@@ -42,8 +42,11 @@ package body Debugger.Jdb is
    --  Regular expressions used to recognize the prompt.
 
    Highlight_Pattern : constant GNAT.Regpat.Pattern_Matcher :=
-     GNAT.Regpat.Compile ("^(>|\w*\[\d+\]) ");
+     GNAT.Regpat.Compile ("^(>|\w*\[\d+\]) ", Multiple_Lines);
    --  Match everything that should be highlighted in the debugger window.
+
+   Frame_Pattern : constant Pattern_Matcher := Compile
+     ("^ +\[(\d+)\] (.+) \((.+:\d+)?\), pc = (\d+)$", Multiple_Lines);
 
    Jdb_Command : constant String := "jdb";
    --  The default Jdb executable name.
@@ -55,7 +58,15 @@ package body Debugger.Jdb is
    function Type_Of
      (Debugger : access Jdb_Debugger; Entity : String) return String is
    begin
-      return "";
+      Send (Debugger, "fields " & Entity);
+
+      declare
+         S       : String := Expect_Out (Get_Process (Debugger));
+         Matches : Match_Array (0 .. 0);
+      begin
+         Match (Prompt_Regexp, S, Matches);
+         return S (S'First .. Matches (0).First - 1);
+      end;
    end Type_Of;
 
    --------------
@@ -69,7 +80,7 @@ package body Debugger.Jdb is
    is
       Matches : Match_Array (0 .. 0);
    begin
-      Send (Debugger, "print " & Entity, Empty_Buffer => True);
+      Send (Debugger, "dump " & Entity);
 
       declare
          S : String := Expect_Out (Get_Process (Debugger));
@@ -202,7 +213,7 @@ package body Debugger.Jdb is
    procedure Run (Debugger : access Jdb_Debugger;
                   Display  : Boolean := False) is
    begin
-      Send (Debugger, "run", Wait_For_Prompt => False, Display => Display);
+      Send (Debugger, "run", Display => Display);
    end Run;
 
    -----------
@@ -212,8 +223,7 @@ package body Debugger.Jdb is
    procedure Start (Debugger : access Jdb_Debugger;
                     Display  : Boolean := False) is
    begin
-      --  Send (Debugger, "run");
-      null;
+      Send (Debugger, "run", Display => Display);
    end Start;
 
    ---------------
@@ -323,11 +333,40 @@ package body Debugger.Jdb is
       Value    : out Backtrace_Array;
       Len      : out Natural) is
    begin
-      Send (Debugger, "where");
+      Send (Debugger, "wherei");
+
       declare
-         S : String := Expect_Out (Get_Process (Debugger));
+         S       : String := Expect_Out (Get_Process (Debugger));
+         Matched : Match_Array (0 .. 4);
+         First   : Positive := S'First;
       begin
          Len := 0;
+
+         while Len /= Value'Length loop
+            Match
+              (Frame_Pattern, S (First .. S'Last), Matched);
+
+            exit when Matched (0) = No_Match;
+
+            Len := Len + 1;
+            Value (Len).Frame_Id :=
+              Natural'Value (S (Matched (1).First .. Matched (1).Last));
+
+            Value (Len).Program_Counter :=
+              new String' (S (Matched (4).First .. Matched (4).Last));
+
+            Value (Len).Subprogram :=
+              new String' (S (Matched (2).First .. Matched (2).Last));
+
+            if Matched (3) = No_Match then
+               Value (Len).Source_Location := new String' ("");
+            else
+               Value (Len).Source_Location :=
+                 new String' (S (Matched (3).First .. Matched (3).Last));
+            end if;
+
+            First := Matched (0).Last;
+         end loop;
       end;
    end Backtrace;
 
