@@ -1,6 +1,5 @@
 with Gtk; use Gtk;
 with Gtk.Main;
-with Gtk.Widget; use Gtk.Widget;
 with Gtk.Window; use Gtk.Window;
 with Gui_Builder_Pkg; use Gui_Builder_Pkg;
 with RAD.Editor; use RAD.Editor;
