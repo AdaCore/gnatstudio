@@ -206,12 +206,11 @@ private package Projects.Editor.Normalize is
    --  create the nested case for all the scenario variables. All case items
    --  are empty.
 
-   function Find_Or_Create_Case_Statement
+   function Find_Case_Statement
      (Project : Prj.Tree.Project_Node_Id;
       Pkg     : Prj.Tree.Project_Node_Id := Prj.Tree.Empty_Node)
       return Project_Node_Id;
    --  Return the first case statement in Project/Pkg.
-   --  Create the case statement if none exists currently.
    --  In a normalized project, this returns the only case statement that
    --  exists in a package or project.
    --  Only the first value in Scenario_Variables is relevant.
