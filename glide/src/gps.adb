@@ -342,6 +342,23 @@ procedure GPS is
       Screen            : Welcome_Screen;
       pragma Unreferenced (Data);
 
+      procedure Load_Sources;
+      --  Load all the source files given on the command line.
+
+      procedure Load_Sources is
+      begin
+         loop
+            declare
+               S : constant String := Get_Argument (Do_Expansion => True);
+            begin
+               exit when S = "";
+
+               Open_File_Editor (GPS.Kernel, S, 1, 1, From_Path => True);
+               File_Opened := True;
+            end;
+         end loop;
+      end Load_Sources;
+
    begin
       --  Parse the system's RC file
       if Is_Regular_File (System_Rc) then
@@ -467,8 +484,8 @@ procedure GPS is
 
          Close (Directory);
 
-         --  If only one project file was found in the current directory,
-         --  do not open the welcome dialog.
+         --  If only one project file was found in the current directory, do
+         --  not open the welcome dialog.
 
          if not Auto_Load_Project then
             --  Load a default project, in case the wizard needs to be
@@ -477,38 +494,41 @@ procedure GPS is
 
             Load_Default_Project
               (GPS.Kernel, Get_Current_Dir, Load_Default_Desktop => False);
+            Load_Sources;
 
-            --  Load the project selected by the user
+            if not File_Opened then
+               --  Load the project selected by the user
 
-            if Project_Name = null then
-               Gtk_New (Screen, GPS.Kernel, "");
-            else
-               Gtk_New (Screen, GPS.Kernel, Project_Name.all);
+               if Project_Name = null then
+                  Gtk_New (Screen, GPS.Kernel, "");
+               else
+                  Gtk_New (Screen, GPS.Kernel, Project_Name.all);
+               end if;
+
+               --  Remove the splash screen, since it conflicts with the
+               --  welcome dialog.
+
+               if Splash /= null then
+                  Destroy (Splash);
+                  Splash := null;
+               end if;
+
+               --  If the user wants to quit immediately, so be it.
+
+               case Run_Welcome (Screen) is
+                  when Quit_GPS =>
+                     Destroy (Screen);
+                     Gtk.Main.Main_Quit;
+                     return False;
+
+                  when Project_Loaded =>
+                     --  Desktop was already loaded when the project itself was
+                     --  loaded.
+                     null;
+               end case;
+
+               Destroy (Screen);
             end if;
-
-            --  Remove the splash screen, since it conflicts with the welcome
-            --  dialog.
-
-            if Splash /= null then
-               Destroy (Splash);
-               Splash := null;
-            end if;
-
-            --  If the user wants to quit immediately, so be it.
-
-            case Run_Welcome (Screen) is
-               when Quit_GPS =>
-                  Destroy (Screen);
-                  Gtk.Main.Main_Quit;
-                  return False;
-
-               when Project_Loaded =>
-                  --  Desktop was already loaded when the project itself was
-                  --  loaded.
-                  null;
-            end case;
-
-            Destroy (Screen);
          end if;
       end if;
 
@@ -525,20 +545,8 @@ procedure GPS is
          Project_Viewers.Add_To_Reopen
            (GPS.Kernel, Normalize_Pathname
               (Project_Name.all, Resolve_Links => False));
+         Load_Sources;
       end if;
-
-      --  Then load all the source files given on the command line.
-
-      loop
-         declare
-            S : constant String := Get_Argument (Do_Expansion => True);
-         begin
-            exit when S = "";
-
-            Open_File_Editor (GPS.Kernel, S, 1, 1, From_Path => True);
-            File_Opened := True;
-         end;
-      end loop;
 
       --  Call Show_All before displaying the help so that the help window will
       --  have the focus.
