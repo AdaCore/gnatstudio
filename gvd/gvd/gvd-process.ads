@@ -57,7 +57,7 @@ package Odd.Process is
      (Debugger  : Standard_Input_Package.Data_Access;
       Source    : Gint;
       Condition : Gdk.Types.Gdk_Input_Condition);
-   --  This procedure should be used in conjunction with My_Input above.
+   --  This procedure should be used in conjunction with Standard_Input above.
    --  This is the callback input function that will retrieve the current
    --  page in the process notebook contained by Debugger and send the
    --  command (line read from Source) using Process_User_Command.
@@ -144,7 +144,6 @@ package Odd.Process is
       Descriptor : Program_Descriptor;
       --  This is used to store the launching method.
       --  (Added for handling sessions.)
-
    end record;
    type Debugger_Process_Tab is access all Debugger_Process_Tab_Record'Class;
 
