@@ -1,5 +1,10 @@
 Known Problems fixed in GVD 1.2.0
 
+- Incorrect log-level causes a Constraint_Error.
+  Problem:    Invoking GVD with a log level outside of the [0-4] range
+              causes a Constraint_Error.
+  Workaround: Use a correct log level :-).
+
 - Load a module on the debugger console does not update the explorer
   Problem:    When using the load or file command in the debugger console
               window, the source explorer is not updated.
