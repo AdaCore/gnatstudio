@@ -54,8 +54,8 @@ package VCS_View_Pkg is
       Kernel   : Kernel_Handle);
    --  Internal initialization function.
 
-   function Get_Kernel (VCS_View : access VCS_View_Record)
-      return Glide_Kernel.Kernel_Handle;
+   function Get_Kernel
+     (VCS_View : access VCS_View_Record) return Glide_Kernel.Kernel_Handle;
    --  Return the kernel associated with VCS_View
 
    procedure Clear (Explorer : VCS_View_Access);
@@ -98,11 +98,11 @@ package VCS_View_Pkg is
    --  Display a message.
 
    function Get_Current_Dir
-     (Kernel : access Kernel_Handle_Record'Class)
-     return String;
+     (Context : Selection_Context_Access) return String;
    --  Convenience function to get the current directory.
 
-   function Get_Current_File (Kernel : Kernel_Handle) return String;
+   function Get_Current_File
+     (Context : Selection_Context_Access) return String;
    --  Convenience function to get the current file.
 
    function Get_Selected_Files
@@ -112,19 +112,16 @@ package VCS_View_Pkg is
 
    function Get_Explorer
      (Kernel      : Kernel_Handle;
-      Raise_Child : Boolean := True)
-     return VCS_View_Access;
+      Raise_Child : Boolean := True) return VCS_View_Access;
    --  Return the vcs explorer, if created, null otherwise.
    --  If Raise_Child is True, the MDI_Child is raised.
 
    function Get_Current_Ref
-     (Explorer : access VCS_View_Record)
-     return VCS_Access;
+     (Explorer : access VCS_View_Record) return VCS_Access;
    --  Return the VCS reference currently being viewed in Explorer.
 
    function Get_Current_Context
-     (Explorer : access VCS_View_Record)
-     return Selection_Context_Access;
+     (Explorer : access VCS_View_Record) return Selection_Context_Access;
 
    procedure Set_Current_Context
      (Explorer : access VCS_View_Record;
