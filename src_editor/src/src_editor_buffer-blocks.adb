@@ -126,7 +126,8 @@ package body Src_Editor_Buffer.Blocks is
          --  effect than simply folding the whole file. This will be solved
          --  when the notion of block nesting level is introduced.
 
-         if (not Block_Folded)
+         if Buffer.Block_Folding
+           and then (not Block_Folded)
            and then Current.Category in Subprogram_Category
            and then Current.Sloc_End.Line /= Current.Sloc_Start.Line
          then
