@@ -69,7 +69,6 @@ with Basic_Types;               use Basic_Types;
 with GUI_Utils;                 use GUI_Utils;
 with Projects;                  use Projects;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
-with GNAT.Expect;
 with GNAT.OS_Lib;
 
 with Glide_Main_Window;         use Glide_Main_Window;
@@ -78,7 +77,6 @@ with Glide_Kernel.Console;      use Glide_Kernel.Console;
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
 with Glide_Kernel.Project;      use Glide_Kernel.Project;
-with Glide_Kernel.Task_Manager; use Glide_Kernel.Task_Manager;
 with Glide_Intl;                use Glide_Intl;
 with Pixmaps_IDE;               use Pixmaps_IDE;
 with Traces;                    use Traces;
@@ -93,13 +91,10 @@ with Src_Info.Queries;          use Src_Info.Queries;
 with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 
-with Generic_List;
 with Debugger_Pixmaps;          use Debugger_Pixmaps;
 
 with Commands;                  use Commands;
 with Commands.Debugger;         use Commands.Debugger;
-
-with Commands.Generic_Asynchronous;
 
 with GVD.Text_Box.Source_Editor; use GVD.Text_Box.Source_Editor;
 with GVD.Text_Box.Source_Editor.Glide;
@@ -129,16 +124,6 @@ package body GVD_Module is
       Busy          : Boolean := True;
       Force_Refresh : Boolean := False);
 
-   type File_Line_Record is record
-      File : VFS.Virtual_File;
-      Line : Integer;
-   end record;
-
-   procedure Free (X : in out File_Line_Record);
-   --  Free memory associated to X.
-
-   package File_Line_List is new Generic_List (File_Line_Record);
-
    type GPS_Proxy is new Process_Proxy with record
       Kernel : Kernel_Handle;
    end record;
@@ -154,20 +139,6 @@ package body GVD_Module is
 
       Initialized      : Boolean := False;
       --  Whether the debugger is running;
-
-      Unexplored_Lines : File_Line_List.List := File_Line_List.Null_List;
-      --  The list of lines which are currently revealed in the editor
-      --  but the status of which has not yet been queried from the debugger.
-
-      Total_Unexplored_Lines : Integer := 0;
-      Total_Explored_Lines   : Integer := 0;
-
-      Slow_Query       : Boolean := False;
-      --  Set to True when the interval between two debugger queries should
-      --  be long (for example when the debugger was detected to be busy).
-
-      List_Modified    : Boolean := False;
-      --  Set to True when the list has been modified by a callback.
 
       Show_Lines_With_Code : Boolean;
       --  Whether the lines with code should be explicitly queried.
@@ -188,20 +159,6 @@ package body GVD_Module is
       Lines_Revealed_Id : Handler_Id := (Null_Signal_Id, null);
    end record;
    type GVD_Module is access all GVD_Module_Record'Class;
-
-   procedure Free_Line_Information (Id : in out GVD_Module);
-   --  Free the line information in Id.
-
-   procedure Line_Information_Compute
-     (Id      : in out GVD_Module;
-      Command : Command_Access;
-      Result  : out Command_Return_Type);
-   --  Query the line information from the debugger.
-
-   package Reveal_Lines_Commands is new Commands.Generic_Asynchronous
-     (Data_Type   => GVD_Module,
-      Free        => Free_Line_Information);
-   --  Package that handles commands related to line breakpoints query.
 
    procedure Destroy (Id : in out GVD_Module_Record);
    --  Terminate the debugger the module, and kill the underlying debugger.
@@ -302,16 +259,14 @@ package body GVD_Module is
      (Kernel      : access Kernel_Handle_Record'Class;
       Debugger    : access Visual_Debugger_Record'Class)
    is
-      Project : Project_Type;
-      No_Scenario : constant Scenario_Variable_Array (1 .. 0) :=
-        (others => No_Variable);
-      Exec : Virtual_File;
+      Project : Project_Type := Get_Project (Kernel);
+      Exec    : Virtual_File;
 
    begin
       --  Do nothing unless the current project was already generated from an
       --  executable
 
-      if Status (Get_Project (Kernel)) /= From_Executable then
+      if Status (Project) /= From_Executable then
          return;
       end if;
 
@@ -326,27 +281,64 @@ package body GVD_Module is
       --  No handling of desktop is done here, we want to leave all windows
       --  as-is.
 
-      Unload_Project (Project_Registry (Get_Registry (Kernel)));
+      declare
+         Debugger_Name : constant String :=
+           (Get_Attribute_Value
+             (Project, Debugger_Command_Attribute, Default => ""));
+         Target        : constant String :=
+           (Get_Attribute_Value
+             (Project, Program_Host_Attribute, Default => ""));
+         Protocol      : constant String :=
+           (Get_Attribute_Value
+             (Project, Protocol_Attribute, Default => ""));
 
-      if Exec /= VFS.No_File then
-         Project := Create_Project
-           (Project_Registry (Get_Registry (Kernel)),
-            "debugger_" & Base_Name (Exec),
-            GNAT.Directory_Operations.Get_Current_Dir);
-      else
-         Project := Create_Project
-           (Project_Registry (Get_Registry (Kernel)),
-            "debugger_no_file",
-            GNAT.Directory_Operations.Get_Current_Dir);
-      end if;
+      begin
+         Unload_Project (Project_Registry (Get_Registry (Kernel)));
+
+         if Exec /= VFS.No_File then
+            Project := Create_Project
+              (Project_Registry (Get_Registry (Kernel)),
+               "debugger_" & Base_Name (Exec),
+               GNAT.Directory_Operations.Get_Current_Dir);
+         else
+            Project := Create_Project
+              (Project_Registry (Get_Registry (Kernel)),
+               "debugger_no_file",
+               GNAT.Directory_Operations.Get_Current_Dir);
+         end if;
+
+         if Debugger_Name /= "" then
+            Update_Attribute_Value_In_Scenario
+              (Project            => Project,
+               Scenario_Variables => No_Scenario,
+               Attribute          => Debugger_Command_Attribute,
+               Value              => Debugger_Name);
+         end if;
+
+         if Target /= "" then
+            Update_Attribute_Value_In_Scenario
+              (Project            => Project,
+               Scenario_Variables => No_Scenario,
+               Attribute          => Program_Host_Attribute,
+               Value              => Target);
+         end if;
+
+         if Protocol /= "" then
+            Update_Attribute_Value_In_Scenario
+              (Project            => Project,
+               Scenario_Variables => No_Scenario,
+               Attribute          => Protocol_Attribute,
+               Value              => Protocol);
+         end if;
+      end;
 
       declare
-         List : String_Array := Source_Files_List (Debugger.Debugger);
-         Bases : GNAT.OS_Lib.Argument_List (List'Range);
-         Dirs  : GNAT.OS_Lib.Argument_List (List'Range);
+         List       : String_Array := Source_Files_List (Debugger.Debugger);
+         Bases      : GNAT.OS_Lib.Argument_List (List'Range);
+         Dirs       : GNAT.OS_Lib.Argument_List (List'Range);
          Dirs_Index : Natural := Dirs'First;
-         Main : GNAT.OS_Lib.Argument_List (1 .. 1);
-         Langs : GNAT.OS_Lib.Argument_List (List'Range);
+         Main       : GNAT.OS_Lib.Argument_List (1 .. 1);
+         Langs      : GNAT.OS_Lib.Argument_List (List'Range);
          Lang_Index : Natural := Langs'First;
 
       begin
@@ -1674,9 +1666,6 @@ package body GVD_Module is
 
       if Top.First_Debugger = null then
          Id.Initialized := False;
-         File_Line_List.Free (Id.Unexplored_Lines);
-         Id.Total_Explored_Lines := 0;
-         Id.Total_Unexplored_Lines := 0;
 
          Gtk.Handlers.Disconnect (Kernel, Id.Lines_Revealed_Id);
          Gtk.Handlers.Disconnect (Kernel, Id.File_Edited_Id);
@@ -2135,161 +2124,6 @@ package body GVD_Module is
       Create_Debugger_Columns (Top.Kernel, VFS.No_File);
    end On_Executable_Changed;
 
-   ------------------------------
-   -- Line_Information_Compute --
-   ------------------------------
-
-   procedure Line_Information_Compute
-     (Id      : in out GVD_Module;
-      Command : Command_Access;
-      Result  : out Command_Return_Type)
-   is
-      Kind       : Line_Kind;
-      C          : Set_Breakpoint_Command_Access;
-      File_Line  : File_Line_Record;
-
-      Tab        : constant Visual_Debugger :=
-        Get_Current_Process (Get_Main_Window (Id.Kernel));
-      Debugger   : constant Debugger_Access := Tab.Debugger;
-
-   begin
-      if File_Line_List.Is_Empty (Id.Unexplored_Lines)
-        or else Debugger = null
-        or else Get_Process (Debugger) = null
-      then
-         Result := Success;
-         return;
-
-      elsif Command_In_Process (Get_Process (Debugger)) then
-         Id.Slow_Query := True;
-         Result := Lower_Priority;
-         return;
-
-      elsif Id.Slow_Query then
-         Id.Slow_Query := False;
-         Result := Raise_Priority;
-         return;
-      end if;
-
-      File_Line := File_Line_List.Head (Id.Unexplored_Lines);
-
-      Kind := Line_Contains_Code
-        (Debugger, File_Line.File, File_Line.Line);
-
-      Id.Total_Explored_Lines := Id.Total_Explored_Lines + 1;
-
-      if Id.List_Modified then
-         Id.List_Modified := False;
-         Result := Execute_Again;
-         return;
-      end if;
-
-      declare
-         L          : constant Integer := File_Line.Line;
-         A          : Line_Information_Array (L .. L);
-         Mode       : Breakpoint_Command_Mode := Set;
-
-         use File_Line_List;
-
-         Node      : List_Node;
-         Prev_Node : List_Node;
-
-      begin
-         if Kind = Have_Code then
-            A (L).Image := Line_Has_Code_Pixbuf;
-
-            --  Check whether a breakpoint is set at this location, if so,
-            --  set the mode accordingly.
-            --  ??? Maybe we could optimize a little bit here.
-
-            if Tab.Breakpoints /= null then
-               for J in Tab.Breakpoints'Range loop
-                  if Tab.Breakpoints (J).Line = File_Line.Line
-                    and then Tab.Breakpoints (J).File /= VFS.No_File
-                    and then Tab.Breakpoints (J).File = File_Line.File
-                  then
-                     Mode := Unset;
-                     A (L).Image := Line_Has_Breakpoint_Pixbuf;
-                     exit;
-                  end if;
-               end loop;
-            end if;
-
-            Create
-              (C, Id.Kernel, Tab, Mode, File_Line.File, File_Line.Line);
-            A (L).Associated_Command := Command_Access (C);
-
-         elsif Kind = No_More_Code then
-
-            --  If Kind is No_More_Code, browse through the list of
-            --  unexplored lines, and clean it of all lines after the
-            --  current line in the current file.
-
-            Node := First (Id.Unexplored_Lines);
-
-            while Node /= Null_Node loop
-               if Data (Node).File = File_Line.File
-                 and then Data (Node).Line > File_Line.Line
-               then
-                  Prev_Node := Prev (Id.Unexplored_Lines, Node);
-                  Remove_Nodes (Id.Unexplored_Lines, Prev_Node, Node);
-
-                  if Prev_Node = Null_Node then
-                     Node := First (Id.Unexplored_Lines);
-
-                     if Node = Null_Node then
-                        Result := Success;
-                        return;
-                     end if;
-                  else
-                     Node := Prev_Node;
-                  end if;
-               end if;
-
-               Node := Next (Node);
-            end loop;
-
-            if File_Line_List.Is_Empty (Id.Unexplored_Lines) then
-               Result := Success;
-               return;
-            end if;
-         end if;
-
-         Add_Line_Information
-           (Id.Kernel,
-            File_Line.File,
-            Breakpoints_Column_Id,
-            new Line_Information_Array'(A));
-      end;
-
-      File_Line_List.Next (Id.Unexplored_Lines);
-
-      if File_Line_List.Is_Empty (Id.Unexplored_Lines) then
-         Result := Success;
-         return;
-      end if;
-
-      Set_Progress
-        (Command,
-         (Running, Id.Total_Explored_Lines, Id.Total_Unexplored_Lines));
-
-      Result := Execute_Again;
-
-   exception
-      when E : GNAT.Expect.Process_Died =>
-         Debug_Terminate (Id.Kernel, Tab);
-         Trace (Me, "Debugger died unexpectedly: "
-                & Exception_Information (E));
-
-         Result := Success;
-
-      when E : others =>
-         Debug_Terminate (Id.Kernel, Tab);
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
-
-         Result := Failure;
-   end Line_Information_Compute;
-
    --------------------
    -- File_Edited_Cb --
    --------------------
@@ -2342,51 +2176,31 @@ package body GVD_Module is
       declare
          Line1, Line2 : Integer;
          File : constant Virtual_File := File_Information (Area_Context);
-         C    : Reveal_Lines_Commands.Generic_Asynchronous_Command_Access;
 
       begin
          Get_Area (Area_Context, Line1, Line2);
 
-         if Id.Show_Lines_With_Code then
-            if File_Line_List.Is_Empty (Id.Unexplored_Lines) then
-               Reveal_Lines_Commands.Create
-                 (C,
-                  Data        => Id,
-                  Iterate     => Line_Information_Compute'Access,
-                  Description => -"Querying line information");
-
-               Launch_Background_Command
-                 (Id.Kernel, Command_Access (C), True, "Debugger");
-            else
-               Id.List_Modified := True;
-               Id.Unexplored_Lines := File_Line_List.Null_List;
-            end if;
-
-            for J in Line1 .. Line2 loop
-               File_Line_List.Prepend (Id.Unexplored_Lines, (File, J));
-               --  ??? We might want to use a LIFO structure here
-               --  instead of FIFO, so that the lines currently shown
-               --  are displayed first.
-            end loop;
-
-            Id.Total_Unexplored_Lines := Id.Total_Unexplored_Lines
-              + Line2 - Line1 + 1;
-
+         if Id.Show_Lines_With_Code
+           and then Command_In_Process (Get_Process (Process.Debugger))
+         then
             return;
          end if;
 
-         --  If we are not showing lines with code, no need to do the
-         --  following in an idle loop.
-
          declare
-            A        : Line_Information_Array (Line1 .. Line2);
-            C        : Set_Breakpoint_Command_Access;
-            Mode     : Breakpoint_Command_Mode := Set;
-            Tab      : constant Visual_Debugger :=
+            Lines       : Line_Array (Line1 .. Line2);
+            A           : Line_Information_Array (Line1 .. Line2);
+            C           : Set_Breakpoint_Command_Access;
+            Mode        : Breakpoint_Command_Mode := Set;
+            Tab         : constant Visual_Debugger :=
               Get_Current_Process (Get_Main_Window (Id.Kernel));
-            Bps      : Bp_Array (Line1 .. Line2) := (others => 0);
+            Bps         : Bp_Array (Line1 .. Line2) := (others => 0);
+            Lines_Valid : Boolean := False;
 
          begin
+            if Id.Show_Lines_With_Code then
+               Lines_With_Code (Process.Debugger, File, Lines_Valid, Lines);
+            end if;
+
             --  Build an array of breakpoints in the current range, more
             --  efficient than re-browsing the whole array of breakpoints
             --  for each line.
@@ -2404,7 +2218,13 @@ package body GVD_Module is
             end if;
 
             for J in A'Range loop
-               A (J).Image := Line_Might_Have_Code_Pixbuf;
+               if Lines_Valid then
+                  if Lines (J) then
+                     A (J).Image := Line_Has_Code_Pixbuf;
+                  end if;
+               else
+                  A (J).Image := Line_Might_Have_Code_Pixbuf;
+               end if;
 
                if Bps (J) /= 0 then
                   Mode        := Unset;
@@ -2745,16 +2565,6 @@ package body GVD_Module is
       Init_Graphics;
    end Register_Module;
 
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (X : in out File_Line_Record) is
-      pragma Unreferenced (X);
-   begin
-      null;
-   end Free;
-
    -------------
    -- Destroy --
    -------------
@@ -2763,15 +2573,5 @@ package body GVD_Module is
    begin
       Debug_Terminate (Id.Kernel);
    end Destroy;
-
-   ---------------------------
-   -- Free_Line_Information --
-   ---------------------------
-
-   procedure Free_Line_Information (Id : in out GVD_Module) is
-   begin
-      Id.Total_Explored_Lines := 0;
-      Id.Total_Unexplored_Lines := 0;
-   end Free_Line_Information;
 
 end GVD_Module;
