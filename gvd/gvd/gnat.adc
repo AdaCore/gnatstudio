@@ -1313,7 +1313,6 @@ pragma Eliminate (Gtk.Scrollbar, Initialize_Hscrollbar);
 pragma Eliminate (Gtk.Scrollbar, Generate);
 pragma Eliminate (Gtk.Scrolled_Window, Get_Type);
 pragma Eliminate (Gtk.Scrolled_Window, Generate);
-pragma Eliminate (Gtk.Separator, Gtk_New_Hseparator);
 pragma Eliminate (Gtk.Separator, Initialize_Hseparator);
 pragma Eliminate (Gtk.Separator, Generate);
 pragma Eliminate (Gtk.Spin_Button, Generate);
