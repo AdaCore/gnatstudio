@@ -1440,7 +1440,11 @@ package body Src_Editor_View is
 
          Set_Value
            (Get_Hadjustment (View.Scroll),
-         Get_Value (Get_Hadjustment (View.Synchronized_Editor.Scroll)));
+            Get_Value (Get_Hadjustment (View.Synchronized_Editor.Scroll)));
+      else
+         Scroll_To_Cursor_Location
+           (View, Position_Set_Explicitely
+              (Source_Buffer (Get_Buffer (View))));
       end if;
 
       View.Scrolling := False;
