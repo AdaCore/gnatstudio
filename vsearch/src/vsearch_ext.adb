@@ -49,6 +49,7 @@ with Gtkada.Handlers;       use Gtkada.Handlers;
 with Gtkada.Types;          use Gtkada.Types;
 with Glide_Intl;            use Glide_Intl;
 with Glide_Kernel;          use Glide_Kernel;
+with Glide_Kernel.Console;  use Glide_Kernel.Console;
 with Glide_Kernel.Modules;  use Glide_Kernel.Modules;
 
 with Find_Utils;            use Find_Utils;
@@ -118,6 +119,9 @@ package body Vsearch_Ext is
    --  Performs the search in an idle loop, so that the user can still interact
    --  with the rest of GPS.
 
+   function Idle_Replace (Data : Idle_Search_Data) return Boolean;
+   --  Performs the replace in an idle loop
+
    procedure Set_First_Next_Mode
      (Vsearch : access Vsearch_Extended_Record'Class;
       Find_Next : Boolean);
@@ -162,6 +166,10 @@ package body Vsearch_Ext is
      (Widget : access Gtk.Widget.Gtk_Widget_Record'Class)
       return Node_Ptr;
    --  Save the status of the project explorer to an XML tree
+
+   procedure Create_Context (Vsearch : access Vsearch_Extended_Record'Class);
+   --  Create the search context based on the current contents of the GUI.
+   --  This is stored in Vsearch.Last_Search_Context.
 
    ---------------
    -- Callbacks --
@@ -331,8 +339,7 @@ package body Vsearch_Ext is
         and then Search
            (Data.Vsearch.Last_Search_Context,
             Data.Vsearch.Kernel,
-           Data.Search_Backward,
-           False)
+            Data.Search_Backward)
       then
          return True;
       else
@@ -352,18 +359,106 @@ package body Vsearch_Ext is
          return False;
    end Idle_Search;
 
+   ------------------
+   -- Idle_Replace --
+   ------------------
+
+   function Idle_Replace (Data : Idle_Search_Data) return Boolean is
+   begin
+      if Data.Vsearch.Continue
+        and then Replace
+           (Data.Vsearch.Last_Search_Context,
+            Data.Vsearch.Kernel,
+            Get_Text (Data.Vsearch.Replace_Entry),
+            --  ??? The user could change this interactively in the meantime
+            Data.Search_Backward)
+      then
+         return True;
+      else
+         Insert (Data.Vsearch.Kernel,
+                 -"Finished replacing the string in all the files");
+         Free (Data.Vsearch.Last_Search_Context);
+         Set_Sensitive (Data.Vsearch.Stop_Button, False);
+         Set_Sensitive (Data.Vsearch.Search_Next_Button, True);
+         Pop_State (Data.Vsearch.Kernel);
+         Data.Vsearch.Search_Idle_Handler := 0;
+         return False;
+      end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Pop_State (Data.Vsearch.Kernel);
+         Data.Vsearch.Search_Idle_Handler := 0;
+         return False;
+   end Idle_Replace;
+
+   --------------------
+   -- Create_Context --
+   --------------------
+
+   procedure Create_Context (Vsearch : access Vsearch_Extended_Record'Class) is
+      use Widget_List;
+      Data : constant Search_Module_Data := Find_Module
+        (Vsearch.Kernel, Get_Text (Get_Entry (Vsearch.Context_Combo)));
+      Pattern        : constant String := Get_Text (Vsearch.Pattern_Entry);
+      All_Occurences : constant Boolean := Get_Active
+        (Vsearch.Search_All_Check);
+      Options : Search_Options;
+   begin
+      Free (Vsearch.Last_Search_Context);
+
+      if Data.Factory /= null and then Pattern /= "" then
+         Vsearch.Last_Search_Context := Data.Factory
+           (Vsearch.Kernel, All_Occurences, Data.Extra_Information);
+
+         if Vsearch.Last_Search_Context /= null then
+            Options :=
+              (Case_Sensitive => Get_Active (Vsearch.Case_Check),
+               Whole_Word     => Get_Active (Vsearch.Whole_Word_Check),
+               Regexp         => Get_Active (Vsearch.Regexp_Check));
+            Set_Context (Vsearch.Last_Search_Context, Pattern, Options);
+         end if;
+      end if;
+
+      --  Update the contents of the combo boxes
+      if Get_Selection (Get_List (Vsearch.Pattern_Combo)) =
+        Widget_List.Null_List
+      then
+         Add_Unique_Combo_Entry (Vsearch.Pattern_Combo, Pattern);
+         Add_To_History
+           (Get_History (Vsearch.Kernel).all, Pattern_Hist_Key, Pattern);
+
+         --  It sometimes happen that another entry is selected, for some
+         --  reason. This also resets the options to the unwanted selection,
+         --  so we also need to override them.
+         Set_Text (Vsearch.Pattern_Entry, Pattern);
+         Set_Active (Vsearch.Case_Check, Options.Case_Sensitive);
+         Set_Active (Vsearch.Whole_Word_Check, Options.Whole_Word);
+         Set_Active (Vsearch.Regexp_Check, Options.Regexp);
+      end if;
+
+      declare
+         Replace_Text : constant String := Get_Text (Vsearch.Replace_Entry);
+      begin
+         Add_Unique_Combo_Entry (Vsearch.Replace_Combo, Replace_Text);
+         Add_To_History
+           (Get_History (Vsearch.Kernel).all, Replace_Hist_Key,
+            Replace_Text);
+         Set_Text (Vsearch.Replace_Entry, Replace_Text);
+      end;
+   end Create_Context;
+
    ---------------
    -- On_Search --
    ---------------
 
    procedure On_Search (Object : access Gtk_Widget_Record'Class) is
-      use Widget_List;
       Vsearch : constant Vsearch_Extended := Vsearch_Extended (Object);
-      Options : Search_Options;
-      All_Occurences : constant Boolean := Get_Active
-        (Vsearch.Search_All_Check);
       Has_Next       : Boolean;
       Button         : Message_Dialog_Buttons;
+      All_Occurences : constant Boolean := Get_Active
+        (Vsearch.Search_All_Check);
       Pattern        : constant String := Get_Text (Vsearch.Pattern_Entry);
 
    begin
@@ -373,52 +468,7 @@ package body Vsearch_Ext is
       end if;
 
       if not Vsearch.Find_Next then
-         declare
-            Data : constant Search_Module_Data := Find_Module
-              (Vsearch.Kernel, Get_Text (Get_Entry (Vsearch.Context_Combo)));
-         begin
-            Free (Vsearch.Last_Search_Context);
-
-            if Data.Factory /= null and then Pattern /= "" then
-               Vsearch.Last_Search_Context := Data.Factory
-                 (Vsearch.Kernel, All_Occurences, Data.Extra_Information);
-
-               if Vsearch.Last_Search_Context /= null then
-                  Options :=
-                    (Case_Sensitive => Get_Active (Vsearch.Case_Check),
-                     Whole_Word     => Get_Active (Vsearch.Whole_Word_Check),
-                     Regexp         => Get_Active (Vsearch.Regexp_Check));
-                  Set_Context (Vsearch.Last_Search_Context, Pattern, Options);
-               end if;
-            end if;
-         end;
-
-         --  Update the contents of the combo boxes
-         if Get_Selection (Get_List (Vsearch.Pattern_Combo)) =
-           Widget_List.Null_List
-         then
-            Add_Unique_Combo_Entry (Vsearch.Pattern_Combo, Pattern);
-            Add_To_History
-              (Get_History (Vsearch.Kernel).all, Pattern_Hist_Key, Pattern);
-
-            --  It sometimes happen that another entry is selected, for some
-            --  reason. This also resets the options to the unwanted selection,
-            --  so we also need to override them.
-            Set_Text (Vsearch.Pattern_Entry, Pattern);
-            Set_Active (Vsearch.Case_Check, Options.Case_Sensitive);
-            Set_Active (Vsearch.Whole_Word_Check, Options.Whole_Word);
-            Set_Active (Vsearch.Regexp_Check, Options.Regexp);
-         end if;
-
-         declare
-            Replace_Text : constant String := Get_Text (Vsearch.Replace_Entry);
-         begin
-            Add_Unique_Combo_Entry (Vsearch.Replace_Combo, Replace_Text);
-            Add_To_History
-              (Get_History (Vsearch.Kernel).all, Replace_Hist_Key,
-               Replace_Text);
-            Set_Text (Vsearch.Replace_Entry, Replace_Text);
-         end;
+         Create_Context (Vsearch);
       end if;
 
       if Vsearch.Last_Search_Context /= null then
@@ -440,8 +490,7 @@ package body Vsearch_Ext is
             Has_Next := Search
               (Vsearch.Last_Search_Context,
                Vsearch.Kernel,
-               Search_Backward => False,
-               Interactive => True);
+               Search_Backward => False);
             Pop_State (Vsearch.Kernel);
 
             if not Has_Next then
@@ -480,22 +529,34 @@ package body Vsearch_Ext is
    procedure On_Search_Replace (Object : access Gtk_Widget_Record'Class) is
       Vsearch     : constant Vsearch_Extended := Vsearch_Extended (Object);
       Has_Next    : Boolean;
-      Interactive : constant Boolean := not Get_Active
+      All_Occurences : constant Boolean := Get_Active
         (Vsearch.Search_All_Check);
    begin
-      if not Vsearch.Find_Next
-        or else Vsearch.Last_Search_Context = null
-      then
-         On_Search (Object);
+      if not All_Occurences then
+         --  First time in Interactive mode ?
+         if not Vsearch.Find_Next
+           or else Vsearch.Last_Search_Context = null
+         then
+            On_Search (Object);
+
+         else
+            Push_State (Vsearch.Kernel, Processing);
+            Has_Next := Replace
+              (Vsearch.Last_Search_Context,
+               Vsearch.Kernel,
+               Get_Text (Vsearch.Replace_Entry),
+               Search_Backward => False);
+            Pop_State (Vsearch.Kernel);
+         end if;
+
       else
+         Create_Context (Vsearch);
          Push_State (Vsearch.Kernel, Processing);
-         Has_Next := Replace
-           (Vsearch.Last_Search_Context,
-            Vsearch.Kernel,
-            Get_Text (Vsearch.Replace_Entry),
-            Search_Backward => False,
-            Interactive => Interactive);
-         Pop_State (Vsearch.Kernel);
+         Set_Sensitive (Vsearch.Stop_Button, True);
+         Vsearch.Search_Idle_Handler := Search_Idle_Pkg.Add
+           (Idle_Replace'Access,
+            (Vsearch => Vsearch,
+             Search_Backward => False));
       end if;
 
    exception
@@ -531,8 +592,7 @@ package body Vsearch_Ext is
             Has_Next := Search
               (Vsearch.Last_Search_Context,
                Vsearch.Kernel,
-               Search_Backward => True,
-               Interactive => True);
+               Search_Backward => True);
             Pop_State (Vsearch.Kernel);
          end if;
       end if;
