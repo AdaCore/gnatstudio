@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                          G L I D E  I I                           --
 --                                                                   --
---                     Copyright (C) 2001 - 2002                     --
+--                      Copyright (C) 2001-2002                      --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GLIDE is free software; you can redistribute it and/or modify  it --
@@ -27,7 +27,7 @@ with Unchecked_Deallocation;
 with Glide_Kernel.Console; use Glide_Kernel.Console;
 
 with VCS; use VCS;
---  ??? we are Withing this package only for Copy_String_List : we should put
+--  ??? we are withing this package only for Copy_String_List: we should put
 --  that elsewhere.
 
 package body Commands.External is
@@ -37,6 +37,7 @@ package body Commands.External is
    -----------------------
 
    procedure Destroy (D : in External_Command_Access);
+   pragma Unreferenced (Destroy);
 
    procedure Free is new Unchecked_Deallocation
      (External_Command, External_Command_Access);
@@ -47,8 +48,7 @@ package body Commands.External is
    -- Destroy --
    -------------
 
-   procedure Destroy (D : in External_Command_Access)
-   is
+   procedure Destroy (D : in External_Command_Access) is
       D_Copy : External_Command_Access := D;
    begin
       Free (D_Copy);
