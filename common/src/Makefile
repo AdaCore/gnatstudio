@@ -6,7 +6,7 @@ MAIN=make_common
 
 # List of modules we depend on (Check ../../Makefile.common for list of
 # supported modules)
-MODULES=gnat
+MODULES=gnat kernel
 
 # List of files that shouldn't be compiled with style checks on.
 # This automatically include all GLADE generated files
