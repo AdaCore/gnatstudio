@@ -1,7 +1,6 @@
 
 with Wizards;      use Wizards;
 with Gtk.Main;     use Gtk.Main;
-with Gtk.Label;    use Gtk.Label;
 with Gtk.Handlers; use Gtk.Handlers;
 with Creation_Wizard; use Creation_Wizard;
 
@@ -12,13 +11,12 @@ procedure Test_Wizard is
    procedure Custom_Next (Wiz : access Wizard_Record'Class) is
    begin
       if Get_Current_Page (Wiz) = 4 then
-         Set_Page (Wiz, 5);
+         Set_Current_Page (Wiz, 5);
          Emit_Stop_By_Name (Next_Button (Wiz), "clicked");
       end if;
    end Custom_Next;
 
    Wiz  : Prj_Wizard;
-   Lab  : Gtk_Label;
 
 begin
    Gtk.Main.Init;
@@ -40,7 +38,7 @@ begin
 --     Gtk_New (Lab, "On Page 4");
 --     Add_Page (Wiz, Lab, "Step4");
 
-   Set_Page (Wiz, 1);
+   Set_Current_Page (Wiz, 1);
    Show_All (Wiz);
 
    Main;
