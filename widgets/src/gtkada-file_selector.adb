@@ -28,6 +28,7 @@
 
 with Glib;                      use Glib;
 with Glib.Convert;              use Glib.Convert;
+with Glib.Object;               use Glib.Object;
 with Gtk;                       use Gtk;
 with Gdk;                       use Gdk;
 with Gdk.Types.Keysyms;         use Gdk.Types.Keysyms;
@@ -159,7 +160,8 @@ package body Gtkada.File_Selector is
    --  ???
 
    procedure On_Explorer_Tree_Select_Row
-     (Object : access Gtk_Widget_Record'Class);
+     (Object : access GObject_Record'Class;
+      Params : Gtk_Args);
    --  ???
 
    procedure On_File_List_End_Selection
@@ -1032,13 +1034,18 @@ package body Gtkada.File_Selector is
    ---------------------------------
 
    procedure On_Explorer_Tree_Select_Row
-     (Object : access Gtk_Widget_Record'Class)
+     (Object : access GObject_Record'Class;
+      Params : Gtk_Args)
    is
+      pragma Unreferenced (Params);
       Win : constant File_Selector_Window_Access :=
-        File_Selector_Window_Access (Get_Toplevel (Object));
+        File_Selector_Window_Access (Object);
 
+      Dir : constant String := Get_Selection (Win.Explorer_Tree);
    begin
-      Change_Directory (Win, Get_Selection (Dir_Tree (Object)));
+      if Dir /= "" then
+         Change_Directory (Win, Dir);
+      end if;
 
    exception
       when E : others =>
@@ -1527,10 +1534,8 @@ package body Gtkada.File_Selector is
 
       Gtk_New
         (File_Selector_Window.Explorer_Tree,
-         File_Selector_Window.Home_Directory.all);
-
-      --  Set_Indent (File_Selector_Window.Explorer_Tree, 10);
-      --  Set_Row_Height (File_Selector_Window.Explorer_Tree, 15);
+         File_Selector_Window.Home_Directory.all,
+         Initial_Directory);
 
       Set_Title (File_Selector_Window, Dialog_Title);
 
@@ -1651,35 +1656,32 @@ package body Gtkada.File_Selector is
          "key_press_event", On_Location_Entry_Key_Press_Event'Access,
           After => False);
 
-      Gtk_New_Hpaned (Hpaned1);
-      Set_Position (Hpaned1, 200);
-      Set_Handle_Size (Hpaned1, 10);
-      Set_Gutter_Size (Hpaned1, 6);
+--        Set_Column_Width (File_Selector_Window.Explorer_Tree, 0, 80);
+--        Set_Column_Width (File_Selector_Window.Explorer_Tree, 1, 80);
+--        Set_Column_Width (File_Selector_Window.Explorer_Tree, 2, 80);
+      Object_Callback.Object_Connect
+        (Get_Tree_Selection (File_Selector_Window.Explorer_Tree),
+         "changed",
+         On_Explorer_Tree_Select_Row'Access,
+         Slot_Object => File_Selector_Window);
 
-      Gtk_New_Hbox (Hbox7, False, 0);
-      Pack_Start
-        (File_Selector_Window.File_Selector_Vbox,
-         Hbox7, True, True, 3);
-
-      Pack_Start (Hbox7, Hpaned1, True, True, 3);
-
-      Gtk_New (File_Selector_Window.Explorer_Tree_Scrolledwindow);
-      Set_Policy
-        (File_Selector_Window.Explorer_Tree_Scrolledwindow,
-         Policy_Automatic, Policy_Always);
-
-      Add (Hpaned1, File_Selector_Window.Explorer_Tree_Scrolledwindow);
-
-      Set_Column_Width (File_Selector_Window.Explorer_Tree, 0, 80);
-      Set_Column_Width (File_Selector_Window.Explorer_Tree, 1, 80);
-      Set_Column_Width (File_Selector_Window.Explorer_Tree, 2, 80);
-      Widget_Callback.Connect
-        (File_Selector_Window.Explorer_Tree, "tree_select_row",
-         Widget_Callback.To_Marshaller (On_Explorer_Tree_Select_Row'Access));
-      Add (File_Selector_Window.Explorer_Tree_Scrolledwindow,
-           File_Selector_Window.Explorer_Tree);
 
       if Show_Files then
+         Gtk_New_Hpaned (Hpaned1);
+         Set_Position (Hpaned1, 200);
+         Set_Handle_Size (Hpaned1, 10);
+         Set_Gutter_Size (Hpaned1, 6);
+
+         Gtk_New_Hbox (Hbox7, False, 0);
+         Pack_Start
+           (File_Selector_Window.File_Selector_Vbox,
+            Hbox7, True, True, 3);
+
+         Pack_Start (Hbox7, Hpaned1, True, True, 3);
+
+         Add (Hpaned1,
+           File_Selector_Window.Explorer_Tree);
+
          Gtk_New (File_Selector_Window.Files_Scrolledwindow);
          Set_Policy
            (File_Selector_Window.Files_Scrolledwindow,
@@ -1721,6 +1723,10 @@ package body Gtkada.File_Selector is
          Set_Column_Widget
            (File_Selector_Window.File_List, 2,
             File_Selector_Window.File_Text_Label);
+      else
+         Pack_Start
+           (File_Selector_Window.File_Selector_Vbox,
+            File_Selector_Window.Explorer_Tree, True, True, 3);
       end if;
 
       Gtk_New_Hbox (Hbox4, False, 0);
