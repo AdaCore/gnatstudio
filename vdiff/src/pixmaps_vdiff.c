@@ -1,8 +1,8 @@
 /*---------------------------------------------------------------------
---                   GVD - The GNU Visual Debugger                   --
+--                                GPS                                --
 --                                                                   --
---                      Copyright (C) 2000-2003                      --
---                              ACT-Europe                           --
+--                      Copyright (C) 2000-2005                      --
+--                               AdaCore                             --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,12 +18,5 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 ---------------------------------------------------------------------*/
 
-#include "../pixmaps/up_diff_xpm"
-#include "../pixmaps/down_diff_xpm"
-#include "../pixmaps/first_diff_xpm"
-#include "../pixmaps/last_diff_xpm"
-#include "../pixmaps/reload_diff_xpm"
-#include "../pixmaps/unhighlight_diff_xpm"
-#include "../pixmaps/close_diff_xpm"
 #include "../pixmaps/green_button_xpm"
 #include "../pixmaps/red_button_xpm"
