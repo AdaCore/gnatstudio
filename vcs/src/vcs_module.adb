@@ -436,6 +436,7 @@ package body VCS_Module is
       VCS_Root    : constant String := -"VCS";
       VCS         : constant String := '/' & VCS_Root;
       VCS_Compare : constant String := VCS & "/_" & (-"Compare");
+      VCS_Dir     : constant String := VCS & "/_" & (-"Directory");
 
    begin
       VCS_Module_ID := new VCS_Module_ID_Record;
@@ -460,6 +461,20 @@ package body VCS_Module is
       Register_Menu
         (Kernel, VCS, -"_Query status for all projects", "",
          Query_Status_For_Project'Access);
+
+      Register_Menu
+        (Kernel, VCS_Dir, -"_Query status for directory", "",
+         Query_Status_For_Directory'Access);
+      Register_Menu
+        (Kernel, VCS_Dir, -"Query _status for directory recursively", "",
+         Query_Status_For_Directory_Recursive'Access);
+      Register_Menu
+        (Kernel, VCS_Dir, -"_Update directory", "",
+         Update_Directory'Access);
+      Register_Menu
+        (Kernel, VCS_Dir, -"Update _directory recursively", "",
+         Update_Directory_Recursive'Access);
+
       Gtk_New (Menu_Item);
       Register_Menu (Kernel, VCS, Menu_Item);
       Register_Menu (Kernel, VCS, -"_Update", "", Update'Access);
