@@ -30,6 +30,7 @@ with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
 with Glide_Kernel.Scripts;      use Glide_Kernel.Scripts;
 with Glide_Kernel.Standard_Hooks;
 use Glide_Kernel.Standard_Hooks;
+with Glib;                      use Glib;
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Dnd;                   use Gtk.Dnd;
 with Gtk.Enums;                 use Gtk.Enums;
@@ -262,6 +263,7 @@ package body Glide_Main_Window is
      (Kernel : access Kernel_Handle_Record'Class)
    is
       use Glib;
+      Win : constant Glide_Window := Glide_Window (Get_Main_Window (Kernel));
    begin
       Gtk.Rc.Parse_String
         ("gtk-font-name=""" &
@@ -273,9 +275,12 @@ package body Glide_Main_Window is
               (Get_Pref (Kernel, Can_Change_Accels))));
 
       if Get_Pref (Kernel, Show_Toolbar) then
-         Show_All (Glide_Window (Get_Main_Window (Kernel)).Toolbar_Box);
+         Set_Size_Request (Win.Toolbar_Box, -1, -1);
+         Set_Child_Visible (Win.Toolbar_Box, True);
+         Show_All (Win.Toolbar_Box);
       else
-         Hide_All (Glide_Window (Get_Main_Window (Kernel)).Toolbar_Box);
+         Set_Child_Visible (Win.Toolbar_Box, False);
+         Hide_All (Win.Toolbar_Box);
       end if;
 
       if Get_Pref (Kernel, Toolbar_Show_Text) then
@@ -317,6 +322,7 @@ package body Glide_Main_Window is
    begin
       Gtk_New (Main_Window.Kernel, Gtk_Window (Main_Window), Home_Dir);
       GVD.Main_Window.Initialize (Main_Window, Key, Menu_Items);
+
       Set_Priorities (Main_Window.Process_Mdi, (Left, Top, Bottom, Right));
       Setup_Toplevel_Window (Main_Window.Process_Mdi, Main_Window);
       Main_Window.Home_Dir := new String'(Home_Dir);
@@ -346,6 +352,10 @@ package body Glide_Main_Window is
             Pixbuf := Get_Pixbuf (Main_Window.Animation_Iter);
             Set (Main_Window.Animation_Image, Pixbuf);
             Add (Main_Window.Animation_Frame, Main_Window.Animation_Image);
+         else
+            --  Since we do not have the animated icon, use small icons to keep
+            --  the toolbar smaller
+            Set_Icon_Size (Main_Window.Toolbar, Icon_Size_Small_Toolbar);
          end if;
       end;
 
@@ -356,6 +366,13 @@ package body Glide_Main_Window is
       Add_Hook (Main_Window.Kernel, Preferences_Changed_Hook,
                 Preferences_Changed'Access);
       Preferences_Changed (Main_Window.Kernel);
+
+      --  Make sure we don't display the toolbar until we have actually loaded
+      --  the preferences and checked whether the user wants it or not. This is
+      --  to avoid flickering
+      Set_Size_Request (Main_Window.Toolbar_Box, -1, 0);
+      Set_Child_Visible (Main_Window.Toolbar_Box, False);
+      Hide_All (Main_Window.Toolbar_Box);
 
       Add_Hook (Main_Window.Kernel, Project_Changed_Hook,
                 On_Project_Changed'Access);
