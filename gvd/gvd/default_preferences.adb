@@ -77,8 +77,8 @@ package body Default_Preferences is
      (Preference_Information, Preference_Information_Access);
 
    type Nodes is record
-      Top, Node : Node_Ptr;
-      Param     : Param_Spec;
+      Top   : Node_Ptr;
+      Param : Param_Spec;
    end record;
    package Param_Handlers is new Gtk.Handlers.User_Callback
      (Glib.Object.GObject_Record, Nodes);
@@ -156,7 +156,7 @@ package body Default_Preferences is
    function Value (S : String) return String;
    --  Return the string as is (used for instantiation of Generic_Get_Pref)
 
-   procedure Set_Pref (Top, Node : Node_Ptr; Name : String; Value : String);
+   procedure Set_Pref (Top : Node_Ptr; Name : String; Value : String);
    --  Set or create preference.
 
    procedure Select_Font
@@ -537,16 +537,16 @@ package body Default_Preferences is
    -- Set_Pref --
    --------------
 
-   procedure Set_Pref (Top, Node : Node_Ptr; Name : String; Value : String) is
-      N : Node_Ptr := Node;
+   procedure Set_Pref (Top : Node_Ptr; Name : String; Value : String) is
+      N : Node_Ptr := Find_Node_By_Name (Top, Name);
    begin
       if N = null then
          N     := new XML_Font.Node;
          N.Tag := new String'(Name);
          Add_Child (Top, N);
       else
-         Destroy_Cache (Node.Specific_Data);
-         XML_Font.Free (Node.Value);
+         Destroy_Cache (N.Specific_Data);
+         XML_Font.Free (N.Value);
       end if;
 
       N.Value := new String'(Value);
@@ -560,9 +560,7 @@ package body Default_Preferences is
      (Manager : access Preferences_Manager_Record;
       Name : String; Value : String) is
    begin
-      Set_Pref
-        (Manager.Preferences, Find_Node_By_Name (Manager.Preferences, Name),
-         Name, Value);
+      Set_Pref (Manager.Preferences, Name, Value);
    end Set_Pref;
 
    --------------
@@ -573,9 +571,7 @@ package body Default_Preferences is
      (Manager : access Preferences_Manager_Record;
       Name : String; Value : Gint) is
    begin
-      Set_Pref
-        (Manager.Preferences, Find_Node_By_Name (Manager.Preferences, Name),
-         Name, Gint'Image (Value));
+      Set_Pref (Manager.Preferences, Name, Gint'Image (Value));
    end Set_Pref;
 
    --------------
@@ -589,8 +585,8 @@ package body Default_Preferences is
       Key      : Gdk_Key_Type) is
    begin
       Set_Pref
-        (Manager.Preferences, Find_Node_By_Name (Manager.Preferences, Name),
-         Name, To_String (Modifier) & Gdk.Keyval.Name (Key));
+        (Manager.Preferences, Name,
+         To_String (Modifier) & Gdk.Keyval.Name (Key));
    end Set_Pref;
 
    --------------
@@ -601,9 +597,7 @@ package body Default_Preferences is
      (Manager : access Preferences_Manager_Record;
       Name : String; Value : Boolean) is
    begin
-      Set_Pref
-        (Manager.Preferences, Find_Node_By_Name (Manager.Preferences, Name),
-         Name, Boolean'Image (Value));
+      Set_Pref (Manager.Preferences, Name, Boolean'Image (Value));
    end Set_Pref;
 
    --------------
@@ -709,7 +703,7 @@ package body Default_Preferences is
    is
       C : constant Gtk_Combo := Gtk_Combo (Combo);
    begin
-      Set_Pref (Data.Top, Data.Node, Pspec_Name (Data.Param),
+      Set_Pref (Data.Top, Pspec_Name (Data.Param),
                 Integer'Image (Get_Index_In_List (C)));
    end Enum_Changed;
 
@@ -723,7 +717,7 @@ package body Default_Preferences is
    is
       A : constant Gtk_Adjustment := Gtk_Adjustment (Adj);
    begin
-      Set_Pref (Data.Top, Data.Node, Pspec_Name (Data.Param),
+      Set_Pref (Data.Top, Pspec_Name (Data.Param),
                 Gint'Image (Gint (Get_Value (A))));
    end Gint_Changed;
 
@@ -737,7 +731,7 @@ package body Default_Preferences is
    is
       T : constant Gtk_Toggle_Button := Gtk_Toggle_Button (Toggle);
    begin
-      Set_Pref (Data.Top, Data.Node, Pspec_Name (Data.Param),
+      Set_Pref (Data.Top, Pspec_Name (Data.Param),
                 Boolean'Image (Get_Active (T)));
    end Boolean_Changed;
 
@@ -751,7 +745,7 @@ package body Default_Preferences is
    is
       E : constant Gtk_Entry := Gtk_Entry (Ent);
    begin
-      Set_Pref (Data.Top, Data.Node, Pspec_Name (Data.Param), Get_Text (E));
+      Set_Pref (Data.Top, Pspec_Name (Data.Param), Get_Text (E));
    end Entry_Changed;
 
    ----------------
@@ -783,7 +777,7 @@ package body Default_Preferences is
    is
       E : constant Gtk_Entry := Gtk_Entry (Ent);
    begin
-      Set_Pref (Data.Top, Data.Node, Pspec_Name (Data.Param), Get_Text (E));
+      Set_Pref (Data.Top, Pspec_Name (Data.Param), Get_Text (E));
       Reset_Font (E);
       return False;
    end Font_Entry_Changed;
@@ -881,7 +875,7 @@ package body Default_Preferences is
    is
       C : constant Gvd_Color_Combo := Gvd_Color_Combo (Combo);
    begin
-      Set_Pref (Data.Top, Data.Node, Pspec_Name (Data.Param), Get_Color (C));
+      Set_Pref (Data.Top, Pspec_Name (Data.Param), Get_Color (C));
    end Color_Changed;
 
    ---------------
@@ -972,7 +966,7 @@ package body Default_Preferences is
 
       if Run (Dialog) = Gtk_Response_OK then
          Set_Text (E, Get_Font_Name (F));
-         Set_Pref (Data.Top, Data.Node, Pspec_Name (Data.Param), Get_Text (E));
+         Set_Pref (Data.Top, Pspec_Name (Data.Param), Get_Text (E));
          Reset_Font (E);
       end if;
 
@@ -988,8 +982,7 @@ package body Default_Preferences is
       return Gtk.Widget.Gtk_Widget
    is
       Typ : constant GType := Value_Type (Param);
-      N   : constant Nodes :=
-        (Manager.Preferences, Find_Node_By_Spec (Manager, Param), Param);
+      N   : constant Nodes := (Manager.Preferences, Param);
    begin
       if Typ = GType_Int then
          declare
