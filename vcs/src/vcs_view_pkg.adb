@@ -95,12 +95,8 @@ package body VCS_View_Pkg is
    -- Local packages --
    --------------------
 
-   package Selection_Callback is
-     new Gtk.Handlers.Callback (Gtk_Tree_Selection_Record);
-
    package Explorer_Selection_Foreach is
-     new Selection_Foreach (VCS_View_Access);
-   use Explorer_Selection_Foreach;
+     new Selection_Foreach (VCS_View_Record);
 
    package Check_VCS_View_Handler is new Gtk.Handlers.User_Callback
      (Gtk_Check_Menu_Item_Record, VCS_View_Access);
@@ -221,8 +217,7 @@ package body VCS_View_Pkg is
 
    function Get_Iter_From_Name
      (Explorer : access VCS_View_Record'Class;
-      Name     : String)
-     return Gtk_Tree_Iter;
+      Name     : String) return Gtk_Tree_Iter;
    --  Return the Iter associated with the given name.
    --  Name is a base file name.
    --  Return Null_Iter if no such iter was found.
@@ -575,24 +570,23 @@ package body VCS_View_Pkg is
         (Model : Gtk.Tree_Model.Gtk_Tree_Model;
          Path  : Gtk.Tree_Model.Gtk_Tree_Path;
          Iter  : Gtk.Tree_Model.Gtk_Tree_Iter;
-         Data  : VCS_View_Access);
+         Data  : Explorer_Selection_Foreach.Data_Type_Access);
       --  Launch the Action for one item.
 
       procedure On_Selected_Item
         (Model : Gtk.Tree_Model.Gtk_Tree_Model;
          Path  : Gtk.Tree_Model.Gtk_Tree_Path;
          Iter  : Gtk.Tree_Model.Gtk_Tree_Iter;
-         Data  : VCS_View_Access)
-      is
+         Data  : Explorer_Selection_Foreach.Data_Type_Access) is
       begin
-         Action (Explorer, Iter);
+         Action (Data, Iter);
       end On_Selected_Item;
 
    begin
-      Selected_Foreach
+      Explorer_Selection_Foreach.Selected_Foreach
         (Get_Selection (Explorer.Tree),
          On_Selected_Item'Unrestricted_Access,
-         VCS_View_Access (Explorer));
+         Explorer_Selection_Foreach.Data_Type_Access (Explorer));
    end Foreach_Selected_File;
 
    ------------------------
@@ -608,17 +602,17 @@ package body VCS_View_Pkg is
         (Model : Gtk.Tree_Model.Gtk_Tree_Model;
          Path  : Gtk.Tree_Model.Gtk_Tree_Path;
          Iter  : Gtk.Tree_Model.Gtk_Tree_Iter;
-         Data  : VCS_View_Access);
+         Data  : Explorer_Selection_Foreach.Data_Type_Access);
       --  Add an item to Result.
 
       procedure Add_Selected_Item
         (Model : Gtk.Tree_Model.Gtk_Tree_Model;
          Path  : Gtk.Tree_Model.Gtk_Tree_Path;
          Iter  : Gtk.Tree_Model.Gtk_Tree_Iter;
-         Data  : VCS_View_Access) is
+         Data  : Explorer_Selection_Foreach.Data_Type_Access) is
       begin
          String_List.Append
-           (Result, Get_String (Explorer.Model, Iter, Name_Column));
+           (Result, Get_String (Data.Model, Iter, Name_Column));
       end Add_Selected_Item;
 
    begin
@@ -626,10 +620,10 @@ package body VCS_View_Pkg is
          return Result;
       end if;
 
-      Selected_Foreach
+      Explorer_Selection_Foreach.Selected_Foreach
         (Get_Selection (Explorer.Tree),
          Add_Selected_Item'Unrestricted_Access,
-         VCS_View_Access (Explorer));
+         Explorer_Selection_Foreach.Data_Type_Access (Explorer));
       return Result;
    end Get_Selected_Files;
 
@@ -646,9 +640,9 @@ package body VCS_View_Pkg is
         (Kernel, Message, Highlight_Sloc => False, Mode => M_Type);
    end Push_Message;
 
-   ---------------------------
+   -----------------------------
    -- Log_Editor_Text_Changed --
-   ---------------------------
+   -----------------------------
 
    procedure Log_Editor_Text_Changed
      (Object      : access Gtk_Widget_Record'Class;
@@ -684,7 +678,6 @@ package body VCS_View_Pkg is
               Parameter.Log_Editor.Files,
               Get_Text (Parameter.Log_Editor),
               Parameter.VCS_Ref);
-
       Close (Parameter.Log_Editor);
    end Log_Editor_Ok_Clicked;
 
@@ -743,6 +736,7 @@ package body VCS_View_Pkg is
          Iter     : Gtk_Tree_Iter)
       is
          Stored_Object : GObject;
+         Child         : MDI_Child;
       begin
          Stored_Object := Get_Object (Explorer.Model, Iter, Log_Editor_Column);
 
@@ -787,11 +781,7 @@ package body VCS_View_Pkg is
             if Explorer.Kernel = null then
                Show_All (Log_Editor);
             else
-               declare
-                  Child : MDI_Child;
-               begin
-                  Child := Put (Get_MDI (Explorer.Kernel), Log_Editor);
-               end;
+               Child := Put (Get_MDI (Explorer.Kernel), Log_Editor);
             end if;
          end if;
       end Create_And_Launch_Log_Editor;
@@ -871,7 +861,6 @@ package body VCS_View_Pkg is
       Ref      : VCS_Access) is
    begin
       pragma Assert (Ref /= null);
-
       Open (Ref, Files);
 
       declare
@@ -1020,7 +1009,7 @@ package body VCS_View_Pkg is
 
    procedure Create_Model (VCS_View : access VCS_View_Record'Class) is
    begin
-      Gtk_New (VCS_View.Model, Columns_Types'Length, Columns_Types);
+      Gtk_New (VCS_View.Model, Columns_Types);
    end Create_Model;
 
    -------------
@@ -1029,15 +1018,10 @@ package body VCS_View_Pkg is
 
    procedure Gtk_New
      (VCS_View : out VCS_View_Access;
-      Kernel   : Kernel_Handle;
-      Ref      : VCS_Access) is
+      Kernel   : Kernel_Handle := null) is
    begin
-      Init_Graphics;
-
       VCS_View := new VCS_View_Record;
-      VCS_View.Kernel := Kernel;
-
-      VCS_View_Pkg.Initialize (VCS_View);
+      VCS_View_Pkg.Initialize (VCS_View, Kernel);
    end Gtk_New;
 
    ----------------------------
@@ -1097,14 +1081,21 @@ package body VCS_View_Pkg is
    -- Initialize --
    ----------------
 
-   procedure Initialize (VCS_View : access VCS_View_Record'Class) is
+   procedure Initialize
+     (VCS_View : access VCS_View_Record'Class;
+      Kernel   : Kernel_Handle)
+   is
       Vbox1           : Gtk_Vbox;
       Hbox1           : Gtk_Hbox;
       Scrolledwindow1 : Gtk_Scrolled_Window;
       Selection       : Gtk_Tree_Selection;
 
    begin
+      Init_Graphics;
       Initialize_Hbox (VCS_View);
+
+      VCS_View.Kernel := Kernel;
+
       Gtk_New_Vbox (Vbox1, False, 0);
       Pack_Start (VCS_View, Vbox1);
 
