@@ -172,7 +172,7 @@ package body Src_Editor_Buffer is
    --  warnings.
    --  ??? Remove this procedure when the problem is fixed.
 
-   procedure Strip_Last_Char_If_LF
+   procedure Strip_Ending_Line_Terminator
      (Buffer : access Source_Buffer_Record'Class);
    --  Delete the last character of the buffer if it is an ASCII.LF.
 
@@ -559,26 +559,41 @@ package body Src_Editor_Buffer is
       end loop;
    end Forward_To_Line_End;
 
-   ---------------------------
-   -- Strip_Last_Char_If_LF --
-   ---------------------------
+   ----------------------------------
+   -- Strip_Ending_Line_Terminator --
+   ----------------------------------
 
-   procedure Strip_Last_Char_If_LF
+   procedure Strip_Ending_Line_Terminator
      (Buffer : access Source_Buffer_Record'Class)
    is
-      Iter     : Gtk_Text_Iter;
-      End_Iter : Gtk_Text_Iter;
-      Ignored  : Boolean;
+      Iter      : Gtk_Text_Iter;
+      End_Iter  : Gtk_Text_Iter;
+      Ignored   : Boolean;
    begin
+      --  Does the buffer end with CR & LF?
+      if Get_Char_Count (Buffer) > 1 then
+         Get_End_Iter (Buffer, End_Iter);
+         Copy (Source => End_Iter, Dest => Iter);
+         Backward_Chars (Iter, Count => 2, Result => Ignored);
+         if Get_Slice (Iter, End_Iter) = ASCII.CR & ASCII.LF then
+            Delete (Buffer, Iter, End_Iter);
+            return;
+         end if;
+      end if;
+
+      --  Or does it end with a CR or LF?
       if Get_Char_Count (Buffer) > 0 then
          Get_End_Iter (Buffer, Iter);
          Backward_Char (Iter, Ignored);
-         if Get_Char (Iter) = ASCII.LF then
-            Get_End_Iter (Buffer, End_Iter);
-            Delete (Buffer, Iter, End_Iter);
-         end if;
+         case Character'(Get_Char (Iter)) is
+            when ASCII.LF | ASCII.CR =>
+               Get_End_Iter (Buffer, End_Iter);
+               Delete (Buffer, Iter, End_Iter);
+            when others =>
+               null;
+         end case;
       end if;
-   end Strip_Last_Char_If_LF;
+   end Strip_Ending_Line_Terminator;
 
    -------------
    -- Gtk_New --
@@ -691,7 +706,7 @@ package body Src_Editor_Buffer is
 
       Close (FD);
 
-      Strip_Last_Char_If_LF (Buffer);
+      Strip_Ending_Line_Terminator (Buffer);
 
    exception
       when others =>
