@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                   Copyright (C) 2002-2003                         --
+--                   Copyright (C) 2002-2004                         --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -234,10 +234,11 @@ package Projects is
    --  See also Src_Info.Queries.Get_Other_File_Of
 
    function Get_Filename_From_Unit
-     (Project         : Project_Type;   --  Mustn't be No_Project
-      Unit_Name       : String;
-      Part            : Unit_Part;
-      Check_Predefined_Library : Boolean := False) return String;
+     (Project                  : Project_Type;
+      Unit_Name                : String;
+      Part                     : Unit_Part;
+      Check_Predefined_Library : Boolean := False;
+      File_Must_Exist          : Boolean := True) return String;
    --  Return the base name for the given unit. The empty string is
    --  returned if this unit doesn't belong to the project, or if the concept
    --  of unit doesn't apply to the language. If File_Must_Exist is False, then
@@ -245,7 +246,10 @@ package Projects is
    --  file currently exists in the project.
    --  If Check_Predefined_Library is True, the default GNAT naming scheme is
    --  used (for runtime files).
-   --  Project must never be No_Project
+   --  If Check_Predefined_Library is False, the file must by default be
+   --  found in the project hierarchy. If File_Must_Exist is False, then
+   --  the Project's naming scheme is used to compute the result.
+   --  Project must never be No_Project.
 
    ----------------
    -- Attributes --
