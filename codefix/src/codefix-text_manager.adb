@@ -3398,9 +3398,9 @@ package body Codefix.Text_Manager is
             Space_Cursor := File_Cursor (Word);
             Space_Cursor.Col := Space_Cursor.Col - 1;
 
-            if  Word.Col > 1
+            if Word.Col > 1
               and then not Is_Separator
-                (Get (Current_Text, Space_Cursor, 1) (1))
+                (Get (Current_Text, Space_Cursor, 1) (Space_Cursor.Col))
             then
                Assign (New_Str, " " & New_Str.all);
             end if;
@@ -3409,7 +3409,7 @@ package body Codefix.Text_Manager is
 
             if Word.Col < Line_Length (Current_Text, Line_Cursor)
               and then not Is_Separator
-                (Get (Current_Text, Space_Cursor, 1) (1))
+                (Get (Current_Text, Space_Cursor, 1) (Space_Cursor.Col))
             then
                Assign (New_Str, New_Str.all & " ");
             end if;
@@ -3589,7 +3589,6 @@ package body Codefix.Text_Manager is
    procedure Free (This : in out Add_Line_Cmd) is
    begin
       Free (This.Line);
-      Free (This.Position.all);
       Free (This.Position);
    end Free;
 
