@@ -3447,10 +3447,14 @@ package body Src_Editor_Buffer is
          Get_Iter_At_Screen_Position (Buffer, End_Iter, End_Line, End_Column);
 
       else
-         if not Is_Valid_Position (Buffer, Start_Line, Start_Column)
-           or else not Is_Valid_Position (Buffer, End_Line, End_Column)
-         then
-            Trace (Me, "invalid position in Select_Region, aborting.");
+         if not Is_Valid_Position (Buffer, Start_Line, Start_Column) then
+            Trace (Me, "invalid start position in Select_Region, aborting:"
+                   & Start_Line'Img & Start_Column'Img);
+            return;
+
+         elsif not Is_Valid_Position (Buffer, End_Line, End_Column) then
+            Trace (Me, "invalid end position in Select_Region, aborting:"
+                   & End_Line'Img & End_Column'Img);
             return;
          end if;
 
