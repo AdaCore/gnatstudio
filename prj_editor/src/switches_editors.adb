@@ -797,6 +797,7 @@ package body Switches_Editors is
       S     : Switch_Spin_Widget_Access := new Switch_Spin_Widget
         (Switch'Length);
       L     : Gtk_Label;
+
    begin
       Gtk_New_Hbox (Hbox, False, 0);
       Pack_Start (Box, Hbox, False, False);
@@ -804,6 +805,7 @@ package body Switches_Editors is
       S.Default := Default;
 
       Gtk_New (L, Label);
+      Set_Alignment (L, 0.0, 0.5);
       Pack_Start (Hbox, L, False, False, 0);
 
       if Label_Size_Group /= null then
