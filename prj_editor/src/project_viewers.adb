@@ -4,7 +4,7 @@
 --                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
--- GLIDE is free software; you can redistribute it and/or modify  it --
+-- GPS is free software; you can redistribute it and/or modify  it   --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -730,6 +730,10 @@ package body Project_Viewers is
       Destroy (Selector);
 
       Free (Initial_Dirs);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception " & Exception_Message (E));
    end Edit_Source_Dirs_From_Contextual;
 
    ------------------------------------------
@@ -760,6 +764,10 @@ package body Project_Viewers is
             Attribute_Index    => "");
          Recompute_View (Get_Kernel (Context));
       end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception " & Exception_Message (E));
    end Change_Obj_Directory_From_Contextual;
 
    --------------------
@@ -802,6 +810,10 @@ package body Project_Viewers is
       end;
 
       Destroy (Wiz);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception " & Exception_Message (E));
    end On_New_Project;
 
    ------------------------
@@ -838,6 +850,10 @@ package body Project_Viewers is
 
          Explorer_Selection_Changed (Viewer, Context);
       end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception " & Exception_Message (E));
    end On_Edit_Switches;
 
    -----------------------
@@ -888,6 +904,10 @@ package body Project_Viewers is
       then
          Recompute_View (Get_Kernel (Context));
       end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception " & Exception_Message (E));
    end On_Edit_Naming_Scheme;
 
    -----------------------------------
@@ -919,6 +939,10 @@ package body Project_Viewers is
          Destroy (Wiz);
          Recompute_View (Get_Kernel (Context));
       end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception " & Exception_Message (E));
    end On_Add_Dependency_From_Wizard;
 
    -------------------------------
@@ -940,6 +964,10 @@ package body Project_Viewers is
       Trace_Pretty_Print
         (Me, Get_Project_From_View (Importing_Project_Information (File)));
       Recompute_View (Get_Kernel (Context));
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception " & Exception_Message (E));
    end Remove_Project_Dependency;
 
    -------------------------------------
@@ -951,6 +979,21 @@ package body Project_Viewers is
       Context : Selection_Context_Access)
    is
       pragma Unreferenced (Widget);
+
+      procedure Report_Error (S : String);
+      --  Output error messages from the project parser to the glide console.
+
+      ------------------
+      -- Report_Error --
+      ------------------
+
+      procedure Report_Error (S : String) is
+      begin
+         Console.Insert
+           (Get_Kernel (Context), S, Mode => Console.Error, Add_LF => False);
+      end Report_Error;
+
+
       File : File_Selection_Context_Access :=
         File_Selection_Context_Access (Context);
       Selector : File_Selector_Window_Access;
@@ -970,7 +1013,8 @@ package body Project_Viewers is
          begin
             if Name /= "" then
                Add_Imported_Project
-                 (Get_Project_From_View (Project_Information (File)), Name);
+                 (Get_Project_From_View (Project_Information (File)), Name,
+                  Report_Error'Unrestricted_Access);
             end if;
          end;
          Recompute_View (Get_Kernel (Context));
@@ -979,6 +1023,9 @@ package body Project_Viewers is
    exception
       when E : Project_Warning | Project_Error =>
          Console.Insert (Get_Kernel (Context), Exception_Message (E));
+
+      when E : others =>
+         Trace (Me, "Unexpected exception " & Exception_Message (E));
    end On_Add_Dependency_From_Existing;
 
    -------------------------------
