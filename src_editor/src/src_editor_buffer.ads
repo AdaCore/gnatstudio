@@ -27,6 +27,7 @@
 
 with Glib;             use Glib;
 with Gtk;
+with Gtk.Main;
 with Gtk.Text_Buffer;
 with Gtk.Text_Iter;
 with Gtk.Text_Mark;
@@ -333,9 +334,7 @@ package Src_Editor_Buffer is
      (Buffer : access Source_Buffer_Record) return Glide_Kernel.Kernel_Handle;
    --  Return the kernel associated to Buffer.
 
-   function Get_Filename
-     (Buffer : access Source_Buffer_Record)
-     return String;
+   function Get_Filename (Buffer : access Source_Buffer_Record) return String;
    --  Return the name of the file associated with Buffer.
 
    procedure Set_Filename
@@ -402,6 +401,11 @@ private
 
       References     : Integer := 0;
       --  The number of objects viewing the buffer.
+
+      Modified_Auto  : Boolean := False;
+      --  Whether the buffer has been modified since last auto save.
+
+      Timeout_Id     : Gtk.Main.Timeout_Handler_Id := 0;
    end record;
 
 end Src_Editor_Buffer;
