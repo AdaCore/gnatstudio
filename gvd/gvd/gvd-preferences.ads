@@ -110,7 +110,6 @@ package GVD.Preferences is
    Selected_Item_Color           : Param_Spec_Color;
 
    -- Command Window --
-
    Debugger_Highlight_Color      : Param_Spec_Color;
 
    -- Memory Window --
@@ -126,6 +125,7 @@ package GVD.Preferences is
    Remote_Copy                   : Param_Spec_String;
    Html_Browser                  : Param_Spec_String;
    Execute_Command               : Param_Spec_String;
+   Print_Command                 : Param_Spec_String;
 
 private
    Default_Tab_Size : constant Gint := 8;
