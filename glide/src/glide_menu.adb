@@ -109,6 +109,8 @@ package body Glide_Menu is
       Action : Guint;
       Widget : Limited_Widget)
    is
+      pragma Unreferenced (Action, Widget);
+
       File_Selector : File_Selector_Window_Access;
    begin
       Gtk_New (File_Selector, "/", Get_Current_Dir, -"Open Project");
@@ -134,7 +136,9 @@ package body Glide_Menu is
    procedure On_Close
      (Object : Data_Type_Access;
       Action : Guint;
-      Widget : Limited_Widget) is
+      Widget : Limited_Widget)
+   is
+      pragma Unreferenced (Object, Action, Widget);
    begin
       null;
 
@@ -152,6 +156,8 @@ package body Glide_Menu is
       Action : Guint;
       Widget : Limited_Widget)
    is
+      pragma Unreferenced (Action, Widget);
+
       Button : constant Message_Dialog_Buttons :=
         Message_Dialog
           (Msg            => -"Are you sure you want to quit ?",
@@ -178,6 +184,8 @@ package body Glide_Menu is
       Action : Guint;
       Widget : Limited_Widget)
    is
+      pragma Unreferenced (Action, Widget);
+
       Top  : constant Glide_Window := Glide_Window (Object);
    begin
       Save_Desktop (Top.Kernel);
@@ -194,7 +202,9 @@ package body Glide_Menu is
    procedure On_Preferences
      (Object : Data_Type_Access;
       Action : Guint;
-      Widget : Limited_Widget) is
+      Widget : Limited_Widget)
+   is
+      pragma Unreferenced (Object, Action, Widget);
    begin
       null;
 
@@ -212,6 +222,8 @@ package body Glide_Menu is
       Action : Guint;
       Widget : Limited_Widget)
    is
+      pragma Unreferenced (Widget);
+
       Top : constant Glide_Window := Glide_Window (Object);
    begin
       case Help_Context'Val (Action) is
@@ -259,6 +271,8 @@ package body Glide_Menu is
       Action : Guint;
       Widget : Limited_Widget)
    is
+      pragma Unreferenced (Object, Action, Widget);
+
       Button : Message_Dialog_Buttons;
    begin
       Button := Message_Dialog
