@@ -113,7 +113,7 @@ package body VCS.ClearCase is
       Head   : String_List.List;
       List   : String_List.List) return Boolean;
    --  Parse the output of the command "describe -fmt "%Vn;%f;\n"".
-   --  (-fmt is an option that is used to specify the output format :
+   --  (-fmt is an option that is used to specify the output format:
    --   %Vn corresponds to the version name, and %f corresponds to the
    --   checked-out version, if any).
 
@@ -143,16 +143,10 @@ package body VCS.ClearCase is
    is
       Node   : List_Node := First (List);
    begin
-      Insert
-        (Kernel,
-           -"ClearCase error: " & Message,
-         Mode           => Error);
+      Insert (Kernel, -"ClearCase error: " & Message, Mode => Error);
 
       while Node /= Null_Node loop
-         Insert (Kernel,
-                 "   " & Data (Node),
-                 Mode => Error);
-
+         Insert (Kernel, "   " & Data (Node), Mode => Error);
          Node := Next (Node);
       end loop;
    end Report_Error;
