@@ -49,8 +49,6 @@ with GNAT.Command_Line;         use GNAT.Command_Line;
 with Ada.Text_IO;               use Ada.Text_IO;
 with Language_Handlers.Glide;   use Language_Handlers.Glide;
 with Language.Ada;              use Language.Ada;
-with Language.C;                use Language.C;
-with Language.Cpp;              use Language.Cpp;
 with Prj;                       use Prj;
 with Prj_API;
 with Src_Info;                  use Src_Info;
@@ -61,6 +59,7 @@ with Aunit_Module;
 with Browsers.Dependency_Items;
 with Browsers.Projects;
 with Browsers.Call_Graph;
+with Cpp_Module;
 with External_Editor_Module;
 with GVD_Module;
 with Metrics_Module;
@@ -77,7 +76,6 @@ with Navigation_Module;
 
 --  The LI parsers
 with Src_Info.ALI;
-with Src_Info.CPP;
 
 procedure GPS is
    use Glide_Main_Window;
@@ -321,8 +319,6 @@ procedure GPS is
 
       Register_LI_Handler
         (Handler, "Ada", new Src_Info.ALI.ALI_Handler_Record);
-      Register_LI_Handler
-        (Handler, "c/c++", new Src_Info.CPP.CPP_LI_Handler_Record);
 
       Register_Language (Handler, "Ada", Ada_Lang);
       Add_Language_Info
@@ -331,19 +327,7 @@ procedure GPS is
          Default_Spec_Suffix => ".ads",
          Default_Body_Suffix => ".adb");
 
-      Register_Language (Handler, "c", C_Lang);
-      Add_Language_Info
-        (Handler, "c",
-         LI                  => Get_LI_Handler_By_Name (Handler, "c/c++"),
-         Default_Spec_Suffix => ".h",
-         Default_Body_Suffix => ".c");
-
-      Register_Language (Handler, "c++", Cpp_Lang);
-      Add_Language_Info
-        (Handler, "c++",
-         LI                  => Get_LI_Handler_By_Name (Handler, "c/c++"),
-         Default_Spec_Suffix => ".h",
-         Default_Body_Suffix => ".cc");
+      Cpp_Module.Register_Module (GPS.Kernel);
 
       --  Temporarily disable unimplemented menu items
 
@@ -385,7 +369,7 @@ procedure GPS is
            (GPS.Kernel, File & (-"New View")), False);
       end;
 
-      Glide_Page.Load_Desktop (Page, GPS);
+      Glide_Page.Load_Desktop (GPS);
 
       loop
          declare
