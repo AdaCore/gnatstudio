@@ -912,6 +912,8 @@ package body Codefix.Formal_Errors is
 
       Spec_Extract := Delete_With (Current_Text, Cursor, With_Info.Name.all);
 
+      --  ??? Should ask the project for the body file instead
+
       Assign (Body_Name, Cursor.File_Name.all
                 (Cursor.File_Name'First .. Cursor.File_Name'Last - 3) & "adb");
 

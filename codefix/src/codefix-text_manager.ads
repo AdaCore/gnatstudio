@@ -175,7 +175,7 @@ package Codefix.Text_Manager is
       Cursor                 : File_Cursor'Class;
       Position               : Relative_Position := Specified;
       Category_1, Category_2 : Language_Category := Cat_Unknown)
-     return Construct_Information;
+      return Construct_Information;
    --  Get the Construct_Information found at the specified position, or the
    --  nearest before or after the position (depends on the value of
    --  Position_Expected.
@@ -362,13 +362,18 @@ package Codefix.Text_Manager is
      (This        : in out Extract_Line;
       New_String  : String;
       First, Last : Natural := 0);
+   --  ???
 
    procedure Set_Coloration (This : in out Extract_Line; Value : Boolean);
+   --  ???
 
    function Get_Coloration (This : Extract_Line) return Boolean;
+   --  ???
 
-   function Get_Line (This : Ptr_Extract_Line; Cursor : File_Cursor'Class)
-     return Ptr_Extract_Line;
+   function Get_Line
+     (This : Ptr_Extract_Line; Cursor : File_Cursor'Class)
+      return Ptr_Extract_Line;
+   --  ???
 
    ----------------------------------------------------------------------------
    --  type Extract
@@ -607,14 +612,18 @@ package Codefix.Text_Manager is
    --  Erase the text from Start to Stop.
 
    function Get_Files_Names (This : Extract) return String;
+   --  ???
 
    function Get_Nb_Files (This : Extract) return Natural;
+   --  ???
 
 private
 
    function Compare_Pkg (Pkg_1, Pkg_2 : String) return Boolean;
    --  Compare two package names and determine if their are coherent. For
    --  example, Direct_IO and Ada.Direct_IO are coherent packages names.
+   --  ??? Need a more formal and clearer spec, what does this function do
+   --  exactly ? What does 'coherent' mean ?
 
    ----------------------------------------------------------------------------
    --  type Text_Navigator
@@ -655,12 +664,12 @@ private
       Cursor                 : Text_Cursor'Class;
       Position               : Relative_Position := Specified;
       Category_1, Category_2 : Language_Category := Cat_Unknown)
-   return Construct_Information;
+      return Construct_Information;
 
    function Search_Body
      (Current_Text : Text_Interface;
       Spec         : Construct_Information)
-   return Construct_Information;
+      return Construct_Information;
 
    ----------------------------------------------------------------------------
    --  type Extract_Line
