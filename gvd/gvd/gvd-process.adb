@@ -364,14 +364,7 @@ package body GVD.Process is
             Addr_First, Addr_Last);
       end if;
 
-      --  Do we have a file name or line number indication: if yes, do not
-      --  process them immediatly, but wait for the current command to be
-      --  fully processed (since Text_Output_Filter is called while a
-      --  call to Wait or Wait_Prompt is being processed).
-      --  The memory allocated for Load_File_Data is freed in
-      --  process_proxies.adb:Process_Post_Processes. ??? Check this comment
-      --  The memory allocated for the string is freed in
-      --  Load_File_Post_Process.
+      --  Do we have a file name or line number indication?
 
       if File_First /= 0 then
          --  Override the language currently defined in the editor.
@@ -474,7 +467,7 @@ package body GVD.Process is
          Free (Tmp_Str);
       end if;
 
-      -- Process the filters
+      --  Process the filters
 
       Current_Filter := Process.Filters;
 
@@ -508,7 +501,7 @@ package body GVD.Process is
             --  Strip every line starting with ^Z^Z.
             --  Note that this is GDB specific ???
 
-            Outer_Loop:
+            Outer_Loop :
             for J in Str'First + 1 .. Str'Last loop
                if Str (J) = ASCII.SUB and then Str (J - 1) = ASCII.SUB then
                   First := J - 1;
