@@ -291,6 +291,27 @@ package body Glide_Kernel.Modules is
       return ID.Info.Name;
    end Module_Name;
 
+   -------------------------
+   -- Set_URL_Information --
+   -------------------------
+
+   procedure Set_URL_Information
+     (Context : access URL_Context;
+      URL     : String := "") is
+   begin
+      Free (Context.URL);
+      Context.URL := new String'(URL);
+   end Set_URL_Information;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (Context : in out URL_Context) is
+   begin
+      Free (Context.URL);
+   end Destroy;
+
    --------------------------
    -- Set_File_Information --
    --------------------------
