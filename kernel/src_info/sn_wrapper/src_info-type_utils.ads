@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -81,6 +81,9 @@ package Src_Info.Type_Utils is
    --  Attempts to convert string into E_Kind assuming that the string
    --  is a builtin C type. If conversion fails returns False
 
+   --  ??? Invalid_FU_Table and Invalid_CL_Table are both using 2 Null_Buffer
+   --  objects. These are a bit large (see SN.DB_Structures). Could be
+   --  optimized.
    Invalid_FU_Table    : constant FU_Table :=
      (Class               => Invalid_Segment,
       Name                => Invalid_Segment,
@@ -92,8 +95,8 @@ package Src_Info.Type_Utils is
       Arg_Types           => Invalid_Segment,
       Comments            => Invalid_Segment,
       Template_Parameters => Invalid_Segment,
-      Data                => null,
-      Key                 => null,
+      Data                => Null_Buffer,
+      Key                 => Null_Buffer,
       DBI                 => 0);
 
    Invalid_CL_Table    : constant CL_Table :=
@@ -103,8 +106,8 @@ package Src_Info.Type_Utils is
       End_Position        => Invalid_Point,
       Attributes          => 0,
       Template_Parameters => Invalid_Segment,
-      Data                => null,
-      Key                 => null,
+      Data                => Null_Buffer,
+      Key                 => Null_Buffer,
       DBI                 => 0);
 
    procedure Type_Name_To_Kind
