@@ -41,6 +41,7 @@ with Unchecked_Conversion;
 
 with Prj.Tree;        use Prj.Tree;
 with Prj;             use Prj;
+with Types;           use Types;
 with Stringt;         use Stringt;
 with Namet;           use Namet;
 
@@ -398,9 +399,10 @@ package body Value_Editors is
       ----------------
 
       procedure Add_String (From, To : Natural) is
+         Ignore : String_Id;
       begin
          if Is_Enumeration_Type then
-            Add_Possible_Value (Line_Expr, Buffer (From .. To));
+            Ignore := Add_Possible_Value (Line_Expr, Buffer (From .. To));
          else
             --  ??? Should reuse existing strings if possible
             --  ??? Should be done in Prj_Api
