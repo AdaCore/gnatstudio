@@ -218,48 +218,88 @@ package body Generic_List is
       Start_Node : List_Node;
       End_Node   : List_Node := Null_Node)
    is
-      Next_Node : List_Node;
       Current   : List_Node;
-      Next_End  : List_Node := Null_Node;
-   begin
-      if End_Node /= Null_Node then
-         Next_End := Next (End_Node);
-      end if;
+      Delete    : List_Node;
+      Last      : List_Node;
 
+      procedure Local_Free (Node : in out List_Node);
+      --  Free Node and its element.
+
+      procedure Local_Free (Node : in out List_Node) is
+      begin
+         if Node.Element /= null then
+            Free (Node.Element.all);
+            Free_Element (Node.Element);
+         end if;
+
+         Free_Node (Node);
+      end Local_Free;
+
+   begin
       if Start_Node = Null_Node then
-         while not Is_Empty (L1) loop
-            Current := First (L1);
-            exit when Current = Next_End;
-            Next (L1);
+         --  If Start_Node is null, delete all nodes from the beginning
+         --  of L1, until End_Node.
+
+         Current := First (L1);
+
+         while Current /= End_Node loop
+            Delete := Current;
+            Current := Next (Current);
+            Local_Free (Delete);
          end loop;
 
-         return;
-      end if;
+         --  Remove End_Node
 
-      Next_Node := Next (Start_Node);
-
-      while Next_Node /= Null_Node
-        and then Next_Node /= End_Node
-      loop
-         Current := Next_Node;
-         Next_Node := Next (Next_Node);
-
-         if Current.Element /= null then
-            Free (Current.Element.all);
-            Free_Element (Current.Element);
+         if End_Node /= Null_Node then
+            Delete := End_Node;
+            Last := End_Node.Next;
+            Local_Free (Delete);
          end if;
-         Free_Node (Current);
-      end loop;
 
-      if Next_Node = Null_Node then
-         L1.Last.all := Start_Node;
-         Start_Node.Next := null;
+         --  Set the boundaries.
+
+         if Last /= Null_Node then
+            L1.First.all := Last;
+         else
+            Free_Node_Access (L1.First);
+            Free_Node_Access (L1.Last);
+         end if;
+
+         return;
       else
-         Free (Next_Node.Element.all);
-         Free_Element (Next_Node.Element);
-         Free_Node (Next_Node);
+         Current := Start_Node;
+         Current := Next (Current);
+         --  Remove all nodes between Last and End_Node.
 
-         Start_Node.Next := Next_End;
+         while Current /= End_Node loop
+            Delete := Current;
+            Current := Next (Current);
+            Local_Free (Delete);
+         end loop;
+
+         --  Remove End_Node
+
+         if Current = End_Node then
+            if End_Node /= Null_Node then
+               Delete := End_Node;
+               Last := End_Node.Next;
+               Local_Free (Delete);
+            end if;
+
+            --  Set the boundaries.
+
+            if Last = Null_Node then
+               L1.Last.all := Start_Node;
+               Start_Node.Next := Null_Node;
+            else
+               Start_Node.Next := Last;
+            end if;
+         else
+            --  In this case, Current = End_Node.
+
+            L1.Last.all := Start_Node;
+            Start_Node.Next := Null_Node;
+         end if;
       end if;
    end Remove_Nodes;
 
