@@ -52,11 +52,13 @@ package body Src_Info.LI_Utils is
    begin
       if File = No_LI_File then
          File := new LI_File_Constrained'
-               (LI =>  (Parsed => False,
+               (LI =>  (Parsed => True,
                         Handler => LI_Handler (Handler),
                         LI_Filename => new String'(Source_Filename),
                         Body_Info => new File_Info,
                         Spec_Info => null,
+                        Dependencies_Info => null,
+                        Compilation_Errors_Found => False,
                         Separate_Info => null,
                         LI_Timestamp => 0));
          File.LI.LI_Filename := new String'(Source_Filename);
@@ -64,7 +66,7 @@ package body Src_Info.LI_Utils is
                (Unit_Name => null,
                 Source_Filename => new String'(Source_Filename),
                 Directory_Name => null,
-         --  FIX ME
+         --  ??? we should extract Directory_Name from Source_Filename
                 File_Timestamp => 0,
                 Original_Filename => null,
                 Original_Line => 1,
@@ -306,7 +308,7 @@ package body Src_Info.LI_Utils is
                                         Symbol_Name,
                                         Location);
    end Find_Declaration;
-   --  FIX ME (necessary to add parent name attribute to this function call)
+   --  ??? Class_Name parameter should not be skipped
 
    -----------------------------------
    --  Find_Dependency_Declaration  --
@@ -341,7 +343,7 @@ package body Src_Info.LI_Utils is
                                         Symbol_Name,
                                         Location);
    end Find_Dependency_Declaration;
-   --  FIX ME (necessary to add parent name attribute to this function call)
+   --  ??? Class_Name parameter should not be skipped
 
    -------------------------------------------------------------------------
 
@@ -386,8 +388,8 @@ package body Src_Info.LI_Utils is
                          Source_Filename => new String'(Parent_Filename)),
                 Line => Parent_Location.Line,
                 Column => Parent_Location.Column);
-         --  FIX ME (we need to search for appropriate File in which
-         --  parent is really declared)
+         --  ??? we need to search for appropriate File in which
+         --  parent is really declared
       end if;
       D_Ptr.Value.Declaration.Scope := Scope;
       if End_Of_Scope_Location = Invalid_Point then
@@ -409,8 +411,8 @@ package body Src_Info.LI_Utils is
                              Source_Filename => new String'(Rename_Filename)),
                     Line => Rename_Location.Line,
                     Column => Rename_Location.Column);
-         --  FIX ME (we need to search for appropriate File in which
-         --  renamed entity is really declared)
+         --  ??? we need to search for appropriate File in which
+         --  renamed entity is really declared
       end if;
    end Insert_Declaration_Internal;
 
