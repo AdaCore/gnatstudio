@@ -1008,6 +1008,14 @@ This is usually due to font problems. Typically, editing the file
 @file{$HOME/.gps/preferences} and changing the name of the fonts, e.g
 changing @i{Courier} by @i{Courier Medium}, and @i{Helvetica} by @i{Sans}.
 
+@item GPS window closes or crashes when I start the debugger
+If GPS becomes unstable when you initialize the debugger (menu
+@code{Debug->Initialize}), it is usually because the underlying debugger
+(gdb) cannot be launched properly. To verify this, try to launch the
+'gdb' command from a shell (i.e outside GPS). If gdb cannot be launched from
+a shell, it usually means that you are using a wrong version of gdb
+(e.g a version of gdb built for Solaris 8, but run on Solaris 2.6).
+
 @end table
 
 @c @printindex cp
