@@ -272,7 +272,7 @@ private
       Window           : Gtk_Window;
       --  This is in fact the main debug window.
 
-      Freeze_Count     : Integer;
+      Freeze_Count     : Integer := 0;
       --  Used to lock the History_Dialog while replaying commands.
    end record;
 
