@@ -113,12 +113,12 @@ package body Prj_Editor_Window is
       Set_Dock_Side (Child, Left);
       Dock_Child (Child);
 
-      Widget_Callback.Connect
-        (Prj.Tree, "tree_select_row",
-         Widget_Callback.To_Marshaller (Selection_Changed'Access));
-      Widget_Callback.Connect
-        (Prj.Tree, "tree_unselect_row",
-         Widget_Callback.To_Marshaller (Selection_Changed'Access));
+      --  Widget_Callback.Connect
+      --    (Prj.Tree, "tree_select_row",
+      --     Widget_Callback.To_Marshaller (Selection_Changed'Access));
+      --  Widget_Callback.Connect
+      --    (Prj.Tree, "tree_unselect_row",
+      --     Widget_Callback.To_Marshaller (Selection_Changed'Access));
 
       --  Scenario editor
 
@@ -130,7 +130,7 @@ package body Prj_Editor_Window is
 
       --  Project Viewer
 
-      Gtk_New (Prj.Viewer, Kernel);
+      Gtk_New (Prj.Viewer, Kernel, Prj.Tree);
       Child := Put (Prj.MDI, Prj.Viewer);
       Set_Title (Child, "Project Contents");
 
