@@ -1202,10 +1202,7 @@ private
 
    procedure Destroy (LIFNP : in out LI_File_Node_Ptr);
    --  Deallocated the given LI_File_Node_Ptr (and all objects allocated
-   --  by this structure).
-   --
-   --  Note that only the Node pointed by LIFNP is deallocated, and not
-   --  all the following ones.
+   --  by this structure). All nodes following LIFNP are also destroyed
 
    function Copy (SF : Source_File) return Source_File;
    --  Return a deep-copy of the given Source_File. The copy should be
