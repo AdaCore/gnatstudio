@@ -490,6 +490,8 @@ package body GVD.Strings is
    function Do_Tab_Expansion (Text : String) return String is
       Num_Tabs   : Natural := 0;
       Col        : Integer := 1;
+      Tab_Size   : Integer renames Current_Preferences.Tab_Size;
+
    begin
       --  Count the number of tabs in the string
 
@@ -504,7 +506,8 @@ package body GVD.Strings is
 
       else
          declare
-            S : String (1 .. Num_Tabs * Tab_Size + Text'Length);
+            S : String
+              (1 .. Num_Tabs * Tab_Size + Text'Length);
             S_Index : Integer := 1;
             Bound   : Integer;
          begin

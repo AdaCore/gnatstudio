@@ -116,7 +116,8 @@ package body GVD.Status_Bar is
 
       --  schedule the message to be removed
       Status.Timeout_Id := Status_Timeout.Add
-        (Hide_Delay, Hide_Callback'Access, GVD_Status_Bar (Status));
+        (Current_Preferences.Hide_Delay,
+         Hide_Callback'Access, GVD_Status_Bar (Status));
    end Print_Message;
 
    -------------------
