@@ -74,8 +74,12 @@ package Task_Manager is
    --  Get and set the active graphical interface for Manager.
 
    function Has_Running_Commands
-     (Manager : Task_Manager_Access) return Boolean;
+     (Manager         : Task_Manager_Access;
+      Consider_Silent : Boolean) return Boolean;
    --  Return True if there is one or more command that is Running or Paused.
+   --  If Consider_Silent is True, then all tasks will be considered,
+   --  otherwise tasks that are considered as silent (ie, that have no
+   --  associated progress bar) are not taken into account.
 
 private
    type Queue_Status is (Not_Started, Running, Paused, Completed, Interrupted);
