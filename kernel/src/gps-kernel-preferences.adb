@@ -384,6 +384,18 @@ package body GPS.Kernel.Preferences is
       Register_Property
         (Kernel.Preferences, Param_Spec (Multi_Language_Build), -"General");
 
+      Auto_Jump_To_First := Param_Spec_Boolean
+        (Gnew_Boolean
+          (Name    => "Auto-Jump-To-First",
+           Default => True,
+           Blurb   =>
+             -("Whether GPS should automatically jump to the first location"
+               & " when entries are added to the Location window (error"
+               & " messages, find results, ...)"),
+           Nick    => -"Jump to first location"));
+      Register_Property
+        (Kernel, Param_Spec (Auto_Jump_To_First), -"General");
+
       -- MDI --
 
       MDI_Opaque := Param_Spec_Boolean (Gnew_Boolean

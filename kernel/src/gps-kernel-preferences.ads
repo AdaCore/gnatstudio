@@ -170,6 +170,8 @@ package GPS.Kernel.Preferences is
    Auto_Save             : Param_Spec_Boolean;
    Save_Desktop_On_Exit  : Param_Spec_Boolean;
    Multi_Language_Build  : Param_Spec_Boolean;
+   Auto_Jump_To_First    : Param_Spec_Boolean;
+
 
    -- Messages --
    Message_Highlight      : Param_Spec_Color;
