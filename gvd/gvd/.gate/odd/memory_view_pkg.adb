@@ -252,7 +252,7 @@ begin
       Button_Callback.To_Marshaller (On_Submit_Clicked'Access));
    Add (Memory_View.Hbuttonbox11, Memory_View.Submit);
 
-   Gtk_New (Memory_View.Cancel, -"Cancel");
+   Gtk_New (Memory_View.Cancel, -"Close");
    Set_Flags (Memory_View.Cancel, Can_Default);
    Button_Callback.Connect
      (Memory_View.Cancel, "clicked",

@@ -6707,7 +6707,7 @@ ASCII
 	  <handler>on_cancel_clicked</handler>
 	  <last_modification_time>Thu, 21 Sep 2000 12:54:43 GMT</last_modification_time>
 	</signal>
-	<label>Cancel</label>
+	<label>Close</label>
       </widget>
 
       <widget>
