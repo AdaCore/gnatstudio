@@ -36,9 +36,12 @@ package body Src_Menu is
    Edit_Paste       : constant String := Edit & '/' & "Paste";
    Edit_Search      : constant String := Edit & '/' & "Search";
    Edit_Goto_Line   : constant String := Edit & '/' & "Goto line...";
-   Edit_Highlight   : constant String := Edit & '/' & "Highlight...";
-   Edit_Unhighlight : constant String := Edit & '/' & "Un-highlight...";
-   Edit_Cancel_High : constant String := Edit & '/' & "Cancel highlighting.";
+   Edit_HL_Line     : constant String := Edit & '/' & "HL Line";
+   Edit_UnHL_Line   : constant String := Edit & '/' & "UnHL Line";
+   Edit_Cancel_HL_L : constant String := Edit & '/' & "Cancel HL Line";
+   Edit_HL_Region   : constant String := Edit & '/' & "HL Region";
+   Edit_UnHL_Region : constant String := Edit & '/' & "UnHL Region";
+   Edit_Cancel_HL_R : constant String := Edit & '/' & "Cancel HL Region";
 
    package Factory is new Data_Item (Source_Editor_Box_Record);
    subtype Source_Editor_Box_Access is Factory.Data_Type_Access;
@@ -72,17 +75,32 @@ package body Src_Menu is
       Callback_Action : Guint;
       Widget          : Factory.Limited_Widget);
 
-   procedure Highlight_Cb
+   procedure HL_Line_Cb
      (Box             : Source_Editor_Box_Access;
       Callback_Action : Guint;
       Widget          : Factory.Limited_Widget);
 
-   procedure Cancel_H_Cb
+   procedure Cancel_HL_Line_Cb
      (Box             : Source_Editor_Box_Access;
       Callback_Action : Guint;
       Widget          : Factory.Limited_Widget);
 
-   procedure Unhighlight_Cb
+   procedure UnHL_Line_Cb
+     (Box             : Source_Editor_Box_Access;
+      Callback_Action : Guint;
+      Widget          : Factory.Limited_Widget);
+
+   procedure HL_Region_Cb
+     (Box             : Source_Editor_Box_Access;
+      Callback_Action : Guint;
+      Widget          : Factory.Limited_Widget);
+
+   procedure Cancel_HL_Region_Cb
+     (Box             : Source_Editor_Box_Access;
+      Callback_Action : Guint;
+      Widget          : Factory.Limited_Widget);
+
+   procedure UnHL_Region_Cb
      (Box             : Source_Editor_Box_Access;
       Callback_Action : Guint;
       Widget          : Factory.Limited_Widget);
@@ -167,73 +185,123 @@ package body Src_Menu is
    is
       Line    : Positive;
       Col     : Positive;
-      Success : Boolean;
    begin
       Get_Cursor_Location (Callback_Data, Line, Col);
       Put_Line ("  Current Position : (" &
                 Image (Line) & ", " & Image (Col) & ")");
       Line := Line + 1;
       Col  := Col + 1;
-      Set_Cursor_Location (Callback_Data, Line, Col, Success);
-      if not Success then
+      if Is_Valid_Location (Callback_Data, Line, Col) then
+         Set_Cursor_Location (Callback_Data, Line, Col);
+      else
          Put_Line ("    Could not move Cusor position to (" &
                    Image (Line) & ", " & Image (Col));
       end if;
    end Goto_Line_Cb;
 
-   ------------------
-   -- Highlight_Cb --
-   ------------------
+   ----------------
+   -- HL_Line_Cb --
+   ----------------
 
-   procedure Highlight_Cb
+   procedure HL_Line_Cb
      (Box             : Source_Editor_Box_Access;
       Callback_Action : Guint;
       Widget          : Factory.Limited_Widget)
    is
       Line          : Positive;
       Column        : Positive;
-      Success       : Boolean;
    begin
       Get_Cursor_Location (Box, Line, Column);
       Put_Line ("+++ Highlighting line " & Image (Line));
-      Highlight_Line (Box, Line, Success);
-      if not Success then
-         Put_Line ("*** Highlight_Line failed!");
-      end if;
-   end Highlight_Cb;
+      Highlight_Line (Box, Line);
+   end HL_Line_Cb;
 
-   -----------------
-   -- Cancel_H_Cb --
-   -----------------
+   -----------------------
+   -- Cancel_HL_Line_Cb --
+   -----------------------
 
-   procedure Cancel_H_Cb
+   procedure Cancel_HL_Line_Cb
      (Box             : Source_Editor_Box_Access;
       Callback_Action : Guint;
       Widget          : Factory.Limited_Widget) is
    begin
       Cancel_Highlight_Line (Box);
-   end Cancel_H_Cb;
+   end Cancel_HL_Line_Cb;
 
-   --------------------
-   -- Unhighlight_Cb --
-   --------------------
+   ------------------
+   -- UnHL_Line_Cb --
+   ------------------
 
-   procedure Unhighlight_Cb
+   procedure UnHL_Line_Cb
      (Box             : Source_Editor_Box_Access;
       Callback_Action : Guint;
       Widget          : Factory.Limited_Widget)
    is
       Line          : Positive;
       Column        : Positive;
-      Success       : Boolean;
    begin
       Get_Cursor_Location (Box, Line, Column);
       Put_Line ("+++ Unhighlighting line " & Image (Line));
-      Unhighlight_Line (Box, Line, Success);
-      if not Success then
-         Put_Line ("*** Unhighlight_Line failed!");
+      Unhighlight_Line (Box, Line);
+   end UnHL_Line_Cb;
+
+   ------------------
+   -- HL_Region_Cb --
+   ------------------
+
+   procedure HL_Region_Cb
+     (Box             : Source_Editor_Box_Access;
+      Callback_Action : Guint;
+      Widget          : Factory.Limited_Widget)
+   is
+      Start_Line : Positive;
+      Start_Col  : Positive;
+      End_Line   : Positive;
+      End_Col    : Positive;
+      Found      : Boolean;
+   begin
+      Get_Selection_Bounds
+        (Box, Start_Line, Start_Col, End_Line, End_Col, Found);
+
+      if Found then
+         Highlight_Region (Box, Start_Line, Start_Col, End_Line, End_Col);
       end if;
-   end Unhighlight_Cb;
+   end HL_Region_Cb;
+
+   -------------------------
+   -- Cancel_HL_Region_Cb --
+   -------------------------
+
+   procedure Cancel_HL_Region_Cb
+     (Box             : Source_Editor_Box_Access;
+      Callback_Action : Guint;
+      Widget          : Factory.Limited_Widget) is
+   begin
+      Unhighlight_All (Box);
+   end Cancel_HL_Region_Cb;
+
+   --------------------
+   -- UnHL_Region_Cb --
+   --------------------
+
+   procedure UnHL_Region_Cb
+     (Box             : Source_Editor_Box_Access;
+      Callback_Action : Guint;
+      Widget          : Factory.Limited_Widget)
+   is
+      Start_Line : Positive;
+      Start_Col  : Positive;
+      End_Line   : Positive;
+      End_Col    : Positive;
+      Found      : Boolean;
+   begin
+      Get_Selection_Bounds
+        (Box, Start_Line, Start_Col, End_Line, End_Col, Found);
+
+      if Found then
+         Unhighlight_Region (Box, Start_Line, Start_Col, End_Line, End_Col);
+      end if;
+   end UnHL_Region_Cb;
 
    -----------------
    -- File_Num_Cb --
@@ -281,9 +349,12 @@ package body Src_Menu is
          Factory.Gtk_New (Edit & "/sep1", Item_Type => Separator),
          Factory.Gtk_New (Edit_Search, "<control>S", Menu_Cb'Access),
          Factory.Gtk_New (Edit_Goto_Line, "<control>G", Goto_Line_Cb'Access),
-         Factory.Gtk_New (Edit_Highlight, "<control>L", Highlight_Cb'Access),
-         Factory.Gtk_New (Edit_Cancel_High, "", Cancel_H_Cb'Access),
-         Factory.Gtk_New (Edit_Unhighlight, "", Unhighlight_Cb'Access)
+         Factory.Gtk_New (Edit_HL_Line, "<control>L", HL_Line_Cb'Access),
+         Factory.Gtk_New (Edit_Cancel_HL_L, "", Cancel_HL_Line_Cb'Access),
+         Factory.Gtk_New (Edit_UnHL_Line, "", UnHL_Line_Cb'Access),
+         Factory.Gtk_New (Edit_HL_Region, "<control>R", HL_Region_Cb'Access),
+         Factory.Gtk_New (Edit_Cancel_HL_R, "", Cancel_HL_Region_Cb'Access),
+         Factory.Gtk_New (Edit_UnHL_Region, "", UnHL_Region_Cb'Access)
         );
       Accel_Group : Gtk_Accel_Group;
    begin
