@@ -174,9 +174,11 @@ package body Glide_Main_Window is
    -- Confirm_And_Quit --
    ----------------------
 
-   procedure Quit (Main_Window : access Glide_Window_Record'Class) is
+   procedure Quit
+     (Main_Window : access Glide_Window_Record'Class;
+      Force       : Boolean := False) is
    begin
-      if Save_MDI_Children (Main_Window.Kernel) then
+      if Force or else Save_MDI_Children (Main_Window.Kernel) then
          Main_Quit;
       end if;
    end Quit;

@@ -79,8 +79,11 @@ package Glide_Main_Window is
    function GPS_Name (Window : access Glide_Window_Record) return String;
    --  Return the name of this GPS release.
 
-   procedure Quit (Main_Window : access Glide_Window_Record'Class);
-   --  Exit GPS. Ask for confirmation if there are unsaved files.
+   procedure Quit
+     (Main_Window : access Glide_Window_Record'Class;
+      Force       : Boolean := False);
+   --  Exit GPS. Ask for confirmation if there are unsaved files and Force is
+   --  False. If Force is True, nothing is saved, and GPS exists immediately.
    --  Save the desktop if needed.
 
    procedure Load_Desktop (Window : access Glide_Window_Record'Class);
