@@ -175,14 +175,17 @@ package body SN.Xref_Pools is
    procedure Free (Pool : in out Xref_Pool) is
       procedure Internal_Free is new Ada.Unchecked_Deallocation
         (STable.HTable, Xref_Pool);
-      E : Xref_Elmt_Ptr;
+      E    : Xref_Elmt_Ptr;
+      Next : Xref_Elmt_Ptr;
    begin
       STable.Get_First (Pool.all, E);
       while E /= Null_Xref_Elmt loop
-         Free (E.Source_Filename);
+         STable.Get_Next (Pool.all, Next);
+         STable.Remove (Pool.all, E.Source_Filename);
          Free (E.Xref_Filename);
+         Free (E.Source_Filename);
          Free (E);
-         STable.Get_Next (Pool.all, E);
+         E := Next;
       end loop;
       Internal_Free (Pool);
    end Free;

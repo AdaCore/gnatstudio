@@ -63,7 +63,7 @@ package Src_Info.CPP is
    --  project exception lists and when the extension does not follow the
    --  project naming scheme.
    --  ??? In current implementation for C/C++ this function always
-   --  returns Source_Filename taken as input
+   --  returns Xref_Filename for Source_Filename
 
    procedure Generate_Database
      (File_List              : String_List_Access;

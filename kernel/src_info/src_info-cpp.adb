@@ -460,9 +460,21 @@ package body Src_Info.CPP is
    is
       pragma Unreferenced (Handler);
       pragma Unreferenced (Predefined_Source_Path);
-      pragma Unreferenced (Project);
+      Xrefs              : Xref_Pool;
+      DB_Dir             : constant String :=
+         Prj_API.Object_Path (Project, False) & Browse.DB_Dir_Name;
+      Xref_Pool_Filename : constant String :=
+         DB_Dir & Directory_Separator & SN.Browse.Xref_Pool_Filename;
    begin
-      return Source_Filename;
+      Load (Xrefs, Xref_Pool_Filename);
+      declare
+         Xref_Filename : String := Xref_Filename_For
+            (Source_Filename, DB_Dir, Xrefs).all;
+      begin
+         Save (Xrefs, Xref_Pool_Filename);
+         Free (Xrefs);
+         return Xref_Filename;
+      end;
    end LI_Filename_From_Source;
 
    procedure Info (Msg : String) is
@@ -598,9 +610,9 @@ package body Src_Info.CPP is
          MD_Tab := Parse_Pair (P.all);
          Free (P);
          --  Update position of the first forward declaration
-         exit when Normalized_Compare
-            (MD_Tab.Buffer (MD_Tab.File_Name.First .. MD_Tab.File_Name.Last),
-             Buffer (Filename.First .. Filename.Last))
+         exit when
+            MD_Tab.Buffer (MD_Tab.File_Name.First .. MD_Tab.File_Name.Last)
+            = Buffer (Filename.First .. Filename.Last)
             and then Cmp_Prototypes
               (MD_Tab.Buffer,
                Buffer,
@@ -625,10 +637,9 @@ package body Src_Info.CPP is
          MD_Tab_Tmp := Parse_Pair (P.all);
          Free (P);
          --  Update position of the first forward declaration
-         if Normalized_Compare
-            (MD_Tab.Buffer (MD_Tab.File_Name.First .. MD_Tab.File_Name.Last),
-             MD_Tab_Tmp.Buffer (MD_Tab_Tmp.File_Name.First ..
-                                MD_Tab_Tmp.File_Name.Last))
+         if MD_Tab.Buffer (MD_Tab.File_Name.First .. MD_Tab.File_Name.Last)
+            = MD_Tab_Tmp.Buffer (MD_Tab_Tmp.File_Name.First ..
+                                 MD_Tab_Tmp.File_Name.Last)
             and then Cmp_Prototypes
               (MD_Tab.Buffer,
                MD_Tab_Tmp.Buffer,
@@ -697,9 +708,9 @@ package body Src_Info.CPP is
          FD_Tab := Parse_Pair (P.all);
          Free (P);
          --  Update position of the first forward declaration
-         exit when Normalized_Compare
-            (FD_Tab.Buffer (FD_Tab.File_Name.First .. FD_Tab.File_Name.Last),
-             Buffer (Filename.First .. Filename.Last))
+         exit when
+            FD_Tab.Buffer (FD_Tab.File_Name.First .. FD_Tab.File_Name.Last)
+            = Buffer (Filename.First .. Filename.Last)
             and then Cmp_Prototypes
               (FD_Tab.Buffer,
                Buffer,
@@ -723,10 +734,10 @@ package body Src_Info.CPP is
          FD_Tab_Tmp := Parse_Pair (P.all);
          Free (P);
          --  Update position of the first forward declaration
-         Match := Normalized_Compare
-           (FD_Tab.Buffer (FD_Tab.File_Name.First .. FD_Tab.File_Name.Last),
-            FD_Tab_Tmp.Buffer (FD_Tab_Tmp.File_Name.First ..
-                               FD_Tab_Tmp.File_Name.Last));
+         Match :=
+            FD_Tab.Buffer (FD_Tab.File_Name.First .. FD_Tab.File_Name.Last)
+            = FD_Tab_Tmp.Buffer (FD_Tab_Tmp.File_Name.First ..
+                                 FD_Tab_Tmp.File_Name.Last);
          Match := Match and then Cmp_Prototypes
            (FD_Tab.Buffer,
             FD_Tab_Tmp.Buffer,
