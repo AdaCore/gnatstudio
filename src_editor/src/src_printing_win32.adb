@@ -129,7 +129,7 @@ package body Src_Printing is
       Buffer        : constant Source_Buffer := Get_Buffer (Editor);
       File_Name     : constant String :=
         VFS.Full_Name (Get_Filename (Editor)).all;
-      Document_Name : constant String := File_Name & ASCII.nul;
+      Document_Name : constant String := File_Name & ASCII.NUL;
       Total_Lines   : constant INT := INT (Get_Line_Count (Buffer));
 
       pragma Unreferenced (Status, Result);
@@ -220,17 +220,23 @@ package body Src_Printing is
                   Print_Header (File_Name, Banner_Font, PD.DC);
 
                   --  Now we print the individual lines of a page
+                  --  ??? Should use Parse_Entities instead
+
                   for Line_Num in 0 .. Lines_Per_Page - 1 loop
                      Paginated_Line_Number :=
                        Lines_Per_Page * This_Page + Line_Num;
+
                      exit when Paginated_Line_Number > Total_Lines - 1;
+
                      declare
                         Content : constant String := Get_Chars
                           (Buffer,
                            Editable_Line_Type (Paginated_Line_Number) + 1);
+
                      begin
                         --  Note that we are truncating rather than wrapping,
                         --  and always slicing off the trailing linefeed
+
                         Result := TextOut
                           (PD.DC,
                            Offsets.Left,
@@ -398,7 +404,7 @@ package body Src_Printing is
       Printer    : HDC) return HFONT
    is
       Logical_Font : LOGFONT;
-      Font_Id      : constant String := Font_Name & ASCII.Nul;
+      Font_Id      : constant String := Font_Name & ASCII.NUL;
    begin
       Logical_Font.lfHeight := LONG
         (-MulDiv (INT (Font_Size), GetDeviceCaps (Printer, LOGPIXELSY), 72));
