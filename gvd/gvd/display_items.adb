@@ -238,156 +238,117 @@ package body Display_Items is
       Variable_Name  : String;
       Debugger       : access Debugger_Process_Tab_Record'Class;
       Auto_Refresh   : Boolean := True;
-      Default_Entity : Items.Generic_Type_Access := null)
+      Default_Entity : Items.Generic_Type_Access := null;
+      Link_From      : Display_Item := null;
+      Link_Name      : String := "")
    is
-      Entity      : Generic_Type_Access;
+      Entity      : Generic_Type_Access := Default_Entity;
       Value_Found : Boolean := False;
       Alias_Item  : Display_Item;
+      Id : String_Access;
 
    begin
+      --  We need the information on the type, so that we detect aliases only
+      --  for structurally equivalent types. If we have an error at this level,
+      --  this means that the variable is unknown, and we don't create an item
+      --  in that case.
+
       if Default_Entity = null then
-         declare
-            Id : constant String :=
-              Get_Uniq_Id (Debugger.Debugger, Variable_Name);
          begin
-
-            if Auto_Refresh then
-               --  If the an auto-updated similar item is on the canvas, we
-               --  simply show and select it.
-               Alias_Item :=
-                 Search_Item (Debugger.Data_Canvas, Id, Variable_Name);
-
-               if Alias_Item /= null then
-                  Select_Item (Alias_Item, Alias_Item.Entity);
-                  Show_Item (Debugger.Data_Canvas, Alias_Item);
-                  return;
-               end if;
-            end if;
-
-            --  Parse the type and value of the variable. If we have an error
-            --  at this level, this means that the variable is unknown, and we
-            --  don't create an item in that case.
-
-            begin
-               Entity := Parse_Type (Debugger.Debugger, Variable_Name);
-
-               if Entity = null then
-                  Output_Error
-                    (Debugger.Window,
-                     (-"Could not get the type of ") & Variable_Name);
-                  return;
-               else
-                  Parse_Value
-                    (Debugger.Debugger, Variable_Name, Entity, Value_Found);
-               end if;
-
-               if Entity = null then
-                  Output_Error
-                    (Debugger.Window,
-                     (-"Could not get the value of ") & Variable_Name);
-               end if;
-
-               Item := new Display_Item_Record;
-               Item.Entity := Entity;
-               Item.Num :=
-                 Get_Next_Item_Num (GVD_Canvas (Debugger.Data_Canvas));
-               Set_Valid (Item.Entity, Value_Found);
-
-               --  If we got an exception while parsing the value, we do not
-               --  create the item, since otherwise the user would be able to
-               --  try to update the value for instance, and the type would
-               --  have nothing to do with what the variable really is.
-
-            exception
-               when Language.Unexpected_Type | Constraint_Error =>
-                  Output_Error
-                    (Debugger.Window,
-                     (-"Could not parse type or value for ") & Variable_Name);
-                  return;
-            end;
-
-            if Id /= "" then
-               Item.Id := new String'(Id);
-            end if;
+            Entity := Parse_Type (Debugger.Debugger, Variable_Name);
+         exception
+            when Language.Unexpected_Type | Constraint_Error =>
+               Output_Error
+                 (Debugger.Window,
+                  (-"Could not parse type for ") & Variable_Name);
+               return;
          end;
 
-      --  Default_Entity /= null
-      else
-         Item := new Display_Item_Record;
-         Item.Entity := Default_Entity;
-         Item.Is_A_Variable := False;
-         Item.Num := Get_Next_Item_Num (GVD_Canvas (Debugger.Data_Canvas));
-         Set_Valid (Item.Entity, True);
+         if Entity = null then
+            Output_Error
+              (Debugger.Window,
+               (-"Could not get the type of ") & Variable_Name);
+            return;
+         end if;
       end if;
 
-      Item.Debugger := Debugger_Process_Tab (Debugger);
-      Display_Items.Initialize (Item, Win, Variable_Name, Auto_Refresh);
-   end Gtk_New;
+      --  If the an auto-updated similar item is on the canvas, we simply show
+      --  and select it.
 
-   ---------------------
-   -- Gtk_New_And_Put --
-   ---------------------
-
-   procedure Gtk_New_And_Put
-     (Item           : out Display_Item;
-      Win            : Gdk.Window.Gdk_Window;
-      Variable_Name  : String;
-      Debugger       : access Debugger_Process_Tab_Record'Class;
-      Auto_Refresh   : Boolean := True;
-      Link_From      : access Display_Item_Record'Class;
-      Link_Name      : String := "";
-      Default_Entity : Items.Generic_Type_Access := null)
-   is
-      Id         : constant String :=
-        Get_Uniq_Id (Debugger.Debugger, Variable_Name);
-      Alias_Item : Display_Item;
-
-   begin
-      --  Is the item already on the canvas ? If yes, do not display it again
-      --  Note that this test is ignored if the item is frozen from the
-      --  beginning
+      if Variable_Name /= "" then
+         Id := new String' (Get_Uniq_Id (Debugger.Debugger, Variable_Name));
+      end if;
 
       if Auto_Refresh then
-         Alias_Item := Search_Item (Debugger.Data_Canvas, Id, Variable_Name);
-      end if;
+         --  The following call always returns null if the preference for
+         --  alias detection is unset.
 
-      if Alias_Item = null then
-         Gtk_New (Item,
-                  Get_Window (Debugger.Data_Canvas),
-                  Variable_Name  => Variable_Name,
-                  Debugger       => Debugger,
-                  Auto_Refresh   => Auto_Refresh,
-                  Default_Entity => Default_Entity);
+         Alias_Item :=
+           Search_Item (Debugger.Data_Canvas, Id.all, Variable_Name);
 
-         if Item /= null then
-            Item.Is_Dereference := True;
-            Create_Link (Debugger.Data_Canvas, Link_From, Item, Link_Name);
+         if Alias_Item /= null
+           and then Structurally_Equivalent (Alias_Item.Entity, Entity)
+         then
+            Select_Item (Alias_Item, Alias_Item.Entity);
+            Show_Item (Debugger.Data_Canvas, Alias_Item);
 
-            --  Do we have an existing item that matches this ? (same address
-            --  as in the current access type itself)
-
-            if Get_Detect_Aliases (GVD_Canvas (Debugger.Data_Canvas)) then
-               Alias_Item := Search_Item
-                 (Debugger.Data_Canvas, Id, Variable_Name);
+            if Default_Entity = null then
+               Free (Entity);
             end if;
 
-            Put (Debugger.Data_Canvas, Item);
+            Free (Id);
 
-            if Alias_Item /= null then
-               --  Hide the item so as not to interfer with another one.
-               Set_Visibility (Item, False);
-
-               Item.Is_Alias_Of := Alias_Item;
-               Duplicate_Links (Debugger.Data_Canvas, Item);
+            if Link_From /= null then
+               Create_Link
+                 (Debugger.Data_Canvas, Link_From, Alias_Item, Link_Name);
+               Refresh_Canvas (Debugger.Data_Canvas);
             end if;
+
+            return;
          end if;
-
-      --  There was already such an item
-      else
-         Create_Link (Debugger.Data_Canvas, Link_From, Alias_Item, Link_Name);
-         Refresh_Canvas (Debugger.Data_Canvas);
       end if;
-   end Gtk_New_And_Put;
+
+      --  We now know there is no alias, so we can spend time parsing the value
+      --  if necessary.
+
+
+      if Default_Entity = null then
+         begin
+            Parse_Value (Debugger.Debugger, Variable_Name, Entity, Value_Found);
+            if not Value_Found then
+               Output_Error
+                 (Debugger.Window,
+                  (-"Could not get the value of ") & Variable_Name);
+            end if;
+         exception
+            when Language.Unexpected_Type | Constraint_Error =>
+               Output_Error
+                 (Debugger.Window,
+                  (-"Could not parse the value for ") & Variable_Name);
+               return;
+         end;
+      else
+         Value_Found := True;
+      end if;
+
+      --  Create the item
+
+      Item := new Display_Item_Record;
+      Item.Entity := Entity;
+      Item.Is_A_Variable := (Default_Entity = null);
+      Item.Num := Get_Next_Item_Num (GVD_Canvas (Debugger.Data_Canvas));
+      Item.Debugger := Debugger_Process_Tab (Debugger);
+      Set_Valid (Item.Entity, Value_Found);
+      Item.Id := Id;
+
+      Display_Items.Initialize (Item, Win, Variable_Name, Auto_Refresh);
+
+      if Link_From /= null then
+         Item.Is_Dereference := True;
+         Create_Link (Debugger.Data_Canvas, Link_From, Item, Link_Name);
+         Put (Debugger.Data_Canvas, Item);
+      end if;
+   end Gtk_New;
 
    ----------------
    -- Initialize --
@@ -1470,6 +1431,7 @@ package body Display_Items is
          if It.Id /= null
            and then It2.Is_Alias_Of = null
            and then Is_Alias_Of (It2, It.Id.all, It.Name.all, It_Deref_Name)
+           and then Structurally_Equivalent (It2.Entity, It.Entity)
          then
             --  Keep only one of them:
             --   - if none are the result of a dereference, keep them both
