@@ -32,4 +32,58 @@ package Odd.Types is
    procedure Free (Ar : in out String_Array);
    --  Free all the strings in the array.
 
+   -----------------
+   -- Breakpoints --
+   -----------------
+
+   type Breakpoint_Type is (Breakpoint, Watchpoint);
+   --  Types of breakpoints
+
+   type Breakpoint_Disposition is (Delete, Disable, Keep);
+   --  What to do with a breakpoint when it is reached.
+
+   type Breakpoint_Data is record
+      Num         : Natural;
+      --  breakpoint number (internal to the debugger)
+
+      The_Type    : Breakpoint_Type;
+      --  The type of breakpoint
+
+      Disposition : Breakpoint_Disposition;
+      --  What is done when the breakpoint is reached
+
+      Enabled     : Boolean;
+      --  Whether the breakpoint is currently enabled
+
+      Address     : String_Access;
+      --  The address of the breakpoint.
+
+      Expression  : String_Access;
+      --  The name of the variable to watch for watchpoints. This is left to
+      --  null for breakpoints.
+
+      File        : String_Access;
+      --  The file name that contains the breakpoint
+
+      Line        : Integer;
+      --  The line that contains the breakpoint
+
+      Info        : String_Access;
+      --  Additionnal information
+   end record;
+   --  Information for a specific breakpoint
+
+   type Breakpoint_Array is array (Natural range <>) of Breakpoint_Data;
+
+   type Breakpoint_Array_Ptr is access Breakpoint_Array;
+
+   procedure Free (Br : in out Breakpoint_Data);
+   --  Free the memory allocated for a breakpoint data
+
+   procedure Free (Br_Array : in out Breakpoint_Array);
+   --  Free the memory allocated for a breakpoint array
+
+   procedure Free (Br_Access : in out Breakpoint_Array_Ptr);
+   --  Free the memory allocate for the array.
+
 end Odd.Types;

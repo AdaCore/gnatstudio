@@ -34,4 +34,41 @@ package body Odd.Types is
       end loop;
    end Free;
 
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Br : in out Breakpoint_Data) is
+   begin
+      Free (Br.Address);
+      Free (Br.Expression);
+      Free (Br.File);
+      Free (Br.Info);
+   end Free;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Br_Array : in out Breakpoint_Array) is
+   begin
+      for B in Br_Array'Range loop
+         Free (Br_Array (B));
+      end loop;
+   end Free;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Br_Access : in out Breakpoint_Array_Ptr) is
+      procedure Internal_Free is new Unchecked_Deallocation
+        (Breakpoint_Array, Breakpoint_Array_Ptr);
+   begin
+      if Br_Access /= null then
+         Free (Br_Access.all);
+         Internal_Free (Br_Access);
+      end if;
+   end Free;
+
 end Odd.Types;
