@@ -46,6 +46,7 @@ with Gtk;                         use Gtk;
 with Gtk.Box;                     use Gtk.Box;
 with Gtk.Clipboard;               use Gtk.Clipboard;
 with Gtk.Container;               use Gtk.Container;
+with Gtk.Dialog;                  use Gtk.Dialog;
 with Gtk.Drawing_Area;            use Gtk.Drawing_Area;
 with Gtk.Enums;                   use Gtk.Enums;
 with Gtk.Event_Box;               use Gtk.Event_Box;
@@ -1224,7 +1225,7 @@ package body Src_Editor_Box is
    begin
       if B.Timestamp_Mode = Check_At_Modify then
          if not Check_Timestamp_And_Reload
-           (B.Source_Buffer, Interactive => True, Always_Reload => False)
+           (B, Interactive => True, Always_Reload => False)
          then
             --  Do not propagate the key press event
             return True;
@@ -1286,7 +1287,7 @@ package body Src_Editor_Box is
          B.Timestamp_Mode := Checking;
 
          if not Check_Timestamp_And_Reload
-           (B.Source_Buffer, Interactive => True, Always_Reload => False)
+           (B, Interactive => True, Always_Reload => False)
          then
             --  We'll ask again next time the user wants to modify the file.
             B.Timestamp_Mode := Check_At_Modify;
@@ -2225,6 +2226,75 @@ package body Src_Editor_Box is
    begin
       return Get_Language (Editor.Source_Buffer);
    end Get_Language;
+
+   --------------------------------
+   -- Check_Timestamp_And_Reload --
+   --------------------------------
+
+   function Check_Timestamp_And_Reload
+     (Editor        : access Source_Editor_Box_Record;
+      Interactive   : Boolean;
+      Always_Reload : Boolean) return Boolean
+   is
+      Dialog : Gtk_Dialog;
+      Button : Gtk_Widget;
+      pragma Unreferenced (Button);
+
+      Response : Gtk_Response_Type;
+      Success : Boolean;
+      Line, Column : Integer;
+   begin
+      if Get_Filename (Editor.Source_Buffer) /= VFS.No_File then
+         if Always_Reload
+           or else Check_Timestamp (Editor.Source_Buffer, Update => True)
+         then
+            if Always_Reload or else not Interactive then
+               Response := Gtk_Response_No;
+            else
+               Dialog := Create_Gtk_Dialog
+                 (Msg        => Base_Name (Get_Filename (Editor.Source_Buffer))
+                  & (-" changed on disk.")
+                  & ASCII.LF & ASCII.LF
+                  & (-"Click on Ignore to keep this editing session.")
+                  & ASCII.LF
+                  & (-"Click on Reload to reload the file from disk")
+                  & ASCII.LF
+                  & (-"and discard your current changes."),
+                  Dialog_Type   => Confirmation,
+                  Title         => -"File changed on disk",
+                  Justification => Justify_Left,
+                  Parent        => Get_Current_Window (Editor.Kernel));
+
+               Button := Add_Button (Dialog, -"Ignore", Gtk_Response_Yes);
+               Button := Add_Button (Dialog, -"Reload", Gtk_Response_No);
+
+               Show_All (Dialog);
+               Response := Run (Dialog);
+               Destroy (Dialog);
+            end if;
+
+            case Response is
+               when Gtk_Response_Yes =>
+                  null;
+
+               when Gtk_Response_No =>
+                  Get_Cursor_Location (Editor, Line, Column);
+                  Load_File
+                    (Editor.Source_Buffer,
+                     Filename        => Get_Filename (Editor.Source_Buffer),
+                     Lang_Autodetect => True,
+                     Success         => Success);
+                  Set_Cursor_Location
+                    (Editor, Editable_Line_Type (Line), Column, False);
+
+               when others =>
+                  null;
+            end case;
+         end if;
+      end if;
+
+      return True;
+   end Check_Timestamp_And_Reload;
 
    -------------------------
    -- Set_Cursor_Location --

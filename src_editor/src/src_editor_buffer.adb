@@ -35,7 +35,6 @@ with Glib.Unicode;              use Glib.Unicode;
 with Glib.Values;               use Glib.Values;
 with Gdk.Color;                 use Gdk.Color;
 with Gtk;                       use Gtk;
-with Gtk.Dialog;                use Gtk.Dialog;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Handlers;              use Gtk.Handlers;
 with Gtk.Main;                  use Gtk.Main;
@@ -3872,100 +3871,26 @@ package body Src_Editor_Buffer is
       Unref (Selection_Context_Access (Context));
    end Source_Lines_Revealed;
 
-   --------------------------------
-   -- Check_Timestamp_And_Reload --
-   --------------------------------
-
-   function Check_Timestamp_And_Reload
-     (Buffer        : access Source_Buffer_Record;
-      Interactive   : Boolean;
-      Always_Reload : Boolean) return Boolean
-   is
-      New_Timestamp : Ada.Calendar.Time;
-      Dialog : Gtk_Dialog;
-      Button : Gtk_Widget;
-      pragma Unreferenced (Button);
-
-      Response : Gtk_Response_Type;
-      Success : Boolean;
-      Line, Column : Gint;
-   begin
-      if Buffer.Filename /= VFS.No_File then
-         New_Timestamp := File_Time_Stamp (Buffer.Filename);
-
-         if New_Timestamp = No_Time then
-            return True;
-         end if;
-
-         if Always_Reload or else New_Timestamp /= Buffer.Timestamp then
-            if Always_Reload or else not Interactive then
-               Response := Gtk_Response_No;
-            else
-               Dialog := Create_Gtk_Dialog
-                 (Msg         => Base_Name (Buffer.Filename)
-                  & (-" changed on disk.")
-                  & ASCII.LF & ASCII.LF
-                  & (-"Click on Ignore to keep this editing session.")
-                  & ASCII.LF
-                  & (-"Click on Reload to reload the file from disk")
-                  & ASCII.LF
-                  & (-"and discard your current changes."),
-                  Dialog_Type   => Confirmation,
-                  Title         => -"File changed on disk",
-                  Justification => Justify_Left,
-                  Parent        => Get_Current_Window (Buffer.Kernel));
-
-               Button := Add_Button (Dialog, -"Ignore", Gtk_Response_Yes);
-               Button := Add_Button (Dialog, -"Reload", Gtk_Response_No);
-
-               Show_All (Dialog);
-               Response := Run (Dialog);
-               Destroy (Dialog);
-            end if;
-
-            case Response is
-               when Gtk_Response_Yes =>
-                  Buffer.Timestamp := New_Timestamp;
-
-               when Gtk_Response_No =>
-                  Get_Cursor_Position (Buffer, Line, Column);
-                  Load_File
-                    (Buffer,
-                     Filename        => Buffer.Filename,
-                     Lang_Autodetect => True,
-                     Success         => Success);
-
-                  if Is_Valid_Position (Buffer, Line, Column) then
-                     Set_Cursor_Position (Buffer, Line, Column);
-                  elsif Is_Valid_Position (Buffer, Line, 0) then
-                     Set_Cursor_Position (Buffer, Line, 0);
-                  end if;
-
-               when others =>
-                  null;
-            end case;
-         end if;
-      end if;
-
-      return True;
-   end Check_Timestamp_And_Reload;
-
    ---------------------
    -- Check_Timestamp --
    ---------------------
 
    function Check_Timestamp
-     (Buffer : access Source_Buffer_Record) return Boolean
+     (Buffer : access Source_Buffer_Record;
+      Update : Boolean := False) return Boolean
    is
       New_Timestamp : Ada.Calendar.Time;
-
+      Result : Boolean := True;
    begin
       if Buffer.Filename /= VFS.No_File then
          New_Timestamp := File_Time_Stamp (Buffer.Filename);
-         return New_Timestamp /= Buffer.Timestamp;
+         Result := New_Timestamp /= Buffer.Timestamp;
+         if Update then
+            Buffer.Timestamp := New_Timestamp;
+         end if;
       end if;
 
-      return True;
+      return Result;
    end Check_Timestamp;
 
    ---------

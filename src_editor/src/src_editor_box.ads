@@ -167,6 +167,17 @@ package Src_Editor_Box is
    --  Success is set to false if the buffer could not be saved.
    --  If filename is null, use the filename associated with Editor.
 
+   function Check_Timestamp_And_Reload
+     (Editor        : access Source_Editor_Box_Record;
+      Interactive   : Boolean;
+      Always_Reload : Boolean) return Boolean;
+   --  Check whether the timestamp changed on the disk.
+   --  If yes, then
+   --    if Interactive is True, display a dialog asking the user whether he
+   --      wants to reload the file.
+   --    if Interactive is False, reload the file without asking.
+   --  In Always_Reload, then the file will always be reloaded.
+
    procedure Set_Language
      (Editor : access Source_Editor_Box_Record;
       Lang   : Language.Language_Access := null);
@@ -187,10 +198,6 @@ package Src_Editor_Box is
    --  if the position is outside of the buffer.
    --  If Force_Focus is False, then the editor will not grab the focus
    --  before setting the cursor position.
-   --
-   --  The position must be verified before invoking this procedure. An invalid
-   --  position leads to an Assertion_Failure when compiled with assertion
-   --  checks, or to an undefined behavior otherwise.
 
    procedure Get_Cursor_Location
      (Editor  : access Source_Editor_Box_Record;

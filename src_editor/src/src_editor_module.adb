@@ -1865,7 +1865,7 @@ package body Src_Editor_Module is
               or else D.File = Get_Filename (Box.Editor)
             then
                Dummy := Check_Timestamp_And_Reload
-                 (Get_Buffer (Box.Editor),
+                 (Box.Editor,
                   Interactive   => False,
                   Always_Reload => False);
 
@@ -2458,7 +2458,7 @@ package body Src_Editor_Module is
 
          if Child /= null then
             Dummy := Check_Timestamp_And_Reload
-              (Get_Buffer (Source_Box (Get_Widget (Child)).Editor),
+              (Source_Box (Get_Widget (Child)).Editor,
                Interactive   => False,
                Always_Reload => Force);
 
