@@ -47,9 +47,6 @@ with Traces;                    use Traces;
 
 package body Src_Editor_Module is
 
-   Src_Editor_Module_Id : Module_ID;
-   Src_Editor_Module_Name : constant String := "Source_Editor";
-
    Default_Editor_Width  : constant := 400;
    Default_Editor_Height : constant := 400;
    --  <preferences>
@@ -184,7 +181,7 @@ package body Src_Editor_Module is
    --  Edit->Pretty Print menu
 
    procedure On_Edit_File
-     (Widget : access Gtk_Widget_Record'Class;
+     (Widget : access GObject_Record'Class;
       Context : Selection_Context_Access);
    --  Edit a file (from a contextual menu)
 
@@ -311,7 +308,7 @@ package body Src_Editor_Module is
 
    begin
       if Current /= null then
-         Create_New_View (Editor, Current);
+         Create_New_View (Editor, Kernel, Current);
          Gtk_New (Box, Editor);
          Set_Size_Request (Box, Default_Editor_Width, Default_Editor_Height);
          Attach (Editor, Box);
@@ -802,7 +799,7 @@ package body Src_Editor_Module is
    ------------------
 
    procedure On_Edit_File
-     (Widget : access Gtk_Widget_Record'Class;
+     (Widget : access GObject_Record'Class;
       Context : Selection_Context_Access)
    is
       File : File_Selection_Context_Access := File_Selection_Context_Access

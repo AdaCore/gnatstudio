@@ -23,6 +23,9 @@ with Glide_Kernel;
 
 package Src_Editor_Module is
 
+   Src_Editor_Module_Id : Glide_Kernel.Module_ID;
+   Src_Editor_Module_Name : constant String := "Source_Editor";
+
    procedure Register_Module;
    --  Register the module in the list
 
