@@ -30,6 +30,7 @@ with Gtk.Radio_Menu_Item; use Gtk.Radio_Menu_Item;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 with Gtk.Widget;          use Gtk.Widget;
 with Gtkada.MDI;          use Gtkada.MDI;
+with Gtkada.Handlers;     use Gtkada.Handlers;
 
 with Pango.Font;          use Pango.Font;
 with GVD.Explorer;        use GVD.Explorer;
@@ -72,6 +73,9 @@ package body GVD.Code_Editors is
      (Item : access Gtk_Radio_Menu_Item_Record'Class;
       Data : Editor_Mode_Data);
    --  Change the display mode for the editor
+
+   procedure On_Destroy (Editor : access Gtk_Widget_Record'Class);
+   --  Callback for the "destroy" signal
 
    -----------
    -- Setup --
@@ -130,12 +134,28 @@ package body GVD.Code_Editors is
          --  Since we are sometimes unparenting these widgets, We need to
          --  make sure they are not automatically destroyed by reference
          --  counting.
-         --  ??? Should add a "destroy" callback to the editor to free the
-         --  memory.
          Ref (Editor.Source_Asm_Pane);
          Show_All (Editor);
       end if;
+
+      Widget_Callback.Connect
+        (Editor, "destroy",
+         Widget_Callback.To_Marshaller (On_Destroy'Access));
    end Initialize;
+
+   ----------------
+   -- On_Destroy --
+   ----------------
+
+   procedure On_Destroy (Editor : access Gtk_Widget_Record'Class) is
+      Ed : constant Code_Editor := Code_Editor (Editor);
+   begin
+      if Debugger_Process_Tab (Ed.Process).Window.Standalone then
+         Destroy (Ed.Source_Asm_Pane);
+      end if;
+
+      Destroy (Ed.Asm);
+   end On_Destroy;
 
    --------------
    -- Set_Line --

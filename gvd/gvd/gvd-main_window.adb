@@ -48,6 +48,9 @@ package body GVD.Main_Window is
      (1 => New_String ("preferences_changed"));
    Class_Record : GObject_Class := Uninitialized_Class;
 
+   procedure On_Destroy (Window : access Gtk_Widget_Record'Class);
+   --  Callback for the "destroy" dialog
+
    -------------------------------
    -- Prepare_Cleanup_Debuggers --
    -------------------------------
@@ -158,7 +161,26 @@ package body GVD.Main_Window is
       Gtk_New (Main_Window.PD_Dialog, Gtk_Window (Main_Window));
       Gtk_New (Main_Window.History_Dialog, Gtk_Window (Main_Window));
       Gtk_New (Main_Window.Memory_View, Gtk_Widget (Main_Window));
+
+      Widget_Callback.Connect
+        (Main_Window, "destroy",
+         Widget_Callback.To_Marshaller (On_Destroy'Access));
    end Initialize;
+
+   ----------------
+   -- On_Destroy --
+   ----------------
+
+   procedure On_Destroy (Window : access Gtk_Widget_Record'Class) is
+      Win : constant GVD_Main_Window := GVD_Main_Window (Window);
+   begin
+      Unref (Win.Factory);
+      Destroy (Win.Task_Dialog);
+      Destroy (Win.Thread_Dialog);
+      Destroy (Win.PD_Dialog);
+      Destroy (Win.History_Dialog);
+      Destroy (Win.Memory_View);
+   end On_Destroy;
 
    -----------------
    -- Set_Toolbar --

@@ -88,6 +88,9 @@ package body Glide_Interactive_Consoles is
    procedure Destroy_Idle (Console : in out Glide_Interactive_Console);
    --  Destroy handler for idle callbacks.
 
+   procedure On_Destroy (Console : access Gtk_Widget_Record'Class);
+   --  Called when the console is destroyed.
+
    ------------------
    -- Destroy_Idle --
    ------------------
@@ -646,6 +649,22 @@ package body Glide_Interactive_Consoles is
          Put_Line ("Unexpected exception: " & Exception_Information (E));
    end Mark_Set_Handler;
 
+   ----------------
+   -- On_Destroy --
+   ----------------
+
+   procedure On_Destroy (Console : access Gtk_Widget_Record'Class) is
+      C : constant Glide_Interactive_Console :=
+        Glide_Interactive_Console (Console);
+   begin
+      Unref (C.Uneditable_Tag);
+      Unref (C.Prompt_Tag);
+      Unref (C.Highlight_Tag);
+      Unref (C.External_Messages_Tag);
+      Free (C.Prompt);
+      Free (C.User_Input);
+   end On_Destroy;
+
    -------------
    -- Gtk_New --
    -------------
@@ -690,6 +709,12 @@ package body Glide_Interactive_Consoles is
       Gtk_New (Console.Buffer);
       Gtk_New (Console.View, Console.Buffer);
 
+      --  The buffer should be destroyed when the view is destroyed
+      --  ??? Perhaps we should store it in the module_id, and always reuse it
+      --  when the console is created. This allows the user to destroy the
+      --  console without losing its contents
+      Unref (Console.Buffer);
+
       Gtk_New (Console.Uneditable_Tag);
       Set_Property (Console.Uneditable_Tag, Editable_Property, False);
       Add (Get_Tag_Table (Console.Buffer), Console.Uneditable_Tag);
@@ -720,6 +745,10 @@ package body Glide_Interactive_Consoles is
 
       Modify_Font (Console.View, Font);
 
+      Widget_Callback.Connect
+        (Console, "destroy",
+         Widget_Callback.To_Marshaller (On_Destroy'Access));
+
       Widget_Callback.Object_Connect
         (Console.Buffer, "mark_set",
          Cb => Mark_Set_Handler'Access,
@@ -744,11 +773,10 @@ package body Glide_Interactive_Consoles is
          Gtk_Widget (Console),
          After => False);
 
-      Gtkada.Handlers.Return_Callback.Object_Connect
+      Gtkada.Handlers.Return_Callback.Connect
         (Console, "delete_event",
          Gtkada.Handlers.Return_Callback.To_Marshaller
            (Delete_Event_Handler'Access),
-         Gtk_Widget (Console),
          After => False);
 
       Get_End_Iter (Console.Buffer, Iter);
