@@ -179,8 +179,8 @@ package body Vdiff2_Command is
    procedure Reload_Difference (Kernel : Kernel_Handle;
                                 Diff   : in out Diff_Head_Access) is
    begin
-      Hide_Differences (Kernel, Diff.List, Diff.File1.all,
-                        Diff.File2.all, Diff.File3.all);
+      Hide_Differences (Kernel, Diff.List, Diff.File1,
+                        Diff.File2, Diff.File3);
       Free (Diff.List);
       Diff.List := Diff_Utils.Diff (Kernel, Diff.File1.all, Diff.File2.all);
       --  ???  for 2 file only for the moment
@@ -214,8 +214,8 @@ package body Vdiff2_Command is
    procedure Unhighlight_Difference (Kernel : Kernel_Handle;
                                      Diff   : in out Diff_Head_Access)is
    begin
-      Hide_Differences (Kernel, Diff.List, Diff.File1.all,
-                        Diff.File2.all, Diff.File3.all);
+      Hide_Differences (Kernel, Diff.List, Diff.File1,
+                        Diff.File2, Diff.File3);
    end Unhighlight_Difference;
 
    --------------------
@@ -237,5 +237,16 @@ package body Vdiff2_Command is
          Basic_Types.Free (Args);
       end if;
    end Goto_Difference;
+
+   -----------------------
+   -- Remove_Difference --
+   -----------------------
+
+   procedure Remove_Difference (Kernel : Kernel_Handle;
+                                Diff   : in out Diff_Head_Access) is
+      pragma Unreferenced (Kernel);
+   begin
+      Free (Diff);
+   end Remove_Difference;
 
 end Vdiff2_Command;

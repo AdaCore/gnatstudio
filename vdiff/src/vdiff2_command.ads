@@ -46,17 +46,16 @@ package Vdiff2_Command is
 
    procedure Next_Difference (Kernel : Kernel_Handle;
                              Diff   : in out  Diff_Head_Access);
-
    procedure Prev_Difference (Kernel : Kernel_Handle;
                              Diff   : in out Diff_Head_Access);
-
    procedure First_Difference (Kernel : Kernel_Handle;
                               Diff   : in out Diff_Head_Access);
-
    procedure Last_Difference (Kernel : Kernel_Handle;
                               Diff   : in out Diff_Head_Access);
    procedure Reload_Difference (Kernel : Kernel_Handle;
-                              Diff   : in out Diff_Head_Access);
+                                Diff   : in out Diff_Head_Access);
+   procedure Remove_Difference (Kernel : Kernel_Handle;
+                                Diff   : in out Diff_Head_Access);
    procedure Close_Difference (Kernel : Kernel_Handle;
                                Diff   : in out Diff_Head_Access);
    procedure Unhighlight_Difference (Kernel : Kernel_Handle;
