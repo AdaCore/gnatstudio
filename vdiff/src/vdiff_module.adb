@@ -69,6 +69,7 @@ package body Vdiff_Module is
         Select_File
           (Title             => -"Select First File",
            Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
+           Kind              => Unspecified,
            History           => Get_History (Kernel));
 
       Child  : MDI_Child;
@@ -85,6 +86,7 @@ package body Vdiff_Module is
            Select_File
              (Title             => -"Select Second File",
               Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
+              Kind              => Unspecified,
               History           => Get_History (Kernel));
 
       begin

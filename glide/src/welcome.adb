@@ -400,6 +400,7 @@ package body Welcome is
             File_Pattern      => "*.gpr",
             Pattern_Name      => -"Project Files",
             Use_Native_Dialog => Get_Pref (S.Kernel, Use_Native_Dialogs),
+            Kind              => Open_File,
             History           => Get_History (S.Kernel));
 
       begin
