@@ -16,7 +16,7 @@
 @title{Using GPS}
 @end flushleft
 @flushright
- @titlefont{The GNAT Programming System}
+@titlefont{The GNAT Programming System}
 @end flushright
 @subtitle Version @value{GPSVersion}
 @subtitle Document revision level $Revision$
@@ -7052,7 +7052,7 @@ the following things need to be achieved to successfully use a tool:
 @item Pass it the appropriate arguments depending on the current context, or
       on user input
 @item Spawn the tool
-@item Optionaly parse its result and act accordingly
+@item Optionally parse its result and act accordingly
 @end itemize
 
 Each of these points is discussed in further sections. In all these cases, most
@@ -7381,8 +7381,13 @@ This example adds support for the "find" Unix utility, with a few switches.
 @cindex resource file
 @cindex Unix
 @noindent
-In addition to the preferences dialog, GPS can be configured through the
-Gtk+ mechanism of @file{RC files}. You can create a text file called
+In addition to the GPS specific mechnisms described previousely, GPS can be
+configured through the low level Gtk+ mechanism of @file{RC files}.
+
+As more customization capabilities are added in GPS, this mechanism will
+become less useful and built-in GPS capabilities should be prefered.
+
+You can create a text file called
 @file{gtkrc} in the gps home directory (@file{~/.gps} on Unix systems), or as
 a global change, in the directory etc/gps in the GPS installation.
 
@@ -7549,8 +7554,8 @@ Sets the color used for the background of most visual objects.
 Sets the color used for the foreground of most visual objects.
 
 @item base[@i{state}] = @i{color}
-Sets the color used for foreground of visual objects using base for the
-background color.
+Sets the color used for foreground of visual objects displaying editable
+text (e.g. source editors), using base for the background color.
 
 @item text[@i{state}] = @i{color}
 Sets the color used for the background of visual objects displaying editable
