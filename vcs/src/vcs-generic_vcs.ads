@@ -40,7 +40,8 @@ package VCS.Generic_VCS is
    procedure Get_Status
      (Rep         : access Generic_VCS_Record;
       Filenames   : String_List.List;
-      Clear_Logs  : Boolean := False);
+      Clear_Logs  : Boolean := False;
+      Local       : Boolean := False);
 
    function Local_Get_Status
      (Rep       : access Generic_VCS_Record;
@@ -93,8 +94,14 @@ package VCS.Generic_VCS is
       File : VFS.Virtual_File);
 
    function Parse_Status
-     (Rep  : access Generic_VCS_Record;
-      Text : String) return File_Status_List.List;
+     (Rep   : access Generic_VCS_Record;
+      Text  : String;
+      Local : Boolean) return File_Status_List.List;
+
+   procedure Parse_Annotations
+     (Rep   : access Generic_VCS_Record;
+      File  : VFS.Virtual_File;
+      Text  : String);
 
    procedure Register_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
@@ -109,19 +116,24 @@ private
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Pattern_Matcher, Pattern_Matcher_Access);
 
-   type Generic_VCS_Record is new VCS_Record with record
-      Id       : String_Access;
-      Commands : Action_Array;
-      Labels   : Action_Array;
-
-      Regexp   : Pattern_Matcher_Access;
-
+   type Status_Parser_Record is record
       Status   : Status_Array;
+      Regexp   : Pattern_Matcher_Access;
 
       File_Index           : Natural := 0;
       Status_Index         : Natural := 0;
       Local_Rev_Index      : Natural := 0;
       Repository_Rev_Index : Natural := 0;
+   end record;
+
+   type Generic_VCS_Record is new VCS_Record with record
+      Id       : String_Access;
+      Commands : Action_Array;
+      Labels   : Action_Array;
+
+      Status_Parser       : Status_Parser_Record;
+      Local_Status_Parser : Status_Parser_Record;
+      Annotations_Parser  : Status_Parser_Record;
 
       Absolute_Names       : Boolean := True;
    end record;
