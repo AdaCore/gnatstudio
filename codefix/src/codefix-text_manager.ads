@@ -777,7 +777,9 @@ package Codefix.Text_Manager is
    --  Duplicate all informations of a Word_Cursor, specially informations
    --  memorized in dynamic memory.
 
-   --  Text_Command --
+   ------------------
+   -- Text_Command --
+   ------------------
 
    type Text_Command is abstract tagged private;
    --  A Text_Command is a modification in the text that can be defined one
@@ -788,6 +790,8 @@ package Codefix.Text_Manager is
       Current_Text : Text_Navigator_Abstr'Class;
       New_Extract  : in out Extract'Class) is abstract;
    --  Execute a command, and create an extract to preview the changes.
+   --  If New_Extract is already conaining information, they should be merged
+   --  with new ones.
 
    procedure Free (This : in out Text_Command) is abstract;
    --  Free the memory associated to a Text_Command.
@@ -803,7 +807,9 @@ package Codefix.Text_Manager is
    function Get_Caption (This : Text_Command'Class) return String;
    --  Return the caption associated to a Text_Command.
 
-   --  Remove_Word_Cmd  --
+   ---------------------
+   -- Remove_Word_Cmd --
+   ---------------------
 
    type Remove_Word_Cmd is new Text_Command with private;
 
@@ -811,13 +817,20 @@ package Codefix.Text_Manager is
      (This         : in out Remove_Word_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
       Word         : Word_Cursor'Class);
+   --  Set all the marks that will be necessary later to remove the word.
+
    procedure Free (This : in out Remove_Word_Cmd);
+   --  Free the memory associated to a Remove_Word_Cmd.
+
    procedure Execute
      (This         : Remove_Word_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
       New_Extract  : in out Extract'Class);
+   --  Update an extract with the word removed.
 
-   --  Insert_Word_Cmd  --
+   ---------------------
+   -- Insert_Word_Cmd --
+   ---------------------
 
    type Insert_Word_Cmd is new Text_Command with private;
 
@@ -827,13 +840,20 @@ package Codefix.Text_Manager is
       Word         : Word_Cursor'Class;
       Add_Spaces   : Boolean := True;
       Position     : Relative_Position := Specified);
+   --  Set all the marks that will be necessary later to insert the word.
+
    procedure Free (This : in out Insert_Word_Cmd);
+   --  Fre the memory associated to an Insert_Word_Cmd.
+
    procedure Execute
      (This         : Insert_Word_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
       New_Extract  : in out Extract'Class);
+   --  Update an extact with the word inserted.
 
-   --  Move_Word_Cmd  --
+   --------------------
+   -- Move_Word_Cmd  --
+   --------------------
 
    type Move_Word_Cmd is new Text_Command with private;
 
@@ -842,13 +862,20 @@ package Codefix.Text_Manager is
       Current_Text : Text_Navigator_Abstr'Class;
       Word         : Word_Cursor'Class;
       New_Position : File_Cursor'Class);
+   --  Set all the marks that will be needed to move the word later.
+
    procedure Free (This : in out Move_Word_Cmd);
+   --  Free the memory associated to a Move_Word_Cmd.
+
    procedure Execute
      (This         : Move_Word_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
       New_Extract  : in out Extract'Class);
+   --  Update an extract with the word moved.
 
-   --  Replace_Word_Cmd  --
+   ----------------------
+   -- Replace_Word_Cmd --
+   ----------------------
 
    type Replace_Word_Cmd is new Text_Command with private;
 
@@ -857,13 +884,20 @@ package Codefix.Text_Manager is
       Current_Text : Text_Navigator_Abstr'Class;
       Word         : Word_Cursor'Class;
       New_Word     : String);
+   --  Set all the marks that will be needed to replace the word later.
+
    procedure Free (This : in out Replace_Word_Cmd);
+   --  Free the memory associated to a Replace_Word_Cmd.
+
    procedure Execute
      (This         : Replace_Word_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
       New_Extract  : in out Extract'Class);
+   --  Update an extract with the word replaced.
 
-   --  Invert_Words_Cmd  --
+   ----------------------
+   -- Invert_Words_Cmd --
+   ----------------------
 
    type Invert_Words_Cmd is new Text_Command with private;
 
@@ -871,11 +905,16 @@ package Codefix.Text_Manager is
      (This         : in out Invert_Words_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
       Word1, Word2 : Word_Cursor'Class);
+   --  Set all the marks that will be needed to invert the two words later,
+
    procedure Free (This : in out Invert_Words_Cmd);
+   --  Free the memory associated to an Invert_Word_Cmd.
+
    procedure Execute
      (This         : Invert_Words_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
       New_Extract  : in out Extract'Class);
+   --  Update an extract with the invertion of the two word.
 
 private
 

@@ -34,13 +34,16 @@ package Codefix.Text_Manager.Ada_Commands is
       Word         : Word_Cursor'Class;
       Correct_Word : String := "";
       Word_Case    : Case_Type := Mixed);
+   --  Set all the marks that will be needed to re-case the word later.
 
    procedure Execute
      (This         : Recase_Word_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
       New_Extract  : in out Extract'Class);
+   --  Update an extract with the word recased.
 
    procedure Free (This : in out Recase_Word_Cmd);
+   --  Free the memory associated to a Recase_Word_Cmd.
 
    ----------------------------
    -- Remove_Instruction_Cmd --
@@ -52,13 +55,16 @@ package Codefix.Text_Manager.Ada_Commands is
      (This              : in out Remove_Instruction_Cmd;
       Current_Text      : Text_Navigator_Abstr'Class;
       Start_Instruction : File_Cursor'Class);
+   --  Set all the marks that will be needed to remove the instruction later.
 
    procedure Execute
      (This         : Remove_Instruction_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
       New_Extract  : in out Extract'Class);
+   --  Update an extract with the remove of the instruction.
 
    procedure Free (This : in out Remove_Instruction_Cmd);
+   --  Free the memory associated to a Remove_Instruction_Cmd.
 
    -------------------------
    -- Remove_Elements_Cmd --
@@ -70,13 +76,16 @@ package Codefix.Text_Manager.Ada_Commands is
      (This         : in out Remove_Elements_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
       Word         : Word_Cursor);
+   --  Add an element to be removed later.
 
    procedure Execute
      (This         : Remove_Elements_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
       New_Extract  : in out Extract'Class);
+   --  Update an extract with all the elements removed.
 
    procedure Free (This : in out Remove_Elements_Cmd);
+   --  Free the memory associated to a Remove_Elements_Cmd.
 
    ----------------------------
    -- Remove_Pkg_Clauses_Cmd --
@@ -88,13 +97,16 @@ package Codefix.Text_Manager.Ada_Commands is
      (This         : in out Remove_Pkg_Clauses_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
       Word         : Word_Cursor);
+   --  Set all the marks that will be needed to remove package clauses.
 
    procedure Execute
      (This         : Remove_Pkg_Clauses_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
       New_Extract  : in out Extract'Class);
+   --  Update an extract with the remove of the package clauses.
 
    procedure Free (This : in out Remove_Pkg_Clauses_Cmd);
+   --  Free the memory associated to a Remove_Pkg_Cmd.
 
    -----------------------
    -- Remove_Entity_Cmd --
@@ -106,13 +118,16 @@ package Codefix.Text_Manager.Ada_Commands is
      (This         : in out Remove_Entity_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
       Start_Entity : File_Cursor'Class);
+   --  Set all the marks that will be needed to remove the entity later.
 
    procedure Execute
      (This         : Remove_Entity_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
       New_Extract  : in out Extract'Class);
+   --  Update an extract with the remove of the entity.
 
    procedure Free (This : in out Remove_Entity_Cmd);
+   --  Free the memory associated to a Remove_Entity_Cmd.
 
    --------------------
    -- Add_Pragma_Cmd --
@@ -125,13 +140,16 @@ package Codefix.Text_Manager.Ada_Commands is
       Current_Text   : Text_Navigator_Abstr'Class;
       Position       : File_Cursor'Class;
       Name, Argument : String);
+   --  Set all the marks that will be neede to add the pragma later.
 
    procedure Execute
      (This         : Add_Pragma_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
       New_Extract  : in out Extract'Class);
+   --  Update an extract with the addition of the pragma.
 
    procedure Free (This : in out Add_Pragma_Cmd);
+   --  Free the memory associated to an Add_Pragma_Cmd.
 
    -----------------------
    -- Make_Constant_Cmd --
@@ -144,13 +162,16 @@ package Codefix.Text_Manager.Ada_Commands is
       Current_Text : Text_Navigator_Abstr'Class;
       Position     : File_Cursor'Class;
       Name         : String);
+   --  Set all the marks that will be needed to make the constant later.
 
    procedure Execute
      (This         : Make_Constant_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
       New_Extract  : in out Extract'Class);
+   --  Update an extract with the making of the constant.
 
    procedure Free (This : in out Make_Constant_Cmd);
+   --  Free the memory associated to a Make_Constant_Cmd.
 
 private
 
