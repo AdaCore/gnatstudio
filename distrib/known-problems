@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 1.2.0
 
+- C222-002 Problem with save as null extension under Windows
+  Problem:    Under Windows platforms only, when creating a file with no
+              extension, a default .ads extension is always added.
+  Workaround: Create an empty file with the right name outside of GPS, and
+              then load it and edit it in GPS.
+
 - No GPS window when unknown project specified on the command line
   Problem:    If a non-existing project file is specified on the command line
               with the -P parameter, the GPS window didn't appear on the screen
@@ -11,16 +17,16 @@ Known Problems fixed in GPS 1.2.0
               worked the second time.
   Workaround: Press Alt+O instead
 
+- C227-001 Last line of file not saved properly
+  Problem:    In some cases when saving a file, the last character is
+              truncated.
+  Workaround: Add an extra blank line at the end of the file before saving it.
+
 - C218-012 Drive letters not supported under Windows
   Problem:    The drive letters are not properly supported in the directory
               selector.
   Workaround: Change the current directory the the desired drive before using
               the directory selector, or type the full path directly.
-
-- C227-001 Last line of file not saved properly
-  Problem:    In some cases when saving a file, the last character is
-              truncated.
-  Workaround: Add an extra blank line at the end of the file before saving it.
 
 - C130-023 Crash when opening multiple new files
   Problem:    When opening new files using the menu File->New or the
