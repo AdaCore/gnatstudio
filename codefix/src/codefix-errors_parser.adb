@@ -290,6 +290,54 @@ package body Codefix.Errors_Parser is
            (Current_Text, Message, "goto", "(go[\s]+to)", Regular_Expression));
    end Fix;
 
+   -------------------------
+   -- Library_Misspelling --
+   -------------------------
+
+   procedure Initialize (This : in out Library_Misspelling) is
+   begin
+      This.Matcher := (1 => new Pattern_Matcher'
+        (Compile ("""([^""]+)"" is not a predefined library unit")));
+   end Initialize;
+
+   procedure Free (This : in out Library_Misspelling) is
+   begin
+      Free (Error_Parser (This));
+      Free (This.Misspelling_Matcher);
+   end Free;
+
+   procedure Fix
+     (This         : Library_Misspelling;
+      Errors_List  : in out Errors_Interface'Class;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message      : Error_Message;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array)
+   is
+      Preview     : Error_Message;
+      Fix_Matches : Match_Array (0 .. 1);
+   begin
+      Get_Preview (Errors_List, Current_Text, Preview);
+      Match (This.Misspelling_Matcher.all, Get_Message (Preview), Fix_Matches);
+
+      if Fix_Matches (0) = No_Match then
+         raise Uncorrectible_Message;
+      end if;
+
+      Append
+        (Solutions,
+         Should_Be
+           (Current_Text,
+            Message,
+            Get_Message (Preview)
+              (Fix_Matches (1).First .. Fix_Matches (1).Last),
+            Get_Message (Message) (Matches (1).First .. Matches (1).Last),
+            Text_Ascii));
+
+      Get_Message (Errors_List, Current_Text, Preview);
+
+   end Fix;
+
    -----------------------
    -- Sth_Should_Be_Sth --
    -----------------------
@@ -1514,6 +1562,7 @@ begin
    Add_Parser (new Double_Misspelling);
    Add_Parser (new Ligth_Misspelling);
    Add_Parser (new Goto_Misspelling);
+   Add_Parser (new Library_Misspelling);
    Add_Parser (new Sth_Should_Be_Sth);
    Add_Parser (new Should_Be_Semicolon);
    Add_Parser (new And_Meant);

@@ -205,6 +205,24 @@ package Codefix.Errors_Parser is
       Matches      : Match_Array);
    --  Fix expressions like 'go  to Label;'
 
+   type Library_Misspelling is new Error_Parser (Misspelling, 1) with record
+      Misspelling_Matcher : Ptr_Matcher := new Pattern_Matcher'
+        (Compile ("possible misspelling of ""([^""]+)"""));
+   end record;
+
+   procedure Initialize (This : in out Library_Misspelling);
+
+   procedure Free (This : in out Library_Misspelling);
+
+   procedure Fix
+     (This         : Library_Misspelling;
+      Errors_List  : in out Errors_Interface'Class;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message      : Error_Message;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array);
+   --  Problems of misspelling of packages
+
    type Sth_Should_Be_Sth is new Error_Parser (Wrong_Keyword, 1)
      with null record;
 
