@@ -45,6 +45,9 @@ package body Aunit_Filters is
       Found             : Boolean := False;
 
    begin
+      Package_Name := null;
+      Suite_Name   := null;
+
       if not Is_Regular_File (File_Name)
         or else File_Name'Length <= 4
         or else
@@ -124,6 +127,7 @@ package body Aunit_Filters is
 
       if Found then
          Package_Name := new String'(Constructs.Last.Name.all);
+         Suite_Name   := new String'(Suite_Name.all);
       end if;
 
       Free (Constructs);
@@ -191,11 +195,14 @@ package body Aunit_Filters is
          State  := Normal;
          Text   := Suite_Name;
          Pixbuf := Filter.Pixbuf;
+
       else
          State  := Invisible;
          Text   := new String'("");
          Pixbuf := Null_Pixbuf;
       end if;
+
+      Free (Package_Name);
    end Use_File_Filter;
 
    ---------------------
@@ -260,7 +267,7 @@ package body Aunit_Filters is
          State := Highlighted;
          Text := new String'("Project");
       else
-         State := Insensitive;
+         State := Invisible;
          Text := new String'("");
       end if;
 
