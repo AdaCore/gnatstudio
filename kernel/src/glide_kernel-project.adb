@@ -207,7 +207,11 @@ package body Glide_Kernel.Project is
          --  When loading a new project, we need to reset the cache containing
          --  LI information, otherwise this cache might contain dangling
          --  references to projects that have been freed.
-         Entities.Reset (Get_Database (Kernel));
+
+         if not Same_Project then
+            Entities.Reset (Get_Database (Kernel));
+         end if;
+
          Load (Registry           => Kernel.Registry.all,
                Root_Project_Path  => Project,
                Errors             => Report_Error'Unrestricted_Access,
