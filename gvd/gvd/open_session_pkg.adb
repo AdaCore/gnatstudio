@@ -34,6 +34,7 @@ with Ada.Text_IO; use Ada.Text_IO;
 with Unchecked_Deallocation;
 with Debugger;            use Debugger;
 with Odd.Process;         use Odd.Process;
+with Odd.Strings;         use Odd.Strings;
 with Open_Program_Pkg; use Open_Program_Pkg;
 with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
 
@@ -309,12 +310,12 @@ package body Open_Session_Pkg is
                     Get_Current (Top.Command_History);
                   begin
                      if Conversion_Table (Data.Debugger_Num) /= -1 then
-                        Put_Line (File,
-                                  Natural'Image (Conversion_Table
-                                                 (Data.Debugger_Num)));
-                        Put_Line (File,
-                                  Command_Type'Image (Data.Mode));
-                        Put_Line (File, Data.Command.all);
+                        Put_Line
+                          (File,
+                           Natural'Image
+                             (Conversion_Table (Data.Debugger_Num)) &
+                           " " & Command_Type'Image (Data.Mode) (1) &
+                           " " & Data.Command.all); 
                      end if;
                   end;
                end loop;
@@ -402,15 +403,15 @@ package body Open_Session_Pkg is
             Processes      : array (1 .. Num_Pages) of Debugger_Process_Tab;
             Current_Button : Button_Link := Open.First_Button;
             List           : Argument_List (1 .. 0);
-            Mode           : Command_Type;
             Tab            : Debugger_Process_Tab;
             Program        : Program_Descriptor;
+            Index          : Natural;
+
          begin
 
             --  Read the descriptors and create the debuggers.
 
             for J in 1 .. Num_Pages loop
-
                Get_Line (File, Buffer, Last);
                Program.Program := new String' (Buffer (1 .. Last));
                Get_Line (File, Buffer, Last);
@@ -440,7 +441,6 @@ package body Open_Session_Pkg is
                end if;
 
                Current_Button := Current_Button.Next;
-
             end loop;
 
             --  Read and compute the commands history.
@@ -449,37 +449,36 @@ package body Open_Session_Pkg is
 
             loop
                Get_Line (File, Buffer, Last);
+
                exit when Last > 4 and then Buffer (1 .. 4) = "----";
 
-               if Processes (Gint'Value (Buffer (1 .. Last))) /= null then
-                  Tab := Processes (Gint'Value (Buffer (1 .. Last)));
+               Index := 1;
+               Skip_Blanks (Buffer (1 .. Last), Index);
+               Skip_To_Blank (Buffer (1 .. Last), Index);
 
-                  Get_Line (File, Buffer, Last);
-                  Mode := Command_Type'Value (Buffer (1 .. Last));
+               if Processes (Gint'Value (Buffer (1 .. Index))) /= null then
+                  Tab := Processes (Gint'Value (Buffer (1 .. Index)));
+                  Skip_To_Blank (Buffer (Index .. Last), Index);
+                  Set_Busy_Cursor (Tab, True); 
+                  
+                  if Buffer (Index + 1) = 'H' then
+                     Send
+                       (Tab.Debugger,
+                        Buffer (Index + 3 .. Last),
+                        Wait_For_Prompt => True,
+                        Mode => Hidden);
 
-                  Get_Line (File, Buffer, Last);
-
-                  Set_Busy_Cursor (Tab, True);
-
-                  if Mode = Hidden then
-                     Send (Tab.Debugger,
-                           Buffer (1 .. Last),
-                           Wait_For_Prompt => True,
-                           Mode => Hidden);
-                  else
-                     Process_User_Command (Tab, Buffer (1 .. Last),
-                                           Mode => Odd.Types.Visible);
-                  end if;
-
+                  else     
+                     Process_User_Command
+                       (Tab, Buffer (Index + 3 .. Last),
+                        Mode => Odd.Types.Visible);
+                  end if;                  
+                  
                   Set_Busy_Cursor (Tab, False);
-               else
-                  Get_Line (File, Buffer, Last);
-                  Get_Line (File, Buffer, Last);
                end if;
-
             end loop;
-
          end;
+
          Close (File);
       end if;
 

@@ -73,23 +73,54 @@ package Open_Session_Pkg is
    procedure Gtk_New (Open_Session : out Open_Session_Access);
    procedure Initialize (Open_Session : access Open_Session_Record'Class);
 
-   procedure Save_Session (Window : access Gtk_Widget_Record'Class;
-                           Open   : in out Open_Session_Access;
-                           Dir    : in String);
-   --  Save a session. Window is the main debug window.
-
-   procedure Open_Session (Window : access Gtk_Widget_Record'Class;
-                           Open   : in out Open_Session_Access;
-                           Dir    : in String);
-   --  Load a session into Gvd. Window is the main debug window.
-
-
-   procedure Create_Buttons (Open      : access Open_Session_Record'Class;
-                             File_Name : in String);
+   procedure Create_Buttons
+     (Open      : access Open_Session_Record'Class;
+      File_Name : in String);
    --  Add all the check_buttons corresponding to the session information.
 
    procedure Remove_All_Buttons (Open : access Open_Session_Record'Class);
    --  Clear all the check_buttons.
+
+   ----------------------                  
+   -- Session Handling --
+   ----------------------
+               
+   --  The format for session files is as follows:
+   --             
+   --  [Session_File Header]
+   --  <number_of_processes>
+   --  ---------------------
+   --      <program_file_name_1>
+   --      <debugger_type_1>
+   --      <remote_host_1>
+   --      <remote_target_1>
+   --      <protocol_1> 
+   --      <debugger_name_1>
+   --  --------------------- 
+   --      <program_file_name_2>
+   --      <debugger_type_2>
+   --      <remote_host_2>
+   --      <remote_target_2>
+   --      <protocol_2>
+   --      <debugger_name_2>
+   --  (etc)      
+   --  [History]  
+   --    <debugger_number> < H | V | U > <command>
+   --    <debugger_number> < H | V | U > <command>
+   --  (etc)               
+   --  ---------------------
+
+   procedure Open_Session
+     (Window : access Gtk_Widget_Record'Class;
+      Open   : in out Open_Session_Access;
+      Dir    : in String);
+   --  Load a session into Gvd. Window is the main debug window.
+
+   procedure Save_Session
+     (Window : access Gtk_Widget_Record'Class;
+      Open   : in out Open_Session_Access;
+      Dir    : in String);
+   --  Save a session. Window is the main debug window.
 
 private
 
