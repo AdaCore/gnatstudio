@@ -263,7 +263,14 @@ package body Glide_Kernel.Project is
       end Report_Error;
 
       New_Project : Project_Node_Id;
+
    begin
+      if not Is_Regular_File (Project) then
+         Console.Insert (Kernel, Project & -" is not a regular file",
+                         Mode => Console.Error);
+         return;
+      end if;
+
       Output.Set_Special_Output (Report_Error'Unrestricted_Access);
       Free (Kernel.Scenario_Variables);
       Kernel.Project_Is_Default := False;
