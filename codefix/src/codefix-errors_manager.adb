@@ -18,7 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GNAT.Regpat; use GNAT.Regpat;
+with Codefix.Errors_Parser; use Codefix.Errors_Parser;
 
 package body Codefix.Errors_Manager is
 
@@ -154,7 +154,9 @@ package body Codefix.Errors_Manager is
      (This         : in out Correction_Manager;
       Error        : Error_Id;
       Choice       : Natural;
-      Later_Update : Boolean := True) is
+      Later_Update : Boolean := True)
+   is
+      pragma Unreferenced (Later_Update);
    begin
       if Choice /= 0 then
          Append
@@ -171,7 +173,10 @@ package body Codefix.Errors_Manager is
      (This         : in out Correction_Manager;
       Error        : Error_Id;
       Choice       : Extract;
-      Later_Update : Boolean := True) is
+      Later_Update : Boolean := True)
+   is
+      pragma Unreferenced (Error);
+      pragma Unreferenced (Later_Update);
    begin
       Append (This.Valid_Corrections, Clone (Choice));
    end Validate;
@@ -415,12 +420,10 @@ package body Codefix.Errors_Manager is
    -- Search_Error --
    ------------------
 
-   function Search_Error (This : Correction_Manager; Message : String)
-     return Error_Id is
-
-      Current_Id       : Error_Id := Get_First_Error (This);
-      Message_Expected : Error_Message;
-
+   function Search_Error
+     (This : Correction_Manager; Message : String) return Error_Id
+   is
+      Current_Id : Error_Id := Get_First_Error (This);
    begin
       while Current_Id /= Null_Error_Id loop
          exit when Get_Message (Get_Error_Message (Current_Id)) = Message;

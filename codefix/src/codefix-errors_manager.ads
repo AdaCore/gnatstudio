@@ -21,7 +21,6 @@
 with Generic_List;
 
 with Codefix.Text_Manager; use Codefix.Text_Manager;
-with Codefix.Errors_Parser; use Codefix.Errors_Parser;
 with Codefix.Formal_Errors; use Codefix.Formal_Errors;
 use Codefix.Formal_Errors.Extract_List;
 
