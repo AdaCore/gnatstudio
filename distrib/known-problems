@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 1.2.0
 
+- C218-012 Drive letters not supported under Windows
+  Problem:    The drive letters are not properly supported in the directory
+              selector.
+  Workaround: Change the current directory the the desired drive before using
+              the directory selector, or type the full path directly.
+
 - Crash when searching in files containing CR characters
   Problem:    When searching in a file containing CR with no corresponding
               LF characters, GPS sometimes crashes or behaves in an unreliable
