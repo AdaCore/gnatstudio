@@ -1,5 +1,6 @@
 CC         = @CC@
 LANGUAGES  = c ada
 AR_EXT     = .a
+C_EXT      = .c
 GTK_PREFIX = @GTK_PREFIX@
 
