@@ -54,9 +54,6 @@ package body Src_Editor_View is
    Minimal_Number_Of_Digits_In_LNA : constant := 3;
    --  Minimal number of digits for a line number that the Line Numbers Area
    --  (LNA) should be able to diplay.
-   --  ??? The LNA should stretch itself when more digits need to be displayed.
-   --  ??? Connect to the modified signal, and check the number of lines
-   --  ??? in the buffer for that.
 
    LNA_Border_Width : constant := 4;
    --  The number of pixels between the the LNA borders and the line number.
@@ -67,6 +64,10 @@ package body Src_Editor_View is
    package Source_View_Return_Callback is new Gtk.Handlers.Return_Callback
      (Widget_Type => Source_View_Record,
       Return_Type => Boolean);
+
+   package Source_Buffer_Callback is new Gtk.Handlers.User_Callback
+     (Widget_Type => Source_Buffer_Record,
+      User_Type => Source_View);
 
    --------------------------
    -- Forward declarations --
@@ -91,9 +92,28 @@ package body Src_Editor_View is
    --  is mapped, such as creating GCs associated to the left border window
    --  for instance.
 
-   function Line_Numbers_Area_Width
+   procedure Modified_Cb
+     (Buffer : access Source_Buffer_Record'Class;
+      View   : Source_View);
+   --  This procedure re-evaluates the number of lines in the buffer, and
+   --  if necesary change the width of the LNA.
+
+   function LNA_Width_In_Digits
+     (View : access Source_View_Record'Class) return Natural;
+   --  Return the number of digits the LNA should be able to display in order
+   --  to accomodate any line number for the given view. This value is computed
+   --  by returning the number of digits of the last line number. If this
+   --  number is smaller than the Minimal_Number_Of_Digits_In_LNA constant,
+   --  then this constant is returned instead. This is to ensure that the LNA
+   --  width does not change too often when editing small files.
+
+   function LNA_Width_In_Pixels
      (View : access Source_View_Record'Class) return Gint;
-   --  Return the width of the LNA in pixels.
+   --  Return the needed width in pixels of the LNA to fit any line number for
+   --  the given view. Just as in LNA_Width_In_Digits, the width returned will
+   --  always be able to accomodate at least Minimal_Number_Of_Digits_In_LNA,
+   --  to ensure that the LNA width does not change too often when editing
+   --  small files.
 
    procedure Reset_Left_Border_Window_Size
      (View : access Source_View_Record'Class);
@@ -152,6 +172,52 @@ package body Src_Editor_View is
       Gdk_New (View.Line_Numbers_GC, Get_Window (View, Text_Window_Left));
    end Map_Cb;
 
+   -----------------
+   -- Modified_Cb --
+   -----------------
+
+   procedure Modified_Cb
+     (Buffer : access Source_Buffer_Record'Class;
+      View   : Source_View)
+   is
+      New_Number_Of_Digits : constant Natural := LNA_Width_In_Digits (View);
+   begin
+      if View.Show_Line_Numbers
+        and then New_Number_Of_Digits /= View.LNA_Width_In_Digits
+      then
+         Reset_Left_Border_Window_Size (View);
+      end if;
+   end Modified_Cb;
+
+   -------------------------
+   -- LNA_Width_In_Digits --
+   -------------------------
+
+   function LNA_Width_In_Digits
+     (View : access Source_View_Record'Class) return Natural
+   is
+      Line_Count : constant Gint := Get_Line_Count (Get_Buffer (View));
+      Max_Number_Of_Digits : constant Natural :=
+        Natural'Max
+          (Number_Of_Digits_In (Natural (Line_Count)),
+           Minimal_Number_Of_Digits_In_LNA);
+   begin
+      return Max_Number_Of_Digits;
+   end LNA_Width_In_Digits;
+
+   -------------------------
+   -- LNA_Width_In_Pixels --
+   -------------------------
+
+   function LNA_Width_In_Pixels
+     (View : access Source_View_Record'Class) return Gint
+   is
+      Max_Number_Of_Digits : constant Natural := LNA_Width_In_Digits (View);
+      Templ : constant String (1 .. Max_Number_Of_Digits) := (others => '0');
+   begin
+      return 2 * LNA_Border_Width + Gdk.Font.String_Width (View.Font, Templ);
+   end LNA_Width_In_Pixels;
+
    -----------------------------------
    -- Reset_Left_Border_Window_Size --
    -----------------------------------
@@ -159,30 +225,19 @@ package body Src_Editor_View is
    procedure Reset_Left_Border_Window_Size
      (View : access Source_View_Record'Class)
    is
+      Max_Number_Of_Digits : constant Natural := LNA_Width_In_Digits (View);
       Border_Size : Gint := 0;
    begin
       if View.Show_Line_Numbers then
-         Border_Size := Line_Numbers_Area_Width (View);
+         Border_Size := LNA_Width_In_Pixels (View);
+         View.LNA_Width_In_Digits := Max_Number_Of_Digits;
+      end if;
+      if Border_Size /= 0 then
+         --  ??? Destroy the window first, or the resize will not be effective
+         Set_Border_Window_Size (View, Enums.Text_Window_Left, 0);
       end if;
       Set_Border_Window_Size (View, Enums.Text_Window_Left, Border_Size);
    end Reset_Left_Border_Window_Size;
-
-   -----------------------------
-   -- Line_Numbers_Area_Width --
-   -----------------------------
-
-   function Line_Numbers_Area_Width
-     (View : access Source_View_Record'Class) return Gint
-   is
-      Line_Count : constant Gint := Get_Line_Count (Get_Buffer (View));
-      Max_Number_Of_Digits : constant Natural :=
-        Natural'Max
-          (Number_Of_Digits_In (Natural (Line_Count)),
-           Minimal_Number_Of_Digits_In_LNA);
-      Templ : constant String (1 .. Max_Number_Of_Digits) := (others => '0');
-   begin
-      return 2 * LNA_Border_Width + Gdk.Font.String_Width (View.Font, Templ);
-   end Line_Numbers_Area_Width;
 
    -------------------------
    -- Redraw_Line_Numbers --
@@ -294,6 +349,7 @@ package body Src_Editor_View is
       end if;
       Gdk.Font.From_Description (View.Font, View.Pango_Font);
       View.Show_Line_Numbers := Show_Line_Numbers;
+      View.LNA_Width_In_Digits := Minimal_Number_Of_Digits_In_LNA;
 
       Source_View_Callback.Connect
         (View, "realize",
@@ -308,6 +364,12 @@ package body Src_Editor_View is
          Marsh => Source_View_Return_Callback.To_Marshaller
                     (Expose_Event_Cb'Access),
          After => False);
+      Source_Buffer_Callback.Connect
+        (Buffer, "changed",
+         Marsh => Source_Buffer_Callback.To_Marshaller (Modified_Cb'Access),
+         User_Data => Source_View (View),
+         After => True);
+
    end Initialize;
 
    --------------
