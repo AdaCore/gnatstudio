@@ -157,16 +157,8 @@ package body GVD.Tooltips is
          Tooltip_Handler.To_Marshaller (Mouse_Moved_Cb'Access),
          User_Data => Tooltip);
       Tooltip_Handler.Connect
-        (Widget, "enter_notify_event",
+        (Widget, "focus_in_event",
          Tooltip_Handler.To_Marshaller (Mouse_Enter_Cb'Access),
-         User_Data => Tooltip);
-      Tooltip_Handler.Connect
-        (Widget, "leave_notify_event",
-         Tooltip_Handler.To_Marshaller (Mouse_Leave_Cb'Access),
-         User_Data => Tooltip);
-      Tooltip_Handler.Connect
-        (Widget, "leave_notify_event",
-         Tooltip_Handler.To_Marshaller (Mouse_Leave_Cb'Access),
          User_Data => Tooltip);
       Tooltip_Handler.Connect
         (Widget, "focus_out_event",
@@ -199,6 +191,10 @@ package body GVD.Tooltips is
       if Tooltip.Display_Window /= Null_Window then
          Destroy (Tooltip.Display_Window);
          Tooltip.Display_Window := Null_Window;
+      end if;
+
+      if not Has_Focus_Is_Set (Tooltip.Widget) then
+         return False;
       end if;
 
       Draw_Tooltip
