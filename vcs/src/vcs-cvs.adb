@@ -47,7 +47,6 @@ with Commands;                  use Commands;
 with Commands.External;         use Commands.External;
 with Traces;                    use Traces;
 with VFS;                       use VFS;
-with File_Utils;                use File_Utils;
 
 package body VCS.CVS is
 
@@ -401,6 +400,11 @@ package body VCS.CVS is
                   Current_Status.Status := Removed;
 
                elsif Last >= Index + 12
+                 and then Line (Index .. Index + 12) = "Entry Invalid"
+               then
+                  Current_Status.Status := Removed;
+
+               elsif Last >= Index + 12
                  and then Line (Index .. Index + 12) = "Locally Added"
                then
                   Current_Status.Status := Added;
@@ -419,23 +423,6 @@ package body VCS.CVS is
                  and then Line (Index .. Index + 9) =  "Up-to-date"
                then
                   Current_Status.Status := Up_To_Date;
-
-                  declare
-                     S : constant String :=
-                       String_List.Head (Current_Status.File_Name);
-                  begin
-                     if S'Length > New_Dir'Length + 7
-                       and then
-                         S (S'First + New_Dir'Length
-                                .. S'First + New_Dir'Length + 7) = "no file "
-                     then
-                        Free (Current_Status.File_Name);
-                        Append (Current_Status.File_Name,
-                                New_Dir &
-                                S (S'First + New_Dir'Length + 8 .. S'Last));
-                        Current_Status.Status := Removed;
-                     end if;
-                  end;
 
                elsif Last >= Index + 13
                  and then Line (Index .. Index + 13) = "Needs Checkout"
@@ -461,9 +448,9 @@ package body VCS.CVS is
                      Append (Current_Status.File_Name,
                              New_Dir &
                              S (S'First + New_Dir'Length + 8 .. S'Last));
+                     Current_Status.Status := Needs_Update;
                   end if;
                end;
-
 
             elsif Length > 14
               and then Line (First .. First + 13) = "   Working rev"
@@ -565,16 +552,6 @@ package body VCS.CVS is
       if Is_Directory (Create (Data (Files))) then
          Append (Args, "status");
          Append (Args, "-l");
-
-         declare
-            F : File_Array_Access := Read_Files_From_Dirs (Data (Files));
-         begin
-            for J in F'Range loop
-               Append (Args, Base_Name (F (J)).all);
-            end loop;
-
-            Unchecked_Free (F);
-         end;
 
       else
          Append (Args, "status");
