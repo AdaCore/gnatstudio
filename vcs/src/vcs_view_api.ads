@@ -25,7 +25,6 @@ with Glide_Kernel.Scripts; use Glide_Kernel.Scripts;
 with Gtk.Menu;             use Gtk.Menu;
 with VCS;                  use VCS;
 with Projects;             use Projects;
-with Gtkada.MDI;
 
 package VCS_View_API is
 
@@ -171,10 +170,6 @@ package VCS_View_API is
    procedure Open_Explorer
      (Kernel  : Kernel_Handle;
       Context : Selection_Context_Access);
-   function Open_Explorer
-     (Kernel  : Kernel_Handle;
-      Context : Selection_Context_Access;
-      Visible : Boolean := True) return Gtkada.MDI.MDI_Child;
    --  If the VCS Explorer is not displayed, display it.
    --  Both suprograms accept a null context
 

@@ -733,69 +733,16 @@ package body VCS_View_API is
    -- Open_Explorer --
    -------------------
 
-   function Open_Explorer
-     (Kernel  : Kernel_Handle;
-      Context : Selection_Context_Access;
-      Visible : Boolean := True) return MDI_Child
-   is
-      Explorer : VCS_View_Access := Get_Explorer (Kernel);
-      Child    : MDI_Child;
-      Dirs     : String_List.List;
-
-   begin
-      if Explorer = null then
-         --  Must get the current directory (that depends on what module
-         --  currently has the focus) before we insert a new child in the MDI.
-
-         if Context /= null then
-            String_List.Append (Dirs, Get_Current_Dir (Context));
-         end if;
-
-         Gtk_New (Explorer, Kernel);
-         Child := Put
-           (Kernel, Explorer,
-            Default_Width  => Get_Pref (Kernel, Default_Widget_Width),
-            Default_Height => Get_Pref (Kernel, Default_Widget_Height),
-            Module         => VCS_Module_ID);
-         Set_Focus_Child (Child);
-         Set_Title (Child, -"VCS Explorer");
-
-         if not Visible then
-            Set_Child_Visible (Child, False);
-            Hide (Explorer);
-            Hide (Child);
-         end if;
-
-         if Context /= null then
-            Change_Context (Explorer, Context);
-         end if;
-         return Child;
-      else
-         Child :=
-           Find_MDI_Child_By_Tag (Get_MDI (Kernel), VCS_View_Record'Tag);
-
-         if Child /= null then
-            Set_Child_Visible (Child, True);
-            Show (Explorer);
-            Show (Child);
-         end if;
-
-         return Child;
-      end if;
-   end Open_Explorer;
-
-   -------------------
-   -- Open_Explorer --
-   -------------------
-
    procedure Open_Explorer
      (Kernel  : Kernel_Handle;
       Context : Selection_Context_Access)
    is
-      Child : MDI_Child;
-      pragma Unreferenced (Child);
+      Explorer : constant VCS_View_Access :=
+                   VCS_View_Access (Get_Explorer (Kernel, True, True));
    begin
-      Child := Open_Explorer (Kernel, Context);
+      if Context /= null then
+         Change_Context (Explorer, Context);
+      end if;
    end Open_Explorer;
 
    ------------------------
