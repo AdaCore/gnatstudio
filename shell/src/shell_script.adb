@@ -43,6 +43,7 @@ with String_List_Utils;        use String_List_Utils;
 with System.Address_Image;
 with System;                   use System;
 with Traces;                   use Traces;
+with Basic_Types;              use Basic_Types;
 
 package body Shell_Script is
 
@@ -643,7 +644,7 @@ package body Shell_Script is
       pragma Unreferenced (Script);
       use Command_List;
       Node : Command_List.List_Node;
-      Cmd, U  : String_Access;
+      Cmd, U  : GNAT.OS_Lib.String_Access;
       Min  : Natural := Minimum_Args;
       Max  : Natural := Maximum_Args;
       Info : Command_Information;
@@ -747,9 +748,16 @@ package body Shell_Script is
    procedure Execute_File
      (Script             : access Shell_Scripting_Record;
       Filename           : String;
-      Display_In_Console : Boolean := True) is
+      Display_In_Console : Boolean := True)
+   is
+      Args : Argument_List := (1 => new String'(Filename));
+      S    : constant String := Execute_Command (Script, "load", Args);
    begin
-      Execute_Command (Script, "load " & Filename, Display_In_Console);
+      if Display_In_Console then
+         Insert (Script.Console, S);
+      end if;
+
+      Free (Args);
    end Execute_File;
 
    --------------
@@ -1050,7 +1058,7 @@ package body Shell_Script is
    procedure Set_Return_Value
      (Data : in out Shell_Callback_Data; Value : String)
    is
-      Tmp : String_Access;
+      Tmp : GNAT.OS_Lib.String_Access;
    begin
       if Data.Return_As_List and then Data.Return_Value /= null then
          Tmp := Data.Return_Value;
