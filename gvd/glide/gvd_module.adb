@@ -1418,11 +1418,10 @@ package body GVD_Module is
         Entity_Selection_Context_Access (Context);
       Debugger : constant Debugger_Access :=
         Get_Current_Process (Get_Main_Window (Get_Kernel (Context))).Debugger;
-      Num      : Breakpoint_Identifier;
-      pragma Unreferenced (Widget, Num);
+      pragma Unreferenced (Widget);
 
    begin
-      Num := Break_Source
+      Break_Source
         (Debugger,
          File_Information (Entity),
          Line_Information (Entity),
@@ -1445,11 +1444,10 @@ package body GVD_Module is
         Entity_Selection_Context_Access (Context);
       Debugger : constant Debugger_Access :=
         Get_Current_Process (Get_Main_Window (Get_Kernel (Context))).Debugger;
-      Num      : Breakpoint_Identifier;
-      pragma Unreferenced (Widget, Num);
+      pragma Unreferenced (Widget);
 
    begin
-      Num := Break_Subprogram
+      Break_Subprogram
         (Debugger,
          Entity_Name_Information (Entity),
          Mode => GVD.Types.Visible);
@@ -1471,11 +1469,10 @@ package body GVD_Module is
         Entity_Selection_Context_Access (Context);
       Debugger : constant Debugger_Access :=
         Get_Current_Process (Get_Main_Window (Get_Kernel (Context))).Debugger;
-      Num      : Breakpoint_Identifier;
-      pragma Unreferenced (Widget, Num);
+      pragma Unreferenced (Widget);
 
    begin
-      Num := Break_Source
+      Break_Source
         (Debugger,
          File_Information (Entity),
          Line_Information (Entity),
@@ -1715,7 +1712,6 @@ package body GVD_Module is
          L          : constant Integer := File_Line.Line;
          A          : Line_Information_Array (L .. L);
          Mode       : Breakpoint_Command_Mode := Set;
-         Identifier : Breakpoint_Identifier := 0;
 
          use File_Line_List;
 
@@ -1738,16 +1734,14 @@ package body GVD_Module is
                   then
                      Mode := Unset;
                      A (L).Image := Line_Has_Breakpoint_Pixbuf;
-                     Identifier := Tab.Breakpoints (J).Num;
                      exit;
                   end if;
                end loop;
             end if;
 
             Create
-              (C, Id.Kernel, Debugger, Mode, File_Line.File.all,
-               File_Line.Line, Identifier);
-
+              (C, Id.Kernel, Tab, Mode, File_Line.File.all,
+               File_Line.Line);
             A (L).Associated_Command := Command_Access (C);
 
          elsif Kind = No_More_Code then
@@ -1851,91 +1845,90 @@ package body GVD_Module is
       Id           : constant GVD_Module := GVD_Module (GVD_Module_ID);
 
    begin
-      if Process = null or else Process.Debugger = null then
+      if Process = null
+        or else Process.Debugger = null
+        or else Context.all not in File_Area_Context'Class
+      then
          return;
       end if;
 
-      if Context.all in File_Area_Context'Class then
-         Area_Context := File_Area_Context_Access (Context);
+      Area_Context := File_Area_Context_Access (Context);
+
+      declare
+         File : constant String := Directory_Information (Area_Context) &
+           File_Information (Area_Context);
+         Line1, Line2 : Integer;
+
+      begin
+         Get_Area (Area_Context, Line1, Line2);
+
+         if Id.Show_Lines_With_Code then
+            if File_Line_List.Is_Empty (Id.Unexplored_Lines) then
+               Id.Line_Reveal_Timeout :=
+                 Gtk.Main.Timeout_Add (1, Idle_Reveal_Lines'Access);
+            else
+               Id.List_Modified := True;
+               Id.Unexplored_Lines := File_Line_List.Null_List;
+            end if;
+
+            for J in Line1 .. Line2 loop
+               File_Line_List.Prepend
+                 (Id.Unexplored_Lines, (new String'(File), J));
+               --  ??? We might want to use a LIFO structure here
+               --  instead of FIFO, so that the lines currently shown
+               --  are displayed first.
+            end loop;
+
+            return;
+         end if;
+
+         --  If we are not showing lines with code, no need to do the
+         --  following in an idle loop.
 
          declare
-            File : constant String := Directory_Information (Area_Context) &
-              File_Information (Area_Context);
-            Line1, Line2 : Integer;
-            Identifier : Breakpoint_Identifier := 0;
+            A        : Line_Information_Array (Line1 .. Line2);
+            C        : Set_Breakpoint_Command_Access;
+            Mode     : Breakpoint_Command_Mode := Set;
+            Tab      : constant Visual_Debugger :=
+              Get_Current_Process (Get_Main_Window (Id.Kernel));
+            Bps      : Bp_Array (Line1 .. Line2) := (others => 0);
 
          begin
-            Get_Area (Area_Context, Line1, Line2);
+            --  Build an array of breakpoints in the current range, more
+            --  efficient than re-browsing the whole array of breakpoints
+            --  for each line.
 
-            if Id.Show_Lines_With_Code then
-               if File_Line_List.Is_Empty (Id.Unexplored_Lines) then
-                  Id.Line_Reveal_Timeout :=
-                    Gtk.Main.Timeout_Add (1, Idle_Reveal_Lines'Access);
+            if Tab.Breakpoints /= null then
+               for J in Tab.Breakpoints'Range loop
+                  if Tab.Breakpoints (J).Line in Bps'Range
+                    and then Tab.Breakpoints (J).File /= null
+                    and then Tab.Breakpoints (J).File.all = File
+                  then
+                     Bps (Tab.Breakpoints (J).Line) :=
+                       Tab.Breakpoints (J).Num;
+                  end if;
+               end loop;
+            end if;
+
+            for J in A'Range loop
+               A (J).Image := Line_Might_Have_Code_Pixbuf;
+
+               if Bps (J) /= 0 then
+                  Mode        := Unset;
+                  A (J).Image := Line_Has_Breakpoint_Pixbuf;
                else
-                  Id.List_Modified := True;
-                  Id.Unexplored_Lines := File_Line_List.Null_List;
+                  Mode := Set;
                end if;
 
-               for J in Line1 .. Line2 loop
-                  File_Line_List.Prepend
-                    (Id.Unexplored_Lines, (new String'(File), J));
-                  --  ??? We might want to use a LIFO structure here
-                  --  instead of FIFO, so that the lines currently shown
-                  --  are displayed first.
-               end loop;
-            else
-               --  If we are not showing lines with code, no need to do the
-               --  following in an idle loop.
-               declare
-                  A    : Line_Information_Array (Line1 .. Line2);
-                  C    : Set_Breakpoint_Command_Access;
-                  Mode : Breakpoint_Command_Mode := Set;
-                  Tab  : constant Visual_Debugger :=
-                    Get_Current_Process (Get_Main_Window (Id.Kernel));
-                  Debugger : constant Debugger_Access := Tab.Debugger;
-                  Bps  : Bp_Array (Line1 .. Line2) := (others => 0);
-               begin
-                  --  Build an array of breakpoints in the current range, more
-                  --  efficient than re-browsing the whole array of breakpoints
-                  --  for each line.
+               Create (C, Id.Kernel, Tab, Mode, File, J);
+               A (J).Associated_Command := Command_Access (C);
+            end loop;
 
-                  if Tab.Breakpoints /= null then
-                     for J in Tab.Breakpoints'Range loop
-                        if Tab.Breakpoints (J).Line in Bps'Range
-                          and then Tab.Breakpoints (J).File /= null
-                          and then Tab.Breakpoints (J).File.all = File
-                        then
-                           Bps (Tab.Breakpoints (J).Line) :=
-                             Tab.Breakpoints (J).Num;
-                        end if;
-                     end loop;
-                  end if;
-
-                  for J in A'Range loop
-                     A (J).Image := Line_Might_Have_Code_Pixbuf;
-
-                     if Bps (J) /= 0 then
-                        Mode := Unset;
-                        A (J).Image := Line_Has_Breakpoint_Pixbuf;
-                        Identifier := Bps (J);
-                     else
-                        Mode := Set;
-                        Identifier := 0;
-                     end if;
-
-                     Create
-                       (C, Id.Kernel, Debugger, Mode, File, J, Identifier);
-
-                     A (J).Associated_Command := Command_Access (C);
-                  end loop;
-
-                  Add_Line_Information
-                    (Id.Kernel, File, Breakpoints_Column_Id,
-                     new Line_Information_Array'(A));
-               end;
-            end if;
+            Add_Line_Information
+              (Id.Kernel, File, Breakpoints_Column_Id,
+               new Line_Information_Array'(A));
          end;
-      end if;
+      end;
 
    exception
       when E : others =>
