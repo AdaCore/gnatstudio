@@ -78,7 +78,8 @@ package Debugger.Gdb is
    procedure Found_Frame_Info
      (Debugger    : access Gdb_Debugger;
       Str         : String;
-      First, Last : out Natural);
+      First, Last : out Natural;
+      Message     : out Frame_Info_Type);
 
    function Source_Files_List
      (Debugger : access Gdb_Debugger) return Basic_Types.String_Array;

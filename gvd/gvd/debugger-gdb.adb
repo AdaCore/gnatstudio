@@ -103,6 +103,11 @@ package body Debugger.Gdb is
      ("^#(\d+) +((0x[0-9a-f]+) in )?(.+?)( at (.+))?$", Multiple_Lines);
    --  Regular expression used to detect and parse callstack frames
 
+   Frame_Pattern_With_File : constant Pattern_Matcher := Compile
+     ("^#(\d+) +((0x[0-9a-f]+) in )?(.+?)( at (.+))$", Multiple_Lines);
+   --  Regular expression used to detect and parse callstack frames
+   --  with no file information
+
    Breakpoint_Pattern : constant Pattern_Matcher := Compile
      ("^(\d+)\s+(breakpoint|\w+? watchpoint)\s+(keep|dis|del)\s+([yn])"
       & "\s+((0x0*)?(\S+))\s+(.*)$",
@@ -1768,7 +1773,8 @@ package body Debugger.Gdb is
    procedure Found_Frame_Info
      (Debugger    : access Gdb_Debugger;
       Str         : String;
-      First, Last : out Natural)
+      First, Last : out Natural;
+      Message     : out Frame_Info_Type)
    is
       Matched : Match_Array (0 .. 1);
    begin
@@ -1777,9 +1783,16 @@ package body Debugger.Gdb is
       if Matched (1) /= No_Match then
          First := Matched (1).First;
          Last  := Matched (1).Last;
+         Match (Frame_Pattern_With_File, Str, Matched);
+         if Matched (1) /= No_Match then
+            Message := Location_Found;
+         else
+            Message := No_Debug_Info;
+         end if;
       else
          First := 0;
          Last  := 0;
+         Message := Location_Not_Found;
       end if;
    end Found_Frame_Info;
 

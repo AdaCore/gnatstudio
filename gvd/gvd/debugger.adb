@@ -318,10 +318,12 @@ package body Debugger is
    procedure Found_Frame_Info
      (Debugger    : access Debugger_Root;
       Str         : String;
-      First, Last : out Natural) is
+      First, Last : out Natural;
+      Message     : out Frame_Info_Type) is
    begin
       First := 0;
       Last  := 0;
+      Message := Location_Not_Found;
    end Found_Frame_Info;
 
    -----------------

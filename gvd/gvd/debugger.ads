@@ -306,10 +306,16 @@ package Debugger is
    --  However, since display a file requires multiple operations, it seemed
    --  better to do it in GVD.Process.Text_Output_Handler.
 
+   type Frame_Info_Type is
+     (Location_Not_Found,
+      Location_Found,
+      No_Debug_Info);
+
    procedure Found_Frame_Info
      (Debugger    : access Debugger_Root;
       Str         : String;
-      First, Last : out Natural);
+      First, Last : out Natural;
+      Message     : out Frame_Info_Type);
    --  Search for a callstack frame indication in Str.
    --  First is set to 0 if no such frame is found, and to the beginning of
    --  the substring otherwise. Last is set to the end of the substring if
