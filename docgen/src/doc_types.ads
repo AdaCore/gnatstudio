@@ -221,10 +221,8 @@ package Doc_Types is
 
                --  used to pass the information of one line in the body file
             when Body_Line_Info =>
-               Body_Line                     : GNAT.OS_Lib.String_Access;
+               Body_Text                     : GNAT.OS_Lib.String_Access;
                Body_File                     : GNAT.OS_Lib.String_Access;
-               Body_Line_Last                : Natural;
-               Body_Line_Nr                  : Natural;
                Body_List                     : Type_Entity_List.List;
             when others => null;  --  exception later
          end case;
@@ -254,6 +252,9 @@ package Doc_Types is
       --  show also private entities
       Doc_Directory        : GNAT.OS_Lib.String_Access;
       --  where should the doc files be created
+      References           : Boolean := False;
+      --  True if the program should search for the references
+      --  adding information like "subprogram called by..."
    end record;
 
    function Count_Lines
