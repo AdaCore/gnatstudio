@@ -848,7 +848,7 @@ package body Shell_Script is
          end if;
       end Ret_Val;
 
-      pragma Unreferenced (Script, Static_Method);
+      pragma Unreferenced (Script);
       use Command_List;
       Node : Command_List.List_Node;
       Cmd, U  : GNAT.OS_Lib.String_Access;
@@ -867,9 +867,11 @@ package body Shell_Script is
             Cmd := new String'(Get_Name (Class) & "." & Command);
             --  First parameter is always the instance
 
-            Min := Min + 1;
-            if Max /= Natural'Last then
-               Max := Max + 1;
+            if not Static_Method then
+               Min := Min + 1;
+               if Max /= Natural'Last then
+                  Max := Max + 1;
+               end if;
             end if;
          end if;
       else
