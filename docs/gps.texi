@@ -7207,14 +7207,19 @@ possible with @code{id}), they must all match for the action to be executed.
 These commands can be associated with menus, tool bar buttons and keys. All
 of these use similar syntax.
 
-Binding a menu to an action is done through the @code{<menu>} tag.
-This tag takes the following attributes:
+Binding a menu to an action is done through the @code{<menu>} and
+@code{<submenu>} tags.
+
+The @code{<menu>} tag takes the following attributes:
 
 @table @code
 @item action  (mandatory)
 This attribute specifies which action to execute
 when the menu is selected by the user. If no action by this name was defined,
 no new menu is added.
+
+This attribute can be omitted only when no title is specified for the menu
+to make it a separator (see below).
 
 @item before  (optional)
 It specifies the name of another menu item before
@@ -7238,42 +7243,89 @@ You can define the accelerator keys for your menus, using underscores
 in the titles. Thus, if you want an accelerator on the first letter in
 a menu named @code{File}, set its title as @code{_File}.
 
-You can specify which menu this new item is added to by putting the
-@code{<menu>} tag to a @code{<submenu>} tag. The latter also takes a
-@code{<title>} as a child. You can add items or sub menus to existing menus,
-using titles for menus that already exist.
+The tag @code{<submenu>} accepts the following attributes:
+
+@table @code
+@item before  (optional)
+See description above, same as for @code{<menu>}
+
+@item after   (optional)
+See description above, same as for @code{<menu>}
+@end table
+
+It accepts several children, among @code{<title>} (which must be specified
+at most once), @code{<submenu>} (for nested menus), and @code{<menu>}.
+
+Since @code{<submenu>} doesn't accept the @code{action} attribute, you should
+use @code{<menu>} for clickable items that should result in an action, and
+@code{<submenu>} if you want to define several menus with the same path.
+
+You can specify which menu the new item is added to in one of two ways:
+
+@itemize @bullet
+@item Specify a path in the @code{title} attribute of @code{<menu>}
+@item Put the @code{<menu>} as a child of a @code{<submenu>} node
+  This requires slightly more typing, but it allows you to specify the exact
+  location, at each level, of the parent menu (before or after an existing
+  menu).
+@end itemize
 
 For example, this adds an item named @code{mymenu} to the standard
 @code{Edit} menu.
 
 @smallexample
-<submenu>
-  <title>Edit</title>
+<?xml version="1.0" ?>
+<test>
+  <submenu>
+    <title>Edit</title>
+    <menu action="current file uses">
+       <title>mymenu</title>
+    </menu>
+  </submenu>
+</test>
+@end smallexample
+
+The following has exactly the same effect:
+
+@smallexample
+<?xml version="1.0" ?>
+<test>
   <menu action="current file uses">
-     <title>mymenu</title>
+    <title>Edit/mymenu</title>
   </menu>
-</submenu>
+</test>
 @end smallexample
 
-The above has the same result as
+The following adds a new item "stats" to the "unit testing" submenu
+in "my_tools".
 
 @smallexample
-<menu action="current file uses">
-   <title>/Edit/mymenu</title>
-</menu>
-@end smallexample
-
-Use the @code{/} separator to identify the submenu in a menu. For
-example, this adds a new item "stats" to the standard "unit testing" submenu
-in "tools".
-
-@smallexample
-<submenu>
-  <title>Tools/unit testing</title>
+<?xml version="1.0" ?>
+<test>
   <menu action="execute my stats">
-    <title>stats</title>
+     <title>/My_Tools/unit testing/stats</title>
   </menu>
-</submenu>
+</test>
+@end smallexample
+
+The previous syntax is shorter, but less flexible than the following,
+where we also force the My_Tools menu, if it doesn't exist yet, to
+appear after the File menu. This is not doable by using only @code{<menu>}
+tags. We also insert several items in that new menu
+
+@smallexample
+<?xml version="1.0" ?>
+<test>
+  <submenu after="File">
+    <title>My_Tools</title>
+    <menu action="execute my stats">
+       <title>unit testing/stats</title>
+    </menu>
+    <menu action="execute my stats2">
+       <title>unit testing/stats2</title>
+    </menu>
+  </submenu>
+</test>
 @end smallexample
 
 Adding an item with an empty title or no title at all inserts a
