@@ -1837,18 +1837,22 @@ package body Src_Editor_View is
                External_End_Action (Buffer);
 
             elsif Should_Indent (Buffer) then
-               Insert_At_Cursor (Buffer, (1 => ASCII.LF));
+               Result :=
+                 Insert_Interactive_At_Cursor (Buffer, (1 => ASCII.LF), True);
 
-               --  ??? Could be a key handler as well
-               Get_Iter_At_Mark (Buffer, Last, Get_Insert (Buffer));
-               Copy (Last, Dest => Start);
-               Backward_Line (Start, Result);
+               if Result then
+                  --  ??? Could be a key handler as well
+                  Get_Iter_At_Mark (Buffer, Last, Get_Insert (Buffer));
+                  Copy (Last, Dest => Start);
+                  Backward_Line (Start, Result);
 
-               if not Ends_Line (Last) then
-                  Forward_To_Line_End (Last, Result);
+                  if not Ends_Line (Last) then
+                     Forward_To_Line_End (Last, Result);
+                  end if;
+
+                  Result := Do_Indentation (Buffer, Start, Last);
                end if;
 
-               Result := Do_Indentation (Buffer, Start, Last);
                return True;
             end if;
 
