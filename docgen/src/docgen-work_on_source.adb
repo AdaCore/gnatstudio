@@ -2350,9 +2350,7 @@ package body Docgen.Work_On_Source is
             Data_Subtitle, Doc_Directory, Doc_Suffix,
             Level);
 
-         Final := new String'(New_Line.all
-                                (New_Line.all'First + 1 ..
-                                   New_Line.all'Last));
+         Final := new String'(New_Line (New_Line'First + 1 .. New_Line'Last));
          --  the "+1" avoids the first ASCII.LF in New_Line
          Free (New_Line);
 
