@@ -1018,6 +1018,10 @@ package body GVD.Text_Box.Source_Editor.Builtin is
 
       Update_Child (Edit);
 
+      --  Thaw Edit before calling Update_Buttons to work around a bug in Gtk+
+
+      Thaw (Get_Child (Edit));
+
       Update_Buttons (Editor, True);
 
       if Debugger_Process_Tab (Editor.Process).Breakpoints /= null then
@@ -1031,8 +1035,6 @@ package body GVD.Text_Box.Source_Editor.Builtin is
          Free (Editor.Debugger_Current_File);
          Editor.Debugger_Current_File := new String' (File_Name);
       end if;
-
-      Thaw (Get_Child (Edit));
 
    exception
 
