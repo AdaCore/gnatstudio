@@ -37,6 +37,11 @@
    Implementations for unix and windows systems is provided.
    Dummy stubs are also provided for other systems. */
 
+#ifdef _AIX
+/* work around the fact that gcc/cpp does not define "unix" under AiX */
+#define unix
+#endif
+
 #ifdef _WIN32
 
 #include <windows.h>
