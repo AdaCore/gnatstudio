@@ -296,6 +296,8 @@ package body VCS_View_Pkg is
       end if;
 
       Page := Get_Page_For_Identifier (Explorer, VCS_Identifier);
+      Set_Current_Page (Explorer.Notebook,
+                        Page_Num (Explorer.Notebook, Page));
 
       Push_State (Kernel, Busy);
 
