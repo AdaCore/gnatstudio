@@ -88,7 +88,6 @@ typedef enum {
 #include "htmlengine.h"
 #include "htmltype.h"
 #include "htmlpainter.h"
-#include "htmlengine-save.h"
 
 
 #define HTML_OBJECT(x)		((HTMLObject *) (x))
@@ -239,11 +238,6 @@ struct _HTMLObjectClass {
 
 	void (* forall) (HTMLObject *self, HTMLObjectForallFunc func, gpointer data);
 	gboolean (* is_container) (HTMLObject *self);
-
-	/* Saving.  */
-
-	gboolean (* save) (HTMLObject *self, HTMLEngineSaveState *state);
-	gboolean (* save_plain) (HTMLObject *self, HTMLEngineSaveState *state);
 
 	/* Page splitting (for printing).  */
 
@@ -396,13 +390,6 @@ HTMLObject *html_object_get_selection            (HTMLObject *self,
 						  guint      *size_return);
 void        html_object_append_selection_string  (HTMLObject *self,
 						  GString    *buffer);
-
-/* Saving.  */
-gboolean  html_object_save  (HTMLObject          *self,
-			     HTMLEngineSaveState *state);
-
-gboolean  html_object_save_plain  (HTMLObject          *self,
-				   HTMLEngineSaveState *state);
 
 /* set change flag f of this object and of all its parents */
 void  html_object_change_set  (HTMLObject      *self,

@@ -69,10 +69,7 @@ typedef enum _CscHTMLParagraphAlignment CscHTMLParagraphAlignment;
 
 /* FIXME we should hide this stuff.  */
 #include "htmlengine.h"
-#include "htmlengine-save.h"
 #include "cschtmlfontstyle.h"
-
-typedef HTMLEngineSaveReceiverFn CscHTMLSaveReceiverFn;
 
 struct _CscHTML {
 	GtkLayout layout;
@@ -170,16 +167,6 @@ void           csc_html_end         (CscHTML             *html,
 				     CscHTMLStreamStatus  status);
 void           csc_html_load_empty  (CscHTML             *html);
 
-/* Saving.  */
-gboolean  csc_html_save  (CscHTML               *html,
-			  CscHTMLSaveReceiverFn  receiver,
-			  gpointer               data);
-
-gboolean  csc_html_export  (CscHTML               *html,
-			    const char            *type,
-			    CscHTMLSaveReceiverFn  receiver,
-			    gpointer               data);
-
 /* Streams for feeding the widget with extra data (e.g. images) at loading
    time.  */
 CscHTMLStream *csc_html_stream_ref    (CscHTMLStream *handle);
@@ -214,12 +201,7 @@ void  csc_html_set_font_style       (CscHTML                   *html,
 void  csc_html_align_paragraph      (CscHTML                   *html,
 				     CscHTMLParagraphAlignment  alignment);
 
-void  csc_html_cut    (CscHTML *html);
 void  csc_html_copy   (CscHTML *html);
-void  csc_html_paste  (CscHTML *html);
-
-void  csc_html_undo  (CscHTML *html);
-void  csc_html_redo  (CscHTML *html);
 
 /* misc utils */
 

@@ -40,10 +40,8 @@ typedef struct _HTMLEngineClass HTMLEngineClass;
 #include "htmlsettings.h"
 #include "htmlpainter.h"
 #include "htmlgdkpainter.h"
-#include "htmlundo.h"
 #include "htmlstringtokenizer.h"
 #include "htmlengine-edit-selection-updater.h"
-#include "htmlreplace.h"
 
 #include "cschtml-embedded.h"
 
@@ -83,8 +81,6 @@ struct _HTMLEngine {
 
 	HTMLSettings *settings;
 	HTMLSettings *defaultSettings;
-
-	HTMLUndo *undo;
 
 	GdkWindow *window;
 	GdkGC *invert_gc;
@@ -239,9 +235,8 @@ struct _HTMLEngine {
            idle loop.  */
 	HTMLEngineEditSelectionUpdater *selection_updater;
 
-	/* search & replace */
+	/* search */
 	HTMLSearch  *search_info;
-	HTMLReplace *replace_info;
 };
 
 /* must be forward referenced *sigh* */
@@ -361,15 +356,5 @@ gboolean  html_engine_search                    (HTMLEngine *e,
 						 gboolean regular);
 gboolean  html_engine_search_next               (HTMLEngine *e);
 gboolean  html_engine_search_incremental        (HTMLEngine *e);
-
-void      html_engine_replace                   (HTMLEngine *e,
-						 const gchar *text,
-						 const gchar *rep_text,
-						 gboolean case_sensitive,
-						 gboolean forward,
-						 gboolean regular,
-						 void (*ask)(HTMLEngine *, gpointer), gpointer ask_data);
-void      html_engine_replace_do                (HTMLEngine *e, HTMLReplaceQueryAnswer answer);
-gint      html_engine_replaced                  (void);
 
 #endif /* _HTMLENGINE_H_ */

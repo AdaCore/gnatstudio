@@ -29,11 +29,9 @@
 
 #include "htmlengine-edit.h"
 #include "htmlengine-edit-cursor.h"
-#include "htmlengine-edit-delete.h"
 #include "htmlengine-edit-movement.h"
 
 #include "htmlengine-edit-insert.h"
-#include "htmlengine-edit-paste.h"
 
 /* Paragraph insertion.  */
 
@@ -310,117 +308,6 @@ static guint do_insert(HTMLEngine *engine, const gchar *text, guint len, CscHTML
 	return insert_count;
 }
 
-/* Undo/redo.  */
-
-struct _ActionData {
-	/* Reference count.  This is necessary because we want to share the data between
-           undo and redo.  */
-	guint ref_count;
-
-	/* The string to insert.  */
-	gchar *chars;
-	gint num_chars;
-
-	/* The font style.  */
-	CscHTMLFontStyle style;
-	gchar *face;
-};
-typedef struct _ActionData ActionData;
-
-static void  closure_destroy  (gpointer closure);
-static void  do_redo          (HTMLEngine *engine, gpointer closure);
-static void  do_undo          (HTMLEngine *engine, gpointer closure);
-static void  setup_undo       (HTMLEngine *engine, ActionData *data);
-static void  setup_redo       (HTMLEngine *engine, ActionData *data);
-
-static void
-closure_destroy (gpointer closure)
-{
-	ActionData *data;
-
-	data = (ActionData *) closure;
-	g_assert (data->ref_count > 0);
-
-	data->ref_count--;
-	if (data->ref_count > 0)
-		return;
-
-	g_free (data->chars);
-	g_free (data);
-}
-
-static void do_redo(HTMLEngine *engine, gpointer closure) {
-	ActionData *data;
-	guint n;
-
-	data = (ActionData *) closure;
-
-	n = do_insert(engine, data->chars, data->num_chars, data->style, data->face);
-	setup_undo (engine, data);
-}
-
-static void
-setup_undo (HTMLEngine *engine,
-	    ActionData *data)
-{
-	HTMLUndoAction *action;
-
-	data->ref_count ++;
-
-	/* FIXME i18n */
-	action = html_undo_action_new ("insert",
-				       do_undo,
-				       closure_destroy,
-				       data,
-				       html_cursor_get_position (engine->cursor));
-
-	html_undo_add_undo_action (engine->undo, action);
-}
-
-static void
-do_undo (HTMLEngine *engine,
-	 gpointer closure)
-{
-	ActionData *data;
-
-	data = (ActionData *) closure;
-
-	html_engine_delete(engine, data->num_chars, FALSE, TRUE);
-
-	setup_redo(engine, data);
-}
-
-static void
-setup_redo (HTMLEngine *engine,
-	    ActionData *data)
-{
-	HTMLUndoAction *action;
-
-	data->ref_count ++;
-
-	/* FIXME i18n */
-	action = html_undo_action_new("insert",
-				       do_redo,
-				       closure_destroy,
-				       data,
-				       html_cursor_get_position (engine->cursor));
-
-	html_undo_add_redo_action(engine->undo, action);
-}
-
-static ActionData *create_action_data(HTMLEngine *engine, const gchar *chars, gint num_chars, CscHTMLFontStyle style, gchar *font_face) {
-	ActionData *data;
-
-	data = g_new(ActionData, 1);
-	data->ref_count = 0;
-	data->chars = g_strndup(chars, num_chars);
-	data->num_chars = num_chars;
-	data->style = style;
-	data->face = font_face;
-
-	return data;
-}
-
 guint html_engine_insert(HTMLEngine *e, const gchar *text, guint len) {
 	HTMLObject *current_object;
 	guint n;
@@ -438,13 +325,9 @@ guint html_engine_insert(HTMLEngine *e, const gchar *text, guint len) {
 	if (current_object == NULL)
 		return 0;
 
-	html_undo_discard_redo(e->undo);
-
 	html_engine_hide_cursor(e);
 
 	n = do_insert(e, text, len, e->insertion_font_style, e->insertion_font_face);
-
-	setup_undo(e, create_action_data(e, text, len, e->insertion_font_style, e->insertion_font_face));
 
 	html_engine_show_cursor(e);
 

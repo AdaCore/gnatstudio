@@ -25,12 +25,9 @@
 #include "cscmarshal.h"
 #include "htmlengine-edit-clueflowstyle.h"
 #include "htmlengine-edit-copy.h"
-#include "htmlengine-edit-cut.h"
-#include "htmlengine-edit-delete.h"
 #include "htmlengine-edit-fontstyle.h"
 #include "htmlengine-edit-insert.h"
 #include "htmlengine-edit-movement.h"
-#include "htmlengine-edit-paste.h"
 #include "htmlengine-edit.h"
 
 #include "cschtml-embedded.h"
@@ -1370,39 +1367,6 @@ csc_html_jump_to_anchor (CscHTML *html,
 }
 
 
-gboolean
-csc_html_save (CscHTML *html,
-	       CscHTMLSaveReceiverFn receiver,
-	       gpointer data)
-{
-	g_return_val_if_fail (html != NULL, FALSE);
-	g_return_val_if_fail (GTK_IS_CSCHTML (html), FALSE);
-	g_return_val_if_fail (receiver != NULL, FALSE);
-
-	return html_engine_save (html->engine, receiver, data);
-}
-
-gboolean
-csc_html_export (CscHTML *html,
-		 const char *type,
-		 CscHTMLSaveReceiverFn receiver,
-		 gpointer data)
-{
-	g_return_val_if_fail (html != NULL, FALSE);
-	g_return_val_if_fail (GTK_IS_CSCHTML (html), FALSE);
-	g_return_val_if_fail (receiver != NULL, FALSE);
-
-	if (strcmp (type, "text/html") == 0) {
-		return html_engine_save (html->engine, receiver, data);
-	} else if (strcmp (type, "text/plain") == 0) {
-		return html_engine_save_plain (html->engine, receiver,
-					       data);
-	} else {
-		return FALSE;
-	}
-}
-
-
 void
 csc_html_private_calc_scrollbars (CscHTML *html)
 {
@@ -1535,51 +1499,12 @@ csc_html_align_paragraph (CscHTML *html,
 /* Clipboard operations.  */
 
 void
-csc_html_cut (CscHTML *html)
-{
-	g_return_if_fail (html != NULL);
-	g_return_if_fail (GTK_IS_CSCHTML (html));
-
-	html_engine_cut (html->engine, TRUE);
-}
-
-void
 csc_html_copy (CscHTML *html)
 {
 	g_return_if_fail (html != NULL);
 	g_return_if_fail (GTK_IS_CSCHTML (html));
 
 	html_engine_copy (html->engine);
-}
-
-void
-csc_html_paste (CscHTML *html)
-{
-	g_return_if_fail (html != NULL);
-	g_return_if_fail (GTK_IS_CSCHTML (html));
-
-	html_engine_paste (html->engine, TRUE);
-}
-
-
-/* Undo/redo.  */
-
-void
-csc_html_undo (CscHTML *html)
-{
-	g_return_if_fail (html != NULL);
-	g_return_if_fail (GTK_IS_CSCHTML (html));
-
-	html_engine_undo (html->engine);
-}
-
-void
-csc_html_redo (CscHTML *html)
-{
-	g_return_if_fail (html != NULL);
-	g_return_if_fail (GTK_IS_CSCHTML (html));
-
-	html_engine_redo (html->engine);
 }
 
 /* misc utils */

@@ -29,11 +29,8 @@
 
 #include "htmlengine-edit-copy.h"
 #include "htmlengine-edit-cursor.h"
-#include "htmlengine-edit-cut.h"
-#include "htmlengine-edit-delete.h"
 #include "htmlengine-edit-insert.h"
 #include "htmlengine-edit-movement.h"
-#include "htmlengine-edit-paste.h"
 #include "htmlengine-edit.h"
 
 #include "cschtml-keybinding.h"
@@ -64,18 +61,6 @@ scroll_by_amount (CscHTML *html,
 /* The commands.  */
 
 static void
-undo (CscHTML *html)
-{
-	html_engine_undo (html->engine);
-}
-
-static void
-redo (CscHTML *html)
-{
-	html_engine_redo (html->engine);
-}
-
-static void
 forward (CscHTML *html)
 {
 	html_engine_move_cursor (html->engine, HTML_ENGINE_CURSOR_RIGHT, 1);
@@ -97,23 +82,6 @@ static void
 down (CscHTML *html)
 {
 	html_engine_move_cursor (html->engine, HTML_ENGINE_CURSOR_DOWN, 1);
-}
-
-static void
-delete (CscHTML *html,
-	gboolean backwards)
-{
-	/* FIXME this should cut the selection instead.  */
-	html_engine_disable_selection (html->engine);
-	html_engine_delete (html->engine, 1, TRUE, backwards);
-}
-
-static void
-insert_para (CscHTML *html)
-{
-	/* FIXME this should cut the selection instead.  */
-	html_engine_disable_selection (html->engine);
-	html_engine_insert (html->engine, "\n", 1);
 }
 
 static void
@@ -187,22 +155,10 @@ disable_selection (CscHTML *html)
 }
 
 static void
-cut (CscHTML *html)
-{
-	html_engine_cut (html->engine, TRUE);
-}
-
-static void
 copy (CscHTML *html)
 {
 	html_engine_copy (html->engine);
 	html_engine_disable_selection (html->engine);
-}
-
-static void
-paste (CscHTML *html)
-{
-	html_engine_paste (html->engine, TRUE);
 }
 
 
@@ -222,9 +178,6 @@ handle_ctrl (CscHTML *html,
 	case 'b':
 		backward (html);
 		break;
-	case 'd':
-		delete (html, FALSE);
-		break;
 	case 'e':
 		end_of_line (html);
 		break;
@@ -240,24 +193,8 @@ handle_ctrl (CscHTML *html,
 	case 'p':
 		up (html);
 		break;
-	case 'm':
-	case 'j':
-		insert_para (html);
-		break;
 	case 'v':
 		page_down (html);
-		break;
-	case 'w':
-		cut (html);
-		break;
-	case 'y':
-		paste (html);
-		break;
-	case 'r':
-		redo (html);
-		break;
-	case 'z':
-		undo (html);
 		break;
 	case ' ':
 		set_mark (html);
@@ -359,40 +296,6 @@ handle_none (CscHTML *html,
 	case GDK_Page_Down:
 	case GDK_KP_Page_Down:
 		page_down (html);
-		break;
-	case GDK_Delete:
-	case GDK_KP_Delete:
-		delete (html, FALSE);
-		break;
-	case GDK_Return:
-		insert_para (html);
-		break;
-	case GDK_BackSpace:
-		delete (html, TRUE);
-		break;
-
-		/* FIXME these are temporary bindings.  */
-	case GDK_F1:
-		csc_html_undo (html);
-		break;
-	case GDK_F2:
-		csc_html_redo (html);
-		break;
-	case GDK_F3:
-		csc_html_cut (html);
-		break;
-	case GDK_F4:
-		csc_html_copy (html);
-		break;
-	case GDK_F5:
-		csc_html_paste (html);
-		break;
-	case GDK_F12:
-		if (html->engine->clue != NULL) {
-			g_print ("\n*** TREE DUMP:\n");
-			csc_html_debug_dump_tree_simple (html->engine->clue, 1);
-			g_print ("\n");
-		}
 		break;
 
 		/* The following cases are for keys that we don't want to map yet, but

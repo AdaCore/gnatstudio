@@ -165,14 +165,6 @@ accepts_cursor (HTMLObject *self)
 	return TRUE;
 }
 
-static gboolean
-save (HTMLObject *self,
-      HTMLEngineSaveState *state)
-{
-	/* FIXME lots of missing parameters.. this stuff is sick... */
-	return html_engine_save_output_string (state, "\n<HR%s>\n", HTML_RULE (self)->shade ? "" : " noshade");
-}
-
 
 void
 html_rule_type_init (void)
@@ -197,7 +189,6 @@ html_rule_class_init (HTMLRuleClass *klass,
 	object_class->calc_min_width = calc_min_width;
 	object_class->calc_size = calc_size;
 	object_class->accepts_cursor = accepts_cursor;
-	object_class->save = save;
 
 	parent_class = &html_object_class;
 }

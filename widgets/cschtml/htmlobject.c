@@ -420,20 +420,6 @@ is_container (HTMLObject *self)
 	return FALSE;
 }
 
-static gboolean
-save (HTMLObject *self,
-      HTMLEngineSaveState *state)
-{
-	return TRUE;
-}
-
-static gboolean
-save_plain (HTMLObject *self,
-      HTMLEngineSaveState *state)
-{
-	return TRUE;
-}
-
 static gint
 check_page_split (HTMLObject *self,
 		  gint y)
@@ -499,8 +485,6 @@ html_object_class_init (HTMLObjectClass *klass,
 	klass->append_selection_string = append_selection_string;
 	klass->forall = forall;
 	klass->is_container = is_container;
-	klass->save = save;
-	klass->save_plain = save_plain;
 	klass->check_page_split = check_page_split;
 	klass->search = search;
 	klass->search_next = search;
@@ -895,20 +879,6 @@ html_object_prev_not_slave (HTMLObject *object)
 	return p;
 }
 
-
-gboolean
-html_object_save (HTMLObject *self,
-		  HTMLEngineSaveState *state)
-{
-	return (* HO_CLASS (self)->save) (self, state);
-}
-
-gboolean
-html_object_save_plain (HTMLObject *self,
-			HTMLEngineSaveState *state)
-{
-	return (* HO_CLASS (self)->save_plain) (self, state);
-}
 
 gint
 html_object_check_page_split  (HTMLObject *self,

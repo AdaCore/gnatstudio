@@ -37,8 +37,6 @@
 #include "htmlengine-edit.h"
 #include "htmlengine-edit-cursor.h"
 #include "htmlengine-edit-movement.h"
-#include "htmlengine-cutbuffer.h"
-#include "htmlengine-edit-paste.h"
 
 #include "htmlanchor.h"
 #include "htmlrule.h"
@@ -2837,8 +2835,6 @@ html_engine_destroy (GtkObject *object)
 
 	engine = HTML_ENGINE (object);
 
-	html_undo_destroy (engine->undo);
-
 	if (engine->cut_buffer != NULL)
 		html_engine_cut_buffer_destroy (engine->cut_buffer);
 
@@ -3015,8 +3011,6 @@ html_engine_init (HTMLEngine *engine)
 	engine->settings = html_settings_new ();
 	engine->defaultSettings = html_settings_new ();
 	engine->image_factory = html_image_factory_new(engine);
-
-	engine->undo = html_undo_new ();
 
 	engine->font_style_stack = html_stack_new (NULL);
 	engine->font_face_stack = html_stack_new (NULL);
@@ -3498,14 +3492,10 @@ html_engine_parse (HTMLEngine *e)
 {
 	html_engine_stop_parser (e);
 
-	/* reset search & replace */
+	/* reset search */
 	if (e->search_info) {
 		html_search_destroy (e->search_info);
 		e->search_info = NULL;
-	}
-	if (e->replace_info) {
-		html_replace_destroy (e->replace_info);
-		e->replace_info = NULL;
 	}
 
 	if (e->clue != NULL)
@@ -4221,66 +4211,4 @@ gboolean
 html_engine_search_incremental (HTMLEngine *e)
 {
 	return FALSE;
-}
-
-void
-html_engine_replace (HTMLEngine *e, const gchar *text, const gchar *rep_text,
-		     gboolean case_sensitive, gboolean forward, gboolean regular,
-		     void (*ask)(HTMLEngine *, gpointer), gpointer ask_data)
-{
-	if (e->replace_info)
-		html_replace_destroy (e->replace_info);
-	e->replace_info = html_replace_new (rep_text, ask, ask_data);
-
-	if (html_engine_search (e, text, case_sensitive, forward, regular))
-		ask (e, ask_data);
-}
-
-static void replace(HTMLEngine *e) {
-	HTMLObject *first = HTML_OBJECT(e->search_info->found->data);
-	HTMLObject *new_text;
-
-	html_engine_edit_selection_update_now(e->selection_updater);
-
-	new_text = html_text_master_new(e->replace_info->text, HTML_TEXT(first)->font_style, &HTML_TEXT(first)->color, HTML_TEXT(first)->font_face);
-	html_engine_paste_object(e, new_text, TRUE);
-
-	/* update search info to point just behind replaced text */
-	g_list_free (e->search_info->found);
-	e->search_info->found = g_list_append (NULL, e->cursor->object);
-	e->search_info->start_pos = e->search_info->stop_pos = e->cursor->offset-1;
-	e->search_info->found_len = 0;
-	html_search_pop  (e->search_info);
-	html_search_push (e->search_info, e->cursor->object->parent);
-}
-
-void
-html_engine_replace_do (HTMLEngine *e, HTMLReplaceQueryAnswer answer)
-{
-	g_assert (e->replace_info);
-
-	switch (answer) {
-	case RQA_ReplaceAll:
-		html_undo_level_begin (e->undo, "replace all");
-		replace (e);
-		while (html_engine_search_next (e))
-			replace (e);
-		html_undo_level_end (e->undo);
-	case RQA_Cancel:
-		html_replace_destroy (e->replace_info);
-		e->replace_info = NULL;
-		html_engine_disable_selection (e);
-		break;
-
-	case RQA_Replace:
-		html_undo_level_begin (e->undo, "replace");
-		replace (e);
-		html_undo_level_end (e->undo);
-	case RQA_Next:
-		if (html_engine_search_next (e))
-			e->replace_info->ask (e, e->replace_info->ask_data);
-		else
-			html_engine_disable_selection (e);
-		break;
-	}
 }

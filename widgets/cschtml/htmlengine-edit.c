@@ -32,39 +32,6 @@
 #include "htmlimage.h"
 
 #include "htmlengine-edit.h"
-#include "htmlengine-edit-paste.h"
-
-
-void
-html_engine_undo (HTMLEngine *e)
-{
-	HTMLUndo *undo;
-
-	g_return_if_fail (e != NULL);
-	g_return_if_fail (HTML_IS_ENGINE (e));
-	g_return_if_fail (e->undo != NULL);
-	g_return_if_fail (e->editable);
-
-	html_engine_unselect_all (e, TRUE);
-
-	undo = e->undo;
-	html_undo_do_undo (undo, e);
-}
-
-void
-html_engine_redo (HTMLEngine *e)
-{
-	HTMLUndo *undo;
-
-	g_return_if_fail (e != NULL);
-	g_return_if_fail (HTML_IS_ENGINE (e));
-	g_return_if_fail (e->undo != NULL);
-
-	html_engine_unselect_all (e, TRUE);
-
-	undo = e->undo;
-	html_undo_do_redo (undo, e);
-}
 
 
 void

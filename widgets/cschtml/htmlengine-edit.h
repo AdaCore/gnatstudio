@@ -26,9 +26,6 @@
 #include "htmlengine.h"
 
 
-/* Undo/redo.  */
-void  html_engine_undo      (HTMLEngine *e);
-void  html_engine_redo      (HTMLEngine *e);
 void  html_engine_set_mark  (HTMLEngine *e);
 
 #endif /* _HTMLENGINE_EDIT_H */

@@ -202,51 +202,6 @@ accepts_cursor (HTMLObject *object)
 	return TRUE;
 }
 
-static gboolean
-save (HTMLObject *self,
-      HTMLEngineSaveState *state)
-{
-	/* OK, doing these nasty things is not in my style, but in this case
-           it's so unlikely to break and it's so handy and fast that I think
-           it's almost acceptable.  */
-#define RIDICULOUS_BUFFER_SIZE 16384
-	gchar opening_tags[RIDICULOUS_BUFFER_SIZE];
-	gchar closing_tags[RIDICULOUS_BUFFER_SIZE];
-#undef RIDICULOUS_BUFFER_SIZE
-	HTMLText *text;
-
-	text = HTML_TEXT (self);
-
-	get_tags (text, opening_tags, closing_tags);
-
-	if (! html_engine_save_output_string (state, opening_tags))
-		return FALSE;
-
-	if (! html_engine_save_encode (state, text->text, text->text_len))
-		return FALSE;
-
-	if (! html_engine_save_output_string (state, closing_tags))
-		return FALSE;
-
-	return TRUE;
-}
-
-static gboolean
-save_plain (HTMLObject *self,
-      HTMLEngineSaveState *state)
-{
-	HTMLText *text;
-	char *str = NULL;
-	text = HTML_TEXT (self);
-
-	if (! html_engine_save_output_string (state, text->text))
-		return FALSE;
-	
-	return TRUE;
-}
-
-
-
 
 /* HTMLText methods.  */
 
@@ -585,8 +540,6 @@ html_text_class_init (HTMLTextClass *klass,
 	object_class->calc_size = calc_size;
 	object_class->get_cursor = get_cursor;
 	object_class->get_cursor_base = get_cursor_base;
-	object_class->save = save;
-	object_class->save_plain = save_plain;
 
 	/* HTMLText methods.  */
 

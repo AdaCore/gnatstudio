@@ -20,7 +20,6 @@
 */
 
 #include "htmlengine.h"
-#include "htmlengine-edit-paste.h"
 #include "htmlimage.h"
 #include "htmlcluealigned.h"
 

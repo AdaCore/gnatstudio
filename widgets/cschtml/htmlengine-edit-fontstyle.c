@@ -55,10 +55,6 @@ struct _ActionData {
 typedef struct _ActionData ActionData;
 
 static void  	   closure_destroy    (gpointer closure);
-static void  	   do_redo            (HTMLEngine *engine, gpointer closure);
-static void  	   do_undo            (HTMLEngine *engine, gpointer closure);
-static void  	   setup_undo         (HTMLEngine *engine, ActionData *data);
-static void        setup_undo         (HTMLEngine *engine, ActionData *data);
 static ActionData *create_action_data (CscHTMLFontStyle and_mask,
 				       CscHTMLFontStyle or_mask,
 				       guint count, gboolean backwards,
@@ -320,12 +316,6 @@ set_font_style (HTMLEngine *engine,
 						HTML_OBJECT (new), HTML_OBJECT (curr));
 		}
 
-		/* Save the original style for undo.  */
-		if (want_undo)
-			prepend_style_segment (&orig_styles,
-					       HTML_TEXT (curr)->font_style,
-					       end - start);
-
 		/* Finally set the style.  */
 		html_text_set_font_style (HTML_TEXT (curr), NULL, font_style);
 
@@ -392,12 +382,7 @@ set_font_style (HTMLEngine *engine,
 
 	html_cursor_normalize (engine->cursor);
 
-	if (! want_undo)
-		return NULL;
-
-	orig_styles = g_list_reverse (orig_styles);
-
-	return orig_styles;
+	return NULL;
 }
 
 static void
@@ -438,12 +423,6 @@ set_font_style_in_selection (HTMLEngine *engine,
 	g_print ("Tree after changing font style:\n");
 	csc_html_debug_dump_tree_simple (engine->clue, 2);
 #endif
-
-	if (! want_undo)
-		return;
-
-	setup_undo (engine,
-		    create_action_data (and_mask, or_mask, count, backwards, orig_styles));
 }
 
 
@@ -477,38 +456,6 @@ closure_destroy (gpointer closure)
 
 	free_segment_list (data->segments);
 	g_free (data);
-}
-
-static void
-do_redo (HTMLEngine *engine,
-	 gpointer closure)
-{
-	ActionData *data;
-
-	data = (ActionData *) closure;
-
-	set_font_style (engine, data->and_mask, data->or_mask, data->count,
-			! data->backwards, FALSE);
-
-	setup_undo (engine, data);
-}
-
-static void
-setup_redo (HTMLEngine *engine,
-	    ActionData *data)
-{
-	HTMLUndoAction *action;
-
-	data->ref_count ++;
-
-	/* FIXME i18n */
-	action = html_undo_action_new ("Font style change",
-				       do_redo,
-				       closure_destroy,
-				       data,
-				       html_cursor_get_position (engine->cursor));
-
-	html_undo_add_redo_action (engine->undo, action);
 }
 
 static gboolean
@@ -582,58 +529,6 @@ move_to_next_text_segment_backwards (HTMLEngine *engine)
 	}
 
 	return retval;
-}
-
-static void
-do_undo (HTMLEngine *engine,
-	 gpointer closure)
-{
-	ActionData *data;
-	GList *p;
-
-	data = (ActionData *) closure;
-
-	for (p = data->segments; p != NULL; p = p->next) {
-		FontStyleSegment *segment;
-
-		segment = (FontStyleSegment *) p->data;
-
-		set_font_style (engine, (CscHTMLFontStyle) 0,
-				segment->style, segment->count,
-				data->backwards, FALSE);
-
-		if (data->backwards) {
-			html_engine_move_cursor (engine, HTML_ENGINE_CURSOR_LEFT,
-						 segment->count);
-			if (! move_to_next_text_segment_backwards (engine))
-				break;
-		} else {
-			html_engine_move_cursor (engine, HTML_ENGINE_CURSOR_RIGHT,
-						 segment->count);
-			if (! move_to_next_text_segment_forwards (engine))
-				break;
-		}
-	}
-
-	setup_redo (engine, data);
-}
-
-static void
-setup_undo (HTMLEngine *engine,
-	    ActionData *data)
-{
-	HTMLUndoAction *action;
-
-	data->ref_count ++;
-
-	/* FIXME i18n */
-	action = html_undo_action_new ("Font style change",
-				       do_undo,
-				       closure_destroy,
-				       data,
-				       html_cursor_get_position (engine->cursor));
-
-	html_undo_add_undo_action (engine->undo, action);
 }
 
 static ActionData *
