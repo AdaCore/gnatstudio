@@ -22,7 +22,7 @@
 
 with Gtk.Menu_Item;          use Gtk.Menu_Item;
 
-with Glide_Kernel;
+with Glide_Kernel;           use Glide_Kernel;
 
 with Codefix;                use Codefix;
 with Codefix.Text_Manager;   use Codefix.Text_Manager;
@@ -35,6 +35,7 @@ package Codefix_Module is
       Current_Text : Ptr_Text_Navigator;
       Corrector    : Ptr_Correction_Manager;
       Errors_Found : Ptr_Errors_Interface;
+      Kernel       : Kernel_Handle;
    end record;
 
    type Codefix_Module_ID_Access is access all Codefix_Module_ID_Record'Class;
