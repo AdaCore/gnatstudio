@@ -1743,6 +1743,14 @@ package body Ada_Analyzer is
                         Close_Parenthesis;
                      end if;
 
+                     --  P must point to the end of the string, and thus we
+                     --  need special handling if the string wasn't correctly
+                     --  terminated
+
+                     if P > Buffer'Last or else Buffer (P) /= '"' then
+                        P := Prev_Char (P);
+                     end if;
+
                      if Top_Token.Token in Token_Class_Declk
                        and then Top_Token.Ident_Len = 0
                      then
