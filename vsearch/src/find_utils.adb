@@ -175,7 +175,6 @@ package body Find_Utils is
          Pos : Natural := Start_Index;
       begin
          loop
-            --  Requires GNAT 3.16 >= 20021016  (BA15-007)
             Match (RE, Buffer, Context.Sub_Matches.all, Pos, End_Index);
 
             exit when Context.Sub_Matches (0) = No_Match;
@@ -294,7 +293,8 @@ package body Find_Utils is
    -- Context_As_Regexp --
    -----------------------
 
-   function Context_As_Regexp (Context : access Root_Search_Context)
+   function Context_As_Regexp
+     (Context : access Root_Search_Context)
       return GNAT.Regpat.Pattern_Matcher
    is
       Flags : Regexp_Flags := Multiple_Lines;
@@ -421,8 +421,8 @@ package body Find_Utils is
    -- Get_Options --
    -----------------
 
-   function Get_Options (Context : access Root_Search_Context)
-      return Search_Options is
+   function Get_Options
+     (Context : access Root_Search_Context) return Search_Options is
    begin
       return Context.Options;
    end Get_Options;
