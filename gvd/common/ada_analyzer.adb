@@ -800,6 +800,7 @@ package body Ada_Analyzer is
       ----------------------------
 
       procedure Indent_Function_Return (Prec : Natural) is
+         Top_Token : constant Token_Stack.Generic_Type_Access := Top (Tokens);
       begin
          --  function A
          --    return B;   --  from Indent_Continue
