@@ -81,7 +81,7 @@ package GVD.Dialogs is
    --  Callback function connected to the "process_stopped" signal.
    --  It will update the task window associated with a given tab.
 
-   procedure Update
+   procedure Update_Call_Stack
      (Debugger : access Gtk.Widget.Gtk_Widget_Record'Class);
    --  Update the contents of the call stack window.
    --  The information is read from Debugger (which is in fact a

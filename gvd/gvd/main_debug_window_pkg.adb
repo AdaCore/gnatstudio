@@ -771,7 +771,7 @@ end Initialize;
       end if;
 
       if Tab /= null then
-         Update (Tab);
+         Update_Call_Stack (Tab);
          Update (Window.Task_Dialog, Tab);
          Update (Window.History_Dialog, Tab);
       end if;

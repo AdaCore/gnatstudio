@@ -47,7 +47,7 @@ package body GVD.Dialogs.Callbacks is
       Params : Gtk.Arguments.Gtk_Args)
    is
    begin
-      Update (Object);
+      Update_Call_Stack (Object);
    end On_Stack_Process_Stopped;
 
    -----------------------------

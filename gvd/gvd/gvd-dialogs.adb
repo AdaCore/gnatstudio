@@ -204,7 +204,7 @@ package body GVD.Dialogs is
       end;
    end Update;
 
-   procedure Update
+   procedure Update_Call_Stack
      (Debugger : access Gtk.Widget.Gtk_Widget_Record'Class)
    is
       Temp     : Chars_Ptr_Array (0 .. 2);
@@ -260,7 +260,7 @@ package body GVD.Dialogs is
 
       Free (Bt (1 .. Len));
       Thaw (List);
-   end Update;
+   end Update_Call_Stack;
 
    procedure Update
      (History_Dialog : History_Dialog_Access;
@@ -324,7 +324,7 @@ package body GVD.Dialogs is
    is
       Tab : constant Debugger_Process_Tab := Debugger_Process_Tab (Widget);
    begin
-      Update (Tab);
+      Update_Call_Stack (Tab);
    end On_Stack_Process_Stopped;
 
    ----------------
