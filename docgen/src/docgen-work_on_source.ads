@@ -250,32 +250,32 @@ private
 
    function Line_Is_Comment
      (Line : String) return Boolean;
-   --  returns true, if the first chars of the line are "--"
+   --  Return true, if the first chars of the line are "--"
 
    function Line_Is_Empty
      (Line : String) return Boolean;
-   --  returns true, if there is no text in this line
+   --  Return true, if there is no text in this line
 
    function Is_Ignorable_Comment
      (Comment_Line : String) return Boolean;
-   --  returns true, if the comment line starts with a "--!"
+   --  Return true, if the comment line starts with a "--!"
    --  It must be sure, that Comment_List is a comment line!
 
    function Kill_Prefix
      (Comment_Line : String) return String;
-   --  returns the comment line without the "--" in front
+   --  Return the comment line without the "--" in front
 
    function Get_Whole_Header
      (File_Text   : String;
       Parsed_List : Construct_List;
       Entity_Name : String;
       Entity_Line : Natural) return GNAT.OS_Lib.String_Access;
-   --  returns the Header of the entity. If not header was found,
+   --  Return the Header of the entity. If no header was found,
    --  null will be returned.
 
    function Get_Line_From_String
      (Text    : String;
       Line_Nr : Natural) return String;
-   --  returns the wished Line from the String
+   --  Return the wished Line from the String
 
 end Docgen.Work_On_Source;
