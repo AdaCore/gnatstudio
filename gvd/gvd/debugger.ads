@@ -141,6 +141,12 @@ package Debugger is
    --  Hook called by Send right after it has sent Cmd to the debugger, and
    --  before any other post-processing (like Wait_Prompt).
 
+   procedure Wait_User_Command (Debugger : access Debugger_Root);
+   --  Wait until the current user command ends.
+   --  This is useful in particular when handling batches of command,
+   --  e.g when replaying sessions or a set of user commands.
+
+
    function Highlighting_Pattern
      (Debugger : access Debugger_Root)
       return GNAT.Regpat.Pattern_Matcher is abstract;
