@@ -203,7 +203,9 @@ package body Docgen_Backend_HTML is
       Source_File_List    : Type_Source_File_List.List;
       Link_All            : Boolean;
       Is_Body             : Boolean;
-      Process_Body        : Boolean)
+      Process_Body        : Boolean;
+      Level               : Natural;
+      Indent              : Natural)
    is
       pragma Unreferenced (End_Line);
       Line_Body : Natural := Line_In_Body;
@@ -231,7 +233,9 @@ package body Docgen_Backend_HTML is
          Source_File_List,
          Link_All,
          Is_Body,
-         Process_Body);
+         Process_Body,
+         Level,
+         Indent);
    end Format_Identifier;
 
    -----------------
