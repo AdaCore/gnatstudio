@@ -68,7 +68,7 @@ package Src_Info.Queries is
    function Get_Declaration_Column_Of
      (Entity : Entity_Information) return Natural;
    function Get_Declaration_File_Of
-     (Entity : Entity_Information) return VFS.Virtual_File;
+     (Entity : Entity_Information) return VFS.Virtual_File_Access;
    --  Return the location of the declaration for Entity. Note that this
    --  location remains valid only until the source file are changed. It is not
    --  magically updated when the source file is changed.
@@ -231,11 +231,11 @@ package Src_Info.Queries is
    ---------------------------
 
    function Get_Other_File_Of
-     (Lib_Info : LI_File_Ptr;
-      Source_Filename : VFS.Virtual_File) return VFS.Virtual_File;
+     (Lib_Info        : LI_File_Ptr;
+      Source_Filename : VFS.Virtual_File) return VFS.Virtual_File_Access;
    --  Return the name of the spec or body for Source_Filename.
    --  If Source_Filename is a separate, then the spec of the unit is returned.
-   --  The empty string is returned if there is no other file (for instance, a
+   --  VFS.No_File is returned if there is no other file (for instance, a
    --  body without a spec).
    --  Only the short path name is returned.
    --
@@ -828,7 +828,7 @@ private
       Name        : String_Access;
       Decl_Line   : Positive;
       Decl_Column : Natural;
-      Decl_File   : VFS.Virtual_File;
+      Decl_File   : aliased VFS.Virtual_File;
       Scope       : E_Scope;
       Kind        : E_Kind;
    end record;
