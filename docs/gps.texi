@@ -91,7 +91,7 @@ Customization
 
 * Customizing the Tool Bar::
 * Customizing the Menu Bar::
-* Changing the Colors and Fonts::
+* Changing Colors Fonts and Pixmaps::
 
 Environment
 
@@ -351,7 +351,7 @@ Toggle overwrite mode
 @menu
 * Customizing the Tool Bar::
 * Customizing the Menu Bar::
-* Changing the Colors and Fonts::
+* Changing Colors Fonts and Pixmaps::
 @end menu
 
 @node Customizing the Tool Bar
@@ -362,9 +362,58 @@ Toggle overwrite mode
 @section Customizing the Menu Bar
 @noindent
 
-@node Changing the Colors and Fonts
-@section Changing the Colors and Fonts
+@node Changing Colors Fonts and Pixmaps
+@section Changing the Colors, Fonts and Pixmaps
 @noindent
+
+Glide can be configured through the usual gtk+ mechanisms of @file{rc
+files}. The trick is to create a text file called @file{gtkrc} in the
+glide home directory (@file{~/.glide} on Unix systems). This file
+contains the usual configuration description.
+
+For instance, the following will set the default font for all widgets
+in the interface. Note that this font is sometimes overridden by
+Glide's own preferences, most notably in the source editor.
+
+@smallexample
+style "default" @{
+   font_name="Helvetica 9"
+@}
+class "*GtkWidget*" style "default"
+@end smallexample
+
+Special effects can be achieved easily. For instance, the following
+code will change the background color of any button, when it is
+pressed. It will also set a background pixmap when it is not pressed.
+The style also inherits from the one above, so that the buttons also
+use the default font.
+
+@smallexample
+pixmap_path "<directory_that_contains_the_pixmap>"
+style "button" = "default" @{
+  bg_pixmap[NORMAL]="<pixmap_name>"
+  bg[ACTIVE]="blue"
+@}
+class "*GtkButton*" style "button"
+@end smallexample
+
+Finally, you can configure the key bindings to suit your habits. In
+the editor, you can for instance set @key{Ctrl-V} to scroll forward
+one page, as usual under the Emacs editor. The following code takes
+care of that. Configuring keys is trickier than the above, since you
+need to know the signals that the widgets can receive. Basically, the
+most useful will probably be @option{move_cursor}. The first
+parameter should be one of @option{pages}, @option{paragraphs},
+@option{words}, @option{display-lines} or
+@option{logical-positions}. The second parameter is the number of
+such units to skip
+
+@smallexample
+binding "custombind" @{
+   bind "<ctrl>v" @{ "move_cursor" (pages, 1, 0) @}
+@}
+class "*GtkTextView*" binding : highest "custombind"
+@end smallexample
 
 @c --------------------------------------------------------------------
 @node Environment
