@@ -102,6 +102,10 @@ package body Codefix.Text_Manager is
    --  type Text_Navigator
    ----------------------------------------------------------------------------
 
+   ----------
+   -- Free --
+   ----------
+
    procedure Free (This : in out Text_Navigator_Abstr) is
    begin
       Free (This.Files.all);
@@ -1362,6 +1366,16 @@ package body Codefix.Text_Manager is
       This.Caption := Value.Caption;
    end Unchecked_Assign;
 
+   --------------------
+   -- Unchecked_Free --
+   --------------------
+
+   procedure Unchecked_Free (This : in out Extract) is
+   begin
+      This.First := null;
+      This.Caption := null;
+   end Unchecked_Free;
+
    -----------
    -- Clone --
    -----------
@@ -2398,47 +2412,49 @@ package body Codefix.Text_Manager is
    -- Merge --
    -----------
 
+   type Virtual_Navigator is new Text_Navigator_Abstr with null record;
+
+   function New_Text_Interface (This : Virtual_Navigator) return Ptr_Text;
+
+   function New_Text_Interface (This : Virtual_Navigator) return Ptr_Text is
+      pragma Unreferenced (This);
+   begin
+      return null;
+   end New_Text_Interface;
+
+
+   procedure Merge
+     (This                 : out Extract;
+      Extract_1, Extract_2 : Extract'Class;
+      Success              : out Boolean)
+   is
+      Navigator : Virtual_Navigator;
+   begin
+      Merge
+        (This,
+         Extract_1, Extract_2,
+         Navigator,
+         Success,
+         False);
+   end Merge;
+
+   -----------
+   -- Merge --
+   -----------
+
    procedure Merge
      (This                 : out Extract;
       Extract_1, Extract_2 : Extract'Class;
       Current_Text         : Text_Navigator_Abstr'Class;
-      Success              : out Boolean) is
+      Success              : out Boolean;
+      Merge_Characters     : Boolean := True) is
 
       Line_1, Line_2, New_Line : Ptr_Extract_Line;
 
-      procedure Loop_Add (Num : Integer);
       procedure Line_1_Original;
       procedure Line_1_Modified;
       procedure Line_1_Deleted;
       procedure Line_1_Created;
-
-      procedure Loop_Add (Num : Integer) is
-      begin
-         case Num is
-            when 1 =>
-               while Line_1.Context = Line_Created loop
-                  Add_Element (This, new Extract_Line'(Clone
-                                                         (Line_1.all, False)));
-                  Line_1 := Next (Line_1.all);
-
-                  if Line_1 = null then
-                     return;
-                  end if;
-               end loop;
-            when 2 =>
-               while Line_2.Context = Line_Created loop
-                  Add_Element (This, new Extract_Line'(Clone
-                                                         (Line_2.all, False)));
-                  Line_2 := Next (Line_2.all);
-
-                  if Line_2 = null then
-                     return;
-                  end if;
-               end loop;
-            when others =>
-               null;
-         end case;
-      end Loop_Add;
 
       procedure Line_1_Original is
       begin
@@ -2474,19 +2490,24 @@ package body Codefix.Text_Manager is
                Line_1 := Next (Line_1.all);
                Line_2 := Next (Line_2.all);
             when Line_Modified =>
-               New_Line := new Extract_Line'(Clone (Line_1.all, False));
-               Merge
-                 (New_Line.Content,
-                  Get_Old_Text (Line_1.all, Current_Text),
-                  Line_1.Content.all,
-                  Line_2.Content.all,
-                  Success);
+               if Merge_Characters then
+                  New_Line := new Extract_Line'(Clone (Line_1.all, False));
+                  Merge
+                    (New_Line.Content,
+                     Get_Old_Text (Line_1.all, Current_Text),
+                     Line_1.Content.all,
+                     Line_2.Content.all,
+                     Success);
 
-               if Is_Blank (New_Line.Content.all) then
-                  New_Line.Context := Line_Deleted;
+                  if Is_Blank (New_Line.Content.all) then
+                     New_Line.Context := Line_Deleted;
+                  end if;
+
+                  Add_Element (This, New_Line);
+               else
+                  Add_Element (This, new Extract_Line'(Clone
+                                                         (Line_2.all, False)));
                end if;
-
-               Add_Element (This, New_Line);
                Line_1 := Next (Line_1.all);
                Line_2 := Next (Line_2.all);
             when Line_Deleted =>
@@ -2536,8 +2557,14 @@ package body Codefix.Text_Manager is
                                                       (Line_2.all, False)));
                Line_2 := Next (Line_2.all);
             when Line_Created =>
-               Loop_Add (1);
-               Loop_Add (2);
+               Add_Element (This, new Extract_Line'(Clone
+                                                      (Line_1.all, False)));
+               if Line_1.all /= Line_2.all then
+                  Line_1 := Next (Line_1.all);
+               else
+                  Line_1 := Next (Line_1.all);
+                  Line_2 := Next (Line_2.all);
+               end if;
          end case;
       end Line_1_Created;
 
