@@ -2,7 +2,7 @@
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
 --                      Copyright (C) 2000-2002                      --
---                              ACT-Europe                           --
+--                            ACT-Europe                             --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -45,15 +45,6 @@ package body Process_Tab_Pkg.Callbacks is
    use Gtk.Arguments;
    use String_History;
 
-   procedure Move_Until_Match
-     (History : in out History_List;
-      S       : in String;
-      D       : in Direction;
-      Index   : out Integer;
-      Found   : out Boolean);
-   --  Scan the history to find an entry which begins like S.
-   --  Index indicates the number of characters found beyond that pattern.
-
    ---------------------------------
    -- On_Process_Tab_Delete_Event --
    ---------------------------------
@@ -86,8 +77,9 @@ package body Process_Tab_Pkg.Callbacks is
          --  Do not delete the data window if in stand alone mode.
          return True;
       else
-         Process.Data_Paned := null;
-         return False;
+         Hide (Process.Data_Paned);
+         --  ??? Remove from MDI
+         return True;
       end if;
    end On_Data_Paned_Delete_Event;
 
@@ -177,8 +169,9 @@ package body Process_Tab_Pkg.Callbacks is
          --  Do not delete the command window if in stand alone mode.
          return True;
       else
-         Process.Command_Scrolledwindow := null;
-         return False;
+         Hide (Process.Command_Scrolledwindow);
+         --  ??? Remove from MDI
+         return True;
       end if;
    end On_Command_Scrolledwindow_Delete_Event;
 
@@ -289,54 +282,6 @@ package body Process_Tab_Pkg.Callbacks is
          Delete_Text (Top.Debugger_Text, Gint (Top.Edit_Pos), Arg2);
       end if;
    end On_Debugger_Text_Delete_Text;
-
-   ----------------------
-   -- Move_Until_Match --
-   ----------------------
-
-   procedure Move_Until_Match
-     (History : in out History_List;
-      S       : in String;
-      D       : in Direction;
-      Index   : out Integer;
-      Found   : out Boolean)
-   is
-      Counter : Integer := 0;
-   begin
-      Found := False;
-      loop
-         if D = Forward then
-            Move_To_Next (History);
-         else
-            Move_To_Previous (History);
-         end if;
-
-         declare
-            Data : constant String := Get_Current (History).Command.all;
-         begin
-            if S'Length <= Data'Length
-              and then S = Data (Data'First .. Data'First + S'Length - 1)
-            then
-               Found := True;
-               Index := Data'Length - S'Length;
-               return;
-            end if;
-            Counter := Counter + 1;
-         end;
-      end loop;
-
-   exception
-      when No_Such_Item =>
-         for J in 1 .. Counter loop
-            if D = Forward then
-               Move_To_Previous (History);
-            else
-               Move_To_Next (History);
-            end if;
-         end loop;
-
-         Index := Get_Current (History).Command.all'Length - S'Length;
-   end Move_Until_Match;
 
    --------------------------------------
    -- On_Debugger_Text_Key_Press_Event --
