@@ -763,9 +763,9 @@ begin
 
    Gtk_New (General_Preferences.Ok_Button, -"OK");
    Set_Flags (General_Preferences.Ok_Button, Can_Default);
-   Button_Callback.Connect
+   Widget_Callback.Object_Connect
      (General_Preferences.Ok_Button, "clicked",
-      Button_Callback.To_Marshaller (On_Ok_Button_Clicked'Access));
+      Widget_Callback.To_Marshaller (On_Ok_Button_Clicked'Access), General_Preferences);
    Add (General_Preferences.Hbuttonbox6, General_Preferences.Ok_Button);
 
    Gtk_New (General_Preferences.Reset_Button, -"Reset");

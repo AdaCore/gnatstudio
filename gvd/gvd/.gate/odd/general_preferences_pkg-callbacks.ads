@@ -7,7 +7,7 @@ package General_Preferences_Pkg.Callbacks is
       Params : Gtk.Arguments.Gtk_Args) return Boolean;
 
    procedure On_Ok_Button_Clicked
-     (Object : access Gtk_Button_Record'Class);
+     (Object : access Gtk_Widget_Record'Class);
 
    procedure On_Reset_Button_Clicked
      (Object : access Gtk_Button_Record'Class);

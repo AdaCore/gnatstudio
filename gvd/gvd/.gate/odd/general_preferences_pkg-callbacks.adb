@@ -30,7 +30,7 @@ package body General_Preferences_Pkg.Callbacks is
    --------------------------
 
    procedure On_Ok_Button_Clicked
-     (Object : access Gtk_Button_Record'Class)
+     (Object : access Gtk_Widget_Record'Class)
    is
    begin
       null;
