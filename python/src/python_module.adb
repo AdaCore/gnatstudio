@@ -1119,6 +1119,7 @@ package body Python_Module is
       Class : PyClassObject;
       Ignored : Integer;
       Bases   : PyObject := null;
+      S       : chars_ptr;
       pragma Unreferenced (Ignored);
    begin
       PyDict_SetItemString
@@ -1135,8 +1136,9 @@ package body Python_Module is
         (Bases => Bases,
          Dict  => Dict,
          Name  => PyString_FromString (Name));
-      Ignored := PyModule_AddObject
-        (Script.GPS_Module, New_String (Name), Class);
+      S := New_String (Name);
+      Ignored := PyModule_AddObject (Script.GPS_Module, S, Class);
+      Free (S);
    end Register_Class;
 
    ---------------------
