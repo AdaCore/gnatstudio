@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                        Copyright (C) 2003                         --
+--                      Copyright (C) 2003-2004                      --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
@@ -33,11 +33,11 @@ package Src_Editor_Buffer.Text_Handling is
    --  Return the characters between given positions.
 
    function Get_Chars
-     (Buffer     : access Source_Buffer_Record'Class;
-      Line       : Editable_Line_Type := 0;
-      Column     : Natural := 0;
-      Before     : Integer := -1;
-      After      : Integer := -1) return UTF8_String;
+     (Buffer : access Source_Buffer_Record'Class;
+      Line   : Editable_Line_Type := 0;
+      Column : Natural := 0;
+      Before : Integer := -1;
+      After  : Integer := -1) return UTF8_String;
    --  Return the characters around given position.
    --  If Line is 0, then the contents of the current selection is returned
 
@@ -51,12 +51,12 @@ package Src_Editor_Buffer.Text_Handling is
    --  Replace the characters between given positions.
 
    procedure Replace_Slice
-     (Buffer     : access Source_Buffer_Record'Class;
-      Text       : String;
-      Line       : Editable_Line_Type;
-      Column     : Natural := 0;
-      Before     : Integer := -1;
-      After      : Integer := -1);
+     (Buffer : access Source_Buffer_Record'Class;
+      Text   : String;
+      Line   : Editable_Line_Type;
+      Column : Natural := 0;
+      Before : Integer := -1;
+      After  : Integer := -1);
    --  Replace the characters around given position.
 
 end Src_Editor_Buffer.Text_Handling;
