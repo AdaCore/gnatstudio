@@ -36,7 +36,6 @@ with Basic_Types;                 use Basic_Types;
 with Glide_Kernel;                use Glide_Kernel;
 with Glide_Kernel.Preferences;    use Glide_Kernel.Preferences;
 
-
 with Basic_Types;               use Basic_Types;
 with System;
 
@@ -73,6 +72,10 @@ package body Src_Editor_Buffer.Line_Information is
       Every_Line    : Boolean);
    --  Return the index of the column corresponding to the identifier.
    --  Create such a column if necessary.
+
+   procedure Side_Column_Configuration_Changed
+     (Buffer : access Source_Buffer_Record'Class);
+   --  Emit the "side_column_configuration_changed" signal.
 
    procedure Side_Column_Changed
      (Buffer : access Source_Buffer_Record'Class);
@@ -284,7 +287,7 @@ package body Src_Editor_Buffer.Line_Information is
    begin
       Get_Column_For_Identifier
         (Buffer, Identifier, -1, Stick_To_Data, Every_Line);
-      Side_Column_Changed (Buffer);
+      Side_Column_Configuration_Changed (Buffer);
    end Create_Line_Information_Column;
 
    ------------------------------------
@@ -445,7 +448,7 @@ package body Src_Editor_Buffer.Line_Information is
       end if;
 
       Remove_Line_Information_Column (Buffer, Stick_To_Data, Column);
-      Side_Column_Changed (Buffer);
+      Side_Column_Configuration_Changed (Buffer);
    end Remove_Line_Information_Column;
 
    --------------------------
@@ -579,7 +582,6 @@ package body Src_Editor_Buffer.Line_Information is
 
          if Columns_Config.all = null then
             Unref (Layout);
-            Side_Column_Changed (Buffer);
             return;
          end if;
 
@@ -644,12 +646,10 @@ package body Src_Editor_Buffer.Line_Information is
          end loop;
 
          Recalculate_Side_Column_Width (Buffer);
+         Side_Column_Configuration_Changed (Buffer);
       end if;
 
-
-
       Side_Column_Changed (Buffer);
-
       Unref (Layout);
    end Add_File_Information;
 
@@ -667,6 +667,23 @@ package body Src_Editor_Buffer.Line_Information is
    begin
       Emit_By_Name (Get_Object (Buffer), "side_column_changed" & ASCII.NUL);
    end Side_Column_Changed;
+
+   ---------------------------------------
+   -- Side_Column_Configuration_Changed --
+   ---------------------------------------
+
+   procedure Side_Column_Configuration_Changed
+     (Buffer : access Source_Buffer_Record'Class)
+   is
+      procedure Emit_By_Name
+        (Object : System.Address;
+         Name   : String);
+      pragma Import (C, Emit_By_Name, "g_signal_emit_by_name");
+   begin
+      Emit_By_Name
+        (Get_Object (Buffer),
+         "side_column_configuration_changed" & ASCII.NUL);
+   end Side_Column_Configuration_Changed;
 
    --------------------
    -- Draw_Line_Info --
