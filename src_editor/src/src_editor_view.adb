@@ -551,7 +551,7 @@ package body Src_Editor_View is
                Block_Begin_Y : Gint;
                Y             : Gint;
                Height        : Gint;
-               Width         : Gint;
+               X             : Gint;
 
             begin
                Get_Iter_At_Line_Offset
@@ -568,12 +568,13 @@ package body Src_Editor_View is
                  (View,
                   Text_Window_Text, Dummy, Block_Begin_Y, Dummy, Y);
 
-               Width := Gint (Block.Offset - 1) * View.Char_Width;
+               X := Gint (Block.Offset - 1) * View.Char_Width - 2;
 
-               Draw_Rectangle
-                 (Window, View.Current_Block_GC, False,
-                  Width, Y,
-                  Rect.Width - Width - 1, Height - 1);
+               Draw_Line (Window, View.Current_Block_GC, X, Y, X, Y + Height);
+               Draw_Line (Window, View.Current_Block_GC, X, Y, X + 6, Y);
+               Draw_Line
+                 (Window,
+                  View.Current_Block_GC, X, Y + Height, X + 6, Y + Height);
             end Draw_Block;
 
          begin
@@ -626,6 +627,17 @@ package body Src_Editor_View is
 
             Get_Line_Yrange (View, Cursor_Iter, Line_Y, Line_Height);
 
+            --  Highlight the line that contains the cursor.
+
+            if View.Highlight_Current then
+               Buffer_To_Window_Coords
+                 (View, Text_Window_Text, Dummy, Line_Y, Dummy, Buffer_Line_Y);
+
+               Draw_Rectangle
+                 (Window, View.Current_Line_GC, True, 0, Buffer_Line_Y,
+                  Rect.Width, Line_Height);
+            end if;
+
             --  Highlight the current block.
 
             if View.Highlight_Blocks then
@@ -645,17 +657,6 @@ package body Src_Editor_View is
 
                   Block_Start := Block_Start - 1;
                end loop;
-            end if;
-
-            --  Highlight the line that contains the cursor.
-
-            if View.Highlight_Current then
-               Buffer_To_Window_Coords
-                 (View, Text_Window_Text, Dummy, Line_Y, Dummy, Buffer_Line_Y);
-
-               Draw_Rectangle
-                 (Window, View.Current_Line_GC, True, 0, Buffer_Line_Y,
-                  Rect.Width, Line_Height);
             end if;
 
             --  Redraw the line showing the nth column if needed
