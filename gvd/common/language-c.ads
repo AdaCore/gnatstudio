@@ -42,6 +42,13 @@ package Language.Debugger.C is
    function Get_Language_Context
      (Lang : access C_Language) return Language_Context;
 
+   C_Keywords_Regexp : constant String :=
+     "do|e(lse|xtern)|for|if|s(t(atic|ruct)|witch)|union|while|typedef";
+   --  Regexp used to highlight keywords in C.
+   --  Do not use this directly, use the function Keywords instead.
+   --  ("struct" "union" "extern" "for" "if" "do" "else" "while" "switch"
+   --  "static" "typedef")
+
    --------------
    -- Explorer --
    --------------

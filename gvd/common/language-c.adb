@@ -25,15 +25,7 @@ with GVD.Pixmaps;  use GVD.Pixmaps;
 package body Language.Debugger.C is
 
    Keywords_List : Pattern_Matcher := Compile
-     ("^(do|e(lse|xtern)|for|if|s(t(atic|ruct)|witch)|union|while)\W");
-   --  List of words: ("struct" "union" "extern" "for" "if" "do" "else"
-   --  "while" "switch" "static")
-   --  ??? Could add typedef
-   --
-   --  for c++: ("class" "interface" "namespace" "try" "catch" "friend"
-   --  "virtual" "template" "public" "protected" "private" "const" "abstract"
-   --  "synchronized" "final"
-   --
+     ("^(" & C_Keywords_Regexp & ")\W");
    --  for java: ("finally" "synchronized" "implements" "extends" "throws"
    --  "threadsafe" "transient" "native" "volatile"
 
@@ -163,13 +155,15 @@ package body Language.Debugger.C is
    function Get_Language_Context
      (Lang : access C_Language) return Language_Context is
    begin
-      return (Comment_Start_Length => 2,
-              Comment_End_Length   => 2,
-              Comment_Start        => "/*",
-              Comment_End          => "*/",
-              String_Delimiter     => '"',
-              Quote_Character      => '\',
-              Constant_Character   => ''');
+      return (Comment_Start_Length          => 2,
+              Comment_End_Length            => 2,
+              New_Line_Comment_Start_Length => 0,
+              Comment_Start                 => "/*",
+              Comment_End                   => "*/",
+              New_Line_Comment_Start        => "",
+              String_Delimiter              => '"',
+              Quote_Character               => '\',
+              Constant_Character            => ''');
    end Get_Language_Context;
 
 end Language.Debugger.C;
