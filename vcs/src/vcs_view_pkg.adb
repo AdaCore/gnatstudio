@@ -220,7 +220,7 @@ package body VCS_View_Pkg is
    procedure Execute
      (Hook   : File_Hook_Record;
       Kernel : access Kernel_Handle_Record'Class;
-      File_Data   : Hooks_Data'Class);
+      File_Data   : access Hooks_Data'Class);
    --  Callback for the "file_edited" signal.
 
    function Context_Func
@@ -1265,9 +1265,9 @@ package body VCS_View_Pkg is
    procedure Execute
      (Hook      : File_Hook_Record;
       Kernel    : access Kernel_Handle_Record'Class;
-      File_Data : Hooks_Data'Class)
+      File_Data : access Hooks_Data'Class)
    is
-      D        : constant File_Hooks_Args := File_Hooks_Args (File_Data);
+      D        : constant File_Hooks_Args := File_Hooks_Args (File_Data.all);
       Log_Name : constant String := Full_Name (D.File).all;
       Line     : Line_Record;
    begin

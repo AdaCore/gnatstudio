@@ -135,7 +135,7 @@ package body GVD_Module is
    procedure Execute
      (Hook   : File_Edited_Hook_Record;
       Kernel : access Kernel_Handle_Record'Class;
-      Data   : Hooks_Data'Class);
+      Data   : access Hooks_Data'Class);
    --  Callback for the "file_edited" hook.
 
    type Lines_Revealed_Hook_Record is new Hook_Args_Record with null record;
@@ -143,7 +143,7 @@ package body GVD_Module is
    procedure Execute
      (Hook   : Lines_Revealed_Hook_Record;
       Kernel : access Kernel_Handle_Record'Class;
-      Data   : Hooks_Data'Class);
+      Data   : access Hooks_Data'Class);
    --  Callback for the "source_lines_revealed_hook" hook.
 
    type GPS_Proxy is new Process_Proxy with record
@@ -2061,9 +2061,9 @@ package body GVD_Module is
    procedure Execute
      (Hook   : File_Edited_Hook_Record;
       Kernel : access Kernel_Handle_Record'Class;
-      Data   : Hooks_Data'Class)
+      Data   : access Hooks_Data'Class)
    is
-      D : constant File_Hooks_Args := File_Hooks_Args (Data);
+      D : constant File_Hooks_Args := File_Hooks_Args (Data.all);
    begin
       Create_Debugger_Columns (Kernel_Handle (Kernel), D.File);
 
@@ -2082,10 +2082,10 @@ package body GVD_Module is
    procedure Execute
      (Hook   : Lines_Revealed_Hook_Record;
       Kernel : access Kernel_Handle_Record'Class;
-      Data   : Hooks_Data'Class)
+      Data   : access Hooks_Data'Class)
    is
       pragma Unreferenced (Hook);
-      D : constant Context_Hooks_Args := Context_Hooks_Args (Data);
+      D : constant Context_Hooks_Args := Context_Hooks_Args (Data.all);
       Area_Context : File_Area_Context_Access;
 
       Process      : constant Visual_Debugger :=

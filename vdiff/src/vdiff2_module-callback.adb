@@ -307,11 +307,12 @@ package body Vdiff2_Module.Callback is
    ---------------
 
    function Diff_Hook
-     (Kernel : access Kernel_Handle_Record'Class; Data : Hooks_Data'Class)
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class)
       return Boolean
    is
       pragma Unreferenced (Kernel);
-      D : Diff_Hooks_Args := Diff_Hooks_Args (Data);
+      D : Diff_Hooks_Args := Diff_Hooks_Args (Data.all);
    begin
       if D.Orig_File = VFS.No_File then
          if D.New_File = VFS.No_File then
@@ -351,9 +352,9 @@ package body Vdiff2_Module.Callback is
 
    procedure File_Closed_Cb
      (Kernel  : access Kernel_Handle_Record'Class;
-      Data    : Hooks_Data'Class)
+      Data    : access Hooks_Data'Class)
    is
-      D : constant File_Hooks_Args := File_Hooks_Args (Data);
+      D : constant File_Hooks_Args := File_Hooks_Args (Data.all);
       Diff     : Diff_Head_Access := new Diff_Head;
       Curr_Node : Diff_Head_List.List_Node;
    begin

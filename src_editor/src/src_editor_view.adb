@@ -234,7 +234,7 @@ package body Src_Editor_View is
    procedure Execute
      (Hook   : File_Hook_Record;
       Kernel : access Kernel_Handle_Record'Class;
-      Data   : Hooks_Data'Class);
+      Data   : access Hooks_Data'Class);
    --  Callback for "File_Saved_Signal"
 
    procedure Size_Allocated (View : access Gtk_Widget_Record'Class);
@@ -1471,10 +1471,10 @@ package body Src_Editor_View is
    procedure Execute
      (Hook   : File_Hook_Record;
       Kernel : access Kernel_Handle_Record'Class;
-      Data   : Hooks_Data'Class)
+      Data   : access Hooks_Data'Class)
    is
       pragma Unreferenced (Kernel);
-      D : constant File_Hooks_Args := File_Hooks_Args (Data);
+      D : constant File_Hooks_Args := File_Hooks_Args (Data.all);
 
    begin
       if Get_Filename (Source_Buffer (Get_Buffer (Hook.View))) = D.File then

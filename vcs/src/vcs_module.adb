@@ -98,7 +98,7 @@ package body VCS_Module is
 
    procedure File_Edited_Cb
      (Kernel  : access Kernel_Handle_Record'Class;
-      Data    : Hooks_Data'Class);
+      Data    : access Hooks_Data'Class);
    --  Callback for the "file_edited" signal.
 
    function Load_Desktop
@@ -739,10 +739,10 @@ package body VCS_Module is
 
    procedure File_Edited_Cb
      (Kernel  : access Kernel_Handle_Record'Class;
-      Data    : Hooks_Data'Class)
+      Data    : access Hooks_Data'Class)
    is
       use String_List_Utils.String_List;
-      D : constant File_Hooks_Args := File_Hooks_Args (Data);
+      D : constant File_Hooks_Args := File_Hooks_Args (Data.all);
       Files  : List;
       Ref    : VCS_Access;
       Status : File_Status_Record;

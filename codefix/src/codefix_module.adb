@@ -170,7 +170,7 @@ package body Codefix_Module is
 
    procedure Compilation_Finished_Cb
      (Kernel : access Kernel_Handle_Record'Class;
-      Data   : Hooks_Data'Class);
+      Data   : access Hooks_Data'Class);
    --  Initializes the fix list of Codefix.
 
    type GPS_Navigator is new Text_Navigator_Abstr with null record;
@@ -468,10 +468,10 @@ package body Codefix_Module is
 
    procedure Compilation_Finished_Cb
      (Kernel : access Kernel_Handle_Record'Class;
-      Data   : Hooks_Data'Class)
+      Data   : access Hooks_Data'Class)
    is
       Compilation_Data : constant Compilation_Hooks_Args :=
-        Compilation_Hooks_Args (Data);
+        Compilation_Hooks_Args (Data.all);
 
    begin
       Activate_Codefix

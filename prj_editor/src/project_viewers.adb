@@ -254,7 +254,7 @@ package body Project_Viewers is
    procedure Execute
      (Hook   : Context_Hook_Record;
       Kernel : access Kernel_Handle_Record'Class;
-      Data   : Hooks_Data'Class);
+      Data   : access Hooks_Data'Class);
    --  Called every time the selection has changed in the tree
 
    procedure Explorer_Selection_Changed
@@ -697,9 +697,9 @@ package body Project_Viewers is
    procedure Execute
      (Hook   : Context_Hook_Record;
       Kernel : access Kernel_Handle_Record'Class;
-      Data   : Hooks_Data'Class)
+      Data   : access Hooks_Data'Class)
    is
-      D : constant Context_Hooks_Args := Context_Hooks_Args (Data);
+      D : constant Context_Hooks_Args := Context_Hooks_Args (Data.all);
       Child : constant MDI_Child := Get_Focus_Child (Get_MDI (Kernel));
    begin
       --  Do nothing if we forced the selection change ourselves. For instance,

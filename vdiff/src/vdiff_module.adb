@@ -48,7 +48,7 @@ package body Vdiff_Module is
 
    function Diff_Hook
      (Kernel    : access Kernel_Handle_Record'Class;
-      Data      : Hooks_Data'Class) return Boolean;
+      Data      : access Hooks_Data'Class) return Boolean;
    --  Process, if possible, the data sent by the kernel
 
    procedure On_Compare_Two_Files
@@ -237,9 +237,9 @@ package body Vdiff_Module is
 
    function Diff_Hook
      (Kernel    : access Kernel_Handle_Record'Class;
-      Data      : Hooks_Data'Class) return Boolean
+      Data      : access Hooks_Data'Class) return Boolean
    is
-      D       : constant Diff_Hooks_Args := Diff_Hooks_Args (Data);
+      D       : constant Diff_Hooks_Args := Diff_Hooks_Args (Data.all);
       Child   : MDI_Child;
       pragma Unreferenced (Child);
    begin

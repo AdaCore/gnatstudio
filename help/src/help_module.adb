@@ -174,7 +174,7 @@ package body Help_Module is
 
    function Open_Help_Hook
      (Kernel    : access Kernel_Handle_Record'Class;
-      Data      : Hooks_Data'Class) return Boolean;
+      Data      : access Hooks_Data'Class) return Boolean;
    --  Process, if possible, the data sent by the kernel
 
    function Create_Html_Editor
@@ -1361,9 +1361,9 @@ package body Help_Module is
 
    function Open_Help_Hook
      (Kernel    : access Kernel_Handle_Record'Class;
-      Data      : Hooks_Data'Class) return Boolean
+      Data      : access Hooks_Data'Class) return Boolean
    is
-      D    : constant Html_Hooks_Args := Html_Hooks_Args (Data);
+      D    : constant Html_Hooks_Args := Html_Hooks_Args (Data.all);
       Html : Virtual_File := Create_Html (Full_Name (D.File).all, Kernel);
    begin
       if Html = VFS.No_File then

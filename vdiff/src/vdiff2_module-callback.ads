@@ -30,7 +30,8 @@ with Commands.Interactive; use Commands, Commands.Interactive;
 package Vdiff2_Module.Callback is
 
    function Diff_Hook
-     (Kernel : access Kernel_Handle_Record'Class; Data : Hooks_Data'Class)
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class)
       return Boolean;
    --  Process, if possible, the data sent by the kernel
 
@@ -52,7 +53,7 @@ package Vdiff2_Module.Callback is
 
    procedure File_Closed_Cb
      (Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Data    : Glide_Kernel.Hooks.Hooks_Data'Class);
+      Data    : access Glide_Kernel.Hooks.Hooks_Data'Class);
    --  Callback for the "file_closed" signal.
 
    procedure Diff_Command_Handler
