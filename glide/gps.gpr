@@ -26,6 +26,7 @@ with "../keymanager/keymanager";
 with "../theme_manager/theme_manager";
 with "../refactoring/refactoring";
 with "../action_editor/action_editor";
+with "../socket/socket";
 
 project GPS is
 
@@ -50,12 +51,7 @@ project GPS is
    package Compiler renames Shared.Compiler;
 
    package Binder is
-      case Shared.OS is
-         when "Windows_NT" =>
-
-         when "unix" =>
-            for Default_Switches ("Ada") use ("-E");
-      end case;
+      for Default_Switches ("Ada") use ("-E", "-t");
    end Binder;
 
    package Linker is
