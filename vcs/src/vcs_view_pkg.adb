@@ -186,6 +186,12 @@ package body VCS_View_Pkg is
      return Boolean;
    --  Callback for the "delete_event" signal
 
+   procedure File_Edited_Cb
+     (Widget  : access Glib.Object.GObject_Record'Class;
+      Args    : GValues;
+      Kernel  : Kernel_Handle);
+   --  Callback for the "file_edited" signal.
+
    ----------
    -- Free --
    ----------
@@ -977,17 +983,16 @@ package body VCS_View_Pkg is
 
       Free (Selection_Context_Access (Context));
       return True;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         return False;
    end Button_Press;
 
    --------------------
    -- File_Edited_Cb --
    --------------------
-
-   procedure File_Edited_Cb
-     (Widget  : access Glib.Object.GObject_Record'Class;
-      Args    : GValues;
-      Kernel  : Kernel_Handle);
-   --  Callback for the "file_edited" signal.
 
    procedure File_Edited_Cb
      (Widget  : access Glib.Object.GObject_Record'Class;
