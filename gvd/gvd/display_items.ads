@@ -39,10 +39,6 @@ package Display_Items is
    type GVD_Link_Record is new Gtkada.Canvas.Canvas_Link_Record with private;
    type GVD_Link is access all GVD_Link_Record'Class;
 
-   procedure Init_Graphics (Win : Gdk.Window.Gdk_Window);
-   --  Initializes the pixmaps, colors, etc.
-   --  ??? This function is to be removed when all global variables are removed
-
    procedure Gtk_New
      (Item           : out Display_Item;
       Win            : Gdk.Window.Gdk_Window;
@@ -173,7 +169,8 @@ package Display_Items is
    --  forced to hidden state.
 
    function Create_Drawing_Context
-     (Pixmap : Gdk.Pixmap.Gdk_Pixmap;
+     (Canvas : access GVD.Canvas.GVD_Canvas_Record'Class;
+      Pixmap : Gdk.Pixmap.Gdk_Pixmap;
       Mode   : Items.Display_Mode := Items.Value;
       Lang   : Language.Language_Access := null) return Items.Drawing_Context;
    --  Return a graphic context that can be used to display an item.

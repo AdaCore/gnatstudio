@@ -22,12 +22,9 @@ with Glib;             use Glib;
 with Gdk.Drawable;     use Gdk.Drawable;
 with Gdk.GC;           use Gdk.GC;
 with Gtk.Widget;       use Gtk.Widget;
-with Gdk.Color;        use Gdk.Color;
 with Gdk.Font;         use Gdk.Font;
 with Gdk.Pixmap;       use Gdk.Pixmap;
-with Gdk.Bitmap;       use Gdk.Bitmap;
 with Gdk.Window;       use Gdk.Window;
-with Gtk.Extra.PsFont; use Gtk.Extra.PsFont;
 with Gdk.Types;        use Gdk.Types;
 with Gdk.Event;        use Gdk.Event;
 with Gtk.Menu;         use Gtk.Menu;
@@ -41,7 +38,6 @@ with Items.Simples;    use Items.Simples;
 with Odd_Intl;         use Odd_Intl;
 with GVD.Canvas;       use GVD.Canvas;
 with GVD.Menus;        use GVD.Menus;
-with GVD.Pixmaps;      use GVD.Pixmaps;
 with GVD.Preferences;  use GVD.Preferences;
 with GVD.Process;      use GVD.Process;
 with GVD.Status_Bar;   use GVD.Status_Bar;
@@ -85,32 +81,6 @@ package body Display_Items is
    Attach_Links_To_Components : constant Boolean := False;
    --  If True, then the links are attached to the middle of the actual
    --  component that was dereferenced, not to the middle of the item.
-
-   --  ??? Should get rid of these global variables.
-   --  This could be done in a global initialization file, for all the
-   --  graphic contexts we use in GVD.
-
-   Thaw_Bg_Gc   : Gdk.GC.Gdk_GC;
-   Freeze_Bg_Gc : Gdk.GC.Gdk_GC;
-   Grey_GC    : Gdk.GC.Gdk_GC;
-   Black_GC   : Gdk.GC.Gdk_GC;
-   Xref_GC    : Gdk.GC.Gdk_GC;
-   Change_GC  : Gdk.GC.Gdk_GC;
-   Font       : Gdk.Font.Gdk_Font;
-   Command_Font : Gdk.Font.Gdk_Font;
-   Type_Font  : Gdk.Font.Gdk_Font;
-   Title_Font : Gdk.Font.Gdk_Font;
-   Refresh_Button_GC : Gdk.GC.Gdk_GC;
-
-   Trash_Pixmap        : Gdk_Pixmap;
-   Trash_Mask          : Gdk_Bitmap;
-   Close_Pixmap        : Gdk_Pixmap;
-   Close_Mask          : Gdk_Bitmap;
-   Locked_Pixmap       : Gdk_Pixmap;
-   Locked_Mask         : Gdk_Bitmap;
-   Auto_Display_Pixmap : Gdk_Pixmap;
-   Auto_Display_Mask   : Gdk_Bitmap;
-
 
    --  Aliases detection
    --  ==================
@@ -388,62 +358,6 @@ package body Display_Items is
       end if;
    end Gtk_New_And_Put;
 
-   -------------------
-   -- Init_Graphics --
-   -------------------
-
-   procedure Init_Graphics (Win : Gdk.Window.Gdk_Window) is
-      use type Gdk.GC.Gdk_GC;
-      Box_Pixmap    : Gdk_Pixmap;
-      Box_Mask      : Gdk_Bitmap;
-   begin
-      if Thaw_Bg_Gc = null then
-         Gdk_New (Thaw_Bg_Gc, Win);
-         Set_Foreground (Thaw_Bg_Gc, Get_Pref (Thaw_Bg_Color));
-
-         Gdk_New (Freeze_Bg_Gc, Win);
-         Set_Foreground (Freeze_Bg_Gc, Get_Pref (Freeze_Bg_Color));
-
-         Gdk_New (Xref_GC, Win);
-         Set_Foreground (Xref_GC, Get_Pref (Xref_Color));
-
-         Gdk_New (Grey_GC, Win);
-         Set_Foreground (Grey_GC, Get_Pref (Title_Color));
-
-         Gdk_New (Change_GC, Win);
-         Set_Foreground (Change_GC, Get_Pref (Change_Color));
-
-         Gdk_New (Black_GC, Win);
-         Set_Foreground (Black_GC, Black (Gtk.Widget.Get_Default_Colormap));
-
-         Gdk_New (Refresh_Button_GC, Win);
-
-         Font := Get_Gdkfont
-           (Get_Pref (Value_Font), Get_Pref (Value_Font_Size));
-         Command_Font := Get_Gdkfont
-           (Get_Pref (GVD.Preferences.Command_Font),
-            Get_Pref (Value_Font_Size));
-         Type_Font := Get_Gdkfont
-           (Get_Pref (GVD.Preferences.Type_Font), Get_Pref (Type_Font_Size));
-         Title_Font := Get_Gdkfont
-           (Get_Pref (GVD.Preferences.Title_Font), Get_Pref (Title_Font_Size));
-
-         Create_From_Xpm_D
-           (Close_Pixmap, Win, Close_Mask, Null_Color, cancel_xpm);
-         Create_From_Xpm_D
-           (Locked_Pixmap, Win, Locked_Mask, Null_Color, lock_xpm);
-         Create_From_Xpm_D (Box_Pixmap, Win, Box_Mask, Null_Color, box_xpm);
-         Create_From_Xpm_D
-           (Trash_Pixmap, Win, Trash_Mask, Null_Color, trash_xpm);
-         Create_From_Xpm_D
-           (Auto_Display_Pixmap,
-            Win, Auto_Display_Mask, Null_Color, display_small_xpm);
-
-         Set_Hidden_Pixmap (Box_Pixmap, Box_Mask);
-         Set_Unknown_Pixmap (Trash_Pixmap, Trash_Mask);
-      end if;
-   end Init_Graphics;
-
    ----------------
    -- Initialize --
    ----------------
@@ -463,8 +377,6 @@ package body Display_Items is
       if not Is_Visible (Item) then
          return;
       end if;
-
-      Init_Graphics (Win);
 
       --  Compute the size, hidding if necessary the big components. However,
       --  we never want the top level item to be hidden, so we force it to
@@ -530,6 +442,9 @@ package body Display_Items is
       Title_Height, Title_Width : Gint;
       Num_Width    : Gint;
 
+      Context : constant Box_Drawing_Context :=
+        Get_Box_Context (Item.Debugger.Data_Canvas);
+
    begin
       --  Compute the required size for the value itself.
 
@@ -538,13 +453,14 @@ package body Display_Items is
 
       --  Compute the width and height of the title bar
 
-      Num_Width := String_Width (Font, Integer'Image (Item.Num) & ": ");
+      Num_Width := String_Width
+        (Context.Title_Font, Integer'Image (Item.Num) & ": ");
       Title_Width := (5 + Num_Buttons) * Spacing
-        + String_Width (Title_Font, Item.Name.all)
+        + String_Width (Context.Title_Font, Item.Name.all)
         + Num_Buttons * Buttons_Size + Num_Width;
       Title_Height := Gint'Max
-        (Get_Ascent (Title_Font) + Get_Descent (Title_Font), Buttons_Size)
-        + 2 * Spacing;
+        (Get_Ascent (Context.Title_Font) + Get_Descent (Context.Title_Font),
+         Buttons_Size) + 2 * Spacing;
       Item.Title_Height := Title_Height;
 
       --  Finally, we can find the total size for the display item.
@@ -574,7 +490,7 @@ package body Display_Items is
       if Item.Auto_Refresh then
          Draw_Rectangle
            (Pixmap (Item),
-            GC     => Thaw_Bg_Gc,
+            GC     => Context.Thaw_Bg_Gc,
             Filled => True,
             X      => 0,
             Y      => Title_Height,
@@ -584,7 +500,7 @@ package body Display_Items is
       else
          Draw_Rectangle
            (Pixmap (Item),
-            GC     => Freeze_Bg_Gc,
+            GC     => Context.Freeze_Bg_Gc,
             Filled => True,
             X      => 0,
             Y      => Title_Height,
@@ -594,7 +510,7 @@ package body Display_Items is
 
       Draw_Rectangle
         (Pixmap (Item),
-         GC     => Grey_GC,
+         GC     => Context.Grey_GC,
          Filled => True,
          X      => 0,
          Y      => 0,
@@ -603,7 +519,7 @@ package body Display_Items is
 
       Draw_Rectangle
         (Pixmap (Item),
-         GC     => Black_GC,
+         GC     => Context.Black_GC,
          Filled => False,
          X      => 0,
          Y      => 0,
@@ -613,14 +529,14 @@ package body Display_Items is
       if Get_Pref (Look_3d) then
          Draw_Line
            (Pixmap (Item),
-            GC   => Black_GC,
+            GC   => Context.Black_GC,
             X1   => Alloc_Width,
             Y1   => 2,
             X2   => Alloc_Width,
             Y2   => Alloc_Height);
          Draw_Line
            (Pixmap (Item),
-            GC   => Black_GC,
+            GC   => Context.Black_GC,
             X1   => 1,
             Y1   => Alloc_Height,
             X2   => Alloc_Width,
@@ -629,7 +545,7 @@ package body Display_Items is
 
       Draw_Line
         (Pixmap (Item),
-         GC     => Black_GC,
+         GC     => Context.Black_GC,
          X1     => 0,
          Y1     => Title_Height,
          X2     => Alloc_Width - 1,
@@ -637,18 +553,18 @@ package body Display_Items is
 
       Draw_Text
         (Pixmap (Item),
-         Font   => Font,
-         GC     => Black_GC,
+         Font   => Context.Title_Font,
+         GC     => Context.Black_GC,
          X      => Spacing,
-         Y      => Spacing + Get_Ascent (Title_Font),
+         Y      => Spacing + Get_Ascent (Context.Title_Font),
          Text   => Integer'Image (Item.Num) & ":");
 
       Draw_Text
         (Pixmap (Item),
-         Font   => Title_Font,
-         GC     => Black_GC,
+         Font   => Context.Title_Font,
+         GC     => Context.Black_GC,
          X      => Spacing + Num_Width,
-         Y      => Spacing + Get_Ascent (Title_Font),
+         Y      => Spacing + Get_Ascent (Context.Title_Font),
          Text   => Item.Name.all);
 
       --  First button
@@ -658,19 +574,19 @@ package body Display_Items is
 
       --  Second button
 
-      Set_Clip_Mask (Black_GC, Close_Mask);
+      Set_Clip_Mask (Context.Black_GC, Context.Close_Mask);
       Set_Clip_Origin
-        (Black_GC, Alloc_Width - Buttons_Size - Spacing, Spacing);
+        (Context.Black_GC, Alloc_Width - Buttons_Size - Spacing, Spacing);
       Draw_Pixmap
         (Pixmap (Item),
-         GC     => Black_GC,
-         Src    => Close_Pixmap,
+         GC     => Context.Black_GC,
+         Src    => Context.Close_Pixmap,
          Xsrc   => 0,
          Ysrc   => 0,
          Xdest  => Alloc_Width - Buttons_Size - Spacing,
          Ydest  => Spacing);
-      Set_Clip_Mask (Black_GC, Null_Pixmap);
-      Set_Clip_Origin (Black_GC, 0, 0);
+      Set_Clip_Mask (Context.Black_GC, Null_Pixmap);
+      Set_Clip_Origin (Context.Black_GC, 0, 0);
 
       if Item.Entity /= null then
          Paint
@@ -687,13 +603,16 @@ package body Display_Items is
 
    procedure Update_Component
      (Item : access Display_Item_Record'Class;
-      Component : Generic_Type_Access := null) is
+      Component : Generic_Type_Access := null)
+   is
+      Context : constant Box_Drawing_Context :=
+        Get_Box_Context (Item.Debugger.Data_Canvas);
    begin
       if not Get_Selected (Component) then
          if Item.Auto_Refresh then
             Draw_Rectangle
               (Pixmap (Item),
-               GC     => Thaw_Bg_Gc,
+               GC     => Context.Thaw_Bg_Gc,
                Filled => True,
                X      => Get_X (Component.all),
                Y      => Get_Y (Component.all),
@@ -703,7 +622,7 @@ package body Display_Items is
          else
             Draw_Rectangle
               (Pixmap (Item),
-               GC     => Freeze_Bg_Gc,
+               GC     => Context.Freeze_Bg_Gc,
                Filled => True,
                X      => Get_X (Component.all),
                Y      => Get_Y (Component.all),
@@ -1222,47 +1141,49 @@ package body Display_Items is
       Update_Value : Boolean := False)
    is
       Width : Gint := Gint (Get_Coord (Item).Width);
+      Context : constant Box_Drawing_Context :=
+        Get_Box_Context (Item.Debugger.Data_Canvas);
    begin
       Item.Auto_Refresh := Auto_Refresh;
 
       Draw_Rectangle
         (Pixmap (Item),
-         GC     => Grey_GC,
+         GC     => Context.Grey_GC,
          Filled => True,
          X      => Width - 2 * Buttons_Size - 2 * Spacing,
          Y      => Spacing,
          Width  => Buttons_Size,
          Height => Buttons_Size);
       Set_Clip_Origin
-        (Black_GC,
+        (Context.Black_GC,
          Width - 2 * Buttons_Size - 2 * Spacing,
          Spacing);
 
       if Item.Auto_Refresh then
-         Set_Clip_Mask (Black_GC, Auto_Display_Mask);
+         Set_Clip_Mask (Context.Black_GC, Context.Auto_Display_Mask);
          Draw_Pixmap
            (Pixmap (Item),
-            GC     => Black_GC,
-            Src    => Auto_Display_Pixmap,
+            GC     => Context.Black_GC,
+            Src    => Context.Auto_Display_Pixmap,
             Xsrc   => 0,
             Ysrc   => 0,
             Xdest  => Width - 2 * Buttons_Size - 2 * Spacing,
             Ydest  => Spacing);
 
       else
-         Set_Clip_Mask (Black_GC, Locked_Mask);
+         Set_Clip_Mask (Context.Black_GC, Context.Locked_Mask);
          Draw_Pixmap
            (Pixmap (Item),
-            GC     => Black_GC,
-            Src    => Locked_Pixmap,
+            GC     => Context.Black_GC,
+            Src    => Context.Locked_Pixmap,
             Xsrc   => 0,
             Ysrc   => 0,
             Xdest  => Width - 2 * Buttons_Size - 2 * Spacing,
             Ydest  => Spacing);
       end if;
 
-      Set_Clip_Mask (Black_GC, Null_Pixmap);
-      Set_Clip_Origin (Black_GC, 0, 0);
+      Set_Clip_Mask (Context.Black_GC, Null_Pixmap);
+      Set_Clip_Origin (Context.Black_GC, 0, 0);
 
       if Update_Value then
          --  If we moved back to the auto-refresh state, force an
@@ -1783,14 +1704,14 @@ package body Display_Items is
      (Item : access Display_Item_Record'Class)
      return Drawing_Context
    is
-      D : Drawing_Context :=
-        Create_Drawing_Context
-        (Pixmap => Pixmap (Item),
+      D : Drawing_Context := Create_Drawing_Context
+        (Canvas => Item.Debugger.Data_Canvas,
+         Pixmap => Pixmap (Item),
          Mode   => Item.Mode,
          Lang   => Get_Language (Item.Debugger.Debugger));
    begin
       if not Item.Is_A_Variable then
-         D.Font := Command_Font;
+         D.Font := D.Command_Font;
       end if;
       return D;
    end Create_Drawing_Context;
@@ -1800,23 +1721,18 @@ package body Display_Items is
    ----------------------------
 
    function Create_Drawing_Context
-     (Pixmap : Gdk.Pixmap.Gdk_Pixmap;
+     (Canvas : access GVD_Canvas_Record'Class;
+      Pixmap : Gdk.Pixmap.Gdk_Pixmap;
       Mode   : Items.Display_Mode := Value;
       Lang   : Language.Language_Access := null)
      return Drawing_Context
    is
+      D : Drawing_Context := Get_Item_Context (Canvas);
    begin
-      return Drawing_Context'
-        (Pixmap       => Pixmap,
-         GC           => Black_GC,
-         Xref_GC      => Xref_GC,
-         Thaw_Bg_Gc   => Thaw_Bg_Gc,
-         Freeze_Bg_Gc => Freeze_Bg_Gc,
-         Modified_GC  => Change_GC,
-         Font         => Font,
-         Type_Font    => Type_Font,
-         Mode         => Mode,
-         Lang         => Lang);
+      D.Pixmap := Pixmap;
+      D.Mode := Mode;
+      D.Lang := Lang;
+      return D;
    end Create_Drawing_Context;
 
 end Display_Items;
