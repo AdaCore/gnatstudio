@@ -40,6 +40,7 @@ with Glide_Kernel.Project;      use Glide_Kernel.Project;
 with Src_Info;                  use Src_Info;
 with Src_Info.Ali;              use Src_Info.Ali;
 with Src_Info.Queries;          use Src_Info.Queries;
+with Layouts;                   use Layouts;
 
 package body Glide_Kernel.Browsers is
 
@@ -98,6 +99,8 @@ package body Glide_Kernel.Browsers is
 
       --  Else, just create a new one
       Gtk_New (Browser, Browser_Type, Kernel);
+      Set_Layout_Algorithm (Get_Canvas (Browser), Layer_Layout'Access);
+      Set_Auto_Layout (Get_Canvas (Browser), False);
       Child := Put (MDI, Browser);
       Set_Size_Request
         (Browser, Default_Browser_Width, Default_Browser_Height);
@@ -206,6 +209,7 @@ package body Glide_Kernel.Browsers is
          end loop;
 
          Destroy (List);
+         Layout (Get_Canvas (In_Browser));
          Refresh_Canvas (Get_Canvas (In_Browser));
       end if;
    end Examine_Dependencies;
