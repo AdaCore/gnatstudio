@@ -683,13 +683,20 @@ package body GVD_Module is
    is
       pragma Unreferenced (Widget);
 
-      Top  : constant Glide_Window := Glide_Window (Get_Main_Window (Kernel));
-      Page : constant Glide_Page.Glide_Page :=
+      Top         : constant Glide_Window :=
+        Glide_Window (Get_Main_Window (Kernel));
+      Page        : constant Glide_Page.Glide_Page :=
         Glide_Page.Glide_Page (Get_Current_Process (Top));
-      Exec : GNAT.OS_Lib.String_Access;
+      Exec        : GNAT.OS_Lib.String_Access;
+      Ptr         : GNAT.OS_Lib.String_Access :=
+        GNAT.OS_Lib.Get_Executable_Suffix;
+      Exec_Suffix : constant String := Ptr.all;
+
       use Debugger, GNAT.OS_Lib;
 
    begin
+      Free (Ptr);
+
       declare
          S : constant String := Select_File (Title => -"Select File to Debug");
       begin
@@ -706,6 +713,7 @@ package body GVD_Module is
 
          elsif Page.Descriptor.Remote_Host'Length /= 0
            or else GNAT.OS_Lib.Is_Regular_File (S)
+           or else GNAT.OS_Lib.Is_Regular_File (S & Exec_Suffix)
          then
             Set_Executable (Page.Debugger, S, Mode => Hidden);
             Change_Dir (Dir_Name (S));
