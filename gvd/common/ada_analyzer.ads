@@ -171,8 +171,19 @@ package Ada_Analyzer is
 
       Declaration : Boolean := False;
       --  Are we inside a declarative part ?
+
+      Record_Start_New_Line : Boolean := False;
       --  For a Tok_Record, set to True if the keyword "record" was found on
-      --  its own line.
+      --  its own line (only used internally).
+
+      Type_Declaration : Boolean := False;
+      --  Is it a type declaration ?
+
+      Record_Type : Boolean := False;
+      --  Is it a record type definition ?
+
+      Tagged_Type : Boolean := False;
+      --  Is it a tagged type definition ?
 
       Identifier  : String (1 .. Max_Identifier);
       --  Name of the enclosing token
