@@ -495,7 +495,7 @@ package body Src_Info.CPP is
       end if;
 
       if Xrefs = Empty_Xref_Pool then
-         Load (Env.Xrefs,
+         Load (Xrefs,
            SN_Dir & Directory_Separator & Browse.Xref_Pool_Filename);
       end if;
 
