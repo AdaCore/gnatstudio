@@ -1464,7 +1464,7 @@ package body Entities.Queries is
          Line_Last        : out Natural;
          Info             : in out Entity_Info_Array;
          Info_For_Decl    : in out Entity_Info_Array);
-      --  Set the information in Info based on Tre
+      --  Set the information in Info based on Tree
 
       procedure Process_All_Entities_Refs
         (Info           : Entity_Info_Array;
@@ -1563,7 +1563,7 @@ package body Entities.Queries is
          while T /= null loop
             if T.Start_Line <= Info'Last then
                Info (Line .. T.Start_Line - 1) := (others => Enclosing_Entity);
-               Info_For_Decl (T.Start_Line) := Enclosing_Entity;
+               Info_For_Decl (T.Start_Line)    := Enclosing_Entity;
             end if;
 
             if T.First_Child = null then
@@ -1580,7 +1580,11 @@ package body Entities.Queries is
             end if;
 
             if T.End_Line - 1 <= Info'Last then
-               Info (Line .. T.End_Line - 1) := (others => T.Entity);
+               if T.End_Line = T.Start_Line  then
+                  Info (Line) := Enclosing_Entity;
+               else
+                  Info (Line .. T.End_Line - 1) := (others => T.Entity);
+               end if;
             end if;
 
             Line := T.End_Line;
