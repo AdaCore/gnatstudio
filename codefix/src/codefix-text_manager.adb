@@ -1306,6 +1306,15 @@ package body Codefix.Text_Manager is
       return This.Context;
    end Get_Context;
 
+   -----------------
+   -- Set_Context --
+   -----------------
+
+   procedure Set_Context (This : in out Extract_Line; Value : Merge_Info) is
+   begin
+      This.Context := Value;
+   end Set_Context;
+
    ----------
    -- Next --
    ----------
@@ -1904,6 +1913,10 @@ package body Codefix.Text_Manager is
          Object_2.Content,
          Success,
          Chronologic_Changes);
+
+      Result.Cursor := Clone (Object_1.Cursor);
+      Result.Original_Length := Object_1.Original_Length;
+      Result.Coloration := Object_1.Coloration;
    end Merge_Lines;
 
    function Data (This : Ptr_Extract_Line) return Extract_Line is
@@ -3162,6 +3175,7 @@ package body Codefix.Text_Manager is
          Merge_Iterator => Ptr_Extract_Line,
          First          => Get_First_Line,
          Get_Merge_Info => Get_Context,
+         Set_Merge_Info => Set_Context,
          Append         => Add_Element,
          Merge_Units    => Merge_Lines);
 
