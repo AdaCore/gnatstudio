@@ -1,5 +1,11 @@
 Known Problems fixed in GVD 2.0.0
 
+- [9305-014] Parsing array types in Ada
+  Problem:    In some cases (array of strings declared in a declare block),
+              GVD was trying to display the array as a pointer instead.
+  Workaround: Use print or the tooltips instead to show the array in the
+              gdb console, or display each element of the array separately.
+
 - Data window items folded on update
   Problem:    When the items displayed in the data window are refreshed, they
               might become folded if they are too big, even though the user
