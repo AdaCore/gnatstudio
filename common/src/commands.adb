@@ -51,11 +51,8 @@ package body Commands is
          new Unchecked_Deallocation (Command_Queue_Record, Command_Queue);
    begin
       if Q /= null then
-         --  Those lists contain only copies of commands that are in
-         --  Q.The_Queue, therefore their contents do not need to be
-         --  destroyed explicitely.
-         Free (Q.Undo_Queue, Free_Data => False);
-         Free (Q.Redo_Queue, Free_Data => False);
+         Free (Q.Undo_Queue);
+         Free (Q.Redo_Queue);
 
          Free (Q.The_Queue);
          Destroy (Q.Queue_Change_Hook);
@@ -115,21 +112,9 @@ package body Commands is
       Action.Queue := Queue;
 
       if High_Priority then
-         if Queue.Queue_Node = Null_Node then
-            Append
-              (Queue.The_Queue, Queue.Queue_Node, Command_Access (Action));
-            Queue.Queue_Node := Last (Queue.The_Queue);
-         else
-            Prepend
-              (Queue.The_Queue, Queue.Queue_Node, Command_Access (Action));
-            Queue.Queue_Node := Prev (Queue.The_Queue, Queue.Queue_Node);
-         end if;
+         Prepend (Queue.The_Queue, Command_Access (Action));
       else
          Append (Queue.The_Queue, Command_Access (Action));
-
-         if Queue.Queue_Node = Null_Node then
-            Queue.Queue_Node := Last (Queue.The_Queue);
-         end if;
       end if;
 
       if not Queue.Command_In_Progress then
@@ -151,7 +136,7 @@ package body Commands is
 
       --  If the queue is empty, set its state accordingly.
 
-      if Queue.Queue_Node = Null_Node then
+      if Is_Empty (Queue.The_Queue) then
          Queue.Command_In_Progress := False;
          return;
       end if;
@@ -159,10 +144,10 @@ package body Commands is
       Queue.Command_In_Progress := True;
 
       declare
-         Action  : constant Command_Access := Data (Queue.Queue_Node);
+         Action  : constant Command_Access := Head (Queue.The_Queue);
          Success : Boolean;
       begin
-         Queue.Queue_Node := Next (Queue.Queue_Node);
+         Next (Queue.The_Queue, Free_Data => False);
 
          case Action.Mode is
             when Normal | Undone =>
@@ -171,8 +156,6 @@ package body Commands is
             when Done =>
                Success := Undo (Action);
          end case;
-
-         --  ??? Where is Action freed ? at the end of execution ?
       end;
    end Execute_Next_Action;
 
@@ -201,8 +184,7 @@ package body Commands is
       end if;
 
       while Node /= Null_Node loop
-         Prepend (Queue.The_Queue, Queue.Queue_Node, Data (Node));
-         Queue.Queue_Node := Prev (Queue.The_Queue, Queue.Queue_Node);
+         Prepend (Queue.The_Queue, Data (Node));
          Data (Node).Queue := Queue;
          Node := Next (Node);
       end loop;
@@ -224,7 +206,7 @@ package body Commands is
             Prepend (Queue.Undo_Queue, Command_Access (Action));
             --  When a normal command is finished, purge the redo
             --  queue.
-            Free (Queue.Redo_Queue, Free_Data => False);
+            Free (Queue.Redo_Queue);
 
          when Done =>
             Action.Mode := Undone;
