@@ -197,7 +197,7 @@ package body GVD.Asm_Editors is
 
          S2 := Editor.Current_Range.Data;
          Editor.Current_Range.Data :=
-           new String' (Do_Tab_Expansion (S.all) & S2.all);
+           new String' (Do_Tab_Expansion (S.all) & ASCII.LF & S2.all);
          Free (S2);
 
       --  Should we append to the current buffer
@@ -217,7 +217,7 @@ package body GVD.Asm_Editors is
 
          S2 := Editor.Current_Range.Data;
          Editor.Current_Range.Data :=
-           new String' (S2.all & Do_Tab_Expansion (S.all));
+           new String' (S2.all & ASCII.LF & Do_Tab_Expansion (S.all));
          Free (S2);
 
       --  Else get a whole new range (minimum size Assembly_Range_Size)
@@ -672,5 +672,22 @@ package body GVD.Asm_Editors is
    begin
       Set_Line (Editor, Get_Line (Editor), Set_Current => True);
    end Show_Current_Line_Menu;
+
+   -------------------------
+   -- Preferences_Changed --
+   -------------------------
+
+   procedure Preferences_Changed
+     (Editor : access Asm_Editor_Record'Class) is
+   begin
+      Editor.Highlight_Color := Get_Pref (Asm_Highlight_Color);
+      Update_Child (Editor);
+
+      --  The currently highlighted range is reset in Gvd.Code_Editors.
+      --  However, we simply reset it here.
+      Highlight_Range
+        (Editor, Gint (0), Gint (0),
+         Gint (0), Fore => Editor.Highlight_Color);
+   end Preferences_Changed;
 
 end GVD.Asm_Editors;

@@ -93,6 +93,11 @@ package GVD.Asm_Editors is
      (Editor : access Asm_Editor_Record);
    --  Called when the executable associated with the explorer has changed.
 
+   procedure Preferences_Changed
+     (Editor : access Asm_Editor_Record'Class);
+   --  Called when the preferences have changed, and the editor should be
+   --  redisplayed with the new setup.
+
 private
 
    type Cache_Data;
