@@ -567,7 +567,10 @@ package body Glide_Menu is
       Dead      : Boolean;
       Title     : constant String := Get_Focus_Title (Top.Kernel);
       Project   : constant String := Get_Project_File_Name (Top.Kernel);
-      Cmd       : constant String := "gnatmake -P" & Project & " " & Title;
+      Cmd       : constant String :=
+        "gnatmake -P" & Project & " "
+        & Scenario_Variables_Cmd_Line (Top.Kernel)
+        & " " & Title;
 
    begin
       if not Focus_Is_Editor (Top.Kernel) then
