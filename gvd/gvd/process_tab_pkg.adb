@@ -138,20 +138,22 @@ begin
    Set_Policy (Process_Tab.Data_Scrolledwindow, Policy_Automatic, Policy_Automatic);
    --  Add (Process_Tab.Data_Paned, Process_Tab.Data_Scrolledwindow);
 
+   Gtk_New_Vbox (Process_Tab.Editor_Vbox, False, 0);
+
    if Separate_Data_Window then
       Add (Process_Tab, Process_Tab.Data_Scrolledwindow);
       Ref (Process_Tab.Data_Editor_Paned);
+      Add (Process_Tab.Process_Paned, Process_Tab.Editor_Vbox);
    else
       Add (Process_Tab.Process_Paned, Process_Tab.Data_Editor_Paned);
       Add (Process_Tab.Data_Editor_Paned, Process_Tab.Data_Scrolledwindow);
+      Add (Process_Tab.Data_Editor_Paned, Process_Tab.Editor_Vbox);
    end if;
 
    Gtk_New (GVD_Canvas (Process_Tab.Data_Canvas));
    Set_Shadow_Type (Process_Tab.Data_Canvas, Shadow_In);
    Add (Process_Tab.Data_Scrolledwindow, Process_Tab.Data_Canvas);
 
-   Gtk_New_Vbox (Process_Tab.Editor_Vbox, False, 0);
-   Add (Process_Tab.Data_Editor_Paned, Process_Tab.Editor_Vbox);
 
    Gtk_New_Hbox (Process_Tab.Label_Hbox, False, 0);
    Pack_Start (Process_Tab.Editor_Vbox, Process_Tab.Label_Hbox, False, True, 0);
