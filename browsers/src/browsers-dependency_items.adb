@@ -857,7 +857,8 @@ package body Browsers.Dependency_Items is
       function Unexpanded
         (Canvas : access Interactive_Canvas_Record'Class;
          Item   : access Canvas_Item_Record'Class) return Boolean;
-      --  ???
+      --  Set Found to the first canvas item which has unexpanded ancestors or
+      --  children.
 
       ----------------
       -- Unexpanded --
