@@ -1,6 +1,6 @@
 Known Problems fixed in GVD 2.0.0
 
-- Parsing arrays null access types
+- Parsing arrays of null access types
   Problem:    when parsing an Ada array of null access types, gvd sometimes
               enters an infinite loop
   Workaround: Display the variable in the gdb console instead, by selecting
