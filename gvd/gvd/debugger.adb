@@ -50,7 +50,8 @@ with GVD.Main_Window;   use GVD.Main_Window;
 
 with Gtkada.Dialogs;    use Gtkada.Dialogs;
 with GVD.Text_Box.Source_Editor; use GVD.Text_Box.Source_Editor;
-with GVD.Code_Editors; use GVD.Code_Editors;
+with GVD.Code_Editors;  use GVD.Code_Editors;
+with Config;            use Config;
 
 package body Debugger is
 

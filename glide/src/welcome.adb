@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2004                       --
+--                     Copyright (C) 2001-2005                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -36,7 +36,7 @@ with Gtkada.Dialogs;       use Gtkada.Dialogs;
 with Gtkada.Handlers;      use Gtkada.Handlers;
 with Gtkada.File_Selector; use Gtkada.File_Selector;
 
-with GVD;
+with Config;
 with Glide_Kernel;              use Glide_Kernel;
 with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
 with Glide_Kernel.Project;      use Glide_Kernel.Project;
@@ -102,8 +102,8 @@ package body Welcome is
 
       Logo_Boxes.Initialize
         (Win        => Screen,
-         Title      => -"Welcome to GPS " & GVD.Version &
-                       " (" & GVD.Source_Date & ")",
+         Title      => -"Welcome to GPS " & Config.Version &
+                       " (" & Config.Source_Date & ")",
          Parent     => null,
          Title_Font => Get_Pref (Kernel, Wizard_Title_Font));
 

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                         Copyright (C) 2003                        --
+--                       Copyright (C) 2003-2005                     --
 --                             ACT-Europe                            --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -43,6 +43,7 @@ with Basic_Types;              use Basic_Types;
 with String_Utils;             use String_Utils;
 
 with Traces;                   use Traces;
+with Config;                   use Config;
 with Ada.Exceptions;           use Ada.Exceptions;
 
 package body GVD.Call_Stack is

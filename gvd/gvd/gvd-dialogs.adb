@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2003                      --
+--                      Copyright (C) 2000-2005                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -47,6 +47,7 @@ with Process_Proxies;       use Process_Proxies;
 with GNAT.OS_Lib;
 with Histories;             use Histories;
 with Interactive_Consoles;  use Interactive_Consoles;
+with Config;                use Config;
 
 package body GVD.Dialogs is
 

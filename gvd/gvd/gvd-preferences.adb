@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2003                      --
+--                      Copyright (C) 2000-2005                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -18,11 +18,12 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib;                    use Glib;
-with Default_Preferences;     use Default_Preferences;
+with Glib;                     use Glib;
+with Default_Preferences;      use Default_Preferences;
 with Glib.Properties.Creation; use Glib.Properties.Creation;
 with Glib.Generic_Properties;  use Glib.Generic_Properties;
-with Odd_Intl;                use Odd_Intl;
+with Odd_Intl;                 use Odd_Intl;
+with Config;                   use Config;
 
 package body GVD.Preferences is
 
@@ -81,7 +82,7 @@ package body GVD.Preferences is
               (Name      => XML_Prefix & "Default-Font",
                Nick      => -"Default font",
                Blurb     => -"Default font",
-               Default   => GVD.Default_Font));
+               Default   => Config.Default_Font));
          Register_Property (Prefs, Param_Spec (Default_Font), -"General");
 
          Fixed_Style :=
@@ -484,7 +485,7 @@ package body GVD.Preferences is
           Nick    => -"Print command",
           Blurb   => -"Program used to print files",
           Flags   => External_Flags,
-          Default => GVD.Default_Print_Cmd));
+          Default => Default_Print_Cmd));
       Register_Property (Prefs, Param_Spec (Print_Command), Helpers);
 
       Selected_Item_Color := Param_Spec_Color (Gnew_Color

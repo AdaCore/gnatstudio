@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2003                      --
+--                      Copyright (C) 2000-2005                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -36,6 +36,7 @@ with GVD.Process;         use GVD.Process;
 with GVD.Types;           use GVD.Types;
 with Basic_Types;         use Basic_Types;
 with VFS;                 use VFS;
+with Config;              use Config;
 
 package body GVD.Code_Editors is
 

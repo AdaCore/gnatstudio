@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2004                       --
+--                     Copyright (C) 2001-2005                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -59,7 +59,7 @@ use Src_Editor_Buffer.Line_Information;
 with Pango.Font;                  use Pango.Font;
 with Pango.Layout;                use Pango.Layout;
 with Gtkada.MDI;                  use Gtkada.MDI;
-with GVD;                         use GVD;
+with Config;                      use Config;
 with Traces;                      use Traces;
 with Glide_Kernel;                use Glide_Kernel;
 with Glide_Kernel.Hooks;          use Glide_Kernel.Hooks;
