@@ -2525,6 +2525,9 @@ package body Project_Explorers is
             Free (C);
          end if;
       end if;
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Locate_File;
 
    --------------------
@@ -2566,6 +2569,9 @@ package body Project_Explorers is
             Free (C);
          end if;
       end if;
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Locate_Project;
 
    -------------------------
