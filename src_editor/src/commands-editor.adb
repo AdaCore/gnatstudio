@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with Glib;        use Glib;
+with Gtk.Text_Iter;   use Gtk.Text_Iter;
 
 package body Commands.Editor is
 
@@ -186,5 +187,91 @@ package body Commands.Editor is
 
       return True;
    end Undo;
+
+   -------------
+   -- Execute --
+   -------------
+
+   function Execute
+     (Command : access Editor_Replace_Slice_Type) return Boolean
+   is
+      Iter       : Gtk_Text_Iter;
+      Result     : Boolean;
+   begin
+      Replace_Slice (Command.Buffer,
+                     Gint (Command.Start_Line),
+                     Gint (Command.Start_Column),
+                     Gint (Command.End_Line_Before),
+                     Gint (Command.End_Column_Before),
+                     Command.Text_After.all,
+                     False);
+      Get_Iter_At_Line_Offset (Command.Buffer,
+                               Iter,
+                               Gint (Command.Start_Line),
+                               Gint (Command.Start_Column));
+
+      if Command.End_Line_After = -1 then
+         Forward_Chars (Iter, Command.Text_After.all'Length, Result);
+         Command.End_Line_After := Integer (Get_Line (Iter));
+         Command.End_Column_After := Integer (Get_Line_Offset (Iter));
+      end if;
+
+      Command_Finished (Command, True);
+
+      return True;
+   end Execute;
+
+   ----------
+   -- Undo --
+   ----------
+
+   function Undo (Command : access Editor_Replace_Slice_Type) return Boolean is
+   begin
+      Replace_Slice (Command.Buffer,
+                     Gint (Command.Start_Line),
+                     Gint (Command.Start_Column),
+                     Gint (Command.End_Line_After),
+                     Gint (Command.End_Column_After),
+                     Command.Text_Before.all,
+                     False);
+      Command_Finished (Command, True);
+      return True;
+   end Undo;
+
+   ------------
+   -- Create --
+   ------------
+
+   procedure Create
+     (Item          : out Editor_Replace_Slice;
+      Buffer        : Source_Buffer;
+      Start_Line    : Integer;
+      Start_Column  : Integer;
+      End_Line      : Integer;
+      End_Column    : Integer;
+      Text          : String)
+   is
+      Iter     : Gtk_Text_Iter;
+   begin
+      Item := new Editor_Replace_Slice_Type;
+      Item.Buffer := Buffer;
+      Item.Start_Line := Start_Line;
+      Item.Start_Column := Start_Column;
+      Item.End_Line_Before := End_Line;
+      Item.End_Column_Before := End_Column;
+
+      Item.Text_Before := new String'
+        (Get_Slice (Buffer,
+                    Gint (Start_Line),
+                    Gint (Start_Column),
+                    Gint (End_Line),
+                    Gint (End_Column)));
+
+      Item.Text_After := new String' (Text);
+
+      Get_Iter_At_Line_Offset (Buffer, Iter,
+                               Gint (Start_Line), Gint (Start_Column));
+
+   end Create;
 
 end Commands.Editor;
