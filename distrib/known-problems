@@ -1,5 +1,10 @@
 Known Problems fixed in GPS 1.2.0
 
+- C228-002 Changes in project settings not taken into account immediately
+  Problem:    If you modify the compiler name in the project properties editor,
+              it isn't taken into account for the following compilation commands
+  Workaround: Quit GPS and reload the project
+
 - C222-002 Problem with save as null extension under Windows
   Problem:    Under Windows platforms only, when creating a file with no
               extension, a default .ads extension is always added.
