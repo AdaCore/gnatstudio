@@ -178,7 +178,7 @@ Select the menu @code{Build->Make->sdc.adb}: this will launch a complete
 build of the @i{sdc} application. Note also that a key binding
 is associated with this menu item (@key{F4}).
 
-The build has generated a number of errors in a new window: the @i{Results}
+The build has generated a number of errors in a new window: the @i{Locations}
 window, displayed in the bottom area.
 
 Click on the first error message (@i{sdc.adb, 28:6  : (style) bad indentation})
