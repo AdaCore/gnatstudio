@@ -21,13 +21,10 @@
 with Gtk;             use Gtk;
 with Gtk.Widget;      use Gtk.Widget;
 with Gtk.Enums;       use Gtk.Enums;
-with Gtk.Accel_Group; use Gtk.Accel_Group;
 with Gtk.Pixmap;      use Gtk.Pixmap;
-with Gtk.Menu_Bar;    use Gtk.Menu_Bar;
 with Gtkada.Handlers; use Gtkada.Handlers;
 with Odd_Intl;        use Odd_Intl;
 with Main_Debug_Window_Pkg.Callbacks; use Main_Debug_Window_Pkg.Callbacks;
-with GVD.Menu;        use GVD.Menu;
 with Pixmaps_IDE;     use Pixmaps_IDE;
 
 package body Main_Debug_Window_Pkg is
@@ -40,7 +37,6 @@ end Gtk_New;
 
 procedure Initialize (Main_Debug_Window : access Main_Debug_Window_Record'Class) is
    pragma Suppress (All_Checks);
-   The_Accel_Group : Gtk_Accel_Group;
 
 begin
    Gtk.Window.Initialize (Main_Debug_Window, Window_Toplevel);
@@ -52,27 +48,16 @@ begin
    Return_Callback.Connect
      (Main_Debug_Window, "delete_event", On_Main_Debug_Window_Delete_Event'Access);
 
-   Gtk_New_Vbox (Main_Debug_Window.Vbox1, False, 0);
-   Add (Main_Debug_Window, Main_Debug_Window.Vbox1);
+   Gtk_New_Vbox (Main_Debug_Window.Vbox, False, 0);
+   Add (Main_Debug_Window, Main_Debug_Window.Vbox);
 
-   Gtk_New (The_Accel_Group);
-   Add_Accel_Group (Main_Debug_Window, The_Accel_Group);
-   Gtk_New (Main_Debug_Window.Factory, Gtk.Menu_Bar.Get_Type,
-            "<gvd>", The_Accel_Group);
-   Factory_Data.Create_Items
-     (Main_Debug_Window.Factory, GVD_Menu_Items.all,
-      Main_Debug_Window.all'Access);
-   Pack_Start
-     (Main_Debug_Window.Vbox1,
-      Get_Widget (Main_Debug_Window.Factory, "<gvd>"), False, False, 0);
-
-   Gtk_New (Main_Debug_Window.Toolbar2, Orientation_Horizontal, Toolbar_Icons);
-   Set_Space_Size (Main_Debug_Window.Toolbar2, 5);
-   Set_Space_Style (Main_Debug_Window.Toolbar2, Toolbar_Space_Empty);
-   Set_Tooltips (Main_Debug_Window.Toolbar2, True);
-   Set_Button_Relief (Main_Debug_Window.Toolbar2, Relief_Normal);
+   Gtk_New (Main_Debug_Window.Toolbar, Orientation_Horizontal, Toolbar_Icons);
+   Set_Space_Size (Main_Debug_Window.Toolbar, 5);
+   Set_Space_Style (Main_Debug_Window.Toolbar, Toolbar_Space_Empty);
+   Set_Tooltips (Main_Debug_Window.Toolbar, True);
+   Set_Button_Relief (Main_Debug_Window.Toolbar, Relief_Normal);
    Main_Debug_Window.Button49 := Append_Element
-     (Toolbar => Main_Debug_Window.Toolbar2,
+     (Toolbar => Main_Debug_Window.Toolbar,
       The_Type => Toolbar_Child_Button,
       Text => -"",
       Tooltip_Text => -"Start the debugged program",
@@ -80,7 +65,7 @@ begin
    Widget_Callback.Object_Connect
      (Main_Debug_Window.Button49, "clicked", On_Run1_Toolbar_Activate'Access, Main_Debug_Window);
    Main_Debug_Window.Button50 := Append_Element
-     (Toolbar => Main_Debug_Window.Toolbar2,
+     (Toolbar => Main_Debug_Window.Toolbar,
       The_Type => Toolbar_Child_Button,
       Text => -"",
       Tooltip_Text => -"Start the debugged program, stopping at the beginning of the main procedure",
@@ -88,7 +73,7 @@ begin
    Widget_Callback.Object_Connect
      (Main_Debug_Window.Button50, "clicked", On_Start1_Activate'Access, Main_Debug_Window);
    Main_Debug_Window.Button52 := Append_Element
-     (Toolbar => Main_Debug_Window.Toolbar2,
+     (Toolbar => Main_Debug_Window.Toolbar,
       The_Type => Toolbar_Child_Button,
       Text => -"",
       Tooltip_Text => -"Step program until it reaches a different source line",
@@ -96,7 +81,7 @@ begin
    Widget_Callback.Object_Connect
      (Main_Debug_Window.Button52, "clicked", On_Step1_Activate'Access, Main_Debug_Window);
    Main_Debug_Window.Button53 := Append_Element
-     (Toolbar => Main_Debug_Window.Toolbar2,
+     (Toolbar => Main_Debug_Window.Toolbar,
       The_Type => Toolbar_Child_Button,
       Text => -"",
       Tooltip_Text => -"Step one instruction exactly",
@@ -104,7 +89,7 @@ begin
    Widget_Callback.Object_Connect
      (Main_Debug_Window.Button53, "clicked", On_Step_Instruction1_Activate'Access, Main_Debug_Window);
    Main_Debug_Window.Button54 := Append_Element
-     (Toolbar => Main_Debug_Window.Toolbar2,
+     (Toolbar => Main_Debug_Window.Toolbar,
       The_Type => Toolbar_Child_Button,
       Text => -"",
       Tooltip_Text => -"Step program, proceeding through subroutine calls",
@@ -112,7 +97,7 @@ begin
    Widget_Callback.Object_Connect
      (Main_Debug_Window.Button54, "clicked", On_Next1_Activate'Access, Main_Debug_Window);
    Main_Debug_Window.Button55 := Append_Element
-     (Toolbar => Main_Debug_Window.Toolbar2,
+     (Toolbar => Main_Debug_Window.Toolbar,
       The_Type => Toolbar_Child_Button,
       Text => -"",
       Tooltip_Text => -"Step one instruction, but proceed through subroutine calls",
@@ -120,7 +105,7 @@ begin
    Widget_Callback.Object_Connect
      (Main_Debug_Window.Button55, "clicked", On_Next_Instruction1_Activate'Access, Main_Debug_Window);
    Main_Debug_Window.Button58 := Append_Element
-     (Toolbar => Main_Debug_Window.Toolbar2,
+     (Toolbar => Main_Debug_Window.Toolbar,
       The_Type => Toolbar_Child_Button,
       Text => -"",
       Tooltip_Text => -"Execute until selected stack frame returns",
@@ -128,7 +113,7 @@ begin
    Widget_Callback.Object_Connect
      (Main_Debug_Window.Button58, "clicked", On_Finish1_Activate'Access, Main_Debug_Window);
    Main_Debug_Window.Button60 := Append_Element
-     (Toolbar => Main_Debug_Window.Toolbar2,
+     (Toolbar => Main_Debug_Window.Toolbar,
       The_Type => Toolbar_Child_Button,
       Text => -"",
       Tooltip_Text => -"Continue program being debugged, after signal or breakpoint",
@@ -136,7 +121,7 @@ begin
    Widget_Callback.Object_Connect
      (Main_Debug_Window.Button60, "clicked", On_Continue1_Activate'Access, Main_Debug_Window);
    Main_Debug_Window.Button57 := Append_Element
-     (Toolbar => Main_Debug_Window.Toolbar2,
+     (Toolbar => Main_Debug_Window.Toolbar,
       The_Type => Toolbar_Child_Button,
       Text => -"",
       Tooltip_Text => -"Select and print stack frame that called this one",
@@ -144,7 +129,7 @@ begin
    Widget_Callback.Object_Connect
      (Main_Debug_Window.Button57, "clicked", On_Up1_Activate'Access, Main_Debug_Window);
    Main_Debug_Window.Button51 := Append_Element
-     (Toolbar => Main_Debug_Window.Toolbar2,
+     (Toolbar => Main_Debug_Window.Toolbar,
       The_Type => Toolbar_Child_Button,
       Text => -"",
       Tooltip_Text => -"Select and print stack frame called by this one",
@@ -152,19 +137,19 @@ begin
    Widget_Callback.Object_Connect
      (Main_Debug_Window.Button51, "clicked", On_Down1_Activate'Access, Main_Debug_Window);
    Main_Debug_Window.Button61 := Append_Element
-     (Toolbar => Main_Debug_Window.Toolbar2,
+     (Toolbar => Main_Debug_Window.Toolbar,
       The_Type => Toolbar_Child_Button,
       Text => -"",
       Tooltip_Text => -"Interrupt debugged program",
       Icon => Gtk_Widget (Create_Pixmap (interrupt_xpm, Main_Debug_Window)));
    Widget_Callback.Object_Connect
      (Main_Debug_Window.Button61, "clicked", On_Interrupt1_Activate'Access, Main_Debug_Window);
-   Pack_Start (Main_Debug_Window.Vbox1,
-     Get_Handle_Box (Main_Debug_Window.Toolbar2), False, False, 0);
+   Pack_Start (Main_Debug_Window.Vbox,
+     Get_Handle_Box (Main_Debug_Window.Toolbar), False, False, 0);
 
-   Gtk_New (Main_Debug_Window.Frame7);
-   Set_Shadow_Type (Main_Debug_Window.Frame7, Shadow_Etched_In);
-   Pack_Start (Main_Debug_Window.Vbox1, Main_Debug_Window.Frame7, True, True, 0);
+   Gtk_New (Main_Debug_Window.Frame);
+   Set_Shadow_Type (Main_Debug_Window.Frame, Shadow_Etched_In);
+   Pack_Start (Main_Debug_Window.Vbox, Main_Debug_Window.Frame, True, True, 0);
 
    Gtk_New (Main_Debug_Window.Process_Notebook);
    Set_Scrollable (Main_Debug_Window.Process_Notebook, True);
@@ -175,11 +160,10 @@ begin
    Set_Tab_Pos (Main_Debug_Window.Process_Notebook, Pos_Top);
    Widget_Callback.Object_Connect
      (Main_Debug_Window.Process_Notebook, "switch_page", On_Process_Notebook_Switch_Page'Access, Main_Debug_Window);
-   Add (Main_Debug_Window.Frame7, Main_Debug_Window.Process_Notebook);
+   Add (Main_Debug_Window.Frame, Main_Debug_Window.Process_Notebook);
 
-   Gtk_New (Main_Debug_Window.Statusbar1);
-   Pack_Start (Main_Debug_Window.Vbox1, Main_Debug_Window.Statusbar1, False, False, 0);
-   Lock (The_Accel_Group);
+   Gtk_New (Main_Debug_Window.Statusbar);
+   Pack_Start (Main_Debug_Window.Vbox, Main_Debug_Window.Statusbar, False, False, 0);
 
 end Initialize;
 
