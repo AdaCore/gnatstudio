@@ -2,9 +2,11 @@
 with Gtk.Clist;
 with Gtk.GEntry;
 with Gtk.Menu;
+with Gtk.Style;
 
 with Wizards;
 with Directory_Tree;
+with Switches_Editors;
 
 package Creation_Wizard is
 
@@ -23,8 +25,14 @@ private
       Project_Location  : Gtk.GEntry.Gtk_Entry;
       Src_Dir_Selection : Directory_Tree.Dir_Tree;
       Src_Dir_List      : Gtk.Clist.Gtk_Clist;
-
       Obj_Dir_Selection : Directory_Tree.Dir_Tree;
+      Switches          : Switches_Editors.Switches_Editor;
+
+      Make_Switches     : Switches_Editors.Switches_Editor;
+      Comp_Switches     : Switches_Editors.Switches_Editor;
+      Bind_Switches     : Switches_Editors.Switches_Editor;
+      Link_Switches     : Switches_Editors.Switches_Editor;
+      Title_Style       : Gtk.Style.Gtk_Style;
 
       Dir_Contextual_Menu : Gtk.Menu.Gtk_Menu;
       Src_Dir_Contextual_Menu : Gtk.Menu.Gtk_Menu;

@@ -1,31 +1,48 @@
 
-with Glib;          use Glib;
-with Gdk.Bitmap;    use Gdk.Bitmap;
-with Gdk.Color;     use Gdk.Color;
-with Gdk.Event;     use Gdk.Event;
-with Gdk.Types;     use Gdk.Types;
-with Gdk.Pixmap;    use Gdk.Pixmap;
-with Gtk.Box;       use Gtk.Box;
-with Gtk.Enums;     use Gtk.Enums;
-with Gtk.GEntry;    use Gtk.GEntry;
-with Gtk.Button;    use Gtk.Button;
-with Gtk.Label;     use Gtk.Label;
-with Gtkada.Types;  use Gtkada.Types;
-with Gtk.Widget;    use Gtk.Widget;
-with Gtk.Clist;     use Gtk.Clist;
-with Gtk.Menu;      use Gtk.Menu;
-with Gtk.Menu_Item; use Gtk.Menu_Item;
-with Gtk.Handlers;  use Gtk.Handlers;
-with Gtkada.Handlers; use Gtkada.Handlers;
-with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
-with Gtk.Hbutton_Box; use Gtk.Hbutton_Box;
-with Gtk.Arrow;    use Gtk.Arrow;
+with Gdk.Bitmap;            use Gdk.Bitmap;
+with Gdk.Color;             use Gdk.Color;
+with Gdk.Event;             use Gdk.Event;
+with Gdk.Font;              use Gdk.Font;
+with Gdk.Pixmap;            use Gdk.Pixmap;
+with Gdk.Types;             use Gdk.Types;
+with Glib;                  use Glib;
+with Gtk.Alignment;         use Gtk.Alignment;
+with Gtk.Arrow;             use Gtk.Arrow;
+with Gtk.Box;               use Gtk.Box;
+with Gtk.Button;            use Gtk.Button;
+with Gtk.Button_Box;        use Gtk.Button_Box;
+with Gtk.Clist;             use Gtk.Clist;
+with Gtk.Enums;             use Gtk.Enums;
+with Gtk.GEntry;            use Gtk.GEntry;
+with Gtk.Handlers;          use Gtk.Handlers;
+with Gtk.Hbutton_Box;       use Gtk.Hbutton_Box;
+with Gtk.Label;             use Gtk.Label;
+with Gtk.Menu;              use Gtk.Menu;
+with Gtk.Menu_Item;         use Gtk.Menu_Item;
+with Gtk.Scrolled_Window;   use Gtk.Scrolled_Window;
+with Gtk.Style;             use Gtk.Style;
+with Gtk.Table;             use Gtk.Table;
+with Gtk.Widget;            use Gtk.Widget;
+with Gtkada.File_Selection; use Gtkada.File_Selection;
+with Gtkada.Handlers;       use Gtkada.Handlers;
+with Gtkada.Types;          use Gtkada.Types;
 
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with Ada.Text_IO; use Ada.Text_IO;
 
-with Wizards;      use Wizards;
-with Directory_Tree; use Directory_Tree;
+with Prj.PP;   use Prj.PP;
+with Prj.Tree; use Prj.Tree;
+with Namet;    use Namet;
+with Prj;      use Prj;
+with Stringt;  use Stringt;
+with Snames;   use Snames;
+with Csets;    use Csets;
+with Types;    use Types;
+
+with Wizards;          use Wizards;
+with Directory_Tree;   use Directory_Tree;
+with Switches_Editors; use Switches_Editors;
 
 package body Creation_Wizard is
 
@@ -38,7 +55,11 @@ package body Creation_Wizard is
       return Gtk_Widget;
    function Third_Page (Wiz : access Prj_Wizard_Record'Class)
       return Gtk_Widget;
-  --  Return the widget to use for any of the pages in the wizard
+   function Fourth_Page (Wiz : access Prj_Wizard_Record'Class)
+      return Gtk_Widget;
+   function Fifth_Page (Wiz : access Prj_Wizard_Record'Class)
+      return Gtk_Widget;
+   --  Return the widget to use for any of the pages in the wizard
 
    procedure Add_Src_Directory
      (Wiz : access Prj_Wizard_Record'Class;
@@ -87,6 +108,22 @@ package body Creation_Wizard is
    --  -1 if Name is not a source directory for the project defined in Wiz.
    --  Otherwise, the index of Name in Wiz.Src_Dir_List is returned.
 
+   procedure Advanced_Prj_Location (W : access Gtk_Widget_Record'Class);
+   --  Open up a dialog to select the project location.
+
+   procedure Advanced_Make_Switches (W : access Gtk_Widget_Record'Class);
+   procedure Advanced_Compiler_Switches (W : access Gtk_Widget_Record'Class);
+   procedure Advanced_Binder_Switches (W : access Gtk_Widget_Record'Class);
+   procedure Advanced_Linker_Switches (W : access Gtk_Widget_Record'Class);
+   --  Callbacks used to provide an advanced switches editor
+
+   function Directory_Name (File_Name : String) return String;
+   --  Return the directory name for File_Name (always ends with a directory
+   --  separator).
+
+   procedure Generate_Prj (W : access Gtk_Widget_Record'Class);
+   --  Generate the project files from the contents of the wizard W.
+
    -------------
    -- Gtk_New --
    -------------
@@ -104,16 +141,30 @@ package body Creation_Wizard is
    procedure Initialize (Wiz : access Prj_Wizard_Record'Class) is
       Pix  : Gdk_Pixmap;
       Mask : Gdk_Bitmap;
+      Font : Gdk_Font;
    begin
       Wizards.Initialize (Wiz, "Project setup", "#0476bc");
+      Set_USize (Wiz, 640, -1);
 
       Create_From_Xpm_D
         (Pix, null, Get_Default_Colormap, Mask, Null_Color, Logo_Xpm);
       Add_Logo (Wiz, Pix, Mask);
 
-      Add_Page (Wiz, First_Page (Wiz), "Naming the project");
+      Wiz.Title_Style := Copy (Get_Style (Wiz));
+      Load (Font, "-adobe-helvetica-bold-*-*-*-*-180-*-*-*-*-*-*");
+      if Font /= null then
+         Set_Font (Wiz.Title_Style, Font);
+      end if;
+
+      Add_Page (Wiz, First_Page (Wiz),  "Naming the project");
       Add_Page (Wiz, Second_Page (Wiz), "Selecting sources");
-      Add_Page (Wiz, Third_Page (Wiz), "Selecting build directory");
+      Add_Page (Wiz, Third_Page (Wiz),  "Selecting build directory");
+      Add_Page (Wiz, Fourth_Page (Wiz), "Selecting switches");
+      Add_Page (Wiz, Fifth_Page (Wiz),  "Selecting switches (tmp)");
+
+      Widget_Callback.Object_Connect
+        (Finish_Button (Wiz), "clicked",
+         Widget_Callback.To_Marshaller (Generate_Prj'Access), Wiz);
    end Initialize;
 
    ----------------
@@ -123,36 +174,44 @@ package body Creation_Wizard is
    function First_Page (Wiz : access Prj_Wizard_Record'Class)
       return Gtk_Widget
    is
+      Table  : Gtk_Table;
       Box    : Gtk_Box;
-      Hbox   : Gtk_Box;
       Label  : Gtk_Label;
       Button : Gtk_Button;
+      Align  : Gtk_Alignment;
    begin
-      Gtk_New_Vbox (Box, Homogeneous => False, Spacing => 8);
+      Gtk_New_Vbox (Box, Spacing => 8);
       Set_Border_Width (Box, 5);
 
       Gtk_New (Label, "Creating a new project");
-      Pack_Start (Box, Label, Fill => True, Expand => True);
+      Set_Style (Label, Wiz.Title_Style);
+      Pack_Start (Box, Label, Fill => False, Expand => False);
 
-      Gtk_New_Hbox (Hbox, Homogeneous => False, Spacing => 8);
-      Pack_End (Box, Hbox, Expand => False, Fill => False);
-      Gtk_New (Wiz.Project_Name, 255);
-      Pack_Start (Hbox, Wiz.Project_Name, Expand => True, Fill => True);
-      Gtk_New (Button, "...");
-      Pack_Start (Hbox, Button, Expand => False, Fill => False);
+      Gtk_New (Align, 0.0, 0.5, 1.0, 0.0);
+      Pack_Start (Box, Align, Expand => True, Fill => True);
 
-      Gtk_New (Label, "Enter the directory where to copy the file to:");
-      Pack_End (Box, Label, Expand => False, Fill => False);
-
-      Gtk_New_Hbox (Hbox, Homogeneous => False, Spacing => 8);
-      Pack_End (Box, Hbox, Expand => False, Fill => False);
-      Gtk_New (Wiz.Project_Location, 255);
-      Pack_Start (Hbox, Wiz.Project_Location, Expand => True, Fill => True);
-      Gtk_New (Button, "...");
-      Pack_Start (Hbox, Button, Expand => False, Fill => False);
+      Gtk_New (Table, Rows => 4, Columns => 2, Homogeneous => False);
+      Add (Align, Table);
 
       Gtk_New (Label, "Enter the name of the project to create:");
-      Pack_End (Box, Label, Expand => False, Fill => False);
+      Attach (Table, Label, 0, 2, 0, 1);
+
+      Gtk_New (Wiz.Project_Name, 255);
+      Attach (Table, Wiz.Project_Name, 0, 1, 1, 2);
+
+      Set_Row_Spacing (Table, 1, 20);
+
+      Gtk_New (Label, "Enter the directory where to copy the file to:");
+      Attach (Table, Label, 0, 2, 2, 3);
+
+      Gtk_New (Wiz.Project_Location, 255);
+      Attach (Table, Wiz.Project_Location, 0, 1, 3, 4);
+
+      Gtk_New (Button, "...");
+      Attach (Table, Button, 1, 2, 3, 4, Xoptions => 0);
+      Widget_Callback.Object_Connect
+        (Button, "clicked",
+         Widget_Callback.To_Marshaller (Advanced_Prj_Location'Access), Wiz);
 
       return Gtk_Widget (Box);
    end First_Page;
@@ -164,6 +223,8 @@ package body Creation_Wizard is
    function Second_Page (Wiz : access Prj_Wizard_Record'Class)
       return Gtk_Widget
    is
+      Arrow_Buttons_Width  : constant := 30;
+      Arrow_Buttons_Height : constant := 15;
       Box, Vbox : Gtk_Box;
       Bbox      : Gtk_Hbutton_Box;
       Button    : Gtk_Button;
@@ -176,6 +237,7 @@ package body Creation_Wizard is
       Gtk_New_Vbox (Vbox, Homogeneous => False, Spacing => 8);
 
       Gtk_New (Label, "Please select the source directories for this project");
+      Set_Style (Label, Wiz.Title_Style);
       Pack_Start (Vbox, Label, Expand => False, Fill => False);
 
       Gtk_New_Vbox (Box, Homogeneous => False);
@@ -196,6 +258,7 @@ package body Creation_Wizard is
 
       Gtk_New (Bbox);
       Set_Layout (Bbox, Buttonbox_Spread);
+      Set_Child_Size_Default (Arrow_Buttons_Width, Arrow_Buttons_Height);
       Pack_Start (Box, Bbox, Expand => False, Fill => False);
 
       Gtk_New (Button);
@@ -230,9 +293,8 @@ package body Creation_Wizard is
          Wiz);
 
       --  ??? This is a workaround for a horizontal scrollbar problem: When the
-      --  ctree is put in a scrolled window, and if this is not called, the
+      --  clist is put in a scrolled window, and if this is not called, the
       --  scrollbar does not allow us to scroll as far right as possible...
-      Set_Column_Auto_Resize (Wiz.Src_Dir_Selection, 0, True);
       Set_Column_Auto_Resize (Wiz.Src_Dir_List, 0, True);
 
       return Gtk_Widget (Vbox);
@@ -252,6 +314,7 @@ package body Creation_Wizard is
       Gtk_New_Vbox (Vbox, Homogeneous => False);
 
       Gtk_New (Label, "Please select the build directory for this project");
+      Set_Style (Label, Wiz.Title_Style);
       Pack_Start (Vbox, Label, Expand => False, Fill => False);
 
       Gtk_New (Scrolled);
@@ -264,6 +327,109 @@ package body Creation_Wizard is
 
       return Gtk_Widget (Vbox);
    end Third_Page;
+
+   -----------------
+   -- Fourth_Page --
+   -----------------
+
+   function Fourth_Page (Wiz : access Prj_Wizard_Record'Class)
+      return Gtk_Widget
+   is
+      Vbox : Gtk_Box;
+      Table : Gtk_Table;
+      Label : Gtk_Label;
+      Button : Gtk_Button;
+      Options : Gtk_Entry;
+   begin
+      Gtk_New_Vbox (Vbox);
+
+      Gtk_New (Label, "Please select the switches to build the project");
+      Set_Style (Label, Wiz.Title_Style);
+      Pack_Start (Vbox, Label, Expand => False, Fill => False);
+
+      Gtk_New (Table, Rows => 4, Columns => 3, Homogeneous => False);
+      Pack_Start (Vbox, Table, Expand => False, Fill => False);
+
+      Gtk_New (Label, "Make:");
+      Attach (Table, Label, 0, 1, 0, 1);
+      Gtk_New (Options, 1024);
+      Attach (Table, Options, 1, 2, 0, 1);
+      Gtk_New (Button, "...");
+      Attach (Table, Button, 2, 3, 0, 1);
+      Widget_Callback.Object_Connect
+        (Button, "clicked",
+         Widget_Callback.To_Marshaller (Advanced_Make_Switches'Access),
+         Wiz);
+      Gtk_New (Wiz.Make_Switches, Gnatmake_Page);
+      Set_Switches (Wiz.Make_Switches, (1 => new String' ("-g")));
+      Set_Text (Options, "-g");
+
+      Gtk_New (Label, "Compiler:");
+      Attach (Table, Label, 0, 1, 1, 2);
+      Gtk_New (Options, 1024);
+      Attach (Table, Options, 1, 2, 1, 2);
+      Gtk_New (Button, "...");
+      Attach (Table, Button, 2, 3, 1, 2);
+      Widget_Callback.Object_Connect
+        (Button, "clicked",
+         Widget_Callback.To_Marshaller (Advanced_Compiler_Switches'Access),
+         Wiz);
+      Gtk_New (Wiz.Comp_Switches, Compiler_Page);
+      Set_Switches (Wiz.Comp_Switches, (1 .. 0 => null));
+
+      Gtk_New (Label, "Binder:");
+      Attach (Table, Label, 0, 1, 2, 3);
+      Gtk_New (Options, 1024);
+      Attach (Table, Options, 1, 2, 2, 3);
+      Gtk_New (Button, "...");
+      Attach (Table, Button, 2, 3, 2, 3);
+      Widget_Callback.Object_Connect
+        (Button, "clicked",
+         Widget_Callback.To_Marshaller (Advanced_Binder_Switches'Access),
+         Wiz);
+      Gtk_New (Wiz.Bind_Switches, Binder_Page);
+      Set_Switches (Wiz.Bind_Switches, (1 .. 0 => null));
+
+      Gtk_New (Label, "Linker:");
+      Attach (Table, Label, 0, 1, 3, 4);
+      Gtk_New (Options, 1024);
+      Attach (Table, Options, 1, 2, 3, 4);
+      Gtk_New (Button, "...");
+      Attach (Table, Button, 2, 3, 3, 4);
+      Widget_Callback.Object_Connect
+        (Button, "clicked",
+         Widget_Callback.To_Marshaller (Advanced_Linker_Switches'Access),
+         Wiz);
+      Gtk_New (Wiz.Link_Switches, Linker_Page);
+      Set_Switches (Wiz.Link_Switches, (1 .. 0 => null));
+
+      return Gtk_Widget (Vbox);
+   end Fourth_Page;
+
+   ----------------
+   -- Fifth_Page --
+   ----------------
+
+   function Fifth_Page (Wiz : access Prj_Wizard_Record'Class)
+      return Gtk_Widget
+   is
+      Vbox : Gtk_Box;
+      Label : Gtk_Label;
+   begin
+      Gtk_New_Vbox (Vbox, Homogeneous => False);
+
+      Gtk_New (Label, "Please select the switches to build the project");
+      Set_Style (Label, Wiz.Title_Style);
+      Pack_Start (Vbox, Label, Expand => False, Fill => False);
+
+      Gtk_New (Wiz.Switches, Gnatmake_Page or Compiler_Page);
+      Pack_Start (Vbox, Wiz.Switches, Expand => True, Fill => True);
+
+      Set_Switches (Wiz.Switches, (new String' ("-g"), new String' ("-i")));
+      Set_Switches (Wiz.Switches, (new String' ("-I-"), new String' ("-f")));
+
+      return Gtk_Widget (Vbox);
+   end Fifth_Page;
 
    -------------------------
    -- Is_Source_Directory --
@@ -369,6 +535,12 @@ package body Creation_Wizard is
          Remove (Wiz.Src_Dir_List, Gint_List.Get_Data (List));
          List := Next;
       end loop;
+
+      --  Workaround for a possible bug in gtk+: when all the rows in the
+      --  clist are removed with the loop above, we get a STORAGE_ERROR,
+      --  unless we do the following
+
+      Remove (Wiz.Src_Dir_List, Append (Wiz.Src_Dir_List, Null_Array + ""));
    end Remove_Src_Directory;
 
    --------------------------
@@ -379,9 +551,15 @@ package body Creation_Wizard is
       Wiz : Prj_Wizard := Prj_Wizard (W);
    begin
       Freeze (Wiz.Src_Dir_List);
+      Unselect_All (Wiz.Src_Dir_List);
       Add_Src_Directory (Wiz, Get_Selection (Wiz.Src_Dir_Selection), True);
       Sort (Wiz.Src_Dir_List);
       Thaw (Wiz.Src_Dir_List);
+
+      --  Show the first selected item
+      Moveto (Wiz.Src_Dir_List,
+              Gint_List.Get_Data (Get_Selection (Wiz.Src_Dir_List)),
+              0, 0.0, 0.2);
    end Add_Src_Directory_Cb;
 
    ---------------------------------
@@ -446,7 +624,6 @@ package body Creation_Wizard is
             Selected_Row, Selected_Col, Is_Valid);
 
          if Is_Valid then
-            Unselect_All (Wiz.Src_Dir_Selection);
             Select_Row (Wiz.Src_Dir_Selection, Selected_Row, Selected_Col);
 
             Gtk_New (Wiz.Dir_Contextual_Menu);
@@ -486,10 +663,11 @@ package body Creation_Wizard is
      (W : access Gtk_Widget_Record'Class;
       Event  : Gdk.Event.Gdk_Event) return Boolean
    is
+      use type Gint_List.Glist;
       Wiz  : Prj_Wizard := Prj_Wizard (W);
       Item : Gtk_Menu_Item;
-      Selected_Row, Selected_Col : Gint;
-      Is_Valid : Boolean;
+      Is_Valid : constant Boolean :=
+        Get_Selection (Wiz.Src_Dir_List) /= Gint_List.Null_List;
 
    begin
       if Get_Button (Event) = 3
@@ -499,42 +677,347 @@ package body Creation_Wizard is
             Destroy (Wiz.Src_Dir_Contextual_Menu);
          end if;
 
-         Get_Selection_Info
-           (Wiz.Src_Dir_List,
-            Gint (Get_X (Event)), Gint (Get_Y (Event)),
-            Selected_Row, Selected_Col, Is_Valid);
+         Gtk_New (Wiz.Src_Dir_Contextual_Menu);
+         Gtk_New (Item, "Remove directory recursive");
+         Widget_Callback.Object_Connect
+           (Item, "activate",
+            Widget_Callback.To_Marshaller (Remove_Src_Directory_Cb'Access),
+            Wiz);
+         Set_Sensitive (Item, Is_Valid);
+         Append (Wiz.Src_Dir_Contextual_Menu, Item);
 
-         if Is_Valid then
-            Unselect_All (Wiz.Src_Dir_List);
-            Select_Row (Wiz.Src_Dir_List, Selected_Row, Selected_Col);
+         Gtk_New (Item, "Remove directory");
+         Widget_Callback.Object_Connect
+           (Item, "activate",
+            Widget_Callback.To_Marshaller
+            (Remove_Single_Src_Directory_Cb'Access),
+            Wiz);
+         Set_Sensitive (Item, Is_Valid);
+         Append (Wiz.Src_Dir_Contextual_Menu, Item);
 
-            Gtk_New (Wiz.Src_Dir_Contextual_Menu);
-            Gtk_New (Item, "Remove directory recursive");
-            Widget_Callback.Object_Connect
-              (Item, "activate",
-               Widget_Callback.To_Marshaller (Remove_Src_Directory_Cb'Access),
-               Wiz);
-            Append (Wiz.Src_Dir_Contextual_Menu, Item);
+         Show_All (Wiz.Src_Dir_Contextual_Menu);
 
-            Gtk_New (Item, "Remove directory");
-            Widget_Callback.Object_Connect
-              (Item, "activate",
-               Widget_Callback.To_Marshaller
-                 (Remove_Single_Src_Directory_Cb'Access),
-               Wiz);
-            Append (Wiz.Src_Dir_Contextual_Menu, Item);
-
-            Show_All (Wiz.Src_Dir_Contextual_Menu);
-
-            Popup (Wiz.Src_Dir_Contextual_Menu,
-                   Button        => Gdk.Event.Get_Button (Event),
-                   Activate_Time => Gdk.Event.Get_Time (Event));
-            Emit_Stop_By_Name (Wiz.Src_Dir_List, "button_press_event");
-            return True;
-         end if;
+         Popup (Wiz.Src_Dir_Contextual_Menu,
+                Button        => Gdk.Event.Get_Button (Event),
+                Activate_Time => Gdk.Event.Get_Time (Event));
+         Emit_Stop_By_Name (Wiz.Src_Dir_List, "button_press_event");
+         return True;
       end if;
 
       return False;
    end Src_List_Button_Press_Cb;
 
+   ----------------------------
+   -- Advanced_Make_Switches --
+   ----------------------------
+
+   procedure Advanced_Make_Switches (W : access Gtk_Widget_Record'Class) is
+   begin
+      null;
+   end Advanced_Make_Switches;
+
+   --------------------------------
+   -- Advanced_Compiler_Switches --
+   --------------------------------
+
+   procedure Advanced_Compiler_Switches (W : access Gtk_Widget_Record'Class) is
+   begin
+      null;
+   end Advanced_Compiler_Switches;
+
+   ------------------------------
+   -- Advanced_Binder_Switches --
+   ------------------------------
+
+   procedure Advanced_Binder_Switches (W : access Gtk_Widget_Record'Class) is
+   begin
+      null;
+   end Advanced_Binder_Switches;
+
+   ------------------------------
+   -- Advanced_Linker_Switches --
+   ------------------------------
+
+   procedure Advanced_Linker_Switches (W : access Gtk_Widget_Record'Class) is
+   begin
+      null;
+   end Advanced_Linker_Switches;
+
+   --------------------
+   -- Directory_Name --
+   --------------------
+
+   function Directory_Name (File_Name : String) return String is
+   begin
+      for J in reverse File_Name'Range loop
+         if File_Name (J) = GNAT.OS_Lib.Directory_Separator
+           or else File_Name (J) = '/'
+         then
+            return File_Name (File_Name'First .. J);
+         end if;
+      end loop;
+      return "";
+   end Directory_Name;
+
+   ---------------------------
+   -- Advanced_Prj_Location --
+   ---------------------------
+
+   procedure Advanced_Prj_Location (W : access Gtk_Widget_Record'Class) is
+      Name : constant String := Directory_Name (File_Selection_Dialog
+         ("Select project file location", Dir_Only => True));
+   begin
+      if Name /= "" then
+         Set_Text (Prj_Wizard (W).Project_Location, Name);
+      end if;
+   end Advanced_Prj_Location;
+
+
+   ----------------------
+   --  Project support --
+   ----------------------
+   --  The following should be moved to prj_api
+
+   function Create_Project (Name, Path : String) return Project_Node_Id;
+   --  Create a new empty project.
+   --  You must have called "Project_Nodes.Set_Last (Empty_Node)" first.
+
+   function Get_Or_Create_Declaration (Project : Project_Node_Id)
+      return Project_Node_Id;
+   --  Create (or get) the declaration associated with project
+   --  This returns a N_Project_Declaration
+
+   function Get_Or_Create_Variable
+     (Project : Project_Node_Id; Name : String; Kind : Variable_Kind := List)
+      return Project_Node_Id;
+   --  Create (or get an existing) variable by Name.
+   --  The variable is added before the others in the project.
+   --  If the variable is a list, it also creates the associated
+   --  N_Literal_String_List node.
+
+   procedure Append_To_List (Var : Project_Node_Id; Value : String);
+   --  Append a simple string to Var.
+   --  Var must be a list, and contain a N_Literal_String_List, as created
+   --  by Get_Or_Create_Variable above
+
+   procedure Set_Value (Var : Project_Node_Id; Value : String);
+   --  Set the value for a variable. Var mustn't be a list.
+
+   --------------------
+   -- Create_Project --
+   --------------------
+
+   function Create_Project (Name, Path : String) return Project_Node_Id is
+      Project : Project_Node_Id;
+   begin
+      Project_Nodes.Append (Default_Project_Node (N_Project));
+      Project := Project_Nodes.Last;
+      pragma Assert (Project /= Empty_Node);
+
+      --  Adding the name of the project
+      Name_Len := Name'Length;
+      Name_Buffer (1 .. Name_Len) := Name;
+      Project_Nodes.Table (Project).Name := Name_Enter;
+
+      --  Adding the project path
+      Name_Len := Path'Length;
+      Name_Buffer (1 .. Name_Len) := Path;
+      Project_Nodes.Table (Project).Path_Name := Name_Enter;
+      return Project;
+   end Create_Project;
+
+   -------------------------------
+   -- Get_Or_Create_Declaration --
+   -------------------------------
+
+   function Get_Or_Create_Declaration (Project : Project_Node_Id)
+      return Project_Node_Id
+   is
+      Decl : Project_Node_Id := Project_Nodes.Table (Project).Field2;
+   begin
+      if Decl = Empty_Node then
+         Project_Nodes.Append (Default_Project_Node (N_Project_Declaration));
+         Decl := Project_Nodes.Last;
+         Project_Nodes.Table (Project).Field2 := Decl;
+      end if;
+      return Decl;
+   end Get_Or_Create_Declaration;
+
+   ----------------------------
+   -- Get_Or_Create_Variable --
+   ----------------------------
+
+   function Get_Or_Create_Variable
+     (Project : Project_Node_Id; Name : String; Kind : Variable_Kind := List)
+      return Project_Node_Id
+   is
+      Decl : constant Project_Node_Id := Get_Or_Create_Declaration (Project);
+      Decl_Item : Project_Node_Id;
+      Var : Project_Node_Id;
+      N : Name_Id;
+   begin
+      Name_Len := Name'Length;
+      Name_Buffer (1 .. Name_Len) := Name;
+      N := Name_Find;
+
+      --  Check if the variable already exists
+      Decl_Item := Project_Nodes.Table (Decl).Field1;
+      while Decl_Item /= Empty_Node loop
+         Var := Project_Nodes.Table (Decl_Item).Field1;
+         if Project_Nodes.Table (Var).Kind = N_Variable_Declaration
+           and then Project_Nodes.Table (Var).Name = N
+         then
+            return Var;
+         end if;
+         Decl_Item := Project_Nodes.Table (Decl_Item).Field2;
+      end loop;
+
+      --  Otherwise create the declarative item
+      Project_Nodes.Append (Default_Project_Node (N_Declarative_Item));
+      Decl_Item := Project_Nodes.Last;
+      Project_Nodes.Table (Decl_Item).Field2 :=
+        Project_Nodes.Table (Decl).Field1;
+      Project_Nodes.Table (Decl).Field1 := Decl_Item;
+
+      --  Create the variable
+      Project_Nodes.Append
+        (Default_Project_Node (N_Variable_Declaration, Kind));
+      Var := Project_Nodes.Last;
+      Project_Nodes.Table (Var).Field3 := Project_Nodes.Table (Decl).Field1;
+      Project_Nodes.Table (Decl_Item).Field1 := Var;
+
+      Project_Nodes.Table (Var).Name := N;
+
+      if Kind = Prj.List then
+         Project_Nodes.Append
+           (Default_Project_Node (N_Literal_String_List, List));
+         Project_Nodes.Table (Var).Field1 := Project_Nodes.Last;
+      end if;
+      return Var;
+   end Get_Or_Create_Variable;
+
+   --------------------
+   -- Append_To_List --
+   --------------------
+
+   procedure Append_To_List (Var : Project_Node_Id; Value : String) is
+      List, Expr, Term, Str : Project_Node_Id;
+   begin
+      pragma Assert (Var /= Empty_Node);
+      pragma Assert (Project_Nodes.Table (Var).Expr_Kind = Prj.List);
+
+      List := Project_Nodes.Table (Var).Field1;
+
+      pragma Assert (List /= Empty_Node);
+      pragma Assert (Project_Nodes.Table (List).Kind = N_Literal_String_List);
+
+      --  Create a new expression
+      Project_Nodes.Append (Default_Project_Node (N_Expression));
+      Term := Project_Nodes.Last;
+
+      --  Create a new list if required
+      Expr := Project_Nodes.Table (List).Field1;
+      if Expr = Empty_Node then
+         Project_Nodes.Table (List).Field1 := Term;
+
+      --  Else append at the end of list
+      else
+         while Project_Nodes.Table (Expr).Field2 /= Empty_Node loop
+            Expr := Project_Nodes.Table (Expr).Field2;
+         end loop;
+
+         Project_Nodes.Table (Expr).Field2 := Term;
+      end if;
+      Expr := Term;
+
+      Project_Nodes.Append (Default_Project_Node (N_Term));
+      Term := Project_Nodes.Last;
+      Project_Nodes.Table (Expr).Field1 := Term;
+
+      Project_Nodes.Append (Default_Project_Node (N_Literal_String));
+      Str := Project_Nodes.Last;
+      Project_Nodes.Table (Term).Field1 := Str;
+
+      Start_String;
+      Store_String_Chars (Value);
+      Project_Nodes.Table (Str).Value := End_String;
+   end Append_To_List;
+
+   ---------------
+   -- Set_Value --
+   ---------------
+
+   procedure Set_Value (Var : Project_Node_Id; Value : String) is
+      Expr, Term, Str : Project_Node_Id;
+   begin
+      pragma Assert (Var /= Empty_Node);
+      pragma Assert (Project_Nodes.Table (Var).Expr_Kind = Prj.Single);
+
+      --  Create the expression if required
+      Expr := Project_Nodes.Table (Var).Field1;
+      if Expr = Empty_Node then
+         Project_Nodes.Append (Default_Project_Node (N_Expression));
+         Expr := Project_Nodes.Last;
+         Project_Nodes.Table (Var).Field1 := Expr;
+      else
+         pragma Assert (Project_Nodes.Table (Expr).Kind = N_Expression);
+         null;
+      end if;
+
+      Project_Nodes.Table (Expr).Field2 := Empty_Node; --  No next in the list
+
+      --  Create the term
+      Term := Project_Nodes.Table (Expr).Field1;
+      if Term = Empty_Node then
+         Project_Nodes.Append (Default_Project_Node (N_Term));
+         Term := Project_Nodes.Last;
+         Project_Nodes.Table (Expr).Field1 := Term;
+      else
+         pragma Assert (Project_Nodes.Table (Term).Kind = N_Term);
+         null;
+      end if;
+
+      Project_Nodes.Append (Default_Project_Node (N_Literal_String));
+      Str := Project_Nodes.Last;
+      Project_Nodes.Table (Term).Field1 := Str;
+      Project_Nodes.Table (Term).Field2 := Empty_Node;
+
+      Start_String;
+      Store_String_Chars (Value);
+      Project_Nodes.Table (Str).Value := End_String;
+   end Set_Value;
+
+   ------------------
+   -- Generate_Prj --
+   ------------------
+
+   procedure Generate_Prj (W : access Gtk_Widget_Record'Class) is
+      Wiz  : Prj_Wizard := Prj_Wizard (W);
+      Project, Var : Project_Node_Id;
+      Num_Src_Dir : constant Gint := Get_Rows (Wiz.Src_Dir_List);
+   begin
+      Project := Create_Project
+        (Name => Get_Chars (Wiz.Project_Name),
+         Path => Get_Chars (Wiz.Project_Location));
+
+      --  Append the source directories
+      Var := Get_Or_Create_Variable (Project, "src_dir", List);
+      for J in 0 .. Num_Src_Dir - 1 loop
+         Append_To_List (Var, Get_Text (Wiz.Src_Dir_List, J, 0));
+      end loop;
+
+      --  Append the build directory
+      Var := Get_Or_Create_Variable (Project, "obj_dir", Single);
+      Set_Value (Var, Get_Selection (Wiz.Obj_Dir_Selection));
+
+      Pretty_Print (Project);
+   end Generate_Prj;
+
+begin
+   Namet.Initialize;
+   Csets.Initialize;
+   Snames.Initialize;
+   Prj.Initialize;
+   --  Prj.Env.Initialize;
+   Project_Nodes.Set_Last (Empty_Node);
 end Creation_Wizard;
