@@ -1,7 +1,7 @@
 ----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2001-2003                       --
+--                     Copyright (C) 2001-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -1497,6 +1497,7 @@ package body Builder_Module is
       Builder_Module : constant Builder_Module_ID_Access :=
         Builder_Module_ID_Access (Builder_Module_ID);
       Group : constant Gtk_Accel_Group := Get_Default_Accelerators (Kernel);
+      Main : Virtual_File;
 
    begin
       if Menu = null then
@@ -1510,13 +1511,22 @@ package body Builder_Module is
       for M in Mains'Range loop
          Gtk_New (Mitem, Mains (M).all);
          Append (Menu, Mitem);
+
+         --  If the name of the main is not a source file, we might not be
+         --  able to resolve it.
+         Main := Create (Mains (M).all, Project);
+         if Main = VFS.No_File then
+            Main := Create_From_Base
+              (Executables_Directory (Project) & Mains (M).all);
+         end if;
+
          File_Project_Cb.Object_Connect
            (Mitem, "activate",
             File_Project_Cb.To_Marshaller (On_Build'Access),
             Slot_Object => Kernel,
             User_Data   => File_Project_Record'
               (Project => Project,
-               File    => Create (Mains (M).all, Project)));
+               File    => Main));
 
          declare
             Accel_Path : constant String := Make_Menu_Prefix
