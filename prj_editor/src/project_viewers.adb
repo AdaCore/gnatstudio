@@ -62,17 +62,20 @@ with Switches_Editors;     use Switches_Editors;
 with Naming_Editors;       use Naming_Editors;
 with Directory_Tree;       use Directory_Tree;
 with String_Utils;         use String_Utils;
+with Switches_Editors; use Switches_Editors;
+with Traces;               use Traces;
 
 with Prj;           use Prj;
 with Prj.Tree;      use Prj.Tree;
+with Prj.PP;        use Prj.PP;
 with Stringt;       use Stringt;
 with Types;         use Types;
 with Namet;         use Namet;
 with Snames;        use Snames;
 
-with Switches_Editors; use Switches_Editors;
-
 package body Project_Viewers is
+
+   Me : Debug_Handle := Create ("Project_Viewers");
 
    Prj_Editor_Module_ID : Module_ID;
    --  Id for the project editor module
@@ -303,6 +306,11 @@ package body Project_Viewers is
      (Widget  : access Gtk_Widget_Record'Class;
       Context : Selection_Context_Access);
    --  Add a dependency to a default empty project.
+
+   procedure Remove_Project_Dependency
+     (Widget  : access Gtk_Widget_Record'Class;
+      Context : Selection_Context_Access);
+   --  Remove the project dependency between the two projects in Context.
 
    -------------------------
    -- Find_In_Source_Dirs --
@@ -1052,6 +1060,26 @@ package body Project_Viewers is
       end if;
    end On_Add_Dependency_From_Wizard;
 
+   -------------------------------
+   -- Remove_Project_Dependency --
+   -------------------------------
+
+   procedure Remove_Project_Dependency
+     (Widget  : access Gtk_Widget_Record'Class;
+      Context : Selection_Context_Access)
+   is
+      File : File_Selection_Context_Access :=
+        File_Selection_Context_Access (Context);
+   begin
+      Remove_Imported_Project
+        (Get_Project_From_View (Importing_Project_Information (File)),
+         Project_Name (Project_Information (File)));
+      Trace (Me, "Removing project dependency");
+      Trace_Pretty_Print
+        (Me, Get_Project_From_View (Importing_Project_Information (File)));
+      Recompute_View (Get_Kernel (Context));
+   end Remove_Project_Dependency;
+
    -------------------------------------
    -- On_Add_Dependency_From_Existing --
    -------------------------------------
@@ -1150,7 +1178,11 @@ package body Project_Viewers is
                Context_Callback.To_Marshaller
                (On_Edit_Naming_Scheme'Access),
                Selection_Context_Access (Context));
+         end if;
 
+         if Has_Project_Information (File_Context)
+           and then not Has_Directory_Information (File_Context)
+         then
             Gtk_New (Item, -"Add dependency");
             Add (Menu, Item);
 
@@ -1172,6 +1204,20 @@ package body Project_Viewers is
                Context_Callback.To_Marshaller
                (On_Add_Dependency_From_Existing'Access),
                Selection_Context_Access (Context));
+
+            if Has_Importing_Project_Information (File_Context) then
+               Gtk_New
+                 (Item, Label => -"Remove dependency "
+                  & Project_Name (Importing_Project_Information (File_Context))
+                  & " -> "
+                  & Project_Name (Project_Information (File_Context)));
+               Append (Menu, Item);
+               Context_Callback.Connect
+                 (Item, "activate",
+                  Context_Callback.To_Marshaller
+                  (Remove_Project_Dependency'Access),
+                  Selection_Context_Access (Context));
+            end if;
          end if;
 
          if Has_Directory_Information (File_Context) then
