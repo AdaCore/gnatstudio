@@ -4,6 +4,7 @@
 
 <gnatpp>
    <action name="Pretty print" output="none" >
+      <description>Reformat the current Ada source file, and reload the reformated version. Specific formating options can be set in the project file</description>
       <!-- This action only applies to Ada files -->
       <filter language="ada"
               error="Pretty printing of non Ada files not supported yet" />
