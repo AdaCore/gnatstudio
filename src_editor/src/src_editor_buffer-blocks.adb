@@ -76,10 +76,6 @@ package body Src_Editor_Buffer.Blocks is
          return;
       end if;
 
-      --  Free the previous block information.
-
-      Free (Buffer.Blocks);
-
       if Buffer.Line_Data /= null then
          for Line in Buffer.Line_Data'Range loop
             Buffer.Line_Data (Line).Block := null;
@@ -130,7 +126,6 @@ package body Src_Editor_Buffer.Blocks is
                end loop;
 
                Buffer.Line_Data (First_Buffer_Line).Block := Block;
-               Append (Buffer.Blocks, Block);
             else
                Free_Block (Block);
             end if;
