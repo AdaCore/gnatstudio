@@ -27,6 +27,7 @@
 with System;
 with GNAT.OS_Lib;
 with Glib.Object;
+with Gtk.Widget;
 with Entities;
 with Projects;
 with Glide_Kernel.Contexts;
@@ -672,6 +673,30 @@ package Glide_Kernel.Scripts is
      (Script : access Scripting_Language_Record'Class;
       File   : VFS.Virtual_File) return Class_Instance;
    --  Return a new file.
+
+   ---------------
+   -- GUI_Class --
+   ---------------
+
+   function Get_GUI_Class
+     (Kernel : access Kernel_Handle_Record'Class) return Class_Type;
+   --  Return the class to use for GUI elements. This encapsulate a Gtk_Widget
+
+   function Get_Data (Instance : Class_Instance) return Gtk.Widget.Gtk_Widget;
+   --  Get the object stored in Instance
+
+   procedure Set_Data
+     (Instance : Class_Instance;
+      Widget   : Gtk.Widget.Gtk_Widget);
+   --  Set the data stored in the instance. The two are then closely
+   --  associated: When the instance is destroyed, the widget is unreferenced.
+   --  If the widget is destroyed, the instance will no longer be associated
+   --  with a widget.
+
+   function Get_Instance
+     (Widget   : access Gtk.Widget.Gtk_Widget_Record'Class)
+     return Class_Instance;
+   --  Return the instance that was associated with the widget, if any.
 
    -------------------------
    -- File_Location_Class --

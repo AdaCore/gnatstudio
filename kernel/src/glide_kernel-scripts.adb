@@ -22,6 +22,8 @@ with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 with GNAT.OS_Lib;          use GNAT.OS_Lib;
 with Glib.Object;          use Glib.Object;
+with Gtkada.Types;         use Gtkada.Types;
+with Gtk.Widget;           use Gtk.Widget;
 with Glide_Intl;           use Glide_Intl;
 with Glide_Kernel.Actions; use Glide_Kernel.Actions;
 with Glide_Kernel.Custom;  use Glide_Kernel.Custom;
@@ -72,6 +74,7 @@ package body Glide_Kernel.Scripts is
       File_Context_Class   : Class_Type := No_Class;
       File_Location_Class  : Class_Type := No_Class;
       Entity_Context_Class : Class_Type := No_Class;
+      GUI_Class            : Class_Type := No_Class;
       Hook_Class           : Class_Type := No_Class;
    end record;
    type Scripting_Data is access all Scripting_Data_Record'Class;
@@ -106,6 +109,20 @@ package body Glide_Kernel.Scripts is
    procedure On_Destroy_Context (Value : System.Address);
    pragma Convention (C, On_Destroy_Context);
 
+   function Convert is new Ada.Unchecked_Conversion
+     (System.Address, Gtk_Widget);
+   procedure On_Destroy_Widget (Value : System.Address);
+   pragma Convention (C, On_Destroy_Widget);
+
+   procedure On_Widget_Destroyed
+     (Data : System.Address; Widget : System.Address);
+   pragma Convention (C, On_Widget_Destroyed);
+   --  Called when Widget is destroyed, to break its associated with a
+   --  Class_Instance
+
+   package Widget_User_Data is new Glib.Object.User_Data
+     (Data_Type => Class_Instance);
+
    procedure Default_Command_Handler
      (Data : in out Callback_Data'Class; Command : String);
    --  Handler for the default commands
@@ -133,6 +150,10 @@ package body Glide_Kernel.Scripts is
    procedure Entity_Context_Command_Handler
      (Data : in out Callback_Data'Class; Command : String);
    --  Handler for all entity_context-related commands
+
+   procedure GUI_Command_Handler
+     (Data : in out Callback_Data'Class; Command : String);
+   --  Handler for all GUI class commands
 
    procedure Set_Data
      (Instance : access Class_Instance_Record'Class; File : File_Info);
@@ -164,6 +185,7 @@ package body Glide_Kernel.Scripts is
    Tool_Cst       : aliased constant String := "tool";
    Action_Cst     : aliased constant String := "action";
    Prefix_Cst     : aliased constant String := "prefix";
+   Sensitive_Cst  : aliased constant String := "sensitive";
    Project_Cmd_Parameters : constant Cst_Argument_List :=
      (1 => Name_Cst'Access);
    Insmod_Cmd_Parameters  : constant Cst_Argument_List :=
@@ -189,6 +211,8 @@ package body Glide_Kernel.Scripts is
      (1 => Action_Cst'Access);
    Scenar_Var_Parameters : constant Cst_Argument_List :=
      (1 => Prefix_Cst'Access);
+   Set_Sensitive_Parameters : constant Cst_Argument_List :=
+     (1 => Sensitive_Cst'Access);
 
    ----------
    -- Free --
@@ -1469,6 +1493,17 @@ package body Glide_Kernel.Scripts is
       Register_Command
         (Kernel, "current_context",
          Handler      => Context_Command_Handler'Access);
+
+      Register_Command
+        (Kernel, Constructor_Method,
+         Class   => Get_GUI_Class (Kernel),
+         Handler => GUI_Command_Handler'Access);
+      Register_Command
+        (Kernel, "set_sensitive",
+         Minimum_Args => 0,
+         Maximum_Args => 1,
+         Class        => Get_GUI_Class (Kernel),
+         Handler      => GUI_Command_Handler'Access);
    end Register_Default_Script_Commands;
 
    ----------------------
@@ -2189,5 +2224,132 @@ package body Glide_Kernel.Scripts is
          Unchecked_Free (Subprogram);
       end if;
    end Free;
+
+   -------------------
+   -- Get_GUI_Class --
+   -------------------
+
+   function Get_GUI_Class
+     (Kernel : access Kernel_Handle_Record'Class) return Class_Type is
+   begin
+      if Scripting_Data (Kernel.Scripts).GUI_Class = No_Class then
+         Scripting_Data (Kernel.Scripts).GUI_Class := New_Class
+           (Kernel, "GUI");
+      end if;
+
+      return Scripting_Data (Kernel.Scripts).GUI_Class;
+   end Get_GUI_Class;
+
+   --------------
+   -- Get_Data --
+   --------------
+
+   function Get_Data
+     (Instance : Class_Instance) return Gtk.Widget.Gtk_Widget
+   is
+      Script : constant Scripting_Language := Get_Script (Instance);
+   begin
+      if not Is_Subclass
+        (Script, Get_Class (Instance), Get_GUI_Class (Get_Kernel (Script)))
+      then
+         raise Invalid_Data;
+      else
+         return Convert (Get_Data (Instance));
+      end if;
+   end Get_Data;
+
+   --------------
+   -- Set_Data --
+   --------------
+
+   procedure Set_Data
+     (Instance : Class_Instance;
+      Widget   : Gtk.Widget.Gtk_Widget)
+   is
+      Script : constant Scripting_Language := Get_Script (Instance);
+   begin
+      if not Is_Subclass
+        (Script, Get_Class (Instance), Get_GUI_Class (Get_Kernel (Script)))
+      then
+         raise Invalid_Data;
+      else
+         Ref (Widget);
+         Set_Data
+           (Instance,
+            Value      => Widget.all'Address,
+            On_Destroy => On_Destroy_Widget'Access);
+         Widget_User_Data.Set
+           (Widget, Instance, "GPS-script-instance");
+         Weak_Ref (Widget, Notify => On_Widget_Destroyed'Access);
+      end if;
+   end Set_Data;
+
+   -------------------------
+   -- On_Widget_Destroyed --
+   -------------------------
+
+   procedure On_Widget_Destroyed
+     (Data : System.Address; Widget : System.Address)
+   is
+      pragma Unreferenced (Data);
+      Stub : Gtk.Widget.Gtk_Widget_Record;
+      Inst : constant Class_Instance :=
+        Get_Instance (Gtk_Widget (Get_User_Data (Widget, Stub)));
+   begin
+      if Inst /= null then
+         Set_Data (Inst, System.Null_Address);
+      end if;
+   end On_Widget_Destroyed;
+
+   ------------------
+   -- Get_Instance --
+   ------------------
+
+   function Get_Instance
+     (Widget   : access Gtk.Widget.Gtk_Widget_Record'Class)
+     return Class_Instance is
+   begin
+      return Widget_User_Data.Get (Widget, "GPS-script-instance");
+   exception
+      when Gtkada.Types.Data_Error =>
+         return null;
+   end Get_Instance;
+
+   -----------------------
+   -- On_Destroy_Widget --
+   -----------------------
+
+   procedure On_Destroy_Widget (Value : System.Address) is
+      W : constant Gtk_Widget := Convert (Value);
+   begin
+      Unref (W);
+   end On_Destroy_Widget;
+
+   -------------------------
+   -- GUI_Command_Handler --
+   -------------------------
+
+   procedure GUI_Command_Handler
+     (Data : in out Callback_Data'Class; Command : String)
+   is
+      Inst : constant Class_Instance := Nth_Arg
+        (Data, 1, Get_GUI_Class (Get_Kernel (Data)));
+   begin
+      if Command = Constructor_Method then
+         Set_Error_Msg
+           (Data, -("Cannot build instances of GPS.GUI, these are returned"
+                    & " by other functions"));
+      elsif Command = "set_sensitive" then
+         Name_Parameters (Data, Set_Sensitive_Parameters);
+         declare
+            Value : constant Boolean := Nth_Arg (Data, 2, True);
+            W     : constant Gtk_Widget := Get_Data (Inst);
+         begin
+            Set_Sensitive (W, Value);
+         end;
+      end if;
+
+      Free (Inst);
+   end GUI_Command_Handler;
 
 end Glide_Kernel.Scripts;
