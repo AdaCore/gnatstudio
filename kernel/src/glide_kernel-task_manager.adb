@@ -146,7 +146,7 @@ package body Glide_Kernel.Task_Manager is
       Button := Add_Button (Dialog, Stock_Ok, Gtk_Response_Yes);
       Button := Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel);
 
-      Set_Default_Size (Dialog, 150, 100);
+      Set_Size_Request (Interface, 400, 200);
       Show_All (Dialog);
       Response := Run (Dialog);
 
