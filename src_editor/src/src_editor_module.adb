@@ -3230,7 +3230,7 @@ package body Src_Editor_Module is
          Command, -"Auto-indent the current line or block of lines",
          Src_Action_Context);
       Bind_Default_Key
-        (Handler     => Get_Key_Handler (Kernel),
+        (Kernel      => Kernel,
          Action      => "Indent current line",
          Default_Key => "control-Tab");
 
@@ -3242,7 +3242,7 @@ package body Src_Editor_Module is
            & " contents of the editor"),
          Src_Action_Context);
       Bind_Default_Key
-        (Handler     => Get_Key_Handler (Kernel),
+        (Kernel      => Kernel,
          Action      => "Complete identifier",
          Default_Key => "control-slash");
 
@@ -3254,7 +3254,7 @@ package body Src_Editor_Module is
          -"Jump to the matching delimiter ()[]{}",
          Src_Action_Context);
       Bind_Default_Key
-        (Handler     => Get_Key_Handler (Kernel),
+        (Kernel      => Kernel,
          Action      => "Jump to matching delimiter",
          Default_Key => "control-apostrophe");
 
