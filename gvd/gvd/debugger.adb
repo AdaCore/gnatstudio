@@ -760,7 +760,13 @@ package body Debugger is
       CR_Found : Boolean;
 
    begin
-      pragma Assert (not Command_In_Process (Get_Process (Debugger)));
+      if Command_In_Process (Get_Process (Debugger)) then
+         --  Should never happen, but it's safer to return immediately in case
+         --  we're compiling without assertions, rather than hanging.
+
+         pragma Assert (False);
+         return "";
+      end if;
 
       Send_Internal_Pre (Debugger, Cmd, Mode => Mode);
       Wait_Prompt (Debugger);
