@@ -770,7 +770,7 @@ package body VCS_View_API is
                   Selection_Context_Access (Context));
 
                Gtk_New (Item, Label =>
-                        -"Compare against specific rev.");
+                        -"Compare against revision...");
                Append (Menu, Item);
                Context_Callback.Connect
                  (Item, "activate",
