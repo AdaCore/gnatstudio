@@ -20,7 +20,6 @@
 
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
-with GVD.Process; use GVD.Process;
 with GVD.Types; use GVD.Types;
 with Process_Proxies; use Process_Proxies;
 with Debugger; use Debugger;
@@ -39,13 +38,33 @@ package body GVD.Trace is
    function To_Main_Window is new
      Unchecked_Conversion (System.Address, Main_Debug_Window_Access);
 
-   procedure Output_Message (File : File_Descriptor; Str : String);
-   --  Write on File the string Str, by replacing ASCII.LF by "\n" and
-   --  ASCII.HT by "\t", and putting lines in quotes.
+   --------------------
+   -- Output_Message --
+   --------------------
 
-   procedure Output_Message (File : File_Descriptor; Str : String) is
-      N : Integer;
+   procedure Output_Message
+     (Process : Debugger_Process_Tab;
+      Str     : String;
+      Kind    : IO_Kind := Input_Kind)
+   is
+      N      : Integer;
+      File   : File_Descriptor renames Process.Window.Log_File;
+      Num    : constant String := Integer'Image (Process.Debugger_Num);
+      Prefix : aliased constant String := '[' & Num (2 .. Num'Last) & "] ";
+
    begin
+      if Kind = Input_Kind then
+         N := Write (File, Prefix'Address, Prefix'Length);
+         N := Write (File, Input_String'Address, Input_String'Length);
+
+      elsif Kind = Output_Kind then
+         N := Write (File, Prefix'Address, Prefix'Length);
+         N := Write (File, Output_String'Address, Output_String'Length);
+
+      else
+         raise Program_Error;
+      end if;
+
       for J in Str'Range loop
          case Str (J) is
             when ASCII.LF =>
@@ -62,6 +81,8 @@ package body GVD.Trace is
                N := Write (File, Str (J)'Address, 1);
          end case;
       end loop;
+
+      N := Write (File, Quote_EOL'Address, Quote_EOL'Length);
    end Output_Message;
 
    ------------------
@@ -73,31 +94,19 @@ package body GVD.Trace is
       Str        : String;
       User_Data  : System.Address := System.Null_Address)
    is
-      Window       : constant Main_Debug_Window_Access :=
-        To_Main_Window (User_Data);
-      N            : Integer;
-
+      Window : constant Main_Debug_Window_Access := To_Main_Window (User_Data);
    begin
       declare
-         Tab    : constant Debugger_Process_Tab :=
-           Convert (Window, Descriptor);
-         Num    : constant String := Integer'Image (Tab.Debugger_Num);
-         Prefix : aliased constant String := '[' & Num (2 .. Num'Last) & "] ";
-
+         Tab : constant Debugger_Process_Tab := Convert (Window, Descriptor);
       begin
          if Get_Command_Mode (Get_Process (Tab.Debugger)) >=
            Window.Log_Level
          then
-            N := Write (Window.Log_File, Prefix'Address, Prefix'Length);
-            N := Write
-              (Window.Log_File, Input_String'Address, Input_String'Length);
-            Output_Message (Window.Log_File, Str);
-            N := Write (Window.Log_File, Quote_EOL'Address, Quote_EOL'Length);
+            Output_Message (Tab, Str, Input_Kind);
          end if;
+      exception
+         when Debugger_Not_Found => null;
       end;
-
-   exception
-      when Debugger_Not_Found => null;
    end Input_Filter;
 
    -------------------
@@ -110,29 +119,18 @@ package body GVD.Trace is
       User_Data  : System.Address := System.Null_Address)
    is
       Window : constant Main_Debug_Window_Access := To_Main_Window (User_Data);
-      N      : Integer;
-
    begin
       declare
-         Tab    : constant Debugger_Process_Tab :=
-           Convert (Window, Descriptor);
-         Num    : constant String := Integer'Image (Tab.Debugger_Num);
-         Prefix : aliased constant String := '[' & Num (2 .. Num'Last) & "] ";
-
+         Tab : constant Debugger_Process_Tab := Convert (Window, Descriptor);
       begin
          if Get_Command_Mode (Get_Process (Tab.Debugger)) >=
            Window.Log_Level
          then
-            N := Write (Window.Log_File, Prefix'Address, Prefix'Length);
-            N := Write
-              (Window.Log_File, Output_String'Address, Output_String'Length);
-            Output_Message (Window.Log_File, Str);
-            N := Write (Window.Log_File, Quote_EOL'Address, Quote_EOL'Length);
+            Output_Message (Tab, Str, Output_Kind);
          end if;
+      exception
+         when Debugger_Not_Found => null;
       end;
-
-   exception
-      when Debugger_Not_Found => null;
    end Output_Filter;
 
 end GVD.Trace;

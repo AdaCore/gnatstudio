@@ -19,9 +19,22 @@
 -----------------------------------------------------------------------
 
 with GNAT.Expect; use GNAT.Expect;
+with GVD.Process; use GVD.Process;
 with System;
 
 package GVD.Trace is
+
+   type IO_Kind is (Input_Kind, Output_Kind);
+   --  Kind of IO in the log files.
+   --  Input_Kind means input strings sent to the debugger.
+   --  Output_Kind means output strings received from the debugger.
+
+   procedure Output_Message
+     (Process : Debugger_Process_Tab;
+      Str     : String;
+      Kind    : IO_Kind := Input_Kind);
+   --  Write on the log file associated with Process.
+   --  Replace ASCII.LF by "\n" and ASCII.HT by "\t", and put lines in quotes.
 
    procedure Input_Filter
      (Descriptor : Process_Descriptor'Class;
