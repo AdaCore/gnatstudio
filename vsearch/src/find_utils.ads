@@ -96,6 +96,12 @@ package Find_Utils is
       Options  : Search_Options);
    --  Create a new search context
 
+   function Context_Look_For
+     (Context : access Root_Search_Context) return String;
+   --  Return the search string, or "" if Context does not contain any search
+   --  string. If context is a regular expression, return the original regexp
+   --  string if any, "" otherwise.
+
    function Context_As_String
      (Context : access Root_Search_Context) return String;
    --  Return the search string.
