@@ -1458,7 +1458,8 @@ package body Src_Editor_Module is
    is
       pragma Unreferenced (Mode);
 
-      Edit : Source_Editor_Box;
+      Source : Source_Box;
+      Edit   : Source_Editor_Box;
 
    begin
       if Mime_Type = Mime_Source_File then
@@ -1479,7 +1480,11 @@ package body Src_Editor_Module is
                Idle_Remove (The_Data.Location_Open_Id);
             end if;
 
-            Edit := Open_File (Kernel, File, Create_New => New_File).Editor;
+            Source := Open_File (Kernel, File, Create_New => New_File);
+
+            if Source /= null then
+               Edit := Source.Editor;
+            end if;
 
             if Edit /= null
               and then (Line /= 0 or else Column /= 0)
