@@ -1868,6 +1868,18 @@ package body Src_Editor_Buffer is
       if not Prev and then B.Parse_Blocks then
          Request_Blocks (B);
       end if;
+
+      Prev := B.Block_Folding;
+      B.Block_Folding := Get_Pref (Kernel, Block_Folding);
+
+      if not B.Block_Folding and then Prev then
+         Unfold_All (B);
+         Remove_Block_Folding_Commands (B);
+      end if;
+
+      if not Prev and then B.Block_Folding then
+         Request_Blocks (B);
+      end if;
    end Preferences_Changed;
 
    ---------------
