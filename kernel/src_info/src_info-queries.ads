@@ -423,16 +423,16 @@ package Src_Info.Queries is
    --  language (Integer for Ada for instance), the returned entity will have
    --  Is_Predefined_Entity returning true.
 
-   function Array_Contents_Type
-     (Lib_Info   : LI_File_Ptr;
-      Array_Type : Entity_Information) return Entity_Information
-      renames Get_Variable_Type;
-   --  Return the type of data contained in an array type.
-
    function Pointed_Type
      (Lib_Info   : LI_File_Ptr;
       Access_Type : Entity_Information) return Entity_Information;
    --  Return the type of data pointed to by a pointer type.
+
+   function Array_Contents_Type
+     (Lib_Info   : LI_File_Ptr;
+      Array_Type : Entity_Information) return Entity_Information
+      renames Pointed_Type;
+   --  Return the type of data contained in an array type.
 
    function Returned_Type
      (Lib_Info        : LI_File_Ptr;
