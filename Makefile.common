@@ -98,7 +98,7 @@ ifneq (,$(findstring gvd,$(MODULES)))
 # information on how to setup the required links
 GVD_SRC=../../gvd
 
-MODULE_INCLUDE+=-I${GVD_SRC}/gvd -I${GVD_SRC}/pixmaps
+MODULE_INCLUDE+=-I${GVD_SRC}/gvd -I${GVD_SRC}/pixmaps -I${GVD_SRC}/gnat
 endif
 
 .PHONY: check_gvd
@@ -169,6 +169,24 @@ endif
 check_hypergrep: force
 	@[ -f ${HYPERGREP_SRC}/src/hyper_grep_base_pkg.ads ] || \
 	   (echo "hypergrep sources not found in ${HYPERGREP_SRC}, see README"; false)
+
+##################
+## vdiff module ##
+##################
+
+ifneq (,$(findstring vdiff,$(MODULES)))
+
+# Location of vdiff sources. See the README file at the top-level for
+# information on how to setup the required links
+VDIFF_SRC=../../vdiff
+
+MODULE_INCLUDE+=-I${VDIFF_SRC}/src
+endif
+
+.PHONY: check_vdiff
+check_vdiff: force
+	@[ -f ${VDIFF_SRC}/src/vdiff_utils.ads ] || \
+	   (echo "vdiff sources not found in ${VDIFF_SRC}, see README"; false)
 
 ##################
 ## glide module ##
