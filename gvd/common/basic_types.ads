@@ -18,8 +18,10 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with System;
 with Gtkada.Types;
 with Ada.Unchecked_Deallocation;
+with Ada.Unchecked_Conversion;
 
 package Basic_Types is
 
@@ -32,6 +34,18 @@ package Basic_Types is
    type String_Array is array (Natural range <>) of String_Access;
    procedure Free (Ar : in out String_Array);
    --  Free all the strings in the array.
+
+   subtype Unchecked_String is String (Positive);
+
+   type Unchecked_String_Access is access all Unchecked_String;
+   --  For efficiency reasons, use this type compatible with C char*,
+   --  so that C strings can be reused without making extra copies.
+
+   function To_Unchecked_String is new Ada.Unchecked_Conversion
+     (System.Address, Unchecked_String_Access);
+
+   function To_Unchecked_String is new Ada.Unchecked_Conversion
+     (Gtkada.Types.Chars_Ptr, Unchecked_String_Access);
 
    type Position_Type is new Natural;
    --  Indicates the position in a file.
