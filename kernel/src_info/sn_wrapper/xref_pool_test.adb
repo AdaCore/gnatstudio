@@ -21,6 +21,11 @@ begin
    Put_Line (Xref_Filename_For (F3, D, Xrefs).all);
    Put_Line (Xref_Filename_For (F4, D, Xrefs).all);
 
+   Save (Xrefs, "XXX"); -- save
+   Save (Xrefs, "XXX"); -- overwrite XXX
+   Free (Xrefs);
+   Load (Xrefs, "XXX");
+
    Free_Filename_For (F1, D, Xrefs);
    Free_Filename_For (F2, D, Xrefs);
    Free_Filename_For (F3, D, Xrefs);

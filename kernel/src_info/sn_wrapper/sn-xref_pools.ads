@@ -6,6 +6,7 @@ with HTables;
 package SN.Xref_Pools is
 
    type Xref_Pool is private;
+   Empty_Xref_Pool : constant Xref_Pool;
 
    Xref_File_Error : exception;
    --  Exception raised if xref file cannot be created, read, written.
@@ -21,11 +22,12 @@ package SN.Xref_Pools is
    --  Creates new empty pool.
 
    procedure Load (Pool : in out Xref_Pool; Filename : String);
-   --  Loads pool from specified file. Does nothing if file does not
-   --  exist.
+   --  Loads pool from specified file. Does the same as Init if specified
+   --  file does not exist.
 
    procedure Save (Pool : Xref_Pool; Filename : String);
-   --  Saves pool to specified file. Tryes to overwrite existing file.
+   --  Saves pool to specified file. Overwrite existing file.
+   --  Raises Xref_File_Error if writing failed.
 
    procedure Free (Pool : in out Xref_Pool);
    --  Releases pool's resources from memory. Does nothing to
@@ -45,6 +47,9 @@ package SN.Xref_Pools is
    --  directory and returns its name.
    --  3. If generated file already exists, it makes modification to
    --  generated (to achieve uniquity) and jumps to step 2.
+   --
+   --  Raises Xref_File_Error if it could not create file with generated
+   --  file name in specified directory.
 
    procedure Free_Filename_For
      (Source_Filename : String;
@@ -88,5 +93,6 @@ private
       Equal       => Equal);
 
    type Xref_Pool is access all STable.HTable;
+   Empty_Xref_Pool : constant Xref_Pool := null;
 
 end SN.Xref_Pools;

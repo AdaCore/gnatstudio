@@ -1,8 +1,11 @@
 with Ada.Unchecked_Deallocation;
+with Ada.Text_IO; use Ada.Text_IO;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 
 package body SN.Xref_Pools is
+
+   Max_Filename_Length : constant := 1024;
 
    --------------
    -- Str_Hash --
@@ -85,10 +88,49 @@ package body SN.Xref_Pools is
    ----------
 
    procedure Load (Pool : in out Xref_Pool; Filename : String) is
-      pragma Unreferenced (Filename);
-      pragma Unreferenced (Pool);
    begin
-      null;
+
+      Init (Pool);
+
+      if not Is_Regular_File (Filename) then
+         return;
+      end if;
+
+      --  open file and read its content to hashtable
+      --  file format: <src_file_name>\n<xref_files_name>\n...
+      declare
+         FD : File_Type;
+         Src_Buf : String (1 .. Max_Filename_Length);
+         Ref_Buf : String (1 .. Max_Filename_Length);
+         Src_Buf_Last : Natural;
+         Ref_Buf_Last : Natural;
+      begin
+         Open (FD, In_File, Filename);
+         if Is_Open (FD) then
+            loop
+               Get_Line (FD, Src_Buf, Src_Buf_Last);
+               Get_Line (FD, Ref_Buf, Ref_Buf_Last);
+
+               exit when
+                 Src_Buf_Last < Src_Buf'First or
+                 Ref_Buf_Last < Ref_Buf'First;
+
+               declare
+                  Xref_Elmt : Xref_Elmt_Ptr := new Xref_Elmt_Record;
+               begin
+                  Xref_Elmt.Source_Filename :=
+                    new String' (Src_Buf (Src_Buf'First .. Src_Buf_Last));
+                  Xref_Elmt.Xref_Filename :=
+                    new String' (Ref_Buf (Ref_Buf'First .. Ref_Buf_Last));
+                  STable.Set (Pool.all, Xref_Elmt);
+               end;
+
+            end loop;
+         end if;
+         Close (FD);
+      exception
+         when others => null; -- ignore errors
+      end;
    end Load;
 
    ----------
@@ -96,10 +138,19 @@ package body SN.Xref_Pools is
    ----------
 
    procedure Save (Pool : Xref_Pool; Filename : String) is
-      pragma Unreferenced (Filename);
-      pragma Unreferenced (Pool);
+      FD : File_Type;
+      E  : Xref_Elmt_Ptr;
    begin
-      null;
+      Create (FD, Out_File, Filename);
+      STable.Get_First (Pool.all, E);
+      while E /= Null_Xref_Elmt loop
+         Put_Line (FD, E.Source_Filename.all);
+         Put_Line (FD, E.Xref_Filename.all);
+         STable.Get_Next (Pool.all, E);
+      end loop;
+      Close (FD);
+   exception
+      when others => raise Xref_File_Error;
    end Save;
 
    ----------
