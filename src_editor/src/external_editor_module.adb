@@ -676,6 +676,9 @@ package body External_Editor_Module is
       if Args'Length /= 0 then
          Path := Locate_Exec_On_Path (Args (Args'First).all);
       else
+         Insert (Kernel, """" & Get_Pref (Kernel, Custom_Editor)
+                    & """ is not a valid external editor",
+                 Mode => Error);
          return;
       end if;
 
