@@ -1096,11 +1096,6 @@ package body Src_Info.CPP is
       --  First we have to find the first forward declaration
       --  that corresponds to our method, that is prototypes
       --  should be the same
-      --  ??? What should we do when forward declarations are
-      --  found in different files, which to choose?
-      --  So far we take the first one.
-      --  ??? What should we do when forward declaration located
-      --  in another file has not been processed yet?
       Set_Cursor
         (SN_Table (MD),
          By_Key,
@@ -1118,8 +1113,7 @@ package body Src_Info.CPP is
          --  Update position of the first forward declaration
          exit when (MD_Tab.Buffer (MD_Tab.File_Name.First ..
                                    MD_Tab.File_Name.Last)
-            = MD_Tab_Tmp.Buffer (MD_Tab_Tmp.File_Name.First ..
-                                 MD_Tab_Tmp.File_Name.Last))
+            = Fn.Buffer (Fn.File_Name.First .. Fn.File_Name.Last))
             and then Cmp_Prototypes
               (MD_Tab.Buffer,
                Fn.Buffer,
