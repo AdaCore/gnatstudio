@@ -238,7 +238,7 @@ When starting GPS, a welcome dialog is displayed by default, giving the
 following choices:
 
 @table @b
-@item Start with default project
+@item Start with default project in directory
 @cindex project
 If you select this option and click on the @code{OK} button, GPS will create a
 default internal project with the following properties:
@@ -865,7 +865,7 @@ by side, from top to bottom. No window will overlap any other.
 
 @iftex
 @cindex screen shot
-@image{mdi-tile-vertical, 10.7cm}
+@image{mdi-tile-vertical, 9.5cm}
 @end iftex
 
 @ifhtml
@@ -892,7 +892,7 @@ before it was iconified.
 
 @iftex
 @cindex screen shot
-@image{mdi-icons, 10.7cm}
+@image{mdi-icons, 9.5cm}
 @end iftex
 
 @ifhtml
@@ -990,8 +990,7 @@ bar button, and the window will be put back in GPS. If you actually
 want to close it, you need to click once again on the cross button in
 its title bar.
 
-@cindex All Floating
-
+@cindex all floating
 A special mode is also available in GPS, where all windows are
 floating. The MDI area in the main window becomes invisible. This can
 be useful if your system or window manager provides windows-handling
@@ -1515,12 +1514,12 @@ Same current file under a different name, using the file selector dialog.
 
 @item All
 @cindex save all
-Save all items, including projects, etc...
+Save all items, including projects, etc@dots{}
 
 @item Desktop
 @cindex save desktop
 Save the desktop to a file. The desktop includes information about
-files, graphs, ... and their window size and position in GPS. The desktop
+files, graphs, @dots{} and their window size and position in GPS. The desktop
 is saved per top level project.
 
 @end table
@@ -2137,8 +2136,9 @@ itself: the projects can be referenced in several ways:
 These paths, when used in a with line as described below, are relative
 to the location of the project that does the with.
 @item ADA_PROJECT_PATH
-If this environment variable is set, it contains a colon-separated
-list of directories in which the project files are searched.
+If this environment variable is set, it contains a colon-separated (or
+semicolon under Windows) list of directories in which the project files are
+searched.
 @end itemize
 
 
@@ -2155,7 +2155,7 @@ organization. In this case, you will create and use a project hierarchy,
 with a root project importing other sub projects. Each of the projects
 and sub projects is responsible for its own set of sources (recompile
 them with the appropriate switches, put the resulting files in the
-right directories, ...).
+right directories, @dots{}).
 
 @cindex GNAT
 Each project contains the following information, among other things
@@ -2243,11 +2243,11 @@ Each project contains the following information, among other things
 @item @b{Embedded targets and Cross-environments}:
 @cindex cross environment
    GPS fully supports cross-environment work: GPS itself can run on a
-   machine but start all the compilation, run and debugger on a remote
+   machine and start all the compilation, run and debugger on a remote
    host.
 
 @cindex VxWorks
-   It also support embedded targets (VxWorks,...) by specifying alternate
+   It also supports embedded targets (VxWorks, @dots{}) by specifying alternate
    names for the build and debug tools.
 
    The project file contains the information required to log on the
@@ -2255,14 +2255,14 @@ Each project contains the following information, among other things
 
 @item @b{Tools}:
 @cindex tools
-   The project files provide a simply way to change the compiler that
+   The project files provide a simple way to change the compiler that
    should be used to compile the source files, as well as the
    underlying debugger to use.
 
 @item @b{Switches}:
 @cindex switches
    Each tool that is used by GPS (compiler, pretty-printer,
-   debugger,...) has its own set of switches. Moreover, these switches
+   debugger, @dots{}) has its own set of switches. Moreover, these switches
    may depend on what specific file is manipulated, and on its language.
 
 @end itemize
@@ -2292,7 +2292,7 @@ Explorer}).
 This can for instance be used to compile all the sources either in
 debug mode (so that the executables can be run in the debugger), or in
 optimized mode (to reduce the space and increase the speed when delivering).
-In this case, all the attributes (source directories, tools,...) remain the
+In this case, all the attributes (source directories, tools, @dots{}) remain the
 same, except the switches. It would
 be more difficult to maintain a completely separate hierarchy of
 project, and it is much more efficient to create a new configuration
@@ -2388,7 +2388,7 @@ of source files has changed). A number of things will also be updated
 @cindex browsers
 @cindex call graph
 Currently, GPS will not recompute the contents of the various browsers
-(call graph, dependencies,...) for this new project. This would be too
+(call graph, dependencies, @dots{}) for this new project. This would be too
 expensive to do every time the value changes, and therefore you need
 to explicitly request an update.
 
@@ -2416,27 +2416,27 @@ the value it had when it was deleted.
 @c -------------------------------------------------------------------
 
 @noindent
-The project explorer, as mentionned in the general description of the
+The project explorer, as mentioned in the general description of the
 GPS window, is one of the two explorers found by default on the left
 of the window. It shows in a tree structure the project hierarchy,
-along with all the source files belonging to the application, and the
+along with all the source files belonging to the project, and the
 entities declared in the source files.
 
 The contextual menu in this explorer provides a number of items to
 modify the project hierarchy (what each project imports), as well as
 to visualize and modify the attributes for each projects (compilation
-switches, naming scheme,...)
+switches, naming scheme, @dots{})
 
 The following entries are available in the contextual menu:
 
-@itemize @bullet
+@table @command
 @item Examine Projects Imported by...
 This item will open a new window in GPS, the project browser, which
 displays graphically the relationships between each project in the
 hierarchy.
 
 @item Save The Project...
-@cindex Saving Projects
+@cindex saving projects
 This item can be selected to save a single project in the hierarchy
 after it was modified. Modified but unsaved projects in the hierarchy
 have a special icon (an red exclamation mark is drawn on top of the
@@ -2446,22 +2446,22 @@ a single step, use the menu bar item @code{Project->Save All}.
 @item Edit Project Properties
 This item will open a new dialog, and give access to all the
 attributes of the project: tool switches, naming schemes, source
-directories,... @xref{The Project Properties Editor}.
+directories, @dots{} @xref{The Project Properties Editor}.
 
 @item Add Dependency...
-@cindex Add Dependency
+@cindex add dependency
 This menu and its two submenus are the primary way to change the
 relationship between projects in the hierarchy. You can either add a
 dependency on an already existing project, or a dependency on a newly
 created project.
 
 @item Remove Dependency...
-@cindex Remove Dependency
+@cindex remove dependency
 This menu item is the opposite of the previous one, and will remove a
 dependency between two projects
 
 @item Add Configuration Variable
-@cindex Add Configuration Variable
+@cindex add configuration variable
 This menu item should be used to add new configuration variables, as
 described in @ref{Scenarios and Configuration Variables}.
 
@@ -2470,11 +2470,11 @@ described in @ref{Scenarios and Configuration Variables}.
 This menu will load the project file into an editor, so that you can
 manually edit it. This should be used if you need to access some
 features of the project files that are not accessible graphically
-(renames statements, variables,...)
+(renames statements, variables, @dots{})
 
-@end itemize
+@end table
 
-@cindex Saving Projects
+@cindex saving projects
 Any time one or several projects are modified, the contents of the
 explorer is automatically refreshed. No project is automatically
 saved. This provides a simple way to temporarily tests new values for
@@ -2499,7 +2499,7 @@ on a single project, use the contextual menu in the project explorer.
 Some of these menus apply to the currently selected project. This
 notion depends on what window is currently active in GPS: if it is the
 project explorer, the selected project is either the selected node (if
-it is a project), or its parent project (for a file, directory,...).
+it is a project), or its parent project (for a file, directory, @dots{}).
 If the currently active window is an editor, the selected project is
 the one that contains the file.
 
@@ -2508,7 +2508,7 @@ apply to the root project of the hierarchy.
 
 These commands are:
 
-@itemize @bullet
+@table @command
 @item New
 This menu will open the project wizard (@ref{The Project Wizard}), so
 that you can create new projects. On exit, the wizard asks whether the
@@ -2518,13 +2518,12 @@ project will replace the currently loaded project hierarchy.
 @item Open
 This menu opens a file selection dialog, so that any existing project
 can be loaded in GPS. The newly loaded project replaces the currently
-loaded project hierarchy. GPS cannot work on several project
-hierarchies at the same time.
+loaded project hierarchy. GPS works on a single project hierarchy at
+a time.
 
 @item Recent
-As mentionned above, GPS cannot work on several project hierarchies at
-the same time. However, this menu can be used to quickly switch
-between the last few projects that were loaded in GPS.
+This menu can be used to easily switch between the last projects that
+were loaded in GPS.
 
 @item Edit Properties
 This menu applies to the currently selected project, and will open the
@@ -2540,20 +2539,17 @@ along with the switches that will be used to compile them, @xref{The
 Switches Editor}.
 
 @item Recompute Project
-@cindex Recompute Project
+@cindex recompute project
 @cindex C
 @cindex C++
-This menu forces GPS to recompute the cross-references for the
-project. This is needed only for some of the languages (currently
-@code{C} and @code{C++}. For other languages like Ada, the
-cross-references are automatically recompiled when the project is
-recompiled through the @code{Build} menu
+This menu forces GPS to recompute the current project view. In particular,
+it will take into account new files added externally to the source directories.
 
 @item File View and Project View
-These two menus will open (or raise if they are already open) the two
+These two menus will open (or raise if they are already open) the
 explorers on the left side of the GPS window.
 
-@end itemize
+@end table
 
 @c -------------------------------------------------------------------
 @node The Project Wizard
@@ -2562,23 +2558,29 @@ explorers on the left side of the GPS window.
 @c -------------------------------------------------------------------
 
 @noindent
-The project wizard allows you to create in a few steps a new project
-file.
-
+The project wizard allows you to create in a few steps a new project file.
 It has a number of pages, each dedicated to editing a specific set of
-attributes for the project. This section will describe the default
-pages. However, this list of pages is dynamic, and some GPS modules
-might add some.
+attributes for the project.
 
 The most usual way to access this wizard is through the menu
-@code{Project->New}. On exit, the wizard will ask whether the newly
+@code{Project->New...} On exit, the wizard will ask whether the newly
 created project should replace the currently loaded ones.
 
 The project wizard is also actived when a new dependency is created
 between two projects, through the contextual menu in the project
 explorer. 
 
-Here is the default list of pages:
+@iftex
+@cindex screen shot
+@image{project-wizard, 12.7cm}
+@end iftex
+
+@ifhtml
+@cindex screen shot
+@image{project-wizard}
+@end ifhtml
+
+The wizard gives access to the following list of pages:
 
 @itemize @bullet
 @item Project Naming
@@ -2591,24 +2593,14 @@ Here is the default list of pages:
 @end itemize
 
 @c ------------------------------------------------------------------
-@section Project Naming
+@subsection Project Naming
 @c ------------------------------------------------------------------
 
 @noindent
-The first page displayed in the wizard is always this one.
-
-@iftex
-@cindex screen shot
-@image{project-wizard, 12.7cm}
-@end iftex
-
-@ifhtml
-@cindex screen shot
-@image{project-wizard}
-@end ifhtml
+This is the first page displayed by the wizard.
 
 You must enter the name and location of the project to create. This
-name must be a valid C or Ada identifier (i.e. start with a letter,
+name must be a valid Ada identifier (i.e. start with a letter,
 optionally followed by a series of digits, letters or
 underscores). Spaces are not allowed. Likewise, reserved Ada keywords
 must be avoided. If the name is invalid, GPS will display an error
@@ -2628,7 +2620,7 @@ paths should be stored as relative paths (they will be relative to the
 location of the project file).
 
 @c ------------------------------------------------------------------
-@section VCS Selection
+@subsection VCS Selection
 @cindex Version Control System
 @cindex VCS
 @c ------------------------------------------------------------------
@@ -2649,13 +2641,13 @@ made available to the other persons in your team.
 If left blank, no program will be run.
 
 @c ------------------------------------------------------------------
-@section Source Directories Selection
+@subsection Source Directories Selection
 @c ------------------------------------------------------------------
 
 @noindent
 This page lists and edits the list of source directories for the
 project. Any number of source directory can be used (the default is to
-use only one, the directory which contains the project file, as
+use the directory which contains the project file, as
 specified in the first page of the wizard).
 
 If you do not specify any source directory, no source file will be
@@ -2664,8 +2656,7 @@ them.
 
 To add source directories to the project, select the project in the
 top frame, and click on the down arrow. This will add the directory to
-the bottom frame, which contains the current list of source
-directories.
+the bottom frame, which contains the current list of source directories.
 
 You can also add a directory and all its subdirectories recursively by
 using the contextual menu in the top frame. This contextual menu also
@@ -2679,12 +2670,12 @@ All the files in these directories that match one of the language
 supported by the project are automatically associated with that
 project.
 
-The relative sizes of the top and bottom frame can be changed simply
-by clicking on the separation line between the two frames and dragging
+The relative sizes of the top and bottom frame can be changed by
+clicking on the separation line between the two frames and dragging
 the mouse up or down.
 
 @c ------------------------------------------------------------------
-@section Object Selection
+@subsection Build Directory
 @cindex object directory
 @cindex exec directory
 @c ------------------------------------------------------------------
@@ -2693,22 +2684,23 @@ the mouse up or down.
 The object directory is the location where the files resulting from
 the compilation of sources (@file{.o} files for instance) are put.
 
-Only one such directory can be set up per project.
+One object directory is associated for each project.
 
 The exec directory is the location where the executables are put. By
-default, this is the same directory as the object directory, although
-you might chose to use a different one.
+default, this is the same directory as the object directory.
 
 @c ------------------------------------------------------------------
-@section Naming Scheme
+@subsection Naming Scheme
+@cindex naming scheme
 @c ------------------------------------------------------------------
 
 @noindent
-A naming scheme indicates how the language of a source file should be
-guessed by GPS. For instance, all @file{.adb} files are Ada files, all
-@file{.c} files are C files.
+A naming scheme indicates the filenaming conventions used in the different
+languages supported by a given project.
+For example, all @file{.adb} files are Ada files, all @file{.c} files are
+C files.
 
-GPS is fully flexible in that respect, and allows you to specify the
+GPS is very flexible in that respect, and allows you to specify the
 default extension for the files in this language. GPS makes a
 distinction between spec (or header) files, which generally contains
 no executable code, only declarations, and body files which contain
@@ -2716,32 +2708,32 @@ the actual code. For languages other than Ada, this header file is
 used rather than the body file when you select @code{Go To
 Declaration} in the contextual menu of editors.
 
-However, in a language like Ada, the distinction between spec and body
-is part of the reference manual for the language, and you should be
-sure to specify the appropriate extension.
+In a language like Ada, the distinction between spec and body
+is part of the definition of the language itself, and you should be
+sure to specify the appropriate extensions.
 
 The default naming scheme for Ada is GNAT's naming scheme (@file{.ads}
-for specs and @file{.adb} for bodies), although a number of predefined
-naming schemes for other compiles are also available in the first
-combo box on the page.
+for specs and @file{.adb} for bodies). In addition, a number of predefined
+naming schemes for other compilers are available in the first combo box on
+the page. You can also create your own customized scheme by entering a
+free text in the text entries.
 
 @c ??? Insert here screenshot for naming scheme page
 
-
 For all languages, GPS accepts exceptions to this standard naming
-scheme. For instance, this allows you to specify that although Ada
-files will generally end with @file{.adb}, the file @file{foo.ada}
-should also be considered as an Ada file.
+scheme. For instance, this let you specify that in addition to using
+@file{.adb} for Ada body files, the file @file{foo.ada} should also be
+considered as an Ada file.
 
 
 @c ------------------------------------------------------------------
-@section Main Units
+@subsection Main Units
 @cindex main units
 @c ------------------------------------------------------------------
 
 @noindent
 The main units for a project are the files that should be compiled and
-link to obtain executables.
+linked to obtain executables.
 
 Typically, for C applications, these are the files that contain the
 @code{main()} function. For Ada applications, these are the files that
@@ -2754,17 +2746,17 @@ executables.
 
 To add main units click on the @code{Add} button. This opens a file
 selection dialog. No check is currently done that the selected file
-belongs to the project, but GPS will complain later one if it doesn't.
+belongs to the project, but GPS will complain later if it doesn't.
 
 @c ------------------------------------------------------------------
-@section Switches
+@subsection Switches
 @cindex switches
 @c ------------------------------------------------------------------
 
 @noindent
-The last standard page of the project wizard is used to select the
-default switches to use for the various tools that GPS uses (compiler,
-linker, binder, pretty printer,...).
+The last page of the project wizard is used to select the
+default switches to be used by the various tools that GPS calls (compiler,
+linker, binder, pretty printer, @dots{}).
 
 @c ??? Insert screenshot for the switches editor
 
@@ -2773,14 +2765,14 @@ specific tool. All these pages have the same structure:
 
 @itemize @bullet
 @item Graphical selection of switches
-The top part of each page contains a series of buttons, combo boxes,
-entry fields,... which give fast and intuitive access to the most
+The top part of each page contains a set of buttons, combo boxes,
+entry fields, @dots{} which give fast and intuitive access to the most
 commonly used switches for that tool.
 
 @item Textual selection of switches
 The bottom part is an editable entry field, where you can directly
-type the switches if you know them. This makes it easier to move from
-an older setup (Makefile,...) to GPS, by copy-pasting switches.
+type the switches. This makes it easier to move from
+an older setup (e.g. Makefile, script) to GPS, by copy-pasting switches.
 
 @end itemize
 
@@ -2791,7 +2783,7 @@ button if there is one.
 
 Any switch can be added to the entry field, even if there is no
 corresponding button. In this case, GPS will simply forward it to the
-tool when it is called, but will not try to represent it graphically.
+tool when it is called, without trying to represent it graphically.
 
 @c -------------------------------------------------------------------
 @node The Project Properties Editor
@@ -2825,19 +2817,24 @@ wizard (@pxref{The Project Wizard}). In fact, all pages but the
 @code{General} page are exactly the same, and you should therefore
 read the description for these in the project wizard chapter.
 
-The general page gives access to more attribute than the general page
-of the project wizard does. You can select the name of all the
-external tools that GPS is using (compilers for the various languages,
-linker, pretty-printer,...).
+The general page gives access to more attributes than the general page
+of the project wizard does. In addtion, you can select the name of all the
+external tools that GPS uses (compilers for the various languages,
+linker, pretty-printer, @dots{}).
+
+@c ??? missing documentation of Project and Scenario check box trees
 
 @item the project selector
 This area, in the top-right corner of the properties editor, contains
-a list of all the projects in the hierarcht. The value in the
+a list of all the projects in the hierarchy. The value in the
 attributes editor is applied to all the selected projects in this
 selector. You can never unselect the project for which you activated
 the contextual menu.
 
-Clicking in the title bar of this selector will select or unselect all
+Clicking on the right title bar (@code{Project}) of this selector will sort the
+projects in ascending or descending order.
+
+Clicking on the left title bar (untitled) will select or unselect all
 the projects.
 
 This selector has two different possible presentations, chosen by the
@@ -2851,6 +2848,12 @@ This area, in the bottom-right corner of the properties editor, lists
 all the scenario variables declared for the project hierarchy. By
 selecting some or all of their values, you can chose to which scenario
 the modifications in attributes editor apply.
+
+Clicking on the left title bar (untitled, on the left of the @code{Scenario}
+label) will select all values of all variables.
+
+To select all values of a given variable, click on the corresponding check
+button.
 
 @end itemize
 
@@ -2868,15 +2871,15 @@ project.
 For each file, the compiler switches are listed. These switches are
 displayed in grey if they are the default switches defined at the
 project level (@pxref{The Project Properties Editor}). They are defined
-in black if they are specific to this file.
+in black if they are specific to a given file.
 
 Double-clicking in the switches column allows you to edit the switches
 for a specific file. It is possible to edit the switches for multiple
 files at the same by selecting them before displaying the contextual
-menu.
+menu (@code{Edit switches for all selected files}.
 
 When you double-click in one of the columns that contain the switches,
-a new dialog is open that allows you to edit the switches specific to
+a new dialog is opened that allows you to edit the switches specific to
 the selected files.
 
 This dialog has a button titled @code{Revert}. Clicking on this button
@@ -2902,9 +2905,8 @@ It is accessed through the contextual menu in the project explorer, by
 selecting the @code{Examine projects imported by...} item, when
 right-clicking on a project node.
 
-
 Clicking on the left arrow in the title bar of the items will display
-all the projects that import that project. On the other hand, clicking
+all the projects that import that project. Similarly, clicking
 on the right arrow will display all the projects that are imported by
 that project.
 
@@ -2923,7 +2925,8 @@ need to select this menu item to force a refresh of the browser.
 The contextual menu obtained by right-clicking on a project item
 contains several items. Most of them are added by the project editor,
 and gives direct access to editing the properties of the project,
-adding dependencies...
+adding dependencies@dots{}
+@c ??? missing a xref to project contextual menus
 
 Some new items are added to the menu
 
@@ -2944,7 +2947,7 @@ by the selected project
 @item Examine recursive dependencies
 @cindex examine recursive dependencies
 This item will display all the dependencies recursively for the
-project (ie the project it imports directlry, and the projects that
+project (i.e. the project it imports directly, and the projects that
 are imported by them, and so on).
 
 @item Examine projects depending on
@@ -3262,7 +3265,7 @@ Browser}) and the entity browser (@pxref{Entity Browser}).
 
 All these browsers are interactive viewers. They contain a number of
 items, whose visual representation depends on the type of information
-displayed in the browser (they can be projects, files, entities,...).
+displayed in the browser (they can be projects, files, entities, @dots{}).
 
 In addition, the following capabilities are provided in all browsers:
 
@@ -3275,7 +3278,7 @@ items visible. Scrolling can also be done with the arrow keys.
 
 @item Layout
 A basic layout algorithm is used to organize the items. This algorithm
-is layed oriented: items with no parents are put in the first layer,
+is layer oriented: items with no parents are put in the first layer,
 then their direct children are put in the second layer, and so
 on. Depending on the type of browser, these layers are organized
 either vertically or horizontally. This algorithm tries to preserve as
@@ -3283,7 +3286,7 @@ much as possible the positions of the items that were moved
 interactively. 
 
 The @code{refresh} menu item in the background contextual menu can be
-used to recompute the layout of items at any item, even for items that
+used to recompute the layout of items at any time, even for items that
 were previously moved interactively.
 
 @item @b{Interactive moving of items}
@@ -3325,7 +3328,7 @@ linked to them also use a different title bar color, as well as the
 links. This is the most convenient way to understand the relationships
 between items when lots of them are present in the browser.
 
-@item hyper-links
+@item Hyper-links
 Some of the items will contain hyper links, displayed in blue by
 default, and underlined. Clicking on these will generally display new
 items. 
@@ -3334,30 +3337,30 @@ items.
 
 Two types of contextual menus are available in the browsers: the
 background contextual menu is available by right-clicking in the
-background area (ie outside of any item). As described above, it
+background area (i.e. outside of any item). As described above, it
 contains entries for the zooming, selecting of orthogonal links, and
 refresh; the second kind of contextual menu is available by
 right-clicking in items.
 
 The latter menu contains various entries. Most of the entries are
 added by various modules in GPS (VCS module, source
-editor,...). However, each type of browser also has some specific
-entries, which will be described in the section about the browser.
+editor, @dots{}). In addition, each kind of browser also has some specific
+entries, which is described in the corresponding browser's section.
 
 There are two common items in all item contextual menus:
 
-@itemize @bullet
+@table @command
 @item Hide Links
 Browsers can become confusing if there are many items and many
-links. You can lighten them somewhat by selecting this menu entry. As
+links. You can lighten them by selecting this menu entry. As
 a result, the item will remain in the canvas, but none of the links to
-or from it will be visible. However, selecting the item will still
+or from it will be visible. Selecting the item will still
 highlight linked items, so that this information remains available.
 
 @item Remove all other items
 Selecting this menu item will remove all items but the selected one.
 
-@end itemize
+@end table
 
 
 @c --------------------------------------------------------------------
@@ -3372,7 +3375,7 @@ and callees.
 
 @iftex
 @cindex screen shot
-@image{call-graph, 11.7cm}
+@image{call-graph, 12.7cm}
 @end iftex
 
 @ifhtml
@@ -3384,42 +3387,48 @@ In this browser, clicking on the right arrow in the title bar will
 display all the entities that are called by the selected item.
 
 Clicking on the left arrow will display all the entities that call the
-selected item.
+selected item (i.e. its callers).
 
 This browser is accessible through the contextual menu in the project
-explorer, by selecting one of the items:
+explorer and source editor, by selecting one of the items:
 
-@itemize @bullet
-@item References->... calls
+@table @command
+@item References->@i{Entity} calls
 Display all the entities called by the selected entity. This has the
 same effect as clicking on the right title bar arrow if the item is
 already present in the call graph.
 
-@item References->... is called by
+@item References->@i{Entity} is called by
 Display all the entities called by the selected entity. This has the
 same effect as clicking on the left title bar arrow if the item is
 already present in the call graph.
-@end itemize
+@end table
 
 The contextal menu available by right-clicking on the entities in the
-browser as the following new entries, in addition to the ones added by
+browser has the following new entries, in addition to the ones added by
 other modules of GPS.
 
-@itemize @bullet
-@item @code{... calls} and @code{... is called by}
-These entries are the same as described above.
+@table @command
+@item @i{Entity} @code{calls}
+Same as described above.
 
-@item @code{Go To Spec} and @code{Go To Body}
-Selecting these will open a source editor that displays either the
-declaration or the body of the entity.
+@item @i{Entity} @code{is called by}
+Same as described above.
+
+@item @code{Go To Spec}
+Selecting this item will open a source editor that displays the
+declaration of the entity.
+
+@item @code{Go To Body}
+Selecting this item will open a source editor that displays the
+body of the entity.
 
 @item @code{Locate in explorer}
 Selecting this menu entry will move the focus to the project explorer,
 and select the first node representing the file in which the entity is
 declared. This makes it easier to see which other entities are
 declared in the same file.
-
-@end itemize
+@end table
 
 @c --------------------------------------------------------------------
 @node Dependency Browser
@@ -3429,6 +3438,8 @@ declared in the same file.
 
 @noindent
 The dependency browser shows the dependencies between source files.
+@c ??? incomplete
+@i{This section is incomplete}
 
 @iftex
 @cindex screen shot
@@ -3449,6 +3460,8 @@ The dependency browser shows the dependencies between source files.
 
 @noindent
 The entity browser displays static information about any source entity.
+@c ??? incomplete
+@i{This section is incomplete}
 
 @iftex
 @cindex screen shot
@@ -3562,7 +3575,7 @@ The VCS Explorer provides an overview of source files and their status.
 
 @iftex
 @cindex screen shot
-@image{vcs-explorer, 12.7cm}
+@image{vcs-explorer, 10.7cm}
 @end iftex
 
 @ifhtml
@@ -4593,7 +4606,7 @@ Here is an example for such a file:
 The example above creates a top-level menu named @code{custom menu}.
 This menu contains a menu item named @code{item 1}, which is associated to the
 shell command @code{external-command 1}, a sub menu named @code{other menu},
-etc...
+etc@dots{}
 
 Note for Windows users: like under UNIX, scripts can be called
 from custom menu. In order to do that, you must write your script in a
@@ -4729,7 +4742,7 @@ the selected project, or the root project if there is no project selected.
 
 @item r
 recurse through the projects: sub projects will be listed as well as their
-sub projects, etc...
+sub projects, etc@dots{}
 
 @item d
 list the source directories.
@@ -4776,7 +4789,7 @@ a global change, in the directory etc/gps in the GPS installation.
 
 This file follows the Gtk+ resource file syntax and gives the possibility in
 particular to define a number of styles and key bindings and attach them to
-particular visual objects such as text editors, menu items, ...
+particular visual objects such as text editors, menu items, @dots{}
 
 For example, you can set @key{Ctrl-v} in the source editors to scroll forward
 one page. The following code defines this new key binding:
@@ -4804,7 +4817,8 @@ All the literals are case sensitive;
 @code{#} is ignored when parsing an RC file.
 The syntax of the toplevel declarations is described below.
 Opening/closing brackets on the same line (@{ ... @}) are used to represent
-a sequence of 0 or more elements.
+a sequence of 0 or more elements. Brackets on their own line are real bracket
+characters.
 
 @smallexample
 toplevel-declarations ::=
@@ -5443,7 +5457,8 @@ Directory used to retrieve the translation files, when relevant.
 @noindent
 If you would like to make suggestions about GPS, or if you encountered a bug,
 please report it to @uref{mailto:report@@gnat.com} following the usual GNAT
-reports recommendations as explained in the file README.GNATPRO.
+reports recommendations as explained in the file README.GNATPRO for supported
+users, and in gnatinfo.txt for non supported users.
 
 Please try to include a detailed description of the problem, including
 sources to reproduce it if possible/needed, and/or a scenario describing the
