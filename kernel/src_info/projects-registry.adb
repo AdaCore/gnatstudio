@@ -262,13 +262,12 @@ package body Projects.Registry is
       end if;
    end Reset_Name_Table;
 
-   -----------
-   -- Reset --
-   -----------
+   --------------------
+   -- Unload_Project --
+   --------------------
 
-   procedure Reset
-     (Registry  : in out Project_Registry;
-      View_Only : Boolean)
+   procedure Unload_Project
+     (Registry  : Project_Registry; View_Only : Boolean := False)
    is
       Project : Project_Type;
       Iter    : Project_Htable.String_Hash_Table.Iterator;
@@ -299,6 +298,19 @@ package body Projects.Registry is
          Reset (Registry.Data.Sources);
          Reset (Registry.Data.Directories);
          Reset_Scenario_Variables_Cache (Registry);
+      end if;
+   end Unload_Project;
+
+   -----------
+   -- Reset --
+   -----------
+
+   procedure Reset
+     (Registry  : in out Project_Registry;
+      View_Only : Boolean) is
+   begin
+      if Registry.Data /= null then
+         Unload_Project (Registry, View_Only);
       else
          Registry.Data := new Project_Registry_Data;
       end if;
@@ -396,7 +408,7 @@ package body Projects.Registry is
         (Registry, Prj.Tree.Name_Of (Project));
       Unchecked_Free (Registry.Data.Scenario_Variables);
 
-      Set_Is_Default (Registry.Data.Root, False);
+      Set_Status (Registry.Data.Root, From_File);
       Output.Set_Special_Output (null);
 
       Trace (Me, "End of Load project");
@@ -409,6 +421,19 @@ package body Projects.Registry is
          raise;
    end Load;
 
+   -------------------------
+   -- Load_Custom_Project --
+   -------------------------
+
+   procedure Load_Custom_Project
+     (Registry  : Project_Registry;
+      Project   : Project_Type) is
+   begin
+      Registry.Data.Root := Project;
+      Set_Status (Registry.Data.Root, Default);
+      Set_Project_Modified (Registry.Data.Root, False);
+   end Load_Custom_Project;
+
    --------------------------
    -- Load_Default_Project --
    --------------------------
@@ -418,10 +443,8 @@ package body Projects.Registry is
       Directory : String) is
    begin
       Reset (Registry, View_Only => False);
-      Registry.Data.Root := Create_Default_Project
-        (Registry, "default", Directory);
-      Set_Is_Default (Registry.Data.Root, True);
-      Set_Project_Modified (Registry.Data.Root, False);
+      Load_Custom_Project
+        (Registry, Create_Default_Project (Registry, "default", Directory));
    end Load_Default_Project;
 
    --------------------
@@ -475,7 +498,7 @@ package body Projects.Registry is
             if Project = Prj.No_Project then
                Errors (S);
 
-            elsif not Is_Default (Registry.Data.Root)
+            elsif Status (Registry.Data.Root) = From_File
               or else Project_Modified (Registry.Data.Root)
             then
                Errors (Project_Name (P) & ": " & S);
@@ -798,8 +821,20 @@ package body Projects.Registry is
       Part      : Unit_Part;
       Unit, Lang : Name_Id;
       Has_File : Boolean;
+      Dirs_List : String_List_Id;
 
    begin
+      --  We already know if the directories contain Ada files. Update the
+      --  status accordingly, in case they don't contain any other file
+
+      Dirs_List := Prj.Projects.Table (Get_View (Project)).Source_Dirs;
+      while Dirs_List /= Nil_String loop
+         Update_Directory_Cache
+           (Project, Get_String (String_Elements.Table (Dirs_List).Value),
+            String_Elements.Table (Dirs_List).Flag);
+         Dirs_List := String_Elements.Table (Dirs_List).Next;
+      end loop;
+
       --  Nothing to do if the only language is Ada, since this has already
       --  been taken care of
 
@@ -808,20 +843,6 @@ package body Projects.Registry is
                  and then Languages (Languages'First).all = Ada_String)
       then
          Free (Languages);
-         --  Check which directories contain source files.
-
-         declare
-            Dirs : String_List_Id;
-         begin
-            Dirs := Prj.Projects.Table (Get_View (Project)).Source_Dirs;
-            while Dirs /= Nil_String loop
-               Update_Directory_Cache
-                 (Project, Get_String (String_Elements.Table (Dirs).Value),
-                  String_Elements.Table (Dirs).Flag);
-               Dirs := String_Elements.Table (Dirs).Next;
-            end loop;
-         end;
-
          return;
       end if;
 
@@ -844,7 +865,11 @@ package body Projects.Registry is
                Canonical_Case_File_Name (Name_Buffer (1 .. Name_Len));
 
                Src := Get (Registry.Data.Sources, Name_Buffer (1 .. Name_Len));
-               if Src.Lang = No_Name then
+               if Src.Lang = Name_Ada then
+                  --  No warning, this was already processed
+                  null;
+
+               elsif Src.Lang = No_Name then
                   Set (Registry.Data.Sources,
                        K => Name_Buffer (1 .. Name_Len),
                        E => (No_Project, Unknown_Language, No_Name));
@@ -896,7 +921,11 @@ package body Projects.Registry is
                         Canonical_Case_File_Name (Line (1 .. Last));
 
                         Src := Get (Registry.Data.Sources, Line (1 .. Last));
-                        if Src.Lang = No_Name then
+                        if Src.Lang = Name_Ada then
+                           --  Has already been processed
+                           null;
+
+                        elsif Src.Lang = No_Name then
                            Set (Registry.Data.Sources,
                                 K => Line (1 .. Last),
                                 E => (No_Project, Unknown_Language, No_Name));
@@ -1143,12 +1172,14 @@ package body Projects.Registry is
             if Ext = ".ads" or else Ext = ".adb" then
                return Name_Ada;
 
-            elsif Get_Root_Project (Registry) /= No_Project then
+            else
                --  Try with the top-level project. This contains the default
                --  registered extensions when the languages were registered.
                --  At least, we might be able to display files that don't
                --  directly belong to a project with the appropriate
                --  highlighting.
+               --  If there is no root project, this will use the default
+               --  naming scheme
 
                Get_Unit_Part_And_Name_From_Filename
                  (Filename  => Base_Name (Source_Filename),
@@ -1157,9 +1188,6 @@ package body Projects.Registry is
                   Unit_Name => Unit,
                   Lang      => Lang);
                return Lang;
-
-            else
-               return No_Name;
             end if;
          end;
       else

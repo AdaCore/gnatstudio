@@ -90,17 +90,38 @@ package Projects.Registry is
    --  from the current one, was loaded.
    --  Recompute_View should be called afterward
 
+   procedure Load_Custom_Project
+     (Registry  : Project_Registry;
+      Project   : Project_Type);
+   --  Set Project as the root project. Recompute_View should be called
+   --  afterward. The status of the project is automatically set to Default.
+   --  It is recommended that you call Reset before this function, to free
+   --  the memory.
+
    procedure Load_Default_Project
      (Registry  : in out Project_Registry;
       Directory : String);
    --  Load the default project for Directory.
-   --  Recompute_View should be called afterward
+   --  Recompute_View must be called afterwards.
 
    function Load_Or_Find
      (Registry     : Project_Registry;
       Project_Path : String) return Project_Type;
    --  Check if Project_Path is already loaded. If not, load it and add it to
    --  the list of currently loaded tree.
+
+   procedure Unload_Project
+     (Registry  : Project_Registry; View_Only : Boolean := False);
+   --  Reset the contents of the project registry. This should be called only
+   --  if a new project is loaded, otherwise no project is accessible to the
+   --  application any more.
+   --  If View_Only is true, then the projects are not destroyed, but all the
+   --  fields related to the current view are reset.
+   --
+   --  Use this function with care. No project is defined once this has been
+   --  run, and most of GPS will crash or misbehave.
+   --  Load_Custom_Project should be called immediately afterwards to
+   --  prevent erroneous behavior.
 
    procedure Recompute_View
      (Registry : in out Project_Registry;
