@@ -571,6 +571,15 @@ procedure GPS is
    end Finish_Setup;
 
 begin
+   Home := Getenv ("CHARSET");
+
+   if Home.all = "" then
+      --  Gtk+ does not like if CHARSET is not defined.
+      Setenv ("CHARSET", "ISO-8859-1");
+   end if;
+
+   Free (Home);
+
    OS_Utils.Install_Ctrl_C_Handler (Ctrl_C_Handler'Unrestricted_Access);
    Projects.Registry.Initialize;
 
