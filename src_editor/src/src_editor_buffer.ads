@@ -375,7 +375,8 @@ package Src_Editor_Buffer is
    function Check_Timestamp
      (Buffer : access Source_Buffer_Record;
       Update : Boolean := False) return Boolean;
-   --  Check whether the timestamp changed on the disk
+   --  Check whether the timestamp changed on the disk.
+   --  Return True if the file is up-to-date.
    --  If Update is true, the internal timestamp is also updated, so that a
    --  second call to this function will always return False.
 
