@@ -1537,8 +1537,8 @@ package body Project_Explorers is
                Expansion := (others => False);
 
                File := Row_Get_Parent (Node_Get_Row (Node));
-
                N := Row_Get_Children (Node_Get_Row (File));
+
                while N /= null loop
                   Expansion (Node_Get_Row_Data (Explorer.Tree, N).Category) :=
                     Row_Get_Expanded (Node_Get_Row (N));
@@ -1555,12 +1555,14 @@ package body Project_Explorers is
                --  Restore the state of the categories
 
                N := Row_Get_Children (Node_Get_Row (File));
+
                while N /= null loop
                   if Expansion
                     (Node_Get_Row_Data (Explorer.Tree, N).Category)
                   then
                      Gtk.Ctree.Expand (Explorer.Tree, N);
                   end if;
+
                   N := Row_Get_Sibling (Node_Get_Row (N));
                end loop;
 
@@ -1739,6 +1741,7 @@ package body Project_Explorers is
             begin
                if D.Node_Type = Directory_Node then
                   String_To_Name_Buffer (D.Directory);
+
                   if Name_Buffer (1 .. Name_Len) = Directory then
                      Gtk_Select (Explorer.Tree, N);
                      return;
@@ -1784,11 +1787,13 @@ package body Project_Explorers is
          begin
             Count := Imported'First;
             Import := Projects.Table (Prj).Imported_Projects;
+
             while Import /= Empty_Project_List loop
                Imported (Count) := Project_Lists.Table (Import).Project;
                Count := Count + 1;
                Import := Project_Lists.Table (Import).Next;
             end loop;
+
             return Imported;
          end;
       end Imported_Projects;
@@ -1828,10 +1833,12 @@ package body Project_Explorers is
               Node_Get_Row_Data (Explorer.Tree, N);
             Prj  : Project_Id;
             Obj  : String_Id;
+
          begin
             case User.Node_Type is
                when Directory_Node =>
                   Index := Sources'First;
+
                   while Index <= Sources'Last loop
                      if Sources (Index) /= No_String
                        and then
@@ -1842,6 +1849,7 @@ package body Project_Explorers is
                         Sources (Index) := No_String;
                         exit;
                      end if;
+
                      Index := Index + 1;
                   end loop;
 
