@@ -18,9 +18,10 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib;         use Glib;
-with Glib.Xml_Int; use Glib.Xml_Int;
-with GNAT.Regpat;  use GNAT.Regpat;
+with Glib;                  use Glib;
+with Glib.Xml_Int;          use Glib.Xml_Int;
+with GNAT.Regpat;           use GNAT.Regpat;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
 package body Language.Custom is
 
@@ -81,7 +82,6 @@ package body Language.Custom is
    is
       Node          : Node_Ptr;
       Parent        : Node_Ptr;
-      Field         : String_Ptr;
       Comment_Start : String_Ptr;
       Comment_End   : String_Ptr;
       Flags         : Regexp_Flags;
@@ -90,6 +90,7 @@ package body Language.Custom is
       Comment_Start_Length,
       Comment_End_Length,
       New_Line_Comment_Start_Length : Natural := 0;
+      Keywords      : Unbounded_String;
 
       procedure Parse_Character
         (Node          : Node_Ptr;
@@ -170,17 +171,32 @@ package body Language.Custom is
       end Get_String;
 
    begin
-      Lang.Name := Get_String (Get_Field (Top, "name"));
-      Lang.Spec_Suffix := Get_String (Get_Field (Top, "spec-suffix"));
-      Lang.Body_Suffix := Get_String (Get_Field (Top, "body-suffix"));
+      Lang.Name := Get_String (Get_Field (Top, "Name"));
+      Lang.Spec_Suffix := Get_String (Get_Field (Top, "Spec_Suffix"));
+      Lang.Body_Suffix := Get_String (Get_Field (Top, "Body_Suffix"));
 
-      Field := Get_Field (Top, "keywords");
+      --  Concatenate all Keyword tags
 
-      if Field /= null then
-         Lang.Keywords := new Pattern_Matcher'(Compile (Field.all));
-      end if;
+      Node := Top.Child;
 
-      Node := Find_Tag (Top.Child, "context");
+      loop
+         Node := Find_Tag (Node, "Keywords");
+
+         exit when Node = null;
+
+         Append (Keywords, Node.Value.all);
+         Node := Node.Next;
+      end loop;
+
+      declare
+         KW : constant String := To_String (Keywords);
+      begin
+         if KW /= "" then
+            Lang.Keywords := new Pattern_Matcher'(Compile (KW));
+         end if;
+      end;
+
+      Node := Find_Tag (Top.Child, "Context");
 
       if Node = null then
          --  ??? Return an error code
@@ -202,20 +218,20 @@ package body Language.Custom is
          return;
       end if;
 
-      Comment_Start := Get_Field (Node, "comment-start");
+      Comment_Start := Get_Field (Node, "Comment_Start");
 
       if Comment_Start /= null then
          Comment_Start_Length := Comment_Start'Length;
       end if;
 
-      Comment_End := Get_Field (Node, "comment-end");
+      Comment_End := Get_Field (Node, "Comment_End");
 
       if Comment_End /= null then
          Comment_End_Length := Comment_End'Length;
       end if;
 
       New_Line_Comment_Start :=
-        Get_Field (Node, "new-line-comment-start");
+        Get_Field (Node, "New_Line_Comment_Start");
 
       if New_Line_Comment_Start /= null then
          New_Line_Comment_Start_Length := New_Line_Comment_Start'Length;
@@ -239,17 +255,17 @@ package body Language.Custom is
       end if;
 
       Parse_Character
-        (Node, "string-delimiter", Lang.Context.String_Delimiter);
+        (Node, "String_Delimiter", Lang.Context.String_Delimiter);
       Parse_Character
-        (Node, "quote-character", Lang.Context.Quote_Character);
+        (Node, "Quote_Character", Lang.Context.Quote_Character);
       Parse_Character
-        (Node, "constant-character", Lang.Context.Constant_Character);
+        (Node, "Constant_Character", Lang.Context.Constant_Character);
       Parse_Boolean
-        (Node, "can-indent", Lang.Context.Can_Indent);
+        (Node, "Can_Indent", Lang.Context.Can_Indent);
       Parse_Boolean
-        (Node, "syntax-highlighting", Lang.Context.Syntax_Highlighting);
+        (Node, "Syntax_Highlighting", Lang.Context.Syntax_Highlighting);
       Parse_Boolean
-        (Node, "case-sensitive", Lang.Context.Case_Sensitive, True);
+        (Node, "Case_Sensitive", Lang.Context.Case_Sensitive, True);
 
       if Lang.Context.Case_Sensitive then
          Flags := Multiple_Lines;
@@ -257,7 +273,7 @@ package body Language.Custom is
          Flags := Multiple_Lines or Case_Insensitive;
       end if;
 
-      Parent := Find_Tag (Top.Child, "categories");
+      Parent := Find_Tag (Top.Child, "Categories");
 
       if Parent = null then
          Lang.Categories := new Explorer_Categories (1 .. 0);
@@ -278,16 +294,16 @@ package body Language.Custom is
       Node := Parent.Child;
 
       for J in 1 .. Num_Categories loop
-         pragma Assert (Node.Tag.all = "category");
+         pragma Assert (Node.Tag.all = "Category");
 
          begin
             Lang.Categories (J) :=
               (Category       => Language_Category'Value
-                 ("Cat_" & Get_Field (Node, "name").all),
+                 ("Cat_" & Get_Field (Node, "Name").all),
                Regexp         => new Pattern_Matcher'
-                 (Compile (Get_Field (Node, "pattern").all, Flags)),
+                 (Compile (Get_Field (Node, "Pattern").all, Flags)),
                Position_Index =>
-                 Integer'Value (Get_Field (Node, "index").all),
+                 Integer'Value (Get_Field (Node, "Index").all),
                Icon           => null,  -- ??? subprogram_xpm'Access,
                Make_Entry     => null);
 
