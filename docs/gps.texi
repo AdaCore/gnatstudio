@@ -6546,7 +6546,7 @@ This attribute can be overridden for each command.
 @end table
 
 If you are defining the same action multiple times, the last definition will
-be kept. However, existing menus, buttons,@dots that already reference that
+be kept. However, existing menus, buttons,@dots{} that already reference that
 action will keep their existing semantic. The new definition will only be
 used for all new menus created from that point on.
 
