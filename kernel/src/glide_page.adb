@@ -56,7 +56,7 @@ package body Glide_Page is
       Glide.Gtk_New (Edit, Window);
       GVD.Process.Initialize (Page, Window, Source_Editor (Edit));
       Set_Priorities
-        (Page.Process_Mdi, (Left => 2, Right => 4, Top => 1, Bottom => 3));
+        (Page.Process_Mdi, (Left => 1, Right => 4, Top => 2, Bottom => 3));
 
       if Load_Desktop (Window.Kernel) then
          Iter := First_Child (Page.Process_Mdi);
@@ -82,5 +82,17 @@ package body Glide_Page is
          Raise_Child (Child);
       end if;
    end Initialize;
+
+   --------------
+   -- Set_Busy --
+   --------------
+
+   procedure Set_Busy
+     (Page          : access Glide_Page_Record;
+      Busy          : Boolean := True;
+      Force_Refresh : Boolean := False) is
+   begin
+      Set_Busy (Glide_Window (Page.Window).Kernel, Busy);
+   end Set_Busy;
 
 end Glide_Page;

@@ -39,4 +39,9 @@ package Glide_Page is
      (Page   : access Glide_Page_Record'Class;
       Window : access Glide_Window_Record'Class);
 
+   procedure Set_Busy
+     (Page          : access Glide_Page_Record;
+      Busy          : Boolean := True;
+      Force_Refresh : Boolean := False);
+
 end Glide_Page;
