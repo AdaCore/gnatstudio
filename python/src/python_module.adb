@@ -105,6 +105,10 @@ package body Python_Module is
      (Script             : access Python_Scripting_Record;
       Command            : String;
       Display_In_Console : Boolean := True);
+   function Execute_Command
+     (Script  : access Python_Scripting_Record;
+      Command : String;
+      Display_In_Console : Boolean) return String;
    procedure Execute_File
      (Script             : access Python_Scripting_Record;
       Filename           : String;
@@ -1157,6 +1161,19 @@ package body Python_Module is
       end if;
 
       Run_Command
+        (Script.Interpreter, Command, Hide_Output => not Display_In_Console);
+   end Execute_Command;
+
+   ---------------------
+   -- Execute_Command --
+   ---------------------
+
+   function Execute_Command
+     (Script  : access Python_Scripting_Record;
+      Command : String;
+      Display_In_Console : Boolean) return String is
+   begin
+      return Run_Command
         (Script.Interpreter, Command, Hide_Output => not Display_In_Console);
    end Execute_Command;
 
