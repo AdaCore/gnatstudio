@@ -20,10 +20,11 @@
 
 with Gtk.Widget; use Gtk.Widget;
 with Gtk.Main;            use Gtk.Main;
+with Gtk.Handlers;        use Gtk.Handlers;
 with Gtk.Notebook;        use Gtk.Notebook;
+with Gtk.Text;            use Gtk.Text;
 with Odd_Preferences_Pkg; use Odd_Preferences_Pkg;
 with Gtkada.Dialogs;      use Gtkada.Dialogs;
---  with Gtkada.Handlers;     use Gtkada.Handlers;
 with Odd_Intl;            use Odd_Intl;
 with Odd.Process;         use Odd.Process;
 with GNAT.OS_Lib;         use GNAT.OS_Lib;
@@ -35,7 +36,6 @@ with Odd.Process;         use Odd.Process;
 with GNAT.Expect;         use GNAT.Expect;
 with Ada.Text_IO;         use Ada.Text_IO;
 with Gtkada.File_Selection; use Gtkada.File_Selection;
-with Odd.Types;           use Odd.Types;
 with Display_Items;       use Display_Items;
 with Gtkada.Canvas;       use Gtkada.Canvas;
 with Odd.Canvas;          use Odd.Canvas;
@@ -681,7 +681,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
    ----------------------------------
 
    procedure On_Command_History1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
+     (Object : access Gtk_Widget_Record'Class)
    is
    begin
       null;
@@ -692,10 +692,20 @@ package body Main_Debug_Window_Pkg.Callbacks is
    -------------------------------
 
    procedure On_Clear_Window1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
+     (Object : access Gtk_Widget_Record'Class)
    is
+      Top : constant Main_Debug_Window_Access :=
+        Main_Debug_Window_Access (Get_Toplevel (Object));
+      Page : constant Gtk_Widget :=
+        Get_Nth_Page
+          (Top.Process_Notebook, Get_Current_Page (Top.Process_Notebook));
+      Tab : constant Debugger_Process_Tab := Process_User_Data.Get (Page);
+
    begin
-      null;
+      Handler_Block (Tab.Debugger_Text, Tab.Delete_Text_Handler_Id);
+      Delete_Text (Tab.Debugger_Text);
+      Handler_Unblock (Tab.Debugger_Text, Tab.Delete_Text_Handler_Id);
+      Display_Prompt (Tab.Debugger);
    end On_Clear_Window1_Activate;
 
    ---------------------------------
@@ -703,7 +713,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
    ---------------------------------
 
    procedure On_Define_Command1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
+     (Object : access Gtk_Widget_Record'Class)
    is
    begin
       null;
@@ -714,7 +724,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
    -------------------------------
 
    procedure On_Edit_Buttons1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
+     (Object : access Gtk_Widget_Record'Class)
    is
    begin
       null;

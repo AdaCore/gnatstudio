@@ -714,6 +714,7 @@
 	    <signal>
 	      <name>activate</name>
 	      <handler>on_command_history1_activate</handler>
+	      <object>main_debug_window</object>
 	      <last_modification_time>Tue, 28 Mar 2000 02:34:58 GMT</last_modification_time>
 	    </signal>
 	    <label>Command History...</label>
@@ -726,6 +727,7 @@
 	    <signal>
 	      <name>activate</name>
 	      <handler>on_clear_window1_activate</handler>
+	      <object>main_debug_window</object>
 	      <last_modification_time>Tue, 28 Mar 2000 02:37:24 GMT</last_modification_time>
 	    </signal>
 	    <label>Clear Window</label>
@@ -745,6 +747,7 @@
 	    <signal>
 	      <name>activate</name>
 	      <handler>on_define_command1_activate</handler>
+	      <object>main_debug_window</object>
 	      <last_modification_time>Tue, 28 Mar 2000 02:37:39 GMT</last_modification_time>
 	    </signal>
 	    <label>Define Command...</label>
@@ -758,6 +761,7 @@
 	    <signal>
 	      <name>activate</name>
 	      <handler>on_edit_buttons1_activate</handler>
+	      <object>main_debug_window</object>
 	      <last_modification_time>Tue, 28 Mar 2000 02:37:52 GMT</last_modification_time>
 	    </signal>
 	    <label>Edit Buttons...</label>
