@@ -209,15 +209,15 @@ package body Commands is
       Node  : List_Node;
 
    begin
+      if Success then
+         Node := First (Action.Next_Commands);
+      else
+         Node := First (Action.Alternate_Commands);
+      end if;
+
       if Queue = null then
          --  If we are not calling the commands in "Queue" mode, execute the
          --  Next/Alternate commands without adding them to the queue.
-
-         if Success then
-            Node := First (Action.Next_Commands);
-         else
-            Node := First (Action.Alternate_Commands);
-         end if;
 
          while Node /= Null_Node loop
             Execute (Data (Node));
@@ -228,12 +228,6 @@ package body Commands is
       end if;
 
       Queue.Command_In_Progress := False;
-
-      if Success then
-         Node := First (Action.Next_Commands);
-      else
-         Node := First (Action.Alternate_Commands);
-      end if;
 
       while Node /= Null_Node loop
          Prepend (Queue.The_Queue, Data (Node));
