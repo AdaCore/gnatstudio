@@ -139,7 +139,6 @@ private
      (Array_Item_Array, Array_Item_Array_Access);
 
    type Array_Type (Num_Dimensions : Positive) is new Generic_Type with record
-      Dimensions  : Dimension_Array (1 .. Num_Dimensions);
       Values      : Array_Item_Array_Access := null;
       Item_Type   : Generic_Type_Access := null;
       Last_Value  : Natural := 0;
@@ -148,6 +147,8 @@ private
 
       Type_Height : Glib.Gint := 0;
       --  Height of the first line used to display the type of the item.
+
+      Dimensions  : Dimension_Array (1 .. Num_Dimensions);
    end record;
    --  Last_Value is the last value that is relevant in Values, or 0 if the
    --  array is empty.

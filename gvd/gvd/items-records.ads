@@ -146,18 +146,18 @@ private
    --  list of all alternatives.
 
    type Record_Type (Num_Fields : Natural) is new Generic_Type with record
-      Fields           : Record_Field_Array (1 .. Num_Fields);
-
       Gui_Fields_Width : Glib.Gint := 0;
       --  Width allocated for the field names column when drawing the item
       --  on a pixmap. This is calculated once when Size_Request is called.
 
-      Type_Height : Glib.Gint := 0;
+      Type_Height      : Glib.Gint := 0;
       --  Height of the first line used to display the type of the item.
 
-      Border_Spacing : Glib.Gint := Items.Border_Spacing;
+      Border_Spacing   : Glib.Gint := Items.Border_Spacing;
       --  Size to leave on each size between the border and the actual
       --  display of the item. If this is set to 0, then no border is drawn.
+
+      Fields           : Record_Field_Array (1 .. Num_Fields);
    end record;
    --  Num_Fields can be 0 in case of a 'null record'. Thus, it has to be
    --  a Natural.

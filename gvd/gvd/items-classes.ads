@@ -83,9 +83,9 @@ private
    type Class_Type_Array is array (Positive range <>) of Class_Type_Access;
 
    type Class_Type (Num_Ancestors : Natural) is new Generic_Type with record
-     Ancestors : Class_Type_Array (1 .. Num_Ancestors) := (others => null);
      Child     : Items.Records.Record_Type_Access;
      Border_Spacing : Glib.Gint := Items.Border_Spacing;
+     Ancestors : Class_Type_Array (1 .. Num_Ancestors) := (others => null);
    end record;
    procedure Print (Value : Class_Type; Indent : Natural := 0);
    procedure Free
