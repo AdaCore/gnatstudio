@@ -100,38 +100,6 @@ int csf_get_field_count(CSF * csf)
 }
 
 /*************************************************************************
- ** csf_get_field
- ** Return string at index, index is 1 .. get_field_count.
- ** Returns NULL if index is out of range
- *************************************************************************/
-
-/*
-char *csf_get_field(CSF * csf, int index)
-{
-  if (csf == 0)
-    return 0;
-  if (csf->num_of_fields < index || index < 1)
-    return 0;
-  return (csf->fields[index - 1]);
-}
-*/
-
-/*************************************************************************
- ** csf_get_field_length
- *************************************************************************/
-
-/*
-int csf_get_field_length(CSF * csf, int index)
-{
-  if (csf == 0)
-    return 0;
-  if (csf->num_of_fields < index || index < 1)
-    return 0;
-  return csf->fields[index] - csf->fields[index - 1] - 1;
-}
-*/
-
-/*************************************************************************
  ** ada_db_open
  *************************************************************************/
 
@@ -226,6 +194,7 @@ void ada_db_close(DB_File * file)
   }
 
   free (file->fname);
+  file->fname = NULL;
   free (file->db);
 }
 
