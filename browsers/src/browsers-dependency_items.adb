@@ -994,6 +994,8 @@ package body Browsers.Dependency_Items is
    is
       Tools : constant String := '/' & (-"Tools");
       Command : Interactive_Command_Access;
+      Filter  : constant Action_Filter :=
+        Action_Filter (not Lookup_Filter (Kernel, "Entity"));
    begin
       Register_Module
         (Module                  => Dependency_Browser_Module_ID,
@@ -1011,6 +1013,7 @@ package body Browsers.Dependency_Items is
         (Kernel, "File dependencies",
          Action => Command,
          Label  => -"Show dependencies for %f",
+         Filter => Filter,
          Stock_Image => Stock_Go_Forward);
 
       Command := new Show_Depending_On_Command;
@@ -1018,6 +1021,7 @@ package body Browsers.Dependency_Items is
         (Kernel, "File depending on",
          Action      => Command,
          Label       => -"Show files depending on %f",
+         Filter => Filter,
          Stock_Image => Stock_Go_Back);
 
       Command := new Examine_Other_File_Command;
