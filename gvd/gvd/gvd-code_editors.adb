@@ -62,13 +62,25 @@ package body GVD.Code_Editors is
       Mode   : View_Mode;
    end record;
 
-   package Editor_Mode_Cb is new Gtk.Handlers.User_Callback
-     (Gtk_Radio_Menu_Item_Record, Editor_Mode_Data);
+   procedure Setup (Data : Editor_Mode_Data; Id : Handler_Id);
+   --  Make sure that when Data is destroyed, Id is properly removed
+
+   package Editor_Mode_Cb is new Gtk.Handlers.User_Callback_With_Setup
+     (Gtk_Radio_Menu_Item_Record, Editor_Mode_Data, Setup);
 
    procedure Change_Mode
      (Item : access Gtk_Radio_Menu_Item_Record'Class;
       Data : Editor_Mode_Data);
    --  Change the display mode for the editor
+
+   -----------
+   -- Setup --
+   -----------
+
+   procedure Setup (Data : Editor_Mode_Data; Id : Handler_Id) is
+   begin
+      Add_Watch (Id, Data.Editor);
+   end Setup;
 
    ------------------
    -- Gtk_New_Hbox --
