@@ -353,12 +353,9 @@ package body Glide_Kernel.Console is
       Console_Module_Id.Console := Console;
 
       Kernel_Callback.Connect
-        (Console, "destroy",
-         Kernel_Callback.To_Marshaller (Console_Destroyed'Access),
-         Kernel_Handle (Kernel));
+        (Console, "destroy", Console_Destroyed'Access, Kernel_Handle (Kernel));
       Return_Callback.Connect
-        (Console, "delete_event",
-         Return_Callback.To_Marshaller (Console_Delete_Event'Access));
+        (Console, "delete_event", Console_Delete_Event'Access);
    end Initialize_Console;
 
    --------------------------------
@@ -415,7 +412,6 @@ package body Glide_Kernel.Console is
             Dock_Child (Child);
             Raise_Child (Child);
             Set_Title (Child, Title, Title);
-            Set_Focus_Child (Child);
          elsif Child /= null then
             Console := Interactive_Console (Get_Widget (Child));
             Enable_Prompt_Display (Console, True);

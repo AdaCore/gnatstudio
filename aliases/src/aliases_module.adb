@@ -1602,15 +1602,12 @@ package body Aliases_Module is
 
       Gtk_New (Item, View, -"Insert Parameter Reference", Special & "()");
       Add (Menu, Item);
-      Widget_Callback.Connect
-        (Item, "activate",
-         Widget_Callback.To_Marshaller (Insert_Special'Access));
+      Widget_Callback.Connect (Item, "activate", Insert_Special'Access);
 
       Gtk_New (Item, View, -"Insert Cursor Position", Special & "_");
       Add (Menu, Item);
       Widget_Callback.Connect
-        (Item, "activate",
-         Widget_Callback.To_Marshaller (Insert_Special'Access));
+        (Item, "activate", Insert_Special'Access);
 
       for C in Aliases_Module_Id.Module_Funcs'Range loop
          Tmp := Aliases_Module_Id.Module_Funcs (C);
@@ -1619,8 +1616,7 @@ package body Aliases_Module is
             Gtk_New (Item, View, Tmp.Descr, Special & C);
             Add (Menu, Item);
             Widget_Callback.Connect
-              (Item, "activate",
-               Widget_Callback.To_Marshaller (Insert_Special'Access));
+              (Item, "activate", Insert_Special'Access);
             Tmp := Tmp.Next;
          end loop;
       end loop;
@@ -1729,11 +1725,9 @@ package body Aliases_Module is
 
       Widget_Callback.Object_Connect
         (Get_Selection (Editor.Aliases), "changed",
-         Widget_Callback.To_Marshaller (Alias_Selection_Changed'Access),
-         Editor);
+         Alias_Selection_Changed'Access, Editor);
       Widget_Callback.Object_Connect
-        (Render, "edited",
-         Widget_Callback.To_Marshaller (Alias_Renamed'Access), Editor);
+        (Render, "edited", Alias_Renamed'Access, Editor);
 
       Gtk_New (Render);
       Pack_Start (Editor.Alias_Col, Render, False);
@@ -1750,8 +1744,7 @@ package body Aliases_Module is
       Pack_Start (Box, Editor.Show_Read_Only, Expand => False);
       Widget_Callback.Object_Connect
         (Editor.Show_Read_Only, "toggled",
-         Widget_Callback.To_Marshaller (Show_Read_Only_Toggled'Access),
-         Editor);
+         Show_Read_Only_Toggled'Access, Editor);
 
       --  Right part
 
@@ -1860,14 +1853,12 @@ package body Aliases_Module is
       Gtk_New_From_Stock (Button, Stock_New);
       Pack_Start (Get_Action_Area (Editor), Button, Expand => False);
       Widget_Callback.Object_Connect
-        (Button, "clicked",
-         Widget_Callback.To_Marshaller (Alias_Created'Access), Editor);
+        (Button, "clicked", Alias_Created'Access, Editor);
 
       Gtk_New_From_Stock (Button, Stock_Delete);
       Pack_Start (Get_Action_Area (Editor), Button, Expand => False);
       Widget_Callback.Object_Connect
-        (Button, "clicked",
-         Widget_Callback.To_Marshaller (Alias_Deleted'Access), Editor);
+        (Button, "clicked", Alias_Deleted'Access, Editor);
 
       Gtk_New_Vseparator (Sep);
       Pack_Start (Get_Action_Area (Editor), Sep, Expand => False);

@@ -128,7 +128,7 @@ begin
    Set_Tip (Tooltips, Files_Extra_Info.Browse_Button, -"Select a directory");
    Widget_Callback.Object_Connect
      (Files_Extra_Info.Browse_Button, "clicked",
-      Widget_Callback.To_Marshaller (On_Browse_Button_Clicked'Access), Files_Extra_Info);
+      On_Browse_Button_Clicked'Access, Files_Extra_Info);
 
    Gtk_New (Files_Extra_Info.Subdirs_Check, -"Recursive Search");
    Set_Active (Files_Extra_Info.Subdirs_Check, False);

@@ -2197,9 +2197,7 @@ package body Src_Editor_Buffer is
       --  And finally, connect ourselves to the interesting signals
 
       Buffer_Callback.Connect
-        (Buffer, "changed",
-         Buffer_Callback.To_Marshaller (Changed_Handler'Access),
-         After => True);
+        (Buffer, "changed", Changed_Handler'Access, After => True);
       Buffer_Callback.Connect
         (Buffer, "mark_set", Cb => Mark_Set_Handler'Access, After => True);
       Buffer_Callback.Connect

@@ -93,14 +93,12 @@ begin
 
    Widget_Callback.Object_Connect
      (Get_Vadjustment (Vdiff.Scrolledwindow1),
-      Name  => "value_changed",
-      Marsh => Widget_Callback.To_Marshaller (Value1_Changed'Access),
+      "value_changed", Value1_Changed'Access,
       Slot_Object => Vdiff);
 
    Widget_Callback.Object_Connect
      (Get_Hadjustment (Vdiff.Scrolledwindow1),
-      Name  => "value_changed",
-      Marsh => Widget_Callback.To_Marshaller (H_Value1_Changed'Access),
+      "value_changed", H_Value1_Changed'Access,
       Slot_Object => Vdiff);
 
    Gtk_New (Vdiff.Label8);
@@ -161,14 +159,12 @@ begin
 
    Widget_Callback.Object_Connect
      (Get_Vadjustment (Vdiff.Scrolledwindow2),
-      Name  => "value_changed",
-      Marsh => Widget_Callback.To_Marshaller (Value2_Changed'Access),
+      "value_changed", Value2_Changed'Access,
       Slot_Object => Vdiff);
 
    Widget_Callback.Object_Connect
      (Get_Hadjustment (Vdiff.Scrolledwindow2),
-      Name  => "value_changed",
-      Marsh => Widget_Callback.To_Marshaller (H_Value2_Changed'Access),
+      "value_changed", H_Value2_Changed'Access,
       Slot_Object => Vdiff);
 
    Gtk_New (Vdiff.Label10);
