@@ -45,13 +45,13 @@ with Gtk.Check_Button;      use Gtk.Check_Button;
 with Process_Proxies;       use Process_Proxies;
 with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
 with GVD.Utils;             use GVD.Utils;
+with Odd_Intl;              use Odd_Intl;
 
 package body GVD.Dialogs is
 
    type GVD_Dialog_Access is access all GVD_Dialog;
 
-   Question_Titles : constant Chars_Ptr_Array := "" + "Choice";
-   --  ??? Should be translatable.
+   Question_Titles : constant Chars_Ptr_Array := "" + (-"Choice");
 
    type Simple_Entry_Dialog_Record is new Gtk_Dialog_Record with record
       Entry_Field   : Gtk_Combo;
