@@ -47,6 +47,7 @@ with Vdiff_Pkg;               use Vdiff_Pkg;
 with Vdiff_Utils;             use Vdiff_Utils;
 with Diff_Utils;              use Diff_Utils;
 
+with OS_Utils;                use OS_Utils;
 with GVD.Dialogs;             use GVD.Dialogs;
 
 with GNAT.Expect;             use GNAT.Expect;
@@ -275,6 +276,25 @@ package body Glide_Menu is
       Action : Guint;
       Widget : Limited_Widget);
    --  Help->About menu
+
+   -----------------------------
+   -- Misc internal functions --
+   -----------------------------
+
+   procedure Refresh;
+   --  Handle pending graphical events.
+
+   -------------
+   -- Refresh --
+   -------------
+
+   procedure Refresh is
+      Dead : Boolean;
+   begin
+      while Gtk.Main.Events_Pending loop
+         Dead := Main_Iteration;
+      end loop;
+   end Refresh;
 
    ------------------
    -- On_Open_File --
@@ -564,7 +584,6 @@ package body Glide_Menu is
       Matcher   : constant Pattern_Matcher := Compile
         ("completed ([0-9]+) out of ([0-9]+) \((.*)%\)\.\.\.$",
          Multiple_Lines);
-      Dead      : Boolean;
       Title     : constant String := Get_Focus_Title (Top.Kernel);
       Project   : constant String := Get_Project_File_Name (Top.Kernel);
       Cmd       : constant String :=
@@ -593,9 +612,7 @@ package body Glide_Menu is
          Err_To_Out  => True);
 
       loop
-         while Gtk.Main.Events_Pending loop
-            Dead := Main_Iteration;
-         end loop;
+         Refresh;
 
          --  ??? if Top.Terminated then
          --     Interrupt (Fd);
@@ -826,8 +843,10 @@ package body Glide_Menu is
       Success : Boolean;
 
       function Body_Name (Name : String) return String;
+      --  Return the name of the body corresponding to a spec file.
 
       procedure Gnatstub (Name : String; Success : out Boolean);
+      --  Launch gnatstub process and wait for it.
 
       function Body_Name (Name : String) return String is
       begin
@@ -835,21 +854,25 @@ package body Glide_Menu is
       end Body_Name;
 
       procedure Gnatstub (Name : String; Success : out Boolean) is
-         Args : Argument_List (1 .. 2);
+         Args : Argument_List (1 .. 1);
          Exec : String_Access := Locate_Exec_On_Path ("gnatstub");
 
       begin
-         Args (1) := new String' ("-f");
-         Args (2) := new String' (Name);
-         Spawn (Exec.all, Args, Success);
+         if Exec = null then
+            Success := False;
+            return;
+         end if;
+
+         Args (1) := new String' (Name);
+         Spawn (Exec.all, Args, Refresh'Access, Success);
          Free (Exec);
          Free (Args (1));
-         Free (Args (2));
       end Gnatstub;
 
    begin
       if Focus_Is_Editor (Top.Kernel) then
          declare
+            --  ??? Does not handle files with pathname
             Title : constant String := Get_Focus_Title (Top.Kernel);
          begin
             Gnatstub (Title, Success);
@@ -912,7 +935,6 @@ package body Glide_Menu is
          declare
             File : constant String := Make_Suite_Window.Name.all;
          begin
-            Open_File (Top.Kernel, File & ".ads");
             Open_File (Top.Kernel, File & ".adb");
          end;
       end if;
