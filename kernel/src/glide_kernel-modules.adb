@@ -25,13 +25,14 @@ pragma Warnings (Off, Gtk.Image_Menu_Item);
 with GNAT.OS_Lib;       use GNAT.OS_Lib;
 with GUI_Utils;         use GUI_Utils;
 with Gdk.Event;         use Gdk.Event;
+with Gdk.Types;         use Gdk.Types;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Glib;              use Glib;
 with Glib.Object;       use Glib.Object;
 with Glib.Values;       use Glib.Values;
 with Glide_Main_Window; use Glide_Main_Window;
 with Gtk.Image_Menu_Item; use Gtk.Image_Menu_Item;
-with Gtk.Accel_Group;   use Gtk.Accel_Group;
+with Gtk.Accel_Map;     use Gtk.Accel_Map;
 with Gtk.Enums;         use Gtk.Enums;
 with Gtk.Image;         use Gtk.Image;
 with Gtk.Label;         use Gtk.Label;
@@ -816,6 +817,10 @@ package body Glide_Kernel.Modules is
          Gtk_New_With_Mnemonic (Menu_Item, Parent_Path (First .. Last - 1));
          Set_Submenu (Menu_Item, Menu);
 
+         Trace (Me, "MANU: creating menu: " & Parent_Path (First .. Last - 1));
+         Set_Accel_Group
+           (Menu, Get_Default_Accelerators (Kernel));
+
          if Item = null
            and then Last >= Parent_Path'Last
          then
@@ -900,9 +905,36 @@ package body Glide_Kernel.Modules is
       Sensitive   : Boolean := True)
      return Gtk_Menu_Item
    is
+
+      function Cleanup (Path : String) return String;
+
+      -------------
+      -- Cleanup --
+      -------------
+
+      function Cleanup (Path : String) return String is
+         Output : String (Path'Range);
+         Index  : Natural := Output'First;
+      begin
+         for P in Path'Range loop
+            if Path (P) /= '_'
+              and then (Path (P) /= '/'
+                        or else P + 1 > Path'Last
+                        or else Path (P + 1) /= '/')
+            then
+               Output (Index) := Path (P);
+               Index := Index + 1;
+            end if;
+         end loop;
+         return Output (Output'First .. Index - 1);
+      end Cleanup;
+
+
       Item  : Gtk_Menu_Item;
       Image : Gtk_Image_Menu_Item;
       Pix   : Gtk_Image;
+      Accel_Path : constant String :=
+        Cleanup ("<gps>" & Parent_Path & '/' & Text);
 
    begin
       if Stock_Image = "" then
@@ -915,11 +947,13 @@ package body Glide_Kernel.Modules is
       end if;
 
       Set_Sensitive (Item, Sensitive);
+      Set_Accel_Path (Item, Accel_Path);
 
       if Guint (Accel_Key) > 0 then
-         Add_Accelerator
-           (Item, "activate", Get_Default_Accelerators (Kernel),
-            Accel_Key, Accel_Mods, Accel_Visible);
+         Gtk.Accel_Map.Add_Entry
+           (Accel_Path,
+            Accel_Key  => Accel_Key,
+            Accel_Mods => Accel_Mods);
       end if;
 
       Register_Menu (Kernel, Parent_Path, Item, Ref_Item, Add_Before);
