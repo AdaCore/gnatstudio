@@ -105,6 +105,7 @@ package body Language.Debugger.Ada is
       return Str = "boolean"
         or else Str = "integer"
         or else Str = "natural"
+        or else Str = "system.address"
         or else Str = "character";
    end Is_Simple_Type;
 
