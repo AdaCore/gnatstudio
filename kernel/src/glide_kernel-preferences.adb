@@ -1052,6 +1052,7 @@ package body Glide_Kernel.Preferences is
       Tmp : Glib.Xml_Int.Node_Ptr := Node;
       Child : Glib.Xml_Int.Node_Ptr;
       Child_Count : Natural;
+      Flags : Param_Flags;
    begin
       while Tmp /= null loop
          if Tmp.Tag.all = "preference" then
@@ -1076,6 +1077,11 @@ package body Glide_Kernel.Preferences is
                        & " ""label"" attributes"),
                      Mode => Error);
                   return;
+               end if;
+
+               Flags := Param_Readable or Param_Writable;
+               if Page = "" then
+                  Flags := Param_Readable;
                end if;
 
                for N in Name'Range loop
@@ -1104,7 +1110,12 @@ package body Glide_Kernel.Preferences is
                elsif Typ = "integer" then
                   Minimum := Gint'Value (Min);
                   Maximum := Gint'Value (Max);
-                  Def     := Gint'Value (Default);
+                  if Default = "" then
+                     Def := 0;
+                  else
+                     Def     := Gint'Value (Default);
+                  end if;
+
                   if Minimum > Maximum then
                      Insert
                        (Kernel,
@@ -1138,25 +1149,29 @@ package body Glide_Kernel.Preferences is
                      Blurb   => Tooltip,
                      Minimum => Minimum,
                      Maximum => Maximum,
-                     Default => Def);
+                     Default => Def,
+                     Flags   => Flags);
                elsif Typ = "string" then
                   Pspec := Gnew_String
                     (Name    => Name,
                      Nick    => Label,
                      Blurb   => Tooltip,
-                     Default => Default);
+                     Default => Default,
+                     Flags   => Flags);
                elsif Typ = "color" then
                   Pspec := Param_Spec (Gnew_Color
                     (Name    => Name,
                      Nick    => Label,
                      Blurb   => Tooltip,
-                     Default => Default));
+                     Default => Default,
+                     Flags   => Flags));
                elsif Typ = "font" then
                   Pspec := Param_Spec (Gnew_Font
                     (Name    => Name,
                      Nick    => Label,
                      Blurb   => Tooltip,
-                     Default => Default));
+                     Default => Default,
+                     Flags   => Flags));
 
                elsif Typ = "choices" then
                   Child := Tmp.Child;
@@ -1196,7 +1211,8 @@ package body Glide_Kernel.Preferences is
                         Nick      => Label,
                         Blurb     => Tooltip,
                         Enum_Type => Typ,
-                        Default   => Def);
+                        Default   => Def,
+                        Flags     => Flags);
                   end;
 
                else
