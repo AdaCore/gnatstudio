@@ -805,16 +805,17 @@ package body External_Editor_Module is
         and then Mime_Type = Mime_Source_File
       then
          declare
-            File   : constant String := Get_String (Data (Data'First));
+            File   : constant Virtual_File := Get_File (Data (Data'First));
             Line   : constant Gint   := Get_Int (Data (Data'First + 1));
             Column : constant Gint   := Get_Int (Data (Data'First + 2));
 
          begin
             if Is_Regular_File (File) then
                Push_State (Kernel_Handle (Kernel), Processing);
+               --  ??? Incorrect handling of remote files
                Client_Command
                  (Kernel => Kernel,
-                  File   => File,
+                  File   => Full_Name (File).all,
                   Line   => Natural (Line),
                   Column => Natural (Column));
                Pop_State (Kernel_Handle (Kernel));
