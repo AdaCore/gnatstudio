@@ -1137,6 +1137,23 @@ package body Glide_Kernel.Modules is
                   Set_String (Value (1), Normalize_Pathname (F.all));
                   File_Found := True;
                   Free (F);
+                  Has_Dir := True;
+               end if;
+            end;
+         end if;
+
+         --  Check the object directory too, for instance for the
+         --  compiler-generated files (binder files, ...)
+         if not Has_Dir then
+            declare
+               F : GNAT.OS_Lib.String_Access := Locate_Regular_File
+                 (Filename,
+                  Object_Path (Get_Project_View (Kernel), Recursive => True));
+            begin
+               if F /= null then
+                  Set_String (Value (1), Normalize_Pathname (F.all));
+                  File_Found := True;
+                  Free (F);
                end if;
             end;
          end if;
