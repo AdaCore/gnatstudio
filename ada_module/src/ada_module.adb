@@ -18,21 +18,22 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glide_Kernel;            use Glide_Kernel;
-with Src_Info.ALI;            use Src_Info.ALI;
-with Language.Ada;            use Language.Ada;
-with Language_Handlers.Glide; use Language_Handlers.Glide;
-with Vsearch_Ext;             use Vsearch_Ext;
-with Glib.Properties.Creation; use Glib.Properties.Creation;
-with Glide_Intl;               use Glide_Intl;
-with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
+with Glib.Generic_Properties;
 with Glib.Object;              use Glib, Glib.Object;
-with Language;                 use Language;
-with Switches_Editors;         use Switches_Editors;
+with Glib.Properties.Creation; use Glib.Properties.Creation;
 with Gtk.Frame;                use Gtk.Frame;
 with Gtk.Box;                  use Gtk.Box;
 with Gtk.Size_Group;           use Gtk.Size_Group;
 with Gtk.Table;                use Gtk.Table;
+with Glide_Kernel;             use Glide_Kernel;
+with Src_Info.ALI;             use Src_Info.ALI;
+with Language.Ada;             use Language.Ada;
+with Language_Handlers.Glide;  use Language_Handlers.Glide;
+with Vsearch_Ext;              use Vsearch_Ext;
+with Glide_Intl;               use Glide_Intl;
+with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
+with Language;                 use Language;
+with Switches_Editors;         use Switches_Editors;
 with Projects;                 use Projects;
 with Project_Viewers;          use Project_Viewers;
 with Naming_Editors;           use Naming_Editors;
@@ -46,6 +47,13 @@ package body Ada_Module is
    Ada_Continuation_Level    : Param_Spec_Int;
    Ada_Declaration_Level     : Param_Spec_Int;
    Ada_Indent_Case_Extra     : Param_Spec_Boolean;
+   Ada_Reserved_Casing       : Param_Spec_Enum;
+   Ada_Ident_Casing          : Param_Spec_Enum;
+   Ada_Format_Operators      : Param_Spec_Boolean;
+
+   package Casing_Properties is new
+     Glib.Generic_Properties.Generic_Enumeration_Property
+     ("Casing_Type", Language.Casing_Type);
 
    --  The following constants are defined to avoid allocating dynamic memory
    --  in Gtk_New. This should eventually be integrated in the kernel.
@@ -824,9 +832,11 @@ package body Ada_Module is
               Integer (Get_Pref (K, Ada_Declaration_Level)),
             Tab_Width         => Integer (Get_Pref (K, Tab_Width)),
             Indent_Case_Extra => Get_Pref (K, Ada_Indent_Case_Extra),
-            Reserved_Casing   => Unchanged,
-            Ident_Casing      => Unchanged,
-            Format_Operators  => False,
+            Reserved_Casing   => Casing_Type'Val
+              (Get_Pref (K, Ada_Reserved_Casing)),
+            Ident_Casing      => Casing_Type'Val
+              (Get_Pref (K, Ada_Ident_Casing)),
+            Format_Operators  => Get_Pref (K, Ada_Format_Operators),
             Use_Tabs          => Get_Pref (K, Ada_Use_Tabs)));
    end On_Preferences_Changed;
 
@@ -934,6 +944,33 @@ package body Ada_Module is
            Nick    => -"RM style case indentation"));
       Register_Property
         (Kernel, Param_Spec (Ada_Indent_Case_Extra), -"Editor:Ada");
+
+      Ada_Reserved_Casing := Param_Spec_Enum
+        (Casing_Properties.Gnew_Enum
+           (Name    => "Ada-Reserved-Casing",
+            Default => Unchanged,
+            Blurb   => -"How the editor should handle reserved words casing",
+            Nick    => -"Reserved word casing"));
+      Register_Property
+        (Kernel, Param_Spec (Ada_Reserved_Casing), -"Editor:Ada");
+
+      Ada_Ident_Casing := Param_Spec_Enum
+        (Casing_Properties.Gnew_Enum
+           (Name    => "Ada-Ident-Casing",
+            Default => Unchanged,
+            Blurb   => -"How the editor should handle identifiers casing",
+            Nick    => -"Identifier casing"));
+      Register_Property
+        (Kernel, Param_Spec (Ada_Ident_Casing), -"Editor:Ada");
+
+      Ada_Format_Operators := Param_Spec_Boolean
+        (Gnew_Boolean
+          (Name    => "Ada-Format-Operators",
+           Default => False,
+           Blurb   => -"Indent case statements with an extra level",
+           Nick    => -"RM style case indentation"));
+      Register_Property
+        (Kernel, Param_Spec (Ada_Format_Operators), -"Editor:Ada");
 
       Kernel_Callback.Connect
         (Kernel, "preferences_changed",
