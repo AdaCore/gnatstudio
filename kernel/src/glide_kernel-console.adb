@@ -289,7 +289,8 @@ package body Glide_Kernel.Console is
          File : constant String :=
            Select_File
              (Title             => -"Save messages window as",
-              Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs));
+              Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
+              History           => Get_History (Kernel));
       begin
          if File = "" then
             return;
@@ -325,7 +326,8 @@ package body Glide_Kernel.Console is
          File : constant String :=
            Select_File
              (Title => -"Select file to load in the messages window",
-              Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs));
+              Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
+              History           => Get_History (Kernel));
 
       begin
          if File = "" then
