@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2003                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2001-2005                       --
+--                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -24,7 +24,6 @@ with Glide_Kernel;             use Glide_Kernel;
 with Glib.Properties.Creation; use Glib.Properties.Creation;
 with Default_Preferences;      use Default_Preferences;
 with Diff_Utils2;              use Diff_Utils2;
-with Vdiff2_Command_Block;     use Vdiff2_Command_Block;
 with Gtk.Handlers;             use Gtk.Handlers;
 with Glib;                     use Glib;
 
@@ -43,17 +42,6 @@ package Vdiff2_Module is
    Diff_Change_Color      : Param_Spec_Color;
    Diff_Fine_Change_Color : Param_Spec_Color;
 
-   procedure VDiff_Toolbar
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
-   --  Register all vdiff button in gps toolbar
-
-   procedure Remove_VDiff_Toolbar
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
-   --  Unregister all vdiff button in gps toolbar
-
-   procedure Init_Prev_Diff_Cmd (Diff : Diff_Head);
-   --  Initialize for each command the last selected diff
-
    procedure Register_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
    --  Register the module in the list
@@ -64,13 +52,8 @@ private
 
    type VDiff2_Module_Record is new Module_ID_Record with record
       Kernel           : Kernel_Handle;
-      Is_Active        : Boolean := False;
       Number_active    : Natural := 0;
       List_Diff        : Diff_Head_List_Access;
-      Command_Prev     : Diff_Command_Access;
-      Command_Next     : Diff_Command_Access;
-      Command_First    : Diff_Command_Access;
-      Command_Last     : Diff_Command_Access;
       Enable_Fine_Diff : Boolean := True;
    end record;
 
