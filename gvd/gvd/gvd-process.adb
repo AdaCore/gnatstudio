@@ -1001,6 +1001,7 @@ package body GVD.Process is
       Configure (Process.Data_Canvas, Annotation_Font => Annotation_Font);
       Free (Annotation_Font);
 
+      Set_Size_Request (Process.Data_Scrolledwindow, 200, 200);
       Child := Put
         (Process.Window.Process_Mdi, Process.Data_Scrolledwindow,
          Position => Position_Top,
