@@ -12,20 +12,6 @@ package body Process_Tab_Pkg.Callbacks is
 
    use Gtk.Arguments;
 
-   ------------------------------------
-   -- On_Thread_Notebook_Switch_Page --
-   ------------------------------------
-
-   procedure On_Thread_Notebook_Switch_Page
-     (Object : access Gtk_Notebook_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args)
-   is
-      Arg1 : Address := To_Address (Params, 1);
-      Arg2 : Guint := To_Guint (Params, 2);
-   begin
-      null;
-   end On_Thread_Notebook_Switch_Page;
-
    ----------------------------------
    -- On_Debugger_Text_Insert_Text --
    ----------------------------------

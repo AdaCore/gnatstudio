@@ -36,6 +36,17 @@ package body Main_Debug_Window_Pkg.Callbacks is
       null;
    end On_Open_Program1_Activate;
 
+   --------------------------------
+   -- On_Open_Debugger1_Activate --
+   --------------------------------
+
+   procedure On_Open_Debugger1_Activate
+     (Object : access Gtk_Widget_Record'Class)
+   is
+   begin
+      null;
+   end On_Open_Debugger1_Activate;
+
    ---------------------------------
    -- On_Open_Core_Dump1_Activate --
    ---------------------------------
@@ -564,28 +575,6 @@ package body Main_Debug_Window_Pkg.Callbacks is
       null;
    end On_Command_History1_Activate;
 
-   ---------------------------
-   -- On_Previous1_Activate --
-   ---------------------------
-
-   procedure On_Previous1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
-   is
-   begin
-      null;
-   end On_Previous1_Activate;
-
-   -----------------------
-   -- On_Next2_Activate --
-   -----------------------
-
-   procedure On_Next2_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
-   is
-   begin
-      null;
-   end On_Next2_Activate;
-
    --------------------------------
    -- On_Find_Backward1_Activate --
    --------------------------------
@@ -607,39 +596,6 @@ package body Main_Debug_Window_Pkg.Callbacks is
    begin
       null;
    end On_Find_Forward1_Activate;
-
-   ------------------------------
-   -- On_Quit_Search1_Activate --
-   ------------------------------
-
-   procedure On_Quit_Search1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
-   is
-   begin
-      null;
-   end On_Quit_Search1_Activate;
-
-   ---------------------------
-   -- On_Complete1_Activate --
-   ---------------------------
-
-   procedure On_Complete1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
-   is
-   begin
-      null;
-   end On_Complete1_Activate;
-
-   ------------------------
-   -- On_Apply1_Activate --
-   ------------------------
-
-   procedure On_Apply1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
-   is
-   begin
-      null;
-   end On_Apply1_Activate;
 
    -----------------------------
    -- On_Clear_Line1_Activate --

@@ -42,19 +42,17 @@ begin
    Add (Process_Tab.Scrolledwindow9, Process_Tab.Data_Canvas);
    Set_Shadow_Type (Process_Tab.Data_Canvas, Shadow_In);
 
-   Gtk_New (Process_Tab.Thread_Notebook);
-   Notebook_Callback.Connect
-     (Process_Tab.Thread_Notebook, "switch_page", On_Thread_Notebook_Switch_Page'Access);
-   Add (Process_Tab.Vpaned6, Process_Tab.Thread_Notebook);
-   Set_Scrollable (Process_Tab.Thread_Notebook, True);
-   Set_Show_Border (Process_Tab.Thread_Notebook, True);
-   Set_Show_Tabs (Process_Tab.Thread_Notebook, True);
-   Set_Tab_Hborder (Process_Tab.Thread_Notebook, 2);
-   Set_Tab_Vborder (Process_Tab.Thread_Notebook, 2);
-   Set_Tab_Pos (Process_Tab.Thread_Notebook, Pos_Top);
+   Gtk_New (Process_Tab.File_Notebook);
+   Add (Process_Tab.Vpaned6, Process_Tab.File_Notebook);
+   Set_Scrollable (Process_Tab.File_Notebook, True);
+   Set_Show_Border (Process_Tab.File_Notebook, True);
+   Set_Show_Tabs (Process_Tab.File_Notebook, True);
+   Set_Tab_Hborder (Process_Tab.File_Notebook, 2);
+   Set_Tab_Vborder (Process_Tab.File_Notebook, 2);
+   Set_Tab_Pos (Process_Tab.File_Notebook, Pos_Top);
 
    Gtk_New (Process_Tab.Frame10);
-   Add (Process_Tab.Thread_Notebook, Process_Tab.Frame10);
+   Add (Process_Tab.File_Notebook, Process_Tab.Frame10);
    Set_Shadow_Type (Process_Tab.Frame10, Shadow_Etched_In);
 
    Gtk_New_Hbox (Process_Tab.Editor_Text, False, 0);
@@ -65,7 +63,7 @@ begin
    Set_Padding (Process_Tab.Label52, 0, 0);
    Set_Justify (Process_Tab.Label52, Justify_Center);
    Set_Line_Wrap (Process_Tab.Label52, False);
-   Set_Tab (Process_Tab.Thread_Notebook, 0, Process_Tab.Label52);
+   Set_Tab (Process_Tab.File_Notebook, 0, Process_Tab.Label52);
 
    Gtk_New (Process_Tab.Scrolledwindow7);
    Add (Process_Tab.Process_Paned, Process_Tab.Scrolledwindow7);

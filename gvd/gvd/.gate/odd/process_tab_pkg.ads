@@ -15,7 +15,7 @@ package Process_Tab_Pkg is
       Vpaned6 : Gtk_Vpaned;
       Scrolledwindow9 : Gtk_Scrolled_Window;
       Data_Canvas : Gtk_Viewport;
-      Thread_Notebook : Gtk_Notebook;
+      File_Notebook : Gtk_Notebook;
       Frame10 : Gtk_Frame;
       Editor_Text : Gtk_Hbox;
       Label52 : Gtk_Label;
