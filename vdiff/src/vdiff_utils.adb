@@ -245,7 +245,7 @@ package body Vdiff_Utils is
 
          if Display then
             Texts (0) := ICS.New_String (Image (Line));
-            Texts (1) := ICS.New_String (S (1 .. Last));
+            Texts (1) := ICS.New_String (Strip_CR (S (1 .. Last)));
             Row := Append (List, Texts);
             Set_Cell_Style (List, Row, 0, Style);
             Set_Cell_Style (List, Row, 1, Style);
@@ -474,8 +474,9 @@ package body Vdiff_Utils is
    -- Fill_Diff_Lists --
    ---------------------
 
-   --  ??? This function is not yet terminated. It is working with a vritual
+   --  ??? This function is not yet terminated. It is working with a virtual
    --  Kernel.
+
    procedure Fill_Diff_Lists
      (Kernel     : access Kernel_Handle_Record'Class;
       List1      : access Gtk_Clist_Record'Class;
