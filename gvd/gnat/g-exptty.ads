@@ -45,6 +45,9 @@ package GNAT.Expect.TTY is
    --  Similar, but the parent is set up as a full terminal (Unix sense, see
    --  tty(4)).
 
+   function TTY_Name (Descriptor : TTY_Process_Descriptor) return String;
+   --  Return the name of the tty, or "" if not relevant on the target.
+
 private
 
    procedure Close

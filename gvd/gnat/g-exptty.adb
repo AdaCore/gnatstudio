@@ -33,6 +33,7 @@
 ------------------------------------------------------------------------------
 
 with GNAT.OS_Lib; use GNAT.OS_Lib;
+with Interfaces.C.Strings;
 
 package body GNAT.Expect.TTY is
 
@@ -142,5 +143,18 @@ package body GNAT.Expect.TTY is
    begin
       Internal (Pid.Process, Args);
    end Set_Up_Child_Communications;
+
+   --------------
+   -- TTY_Name --
+   --------------
+
+   function TTY_Name (Descriptor : TTY_Process_Descriptor) return String is
+      function Internal
+        (Process : System.Address) return Interfaces.C.Strings.chars_ptr;
+      pragma Import (C, Internal, "gvd_tty_name");
+
+   begin
+      return Interfaces.C.Strings.Value (Internal (Descriptor.Process));
+   end TTY_Name;
 
 end GNAT.Expect.TTY;
