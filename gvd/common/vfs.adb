@@ -37,7 +37,6 @@ with Ada.Unchecked_Deallocation;
 with System;
 
 package body VFS is
-
    Empty_String : constant Cst_UTF8_String_Access := new String'("");
 
    procedure Ensure_Normalized (File : Virtual_File);
@@ -77,8 +76,7 @@ package body VFS is
                 (Ref_Count       => 1,
                  Full_Name       => new String'(Full_Filename),
                  Normalized_Full => null,
-                 Dir_Name        => null,
-                 Base_Name       => null));
+                 Dir_Name        => null));
    end Create;
 
    ----------------------
@@ -92,8 +90,7 @@ package body VFS is
                 (Ref_Count       => 1,
                  Full_Name       => new String'(Base_Name),
                  Normalized_Full => null,
-                 Dir_Name        => null,
-                 Base_Name       => new String'(Base_Name)));
+                 Dir_Name        => null));
    end Create_From_Base;
 
    -----------------------
@@ -127,19 +124,15 @@ package body VFS is
    ---------------
 
    function Base_Name
-     (File   : Virtual_File;
-      Suffix : String := "") return Cst_UTF8_String_Access is
+     (File   : Virtual_File; Suffix : String := "") return Glib.UTF8_String is
    begin
       if File.Value = null then
-         return Empty_String;
+         return "";
       else
          --  Since we can't ensure that Prefix will be the same in two
          --  successive calls, we have to reallocate the string every time.
 
-         Free (File.Value.Base_Name);
-         File.Value.Base_Name := new UTF8_String'
-           (Base_Name (File.Value.Full_Name.all, Suffix));
-         return Cst_UTF8_String_Access (File.Value.Base_Name);
+         return Base_Name (File.Value.Full_Name.all, Suffix);
       end if;
    end Base_Name;
 
@@ -223,7 +216,7 @@ package body VFS is
    ----------------------
 
    function Locale_Base_Name (File : Virtual_File) return String is
-      Base : constant String := Base_Name (File).all;
+      Base : constant String := Base_Name (File);
    begin
       return Locale_From_UTF8 (Base);
    end Locale_Base_Name;
@@ -354,7 +347,6 @@ package body VFS is
 
          if File.Value.Ref_Count = 0 then
             Free (File.Value.Full_Name);
-            Free (File.Value.Base_Name);
             Free (File.Value.Dir_Name);
             Free (File.Value.Normalized_Full);
             Unchecked_Free (File.Value);

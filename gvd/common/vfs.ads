@@ -61,8 +61,7 @@ package VFS is
    --  Overloading of the standard operator
 
    function Base_Name
-     (File   : Virtual_File;
-      Suffix : String := "") return Cst_UTF8_String_Access;
+     (File   : Virtual_File; Suffix : String := "") return Glib.UTF8_String;
    --  Return the base name of the file.
 
    function Full_Name
@@ -166,7 +165,6 @@ private
       Full_Name        : GNAT.OS_Lib.String_Access;
       Normalized_Full  : GNAT.OS_Lib.String_Access;
       Dir_Name         : GNAT.OS_Lib.String_Access;
-      Base_Name        : GNAT.OS_Lib.String_Access;
    end record;
    type Contents_Access is access Contents_Record;
 
