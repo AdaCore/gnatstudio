@@ -86,14 +86,14 @@ def goto_other_file():
       try:
          entity = GPS.Entity (name, current_file, line)
 
-         if entity.decl_file() == current_file:
+         if entity.declaration.file() == current_file:
             body = entity.body()
             if body.file() != current_file:
 	       GPS.Editor.edit (body.file().name(), line=body.line(), column=body.column())
             else:
                GPS.Editor.edit (current_file.other_file().name())
          else:
-            GPS.Editor.edit (entity.decl_file().name(), line=entity.decl_line(),
+            GPS.Editor.edit (entity.declaration().file().name(), line=entity.decl_line(),
                   column=entity.decl_column())
       except:
          print "Not found " + name + ":" + current_file.name() + ":" + `line`
