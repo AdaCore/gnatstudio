@@ -115,7 +115,7 @@ package body Odd.Dialogs.Callbacks is
    is
       use type Gint_List.Glist;
 
-      Dialog      : constant Question_Dialog_Access :=
+      Dialog    : constant Question_Dialog_Access :=
         Question_Dialog_Access (Get_Toplevel (Object));
 
       Selection : constant Gint_List.Glist := Get_Selection (Dialog.List);

@@ -244,12 +244,10 @@ package body Display_Items is
    is
       Entity      : Generic_Type_Access;
       Value_Found : Boolean := False;
-      Alias_Item : Display_Item;
+      Alias_Item  : Display_Item;
 
    begin
-
       if Default_Entity = null then
-
          declare
             Id : constant String :=
               Get_Uniq_Id (Debugger.Debugger, Variable_Name);
