@@ -137,6 +137,7 @@ package body Shell_Script is
    end record;
    type Shell_Scripting is access all Shell_Scripting_Record'Class;
 
+   procedure Destroy (Script : access Shell_Scripting_Record);
    procedure Register_Command
      (Script        : access Shell_Scripting_Record;
       Command       : String;
@@ -955,6 +956,15 @@ package body Shell_Script is
       return GPS_Shell_Name;
    end Get_Name;
 
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (Script : access Shell_Scripting_Record) is
+   begin
+      Free (Script.Returns);
+   end Destroy;
+
    ---------------------
    -- Execute_Command --
    ---------------------
@@ -1047,7 +1057,12 @@ package body Shell_Script is
 
                if Callback.Return_As_Error then
                   Free (Callback.Return_Dict);
-                  return Callback.Return_Value.all;
+                  declare
+                     R : constant String := Callback.Return_Value.all;
+                  begin
+                     Free (Callback.Return_Value);
+                     return R;
+                  end;
                end if;
 
                if Data.Short_Command.all = Constructor_Method then
@@ -1077,6 +1092,8 @@ package body Shell_Script is
                if Callback.Return_Value = null then
                   return "";
                else
+                  --  Do not free Callback.Return_Value, it is stored in the
+                  --  list of previous commands
                   return Callback.Return_Value.all;
                end if;
 
