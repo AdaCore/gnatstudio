@@ -33,6 +33,12 @@ Known Problems fixed in GPS 2.0.2
               'r' or 't'.
   Workaround: Install GPS in another directory.
 
+- D524-007 Error when using middle button in help under Windows
+  Problem:    Under Windows only, when clicking on the middle button in the
+              help viewer, GPS will either open a console with an error
+              message, or crash unexpectedly.
+  Workaround: Do not use the middle button  inside the help viewer.
+
 Known Problems fixed in GPS 2.0.1
 
 - D603-013 %pp in custom files incorrect expanded on Windows
