@@ -1071,6 +1071,7 @@ package body Src_Editor_Module is
         or else Command = "block_get_name"
         or else Command = "block_get_type"
         or else Command = "block_get_level"
+        or else Command = "subprogram_name"
       then
          declare
             File   : constant Virtual_File :=
@@ -1106,11 +1107,16 @@ package body Src_Editor_Module is
                     (Data,
                      Get_Block_Type
                        (Source_Box (Get_Widget (Child)).Editor, Line));
-               else
-                  --  Get_Level
+               elsif Command = "block_get_level" then
                   Set_Return_Value
                     (Data,
                      Get_Block_Level
+                       (Source_Box (Get_Widget (Child)).Editor, Line));
+               else
+                  --  subprogram_name
+                  Set_Return_Value
+                    (Data,
+                     Get_Subprogram_Name
                        (Source_Box (Get_Widget (Child)).Editor, Line));
                end if;
             end if;
@@ -3911,6 +3917,19 @@ package body Src_Editor_Module is
          Return_Value  => "integer",
          Description   =>
            -"Returns nested level for block enclosing line.",
+         Minimum_Args  => 2,
+         Maximum_Args  => 2,
+         Class         => Editor_Class,
+         Static_Method => True,
+         Handler       => Edit_Command_Handler'Access);
+
+      Register_Command
+        (Kernel,
+         Command       => "subprogram_name",
+         Params        => "(file, line)",
+         Return_Value  => "string",
+         Description   =>
+           -"Returns the name of the subprogram enclosing line.",
          Minimum_Args  => 2,
          Maximum_Args  => 2,
          Class         => Editor_Class,
