@@ -459,11 +459,10 @@ package body Projects is
    ------------
 
    function Create
-     (Base_Name : Glib.UTF8_String;
-      Project : Projects.Project_Type;
+     (Base_Name       : Glib.UTF8_String;
+      Project         : Projects.Project_Type;
       Use_Source_Path : Boolean := True;
-      Use_Object_Path : Boolean := True)
-      return VFS.Virtual_File
+      Use_Object_Path : Boolean := True) return VFS.Virtual_File
    is
       Full : constant String := Get_Full_Path_From_File
         (Project_Registry (Get_Registry (Project)), Base_Name,
