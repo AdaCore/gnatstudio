@@ -154,7 +154,7 @@ package body Src_Info.LI_Utils is
       if File.LI.Dependencies_Info = null then
          File.LI.Dependencies_Info := new Dependency_File_Info_Node;
          File.LI.Dependencies_Info.Value.File := No_Source_File;
-         --  FIX ME
+         --  FIX ME (we need find or create LI_File here)
          File.LI.Dependencies_Info.Value.Dep_Info :=
                                           (Depends_From_Spec => False,
                                            Depends_From_Body => True);
@@ -170,6 +170,7 @@ package body Src_Info.LI_Utils is
          Dep_Ptr.Next := new Dependency_File_Info_Node;
          Dep_Ptr.Next.Next := null;
          Dep_Ptr := Dep_Ptr.Next;
+         --  FIX ME !!! (we need to find suitable source file!!!)
       end if;
       if Dep_Ptr.Value.Declarations = null then
          Dep_Ptr.Value.Declarations := new E_Declaration_Info_Node;
@@ -242,6 +243,7 @@ package body Src_Info.LI_Utils is
                                         Symbol_Name,
                                         Location);
    end Find_Declaration;
+   --  FIX ME (necessary to add parent name attribute to this function call)
 
    -----------------------------------
    --  Find_Dependency_Declaration  --
@@ -274,6 +276,7 @@ package body Src_Info.LI_Utils is
                                         Symbol_Name,
                                         Location);
    end Find_Dependency_Declaration;
+   --  FIX ME (necessary to add parent name attribute to this function call)
 
    -------------------------------------------------------------------------
 

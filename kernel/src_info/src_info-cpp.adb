@@ -31,7 +31,6 @@ with SN;                use SN;
 with SN.DB_Structures;  use SN.DB_Structures;
 with SN.Find_Fns;       use SN.Find_Fns;
 with SN.Browse;
-with Ada.Unchecked_Deallocation;
 
 with File_Buffer;
 
@@ -69,9 +68,6 @@ package body Src_Info.CPP is
    procedure Sym_FU_Handler      (Sym : FIL_Table);
    procedure Sym_E_Handler       (Sym : FIL_Table);
    procedure Sym_EC_Handler      (Sym : FIL_Table);
-   procedure Sym_T_Handler       (Sym : FIL_Table);
-   procedure Sym_CON_Handler     (Sym : FIL_Table);
-   procedure Sym_MA_Handler      (Sym : FIL_Table);
 
    ---------------------
    -- Symbol_Handlers --
@@ -82,9 +78,6 @@ package body Src_Info.CPP is
       FU     => Sym_FU_Handler'Access,
       E      => Sym_E_Handler'Access,
       EC     => Sym_EC_Handler'Access,
-      T      => Sym_T_Handler'Access,
-      MA     => Sym_MA_Handler'Access,
-      CON    => Sym_CON_Handler'Access,
       others => Sym_Default_Handler'Access);
 
    ------------------
@@ -92,6 +85,8 @@ package body Src_Info.CPP is
    ------------------
 
    type To_Handler is access procedure (Ref : TO_Table);
+
+   --  procedure Fu_To_Gv_Handler (Ref : TO_Table);
 
    -------------------
    --  To_Handlers  --
@@ -125,34 +120,10 @@ package body Src_Info.CPP is
       FU     => Ext ("fu"),
       T      => Ext ("t"),
       CL     => Ext ("cl"),
-      CON    => Ext ("con"),
-      MA     => Ext ("ma"),
       GV     => Ext ("gv"),
       E      => Ext ("e"),
       EC     => Ext ("ec"),
       others => Ext (""));
-
-   type Type_To_Object_Array is array (E_Kind) of E_Kind;
-   --  type for array that maps E_Kind type entities into
-   --  object entities
-
-   Type_To_Object : Type_To_Object_Array :=
-     (Access_Type               => Access_Object,
-      Array_Type                => Array_Object,
-      Boolean_Type              => Boolean_Object,
-      Class_Wide_Type           => Class_Wide_Object,
-      Decimal_Fixed_Point_Type  => Decimal_Fixed_Point_Object,
-      Enumeration_Type          => Enumeration_Object,
-      Modular_Integer_Type      => Modular_Integer_Object,
-      Protected_Type            => Protected_Object,
-      Record_Type               => Record_Object,
-      Ordinary_Fixed_Point_Type => Ordinary_Fixed_Point_Object,
-      Signed_Integer_Type       => Signed_Integer_Object,
-      String_Type               => String_Object,
-      Task_Type                 => Task_Object,
-      others                    => Overloaded_Entity);
-   --  This array establishes relation between E_Kind type entities
-   --  and object entities
 
    procedure Open_DB_Files
      (DB_Prefix : in String);
@@ -168,16 +139,11 @@ package body Src_Info.CPP is
 
    type CType_Description is
       record
-         Kind            : E_Kind;
-         IsVolatile      : Boolean;
-         IsConst         : Boolean;
-         IsTemplate      : Boolean;
-         Parent_Point    : Point;
-         Parent_Filename : SN.String_Access;
+         Kind         : E_Kind;
+         IsVolatile   : Boolean;
+         IsConst      : Boolean;
+         IsTemplate   : Boolean;
       end record;
-
-   procedure Free (Desc : in out CType_Description);
-   --  Frees Parent_Filename if any
 
    --  Debugging utils
    procedure Info (Msg : String); -- print info message
@@ -367,14 +333,6 @@ package body Src_Info.CPP is
       end if;
    end Builtin_Type_To_Kind;
 
-   procedure Original_Type
-     (Type_Name : String;
-      Desc      : out CType_Description;
-      Success   : out Boolean);
-   --  Gets E_Kind of original type for specified typedef type.
-   --  Sets Success to True if type found and fills Desc structure
-   --  with appropriate information.
-
    procedure Type_Name_To_Kind
      (Type_Name : in String; Desc : out CType_Description;
       Success : out Boolean);
@@ -406,11 +364,9 @@ package body Src_Info.CPP is
       Volatile_Str : constant String := "volatile ";
       Const_Str    : constant String := "const ";
    begin
-      Desc.IsVolatile   := False;
-      Desc.IsConst      := False;
-      Desc.IsTemplate   := False;
-      Desc.Parent_Point := Invalid_Point;
-      Success         := False;
+      Desc.IsVolatile := False;
+      Desc.IsConst    := False;
+      Desc.IsTemplate := False;
 
       --  check for leading volatile/const modifier
       if Type_Name'Length > Volatile_Str'Length
@@ -475,9 +431,28 @@ package body Src_Info.CPP is
       end if;
 
       --  look in typedefs
-      Original_Type (Type_Name, Desc, Success);
-      if Success then -- original type found
-         return;
+      if Is_Open (SN_Table (T)) then
+         declare
+            Typedef   : T_Table;
+         begin
+            Typedef   := Find (SN_Table (T), Type_Name);
+            Type_Name_To_Kind (Typedef.Buffer (
+                    Typedef.Original.First .. Typedef.Original.Last),
+                    Desc, Success);
+            if Success then
+               Free (Typedef);
+               Success := True;
+               return;
+            end if;
+            Free (Typedef);
+            --  This is a typedef but base type is not found :(
+            Success := False;
+            return;
+         exception
+            when  DB_Error |   -- non-existent table
+                  Not_Found => -- missed, fall thru'
+               null;
+         end;
       end if;
 
       --  look in classes
@@ -522,51 +497,9 @@ package body Src_Info.CPP is
          end;
       end if;
 
-      --  when everything else failed (Success is False)
-   end Type_Name_To_Kind;
-
-   -------------------
-   -- Original_Type --
-   -------------------
-
-   procedure Original_Type
-     (Type_Name : String;
-      Desc      : out CType_Description;
-      Success   : out Boolean)
-   is
-      Typedef   : T_Table;
-   begin
-
+      --  when everything else failed
       Success := False;
-
-      if not Is_Open (SN_Table (T)) then
-         --  typedef table does not exist
-         return;
-      end if;
-
-      Typedef   := Find (SN_Table (T), Type_Name);
-      Type_Name_To_Kind (Typedef.Buffer (
-              Typedef.Original.First .. Typedef.Original.Last),
-              Desc, Success);
-      if Success then
-         Desc.Parent_Point     := Typedef.Start_Position;
-         Desc.Parent_Filename := new String'(Typedef.Buffer (
-                    Typedef.File_Name.First .. Typedef.File_Name.Last));
-         Free (Typedef);
-         Success := True;
-         return;
-      end if;
-
-      Free (Typedef);
-
-      --  original type not found
-      return;
-
-   exception
-      when  DB_Error |   -- non-existent table
-            Not_Found => -- missed, fall thru'
-         null;
-   end Original_Type;
+   end Type_Name_To_Kind;
 
    procedure Info (Msg : String) is
    begin
@@ -583,18 +516,6 @@ package body Src_Info.CPP is
       Put_Line ("[E] " & Msg);
    end Fail;
 
-   ----------
-   -- Free --
-   ----------
-   procedure Free (Desc : in out CType_Description) is
-      procedure Free is new Ada.Unchecked_Deallocation
-         (String, SN.String_Access);
-   begin
-      if Desc.Parent_Point /= Invalid_Point then
-         Free (Desc.Parent_Filename);
-      end if;
-   end Free;
-
    --------------
    -- Handlers --
    --------------
@@ -604,9 +525,8 @@ package body Src_Info.CPP is
    procedure Sym_FU_Handler      (Sym : FIL_Table) is separate;
    procedure Sym_E_Handler       (Sym : FIL_Table) is separate;
    procedure Sym_EC_Handler      (Sym : FIL_Table) is separate;
-   procedure Sym_T_Handler       (Sym : FIL_Table) is separate;
-   procedure Sym_CON_Handler     (Sym : FIL_Table) is separate;
-   procedure Sym_MA_Handler      (Sym : FIL_Table) is separate;
+
+   --  procedure Fu_To_Gv_Handler    (Ref : TO_Table) is separate;
 
 end Src_Info.CPP;
 

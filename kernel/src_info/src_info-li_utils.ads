@@ -74,7 +74,7 @@ private package Src_Info.LI_Utils is
    function Find_Dependency_Declaration
      (File                    : in LI_File_Ptr;
       Symbol_Name             : in String;
-      Filename                : in String;
+      Filename                : in String := "";
       Location                : in Point) return E_Declaration_Info_List;
    --  Finds declaration in LI tree by it's Name and Location
 
