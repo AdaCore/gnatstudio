@@ -93,14 +93,14 @@ package body GVD.Dialogs is
    --  "Ok" was pressed in a simple entry dialog
 
    function Internal_Simple_Entry_Dialog
-     (Dialog   : access Simple_Entry_Dialog_Record'Class;
+     (Dialog          : access Simple_Entry_Dialog_Record'Class;
       Must_Initialize : Boolean;
-      Parent   : access Gtk.Window.Gtk_Window_Record'Class;
-      Extra_Box : Gtk.Check_Button.Gtk_Check_Button := null;
-      Title    : String;
-      Message  : String;
-      Position : Gtk_Window_Position := Win_Pos_Center;
-      Key      : String := "") return String;
+      Parent          : access Gtk.Window.Gtk_Window_Record'Class;
+      Extra_Box       : Gtk.Check_Button.Gtk_Check_Button := null;
+      Title           : String;
+      Message         : String;
+      Position        : Gtk_Window_Position := Win_Pos_Center;
+      Key             : String := "") return String;
    --  Internal version of Simple_Entry_Dialog, where Dialog is already
    --  created.
 
@@ -712,18 +712,23 @@ package body GVD.Dialogs is
    ----------------------------------
 
    function Internal_Simple_Entry_Dialog
-     (Dialog   : access Simple_Entry_Dialog_Record'Class;
+     (Dialog          : access Simple_Entry_Dialog_Record'Class;
       Must_Initialize : Boolean;
-      Parent   : access Gtk.Window.Gtk_Window_Record'Class;
-      Extra_Box : Gtk.Check_Button.Gtk_Check_Button := null;
-      Title    : String;
-      Message  : String;
-      Position : Gtk_Window_Position := Win_Pos_Center;
-      Key      : String := "") return String
+      Parent          : access Gtk.Window.Gtk_Window_Record'Class;
+      Extra_Box       : Gtk.Check_Button.Gtk_Check_Button := null;
+      Title           : String;
+      Message         : String;
+      Position        : Gtk_Window_Position := Win_Pos_Center;
+      Key             : String := "") return String
    is
-      Button : Gtk_Button;
-      Box    : Gtk_Box;
-      Vbox   : Gtk_Box;
+      use Widget_List;
+
+      Button   : Gtk_Button;
+      Box      : Gtk_Box;
+      Vbox     : Gtk_Box;
+      Item     : Gtk_List_Item;
+      Children : Widget_List.Glist;
+
    begin
       if Must_Initialize then
          Set_Transient_For (Dialog, Parent);
@@ -787,7 +792,18 @@ package body GVD.Dialogs is
       end if;
 
       Set_Title (Dialog, Title);
-      Set_Text (Get_Entry (Dialog.Entry_Field), "");
+
+      Children := Last (Get_Children (Get_List (Dialog.Entry_Field)));
+
+      if Children /= Null_List then
+         Item := Gtk_List_Item (Get_Data (Children));
+         Set_Text (Get_Entry (Dialog.Entry_Field),
+                   Get (Gtk_Label (Get_Child (Item))));
+
+      else
+         Set_Text (Get_Entry (Dialog.Entry_Field), "");
+      end if;
+
       Dialog.Was_Cancelled := False;
       Show_All (Dialog);
       Gtk.Main.Main;
@@ -799,7 +815,7 @@ package body GVD.Dialogs is
             Hide (Dialog);
          end if;
 
-         return ASCII.NUL & "";
+         return (1 => ASCII.NUL);
 
       else
          declare
@@ -831,8 +847,9 @@ package body GVD.Dialogs is
       Position : Gtk_Window_Position := Win_Pos_Center;
       Key      : String := "") return String
    is
-      Dialog      : Simple_Entry_Dialog_Access;
+      Dialog          : Simple_Entry_Dialog_Access;
       Must_Initialize : Boolean := False;
+
    begin
       if Key /= "" then
          begin
