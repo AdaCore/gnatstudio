@@ -4053,21 +4053,11 @@ package body Docgen.Work_On_Source is
                   --  Entity_Info is declared in the given package
                   Free (Temp_Entity);
                   return True;
-               else
-                  Trace (Me, "The parent isn't the package_container");
                end if;
                Free (Temp_Entity);
-            else
-               Trace (Me, "Parent found in scope tree, but it has no entity");
             end if;
-         else
-            Trace (Me, "In scope tree, entity_info has no parent");
          end if;
-      else
-         Trace (Me, "In scope tree, entity_info is not found");
       end if;
-
-      Trace (Me, "Function :: Entity_Defined_In_Package return false");
       return False;
    end Entity_Defined_In_Package;
 
