@@ -43,6 +43,8 @@ with Gtk.Text_View;               use Gtk.Text_View;
 with Gtk.Widget;                  use Gtk.Widget;
 with Gtkada.Handlers;             use Gtkada.Handlers;
 with Src_Editor_Buffer;           use Src_Editor_Buffer;
+with Src_Editor_Buffer.Blocks;    use Src_Editor_Buffer.Blocks;
+
 with Src_Editor_Buffer.Line_Information;
 use Src_Editor_Buffer.Line_Information;
 with Pango.Font;                  use Pango.Font;
@@ -702,8 +704,8 @@ package body Src_Editor_View is
                  (View,
                   Text_Window_Text, Dummy, Block_Begin_Y, Dummy, Y);
 
-               X := Gint (B.Offset - 1) * View.Char_Width - Bracket_Offset -
-                 Rect.X + Margin;
+               X := Gint (Get_Screen_Offset (Buffer, B) - 1) * View.Char_Width
+                 - Bracket_Offset - Rect.X + Margin;
 
                Draw_Line (Window, View.Current_Block_GC, X, Y, X, Y + Height);
                Draw_Line
