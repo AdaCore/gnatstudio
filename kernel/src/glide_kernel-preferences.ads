@@ -171,6 +171,10 @@ package Glide_Kernel.Preferences is
    --  Whether the editor should indent automatically the source
    --  ??? not used
 
+   Default_Source_Editor_Font : constant Property_Font :=
+     Register_Property ("Src_Editor:Default_Font", "Courier 12");
+   --  The font used in the source editor.
+
    --------------------
    -- Project Editor --
    --------------------
