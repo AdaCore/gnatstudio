@@ -36,14 +36,13 @@ with Docgen.Work_On_File;       use Docgen.Work_On_File;
 with Docgen;                    use Docgen;
 with Docgen.Html_Output;        use Docgen.Html_Output;
 with Docgen.Texi_Output;        use Docgen.Texi_Output;
+with Glide_Intl;                use Glide_Intl;
 
 procedure Docgen.Main is
 
    package TSFL renames Type_Source_File_List;
 
-   Help_Requested : exception;
-   --  raised when the help option was used. no need to go on!
-   Command_Line_Error : exception;
+   Help_Requested, Command_Line_Error : exception;
 
    Source_File_List   : Type_Source_File_List.List;
    Prj_File_Name      : String_Access;
@@ -61,7 +60,7 @@ procedure Docgen.Main is
 
    procedure Handle_Command_Line
      (Quit : out Boolean);
-   --  ???
+   --  takes the arguments from the command line and sets the options
 
    procedure Add_Body_Files
      (Source_File_List : in out Type_Source_File_List.List);
@@ -110,7 +109,7 @@ procedure Docgen.Main is
                Index2 := Index1;
                Skip_To_Char (New_Line, Index2, ' ');
                if Options.Info_Output then
-                  Put_Line ("Package name found:   *" &
+                  Put_Line (-"Package name found:   *" &
                             New_Line (Index1 .. Index2 - 1) & "*");
                end if;
 
@@ -126,7 +125,7 @@ procedure Docgen.Main is
       end loop;
 
       Close (File);
-      Put_Line ("ERROR: Package Definition not found!!!");
+      Put_Line (-"ERROR: Package Definition not found!!!");
       return Result;
    end Get_Package_Name;
 
@@ -145,13 +144,11 @@ procedure Docgen.Main is
 
    begin
       --  ??? Should use GNAT.Command_Line instead
-
       J := 1;
 
       if N = 0 then
          raise Help_Requested;
       end if;
-
       Quit := False;
 
       while J <= N loop
@@ -162,7 +159,6 @@ procedure Docgen.Main is
             --  if options for other output formats, define here!
             Options.Doc_Subprogram := Doc_HTML_Create'Access;
             Options.Doc_Suffix     := new String'(".htm");
-            Options.Doc_One_File   := False;
 
             if S = "-h"    or else S = "-?" or else
               S = "-help" or else S = "--help"
@@ -171,7 +167,10 @@ procedure Docgen.Main is
             elsif S = "-texi" then
                Options.Doc_Subprogram := Doc_TEXI_Create'Access;
                Options.Doc_Suffix     := new String'(".texi");
-               Options.Doc_One_File   := True;
+            elsif S = "-onetexi" then
+               Options.Doc_Subprogram := Doc_TEXI_Create'Access;
+               Options.Doc_Suffix     := new String'(".texi");
+               Options.One_Doc_File   := True;
             elsif S = "-body" then
                Options.Process_Body_Files := True;
             elsif S = "-ic" then
@@ -192,6 +191,8 @@ procedure Docgen.Main is
                      raise Help_Requested;
                   else
                      Prj_File_Name := new String'(S);
+                     Options.Project_Name :=
+                       new String'(File_Name (S (S'First .. S'Last - 4)));
                   end if;
 
                elsif S (S'Last - 3 .. S'Last) = ".ads" then
@@ -274,7 +275,7 @@ procedure Docgen.Main is
               (Old_Filename.all (Old_Filename'First .. Old_Filename'Last - 4)
                & ".adb");
             if Options.Info_Output then
-               Put_Line ("Adding file: " & New_Filename.all);
+               Put_Line (-"Adding file: " & New_Filename.all);
             end if;
 
             New_Node.File_Name         :=
@@ -294,7 +295,7 @@ procedure Docgen.Main is
       end loop;
 
       if Options.Info_Output then
-         Put_Line ("The files in the file list are now: ");
+         Put_Line (-"The files in the file list are now: ");
          Source_File_Node := TSFL.First (Source_File_List);
 
          for J in 1 .. Type_Source_File_List.Length (Source_File_List) loop
@@ -334,9 +335,9 @@ begin --  DocGen
    end Parse_Command_Line;
 
    if Options.Info_Output then
-      Put_Line ("--------------------------------------------------------");
-      Put_Line ("--------------------------------------------------------");
-      Put_Line ("--------------------------------------------------------");
+      Put_Line (-"--------------------------------------------------------");
+      Put_Line (-"--------------------------------------------------------");
+      Put_Line (-"--------------------------------------------------------");
    end if;
 
    if not TSFL.Is_Empty (Source_File_List) then
@@ -364,45 +365,52 @@ begin --  DocGen
 exception
    when Command_Line_Error =>
       Put_Line (Current_Error,
-                "Type ""docgen -?"" for more information.");
+                -"Type ""docgen -?"" for more information.");
 
    when Help_Requested =>
       New_Line (Current_Error);
-      Put_Line (Current_Error, "NAME");
+      Put_Line (Current_Error, -"NAME");
       New_Line (Current_Error);
-      Put_Line (Current_Error, "   Docgen - Ada95 documentation generator");
+      Put_Line (Current_Error, -"   Docgen - Ada95 documentation generator");
       New_Line (Current_Error);
-      Put_Line (Current_Error, "SYNOPSIS");
+      Put_Line (Current_Error, -"SYNOPSIS");
       New_Line (Current_Error);
-      Put_Line (Current_Error, "   docgen (-h | -help | --help | -?)");
-      Put_Line (Current_Error, "   docgen  .gpr-file  .ads-file " &
-                "{ .ads-files }");
-      Put_Line (Current_Error, "   [ -info ] [ -ic ] [ -under]" &
-                "[ -private] [ -texi ] ");
-      Put_Line (Current_Error, "  [ -ref] [ -docpath=DIR ]");
+      Put_Line (Current_Error, -"   docgen (-h | -help | --help | -?)");
+      Put_Line (Current_Error, -("   docgen  .gpr-file  .ads-file " &
+                "{ .ads-files }"));
+      Put_Line (Current_Error, -("   [ -info ] [ -ic ] [ -under]" &
+                "[ -private] [ -texi ] "));
+      Put_Line (Current_Error, -"  [ -ref] [ -docpath=DIR ]");
       New_Line (Current_Error);
-      Put_Line (Current_Error, "DESCRIPTION");
+      Put_Line (Current_Error, -"DESCRIPTION");
       New_Line (Current_Error);
       New_Line (Current_Error);
-      Put_Line (Current_Error, "OPTIONS");
+      Put_Line (Current_Error, -"OPTIONS");
       New_Line (Current_Error);
-      Put_Line (Current_Error, "   -help     Shows information about Docgen");
-      Put_Line (Current_Error, "   -verbose     Gives further information" &
-                " while processing");
-      Put_Line (Current_Error, "   -body     Create also output files" &
-                " for the body files");
-      Put_Line (Current_Error, "   -ic       Comment starting with ""--!""" &
-                " should be ignored ");
-      Put_Line (Current_Error, "   -under    use comments under" &
-                " the entity headers ");
-      Put_Line (Current_Error, "   -private  Process also the entites" &
-                " declared as Private");
-      Put_Line (Current_Error, "   -texi     The output format should" &
-                " be TexInfo.");
-      Put_Line (Current_Error, "   -ref      Search also for the references");
-      Put_Line (Current_Error, "   -docpath=DIR   the subdirectory for the" &
-                " doc files");
-      Put_Line (Current_Error, "                  The last character is" &
-                """/"" or ""\""");
+      Put_Line (Current_Error, -"   -help     Shows information about Docgen");
+      Put_Line (Current_Error, -("   -verbose     Gives further information" &
+                " while processing"));
+      Put_Line (Current_Error, -("   -body     Create also output files" &
+                " for the body files"));
+      Put_Line (Current_Error, -("   -ic       Comment starting with ""--!""" &
+                " should be ignored "));
+      Put_Line (Current_Error, -("   -under    use comments under" &
+                " the entity headers "));
+      Put_Line (Current_Error, -("   -private  Process also the entites" &
+                " declared as Private"));
+      Put_Line (Current_Error, -("   -texi     The output format should" &
+                                 " be TexInfo."));
+      Put_Line (Current_Error, -("   -onetexi  The output format should" &
+                                 " be TexInfo."));
+      Put_Line (Current_Error, -("             Here a file project.text is" &
+                "  created and"));
+      Put_Line (Current_Error, -("             the package files can be" &
+                "  included."));
+      Put_Line (Current_Error, -"   -ref      Search also for the references");
+      Put_Line (Current_Error, -("   -docpath=DIR   the subdirectory for the" &
+                " doc files"));
+      Put_Line (Current_Error, -("                  The last character is" &
+                """/"" or ""\"""));
       New_Line (Current_Error);
+
 end Docgen.Main;
