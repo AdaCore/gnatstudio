@@ -25,6 +25,7 @@ with Gtk.Combo; use Gtk.Combo;
 with Gtk.GEntry; use Gtk.GEntry;
 with Gtk.Check_Button; use Gtk.Check_Button;
 with Gtk.Button; use Gtk.Button;
+with Glide_Kernel;
 package Files_Extra_Info_Pkg is
 
    type Files_Extra_Info_Record is new Gtk_Frame_Record with record
@@ -41,7 +42,11 @@ package Files_Extra_Info_Pkg is
    end record;
    type Files_Extra_Info_Access is access all Files_Extra_Info_Record'Class;
 
-   procedure Gtk_New (Files_Extra_Info : out Files_Extra_Info_Access);
-   procedure Initialize (Files_Extra_Info : access Files_Extra_Info_Record'Class);
+   procedure Gtk_New
+     (Files_Extra_Info : out Files_Extra_Info_Access;
+      Handle : access Glide_Kernel.Kernel_Handle_Record'Class);
+   procedure Initialize
+     (Files_Extra_Info : access Files_Extra_Info_Record'Class;
+      Handle : access Glide_Kernel.Kernel_Handle_Record'Class);
 
 end Files_Extra_Info_Pkg;

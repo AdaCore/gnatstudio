@@ -24,16 +24,21 @@ with Gtkada.Handlers; use Gtkada.Handlers;
 with Gtk.Tooltips; use Gtk.Tooltips;
 with Glide_Intl; use Glide_Intl;
 with Files_Extra_Info_Pkg.Callbacks; use Files_Extra_Info_Pkg.Callbacks;
+with Glide_Kernel; use Glide_Kernel;
 
 package body Files_Extra_Info_Pkg is
 
-procedure Gtk_New (Files_Extra_Info : out Files_Extra_Info_Access) is
+procedure Gtk_New
+  (Files_Extra_Info : out Files_Extra_Info_Access;
+   Handle : access Glide_Kernel.Kernel_Handle_Record'Class) is
 begin
    Files_Extra_Info := new Files_Extra_Info_Record;
-   Files_Extra_Info_Pkg.Initialize (Files_Extra_Info);
+   Files_Extra_Info_Pkg.Initialize (Files_Extra_Info, Handle);
 end Gtk_New;
 
-procedure Initialize (Files_Extra_Info : access Files_Extra_Info_Record'Class) is
+procedure Initialize
+  (Files_Extra_Info : access Files_Extra_Info_Record'Class;
+   Handle : access Glide_Kernel.Kernel_Handle_Record'Class) is
    pragma Suppress (All_Checks);
    Files_Combo_Items : String_List.Glist;
    Tooltips : Gtk_Tooltips;
@@ -93,7 +98,8 @@ begin
    Set_Max_Length (Files_Extra_Info.Files_Entry, 0);
    Set_Text (Files_Extra_Info.Files_Entry, -"");
    Set_Visibility (Files_Extra_Info.Files_Entry, True);
-   Gtk_New (Tooltips);
+   --  Gtk_New (Tooltips);
+   Tooltips := Get_Tooltips (Handle);
    Set_Tip (Tooltips, Files_Extra_Info.Files_Entry, -"File(s) to scan");
 
    Gtk_New (Files_Extra_Info.Directory_Combo);
