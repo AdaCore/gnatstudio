@@ -1,5 +1,5 @@
 Here is the complete procedure to build Gtk+ 2.0.0 from scratch
-(systems tested are Redhat 7.1 & Solaris 2.8).
+(systems tested are Redhat 7.1, Solaris 2.8, HP-UX 11.00).
 
 On linux systems, you can skip the steps from libiconv to libjpeg, and
 ignore the special comments.
@@ -21,11 +21,14 @@ cd ..
 
 PATH=$prefix/bin:$PATH
 LD_LIBRARY_PATH=$prefix/lib:$LD_LIBRARY_PATH
+LDFLAGS=-L$prefix/lib
+export PATH LDFLAGS LD_LIBRARY_PATH
 
 ############
 # libiconv #
 ############
 tar xzvf libiconv-1.7.tar.gz
+cd libiconv-1.7
 ./configure --prefix=$prefix
 make
 make install
@@ -72,6 +75,15 @@ cp -p libjpeg.a $prefix/lib
 cp -p jpeglib.h jconfig.h jmorecfg.h $prefix/include
 chmod 644 $prefix/include/j*.h
 cd ..
+
+###########
+# gettext #
+###########
+tar xzvf gettext-0.11.1.tar.gz
+cd gettext-0.11.1
+./configure --prefix=$prefix
+make
+make install
 
 ########
 # glib #
