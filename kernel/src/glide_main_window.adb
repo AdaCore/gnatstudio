@@ -37,6 +37,7 @@ with Gtk.Window;                use Gtk.Window;
 with Gtk.Widget;                use Gtk.Widget;
 with Gtkada.Dialogs;            use Gtkada.Dialogs;
 with Gtkada.Handlers;           use Gtkada.Handlers;
+with Gtkada.MDI;                use Gtkada.MDI;
 with Glide_Intl;                use Glide_Intl;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
@@ -190,6 +191,18 @@ package body Glide_Main_Window is
       else
          Set_Style (Main.Toolbar, Toolbar_Icons);
       end if;
+
+      Configure
+        (Get_MDI (Kernel),
+         Opaque_Resize     => Get_Pref (Kernel, MDI_Opaque),
+         Opaque_Move       => Get_Pref (Kernel, MDI_Opaque),
+         Opaque_Docks      => Get_Pref (Kernel, MDI_Opaque),
+         Close_Floating_Is_Unfloat =>
+           not Get_Pref (Kernel, MDI_Destroy_Floats),
+         Title_Font        => Get_Pref (Kernel, MDI_Title_Font),
+         Background_Color  => Get_Pref (Kernel, MDI_Background_Color),
+         Title_Bar_Color   => Get_Pref (Kernel, MDI_Title_Bar_Color),
+         Focus_Title_Color => Get_Pref (Kernel, MDI_Focus_Title_Color));
    end Preferences_Changed;
 
    ----------------
@@ -210,6 +223,9 @@ package body Glide_Main_Window is
    begin
       Gtk_New (Main_Window.Kernel, Gtk_Window (Main_Window), Home_Dir);
       GVD.Main_Window.Initialize (Main_Window, Key, Menu_Items);
+      Set_Priorities
+        (Main_Window.Process_Mdi,
+         (Left => 1, Top => 2, Bottom => 3, Right => 4));
       Main_Window.Home_Dir := new String'(Home_Dir);
       Main_Window.Prefix_Directory := new String'(Prefix_Directory);
       Main_Window.Standalone := False;
@@ -269,5 +285,15 @@ package body Glide_Main_Window is
       Unref (Win.Animation);
       Unref (Win.Animation_Iter);
    end On_Destroy;
+
+   ------------------
+   -- Load_Desktop --
+   ------------------
+
+   procedure Load_Desktop (Window : access Glide_Window_Record'Class) is
+      Was_Loaded : Boolean;
+   begin
+      Was_Loaded := Load_Desktop (Window.Kernel);
+   end Load_Desktop;
 
 end Glide_Main_Window;
