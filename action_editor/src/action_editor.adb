@@ -73,11 +73,10 @@ package body Action_Editor is
 
    Me : constant Debug_Handle := Create ("Action_Editor");
 
-   type Action_Editor_Module_Record is new Module_ID_Record with record
-      Kernel : Kernel_Handle;
-   end record;
-   type Action_Editor_Module_Access is access all
-       Action_Editor_Module_Record'Class;
+   type Action_Editor_Module_Record is new Module_ID_Record with null record;
+   type Action_Editor_Module_Access is
+     access all Action_Editor_Module_Record'Class;
+
    Action_Editor_Module : Action_Editor_Module_Access;
 
    procedure Destroy (Module : in out Action_Editor_Module_Record);
@@ -790,11 +789,11 @@ package body Action_Editor is
 
    procedure Destroy (Module : in out Action_Editor_Module_Record) is
       Filename : constant String :=
-        Get_Home_Dir (Module.Kernel) & "actions.xml";
+        Get_Home_Dir (Get_Kernel (Module)) & "actions.xml";
       Tree        : Node_Ptr;
       Error       : String_Access;
       Action      : Action_Record_Access;
-      Action_Iter : Action_Iterator := Start (Module.Kernel);
+      Action_Iter : Action_Iterator := Start (Get_Kernel (Module));
       Child       : Node_Ptr;
       Descr       : Node_Ptr;
 
@@ -843,7 +842,7 @@ package body Action_Editor is
             Action.Modified := False;
          end if;
 
-         Next (Module.Kernel, Action_Iter);
+         Next (Get_Kernel (Module), Action_Iter);
       end loop;
 
       Trace (Me, "Saving " & Filename);
@@ -864,16 +863,14 @@ package body Action_Editor is
       Err  : String_Access;
    begin
       Action_Editor_Module := new Action_Editor_Module_Record;
-      Action_Editor_Module.Kernel := Kernel_Handle (Kernel);
       Register_Module
          (Module      => Module_ID (Action_Editor_Module),
           Kernel      => Kernel,
           Module_Name => "Action_Editor");
 
       Register_Menu
-        (Kernel, '/' & (-"Edit"), -"Actions",
+        (Kernel, '/' & (-"Edit"), -"Ac_tions",
          Ref_Item   => -"Preferences",
-         Add_Before => False,
          Callback   => On_Edit_Actions'Access);
 
       if GNAT.OS_Lib.Is_Regular_File (Filename) then
