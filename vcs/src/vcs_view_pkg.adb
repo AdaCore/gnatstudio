@@ -235,6 +235,40 @@ package body VCS_View_Pkg is
    --  Return the path at which Event has occured.
    --  User must free memory associated to the returned path.
 
+   function Get_Cached_Data
+     (Page  : VCS_Page_Access;
+      Index : VFS.Virtual_File) return Line_Record;
+   --  Get the cached data.
+
+   procedure Set_Cached_Data
+     (Page  : VCS_Page_Access;
+      Index : VFS.Virtual_File;
+      Data  : Line_Record);
+   --  Set the cached data.
+
+   ---------------------
+   -- Get_Cached_Data --
+   ---------------------
+
+   function Get_Cached_Data
+     (Page  : VCS_Page_Access;
+      Index : VFS.Virtual_File) return Line_Record is
+   begin
+      return Copy (Status_Hash.Get (Page.Cached_Status, Index).Line);
+   end Get_Cached_Data;
+
+   ---------------------
+   -- Set_Cached_Data --
+   ---------------------
+
+   procedure Set_Cached_Data
+     (Page  : VCS_Page_Access;
+      Index : VFS.Virtual_File;
+      Data  : Line_Record) is
+   begin
+      Status_Hash.Set (Page.Cached_Status, Index, (Line => Copy (Data)));
+   end Set_Cached_Data;
+
    -----------------
    -- On_Selected --
    -----------------
@@ -324,8 +358,7 @@ package body VCS_View_Pkg is
    -- Free --
    ----------
 
-   procedure Free (X : in out Line_Record)
-   is
+   procedure Free (X : in out Line_Record) is
    begin
       Free (X.Status);
    end Free;
@@ -403,7 +436,7 @@ package body VCS_View_Pkg is
            (Get_Nth_Page (The_View.Notebook, Gint (J - 1)));
 
          Free (Page.Stored_Status);
-         Free (Page.Cached_Status);
+         Status_Hash.Reset (Page.Cached_Status);
          Destroy_Tooltip (Page.Tooltip);
       end loop;
 
@@ -472,10 +505,10 @@ package body VCS_View_Pkg is
       File     : VFS.Virtual_File)
    is
       Page          : VCS_Page_Access;
-      List_Temp     : List_Node;
       Log           : Boolean;
-      Found         : Boolean;
+      Dummy         : Boolean;
       Iter          : Gtk_Tree_Iter;
+      Line          : Line_Record;
    begin
       if Get_Log_From_File (Explorer.Kernel, File, False) = VFS.No_File then
          Log := False;
@@ -489,48 +522,18 @@ package body VCS_View_Pkg is
 
          --  Refresh the information in the cache.
 
-         List_Temp := First (Page.Cached_Status);
-         Found := False;
+         Line := Get_Cached_Data (Page, File);
 
-         while List_Temp /= Null_Node and then not Found loop
-            if File = Data (List_Temp).Status.File then
-               --  The data was found in the list, override it.
+         if Line /= No_Data then
+            Set_Cached_Data (Page, File, (Line.Status, Log));
+            Iter := Get_Iter_From_Name (Page, File);
 
-               Set_Data
-                 (List_Temp,
-                    (Copy_File_Status
-                       (Data (List_Temp).Status), Log));
-
-               Found := True;
+            if Iter /= Null_Iter then
+               Fill_Info (Page, Iter, (Line.Status, Log), Dummy);
             end if;
-
-            List_Temp := Next (List_Temp);
-         end loop;
-
-         if Found then
-            List_Temp := First (Page.Stored_Status);
-
-            while List_Temp /= Null_Node loop
-               if File = Data (List_Temp).Status.File then
-                  --  The data was found in the list, override it.
-                  --  and refresh the model if needed.
-
-                  Set_Data
-                    (List_Temp,
-                       (Copy_File_Status
-                          (Data (List_Temp).Status), Log));
-
-                  Iter := Get_Iter_From_Name (Page, File);
-
-                  if Iter /= Null_Iter then
-                     Fill_Info (Page, Iter, Data (List_Temp), Found);
-                  end if;
-               end if;
-
-               List_Temp := Next (List_Temp);
-            end loop;
          end if;
 
+         Free (Line);
       end loop;
    end Refresh_Log;
 
@@ -544,22 +547,28 @@ package body VCS_View_Pkg is
       VCS_Identifier : VCS_Access;
       Override_Cache : Boolean;
       Force_Display  : Boolean := False;
-      Clear_Logs     : Boolean := False)
+      Clear_Logs     : Boolean := False;
+      Display        : Boolean := True)
    is
       Child         : constant MDI_Child :=
-        Find_MDI_Child_By_Tag (Get_MDI (Kernel), VCS_View_Record'Tag);
+                        Find_MDI_Child_By_Tag
+                          (Get_MDI (Kernel), VCS_View_Record'Tag);
+      --  ??? This might be costly, maybe we could cache the VCS Explorer.
       Explorer      : VCS_View_Access;
-      Cache_Temp    : List_Node;
       Status_Temp   : File_Status_List.List_Node
         := File_Status_List.First (Status);
       Found         : Boolean := False;
       Page          : VCS_Page_Access;
       Log           : Boolean;
+      Line          : Line_Record;
       Sort_Id       : Gint;
 
       Up_To_Date_Status : File_Status;
       Registered_Status : constant Status_Array :=
                             Get_Registered_Status (VCS_Identifier);
+
+      No_Files_Displayed : Boolean := False;
+
       use type File_Status_List.List_Node;
    begin
       if Registered_Status'Length >= 2 then
@@ -625,116 +634,103 @@ package body VCS_View_Pkg is
       Push_State (Kernel, Busy);
       Sort_Id := Freeze_Sort (Page.Model);
 
-      while Status_Temp /= File_Status_List.Null_Node loop
-         Cache_Temp := First (Page.Cached_Status);
-         Found      := False;
+      if Display then
+         No_Files_Displayed := Is_Empty (Page.Stored_Status);
+         --  If no files are to be displayed when displaying the status,
+         --  optimize by not comparing the status to the inserted status.
+      end if;
 
+      while Status_Temp /= File_Status_List.Null_Node loop
          declare
             File : constant Virtual_File :=
-              File_Status_List.Data (Status_Temp).File;
+                     File_Status_List.Data (Status_Temp).File;
          begin
-            while not Found
-              and then Cache_Temp /= Null_Node
-            loop
-               if File = Data (Cache_Temp).Status.File then
-                  --  We have found an entry in the cache with the
-                  --  corresponding information.
+            Line := Get_Cached_Data (Page, File);
 
-                  Found := True;
-
-                  if Override_Cache then
-                     --  Enter the new file information into the cache.
-
-                     Log :=
-                       Get_Log_From_File (Kernel, File, False) /= VFS.No_File;
-                     Set_Data
-                       (Cache_Temp,
-                          (Copy_File_Status
-                             (File_Status_List.Data (Status_Temp)), Log));
-                  end if;
-
-                  exit;
-               end if;
-
-               Cache_Temp := Next (Cache_Temp);
-            end loop;
-
-            --  If the status for this file was not found in the cache,
-            --  add the information to the cache.
-
-            if not Found then
+            if Line = No_Data
+              or else Override_Cache
+            then
                Log := Get_Log_From_File (Kernel, File, False) /= VFS.No_File;
-               Prepend (Page.Cached_Status,
-                          (Copy_File_Status
-                             (File_Status_List.Data (Status_Temp)), Log));
-               Cache_Temp := First (Page.Cached_Status);
+
+               Line :=
+                 (Copy_File_Status (File_Status_List.Data (Status_Temp)), Log);
+               Set_Cached_Data (Page, File, Line);
             end if;
          end;
 
-         --  The info that we want to display is now in Data (Cache_Temp),
+         --  The info that we want to display is now in Line,
          --  if it already exists in Page.Stored_Status, we simply modify
          --  the element, otherwise we add it to the list.
 
-         declare
-            New_Status         : constant Line_Record :=
-              Copy (Data (Cache_Temp));
-            New_File           : constant Virtual_File :=
-              New_Status.Status.File;
-            Temp_Stored_Status : List_Node := First (Page.Stored_Status);
-            Iter               : Gtk_Tree_Iter := Null_Iter;
-            Success            : Boolean;
-         begin
-            Found := False;
+         if Display then
+            declare
+               New_Status         : constant Line_Record := Copy (Line);
+               New_File           : constant Virtual_File :=
+                                      New_Status.Status.File;
+               Temp_Stored_Status : List_Node := First (Page.Stored_Status);
+               Iter               : Gtk_Tree_Iter := Null_Iter;
+               Success            : Boolean;
+            begin
+               Found := False;
 
-            while not Found
-              and then Temp_Stored_Status /= Null_Node
-            loop
-               if New_File = Data (Temp_Stored_Status).Status.File then
-                  Found := True;
-                  Set_Data (Temp_Stored_Status, New_Status);
-                  Iter := Get_Iter_From_Name (Page, New_Status.Status.File);
-               end if;
+               if No_Files_Displayed then
+                  Prepend (Page.Stored_Status, New_Status);
+               else
+                  while not Found
+                    and then Temp_Stored_Status /= Null_Node
+                  loop
+                     if New_File = Data (Temp_Stored_Status).Status.File then
+                        Found := True;
+                        Set_Data (Temp_Stored_Status, New_Status);
+                        Iter := Get_Iter_From_Name
+                          (Page, New_Status.Status.File);
+                     end if;
 
-               Temp_Stored_Status := Next (Temp_Stored_Status);
-            end loop;
+                     Temp_Stored_Status := Next (Temp_Stored_Status);
+                  end loop;
 
-            if not Found
-              and then Force_Display
-            then
-               Prepend (Page.Stored_Status, New_Status);
-            end if;
-
-            --  Append the iter only if the status is currently shown.
-
-            for J in Page.Status'Range loop
-               if Page.Status (J).Status = New_Status.Status.Status then
-                  --  Do not append the file if it is up-to-date but the
-                  --  file does not exist.
-
-                  if Page.Status (J).Display
-                    and then not
-                      (Page.Status (J).Status = Up_To_Date_Status
-                       and then not Is_Regular_File (New_Status.Status.File))
+                  if not Found
+                    and then Force_Display
                   then
-                     if Iter = Null_Iter
-                       and then Force_Display
-                     then
-                        Append (Page.Model, Iter, Null_Iter);
-                     end if;
-
-                     if Iter /= Null_Iter then
-                        Fill_Info (Page, Iter, New_Status, Success);
-                     end if;
-                  else
-                     if Iter /= Null_Iter then
-                        Remove (Page.Model, Iter);
-                     end if;
+                     Prepend (Page.Stored_Status, New_Status);
                   end if;
-
-                  exit;
                end if;
-            end loop;
-         end;
+
+               --  Append the iter only if the status is currently shown.
+
+               for J in Page.Status'Range loop
+                  if Page.Status (J).Status = New_Status.Status.Status then
+                     --  Do not append the file if it is up-to-date but the
+                     --  file does not exist.
+
+                     if Page.Status (J).Display
+                       and then not
+                         (Page.Status (J).Status = Up_To_Date_Status
+                          and then not Is_Regular_File
+                            (New_Status.Status.File))
+                     then
+                        if Iter = Null_Iter
+                          and then Force_Display
+                        then
+                           Append (Page.Model, Iter, Null_Iter);
+                        end if;
+
+                        if Iter /= Null_Iter then
+                           Fill_Info (Page, Iter, New_Status, Success);
+                        end if;
+                     else
+                        if Iter /= Null_Iter then
+                           Remove (Page.Model, Iter);
+                        end if;
+                     end if;
+
+                     exit;
+                  end if;
+               end loop;
+            end;
+         end if;
+
+         Free (Line);
 
          Status_Temp := File_Status_List.Next (Status_Temp);
       end loop;
@@ -742,26 +738,6 @@ package body VCS_View_Pkg is
       Thaw_Sort (Page.Model, Sort_Id);
       Pop_State (Kernel);
    end Display_File_Status;
-
-   -------------------------
-   -- Display_String_List --
-   -------------------------
-
-   procedure Display_String_List
-     (Kernel   : Kernel_Handle;
-      List     : String_List.List;
-      M_Type   : Message_Type := Verbose)
-   is
-      use String_List;
-
-      Temp_List : String_List.List_Node := String_List.First (List);
-   begin
-      while Temp_List /= String_List.Null_Node loop
-         Push_Message
-           (Kernel, M_Type, "   "  & String_List.Data (Temp_List));
-         Temp_List := String_List.Next (Temp_List);
-      end loop;
-   end Display_String_List;
 
    ---------------
    -- Fill_Info --
@@ -1281,6 +1257,7 @@ package body VCS_View_Pkg is
    is
       D        : constant File_Hooks_Args := File_Hooks_Args (File_Data);
       Log_Name : constant String := Full_Name (D.File).all;
+      Line     : Line_Record;
    begin
       if Log_Name'Length > 4
         and then Log_Name (Log_Name'Last - 3 .. Log_Name'Last) = "$log"
@@ -1289,7 +1266,6 @@ package body VCS_View_Pkg is
             File        : constant Virtual_File :=
               Get_File_From_Log (Kernel, D.File);
             Page        : VCS_Page_Access;
-            Cache_Node  : List_Node;
             Stored_Node : List_Node;
          begin
             Browse_Files :
@@ -1297,36 +1273,25 @@ package body VCS_View_Pkg is
                Page := VCS_Page_Access
                  (Get_Nth_Page (Hook.Explorer.Notebook, Gint (J - 1)));
 
-               Cache_Node := First (Page.Cached_Status);
+               Line := Get_Cached_Data (Page, File);
 
-               while Cache_Node /= Null_Node loop
-                  if Data (Cache_Node).Status.File = File then
-                     --  The file was found in the cache, update it.
-                     Set_Data (Cache_Node,
-                               (Copy_File_Status (Data (Cache_Node).Status),
+               if Line /= No_Data then
+                  Set_Cached_Data (Page, File, (Line.Status, True));
+               end if;
+
+               Stored_Node := First (Page.Stored_Status);
+
+               while Stored_Node /= Null_Node loop
+                  if File = Data (Stored_Node).Status.File then
+                     Set_Data (Stored_Node,
+                               (Copy_File_Status (Line.Status),
                                 True));
-
-                     Stored_Node := First (Page.Stored_Status);
-
-                     while Stored_Node /= Null_Node loop
-                        if File = Data (Stored_Node).Status.File then
-                           Set_Data (Stored_Node,
-                                     (Copy_File_Status
-                                        (Data (Stored_Node).Status),
-                                      True));
-                           Refresh (Hook.Explorer);
-                           return;
-                        end if;
-
-                        Stored_Node := Next (Stored_Node);
-                     end loop;
-
+                     Refresh (Hook.Explorer);
                      return;
                   end if;
 
-                  Cache_Node := Next (Cache_Node);
+                  Stored_Node := Next (Stored_Node);
                end loop;
-
             end loop Browse_Files;
          end;
       end if;
@@ -1717,22 +1682,10 @@ package body VCS_View_Pkg is
       File     : VFS.Virtual_File;
       Ref      : VCS_Access) return File_Status_Record
    is
-      Node   : List_Node;
-      Page   : constant VCS_Page_Access :=
-        Get_Page_For_Identifier (Explorer, Ref);
-      Result : File_Status_Record;
+      Page : constant VCS_Page_Access :=
+               Get_Page_For_Identifier (Explorer, Ref);
    begin
-      Node := First (Page.Cached_Status);
-
-      while Node /= Null_Node loop
-         if Data (Node).Status.File = File then
-            return Data (Node).Status;
-         end if;
-
-         Node := Next (Node);
-      end loop;
-
-      return Result;
+      return Get_Cached_Data (Page, File).Status;
    end Get_Cached_Status;
 
    ----------------
@@ -1816,5 +1769,34 @@ package body VCS_View_Pkg is
          N := N.Next;
       end loop;
    end Load_State;
+
+   ----------
+   -- Hash --
+   ----------
+
+   function Hash is new HTables.Hash (Header_Num);
+
+   function Hash (F : Virtual_File) return Header_Num is
+   begin
+      return Hash (Full_Name (F).all);
+   end Hash;
+
+   -----------
+   -- Equal --
+   -----------
+
+   function Equal (F1, F2 : Virtual_File) return Boolean is
+   begin
+      return F1 = F2;
+   end Equal;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (X : in out Element) is
+   begin
+      Free (X.Line);
+   end Free;
 
 end VCS_View_Pkg;
