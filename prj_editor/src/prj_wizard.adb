@@ -27,7 +27,7 @@ procedure Prj_Wizard is
    Kernel : Kernel_Handle;
 begin
    Gtk.Main.Init;
-   Gtk_New (Kernel, null);
+   Gtk_New (Kernel, null, "");
 
    Gtk_New (Wiz, Kernel);
    Set_Current_Page (Wiz, 1);
