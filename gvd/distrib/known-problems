@@ -1,5 +1,11 @@
 Known Problems fixed in GVD 1.1.0
 
+- Wrong command line "--log-level" not handled properly
+  Problem:    When specifying the --log-level option with no parameter,
+              GVD generates a bug box instead of displaying the help
+              text.
+  Workaround: Use proper syntax for --log-level argument.
+
 - Support for CR characters on Unix systems
   Problem:    GVD can not correctly detect whether a file contains CR
               characters unless it is on a Windows system. This result in the
