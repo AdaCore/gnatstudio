@@ -292,7 +292,7 @@ package Src_Editor_Box is
 
    function Get_Last_Line
      (Editor : access Source_Editor_Box_Record) return Positive;
-   --  Return the number of the last line in the file.
+   --  Return the number of the last line in the file
 
    function Get_Block_Start
      (Editor : access Source_Editor_Box_Record;
@@ -309,7 +309,7 @@ package Src_Editor_Box is
    function Get_Block_Name
      (Editor : access Source_Editor_Box_Record;
       Line   : Src_Editor_Buffer.Editable_Line_Type) return String;
-   --  Return the name for the block enclosing Line.
+   --  Return the name for the block enclosing Line
 
    function Get_Block_Type
      (Editor : access Source_Editor_Box_Record;
@@ -326,6 +326,11 @@ package Src_Editor_Box is
    function Get_Buffer
      (Editor : access Source_Editor_Box_Record) return String;
    --  Return the contents of the entire buffer.
+
+   function Get_Subprogram_Name
+     (Editor : access Source_Editor_Box_Record;
+      Line   : Src_Editor_Buffer.Editable_Line_Type) return String;
+   --  Return the name for the subprogram enclosing Line
 
    ---------------------
    -- Contextual menu --
