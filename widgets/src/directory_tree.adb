@@ -898,16 +898,14 @@ package body Directory_Tree is
      (Selector : Directory_Selector;
       Event    : Gdk.Event.Gdk_Event) return Gtk_Menu
    is
-      --  pragma Unreferenced (Event);
-
       use type Gint_List.Glist;
 
-      Item     : Gtk_Menu_Item;
-      Is_Valid : constant Boolean :=
+      Item        : Gtk_Menu_Item;
+      Is_Valid    : constant Boolean :=
         Get_Selection (Selector.List) /= Gint_List.Null_List;
-      Menu     : Gtk_Menu;
+      Menu        : Gtk_Menu;
       Row, Column : Gint;
-      Valid : Boolean;
+      Valid       : Boolean;
 
    begin
       Get_Selection_Info
