@@ -78,9 +78,6 @@ package body GPS.Location_View is
    Non_Leaf_Color_Name : constant String := "blue";
    --  <preference> color to use for category and file names
 
-   Auto_Jump_To_First : Param_Spec_Boolean;
-   --  Preferences local to this module
-
    Location_View_Module_Id : Module_ID;
 
    package View_Idle is new Gtk.Main.Timeout (Location_View);
@@ -1926,37 +1923,41 @@ package body GPS.Location_View is
                  Get_Attribute (Category, "name");
                File_Name     : Virtual_File;
                Loc           : Location_Record;
-
             begin
-               File := Category.Child;
-               while File /= null loop
-                  File_Name := Create
-                    (Full_Filename => Get_Attribute (File, "name"));
+               --  Do not load errors in the project file back, since in fact
+               --  they have already been overwritten if required when the
+               --  project was loaded before the desktop
+               if Category_Name /= "Project" then
+                  File := Category.Child;
+                  while File /= null loop
+                     File_Name := Create
+                       (Full_Filename => Get_Attribute (File, "name"));
 
-                  Location := File.Child;
-                  while Location /= null loop
-                     Loc :=
-                        (Category => new String'(Category_Name),
-                         File     => File_Name,
-                         Line     => Integer'Value
-                           (Get_Attribute (Location, "line", "0")),
-                         Column   => Integer'Value
-                           (Get_Attribute (Location, "column", "0")),
-                         Length   => Integer'Value
-                           (Get_Attribute (Location, "length", "0")),
-                         Highlight => True or else Boolean'Value
-                           (Get_Attribute (Location, "highlight", "False")),
-                         Message  => new String'
-                           (Get_Attribute (Location, "message", "")),
-                         Highlight_Category => new String'
-                           (Get_Attribute (Location, "category", "")));
-                     Location := Location.Next;
+                     Location := File.Child;
+                     while Location /= null loop
+                        Loc :=
+                          (Category => new String'(Category_Name),
+                           File     => File_Name,
+                           Line     => Integer'Value
+                             (Get_Attribute (Location, "line", "0")),
+                           Column   => Integer'Value
+                             (Get_Attribute (Location, "column", "0")),
+                           Length   => Integer'Value
+                             (Get_Attribute (Location, "length", "0")),
+                           Highlight => True or else Boolean'Value
+                             (Get_Attribute (Location, "highlight", "False")),
+                           Message  => new String'
+                             (Get_Attribute (Location, "message", "")),
+                           Highlight_Category => new String'
+                             (Get_Attribute (Location, "category", "")));
+                        Location := Location.Next;
 
-                     Append (View.Stored_Locations, Loc);
+                        Append (View.Stored_Locations, Loc);
+                     end loop;
+
+                     File := File.Next;
                   end loop;
-
-                  File := File.Next;
-               end loop;
+               end if;
             end;
 
             Category := Category.Next;
@@ -2065,17 +2066,6 @@ package body GPS.Location_View is
          Kernel      => Kernel,
          Module_Name => "Location View");
 
-      Auto_Jump_To_First := Param_Spec_Boolean
-        (Gnew_Boolean
-          (Name    => "Auto-Jump-To-First",
-           Default => True,
-           Blurb   =>
-             -("Whether GPS should automatically jump to the first location"
-               & " when entries are added to the Location window (error"
-               & " messages, find results, ...)"),
-           Nick    => -"Jump to first location"));
-      Register_Property
-        (Kernel, Param_Spec (Auto_Jump_To_First), -"General");
       Add_Hook (Kernel, Location_Action_Hook, Location_Hook'Access);
       GPS.Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
