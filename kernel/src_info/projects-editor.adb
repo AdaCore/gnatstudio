@@ -63,12 +63,23 @@ package body Projects.Editor is
       Imported_Project_Location : String;
       Imported_Project          : Project_Node_Id;
       Importing_Project         : Project_Node_Id;
-      Use_Relative_Path         : Boolean);
+      Use_Relative_Path         : Boolean;
+      Limited_With              : Boolean := False);
    --  Set the attributes of the with_clause (imported project node, imported
    --  project path,....)
 
    procedure Reset_All_Caches (Project : Project_Type);
    --  Reset all the caches for the whole project hierarchy
+
+   function Add_Imported_Project
+     (Project                   : Project_Type;
+      Imported_Project          : Project_Node_Id;
+      Imported_Project_Location : String;
+      Report_Errors             : Output.Output_Proc := null;
+      Use_Relative_Path         : Boolean;
+      Limited_With              : Boolean := False)
+      return Import_Project_Error;
+   --  Internal version of Add_Imported_Project
 
    ---------------
    -- Variables --
@@ -2694,7 +2705,8 @@ package body Projects.Editor is
       Imported_Project_Location : String;
       Imported_Project          : Project_Node_Id;
       Importing_Project         : Project_Node_Id;
-      Use_Relative_Path         : Boolean)
+      Use_Relative_Path         : Boolean;
+      Limited_With              : Boolean := False)
    is
       Clause : Name_Id;
    begin
@@ -2710,7 +2722,8 @@ package body Projects.Editor is
       Set_String_Value_Of (With_Clause, Clause);
 
       Set_Path_Name_Of (With_Clause, Prj.Tree.Path_Name_Of (Imported_Project));
-      Set_Project_Node_Of (With_Clause, Imported_Project);
+      Set_Project_Node_Of (With_Clause, Imported_Project,
+                           Limited_With => Limited_With);
    end Set_With_Clause_Path;
 
    --------------------------
@@ -2719,9 +2732,11 @@ package body Projects.Editor is
 
    function Add_Imported_Project
      (Project                   : Project_Type;
+      Imported_Project          : Project_Node_Id;
       Imported_Project_Location : String;
       Report_Errors             : Output.Output_Proc := null;
-      Use_Relative_Path         : Boolean)
+      Use_Relative_Path         : Boolean;
+      Limited_With              : Boolean := False)
       return Import_Project_Error
    is
       use Prj.Tree.Tree_Private_Part;
@@ -2736,57 +2751,15 @@ package body Projects.Editor is
 
       procedure Fail (S1 : String; S2 : String := ""; S3 : String := "") is
       begin
-         Report_Errors (S1 & S2 & S3);
+         if Report_Errors /= null then
+            Report_Errors (S1 & S2 & S3);
+         end if;
       end Fail;
 
-      With_Clause      : Project_Node_Id;
-      Imported_Project : Project_Node_Id := Empty_Node;
-
-      Basename : constant String := Base_Name
-        (Imported_Project_Location, Project_File_Extension);
-      Dep_ID   : Name_Id;
-      Dep_Name : Prj.Tree.Tree_Private_Part.Project_Name_And_Node;
-      Imported : constant String := Normalize_Pathname
-        (Name          => Imported_Project_Location,
-         Resolve_Links => True);
-
+      With_Clause : Project_Node_Id;
    begin
       Output.Set_Special_Output (Report_Errors);
       Prj.Com.Fail := Fail'Unrestricted_Access;
-
-      Dep_ID := Get_String (Basename);
-
-      Dep_Name := Tree_Private_Part.Projects_Htable.Get (Dep_ID);
-
-      if Dep_Name /= No_Project_Name_And_Node then
-         if not File_Equal
-           (Format_Pathname (Get_String (Path_Name_Of (Dep_Name.Node))),
-            Imported)
-         then
-            if Report_Errors /= null then
-               Report_Errors
-                 (-"A different project with the same name"
-                  & " already exists in the project tree.");
-            end if;
-            Output.Set_Special_Output (null);
-            Prj.Com.Fail := null;
-            return Project_Already_Exists;
-         else
-            Imported_Project := Dep_Name.Node;
-         end if;
-
-      else
-         Prj.Part.Parse (Imported_Project, Imported,
-                         Always_Errout_Finalize => True);
-      end if;
-
-      if Imported_Project = Empty_Node then
-         Trace (Me, "Add_Imported_Project: imported project not found ("
-                & Imported_Project_Location & ")");
-         Output.Set_Special_Output (null);
-         Prj.Com.Fail := null;
-         return Imported_Project_Not_Found;
-      end if;
 
       --  Make sure we are not trying to import ourselves, since otherwise it
       --  would result in an infinite loop when manipulating the project
@@ -2829,7 +2802,8 @@ package body Projects.Editor is
 
       Set_With_Clause_Path
         (With_Clause, Normalize_Pathname (Imported_Project_Location),
-         Imported_Project, Project.Node, Use_Relative_Path);
+         Imported_Project, Project.Node, Use_Relative_Path,
+         Limited_With => Limited_With);
 
       if Has_Circular_Dependencies (Project.Node) then
          Set_First_With_Clause_Of
@@ -2849,10 +2823,13 @@ package body Projects.Editor is
 
       Set_Project_Modified (Project, True);
 
+
       Reset_Cache (Project, Imported_By => False);
       Reset_Cache
         (Get_Project_From_Name
-           (Project_Registry'Class (Get_Registry (Project)), Dep_ID),
+           (Project_Registry'Class (Get_Registry (Project)),
+            Get_String (Base_Name (Imported_Project_Location,
+                                   Project_File_Extension))),
          Imported_By => True);
       return Success;
 
@@ -2861,6 +2838,112 @@ package body Projects.Editor is
          Output.Set_Special_Output (null);
          Prj.Com.Fail := null;
          raise;
+   end Add_Imported_Project;
+
+   --------------------------
+   -- Add_Imported_Project --
+   --------------------------
+
+   function Add_Imported_Project
+     (Project                   : Project_Type;
+      Imported_Project          : Project_Type;
+      Report_Errors             : Output.Output_Proc := null;
+      Use_Relative_Path         : Boolean;
+      Limited_With              : Boolean := False)
+      return Import_Project_Error is
+   begin
+      return Add_Imported_Project
+        (Project                   => Project,
+         Imported_Project          => Imported_Project.Node,
+         Imported_Project_Location => Project_Path (Imported_Project),
+         Report_Errors             => Report_Errors,
+         Use_Relative_Path         => Use_Relative_Path,
+         Limited_With              => Limited_With);
+   end Add_Imported_Project;
+
+   --------------------------
+   -- Add_Imported_Project --
+   --------------------------
+
+   function Add_Imported_Project
+     (Project                   : Project_Type;
+      Imported_Project_Location : String;
+      Report_Errors             : Output.Output_Proc := null;
+      Use_Relative_Path         : Boolean;
+      Limited_With              : Boolean := False)
+      return Import_Project_Error
+   is
+      use Prj.Tree.Tree_Private_Part;
+      use type Output.Output_Proc;
+
+      procedure Fail (S1 : String; S2 : String := ""; S3 : String := "");
+      --  Replaces Osint.Fail
+
+      ----------
+      -- Fail --
+      ----------
+
+      procedure Fail (S1 : String; S2 : String := ""; S3 : String := "") is
+      begin
+         if Report_Errors /= null then
+            Report_Errors (S1 & S2 & S3);
+         end if;
+      end Fail;
+
+      Imported_Project : Project_Node_Id := Empty_Node;
+      Basename : constant String := Base_Name
+        (Imported_Project_Location, Project_File_Extension);
+      Imported : constant String := Normalize_Pathname
+        (Name          => Imported_Project_Location,
+         Resolve_Links => True);
+      Dep_ID   : Name_Id;
+      Dep_Name : Prj.Tree.Tree_Private_Part.Project_Name_And_Node;
+
+   begin
+      Output.Set_Special_Output (Report_Errors);
+      Prj.Com.Fail := Fail'Unrestricted_Access;
+
+      Dep_ID := Get_String (Basename);
+
+      Dep_Name := Tree_Private_Part.Projects_Htable.Get (Dep_ID);
+
+      if Dep_Name /= No_Project_Name_And_Node then
+         if not File_Equal
+           (Format_Pathname (Get_String (Path_Name_Of (Dep_Name.Node))),
+            Imported)
+         then
+            if Report_Errors /= null then
+               Report_Errors
+                 (-"A different project with the same name"
+                  & " already exists in the project tree.");
+            end if;
+            Output.Set_Special_Output (null);
+            Prj.Com.Fail := null;
+            return Project_Already_Exists;
+         else
+            Imported_Project := Dep_Name.Node;
+         end if;
+
+      else
+         Prj.Part.Parse (Imported_Project, Imported,
+                         Always_Errout_Finalize => True);
+      end if;
+
+      if Imported_Project = Empty_Node then
+         Trace (Me, "Add_Imported_Project: imported project not found ("
+                & Imported_Project_Location & ")");
+         Output.Set_Special_Output (null);
+         Prj.Com.Fail := null;
+         return Imported_Project_Not_Found;
+      end if;
+
+      return Add_Imported_Project
+        (Project           => Project,
+         Imported_Project  => Imported_Project,
+         Imported_Project_Location => Imported_Project_Location,
+         Report_Errors     => Report_Errors,
+         Use_Relative_Path => Use_Relative_Path,
+         Limited_With      => Limited_With);
    end Add_Imported_Project;
 
    -----------------------------

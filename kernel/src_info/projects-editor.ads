@@ -104,13 +104,23 @@ package Projects.Editor is
      (Project                   : Project_Type;
       Imported_Project_Location : String;
       Report_Errors             : Output.Output_Proc := null;
-      Use_Relative_Path         : Boolean)
+      Use_Relative_Path         : Boolean;
+      Limited_With              : Boolean := False)
       return Import_Project_Error;
    --  Add a new with_statement for Imported_Project.
    --  Errors while parsing the project file are sent to Report_Errors.
    --  True is returned if the project was modified with success
    --  If Use_Relative_Path is True, then a relative path is used in the with
    --  statement, otherwise an absolute path is used.
+
+   function Add_Imported_Project
+     (Project                   : Project_Type;
+      Imported_Project          : Project_Type;
+      Report_Errors             : Output.Output_Proc := null;
+      Use_Relative_Path         : Boolean;
+      Limited_With              : Boolean := False)
+      return Import_Project_Error;
+   --  Same as above, but the project is already in memory
 
    procedure Replace_Project_Occurrences
      (Root_Project      : Project_Type;
