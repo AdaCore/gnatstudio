@@ -1,14 +1,14 @@
 \input texiplus   @c -*-texinfo-*-
 @c %**start of header
 @setfilename gvd.info
-@settitle Using GPS
+@settitle Using the GNAT Programming System
 @syncodeindex fn cp
 
 @set GPSVersion 0.9.2
 
 @titlepage
 
-@title Using GPS
+@title Using the GNAT Programming System
 @subtitle Version @value{GPSVersion}
 @subtitle Document revision level $Revision$
 @subtitle Date: $Date$
@@ -27,9 +27,9 @@ unmodified in any copy.
 
 @ifinfo
 @node Top, Introduction, (dir), (dir)
-@top Using GPS
+@top Using the GNAT Programming System
 
-Using GPS
+Using the GNAT Programming System
 
 GPS, the GNAT Programming System
 
