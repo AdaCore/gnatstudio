@@ -86,7 +86,9 @@ package body Codefix.Errors_Manager is
       Current_Text : Text_Navigator_Abstr'Class;
       Preview      : out Error_Message) is
    begin
-      if This.Preview = Invalid_Error_Message then
+      if This.Preview = Invalid_Error_Message
+        and then not No_More_Messages (This)
+      then
          Get_Message (This, Current_Text, This.Preview);
       end if;
 
