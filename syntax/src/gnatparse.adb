@@ -43,7 +43,7 @@ begin
    loop
       exit when Info = null;
 
-      Put (Info.Token'Img & " ");
+      Put (Token_Type'Val (Info.Token)'Img & " ");
 
       if Info.Name /= null then
          Put (Info.Name.all & " ");
