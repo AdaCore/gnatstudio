@@ -26,6 +26,16 @@ with Language_Handlers;
 
 package Src_Info is
 
+   ----------------
+   -- Timestamps --
+   ----------------
+
+   type Timestamp is new Long_Integer;
+
+   function To_Timestamp (Time : GNAT.OS_Lib.OS_Time) return Timestamp;
+   --  Convert the time to an integer, that can be compared to other integers
+   --  (when OS_Time can not).
+
    -------------------------------
    -- Library Information files --
    -------------------------------
@@ -471,10 +481,7 @@ private
    --  The information associated with a source file, and that remains valid
    --  even when the LI file is parsed again.
 
-   type Timestamp is new Integer;
-
    function To_Timestamp (Str : Types.Time_Stamp_Type) return Timestamp;
-   function To_Timestamp (Time : GNAT.OS_Lib.OS_Time) return Timestamp;
    --  Convert the string to an internal timestamp.
 
    type File_Info is record
