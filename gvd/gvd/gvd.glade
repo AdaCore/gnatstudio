@@ -112,6 +112,42 @@
 
 	  <widget>
 	    <class>GtkMenuItem</class>
+	    <name>separator0</name>
+	    <right_justify>False</right_justify>
+	  </widget>
+
+	  <widget>
+	    <class>GtkMenuItem</class>
+	    <name>edit_source1</name>
+	    <accelerator>
+	      <modifiers>GDK_CONTROL_MASK</modifiers>
+	      <key>GDK_e</key>
+	      <signal>activate</signal>
+	    </accelerator>
+	    <signal>
+	      <name>activate</name>
+	      <handler>on_edit_source1_activate</handler>
+	      <last_modification_time>Tue, 28 Mar 2000 02:41:47 GMT</last_modification_time>
+	    </signal>
+	    <label>Edit Source...</label>
+	    <right_justify>False</right_justify>
+	  </widget>
+
+	  <widget>
+	    <class>GtkMenuItem</class>
+	    <name>reload_source1</name>
+	    <sensitive>False</sensitive>
+	    <signal>
+	      <name>activate</name>
+	      <handler>on_reload_source1_activate</handler>
+	      <last_modification_time>Tue, 28 Mar 2000 02:42:04 GMT</last_modification_time>
+	    </signal>
+	    <label>Reload Source</label>
+	    <right_justify>False</right_justify>
+	  </widget>
+
+	  <widget>
+	    <class>GtkMenuItem</class>
 	    <name>separator1</name>
 	    <right_justify>False</right_justify>
 	  </widget>
@@ -297,6 +333,26 @@
 
 	  <widget>
 	    <class>GtkMenuItem</class>
+	    <name>search1</name>
+	    <sensitive>False</sensitive>
+	    <signal>
+	      <name>activate</name>
+	      <handler>on_search1_activate</handler>
+	      <object>main_debug_window</object>
+	      <last_modification_time>Tue, 28 Mar 2000 02:31:42 GMT</last_modification_time>
+	    </signal>
+	    <label>Search...</label>
+	    <right_justify>False</right_justify>
+	  </widget>
+
+	  <widget>
+	    <class>GtkMenuItem</class>
+	    <name>separator8</name>
+	    <right_justify>False</right_justify>
+	  </widget>
+
+	  <widget>
+	    <class>GtkMenuItem</class>
 	    <name>cut1</name>
 	    <sensitive>False</sensitive>
 	    <accelerator>
@@ -412,48 +468,6 @@
 
 	  <widget>
 	    <class>GtkMenuItem</class>
-	    <name>edit_source1</name>
-	    <sensitive>False</sensitive>
-	    <accelerator>
-	      <modifiers>GDK_CONTROL_MASK | GDK_SHIFT_MASK</modifiers>
-	      <key>GDK_v</key>
-	      <signal>activate</signal>
-	    </accelerator>
-	    <signal>
-	      <name>activate</name>
-	      <handler>on_edit_source1_activate</handler>
-	      <last_modification_time>Tue, 28 Mar 2000 02:41:47 GMT</last_modification_time>
-	    </signal>
-	    <label>Edit Source...</label>
-	    <right_justify>False</right_justify>
-	  </widget>
-
-	  <widget>
-	    <class>GtkMenuItem</class>
-	    <name>reload_source1</name>
-	    <sensitive>False</sensitive>
-	    <accelerator>
-	      <modifiers>GDK_CONTROL_MASK | GDK_SHIFT_MASK</modifiers>
-	      <key>GDK_l</key>
-	      <signal>activate</signal>
-	    </accelerator>
-	    <signal>
-	      <name>activate</name>
-	      <handler>on_reload_source1_activate</handler>
-	      <last_modification_time>Tue, 28 Mar 2000 02:42:04 GMT</last_modification_time>
-	    </signal>
-	    <label>Reload Source</label>
-	    <right_justify>False</right_justify>
-	  </widget>
-
-	  <widget>
-	    <class>GtkMenuItem</class>
-	    <name>separator19</name>
-	    <right_justify>False</right_justify>
-	  </widget>
-
-	  <widget>
-	    <class>GtkMenuItem</class>
 	    <name>preferences1</name>
 	    <signal>
 	      <name>activate</name>
@@ -477,228 +491,6 @@
 	    </signal>
 	    <label>GDB Settings...</label>
 	    <right_justify>False</right_justify>
-	  </widget>
-	</widget>
-      </widget>
-
-      <widget>
-	<class>GtkMenuItem</class>
-	<name>search1</name>
-	<label>Search</label>
-	<right_justify>False</right_justify>
-
-	<widget>
-	  <class>GtkMenu</class>
-	  <name>search1_menu</name>
-
-	  <widget>
-	    <class>GtkMenuItem</class>
-	    <name>lookup_1</name>
-	    <sensitive>False</sensitive>
-	    <accelerator>
-	      <modifiers>GDK_CONTROL_MASK</modifiers>
-	      <key>GDK_/</key>
-	      <signal>activate</signal>
-	    </accelerator>
-	    <signal>
-	      <name>activate</name>
-	      <handler>on_lookup_1_activate</handler>
-	      <last_modification_time>Tue, 18 Apr 2000 21:18:47 GMT</last_modification_time>
-	    </signal>
-	    <label>Lookup ()</label>
-	    <right_justify>False</right_justify>
-	  </widget>
-
-	  <widget>
-	    <class>GtkMenuItem</class>
-	    <name>find_1</name>
-	    <sensitive>False</sensitive>
-	    <accelerator>
-	      <modifiers>GDK_CONTROL_MASK</modifiers>
-	      <key>GDK_.</key>
-	      <signal>activate</signal>
-	    </accelerator>
-	    <signal>
-	      <name>activate</name>
-	      <handler>on_find_1_activate</handler>
-	      <last_modification_time>Tue, 18 Apr 2000 21:19:03 GMT</last_modification_time>
-	    </signal>
-	    <label>Find&gt;&gt; ()</label>
-	    <right_justify>False</right_justify>
-	  </widget>
-
-	  <widget>
-	    <class>GtkMenuItem</class>
-	    <name>find_2</name>
-	    <sensitive>False</sensitive>
-	    <accelerator>
-	      <modifiers>GDK_CONTROL_MASK</modifiers>
-	      <key>GDK_,</key>
-	      <signal>activate</signal>
-	    </accelerator>
-	    <signal>
-	      <name>activate</name>
-	      <handler>on_find_2_activate</handler>
-	      <last_modification_time>Tue, 18 Apr 2000 21:43:29 GMT</last_modification_time>
-	    </signal>
-	    <label>Find&lt;&lt; ()</label>
-	    <right_justify>False</right_justify>
-	  </widget>
-
-	  <widget>
-	    <class>GtkMenuItem</class>
-	    <name>separator8</name>
-	    <right_justify>False</right_justify>
-	  </widget>
-
-	  <widget>
-	    <class>GtkCheckMenuItem</class>
-	    <name>find_words_only1</name>
-	    <sensitive>False</sensitive>
-	    <accelerator>
-	      <modifiers>GDK_MOD1_MASK</modifiers>
-	      <key>GDK_W</key>
-	      <signal>activate</signal>
-	    </accelerator>
-	    <signal>
-	      <name>activate</name>
-	      <handler>on_find_words_only1_activate</handler>
-	      <last_modification_time>Tue, 28 Mar 2000 02:40:30 GMT</last_modification_time>
-	    </signal>
-	    <label>Find Words Only</label>
-	    <active>False</active>
-	    <always_show_toggle>False</always_show_toggle>
-	  </widget>
-
-	  <widget>
-	    <class>GtkCheckMenuItem</class>
-	    <name>find_case_sensitive1</name>
-	    <sensitive>False</sensitive>
-	    <accelerator>
-	      <modifiers>GDK_MOD1_MASK</modifiers>
-	      <key>GDK_I</key>
-	      <signal>activate</signal>
-	    </accelerator>
-	    <signal>
-	      <name>activate</name>
-	      <handler>on_find_case_sensitive1_activate</handler>
-	      <last_modification_time>Tue, 28 Mar 2000 02:40:39 GMT</last_modification_time>
-	    </signal>
-	    <label>Find Case Sensitive</label>
-	    <active>False</active>
-	    <always_show_toggle>False</always_show_toggle>
-	  </widget>
-	</widget>
-      </widget>
-
-      <widget>
-	<class>GtkMenuItem</class>
-	<name>view1</name>
-	<label>View</label>
-	<right_justify>False</right_justify>
-
-	<widget>
-	  <class>GtkMenu</class>
-	  <name>view1_menu</name>
-
-	  <widget>
-	    <class>GtkMenuItem</class>
-	    <name>execution_window1</name>
-	    <sensitive>False</sensitive>
-	    <accelerator>
-	      <modifiers>GDK_MOD1_MASK</modifiers>
-	      <key>GDK_9</key>
-	      <signal>activate</signal>
-	    </accelerator>
-	    <signal>
-	      <name>activate</name>
-	      <handler>on_execution_window1_activate</handler>
-	      <last_modification_time>Tue, 28 Mar 2000 02:28:50 GMT</last_modification_time>
-	    </signal>
-	    <label>Execution Window...</label>
-	    <right_justify>False</right_justify>
-	  </widget>
-
-	  <widget>
-	    <class>GtkMenuItem</class>
-	    <name>separator9</name>
-	    <right_justify>False</right_justify>
-	  </widget>
-
-	  <widget>
-	    <class>GtkCheckMenuItem</class>
-	    <name>gdb_console1</name>
-	    <sensitive>False</sensitive>
-	    <accelerator>
-	      <modifiers>GDK_MOD1_MASK</modifiers>
-	      <key>GDK_1</key>
-	      <signal>activate</signal>
-	    </accelerator>
-	    <signal>
-	      <name>activate</name>
-	      <handler>on_gdb_console1_activate</handler>
-	      <last_modification_time>Tue, 28 Mar 2000 02:29:24 GMT</last_modification_time>
-	    </signal>
-	    <label>GDB Console</label>
-	    <active>False</active>
-	    <always_show_toggle>False</always_show_toggle>
-	  </widget>
-
-	  <widget>
-	    <class>GtkCheckMenuItem</class>
-	    <name>source_window1</name>
-	    <sensitive>False</sensitive>
-	    <accelerator>
-	      <modifiers>GDK_MOD1_MASK</modifiers>
-	      <key>GDK_2</key>
-	      <signal>activate</signal>
-	    </accelerator>
-	    <signal>
-	      <name>activate</name>
-	      <handler>on_source_window1_activate</handler>
-	      <last_modification_time>Tue, 28 Mar 2000 02:29:43 GMT</last_modification_time>
-	    </signal>
-	    <label>Source Window</label>
-	    <active>False</active>
-	    <always_show_toggle>False</always_show_toggle>
-	  </widget>
-
-	  <widget>
-	    <class>GtkCheckMenuItem</class>
-	    <name>data_window1</name>
-	    <sensitive>False</sensitive>
-	    <accelerator>
-	      <modifiers>GDK_MOD1_MASK</modifiers>
-	      <key>GDK_3</key>
-	      <signal>activate</signal>
-	    </accelerator>
-	    <signal>
-	      <name>activate</name>
-	      <handler>on_data_window1_activate</handler>
-	      <last_modification_time>Tue, 28 Mar 2000 02:30:02 GMT</last_modification_time>
-	    </signal>
-	    <label>Data Window</label>
-	    <active>False</active>
-	    <always_show_toggle>False</always_show_toggle>
-	  </widget>
-
-	  <widget>
-	    <class>GtkCheckMenuItem</class>
-	    <name>machine_code_window1</name>
-	    <sensitive>False</sensitive>
-	    <accelerator>
-	      <modifiers>GDK_MOD1_MASK</modifiers>
-	      <key>GDK_4</key>
-	      <signal>activate</signal>
-	    </accelerator>
-	    <signal>
-	      <name>activate</name>
-	      <handler>on_machine_code_window1_activate</handler>
-	      <last_modification_time>Tue, 28 Mar 2000 02:30:28 GMT</last_modification_time>
-	    </signal>
-	    <label>Machine Code Window</label>
-	    <active>False</active>
-	    <always_show_toggle>False</always_show_toggle>
 	  </widget>
 	</widget>
       </widget>
@@ -1312,7 +1104,6 @@
 
 	  <widget>
 	    <class>GtkMenuItem</class>
-<<<<<<< odd.glade
 	    <name>display_expression1</name>
 	    <signal>
 	      <name>activate</name>
@@ -1326,26 +1117,6 @@
 
 	  <widget>
 	    <class>GtkMenuItem</class>
-	    <name>display_machine_code1</name>
-	    <sensitive>False</sensitive>
-	    <accelerator>
-	      <modifiers>GDK_MOD1_MASK</modifiers>
-	      <key>GDK_4</key>
-	      <signal>activate</signal>
-	    </accelerator>
-	    <signal>
-	      <name>activate</name>
-	      <handler>on_display_machine_code1_activate</handler>
-	      <last_modification_time>Tue, 28 Mar 2000 02:41:30 GMT</last_modification_time>
-	    </signal>
-	    <label>Display Machine Code</label>
-	    <right_justify>False</right_justify>
-	  </widget>
-
-	  <widget>
-	    <class>GtkMenuItem</class>
-=======
->>>>>>> 1.47
 	    <name>more_status_display1</name>
 	    <sensitive>False</sensitive>
 	    <signal>
@@ -1366,7 +1137,6 @@
 	  <widget>
 	    <class>GtkMenuItem</class>
 	    <name>refresh1</name>
-	    <sensitive>False</sensitive>
 	    <accelerator>
 	      <modifiers>GDK_CONTROL_MASK</modifiers>
 	      <key>GDK_L</key>

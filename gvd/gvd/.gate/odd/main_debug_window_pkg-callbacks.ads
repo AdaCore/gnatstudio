@@ -15,6 +15,12 @@ package Main_Debug_Window_Pkg.Callbacks is
    procedure On_Open_Core_Dump1_Activate
      (Object : access Gtk_Widget_Record'Class);
 
+   procedure On_Edit_Source1_Activate
+     (Object : access Gtk_Menu_Item_Record'Class);
+
+   procedure On_Reload_Source1_Activate
+     (Object : access Gtk_Menu_Item_Record'Class);
+
    procedure On_Open_Session1_Activate
      (Object : access Gtk_Widget_Record'Class);
 
@@ -42,6 +48,9 @@ package Main_Debug_Window_Pkg.Callbacks is
    procedure On_Redo1_Activate
      (Object : access Gtk_Menu_Item_Record'Class);
 
+   procedure On_Search1_Activate
+     (Object : access Gtk_Widget_Record'Class);
+
    procedure On_Cut1_Activate
      (Object : access Gtk_Menu_Item_Record'Class);
 
@@ -60,47 +69,11 @@ package Main_Debug_Window_Pkg.Callbacks is
    procedure On_Select_All1_Activate
      (Object : access Gtk_Menu_Item_Record'Class);
 
-   procedure On_Edit_Source1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class);
-
-   procedure On_Reload_Source1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class);
-
    procedure On_Preferences1_Activate
      (Object : access Gtk_Widget_Record'Class);
 
    procedure On_Gdb_Settings1_Activate
      (Object : access Gtk_Widget_Record'Class);
-
-   procedure On_Lookup_1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class);
-
-   procedure On_Find_1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class);
-
-   procedure On_Find_2_Activate
-     (Object : access Gtk_Menu_Item_Record'Class);
-
-   procedure On_Find_Words_Only1_Activate
-     (Object : access Gtk_Check_Menu_Item_Record'Class);
-
-   procedure On_Find_Case_Sensitive1_Activate
-     (Object : access Gtk_Check_Menu_Item_Record'Class);
-
-   procedure On_Execution_Window1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class);
-
-   procedure On_Gdb_Console1_Activate
-     (Object : access Gtk_Check_Menu_Item_Record'Class);
-
-   procedure On_Source_Window1_Activate
-     (Object : access Gtk_Check_Menu_Item_Record'Class);
-
-   procedure On_Data_Window1_Activate
-     (Object : access Gtk_Check_Menu_Item_Record'Class);
-
-   procedure On_Machine_Code_Window1_Activate
-     (Object : access Gtk_Check_Menu_Item_Record'Class);
 
    procedure On_Run1_Activate
      (Object : access Gtk_Widget_Record'Class);

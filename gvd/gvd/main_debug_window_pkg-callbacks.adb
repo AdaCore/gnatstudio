@@ -182,6 +182,28 @@ package body Main_Debug_Window_Pkg.Callbacks is
       null;
    end On_Open_Core_Dump1_Activate;
 
+   ------------------------------
+   -- On_Edit_Source1_Activate --
+   ------------------------------
+
+   procedure On_Edit_Source1_Activate
+     (Object : access Gtk_Menu_Item_Record'Class)
+   is
+   begin
+      null;
+   end On_Edit_Source1_Activate;
+
+   --------------------------------
+   -- On_Reload_Source1_Activate --
+   --------------------------------
+
+   procedure On_Reload_Source1_Activate
+     (Object : access Gtk_Menu_Item_Record'Class)
+   is
+   begin
+      null;
+   end On_Reload_Source1_Activate;
+
    -------------------------------
    -- On_Open_Session1_Activate --
    -------------------------------
@@ -487,6 +509,17 @@ package body Main_Debug_Window_Pkg.Callbacks is
       null;
    end On_Redo1_Activate;
 
+   -------------------------
+   -- On_Search1_Activate --
+   -------------------------
+
+   procedure On_Search1_Activate
+     (Object : access Gtk_Widget_Record'Class)
+   is
+   begin
+      null;
+   end On_Search1_Activate;
+
    ----------------------
    -- On_Cut1_Activate --
    ----------------------
@@ -554,28 +587,6 @@ package body Main_Debug_Window_Pkg.Callbacks is
    end On_Select_All1_Activate;
 
    ------------------------------
-   -- On_Edit_Source1_Activate --
-   ------------------------------
-
-   procedure On_Edit_Source1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
-   is
-   begin
-      null;
-   end On_Edit_Source1_Activate;
-
-   --------------------------------
-   -- On_Reload_Source1_Activate --
-   --------------------------------
-
-   procedure On_Reload_Source1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
-   is
-   begin
-      null;
-   end On_Reload_Source1_Activate;
-
-   ------------------------------
    -- On_Preferences1_Activate --
    ------------------------------
 
@@ -602,116 +613,6 @@ package body Main_Debug_Window_Pkg.Callbacks is
    begin
       null;
    end On_Gdb_Settings1_Activate;
-
-   --------------------------
-   -- On_Lookup_1_Activate --
-   --------------------------
-
-   procedure On_Lookup_1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
-   is
-   begin
-      null;
-   end On_Lookup_1_Activate;
-
-   ------------------------
-   -- On_Find_1_Activate --
-   ------------------------
-
-   procedure On_Find_1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
-   is
-   begin
-      null;
-   end On_Find_1_Activate;
-
-   ------------------------
-   -- On_Find_2_Activate --
-   ------------------------
-
-   procedure On_Find_2_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
-   is
-   begin
-      null;
-   end On_Find_2_Activate;
-
-   ----------------------------------
-   -- On_Find_Words_Only1_Activate --
-   ----------------------------------
-
-   procedure On_Find_Words_Only1_Activate
-     (Object : access Gtk_Check_Menu_Item_Record'Class)
-   is
-   begin
-      null;
-   end On_Find_Words_Only1_Activate;
-
-   --------------------------------------
-   -- On_Find_Case_Sensitive1_Activate --
-   --------------------------------------
-
-   procedure On_Find_Case_Sensitive1_Activate
-     (Object : access Gtk_Check_Menu_Item_Record'Class)
-   is
-   begin
-      null;
-   end On_Find_Case_Sensitive1_Activate;
-
-   -----------------------------------
-   -- On_Execution_Window1_Activate --
-   -----------------------------------
-
-   procedure On_Execution_Window1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
-   is
-   begin
-      null;
-   end On_Execution_Window1_Activate;
-
-   ------------------------------
-   -- On_Gdb_Console1_Activate --
-   ------------------------------
-
-   procedure On_Gdb_Console1_Activate
-     (Object : access Gtk_Check_Menu_Item_Record'Class)
-   is
-   begin
-      null;
-   end On_Gdb_Console1_Activate;
-
-   --------------------------------
-   -- On_Source_Window1_Activate --
-   --------------------------------
-
-   procedure On_Source_Window1_Activate
-     (Object : access Gtk_Check_Menu_Item_Record'Class)
-   is
-   begin
-      null;
-   end On_Source_Window1_Activate;
-
-   ------------------------------
-   -- On_Data_Window1_Activate --
-   ------------------------------
-
-   procedure On_Data_Window1_Activate
-     (Object : access Gtk_Check_Menu_Item_Record'Class)
-   is
-   begin
-      null;
-   end On_Data_Window1_Activate;
-
-   --------------------------------------
-   -- On_Machine_Code_Window1_Activate --
-   --------------------------------------
-
-   procedure On_Machine_Code_Window1_Activate
-     (Object : access Gtk_Check_Menu_Item_Record'Class)
-   is
-   begin
-      null;
-   end On_Machine_Code_Window1_Activate;
 
    ----------------------
    -- On_Run1_Activate --
