@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                 Odd - The Other Display Debugger                  --
 --                                                                   --
---                         Copyright (C) 2000                        --
---                 Emmanuel Briot and Arnaud Charlet                 --
+--                      Copyright (C) 2000-2001                      --
+--                              ACT-Europe                           --
 --                                                                   --
 -- Odd is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
