@@ -51,6 +51,7 @@ with Glide_Kernel.Modules;     use Glide_Kernel.Modules;
 with Glide_Kernel.Project;     use Glide_Kernel.Project;
 with Pixmaps_IDE;              use Pixmaps_IDE;
 with Glide_Intl;               use Glide_Intl;
+with Projects.Registry;        use Projects.Registry;
 
 with Traces;                   use Traces;
 with Commands;                 use Commands;
@@ -761,8 +762,11 @@ package body Glide_Result_View is
 
       else
          declare
-            F : constant String := Find_Source_File
-              (View.Kernel, Source_File, True);
+            F : constant String := Get_Full_Path_From_File
+              (Registry        => Get_Registry (View.Kernel),
+               Filename        => Source_File,
+               Use_Source_Path => True,
+               Use_Object_Path => False);
          begin
             if GNAT.OS_Lib.Is_Absolute_Path (F) then
                Add_Location
