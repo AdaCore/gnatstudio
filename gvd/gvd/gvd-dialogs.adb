@@ -50,8 +50,6 @@ with GNAT.OS_Lib;
 with Histories;             use Histories;
 with Interactive_Consoles;  use Interactive_Consoles;
 
-with Ada.Text_IO; use Ada.Text_IO;
-
 package body GVD.Dialogs is
 
    Question_Titles : constant Chars_Ptr_Array := "" + (-"Choice");
@@ -428,9 +426,6 @@ package body GVD.Dialogs is
       Remove_Items (History_Dialog.List, Get_Children (History_Dialog.List));
 
       if History /= null then
-
-         Put_Line (History'First'Img & " " & History'Last'Img);
-
          for J in History.all'Range loop
             if History (J) = null then
                Gtk_New (Item, Label => "");
