@@ -1,5 +1,7 @@
 New features in GPS 1.0.2
 
+- Additional information about the VCS status displayed in source editors
+
 - Multiple items can now be selected and move at the same time in the browsers
 
 - Separate execution window for debugged programs
