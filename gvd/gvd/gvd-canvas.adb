@@ -45,10 +45,10 @@ with Display_Items;    use Display_Items;
 with Items;            use Items;
 with Pixmaps_IDE;      use Pixmaps_IDE;
 
-with GPS.Intl;       use GPS.Intl;
+with GPS.Intl;         use GPS.Intl;
 with GPS.Main_Window;  use GPS.Main_Window;
-with GVD.Memory_View;  use GVD.Memory_View;
 with GVD.Menu;         use GVD.Menu;
+with GVD.Memory_View;  use GVD.Memory_View;
 with GVD.Preferences;  use GVD.Preferences;
 with GVD.Process;      use GVD.Process;
 with Std_Dialogs;      use Std_Dialogs;
@@ -585,8 +585,7 @@ package body GVD.Canvas is
       Gtk_New (Mitem, Label => -"Display Expression...");
       Append (Canvas.Contextual_Background_Menu, Mitem);
       Widget_Callback.Object_Connect
-        (Mitem, "activate",
-        Widget_Callback.To_Marshaller (Display_Expression'Access), Canvas);
+        (Mitem, "activate", Display_Expression'Access, Canvas);
 
       Gtk_New (Mitem);
       Append (Canvas.Contextual_Background_Menu, Mitem);
