@@ -98,9 +98,11 @@ package body VCS_View_Pkg is
 
    --  The following list must be synchronized with the array of types
    --  in Columns_Types.
+   --  Base_Name_Column is the first column, because we want the built-in
+   --  interactive search to be performed on the base name of the files.
 
-   Name_Column               : constant := 0;
-   Base_Name_Column          : constant := 1;
+   Base_Name_Column          : constant := 0;
+   Name_Column               : constant := 1;
    Local_Rev_Column          : constant := 2;
    Rep_Rev_Column            : constant := 3;
    Status_Description_Column : constant := 4;
@@ -115,8 +117,8 @@ package body VCS_View_Pkg is
    function Columns_Types return GType_Array is
    begin
       return GType_Array'
-        (Name_Column               => GType_String,
-         Base_Name_Column          => GType_String,
+        (Base_Name_Column          => GType_String,
+         Name_Column               => GType_String,
          Local_Rev_Column          => GType_String,
          Rep_Rev_Column            => GType_String,
          Status_Description_Column => GType_Int,
@@ -248,8 +250,7 @@ package body VCS_View_Pkg is
       Height := 0;
 
       Window := Get_Bin_Window (Data.Tree);
-      Get_Pointer
-        (Window, X, Y, Mask, New_Window);
+      Get_Pointer (Window, X, Y, Mask, New_Window);
 
       Get_Path_At_Pos
         (Data.Tree,
@@ -276,12 +277,15 @@ package body VCS_View_Pkg is
          else
             Text := new String'(-"No revision log exists for this file");
          end if;
+
+      elsif Column = Data.File_Column then
+         Text := new String'(Get_String (Data.Model, Iter, Name_Column));
       end if;
 
       if Text /= null then
          Create_Pixmap_From_Text
            (Text.all,
-            Get_Pref (Data.Kernel, Tooltip_Font),
+            Get_Pref (Data.Kernel, Default_Font),
             White (Get_Default_Colormap),
             Widget,
             Pixmap,
