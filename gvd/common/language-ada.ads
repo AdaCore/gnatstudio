@@ -31,12 +31,20 @@ package Language.Debugger.Ada is
       Entity    : out Language_Entity;
       Next_Char : out Positive);
 
-   function Dereference
-     (Lang     : access Ada_Language;
-      Variable : String) return String;
+   function Dereference_Name (Lang : access Ada_Language;
+                              Name : String)
+                             return String;
+
+   function Array_Item_Name (Lang  : access Ada_Language;
+                             Name  : String;
+                             Index : String)
+                            return String;
+
+   function Record_Field_Name (Lang  : access Ada_Language;
+                               Name  : String;
+                               Field : String)
+                              return String;
 
 private
-
    type Ada_Language is abstract new Language_Debugger with null record;
-
 end Language.Debugger.Ada;

@@ -106,31 +106,72 @@ package body Language.Debugger.Ada is
       --  If no, skip to the next meaningfull character
 
       Next_Char := Buffer'First + 1;
-      while Next_Char <= Buffer'Last
-        and then Buffer (Next_Char) /= ' '
-        and then Buffer (Next_Char) /= ASCII.LF
-        and then Buffer (Next_Char) /= '"'
-        and then Buffer (Next_Char) /= '-'
-      loop
-         Next_Char := Next_Char + 1;
-      end loop;
 
-      if Buffer (Next_Char) = ' ' then
-         Next_Char := Next_Char + 1;
+      if Buffer (Next_Char) = ' ' or else Buffer (Next_Char) = ASCII.HT then
+         while Next_Char <= Buffer'Last
+           and then (Buffer (Next_Char) = ' '
+                     or else Buffer (Next_Char) = ASCII.HT)
+         loop
+            Next_Char := Next_Char + 1;
+         end loop;
+
+      --  It is better to return a pointer to the newline, so that the icons
+      --  on the side might be displayed properly.
+
+      else
+         while Next_Char <= Buffer'Last
+           and then Buffer (Next_Char) /= ' '
+           and then Buffer (Next_Char) /= ASCII.LF
+           and then Buffer (Next_Char) /= ASCII.HT
+           and then Buffer (Next_Char) /= '"'
+         loop
+            Next_Char := Next_Char + 1;
+         end loop;
+
+         if Buffer (Next_Char) = ' ' then
+            Next_Char := Next_Char + 1;
+         end if;
       end if;
       Entity := Normal_Text;
    end Looking_At;
 
-   -----------------
-   -- Dereference --
-   -----------------
+   ----------------------
+   -- Dereference_Name --
+   ----------------------
 
-   function Dereference
-     (Lang     : access Ada_Language;
-      Variable : String) return String is
+   function Dereference_Name (Lang : access Ada_Language;
+                              Name : String)
+                             return String
+   is
    begin
-      return Variable & ".all";
-   end Dereference;
+      return Name & ".all";
+   end Dereference_Name;
+
+   ---------------------
+   -- Array_Item_Name --
+   ---------------------
+
+   function Array_Item_Name (Lang  : access Ada_Language;
+                             Name  : String;
+                             Index : String)
+                            return String
+   is
+   begin
+      return Name & '(' & Index & ')';
+   end Array_Item_Name;
+
+   -----------------------
+   -- Record_Field_Name --
+   -----------------------
+
+   function Record_Field_Name (Lang  : access Ada_Language;
+                               Name  : String;
+                               Field : String)
+                              return String
+   is
+   begin
+      return Name & '.' & Field;
+   end Record_Field_Name;
 
 begin
    Compile (Keywords,
