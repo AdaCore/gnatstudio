@@ -276,7 +276,8 @@ package body Switches_Editors is
      (Switches : access Switches_Edit_Record'Class;
       Pkg_Name : String;
       Language : String;
-      Files    : VFS.File_Array) return Argument_List;
+      Files    : File_Array;
+      Use_Initial_Value : Boolean := True) return Argument_List;
    --  Return the list of switches for Files, found in the package Pkg_Name,
    --  for a specific language, and for a specific list of switches. The
    --  returned array must be freed by the caller.
@@ -1688,7 +1689,8 @@ package body Switches_Editors is
               (S,
                S.Pages (P).Pkg.all,
                S.Pages (P).Attribute_Index.all,
-               Files => (1 .. 0 => VFS.No_File));
+               Files => (1 .. 0 => VFS.No_File),
+               Use_Initial_Value => True);
          begin
             Set_Text (S.Pages (P).Cmd_Line,
                       Argument_List_To_String (List));
@@ -1798,12 +1800,22 @@ package body Switches_Editors is
                   Value            => Value,
                   Is_Default_Value => Is_Default_Value);
 
-               --  Check if we in fact have the initial value
+               --  Check if we in fact have the initial value. We much check
+               --  the normalized switches (after expansion), since otherwise
+               --  -gnatwue and -gnatweu would appear to be different.
+               --  Note that this test doesn't handle the case where
+               --  "-O" and "-O1" are the same.
                declare
-                  Default_Args : Argument_List := To_Argument_List (Value);
+                  Default_Args : constant Argument_List :=
+                                   To_Argument_List (Value);
+                  Default_Args_N : Argument_List := Normalize_Compiler_Switches
+                    (Page, Default_Args);
+                  A : Argument_List :=
+                    Normalize_Compiler_Switches (Page, Clone (Args));
                begin
-                  Is_Default_Value := Is_Equal (Default_Args, Args);
-                  Free (Default_Args);
+                  Is_Default_Value := Is_Equal (Default_Args_N, A);
+                  Free (Default_Args_N);
+                  Free (A);
                end;
             end if;
 
@@ -1941,19 +1953,20 @@ package body Switches_Editors is
      (Switches : access Switches_Edit_Record'Class;
       Pkg_Name : String;
       Language : String;
-      Files    : File_Array) return Argument_List is
+      Files    : File_Array;
+      Use_Initial_Value : Boolean := True) return Argument_List is
    begin
       if Files'Length = 0 then
          return Get_Switches
            (Switches.Kernel,
             Switches.Project, Pkg_Name, VFS.No_File,
-            Language, Use_Initial_Value => True);
+            Language, Use_Initial_Value => Use_Initial_Value);
       else
          --  ??? Should we merge all the switches ?
          return Get_Switches
            (Switches.Kernel,
             Switches.Project, Pkg_Name, Files (Files'First),
-            Language, Use_Initial_Value => True);
+            Language, Use_Initial_Value => Use_Initial_Value);
       end if;
    end Get_Switches;
 
@@ -2006,7 +2019,8 @@ package body Switches_Editors is
               (Switches,
                Switches.Pages (P).Pkg.all,
                Switches.Pages (P).Attribute_Index.all,
-               Files);
+               Files,
+               Use_Initial_Value => False);
          begin
             --  Force a space, so that at least some text is inserted, and thus
             --  we correctly initialize the widgets.
