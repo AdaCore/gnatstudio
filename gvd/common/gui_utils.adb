@@ -51,6 +51,8 @@ with Gtk.List_Item;            use Gtk.List_Item;
 with Gtk.Main;                 use Gtk.Main;
 with Gtk.Menu;                 use Gtk.Menu;
 with Gtk.Menu_Item;            use Gtk.Menu_Item;
+with Gtk.Menu_Bar;             use Gtk.Menu_Bar;
+with Gtk.Menu_Shell;           use Gtk.Menu_Shell;
 with Gtk.Stock;                use Gtk.Stock;
 with Gtk.Text_Iter;            use Gtk.Text_Iter;
 with Gtk.Text_Buffer;          use Gtk.Text_Buffer;
@@ -70,8 +72,11 @@ with String_Utils;             use String_Utils;
 with System;                   use System;
 with String_List_Utils;        use String_List_Utils;
 with Ada.Text_IO;              use Ada.Text_IO;
+with Traces;                   use Traces;
 
 package body GUI_Utils is
+
+   Me : constant Debug_Handle := Create ("GUI_Utils");
 
    type Contextual_Menu_Data is record
       Create  : Contextual_Menu_Create;
@@ -1219,5 +1224,190 @@ package body GUI_Utils is
          return "";
       end if;
    end Query_Password;
+
+   ----------------------------
+   -- Find_Menu_Item_By_Name --
+   ----------------------------
+
+   procedure Find_Menu_Item_By_Name
+     (Menu_Bar  : Gtk_Menu_Bar;
+      Menu      : Gtk_Menu;
+      Name      : String;
+      Menu_Item : out Gtk_Menu_Item;
+      Index     : out Gint)
+   is
+      use type Widget_List.Glist;
+      Children, Tmp : Widget_List.Glist;
+      Label         : Gtk_Label;
+      New_Name      : String := Name;
+      Last          : Integer := New_Name'First;
+
+   begin
+      Menu_Item := null;
+
+      if Name = "" then
+         Index := -1;
+         return;
+      end if;
+
+      for J in Name'Range loop
+         if Name (J) = '_' then
+            if J - 1 >= Name'First and then Name (J - 1) = '_' then
+               New_Name (Last) := '_';
+               Last := Last + 1;
+            end if;
+         else
+            New_Name (Last) := Name (J);
+            Last := Last + 1;
+         end if;
+      end loop;
+
+      if Menu /= null then
+         Children := Get_Children (Menu);
+      elsif Menu_Bar /= null then
+         Children := Get_Children (Menu_Bar);
+      else
+         Children := Widget_List.Null_List;
+      end if;
+
+      Index := 0;
+      Tmp := Children;
+
+      while Tmp /= Widget_List.Null_List loop
+         Menu_Item := Gtk_Menu_Item (Widget_List.Get_Data (Tmp));
+
+         if Get_Child (Menu_Item) /= null
+           and then Get_Child (Menu_Item).all in Gtk_Label_Record'Class
+         then
+            Label := Gtk_Label (Get_Child (Menu_Item));
+            exit when Get_Text (Label) = New_Name (New_Name'First .. Last - 1);
+         end if;
+
+         Index := Index + 1;
+         Tmp := Widget_List.Next (Tmp);
+         Menu_Item := null;
+      end loop;
+
+      Widget_List.Free (Children);
+
+      if Menu_Item = null then
+         Index := -1;
+      end if;
+   end Find_Menu_Item_By_Name;
+
+   ------------------------------
+   -- Find_Or_Create_Menu_Tree --
+   ------------------------------
+
+   function Find_Or_Create_Menu_Tree
+     (Menu_Bar     : Gtk_Menu_Bar;
+      Menu         : Gtk_Menu;
+      Path         : String;
+      Accelerators : Gtk.Accel_Group.Gtk_Accel_Group;
+      Allow_Create : Boolean := True;
+      Ref_Item     : String  := "";
+      Add_Before   : Boolean := True) return Gtk_Menu_Item
+   is
+      First           : Natural := Path'First;
+      Last            : Natural;
+      Parent          : Gtk_Menu := Menu;
+      Menu_Item       : Gtk_Menu_Item;
+      Pred            : Gtk_Menu_Item;
+      M               : Gtk_Menu;
+      Index           : Gint;
+   begin
+      if Path (First) = '/' then
+         First := First + 1;
+      end if;
+
+      Last := First;
+
+      --  Find the existing parents
+
+      while First <= Path'Last loop
+         Last := First + 1;
+         Skip_To_Char (Path, Last, '/');
+
+         Find_Menu_Item_By_Name
+           (Menu_Bar, Parent, Path (First .. Last - 1), Menu_Item, Index);
+         exit when Menu_Item = null;
+
+         --  Have we found the item ?
+         First  := Last + 1;
+         exit when Last >= Path'Last;
+
+         if Get_Submenu (Menu_Item) = null then
+            Trace
+              (Me, "Find_Or_Create_Menu_Tree: "
+               & Path (Path'First .. Last - 1) & " has no submenu");
+            return null;
+         end if;
+
+         Parent := Gtk_Menu (Get_Submenu (Menu_Item));
+      end loop;
+
+      --  Create the missing parents
+
+      if Allow_Create then
+         while First <= Path'Last loop
+            Last := First + 1;
+            Skip_To_Char (Path, Last, '/');
+
+            Gtk_New_With_Mnemonic (Menu_Item, Path (First .. Last - 1));
+
+            --  Should we create a submenu ?
+            if Last <= Path'Last then
+               Gtk_New (M);
+               Set_Submenu (Menu_Item, M);
+               Set_Accel_Group (M, Accelerators);
+               Find_Menu_Item_By_Name
+                 (Menu_Bar, Parent, Ref_Item, Pred, Index);
+
+            else
+               Find_Menu_Item_By_Name
+                 (Menu_Bar, Parent, Ref_Item, Pred, Index);
+            end if;
+
+            Add_Menu (Parent, Menu_Bar, Menu_Item, Index, Add_Before);
+            Show_All (Menu_Item);
+            Parent := M;
+
+            First := Last + 1;
+         end loop;
+
+      elsif First <= Path'Last then
+         --  No such item
+         Menu_Item := null;
+      end if;
+
+      return Menu_Item;
+   end Find_Or_Create_Menu_Tree;
+
+   --------------
+   -- Add_Menu --
+   --------------
+
+   procedure Add_Menu
+     (Parent     : Gtk_Menu;
+      Menu_Bar   : Gtk_Menu_Bar := null;
+      Item       : Gtk_Menu_Item;
+      Index      : Gint := -1;
+      Add_Before : Boolean := True)
+   is
+      P : Gtk_Menu_Shell := Gtk_Menu_Shell (Parent);
+   begin
+      --  Insertion in the menu bar
+      if Parent = null then
+         P := Gtk_Menu_Shell (Menu_Bar);
+      end if;
+
+      if Index = -1 then
+         Append (P, Item);
+      elsif Add_Before then
+         Insert (P, Item, Index);
+      else
+         Insert (P, Item, Index + 1);
+      end if;
+   end Add_Menu;
 
 end GUI_Utils;

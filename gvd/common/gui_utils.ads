@@ -28,6 +28,7 @@ with Gdk.Types;
 with Gdk.Window;
 with Glib.Object;
 with Glib;                     use Glib;
+with Gtk.Accel_Group;          use Gtk.Accel_Group;
 with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Toggle; use Gtk.Cell_Renderer_Toggle;
 with Gtk.Clist;
@@ -38,6 +39,8 @@ with Gtk.Handlers;
 with Gtk.List;
 with Gtk.List_Item;
 with Gtk.Menu;
+with Gtk.Menu_Item;
+with Gtk.Menu_Bar;
 with Gtk.Text_Iter;
 with Gtk.Text_Mark;
 with Gtk.Text_Tag;
@@ -267,6 +270,42 @@ package GUI_Utils is
    --  Text must be a correct Utf8 text, see Glib.Convert
    --
    --  The maximal width of the text is Wrap_Width.
+
+   -----------
+   -- Menus --
+   -----------
+
+   procedure Find_Menu_Item_By_Name
+     (Menu_Bar  : Gtk.Menu_Bar.Gtk_Menu_Bar;
+      Menu      : Gtk.Menu.Gtk_Menu;
+      Name      : String;
+      Menu_Item : out Gtk.Menu_Item.Gtk_Menu_Item;
+      Index     : out Gint);
+   --  Return the menu item with name Name, either from Menu, or from Menu_Bar
+   --  if the latter is null.
+
+   function Find_Or_Create_Menu_Tree
+     (Menu_Bar     : Gtk.Menu_Bar.Gtk_Menu_Bar;
+      Menu         : Gtk.Menu.Gtk_Menu;
+      Path         : String;
+      Accelerators : Gtk.Accel_Group.Gtk_Accel_Group;
+      Allow_Create : Boolean := True;
+      Ref_Item     : String  := "";
+      Add_Before   : Boolean := True) return Gtk.Menu_Item.Gtk_Menu_Item;
+   --  Create or return the menu_item corresponding to Path in Menu.
+   --  Path is a '/'-separated list of menu names, for instance File/New.
+   --  Menu_Bar is used if Menu is null
+   --  null is returned if the menu couldn't be created.
+
+   procedure Add_Menu
+     (Parent     : Gtk.Menu.Gtk_Menu;
+      Menu_Bar   : Gtk.Menu_Bar.Gtk_Menu_Bar := null;
+      Item       : Gtk.Menu_Item.Gtk_Menu_Item;
+      Index      : Gint    := -1;
+      Add_Before : Boolean := True);
+   --  Append Item either to Parent, if not null, or directly to the menu
+   --  bar.
+   --  The menu is appended if Index is -1
 
    ----------------------
    -- Contextual menus --
