@@ -27,6 +27,9 @@ package body Ada_Analyzer is
 
    use Basic_Types;
 
+   pragma Suppress (All_Checks);
+   --  For efficiency
+
    -----------------
    -- Local types --
    -----------------
@@ -50,10 +53,6 @@ package body Ada_Analyzer is
    function Is_Library_Level (Stack : Token_Stack.Simple_Stack) return Boolean;
    --  Return True if the current scope in Stack is a library level package.
 
-   function Is_Word_Char (C : Character) return Boolean;
-   --  Return whether C is a word character (alphanumeric or underscore).
-   pragma Inline (Is_Word_Char);
-
    function Next_Char  (P : Natural) return Natural;
    --  Return the next char in buffer. P is the current character.
    pragma Inline (Next_Char);
@@ -68,15 +67,6 @@ package body Ada_Analyzer is
       Last    : Natural;
       Replace : String);
    --  Replace the slice First .. Last - 1 in Buffer by Replace.
-
-   ------------------
-   -- Is_Word_Char --
-   ------------------
-
-   function Is_Word_Char (C : Character) return Boolean is
-   begin
-      return C = '_' or else Is_Alphanumeric (C);
-   end Is_Word_Char;
 
    ---------------
    -- Next_Char --
@@ -370,8 +360,7 @@ package body Ada_Analyzer is
    ------------------------
 
    procedure Analyze_Ada_Source
-     (Buffer           : Unchecked_String_Access;
-      Buffer_Length    : Natural;
+     (Buffer           : String;
       New_Buffer       : in out Extended_Line_Buffer;
       Indent_Params    : Indent_Parameters;
       Reserved_Casing  : Casing_Type           := Lower;
@@ -403,6 +392,8 @@ package body Ada_Analyzer is
       Indent_Use      : Natural renames Indent_Params.Indent_Use;
       Indent_Record   : Natural renames Indent_Params.Indent_Record;
 
+      Buffer_Length   : constant Natural := Buffer'Last;
+
       ---------------
       -- Variables --
       ---------------
@@ -411,7 +402,7 @@ package body Ada_Analyzer is
       Str                 : String (1 .. 1024);
       Str_Len             : Natural           := 0;
       Current             : Natural;
-      Prec                : Natural           := 1;
+      Prec                : Natural           := Buffer'First;
       Token_Prec          : Natural           := 0;
       Start_Of_Line       : Natural;
       Prev_Spaces         : Integer           := 0;
