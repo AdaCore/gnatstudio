@@ -114,7 +114,6 @@ package body GVD.Call_Stack is
       end if;
 
       Get_Selected (Get_Selection (Stack.Tree), Model, Iter);
-
       Stack_Frame
         (Stack.Debugger,
          Natural'Value (Get_String (Stack.Model, Iter, Frame_Num_Column)) + 1,
@@ -131,8 +130,7 @@ package body GVD.Call_Stack is
    is
       pragma Unreferenced (Widget);
    begin
-      Mask.Stack.Backtrace_Mask :=
-        Mask.Stack.Backtrace_Mask xor Mask.Mask;
+      Mask.Stack.Backtrace_Mask := Mask.Stack.Backtrace_Mask xor Mask.Mask;
       Set_Column_Types (Mask.Stack);
    end Change_Mask;
 
@@ -217,8 +215,10 @@ package body GVD.Call_Stack is
                 Button        => Gdk.Event.Get_Button (Arg1),
                 Activate_Time => Gdk.Event.Get_Time (Arg1));
          Emit_Stop_By_Name (Process.Tree, "button_press_event");
+
          return True;
       end if;
+
       return False;
    end On_Button_Press_Event;
 
@@ -390,10 +390,10 @@ package body GVD.Call_Stack is
       Len      : Natural;
       Process  : constant Process_Proxy_Access := Get_Process (Debugger);
       Index    : Integer;
-            Subp     : String_Access;
-      Iter : Gtk_Tree_Iter;
-   begin
+      Subp     : String_Access;
+      Iter     : Gtk_Tree_Iter;
 
+   begin
       --  Remove previous stack information.
 
       Stack.Block := True;

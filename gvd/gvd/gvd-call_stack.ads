@@ -48,28 +48,24 @@ package GVD.Call_Stack is
    procedure Set_List_Mask (Stack : Call_Stack; Mask : Stack_List_Mask);
    --  Accessors for Stack.Backtrace_Mask.
 
-   procedure Highlight_Frame
-     (Stack : Call_Stack;
-      Frame : Natural);
+   procedure Highlight_Frame (Stack : Call_Stack; Frame : Natural);
    --  Highlight frame number Frame.
 
-   procedure Update
-     (Stack    : Call_Stack;
-      Debugger : Debugger_Access);
+   procedure Update (Stack : Call_Stack; Debugger : Debugger_Access);
    --  Update the call stack.
 
 private
 
    type Call_Stack_Record is new Gtk_Scrolled_Window_Record with record
-      Tree     : Gtk_Tree_View;
-      Model    : Gtk_Tree_Store;
-      Debugger : Debugger_Access;
+      Tree                       : Gtk_Tree_View;
+      Model                      : Gtk_Tree_Store;
+      Debugger                   : Debugger_Access;
 
       Call_Stack_Contextual_Menu : Gtk.Menu.Gtk_Menu;
-      Block    : Boolean := False;
+      Block                      : Boolean := False;
       --  Whether to process selection events.
 
-      Backtrace_Mask          : Stack_List_Mask := Subprog_Name;
+      Backtrace_Mask             : Stack_List_Mask := Subprog_Name;
       --  What columns to be displayed in the stack list window
    end record;
 
