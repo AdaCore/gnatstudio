@@ -452,7 +452,6 @@ begin
 
    Gtk_New (Main_Debug_Window.Processes1, -"Processes...");
    Set_Right_Justify (Main_Debug_Window.Processes1, False);
-   Set_Sensitive (Main_Debug_Window.Processes1, False);
    Widget_Callback.Object_Connect
      (Main_Debug_Window.Processes1, "activate",
       Widget_Callback.To_Marshaller (On_Processes1_Activate'Access), Main_Debug_Window);
