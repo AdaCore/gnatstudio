@@ -56,7 +56,7 @@ with Gtk.Handlers; use Gtk.Handlers;
 
 with Ada.Text_IO; use Ada.Text_IO;
 
-package body Gtkada.Code_Editors is
+package body Odd.Code_Editors is
 
    use Odd;
 
@@ -852,4 +852,4 @@ package body Gtkada.Code_Editors is
       return Editor.Show_Lines_With_Code;
    end Get_Show_Lines_With_Code;
 
-end Gtkada.Code_Editors;
+end Odd.Code_Editors;

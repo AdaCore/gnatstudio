@@ -27,7 +27,7 @@ with Gtk.Label; use Gtk.Label;
 with Gtk.Text; use Gtk.Text;
 with Gtk.Handlers;
 with Gtkada.Canvas; use Gtkada.Canvas;
-with Gtkada.Code_Editors; use Gtkada.Code_Editors;
+with Odd.Code_Editors; use Odd.Code_Editors;
 
 package Process_Tab_Pkg is
 

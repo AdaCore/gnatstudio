@@ -51,7 +51,7 @@ with Debugger.Gdb;    use Debugger.Gdb;
 with Debugger.Jdb;    use Debugger.Jdb;
 with Odd.Strings;     use Odd.Strings;
 with Process_Proxies; use Process_Proxies;
-with Gtkada.Code_Editors; use Gtkada.Code_Editors;
+with Odd.Code_Editors; use Odd.Code_Editors;
 with GNAT.Regpat;     use GNAT.Regpat;
 with Gtk.Handlers;    use Gtk.Handlers;
 with Odd.Menus;       use Odd.Menus;
@@ -145,7 +145,7 @@ package body Odd.Process is
    -------------
 
    function Convert
-     (Text : access Gtkada.Code_Editors.Code_Editor_Record'Class)
+     (Text : access Odd.Code_Editors.Code_Editor_Record'Class)
      return Debugger_Process_Tab
    is
    begin

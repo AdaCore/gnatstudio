@@ -60,6 +60,9 @@ package Debugger.Gdb is
       First, Last : out Natural;
       Line        : out Natural);
 
+   function Source_Files_List (Debugger : access Gdb_Debugger)
+                              return Odd.Types.String_Array;
+
    function Type_Of
      (Debugger : access Gdb_Debugger;
       Entity   : String) return String;

@@ -27,7 +27,7 @@ with Gtk.Widget; use Gtk.Widget;
 with Odd_Intl; use Odd_Intl;
 with Odd.Process; use Odd.Process;
 with Debugger; use Debugger;
-with Gtkada.Code_Editors; use Gtkada.Code_Editors;
+with Odd.Code_Editors; use Odd.Code_Editors;
 with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
 with Process_Proxies; use Process_Proxies;
 

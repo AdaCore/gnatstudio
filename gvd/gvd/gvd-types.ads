@@ -26,7 +26,10 @@ package Odd.Types is
    type Chars_Ptr_Array_Access is access all Gtkada.Types.Chars_Ptr_Array;
 
    type String_Access is access all String;
-
    procedure Free is new Unchecked_Deallocation (String, String_Access);
+
+   type String_Array is array (Natural range <>) of String_Access;
+   procedure Free (Ar : in out String_Array);
+   --  Free all the strings in the array.
 
 end Odd.Types;

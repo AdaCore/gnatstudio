@@ -220,6 +220,18 @@ package body Debugger is
       Send (Debugger, Thread_Switch (Get_Language (Debugger), Thread));
    end Thread_Switch;
 
+   -----------------------
+   -- Source_Files_List --
+   -----------------------
+
+   function Source_Files_List (Debugger : access Debugger_Root)
+                              return Odd.Types.String_Array
+   is
+      A : Odd.Types.String_Array (1 .. 0);
+   begin
+      return A;
+   end Source_Files_List;
+
    ----------
    -- Send --
    ----------

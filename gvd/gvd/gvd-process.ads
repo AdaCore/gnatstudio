@@ -36,7 +36,7 @@ with Debugger; use Debugger;
 with Main_Debug_Window_Pkg;
 with Process_Tab_Pkg;
 with Generic_Values;
-with Gtkada.Code_Editors;
+with Odd.Code_Editors;
 with Odd.Histories;
 
 package Odd.Process is
@@ -165,7 +165,7 @@ package Odd.Process is
    --  If no such page is found, an exception Debugger_Not_Found is raised.
 
    function Convert
-     (Text : access Gtkada.Code_Editors.Code_Editor_Record'Class)
+     (Text : access Odd.Code_Editors.Code_Editor_Record'Class)
      return Debugger_Process_Tab;
    --  Conversion function, from the code editor to the process tab.
    --  Note that there is a single such editor per process, even if there are

@@ -31,7 +31,7 @@ with Gtk.Widget;          use Gtk.Widget;
 with Odd_Intl;            use Odd_Intl;
 with Display_Items;       use Display_Items;
 with Generic_Values;      use Generic_Values;
-with Gtkada.Code_Editors; use Gtkada.Code_Editors;
+with Odd.Code_Editors;    use Odd.Code_Editors;
 with Debugger;            use Debugger;
 with Odd.Process;         use Odd.Process;
 
@@ -75,7 +75,7 @@ package body Odd.Menus is
    package Check_Canvas_Handler is new Gtk.Handlers.User_Callback
      (Gtk_Check_Menu_Item_Record, Interactive_Canvas);
    package Check_Editor_Handler is new Gtk.Handlers.User_Callback
-     (Gtk_Check_Menu_Item_Record, Gtkada.Code_Editors.Code_Editor);
+     (Gtk_Check_Menu_Item_Record, Odd.Code_Editors.Code_Editor);
    package Widget_Breakpoint_Handler is new Gtk.Handlers.User_Callback
      (Gtk_Widget_Record, Breakpoint_Record);
    package Widget_Variable_Handler is new Gtk.Handlers.User_Callback
@@ -246,7 +246,7 @@ package body Odd.Menus is
    ----------------------------
 
    function Editor_Contextual_Menu
-     (Editor   : access Gtkada.Code_Editors.Code_Editor_Record'Class;
+     (Editor   : access Odd.Code_Editors.Code_Editor_Record'Class;
       Line     : Glib.Gint;
       Entity   : String)
      return Gtk.Menu.Gtk_Menu

@@ -29,7 +29,7 @@ with Gtk.Menu;
 with Gtkada.Canvas;
 with Glib;
 
-with Gtkada.Code_Editors;
+with Odd.Code_Editors;
 with Display_Items;
 with Generic_Values;
 with Odd.Process;
@@ -53,7 +53,7 @@ package Odd.Menus is
    --  on the title bar.
 
    function Editor_Contextual_Menu
-     (Editor   : access Gtkada.Code_Editors.Code_Editor_Record'Class;
+     (Editor   : access Odd.Code_Editors.Code_Editor_Record'Class;
       Line     : Glib.Gint;
       Entity   : String)
      return Gtk.Menu.Gtk_Menu;

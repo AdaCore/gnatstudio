@@ -793,4 +793,72 @@ package body Debugger.Gdb is
       end if;
    end Found_File_Name;
 
+   -----------------------
+   -- Source_Files_List --
+   -----------------------
+
+   function Source_Files_List (Debugger : access Gdb_Debugger)
+                              return Odd.Types.String_Array
+   is
+   begin
+      Send (Debugger, "info sources", Empty_Buffer => True);
+
+      declare
+         S : String := Expect_Out (Get_Process (Debugger));
+         Num_Files : Natural := 0;
+      begin
+         --  Count the number of files
+         for J in S'Range loop
+            if S (J) = ',' then
+               Num_Files := Num_Files + 1;
+            end if;
+         end loop;
+
+         --  Add two, since there are in fact two lists of files (already
+         --  read, and to be read), that do not end with ','
+
+         Num_Files := Num_Files + 2;
+
+         declare
+            Result : Odd.Types.String_Array (1 .. Num_Files);
+            Num    : Natural := 1;
+            Index  : Positive := S'First;
+            Start  : Positive;
+         begin
+            --  Parse first list (starts with ':')
+            Skip_To_Char (S, Index, ':');
+            Index := Index + 1;
+            Skip_Blanks (S, Index);
+
+            while Index <= S'Last loop
+               --  Parse each file
+               Start := Index;
+               while Index <= S'Last
+                 and then S (Index) /= ','
+                 and then S (Index) /= ' '
+                 and then S (Index) /= ASCII.LF
+               loop
+                  Index := Index + 1;
+               end loop;
+
+               if Index <= S'Last then
+                  Result (Num) := new String'(S (Start .. Index - 1));
+                  Num := Num + 1;
+
+                  --  End of list ?
+                  if S (Index) /= ',' then
+                     Skip_To_Char (S, Index, ':');
+                     Index := Index + 1;
+                  else
+                  Index := Index + 1;
+                  end if;
+
+                  Skip_Blanks (S, Index);
+               end if;
+            end loop;
+            return Result (1 .. Num - 1);
+         end;
+      end;
+   end Source_Files_List;
+
 end Debugger.Gdb;

@@ -173,6 +173,34 @@ package Debugger is
    --  again in the debugger window. This is used after internal commands like
    --  "graph print", to indicate that the command has finished executing.
 
+   function Type_Of
+     (Debugger : access Debugger_Root;
+      Entity   : String) return String is abstract;
+   --  Return the type of the entity.
+   --  An empty string is returned if the entity is not defined in the
+   --  current context.
+   --  GDB_COMMAND: "ptype"
+
+   type Value_Format is (Decimal, Binary, Hexadecimal, Octal);
+
+   function Value_Of
+     (Debugger : access Debugger_Root;
+      Entity   : String;
+      Format   : Value_Format := Decimal) return String is abstract;
+   --  Return the value of the entity.
+   --  GDB_COMMAND: "print"
+
+   procedure Set_Executable
+     (Debugger : access Debugger_Root; Executable : String) is abstract;
+   --  Load an executable into the debugger.
+   --  Note that this can have a different meaning with some languages like
+   --  Java, where Executable should be the name of the main class.
+   --  GDB_COMMAND: "file"
+
+   --------------------------
+   -- Sources manipulation --
+   --------------------------
+
    procedure Found_File_Name
      (Debugger    : access Debugger_Root;
       Str         : String;
@@ -198,29 +226,11 @@ package Debugger is
    --  However, since display a file requires multiple operations, it seemed
    --  better to do it in Odd.Process.Text_Output_Handler.
 
-   function Type_Of
-     (Debugger : access Debugger_Root;
-      Entity   : String) return String is abstract;
-   --  Return the type of the entity.
-   --  An empty string is returned if the entity is not defined in the
-   --  current context.
-   --  GDB_COMMAND: "ptype"
-
-   type Value_Format is (Decimal, Binary, Hexadecimal, Octal);
-
-   function Value_Of
-     (Debugger : access Debugger_Root;
-      Entity   : String;
-      Format   : Value_Format := Decimal) return String is abstract;
-   --  Return the value of the entity.
-   --  GDB_COMMAND: "print"
-
-   procedure Set_Executable
-     (Debugger : access Debugger_Root; Executable : String) is abstract;
-   --  Load an executable into the debugger.
-   --  Note that this can have a different meaning with some languages like
-   --  Java, where Executable should be the name of the main class.
-   --  GDB_COMMAND: "file"
+   function Source_Files_List (Debugger : access Debugger_Root)
+                              return Odd.Types.String_Array;
+   --  Return the list of source files for the curerently loaded executable.
+   --  If the debugger can not return a list of specific sources, it should
+   --  return an empty array.
 
    ------------------------
    -- Execution Commands --

@@ -131,8 +131,12 @@ package body Main_Debug_Window_Pkg.Callbacks is
    procedure On_Open_Source1_Activate
      (Object : access Gtk_Widget_Record'Class)
    is
+      Top  : Main_Debug_Window_Access := Main_Debug_Window_Access (Object);
+      Tab  : Debugger_Process_Tab := Process_User_Data.Get
+        (Get_Child (Get_Cur_Page (Top.Process_Notebook)));
+      List : Odd.Types.String_Array := Source_Files_List (Tab.Debugger);
    begin
-      null;
+      Odd.Types.Free (List);
    end On_Open_Source1_Activate;
 
    -------------------------------

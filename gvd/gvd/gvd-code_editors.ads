@@ -40,7 +40,7 @@ with Gtk.Text;
 with Gtkada.Types;
 with Language;
 
-package Gtkada.Code_Editors is
+package Odd.Code_Editors is
 
    type Code_Editor_Record is new Gtk.Box.Gtk_Box_Record with private;
    type Code_Editor is access all Code_Editor_Record'Class;
@@ -153,4 +153,4 @@ private
       --  on the side.
    end record;
 
-end Gtkada.Code_Editors;
+end Odd.Code_Editors;
