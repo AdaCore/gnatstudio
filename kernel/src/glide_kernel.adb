@@ -375,7 +375,6 @@ package body Glide_Kernel is
       MDI    : constant MDI_Window := Get_MDI (Handle);
       Iter   : Child_Iterator;
       Child  : MDI_Child;
-      Module : Module_ID;
       Save_Type : Save_Return_Value;
       F      : Boolean := Force;
 
@@ -394,9 +393,6 @@ package body Glide_Kernel is
       --  Browse through all MDI children.
 
       while Child /= null loop
-         --  Find the module associated to Child.
-         Module := Get_Module_From_Child (Handle, Child);
-
          Save_Type := Save_Child (Handle, Child, F);
 
          if Save_Type = Cancel then
