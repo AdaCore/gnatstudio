@@ -1455,6 +1455,24 @@ cross-reference information about the current file has been
 generated. If there is no relevant information, no tooltip is displayed.
 See @ref{Support for Cross-References} for more information.
 
+In addition, the documentation for the entity is displayed. This is the block
+of comments just before or just after the entity's declaration of body. There
+mustn't be any blank line between the two. For instance, the following are
+valid documentation for Ada and C:
+
+@smallexample
+--  A comment for A
+A : Integer;
+
+B : Integer;
+--  A comment for B
+
+C : Integer;
+
+--  Not a comment for C, there is a blank linke
+@end smallexample
+
+
 In debugging mode, the value of the variable under the mouse is displayed in
 the pop up window if the variable is known to the debugger.
 Otherwise, the normal mode information is displayed.
