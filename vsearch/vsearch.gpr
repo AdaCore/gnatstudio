@@ -2,7 +2,6 @@ with "../gtkada/gtkada";
 with "../gvd/gvd_common";
 with "../common/common";
 with "../kernel/kernel";
-with "../src_editor/src_editor";
 with "../shared";
 
 project Vsearch is
@@ -13,7 +12,6 @@ project Vsearch is
    package Compiler is
       for Default_Switches ("Ada") use ("-gnata", "-g", "-O2", "-gnaty", "-gnatwue");
       for Switches ("vsearch_pkg.adb") use ("-g", "-O2");
-      for Switches ("files_extra_info_pkg.adb") use ("-g", "-O2");
    end Compiler;
 
    package IDE renames Shared.IDE;
