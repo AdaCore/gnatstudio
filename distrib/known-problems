@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 2.2.0
 
+- E207-021 Can't load a project depending on predefined projects
+  Problem:    If your project depends on project files found in the predefined
+              project directory of GNAT (XML/Ada, AWS,...), GPS will not
+              properly find these dependency projects
+  Workaround: Add the directory containing these projects to your
+              ADA_PROJECT_PATH environment variable
+
 - E204-007 Wrong search results in comments
   Problem:    When searching for a string in comments only, or all but
               comments, GPS will sometimes report incorrect matches, or
