@@ -122,6 +122,9 @@ package body Src_Editor_Module is
    Recursive_Cst : aliased constant String := "recursive";
    Scope_Cst     : aliased constant String := "scope";
    Force_Cst     : aliased constant String := "force";
+   All_Cst       : aliased constant String := "all";
+   Interactive_Cst : aliased constant String := "interactive";
+   Current_Line_Only_Cst : aliased constant String := "current_line_only";
 
    Edit_Cmd_Parameters : constant Cst_Argument_List :=
      (1 => Filename_Cst'Access,
@@ -139,6 +142,11 @@ package body Src_Editor_Module is
       2 => Case_Cst'Access,
       3 => Regexp_Cst'Access,
       4 => Scope_Cst'Access);
+   Save_Cmd_Parameters : constant Cst_Argument_List :=
+     (1 => Interactive_Cst'Access,
+      2 => All_Cst'Access);
+   Indent_Cmd_Parameters : constant Cst_Argument_List :=
+     (1 => Current_Line_Only_Cst'Access);
    Project_Search_Parameters : constant Cst_Argument_List :=
      File_Search_Parameters & (5 => Recursive_Cst'Access);
 
@@ -742,6 +750,24 @@ package body Src_Editor_Module is
             end if;
          end;
 
+      elsif Command = "indent" then
+         Name_Parameters (Data, Indent_Cmd_Parameters);
+         declare
+            Current_Line_Only : constant Boolean := Nth_Arg (Data, 1, False);
+            Child : constant MDI_Child := Find_Current_Editor (Kernel);
+            Box   : Source_Box;
+         begin
+            if Child /= null then
+               Box := Source_Box (Get_Widget (Child));
+
+               if not Do_Indentation
+                 (Get_Buffer (Box.Editor), Current_Line_Only)
+               then
+                  Set_Error_Msg (Data, -"Could not reindent selection");
+               end if;
+            end if;
+         end;
+
       elsif Command = "close"
         or else Command = "undo"
         or else Command = "redo"
@@ -889,17 +915,13 @@ package body Src_Editor_Module is
             Text   : constant String  := Nth_Arg (Data, 4);
             Before : constant Integer := Nth_Arg (Data, 5, Default => -1);
             After  : constant Integer := Nth_Arg (Data, 6, Default => -1);
-            Child  : MDI_Child;
-            Editor : Source_Editor_Box;
+            Editor : constant Source_Box := Open_File
+              (Kernel, Create (File, Kernel), Create_New => False);
          begin
-            Child := Find_Editor (Kernel, Create (File, Kernel));
-
-            if Child /= null then
-               Editor := Source_Box (Get_Widget (Child)).Editor;
-
-               if Get_Writable (Editor) then
+            if Editor /= null then
+               if Get_Writable (Editor.Editor) then
                   Replace_Slice
-                    (Get_Buffer (Editor),
+                    (Get_Buffer (Editor.Editor),
                      Text,
                      Editable_Line_Type (Line), Natural (Column),
                      Before, After);
@@ -1148,6 +1170,7 @@ package body Src_Editor_Module is
          end;
 
       elsif Command = "save" then
+         Name_Parameters (Data, Save_Cmd_Parameters);
          declare
             Interactive : constant Boolean :=
               Nth_Arg (Data, 1, Default => True);
@@ -3780,6 +3803,18 @@ package body Src_Editor_Module is
 
       Register_Command
         (Kernel,
+         Command      => "indent",
+         Params       => Parameter_Names_To_Usage (Indent_Cmd_Parameters, 1),
+         Description  =>
+         -("Indent the selection (or the current line only if required) in"
+           & " current editor. This command has no effect if the current GPS"
+           & " window is not an editor."),
+         Minimum_Args => Indent_Cmd_Parameters'Length - 1,
+         Maximum_Args => Indent_Cmd_Parameters'Length,
+         Handler      => Edit_Command_Handler'Access);
+
+      Register_Command
+        (Kernel,
          Command      => "undo",
          Params       => "(file)",
          Description  => -"Undo the last edition command for file.",
@@ -3813,7 +3848,7 @@ package body Src_Editor_Module is
            & " If interactive is true, then prompt before each save."
            & " If all is true, then all files are saved"),
          Minimum_Args => 0,
-         Maximum_Args => 2,
+         Maximum_Args => Save_Cmd_Parameters'Length,
          Handler      => Edit_Command_Handler'Access);
 
       Register_Command
