@@ -1033,7 +1033,9 @@ package body GVD.Text_Box.Source_Editor.Builtin is
       Editor.Breakpoint_Buttons := Null_List;
 
       --  Print a warning message
-      Insert (Edit, Chars => File_Name & (-": File not found"));
+      if File_Name /= "" then
+         Insert (Edit, Chars => File_Name & (-": File not found"));
+      end if;
    end File_Not_Found;
 
    --------------------
@@ -1225,13 +1227,13 @@ package body GVD.Text_Box.Source_Editor.Builtin is
      (Widget : access Gtk_Widget_Record'Class;
       Br     : Contextual_Data_Record)
    is
-      Top  : Main_Debug_Window_Access
-        := Br.Process.Window;
-      View : GVD_Memory_View := Top.Memory_View;
+      Top  : constant Main_Debug_Window_Access := Br.Process.Window;
+      View : constant GVD_Memory_View := Top.Memory_View;
    begin
       if not Visible_Is_Set (View) then
          Show_All (View);
       end if;
+
       Display_Memory (View, Br.Name);
       Gdk_Raise (Get_Window (View));
    end View_Into_Memory;
@@ -1254,17 +1256,20 @@ package body GVD.Text_Box.Source_Editor.Builtin is
    procedure Show_Current_Line_Menu
      (Box : access Gtk_Widget_Record'Class)
    is
-      Editor : constant Builtin := Builtin_Text_Box (Box).Editor;
-      Process : Debugger_Process_Tab := Debugger_Process_Tab (Editor.Process);
-      Name   : constant String := Editor.Debugger_Current_File.all;
-      Lang   : Language_Access;
+      Editor  : constant Builtin := Builtin_Text_Box (Box).Editor;
+      Process : constant Debugger_Process_Tab :=
+        Debugger_Process_Tab (Editor.Process);
+      Name    : constant String := Editor.Debugger_Current_File.all;
+      Lang    : Language_Access;
 
    begin
       if Name /= "" then
          Lang := Get_Language_From_File (Name);
          Set_Current_Language (Process.Editor_Text, Lang);
+
          --  Refresh the code editor itself, so that both the source window
          --  and the explorer are correctly updated.
+
          Load_File
            (Process.Editor_Text,
             Find_File (Process.Debugger, Name),
@@ -1420,6 +1425,7 @@ package body GVD.Text_Box.Source_Editor.Builtin is
       Entity        : Items.Generic_Type_Access;
       Value_Found   : Boolean;
       Value         : GVD.Types.String_Access;
+      Variable_Name : GVD.Types.String_Access;
 
       Debugger : constant Debugger_Process_Tab :=
         Debugger_Process_Tab (Data.Box.Process);
@@ -1452,79 +1458,73 @@ package body GVD.Text_Box.Source_Editor.Builtin is
       --  small offset.
 
       Get_Pointer (Get_Text_Area (Get_Child (Edit)), X, Y, Mask2, Win);
+      Get_Entity_Area (Edit, X, Y, Area, Variable_Name);
 
-      declare
-         Variable_Name : GVD.Types.String_Access;
-      begin
-         Get_Entity_Area (Edit, X, Y, Area, Variable_Name);
+      if Variable_Name = null then
+         return;
+      end if;
 
-         if Variable_Name = null then
+      if Get_Pref (Tooltips_In_Source) = Full then
+         Entity := Parse_Type (Debugger.Debugger, Variable_Name.all);
+
+         if Entity = null then
+            return;
+         else
+            Parse_Value
+              (Debugger.Debugger, Variable_Name.all, Entity, Value_Found);
+         end if;
+
+         if Value_Found then
+            Set_Valid (Entity);
+            Size_Request
+              (Entity.all,
+               Create_Tooltip_Drawing_Context
+               (Debugger.Data_Canvas, Pixmap));
+
+            Width := Gint'Min (Max_Tooltip_Width, Get_Width (Entity.all) + 4);
+            Height := Gint'Min
+              (Max_Tooltip_Height, Get_Height (Entity.all) + 4);
+
+            Propagate_Width (Entity.all, Width - 4);
+         end if;
+
+      else
+         if Can_Tooltip_On_Entity
+           (Get_Language (Debugger.Debugger), Variable_Name.all)
+         then
+            Value :=
+              new String'(Value_Of (Debugger.Debugger, Variable_Name.all));
+
+            if Value.all = "" then
+               Free (Value);
+               return;
+            end if;
+         else
             return;
          end if;
 
-         if Get_Pref (Tooltips_In_Source) = Full then
-            Entity := Parse_Type (Debugger.Debugger, Variable_Name.all);
+         Context := Create_Tooltip_Drawing_Context
+           (Debugger.Data_Canvas, Null_Pixmap);
+         Chars_Per_Line :=
+           Max_Tooltip_Width / Char_Width (Context.Font, Character'('m'));
 
-            if Entity = null then
-               return;
-            else
-               Parse_Value
-                 (Debugger.Debugger, Variable_Name.all, Entity, Value_Found);
-            end if;
+         Height := Get_Ascent (Context.Font) + Get_Descent (Context.Font);
 
-            if Value_Found then
-               Set_Valid (Entity);
-               Size_Request
-                 (Entity.all,
-                  Create_Tooltip_Drawing_Context
-                  (Debugger.Data_Canvas, Pixmap));
-
-               Width := Gint'Min
-                 (Max_Tooltip_Width, Get_Width (Entity.all) + 4);
-               Height := Gint'Min
-                 (Max_Tooltip_Height, Get_Height (Entity.all) + 4);
-
-               Propagate_Width (Entity.all, Width - 4);
-            end if;
-
+         if Value'Length > Chars_Per_Line then
+            Width := Gint'Min
+              (Max_Tooltip_Width,
+               Chars_Per_Line * Char_Width (Context.Font, Character'('m'))
+               + 4);
+            Height := Gint'Min
+              (Max_Tooltip_Height,
+               (1 + Value'Length / Chars_Per_Line) * Height + 2);
          else
-            if Can_Tooltip_On_Entity
-              (Get_Language (Debugger.Debugger), Variable_Name.all)
-            then
-               Value :=
-                 new String'(Value_Of (Debugger.Debugger, Variable_Name.all));
-
-               if Value.all = "" then
-                  Free (Value);
-                  return;
-               end if;
-            else
-               return;
-            end if;
-
-            Context := Create_Tooltip_Drawing_Context
-              (Debugger.Data_Canvas, Null_Pixmap);
-            Chars_Per_Line :=
-              Max_Tooltip_Width / Char_Width (Context.Font, Character'('m'));
-
-            Height := Get_Ascent (Context.Font) + Get_Descent (Context.Font);
-
-            if Value'Length > Chars_Per_Line then
-               Width := Gint'Min
-                 (Max_Tooltip_Width,
-                  Chars_Per_Line * Char_Width (Context.Font, Character'('m'))
-                  + 4);
-               Height := Gint'Min
-                 (Max_Tooltip_Height,
-                  (1 + Value'Length / Chars_Per_Line) * Height + 2);
-            else
-               Width := Gint'Min
-                 (Max_Tooltip_Width, Text_Width (Context.Font, Value.all) + 4);
-            end if;
+            Width := Gint'Min
+              (Max_Tooltip_Width, Text_Width (Context.Font, Value.all) + 4);
          end if;
+      end if;
 
-         Free (Variable_Name);
-      end;
+      Free (Variable_Name);
 
       if Width /= 0 and then Height /= 0 then
          Gdk.Pixmap.Gdk_New
@@ -1545,8 +1545,8 @@ package body GVD.Text_Box.Source_Editor.Builtin is
             Items.Paint (Entity.all, Context, X => 2, Y => 2);
          else
             Index := Value'First;
-            Line := 0;
-            W := 0;
+            Line  := 0;
+            W     := 0;
 
             while Index <= Value'Last loop
                Max := Index + Natural (Chars_Per_Line) - 1;
@@ -1591,16 +1591,16 @@ package body GVD.Text_Box.Source_Editor.Builtin is
    ----------------------------
 
    procedure Highlight_Current_Line (Editor : access Builtin_Record) is
-      Edit         : constant Builtin_Text_Box :=
+      Edit           : constant Builtin_Text_Box :=
         Builtin_Text_Box (Editor.Widget);
-      Buffer       : constant GVD.Types.String_Access := Get_Buffer (Edit);
-      Index        : Natural := 0;
-      Current_Line : Natural := 1;
-      Col          : Natural := 1;
-      Text_Pos     : Natural;
-      Text_Pos_End : Natural;
-      Line         : constant Natural := Get_Line (Editor);
-      Tab_Size     : constant Integer := Integer (Get_Tab_Size);
+      Buffer         : constant GVD.Types.String_Access := Get_Buffer (Edit);
+      Index          : Natural := 0;
+      Current_Line   : Natural := 1;
+      Col            : Natural := 1;
+      Text_Pos       : Natural;
+      Text_Pos_End   : Natural;
+      Line           : constant Natural := Get_Line (Editor);
+      Tab_Size       : constant Integer := Integer (Get_Tab_Size);
       Show_Line_Nums : constant Boolean := Editor.Show_Line_Nums;
 
    begin
@@ -1649,6 +1649,7 @@ package body GVD.Text_Box.Source_Editor.Builtin is
          --  Change the highlighted range. Since this will redraw the line
          --  currently highlighted, and that it already has the line
          --  numbers, we temporarily disable that.
+
          Editor.Show_Line_Nums := False;
          Highlight_Range
            (Edit, Gint (Text_Pos), Gint (Text_Pos_End), Gint (Index),
@@ -1666,8 +1667,7 @@ package body GVD.Text_Box.Source_Editor.Builtin is
         Builtin_Text_Box (Editor.Widget);
 
       --  Save the currently displayed line
-      Value     : constant Gfloat :=
-        Get_Value (Get_Vadj (Get_Child (Edit)));
+      Value     : constant Gfloat := Get_Value (Get_Vadj (Get_Child (Edit)));
       File_Name : constant String := Get_Current_File (Editor);
 
    begin
@@ -1679,9 +1679,10 @@ package body GVD.Text_Box.Source_Editor.Builtin is
 
       --  Pretend we have changed the contents of the buffer. This removes
       --  all highlighting of the current line, and reset any marker we
-      --  might have
-      Clear_Cache (Debugger_Process_Tab (Editor.Process).Window,
-                   Force => False);
+      --  might have.
+
+      Clear_Cache
+        (Debugger_Process_Tab (Editor.Process).Window, Force => False);
       Load_File (Editor, File_Name, False, Force => True);
       Set_Value (Get_Vadj (Get_Child (Edit)), Value);
 
@@ -1702,7 +1703,7 @@ package body GVD.Text_Box.Source_Editor.Builtin is
       Set_Show_Lines_With_Code (Editor, Get_Pref (Editor_Show_Line_With_Code));
 
       --  Note: We don't need to do anything for the tooltips preference, since
-      --  this is check dynamically before displaying the tooltips.
+      --  this is checked dynamically before displaying the tooltips.
    end Preferences_Changed;
 
    --------------
