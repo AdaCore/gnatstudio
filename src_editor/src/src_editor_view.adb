@@ -365,9 +365,18 @@ package body Src_Editor_View is
      (View : access Source_View_Record'Class)
    is
       Insert_Iter : Gtk_Text_Iter;
+      Cursor_Iter : Gtk_Text_Iter;
       Buffer : constant Source_Buffer := Source_Buffer (Get_Buffer (View));
    begin
       Get_Iter_At_Mark (Buffer, Insert_Iter, View.Saved_Cursor_Mark);
+
+      --  If the cursor has not moved, do not do anything.
+
+      Get_Iter_At_Mark (Buffer, Cursor_Iter, Get_Insert (Buffer));
+
+      if Equal (Cursor_Iter, Insert_Iter) then
+         return;
+      end if;
 
       --  ??? Do we want to save/restore the selection bound as well ?
       Place_Cursor (Buffer, Insert_Iter);
@@ -658,7 +667,11 @@ package body Src_Editor_View is
    is
       Line : constant Gint := Get_Int (Nth (Params, 1));
    begin
-      if User.Has_Focus then
+      if User.Child = null then
+         return;
+      end if;
+
+      if User.Child = Get_Focus_Child (Get_MDI (User.Kernel)) then
          Save_Cursor_Position (User);
          Scroll_To_Cursor_Location (User);
       end if;
@@ -1586,19 +1599,14 @@ package body Src_Editor_View is
 
    procedure Scroll_To_Cursor_Location
      (View   : access Source_View_Record;
-      Center : Boolean := False)
-   is
-      Insert_Mark : constant Gtk_Text_Mark := Get_Insert (Get_Buffer (View));
+      Center : Boolean := False) is
    begin
-      --  Save the cursor location.
-      Save_Cursor_Position (View);
-
       --  We want to use the alignments, so that the line appears in the middle
       --  of the screen if possible. This provides a more user-friendly
       --  behavior.
 
       Scroll_To_Mark
-        (View, Insert_Mark, Use_Align => Center,
+        (View, View.Saved_Cursor_Mark, Use_Align => Center,
          Within_Margin => 0.0, Xalign => 0.5, Yalign => 0.5);
    end Scroll_To_Cursor_Location;
 
@@ -2288,5 +2296,16 @@ package body Src_Editor_View is
 
       Src_View.Scrolling := False;
    end On_Scroll;
+
+   ---------------
+   -- Set_Child --
+   ---------------
+
+   procedure Set_Child
+     (View  : access Source_View_Record;
+      Child : MDI_Child) is
+   begin
+      View.Child := Child;
+   end Set_Child;
 
 end Src_Editor_View;
