@@ -34,7 +34,6 @@ with Gtkada.Handlers;       use Gtkada.Handlers;
 with Glide_Intl;            use Glide_Intl;
 with Glide_Kernel;          use Glide_Kernel;
 with Glide_Kernel.Project;  use Glide_Kernel.Project;
-with Glide_Kernel.Help;
 
 with Find_Utils;            use Find_Utils;
 with Prj_API;               use Prj_API;
@@ -96,7 +95,7 @@ package body Vsearch_Ext is
       Highlight      : Gdk_Color;
       Sources        : String_Array_Access;
       Scope          : Search_Scope;
-      Found          : Boolean;
+      --  Found          : Boolean;
 
       procedure Reset_Search;
       --  Call it before every search using this callback.
@@ -212,23 +211,25 @@ package body Vsearch_Ext is
          Free (S);
          Basic_Types.Free (Sources);
 
-      else
-         --  Search only once
+         --  ??? Modules should be able to register entries in search, to keep
+         --  ??? this internal to the module
 
-         case Vsearch.Context is
-            when Context_Help =>
-               Found := Help.Search
-                 (Kernel         => Vsearch.Kernel,
-                  Text           => Get_Text (Vsearch.Pattern_Entry),
-                  Case_Sensitive => Get_Active (Vsearch.Case_Check),
-                  Forward        => True,
-                  Regular        => Get_Active (Vsearch.Regexp_Check));
-               Set_Busy (Vsearch.Kernel, False);
-               return;
+      --  else
+      --     --  Search only once
 
-            when others =>
-               null;
-         end case;
+      --     case Vsearch.Context is
+      --        when Context_Help =>
+      --           Found := Help.Search
+      --             (Kernel         => Vsearch.Kernel,
+      --              Text           => Get_Text (Vsearch.Pattern_Entry),
+      --              Case_Sensitive => Get_Active (Vsearch.Case_Check),
+      --              Forward        => True,
+      --              Regular        => Get_Active (Vsearch.Regexp_Check));
+      --           return;
+
+      --        when others =>
+      --           null;
+      --     end case;
       end if;
 
       Set_Busy (Vsearch.Kernel, False);
@@ -258,19 +259,20 @@ package body Vsearch_Ext is
 
    procedure On_Search_Previous (Object : access Gtk_Widget_Record'Class) is
       Vsearch : constant Vsearch_Extended := Vsearch_Extended (Object);
-      Found   : Boolean;
+      --  Found   : Boolean;
 
    begin
       Set_Busy (Vsearch.Kernel, True);
+      --  ??? Should be registered in the module
 
-      case Vsearch.Context is
-         when Context_Help =>
-            Found := Help.Search_Next (Vsearch.Kernel);
-            return;
+      --  case Vsearch.Context is
+      --     when Context_Help =>
+      --        Found := Help.Search_Next (Vsearch.Kernel);
+      --        return;
 
-         when others =>
-            null;
-      end case;
+      --     when others =>
+      --        null;
+      --  end case;
 
       Set_Busy (Vsearch.Kernel, True);
    end On_Search_Previous;
