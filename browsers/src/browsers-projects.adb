@@ -352,16 +352,18 @@ package body Browsers.Projects is
    ---------------------
 
    procedure Resize_And_Draw
-     (Item                        : access Browser_Project_Vertex;
-      Width, Height               : Glib.Gint;
-      Width_Offset, Height_Offset : Glib.Gint;
-      Xoffset, Yoffset            : in out Glib.Gint;
+     (Item             : access Browser_Project_Vertex;
+      Width, Height    : Glib.Gint;
+      Width_Offset     : Glib.Gint;
+      Height_Offset    : Glib.Gint;
+      Xoffset, Yoffset : in out Glib.Gint;
       Layout           : access Pango.Layout.Pango_Layout_Record'Class)
    is
       --  Project : constant Project_Id :=
       --        Get_Project_View_From_Name (Item.Name);
       W, H    : Gint;
    begin
+      --  ??? Why is this code commented out
       --  Set_text (Layout, Project_Path (Project));
       --  Get_Pixel_Size (Layout, W, H);
 
