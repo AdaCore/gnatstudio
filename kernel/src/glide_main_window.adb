@@ -177,7 +177,10 @@ package body Glide_Main_Window is
       Window : constant Glide_Window :=
         Glide_Window (Get_Main_Window (Kernel));
    begin
-      if Advance (Window.Animation_Iter) then
+      if not Get_Pref (Kernel, Show_Toolbar) then
+         return False;
+
+      elsif Advance (Window.Animation_Iter) then
          Set (Window.Animation_Image, Get_Pixbuf (Window.Animation_Iter));
       end if;
 
@@ -268,6 +271,12 @@ package body Glide_Main_Window is
          Integer'Image
            (Boolean'Pos
               (Get_Pref (Kernel, Can_Change_Accels))));
+
+      if Get_Pref (Kernel, Show_Toolbar) then
+         Show_All (Glide_Window (Get_Main_Window (Kernel)).Toolbar_Box);
+      else
+         Hide_All (Glide_Window (Get_Main_Window (Kernel)).Toolbar_Box);
+      end if;
 
       if Get_Pref (Kernel, Toolbar_Show_Text) then
          Set_Style (Get_Toolbar (Kernel), Toolbar_Both);
