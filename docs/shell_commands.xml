@@ -1241,10 +1241,14 @@ If the line and column are not specified, then the current selection is returned
              real_name="GPS.VCS.status_parse">
       <param name="vcs_identifier">A string</param>
       <param name="string">A string</param>
-      <param name="clear_logs">A string</param>
-      <param name="local">A string</param>
+      <param name="clear_logs">A boolean</param>
+      <param name="local">A boolean</param>
       <param name="dir" default="">A string</param>
-      <description>Parses string for vcs status. See the GPS documentation for detailed usage description</description>
+      <description>Parses a string for VCS status. This command uses the parsers defined in the XML description node for the VCS corresponding to vcs_identifier.
+   - When local is FALSE, the parser defined by the node status_parser is used.
+   - When local is TRUE, the parser defined by the node local_status_parser is used.
+ If clear_logs is TRUE, the revision logs editors are closed for files that have the VCS status "up-to-date".
+ Parameter dir indicates the directory in which the files matched in string are located.</description>
   </shell_doc>
 
   <shell_doc name="GPS.annotation_parse"
@@ -1252,7 +1256,7 @@ If the line and column are not specified, then the current selection is returned
       <param name="vcs_identifier">A string</param>
       <param name="file">A string</param>
       <param name="string">A string</param>
-      <description>Parses string for vcs annotations. See the GPS documentation for detailed usage description</description>
+      <description>Parses string to find vcs annotations in file. This command uses the parser in the XML description node for the VCS corresponding to vcs_identifier.</description>
   </shell_doc>
 
 
@@ -1527,9 +1531,9 @@ Access the various suggested fixes through the methods of the Codefix class</des
          print "a"      ##  Prints in "New Window"
 
          my_out.write ("b")   ##  Also prints in "New Window"
- 
+
          my_out.set_console ()
-         print "c"      ##  Prints in python console       
+         print "c"      ##  Prints in python console
       </example>
       <see_also name="GPS.Console.__init__()" />
   </shell_doc>
@@ -1608,7 +1612,7 @@ Access the various suggested fixes through the methods of the Codefix class</des
    - $1 = The instance of GPS.ToolbarEntry (self)
    - $2 = The newly selected text (a string) </description>
   </shell_doc>
- 
+
   <!--#################################################################
     ####   ToolbarEntry class
     ###################################################################-->
