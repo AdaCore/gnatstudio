@@ -772,7 +772,9 @@ package body Ada_Analyzer is
             Constructs.Current.Sloc_Start     := Value.Sloc;
             Constructs.Current.Sloc_End       := (Line_Count, Column, Prec);
             Constructs.Current.Is_Declaration :=
-              Subprogram_Decl or else Value.Type_Declaration;
+              Subprogram_Decl
+                or else Value.Type_Declaration
+                or else Value.Package_Declaration;
          end if;
       end Pop;
 
@@ -813,6 +815,10 @@ package body Ada_Analyzer is
 
          if Reserved = Tok_Body then
             Subprogram_Decl := False;
+
+            if Top_Token.Token = Tok_Package then
+               Top_Token.Package_Declaration := False;
+            end if;
 
          elsif Reserved = Tok_Tagged then
             if Top_Token.Token = Tok_Type then
@@ -879,7 +885,9 @@ package body Ada_Analyzer is
            or else Reserved = Tok_Protected
            or else Reserved = Tok_Entry
          then
-            if Reserved /= Tok_Package then
+            if Reserved = Tok_Package then
+               Temp.Package_Declaration := True;
+            else
                Subprogram_Decl := True;
                Num_Parens      := 0;
             end if;
@@ -915,6 +923,7 @@ package body Ada_Analyzer is
                end if;
 
                In_Generic := False;
+
                Push (Tokens, Temp);
             end if;
 
@@ -1783,7 +1792,11 @@ package body Ada_Analyzer is
                Top_Token.Sloc_Name.Index  := Prec;
             end if;
 
-            if Top_Token.Declaration and then Prev_Token /= Tok_End then
+            if Top_Token.Declaration
+              and then Prev_Token /= Tok_Pragma
+              and then Prev_Token /= Tok_End
+              and then Num_Parens = 0
+            then
                --  This is a variable declaration
 
                declare
