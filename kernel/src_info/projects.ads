@@ -367,7 +367,8 @@ package Projects is
    function Start
      (Root_Project : Project_Type;
       Recursive    : Boolean := True;
-      Direct_Only  : Boolean := False)
+      Direct_Only  : Boolean := False;
+      Include_Extended : Boolean := True)
       return Imported_Project_Iterator;
    --  Initialize the iterator to start at Root_Project.
    --  It will process Root_Project and all its subprojects, recursively, but
@@ -380,7 +381,8 @@ package Projects is
    --  Root_Project. This is provided only to simplify the caller's code
    --
    --  In all cases, Root_Project itself is returned first by the iterator. The
-   --  project extended by Root_Project, if any, is also returned.
+   --  project extended by Root_Project, if any, is also returned if
+   --  Include_Extended is true or if Direct_Only is False.
    --
    --  If Direct_Only is True and Recursive is True, then only the projects
    --  that are imported directly by Root_Project are returned.
@@ -602,6 +604,9 @@ private
       Importing : Boolean := False;
       --  True if we are looking for importing projects instead of imported
       --  projects.
+
+      Include_Extended : Boolean := True;
+      --  True if we should also return extended projects
 
       Direct_Only : Boolean := False;
       --  Relevant only when listing projects importing Root
