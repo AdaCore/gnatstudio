@@ -166,7 +166,7 @@ package body Project_Explorers is
             --  tables. We should keep a Name_Id instead.
 
          when File_Node =>
-            File : String_Id;
+            null;
 
          when Category_Node =>
             Category : Language_Category;
@@ -231,6 +231,7 @@ package body Project_Explorers is
       Parent_Node      : Gtk_Ctree_Node := null;
       Current_Dir      : String;
       Directory_String : String_Id;
+      Files_In_Project : String_Array_Access;
       Object_Directory : Boolean := False) return Gtk_Ctree_Node;
    --  Add a new directory node in the tree, for Directory.
    --  Current_Dir is used to resolve Directory to an absolute directory if
@@ -239,7 +240,7 @@ package body Project_Explorers is
 
    function Add_File_Node
      (Explorer    : access Project_Explorer_Record'Class;
-      File        : String_Id;
+      File        : String;
       Parent_Node : Gtk_Ctree_Node) return Gtk_Ctree_Node;
    --  Add a new file node in the tree, for File
 
@@ -369,11 +370,14 @@ package body Project_Explorers is
    --------------------
 
    procedure Update_Project_Node
-     (Explorer : access Project_Explorer_Record'Class; Node : Gtk_Ctree_Node);
+     (Explorer : access Project_Explorer_Record'Class;
+      Files : String_Array_Access;
+      Node : Gtk_Ctree_Node);
    --  Recompute the directories for the project.
 
    procedure Update_Directory_Node
      (Explorer : access Project_Explorer_Record'Class;
+      Files_In_Project : String_Array_Access;
       Node     : Gtk_Ctree_Node;
       Data     : User_Data);
    --  Recompute the files for the directory. This procedure tries to keep the
@@ -399,11 +403,12 @@ package body Project_Explorers is
    --  be computed on demand when the user expands Node.
 
    function Get_File_From_Node
-     (Explorer : access Project_Explorer_Record'Class; Node : Gtk_Ctree_Node)
-      return String;
+     (Explorer  : access Project_Explorer_Record'Class;
+      Node      : Gtk_Ctree_Node;
+      Full_Path : Boolean := False) return String;
    --  Return the name of the file containing Node (or, in case Node is an
    --  Entity_Node, the name of the file that contains the entity).
-   --  The full name, including directory, is returned.
+   --  The full name, including directory, is returned if Full_Path is True.
 
    function Get_Directory_From_Node
      (Explorer : access Project_Explorer_Record'Class; Node : Gtk_Ctree_Node)
@@ -420,19 +425,16 @@ package body Project_Explorers is
    --  Return the node that contains the selected directory (or, if the user
    --  selected a project directly, it returns the node of that project itself)
 
-   function Get_File_From_Node
-     (Explorer : access Project_Explorer_Record'Class; Node : Gtk_Ctree_Node)
-      return String_Id;
-   --  Return the file associated with Node (ie the file that contains the
-   --  entity for an Entity_Node), or file itself for a File_Node.
-   --  No_String is returned for a Directory_Node or Project_Node
-
    procedure Update_Node
-     (Explorer : access Project_Explorer_Record'Class; Node : Gtk_Ctree_Node);
+     (Explorer         : access Project_Explorer_Record'Class;
+      Node             : Gtk_Ctree_Node;
+      Files_In_Project : String_Array_Access);
    --  Refresh the contents of the Node after the Project_View has
    --  changed. This means that possibly the list of directories has
    --  changed. However, the hierarchy of projects can not change, nor the list
-   --  of modified projects
+   --  of modified projects.
+   --  Files_In_Project should contain the list of sources in the project to
+   --  which Node belongs. If it is null, it will be computed automatically.
 
    procedure Select_Directory
      (Explorer     : access Project_Explorer_Record'Class;
@@ -441,9 +443,9 @@ package body Project_Explorers is
    --  Select a specific project, and (if not "") a specific directory
    --  in that project
 
-   function Has_Entries (Project : Project_Id; Directory : String)
-      return Boolean;
-   --  Return True if Directory contains any file in the project.
+   function Has_Entries
+     (Directory : String; Files : String_Array_Access) return Boolean;
+   --  Return True if Directory contains any file among Files.
 
    procedure Refresh
      (Kernel : access GObject_Record'Class; Explorer : GObject);
@@ -1231,7 +1233,9 @@ package body Project_Explorers is
          Button_Press_Release'Access, Explorer);
 
       --  Update the tree with the current project
+      Trace (Me, "MANU: Start of refresh");
       Refresh (Kernel, GObject (Explorer));
+      Trace (Me, "MANU: End of refresh");
 
       Widget_Callback.Object_Connect
         (Get_MDI (Kernel), "child_selected",
@@ -1375,7 +1379,7 @@ package body Project_Explorers is
                   Set_File_Information
                     (Context   => File_Selection_Context_Access (Context),
                      Directory    => Get_Directory_From_Node (T, Node),
-                     File_Name    => Base_Name (Get_File_From_Node (T, Node)));
+                     File_Name    => Get_File_From_Node (T, Node));
                   Set_Entity_Information
                     (Context     => Entity_Selection_Context_Access (Context),
                      Entity_Name => Data.Entity_Name,
@@ -1392,7 +1396,7 @@ package body Project_Explorers is
                   Set_File_Information
                     (Context   => File_Selection_Context_Access (Context),
                      Directory    => Get_Directory_From_Node (T, Node),
-                     File_Name    => Base_Name (Get_File_From_Node (T, Node)),
+                     File_Name    => Get_File_From_Node (T, Node),
                      Project_View => Get_Project_From_Node (T, Node),
                      Importing_Project => Importing_Project);
                end if;
@@ -1629,7 +1633,7 @@ package body Project_Explorers is
       Set_File_Information
         (Context,
          Directory    => Get_Directory_From_Node (T, Node),
-         File_Name    => Base_Name (Get_File_From_Node (T, Node)),
+         File_Name    => Get_File_From_Node (T, Node),
          Project_View => Get_Project_From_Node (T, Node));
       Context_Changed (T.Kernel, Selection_Context_Access (Context));
       Free (Selection_Context_Access (Context));
@@ -1764,29 +1768,23 @@ package body Project_Explorers is
    -- Has_Entries --
    -----------------
 
-   function Has_Entries (Project : Project_Id; Directory : String)
-      return Boolean
+   function Has_Entries
+     (Directory : String; Files : String_Array_Access) return Boolean
    is
       Dir   : constant String := Name_As_Directory (Directory);
-      Files : Basic_Types.String_Array_Access;
       First : Integer;
    begin
-      --  We check in the project itself whether there are some files in the
-      --  directory.
-      Files := Get_Source_Files
-        (Project, Recursive => False, Full_Path => True);
+      if Files /= null then
+         --  We check in the project itself whether there are some files in the
+         --  directory.
+         for F in Files'Range loop
+            First := Files (F)'First;
+            if Dir_Name (Files (F).all) = Dir then
+               return True;
+            end if;
+         end loop;
+      end if;
 
-      for F in Files'Range loop
-         First := Files (F)'First;
-         if Files (F)'Length > Dir'Length
-           and then Files (F)(First .. First + Dir'Length - 1) = Dir
-         then
-            Free (Files);
-            return True;
-         end if;
-      end loop;
-
-      Free (Files);
       return False;
    end Has_Entries;
 
@@ -1800,6 +1798,7 @@ package body Project_Explorers is
       Parent_Node      : Gtk_Ctree_Node := null;
       Current_Dir      : String;
       Directory_String : String_Id;
+      Files_In_Project : String_Array_Access;
       Object_Directory : Boolean := False) return Gtk_Ctree_Node
    is
       N         : Gtk_Ctree_Node;
@@ -1827,8 +1826,7 @@ package body Project_Explorers is
       end if;
 
       Is_Leaf := Node_Type = Obj_Directory_Node
-        or else not Has_Entries
-        (Get_Project_From_Node (Explorer, Parent_Node), Node_Text.all);
+        or else not Has_Entries (Node_Text.all, Files_In_Project);
 
       Text := Create_Line_Text (Node_Text.all);
       N := Insert_Node
@@ -1875,7 +1873,7 @@ package body Project_Explorers is
 
    function Add_File_Node
      (Explorer    : access Project_Explorer_Record'Class;
-      File        : String_Id;
+      File        : String;
       Parent_Node : Gtk_Ctree_Node) return Gtk_Ctree_Node
    is
       N       : Gtk_Ctree_Node;
@@ -1883,9 +1881,7 @@ package body Project_Explorers is
       Text    : Tree_Chars_Ptr_Array;
 
    begin
-      String_To_Name_Buffer (File);
-
-      Text := Create_Line_Text (Name_Buffer (1 .. Name_Len));
+      Text := Create_Line_Text (File);
       N := Insert_Node
         (Ctree         => Explorer.Tree,
          Parent        => Parent_Node,
@@ -1903,7 +1899,7 @@ package body Project_Explorers is
       Node_Set_Row_Data
         (Explorer.Tree, N, (Node_Type   => File_Node,
                             Name_Length => 0,
-                            File        => File, Up_To_Date => False));
+                            Up_To_Date => False));
 
       if not Is_Leaf then
          Add_Dummy_Node (Explorer, N);
@@ -2020,6 +2016,8 @@ package body Project_Explorers is
       N           : Gtk_Ctree_Node := null;
       Dir         : String_List_Id;
       Current_Dir : constant String := String (Get_Current_Dir);
+      Files       : String_Array_Access := Get_Source_Files
+        (Project, Recursive => False, Full_Path => True);
 
    begin
       Push_State (Explorer.Kernel, Busy);
@@ -2052,6 +2050,7 @@ package body Project_Explorers is
                Directory        => Name_Buffer (1 .. Name_Len),
                Parent_Node      => Node,
                Current_Dir      => Current_Dir,
+               Files_In_Project => Files,
                Directory_String => String_Elements.Table (Dir).Value);
             Dir := String_Elements.Table (Dir).Next;
          end loop;
@@ -2069,9 +2068,11 @@ package body Project_Explorers is
             Parent_Node      => Node,
             Current_Dir      => Current_Dir,
             Directory_String => End_String,
+            Files_In_Project => null,
             Object_Directory => True);
       end if;
 
+      Free (Files);
       Thaw (Explorer.Tree);
       Pop_State (Explorer.Kernel);
    end Expand_Project_Node;
@@ -2101,7 +2102,7 @@ package body Project_Explorers is
          then
             N := Add_File_Node
               (Explorer    => Explorer,
-               File        => String_Elements.Table (Src).Value,
+               File        => Get_String (String_Elements.Table (Src).Value),
                Parent_Node => Node);
          end if;
          Src := String_Elements.Table (Src).Next;
@@ -2118,7 +2119,8 @@ package body Project_Explorers is
      (Explorer : access Project_Explorer_Record'Class;
       Node     : Gtk_Ctree_Node)
    is
-      File_Name  : constant String := Get_File_From_Node (Explorer, Node);
+      File_Name  : constant String :=
+        Get_File_From_Node (Explorer, Node, Full_Path => True);
       Buffer     : String_Access;
       N          : Gtk_Ctree_Node;
       F          : File_Descriptor;
@@ -2235,8 +2237,10 @@ package body Project_Explorers is
    ------------------------
 
    function Get_File_From_Node
-     (Explorer : access Project_Explorer_Record'Class; Node : Gtk_Ctree_Node)
-     return String
+     (Explorer : access Project_Explorer_Record'Class;
+      Node : Gtk_Ctree_Node;
+      Full_Path : Boolean := False)
+      return String
    is
       N : Gtk_Ctree_Node := Node;
    begin
@@ -2248,15 +2252,12 @@ package body Project_Explorers is
 
       if N = null then
          return "";
+      elsif Full_Path then
+         return Get_Directory_From_Node
+           (Explorer, Row_Get_Parent (Node_Get_Row (N)))
+           & Node_Get_Text (Explorer.Tree, N, 0);
       else
-         String_To_Name_Buffer (Node_Get_Row_Data (Explorer.Tree, N).File);
-         declare
-            Name : constant String := Name_Buffer (1 .. Name_Len);
-         begin
-            return
-              Get_Directory_From_Node
-              (Explorer, Row_Get_Parent (Node_Get_Row (N)))  & Name;
-         end;
+         return Node_Get_Text (Explorer.Tree, N, 0);
       end if;
    end Get_File_From_Node;
 
@@ -2401,7 +2402,9 @@ package body Project_Explorers is
    -------------------------
 
    procedure Update_Project_Node
-     (Explorer : access Project_Explorer_Record'Class; Node : Gtk_Ctree_Node)
+     (Explorer : access Project_Explorer_Record'Class;
+      Files : String_Array_Access;
+      Node : Gtk_Ctree_Node)
    is
       function Imported_Projects (Prj : Project_Id) return Project_Id_Array;
       --  Return the list of imported projects, as an array
@@ -2473,7 +2476,7 @@ package body Project_Explorers is
                   if Index > Sources'Last then
                      Remove_Node (Explorer.Tree, N);
                   else
-                     Update_Node (Explorer, N);
+                     Update_Node (Explorer, N, Files);
                   end if;
 
                when Obj_Directory_Node =>
@@ -2491,6 +2494,7 @@ package body Project_Explorers is
                      Parent_Node => Node,
                      Current_Dir => Current_Dir,
                      Directory_String => Obj,
+                     Files_In_Project => null,
                      Object_Directory => True);
 
                when Project_Node =>
@@ -2518,7 +2522,7 @@ package body Project_Explorers is
                         Remove_Node (Explorer.Tree, N);
 
                      else
-                        Update_Node (Explorer, N);
+                        Update_Node (Explorer, N, Files_In_Project => null);
                      end if;
                   end;
 
@@ -2551,6 +2555,7 @@ package body Project_Explorers is
                Parent_Node      => Node,
                Current_Dir      => Current_Dir,
                Directory_String => Sources (J),
+               Files_In_Project => Files,
                Object_Directory => False);
          end if;
       end loop;
@@ -2562,15 +2567,16 @@ package body Project_Explorers is
 
    procedure Update_Directory_Node
      (Explorer : access Project_Explorer_Record'Class;
+      Files_In_Project : String_Array_Access;
       Node     : Gtk_Ctree_Node;
       Data     : User_Data)
    is
       Index : Natural;
       N, N2 : Gtk_Ctree_Node;
       Dir : constant String := Name_As_Directory (Get_String (Data.Directory));
-      Sources : String_Id_Array := Get_Source_Files
-        (Get_Project_From_Node (Explorer, Node),
-         Recursive => False);
+
+      type Boolean_Array is array (Files_In_Project'Range) of Boolean;
+      New_File : Boolean_Array := (others => True);
 
    begin
       --  The goal here is to keep the files and subdirectories if their
@@ -2586,20 +2592,21 @@ package body Project_Explorers is
          declare
             User : constant User_Data :=
               Node_Get_Row_Data (Explorer.Tree, N);
+            F : constant String := Node_Get_Text (Explorer.Tree, N, 0);
          begin
             if User.Node_Type = File_Node then
-               Index := Sources'First;
-               while Index <= Sources'Last loop
-                  if Sources (Index) /= No_String
-                    and then String_Equal (Sources (Index), User.File)
+               Index := Files_In_Project'First;
+               while Index <= Files_In_Project'Last loop
+                  if New_File (Index)
+                    and then Base_Name (Files_In_Project (Index).all) = F
                   then
-                     Sources (Index) := No_String;
+                     New_File (Index) := False;
                      exit;
                   end if;
                   Index := Index + 1;
                end loop;
 
-               if Index > Sources'Last then
+               if Index > Files_In_Project'Last then
                   Remove_Node (Explorer.Tree, N);
                end if;
             end if;
@@ -2609,13 +2616,13 @@ package body Project_Explorers is
 
       --  Then add all the new directories
 
-      for J in Sources'Range loop
-         if Sources (J) /= No_String
-           and then Is_Regular_File (Dir & Get_String (Sources (J)))
+      for J in Files_In_Project'Range loop
+         if New_File (J)
+           and then Dir_Name (Files_In_Project (J).all) = Dir
          then
             N := Add_File_Node
               (Explorer         => Explorer,
-               File             => Sources (J),
+               File             => Files_In_Project (J).all,
                Parent_Node      => Node);
          end if;
       end loop;
@@ -2626,14 +2633,22 @@ package body Project_Explorers is
    -----------------
 
    procedure Update_Node
-     (Explorer : access Project_Explorer_Record'Class; Node : Gtk_Ctree_Node)
+     (Explorer         : access Project_Explorer_Record'Class;
+      Node             : Gtk_Ctree_Node;
+      Files_In_Project : String_Array_Access)
    is
       Data   : User_Data := Node_Get_Row_Data (Explorer.Tree, Node);
       N, N2  : Gtk_Ctree_Node;
       N_Type : Node_Types;
-
+      Prj    : Project_Id := Get_Project_From_Node (Explorer, Node);
+      Files  : String_Array_Access := Files_In_Project;
 
    begin
+      if Files = null then
+         Files := Get_Source_Files
+           (Prj, Recursive => False, Full_Path => True);
+      end if;
+
       --  If the information about the node hasn't been computed before,
       --  then we don't need to do anything. This will be done when the
       --  node is actually expanded by the user
@@ -2643,10 +2658,9 @@ package body Project_Explorers is
       if Row_Get_Children (Node_Get_Row (Node)) = null then
          declare
             Str : constant String := Node_Get_Text (Explorer.Tree, Node, 0);
-            Prj : Project_Id := Get_Project_From_Node (Explorer, Node);
          begin
             if (Data.Node_Type = Directory_Node
-                  and then Has_Entries (Prj, Str))
+                  and then Has_Entries (Str, Files))
               or else
               (Data.Node_Type = Project_Node
                  and then Projects.Table (Prj).Imported_Projects =
@@ -2689,9 +2703,10 @@ package body Project_Explorers is
 
          else
             case Data.Node_Type is
-               when Project_Node   => Update_Project_Node (Explorer, Node);
+               when Project_Node   =>
+                  Update_Project_Node (Explorer, Files, Node);
                when Directory_Node =>
-                  Update_Directory_Node (Explorer, Node, Data);
+                  Update_Directory_Node (Explorer, Files, Node, Data);
                when others         => null;
             end case;
          end if;
@@ -2721,6 +2736,10 @@ package body Project_Explorers is
             Mask_Opened   => Explorer.Open_Masks (N_Type),
             Is_Leaf       => False,
             Expanded      => Row_Get_Expanded (Node_Get_Row (Node)));
+      end if;
+
+      if Files_In_Project = null then
+         Free (Files);
       end if;
    end Update_Node;
 
@@ -2801,7 +2820,7 @@ package body Project_Explorers is
             end;
          end if;
 
-         Update_Node (T, Node_Nth (T.Tree, 0));
+         Update_Node (T, Node_Nth (T.Tree, 0), Files_In_Project => null);
          Sort_Recursive (T.Tree);
 
          --  Restore the selection. Note that this also resets the project
@@ -2876,40 +2895,6 @@ package body Project_Explorers is
       return null;
    end Get_Selected_Project_Node;
 
-   ------------------------
-   -- Get_File_From_Node --
-   ------------------------
-
-   function Get_File_From_Node
-     (Explorer : access Project_Explorer_Record'Class; Node : Gtk_Ctree_Node)
-      return String_Id
-   is
-      N : Gtk_Ctree_Node := Node;
-   begin
-      --  Loop until we get to a file
-      while N /= null loop
-         declare
-            User : constant User_Data := Node_Get_Row_Data (Explorer.Tree, N);
-         begin
-            case User.Node_Type is
-               when File_Node =>
-                  return User.File;
-
-               when Project_Node
-                 | Directory_Node
-                 | Extends_Project_Node
-                 | Obj_Directory_Node =>
-                  return No_String;
-
-               when others =>
-                  null;
-            end case;
-         end;
-         N := Row_Get_Parent (Node_Get_Row (N));
-      end loop;
-      return No_String;
-   end Get_File_From_Node;
-
    -------------------
    -- Node_Selected --
    -------------------
@@ -2917,38 +2902,21 @@ package body Project_Explorers is
    procedure Node_Selected
      (Explorer : access Project_Explorer_Record'Class; Node : Gtk_Ctree_Node)
    is
-      use type Node_List.Glist;
-
-      File : constant String_Id := Get_File_From_Node (Explorer, Node);
-      N    : Gtk_Ctree_Node := Node;
-      User : constant User_Data := Node_Get_Row_Data (Explorer.Tree, N);
+      File : constant String :=
+        Get_File_From_Node (Explorer, Node, Full_Path => True);
+      User : constant User_Data := Node_Get_Row_Data (Explorer.Tree, Node);
 
    begin
       case User.Node_Type is
          when Entity_Node =>
-            String_To_Name_Buffer (File);
-
-            declare
-               File_S : constant String := Name_Buffer (1 .. Name_Len);
-               Dir_S  : constant String :=
-                 Get_Directory_From_Node (Explorer, N);
-            begin
-               Open_File_Editor
-                 (Explorer.Kernel,
-                  Dir_S & File_S,
-                  Line   => User.Sloc_Entity.Line,
-                  Column => User.Sloc_Entity.Column);
-            end;
+            Open_File_Editor
+              (Explorer.Kernel,
+               File,
+               Line   => User.Sloc_Entity.Line,
+               Column => User.Sloc_Entity.Column);
 
          when File_Node =>
-            String_To_Name_Buffer (File);
-            declare
-               File_S : constant String := Name_Buffer (1 .. Name_Len);
-               Dir_S  : constant String :=
-                 Get_Directory_From_Node (Explorer, N);
-            begin
-               Open_File_Editor (Explorer.Kernel, Dir_S & File_S);
-            end;
+            Open_File_Editor (Explorer.Kernel, File);
 
          when others =>
             null;
