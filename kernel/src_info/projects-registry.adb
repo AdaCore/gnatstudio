@@ -1575,7 +1575,7 @@ package body Projects.Registry is
       if Is_Absolute_Path (Filename) then
          declare
             S : constant String := Locale_To_UTF8
-              (Normalize_Pathname (Locale));
+              (Normalize_Pathname (Locale, Resolve_Links => False));
          begin
             Name_Len := S'Length;
             Name_Buffer (1 .. Name_Len) := S;
@@ -1779,7 +1779,8 @@ package body Projects.Registry is
          --  for files opened from the command line.
          return Create
            (Full_Filename => Locale_To_UTF8
-              (Normalize_Pathname (Locale_From_UTF8 (Name))));
+              (Normalize_Pathname (Locale_From_UTF8 (Name),
+                                   Resolve_Links => False)));
       end if;
    end Create;
 
