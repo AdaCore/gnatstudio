@@ -100,7 +100,9 @@ package body Browsers.Dependency_Items is
    --  Return the child that shows Filename in the browser, or null if Filename
    --  is not already displayed in the canvas.
 
-   function Filter (Dep : Dependency) return Boolean;
+   function Filter
+     (Kernel : access Kernel_Handle_Record'Class; Dep : Dependency)
+      return Boolean;
    --  A filter function that decides whether Dep should be displayed in the
    --  canvas. It should return false if Dep should not be displayed.
    --
@@ -364,7 +366,7 @@ package body Browsers.Dependency_Items is
             Dep := List;
 
             while Dep /= null loop
-               if Filter (Dep.Value) then
+               if Filter (Kernel, Dep.Value) then
                   Intern := File_Information (Dep.Value);
                   Item := File_Item
                     (Find_File (Browser, Get_Source_Filename (Intern)));
@@ -474,7 +476,7 @@ package body Browsers.Dependency_Items is
          return False;
       else
          Dep := Get (Data.Iter.all);
-         if Filter (Dep) then
+         if Filter (Get_Kernel (Data.Browser), Dep) then
             declare
                File : constant String :=
                  Get_Source_Filename (File_Information (Dep));
@@ -590,23 +592,26 @@ package body Browsers.Dependency_Items is
    -- Filter --
    ------------
 
-   function Filter (Dep : Dependency) return Boolean  is
+   function Filter
+     (Kernel : access Kernel_Handle_Record'Class; Dep : Dependency)
+      return Boolean
+   is
       Explicit_Dependency : Boolean;
+      System_File         : Boolean;
       Info                : constant Dependency_Info :=
         Dependency_Information (Dep);
 
    begin
-      --  ??? This must be configurable at the GUI level.
-
       --  Only show explicit dependencies, not implicit ones
-
-      Explicit_Dependency := Get_Depends_From_Spec (Info)
+      Explicit_Dependency := Get_Pref (Kernel, Dep_Browser_Show_Implicit_Dep)
+        or else Get_Depends_From_Spec (Info)
         or else Get_Depends_From_Body (Info);
 
       --  Do not display dependencies on runtime files
+      System_File := Get_Pref (Kernel, Dep_Browser_Show_System_Files)
+        or else not Is_System_File (File_Information (Dep));
 
-      return Explicit_Dependency
-        and then not Is_System_File (File_Information (Dep));
+      return Explicit_Dependency and then System_File;
    end Filter;
 
    ---------------
