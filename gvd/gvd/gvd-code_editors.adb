@@ -416,9 +416,26 @@ package body Gtkada.Code_Editors is
            and then Min <= Gint (Start_Index)
            and then Gint (Start_Index) <= Max
          then
-            --  Use the selection...
-            Menu := Editor_Contextual_Menu
-              (Editor, Line, Get_Chars (Editor.Text, Min, Max));
+            --  Keep only the first line of the selection. This avoids having
+            --  too long menus, and since the debugger can not handle multiple
+            --  line commands anyway is not a big problem.
+            --  We do not use Editor.Buffer directly, so that we don't have to
+            --  take into account the presence of line numbers.
+
+            declare
+               S : String := Get_Chars (Editor.Text, Min, Max);
+            begin
+               for J in S'Range loop
+                  if S (J) = ASCII.LF then
+                     Max := Gint (J - S'First) + Min;
+                     exit;
+                  end if;
+               end loop;
+
+               --  Use the selection...
+               Menu := Editor_Contextual_Menu
+                 (Editor, Line, Get_Chars (Editor.Text, Min, Max));
+            end;
          else
             if Index < 0 then
                Menu := Editor_Contextual_Menu (Editor, Line, "");
