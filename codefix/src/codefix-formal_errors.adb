@@ -379,7 +379,7 @@ package body Codefix.Formal_Errors is
       String_Unexpected : String;
       Mode              : String_Mode := Text_Ascii) return Solution_List
    is
-      New_Command  : Insert_Word_Cmd;
+      New_Command  : Remove_Word_Cmd;
       Word         : Word_Cursor;
       Result       : Solution_List;
    begin
