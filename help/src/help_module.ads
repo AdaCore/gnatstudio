@@ -61,5 +61,4 @@ private
       --  true if the next search will be the first for this context
    end record;
 
-
 end Help_Module;
