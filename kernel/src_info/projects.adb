@@ -112,7 +112,7 @@ package body Projects is
    --  Return the project view for the project Name
 
    function Check_Full_File
-     (File : String; List : Array_Element_Id) return Array_Element_Id;
+     (File : Name_Id; List : Array_Element_Id) return Array_Element_Id;
    --  Check whether File is in the List. Return the index in the list
 
    type External_Variable_Callback is access function
@@ -586,15 +586,19 @@ package body Projects is
       F    : String := Filename;
       Arr  : Array_Element_Id;
       Len  : Natural;
+      File : Name_Id;
    begin
       Canonical_Case_File_Name (F);
 
       --  Check Ada exceptions
 
-      Arr := Check_Full_File (F, Prj.Projects.Table (Project).Naming.Bodies);
+      File := Get_String (F);
+
+      Arr := Check_Full_File
+        (File, Prj.Projects.Table (Project).Naming.Bodies);
 
       if Arr = No_Array_Element then
-         Arr := Check_Full_File (F, Naming.Specs);
+         Arr := Check_Full_File (File, Naming.Specs);
 
          if Arr /= No_Array_Element then
             Part      := Unit_Spec;
@@ -613,10 +617,10 @@ package body Projects is
       --  Check exceptions for other languages.
       --  No notion of unit here, so no other file name
 
-      Arr := Check_Full_File (F, Naming.Implementation_Exceptions);
+      Arr := Check_Full_File (File, Naming.Implementation_Exceptions);
 
       if Arr = No_Array_Element then
-         Arr := Check_Full_File (F, Naming.Specification_Exceptions);
+         Arr := Check_Full_File (File, Naming.Specification_Exceptions);
 
          if Arr /= No_Array_Element then
             Part      := Unit_Spec;
@@ -1747,7 +1751,7 @@ package body Projects is
    ---------------------
 
    function Check_Full_File
-     (File : String; List : Array_Element_Id) return Array_Element_Id
+     (File : Name_Id; List : Array_Element_Id) return Array_Element_Id
    is
       Prefix : Array_Element_Id := List;
       Str    : String_List_Id;
@@ -1761,7 +1765,7 @@ package body Projects is
             when Prj.List =>
                Str := Array_Elements.Table (Prefix).Value.Values;
                while Str /= Nil_String loop
-                  if Is_Equal (String_Elements.Table (Str).Value, File) then
+                  if String_Elements.Table (Str).Value = File then
                      return Prefix;
                   end if;
                   Str := String_Elements.Table (Str).Next;
@@ -1769,9 +1773,7 @@ package body Projects is
 
             --  Naming exceptions for Ada
             when Single =>
-               if Is_Equal
-                 (Array_Elements.Table (Prefix).Value.Value, File)
-               then
+               if Array_Elements.Table (Prefix).Value.Value = File then
                   return Prefix;
                end if;
          end case;
