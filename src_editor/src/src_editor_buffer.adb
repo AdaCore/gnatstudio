@@ -274,6 +274,13 @@ package body Src_Editor_Buffer is
    procedure Buffer_Destroy (Buffer : access Source_Buffer_Record'Class) is
       Result : Boolean;
    begin
+      --  We do not free memory associated to Buffer.Current_Command, since
+      --  this command is already freed when freeing Buffer.Queue.
+
+      if Buffer.Filename /= null then
+         File_Closed (Buffer.Kernel, Buffer.Filename.all);
+      end if;
+
       Destroy_Hook (Buffer);
 
       if Buffer.Timeout_Id /= 0 then
@@ -288,14 +295,6 @@ package body Src_Editor_Buffer is
       end if;
 
       Free_Queue (Buffer.Queue);
-
-      --  We do not free memory associated to Buffer.Current_Command, since
-      --  this command is already freed when freeing Buffer.Queue.
-
-      if Buffer.Filename /= null then
-         File_Closed (Buffer.Kernel, Buffer.Filename.all);
-      end if;
-
       Free (Buffer.Filename);
    end Buffer_Destroy;
 
