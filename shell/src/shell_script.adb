@@ -742,7 +742,6 @@ package body Shell_Script is
          Priority    => Glide_Kernel.Default_Priority);
       Glide_Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
-      Add_Default_Desktop_Item (Kernel, "Shell_Console", Position_Bottom);
 
       Script := new Shell_Scripting_Record;
       Script.Kernel := Kernel_Handle (Kernel);
