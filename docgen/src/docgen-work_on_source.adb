@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with Ada.Text_IO;               use Ada.Text_IO;
+with Basic_Types;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
@@ -1442,39 +1443,29 @@ package body Docgen.Work_On_Source is
       Entity_Name : String;
       Entity_Line : Natural) return GNAT.OS_Lib.String_Access
    is
-
       Parse_Node      : Construct_Access;
-      Parsed_List_End : Boolean;
       Result          : GNAT.OS_Lib.String_Access;
 
+      use type Basic_Types.String_Access;
+
    begin
-      Parse_Node      := Parsed_List.First;
-      Parsed_List_End := False;
+      Parse_Node := Parsed_List.First;
 
       --  ??? Exception if no parsed entities found: later
 
-      while not Parsed_List_End loop
-         declare
-            use Basic_Types;
-         begin
-               if Parse_Node.Name /= null and then
-                 To_Lower (Parse_Node.Name.all) =
-                 To_Lower (Entity_Name) and then
-                 Parse_Node.Sloc_Start.Line = Entity_Line
-               then
-                  Result := new String (1 .. Parse_Node.Sloc_End.Index -
-                                          Parse_Node.Sloc_Start.Index + 1);
-                  Result.all := File_Text (Parse_Node.Sloc_Start.Index ..
-                                             Parse_Node.Sloc_End.Index);
-                  return Result;
-               end if;
-         end;
-
-         if Parse_Node = Parsed_List.Last then
-            Parsed_List_End := True;
-         else
-            Parse_Node := Parse_Node.Next;
+      while Parse_Node /= null loop
+         if Parse_Node.Name /= null
+           and then To_Lower (Parse_Node.Name.all) = To_Lower (Entity_Name)
+           and then Parse_Node.Sloc_Start.Line = Entity_Line
+         then
+            Result := new String (1 .. Parse_Node.Sloc_End.Index -
+                                    Parse_Node.Sloc_Start.Index + 1);
+            Result.all := File_Text (Parse_Node.Sloc_Start.Index ..
+                                       Parse_Node.Sloc_End.Index);
+            return Result;
          end if;
+
+         Parse_Node := Parse_Node.Next;
       end loop;
 
       return null;
