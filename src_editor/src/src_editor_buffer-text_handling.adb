@@ -291,6 +291,7 @@ package body Src_Editor_Buffer.Text_Handling is
       Indent_Params : Indent_Parameters;
       Indent_Kind   : Indentation_Kind;
       Result        : Boolean;
+      Char          : Character;
 
       ------------------
       -- Replace_Text --
@@ -300,15 +301,19 @@ package body Src_Editor_Buffer.Text_Handling is
         (Ln, F, L : Natural;
          Replace  : String)
       is
-         pragma Unreferenced (Ln, F, L);
+         pragma Unreferenced (Ln);
       begin
-         if Replace'Length > 0 then
-            --  ??? The parser sometimes callback with a null replacement.
-            --  Ignore those cases. This should probably be fixed
-            --  in the parser.
+         if Replace'Length > 0 and then L - F > 0 then
+            --  The parser sometimes callback with a null replacement.
+            --  Ignore those cases as we do not want to indent the code here.
             Replace_Slice
               (Buffer, Replace, Line, First,
                Before => 0, After => Replace'Length);
+
+            --  Compute position of the next insert point. This can happen only
+            --  in the case of an attribute. In String'Access for example the
+            --  first call is for String and the second for Access.
+            First := First + Replace'Length + 1;
          end if;
       end Replace_Text;
 
@@ -338,21 +343,27 @@ package body Src_Editor_Buffer.Text_Handling is
 
       Copy (W_End, W_Start);
 
-      --  Look for the start of the word
+      --  Look for the start of the word, note that we do not want to stop at
+      --  quote otherwise it is not possible to handle properly attributes
+      --  which are also reserved words like access and range for example.
 
       First := Column;
 
       loop
          Backward_Char (W_Start, Result);
+         Char := Get_Char (W_Start);
          exit when not Result
-           or else
-         not Is_In (Get_Char (W_Start), Word_Character_Set (Lang));
+           or else (Char /= '''
+                    and then not Is_In (Char, Word_Character_Set (Lang)));
          First := First - 1;
+         exit when Is_Start (W_Start);
       end loop;
 
       --  Move one character forward, the first character in the word
 
-      Forward_Char (W_Start, Result);
+      if not Is_Start (W_Start) then
+         Forward_Char (W_Start, Result);
+      end if;
 
       if First /= Column then
          --  We have a word, set casing
