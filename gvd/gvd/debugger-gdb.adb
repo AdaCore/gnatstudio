@@ -437,18 +437,29 @@ package body Debugger.Gdb is
    -------------
 
    function Type_Of
-     (Debugger : access Gdb_Debugger; Entity : String) return String
-   is
-      S : constant String :=
-        Send (Debugger, "ptype " & Entity, Mode => Internal);
+     (Debugger : access Gdb_Debugger; Entity : String) return String is
    begin
-      if S'Length > 6
-        and then S (S'First .. S'First + 5) = "type ="
-      then
-         return S (S'First + 7 .. S'Last);
-      else
-         return "";
-      end if;
+      --  If Entity contains a LF, this is an invalid entity, so give up
+      --  immediately.
+
+      for J in reverse Entity'Range loop
+         if Entity (J) = ASCII.LF then
+            return "";
+         end if;
+      end loop;
+
+      declare
+         S : constant String :=
+           Send (Debugger, "ptype " & Entity, Mode => Internal);
+      begin
+         if S'Length > 6
+           and then S (S'First .. S'First + 5) = "type ="
+         then
+            return S (S'First + 7 .. S'Last);
+         else
+            return "";
+         end if;
+      end;
    end Type_Of;
 
    -----------------
