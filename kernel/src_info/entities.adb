@@ -893,13 +893,25 @@ package body Entities is
    procedure Add_Depends_On
      (File                : Source_File;
       Depends_On          : Source_File;
-      Explicit_Dependency : Boolean := False) is
+      Explicit_Dependency : Boolean := False)
+   is
+      Index : Dependency_Arrays.Index_Type;
    begin
       Assert (Assert_Me, Depends_On /= File, "File cannot depend on itself");
 
-      if Find (File.Depends_On, Depends_On) < Dependency_Arrays.First then
+      Index := Find (File.Depends_On, Depends_On);
+
+      if Index < Dependency_Arrays.First then
          Append (File.Depends_On, (Depends_On, Explicit_Dependency));
          Append (Depends_On.Depended_On, (File, Explicit_Dependency));
+
+      elsif Explicit_Dependency then
+         --  This is only added when File itself is actually parse, so be sure
+         --  to reflect the dependency status
+         File.Depends_On.Table (Index).Explicit := Explicit_Dependency;
+
+         Index := Find (Depends_On.Depended_On, File);
+         Depends_On.Depended_On.Table (Index).Explicit := Explicit_Dependency;
       end if;
    end Add_Depends_On;
 
