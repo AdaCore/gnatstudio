@@ -35,6 +35,7 @@ begin
       Constructs       => Constructs'Unchecked_Access,
       Current_Indent   => Next_Indent,
       Prev_Indent      => Indent);
+
    Free (Buffer);
    Put_Line ("Indent = " & Image (Indent));
    Put_Line ("Next Indent = " & Image (Next_Indent));
@@ -43,10 +44,19 @@ begin
    loop
       exit when Info = null;
 
-      Put (Token_Type'Val (Info.Token)'Img & " ");
+      declare
+         Cat : String := Info.Category'Img;
+      begin
+         Lower_Case (Cat (5 .. Cat'Last));
+         Put (Cat (5 .. Cat'Last) & " ");
+      end;
 
       if Info.Name /= null then
          Put (Info.Name.all & " ");
+      end if;
+
+      if Info.Profile /= null then
+         Put (Info.Profile.all & " ");
       end if;
 
       if Info.Is_Declaration then
