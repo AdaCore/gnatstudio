@@ -624,9 +624,7 @@ package body Entities is
                Entity := EIS.List.Table (J);
                --  If the entity was still under control of File
                if Entity.Is_Valid then
-                  if Entity.Ref_Count = 1 then
-                     Remove (File.Entities, EIS.List.Table (J));
-                  else
+                  if Entity.Ref_Count /= 1 then
                      Entity.Is_Valid := False;
                   end if;
                   Unref (Entity, ".entities");
