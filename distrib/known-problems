@@ -12,11 +12,6 @@ Known Problems fixed in GPS 2.1.0
   Workaround: Double-click on the entry to open the file, and use "Locate in
               explorer" on the file editor.
 
-- D621-013 GPS crashes when annotating large files
-  Problem:    When querying the annotations for large files, GPS crashes before
-              displaying the annotations.
-  Workaround: Use the command line when annotating large files.
-
 - Changing size of a font resets its color
   Problem:    In the preferences dialog, changing the size of a font resets
               its foreground and background colors to the default values.
