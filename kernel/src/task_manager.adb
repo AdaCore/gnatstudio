@@ -210,7 +210,12 @@ package body Task_Manager is
          if Manager.Queues (Manager.Running_Queue).Status = Interrupted then
             Result := Success;
          else
-            Result := Safe_Execute (Command);
+            declare
+               This_Running_Queue : constant Integer := Manager.Running_Queue;
+            begin
+               Result := Safe_Execute (Command);
+               Manager.Running_Queue := This_Running_Queue;
+            end;
          end if;
 
          Manager.Queues (Manager.Running_Queue).Need_Refresh := True;
