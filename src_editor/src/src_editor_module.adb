@@ -408,6 +408,25 @@ package body Src_Editor_Module is
    --  Create the marks on the buffer corresponding to File, if File has just
    --  been open.
 
+   function Get_Filename (Child : MDI_Child) return String;
+   --  If Child is a file editor, return the corresponding filename,
+   --  otherwise return an empty string.
+
+   ------------------
+   -- Get_Filename --
+   ------------------
+
+   function Get_Filename (Child : MDI_Child) return String is
+   begin
+      if Child /= null
+        and then Get_Widget (Child).all in Source_Box_Record'Class
+      then
+         return Get_Filename (Source_Box (Get_Widget (Child)).Editor);
+      else
+         return "";
+      end if;
+   end Get_Filename;
+
    -----------------------
    -- Console_Has_Focus --
    -----------------------
@@ -1166,18 +1185,9 @@ package body Src_Editor_Module is
 
          exit when Child = null;
 
-         if (Get_Widget (Child).all in Source_Box_Record'Class) then
-            declare
-               Title : constant String := Get_Title (Child);
-            begin
-               if Title'Length >= File'Length
-                 and then File_Equal
-                   (File, Title (Title'First .. Title'First + File'Length - 1))
-               then
-                  Box := Source_Box (Get_Widget (Child));
-                  Check_Timestamp (Box.Editor);
-               end if;
-            end;
+         if File_Equal (File, Get_Filename (Child)) then
+            Box := Source_Box (Get_Widget (Child));
+            Check_Timestamp (Box.Editor);
          end if;
 
          Next (Iter);
@@ -1713,18 +1723,8 @@ package body Src_Editor_Module is
                   The_Child := Get (Iterator);
 
                   while The_Child /= null loop
-                     if Get_Widget (Child).all in Source_Box_Record'Class then
-                        declare
-                           Title : constant String := Get_Title (The_Child);
-                        begin
-                           if Title'Length >= No_Name'Length
-                             and then Title
-                               (Title'First
-                                .. Title'First + No_Name'Length - 1) = No_Name
-                           then
-                              Nb_Untitled := Nb_Untitled + 1;
-                           end if;
-                        end;
+                     if Get_Filename (The_Child) = "" then
+                        Nb_Untitled := Nb_Untitled + 1;
                      end if;
 
                      Next (Iterator);
@@ -1732,14 +1732,13 @@ package body Src_Editor_Module is
                   end loop;
 
                   if Nb_Untitled = 0 then
-                     Set_Title (Child, -"Untitled");
+                     Set_Title (Child, No_Name);
                   else
                      Set_Title
-                       (Child,
-                          -"Untitled" & " (" & Image (Nb_Untitled + 1) & ")");
+                       (Child, No_Name & " (" & Image (Nb_Untitled + 1) & ")");
                   end if;
 
-                  Set_Filename (Editor, Get_Title (Child));
+                  Set_Filename (Editor, Get_Filename (Child));
                end;
             end if;
          end if;
@@ -2663,13 +2662,15 @@ package body Src_Editor_Module is
 
          begin
             if Line = -1 then
+               --  Close all file editors corresponding to File.
+
                loop
                   Child := Get (Iter);
 
                   exit when Child = null;
 
                   if Get_Widget (Child).all in Source_Box_Record'Class
-                    and then File_Equal (Get_Title (Child), File)
+                    and then File_Equal (Get_Filename (Child), File)
                   then
                      Destroy (Source_Box (Get_Widget (Child)));
                   end if;
@@ -3396,14 +3397,15 @@ package body Src_Editor_Module is
    is
       Iter  : Child_Iterator := First_Child (Get_MDI (Kernel));
       Child : MDI_Child;
+
    begin
       if File /= Base_Name (File) then
          loop
             Child := Get (Iter);
 
             exit when Child = null
-              or else (Get_Widget (Child).all in Source_Box_Record'Class
-                       and then File_Equal (Get_Title (Child), File));
+              or else File_Equal (Get_Filename (Child), File);
+
             Next (Iter);
          end loop;
 
@@ -3414,9 +3416,8 @@ package body Src_Editor_Module is
             Child := Get (Iter);
 
             exit when Child = null
-              or else (Get_Widget (Child).all in Source_Box_Record'Class
-                       and then File_Equal (Base_Name (Get_Title (Child)),
-                                            File));
+              or else File_Equal (Base_Name (Get_Filename (Child)), File);
+
             Next (Iter);
          end loop;
 
