@@ -426,7 +426,7 @@ package body Python_Module is
       Register_Menu
         (Kernel,
          Parent_Path => "/" & (-"Tools"),
-         Text        => -"Python console",
+         Text        => -"Python Console",
          Callback    => Open_Python_Console'Access);
    end Register_Module;
 
