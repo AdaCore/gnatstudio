@@ -996,10 +996,11 @@ package body Src_Editor_Box is
       Box.Overwrite := not Box.Overwrite;
 
       if Box.Overwrite then
-         Set_Text (Box.Overwrite_Label, -"Ovwrt");
+         Set_Text (Box.Overwrite_Label, -"Overwrite");
       else
-         Set_Text (Box.Overwrite_Label, -"Ins");
+         Set_Text (Box.Overwrite_Label, -"Insert");
       end if;
+
    exception
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
@@ -1092,7 +1093,7 @@ package body Src_Editor_Box is
       Pack_End (Box.Label_Box, Frame, Expand => False, Fill => True);
       Gtk_New (Event_Box);
       Add (Frame, Event_Box);
-      Gtk_New (Box.Overwrite_Label, -"Ins");
+      Gtk_New (Box.Overwrite_Label, -"Insert");
       Add (Event_Box, Box.Overwrite_Label);
 
       Box_Callback.Connect
