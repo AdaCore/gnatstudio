@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003                            --
+--                     Copyright (C) 2003 - 2004                     --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -561,13 +561,14 @@ package body Glide_Kernel.Standard_Hooks is
       Args   : Diff_Hooks_Args;
       pragma Unreferenced (Command);
    begin
-      Args := (Hooks_Data with
-               Orig_File         => Get_File
-                 (Get_Data (Nth_Arg (Data, 2, Get_File_Class (Kernel)))),
-               New_File          => Get_File
-                 (Get_Data (Nth_Arg (Data, 3, Get_File_Class (Kernel)))),
-               Diff_File         => Get_File
-                 (Get_Data (Nth_Arg (Data, 4, Get_File_Class (Kernel)))));
+      Args :=
+        (Hooks_Data with
+         Orig_File         => Get_File
+           (Get_Data (Nth_Arg (Data, 2, Get_File_Class (Kernel), True))),
+         New_File          => Get_File
+           (Get_Data (Nth_Arg (Data, 3, Get_File_Class (Kernel), True))),
+         Diff_File         => Get_File
+           (Get_Data (Nth_Arg (Data, 4, Get_File_Class (Kernel), True))));
       Set_Return_Value (Data, Run_Hook_Until_Success (Kernel, Name, Args));
    end Diff_Run_Hook_Handler;
 
