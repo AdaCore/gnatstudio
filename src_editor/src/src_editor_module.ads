@@ -188,12 +188,12 @@ private
    -----------------------------
 
    type Highlighting_Category_Record (L : Natural) is record
-      Id    : String (1 .. L);
       GC    : Gdk.GC.Gdk_GC;
       Color : Gdk_Color;
       Mark_In_Speedbar : Boolean := False;
       --  If True, a mark is added in the speedbar even when we only highlight
       --  a small range of a line, as opposed to the whole line.
+      Id    : String (1 .. L);
    end record;
 
    type Highlighting_Category is access Highlighting_Category_Record;
@@ -224,7 +224,6 @@ private
    --  Hook called when the "source_lines_revealed" hook is run.
 
    type Source_Editor_Module_Record is new Module_ID_Record with record
-      Kernel                : Kernel_Handle;
       Lines_Hook            : Lines_Revealed_Hook;
 
       Display_Line_Numbers  : Boolean    := False;
