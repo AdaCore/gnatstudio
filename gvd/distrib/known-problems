@@ -1,5 +1,11 @@
 Known Problems fixed in GVD 2.0.0
 
+- Parsing C++ classes with static members
+  Problem:    gvd can not parse c++ classes that have static fields.
+  Workaround: Display the variable in the gdb console instead, by selecting
+              "print <var" instead of "display <var>" in the contextual
+              menu
+
 - Parsing C++ classes with virtual functions
   Problem:    In some cases, gvd can not display c++ classes with virtual
               functions, and reports an Assert_Failure in the log file.
