@@ -40,8 +40,8 @@ msgstr "Toutes les assertions"
 msgid  "All exceptions"
 msgstr "Toutes les exceptions"
 
-msgid  "and a description as complete as possible "
-msgstr "et une description aussi complète que possible "
+msgid  "and a description as complete as possible (including sources)"
+msgstr "et une description aussi complète que possible (avec les sources)"
 
 msgid  "Arguments Selection"
 msgstr "Sélection des arguments"
@@ -225,9 +225,6 @@ msgstr " [--dargs [options du débogueur]] [--pargs [options du programme]]"
 
 msgid  "Data"
 msgstr "Donnée"
-
-msgid  "Date: "
-msgstr "Date: "
 
 msgid  "DBX"
 msgstr "DBX"
@@ -850,9 +847,6 @@ msgstr "Routines"
 msgid  "Syntax Highlighting"
 msgstr "Mise en évidence de la syntaxe"
 
-msgid  "Target: "
-msgstr "Cible : "
-
 msgid  "   --target=TARG:PRO   "
 msgstr "   --target=TARG:PRO   "
 
@@ -871,9 +865,6 @@ msgstr "Point d'arrêt temporaire"
 msgid  "Test"
 msgstr "Tester"
 
-msgid  "the following information:"
-msgstr "les informations suivantes :"
-
 msgid  "The GNU Visual Debugger"
 msgstr "The GNU Visual Debugger"
 
@@ -891,6 +882,9 @@ msgstr "État des threads"
 
 msgid  "Title Background"
 msgstr "Titre"
+
+msgid  "to reproduce the bug"
+msgstr "pour reproduire le problème"
 
 msgid  "   --tty               Use controlling tty as additional "
 msgstr "   --tty               Utilise le terminal comme additionel "
@@ -927,9 +921,6 @@ msgstr "  en utilisant le protocole : "
 
 msgid  "Variable"
 msgstr "Variable"
-
-msgid  "Version: "
-msgstr "Version : "
 
 msgid  "Version"
 msgstr "Version"
