@@ -36,14 +36,27 @@ package body Debugger.Gdb.Ada is
    function Break_Exception
      (Debugger  : access Gdb_Ada_Language;
       Name      : String  := "";
+      Temporary : Boolean := False;
       Unhandled : Boolean := False) return String is
    begin
       if Unhandled then
-         return "break exception unhandled";
+         if Temporary then
+            return "tbreak exception unhandled";
+         else
+            return "break exception unhandled";
+         end if;
       elsif Name /= "" then
-         return "break exception " & Name;
+         if Temporary then
+            return "tbreak exception " & Name;
+         else
+            return "break exception " & Name;
+         end if;
       else
-         return "break exception";
+         if Temporary then
+            return "tbreak exception";
+         else
+            return "break exception";
+         end if;
       end if;
    end Break_Exception;
 

@@ -50,6 +50,7 @@ package Debugger.Gdb.Ada is
    function Break_Exception
      (Debugger  : access Gdb_Ada_Language;
       Name      : String  := "";
+      Temporary : Boolean := False;
       Unhandled : Boolean := False) return String;
 
    function Thread_List (Lang : access Gdb_Ada_Language) return String;
