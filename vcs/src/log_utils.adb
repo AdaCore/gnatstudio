@@ -74,7 +74,7 @@ package body Log_Utils is
    function Get_Log_From_File
      (Kernel    : access Kernel_Handle_Record'Class;
       File_Name : String;
-      Create    : Boolean := True) return String
+      Create    : Boolean) return String
    is
       Mapper      : File_Mapper_Access := Get_Logs_Mapper (Kernel);
       Real_Name   : constant String := Normalize_Pathname (File_Name);
@@ -157,7 +157,7 @@ package body Log_Utils is
       R : String_Access;
    begin
       R := Read_File
-        (Get_Log_From_File (Kernel, Normalize_Pathname (File_Name)));
+        (Get_Log_From_File (Kernel, Normalize_Pathname (File_Name), False));
 
       if R = null then
          return "";
@@ -180,9 +180,13 @@ package body Log_Utils is
      (Kernel    : access Kernel_Handle_Record'Class;
       File_Name : String)
    is
-      Mapper : File_Mapper_Access := Get_Logs_Mapper (Kernel);
+      Logs_Dir : constant String :=
+        Normalize_Pathname (Get_Home_Dir (Kernel) & "/log_files");
+      Mapper   : File_Mapper_Access := Get_Logs_Mapper (Kernel);
    begin
       Remove_Entry (Mapper, File_Name);
+      Save_Mapper
+        (Mapper, Normalize_Pathname (Logs_Dir & "/mapping"));
    end Remove_File_From_Mapping;
 
 end Log_Utils;
