@@ -37,7 +37,10 @@ with Language;
 with Language_Handlers;
 with Src_Highlighting;
 
+with GNAT.OS_Lib;         use GNAT.OS_Lib;
+
 with Commands;         use Commands;
+with Glide_Kernel;
 
 package Src_Editor_Buffer is
 
@@ -47,11 +50,13 @@ package Src_Editor_Buffer is
 
    procedure Gtk_New
      (Buffer : out Source_Buffer;
+      Kernel : Glide_Kernel.Kernel_Handle;
       Lang   : Language.Language_Access := null);
    --  Create a new Source_Buffer with the given Language.
 
    procedure Initialize
      (Buffer : access Source_Buffer_Record'Class;
+      Kernel : Glide_Kernel.Kernel_Handle;
       Lang   : Language.Language_Access := null);
    --  Internal initialization procedure.
    --  See the section "Creating your own widgets" in the documentation.
@@ -317,10 +322,30 @@ package Src_Editor_Buffer is
      (Buffer : access Source_Buffer_Record) return Command_Queue;
    --  Return the action queue associated to Buffer.
 
+   function Get_Filename
+     (Buffer : access Source_Buffer_Record)
+     return String;
+   --  Return the name of the file associated with Buffer.
+
+   procedure Set_Filename
+     (Buffer : access Source_Buffer_Record;
+      Name   : String);
+   --  Set the name of the file associated with Buffer to Name.
+
+   procedure Source_Lines_Revealed
+     (Buffer     : access Source_Buffer_Record;
+      Start_Line : Integer;
+      End_Line   : Integer);
+   --  Emit the signal to the kernel saying that an area in the source
+   --  has been revealed.
+
 private
 
    type Source_Buffer_Record is new Gtk.Text_Buffer.Gtk_Text_Buffer_Record with
    record
+      Kernel        : Glide_Kernel.Kernel_Handle;
+      Filename      : String_Access;
+
       Lang          : Language.Language_Access;
       Syntax_Tags   : Src_Highlighting.Highlighting_Tags;
       HL_Line_Tag   : Gtk.Text_Tag.Gtk_Text_Tag;
