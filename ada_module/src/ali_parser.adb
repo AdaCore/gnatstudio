@@ -1298,7 +1298,11 @@ package body ALI_Parser is
                   Project   => Project);
                if LI = null then
                   return VFS.No_File;
-               elsif not Update_ALI (Handler, LI, Reset_ALI => True)
+
+               --  Do not reset ALI below, since we are in the process of
+               --  parsing an ALI file, and need to parse a second one. We
+               --  still need to keep the data for the first in memory, though
+               elsif not Update_ALI (Handler, LI, Reset_ALI => False)
                  or else not Check_LI_And_Source (LI, Source_Filename)
                then
                   return VFS.No_File;
