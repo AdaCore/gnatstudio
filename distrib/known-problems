@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 2.0.0
 
+- The title of windows is not remembered from one session to another.
+  Problem:    When the Entities Browser, the Project Browser or the Dependency
+              Browser is open, exiting GPS and restarting will create those
+              browsers with no titles.
+  Workaround: Close these windows and launch the browser in the usual fashion.
+
 Known Problems fixed in GPS 1.4.0
 
 - CA08-005 Searching file names in explorer fails for extended projects
