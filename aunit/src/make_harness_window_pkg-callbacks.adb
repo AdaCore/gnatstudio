@@ -135,6 +135,7 @@ package body Make_Harness_Window_Pkg.Callbacks is
                           Id,
                           "Warning : no suite was found in that file.");
       end if;
+
       Set_Text (Harness_Window.File_Name_Entry, S);
    end On_Ok_Button_Clicked;
 
@@ -166,6 +167,7 @@ package body Make_Harness_Window_Pkg.Callbacks is
       Filter_B : Filter_Show_Ada_Access := new Filter_Show_Ada;
       Filter_C : Filter_Show_Suites_Access := new Filter_Show_Suites;
    begin
+
       if Harness_Window.Explorer = null then
          Create_From_Xpm_D
            (Filter_C.Suite_Pixmap,
@@ -228,6 +230,7 @@ package body Make_Harness_Window_Pkg.Callbacks is
       File_Name      : String := Get_Text (Top.File_Name_Entry);
 
    begin
+
       if Procedure_Name /= "" and then File_Name /= "" then
          Mixed_Case (Procedure_Name);
          Mixed_Case (File_Name);
@@ -248,6 +251,7 @@ package body Make_Harness_Window_Pkg.Callbacks is
             then
                return;
             end if;
+
          end if;
 
          Ada.Text_IO.Create

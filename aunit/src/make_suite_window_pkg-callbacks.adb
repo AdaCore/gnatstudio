@@ -121,7 +121,9 @@ package body Make_Suite_Window_Pkg.Callbacks is
                  Row_Num,
                  Package_Name.all);
          end if;
+
       end if;
+
    end On_Ok_Button_Clicked;
 
    ------------------------------
@@ -153,6 +155,7 @@ package body Make_Suite_Window_Pkg.Callbacks is
       Filter_B : Filter_Show_Ada_Access := new Filter_Show_Ada;
       Filter_C : Filter_Show_Tests_Access := new Filter_Show_Tests;
    begin
+
       if Suite_Window.Explorer = null then
          Gtk_New (Suite_Window.Explorer, "");
          Create_From_Xpm_D
@@ -215,6 +218,7 @@ package body Make_Suite_Window_Pkg.Callbacks is
       I    : Gint;
    begin
       Freeze (List);
+
       loop
          exit when Length (Get_Selection (List)) = 0;
          I := Get_Data (First (Get_Selection (List)));
@@ -242,6 +246,7 @@ package body Make_Suite_Window_Pkg.Callbacks is
       use Row_List;
       List : Row_List.Glist := Get_Row_List (Win.Test_List);
    begin
+
       if Name /= "" then
          if To_Lower (Name) = "test_suite" then
             if Message_Dialog
@@ -277,14 +282,18 @@ package body Make_Suite_Window_Pkg.Callbacks is
            (File, "with AUnit.Test_Suites; use AUnit.Test_Suites;");
 
          while List /= Null_List loop
+
             declare
                Package_Name : String := Get (Win.Test_List, Get_Data (List));
             begin
+
                if Package_Name /= "" then
                   Mixed_Case (Package_Name);
                   Put_Line (File, "with " & Package_Name & ";");
                end if;
+
             end;
+
             List := Next (List);
          end loop;
 
@@ -302,11 +311,13 @@ package body Make_Suite_Window_Pkg.Callbacks is
          List := Get_Row_List (Win.Test_List);
 
          while List /= Null_List loop
+
             declare
                S : String := Get_Text (Win.Test_List, Get_Data (List), 1);
                Package_Name : String := Get (Win.Test_List, Get_Data (List));
 
             begin
+
                if Package_Name /= "" then
                   Mixed_Case (S);
                   Mixed_Case (Package_Name);
@@ -323,7 +334,9 @@ package body Make_Suite_Window_Pkg.Callbacks is
                      Put_Line
                        (File, "   Add_Test (Result, " & Package_Name &");");
                   end if;
+
                end if;
+
             end;
             List := Next (List);
          end loop;

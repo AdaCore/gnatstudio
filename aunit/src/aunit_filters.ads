@@ -44,6 +44,8 @@ package Aunit_Filters is
    --  Open File_Name, do a basic parsing on it to look for aunit tests or
    --  tests suite. If found, then Suite_Name is initialized to this test/suite
    --  name, and Package_Name to the name of the main unit in the file.
+   --  The parsing is done by looking for the first occurence of " is " in
+   --  non-commented lines, and
 
    type Filter_Show_Ada is new File_Filter_Record (new String'("Ada Files"))
      with record
