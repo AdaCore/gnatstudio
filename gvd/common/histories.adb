@@ -27,12 +27,16 @@ with Gtk.GEntry;    use Gtk.GEntry;
 with Glib.Xml_Int;  use Glib.Xml_Int;
 with Gtk.List;      use Gtk.List;
 with Gtk.List_Item; use Gtk.List_Item;
+with Gtk.Menu_Item; use Gtk.Menu_Item;
+with Gtk.Menu;      use Gtk.Menu;
 with Ada.Unchecked_Deallocation;
 with GUI_Utils;     use GUI_Utils;
 with Gtk.Handlers;  use Gtk.Handlers;
 with Gtk.Widget;    use Gtk.Widget;
 with Gtk.Toggle_Button; use Gtk.Toggle_Button;
 with Traces;        use Traces;
+with GUI_Utils;     use GUI_Utils;
+with String_Utils;  use String_Utils;
 
 package body Histories is
 
@@ -42,9 +46,17 @@ package body Histories is
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (History_Key_Record, History_Key_Access);
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Changed_Notifier_Record'Class, Changed_Notifier);
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Menu_Callback_Record'Class, Menu_Callback);
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (History_Hash.String_Hash_Table.HTable, HTable_Access);
 
    package Value_Callback is new Gtk.Handlers.User_Callback
      (Gtk_Widget_Record, History_Key_Access);
+   package Notifier_Callback is new Gtk.Handlers.User_Callback
+     (Gtk_Widget_Record, Changed_Notifier);
 
    procedure Update_History
      (Button : access Gtk_Widget_Record'Class;
@@ -53,6 +65,71 @@ package body Histories is
      (Item : access Gtk_Widget_Record'Class;
       Value  : History_Key_Access);
    --  Called when the button is toggled.
+
+   type Menu_Changed_Notifier_Record is new Changed_Notifier_Record with record
+      Menu     : Gtk_Menu_Item;
+      Callback : Menu_Callback;
+      Data     : History_Key_Access;
+   end record;
+   type Menu_Changed_Notifier is access all Menu_Changed_Notifier_Record'Class;
+   procedure On_Changed
+     (Notifier : access Menu_Changed_Notifier_Record;
+      Hist     : in out History_Record;
+      Key      : History_Key);
+
+   procedure On_Menu_Destroy
+     (Menu     : access Gtk_Widget_Record'Class;
+      Notifier : Changed_Notifier);
+   --  Called when the menu associated with a history key is destroyed
+
+   procedure On_Menu_Selected
+     (Menu_Item : access Gtk_Widget_Record'Class;
+      Notifier  : Changed_Notifier);
+   --  Called when one of the entries in a menu associated with a history key
+   --  is destroyed.
+
+   function Create_New_Key_If_Necessary
+     (Hist     : History_Record;
+      Key      : History_Key;
+      Key_Type : History_Key_Type) return History_Key_Access;
+   --  Internal version of the public procedure
+
+   ---------------------------------
+   -- Create_New_Key_If_Necessary --
+   ---------------------------------
+
+   procedure Create_New_Key_If_Necessary
+     (Hist     : in out History_Record;
+      Key      : History_Key;
+      Key_Type : History_Key_Type)
+   is
+      Val : History_Key_Access;
+      pragma Unreferenced (Val);
+   begin
+      Val := Create_New_Key_If_Necessary (Hist, Key, Key_Type);
+   end Create_New_Key_If_Necessary;
+
+   ---------------------------------
+   -- Create_New_Key_If_Necessary --
+   ---------------------------------
+
+   function Create_New_Key_If_Necessary
+     (Hist     : History_Record;
+      Key      : History_Key;
+      Key_Type : History_Key_Type) return History_Key_Access
+   is
+      Value    : History_Key_Access;
+   begin
+      Value := Get (Hist.Table.all, String (Key));
+      if Value = Null_History then
+         Value := new History_Key_Record (Key_Type);
+         Set (Hist.Table.all, String (Key), Value);
+
+      elsif Value.Typ /= Key_Type then
+         raise Invalid_Key_Type;
+      end if;
+      return Value;
+   end Create_New_Key_If_Necessary;
 
    --------------------
    -- Set_Max_Length --
@@ -66,10 +143,8 @@ package body Histories is
       if Key = "" then
          Hist.Max_Length := Num;
       else
-         Current := Get (Hist.Table, String (Key));
-         if Current /= null then
-            Current.Max_Length := Num;
-         end if;
+         Current := Create_New_Key_If_Necessary (Hist, Key, Strings);
+         Current.Max_Length := Num;
       end if;
    end Set_Max_Length;
 
@@ -83,19 +158,18 @@ package body Histories is
       Allow       : Boolean;
       Merge_First : Boolean := False)
    is
-      Current : History_Key_Access := Get (Hist.Table, String (Key));
+      Current : History_Key_Access := Create_New_Key_If_Necessary
+        (Hist, Key, Strings);
    begin
-      if Current /= null then
-         Current.Allow_Duplicates := Allow;
-         Current.Merge_First := Merge_First;
-      end if;
+      Current.Allow_Duplicates := Allow;
+      Current.Merge_First := Merge_First;
    end Allow_Duplicates;
 
    ----------
    -- Load --
    ----------
 
-   procedure Load (Hist : out History_Record; File_Name : String) is
+   procedure Load (Hist : in out History_Record; File_Name : String) is
       N : Node_Ptr;
       File : Node_Ptr;
       Key  : Node_Ptr;
@@ -111,10 +185,12 @@ package body Histories is
          if Key.Attributes = null
            or else Get_Attribute (Key, "type") = "strings"
          then
-            Value := new History_Key_Record (Strings);
+            Value := Create_New_Key_If_Necessary
+              (Hist, History_Key (Key.Tag.all), Strings);
 
          elsif Get_Attribute (Key, "type") = "booleans" then
-            Value := new History_Key_Record (Booleans);
+            Value := Create_New_Key_If_Necessary
+              (Hist, History_Key (Key.Tag.all), Booleans);
 
          else
             Value := null;
@@ -168,8 +244,6 @@ package body Histories is
                      Value.Value := False;
                   end if;
             end case;
-
-            Set (Hist.Table, Key.Tag.all, Value);
          end if;
 
          Key := Key.Next;
@@ -194,7 +268,7 @@ package body Histories is
       File := new Node;
       File.Tag := new String'("History");
 
-      Get_First (Hist.Table, Iter);
+      Get_First (Hist.Table.all, Iter);
       loop
          Value := Get_Element (Iter);
          exit when Value = Null_History;
@@ -232,7 +306,7 @@ package body Histories is
 
          Add_Child (File, Key);
 
-         Get_Next (Hist.Table, Iter);
+         Get_Next (Hist.Table.all, Iter);
       end loop;
 
       Print (File, File_Name);
@@ -243,11 +317,21 @@ package body Histories is
    -- Free --
    ----------
 
+   procedure Free (Notifier : in out Changed_Notifier_Record) is
+      pragma Unreferenced (Notifier);
+   begin
+      null;
+   end Free;
+
+   ----------
+   -- Free --
+   ----------
+
    procedure Free (Hist : in out History_Record) is
       Iter : Iterator;
       Value : History_Key_Access;
    begin
-      Get_First (Hist.Table, Iter);
+      Get_First (Hist.Table.all, Iter);
       loop
          Value := Get_Element (Iter);
          exit when Value = Null_History;
@@ -257,11 +341,17 @@ package body Histories is
             when Booleans => null;
          end case;
 
+         if Value.Notifier /= null then
+            Free (Value.Notifier.all);
+            Unchecked_Free (Value.Notifier);
+         end if;
+
          Unchecked_Free (Value);
 
-         Get_Next (Hist.Table, Iter);
+         Get_Next (Hist.Table.all, Iter);
       end loop;
-      Reset (Hist.Table);
+      Reset (Hist.Table.all);
+      Unchecked_Free (Hist.Table);
    end Free;
 
    -----------------
@@ -272,13 +362,10 @@ package body Histories is
      (Hist : History_Record; Key : History_Key)
       return GNAT.OS_Lib.String_List_Access
    is
-      Val : constant History_Key_Access := Get (Hist.Table, String (Key));
+      Val : constant History_Key_Access := Create_New_Key_If_Necessary
+        (Hist, Key, Strings);
    begin
-      if Val /= null then
-         return Get (Hist.Table, String (Key)).List;
-      else
-         return null;
-      end if;
+      return Val.List;
    end Get_History;
 
    -----------------
@@ -336,14 +423,15 @@ package body Histories is
    is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (String_List, String_List_Access);
-      Value : History_Key_Access := Get (Hist.Table, String (Key));
+      Value : History_Key_Access := Create_New_Key_If_Necessary
+        (Hist, Key, Strings);
       Tmp   : String_Access;
       Tmp2  : String_List_Access;
    begin
-      if Value /= Null_History then
-         --  Is this item already in the table ? We do not need to check, if
-         --  duplicates are allowed.
+      --  Is this item already in the table ? We do not need to check, if
+      --  duplicates are allowed.
 
+      if Value.List /= null then
          if not Value.Allow_Duplicates then
             for V in Value.List'Range loop
                if Value.List (V).all = New_Entry then
@@ -351,8 +439,6 @@ package body Histories is
                   Value.List (Value.List'First + 1 .. V) :=
                     Value.List (Value.List'First .. V - 1);
                   Value.List (Value.List'First) := Tmp;
-
-                  Set (Hist.Table, String (Key), Value);
                   return;
                end if;
             end loop;
@@ -375,26 +461,21 @@ package body Histories is
             Value.List (Value.List'First + 1 .. Value.List'Last) :=
               Value.List (Value.List'First .. Value.List'Last - 1);
             Value.List (Value.List'First) := new String'(New_Entry);
-
-            Set (Hist.Table, String (Key), Value);
-            return;
+         else
+            --  Insert the element in the table
+            Tmp2 := new String_List (1 .. Value.List'Length + 1);
+            Tmp2 (2 .. Tmp2'Last) := Value.List.all;
+            Unchecked_Free (Value.List);
+            Tmp2 (Tmp2'First) := new String'(New_Entry);
+            Value.List := Tmp2;
          end if;
 
-         --  Insert the element in the table
-         Tmp2 := new String_List (1 .. Value.List'Length + 1);
-         Tmp2 (2 .. Tmp2'Last) := Value.List.all;
-         Unchecked_Free (Value.List);
-         Tmp2 (Tmp2'First) := new String'(New_Entry);
-         Value.List := Tmp2;
+         if Value.Notifier /= null then
+            On_Changed (Value.Notifier, Hist, Key);
+         end if;
 
       else
-         Value := new History_Key_Record'
-           (Typ              => Strings,
-            List             => new String_List'(1 => new String'(New_Entry)),
-            Max_Length       => -1,
-            Allow_Duplicates => False,
-            Merge_First      => True);
-         Set (Hist.Table, String (Key), Value);
+         Value.List := new String_List'(1 => new String'(New_Entry));
       end if;
    end Add_To_History;
 
@@ -417,15 +498,13 @@ package body Histories is
       Key       : History_Key;
       Value     : Boolean)
    is
-      Val : History_Key_Access := Get (Hist.Table, String (Key));
+      Val : History_Key_Access := Create_New_Key_If_Necessary
+        (Hist, Key, Booleans);
    begin
-      if Val = Null_History then
-         Val := new History_Key_Record'
-           (Typ   => Booleans,
-            Value => Value);
-         Set (Hist.Table, String (Key), Val);
-      else
-         Val.Value := Value;
+      Val.Value := Value;
+
+      if Val.Notifier /= null then
+         On_Changed (Val.Notifier, Hist, Key);
       end if;
    end Set_History;
 
@@ -437,13 +516,10 @@ package body Histories is
      (Hist      : History_Record;
       Key       : History_Key) return Boolean
    is
-      Val : constant History_Key_Access := Get (Hist.Table, String (Key));
+      Val : constant History_Key_Access := Create_New_Key_If_Necessary
+        (Hist, Key, Booleans);
    begin
-      if Val = null then
-         return False;
-      else
-         return Val.Value;
-      end if;
+      return Val.Value;
    end Get_History;
 
    --------------------
@@ -477,14 +553,9 @@ package body Histories is
       Key       : History_Key;
       Button    : access Gtk.Toggle_Button.Gtk_Toggle_Button_Record'Class)
    is
-      Val : History_Key_Access := Get (Hist.Table, String (Key));
+      Val : constant History_Key_Access := Create_New_Key_If_Necessary
+        (Hist, Key, Booleans);
    begin
-      --  This call is needed to ensure that Val is created and not null
-      if Val = null then
-         Set_History (Hist, Key, False);
-         Val := Get (Hist.Table, String (Key));
-      end if;
-
       Set_Active (Button, Val.Value);
       Value_Callback.Connect
         (Button, "toggled",
@@ -501,20 +572,128 @@ package body Histories is
       Key  : History_Key;
       Item : access Gtk.Check_Menu_Item.Gtk_Check_Menu_Item_Record'Class)
    is
-      Val : History_Key_Access := Get (Hist.Table, String (Key));
+      Val : constant History_Key_Access := Create_New_Key_If_Necessary
+        (Hist, Key, Booleans);
    begin
-      --  This call is needed to ensure that Val is created and not null
-      if Val = null then
-         Set_History (Hist, Key, False);
-         Val := Get (Hist.Table, String (Key));
-      end if;
-
       Set_Active (Item, Val.Value);
       Value_Callback.Connect
         (Item, "toggled",
          Value_Callback.To_Marshaller (Update_History_Item'Access),
          User_Data => Val);
    end Associate;
+
+   ---------------
+   -- Associate --
+   ---------------
+
+   procedure Associate
+     (Hist      : in out History_Record;
+      Key       : History_Key;
+      Menu      : access Gtk.Menu_Item.Gtk_Menu_Item_Record'Class;
+      Callback  : Menu_Callback)
+   is
+      Val : History_Key_Access := Create_New_Key_If_Necessary
+        (Hist, Key, Strings);
+      Notifier : Menu_Changed_Notifier := new Menu_Changed_Notifier_Record;
+   begin
+      Notifier.Menu     := Gtk_Menu_Item (Menu);
+      Notifier.Callback := Callback;
+      Notifier.Data     := Val;
+      Val.Notifier      := Changed_Notifier (Notifier);
+
+      Notifier_Callback.Connect
+        (Menu, "destroy",
+         Notifier_Callback.To_Marshaller (On_Menu_Destroy'Access),
+         Changed_Notifier (Notifier));
+      On_Changed (Notifier, Hist, Key);
+   end Associate;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Callback : in out Menu_Callback_Record) is
+      pragma Unreferenced (Callback);
+   begin
+      null;
+   end Free;
+
+   ---------------------
+   -- On_Menu_Destroy --
+   ---------------------
+
+   procedure On_Menu_Destroy
+     (Menu     : access Gtk_Widget_Record'Class;
+      Notifier : Changed_Notifier)
+   is
+      pragma Unreferenced (Menu);
+      Notif : constant Menu_Changed_Notifier :=
+        Menu_Changed_Notifier (Notifier);
+      Changed_Notif : Changed_Notifier := Changed_Notifier (Notif);
+   begin
+      Free (Notif.Callback.all);
+      Unchecked_Free (Notif.Callback);
+      Notif.Data.Notifier := null;
+      Free (Notif.all);
+      Unchecked_Free (Changed_Notif);
+   end On_Menu_Destroy;
+
+   ----------------------
+   -- On_Menu_Selected --
+   ----------------------
+
+   procedure On_Menu_Selected
+     (Menu_Item : access Gtk_Widget_Record'Class;
+      Notifier  : Changed_Notifier)
+   is
+      Notif : constant Menu_Changed_Notifier :=
+        Menu_Changed_Notifier (Notifier);
+   begin
+      Activate (Notif.Callback, Get_Path (Full_Path_Menu_Item (Menu_Item)));
+   end On_Menu_Selected;
+
+   ----------------
+   -- On_Changed --
+   ----------------
+
+   procedure On_Changed
+     (Notifier : access Menu_Changed_Notifier_Record;
+      Hist     : in out History_Record;
+      Key      : History_Key)
+   is
+      Value : constant String_List_Access := Create_New_Key_If_Necessary
+        (Hist, Key, Strings).List;
+      Menu  : Gtk_Menu;
+   begin
+      if Get_Submenu (Notifier.Menu) /= null then
+         Remove_Submenu (Notifier.Menu);
+      end if;
+
+      Gtk_New (Menu);
+      Set_Submenu (Notifier.Menu, Gtk_Widget (Menu));
+
+      if Value /= null then
+         for V in Value'Range loop
+            declare
+               Path  : constant String := Value (V).all;
+               Mitem : Full_Path_Menu_Item;
+            begin
+               Gtk_New (Mitem, Shorten (Path), Path);
+               Append (Menu, Mitem);
+
+               if Notifier.Callback /= null then
+                  Notifier_Callback.Connect
+                    (Mitem,
+                     "activate",
+                     Notifier_Callback.To_Marshaller (On_Menu_Selected'Access),
+                     Changed_Notifier (Notifier));
+               end if;
+            end;
+         end loop;
+
+         Show_All (Menu);
+      end if;
+   end On_Changed;
 
 end Histories;
 

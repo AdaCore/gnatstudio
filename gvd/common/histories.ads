@@ -28,6 +28,7 @@ with GNAT.OS_Lib;
 with Gtk.Check_Menu_Item;
 with Gtk.Combo;
 with Gtk.Toggle_Button;
+with Gtk.Menu_Item;
 with String_Hash;
 
 package Histories is
@@ -36,8 +37,9 @@ package Histories is
    type History is access History_Record;
 
    type History_Key is new String;
+   type History_Key_Type is (Strings, Booleans);
 
-   procedure Load (Hist : out History_Record; File_Name : String);
+   procedure Load (Hist : in out History_Record; File_Name : String);
    --  Load Hist from file File_Name
 
    procedure Save (Hist : in out History_Record; File_Name : String);
@@ -46,6 +48,18 @@ package Histories is
    procedure Free (Hist : in out History_Record);
    --  Free the memory used by Hist. Get_History will return empty results
    --  afterwards.
+
+   procedure Create_New_Key_If_Necessary
+     (Hist     : in out History_Record;
+      Key      : History_Key;
+      Key_Type : History_Key_Type);
+   --  Make sure that a key with the appropriate type exists.
+   --  If a key with the same name but a wrong type exists, a Invalid_Key_Type
+   --  is raised.
+   --  Calling this procedure is not mandatory. By default, keys are created
+   --  with the appropriate type the first time some data is stored.
+
+   Invalid_Key_Type : exception;
 
    ---------------------
    -- List of strings --
@@ -101,6 +115,28 @@ package Histories is
    --  If New_Entry is already in the history, it is not added a second time,
    --  but moved into first position.
 
+   type Menu_Callback_Record is abstract tagged null record;
+   type Menu_Callback is access all Menu_Callback_Record'Class;
+   procedure Activate
+     (Callback : access Menu_Callback_Record; Item : String) is abstract;
+   --  Called by the menu entries created by Associate below. User-data should
+   --  be stored in Callback directly.
+
+   procedure Free (Callback : in out Menu_Callback_Record);
+   --  Called when the menu associated with callback is destroyed
+
+   procedure Associate
+     (Hist      : in out History_Record;
+      Key       : History_Key;
+      Menu      : access Gtk.Menu_Item.Gtk_Menu_Item_Record'Class;
+      Callback  : Menu_Callback);
+   --  Associate the menu with Key.
+   --  Every time some entry is added to Key, a corresponding entry is added to
+   --  the submenu of Menu. Callback is set for all these new entries.
+   --  Entries in this submenu are shorten if required (see
+   --  GUI_Utils.Full_Path_Menu_Item).
+   --  Callback is automatically freed when the menu is destroyed.
+
    --------------
    -- Booleans --
    --------------
@@ -133,9 +169,17 @@ package Histories is
 
 private
 
-   type History_Key_Type is (Strings, Booleans);
+   type Changed_Notifier_Record is abstract tagged limited null record;
+   type Changed_Notifier is access all Changed_Notifier_Record'Class;
+   procedure On_Changed
+     (Notifier : access Changed_Notifier_Record;
+      Hist     : in out History_Record;
+      Key      : History_Key) is abstract;
+   procedure Free (Notifier : in out Changed_Notifier_Record);
 
    type History_Key_Record (Typ : History_Key_Type := Strings) is record
+      Notifier : Changed_Notifier;
+
       case Typ is
          when Strings =>
             List             : GNAT.OS_Lib.String_List_Access;
@@ -147,7 +191,7 @@ private
             Merge_First      : Boolean := True;
 
          when Booleans =>
-            Value : Boolean;
+            Value : Boolean := False;
       end case;
    end record;
 
@@ -162,10 +206,11 @@ private
      (Data_Type    => History_Key_Access,
       Free_Data    => No_Free,
       Null_Ptr     => Null_History);
+   type HTable_Access is access History_Hash.String_Hash_Table.HTable;
 
    type History_Record is record
       Max_Length : Positive := Positive'Last;
-      Table      : History_Hash.String_Hash_Table.HTable;
+      Table      : HTable_Access := new History_Hash.String_Hash_Table.HTable;
    end record;
 
 end Histories;
