@@ -442,6 +442,9 @@ package body Codefix.Formal_Errors is
       --  Add a pragma after the declaration or, if there is no declaration,
       --  after the body.
 
+      function Add_Literal_Pragma return Add_Pragma_Cmd;
+      --  Add a pragma after the declaration of the current type.
+
       function Add_Parameter_Pragma return Add_Pragma_Cmd;
       --  Add a pragma after the 'is' of the subprogram
 
@@ -471,6 +474,30 @@ package body Codefix.Formal_Errors is
          Free (New_Position);
          return New_Command;
       end Add_Pragma;
+
+      ------------------------
+      -- Add_Literal_Pragma --
+      ------------------------
+
+      function Add_Literal_Pragma return Add_Pragma_Cmd is
+         New_Command  : Add_Pragma_Cmd;
+         New_Position : File_Cursor;
+         Declaration  : Construct_Information;
+      begin
+         Declaration := Get_Unit (Current_Text, Cursor, Before, Cat_Type);
+         New_Position.Line := Declaration.Sloc_End.Line;
+         New_Position.Col  := Declaration.Sloc_End.Column;
+         Assign (New_Position.File_Name, Cursor.File_Name);
+
+         if New_Position.Col = 0 then
+            New_Position.Col := 1;
+         end if;
+
+         Initialize
+           (New_Command, Current_Text, New_Position, "Unreferenced", Name);
+         Free (New_Position);
+         return New_Command;
+      end Add_Literal_Pragma;
 
       --------------------------
       -- Add_Parameter_Pragma --
@@ -521,9 +548,7 @@ package body Codefix.Formal_Errors is
                  (File_Cursor (Cursor) with new String'(Name), Text_Ascii);
             begin
                Add_To_Remove (New_Command, Current_Text, Var_Cursor);
-               Set_Caption
-                 (New_Command,
-                  "Delete variable """ & Name & """");
+               Set_Caption (New_Command, "Delete """ & Name & """");
                Append (Result, New_Command);
             end;
 
@@ -563,15 +588,25 @@ package body Codefix.Formal_Errors is
                Append (Result, Pragma_Command);
             end;
 
-         when Cat_Local_Variable =>
+         when Cat_Literal =>
+            declare
+               Pragma_Command : Add_Pragma_Cmd;
+            begin
+               Pragma_Command := Add_Literal_Pragma;
+               Set_Caption
+                 (Pragma_Command,
+                  "Add pragma Unreferenced to literal """ & Name & """");
+               Append (Result, Pragma_Command);
+            end;
+
+         when Cat_Parameter =>
             declare
                New_Command : Add_Pragma_Cmd;
             begin
                New_Command := Add_Parameter_Pragma;
                Set_Caption
                  (New_Command,
-                  "Add pragma Unreferenced to formal parameter """
-                    & Name & """");
+                  "Add pragma Unreferenced to parameter """ & Name & """");
                Append (Result, New_Command);
             end;
 
