@@ -11,6 +11,10 @@ package Src_Info is
    No_LI_File : constant LI_File_Ptr;
    --  A null LI_File_Ptr.
 
+   function Is_Incomplete (Source_Info : LI_File_Ptr) return Boolean;
+   --  Return True if the given Source_Info has not be built from reading
+   --  the corresponding ALI file.
+
    type LI_File_List is private;
    --  A list of LI_File_Ptr.
 
