@@ -95,7 +95,11 @@ package body Codefix.GPS_Io is
    procedure Free (This : in out Console_Interface) is
    begin
       Free (Text_Interface (This));
-      Free (This.Lines.all);
+
+      if This.Lines /= null then
+         Free (This.Lines.all);
+      end if;
+
       Free (This.Lines);
       Free (This.Lines_Number);
       Free (This.File_Modified);
@@ -185,9 +189,10 @@ package body Codefix.GPS_Io is
                & " -b 0"
                & " """ & New_Value & """"));
       end if;
-      --  ??? Be carefull !!! In New_Value, if there is any cote,
-      --  the command will be bad interpreted !!! Waiting to know the
-      --  escape character before fixing this bug.
+
+      --  ??? Should use new Interpret_Command procedure with a string_list
+      --  to avoid wrong cutting of parameters.
+
       Free (Garbage);
    end Replace;
 
@@ -259,10 +264,6 @@ package body Codefix.GPS_Io is
 
    function Read_File (This : Console_Interface) return Dynamic_String is
    begin
-
-      Put_Line (Find_Source_File
-                  (This.Kernel, Get_File_Name (This))); --  ??? Debug ?
-
       return new String'
         (Interpret_Command
            (This.Kernel, "get_buffer " & Find_Source_File
