@@ -62,22 +62,19 @@ package body Src_Editor_Module is
 
    Me : Debug_Handle := Create ("Src_Editor_Module");
 
+   type Source_Editor_Module_Record is new Module_ID_Record with record
+      Reopen_Menu_Item : Gtk_Menu_Item;
+      List             : String_List_Utils.String_List.List;
+   end record;
+   type Source_Editor_Module is access all Source_Editor_Module_Record'Class;
+
    type Source_Box_Record is new Gtk_Hbox_Record with record
       Editor : Source_Editor_Box;
    end record;
    type Source_Box is access all Source_Box_Record'Class;
 
-   type Reopen_Record is record
-      Reopen_Menu_Item : Gtk_Menu_Item;
-      List             : String_List_Utils.String_List.List;
-   end record;
-
    Max_Number_Of_Reopens : constant Integer := 10;
    --  ??? should we have a preference for that ?
-
-   package Reopen_User_Data is new Glib.Object.User_Data (Reopen_Record);
-
-   Reopen_User_Data_Id : constant String := Src_Editor_Module_Name & "/Reopen";
 
    function Generate_Body_Timeout (Data : Process_Data) return Boolean;
    --  Callback for Process_Timeout, to handle gnatstub execution
@@ -621,16 +618,16 @@ package body Src_Editor_Module is
          declare
             use String_List_Utils.String_List;
 
-            The_Data         : Reopen_Record;
             Reopen_File_Name : constant String :=
               Format_Pathname (Get_Home_Dir (Kernel) & "/recent_files");
             Reopen_File      : File_Type;
             Counter          : Integer := 0;
             Node             : List_Node;
+            The_Data         : Source_Editor_Module :=
+              Source_Editor_Module (Src_Editor_Module_Id);
 
          begin
-            The_Data := Reopen_User_Data.Get (Kernel, Reopen_User_Data_Id);
-            Node :=  First (The_Data.List);
+            Node := First (The_Data.List);
 
             while Node /= Null_Node loop
                Counter := Counter + 1;
@@ -646,15 +643,14 @@ package body Src_Editor_Module is
             if Counter >= 0
               and then Node = Null_Node
             then
-               Append (The_Data.List, File);
+               Prepend (The_Data.List, File);
 
                if Counter >= Max_Number_Of_Reopens then
                   Next (The_Data.List);
                end if;
 
-               Reopen_User_Data.Set (Kernel, The_Data, Reopen_User_Data_Id);
                Open (Reopen_File, Out_File, Reopen_File_Name);
-               Node :=  First (The_Data.List);
+               Node := First (The_Data.List);
 
                while Node /= Null_Node loop
                   Put_Line (Reopen_File, Data (Node));
@@ -1378,9 +1374,9 @@ package body Src_Editor_Module is
       Reopen_File : File_Type;
       Buffer      : String (1 .. 1024);
       Last        : Integer := 1;
-      Reopen_Data : Reopen_Record;
 
    begin
+      Src_Editor_Module_Id := new Source_Editor_Module_Record;
       Register_Module
         (Module                  => Src_Editor_Module_Id,
          Kernel                  => Kernel,
@@ -1399,10 +1395,10 @@ package body Src_Editor_Module is
       Register_Menu (Kernel, File, -"Open...",  Stock_Open,
                      On_Open_File'Access, GDK_F3, Ref_Item => -"Save");
 
-      Reopen_Data.Reopen_Menu_Item := Register_Menu
-        (Kernel, File, -"Reopen", "", null,
-         Ref_Item   => -"Open...",
-         Add_Before => False);
+      Source_Editor_Module (Src_Editor_Module_Id).Reopen_Menu_Item :=
+        Register_Menu (Kernel, File, -"Reopen", "", null,
+                       Ref_Item   => -"Open...",
+                       Add_Before => False);
 
       if not Is_Regular_File (Reopen_File_Name) then
          declare
@@ -1421,11 +1417,11 @@ package body Src_Editor_Module is
          Get_Line (Reopen_File, Buffer, Last);
 
          String_List_Utils.String_List.Append
-           (Reopen_Data.List, Buffer (1 .. Last));
+           (Source_Editor_Module (Src_Editor_Module_Id).List,
+            Buffer (1 .. Last));
       end loop;
 
       Close (Reopen_File);
-      Reopen_User_Data.Set (Kernel,  Reopen_Data, Reopen_User_Data_Id);
       Refresh_Reopen_Menu (Kernel);
 
       Register_Menu (Kernel, File, -"New", Stock_New, On_New_File'Access,
@@ -1550,13 +1546,12 @@ package body Src_Editor_Module is
    is
       use String_List_Utils.String_List;
 
-      The_Data    : Reopen_Record;
+      The_Data    : Source_Editor_Module :=
+        Source_Editor_Module (Src_Editor_Module_Id);
       Node        : List_Node;
       Reopen_Menu : Gtk_Menu;
       Mitem       : Gtk_Menu_Item;
    begin
-      The_Data := Reopen_User_Data.Get (Kernel, Reopen_User_Data_Id);
-
       if Get_Submenu (The_Data.Reopen_Menu_Item) /= null then
          Remove_Submenu (The_Data.Reopen_Menu_Item);
       end if;
@@ -1568,7 +1563,7 @@ package body Src_Editor_Module is
 
       while Node /= Null_Node loop
          Gtk_New (Mitem, Data (Node));
-         Append (Reopen_Menu, Mitem);
+         Prepend (Reopen_Menu, Mitem);
 
          Kernel_Callback.Connect
            (Mitem,
