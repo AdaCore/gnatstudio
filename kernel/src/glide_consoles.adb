@@ -20,6 +20,7 @@
 
 with Glib;                 use Glib;
 with Gdk.Color;            use Gdk.Color;
+with Gtk.Adjustment;       use Gtk.Adjustment;
 with Gtk.Enums;            use Gtk.Enums;
 with Gtk.Scrolled_Window;  use Gtk.Scrolled_Window;
 with Gtk.Text;             use Gtk.Text;
@@ -118,6 +119,8 @@ package body Glide_Consoles is
       Color     : Gdk_Color;
 
    begin
+      Freeze (Console.Text);
+
       if Mode = Error then
          Color := Parse (Highlight_Error);
       else
@@ -134,21 +137,23 @@ package body Glide_Consoles is
          declare
             Matched   : Match_Array (0 .. 3);
             File      : constant Pattern_Matcher :=
-              Compile ("([^:]*):(\d+):(\d+:)?");
+              Compile ("^([^:]+):(\d+):(\d+:)?", Multiple_Lines);
             Highlight : Gdk_Color;
-            Last      : Natural;
+            Start : Natural := New_Text'First;
+            Last : Natural;
 
          begin
-            Match (File, New_Text.all, Matched);
+            Highlight := Parse (Highlight_File);
+            Alloc (Get_Default_Colormap, Highlight);
 
-            if Matched (0) /= No_Match then
-               Highlight := Parse (Highlight_File);
-               Alloc (Get_Default_Colormap, Highlight);
+            while Start <= New_Text'Last loop
+               Match (File, New_Text (Start .. New_Text'Last), Matched);
+               exit when Matched (0) = No_Match;
 
                Insert
                  (Console.Text,
                   Fore  => Color,
-                  Chars => New_Text (New_Text'First .. Matched (1).First - 1));
+                  Chars => New_Text (Start .. Matched (1).First - 1));
 
                if Matched (3) = No_Match then
                   Last := Matched (2).Last;
@@ -160,21 +165,36 @@ package body Glide_Consoles is
                  (Console.Text,
                   Fore => Highlight,
                   Chars => New_Text (Matched (1).First .. Last));
+               Start := Last + 1;
+            end loop;
+
+            if Start <= New_Text'Last then
                Insert
                  (Console.Text,
                   Fore  => Color,
-                  Chars => New_Text (Last + 1 .. New_Text'Last));
-
-               Free (New_Text);
-               return;
+                  Chars => New_Text (Start .. New_Text'Last));
             end if;
          end;
+
+      else
+         Insert (Console.Text, Fore  => Color, Chars => New_Text.all);
       end if;
 
-      Insert (Console.Text, Fore  => Color, Chars => New_Text.all);
       Free (New_Text);
 
-      Trace (Me, Text);
+      if Mode = Error then
+         Trace (Me, Text);
+      end if;
+
+      Thaw (Console.Text);
+
+      --  Force a scroll of the text widget. This speeds things up a lot for
+      --  programs that output a lot of things, since its takes a very long
+      --  time for the text widget to scroll smoothly otherwise (lots of
+      --  events...)
+      Set_Value (Get_Vadj (Console.Text),
+                 Get_Upper (Get_Vadj (Console.Text)) -
+                   Get_Page_Size (Get_Vadj (Console.Text)));
    end Insert;
 
    -----------------------
