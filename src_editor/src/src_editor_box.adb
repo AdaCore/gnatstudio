@@ -1541,34 +1541,44 @@ package body Src_Editor_Box is
             Place_Cursor (Editor.Source_Buffer, Start_Iter);
 
             if Has_Entity_Name_Information (Context) then
-               declare
-                  Name : constant String :=
-                    Krunch (Entity_Name_Information (Context));
-               begin
-                  Gtk_New (Item, -"Goto declaration of " & Name);
-                  Add (Menu, Item);
-                  Context_Callback.Object_Connect
-                    (Item, "activate",
-                     Context_Callback.To_Marshaller
-                     (On_Goto_Declaration'Access),
-                     User_Data   => Selection_Context_Access (Context),
-                     Slot_Object => Editor,
-                     After       => True);
+               Push_State (Get_Kernel (Context), Busy);
 
-                  if Is_Subprogram (Get_Entity (Context)) then
-                     Gtk_New (Item, -"Goto body of " & Name);
-                  else
-                     Gtk_New (Item, -"Goto full declaration of " & Name);
+               declare
+                  Name   : constant String :=
+                    Krunch (Entity_Name_Information (Context));
+                  Entity : constant Src_Info.Queries.Entity_Information :=
+                    Get_Entity (Context);
+
+               begin
+                  if Entity /= No_Entity_Information then
+                     Gtk_New (Item, -"Goto declaration of " & Name);
+                     Add (Menu, Item);
+                     Context_Callback.Object_Connect
+                       (Item, "activate",
+                        Context_Callback.To_Marshaller
+                          (On_Goto_Declaration'Access),
+                        User_Data   => Selection_Context_Access (Context),
+                        Slot_Object => Editor,
+                        After       => True);
+
+                     if Is_Subprogram (Entity) then
+                        Gtk_New (Item, -"Goto body of " & Name);
+                     else
+                        Gtk_New (Item, -"Goto full declaration of " & Name);
+                     end if;
+
+                     Add (Menu, Item);
+                     Context_Callback.Object_Connect
+                       (Item, "activate",
+                        Context_Callback.To_Marshaller
+                          (On_Goto_Next_Body'Access),
+                        User_Data   => Selection_Context_Access (Context),
+                        Slot_Object => Editor,
+                        After       => True);
                   end if;
-                  Add (Menu, Item);
-                  Context_Callback.Object_Connect
-                    (Item, "activate",
-                     Context_Callback.To_Marshaller
-                     (On_Goto_Next_Body'Access),
-                     User_Data   => Selection_Context_Access (Context),
-                     Slot_Object => Editor,
-                     After       => True);
                end;
+
+               Pop_State (Get_Kernel (Context));
             end if;
 
             Gtk_New (Item, -"Goto file spec/body");
