@@ -655,6 +655,8 @@ of breakpoints is recommended instead to stop programs.
    A contextual menu, taking into account the current component pointed
    by the mouse, gives access to the following capabilities:
    @itemize @bullet
+     @item Close @i{component}
+
      @item Hide all @i{component}
      @item Show all @i{component}
 
@@ -665,6 +667,8 @@ of breakpoints is recommended instead to stop programs.
      @item Show Value
      @item Show Type
      @item Show Value+Type
+
+     @item Enable/Disable automatic refreshing of @i{component}
    @end itemize
 
    Colors convey special meaning in the canvas. The default color (can be
