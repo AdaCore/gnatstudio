@@ -42,6 +42,8 @@ with Gtkada.Types; use Gtkada.Types;
 
 with Row_Data; use Row_Data;
 
+with Glide_Intl; use Glide_Intl;
+
 package body Make_Suite_Window_Pkg.Callbacks is
    use Gtk.Arguments;
 
@@ -137,11 +139,19 @@ package body Make_Suite_Window_Pkg.Callbacks is
       Suite_Window : constant Make_Suite_Window_Access :=
         Make_Suite_Window_Access (Get_Toplevel (Object));
 
-      Filter_A : Filter_Show_All_Access := new Filter_Show_All;
-      Filter_B : Filter_Show_Ada_Access := new Filter_Show_Ada;
-      Filter_C : Filter_Show_Tests_Access := new Filter_Show_Tests;
+      Filter_A : Filter_Show_All_Access;
+      Filter_B : Filter_Show_Ada_Access;
+      Filter_C : Filter_Show_Tests_Access;
    begin
       if Suite_Window.Explorer = null then
+         Filter_A := new Filter_Show_All;
+         Filter_B := new Filter_Show_Ada;
+         Filter_C := new Filter_Show_Tests;
+
+         Filter_A.Label := new String' (-"All files");
+         Filter_B.Label := new String' (-"Ada files");
+         Filter_C.Label := new String' (-"Suite and test files");
+
          Gtk_New (Suite_Window.Explorer, "/", "", "Select test suite");
          Create_From_Xpm_D
            (Filter_C.Suite_Pixmap,
