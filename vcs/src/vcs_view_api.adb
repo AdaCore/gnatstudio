@@ -2345,6 +2345,7 @@ package body VCS_View_API is
 
    procedure Display_Editor_Status
      (Kernel : access Kernel_Handle_Record'Class;
+      Ref    : VCS_Access;
       Status : File_Status_Record)
    is
       Status_Label   : String_Access;
@@ -2352,21 +2353,29 @@ package body VCS_View_API is
 
       use String_List_Utils.String_List;
    begin
-      Status_Label := new String'
-        (-"VCS Status:" & (-To_Lower (File_Status'Image (Status.Status))));
+      if Ref = null then
+         return;
+      end if;
+
+      if Status.Status /= Unknown then
+         Status_Label := new String'
+           (" (" & (-To_Lower (File_Status'Image (Status.Status))) & ")");
+      else
+         Status_Label := new String'("");
+      end if;
 
       if not Is_Empty (Status.Working_Revision) then
          Revision_Label := new String'
-           (-" - (rev: " & Head (Status.Working_Revision) & ")");
+           (Name (Ref) & ":" & Head (Status.Working_Revision));
       else
-         Revision_Label := new String'("");
+         Revision_Label := new String'(Name (Ref));
       end if;
 
       Add_Editor_Label
         (Kernel,
          Head (Status.File_Name),
          VCS_Module_Name,
-         Status_Label.all & Revision_Label.all);
+         Revision_Label.all & Status_Label.all);
 
       Free (Status_Label);
       Free (Revision_Label);
