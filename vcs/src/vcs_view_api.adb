@@ -852,12 +852,6 @@ package body VCS_View_API is
       Commit_Command     : Commit_Command_Access;
       Get_Status_Command : Get_Status_Command_Access;
 
-      File_Command       : String_List.List;
-      File_Args          : String_List.List;
-      Log_Command        : String_List.List;
-      Log_Args           : String_List.List;
-      Head_List          : String_List.List;
-
       Project            : Project_Id;
 
       Child              : MDI_Child;
@@ -890,13 +884,12 @@ package body VCS_View_API is
       --  Create the Get_Status command.
       Create (Get_Status_Command, Ref, Files);
 
+      --  The Get_Status command is a consequence of the Commit command.
       Add_Consequence_Action
         (Command_Access (Commit_Command),
          Command_Access (Get_Status_Command));
 
-      First_Check := Command_Access (Commit_Command);
-
-      --  Create the file checks.
+      --  Create the file checks and the log checks.
       Files_Temp := First (Files);
 
       while Files_Temp /= Null_Node loop
@@ -911,71 +904,74 @@ package body VCS_View_API is
                  (Project, Vcs_Log_Check, Ide_Package);
                Log_File  : constant String :=
                  Get_Log_From_File (Kernel, Data (Files_Temp));
+               File_Args         : String_List.List;
+               Log_Args          : String_List.List;
+               Head_List         : String_List.List;
             begin
                if File_Check_Script /= "" then
-                  Append (File_Command, File_Check_Script);
                   Append (File_Args, Data (Files_Temp));
+
+                  Create (File_Checks,
+                          Kernel,
+                          File_Check_Script,
+                          "",
+                          File_Args,
+                          Null_List,
+                          Check_Handler'Access);
+
+                  if First_Check = null then
+                     First_Check := Command_Access (File_Checks);
+                  else
+                     Add_Consequence_Action (Last_Check, File_Checks);
+                  end if;
+
+                  Last_Check := Command_Access (File_Checks);
                end if;
 
                if Log_Check_Script /= "" then
-                  Append (Log_Command, Log_Check_Script);
                   Append (Log_Args, Log_File);
                   Append
                     (Head_List, -"File: " & Head (Files) & ASCII.LF
                      & (-"The changelog provided does not pass the checks."));
+
+                  Create
+                    (Log_Checks,
+                     Kernel,
+                     Log_Check_Script,
+                     "",
+                     Log_Args,
+                     Head_List,
+                     Check_Handler'Access);
+
+                  if First_Check = null then
+                     First_Check := Command_Access (Log_Checks);
+                  else
+                     Add_Consequence_Action (Last_Check, Log_Checks);
+                  end if;
+
+                  Last_Check := Command_Access (Log_Checks);
                end if;
+
+               Free (File_Args);
+               Free (Log_Args);
+               Free (Head_List);
             end;
          end if;
 
          Files_Temp := Next (Files_Temp);
       end loop;
 
-      if File_Command /= Null_List then
-         Create (File_Checks,
-                 Kernel,
-                 File_Command,
-                 Null_List,
-                 File_Args,
-                 Null_List,
-                 Check_Handler'Access);
-         First_Check := Command_Access (File_Checks);
-         Last_Check  := Command_Access (File_Checks);
-      end if;
-
-      if Log_Command /= Null_List then
-         Create
-           (Log_Checks,
-            Kernel,
-            Log_Command,
-            Null_List,
-            Log_Args,
-            Head_List,
-            Check_Handler'Access);
-
-         Last_Check  := Command_Access (Log_Checks);
-
-         if File_Command /= Null_List then
-            --  Test all the logs after checking all the files
-            Add_Consequence_Action (File_Checks, Log_Checks);
-         else
-            First_Check := Command_Access (Log_Checks);
-         end if;
-      end if;
-
       --  Execute the commit command after the last file check or log check
       --  command.
       if Last_Check /= null then
          Add_Consequence_Action (Last_Check, Commit_Command);
+      else
+         First_Check := Command_Access (Commit_Command);
       end if;
 
       Enqueue (Get_Queue (Ref), First_Check);
 
       Free (Logs);
-      Free (File_Command);
-      Free (Log_Command);
-      Free (File_Args);
-      Free (Log_Args);
-      Free (Head_List);
    end Commit_Files;
 
    ---------------------
