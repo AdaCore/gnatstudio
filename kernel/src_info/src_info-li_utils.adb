@@ -494,7 +494,8 @@ package body Src_Info.LI_Utils is
       if Parent_Location = Invalid_Point then
          D_Ptr.Value.Declaration.Parent_Location := Null_File_Location;
       elsif Parent_Location = Predefined_Point then
-         D_Ptr.Value.Declaration.Parent_Location := Predefined_File_Location;
+         D_Ptr.Value.Declaration.Parent_Location :=
+           Predefined_Entity_Location;
       else
          --  Processing parent information
          if eq (Source_Filename, Parent_Filename) then
