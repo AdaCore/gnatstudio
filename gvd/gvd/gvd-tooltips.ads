@@ -141,22 +141,11 @@ private
       Return_Type => Boolean,
       User_Type   => Tooltips);
 
-   function Mouse_Moved_Cb
+   function Mouse_Event_Cb
      (Widget  : access Widget_Type'Class;
       Event   : Gdk.Event.Gdk_Event;
       Tooltip :  Tooltips) return Boolean;
-   --  Callback for motion_notify_event
-
-   function Mouse_Enter_Cb
-     (Widget  : access Widget_Type'Class;
-      Event   : Gdk.Event.Gdk_Event;
-      Tooltip :  Tooltips) return Boolean;
-   --  Callback for enter_notify_event
-
-   function Mouse_Leave_Cb
-     (Widget  : access Widget_Type'Class;
-      Event   : Gdk.Event.Gdk_Event;
-      Tooltip :  Tooltips) return Boolean;
-   --  Callback for leave_notify_event
+   --  Callback for all mouse events that will disable the tooltip
+   --  e.g: focus_in/focus_out/motion_notify/button_clicked
 
 end GVD.Tooltips;
