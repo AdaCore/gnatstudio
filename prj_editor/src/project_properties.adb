@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2002-2003                       --
+--                     Copyright (C) 2002-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -1276,7 +1276,6 @@ package body Project_Properties is
             Set_Environment (Vars, Saved_Values);
             Free (Saved_Values);
          end;
-
 
          --  Rename the project last, since we need to recompute the view
          --  immediately afterward before anything else can be done with the
