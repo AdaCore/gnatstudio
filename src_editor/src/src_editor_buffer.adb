@@ -325,10 +325,11 @@ package body Src_Editor_Buffer is
    --  The caller is responsible for freeing the returned value..
    --  The returned string is UTF8-encoded
 
-   function Get_First_Lines
-     (Buffer : Source_Buffer;
-      Line   : Editable_Line_Type) return GNAT.OS_Lib.String_Access;
-   --  Return the text up to line Line.
+   function Get_Buffer_Lines
+     (Buffer     : access Source_Buffer_Record'Class;
+      Start_Line : Editable_Line_Type;
+      End_Line   : Editable_Line_Type) return GNAT.OS_Lib.String_Access;
+   --  Return the text from Start_Line to End_Line, included.
 
    procedure Free_Column_Info
      (Column_Info : in out Columns_Config_Access);
@@ -337,6 +338,89 @@ package body Src_Editor_Buffer is
    procedure C_Free (S : Interfaces.C.Strings.chars_ptr);
    pragma Import (C, C_Free, "free");
    --  Binding to the C "free" function.
+
+   function Get_Slice
+     (Buffer       : Source_Buffer;
+      Start_Line   : Gint;
+      Start_Column : Gint;
+      End_Line     : Gint := -1;
+      End_Column   : Gint := -1) return String;
+   --  Return the text located between (Start_Line, Start_Column) and
+   --  (End_Line, End_Column). The first line is 0, the first column is 0
+   --  If End_Line = -1, contents are taken until the end of the buffer.
+   --
+   --  The text returned is UTF8-encoded.
+   --
+   --  The validity of both start and end positions must be verified before
+   --  invoking this function. An incorrect position will cause an
+   --  Assertion_Failure when compiled with assertion checks, or an undefined
+   --  behavior otherwise.
+
+   function Get_Slice
+     (Buffer       : Source_Buffer;
+      Start_Line   : Gint;
+      Start_Column : Gint;
+      End_Line     : Gint := -1;
+      End_Column   : Gint := -1) return Gtkada.Types.Chars_Ptr;
+   --  Same as above but return the C pointer directly for efficiency.
+   --  The caller is responsible for freeing the memory (with g_free).
+   --  The returned string is UTF8-encoded.
+
+   procedure Get_Selection_Bounds
+     (Buffer       : access Source_Buffer_Record;
+      Start_Line   : out Gint;
+      Start_Column : out Gint;
+      End_Line     : out Gint;
+      End_Column   : out Gint;
+      Found        : out Boolean);
+   --  If a portion of the buffer is currently selected, then return the
+   --  position of the beginning and the end of the selection. Otherwise,
+   --  Found is set to False and the positions returned both point to the
+   --  begining of the buffer.
+
+   procedure Insert
+     (Buffer      : access Source_Buffer_Record;
+      Line        : Gint;
+      Column      : Gint;
+      Text        : String;
+      Enable_Undo : Boolean := True);
+   --  Insert the given text in at the specified position.
+   --
+   --  The validity of the given position must be verified before invoking this
+   --  procedure. An incorrect position  will cause an Assertion_Failure when
+   --  compiled with assertion checks, or an undefined behavior
+   --  otherwise.
+   --  If Enable_Undo is True, then the insertion action will be
+   --  stored in the undo/redo queue.
+
+   procedure Replace_Slice
+     (Buffer       : access Source_Buffer_Record;
+      Start_Line   : Gint;
+      Start_Column : Gint;
+      End_Line     : Gint;
+      End_Column   : Gint;
+      Text         : String;
+      Enable_Undo  : Boolean := True);
+   --  Replace the text between the start and end positions by Text.
+   --
+   --  The validity of the given positions must be verified before invoking
+   --  this procedure. An incorrect position will cause an Assertion_Failure
+   --  when compiled with assertion checks, or an undefined behavior otherwise.
+
+   procedure Delete
+     (Buffer      : access Source_Buffer_Record;
+      Line        : Gint;
+      Column      : Gint;
+      Length      : Gint;
+      Enable_Undo : Boolean := True);
+   --  Delete Length caracters after the specified position.
+   --
+   --  The validity of the given position must be verified before invoking this
+   --  procedure. An incorrect position  will cause an Assertion_Failure when
+   --  compiled with assertion checks, or an undefined behavior
+   --  otherwise.
+   --  If Enable_Undo is True, then the deletion action will be
+   --  stored in the undo/redo queue.
 
    ----------------------
    -- Free_Column_Info --
@@ -445,26 +529,27 @@ package body Src_Editor_Buffer is
          return Result;
 
       else
-         return Get_First_Lines (Buffer, Buffer.Last_Editable_Line);
+         return Get_Buffer_Lines (Buffer, 1, Buffer.Last_Editable_Line);
       end if;
    end Get_String;
 
-   ---------------------
-   -- Get_First_Lines --
-   ---------------------
+   ----------------------
+   -- Get_Buffer_Lines --
+   ----------------------
 
-   function Get_First_Lines
-     (Buffer : Source_Buffer;
-      Line   : Editable_Line_Type) return GNAT.OS_Lib.String_Access
+   function Get_Buffer_Lines
+     (Buffer     : access Source_Buffer_Record'Class;
+      Start_Line : Editable_Line_Type;
+      End_Line   : Editable_Line_Type) return GNAT.OS_Lib.String_Access
    is
-      A      : array (Buffer.Editable_Lines'First .. Line) of Src_String;
+      A      : array (Start_Line .. End_Line) of Src_String;
       Len    : Integer := 0;
       Index  : Integer := 1;
       Output : GNAT.OS_Lib.String_Access;
 
    begin
       for J in A'Range loop
-         A (J) := Get_String (Buffer, Editable_Line_Type (J));
+         A (J) := Get_String (Source_Buffer (Buffer), Editable_Line_Type (J));
          Len := Len + A (J).Length;
       end loop;
 
@@ -491,7 +576,7 @@ package body Src_Editor_Buffer is
       Free (A (A'Last));
 
       return Output;
-   end Get_First_Lines;
+   end Get_Buffer_Lines;
 
    ------------------
    -- Check_Blocks --
@@ -2669,21 +2754,6 @@ package body Src_Editor_Buffer is
    end Get_Iter_At_Screen_Position;
 
    -------------------------
-   -- Set_Screen_Position --
-   -------------------------
-
-   procedure Set_Screen_Position
-     (Buffer  : access Source_Buffer_Record;
-      Line    : Gint;
-      Column  : Gint)
-   is
-      Start   : Gtk_Text_Iter;
-   begin
-      Get_Iter_At_Screen_Position (Buffer, Start, Line, Column);
-      Place_Cursor (Buffer, Start);
-   end Set_Screen_Position;
-
-   -------------------------
    -- Get_Screen_Position --
    -------------------------
 
@@ -2855,6 +2925,24 @@ package body Src_Editor_Buffer is
       end if;
    end Get_Selection_Bounds;
 
+   procedure Get_Selection_Bounds
+     (Buffer       : access Source_Buffer_Record;
+      Start_Line   : out Editable_Line_Type;
+      Start_Column : out Natural;
+      End_Line     : out Editable_Line_Type;
+      End_Column   : out Natural;
+      Found        : out Boolean)
+   is
+      SL, SC, EL, EC : Gint;
+   begin
+      Get_Selection_Bounds (Buffer, SL, SC, EL, EC, Found);
+
+      Start_Line := Get_Editable_Line (Buffer, Buffer_Line_Type (SL + 1));
+      End_Line := Get_Editable_Line (Buffer, Buffer_Line_Type (EL + 1));
+      Start_Column := Natural (SC + 1);
+      End_Column   := Natural (EC + 1);
+   end Get_Selection_Bounds;
+
    -------------------
    -- Get_Selection --
    -------------------
@@ -2871,50 +2959,20 @@ package body Src_Editor_Buffer is
 
       if Found then
          return Get_Slice
-           (Buffer, Get_Line (Start_Iter), Get_Line_Offset (Start_Iter),
+           (Source_Buffer (Buffer),
+            Get_Line (Start_Iter), Get_Line_Offset (Start_Iter),
             Get_Line (End_Iter), Get_Line_Offset (End_Iter));
       else
          return "";
       end if;
    end Get_Selection;
 
-   ------------
-   -- Search --
-   ------------
-
-   procedure Search
-     (Buffer             : access Source_Buffer_Record;
-      Pattern            : String;
-      Case_Sensitive     : Boolean := True;
-      Whole_Word         : Boolean := False;
-      Search_Forward     : Boolean := True;
-      From_Line          : Gint := 0;
-      From_Column        : Gint := 0;
-      Found              : out Boolean;
-      Match_Start_Line   : out Gint;
-      Match_Start_Column : out Gint;
-      Match_End_Line     : out Gint;
-      Match_End_Column   : out Gint)
-   is
-      pragma Unreferenced
-        (Buffer, Pattern, Case_Sensitive, Whole_Word,
-         Search_Forward, From_Line, From_Column);
-
-   begin
-      --  ??? Unimplemented
-      Found := False;
-      Match_Start_Line   := 0;
-      Match_Start_Column := 0;
-      Match_End_Line     := 0;
-      Match_End_Column   := 0;
-   end Search;
-
    ---------------
    -- Get_Slice --
    ---------------
 
    function Get_Slice
-     (Buffer       : access Source_Buffer_Record;
+     (Buffer       : Source_Buffer;
       Start_Line   : Gint;
       Start_Column : Gint;
       End_Line     : Gint := -1;
@@ -2938,7 +2996,7 @@ package body Src_Editor_Buffer is
    end Get_Slice;
 
    function Get_Slice
-     (Buffer       : access Source_Buffer_Record;
+     (Buffer       : Source_Buffer;
       Start_Line   : Gint;
       Start_Column : Gint;
       End_Line     : Gint := -1;
@@ -3243,6 +3301,28 @@ package body Src_Editor_Buffer is
 
       Move_Mark_By_Name (Buffer, "selection_bound", Start_Iter);
       Move_Mark_By_Name (Buffer, "insert", End_Iter);
+   end Select_Region;
+
+   -------------------
+   -- Select_Region --
+   -------------------
+
+   procedure Select_Region
+     (Buffer       : access Source_Buffer_Record;
+      Start_Line   : Editable_Line_Type;
+      Start_Column : Natural;
+      End_Line     : Editable_Line_Type;
+      End_Column   : Natural;
+      Expand_Tabs  : Boolean := True)
+   is
+   begin
+      Select_Region
+        (Buffer,
+         Gint (Get_Buffer_Line (Buffer, Start_Line) - 1),
+         Gint (Start_Column - 1),
+         Gint (Get_Buffer_Line (Buffer, End_Line) - 1),
+         Gint (End_Column - 1),
+         Expand_Tabs);
    end Select_Region;
 
    --------------------
@@ -4287,7 +4367,7 @@ package body Src_Editor_Buffer is
          From_Line :=
            Get_Editable_Line (Buffer, Buffer_Line_Type (Current_Line + 1));
          To_Line := Get_Editable_Line (Buffer, Buffer_Line_Type (Line + 1));
-         Buffer_Text := Get_First_Lines (Buffer, To_Line);
+         Buffer_Text := Get_Buffer_Lines (Buffer, 1, To_Line);
          Local_Format_Buffer
            (Lang,
             Buffer_Text.all,
@@ -4407,14 +4487,21 @@ package body Src_Editor_Buffer is
      (Buffer       : access Source_Buffer_Record;
       Start_Line   : Editable_Line_Type;
       Start_Column : Natural;
-      End_Line     : Editable_Line_Type;
-      End_Column   : Natural) return String
+      End_Line     : Editable_Line_Type := 0;
+      End_Column   : Natural := 0) return String
    is
       Start_Iter, End_Iter : Gtk_Text_Iter;
+      Start_End, End_Begin : Gtk_Text_Iter;
+      Result               : Boolean;
+      Real_End_Line        : Editable_Line_Type := End_Line;
    begin
-      --  ??? Should remove non-editable lines / include hidden lines ?
-      --  ??? Should we provide a Get_Iter_At_Line_Offset function
-      --  generalized to Editable_Line_Type ?
+      if not Lines_Are_Real (Buffer) then
+         Unfold_Line (Buffer, Start_Line);
+
+         if End_Line /= 0 then
+            Unfold_Line (Buffer, End_Line);
+         end if;
+      end if;
 
       Get_Iter_At_Line_Offset
         (Buffer,
@@ -4422,13 +4509,50 @@ package body Src_Editor_Buffer is
          Gint (Get_Buffer_Line (Buffer, Start_Line) - 1),
          Gint (Start_Column - 1));
 
-      Get_Iter_At_Line_Offset
-        (Buffer,
-         End_Iter,
-         Gint (Get_Buffer_Line (Buffer, End_Line) - 1),
-         Gint (End_Column - 1));
+      if End_Line /= 0 then
+         Get_Iter_At_Line_Offset
+           (Buffer,
+            End_Iter,
+            Gint (Get_Buffer_Line (Buffer, End_Line) - 1),
+            Gint (End_Column - 1));
+      else
+         Real_End_Line := Buffer.Last_Editable_Line;
+         Get_End_Iter (Buffer, End_Iter);
+      end if;
 
-      return Get_Text (Buffer, Start_Iter, End_Iter, True);
+      if (not Lines_Are_Real (Buffer))
+        and then Real_End_Line - Start_Line > 1
+      then
+         --  If we are getting multiple lines of text, we need to get the
+         --  potential hidden lines.
+
+         Copy (Start_Iter, Start_End);
+
+         if not Ends_Line (Start_End) then
+            Forward_To_Line_End (Start_End, Result);
+
+            if not Result then
+               Copy (Start_Iter, Start_End);
+            end if;
+         end if;
+
+         Copy (End_Iter, End_Begin);
+         Set_Line_Offset (End_Begin, 0);
+
+         declare
+            A : GNAT.OS_Lib.String_Access :=
+              Get_Buffer_Lines (Buffer, Start_Line + 1, Real_End_Line - 1);
+            S : constant String :=
+              Get_Text (Buffer, Start_Iter, Start_End) & ASCII.LF
+                & A.all & ASCII.LF
+                & Get_Text (Buffer, End_Begin, End_Iter);
+         begin
+            GNAT.OS_Lib.Free (A);
+            return S;
+         end;
+      else
+         return Get_Text (Buffer, Start_Iter, End_Iter, True);
+      end if;
    end Get_Text;
 
    ------------------
