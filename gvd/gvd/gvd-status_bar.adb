@@ -84,10 +84,6 @@ package body GVD.Status_Bar is
       Gtk_New (Status.Arrow, Arrow_Up, Shadow_Out);
       Add (Status.Arrow_Button, Status.Arrow);
 
-      Gtk_New (Status.Status);
-      Set_Has_Resize_Grip (Status.Status, False);
-      Pack_Start (Status, Status.Status, True, True, 0);
-
       Gtk_New (Status.Progress);
       Set_Text (Status.Progress, " ");
       --  ??? This is a tweak : it seems that the gtk progress bar doesn't
@@ -96,7 +92,17 @@ package body GVD.Status_Bar is
       --  the annoying change in size, so we make sure there is always some
       --  text displayed.
 
-      Pack_End (Status, Status.Progress, False, False, 0);
+      Pack_Start (Status, Status.Progress, False, False, 0);
+
+      --  ??? We set the default width to 0 so that the progress bar appears
+      --  only as a vertical separator.
+      --  This should be removed when another way to keep the size of the
+      --  status bar acceptable is found.
+      Set_Size_Request (Status.Progress, 0, -1);
+
+      Gtk_New (Status.Status);
+      Set_Has_Resize_Grip (Status.Status, False);
+      Pack_Start (Status, Status.Status, True, True, 0);
 
       Status.Ids (Help)  := Get_Context_Id (Status.Status, "Help");
       Status.Ids (Error) := Get_Context_Id (Status.Status, "Error");
