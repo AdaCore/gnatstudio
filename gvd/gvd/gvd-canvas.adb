@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                   GVD - The GNU Visual Debugger                   --
+--                               G P S
 --                                                                   --
---                      Copyright (C) 2000-2003                      --
---                              ACT-Europe                           --
+--                      Copyright (C) 2000-2005                      --
+--                               AdaCore                             --
 --                                                                   --
--- GVD is free  software;  you can redistribute it and/or modify  it --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -45,12 +45,12 @@ with Items;            use Items;
 with Pixmaps_IDE;      use Pixmaps_IDE;
 
 with Odd_Intl;         use Odd_Intl;
-with GVD.Dialogs;      use GVD.Dialogs;
 with GVD.Main_Window;  use GVD.Main_Window;
 with GVD.Memory_View;  use GVD.Memory_View;
 with GVD.Menu;         use GVD.Menu;
 with GVD.Preferences;  use GVD.Preferences;
 with GVD.Process;      use GVD.Process;
+with Std_Dialogs;      use Std_Dialogs;
 
 with String_Utils;     use String_Utils;
 with Traces;           use Traces;
