@@ -287,15 +287,9 @@ package body Debugger.Gdb.C is
       --  Else ask for more information
       --  This is needed when Type_Str didn't start with a known keyword,
       --  like "__time_t" for instance
-      --  ??? It is also called when Type_Str is "int " or "long int", when
-      --  debugging parse_c. This could probably be optimized somewhat
-
-      Index := Tmp;
-      Skip_Word (Type_Str, Index);
-      Skip_Blanks (Type_Str, Index);
 
       declare
-         Ent : constant String := Type_Str (Tmp .. Index - 1);
+         Ent : constant String := Type_Str (Tmp .. Type_Str'Last);
          T : constant String := Type_Of (Get_Debugger (Lang), Ent);
          J : Natural := T'First;
       begin
@@ -392,11 +386,20 @@ package body Debugger.Gdb.C is
          Index := Index + 1;
       end loop;
 
-      --  Finally parse the type of items
+      --  Finally parse the type of items.
+      --  Note that we have to delete the name of the field, so that simple
+      --  types can be correctly detected (from "int foo" to "int"). This
+      --  needs to be done only if we are parsing a struct field, not a normal
+      --  array.
+
+      Tmp_Index := Start_Of_Dim - 1;
+      if Type_Str (Tmp_Index) = ' ' then
+         Tmp_Index := Tmp_Index - 1;
+      end if;
 
       Parse_Type
         (Lang,
-         Type_Str (Initial .. Start_Of_Dim - 1),
+         Type_Str (Initial .. Tmp_Index),
          Array_Item_Name (Lang, Entity, "0"),
          Initial,
          Item_Type);
@@ -434,6 +437,7 @@ package body Debugger.Gdb.C is
       Result     : out Items.Generic_Type_Access)
    is
       Tmp : Natural := Index;
+      Semi_Colon_Pos : Natural;
 
    begin
       --  Get the field name (last word before ;)
@@ -444,6 +448,7 @@ package body Debugger.Gdb.C is
       --  the parameter list.
 
       Skip_To_Char (Type_Str, Tmp, ';');
+      Semi_Colon_Pos := Tmp;
       Field_End := Tmp;
       Tmp := Tmp - 1;
 
@@ -473,6 +478,7 @@ package body Debugger.Gdb.C is
 
          Skip_Word (Type_Str, Tmp, Step => -1);
          if Type_Str (Tmp - 1) = ':' then
+            Field_End := Tmp - 2;
             Tmp := Tmp - 3;
             Name_End := Tmp;
             Skip_Word (Type_Str, Tmp, Step => -1);
@@ -483,11 +489,16 @@ package body Debugger.Gdb.C is
       --  Avoid some calls to ptype if possible. Note that we have to get
       --  rid of the field's name before calling Is_Simple_Type, since
       --  otherwise "int a" is not recognized as a simple type.
-      --  We also need to handle properly cases of "int a[2]".
+      --  We also need to handle properly cases of "int a[2]". The only
+      --  solution here is to remove the field name from the string before
+      --  calling recursively C_Detect_Composite_Type, or simple types like
+      --  the above generate an extra ptype for "int".
 
       Tmp := Index;
       C_Detect_Composite_Type
-        (Lang, Type_Str (Index .. Field_End - 1), Entity, Tmp, Result);
+        (Lang, Type_Str (Index .. Name_Start - 1)
+         & Type_Str (Name_End + 1 .. Field_End - 1),
+         Entity, Tmp, Result);
 
       --  if not an access or array:
       if Result = null then
@@ -497,12 +508,16 @@ package body Debugger.Gdb.C is
          else
             Tmp := Index;
             Parse_Type
-              (Lang, Type_Str (Index .. Field_End - 1),
+              (Lang,
+               Type_Str (Index .. Name_Start - 1)
+               & Type_Str (Name_End + 1 .. Field_End - 1),
                Record_Field_Name
                (Lang, Entity, Type_Str (Name_Start .. Name_End)),
                Tmp, Result);
          end if;
       end if;
+
+      Field_End := Semi_Colon_Pos;
    end C_Field_Name;
 
    -------------------------
