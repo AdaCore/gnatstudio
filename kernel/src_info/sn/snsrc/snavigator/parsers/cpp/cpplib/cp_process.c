@@ -157,7 +157,8 @@ static Proc_t f_expr( Expr_t Expr, int access, char *scope, int call, int pass )
    case OPERATOR_KOMMA            :
       Proc1 = f_expr( Expr->Expr1, READ, scope, 0, pass );
       Proc2 = f_expr( Expr->Expr2, READ, scope, 0, pass );
-      Proc.Type = f_OperatorCall2( ",", Proc1.Type, Proc2.Type, access, 0, 0 );
+      Proc.Type = f_OperatorCall2( ",", Proc1.Type, Proc2.Type, access,
+		      Expr->lineno_beg, Expr->charno_beg );
       if( Proc.Type == 0 )
       {
          ProcTypeAssign( Proc, Proc2 );
@@ -185,7 +186,8 @@ static Proc_t f_expr( Expr_t Expr, int access, char *scope, int call, int pass )
 label1:
       Proc1 = f_expr( Expr->Expr1, WRITE, scope, 0, pass );
       Proc2 = f_expr( Expr->Expr2, READ , scope, 0, pass );
-      Proc.Type = f_OperatorCall2( pcOperator, Proc1.Type, Proc2.Type, access, 0, 0 );
+      Proc.Type = f_OperatorCall2( pcOperator, Proc1.Type, Proc2.Type, access,
+		      Expr->lineno_beg, Expr->charno_beg );
       if( Proc.Type == 0 )
       {
          ProcTypeAssign( Proc, Proc1 );
@@ -217,7 +219,8 @@ label1:
    case OPERATOR_OROR             :
       Proc1 = f_expr( Expr->Expr1, READ, scope, 0, pass );
       Proc2 = f_expr( Expr->Expr2, READ, scope, 0, pass );
-      Proc.Type = f_OperatorCall2( "||", Proc1.Type, Proc2.Type, access, 0, 0 );
+      Proc.Type = f_OperatorCall2( "||", Proc1.Type, Proc2.Type, access,
+		      Expr->lineno_beg, Expr->charno_beg );
       if( Proc.Type == 0 )
       {
          Proc.Type = f_TypeCreateInt();
@@ -234,7 +237,8 @@ label1:
    case OPERATOR_ANDAND           :
       Proc1 = f_expr( Expr->Expr1, READ, scope, 0, pass );
       Proc2 = f_expr( Expr->Expr2, READ, scope, 0, pass );
-      Proc.Type = f_OperatorCall2( "&&", Proc1.Type, Proc2.Type, access, 0, 0 );
+      Proc.Type = f_OperatorCall2( "&&", Proc1.Type, Proc2.Type, access,
+		      Expr->lineno_beg, Expr->charno_beg );
       if( Proc.Type == 0 )
       {
          Proc.Type = f_TypeCreateInt();
@@ -251,7 +255,8 @@ label1:
    case OPERATOR_OR               :
       Proc1 = f_expr( Expr->Expr1, READ, scope, 0, pass );
       Proc2 = f_expr( Expr->Expr2, READ, scope, 0, pass );
-      Proc.Type = f_OperatorCall2( "|", Proc1.Type, Proc2.Type, access, 0, 0 );
+      Proc.Type = f_OperatorCall2( "|", Proc1.Type, Proc2.Type, access,
+		      Expr->lineno_beg, Expr->charno_beg );
       if( Proc.Type == 0 )
       {
          ProcTypeAssign( Proc, Proc1 );
@@ -268,7 +273,8 @@ label1:
    case OPERATOR_ER               :
       Proc1 = f_expr( Expr->Expr1, READ, scope, 0, pass );
       Proc2 = f_expr( Expr->Expr2, READ, scope, 0, pass );
-      Proc.Type = f_OperatorCall2( "'", Proc1.Type, Proc2.Type, access, 0, 0 );
+      Proc.Type = f_OperatorCall2( "'", Proc1.Type, Proc2.Type, access,
+		      Expr->lineno_beg, Expr->charno_beg );
       if( Proc.Type == 0 )
       {
          ProcTypeAssign( Proc, Proc1 );
@@ -285,7 +291,8 @@ label1:
    case OPERATOR_AND              :
       Proc1 = f_expr( Expr->Expr1, READ, scope, 0, pass );
       Proc2 = f_expr( Expr->Expr2, READ, scope, 0, pass );
-      Proc.Type = f_OperatorCall2( "&", Proc1.Type, Proc2.Type, access, 0, 0 );
+      Proc.Type = f_OperatorCall2( "&", Proc1.Type, Proc2.Type, access,
+		      Expr->lineno_beg, Expr->charno_beg );
       if( Proc.Type == 0 )
       {
          ProcTypeAssign( Proc, Proc1 );
@@ -308,7 +315,8 @@ label1:
 label2:
       Proc1 = f_expr( Expr->Expr1, READ, scope, 0, pass );
       Proc2 = f_expr( Expr->Expr2, READ, scope, 0, pass );
-      Proc.Type = f_OperatorCall2( pcOperator, Proc1.Type, Proc2.Type, access, 0, 0 );
+      Proc.Type = f_OperatorCall2( pcOperator, Proc1.Type, Proc2.Type, access,
+		      Expr->lineno_beg, Expr->charno_beg );
       if( Proc.Type == 0 )
       {
          Proc.Type = f_TypeCreateInt();
@@ -325,7 +333,14 @@ label2:
    case OPERATOR_LS               :
       Proc1 = f_expr( Expr->Expr1, READ, scope, 0, pass );
       Proc2 = f_expr( Expr->Expr2, READ, scope, 0, pass );
-      Proc.Type = f_OperatorCall2( "<<", Proc1.Type, Proc2.Type, access, 0, 0 );
+      Proc.Type = f_OperatorCall2( "<<", Proc1.Type, Proc2.Type, access,
+		      Expr->lineno_beg, Expr->charno_beg );
+      /*
+      fprintf (stderr, "<< expr (%i, %i), proc1 (%i, %i), proc2(%i, %i)\n",
+		      Expr->lineno_beg, Expr->charno_beg,
+		      Proc1.lineno_beg, Proc1.charno_beg,
+		      Proc2.lineno_beg, Proc2.charno_beg);
+      */
       if( Proc.Type == 0 )
       {
          ProcTypeAssign( Proc, Proc1 );
@@ -342,7 +357,8 @@ label2:
    case OPERATOR_RS               :
       Proc1 = f_expr( Expr->Expr1, READ, scope, 0, pass );
       Proc2 = f_expr( Expr->Expr2, READ, scope, 0, pass );
-      Proc.Type = f_OperatorCall2( ">>", Proc1.Type, Proc2.Type, access, 0, 0 );
+      Proc.Type = f_OperatorCall2( ">>", Proc1.Type, Proc2.Type, access,
+		      Expr->lineno_beg, Expr->charno_beg );
       if( Proc.Type == 0 )
       {
          ProcTypeAssign( Proc, Proc1 );
@@ -363,7 +379,8 @@ label2:
 label3:
       Proc1 = f_expr( Expr->Expr1, READ, scope, 0, pass );
       Proc2 = f_expr( Expr->Expr2, READ, scope, 0, pass );
-      Proc.Type = f_OperatorCall2( pcOperator, Proc1.Type, Proc2.Type, access, 0, 0 );
+      Proc.Type = f_OperatorCall2( pcOperator, Proc1.Type, Proc2.Type, access,
+		      Expr->lineno_beg, Expr->charno_beg );
       if( Proc.Type == 0 )
       {
          ProcTypeAssign( Proc, Proc1 );
@@ -380,7 +397,8 @@ label3:
    case OPERATOR_MOD              :
       Proc1 = f_expr( Expr->Expr1, READ, scope, 0, pass );
       Proc2 = f_expr( Expr->Expr2, READ, scope, 0, pass );
-      Proc.Type = f_OperatorCall2( "%", Proc1.Type, Proc2.Type, access, 0, 0 );
+      Proc.Type = f_OperatorCall2( "%", Proc1.Type, Proc2.Type, access,
+		      Expr->lineno_beg, Expr->charno_beg );
       if( Proc.Type == 0 )
       {
          Proc.Type = f_TypeCreateInt();
@@ -399,7 +417,8 @@ label3:
 label4:
       Proc1 = f_expr( Expr->Expr1, READ, scope, 0, pass );
       Proc2 = f_expr( Expr->Expr2, READ, f_TypeToScope( Proc1.Type ), 0, pass );
-      Proc.Type = f_OperatorCall2( pcOperator, Proc1.Type, Proc2.Type, access, 0, 0 );
+      Proc.Type = f_OperatorCall2( pcOperator, Proc1.Type, Proc2.Type, access,
+		      Expr->lineno_beg, Expr->charno_beg );
       if( Proc.Type == 0 )
       {
          ProcTypeAssign( Proc, Proc2 );

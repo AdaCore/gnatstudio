@@ -142,6 +142,7 @@ extern Expr_t expression( void )
    Expr_t Expr1;
    Expr_t Expr2;
    int operator;
+   int lineno, charno;
    Save();
 
 #ifdef TRACE
@@ -164,6 +165,8 @@ extern Expr_t expression( void )
       case ',': operator = OPERATOR_KOMMA; break;
       default : return Expr1;
       }
+      lineno = f_lineno (0);
+      charno = f_charno (0);
 
       step( 1 );
 
@@ -176,7 +179,10 @@ extern Expr_t expression( void )
 #endif
          return 0;
       }
-      Expr1 = ExprCreateOp2( operator, Expr1, Expr2 );
+      if ( Expr1 = ExprCreateOp2( operator, Expr1, Expr2 ) ) {
+          Expr1->lineno_beg = lineno;
+          Expr1->charno_beg = charno;
+      }
    }
 }
 
@@ -185,6 +191,7 @@ static Expr_t assignment_expression( void )
    Expr_t Expr1;
    Expr_t Expr2;
    int operator;
+   int lineno, charno;
    Save();
 
 #ifdef TRACE
@@ -214,6 +221,8 @@ static Expr_t assignment_expression( void )
       case SN_ORassign   : operator = OPERATOR_ORassign   ; break;
       default            : return Expr1;
       }
+      lineno = f_lineno (0);
+      charno = f_charno (0);
 
       step( 1 );
 
@@ -223,7 +232,12 @@ static Expr_t assignment_expression( void )
          Restore();
          return 0;
       }
-      Expr1 = ExprCreateOp2( operator, Expr1, Expr2 );
+
+      if ( Expr1 = ExprCreateOp2( operator, Expr1, Expr2 ) ) {
+	 Expr1->lineno_beg = lineno;
+	 Expr1->charno_beg = charno;
+      }
+      
    }
 }
 
@@ -237,6 +251,8 @@ static Expr_t conditional_expression( void )
    Expr_t Expr1;
    Expr_t Expr2;
    Expr_t Expr3;
+   Expr_t Whole;
+   int lineno, charno;
    Save();
 
 #ifdef TRACE
@@ -253,6 +269,8 @@ static Expr_t conditional_expression( void )
    {
       return Expr1;
    }
+   lineno = f_lineno (0);
+   charno = f_charno (0);
 
    step( 1 );
 
@@ -280,7 +298,11 @@ static Expr_t conditional_expression( void )
       Restore();
       return 0;
    }
-   return ExprCreateOp3( OPERATOR_CONDITIONAL, Expr1, Expr2, Expr3 );
+   if ( Whole = ExprCreateOp3( OPERATOR_CONDITIONAL, Expr1, Expr2, Expr3 ) ) {
+       Whole->lineno_beg = lineno;
+       Whole->charno_beg = charno;
+   }
+   return Whole;
 }
 
 static Expr_t logical_or_expression( void )
@@ -288,6 +310,7 @@ static Expr_t logical_or_expression( void )
    Expr_t Expr1;
    Expr_t Expr2;
    int operator;
+   int lineno, charno;
    Save();
 
 #ifdef TRACE
@@ -307,6 +330,8 @@ static Expr_t logical_or_expression( void )
       case SN_OROR: operator = OPERATOR_OROR; break;
       default  : return Expr1;
       }
+      lineno = f_lineno (0);
+      charno = f_charno (0);
 
       step( 1 );
 
@@ -316,7 +341,10 @@ static Expr_t logical_or_expression( void )
          Restore();
          return 0;
       }
-      Expr1 = ExprCreateOp2( operator, Expr1, Expr2 );
+      if ( Expr1 = ExprCreateOp2( operator, Expr1, Expr2 ) ) {
+          Expr1->lineno_beg = lineno;
+          Expr1->charno_beg = charno;
+      }
    }
 }
 
@@ -325,6 +353,7 @@ static Expr_t logical_and_expression( void )
    Expr_t Expr1;
    Expr_t Expr2;
    int operator;
+   int lineno, charno;
    Save();
 
 #ifdef TRACE
@@ -344,6 +373,8 @@ static Expr_t logical_and_expression( void )
       case SN_ANDAND: operator = OPERATOR_ANDAND; break;
       default    : return Expr1;
       }
+      lineno = f_lineno (0);
+      charno = f_charno (0);
 
       step( 1 );
 
@@ -353,7 +384,10 @@ static Expr_t logical_and_expression( void )
          Restore();
          return 0;
       }
-      Expr1 = ExprCreateOp2( operator, Expr1, Expr2 );
+      if ( Expr1 = ExprCreateOp2( operator, Expr1, Expr2 ) ) {
+          Expr1->lineno_beg = lineno;
+          Expr1->charno_beg = charno;
+      }
    }
 }
 
@@ -362,6 +396,7 @@ static Expr_t inclusive_or_expression( void )
    Expr_t Expr1;
    Expr_t Expr2;
    int operator;
+   int lineno, charno;
    Save();
 
 #ifdef TRACE
@@ -381,6 +416,8 @@ static Expr_t inclusive_or_expression( void )
       case '|': operator = OPERATOR_OR; break;
       default : return Expr1;
       }
+      lineno = f_lineno (0);
+      charno = f_charno (0);
 
       step( 1 );
 
@@ -390,7 +427,10 @@ static Expr_t inclusive_or_expression( void )
          Restore();
          return 0;
       }
-      Expr1 = ExprCreateOp2( operator, Expr1, Expr2 );
+      if ( Expr1 = ExprCreateOp2( operator, Expr1, Expr2 ) ) {
+          Expr1->lineno_beg = lineno;
+          Expr1->charno_beg = charno;
+      }
    }
 }
 
@@ -400,6 +440,7 @@ static Expr_t exclusive_or_expression( void )
    Expr_t Expr1;
    Expr_t Expr2;
    int operator;
+   int lineno, charno;
    Save();
 
 #ifdef TRACE
@@ -419,6 +460,8 @@ static Expr_t exclusive_or_expression( void )
       case '^': operator = OPERATOR_ER; break;
       default : return Expr1;
       }
+      lineno = f_lineno (0);
+      charno = f_charno (0);
 
       step( 1 );
 
@@ -428,7 +471,10 @@ static Expr_t exclusive_or_expression( void )
          Restore();
          return 0;
       }
-      Expr1 = ExprCreateOp2( operator, Expr1, Expr2 );
+      if ( Expr1 = ExprCreateOp2( operator, Expr1, Expr2 ) ) {
+          Expr1->lineno_beg = lineno;
+          Expr1->charno_beg = charno;
+      }
    }
 }
 
@@ -437,6 +483,7 @@ static Expr_t and_expression( void )
    Expr_t Expr1;
    Expr_t Expr2;
    int operator;
+   int lineno, charno;
    Save();
 
 #ifdef TRACE
@@ -456,6 +503,8 @@ static Expr_t and_expression( void )
       case '&': operator = OPERATOR_AND; break;
       default : return Expr1;
       }
+      lineno = f_lineno (0);
+      charno = f_charno (0);
 
       step( 1 );
 
@@ -465,7 +514,10 @@ static Expr_t and_expression( void )
          Restore();
          return 0;
       }
-      Expr1 = ExprCreateOp2( operator, Expr1, Expr2 );
+      if ( Expr1 = ExprCreateOp2( operator, Expr1, Expr2 ) ) {
+          Expr1->lineno_beg = lineno;
+          Expr1->charno_beg = charno;
+      }
    }
 }
 
@@ -474,6 +526,7 @@ static Expr_t equality_expression( void )
    Expr_t Expr1;
    Expr_t Expr2;
    int operator;
+   int lineno, charno;
    Save();
 
 #ifdef TRACE
@@ -494,6 +547,8 @@ static Expr_t equality_expression( void )
       case SN_NE: operator = OPERATOR_NE; break;
       default: return Expr1;
       }
+      lineno = f_lineno (0);
+      charno = f_charno (0);
 
       step( 1 );
 
@@ -503,7 +558,10 @@ static Expr_t equality_expression( void )
          Restore();
          return 0;
       }
-      Expr1 = ExprCreateOp2( operator, Expr1, Expr2 );
+      if ( Expr1 = ExprCreateOp2( operator, Expr1, Expr2 ) ) {
+          Expr1->lineno_beg = lineno;
+          Expr1->charno_beg = charno;
+      }
    }
 }
 
@@ -512,6 +570,7 @@ static Expr_t relational_expression( void )
    Expr_t Expr1;
    Expr_t Expr2;
    int operator;
+   int lineno, charno;
    Save();
 
 #ifdef TRACE
@@ -540,6 +599,8 @@ static Expr_t relational_expression( void )
       case SN_GE : operator = OPERATOR_GE; break;
       default : return Expr1;
       }
+      lineno = f_lineno (0);
+      charno = f_charno (0);
 
       step( 1 );
 
@@ -549,7 +610,10 @@ static Expr_t relational_expression( void )
          Restore();
          return 0;
       }
-      Expr1 = ExprCreateOp2( operator, Expr1, Expr2 );
+      if ( Expr1 = ExprCreateOp2( operator, Expr1, Expr2 ) ) {
+          Expr1->lineno_beg = lineno;
+          Expr1->charno_beg = charno;
+      }
    }
 }
 
@@ -558,6 +622,7 @@ static Expr_t shift_expression( void )
    Expr_t Expr1;
    Expr_t Expr2;
    int operator;
+   int lineno, charno;
    Save();
 
 #ifdef TRACE
@@ -578,6 +643,8 @@ static Expr_t shift_expression( void )
       case SN_RS : operator = OPERATOR_RS; break;
       default : return Expr1;
       }
+      lineno = f_lineno (0);
+      charno = f_charno (0);
 
       step( 1 );
 
@@ -587,7 +654,10 @@ static Expr_t shift_expression( void )
          Restore();
          return 0;
       }
-      Expr1 = ExprCreateOp2( operator, Expr1, Expr2 );
+      if ( Expr1 = ExprCreateOp2( operator, Expr1, Expr2 ) ) {
+          Expr1->lineno_beg = lineno;
+          Expr1->charno_beg = charno;
+      }
    }
 }
 
@@ -596,6 +666,7 @@ static Expr_t additive_expression( void )
    Expr_t Expr1;
    Expr_t Expr2;
    int operator;
+   int lineno, charno;
    Save();
 
 #ifdef TRACE
@@ -616,6 +687,8 @@ static Expr_t additive_expression( void )
       case '-': operator = OPERATOR_MINUS; break;
       default : return Expr1;
       }
+      lineno = f_lineno (0);
+      charno = f_charno (0);
 
       step( 1 );
 
@@ -625,7 +698,10 @@ static Expr_t additive_expression( void )
          Restore();
          return 0;
       }
-      Expr1 = ExprCreateOp2( operator, Expr1, Expr2 );
+      if ( Expr1 = ExprCreateOp2( operator, Expr1, Expr2 ) ) {
+          Expr1->lineno_beg = lineno;
+          Expr1->charno_beg = charno;
+      }
    }
 }
 
@@ -634,6 +710,7 @@ static Expr_t multiplicative_expression( void )
    Expr_t Expr1;
    Expr_t Expr2;
    int operator;
+   int lineno, charno;
    Save();
 
 #ifdef TRACE
@@ -655,6 +732,8 @@ static Expr_t multiplicative_expression( void )
       case '%': operator = OPERATOR_MOD ; break;
       default : return Expr1;
       }
+      lineno = f_lineno (0);
+      charno = f_charno (0);
 
       step( 1 );
 
@@ -664,7 +743,10 @@ static Expr_t multiplicative_expression( void )
          Restore();
          return 0;
       }
-      Expr1 = ExprCreateOp2( operator, Expr1, Expr2 );
+      if ( Expr1 = ExprCreateOp2( operator, Expr1, Expr2 ) ) {
+          Expr1->lineno_beg = lineno;
+          Expr1->charno_beg = charno;
+      }
    }
 }
 
@@ -673,6 +755,7 @@ static Expr_t pm_expression( void )
    Expr_t Expr1;
    Expr_t Expr2;
    int operator;
+   int lineno, charno;
    Save();
 
 #ifdef TRACE
@@ -693,6 +776,8 @@ static Expr_t pm_expression( void )
       case SN_ARROWstar: operator = OPERATOR_ARROWstar; break;
       default       : return Expr1;
       }
+      lineno = f_lineno (0);
+      charno = f_charno (0);
 
       step( 1 );
 
@@ -702,7 +787,10 @@ static Expr_t pm_expression( void )
          Restore();
          return 0;
       }
-      Expr1 = ExprCreateOp2( operator, Expr1, Expr2 );
+      if ( Expr1 = ExprCreateOp2( operator, Expr1, Expr2 ) ) {
+          Expr1->lineno_beg = lineno;
+          Expr1->charno_beg = charno;
+      }
    }
 }
 
@@ -1028,6 +1116,7 @@ static Expr_t postfix_expression( void )
    int charno_beg;
    int lineno_end;
    int charno_end;
+   int lineno, charno;
    Save();
 
 #ifdef TRACE
@@ -1158,6 +1247,8 @@ label:
       {
       case '[' :
          operator = OPERATOR_ARRAY;
+         lineno = f_lineno (0);
+         charno = f_charno (0);
          step( 1 );
 
          if(( Expr2 = expression()) == 0 )
@@ -1170,11 +1261,16 @@ label:
          {
             step( 1 );
          }
-         Expr1 = ExprCreateOp2( operator, Expr1, Expr2 );
+	 if ( Expr1 = ExprCreateOp2( operator, Expr1, Expr2 ) ) {
+             Expr1->lineno_beg = lineno;
+             Expr1->charno_beg = charno;
+	 }
          break;
 
       case '(' :
          operator = OPERATOR_FUNCTION_CALL;
+         lineno = f_lineno (0);
+         charno = f_charno (0);
          step( 1 );
 
          ListExpr = expression_list_opt();
@@ -1202,11 +1298,16 @@ label:
             return 0;
          }
 
-         Expr1 = ExprCreateOp2List( operator, Expr1, ListExpr );
+         if ( Expr1 = ExprCreateOp2List( operator, Expr1, ListExpr ) ) {
+             Expr1->lineno_beg = lineno;
+             Expr1->charno_beg = charno;
+	 }
          break;
 
       case '.' :
          operator = OPERATOR_DOT;
+         lineno = f_lineno (0);
+         charno = f_charno (0);
          step( 1 );
 
          if(( Expr2 = expression_member_name()) == 0 )
@@ -1215,11 +1316,16 @@ label:
             Restore();
             return 0;
          }
-         Expr1 = ExprCreateOp2( operator, Expr1, Expr2 );
+         if ( Expr1 = ExprCreateOp2( operator, Expr1, Expr2 ) ) {
+             Expr1->lineno_beg = lineno;
+             Expr1->charno_beg = charno;
+	 }
          break;
 
       case SN_ARROW :
          operator = OPERATOR_ARROW;
+         lineno = f_lineno (0);
+         charno = f_charno (0);
          step( 1 );
 
          if(( Expr2 = expression_member_name()) == 0 )
@@ -1228,19 +1334,28 @@ label:
             Restore();
             return 0;
          }
-         Expr1 = ExprCreateOp2( operator, Expr1, Expr2 );
+         if ( Expr1 = ExprCreateOp2( operator, Expr1, Expr2 ) ) {
+             Expr1->lineno_beg = lineno;
+             Expr1->charno_beg = charno;
+	 }
          break;
 
       case SN_ICR:
          operator = OPERATOR_POST_ICR;
          step( 1 );
-         Expr1 = ExprCreateOp1( operator, Expr1 );
+         if ( Expr1 = ExprCreateOp1( operator, Expr1 ) ) {
+             Expr1->lineno_beg = f_lineno (0);
+             Expr1->charno_beg = f_charno (0);
+	 }
          break;
 
       case SN_DECR:
          operator = OPERATOR_POST_DECR;
          step( 1 );
-         Expr1 = ExprCreateOp1( operator, Expr1 );
+         if ( Expr1 = ExprCreateOp1( operator, Expr1 ) ) {
+             Expr1->lineno_beg = f_lineno (0);
+             Expr1->charno_beg = f_charno (0);
+	 }
          break;
 
       default  :
@@ -1522,6 +1637,7 @@ static List_t placement_opt( void )
 static Expr_t deallocation_expression( void )
 {
    Expr_t Expr1;
+   int lineno, charno;
    Save();
 
 #ifdef TRACE
@@ -1535,6 +1651,8 @@ static Expr_t deallocation_expression( void )
 
    if( token( 0 ) == SN_DELETE )
    {
+      lineno = f_lineno (0);
+      charno = f_charno (0);
       step( 1 );
 
       /* opcionalis [] */
@@ -1545,7 +1663,10 @@ static Expr_t deallocation_expression( void )
 
       if(( Expr1 = cast_expression()))
       {
-         return ExprCreateOp1( OPERATOR_DELETE, Expr1 );
+         if ( Expr1 = ExprCreateOp1( OPERATOR_DELETE, Expr1 ) ) {
+             Expr1->lineno_beg = lineno;
+             Expr1->charno_beg = charno;
+	 }
       }
    }
    Restore();
