@@ -65,6 +65,7 @@ with Language;                 use Language;
 with Basic_Types;              use Basic_Types;
 with String_Utils;             use String_Utils;
 with Glide_Kernel;             use Glide_Kernel;
+with Glide_Kernel.Console;     use Glide_Kernel.Console;
 with Glide_Kernel.Project;     use Glide_Kernel.Project;
 with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
 with Glide_Kernel.Modules;     use Glide_Kernel.Modules;
@@ -374,6 +375,31 @@ package body Project_Explorers is
    --  Called when the project as changed, as opposed to the project view.
    --  This means we need to start up with a completely new tree, no need to
    --  try to keep the current one.
+
+   function Next_Node
+     (Explorer         : Project_Explorer;
+      Current_Node     : Gtk_Ctree_Node;
+      Include_Entities : Boolean)
+      return Gtk_Ctree_Node;
+   --  Jump to the node following Current_Node. This subprogram will not a
+   --  depth-first search, and eventually return all the nodes in Explorer.
+
+   procedure Jump_To_Node
+     (Explorer    : Project_Explorer;
+      Target_Node : Gtk_Ctree_Node);
+   --  Select Target_Node, and make sure it is visible on the screen
+
+   procedure Locate_File
+     (Widget  : access Glib.Object.GObject_Record'Class;
+      Context : Glide_Kernel.Selection_Context_Access);
+   --  Callback suitable for a contextual menu item. If the file name is not
+   --  the empty string, then it is looked up in the project view explorer.
+
+   procedure Explorer_Contextual
+     (Object    : access GObject_Record'Class;
+      Context   : access Selection_Context'Class;
+      Menu      : access Gtk.Menu.Gtk_Menu_Record'Class);
+   --  Add entries to the contextual menu
 
    procedure Node_Selected
      (Explorer : access Project_Explorer_Record'Class; Node : Gtk_Ctree_Node);
@@ -2315,46 +2341,6 @@ package body Project_Explorers is
         Explorer_Search_Context_Access (Context);
       Explorer : Project_Explorer;
 
-      procedure Next;
-      --  Move to the next node in the tree
-
-      ----------
-      -- Next --
-      ----------
-
-      procedure Next is
-         Tmp : Gtk_Ctree_Node;
-      begin
-         if not Row_Get_Is_Leaf (Node_Get_Row (C.Current)) then
-            if C.Include_Entities
-              or else Node_Get_Row_Data
-                (Explorer.Tree, C.Current).Node_Type /= File_Node
-            then
-               Compute_Children (Explorer, C.Current);
-               Tmp := Row_Get_Children (Node_Get_Row (C.Current));
-
-               if Tmp /= null then
-                  C.Current := Tmp;
-                  return;
-               end if;
-            end if;
-         end if;
-
-         loop
-            Tmp := Row_Get_Sibling (Node_Get_Row (C.Current));
-            exit when Tmp /= null;
-
-            C.Current := Row_Get_Parent (Node_Get_Row (C.Current));
-            if C.Current = null then
-               return;
-            end if;
-         end loop;
-
-         C.Current := Tmp;
-      end Next;
-
-      Tmp   : Gtk_Ctree_Node;
-
    begin
       --  ??? Problem: this algorithm will analyze the same files multiple
       --  times if they appear multiple times in the explorer. This might not
@@ -2370,38 +2356,166 @@ package body Project_Explorers is
       if C.Current = null then
          C.Current := Node_Nth (Explorer.Tree, 0);
       else
-         Next;
+         C.Current := Next_Node (Explorer, C.Current, C.Include_Entities);
       end if;
 
       Gtk.Handlers.Handler_Block (Explorer.Tree, Explorer.Expand_Id);
 
       while C.Current /= null loop
          if Match (C, Node_Get_Text (Explorer.Tree, C.Current, 0)) /= -1 then
-            Gtk_Select (Explorer.Tree, C.Current);
-
-            if not Is_Viewable (Explorer.Tree, C.Current) then
-               Tmp := Row_Get_Parent (Node_Get_Row (C.Current));
-               while Tmp /= null loop
-                  Gtk.Ctree.Expand (Explorer.Tree, Tmp);
-                  Tmp := Row_Get_Parent (Node_Get_Row (Tmp));
-               end loop;
-            end if;
-
-            if Node_Is_Visible (Explorer.Tree, C.Current) /=
-              Visibility_Full
-            then
-               Node_Moveto (Explorer.Tree, C.Current, 0, 0.5, 0.0);
-            end if;
-
+            Jump_To_Node (Explorer, C.Current);
             Gtk.Handlers.Handler_Unblock (Explorer.Tree, Explorer.Expand_Id);
             return True;
          end if;
-         Next;
+         C.Current := Next_Node (Explorer, C.Current, C.Include_Entities);
       end loop;
 
       Gtk.Handlers.Handler_Unblock (Explorer.Tree, Explorer.Expand_Id);
       return False;
    end Search;
+
+   ---------------
+   -- Next_Node --
+   ---------------
+
+   function Next_Node
+     (Explorer         : Project_Explorer;
+      Current_Node     : Gtk_Ctree_Node;
+      Include_Entities : Boolean)
+      return Gtk_Ctree_Node
+   is
+      Tmp        : Gtk_Ctree_Node;
+      Start_Node : Gtk_Ctree_Node := Current_Node;
+   begin
+      if not Row_Get_Is_Leaf (Node_Get_Row (Start_Node)) then
+         if Include_Entities
+           or else Node_Get_Row_Data
+           (Explorer.Tree, Start_Node).Node_Type /= File_Node
+         then
+            Compute_Children (Explorer, Start_Node);
+            Tmp := Row_Get_Children (Node_Get_Row (Start_Node));
+
+            if Tmp /= null then
+               return Tmp;
+            end if;
+         end if;
+      end if;
+
+      loop
+         Tmp := Row_Get_Sibling (Node_Get_Row (Start_Node));
+         exit when Tmp /= null;
+
+         Start_Node := Row_Get_Parent (Node_Get_Row (Start_Node));
+         if Start_Node = null then
+            return null;
+         end if;
+      end loop;
+
+      return Tmp;
+   end Next_Node;
+
+   --------------------
+   --  Jump_To_Node  --
+   --------------------
+
+   procedure Jump_To_Node
+     (Explorer    : Project_Explorer;
+      Target_Node : Gtk_Ctree_Node)
+   is
+      Tmp      : Gtk_Ctree_Node;
+   begin
+      Gtk_Select (Explorer.Tree, Target_Node);
+
+      if not Is_Viewable (Explorer.Tree, Target_Node) then
+         Tmp := Row_Get_Parent (Node_Get_Row (Target_Node));
+         while Tmp /= null loop
+            Gtk.Ctree.Expand (Explorer.Tree, Tmp);
+            Tmp := Row_Get_Parent (Node_Get_Row (Tmp));
+         end loop;
+      end if;
+
+      if Node_Is_Visible (Explorer.Tree, Target_Node) /=
+        Visibility_Full
+      then
+         Node_Moveto (Explorer.Tree, Target_Node, 0, 0.5, 0.0);
+      end if;
+
+      return;
+   end Jump_To_Node;
+
+   -------------------
+   --  Locate_File  --
+   -------------------
+
+   procedure Locate_File
+     (Widget  : access Glib.Object.GObject_Record'Class;
+      Context : Glide_Kernel.Selection_Context_Access)
+   is
+      pragma Unreferenced (Widget);
+
+      Kernel   : constant Kernel_Handle := Get_Kernel (Context);
+      Explorer : Project_Explorer;
+      File_C   : constant Entity_Selection_Context_Access :=
+        Entity_Selection_Context_Access (Context);
+      Node   : Gtk_Ctree_Node;
+   begin
+      if Has_File_Information (File_C) then
+         declare
+            Current_File : constant String := File_Information (File_C);
+         begin
+            --  Make sure the explorer is visible, and get a handle on it
+            Explorer := Get_Or_Create_Project_View (Kernel);
+
+            --  Find the next matching node
+            Node := Node_Nth (Explorer.Tree, 0);
+
+            Gtk.Handlers.Handler_Block (Explorer.Tree, Explorer.Expand_Id);
+
+            while Node /= null loop
+               if Current_File = Node_Get_Text (Explorer.Tree, Node, 0) then
+                  Jump_To_Node (Explorer, Node);
+                  Gtk.Handlers.Handler_Unblock
+                    (Explorer.Tree, Explorer.Expand_Id);
+                  Gtk.Ctree.Expand (Explorer.Tree, Node);
+                  return;
+               end if;
+               Node := Next_Node (Explorer, Node, Include_Entities => False);
+            end loop;
+            Insert (Kernel,
+                    -"File not found in the explorer: " & Current_File);
+            Gtk.Handlers.Handler_Unblock (Explorer.Tree, Explorer.Expand_Id);
+         end;
+      end if;
+   end Locate_File;
+
+   -------------------------
+   -- Explorer_Contextual --
+   -------------------------
+
+   procedure Explorer_Contextual
+     (Object    : access GObject_Record'Class;
+      Context   : access Selection_Context'Class;
+      Menu      : access Gtk.Menu.Gtk_Menu_Record'Class)
+   is
+      pragma Unreferenced (Object);
+      File : File_Selection_Context_Access;
+      Item : Gtk_Menu_Item;
+   begin
+      if Context.all in File_Selection_Context'Class then
+         File := File_Selection_Context_Access (Context);
+
+         if Has_File_Information (File) then
+            Gtk_New (Item, Label => -"Locate in Explorer: "
+                     & Base_Name (File_Information (File)));
+            Append (Menu, Item);
+
+            Context_Callback.Connect
+              (Item, "activate",
+               Context_Callback.To_Marshaller (Locate_File'Access),
+               Selection_Context_Access (Context));
+         end if;
+      end if;
+   end Explorer_Contextual;
 
    ---------------------
    -- Register_Module --
@@ -2423,7 +2537,7 @@ package body Project_Explorers is
          Kernel                  => Kernel,
          Module_Name             => Explorer_Module_Name,
          Priority                => Default_Priority,
-         Contextual_Menu_Handler => null,
+         Contextual_Menu_Handler => Explorer_Contextual'Access,
          MDI_Child_Tag           => Project_Explorer_Record'Tag,
          Default_Context_Factory => Default_Factory'Access);
       Glide_Kernel.Kernel_Desktop.Register_Desktop_Functions
