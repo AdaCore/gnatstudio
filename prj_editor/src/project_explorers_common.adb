@@ -435,7 +435,9 @@ package body Project_Explorers_Common is
                        (Kernel,
                         Create
                           (Full_Filename =>
-                             Get_String (Model, Iter, Absolute_Name_Column)));
+                             Get_String (Model, Iter, Absolute_Name_Column)),
+                        Line => 0,
+                        Column => 0);
                      return True;
                   end if;
 
