@@ -167,8 +167,7 @@ package body Aunit_Module is
         (Module                  => Aunit_Module_ID,
          Kernel                  => Kernel,
          Module_Name             => Aunit_Module_Name,
-         Priority                => Default_Priority,
-         Contextual_Menu_Handler => null);
+         Priority                => Default_Priority);
 
       Register_Menu (Kernel, Edit & '_' & Unit_Testing,
                      Ref_Item => -"Preferences");
