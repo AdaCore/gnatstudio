@@ -101,7 +101,7 @@ package body Vdiff2_Command is
       Context       : constant Selection_Context_Access
         := Get_Current_Context (Command.Kernel);
       Curr_Node     : Diff_Head_List.List_Node;
-      Diff          : Diff_Head;
+      Diff          : Diff_Head := Null_Head;
       Selected_File : Virtual_File;
 
    begin
@@ -122,11 +122,26 @@ package body Vdiff2_Command is
                Remove_Nodes (Command.List_Diff.all,
                              Prev (Command.List_Diff.all, Curr_Node),
                              Curr_Node);
+               Diff := Null_Head;
+            else
+               Set_Data (Curr_Node, Diff);
+            end if;
+
+         elsif Command.Last_Active_Diff /= Null_Head then
+            Diff := Command.Last_Active_Diff;
+            Trace (Me, "Execute Action");
+            Command.Action (Command.Kernel, Diff);
+            if Diff.List = Diff_Chunk_List.Null_List then
+               Remove_Nodes (Command.List_Diff.all,
+                             Prev (Command.List_Diff.all, Curr_Node),
+                             Curr_Node);
+               Diff := Null_Head;
             else
                Set_Data (Curr_Node, Diff);
             end if;
          end if;
       end if;
+      Command.Last_Active_Diff := Diff;
       return Commands.Success;
    exception
       when others =>
