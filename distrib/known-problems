@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 1.1.0
 
+- BB28-005 File comparison not working under Windows
+  Problem:    The menu Tools->Compare->Two Files... is not working under
+              Windows.
+  Workaround: When possible, use the VCS comparison or use the diff command
+              from the command line.
+
 Known Problems fixed in GPS 1.0.2
 
 - BA17-003 Adding the same project multiple times to the project tree
