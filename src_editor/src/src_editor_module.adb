@@ -259,6 +259,7 @@ package body Src_Editor_Module is
       Line  : Editable_Line_Type;
       Column, Column_End : Natural;
       Kernel : Kernel_Handle;
+      Focus  : Boolean;
    end record;
 
    function Location_Callback (D : Location_Idle_Data) return Boolean;
@@ -2081,7 +2082,9 @@ package body Src_Editor_Module is
 
             if Src /= null then
                Dummy := File_Edit_Callback
-                 ((Src.Editor, Editable_Line_Type (Line), Column, 0, User));
+                 ((Src.Editor,
+                   Editable_Line_Type (Line),
+                   Column, 0, User, False));
 
                --  Add the location in the navigations button.
                declare
@@ -2430,11 +2433,7 @@ package body Src_Editor_Module is
                Interactive   => False,
                Always_Reload => Force);
 
-            Raise_Child (Child);
-
-            if Focus then
-               Set_Focus_Child (Child);
-            end if;
+            Raise_Child (Child, Focus);
 
             return Source_Box (Get_Widget (Child));
          end if;
@@ -2469,11 +2468,7 @@ package body Src_Editor_Module is
            (Child, "destroy", On_Editor_Destroy'Access,
             User_Data => File);
 
-         if Focus then
-            Set_Focus_Child (Child);
-         end if;
-
-         Raise_Child (Child);
+         Raise_Child (Child, Focus);
 
          if File /= VFS.No_File then
             Set_Title (Child, URL_File_Name (File), Base_Name (File));
@@ -2574,7 +2569,7 @@ package body Src_Editor_Module is
       if D.Line /= 0
         and then Is_Valid_Position (Get_Buffer (D.Edit), D.Line)
       then
-         Set_Cursor_Location (D.Edit, D.Line, D.Column, True);
+         Set_Cursor_Location (D.Edit, D.Line, D.Column, D.Focus);
 
          if D.Column_End /= 0
            and then Is_Valid_Position
@@ -3398,7 +3393,7 @@ package body Src_Editor_Module is
          Source := Open_File
            (Kernel, D.File,
             Create_New => D.New_File,
-            Focus      => not No_Location,
+            Focus      => D.Focus,
             Force      => D.Force_Reload);
 
          if Source /= null then
@@ -3419,7 +3414,8 @@ package body Src_Editor_Module is
                 Editable_Line_Type (D.Line),
                 Natural (Column),
                 Natural (D.Column_End),
-                Kernel_Handle (Kernel)));
+                Kernel_Handle (Kernel),
+                D.Focus));
          end if;
 
          return Edit /= null;
