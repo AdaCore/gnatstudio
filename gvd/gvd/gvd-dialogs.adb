@@ -46,8 +46,11 @@ with Gtk.Check_Button;      use Gtk.Check_Button;
 with Gtk.Stock;             use Gtk.Stock;
 with Process_Proxies;       use Process_Proxies;
 with GVD.Main_Window;       use GVD.Main_Window;
-with GVD.Types;             use GVD.Types;
+with GNAT.OS_Lib;
 with Histories;             use Histories;
+with Interactive_Consoles;  use Interactive_Consoles;
+
+with Ada.Text_IO; use Ada.Text_IO;
 
 package body GVD.Dialogs is
 
@@ -409,10 +412,12 @@ package body GVD.Dialogs is
 
       Tab     : constant Visual_Debugger :=
         Visual_Debugger (Debugger);
-      History : History_List := Tab.Window.Command_History;
-      Data    : History_Data;
       Item    : Gtk_List_Item;
 
+      History : constant GNAT.OS_Lib.String_List_Access :=
+        Get_History (Tab.Debugger_Text);
+
+      use GNAT.OS_Lib;
    begin
       if not Visible_Is_Set (History_Dialog)
         or else History_Dialog.Freeze_Count /= 0
@@ -420,26 +425,23 @@ package body GVD.Dialogs is
          return;
       end if;
 
-      Remove_Items
-        (History_Dialog.List, Get_Children (History_Dialog.List));
-      Wind (History, Backward);
+      Remove_Items (History_Dialog.List, Get_Children (History_Dialog.List));
 
-      for J in 1 .. Length (History) loop
-         Data := Get_Current (History);
+      if History /= null then
 
-         if Data.Debugger_Num = Natural (Get_Num (Tab))
-           and then Data.Mode /= Hidden
-         then
-            Gtk_New (Item, Label => Data.Command.all);
+         Put_Line (History'First'Img & " " & History'Last'Img);
+
+         for J in History.all'Range loop
+            if History (J) = null then
+               Gtk_New (Item, Label => "");
+            else
+               Gtk_New (Item, Label => History (J).all);
+            end if;
+
             Show (Item);
             Add (History_Dialog.List, Item);
-         end if;
-
-         Move_To_Next (History);
-      end loop;
-
-   exception
-      when No_Such_Item => null;
+         end loop;
+      end if;
    end Update;
 
    -----------------------------
