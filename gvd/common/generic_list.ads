@@ -90,6 +90,10 @@ package Generic_List is
    function First (L : List) return List_Node;
    --  Return the first node contained in L.
    --  Raise List_Empty if L is empty.
+   --  ??? this spec does not correspond to the body.
+
+   function Last (L : List) return List_Node;
+   --  Return the last node contained in L.
 
    function Prev (L : List; Node : List_Node) return List_Node;
    --  Return the node before Node in L. The cost is O(n).
