@@ -51,7 +51,7 @@ package Docgen.Work_On_Source is
       Source_File_List          : in out Type_Source_File_Table.HTable;
       Source_Filename           : VFS.Virtual_File;
       Source_Is_Spec            : Boolean;
-      Package_Name              : String;
+      Unit_Name                 : String;
       Entity_List               : in out Type_Entity_List.List;
       List_Ref_In_File          : in out List_Reference_In_File.List;
       Tagged_Types_List         : in out List_Entity_Information.List;
