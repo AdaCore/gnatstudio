@@ -1145,12 +1145,14 @@ package body Vdiff2_Module.Utils is
       New_File  : VFS.Virtual_File;
       Diff_File : VFS.Virtual_File;
       Revert    : Boolean := False;
-      Tmp_File  : VFS.Virtual_File := VFS.No_File) return Boolean is
+      Tmp_File  : VFS.Virtual_File := VFS.No_File) return Boolean
+   is
       Id     : constant VDiff2_Module := VDiff2_Module (Vdiff_Module_ID);
       Result : Diff_List;
       Button : Message_Dialog_Buttons;
       pragma Unreferenced (Button);
       Item   : Diff_Head;
+
    begin
       Result :=
         Diff (Id.Kernel, Orig_File, New_File, Diff_File, Revert);
@@ -1172,7 +1174,7 @@ package body Vdiff2_Module.Utils is
          Ref_File     => 2,
          Tmp_File     => Tmp_File);
       Process_Differences (Id.Kernel, Item, Id.List_Diff);
-      return true;
+      return True;
    end Visual_Patch;
 
 end Vdiff2_Module.Utils;

@@ -138,7 +138,7 @@ package body Vdiff2_Command is
 
    procedure Next_Difference
      (Kernel : Kernel_Handle;
-      Diff   : in out  Diff_Head)
+      Diff   : in out Diff_Head)
    is
       Link      : Diff_List_Node;
       Curr_Data : Diff_Chunk_Access;
