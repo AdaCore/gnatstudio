@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 2.1.0
 
+- D525-001 GPS and Python on Windows
+  Problem:    On Windows, GPS Python support does not work properly if GPS
+              is installed on a directory whose name start with a letter 'n',
+              'r' or 't'.
+  Workaround: Install GPS in another directory.
+
 - D515-001 "Tasks are running" window shows internal processings of GPS
   Problem:    When launching GPS and exiting quickly, or when exiting right
               after opening a new editor, GPS opens the "Tasks are running"
