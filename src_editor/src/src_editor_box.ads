@@ -379,6 +379,8 @@ private
       Source_View          : Src_Editor_View.Source_View;
       Source_Buffer        : Src_Editor_Buffer.Source_Buffer;
       --  Contextual menus
+      Menu_Line_Pos        : Natural;
+      Menu_Col_Pos         : Natural;
       Contextual_Menu      : Gtk.Menu.Gtk_Menu;
       Left_Contextual_Menu : Gtk.Menu.Gtk_Menu;
       --  The status bar
