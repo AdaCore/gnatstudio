@@ -259,15 +259,6 @@ procedure GPS is
       pragma Unreferenced (Ignored);
 
    begin
-      Charset := Getenv ("CHARSET");
-
-      if Charset.all = "" then
-         --  Gtk+ does not like if CHARSET is not defined.
-         Setenv ("CHARSET", "ISO-8859-1");
-      end if;
-
-      Free (Charset);
-
       OS_Utils.Install_Ctrl_C_Handler (Ctrl_C_Handler'Unrestricted_Access);
       Projects.Registry.Initialize;
 
@@ -435,6 +426,15 @@ procedure GPS is
 
       GPS.Debug_Mode := True;
       GPS.Log_Level  := GVD.Types.Hidden;
+
+      Charset := Getenv ("CHARSET");
+
+      if Charset.all = "" then
+         --  Gtk+ does not like if CHARSET is not defined.
+         Setenv ("CHARSET", Get_Pref (GPS.Kernel, Default_Charset));
+      end if;
+
+      Free (Charset);
 
       if Override_Gtk_Theme then
          declare
