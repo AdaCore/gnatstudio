@@ -866,6 +866,11 @@ scope is provided. This is used to avoid matching on comments when you
 are only interested in actual code, or to only search strings and
 comments, and ignore the code.
 
+GPS will automatically select the most appropriate context when you
+open the search dialog, depending on which component currently has the
+focus. However, you can of course change the context to the one you
+prefer. 
+
 @end table
 
 The second part of the window is a row of buttons, to start the search
