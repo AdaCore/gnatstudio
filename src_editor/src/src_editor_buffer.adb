@@ -4146,6 +4146,8 @@ package body Src_Editor_Buffer is
       Category := Lookup_Category (Id);
 
       if Category = 0 then
+         Trace (Me, "Set_Line_Highlight Id=" & Id
+                & " couldn't identify category, nothing done");
          --  Could not identify highlighting category
          return;
       end if;
@@ -4174,12 +4176,12 @@ package body Src_Editor_Buffer is
          Editor.Line_Data (Line).Enabled_Highlights (Category) := Set;
 
          if Set then
-            Editor.Line_Data (Line).Current_Highlight := Get_GC (Category);
+            Editor.Line_Data (Line).Highlight_Category := Category;
          else
             --  ??? This is never reached
             for J in Editor.Line_Data (Line).Enabled_Highlights'Range loop
                if Editor.Line_Data (Line).Enabled_Highlights (J) then
-                  Editor.Line_Data (Line).Current_Highlight := Get_GC (J);
+                  Editor.Line_Data (Line).Highlight_Category := J;
                end if;
             end loop;
          end if;
@@ -4205,7 +4207,7 @@ package body Src_Editor_Buffer is
 
       for J in Editor.Line_Data (Line).Enabled_Highlights'Range loop
          if Editor.Line_Data (Line).Enabled_Highlights (J) then
-            Editor.Line_Data (Line).Current_Highlight := Get_GC (J);
+            Editor.Line_Data (Line).Highlight_Category := J;
             return;
          end if;
       end loop;
@@ -4213,7 +4215,7 @@ package body Src_Editor_Buffer is
       --  If we reach this stage, no highlighting was found, therefore we
       --  remove the current GC.
 
-      Editor.Line_Data (Line).Current_Highlight := null;
+      Editor.Line_Data (Line).Highlight_Category := 0;
    end Set_Line_Highlighting;
 
    --------------------------
@@ -4285,7 +4287,7 @@ package body Src_Editor_Buffer is
       if Editor.Line_Data /= null
         and then Line <= Editor.Line_Data'Last
       then
-         return Editor.Line_Data (Line).Current_Highlight;
+         return Get_GC (Editor.Line_Data (Line).Highlight_Category);
       end if;
 
       return null;

@@ -2,7 +2,7 @@
 --                               G P S                               --
 --                                                                   --
 --                     Copyright (C) 2001-2005                       --
---                            ACT-Europe                             --
+--                            AdaCore                                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -768,8 +768,10 @@ private
       Editable_Line      : Editable_Line_Type;
       --  The line in the real buffer.
 
-      --  The following corresponds to line highlighting.
-      Current_Highlight  : Gdk_GC;
+      --  The following corresponds to line highlighting. This is the category
+      --  to use for highlighting. We cannot store the GC directly, since GPS
+      --  might not be realized when the line_data is created
+      Highlight_Category : Natural;
 
       Enabled_Highlights : Boolean_Array_Access;
       --  This array corresponds to the categories in Source_Editor_Module_Id.
@@ -787,7 +789,7 @@ private
       --  0 if the line is not in the file.
    end record;
 
-   New_Line_Data : constant Line_Data_Record := (0, null, null, null, 0);
+   New_Line_Data : constant Line_Data_Record := (0, 0, null, null, 0);
 
    type Line_Data_Array is array (Buffer_Line_Type range <>) of
      Line_Data_Record;
