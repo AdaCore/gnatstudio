@@ -507,7 +507,7 @@ package body Src_Editor_View is
 
       if User.Highlight_Blocks
         and then User.Current_Block /=
-          Get_Block (Buffer, Buffer_Line_Type (Line))
+          Get_Block (Buffer, Buffer_Line_Type (Line), False)
       then
          Clear_Text_Window (User);
       end if;
@@ -783,7 +783,9 @@ package body Src_Editor_View is
 
             if View.Highlight_Blocks then
                View.Current_Block := Get_Block
-                 (Buffer, Buffer_Line_Type (Get_Line (Cursor_Iter)) + 1);
+                 (Buffer,
+                  Buffer_Line_Type (Get_Line (Cursor_Iter)) + 1,
+                  False);
                Draw_Block (View.Current_Block);
             end if;
 
