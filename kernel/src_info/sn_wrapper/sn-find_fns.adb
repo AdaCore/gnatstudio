@@ -232,7 +232,7 @@ package body SN.Find_Fns is
 
    function Find (DB : DB_File;
                   Name : String := Invalid_String;
-                  Start_position : Point := Invalid_Point;
+                  Start_Position : Point := Invalid_Point;
                   Filename : String := Invalid_String)
       return CL_Table is
       P    : Pair_Ptr;
@@ -250,7 +250,7 @@ package body SN.Find_Fns is
          end if;
       end if;
       if not Fall then
-         if Start_position = Invalid_Point then
+         if Start_Position = Invalid_Point then
             Fall := True;
          else
             Len := Len + 11;
@@ -279,10 +279,10 @@ package body SN.Find_Fns is
          end if;
       end if;
       if not Fall then
-         if Start_position = Invalid_Point then
+         if Start_Position = Invalid_Point then
             Fall := True;
          else
-            To_String (Start_position, Key.all, Pos);
+            To_String (Start_Position, Key.all, Pos);
             Key (Pos) := Field_Sep;
             Pos := Pos + 1;
          end if;
@@ -315,7 +315,7 @@ package body SN.Find_Fns is
 
    function Find (DB : DB_File;
                   Name : String := Invalid_String;
-                  Start_position : Point := Invalid_Point;
+                  Start_Position : Point := Invalid_Point;
                   Filename : String := Invalid_String)
       return COM_Table is
       P    : Pair_Ptr;
@@ -333,7 +333,7 @@ package body SN.Find_Fns is
          end if;
       end if;
       if not Fall then
-         if Start_position = Invalid_Point then
+         if Start_Position = Invalid_Point then
             Fall := True;
          else
             Len := Len + 11;
@@ -362,10 +362,10 @@ package body SN.Find_Fns is
          end if;
       end if;
       if not Fall then
-         if Start_position = Invalid_Point then
+         if Start_Position = Invalid_Point then
             Fall := True;
          else
-            To_String (Start_position, Key.all, Pos);
+            To_String (Start_Position, Key.all, Pos);
             Key (Pos) := Field_Sep;
             Pos := Pos + 1;
          end if;
@@ -398,7 +398,7 @@ package body SN.Find_Fns is
 
    function Find (DB : DB_File;
                   Name : String := Invalid_String;
-                  Start_position : Point := Invalid_Point;
+                  Start_Position : Point := Invalid_Point;
                   Filename : String := Invalid_String)
       return CON_Table is
       P    : Pair_Ptr;
@@ -416,7 +416,7 @@ package body SN.Find_Fns is
          end if;
       end if;
       if not Fall then
-         if Start_position = Invalid_Point then
+         if Start_Position = Invalid_Point then
             Fall := True;
          else
             Len := Len + 11;
@@ -445,10 +445,10 @@ package body SN.Find_Fns is
          end if;
       end if;
       if not Fall then
-         if Start_position = Invalid_Point then
+         if Start_Position = Invalid_Point then
             Fall := True;
          else
-            To_String (Start_position, Key.all, Pos);
+            To_String (Start_Position, Key.all, Pos);
             Key (Pos) := Field_Sep;
             Pos := Pos + 1;
          end if;
@@ -482,7 +482,7 @@ package body SN.Find_Fns is
    function Find (DB : DB_File;
                   Common_Block : String := Invalid_String;
                   Name : String := Invalid_String;
-                  Start_position : Point := Invalid_Point;
+                  Start_Position : Point := Invalid_Point;
                   Filename : String := Invalid_String)
       return COV_Table is
       P    : Pair_Ptr;
@@ -507,7 +507,7 @@ package body SN.Find_Fns is
          end if;
       end if;
       if not Fall then
-         if Start_position = Invalid_Point then
+         if Start_Position = Invalid_Point then
             Fall := True;
          else
             Len := Len + 11;
@@ -547,10 +547,10 @@ package body SN.Find_Fns is
          end if;
       end if;
       if not Fall then
-         if Start_position = Invalid_Point then
+         if Start_Position = Invalid_Point then
             Fall := True;
          else
-            To_String (Start_position, Key.all, Pos);
+            To_String (Start_Position, Key.all, Pos);
             Key (Pos) := Field_Sep;
             Pos := Pos + 1;
          end if;
@@ -583,7 +583,7 @@ package body SN.Find_Fns is
 
    function Find (DB : DB_File;
                   Name : String := Invalid_String;
-                  Start_position : Point := Invalid_Point;
+                  Start_Position : Point := Invalid_Point;
                   Filename : String := Invalid_String)
       return E_Table is
       P    : Pair_Ptr;
@@ -601,7 +601,7 @@ package body SN.Find_Fns is
          end if;
       end if;
       if not Fall then
-         if Start_position = Invalid_Point then
+         if Start_Position = Invalid_Point then
             Fall := True;
          else
             Len := Len + 11;
@@ -630,10 +630,10 @@ package body SN.Find_Fns is
          end if;
       end if;
       if not Fall then
-         if Start_position = Invalid_Point then
+         if Start_Position = Invalid_Point then
             Fall := True;
          else
-            To_String (Start_position, Key.all, Pos);
+            To_String (Start_Position, Key.all, Pos);
             Key (Pos) := Field_Sep;
             Pos := Pos + 1;
          end if;
@@ -666,7 +666,7 @@ package body SN.Find_Fns is
 
    function Find (DB : DB_File;
                   Name : String := Invalid_String;
-                  Start_position : Point := Invalid_Point;
+                  Start_Position : Point := Invalid_Point;
                   Filename : String := Invalid_String)
       return EC_Table is
       P    : Pair_Ptr;
@@ -684,7 +684,7 @@ package body SN.Find_Fns is
          end if;
       end if;
       if not Fall then
-         if Start_position = Invalid_Point then
+         if Start_Position = Invalid_Point then
             Fall := True;
          else
             Len := Len + 11;
@@ -713,10 +713,10 @@ package body SN.Find_Fns is
          end if;
       end if;
       if not Fall then
-         if Start_position = Invalid_Point then
+         if Start_Position = Invalid_Point then
             Fall := True;
          else
-            To_String (Start_position, Key.all, Pos);
+            To_String (Start_Position, Key.all, Pos);
             Key (Pos) := Field_Sep;
             Pos := Pos + 1;
          end if;
@@ -796,7 +796,7 @@ package body SN.Find_Fns is
 
    function Find (DB : DB_File;
                   Name : String := Invalid_String;
-                  Start_position : Point := Invalid_Point;
+                  Start_Position : Point := Invalid_Point;
                   Filename : String := Invalid_String)
       return FD_Table is
       P    : Pair_Ptr;
@@ -814,7 +814,7 @@ package body SN.Find_Fns is
          end if;
       end if;
       if not Fall then
-         if Start_position = Invalid_Point then
+         if Start_Position = Invalid_Point then
             Fall := True;
          else
             Len := Len + 11;
@@ -843,10 +843,10 @@ package body SN.Find_Fns is
          end if;
       end if;
       if not Fall then
-         if Start_position = Invalid_Point then
+         if Start_Position = Invalid_Point then
             Fall := True;
          else
-            To_String (Start_position, Key.all, Pos);
+            To_String (Start_Position, Key.all, Pos);
             Key (Pos) := Field_Sep;
             Pos := Pos + 1;
          end if;
@@ -879,7 +879,7 @@ package body SN.Find_Fns is
 
    function Find (DB : DB_File;
                   Filename : String := Invalid_String;
-                  Start_position : Point := Invalid_Point;
+                  Start_Position : Point := Invalid_Point;
                   Class : String := Invalid_String;
                   Identifier : String := Invalid_String;
                   Sym_Type : Symbol_Type := Undef)
@@ -899,7 +899,7 @@ package body SN.Find_Fns is
          end if;
       end if;
       if not Fall then
-         if Start_position = Invalid_Point then
+         if Start_Position = Invalid_Point then
             Fall := True;
          else
             Len := Len + 11;
@@ -943,10 +943,10 @@ package body SN.Find_Fns is
          end if;
       end if;
       if not Fall then
-         if Start_position = Invalid_Point then
+         if Start_Position = Invalid_Point then
             Fall := True;
          else
-            To_String (Start_position, Key.all, Pos);
+            To_String (Start_Position, Key.all, Pos);
             Key (Pos) := Field_Sep;
             Pos := Pos + 1;
          end if;
@@ -999,7 +999,7 @@ package body SN.Find_Fns is
 
    function Find (DB : DB_File;
                   Name : String := Invalid_String;
-                  Start_position : Point := Invalid_Point;
+                  Start_Position : Point := Invalid_Point;
                   Filename : String := Invalid_String)
       return FR_Table is
       P    : Pair_Ptr;
@@ -1017,7 +1017,7 @@ package body SN.Find_Fns is
          end if;
       end if;
       if not Fall then
-         if Start_position = Invalid_Point then
+         if Start_Position = Invalid_Point then
             Fall := True;
          else
             Len := Len + 11;
@@ -1046,10 +1046,10 @@ package body SN.Find_Fns is
          end if;
       end if;
       if not Fall then
-         if Start_position = Invalid_Point then
+         if Start_Position = Invalid_Point then
             Fall := True;
          else
-            To_String (Start_position, Key.all, Pos);
+            To_String (Start_Position, Key.all, Pos);
             Key (Pos) := Field_Sep;
             Pos := Pos + 1;
          end if;
@@ -1082,7 +1082,7 @@ package body SN.Find_Fns is
 
    function Find (DB : DB_File;
                   Name : String := Invalid_String;
-                  Start_position : Point := Invalid_Point;
+                  Start_Position : Point := Invalid_Point;
                   Filename : String := Invalid_String)
       return FU_Table is
       P    : Pair_Ptr;
@@ -1100,7 +1100,7 @@ package body SN.Find_Fns is
          end if;
       end if;
       if not Fall then
-         if Start_position = Invalid_Point then
+         if Start_Position = Invalid_Point then
             Fall := True;
          else
             Len := Len + 11;
@@ -1129,10 +1129,10 @@ package body SN.Find_Fns is
          end if;
       end if;
       if not Fall then
-         if Start_position = Invalid_Point then
+         if Start_Position = Invalid_Point then
             Fall := True;
          else
-            To_String (Start_position, Key.all, Pos);
+            To_String (Start_Position, Key.all, Pos);
             Key (Pos) := Field_Sep;
             Pos := Pos + 1;
          end if;
@@ -1249,7 +1249,7 @@ package body SN.Find_Fns is
    function Find (DB : DB_File;
                   Class : String := Invalid_String;
                   Base_Class : String := Invalid_String;
-                  Start_position : Point := Invalid_Point;
+                  Start_Position : Point := Invalid_Point;
                   Filename : String := Invalid_String)
       return IN_Table is
       P    : Pair_Ptr;
@@ -1274,7 +1274,7 @@ package body SN.Find_Fns is
          end if;
       end if;
       if not Fall then
-         if Start_position = Invalid_Point then
+         if Start_Position = Invalid_Point then
             Fall := True;
          else
             Len := Len + 11;
@@ -1314,10 +1314,10 @@ package body SN.Find_Fns is
          end if;
       end if;
       if not Fall then
-         if Start_position = Invalid_Point then
+         if Start_Position = Invalid_Point then
             Fall := True;
          else
-            To_String (Start_position, Key.all, Pos);
+            To_String (Start_Position, Key.all, Pos);
             Key (Pos) := Field_Sep;
             Pos := Pos + 1;
          end if;
@@ -1350,7 +1350,7 @@ package body SN.Find_Fns is
 
    function Find (DB : DB_File;
                   Included_file : String := Invalid_String;
-                  Start_position : Point := Invalid_Point;
+                  Start_Position : Point := Invalid_Point;
                   Include_from_file : String := Invalid_String)
       return IU_Table is
       P    : Pair_Ptr;
@@ -1368,7 +1368,7 @@ package body SN.Find_Fns is
          end if;
       end if;
       if not Fall then
-         if Start_position = Invalid_Point then
+         if Start_Position = Invalid_Point then
             Fall := True;
          else
             Len := Len + 11;
@@ -1397,10 +1397,10 @@ package body SN.Find_Fns is
          end if;
       end if;
       if not Fall then
-         if Start_position = Invalid_Point then
+         if Start_Position = Invalid_Point then
             Fall := True;
          else
-            To_String (Start_position, Key.all, Pos);
+            To_String (Start_Position, Key.all, Pos);
             Key (Pos) := Field_Sep;
             Pos := Pos + 1;
          end if;
@@ -1434,7 +1434,7 @@ package body SN.Find_Fns is
    function Find (DB : DB_File;
                   Class : String := Invalid_String;
                   Variable_Name : String := Invalid_String;
-                  Start_position : Point := Invalid_Point;
+                  Start_Position : Point := Invalid_Point;
                   Filename : String := Invalid_String)
       return IV_Table is
       P    : Pair_Ptr;
@@ -1459,7 +1459,7 @@ package body SN.Find_Fns is
          end if;
       end if;
       if not Fall then
-         if Start_position = Invalid_Point then
+         if Start_Position = Invalid_Point then
             Fall := True;
          else
             Len := Len + 11;
@@ -1499,10 +1499,10 @@ package body SN.Find_Fns is
          end if;
       end if;
       if not Fall then
-         if Start_position = Invalid_Point then
+         if Start_Position = Invalid_Point then
             Fall := True;
          else
-            To_String (Start_position, Key.all, Pos);
+            To_String (Start_Position, Key.all, Pos);
             Key (Pos) := Field_Sep;
             Pos := Pos + 1;
          end if;
@@ -1536,7 +1536,7 @@ package body SN.Find_Fns is
    function Find (DB : DB_File;
                   Function_Name : String := Invalid_String;
                   Variable_Name : String := Invalid_String;
-                  Start_position : Point := Invalid_Point;
+                  Start_Position : Point := Invalid_Point;
                   Filename : String := Invalid_String)
       return LV_Table is
       P    : Pair_Ptr;
@@ -1561,7 +1561,7 @@ package body SN.Find_Fns is
          end if;
       end if;
       if not Fall then
-         if Start_position = Invalid_Point then
+         if Start_Position = Invalid_Point then
             Fall := True;
          else
             Len := Len + 11;
@@ -1601,10 +1601,10 @@ package body SN.Find_Fns is
          end if;
       end if;
       if not Fall then
-         if Start_position = Invalid_Point then
+         if Start_Position = Invalid_Point then
             Fall := True;
          else
-            To_String (Start_position, Key.all, Pos);
+            To_String (Start_Position, Key.all, Pos);
             Key (Pos) := Field_Sep;
             Pos := Pos + 1;
          end if;
@@ -1637,7 +1637,7 @@ package body SN.Find_Fns is
 
    function Find (DB : DB_File;
                   Name : String := Invalid_String;
-                  Start_position : Point := Invalid_Point;
+                  Start_Position : Point := Invalid_Point;
                   Filename : String := Invalid_String)
       return MA_Table is
       P    : Pair_Ptr;
@@ -1655,7 +1655,7 @@ package body SN.Find_Fns is
          end if;
       end if;
       if not Fall then
-         if Start_position = Invalid_Point then
+         if Start_Position = Invalid_Point then
             Fall := True;
          else
             Len := Len + 11;
@@ -1684,10 +1684,10 @@ package body SN.Find_Fns is
          end if;
       end if;
       if not Fall then
-         if Start_position = Invalid_Point then
+         if Start_Position = Invalid_Point then
             Fall := True;
          else
-            To_String (Start_position, Key.all, Pos);
+            To_String (Start_Position, Key.all, Pos);
             Key (Pos) := Field_Sep;
             Pos := Pos + 1;
          end if;
@@ -1721,7 +1721,7 @@ package body SN.Find_Fns is
    function Find (DB : DB_File;
                   Class : String := Invalid_String;
                   Name : String := Invalid_String;
-                  Start_position : Point := Invalid_Point;
+                  Start_Position : Point := Invalid_Point;
                   Filename : String := Invalid_String)
       return MD_Table is
       P    : Pair_Ptr;
@@ -1746,7 +1746,7 @@ package body SN.Find_Fns is
          end if;
       end if;
       if not Fall then
-         if Start_position = Invalid_Point then
+         if Start_Position = Invalid_Point then
             Fall := True;
          else
             Len := Len + 11;
@@ -1786,10 +1786,10 @@ package body SN.Find_Fns is
          end if;
       end if;
       if not Fall then
-         if Start_position = Invalid_Point then
+         if Start_Position = Invalid_Point then
             Fall := True;
          else
-            To_String (Start_position, Key.all, Pos);
+            To_String (Start_Position, Key.all, Pos);
             Key (Pos) := Field_Sep;
             Pos := Pos + 1;
          end if;
@@ -1823,7 +1823,7 @@ package body SN.Find_Fns is
    function Find (DB : DB_File;
                   Class : String := Invalid_String;
                   Name : String := Invalid_String;
-                  Start_position : Point := Invalid_Point;
+                  Start_Position : Point := Invalid_Point;
                   Filename : String := Invalid_String)
       return FU_Table is
       P    : Pair_Ptr;
@@ -1848,7 +1848,7 @@ package body SN.Find_Fns is
          end if;
       end if;
       if not Fall then
-         if Start_position = Invalid_Point then
+         if Start_Position = Invalid_Point then
             Fall := True;
          else
             Len := Len + 11;
@@ -1888,10 +1888,10 @@ package body SN.Find_Fns is
          end if;
       end if;
       if not Fall then
-         if Start_position = Invalid_Point then
+         if Start_Position = Invalid_Point then
             Fall := True;
          else
-            To_String (Start_position, Key.all, Pos);
+            To_String (Start_Position, Key.all, Pos);
             Key (Pos) := Field_Sep;
             Pos := Pos + 1;
          end if;
@@ -2170,6 +2170,108 @@ package body SN.Find_Fns is
          else
             Key (Pos .. Pos + Filename'Length - 1)
               := Filename;
+            Pos := Pos + Filename'Length;
+         end if;
+      end if;
+      Set_Cursor (DB, By_Key, Key.all, False);
+      Free (Key);
+      P   := Get_Pair (DB, Next_By_Key);
+      Release_Cursor (DB);
+      if null = P then
+         raise Not_Found;
+      end if;
+      Tab := Parse_Pair (P.all);
+      Free (P);
+      return Tab;
+   end Find;
+
+   ----------
+   -- Find --
+   ----------
+   --  Find functions for Templates arguments table
+   function Find
+     (DB             : DB_File;
+      Scope          : String := Invalid_String;
+      Name           : String := Invalid_String;
+      Start_Position : Point  := Invalid_Point;
+      Filename       : String := Invalid_String)
+   return TA_Table is
+      P    : Pair_Ptr;
+      Tab  : TA_Table;
+      Key  : String_Access;
+      Fall : Boolean := False;
+      Len  : Integer := 0;
+      Pos  : Integer := 1;
+   begin
+      if not Fall then
+         if Scope = Invalid_String then
+            Fall := True;
+         else
+            Len := Len + Scope'Length + 1;
+         end if;
+      end if;
+      if not Fall then
+         if Name = Invalid_String then
+            Fall := True;
+         else
+            Len := Len + Name'Length + 1;
+         end if;
+      end if;
+      if not Fall then
+         if Start_Position = Invalid_Point then
+            Fall := True;
+         else
+            Len := Len + 11;
+         end if;
+      end if;
+      if not Fall then
+         if Filename = Invalid_String then
+            Fall := True;
+         else
+            Len := Len + Filename'Length;
+         end if;
+      end if;
+
+      Key := new String (1 .. Len);
+      Fall := False;
+
+      if not Fall then
+         if Scope = Invalid_String then
+            Fall := True;
+         else
+            Key (Pos .. Pos + Scope'Length - 1)
+               := Scope;
+            Pos := Pos + Scope'Length;
+            Key (Pos) := Field_Sep;
+            Pos := Pos + 1;
+         end if;
+      end if;
+      if not Fall then
+         if Name = Invalid_String then
+            Fall := True;
+         else
+            Key (Pos .. Pos + Name'Length - 1)
+               := Name;
+            Pos := Pos + Name'Length;
+            Key (Pos) := Field_Sep;
+            Pos := Pos + 1;
+         end if;
+      end if;
+      if not Fall then
+         if Start_Position = Invalid_Point then
+            Fall := True;
+         else
+            To_String (Start_Position, Key.all, Pos);
+            Key (Pos) := Field_Sep;
+            Pos := Pos + 1;
+         end if;
+      end if;
+      if not Fall then
+         if Filename = Invalid_String then
+            Fall := True;
+         else
+            Key (Pos .. Pos + Filename'Length - 1)
+               := Filename;
             Pos := Pos + Filename'Length;
          end if;
       end if;
