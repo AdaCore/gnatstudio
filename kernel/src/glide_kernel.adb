@@ -541,18 +541,18 @@ package body Glide_Kernel is
 
       Gtk_New (Model, Column_Types);
 
-      if Project_Modified (Get_Project (Handle), Recursive => True) then
-         Num_Unsaved := Num_Unsaved + 1;
-         Append (Model, It, Null_Iter);
-         Set (Model, It, 0, True);
-         Set (Model, It, 1, Project_Description);
-      end if;
-
       if Children /= No_Children then
          for C in Children'Range loop
             Add_Child_If_Needed (Children (C));
          end loop;
       else
+         if Project_Modified (Get_Project (Handle), Recursive => True) then
+            Num_Unsaved := Num_Unsaved + 1;
+            Append (Model, It, Null_Iter);
+            Set (Model, It, 0, True);
+            Set (Model, It, 1, Project_Description);
+         end if;
+
          Iter := First_Child (MDI);
 
          loop
