@@ -850,6 +850,12 @@ task, and the current progress. The execution of theses tasks can be
 suspended using a contextual menu, brought up by right-clicking on a
 line.
 
+When exiting GPS, if there are tasks running in the Task Manager, a window
+will display those tasks. You can also bring up a contextual menu on the
+items in this window. When there are no more running tasks, GPS will exit.
+You can force the exit at any time by pressing the confirmation button, or
+prevent this exit by pressing the Cancel button.
+
 @c --------------------------------------------------------------------
 @node Integrated Help
 @chapter Integrated Help
