@@ -707,17 +707,21 @@ package body Project_Trees is
 
       type Ctree_Node_Array is array (Language_Category'Range)
         of Gtk_Ctree_Node;
-      Categories  : Ctree_Node_Array := (others => null);
+      Categories : Ctree_Node_Array := (others => null);
+
    begin
       F := Open_Read (Name, Binary);
+
       if F = Invalid_FD then
          return;
       end if;
+
       Buffer := new String (1 .. Integer (File_Length (F)));
       Length := Read (F, Buffer.all'Address, Buffer'Length);
       Close (F);
 
       Lang := Get_Language_From_File (File_Name);
+
       if Lang /= null then
          Parse_Constructs
            (Lang,
@@ -728,6 +732,7 @@ package body Project_Trees is
             Next_Indent   => Next_Indent);
 
          Constructs.Current := Constructs.First;
+
          while Constructs.Current /= null loop
             if Constructs.Current.Name /= null then
                if Categories (Constructs.Current.Category) = null then
@@ -744,6 +749,7 @@ package body Project_Trees is
                   Constructs.Current.Name.all,
                   Categories (Constructs.Current.Category));
             end if;
+
             Constructs.Current := Constructs.Current.Next;
          end loop;
 
