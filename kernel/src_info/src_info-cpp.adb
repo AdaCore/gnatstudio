@@ -44,6 +44,9 @@ package body Src_Info.CPP is
    Warn_Stream : Debug_Handle := Create ("CPP.Warn");
    Fail_Stream : Debug_Handle := Create ("CPP.Fail");
 
+   Xrefs : Xref_Pool := Empty_Xref_Pool;
+   --  ??? a global variable fon now
+
    type Handler_Environment is record
       SN_Table          : SN_Table_Array;
       File              : LI_File_Ptr;
@@ -228,9 +231,26 @@ package body Src_Info.CPP is
    function Get_Full_Filename_In_Project
      (Project : Prj.Project_Id; Source_File : String)
      return SN.String_Access;
+   pragma Inline (Get_Full_Filename_In_Project);
    --  Returns full name of specified source file or null, if file not found
    --  in project. User has to free returned string.
 
+   function Get_SN_Dir (Project : Prj.Project_Id) return String;
+   pragma Inline (Get_SN_Dir);
+
+   ----------------
+   -- Get_SN_Dir --
+   ----------------
+
+   function Get_SN_Dir (Project : Prj.Project_Id) return String is
+   begin
+      return Prj_API.Object_Path (Project, Recursive => False)
+        & Browse.DB_Dir_Name;
+   end Get_SN_Dir;
+
+   ----------------------------------
+   -- Get_Full_Filename_In_Project --
+   ----------------------------------
 
    function Get_Full_Filename_In_Project
      (Project : Prj.Project_Id; Source_File : String)
@@ -344,58 +364,67 @@ package body Src_Info.CPP is
          raise;
    end Process_File;
 
-   ------------------
-   -- Browse_Files --
-   ------------------
+   ---------------------
+   -- Delete_Database --
+   ---------------------
 
-   procedure Browse_Files
-     (File_List              : String_List_Access;
-      Project                : Prj.Project_Id;
-      Predefined_Source_Path : String;
-      Predefined_Object_Path : String;
-      Regenerate             : Boolean := False)
-   is
-      pragma Unreferenced (Predefined_Source_Path);
-      pragma Unreferenced (Predefined_Object_Path);
-
-      Xrefs : Xref_Pool := Empty_Xref_Pool;
-
-      SN_Dir      : constant String :=
-        Prj_API.Object_Path (Project, Recursive => False)
-        & Browse.DB_Dir_Name;
-      --  SN project directory
-
-      Full_Filename : SN.String_Access;
+   procedure Delete_Database (Root_Project : Prj.Project_Id) is
    begin
-      --  try to load xref pool
-      Load (Xrefs,
-        SN_Dir & Directory_Separator & Browse.Xref_Pool_Filename);
+      if Xrefs /= Empty_Xref_Pool  then
+         Free (Xrefs);
+      end if;
+      Browse.Delete_Database (Get_SN_Dir (Root_Project));
+   end Delete_Database;
 
-      if Regenerate then
-         Browse.Delete_Database (SN_Dir);
+   -----------------
+   -- Browse_File --
+   -----------------
+
+   function Browse_File
+     (Source_File            : String;
+      Root_Project           : Prj.Project_Id) return Process_Descriptor
+   is
+      SN_Dir : constant String := Get_SN_Dir (Root_Project);
+      Full_Filename : SN.String_Access
+        := Get_Full_Filename_In_Project (Root_Project, Source_File);
+      PD : Process_Descriptor;
+   begin
+      if Full_Filename = null then
+         Fail ("File not found: " & Source_File);
       end if;
 
-      for F in File_List.all'Range loop -- iterate thru files in list
-         Full_Filename :=
-           Get_Full_Filename_In_Project (Project, File_List (F).all);
+      if Xrefs = Empty_Xref_Pool then
+         --  try to load xref pool
+         Load (Xrefs,
+           SN_Dir & Directory_Separator & Browse.Xref_Pool_Filename);
+      end if;
 
-         if Full_Filename = null then
-            Warn ("File not found: " & File_List (F).all);
-         else
-            --  run cbrowser
-            Browse.Browse (Full_Filename.all, SN_Dir, "cbrowser", Xrefs);
-            Free_String (Full_Filename);
-         end if;
-
-      end loop;
+      Browse.Browse
+        (Full_Filename.all,
+         SN_Dir,
+         "cbrowser",
+         Xrefs,
+         PD);
 
       --  save xref pool to file
       Save (Xrefs, SN_Dir & Directory_Separator & Browse.Xref_Pool_Filename);
+      Free_String (Full_Filename);
 
+      return PD;
+
+   end Browse_File;
+
+   --------------------
+   -- Generate_Xrefs --
+   --------------------
+
+   function Generate_Xrefs
+     (Root_Project : Prj.Project_Id) return Process_Descriptor
+   is
+   begin
       --  update .to and .by tables
-      Browse.Generate_Xrefs (SN_Dir);
-      Free (Xrefs);
-   end Browse_Files;
+      return Browse.Generate_Xrefs (Get_SN_Dir (Root_Project));
+   end Generate_Xrefs;
 
    ---------------------------
    -- Create_Or_Complete_LI --
@@ -414,13 +443,11 @@ package body Src_Info.CPP is
       pragma Unreferenced (Predefined_Source_Path);
       pragma Unreferenced (Predefined_Object_Path);
 
-      SN_Dir      : constant String :=
-        Prj_API.Object_Path (Project, Recursive => False)
-        & Browse.DB_Dir_Name;
+      SN_Dir      : constant String := Get_SN_Dir (Project);
       --  SN project directory
 
-      Full_Filename : GNAT.OS_Lib.String_Access := Locate_Regular_File
-        (Source_Filename, Include_Path (Project, Recursive => True));
+      Full_Filename : SN.String_Access :=
+        Get_Full_Filename_In_Project (Project, Source_Filename);
 
       Env : Handler_Environment;
 
@@ -430,13 +457,16 @@ package body Src_Info.CPP is
          return;
       end if;
 
-      Load (Env.Xrefs,
-        SN_Dir & Directory_Separator & Browse.Xref_Pool_Filename);
+      if Xrefs = Empty_Xref_Pool then
+         Load (Env.Xrefs,
+           SN_Dir & Directory_Separator & Browse.Xref_Pool_Filename);
+      end if;
 
       Open_DB_Files
         (SN_Dir & Directory_Separator & Browse.DB_File_Name,
          Env.SN_Table);
 
+      Env.Xrefs := Xrefs;
       Env.File := File;
       Env.List_Of_Files := List;
       Env.DB_Dir := new String' (SN_Dir);
@@ -450,15 +480,14 @@ package body Src_Info.CPP is
 
       Close_DB_Files (Env.SN_Table);
 
-      Free (Full_Filename);
-      Free (Env.Xrefs);
+      Free_String (Full_Filename);
       Free (Env.DB_Dir);
 
    exception
       when E : others =>
          Trace (Warn_Stream, "Unexpected exception: "
                 & Exception_Information (E));
-         Free (Full_Filename);
+         Free_String (Full_Filename);
    end Create_Or_Complete_LI;
 
    ------------------------------

@@ -193,6 +193,8 @@ package body SN.Browse is
       end loop;
       Close (Dir);
 
+      Close (GNAT.Expect.Get_Input_Fd (PD));
+
       return PD;
    end Generate_Xrefs;
 
