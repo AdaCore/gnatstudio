@@ -880,7 +880,6 @@ package body VCS.CVS is
    is
       use String_List;
 
-      L       : String_List.List := List;
       L_Temp  : List_Node := First (List);
       Success : Boolean;
 
@@ -899,7 +898,6 @@ package body VCS.CVS is
          L_Temp := Next (L_Temp);
       end loop;
 
-      String_List.Free (L);
       Close (File);
       Insert (Kernel,
               -"CVS: Got comparison for file " & Current_File,
@@ -1046,7 +1044,6 @@ package body VCS.CVS is
    is
       use String_List;
 
-      L       : String_List.List := List;
       L_Temp  : List_Node := First (List);
       Success : Boolean;
 
@@ -1064,7 +1061,6 @@ package body VCS.CVS is
          L_Temp := Next (L_Temp);
       end loop;
 
-      String_List.Free (L);
       Close (File);
       Open_File_Editor (Kernel, Text_File);
       GNAT.OS_Lib.Delete_File (Text_File, Success);
