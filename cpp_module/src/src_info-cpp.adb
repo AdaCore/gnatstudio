@@ -138,6 +138,7 @@ package body Src_Info.CPP is
       Declaration     : in out E_Declaration_Info_List;
       Parent_Filename : VFS.Virtual_File := VFS.No_File;
       Parent_Location : SN.Point := SN.Invalid_Point;
+      Kind            : Parent_Kind := Container_Type;
       Parent_Name     : String := "");
    --  Set the location of the parent type of Declaration. This is added to
    --  any currently defined parent type
@@ -449,6 +450,7 @@ package body Src_Info.CPP is
       Declaration     : in out E_Declaration_Info_List;
       Parent_Filename : VFS.Virtual_File := VFS.No_File;
       Parent_Location : SN.Point := SN.Invalid_Point;
+      Kind            : Parent_Kind := Container_Type;
       Parent_Name     : String := "")
    is
       Tmp_LI_File_Ptr : LI_File_Ptr;
@@ -460,7 +462,7 @@ package body Src_Info.CPP is
          Declaration.Value.Declaration.Parent_Location :=
            new File_Location_Node'
              (Value                  => Predefined_Entity_Location,
-              Kind                   => Container_Type,
+              Kind                   => Kind,
               Predefined_Entity_Name => Get_String (Parent_Name),
               Next           => Declaration.Value.Declaration.Parent_Location);
 
@@ -489,7 +491,7 @@ package body Src_Info.CPP is
                                    Source_Filename => null),
                         Line   => Parent_Location.Line,
                         Column => Parent_Location.Column),
-              Kind  => Container_Type,
+              Kind  => Kind,
               Predefined_Entity_Name => No_Name,
               Next  => Declaration.Value.Declaration.Parent_Location);
       end if;
@@ -4416,7 +4418,8 @@ package body Src_Info.CPP is
                        (String (Super_Def.Key
                           (Super_Def.File_Name.First ..
                              Super_Def.File_Name.Last))),
-                     Parent_Location => Super_Def.Start_Position);
+                     Parent_Location => Super_Def.Start_Position,
+                     Kind => Parent_Type);
                   Free (Super_Desc);
                end if;
             end loop;
