@@ -295,7 +295,19 @@ package body Switches_Editors is
                   Level := 0;
                end if;
 
-               Select_Item (Get_List (Combo), Level);
+               if Switch = "-gnatR"
+                 and then Switches (J).all = "-gnatR"
+               then
+                  Select_Item (Get_List (Combo), 2);
+
+               elsif Switch = "-O"
+                 and then Switches (J).all = "-O"
+               then
+                  Select_Item (Get_List (Combo), 1);
+
+               else
+                  Select_Item (Get_List (Combo), Level);
+               end if;
                return;
             end if;
          end loop;
