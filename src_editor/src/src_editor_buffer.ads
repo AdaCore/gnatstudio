@@ -858,7 +858,6 @@ private
             Buffer_Line : Buffer_Line_Type;
 
          when In_Mark =>
-            Mark : Gtk.Text_Mark.Gtk_Text_Mark := null;
             Text : String_Access := null;
       end case;
    end record;
@@ -1006,9 +1005,6 @@ private
       Blocks_Need_Parsing : Boolean := False;
       --  Whether the block information should be computed next time it is
       --  needed.
-
-      Blocks : Block_List.List;
-      --  A cache structure containing all the blocks in the buffer.
 
       Blocks_Timeout_Registered : Boolean := False;
       --  Whether the blocks need to be recomputed.
