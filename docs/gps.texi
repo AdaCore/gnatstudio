@@ -396,7 +396,7 @@ start/continue the debugging session, step/next execution, finish
 current procedure.
 
 The icon on the far right of the tool bar will be animated to indicate that an
-action (e.g. a build or a search) is going on in background.
+action (e.g. a build or a search) is going on in the background.
 
 @c --------------------------------------------------------------------
 @node The Work Space
@@ -542,7 +542,7 @@ subprograms, packages, types, variables, tasks,@dots{}
 
 @end table
 
-Double-clicking on an file, or simple clicking on any entity will open
+Double-clicking on a file, or simple clicking on any entity will open
 a source editor and display respectively the first line in this file
 or the line on which the entity is defined.
 
@@ -1088,10 +1088,10 @@ squares, and will toggle between maximized and unmaximized states.
 @item unmaximized windows
 @cindex unmaximized
 @cindex menu
-As opposed to putting all the windows inside a notebook, GPS can also
-let you organize them freely when they are unmaximized. Select the
-menu @code{Window->Unmaximize All}, or click again in the middle
-button on the right of the title bar.
+Instead of putting all the windows inside a notebook, GPS lets you
+organize them freely when they are unmaximized. Select the menu
+@code{Window->Unmaximize All}, or click again in the middle button on
+the right of the title bar.
 
 In this mode, the windows can be resized freely by clicking on the
 border of any side or in one of their four corners, as usual on
@@ -1153,7 +1153,7 @@ in the title bar (the one that shows a single line).
 
 The window will then be resized so that only part of its title bar is
 visible, and none of its actual contents. Icons can still be moved
-around as you want, but they can not be resized. You need to first
+around as you want, but they cannot be resized. You need to first
 de-iconify the window, by clicking once again on the same button.
 
 When de-iconified, a window will restore the size and position it had
@@ -1192,7 +1192,7 @@ see by clicking on its name in the tabs area.
 GPS includes four such areas, one on each side of the main area. Some
 visual objects will initially be displayed in one of these docking areas
 instead of in the central one, like the project explorer, the message
-window,@dots{} Although you can not control this initial position, it is
+window,@dots{} Although you cannot control this initial position, it is
 possible to change it later on (@ref{Moving Windows}).
 
 However, you can still choose precisely the dimension you want for
@@ -1202,12 +1202,12 @@ its height for the top and bottom ones).
 @cindex handle
 Between each docking area and the central one, there is a small handle
 (on which a series of dots are drawn), that you can move interactively
-with the mouse, to resize the docking areas). By default, when you
-move such a handle, a line will appear on top of all other windows in
-GPS to show you the new position the docking area will have when you
-release the mouse. You can set up a preference (menu
-@code{Edit->Preferences}) to indicate that you want the resizing to be
-opaque, which might give more intuitive results.
+with the mouse, to resize the docking areas). By default, when you move
+such a handle, a line will appear on top of all other windows in GPS to
+show you the new position the docking area will have when you release
+the mouse. You can set up a preference (menu @code{Edit->Preferences})
+to indicate that you want the resizing to be opaque, that is that you
+want to see the windows as you resize them.
 @cindex preferences
 
 Note that when a window is @b{docked} (i.e. put in a docking area), some
@@ -1218,7 +1218,7 @@ A simple way to dock a window is to select it, and then select the
 menu @code{Window->Docked}. We will see in @ref{Moving Windows} that
 there is a more intuitive way to do the same thing.
 
-In some cases, GPS will change the color used to draw the title of the
+In some cases GPS will change the color and size of the title (name) of a 
 window in the notebook tab. This indicates that the window content
 has been updated, but the window wasn't visible. Typically,
 this is used to indicate that new messages have been written in the
@@ -1288,7 +1288,7 @@ GPS's main window.
 @cindex menu
 There are two ways to put a floating window back under control of GPS.
 The more general method is to select the window through its title in
-the menu @code{Window}, and then select @code{Window->Floating}.
+the menu @code{Window}, and then unselect @code{Window->Floating}.
 
 @cindex preferences
 The second method assumes that the preference @b{Destroy Floats} in
@@ -1300,11 +1300,11 @@ its title bar.
 
 @cindex all floating
 A special mode is also available in GPS, where all windows are
-floating. The MDI area in the main window becomes invisible. This can
-be useful if your system or window manager provides windows-handling
-facilities that GPS does and you rely on them. It might also be used
-if you want to have windows on various virtual desktops, when your
-window manager has this feature.
+floating. The MDI area in the main window becomes invisible. This can be
+useful if you rely on windows handling facilities supported by your
+system or window manager but not available in GPS. This might also be
+useful if you want to have windows on various virtual desktops, should
+your window manager support this.
 
 This special mode is activated through a preference (menu
 @code{Edit->Preferences}). This preference is entitled @b{All
@@ -1322,12 +1322,12 @@ Floating}.
 @cindex floating
 @noindent
 As we have seen, the windows' state can be changed at any time, from
-maximized to unmaximized to docked and floating and back, in any
+maximized to unmaximized to docked to floating and back, in any
 order.
 
 @cindex menu
 In all cases, the changes are done either through the buttons in the
-title bar or through the menu @code{Window}.
+title bar or through the @code{Window} menu.
 
 @cindex drag-n-drop
 A more intuitive method is also provided, based on
@@ -1344,7 +1344,7 @@ used to move them around. In that case, you need to press the
 
 A third possibility can be used for maximized or docked windows: click
 with the left mouse button in the notebook tab that contains their
-name. This third option is not available under Windows systems.
+name. This third option is not available under Microsoft Windows systems.
 
 While you keep the mouse button pressed, and move the mouse around, the
 selected drop area is highlighted with a dashed border. This shows precisely
@@ -1367,8 +1367,8 @@ where you released the mouse button, or on one of the sides of that pane
 @item Docking areas
 @cindex docked
 @cindex docking area
-The window will immediately be adopted by this dropping area, and a
-new notebook will be created as needed.
+The window will be immediately added to this area after dropping it
+and a new notebook will be created as needed.
 
 In some cases, you might want to create a docking area that is not
 currently visible (for instance, it is often useful to put the location window
@@ -1510,17 +1510,18 @@ When you leave the mouse over a word in the source editor, a small window
 will automatically pop up if there are relevant contextual information to
 display about the word.
 
-The kind of information displayed depends on the current state of GPS.
+The type of information displayed depends on the current state of GPS.
 
-In normal mode, the kind of entity and where it is declared is displayed when
-this information is available. That is, when the cross reference
-information about the current file has been generated. If there is no relevant
-information, no tooltip is displayed.
-See @ref{Support for Cross References} for more information.
+In normal mode, the entity kind and the location of declaration is
+displayed when this information is available. That is, when the cross
+reference information about the current file has been generated. If
+there is no relevant information, no tooltip is displayed.  See
+@ref{Support for Cross References} for more information.
 
 In debugging mode, the value of the variable under the mouse is displayed in
-the pop up window if the variable is known to the debugger, in the right frame,
-and if the program being debugged is in the right state. If one of these
+the pop up window if the variable is known to the debugger, the variable
+belongs to the current stack frame,
+and the program being debugged is in the right state. If one of these
 conditions is not met, the normal mode information is displayed.
 
 You can disable the automatic pop up of tool tips in the Editor section of
@@ -1584,7 +1585,7 @@ See @ref{autosave delay} for a full description of this capability.
 
 @cindex emacs
 GPS also integrates with existing third party editors such as
-@code{Emacs}. @xref{Using an External Editor}.
+@code{Emacs} or @code{vi}. @xref{Using an External Editor}.
 
 @c --------------------------------------------------------------------------
 @node Editing Sources
@@ -2081,7 +2082,7 @@ switch editor. @xref{The Switches Editor}.
 @cindex unit testing
 @cindex testing
 This sub menu gives access to dialogs that make it easy to generate
-AUnit stubs. AUnit is an Ada unit testing frame work.
+AUnit stubs. AUnit is an Ada unit testing framework.
 
 @table @i
 @item New Test Case...
@@ -2167,7 +2168,7 @@ your system doesn't support @code{emacsclient}.
 @code{Vim} is a vi-like editor that provides a number of enhancements,
 for instance syntax highlighting for all the languages supported by
 GPS. Selecting this external editor will start an xterm (or command
-window, depending on your system) with a running vim process editing
+window, depending on your system) with a running @code{vim} process editing
 the file.
 
 Note that one limitation of this editor is that if GPS needs to open
@@ -2305,32 +2306,32 @@ GPS with unsaved files.
 @c --------------------------------------------------------------------
 
 @noindent
-GPS provides cross-references for most of the entities defined in your
-application, as well as some advanced browsers like a call graph.
-For this to work, it needs some help from external tools, specific to
-each of the supported languages.
+GPS provides cross-references for entities, such as types, procedures,
+functions, variables, @dots{}, defined in your application. In addition
+GPS has advanced visual browsers like call graphs and entity graphs.  To
+support cross references GPS needs help from external language-specific
+tools.
 
 @table @b
 @item Ada
 @cindex Ada
 @cindex GNAT
-The GNAT compiler itself is used to generate the cross-references
-information. This means that you need to compile your application to
-get access to this feature or the various graphs.
-If your sources have been modified, you should recompile the
-modified files.
+The GNAT compiler is used to generate the cross-references information
+needed by GPS. This means that you must compile your application before
+you browse through the cross-references or view various graphs in GPS.
+If sources have been modified, you should recompile the modified files.
 
 @cindex -gnatQ
 @cindex -k
-If you need to navigate through sources that are not fully compilable
-(e.g after heavy modifications, or while porting an application), GNAT
-can still generate partial information if you specify the @code{-gnatQ}
+If you need to navigate through sources that do not compile (e.g after
+modifications, or while porting an application), GNAT can still generate
+partial cross-reference information if you specify the @code{-gnatQ}
 compilation option. Along with the @code{-k} option of gnatmake, it is
-then possible to generate as much relevant information as possible for a
-complete set of non compilable sources.
+then possible to generate as much relevant information as possible for
+your non compilable sources.
 
 @cindex ALI
-There are a few special cases where GPS can not find the external file
+There are a few special cases where GPS cannot find the external file
 (called @file{ALI file}) that contains the cross-reference
 information. Most likely, this is either because you haven't compiled
 your sources yet, or because the source code has changed since the
@@ -2341,7 +2342,7 @@ It could also be that you haven't included in the project the object
 directories that contain the @file{ALI files}.
 
 @cindex separate unit
-In addition, one special case can not be handled automatically. This
+In addition, one special case cannot be handled automatically. This
 is for separate units, whose file names have been crunched through the
 @command{gnatkr} command. To handle this, you should force GPS to parse
 all the @file{ALI files} in the appropriate object directory. This is
@@ -2371,10 +2372,10 @@ or if multiple functions with the same name, but under different
 @code{#ifdef} sections, are defined. In this case, GPS will display a
 dialog listing the possible choices to resolve the ambiguity.
 
-@cindex name space
+@cindex namespace
 @cindex macro
-In addition, the C/C++ parser has the following limitations: name spaces
-are currently ignored (no specific processing is done for name spaces);
+In addition, the C/C++ parser has the following limitations: namespaces
+are currently ignored (no specific processing is done for namespaces);
 no attempt is made to process the macros and other preprocessor defines.
 Macros are considered as special entities, so it is possible to navigate
 from a macro use to its definition, but the macro content is ignored,
@@ -2680,7 +2681,7 @@ Each project contains the following information, among other things
    cannot be found.
 
    One important rule is that each source file name must be unique in
-   the project hierarchy (i.e. a file can not be under control of two
+   the project hierarchy (i.e. a file cannot be under control of two
    different projects. This ensures that the same file will be found
    no matter what project is managing the source file that uses
 
