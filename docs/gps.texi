@@ -223,7 +223,7 @@ Scripting GPS
 
 @ifset python
 Python FAQ
-* Spawning external processes
+* Spawning external processes::
 * Redirecting the output of spawned processes::
 * Contextual menus on object directories only::
 * Redirecting the output to specific windows::
@@ -10438,7 +10438,7 @@ This section lists some of the problems that have been encountered while using
 Python inside GPS. This is not a general Python discussion.
 
 @menu
-* Spawning external processes
+* Spawning external processes::
 * Redirecting the output of spawned processes::
 * Contextual menus on object directories only::
 * Redirecting the output to specific windows::
@@ -10447,7 +10447,7 @@ Python inside GPS. This is not a general Python discussion.
 * Automatically loading python files at startup::
 @end menu
 
-c -------------------------------------------
+@c -------------------------------------------
 @node Spawning external processes
 @subsubsection Spawning external processes
 
@@ -10470,13 +10470,12 @@ The use of an expect library may be a good solution. There are various python
 expect libraries that already exist.
 
 These libraries generally try to copy the parameters of the standard @code{file}
-class., They may fail doing so, as GPS's consoles do not fully emulated all
+class. They may fail doing so, as GPS's consoles do not fully emulate all
 the primitive functions of that class (there is no file descriptor for
 instance).
 
-When possible, it is recommanded to use one of the methods above instead.
+When possible, it is recommended to use one of the methods above instead.
 @end itemize
-
 
 @c -------------------------------------------
 @node Redirecting the output of spawned processes
@@ -10728,22 +10727,25 @@ to convert the text file into a postscript document.
 @subsubsection Automatically loading python files at startup
 
 @noindent
-At startup, GPS will automatically load a few python files. This include
+At startup, GPS will automatically load a few python files. This includes
 the file @file{autoexec.py} in its installation directory
 @file{share/gps/python}, as well as all the files that each user has put
 in his own @file{$HOME/.gps/python_startup} directory.
 
-However, it is often the case that companies or groups create some internal
-python files to enhance GPS. The question is how these are made available
-to each GPS user.
+In addition, in order to make python files available to a group of users,
+several approaches are possible:
 
 @itemize @bullet
-@item Each user can install them in his @file{$HOME/.gps/python_startup} directory
-@item The system administrator copies them in GPS installation directory in @file{<prefix>/share/gps/python}
-@item The system administrator copies them to any directory on your system. This directory then needs to
- be added by each user to his @code{PYTHONPATH} environment variable. You
- can alternatively modify the small @file{gps} wrapper script to do this
- automatically on startup
+@item Each user can install them in his @file{$HOME/.gps/python_startup}
+directory
+
+@item The system administrator copies them in GPS installation directory in
+@file{<prefix>/share/gps/python}
+
+@item The system administrator copies them to any directory on your system.
+This directory then needs to be added by each user to his @code{PYTHONPATH}
+environment variable. Under unix, you can alternatively modify the small
+@file{gps} wrapper script to do this automatically on startup.
 @end itemize
 
 The above steps will make your files available to GPS, but will not execute
@@ -10777,7 +10779,8 @@ This is a unix-shell syntax. Such shells are also available on Windows, but
 you can also do the following using a windows @file{.bat} file
 
 @smallexample
-  export LD_LIBRARY_PATH=/dir/support:$LD_LIBRARY_PATH
+  LD_LIBRARY_PATH=/dir/support:$LD_LIBRARY_PATH
+  export LD_LIBRARY_PATH
   gps --eval=python:'import support_autoexec.py' $*
 @end smallexample
 
