@@ -33,6 +33,7 @@
 
 with Gtk.Tree_View;  use Gtk.Tree_View;
 with Gtk.Tree_Store; use Gtk.Tree_Store;
+with Gtk.Tree_Model; use Gtk.Tree_Model;
 with Glib;
 
 package Gtkada.Tree_View is
@@ -43,6 +44,11 @@ package Gtkada.Tree_View is
 
       Expanded_State_Column : Glib.Gint;
       --  The column memorizing the collapsed/expanded states of rows.
+
+      Lock : Boolean := False;
+      --  Whether the expand callbacks should do anything.
+      --  It's useful to set this lock to True when the user wants to
+      --  control expansion himself.
    end record;
    type Tree_View is access all Tree_View_Record'Class;
 
@@ -55,5 +61,10 @@ package Gtkada.Tree_View is
      (Widget       : access Tree_View_Record'Class;
       Column_Types : Glib.GType_Array);
    --  Internal initialization function.
+
+   function Get_Expanded
+     (Widget : access Tree_View_Record;
+      Iter   : Gtk_Tree_Iter) return Boolean;
+   --  Return whether the node corresponding to Iter is expanded.
 
 end Gtkada.Tree_View;
