@@ -930,7 +930,7 @@ package body Browsers.Dependency_Items is
      (Browser  : access GObject_Record'Class;
       Context : Selection_Context_Access)
    is
-      File : constant UTF8_String :=
+      File : constant Virtual_File :=
         Select_File
           (Title             => -"Select File",
            Parent            =>
@@ -942,9 +942,8 @@ package body Browsers.Dependency_Items is
       --  ??? Should set up filters to only open file from the current project.
 
    begin
-      if File /= "" then
-         Examine_Dependencies
-           (Get_Kernel (Context), Create (Full_Filename => File));
+      if File /= VFS.No_File then
+         Examine_Dependencies (Get_Kernel (Context), File);
       end if;
    end Open_File;
 
