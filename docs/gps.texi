@@ -8307,6 +8307,9 @@ saves the project, and reloaded automatically the next time GPS is started.
 
 @subsubsection Declaring the new attributes
 
+New project attributes can be declared in two ways: either using the advanced
+XML tags below, or using the @code{<tool>} tag (@pxref{Defining tool switches}).
+
 The customization files support the @code{<project_attribute>} tag,
 which is used to declare all the new attributes that GPS should expect
 in a project.  Attributes that have not been declared explictly will
@@ -8920,10 +8923,14 @@ for instances the tabs of the switches editor.
 
 @item package (Default value is ide)
 This optional attribute specifies which package should be used in the project
-to store information about this tool, in particular its switches. You cannot
-create new packages as you wish, and must use only existing packages. Most of
+to store information about this tool, in particular its switches. Most of
 the time the default value should be used, unless you are working with one of
 the predefined packages.
+
+See also @xref{Defining project attributes}, for more information on defining
+your own project attributes. Using the "package", "attribute" or "index"
+XML attributes of <tool> will implicitly create new project attributes as
+needed.
 
 If this attribute is set to "ide", then the switches cannot be set for a
 specific file, only at the project level. Support for file-specific switches
