@@ -5077,6 +5077,10 @@ package body Src_Editor_Buffer is
          function Only_Spaces return Boolean;
          --  Return True is Line contains only spaces or HT
 
+         -----------------
+         -- Only_Spaces --
+         -----------------
+
          function Only_Spaces return Boolean is
             Result : Boolean := True;
          begin
