@@ -286,37 +286,6 @@ package body Codefix.Errors_Manager is
       end loop;
    end Analyze;
 
-   --------------
-   -- Validate --
-   --------------
-
-   procedure Validate
-     (This   : in out Correction_Manager;
-      Error  : Error_Id;
-      Choice : Natural)
-   is
-   begin
-      if Choice /= 0 then
-         Validate
-           (This,
-            Error,
-            Get_Command (Get_Solutions (Error), Choice));
-      end if;
-   end Validate;
-
-   --------------
-   -- Validate --
-   --------------
-
-   procedure Validate
-     (This   : in out Correction_Manager;
-      Error  : Error_Id;
-      Choice : Text_Command'Class) is
-   begin
-      Append (This.Fix_List, Choice);
-      Data (Error).Fixed.all := True;
-   end Validate;
-
    -------------------------
    -- Validate_And_Commit --
    -------------------------
@@ -364,27 +333,6 @@ package body Codefix.Errors_Manager is
       Extract (Data (Error).Solution_Chosen.all) := New_Extract;
    end Validate_And_Commit;
 
-   ------------
-   -- Commit --
-   ------------
-
-   procedure Commit
-     (This         : in out Correction_Manager;
-      Current_Text : in out Text_Navigator_Abstr'Class)
-   is
-      pragma Unreferenced (Current_Text);
-   begin
-      --  Commit (This.Fix_List, Current_Text);
-      --  Replace the line above by the execution of all commands, a commit
-      --  of the current_text between all executions.
-
-      --  Commit (Current_Text);
-      --  I'm not shure that I must commit the entire text after. Just let the
-      --  user choose later.
-
-      Codefix.Formal_Errors.Free (This.Fix_List);
-   end Commit;
-
    ----------
    -- Free --
    ----------
@@ -392,7 +340,6 @@ package body Codefix.Errors_Manager is
    procedure Free (This : in out Correction_Manager) is
    begin
       Free (This.Potential_Corrections);
-      Codefix.Formal_Errors.Free (This.Fix_List);
    end Free;
 
    ---------------
