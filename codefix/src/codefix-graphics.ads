@@ -106,6 +106,10 @@ package Codefix.Graphics is
      (Graphic_Codefix : access Graphic_Codefix_Record'Class);
    --  Load on the window the next error, and solutions associated to.
 
+   procedure Load_Previous_Error
+     (Graphic_Codefix : access Graphic_Codefix_Record'Class);
+   --  Load on the window the previous fixable error.
+
    procedure Load_Error
      (Graphic_Codefix : access Graphic_Codefix_Record'Class;
       Success : out Boolean);

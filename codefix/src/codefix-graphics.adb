@@ -590,4 +590,35 @@ package body Codefix.Graphics is
       Load_Next_Error (Graphic_Codefix);
    end Cancel_All_Fixes;
 
+   -------------------------
+   -- Load_Previous_Error --
+   -------------------------
+
+   procedure Load_Previous_Error
+     (Graphic_Codefix : access Graphic_Codefix_Record'Class)
+   is
+      Last_Non_Fixed_Error : Error_Id := Null_Error_Id;
+      Current_Id           : Error_Id := Get_First_Error
+        (Graphic_Codefix.Corrector.all);
+      Success              : Boolean;
+   begin
+      while Current_Id /= Graphic_Codefix.Current_Error loop
+         if not Is_Fixed (Current_Id) then
+            Last_Non_Fixed_Error := Current_Id;
+         end if;
+
+         Current_Id := Next (Current_Id);
+      end loop;
+
+      if Last_Non_Fixed_Error /= Null_Error_Id then
+         Graphic_Codefix.Current_Error := Last_Non_Fixed_Error;
+         Load_Error (Graphic_Codefix, Success);
+
+         if not Success then
+            raise Codefix_Panic;
+         end if;
+      end if;
+   end Load_Previous_Error;
+
+
 end Codefix.Graphics;
