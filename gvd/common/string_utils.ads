@@ -168,13 +168,6 @@ package String_Utils is
    --  depending on the value of Tab_Size.
    --  This function works correctly with multiple-line strings.
 
-   procedure Mixed_Case (S : in out String);
-   --  Return S with a casing matching Ada style: upper case after an
-   --  underscore or a dot.
-
-   procedure Smart_Mixed_Case (S : in out String);
-   --  As above but do not change upper-case letters in S.
-
    function Strip_Quotes (S : in String) return String;
    --  Remove the quotes and the spaces at the beginning and end of S.
 
