@@ -564,56 +564,70 @@ package body GVD.Menus is
       return Gtk.Menu.Gtk_Menu
    is
       Menu  : Gtk_Menu;
-      Mitem : Gtk_Menu_Item;
+      Check : Gtk_Check_Menu_Item;
+
    begin
-      Menu := Menu_User_Data.Get
-        (Process.Debugger_Text, Call_Stack_Contextual_Menu_Name);
+
+      --  Destroy the old menu (We need to recompute the state of the toggle
+      --  buttons)
+      begin
+         Menu := Menu_User_Data.Get
+           (Process.Debugger_Text, Call_Stack_Contextual_Menu_Name);
+         Destroy (Menu);
+      exception
+         when Gtkada.Types.Data_Error => null;
+      end;
+
+      Gtk_New (Menu);
+      Gtk_New (Check, Label => -"Frame Number");
+      Set_Always_Show_Toggle (Check, True);
+      Set_Active (Check, (Process.Backtrace_Mask and Frame_Num) /= 0);
+      Append (Menu, Check);
+      Call_Stack_Cb.Connect
+        (Check, "activate",
+         Call_Stack_Cb.To_Marshaller (Change_Mask'Access),
+         (Debugger_Process_Tab (Process), Frame_Num));
+
+      Gtk_New (Check, Label => -"Program Counter");
+      Set_Always_Show_Toggle (Check, True);
+      Set_Active (Check, (Process.Backtrace_Mask and Program_Counter) /= 0);
+      Append (Menu, Check);
+      Call_Stack_Cb.Connect
+        (Check, "activate",
+         Call_Stack_Cb.To_Marshaller (Change_Mask'Access),
+         (Debugger_Process_Tab (Process), Program_Counter));
+
+      Gtk_New (Check, Label => -"Subprogram Name");
+      Set_Always_Show_Toggle (Check, True);
+      Set_Active (Check, (Process.Backtrace_Mask and Subprog_Name) /= 0);
+      Append (Menu, Check);
+      Call_Stack_Cb.Connect
+        (Check, "activate",
+         Call_Stack_Cb.To_Marshaller (Change_Mask'Access),
+         (Debugger_Process_Tab (Process), Subprog_Name));
+
+      Gtk_New (Check, Label => -"Parameters");
+      Set_Always_Show_Toggle (Check, True);
+      Set_Active (Check, (Process.Backtrace_Mask and Params) /= 0);
+      Append (Menu, Check);
+      Call_Stack_Cb.Connect
+        (Check, "activate",
+         Call_Stack_Cb.To_Marshaller (Change_Mask'Access),
+         (Debugger_Process_Tab (Process), Params));
+
+      Gtk_New (Check, Label => -"File Location");
+      Set_Always_Show_Toggle (Check, True);
+      Set_Active (Check, (Process.Backtrace_Mask and File_Location) /= 0);
+      Append (Menu, Check);
+      Call_Stack_Cb.Connect
+        (Check, "activate",
+         Call_Stack_Cb.To_Marshaller (Change_Mask'Access),
+         (Debugger_Process_Tab (Process), File_Location));
+
+      Show_All (Menu);
+      Menu_User_Data.Set
+        (Process.Debugger_Text, Menu, Call_Stack_Contextual_Menu_Name);
       return Menu;
-
-   exception
-      when Gtkada.Types.Data_Error =>
-         --  The menu has not been created yet
-
-         Gtk_New (Menu);
-         Gtk_New (Mitem, Label => -"Toggle Frame Num");
-         Append (Menu, Mitem);
-         Call_Stack_Cb.Connect
-           (Mitem, "activate",
-            Call_Stack_Cb.To_Marshaller (Change_Mask'Access),
-            (Debugger_Process_Tab (Process), Frame_Num));
-
-         Gtk_New (Mitem, Label => -"Toggle Subprogram Name");
-         Append (Menu, Mitem);
-         Call_Stack_Cb.Connect
-           (Mitem, "activate",
-            Call_Stack_Cb.To_Marshaller (Change_Mask'Access),
-            (Debugger_Process_Tab (Process), Subprog_Name));
-
-         Gtk_New (Mitem, Label => -"Toggle Parameters");
-         Append (Menu, Mitem);
-         Call_Stack_Cb.Connect
-           (Mitem, "activate",
-            Call_Stack_Cb.To_Marshaller (Change_Mask'Access),
-            (Debugger_Process_Tab (Process), Params));
-
-         Gtk_New (Mitem, Label => -"Toggle File Location");
-         Append (Menu, Mitem);
-         Call_Stack_Cb.Connect
-           (Mitem, "activate",
-            Call_Stack_Cb.To_Marshaller (Change_Mask'Access),
-            (Debugger_Process_Tab (Process), File_Location));
-
-         Gtk_New (Mitem, Label => -"Toggle Program Counter");
-         Append (Menu, Mitem);
-         Call_Stack_Cb.Connect
-           (Mitem, "activate",
-            Call_Stack_Cb.To_Marshaller (Change_Mask'Access),
-            (Debugger_Process_Tab (Process), Program_Counter));
-
-         Show_All (Menu);
-         Menu_User_Data.Set
-           (Process.Debugger_Text, Menu, Call_Stack_Contextual_Menu_Name);
-         return Menu;
    end Call_Stack_Contextual_Menu;
 
 end GVD.Menus;
