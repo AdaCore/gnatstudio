@@ -38,11 +38,6 @@ with GNAT.OS_Lib;
 
 package Gtkada.File_Selector.Filters is
 
-   procedure Create_Filters;
-   --  This creates all the default filters. This function will be called
-   --  automatically the first time you access one of these filters, but you
-   --  might also want to explicitly call it in your program
-
    -------------------------
    -- Project file filter --
    -------------------------
@@ -52,6 +47,8 @@ package Gtkada.File_Selector.Filters is
 
    function Prj_File_Filter return Project_File_Filter;
    --  Return a new filter that only shows the Glide project files.
+   --  New memory is allocated, that will be freed automatically by the file
+   --  selector where the filter is registered.
 
 private
 

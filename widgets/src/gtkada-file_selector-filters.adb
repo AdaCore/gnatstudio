@@ -42,37 +42,15 @@ with Glide_Intl;        use Glide_Intl;
 
 package body Gtkada.File_Selector.Filters is
 
-   ----------------------
-   -- Global variables --
-   ----------------------
-   --  Note: we use global variables in this package. This shouldn't be a
-   --  problem, since they are created only once when Glide is initialized, and
-   --  used read-only afterwards.
-
-   Global_Prj_File_Filter : Project_File_Filter := null;
-
-   --------------------
-   -- Create_Filters --
-   --------------------
-
-   procedure Create_Filters is
-   begin
-      if Global_Prj_File_Filter /= null then
-         return;
-      end if;
-
-      Global_Prj_File_Filter := new Project_File_Filter_Record;
-      Global_Prj_File_Filter.Label := new String'(-"Glide project files");
-   end Create_Filters;
-
    ---------------------
    -- Prj_File_Filter --
    ---------------------
 
    function Prj_File_Filter return Project_File_Filter is
+      Filter : Project_File_Filter := new Project_File_Filter_Record;
    begin
-      Create_Filters;
-      return Global_Prj_File_Filter;
+      Filter.Label := new String'(-"Glide project files");
+      return Filter;
    end Prj_File_Filter;
 
    ---------------------
