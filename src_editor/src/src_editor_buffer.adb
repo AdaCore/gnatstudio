@@ -1925,20 +1925,6 @@ package body Src_Editor_Buffer is
       Name_Changed : Boolean;
       Result       : Boolean;
    begin
-      Internal_Save_To_File (Buffer.all'Access, Filename, Success);
-
-      if not Success then
-         return;
-      end if;
-
-      if Buffer.Filename /= null then
-         Delete_File
-           (Dir_Name (Buffer.Filename.all) & ".#" &
-            Base_Name (Buffer.Filename.all), Result);
-      end if;
-
-      Set_Modified (Buffer, False);
-      Buffer.Modified_Auto := False;
       Name_Changed := Buffer.Filename = null
         or else Buffer.Filename.all /= Filename;
 
@@ -1946,9 +1932,6 @@ package body Src_Editor_Buffer is
          Free (Buffer.Filename);
          Buffer.Filename := new String'(Filename);
       end if;
-
-      Buffer.Timestamp := To_Timestamp
-        (File_Time_Stamp (Get_Filename (Buffer)));
 
       if Name_Changed then
          Set_Language
@@ -1962,6 +1945,24 @@ package body Src_Editor_Buffer is
          --  of a project.
          Recompute_View (Buffer.Kernel);
       end if;
+
+      Internal_Save_To_File (Buffer.all'Access, Filename, Success);
+
+      if not Success then
+         return;
+      end if;
+
+      Buffer.Timestamp := To_Timestamp
+        (File_Time_Stamp (Get_Filename (Buffer)));
+
+      if Buffer.Filename /= null then
+         Delete_File
+           (Dir_Name (Buffer.Filename.all) & ".#" &
+            Base_Name (Buffer.Filename.all), Result);
+      end if;
+
+      Set_Modified (Buffer, False);
+      Buffer.Modified_Auto := False;
 
    exception
       when E : others =>
