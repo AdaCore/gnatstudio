@@ -40,8 +40,8 @@ with Debugger; use Debugger;
 with GVD.Main_Window;
 with Process_Tab_Pkg;
 with Items;
+with GVD.Text_Box.Source_Editor;
 with GVD.Code_Editors;
-with GVD.Types;
 with GVD.Types;
 
 package GVD.Process is
@@ -197,12 +197,14 @@ package GVD.Process is
 
    procedure Gtk_New
      (Process : out Debugger_Process_Tab;
-      Window  : access GVD.Main_Window.GVD_Main_Window_Record'Class);
+      Window  : access GVD.Main_Window.GVD_Main_Window_Record'Class;
+      Source  : GVD.Text_Box.Source_Editor.Source_Editor);
    --  Create a new debugger page and add it to Window.
 
    procedure Initialize
      (Process : access Debugger_Process_Tab_Record'Class;
-      Window  : access GVD.Main_Window.GVD_Main_Window_Record'Class);
+      Window  : access GVD.Main_Window.GVD_Main_Window_Record'Class;
+      Source  : GVD.Text_Box.Source_Editor.Source_Editor);
    --  Internal initialize procedure.
 
    procedure Configure

@@ -66,23 +66,26 @@ with Debugger.Gdb;               use Debugger.Gdb;
 with Debugger.Jdb;               use Debugger.Jdb;
 with Process_Proxies;            use Process_Proxies;
 with Items.Simples;              use Items.Simples;
-with GVD.Main_Window;            use GVD.Main_Window;
 with Breakpoints_Editor;         use Breakpoints_Editor;
+with Pixmaps_IDE;                use Pixmaps_IDE;
+with String_Utils;               use String_Utils;
+with Basic_Types;                use Basic_Types;
+with GUI_Utils;                  use GUI_Utils;
+with Dock_Paned;                 use Dock_Paned;
+with Language;                   use Language;
+
 with GVD.Canvas;                 use GVD.Canvas;
 with GVD.Dialogs;                use GVD.Dialogs;
 with GVD.Explorer;               use GVD.Explorer;
-with Pixmaps_IDE;                use Pixmaps_IDE;
-with String_Utils;               use String_Utils;
+with GVD.Main_Window;            use GVD.Main_Window;
 with GVD.Types;                  use GVD.Types;
-with Basic_Types;                use Basic_Types;
 with GVD.Code_Editors;           use GVD.Code_Editors;
 with GVD.Preferences;            use GVD.Preferences;
 with GVD.Window_Settings;        use GVD.Window_Settings;
-with GUI_Utils;                  use GUI_Utils;
-with GVD.Text_Box.Source_Editor; use GVD.Text_Box.Source_Editor;
 with GVD.Trace;                  use GVD.Trace;
-with Dock_Paned;                 use Dock_Paned;
-with Language;                   use Language;
+with GVD.Text_Box.Source_Editor; use GVD.Text_Box.Source_Editor;
+with GVD.Text_Box.Source_Editor.Socket;
+with GVD.Text_Box.Source_Editor.Builtin;
 
 with System;
 with Ada.Unchecked_Conversion;
@@ -720,10 +723,11 @@ package body GVD.Process is
 
    procedure Gtk_New
      (Process : out Debugger_Process_Tab;
-      Window  : access GVD.Main_Window.GVD_Main_Window_Record'Class) is
+      Window  : access GVD.Main_Window.GVD_Main_Window_Record'Class;
+      Source  : GVD.Text_Box.Source_Editor.Source_Editor) is
    begin
       Process := new Debugger_Process_Tab_Record;
-      Initialize (Process, Window);
+      Initialize (Process, Window, Source);
    end Gtk_New;
 
    ----------------
@@ -732,7 +736,8 @@ package body GVD.Process is
 
    procedure Initialize
      (Process : access Debugger_Process_Tab_Record'Class;
-      Window  : access GVD.Main_Window.GVD_Main_Window_Record'Class)
+      Window  : access GVD.Main_Window.GVD_Main_Window_Record'Class;
+      Source  : GVD.Text_Box.Source_Editor.Source_Editor)
    is
       Menu_Item     : Gtk_Menu_Item;
       Label         : Gtk_Label;
@@ -876,14 +881,13 @@ package body GVD.Process is
 
       Configure
         (Process.Editor_Text,
+         Source,
          Get_Pref (Editor_Font),
          Get_Pref (Editor_Font_Size),
          dot_xpm, arrow_xpm, stop_xpm,
          Comments_Color => Get_Pref (Comments_Color),
          Strings_Color  => Get_Pref (Strings_Color),
-         Keywords_Color => Get_Pref (Keywords_Color),
-         TTY_Mode       => Window.TTY_Mode,
-         External_XID   => Window.External_XID);
+         Keywords_Color => Get_Pref (Keywords_Color));
 
       --  Initialize the call stack list
 
@@ -1106,9 +1110,32 @@ package body GVD.Process is
       Remote_Protocol : String := "";
       Debugger_Name   : String := "") return Debugger_Process_Tab
    is
-      Process : Debugger_Process_Tab;
+      Process         : Debugger_Process_Tab;
+      Builtin_Source  : Builtin.Builtin;
+      External_Source : Socket.Socket;
+      Source          : Source_Editor;
+
    begin
-      Gtk_New (Process, Window);
+      Process := new Debugger_Process_Tab_Record;
+
+      if Window.External_XID = 0 then
+         Builtin.Gtk_New
+           (Builtin_Source, Process, Window.TTY_Mode,
+            Get_Pref (Editor_Font),
+            Get_Pref (Editor_Font_Size),
+            dot_xpm, arrow_xpm, stop_xpm,
+            Comments_Color => Get_Pref (Comments_Color),
+            Strings_Color  => Get_Pref (Strings_Color),
+            Keywords_Color => Get_Pref (Keywords_Color));
+         Source := Source_Editor (Builtin_Source);
+
+      else
+         Socket.Gtk_New
+           (External_Source, Window.External_XID, Window.TTY_Mode);
+         Source := Source_Editor (External_Source);
+      end if;
+
+      Initialize (Process, Window, Source);
       Configure
         (Process, Kind, Executable, Debugger_Args,
          Remote_Host, Remote_Target, Remote_Protocol, Debugger_Name);
