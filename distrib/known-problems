@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 2.0.0
 
+- D108-007 Main files listed in the project file must end with source extension
+  Problem:    If the list of main units listed in the project file is the name
+              of an executable instead of a source file, GPS doesn't recognize
+              it.
+  Workaround: Specify the list of main source files in your manually edited
+              projects
+
 - D128-002 Absolute paths generated when adding project dependencies
   Problem:    When a new dependency is added between two projects, an absolute
               path is almost always generated, no matter what the preference
