@@ -15,7 +15,7 @@
       <shell>Project.scenario_variables_cmd_line -X</shell>
       <external show-command="true"
                 output="">gnat stub "%pps" %1 "%F" "%d"</external>
-      <on-failure>Locations.parse """%1 """ gnatstub</on-failure>
+      <on-failure><shell>Locations.parse """%1 """ gnatstub</shell></on-failure>
       <shell>Project.recompute</shell>
       <shell>File "%F"</shell>
       <shell>File.other_file "%1"</shell>
