@@ -1254,8 +1254,31 @@ package body Entities is
    is
    begin
       Assert (Assert_Me, Location.File /= null, "Invalid End_Of_Scope");
-      Entity.End_Of_Scope := (Location, null, Kind);
-      Add_All_Entities (Location.File, Entity);
+
+      --  In End_Of_Scope is currently the spec, save this in the standard list
+      --  of references
+      if Entity.End_Of_Scope /= No_E_Reference
+        and then (Entity.End_Of_Scope.Location /= Location
+                  or else Entity.End_Of_Scope.Kind /= Kind)
+      then
+         if Entity.End_Of_Scope.Kind = End_Of_Spec then
+            Add_Reference
+              (Entity,
+               Location => Entity.End_Of_Scope.Location,
+               Kind     => Entity.End_Of_Scope.Kind);
+            Entity.End_Of_Scope := (Location, null, Kind);
+            Add_All_Entities (Location.File, Entity);
+         else
+            Add_Reference
+              (Entity,
+               Location => Location,
+               Kind     => Kind);
+            Add_All_Entities (Location.File, Entity);
+         end if;
+      else
+         Entity.End_Of_Scope := (Location, null, Kind);
+         Add_All_Entities (Location.File, Entity);
+      end if;
    end Set_End_Of_Scope;
 
    ----------------------
