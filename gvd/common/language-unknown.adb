@@ -111,6 +111,16 @@ package body Language.Unknown is
               Constant_Character            => ''');
    end Get_Language_Context;
 
+   ----------------
+   -- Can_Indent --
+   ----------------
+
+   function Can_Indent (Lang : access Unknown_Language) return Boolean is
+      pragma Unreferenced (Lang);
+   begin
+      return False;
+   end Can_Indent;
+
    ----------------------
    -- Next_Indentation --
    ----------------------
@@ -118,14 +128,12 @@ package body Language.Unknown is
    procedure Next_Indentation
      (Lang          : access Unknown_Language;
       Buffer        : String;
-      Success       : out Boolean;
       Indent        : out Natural;
       Next_Indent   : out Natural;
       Indent_Params : Indent_Parameters := Default_Indent_Parameters)
    is
       pragma Unreferenced (Lang, Buffer, Indent_Params);
    begin
-      Success := False;
       Indent := 0;
       Next_Indent := 0;
    end Next_Indentation;
