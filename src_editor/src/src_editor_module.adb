@@ -374,12 +374,12 @@ package body Src_Editor_Module is
    procedure File_Changed_On_Disk_Cb
      (Kernel  : access Kernel_Handle_Record'Class;
       Data    : Hooks_Data'Class);
-   --  Callback for the "file_changed_on_disk" signal.
+   --  Callback for the "file_changed_on_disk" hook.
 
    procedure File_Saved_Cb
      (Kernel  : access Kernel_Handle_Record'Class;
       Data    : Hooks_Data'Class);
-   --  Callback for the "file_saved" signal.
+   --  Callback for the "file_saved" hook.
 
    procedure Preferences_Changed
      (Kernel : access Kernel_Handle_Record'Class);
