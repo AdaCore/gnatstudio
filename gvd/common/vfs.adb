@@ -33,20 +33,10 @@ with GNAT.Case_Util;             use GNAT.Case_Util;
 with GNAT.Heap_Sort;             use GNAT.Heap_Sort;
 with Interfaces.C.Strings;       use Interfaces.C.Strings;
 with Ada.Unchecked_Conversion;
+with Ada.Unchecked_Deallocation;
 with System;
---  with Traces; use Traces;
-with String_Hash;
 
 package body VFS is
-
---   Me : constant Debug_Handle := Create ("VFS");
-
---     type Contents_Record is record
---        Full_Name        : Cst_UTF8_String_Access;
---        Normalized_Full  : String_Access;
---        Dir_Name         : Cst_UTF8_String_Access;
---        Base_Name        : Cst_UTF8_String_Access;
---     end record;
 
    Empty_String : constant Cst_UTF8_String_Access := new String'("");
 
@@ -54,45 +44,41 @@ package body VFS is
    --  Ensure that the information for the normalized file have been correctly
    --  computed.
 
-   procedure Do_Nothing (File : in out Virtual_File);
-   --  Do nothing (used for instantiation of hash table
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Contents_Record, Contents_Access);
 
-   package File_Hash is new String_Hash
-     (Data_Type => Virtual_File,
-      Free_Data => Do_Nothing,
-      Null_Ptr  => No_File);
-   use File_Hash.String_Hash_Table;
+   ---------
+   -- "=" --
+   ---------
 
-   Files : File_Hash.String_Hash_Table.HTable;
-   --  This table is never freed, since it acts as a cache for all file names
-   --  ever manipulated by the user.
-
-   ----------------
-   -- Do_Nothing --
-   ----------------
-
-   procedure Do_Nothing (File : in out Virtual_File) is
-      pragma Unreferenced (File);
+   function "=" (File1, File2 : Virtual_File) return Boolean is
    begin
-      null;
-   end Do_Nothing;
+      if File1.Value = null then
+         return File2.Value = null;
+      elsif File2.Value = null then
+         return False;
+      else
+         Ensure_Normalized (File1);
+         Ensure_Normalized (File2);
+
+         return File2.Value.Normalized_Full.all =
+           File1.Value.Normalized_Full.all;
+      end if;
+   end "=";
 
    ------------
    -- Create --
    ------------
 
    function Create (Full_Filename : UTF8_String) return Virtual_File is
-      F : Virtual_File := Get (Files, Full_Filename);
    begin
-      if F = No_File then
-         F := new Contents_Record'
-           (Full_Name       => new String'(Full_Filename),
-            Normalized_Full => null,
-            Dir_Name        => null,
-            Base_Name       => null);
-         Set (Files, Full_Filename, F);
-      end if;
-      return F;
+      return (Ada.Finalization.Controlled with
+              Value => new Contents_Record'
+                (Ref_Count       => 1,
+                 Full_Name       => new String'(Full_Filename),
+                 Normalized_Full => null,
+                 Dir_Name        => null,
+                 Base_Name       => null));
    end Create;
 
    ----------------------
@@ -100,18 +86,14 @@ package body VFS is
    ----------------------
 
    function Create_From_Base (Base_Name : UTF8_String) return Virtual_File is
-      F : Virtual_File := Get (Files, Base_Name);
    begin
-      if F = No_File then
-         F := new Contents_Record'
-           (Full_Name       => new String'(Base_Name),
-            Normalized_Full => null,
-            Dir_Name        => null,
-            Base_Name       => new String'(Base_Name));
-         Set (Files, Base_Name, F);
-      end if;
-
-      return F;
+      return (Ada.Finalization.Controlled with
+                Value => new Contents_Record'
+                (Ref_Count       => 1,
+                 Full_Name       => new String'(Base_Name),
+                 Normalized_Full => null,
+                 Dir_Name        => null,
+                 Base_Name       => new String'(Base_Name)));
    end Create_From_Base;
 
    -----------------------
@@ -120,14 +102,14 @@ package body VFS is
 
    procedure Ensure_Normalized (File : Virtual_File) is
    begin
-      if File.Normalized_Full = null then
-         File.Normalized_Full := new UTF8_String'
+      if File.Value.Normalized_Full = null then
+         File.Value.Normalized_Full := new UTF8_String'
            (Locale_To_UTF8 (To_Host_Pathname (Normalize_Pathname
-                              (Locale_From_UTF8 (File.Full_Name.all),
+                              (Locale_From_UTF8 (File.Value.Full_Name.all),
                                                  Resolve_Links => True))));
 
          if not File_Utils.Filenames_Are_Case_Sensitive then
-            To_Lower (File.Normalized_Full.all);
+            To_Lower (File.Value.Normalized_Full.all);
          end if;
       end if;
    end Ensure_Normalized;
@@ -140,14 +122,14 @@ package body VFS is
      (File   : Virtual_File;
       Suffix : String := "") return Cst_UTF8_String_Access is
    begin
-      if File = null then
+      if File.Value = null then
          return Empty_String;
       else
-         if File.Base_Name = null then
-            File.Base_Name := new UTF8_String'
-              (Base_Name (File.Full_Name.all, Suffix));
+         if File.Value.Base_Name = null then
+            File.Value.Base_Name := new UTF8_String'
+              (Base_Name (File.Value.Full_Name.all, Suffix));
          end if;
-         return File.Base_Name;
+         return Cst_UTF8_String_Access (File.Value.Base_Name);
       end if;
    end Base_Name;
 
@@ -159,15 +141,15 @@ package body VFS is
      (File : Virtual_File; Normalize : Boolean := False)
       return Cst_UTF8_String_Access is
    begin
-      if File = null then
+      if File.Value = null then
          return Empty_String;
 
       elsif Normalize then
          Ensure_Normalized (File);
-         return Cst_UTF8_String_Access (File.Normalized_Full);
+         return Cst_UTF8_String_Access (File.Value.Normalized_Full);
 
       else
-         return File.Full_Name;
+         return Cst_UTF8_String_Access (File.Value.Full_Name);
       end if;
    end Full_Name;
 
@@ -177,13 +159,14 @@ package body VFS is
 
    function Dir_Name (File : Virtual_File) return Cst_UTF8_String_Access is
    begin
-      if File = null then
+      if File.Value = null then
          return Empty_String;
       else
-         if File.Dir_Name = null then
-            File.Dir_Name := new UTF8_String'(Dir_Name (File.Full_Name.all));
+         if File.Value.Dir_Name = null then
+            File.Value.Dir_Name :=
+              new UTF8_String'(Dir_Name (File.Value.Full_Name.all));
          end if;
-         return File.Dir_Name;
+         return Cst_UTF8_String_Access (File.Value.Dir_Name);
       end if;
    end Dir_Name;
 
@@ -193,7 +176,7 @@ package body VFS is
 
    function Read_File (File : Virtual_File) return UTF8_String_Access is
    begin
-      if File = null then
+      if File.Value = null then
          return null;
       else
          --  ??? Should be enhanced for remote access
@@ -217,11 +200,11 @@ package body VFS is
 
    function Locale_Full_Name (File : Virtual_File) return String is
    begin
-      if File = null then
+      if File.Value = null then
          return "";
       else
          --  ??? This is not cached, should it ?
-         return Locale_From_UTF8 (File.Full_Name.all);
+         return Locale_From_UTF8 (File.Value.Full_Name.all);
       end if;
    end Locale_Full_Name;
 
@@ -241,7 +224,7 @@ package body VFS is
 
    function Is_Regular_File (File : Virtual_File) return Boolean is
    begin
-      return File /= No_File
+      return File.Value /= null
         and then Is_Regular_File (Locale_Full_Name (File));
    end Is_Regular_File;
 
@@ -350,6 +333,36 @@ package body VFS is
       return File_Time_Stamp (Locale_Full_Name (File));
    end File_Time_Stamp;
 
+   --------------
+   -- Finalize --
+   --------------
+
+   procedure Finalize (File : in out Virtual_File) is
+   begin
+      if File.Value /= null then
+         File.Value.Ref_Count := File.Value.Ref_Count - 1;
+
+         if File.Value.Ref_Count = 0 then
+            Free (File.Value.Full_Name);
+            Free (File.Value.Base_Name);
+            Free (File.Value.Dir_Name);
+            Free (File.Value.Normalized_Full);
+            Unchecked_Free (File.Value);
+         end if;
+      end if;
+   end Finalize;
+
+   ------------
+   -- Adjust --
+   ------------
+
+   procedure Adjust (File : in out Virtual_File) is
+   begin
+      if File.Value /= null then
+         File.Value.Ref_Count := File.Value.Ref_Count + 1;
+      end if;
+   end Adjust;
+
    ----------
    -- Sort --
    ----------
@@ -382,10 +395,10 @@ package body VFS is
          --  (Or maybe write a "Case_Insensitive_Lt" for more efficiency).
 
          return
-           Files (Files'First - 1 + Op2).Full_Name /= null
-            and then Files (Files'First - 1 + Op1).Full_Name /= null
-            and then Files (Files'First - 1 + Op1).Full_Name.all
-              < Files (Files'First - 1 + Op2).Full_Name.all;
+           Files (Files'First - 1 + Op2).Value /= null
+            and then Files (Files'First - 1 + Op1).Value /= null
+            and then Files (Files'First - 1 + Op1).Value.Full_Name.all
+              < Files (Files'First - 1 + Op2).Value.Full_Name.all;
       end Lt;
    begin
       Sort (Files'Length, Xchg'Unrestricted_Access, Lt'Unrestricted_Access);

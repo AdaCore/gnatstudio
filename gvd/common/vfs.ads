@@ -24,7 +24,7 @@
 
 with Glib;          use Glib;
 with GNAT.OS_Lib;
---  with Ada.Finalization;
+with Ada.Finalization;
 
 package VFS is
 
@@ -56,6 +56,9 @@ package VFS is
    function Is_Regular_File (File : Virtual_File) return Boolean;
    --  Whether File corresponds to an actual file on the disk.
    --  This also works for remote files.
+
+   function "=" (File1, File2 : Virtual_File) return Boolean;
+   --  Overloading of the standard operator
 
    function Base_Name
      (File   : Virtual_File;
@@ -159,17 +162,26 @@ private
    --  itself, although they do compute some information lazily).
 
    type Contents_Record is record
-      Full_Name        : Cst_UTF8_String_Access;
+      Ref_Count        : Natural := 1;
+      Full_Name        : GNAT.OS_Lib.String_Access;
       Normalized_Full  : GNAT.OS_Lib.String_Access;
-      Dir_Name         : Cst_UTF8_String_Access;
-      Base_Name        : Cst_UTF8_String_Access;
+      Dir_Name         : GNAT.OS_Lib.String_Access;
+      Base_Name        : GNAT.OS_Lib.String_Access;
    end record;
-   type Virtual_File is access Contents_Record;
+   type Contents_Access is access Contents_Record;
+
+   type Virtual_File is new Ada.Finalization.Controlled with record
+      Value : Contents_Access;
+   end record;
+
+   procedure Finalize (File : in out Virtual_File);
+   procedure Adjust (File : in out Virtual_File);
 
    type Writable_File is record
       File : Virtual_File;
       FD   : GNAT.OS_Lib.File_Descriptor := GNAT.OS_Lib.Invalid_FD;
    end record;
 
-   No_File : constant Virtual_File := null;
+   No_File : constant Virtual_File :=
+     (Ada.Finalization.Controlled with Value => null);
 end VFS;
