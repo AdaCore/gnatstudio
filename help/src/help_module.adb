@@ -730,8 +730,10 @@ package body Help_Module is
    function Search
      (Context         : access Help_Context;
       Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Search_Backward : Boolean) return Boolean
+      Search_Backward : Boolean;
+      Interactive     : Boolean) return Boolean
    is
+      pragma Unreferenced (Interactive);
       MDI      : constant MDI_Window := Get_MDI (Kernel);
       Child    : constant MDI_Child := Find_MDI_Child_By_Tag
         (MDI, Help_Browser_Record'Tag);

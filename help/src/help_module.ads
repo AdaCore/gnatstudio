@@ -44,7 +44,8 @@ package Help_Module is
    function Search
      (Context         : access Help_Context;
       Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Search_Backward : Boolean) return Boolean;
+      Search_Backward : Boolean;
+      Interactive     : Boolean) return Boolean;
    --  Search function for "Help"
 
    function Help_Factory
