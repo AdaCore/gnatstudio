@@ -61,7 +61,7 @@ package Docgen.Work_On_Source is
       Converter          : Docgen.Doc_Subprogram_Type;
       Doc_Directory      : String;
       Doc_Suffix         : String);
-   --  with the data from the lists, the soucre file and the config file,
+   --  With the data from the lists, the source file and the config file,
    --  create the Strings for the output.
    --  The order of the procedure calls can't be changed here
    --  without changing the order in texi_output!
@@ -76,7 +76,7 @@ package Docgen.Work_On_Source is
       Converter        : Docgen.Doc_Subprogram_Type;
       Doc_Directory    : String;
       Doc_Suffix       : String);
-   --  creates the index file for the packages
+   --  Create the index file for the packages
 
    procedure Process_Subprogram_Index
      (B                     : Backend_Handle;
@@ -87,7 +87,7 @@ package Docgen.Work_On_Source is
       Converter             : Docgen.Doc_Subprogram_Type;
       Doc_Directory         : String;
       Doc_Suffix            : String);
-   --  creates the index file for the subprograms
+   --  Create the index file for the subprograms
 
    procedure Process_Type_Index
      (B               : Backend_Handle;
@@ -98,6 +98,6 @@ package Docgen.Work_On_Source is
       Converter       : Doc_Subprogram_Type;
       Doc_Directory   : String;
       Doc_Suffix      : String);
-   --  creates the index file for the types
+   --  Create the index file for the types
 
 end Docgen.Work_On_Source;
