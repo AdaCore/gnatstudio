@@ -182,9 +182,9 @@ package body Glide_Kernel.Help is
       Kernel : Kernel_Handle)
    is
       --  Html     : Help_Browser := Help_Browser (Object);
-      --  Url : constant String := Get_String (Nth (Params, 1));
+      Url : constant String := Get_String (Nth (Params, 1));
    begin
-      null;
+      Trace (Me, "On_Url: " & Url);
    end On_Url;
 
    ------------------
@@ -207,8 +207,6 @@ package body Glide_Kernel.Help is
       if Anchor = 0 then
          Anchor := Url'Last + 1;
       end if;
-
-      Trace (Me, "Link_Clicked: " & Url & " Anchor=" & Anchor'Img);
 
       if Is_Absolute_Path (Url) then
          if Url /= Html.Current_Help_File.all then
