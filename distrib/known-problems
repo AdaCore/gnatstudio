@@ -1,5 +1,10 @@
 Known Problems fixed in GPS 1.4.0
 
+- C502-014 Code fixing does not work on lines containing TABs.
+  Problem:    When there are errors in a line containing tabulations, the
+              automatic code fixing does not provide an icon to fix errors.
+  Workaround: Fix the errors manually.
+
 - C805-014 %pp in custom menus doesn't work from source editors
   Problem:    If your custom menu launches a command with the %pp parameter,
               the latter will not be substitued when launched while a source
