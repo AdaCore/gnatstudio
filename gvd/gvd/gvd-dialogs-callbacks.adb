@@ -31,6 +31,7 @@ with Gtk.Clist;       use Gtk.Clist;
 with Gtk.Enums;       use Gtk.Enums;
 with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
 with Odd.Types; use Odd.Types;
+with Unchecked_Deallocation;
 
 package body Odd.Dialogs.Callbacks is
 
@@ -195,6 +196,15 @@ package body Odd.Dialogs.Callbacks is
    procedure On_Replay_Selection_Clicked
      (Object : access Gtk_Button_Record'Class)
    is
+      type List_Node;
+      type List_Link is access List_Node;
+      type List_Node is record
+         Command : Odd.Types.String_Access;
+         Next    : List_Link;
+      end record;
+
+      procedure Free is new Unchecked_Deallocation (List_Node, List_Link);
+
       Top  : constant Main_Debug_Window_Access :=
         Main_Debug_Window_Access
           (History_Dialog_Access (Get_Toplevel (Object)).Window);
@@ -207,28 +217,39 @@ package body Odd.Dialogs.Callbacks is
 
       use Widget_List;
 
-      Selected : Widget_List.Glist := First (Get_Selection (List));
-      New_List : Widget_List.Glist;
+      Selected   : Widget_List.Glist := Last (Get_Selection (List));
+      New_List   : List_Link;
+      First_Item : List_Link;
 
    begin
       while Selected /= Null_List loop
-         Append (New_List, Get_Data (Selected));
-         Selected := Next (Selected);
+         if First_Item = null then
+            First_Item := new List_Node;
+            New_List := First_Item;
+         else
+            New_List.Next := new List_Node;
+            New_List := New_List.Next;
+         end if;
+
+         New_List.Command :=
+           new String' (Get (Gtk_Label (Get_Data (Children (Gtk_Container
+             (Get_Data (Selected)))))));
+         Selected := Prev (Selected);
       end loop;
 
-      New_List := Last (New_List);
+      New_List := First_Item;
 
-      while New_List /= Null_List loop
-         Process_User_Command
-           (Tab,
-            Get
-              (Gtk_Label
-                (Get_Data (Children (Gtk_Container (Get_Data (New_List)))))));
-         New_List := Prev (New_List);
+      --  Execute the commands and free the list while traversing it
+
+      while New_List /= null loop
+         Process_User_Command (Tab, New_List.Command.all);
+         Free (New_List.Command);
+         First_Item := New_List;
+         New_List := New_List.Next;
+         Free (First_Item);
       end loop;
 
       Update (Top.History_Dialog, Gtk_Widget (Tab));
-      --  When is New_List freed ???
       --  This does not take into account the fact that the selection can be
       --  done in an arbitrary order ???
    end On_Replay_Selection_Clicked;
