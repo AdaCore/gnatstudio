@@ -267,6 +267,11 @@ package Debugger.Jdb is
       Thread   : Natural;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
 
+   procedure PD_Switch
+     (Debugger : access Jdb_Debugger;
+      PD       : Natural;
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
+
    procedure Info_Tasks
      (Debugger : access Jdb_Debugger;
       Info     : out Thread_Information_Array;
@@ -276,6 +281,15 @@ package Debugger.Jdb is
      (Debugger : access Jdb_Debugger;
       Info     : out Thread_Information_Array;
       Len      : out Natural);
+
+   procedure Info_PD
+     (Debugger : access Jdb_Debugger;
+      Info     : out PD_Information_Array;
+      Len      : out Natural);
+
+   procedure Info_WTX
+     (Debugger : access Jdb_Debugger;
+      Version  : out Natural);
 
    function Line_Contains_Code
      (Debugger : access Jdb_Debugger;

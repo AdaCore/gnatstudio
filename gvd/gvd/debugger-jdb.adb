@@ -789,6 +789,20 @@ package body Debugger.Jdb is
       Send (Debugger, "thread" & Natural'Image (Thread), Mode => Mode);
    end Thread_Switch;
 
+   ---------------
+   -- PD_Switch --
+   ---------------
+
+   procedure PD_Switch
+     (Debugger : access Jdb_Debugger;
+      PD       : Natural;
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden)
+   is
+      pragma Unreferenced (Debugger, Pd, Mode);
+   begin
+      null;
+   end PD_Switch;
+
    ----------------
    -- Info_Tasks --
    ----------------
@@ -820,6 +834,34 @@ package body Debugger.Jdb is
       Len := 0;
       --  Not implemented ???
    end Info_Threads;
+
+   --------------
+   -- Info_PD --
+   --------------
+
+   procedure Info_PD
+      (Debugger : access Jdb_Debugger;
+       Info     : out PD_Information_Array;
+       Len      : out Natural)
+   is
+      pragma Unreferenced (Debugger);
+   begin
+      Info (Info'First) := (Num_Fields => 1, Information => (1 => Null_Ptr));
+      Len := 0;
+   end Info_PD;
+
+   ----------------
+   --  Info_WTX  --
+   ----------------
+
+   procedure Info_WTX
+     (Debugger : access Jdb_Debugger;
+      Version  : out Natural)
+   is
+      pragma Unreferenced (Debugger);
+   begin
+      Version := 0;
+   end Info_WTX;
 
    -----------------
    -- Info_Locals --
