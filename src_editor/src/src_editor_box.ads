@@ -42,6 +42,7 @@ with Gtk.Label;
 
 with Language;
 with GNAT.OS_Lib;         use GNAT.OS_Lib;
+with Glide_Kernel;
 with Src_Editor_Buffer;
 with Src_Editor_View;
 
@@ -51,14 +52,16 @@ package Src_Editor_Box is
    type Source_Editor_Box is access all Source_Editor_Box_Record;
 
    procedure Gtk_New
-     (Box  : out Source_Editor_Box;
-      Lang : Language.Language_Access := null);
+     (Box    : out Source_Editor_Box;
+      Kernel : Glide_Kernel.Kernel_Handle;
+      Lang   : Language.Language_Access := null);
    --  Create a new Source_Editor_Box. It must be destroyed after use
    --  (see procedure Destroy below).
 
    procedure Initialize
-     (Box  : access Source_Editor_Box_Record;
-      Lang : Language.Language_Access);
+     (Box    : access Source_Editor_Box_Record;
+      Kernel : Glide_Kernel.Kernel_Handle;
+      Lang   : Language.Language_Access);
    --  Initialize the newly created Source_Editor_Box.
 
    procedure Create_New_View
@@ -154,6 +157,7 @@ private
    type Source_Editor_Box_Record is record
       Root_Container      : Gtk.Box.Gtk_Box;
       Never_Attached      : Boolean := True;
+      Kernel              : Glide_Kernel.Kernel_Handle;
       Source_View         : Src_Editor_View.Source_View;
       Source_Buffer       : Src_Editor_Buffer.Source_Buffer;
       --  The status bar
