@@ -328,6 +328,13 @@ package body GVD.Canvas is
       Gdk_New (C.Item_Context.Modified_GC, Win);
       Set_Foreground (C.Item_Context.Modified_GC, Get_Pref (Change_Color));
 
+      if C.Item_Context.Selection_GC /= null then
+         Destroy (C.Item_Context.Selection_GC);
+      end if;
+
+      Gdk_New (C.Item_Context.Selection_GC, Win);
+      Set_Foreground (C.Item_Context.Selection_GC, Get_Pref (Selection_Color));
+
       if C.Item_Context.Font /= null then
          Unref (C.Item_Context.Font);
       end if;
