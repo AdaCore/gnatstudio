@@ -6056,13 +6056,9 @@ key ::=
    @i{plus | comma | minus | period | slash | colon | semicolon | less |}
    @i{equal | greater | question | at | bracketleft | backslash |}
    @i{bracketright | underscore | grave | quoteleft | braceleft | bar |}
-   @i{braceright} | ...
+   @i{braceright}
 
 @end smallexample
-
-@noindent
-See the file gdk/gdkkeysyms.h from the Gtk+ sources for a complete list of
-possible values for @code{key}.
 
 @noindent
 The list of valid @command{command-kind} values and their parameters depend on
