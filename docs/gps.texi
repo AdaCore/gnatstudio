@@ -778,6 +778,9 @@ This menu contains a number of additional entries, depending on what
 documentation packages were installed on your system. See the next
 section to see how to add new help files.
 
+The help window also provides a contextual menu that gives the possibility
+to copy the current selection to the clipboard.
+
 @node Adding New Help Files
 @section Adding New Help Files
 @noindent
