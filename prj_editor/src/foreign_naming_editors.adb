@@ -39,6 +39,7 @@ with Prj.Tree;                         use Prj.Tree;
 with Prj_API;                          use Prj_API;
 with Snames;                           use Snames;
 with Types;                            use Types;
+with Prj_Normalize;                    use Prj_Normalize;
 
 package body Foreign_Naming_Editors is
 
@@ -97,6 +98,10 @@ package body Foreign_Naming_Editors is
          Scenar := new Project_Node_Array (1 .. 0);
       else
          Scenar := new Project_Node_Array ' (Scenario_Variables (Kernel));
+      end if;
+
+      if not Has_Been_Normalized (Project) then
+         Normalize (Project, Recurse => False);
       end if;
 
       Update_Attribute_Value_In_Scenario
