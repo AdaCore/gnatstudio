@@ -8873,7 +8873,9 @@ with a quote.
 <make>
   <action name="make example" >
      <external>make</external>
-     <shell>Locations.parse """%1 """ make_example</shell>
+     <on-failure>
+        <shell>Locations.parse """%1 """ make_example</shell>
+     </on-failure>
   </action>
 </make>
 @end smallexample
