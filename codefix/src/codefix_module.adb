@@ -332,7 +332,7 @@ package body Codefix_Module is
       Add_Location_Action
         (Kernel        => Codefix_Module_ID.Kernel,
          Identifier    => Location_Button_Name,
-         Category      => "Builder Results",
+         Category      => Compilation_Category,
          File          => Create
            (Get_Error_Message (Error).File_Name.all,
             Codefix_Module_ID.Kernel),
