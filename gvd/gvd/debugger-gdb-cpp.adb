@@ -190,16 +190,28 @@ package body Debugger.Gdb.Cpp is
          return;
       end if;
 
+      --  A class can have static members, that are reported as:
+      --    type = class CL {\n
+      --        private:\n
+      --        static double x;\n
+      --  Thus, we must ignore the static keyword
+
+      if Looking_At (Type_Str, Tmp, "static ") then
+         Index := Tmp + 7;
+      else
+         Index := Tmp;
+      end if;
+
       --  Else handle specially two cases: classes, which are new to C++, and
       --  unions, since gdb prints a 'public:' indication at the
       --  beginning of the union (why ?)
 
-      if Looking_At (Type_Str, Tmp, "class ") then
-         Index := Tmp + 6; --  skips "class "
+      if Looking_At (Type_Str, Index, "class ") then
+         Index := Index + 6; --  skips "class "
          Parse_Class_Type (Lang, Type_Str, Entity, Index, Result);
 
-      elsif Looking_At (Type_Str, Tmp, "union ") then
-         Index := Tmp + 6;
+      elsif Looking_At (Type_Str, Index, "union ") then
+         Index := Index + 6;
          Skip_To_Char (Type_Str, Index, '{');
          Index := Index + 1;
          Parse_Class_Contents (Lang, Type_Str, Entity, Index, True, Result);
