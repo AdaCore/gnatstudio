@@ -76,6 +76,8 @@ with Src_Editor_Module.Line_Highlighting;
 use Src_Editor_Module.Line_Highlighting;
 
 with Src_Editor_Buffer.Blocks;          use Src_Editor_Buffer.Blocks;
+with Src_Editor_Buffer.Line_Information;
+use Src_Editor_Buffer.Line_Information;
 
 package body Src_Editor_Buffer is
 
@@ -294,19 +296,6 @@ package body Src_Editor_Buffer is
    procedure Clear (Buffer : access Source_Buffer_Record);
    --  Delete all characters from the given buffer, leaving an empty buffer.
 
-   procedure Add_Lines
-     (Buffer : access Source_Buffer_Record'Class;
-      Start  : Buffer_Line_Type;
-      Number : Buffer_Line_Type);
-   --  Add Number blank lines to the column info and line highlights,
-   --  after Start.
-
-   procedure Remove_Lines
-     (Buffer     : access Source_Buffer_Record'Class;
-      Start_Line : Buffer_Line_Type;
-      End_Line   : Buffer_Line_Type);
-   --  Remove lines from the column info and line highlights.
-
    procedure Set_Line_Highlighting
      (Editor : access Source_Buffer_Record;
       Line   : Buffer_Line_Type;
@@ -326,6 +315,102 @@ package body Src_Editor_Buffer is
 
    function Check_Blocks (Buffer : Source_Buffer) return Boolean;
    --  Timeout that recomputes the blocks if needed.
+
+   function Get_String
+     (Buffer : Source_Buffer;
+      Line   : Editable_Line_Type) return String;
+   --  Return the string at line Line.
+
+   function Get_String (Buffer : Source_Buffer) return String;
+   pragma Unreferenced (Get_String);
+   --  Return the entire editable string.
+
+   ----------------
+   -- Get_String --
+   ----------------
+
+   --  ??? These two functions should be optimized for speed.
+
+   function Get_String
+     (Buffer : Source_Buffer;
+      Line   : Editable_Line_Type) return String
+   is
+      Start_Iter, End_Iter : Gtk_Text_Iter;
+      Success              : Boolean;
+   begin
+      if Line not in Buffer.Editable_Lines'Range then
+         return "";
+      end if;
+
+      case Buffer.Editable_Lines (Line).Where is
+         when In_Buffer =>
+            Get_Iter_At_Line
+              (Buffer,
+               Start_Iter,
+               Gint (Buffer.Editable_Lines (Line).Buffer_Line - 1));
+            Copy (Start_Iter, End_Iter);
+            Forward_To_Line_End (End_Iter, Success);
+
+            if Get_Line (Start_Iter) /= Get_Line (End_Iter) then
+               return "";
+            end if;
+
+            declare
+               Ignore, Length  : Natural;
+               UTF8            : constant Gtkada.Types.Chars_Ptr :=
+                 Get_Text (Buffer, Start_Iter, End_Iter, True);
+               Contents        : GNAT.OS_Lib.String_Access;
+            begin
+               Length := Integer (Strlen (UTF8));
+               Contents := new String (1 .. Length);
+               Glib.Convert.Convert
+                 (UTF8, Length,
+                  Get_Pref (Buffer.Kernel, Default_Charset), "UTF-8",
+                  Ignore, Length, Result => Contents.all);
+               g_free (UTF8);
+
+               declare
+                  Output : constant String := Contents.all;
+               begin
+                  Free (Contents);
+                  return Output;
+               end;
+            end;
+
+         when In_Mark =>
+            if Buffer.Editable_Lines (Line).Text = null then
+               return "";
+            else
+               return Buffer.Editable_Lines (Line).Text.all;
+            end if;
+      end case;
+   end Get_String;
+
+   function Get_String (Buffer : Source_Buffer) return String is
+      A : GNAT.OS_Lib.Argument_List
+        (Integer (Buffer.Editable_Lines'First) ..
+           Integer (Buffer.Editable_Lines'Last));
+      Len : Integer := 0;
+   begin
+      for J in A'Range loop
+         A (J) := new String'(Get_String (Buffer, Editable_Line_Type (J)));
+         Len := Len + A (J)'Length;
+      end loop;
+
+      declare
+         Output : String (1 .. 1 + Len);
+         Index  : Integer := 1;
+
+      begin
+         for J in A'Range loop
+            Output (Index .. Index + A (J)'Length - 1) := A (J).all;
+            Index := Index + A (J)'Length;
+            Free (A (J));
+         end loop;
+
+         return Output;
+      end;
+   end Get_String;
 
    ------------------
    -- Check_Blocks --
@@ -1804,8 +1889,6 @@ package body Src_Editor_Buffer is
       Success  : out Boolean)
    is
       FD         : File_Descriptor := Invalid_FD;
-      Start_Iter : Gtk_Text_Iter;
-      End_Iter   : Gtk_Text_Iter;
       Terminator : Line_Terminator_Style := Buffer.Line_Terminator;
       Buffer_Line : Buffer_Line_Type;
 
@@ -1872,54 +1955,16 @@ package body Src_Editor_Buffer is
          return;
       end if;
 
-      Get_Bounds (Buffer, Start_Iter, End_Iter);
-
       declare
          Terminator_Pref : constant Line_Terminators :=
            Line_Terminators'Val (Get_Pref (Buffer.Kernel, Line_Terminator));
-         UTF8            : constant Gtkada.Types.Chars_Ptr :=
-           Get_Text (Buffer, Start_Iter, End_Iter, True);
-         Contents        : GNAT.OS_Lib.String_Access;
          Bytes_Written   : Integer;
          pragma Unreferenced (Bytes_Written);
 
-         First, Current  : Natural := 1;
-         Blanks          : Natural := 0;
-         Ignore, Length  : Natural;
          Strip_Blank     : Boolean;
+         Index           : Natural;
 
       begin
-         Length := Integer (Strlen (UTF8));
-         Contents := new String (1 .. Length);
-         Glib.Convert.Convert
-           (UTF8, Length, Get_Pref (Buffer.Kernel, Default_Charset), "UTF-8",
-            Ignore, Length, Result => Contents.all);
-         g_free (UTF8);
-
-         if Terminator_Pref = Unchanged and then Terminator = Unknown then
-            --  Check value of first line terminator and set Terminator
-            --  accordingly.
-
-            for J in 1 .. Length loop
-               if Contents (J) = ASCII.CR then
-                  if J < Length and then Contents (J + 1) = ASCII.LF then
-                     Terminator := CR_LF;
-                  else
-                     Terminator := CR;
-                  end if;
-
-                  exit;
-
-               elsif Contents (J) = ASCII.LF then
-                  Terminator := LF;
-
-                  exit;
-               end if;
-            end loop;
-
-            Buffer.Line_Terminator := Terminator;
-         end if;
-
          case Terminator_Pref is
             when Unix =>
                Terminator := LF;
@@ -1931,61 +1976,37 @@ package body Src_Editor_Buffer is
 
          Strip_Blank := Get_Pref (Buffer.Kernel, Strip_Blanks);
 
-         while Current <= Length loop
-            case Contents (Current) is
-               when ASCII.CR =>
-                  null;
+         for Line in Buffer.Editable_Lines'First
+           ..  Buffer.Last_Editable_Line
+         loop
+            declare
+               Str : constant String := Get_String (Buffer, Line);
+            begin
+               if Str /= "" then
+                  if Strip_Blank then
+                     Index := Str'Last;
+                     while Index >= Str'First
+                       and then (Str (Index) = ' '
+                                 or else Str (Index) = ASCII.HT)
+                     loop
+                        Index := Index - 1;
+                     end loop;
 
-               when ASCII.LF =>
-                  if Blanks /= 0 then
-                     Bytes_Written := Write
-                       (FD, Contents (First)'Address, Blanks - First);
-
+                     Bytes_Written :=
+                       Write
+                         (FD, Str (Str'First)'Address,
+                          Index - Str'First + 1);
                   else
-                     if Current > 1
-                       and then Contents (Current - 1) = ASCII.CR
-                     then
-                        Bytes_Written := Write
-                          (FD, Contents (First)'Address, Current - First - 1);
-                     else
-                        Bytes_Written := Write
-                          (FD, Contents (First)'Address, Current - First);
-                     end if;
+                     Bytes_Written :=
+                       Write (FD, Str (Str'First)'Address, Str'Length);
                   end if;
+               end if;
 
-                  New_Line (FD);
-                  Blanks := 0;
-                  First := Current + 1;
-
-               when ' ' | ASCII.HT =>
-                  if Strip_Blank and Blanks = 0 then
-                     Blanks := Current;
-                  end if;
-
-               when others =>
-                  Blanks := 0;
-            end case;
-
-            Current := Current + 1;
-         end loop;
-
-         if First <= Length then
-            if Blanks /= 0 then
-               Bytes_Written :=
-                 Write (FD, Contents (First)'Address, Blanks - First);
-               New_Line (FD);
-
-            else
-               Bytes_Written :=
-                 Write (FD, Contents (First)'Address, Current - First);
-
-               if Contents (Length) /= ASCII.LF then
+               if Line /= Buffer.Last_Editable_Line then
                   New_Line (FD);
                end if;
-            end if;
-         end if;
-
-         Free (Contents);
+            end;
+         end loop;
       end;
 
       Close (FD);
@@ -3338,188 +3359,6 @@ package body Src_Editor_Buffer is
       end if;
    end Create_Side_Info;
 
-   ---------------
-   -- Add_Lines --
-   ---------------
-
-   procedure Add_Lines
-     (Buffer : access Source_Buffer_Record'Class;
-      Start  : Buffer_Line_Type;
-      Number : Buffer_Line_Type)
-   is
-      Buffer_Lines   : Line_Data_Array_Access renames Buffer.Line_Data;
-      Editable_Lines : Editable_Line_Array_Access renames
-        Buffer.Editable_Lines;
-
-      Bottom_Line : Buffer_Line_Type;
-      Ref_Editable_Line : Editable_Line_Type;
-
-
-      procedure Expand_Lines
-        (N : Buffer_Line_Type);
-      --  Expand the line-indexed arrays to contain N lines in size.
-
-      procedure Expand_Lines (N : Buffer_Line_Type) is
-         H : constant Line_Data_Array := Buffer_Lines.all;
-         K : constant Editable_Line_Array := Buffer.Editable_Lines.all;
-         R : Buffer_Line_Type;
-      begin
-         Unchecked_Free (Buffer_Lines);
-         Buffer_Lines := new Line_Data_Array (1 .. N * 2);
-
-
-         Buffer_Lines (H'Range) := H;
-
-         for J in H'Last + 1 .. Buffer_Lines'Last loop
-            Buffer_Lines (J) := New_Line_Data;
-            Create_Side_Info (Buffer, J);
-         end loop;
-
-         Unchecked_Free (Buffer.Editable_Lines);
-         Buffer.Editable_Lines := new Editable_Line_Array
-           (1 .. Editable_Line_Type (N * 2));
-
-         --  ??? Should we save R somewhere as last editable buffer line ?
-         R := 0;
-
-         for J in reverse K'Range loop
-            if K (J).Where = In_Buffer then
-               R := K (J).Buffer_Line;
-               exit;
-            end if;
-         end loop;
-
-         Buffer.Editable_Lines (K'Range) := K;
-
-
-         for J in K'Last + 1 .. Buffer.Editable_Lines'Last loop
-            Buffer.Editable_Lines (J) :=
-              (Where       => In_Buffer,
-               Buffer_Line => R + Buffer_Line_Type (J - K'Last),
-               Side_Info_Data => null);
-            Create_Side_Info (Buffer, J);
-         end loop;
-      end Expand_Lines;
-
-   begin
-      if Number <= 0 then
-         return;
-      end if;
-
-      --  ??? What if inserting in non editable area ?
-      Ref_Editable_Line := Buffer_Lines (Start).Editable_Line;
-
-      if not Buffer.Original_Text_Inserted then
-         Buffer.Original_Lines_Number := Number;
-
-         if Buffer.Original_Lines_Number >= Buffer_Lines'Last then
-            Expand_Lines (Number);
-         end if;
-
-         for J in 0 .. Number loop
-            Buffer_Lines (Start + J) := New_Line_Data;
-            Buffer_Lines (Start + J).Editable_Line := Editable_Line_Type
-              (Start + J);
-            Buffer_Lines (Start + J).File_Line := File_Line_Type (Start + J);
-
-            Create_Side_Info (Buffer, Start + J);
-
-            if Buffer.Modifying_Editable_Lines then
-               Buffer.Editable_Lines (Ref_Editable_Line
-                                        + Editable_Line_Type (J)) :=
-                 (Where        => In_Buffer,
-                  Buffer_Line  => Start + J,
-                  Side_Info_Data => null);
-               Create_Side_Info
-                 (Buffer, Ref_Editable_Line + Editable_Line_Type (J));
-            end if;
-         end loop;
-
-         Buffer.Original_Text_Inserted := True;
-
-      else
-         Bottom_Line := Buffer_Line_Type (Get_Line_Count (Buffer));
-
-         if Buffer_Lines'Last < Bottom_Line then
-            Expand_Lines (Bottom_Line);
-         end if;
-
-         --  Shift down the existing lines.
-
-         for J in reverse Start + Number + 1 .. Buffer_Lines'Last loop
-            Buffer_Lines (J) := Buffer_Lines (J - Number);
-
-            if Buffer_Lines (J).Editable_Line /= 0 then
-               Buffer_Lines (J).Editable_Line
-                 := Buffer_Lines (J).Editable_Line
-                 + Editable_Line_Type (Number);
-
-               Editable_Lines (Buffer_Lines (J).Editable_Line).Buffer_Line
-                 := J;
-            end if;
-         end loop;
-
-         --  Reset the newly inserted lines.
-
-         for J in 1 .. Number loop
-            Buffer_Lines (Start + J) := New_Line_Data;
-            Buffer_Lines (Start + J).Editable_Line := Ref_Editable_Line
-              + Editable_Line_Type (J);
-
-            Editable_Lines
-              (Buffer_Lines (Start + J).Editable_Line).Buffer_Line :=
-              Start + J;
-
-            Create_Side_Info (Buffer, Start + J);
-         end loop;
-      end if;
-   end Add_Lines;
-
-   ------------------
-   -- Remove_Lines --
-   ------------------
-
-   procedure Remove_Lines
-     (Buffer     : access Source_Buffer_Record'Class;
-      Start_Line : Buffer_Line_Type;
-      End_Line   : Buffer_Line_Type)
-   is
-      Buffer_Lines   : Line_Data_Array_Access renames Buffer.Line_Data;
-      Editable_Lines : Editable_Line_Array_Access renames
-        Buffer.Editable_Lines;
-
-   begin
-      if End_Line <= Start_Line then
-         return;
-      end if;
-
-      --  Shift up remaining lines
-
-      for J in Start_Line + 1 .. Buffer_Lines'Last + Start_Line - End_Line loop
-         Buffer_Lines (J) := Buffer_Lines (End_Line + J - Start_Line);
-
-         if Buffer_Lines (J).Editable_Line /= 0 then
-            Buffer_Lines (J).Editable_Line :=
-              Buffer_Lines (J).Editable_Line
-              - Editable_Line_Type (End_Line - Start_Line);
-
-            Editable_Lines (Buffer_Lines (J).Editable_Line).Buffer_Line := J;
-         end if;
-      end loop;
-
-      --  Reset bottom lines
-
-      for J in Buffer_Lines'Last + Start_Line - End_Line + 1
-        .. Buffer_Lines'Last
-      loop
-         if Buffer_Lines (J).Editable_Line /= 0 then
-            Editable_Lines (Buffer_Lines (J).Editable_Line).Buffer_Line := 0;
-         end if;
-
-         Buffer_Lines (J) := New_Line_Data;
-      end loop;
-   end Remove_Lines;
-
    -----------------------
    -- Needs_To_Be_Saved --
    -----------------------
@@ -4152,119 +3991,6 @@ package body Src_Editor_Buffer is
 
          return False;
    end Do_Indentation;
-
-   ---------------------
-   -- Add_Blank_Lines --
-   ---------------------
-
-   function Add_Blank_Lines
-     (Editor : access Source_Buffer_Record;
-      Line   : Editable_Line_Type;
-      GC     : Gdk.GC.Gdk_GC;
-      Text   : String;
-      Number : Positive) return Gtk.Text_Mark.Gtk_Text_Mark
-   is
-      pragma Unreferenced (Text);
-      LFs         : String (1 .. Natural (Number));
-      Buffer_Line : Buffer_Line_Type;
-      Iter        : Gtk_Text_Iter;
-      End_Iter    : Gtk_Text_Iter;
-      Success     : Boolean;
-   begin
-      Buffer_Line := Get_Buffer_Line (Editor, Line);
-
-      if Buffer_Line = 0 then
-         return null;
-      end if;
-
-      End_Action (Editor);
-
-      LFs := (others => ASCII.LF);
-
-      Get_Iter_At_Line (Editor, Iter, Gint (Buffer_Line - 1));
-
-      Editor.Modifying_Editable_Lines := False;
-      Editor.Inserting := True;
-      Insert (Editor, Iter, LFs);
-      Editor.Inserting := False;
-      Editor.Modifying_Editable_Lines := True;
-
-      Get_Iter_At_Line (Editor, Iter, Gint (Buffer_Line - 1));
-      Backward_Char (Iter, Success);
-      Get_Iter_At_Line (Editor, End_Iter,
-                        Gint (Buffer_Line - 1) + Gint (Number));
-
-      Apply_Tag (Editor, Editor.Non_Editable_Tag, Iter, End_Iter);
-
-      --  Shift down existing buffer lines
-
-      for J in Buffer_Line + Buffer_Line_Type (Number)
-        .. Editor.Line_Data'Last
-      loop
-         if Editor.Line_Data (J).Editable_Line > Line then
-            Editor.Line_Data (J).Editable_Line :=
-              Editor.Line_Data (J).Editable_Line - Editable_Line_Type (Number);
-         end if;
-      end loop;
-
-      --  Shift down editable lines.
-
-      for J in Line .. Editor.Editable_Lines'Last loop
-         if Editor.Editable_Lines (J).Where = In_Buffer then
-            Editor.Editable_Lines (J).Buffer_Line :=
-              Editor.Editable_Lines (J).Buffer_Line
-              + Buffer_Line_Type (Number);
-         end if;
-      end loop;
-
-      --  Reset information for newly inserted buffer lines.
-
-      for J in Buffer_Line .. Buffer_Line + Buffer_Line_Type (Number) - 1 loop
-         Editor.Line_Data (J).Editable_Line := 0;
-         Editor.Line_Data (J).Current_Highlight := GC;
-      end loop;
-
-      Get_Iter_At_Line_Offset (Editor, Iter, Gint (Buffer_Line - 1), 0);
-
-      return Create_Mark (Editor, "", Iter);
-   end Add_Blank_Lines;
-
-   -----------------
-   -- Create_Mark --
-   -----------------
-
-   function Create_Mark
-     (Editor : access Source_Buffer_Record;
-      Line   : Editable_Line_Type;
-      Column : Positive) return Gtk.Text_Mark.Gtk_Text_Mark
-   is
-      Buffer_Line : Buffer_Line_Type;
-      Iter        : Gtk_Text_Iter;
-   begin
-      --  ??? How do we deal with marks in non-present lines ?
-
-      Buffer_Line := Get_Buffer_Line (Editor, Line);
-
-      if Buffer_Line = 0 then
-         Get_Iter_At_Line_Offset (Editor, Iter, 0, 0);
-         return Create_Mark (Editor, "", Iter);
-      end if;
-
-      if Is_Valid_Position
-        (Editor, Gint (Buffer_Line - 1), Gint (Column - 1))
-      then
-         Get_Iter_At_Line_Offset
-           (Editor, Iter, Gint (Buffer_Line - 1), Gint (Column - 1));
-         return Create_Mark (Editor, "", Iter);
-
-      elsif Is_Valid_Position (Editor, Gint (Buffer_Line - 1), 1) then
-         Get_Iter_At_Line_Offset (Editor, Iter, Gint (Buffer_Line - 1), 1);
-         return Create_Mark (Editor, "", Iter);
-      end if;
-
-      Get_Iter_At_Line_Offset (Editor, Iter, 0, 0);
-      return Create_Mark (Editor, "", Iter);
-   end Create_Mark;
 
    --------------
    -- Get_Name --
