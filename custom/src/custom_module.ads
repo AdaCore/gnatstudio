@@ -102,7 +102,6 @@ with GNAT.Regpat;
 with Glide_Kernel.Actions;      use Glide_Kernel.Actions;
 with Glide_Kernel;              use Glide_Kernel;
 with Glide_Kernel.Scripts;      use Glide_Kernel.Scripts;
-with Gtk.Combo;                 use Gtk.Combo;
 with Generic_List;
 
 with Ada.Unchecked_Deallocation;
@@ -148,43 +147,6 @@ package Custom_Module is
    procedure Free (X : in out Custom_Action_Record);
    --  Free memory associated to X.
 
-   ------------------------------------------
-   -- Definitions for custom combo entries --
-   ------------------------------------------
-
-   type Entry_Action_Record is record
-      Label   : String_Access;
-      --  This is an allocated string identifying the action.
-      --  This can never be null.
-
-      Command : Action_Record_Access;
-      On_Selected : Glide_Kernel.Scripts.Subprogram_Type;
-      --  This should not be allocated/deallocated.
-   end record;
-
-   procedure Free (X : in out Entry_Action_Record);
-   --  Free memory associated to X.
-
-   package Entry_List is new Generic_List (Entry_Action_Record);
-
-   type GPS_Combo_Record is record
-      Label                : String_Access;
-      Combo                : Gtk_Combo;
-      On_Change_Action     : Action_Record_Access;
-      On_Change_Subprogram : Glide_Kernel.Scripts.Subprogram_Type;
-      Entries              : Entry_List.List;
-   end record;
-
-   type GPS_Combo_Access is access GPS_Combo_Record;
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (GPS_Combo_Record, GPS_Combo_Access);
-
-   procedure Free (X : in out GPS_Combo_Access);
-   --  Free memory associated to X.
-
-   package Combo_List is new Generic_List (GPS_Combo_Access);
-   --  ??? Should this be a HTable ?
-
    --------------------------------------
    -- Definitions for contextual menus --
    --------------------------------------
@@ -205,7 +167,6 @@ package Custom_Module is
       Kernel        : Kernel_Handle;
       Contextual    : Contextual_Menu_Access;
       Process_Class : Glide_Kernel.Scripts.Class_Type;
-      Combos        : Combo_List.List;
    end record;
    type Custom_Module_ID_Access is access all Custom_Module_ID_Record'Class;
 

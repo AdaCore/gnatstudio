@@ -523,53 +523,43 @@ package body Custom_Module is
             return;
          end if;
 
-         Child := Node.Child;
+         --  The creation of the new combo and its entries is done through
+         --  shell commands, so that the action is automatically converted to
+         --  a Subprogram_Type. This also limits the direct dependencies
+         --  between the packages.
 
-         --  Determine the title of the combo and register it.
-
-         Register_Combo (Kernel, Label, Id);
-
-         --  Determine the default action for this entry
-
-         declare
-            Action  : constant String := Get_Attribute (Node, "on-changed");
-            Command : Action_Record_Access;
-         begin
-            if Action /= "" then
-               Command := Lookup_Action (Kernel, Action);
-
-               if Command = null then
-                  Insert
-                    (Kernel,
-                     -"Action not registered: " & Action,
-                     Mode => Error);
-               else
-                  Set_Combo_Changed_Action (Kernel, Id, Command);
-               end if;
-            end if;
-         end;
+         Execute_GPS_Shell_Command
+           (Kernel => Kernel,
+            Command =>
+              "ToolbarEntry """ & Id & """ """
+              & Get_Attribute (Node, "on-changed")
+              & """; Toolbar; Toolbar.append %1 %2 """ & Label & """");
 
          --  Parse the child nodes
 
-         Child := Child.Next;
+         Child := Node.Child;
 
          while Child /= null loop
             if To_Lower (Child.Tag.all) = "choice" then
                --  ??? Need to implement "default" attribute.
-
-               Add_Combo_Entry
-                 (Kernel,
-                  Id,
-                  Child.Value.all,
-                  Lookup_Action
-                    (Kernel, Get_Attribute (Child, "on-selected")),
-                  On_Selected => null);
-
-            elsif To_Lower (Child.Tag.all) = "label" then
-               Insert
-                 (Kernel,
-                  -"<label> node must be the first child in an <entry> node",
-                  Mode => Error);
+               declare
+                  On_Selected : constant String :=
+                    Get_Attribute (Child, "on-selected");
+               begin
+                  if On_Selected /= "" then
+                     Execute_GPS_Shell_Command
+                       (Kernel,
+                        "Toolbar; Toolbar.entry %1 """ & Id
+                        & """; ToolbarEntry.add %1 """ & Child.Value.all
+                        & """ """ & On_Selected & """");
+                  else
+                     Execute_GPS_Shell_Command
+                       (Kernel,
+                        "Toolbar; Toolbar.entry %1 """ & Id
+                        & """; ToolbarEntry.add %1 """ & Child.Value.all
+                        & """");
+                  end if;
+               end;
             else
                Insert
                  (Kernel,
@@ -892,9 +882,7 @@ package body Custom_Module is
    ---------------------
 
    procedure Register_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
-   is
-      Toolbar_Class : constant Class_Type := New_Class (Kernel, "Toolbar");
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class) is
    begin
       Custom_Module_ID := new Custom_Module_ID_Record;
       Register_Module
@@ -936,42 +924,7 @@ package body Custom_Module is
          Class         => Custom_Module_ID.Process_Class,
          Handler       => Custom_Spawn_Handler'Access);
 
-      Register_Command
-        (Kernel, "entry_add",
-         Minimum_Args  => 2,
-         Maximum_Args  => 3,
-         Class         => Toolbar_Class,
-         Handler       => Custom_Entry_Handler'Access);
-      Register_Command
-        (Kernel, "entry_remove",
-         Minimum_Args  => 2,
-         Maximum_Args  => 2,
-         Class         => Toolbar_Class,
-         Handler       => Custom_Entry_Handler'Access);
-      Register_Command
-        (Kernel, "entry_create",
-         Minimum_Args  => 2,
-         Maximum_Args  => 4,
-         Class         => Toolbar_Class,
-         Handler       => Custom_Entry_Handler'Access);
-      Register_Command
-        (Kernel, "entry_clear",
-         Minimum_Args  => 1,
-         Maximum_Args  => 1,
-         Class         => Toolbar_Class,
-         Handler       => Custom_Entry_Handler'Access);
-      Register_Command
-        (Kernel, "entry_get_text",
-         Minimum_Args  => 1,
-         Maximum_Args  => 1,
-         Class         => Toolbar_Class,
-         Handler       => Custom_Entry_Handler'Access);
-      Register_Command
-        (Kernel, "entry_set_text",
-         Minimum_Args  => 2,
-         Maximum_Args  => 2,
-         Class         => Toolbar_Class,
-         Handler       => Custom_Entry_Handler'Access);
+      Custom_Combos.Register_Commands (Kernel);
    end Register_Module;
 
    ----------
@@ -1007,29 +960,6 @@ package body Custom_Module is
    procedure Free (X : in out Expect_Filter) is
    begin
       Unchecked_Free (X.Pattern);
-   end Free;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (X : in out Entry_Action_Record) is
-   begin
-      Free (X.Label);
-   end Free;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (X : in out GPS_Combo_Access) is
-   begin
-      if X /= null then
-         Free (X.Label);
-         Entry_List.Free (X.Entries);
-
-         Unchecked_Free (X);
-      end if;
    end Free;
 
 end Custom_Module;
