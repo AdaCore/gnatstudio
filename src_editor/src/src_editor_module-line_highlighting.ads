@@ -40,6 +40,7 @@ package Src_Editor_Module.Line_Highlighting is
       GC    : Gdk_GC;
       Color : Gdk_Color);
    --  Add a new category to the category cache.
+   --  Update the GC and Color of the category if it already exists.
 
    function Lookup_Category (Id : String) return Natural;
    --  Return the index corresponding to Id.
