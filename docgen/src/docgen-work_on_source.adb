@@ -2,7 +2,7 @@
 --                               G P S                               --
 --                                                                   --
 --                     Copyright (C) 2001-2005                       --
---                            ACT-Europe                             --
+--                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -1013,7 +1013,7 @@ package body Docgen.Work_On_Source is
                if Public then
                   Doc_Public_Index (B, Kernel, Index_File, Title => "Public:");
                else
-                  Doc_Private_Index (B, Kernel, Index_File, "Private;");
+                  Doc_Private_Index (B, Kernel, Index_File, "Private:");
                end if;
             end if;
          end if;
