@@ -254,7 +254,7 @@ package body Debugger.Gdb is
          else
             Output_Error
               (Process.Window,
-               (-"Language currently not supported by GVD: ") & Lang);
+               (-"Language unknown, defaulting to C: ") & Lang);
             Language := new Gdb_C_Language;
          end if;
 
