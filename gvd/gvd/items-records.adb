@@ -350,6 +350,7 @@ package body Items.Records is
          end if;
       end loop;
       if not Only_Value then
+         Free (I.Type_Name);
          Free_Internal (I);
       end if;
    end Free;
@@ -441,6 +442,20 @@ package body Items.Records is
          Set_Function (Context.GC, Copy_Invert);
       end if;
 
+--        if Show_Type (Context.Mode)
+--          and then Item.Type_Name /= null
+--        then
+--           Draw_Text
+--             (Context.Pixmap,
+--              Font => Context.Font,
+--              GC   => Context.GC,
+--              X    => X + Left_Border + Border_Spacing,
+--              Y    => Current_Y + Get_Ascent (Context.Font),
+--              Text => Item.Type_Name.all);
+--           Current_Y := Current_Y
+--             + Get_Ascent (Context.Font) + Get_Descent (Context.Font);
+--        end if;
+
       for F in Item.Fields'Range loop
          Draw_Text
            (Context.Pixmap,
@@ -506,7 +521,6 @@ package body Items.Records is
       Total_Height, Total_Width : Gint := 0;
       Largest_Name : String_Access := null;
    begin
-
       if not Item.Valid then
          Item.Width := Unknown_Width;
          Item.Height := Unknown_Height;
@@ -575,6 +589,16 @@ package body Items.Records is
               Text_Width (Context.Font, Largest_Name.all & " => ");
          end if;
 
+--           if Show_Type (Context.Mode)
+--             and then Item.Type_Name /= null
+--           then
+--              Total_Height := Total_Height
+--                + Get_Ascent (Context.Font) + Get_Descent (Context.Font);
+--              Total_Width := Gint'Max
+--                (Total_Width,
+--                 Text_Width (Context.Font, Item.Type_Name.all));
+--           end if;
+
          --  Keep enough space for the border (Border_Spacing on each side)
          Item.Width  := Total_Width + Item.Gui_Fields_Width + Left_Border
            + 2 * Border_Spacing;
@@ -583,6 +607,7 @@ package body Items.Records is
          if Hide_Big_Items and then Item.Height > Big_Item_Height then
             Item.Visible := False;
          end if;
+
       end if;
 
       if not Item.Visible then

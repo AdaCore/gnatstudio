@@ -69,6 +69,11 @@ package Debugger.Gdb is
      (Debugger : access Gdb_Debugger;
       Entity   : String) return String;
 
+   function Get_Type_Info
+     (Debugger  : access Gdb_Debugger;
+      Entity    : String;
+      Default   : String) return String;
+
    function Value_Of
      (Debugger : access Gdb_Debugger;
       Entity   : String;

@@ -168,7 +168,14 @@ package body Display_Items is
    --  Item.Entity must have been parsed already.
 
    procedure Update_Display (Item : access Display_Item_Record'Class);
-   --  Recompute the size of an item, and redraw its contents.
+   --  Redraw the contents of item.
+   --  It also warns the canvas that the item has changed.
+
+   procedure Update_Resize_Display
+     (Item : access Display_Item_Record'Class;
+      Was_Visible : Boolean := False);
+   --  Recompute the size and update the contents of item.
+   --  Was_Visible indicates whether the item was initially visible
    --  It also warns the canvas that the item has changed.
 
    procedure Update_Component
@@ -293,6 +300,7 @@ package body Display_Items is
       else
          Item := new Display_Item_Record;
          Item.Entity := Default_Entity;
+         Item.Is_A_Variable := False;
          Item.Num := Get_Next_Item_Num (Debugger.Data_Canvas);
          Set_Valid (Item.Entity, True);
       end if;
@@ -432,7 +440,8 @@ package body Display_Items is
                           GC          => Black_GC,
                           Xref_GC     => Xref_GC,
                           Modified_GC => Change_GC,
-                          Font        => Font),
+                          Font        => Font,
+                          Mode        => Item.Mode),
          Hide_Big_Items => Hide_Big_Items);
       if not Get_Visibility (Item.Entity.all) then
          Set_Visibility (Item.Entity.all, True);
@@ -442,7 +451,8 @@ package body Display_Items is
                              GC          => Black_GC,
                              Xref_GC     => Xref_GC,
                              Modified_GC => Change_GC,
-                             Font        => Font));
+                             Font        => Font,
+                             Mode        => Item.Mode));
       end if;
 
       Update_Display (Item);
@@ -633,7 +643,8 @@ package body Display_Items is
                              GC          => Black_GC,
                              Xref_GC     => Xref_GC,
                              Modified_GC => Change_GC,
-                             Font        => Font),
+                             Font        => Font,
+                             Mode        => Item.Mode),
             X => Border_Spacing,
             Y => Title_Height + Border_Spacing);
       end if;
@@ -664,7 +675,8 @@ package body Display_Items is
                           GC          => Black_GC,
                           Xref_GC     => Xref_GC,
                           Modified_GC => Change_GC,
-                          Font        => Font),
+                          Font        => Font,
+                          Mode        => Item.Mode),
          X => Get_X (Component.all),
          Y => Get_Y (Component.all));
    end Update_Component;
@@ -769,9 +781,28 @@ package body Display_Items is
          Parse_Value (Item.Debugger.Debugger, Item.Name.all,
                       Item.Entity, Value_Found);
          Set_Valid (Item.Entity, Value_Found);
-
       end if;
 
+      Update_Resize_Display (Item, Was_Visible);
+      Pop_Internal_Command_Status (Get_Process (Item.Debugger.Debugger));
+
+      --  If we got an exception while parsing the value, we register the new
+      --  value as being incorrect.
+   exception
+      when Language.Unexpected_Type | Constraint_Error =>
+         Set_Valid (Item.Entity, False);
+         Pop_Internal_Command_Status (Get_Process (Item.Debugger.Debugger));
+   end Update;
+
+   ---------------------------
+   -- Update_Resize_Display --
+   ---------------------------
+
+   procedure Update_Resize_Display
+     (Item : access Display_Item_Record'Class;
+      Was_Visible : Boolean := False)
+   is
+   begin
       --  Update graphically.
       --  Note that we should not change the visibility status of item
       --  and its children.
@@ -782,7 +813,8 @@ package body Display_Items is
                           GC          => Black_GC,
                           Xref_GC     => Xref_GC,
                           Modified_GC => Change_GC,
-                          Font        => Font),
+                          Font        => Font,
+                          Mode        => Item.Mode),
          Hide_Big_Items => Hide_Big_Items);
 
       --  Make sure we don't hide the item, unless it was already hidden.
@@ -798,21 +830,13 @@ package body Display_Items is
                              GC          => Black_GC,
                              Xref_GC     => Xref_GC,
                              Modified_GC => Change_GC,
-                             Font        => Font));
+                             Font        => Font,
+                             Mode        => Item.Mode));
       end if;
 
       Update_Display (Item);
-      Item_Resized (Canvas, Item);
-
-      Pop_Internal_Command_Status (Get_Process (Item.Debugger.Debugger));
-
-      --  If we got an exception while parsing the value, we register the new
-      --  value as being incorrect.
-   exception
-      when Language.Unexpected_Type | Constraint_Error =>
-         Set_Valid (Item.Entity, False);
-         Pop_Internal_Command_Status (Get_Process (Item.Debugger.Debugger));
-   end Update;
+      Item_Resized (Item.Debugger.Data_Canvas, Item);
+   end Update_Resize_Display;
 
    -----------------
    -- Create_Link --
@@ -861,24 +885,17 @@ package body Display_Items is
       --  The newly created item should have the same auto-refresh state as
       --  the one we are dereferencing
       if Item.Auto_Refresh then
-         declare
-            Cmd : String := "graph display " & New_Name & " dependent on "
-              & Integer'Image (Item.Num) & " link_name " & Link_Name;
-         begin
-            Text_Output_Handler (Item.Debugger, Cmd & ASCII.LF,
-                                 Is_Command => True);
-            Process_User_Command (Item.Debugger, Cmd);
-        end;
-
+         Process_User_Command
+           (Item.Debugger,
+            "graph display " & New_Name & " dependent on"
+            & Integer'Image (Item.Num) & " link_name " & Link_Name,
+            Output_Command => True);
       else
-         declare
-            Cmd : String := "graph print " & New_Name & " dependent on "
-              & Integer'Image (Item.Num) & " link_name " & Link_Name;
-        begin
-           Text_Output_Handler (Item.Debugger, Cmd & ASCII.LF,
-                                Is_Command => True);
-           Process_User_Command (Item.Debugger, Cmd);
-        end;
+         Process_User_Command
+           (Item.Debugger,
+            "graph print " & New_Name & " dependent on"
+            & Integer'Image (Item.Num) & " link_name " & Link_Name,
+            Output_Command => True);
       end if;
    end Dereference_Item;
 
@@ -957,24 +974,23 @@ package body Display_Items is
             then
                case B is
                   when 0 =>
-                     Set_Auto_Refresh
-                       (Item, Get_Window (Item.Debugger.Data_Canvas),
-                        not Item.Auto_Refresh);
-
-                     --  If we moved back to the auto-refresh state, force an
-                     --  update of the value.
                      if Item.Auto_Refresh then
-                        Update (Item.Debugger.Data_Canvas, Item);
+                        Process_User_Command
+                          (Item.Debugger,
+                           "graph disable display" & Integer'Image (Item.Num),
+                           Output_Command => True);
                      else
-                        --  Redisplay the item, so that no field is displayed
-                        --  in red anymore.
-                        Reset_Recursive (Item);
-                        Update_Display (Item);
-                        Item_Updated (Item.Debugger.Data_Canvas, Item);
+                        Process_User_Command
+                          (Item.Debugger,
+                           "graph enable display" & Integer'Image (Item.Num),
+                           Output_Command => True);
                      end if;
 
                   when 1 =>
-                     Free (Item);
+                     Process_User_Command
+                       (Item.Debugger,
+                        "graph undisplay" & Integer'Image (Item.Num),
+                        Output_Command => True);
 
                end case;
                return;
@@ -995,9 +1011,16 @@ package body Display_Items is
       if Get_Button (Event) = 3
         and then Get_Event_Type (Event) = Button_Press
       then
-         Popup (Item_Contextual_Menu (Item.Debugger.Data_Canvas,
-                                      Item,
-                                      Component),
+         Popup (Item_Contextual_Menu
+                (Item.Debugger.Data_Canvas,
+                 Item,
+                 Component,
+                 Get_Component_Name
+                 (Item.Entity,
+                  Get_Language (Item.Debugger.Debugger),
+                  Item.Name.all,
+                  Gint (Get_X (Event)),
+                  Gint (Get_Y (Event)) - Item.Title_Height - Border_Spacing)),
                 Button            => Get_Button (Event),
                 Activate_Time     => Get_Time (Event));
 
@@ -1027,7 +1050,8 @@ package body Display_Items is
                              GC          => Black_GC,
                              Xref_GC     => Xref_GC,
                              Modified_GC => Change_GC,
-                             Font        => Font));
+                             Font        => Font,
+                             Mode        => Item.Mode));
          Update_Display (Item);
          Item_Resized (Item.Debugger.Data_Canvas, Item);
 
@@ -1048,7 +1072,8 @@ package body Display_Items is
    procedure Set_Auto_Refresh
      (Item         : access Display_Item_Record;
       Win          : Gdk.Window.Gdk_Window;
-      Auto_Refresh : Boolean)
+      Auto_Refresh : Boolean;
+      Update_Value : Boolean := False)
    is
       Width : Gint := Gint (Get_Coord (Item).Width);
    begin
@@ -1092,6 +1117,20 @@ package body Display_Items is
 
       Set_Clip_Mask (Black_GC, Null_Pixmap);
       Set_Clip_Origin (Black_GC, 0, 0);
+
+      if Update_Value then
+         --  If we moved back to the auto-refresh state, force an
+         --  update of the value.
+         if Item.Auto_Refresh then
+            Update (Item.Debugger.Data_Canvas, Item);
+         else
+            --  Redisplay the item, so that no field is displayed
+            --  in red anymore.
+            Reset_Recursive (Item);
+            Update_Display (Item);
+            Item_Updated (Item.Debugger.Data_Canvas, Item);
+         end if;
+      end if;
    end Set_Auto_Refresh;
 
    ----------
@@ -1183,6 +1222,11 @@ package body Display_Items is
             return False;
          end if;
 
+         --  Frozen items can not be part of an alias detection
+         if not It2.Auto_Refresh then
+            return False;
+         end if;
+
          --  Do we have an alias ?
          --  Do not detect aliases with items that are aliases themselves,
          --  so as to avoid chains of aliases
@@ -1229,6 +1273,13 @@ package body Display_Items is
    begin
       --  If this is not an item associated with a variable, ignore it.
       if It.Name = null then
+         return True;
+      end if;
+
+      --  Only detect aliases if we have an auto_refresh item
+      if not It.Auto_Refresh
+        or else not Is_A_Variable (It)
+      then
          return True;
       end if;
 
@@ -1444,5 +1495,53 @@ package body Display_Items is
       end if;
       return Item.Name.all;
    end Get_Name;
+
+   ------------------
+   -- Get_Debugger --
+   ------------------
+
+   function Get_Debugger
+     (Item : access Display_Item_Record'Class)
+     return Debugger_Process_Tab
+   is
+   begin
+      return Item.Debugger;
+   end Get_Debugger;
+
+   -------------------
+   -- Is_A_Variable --
+   -------------------
+
+   function Is_A_Variable
+     (Item : access Display_Item_Record'Class)
+     return Boolean
+   is
+   begin
+      return Item.Is_A_Variable;
+   end Is_A_Variable;
+
+   ----------------------
+   -- Set_Display_Mode --
+   ----------------------
+
+   procedure Set_Display_Mode
+     (Item : access Display_Item_Record'Class;
+      Mode : Items.Display_Mode)
+   is
+   begin
+      Item.Mode := Mode;
+      Update_Resize_Display (Item);
+   end Set_Display_Mode;
+
+   ----------------------
+   -- Get_Display_Mode --
+   ----------------------
+
+   function Get_Display_Mode (Item : access Display_Item_Record)
+                             return Items.Display_Mode
+   is
+   begin
+      return Item.Mode;
+   end Get_Display_Mode;
 
 end Display_Items;

@@ -28,6 +28,7 @@ with Glib;
 with Language;
 with Glib;
 with Unchecked_Deallocation;
+with Odd.Types;
 
 package Items is
 
@@ -67,12 +68,23 @@ package Items is
    -- Drawing Context --
    ---------------------
 
+   type Display_Mode is (Value, Type_Only, Type_Value);
+   --  What information should be displayed in the item.
+
+   function Show_Value (Mode : in Display_Mode) return Boolean;
+   --  Whether we should display the value of the item
+
+   function Show_Type (Mode : in Display_Mode) return Boolean;
+   --  Whether we should display the type of the item
+
+
    type Drawing_Context is record
       GC          : Gdk.GC.Gdk_GC;
       Xref_GC     : Gdk.GC.Gdk_GC;
       Modified_GC : Gdk.GC.Gdk_GC;
       Font        : Gdk.Font.Gdk_Font;
       Pixmap      : Gdk.Pixmap.Gdk_Pixmap;
+      Mode        : Display_Mode;
    end record;
    --  This structure contains all the information needed to draw items on
    --  the canvas.
@@ -218,6 +230,14 @@ package Items is
    --  Reset the boolean that indicates whether the item has changed since the
    --  last update. All the children of Item are reset as well.
 
+   procedure Set_Type_Name
+     (Item : access Generic_Type;
+      Name : String);
+   --  Change the type of the item
+
+   function Get_Type_Name (Item : access Generic_Type) return String;
+   --  Return the type of Item
+
    ---------------
    -- Constants --
    ---------------
@@ -282,6 +302,9 @@ private
       Valid    : Boolean := False;
       --  Whether the value stored is valid, ie there was no error from the
       --  debugger when we got it.
+
+      Type_Name : Odd.Types.String_Access := null;
+      --  The type of the item.
    end record;
 
    procedure Free_Internal is new Unchecked_Deallocation

@@ -201,6 +201,15 @@ package Debugger is
    --  current context.
    --  GDB_COMMAND: "ptype"
 
+   function Get_Type_Info
+     (Debugger  : access Debugger_Root;
+      Entity    : String;
+      Default   : String) return String;
+   --  Return a string suitable for printing in canvas items for the type.
+   --  Default is the result of Type_Of for Entity, and should be returned
+   --  if the debugger does not have any special support for this command.
+   --  GDB_COMMAND: "whatis"
+
    function Info_Locals (Debugger : access Debugger_Root) return String
       is abstract;
    --  Return the command to be used to display local variables

@@ -74,7 +74,9 @@ package body Debugger.Gdb.Ada is
       Type_Str : String;
       Entity   : String;
       Index    : in out Natural;
-      Result   : out Items.Generic_Type_Access) is
+      Result   : out Items.Generic_Type_Access)
+   is
+      Start : constant Natural := Index;
    begin
       case Type_Str (Index) is
          when '<' =>
@@ -101,8 +103,10 @@ package body Debugger.Gdb.Ada is
 
             else
                Skip_To_Char (Type_Str, Index, '>');
-               Index := Index + 1;
                Result := New_Simple_Type;
+               Set_Type_Name
+                 (Result, Type_Str (Start .. Index));
+               Index := Index + 1;
 
             end if;
 
@@ -118,6 +122,13 @@ package body Debugger.Gdb.Ada is
 
             elsif Looking_At (Type_Str, Index, "access ") then
                Result := New_Access_Type;
+
+               --  Use the result of "whatis" so as to get a more interesting
+               --  information
+               Set_Type_Name
+                 (Result,
+                  Get_Type_Info
+                  (Get_Debugger (Lang), Entity, Type_Str));
             else
                raise Unexpected_Type;
             end if;
@@ -128,6 +139,8 @@ package body Debugger.Gdb.Ada is
 
             if Looking_At (Type_Str, Index, "delta ") then
                Result := New_Simple_Type;
+               Set_Type_Name
+                 (Result, Type_Str);
             else
                raise Unexpected_Type;
             end if;
@@ -143,6 +156,8 @@ package body Debugger.Gdb.Ada is
                   Index := Index + 4;
                   Parse_Num (Type_Str, Index, Modulo);
                   Result := New_Mod_Type (Modulo);
+                  Set_Type_Name
+                    (Result, Type_Str (Start .. Index - 1));
                end;
             else
                raise Unexpected_Type;
@@ -218,6 +233,8 @@ package body Debugger.Gdb.Ada is
                   Index := Index + 4; --  skips ' .. '
                   Parse_Num (Type_Str, Index, Max);
                   Result := New_Range_Type (Min, Max);
+                  Set_Type_Name
+                    (Result, Type_Str (Start .. Index - 1));
                end;
 
             else
@@ -248,8 +265,14 @@ package body Debugger.Gdb.Ada is
 
             --  Enumeration type
             Skip_To_Char (Type_Str, Index, ')');
-            Index := Index + 1;
             Result := New_Enum_Type;
+
+            --  Get the result of "whatis" so as to get a more concise
+            --  information.
+            Set_Type_Name
+              (Result, Get_Type_Info (Get_Debugger (Lang),
+               Entity, Type_Str (Start .. Index)));
+            Index := Index + 1;
 
          --  A type we do not expect.
 
@@ -454,6 +477,7 @@ package body Debugger.Gdb.Ada is
       Fields : Natural := 0;
       R : Record_Type_Access;
       Num_Parts  : Natural := 0;
+      G  : Generic_Type_Access;
    begin
       Skip_Blanks (Type_Str, Index);
       Tmp_Index := Index;
@@ -492,6 +516,8 @@ package body Debugger.Gdb.Ada is
          Result := New_Record_Type (Fields);
       end if;
       R := Record_Type_Access (Result);
+
+      Set_Type_Name (R, Get_Type_Info (Get_Debugger (Lang), Entity, Type_Str));
 
       --  Now parse all the fields
 
@@ -574,16 +600,33 @@ package body Debugger.Gdb.Ada is
             --  reasons.
 
             if Is_Simple_Type (Lang, Type_Str (Tmp_Index .. Index - 1)) then
+               G := New_Simple_Type;
                Set_Value (Item  => R.all,
-                          Value => New_Simple_Type,
+                          Value => G,
                           Field => Fields);
+
+               --  Do not get the result of "whatis", since it is more
+               --  interesting for debugging purpose to display the type as
+               --  see by the debugger.
+               Set_Type_Name
+                 (G, Type_Str (Tmp_Index .. Index - 1));
 
             elsif Tmp_Index + 6 <= Type_Str'Last
               and then Type_Str (Tmp_Index .. Tmp_Index + 6) = "access "
             then
+               G := New_Access_Type;
                Set_Value (Item  => R.all,
-                          Value => New_Access_Type,
+                          Value => G,
                           Field => Fields);
+
+               --  Display the result of "whatis", so as to get a more
+               --  concise information
+               Set_Type_Name
+                 (G, Get_Type_Info
+                  (Get_Debugger (Lang),
+                   Record_Field_Name
+                     (Lang, Entity, Get_Field_Name (R.all, Fields).all),
+                   Type_Str (Tmp_Index .. Index - 1)));
 
             else
                Set_Value (R.all,

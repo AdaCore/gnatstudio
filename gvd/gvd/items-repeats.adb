@@ -36,15 +36,9 @@ package body Items.Repeats is
    function New_Repeat_Type return Generic_Type_Access is
    begin
       return new Repeat_Type'
-        (Repeat_Num => 0,
+        (Generic_Type with
          Value      => null,
-         Visible    => True,
-         Selected   => False,
-         Valid      => True,
-         Width      => 0,
-         Height     => 0,
-         X          => -1,
-         Y          => -1);
+         Repeat_Num => 0);
    end New_Repeat_Type;
 
    --------------------

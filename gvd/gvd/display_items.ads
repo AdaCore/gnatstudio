@@ -83,8 +83,11 @@ package Display_Items is
    procedure Set_Auto_Refresh
      (Item          : access Display_Item_Record;
       Win           : Gdk.Window.Gdk_Window;
-      Auto_Refresh  : Boolean);
+      Auto_Refresh  : Boolean;
+      Update_Value  : Boolean := False);
    --  Change the auto refresh status of the item, and update its pixmap.
+   --  If Update_Value is True, then the value of the item is recomputed
+   --  if necessary.
 
    procedure On_Background_Click
      (Canvas : access Odd.Canvas.Odd_Canvas_Record'Class;
@@ -125,6 +128,25 @@ package Display_Items is
    function Get_Name (Item : access Display_Item_Record) return String;
    --  Return the name of Item, or "" if there is no such name.
 
+   function Get_Debugger
+     (Item : access Display_Item_Record'Class)
+     return Odd.Process.Debugger_Process_Tab;
+   --  Return the process tab to which item belongs
+
+   function Is_A_Variable
+     (Item : access Display_Item_Record'Class)
+     return Boolean;
+   --  Return True if the item is a variable.
+
+   procedure Set_Display_Mode
+     (Item : access Display_Item_Record'Class;
+      Mode : Items.Display_Mode);
+   --  Set the display mode for the item and all its children
+
+   function Get_Display_Mode (Item : access Display_Item_Record)
+                             return Items.Display_Mode;
+   --  Get the display mode for item
+
 private
    type Display_Item_Record is new Gtkada.Canvas.Canvas_Item_Record with
       record
@@ -133,6 +155,9 @@ private
          Entity       : Items.Generic_Type_Access := null;
          Auto_Refresh : Boolean := True;
          Debugger     : Odd.Process.Debugger_Process_Tab;
+
+         Is_A_Variable : Boolean := True;
+         --  Set to False if the item is not related to a variable
 
          Title_Height : Glib.Gint;
 
@@ -155,6 +180,9 @@ private
          Was_Alias      : Boolean := False;
          --  Memorize whether the item was an alias in the previous display, so
          --  that we can compute a new position for it.
+
+         Mode           : Items.Display_Mode := Items.Value;
+         --  Whether we should display the mode itself.
       end record;
 
    type Odd_Link_Record is new Gtkada.Canvas.Canvas_Link_Record with record

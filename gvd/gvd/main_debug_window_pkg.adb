@@ -846,22 +846,20 @@ begin
    Set_Right_Justify (Main_Debug_Window.Separator24, False);
 
    Gtk_New (Main_Debug_Window.Print_1, -"Print ()");
-   Set_Sensitive (Main_Debug_Window.Print_1, False);
    Add_Accelerator (Main_Debug_Window.Print_1, "activate",
      The_Accel_Group, GDK_equal, Gdk.Types.Control_Mask, Accel_Visible);
-   Menu_Item_Callback.Connect
+   Widget_Callback.Object_Connect
      (Main_Debug_Window.Print_1, "activate",
-      Menu_Item_Callback.To_Marshaller (On_Print_1_Activate'Access));
+      Widget_Callback.To_Marshaller (On_Print1_Activate'Access), Main_Debug_Window);
    Add (Main_Debug_Window.Data1_Menu, Main_Debug_Window.Print_1);
    Set_Right_Justify (Main_Debug_Window.Print_1, False);
 
    Gtk_New (Main_Debug_Window.Display_1, -"Display ()");
-   Set_Sensitive (Main_Debug_Window.Display_1, False);
    Add_Accelerator (Main_Debug_Window.Display_1, "activate",
      The_Accel_Group, GDK_minus, Gdk.Types.Control_Mask, Accel_Visible);
-   Menu_Item_Callback.Connect
+   Widget_Callback.Object_Connect
      (Main_Debug_Window.Display_1, "activate",
-      Menu_Item_Callback.To_Marshaller (On_Display_1_Activate'Access));
+      Widget_Callback.To_Marshaller (On_Display1_Activate'Access), Main_Debug_Window);
    Add (Main_Debug_Window.Data1_Menu, Main_Debug_Window.Display_1);
    Set_Right_Justify (Main_Debug_Window.Display_1, False);
 
@@ -876,6 +874,7 @@ begin
      (Main_Debug_Window.Display_Local_Variables1, "activate",
       Widget_Callback.To_Marshaller (On_Display_Local_Variables1_Activate'Access), Main_Debug_Window);
    Add (Main_Debug_Window.Data1_Menu, Main_Debug_Window.Display_Local_Variables1);
+   Set_Right_Justify (Main_Debug_Window.Display_Local_Variables1, False);
 
    Gtk_New (Main_Debug_Window.Display_Arguments1, -"Display Arguments");
    Add_Accelerator (Main_Debug_Window.Display_Arguments1, "activate",
@@ -1116,13 +1115,15 @@ begin
       Tooltip_Text => -"Print ()",
       Icon => Gtk_Widget (Create_Pixmap (print_xpm, Main_Debug_Window)));
    Widget_Callback.Object_Connect
-     (Main_Debug_Window.Button66, "clicked", On_Print1_Activate'Access, Main_Debug_Window);
+     (Main_Debug_Window.Button66, "clicked", On_Print1_Clicked'Access, Main_Debug_Window);
    Main_Debug_Window.Button67 := Append_Element
      (Toolbar => Main_Debug_Window.Toolbar1,
       The_Type => Toolbar_Child_Button,
       Text => -"",
       Tooltip_Text => -"Display ()",
       Icon => Gtk_Widget (Create_Pixmap (display_xpm, Main_Debug_Window)));
+   Widget_Callback.Object_Connect
+     (Main_Debug_Window.Button67, "clicked", On_Display1_Clicked'Access, Main_Debug_Window);
    Main_Debug_Window.Button68 := Append_Element
      (Toolbar => Main_Debug_Window.Toolbar1,
       The_Type => Toolbar_Child_Button,

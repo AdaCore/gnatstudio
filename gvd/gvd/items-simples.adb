@@ -94,10 +94,9 @@ package body Items.Simples is
    is
       I : Generic_Type_Access := Generic_Type_Access (Item);
    begin
-      if Item.Value /= null then
-         Free (Item.Value);
-      end if;
+      Free (Item.Value);
       if not Only_Value then
+         Free (Item.Type_Name);
          Free_Internal (I);
       end if;
    end Free;
@@ -126,13 +125,14 @@ package body Items.Simples is
                     X, Y    : Gint := 0)
    is
       Text_GC : Gdk_GC := Context.GC;
+      Y2      : Gint := Y;
    begin
       Item.X := X;
-      Item.Y := Y;
+      Item.Y := Y2;
 
       if not Item.Valid or else Item.Value = null then
          Display_Pixmap (Context.Pixmap, Context.GC, Unknown_Pixmap,
-                         Unknown_Mask, X + Border_Spacing, Y);
+                         Unknown_Mask, X + Border_Spacing, Y2);
          return;
       end if;
 
@@ -141,22 +141,36 @@ package body Items.Simples is
                          Context.GC,
                          Filled => True,
                          X      => X,
-                         Y      => Y,
+                         Y      => Y2,
                          Width  => Item.Width,
                          Height => Item.Height);
          Set_Function (Context.GC, Copy_Invert);
+      end if;
+
+      if Show_Type (Context.Mode)
+        and then Item.Type_Name /= null
+      then
+         Draw_Text (Context.Pixmap,
+                    Font => Context.Font,
+                    GC   => Context.GC,
+                    X    => X,
+                    Y    => Y2 + Get_Ascent (Context.Font),
+                    Text => Item.Type_Name.all);
+         Y2 := Y2 + Get_Ascent (Context.Font) + Get_Descent (Context.Font);
       end if;
 
       if Item.Has_Changed then
          Text_GC := Context.Modified_GC;
       end if;
 
-      Draw_Text (Context.Pixmap,
-                 Font => Context.Font,
-                 GC   => Text_GC,
-                 X    => X,
-                 Y    => Y + Get_Ascent (Context.Font),
-                 Text => Item.Value.all);
+      if Show_Value (Context.Mode) then
+         Draw_Text (Context.Pixmap,
+                    Font => Context.Font,
+                    GC   => Text_GC,
+                    X    => X,
+                    Y    => Y2 + Get_Ascent (Context.Font),
+                    Text => Item.Value.all);
+      end if;
 
       if Item.Selected then
          Set_Function (Context.GC, Copy);
@@ -173,11 +187,30 @@ package body Items.Simples is
       Hide_Big_Items : Boolean := False)
    is
    begin
-      if Item.Valid and then Item.Value /= null then
+      Item.Width := Unknown_Width;
+      Item.Height := 0;
+
+      if Item.Valid
+        and then Item.Value /= null
+        and then Show_Value (Context.Mode)
+      then
          Item.Width  := Text_Width (Context.Font, Item.Value.all);
-         Item.Height := Get_Ascent (Context.Font) + Get_Descent (Context.Font);
-      else
-         Item.Width := Unknown_Width;
+         Item.Height :=
+              Get_Ascent (Context.Font) + Get_Descent (Context.Font);
+      end if;
+
+      if Item.Valid
+        and then Item.Type_Name /= null
+        and then Show_Type (Context.Mode)
+      then
+         Item.Width := Gint'Max
+           (Item.Width,
+            Text_Width (Context.Font, Item.Type_Name.all));
+         Item.Height := Item.Height +
+           Get_Ascent (Context.Font) + Get_Descent (Context.Font);
+      end if;
+
+      if not Item.Valid then
          Item.Height := Unknown_Height;
       end if;
    end Size_Request;
@@ -283,17 +316,9 @@ package body Items.Simples is
                            return Generic_Type_Access
    is
    begin
-      return new Range_Type'(Value    => null,
-                             Visible  => True,
-                             Selected => False,
+      return new Range_Type'(Simple_Type with
                              Min      => Min,
-                             Max      => Max,
-                             Width    => 0,
-                             Height   => 0,
-                             Valid    => False,
-                             Has_Changed => False,
-                             X        => -1,
-                             Y        => -1);
+                             Max      => Max);
    end New_Range_Type;
 
    ------------------
@@ -302,16 +327,8 @@ package body Items.Simples is
 
    function New_Mod_Type (Modulo : Long_Integer) return Generic_Type_Access is
    begin
-      return new Mod_Type'(Value    => null,
-                           Modulo   => Modulo,
-                           Visible  => True,
-                           Selected => False,
-                           Width    => 0,
-                           Height   => 0,
-                           Valid    => False,
-                           Has_Changed => False,
-                           X        => -1,
-                           Y        => -1);
+      return new Mod_Type'(Simple_Type with
+                           Modulo   => Modulo);
    end New_Mod_Type;
 
    ---------------------
@@ -411,13 +428,14 @@ package body Items.Simples is
                     X, Y    : Glib.Gint := 0)
    is
       Text_GC : Gdk_GC := Context.Xref_GC;
+      Y2      : Gint := Y;
    begin
       Item.X := X;
-      Item.Y := Y;
+      Item.Y := Y2;
 
       if not Item.Valid then
          Display_Pixmap (Context.Pixmap, Context.GC, Unknown_Pixmap,
-                         Unknown_Mask, X + Border_Spacing, Y);
+                         Unknown_Mask, X + Border_Spacing, Y2);
          return;
       end if;
 
@@ -427,7 +445,7 @@ package body Items.Simples is
             Context.GC,
             Filled => True,
             X      => X,
-            Y      => Y,
+            Y      => Y2,
             Width  => Item.Width,
             Height => Item.Height);
          Set_Function (Context.GC, Copy_Invert);
@@ -437,12 +455,28 @@ package body Items.Simples is
          Text_GC := Context.Modified_GC;
       end if;
 
-      Draw_Text (Context.Pixmap,
-                 Font => Context.Font,
-                 GC   => Text_GC,
-                 X    => X,
-                 Y    => Y + Get_Ascent (Context.Font),
-                 Text => Item.Value.all);
+      if Item.Type_Name /= null
+        and then Show_Type (Context.Mode)
+      then
+         Draw_Text (Context.Pixmap,
+                    Font => Context.Font,
+                    GC   => Context.GC,
+                    X    => X,
+                    Y    => Y2 + Get_Ascent (Context.Font),
+                    Text => Item.Type_Name.all);
+         Y2 := Y2 + Get_Ascent (Context.Font) + Get_Descent (Context.Font);
+      end if;
+
+      if Item.Value /= null
+        and then Show_Value (Context.Mode)
+      then
+         Draw_Text (Context.Pixmap,
+                    Font => Context.Font,
+                    GC   => Text_GC,
+                    X    => X,
+                    Y    => Y2 + Get_Ascent (Context.Font),
+                    Text => Item.Value.all);
+      end if;
 
       if Item.Selected then
          Set_Function (Context.GC, Copy);
@@ -507,13 +541,10 @@ package body Items.Simples is
    is
       A_Type : Generic_Type_Access := Generic_Type_Access (Item);
    begin
-      Free (Item.Refresh_Cmd);
-
-      if Item.Value /= null then
-         Free (Item.Value);
-      end if;
-
+      Free (Item.Value);
       if not Only_Value then
+         Free (Item.Refresh_Cmd);
+         Free (Item.Type_Name);
          Free_Internal (A_Type);
       end if;
    end Free;

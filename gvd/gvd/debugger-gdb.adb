@@ -104,6 +104,10 @@ package body Debugger.Gdb is
      ("in (\S+)");
    --  How to detect subprogram names in the info given by "info breakpoint"
 
+   Question_Filter_Pattern : constant Pattern_Matcher := Compile
+     ("^\[0\] ", Multiple_Lines);
+   --  How to detect a question in gdb's output
+
    procedure Language_Filter
      (Descriptor : GNAT.Expect.Process_Descriptor;
       Str        : String;
@@ -181,14 +185,14 @@ package body Debugger.Gdb is
         Unchecked_Conversion (System.Address, Gtk_Window);
 
       Dialog     : Question_Dialog_Access;
-      Index      : Positive;
+      Index      : Natural;
+      Question_Start : Natural;
    begin
       --  Do we have a question ?
 
-      if Str'Length > 4
-        and then Str (Str'First .. Str'First + 3) = "[0] "
-      then
-         Index := Str'First;
+      Question_Start := Match (Question_Filter_Pattern, Str);
+      if Question_Start >= Str'First then
+         Index := Question_Start;
          while Index < Str'Last loop
             if Str (Index) = ASCII.LF
               and then Str (Index + 1) = '>'
@@ -200,7 +204,7 @@ package body Debugger.Gdb is
 
                   Num     : Natural := 1;
                   First   : Positive;
-                  Last    : Positive := Str'First;
+                  Last    : Positive := Question_Start;
                begin
                   while Last < Index loop
                      --  Skips the choice number ("[n] ")
@@ -1566,5 +1570,25 @@ package body Debugger.Gdb is
          end;
       end;
    end List_Exceptions;
+
+   -------------------
+   -- Get_Type_Info --
+   -------------------
+
+   function Get_Type_Info
+     (Debugger  : access Gdb_Debugger;
+      Entity    : String;
+      Default   : String) return String
+   is
+      S : String := Send (Debugger, "whatis " & Entity);
+   begin
+      if S'Length > 6
+        and then S (S'First .. S'First + 5) = "type ="
+      then
+         return S (S'First + 7 .. S'Last);
+      else
+         return Default;
+      end if;
+   end Get_Type_Info;
 
 end Debugger.Gdb;

@@ -43,9 +43,10 @@ package Odd.Menus is
    --  clicks in the background of the canvas.
 
    function Item_Contextual_Menu
-     (Canvas    : access Odd.Canvas.Odd_Canvas_Record'Class;
-      Item      : access Display_Items.Display_Item_Record'Class;
-      Component : Items.Generic_Type_Access)
+     (Canvas         : access Odd.Canvas.Odd_Canvas_Record'Class;
+      Item           : access Display_Items.Display_Item_Record'Class;
+      Component      : Items.Generic_Type_Access;
+      Component_Name : String)
      return Gtk.Menu.Gtk_Menu;
    --  Create (if necessary) and reset the contextual menu used when a specific
    --  component in an item is selected.

@@ -26,6 +26,7 @@ with Gdk.Bitmap;   use Gdk.Bitmap;
 with Gdk.GC;       use Gdk.GC;
 with Gdk.Window;   use Gdk.Window;
 with Language;     use Language;
+with Odd.Types;    use Odd.Types;
 
 package body Items is
 
@@ -171,5 +172,49 @@ package body Items is
    begin
       return Item.Selected;
    end Get_Selected;
+
+   -------------------
+   -- Set_Type_Name --
+   -------------------
+
+   procedure Set_Type_Name
+     (Item : access Generic_Type;
+      Name : String)
+   is
+   begin
+      Free (Item.Type_Name);
+      Item.Type_Name := new String'(Name);
+   end Set_Type_Name;
+
+   -------------------
+   -- Get_Type_Name --
+   -------------------
+
+   function Get_Type_Name (Item : access Generic_Type) return String is
+   begin
+      if Item.Type_Name = null then
+         return "";
+      else
+         return Item.Type_Name.all;
+      end if;
+   end Get_Type_Name;
+
+   ----------------
+   -- Show_Value --
+   ----------------
+
+   function Show_Value (Mode : Display_Mode) return Boolean is
+   begin
+      return Mode = Value or else Mode = Type_Value;
+   end Show_Value;
+
+   ---------------
+   -- Show_Type --
+   ---------------
+
+   function Show_Type (Mode : Display_Mode) return Boolean is
+   begin
+      return Mode = Type_Only or else Mode = Type_Value;
+   end Show_Type;
 
 end Items;

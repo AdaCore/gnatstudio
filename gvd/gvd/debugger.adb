@@ -320,4 +320,17 @@ package body Debugger is
       return Arr;
    end List_Exceptions;
 
+   -------------------
+   -- Get_Type_Info --
+   -------------------
+
+   function Get_Type_Info
+     (Debugger  : access Debugger_Root;
+      Entity    : String;
+      Default   : String) return String
+   is
+   begin
+      return Default;
+   end Get_Type_Info;
+
 end Debugger;

@@ -171,8 +171,6 @@ private
      return Generic_Type_Access;
    procedure Reset_Recursive (Item : access Record_Type);
 
-
-
    type Union_Type (Num_Fields : Natural) is new Record_Type (Num_Fields)
      with null record;
    procedure Print (Value : Union_Type; Indent : Natural := 0);

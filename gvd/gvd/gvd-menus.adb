@@ -73,9 +73,11 @@ package body Odd.Menus is
       Auto_Refresh : Boolean;
    end record;
 
-   type Item_Record is record
-      Canvas : Odd_Canvas;
-      Item   : Display_Item;
+   type Item_Record (Name_Length : Natural) is record
+      Canvas         : Odd_Canvas;
+      Item           : Display_Item;
+      Component      : Items.Generic_Type_Access;
+      Component_Name : String (1 .. Name_Length);
    end record;
 
    --------------------
@@ -139,6 +141,23 @@ package body Odd.Menus is
      (Item   : access Gtk_Check_Menu_Item_Record'Class;
       Editor : Code_Editor);
    --  Callback for the "show lines with code" contextual menu item.
+
+   procedure Clone_Component
+     (Widget  : access Gtk_Widget_Record'Class;
+      Item    : Item_Record);
+   --  Clone the item or its selected component.
+
+   procedure Change_Value_Mode
+     (Widget  : access Gtk_Widget_Record'Class;
+      Item    : Item_Record);
+   --  Change the mode of a specific item to indicate whether the value of the
+   --  item should be displayed
+
+   procedure Change_Type_Mode
+     (Widget  : access Gtk_Widget_Record'Class;
+      Item    : Item_Record);
+   --  Change the mode of a specific item to indicate whether the type of the
+   --  item should be displayed
 
    --------------------------
    -- Change_Align_On_Grid --
@@ -224,6 +243,82 @@ package body Odd.Menus is
       Display_Items.Update (Item.Canvas, Item.Item);
    end Update_Variable;
 
+   -----------------------
+   -- Change_Value_Mode --
+   -----------------------
+
+   procedure Change_Value_Mode
+     (Widget  : access Gtk_Widget_Record'Class;
+      Item    : Item_Record)
+   is
+   begin
+      if Show_Type (Get_Display_Mode (Item.Item)) then
+         if Get_Active (Gtk_Check_Menu_Item (Widget)) then
+            Set_Display_Mode (Item.Item, Type_Value);
+         else
+            Set_Display_Mode (Item.Item, Type_Only);
+         end if;
+      else
+         if Get_Active (Gtk_Check_Menu_Item (Widget)) then
+            Set_Display_Mode (Item.Item, Value);
+         else
+            --  This mode is not authorized
+            Set_Active (Gtk_Check_Menu_Item (Widget), True);
+            return;
+         end if;
+      end if;
+      Display_Items.Update (Item.Canvas, Item.Item);
+   end Change_Value_Mode;
+
+   ----------------------
+   -- Change_Type_Mode --
+   ----------------------
+
+   procedure Change_Type_Mode
+     (Widget  : access Gtk_Widget_Record'Class;
+      Item    : Item_Record)
+   is
+   begin
+      if Show_Value (Get_Display_Mode (Item.Item)) then
+         if Get_Active (Gtk_Check_Menu_Item (Widget)) then
+            Set_Display_Mode (Item.Item, Type_Value);
+         else
+            Set_Display_Mode (Item.Item, Value);
+         end if;
+      else
+         if Get_Active (Gtk_Check_Menu_Item (Widget)) then
+            Set_Display_Mode (Item.Item, Type_Only);
+         else
+            --  This mode is not authorized
+            Set_Active (Gtk_Check_Menu_Item (Widget), True);
+            return;
+         end if;
+      end if;
+   end Change_Type_Mode;
+
+   ---------------------
+   -- Clone_Component --
+   ---------------------
+
+   procedure Clone_Component
+     (Widget  : access Gtk_Widget_Record'Class;
+      Item    : Item_Record)
+   is
+      pragma Warnings (Off, Widget);
+   begin
+      if Is_A_Variable (Item.Item) then
+         Process_User_Command
+           (Get_Debugger (Item.Item),
+            "graph display " & Item.Component_Name,
+            Output_Command => True);
+      else
+         Process_User_Command
+           (Get_Debugger (Item.Item),
+            "graph display `" & Get_Name (Item.Item) & "`",
+            Output_Command => True);
+      end if;
+   end Clone_Component;
+
    --------------------
    -- Print_Variable --
    --------------------
@@ -235,15 +330,13 @@ package body Odd.Menus is
       pragma Warnings (Off, Widget);
    begin
       if Var.Auto_Refresh then
-         Text_Output_Handler
-           (Var.Process, "graph display " & Var.Name & ASCII.LF,
-            Is_Command => True);
-         Process_User_Command (Var.Process, "graph display " & Var.Name);
+         Process_User_Command
+           (Var.Process, "graph display " & Var.Name,
+            Output_Command => True);
       else
-         Text_Output_Handler
-           (Var.Process, "graph print " & Var.Name & ASCII.LF,
-            Is_Command => True);
-         Process_User_Command (Var.Process, "graph print " & Var.Name);
+         Process_User_Command
+           (Var.Process, "graph print " & Var.Name,
+            Output_Command => True);
       end if;
    end Print_Variable;
 
@@ -293,13 +386,16 @@ package body Odd.Menus is
    --------------------------
 
    function Item_Contextual_Menu
-     (Canvas    : access Odd_Canvas_Record'Class;
-      Item      : access Display_Items.Display_Item_Record'Class;
-      Component : Items.Generic_Type_Access)
+     (Canvas         : access Odd_Canvas_Record'Class;
+      Item           : access Display_Items.Display_Item_Record'Class;
+      Component      : Items.Generic_Type_Access;
+      Component_Name : String)
      return Gtk.Menu.Gtk_Menu
    is
       Menu  : Gtk_Menu;
       Mitem : Gtk_Menu_Item;
+      Check : Gtk_Check_Menu_Item;
+
    begin
 
       --  Delete the previous contextual menu if needed.
@@ -320,13 +416,67 @@ package body Odd.Menus is
       Set_State (Mitem, State_Insensitive);
       Append (Menu, Mitem);
 
+      --  Display a separator
+
+      Gtk_New (Mitem);
+      Append (Menu, Mitem);
+
+      if Is_A_Variable (Item) then
+         Gtk_New (Mitem, Label => -"Clone" & " " & Component_Name);
+      else
+         Gtk_New (Mitem, Label => -"Clone");
+      end if;
+      Item_Handler.Connect
+        (Mitem, "activate",
+         Item_Handler.To_Marshaller (Clone_Component'Access),
+         Item_Record'(Name_Length    => Component_Name'Length,
+                      Canvas         => Odd_Canvas (Canvas),
+                      Item           => Display_Item (Item),
+                      Component      => Component,
+                      Component_Name => Component_Name));
+      Append (Menu, Mitem);
+
       Gtk_New (Mitem, Label => -"Update Value");
       Item_Handler.Connect
         (Mitem, "activate",
          Item_Handler.To_Marshaller (Update_Variable'Access),
-         Item_Record'(Canvas => Odd_Canvas (Canvas),
-                      Item   => Display_Item (Item)));
+         Item_Record'(Name_Length    => Component_Name'Length,
+                      Canvas         => Odd_Canvas (Canvas),
+                      Item           => Display_Item (Item),
+                      Component      => Component,
+                      Component_Name => Component_Name));
       Append (Menu, Mitem);
+
+      --  Display a separator
+
+      Gtk_New (Mitem);
+      Append (Menu, Mitem);
+
+      Gtk_New (Check, Label => -"Show Value");
+      Item_Handler.Connect
+        (Check, "activate",
+         Item_Handler.To_Marshaller (Change_Value_Mode'Access),
+         Item_Record'(Name_Length    => Component_Name'Length,
+                      Canvas         => Odd_Canvas (Canvas),
+                      Item           => Display_Item (Item),
+                      Component      => Component,
+                      Component_Name => Component_Name));
+      Append (Menu, Check);
+      Set_Always_Show_Toggle (Check, True);
+      Set_Active (Check, Show_Value (Get_Display_Mode (Item)));
+
+      Gtk_New (Check, Label => -"Show Type");
+      Item_Handler.Connect
+        (Check, "activate",
+         Item_Handler.To_Marshaller (Change_Type_Mode'Access),
+         Item_Record'(Name_Length    => Component_Name'Length,
+                      Canvas         => Odd_Canvas (Canvas),
+                      Item           => Display_Item (Item),
+                      Component      => Component,
+                      Component_Name => Component_Name));
+      Append (Menu, Check);
+      Set_Always_Show_Toggle (Check, True);
+      Set_Active (Check, Show_Type (Get_Display_Mode (Item)));
 
       Show_All (Menu);
       Menu_User_Data.Set (Canvas, Menu, Item_Contextual_Menu_Name);
