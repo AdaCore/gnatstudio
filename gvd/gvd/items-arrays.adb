@@ -567,11 +567,12 @@ package body Items.Arrays is
 
       --  If we have a real empty array (ie the dimensions were not considered
       --  as dynamic
+
       if Item.Dimensions (1).First > Item.Dimensions (1).Last
         and then Item.Dimensions (1).First /= Long_Integer'Last
         and then Item.Dimensions (1).Last /= Long_Integer'First
-        and then Item.Values = null  --  In case we were able to parse the
-                                     --  value anyway
+        and then Item.Values = null
+      --  In case we were able to parse the value despite the range information
       then
          return;
       end if;
