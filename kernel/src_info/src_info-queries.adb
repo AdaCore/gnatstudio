@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                       Copyright (C) 2001-2003                     --
---                            ACT-Europe                             --
+--                       Copyright (C) 2001-2004                     --
+--                             ACT-Europe                            --
 --                                                                   --
 -- GPS is free software; you can redistribute it and/or modify  it   --
 -- under the terms of the GNU General Public License as published by --
@@ -143,16 +143,16 @@ package body Src_Info.Queries is
    --  etc).
 
    procedure Find_Spec_Or_Body
-     (Decl            : E_Declaration_Info_List;
-      File_Name       : Virtual_File;
-      Entity_Name     : String;
-      Line            : Positive;
-      Column          : Positive;
+     (Decl             : E_Declaration_Info_List;
+      File_Name        : Virtual_File;
+      Entity_Name      : String;
+      Line             : Positive;
+      Column           : Positive;
       Check_References : Boolean := True;
-      Proximity       : in out Integer;
-      Entity_Decl     : in out E_Declaration_Info;
-      Ref             : in out E_Reference_List;
-      Status          : in out Find_Decl_Or_Body_Query_Status);
+      Proximity        : in out Integer;
+      Entity_Decl      : in out E_Declaration_Info;
+      Ref              : in out E_Reference_List;
+      Status           : in out Find_Decl_Or_Body_Query_Status);
    --  Same as Internal_Find_Declaration_Or_Body, but for a specific
    --  declaration list.  Entity_Name must be all lower-cases if the language
    --  is case insensitive.
@@ -168,11 +168,11 @@ package body Src_Info.Queries is
    --  to the distance. Status will be set to Fuzzy_Match.
 
    procedure Trace_Dump
-     (Handler : Debug_Handle;
-      Scope : Scope_List;
-      Prefix : String;
+     (Handler              : Debug_Handle;
+      Scope                : Scope_List;
+      Prefix               : String;
       Subprograms_Pkg_Only : Boolean;
-      Display_Siblings : Boolean := True);
+      Display_Siblings     : Boolean := True);
    --  Dump Scope to Handler, printing Prefix at the beginning of each line.
    --  If Display_Siblings is True, then the siblings of the node will be
    --  displayed. Otherwise, only the node itself and its children will be
@@ -198,15 +198,15 @@ package body Src_Info.Queries is
    --  direct equality test
 
    procedure Internal_Find_Declaration_Or_Body
-     (Lib_Info      : LI_File_Ptr;
-      File_Name     : Virtual_File;
-      Entity_Name   : String;
-      Line          : Positive;
-      Column        : Positive;
+     (Lib_Info         : LI_File_Ptr;
+      File_Name        : Virtual_File;
+      Entity_Name      : String;
+      Line             : Positive;
+      Column           : Positive;
       Check_References : Boolean := True;
-      Decl          : out E_Declaration_Info;
-      Ref           : out E_Reference_List;
-      Status        : out Find_Decl_Or_Body_Query_Status);
+      Decl             : out E_Declaration_Info;
+      Ref              : out E_Reference_List;
+      Status           : out Find_Decl_Or_Body_Query_Status);
    --  Internal version of Find_Declaration and Find_Next_Body.
    --  Decl might point to an E_Declaration whose E_Kind is Overloaded_Entity.
    --  In that case, the caller should search in Lib_Info all the possible
@@ -225,7 +225,7 @@ package body Src_Info.Queries is
    --  Return the list of declarations for a specific source file.
 
    function Find_Declaration
-     (List : E_Declaration_Info_List;
+     (List   : E_Declaration_Info_List;
       Entity : Entity_Information) return E_Declaration_Info_List;
    --  Return the specific declaration for Entity in List, or null if no such
    --  declaration was found.
@@ -379,16 +379,16 @@ package body Src_Info.Queries is
    -----------------------
 
    procedure Find_Spec_Or_Body
-     (Decl            : E_Declaration_Info_List;
-      File_Name       : Virtual_File;
-      Entity_Name     : String;
-      Line            : Positive;
-      Column          : Positive;
+     (Decl             : E_Declaration_Info_List;
+      File_Name        : Virtual_File;
+      Entity_Name      : String;
+      Line             : Positive;
+      Column           : Positive;
       Check_References : Boolean := True;
-      Proximity       : in out Integer;
-      Entity_Decl     : in out E_Declaration_Info;
-      Ref             : in out E_Reference_List;
-      Status          : in out Find_Decl_Or_Body_Query_Status)
+      Proximity        : in out Integer;
+      Entity_Decl      : in out E_Declaration_Info;
+      Ref              : in out E_Reference_List;
+      Status           : in out Find_Decl_Or_Body_Query_Status)
    is
       Current_Decl : E_Declaration_Info_List := Decl;
       Current_Ref  : E_Reference_List;
@@ -464,15 +464,15 @@ package body Src_Info.Queries is
    ---------------------------------------
 
    procedure Internal_Find_Declaration_Or_Body
-     (Lib_Info      : LI_File_Ptr;
-      File_Name     : Virtual_File;
-      Entity_Name   : String;
-      Line          : Positive;
-      Column        : Positive;
+     (Lib_Info         : LI_File_Ptr;
+      File_Name        : Virtual_File;
+      Entity_Name      : String;
+      Line             : Positive;
+      Column           : Positive;
       Check_References : Boolean := True;
-      Decl          : out E_Declaration_Info;
-      Ref           : out E_Reference_List;
-      Status        : out Find_Decl_Or_Body_Query_Status)
+      Decl             : out E_Declaration_Info;
+      Ref              : out E_Reference_List;
+      Status           : out Find_Decl_Or_Body_Query_Status)
    is
       Current_Sep : File_Info_Ptr_List;
       Current_Dep : Dependency_File_Info_List;
@@ -556,16 +556,16 @@ package body Src_Info.Queries is
    ----------------------
 
    procedure Find_Declaration
-     (Lib_Info      : LI_File_Ptr;
-      File_Name     : VFS.Virtual_File;
-      Entity_Name   : String;
-      Line          : Positive;
-      Column        : Positive;
-      Entity        : out Entity_Information;
-      Status        : out Find_Decl_Or_Body_Query_Status)
+     (Lib_Info    : LI_File_Ptr;
+      File_Name   : VFS.Virtual_File;
+      Entity_Name : String;
+      Line        : Positive;
+      Column      : Positive;
+      Entity      : out Entity_Information;
+      Status      : out Find_Decl_Or_Body_Query_Status)
    is
-      Ref         : E_Reference_List;
-      Decl        : E_Declaration_Info;
+      Ref  : E_Reference_List;
+      Decl : E_Declaration_Info;
    begin
       Internal_Find_Declaration_Or_Body
         (Lib_Info         => Lib_Info,
@@ -607,15 +607,15 @@ package body Src_Info.Queries is
    --------------------
 
    procedure Find_Next_Body
-     (Lib_Info               : LI_File_Ptr;
-      File_Name              : VFS.Virtual_File;
-      Entity_Name            : String;
-      Line                   : Positive;
-      Column                 : Positive;
-      Handler                : access LI_Handler_Record'Class;
-      Project                : Project_Type;
-      Location               : out File_Location;
-      Status                 : out Find_Decl_Or_Body_Query_Status)
+     (Lib_Info    : LI_File_Ptr;
+      File_Name   : VFS.Virtual_File;
+      Entity_Name : String;
+      Line        : Positive;
+      Column      : Positive;
+      Handler     : access LI_Handler_Record'Class;
+      Project     : Project_Type;
+      Location    : out File_Location;
+      Status      : out Find_Decl_Or_Body_Query_Status)
    is
       Body_LI : LI_File_Ptr;
       Ref     : E_Reference_List;
@@ -885,11 +885,11 @@ package body Src_Info.Queries is
    ----------------
 
    procedure Trace_Dump
-     (Handler : Debug_Handle;
-      Scope : Scope_List;
-      Prefix : String;
+     (Handler              : Debug_Handle;
+      Scope                : Scope_List;
+      Prefix               : String;
       Subprograms_Pkg_Only : Boolean;
-      Display_Siblings : Boolean := True)
+      Display_Siblings     : Boolean := True)
    is
       L : Scope_List := Scope;
    begin
@@ -1113,7 +1113,7 @@ package body Src_Info.Queries is
       procedure Compute_Scope
         (L : in out Scope_List; Ref : E_Reference_List)
       is
-         R : E_Reference_List := Ref;
+         R   : E_Reference_List := Ref;
          Eos : E_Reference;
       begin
          L.Start_Of_Scope := L.Decl.Location;
@@ -1399,10 +1399,10 @@ package body Src_Info.Queries is
       --------------------
 
       procedure Add_References
-        (Decl : E_Declaration_Info;
+        (Decl       : E_Declaration_Info;
          Decl_Start : File_Location)
       is
-         R : E_Reference_List := Decl.References;
+         R        : E_Reference_List := Decl.References;
          New_Item : Scope_List;
       begin
          while R /= null loop
@@ -1609,8 +1609,8 @@ package body Src_Info.Queries is
    ----------------------------
 
    procedure Find_Entity_References
-     (Node   : Scope_List;
-      Entity : Entity_Information;
+     (Node     : Scope_List;
+      Entity   : Entity_Information;
       Callback : Node_Callback)
    is
       L : Scope_List := Node;
@@ -2269,16 +2269,16 @@ package body Src_Info.Queries is
    --  We also only look in the files that are in the same language.
 
    procedure Find_All_References
-     (Root_Project           : Project_Type;
-      Lang_Handler           : Language_Handlers.Language_Handler;
-      Entity                 : Entity_Information;
-      Iterator               : out Entity_Reference_Iterator;
-      Project                : Project_Type := No_Project;
-      LI_Once                : Boolean := False;
-      File_Has_No_LI_Report  : File_Error_Reporter := null;
-      In_File                : VFS.Virtual_File := VFS.No_File) is
+     (Root_Project          : Project_Type;
+      Lang_Handler          : Language_Handlers.Language_Handler;
+      Entity                : Entity_Information;
+      Iterator              : out Entity_Reference_Iterator;
+      Project               : Project_Type := No_Project;
+      LI_Once               : Boolean := False;
+      File_Has_No_LI_Report : File_Error_Reporter := null;
+      In_File               : VFS.Virtual_File := VFS.No_File) is
    begin
-      Iterator.Entity := Copy (Entity);
+      Iterator.Entity  := Copy (Entity);
       Iterator.LI_Once := LI_Once;
 
       if In_File = VFS.No_File then
@@ -2286,19 +2286,19 @@ package body Src_Info.Queries is
            (Root_Project, Lang_Handler,
             Get_Declaration_File_Of (Entity).all,
             Iterator.Decl_Iter,
-            Project                => Project,
-            File_Has_No_LI_Report  => File_Has_No_LI_Report,
-            Include_Self           => True,
-            LI_Once                => True);
+            Project               => Project,
+            File_Has_No_LI_Report => File_Has_No_LI_Report,
+            Include_Self          => True,
+            LI_Once               => True);
       else
          Find_Ancestor_Dependencies
            (Root_Project, Lang_Handler, In_File,
             Iterator.Decl_Iter,
-            Project                => Project,
-            File_Has_No_LI_Report  => File_Has_No_LI_Report,
-            Include_Self           => True,
-            LI_Once                => True,
-            Single_Source_File     => True);
+            Project               => Project,
+            File_Has_No_LI_Report => File_Has_No_LI_Report,
+            Include_Self          => True,
+            LI_Once               => True,
+            Single_Source_File    => True);
       end if;
 
       Next (Lang_Handler, Iterator);
@@ -2516,8 +2516,8 @@ package body Src_Info.Queries is
       --  No more entities to display in the current file ?
 
       if Iterator.Current_Decl = null then
-         Iterator.Reference    := null;
-         Iterator.New_Decl     := True;
+         Iterator.Reference := null;
+         Iterator.New_Decl  := True;
          Next_File;
 
       elsif Iterator.Reference /= null then
@@ -2554,7 +2554,7 @@ package body Src_Info.Queries is
 
    procedure Next
      (Lang_Handler : Language_Handlers.Language_Handler;
-      Iterator : in out Dependency_Iterator)
+      Iterator     : in out Dependency_Iterator)
    is
       function Check_File return Dependency_File_Info_List;
       --  Check the current file in the iterator, and return the list of
@@ -2571,8 +2571,8 @@ package body Src_Info.Queries is
       ----------------
 
       function Check_File return Dependency_File_Info_List is
-         LI      : LI_File_Ptr;
-         Handler : LI_Handler;
+         LI       : LI_File_Ptr;
+         Handler  : LI_Handler;
          Sep_List : File_Info_Ptr_List;
 
       begin
@@ -2825,15 +2825,15 @@ package body Src_Info.Queries is
    --------------------------------
 
    procedure Find_Ancestor_Dependencies
-     (Root_Project           : Project_Type;
-      Lang_Handler           : Language_Handlers.Language_Handler;
-      Source_Filename        : VFS.Virtual_File;
-      Iterator               : out Dependency_Iterator;
-      Project                : Project_Type := No_Project;
-      File_Has_No_LI_Report  : File_Error_Reporter := null;
-      Include_Self           : Boolean := False;
-      LI_Once                : Boolean := False;
-      Single_Source_File     : Boolean := False)
+     (Root_Project          : Project_Type;
+      Lang_Handler          : Language_Handlers.Language_Handler;
+      Source_Filename       : VFS.Virtual_File;
+      Iterator              : out Dependency_Iterator;
+      Project               : Project_Type := No_Project;
+      File_Has_No_LI_Report : File_Error_Reporter := null;
+      Include_Self          : Boolean := False;
+      LI_Once               : Boolean := False;
+      Single_Source_File    : Boolean := False)
    is
       Decl_Project          : Project_Type := Project;
       Iterator_Decl_Project : Project_Type := Project;
@@ -3068,8 +3068,9 @@ package body Src_Info.Queries is
    ---------------------
 
    function Get_Declaration
-     (List : E_Declaration_Info_List;
-      Decl_Line, Decl_Column : Natural; Entity_Name : String := "")
+     (List                   : E_Declaration_Info_List;
+      Decl_Line, Decl_Column : Natural;
+      Entity_Name            : String := "")
       return E_Declaration_Info_List
    is
       Decl : E_Declaration_Info_List := List;
@@ -3227,8 +3228,8 @@ package body Src_Info.Queries is
    ------------------------------------
 
    function Find_All_Possible_Declarations
-     (Lib_Info    : LI_File_Ptr;
-      Entity_Name : String := "";
+     (Lib_Info       : LI_File_Ptr;
+      Entity_Name    : String := "";
       In_Source_File : Virtual_File := VFS.No_File)
       return Entity_Declaration_Iterator
    is
@@ -3291,7 +3292,7 @@ package body Src_Info.Queries is
    ----------
 
    procedure Next (Iterator : in out Entity_Declaration_Iterator) is
-      File   : File_Info_Ptr;
+      File : File_Info_Ptr;
    begin
       if Iterator.Current /= null then
          Iterator.Current := Iterator.Current.Next;
@@ -3648,7 +3649,7 @@ package body Src_Info.Queries is
       Entity   : Entity_Information;
       Kind     : Parent_Kind) return Entity_Information
    is
-      Decl : constant E_Declaration_Info_List := Find_Declaration_In_LI
+      Decl   : constant E_Declaration_Info_List := Find_Declaration_In_LI
         (Lib_Info, Entity);
       Parent : File_Location_List;
    begin
@@ -3714,7 +3715,7 @@ package body Src_Info.Queries is
    ------------------
 
    function Pointed_Type
-     (Lib_Info   : LI_File_Ptr;
+     (Lib_Info    : LI_File_Ptr;
       Access_Type : Entity_Information) return Entity_Information is
    begin
       return Process_Parents (Lib_Info, Access_Type, Pointed_Type);
@@ -3807,7 +3808,7 @@ package body Src_Info.Queries is
 
       Decl : constant E_Declaration_Info_List := Find_Declaration_In_LI
         (Lib_Info, Entity);
-      N : Natural;
+      N    : Natural;
       pragma Unreferenced (N);
    begin
       if Decl = null then
@@ -3846,7 +3847,7 @@ package body Src_Info.Queries is
    ---------
 
    function Get (Iter : Parent_Iterator) return Entity_Information is
-      Lib  : LI_File_Ptr;
+      Lib : LI_File_Ptr;
    begin
       if Iter.Parents = null
         or else Iter.Current > Iter.Parents'Last
@@ -3898,21 +3899,21 @@ package body Src_Info.Queries is
    is
       Decl : constant E_Declaration_Info_List := Find_Declaration_In_LI
         (Lib_Info, Entity);
-      P : Primitive_Iterator;
+      P    : Primitive_Iterator;
    begin
       Trace (Me, "Get_Primitive_Operations: " & Get_Name (Entity)
              & " Include_Inherited:"          & Include_Inherited'Img);
       if Decl = null then
          Trace (Me, "Get_Primitive_Operations: No declaration found");
-         return (Lib_Info          => Lib_Info,
-                 Kind              => Primitive_Operation,
-                 Parent_Iter       => No_Parent_Iterator,
+         return (Lib_Info           => Lib_Info,
+                 Kind               => Primitive_Operation,
+                 Parent_Iter        => No_Parent_Iterator,
                  Processing_Parents => False,
-                 Current           => null);
+                 Current            => null);
       else
-         P := (Lib_Info    => Lib_Info,
-               Kind        => Primitive_Operation,
-               Parent_Iter => No_Parent_Iterator,
+         P := (Lib_Info           => Lib_Info,
+               Kind               => Primitive_Operation,
+               Parent_Iter        => No_Parent_Iterator,
                Processing_Parents => False,
                Current     => Decl.Value.Declaration.Primitive_Subprograms);
 
@@ -3966,8 +3967,8 @@ package body Src_Info.Queries is
    ----------
 
    procedure Next (Iter : in out Special_Iterator) is
-      Ent  : Entity_Information;
-      Decl : E_Declaration_Info_List;
+      Ent      : Entity_Information;
+      Decl     : E_Declaration_Info_List;
       Lib_Info : LI_File_Ptr;
    begin
       if Iter.Current /= null then
