@@ -4648,6 +4648,21 @@ would be
 $ gps --debug='executable 1 2 3' --debugger=gdb-5
 @end smallexample
 
+The following command line switch no longer exists in GPS:
+
+@table @code
+@item --log-level
+This switch was used to get the full log of the communications between GVD
+and the underlying debugger. This can be replaced in GPS with
+
+@smallexample
+gps --traceon=GVD.OUT
+@end smallexample
+
+@end table
+
+
+
 @subsection Menu Items
 @noindent
 All the debugger-related menus in GVD can be found under the 'Debug'
@@ -11149,6 +11164,10 @@ Options:
                        language lang
    --eval=lang:file    Execute an in-line script written in the
                        language lang
+   --tracelist         Output the current configuration for logs
+   --traceon=name      Activate the logs for a given module
+   --traceoff=name     Deactivate the logs for a given module
+   --tracefile=file    Parse an alternate configuration file for the logs
 
 Source files can be absolute or relative pathnames.
 If you prepend a file name with '=', this file will be
