@@ -99,13 +99,13 @@ package body Builder_Module is
 
    Custom_Make_Suffix  : constant String := "Custom...";
    Current_Make_Suffix : constant String := "<current file>";
-   Project_Make_Suffix : constant String := "Project";
-   All_Make_Suffix     : constant String := "All mains";
+   Project_Make_Suffix : constant String := "Compile all sources";
+   All_Make_Suffix     : constant String := "All";
    --  Name for various menus (need to be translated through)
    --      -"Custom..."
    --      -"<current file>"
-   --      -"Project"
-   --      -"All mains"
+   --      -"Compile all sources"
+   --      -"All"
 
    Me : constant Debug_Handle := Create (Builder_Module_Name);
 
@@ -237,7 +237,7 @@ package body Builder_Module is
 
    procedure On_Build_Project
      (Kernel : access GObject_Record'Class; Data : File_Project_Record);
-   --  Build->Make->All mains menu.
+   --  Build->Make->All/Compile all sources menus.
 
    procedure On_Build
      (Kernel      : Kernel_Handle;
