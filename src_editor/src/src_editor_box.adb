@@ -26,6 +26,7 @@ with Glide_Kernel;               use Glide_Kernel;
 with Glide_Kernel.Console;       use Glide_Kernel.Console;
 with Glide_Kernel.Modules;       use Glide_Kernel.Modules;
 with Glide_Kernel.Project;       use Glide_Kernel.Project;
+with Glide_Kernel.Preferences;   use Glide_Kernel.Preferences;
 with Gdk;                        use Gdk;
 with Gdk.Event;                  use Gdk.Event;
 with Gdk.Rectangle;              use Gdk.Rectangle;
@@ -141,14 +142,6 @@ package body Src_Editor_Box is
    package CMenu is new GUI_Utils.User_Contextual_Menus
      (User_Data => Source_Editor_Box);
    --  Used to register contextual menus with a user data.
-
-   function Get_Contextual_Menu
-     (Kernel       : access Kernel_Handle_Record'Class;
-      Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Object       : access Glib.Object.GObject_Record'Class;
-      Event        : Gdk.Event.Gdk_Event;
-      Menu         : Gtk.Menu.Gtk_Menu) return Selection_Context_Access;
-   --  Return the contextual menu to use for the source box.
 
    procedure On_Goto_Declaration_Or_Body
      (Widget  : access GObject_Record'Class;
@@ -553,7 +546,9 @@ package body Src_Editor_Box is
          Set_Language (Box.Source_Buffer, Lang => Lang);
       end if;
 
-      Gtk_New (Box.Source_View, Box.Source_Buffer, Show_Line_Numbers => True);
+      Gtk_New (Box.Source_View, Box.Source_Buffer,
+               Get_Pref (Kernel, Default_Source_Editor_Font),
+               Show_Line_Numbers => True);
       Add (Scrolling_Area, Box.Source_View);
 
       Data.Box := Source_Editor_Box (Box);
@@ -703,7 +698,9 @@ package body Src_Editor_Box is
          Directory => Dir_Name (Editor.Filename.all),
          File_Name => Base_Name (Editor.Filename.all));
 
-      if Get_Window (Event) = Get_Window (V, Text_Window_Left) then
+      if Event /= null
+        and then Get_Window (Event) = Get_Window (V, Text_Window_Left)
+      then
          Window_To_Buffer_Coords
            (Editor.Source_View, Text_Window_Left,
             Gint (Get_X (Event)), Gint (Get_Y (Event)),
@@ -712,17 +709,28 @@ package body Src_Editor_Box is
          Line := Get_Line (Start_Iter);
          Set_Entity_Information (Context, Line => To_Box_Line (Line));
 
-         Gtk_New (Item, -"Go to line...");
-         Add (Menu, Item);
-         Gtk_New (Item, -"Go to previous reference");
-         Add (Menu, Item);
-         Gtk_New (Item, -"Go to file spec/body");
-         Add (Menu, Item);
-         Gtk_New (Item, -"Go to parent unit");
-         Add (Menu, Item);
+         if Menu /= null then
+            Gtk_New (Item, -"Go to line...");
+            Add (Menu, Item);
+            Gtk_New (Item, -"Go to previous reference");
+            Add (Menu, Item);
+            Gtk_New (Item, -"Go to file spec/body");
+            Add (Menu, Item);
+            Gtk_New (Item, -"Go to parent unit");
+            Add (Menu, Item);
+         end if;
 
       else
-         Event_To_Buffer_Coords (Editor.Source_View, Event, Line, Column);
+         if Event = null then
+            Get_Iter_At_Mark (Editor.Source_Buffer, Start_Iter,
+                              Get_Insert (Editor.Source_Buffer));
+            Line   := Get_Line (Start_Iter);
+            Column := Get_Line_Offset (Start_Iter);
+
+         else
+            Event_To_Buffer_Coords (Editor.Source_View, Event, Line, Column);
+         end if;
+
          L := To_Box_Line (Line);
          C := To_Box_Column (Column);
 
@@ -753,29 +761,31 @@ package body Src_Editor_Box is
             Place_Cursor (Editor.Source_Buffer, Start_Iter);
          end if;
 
-         Gtk_New (Item, -"Go to previous reference");
-         Add (Menu, Item);
-
-         if Has_Entity_Name_Information (Context) then
-            Gtk_New (Item, -"Go to declaration/body of "
-                     & Entity_Name_Information (Context));
+         if Menu /= null then
+            Gtk_New (Item, -"Go to previous reference");
             Add (Menu, Item);
-            Context_Callback.Object_Connect
-              (Item, "activate",
-               Context_Callback.To_Marshaller
-                 (On_Goto_Declaration_Or_Body'Access),
-               User_Data   => Selection_Context_Access (Context),
-               Slot_Object => Editor,
-               After       => True);
-            Gtk_New (Item, -"Go to body of "
-                     & Entity_Name_Information (Context));
+
+            if Has_Entity_Name_Information (Context) then
+               Gtk_New (Item, -"Go to declaration/body of "
+                          & Entity_Name_Information (Context));
+               Add (Menu, Item);
+               Context_Callback.Object_Connect
+                 (Item, "activate",
+                  Context_Callback.To_Marshaller
+                    (On_Goto_Declaration_Or_Body'Access),
+                  User_Data   => Selection_Context_Access (Context),
+                  Slot_Object => Editor,
+                  After       => True);
+               Gtk_New (Item, -"Go to body of "
+                          & Entity_Name_Information (Context));
+               Add (Menu, Item);
+            end if;
+
+            Gtk_New (Item, -"Go to file spec/body");
+            Add (Menu, Item);
+            Gtk_New (Item, -"Go to parent unit");
             Add (Menu, Item);
          end if;
-
-         Gtk_New (Item, -"Go to file spec/body");
-         Add (Menu, Item);
-         Gtk_New (Item, -"Go to parent unit");
-         Add (Menu, Item);
       end if;
 
       return Selection_Context_Access (Context);

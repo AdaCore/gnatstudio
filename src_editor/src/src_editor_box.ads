@@ -32,9 +32,12 @@ with Glib.Object;
 with Gdk.Rectangle;
 with GVD.Tooltips;
 
+with Gdk.Event;
 with Gtk.Box;
 with Gtk.Container;
 with Gtk.Label;
+with Gtk.Menu;
+with Gtk.Widget;
 
 with Language;
 with Language_Handlers;
@@ -343,6 +346,22 @@ package Src_Editor_Box is
    function Get_Show_Line_Numbers
      (Editor : access Source_Editor_Box_Record) return Boolean;
    --  Returns True if the line numbers are displayed.
+
+   ---------------------
+   -- Contextual menu --
+   ---------------------
+
+   function Get_Contextual_Menu
+     (Kernel       : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Object       : access Glib.Object.GObject_Record'Class;
+      Event        : Gdk.Event.Gdk_Event;
+      Menu         : Gtk.Menu.Gtk_Menu)
+      return Glide_Kernel.Selection_Context_Access;
+   --  Return the contextual menu to use for the source box.
+   --  This function is also used to create the context for
+   --  Glide_Kernel.Get_Current_Context, and might be called with Event and
+   --  Menu set to null.
 
 private
 
