@@ -244,14 +244,15 @@
    <!-------------->
 
    <action name="generic_cvs_open" show-command="true" output="none">
-      <shell output="">echo "Opening CVS file(s) $2-"</shell>
-      <external>cvs edit "$2-"</external>
+      <shell output="">echo "Opening CVS file $*"</shell>
+      <external>cvs edit "$*"</external>
       <on-failure>
          <shell output="">echo "CVS error:"</shell>
          <shell output="">echo "%2"</shell>
       </on-failure>
       <shell>Hook "file_changed_on_disk"</shell>
       <shell>Hook.run %1 null</shell>
+      <shell>Editor.edit "$1" 0 0</shell>
    </action>
 
    <!---------------->
