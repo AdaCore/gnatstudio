@@ -1,5 +1,8 @@
 New features in GPS 1.0.2
 
+- New menus Project->Project View and Project->Files View to replace
+  Project->Explorer
+
 - VCS is now able to compare between the working revision in the
   repository and the head revision in the repository.
 
