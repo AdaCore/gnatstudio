@@ -65,27 +65,27 @@ begin
          Parent_Location   => Desc.Parent_Point,
          Parent_Filename   => Desc.Parent_Filename.all,
          Declaration_Info  => Decl_Info);
+
+      --  add reference to the type of this field
+      begin
+         Type_Decl_Info := Find_Declaration
+           (Global_LI_File,
+            Inst_Var.Buffer
+               (Inst_Var.Value_Type.First .. Inst_Var.Value_Type.Last),
+            Desc.Parent_Point);
+
+         Insert_Reference
+           (Declaration_Info     => Type_Decl_Info,
+            File                 => Global_LI_File,
+            Source_Filename      =>
+               Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
+            Location             => Sym.Start_Position,
+            Kind                 => Reference);
+      exception
+         when Declaration_Not_Found => -- ignore
+            null;
+      end;
    end if;
-
-   --  add reference to the type of this field
-   begin
-      Type_Decl_Info := Find_Declaration
-        (Global_LI_File,
-         Inst_Var.Buffer
-            (Inst_Var.Value_Type.First .. Inst_Var.Value_Type.Last),
-         Inst_Var.Start_Position);
-
-      Insert_Reference
-        (Declaration_Info     => Type_Decl_Info,
-         File                 => Global_LI_File,
-         Source_Filename      =>
-            Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
-         Location             => Sym.Start_Position,
-         Kind                 => Reference);
-   exception
-      when Declaration_Not_Found => -- ignore
-         null;
-   end;
 
    Free (Desc);
    Free (Inst_Var);
