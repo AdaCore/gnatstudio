@@ -1175,7 +1175,7 @@ package body VCS_View_API is
       while Files_Temp /= Null_Node loop
          --  Save any open log editors, and then get the corresponding logs.
 
-         File := Create (Full_Filename => Head (Files));
+         File := Create (Full_Filename => Data (Files_Temp));
          Child := Get_File_Editor
            (Kernel, Get_Log_From_File (Kernel, File, False));
 
