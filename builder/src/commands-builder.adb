@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2003                         --
---                            ACT-Europe                             --
+--                     Copyright (C) 2003-2005                       --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free software; you can redistribute it and/or modify  it   --
 -- under the terms of the GNU General Public License as published by --
@@ -25,8 +25,6 @@ with Glide_Result_View;         use Glide_Result_View;
 
 with Glide_Intl;                use Glide_Intl;
 with GNAT.Expect;               use GNAT.Expect;
-
-with Glide_Main_Window;         use Glide_Main_Window;
 
 with GNAT.Regpat;               use GNAT.Regpat;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
@@ -62,6 +60,9 @@ package body Commands.Builder is
    --  Category is the category to add to in the results view.
    --  Warning_Category and Style_Category correspond to the categories
    --  used for warnings and style errors.
+
+   procedure Cleanup_Build (Command : access Build_Command);
+   --  Perform all clean ups and updates after a build is terminated.
 
    ------------
    -- Create --
@@ -140,8 +141,7 @@ package body Commands.Builder is
          if PID /= Null_Pid and then PID /= GNAT.Expect.Invalid_Pid then
             Interrupt (Fd.all);
             Console.Insert (Data.Kernel, "<^C>");
-            Close (Fd.all);
-            Free (Data.Descriptor);
+            Cleanup_Build (D'Access);
          end if;
       end if;
 
@@ -160,11 +160,57 @@ package body Commands.Builder is
       Free (D.Main_Error_Category);
       Free (D.Warning_Category);
       Free (D.Style_Category);
+
    exception
       when E : others =>
          Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
    end Free;
+
+   -------------------
+   -- Cleanup_Build --
+   -------------------
+
+   procedure Cleanup_Build (Command : access Build_Command) is
+      Data    : Process_Data renames Command.Data;
+      Kernel  : Kernel_Handle renames Data.Kernel;
+      Fd      : Process_Descriptor renames Data.Descriptor.all;
+      Status  : Integer;
+
+   begin
+      Builder_Module_ID_Access (Builder_Module_ID).Build_Count :=
+        Builder_Module_ID_Access (Builder_Module_ID).Build_Count - 1;
+      Builder_Module_ID_Access (Builder_Module_ID).Last_Command := null;
+
+      Parse_Compiler_Output
+        (Kernel,
+         Command.Main_Error_Category.all,
+         Command.Warning_Category.all,
+         Command.Style_Category.all,
+         Expect_Out (Fd),
+         Command.Quiet);
+      Close (Fd, Status);
+
+      if not Command.Quiet then
+         if Status = 0 then
+            Console.Insert
+              (Kernel, ASCII.LF & (-"successful compilation/build"));
+         else
+            Console.Insert
+              (Kernel,
+               ASCII.LF
+               & (-"process exited with status ") & Image (Status));
+         end if;
+      end if;
+
+      Pop_State (Kernel);
+      Free (Data.Descriptor);
+
+      if Builder_Module_ID_Access (Builder_Module_ID).Build_Count = 0 then
+         Compilation_Finished
+           (Kernel, VFS.No_File, Command.Main_Error_Category.all);
+      end if;
+   end Cleanup_Build;
 
    -------------
    -- Execute --
@@ -177,13 +223,10 @@ package body Commands.Builder is
       Kernel  : Kernel_Handle renames Data.Kernel;
       Fd      : Process_Descriptor renames Data.Descriptor.all;
 
-      Top          : constant Glide_Window :=
-        Glide_Window (Get_Main_Window (Kernel));
       Matched      : Match_Array (0 .. 3);
       Result       : Expect_Match;
       Matcher      : constant Pattern_Matcher := Compile
         ("completed ([0-9]+) out of ([0-9]+) \((.*)%\)\.\.\.");
-      Timeout      : Integer := 1;
       Line_Matcher : constant Pattern_Matcher :=
         Compile ("^.*?\n", Multiple_Lines);
       Buffer       : String_Access := new String (1 .. 1024);
@@ -191,20 +234,12 @@ package body Commands.Builder is
       Min_Size     : Natural;
       New_Size     : Natural;
       Tmp          : String_Access;
-      Status       : Integer;
 
    begin
       Command.Progress.Activity := Running;
 
-      if Top.Interrupted then
-         Interrupt (Fd);
-         Console.Insert (Kernel, "<^C>");
-         Top.Interrupted := False;
-         Timeout := 10;
-      end if;
-
       loop
-         Expect (Fd, Result, Line_Matcher, Timeout => Timeout);
+         Expect (Fd, Result, Line_Matcher, Timeout => 1);
 
          exit when Result = Expect_Timeout;
 
@@ -271,44 +306,14 @@ package body Commands.Builder is
          end if;
 
          Free (Buffer);
-         Parse_Compiler_Output
-           (Kernel,
-            Command.Main_Error_Category.all,
-            Command.Warning_Category.all,
-            Command.Style_Category.all,
-            Expect_Out (Fd),
-            Command.Quiet);
-         Close (Fd, Status);
-
-         if not Command.Quiet then
-            if Status = 0 then
-               Console.Insert
-                 (Kernel, ASCII.LF & (-"successful compilation/build"));
-            else
-               Console.Insert
-                 (Kernel,
-                  ASCII.LF
-                  & (-"process exited with status ") & Image (Status));
-            end if;
-         end if;
-
-         Pop_State (Kernel);
-         Set_Sensitive_Menus (Kernel, True);
-         Free (Data.Descriptor);
-
-         Compilation_Finished
-           (Kernel, VFS.No_File, Command.Main_Error_Category.all);
+         Cleanup_Build (Command);
          return Success;
 
       when E : others =>
          Free (Buffer);
-         Pop_State (Kernel);
-         Set_Sensitive_Menus (Kernel, True);
-         Close (Fd);
-         Free (Data.Descriptor);
+         Cleanup_Build (Command);
          Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
-
          return Failure;
    end Execute;
 

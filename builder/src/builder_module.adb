@@ -1,8 +1,8 @@
-----------------------------------------------------------------------
+-----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
 --                     Copyright (C) 2001-2005                       --
---                            AdaCore                                --
+--                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -54,8 +54,6 @@ with Projects.Registry;         use Projects.Registry;
 with Entities;                  use Entities;
 with Histories;                 use Histories;
 with Glide_Kernel.Scripts;      use Glide_Kernel.Scripts;
-
-with Glide_Main_Window;         use Glide_Main_Window;
 
 with Basic_Types;
 with GVD.Dialogs;               use GVD.Dialogs;
@@ -344,6 +342,10 @@ package body Builder_Module is
       else
          Console.Clear (Kernel);
          Remove_Result_Category (Kernel, -Error_Category);
+
+         --  We do not need to remove Warning/Style_Category since these
+         --  are located under the Error_Category hierarchy in the locations
+         --  window.
       end if;
 
       String_List_Utils.String_List.Free
@@ -439,25 +441,6 @@ package body Builder_Module is
       end if;
    end Free;
 
-   -------------------------
-   -- Set_Sensitive_Menus --
-   -------------------------
-
-   procedure Set_Sensitive_Menus
-     (Kernel    : Kernel_Handle;
-      Sensitive : Boolean)
-   is
-      Build : constant String := '/' & (-"Build") & '/';
-   begin
-      Set_Sensitive (Find_Menu_Item
-        (Kernel, Build & (-"Check Syntax")), Sensitive);
-      Set_Sensitive (Find_Menu_Item
-        (Kernel, Build & (-"Compile File")), Sensitive);
-      Set_Sensitive (Find_Menu_Item (Kernel, Build & (-"Make")), Sensitive);
-      Set_Sensitive (Find_Menu_Item
-        (Kernel, Build & (-"Interrupt")), not Sensitive);
-   end Set_Sensitive_Menus;
-
    -----------------------
    -- Insert_And_Launch --
    -----------------------
@@ -539,8 +522,6 @@ package body Builder_Module is
       Main_Units  : Boolean := False;
       Synchronous : Boolean := False)
    is
-      Top          : constant Glide_Window :=
-        Glide_Window (Get_Main_Window (Kernel));
       Fd           : Process_Descriptor_Access;
       Cmd          : String_Access;
       Args         : Argument_List_Access;
@@ -680,7 +661,9 @@ package body Builder_Module is
          Change_Dir (Dir_Name (Project_Path (Project)));
       end if;
 
-      Clear_Compilation_Output (Kernel, False);
+      if Builder_Module_ID_Access (Builder_Module_ID).Build_Count = 0 then
+         Clear_Compilation_Output (Kernel, False);
+      end if;
 
       case Syntax is
          when GNAT_Syntax =>
@@ -692,11 +675,7 @@ package body Builder_Module is
             Cmd := new String'("gprmake");
       end case;
 
-      Set_Sensitive_Menus (Kernel, False);
-
-      Top.Interrupted := False;
       Fd := new TTY_Process_Descriptor;
-
       Insert_And_Launch
         (Kernel,
          Remote_Protocol  => Get_Pref (GVD_Prefs, Remote_Protocol),
@@ -705,11 +684,14 @@ package body Builder_Module is
          Command          => Cmd.all,
          Arguments        => Args.all,
          Fd               => Fd);
-
       Free (Cmd);
       Free (Args);
 
       Create (C, (Kernel, Fd, null, null, System.Null_Address));
+      Builder_Module_ID_Access (Builder_Module_ID).Build_Count :=
+        Builder_Module_ID_Access (Builder_Module_ID).Build_Count + 1;
+      Builder_Module_ID_Access (Builder_Module_ID).Last_Command :=
+        Command_Access (C);
 
       if Synchronous then
          Launch_Synchronous (Command_Access (C), 0.1);
@@ -729,7 +711,6 @@ package body Builder_Module is
    exception
       when Invalid_Process =>
          Console.Insert (Kernel, -"Invalid command", Mode => Error);
-         Set_Sensitive_Menus (Kernel, True);
          Change_Dir (Old_Dir);
          Free (Cmd);
          Free (Args);
@@ -807,8 +788,6 @@ package body Builder_Module is
       Quiet       : Boolean := False;
       Shadow      : Boolean := False)
    is
-      Top          : constant Glide_Window :=
-        Glide_Window (Get_Main_Window (Kernel));
       Prj          : constant Project_Type :=
         Get_Project_From_File (Get_Registry (Kernel).all, File);
       Cmd          : String_Access;
@@ -905,9 +884,10 @@ package body Builder_Module is
          Common_Args := new Argument_List'(1 .. 0 => null);
       end if;
 
-      Clear_Compilation_Output (Kernel, Shadow);
-      Set_Sensitive_Menus (Kernel, False);
-      Top.Interrupted := False;
+      if Builder_Module_ID_Access (Builder_Module_ID).Build_Count = 0 then
+         Clear_Compilation_Output (Kernel, Shadow);
+      end if;
+
       Fd := new TTY_Process_Descriptor;
 
       if Shadow then
@@ -1010,6 +990,11 @@ package body Builder_Module is
       Basic_Types.Unchecked_Free (Common_Args);
       Free (Cmd);
 
+      Builder_Module_ID_Access (Builder_Module_ID).Build_Count :=
+        Builder_Module_ID_Access (Builder_Module_ID).Build_Count + 1;
+      Builder_Module_ID_Access (Builder_Module_ID).Last_Command :=
+        Command_Access (C);
+
       if Synchronous then
          Launch_Synchronous (Command_Access (C), 0.1);
          Destroy (Command_Access (C));
@@ -1031,7 +1016,6 @@ package body Builder_Module is
       when Invalid_Process =>
          Console.Insert (Kernel, -"Invalid command", Mode => Error);
          Change_Dir (Old_Dir);
-         Set_Sensitive_Menus (Kernel, True);
          Free (Fd);
    end Compile_File;
 
@@ -1158,30 +1142,25 @@ package body Builder_Module is
          Key      => "gps_custom_command");
 
       C   : Build_Command_Access;
+      Fd  : Process_Descriptor_Access;
 
    begin
       if Cmd = "" or else Cmd (Cmd'First) = ASCII.NUL then
          return;
       end if;
 
-      declare
-         Top     : constant Glide_Window :=
-           Glide_Window (Get_Main_Window (Kernel));
-         Fd      : Process_Descriptor_Access;
+      if not Save_MDI_Children
+        (Kernel, Force => Get_Pref (Kernel, Auto_Save))
+      then
+         return;
+      end if;
+
+      if Builder_Module_ID_Access (Builder_Module_ID).Build_Count = 0 then
+         Clear_Compilation_Output (Kernel, False);
+      end if;
 
       begin
-         if not Save_MDI_Children
-           (Kernel, Force => Get_Pref (Kernel, Auto_Save))
-         then
-            return;
-         end if;
-
-         Clear_Compilation_Output (Kernel, False);
-         Set_Sensitive_Menus (Kernel, False);
-
-         Top.Interrupted := False;
          Fd := new TTY_Process_Descriptor;
-
          Insert_And_Launch
            (Kernel,
             Remote_Protocol  => Get_Pref (GVD_Prefs, Remote_Protocol),
@@ -1193,6 +1172,11 @@ package body Builder_Module is
 
          Create (C, (Kernel, Fd, null, null, System.Null_Address));
 
+         Builder_Module_ID_Access (Builder_Module_ID).Build_Count :=
+           Builder_Module_ID_Access (Builder_Module_ID).Build_Count + 1;
+         Builder_Module_ID_Access (Builder_Module_ID).Last_Command :=
+           Command_Access (C);
+
          Launch_Background_Command
            (Kernel, Command_Access (C),
             Active   => False,
@@ -1202,7 +1186,6 @@ package body Builder_Module is
       exception
          when Invalid_Process =>
             Console.Insert (Kernel, -"Invalid command", Mode => Error);
-            Set_Sensitive_Menus (Kernel, True);
             Free (Fd);
       end;
 
@@ -1453,11 +1436,18 @@ package body Builder_Module is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
       pragma Unreferenced (Widget);
-
-      Top : constant Glide_Window := Glide_Window (Get_Main_Window (Kernel));
    begin
-      Top.Interrupted := True;
-      Console.Raise_Console (Kernel);
+      if Builder_Module_ID_Access (Builder_Module_ID).Last_Command /= null then
+         Console.Raise_Console (Kernel);
+         Console.Insert
+           (Kernel,
+            "menu not implemented yet, please use task manager instead",
+            Mode => Error);
+
+         --  ??? not implemented yet:
+         --  Interrupt_Task
+         --    (Builder_Module_ID_Access (Builder_Module_ID).Last_Command);
+      end if;
    end On_Stop_Build;
 
    --------------------
@@ -1917,11 +1907,10 @@ package body Builder_Module is
 
       Gtk_New (Mitem);
       Register_Menu (Kernel, Build, Mitem);
-      Set_Sensitive
-        (Register_Menu
-           (Kernel, Build, -"_Interrupt", Stock_Stop, On_Stop_Build'Access,
-           null, GDK_C, Control_Mask + Shift_Mask),
-         False);
+
+      Register_Menu
+        (Kernel, Build, -"_Interrupt", Stock_Stop, On_Stop_Build'Access,
+         null, GDK_C, Control_Mask + Shift_Mask);
 
       Add_Hook (Kernel, Project_View_Changed_Hook, On_View_Changed'Access);
 

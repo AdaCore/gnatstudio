@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2003                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2001-2005                       --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -25,10 +25,11 @@ with Gtk.Menu;
 with Gtk.Menu_Item;
 with String_List_Utils;
 with Projects;
+with Commands;
 
 package Builder_Module is
 
-   Builder_Module_ID   : Glide_Kernel.Module_ID;
+   Builder_Module_ID : Glide_Kernel.Module_ID;
 
    type Builder_Module_ID_Record is new Glide_Kernel.Module_ID_Record
    with record
@@ -42,22 +43,22 @@ package Builder_Module is
       --  Project used to fill the Run_Menu and Make_Menu
 
       Output     : String_List_Utils.String_List.List;
-      --  The last build output.
+      --  The last build output
+
+      Build_Count : Natural := 0;
+      --  Number of on-going builds
+
+      Last_Command : Commands.Command_Access;
+      --  The last build command launched
    end record;
    --  Data stored with the module id.
 
    type Builder_Module_ID_Access is access all Builder_Module_ID_Record;
-
 
    Builder_Module_Name : constant String := "Builder";
 
    procedure Register_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
    --  Register the module in the list
-
-   procedure Set_Sensitive_Menus
-     (Kernel    : Glide_Kernel.Kernel_Handle;
-      Sensitive : Boolean);
-   --  Change the sensitive aspect of the build menu items.
 
 end Builder_Module;
