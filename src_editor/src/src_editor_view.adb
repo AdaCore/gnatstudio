@@ -422,8 +422,12 @@ package body Src_Editor_View is
          User.Side_Column_Buffer := null;
       end if;
 
-      if Realized_Is_Set (User) then
-         Redraw_Columns (User);
+      if Realized_Is_Set (User)
+        and then not User.Idle_Redraw_Registered
+      then
+         User.Idle_Redraw_Registered := True;
+         User.Idle_Redraw_Id := Source_View_Idle.Add
+           (Idle_Column_Redraw'Access, User);
       end if;
    end Side_Columns_Change_Handler;
 
@@ -439,6 +443,11 @@ package body Src_Editor_View is
       pragma Unreferenced (Buffer, Params);
    begin
       User.Side_Columns_Up_To_Date := False;
+
+      if User.Side_Column_Buffer /= null then
+         Gdk.Pixmap.Unref (User.Side_Column_Buffer);
+         User.Side_Column_Buffer := null;
+      end if;
 
       User.Buffer_Top_Line := 0;
 
@@ -1420,6 +1429,7 @@ package body Src_Editor_View is
             Ysrc     => 0,
             Xdest    => 0,
             Ydest    => 0);
+
       else
          --  The lines have changed or the cache is not created: create it.
 
@@ -1436,11 +1446,11 @@ package body Src_Editor_View is
 
          Get_Geometry (Left_Window, X, Y, Width, Height, Depth);
 
-         Gdk_New (View.Side_Column_Buffer, Left_Window, Width, Height);
+         Gdk_New (View.Side_Column_Buffer, Left_Window, Total_Width, Height);
          Draw_Rectangle
            (View.Side_Column_Buffer,
             View.Side_Background_GC,
-            True, X, Y, Width, Height);
+            True, X, Y, Total_Width, Height);
 
          Draw_Line_Info
            (Src_Buffer, View.Top_Line, View.Bottom_Line,
