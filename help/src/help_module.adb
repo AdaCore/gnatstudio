@@ -643,7 +643,9 @@ package body Help_Module is
 
       if Child = null then
          Scrolled := Create_Html_Editor (Kernel, Help_File);
-         Child := Put (MDI, Scrolled);
+         Child := Put
+           (MDI, Scrolled,
+            Focus_Widget => Gtk_Widget (Scrolled.Csc));
          Set_Title (Child, -"Help");
          Show_All (Scrolled);
          Raise_Child (Child);
