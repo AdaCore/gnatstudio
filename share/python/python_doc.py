@@ -7,7 +7,7 @@
 ##  - Dynamically generating HTML file to document python entities. In
 ##    particular, a predefined menu is added for the GPS extensions
 
-import GPS, pydoc, os, inspect, pydoc
+import GPS, pydoc, os, inspect, pydoc, sys
 from string import rstrip, lstrip
 
 def generate_doc (entity):
@@ -74,14 +74,16 @@ class Help_Wrapper:
    def getdoc (self, object): 
       try:
          try:
-            module=object.__module__ + '.'
+            module=object.__module__
             if module == None:
                ## Work around for limitation in older versions of pythons: no
                ## module could be associated to functions exported from C
-	       if sys.version_info[0]+'.'+sys.version_info[1]+'.'+sys.version_info[2] < "2.3.3":
+	       if `sys.version_info[0]`+'.'+`sys.version_info[1]`+'.'+`sys.version_info[2]` < "2.3.3":
                    module="GPS."
                else:
                    module=""
+            else:
+               module = module + '.'
          except:
             module=""
 
