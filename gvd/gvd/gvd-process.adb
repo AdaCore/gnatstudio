@@ -469,9 +469,12 @@ package body GVD.Process is
    procedure On_Debugger_Text_Grab_Focus
      (Object : access GObject_Record'Class)
    is
+      Debugger : constant Visual_Debugger := Visual_Debugger (Object);
+
       use String_History;
    begin
-      Wind (Visual_Debugger (Object).Window.Command_History, Forward);
+      Switch_Debugger (Debugger.Window, GObject (Object));
+      Wind (Debugger.Window.Command_History, Forward);
    end On_Debugger_Text_Grab_Focus;
 
    -----------------------
@@ -925,7 +928,14 @@ package body GVD.Process is
 
       Child := Put (Process.Window.Process_Mdi, Process.Stack);
       Set_Focus_Child (Child);
-      Set_Title (Child, -"Call Stack");
+
+      if Process.Debugger_Num = 1 then
+         Set_Title (Child, -"Call Stack");
+      else
+         Set_Title (Child, (-"Call Stack") & " <" &
+                    Image (Process.Debugger_Num) & ">");
+      end if;
+
       Set_Dock_Side (Child, Right);
       Dock_Child (Child);
    end Create_Call_Stack;
@@ -978,7 +988,14 @@ package body GVD.Process is
         (Process.Window.Process_Mdi, Process.Data_Scrolledwindow,
          Flags => Iconify_Button or Maximize_Button);
       Set_Focus_Child (Child);
-      Set_Title (Child, -"Debugger Data");
+
+      if Process.Debugger_Num = 1 then
+         Set_Title (Child, -"Debugger Data");
+      else
+         Set_Title (Child, (-"Debugger Data") & " <" &
+                    Image (Process.Debugger_Num) & ">");
+      end if;
+
       Set_Dock_Side (Child, Top);
       Dock_Child (Child);
    end Setup_Data_Window;
@@ -1023,7 +1040,7 @@ package body GVD.Process is
          On_Command_Scrolledwindow_Delete_Event'Access, Process);
 
       Object_Callback.Object_Connect
-        (Process.Debugger_Text, "grab_focus",
+        (Get_View (Process.Debugger_Text), "grab_focus",
          Object_Callback.To_Marshaller (On_Debugger_Text_Grab_Focus'Access),
          Process);
 
@@ -1042,7 +1059,14 @@ package body GVD.Process is
          Flags => Iconify_Button or Maximize_Button,
          Focus_Widget => Gtk_Widget (Get_View (Process.Debugger_Text)));
       Set_Focus_Child (Child);
-      Set_Title (Child, -"Debugger Console");
+
+      if Process.Debugger_Num = 1 then
+         Set_Title (Child, -"Debugger Console");
+      else
+         Set_Title (Child, (-"Debugger Console") & " <" &
+                    Image (Process.Debugger_Num) & ">");
+      end if;
+
       Set_Dock_Side (Child, Bottom);
       Dock_Child (Child);
       Raise_Child (Child);
@@ -1344,7 +1368,14 @@ package body GVD.Process is
            (Window.Process_Mdi, Process.Debuggee_Console,
             Flags => Iconify_Button or Maximize_Button,
             Focus_Widget => Gtk_Widget (Get_View (Process.Debuggee_Console)));
-         Set_Title (Child, -"Debugger Execution");
+
+         if Process.Debugger_Num = 1 then
+            Set_Title (Child, -"Debugger Execution");
+         else
+            Set_Title (Child, (-"Debugger Execution") & " <" &
+                       Image (Process.Debugger_Num) & ">");
+         end if;
+
          Set_Dock_Side (Child, Bottom);
          Dock_Child (Child);
       end if;
@@ -1401,12 +1432,8 @@ package body GVD.Process is
    is
       pragma Unreferenced (Executable_Name);
    begin
-      --  ??? Change the title of the menu items Debug->Debuggers
-
       --  Emit the signal
-
-      Object_Callback.Emit_By_Name
-        (GObject (Debugger), "executable_changed");
+      Object_Callback.Emit_By_Name (GObject (Debugger), "executable_changed");
    end Executable_Changed;
 
    ---------------------
@@ -1674,7 +1701,8 @@ package body GVD.Process is
    --------------------
 
    procedure Close_Debugger (Debugger : Visual_Debugger) is
-      Top      : constant GVD_Main_Window := Debugger.Window;
+      Top  : constant GVD_Main_Window := Debugger.Window;
+      List : Debugger_List_Link;
       use String_History;
 
    begin
@@ -1690,21 +1718,39 @@ package body GVD.Process is
          Close (Debugger.Debugger);
       end if;
 
-      if not Debugger.Window.Standalone then
-         Unref (Debugger);
-         return;
+      --  Recompute Top.Current_Debugger and Top.First_Debugger:
+
+      List := Top.First_Debugger;
+
+      if Visual_Debugger (List.Debugger) = Debugger then
+         Top.First_Debugger := List.Next;
+         Top.Current_Debugger := Top.First_Debugger.Debugger;
+      else
+         while List.Next /= null loop
+            if Visual_Debugger (List.Next.Debugger) = Debugger then
+               List.Next := List.Next.Next;
+               Top.Current_Debugger := List.Debugger;
+
+               exit;
+            end if;
+
+            List := List.Next;
+         end loop;
       end if;
 
-      Set_Busy (Debugger, False);
+      --  ??? need to keep a ref for sessions, except that sessions are
+      --  disabled in GPS.
 
-      --  ??? need to keep a ref for sessions
-      --  Unref (Debugger);
+      if Debugger.Window.Standalone then
+         if Top.Current_Debugger = null then
+            Set_Sensitive
+              (Get_Item (Top.Factory, -"/File/Open Program..."), False);
+         end if;
 
-      --  ??? Update Top.Current_Debugger
+         Set_Busy (Debugger, False);
 
-      if Top.Current_Debugger = null then
-         Set_Sensitive
-           (Get_Item (Top.Factory, -"/File/Open Program..."), False);
+      else
+         Unref (Debugger);
       end if;
    end Close_Debugger;
 
