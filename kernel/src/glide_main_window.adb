@@ -28,7 +28,9 @@ package body Glide_Main_Window is
       MDI    : constant MDI_Window :=
         Glide_Page.Glide_Page (Get_Current_Process (Top)).Process_Mdi;
    begin
-      Set_Focus_Child (MDI, Containing => Widget);
+      if Widget /= null then
+         Set_Focus_Child (MDI, Containing => Widget);
+      end if;
    end Set_Focus;
 
    -------------
