@@ -86,6 +86,7 @@ with GUI_Utils;                 use GUI_Utils;
 with String_Utils;              use String_Utils;
 
 with Ada.Exceptions;            use Ada.Exceptions;
+with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 
 with Generic_List;
 with Debugger_Pixmaps;          use Debugger_Pixmaps;
@@ -499,6 +500,16 @@ package body GVD_Module is
    --  Idle/Timeout function to query the line information from the debugger.
    --  ??? Should provide proper user data instead of using a global variable
    --  to access debugger info.
+
+   -------------------------
+   -- Initialize_Debugger --
+   -------------------------
+
+   procedure Initialize_Debugger
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class) is
+   begin
+      On_Debug_Init (Kernel, (0, Get_Project (Kernel), ""));
+   end Initialize_Debugger;
 
    -----------------------------
    -- Create_Debugger_Columns --
@@ -1149,11 +1160,14 @@ package body GVD_Module is
         Glide_Window (Get_Main_Window (K));
       Page         : GPS_Debugger;
       Module       : String_Access;
+      Program_Args : String_Access;
+      Blank_Pos    : Natural;
       Proxy        : Process_Proxy_Access;
       Success      : Boolean;
       Id           : constant GVD_Module  := GVD_Module (GVD_Module_ID);
 
       use Debugger;
+      use type GNAT.OS_Lib.String_Access;
 
    begin
       Push_State (K, Busy);
@@ -1173,9 +1187,25 @@ package body GVD_Module is
       --  Initialize the debugger if necessary
 
       if Page.Debugger = null then
+         Program_Args := new String'("");
+
          if Data.File /= "" then
             Module := new String'
               (Executables_Directory (Data.Project) & Data.File);
+
+         elsif Top.Program_Args /= null then
+            Blank_Pos := Ada.Strings.Fixed.Index (Top.Program_Args.all, " ");
+
+            if Blank_Pos = 0 then
+               Module := new String'(Top.Program_Args.all);
+            else
+               Module := new String'
+                 (Top.Program_Args (Top.Program_Args'First .. Blank_Pos - 1));
+               Free (Program_Args);
+               Program_Args := new String'
+                 (Top.Program_Args (Blank_Pos + 1 .. Top.Program_Args'Last));
+            end if;
+
          else
             Module := new String'("");
          end if;
@@ -1195,7 +1225,7 @@ package body GVD_Module is
                Proxy           => Proxy,
                Executable      => Module.all,
                Debugger_Args   => Args (2 .. Args'Last),
-               Executable_Args => "",
+               Executable_Args => Program_Args.all,
                Remote_Host     =>
                  Get_Attribute_Value (Get_Project (K), Remote_Host_Attribute),
                Remote_Target   =>
@@ -2119,64 +2149,66 @@ package body GVD_Module is
 
       --  Add debugger buttons in the toolbar
 
-      Append_Space (Toolbar);
+      Top.Toolbar_Space := Append_Element
+        (Toolbar  => Toolbar,
+         The_Type => Toolbar_Child_Space);
       Top.Cont_Button := Append_Element
-        (Toolbar => Toolbar,
-         The_Type => Toolbar_Child_Button,
-         Text     => -"Go",
+        (Toolbar      => Toolbar,
+         The_Type     => Toolbar_Child_Button,
+         Text         => -"Go",
          Tooltip_Text => -"Start/Continue the debugged program",
-         Icon => Gtk_Widget (Create_Pixmap (run_xpm, Window)));
+         Icon         => Gtk_Widget (Create_Pixmap (run_xpm, Window)));
       Widget_Callback.Object_Connect
         (Top.Cont_Button, "clicked",
          Widget_Callback.To_Marshaller (On_Start_Continue'Access),
          Window);
 
       Top.Step_Button := Append_Element
-        (Toolbar => Toolbar,
-         The_Type => Toolbar_Child_Button,
-         Text     => -"Step",
+        (Toolbar      => Toolbar,
+         The_Type     => Toolbar_Child_Button,
+         Text         => -"Step",
          Tooltip_Text => -"Step",
-         Icon => Gtk_Widget (Create_Pixmap (step_xpm, Window)));
+         Icon         => Gtk_Widget (Create_Pixmap (step_xpm, Window)));
       Widget_Callback.Object_Connect
         (Top.Step_Button, "clicked",
          Widget_Callback.To_Marshaller (On_Step'Access), Window);
 
       Top.Next_Button := Append_Element
-        (Toolbar => Toolbar,
-         The_Type => Toolbar_Child_Button,
-         Text     => -"Next",
+        (Toolbar      => Toolbar,
+         The_Type     => Toolbar_Child_Button,
+         Text         => -"Next",
          Tooltip_Text => -"Next",
-         Icon => Gtk_Widget (Create_Pixmap (next_xpm, Window)));
+         Icon         => Gtk_Widget (Create_Pixmap (next_xpm, Window)));
       Widget_Callback.Object_Connect
         (Top.Next_Button, "clicked",
          Widget_Callback.To_Marshaller (On_Next'Access), Window);
 
       Top.Finish_Button := Append_Element
-        (Toolbar => Toolbar,
-         The_Type => Toolbar_Child_Button,
-         Text     => -"Finish",
+        (Toolbar      => Toolbar,
+         The_Type     => Toolbar_Child_Button,
+         Text         => -"Finish",
          Tooltip_Text => -"Execute until selected stack frame returns",
-         Icon => Gtk_Widget (Create_Pixmap (finish_xpm, Window)));
+         Icon         => Gtk_Widget (Create_Pixmap (finish_xpm, Window)));
       Widget_Callback.Object_Connect
         (Top.Finish_Button, "clicked",
          Widget_Callback.To_Marshaller (On_Finish'Access), Window);
 
       Top.Up_Button := Append_Element
-        (Toolbar => Toolbar,
-         The_Type => Toolbar_Child_Button,
-         Text     => -"Up",
+        (Toolbar      => Toolbar,
+         The_Type     => Toolbar_Child_Button,
+         Text         => -"Up",
          Tooltip_Text => -"Select and print stack frame that called this one",
-         Icon     => Gtk_Widget (Create_Pixmap (up_xpm, Window)));
+         Icon         => Gtk_Widget (Create_Pixmap (up_xpm, Window)));
       Widget_Callback.Object_Connect
         (Top.Up_Button, "clicked",
          Widget_Callback.To_Marshaller (On_Up'Access), Window);
 
       Top.Down_Button := Append_Element
-        (Toolbar => Toolbar,
-         The_Type => Toolbar_Child_Button,
-         Text     => -"Down",
+        (Toolbar      => Toolbar,
+         The_Type     => Toolbar_Child_Button,
+         Text         => -"Down",
          Tooltip_Text => -"Select and print stack frame called by this one",
-         Icon     => Gtk_Widget (Create_Pixmap (down_xpm, Window)));
+         Icon         => Gtk_Widget (Create_Pixmap (down_xpm, Window)));
       Widget_Callback.Object_Connect
         (Top.Down_Button, "clicked",
          Widget_Callback.To_Marshaller (On_Down'Access), Window);
