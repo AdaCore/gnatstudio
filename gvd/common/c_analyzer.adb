@@ -946,12 +946,13 @@ package body C_Analyzer is
                while Index < Buffer'Last
                  and then Buffer (Index) /= '"'
                  and then Buffer (Index) /= '<'
+                 and then Buffer (Index) /= ASCII.LF
                loop
                   Index := UTF8_Find_Next_Char (Buffer, Index);
                   Char_In_Line := Char_In_Line + 1;
                end loop;
 
-               if Index < Buffer'Last then
+               if Index < Buffer'Last and then Buffer (Index) /= ASCII.LF then
                   Name_Index  := Index;
                   Name_Column := Char_In_Line;
                   Index  := Index + 1;
