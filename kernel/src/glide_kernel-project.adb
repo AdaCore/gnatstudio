@@ -198,6 +198,15 @@ package body Glide_Kernel.Project is
 
          Free (Path);
          Free (Gnatls_Args);
+         Expect (Fd, Result, "GNATLS .+\)", Timeout => -1);
+         Free (Handle.GNAT_Version);
+
+         declare
+            S : constant String := Expect_Out_Match (Fd);
+         begin
+            Handle.GNAT_Version := new String'(S (S'First + 7 .. S'Last));
+         end;
+
          Expect (Fd, Result, "Source Search Path:", Timeout => -1);
 
          loop
