@@ -85,6 +85,7 @@ with GNAT.OS_Lib; use GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 
 with Histories;
+with VFS;
 
 with Unchecked_Deallocation;
 
@@ -101,9 +102,9 @@ package Gtkada.File_Selector is
       Parent            : Gtk_Window := null;
       Use_Native_Dialog : Boolean := False;
       Kind              : File_Selector_Kind := Unspecified;
-      History           : Histories.History  := null) return String;
-   --  Create a file selection dialog, display it, and return the absolute file
-   --  name that was selected, if any, or return an empty string.
+      History           : Histories.History  := null) return VFS.Virtual_File;
+   --  Create a file selection dialog, display it, and return the selected file
+   --  if any, or return a VFS.No_File is the user cancelled the dialog.
    --  Base_Directory is the directory on which the dialog starts. If the
    --  directory is invalid, then the dialog will point to the current
    --  directory.
@@ -145,10 +146,9 @@ package Gtkada.File_Selector is
 
    function Select_File
      (File_Selector : File_Selector_Window_Access;
-      Parent        : Gtk_Window := null) return String;
+      Parent        : Gtk_Window := null) return VFS.Virtual_File;
    --  Display File_Selector on the screen, and wait until the user selects a
-   --  file. The absolute file name is returned, or the empty string if the
-   --  user cancelled the dialog.
+   --  file. VFS.No_File is returned if the user cancelled the dialog.
    --  As opposed to the first version of Select_File above, this one gives
    --  the opportunity to register filters before displaying the dialog.
 
@@ -169,9 +169,9 @@ package Gtkada.File_Selector is
    --  put the result there.
 
    function Get_Selection
-     (Dialog : access File_Selector_Window_Record) return String;
+     (Dialog : access File_Selector_Window_Record) return VFS.Virtual_File;
    --  Return the selected file.
-   --  Return an empty string if the entry does not exist.
+   --  Return VFS.No_File if the entry does not exist.
 
    function Get_Ok_Button
      (File_Selection : access File_Selector_Window_Record)

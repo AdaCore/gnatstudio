@@ -58,8 +58,8 @@ with Interfaces.C.Strings;
 
 with File_Utils;                use File_Utils;
 with GUI_Utils;                 use GUI_Utils;
-with String_Utils;              use String_Utils;
 with Traces;                    use Traces;
+with VFS;                       use VFS;
 
 with GNAT.Regexp;               use GNAT.Regexp;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
@@ -308,23 +308,22 @@ package body Gtkada.File_Selector is
    -------------------
 
    function Get_Selection
-     (Dialog : access File_Selector_Window_Record) return String is
+     (Dialog : access File_Selector_Window_Record) return VFS.Virtual_File is
    begin
       if Dialog.Selection_Entry = null
         or else Get_Text (Dialog.Selection_Entry) = ""
       then
-         return "";
+         return VFS.No_File;
       else
          declare
-            File : constant String :=
-              Locale_From_UTF8 (Get_Text (Dialog.Selection_Entry));
+            UTF8 : constant String := Get_Text (Dialog.Selection_Entry);
+            File : constant String := Locale_From_UTF8 (UTF8);
          begin
-            if Is_Absolute_Path (File) then
-               return File;
-            else
-               return Normalize_Pathname
-                 (Name_As_Directory (Dialog.Current_Directory.all) & File);
-            end if;
+            return Create
+              (Full_Filename =>
+                 Locale_To_UTF8
+                   (Normalize_Pathname
+                        (File, Directory => Dialog.Current_Directory.all)));
          end;
       end if;
    end Get_Selection;
@@ -364,7 +363,7 @@ package body Gtkada.File_Selector is
       Parent            : Gtk_Window := null;
       Use_Native_Dialog : Boolean := False;
       Kind              : File_Selector_Kind := Unspecified;
-      History           : Histories.History := null) return String
+      History           : Histories.History := null) return VFS.Virtual_File
    is
       function NativeFileSelection
         (Title       : String;
@@ -402,7 +401,11 @@ package body Gtkada.File_Selector is
             Val : constant String := Interfaces.C.Strings.Value (S);
          begin
             c_free (S);
-            return Val;
+            if Val = "" then
+               return VFS.No_File;
+            else
+               return Create (Full_Filename => Val);
+            end if;
          end;
       end if;
 
@@ -425,7 +428,7 @@ package body Gtkada.File_Selector is
 
    function Select_File
      (File_Selector : File_Selector_Window_Access;
-      Parent        : Gtk_Window := null) return String
+      Parent        : Gtk_Window := null) return VFS.Virtual_File
    is
       Filter_A : Filter_Show_All_Access := new Filter_Show_All;
    begin
@@ -454,10 +457,10 @@ package body Gtkada.File_Selector is
       Gtk.Main.Main;
 
       if File_Selector.Current_Directory = null then
-         return "";
+         return VFS.No_File;
       else
          declare
-            File : constant String := Get_Selection (File_Selector);
+            File : constant Virtual_File := Get_Selection (File_Selector);
          begin
             Destroy (File_Selector);
             return File;
