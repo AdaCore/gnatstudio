@@ -9,7 +9,8 @@
    <!---------------->
 
    <action name="generic_cvs_status" show-command="true" output="none">
-      <shell output="">echo "Querying status for $2-"</shell>
+      <shell output="none">pwd</shell>
+      <shell output="">echo "Querying status for files in %1"</shell>
       <external>cvs status "$2-"</external>
       <shell>VCS.status_parse "CVS" "%1" "$1" FALSE</shell>
    </action>
@@ -19,8 +20,8 @@
    <!-------------------->
 
    <action name="generic_cvs_status_dir" show-command="true" output="none">
-      <shell output="">echo "Querying status for directory:"</shell>
-      <shell output="">pwd</shell>
+      <shell output="none">pwd</shell>
+      <shell output="">echo "Querying status for %1"</shell>
       <external>cvs status .</external>
       <shell>VCS.status_parse "CVS" "%1" "$1" FALSE</shell>
    </action>
@@ -114,6 +115,7 @@
    <!-------------->
 
    <action name="generic_cvs_diff_head" show-command="true" output="none">
+      <shell output="">echo "Getting comparison for $1 ..."</shell>
       <external>cvs -f diff -rHEAD "$1"</external>
 
       <on-failure>
@@ -128,6 +130,7 @@
    </action>
 
    <action name="generic_cvs_diff" show-command="true" output="none">
+      <shell output="">echo "Getting comparison for revision $1 of $2 ..."</shell>
       <external>cvs -f diff -r $1 "$2"</external>
 
       <on-failure>
@@ -142,6 +145,7 @@
    </action>
 
    <action name="generic_cvs_diff2" show-command="true" output="none">
+      <shell output="">echo "Getting comparison between revisions $1 / $2 of $3 ..."</shell>
       <external>cvs -q update -p -r$2 "$3"</external>
       <shell>dump "%1" TRUE</shell>
       <shell>File "%1"</shell>
