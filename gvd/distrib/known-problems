@@ -1,5 +1,10 @@
 Known Problems fixed in GVD 1.2.0
 
+- [8715-002] Explorer does not handle files starting with no comment/blank line
+  Problem:    GVD will generate a bug box when trying to open in the explorer
+              window a package that starts with no blank or comment line.
+  Workaround: Add a comment or blank line at the beginning of the package.
+
 - Parsing Ada exported variables in C
   Problem:    GVD will generate a bug box when trying to display in C mode
               a variable declared in Ada.
