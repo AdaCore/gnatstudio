@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2003                      --
+--                      Copyright (C) 2001-2004                      --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -18,23 +18,22 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Gtk.Main;        use Gtk.Main;
-with File_Utils;      use File_Utils;
-with String_Utils;    use String_Utils;
-with Ada.Text_IO;     use Ada.Text_IO;
+with Gtk.Main;                use Gtk.Main;
+with File_Utils;              use File_Utils;
+with Ada.Text_IO;             use Ada.Text_IO;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
+with Case_Handling;           use Case_Handling;
 
-with Gtkada.Dialogs;  use Gtkada.Dialogs;
-with String_Utils;    use String_Utils;
+with Gtkada.Dialogs;          use Gtkada.Dialogs;
 
-with Pixmaps_IDE;     use Pixmaps_IDE;
+with Pixmaps_IDE;             use Pixmaps_IDE;
 
-with Aunit_Filters;   use Aunit_Filters;
-with Gtkada.Handlers; use Gtkada.Handlers;
+with Aunit_Filters;           use Aunit_Filters;
+with Gtkada.Handlers;         use Gtkada.Handlers;
 
-with Gdk.Pixbuf;      use Gdk.Pixbuf;
-with Glide_Intl;      use Glide_Intl;
-with VFS;             use VFS;
+with Gdk.Pixbuf;              use Gdk.Pixbuf;
+with Glide_Intl;              use Glide_Intl;
+with VFS;                     use VFS;
 
 package body Make_Harness_Window_Pkg.Callbacks is
    --  Callbacks for main "AUnit_Make_Harness" window. Template
