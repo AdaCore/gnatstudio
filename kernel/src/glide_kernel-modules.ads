@@ -132,8 +132,6 @@ with Gtk.Handlers;
 with Gtk.Menu_Item;
 with Gtk.Widget;
 with Gtkada.MDI;
-with Prj;
-with Prj.Tree;
 with Src_Info;
 with Language;
 with Basic_Types; use Basic_Types;
@@ -439,7 +437,7 @@ package Glide_Kernel.Modules is
 
    function Widget_Factory
      (Page         : access Project_Editor_Page_Record;
-      Project_View : Prj.Project_Id;
+      Project      : Projects.Project_type;
       Full_Project : String;
       Kernel       : access Kernel_Handle_Record'Class)
       return Gtk.Widget.Gtk_Widget is abstract;
@@ -460,24 +458,20 @@ package Glide_Kernel.Modules is
 
    function Project_Editor
      (Page          : access Project_Editor_Page_Record;
-      Project       : Prj.Tree.Project_Node_Id;
-      Project_View  : Prj.Project_Id;
+      Project       : Projects.Project_Type;
       Kernel        : access Kernel_Handle_Record'Class;
       Widget        : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Scenario_Variables : Prj_API.Project_Node_Array;
-      Ref_Project   : Prj.Tree.Project_Node_Id)
-      return Prj_API.Project_Node_Array is abstract;
+      Scenario_Variables : Projects.Scenario_Variable_Array;
+      Ref_Project   : Projects.Project_Type) return Boolean is abstract;
    --  Modifies Project given the data in Widget. Widget is the same that was
    --  created through a Project_Editor_Page_Factor.
    --
-   --  Should return the list of modified projects, if any, or an empty array
-   --  if no project was modified. The returned value will be different from
-   --  Project only if the modified package is a renaming of another package.
+   --  Return True if at least one project was modified.
    --
    --  This subprogram should not recompute the project view itself,
    --  since this is already done once after all the modifications have been
    --  done.
-   --  This function should expect Project_View to be No_Project in some cases.
+   --  This function should expect Project to be No_Project in some cases.
    --
    --  Ref_Project is the project whose properties the user decided to edit
    --  initially (through the contextual menu). In some cases, an editor might
@@ -488,14 +482,13 @@ package Glide_Kernel.Modules is
    --
    --  This function might be called several times with the same project, but a
    --  different scenario if the user has decided to modify several
-   --  scenarios. Project_View, if different from No_Project, will always be
-   --  the processed version of Project for the current scenario.
+   --  scenarios.
 
    procedure Refresh
-     (Page         : access Project_Editor_Page_Record;
-      Widget       : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Project_View : Prj.Project_Id := Prj.No_Project;
-      Languages    : GNAT.OS_Lib.Argument_List);
+     (Page      : access Project_Editor_Page_Record;
+      Widget    : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Project   : Projects.Project_Type := Projects.No_Project;
+      Languages : GNAT.OS_Lib.Argument_List);
    --  Refresh the contents of Widget, that was created by Widget_Factory.
    --  Since Project_View is still the one when the project creation wizard or
    --  the project properties editor were initially displayed, the list of
@@ -793,8 +786,8 @@ package Glide_Kernel.Modules is
      (Context           : access File_Selection_Context;
       Directory         : String := "";
       File_Name         : String := "";
-      Project_View      : Prj.Project_Id := Prj.No_Project;
-      Importing_Project : Prj.Project_Id := Prj.No_Project);
+      Project           : Projects.Project_Type := Projects.No_Project;
+      Importing_Project : Projects.Project_Type := Projects.No_Project);
    --  Set the information in this context.
 
    function Has_Directory_Information
@@ -823,7 +816,7 @@ package Glide_Kernel.Modules is
    --  project.
 
    function Project_Information
-     (Context : access File_Selection_Context) return Prj.Project_Id;
+     (Context : access File_Selection_Context) return Projects.Project_Type;
    --  Return the id of the project to which the file belongs. Note that this
    --  is computed automatically and cached otherwise.
    --  This function will return No_Project if the file stored in the context
@@ -835,7 +828,7 @@ package Glide_Kernel.Modules is
    --  current one.
 
    function Importing_Project_Information
-     (Context : access File_Selection_Context) return Prj.Project_Id;
+     (Context : access File_Selection_Context) return Projects.Project_Type;
    --  Return the project that imports the one returned by Project_Information.
    --  This is never computed automatically, and unless provided by the creator
    --  of the project, this will be left empty.
@@ -1002,8 +995,8 @@ private
    type File_Selection_Context is new Selection_Context with record
       Directory         : GNAT.OS_Lib.String_Access := null;
       File_Name         : GNAT.OS_Lib.String_Access := null;
-      Project_View      : Prj.Project_Id            := Prj.No_Project;
-      Importing_Project : Prj.Project_Id            := Prj.No_Project;
+      Project           : Projects.Project_Type     := Projects.No_Project;
+      Importing_Project : Projects.Project_Type     := Projects.No_Project;
 
       Creator_Provided_Project : Boolean := False;
       --  Set to True if the project_view was given by the creator, instead of

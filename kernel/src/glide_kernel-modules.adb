@@ -45,8 +45,8 @@ with Gtk.Toolbar;       use Gtk.Toolbar;
 with Gtk.Widget;        use Gtk.Widget;
 with Gtkada.MDI;        use Gtkada.MDI;
 with Language;          use Language;
-with Prj;               use Prj;
-with Prj_API;           use Prj_API;
+with Projects;          use Projects;
+with Projects.Registry; use Projects.Registry;
 with Src_Info;          use Src_Info;
 with Src_Info.Queries;  use Src_Info.Queries;
 with String_Utils;      use String_Utils;
@@ -299,8 +299,8 @@ package body Glide_Kernel.Modules is
      (Context : access File_Selection_Context;
       Directory : String := "";
       File_Name : String := "";
-      Project_View      : Prj.Project_Id := Prj.No_Project;
-      Importing_Project : Prj.Project_Id := Prj.No_Project) is
+      Project           : Projects.Project_Type := Projects.No_Project;
+      Importing_Project : Projects.Project_Type := Projects.No_Project) is
    begin
       Free (Context.Directory);
       Free (Context.File_Name);
@@ -313,8 +313,8 @@ package body Glide_Kernel.Modules is
          Context.File_Name := new String'(File_Name);
       end if;
 
-      Context.Creator_Provided_Project := Project_View /= No_Project;
-      Context.Project_View := Project_View;
+      Context.Creator_Provided_Project := Project /= No_Project;
+      Context.Project := Project;
       Context.Importing_Project := Importing_Project;
    end Set_File_Information;
 
@@ -333,16 +333,15 @@ package body Glide_Kernel.Modules is
    -------------------------
 
    function Project_Information (Context : access File_Selection_Context)
-      return Prj.Project_Id is
+      return Projects.Project_Type is
    begin
-      if Context.Project_View = No_Project
+      if Context.Project = No_Project
         and then Has_File_Information (Context)
       then
-         Context.Project_View := Get_Project_From_File
-           (Get_Project_View (Get_Kernel (Context)),
-            File_Information (Context));
+         Context.Project := Get_Project_From_File
+           (Get_Registry (Get_Kernel (Context)), File_Information (Context));
       end if;
-      return Context.Project_View;
+      return Context.Project;
    end Project_Information;
 
    -------------------------------
@@ -408,7 +407,7 @@ package body Glide_Kernel.Modules is
    -----------------------------------
 
    function Importing_Project_Information
-     (Context : access File_Selection_Context) return Prj.Project_Id is
+     (Context : access File_Selection_Context) return Project_Type is
    begin
       return Context.Importing_Project;
    end Importing_Project_Information;
@@ -1472,7 +1471,6 @@ package body Glide_Kernel.Modules is
          declare
             Full : constant String := Find_On_Path
               (Project   => Get_Project (Kernel),
-               View      => Get_Project_View (Kernel),
                Filename  => Filename,
                Recursive => True);
          begin
@@ -1740,12 +1738,12 @@ package body Glide_Kernel.Modules is
    -------------
 
    procedure Refresh
-     (Page         : access Project_Editor_Page_Record;
-      Widget       : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Project_View : Prj.Project_Id := Prj.No_Project;
-      Languages    : Argument_List)
+     (Page      : access Project_Editor_Page_Record;
+      Widget    : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Project   : Project_Type := No_Project;
+      Languages : Argument_List)
    is
-      pragma Unreferenced (Page, Widget, Project_View, Languages);
+      pragma Unreferenced (Page, Widget, Project, Languages);
    begin
       null;
    end Refresh;
