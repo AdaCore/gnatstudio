@@ -1,0 +1,19 @@
+with Gtk; use Gtk;
+with Gtk.Main;
+with Gtk.Widget; use Gtk.Widget;
+with Builder_Pkg; use Builder_Pkg;
+with Glide_Pkg; use Glide_Pkg;
+
+procedure Glide is
+   Builder : Builder_Access;
+   Glide : Glide_Access;
+
+begin
+   Gtk.Main.Set_Locale;
+   Gtk.Main.Init;
+   Gtk_New (Builder);
+   Show_All (Builder);
+   Gtk_New (Glide);
+   Show_All (Glide);
+   Gtk.Main.Main;
+end Glide;
