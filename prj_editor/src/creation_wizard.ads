@@ -26,7 +26,6 @@
 -- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
 
-with Gtk.Clist;
 with Gtk.GEntry;
 with Gtk.Menu;
 with Gtk.Check_Button;
@@ -56,9 +55,8 @@ private
    type Prj_Wizard_Record is new Wizards.Wizard_Record with record
       Project_Name      : Gtk.GEntry.Gtk_Entry;
       Project_Location  : Gtk.GEntry.Gtk_Entry;
-      Src_Dir_Selection : Directory_Tree.Dir_Tree;
-      Src_Dir_List      : Gtk.Clist.Gtk_Clist;
-      Obj_Dir_Selection : Directory_Tree.Dir_Tree;
+      Src_Dir_Selection : Directory_Tree.Directory_Selector;
+      Obj_Dir_Selection : Directory_Tree.Directory_Selector;
       Switches          : Switches_Editors.Switches_Edit;
       Naming            : Naming_Editors.Naming_Editor;
       Load_Project      : Gtk.Check_Button.Gtk_Check_Button;
