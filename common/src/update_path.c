@@ -18,53 +18,10 @@
  * Place - Suite 330, Boston, MA 02111-1307, USA.                    *
  *********************************************************************/
 
-
-/* Dummy version of run_path_option, needed by mlib.adb */
-
-const char *__gnat_run_path_option = "";
-
-/* Dummy versions of update_path and set_std_prefix (needed by osint.adb) */
-
-void
-set_std_prefix (char *path, int len)
-{
-}
+/* Dummy version of update_path (needed by osint.adb) */
 
 char *
 update_path (char *path, char *key)
 {
   return path;
 }
-
-/* Provide dummy symbols needed by gcc on some platforms */
-
-#ifdef hpux
-
-/* These symbols are expected by libgcc under HP-UX when GCC is
-   configure with --enable-threads */
-
-int
-pthread_once ()
-{
-  return -1;
-}
-
-int
-pthread_mutex_lock ()
-{
-  return 0;
-}
-
-int
-pthread_mutex_unlock ()
-{
-  return 0;
-}
-
-int
-pthread_create ()
-{
-  return 0;
-}
-
-#endif
