@@ -2613,7 +2613,7 @@ package body CPP_Parser is
       end if;
 
       if Get_Time_Stamp (Source) = VFS.No_Time
-        or else Get_Time_Stamp (Source) < File_Time_Stamp (Source_Filename)
+        or else Get_Time_Stamp (Source) /= File_Time_Stamp (Source_Filename)
       then
          Parse_File (Handler, Source);
       end if;
@@ -2777,7 +2777,7 @@ package body CPP_Parser is
          begin
             if Lang = Name_C or else Lang = Name_C_Plus_Plus then
 
-               if File_Time_Stamp (Xref_File_Name) <
+               if File_Time_Stamp (Xref_File_Name) /=
                  File_Time_Stamp (File)
                then
                   Num_C_Files := Num_C_Files + 1;
