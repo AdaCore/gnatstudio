@@ -698,7 +698,13 @@ package body Codefix.Formal_Errors is
 
             for J in 1 ..  Index_Str - 1 loop
                if Str_Array (J).all = Str_Array (Index_Str).all then
-                  --  ???  Free
+
+                  for J in Str_Array'Range loop
+                     Free (Str_Array (J));
+                  end loop;
+
+                  Codefix.Formal_Errors.Free (Result);
+
                   return Command_List.Null_List;
                end if;
             end loop;
@@ -708,7 +714,7 @@ package body Codefix.Formal_Errors is
                String_Match => new String'(Str_Array (Index_Str).all & "."),
                Mode         => Text_Ascii);
 
-            Initialize (New_Command, Current_Text, Word);
+            Initialize (New_Command, Current_Text, Word, False);
 
             Set_Caption
               (New_Command,
@@ -722,6 +728,10 @@ package body Codefix.Formal_Errors is
             Index_Str := Index_Str + 1;
             Cursor_Node := Next (Cursor_Node);
          end;
+      end loop;
+
+      for J in Str_Array'Range loop
+         Free (Str_Array (J));
       end loop;
 
       return Result;
