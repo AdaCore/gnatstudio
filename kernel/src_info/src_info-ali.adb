@@ -1084,15 +1084,17 @@ package body Src_Info.ALI is
       --  naming schems
 
       if New_LI_File.LI.Spec_Info /= null
-        and then New_LI_File.LI.Spec_Info.Source_Filename.all =
-           Withed_File_Name
+        and then
+        (New_LI_File.LI.Spec_Info.Source_Filename.all = Withed_File_Name
+         or else New_LI_File.LI.Spec_Info.Source_Filename.all = Krunched_Name)
       then
          return;
       end if;
 
       if New_LI_File.LI.Body_Info /= null
-        and then New_LI_File.LI.Body_Info.Source_Filename.all =
-           Withed_File_Name
+        and then
+        (New_LI_File.LI.Body_Info.Source_Filename.all = Withed_File_Name
+         or else New_LI_File.LI.Body_Info.Source_Filename.all = Krunched_Name)
       then
          return;
       end if;
@@ -1144,7 +1146,7 @@ package body Src_Info.ALI is
       --  raise the ALI_Internal_Error exception to signal the error.
 
       Trace (Me, "Process_With: unexpected end " & Withed_File_Name
-             & " in project "
+             & " " & Krunched_Name & " in project "
              & Get_String (Projects.Table (Project).Name));
       raise ALI_Internal_Error;
    end Process_With;
