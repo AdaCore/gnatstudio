@@ -72,13 +72,13 @@ with VCS_Module;
 with VCS.CVS;
 with VCS.ClearCase;
 with VCS.Unknown_VCS;
-with Glide_Kernel.Help;
 with Vdiff_Module;
 with Builder_Module;
 with Glide_Kernel.Console;
 with Navigation_Module;
 with Custom_Module;
 with Vsearch_Ext;
+with Help_Module;
 
 procedure GPS is
    use Glide_Main_Window;
@@ -339,7 +339,7 @@ procedure GPS is
       VCS.ClearCase.Register_Module (GPS.Kernel);
       Aunit_Module.Register_Module (GPS.Kernel);
       Glide_Kernel.Console.Register_Module (GPS.Kernel);
-      Glide_Kernel.Help.Register_Module (GPS.Kernel);
+      Help_Module.Register_Module (GPS.Kernel);
 
       --  Register the supported languages and their associated LI handlers.
 
