@@ -108,7 +108,6 @@ begin
    Gtk_New (Codefix_Window.Accept_Correction, -"Apply");
    Set_Relief (Codefix_Window.Accept_Correction, Relief_Normal);
    Set_Flags (Codefix_Window.Accept_Correction, Can_Default);
-   Grab_Default (Codefix_Window.Accept_Correction);
    Set_Tip (Tooltips, Codefix_Window.Accept_Correction, -"Fix this error and go to next one");
    Widget_Callback.Object_Connect
      (Codefix_Window.Accept_Correction, "clicked",
