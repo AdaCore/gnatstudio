@@ -13,7 +13,7 @@
 -- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
 -- General Public License for more details. You should have received --
--- a copy of the GNU General Public License along with this library; --
+-- a copy of the GNU General Public License along with this program; --
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
@@ -39,7 +39,6 @@ with Gtk.Item_Factory;    use Gtk.Item_Factory;
 with Gtk.Menu;            use Gtk.Menu;
 with Gtk.Menu_Item;       use Gtk.Menu_Item;
 with Gtk.Widget;          use Gtk.Widget;
-with Gtk.Notebook;        use Gtk.Notebook;
 with Gtk.Label;           use Gtk.Label;
 with Gtk.Object;          use Gtk.Object;
 with Gtk.Window;          use Gtk.Window;
@@ -54,11 +53,12 @@ with Gtkada.Types;        use Gtkada.Types;
 
 with Ada.Characters.Handling;  use Ada.Characters.Handling;
 
-with GNAT.Regpat; use GNAT.Regpat;
-with GNAT.OS_Lib; use GNAT.OS_Lib;
+pragma Warnings (Off);
+with GNAT.Expect.TTY;     use GNAT.Expect.TTY;
+with GNAT.Regpat;         use GNAT.Regpat;
+with GNAT.OS_Lib;         use GNAT.OS_Lib;
 
 with Odd_Intl;                   use Odd_Intl;
-with Process_Tab_Pkg;            use Process_Tab_Pkg;
 with Display_Items;              use Display_Items;
 with Debugger.Gdb;               use Debugger.Gdb;
 with Debugger.Jdb;               use Debugger.Jdb;
@@ -87,12 +87,8 @@ with String_List_Utils;          use String_List_Utils;
 
 package body GVD.Process is
 
-   Process_User_Data_Name : constant String := "gvd_editor_to_process";
-   --  User data string.
-   --  ??? Should use some quarks, which would be just a little bit faster.
-
    type Call_Stack_Record is record
-      Process : Debugger_Process_Tab;
+      Process : Visual_Debugger;
       Mask    : Stack_List_Mask;
    end record;
 
@@ -103,7 +99,7 @@ package body GVD.Process is
      (Gtk_Menu_Item_Record, Call_Stack_Record, Setup);
 
    package Canvas_Event_Handler is new Gtk.Handlers.Return_Callback
-     (Debugger_Process_Tab_Record, Boolean);
+     (Visual_Debugger_Record, Boolean);
 
    function To_Main_Debug_Window is new
      Ada.Unchecked_Conversion (System.Address, GVD_Main_Window);
@@ -115,7 +111,8 @@ package body GVD.Process is
 
    --  Array of the signals created for this widget
    Signals : constant Chars_Ptr_Array :=
-     "process_stopped" + "context_changed" + "debugger_closed";
+   "executable_changed" + "process_stopped" + "context_changed" +
+     "debugger_closed";
 
    Graph_Cmd_Format : constant Pattern_Matcher := Compile
      ("graph\s+(print|display)\s+(`([^`]+)`|""([^""]+)"")?(.*)",
@@ -155,7 +152,7 @@ package body GVD.Process is
    --  Toggle the display of a specific column in the Stack_List window.
 
    function Debugger_Contextual_Menu
-     (Process  : access Debugger_Process_Tab_Record'Class)
+     (Process  : access Visual_Debugger_Record'Class)
       return Gtk.Menu.Gtk_Menu;
    --  Create (if necessary) and reset the contextual menu used in the
    --  debugger command window.
@@ -174,64 +171,79 @@ package body GVD.Process is
    --  Real handler called by First_Text_Output_Filter
 
    function Debugger_Button_Press
-     (Process : access Debugger_Process_Tab_Record'Class;
+     (Process : access Visual_Debugger_Record'Class;
       Event    : Gdk.Event.Gdk_Event) return Boolean;
    --  Callback for all the button press events in the debugger command window.
    --  This is used to display the contexual menu.
 
    procedure Process_Graph_Cmd
-     (Process : access Debugger_Process_Tab_Record'Class;
+     (Process : access Visual_Debugger_Record'Class;
       Cmd     : String);
    --  Parse and process a "graph print" or "graph display" command
 
    procedure Process_View_Cmd
-     (Process : access Debugger_Process_Tab_Record'Class;
+     (Process : access Visual_Debugger_Record'Class;
       Cmd     : String);
    --  Parse and process a "view".
    --  Syntax recognized: view (source|asm|source_asm)
 
    procedure Preferences_Changed
-     (Editor : access Gtk.Widget.Gtk_Widget_Record'Class);
+     (Editor : access Glib.Object.GObject_Record'Class);
    --  Called when the preferences have changed, and the editor should be
    --  redisplayed with the new setup.
 
    function On_Data_Paned_Delete_Event
-     (Object : access Gtk_Widget_Record'Class;
+     (Object : access Glib.Object.GObject_Record'Class;
       Params : Gtk.Arguments.Gtk_Args) return Boolean;
    --  Callback for the "delete_event" signal on the Data window.
 
+   function On_Editor_Text_Delete_Event
+     (Object : access Glib.Object.GObject_Record'Class;
+      Params : Gtk.Arguments.Gtk_Args) return Boolean;
+   --  Callback for the "delete_event" signal on the editor text
+
    procedure On_Stack_List_Select_Row
-     (Object : access Gtk_Widget_Record'Class;
+     (Object : access Glib.Object.GObject_Record'Class;
       Params : Gtk.Arguments.Gtk_Args);
    --  Callback for the "select_row" signal on the stack list.
 
    function On_Stack_List_Button_Press_Event
-     (Object : access Gtk_Widget_Record'Class;
+     (Object : access Glib.Object.GObject_Record'Class;
       Params : Gtk.Arguments.Gtk_Args) return Boolean;
    --  Callback for the "button_press" signal on the stack list.
 
    function On_Command_Scrolledwindow_Delete_Event
-     (Object : access Gtk_Widget_Record'Class;
+     (Object : access Glib.Object.GObject_Record'Class;
       Params : Gtk.Arguments.Gtk_Args) return Boolean;
    --  Callback for the "delete_event" signal on the command window.
 
    procedure On_Debugger_Text_Grab_Focus
-     (Object : access Gtk_Widget_Record'Class);
+     (Object : access Glib.Object.GObject_Record'Class);
    --  Callback for the "grab_focus" signal on the command window.
 
    function Interpret_Command_Handler
-     (Input  : in String;
+     (Input  : String;
       Object : access GObject_Record'Class) return String;
    --  Launch the command interpreter for Input and return the output.
+
+   function Debuggee_Console_Handler
+     (Input  : String;
+      Object : access GObject_Record'Class) return String;
+   --  Handler of I/O for the debuggee console.
+
+   function On_Debuggee_Console_Delete_Event
+     (Object : access Glib.Object.GObject_Record'Class;
+      Params : Gtk.Arguments.Gtk_Args) return Boolean;
+   --  Callback for the "delete_event" signal on the debuggee console.
 
    function Complete_Command
      (Input  : in String;
       Object : access GObject_Record'Class)
-     return String_List_Utils.String_List.List;
+      return String_List_Utils.String_List.List;
    --  Return the list of completions for Input.
 
    procedure Setup_Data_Window
-     (Process : access Debugger_Process_Tab_Record'Class);
+     (Process : access Visual_Debugger_Record'Class);
    --  Set up/initialize the data window associated with Process.
    --  History will be used for the various dialog's combo boxes to store the
    --  values used by the user
@@ -256,7 +268,7 @@ package body GVD.Process is
    is
       use String_List_Utils.String_List;
 
-      Top    : constant Debugger_Process_Tab := Debugger_Process_Tab (Object);
+      Top    : constant Visual_Debugger := Visual_Debugger (Object);
       Result : List;
    begin
       if not Command_In_Process (Get_Process (Top.Debugger)) then
@@ -291,10 +303,10 @@ package body GVD.Process is
    -------------------------------
 
    function Interpret_Command_Handler
-     (Input  : in String;
+     (Input  : String;
       Object : access GObject_Record'Class) return String
    is
-      Top : constant Debugger_Process_Tab := Debugger_Process_Tab (Object);
+      Top : constant Visual_Debugger := Visual_Debugger (Object);
    begin
       --  ??? Remember last command ?
 
@@ -302,18 +314,32 @@ package body GVD.Process is
       return "";
    end Interpret_Command_Handler;
 
+   ------------------------------
+   -- Debuggee_Console_Handler --
+   ------------------------------
+
+   function Debuggee_Console_Handler
+     (Input  : String;
+      Object : access GObject_Record'Class) return String
+   is
+      Top : constant Visual_Debugger := Visual_Debugger (Object);
+      pragma Unreferenced (Input, Top);
+   begin
+      --  ??? Send (Top.Debuggee_Console.TTY, Input, Add_LD => False);
+      return "";
+   end Debuggee_Console_Handler;
+
    --------------------------------
    -- On_Data_Paned_Delete_Event --
    --------------------------------
 
    function On_Data_Paned_Delete_Event
-     (Object : access Gtk_Widget_Record'Class;
+     (Object : access Glib.Object.GObject_Record'Class;
       Params : Gtk.Arguments.Gtk_Args) return Boolean
    is
       pragma Unreferenced (Params);
-      --  Arg1 : Gdk_Event := To_Event (Params, 1);
-      Process : constant Debugger_Process_Tab :=
-        Debugger_Process_Tab (Object);
+      Process : constant Visual_Debugger :=
+        Visual_Debugger (Object);
 
    begin
       if Process.Exiting then
@@ -324,17 +350,30 @@ package body GVD.Process is
       end if;
    end On_Data_Paned_Delete_Event;
 
+   ---------------------------------
+   -- On_Editor_Text_Delete_Event --
+   ---------------------------------
+
+   function On_Editor_Text_Delete_Event
+     (Object : access GObject_Record'Class;
+      Params : Gtk.Arguments.Gtk_Args) return Boolean
+   is
+      pragma Unreferenced (Object, Params);
+   begin
+      return False;
+   end On_Editor_Text_Delete_Event;
+
    ------------------------------
    -- On_Stack_List_Select_Row --
    ------------------------------
 
    procedure On_Stack_List_Select_Row
-     (Object : access Gtk_Widget_Record'Class;
+     (Object : access GObject_Record'Class;
       Params : Gtk.Arguments.Gtk_Args)
    is
       Frame     : constant Gint := To_Gint (Params, 1) + 1;
-      Process   : constant Debugger_Process_Tab :=
-        Debugger_Process_Tab (Object);
+      Process   : constant Visual_Debugger :=
+        Visual_Debugger (Object);
 
    begin
       Stack_Frame (Process.Debugger, Positive (Frame), GVD.Types.Visible);
@@ -345,12 +384,12 @@ package body GVD.Process is
    --------------------------------------
 
    function On_Stack_List_Button_Press_Event
-     (Object : access Gtk_Widget_Record'Class;
+     (Object : access GObject_Record'Class;
       Params : Gtk.Arguments.Gtk_Args) return Boolean
    is
       Arg1    : constant Gdk_Event := To_Event (Params, 1);
-      Process : constant Debugger_Process_Tab :=
-        Debugger_Process_Tab (Object);
+      Process : constant Visual_Debugger :=
+        Visual_Debugger (Object);
 
    begin
       if Get_Button (Arg1) = 3
@@ -370,13 +409,12 @@ package body GVD.Process is
    --------------------------------------------
 
    function On_Command_Scrolledwindow_Delete_Event
-     (Object : access Gtk_Widget_Record'Class;
+     (Object : access GObject_Record'Class;
       Params : Gtk.Arguments.Gtk_Args) return Boolean
    is
       pragma Unreferenced (Params);
-      --  Arg1 : Gdk_Event := To_Event (Params, 1);
-      Process : constant Debugger_Process_Tab :=
-        Debugger_Process_Tab (Object);
+      Process : constant Visual_Debugger :=
+        Visual_Debugger (Object);
 
    begin
       if Process.Exiting then
@@ -387,16 +425,37 @@ package body GVD.Process is
       end if;
    end On_Command_Scrolledwindow_Delete_Event;
 
+   --------------------------------------
+   -- On_Debuggee_Console_Delete_Event --
+   --------------------------------------
+
+   function On_Debuggee_Console_Delete_Event
+     (Object : access GObject_Record'Class;
+      Params : Gtk.Arguments.Gtk_Args) return Boolean
+   is
+      pragma Unreferenced (Params);
+      Process : constant Visual_Debugger :=
+        Visual_Debugger (Object);
+
+   begin
+      if Process.Exiting then
+         Process.Debuggee_Console := null;
+         return False;
+      else
+         return True;
+      end if;
+   end On_Debuggee_Console_Delete_Event;
+
    ---------------------------------
    -- On_Debugger_Text_Grab_Focus --
    ---------------------------------
 
    procedure On_Debugger_Text_Grab_Focus
-     (Object : access Gtk_Widget_Record'Class)
+     (Object : access GObject_Record'Class)
    is
       use String_History;
    begin
-      Wind (Debugger_Process_Tab (Object).Window.Command_History, Forward);
+      Wind (Visual_Debugger (Object).Window.Command_History, Forward);
    end On_Debugger_Text_Grab_Focus;
 
    -----------------------
@@ -404,7 +463,7 @@ package body GVD.Process is
    -----------------------
 
    procedure Add_Regexp_Filter
-     (Process : access Debugger_Process_Tab_Record'Class;
+     (Process : access Visual_Debugger_Record'Class;
       Filter  : Regexp_Filter_Function;
       Regexp  : Pattern_Matcher) is
    begin
@@ -420,7 +479,7 @@ package body GVD.Process is
    --------------------------------
 
    function Call_Stack_Contextual_Menu
-     (Process : access Debugger_Process_Tab_Record'Class)
+     (Process : access Visual_Debugger_Record'Class)
       return Gtk.Menu.Gtk_Menu
    is
       Check : Gtk_Check_Menu_Item;
@@ -439,7 +498,7 @@ package body GVD.Process is
       Call_Stack_Cb.Connect
         (Check, "activate",
          Call_Stack_Cb.To_Marshaller (Change_Mask'Access),
-         (Debugger_Process_Tab (Process), Frame_Num));
+         (Visual_Debugger (Process), Frame_Num));
 
       Gtk_New (Check, Label => -"Program Counter");
       Set_Active (Check, (Process.Backtrace_Mask and Program_Counter) /= 0);
@@ -447,7 +506,7 @@ package body GVD.Process is
       Call_Stack_Cb.Connect
         (Check, "activate",
          Call_Stack_Cb.To_Marshaller (Change_Mask'Access),
-         (Debugger_Process_Tab (Process), Program_Counter));
+         (Visual_Debugger (Process), Program_Counter));
 
       Gtk_New (Check, Label => -"Subprogram Name");
       Set_Active (Check, (Process.Backtrace_Mask and Subprog_Name) /= 0);
@@ -455,7 +514,7 @@ package body GVD.Process is
       Call_Stack_Cb.Connect
         (Check, "activate",
          Call_Stack_Cb.To_Marshaller (Change_Mask'Access),
-         (Debugger_Process_Tab (Process), Subprog_Name));
+         (Visual_Debugger (Process), Subprog_Name));
 
       Gtk_New (Check, Label => -"Parameters");
       Set_Active (Check, (Process.Backtrace_Mask and Params) /= 0);
@@ -463,7 +522,7 @@ package body GVD.Process is
       Call_Stack_Cb.Connect
         (Check, "activate",
          Call_Stack_Cb.To_Marshaller (Change_Mask'Access),
-         (Debugger_Process_Tab (Process), Params));
+         (Visual_Debugger (Process), Params));
 
       Gtk_New (Check, Label => -"File Location");
       Set_Active (Check, (Process.Backtrace_Mask and File_Location) /= 0);
@@ -471,7 +530,7 @@ package body GVD.Process is
       Call_Stack_Cb.Connect
         (Check, "activate",
          Call_Stack_Cb.To_Marshaller (Change_Mask'Access),
-         (Debugger_Process_Tab (Process), File_Location));
+         (Visual_Debugger (Process), File_Location));
 
       Show_All (Process.Call_Stack_Contextual_Menu);
       return Process.Call_Stack_Contextual_Menu;
@@ -499,23 +558,16 @@ package body GVD.Process is
    function Convert
      (Main_Debug_Window : access GVD_Main_Window_Record'Class;
       Descriptor        : GNAT.Expect.Process_Descriptor'Class)
-      return Debugger_Process_Tab
+      return Visual_Debugger
    is
-      Page      : Gtk_Widget;
-      Num_Pages : constant Gint :=
-        Gint (Page_List.Length
-          (Get_Children (Main_Debug_Window.Process_Notebook)));
-      Process   : Debugger_Process_Tab;
+      Process : Visual_Debugger;
+      List    : Debugger_List_Link := Main_Debug_Window.First_Debugger;
 
    begin
-      --  For all the process tabs in the application, check whether
-      --  this is the one associated with Pid.
+      while List /= null loop
+         Process := Visual_Debugger (List.Debugger);
 
-      for Page_Num in 0 .. Num_Pages - 1 loop
-         Page := Get_Nth_Page (Main_Debug_Window.Process_Notebook, Page_Num);
-         if Page /= null then
-            Process := Process_User_Data.Get (Page);
-
+         if Process.Debugger /= null then
             --  Note: The process might have been already killed when this
             --  function is called.
 
@@ -525,6 +577,8 @@ package body GVD.Process is
                return Process;
             end if;
          end if;
+
+         List := List.Next;
       end loop;
 
       raise Debugger_Not_Found;
@@ -539,19 +593,9 @@ package body GVD.Process is
    -------------
 
    function Convert
-     (Text : access GVD.Code_Editors.Code_Editor_Record'Class)
-      return Debugger_Process_Tab is
-   begin
-      return Process_User_Data.Get (Text, Process_User_Data_Name);
-   end Convert;
-
-   -------------
-   -- Convert --
-   -------------
-
-   function Convert
      (Main_Debug_Window : access Gtk.Window.Gtk_Window_Record'Class;
-      Debugger : access Debugger_Root'Class) return Debugger_Process_Tab is
+      Debugger          : access Debugger_Root'Class)
+      return Visual_Debugger is
    begin
       return Convert (GVD_Main_Window (Main_Debug_Window),
                       Get_Descriptor (Get_Process (Debugger)).all);
@@ -562,7 +606,7 @@ package body GVD.Process is
    ------------------------------
 
    function Debugger_Contextual_Menu
-     (Process : access Debugger_Process_Tab_Record'Class)
+     (Process : access Visual_Debugger_Record'Class)
       return Gtk.Menu.Gtk_Menu
    is
       Mitem : Gtk_Menu_Item;
@@ -584,7 +628,7 @@ package body GVD.Process is
    -----------------
 
    procedure Output_Text
-     (Process      : Debugger_Process_Tab;
+     (Process      : Visual_Debugger;
       Str          : String;
       Is_Command   : Boolean := False;
       Set_Position : Boolean := False)
@@ -629,7 +673,7 @@ package body GVD.Process is
    ------------------------
 
    procedure Final_Post_Process
-     (Process : access Debugger_Process_Tab_Record'Class;
+     (Process : access Visual_Debugger_Record'Class;
       Mode    : GVD.Types.Command_Type)
    is
       File_First  : Natural := 0;
@@ -692,7 +736,7 @@ package body GVD.Process is
       if Line /= 0
         and then Mode /= Internal
       then
-         Set_Line (Process.Editor_Text, Line, Process => Gtk_Widget (Process));
+         Set_Line (Process.Editor_Text, Line, Process => GObject (Process));
       end if;
 
       --  Change the current assembly source displayed, before updating
@@ -775,7 +819,7 @@ package body GVD.Process is
       Str        : String;
       Window     : System.Address)
    is
-      Process        : constant Debugger_Process_Tab :=
+      Process        : constant Visual_Debugger :=
         Convert (To_Main_Debug_Window (Window), Descriptor);
       Tmp_Str        : GNAT.OS_Lib.String_Access;
       Current_Filter : Regexp_Filter_List;
@@ -884,7 +928,7 @@ package body GVD.Process is
    ---------------------------
 
    function Debugger_Button_Press
-     (Process : access Debugger_Process_Tab_Record'Class;
+     (Process : access Visual_Debugger_Record'Class;
       Event    : Gdk.Event.Gdk_Event) return Boolean is
    begin
       if Get_Button (Event) = 3 then
@@ -904,11 +948,11 @@ package body GVD.Process is
    -------------
 
    procedure Gtk_New
-     (Process : out Debugger_Process_Tab;
+     (Process : out Visual_Debugger;
       Window  : access GVD.Main_Window.GVD_Main_Window_Record'Class;
       Source  : GVD.Text_Box.Source_Editor.Source_Editor) is
    begin
-      Process := new Debugger_Process_Tab_Record;
+      Process := new Visual_Debugger_Record;
       Initialize (Process, Window, Source);
    end Gtk_New;
 
@@ -917,7 +961,7 @@ package body GVD.Process is
    -----------------------
 
    procedure Setup_Data_Window
-     (Process : access Debugger_Process_Tab_Record'Class)
+     (Process : access Visual_Debugger_Record'Class)
    is
       Label : Gtk_Label;
       Child : MDI_Child;
@@ -925,7 +969,7 @@ package body GVD.Process is
       Gtk_New_Hpaned (Process.Data_Paned);
       Set_Position (Process.Data_Paned, 200);
       Set_Size_Request (Process.Data_Paned, 100, 100);
-      Gtkada.Handlers.Return_Callback.Object_Connect
+      Object_Return_Callback.Object_Connect
         (Process.Data_Paned, "delete_event",
          On_Data_Paned_Delete_Event'Access, Process);
 
@@ -941,27 +985,27 @@ package body GVD.Process is
         Button_Press_Mask or
         Button_Release_Mask);
       Process.Stack_List_Select_Id :=
-        Widget_Callback.Object_Connect
+        Object_Callback.Object_Connect
           (Process.Stack_List, "select_row",
            On_Stack_List_Select_Row'Access, Process);
-      Gtkada.Handlers.Return_Callback.Object_Connect
+      Object_Return_Callback.Object_Connect
         (Process.Stack_List, "button_press_event",
          On_Stack_List_Button_Press_Event'Access, Process);
       Add (Process.Stack_Scrolledwindow, Process.Stack_List);
 
-      Gtk_New (Label, -("Num"));
+      Gtk_New (Label, -"Num");
       Set_Column_Widget (Process.Stack_List, 0, Label);
 
-      Gtk_New (Label, -("PC"));
+      Gtk_New (Label, -"PC");
       Set_Column_Widget (Process.Stack_List, 1, Label);
 
-      Gtk_New (Label, -("Subprogram"));
+      Gtk_New (Label, -"Subprogram");
       Set_Column_Widget (Process.Stack_List, 2, Label);
 
-      Gtk_New (Label, -("Parameters"));
+      Gtk_New (Label, -"Parameters");
       Set_Column_Widget (Process.Stack_List, 3, Label);
 
-      Gtk_New (Label, -("Location"));
+      Gtk_New (Label, -"Location");
       Set_Column_Widget (Process.Stack_List, 4, Label);
 
       Gtk_New (Process.Data_Scrolledwindow);
@@ -993,10 +1037,10 @@ package body GVD.Process is
       Configure
         (Process.Data_Canvas,
          Annotation_Font => To_String
-         (Get_Pref (GVD_Prefs, Annotation_Font)));
+           (Get_Pref (GVD_Prefs, Annotation_Font)));
 
-      Child := Put (Process.Process_Mdi, Process.Data_Paned);
-      Set_Title (Child, "Debugger Data");
+      Child := Put (Process.Window.Process_Mdi, Process.Data_Paned);
+      Set_Title (Child, -"Debugger Data");
       Set_Dock_Side (Child, Top);
       Dock_Child (Child);
    end Setup_Data_Window;
@@ -1006,7 +1050,7 @@ package body GVD.Process is
    --------------------------
 
    procedure Setup_Command_Window
-     (Process : access Debugger_Process_Tab_Record'Class)
+     (Process : access Visual_Debugger_Record'Class)
    is
       Child : MDI_Child;
    begin
@@ -1025,13 +1069,13 @@ package body GVD.Process is
         (Process.Debugger_Text,
          Complete_Command'Access);
 
-      Gtkada.Handlers.Return_Callback.Object_Connect
+      Object_Return_Callback.Object_Connect
         (Process.Debugger_Text, "delete_event",
          On_Command_Scrolledwindow_Delete_Event'Access, Process);
 
-      Widget_Callback.Object_Connect
+      Object_Callback.Object_Connect
         (Process.Debugger_Text, "grab_focus",
-         Widget_Callback.To_Marshaller (On_Debugger_Text_Grab_Focus'Access),
+         Object_Callback.To_Marshaller (On_Debugger_Text_Grab_Focus'Access),
          Process);
 
       --  Set up the command window for the contextual menus
@@ -1042,9 +1086,9 @@ package body GVD.Process is
          Canvas_Event_Handler.To_Marshaller (Debugger_Button_Press'Access),
          Process);
 
-      --  Add debugger console and source viewer
+      --  Add debugger console in the MDI
 
-      Child := Put (Process.Process_Mdi, Process.Debugger_Text);
+      Child := Put (Process.Window.Process_Mdi, Process.Debugger_Text);
       Set_Title (Child, -"Debugger Console");
       Set_Dock_Side (Child, Bottom);
       Dock_Child (Child);
@@ -1056,7 +1100,7 @@ package body GVD.Process is
    ----------------
 
    procedure Initialize
-     (Process : access Debugger_Process_Tab_Record'Class;
+     (Process : access Visual_Debugger_Record'Class;
       Window  : access GVD.Main_Window.GVD_Main_Window_Record'Class;
       Source  : GVD.Text_Box.Source_Editor.Source_Editor)
    is
@@ -1068,44 +1112,44 @@ package body GVD.Process is
       Widget        : Gtk_Widget;
 
    begin
-      --  Process.Window needs to be set before calling Initialize which
-      --  might need to reference it.
-
+      Initialize (Process);
+      Ref (Process);
       Process.Window := Window.all'Access;
-      Process_Tab_Pkg.Initialize (Process, Window.Main_Accel_Group);
-      Gtk.Object.Initialize_Class_Record
+
+      Gtk_New_Hbox (Process.Editor_Text, Process);
+      Object_Return_Callback.Object_Connect
+        (Process.Editor_Text, "delete_event",
+         On_Editor_Text_Delete_Event'Access, Process);
+
+      Glib.Object.Initialize_Class_Record
         (Process, Signals, Class_Record,
          Type_Name => "GvdDebuggerProcessTab");
 
-      Menu_Item :=
-        Gtk_Menu_Item (Get_Widget (Window.Factory, '/' & (-"Window")));
-      Set_Submenu (Menu_Item, Create_Menu (Process.Process_Mdi));
-
-      Widget_Callback.Connect
+      Object_Callback.Connect
         (Process, "process_stopped",
-         Widget_Callback.To_Marshaller (On_Canvas_Process_Stopped'Access));
-      Widget_Callback.Connect
+         Object_Callback.To_Marshaller (On_Canvas_Process_Stopped'Access));
+      Object_Callback.Connect
         (Process, "context_changed",
-         Widget_Callback.To_Marshaller (On_Canvas_Process_Stopped'Access));
-      Widget_Callback.Connect
+         Object_Callback.To_Marshaller (On_Canvas_Process_Stopped'Access));
+      Object_Callback.Connect
         (Process, "process_stopped",
-         Widget_Callback.To_Marshaller (On_Stack_Process_Stopped'Access));
-      Widget_Callback.Connect
+         Object_Callback.To_Marshaller (On_Stack_Process_Stopped'Access));
+      Object_Callback.Connect
         (Process, "context_changed",
-         Widget_Callback.To_Marshaller (On_Stack_Process_Stopped'Access));
-      Widget_Callback.Connect
+         Object_Callback.To_Marshaller (On_Stack_Process_Stopped'Access));
+      Object_Callback.Connect
         (Process, "process_stopped",
-         Widget_Callback.To_Marshaller (On_Task_Process_Stopped'Access));
-      Widget_Callback.Connect
+         Object_Callback.To_Marshaller (On_Task_Process_Stopped'Access));
+      Object_Callback.Connect
         (Process, "process_stopped",
-         Widget_Callback.To_Marshaller (On_Thread_Process_Stopped'Access));
+         Object_Callback.To_Marshaller (On_Thread_Process_Stopped'Access));
 
       --  Connect the various components so that they are refreshed when the
       --  preferences are changed
 
-      Widget_Callback.Object_Connect
+      Object_Callback.Object_Connect
         (Process.Window, "preferences_changed",
-         Widget_Callback.To_Marshaller
+         Object_Callback.To_Marshaller
            (GVD.Process.Preferences_Changed'Access),
          Process);
 
@@ -1113,7 +1157,7 @@ package body GVD.Process is
          Widget_Callback.Object_Connect
            (Process.Window, "preferences_changed",
             Widget_Callback.To_Marshaller
-            (GVD.Code_Editors.Preferences_Changed'Access),
+              (GVD.Code_Editors.Preferences_Changed'Access),
             Process.Editor_Text);
 
          Widget_Callback.Object_Connect
@@ -1142,32 +1186,11 @@ package body GVD.Process is
       Process.Separate_Data := False;
       --  ??? Should use MDI.Save/Load_Desktop instead
 
-      --  Add a new page to the notebook
+      Widget := Get_Item (Window.Factory, -"/File/Open Program...");
 
-      Gtk_New (Label);
-
-      Append_Page (Window.Process_Notebook, Process.Process_Mdi, Label);
-
-      Show_All (Window.Process_Notebook);
-      Set_Page (Window.Process_Notebook, -1);
-
-      Length := Page_List.Length (Get_Children (Window.Process_Notebook));
-
-      if Length > 1 then
-         Set_Show_Tabs (Window.Process_Notebook, True);
-      elsif Length /= 0 then
-         Widget := Get_Item (Window.Factory, -"/File/Open Program...");
-
-         if Widget /= null then
-            Set_Sensitive (Widget, True);
-         end if;
+      if Widget /= null then
+         Set_Sensitive (Widget, True);
       end if;
-
-      --  Set the user data, so that we can easily convert afterwards.
-
-      Process_User_Data.Set
-        (Process.Editor_Text, Process.all'Access, Process_User_Data_Name);
-      Process_User_Data.Set (Process.Process_Mdi, Process.all'Access);
 
       --  Initialize the code editor.
       --  This should be done before initializing the debugger, in case the
@@ -1183,11 +1206,14 @@ package body GVD.Process is
          Strings_Color  => Get_Pref (GVD_Prefs, Strings_Color),
          Keywords_Color => Get_Pref (GVD_Prefs, Keywords_Color));
 
+      Window.Current_Debugger := GObject (Process);
+
       if Window.First_Debugger = null then
          Process.Debugger_Num := Debugger_Num;
          Window.First_Debugger := new Debugger_List_Node'
            (Next     => null,
-            Debugger => Gtk_Widget (Process));
+            Debugger => GObject (Process));
+
       else
          Debugger_Num := Debugger_Num + 1;
          Debugger_List := Window.First_Debugger;
@@ -1200,7 +1226,7 @@ package body GVD.Process is
          Process.Debugger_Num := Debugger_Num;
          Debugger_List.Next := new Debugger_List_Node'
            (Next     => null,
-            Debugger => Gtk_Widget (Process));
+            Debugger => GObject (Process));
       end if;
    end Initialize;
 
@@ -1209,7 +1235,7 @@ package body GVD.Process is
    ---------------
 
    procedure Configure
-     (Process         : access Debugger_Process_Tab_Record'Class;
+     (Process         : access Visual_Debugger_Record'Class;
       Kind            : Debugger_Type;
       Proxy           : Process_Proxy_Access;
       Executable      : String;
@@ -1240,9 +1266,9 @@ package body GVD.Process is
       Setup_Data_Window (Process);
 
       if Window.Standalone then
-         Child := Put (Process.Process_Mdi, Process.Editor_Text);
-         Set_Title (Child, "Editor");
-         Maximize_Children (Process.Process_Mdi);
+         Child := Put (Window.Process_Mdi, Process.Editor_Text);
+         Set_Title (Child, -"Editor");
+         Maximize_Children (Window.Process_Mdi);
       end if;
 
       --  Remove the stack window if needed.
@@ -1271,8 +1297,7 @@ package body GVD.Process is
       then
          --  ??? Should use MDI.Save/Load_Desktop instead
 
-         Geometry_Info := Get_Process_Tab_Geometry
-           (Page_Num (Window.Process_Notebook, Process.Process_Mdi));
+         Geometry_Info := Get_Process_Tab_Geometry (Process.Debugger_Num);
 
          if Get_Active (Call_Stack) then
             Set_Position (Process.Data_Paned, Geometry_Info.Stack_Width);
@@ -1377,6 +1402,32 @@ package body GVD.Process is
          end if;
       end if;
 
+      --  ??? Disabled for now
+
+      if Support_TTY (Process.Debugger)
+        and then False
+      then
+         Gtk_New
+           (Process.Debuggee_Console,
+            "",
+            Debuggee_Console_Handler'Access,
+            GObject (Process),
+            Process.Debugger_Text_Font);
+
+         Object_Return_Callback.Object_Connect
+           (Process.Debuggee_Console, "delete_event",
+            On_Debuggee_Console_Delete_Event'Access, Process);
+
+         --  ??? Create a new TTY
+         --  Set_TTY (Process.Debugger, TTY_Name (Debuggee_Console.TTY));
+         --  ??? Must close the TTY when deleting Debuggee_Console
+
+         Child := Put (Window.Process_Mdi, Process.Debuggee_Console);
+         Set_Title (Child, -"Debugger Execution");
+         Set_Dock_Side (Child, Bottom);
+         Dock_Child (Child);
+      end if;
+
       Success := True;
 
    exception
@@ -1385,8 +1436,8 @@ package body GVD.Process is
            Message_Dialog
              (-"Could not launch the debugger", Error, Button_OK, Button_OK);
          Process.Debugger := null;
-         Close (Process.Process_Mdi, Process.Debugger_Text);
-         Close (Process.Process_Mdi, Process.Data_Paned);
+         Close (Window.Process_Mdi, Process.Debugger_Text);
+         Close (Window.Process_Mdi, Process.Data_Paned);
          Success := False;
 
       when Spawn_Error =>
@@ -1401,13 +1452,13 @@ package body GVD.Process is
    ---------------------
 
    procedure Context_Changed
-     (Debugger : access Debugger_Process_Tab_Record'Class) is
+     (Debugger : access Visual_Debugger_Record'Class) is
    begin
       --  If the context has changed, it means that the debugger has started
       Set_Is_Started (Debugger.Debugger, True);
 
       --  Emit the signal
-      Widget_Callback.Emit_By_Name (Gtk_Widget (Debugger), "context_changed");
+      Object_Callback.Emit_By_Name (GObject (Debugger), "context_changed");
    end Context_Changed;
 
    ------------------------
@@ -1415,26 +1466,15 @@ package body GVD.Process is
    ------------------------
 
    procedure Executable_Changed
-     (Debugger        : access Debugger_Process_Tab_Record'Class;
-      Executable_Name : String)
-   is
-      Debug : constant String :=
-        Debugger_Type'Image (Debugger.Descriptor.Debugger);
-      Label : Gtk_Widget;
-
+     (Debugger        : access Visual_Debugger_Record'Class;
+      Executable_Name : String) is
    begin
-      --  Change the title of the tab for that debugger
-
-      Label := Get_Tab_Label
-        (Debugger.Window.Process_Notebook, Debugger.Process_Mdi);
-      Set_Text (Gtk_Label (Label),
-                Debug (1 .. Debug'Last - 5) & " - "
-                & Base_File_Name (Executable_Name));
+      --  ??? Change the title of the menu items Debug->Debuggers
 
       --  Emit the signal
 
-      Widget_Callback.Emit_By_Name
-        (Gtk_Widget (Debugger), "executable_changed");
+      Object_Callback.Emit_By_Name
+        (GObject (Debugger), "executable_changed");
    end Executable_Changed;
 
    ---------------------
@@ -1442,12 +1482,12 @@ package body GVD.Process is
    ---------------------
 
    procedure Process_Stopped
-     (Debugger : access Debugger_Process_Tab_Record'Class) is
+     (Debugger : access Visual_Debugger_Record'Class) is
    begin
       --  ??? Will not work when commands like "step" are sent before
       --  e.g "run".
       Set_Is_Started (Debugger.Debugger, True);
-      Widget_Callback.Emit_By_Name (Gtk_Widget (Debugger), "process_stopped");
+      Object_Callback.Emit_By_Name (GObject (Debugger), "process_stopped");
    end Process_Stopped;
 
    -----------------------
@@ -1455,7 +1495,7 @@ package body GVD.Process is
    -----------------------
 
    procedure Process_Graph_Cmd
-     (Process : access Debugger_Process_Tab_Record'Class;
+     (Process : access Visual_Debugger_Record'Class;
       Cmd     : String)
    is
       Matched   : Match_Array (0 .. 10);
@@ -1638,7 +1678,6 @@ package body GVD.Process is
                  (Find_Item
                     (Process.Data_Canvas,
                      Integer'Value (Cmd (Index .. Last - 1))),
-                  Get_Window (Process),
                   Enable,
                   Update_Value => True);
                Index := Last + 1;
@@ -1676,7 +1715,7 @@ package body GVD.Process is
    ----------------------
 
    procedure Process_View_Cmd
-     (Process : access Debugger_Process_Tab_Record'Class;
+     (Process : access Visual_Debugger_Record'Class;
       Cmd     : String)
    is
       Mode : View_Mode;
@@ -1702,9 +1741,8 @@ package body GVD.Process is
    -- Close_Debugger --
    --------------------
 
-   procedure Close_Debugger (Debugger : Debugger_Process_Tab) is
+   procedure Close_Debugger (Debugger : Visual_Debugger) is
       Top      : constant GVD_Main_Window := Debugger.Window;
-      Notebook : constant Gtk_Notebook := Debugger.Window.Process_Notebook;
       Length   : Guint;
       use String_History;
 
@@ -1713,42 +1751,25 @@ package body GVD.Process is
          return;
       end if;
 
-      Widget_Callback.Emit_By_Name
-        (Gtk_Widget (Debugger), "debugger_closed");
-
+      Object_Callback.Emit_By_Name (GObject (Debugger), "debugger_closed");
       Debugger.Exiting := True;
+      Free (Debugger.Current_File);
+      Free (Debugger.Breakpoints);
+      Close (Debugger.Debugger);
 
       if not Debugger.Window.Standalone then
-         Free (Debugger.Current_File);
-         Free (Debugger.Breakpoints);
-
-         Close (Debugger.Debugger);
-         Destroy (Debugger);
-
+         Unref (Debugger);
          return;
       end if;
 
-      --  Switch to another page before removing the debugger.
-      --  Otherwise, "switch_page" would be emitted after the debugger is dead,
-      --  and Update_Dialogs would be called with a non-existent debugger.
-      Next_Page (Notebook);
-
-      Free (Debugger.Current_File);
-      Free (Debugger.Breakpoints);
-
-      Close (Debugger.Debugger);
-      Remove_Page (Notebook, Page_Num (Notebook, Debugger.Process_Mdi));
       Set_Busy (Debugger, False);
-      Destroy (Debugger);
 
-      --  If the last notebook page was destroyed, disable "Open Program"
-      --  in the menu.
+      --  ??? need to keep a ref for sessions
+      --  Unref (Debugger);
 
-      Length := Page_List.Length (Get_Children (Notebook));
+      --  ??? Update Top.Current_Debugger
 
-      if Length = 1 then
-         Set_Show_Tabs (Notebook, False);
-      elsif Length = 0 then
+      if Top.Current_Debugger = null then
          Set_Sensitive
            (Get_Item (Top.Factory, -"/File/Open Program..."), False);
       end if;
@@ -1759,7 +1780,7 @@ package body GVD.Process is
    --------------------------
 
    procedure Process_User_Command
-     (Debugger       : Debugger_Process_Tab;
+     (Debugger       : Visual_Debugger;
       Command        : String;
       Output_Command : Boolean := False;
       Mode           : Visible_Command := GVD.Types.Visible)
@@ -1850,7 +1871,7 @@ package body GVD.Process is
    ---------------------
 
    procedure Register_Dialog
-     (Process : access Debugger_Process_Tab_Record;
+     (Process : access Visual_Debugger_Record;
       Dialog  : access Gtk.Dialog.Gtk_Dialog_Record'Class) is
    begin
       if Process.Registered_Dialog /= null then
@@ -1865,7 +1886,7 @@ package body GVD.Process is
    -----------------------
 
    procedure Unregister_Dialog
-     (Process : access Debugger_Process_Tab_Record) is
+     (Process : access Visual_Debugger_Record) is
    begin
       if Process.Registered_Dialog /= null then
          Destroy (Process.Registered_Dialog);
@@ -1878,42 +1899,42 @@ package body GVD.Process is
    ------------------------
 
    procedure Update_Breakpoints
-     (Object : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Force  : Boolean)
+     (Process : access GObject_Record'Class;
+      Force   : Boolean)
    is
-      Process : constant Debugger_Process_Tab := Debugger_Process_Tab (Object);
+      Debugger : constant Visual_Debugger := Visual_Debugger (Process);
    begin
       --  We only need to update the list of breakpoints when we have a
       --  temporary breakpoint (since its status might be changed upon
       --  reaching the line).
 
-      if Force or else Process.Has_Temporary_Breakpoint then
-         Free (Process.Breakpoints);
-         Process.Breakpoints := new Breakpoint_Array'
-           (List_Breakpoints (Process.Debugger));
+      if Force or else Debugger.Has_Temporary_Breakpoint then
+         Free (Debugger.Breakpoints);
+         Debugger.Breakpoints := new Breakpoint_Array'
+           (List_Breakpoints (Debugger.Debugger));
 
          --  Check whether there is any temporary breakpoint
 
-         Process.Has_Temporary_Breakpoint := False;
+         Debugger.Has_Temporary_Breakpoint := False;
 
-         for J in Process.Breakpoints'Range loop
-            if Process.Breakpoints (J).Disposition /= Keep
-              and then Process.Breakpoints (J).Enabled
+         for J in Debugger.Breakpoints'Range loop
+            if Debugger.Breakpoints (J).Disposition /= Keep
+              and then Debugger.Breakpoints (J).Enabled
             then
-               Process.Has_Temporary_Breakpoint := True;
+               Debugger.Has_Temporary_Breakpoint := True;
                exit;
             end if;
          end loop;
 
          --  Update the breakpoints in the editor
-         Update_Breakpoints (Process.Editor_Text, Process.Breakpoints.all);
+         Update_Breakpoints (Debugger.Editor_Text, Debugger.Breakpoints.all);
 
          --  Update the breakpoints dialog if necessary
-         if Process.Window.Breakpoints_Editor /= null
-           and then Mapped_Is_Set (Process.Window.Breakpoints_Editor)
+         if Debugger.Window.Breakpoints_Editor /= null
+           and then Mapped_Is_Set (Debugger.Window.Breakpoints_Editor)
          then
             Update_Breakpoint_List
-              (Breakpoint_Editor_Access (Process.Window.Breakpoints_Editor));
+              (Breakpoint_Editor_Access (Debugger.Window.Breakpoints_Editor));
          end if;
       end if;
    end Update_Breakpoints;
@@ -1923,7 +1944,7 @@ package body GVD.Process is
    -----------------------------
 
    function Toggle_Breakpoint_State
-     (Process        : access Debugger_Process_Tab_Record;
+     (Process        : access Visual_Debugger_Record;
       Breakpoint_Num : Breakpoint_Identifier) return Boolean is
    begin
       --  ??? Maybe we should also update the icons in the code_editor to have
@@ -1952,18 +1973,9 @@ package body GVD.Process is
 
    function Get_Current_Process
      (Main_Window : access Gtk.Widget.Gtk_Widget_Record'Class)
-      return Debugger_Process_Tab
-   is
-      Process : constant Gtk_Notebook :=
-        GVD_Main_Window (Main_Window).Process_Notebook;
-      Page    : constant Gint := Get_Current_Page (Process);
-
+      return Visual_Debugger is
    begin
-      if Page = -1 then
-         return null;
-      else
-         return Process_User_Data.Get (Get_Nth_Page (Process, Page));
-      end if;
+      return Visual_Debugger (GVD_Main_Window (Main_Window).Current_Debugger);
    end Get_Current_Process;
 
    --------------
@@ -1971,7 +1983,7 @@ package body GVD.Process is
    --------------
 
    procedure Set_Busy
-     (Debugger      : access Debugger_Process_Tab_Record;
+     (Debugger      : access Visual_Debugger_Record;
       Busy          : Boolean := True;
       Force_Refresh : Boolean := False) is
    begin
@@ -1982,7 +1994,7 @@ package body GVD.Process is
    -- Get_Num --
    -------------
 
-   function Get_Num (Tab : Debugger_Process_Tab) return Gint is
+   function Get_Num (Tab : Visual_Debugger) return Gint is
    begin
       return Gint (Tab.Debugger_Num);
    end Get_Num;
@@ -1992,9 +2004,9 @@ package body GVD.Process is
    -------------------------
 
    procedure Preferences_Changed
-     (Editor : access Gtk.Widget.Gtk_Widget_Record'Class)
+     (Editor : access Glib.Object.GObject_Record'Class)
    is
-      Process : constant Debugger_Process_Tab := Debugger_Process_Tab (Editor);
+      Process : constant Visual_Debugger := Visual_Debugger (Editor);
       F       : constant Pango_Font_Description :=
         Get_Pref (GVD_Prefs, Fixed_Font);
       C       : constant Gdk_Color :=
@@ -2022,12 +2034,12 @@ package body GVD.Process is
    -------------------------
 
    procedure Update_Editor_Frame
-     (Process : access Debugger_Process_Tab_Record) is
+     (Process : access Visual_Debugger_Record) is
    begin
       if Process.Window.Standalone then
          --  Set the label text.
          Set_Title
-           (Find_MDI_Child (Process.Process_Mdi, Process.Editor_Text),
+           (Find_MDI_Child (Process.Window.Process_Mdi, Process.Editor_Text),
             Base_File_Name (Get_Current_File (Process.Editor_Text)));
       end if;
    end Update_Editor_Frame;
@@ -2037,7 +2049,7 @@ package body GVD.Process is
    ---------------------------------
 
    procedure Set_Current_Source_Location
-     (Process : access Debugger_Process_Tab_Record;
+     (Process : access Visual_Debugger_Record;
       File    : String;
       Line    : Integer) is
    begin
@@ -2051,8 +2063,8 @@ package body GVD.Process is
    -----------------------------
 
    function Get_Current_Source_File
-     (Process : access Debugger_Process_Tab_Record)
-     return String is
+     (Process : access Visual_Debugger_Record)
+      return String is
    begin
       if Process.Current_File = null then
          return "";
@@ -2066,7 +2078,7 @@ package body GVD.Process is
    -----------------------------
 
    function Get_Current_Source_Line
-     (Process : access Debugger_Process_Tab_Record)
+     (Process : access Visual_Debugger_Record)
      return Integer is
    begin
       return Process.Current_Line;
