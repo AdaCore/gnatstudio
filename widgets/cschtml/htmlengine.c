@@ -3951,6 +3951,17 @@ html_engine_unselect_all (HTMLEngine *e,
 	html_engine_edit_selection_updater_reset (e->selection_updater);
 
 	csc_html_debug_log (e->widget, "Active selection: FALSE\n");
+
+	/* Force a reexposition of the window */
+	{
+	  GdkWindow *win;
+	  gint x, y, w, h, d;
+
+	  win = e->window;
+
+	  gdk_window_get_geometry (win, &x, &y, &w, &h, &d);
+          gdk_window_clear_area_e (win, 0, 0, w, h);
+        }
 }
 
 void
