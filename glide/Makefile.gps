@@ -66,7 +66,15 @@ endif
 
 ifeq ($(GLIDE_ROOT),True)
 
-   default: do_links all
+   ifeq ($(OS),Windows_NT)
+      default: resources do_links all
+   else
+      default: do_links all
+   endif
+
+   resources: force
+	cd $(GLIDE_BASE_DIR)/src; windres gps.rc -O coff \
+	  -o $(GLIDE_OBJ_DIR)/gps.res
 
    do_links: force
 	-@$(foreach f,$(GNAT_SOURCES), \
