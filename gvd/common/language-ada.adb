@@ -156,14 +156,6 @@ package body Language.Debugger.Ada is
       Matched : Match_Array (0 .. 1);
 
    begin
-      --  Do we have a keyword ?
-
-      Match (Keywords, Buffer, Matched);
-      if Matched (0) /= No_Match then
-         Next_Char := Matched (0).Last + 1;
-         Entity := Keyword_Text;
-         return;
-      end if;
 
       --  Do we have a comment ?
 
@@ -207,34 +199,14 @@ package body Language.Debugger.Ada is
          return;
       end if;
 
-      --  If no, skip to the next meaningful character
-
-      Next_Char := Buffer'First + 1;
-
-      if Buffer (Next_Char) = ' ' or else Buffer (Next_Char) = ASCII.HT then
-         while Next_Char <= Buffer'Last
-           and then (Buffer (Next_Char) = ' '
-                     or else Buffer (Next_Char) = ASCII.HT)
-         loop
-            Next_Char := Next_Char + 1;
-         end loop;
-
+      --  Another special character, not part of a word: just skip it, before
+      --  doing some regexp matching
       --  It is better to return a pointer to the newline, so that the icons
       --  on the side might be displayed properly.
 
-      else
-
-         --  First skip the current word
-         if Is_Letter (Buffer (Next_Char)) then
-            while Next_Char <= Buffer'Last
-              and then (Is_Letter (Buffer (Next_Char))
-                        or else Buffer (Next_Char) = '_')
-            loop
-               Next_Char := Next_Char + 1;
-            end loop;
-         end if;
-
-         --  Then the strange characters
+      if not Is_Letter (Buffer (Buffer'First)) then
+         Entity := Normal_Text;
+         Next_Char := Buffer'First + 1;
          while Next_Char <= Buffer'Last
            and then Buffer (Next_Char) /= ' '
            and then Buffer (Next_Char) /= ASCII.LF
@@ -246,12 +218,31 @@ package body Language.Debugger.Ada is
          loop
             Next_Char := Next_Char + 1;
          end loop;
-
-         if Buffer (Next_Char) = ' ' then
-            Next_Char := Next_Char + 1;
-         end if;
+         return;
       end if;
+
+      --  Do we have a keyword ?
+
+      Match (Keywords, Buffer, Matched);
+      if Matched (0) /= No_Match then
+         Next_Char := Matched (0).Last + 1;
+         Entity := Keyword_Text;
+         return;
+      end if;
+
+      --  If no, skip to the next meaningful character. we know we are
+      --  starting with a letter
+
+      Next_Char := Buffer'First + 1;
       Entity := Normal_Text;
+
+      --  Skip the current word
+      while Next_Char <= Buffer'Last
+        and then (Is_Letter (Buffer (Next_Char))
+                  or else Buffer (Next_Char) = '_')
+      loop
+         Next_Char := Next_Char + 1;
+      end loop;
    end Looking_At;
 
    ----------------------
@@ -445,6 +436,6 @@ begin
             & ")|p(ackage|r(agma|ivate|o(cedure|tected)))|r(a(ise|nge)|e("
             & "cord|m|names|queue|turn|verse))|s(e(lect|parate)|ubtype)|t"
             & "(a(gged|sk)|erminate|hen|ype)|u(ntil|se)|w(h(en|ile)|ith)|"
-            & "xor)\W",
+            & "xor)\b",
             Case_Insensitive);
 end Language.Debugger.Ada;
