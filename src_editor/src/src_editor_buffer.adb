@@ -2427,43 +2427,49 @@ package body Src_Editor_Buffer is
    procedure Save_To_File
      (Buffer   : access Source_Buffer_Record;
       Filename : VFS.Virtual_File;
-      Success  : out Boolean)
+      Success  : out Boolean;
+      Internal : Boolean := False)
    is
       Name_Changed : constant Boolean := Buffer.Filename /= Filename;
    begin
-      if Name_Changed then
-         Buffer.Filename := Filename;
-      end if;
+      if not Internal then
+         if Name_Changed then
+            Buffer.Filename := Filename;
+         end if;
 
-      if Name_Changed then
-         Set_Language
-           (Buffer,
-            Get_Language_From_File
-              (Glide_Language_Handler (Get_Language_Handler (Buffer.Kernel)),
-               Buffer.Filename));
+         if Name_Changed then
+            Set_Language
+              (Buffer,
+               Get_Language_From_File
+                 (Glide_Language_Handler
+                    (Get_Language_Handler (Buffer.Kernel)),
+                  Buffer.Filename));
 
-         --  ??? The following is expensive, it would be nice to have a
-         --  simpler way to report a possible change in the list of sources
-         --  of a project.
-         Recompute_View (Buffer.Kernel);
+            --  ??? The following is expensive, it would be nice to have a
+            --  simpler way to report a possible change in the list of sources
+            --  of a project.
+            Recompute_View (Buffer.Kernel);
+         end if;
       end if;
 
       Internal_Save_To_File (Source_Buffer (Buffer), Filename, False, Success);
 
-      if not Success then
-         return;
+      if not Internal then
+         if not Success then
+            return;
+         end if;
+
+         Buffer.Timestamp := File_Time_Stamp (Get_Filename (Buffer));
+
+         if Buffer.Filename /= VFS.No_File then
+            Delete (Create (Full_Filename =>
+                              Dir_Name (Buffer.Filename).all
+                            & ".#" & Base_Name (Buffer.Filename)));
+         end if;
+
+         Set_Modified (Buffer, False);
+         Buffer.Modified_Auto := False;
       end if;
-
-      Buffer.Timestamp := File_Time_Stamp (Get_Filename (Buffer));
-
-      if Buffer.Filename /= VFS.No_File then
-         Delete (Create (Full_Filename =>
-                           Dir_Name (Buffer.Filename).all
-                           & ".#" & Base_Name (Buffer.Filename)));
-      end if;
-
-      Set_Modified (Buffer, False);
-      Buffer.Modified_Auto := False;
 
    exception
       when E : others =>
