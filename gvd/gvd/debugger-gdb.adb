@@ -125,10 +125,7 @@ package body Debugger.Gdb is
          S : String := Expect_Out (Get_Process (Debugger));
       begin
          if S'Length > Prompt_Length
-           and then (S'Length <= 14
-                     or else S (S'First .. S'First + 12) /= "No definition")
-           and  then (S'Length <= 9
-                      or else S (S'First .. S'First + 9) /= "No file or")
+           and then S (S'First .. S'First + 5) = "type ="
          then
             return S (S'First + 7 .. S'Last - Prompt_Length);
          else
@@ -167,6 +164,35 @@ package body Debugger.Gdb is
          return S (Index + 1 .. S'Last - Prompt_Length);
       end;
    end Value_Of;
+
+   -----------------
+   -- Get_Uniq_Id --
+   -----------------
+
+   function Get_Uniq_Id
+     (Debugger : access Gdb_Debugger;
+      Entity   : String)
+     return String
+   is
+   begin
+      --  ??? Probably, this should be language-dependent.
+
+      --  Empty the buffer.
+      Empty_Buffer (Get_Process (Debugger));
+      Send (Get_Process (Debugger), "print &(" & Entity & ")");
+      Wait_Prompt (Debugger);
+
+      declare
+         S       : String := Expect_Out (Get_Process (Debugger));
+         Matched : Match_Array (0 .. 1);
+      begin
+         Match (" (0x[0-9a-zA-Z]+)", S, Matched);
+         if Matched (1) /= No_Match then
+            return S (Matched (1).First .. Matched (1).Last);
+         end if;
+      end;
+      return "";
+   end Get_Uniq_Id;
 
    -----------
    -- Spawn --

@@ -67,6 +67,11 @@ package Debugger.Gdb is
       Entity   : String;
       Format   : Value_Format := Decimal) return String;
 
+   function Get_Uniq_Id
+     (Debugger : access Gdb_Debugger;
+      Entity   : String)
+     return String;
+
    procedure Set_Executable
      (Debugger   : access Gdb_Debugger;
       Executable : String);
