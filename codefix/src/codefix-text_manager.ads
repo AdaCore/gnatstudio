@@ -156,9 +156,11 @@ package Codefix.Text_Manager is
    function Search_Unit
      (This     : Text_Interface'Class;
       Category : Language_Category;
-      Name     : String) return Construct_Information;
+      Name     : String := "") return Construct_Information;
    --  Return the first Contruct_Information that matche Category and name.
-   --  If not found, return a Contruct_Information with Category = Cat_Unknown
+   --  If not found, return a Contruct_Information with Category = Cat_Unknown.
+   --  If Name is "", then the first unit with the rigth Category will be
+   --  returned.
 
    ----------------------------------------------------------------------------
    --  type Text_Navigator
@@ -248,9 +250,11 @@ package Codefix.Text_Manager is
      (This      : Text_Navigator_Abstr'Class;
       File_Name : String;
       Category  : Language_Category;
-      Name      : String) return Construct_Information;
+      Name      : String := "") return Construct_Information;
    --  Return the first Contruct_Information that matche Category and name.
-   --  If not found, return a Contruct_Information with Category = Cat_Unknown
+   --  If not found, return a Contruct_Information with Category = Cat_Unknown.
+   --  If Name is "", then the first unit with the rigth Category will be
+   --  returned.
 
    function Line_Max
      (This      : Text_Navigator_Abstr'Class;
@@ -601,6 +605,10 @@ package Codefix.Text_Manager is
      (This        : in out Extract;
       Start, Stop : File_Cursor'Class);
    --  Erase the text from Start to Stop.
+
+   function Get_Files_Names (This : Extract) return String;
+
+   function Get_Nb_Files (This : Extract) return Natural;
 
 private
 
