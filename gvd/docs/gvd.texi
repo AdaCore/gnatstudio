@@ -1,4 +1,4 @@
-\input texinfo   @c -*-texinfo-*-
+\input texiplus   @c -*-texinfo-*-
 @c %**start of header
 @setfilename gvd.info
 @settitle Using the GNU Visual Debugger
@@ -132,7 +132,7 @@ at the moment it crashed.
 @end menu
 
 @iftex
-@image{main-window, 14cm}
+@image{main-window, 12.7cm}
 @end iftex
 
 @c --------------------------------------------------------------------
@@ -266,10 +266,19 @@ preferences.
 Give access to the general preferences in GVD.
 
 @itemize @bullet
+@item Break On Exceptions.
+Whether a breakpoint on all exceptions should be set by default.
+
 @item Status Bar Time Out.
 Time after which a message in the status bar will disappear. Messages that
 have disappeared can be displayed using the arrow in the bottom left area
 of the main window.
+
+@item File Extensions.
+Filename extensions recognized for each of the following supported languages:
+Ada, C, C++.
+Each text entry is a semicolon separated list of filename extensions, e.g
+@code{.ads;.adb}.
 @end itemize
 
 @item Source.
@@ -507,11 +516,11 @@ Clear the debugger console window.
       allowing you to inspect other thread's stacks.
 
 @iftex
-@image{tasks, 14cm}
+@image{tasks, 12.7cm}
 @end iftex
 
 @iftex
-@image{breakpoints, 14cm}
+@image{breakpoints, 12.7cm}
 @end iftex
 
    @item Edit Breakpoints...
@@ -655,7 +664,7 @@ of breakpoints is recommended instead to stop programs.
    with the following information:
 
 @iftex
-@image{canvas, 14cm}
+@image{canvas, 12.7cm}
 @end iftex
 
    @itemize @bullet
@@ -777,7 +786,7 @@ a pointer).
 @c --------------------------------------------------------------------
 
 @iftex
-@image{memory-view, 14cm}
+@image{memory-view, 12.7cm}
 @end iftex
 
 @noindent
@@ -884,7 +893,7 @@ the second click will remove it).
    @end itemize
 
 @iftex
-@image{tooltips, 14cm}
+@image{tooltips, 12.7cm}
 @end iftex
 
    and a text window on the right that displays with syntax highlighting the
@@ -951,7 +960,7 @@ Source", the later will allow you to see both the source code and the
 matching assembly code.
 
 @iftex
-@image{assembly, 14cm}
+@image{assembly, 12.7cm}
 @end iftex
 
 The current assembly instruction is, as usual, highlighted with a green
@@ -1226,7 +1235,7 @@ gvd --debugger powerpc-wrs-vxworks-gdb --target my_target:wtx
   the @i{File->New Debugger} menu item.
 
 @iftex
-@image{process, 14cm}
+@image{process, 12.7cm}
 @end iftex
 
 Of course, you can also combine GVD remote mode and GDB remote mode, running
@@ -1342,7 +1351,7 @@ saved by the user.
      Output that confuses GVD includes:
 
      @itemize @bullet
-       @item Primary debugger prompts (e.g '(gvd) ')
+       @item Primary debugger prompts (e.g '(gdb) ')
        @item Secondary debugger prompts (e.g '>')
        @item Confirmation prompts (e.g '(y or n)')
      @end itemize
@@ -1365,7 +1374,7 @@ saved by the user.
      @item set height 0
      @item set width 0
      @item set verbose off
-     @item set prompt (gvd) 
+     @item set prompt (gdb) 
      @end itemize
 
      GVD sets these values automatically when invoking GDB; if these values
@@ -1389,6 +1398,7 @@ actions performed to reproduce the problem. Saving your session and
 the log file (see @ref{log file}) can help automate this process.
 
 @c @printindex cp
+
 @contents
 
 @bye

@@ -1,0 +1,255 @@
+\input texinfo
+@tex
+%% Cygnus revisions to texinfo.tex, TeX macros to handle texinfo files
+%   Copyright (C) 1991 Free Software Foundation, Inc.
+%% Maintained at Cygnus Support as: 
+%%$Id$
+  
+%This texi+.tex file is free software; you can redistribute it and/or
+%modify it under the terms of the GNU General Public License as
+%published by the Free Software Foundation; either version 1, or (at
+
+{\let\fsfvn=\texinfoversion
+\xdef\texinfoversion{\fsfvn\ (Cygnus)}}
+\message{Loading Cygnus texinfo revisions [\texinfoversion]:}
+  
+% Print the version number if in a .fmt file.
+\everyjob{\message{[Cygnus Texinfo \texinfoversion]}}
+
+\globaldefs=1 % Escape the bounds of @tex/@end tex surrounding us
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%CROPMARKS%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% These differ only slightly from FSF defaults; all crop dimens are
+% defined here (whether different or not) for ease in revising.
+\cornerlong=1pc\cornerthick=.3pt	% These set size of cropmarks
+\outerhsize=7in
+\outervsize=9in
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		
+\newif\ifdraft\drafttrue % Extra markings; turn off with @finalout
+
+% Cygnus uses different default page headings and footers
+\def\leadline{\ \leaders\hrule height 2.5pt depth -2pt\hfil\ }
+\def\manvers{}% Empty default version in case manual doesn't supply
+% This is for _explicitly_ turning headers off.  Note that we're more
+% literal-minded than the FSF: we don't turn off _footers_!  This
+% means that, unlike with the FSF macros, our ``@headings off'' do not
+% return to the default Texinfo heading-state of the document.
+% Reconsider if this gives trouble...
+\def\HEADINGSoff{
+\global\evenheadline={\hfil}
+\global\evenfootline={\line{\let\,\leadline\manvers}}
+\global\oddheadline={\hfil}
+\global\oddfootline={\line {\let\,\leadline\manvers}}}
+% SINGLEPAGE:
+\def\HEADINGSsingle{
+\global\pageno=1\HEADINGSsinglex}
+\def\HEADINGSsinglex{
+\global\evenfootline={%
+\leadline\manvers}
+\global\oddfootline={%
+\leadline\manvers}
+\global\evenheadline={\ftfnt\thischapter\leadline
+		\ifdraft DRAFT\leadline\fi
+		\bf\folio}
+\global\oddheadline={\ftfnt\thischapter\leadline
+		\ifdraft DRAFT\leadline\fi
+		\bf\folio}
+}
+%
+% DOUBLEPAGE:
+% use hrule leaders to delimit headings, footings from
+%               body; timestamp footer; pagenos outside *bottom* to
+%               permit moving chaptername to outside *top* (for easier
+%               skimming).  1990 dec 31, pesch@cygnus.com
+\def\HEADINGSdouble{
+\global\pageno=1\HEADINGSdoublex}
+\def\HEADINGSdoublex{
+\global\evenfootline={%
+{\bf\folio}\ftfnt\leadline\ifdraft DRAFT\quad\fi
+\ftfnt\manvers\qquad\today
+}
+\global\oddfootline={%
+\leadline{\bf\folio}%
+}
+\global\evenheadline={\ftfnt\thistitle\leadline\ifdraft DRAFT\fi}
+\global\oddheadline={\rm\leadline\thischapter}
+}
+
+% CHANGE to @finalout ---also use it to remove DRAFT markings from
+% title, footers
+%% For a final copy, take out the rectangles
+%% that mark overfull boxes (in case you have decided
+%% that the text looks ok even though it passes the margin).
+@finalout{\overfullrule=0pt
+%% Also take out ``DRAFT'' markings
+	\global\draftfalse
+			}
+
+%Font overrides; we use PostScript when possible.
+\font\textrm=pncr scaled \magstephalf
+\font\texttt=pcrr
+\font\textbf=pncb scaled \magstephalf 
+\font\textit=pncri scaled \magstephalf
+\font\textsl=pcrro
+% FIXME: figure out, test dvips smallcaps kluge
+%\font\textsc=Times-SmallCaps scaled \magstephalf
+\font\ftfnt=phvr at 8pt % Cygnus Support footer-font
+
+\font\defbf=pncb scaled \magstep1 %was 1314
+
+\font\ninett=pcrr at 9pt
+\let\indtt=\ninett
+\font\indrm=pncr at 9pt
+\font\indit=pncri at 9pt
+\font\indsl=pcrro at 9pt
+\let\indsf=\indrm
+\let\indbf=\indrm
+\let\indsc=\indrm
+
+\font\chaprm=pncb at 17pt
+\font\chapit=pncbi at 17pt
+\font\chapsl=pcrbo at 16pt
+\font\chaptt=pcrb at 16pt
+\let\chapbf=\chaprm
+% \chapfonts mod from FSF vn is to include baselineskip, for the few
+% cases where a title chapter overflows its line.
+\def\chapfonts{\baselineskip=19pt%
+  \let\tenrm=\chaprm \let\tenit=\chapit \let\tensl=\chapsl 
+  \let\tenbf=\chapbf \let\tentt=\chaptt \let\smallcaps=\chapsc
+  \let\tensf=\chapsf \let\teni=\chapi \let\tensy=\chapsy
+  \resetmathfonts}
+
+
+\font\secrm=pncb at 14pt
+\font\secit=pncbi at 14pt
+\font\secsl=pcrbo at 13pt
+\font\sectt=pcrb at 13pt
+\font\secbf=pncb at 14pt
+
+\font\ssecrm=pncr at 13pt
+\font\ssecit=pncri at 13pt
+\font\ssecsl=pcrro at 12pt
+\font\ssectt=pcrr at 12pt
+\font\ssecbf=pncb at 13pt
+
+\font\titlerm=pncb at 21pt
+\font\titlett=pcrr at 20pt
+\font\authorrm=pncr scaled \magstep2
+
+\font\truesecrm=pncr at 12pt
+
+% Fonts for short table of contents
+\font\shortcontrm=pncr at 12pt 
+\font\shortcontbf=pncb at 12pt 
+\font\shortcontsl=pncri at 12pt
+
+% \smartitalic{ARG} outputs arg in italics, followed by an italic correction
+% unless the following character is such as not to need one.
+\def\smartitalicx{\ifx\next,\else\ifx\next-\else\ifx\next.\else\/\fi\fi\fi}
+\def\smartitalic#1{{\it #1}\futurelet\next\smartitalicx}
+% \smartitalic is used for @emph; FSF keeps trying to make it match
+% @var.
+%
+% \smartslant{ARG} outputs arg in a slanted font, followed by an
+% italic correction unless the following character is such as not to need one.
+\def\smartslantx{\ifx\next,\else\ifx\next-\else\ifx\next.\else\/\fi\fi\fi}
+\def\smartslant#1{{\sl #1}\futurelet\next\smartslantx}
+
+\let\i=\smartitalic
+\let\var=\smartslant
+\let\dfn=\smartitalic
+\let\emph=\smartitalic
+\let\cite=\smartitalic
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% @altref, if called explicitly (inside @iftex), switches the @ref
+% printed output so it lacks the square brackets used by default.
+% While we're at it, we use double quotes instead of square brackets 
+% (or no decorator at all, depending on state of @altref toggle).
+% Unfortunately this requires reproducing the entire damn xrefX
+% definition. WARNING: may need to track texinfo.tex changes to xrefX...
+\newif\ifbra\bratrue
+\def\altref{\ifbra\brafalse\else\bratrue\fi}% Toggle.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%Begin duplicate xrefX:
+\def\xrefX[#1,#2,#3,#4,#5,#6]{\begingroup%
+\def\printedmanual{\ignorespaces #5}%
+\def\printednodename{\ignorespaces #3}%
+%
+\setbox1=\hbox{\printedmanual}%
+\setbox0=\hbox{\printednodename}%
+\ifdim \wd0=0pt%
+\def\printednodename{\ignorespaces #1}%
+%%% Uncommment the following line to make the actual chapter or section title
+%%% appear inside the square brackets.
+%\def\printednodename{#1-title}%
+\fi%
+%
+%
+% If we use \unhbox0 and \unhbox1 to print the node names, TeX does
+% not insert empty discretionaries after hyphens, which means that it
+% will not find a line break at a hyphen in a node names.  Since some
+% manuals are best written with fairly long node names, containing
+% hyphens, this is a loss.  Therefore, we simply give the text of
+% the node name again, so it is as if TeX is seeing it for the first
+% time.
+\ifdim \wd1>0pt
+section ``\printednodename'' in \cite{\printedmanual}%
+\else%
+\turnoffactive%
+%%%%%%%%%%%%%%%Here's the change for @altref:
+\ifbra
+\refx{#1-snt}{} ``\printednodename,'' page\tie\refx{#1-pg}{}%
+\else
+\refx{#1-snt}{} \printednodename, page\tie\refx{#1-pg}{}%
+\fi
+%%%%%%%%%%%%%%%end change for @altref
+\fi
+\endgroup}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%:End duplicate xrefX
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% \widen: let examples (or whatever) fall into margins.  Symmetric.  Cancel
+% ``@widen{N}'' with ``@widen{-N}''.
+\newdimen\extra\extra=0pt % for ``widen''
+\global\def\widen#1{\advance\extra by #1%
+\advance\leftskip by -#1\advance\rightskip by -#1}
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% ONLY INTENDED CHANGES from FSF smallbook: tolerance and page centering
+% Use @smallbook to reset parameters for 7x9.5 format  (or else 7x9.25)
+\def\smallbook{
+
+% These values for secheadingskip and subsecheadingskip are
+% experiments.  RJC 7 Aug 1992
+\global\secheadingskip = 17pt plus 6pt minus 3pt
+\global\subsecheadingskip = 14pt plus 6pt minus 3pt
+
+\global\lispnarrowing = 0.3in
+\setleading{12pt}
+\advance\topskip by -1cm
+\global\parskip 3pt plus 1pt
+\global\hsize = 5in
+\advance\normaloffset by .75in % half of difference from 6.5in default hsize
+\global\vsize=7.5in
+\advance\voffset by .7in % half of difference from 8.9in default vsize
+\global\tolerance=1400
+\global\hfuzz=1pt
+\global\contentsrightmargin=0pt
+
+\global\pagewidth=\hsize
+\global\pageheight=\vsize
+
+\global\let\smalllisp=\smalllispx
+\global\let\smallexample=\smalllispx
+\global\def\Esmallexample{\Esmalllisp}
+}\textfonts
+
+\globaldefs=0 % this is NOT redundant; the \endgroup done by@end tex
+	      % would restore the value, but before doing that would
+	      % screw up if globaldefs=1 were allowed to remain here.
+@end tex
+@rm
+@smallbook
+@c some manuals (notably as) contain stuff that only looks good in
+@c smallbook; this switch controls its appearance, by local convention
+@set SMALL
