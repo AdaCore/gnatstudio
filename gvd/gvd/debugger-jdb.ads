@@ -64,6 +64,8 @@ package Debugger.Jdb is
 
    function Info_Locals (Debugger : access Jdb_Debugger) return String;
 
+   function Info_Args (Debugger : access Jdb_Debugger) return String;
+
    procedure Set_Executable
      (Debugger   : access Jdb_Debugger;
       Executable : String);

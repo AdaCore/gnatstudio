@@ -207,6 +207,11 @@ package Debugger is
       is abstract;
    --  Return the command to be used to display local variables
 
+   function Info_Args (Debugger : access Debugger_Root) return String
+      is abstract;
+   --  Return the command to be used to display the parameters of the current
+   --  subprogram
+
    type Value_Format is (Decimal, Binary, Hexadecimal, Octal);
 
    function Value_Of

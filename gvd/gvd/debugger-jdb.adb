@@ -529,6 +529,16 @@ package body Debugger.Jdb is
       return "locals";
    end Info_Locals;
 
+   ---------------
+   -- Info_Args --
+   ---------------
+
+   function Info_Args (Debugger : access Jdb_Debugger) return String is
+   begin
+      raise Unknown_Command;
+      return "";
+   end Info_Args;
+
    --------------------------
    -- Highlighting_Pattern --
    --------------------------

@@ -290,6 +290,15 @@ package body Debugger.Gdb is
       return "info locals";
    end Info_Locals;
 
+   ---------------
+   -- Info_Args --
+   ---------------
+
+   function Info_Args (Debugger : access Gdb_Debugger) return String is
+   begin
+      return "info args";
+   end Info_Args;
+
    --------------
    -- Value_Of --
    --------------
