@@ -34,6 +34,7 @@ with Gtkada.Canvas;    use Gtkada.Canvas;
 with Gtkada.Handlers;  use Gtkada.Handlers;
 with Gtkada.MDI;       use Gtkada.MDI;
 
+with Gint_Xml;                 use Gint_Xml;
 with Src_Info;                 use Src_Info;
 with Src_Info.Queries;         use Src_Info.Queries;
 with Glide_Kernel;             use Glide_Kernel;
@@ -154,6 +155,14 @@ package body Browsers.Call_Graph is
 
    procedure On_Destroy (Browser : access Gtk_Widget_Record'Class);
    --  Called when the browser is destroyed
+
+   function Load_Desktop
+     (Node : Gint_Xml.Node_Ptr; User : Kernel_Handle)
+      return Gtk_Widget;
+   function Save_Desktop
+     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class)
+      return Node_Ptr;
+   --  Support functions for the MDI
 
    -------------
    -- Gtk_New --
@@ -983,6 +992,42 @@ package body Browsers.Call_Graph is
          Priority                => Default_Priority,
          Initializer             => null,
          Contextual_Menu_Handler => Call_Graph_Contextual_Menu'Access);
+      Glide_Kernel.Kernel_Desktop.Register_Desktop_Functions
+        (Save_Desktop'Access, Load_Desktop'Access);
    end Register_Module;
+
+   ------------------
+   -- Load_Desktop --
+   ------------------
+
+   function Load_Desktop
+     (Node : Gint_Xml.Node_Ptr; User : Kernel_Handle)
+      return Gtk_Widget is
+   begin
+      if Node.Tag.all = "Call_Graph" then
+         return Gtk_Widget (Create_Call_Graph_Browser (User));
+      end if;
+
+      return null;
+   end Load_Desktop;
+
+   ------------------
+   -- Save_Desktop --
+   ------------------
+
+   function Save_Desktop
+     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class)
+     return Node_Ptr
+   is
+      N : Node_Ptr;
+   begin
+      if Widget.all in Call_Graph_Browser_Record'Class then
+         N := new Node;
+         N.Tag := new String' ("Call_Graph");
+         return N;
+      end if;
+
+      return null;
+   end Save_Desktop;
 
 end Browsers.Call_Graph;
