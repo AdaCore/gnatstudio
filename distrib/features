@@ -11,13 +11,6 @@ New features in GPS 2.1.0
 
 - GPS can recompute the indentation for an alias after its expansion
 
-[ Note: the following two entries will only be provided when GPS is built with
-  XML/Ada ]
-
-- Better error messages when parsing customization XML files.
-
-- Full support of XML features in XML customization files
-
 - Improved indentation of C/C++ struct, class, union constructs
 
 - D525-015 New preference for indentation of variable declaration
@@ -30,4 +23,11 @@ New features in GPS 2.1.0
 
 - New shell commands, to ease writing of GPS scripts. See 'help' in the
   GPS shell for a full list of GPS commands.
+
+[ Note: the following two entries are only provided when GPS is built with
+  XML/Ada ]
+
+- Better error messages when parsing customization XML files.
+
+- Full support of XML features in XML customization files
 
