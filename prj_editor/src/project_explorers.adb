@@ -64,7 +64,6 @@ with Glide_Kernel.Editor;      use Glide_Kernel.Editor;
 with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
 with Glide_Kernel.Modules;     use Glide_Kernel.Modules;
 with Glide_Intl;               use Glide_Intl;
-with Variable_Editors;         use Variable_Editors;
 
 package body Project_Explorers is
 
@@ -340,9 +339,6 @@ package body Project_Explorers is
       Menu         : Gtk_Menu) return Selection_Context_Access;
    --  Return the context to use for the contextual menu
 
-   procedure On_Add_Variable (Tree : access Gtk_Widget_Record'Class);
-   --  Callback for the "Add variable" contextual menu item
-
    function Load_Desktop
      (Node : Gint_Xml.Node_Ptr; User : Kernel_Handle)
       return Gtk_Widget;
@@ -500,18 +496,6 @@ package body Project_Explorers is
 
       return null;
    end Save_Desktop;
-
-   ---------------------
-   -- On_Add_Variable --
-   ---------------------
-
-   procedure On_Add_Variable (Tree : access Gtk_Widget_Record'Class) is
-      T : Project_Explorer := Project_Explorer (Tree);
-      Edit : New_Var_Edit;
-   begin
-      Gtk_New (Edit, T.Kernel, Scenario_Variable_Only => True);
-      Show_All (Edit);
-   end On_Add_Variable;
 
    ------------------------------
    -- Explorer_Context_Factory --
