@@ -66,7 +66,7 @@ begin
    Gtk_New_Vbox (Memory_View.Vbox23, True, 0);
    Pack_Start (Memory_View.Hbox11, Memory_View.Vbox23, False, False, 7);
 
-   Gtk_New (Memory_View.Label95, -("Address"));
+   Gtk_New (Memory_View.Label95, -("Location"));
    Set_Alignment (Memory_View.Label95, 0.5, 0.5);
    Set_Padding (Memory_View.Label95, 0, 0);
    Set_Justify (Memory_View.Label95, Justify_Center);
