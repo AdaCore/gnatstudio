@@ -480,6 +480,7 @@ package body Browsers.Call_Graph is
          Insert (Kernel,
                  -"LI file not found for "
                    & Get_Declaration_File_Of (Entity));
+         Pop_State (Kernel_Handle (Kernel));
          return;
       end if;
 
