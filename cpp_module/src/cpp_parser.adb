@@ -1316,6 +1316,10 @@ package body CPP_Parser is
                          Line   => Var.End_Position.Line,
                          Column => Column_Type (Var.End_Position.Column)),
             Kind     => End_Of_Spec);
+
+         Set_Attributes
+           (Entity, (Global => (Var.Attributes and SN_STATIC) = 0,
+                     others => False));
       end if;
    end Parse_MD_Table;
 
