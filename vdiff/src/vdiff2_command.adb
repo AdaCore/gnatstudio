@@ -222,9 +222,14 @@ package body Vdiff2_Command is
    is
       Tmp : Diff_List;
       Button     : Message_Dialog_Buttons;
+      Args : Argument_List := (1 => new String'("true"),
+                               2 => new String'("true"));
       pragma Unreferenced (Button);
    begin
       Unhighlight_Difference (Kernel, Item);
+      Execute_GPS_Shell_Command (Kernel, "save", Args);
+      --  ??? Just for the moment
+      Free (Args);
       if Item.File3 = VFS.No_File then
          Tmp := Diff
            (Kernel, Item.File1,
