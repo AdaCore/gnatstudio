@@ -63,17 +63,21 @@ package Python.GUI is
    procedure Run_Command
      (Interpreter : access Python_Interpreter_Record'Class;
       Command     : String;
-      Hide_Output : Boolean := False);
+      Hide_Output : Boolean := False;
+      Errors      : out Boolean);
    --  Execute a command in the interpreter, and send its output to the
    --  console.
    --  If Hide_Output is True, then nothing is printed on the console. If the
    --  command is incomplete and would require extra input (a secondary prompt
    --  in interactive mode), then it is not executed.
+   --  Errors is set to True if there was an error executing the command or
+   --  if the input was incomplete.
 
    function Run_Command
      (Interpreter : access Python_Interpreter_Record'Class;
       Command     : String;
-      Hide_Output : Boolean := False) return String;
+      Hide_Output : Boolean := False;
+      Errors      : access Boolean) return String;
    --  Same as above, but also return the output of the command
 
    procedure Insert_Text

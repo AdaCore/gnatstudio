@@ -562,12 +562,13 @@ package body Python.GUI is
    function Run_Command
      (Interpreter : access Python_Interpreter_Record'Class;
       Command     : String;
-      Hide_Output : Boolean := False) return String is
+      Hide_Output : Boolean := False;
+      Errors      : access Boolean) return String is
    begin
       Interpreter.Save_Output := True;
       Interpreter.Current_Output := new String'("");
 
-      Run_Command (Interpreter, Command, Hide_Output);
+      Run_Command (Interpreter, Command, Hide_Output, Errors.all);
 
       declare
          Output : constant String := Interpreter.Current_Output.all;
@@ -585,7 +586,8 @@ package body Python.GUI is
    procedure Run_Command
      (Interpreter : access Python_Interpreter_Record'Class;
       Command     : String;
-      Hide_Output : Boolean := False)
+      Hide_Output : Boolean := False;
+      Errors      : out Boolean)
    is
       Obj            : PyObject;
       Code           : PyCodeObject;
@@ -598,6 +600,7 @@ package body Python.GUI is
       use type Gdk_Window;
    begin
       Interpreter.Hide_Output := Hide_Output;
+      Errors := False;
 
       if Cmd = "" & ASCII.LF then
          if not Hide_Output then
@@ -642,6 +645,7 @@ package body Python.GUI is
 
          if Obj = null then
             PyErr_Print;
+            Errors := True;
          else
             Py_DECREF (Obj);
          end if;
@@ -680,6 +684,7 @@ package body Python.GUI is
                   if not Interpreter.Use_Secondary_Prompt then
                      PyErr_Restore (Typ, Occurrence, Traceback);
                      PyErr_Print;
+                     Errors := True;
                   else
                      PyErr_Clear;
                   end if;
@@ -713,6 +718,7 @@ package body Python.GUI is
                 & Exception_Information (E));
          Interpreter.In_Process := False;
          Interpreter.Hide_Output := False;
+         Errors := True;
    end Run_Command;
 
    --------------------
@@ -843,6 +849,7 @@ package body Python.GUI is
       Key       : constant Gdk_Key_Type    := Get_Key_Val (Event);
       Iter, Prompt_End : Gtk_Text_Iter;
       Success : Boolean;
+      Errors  : Boolean;
    begin
       case Key is
          when GDK_Up | GDK_Down =>
@@ -924,7 +931,9 @@ package body Python.GUI is
                   Get_Slice (Buffer, Prompt_End, Iter));
                Interpreter.History_Position := -1;
 
-               Run_Command (Interpreter, Get_Slice (Buffer, Prompt_End, Iter));
+               Run_Command
+                 (Interpreter, Get_Slice (Buffer, Prompt_End, Iter),
+                  False, Errors);
 
                --  Preserve the focus on the console after interactive
                --  execution
