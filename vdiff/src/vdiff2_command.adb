@@ -73,9 +73,18 @@ package body Vdiff2_Command is
          while CurrNode /= Null_Node
          loop
             Diff.all := Data (CurrNode);
-            exit when (Diff.File1.all = Selected_File.all
+            exit when (
+                         (Diff.File1 /= null
+                          and then
+                          Diff.File1.all = Selected_File.all)
                        or else
-                       Diff.File2.all = Selected_File.all);
+                         (Diff.File2 /= null
+                          and then
+                          Diff.File2.all = Selected_File.all)
+                       or else
+                         (Diff.File3 /= null
+                          and then
+                          Diff.File3.all = Selected_File.all));
             CurrNode := Next (CurrNode);
          end loop;
          if CurrNode /= Null_Node then
@@ -179,14 +188,12 @@ package body Vdiff2_Command is
    procedure Reload_Difference (Kernel : Kernel_Handle;
                                 Diff   : in out Diff_Head_Access) is
    begin
-      Hide_Differences (Kernel, Diff.List, Diff.File1,
-                        Diff.File2, Diff.File3);
+      Hide_Differences (Kernel, Diff.all);
       Free (Diff.List);
       Diff.List := Diff_Utils.Diff (Kernel, Diff.File1.all, Diff.File2.all);
       --  ???  for 2 file only for the moment
       Diff.Current_Diff := Diff.List;
-      Show_Differences (Kernel, Diff.List, Diff.File1.all,
-                        Diff.File2.all, Diff.File3.all);
+      Show_Differences (Kernel, Diff.all);
    end Reload_Difference;
 
 
@@ -214,8 +221,7 @@ package body Vdiff2_Command is
    procedure Unhighlight_Difference (Kernel : Kernel_Handle;
                                      Diff   : in out Diff_Head_Access)is
    begin
-      Hide_Differences (Kernel, Diff.List, Diff.File1,
-                        Diff.File2, Diff.File3);
+      Hide_Differences (Kernel, Diff.all);
    end Unhighlight_Difference;
 
    --------------------
