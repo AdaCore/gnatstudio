@@ -1,8 +1,5 @@
---  It would have been nice to be able to use a Gtk_Layout. However, the
---  layout doesn't give any information about the location of its children.
---  Moreover, it is not easily possible to raise or lower a child
-
 with Glib;             use Glib;
+with Gdk;              use Gdk;
 with Gdk.Color;        use Gdk.Color;
 with Gdk.Cursor;       use Gdk.Cursor;
 with Gdk.Drawable;     use Gdk.Drawable;
@@ -295,7 +292,7 @@ package body Gtkada.MDI is
    is
       MDI : MDI_Window := Child.MDI;
       F : Gdk_Font := Get_Gdkfont (Title_Font_Name, Title_Font_Height);
-      GC : Gdk_GC := MDI.GC;
+      GC : Gdk.Gdk_GC := MDI.GC;
    begin
       if MDI.Focus_Child = MDI_Child (Child) then
          GC := MDI.Focus_GC;
@@ -404,6 +401,13 @@ package body Gtkada.MDI is
       Tmp : Boolean;
       Curs : Gdk_Cursor_Type;
    begin
+      --  It sometimes happens that widgets let events pass through (for
+      --  instance scrollbars do that), and thus wouldn't be useful anymore
+      --  if we do a grab.
+      if Get_Window (Child) /= Get_Window (Event) then
+         return False;
+      end if;
+
       --  Not a notebook ???
       if C.Title /= null then
          Activate_Child (MDI, C);
@@ -468,6 +472,10 @@ package body Gtkada.MDI is
    is
       MDI : MDI_Window := MDI_Child (Child).MDI;
    begin
+      if Get_Window (Child) /= Get_Window (Event) then
+         return False;
+      end if;
+
       if MDI.Selected_Child /= null then
          if Do_Grabs then
             Pointer_Ungrab (Time => 0);
@@ -513,6 +521,10 @@ package body Gtkada.MDI is
       Curs : Gdk_Cursor_Type;
       W, H : Gint;
    begin
+      if Get_Window (Child) /= Get_Window (Event) then
+         return False;
+      end if;
+
       --  A button_motion event ?
       if (Get_State (Event) and Button1_Mask) /= 0 then
          if MDI.Selected_Child /= null then
@@ -1331,8 +1343,16 @@ package body Gtkada.MDI is
    procedure Set_Dock_Side
      (Child : access MDI_Child_Record'Class; Side  : Dock_Side) is
    begin
-      --  ??? What should we do if the child is already docked ?
-      Child.Dock := Side;
+      --  If the child is already docked on another side, change it.
+      if Side /= Child.Dock
+        and then Child.State = Embedded
+      then
+         Dock_Child (Child, False);
+         Child.Dock := Side;
+         Dock_Child (Child, True, Side);
+      else
+         Child.Dock := Side;
+      end if;
    end Set_Dock_Side;
 
    --------------------

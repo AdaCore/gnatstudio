@@ -157,6 +157,7 @@ package Gtkada.MDI is
      (Child : access MDI_Child_Record'Class; Side  : Dock_Side);
    --  Specify where a child should be docked. Note that this doesn't
    --  actually dock the child.
+   --  If the child was already docked, its location is changed accordingly.
 
    ---------------------------
    -- Reorganizing children --
