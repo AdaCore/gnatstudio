@@ -605,7 +605,7 @@ package body Projects.Registry is
       Prj.Proc.Process
         (View, Success, Registry.Data.Root.Node,
          Report_Error'Unrestricted_Access,
-         Trusted_Mode => Registry.Data.Trusted_Mode);
+         Follow_Links => not Registry.Data.Trusted_Mode);
 
       --  Lower case the languages attribute
 
