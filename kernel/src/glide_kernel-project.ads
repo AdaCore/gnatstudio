@@ -48,7 +48,6 @@ with Basic_Types;
 with Prj;
 with Prj_API;
 with Prj.Tree;
-with Glide_Kernel.Modules;
 
 package Glide_Kernel.Project is
 
