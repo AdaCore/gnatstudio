@@ -602,14 +602,12 @@ package body Gtkada.File_Selector is
 
          Win.Remaining_Files := First (Win.Files);
 
-         if Win.Display_Idle_Handler /= 0 then
-            Idle_Remove (Win.Display_Idle_Handler);
+         if Win.Display_Idle_Handler = 0 then
+            Win.Display_Idle_Handler :=
+              Add (Display_File'Access,
+                   Win,
+                   Destroy => On_Display_Idle_Destroy'Access);
          end if;
-
-         Win.Display_Idle_Handler :=
-           Add (Display_File'Access,
-                Win,
-                Destroy => On_Display_Idle_Destroy'Access);
 
          return False;
 
@@ -734,14 +732,12 @@ package body Gtkada.File_Selector is
          GNAT.Directory_Operations.Open (Win.Current_Directory_Id.all, Dir);
          Win.Current_Directory_Is_Open := True;
 
-         if Win.Read_Idle_Handler /= 0 then
-            Idle_Remove (Win.Read_Idle_Handler);
+         if Win.Read_Idle_Handler = 0 then
+            Win.Read_Idle_Handler
+              := Add (Read_File'Access,
+                      File_Selector_Window_Access (Win),
+                      Destroy => On_Read_Idle_Destroy'Access);
          end if;
-
-         Win.Read_Idle_Handler
-           := Add (Read_File'Access,
-                   File_Selector_Window_Access (Win),
-                   Destroy => On_Read_Idle_Destroy'Access);
 
       exception
          when Directory_Error =>
@@ -1140,12 +1136,10 @@ package body Gtkada.File_Selector is
 
       if Win.Display_Idle_Handler /= 0 then
          Idle_Remove (Win.Display_Idle_Handler);
-         Win.Display_Idle_Handler := 0;
       end if;
 
       if Win.Read_Idle_Handler /= 0 then
          Idle_Remove (Win.Read_Idle_Handler);
-         Win.Read_Idle_Handler := 0;
       end if;
 
       if Win.Own_Main_Loop then
