@@ -13,6 +13,7 @@ New features in GVD 1.2.0
 - The handling of commands has been improved and is more reliable. Caching of
   commands has also been put in place giving better user feedback on slow
   machines.
+- New item in the source editor contextual menu: display dereferenced variable
 
 New features in GVD 1.1.0
 
