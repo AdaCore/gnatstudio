@@ -395,6 +395,7 @@ package body VCS_View_Pkg is
       Page     : VCS_Page_Access;
 
    begin
+      Push_State (Explorer.Kernel, Busy);
       Page := VCS_Page_Access
         (Get_Nth_Page (Explorer.Notebook,
                        Get_Current_Page (Explorer.Notebook)));
@@ -424,6 +425,7 @@ package body VCS_View_Pkg is
       end loop;
 
       Columns_Autosize (Page.Tree);
+      Pop_State (Explorer.Kernel);
    end Refresh;
 
    -----------------
