@@ -88,13 +88,51 @@ package VCS_View_Pkg is
    --  Return the VCS reference corresponding to Dir.
    --  User must free it afterwards.
 
+   function Get_Selected_Files
+     (Explorer : VCS_View_Access)
+     return VCS.String_List.List;
+   --  Return the list of files that are selected.
+
+   procedure Open_Files
+     (Explorer : VCS_View_Access;
+      Kernel   : Kernel_Handle;
+      Files    : List;
+      Ref      : VCS_Access);
+   --  Open a list of files.
+   --  User must free Files afterwards.
+
+   procedure Commit
+     (Explorer : VCS_View_Access;
+      Kernel   : Kernel_Handle;
+      Files    : List;
+      Log      : String;
+      Ref      : VCS_Access);
+   --  Commit a list of files with a given log.
+   --  User must free Files afterwards.
+
+   procedure Edit_Log
+     (Explorer : VCS_View_Access;
+      Kernel   : Kernel_Handle;
+      Files    : List;
+      Ref      : VCS_Access);
+   --  Launch log editors for these files.
+   --  User must free Files afterwards.
+
+   procedure Diff_Files
+     (Explorer : VCS_View_Access;
+      Kernel   : Kernel_Handle;
+      Files    : List;
+      Ref      : VCS_Access);
+   --  View differences between Files and the head revision.
+   --  User must free Files afterwards.
+
    procedure Update_File_List
      (Explorer : VCS_View_Access;
       Kernel   : Kernel_Handle;
       Files    : List;
       Ref      : VCS_Access);
    --  Updates a list of files.
-   --  User must free L afterwards.
+   --  User must free Files afterwards.
 
    procedure Push_Message
      (Explorer : VCS_View_Access;
