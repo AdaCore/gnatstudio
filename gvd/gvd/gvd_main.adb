@@ -27,6 +27,7 @@ with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
 with Gtkada.Intl; use Gtkada.Intl;
 with Gtkada.Dialogs; use Gtkada.Dialogs;
 with Odd.Process; use Odd.Process;
+with Odd.Types;
 with Debugger;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
@@ -46,6 +47,7 @@ procedure Odd_Main is
    Main_Debug_Window : Main_Debug_Window_Access;
    Id                : Glib.Gint;
    Index             : Natural := 0;
+   Level             : Integer;
    Debug_Type        : Debugger.Debugger_Type := Debugger.Gdb_Type;
    Button            : Message_Dialog_Buttons;
    Root              : String_Access;
@@ -180,14 +182,14 @@ procedure Odd_Main is
       Put_Line ("Usage:");
       Put_Line ("   gvd [options...] executable-file");
       Put_Line ("Options:");
-      Put_Line ("   --disable-log Disable automatic log file.");
-      Put_Line ("   --jdb         Invoke JDB as inferior debugger.");
-      Put_Line ("   --host HOST   Run inferior debugger on HOST.");
-      Put_Line ("   --tty         Use controlling tty as additional debugger" &
-                " console.");
-      Put_Line ("   --version     Show the GVD version and exit.");
+      Put_Line ("   --log-level [0-4] Set level of logging (Default is 3).");
+      Put_Line ("   --jdb             Invoke JDB as inferior debugger.");
+      Put_Line ("   --host HOST       Run inferior debugger on HOST.");
+      Put_Line ("   --tty             Use controlling tty as additional " &
+                "debugger console.");
+      Put_Line ("   --version         Show the GVD version and exit.");
       New_Line;
-      Put_Line ("Other arguments are passed as is to gdb.");
+      Put_Line ("Other arguments are passed to the underlying debugger.");
    end Help;
 
 begin
@@ -203,11 +205,12 @@ begin
         Dir.all & Directory_Separator & "log" & ASCII.NUL;
    begin
       Main_Debug_Window.Debug_Mode := True;
-      Main_Debug_Window.Log_File := Create_File (Log'Address, Fmode => Text);
+      Main_Debug_Window.Log_Level  := Odd.Types.Hidden;
+      Main_Debug_Window.Log_File   := Create_File (Log'Address, Fmode => Text);
    end;
 
    loop
-      case Getopt ("-tty -disable-log fullname -jdb -version -help -host:") is
+      case Getopt ("-tty fullname -jdb -version -help -host: -log-level:") is
          -- long option names --
          when '-' =>
 
@@ -222,9 +225,6 @@ begin
                     (0, Input_Read, Input_Available'Access,
                      Main_Debug_Window.all'Access);
 
-               -- --disable-log --
-               when 'd' => Main_Debug_Window.Debug_Mode := False;
-
                -- -fullname --
                when 'f' => null;
                   --  supported for backward compatibility only, and
@@ -232,6 +232,23 @@ begin
 
                -- --jdb --
                when 'j' => Debug_Type := Debugger.Jdb_Type;
+
+               -- --log-level --
+               when 'l' =>
+                  Level := Integer'Value (Parameter);
+
+                  --  Level 0 is no logging, 1 is minimal logging (only
+                  --  user commands), 4 is max logging (all commands)
+
+                  if Level = 0 then
+                     Main_Debug_Window.Debug_Mode := False;
+                  else
+                     Main_Debug_Window.Debug_Mode := True;
+                     Main_Debug_Window.Log_Level :=
+                       Odd.Types.Command_Type'Val
+                         (Odd.Types.Command_Type'Pos
+                           (Odd.Types.Command_Type'Last) + 1 - Level);
+                  end if;
 
                -- --version --
                when 'v' =>
