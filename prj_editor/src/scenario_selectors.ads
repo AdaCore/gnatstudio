@@ -18,6 +18,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Gtk.Box;
+with Gtk.Check_Button;
 with Gtk.Scrolled_Window;
 with Gtk.Tree_Model;
 with Gtk.Tree_Store;
@@ -31,8 +33,7 @@ package Scenario_Selectors is
    -- Project selector --
    ----------------------
 
-   type Project_Selector_Record is new
-     Gtk.Scrolled_Window.Gtk_Scrolled_Window_Record with private;
+   type Project_Selector_Record is new Gtk.Box.Gtk_Box_Record with private;
    type Project_Selector is access all Project_Selector_Record'Class;
 
    procedure Gtk_New
@@ -124,13 +125,12 @@ package Scenario_Selectors is
 
 private
 
-   type Project_Selector_Record is new
-     Gtk.Scrolled_Window.Gtk_Scrolled_Window_Record with
-   record
+   type Project_Selector_Record is new Gtk.Box.Gtk_Box_Record with record
       Model       : Gtk.Tree_Store.Gtk_Tree_Store;
       Ref_Project : Projects.Project_Type;
       Kernel      : Glide_Kernel.Kernel_Handle;
       Select_All  : Boolean := True;
+      Show_As_Hierarchy : Gtk.Check_Button.Gtk_Check_Button;
    end record;
 
    type Scenario_Selector_Record is new

@@ -21,6 +21,8 @@
 with Glib;                     use Glib;
 with Glib.Object;              use Glib.Object;
 with Glib.Values;              use Glib.Values;
+with Gtk.Check_Button;         use Gtk.Check_Button;
+with Gtk.Box;                  use Gtk.Box;
 with Gtk.Enums;                use Gtk.Enums;
 with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
 with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
@@ -32,7 +34,6 @@ with Gtk.Cell_Renderer_Toggle; use Gtk.Cell_Renderer_Toggle;
 with Gtk.Widget;               use Gtk.Widget;
 with Gtkada.Handlers;          use Gtkada.Handlers;
 with Glide_Kernel;             use Glide_Kernel;
-with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
 with Glide_Kernel.Project;     use Glide_Kernel.Project;
 with System;
 with Glide_Intl;               use Glide_Intl;
@@ -41,6 +42,7 @@ with Projects.Editor;          use Projects, Projects.Editor;
 with Projects.Registry;        use Projects.Registry;
 with GNAT.OS_Lib;              use GNAT.OS_Lib;
 with Ada.Unchecked_Deallocation;
+with Histories;                use Histories;
 
 package body Scenario_Selectors is
 
@@ -113,6 +115,9 @@ package body Scenario_Selectors is
    --  Return the first selected sibling of Iter, including Iter if it is
    --  selected.
 
+   procedure Toggle_Hierarchy (Selector : access Gtk_Widget_Record'Class);
+   --  Show a different view of the project selector
+
    -------------
    -- Gtk_New --
    -------------
@@ -140,18 +145,30 @@ package body Scenario_Selectors is
       Toggle_Render : Gtk_Cell_Renderer_Toggle;
       Text_Render   : Gtk_Cell_Renderer_Text;
       Num           : Gint;
+      Scrolled      : Gtk_Scrolled_Window;
       pragma Unreferenced (Num);
 
    begin
-      Gtk.Scrolled_Window.Initialize (Selector);
-      Set_Policy (Selector, Policy_Never, Policy_Automatic);
+      Initialize_Vbox (Selector, Homogeneous => False);
+
+      Gtk_New (Selector.Show_As_Hierarchy, -"Show as hierarchy");
+      Pack_Start (Selector, Selector.Show_As_Hierarchy, Expand => False);
+      Associate
+        (Get_History (Kernel).all, "scenario_selector_show_as_hierarchy",
+         Selector.Show_As_Hierarchy);
+      Widget_Callback.Object_Connect
+        (Selector.Show_As_Hierarchy, "toggled",
+         Widget_Callback.To_Marshaller (Toggle_Hierarchy'Access), Selector);
+
+      Gtk_New (Scrolled);
+      Pack_Start (Selector, Scrolled, Expand => True, Fill => True);
+      Set_Policy (Scrolled, Policy_Never, Policy_Automatic);
 
       Selector.Ref_Project := Ref_Project;
       Selector.Kernel      := Kernel_Handle (Kernel);
 
       Gtk_New (View);
-      Add (Selector, View);
-      --  Set_Mode (Get_Selection (View), Selection_None);
+      Add (Scrolled, View);
 
       Gtk_New (Selector.Model, Project_Column_Types);
       Set_Model (View, Gtk_Tree_Model (Selector.Model));
@@ -184,6 +201,17 @@ package body Scenario_Selectors is
 
       Add_Project_Recursive (Selector, Null_Iter, Get_Project (Kernel));
    end Initialize;
+
+   ----------------------
+   -- Toggle_Hierarchy --
+   ----------------------
+
+   procedure Toggle_Hierarchy (Selector : access Gtk_Widget_Record'Class) is
+      S : constant Project_Selector := Project_Selector (Selector);
+   begin
+      Clear (S.Model);
+      Add_Project_Recursive (S, Null_Iter, Get_Project (S.Kernel));
+   end Toggle_Hierarchy;
 
    ------------------------
    -- Select_All_Project --
@@ -282,7 +310,7 @@ package body Scenario_Selectors is
             Selected := Get_Boolean (S.Model, Iter, Selected_Column);
             Set (S.Model, Iter, Selected_Column, not Selected);
 
-            if Get_Pref (S.Kernel, Selector_Show_Project_Hierarchy) then
+            if Get_Active (S.Show_As_Hierarchy) then
                Reset_Selected_Status
                  (S, Get_Iter_First (S.Model), Project, not Selected);
             end if;
@@ -299,10 +327,10 @@ package body Scenario_Selectors is
       Iter     : Gtk_Tree_Iter;
       Project  : Project_Type)
    is
-      It : Gtk_Tree_Iter;
+      It : Gtk_Tree_Iter := Null_Iter;
       Iterator : Imported_Project_Iterator;
    begin
-      if Get_Pref (Selector.Kernel, Selector_Show_Project_Hierarchy) then
+      if Get_Active (Selector.Show_As_Hierarchy) then
          Iterator := Start (Project, Recursive => True, Direct_Only => True);
 
          Append (Selector.Model, It, Iter);
@@ -310,7 +338,9 @@ package body Scenario_Selectors is
            (Selector, It, Project = Selector.Ref_Project, Project);
 
          while Current (Iterator) /= No_Project loop
-            Add_Project_Recursive (Selector, It, Current (Iterator));
+            if Current (Iterator) /= Project then
+               Add_Project_Recursive (Selector, It, Current (Iterator));
+            end if;
             Next (Iterator);
          end loop;
 
