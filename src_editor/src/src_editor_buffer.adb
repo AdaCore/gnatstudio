@@ -1514,7 +1514,6 @@ package body Src_Editor_Buffer is
       Entity_End         : Gtk_Text_Iter;
       Tags               : Highlighting_Tags renames Buffer.Syntax_Tags;
       Slice_Offset       : Gint;
-      pragma Unreferenced (Slice_Offset);
       Result             : Boolean;
 
       function Highlight_Cb
@@ -1544,22 +1543,47 @@ package body Src_Editor_Buffer is
          Sloc_End       : Source_Location;
          Partial_Entity : Boolean) return Boolean
       is
-         Success : Boolean;
       begin
-         Get_Iter_At_Line_Index
-           (Buffer, Entity_Start,
-            Gint (Sloc_Start.Line) - 1, Gint (Sloc_Start.Column) - 1);
+         Get_Iter_At_Offset
+           (Buffer, Entity_Start, Gint (Sloc_Start.Index) + Slice_Offset - 1);
+         Get_Iter_At_Offset
+           (Buffer, Entity_End, Gint (Sloc_End.Index) + Slice_Offset);
 
-         if Sloc_End.Column = 0 then
-            Get_Iter_At_Line_Index
-              (Buffer, Entity_End,
-               Gint (Sloc_End.Line), Gint (Sloc_End.Column));
-         else
-            Get_Iter_At_Line_Index
-              (Buffer, Entity_End,
-               Gint (Sloc_End.Line) - 1, Gint (Sloc_End.Column) - 1);
-            Forward_Char (Entity_End, Success);
-         end if;
+--         if Gint (Sloc_Start.Line) = 0 then
+--            Col := Gint (Sloc_Start.Column) + Slice_Offset_Column - 1;
+--         else
+--            Col := Gint (Sloc_Start.Column) - 1;
+--         end if;
+
+--         Get_Iter_At_Line_Index
+--           (Buffer, Entity_Start,
+--            Gint (Sloc_Start.Line) + Slice_Offset_Line - 1,
+--            Col);
+
+--         if Sloc_End.Column = 0 then
+--            if Gint (Sloc_End.Line) = 1 then
+--               Col := Gint (Sloc_End.Column) + Slice_Offset_Column;
+--            else
+--               Col := Gint (Sloc_End.Column);
+--            end if;
+
+--            Get_Iter_At_Line_Index
+--              (Buffer, Entity_End,
+--               Gint (Sloc_End.Line) + Slice_Offset_Line,
+--               Col);
+--         else
+--            if Gint (Sloc_End.Line) - 1 = 0 then
+--               Col := Gint (Sloc_End.Column) + Slice_Offset_Column;
+--            else
+--               Col := Gint (Sloc_End.Column);
+--            end if;
+
+--            Get_Iter_At_Line_Index
+--              (Buffer, Entity_End,
+--               Gint (Sloc_End.Line) + Slice_Offset_Line - 1,
+--               Col - 1);
+--            Forward_Char (Entity_End, Success);
+--         end if;
 
          if Partial_Entity then
             Highlight_Complete := False;
