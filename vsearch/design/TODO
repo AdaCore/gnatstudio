@@ -25,17 +25,25 @@
 
   * [Yeti] Obtaining the project file list
 
-  * [Yeti] Don't scan empty comments /**/ and empty string "" ?
-    Incompatible for patterns matching empty string.
-
   * [Yeti] Scan empty lines ?
     Only useful when pattern matches empty string.
 
-  * [Yeti] Move the abort flag and the callback access in HG_Window_Record.
+  * [Yeti] Move the abort flag and the callback access in Hyper_Grep_Record.
 
   * [Yeti] Desactivate Stop when not searching, Start when searching.
 
-  * [Yeti] Scan in syntactic delimiters also ( /* " -- */ ) ?
+  * [Yeti] Don't discard syntactic delimiters " /* -- */ in matching ?
+
+  * [Yeti] Option to scan with no context, even if one could be used.
+
+  * [Yeti] Avoid // in pathnames.
+
+  * [Yeti] in C strings, '\' skips ASCII.LF; don't skip LF without '\' ?
+
+  * [Yeti] handle "" in Ada strings as a '"' character, not as the string end
+    and the start of another string.
+
+  * [Yeti] Add a callback reporting failures (opening error, ...)
 
 -----------
 -- Speed --
@@ -45,8 +53,9 @@
     Difference is that syntactic delimiters ( /* " -- */ ) can't be matched in
     current context-with implementation.
 
-  * [Yeti] Merge Scan_File_with_Context and Scan_Line_With_Context
-    Avoids many calls, but add indentation levels.
+  * [Yeti] Merge Scan_File_With_Context and Scan_Line_With_Context
+    Avoids calls to SLWC and re-elaboration of declared items, but add
+    indentation levels.
 
 ----------
 -- Bugs --
