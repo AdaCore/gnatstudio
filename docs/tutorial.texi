@@ -328,7 +328,7 @@ removed in the call stack. From this contextual menu, add the
 @code{Frame Number} info by clicking on it.
 
 Now select the menu @code{Debug->Run...}. Notice that @code{../input.txt} has
-been filled automatically for you since the two menus @code{Build->Run...) and
+been filled automatically for you since the two menus @code{Build->Run...} and
 @code{Debug->Run...} are synchronized. Click on @code{OK}: the debugger should
 stop on an exception (@code{Contraint_Error} in the file @file{stack.adb}, at
 line 49).
