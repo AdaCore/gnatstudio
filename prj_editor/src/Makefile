@@ -10,7 +10,7 @@ RUNTIME_INC=${RUNTIME_HEAD:%=-aI%}
 GNAT_INC=${RUNTIME_INC} -aI${GNAT_SRC}
 
 CFLAGS=-g
-GNATMAKE_FLAGS=-gnaty -gnatwu -gnata -m ${CFLAGS} `gtkada-config`
+GNATMAKE_FLAGS=-gnaty -gnatwu -gnata -gnatQ -m ${CFLAGS} `gtkada-config` -bargs -E
 
 
 .PHONY: all check_gnat force
@@ -27,6 +27,6 @@ check_gnat: force
 	   (echo "GNAT sources not found in ${GNAT_SRC}"; false)
 
 clean: force
-	cd ../obj; ${RM} b~* *.o *.ali core wizard
+	cd ../obj; ${RM} b~* *.o *.ali core wizard lib_make
 
 force:
