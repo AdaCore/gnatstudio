@@ -1072,8 +1072,13 @@ package body Odd.Process is
    begin
       Tab := Process_User_Data.Get
         (Get_Child (Get_Cur_Page (Debugger.Process_Notebook)));
-      Get_Line (Buffer, Len);
-      Process_User_Command (Tab, Buffer (1 .. Len));
+
+      --  If we are already processing a command, just wait until
+      --  the debugger is available
+      if not Command_In_Process (Get_Process (Tab.Debugger)) then
+         Get_Line (Buffer, Len);
+         Process_User_Command (Tab, Buffer (1 .. Len));
+      end if;
    end Input_Available;
 
    ---------------------
