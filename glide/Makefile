@@ -1,2 +1,2 @@
 all build compile link ada c c++ clean internal-clean :
-	$(MAKE) -s -f Makefile.glide $@
+	$(MAKE) -s -f Makefile.glide $@ ADAFLAGS=-gnatwF

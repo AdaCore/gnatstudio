@@ -1,5 +1,5 @@
 all build compile link ada c c++ clean :
-	$(MAKE) -s -C glide -f Makefile.glide $@
+	$(MAKE) -s -C glide -f Makefile.glide $@ ADAFLAGS=-gnatwF
 
 gvd:
 	$(MAKE) -s -C gvd -f Makefile.gvd EXEC=gvd ADA_SOURCES=gvd_main.adb
