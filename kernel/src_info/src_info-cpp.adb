@@ -314,38 +314,6 @@ package body Src_Info.CPP is
       Load (HI.Xrefs,
         Name_As_Directory (HI.SN_Dir.all) & Browse.Xref_Pool_Filename);
 
-      loop
-         declare
-            Current_File : String := Current_Source_File (HI);
-         begin
-            if Current_File = "" and HI.State = Start then
-               --  empty list or nothing to update
-               HI.State := Done;
-               Save (HI.Xrefs, Name_As_Directory (HI.SN_Dir.all)
-                 & Browse.Xref_Pool_Filename);
-               Free_String (HI.SN_Dir);
-               Free (HI.Xrefs);
-               return HI;
-            end if;
-
-            --  check if we need update DB for this file
-            if not Up_To_Date (Current_File, HI.SN_Dir.all, HI.Xrefs)
-               or HI.Process_All
-            then
-               --  start processing
-               HI.State := Process_Files;
-               Browse.Browse
-                 (Current_File,
-                  HI.SN_Dir.all,
-                  HI.Xrefs,
-                  HI.PD);
-               return HI;
-            else
-               Next_Source_File (HI);
-            end if;
-         end;
-      end loop;
-
       return HI;
    end Generate_LI_For_Project;
 
@@ -353,7 +321,7 @@ package body Src_Info.CPP is
      (Iterator : in out CPP_LI_Handler_Iterator;
       Finished : out Boolean)
    is
-      Process_Alive : Boolean;
+      Process_Alive : Boolean := False;
       Success       : Boolean;
    begin
       Finished := False;
@@ -363,7 +331,9 @@ package body Src_Info.CPP is
          return;
       end if;
 
-      Browse.Is_Alive (Iterator.PD, Process_Alive);
+      if Iterator.State /= Start then
+         Browse.Is_Alive (Iterator.PD, Process_Alive);
+      end if;
 
       if Process_Alive then
          return;
@@ -396,6 +366,7 @@ package body Src_Info.CPP is
                             (Next_File, Iterator.SN_Dir.all, Iterator.Xrefs)
                         or Iterator.Process_All
                      then
+                        Trace (Info_Stream, "Updating " & Next_File);
                         Iterator.State := Process_Files;
                         Browse.Browse
                           (Next_File,
