@@ -1234,6 +1234,7 @@ package body Src_Editor_View is
          Use_Tabs     => Use_Tabs,
          Params       => Indent_Params,
          Indent_Style => Indent_Style);
+
       if Indent_Style = None then
          return False;
       end if;
