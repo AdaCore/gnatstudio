@@ -21,29 +21,16 @@
 with Gtk.Window; use Gtk.Window;
 with Gtk.Box; use Gtk.Box;
 with Gtk.Item_Factory; use Gtk.Item_Factory;
-with Gtk.Widget; use Gtk.Widget;
 with Gtk.Frame; use Gtk.Frame;
 with Gtk.Notebook; use Gtk.Notebook;
 with GVD.Status_Bar; use GVD.Status_Bar;
-with Gtkada.Toolbar; use Gtkada.Toolbar;
 
 package Main_Debug_Window_Pkg is
 
    type Main_Debug_Window_Record is new Gtk_Window_Record with record
       Vbox : Gtk_Vbox;
       Factory : Gtk_Item_Factory;
-      Toolbar : Gtkada_Toolbar;
-      Button49 : Gtk_Widget;
-      Button50 : Gtk_Widget;
-      Button52 : Gtk_Widget;
-      Button53 : Gtk_Widget;
-      Button54 : Gtk_Widget;
-      Button55 : Gtk_Widget;
-      Button58 : Gtk_Widget;
-      Button60 : Gtk_Widget;
-      Button57 : Gtk_Widget;
-      Button51 : Gtk_Widget;
-      Button61 : Gtk_Widget;
+      Toolbar_Box : Gtk_Vbox;
       Frame : Gtk_Frame;
       Process_Notebook : Gtk_Notebook;
       Statusbar : GVD_Status_Bar;
