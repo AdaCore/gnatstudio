@@ -40,6 +40,9 @@ with Ada.Unchecked_Deallocation;
 
 package body GVD.Session_Dialog is
 
+   Buffer_Length : constant := 8192;
+   --  Maximum length of a string buffer
+
    ----------------------
    -- Local procedures --
    ----------------------
@@ -62,7 +65,7 @@ package body GVD.Session_Dialog is
       Top           : constant GVD_Main_Window := GVD_Main_Window (Window);
       Tab           : Debugger_Process_Tab;
       Directory     : Dir_Type;
-      Buffer        : String (1 .. 256);
+      Buffer        : String (1 .. Buffer_Length);
       Last          : Natural;
       Item          : Gtk_List_Item;
       Program       : Basic_Types.String_Access;
@@ -218,7 +221,7 @@ package body GVD.Session_Dialog is
       Dir    : String)
    is
       Directory    : Dir_Type;
-      Buffer       : String (1 .. 256);
+      Buffer       : String (1 .. Buffer_Length);
       Last         : Natural;
       Item         : Gtk_List_Item;
       File         : File_Type;
@@ -407,7 +410,7 @@ package body GVD.Session_Dialog is
    is
       File      : File_Type;
       Num_Pages : Gint;
-      Buffer    : String (1 .. 256);
+      Buffer    : String (1 .. Buffer_Length);
       Last      : Natural;
 
    begin
