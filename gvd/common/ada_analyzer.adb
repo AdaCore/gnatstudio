@@ -21,6 +21,7 @@
 with String_Utils;            use String_Utils;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 with GNAT.IO;                 use GNAT.IO;
+with Glib.Unicode;            use Glib.Unicode;
 with Ada.Unchecked_Deallocation;
 
 package body Ada_Analyzer is
@@ -56,29 +57,12 @@ package body Ada_Analyzer is
    function Is_Library_Level (Stack : Token_Stack.Simple_Stack) return Boolean;
    --  Return True if the current scope in Stack is a library level package.
 
-   function Next_Char  (P : Natural) return Natural;
-   --  Return the next char in buffer. P is the current character.
-   pragma Inline (Next_Char);
-
-   function Prev_Char (P : Natural) return Natural;
-   --  Return the previous char in buffer. P is the current character.
-   pragma Inline (Prev_Char);
-
    procedure Replace_Text
      (Buffer  : in out Extended_Line_Buffer;
       First   : Natural;
       Last    : Natural;
       Replace : String);
    --  Replace the slice First .. Last - 1 in Buffer by Replace.
-
-   ---------------
-   -- Next_Char --
-   ---------------
-
-   function Next_Char (P : Natural) return Natural is
-   begin
-      return P + 1;
-   end Next_Char;
 
    ---------------
    -- Get_Token --
@@ -327,15 +311,6 @@ package body Ada_Analyzer is
       return Tok_Identifier;
    end Get_Token;
 
-   ---------------
-   -- Prev_Char --
-   ---------------
-
-   function Prev_Char (P : Natural) return Natural is
-   begin
-      return P - 1;
-   end Prev_Char;
-
    ----------------------
    -- Is_Library_Level --
    ----------------------
@@ -493,6 +468,14 @@ package body Ada_Analyzer is
       --  Compute proper indentation, taking into account various cases
       --  of simple/continuation/declaration/... lines.
 
+      function Next_Char  (P : Natural) return Natural;
+      --  Return the next char in buffer. P is the current character.
+      pragma Inline (Next_Char);
+
+      function Prev_Char (P : Natural) return Natural;
+      --  Return the previous char in buffer. P is the current character.
+      pragma Inline (Prev_Char);
+
       --------------------
       -- Stack Routines --
       --------------------
@@ -503,6 +486,24 @@ package body Ada_Analyzer is
 
       procedure Pop (Stack : in out Token_Stack.Simple_Stack);
       --  Pop Value on top of Stack. Ignore returned value.
+
+      ---------------
+      -- Next_Char --
+      ---------------
+
+      function Next_Char (P : Natural) return Natural is
+      begin
+         return Utf8_Find_Next_Char (Buffer, P);
+      end Next_Char;
+
+      ---------------
+      -- Prev_Char --
+      ---------------
+
+      function Prev_Char (P : Natural) return Natural is
+      begin
+         return Utf8_Find_Prev_Char (Buffer, P);
+      end Prev_Char;
 
       ---------------
       -- Do_Indent --
@@ -701,17 +702,20 @@ package body Ada_Analyzer is
             --  Manual unrolling for efficiency
 
             exit when Tmp >= Buffer_Length
-              or else not Is_Entity_Letter (Buffer (Next_Char (Tmp)));
+              or else not Is_Entity_Letter
+                (Utf8_Get_Char (Buffer (Next_Char (Tmp) .. Buffer'Last)));
 
             Tmp := Next_Char (Tmp);
 
             exit when Tmp >= Buffer_Length
-              or else not Is_Entity_Letter (Buffer (Next_Char (Tmp)));
+              or else not Is_Entity_Letter
+                (Utf8_Get_Char (Buffer (Next_Char (Tmp) .. Buffer'Last)));
 
             Tmp := Next_Char (Tmp);
 
             exit when Tmp >= Buffer_Length
-              or else not Is_Entity_Letter (Buffer (Next_Char (Tmp)));
+              or else not Is_Entity_Letter
+                (Utf8_Get_Char (Buffer (Next_Char (Tmp) .. Buffer'Last)));
 
             Tmp := Next_Char (Tmp);
          end loop;
@@ -1651,7 +1655,8 @@ package body Ada_Analyzer is
 
                exit when not Skip_Comments
                  or else P = Buffer_Length
-                 or else Is_Entity_Letter (Buffer (P));
+                 or else Is_Entity_Letter
+                   (Utf8_Get_Char (Buffer (P .. Buffer'Last)));
 
                P := Next_Char (P);
             end loop;
@@ -1660,7 +1665,9 @@ package body Ada_Analyzer is
                return;
             end if;
 
-            exit when P = Buffer_Length or else Is_Entity_Letter (Buffer (P));
+            exit when P = Buffer_Length
+              or else Is_Entity_Letter
+                (Utf8_Get_Char (Buffer (P .. Buffer'Last)));
 
             Top_Token := Top (Tokens);
             Prev_Prev_Token := Prev_Token;
