@@ -628,7 +628,7 @@ package body Src_Info.ALI is
 
    begin
       File :=
-        (LI              => Get (List.Table.all, Base_Name (ALI_Filename)),
+        (LI              => Get (List.Table.all, ALI_Filename),
          Part            => Part,
          Source_Filename => null);
 
@@ -637,23 +637,20 @@ package body Src_Info.ALI is
 
       if File.LI = null then
          declare
-            LI : constant String := Locate_ALI (ALI_Filename, Project);
+            LI : Virtual_File :=
+              Create (ALI_Filename, Project, Use_Source_Path => False);
          begin
-            if LI = "" then
-               Create_LI_File
-                 (File        => File.LI,
-                  List        => List,
-                  Project     => Project,
-                  LI_Filename => Create_From_Base (ALI_Filename),
-                  Handler     => LI_Handler (Handler));
-            else
-               Create_LI_File
-                 (File        => File.LI,
-                  List        => List,
-                  Project     => Project,
-                  LI_Filename => Create (Full_Filename => LI),
-                  Handler     => LI_Handler (Handler));
+            if LI = VFS.No_File then
+               LI := Create_From_Base (ALI_Filename);
             end if;
+
+            Create_LI_File
+              (File        => File.LI,
+               List        => List,
+               Project     => Project,
+               LI_Filename => LI,
+               Handler     => LI_Handler (Handler));
+
             if File.LI = null then
                raise ALI_Internal_Error;
             end if;
@@ -1761,7 +1758,6 @@ package body Src_Info.ALI is
          when Unit_Spec =>
             --  Use the ALI for the body, if there is a body, otherwise the one
             --  for the spec will do.
-
             return Create
               (Locate_ALI
                  (Get_ALI_Filename
@@ -1805,7 +1801,7 @@ package body Src_Info.ALI is
             --  not get a LI_Name. Nothing to do in this case
 
             if Full_Name (LI_Name).all = "" then
-               Trace (Me, "No LI found found for "
+               Trace (Me, "No LI found for "
                       & Full_Name (Source_Filename).all);
 
             else
