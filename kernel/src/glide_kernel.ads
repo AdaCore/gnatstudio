@@ -190,12 +190,6 @@ package Glide_Kernel is
    --  opened from the command line. As a result, Name might be found even
    --  if it doesn't directly belong to a project.
 
-   function Create_Html
-     (Name   : Glib.UTF8_String;
-      Kernel : access Kernel_Handle_Record) return VFS.Virtual_File;
-   --  Filename can be a full name or a base name, and can include ancors (e.g
-   --  "foo.html#anchor").
-
    -------------
    -- Queries --
    -------------
