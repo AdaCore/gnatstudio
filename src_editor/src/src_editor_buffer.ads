@@ -32,7 +32,6 @@ with Gtk.Text_Buffer;
 with Gtk.Text_Iter;
 with Gtk.Text_Mark;
 with Gtk.Text_Tag;
-with Gtkada.Types;
 
 with Language;
 with Src_Highlighting;
@@ -145,17 +144,6 @@ package Src_Editor_Buffer is
 
    procedure Set_Cursor_Position
      (Buffer  : access Source_Buffer_Record;
-      Line    : Gint;
-      Column  : Gint);
-   --  Move the insert cursor to the given position.
-   --
-   --  The validity of the cursor position must be verified before invoking
-   --  this procedure. An incorrect position will cause an Assertion_Failure
-   --  when compiled with assertion checks, or an undefined behavior otherwise.
-   --  This is obsolete, Set_Cursor_Position below should be called.
-
-   procedure Set_Cursor_Position
-     (Buffer  : access Source_Buffer_Record;
       Line    : Editable_Line_Type;
       Column  : Natural);
    --  Move the insert cursor to the given position.
@@ -163,12 +151,6 @@ package Src_Editor_Buffer is
    --  The validity of the cursor position must be verified before invoking
    --  this procedure. An incorrect position will cause an Assertion_Failure
    --  when compiled with assertion checks, or an undefined behavior otherwise.
-
-   procedure Set_Screen_Position
-     (Buffer  : access Source_Buffer_Record;
-      Line    : Gint;
-      Column  : Gint);
-   --  Same as Set_Cursor_Position, after expanding all tabs.
 
    procedure Get_Cursor_Position
      (Buffer : access Source_Buffer_Record;
@@ -206,10 +188,10 @@ package Src_Editor_Buffer is
 
    procedure Get_Selection_Bounds
      (Buffer       : access Source_Buffer_Record;
-      Start_Line   : out Gint;
-      Start_Column : out Gint;
-      End_Line     : out Gint;
-      End_Column   : out Gint;
+      Start_Line   : out Editable_Line_Type;
+      Start_Column : out Natural;
+      End_Line     : out Editable_Line_Type;
+      End_Column   : out Natural;
       Found        : out Boolean);
    --  If a portion of the buffer is currently selected, then return the
    --  position of the beginning and the end of the selection. Otherwise,
@@ -224,61 +206,15 @@ package Src_Editor_Buffer is
    --  sequence because it does not work with (line, column) positions but
    --  directly with buffer iterators.
 
-   procedure Search
-     (Buffer             : access Source_Buffer_Record;
-      Pattern            : String;
-      Case_Sensitive     : Boolean := True;
-      Whole_Word         : Boolean := False;
-      Search_Forward     : Boolean := True;
-      From_Line          : Gint := 0;
-      From_Column        : Gint := 0;
-      Found              : out Boolean;
-      Match_Start_Line   : out Gint;
-      Match_Start_Column : out Gint;
-      Match_End_Line     : out Gint;
-      Match_End_Column   : out Gint);
-   --  Search function. Regular expressions for Pattern are not supported.
-   --  If the pattern is found, then Found is set to True and the positions
-   --  of the begining and of the end of the matching portion are returned.
-   --
-   --  The validity of the start position must be verified before invoking
-   --  this function. An incorrect position will cause an Assertion_Failure
-   --  when compiled with assertion checks, or an undefined behavior otherwise.
-
-   function Get_Slice
-     (Buffer       : access Source_Buffer_Record;
-      Start_Line   : Gint;
-      Start_Column : Gint;
-      End_Line     : Gint := -1;
-      End_Column   : Gint := -1) return String;
-   --  Return the text located between (Start_Line, Start_Column) and
-   --  (End_Line, End_Column). The first line is 0, the first column is 0
-   --  If End_Line = -1, contents are taken until the end of the buffer.
-   --
-   --  The text returned is UTF8-encoded.
-   --
-   --  The validity of both start and end positions must be verified before
-   --  invoking this function. An incorrect position will cause an
-   --  Assertion_Failure when compiled with assertion checks, or an undefined
-   --  behavior otherwise.
-
-   function Get_Slice
-     (Buffer       : access Source_Buffer_Record;
-      Start_Line   : Gint;
-      Start_Column : Gint;
-      End_Line     : Gint := -1;
-      End_Column   : Gint := -1) return Gtkada.Types.Chars_Ptr;
-   --  Same as above but return the C pointer directly for efficiency.
-   --  The caller is responsible for freeing the memory (with g_free).
-   --  The returned string is UTF8-encoded.
-
    function Get_Text
      (Buffer       : access Source_Buffer_Record;
       Start_Line   : Editable_Line_Type;
       Start_Column : Natural;
-      End_Line     : Editable_Line_Type;
-      End_Column   : Natural) return String;
+      End_Line     : Editable_Line_Type := 0;
+      End_Column   : Natural := 0) return String;
    --  Return (as UTF-8) the text in range [Start, end).
+   --  If End_Line is 0, get the entire range between start position and end
+   --  of text.
 
    procedure Forward_Position
      (Buffer       : access Source_Buffer_Record;
@@ -288,22 +224,6 @@ package Src_Editor_Buffer is
       End_Line     : out Editable_Line_Type;
       End_Column   : out Natural);
    --  Return the position Length characters after Start_Line/Start_Column.
-
-   procedure Insert
-     (Buffer      : access Source_Buffer_Record;
-      Line        : Gint;
-      Column      : Gint;
-      Text        : String;
-      Enable_Undo : Boolean := True);
-   --  Insert the given text in at the specified position.
-   --
-   --  The validity of the given position must be verified before invoking this
-   --  procedure. An incorrect position  will cause an Assertion_Failure when
-   --  compiled with assertion checks, or an undefined behavior
-   --  otherwise.
-   --  If Enable_Undo is True, then the insertion action will be
-   --  stored in the undo/redo queue.
-   --  This is obsolete, we should use Insert below.
 
    procedure Insert
      (Buffer      : access Source_Buffer_Record;
@@ -319,22 +239,6 @@ package Src_Editor_Buffer is
    --  otherwise.
    --  If Enable_Undo is True, then the insertion action will be
    --  stored in the undo/redo queue.
-
-   procedure Delete
-     (Buffer      : access Source_Buffer_Record;
-      Line        : Gint;
-      Column      : Gint;
-      Length      : Gint;
-      Enable_Undo : Boolean := True);
-   --  Delete Length caracters after the specified position.
-   --
-   --  The validity of the given position must be verified before invoking this
-   --  procedure. An incorrect position  will cause an Assertion_Failure when
-   --  compiled with assertion checks, or an undefined behavior
-   --  otherwise.
-   --  If Enable_Undo is True, then the deletion action will be
-   --  stored in the undo/redo queue.
-   --  Obsolete, we should use Delete below.
 
    procedure Delete
      (Buffer      : access Source_Buffer_Record;
@@ -350,21 +254,6 @@ package Src_Editor_Buffer is
    --  otherwise.
    --  If Enable_Undo is True, then the deletion action will be
    --  stored in the undo/redo queue.
-
-   procedure Replace_Slice
-     (Buffer       : access Source_Buffer_Record;
-      Start_Line   : Gint;
-      Start_Column : Gint;
-      End_Line     : Gint;
-      End_Column   : Gint;
-      Text         : String;
-      Enable_Undo  : Boolean := True);
-   --  Replace the text between the start and end positions by Text.
-   --
-   --  The validity of the given positions must be verified before invoking
-   --  this procedure. An incorrect position will cause an Assertion_Failure
-   --  when compiled with assertion checks, or an undefined behavior otherwise.
-   --  Obsolete, should call Replace_Slice below.
 
    procedure Replace_Slice
      (Buffer       : access Source_Buffer_Record;
@@ -399,6 +288,15 @@ package Src_Editor_Buffer is
    --  procedure. An incorrect position will cause an Assertion_Failure
    --  when compiled with assertion checks, or an undefined behavior otherwise.
    --  Takes Tabs into account when Expand_Tabs = True.
+
+   procedure Select_Region
+     (Buffer       : access Source_Buffer_Record;
+      Start_Line   : Editable_Line_Type;
+      Start_Column : Natural;
+      End_Line     : Editable_Line_Type;
+      End_Column   : Natural;
+      Expand_Tabs  : Boolean := True);
+   --  Select the given region.
 
    procedure External_End_Action (Buffer : access Source_Buffer_Record);
    --  This procedure should be called every time that an external
@@ -752,7 +650,34 @@ package Src_Editor_Buffer is
    --  Return the entire editable string.
    --  The caller is responsible for freeing the returned value.
 
+   function Get_Editable_Line
+     (Buffer : access Source_Buffer_Record;
+      Line   : File_Line_Type) return Editable_Line_Type;
+   --  Return the editable line corresponding to Line.
+
+   function Get_Editable_Line
+     (Buffer : access Source_Buffer_Record'Class;
+      Line   : Buffer_Line_Type) return Editable_Line_Type;
+   --  Return the editable line corresponding to Line.
+   --  Return 0 if no editable line was found.
+
+   function Get_Buffer_Line
+     (Buffer : access Source_Buffer_Record;
+      Line   : File_Line_Type) return Buffer_Line_Type;
+   --  Return the buffer line corresponding to file line Line.
+
 private
+
+   procedure Set_Cursor_Position
+     (Buffer  : access Source_Buffer_Record;
+      Line    : Gint;
+      Column  : Gint);
+   --  Move the insert cursor to the given position.
+   --
+   --  The validity of the cursor position must be verified before invoking
+   --  this procedure. An incorrect position will cause an Assertion_Failure
+   --  when compiled with assertion checks, or an undefined behavior otherwise.
+   --  This is obsolete, Set_Cursor_Position above should be called.
 
    procedure Highlight_Slice
      (Buffer     : access Source_Buffer_Record'Class;
@@ -890,22 +815,6 @@ private
 
    procedure Free (X : in out Line_Info_Width);
    --  Free memory associated to X.
-
-   function Get_Editable_Line
-     (Buffer : access Source_Buffer_Record;
-      Line   : File_Line_Type) return Editable_Line_Type;
-   --  Return the editable line corresponding to Line.
-
-   function Get_Buffer_Line
-     (Buffer : access Source_Buffer_Record;
-      Line   : File_Line_Type) return Buffer_Line_Type;
-   --  Return the buffer line corresponding to file line Line.
-
-   function Get_Editable_Line
-     (Buffer : access Source_Buffer_Record'Class;
-      Line   : Buffer_Line_Type) return Editable_Line_Type;
-   --  Return the editable line corresponding to Line.
-   --  Return 0 if no editable line was found.
 
    --------------------
    -- Editable lines --
