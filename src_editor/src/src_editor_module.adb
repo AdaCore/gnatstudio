@@ -3399,6 +3399,29 @@ package body Src_Editor_Module is
 
       Register_Command
         (Kernel,
+         Command      => "highlight_range",
+         Params       =>
+           "(file, category, line, [start_column, [end_column]])",
+         Description  =>
+           -("Highlights a portion of a line in a file with the given"
+             & " category."),
+         Minimum_Args => 3,
+         Maximum_Args => 5,
+         Handler      => Line_Highlighting.Edit_Command_Handler'Access);
+
+      Register_Command
+        (Kernel,
+         Command      => "unhighlight_range",
+         Params       =>
+           "(file, category, line, [start_column, [end_column]])",
+         Description  =>
+           -("Remove highlights for a portion of a line in a file."),
+         Minimum_Args => 3,
+         Maximum_Args => 5,
+         Handler      => Line_Highlighting.Edit_Command_Handler'Access);
+
+      Register_Command
+        (Kernel,
          Command      => "register_highlighting",
          Params       => "(category, color)",
          Description  =>
