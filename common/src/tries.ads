@@ -169,7 +169,7 @@ private
       Cell_Parent       : Cell_Child_Access;
       Last              : Integer;
       Index_Length      : Integer;
-      Scenario          : Integer;
+      Scenario          : Short_Short_Integer;
       First_Not_Matched : Character;
    end record;
 
