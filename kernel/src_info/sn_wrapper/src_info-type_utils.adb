@@ -512,7 +512,12 @@ package body Src_Info.Type_Utils is
       then
          return True;
       end if;
+
       while Ptr_A /= null and then Ptr_B /= null loop
+         if Buffer_A (Ptr_A.Data.First .. Ptr_A.Data.Last) = "..."
+            or else Buffer_B (Ptr_B.Data.First .. Ptr_B.Data.Last) = "..." then
+            return True;
+         end if;
          if Buffer_A (Ptr_A.Data.First .. Ptr_A.Data.Last)
             /= Buffer_B (Ptr_B.Data.First .. Ptr_B.Data.Last) then
             return False;

@@ -277,11 +277,13 @@ package body Src_Info.CPP is
    Fu_To_Handlers : constant array (Symbol_Type) of To_Handler :=
      (GV     => Fu_To_Gv_Handler'Access,
       FU     => Fu_To_Fu_Handler'Access,
+      FD     => Fu_To_Fu_Handler'Access,
       CON    => Fu_To_Con_Handler'Access,
       E      => Fu_To_E_Handler'Access,
       EC     => Fu_To_Ec_Handler'Access,
       MA     => Fu_To_Ma_Handler'Access,
       MI     => Fu_To_Mi_Handler'Access,
+      MD     => Fu_To_Mi_Handler'Access,
       CL     => Fu_To_Cl_Handler'Access,
       T      => Fu_To_T_Handler'Access,
       UN     => Fu_To_Un_Handler'Access,
