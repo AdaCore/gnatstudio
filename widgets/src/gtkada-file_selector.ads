@@ -99,6 +99,7 @@ package Gtkada.File_Selector is
       File_Pattern      : String  := "";
       Pattern_Name      : String  := "";
       Default_Name      : String  := "";
+      Parent            : Gtk_Window := null;
       Use_Native_Dialog : Boolean := False;
       Kind              : File_Selector_Kind := Unspecified;
       History           : Histories.History  := null) return String;
@@ -107,19 +108,19 @@ package Gtkada.File_Selector is
    --  Base_Directory is the directory on which the dialog starts. If the
    --  directory is invalid, then the dialog will point to the current
    --  directory.
+   --  Parent is the parent window, used for setting the transient attribute.
    --  File_Pattern is a globbing pattern, as described in GNAT.Regexp
-   --  (e.g. "{*.htm,*.html}"), or null for no filter.
+   --  (e.g. "*.htm"), or null for no filter.
    --  If Pattern_Name is not null, use this parameter instead of File_Pattern
    --  as the filter name.
    --  Default_Name is a default value entered in the text entry.
    --  If Use_Native_Dialog is True, this function will use the native file
-   --  selection widget instead of a GtkAda based one. This option has
-   --  currently no effect, but will provide in the future support for e.g.
-   --  Windows standard dialog.
+   --  selection widget instead of a GtkAda based one.
 
    function Select_Directory
      (Title             : String  := "Select a directory";
       Base_Directory    : String  := "";
+      Parent            : Gtk_Window := null;
       Use_Native_Dialog : Boolean := False;
       History           : Histories.History := null) return String;
    --  Create a directory selection dialog, display it, and return the absolute
@@ -145,7 +146,8 @@ package Gtkada.File_Selector is
    --  A file selector window.
 
    function Select_File
-     (File_Selector : File_Selector_Window_Access) return String;
+     (File_Selector : File_Selector_Window_Access;
+      Parent        : Gtk_Window := null) return String;
    --  Display File_Selector on the screen, and wait until the user selects a
    --  file. The absolute file name is returned, or the empty string if the
    --  user cancelled the dialog.
@@ -153,7 +155,8 @@ package Gtkada.File_Selector is
    --  the opportunity to register filters before displaying the dialog.
 
    function Select_Directory
-     (File_Selector : File_Selector_Window_Access) return String;
+     (File_Selector : File_Selector_Window_Access;
+      Parent        : Gtk_Window := null) return String;
    --  Display File_Selector on the screen, and wait until the user selects a
    --  file. The absolute dir name is returned, or the empty string if the
    --  user cancelled the dialog.
