@@ -26,7 +26,7 @@ with Gtk.Box;                  use Gtk.Box;
 with Glide_Kernel;             use Glide_Kernel;
 with Glide_Kernel.Modules;     use Glide_Kernel.Modules;
 
-with Gtkada.Smart_Tree_Store;  use Gtkada.Smart_Tree_Store;
+with Gtkada.Tree_View;         use Gtkada.Tree_View;
 
 package Glide_Result_View is
 
@@ -86,7 +86,7 @@ package Glide_Result_View is
 private
    type Result_View_Record is new Gtk_Hbox_Record with record
       Kernel : Kernel_Handle;
-      Tree   : Smart_Tree;
+      Tree   : Tree_View;
 
       Non_Leaf_Color : Gdk.Color.Gdk_Color;
       Leaf_Color     : Gdk.Color.Gdk_Color;
