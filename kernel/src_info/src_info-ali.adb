@@ -329,7 +329,7 @@ package body Src_Info.ALI is
       end loop;
 
       --  If we reach this point, the character is illegal.
-      Trace (Me, "Char_To_R_KindL Invalid character " & C);
+      Trace (Me, "Char_To_R_Kind: Invalid character " & C);
       raise ALI_Internal_Error;
    end Char_To_R_Kind;
 
