@@ -2285,6 +2285,49 @@ package body Src_Editor_Buffer is
       end;
    end Is_In_Comment;
 
+   ------------------
+   -- Is_In_String --
+   ------------------
+
+   function Is_In_String
+     (Buffer : Source_Buffer;
+      Iter   : Gtk_Text_Iter) return Boolean
+   is
+      Lang         : constant Language_Access := Buffer.Lang;
+      Lang_Context : constant Language_Context_Access :=
+                       Get_Language_Context (Lang);
+      C1, C2       : Character;
+      Pos          : Gtk_Text_Iter;
+      Quoted       : Boolean := False;
+      Result       : Boolean;
+   begin
+      Copy (Iter, Pos);
+      Backward_Char (Pos, Result);
+
+      if not Result then
+         --  Start of buffer
+         return Quoted;
+      end if;
+
+      C2 := Get_Char (Pos);
+
+      loop
+         Backward_Char (Pos, Result);
+         exit when not Result;
+
+         C1 := C2;
+         C2 := Get_Char (Pos);
+
+         if C1 = Lang_Context.String_Delimiter
+           and then not (C2 = Lang_Context.Quote_Character)
+         then
+            Quoted := not Quoted;
+         end if;
+      end loop;
+
+      return Quoted;
+   end Is_In_String;
+
    -------------
    -- Execute --
    -------------

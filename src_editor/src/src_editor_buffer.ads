@@ -714,10 +714,14 @@ private
 
    function Is_In_Comment
      (Buffer : Source_Buffer;
-      Iter   : Gtk.Text_Iter.Gtk_Text_Iter)
-      return Boolean;
+      Iter   : Gtk.Text_Iter.Gtk_Text_Iter) return Boolean;
    --  Retruns true if Iter is in a comment. This is only supported for non
    --  case sensitive languages that have one-line comment construct only.
+
+   function Is_In_String
+     (Buffer : Source_Buffer;
+      Iter   : Gtk.Text_Iter.Gtk_Text_Iter) return Boolean;
+   --  Returns true if Iter is inside a string
 
    procedure Highlight_Slice
      (Buffer     : access Source_Buffer_Record'Class;
