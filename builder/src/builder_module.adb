@@ -218,7 +218,7 @@ package body Builder_Module is
 
    begin
       if Context = null
-        or else not (Context.all in File_Selection_Context'Class)
+        or else not (Context.all in File_Name_Selection_Context'Class)
       then
          return;
       end if;
@@ -226,8 +226,8 @@ package body Builder_Module is
       declare
          Top  : constant Glide_Window :=
            Glide_Window (Get_Main_Window (Kernel));
-         File_Context : constant File_Selection_Context_Access :=
-           File_Selection_Context_Access (Context);
+         File_Context : constant File_Name_Selection_Context_Access :=
+           File_Name_Selection_Context_Access (Context);
 
          --  ??? Should get the name of the real main
          Cmd  : constant String := "gnatmake -q -u -gnats " &
@@ -271,8 +271,9 @@ package body Builder_Module is
 
    begin
       if Context = null
-        or else not (Context.all in File_Selection_Context'Class)
+        or else not (Context.all in File_Name_Selection_Context'Class)
       then
+         Trace (Me, "On_Compile: context doesn't contain file name");
          return;
       end if;
 
@@ -284,7 +285,7 @@ package body Builder_Module is
 
          --  ??? Should get the name of the real main
          File    : constant String :=
-           File_Information (File_Selection_Context_Access (Context));
+           File_Information (File_Name_Selection_Context_Access (Context));
          Fd      : Process_Descriptor_Access;
          Args    : Argument_List_Access;
          Id      : Timeout_Handler_Id;

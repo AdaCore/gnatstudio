@@ -92,7 +92,7 @@ ifndef AR_CMD
 endif
 
 ifndef GNATMAKE
-   GNATMAKE=gnatmake
+   GNATMAKE=gnatmake -j3 -gnatwc
 endif
 
 # Set the object search path
