@@ -90,8 +90,7 @@ package body Src_Editor_Buffer is
    --------------------------
 
    procedure Changed_Handler
-     (Buffer : access Source_Buffer_Record'Class;
-      Params : Glib.Values.GValues);
+     (Buffer : access Source_Buffer_Record'Class);
    --  This procedure is used to signal to the clients that the insert
    --  cursor position may have changed by emitting the
    --  "cursor_position_changed" signal.
@@ -185,10 +184,7 @@ package body Src_Editor_Buffer is
    -- Changed_Handler --
    ---------------------
 
-   procedure Changed_Handler
-     (Buffer : access Source_Buffer_Record'Class;
-      Params : Glib.Values.GValues)
-   is
+   procedure Changed_Handler (Buffer : access Source_Buffer_Record'Class) is
       Line : Gint;
       Col  : Gint;
    begin
@@ -761,7 +757,9 @@ package body Src_Editor_Buffer is
       --  And finally, connect ourselves to the interestings signals
 
       Buffer_Callback.Connect
-        (Buffer, "changed", Cb => Changed_Handler'Access, After => True);
+        (Buffer, "changed",
+         Buffer_Callback.To_Marshaller (Changed_Handler'Access),
+         After => True);
       Buffer_Callback.Connect
         (Buffer, "mark_set", Cb => Mark_Set_Handler'Access, After => True);
       Buffer_Callback.Connect
