@@ -162,6 +162,7 @@ package body GVD.Status_Bar is
       Status  : GVD_Status_Bar := GVD_Status_Bar (Widget);
       X, Y, W : Gint;
       Success : Boolean;
+      Grab    : Gdk_Grab_Status;
       Text    : Gtk_Text;
       List    : Messages_List.GSlist := Get_Messages (Status.Status);
       use type Messages_List.GSlist;
@@ -257,7 +258,7 @@ package body GVD.Status_Bar is
          Show_All (Status.History_Win);
 
          Grab_Add (Status.History_Win);
-         Success := Pointer_Grab
+         Grab := Pointer_Grab
            (Get_Window (Status.History_Win),
             Event_Mask => Button_Press_Mask or Button_Release_Mask,
             Time       => 0);
