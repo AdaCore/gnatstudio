@@ -267,7 +267,6 @@ package body Odd.Menus is
             return;
          end if;
       end if;
-      Display_Items.Update (Item.Canvas, Item.Item);
    end Change_Value_Mode;
 
    ----------------------
