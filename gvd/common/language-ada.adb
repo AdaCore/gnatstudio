@@ -18,6 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Odd_Intl;     use Odd_Intl;
 with GNAT.Regpat;  use GNAT.Regpat;
 with GVD.Pixmaps;  use GVD.Pixmaps;
 with GVD.Strings;  use GVD.Strings;
@@ -89,39 +90,41 @@ package body Language.Debugger.Ada is
    --  The Specs are not parsed specifically. Instead, all the work is done
    --  while parsing for subprograms, and the function Make_Entry_Subprogram
    --  distinguishes between the two cases.
+   --  ??? Note that calling gettext ("-") here is too early since we have
+   --  not called Set_Domain yet.
 
    Ada_Explorer_Categories : constant Explorer_Categories :=
-     ((Name           => new String'("Subprograms"),
+     ((Name           => new String' (-"Subprograms"),
        Regexp         => Subprogram_RE'Access,
        Position_Index => 2,
        Icon           => subprogram_xpm'Access,
        Make_Entry     => Make_Entry_Subprogram'Access),
 
-      (Name           => new String'("Specs"),
+      (Name           => new String' (-"Specs"),
        Regexp         => Subprogram_RE'Access,
        Position_Index => 2,
        Icon           => subprogram_xpm'Access,
        Make_Entry     => null),
 
-      (Name           => new String'("Packages"),
+      (Name           => new String' (-"Packages"),
        Regexp         => Package_RE'Access,
        Position_Index => 3,
        Icon           => package_xpm'Access,
        Make_Entry     => Make_Entry_Package'Access),
 
-      (Name           => new String'("Types"),
+      (Name           => new String' (-"Types"),
        Regexp         => Type_Def_RE'Access,
        Position_Index => 2,
        Icon           => var_xpm'Access,
        Make_Entry     => Make_Entry_Type'Access),
 
-      (Name           => new String'("Tasks"),
+      (Name           => new String' (-"Tasks"),
        Regexp         => Task_RE'Access,
        Position_Index => 3,
        Icon           => package_xpm'Access,
        Make_Entry     => Make_Entry_Task'Access),
 
-      (Name           => new String'("Protected"),
+      (Name           => new String' (-"Protected"),
        Regexp         => Protected_RE'Access,
        Position_Index => 3,
        Icon           => package_xpm'Access,
@@ -190,15 +193,6 @@ package body Language.Debugger.Ada is
          return Name & '.' & Field;
       end if;
    end Record_Field_Name;
-
-   -----------
-   -- Start --
-   -----------
-
-   function Start (Debugger  : access Ada_Language) return String is
-   begin
-      return "begin";
-   end Start;
 
    ----------------------
    -- Explorer_Regexps --
@@ -327,9 +321,8 @@ package body Language.Debugger.Ada is
    -- Keywords --
    --------------
 
-   function Keywords (Lang : access Ada_Language)
-      return GNAT.Regpat.Pattern_Matcher
-   is
+   function Keywords
+     (Lang : access Ada_Language) return GNAT.Regpat.Pattern_Matcher is
    begin
       return Keywords_List;
    end Keywords;
@@ -344,9 +337,9 @@ package body Language.Debugger.Ada is
       return (Comment_Start_Length => 2,
               Comment_End_Length   => 1,
               Comment_Start        => "--",
-              Comment_End          => String'(1 => ASCII.LF),
+              Comment_End          => String' (1 => ASCII.LF),
               String_Delimiter     => '"',
-              Quote_Character      => ASCII.Nul,
+              Quote_Character      => ASCII.NUL,
               Constant_Character   => ''');
    end Get_Language_Context;
 
