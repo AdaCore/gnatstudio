@@ -44,6 +44,7 @@ with Docgen;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Projects.Registry;         use Projects.Registry;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
+--  ??? why is the following line commented out
 --  with Docgen_Backend_TEXI;     use Docgen_Backend_TEXI; not ready
 
 package body Docgen_Module is
@@ -106,23 +107,23 @@ package body Docgen_Module is
       Link_All_P           : Boolean := False);
    --  Set new options or reset options
    --
-   --  Type_Of_File_P is the type of the generated file (html, texi...)
-   --  Process_Body_Files_P indicates if we create also documentation
-   --    for body files
-   --  Ignorable_Comments_P indicates if we ignore all comments with "--!"
-   --  Comments_Above_P says if we generate doc comments for entities above
-   --    the header
-   --  Show_Private_P indicates if we show also private entities
-   --  References_P says if we add information like "subprogram called by..."
-   --  One_Doc_File_P says if we create documentation in only one
-   --    file (only fortexi)
-   --  Link_All_P indicates if links are created for entities whose
+   --  - Type_Of_File_P is the type of the generated file (html, texi...)
+   --  - Process_Body_Files_P indicates if we create also documentation
+   --    for body files.
+   --  - Ignorable_Comments_P indicates if we ignore all comments with "--!"
+   --  - Comments_Above_P says if we generate doc comments for entities above
+   --    the header.
+   --  - Show_Private_P indicates if we show also private entities
+   --  - References_P says if we add information like "subprogram called by..."
+   --  - One_Doc_File_P says if we create documentation in only one
+   --    file (only for texi)
+   --  - Link_All_P indicates if links are created for entities whose
    --    declaration files aren't processed
 
    procedure Array2List
      (Kernel : Kernel_Handle;
-      Tab : in VFS.File_Array_Access;
-      List : in out Type_Source_File_List.List);
+      Tab    : VFS.File_Array_Access;
+      List   : in out Type_Source_File_List.List);
    --  Create a list of files with those contained in the array
 
    procedure On_Preferences_Changed
@@ -240,25 +241,23 @@ package body Docgen_Module is
       Show_Private_P       : Boolean := False;
       References_P         : Boolean := False;
       One_Doc_File_P       : Boolean := False;
-      Link_All_P           : Boolean := False)
-   is
+      Link_All_P           : Boolean := False) is
    begin
-      Docgen_Module (Docgen_Module_ID).Options.Type_Of_File
-        := Type_Of_File_P;
-      Docgen_Module (Docgen_Module_ID).Options.Process_Body_Files
-        := Process_Body_Files_P;
-      Docgen_Module (Docgen_Module_ID).Options.Ignorable_Comments
-        := Ignorable_Comments_P;
-      Docgen_Module (Docgen_Module_ID).Options.Comments_Above
-        := Comments_Above_P;
-      Docgen_Module (Docgen_Module_ID).Options.Show_Private
-        := Show_Private_P;
-      Docgen_Module (Docgen_Module_ID).Options.References
-        := References_P;
-      Docgen_Module (Docgen_Module_ID).Options.One_Doc_File
-        := One_Doc_File_P;
-      Docgen_Module (Docgen_Module_ID).Options.Link_All
-        := Link_All_P;
+      Docgen_Module (Docgen_Module_ID).Options.Type_Of_File := Type_Of_File_P;
+      Docgen_Module (Docgen_Module_ID).Options.Process_Body_Files :=
+        Process_Body_Files_P;
+      Docgen_Module (Docgen_Module_ID).Options.Ignorable_Comments :=
+        Ignorable_Comments_P;
+      Docgen_Module (Docgen_Module_ID).Options.Comments_Above :=
+        Comments_Above_P;
+      Docgen_Module (Docgen_Module_ID).Options.Show_Private :=
+        Show_Private_P;
+      Docgen_Module (Docgen_Module_ID).Options.References :=
+        References_P;
+      Docgen_Module (Docgen_Module_ID).Options.One_Doc_File :=
+        One_Doc_File_P;
+      Docgen_Module (Docgen_Module_ID).Options.Link_All :=
+        Link_All_P;
    end Set_Options;
 
    -----------------
@@ -267,7 +266,7 @@ package body Docgen_Module is
 
    procedure Array2List
      (Kernel : Kernel_Handle;
-      Tab    : in VFS.File_Array_Access;
+      Tab    : VFS.File_Array_Access;
       List   : in out Type_Source_File_List.List)
    is
       use Type_Source_File_List;
@@ -299,8 +298,10 @@ package body Docgen_Module is
    is
       pragma Unreferenced (Kernel);
    begin
-      Set_Options (Type_Api_Doc'Val (
-         Get_Pref (K, Docgen_Module (Docgen_Module_ID).Type_Generated_File)),
+      Set_Options
+        (Type_Api_Doc'Val
+           (Get_Pref
+              (K, Docgen_Module (Docgen_Module_ID).Type_Generated_File)),
          Get_Pref (K, Docgen_Module (Docgen_Module_ID).Generate_Body_Files),
          Get_Pref (K, Docgen_Module (Docgen_Module_ID).Ignore_Some_Comments),
          Get_Pref (K, Docgen_Module (Docgen_Module_ID).Comments_Before),
@@ -518,6 +519,7 @@ package body Docgen_Module is
          Project := Get_Root_Project (Get_Registry (Kernel));
 
       end if;
+
       Sources := Get_Source_Files (Project, Recursive);
       Array2List (Kernel, Sources, Source_File_List);
       Generate (Kernel, Source_File_List);
@@ -608,15 +610,19 @@ package body Docgen_Module is
       case Docgen_Module (Docgen_Module_ID).Options.Type_Of_File is
          when HTML =>
             Docgen_Module (Docgen_Module_ID).B := new Backend_HTML;
+
+--  ???
 --       when TEXI =>
---          Docgen_Module (Docgen_Module_ID).B :=  new Backend_TEXI;
+--          Docgen_Module (Docgen_Module_ID).B := new Backend_TEXI;
+
          when others =>
-            Docgen_Module (Docgen_Module_ID).B :=  new Backend_HTML;
+            Docgen_Module (Docgen_Module_ID).B := new Backend_HTML;
       end case;
 
       --  We override old documentations which has the same format and
       --  which has been already processed.
       --  Documentation for new files is added.
+
       if not Is_Directory
         (Get_Doc_Directory (Docgen_Module (Docgen_Module_ID).B, Kernel)) then
          Make_Dir (Get_Doc_Directory
