@@ -715,7 +715,7 @@ package Debugger is
 
    procedure PD_Switch
      (Debugger : access Debugger_Root;
-      PD       : Natural;
+      PD       : String;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is abstract;
    --  Switch to a specified protection domain.
    --  GDB_COMMAND: "pd <pd_id>"

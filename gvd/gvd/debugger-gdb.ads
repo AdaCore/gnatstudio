@@ -304,7 +304,7 @@ package Debugger.Gdb is
 
    procedure PD_Switch
      (Debugger : access Gdb_Debugger;
-      PD       : Natural;
+      PD       : String;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
 
    procedure Info_Tasks

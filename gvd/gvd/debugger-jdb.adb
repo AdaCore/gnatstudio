@@ -812,7 +812,7 @@ package body Debugger.Jdb is
 
    procedure PD_Switch
      (Debugger : access Jdb_Debugger;
-      PD       : Natural;
+      PD       : String;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden)
    is
       pragma Unreferenced (Debugger, PD, Mode);
