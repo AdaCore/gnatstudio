@@ -1,3 +1,12 @@
+Known Problems fixed in GPS 2.1.1
+
+- DC03-019: Popup dialogs in project editors can be hidden by parent window
+  Problem:    When you edit the value of some project attributes, like the
+              compiler to use for Ada, a popup dialog is displayed. However,
+              this dialog can go behind the project properties editor window,
+              and thus be invisible to the user
+  Workaround: Move the windows until you can find the popup dialog again
+
 Known Problems fixed in GPS 2.1.0
 
 - On Windows, opening file.ADB will not provide syntax highlighting
