@@ -18,52 +18,51 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Gdk.Event;             use Gdk.Event;
-with Gdk.Types;             use Gdk.Types;
-with Gdk.Types.Keysyms;     use Gdk.Types.Keysyms;
-with Glib;                  use Glib;
-with Glib.Object;           use Glib.Object;
-with Glib.Xml_Int;          use Glib.Xml_Int;
-with Gtk.Alignment;         use Gtk.Alignment;
-with Gtk.Box;               use Gtk.Box;
-with Gtk.Button;            use Gtk.Button;
-with Gtk.Clipboard;         use Gtk.Clipboard;
-with Gtk.Hbutton_Box;       use Gtk.Hbutton_Box;
-with Gtk.Check_Button;      use Gtk.Check_Button;
-with Gtk.Combo;             use Gtk.Combo;
-with Gtk.Dialog;            use Gtk.Dialog;
-with Gtk.Enums;             use Gtk.Enums;
-with Gtk.GEntry;            use Gtk.GEntry;
-with Gtk.Image;             use Gtk.Image;
-with Gtk.Label;             use Gtk.Label;
-with Gtk.List;              use Gtk.List;
-with Gtk.List_Item;         use Gtk.List_Item;
-with Gtk.Menu_Item;         use Gtk.Menu_Item;
-with Gtk.Selection;         use Gtk.Selection;
-with Gtk.Stock;             use Gtk.Stock;
-with Gtk.Toggle_Button;     use Gtk.Toggle_Button;
-with Gtk.Tooltips;          use Gtk.Tooltips;
-with Gtk.Widget;            use Gtk.Widget;
-with Gtk.Window;            use Gtk.Window;
-with Gtkada.Dialogs;        use Gtkada.Dialogs;
-with Gtkada.MDI;            use Gtkada.MDI;
-with Gtkada.Handlers;       use Gtkada.Handlers;
-with Gtkada.Types;          use Gtkada.Types;
-with GPS.Intl;            use GPS.Intl;
-with GPS.Kernel;          use GPS.Kernel;
-with GPS.Kernel.Console;  use GPS.Kernel.Console;
-with GPS.Kernel.Hooks;    use GPS.Kernel.Hooks;
-with GPS.Kernel.MDI;      use GPS.Kernel.MDI;
-with GPS.Kernel.Modules;  use GPS.Kernel.Modules;
-with GPS.Kernel.Preferences;
-use GPS.Kernel.Preferences;
+with Gdk.Event;               use Gdk.Event;
+with Gdk.Types;               use Gdk.Types;
+with Gdk.Types.Keysyms;       use Gdk.Types.Keysyms;
+with Glib;                    use Glib;
+with Glib.Object;             use Glib.Object;
+with Glib.Xml_Int;            use Glib.Xml_Int;
+with Gtk.Alignment;           use Gtk.Alignment;
+with Gtk.Box;                 use Gtk.Box;
+with Gtk.Button;              use Gtk.Button;
+with Gtk.Clipboard;           use Gtk.Clipboard;
+with Gtk.Hbutton_Box;         use Gtk.Hbutton_Box;
+with Gtk.Check_Button;        use Gtk.Check_Button;
+with Gtk.Combo;               use Gtk.Combo;
+with Gtk.Dialog;              use Gtk.Dialog;
+with Gtk.Enums;               use Gtk.Enums;
+with Gtk.GEntry;              use Gtk.GEntry;
+with Gtk.Image;               use Gtk.Image;
+with Gtk.Label;               use Gtk.Label;
+with Gtk.List;                use Gtk.List;
+with Gtk.List_Item;           use Gtk.List_Item;
+with Gtk.Menu_Item;           use Gtk.Menu_Item;
+with Gtk.Selection;           use Gtk.Selection;
+with Gtk.Stock;               use Gtk.Stock;
+with Gtk.Toggle_Button;       use Gtk.Toggle_Button;
+with Gtk.Tooltips;            use Gtk.Tooltips;
+with Gtk.Widget;              use Gtk.Widget;
+with Gtk.Window;              use Gtk.Window;
+with Gtkada.Dialogs;          use Gtkada.Dialogs;
+with Gtkada.MDI;              use Gtkada.MDI;
+with Gtkada.Handlers;         use Gtkada.Handlers;
+with Gtkada.Types;            use Gtkada.Types;
+with GPS.Intl;                use GPS.Intl;
+with GPS.Kernel;              use GPS.Kernel;
+with GPS.Kernel.Console;      use GPS.Kernel.Console;
+with GPS.Kernel.Hooks;        use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;          use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
+with GPS.Kernel.Preferences;  use GPS.Kernel.Preferences;
 with GPS.Kernel.Task_Manager; use GPS.Kernel.Task_Manager;
-with GNAT.OS_Lib;           use GNAT.OS_Lib;
+with GNAT.OS_Lib;             use GNAT.OS_Lib;
 
-with Find_Utils;            use Find_Utils;
-with GUI_Utils;             use GUI_Utils;
+with Find_Utils;              use Find_Utils;
+with GUI_Utils;               use GUI_Utils;
 with Generic_List;
-with Histories;             use Histories;
+with Histories;               use Histories;
 
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Exceptions;          use Ada.Exceptions;
@@ -73,7 +72,7 @@ with Ada.Unchecked_Deallocation;
 with Traces; use Traces;
 with VFS;
 
-with Commands;              use Commands;
+with Commands;                use Commands;
 with Commands.Generic_Asynchronous;
 
 package body Vsearch_Ext is
@@ -147,7 +146,7 @@ package body Vsearch_Ext is
    --  Perform an atomic replace operation.
 
    procedure Free (D : in out Idle_Search_Data);
-   --  Free memory associated to D.
+   --  Free memory associated with D.
 
    package Search_Commands is new Commands.Generic_Asynchronous
      (Data_Type => Idle_Search_Data,
@@ -592,7 +591,7 @@ package body Vsearch_Ext is
 
             Search_Commands.Create
               (C,
-                 -"Searching",
+               -"Searching",
                (Vsearch => Vsearch, Search_Backward => False),
                Search_Iterate'Access);
 
