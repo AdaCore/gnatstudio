@@ -29,8 +29,10 @@ with GNAT.Directory_Operations;    use GNAT.Directory_Operations;
 with GNAT.OS_Lib;                  use GNAT.OS_Lib;
 with Glide_Kernel;                 use Glide_Kernel;
 with Glide_Kernel.Console;         use Glide_Kernel.Console;
+with Glide_Kernel.Hooks;           use Glide_Kernel.Hooks;
 with Glide_Kernel.Modules;         use Glide_Kernel.Modules;
 with Glide_Kernel.Preferences;     use Glide_Kernel.Preferences;
+with Glide_Kernel.Standard_Hooks;  use Glide_Kernel.Standard_Hooks;
 with Glide_Main_Window;            use Glide_Main_Window;
 with Gtkada.Dialogs;               use Gtkada.Dialogs;
 with Gtkada.File_Selector;         use Gtkada.File_Selector;
@@ -156,11 +158,9 @@ package body Help_Module is
       return Node_Ptr;
    --  Support functions for the MDI
 
-   function Mime_Action
+   function Open_Help_Hook
      (Kernel    : access Kernel_Handle_Record'Class;
-      Mime_Type : String;
-      Data      : GValue_Array;
-      Mode      : Mime_Mode := Read_Write) return Boolean;
+      Data      : Hooks_Data'Class) return Boolean;
    --  Process, if possible, the data sent by the kernel
 
    function Create_Html_Editor
@@ -1003,51 +1003,37 @@ package body Help_Module is
       end if;
    end Open_HTML_File;
 
-   -----------------
-   -- Mime_Action --
-   -----------------
+   --------------------
+   -- Open_Help_Hook --
+   --------------------
 
-   function Mime_Action
+   function Open_Help_Hook
      (Kernel    : access Kernel_Handle_Record'Class;
-      Mime_Type : String;
-      Data      : GValue_Array;
-      Mode      : Mime_Mode := Read_Write) return Boolean
+      Data      : Hooks_Data'Class) return Boolean
    is
-      pragma Unreferenced (Mode);
+      D    : constant Html_Hooks_Args := Html_Hooks_Args (Data);
+      Args : Argument_List (1 .. 3);
    begin
-      if Mime_Type = Mime_Html_File then
-         declare
-            File     : constant String := Get_String (Data (Data'First));
-            Anchor   : constant String := Get_String (Data (Data'First + 2));
-            Navigate : constant Boolean := Get_Boolean (Data (Data'First + 1));
-            Args     : Argument_List (1 .. 3);
-            Html     : Virtual_File := Create_Html (File, Kernel);
-         begin
-            if Html = VFS.No_File then
-               return True;
-            else
-               Open_HTML_File (Kernel, Html, Anchor);
-            end if;
-
-            if Navigate then
-               Args (1) := new String'("html_browse");
-               Args (2) := new String'(File);
-               Args (3) := new String'(Anchor);
-
-               Execute_GPS_Shell_Command
-                 (Kernel, "add_location_command", Args);
-
-               for J in Args'Range loop
-                  Free (Args (J));
-               end loop;
-            end if;
-         end;
-
+      if D.File = VFS.No_File then
          return True;
+      else
+         Open_HTML_File (Kernel, D.File, D.Anchor);
       end if;
 
-      return False;
-   end Mime_Action;
+      if D.Enable_Navigation then
+         Args (1) := new String'("html_browse");
+         Args (2) := new String'(Full_Name (D.File).all);
+         Args (3) := new String'(D.Anchor);
+
+         Execute_GPS_Shell_Command (Kernel, "add_location_command", Args);
+
+         for J in Args'Range loop
+            Free (Args (J));
+         end loop;
+      end if;
+
+      return True;
+   end Open_Help_Hook;
 
    --------------
    -- On_About --
@@ -1302,10 +1288,10 @@ package body Help_Module is
          Module_Name             => Help_Module_Name,
          Priority                => Default_Priority - 20,
          Contextual_Menu_Handler => null,
-         Default_Context_Factory => Default_Factory'Access,
-         Mime_Handler            => Mime_Action'Access);
+         Default_Context_Factory => Default_Factory'Access);
       Glide_Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
+      Add_Hook (Kernel, Html_Action_Hook, Open_Help_Hook'Access);
 
       if Path_From_Env = null or else Path_From_Env.all = "" then
          Help_Module_ID.Doc_Path := new String'
