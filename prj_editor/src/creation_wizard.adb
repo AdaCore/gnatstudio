@@ -194,7 +194,8 @@ package body Creation_Wizard is
       Mask : Gdk_Bitmap;
    begin
       Wiz.Kernel := Kernel_Handle (Kernel);
-      Wizards.Initialize (Wiz, "Project setup", "#0e79bd", Num_Pages => 6);
+      Wizards.Initialize
+        (Wiz, Kernel, "Project setup", "#0e79bd", Num_Pages => 6);
       Set_USize (Wiz, 640, -1);
 
       Create_From_Xpm_D
