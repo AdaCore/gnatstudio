@@ -25,11 +25,13 @@ with Gtk.Widget;              use Gtk.Widget;
 with Gtk.GEntry;              use Gtk.GEntry;
 with Gtk.Extra.Font_Combo;    use Gtk.Extra.Font_Combo;
 with Gdk.Color;               use Gdk.Color;
+with Gtk.Combo;               use Gtk.Combo;
 with Gtk.Label;               use Gtk.Label;
 with Gtk.Check_Button;        use Gtk.Check_Button;
 with Gtk.Spin_Button;         use Gtk.Spin_Button;
 with GVD.Color_Combo;         use GVD.Color_Combo;
 with Ada.Text_IO; use Ada.Text_IO;
+with Ada.Integer_Text_IO;     use Ada.Integer_Text_IO;
 with Unchecked_Deallocation;
 
 package body GVD.Preferences is
@@ -57,6 +59,13 @@ package body GVD.Preferences is
      (Var : String_Guint; Value : Guint; Override : Boolean := False);
    procedure Set
      (Var : String_Boolean; Value : Boolean; Override : Boolean := False);
+   procedure Set
+     (Var : String_Color; Value : Gdk_Color; Override : Boolean := False);
+   procedure Set
+     (Var      : String_Font;
+      Size     : String_Gint;
+      Dialog   : access Gtk_Font_Combo_Record'Class;
+      Override : Boolean := False);
    procedure Set
      (Var : String_Tooltips_In_Source;
       Value : Tooltips_In_Source_Type;
@@ -358,6 +367,58 @@ package body GVD.Preferences is
       Set (String (Var), Tooltips_In_Source_Type'Image (Value), Override);
    end Set;
 
+   ---------
+   -- Set --
+   ---------
+
+   procedure Set
+     (Var : String_Color; Value : Gdk_Color; Override : Boolean := False)
+   is
+      function Normalize (V : Gushort) return String;
+      function Normalize (V : Gushort) return String is
+         S : String (1 .. 8);  --  "16#....#" or "16#.#", ....
+         O : String (1 .. 4) := "0000";
+         Index : Natural := S'Last;
+         O_Index : Natural := O'Last;
+      begin
+         Put (S, Integer (V), 16);
+         while S (Index) /= '#' loop
+            Index := Index - 1;
+         end loop;
+         Index := Index - 1;
+
+         while S (Index) /= '#' loop
+            O (O_Index) := S (Index);
+            Index := Index - 1;
+            O_Index := O_Index - 1;
+         end loop;
+         return O;
+      end Normalize;
+
+   begin
+      Set (String (Var), '#'
+           & Normalize (Red (Value))
+           & Normalize (Green (Value))
+           & Normalize (Blue (Value)),
+           Override);
+   end Set;
+
+   ---------
+   -- Set --
+   ---------
+
+   procedure Set
+     (Var      : String_Font;
+      Size     : String_Gint;
+      Dialog   : access Gtk_Font_Combo_Record'Class;
+      Override : Boolean := False) is
+   begin
+      Set (String (Var), Get_Chars (Get_Entry (Get_Name_Combo (Dialog))),
+           Override);
+      Set (Size, Gint'Value (Get_Chars (Get_Entry (Get_Size_Combo (Dialog)))),
+           Override);
+   end Set;
+
    -----------------------------
    -- Set_Default_Preferences --
    -----------------------------
@@ -546,6 +607,58 @@ package body GVD.Preferences is
       Set_Text (Dialog.List_Processes_Entry, Get_Pref (List_Processes));
       Set_Sensitive (Dialog.Web_Browser_Entry, False);
    end Fill_Dialog;
+
+   ---------------------
+   -- Set_From_Dialog --
+   ---------------------
+
+   procedure Set_From_Dialog
+     (Dialog : General_Preferences_Pkg.General_Preferences_Access) is
+   begin
+      if Get_Active (Dialog.Variable_Popup_Check) then
+         Set (Tooltips_In_Source, Simple, True);
+      else
+         Set (Tooltips_In_Source, None, True);
+      end if;
+
+      Set (Hide_Delay, Guint'Value (Get_Text (Dialog.Statusbar_Timeout_Entry)),
+           True);
+      Set (Display_Explorer, Get_Active (Dialog.Display_Explorer_Check), True);
+      Set (File_Name_Bg_Color, Get_Color (Dialog.File_Name_Bg_Combo), True);
+      Set (Editor_Font, Editor_Font_Size, Dialog.Editor_Font_Combo, True);
+      Set (Editor_Show_Line_Nums, Get_Active (Dialog.Show_Line_Numbers_Check),
+           True);
+      Set (Editor_Show_Line_With_Code,
+           Get_Active (Dialog.Show_Lines_Code_Check), True);
+      Set (Do_Color_Highlighting, Get_Active (Dialog.Syntax_Hilight_Check),
+           True);
+      Set (Comments_Color, Get_Color (Dialog.Comment_Color_Combo), True);
+      Set (Strings_Color, Get_Color (Dialog.String_Color_Combo), True);
+      Set (Keywords_Color, Get_Color (Dialog.Keyword_Color_Combo), True);
+      Set (Asm_Highlight_Color, Get_Color (Dialog.Asm_Highlight_Combo), True);
+      Set (Xref_Color, Get_Color (Dialog.Xref_Color_Combo), True);
+      Set (Title_Color, Get_Color (Dialog.Title_Color_Combo), True);
+      Set (Change_Color, Get_Color (Dialog.Change_Color_Combo), True);
+      Set (Thaw_Bg_Color, Get_Color (Dialog.Thaw_Bg_Color_Combo), True);
+      Set (Freeze_Bg_Color, Get_Color (Dialog.Freeze_Bg_Color_Combo), True);
+      Set (Look_3d, Get_Active (Dialog.Look_3d_Check), True);
+      Set (Title_Font, Title_Font_Size, Dialog.Title_Font_Combo, True);
+      Set (Value_Font, Value_Font_Size, Dialog.Value_Font_Combo, True);
+      Set (Type_Font, Type_Font_Size, Dialog.Type_Font_Combo, True);
+      Set (Hide_Big_Items, Get_Active (Dialog.Hide_Big_Items_Check), True);
+      Set (Big_Item_Height, Get_Value_As_Int (Dialog.Big_Item_Spin), True);
+      Set (Default_Detect_Aliases, Get_Active (Dialog.Detect_Aliases_Check),
+           True);
+      Set (Display_Grid, Get_Active (Dialog.Display_Grid_Check), True);
+      Set (Align_Items_On_Grid, Get_Active (Dialog.Align_Grid_Check), True);
+      Set (Debugger_Highlight_Color, Get_Color (Dialog.Debug_Higlight_Combo),
+           True);
+      Set (Debugger_Font, Debugger_Font_Size, Dialog.Debug_Font_Combo, True);
+      Set (String (Default_External_Editor),
+           Get_Chars (Dialog.Edit_Source_Entry), True);
+      Set (String (List_Processes), Get_Chars (Dialog.List_Processes_Entry),
+           True);
+   end Set_From_Dialog;
 
 begin
    --  Initialize the default values
