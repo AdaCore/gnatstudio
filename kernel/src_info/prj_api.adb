@@ -37,6 +37,7 @@ with Types;            use Types;
 with Csets;            use Csets;
 pragma Elaborate_All (Csets);
 with Stringt;          use Stringt;
+with Osint;            use Osint;
 with GNAT.OS_Lib;      use GNAT.OS_Lib;
 with String_Utils;     use String_Utils;
 with Ada.Exceptions;   use Ada.Exceptions;
@@ -52,16 +53,6 @@ with Traces; use Traces;
 package body Prj_API is
 
    Me : Debug_Handle := Create ("Prj_API");
-
-   File_Specific_Switches_Attribute : constant String := "switches";
-   --  Name of the attribute used for file specific switches. Its index is the
-   --  unit name
-
-   Source_Dir_Attribute_Name : constant String := "source_dirs";
-   Object_Dir_Attribute_Name : constant String := "object_dir";
-
-   Default_Switches_Attribute : constant String := "default_switches";
-   --  Name of the attribute used for default switches.
 
    procedure Set_Expression
      (Var_Or_Attribute : Project_Node_Id; Expr : Project_Node_Id);
@@ -148,6 +139,17 @@ package body Prj_API is
       Declaration        : Project_Node_Id);
    --  Remove the variable declaration from the list of variables in
    --  Project_Or_Package.
+
+   function Check_Suffix_List
+     (File : String; List : Array_Element_Id) return Array_Element_Id;
+   --  Check all the suffixes in List, for whether they match File or
+   --  not.
+   --  Return the index in List that matches File, or No_Array_Element if there
+   --  was no match.
+
+   function Check_Full_File
+     (File : String; List : Array_Element_Id) return Array_Element_Id;
+   --  Check whether File is in the List. Return the index in the list
 
    ----------------
    -- Get_String --
@@ -754,7 +756,6 @@ package body Prj_API is
    is
       Pkg : Package_Id := Projects.Table (Project).Decl.Packages;
       Pkg_Name : Name_Id;
-      Switches : Name_Id;
       Var_Value : Variable_Value := Nil_Variable_Value;
       The_Array : Array_Element_Id;
 
@@ -763,10 +764,6 @@ package body Prj_API is
       Name_Buffer (1 .. Name_Len) := In_Pkg;
       Pkg_Name := Name_Find;
 
-      Name_Len := File_Specific_Switches_Attribute'Length;
-      Name_Buffer (1 .. Name_Len) := File_Specific_Switches_Attribute;
-      Switches := Name_Find;
-
       Pkg  := Prj.Util.Value_Of
         (Name        => Pkg_Name,
          In_Packages => Projects.Table (Project).Decl.Packages);
@@ -774,7 +771,7 @@ package body Prj_API is
       --  Do we have some file-specific switches ?
       if Pkg /= No_Package and then File /= "" then
          The_Array := Value_Of
-             (Name      => Switches,
+             (Name      => Name_Switches,
               In_Arrays => Packages.Table (Pkg).Decl.Arrays);
          Name_Len := File'Length;
          Name_Buffer (1 .. Name_Len) := File;
@@ -794,14 +791,10 @@ package body Prj_API is
       if Pkg /= No_Package
         and then Packages.Table (Pkg).Decl.Attributes /= No_Variable
       then
-         Name_Len := Default_Switches_Attribute'Length;
-         Name_Buffer (1 .. Name_Len) := Default_Switches_Attribute;
-         Switches := Name_Find;
-
          --  Indexed by the language ?
 
          The_Array := Value_Of
-             (Name      => Switches,
+             (Name      => Name_Default_Switches,
               In_Arrays => Packages.Table (Pkg).Decl.Arrays);
          Var_Value := Value_Of
              (Index    => Language,
@@ -3154,7 +3147,7 @@ package body Prj_API is
      (Project   : Prj.Tree.Project_Node_Id;
       Recursive : Boolean := False)
    is
-      File : File_Type;
+      File : Ada.Text_IO.File_Type;
 
       procedure Internal_Write_Char (C : Character);
       procedure Internal_Write_Str (S : String);
@@ -3486,9 +3479,7 @@ package body Prj_API is
                   end loop;
 
                when N_Attribute_Declaration =>
-                  if Get_Name_String (Prj.Tree.Name_Of (Current)) =
-                    Source_Dir_Attribute_Name
-                  then
+                  if Prj.Tree.Name_Of (Current) = Name_Source_Dirs then
                      Expr := First_Expression_In_List
                        (Current_Term (First_Term (Expression_Of (Current))));
                      while Expr /= Empty_Node loop
@@ -3507,9 +3498,7 @@ package body Prj_API is
                      end loop;
 
 
-                  elsif Get_Name_String (Prj.Tree.Name_Of (Current)) =
-                      Object_Dir_Attribute_Name
-                  then
+                  elsif Prj.Tree.Name_Of (Current) = Name_Object_Dir then
                      Expr := Expression_Of (Current);
                      Str := Current_Term (First_Term (Expr));
                      Assert (Me, Kind_Of (Str) = N_Literal_String,
@@ -3555,6 +3544,221 @@ package body Prj_API is
       --  Then replace all the paths
       Convert_In_Section (Project_Declaration_Of (Project));
    end Convert_Paths_To_Absolute;
+
+   -----------------------
+   -- Check_Suffix_List --
+   -----------------------
+
+   function Check_Suffix_List
+     (File : String; List : Array_Element_Id) return Array_Element_Id
+   is
+      Prefix : Array_Element_Id := List;
+   begin
+      while Prefix /= No_Array_Element loop
+         exit when Suffix_Matches
+           (File, Get_String (Array_Elements.Table (Prefix).Value.Value));
+
+         Prefix := Array_Elements.Table (Prefix).Next;
+      end loop;
+      return Prefix;
+   end Check_Suffix_List;
+
+   ---------------------
+   -- Check_Full_File --
+   ---------------------
+
+   function Check_Full_File
+     (File : String; List : Array_Element_Id) return Array_Element_Id
+   is
+      Prefix : Array_Element_Id := List;
+      Str    : String_List_Id;
+      F      : String := File;
+   begin
+      Canonical_Case_File_Name (F);
+
+      while Prefix /= No_Array_Element loop
+         case Array_Elements.Table (Prefix).Value.Kind is
+            when Undefined =>
+               null;
+
+            --  Naming exceptions for languages other than Ada
+            when Prj.List =>
+               Str := Array_Elements.Table (Prefix).Value.Values;
+               while Str /= Nil_String loop
+                  if F = Get_String (String_Elements.Table (Str).Value) then
+                     return Prefix;
+                  end if;
+                  Str := String_Elements.Table (Str).Next;
+               end loop;
+
+            --  Naming exceptions for Ada
+            when Single =>
+               if F = Get_String
+                 (Array_Elements.Table (Prefix).Value.Value)
+               then
+                  return Prefix;
+               end if;
+         end case;
+
+         Prefix := Array_Elements.Table (Prefix).Next;
+      end loop;
+      return No_Array_Element;
+   end Check_Full_File;
+
+   ------------------------------
+   -- Add_Foreign_Source_Files --
+   ------------------------------
+
+   procedure Add_Foreign_Source_Files (Project_View : Prj.Project_Id) is
+      procedure Record_Source (File : String);
+      --  Add file to the list of source files for Project_View
+
+      -------------------
+      -- Record_Source --
+      -------------------
+
+      procedure Record_Source (File : String) is
+      begin
+         String_Elements.Increment_Last;
+         Start_String;
+         Store_String_Chars (File);
+         String_Elements.Table (String_Elements.Last) :=
+           (Value    => End_String,
+            Location => No_Location,
+            Next     => Projects.Table (Project_View).Sources);
+         Projects.Table (Project_View).Sources := String_Elements.Last;
+      end Record_Source;
+
+      Languages : Variable_Value;
+      Current_Language : String_List_Id;
+      Current_Dir : String_List_Id;
+      Dir : Dir_Type;
+      Naming : Naming_Data := Projects.Table (Project_View).Naming;
+      Elem : Array_Element_Id;
+
+   begin
+      Languages := Value_Of
+        (Variable_Name => Name_Languages,
+         In_Variables  => Projects.Table (Project_View).Decl.Attributes);
+
+      Assert (Me, Languages.Kind = List, "Unexpected list of languages");
+
+      Current_Language := Languages.Values;
+
+      --  Nothing to do if the only language is Ada, since this has already
+      --  been taken care of
+
+      if Current_Language = Nil_String
+        or else
+        (String_Elements.Table (Current_Language).Next = Nil_String
+         and then Get_String (String_Elements.Table (Current_Language).Value) =
+          Ada_String)
+      then
+         return;
+      end if;
+
+      --  Note: we do not have to check Source_File_List and Source_Files
+      --  attributes, since they have already been processed by the Ada parser.
+
+      --  Else, look at each of the file in each of the source directories of
+      --  the project. Note: this might seem slow, however we would have to do
+      --  it anyway for the explorer, so it is better to cache the result
+      --  directly in the project itself.
+
+      Current_Dir := Projects.Table (Project_View).Source_Dirs;
+      while Current_Dir /= Nil_String loop
+
+         Open (Dir, Get_String (String_Elements.Table (Current_Dir).Value));
+         loop
+            Read (Dir, Name_Buffer, Name_Len);
+            exit when Name_Len = 0;
+
+            declare
+               File : constant String := Name_Buffer (1 .. Name_Len);
+            begin
+               --  Check if it matches one of the naming schemes
+               Elem := Check_Suffix_List (File, Naming.Implementation_Suffix);
+               if Elem = No_Array_Element then
+                  Elem := Check_Suffix_List
+                    (File, Naming.Specification_Suffix);
+               end if;
+
+               --  Check if it matches one of the exception lists
+               if Elem = No_Array_Element then
+                  Elem := Check_Full_File
+                    (File, Naming.Implementation_Exceptions);
+               end if;
+
+               if Elem = No_Array_Element then
+                  Elem := Check_Full_File
+                    (File, Naming.Specification_Exceptions);
+               end if;
+
+               if Elem /= No_Array_Element
+                 and then Array_Elements.Table (Elem).Index /= Name_Ada
+               then
+                  Record_Source (File);
+               end if;
+            end;
+         end loop;
+         Close (Dir);
+
+         Current_Dir := String_Elements.Table (Current_Dir).Next;
+      end loop;
+   end Add_Foreign_Source_Files;
+
+   ---------------------
+   -- Get_Language_Of --
+   ---------------------
+
+   function Get_Language_Of
+     (Project : Project_Id; Source_Filename : String) return Name_Id
+   is
+      Naming : Naming_Data := Projects.Table (Project).Naming;
+      Elem   : Array_Element_Id;
+   begin
+      --  Check if it matches one of the naming schemes
+      Elem := Check_Suffix_List
+        (Source_Filename, Naming.Implementation_Suffix);
+
+      if Elem = No_Array_Element then
+         Elem := Check_Suffix_List
+           (Source_Filename, Naming.Specification_Suffix);
+      end if;
+
+      --  Test the separate suffix (for Ada files)
+      if Suffix_Matches
+        (Source_Filename, Get_Name_String (Naming.Separate_Suffix))
+      then
+         return Name_Ada;
+      end if;
+
+      --  Check if it matches one of the exception lists for Ada
+      if Elem = No_Array_Element then
+         Elem := Check_Full_File (Source_Filename, Naming.Bodies);
+      end if;
+
+      if Elem = No_Array_Element then
+         Elem := Check_Full_File (Source_Filename, Naming.Specifications);
+      end if;
+
+      --  Check if it matches one of the exception lists for foreign languages
+      if Elem = No_Array_Element then
+         Elem := Check_Full_File
+           (Source_Filename, Naming.Implementation_Exceptions);
+      end if;
+
+      if Elem = No_Array_Element then
+         Elem := Check_Full_File
+           (Source_Filename, Naming.Specification_Exceptions);
+      end if;
+
+      if Elem = No_Array_Element then
+         return No_Name;
+      else
+         return Array_Elements.Table (Elem).Index;
+      end if;
+   end Get_Language_Of;
 
    -------------------------------------
    -- Register_Default_Naming_Schemes --

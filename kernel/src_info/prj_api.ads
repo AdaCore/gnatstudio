@@ -147,6 +147,10 @@ package Prj_API is
    --  If Full_Path is true, then the file names will also include the
    --  directory.
 
+   procedure Add_Foreign_Source_Files (Project_View : Prj.Project_Id);
+   --  Add to Project_View the list of source files for languages other than
+   --  Ada.
+
    --------------------
    -- Creating nodes --
    --------------------
@@ -496,6 +500,11 @@ package Prj_API is
    --  suffix. Suffixes are searched independently from the language.
    --  If not matching suffix is found in project, the returned value will
    --  simply be Filename'Last.
+
+   function Get_Language_Of
+     (Project : Project_Id; Source_Filename : String) return Types.Name_Id;
+   --  Return the name of the language used for Source_Filename.
+   --  This is based on the naming scheme given in Project.
 
    -----------------
    -- Expressions --
