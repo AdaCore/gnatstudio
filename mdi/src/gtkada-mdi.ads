@@ -7,13 +7,17 @@ with Gtk.Widget;
 with GNAT.OS_Lib;
 
 --  TODO:
---  - emit "delete_event" when clicking on the "x" button
 --  - handles docking (widgets that can't move)
---  - handles floating widgets (have their own window)
 --  - handles multiple views of the MDI (through several top-level windows)
 --  - have an icon-bar somewhere (or notebook) to list all the children
 --  - Provide automatic initial placement of widgets
---  - Provide non-opaque resizing
+--  - Saving and restoring sessions (window location,...)
+--  - When in a scrolled window, shouldn't constrain the possible coordinates
+--
+--  From GNOME MDI documentation:
+--  - GnomeMDI also provides means to create global menus and toolbar that
+--    apply for each document and for merging document-specific menus with the
+--    global ones
 
 package Gtkada.MDI is
 
@@ -23,7 +27,9 @@ package Gtkada.MDI is
    --  use the standard Gtk_Layout functions like Put and Move yourself.
 
    procedure Gtk_New (MDI : out MDI_Window);
-   --  Create a new MDI window
+   --  Create a new MDI window.
+   --  Note that it is recommended that you modify the style (Set_Background
+   --  in State_Normal) to have a different color.
 
    procedure Initialize (MDI : access MDI_Window_Record'Class);
    --  Internal initialization function.
@@ -43,26 +49,56 @@ package Gtkada.MDI is
       Child : access Gtk.Widget.Gtk_Widget_Record'Class);
    --  Put Child in the foreground.
 
+   procedure Float_Child
+     (MDI : access MDI_Window_Record;
+      Child : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Float : Boolean);
+   --  Change the floating state of a child
+
+   function Is_Floating
+     (MDI : access MDI_Window_Record;
+      Child : access Gtk.Widget.Gtk_Widget_Record'Class) return Boolean;
+   --  Return True if Child is currently in a separate window
+
    procedure Cascade_Children (MDI : access MDI_Window_Record);
    --  All the children are stacked so that the focus widget is on top.
    --  They overlap each other, but all the title bars are left visible
 
-   procedure Tile_Children (MDI : access MDI_Window_Record);
+   procedure Tile_Vertically (MDI : access MDI_Window_Record);
    --  The available space in the MDI is shared equally between all children.
    --  They do not overlap each other.
 
+   -------------
+   -- Signals --
+   -------------
+
+   --  <signals>
+   --  The following new signals are defined for this widget:
+   --
+   --  - "delete_event"
+   --    function Handler (Child : access Gtk_Widget_Record'Class)
+   --                     return Boolean;
+   --
+   --    This signal is emitted for each item in the MDI window before it is
+   --    actually delete. The child is destroyed only if the handler returns
+   --    False.
+   --    Note that the Child passed in argument is exactly the one you passed
+   --    to Put to insert it in the MDI window.
+   --    Note that this is also the signal to use to prevent top level
+   --    Gtk_Window from being destroyed.
+   --  </signals>
+
 private
-   type State_Type is (Normal, Iconified);
+   type State_Type is (Normal, Iconified, Floating);
 
    type MDI_Child_Record is new Gtk.Event_Box.Gtk_Event_Box_Record with record
       Initial : Gtk.Widget.Gtk_Widget;
+      Initial_Child : Gtk.Widget.Gtk_Widget;
       --  The widget we used to build this child. This is used in case it
       --  was a window, since we need to be able to reparent it in the future,
       --  just in case.
 
       X, Y : Glib.Gint;
-      GC   : Gdk.GC.Gdk_GC;
-      Title_GC : Gdk.GC.Gdk_GC;
       State : State_Type := Normal;
       Name : GNAT.OS_Lib.String_Access;
 
@@ -90,6 +126,19 @@ private
       Current_Cursor : Gdk.Types.Gdk_Cursor_Type := Gdk.Types.Left_Ptr;
 
       Initial_Width, Initial_Height : Glib.Gint;
+
+      Focus_Child : MDI_Child := null;
+      --  The widget that currently has the focus.
+
+      Current_W, Current_H : Glib.Gint;
+      --  Current size of the widget that is currently resized. This is used
+      --  for non-opaque resizing.
+
+      GC   : Gdk.GC.Gdk_GC;
+      Resize_GC : Gdk.GC.Gdk_GC;
+      Focus_GC : Gdk.GC.Gdk_GC;
+      Title_GC : Gdk.GC.Gdk_GC;
+      --  The graphic contexts to draw the children.
    end record;
 
 end Gtkada.MDI;

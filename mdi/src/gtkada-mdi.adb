@@ -33,11 +33,13 @@ with Ada.Text_IO; use Ada.Text_IO;
 
 package body Gtkada.MDI is
 
-   Title_Bar_Color : constant String := "#000088";
-   --  <preference> Color to use for the title bar of the children
+   Title_Bar_Focus_Color : constant String := "#000088";
+   --  <preference> Color to use for the title bar of the child that has
+   --  the focus
 
-   MDI_Background_Color : constant String := "#666666";
-   --  <preference> Background color to use for the MDI window
+   Title_Bar_Color : constant String := "#AAAAAA";
+   --  <preference> Color to use for the title bar of children that do not
+   --  have the focus.
 
    Title_Bar_Height : constant Gint := 15;
    --  <preference> Height of the title bar for the children
@@ -54,9 +56,17 @@ package body Gtkada.MDI is
    Icons_Width : constant Gint := 100;
    --  <preference> Width to use for icons
 
+   Opaque_Resize : constant Boolean := False;
+   --  <preference> True if the contents of windows should be displayed while
+   --  resizing widgets.
+
    Do_Grabs : constant Boolean := True;
    --  Should be set to False when debugging, so that pointer grabs are not
    --  done.
+
+   Min_Width : constant Gint := 40;
+   Min_Height : constant Gint := 2 * Border_Thickness + Title_Bar_Height;
+   --  Minimal size for all windows
 
    use Widget_List;
 
@@ -77,6 +87,11 @@ package body Gtkada.MDI is
       Event  : Gdk_Event) return Boolean;
    --  Called when the user moves the mouse while a button is pressed.
    --  If an item was selected, the item is moved.
+
+   function Leave_Child
+     (Child : access Gtk_Widget_Record'Class;
+      Event  : Gdk_Event) return Boolean;
+   --  The pointer has left the mouse
 
    function Side
      (Child : access Gtk_Widget_Record'Class; X, Y  : Gint)
@@ -102,8 +117,13 @@ package body Gtkada.MDI is
       return Boolean;
    --  Draw the child (and the title bar)
 
-   procedure Realize_Child (Child : access Gtk_Widget_Record'Class);
+   procedure Realize_MDI (MDI : access Gtk_Widget_Record'Class);
    --  Called when the child is realized.
+
+   procedure Activate_Child
+     (MDI : access MDI_Window_Record'Class;
+      Child : access MDI_Child_Record'Class);
+   --  Make Child the active widget, and raise it at the top.
 
    function Find
      (MDI : access MDI_Window_Record'Class;
@@ -112,6 +132,12 @@ package body Gtkada.MDI is
    --  Return the child associated with Widget.
    --  Widget is the widget that was given by the user when calling Put, thus
    --  it could be a Gtk_Window for instance.
+
+   function Constrain_X (MDI : access MDI_Window_Record'Class; X : Gint)
+      return Gint;
+   function Constrain_Y (MDI : access MDI_Window_Record'Class; Y : Gint)
+      return Gint;
+   --  Constrain the possible values of coordinates for an item in MDI.
 
    -------------
    -- Gtk_New --
@@ -128,33 +154,37 @@ package body Gtkada.MDI is
    ----------------
 
    procedure Initialize (MDI : access MDI_Window_Record'Class) is
-      Style : Gtk_Style;
-      Color : Gdk_Color;
    begin
       Gtk.Layout.Initialize (MDI, Null_Adjustment, Null_Adjustment);
-
-      Color := Parse (MDI_Background_Color);
-      Alloc (Get_Default_Colormap, Color);
-      Style := Copy (Get_Style (MDI));
-      Set_Background (Style, State_Normal, Color);
-      Set_Style (MDI, Style);
+      Widget_Callback.Connect
+        (MDI, "realize",
+         Widget_Callback.To_Marshaller (Realize_MDI'Access));
    end Initialize;
 
    -------------------
-   -- Realize_Child --
+   -- Realize_MDI --
    -------------------
 
-   procedure Realize_Child (Child : access Gtk_Widget_Record'Class) is
+   procedure Realize_MDI (MDI : access Gtk_Widget_Record'Class) is
+      M : MDI_Window := MDI_Window (MDI);
       Color : Gdk_Color;
-      C : MDI_Child := MDI_Child (Child);
    begin
-      Gdk_New (C.GC, Get_Window (Child));
+      Gdk_New (M.GC, Get_Window (MDI));
       Color := Parse (Title_Bar_Color);
       Alloc (Get_Default_Colormap, Color);
-      Set_Foreground (C.GC, Color);
+      Set_Foreground (M.GC, Color);
 
-      C.Title_GC := Get_White_GC (Get_Style (Child));
-   end Realize_Child;
+      Gdk_New (M.Focus_GC, Get_Window (MDI));
+      Color := Parse (Title_Bar_Focus_Color);
+      Alloc (Get_Default_Colormap, Color);
+      Set_Foreground (M.Focus_GC, Color);
+
+      Gdk_New (M.Resize_GC, Get_Window (MDI));
+      Set_Function (M.Resize_GC, Gdk_Xor);
+      Set_Foreground (M.Resize_GC, White (Get_Default_Colormap));
+
+      M.Title_GC := Get_White_GC (Get_Style (MDI));
+   end Realize_MDI;
 
    -------------------
    -- Iconify_Child --
@@ -200,15 +230,15 @@ package body Gtkada.MDI is
                Tmp := Next (Tmp);
             end loop;
          end;
-
+         Move (MDI, C, C.X, C.Y);
 
       elsif C.State = Iconified then
          Set_USize (C, C.Uniconified_Width, C.Uniconified_Height);
          C.X := C.Uniconified_X;
          C.Y := C.Uniconified_Y;
          C.State := Normal;
+         Move (MDI, C, C.X, C.Y);
       end if;
-      Move (MDI, C, C.X, C.Y);
    end Iconify_Child;
 
    -----------------
@@ -218,20 +248,29 @@ package body Gtkada.MDI is
    procedure Close_Child (Child : access Gtk_Widget_Record'Class) is
       MDI : MDI_Window := MDI_Window (Get_Parent (Child));
       C : MDI_Child := MDI_Child (Child);
+      Event : Gdk_Event;
    begin
-      pragma Assert (C.Initial.all in Gtk_Window_Record'Class);
+      Allocate (Event, Delete, Get_Window (C));
 
-      --  Rebuild the initial widget
---      Reparent (Get_Child (C), Gtk_Window (C.Initial));
-      if not Return_Callback.Emit_By_Name (C.Initial, "delete_event") then
-         Put_Line ("Destroyed");
-         Remove (MDI, C);
-         Destroy (C.Initial);
-         Destroy (Child);
+      --  For a top-level window, we must rebuild the initial widget
+
+      if C.Initial.all in Gtk_Window_Record'Class then
+         Reparent (C.Initial_Child, Gtk_Window (C.Initial));
+         if not Return_Callback.Emit_By_Name
+           (C.Initial, "delete_event", Event)
+         then
+            Remove (MDI, C);
+         else
+            Reparent (C.Initial_Child, Gtk_Box (Get_Child (C)));
+         end if;
       else
-         Put_Line ("Not destroyed");
---         Reparent (Get_Child (Gtk_Window (C.Initial)), C);
+         if not Return_Callback.Emit_By_Name
+           (C.Initial, "delete_event", Event)
+         then
+            Remove (MDI, C);
+         end if;
       end if;
+      Free (Event);
    end Close_Child;
 
    -------------------
@@ -251,11 +290,17 @@ package body Gtkada.MDI is
    procedure Draw_Child
      (Child : access MDI_Child_Record'Class; Area : Gdk_Rectangle)
    is
+      MDI : MDI_Window := MDI_Window (Get_Parent (Child));
       F : Gdk_Font := Get_Gdkfont (Title_Font_Name, Title_Font_Height);
+      GC : Gdk_GC := MDI.GC;
    begin
+      if MDI.Focus_Child = MDI_Child (Child) then
+         GC := MDI.Focus_GC;
+      end if;
+
       Draw_Rectangle
         (Get_Window (Child),
-         Child.GC,
+         GC,
          True,
          Border_Thickness,
          Border_Thickness,
@@ -274,9 +319,10 @@ package body Gtkada.MDI is
       Draw_Text
         (Get_Window (Child),
          F,
-         Child.Title_GC,
+         MDI.Title_GC,
          Border_Thickness + 3,
-         Border_Thickness + Get_Ascent (F),
+         Border_Thickness +
+         (Title_Bar_Height + Get_Ascent (F) - Get_Descent (F)) / 2,
          Child.Name.all);
    end Draw_Child;
 
@@ -304,6 +350,30 @@ package body Gtkada.MDI is
       return True;
    end Draw_Child;
 
+   -----------------
+   -- Constrain_X --
+   -----------------
+
+   function Constrain_X (MDI : access MDI_Window_Record'Class; X : Gint)
+      return Gint is
+   begin
+      --  ??? Shouldn't constrain if we are in a scrolled window
+      return Gint'Max
+        (0, Gint'Min (X, Gint (Get_Allocation_Width (MDI)) - Min_Width));
+   end Constrain_X;
+
+   -----------------
+   -- Constrain_Y --
+   -----------------
+
+   function Constrain_Y (MDI : access MDI_Window_Record'Class; Y : Gint)
+      return Gint is
+   begin
+      --  ??? Shouldn't constrain if we are in a scrolled window
+      return Gint'Max
+        (0, Gint'Min (Y, Gint (Get_Allocation_Height (MDI)) - Min_Height));
+   end Constrain_Y;
+
    --------------------
    -- Button_Pressed --
    --------------------
@@ -318,13 +388,16 @@ package body Gtkada.MDI is
       Tmp : Boolean;
       Curs : Gdk_Cursor_Type;
    begin
-      Gdk_Raise (Get_Window (C));
+      Activate_Child (MDI, C);
       MDI.X_Root := Gint (Get_X_Root (Event));
       MDI.Y_Root := Gint (Get_Y_Root (Event));
       MDI.Initial_Width := Gint (Get_Allocation_Width (Child));
       MDI.Initial_Height := Gint (Get_Allocation_Height (Child));
+      MDI.Current_W := MDI.Initial_Width;
+      MDI.Current_H := MDI.Initial_Height;
 
       Curs := Side (Child, Gint (Get_X (Event)), Gint (Get_Y (Event)));
+      MDI.Current_Cursor := Curs;
       if Curs = Left_Ptr then
          Curs := Fleur;
       end if;
@@ -343,6 +416,18 @@ package body Gtkada.MDI is
          end if;
          MDI.Selected_Child := C;
       end if;
+
+      if not Opaque_Resize and then MDI.Current_Cursor /= Left_Ptr then
+         Draw_Rectangle
+           (Get_Bin_Window (MDI),
+            MDI.Resize_GC,
+            Filled => False,
+            X => C.X,
+            Y => C.Y,
+            Width => MDI.Current_W,
+            Height => MDI.Current_H);
+      end if;
+
       return True;
    end Button_Pressed;
 
@@ -363,27 +448,39 @@ package body Gtkada.MDI is
             Pointer_Ungrab (Time => 0);
          end if;
 
+         if not Opaque_Resize and then MDI.Current_Cursor /= Left_Ptr then
+            Draw_Rectangle
+              (Get_Bin_Window (MDI),
+               MDI.Resize_GC,
+               Filled => False,
+               X => C.X,
+               Y => C.Y,
+               Width => MDI.Current_W,
+               Height => MDI.Current_H);
+            Set_USize (C, MDI.Current_W, MDI.Current_H);
+         end if;
+
          Delta_X := Gint (Get_X_Root (Event)) - MDI.X_Root;
          Delta_Y := Gint (Get_Y_Root (Event)) - MDI.Y_Root;
 
          if MDI.Current_Cursor = Left_Ptr then
-            C.X := Delta_X + C.X;
-            C.Y := Delta_Y + C.Y;
+            C.X := Constrain_X (MDI, C.X + Delta_X);
+            C.Y := Constrain_Y (MDI, C.Y + Delta_Y);
          else
-            if MDI.Initial_Width - Delta_X > 2 * Border_Thickness
+            if MDI.Initial_Width - Delta_X > Min_Width
               and then (MDI.Current_Cursor = Left_Side
                         or else MDI.Current_Cursor = Top_Left_Corner
                         or else MDI.Current_Cursor = Bottom_Left_Corner)
             then
-               C.X := Delta_X + C.X;
+               C.X := Constrain_X (MDI, Delta_X + C.X);
             end if;
 
-            if MDI.Initial_Height - Delta_Y > 2 * Border_Thickness
+            if MDI.Initial_Height - Delta_Y > Min_Height
               and then (MDI.Current_Cursor = Top_Side
                         or else MDI.Current_Cursor = Top_Left_Corner
                         or else MDI.Current_Cursor = Top_Right_Corner)
             then
-               C.Y := Delta_Y + C.Y;
+               C.Y := Constrain_Y (MDI, Delta_Y + C.Y);
             end if;
          end if;
 
@@ -410,6 +507,19 @@ package body Gtkada.MDI is
       --  A button_motion event ?
       if (Get_State (Event) and Button1_Mask) /= 0 then
          if MDI.Selected_Child /= null then
+            C := MDI.Selected_Child;
+
+            if not Opaque_Resize and then MDI.Current_Cursor /= Left_Ptr then
+               Draw_Rectangle
+                 (Get_Bin_Window (MDI),
+                  MDI.Resize_GC,
+                  Filled => False,
+                  X => C.X,
+                  Y => C.Y,
+                  Width => MDI.Current_W,
+                  Height => MDI.Current_H);
+            end if;
+
             Delta_X := Gint (Get_X_Root (Event)) - MDI.X_Root;
             Delta_Y := Gint (Get_Y_Root (Event)) - MDI.Y_Root;
             W := MDI.Initial_Width;
@@ -417,73 +527,84 @@ package body Gtkada.MDI is
 
             case MDI.Current_Cursor is
                when Left_Ptr =>
-                  Move (MDI, Child, Delta_X + C.X, Delta_Y + C.Y);
+                  Move (MDI, C, Constrain_X (MDI, Delta_X + C.X),
+                        Constrain_Y (MDI, Delta_Y + C.Y));
 
                when Left_Side =>
-                  if W - Delta_X > 2 * Border_Thickness then
-                     Set_USize (Child, W - Delta_X, H);
-                     Move (MDI, Child, Delta_X + C.X, C.Y);
+                  W := Gint'Max (Min_Width, W - Delta_X);
+                  if W /= MDI.Initial_Width then
+                     Move (MDI, C,
+                           Constrain_X (MDI, C.X + MDI.Initial_Width - W),
+                           C.Y);
                   end if;
 
                when Right_Side =>
-                  if W + Delta_X > 2 * Border_Thickness then
-                     Set_USize (Child, W + Delta_X, H);
-                  end if;
+                  W := Gint'Max (Min_Width, W + Delta_X);
 
                when Top_Side =>
-                  if H - Delta_Y > 2 * Border_Thickness then
-                     Set_USize (Child, W, H - Delta_Y);
-                     Move (MDI, Child, C.X, Delta_Y + C.Y);
+                  H := Gint'Max (Min_Height, H - Delta_Y);
+                  if H /= MDI.Initial_Height then
+                     Move (MDI, C,
+                           C.X,
+                           Constrain_Y (MDI, C.Y + MDI.Initial_Height - H));
                   end if;
 
                when Bottom_Side =>
-                  if H + Delta_Y > 2 * Border_Thickness then
-                     Set_USize (Child, W, H + Delta_Y);
-                  end if;
+                  H := Gint'Max (Min_Height, H + Delta_Y);
 
                when Top_Left_Corner =>
-                  if W - Delta_X <= 2 * Border_Thickness then
-                     Delta_X := 0;
+                  W := Gint'Max (Min_Width, W - Delta_X);
+                  H := Gint'Max (Min_Height, H - Delta_Y);
+                  if W /= MDI.Initial_Width
+                    or else H /= MDI.Initial_Height
+                  then
+                     Move (MDI, C,
+                           Constrain_X (MDI, C.X + MDI.Initial_Width - W),
+                           Constrain_Y (MDI, C.Y + MDI.Initial_Height - H));
                   end if;
-                  if H - Delta_Y <= 2 * Border_Thickness then
-                     Delta_Y := 0;
-                  end if;
-                  Set_USize (Child, W - Delta_X, H - Delta_Y);
-                  Move (MDI, Child, Delta_X + C.X, Delta_Y + C.Y);
 
                when Top_Right_Corner =>
-                  if W + Delta_X <= 2 * Border_Thickness then
-                     Delta_X := 0;
+                  W := Gint'Max (Min_Width, W + Delta_X);
+                  H := Gint'Max (Min_Height, H - Delta_Y);
+                  if H /= MDI.Initial_Height then
+                     Move (MDI, C, C.X,
+                           Constrain_Y (MDI, C.Y + MDI.Initial_Height - H));
                   end if;
-                  if H - Delta_Y > 2 * Border_Thickness then
-                     Move (MDI, Child, C.X, Delta_Y + C.Y);
-                  else
-                     Delta_Y := 0;
-                  end if;
-                  Set_USize (Child, W + Delta_X, H - Delta_Y);
 
                when Bottom_Left_Corner =>
-                  if W - Delta_X > 2 * Border_Thickness then
-                     Move (MDI, Child, Delta_X + C.X, C.Y);
-                  else
-                     Delta_X := 0;
+                  W := Gint'Max (Min_Width, W - Delta_X);
+                  H := Gint'Max (Min_Height, H + Delta_Y);
+                  if W /= MDI.Initial_Width then
+                     Move (MDI, C,
+                           Constrain_X (MDI, C.X + MDI.Initial_Width - W),
+                           C.Y);
                   end if;
-                  if H + Delta_Y <= 2 * Border_Thickness then
-                     Delta_Y := 0;
-                  end if;
-                  Set_USize (Child, W - Delta_X, H + Delta_Y);
 
                when Bottom_Right_Corner =>
-                  if W + Delta_X <= 2 * Border_Thickness then
-                     Delta_X := 0;
-                  end if;
-                  if H + Delta_Y <= 2 * Border_Thickness then
-                     Delta_Y := 0;
-                  end if;
-                  Set_USize (Child, W + Delta_X, H + Delta_Y);
+                  W := Gint'Max (Min_Width, W + Delta_X);
+                  H := Gint'Max (Min_Height, H + Delta_Y);
 
                when others => null;
             end case;
+            if MDI.Current_Cursor /= Left_Ptr
+              and then (W /= Gint (Get_Allocation_Width (C))
+                        or else H /= Gint (Get_Allocation_Height (C)))
+            then
+               if Opaque_Resize then
+                  Set_USize (C, W, H);
+               elsif MDI.Current_Cursor /= Left_Ptr then
+                  MDI.Current_W := W;
+                  MDI.Current_H := H;
+                  Draw_Rectangle
+                    (Get_Bin_Window (MDI),
+                     MDI.Resize_GC,
+                     Filled => False,
+                     X => C.X,
+                     Y => C.Y,
+                     Width => MDI.Current_W,
+                     Height => MDI.Current_H);
+               end if;
+            end if;
          end if;
 
       --  A motion_event ?
@@ -500,6 +621,28 @@ package body Gtkada.MDI is
       end if;
       return True;
    end Button_Motion;
+
+   -----------------
+   -- Leave_Child --
+   -----------------
+
+   function Leave_Child
+     (Child : access Gtk_Widget_Record'Class;
+      Event  : Gdk_Event) return Boolean
+   is
+      MDI : MDI_Window := MDI_Window (Get_Parent (Child));
+      Cursor : Gdk_Cursor;
+   begin
+      if Get_State (Event) = 0
+        and then MDI.Current_Cursor /= Left_Ptr
+      then
+         MDI.Current_Cursor := Left_Ptr;
+         Gdk_New (Cursor, MDI.Current_Cursor);
+         Set_Cursor (Get_Window (Child), Cursor);
+         Destroy (Cursor);
+      end if;
+      return False;
+   end Leave_Child;
 
    ----------
    -- Side --
@@ -597,9 +740,9 @@ package body Gtkada.MDI is
       Widget_Callback.Connect
         (Child, "destroy",
          Widget_Callback.To_Marshaller (Destroy_Child'Access));
-      Widget_Callback.Connect
-        (Child, "realize",
-         Widget_Callback.To_Marshaller (Realize_Child'Access));
+      Return_Callback.Connect
+        (Child, "leave_notify_event",
+         Return_Callback.To_Marshaller (Leave_Child'Access));
       Return_Callback.Connect
         (Child, "expose_event",
          Return_Callback.To_Marshaller (Draw_Child'Access));
@@ -619,9 +762,8 @@ package body Gtkada.MDI is
       Widget_Callback.Object_Connect
         (Button, "clicked",
          Widget_Callback.To_Marshaller (Close_Child'Access), Child);
-      Set_Sensitive (Button, Widget.all in Gtk_Window_Record'Class);
 
-      Gtk_New (Button, "^");
+      Gtk_New (Button, "_");
       Pack_End (Box2, Button, Expand => False, Fill => False);
       Widget_Callback.Object_Connect
         (Button, "clicked",
@@ -631,8 +773,11 @@ package body Gtkada.MDI is
 
       if Widget.all in Gtk_Window_Record'Class then
          pragma Assert (Get_Child (Gtk_Window (Widget)) /= null);
-         Reparent (Get_Child (Gtk_Window (Widget)), Box);
+         Child.Initial_Child := Get_Child (Gtk_Window (Widget));
+         Reparent (Child.Initial_Child, Box);
       else
+         Child.Initial := Gtk_Widget (Widget);
+         Child.Initial_Child := Gtk_Widget (Widget);
          Pack_Start
            (Box, Widget, Expand => True, Fill => True, Padding => 0);
       end if;
@@ -659,6 +804,7 @@ package body Gtkada.MDI is
       C.Y := Y;
       C.Name := new String' (Name);
       Gtk.Layout.Put (Gtk_Layout_Record (MDI.all)'Access, C, X, Y);
+      Activate_Child (MDI, C);
    end Put;
 
    ----------
@@ -699,12 +845,35 @@ package body Gtkada.MDI is
      (MDI : access MDI_Window_Record;
       Child : access Gtk.Widget.Gtk_Widget_Record'Class)
    is
-      C : MDI_Child := Find (MDI, Child);
+      C : MDI_Child;
    begin
+      C := Find (MDI, Child);
       if C /= null then
          Gdk_Raise (Get_Window (C));
       end if;
    end Raise_Child;
+
+   --------------------
+   -- Activate_Child --
+   --------------------
+
+   procedure Activate_Child
+     (MDI : access MDI_Window_Record'Class;
+      Child : access MDI_Child_Record'Class)
+   is
+      Old : MDI_Child := MDI.Focus_Child;
+   begin
+      MDI.Focus_Child := MDI_Child (Child);
+
+      if Old /= null and then Realized_Is_Set (Old) then
+         Draw_Child (Old, Full_Area);
+      end if;
+
+      if Realized_Is_Set (Child) then
+         Gdk_Raise (Get_Window (Child));
+         Draw_Child (Child, Full_Area);
+      end if;
+   end Activate_Child;
 
    ----------------------
    -- Cascade_Children --
@@ -721,7 +890,7 @@ package body Gtkada.MDI is
       Tmp := First (List);
       while Tmp /= Null_List loop
          C := MDI_Child (Get_Data (Tmp));
-         if C.State = Normal then
+         if C.State = Normal and then C /= MDI.Focus_Child then
             C.X := Level;
             C.Y := Level;
             Move (MDI, C, C.X, C.Y);
@@ -731,15 +900,23 @@ package body Gtkada.MDI is
          end if;
          Tmp := Next (Tmp);
       end loop;
+
+      if MDI.Focus_Child /= null then
+         C := MDI.Focus_Child;
+         C.X := Level;
+         C.Y := Level;
+         Move (MDI, C, C.X, C.Y);
+         Set_USize (C, W - Level, H - Level);
+      end if;
       Free (List);
       Queue_Resize (MDI);
    end Cascade_Children;
 
-   -------------------
-   -- Tile_Children --
-   -------------------
+   ---------------------
+   -- Tile_Vertically --
+   ---------------------
 
-   procedure Tile_Children (MDI : access MDI_Window_Record) is
+   procedure Tile_Vertically (MDI : access MDI_Window_Record) is
       W : constant Gint := Gint (Get_Allocation_Width (MDI));
       H : constant Gint := Gint (Get_Allocation_Height (MDI));
       List : Widget_List.Glist := Children (MDI);
@@ -770,12 +947,58 @@ package body Gtkada.MDI is
       end loop;
       Free (List);
       Queue_Resize (MDI);
-   end Tile_Children;
+   end Tile_Vertically;
 
-begin
-   declare
-      Tmp : Gint;
+   -----------------
+   -- Float_Child --
+   -----------------
+
+   procedure Float_Child
+     (MDI : access MDI_Window_Record;
+      Child : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Float : Boolean)
+   is
+      C : MDI_Child;
+      Win : Gtk_Window;
    begin
-      Tmp := Gtk.Extra.PsFont.Init;
-   end;
+      C := Find (MDI, Child);
+      if C /= null and then C.State = Normal and then Float then
+         if C.Initial.all in Gtk_Window_Record'Class then
+            Reparent (C.Initial_Child, Gtk_Window (C.Initial));
+            Show_All (C.Initial);
+         else
+            Gtk_New (Win, Window_Toplevel);
+            Reparent (C.Initial_Child, Win);
+            Show_All (Win);
+         end if;
+         Hide (C);
+         C.State := Floating;
+
+      elsif C /= null and then C.State = Floating and then not Float then
+         Win := Gtk_Window (Get_Parent (C.Initial_Child));
+         Reparent (C.Initial_Child, Gtk_Box (Get_Child (C)));
+         if C.Initial.all in Gtk_Window_Record'Class then
+            Hide (C.Initial);
+         else
+            Destroy (Win);
+         end if;
+         Show_All (C);
+         C.State := Normal;
+      end if;
+   end Float_Child;
+
+   -----------------
+   -- Is_Floating --
+   -----------------
+
+   function Is_Floating
+     (MDI : access MDI_Window_Record;
+      Child : access Gtk.Widget.Gtk_Widget_Record'Class) return Boolean
+   is
+      C : MDI_Child;
+   begin
+      C := Find (MDI, Child);
+      return (C /= null and then C.State = Floating);
+   end Is_Floating;
+
 end Gtkada.MDI;
