@@ -1258,23 +1258,6 @@ package body Vsearch_Ext is
 
       Grab_Focus (Vsearch.Pattern_Entry);
 
-      --  Under Windows, calling Gtk.Window.Present has a side effect of
-      --  unmaximizing the window.
-      --  ??? Is this a GTK/Win32 bug ?
-      --  Therefore, we check whether the dialog is floating before
-      --  calling Present.
-
-      declare
-         Child : constant MDI_Child := Find_MDI_Child
-           (Get_MDI (Vsearch.Kernel), Vsearch);
-      begin
-         if Child /= null
-           and then Is_Floating (Child)
-         then
-            Present (Gtk_Window (Get_Toplevel (Vsearch)));
-         end if;
-      end;
-
    exception
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
