@@ -1175,7 +1175,7 @@ package body GVD_Module is
             Args : GNAT.OS_Lib.Argument_List_Access :=
               GNAT.OS_Lib.Argument_String_To_List (Get_Attribute_Value
                 (Get_Project (K), Debugger_Command_Attribute,
-                 Ide_Package, Default => "gdb"));
+                 Default => "gdb"));
 
          begin
             Proxy := new GPS_Proxy;
@@ -1188,14 +1188,11 @@ package body GVD_Module is
                Debugger_Args   => Args (2 .. Args'Last),
                Executable_Args => "",
                Remote_Host     =>
-                 Get_Attribute_Value
-                   (Get_Project (K), Remote_Host_Attribute, Ide_Package),
+                 Get_Attribute_Value (Get_Project (K), Remote_Host_Attribute),
                Remote_Target   =>
-                 Get_Attribute_Value
-                   (Get_Project (K), Program_Host_Attribute, Ide_Package),
+                 Get_Attribute_Value (Get_Project (K), Program_Host_Attribute),
                Remote_Protocol =>
-                 Get_Attribute_Value
-                   (Get_Project (K), Protocol_Attribute, Ide_Package),
+                 Get_Attribute_Value (Get_Project (K), Protocol_Attribute),
                Debugger_Name   => Args (1).all,
                History         => Get_History (K),
                Success => Success);
@@ -1861,15 +1858,12 @@ package body GVD_Module is
       while Current (Iter) /= No_Project loop
          declare
             Mains : GNAT.OS_Lib.Argument_List := Get_Attribute_Value
-              (Current (Iter), Attribute_Name => Main_Attribute);
+              (Current (Iter), Attribute => Main_Attribute);
          begin
             for M in Mains'Range loop
                declare
-                  Full : constant String := Base_Name (Mains (M).all);
-                  Exec : constant String := Full
-                    (Full'First .. Delete_File_Suffix (Full, Current (Iter))) &
-                    Debuggable_Suffix.all;
-
+                  Exec : constant String := Get_Executable_Name
+                    (Current (Iter), Mains (M).all);
                begin
                   Gtk_New (Mitem, Exec);
                   Append (Menu, Mitem);
