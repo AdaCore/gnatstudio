@@ -528,6 +528,7 @@ private
       Primitive_Operation,
       With_Line,
       Label,
+      Subprogram_Parameter,
       End_Of_Spec,
       End_Of_Body);
    --  The kind of reference to an entity. They have the following meaning:
@@ -556,6 +557,8 @@ private
    --    - Primitive_Operation: used for primitive operations of tagged types
    --      (in Ada), or for methods (in C++). It possibly points to inherited
    --      methods in the parent type.
+   --    - Subprogram_Parameter: for a subprogram declaration, references all
+   --      its parameters
 
    type Reference_Kind_To_Boolean_Map is array (Reference_Kind) of Boolean;
 
@@ -570,6 +573,7 @@ private
       Label                                    => False,
       Primitive_Operation                      => False,
       With_Line                                => False,
+      Subprogram_Parameter                     => False,
       End_Of_Spec                              => True,
       End_Of_Body                              => True);
    --  True if the matching entity indicates an end-of-scope (end of subprogram
@@ -586,6 +590,7 @@ private
       Label                                    => False,
       Primitive_Operation                      => False,
       With_Line                                => False,
+      Subprogram_Parameter                     => False,
       End_Of_Spec                              => False,
       End_Of_Body                              => False);
    --  True if the matching entity indicates an start-of-scope (start of
@@ -602,6 +607,7 @@ private
       Label                                    => True,
       Primitive_Operation                      => False,
       With_Line                                => True,
+      Subprogram_Parameter                     => False,
       End_Of_Spec                              => False,
       End_Of_Body                              => False);
    --  True if the name of the entity really appears at that location in the
