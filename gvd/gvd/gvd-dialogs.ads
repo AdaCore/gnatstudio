@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2002                      --
+--                      Copyright (C) 2000-2003                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -153,13 +153,6 @@ package GVD.Dialogs is
      (Widget : access Glib.Object.GObject_Record'Class);
    --  Callback function connected to the "process_stopped" signal.
    --  It will update the call stack window associated with a given tab.
-
-   procedure Highlight_Stack_Frame
-     (Debugger : access Glib.Object.GObject_Record'Class;
-      Frame    : Natural);
-   --  Highlights a specific frame in the call stack list for a specific
-   --  debugger.
-   --  Frame 1 is the first one visible in the list.
 
    procedure Gtk_New
      (Question_Dialog            : out Question_Dialog_Access;
