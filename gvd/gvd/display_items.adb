@@ -323,7 +323,7 @@ package body Display_Items is
       --  Compute the width and height of the title bar
 
       Title_Width := (5 + Num_Buttons) * Spacing
-        + String_Width (Font, Item.Name.all)
+        + String_Width (Title_Font, Item.Name.all)
         + Num_Buttons * Buttons_Size;
       Title_Height := Gint'Max
         (Get_Ascent (Title_Font) + Get_Descent (Title_Font), Buttons_Size)
