@@ -149,6 +149,12 @@ package body Src_Editor_Box is
    --  extracts the necessary values from Params, and pass them on to
    --  Show_Cursor_Position.
 
+   procedure Buffer_Information_Handler
+     (Buffer : access Glib.Object.GObject_Record'Class;
+      Params : Glib.Values.GValues;
+      Box    : Source_Editor_Box);
+   --  Reflect the change in buffer information.
+
    procedure Status_Changed_Handler
      (Buffer : access Glib.Object.GObject_Record'Class;
       Params : Glib.Values.GValues;
@@ -864,6 +870,54 @@ package body Src_Editor_Box is
       end case;
    end Status_Changed_Handler;
 
+   --------------------------------
+   -- Buffer_Information_Handler --
+   --------------------------------
+
+   procedure Buffer_Information_Handler
+     (Buffer : access Glib.Object.GObject_Record'Class;
+      Params : Glib.Values.GValues;
+      Box    : Source_Editor_Box)
+   is
+      pragma Unreferenced (Buffer, Params);
+
+      Info : constant Extra_Information_Array_Access
+        := Get_Extra_Information (Box.Source_Buffer);
+
+      use type Basic_Types.String_Access;
+   begin
+      if Box.Buffer_Info_Labels /= null then
+         for J in Box.Buffer_Info_Labels'Range loop
+            Unref (Box.Buffer_Info_Labels (J));
+         end loop;
+
+         Unchecked_Free (Box.Buffer_Info_Labels);
+      end if;
+
+      if Info = null then
+         return;
+      end if;
+
+      Box.Buffer_Info_Labels := new Label_Array (Info'Range);
+
+      for J in Box.Buffer_Info_Labels'Range loop
+         if Info (J).Info.Text /= null then
+            Gtk_New (Box.Buffer_Info_Labels (J), Info (J).Info.Text.all);
+         else
+            Gtk_New (Box.Buffer_Info_Labels (J));
+         end if;
+
+         Pack_Start
+           (Box.Label_Box,
+            Box.Buffer_Info_Labels (J),
+            Expand  => False,
+            Fill    => False,
+            Padding => 3);
+      end loop;
+
+      Show_All (Box.Label_Box);
+   end Buffer_Information_Handler;
+
    -------------------------------------
    -- Cursor_Position_Changed_Handler --
    -------------------------------------
@@ -899,6 +953,7 @@ package body Src_Editor_Box is
    begin
       Disconnect (Box.Source_Buffer, Box.Cursor_Handler);
       Disconnect (Box.Source_Buffer, Box.Status_Handler);
+      Disconnect (Box.Source_Buffer, Box.Buffer_Info_Handler);
       Editor_Tooltips.Destroy_Tooltip (Box.Tooltip);
 
       if Box.Default_GC /= null then
@@ -925,7 +980,6 @@ package body Src_Editor_Box is
       Lang   : Language.Language_Access)
    is
       Frame          : Gtk_Frame;
-      Hbox           : Gtk_Box;
       Event_Box      : Gtk_Event_Box;
       Scrolling_Area : Gtk_Scrolled_Window;
       Data           : Editor_Tooltip_Data;
@@ -967,20 +1021,29 @@ package body Src_Editor_Box is
       Set_Shadow_Type (Frame, Shadow_Out);
       Pack_Start (Box.Root_Container, Frame, Expand => False, Fill => False);
 
-      Gtk_New_Hbox (Hbox, Homogeneous => False, Spacing => 2);
-      Add (Frame, Hbox);
+      Gtk_New_Hbox (Box.Label_Box, Homogeneous => False, Spacing => 2);
+      Add (Frame, Box.Label_Box);
 
-      --  Filename area...
+      --  Line:Column number area...
       Gtk_New (Frame);
       Set_Shadow_Type (Frame, Shadow_In);
-      Pack_Start (Hbox, Frame, Expand => True, Fill => True);
-      --  Gtk_New (Box.Filename_Label);
-      --  ??? Commented out as not used for the moment.
+      --  ??? Should compute the size based on the font
+      Set_Size_Request (Frame, 100, -1);
+      Pack_End (Box.Label_Box, Frame, Expand => False, Fill => True);
+      Gtk_New (Box.Cursor_Loc_Label, "1:1");
+      Add (Frame, Box.Cursor_Loc_Label);
+
+      --  Modified file area...
+      Gtk_New (Frame);
+      Set_Shadow_Type (Frame, Shadow_In);
+      Pack_End (Box.Label_Box, Frame, Expand => False, Fill => True);
+      Gtk_New (Box.Modified_Label);
+      Add (Frame, Box.Modified_Label);
 
       --  Read only file area...
       Gtk_New (Frame);
       Set_Shadow_Type (Frame, Shadow_In);
-      Pack_Start (Hbox, Frame, Expand => False, Fill => True);
+      Pack_End (Box.Label_Box, Frame, Expand => False, Fill => True);
       Gtk_New (Event_Box);
       Add (Frame, Event_Box);
       Gtk_New (Box.Read_Only_Label);
@@ -990,21 +1053,12 @@ package body Src_Editor_Box is
          Object_Return_Callback.To_Marshaller (On_Read_Only_Pressed'Access),
          Box);
 
-      --  Modified file area...
+      --  Filename area...
       Gtk_New (Frame);
       Set_Shadow_Type (Frame, Shadow_In);
-      Pack_Start (Hbox, Frame, Expand => False, Fill => True);
-      Gtk_New (Box.Modified_Label);
-      Add (Frame, Box.Modified_Label);
-
-      --  Line:Column number area...
-      Gtk_New (Frame);
-      Set_Shadow_Type (Frame, Shadow_In);
-      --  ??? Should compute the size based on the font
-      Set_Size_Request (Frame, 100, -1);
-      Pack_Start (Hbox, Frame, Expand => False, Fill => True);
-      Gtk_New (Box.Cursor_Loc_Label, "1:1");
-      Add (Frame, Box.Cursor_Loc_Label);
+      Pack_End (Box.Label_Box, Frame, Expand => True, Fill => True);
+      --  Gtk_New (Box.Filename_Label);
+      --  ??? Commented out as not used for the moment.
 
       --  Connect to source buffer signals.
 
@@ -1019,6 +1073,13 @@ package body Src_Editor_Box is
         (Box.Source_Buffer,
          "status_changed",
          Status_Changed_Handler'Access,
+         User_Data => Source_Editor_Box (Box),
+         After     => True);
+
+      Box.Buffer_Info_Handler := Box_Callback.Connect
+        (Box.Source_Buffer,
+         "buffer_information_changed",
+         Buffer_Information_Handler'Access,
          User_Data => Source_Editor_Box (Box),
          After     => True);
 
