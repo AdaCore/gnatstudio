@@ -57,6 +57,22 @@ package body Basic_Mapper is
       end if;
    end Get_Other_Text;
 
+   ------------------
+   -- Remove_Entry --
+   ------------------
+
+   procedure Remove_Entry
+     (Mapper : in out File_Mapper_Access;
+      Text   : String)
+   is
+      Key_1 : String_Access := new String' (Text);
+   begin
+      Remove (Mapper.Table_1, Key_1);
+      Remove (Mapper.Table_2, Key_1);
+
+      Free (Key_1);
+   end Remove_Entry;
+
    ---------------
    -- Add_Entry --
    ---------------

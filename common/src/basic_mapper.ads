@@ -41,6 +41,12 @@ package Basic_Mapper is
       Text_2 : String);
    --  Add a couple of corresponding strings in Mapper.
 
+   procedure Remove_Entry
+     (Mapper : in out File_Mapper_Access;
+      Text   : String);
+   --  Remove all the entries containing Text on either table
+   --  from Mapping.
+
    procedure Save_Mapper
      (Mapper    : File_Mapper_Access;
       File_Name : String);
