@@ -307,13 +307,6 @@ package body Src_Editor_Buffer is
       Set    : Boolean);
    --  Common function for [Add|Remove]_Line_Highlighting.
 
-   function Do_Indentation
-     (Buffer      : Source_Buffer;
-      Lang        : Language_Access;
-      Cursor_Iter : Gtk_Text_Iter;
-      New_Line    : Boolean := True) return Boolean;
-   --  Perform indentation for Cursor_Line.
-
    procedure Request_Blocks (Buffer : access Source_Buffer_Record'Class);
    --  Request that the blocks be recomputed whenever there is time.
 
@@ -3686,54 +3679,34 @@ package body Src_Editor_Buffer is
 
    function Do_Indentation
      (Buffer      : Source_Buffer;
-      Lang        : Language_Access;
-      New_Line    : Boolean := True) return Boolean
+      Lang        : Language_Access) return Boolean
    is
-      Iter, Pos : Gtk_Text_Iter;
-      Result    : Boolean;
-      Success   : Boolean := True;
-      Count     : Gint := 0;
+      Iter, End_Pos : Gtk_Text_Iter;
+      Result : Boolean;
    begin
-      Get_Iter_At_Mark (Buffer, Iter, Buffer.Insert_Mark);
+      Get_Selection_Bounds (Buffer, Iter, End_Pos, Result);
 
-      if not New_Line then
-         Copy (Iter, Pos);
+      if Result then
+         --  Do not consider a line selected if only the first character
+         --  is selected.
 
-         Set_Line_Offset (Pos, 0);
-
-         while Success and then Is_Space (Get_Char (Pos)) loop
-            Forward_Char (Pos, Success);
-         end loop;
-
-         if Compare (Iter, Pos) > 0 then
-            Count := Get_Offset (Iter) - Get_Offset (Pos);
+         if Get_Line_Offset (End_Pos) = 0 then
+            Backward_Char (End_Pos, Result);
          end if;
-      end if;
 
-      Result := Do_Indentation (Buffer, Lang, Iter, New_Line);
+         --  Do not consider a line selected if only the last character is
+         --  selected.
 
-      --  Special case if we are adding a new line, otherwise the cursor
-      --  is left on the first non-blank character of the line after the newly
-      --  inserted one.
+         if Ends_Line (Iter) then
+            Forward_Char (Iter, Result);
+         end if;
 
-      if not New_Line then
-         --  If the cursor was set in the middle of a line, restore its
-         --  position within the line. Otherwise, restore it at the first
-         --  non-blank character.
-
+      else
          Get_Iter_At_Mark (Buffer, Iter, Buffer.Insert_Mark);
-         Set_Line_Offset (Iter, 0);
-
-         Success := True;
-         while Success and then Is_Space (Get_Char (Iter)) loop
-            Forward_Char (Iter, Success);
-         end loop;
-
-         Forward_Chars (Iter, Count, Success);
-         Place_Cursor (Buffer, Iter);
+         Copy (Iter, Dest => End_Pos);
       end if;
 
-      return Result;
+      return Do_Indentation (Buffer, Lang, Iter, End_Pos);
    end Do_Indentation;
 
    --------------------
@@ -3743,40 +3716,30 @@ package body Src_Editor_Buffer is
    function Do_Indentation
      (Buffer      : Source_Buffer;
       Lang        : Language_Access;
-      Cursor_Iter : Gtk_Text_Iter;
-      New_Line    : Boolean := True) return Boolean
+      From, To    : Gtk_Text_Iter) return Boolean
    is
       Indent_Style  : Indentation_Kind;
-
-      Start         : Gtk_Text_Iter;
-      Pos           : Gtk_Text_Iter;
+      End_Pos       : Gtk_Text_Iter;
       Iter          : Gtk_Text_Iter;
       Indent        : Natural;
-      Next_Indent   : Natural;
-      Ignore        : Natural;
-      Line, Col     : Gint;
+      Line          : Gint;
       Current_Line  : Gint;
       Offset        : Integer;
+      Cursor_Line, Cursor_Offset : Gint;
+      Editable_Line : Editable_Line_Type;
       Global_Offset : Integer := 0;
 
-      Blanks        : Natural;
       C_Str         : Gtkada.Types.Chars_Ptr := Gtkada.Types.Null_Ptr;
-      Line_Ends     : Boolean := True;
       Line_Start    : Natural;
       Line_End      : Natural;
       Result        : Boolean;
-      Slice_Length  : Natural;
       Slice         : Unchecked_String_Access;
       pragma Suppress (Access_Check, Slice);
       Index         : Integer;
       Replace_Cmd   : Editor_Replace_Slice;
       Tabs_Used     : Boolean := False;
-      Char          : Character;
       Indent_Params : Indent_Parameters;
       Use_Tabs      : Boolean := False;
-
-      Cursor_Line   : Gint;
-      Cursor_Column : Gint;
 
       function Blank_Slice (Count : Natural; Use_Tabs : Boolean) return String;
       --  Return a string representing count blanks.
@@ -3791,9 +3754,27 @@ package body Src_Editor_Buffer is
         (Lang          : Language_Access;
          Buffer        : String;
          Indent        : out Natural;
-         Next_Indent   : out Natural;
          Indent_Params : Indent_Parameters);
       --  Wrapper around Next_Indentation to take into account Indent_Style.
+
+      procedure Skip_To_First_Non_Blank (Iter : in out Gtk_Text_Iter);
+      --  Move Iter to the first non-blank character on the line
+
+      -----------------------------
+      -- Skip_To_First_Non_Blank --
+      -----------------------------
+
+      procedure Skip_To_First_Non_Blank (Iter : in out Gtk_Text_Iter) is
+         Result : Boolean := True;
+      begin
+         Set_Line_Offset (Iter, 0);
+         while Result
+           and then not Ends_Line (Iter)
+           and then Is_Space (Get_Char (Iter))
+         loop
+            Forward_Char (Iter, Result);
+         end loop;
+      end Skip_To_First_Non_Blank;
 
       -----------------
       -- Blank_Slice --
@@ -3836,8 +3817,9 @@ package body Src_Editor_Buffer is
         (Lang          : Language_Access;
          Buffer        : String;
          Indent        : out Natural;
-         Next_Indent   : out Natural;
-         Indent_Params : Indent_Parameters) is
+         Indent_Params : Indent_Parameters)
+      is
+         Next_Indent   : Natural;
       begin
          if Indent_Style = Simple then
             Next_Indentation
@@ -3867,179 +3849,92 @@ package body Src_Editor_Buffer is
          return False;
       end if;
 
-      --  Compute Cursor_Column
+      --  Where is the cursor (so we can keep it on the same line)
+      Get_Iter_At_Mark (Buffer, Iter, Buffer.Insert_Mark);
+      Cursor_Line   := Get_Line (Iter);
+      Cursor_Offset := Get_Offset (Iter);
 
-      if Use_Tabs then
-         Get_Screen_Position (Buffer, Cursor_Iter, Cursor_Line, Cursor_Column);
-      else
-         Cursor_Line := Get_Line (Cursor_Iter);
-         Cursor_Column := Get_Line_Offset (Cursor_Iter);
+      --  What should we indent (current line or current selection) ?
+
+      Copy (From, Dest => Iter);
+      Set_Line_Offset (Iter, 0);
+      Current_Line := Get_Line (Iter);
+
+      Copy (To, Dest => End_Pos);
+      if not Ends_Line (End_Pos) then
+         Forward_To_Line_End (End_Pos, Result);
       end if;
-
-      Get_Selection_Bounds (Buffer, Start, Pos, Result);
-
-      if Result then
-         --  Do not consider a line selected if only the first character
-         --  is selected.
-
-         if Get_Line_Offset (Pos) = 0 then
-            Backward_Char (Pos, Result);
-         end if;
-
-         --  Do not consider a line selected if only the last character is
-         --  selected.
-
-         if Ends_Line (Start) then
-            Forward_Char (Start, Result);
-         end if;
-
-      else
-         Copy (Cursor_Iter, Start);
-         Copy (Cursor_Iter, Pos);
-      end if;
-
-      Copy (Pos, Iter);
-
-      --  Go to last char of the line pointed by Iter
-
-      if not Ends_Line (Iter) then
-         Forward_To_Line_End (Iter, Result);
-         Line_Ends := False;
-      end if;
-
-      Line := Get_Line (Iter);
-      Col  := Get_Line_Offset (Iter);
+      Line := Get_Line (End_Pos);
 
       --  We're spending most of our time getting this string.
       --  Consider saving the current line, indentation level and
       --  the stacks used by Next_Indentation to avoid parsing
       --  the buffer from scratch each time.
 
-      C_Str        := Get_Slice (Buffer, 0, 0, Line, Col);
-      Slice        := To_Unchecked_String (C_Str);
-      Slice_Length := Natural (Strlen (C_Str));
+      C_Str := Get_Slice (Buffer, 0, 0, Line, Get_Line_Offset (End_Pos));
+      Slice := To_Unchecked_String (C_Str);
 
-      if New_Line then
-         Offset := Natural (Col - Get_Line_Offset (Pos));
-         Blanks := Slice_Length - Offset + 1;
+      --  In the loop below, Global_Offset contains the offset between
+      --  the modified buffer, and the original buffer, caused by the
+      --  buffer replacements.
 
-         if Line_Ends then
-            Slice_Length := Slice_Length + 1;
-            Slice (Slice_Length) := ASCII.LF;
+      loop
+         Line_Start   := Natural (Get_Offset (Iter)) + 1 - Global_Offset;
+         Index        := Line_Start;
+
+         if Current_Line = Cursor_Line then
+            Skip_To_First_Non_Blank (Iter);
+            Cursor_Offset := Cursor_Offset - Get_Offset (Iter);
          end if;
 
-         --  ??? We should use Is_Space instead
-         while Blanks <= Slice_Length
-           and then (Slice (Blanks) = ' ' or else Slice (Blanks) = ASCII.HT)
-         loop
-            Blanks := Blanks + 1;
-         end loop;
-
-         if Line_Ends then
-            Local_Next_Indentation
-              (Lang, Slice (1 .. Slice_Length), Indent, Next_Indent,
-               Indent_Params);
-         else
-            Index := Integer (Get_Offset (Pos)) + 1;
-            Char  := Slice (Index);
-            Slice (Index) := ASCII.LF;
-            Local_Next_Indentation
-              (Lang, Slice (1 .. Index), Indent, Ignore, Indent_Params);
-            Slice (Index) := Char;
-
-            --  ??? Would be nice to call Local_Next_Indentation once, which
-            --  would be possible with e.g a Prev_Indent parameter
-
-            Local_Next_Indentation
-              (Lang,
-               Slice (1 .. Index - 1) & ASCII.LF &
-                 Slice (Index .. Slice_Length),
-               Next_Indent, Ignore, Indent_Params);
+         if not Ends_Line (Iter) then
+            Forward_To_Line_End (Iter, Result);
          end if;
 
-         Set_Line_Offset (Iter, 0);
-         Line_Start := Natural (Get_Offset (Iter)) + 1;
-         Index      := Line_Start;
+         Line_End := Natural (Get_Offset (Iter)) + 1 - Global_Offset;
+         Local_Next_Indentation
+           (Lang, Slice (1 .. Line_End), Indent, Indent_Params);
 
-         Find_Non_Blank (Slice_Length);
+         Find_Non_Blank (Line_End);
+         Offset := Index - Line_Start;
 
-         --  Replace everything at once, important for efficiency
-         --  and also because otherwise, undo/redo won't work properly.
+         --  Only indent if the current indentation is wrong
+         --  ??? Would be nice to indent the whole selection at once,
+         --  this would make the undo/redo behavior more intuitive.
+         if Tabs_Used or else Offset /= Indent then
+            Editable_Line := Get_Editable_Line
+              (Buffer, Buffer_Line_Type (Current_Line + 1));
+            Create
+              (Replace_Cmd,
+               Buffer,
+               Editable_Line,
+               1,
+               Editable_Line,
+               Natural (Offset + 1),
+               Blank_Slice (Indent, Use_Tabs));
 
-         if Line_Ends then
-            Slice_Length := Slice_Length - 1;
+            Enqueue (Buffer, Command_Access (Replace_Cmd));
+            Global_Offset := Global_Offset - Offset + Indent;
          end if;
 
-         Create
-           (Replace_Cmd,
-            Buffer,
-            Get_Editable_Line (Buffer, Buffer_Line_Type (Line + 1)), 1,
-            Get_Editable_Line (Buffer, Buffer_Line_Type (Line + 1)),
-            Natural (Col + 1),
-            Blank_Slice (Indent, Use_Tabs) &
-            Slice (Index .. Slice_Length - Offset) & ASCII.LF &
-            Blank_Slice (Next_Indent, Use_Tabs) &
-            Slice (Blanks .. Slice_Length));
-         Enqueue (Buffer, Command_Access (Replace_Cmd));
+         --  If the cursor was located before the first non-blank character,
+         --  move it to that character. This is more usual for Emacs users,
+         --  and more user friendly generally.
 
-      else
-         Current_Line := Get_Line (Start);
-         Set_Line_Offset (Start, 0);
-         Col := Get_Line_Offset (Pos);
-
-         --  In the loop below, Global_Offset contains the offset between
-         --  the modified buffer, and the original buffer, caused by the
-         --  buffer replacements.
-
-         loop
-            Line_Start := Natural (Get_Offset (Start)) + 1 - Global_Offset;
-            Index      := Line_Start;
-
-            if not Ends_Line (Start) then
-               Forward_To_Line_End (Start, Result);
+         if Current_Line = Cursor_Line then
+            Get_Iter_At_Line_Offset (Buffer, Iter, Current_Line);
+            Skip_To_First_Non_Blank (Iter);
+            if Cursor_Offset > 0 then
+               Forward_Chars (Iter, Cursor_Offset, Result);
             end if;
+            Place_Cursor (Buffer, Iter);
+         end if;
 
-            Line_End := Natural (Get_Offset (Start)) + 1 - Global_Offset;
-            Local_Next_Indentation
-              (Lang, Slice (1 .. Line_End),
-               Indent, Next_Indent, Indent_Params);
+         exit when Current_Line >= Line;
 
-            Find_Non_Blank (Line_End);
-            Offset := Index - Line_Start;
-
-            if Tabs_Used or else Offset /= Indent then
-               --  Only indent if the current indentation is wrong
-               --  ??? Would be nice to indent the whole selection at once,
-               --  this would make the undo/redo behavior more intuitive.
-
-               if Current_Line = Cursor_Line then
-                  Cursor_Column := Cursor_Column - Gint (Offset - Indent);
-
-                  if Cursor_Column < 0 then
-                     Cursor_Column := 0;
-                  end if;
-               end if;
-
-               Create
-                 (Replace_Cmd,
-                  Buffer,
-                  Get_Editable_Line
-                    (Buffer, Buffer_Line_Type (Current_Line + 1)),
-                  1,
-                  Get_Editable_Line
-                    (Buffer, Buffer_Line_Type (Current_Line + 1)),
-                  Natural (Offset + 1),
-                  Blank_Slice (Indent, Use_Tabs));
-               Enqueue (Buffer, Command_Access (Replace_Cmd));
-               Global_Offset := Global_Offset - Offset + Indent;
-            end if;
-
-            exit when Current_Line >= Line;
-
-            Current_Line := Current_Line + 1;
-            Get_Iter_At_Line_Offset (Buffer, Start, Current_Line);
-         end loop;
-      end if;
+         Current_Line := Current_Line + 1;
+         Get_Iter_At_Line_Offset (Buffer, Iter, Current_Line);
+      end loop;
 
       g_free (C_Str);
       return True;
