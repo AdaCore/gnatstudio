@@ -91,7 +91,7 @@ endif
 ifeq ($(GLIDE_ROOT),True)
 
    ifeq ($(OS),Windows_NT)
-      default: resources do_links gpslink gvd all
+      default: resources do_links gpslink all
    else
       default: do_links gpslink gvd all
    endif
@@ -103,9 +103,6 @@ ifeq ($(GLIDE_ROOT),True)
    do_links: force
 	-@$(foreach f,$(GNAT_SOURCES), \
 	  $(LN) ../gnat_src/$(f) ../gnat > /dev/null 2>&1 ;)
-
-   gvd: force
-	gnatmake -u -c -P../gvd/gvd $(ADAFLAGS) gvd-main_window.adb
 
    gpslink: force
 	cd $(GLIDE_OBJ_DIR); gnatmake -q -a ../src/gpslink
