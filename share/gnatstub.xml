@@ -13,7 +13,8 @@
       <!-- Generate and load the body -->
       <shell>save_all</shell>
       <shell>scenario_variables_cmd_line -X</shell>
-      <external output="" >gnat stub %pps %1 %F %d</external>
+      <external output="" 
+                on-failure="locations_parse &quot;&quot;&quot;%1 &quot;&quot;&quot; gnatstub" >gnat stub %pps %1 %F %d</external>
       <shell>File %F</shell>
       <shell>File.other_file %1</shell>
       <shell>File.name %1</shell>
