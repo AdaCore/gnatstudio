@@ -183,7 +183,7 @@ package body GVD.Menu is
          if Tab.Descriptor.Remote_Host /= null
            or else Is_Regular_File (S)
          then
-            Load_Core_File (Tab.Debugger, S, Mode => Hidden);
+            Load_Core_File (Tab.Debugger, S, Mode => GVD.Types.Visible);
          else
             Output_Error
               (GVD_Main_Window (Get_Toplevel (Object)),

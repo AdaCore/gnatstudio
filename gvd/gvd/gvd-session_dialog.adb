@@ -285,7 +285,8 @@ package body GVD.Session_Dialog is
 
             for J in 1 .. Num_Pages loop
                Get_Line (File, Buffer, Last);
-               Program.Program := new String' (Buffer (1 .. Last));
+               --  Ignore program name
+
                Get_Line (File, Buffer, Last);
                Program.Debugger := Debugger_Type'Value (Buffer (1 .. Last));
                Get_Line (File, Buffer, Last);
@@ -302,8 +303,7 @@ package body GVD.Session_Dialog is
                   Processes (J) :=
                     Create_Debugger
                     (GVD_Main_Window (Window),
-                     Program.Debugger,
-                     Program.Program.all,
+                     Program.Debugger, "",
                      List, "",
                      Program.Remote_Host.all,
                      Program.Remote_Target.all,

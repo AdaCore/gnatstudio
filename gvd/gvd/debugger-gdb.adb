@@ -624,7 +624,7 @@ package body Debugger.Gdb is
       --  Load the module to debug, if any.
 
       if Debugger.Executable /= null then
-         Set_Executable (Debugger, Debugger.Executable.all, Mode => Internal);
+         Set_Executable (Debugger, Debugger.Executable.all, Mode => Visible);
       else
          --  Indicate that a new executable is present (even if there is none,
          --  we still need to reset some data).
@@ -654,7 +654,7 @@ package body Debugger.Gdb is
       end if;
 
       if Debugger.Executable_Args /= null then
-         Set_Args (Debugger, Debugger.Executable_Args.all, Mode => Hidden);
+         Set_Args (Debugger, Debugger.Executable_Args.all, Mode => Visible);
       end if;
 
    exception
@@ -725,7 +725,7 @@ package body Debugger.Gdb is
    procedure Set_Executable
      (Debugger   : access Gdb_Debugger;
       Executable : String;
-      Mode       : Invisible_Command := Hidden)
+      Mode       : Command_Type := Hidden)
    is
       Num                 : Breakpoint_Identifier;
       No_Such_File_Regexp : Pattern_Matcher :=
@@ -735,19 +735,31 @@ package body Debugger.Gdb is
 
    begin
       if Debugger.Remote_Target /= null then
-         if Match
-           (No_Such_File_Regexp,
-            Send (Debugger, "load " & Executable, Mode => Mode)) /= 0
-         then
-            raise Executable_Not_Found;
-         end if;
+         declare
+            S : constant String :=
+              Send (Debugger, "load " & Executable, Mode => Hidden);
+
+         begin
+            if Match (No_Such_File_Regexp, S) /= 0 then
+               raise Executable_Not_Found;
+            end if;
+
+            Output_Text (Convert (Debugger.Window, Debugger), S & ASCII.LF);
+         end;
+
       else
-         if Match
-           (No_Such_File_Regexp,
-            Send (Debugger, "file " & Executable, Mode => Mode)) /= 0
-         then
-            raise Executable_Not_Found;
-         end if;
+         declare
+            S : constant String :=
+              Send (Debugger, "file " & Executable, Mode => Hidden);
+
+         begin
+            if Match (No_Such_File_Regexp, S) /= 0 then
+               raise Executable_Not_Found;
+            end if;
+
+            Output_Text (Convert (Debugger.Window, Debugger), S & ASCII.LF);
+         end;
+
       end if;
 
       Set_Is_Started (Debugger, False);
@@ -824,7 +836,7 @@ package body Debugger.Gdb is
    procedure Load_Core_File
      (Debugger : access Gdb_Debugger;
       Core     : String;
-      Mode     : Invisible_Command := Hidden) is
+      Mode     : Command_Type := Hidden) is
    begin
       Set_Is_Started (Debugger, False);
       Send (Debugger, "core " & Core, Mode => Mode);

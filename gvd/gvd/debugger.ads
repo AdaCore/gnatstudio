@@ -340,7 +340,7 @@ package Debugger is
    procedure Set_Executable
      (Debugger   : access Debugger_Root;
       Executable : String;
-      Mode       : GVD.Types.Invisible_Command := GVD.Types.Hidden)
+      Mode       : GVD.Types.Command_Type := GVD.Types.Hidden)
       is abstract;
    --  Load an executable into the debugger.
    --  Note that this can have a different meaning with some languages like
@@ -352,7 +352,7 @@ package Debugger is
    procedure Load_Core_File
      (Debugger : access Debugger_Root;
       Core     : String;
-      Mode     : GVD.Types.Invisible_Command := GVD.Types.Hidden) is abstract;
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is abstract;
    --  Load a core file into the debugger.
    --  GDB_COMMAND: "core"
 

@@ -117,12 +117,12 @@ package Debugger.Gdb is
    procedure Set_Executable
      (Debugger   : access Gdb_Debugger;
       Executable : String;
-      Mode       : GVD.Types.Invisible_Command := GVD.Types.Hidden);
+      Mode       : GVD.Types.Command_Type := GVD.Types.Hidden);
 
    procedure Load_Core_File
      (Debugger : access Gdb_Debugger;
       Core     : String;
-      Mode     : GVD.Types.Invisible_Command := GVD.Types.Hidden);
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
 
    procedure Run
      (Debugger  : access Gdb_Debugger;
