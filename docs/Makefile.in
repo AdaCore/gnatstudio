@@ -77,6 +77,7 @@ install:
 	  $(INSTALL_DATA) $$img $(docdir)/html; \
 	done
 	-$(INSTALL_DATA) gps-animation.gif $(sharedir)
+	-$(INSTALL_DATA) gps-splash.jpg $(sharedir)
 
 clean-temp-files:
 	-$(RM) *.aux
