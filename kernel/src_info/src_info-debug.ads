@@ -91,7 +91,8 @@ private
    --  Dependency_File_Info object are printed after the Source_Filename
    --  on the 'X' lines.
 
-   procedure Dump_Unit_Dependency_Section (LIF : LI_File; Part : Unit_Part);
+   procedure Dump_Unit_Dependency_Section
+     (LIF : LI_File; Part : Projects.Unit_Part);
    --  Dump the 'U' line and the associated 'W' lines. Part must be either
    --  Unit_Spec of Unit_Body.
 

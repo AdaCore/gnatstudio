@@ -21,6 +21,7 @@
 with Ada.Exceptions;    use Ada.Exceptions;
 with Ada.Text_IO;       use Ada.Text_IO;
 with String_Utils;      use String_Utils;
+with Projects;          use Projects;
 
 package body Src_Info.Debug is
 
@@ -399,7 +400,8 @@ package body Src_Info.Debug is
    -- Dump_Dependency_Section --
    -----------------------------
 
-   procedure Dump_Unit_Dependency_Section (LIF : LI_File; Part : Unit_Part)
+   procedure Dump_Unit_Dependency_Section
+     (LIF : LI_File; Part : Projects.Unit_Part)
    is
       Current_Dep_File_Info : Dependency_File_Info_List :=
         LIF.Dependencies_Info;
