@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 1.2.0
 
+- Crash when opening multiple new files.
+  Problem:    When when opening new files using the menu File->New or the
+              toolbar icon, opening multiple new files when the line numbers
+              are displayed causes GPS to crash.
+  Workaround: In the preferences dialog, disable the "Display line numbers"
+              preference in the Editor section.
+
 - Bad handling of item icon when saving new file
   Problem:    After saving an untitled file, the icon corresponding to the
               editor still shows the "modified" icon.
