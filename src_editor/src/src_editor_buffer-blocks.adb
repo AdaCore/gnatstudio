@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2001-2004                       --
+--                     Copyright (C) 2001-2005                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
@@ -167,7 +167,7 @@ package body Src_Editor_Buffer.Blocks is
 
                      Add_Block_Command
                        (Buffer,
-                        Buffer_Line,
+                        Editable_Line_Type (Current.Sloc_Start.Line),
                         Command_Access (Command),
                         Hide_Block_Pixbuf);
                   end if;
