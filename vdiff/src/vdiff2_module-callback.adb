@@ -425,6 +425,30 @@ package body Vdiff2_Module.Callback is
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end File_Closed_Cb;
 
+   --------------------------
+   -- Diff_Command_Handler --
+   --------------------------
+
+   procedure Diff_Command_Handler
+     (Data    : in out Callback_Data'Class; Command : String)
+   is
+      Kernel   : constant Kernel_Handle := Get_Kernel (Data);
+   begin
+      if Command = "visual_diff" then
+         declare
+            File1 : constant Virtual_File :=
+              Create (Nth_Arg (Data, 1), Kernel, Use_Source_Path => True);
+            File2 : constant Virtual_File :=
+              Create (Nth_Arg (Data, 2), Kernel, Use_Source_Path => True);
+            File3 : constant Virtual_File :=
+              Create (Nth_Arg (Data, 3, Default => ""),
+                      Kernel, Use_Source_Path => True);
+         begin
+            Visual_Diff (File1, File2, File3);
+         end;
+      end if;
+   end Diff_Command_Handler;
+
    ------------------------------
    --  On_Preferences_Changed  --
    ------------------------------

@@ -19,11 +19,12 @@
 -----------------------------------------------------------------------
 --  Provide all callback for menu
 
-with Glib;         use Glib;
-with Glib.Object;  use Glib.Object;
-with Glib.Values;  use Glib.Values;
+with Glib;                 use Glib;
+with Glib.Object;          use Glib.Object;
+with Glib.Values;          use Glib.Values;
 
-with Glide_Kernel; use Glide_Kernel;
+with Glide_Kernel;         use Glide_Kernel;
+with Glide_Kernel.Scripts; use Glide_Kernel.Scripts;
 
 package Vdiff2_Module.Callback is
 
@@ -55,6 +56,10 @@ package Vdiff2_Module.Callback is
       Args    : GValues;
       Kernel  : Kernel_Handle);
    --  Callback for the "file_closed" signal.
+
+   procedure Diff_Command_Handler
+     (Data    : in out Callback_Data'Class; Command : String);
+   --  Interactive command handler for the Visual_Diff module.
 
    procedure On_Preferences_Changed
      (Kernel : access GObject_Record'Class; K : Kernel_Handle);
