@@ -109,6 +109,8 @@ package body Ada_Naming_Editors is
 
       Set_Popdown_Strings (Editor.Casing, Casing_Items);
       Free_String_List (Casing_Items);
+
+      Select_Item (Get_List (Editor.Standard_Scheme), Gnat_Naming_Scheme);
    end Gtk_New;
 
    ----------------
