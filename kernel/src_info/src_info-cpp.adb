@@ -28,7 +28,8 @@ with SN,
      Src_Info,
 --     Src_Info.CPP.LI_Utils,
      Ada.Text_IO,
-     DB_API;
+     DB_API,
+     Src_Info.LI_Utils;
 
 use  SN,
      SN.DB_Structures,
@@ -36,7 +37,8 @@ use  SN,
      Src_Info,
 --     Src_Info.CPP.LI_Utils,
      Ada.Text_IO,
-     DB_API;
+     DB_API,
+     Src_Info.LI_Utils;
 
 package body Src_Info.CPP is
    type SN_Table_Array is array (Table_Type) of DB_File;
@@ -87,6 +89,7 @@ package body Src_Info.CPP is
       (GV       => Sym_GV_Handler'Access,
        others   => Sym_Default_Handler'Access);
 
+   Global_CPP_Handler : constant CPP_LI_Handler := null;
 
    -------------------
    -- Open_DB_Files --
@@ -326,11 +329,14 @@ package body Src_Info.CPP is
    procedure Sym_GV_Handler (Sym : FIL_Table;
                            File : in out LI_File_Ptr;
                            SN_Table : in out SN_Table_Array) is
-      pragma Unreferenced (File);
       Kind    : E_Kind;
       Var     : GV_Table;
       Success : Boolean;
+      tmp_ptr : E_Declaration_Info_List;
    begin
+      Put_Line ("Sym_GV_Handler (" &
+                Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last) &
+                ")");
       --  Lookup variable type
       Var := Find (SN_Table (GV), Sym.Buffer
          (Sym.Identifier.First .. Sym.Identifier.Last));
@@ -340,15 +346,18 @@ package body Src_Info.CPP is
          Free (Var);
          return; -- type not found, ignore errors
       end if;
---      Insert_Declaration (File,
---         Symbol_Name =>
---            Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
---         Source_Filename =>
---            Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
---         Location => Sym.Start_Position,
---         Kind => Kind,
---         Scope => Global_Scope
---      );
+      Insert_Declaration (
+         Handler => LI_Handler (Global_CPP_Handler),
+         File => File,
+         Symbol_Name =>
+            Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
+         Source_Filename =>
+            Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
+         Location => Sym.Start_Position,
+         Kind => Kind,
+         Scope => Global_Scope,
+         Declaration_Info => tmp_ptr
+      );
       Free (Var);
    exception
       when  DB_Error |   -- non-existent table

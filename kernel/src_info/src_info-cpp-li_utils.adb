@@ -29,20 +29,19 @@ package body Src_Info.CPP.LI_Utils is
       End_Of_Scope_Location   : in Point := Invalid_Point;
       Rename_Filename         : in String := "";
       Rename_Location         : in Point := Invalid_Point;
-      Declaration_Info        : in out E_Declaration_Info_List := null
+      Declaration_Info        : in out E_Declaration_Info_List
    ) is
       D_Ptr : E_Declaration_Info_List;
    begin
-      if File = No_LI_File
-      then
+      if File = No_LI_File then
          File := new LI_File_Constrained'
-            (LI => (Parsed := False,
-                    Handler => LI_Handler (Handler),
-                    LI_Filename => new String'(Source_Filename),
-                    Body_Info => new File_Info,
-                    Spec_Info => null,
-                    Separate_Info => null,
-                    LI_Timestamp => 0));
+         (LI => (Parsed => False,
+                 Handler => LI_Handler (Handler),
+                 LI_Filename => new String'(Source_Filename),
+                 Body_Info => new File_Info,
+                 Spec_Info => null,
+                 Separate_Info => null,
+                 LI_Timestamp => 0));
          File := new LI_File_Constrained;
          File.LI.LI_Filename := new String'(Source_Filename);
          File.LI.Body_Info := new File_Info'
@@ -56,24 +55,26 @@ package body Src_Info.CPP.LI_Utils is
          File.LI.Spec_Info := null;
          File.LI.Separate_Info := null;
       else
-         if File.LI.Body_Info.Source_Filename.all /= Source_Filename then
+         if File.LI.LI_Filename.all /= Source_Filename then
             raise Invalid_Source_Filename;
          end if;
+         if LI_Handler (Handler) /= File.LI.Handler then
+            raise Invalid_Handler;
+         end if;
       end if;
-      if File.LI.Body_Info.Declarations = null
-      then
+      if File.LI.Body_Info.Declarations = null then
          File.LI.Body_Info.Declarations := new E_Declaration_Info_Node;
-         File.LI.Body_Info.Declarations.next := null;
+         File.LI.Body_Info.Declarations.Next := null;
          D_Ptr := File.LI.Body_Info.Declarations;
       else
          D_Ptr := File.LI.Body_Info.Declarations;
          loop
-            exit when D_Ptr.next = null;
-            D_Ptr := D_Ptr.next;
+            exit when D_Ptr.Next = null;
+            D_Ptr := D_Ptr.Next;
          end loop;
-         D_Ptr.next := new E_Declaration_Info_Node;
-         D_Ptr.next.next := null;
-         D_Ptr := D_Ptr.next;
+         D_Ptr.Next := new E_Declaration_Info_Node;
+         D_Ptr.Next.Next := null;
+         D_Ptr := D_Ptr.Next;
       end if;
       Insert_Declaration_Internal (D_Ptr, File, Symbol_Name, Source_Filename,
             Location, Parent_Filename, Parent_Location, Kind, Scope,
@@ -82,9 +83,9 @@ package body Src_Info.CPP.LI_Utils is
    end Insert_Declaration;
 
    procedure Insert_Dependency_Declaration (
-      Handler                 : in LI_Handler
+      Handler                 : in LI_Handler;
       File                    : in out LI_File_Ptr;
-      Name                    : in String;
+      Symbol_Name             : in String;
       Source_Filename         : in String;
       Location                : in Point;
       Parent_Filename         : in String := "";
@@ -94,14 +95,15 @@ package body Src_Info.CPP.LI_Utils is
       End_Of_Scope_Location   : in Point := Invalid_Point;
       Rename_Filename         : in String := "";
       Rename_Location         : in Point := Invalid_Point;
-      Declaration_Info        : in out E_Declaration_Info_List := null) is
-   begin
+      Declaration_Info        : in out E_Declaration_Info_List
+   ) is
       D_Ptr : E_Declaration_Info_List;
+      Dep_Ptr : Dependency_File_Info_List;
       Tmp_LI_File : LI_File;
    begin
       if File = No_LI_File then
          File := new LI_File_Constrained'
-            (LI => (Parsed := True,
+            (LI => (Parsed => True,
                     Handler => LI_Handler (Handler),
                     LI_Filename => new String'(Source_Filename),
                     Body_Info => null,
@@ -110,42 +112,59 @@ package body Src_Info.CPP.LI_Utils is
                     LI_Timestamp => 0,
                     Compilation_Errors_Found => False,
                     Dependencies_Info => null));
-      elsif File.LI.Parsed = False then
-         Tmp_LI_File := File.LI;
-         File := new LI_File_Constrained'
-            (LI => (Parsed := True,
-                    Handler => LI_Handler (Handler),
-                    LI_Filename => new String'(Source_Filename),
-                    Body_Info => Tmp_LI_File.Body_Info,
-                    Spec_Info => null,
-                    Separate_Info => null,
-                    LI_Timestamp => 0,
-                    Compilation_Errors_Found => False,
-                    Dependencies_Info => null));
-      end if;
-      if File.LI.Dependencies_Info = null
-      then
-         File.LI.Dependencies_Info := new Dependency_File_Info_Node;
-         File.LI.Dependencies_Info.File := No_Source_File;
-         --  FIX ME
-         File.LI.Dependencies_Info.Dep_Info := (Depends_From_Spec => False,
-                                                Depends_From_Body => True);
-         File.LI.Dependencies_Info.Declarations := null;
-      end if;                                 
-      if File.LI.Dependencies_Info.Declarations = null
-      then
-         File.LI.Dependencies_Info.Declarations := new E_Declaration_Info_Node;
-         File.LI.Dependencies_Info.Declarations.next := null;
-         D_Ptr := File.LI.Dependencies_Info.Declarations;
       else
-         D_Ptr := File.LI.Dependencies_Info.Declarations;
+         if File.LI.LI_Filename.all /= Source_Filename then
+            raise Invalid_Source_Filename;
+         end if;
+         if LI_Handler (Handler) /= File.LI.Handler then
+            raise Invalid_Handler;
+         end if;
+         if File.LI.Parsed = False then
+            Tmp_LI_File := File.LI;
+            File.LI := (Parsed => True,
+                        Handler => LI_Handler (Handler),
+                        LI_Filename => new String'(Source_Filename),
+                        Body_Info => Tmp_LI_File.Body_Info,
+                        Spec_Info => null,
+                        Separate_Info => null,
+                        LI_Timestamp => 0,
+                        Compilation_Errors_Found => False,
+                        Dependencies_Info => null);
+         end if;
+      end if;
+      if File.LI.Dependencies_Info = null then
+         File.LI.Dependencies_Info := new Dependency_File_Info_Node;
+         File.LI.Dependencies_Info.Value.File := No_Source_File;
+         --  FIX ME
+         File.LI.Dependencies_Info.Value.Dep_Info :=
+                                          (Depends_From_Spec => False,
+                                           Depends_From_Body => True);
+         File.LI.Dependencies_Info.Value.Declarations := null;
+         File.LI.Dependencies_Info.Next := null;
+         Dep_Ptr := File.LI.Dependencies_Info;
+      else
+         Dep_Ptr := File.LI.Dependencies_Info;
          loop
-            exit when D_Ptr.next = null;
-            D_Ptr := D_Ptr.next;
+            exit when Dep_Ptr.Next = null;
+            Dep_Ptr := Dep_Ptr.Next;
          end loop;
-         D_Ptr.next := new E_Declaration_Info_Node;
-         D_Ptr.next.next := null;
-         D_Ptr := D_Ptr.next;
+         Dep_Ptr.Next := new Dependency_File_Info_Node;
+         Dep_Ptr.Next.Next := null;
+         Dep_Ptr := Dep_Ptr.Next;
+      end if;
+      if Dep_Ptr.Value.Declarations = null then
+         Dep_Ptr.Value.Declarations := new E_Declaration_Info_Node;
+         Dep_Ptr.Value.Declarations.Next := null;
+         D_Ptr := Dep_Ptr.Value.Declarations;
+      else
+         D_Ptr := Dep_Ptr.Value.Declarations;
+         loop
+            exit when D_Ptr.Next = null;
+            D_Ptr := D_Ptr.Next;
+         end loop;
+         D_Ptr.Next := new E_Declaration_Info_Node;
+         D_Ptr.Next.Next := null;
+         D_Ptr := D_Ptr.Next;
       end if;
       Insert_Declaration_Internal (D_Ptr, File, Symbol_Name, Source_Filename,
             Location, Parent_Filename, Parent_Location, Kind, Scope,
@@ -163,19 +182,19 @@ package body Src_Info.CPP.LI_Utils is
    end Insert_Reference;
 
    function Find_Declaration (
-      File                    : in out LI_File_Ptr;
+      File                    : in LI_File_Ptr;
       Name                    : in String;
       Location                : in Point) return E_Declaration_Info_List is
    begin
-      null;
+      return null;
    end Find_Declaration;
 
    function Find_Dependency_Declaration (
-      File                    : in out LI_File_Ptr;
+      File                    : in LI_File_Ptr;
       Name                    : in String;
       Location                : in Point) return E_Declaration_Info_List is
    begin
-      null;
+      return null;
    end Find_Dependency_Declaration;
 
    -------------------------------------------------------------------------
@@ -196,47 +215,44 @@ package body Src_Info.CPP.LI_Utils is
       if D_Ptr = null then
          return;
       end if;
-      D_Ptr.value.References := null;
-      D_Ptr.value.Declaration.Name := new String'(Symbol_Name);
-      D_Ptr.value.Declaration.Location.File.LI := File;
-      D_Ptr.value.Declaration.Location.File.Part := Unit_Body;
-      D_Ptr.value.Declaration.Location.File.Source_Filename
-            := new String'(Source_Filename);
-      D_Ptr.value.Declaration.Location.Line := Location.Line;
-      D_Ptr.value.Declaration.Location.Column := Location.Column;
-      D_Ptr.value.Declaration.Kind := Kind;
+      D_Ptr.Value.References := null;
+      D_Ptr.Value.Declaration.Name := new String'(Symbol_Name);
+      D_Ptr.Value.Declaration.Location :=
+                   (File => (LI => File,
+                             Part => Unit_Body,
+                             Source_Filename => new String'(Source_Filename)),
+                    Line => Location.Line,
+                    Column => Location.Column);
+      D_Ptr.Value.Declaration.Kind := Kind;
       if Parent_Location = Invalid_Point then
-         D_Ptr.value.Declaration.Parent_Location := Null_File_Location;
+         D_Ptr.Value.Declaration.Parent_Location := Null_File_Location;
       else
-         D_Ptr.value.Declaration.Parent_Location.File.LI := File;
-         D_Ptr.value.Declaration.Parent_Location.File.Part := Unit_Body;
-         D_Ptr.value.Declaration.Parent_Location.File.Source_Filename
-               := new String'(Parent_Filename);
-         D_Ptr.value.Declaration.Parent_Location.Line := Parent_Location.Line;
-         D_Ptr.value.Declaration.Parent_Location.Column
-               := Parent_Location.Column;
+         D_Ptr.Value.Declaration.Parent_Location :=
+               (File => (LI => File,
+                         Part => Unit_Body,
+                         Source_Filename => new String'(Parent_Filename)),
+                Line => Parent_Location.Line,
+                Column => Parent_Location.Column);
       end if;
       if End_Of_Scope_Location = Invalid_Point then
-         D_Ptr.value.Declaration.End_Of_Scope := No_Reference;
+         D_Ptr.Value.Declaration.End_Of_Scope := No_Reference;
       else
-         D_Ptr.value.Declaration.End_Of_Scope.Location.File.LI := File;
-         D_Ptr.value.Declaration.End_Of_Scope.Location.File.Part := Unit_Body;
-         D_Ptr.value.Declaration.End_Of_Scope.Location.File.Source_Filename
-               := new String'(Source_Filename);
-         D_Ptr.value.Declaration.End_Of_Scope.Location.Line
-               := End_Of_Scope_Location.Line;
-         D_Ptr.value.Declaration.End_Of_Scope.Location.Column
-               := End_Of_Scope_Location.Column;
+         D_Ptr.Value.Declaration.End_Of_Scope.Location :=
+                   (File => (LI => File,
+                             Part => Unit_Body,
+                             Source_Filename => new String'(Source_Filename)),
+                    Line => End_Of_Scope_Location.Line,
+                    Column => End_Of_Scope_Location.Column);
       end if;
       if Rename_Location = Invalid_Point then
-         D_Ptr.value.Declaration.Rename := Null_File_Location;
+         D_Ptr.Value.Declaration.Rename := Null_File_Location;
       else
-         D_Ptr.value.Declaration.Rename.File.LI := File;
-         D_Ptr.value.Declaration.Rename.File.Part := Unit_Body;
-         D_Ptr.value.Declaration.Rename.File.Source_Filename :=
-               new String'(Rename_Filename);
-         D_Ptr.value.Declaration.Rename.Line := Rename_Location.Line;
-         D_Ptr.value.Declaration.Rename.Column := Rename_Location.Column;
+         D_Ptr.Value.Declaration.Rename :=
+                   (File => (LI => File,
+                             Part => Unit_Body,
+                             Source_Filename => new String'(Rename_Filename)),
+                    Line => Rename_Location.Line,
+                    Column => Rename_Location.Column);
       end if;
    end Insert_Declaration_Internal;
    -------------------------------------------------------------------------

@@ -1,7 +1,9 @@
 with SN; use SN;
-private package Src_Info.CPP.LI_Utils is
+private package Src_Info.LI_Utils is
 
    procedure Insert_Declaration (
+      Handler                 : in LI_Handler;
+      --  Language Information handler
       File                    : in out LI_File_Ptr;
       --  root pointer to whole LI_File structure
       Symbol_Name             : in String;
@@ -38,8 +40,9 @@ private package Src_Info.CPP.LI_Utils is
    --    2. Returns pointer to created declaration (Declaration_Info param)
 
    procedure Insert_Dependency_Declaration (
+      Handler                 : in LI_Handler;
       File                    : in out LI_File_Ptr;
-      Name                    : in String;
+      Symbol_Name                    : in String;
       Source_Filename         : in String;
       Location                : in Point;
       Parent_Filename         : in String := "";
@@ -77,4 +80,8 @@ private package Src_Info.CPP.LI_Utils is
    --  Thrown if specified Source_Filename differs from that found in
    --  File.Body_Info.Source_Filename
 
-end Src_Info.CPP.LI_Utils;
+   Invalid_Handler : exception;
+   --  Thrown if specified handler differs from that found in
+   --  File.Handler
+
+end Src_Info.LI_Utils;
