@@ -20,15 +20,22 @@ package body Source_Analyzer is
    -- Types --
    -----------
 
+   Max_Identifier : constant := 256;
+   --  Maximum length of an identifier.
+
    type Extended_Token is record
-      Token       : Token_Type;
+      Token       : Token_Type := No_Token;
       --  Enclosing token
 
-      Declaration : Boolean;
+      Declaration : Boolean := False;
       --  Are we inside a declarative part ?
 
-      Identifier  : String_Access;
+      Identifier  : String (1 .. Max_Identifier);
       --  Name of the enclosing token
+      --  The actual name is Identifier (1 .. Ident_Len)
+
+      Ident_Len   : Natural := 0;
+      --  Actual length of Indentifier
    end record;
 
    package Token_Stack is new Generic_Stack (Extended_Token);
@@ -874,19 +881,18 @@ package body Source_Analyzer is
       Semicolon           : Boolean           := False;
       Type_Decl           : Boolean           := False;
       Was_Type_Decl       : Boolean           := False;
-      End_Token           : Boolean           := False;
-      Or_Token            : Boolean           := False;
-      And_Token           : Boolean           := False;
       Subprogram_Decl     : Boolean           := False;
       Syntax_Error        : Boolean           := False;
       Started             : Boolean           := False;
-      Prev_Reserved       : Token_Type        := Tok_Identifier;
+      Prev_Reserved       : Token_Type        := No_Token;
       Token               : Token_Type;
       Prev_Token          : Token_Type := No_Token;
       Tokens              : Token_Stack.Simple_Stack;
       Indents             : Indent_Stack.Simple_Stack;
       Val                 : Token_Stack.Generic_Type_Access;
       Casing              : Casing_Type;
+      Default_Extended    : Extended_Token;
+      --  Use default values to initialize this variable/constant.
 
       procedure Handle_Reserved_Word (Word : Token_Type);
       --  Handle reserved words.
@@ -896,13 +902,15 @@ package body Source_Analyzer is
       --------------------------
 
       procedure Handle_Reserved_Word (Word : Token_Type) is
-         Temp : Extended_Token := (Word, False, null);
+         Temp : Extended_Token;
       begin
+         Temp.Token := Word;
+
          --  Note: the order of the following conditions is important
 
          if Word = Tok_Body then
             Subprogram_Decl := False;
-         elsif not End_Token and then Word = Tok_If then
+         elsif Prev_Token /= Tok_End and then Word = Tok_If then
             Push (Tokens, Temp);
 
          elsif Prev_Reserved = Tok_Is and then not Was_Type_Decl
@@ -942,8 +950,9 @@ package body Source_Analyzer is
             if not In_Generic then
                Val := Top (Tokens);
 
-               if not Val.Declaration and then
-                 (Val.Token = Tok_Procedure or else Val.Token = Tok_Function)
+               if not Val.Declaration
+                 and then (Val.Token = Tok_Function
+                           or else Val.Token = Tok_Procedure)
                then
                   --  There was a function declaration, e.g:
                   --
@@ -1019,12 +1028,12 @@ package body Source_Analyzer is
            or else Word = Tok_Declare
            or else Word = Tok_Begin
            or else Word = Tok_Do
-           or else (not Or_Token  and then Word = Tok_Else)
-           or else (not And_Token and then Word = Tok_Then)
-           or else (not End_Token and then Word = Tok_Select)
+           or else (Prev_Token /= Tok_Or  and then Word = Tok_Else)
+           or else (Prev_Token /= Tok_And and then Word = Tok_Then)
+           or else (Prev_Token /= Tok_End and then Word = Tok_Select)
            or else (Top (Tokens).Token = Tok_Select and then Word = Tok_Or)
-           or else (not End_Token and then Word = Tok_Loop)
-           or else (not End_Token and then Prev_Reserved /= Tok_Null
+           or else (Prev_Token /= Tok_End and then Word = Tok_Loop)
+           or else (Prev_Token /= Tok_End and then Prev_Reserved /= Tok_Null
                       and then Word = Tok_Record)
            or else ((Top (Tokens).Token = Tok_Exception
                        or else Top (Tokens).Token = Tok_Case)
@@ -1143,16 +1152,13 @@ package body Source_Analyzer is
          end if;
 
          Prev_Reserved := Word;
-         End_Token     := Word = Tok_End;
-         Or_Token      := Word = Tok_Or;
-         And_Token     := Word = Tok_And;
       end Handle_Reserved_Word;
 
    begin  --  Format_Ada
       New_Buffer := To_Line_Buffer (Buffer);
 
       --  Push a dummy token so that stack will never be empty.
-      Push (Tokens, (No_Token, False, null));
+      Push (Tokens, Default_Extended);
 
       --  Push a dummy indentation so that stack will never be empty.
       Push (Indents, None);
@@ -1173,11 +1179,7 @@ package body Source_Analyzer is
 
             Token := Get_Token (Str (1 .. Str_Len));
 
-            if End_Token and then
-              (Token = Tok_Identifier or else Semicolon)
-            then
-               End_Token := False;
-            elsif Subprogram_Decl then
+            if Subprogram_Decl then
                if Num_Parens = 0 then
                   if Semicolon or else Prev_Num_Parens > 0 then
                      Subprogram_Decl := False;
@@ -1193,15 +1195,27 @@ package body Source_Analyzer is
                end if;
             end if;
 
-            if Token = Tok_Identifier
-              or else
-                ((Token = Tok_Delta or else Token = Tok_Digits
-                   or else Token = Tok_Range or else Token = Tok_Access)
-                 and then Prev_Token = Tok_Apostrophe)
+            if Token = Tok_Identifier then
+               Val := Top (Tokens);
+
+               if Val.Token in Token_Class_Declk
+                 and then Val.Ident_Len = 0
+               then
+                  --  Store enclosing entity name
+
+                  Val.Identifier (1 .. Str_Len) := Buffer (Prec .. Current);
+                  Val.Ident_Len := Str_Len;
+               end if;
+
+               Casing := Ident_Casing;
+
+            elsif Prev_Token = Tok_Apostrophe
+              and then (Token = Tok_Delta or else Token = Tok_Digits
+                        or else Token = Tok_Range or else Token = Tok_Access)
             then
-               Casing    := Ident_Casing;
-               Or_Token  := False;
-               And_Token := False;
+               --  This token should not be considered as a reserved word
+
+               Casing := Ident_Casing;
 
             else
                Casing := Reserved_Casing;
@@ -1220,6 +1234,8 @@ package body Source_Analyzer is
                     (New_Buffer, Prec, Current + 1, Str (1 .. Str_Len));
 
                when Lower =>
+                  --  Str already contains lowercase characters.
+
                   Replace_Text
                     (New_Buffer, Prec, Current + 1, Str (1 .. Str_Len));
 
