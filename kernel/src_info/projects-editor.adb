@@ -87,6 +87,12 @@ package body Projects.Editor is
    --  N_Typed_Variable_Declaration and N_String_Type_Declaration (the last
    --  three are indirect references through a named variable.
 
+   type Node_Callback is access procedure (Node : Project_Node_Id);
+
+   procedure For_Each_Directory_Node
+     (Project : Project_Type; Action  : Node_Callback);
+   --  For each node that deals with a procedure, calls Action.
+
    procedure Remove_Variable_Declaration
      (Project_Or_Package : Project_Node_Id;
       Declaration        : Project_Node_Id);
@@ -1128,7 +1134,8 @@ package body Projects.Editor is
    is
       Attribute_N : Name_Id;
       Pkg : Project_Node_Id;
-
+      Pkg_Prj : constant Project_Type :=
+        Find_Project_Of_Package (Project, Pkg_Name);
 
       procedure Delete_Attr (Case_Item : Project_Node_Id);
       --  Remove all definitions for the attribute in the case item
@@ -1144,11 +1151,11 @@ package body Projects.Editor is
       end Delete_Attr;
 
    begin
-      Projects.Editor.Normalize.Normalize (Project);
+      Projects.Editor.Normalize.Normalize (Pkg_Prj);
       Attribute_N := Get_String (Attribute_Name);
 
       if Pkg_Name /= "" then
-         Pkg := Find_Package_Declaration (Project.Node, Get_String (Pkg_Name));
+         Pkg := Find_Package_Declaration (Pkg_Prj.Node, Get_String (Pkg_Name));
 
          --  If the package doesn't exist, no need to do anything
          if Pkg = Empty_Node then
@@ -1159,14 +1166,14 @@ package body Projects.Editor is
       end if;
 
       Move_From_Common_To_Case_Construct
-        (Project.Node, Pkg_Name, Scenario_Variables, Attribute_N,
+        (Pkg_Prj.Node, Pkg_Name, Scenario_Variables, Attribute_N,
          Attribute_Index);
 
       For_Each_Scenario_Case_Item
-        (Project.Node, Pkg, Scenario_Variables,
+        (Pkg_Prj.Node, Pkg, Scenario_Variables,
          Delete_Attr'Unrestricted_Access);
 
-      Set_Project_Modified (Project, True);
+      Set_Project_Modified (Pkg_Prj, True);
    end Delete_Attribute;
 
    ---------------------------
@@ -2034,9 +2041,6 @@ package body Projects.Editor is
       procedure Convert_Path (Node : Project_Node_Id);
       --  Convert the path to an absolute path
 
-      procedure Convert_In_Section (Node : Project_Node_Id);
-      --  Convert the paths found under Node
-
       Base : constant String := Project_Directory (Project);
       Changed : Boolean := False;
 
@@ -2072,55 +2076,6 @@ package body Projects.Editor is
          end if;
       end Convert_Path;
 
-      ------------------------
-      -- Convert_In_Section --
-      ------------------------
-
-      procedure Convert_In_Section (Node : Project_Node_Id) is
-         Decl : Project_Node_Id := First_Declarative_Item_Of (Node);
-         Current, Item, Expr, Str : Project_Node_Id;
-      begin
-         while Decl /= Empty_Node loop
-            Current := Current_Item_Node (Decl);
-            case Kind_Of (Current) is
-               when N_Case_Construction =>
-                  Item := First_Case_Item_Of (Current);
-                  while Item /= Empty_Node loop
-                     Convert_In_Section (Item);
-                     Item := Next_Case_Item (Item);
-                  end loop;
-
-               when N_Attribute_Declaration =>
-                  if Prj.Tree.Name_Of (Current) = Name_Source_Dirs then
-                     Expr := First_Expression_In_List
-                       (Current_Term (First_Term (Expression_Of (Current))));
-                     while Expr /= Empty_Node loop
-                        Str := Current_Term (First_Term (Expr));
-                        Assert (Me, Kind_Of (Str) = N_Literal_String,
-                                "First term in src_dir isn't literal string");
-
-                        Convert_Path (Str);
-                        Expr := Next_Expression_In_List (Expr);
-                     end loop;
-
-
-                  elsif Prj.Tree.Name_Of (Current) = Name_Object_Dir then
-                     Expr := Expression_Of (Current);
-                     Str := Current_Term (First_Term (Expr));
-                     Assert (Me, Kind_Of (Str) = N_Literal_String,
-                             "First term in obj_dir isn't literal string");
-                     Convert_Path (Str);
-                  end if;
-
-               when others =>
-                  null;
-
-            end case;
-
-            Decl := Next_Declarative_Item (Decl);
-         end loop;
-      end Convert_In_Section;
-
       With_Clause : Project_Node_Id := First_With_Clause_Of (Project.Node);
    begin
       --  First replace the with clauses
@@ -2132,7 +2087,7 @@ package body Projects.Editor is
       end if;
 
       --  Then replace all the paths
-      Convert_In_Section (Project_Declaration_Of (Project.Node));
+      For_Each_Directory_Node (Project, Convert_Path'Unrestricted_Access);
 
       if Changed then
          Set_Project_Modified (Project, True);
@@ -2718,6 +2673,95 @@ package body Projects.Editor is
          raise;
    end Add_Imported_Project;
 
+   -----------------------------
+   -- For_Each_Directory_Node --
+   -----------------------------
+
+   procedure For_Each_Directory_Node
+     (Project : Project_Type; Action  : Node_Callback)
+   is
+      procedure Process_List (List : Project_Node_Id);
+      --  Process a list of declarative items
+
+      ------------------
+      -- Process_List --
+      ------------------
+
+      procedure Process_List (List : Project_Node_Id) is
+         Node : Project_Node_Id := List;
+         Current, Expr, Term, Expr2 : Project_Node_Id;
+      begin
+         while Node /= Empty_Node loop
+            Current := Current_Item_Node (Node);
+            case Kind_Of (Current) is
+               when N_Attribute_Declaration =>
+                  if Prj.Tree.Name_Of (Current) = Name_Source_Dirs
+                    or else Prj.Tree.Name_Of (Current) = Name_Object_Dir
+                  then
+                     Expr := Expression_Of (Current);
+                     while Expr /= Empty_Node loop
+                        Term := First_Term (Expr);
+                        while Term /= Empty_Node loop
+                           Current := Current_Term (Term);
+
+                           case Kind_Of (Current) is
+                              when N_Literal_String_List =>
+                                 Expr2 := First_Expression_In_List (Current);
+                                 while Expr2 /= Empty_Node loop
+                                    Current := Current_Term
+                                      (First_Term (Expr2));
+                                    if Kind_Of (Current) /= N_Literal_String
+                                      or else Next_Term (First_Term (Expr2)) /=
+                                        Empty_Node
+                                    then
+                                       Trace
+                                         (Me, "Cannot process lists of "
+                                          & " non-literal string "
+                                          & Kind_Of (Current)'Img);
+                                    else
+                                       Action (Current);
+                                    end if;
+
+                                    Expr2 := Next_Expression_In_List (Expr2);
+                                 end loop;
+
+                              when N_Literal_String =>
+                                 Action (Current);
+
+                              when others =>
+                                 Trace (Me, "Ignoring "
+                                        & Kind_Of (Current)'Img);
+                                 null;
+                           end case;
+
+                           Term := Next_Term (Term);
+                        end loop;
+
+                        Expr := Next_Expression_In_List (Expr);
+                     end loop;
+                  end if;
+
+               when N_Case_Construction =>
+                  Expr := First_Case_Item_Of (Current);
+                  while Expr /= Empty_Node loop
+                     Process_List (First_Declarative_Item_Of (Expr));
+                     Expr := Next_Case_Item (Expr);
+                  end loop;
+
+               when others =>
+                  null;
+            end case;
+
+            Node := Next_Declarative_Item (Node);
+         end loop;
+
+      end Process_List;
+
+   begin
+      Process_List (First_Declarative_Item_Of
+           (Project_Declaration_Of (Project.Node)));
+   end For_Each_Directory_Node;
+
    ---------------------
    -- Rename_And_Move --
    ---------------------
@@ -2729,6 +2773,52 @@ package body Projects.Editor is
       New_Path      : String;
       Report_Errors : Output.Output_Proc := null)
    is
+      Old_Path : constant String := Project_Directory (Project);
+
+      procedure Change_Directory (Node : Project_Node_Id);
+      --  Change the directory refered to by Node
+
+      ----------------------
+      -- Change_Directory --
+      ----------------------
+
+      procedure Change_Directory (Node : Project_Node_Id) is
+      begin
+         case Kind_Of (Node) is
+            when N_Literal_String =>
+               declare
+                  D : constant String := Get_String (String_Value_Of (Node));
+               begin
+                  Trace (Me, "MANU: " & D);
+                  if not Is_Absolute_Path (D) then
+                     Trace (Me, "MANU: " & Normalize_Pathname
+                            (D, Old_Path, Resolve_Links => False));
+                     Trace (Me, "MANU: " & New_Path);
+                     Trace (Me, "MANU: " & Relative_Path_Name
+                        (Normalize_Pathname
+                           (D, Old_Path, Resolve_Links => False),
+                         New_Path));
+
+                     Start_String;
+                     Store_String_Chars
+                       (Relative_Path_Name
+                        (Normalize_Pathname
+                           (D, Old_Path, Resolve_Links => False),
+                         New_Path));
+                     Set_String_Value_Of (Node, End_String);
+                     Trace (Me,
+                            "MANU => " & Get_String (String_Value_Of (Node)));
+                  else
+                     Trace (Me, "MANU: is absolute");
+                  end if;
+               end;
+
+            when others =>
+               Trace (Me, "For_Each_Directory_Node: unknown node type: "
+                      & Kind_Of (Node)'Img);
+         end case;
+      end Change_Directory;
+
       D           : constant String :=
         New_Path & To_File_Name (New_Name) & Project_File_Extension;
       Full_Path   : String_Id := No_String;
@@ -2752,6 +2842,14 @@ package body Projects.Editor is
            (-"Couldn't rename the project to " & New_Name
             & ASCII.LF & (-"Project already exists in the project graph"));
          return;
+      end if;
+
+      --  If the file was moved, update the source directories so that we still
+      --  point to the same physical directories.
+
+      if New_Path /= Project_Directory (Project) then
+         For_Each_Directory_Node
+           (Project, Change_Directory'Unrestricted_Access);
       end if;
 
       Set_Name_Of (Project.Node, Name);
