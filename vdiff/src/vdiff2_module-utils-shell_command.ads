@@ -39,6 +39,13 @@ package Vdiff2_Module.Utils.Shell_Command is
    --  Open editor for File
    pragma Inline (Edit);
 
+   procedure Synchronize_Scrolling
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+      File1  : Virtual_File;
+      File2  : Virtual_File;
+      File3  : Virtual_File := No_File);
+   --  Synchronize the scrolling between files.
+
    function Get_Chars
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
       File   : Virtual_File;

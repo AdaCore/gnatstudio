@@ -82,6 +82,35 @@ package body Vdiff2_Module.Utils.Shell_Command is
       Basic_Types.Free (Args_edit);
    end Edit;
 
+   ---------------------------
+   -- Synchronize_Scrolling --
+   ---------------------------
+
+   procedure Synchronize_Scrolling
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+      File1  : Virtual_File;
+      File2  : Virtual_File;
+      File3  : Virtual_File := VFS.No_File)
+   is
+      Args : Argument_List_Access;
+   begin
+      if File3 = VFS.No_File then
+         Args := new Argument_List'
+           (1 => new String'(Full_Name (File1).all),
+            2 => new String'(Full_Name (File2).all));
+      else
+         Args := new Argument_List'
+           (1 => new String'(Full_Name (File1).all),
+            2 => new String'(Full_Name (File2).all),
+            3 => new String'(Full_Name (File3).all));
+      end if;
+
+      Execute_GPS_Shell_Command
+        (Kernel, "set_synchronized_scrolling", Args.all);
+      Basic_Types.Free (Args.all);
+      Free (Args);
+   end Synchronize_Scrolling;
+
    ---------------
    -- Get_Chars --
    ---------------
