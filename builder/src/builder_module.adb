@@ -706,10 +706,14 @@ package body Builder_Module is
          Set_Fraction (Top.Statusbar, 0.0);
          Set_Progress_Text (Top.Statusbar, "");
          Console.Insert (Kernel, Expect_Out (Fd.all), Add_LF => True);
-
          Close (Fd.all, Status);
-         Console.Insert
-           (Kernel, -"process exited with status " & Image (Status));
+
+         if Status = 0 then
+            Console.Insert (Kernel, -"successful compilation/build");
+         else
+            Console.Insert
+              (Kernel, -"process exited with status " & Image (Status));
+         end if;
 
          Pop_State (Kernel);
          Set_Sensitive_Menus (Kernel, True);
