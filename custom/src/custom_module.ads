@@ -25,7 +25,7 @@
 --
 --  <Custom>
 --
---    <Menu>
+--    <Submenu>
 --      <Title>Title for toplevel menu</Title>
 --
 --      <Menuitem>
@@ -45,24 +45,53 @@
 --               (...)
 --        </Submenu>
 --      </Submenu>
---    </Menu>
+--    </Submenu>
 --
---    <Menu>
+--    <Submenu>
 --      <Title>Title for toplevel menu number 2</Title>
 --             (...)
---    </Menu>
+--    </Submenu>
+--
+--    <Button>
+--      <Title>Button label/tooltip</Title>
+--      <Pixmap>location of pixmap (xpm) file</Pixmap>
+--      <Action>command 1</Action>
+--    </Button>
 --
 --  </Custom>
-
+--
+--  Titles like "_File", "Open from _Project", ... can now be used,
+--  The underscores identify the accelerator keys.
+--
+--  You can add items or submenus to existing menus :
+--
+--   This adds an item named "Robert" to the "Edit" menu.
+--      <Submenu>
+--         <Title>Edit</Title>
+--         <Menuitem>
+--           <Title>Robert</Title>
+--         </Menuitem>
+--      </Submenu>
+--
+--  This adds a submenu named "Olga" to the "Edit" menu.
+--  <Submenu>
+--     <Title>Edit/Olga</Title>
+--     <Menuitem>
+--       <Title>title 1</Title>
+--     </Menuitem>
+--  </Submenu>
+--
+--  Adding an item with an empty title or a null title will insert
+--  a menu separator.
+--
 --  Here is a non-exhaustive list of possible enhancements here
 --    -> facilities for creating toolbar buttons
---    -> be able to add custom menu items to existing menus
 --    -> be able to position the custom menus relatively to
 --       other menus
 --    -> add icons to the menus (using stock icons)
 --    -> make the file syntax a little more flexible
 --       (right now it's very case-sensitive, and so on)
---    -> Use GPS commands instead of shell commands
+--    -> Use GPS commands as well as shell commands
 --    -> implement a GUI to create those menus graphically
 
 with Glide_Kernel;
