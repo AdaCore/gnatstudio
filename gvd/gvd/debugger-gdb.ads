@@ -33,6 +33,12 @@ package Debugger.Gdb is
 
    type Gdb_Debugger is new Debugger.Debugger_Root with private;
 
+   procedure Initialize (Debugger : access Gdb_Debugger);
+   --  Spawn the external process, and initializes gdb.
+
+   procedure Close (Debugger : in out Gdb_Debugger);
+   --  Terminates the external process.
+
    function Parse_Type
      (Debugger  : Gdb_Debugger;
       Entity    : String) return Generic_Values.Generic_Type_Access;
@@ -43,6 +49,8 @@ package Debugger.Gdb is
       Entity    : String;
       Value     : in out Generic_Values.Generic_Type_Access);
    --  Parse the value for Entity.
+
+   procedure Wait_Prompt (Debugger : Gdb_Debugger);
 
    function Type_Of (Debugger : Gdb_Debugger;
                      Entity : String)
@@ -59,26 +67,24 @@ package Debugger.Gdb is
                              Executable : String);
    --  Load the executable.
 
-   procedure Initialize (Debugger : in out Gdb_Debugger);
-   --  Spawn the external process, and initializes gdb.
-
-   procedure Close (Debugger : in out Gdb_Debugger);
-   --  Terminates the external process.
-
-   procedure Wait_Prompt (Debugger : Gdb_Debugger);
-
    procedure Run (Debugger : Gdb_Debugger);
+
+   procedure Start (Debugger : Gdb_Debugger);
+
+   procedure Step_Into (Debugger : Gdb_Debugger);
+
+   procedure Step_Over (Debugger : Gdb_Debugger);
 
    procedure Break_Exception (Debugger  : Gdb_Debugger;
                               Name      : String  := "";
                               Unhandled : Boolean := False);
 
-   function Backtrace (Debugger : Gdb_Debugger) return String;
-
    procedure Break_Subprogram (Debugger : Gdb_Debugger;
                                Name     : String);
 
    procedure Finish (Debugger : Gdb_Debugger);
+
+   function Backtrace (Debugger : Gdb_Debugger) return String;
 
 private
    type Gdb_Debugger is new Debugger.Debugger_Root with null record;
