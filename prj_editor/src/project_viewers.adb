@@ -1585,11 +1585,13 @@ package body Project_Viewers is
          Iter   => Iter,
          Column => 0,
          Value  => File);
+
       Set
         (Editor.Executables,
          Iter   => Iter,
          Column => 1,
          Value  => Get_Executable_Name (Editor.Project, File));
+
       Set
         (Editor.Executables,
          Iter   => Iter,
@@ -2394,7 +2396,6 @@ package body Project_Viewers is
       if Project /= No_Project then
          Gtk_New (Editor, Kernel, Project);
          Show (Editor);
-         Show_Project_Settings (Editor, Kernel, Project);
       else
          Gtk_New (Editor, Kernel,
                   Known_Languages (Get_Language_Handler (Kernel)));
@@ -2880,7 +2881,8 @@ package body Project_Viewers is
          Usage        => "(main1, [main2 ...]) -> None",
          Description  =>
            -("Add some main units to the current project, and for the"
-             & " current scenario. The project is not saved automatically."),
+             & ASCII.LF
+             & "current scenario. The project is not saved automatically."),
          Minimum_Args => 1,
          Maximum_Args => Natural'Last,
          Class        => Get_Project_Class (Kernel),
