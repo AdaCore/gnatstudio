@@ -2845,6 +2845,11 @@ source files contained in the project. Those basic features typically include
 the checking in and out of files, the querying of file status, file revision
 history, comparison between various revisions, and so on.
 
+Administration of VCS systems is not handled by GPS at this
+stage. Therefore, before working on a project using version control
+system, make sure that the system is properly set-up before launching
+GPS.
+
 @node The VCS Explorer
 @section The VCS Explorer
 @cindex VCS explorer
