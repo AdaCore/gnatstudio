@@ -178,11 +178,12 @@ package body Odd.Explorer is
          end if;
       end loop;
 
-      Thaw (Tree);
-
       --  Free all icons
 
       for C in Categories'Range loop
+         if Internal_Cat (C).Node /= null then
+            Sort_Recursive (Tree, Internal_Cat (C).Node);
+         end if;
          Gdk.Pixmap.Unref (Internal_Cat (C).Pixmap);
          Gdk.Bitmap.Unref (Internal_Cat (C).Mask);
       end loop;
@@ -191,7 +192,7 @@ package body Odd.Explorer is
       Gdk.Pixmap.Unref (Folder_Pixmap);
       Gdk.Bitmap.Unref (Folder_Mask);
 
-
+      Thaw (Tree);
       return Tree;
    end Explore;
 
