@@ -18,6 +18,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Glib;
+
 with Gdk.Event;   use Gdk.Event;
 
 with Gdk.Types;         use Gdk.Types;
@@ -34,6 +36,19 @@ package body Memory_View_Pkg.Callbacks is
 
    use Gtk.Arguments;
 
+   ---------------------------------
+   -- On_Memory_View_Delete_Event --
+   ---------------------------------
+
+   function On_Memory_View_Delete_Event
+     (Object : access Gtk_Widget_Record'Class;
+      Params : Gtk.Arguments.Gtk_Args) return Boolean
+   is
+   begin
+      Hide (Get_Toplevel (Object));
+      return True;
+   end On_Memory_View_Delete_Event;
+
    ----------------------------------
    -- On_Memory_View_Size_Allocate --
    ----------------------------------
@@ -48,18 +63,6 @@ package body Memory_View_Pkg.Callbacks is
    end On_Memory_View_Size_Allocate;
 
    -------------------------------
-   -- On_Vbox20_Key_Press_Event --
-   -------------------------------
-
-   function On_Vbox20_Key_Press_Event
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args) return Boolean
-   is
-   begin
-      return False;
-   end On_Vbox20_Key_Press_Event;
-
-   -------------------------------
    -- On_Address_Entry_Activate --
    -------------------------------
 
@@ -70,20 +73,6 @@ package body Memory_View_Pkg.Callbacks is
    begin
       Display_Memory (View, Get_Text (View.Address_Entry));
    end On_Address_Entry_Activate;
-
-   --------------------------
-   -- On_Value_Insert_Text --
-   --------------------------
-
-   procedure On_Value_Insert_Text
-     (Object : access Gtk_Entry_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args)
-   is
-      Arg1 : String := To_String (Params, 1);
-      View : Odd_Memory_View := Odd_Memory_View (Get_Toplevel (Object));
-   begin
-      Insert (View, Arg1);
-   end On_Value_Insert_Text;
 
    -----------------------------
    -- On_Address_View_Clicked --
@@ -97,19 +86,6 @@ package body Memory_View_Pkg.Callbacks is
    begin
       Display_Memory (View, Get_Text (View.Address_Entry));
    end On_Address_View_Clicked;
-
-   -----------------------------
-   -- On_Value_Update_Clicked --
-   -----------------------------
-
-   procedure On_Value_Update_Clicked
-     (Object : access Gtk_Button_Record'Class)
-   is
-      View : constant Odd_Memory_View :=
-        Odd_Memory_View (Get_Toplevel (Object));
-   begin
-      Display_Memory (View, Get_Text (View.Address_Entry));
-   end On_Value_Update_Clicked;
 
    ---------------------
    -- On_Pgup_Clicked --
@@ -136,19 +112,6 @@ package body Memory_View_Pkg.Callbacks is
    begin
       Page_Down (View);
    end On_Pgdn_Clicked;
-
-   ---------------------------------
-   -- On_Page_Size_Entry_Activate --
-   ---------------------------------
-
-   procedure On_Page_Size_Entry_Activate
-     (Object : access Gtk_Entry_Record'Class)
-   is
-      View : Odd_Memory_View := Odd_Memory_View (Get_Toplevel (Object));
-   begin
-      View.Number_Of_Bytes := Integer'Value (Get_Text (Object));
-      Display_Memory (View, View.Starting_Address);
-   end On_Page_Size_Entry_Activate;
 
    ---------------------------
    -- On_Size_Entry_Changed --
@@ -192,11 +155,13 @@ package body Memory_View_Pkg.Callbacks is
             Move_Cursor (View, Left);
          when GDK_Up | GDK_Down =>
             Move_Cursor (View, Up);
+         when GDK_BackSpace | GDK_Clear | GDK_Delete =>
+            Emit_Stop_By_Name (View.View, "key_press_event");
          when others =>
             null;
       end case;
 
-      return False;
+      return True;
    end On_View_Key_Press_Event;
 
    -------------------------
@@ -220,12 +185,23 @@ package body Memory_View_Pkg.Callbacks is
       Params : Gtk.Arguments.Gtk_Args) return Boolean
    is
       View : Odd_Memory_View := Odd_Memory_View (Get_Toplevel (Object));
+      use type Glib.Gint;
+      use type Glib.Guint;
    begin
+      if View.Values = null then
+         return False;
+      end if;
+
       View.Cursor_Index :=
         Position_To_Index (View, Get_Position (View.View));
-      Update_Display (View);
-      Set_Position (View.View, View.Cursor_Position);
-      return False;
+      if Get_Selection_End_Pos (View.View)
+        = Get_Selection_Start_Pos (View.View)
+      then
+         Set_Position (View.View, Get_Position (View.View) - 1);
+         Move_Cursor (View, Right);
+         Set_Position (View.View, Get_Position (View.View) + 1);
+      end if;
+      return True;
    end On_View_Button_Release_Event;
 
    --------------------------------
@@ -254,6 +230,22 @@ package body Memory_View_Pkg.Callbacks is
       Insert (View, Arg1 (1 .. 1));
       Emit_Stop_By_Name (View.View, "insert_text");
    end On_View_Insert_Text;
+
+   ---------------------------------
+   -- On_Page_Size_Button_Clicked --
+   ---------------------------------
+
+   procedure On_Page_Size_Button_Clicked
+     (Object : access Gtk_Button_Record'Class)
+   is
+      View : Odd_Memory_View := Odd_Memory_View (Get_Toplevel (Object));
+   begin
+      View.Number_Of_Bytes := Integer'Value (Get_Text (View.Value));
+      --  This entry is not editable and cannot contain anything else
+      --  than an integer, so no additional check is needed here.
+
+      Display_Memory (View, View.Starting_Address);
+   end On_Page_Size_Button_Clicked;
 
    ----------------------
    -- On_Reset_Clicked --

@@ -12,6 +12,19 @@ package body Memory_View_Pkg.Callbacks is
 
    use Gtk.Arguments;
 
+   ---------------------------------
+   -- On_Memory_View_Delete_Event --
+   ---------------------------------
+
+   function On_Memory_View_Delete_Event
+     (Object : access Gtk_Widget_Record'Class;
+      Params : Gtk.Arguments.Gtk_Args) return Boolean
+   is
+      Arg1 : Gdk_Event := To_Event (Params, 1);
+   begin
+      return False;
+   end On_Memory_View_Delete_Event;
+
    ----------------------------------
    -- On_Memory_View_Size_Allocate --
    ----------------------------------
@@ -26,19 +39,6 @@ package body Memory_View_Pkg.Callbacks is
    end On_Memory_View_Size_Allocate;
 
    -------------------------------
-   -- On_Vbox20_Key_Press_Event --
-   -------------------------------
-
-   function On_Vbox20_Key_Press_Event
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args) return Boolean
-   is
-      Arg1 : Gdk_Event := To_Event (Params, 1);
-   begin
-      return False;
-   end On_Vbox20_Key_Press_Event;
-
-   -------------------------------
    -- On_Address_Entry_Activate --
    -------------------------------
 
@@ -48,21 +48,6 @@ package body Memory_View_Pkg.Callbacks is
    begin
       null;
    end On_Address_Entry_Activate;
-
-   --------------------------
-   -- On_Value_Insert_Text --
-   --------------------------
-
-   procedure On_Value_Insert_Text
-     (Object : access Gtk_Entry_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args)
-   is
-      Arg1 : String := To_String (Params, 1);
-      Arg2 : Gint := To_Gint (Params, 2);
-      Arg3 : Address := To_Address (Params, 3);
-   begin
-      null;
-   end On_Value_Insert_Text;
 
    -----------------------------
    -- On_Address_View_Clicked --
@@ -74,50 +59,6 @@ package body Memory_View_Pkg.Callbacks is
    begin
       null;
    end On_Address_View_Clicked;
-
-   -----------------------------
-   -- On_Value_Update_Clicked --
-   -----------------------------
-
-   procedure On_Value_Update_Clicked
-     (Object : access Gtk_Button_Record'Class)
-   is
-   begin
-      null;
-   end On_Value_Update_Clicked;
-
-   ---------------------
-   -- On_Pgup_Clicked --
-   ---------------------
-
-   procedure On_Pgup_Clicked
-     (Object : access Gtk_Button_Record'Class)
-   is
-   begin
-      null;
-   end On_Pgup_Clicked;
-
-   ---------------------
-   -- On_Pgdn_Clicked --
-   ---------------------
-
-   procedure On_Pgdn_Clicked
-     (Object : access Gtk_Button_Record'Class)
-   is
-   begin
-      null;
-   end On_Pgdn_Clicked;
-
-   ---------------------------------
-   -- On_Page_Size_Entry_Activate --
-   ---------------------------------
-
-   procedure On_Page_Size_Entry_Activate
-     (Object : access Gtk_Entry_Record'Class)
-   is
-   begin
-      null;
-   end On_Page_Size_Entry_Activate;
 
    ---------------------------
    -- On_Size_Entry_Changed --
@@ -208,6 +149,39 @@ package body Memory_View_Pkg.Callbacks is
    begin
       null;
    end On_View_Insert_Text;
+
+   ---------------------------------
+   -- On_Page_Size_Button_Clicked --
+   ---------------------------------
+
+   procedure On_Page_Size_Button_Clicked
+     (Object : access Gtk_Button_Record'Class)
+   is
+   begin
+      null;
+   end On_Page_Size_Button_Clicked;
+
+   ---------------------
+   -- On_Pgup_Clicked --
+   ---------------------
+
+   procedure On_Pgup_Clicked
+     (Object : access Gtk_Button_Record'Class)
+   is
+   begin
+      null;
+   end On_Pgup_Clicked;
+
+   ---------------------
+   -- On_Pgdn_Clicked --
+   ---------------------
+
+   procedure On_Pgdn_Clicked
+     (Object : access Gtk_Button_Record'Class)
+   is
+   begin
+      null;
+   end On_Pgdn_Clicked;
 
    ----------------------
    -- On_Reset_Clicked --

@@ -5622,9 +5622,14 @@ remote
   <class>GtkWindow</class>
   <name>memory_view</name>
   <signal>
+    <name>delete_event</name>
+    <handler>on_memory_view_delete_event</handler>
+    <last_modification_time>Tue, 26 Sep 2000 23:12:10 GMT</last_modification_time>
+  </signal>
+  <signal>
     <name>size_allocate</name>
     <handler>on_memory_view_size_allocate</handler>
-    <last_modification_time>Sat, 23 Sep 2000 06:23:45 GMT</last_modification_time>
+    <last_modification_time>Wed, 27 Sep 2000 00:11:53 GMT</last_modification_time>
   </signal>
   <title>Memory View</title>
   <type>GTK_WINDOW_TOPLEVEL</type>
@@ -5637,11 +5642,6 @@ remote
   <widget>
     <class>GtkVBox</class>
     <name>vbox20</name>
-    <signal>
-      <name>key_press_event</name>
-      <handler>on_vbox20_key_press_event</handler>
-      <last_modification_time>Sun, 24 Sep 2000 22:54:16 GMT</last_modification_time>
-    </signal>
     <homogeneous>False</homogeneous>
     <spacing>0</spacing>
 
@@ -5706,7 +5706,7 @@ remote
 	      <class>GtkLabel</class>
 	      <name>label96</name>
 	      <sensitive>False</sensitive>
-	      <label>Value</label>
+	      <label>Find</label>
 	      <justify>GTK_JUSTIFY_CENTER</justify>
 	      <wrap>False</wrap>
 	      <xalign>0.5</xalign>
@@ -5754,14 +5754,9 @@ remote
 
 	    <widget>
 	      <class>GtkEntry</class>
-	      <name>value_entry</name>
+	      <name>search_entry</name>
 	      <sensitive>False</sensitive>
 	      <can_focus>True</can_focus>
-	      <signal>
-		<name>insert_text</name>
-		<handler>on_value_insert_text</handler>
-		<last_modification_time>Thu, 21 Sep 2000 20:49:06 GMT</last_modification_time>
-	      </signal>
 	      <editable>True</editable>
 	      <text_visible>True</text_visible>
 	      <text_max_length>0</text_max_length>
@@ -5805,16 +5800,11 @@ remote
 
 	  <widget>
 	    <class>GtkButton</class>
-	    <name>value_update</name>
+	    <name>search_button</name>
 	    <sensitive>False</sensitive>
 	    <can_default>True</can_default>
 	    <can_focus>True</can_focus>
-	    <signal>
-	      <name>clicked</name>
-	      <handler>on_value_update_clicked</handler>
-	      <last_modification_time>Thu, 21 Sep 2000 20:53:09 GMT</last_modification_time>
-	    </signal>
-	    <label>Update</label>
+	    <label>Search</label>
 	  </widget>
 	</widget>
       </widget>
@@ -5848,137 +5838,6 @@ remote
       </widget>
 
       <widget>
-	<class>GtkButton</class>
-	<name>pgup</name>
-	<can_default>True</can_default>
-	<can_focus>True</can_focus>
-	<signal>
-	  <name>clicked</name>
-	  <handler>on_pgup_clicked</handler>
-	  <last_modification_time>Thu, 21 Sep 2000 12:53:53 GMT</last_modification_time>
-	</signal>
-	<child>
-	  <padding>0</padding>
-	  <expand>False</expand>
-	  <fill>False</fill>
-	</child>
-
-	<widget>
-	  <class>GtkPixmap</class>
-	  <name>pixmap1</name>
-	  <filename>up_xpm</filename>
-	  <xalign>0.5</xalign>
-	  <yalign>0.5</yalign>
-	  <xpad>0</xpad>
-	  <ypad>0</ypad>
-	  <build_insensitive>True</build_insensitive>
-	</widget>
-      </widget>
-
-      <widget>
-	<class>GtkButton</class>
-	<name>pgdn</name>
-	<can_default>True</can_default>
-	<can_focus>True</can_focus>
-	<signal>
-	  <name>clicked</name>
-	  <handler>on_pgdn_clicked</handler>
-	  <last_modification_time>Thu, 21 Sep 2000 12:53:58 GMT</last_modification_time>
-	</signal>
-	<child>
-	  <padding>0</padding>
-	  <expand>False</expand>
-	  <fill>False</fill>
-	</child>
-
-	<widget>
-	  <class>GtkPixmap</class>
-	  <name>pixmap2</name>
-	  <filename>down_xpm</filename>
-	  <xalign>0.5</xalign>
-	  <yalign>0.5</yalign>
-	  <xpad>0</xpad>
-	  <ypad>0</ypad>
-	  <build_insensitive>True</build_insensitive>
-	</widget>
-      </widget>
-
-      <widget>
-	<class>GtkVSeparator</class>
-	<name>vseparator5</name>
-	<child>
-	  <padding>7</padding>
-	  <expand>True</expand>
-	  <fill>True</fill>
-	</child>
-      </widget>
-
-      <widget>
-	<class>GtkLabel</class>
-	<name>label99</name>
-	<label>Page size:</label>
-	<justify>GTK_JUSTIFY_CENTER</justify>
-	<wrap>False</wrap>
-	<xalign>0.5</xalign>
-	<yalign>0.5</yalign>
-	<xpad>0</xpad>
-	<ypad>0</ypad>
-	<child>
-	  <padding>1</padding>
-	  <expand>True</expand>
-	  <fill>True</fill>
-	</child>
-      </widget>
-
-      <widget>
-	<class>GtkEntry</class>
-	<name>page_size_entry</name>
-	<width>50</width>
-	<can_focus>True</can_focus>
-	<signal>
-	  <name>activate</name>
-	  <handler>on_page_size_entry_activate</handler>
-	  <last_modification_time>Sat, 23 Sep 2000 08:48:53 GMT</last_modification_time>
-	</signal>
-	<editable>True</editable>
-	<text_visible>True</text_visible>
-	<text_max_length>0</text_max_length>
-	<text>256</text>
-	<child>
-	  <padding>0</padding>
-	  <expand>False</expand>
-	  <fill>False</fill>
-	</child>
-      </widget>
-
-      <widget>
-	<class>GtkLabel</class>
-	<name>label100</name>
-	<label>bytes</label>
-	<justify>GTK_JUSTIFY_CENTER</justify>
-	<wrap>False</wrap>
-	<xalign>0.5</xalign>
-	<yalign>0.5</yalign>
-	<xpad>0</xpad>
-	<ypad>0</ypad>
-	<child>
-	  <padding>0</padding>
-	  <expand>False</expand>
-	  <fill>True</fill>
-	</child>
-      </widget>
-
-      <widget>
-	<class>GtkVSeparator</class>
-	<name>vseparator6</name>
-	<child>
-	  <padding>7</padding>
-	  <expand>True</expand>
-	  <fill>True</fill>
-	</child>
-      </widget>
-
-      <widget>
 	<class>GtkLabel</class>
 	<name>label98</name>
 	<label>Unit size: </label>
@@ -5989,7 +5848,7 @@ remote
 	<xpad>0</xpad>
 	<ypad>0</ypad>
 	<child>
-	  <padding>0</padding>
+	  <padding>4</padding>
 	  <expand>True</expand>
 	  <fill>True</fill>
 	</child>
@@ -5998,6 +5857,7 @@ remote
       <widget>
 	<class>GtkCombo</class>
 	<name>size</name>
+	<width>87</width>
 	<value_in_list>False</value_in_list>
 	<ok_if_empty>True</ok_if_empty>
 	<case_sensitive>False</case_sensitive>
@@ -6009,7 +5869,7 @@ Word
 </items>
 	<child>
 	  <padding>0</padding>
-	  <expand>False</expand>
+	  <expand>True</expand>
 	  <fill>True</fill>
 	</child>
 
@@ -6032,6 +5892,16 @@ Word
       </widget>
 
       <widget>
+	<class>GtkVSeparator</class>
+	<name>vseparator7</name>
+	<child>
+	  <padding>10</padding>
+	  <expand>False</expand>
+	  <fill>True</fill>
+	</child>
+      </widget>
+
+      <widget>
 	<class>GtkLabel</class>
 	<name>label97</name>
 	<label>Format: </label>
@@ -6042,7 +5912,7 @@ Word
 	<xpad>0</xpad>
 	<ypad>0</ypad>
 	<child>
-	  <padding>4</padding>
+	  <padding>0</padding>
 	  <expand>True</expand>
 	  <fill>True</fill>
 	</child>
@@ -6051,6 +5921,7 @@ Word
       <widget>
 	<class>GtkCombo</class>
 	<name>Format</name>
+	<width>87</width>
 	<value_in_list>False</value_in_list>
 	<ok_if_empty>False</ok_if_empty>
 	<case_sensitive>False</case_sensitive>
@@ -6062,8 +5933,8 @@ Octal
 ASCII
 </items>
 	<child>
-	  <padding>0</padding>
-	  <expand>False</expand>
+	  <padding>7</padding>
+	  <expand>True</expand>
 	  <fill>True</fill>
 	</child>
 
@@ -6102,8 +5973,7 @@ ASCII
       <widget>
 	<class>GtkText</class>
 	<name>view</name>
-	<width>686</width>
-	<height>320</height>
+	<height>152</height>
 	<can_focus>True</can_focus>
 	<signal>
 	  <name>key_press_event</name>
@@ -6136,6 +6006,181 @@ ASCII
     </widget>
 
     <widget>
+      <class>GtkHBox</class>
+      <name>hbox13</name>
+      <homogeneous>False</homogeneous>
+      <spacing>0</spacing>
+      <child>
+	<padding>0</padding>
+	<expand>False</expand>
+	<fill>False</fill>
+      </child>
+
+      <widget>
+	<class>GtkLabel</class>
+	<name>label99</name>
+	<label>Page size:</label>
+	<justify>GTK_JUSTIFY_CENTER</justify>
+	<wrap>False</wrap>
+	<xalign>0.5</xalign>
+	<yalign>0.5</yalign>
+	<xpad>0</xpad>
+	<ypad>0</ypad>
+	<child>
+	  <padding>5</padding>
+	  <expand>True</expand>
+	  <fill>True</fill>
+	</child>
+      </widget>
+
+      <widget>
+	<class>GtkSpinButton</class>
+	<name>value</name>
+	<width>56</width>
+	<can_focus>True</can_focus>
+	<climb_rate>1</climb_rate>
+	<digits>0</digits>
+	<numeric>True</numeric>
+	<update_policy>GTK_UPDATE_ALWAYS</update_policy>
+	<snap>False</snap>
+	<wrap>False</wrap>
+	<value>256</value>
+	<lower>256</lower>
+	<upper>4096</upper>
+	<step>256</step>
+	<page>256</page>
+	<page_size>256</page_size>
+	<child>
+	  <padding>0</padding>
+	  <expand>True</expand>
+	  <fill>True</fill>
+	</child>
+      </widget>
+
+      <widget>
+	<class>GtkLabel</class>
+	<name>label100</name>
+	<label>bytes</label>
+	<justify>GTK_JUSTIFY_CENTER</justify>
+	<wrap>False</wrap>
+	<xalign>0.5</xalign>
+	<yalign>0.5</yalign>
+	<xpad>0</xpad>
+	<ypad>0</ypad>
+	<child>
+	  <padding>0</padding>
+	  <expand>False</expand>
+	  <fill>False</fill>
+	</child>
+      </widget>
+
+      <widget>
+	<class>GtkHButtonBox</class>
+	<name>hbuttonbox12</name>
+	<layout_style>GTK_BUTTONBOX_DEFAULT_STYLE</layout_style>
+	<spacing>30</spacing>
+	<child_min_width>85</child_min_width>
+	<child_min_height>27</child_min_height>
+	<child_ipad_x>7</child_ipad_x>
+	<child_ipad_y>0</child_ipad_y>
+	<child>
+	  <padding>0</padding>
+	  <expand>True</expand>
+	  <fill>True</fill>
+	</child>
+
+	<widget>
+	  <class>GtkButton</class>
+	  <name>page_size_button</name>
+	  <can_default>True</can_default>
+	  <can_focus>True</can_focus>
+	  <signal>
+	    <name>clicked</name>
+	    <handler>on_page_size_button_clicked</handler>
+	    <last_modification_time>Tue, 26 Sep 2000 23:04:01 GMT</last_modification_time>
+	  </signal>
+	  <label>OK</label>
+	</widget>
+      </widget>
+
+      <widget>
+	<class>GtkVSeparator</class>
+	<name>vseparator8</name>
+	<child>
+	  <padding>0</padding>
+	  <expand>True</expand>
+	  <fill>False</fill>
+	</child>
+      </widget>
+
+      <widget>
+	<class>GtkButton</class>
+	<name>pgup</name>
+	<can_default>True</can_default>
+	<can_focus>True</can_focus>
+	<signal>
+	  <name>clicked</name>
+	  <handler>on_pgup_clicked</handler>
+	  <last_modification_time>Thu, 21 Sep 2000 12:53:53 GMT</last_modification_time>
+	</signal>
+	<child>
+	  <padding>0</padding>
+	  <expand>True</expand>
+	  <fill>True</fill>
+	</child>
+
+	<widget>
+	  <class>GtkArrow</class>
+	  <name>arrow1</name>
+	  <arrow_type>GTK_ARROW_UP</arrow_type>
+	  <shadow_type>GTK_SHADOW_OUT</shadow_type>
+	  <xalign>0.5</xalign>
+	  <yalign>0.5</yalign>
+	  <xpad>0</xpad>
+	  <ypad>0</ypad>
+	</widget>
+      </widget>
+
+      <widget>
+	<class>GtkButton</class>
+	<name>pgdn</name>
+	<can_default>True</can_default>
+	<can_focus>True</can_focus>
+	<signal>
+	  <name>clicked</name>
+	  <handler>on_pgdn_clicked</handler>
+	  <last_modification_time>Thu, 21 Sep 2000 12:53:58 GMT</last_modification_time>
+	</signal>
+	<child>
+	  <padding>0</padding>
+	  <expand>True</expand>
+	  <fill>True</fill>
+	</child>
+
+	<widget>
+	  <class>GtkArrow</class>
+	  <name>arrow2</name>
+	  <arrow_type>GTK_ARROW_DOWN</arrow_type>
+	  <shadow_type>GTK_SHADOW_OUT</shadow_type>
+	  <xalign>0.5</xalign>
+	  <yalign>0.5</yalign>
+	  <xpad>0</xpad>
+	  <ypad>0</ypad>
+	</widget>
+      </widget>
+    </widget>
+
+    <widget>
+      <class>GtkHSeparator</class>
+      <name>hseparator2</name>
+      <child>
+	<padding>3</padding>
+	<expand>False</expand>
+	<fill>False</fill>
+      </child>
+    </widget>
+
+    <widget>
       <class>GtkHButtonBox</class>
       <name>hbuttonbox11</name>
       <layout_style>GTK_BUTTONBOX_SPREAD</layout_style>
@@ -6160,7 +6205,7 @@ ASCII
 	  <handler>on_reset_clicked</handler>
 	  <last_modification_time>Thu, 21 Sep 2000 12:54:48 GMT</last_modification_time>
 	</signal>
-	<label>Reset</label>
+	<label>Undo changes</label>
       </widget>
 
       <widget>
