@@ -18,19 +18,19 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Gtk.Window;          use Gtk.Window;
-with Gtk.Box;             use Gtk.Box;
+with Gtk.Window; use Gtk.Window;
+with Gtk.Box; use Gtk.Box;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
-with Gtk.Viewport;        use Gtk.Viewport;
-with Gtk.List;            use Gtk.List;
-with Gtk.Label;           use Gtk.Label;
-with Gtk.GEntry;          use Gtk.GEntry;
-with Gtk.Separator;       use Gtk.Separator;
-with Gtk.Hbutton_Box;     use Gtk.Hbutton_Box;
-with Gtk.Button;          use Gtk.Button;
-with Gtk.Widget;          use Gtk.Widget;
-with Gtk.Check_Button;    use Gtk.Check_Button;
-with Odd.Types;           use Odd.Types;
+with Gtk.Viewport; use Gtk.Viewport;
+with Gtk.List; use Gtk.List;
+with Gtk.Label; use Gtk.Label;
+with Gtk.GEntry; use Gtk.GEntry;
+with Gtk.Separator; use Gtk.Separator;
+with Gtk.Hbutton_Box; use Gtk.Hbutton_Box;
+with Gtk.Button; use Gtk.Button;
+with Gtk.Widget; use Gtk.Widget;
+with Gtk.Check_Button; use Gtk.Check_Button;
+with Odd.Types; use Odd.Types;
 
 package Open_Session_Pkg is
 
@@ -49,15 +49,11 @@ package Open_Session_Pkg is
       Hbox7 : Gtk_Hbox;
       Vbox18 : Gtk_Vbox;
       Scrolledwindow10 : Gtk_Scrolled_Window;
-      Viewport1        : Gtk_Viewport;
-      List             : Gtk_List;
-      Hbox6            : Gtk_Hbox;
-      Label73          : Gtk_Label;
-      Entry1           : Gtk_Entry;
-      Hbuttonbox9      : Gtk_Hbutton_Box;
-      Ok_Button        : Gtk_Button;
-      Cancel_Button    : Gtk_Button;
-      Help_Button      : Gtk_Button;
+      Viewport1 : Gtk_Viewport;
+      List : Gtk_List;
+      Hbox6 : Gtk_Hbox;
+      Label73 : Gtk_Label;
+      Entry1 : Gtk_Entry;
       Vseparator4 : Gtk_Vseparator;
       Vbox19 : Gtk_Vbox;
       Scrolledwindow11 : Gtk_Scrolled_Window;
@@ -67,6 +63,10 @@ package Open_Session_Pkg is
       Select_All : Gtk_Button;
       Unselect_All : Gtk_Button;
       Hseparator1 : Gtk_Hseparator;
+      Hbuttonbox9 : Gtk_Hbutton_Box;
+      Ok_Button : Gtk_Button;
+      Cancel_Button : Gtk_Button;
+      Help_Button : Gtk_Button;
    end record;
    type Open_Session_Access is access all Open_Session_Record'Class;
 
@@ -81,12 +81,12 @@ package Open_Session_Pkg is
    procedure Remove_All_Buttons (Open : access Open_Session_Record'Class);
    --  Clear all the check_buttons.
 
-   ----------------------                  
+   ----------------------
    -- Session Handling --
    ----------------------
                
    --  The format for session files is as follows:
-   --             
+   --
    --  [Session_File Header]
    --  <number_of_processes>
    --  ---------------------
@@ -94,20 +94,20 @@ package Open_Session_Pkg is
    --      <debugger_type_1>
    --      <remote_host_1>
    --      <remote_target_1>
-   --      <protocol_1> 
+   --      <protocol_1>
    --      <debugger_name_1>
-   --  --------------------- 
+   --  ---------------------
    --      <program_file_name_2>
    --      <debugger_type_2>
    --      <remote_host_2>
    --      <remote_target_2>
    --      <protocol_2>
    --      <debugger_name_2>
-   --  (etc)      
-   --  [History]  
+   --  (etc)
+   --  [History]
    --    <debugger_number> < H | V | U > <command>
    --    <debugger_number> < H | V | U > <command>
-   --  (etc)               
+   --  (etc)
    --  ---------------------
 
    procedure Open_Session
