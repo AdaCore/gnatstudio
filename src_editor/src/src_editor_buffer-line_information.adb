@@ -1501,7 +1501,7 @@ package body Src_Editor_Buffer.Line_Information is
          end if;
       end loop;
 
-      if Info_Found then
+      if not Info_Found then
          Remove_Line_Information_Column (Buffer, Block_Info_Column);
          Buffer.Block_Highlighting_Column := -1;
       end if;
