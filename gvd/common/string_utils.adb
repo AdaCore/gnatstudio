@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2001                      --
+--                      Copyright (C) 2000-2002                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -797,5 +797,14 @@ package body String_Utils is
          return Dir;
       end if;
    end Name_As_Directory;
+
+   ------------------
+   -- Is_Word_Char --
+   ------------------
+
+   function Is_Word_Char (C : Character) return Boolean is
+   begin
+      return C = '_' or else Is_Alphanumeric (C);
+   end Is_Word_Char;
 
 end String_Utils;

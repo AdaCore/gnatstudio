@@ -152,6 +152,9 @@ package String_Utils is
    function Number_Of_Digits (N : Integer) return Natural;
    --  Return the number of digits for the given Integer number;
 
+   function Is_Word_Char (C : Character) return Boolean;
+   --  Return whether C is a word character (alphanumeric or underscore).
+
    ----------------------------
    -- File name manipulation --
    ----------------------------
@@ -208,4 +211,5 @@ private
    pragma Inline (Looking_At);
    pragma Inline (Skip_Blanks);
    pragma Inline (Skip_To_Char);
+   pragma Inline (Is_Word_Char);
 end String_Utils;
