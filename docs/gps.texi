@@ -1686,10 +1686,10 @@ automatically when you modify your sources and are always kept up to date.
 
 This capability is currently implemented for Ada, C and C++ languages.
 
-@item Automatic syntax checking
-@cindex automatic syntax checking
-When enabled, the editor will perform on-the-fly syntax checks, and will
-underline the errors in your file as you type.
+@c @item Automatic syntax checking
+@c @cindex automatic syntax checking
+@c When enabled, the editor will perform on-the-fly syntax checks, and will
+@c underline the errors in your file as you type.
 
 @item Auto save
 @cindex auto save
@@ -5526,26 +5526,20 @@ preference, and an editing area to modify its value. If you leave to mouse
 over the label, a tool tip will be displayed giving an on-line help on the
 preference.
 
-The preferences dialog is composed of eight areas, accessible through the
-tabs at the left of the dialog, labeled @i{General}, @i{Editor}, @i{Debugger},
-@i{Helpers}, @i{Browsers}, @i{Visual Diff}, @i{Messages} and @i{Project}.
-Each page corresponds to a section of preferences.
+The preferences dialog is composed of several areas, accessible through the
+tabs at the left of the dialog.
+Each page corresponds to a set of preferences.
 
 @itemize @bullet
+@item @b{Themes}
+
+This page allows you to quickly change the current settings for GPS, including
+preferences, key bindings, menus@dots{}. See @ref{GPS Themes} for more
+information on themes. It is only displayed when there are themes registered.
+
 @item @b{General}
 
-The general preferences are composed of two pages available at the top of the
-right area: @i{General} and @i{Windows}
-
 @table @i
-@item Themes
-This page allows you to quickly change the current settings for GPS, including
-preferences, key bindings, menus@dots{}. @ref{GPS Themes} for more information
-on themes.
-
-@item General
-
-@table @b
 @item Default font
 @cindex font
 The default font used in GPS
@@ -5594,19 +5588,26 @@ calling external tools (e.g. before a build).
 Whether the desktop (size and positions of all windows) should be saved when
 exiting.
 
-@item Jump To First Location
+@item Relative paths
+@cindex relative path
+Whether paths should be absolute or relative when the projects are modified.
+
+@item Jump to first location
 @cindex location
 Whether the first entry of the location window should be selected
 automatically, and thus whether the corresponding editor should be
 immediately open.
 
-@item Windows
+@end table
+
+@item @b{Windows}
+
 @cindex MDI
 @cindex Multiple Document Interface
 This section specifies preferences that apply to the @i{Multiple Document
 Interface} described in @ref{Multiple Document Interface}.
 
-@table @b
+@table @i
 @item Opaque
 @cindex opaque
 If True, items will be resized or moved opaquely when not maximized.
@@ -5634,8 +5635,6 @@ Color to use for the title bar of unselected items.
 @item Selected title bar color
 @cindex color
 Color to use for the title bar of selected items.
-
-@end table
 
 @end table
 
@@ -5852,7 +5851,7 @@ If this preference is set to @code{False}, this would be indented as:
 @smallexample
 case Value is
 when others =>
-null;
+   null;
 end case;
 @end smallexample
 
@@ -6200,17 +6199,6 @@ Index of the warning identifier in the file pattern.
 @item Style index
 @cindex column index
 Index of the style error identifier in the file pattern.
-
-@end table
-
-@item @b{Project}
-@cindex project
-@table @i
-@item Relative paths
-@cindex relative path
-Whether paths should be absolute or relative when the projects are modified.
-
-@end table
 
 @end table
 
