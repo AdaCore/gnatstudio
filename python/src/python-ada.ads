@@ -221,6 +221,13 @@ package Python.Ada is
    function PyInstance_Check (Obj : PyObject) return Boolean;
    --  Whether Obj is an instance
 
+   function PyMethod_Check (Obj : PyObject) return Boolean;
+   --  Whether Obj is a method of a class
+
+   function PyMethod_Function (Obj : PyObject) return PyObject;
+   --  Return the function object associated with the method. That is the code
+   --  that is actually executed when the method is called
+
    ------------------------------------
    -- Creating and declaring methods --
    ------------------------------------
@@ -303,4 +310,5 @@ private
    pragma Import (C, PyCObject_GetDesc, "PyCObject_GetDesc");
    pragma Import (C, PyInstance_New, "PyInstance_New");
    pragma Import (C, PyInstance_NewRaw, "PyInstance_NewRaw");
+   pragma Import (C, PyMethod_Function, "PyMethod_Function");
 end Python.Ada;

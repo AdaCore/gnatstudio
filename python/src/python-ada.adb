@@ -280,6 +280,17 @@ package body Python.Ada is
       return Internal (Obj) = 1;
    end PyInstance_Check;
 
+   --------------------
+   -- PyMethod_Check --
+   --------------------
+
+   function PyMethod_Check (Obj : PyObject) return Boolean is
+      function Internal (Obj : PyObject) return Integer;
+      pragma Import (C, Internal, "ada_pymethod_check");
+   begin
+      return Internal (Obj) = 1;
+   end PyMethod_Check;
+
    ------------------------
    -- PyClass_IsSubclass --
    ------------------------
