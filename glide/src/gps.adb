@@ -336,7 +336,7 @@ procedure GPS is
          Put_Line
            (-"   --eval=lang:file    Execute a command written in the");
          Put_Line (-"                        language lang. This is executed");
-         Put_Line (-"                        before the --batch command");
+         Put_Line (-"                        before the --load command");
          New_Line;
          Put_Line (-("Source files are searched everywhere on the project's "
                    & " source path"));
@@ -356,7 +356,7 @@ procedure GPS is
             (-"   --eval=lang:file    Execute a command written in the")
             & LF &
             (-"                        language lang. This is executed") & LF &
-            (-"                        before the --batch command") & LF &
+            (-"                        before the --load command") & LF &
             (-"   --debug[=program]   Start a debug session") & LF &
             (-"   --debugger debugger Specify the debugger's command line") &
             LF &
