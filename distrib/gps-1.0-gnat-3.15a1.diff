@@ -90,7 +90,7 @@ Index: common/src/stubs.c
      for Source_Dirs use ();
   
 *** gps-1.0.2/glide/gps.gpr	Tue Sep  3 11:08:17 2002
---- gps.gpr	18 Nov 2002 10:06:51 -0000
+--- glide/gps.gpr	18 Nov 2002 10:06:51 -0000
 ***************
 *** 28,40 ****
   
