@@ -90,8 +90,7 @@ package Language_Handlers.Glide is
       Source_Filename : String)
       return Src_Info.LI_Handler;
    --  Return the LI handler to use for a specific file name.
-   --  null is returned if the language is unknown
-   --  Raises Unsupported_Language if the language is unknown
+   --  null is returned if the language is unknown.
    --  Project is the project that contains Source_Filename, or No_Project if
    --  it is unknown.
 
@@ -149,9 +148,6 @@ package Language_Handlers.Glide is
       Num     : Positive) return String;
    --  Return the name of the Num-th language.
    --  The first handler is number 1.
-
-   Unsupported_Language : exception;
-   --  Raised when a file name can not be associated with one of the handlers.
 
 private
    type Language_Info is record
