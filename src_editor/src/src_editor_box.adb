@@ -971,8 +971,8 @@ package body Src_Editor_Box is
          Unref (Box.Default_GC);
       end if;
 
-      Unref (Box.Source_Buffer);
       Delete (Box.Source_View);
+      Unref (Box.Source_Buffer);
 
    exception
       when E : others =>
@@ -1737,6 +1737,7 @@ package body Src_Editor_Box is
          Get_Language (Source));
       Box.Writable := Source.Writable;
 
+      --  ??? Is this really useful ?
       Set_Filename (Box, Get_Filename (Source));
 
       Set_Text (Box.Modified_Label, Get_Text (Source.Modified_Label));
@@ -1831,6 +1832,17 @@ package body Src_Editor_Box is
    begin
       Set_Filename (Editor.Source_Buffer, Filename);
    end Set_Filename;
+
+   -------------------------
+   -- Set_File_Identifier --
+   -------------------------
+
+   procedure Set_File_Identifier
+     (Editor   : access Source_Editor_Box_Record;
+      Filename : String) is
+   begin
+      Set_File_Identifier (Editor.Source_Buffer, Filename);
+   end Set_File_Identifier;
 
    ------------------
    -- Get_Filename --
@@ -2380,9 +2392,9 @@ package body Src_Editor_Box is
    --------------------------
 
    procedure Add_File_Information
-     (Editor        : access Source_Editor_Box_Record;
-      Identifier    : String;
-      Info          : Glide_Kernel.Modules.Line_Information_Data) is
+     (Editor     : access Source_Editor_Box_Record;
+      Identifier : String;
+      Info       : Glide_Kernel.Modules.Line_Information_Data) is
    begin
       Add_File_Information
         (Editor.Source_Buffer,
