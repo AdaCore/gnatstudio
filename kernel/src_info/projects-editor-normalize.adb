@@ -20,6 +20,7 @@
 
 with Ada.Exceptions;    use Ada.Exceptions;
 with Projects.Editor;   use Projects, Projects.Editor;
+with Projects.Registry; use Projects.Registry;
 with Traces;            use Traces;
 with String_Utils;      use String_Utils;
 with Glide_Intl;        use Glide_Intl;
@@ -195,6 +196,7 @@ package body Projects.Editor.Normalize is
       Decl      : Project_Node_Id;
       Iter      : Imported_Project_Iterator := Start (Root_Project, Recurse);
       Project   : Project_Node_Id;
+      Max_Scenario_Variables : Integer;
 
       procedure Process_Declarative_List
         (From, To : Project_Node_Id);
@@ -221,6 +223,7 @@ package body Projects.Editor.Normalize is
          Index     : Natural;
          Var_Type  : Project_Node_Id;
          Already_Have_Var, Match : Boolean;
+         Decl_Item2 : Project_Node_Id;
 
          procedure Add_Decl_Item (To_Case_Item : Project_Node_Id);
          --  Add Decl_Item to To_Case_Item.
@@ -385,6 +388,30 @@ package body Projects.Editor.Normalize is
                   null;
 
                when others =>
+                  --  Add as many items as possible at once. This speeds things
+                  --  up, since we do not have to traverse all the case items
+                  --  for all of them.
+
+                  Decl_Item2 := Decl_Item;
+                  while Next_Item /= Empty_Node loop
+                     case Kind_Of (Current_Item_Node (Next_Item)) is
+                        when N_Package_Declaration
+                          | N_Case_Construction
+                          | N_Typed_Variable_Declaration
+                          | N_String_Type_Declaration =>
+                           exit;
+
+                        when others =>
+                           null;
+                     end case;
+
+                     Set_Next_Declarative_Item (Decl_Item2, Next_Item);
+                     Decl_Item2 := Next_Item;
+                     Next_Item  := Next_Declarative_Item (Next_Item);
+                  end loop;
+
+                  Set_Next_Declarative_Item (Decl_Item2, Empty_Node);
+
                   For_Each_Matching_Case_Item
                     (Project_Norm, Current_Pkg, Case_Construct,
                      Values (Values'First .. Last_Values),
@@ -395,15 +422,24 @@ package body Projects.Editor.Normalize is
          end loop;
       end Process_Declarative_List;
 
+      Registry : Project_Registry := Project_Registry
+        (Get_Registry (Root_Project));
    begin
+      --  This is null when the default project is loaded at startup time.o
+      if Get_Root_Project (Registry) /= No_Project then
+         Max_Scenario_Variables := Scenario_Variables (Registry)'Length;
+      else
+         Max_Scenario_Variables := 50;  --  Random
+      end if;
+
       while Current (Iter) /= Projects.No_Project loop
          if not Is_Normalized (Current (Iter)) then
             Project := Current (Iter).Node;
             Trace (Me, "Normalize: " & Project_Name (Current (Iter))
                    & ' ' & Recurse'Img);
 
-            --  ??? Why this hard-coded limit ?
-            Values := new External_Variable_Value_Array (1 .. 50);
+            Values := new External_Variable_Value_Array
+              (1 .. Max_Scenario_Variables);
             Last_Values := Values'First - 1;
 
             Project_Norm := Clone_Project (Project);
@@ -433,9 +469,7 @@ package body Projects.Editor.Normalize is
                Decl := First_Declarative_Item_Of (Current_Pkg);
                Set_First_Declarative_Item_Of (Current_Pkg, Empty_Node);
 
-               Case_Construct := Find_Or_Create_Case_Statement
-                 (Project_Norm, Current_Pkg);
-
+               Case_Construct := Empty_Node;
                Process_Declarative_List
                  (From      => Decl,
                   To        => Current_Pkg);
@@ -447,7 +481,8 @@ package body Projects.Editor.Normalize is
                      -"Internal error while normalizing");
                end if;
 
-               Add_At_End (Project_Declaration_Of (Project_Norm), Current_Pkg);
+               Add_At_End
+                 (Project_Declaration_Of (Project_Norm), Current_Pkg);
                Current_Pkg := Next_Package_In_Project (Current_Pkg);
             end loop;
 
@@ -509,11 +544,11 @@ package body Projects.Editor.Normalize is
         (Project, Pkg, Case_Construct, Values, Action);
    end For_Each_Scenario_Case_Item;
 
-   -----------------------------------
-   -- Find_Or_Create_Case_Statement --
-   -----------------------------------
+   -------------------------
+   -- Find_Case_Statement --
+   -------------------------
 
-   function Find_Or_Create_Case_Statement
+   function Find_Case_Statement
      (Project : Prj.Tree.Project_Node_Id;
       Pkg     : Prj.Tree.Project_Node_Id := Prj.Tree.Empty_Node)
       return Project_Node_Id
@@ -540,7 +575,7 @@ package body Projects.Editor.Normalize is
       end loop;
 
       return Case_Construct;
-   end Find_Or_Create_Case_Statement;
+   end Find_Case_Statement;
 
    --------------------
    -- Values_Matches --
