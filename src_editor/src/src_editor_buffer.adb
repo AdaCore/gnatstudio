@@ -321,11 +321,6 @@ package body Src_Editor_Buffer is
       Set    : Boolean);
    --  Common function for [Add|Remove]_Line_Highlighting.
 
-   procedure Register_Edit_Timeout
-     (Buffer : access Source_Buffer_Record'Class);
-   --  Indicate that the text has been edited, and that a timeout should be
-   --  registered to call the corresponding "after-timeout" hook.
-
    procedure Register_Cursor_Timeout
      (Buffer : access Source_Buffer_Record'Class);
    --  Indicate that the cursor has moved, and that a timeout should be
