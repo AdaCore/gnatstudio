@@ -9,7 +9,10 @@ DEBUG.ENCLOSING_ENTITY=no
 
 --  List of all the handles defined in the application
 KERNEL.BROWSER=yes
+GLIDE_KERNEL=yes
 GLIDE_KERNEL.PROJECT=yes
+GLIDE_KERNEL.MODULES=yes
+AUNIT_MODULE=yes
 PRJ_API=yes
 PRJ_NORMALIZE=yes
 SRC_INFO=yes
