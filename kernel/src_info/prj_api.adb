@@ -2100,10 +2100,10 @@ package body Prj_API is
    end Rename;
 
    ----------------------------------
-   -- Set_Scenario_Variable_Values --
+   -- Add_Scenario_Variable_Values --
    ----------------------------------
 
-   procedure Set_Scenario_Variable_Values
+   procedure Add_Scenario_Variable_Values
      (Root_Project           : Project_Node_Id;
       External_Variable_Name : String_Id;
       Values                 : String_Id_Array)
@@ -2112,13 +2112,13 @@ package body Prj_API is
    begin
       Var := Find_Scenario_Variable (Root_Project, External_Variable_Name);
 
-      --  If variable is defined in the current project, then reset the type to
-      --  Values.
+      --  If variable is defined in the current project, then modify the type
+      --  to Values.
 
       if Var /= Empty_Node then
          Type_Node := String_Type_Of (Var);
          pragma Assert (Type_Node /= Empty_Node);
-         Set_First_Literal_String (Type_Node, Empty_Node);
+         --  Set_First_Literal_String (Type_Node, Empty_Node);
 
          for J in Values'Range loop
             Add_Possible_Value (Type_Node, Values (J));
@@ -2127,11 +2127,99 @@ package body Prj_API is
 
       With_Clause := First_With_Clause_Of (Root_Project);
       while With_Clause /= Empty_Node loop
-         Set_Scenario_Variable_Values
+         Add_Scenario_Variable_Values
            (Project_Node_Of (With_Clause), External_Variable_Name, Values);
          With_Clause := Next_With_Clause_Of (With_Clause);
       end loop;
-   end Set_Scenario_Variable_Values;
+   end Add_Scenario_Variable_Values;
+
+   ------------------------------
+   -- Rename_External_Variable --
+   ------------------------------
+
+   procedure Rename_External_Variable
+     (Root_Project : Project_Node_Id;
+      Old_Name     : String;
+      New_Name     : Types.String_Id)
+   is
+      Decl : Project_Node_Id := Empty_Node;
+      Expr, Current, Term, With_Clause : Project_Node_Id;
+   begin
+      case Kind_Of (Root_Project) is
+         when N_Project =>
+            Decl := First_Declarative_Item_Of
+              (Project_Declaration_Of (Root_Project));
+
+         when N_Package_Declaration | N_Case_Item =>
+            Decl := First_Declarative_Item_Of (Root_Project);
+
+         when N_Expression =>
+            Expr := Root_Project;
+            while Expr /= Empty_Node loop
+               Term := First_Term (Expr);
+               while Term /= Empty_Node loop
+                  if Kind_Of (Current_Term (Term)) = N_Literal_String_List then
+                     Rename_External_Variable
+                       (First_Expression_In_List (Current_Term (Term)),
+                        Old_Name, New_Name);
+
+                  elsif Kind_Of (Current_Term (Term)) = N_External_Value
+                    and then Get_String (String_Value_Of
+                      (External_Reference_Of (Current_Term (Term))))
+                    = Old_Name
+                  then
+                     Set_String_Value_Of
+                       (External_Reference_Of (Current_Term (Term)),
+                        New_Name);
+                  end if;
+
+                  Term := Next_Term (Term);
+               end loop;
+
+               Expr := Next_Expression_In_List (Expr);
+            end loop;
+
+         when others =>
+            null;
+      end case;
+
+      while Decl /= Empty_Node loop
+         Current := Current_Item_Node (Decl);
+         case Kind_Of (Current) is
+            when N_Package_Declaration =>
+               Rename_External_Variable
+                 (Current, Old_Name, New_Name);
+
+            when N_Variable_Declaration
+              |  N_Attribute_Declaration
+              |  N_Typed_Variable_Declaration =>
+               Rename_External_Variable
+                 (Expression_Of (Current), Old_Name, New_Name);
+
+            when N_Case_Construction =>
+               Expr := First_Case_Item_Of (Root_Project);
+               while Expr /= Empty_Node loop
+                  Rename_External_Variable
+                    (Expr, Old_Name, New_Name);
+                  Expr := Next_Case_Item (Expr);
+               end loop;
+
+            when others =>
+               null;
+         end case;
+
+         Decl := Next_Declarative_Item (Decl);
+      end loop;
+
+      if Kind_Of (Root_Project) = N_Project then
+         With_Clause := First_With_Clause_Of (Root_Project);
+         while With_Clause /= Empty_Node loop
+            Rename_External_Variable
+              (Project_Node_Of (With_Clause), Old_Name, New_Name);
+            With_Clause := Next_With_Clause_Of (With_Clause);
+         end loop;
+      end if;
+   end Rename_External_Variable;
 
 begin
    Namet.Initialize;

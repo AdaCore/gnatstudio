@@ -456,15 +456,22 @@ package Prj_API is
    --
    --  ??? Can this be merged with External_Reference_Of
 
-   procedure Set_Scenario_Variable_Values
+   procedure Add_Scenario_Variable_Values
      (Root_Project           : Project_Node_Id;
       External_Variable_Name : Types.String_Id;
       Values                 : String_Id_Array);
-   --  Set the list of possible values for all the scenario variables
-   --  associated with External_Variable_Name. The previous values are
-   --  simply removed. This helps ensure type matching for all these variables.
-   --  The changes are done recursively in Root_Project and all its imported
+   --  Add some values to the list of possible values for the scenario
+   --  variables associated with External_Variable_Name. The changes are done
+   --  recursively in Root_Project and all its imported projects.
+
+   procedure Rename_External_Variable
+     (Root_Project : Project_Node_Id;
+      Old_Name     : String;
+      New_Name     : Types.String_Id);
+   --  Rename all references to Old_Name in Root_Project and its imported
    --  projects.
+   --  Old_Name is given as a string so that we don't need to allocate a new
+   --  string_id.
 
    Invalid_Value : exception;
 
