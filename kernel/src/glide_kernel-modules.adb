@@ -1317,7 +1317,7 @@ package body Glide_Kernel.Modules is
       Message       : String;
       Action        : Action_Item)
    is
-      Value         : GValue_Array (1 .. 8);
+      Value         : GValue_Array (1 .. 7);
    begin
       Init (Value (1),  Glib.GType_String);
       Init (Value (2),  Glib.GType_String);
@@ -1331,8 +1331,8 @@ package body Glide_Kernel.Modules is
       Set_String (Value (3), File);
       Set_Int (Value (4), Gint (Line));
       Set_Int (Value (5), Gint (Column));
-      Set_String (Value (7), Message);
-      Set_Address (Value (8), To_Address (Action));
+      Set_String (Value (6), Message);
+      Set_Address (Value (7), To_Address (Action));
 
       if not Mime_Action
         (Kernel, Mime_Location_Action, Value, Set_Busy => False)
