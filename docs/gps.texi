@@ -4165,6 +4165,12 @@ your main program(s) in the project properties, or start an empty debug
 session using the @code{<no main file>} item. It is then possible to load
 any file to debug, by using the menu @code{Debug->Debug->Load File...}
 
+Note that you can create multiple debuggers by using the @code{Initialize}
+menu several times: this will create a new debugger each time.
+All the debugger-related actions (e.g. stepping, running) are performed on
+the current debugger, which is represented by the current debugger console.
+To switch between debuggers, simply select its corresponding console.
+
 After the debugger has been initialized, you have access to two new windows:
 the data window (in the top of the working area), and the debugger console
 (in a new page, after the Messages and Shell windows).
@@ -4176,7 +4182,9 @@ display variables, set breakpoints, and get automatic display
 
 @cindex menu
 When you want to quit the debugger without quitting GPS, go to the menu
-@code{Debug->Terminate}, which will terminate your debug session.
+@code{Debug->Terminate Current}, that will terminate your current debug
+session, or the menu @code{Debug->Terminate} that will terminate all your
+debug sessions at once.
 
 @menu
 * The Debug Menu::
