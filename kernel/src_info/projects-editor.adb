@@ -2181,9 +2181,11 @@ package body Projects.Editor is
             when N_Variable_Declaration | N_Typed_Variable_Declaration =>
                if Last_Var /= Empty_Node then
                   Set_Next_Variable (Last_Var, Current_Node);
+                  Set_Next_Variable (Current_Node, Empty_Node);
                   Last_Var := Current_Node;
                else
                   Last_Var := Current_Node;
+                  Set_Next_Variable (Last_Var, Empty_Node);
 
                   if Pkg /= Empty_Node then
                      Tree_Private_Part.Project_Nodes.Table (Pkg).Variables
