@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2003                         --
+--                      Copyright (C) 2003-2005                      --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -69,28 +69,28 @@ package Docgen_Backend_HTML is
       Header_Link    : Boolean);
 
    procedure Doc_Header_Private
-     (B                : access Backend_HTML;
-      Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
-      File             : File_Descriptor;
-      Header_Title     : String;
-      Level            : Natural);
+     (B            : access Backend_HTML;
+      Kernel       : access Glide_Kernel.Kernel_Handle_Record'Class;
+      File         : File_Descriptor;
+      Header_Title : String;
+      Level        : Natural);
 
    procedure Doc_Footer
-     (B                : access Backend_HTML;
-      Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
-      File             : in File_Descriptor);
+     (B      : access Backend_HTML;
+      Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+      File   : File_Descriptor);
 
    procedure Doc_Subtitle
-     (B                : access Backend_HTML;
-      Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
-      File             : File_Descriptor;
-      Level            : Natural;
-      Subtitle_Name    : String);
+     (B             : access Backend_HTML;
+      Kernel        : access Glide_Kernel.Kernel_Handle_Record'Class;
+      File          : File_Descriptor;
+      Level         : Natural;
+      Subtitle_Name : String);
 
    procedure Doc_With
      (B                : access Backend_HTML;
       Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
-      File             : in File_Descriptor;
+      File             : File_Descriptor;
       List_Ref_In_File : in out List_Reference_In_File.List;
       Source_File_List : Type_Source_File_Table.HTable;
       Options          : All_Options;
@@ -102,7 +102,7 @@ package Docgen_Backend_HTML is
    procedure Doc_Package
      (B                   : access Backend_HTML;
       Kernel              : access Glide_Kernel.Kernel_Handle_Record'Class;
-      File                : in File_Descriptor;
+      File                : File_Descriptor;
       List_Ref_In_File    : in out List_Reference_In_File.List;
       Source_File_List    : Type_Source_File_Table.HTable;
       Options             : All_Options;
@@ -113,7 +113,7 @@ package Docgen_Backend_HTML is
    procedure Doc_Package_Open_Close
      (B                 : access Backend_HTML;
       Kernel            : access Glide_Kernel.Kernel_Handle_Record'Class;
-      File              : in File_Descriptor;
+      File              : File_Descriptor;
       List_Ref_In_File  : in out List_Reference_In_File.List;
       Source_File_List  : Type_Source_File_Table.HTable;
       Options           : All_Options;
@@ -131,7 +131,7 @@ package Docgen_Backend_HTML is
    procedure Doc_Var
      (B                : access Backend_HTML;
       Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
-      File             : in File_Descriptor;
+      File             : File_Descriptor;
       List_Ref_In_File : in out List_Reference_In_File.List;
       Source_File_List : Type_Source_File_Table.HTable;
       Options          : All_Options;
@@ -332,25 +332,25 @@ package Docgen_Backend_HTML is
    --  Generate a character (between two ') in html format.
 
    procedure Format_Identifier
-     (B                   : access Backend_HTML;
-      List_Ref_In_File    : in out List_Reference_In_File.List;
-      Start_Index         : Natural;
-      Start_Line          : Natural;
-      Start_Column        : Natural;
-      End_Index           : Natural;
-      End_Line            : Natural;
-      Kernel              : access Kernel_Handle_Record'Class;
-      File                : File_Descriptor;
-      Text                : String;
-      File_Name           : VFS.Virtual_File;
-      Entity_Line         : Natural;
-      Line_In_Body        : Natural;
-      Source_File_List    : Type_Source_File_Table.HTable;
-      Link_All            : Boolean;
-      Is_Body             : Boolean;
-      Process_Body        : Boolean;
-      Level               : Natural;
-      Indent              : Natural);
+     (B                : access Backend_HTML;
+      List_Ref_In_File : in out List_Reference_In_File.List;
+      Start_Index      : Natural;
+      Start_Line       : Natural;
+      Start_Column     : Natural;
+      End_Index        : Natural;
+      End_Line         : Natural;
+      Kernel           : access Kernel_Handle_Record'Class;
+      File             : File_Descriptor;
+      Text             : String;
+      File_Name        : VFS.Virtual_File;
+      Entity_Line      : Natural;
+      Line_In_Body     : Natural;
+      Source_File_List : Type_Source_File_Table.HTable;
+      Link_All         : Boolean;
+      Is_Body          : Boolean;
+      Process_Body     : Boolean;
+      Level            : Natural;
+      Indent           : Natural);
    --  Generate an identifier in html format.
 
    procedure Format_Link

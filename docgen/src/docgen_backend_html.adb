@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2003-2004                    --
+--                        Copyright (C) 2003-2005                    --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -127,11 +127,11 @@ package body Docgen_Backend_HTML is
    ------------------
 
    procedure Doc_Subtitle
-     (B                : access Backend_HTML;
-      Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
-      File             : File_Descriptor;
-      Level            : Natural;
-      Subtitle_Name    : String)
+     (B             : access Backend_HTML;
+      Kernel        : access Glide_Kernel.Kernel_Handle_Record'Class;
+      File          : File_Descriptor;
+      Level         : Natural;
+      Subtitle_Name : String)
    is
       pragma Unreferenced (Kernel);
    begin
@@ -169,15 +169,15 @@ package body Docgen_Backend_HTML is
    -----------------
 
    procedure Doc_Package
-     (B                   : access Backend_HTML;
-      Kernel              : access Glide_Kernel.Kernel_Handle_Record'Class;
-      File                : in File_Descriptor;
-      List_Ref_In_File    : in out List_Reference_In_File.List;
-      Source_File_List    : Type_Source_File_Table.HTable;
-      Options             : All_Options;
-      Level               : Natural;
-      Package_Entity      : Entity_Information;
-      Package_Header      : String) is
+     (B                : access Backend_HTML;
+      Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
+      File             : File_Descriptor;
+      List_Ref_In_File : in out List_Reference_In_File.List;
+      Source_File_List : Type_Source_File_Table.HTable;
+      Options          : All_Options;
+      Level            : Natural;
+      Package_Entity   : Entity_Information;
+      Package_Header   : String) is
    begin
       Put_Line
         (File, "  <A NAME="""
@@ -260,7 +260,7 @@ package body Docgen_Backend_HTML is
    procedure Doc_With
      (B                : access Backend_HTML;
       Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
-      File             : in File_Descriptor;
+      File             : File_Descriptor;
       List_Ref_In_File : in out List_Reference_In_File.List;
       Source_File_List : Type_Source_File_Table.HTable;
       Options          : All_Options;
@@ -299,7 +299,7 @@ package body Docgen_Backend_HTML is
    procedure Doc_Var
      (B                : access Backend_HTML;
       Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
-      File             : in File_Descriptor;
+      File             : File_Descriptor;
       List_Ref_In_File : in out List_Reference_In_File.List;
       Source_File_List : Type_Source_File_Table.HTable;
       Options          : All_Options;
@@ -886,10 +886,10 @@ package body Docgen_Backend_HTML is
    --------------------------
 
    procedure Doc_Subprogram_Index
-     (B                : access Backend_HTML;
-      Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
-      File             : File_Descriptor;
-      Options          : All_Options)
+     (B       : access Backend_HTML;
+      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
+      File    : File_Descriptor;
+      Options : All_Options)
    is
       pragma Unreferenced (B, Kernel);
    begin
@@ -928,10 +928,10 @@ package body Docgen_Backend_HTML is
    --------------------
 
    procedure Doc_Type_Index
-     (B                : access Backend_HTML;
-      Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
-      File             : in File_Descriptor;
-      Options          : All_Options)
+     (B       : access Backend_HTML;
+      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
+      File    : File_Descriptor;
+      Options : All_Options)
    is
       pragma Unreferenced (B, Kernel);
    begin
@@ -970,9 +970,9 @@ package body Docgen_Backend_HTML is
    ---------------------------
 
    procedure Doc_Tagged_Type_Index
-     (B                : access Backend_HTML;
-      Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
-      File             : File_Descriptor)
+     (B      : access Backend_HTML;
+      Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+      File   : File_Descriptor)
    is
       pragma Unreferenced (B, Kernel);
    begin
@@ -1084,13 +1084,13 @@ package body Docgen_Backend_HTML is
    --------------------
 
    procedure Doc_Index_Item
-     (B                : access Backend_HTML;
-      Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
-      File             : File_Descriptor;
-      Name             : String;
-      Item_File        : Entities.Source_File;
-      Line             : Natural;
-      Doc_File         : String)
+     (B         : access Backend_HTML;
+      Kernel    : access Glide_Kernel.Kernel_Handle_Record'Class;
+      File      : File_Descriptor;
+      Name      : String;
+      Item_File : Entities.Source_File;
+      Line      : Natural;
+      Doc_File  : String)
    is
       pragma Unreferenced (B, Kernel);
    begin
@@ -1110,10 +1110,10 @@ package body Docgen_Backend_HTML is
    -----------------------
 
    procedure Doc_Private_Index
-     (B                : access Backend_HTML;
-      Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
-      File             : File_Descriptor;
-      Title            : String)
+     (B      : access Backend_HTML;
+      Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+      File   : File_Descriptor;
+      Title  : String)
    is
       pragma Unreferenced (B, Kernel);
    begin
@@ -1127,10 +1127,10 @@ package body Docgen_Backend_HTML is
    ----------------------
 
    procedure Doc_Public_Index
-     (B                : access Backend_HTML;
-      Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
-      File             : File_Descriptor;
-      Title            : String)
+     (B      : access Backend_HTML;
+      Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+      File   : File_Descriptor;
+      Title  : String)
    is
       pragma Unreferenced (B, Kernel);
    begin
@@ -1144,9 +1144,9 @@ package body Docgen_Backend_HTML is
    ----------------------
 
    procedure Doc_End_Of_Index
-     (B                : access Backend_HTML;
-      Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
-      File             : File_Descriptor)
+     (B      : access Backend_HTML;
+      Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+      File   : File_Descriptor)
    is
       pragma Unreferenced (B, Kernel);
    begin
