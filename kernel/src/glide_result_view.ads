@@ -18,6 +18,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Gdk.Color;                use Gdk.Color;
+with Gdk.Pixbuf;               use Gdk.Pixbuf;
 with Gtk.Tree_View;            use Gtk.Tree_View;
 with Gtk.Tree_Store;           use Gtk.Tree_Store;
 with Gtk.Box;                  use Gtk.Box;
@@ -64,6 +66,14 @@ private
       Kernel : Kernel_Handle;
       Tree   : Gtk_Tree_View;
       Model  : Gtk_Tree_Store;
+
+      Non_Leaf_Color : Gdk.Color.Gdk_Color;
+      Leaf_Color     : Gdk.Color.Gdk_Color;
+      --  The color to use in the first column, depending on the status of the
+      --  line.
+
+      Category_Pixbuf : Gdk.Pixbuf.Gdk_Pixbuf;
+      File_Pixbuf     : Gdk.Pixbuf.Gdk_Pixbuf;
 
       Unopened_Files : String_List_Utils.String_List.List;
    end record;

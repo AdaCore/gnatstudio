@@ -116,7 +116,7 @@ package body Cpp_Module is
         (Handler, "c++",
          LI                  => LI_Handler (LI),
          Default_Spec_Suffix => ".hh",
-         Default_Body_Suffix => ".cc");
+         Default_Body_Suffix => ".cpp");
 
       Register_Search_Pattern
         (Kernel,

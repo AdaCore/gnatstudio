@@ -49,11 +49,15 @@ with GNAT.OS_Lib;
 with String_List_Utils;        use String_List_Utils;
 with Glide_Kernel.Modules;     use Glide_Kernel.Modules;
 with Glide_Kernel.Project;     use Glide_Kernel.Project;
+with Pixmaps_IDE;              use Pixmaps_IDE;
 
 with Ada.Text_IO;              use Ada.Text_IO;
 with Ada.Exceptions;           use Ada.Exceptions;
 
 package body Glide_Result_View is
+
+   Non_Leaf_Color_Name : constant String := "blue";
+   --  <preference> color to use for category and file names
 
    use String_List;
 
@@ -79,6 +83,8 @@ package body Glide_Result_View is
    Node_Type_Column     : constant := 5;
    Line_Column          : constant := 6;
    Column_Column        : constant := 7;
+   Weight_Column        : constant := 8;
+   Color_Column         : constant := 9;
 
    --  Number_Of_Columns    : constant := 2;
    --  Number of columns in the ctree.
@@ -110,7 +116,8 @@ package body Glide_Result_View is
       Message       : String;
       Mark          : String;
       Line          : String;
-      Column        : String);
+      Column        : String;
+      Pixbuf        : Gdk.Pixbuf.Gdk_Pixbuf := Null_Pixbuf);
    --  Fill information in Iter.
 
    procedure Add_Location
@@ -155,6 +162,9 @@ package body Glide_Result_View is
       Args    : GValues;
       Kernel  : Kernel_Handle);
    --  Callback for the "file_opened" kernel signal.
+
+   procedure On_Destroy (View : access Gtk_Widget_Record'Class);
+   --  Callback for the "destroy" signal
 
    --------------------
    -- File_Closed_Cb --
@@ -361,7 +371,8 @@ package body Glide_Result_View is
       Message       : String;
       Mark          : String;
       Line          : String;
-      Column        : String) is
+      Column        : String;
+      Pixbuf        : Gdk.Pixbuf.Gdk_Pixbuf := Null_Pixbuf) is
    begin
       Set (View.Model, Iter, Base_Name_Column, Base_Name);
       Set (View.Model, Iter, Absolute_Name_Column, Absolute_Name);
@@ -369,6 +380,20 @@ package body Glide_Result_View is
       Set (View.Model, Iter, Mark_Column, Mark);
       Set (View.Model, Iter, Line_Column, Line);
       Set (View.Model, Iter, Column_Column, Column);
+      Set (View.Model, Iter, Icon_Column, C_Proxy (Pixbuf));
+
+      if Line = "" then
+         Set (View.Model, Iter, Weight_Column, 400);
+
+         --  We can safely take the address of the colors, since they have the
+         --  same lifespan as View and View.Model.
+         Set (View.Model, Iter, Color_Column,
+              Convert (View.Non_Leaf_Color'Address));
+      else
+         Set (View.Model, Iter, Weight_Column, 600);
+         Set (View.Model, Iter, Color_Column,
+              Convert (View.Leaf_Color'Address));
+      end if;
    end Fill_Iter;
 
    -----------------------
@@ -398,7 +423,8 @@ package body Glide_Result_View is
 
       if Category_Iter = Null_Iter then
          Append (View.Model, Category_Iter, Null_Iter);
-         Fill_Iter (View, Category_Iter, Category, "", "", "", "", "");
+         Fill_Iter (View, Category_Iter, Category, "", "", "", "", "",
+                    View.Category_Pixbuf);
          New_Category := True;
       end if;
 
@@ -421,7 +447,8 @@ package body Glide_Result_View is
       --  When we reach this point, we need to create a new sub-category.
 
       Append (View.Model, File_Iter, Category_Iter);
-      Fill_Iter (View, File_Iter, Base_Name (File), File, "", "", "", "");
+      Fill_Iter (View, File_Iter, Base_Name (File), File, "", "", "", "",
+                View.File_Pixbuf);
 
       return;
    end Get_Category_File;
@@ -518,7 +545,11 @@ package body Glide_Result_View is
       Pack_Start (Col, Text_Rend, True);
       Add_Attribute (Col, Pixbuf_Rend, "pixbuf", Icon_Column);
       Add_Attribute (Col, Text_Rend, "text", Base_Name_Column);
+      Add_Attribute (Col, Text_Rend, "weight", Weight_Column);
+      Add_Attribute (Col, Text_Rend, "foreground_gdk", Color_Column);
       Dummy := Append_Column (Tree, Col);
+
+      Gtk_New (Text_Rend);
 
       Gtk_New (Col);
       Pack_Start (Col, Text_Rend, True);
@@ -540,8 +571,22 @@ package body Glide_Result_View is
          Mark_Column               => GType_String,
          Line_Column               => GType_String,
          Column_Column             => GType_String,
-         Node_Type_Column          => GType_Int);
+         Node_Type_Column          => GType_Int,
+         Weight_Column             => GType_Int,
+         Color_Column              => Gdk_Color_Type);
    end Columns_Types;
+
+   ----------------
+   -- On_Destroy --
+   ----------------
+
+   procedure On_Destroy (View : access Gtk_Widget_Record'Class) is
+      V : constant Result_View := Result_View (View);
+   begin
+      Free (V.Non_Leaf_Color);
+      Free (V.Leaf_Color);
+      Unref (V.Category_Pixbuf);
+   end On_Destroy;
 
    -------------
    -- Gtk_New --
@@ -565,9 +610,18 @@ package body Glide_Result_View is
       Kernel : Kernel_Handle := null)
    is
       Scrolled : Gtk_Scrolled_Window;
+      Success  : Boolean;
    begin
       Initialize_Hbox (View);
       View.Kernel := Kernel;
+
+      View.Non_Leaf_Color := Parse (Non_Leaf_Color_Name);
+      Alloc_Color (Get_System, View.Non_Leaf_Color, False, True, Success);
+
+      View.Category_Pixbuf := Gdk_New_From_Xpm_Data (var_xpm);
+      View.File_Pixbuf     := Gdk_New_From_Xpm_Data (mini_page_xpm);
+
+      View.Leaf_Color := Black (Get_System);
 
       --  Initialize the tree.
 
@@ -583,6 +637,9 @@ package body Glide_Result_View is
       Add (Scrolled, View.Tree);
 
       Add (View, Scrolled);
+
+      Widget_Callback.Connect
+        (View, "destroy", Widget_Callback.To_Marshaller (On_Destroy'Access));
 
       Gtkada.Handlers.Return_Callback.Object_Connect
         (View.Tree,
