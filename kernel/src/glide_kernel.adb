@@ -407,8 +407,14 @@ package body Glide_Kernel is
       --  Save a specific child
 
       procedure Add_Child_If_Needed (Child : MDI_Child) is
-         Module : constant Module_ID := Get_Module_From_Child (Child);
+         Module : Module_ID;
       begin
+         if Child = null then
+            return;
+         end if;
+
+         Module := Get_Module_From_Child (Child);
+
          if Module /= null
            and then Module.Info.Save_Function /= null
            and then Module.Info.Save_Function
