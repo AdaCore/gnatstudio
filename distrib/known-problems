@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 2.0.1
 
+- D505-015 Project Explorer is sometimes empty on Windows
+  Problem:    The project explorer sometimes only show the directories of
+              the project, but no source file, although these are still found
+              when pressing File->Open From Project
+  Workaround: Use all lower-cases for your directory names
+
 - D527-011 Some errors no longer auto-fixable
   Problem:    If you compile multiple files with errors with the same command
               (for instance with make -k or gnatmake -k), some errors that
