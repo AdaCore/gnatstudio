@@ -1,5 +1,10 @@
 Known Problems fixed in GPS 1.0.1
 
+- Exception raises when processing Ada separate units
+  Problem:    When GPS displays tooltips or computes cross-references on a
+              separate unit, it crashes.
+  Workaround: <none found>
+
 - The highlighting from the debugger stayed after the debugger ends.
   Problem:    When the debugger highlights lines of code, the highlighting
               remains after the debugger terminates.
