@@ -22,8 +22,23 @@ with Gtk.Container; use Gtk.Container;
 with Gtk.Socket;    use Gtk.Socket;
 with Gtk.Widget;    use Gtk.Widget;
 with Gtk.Window;    use Gtk.Window;
+with GVD.Types;     use GVD.Types;
+with GNAT.IO;       use GNAT.IO;
 
 package body GVD.Text_Box.Source_Editor.Socket is
+
+   ----------------------
+   -- Local Procedures --
+   ----------------------
+
+   procedure Print_File_Location
+     (File     : String;
+      Line     : Natural;
+      Position : Natural);
+   --  Print on standard output the location of a given file, following
+   --  the same syntax than gdb.
+   --  ??? This is gdb specific but gives a much better integration, so
+   --  it is worth it.
 
    ------------
    -- Attach --
@@ -84,7 +99,7 @@ package body GVD.Text_Box.Source_Editor.Socket is
 
    procedure Highlight_Current_Line (Editor : access Socket_Record) is
    begin
-      null;
+      Print_File_Location (Editor.Current_File.all, Editor.Line, 0);
    end Highlight_Current_Line;
 
    --------------------
@@ -93,10 +108,14 @@ package body GVD.Text_Box.Source_Editor.Socket is
 
    procedure Highlight_Word
      (Editor   : access Socket_Record;
-      Position : GVD.Types.Position_Type)
-   is
+      Line     : Natural;
+      Column   : Natural;
+      Position : Position_Type) is
    begin
-      null;
+      if Editor.TTY_Mode then
+         Print_File_Location
+           (Editor.Current_File.all, Line, Natural (Position));
+      end if;
    end Highlight_Word;
 
    ----------------
@@ -123,10 +142,14 @@ package body GVD.Text_Box.Source_Editor.Socket is
    procedure Load_File
      (Editor      : access Socket_Record;
       File_Name   : String;
-      Set_Current : Boolean := True)
-   is
+      Set_Current : Boolean := True) is
    begin
-      null;
+      Free (Editor.Current_File);
+      Editor.Current_File := new String' (File_Name);
+
+      if Editor.TTY_Mode then
+         Print_File_Location (File_Name, 1, 0);
+      end if;
    end Load_File;
 
    -------------------------
@@ -138,6 +161,16 @@ package body GVD.Text_Box.Source_Editor.Socket is
       null;
    end Preferences_Changed;
 
+   procedure Print_File_Location
+     (File     : String;
+      Line     : Natural;
+      Position : Natural) is
+   begin
+      Put_Line (ASCII.SUB & ASCII.SUB & File & ":" &
+        Trim (Natural'Image (Line), Left) & ":" &
+        Trim (Natural'Image (Position), Left) & ":beg:0x0");
+   end Print_File_Location;
+
    --------------
    -- Set_Line --
    --------------
@@ -148,6 +181,10 @@ package body GVD.Text_Box.Source_Editor.Socket is
       Set_Current : Boolean := True) is
    begin
       Editor.Line := Line;
+
+      if Editor.TTY_Mode then
+         Print_File_Location (Editor.Current_File.all, Line, 0);
+      end if;
    end Set_Line;
 
    ------------------------
@@ -156,8 +193,7 @@ package body GVD.Text_Box.Source_Editor.Socket is
 
    procedure Update_Breakpoints
      (Editor : access Socket_Record;
-      Br     : GVD.Types.Breakpoint_Array)
-   is
+      Br     : Breakpoint_Array) is
    begin
       null;
    end Update_Breakpoints;
