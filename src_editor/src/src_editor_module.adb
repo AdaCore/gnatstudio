@@ -51,7 +51,6 @@ with Gtk.Button;                use Gtk.Button;
 with Gtk.Dialog;                use Gtk.Dialog;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.GEntry;                use Gtk.GEntry;
-with Gtk.Handlers;              use Gtk.Handlers;
 with Gtk.Label;                 use Gtk.Label;
 with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
@@ -326,12 +325,6 @@ package body Src_Editor_Module is
       Context : Selection_Context_Access);
    --  Edit a file (from a contextual menu)
 
-   procedure On_Lines_Revealed
-     (Widget  : access Glib.Object.GObject_Record'Class;
-      Args    : GValues;
-      Kernel  : Kernel_Handle);
-   --  Display the line numbers.
-
    procedure Source_Editor_Contextual
      (Object  : access GObject_Record'Class;
       Context : access Selection_Context'Class;
@@ -369,27 +362,23 @@ package body Src_Editor_Module is
    --  Callback for the "delete_event" signal.
 
    procedure File_Edited_Cb
-     (Widget  : access Glib.Object.GObject_Record'Class;
-      Args    : GValues;
-      Kernel  : Kernel_Handle);
-   --  Callback for the "file_edited" signal.
+     (Kernel  : access Kernel_Handle_Record'Class;
+      Data    : Hooks_Data'Class);
+   --  Callback for the "file_edited" hook.
 
    procedure File_Closed_Cb
-     (Widget  : access Glib.Object.GObject_Record'Class;
-      Args    : GValues;
-      Kernel  : Kernel_Handle);
-   --  Callback for the "file_closed" signal.
+     (Kernel  : access Kernel_Handle_Record'Class;
+      Data    : Hooks_Data'Class);
+   --  Callback for the "file_closed" hook.
 
    procedure File_Changed_On_Disk_Cb
-     (Widget  : access Glib.Object.GObject_Record'Class;
-      Args    : GValues;
-      Kernel  : Kernel_Handle);
+     (Kernel  : access Kernel_Handle_Record'Class;
+      Data    : Hooks_Data'Class);
    --  Callback for the "file_changed_on_disk" signal.
 
    procedure File_Saved_Cb
-     (Widget  : access Glib.Object.GObject_Record'Class;
-      Args    : GValues;
-      Kernel  : Kernel_Handle);
+     (Kernel  : access Kernel_Handle_Record'Class;
+      Data    : Hooks_Data'Class);
    --  Callback for the "file_saved" signal.
 
    procedure Preferences_Changed
@@ -410,7 +399,7 @@ package body Src_Editor_Module is
    --  Interactive command handler for the source editor module (Search part)
 
    procedure Add_To_Recent_Menu
-     (Kernel : access Kernel_Handle_Record'Class; File : String);
+     (Kernel : access Kernel_Handle_Record'Class; File : Virtual_File);
    --  Add an entry for File to the Recent menu, if needed.
 
    function Find_Mark (Identifier : String) return Mark_Identifier_Record;
@@ -1445,22 +1434,18 @@ package body Src_Editor_Module is
    --------------------
 
    procedure File_Edited_Cb
-     (Widget  : access Glib.Object.GObject_Record'Class;
-      Args    : GValues;
-      Kernel  : Kernel_Handle)
+     (Kernel  : access Kernel_Handle_Record'Class;
+      Data    : Hooks_Data'Class)
    is
-      pragma Unreferenced (Widget);
-
+      D : constant File_Hooks_Args := File_Hooks_Args (Data);
       Id    : constant Source_Editor_Module :=
         Source_Editor_Module (Src_Editor_Module_Id);
       Infos : Line_Information_Data;
-      File  : constant Virtual_File :=
-        Create (Full_Filename => Get_String (Nth (Args, 1)));
    begin
       if Id.Display_Line_Numbers then
          Create_Line_Information_Column
            (Kernel,
-            File,
+            D.File,
             Src_Editor_Module_Name,
             Stick_To_Data => False,
             Every_Line    => True);
@@ -1470,14 +1455,14 @@ package body Src_Editor_Module is
 
          Add_Line_Information
            (Kernel,
-            File,
+            D.File,
             Src_Editor_Module_Name,
             Infos);
 
          Unchecked_Free (Infos);
       end if;
 
-      Fill_Marks (Kernel, File);
+      Fill_Marks (Kernel_Handle (Kernel), D.File);
    exception
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
@@ -1488,19 +1473,17 @@ package body Src_Editor_Module is
    -----------------------------
 
    procedure File_Changed_On_Disk_Cb
-     (Widget  : access Glib.Object.GObject_Record'Class;
-      Args    : GValues;
-      Kernel  : Kernel_Handle)
+     (Kernel  : access Kernel_Handle_Record'Class;
+      Data    : Hooks_Data'Class)
    is
-      File  : constant Virtual_File :=
-        Create (Get_String (Nth (Args, 1)), Kernel);
+      D : constant File_Hooks_Args := File_Hooks_Args (Data);
       Iter  : Child_Iterator := First_Child (Get_MDI (Kernel));
       Child : MDI_Child;
       Box   : Source_Box;
       Dummy : Boolean;
-      pragma Unreferenced (Widget, Dummy);
+      pragma Unreferenced (Dummy);
    begin
-      if File = VFS.No_File then
+      if D.File = VFS.No_File then
          return;
       end if;
 
@@ -1509,7 +1492,7 @@ package body Src_Editor_Module is
 
          exit when Child = null;
 
-         if File = Get_Filename (Child) then
+         if D.File = Get_Filename (Child) then
             Box := Source_Box (Get_Widget (Child));
             Dummy := Check_Timestamp_And_Reload
               (Get_Buffer (Box.Editor),
@@ -1526,19 +1509,15 @@ package body Src_Editor_Module is
    --------------------
 
    procedure File_Closed_Cb
-     (Widget  : access Glib.Object.GObject_Record'Class;
-      Args    : GValues;
-      Kernel  : Kernel_Handle)
+     (Kernel  : access Kernel_Handle_Record'Class;
+      Data    : Hooks_Data'Class)
    is
-      pragma Unreferenced (Widget);
-
+      pragma Unreferenced (Kernel);
       use Mark_Identifier_List;
 
+      D : constant File_Hooks_Args := File_Hooks_Args (Data);
       Id    : constant Source_Editor_Module :=
         Source_Editor_Module (Src_Editor_Module_Id);
-      File  : constant Virtual_File :=
-        Create (Get_String (Nth (Args, 1)), Kernel);
-
       Node        : List_Node;
       Mark_Record : Mark_Identifier_Record;
       Added       : Boolean := False;
@@ -1547,12 +1526,15 @@ package body Src_Editor_Module is
    begin
       --  If the file has marks, store their location.
 
-      Node := First (Id.Stored_Marks);
+      if Id = null then
+         Node := Null_Node;
+      else
+         Node := First (Id.Stored_Marks);
+      end if;
 
       while Node /= Null_Node loop
-         if Data (Node).File = File then
-            Mark_Record := Data (Node);
-
+         Mark_Record := Mark_Identifier_List.Data (Node);
+         if Mark_Record.File = D.File then
             if Mark_Record.Child /= null
               and then Mark_Record.Mark /= null
               and then Mark_Record.Line /= 0
@@ -1571,14 +1553,15 @@ package body Src_Editor_Module is
                   Mark_Identifier_Record'
                     (Id     => Mark_Record.Id,
                      Child  => null,
-                     File   => File,
+                     File   => D.File,
                      Line   => Mark_Record.Line,
                      Mark   => null,
                      Column => Mark_Record.Column,
                      Length => Mark_Record.Length));
 
                if not Added then
-                  Add_Unique_Sorted (Id.Unopened_Files, Full_Name (File).all);
+                  Add_Unique_Sorted
+                    (Id.Unopened_Files, Full_Name (D.File).all);
                   Added := True;
                end if;
             end if;
@@ -1597,22 +1580,19 @@ package body Src_Editor_Module is
    -------------------
 
    procedure File_Saved_Cb
-     (Widget  : access Glib.Object.GObject_Record'Class;
-      Args    : GValues;
-      Kernel  : Kernel_Handle)
+     (Kernel  : access Kernel_Handle_Record'Class;
+      Data    : Hooks_Data'Class)
    is
-      pragma Unreferenced (Widget);
-
-      File  : constant String := Get_String (Nth (Args, 1));
-      Base  : constant String := Base_Name (File);
+      D : constant File_Hooks_Args := File_Hooks_Args (Data);
+      Base  : constant String := Base_Name (D.File);
    begin
       --  Insert the saved file in the Recent menu.
 
-      if File /= ""
-        and then not (Base'Length > 2
-                      and then Base (Base'First .. Base'First + 1) = ".#")
+      if D.File /= VFS.No_File
+        and then (Base'Length <= 2
+                  or else Base (Base'First .. Base'First + 1) /= ".#")
       then
-         Add_To_Recent_Menu (Kernel, File);
+         Add_To_Recent_Menu (Kernel, D.File);
       end if;
    exception
       when E : others =>
@@ -1755,26 +1735,24 @@ package body Src_Editor_Module is
          return null;
    end Load_Desktop;
 
-   -----------------------
-   -- On_Lines_Revealed --
-   -----------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_Lines_Revealed
-     (Widget  : access Glib.Object.GObject_Record'Class;
-      Args    : GValues;
-      Kernel  : Kernel_Handle)
+   procedure Execute
+     (Hook   : Lines_Revealed_Hook_Record;
+      Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Data   : Glide_Kernel.Hooks.Hooks_Data'Class)
    is
-      pragma Unreferenced (Widget);
-
-      Context      : constant Selection_Context_Access :=
-        To_Selection_Context_Access (Get_Address (Nth (Args, 1)));
+      pragma Unreferenced (Hook);
+      D : constant Context_Hooks_Args := Context_Hooks_Args (Data);
       Area_Context : File_Area_Context_Access;
       Infos        : Line_Information_Data;
       Line1, Line2 : Integer;
 
    begin
-      if Context.all in File_Area_Context'Class then
-         Area_Context := File_Area_Context_Access (Context);
+      if D.Context.all in File_Area_Context'Class then
+         Area_Context := File_Area_Context_Access (D.Context);
 
          Get_Area (Area_Context, Line1, Line2);
 
@@ -1795,7 +1773,7 @@ package body Src_Editor_Module is
 
          Unchecked_Free (Infos);
       end if;
-   end On_Lines_Revealed;
+   end Execute;
 
    ------------------
    -- Save_Desktop --
@@ -2043,9 +2021,9 @@ package body Src_Editor_Module is
    ------------------------
 
    procedure Add_To_Recent_Menu
-     (Kernel : access Kernel_Handle_Record'Class; File : String) is
+     (Kernel : access Kernel_Handle_Record'Class; File : Virtual_File) is
    begin
-      Add_To_History (Kernel, Hist_Key, File);
+      Add_To_History (Kernel, Hist_Key, Full_Name (File).all);
    end Add_To_Recent_Menu;
 
    ---------------
@@ -2167,7 +2145,7 @@ package body Src_Editor_Module is
             After => False);
 
          if File /= VFS.No_File then
-            Add_To_Recent_Menu (Kernel, Full_Name (File).all);
+            Add_To_Recent_Menu (Kernel, File);
          end if;
 
       else
@@ -3459,34 +3437,15 @@ package body Src_Editor_Module is
          Kernel_Callback.To_Marshaller (On_Save'Access),
          Kernel_Handle (Kernel));
 
-      Kernel_Callback.Connect
-        (Kernel, File_Saved_Signal,
-         File_Saved_Cb'Access,
-         Kernel_Handle (Kernel));
+      Add_Hook (Kernel, File_Saved_Hook, File_Saved_Cb'Access);
 
       Undo_Redo_Data.Set (Kernel, Undo_Redo, Undo_Redo_Id);
 
       Add_Hook (Kernel, Preferences_Changed_Hook, Preferences_Changed'Access);
-
-      Source_Editor_Module (Src_Editor_Module_Id).File_Closed_Id :=
-        Kernel_Callback.Connect
-          (Kernel,
-           File_Closed_Signal,
-           File_Closed_Cb'Access,
-           Kernel_Handle (Kernel));
-
-      Kernel_Callback.Connect
-        (Kernel,
-         File_Changed_On_Disk_Signal,
-         File_Changed_On_Disk_Cb'Access,
-         Kernel_Handle (Kernel));
-
-      Source_Editor_Module (Src_Editor_Module_Id).File_Edited_Id :=
-        Kernel_Callback.Connect
-          (Kernel,
-           File_Edited_Signal,
-           File_Edited_Cb'Access,
-           Kernel_Handle (Kernel));
+      Add_Hook (Kernel, File_Closed_Hook, File_Closed_Cb'Access);
+      Add_Hook (Kernel, File_Edited_Hook, File_Edited_Cb'Access);
+      Add_Hook
+        (Kernel, File_Changed_On_Disk_Hook, File_Changed_On_Disk_Cb'Access);
 
       --  Commands
 
@@ -4026,13 +3985,9 @@ package body Src_Editor_Module is
 
       --  Connect necessary signal to display line numbers.
       if Pref_Display_Line_Numbers then
-         if Id.Source_Lines_Revealed_Id = No_Handler then
-            Id.Source_Lines_Revealed_Id :=
-              Kernel_Callback.Connect
-                (Kernel,
-                 Source_Lines_Revealed_Signal,
-                 On_Lines_Revealed'Access,
-                 Kernel_Handle (Kernel));
+         if Id.Lines_Hook = null then
+            Id.Lines_Hook := new Lines_Revealed_Hook_Record;
+            Add_Hook (Kernel, Source_Lines_Revealed_Hook, Id.Lines_Hook);
 
             declare
                Files : constant VFS.File_Array := Open_Files (Kernel);
@@ -4048,11 +4003,9 @@ package body Src_Editor_Module is
             end;
          end if;
 
-      elsif Id.Source_Lines_Revealed_Id /= No_Handler then
-         Gtk.Handlers.Disconnect
-           (Kernel, Id.Source_Lines_Revealed_Id);
-         Id.Source_Lines_Revealed_Id := No_Handler;
-
+      elsif Id.Lines_Hook /= null then
+         Remove_Hook (Kernel, Source_Lines_Revealed_Hook, Id.Lines_Hook);
+         Id.Lines_Hook := null;
          Remove_Line_Information_Column
            (Kernel, VFS.No_File, Src_Editor_Module_Name);
       end if;
@@ -4083,6 +4036,7 @@ package body Src_Editor_Module is
       Unref (Remove_Blank_Lines_Pixbuf);
       Unref (Hide_Block_Pixbuf);
       Unref (Unhide_Block_Pixbuf);
+      Src_Editor_Module_Id := null;
    end Destroy;
 
    -----------------
