@@ -1057,6 +1057,12 @@ package body SN.DB_Structures is
       tab.Comments.First := cur_pos;
       tab.Comments.Last := cur_pos + Len - 1;
       cur_pos := cur_pos + Len;
+
+      tab.Class_Name := Get_Segment_From_Comment
+        (tab.Comments,
+         tab.Buffer,
+         "class");
+
       Number_Of_Allocated_Buffers := Number_Of_Allocated_Buffers + 1;
       return tab;
    end Parse_Pair;

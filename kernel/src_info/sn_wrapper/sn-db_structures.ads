@@ -308,6 +308,7 @@ package SN.DB_Structures is
       Attributes : SN_Attributes;
       Original : Segment;
       Comments : Segment;
+      Class_Name : Segment; -- name of enclosed class
       Buffer : GNAT.OS_Lib.String_Access;
    end record;
    --  Typedefs
