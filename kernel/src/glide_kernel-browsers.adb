@@ -40,7 +40,11 @@ with Src_Info;                  use Src_Info;
 with Src_Info.Queries;          use Src_Info.Queries;
 with String_Utils;              use String_Utils;
 
+with Traces; use Traces;
+
 package body Glide_Kernel.Browsers is
+
+   Me : Debug_Handle := Create ("Kernel.Browser");
 
    Default_Browser_Width  : constant := 400;
    Default_Browser_Height : constant := 400;
@@ -156,6 +160,9 @@ package body Glide_Kernel.Browsers is
       Lib_Info := Locate_From_Source (Kernel, F);
       if Lib_Info = No_LI_File then
          --  ??? Should be displayed in the status bar.
+
+         Trace (Me, "Examine_Dependencies: Couldn't find ALI file for "
+                & File);
 
          --  ??? Should we put an item in the browser anyway, even if nothing
          --  ??? can be done with it anyway ? This might give more indication

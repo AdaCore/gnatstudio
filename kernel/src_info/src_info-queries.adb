@@ -27,8 +27,11 @@
 -----------------------------------------------------------------------
 
 with Unchecked_Deallocation;
+with Traces; use Traces;
 
 package body Src_Info.Queries is
+
+   Me : Debug_Handle := Create ("SRC_INFO");
 
    procedure Free is new
      Unchecked_Deallocation (Dependency_Node, Dependency_List);
@@ -426,9 +429,12 @@ package body Src_Info.Queries is
       if Lib_Info = null then
          Dependencies := null;
          Status := Internal_Error;
+         Trace (Me, "No Lib_Info specified for Find_Dependencies");
          return;
       end if;
 
+      Trace (Me, "Getting dependencies for "
+             & Get_LI_Filename (Lib_Info));
       Current_Dep  := Lib_Info.LI.Dependencies_Info;
       Dependencies := null;
 
@@ -441,6 +447,8 @@ package body Src_Info.Queries is
                Destroy (Dependencies);
                Dependencies := null;
                Status := Internal_Error;
+               Trace (Me, "Couldn't find the File_Info_Ptr for "
+                      & Get_LI_Filename (Lib_Info));
                return;
             end if;
 
