@@ -469,10 +469,11 @@ package body String_Utils is
    --------------------
 
    function File_Extension (File_Name : String) return String is
+      Base : constant String := Base_File_Name (File_Name);
    begin
-      for J in reverse File_Name'Range loop
-         if File_Name (J) = '.' then
-            return File_Name (J + 1 .. File_Name'Last);
+      for J in reverse Base'Range loop
+         if Base (J) = '.' then
+            return Base (J + 1 .. Base'Last);
          end if;
       end loop;
 
