@@ -9597,6 +9597,18 @@ The idea behind this approach is that you can have a local overriding of some
 source files from the common build/source setup (if you are working
 on a small part of the whole system, you may not want to have a complete
 copy of the code on your local machine).
+
+@item Put all duplicate files in the same project
+There is one specific case where a project is allowed to have duplicate source
+files: if the list of source directories is specified explicitely. All
+duplicate files must be in the same project. With these conditions, there is
+no ambiguity for GPS and the GNAT tools which file to use, and the first
+file found on the source path is the one hidding all the others. GPS only
+shows the first file.
+
+You can then have a scenario variable that changes the order of source
+directories to give visibility on one of the other duplicate files.
+
 @end itemize
 
 @end table
