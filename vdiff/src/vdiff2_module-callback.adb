@@ -65,7 +65,7 @@ package body Vdiff2_Module.Callback is
       Id     : constant VDiff2_Module := VDiff2_Module (Vdiff_Module_ID);
       Item   : Diff_Head;
       Result : Diff_List;
-      File1  : constant String :=
+      File1  : constant Virtual_File :=
         Select_File
           (Title             => -"Select Common Ancestor",
            Parent            => Get_Main_Window (Kernel),
@@ -76,12 +76,12 @@ package body Vdiff2_Module.Callback is
       pragma Unreferenced (Widget, Button);
 
    begin
-      if File1 = "" then
+      if File1 = VFS.No_File then
          return;
       end if;
       Change_Dir (Dir_Name (File1));
       declare
-         File2 : constant String :=
+         File2 : constant Virtual_File :=
            Select_File
              (Title             => -"Select First Changes",
               Base_Directory    => "",
@@ -92,12 +92,12 @@ package body Vdiff2_Module.Callback is
          Dummy : Command_Return_Type;
          pragma Unreferenced (Dummy);
       begin
-         if File2 = "" then
+         if File2 = VFS.No_File then
             return;
          end if;
          Change_Dir (Dir_Name (File2));
          declare
-            File3 : constant String :=
+            File3 : constant Virtual_File :=
               Select_File
                 (Title             => -"Select Second Changes",
                  Base_Directory    => "",
@@ -105,19 +105,13 @@ package body Vdiff2_Module.Callback is
                  Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
                  Kind              => Unspecified,
                  History           => Get_History (Kernel));
-
-            F1, F2, F3 : Virtual_File;
          begin
-            if File3 = "" then
+            if File3 = VFS.No_File then
                return;
             end if;
 
-            F1 := Create (Full_Filename => File1);
-            F2 := Create (Full_Filename => File2);
-            F3 := Create (Full_Filename => File3);
-
             Trace (Me, "begin Diff3");
-            Result := Diff3 (Kernel, F1, F2, F3);
+            Result := Diff3 (Kernel, File1, File2, File3);
             Trace (Me, "end Diff3 ");
 
             if Result = Diff_Chunk_List.Null_List then
@@ -128,9 +122,9 @@ package body Vdiff2_Module.Callback is
                return;
             end if;
             Item := (List => Result,
-                     File1 => F1,
-                     File2 => F2,
-                     File3 => F3,
+                     File1 => File1,
+                     File2 => File2,
+                     File3 => File3,
                      Current_Node => First (Result),
                      Ref_File => 2);
             Append (Id.List_Diff.all, Item);
@@ -157,7 +151,7 @@ package body Vdiff2_Module.Callback is
       Id     : constant VDiff2_Module := VDiff2_Module (Vdiff_Module_ID);
       Item   : Diff_Head;
       Result : Diff_List;
-      File1  : constant String :=
+      File1  : constant Virtual_File :=
         Select_File
           (Title             => -"Select First File",
            Base_Directory    => "",
@@ -169,12 +163,12 @@ package body Vdiff2_Module.Callback is
       pragma Unreferenced (Widget, Button);
 
    begin
-      if File1 = "" then
+      if File1 = VFS.No_File then
          return;
       end if;
       Change_Dir (Dir_Name (File1));
       declare
-         File2 : constant String :=
+         File2 : constant Virtual_File :=
            Select_File
              (Title             => -"Select Second File",
               Base_Directory    => "",
@@ -185,17 +179,12 @@ package body Vdiff2_Module.Callback is
          Dummy : Command_Return_Type;
          pragma Unreferenced (Dummy);
 
-         F1, F2 : Virtual_File;
-
       begin
-         if File2 = "" then
+         if File2 = VFS.No_File then
             return;
          end if;
 
-         F1 := Create (Full_Filename => File1);
-         F2 := Create (Full_Filename => File2);
-
-         Result := Diff (Kernel, F1, F2);
+         Result := Diff (Kernel, File1, File2);
 
          if Result = Diff_Chunk_List.Null_List then
             Button := Message_Dialog
@@ -206,8 +195,8 @@ package body Vdiff2_Module.Callback is
          end if;
 
          Item := (List => Result,
-                  File1 => F1,
-                  File2 => F2,
+                  File1 => File1,
+                  File2 => File2,
                   File3 => VFS.No_File,
                   Current_Node => First (Result),
                   Ref_File => 2);
@@ -231,7 +220,7 @@ package body Vdiff2_Module.Callback is
       Id     : constant VDiff2_Module := VDiff2_Module (Vdiff_Module_ID);
       Item   : Diff_Head;
       Result : Diff_List;
-      File1  : constant String :=
+      File1  : constant Virtual_File :=
         Select_File
           (Title             => -"Select Common Ancestor",
            Base_Directory    => "",
@@ -243,12 +232,12 @@ package body Vdiff2_Module.Callback is
       pragma Unreferenced (Widget, Button);
 
    begin
-      if File1 = "" then
+      if File1 = VFS.No_File then
          return;
       end if;
       Change_Dir (Dir_Name (File1));
       declare
-         File2 : constant String :=
+         File2 : constant Virtual_File :=
            Select_File
              (Title             => -"Select First Changes",
               Base_Directory    => "",
@@ -258,12 +247,12 @@ package body Vdiff2_Module.Callback is
               History           => Get_History (Kernel));
 
       begin
-         if File2 = "" then
+         if File2 = VFS.No_File then
             return;
          end if;
          Change_Dir (Dir_Name (File2));
          declare
-            File3 : constant String :=
+            File3 : constant Virtual_File :=
               Select_File
                 (Title             => -"Select Second Changes",
                  Base_Directory    => "",
@@ -273,19 +262,13 @@ package body Vdiff2_Module.Callback is
                  History           => Get_History (Kernel));
             Dummy : Command_Return_Type;
             pragma Unreferenced (Dummy);
-
-            F1, F2, F3 : Virtual_File;
          begin
-            if File3 = "" then
+            if File3 = VFS.No_File then
                return;
             end if;
 
-            F1 := Create (Full_Filename => File1);
-            F2 := Create (Full_Filename => File2);
-            F3 := Create (Full_Filename => File3);
-
             Change_Dir (Dir_Name (File3));
-            Result := Diff3 (Kernel, F1, F2, F3);
+            Result := Diff3 (Kernel, File1, File2, File3);
 
             if Result = Diff_Chunk_List.Null_List then
                Button := Message_Dialog
@@ -296,9 +279,9 @@ package body Vdiff2_Module.Callback is
             end if;
 
             Item := (List => Result,
-                     File1 => F1,
-                     File2 => F2,
-                     File3 => F3,
+                     File1 => File1,
+                     File2 => File2,
+                     File3 => File3,
                      Current_Node => First (Result),
                      Ref_File => 2);
             Append (Id.List_Diff.all, Item);
@@ -306,7 +289,7 @@ package body Vdiff2_Module.Callback is
             Dummy := Execute (Id.Command_First);
 
             declare
-               Merge     : constant String :=
+               Merge     : constant Virtual_File :=
                  Select_File
                    (Title             => -"Select Merge File",
                     Base_Directory    => "",
@@ -317,8 +300,8 @@ package body Vdiff2_Module.Callback is
                Args_edit : Argument_List := (1 => new String'(Merge));
 
             begin
-               if Merge /= "" then
-                  Show_Merge (Kernel, Merge, Item);
+               if Merge /= Virtual_File then
+                  Show_Merge (Kernel, Full_Name (Merge), Item);
                end if;
 
                Free (Args_edit);
@@ -341,7 +324,7 @@ package body Vdiff2_Module.Callback is
       Id     : constant VDiff2_Module := VDiff2_Module (Vdiff_Module_ID);
       Item   : Diff_Head;
       Result : Diff_List;
-      File1  : constant String :=
+      File1  : constant Virtual_File :=
         Select_File
           (Title             => -"Select First File",
            Parent            => Get_Main_Window (Kernel),
@@ -352,12 +335,12 @@ package body Vdiff2_Module.Callback is
       pragma Unreferenced (Widget, Button);
 
    begin
-      if File1 = "" then
+      if File1 = VFS.No_File then
          return;
       end if;
       Change_Dir (Dir_Name (File1));
       declare
-         File2 : constant String :=
+         File2 : constant Virtual_File :=
            Select_File
              (Title             => -"Select Second File",
               Base_Directory    => "",
@@ -368,18 +351,13 @@ package body Vdiff2_Module.Callback is
          Dummy : Command_Return_Type;
          pragma Unreferenced (Dummy);
 
-         F1, F2 : Virtual_File;
-
       begin
-         if File2 = "" then
+         if File2 = VFS.No_File then
             return;
          end if;
 
-         F1 := Create (Full_Filename => File1);
-         F2 := Create (Full_Filename => File2);
-
          Change_Dir (Dir_Name (File2));
-         Result := Diff (Kernel, F1, F2);
+         Result := Diff (Kernel, File1, File2);
 
          if Result = Diff_Chunk_List.Null_List then
             Button := Message_Dialog
@@ -390,8 +368,8 @@ package body Vdiff2_Module.Callback is
          end if;
 
          Item := (List => Result,
-                  File1 => F1,
-                  File2 => F2,
+                  File1 => File1,
+                  File2 => File2,
                   File3 => VFS.No_File,
                   Current_Node => First (Result),
                   Ref_File => 2);
@@ -400,7 +378,7 @@ package body Vdiff2_Module.Callback is
          Dummy := Execute (Id.Command_First);
 
          declare
-            Merge     : constant String :=
+            Merge     : constant Virtual_File :=
               Select_File
                 (Title             => -"Select Merge File",
                  Base_Directory    => "",
@@ -411,8 +389,8 @@ package body Vdiff2_Module.Callback is
             Args_edit : Argument_List := (1 => new String'(Merge));
 
          begin
-            if Merge /= "" then
-               Show_Merge (Kernel, Merge, Item);
+            if Merge /= VFS.No_File then
+               Show_Merge (Kernel, Full_Name (Merge), Item);
             end if;
 
             Free (Args_edit);

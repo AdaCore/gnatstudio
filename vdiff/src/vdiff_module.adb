@@ -71,7 +71,7 @@ package body Vdiff_Module is
    is
       Vdiff  : Vdiff_Access;
       Result : Diff_Occurrence_Link;
-      File1  : constant String :=
+      File1  : constant Virtual_File :=
         Select_File
           (Title             => -"Select First File",
            Parent            => Get_Main_Window (Kernel),
@@ -80,17 +80,16 @@ package body Vdiff_Module is
            History           => Get_History (Kernel));
 
       Child  : MDI_Child;
-      F1, F2 : Virtual_File;
       Button : Message_Dialog_Buttons;
       pragma Unreferenced (Widget, Button);
 
    begin
-      if File1 = "" then
+      if File1 = VFS.No_File then
          return;
       end if;
 
       declare
-         File2 : constant String :=
+         File2 : constant Virtual_File :=
            Select_File
              (Title             => -"Select Second File",
               Parent            => Get_Main_Window (Kernel),
@@ -99,14 +98,11 @@ package body Vdiff_Module is
               History           => Get_History (Kernel));
 
       begin
-         if File2 = "" then
+         if File2 = VFS.No_File then
             return;
          end if;
 
-         F1 := Create (Full_Filename => File1);
-         F2 := Create (Full_Filename => File2);
-
-         Result := Diff (Kernel, F1, F2);
+         Result := Diff (Kernel, File1, File2);
 
          if Result = null then
             Button := Message_Dialog
@@ -117,10 +113,10 @@ package body Vdiff_Module is
          end if;
 
          Gtk_New (Vdiff);
-         Set_Text (Vdiff.File_Label1, File1);
-         Set_Text (Vdiff.File_Label2, File2);
+         Set_Text (Vdiff.File_Label1, Full_Name (File1));
+         Set_Text (Vdiff.File_Label2, Full_Name (File2));
          Fill_Diff_Lists
-           (Kernel, Vdiff.Clist1, Vdiff.Clist2, F1, F2, Result);
+           (Kernel, Vdiff.Clist1, Vdiff.Clist2, File1, File2, Result);
          Show_All (Vdiff);
          Child := Put
            (Kernel, Vdiff,
