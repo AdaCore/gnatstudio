@@ -192,7 +192,7 @@ package body Commands is
    begin
       --  If there is already a command running, then do nothing.
 
-      if Queue.Command_In_Progress = True then
+      if Queue.Command_In_Progress then
          return;
       end if;
 

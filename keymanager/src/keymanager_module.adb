@@ -340,8 +340,8 @@ package body KeyManager_Module is
    is
       Item : Macro_Item_Key_Access;
    begin
-      if (Get_Event_Type (Event) = Key_Press
-          or else Get_Event_Type (Event) = Key_Release)
+      if Get_Event_Type (Event) = Key_Press
+        or else Get_Event_Type (Event) = Key_Release
       then
          if Keymanager_Module.Key_Manager.Recording then
             Item := Create_Item (Event);
