@@ -106,9 +106,9 @@ package body Language.Unknown is
               Comment_Start                 => "",
               Comment_End                   => "",
               New_Line_Comment_Start        => "",
-              String_Delimiter              => '"',
-              Quote_Character               => '\',
-              Constant_Character            => ''');
+              String_Delimiter              => ASCII.NUL,
+              Quote_Character               => ASCII.NUL,
+              Constant_Character            => ASCII.NUL);
    end Get_Language_Context;
 
    ----------------
