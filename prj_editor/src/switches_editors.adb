@@ -20,16 +20,22 @@
 
 with Glib;                 use Glib;
 with Glib.Object;          use Glib.Object;
+with Gtk.Adjustment;       use Gtk.Adjustment;
 with Gtk.Box;              use Gtk.Box;
 with Gtk.Button;           use Gtk.Button;
 with Gtk.Check_Button;     use Gtk.Check_Button;
 with Gtk.Combo;            use Gtk.Combo;
 with Gtk.Dialog;           use Gtk.Dialog;
+with Gtk.Enums;            use Gtk.Enums;
+with Gtk.Frame;            use Gtk.Frame;
 with Gtk.GEntry;           use Gtk.GEntry;
 with Gtk.Handlers;         use Gtk.Handlers;
+with Gtk.Label;            use Gtk.Label;
 with Gtk.List;             use Gtk.List;
+with Gtk.List_Item;        use Gtk.List_Item;
 with Gtk.Notebook;         use Gtk.Notebook;
 with Gtk.Radio_Button;     use Gtk.Radio_Button;
+with Gtk.Size_Group;       use Gtk.Size_Group;
 with Gtk.Spin_Button;      use Gtk.Spin_Button;
 with Gtk.Stock;            use Gtk.Stock;
 with Gtk.Widget;           use Gtk.Widget;
@@ -37,6 +43,8 @@ with Gtkada.Handlers;      use Gtkada.Handlers;
 
 with GNAT.OS_Lib;          use GNAT.OS_Lib;
 with GNAT.Case_Util;       use GNAT.Case_Util;
+with Ada.Characters.Handling; use Ada.Characters.Handling;
+with Ada.Unchecked_Deallocation;
 
 with Prj_API;              use Prj_API;
 with Prj_Normalize;        use Prj_Normalize;
@@ -46,7 +54,6 @@ with Glide_Kernel.Modules; use Glide_Kernel.Modules;
 with Glide_Intl;           use Glide_Intl;
 with Language_Handlers;    use Language_Handlers;
 with String_Utils;         use String_Utils;
-with Switches_Editor_Pkg;  use Switches_Editor_Pkg;
 with Basic_Types;          use Basic_Types;
 with Scenario_Selectors;   use Scenario_Selectors;
 
@@ -63,36 +70,151 @@ package body Switches_Editors is
 
    Me : constant Debug_Handle := Create ("Switches_Editors");
 
-   Conversion_Data_String : constant String := "gps_switches_to_window";
 
-   package Object_User_Data is new Glib.Object.User_Data (GObject);
+   --  The following constants are defined to avoid allocating dynamic memory
+   --  in Gtk_New. This should eventually be integrated in the kernel.
+   --  The comments are there so that the script to handle internationalization
+   --  properly find the constants.
 
-   procedure Filter_Switches
-     (Editor   : access Switches_Edit_Record'Class;
-      Tool     : Tool_Names;
-      Switches : in out GNAT.OS_Lib.Argument_List);
-   --  Remove from Switches all the ones that can be set directly from
-   --  the GUI. As a result, on exit Switches will only contain non-null
-   --  values for the switches that were set manually by the user, and that
-   --  don't have GUI equivalents
+   Cst_No_Optimization : aliased constant String := "No optimization";
+   --  -"No optimization"
+   Cst_Some_Optimization : aliased constant String := "Some optimization";
+   --  -"Some optimization"
+   Cst_Full_Optimization : aliased constant String := "Full optimization";
+   --  -"Full optimization"
+   Cst_Full_Inline_Optimization : aliased constant String :=
+     "Full + Automatic inline";
+   --  -"Full + Automatic inline"
+   Cst_Lower_Case : aliased constant String := "Lower case";
+   --  -"Lower case"
+   Cst_Upper_Case : aliased constant String := "Upper case";
+   --  -"Upper case"
+   Cst_Mixed_Case : aliased constant String := "Mixed case";
+   --  -"Mixed case"
+   Cst_As_Declared : aliased constant String := "As declared";
+   --  -"As declared"
+   Cst_Gnat_Style : aliased constant String := "GNAT style";
+   --  -"GNAT style"
+   Cst_Compact    : aliased constant String := "Compact";
+   --  -"Compact"
+   Cst_Uncompact  : aliased constant String := "Uncompact";
+   --  -"Uncompact"
+   Cst_Gnat_Indent : aliased constant String := "GNAT style line indentation";
+   --  -"GNAT style line indentation"
+   Cst_Std_Indent  : aliased constant String := "Standard line indentation";
+   --  -"Standard line indentation"
+   Cst_Static      : aliased constant String := "Static GNAT run time";
+   --  -"Static GNAT run time"
+   Cst_Shared      : aliased constant String := "Shared GNAT run time";
+   --  -"Shared GNAT run time"
+   Cst_Static_S : aliased constant String := "-static";
+   Cst_Shared_S : aliased constant String := "-shared";
+   Cst_L        : aliased constant String := "L";
+   Cst_M        : aliased constant String := "M";
+   Cst_U        : aliased constant String := "U";
+   Cst_D        : aliased constant String := "D";
+   Cst_Zero     : aliased constant String := "0";
+   Cst_One      : aliased constant String := "1";
+   Cst_Two      : aliased constant String := "2";
+   Cst_Three    : aliased constant String := "3";
 
-   function Get_Switches_From_GUI
-     (Editor : access Switches_Edit_Record; Tool : Tool_Names)
-      return Argument_List;
-   --  Return the list of switches that are set in the GUI (as opposed to the
-   --  one in the command lines).
+   -------------------
+   -- Check buttons --
+   -------------------
 
-   type Switch_Editor_User_Data is record
-      Kernel    : Kernel_Handle;
-      Project   : Project_Id;
-      Switches  : Switches_Edit;
-      File_Name : String_Id;
-      Directory : String_Id;
+   type Switch_Check_Widget is new Switch_Basic_Widget_Record with record
+      Check : Gtk.Check_Button.Gtk_Check_Button;
+   end record;
+   type Switch_Check_Widget_Access is access all Switch_Check_Widget'Class;
+
+   function Get_Switch (Switch : Switch_Check_Widget) return String;
+   procedure Filter_Switch
+     (Switch : Switch_Check_Widget; List : in out Argument_List);
+   procedure Set_And_Filter_Switch
+     (Switch : Switch_Check_Widget; List : in out Argument_List);
+
+   ------------------
+   -- Spin buttons --
+   ------------------
+
+   type Switch_Spin_Widget is new Switch_Basic_Widget_Record with record
+      Spin  : Gtk.Spin_Button.Gtk_Spin_Button;
+      Default : Integer;
+      --  Default value, for which no switch is needed on the command line
+   end record;
+   type Switch_Spin_Widget_Access is access all Switch_Spin_Widget'Class;
+
+   function Get_Switch (Switch : Switch_Spin_Widget) return String;
+   procedure Filter_Switch
+     (Switch : Switch_Spin_Widget; List : in out Argument_List);
+   procedure Set_And_Filter_Switch
+     (Switch : Switch_Spin_Widget; List : in out Argument_List);
+
+   -------------------
+   -- Combo buttons --
+   -------------------
+
+   type Switch_Combo_Widget (Switch_Length : Natural;
+                             No_Digit_Length : Natural;
+                             No_Switch_Length : Natural)
+      is new Switch_Basic_Widget_Record (Switch_Length) with
+   record
+      Combo             : Gtk_Combo;
+      Default_No_Digit  : String (1 .. No_Digit_Length);
+      Default_No_Switch : String (1 .. No_Switch_Length);
+   end record;
+   type Switch_Combo_Widget_Access is access all Switch_Combo_Widget'Class;
+
+   function Get_Switch (Switch : Switch_Combo_Widget) return String;
+   procedure Filter_Switch
+     (Switch : Switch_Combo_Widget; List : in out Argument_List);
+   procedure Set_And_Filter_Switch
+     (Switch : Switch_Combo_Widget; List : in out Argument_List);
+
+   ---------------------
+   -- Combo list item --
+   ---------------------
+
+   type Combo_List_Item_Record (Value_Length : Natural) is new
+     Gtk_List_Item_Record with
+   record
+      Value : String (1 .. Value_Length);
+   end record;
+   type Combo_List_Item is access all Combo_List_Item_Record'Class;
+
+   ------------------
+   -- Dependencies --
+   ------------------
+
+   type Dependency_Data is record
+      Master_Status  : Boolean;
+      Slave_Switch   : Switch_Check_Widget_Access;
+      Slave_Activate : Boolean;
    end record;
 
-   procedure Setup (Data : Switch_Editor_User_Data; Id : Handler_Id);
-   package Switch_Callback is new Gtk.Handlers.User_Callback_With_Setup
-     (Gtk_Widget_Record, Switch_Editor_User_Data, Setup);
+   package Dependency_Callback is new Gtk.Handlers.User_Callback
+     (Gtk_Widget_Record, Dependency_Data);
+
+   procedure Check_Dependency
+     (Check : access Gtk_Widget_Record'Class;
+      Data  : Dependency_Data);
+   --  Callback to handle the dependencies between two items
+
+   -----------------------
+   -- Local subprograms --
+   -----------------------
+
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Widget_Array, Widget_Array_Access);
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Pages_Array, Page_Array_Access);
+
+   function Get_Switch_Widget
+     (Page   : access Switches_Editor_Page_Record'Class;
+      Switch : String) return Switch_Basic_Widget;
+   --  Return the widget that edits a specific switch.
+   --  Note: this only compare with the static part of the switch (e.g doesn't
+   --  include the digits in "-O1")
 
    procedure Fill_Editor
      (Switches  : access Switches_Edit_Record'Class;
@@ -115,10 +237,10 @@ package body Switches_Editors is
 
    procedure Revert_To_Default (Switches : access Gtk_Widget_Record'Class);
    --  Revert to the default switches in the editor
-   --  ??? Should this be specific to a page
 
    function Normalize_Compiler_Switches
-     (Tool : Tool_Names; Switches : Argument_List) return Argument_List;
+     (Page     : access Switches_Editor_Page_Record'Class;
+      Switches : Argument_List) return Argument_List;
    --  Return an equivalent of Switches, but where concatenated switches have
    --  been separated (for instance, -gnatwue = -gnatwu -gnatwe).
    --  Nothing is done if the tool doesn't need this special treatment.
@@ -126,157 +248,353 @@ package body Switches_Editors is
    --  the memory for the array that was passed as a parameter (we either
    --  return it directly, or reuse the strings from it for the output).
 
-   procedure Set_Visible_Pages
-     (Editor : access Switches_Edit_Record'Class; Pages : Page_Filter);
-   --  Only the pages described in Pages will be visible. All others pages are
-   --  shown
+   procedure Refresh_Page (Page : access Gtk_Widget_Record'Class);
+   --  Recompute the value of the command line after a switch has been changed
+   --  through the GUI
 
-   function Get_Pages
-     (Editor : access Switches_Edit_Record'Class) return Page_Filter;
-   --  Return the list of pages that are visible in the switches editor.
+   procedure On_Cmd_Line_Changed (Page : access Gtk_Widget_Record'Class);
+   --  Reset the GUI content of the page, based on the current command line
 
-   -----------
-   -- Setup --
-   -----------
-
-   procedure Setup (Data : Switch_Editor_User_Data; Id : Handler_Id) is
-   begin
-      Add_Watch (Id, Data.Switches);
-   end Setup;
-
-   -------------
-   -- Gtk_New --
-   -------------
-
-   procedure Gtk_New (Editor : out Switches_Edit) is
-      Default_Width : constant := 12;
-   begin
-      Editor := new Switches_Edit_Record;
-      Switches_Editor_Pkg.Initialize (Editor);
-      Set_Width_Chars (Editor.Keyword_Casing_Entry, Default_Width);
-      Set_Width_Chars (Editor.Attribute_Casing_Entry, Default_Width);
-      Set_Width_Chars (Editor.References_Casing_Entry, Default_Width);
-      Set_Width_Chars (Editor.Pragma_Casing_Entry, Default_Width);
-      Set_Current_Page (Editor.Notebook, 0);
-   end Gtk_New;
-
-   -----------------------
-   -- Set_Visible_Pages --
-   -----------------------
+   function Get_Switches (Page : access Switches_Editor_Page_Record'Class)
+      return Argument_List;
+   --  Return the list of parameters set on the command line
 
    procedure Set_Visible_Pages
-     (Editor : access Switches_Edit_Record'Class; Pages : Page_Filter)
-   is
-      procedure Hide_Or_Show
-        (Page   : Page_Filter; Widget : access Gtk_Widget_Record'Class);
-      --  Hide or show a page
+     (Editor    : access Switches_Edit_Record'Class;
+      Languages : Argument_List;
+      Show_Only : Boolean);
+   --  Same as the public version, except that the pages are never hidden, only
+   --  shown depending on the languages
 
-      ------------------
-      -- Hide_Or_Show --
-      ------------------
+   procedure Append_Switch
+     (Page   : access Switches_Editor_Page_Record'Class;
+      Button : access Switch_Basic_Widget_Record'Class);
+   --  Add a new switch to the page.
 
-      procedure Hide_Or_Show
-        (Page   : Page_Filter; Widget : access Gtk_Widget_Record'Class) is
-      begin
-         if (Pages and Page) = 0 then
-            Hide (Widget);
-         else
-            Show (Widget);
+   procedure Page_Destroyed (Page : access Gtk_Widget_Record'Class);
+   --  Callback when a page is destroyed.
+
+   procedure Editor_Destroyed (Editor : access Gtk_Widget_Record'Class);
+   --  Callback when the editor is destroyed.
+
+   -----------------------
+   -- Get_Switch_Widget --
+   -----------------------
+
+   function Get_Switch_Widget
+     (Page   : access Switches_Editor_Page_Record'Class;
+      Switch : String) return Switch_Basic_Widget is
+   begin
+      for S in Page.Switches'Range loop
+         if Page.Switches (S).Switch = Switch then
+            return Page.Switches (S);
          end if;
-      end Hide_Or_Show;
-
-      Current : Gint := Get_Current_Page (Editor.Notebook);
-   begin
-      Hide_Or_Show (Gnatmake_Page, Editor.Make_Switches);
-      Hide_Or_Show (Ada_Page, Editor.Ada_Switches);
-      Hide_Or_Show (C_Page, Editor.C_Switches);
-      Hide_Or_Show (Cpp_Page, Editor.Cpp_Switches);
-      Hide_Or_Show (Pretty_Printer_Page, Editor.Pp_Switches);
-      Hide_Or_Show (Binder_Page, Editor.Binder_Switches);
-      Hide_Or_Show (Linker_Page, Editor.Linker_Switches);
-      Editor.Pages := Pages;
-
-      --  Work around an apparent bug in gtk+: when the contents of a page is
-      --  hidden, and the shown again, it is always displayed on top of the
-      --  current page in the notebook. We thus see the contents of two or more
-      --  pages at the same time...
-      if Current = -1 then
-         Current := 0;
-      end if;
-      Set_Current_Page (Editor.Notebook, Current);
-   end Set_Visible_Pages;
-
-   -----------------------
-   -- Set_Visible_Pages --
-   -----------------------
-
-   procedure Set_Visible_Pages
-     (Editor : access Switches_Edit_Record; Languages : Argument_List)
-   is
-      Pages : Page_Filter := Gnatmake_Page or Binder_Page or Linker_Page;
-   begin
-      for J in Languages'Range loop
-         declare
-            Lang : String := Languages (J).all;
-         begin
-            To_Lower (Lang);
-
-            if Lang = "ada" then
-               Pages := Pages or Ada_Page or Pretty_Printer_Page;
-            elsif Lang = "c" then
-               Pages := Pages or C_Page;
-            elsif Lang = "c++" then
-               Pages := Pages or Cpp_Page;
-            end if;
-         end;
       end loop;
-      Set_Visible_Pages (Editor, Pages);
-   end Set_Visible_Pages;
-
-   ---------------
-   -- Get_Pages --
-   ---------------
-
-   function Get_Pages
-     (Editor : access Switches_Edit_Record'Class) return Page_Filter is
-   begin
-      return Editor.Pages;
-   end Get_Pages;
+      return null;
+   end Get_Switch_Widget;
 
    ----------------
-   -- Get_Window --
+   -- Get_Switch --
    ----------------
 
-   function Get_Window
-     (Editor : access Switches_Edit_Record) return Gtk.Widget.Gtk_Widget is
+   function Get_Switch (Switch : Switch_Check_Widget) return String is
    begin
-      if Get_Parent (Editor.Vbox2) = Gtk_Widget (Editor) then
-         Ref (Editor.Vbox2);
-         Unparent (Editor.Vbox2);
-         Object_User_Data.Set
-           (Editor.Vbox2, GObject (Editor), Conversion_Data_String);
+      if Get_Active (Switch.Check) then
+         return Switch.Switch;
+      else
+         return "";
       end if;
-      return Gtk_Widget (Editor.Vbox2);
-   end Get_Window;
+   end Get_Switch;
 
-   -----------------
-   -- From_Window --
-   -----------------
+   -------------------
+   -- Filter_Switch --
+   -------------------
 
-   function From_Window
-     (Window : access Gtk.Widget.Gtk_Widget_Record'Class)
-      return Switches_Edit is
+   procedure Filter_Switch
+     (Switch : Switch_Check_Widget; List : in out Argument_List) is
    begin
-      return Switches_Edit
-        (Object_User_Data.Get (Window, Conversion_Data_String));
-   end From_Window;
+      for L in List'Range loop
+         if List (L) /= null and then List (L).all = Switch.Switch then
+            Free (List (L));
+         end if;
+      end loop;
+   end Filter_Switch;
+
+   ---------------------------
+   -- Set_And_Filter_Switch --
+   ---------------------------
+
+   procedure Set_And_Filter_Switch
+     (Switch : Switch_Check_Widget; List : in out Argument_List)
+   is
+      Active : Boolean := False;
+   begin
+      for L in List'Range loop
+         if List (L) /= null
+           and then List (L).all = Switch.Switch
+         then
+            Active := True;
+            Free (List (L));
+         end if;
+      end loop;
+
+      Set_Active (Switch.Check, Active);
+   end Set_And_Filter_Switch;
+
+   ----------------
+   -- Get_Switch --
+   ----------------
+
+   function Get_Switch (Switch : Switch_Combo_Widget) return String is
+      use type Widget_List.Glist;
+      Children : Widget_List.Glist := Get_Children (Get_List (Switch.Combo));
+      Item     : Combo_List_Item;
+      Text     : constant String := Get_Text (Get_Entry (Switch.Combo));
+   begin
+      while Children /= Widget_List.Null_List loop
+         Item := Combo_List_Item (Widget_List.Get_Data (Children));
+
+         if Get_Text (Gtk_Label (Get_Child (Item))) = Text then
+            if Item.Value = Switch.Default_No_Switch then
+               return "";
+            else
+               return Switch.Switch & Item.Value;
+            end if;
+         end if;
+
+         Children := Widget_List.Next (Children);
+      end loop;
+
+      return "";
+   end Get_Switch;
+
+   -------------------
+   -- Filter_Switch --
+   -------------------
+
+   procedure Filter_Switch
+     (Switch : Switch_Combo_Widget; List : in out Argument_List) is
+   begin
+      for L in List'Range loop
+         if List (L) /= null
+           and then List (L)'Length >= Switch.Switch'Length
+           and then List (L) (List (L)'First .. List (L)'First
+                              + Switch.Switch'Length - 1) = Switch.Switch
+         then
+            Free (List (L));
+         end if;
+      end loop;
+   end Filter_Switch;
+
+   ---------------------------
+   -- Set_And_Filter_Switch --
+   ---------------------------
+
+   procedure Set_And_Filter_Switch
+     (Switch : Switch_Combo_Widget; List : in out Argument_List)
+   is
+      use type Widget_List.Glist;
+      Item_Value : Integer := -2;
+      Children   : Widget_List.Glist := Get_Children (Get_List (Switch.Combo));
+      Item       : Combo_List_Item;
+   begin
+      for L in List'Range loop
+         if List (L) /= null
+           and then List (L)'Length >= Switch.Switch'Length
+           and then List (L) (List (L)'First .. List (L)'First
+                              + Switch.Switch'Length - 1) = Switch.Switch
+         then
+            begin
+               if List (L)'Last <
+                 List (L)'First + Switch.Switch'Length
+               then
+                  Item_Value := -1;
+
+               else
+                  Item_Value := L;
+               end if;
+            exception
+               when Constraint_Error =>
+                  Item_Value := -1;
+            end;
+            exit;
+         end if;
+      end loop;
+
+      while Children /= Widget_List.Null_List loop
+         Item := Combo_List_Item (Widget_List.Get_Data (Children));
+
+         if Item_Value = -1 then
+            if Item.Value = Switch.Default_No_Digit then
+               Select_Child (Get_List (Switch.Combo), Gtk_Widget (Item));
+               exit;
+            end if;
+
+         elsif Item_Value = -2 then
+            if Item.Value = Switch.Default_No_Switch then
+               Select_Child (Get_List (Switch.Combo), Gtk_Widget (Item));
+               exit;
+            end if;
+
+         elsif Item.Value =
+           List (Item_Value) (List (Item_Value)'First + Switch.Switch'Length
+                              .. List (Item_Value)'Last)
+         then
+            Select_Child (Get_List (Switch.Combo), Gtk_Widget (Item));
+            exit;
+         end if;
+
+         Children := Widget_List.Next (Children);
+      end loop;
+
+      if Item_Value >= 0 then
+         Free (List (Item_Value));
+      end if;
+   end Set_And_Filter_Switch;
+
+   ----------------
+   -- Get_Switch --
+   ----------------
+
+   function Get_Switch (Switch : Switch_Spin_Widget) return String is
+      Val : constant Integer := Integer (Get_Value_As_Int (Switch.Spin));
+   begin
+      if Val /= Switch.Default  then
+         return Switch.Switch & Image (Val);
+      else
+         return "";
+      end if;
+   end Get_Switch;
+
+   -------------------
+   -- Filter_Switch --
+   -------------------
+
+   procedure Filter_Switch
+     (Switch : Switch_Spin_Widget; List : in out Argument_List) is
+   begin
+      for L in List'Range loop
+         if List (L) /= null
+           and then List (L)'Length >= Switch.Switch'Length
+           and then List (L) (List (L)'First .. List (L)'First
+                              + Switch.Switch'Length - 1) = Switch.Switch
+         then
+            Free (List (L));
+         end if;
+      end loop;
+   end Filter_Switch;
+
+   ---------------------------
+   -- Set_And_Filter_Switch --
+   ---------------------------
+
+   procedure Set_And_Filter_Switch
+     (Switch : Switch_Spin_Widget; List : in out Argument_List)
+   is
+      Value  : Grange_Float := Grange_Float (Switch.Default);
+   begin
+      for L in List'Range loop
+         if List (L) /= null
+           and then List (L)'Length >= Switch.Switch'Length
+           and then List (L) (List (L)'First .. List (L)'First
+                              + Switch.Switch'Length - 1) = Switch.Switch
+         then
+            begin
+               Value := Grange_Float'Value
+                 (List (L) (List (L)'First + Switch.Switch'Length
+                            .. List (L)'Last));
+            exception
+               when Constraint_Error =>
+                  Value := 0.0;
+            end;
+
+            Free (List (L));
+         end if;
+      end loop;
+
+      Set_Value (Switch.Spin, Value);
+   end Set_And_Filter_Switch;
+
+   ------------------
+   -- Refresh_Page --
+   ------------------
+
+   procedure Refresh_Page (Page : access Gtk_Widget_Record'Class) is
+      P : constant Switches_Editor_Page := Switches_Editor_Page (Page);
+   begin
+      --  Don't do anything if the callbacks were blocked, to avoid infinite
+      --  loops while we are updating the command line, and it is updating
+      --  the buttons, that are updating the command line,...
+
+      if P.Block_Refresh then
+         return;
+      end if;
+
+      declare
+         Current : Argument_List := Get_Switches (P);
+      begin
+         P.Block_Refresh := True;
+         Set_Text (P.Cmd_Line, "");
+
+         Assert (Me, P.Switches /= null,
+                 "No switches defined for " & P.Title.all);
+
+         for S in P.Switches'Range loop
+            declare
+               Text : constant String := Get_Switch (P.Switches (S).all);
+            begin
+               if Text /= "" then
+                  Append_Text (P.Cmd_Line, Text & " ");
+               end if;
+            end;
+
+            Filter_Switch (P.Switches (S).all, Current);
+         end loop;
+
+         for K in Current'Range loop
+            if Current (K) /= null then
+               Append_Text (P.Cmd_Line, Current (K).all & " ");
+            end if;
+         end loop;
+
+         P.Block_Refresh := False;
+
+         Free (Current);
+      end;
+   end Refresh_Page;
+
+   ------------------
+   -- Get_Switches --
+   ------------------
+
+   function Get_Switches (Page : access Switches_Editor_Page_Record'Class)
+      return Argument_List
+   is
+      Str : constant String := Get_Text (Page.Cmd_Line);
+      Null_Argument_List : Argument_List (1 .. 0);
+      List               : Argument_List_Access;
+   begin
+      if Str /= "" then
+         List := Argument_String_To_List (Str);
+
+         declare
+            Ret : constant Argument_List :=
+              Normalize_Compiler_Switches (Page, List.all);
+         begin
+            Unchecked_Free (List);
+            return Ret;
+         end;
+      end if;
+      return Null_Argument_List;
+   end Get_Switches;
 
    ---------------------------------
    -- Normalize_Compiler_Switches --
    ---------------------------------
 
    function Normalize_Compiler_Switches
-     (Tool : Tool_Names; Switches : Argument_List) return Argument_List
+     (Page     : access Switches_Editor_Page_Record'Class;
+      Switches : Argument_List) return Argument_List
    is
       Output, Tmp : Argument_List_Access;
       Out_Index : Natural;
@@ -284,7 +602,8 @@ package body Switches_Editors is
       --  For Ada switches, use the functions provided by GNAT that
       --  provide the splitting of composite switches like "-gnatwue"
       --  into "-gnatwu -gnatwe"
-      if Tool = Ada_Compiler then
+
+      if Page.Lang.all = Ada_String then
          Output := new Argument_List (Switches'Range);
          Out_Index := Switches'First;
 
@@ -331,879 +650,772 @@ package body Switches_Editors is
       end if;
    end Normalize_Compiler_Switches;
 
+   -------------------------
+   -- On_Cmd_Line_Changed --
+   -------------------------
+
+   procedure On_Cmd_Line_Changed (Page : access Gtk_Widget_Record'Class) is
+      P : constant Switches_Editor_Page := Switches_Editor_Page (Page);
+   begin
+      if P.Block_Refresh then
+         return;
+      end if;
+
+      declare
+         Arg : Argument_List := Get_Switches (P);
+      begin
+         P.Block_Refresh := True;
+
+         for S in P.Switches'Range loop
+            Set_And_Filter_Switch (P.Switches (S).all, Arg);
+         end loop;
+
+         Free (Arg);
+         P.Block_Refresh := False;
+      end;
+   end On_Cmd_Line_Changed;
+
+   -------------------
+   -- Append_Switch --
+   -------------------
+
+   procedure Append_Switch
+     (Page   : access Switches_Editor_Page_Record'Class;
+      Button : access Switch_Basic_Widget_Record'Class)
+   is
+      S : Widget_Array_Access := Page.Switches;
+   begin
+      if S = null then
+         Page.Switches := new Widget_Array (1 .. 1);
+      else
+         Page.Switches := new Widget_Array (1 .. S'Length + 1);
+         Page.Switches (S'Range) := S.all;
+         Unchecked_Free (S);
+      end if;
+
+      Page.Switches (Page.Switches'Last) := Switch_Basic_Widget (Button);
+   end Append_Switch;
+
+   -----------------
+   -- Create_Spin --
+   -----------------
+
+   procedure Create_Spin
+     (Page              : access Switches_Editor_Page_Record;
+      Box               : access Gtk.Box.Gtk_Box_Record'Class;
+      Label             : String;
+      Switch            : String;
+      Min, Max, Default : Integer)
+   is
+      Hbox  : Gtk_Box;
+      Adj   : Gtk_Adjustment;
+      S     : Switch_Spin_Widget_Access := new Switch_Spin_Widget
+        (Switch'Length);
+      L     : Gtk_Label;
+   begin
+      Gtk_New_Hbox (Hbox, False, 0);
+      Pack_Start (Box, Hbox, False, False);
+      S.Switch := Switch;
+      S.Default := Default;
+
+      Gtk_New (L, Label);
+      Pack_Start (Hbox, L, False, False, 0);
+
+      Gtk_New (Adj, Gdouble (Default), Gdouble (Min), Gdouble (Max),
+               1.0, 10.0, 10.0);
+      Gtk_New (S.Spin, Adj, 1.0, 0);
+      Pack_Start (Hbox, S.Spin, True, True, 0);
+      Widget_Callback.Object_Connect
+        (S.Spin, "changed",
+         Widget_Callback.To_Marshaller (Refresh_Page'Access), Page);
+
+      Append_Switch (Page, S);
+   end Create_Spin;
+
    ------------------
-   -- Get_Switches --
+   -- Create_Radio --
    ------------------
 
-   function Get_Switches
-     (Editor : access Switches_Edit_Record; Tool : Tool_Names)
-      return Argument_List
+   procedure Create_Radio
+     (Page    : access Switches_Editor_Page_Record;
+      Box    : access Gtk.Box.Gtk_Box_Record'Class;
+      Buttons : Radio_Switch_Array)
    is
-      Cmd_Line           : Gtk_Entry;
-      Null_Argument_List : Argument_List (1 .. 0);
-      List               : Argument_List_Access;
+      S    : Switch_Check_Widget_Access;
+      Last : Gtk_Radio_Button;
+   begin
+      for B in Buttons'Range loop
+         S := new Switch_Check_Widget (Buttons (B).Switch'Length);
+
+         Gtk_New (Last, Group => Last, Label => -Buttons (B).Label.all);
+         S.Check := Gtk_Check_Button (Last);
+         S.Switch := Buttons (B).Switch.all;
+         Pack_Start (Box, Last, False, False);
+         Widget_Callback.Object_Connect
+           (Last, "toggled",
+            Widget_Callback.To_Marshaller (Refresh_Page'Access), Page);
+
+         Append_Switch (Page, S);
+      end loop;
+   end Create_Radio;
+
+   ------------------
+   -- Create_Check --
+   ------------------
+
+   procedure Create_Check
+     (Page   : access Switches_Editor_Page_Record;
+      Box    : access Gtk.Box.Gtk_Box_Record'Class;
+      Label  : String;
+      Switch : String)
+   is
+      S : Switch_Check_Widget_Access := new Switch_Check_Widget
+        (Switch'Length);
+   begin
+      Gtk_New (S.Check, Label);
+      S.Switch := Switch;
+      Pack_Start (Box, S.Check, False, False);
+      Set_Active (S.Check, False);
+      Widget_Callback.Object_Connect
+        (S.Check, "toggled",
+         Widget_Callback.To_Marshaller (Refresh_Page'Access), Page);
+
+      Append_Switch (Page, S);
+   end Create_Check;
+
+   ------------------
+   -- Create_Combo --
+   ------------------
+
+   function Create_Combo
+     (Page                 : access Switches_Editor_Page_Record;
+      Label                : String;
+      Switch               : String;
+      Default_No_Switch    : String;
+      Default_No_Digit     : String;
+      Buttons              : Combo_Switch_Array;
+      Label_Size_Group     : Gtk.Size_Group.Gtk_Size_Group := null)
+     return Gtk.Widget.Gtk_Widget
+   is
+      L     : Gtk_Label;
+      S     : Switch_Combo_Widget_Access := new Switch_Combo_Widget
+        (Switch'Length, Default_No_Switch'Length, Default_No_Digit'Length);
+      Hbox  : Gtk_Box;
+      Item  : Combo_List_Item;
+   begin
+      Gtk_New_Hbox (Hbox, Homogeneous => False);
+
+      if Label /= "" then
+         Gtk_New (L, Label);
+         Pack_Start (Hbox, L, Expand => False);
+         Set_Alignment (L, 0.0, 0.5);
+
+         if Label_Size_Group /= null then
+            Add_Widget (Label_Size_Group, L);
+         end if;
+      end if;
+
+      Gtk_New (S.Combo);
+      Pack_Start (Hbox, S.Combo, Expand => True, Fill => True);
+      S.Default_No_Switch := Default_No_Switch;
+      S.Default_No_Digit  := Default_No_Digit;
+
+      for B in Buttons'Range loop
+         Item := new Combo_List_Item_Record (Buttons (B).Value'Length);
+         Gtk.List_Item.Initialize (Item, -Buttons (B).Label.all);
+         Item.Value := Buttons (B).Value.all;
+         Show (Item);
+         Add (Get_List (S.Combo), Item);
+      end loop;
+
+      S.Switch := Switch;
+      Append_Switch (Page, S);
+
+      Widget_Callback.Object_Connect
+        (Get_Entry (S.Combo), "changed",
+         Widget_Callback.To_Marshaller (Refresh_Page'Access), Page);
+
+      return Gtk_Widget (Hbox);
+
+   exception
+      when E : others =>
+         Trace (Me, "Create_Combo: Unexpected exception "
+                & Exception_Information (E));
+         return Gtk_Widget (Hbox);
+   end Create_Combo;
+
+   ----------------------
+   -- Check_Dependency --
+   ----------------------
+
+   procedure Check_Dependency
+     (Check : access Gtk_Widget_Record'Class;
+      Data  : Dependency_Data) is
+   begin
+      if Get_Active (Gtk_Check_Button (Check)) = Data.Master_Status then
+         Set_Sensitive (Data.Slave_Switch.Check, False);
+         Set_Active (Data.Slave_Switch.Check, Data.Slave_Activate);
+
+      else
+         Set_Sensitive (Data.Slave_Switch.Check, True);
+         Set_Active (Data.Slave_Switch.Check, not Data.Slave_Activate);
+      end if;
+   end Check_Dependency;
+
+   --------------------
+   -- Add_Dependency --
+   --------------------
+
+   procedure Add_Dependency
+     (Master_Page    : access Switches_Editor_Page_Record'Class;
+      Master_Switch  : String;
+      Master_Status  : Boolean;
+      Slave_Page     : access Switches_Editor_Page_Record'Class;
+      Slave_Switch   : String;
+      Slave_Activate : Boolean := True)
+   is
+      S1 : constant Switch_Basic_Widget := Get_Switch_Widget
+        (Master_Page, Master_Switch);
+      S2 : constant Switch_Basic_Widget := Get_Switch_Widget
+        (Slave_Page, Slave_Switch);
+   begin
+      Assert (Me, S1 /= null
+              and then S2 /= null
+              and then S1.all in Switch_Check_Widget'Class
+              and then S2.all in Switch_Check_Widget'Class,
+              "Can only add dependencies between check button switches "
+              & Master_Page.Title.all & ' ' & Master_Switch
+              & ' ' & Slave_Page.Title.all & ' ' & Slave_Switch);
+
+      Dependency_Callback.Connect
+        (Switch_Check_Widget_Access (S1).Check, "toggled",
+         Dependency_Callback.To_Marshaller (Check_Dependency'Access),
+         (Master_Status, Switch_Check_Widget_Access (S2), Slave_Activate));
+   end Add_Dependency;
+
+   -------------
+   -- Gtk_New --
+   -------------
+
+   procedure Gtk_New
+     (Page            : out Switches_Editor_Page;
+      Title           : String;
+      Project_Package : String;
+      Language        : String;
+      Lines, Cols     : Glib.Guint) is
+   begin
+      Page := new Switches_Editor_Page_Record;
+      Gtk.Table.Initialize (Page, Lines + 1, Cols, False);
+      Set_Row_Spacings (Page, 0);
+      Set_Col_Spacings (Page, 0);
+
+      Page.Lang  := new String'(Language);
+      To_Lower (Page.Lang.all);
+      Page.Title := new String'(Title);
+      Page.Pkg   := new String'(Project_Package);
+
+      Gtk_New (Page.Cmd_Line);
+      Set_Editable (Page.Cmd_Line, True);
+      Widget_Callback.Object_Connect
+        (Page.Cmd_Line, "changed",
+         Widget_Callback.To_Marshaller (On_Cmd_Line_Changed'Access), Page);
+      Attach (Page, Page.Cmd_Line, 0, Cols, Lines, Lines + 1,
+              Expand or Fill, 0, 5, 0);
+   end Gtk_New;
+
+   -------------
+   -- Gtk_New --
+   -------------
+
+   procedure Gtk_New (Editor : out Switches_Edit) is
+      Tab    : Gtk_Label;
+      Frame  : Gtk_Frame;
+      Box    : Gtk_Box;
+      Page   : Switches_Editor_Page;
+      Group  : Gtk_Size_Group;
+      Table  : Gtk_Table;
 
    begin
-      case Tool is
-         when Gnatmake       => Cmd_Line := Editor.Make_Switches_Entry;
-         when Ada_Compiler   => Cmd_Line := Editor.Ada_Switches_Entry;
-         when C_Compiler     => Cmd_Line := Editor.C_Switches_Entry;
-         when Cpp_Compiler   => Cmd_Line := Editor.Cpp_Switches_Entry;
-         when Pretty_Printer => Cmd_Line := Editor.Pp_Switches_Entry;
-         when Binder         => Cmd_Line := Editor.Binder_Switches_Entry;
-         when Linker         => Cmd_Line := Editor.Linker_Switches_Entry;
-      end case;
+      Editor := new Switches_Edit_Record;
+      Gtk.Notebook.Initialize (Editor);
 
-      declare
-         Str : constant String := Get_Text (Cmd_Line);
-      begin
-         if Str /= "" then
-            List := Argument_String_To_List (Str);
+      Editor.Pages := new Pages_Array (1 .. 7);
 
-            declare
-               Ret : constant Argument_List :=
-                 Normalize_Compiler_Switches (Tool, List.all);
-            begin
-               Unchecked_Free (List);
-               return Ret;
-            end;
-         end if;
-      end;
+      --  ??? Should be registered by modules
 
-      return Null_Argument_List;
-   end Get_Switches;
+      for P in Editor.Pages'Range loop
+         case P is
 
-   ---------------------------
-   -- Get_Switches_From_GUI --
-   ---------------------------
+            --  Builder page
+            when 1 =>
+               Gtk_New (Page, "Make", "builder", Ada_String, 1, 2);
 
-   function Get_Switches_From_GUI
-     (Editor : access Switches_Edit_Record; Tool : Tool_Names)
-      return Argument_List
-   is
-      procedure Check_Toggle
-        (Button   : Gtk_Check_Button;
-         Str      : String;
-         Arr      : in out Argument_List;
-         Index    : in out Natural;
-         Inverted : Boolean := False);
-      --  Handle check buttons, and set parameter Str if Button is checked,
-      --  or if button is unchecked, in case Inverted is True.
+               Gtk_New (Frame, -"Dependencies");
+               Set_Border_Width (Frame, 5);
+               Attach (Page, Frame, 0, 1, 0, 1);
+               Gtk_New_Vbox (Box, False, 0);
+               Add (Frame, Box);
+               Create_Check (Page, Box, -"Consider all files", "-a");
+               Create_Check (Page, Box,
+                             -"Recompile if switches changed", "-s");
+               Create_Check (Page, Box, -"Minimal recompilation", "-m");
 
-      procedure Check_Combo
-        (Combo          : Gtk_Combo;
-         Switch         : String;
-         Switch_Details : String;
-         Arr            : in out Argument_List;
-         Index          : in out Natural);
-      --  Set the parameter (starting with Switch, followed by
-      --  Switch_Details (combo index)) to use if Switch is set.
-      --  If the combo index is 0, nothing is inserted into Arr.
+               Gtk_New (Frame, -"Compilation");
+               Set_Border_Width (Frame, 5);
+               Attach (Page, Frame, 1, 2, 0, 1);
+               Gtk_New_Vbox (Box, False, 0);
+               Add (Frame, Box);
+               Create_Spin (Page, Box, -"Multiprocessing", "-j", 1, 100, 1);
+               Create_Check (Page, Box, -"Keep going", "-k");
+               Create_Check (Page, Box, -"Debug information", "-g");
+               Create_Check (Page, Box, -"Use mapping file", "-C");
 
-      ------------------
-      -- Check_Toggle --
-      ------------------
+            --  Ada compiler page
+            when 2 =>
+               Gtk_New (Page, "Ada", "compiler", Ada_String, 3, 2);
 
-      procedure Check_Toggle
-        (Button   : Gtk_Check_Button;
-         Str      : String;
-         Arr      : in out Argument_List;
-         Index    : in out Natural;
-         Inverted : Boolean := False)
-      is
-         Check : Boolean := Get_Active (Button);
-      begin
-         if Inverted then
-            Check := not Check;
-         end if;
+               Gtk_New (Frame, -"Code generation");
+               Set_Border_Width (Frame, 5);
+               Attach (Page, Frame, 0, 1, 0, 1);
+               Gtk_New_Vbox (Box, False, 0);
+               Add (Frame, Box);
+               Pack_Start
+                 (Box, Create_Combo
+                  (Page, "",
+                   Switch               => "-O",
+                   Default_No_Switch    => "0",
+                   Default_No_Digit     => "1",
+                   Buttons => (1 => (Cst_No_Optimization'Access,
+                                     Cst_Zero'Access),
+                               2 => (Cst_Some_Optimization'Access,
+                                     Cst_One'Access),
+                               3 => (Cst_Full_Optimization'Access,
+                                     Cst_Two'Access),
+                               4 => (Cst_Full_Inline_Optimization'Access,
+                                     Cst_Three'Access))),
+                  False, False);
+               Create_Check (Page, Box, -"Interunit inlining", "-gnatN");
+               Create_Check (Page, Box, -"Unroll loops", "-funroll-loops");
+               Create_Check (Page, Box, -"Position independent code", "-fPIC");
+               Create_Check (Page, Box, -"Code coverage", "-ftest-coverage");
+               Create_Check (Page, Box, -"Instrument arcs", "-fprofile-arcs");
+               Add_Dependency (Master_Page    => Page,
+                               Master_Switch  => "-ftest-coverage",
+                               Master_Status  => False,
+                               Slave_Page     => Page,
+                               Slave_Switch   => "-fprofile-arcs",
+                               Slave_Activate => False);
 
-         if Check then
-            Arr (Index) := new String'(Str);
-            Index := Index + 1;
-         end if;
-      end Check_Toggle;
+               Gtk_New (Frame, -"Run-time checks");
+               Set_Border_Width (Frame, 5);
+               Attach (Page, Frame, 1, 2, 0, 1);
+               Gtk_New_Vbox (Box, False, 0);
+               Add (Frame, Box);
+               Create_Check (Page, Box, -"Overflow checking", "-gnato");
+               Create_Check (Page, Box, -"Suppress all checks", "-gnatp");
+               Create_Check (Page, Box, -"Stack checking", "-fstack-check");
+               Create_Check (Page, Box, -"Dynamic elaboration", "-gnatE");
 
-      -----------------
-      -- Check_Combo --
-      -----------------
+               Gtk_New (Frame, -"Messages");
+               Set_Border_Width (Frame, 5);
+               Attach (Page, Frame, 0, 1, 1, 3);
+               Gtk_New_Vbox (Box, False, 0);
+               Add (Frame, Box);
+               Create_Check (Page, Box, -"Full errors", "-gnatf");
+               Create_Check (Page, Box, -"Warning=Error", "-gnatwe");
+               Create_Check (Page, Box, -"Elab warning", "-gnatwl");
+               Create_Check (Page, Box, -"Unused vars warning", "-gnatwu");
+               Create_Check (Page, Box, -"Style checks", "-gnaty");
 
-      procedure Check_Combo
-        (Combo          : Gtk_Combo;
-         Switch         : String;
-         Switch_Details : String;
-         Arr            : in out Argument_List;
-         Index          : in out Natural)
-      is
-         use Widget_List;
-         List     : constant Gtk_List := Get_List (Combo);
-         Position : Integer;
+               Gtk_New (Frame, -"Debugging");
+               Set_Border_Width (Frame, 5);
+               Attach (Page, Frame, 1, 2, 1, 2);
+               Gtk_New_Vbox (Box, False, 0);
+               Add (Frame, Box);
+               Create_Check (Page, Box, -"Debug Information", "-g");
+               Add_Dependency (Master_Page    => Editor.Pages (1),
+                               Master_Switch  => "-g",
+                               Master_Status  => True,
+                               Slave_Page     => Page,
+                               Slave_Switch   => "-g",
+                               Slave_Activate => True);
 
-      begin
-         --  Check whether there is an actual selection. With gtk+2.0, the
-         --  entry emits the "changed" signal more often, even in some cases
-         --  where there is no actual selection in the list. However, the
-         --  callback is called again later on.
+               Create_Check (Page, Box, -"Enable assertions", "-gnata");
+               Create_Check (Page, Box, -"Debug expanded code", "-gnatD");
 
-         if Get_Selection (List) /= Null_List then
-            Position := Integer (Child_Position
-              (List, Get_Data (Get_Selection (List)))) + 1;
+               Gtk_New (Frame, -"Syntax");
+               Set_Border_Width (Frame, 5);
+               Attach (Page, Frame, 1, 2, 2, 3);
+               Gtk_New_Vbox (Box, False, 0);
+               Add (Frame, Box);
+               Create_Check (Page, Box, -"Language extensions", "-gnatX");
+               Create_Check (Page, Box, -"Ada 83 mode", "-gnat83");
 
-            if Position /= 1 then
-               Arr (Index) := new String'(Switch & Switch_Details (Position));
-               Index := Index + 1;
-            end if;
-         end if;
-      end Check_Combo;
+            --  C compiler page
+            when 3 =>
+               Gtk_New (Page, "C", "compiler", C_String, 2, 2);
 
-      Num_Switches : Natural;
+               Gtk_New (Frame, -"Code generation");
+               Set_Border_Width (Frame, 5);
+               Attach (Page, Frame, 0, 1, 0, 1);
+               Gtk_New_Vbox (Box, False, 0);
+               Add (Frame, Box);
+               Pack_Start
+                 (Box, Create_Combo
+                  (Page, "",
+                   Switch               => "-O",
+                   Default_No_Switch    => "0",
+                   Default_No_Digit     => "1",
+                   Buttons => (1 => (Cst_No_Optimization'Access,
+                                     Cst_Zero'Access),
+                               2 => (Cst_Some_Optimization'Access,
+                                     Cst_One'Access),
+                               3 => (Cst_Full_Optimization'Access,
+                                     Cst_Two'Access),
+                               4 => (Cst_Full_Inline_Optimization'Access,
+                                     Cst_Three'Access))),
+                  False, False);
+               Create_Check (Page, Box, -"Unroll loops", "-funroll-loops");
+               Create_Check (Page, Box, -"Position independent code", "-fPIC");
+               Create_Check (Page, Box, -"Profiling", "-pg");
+               Create_Check (Page, Box, -"Code coverage", "-ftest-coverage");
+               Create_Check (Page, Box, -"Instrument arcs", "-fprofile-arcs");
+               Add_Dependency (Master_Page    => Page,
+                               Master_Switch  => "-ftest-coverage",
+                               Master_Status  => False,
+                               Slave_Page     => Page,
+                               Slave_Switch   => "-fprofile-arcs",
+                               Slave_Activate => False);
 
-   begin  --  Get_Switches_From_GUI
-      case Tool is
-         when Gnatmake       => Num_Switches :=  7 + 1;  --  +1 is for -jx
-         when Ada_Compiler   => Num_Switches := 22;
-         when C_Compiler     => Num_Switches := 11;
-         when Cpp_Compiler   => Num_Switches := 14;
-         when Pretty_Printer => Num_Switches := 13;
-         when Binder         => Num_Switches :=  4;
-         when Linker         => Num_Switches :=  3;
-      end case;
+               Gtk_New (Frame, -"Debugging");
+               Set_Border_Width (Frame, 5);
+               Attach (Page, Frame, 1, 2, 0, 1);
+               Gtk_New_Vbox (Box, False, 0);
+               Add (Frame, Box);
+               Create_Check (Page, Box, -"Debug information", "-g");
+               Add_Dependency (Master_Page    => Editor.Pages (1),
+                               Master_Switch  => "-g",
+                               Master_Status  => True,
+                               Slave_Page     => Page,
+                               Slave_Switch   => "-g",
+                               Slave_Activate => True);
 
-      declare
-         Arr    : Argument_List (1 .. Num_Switches);
-         Index  : Natural := Arr'First;
-         Active : Boolean;
-         Value  : Integer;
+               Gtk_New (Frame, -"Messages");
+               Set_Border_Width (Frame, 5);
+               Attach (Page, Frame, 0, 2, 1, 2);
+               Gtk_New_Vbox (Box, False, 0);
+               Add (Frame, Box);
+               Create_Check (Page, Box, -"All warnings", "-Wall");
+               Create_Check (Page, Box, -"Strict ANSI", "-ansi");
 
-      begin
-         case Tool is
-            when Gnatmake =>
-               Check_Toggle (Editor.Make_All_Files, "-a", Arr, Index);
-               Check_Toggle (Editor.Make_Recompile_Switches, "-s", Arr, Index);
-               Check_Toggle (Editor.Make_Minimal_Recompile, "-m", Arr, Index);
-               Check_Toggle (Editor.Make_Keep_Going, "-k", Arr, Index);
-               Check_Toggle (Editor.Make_Debug, "-g", Arr, Index);
-               Check_Toggle (Editor.Make_Mapping_File, "-C", Arr, Index);
-               Active := Get_Active (Editor.Make_Debug);
 
-               if Active /= Editor.Prev_Make_Debug then
-                  if (Editor.Pages and Ada_Page) /= 0 then
-                     Set_Active (Editor.Ada_Debug, Active);
-                     Set_Sensitive (Editor.Ada_Debug, not Active);
-                  end if;
+            --  C++ compiler page
+            when 4 =>
+               Gtk_New (Page, "C++", "compiler", C_String, 2, 2);
 
-                  if (Editor.Pages and C_Page) /= 0 then
-                     Set_Active (Editor.C_Debug, Active);
-                     Set_Sensitive (Editor.C_Debug, not Active);
-                  end if;
+               Gtk_New (Frame, -"Code generation");
+               Set_Border_Width (Frame, 5);
+               Attach (Page, Frame, 0, 1, 0, 1);
+               Gtk_New_Vbox (Box, False, 0);
+               Add (Frame, Box);
+               Pack_Start
+                 (Box, Create_Combo
+                  (Page, "",
+                   Switch               => "-O",
+                   Default_No_Switch    => "0",
+                   Default_No_Digit     => "1",
+                   Buttons => (1 => (Cst_No_Optimization'Access,
+                                     Cst_Zero'Access),
+                               2 => (Cst_Some_Optimization'Access,
+                                     Cst_One'Access),
+                               3 => (Cst_Full_Optimization'Access,
+                                     Cst_Two'Access),
+                               4 => (Cst_Full_Inline_Optimization'Access,
+                                     Cst_Three'Access))),
+                  False, False);
+               Create_Check (Page, Box, -"Unroll loops", "-funroll-loops");
+               Create_Check (Page, Box, -"Position independent code", "-fPIC");
+               Create_Check (Page, Box, -"Profiling", "-pg");
+               Create_Check (Page, Box, -"Code coverage", "-ftest-coverage");
+               Create_Check (Page, Box, -"Instrument arcs", "-fprofile-arcs");
+               Add_Dependency (Master_Page    => Page,
+                               Master_Switch  => "-ftest-coverage",
+                               Master_Status  => False,
+                               Slave_Page     => Page,
+                               Slave_Switch   => "-fprofile-arcs",
+                               Slave_Activate => False);
+               Create_Check (Page, Box, -"Exceptions support", "-fexceptions");
+               Create_Check
+                 (Page, Box, -"Elide constructor", "-felide-constructor");
+               Create_Check (Page, Box, -"Conserve space", "-fconserve-space");
 
-                  if (Editor.Pages and Cpp_Page) /= 0 then
-                     Set_Active (Editor.Cpp_Debug, Active);
-                     Set_Sensitive (Editor.Cpp_Debug, not Active);
-                  end if;
+               Gtk_New (Frame, -"Debugging");
+               Set_Border_Width (Frame, 5);
+               Attach (Page, Frame, 1, 2, 0, 1);
+               Gtk_New_Vbox (Box, False, 0);
+               Add (Frame, Box);
+               Create_Check (Page, Box, -"Debug information", "-g");
+               Add_Dependency (Master_Page    => Editor.Pages (1),
+                               Master_Switch  => "-g",
+                               Master_Status  => True,
+                               Slave_Page     => Page,
+                               Slave_Switch   => "-g",
+                               Slave_Activate => True);
 
-                  if (Editor.Pages and Linker_Page) /= 0 then
-                     Set_Active (Editor.Linker_Debug, Active);
-                     Set_Sensitive (Editor.Linker_Debug, not Active);
-                  end if;
+               Gtk_New (Frame, -"Messages");
+               Set_Border_Width (Frame, 5);
+               Attach (Page, Frame, 0, 2, 1, 2);
+               Gtk_New_Vbox (Box, False, 0);
+               Add (Frame, Box);
+               Create_Check (Page, Box, -"All warnings", "-Wall");
+               Create_Check
+                 (Page, Box, -"Overloaded virtual", "-Woverloaded-virtual");
 
-                  Editor.Prev_Make_Debug := Active;
-               end if;
 
-               if Get_Active (Editor.Make_Multiprocessing) then
-                  Arr (Index) := new String'("-j" &
-                    Image (Integer (Get_Value_As_Int (Editor.Num_Processes))));
-                  Index := Index + 1;
-               end if;
+            --  Pretty printer page
+            when 5 =>
+               Gtk_New (Page, "Pretty Printer", "pretty_Printer", Ada_String,
+                        5, 1);
 
-            when Ada_Compiler =>
-               Check_Combo
-                 (Editor.Ada_Optimization_Level, "-O", "0123", Arr, Index);
-               Check_Toggle
-                 (Editor.Ada_Interunit_Inlining, "-gnatN", Arr, Index);
-               Check_Toggle
-                 (Editor.Ada_Unroll_Loops, "-funroll-loops", Arr, Index);
-               Check_Toggle (Editor.Ada_Pic, "-fPIC", Arr, Index);
-               Check_Toggle
-                 (Editor.Ada_Code_Coverage, "-ftest-coverage", Arr, Index);
-               Set_Active
-                 (Editor.Ada_Instrument_Arcs,
-                  Get_Active (Editor.Ada_Code_Coverage));
-               Check_Toggle
-                 (Editor.Ada_Instrument_Arcs, "-fprofile-arcs", Arr, Index);
-               Check_Toggle
-                 (Editor.Ada_Full_Errors, "-gnatf", Arr, Index);
-               Check_Toggle
-                 (Editor.Ada_Warning_Error, "-gnatwe", Arr, Index);
-               Check_Toggle
-                 (Editor.Ada_Elab_Warning, "-gnatwl", Arr, Index);
-               Check_Toggle
-                 (Editor.Ada_Unused_Warning, "-gnatwu", Arr, Index);
-               Check_Toggle
-                 (Editor.Ada_Style_Checks, "-gnaty", Arr, Index);
-               Check_Toggle
-                 (Editor.Ada_Overflow_Checking, "-gnato", Arr, Index);
-               Check_Toggle
-                 (Editor.Ada_Suppress_All_Checks, "-gnatp", Arr, Index);
-               Check_Toggle
-                 (Editor.Ada_Stack_Checking, "-fstack-check", Arr, Index);
-               Check_Toggle
-                 (Editor.Ada_Dynamic_Elaboration, "-gnatE", Arr, Index);
-               Check_Toggle (Editor.Ada_Debug, "-g", Arr, Index);
-               Check_Toggle (Editor.Ada_Assertions, "-gnata", Arr, Index);
-               Check_Toggle
-                 (Editor.Ada_Debug_Expanded_Code, "-gnatD", Arr, Index);
-               Check_Toggle
-                 (Editor.Ada_Language_Extensions, "-gnatX", Arr, Index);
-               Check_Toggle (Editor.Ada83_Mode, "-gnat83", Arr, Index);
+               Gtk_New (Frame, -"Spacing");
+               Set_Border_Width (Frame, 5);
+               Attach (Page, Frame, 0, 1, 0, 1);
+               Gtk_New_Hbox (Box, False, 0);
+               Add (Frame, Box);
+               Create_Spin (Page, Box, -"Indentation", "-i", 1, 100, 3);
+               Create_Spin
+                 (Page, Box, -"Maximum line length", "-M", 20, 100, 79);
 
-            when C_Compiler =>
-               Check_Combo
-                 (Editor.C_Optimization_Level, "-O", "0123", Arr, Index);
-               Check_Toggle
-                 (Editor.C_Unroll_Loops, "-funroll-loops", Arr, Index);
-               Check_Toggle (Editor.C_Pic, "-fPIC", Arr, Index);
-               Check_Toggle (Editor.C_Profile, "-pg", Arr, Index);
-               Set_Active
-                 (Editor.Linker_Profile,
-                  (Get_Active (Editor.C_Profile))
-                   or else ((Editor.Pages and Cpp_Page) /= 0
-                     and then Get_Active (Editor.Cpp_Profile)));
-               Check_Toggle
-                 (Editor.C_Code_Coverage, "-ftest-coverage", Arr, Index);
-               Set_Active
-                 (Editor.C_Instrument_Arcs,
-                  Get_Active (Editor.C_Code_Coverage));
-               Check_Toggle
-                 (Editor.C_Instrument_Arcs, "-fprofile-arcs", Arr, Index);
-               Check_Toggle (Editor.C_Debug, "-g", Arr, Index);
-               Check_Toggle (Editor.C_All_Warnings, "-Wall", Arr, Index);
-               Check_Toggle (Editor.C_Ansi, "-ansi", Arr, Index);
+               Gtk_New (Frame, -"Casing");
+               Set_Border_Width (Frame, 5);
+               Attach (Page, Frame, 0, 1, 1, 2);
+               Gtk_New (Table, 2, 2, False);
+               Add (Frame, Table);
+               Set_Col_Spacings (Table, 5);
+               Gtk_New (Group);
+               Attach
+                 (Table, Create_Combo
+                  (Page, -"Keyword: ",
+                   Switch               => "-k",
+                   Default_No_Switch    => "L",
+                   Default_No_Digit     => "L",
+                   Buttons =>           (1 => (Cst_Lower_Case'Access,
+                                               Cst_L'Access),
+                                         2 => (Cst_Upper_Case'Access,
+                                               Cst_U'Access)),
+                   Label_Size_Group     => Group),
+                  0, 1, 0, 1);
+               Attach
+                 (Table, Create_Combo
+                  (Page, -"Reference: ",
+                   Switch               => "-r",
+                   Default_No_Switch    => "D",
+                   Default_No_Digit     => "D",
+                   Buttons              => (1 => (Cst_As_Declared'Access,
+                                                  Cst_D'Access),
+                                            2 => (Cst_Mixed_Case'Access,
+                                                  Cst_M'Access)),
+                   Label_Size_Group     => Group),
+                  0, 1, 1, 2);
+               Gtk_New (Group);
+               Attach
+                 (Table, Create_Combo
+                  (Page, -"Attribute: ",
+                   Switch               => "-a",
+                   Default_No_Switch    => "M",
+                   Default_No_Digit     => "M",
+                   Buttons              => (1 => (Cst_Mixed_Case'Access,
+                                                  Cst_M'Access),
+                                            2 => (Cst_Lower_Case'Access,
+                                                  Cst_L'Access),
+                                            3 => (Cst_Upper_Case'Access,
+                                                  Cst_U'Access)),
+                   Label_Size_Group     => Group),
+                  1, 2, 0, 1);
+               Attach
+                 (Table, Create_Combo
+                  (Page, -"Pragma: ",
+                   Switch               => "-p",
+                   Default_No_Switch    => "M",
+                   Default_No_Digit     => "M",
+                   Buttons              => (1 => (Cst_Mixed_Case'Access,
+                                                  Cst_M'Access),
+                                            2 => (Cst_Lower_Case'Access,
+                                                  Cst_L'Access),
+                                            3 => (Cst_Upper_Case'Access,
+                                                  Cst_U'Access)),
+                   Label_Size_Group     => Group),
+                  1, 2, 1, 2);
 
-            when Cpp_Compiler =>
-               Check_Combo
-                 (Editor.Cpp_Optimization_Level, "-O", "0123", Arr, Index);
-               Check_Toggle
-                 (Editor.Cpp_Unroll_Loops, "-funroll-loops", Arr, Index);
-               Check_Toggle (Editor.Cpp_Pic, "-fPIC", Arr, Index);
-               Check_Toggle (Editor.Cpp_Profile, "-pg", Arr, Index);
-               Set_Active
-                 (Editor.Linker_Profile,
-                  (Get_Active (Editor.Cpp_Profile))
-                   or else ((Editor.Pages and C_Page) /= 0
-                     and then Get_Active (Editor.C_Profile)));
-               Check_Toggle
-                 (Editor.Cpp_Code_Coverage, "-ftest-coverage", Arr, Index);
-               Set_Active
-                 (Editor.Cpp_Instrument_Arcs,
-                  Get_Active (Editor.Cpp_Code_Coverage));
-               Check_Toggle
-                 (Editor.Cpp_Instrument_Arcs, "-fprofile-arcs", Arr, Index);
-               Check_Toggle
-                 (Editor.Cpp_Exceptions, "-fexceptions", Arr, Index);
-               Check_Toggle
-                 (Editor.Cpp_Elide_Constructor, "-felide-constructor",
-                  Arr, Index);
-               Check_Toggle
-                 (Editor.Cpp_Conserve_Space, "-fconserve-space", Arr, Index);
-               Check_Toggle (Editor.Cpp_Debug, "-g", Arr, Index);
-               Check_Toggle (Editor.Cpp_All_Warnings, "-Wall", Arr, Index);
-               Check_Toggle
-                 (Editor.Cpp_Overloaded_Virtual, "-Woverloaded-virtual",
-                  Arr, Index);
+               Gtk_New (Frame, -"Layout");
+               Set_Border_Width (Frame, 5);
+               Attach (Page, Frame, 0, 1, 2, 3);
+               Gtk_New_Vbox (Box, False, 0);
+               Add (Frame, Box);
+               Gtk_New (Group);
+               Pack_Start
+                 (Box, Create_Combo
+                  (Page, -"Construct: ",
+                   Switch               => "-l",
+                   Default_No_Switch    => "1",
+                   Default_No_Digit     => "1",
+                   Buttons => (1 => (Cst_Gnat_Style'Access,
+                                     Cst_One'Access),
+                               2 => (Cst_Compact'Access,
+                                     Cst_Two'Access),
+                               3 => (Cst_Uncompact'Access,
+                                     Cst_Three'Access)),
+                   Label_Size_Group => Group),
+                  False, False);
+               Pack_Start
+                 (Box, Create_Combo
+                  (Page, -"Comment: ",
+                   Switch               => "-c",
+                   Default_No_Switch    => "1",
+                   Default_No_Digit     => "1",
+                   Buttons => (1 => (Cst_Gnat_Indent'Access, Cst_One'Access),
+                               2 => (Cst_Std_Indent'Access,  Cst_Two'Access)),
+                   Label_Size_Group => Group),
+                  False, False);
+               Create_Check (Page, Box, -"GNAT style beginning", "-c3");
+               Create_Check (Page, Box, -"Reformat blocks", "-c4");
 
-            when Pretty_Printer =>
-               Value := Integer (Get_Value_As_Int (Editor.Indent_Level));
+               Gtk_New (Frame, -"Alignment");
+               Set_Border_Width (Frame, 5);
+               Attach (Page, Frame, 0, 1, 3, 4);
+               Gtk_New_Vbox (Box, False, 0);
+               Add (Frame, Box);
+               Create_Check (Page, Box, -"Colons in declarations", "-A1");
+               Create_Check (Page, Box, -"Assignments in declarations", "-A2");
+               Create_Check (Page, Box, -"Assignments in statements", "-A3");
+               Create_Check (Page, Box, -"Arrow delimiters in associations",
+                             "-A4");
 
-               --  3 is the default value of this switch
-               if Value /= 3 then
-                  Arr (Index) := new String'("-i" & Image (Value));
-                  Index := Index + 1;
-               end if;
+               Gtk_New (Frame, -"General");
+               Set_Border_Width (Frame, 5);
+               Attach (Page, Frame, 0, 1, 4, 5);
+               Gtk_New_Vbox (Box, False, 0);
+               Add (Frame, Box);
+               Create_Check (Page, Box, -"Set missing end/exit labels", "-e");
 
-               Value := Integer (Get_Value_As_Int (Editor.Max_Line_Length));
+            --  Binder page
+            when 6 =>
+               Gtk_New (Page, "Binder", "binder", Ada_String, 1, 1);
+               Gtk_New_Vbox (Box, False, 0);
+               Attach (Page, Box, 0, 1, 0, 1);
+               Create_Check
+                 (Page, Box, -"Store call stack in expressions", "-E");
+               Create_Check (Page, Box, -"List possible restrictions", "-r");
+               Create_Radio
+                 (Page, Box,
+                  (1 => (Cst_Static'Access, Cst_Static_S'Access),
+                   2 => (Cst_Shared'Access, Cst_Shared_S'Access)));
 
-               --  79 is the default value of this switch
-               if Value /= 79 then
-                  Arr (Index) := new String'("-M" & Image (Value));
-                  Index := Index + 1;
-               end if;
+            --  Linker page
+            when 7 =>
+               Gtk_New (Page, "Linker", "linker", Ada_String, 1, 1);
+               Gtk_New_Vbox (Box, False, 0);
+               Attach (Page, Box, 0, 1, 0, 1);
+               Create_Check (Page, Box, -"Strip symbols", "-s");
+               Create_Check (Page, Box, -"Debug information", "-g");
+               Add_Dependency (Master_Page    => Editor.Pages (1),
+                               Master_Switch  => "-g",
+                               Master_Status  => True,
+                               Slave_Page     => Page,
+                               Slave_Switch   => "-g",
+                               Slave_Activate => True);
+               --  Create_Check (Page, Box, -"Profiling", "-pg");
 
-               Check_Combo (Editor.Keyword_Casing, "-k", "LU", Arr, Index);
-               Check_Combo (Editor.Attribute_Casing, "-a", "MLU", Arr, Index);
-               Check_Combo (Editor.References_Casing, "-r", "DM", Arr, Index);
-               Check_Combo (Editor.Pragma_Casing, "-p", "MLU", Arr, Index);
-               Check_Combo (Editor.Construct_Layout, "-l", "123", Arr, Index);
-               Check_Combo (Editor.Comments_Layout, "-c", "12", Arr, Index);
-               Check_Toggle (Editor.Gnat_Comment_Begin, "-c3", Arr, Index);
-               Check_Toggle (Editor.Reformat_Comment, "-c4", Arr, Index);
-               Check_Toggle (Editor.Align_Colons, "-A1", Arr, Index);
-               Check_Toggle (Editor.Align_Assign_Decl, "-A2", Arr, Index);
-               Check_Toggle (Editor.Align_Assign_Stmt, "-A3", Arr, Index);
-               Check_Toggle (Editor.Align_Arrow, "-A4", Arr, Index);
-               Check_Toggle
-                 (Editor.Set_Labels, "-e", Arr, Index, Inverted => True);
-
-            when Binder =>
-               Check_Toggle (Editor.Binder_Tracebacks, "-E", Arr, Index);
-               Check_Toggle (Editor.Binder_Restrictions, "-r", Arr, Index);
-
-               if Get_Active (Editor.Binder_Static_Gnat) then
-                  Arr (Index) := new String'("-static");
-               else
-                  Arr (Index) := new String'("-shared");
-               end if;
-
-               Index := Index + 1;
-
-            when Linker =>
-               Check_Toggle (Editor.Linker_Strip, "-s", Arr, Index);
-               Check_Toggle (Editor.Linker_Debug, "-g", Arr, Index);
-               Check_Toggle (Editor.Linker_Profile, "-pg", Arr, Index);
+            when others =>
+               null;
          end case;
 
-         return Arr (Arr'First .. Index - 1);
-      end;
-   end Get_Switches_From_GUI;
+         Editor.Pages (P) := Page;
+         Gtk_New (Tab, Editor.Pages (P).Title.all);
+         Append_Page (Editor, Editor.Pages (P), Tab);
 
-   ------------------
-   -- Set_Switches --
-   ------------------
+         Widget_Callback.Connect
+           (Page, "destroy",
+            Widget_Callback.To_Marshaller (Page_Destroyed'Access));
+      end loop;
 
-   procedure Set_Switches
-     (Editor   : access Switches_Edit_Record;
-      Tool     : Tool_Names;
-      Switches : Argument_List)
-   is
-      function Is_Set (Switch : String) return Boolean;
-      --  True if Switch is set in Switches
+      Set_Current_Page (Editor, 0);
 
-      procedure Set_Combo
-        (Combo          : Gtk_Combo;
-         Switch         : String;
-         Switch_Details : String);
-      --  Check if a switch starts with Switch, and get the argument after it
-      --  (set in the combo box)
-
-      ------------
-      -- Is_Set --
-      ------------
-
-      function Is_Set (Switch : String) return Boolean is
-      begin
-         for J in Switches'Range loop
-            if Switches (J) /= null
-              and then Switches (J).all = Switch
-            then
-               return True;
-            end if;
-         end loop;
-
-         return False;
-      end Is_Set;
-
-      ---------------
-      -- Set_Combo --
-      ---------------
-
-      procedure Set_Combo
-        (Combo          : Gtk_Combo;
-         Switch         : String;
-         Switch_Details : String)
-      is
-         Index : Gint := 0;
-         Char  : Character;
-
-      begin
-         for J in Switches'Range loop
-            if Switches (J) /= null
-              and then Switches (J)'Length >= Switch'Length
-              and then Switches (J) (Switches (J)'First
-                                     .. Switches (J)'First + Switch'Length - 1)
-              = Switch
-            then
-               Index := 0;
-
-               if Switches (J)'Length > Switch'Length then
-                  Char := Switches (J) (Switches (J)'First + Switch'Length);
-
-                  for K in Switch_Details'Range loop
-                     if Switch_Details (K) = Char then
-                        Index := Gint (K - Switch_Details'First);
-                     end if;
-                  end loop;
-               end if;
-
-               if Switch = "-O" and then Switches (J).all = "-O" then
-                  Select_Item (Get_List (Combo), 1);
-               else
-                  Select_Item (Get_List (Combo), Index);
-               end if;
-
-               return;
-            else
-               Select_Item (Get_List (Combo), 0);
-            end if;
-         end loop;
-      end Set_Combo;
-
-      Cmd_Line : Gtk_Entry;
-      Second   : Natural;
-
-   begin
-      pragma Assert
-        (Tool /= Gnatmake or else (Editor.Pages and Gnatmake_Page) /= 0);
-      pragma Assert
-        (Tool /= Ada_Compiler or else (Editor.Pages and Ada_Page) /= 0);
-      pragma Assert
-        (Tool /= C_Compiler or else (Editor.Pages and C_Page) /= 0);
-      pragma Assert
-        (Tool /= Cpp_Compiler or else (Editor.Pages and Cpp_Page) /= 0);
-      pragma Assert
-        (Tool /= Binder or else (Editor.Pages and Binder_Page) /= 0);
-      pragma Assert
-        (Tool /= Pretty_Printer
-         or else (Editor.Pages and Pretty_Printer_Page) /= 0);
-      pragma Assert
-        (Tool /= Linker or else (Editor.Pages and Linker_Page) /= 0);
-
-      case Tool is
-         when Gnatmake =>
-            Set_Active (Editor.Make_All_Files, Is_Set ("-a"));
-            Set_Active (Editor.Make_Recompile_Switches, Is_Set ("-s"));
-            Set_Active (Editor.Make_Minimal_Recompile, Is_Set ("-m"));
-            Set_Active (Editor.Make_Keep_Going, Is_Set ("-k"));
-            Set_Active (Editor.Make_Debug, Is_Set ("-g"));
-            Set_Active (Editor.Make_Mapping_File, Is_Set ("-C"));
-            Set_Active (Editor.Make_Multiprocessing, False);
-
-            for J in Switches'Range loop
-               if Switches (J) /= null
-                 and then Switches (J)'Length > 1
-                 and then Switches (J) (Switches (J)'First + 1) = 'j'
-               then
-                  Set_Active (Editor.Make_Multiprocessing, True);
-
-                  begin
-                     if Switches (J)'Length > 2 then
-                        Set_Value
-                          (Editor.Num_Processes,
-                           Grange_Float'Value (Switches (J)
-                             (Switches (J)'First + 2 .. Switches (J)'Last)));
-
-                     else
-                        Set_Value (Editor.Num_Processes, 0.0);
-                     end if;
-
-                  exception
-                     when Constraint_Error =>
-                        Set_Value (Editor.Num_Processes, 0.0);
-                  end;
-               end if;
-            end loop;
-
-            Cmd_Line := Editor.Make_Switches_Entry;
-
-         when Ada_Compiler =>
-            Set_Combo (Editor.Ada_Optimization_Level, "-O", "0123");
-            Set_Active (Editor.Ada_Interunit_Inlining, Is_Set ("-gnatN"));
-            Set_Active (Editor.Ada_Unroll_Loops, Is_Set ("-funroll-loops"));
-            Set_Active (Editor.Ada_Pic, Is_Set ("-fPIC"));
-            Set_Active (Editor.Ada_Code_Coverage, Is_Set ("-ftest-coverage"));
-            Set_Active (Editor.Ada_Instrument_Arcs, Is_Set ("-fprofile-arcs"));
-            Set_Active (Editor.Ada_Full_Errors, Is_Set ("-gnatf"));
-            Set_Active (Editor.Ada_Warning_Error, Is_Set ("-gnatwe"));
-            Set_Active (Editor.Ada_Elab_Warning, Is_Set ("-gnatwl"));
-            Set_Active (Editor.Ada_Unused_Warning, Is_Set ("-gnatwu"));
-            Set_Active (Editor.Ada_Style_Checks, Is_Set ("-gnaty"));
-            Set_Active (Editor.Ada_Overflow_Checking, Is_Set ("-gnato"));
-            Set_Active (Editor.Ada_Suppress_All_Checks, Is_Set ("-gnatp"));
-            Set_Active (Editor.Ada_Stack_Checking, Is_Set ("-fstack-check"));
-            Set_Active (Editor.Ada_Dynamic_Elaboration, Is_Set ("-gnatE"));
-            Set_Active (Editor.Ada_Debug, Is_Set ("-g"));
-            Set_Active (Editor.Ada_Assertions, Is_Set ("-gnata"));
-            Set_Active (Editor.Ada_Debug_Expanded_Code, Is_Set ("-gnatD"));
-            Set_Active (Editor.Ada_Language_Extensions, Is_Set ("-gnatX"));
-            Set_Active (Editor.Ada83_Mode, Is_Set ("-gnat83"));
-
-            Cmd_Line := Editor.Ada_Switches_Entry;
-
-         when C_Compiler =>
-            Set_Combo (Editor.C_Optimization_Level, "-O", "0123");
-            Set_Active (Editor.C_Unroll_Loops, Is_Set ("-funroll-loops"));
-            Set_Active (Editor.C_Pic, Is_Set ("-fPIC"));
-            Set_Active (Editor.C_Profile, Is_Set ("-pg"));
-            Set_Active (Editor.C_Code_Coverage, Is_Set ("-ftest-coverage"));
-            Set_Active (Editor.C_Instrument_Arcs, Is_Set ("-fprofile-arcs"));
-            Set_Active (Editor.C_Debug, Is_Set ("-g"));
-            Set_Active (Editor.C_All_Warnings, Is_Set ("-Wall"));
-            Set_Active (Editor.C_Ansi, Is_Set ("-ansi"));
-
-            Cmd_Line := Editor.C_Switches_Entry;
-
-         when Cpp_Compiler =>
-            Set_Combo (Editor.Cpp_Optimization_Level, "-O", "0123");
-            Set_Active (Editor.Cpp_Unroll_Loops, Is_Set ("-funroll-loops"));
-            Set_Active (Editor.Cpp_Pic, Is_Set ("-fPIC"));
-            Set_Active (Editor.Cpp_Profile, Is_Set ("-pg"));
-            Set_Active (Editor.Cpp_Code_Coverage, Is_Set ("-ftest-coverage"));
-            Set_Active (Editor.Cpp_Instrument_Arcs, Is_Set ("-fprofile-arcs"));
-            Set_Active (Editor.Cpp_Exceptions, Is_Set ("-fexceptions"));
-            Set_Active
-              (Editor.Cpp_Elide_Constructor, Is_Set ("-felide-constructor"));
-            Set_Active
-              (Editor.Cpp_Conserve_Space, Is_Set ("-fconserve-space"));
-            Set_Active (Editor.Cpp_Debug, Is_Set ("-g"));
-            Set_Active (Editor.Cpp_All_Warnings, Is_Set ("-Wall"));
-            Set_Active
-              (Editor.Cpp_Overloaded_Virtual, Is_Set ("-Woverloaded-virtual"));
-
-            Cmd_Line := Editor.Cpp_Switches_Entry;
-
-         when Pretty_Printer =>
-            --  Handle spin buttons first
-
-            for J in Switches'Range loop
-               if Switches (J) /= null then
-                  Second := Switches (J)'First + 1;
-
-                  if Switches (J)'Length = 3
-                    and then Switches (J) (Second) = 'i'
-                    and then Switches (J) (Second + 1) in '0' .. '9'
-                  then
-                     Set_Value
-                       (Editor.Indent_Level,
-                        Grange_Float'Value
-                          (Switches (J) (Second + 1 .. Second + 1)));
-
-                  elsif Switches (J)'Length > 2
-                    and then Switches (J) (Second) = 'M'
-                  then
-                     begin
-                        Set_Value
-                          (Editor.Max_Line_Length,
-                           Grange_Float'Value (Switches (J)
-                             (Second + 1 .. Switches (J)'Last)));
-
-                     exception
-                        when Constraint_Error =>
-                           Set_Value (Editor.Max_Line_Length, 79.0);
-                     end;
-                  end if;
-               end if;
-            end loop;
-
-            Set_Combo (Editor.Keyword_Casing, "-k", "LU");
-            Set_Combo (Editor.Attribute_Casing, "-a", "MLU");
-            Set_Combo (Editor.References_Casing, "-r", "DM");
-            Set_Combo (Editor.Pragma_Casing, "-p", "MLU");
-            Set_Combo (Editor.Construct_Layout, "-l", "123");
-            Set_Combo (Editor.Comments_Layout, "-c", "12");
-            Set_Active (Editor.Gnat_Comment_Begin, Is_Set ("-c3"));
-            Set_Active (Editor.Reformat_Comment, Is_Set ("-c4"));
-            Set_Active (Editor.Align_Colons, Is_Set ("-A1"));
-            Set_Active (Editor.Align_Assign_Decl, Is_Set ("-A2"));
-            Set_Active (Editor.Align_Assign_Stmt, Is_Set ("-A3"));
-            Set_Active (Editor.Align_Arrow, Is_Set ("-A4"));
-            Set_Active (Editor.Set_Labels, not Is_Set ("-e"));
-
-            Cmd_Line := Editor.Pp_Switches_Entry;
-
-         when Binder =>
-            Set_Active (Editor.Binder_Tracebacks, Is_Set ("-E"));
-            Set_Active (Editor.Binder_Restrictions, Is_Set ("-r"));
-            Set_Active (Editor.Binder_Static_Gnat, Is_Set ("-static"));
-            Set_Active (Editor.Binder_Shared_Gnat, Is_Set ("-shared"));
-
-            Cmd_Line := Editor.Binder_Switches_Entry;
-
-         when Linker =>
-            Set_Active (Editor.Linker_Strip, Is_Set ("-s"));
-            Set_Active (Editor.Linker_Debug, Is_Set ("-g"));
-            Set_Active (Editor.Linker_Profile, Is_Set ("-pg"));
-
-            Cmd_Line := Editor.Linker_Switches_Entry;
-      end case;
-
-      if not Editor.Block_Refresh then
-         Editor.Block_Refresh := True;
-
-         Set_Text (Cmd_Line, "");
-
-         for K in Switches'Range loop
-            if Switches (K) /= null then
-               Append_Text (Cmd_Line, Switches (K).all & " ");
-            end if;
-         end loop;
-
-         Editor.Block_Refresh := False;
-      end if;
-   end Set_Switches;
-
-   ---------------------
-   -- Filter_Switches --
-   ---------------------
-
-   procedure Filter_Switches
-     (Editor   : access Switches_Edit_Record'Class;
-      Tool     : Tool_Names;
-      Switches : in out GNAT.OS_Lib.Argument_List) is
-   begin
-      --  Note: We do not filter if the page is not displayed, so that the
-      --  switches do not actually disappear when the switches editor is
-      --  closed.
-
-      case Tool is
-         when Gnatmake =>
-            if (Editor.Pages and Gnatmake_Page) /= 0 then
-               for J in Switches'Range loop
-                  if Switches (J) /= null and then
-                    (Switches (J).all = "-a"
-                     or else Switches (J).all = "-s"
-                     or else Switches (J).all = "-m"
-                     or else Switches (J).all = "-k"
-                     or else Switches (J).all = "-g"
-                     or else Switches (J).all = "-C"
-                     or else (Switches (J)'Length >= 2 and then
-                       Switches (J) (Switches (J)'First ..
-                                     Switches (J)'First + 1) = "-j"))
-                  then
-                     Free (Switches (J));
-                  end if;
-               end loop;
-            end if;
-
-         when Ada_Compiler =>
-            if (Editor.Pages and Ada_Page) /= 0 then
-               for J in Switches'Range loop
-                  if Switches (J) /= null and then
-                    ((Switches (J)'Length >= 2
-                      and then Switches (J) (Switches (J)'First ..
-                                             Switches (J)'First + 1) = "-O")
-                     or else Switches (J).all = "-gnatN"
-                     or else Switches (J).all = "-funroll-loops"
-                     or else Switches (J).all = "-fPIC"
-                     or else Switches (J).all = "-ftest-coverage"
-                     or else Switches (J).all = "-fprofile-arcs"
-                     or else Switches (J).all = "-gnatf"
-                     or else Switches (J).all = "-gnatwe"
-                     or else Switches (J).all = "-gnatwl"
-                     or else Switches (J).all = "-gnatwu"
-                     or else Switches (J).all = "-gnaty"
-                     or else Switches (J).all = "-gnato"
-                     or else Switches (J).all = "-gnatp"
-                     or else Switches (J).all = "-fstack-check"
-                     or else Switches (J).all = "-gnatE"
-                     or else Switches (J).all = "-g"
-                     or else Switches (J).all = "-gnata"
-                     or else Switches (J).all = "-gnatD"
-                     or else Switches (J).all = "-gnatX"
-                     or else Switches (J).all = "-gnat83")
-                  then
-                     Free (Switches (J));
-                  end if;
-               end loop;
-            end if;
-
-         when C_Compiler =>
-            if (Editor.Pages and C_Page) /= 0 then
-               for J in Switches'Range loop
-                  if Switches (J) /= null and then
-                    ((Switches (J)'Length >= 2
-                      and then Switches (J) (Switches (J)'First ..
-                                             Switches (J)'First + 1) = "-O")
-                     or else Switches (J).all = "-funroll-loops"
-                     or else Switches (J).all = "-fPIC"
-                     or else Switches (J).all = "-pg"
-                     or else Switches (J).all = "-ftest-coverage"
-                     or else Switches (J).all = "-fprofile-arcs"
-                     or else Switches (J).all = "-g"
-                     or else Switches (J).all = "-Wall"
-                     or else Switches (J).all = "-ansi")
-                  then
-                     Free (Switches (J));
-                  end if;
-               end loop;
-            end if;
-
-         when Cpp_Compiler =>
-            if (Editor.Pages and Cpp_Page) /= 0 then
-               for J in Switches'Range loop
-                  if Switches (J) /= null and then
-                    ((Switches (J)'Length >= 2
-                      and then Switches (J) (Switches (J)'First ..
-                                             Switches (J)'First + 1) = "-O")
-                     or else Switches (J).all = "-funroll-loops"
-                     or else Switches (J).all = "-fPIC"
-                     or else Switches (J).all = "-pg"
-                     or else Switches (J).all = "-ftest-coverage"
-                     or else Switches (J).all = "-fprofile-arcs"
-                     or else Switches (J).all = "-fexceptions"
-                     or else Switches (J).all = "-felide-constructor"
-                     or else Switches (J).all = "-fconserve-space"
-                     or else Switches (J).all = "-g"
-                     or else Switches (J).all = "-Wall"
-                     or else Switches (J).all = "-Woverloaded-virtual")
-                  then
-                     Free (Switches (J));
-                  end if;
-               end loop;
-            end if;
-
-         when Pretty_Printer =>
-            if (Editor.Pages and Pretty_Printer_Page) /= 0 then
-               for J in Switches'Range loop
-                  if Switches (J) /= null and then
-                    ((Switches (J)'Length = 3
-                      and then Switches (J) (Switches (J)'First ..
-                                             Switches (J)'First + 1) = "-i")
-                     or else (Switches (J)'Length > 2
-                      and then Switches (J) (Switches (J)'First ..
-                                             Switches (J)'First + 1) = "-M")
-                     or else Switches (J).all = "-A1"
-                     or else Switches (J).all = "-A2"
-                     or else Switches (J).all = "-A3"
-                     or else Switches (J).all = "-A4"
-                     or else Switches (J).all = "-aL"
-                     or else Switches (J).all = "-aU"
-                     or else Switches (J).all = "-aM"
-                     or else Switches (J).all = "-c1"
-                     or else Switches (J).all = "-c2"
-                     or else Switches (J).all = "-c3"
-                     or else Switches (J).all = "-c4"
-                     or else Switches (J).all = "-e"
-                     or else Switches (J).all = "-kL"
-                     or else Switches (J).all = "-kU"
-                     or else Switches (J).all = "-l1"
-                     or else Switches (J).all = "-l2"
-                     or else Switches (J).all = "-l3"
-                     or else Switches (J).all = "-pL"
-                     or else Switches (J).all = "-pU"
-                     or else Switches (J).all = "-pM"
-                     or else Switches (J).all = "-rD"
-                     or else Switches (J).all = "-rM"
-                     or else Switches (J).all = "-e")
-                  then
-                     Free (Switches (J));
-                  end if;
-               end loop;
-            end if;
-
-         when Binder =>
-            if (Editor.Pages and Binder_Page) /= 0 then
-               for J in Switches'Range loop
-                  if Switches (J) /= null and then
-                    (Switches (J).all = "-E"
-                     or else Switches (J).all = "-r"
-                     or else Switches (J).all = "-static"
-                     or else Switches (J).all = "-shared")
-                  then
-                     Free (Switches (J));
-                  end if;
-               end loop;
-            end if;
-
-         when Linker =>
-            if (Editor.Pages and Linker_Page) /= 0 then
-               for J in Switches'Range loop
-                  if Switches (J) /= null and then
-                    (Switches (J).all = "-s"
-                     or else Switches (J).all = "-g"
-                     or else Switches (J).all = "-pg")
-                  then
-                     Free (Switches (J));
-                  end if;
-               end loop;
-            end if;
-
-      end case;
-   end Filter_Switches;
+      Widget_Callback.Connect
+        (Editor, "destroy",
+         Widget_Callback.To_Marshaller (Editor_Destroyed'Access));
+   end Gtk_New;
 
    --------------------
-   -- Update_Cmdline --
+   -- Page_Destroyed --
    --------------------
 
-   procedure Update_Cmdline
-     (Editor : access Switches_Edit_Record; Tool : Tool_Names)
-   is
-      Cmd_Line : Gtk_Entry;
+   procedure Page_Destroyed (Page : access Gtk_Widget_Record'Class) is
+      P : Switches_Editor_Page := Switches_Editor_Page (Page);
    begin
-      --  Don't do anything if the callbacks were blocked, to avoid infinite
-      --  loops while we are updating the command line, and it is updating
-      --  the buttons, that are updating the command line,...
+      Free (P.Lang);
+      Free (P.Title);
+      Free (P.Pkg);
+      Unchecked_Free (P.Switches);
+   end Page_Destroyed;
 
-      if Editor.Block_Refresh then
-         return;
-      end if;
+   ----------------------
+   -- Editor_Destroyed --
+   ----------------------
 
-      case Tool is
-         when Gnatmake       => Cmd_Line := Editor.Make_Switches_Entry;
-         when Ada_Compiler   => Cmd_Line := Editor.Ada_Switches_Entry;
-         when C_Compiler     => Cmd_Line := Editor.C_Switches_Entry;
-         when Cpp_Compiler   => Cmd_Line := Editor.Cpp_Switches_Entry;
-         when Pretty_Printer => Cmd_Line := Editor.Pp_Switches_Entry;
-         when Binder         => Cmd_Line := Editor.Binder_Switches_Entry;
-         when Linker         => Cmd_Line := Editor.Linker_Switches_Entry;
-      end case;
+   procedure Editor_Destroyed (Editor : access Gtk_Widget_Record'Class) is
+   begin
+      Unchecked_Free (Switches_Edit (Editor).Pages);
+   end Editor_Destroyed;
 
-      declare
-         Arr     : Argument_List := Get_Switches_From_GUI (Editor, Tool);
-         Current : Argument_List := Get_Switches (Editor, Tool);
+   -----------------------
+   -- Set_Visible_Pages --
+   -----------------------
 
-      begin
-         Editor.Block_Refresh := True;
-         Set_Text (Cmd_Line, "");
+   procedure Set_Visible_Pages
+     (Editor : access Switches_Edit_Record; Languages : Argument_List) is
+   begin
+      Set_Visible_Pages (Editor, Languages, Show_Only => False);
+   end Set_Visible_Pages;
 
-         for J in Arr'Range loop
-            Append_Text (Cmd_Line, Arr (J).all & " ");
-         end loop;
+   -----------------------
+   -- Set_Visible_Pages --
+   -----------------------
 
-         --  Keep the switches set manually by the user
+   procedure Set_Visible_Pages
+     (Editor    : access Switches_Edit_Record'Class;
+      Languages : Argument_List;
+      Show_Only : Boolean)
+   is
+      Visible : Boolean;
+      Current : Gint := Get_Current_Page (Editor);
+   begin
+      for P in Editor.Pages'Range loop
+         Visible := False;
 
-         Filter_Switches (Editor, Tool, Current);
-
-         for K in Current'Range loop
-            if Current (K) /= null then
-               Append_Text (Cmd_Line, Current (K).all & " ");
+         for L in Languages'Range loop
+            if To_Lower (Languages (L).all) = Editor.Pages (P).Lang.all then
+               Visible := True;
+               exit;
             end if;
          end loop;
 
-         Editor.Block_Refresh := False;
+         if Visible then
+            Show (Editor.Pages (P));
+         elsif not Show_Only then
+            Hide (Editor.Pages (P));
+         end if;
+      end loop;
 
-         Free (Arr);
-         Free (Current);
-      end;
-   end Update_Cmdline;
-
-   -----------------------------
-   -- Update_Gui_From_Cmdline --
-   -----------------------------
-
-   procedure Update_Gui_From_Cmdline
-     (Editor : access Switches_Edit_Record; Tool : Tool_Names) is
-   begin
-      if Editor.Block_Refresh then
-         return;
+      --  Work around an apparent bug in gtk+: when the contents of a page is
+      --  hidden, and the shown again, it is always displayed on top of the
+      --  current page in the notebook. We thus see the contents of two or more
+      --  pages at the same time...
+      if Current = -1 then
+         Current := 0;
       end if;
-
-      declare
-         Arg : Argument_List := Get_Switches (Editor, Tool);
-      begin
-         Editor.Block_Refresh := True;
-         Set_Switches (Editor, Tool, Arg);
-         Free (Arg);
-         Editor.Block_Refresh := False;
-      end;
-   end Update_Gui_From_Cmdline;
-
-   --------------
-   -- Set_Page --
-   --------------
-
-   procedure Set_Page
-     (Editor : access Switches_Edit_Record; Tool : Tool_Names) is
-   begin
-      Set_Page (Editor.Notebook, Tool_Names'Pos (Tool));
-   end Set_Page;
+      Set_Current_Page (Editor, Current);
+   end Set_Visible_Pages;
 
    -----------------------
    -- Revert_To_Default --
@@ -1232,17 +1444,14 @@ package body Switches_Editors is
       Scenario_Variables : Prj_API.Project_Node_Array;
       Files              : Argument_List) return Project_Node_Array
    is
-      Max_Modified_Packages : constant := 5;
-      --  Maximum number of packages that can be renamed (Builder, Compiler,
-      --  Binder, Linker, IDE).
+      Max_Modified_Packages : constant Integer := Switches.Pages'Length;
+      --  Maximum number of packages that can be renamed
 
       Result                : Project_Node_Array (1 .. Max_Modified_Packages);
       Current               : Natural := Result'First;
 
       procedure Change_Switches
-        (Tool      : Tool_Names;
-         Pkg_Name  : String;
-         Language  : Name_Id;
+        (Page      : access Switches_Editor_Page_Record'Class;
          File_Name : String);
       --  Changes the switches for a specific package and tool.
 
@@ -1256,17 +1465,16 @@ package body Switches_Editors is
       ---------------------
 
       procedure Change_Switches
-        (Tool : Tool_Names;
-         Pkg_Name : String;
-         Language : Name_Id;
+        (Page      : access Switches_Editor_Page_Record'Class;
          File_Name : String)
       is
-         Args     : Argument_List := Get_Switches (Switches, Tool);
+         Language : constant Name_Id := Get_String (Page.Lang.all);
+         Args     : Argument_List := Get_Switches (Page);
          Value    : Variable_Value;
          Is_Default_Value : Boolean;
          Rename_Prj : Project_Node_Id;
       begin
-         Rename_Prj := Find_Project_Of_Package (Project, Pkg_Name);
+         Rename_Prj := Find_Project_Of_Package (Project, Page.Pkg.all);
 
          if not Has_Been_Normalized (Rename_Prj) then
             Normalize (Rename_Prj, Recurse => False);
@@ -1278,7 +1486,7 @@ package body Switches_Editors is
          else
             Get_Switches
               (Project          => Project_View,
-               In_Pkg           => Pkg_Name,
+               In_Pkg           => Page.Pkg.all,
                File             => File_Name,
                Language         => Language,
                Value            => Value,
@@ -1287,7 +1495,7 @@ package body Switches_Editors is
             --  Check if we in fact have the initial value
             declare
                Default_Args : Argument_List :=
-                 Normalize_Compiler_Switches (Tool, To_Argument_List (Value));
+                 Normalize_Compiler_Switches (Page, To_Argument_List (Value));
             begin
                Is_Default_Value := Is_Equal (Default_Args, Args);
                Free (Default_Args);
@@ -1299,7 +1507,7 @@ package body Switches_Editors is
                if Args'Length /= 0 then
                   Update_Attribute_Value_In_Scenario
                     (Project            => Project,
-                     Pkg_Name           => Pkg_Name,
+                     Pkg_Name           => Page.Pkg.all,
                      Scenario_Variables => Scenario_Variables,
                      Attribute_Name     => Get_String (Name_Switches),
                      Values             => Args,
@@ -1308,7 +1516,7 @@ package body Switches_Editors is
                else
                   Delete_Attribute
                     (Project            => Project,
-                     Pkg_Name           => Pkg_Name,
+                     Pkg_Name           => Page.Pkg.all,
                      Scenario_Variables => Scenario_Variables,
                      Attribute_Name     => Get_String (Name_Switches),
                      Attribute_Index    => File_Name);
@@ -1317,7 +1525,7 @@ package body Switches_Editors is
             elsif Args'Length /= 0 then
                Update_Attribute_Value_In_Scenario
                  (Project            => Project,
-                  Pkg_Name           => Pkg_Name,
+                  Pkg_Name           => Page.Pkg.all,
                   Scenario_Variables => Scenario_Variables,
                   Attribute_Name     => Get_String (Name_Default_Switches),
                   Values             => Args,
@@ -1327,7 +1535,7 @@ package body Switches_Editors is
             else
                Delete_Attribute
                  (Project            => Project,
-                  Pkg_Name           => Pkg_Name,
+                  Pkg_Name           => Page.Pkg.all,
                   Scenario_Variables => Scenario_Variables,
                   Attribute_Name     => Get_String (Name_Default_Switches),
                   Attribute_Index    => Get_String (Language));
@@ -1356,41 +1564,9 @@ package body Switches_Editors is
 
       procedure Process_File (File_Name : String) is
       begin
-         if (Get_Pages (Switches) and Gnatmake_Page) /= 0 then
-            --  ??? Currently, we only edit the default switches for Ada
-            Change_Switches
-              (Gnatmake, "builder", Snames.Name_Ada, File_Name);
-         end if;
-
-         if (Get_Pages (Switches) and Ada_Page) /= 0 then
-            Change_Switches
-              (Ada_Compiler, "compiler", Snames.Name_Ada, File_Name);
-         end if;
-
-         if (Get_Pages (Switches) and C_Page) /= 0 then
-            Change_Switches (C_Compiler, "compiler", Snames.Name_C, File_Name);
-         end if;
-
-         if (Get_Pages (Switches) and Cpp_Page) /= 0 then
-            Change_Switches
-              (Cpp_Compiler, "compiler", Name_C_Plus_Plus, File_Name);
-         end if;
-
-         if (Get_Pages (Switches) and Pretty_Printer_Page) /= 0 then
-            --  ??? Currently, we only edit the default switches for Ada
-            Change_Switches
-              (Pretty_Printer, "pretty_printer", Snames.Name_Ada, File_Name);
-         end if;
-
-         if (Get_Pages (Switches) and Binder_Page) /= 0 then
-            --  ??? Currently, we only edit the default switches for Ada
-            Change_Switches (Binder, "binder", Snames.Name_Ada, File_Name);
-         end if;
-
-         if (Get_Pages (Switches) and Linker_Page) /= 0 then
-            --  ??? Currently, we only edit the default switches for Ada
-            Change_Switches (Linker, "linker", Snames.Name_Ada, File_Name);
-         end if;
+         for P in Switches.Pages'Range loop
+            Change_Switches (Switches.Pages (P), File_Name);
+         end loop;
       end Process_File;
 
    begin
@@ -1503,11 +1679,7 @@ package body Switches_Editors is
          return To_Argument_List (Value);
       end Get_Switches;
 
-      Pages      : Page_Filter;
    begin
-      --  ??? Would be nice to handle the language in a more generic and
-      --  flexible way.
-
       Switches.Project_View := Project;
 
       if Files'Length = 0 then
@@ -1519,103 +1691,34 @@ package body Switches_Editors is
          end;
 
       else
-         Pages := 0;
-
          for F in Files'Range loop
             declare
-               Lang : String := Get_Language_From_File
+               Lang : aliased String := Get_Language_From_File
                  (Get_Language_Handler (Switches.Kernel), Files (F).all);
             begin
                To_Lower (Lang);
 
-               if Lang = "ada" then
-                  Pages := Pages or Ada_Page or Pretty_Printer_Page;
-
-                  if (Pages and Binder_Page) = 0
-                    and then Is_Main_File (Project, Files (F).all)
-                  then
-                     Pages := Pages or Binder_Page or Linker_Page;
-                  end if;
-
-               elsif Lang = "c" then
-                  Pages := Pages or C_Page;
-               elsif Lang = "c++" then
-                  Pages := Pages or Cpp_Page;
-               end if;
+               Set_Visible_Pages
+                 (Editor    => Switches,
+                  Languages => (1 => Lang'Unchecked_Access),
+                  Show_Only => F /= Files'First);
             end;
          end loop;
-
-         Set_Visible_Pages (Switches, Pages);
       end if;
 
       --  Set the switches for all the pages
-      if (Get_Pages (Switches) and Gnatmake_Page) /= 0 then
-         declare
-            List : Argument_List := Get_Switches ("builder", Snames.Name_Ada);
-         begin
-            Set_Switches (Switches, Gnatmake, List);
-            Free (List);
-         end;
-      end if;
 
-      if (Get_Pages (Switches) and Ada_Page) /= 0 then
-         declare
-            List : constant Argument_List :=
-              Get_Switches ("compiler", Snames.Name_Ada);
-            L2   : Argument_List := Normalize_Compiler_Switches
-              (Ada_Compiler, List);
-         begin
-            Set_Switches (Switches, Ada_Compiler, L2);
-            Free (L2);
-         end;
-      end if;
-
-      if (Get_Pages (Switches) and C_Page) /= 0 then
-         declare
-            List : Argument_List := Get_Switches ("compiler", Snames.Name_C);
-         begin
-            Set_Switches (Switches, C_Compiler, List);
-            Free (List);
-         end;
-      end if;
-
-      if (Get_Pages (Switches) and Cpp_Page) /= 0 then
+      for P in Switches.Pages'Range loop
          declare
             List : Argument_List := Get_Switches
-              ("compiler", Name_C_Plus_Plus);
+              (Switches.Pages (P).Pkg.all,
+               Get_String (Switches.Pages (P).Lang.all));
          begin
-            Set_Switches (Switches, Cpp_Compiler, List);
+            Set_Text (Switches.Pages (P).Cmd_Line,
+                      Argument_List_To_String (List));
             Free (List);
          end;
-      end if;
-
-      if (Get_Pages (Switches) and Pretty_Printer_Page) /= 0 then
-         declare
-            List : Argument_List := Get_Switches
-              ("pretty_printer", Snames.Name_Ada);
-         begin
-            Set_Switches (Switches, Pretty_Printer, List);
-            Free (List);
-         end;
-      end if;
-
-      if (Get_Pages (Switches) and Binder_Page) /= 0 then
-         declare
-            List : Argument_List := Get_Switches ("binder", Snames.Name_Ada);
-         begin
-            Set_Switches (Switches, Binder, List);
-            Free (List);
-         end;
-      end if;
-
-      if (Get_Pages (Switches) and Linker_Page) /= 0 then
-         declare
-            List : Argument_List := Get_Switches ("linker", Snames.Name_Ada);
-         begin
-            Set_Switches (Switches, Linker, List);
-            Free (List);
-         end;
-      end if;
+      end loop;
 
    exception
       when E : others =>
@@ -1713,7 +1816,7 @@ package body Switches_Editors is
 
       Gtk_New (Switches);
       Switches.Kernel := Kernel_Handle (Kernel);
-      Pack_Start (Box, Get_Window (Switches), Fill => True, Expand => True);
+      Pack_Start (Box, Switches, Fill => True, Expand => True);
 
       Gtk_New (Selector, Kernel);
       Pack_Start (Box, Selector, Expand => False);

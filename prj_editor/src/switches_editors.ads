@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                          G L I D E  I I                           --
+--                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2001                         --
+--                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
--- GLIDE is free software; you can redistribute it and/or modify  it --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -26,75 +26,140 @@
 --  edit them through an interactive command line.
 --  </description>
 
---  This file extends and replaces the GLADE-generated unit
---  Switches_Editor_Pkg.
-
+with Glib;
+with Gtk.Box;
+with Gtk.Table;        use Gtk.Table;
+with Gtk.GEntry;
+with Gtk.Notebook;     use Gtk.Notebook;
+with Gtk.Size_Group;
 with Gtk.Widget;
 with GNAT.OS_Lib;
 with Glib.Object;
 with Glide_Kernel;
-with Switches_Editor_Pkg; use Switches_Editor_Pkg;
 with Prj;
 with Prj.Tree;
 with Prj_API;
 
 package Switches_Editors is
 
-   type Switches_Edit_Record is new Switches_Editor_Record with private;
+   -----------
+   -- Pages --
+   -----------
+
+   type Switches_Editor_Page_Record is new Gtk_Table_Record with private;
+   type Switches_Editor_Page is access all Switches_Editor_Page_Record'Class;
+
+   procedure Gtk_New
+     (Page            : out Switches_Editor_Page;
+      Title           : String;
+      Project_Package : String;
+      Language        : String;
+      Lines, Cols     : Glib.Guint);
+   --  Create a new page, that should be displayed when a file with the given
+   --  language is displayed. The page is setup as a table of (Line + 1) x
+   --  Cols, the last line being automatically created for the command line.
+   --  Title is displayed in the notebook tab of the switches editor.
+   --
+   --  Project_Package is the name of the package, in the project files, where
+   --  the switches are stored.
+
+   procedure Create_Check
+     (Page   : access Switches_Editor_Page_Record;
+      Box    : access Gtk.Box.Gtk_Box_Record'Class;
+      Label  : String;
+      Switch : String);
+   --  Create a new check button for a simple switch in Page.
+   --  The new button is added at the end of Box.
+   --  Switch is the switch to put on the command line when the button is
+   --  activated.
+
+   procedure Create_Spin
+     (Page              : access Switches_Editor_Page_Record;
+      Box               : access Gtk.Box.Gtk_Box_Record'Class;
+      Label             : String;
+      Switch            : String;
+      Min, Max, Default : Integer);
+   --  Create a new spin button for a switch with multiple levels.
+   --  The actual switch on the command line is "-" & Switch & Leve, as in
+   --  "-j2".
+   --  If Default is selected, then no switch is needed on the command line.
+
+   type Cst_String_Access is access constant String;
+
+   type Radio_Switch is record
+      Label  : Cst_String_Access;
+      Switch : Cst_String_Access;
+   end record;
+
+   type Radio_Switch_Array is array (Positive range <>) of Radio_Switch;
+
+   procedure Create_Radio
+     (Page    : access Switches_Editor_Page_Record;
+      Box     : access Gtk.Box.Gtk_Box_Record'Class;
+      Buttons : Radio_Switch_Array);
+   --  Create a series of radio buttons. Only one of them can be active at any
+   --  time. No copy is made of the string accesses in Buttons.
+
+   type Combo_Switch is record
+      Label : Cst_String_Access;
+      Value : Cst_String_Access;
+   end record;
+
+   type Combo_Switch_Array is array (Positive range <>) of Combo_Switch;
+
+   function Create_Combo
+     (Page                 : access Switches_Editor_Page_Record;
+      Label                : String;
+      Switch               : String;
+      Default_No_Switch    : String;
+      Default_No_Digit     : String;
+      Buttons              : Combo_Switch_Array;
+      Label_Size_Group     : Gtk.Size_Group.Gtk_Size_Group := null)
+      return Gtk.Widget.Gtk_Widget;
+   --  Create a new combo button. Switch is displayed on the left of the combo
+   --  box. The newly created widget is returned, and it includes the label,
+   --  combo,...
+   --  Switch is always used when the button is actived, followed by the value
+   --  for the specific line selected in the combo.
+   --
+   --  If the value is Default_No_Switch, no switch is necessary on the command
+   --  line.
+   --  If the value is Default_No_Digit, no additional digit is necessary in
+   --  addition to Switch.
+   --
+   --  if Label_Size_Group is not null, then the label is added to that
+   --  group. This can be used to provide a nicer layout of the widgets.
+
+   procedure Add_Dependency
+     (Master_Page    : access Switches_Editor_Page_Record'Class;
+      Master_Switch  : String;
+      Master_Status  : Boolean;
+      Slave_Page     : access Switches_Editor_Page_Record'Class;
+      Slave_Switch   : String;
+      Slave_Activate : Boolean := True);
+   --  Add dependency between two switches: if Master switch's status becomes
+   --  Master_Status, then Slave_Switch will be automatically set to a new
+   --  state (Activate), and set insensitive until Master_Switch is set
+   --  insensitive again.
+   --  For instance: if Master_Switch is "-g" for the builder, and Slave_Switch
+   --  is "-g" for the compiler, with Master_Status=True and
+   --  Slave_Activate=True, then everytime the user selects "-g" for the
+   --  builder, "-g" will also be forced for the compiler.
+
+   ---------------------
+   -- Switches editor --
+   ---------------------
+
+   type Switches_Edit_Record is new Gtk_Notebook_Record with private;
    type Switches_Edit is access all Switches_Edit_Record'Class;
 
-   type Tool_Names is
-     (Gnatmake, Ada_Compiler, C_Compiler, Cpp_Compiler,
-      Pretty_Printer, Binder, Linker);
-
    procedure Gtk_New (Editor : out Switches_Edit);
-   --  Create a new switches editor
+   --  Create a new switches editor.
 
    procedure Set_Visible_Pages
      (Editor : access Switches_Edit_Record;
       Languages : GNAT.OS_Lib.Argument_List);
    --  Set the visible pages based on the specific languages
-
-   function Get_Window
-     (Editor : access Switches_Edit_Record) return Gtk.Widget.Gtk_Widget;
-   --  Return the window to use to insert the editor in a parent container.
-   --
-   --  From the moment this function is called, you should no longer use
-   --  Editor itself, but only the result of Get_Window, unless you want to
-   --  put the editor back in Editor.
-   --  Likewise, you shouldn't call Show_All on the editor itself, but rather
-   --  on the window.
-
-   function From_Window
-     (Window : access Gtk.Widget.Gtk_Widget_Record'Class)
-      return Switches_Edit;
-   --  Return the switches editor from the window.
-
-   procedure Set_Page
-     (Editor : access Switches_Edit_Record; Tool : Tool_Names);
-   --  Show a specific page of the editor.
-
-   ------------------------
-   -- Access to switches --
-   ------------------------
-
-   function Get_Switches
-     (Editor : access Switches_Edit_Record; Tool : Tool_Names)
-      return GNAT.OS_Lib.Argument_List;
-   --  Return the switches set in the editor for one of the specific tools.
-   --  It is your responsability to free the strings (see Free below).
-
-   procedure Set_Switches
-     (Editor   : access Switches_Edit_Record;
-      Tool     : Tool_Names;
-      Switches : GNAT.OS_Lib.Argument_List);
-   --  Set the initial value for the switches, for a specific tool
-
-   procedure Set_Switches
-     (Editor : access Switches_Edit_Record; Project_View : Prj.Project_Id);
-   --  Set the initial value for the switches, based on the contents
-   --  of Project_View. If a page doesn't exist in Editor, it will not be
-   --  automatically created.
 
    function Generate_Project
      (Switches           : access Switches_Edit_Record'Class;
@@ -108,24 +173,6 @@ package Switches_Editors is
    --  one of the modified packages was a renaming of another package).
    --  Project_View can be No_Project, in which case the return value will
    --  always be non empty, after modification of the project.
-
-   ---------------------------
-   -- Callbacks for the GUI --
-   ---------------------------
-   --  The subprograms below shouldn't be used directly, and are only meant
-   --  as callbacks for the graphical user interface.
-
-   procedure Update_Cmdline
-     (Editor : access Switches_Edit_Record; Tool : Tool_Names);
-   --  Update the command lines found at the bottom of the page for Tool.
-   --  This adds the switches set through the buttons, and keeps the switches
-   --  added by the user.
-
-   procedure Update_Gui_From_Cmdline
-     (Editor : access Switches_Edit_Record; Tool : Tool_Names);
-   --  Update the GUI from the contents of the command line for Tool.
-   --  This is called every time the user has inserted new switches in the
-   --  command line, so that we can keep the GUI and the command line coherent
 
    -----------------------------------------------------
    -- Editing switches for a specific file or project --
@@ -156,32 +203,61 @@ package Switches_Editors is
    --  the same switches.
    --  If there are no files in Files, the default switches are edited.
 
+   procedure Set_Switches
+     (Editor : access Switches_Edit_Record; Project_View : Prj.Project_Id);
+   --  Set the initial value for the switches, based on the contents
+   --  of Project_View. If a page doesn't exist in Editor, it will not be
+   --  automatically created.
+   --  Project_View can be No_Project, in which case only Ada-related pages are
+   --  displayed.
+
 private
-   type Page_Filter is mod 2 ** 32;
-   Gnatmake_Page       : constant Page_Filter := 2 ** 0;
-   Ada_Page            : constant Page_Filter := 2 ** 1;
-   C_Page              : constant Page_Filter := 2 ** 2;
-   Cpp_Page            : constant Page_Filter := 2 ** 3;
-   Pretty_Printer_Page : constant Page_Filter := 2 ** 4;
-   Binder_Page         : constant Page_Filter := 2 ** 5;
-   Linker_Page         : constant Page_Filter := 2 ** 6;
-   All_Pages           : constant Page_Filter :=
-     Gnatmake_Page or Ada_Page or C_Page or Cpp_Page or
-     Pretty_Printer_Page or Binder_Page or Linker_Page;
 
-   type Switches_Edit_Record is new Switches_Editor_Record with record
-      Kernel          : Glide_Kernel.Kernel_Handle;
-      Project_View    : Prj.Project_Id;
-      Pages           : Page_Filter := All_Pages;
-      Files           : GNAT.OS_Lib.Argument_List_Access;
+   type Switch_Basic_Widget_Record (Switch_Length : Natural) is abstract
+   tagged record
+      Switch : String (1 .. Switch_Length);
+   end record;
+   type Switch_Basic_Widget is access all Switch_Basic_Widget_Record'Class;
 
-      Block_Refresh   : Boolean := False;
-      --  If this is True, then clicking on the toggle buttons in the
-      --  editor will not refresh the command lines. This is required so that
-      --  people can edit the command lines manually.
+   function Get_Switch (Switch : Switch_Basic_Widget_Record) return String
+      is abstract;
+   --  Return the string to add to the command line if the widget is active. If
+   --  the widget is not active, the empty string is returned
 
-      Prev_Make_Debug : Boolean := False;
-      --  Store the previous value of Make_Debug flag.
+   procedure Filter_Switch
+     (Switch : Switch_Basic_Widget_Record;
+      List   : in out GNAT.OS_Lib.Argument_List) is abstract;
+   --  Remove (and free) from List the switches that would correspond to the
+   --  one edited by Switch.
+
+   procedure Set_And_Filter_Switch
+     (Switch : Switch_Basic_Widget_Record;
+      List   : in out GNAT.OS_Lib.Argument_List) is abstract;
+   --  If one of the switches in List matches Switch, the widget is actived as
+   --  appropriate, and the entry in List is freed and set to null.
+
+   type Widget_Array is array (Natural range <>) of Switch_Basic_Widget;
+   type Widget_Array_Access is access Widget_Array;
+
+   type Switches_Editor_Page_Record is new Gtk_Table_Record with record
+      Lang     : GNAT.OS_Lib.String_Access;
+      Title    : GNAT.OS_Lib.String_Access;
+      Pkg      : GNAT.OS_Lib.String_Access;
+      Switches : Widget_Array_Access;
+      Cmd_Line : Gtk.GEntry.Gtk_Entry;
+
+      Block_Refresh : Boolean := False;
+      --  Used to avoid infinite recursion in the handling of signals
+   end record;
+
+   type Pages_Array is array (Natural range <>) of Switches_Editor_Page;
+   type Page_Array_Access is access Pages_Array;
+
+   type Switches_Edit_Record is new Gtk_Notebook_Record with record
+      Kernel       : Glide_Kernel.Kernel_Handle;
+      Files        : GNAT.OS_Lib.Argument_List_Access;
+      Project_View : Prj.Project_Id;
+      Pages        : Page_Array_Access;
    end record;
 
 end Switches_Editors;
