@@ -95,10 +95,10 @@ package body Glide_Kernel.Timeout is
       if Data.Exit_Cb = null then
          if Status = 0 then
             Console.Insert
-              (Data.Kernel, -"process terminated successfully");
+              (Data.Kernel, ASCII.LF & (-"process terminated successfully"));
          else
             Console.Insert
-              (Data.Kernel, -"process exited with status " &
+              (Data.Kernel, ASCII.LF & (-"process exited with status ") &
                  Image (Status));
          end if;
 
@@ -131,7 +131,8 @@ package body Glide_Kernel.Timeout is
       Expect (Fd.all, Result, ".+", Timeout => 1);
 
       if Result /= Expect_Timeout then
-         Insert (Data.Console, Expect_Out (Fd.all), Add_LF => False);
+         Insert
+           (Data.Console, Strip_CR (Expect_Out (Fd.all)), Add_LF => False);
          Highlight_Child
            (Find_MDI_Child (Get_MDI (Data.D.Kernel), Data.Console));
       end if;
@@ -140,7 +141,8 @@ package body Glide_Kernel.Timeout is
 
    exception
       when Process_Died =>
-         Insert (Data.Console, Expect_Out (Fd.all), Add_LF => False);
+         Insert
+           (Data.Console, Strip_CR (Expect_Out (Fd.all)), Add_LF => False);
          Highlight_Child
            (Find_MDI_Child (Get_MDI (Data.D.Kernel), Data.Console));
 
