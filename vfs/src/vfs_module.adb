@@ -155,10 +155,9 @@ package body VFS_Module is
 
       elsif Command = "cd" then
          Name_Parameters (Data, Cd_Cmd_Parameters);
-         declare
-            File : constant String := Nth_Arg (Data, 1);
+
          begin
-            Change_Dir (File);
+            Change_Dir (Nth_Arg (Data, 1));
          exception
             when Directory_Error =>
                Set_Error_Msg
@@ -168,19 +167,12 @@ package body VFS_Module is
 
       elsif Command = "delete" then
          Name_Parameters (Data, Delete_Cmd_Parameters);
+
          declare
             File : constant String := Nth_Arg (Data, 1);
          begin
             if Is_Directory (File) then
-               begin
-                  Remove_Dir (File, True);
-               exception
-                  when Directory_Error =>
-                     Set_Error_Msg
-                       (Data, Command & ": " & "cannot delete directory");
-                     return;
-               end;
-
+               Remove_Dir (File, True);
             else
                Delete_File (File, Success);
 
@@ -190,6 +182,12 @@ package body VFS_Module is
                   return;
                end if;
             end if;
+
+         exception
+            when Directory_Error =>
+               Set_Error_Msg
+                 (Data, Command & ": " & (-"cannot delete directory"));
+               return;
          end;
 
       elsif Command = "dir" or else Command = "ls" then
