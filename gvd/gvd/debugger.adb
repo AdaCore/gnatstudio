@@ -84,8 +84,6 @@ package body Debugger is
       Repeat_Num : Positive;
 
    begin
-      --  Clear the value previously parsed.
-      Free (Value, Only_Value => True);
       Value_Found := Type_Str'Length /= 0;
       if Value_Found then
          Parse_Value
