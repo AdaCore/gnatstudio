@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2002                      --
+--                      Copyright (C) 2000-2003                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -29,6 +29,7 @@ with Gtkada.Handlers;       use Gtkada.Handlers;
 with Interfaces.C;          use Interfaces.C;
 with Interfaces.C.Strings;
 with Basic_Types;           use Basic_Types;
+with GVD.Call_Stack;        use GVD.Call_Stack;
 with GVD.Process;           use GVD.Process;
 with Odd_Intl;              use Odd_Intl;
 pragma Elaborate_All (Odd_Intl);
@@ -298,27 +299,6 @@ package body GVD.Dialogs is
       Update_PD (PD_Dialog, Info (1 .. Len));
    end Update;
 
-   -----------------------------
-   -- Show_Call_Stack_Columns --
-   -----------------------------
-
-   procedure Show_Call_Stack_Columns
-     (Debugger : access Glib.Object.GObject_Record'Class)
-   is
-      Process  : constant Visual_Debugger :=
-        Visual_Debugger (Debugger);
-      Mask   : constant Stack_List_Mask :=
-        Process.Backtrace_Mask;
-      List     : constant Gtk_Clist := Process.Stack_List;
-
-   begin
-      Set_Column_Visibility (List, 0, (Mask and Frame_Num) /= 0);
-      Set_Column_Visibility (List, 1, (Mask and Program_Counter) /= 0);
-      Set_Column_Visibility (List, 2, (Mask and Subprog_Name) /= 0);
-      Set_Column_Visibility (List, 3, (Mask and Params) /= 0);
-      Set_Column_Visibility (List, 4, (Mask and File_Location) /= 0);
-   end Show_Call_Stack_Columns;
-
    -----------------------
    -- Update_Call_Stack --
    -----------------------
@@ -326,67 +306,13 @@ package body GVD.Dialogs is
    procedure Update_Call_Stack
      (Debugger : access Glib.Object.GObject_Record'Class)
    is
-      Temp     : Chars_Ptr_Array (0 .. 4);
-      Bt       : Backtrace_Array (1 .. Max_Frame);
-      Len      : Natural;
-      Tab      : constant Visual_Debugger :=
-        Visual_Debugger (Debugger);
-      Process  : constant Process_Proxy_Access := Get_Process (Tab.Debugger);
-      List     : constant Gtk_Clist := Tab.Stack_List;
-      Row      : Gint;
-      Columns  : Gint;
-      pragma Unreferenced (Row, Columns);
-
-      Index    : Integer;
-      Subp     : String_Access;
-
+      Tab : constant Visual_Debugger := Visual_Debugger (Debugger);
    begin
-      if Tab.Stack_Scrolledwindow = null then
+      if Tab.Stack = null or else Tab.Debugger = null then
          return;
       end if;
 
-      Columns := Get_Columns (List);
-
-      Freeze (List);
-      Clear (List);
-
-      --  If the debugger was killed, no need to refresh
-
-      if Process = null then
-         Thaw (List);
-         return;
-      end if;
-
-      --  Parse the information from the debugger
-
-      Backtrace (Tab.Debugger, Bt, Len);
-
-      --  Update the contents of the window
-
-      if Len > 0 then
-         for J in 1 .. Len loop
-            --  ??? We currently consider that the list of parameters always
-            --  starts at the first '(' character encountered
-            Subp := Bt (J).Subprogram;
-            Index := Subp'First;
-            while Index <= Subp'Last and then Subp (Index) /= '(' loop
-               Index := Index + 1;
-            end loop;
-
-            Temp (0) := Strings.New_String (Natural'Image (Bt (J).Frame_Id));
-            Temp (1) := Strings.New_String (Bt (J).Program_Counter.all);
-            Temp (2) := Strings.New_String (Subp (Subp'First .. Index - 1));
-            Temp (3) := Strings.New_String (Subp (Index .. Subp'Last));
-            Temp (4) := Strings.New_String (Bt (J).Source_Location.all);
-            Row := Append (List, Temp);
-            Free (Temp);
-         end loop;
-      end if;
-
-      Free (Bt (1 .. Len));
-
-      Highlight_Stack_Frame (Debugger, 0);
-      Thaw (List);
+      Update (Tab.Stack, Tab.Debugger);
    end Update_Call_Stack;
 
    procedure Update
@@ -473,22 +399,6 @@ package body GVD.Dialogs is
    begin
       Update_Call_Stack (Tab);
    end On_Stack_Process_Stopped;
-
-   ---------------------------
-   -- Highlight_Stack_Frame --
-   ---------------------------
-
-   procedure Highlight_Stack_Frame
-     (Debugger : access Glib.Object.GObject_Record'Class;
-      Frame    : Natural)
-   is
-      Tab : constant Visual_Debugger := Visual_Debugger (Debugger);
-   begin
-      Gtk.Handlers.Handler_Block (Tab.Stack_List, Tab.Stack_List_Select_Id);
-      Unselect_All (Tab.Stack_List);
-      Select_Row (Tab.Stack_List, Gint (Frame), 0);
-      Gtk.Handlers.Handler_Unblock (Tab.Stack_List, Tab.Stack_List_Select_Id);
-   end Highlight_Stack_Frame;
 
    ----------------
    -- Initialize --
