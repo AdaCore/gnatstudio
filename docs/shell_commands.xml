@@ -209,6 +209,10 @@ Optionally you can also pass the full contents of an XML file, starting from the
      <description>Dump string to a temporary file. Return the name of the file. If add_lf is TRUE, append a line feed at end of file</description>
   </shell_doc>
 
+  <shell_doc name="GPS.dump_xref_db">
+     <description>Dump in the file $HOME/.gps/db_dump the current contents of the cross-references database. This is intended for debugging purposes only</description>
+  </shell_doc>
+
   <!--#################################################################
     ####   GPS shell commands
     ###################################################################-->
@@ -475,6 +479,11 @@ Optionally you can also pass the full contents of an XML file, starting from the
       <param name="self">The instance of GPS.Entity</param>
       <return>A dictionary, see below</return>
       <description>Display the list of entities that call the entity. The returned value is a dictionary whose keys are instances of Entity called by this entity, and whose value is a list of FileLocation instances where the entity is referenced. This command might take a while to execute, since GPS needs to get the cross-reference information for lots of source files.</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.Entity.called_by_browser">
+      <param name="self">The instance of GPS.Entity</param>
+      <description>Open the call graph browser to show what entities call self</description>
   </shell_doc>
 
   <shell_doc name="GPS.Entity.show">
