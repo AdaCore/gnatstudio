@@ -558,6 +558,8 @@ package body Language is
          when Cat_Subtype               => return -"subtype";
          when Cat_Variable              => return -"variable";
          when Cat_Local_Variable        => return -"variable";
+         when Cat_Parameter             => return -"parameter";
+         when Cat_Literal               => return -"literal";
          when Cat_Representation_Clause => return -"representation clause";
          when Cat_With                  => return -"with";
          when Cat_Use                   => return -"use";

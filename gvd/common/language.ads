@@ -298,6 +298,8 @@ package Language is
       Cat_Subtype,
       Cat_Variable,
       Cat_Local_Variable,
+      Cat_Parameter,
+      Cat_Literal,
       Cat_Representation_Clause,
 
       ----------------
