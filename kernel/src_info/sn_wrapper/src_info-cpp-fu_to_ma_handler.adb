@@ -64,7 +64,7 @@ begin
      (Declaration_Info     => Decl_Info,
       File                 => Global_LI_File,
       Source_Filename      =>
-        Ref.Buffer (Macro.File_Name.First .. Macro.File_Name.Last),
+        Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last),
       Location             => Ref.Position,
       Kind                 => Reference);
 
