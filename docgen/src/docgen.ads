@@ -146,9 +146,8 @@ package Docgen is
    --  Description of an entity
 
    function Clone
-     (Entity : Entity_List_Information;
-      Also_Lists : Boolean)
-      return Entity_List_Information;
+     (Entity     : Entity_List_Information;
+      Copy_Lists : Boolean) return Entity_List_Information;
    --  Return a deep-copy of Entity.
    --  Entity can be freed without impacting the copy
    --  If Also_List is true, it copies also the lists used for the call graph
@@ -490,26 +489,26 @@ package Docgen is
       --  Format text as a character (between two ')
 
       procedure Format_Identifier
-        (B                : access Backend;
-         Entity_List      : in out Type_Entity_List.List;
-         List_Ref_In_File   : in out List_Reference_In_File.List;
-         Start_Index      : Natural;
-         Start_Line       : Natural;
-         Start_Column     : Natural;
-         End_Index        : Natural;
-         End_Line         : Natural;
-         Kernel           : access Kernel_Handle_Record'Class;
-         File             : Ada.Text_IO.File_Type;
-         LI_Unit          : LI_File_Ptr;
-         Text             : String;
-         File_Name        : VFS.Virtual_File;
-         Entity_Line      : Natural;
-         Line_In_Body     : Natural;
-         Source_File_List : Type_Source_File_List.List;
-         Link_All         : Boolean;
-         Is_Body          : Boolean;
-         Process_Body     : Boolean;
-         Info             : Doc_Info;
+        (B                   : access Backend;
+         Entity_List         : in out Type_Entity_List.List;
+         List_Ref_In_File    : in out List_Reference_In_File.List;
+         Start_Index         : Natural;
+         Start_Line          : Natural;
+         Start_Column        : Natural;
+         End_Index           : Natural;
+         End_Line            : Natural;
+         Kernel              : access Kernel_Handle_Record'Class;
+         File                : Ada.Text_IO.File_Type;
+         LI_Unit             : LI_File_Ptr;
+         Text                : String;
+         File_Name           : VFS.Virtual_File;
+         Entity_Line         : Natural;
+         Line_In_Body        : Natural;
+         Source_File_List    : Type_Source_File_List.List;
+         Link_All            : Boolean;
+         Is_Body             : Boolean;
+         Process_Body        : Boolean;
+         Info                : Doc_Info;
          Call_Graph_Entities : in out Type_Entity_List.List) is abstract;
       --  Format text as an identifier
 
@@ -541,9 +540,9 @@ package Docgen is
       --  which is needed, but the line of the definition in the body.
 
       procedure Print_Ref_List
-        (B      : access Backend;
-         Kernel : access Kernel_Handle_Record'Class;
-         File   : in Ada.Text_IO.File_Type;
+        (B           : access Backend;
+         Kernel      : access Kernel_Handle_Record'Class;
+         File        : in Ada.Text_IO.File_Type;
          Name_Entity : Basic_Types.String_Access;
          Local_List  : Type_Reference_List.List;
          Called_Subp : Boolean) is abstract;
@@ -601,7 +600,8 @@ package Docgen is
       --  Terminate processing of a block of code which has been analysed
       --  by Parse_Entities + Callback + Format_xxx
 
-      function Get_Extension (B : access Backend) return String is abstract;
+      function Get_Extension
+        (B : access Backend) return String is abstract;
       --  Return the extension of doc files (eg. ".htm" for an instance of
       --  object Backend_HTML).
 
@@ -642,25 +642,25 @@ package Docgen is
    --  The procedure to define for each new output format
 
    procedure Format_All_Link
-     (B                : access Backend'Class;
-      Entity_List      : in out Type_Entity_List.List;
-      List_Ref_In_File : in out List_Reference_In_File.List;
-      Start_Index      : Natural;
-      Start_Line       : Natural;
-      Start_Column     : Natural;
-      End_Index        : Natural;
-      Kernel           : access Kernel_Handle_Record'Class;
-      File             : Ada.Text_IO.File_Type;
-      LI_Unit          : LI_File_Ptr;
-      Text             : String;
-      File_Name        : VFS.Virtual_File;
-      Entity_Line      : Natural;
-      Line_In_Body     : in out Natural;
-      Source_File_List : Type_Source_File_List.List;
-      Link_All         : Boolean;
-      Is_Body          : Boolean;
-      Process_Body     : Boolean;
-      Info             : Doc_Info;
+     (B                   : access Backend'Class;
+      Entity_List         : in out Type_Entity_List.List;
+      List_Ref_In_File    : in out List_Reference_In_File.List;
+      Start_Index         : Natural;
+      Start_Line          : Natural;
+      Start_Column        : Natural;
+      End_Index           : Natural;
+      Kernel              : access Kernel_Handle_Record'Class;
+      File                : Ada.Text_IO.File_Type;
+      LI_Unit             : LI_File_Ptr;
+      Text                : String;
+      File_Name           : VFS.Virtual_File;
+      Entity_Line         : Natural;
+      Line_In_Body        : in out Natural;
+      Source_File_List    : Type_Source_File_List.List;
+      Link_All            : Boolean;
+      Is_Body             : Boolean;
+      Process_Body        : Boolean;
+      Info                : Doc_Info;
       Call_Graph_Entities : in out Type_Entity_List.List);
    --  This procedure is used by formats of documentation like html to
    --  create links for each entity of the file File_Name on their

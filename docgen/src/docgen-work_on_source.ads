@@ -45,22 +45,22 @@ with Glide_Kernel;
 package Docgen.Work_On_Source is
 
    procedure Process_Source
-     (B                  : Backend_Handle;
-      Kernel             : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Doc_File           : File_Type;
-      Next_Package       : GNAT.OS_Lib.String_Access;
-      Prev_Package       : GNAT.OS_Lib.String_Access;
-      Source_File_List   : in out Type_Source_File_List.List;
-      Source_Filename    : VFS.Virtual_File;
-      Package_Name       : String;
-      Entity_List        : in out Type_Entity_List.List;
-      List_Ref_In_File   : in out List_Reference_In_File.List;
-      Process_Body_File  : Boolean;
-      LI_Unit            : LI_File_Ptr;
-      Options            : All_Options;
-      Converter          : Docgen.Doc_Subprogram_Type;
-      Doc_Directory      : String;
-      Doc_Suffix         : String);
+     (B                 : Backend_Handle;
+      Kernel            : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Doc_File          : File_Type;
+      Next_Package      : GNAT.OS_Lib.String_Access;
+      Prev_Package      : GNAT.OS_Lib.String_Access;
+      Source_File_List  : in out Type_Source_File_List.List;
+      Source_Filename   : VFS.Virtual_File;
+      Package_Name      : String;
+      Entity_List       : in out Type_Entity_List.List;
+      List_Ref_In_File  : in out List_Reference_In_File.List;
+      Process_Body_File : Boolean;
+      LI_Unit           : LI_File_Ptr;
+      Options           : All_Options;
+      Converter         : Docgen.Doc_Subprogram_Type;
+      Doc_Directory     : String;
+      Doc_Suffix        : String);
    --  With the data from the lists, the source file and the config file,
    --  create the Strings for the output.
    --  The order of the procedure calls can't be changed here
@@ -92,28 +92,28 @@ package Docgen.Work_On_Source is
    --  Create the index file for the subprograms
 
    procedure Process_Type_Index
-     (B               : Backend_Handle;
-      Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Type_Index_List : Docgen.Type_Entity_List.List;
+     (B                : Backend_Handle;
+      Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Type_Index_List  : Docgen.Type_Entity_List.List;
       Entity_List      : in out Type_Entity_List.List;
       List_Ref_In_File : in out List_Reference_In_File.List;
-      Options         : All_Options;
-      Converter       : Doc_Subprogram_Type;
-      Doc_Directory   : String;
-      Doc_Suffix      : String);
+      Options          : All_Options;
+      Converter        : Doc_Subprogram_Type;
+      Doc_Directory    : String;
+      Doc_Suffix       : String);
    --  Create the index file for the types
 
    procedure Process_Tagged_Type_Index
-     (B               : Backend_Handle;
-      Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (B                      : Backend_Handle;
+      Kernel                 : access Glide_Kernel.Kernel_Handle_Record'Class;
       Tagged_Type_Index_List : Docgen.Type_List_Tagged_Element.List;
-      Entity_List      : in out Type_Entity_List.List;
-      List_Ref_In_File : in out List_Reference_In_File.List;
-      Source_File_List : in out Type_Source_File_List.List;
-      Options         : All_Options;
-      Converter       : Doc_Subprogram_Type;
-      Doc_Directory   : String;
-      Doc_Suffix      : String);
+      Entity_List            : in out Type_Entity_List.List;
+      List_Ref_In_File       : in out List_Reference_In_File.List;
+      Source_File_List       : in out Type_Source_File_List.List;
+      Options                : All_Options;
+      Converter              : Doc_Subprogram_Type;
+      Doc_Directory          : String;
+      Doc_Suffix             : String);
    --  Create the index file for the tagged types
 
 end Docgen.Work_On_Source;

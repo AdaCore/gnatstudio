@@ -82,24 +82,22 @@ package body Docgen_Module is
       --  aren't being processed
 
       Process_Tagged_Types  : Param_Spec_Boolean;
-      --  True if we indicate if we make a list with all tagged
+      --  True to we want to build a list with all tagged
       --  types declared in the list of files we are processing. For each
-      --  tagged types we indicate his parent and his Children (if they exist)
+      --  tagged types we indicate its parent and children (if they exist)
 
       Options : All_Options;
       --  Group all the preferences
 
       B : Docgen.Docgen_Backend.Backend_Handle;
       --  An instance of this object is used to lead the documentation process
-      --     througth the good method (ie. for the good format)
+      --  through the good method (ie. for the good format)
    end record;
    type Docgen_Module is access all Docgen_Module_Record'Class;
 
-   package TSFL renames Type_Source_File_List;
-
    package Type_Api_Doc_Properties is new
      Glib.Generic_Properties.Generic_Enumeration_Property
-     ("Type_Api_Doc", Type_Api_Doc);
+       ("Type_Api_Doc", Type_Api_Doc);
 
    procedure Set_Options
      (Type_Of_File_P         : Type_Api_Doc := HTML;
@@ -110,7 +108,7 @@ package body Docgen_Module is
       References_P           : Boolean := False;
       One_Doc_File_P         : Boolean := False;
       Link_All_P             : Boolean := False;
-      Tagged_Types_P : Boolean := False);
+      Tagged_Types_P         : Boolean := False);
    --  Set new options or reset options
    --
    --  - Type_Of_File_P is the type of the generated file (html, texi...)
@@ -253,7 +251,7 @@ package body Docgen_Module is
       References_P         : Boolean := False;
       One_Doc_File_P       : Boolean := False;
       Link_All_P           : Boolean := False;
-      Tagged_Types_P : Boolean := False) is
+      Tagged_Types_P       : Boolean := False) is
    begin
       Docgen_Module (Docgen_Module_ID).Options.Type_Of_File := Type_Of_File_P;
       Docgen_Module (Docgen_Module_ID).Options.Process_Body_Files :=
@@ -776,27 +774,27 @@ package body Docgen_Module is
          Param_Spec (Docgen_Module (Docgen_Module_ID).One_Document_File),
          -"Documentation");
 
-      Docgen_Module (Docgen_Module_ID).Link_All_References
-        := Param_Spec_Boolean
-        (Gnew_Boolean
-          (Name    => "Doc-Xref-All",
-           Default => False,
-           Blurb   =>
-             -("Links for entities declared in files which are not processed"),
-           Nick    => -"Create all links"));
+      Docgen_Module (Docgen_Module_ID).Link_All_References :=
+        Param_Spec_Boolean
+          (Gnew_Boolean
+            (Name    => "Doc-Xref-All",
+             Default => False,
+             Blurb   =>
+               -"Links for entities declared in files which are not processed",
+             Nick    => -"Create all links"));
       Register_Property
         (Kernel,
          Param_Spec (Docgen_Module (Docgen_Module_ID).Link_All_References),
          -"Documentation");
 
-      Docgen_Module (Docgen_Module_ID).Process_Tagged_Types
-        := Param_Spec_Boolean
-        (Gnew_Boolean
-          (Name    => "Doc-Tagged",
-           Default => False,
-           Blurb   =>
-             -("List of tagged types declared in processed files"),
-           Nick    => -"List tagged types"));
+      Docgen_Module (Docgen_Module_ID).Process_Tagged_Types :=
+        Param_Spec_Boolean
+          (Gnew_Boolean
+            (Name    => "Doc-Tagged",
+             Default => False,
+             Blurb   =>
+               -"List of tagged types declared in processed files",
+             Nick    => -"List tagged types"));
       Register_Property
         (Kernel,
          Param_Spec (Docgen_Module (Docgen_Module_ID).Process_Tagged_Types),
