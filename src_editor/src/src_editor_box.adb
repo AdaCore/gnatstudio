@@ -61,7 +61,6 @@ with Gtkada.File_Selector;       use Gtkada.File_Selector;
 with Gtkada.MDI;                 use Gtkada.MDI;
 with GUI_Utils;                  use GUI_Utils;
 with Glide_Intl;                 use Glide_Intl;
-with GNAT.OS_Lib;                use GNAT.OS_Lib;
 
 with Basic_Types;
 with Language;                   use Language;
@@ -1880,7 +1879,7 @@ package body Src_Editor_Box is
          Set_Filename (Editor.Source_Buffer, Filename);
          Set_Text (Editor.Modified_Label, -"Unmodified");
 
-         Editor.Writable := Is_Writable_File (Locale_Full_Name (Filename));
+         Editor.Writable := Is_Writable (Filename);
 
          if Editor.Writable then
             Set_Text (Editor.Read_Only_Label, -"Writable");
