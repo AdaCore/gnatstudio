@@ -61,19 +61,19 @@ package body Glide_Kernel.Project is
    ----------------------
 
    function Find_Source_File
-     (Kernel : access Kernel_Handle_Record'Class; Short_File_Name : String)
+     (Kernel          : access Kernel_Handle_Record'Class;
+      Short_File_Name : String;
+      Use_Source_Path : Boolean := False)
       return String
    is
       Path : String_Access;
    begin
+      --  First, try on the project source path
       Path := Locate_Regular_File
         (Short_File_Name,
          Ada_Include_Path (Kernel.Project_View).all);
 
-      if Path = null then
-         return "";
-
-      else
+      if Path /= null then
          declare
             Full_Path : constant String := Path.all;
          begin
@@ -81,7 +81,66 @@ package body Glide_Kernel.Project is
             return Full_Path;
          end;
       end if;
+
+      --  Fallback, try on the Source_Path (only if Use_Source_Path is set)
+      if Use_Source_Path then
+         Path := Locate_Regular_File (Short_File_Name, Kernel.Source_Path.all);
+         if Path /= null then
+            declare
+               Full_Path : constant String := Path.all;
+            begin
+               Free (Path);
+               return Full_Path;
+            end;
+         end if;
+      end if;
+
+      --  Source file not found anywhere, return the empty string
+      return "";
    end Find_Source_File;
+
+   ----------------------
+   -- Find_Object_File --
+   ----------------------
+
+   function Find_Object_File
+     (Kernel          : access Kernel_Handle_Record'Class;
+      Short_File_Name : String;
+      Use_Object_Path : Boolean := False)
+      return String
+   is
+      Path : String_Access;
+   begin
+      --  First, try on the project object path
+      Path := Locate_Regular_File
+        (Short_File_Name,
+         Ada_Objects_Path (Kernel.Project_View).all);
+
+      if Path /= null then
+         declare
+            Full_Path : constant String := Path.all;
+         begin
+            Free (Path);
+            return Full_Path;
+         end;
+      end if;
+
+      --  Fallback, try on the Object_Path (only if Use_Object_Path is set)
+      if Use_Object_Path then
+         Path := Locate_Regular_File (Short_File_Name, Kernel.Object_Path.all);
+         if Path /= null then
+            declare
+               Full_Path : constant String := Path.all;
+            begin
+               Free (Path);
+               return Full_Path;
+            end;
+         end if;
+      end if;
+
+      --  Object file not found anywhere, return the empty string
+      return "";
+   end Find_Object_File;
 
    ---------------------------
    -- Get_Project_File_Name --

@@ -66,10 +66,23 @@ package Glide_Kernel.Project is
    --  loaded by the user), then the empty string ("") is returned.
 
    function Find_Source_File
-     (Kernel : access Kernel_Handle_Record'Class; Short_File_Name : String)
+     (Kernel          : access Kernel_Handle_Record'Class;
+      Short_File_Name : String;
+      Use_Source_Path : Boolean := False)
       return String;
    --  Search in the project source path Short_File_Name and return its
-   --  complete path, or an empty string in case of failure.
+   --  complete path, or an empty string in case of failure. If Use_Source_Path
+   --  is set to True, then also try to locate the source file in the Source
+   --  Path of the given Kernel Handle if the source file is not found in
+   --  the project source path.
+
+   function Find_Object_File
+     (Kernel          : access Kernel_Handle_Record'Class;
+      Short_File_Name : String;
+      Use_Object_Path : Boolean := False)
+      return String;
+   --  This is the equivalent function of Find_Source_File for object files.
+   --  This also works for ali files.
 
    procedure Load_Project
      (Kernel : access Kernel_Handle_Record'Class; Project : String);
