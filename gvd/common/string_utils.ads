@@ -91,7 +91,11 @@ package Odd.Strings is
    --  point after the closing " character.
    --  Special characters, as output by gdb (["0a"]) are also interpreted
    --  and converted to the equivalent Character value.
-   --  Str must be long enough to contain the string, not check is done.
+   --  Str must be long enough to contain the string, not check is done. As a
+   --  special case, if Str'Length = 0 then no attempt is done to fill up
+   --  the string, and only Length is computed.
+   --
+   --  Length is set to the number of characters parsed in the string.
 
    procedure Skip_Simple_Value
      (Type_Str             : in String;

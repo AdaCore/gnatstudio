@@ -169,9 +169,10 @@ package body Odd.Strings is
    -- Parse_Cst_String --
    ----------------------
 
-   procedure Parse_Cst_String (Type_Str : String;
-                               Index    : in out Natural;
-                               Str      : out String)
+   procedure Parse_Cst_String
+     (Type_Str : String;
+      Index    : in out Natural;
+      Str      : out String)
    is
       procedure Parse_Next_Char (Index : in out Natural;
                                  Char  : out Character);
@@ -236,8 +237,14 @@ package body Odd.Strings is
       S_Index : Natural := Str'First;
       Char    : Character;
       Num     : Long_Integer;
-      In_String : Boolean := True;
+      In_String : Boolean;
+      Last    : Natural := Str'Last;
    begin
+      if Str'Length = 0 then
+         Last := Natural'Last;
+      end if;
+
+      In_String := Type_Str (Index) = '"';
       Index := Index + 1;
 
       --  Note: this is a slightly complex loop, since a string might not
@@ -245,7 +252,10 @@ package body Odd.Strings is
       --  elements, including characters repeated a number of times, as in:
       --  "["af"]["c7"]", '["00"]' <repeats 12 times>, "BA"
 
-      while S_Index <= Str'Last loop
+      while S_Index <= Last
+        and then Index <= Type_Str'Last
+        and then Type_Str (Index) /= ASCII.LF
+      loop
 
          case Type_Str (Index) is
 
@@ -255,19 +265,25 @@ package body Odd.Strings is
 
             when ''' =>
                if In_String then
-                  Str (S_Index) := ''';
+                  if Str'Length /= 0 then
+                     Str (S_Index) := ''';
+                  end if;
                   S_Index := S_Index + 1;
                   Index := Index + 1;
                else
                   Index := Index + 1;  --  skips initial '''
                   Parse_Next_Char (Index, Char);
-                  Str (S_Index) := Char;
+                  if Str'Length /= 0 then
+                     Str (S_Index) := Char;
+                  end if;
                   Index := Index + 2;     --  skips "' " at the end
                   if Looking_At (Type_Str, Index, "<repeats ") then
                      Index := Index + 9;
                      Parse_Num (Type_Str, Index, Num);
-                     Str (S_Index .. S_Index + Integer (Num) - 1) :=
-                       (others => Char);
+                     if Str'Length /= 0 then
+                        Str (S_Index .. S_Index + Integer (Num) - 1) :=
+                          (others => Char);
+                     end if;
                      S_Index := S_Index + Integer (Num);
                      Index := Index + 7; --  skips " times>"
                   else
@@ -275,15 +291,26 @@ package body Odd.Strings is
                   end if;
                end if;
 
+            when '\' =>
+               if Str'Length /= 0 then
+                  Str (S_Index) := Type_Str (Index + 1);
+               end if;
+               Index := Index + 2;
+
             when ' ' | ',' =>
                if In_String then
-                  Str (S_Index) := ' ';
+                  if Str'Length /= 0 then
+                     Str (S_Index) := ' ';
+                  end if;
                   S_Index := S_Index + 1;
                end if;
                Index := Index + 1;
 
             when others =>
-               Parse_Next_Char (Index, Str (S_Index));
+               Parse_Next_Char (Index, Char);
+               if Str'Length /= 0 then
+                  Str (S_Index) := Char;
+               end if;
                S_Index := S_Index + 1;
          end case;
       end loop;
