@@ -579,9 +579,9 @@ package body Switches_Editors is
                end if;
 
                Check_Combo (Editor.Keyword_Casing, "-k", "LU", Arr, Index);
-               Check_Combo (Editor.Attribute_Casing, "-a", "CLU", Arr, Index);
-               Check_Combo (Editor.References_Casing, "-r", "DC", Arr, Index);
-               Check_Combo (Editor.Pragma_Casing, "-p", "CLU", Arr, Index);
+               Check_Combo (Editor.Attribute_Casing, "-a", "MLU", Arr, Index);
+               Check_Combo (Editor.References_Casing, "-r", "DM", Arr, Index);
+               Check_Combo (Editor.Pragma_Casing, "-p", "MLU", Arr, Index);
                Check_Combo (Editor.Construct_Layout, "-l", "123", Arr, Index);
                Check_Combo (Editor.Comments_Layout, "-c", "1234", Arr, Index);
                Check_Toggle (Editor.Align_Colons, "-A1", Arr, Index);
@@ -846,9 +846,9 @@ package body Switches_Editors is
             end loop;
 
             Set_Combo (Editor.Keyword_Casing, "-k", "LU");
-            Set_Combo (Editor.Attribute_Casing, "-a", "CLU");
-            Set_Combo (Editor.References_Casing, "-r", "DC");
-            Set_Combo (Editor.Pragma_Casing, "-p", "CLU");
+            Set_Combo (Editor.Attribute_Casing, "-a", "MLU");
+            Set_Combo (Editor.References_Casing, "-r", "DM");
+            Set_Combo (Editor.Pragma_Casing, "-p", "MLU");
             Set_Combo (Editor.Construct_Layout, "-l", "123");
             Set_Combo (Editor.Comments_Layout, "-c", "1234");
             Set_Active (Editor.Align_Colons, Is_Set ("-A1"));
@@ -1022,7 +1022,7 @@ package body Switches_Editors is
                      or else Switches (J).all = "-A4"
                      or else Switches (J).all = "-aL"
                      or else Switches (J).all = "-aU"
-                     or else Switches (J).all = "-aC"
+                     or else Switches (J).all = "-aM"
                      or else Switches (J).all = "-c1"
                      or else Switches (J).all = "-c2"
                      or else Switches (J).all = "-c3"
@@ -1035,9 +1035,9 @@ package body Switches_Editors is
                      or else Switches (J).all = "-l3"
                      or else Switches (J).all = "-pL"
                      or else Switches (J).all = "-pU"
-                     or else Switches (J).all = "-pC"
+                     or else Switches (J).all = "-pM"
                      or else Switches (J).all = "-rD"
-                     or else Switches (J).all = "-rC"
+                     or else Switches (J).all = "-rM"
                      or else Switches (J).all = "-e")
                   then
                      Free (Switches (J));
