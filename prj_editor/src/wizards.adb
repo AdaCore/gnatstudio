@@ -323,10 +323,23 @@ package body Wizards is
       Display_Message (W, "", As_Error => False);
       W.Pages (W.Current_Page).Was_Complete :=
         Is_Complete (W.Pages (W.Current_Page), W);
-      Set_Sensitive (W.Next, W.Pages (W.Current_Page).Was_Complete
-                     and then W.Current_Page < W.Pages'Last);
+
+      --  Special case: if we have a single page, show neither Back nor
+      --  forward, since they will never apply anyway
+      if W.Pages = null
+        or else W.Pages'Length = 1
+      then
+         Hide_All (W.Next);
+         Hide_All (W.Previous);
+      else
+         Show_All (W.Next);
+         Show_All (W.Previous);
+         Set_Sensitive (W.Next, W.Pages (W.Current_Page).Was_Complete
+                        and then W.Current_Page < W.Pages'Last);
+         Set_Sensitive (W.Previous, W.Current_Page > 1);
+      end if;
+
       Set_Sensitive (W.Finish, Can_Complete (W));
-      Set_Sensitive (W.Previous, W.Current_Page > 1);
       Grab_Default (W.Finish);
    end Update_Buttons_Sensitivity;
 
