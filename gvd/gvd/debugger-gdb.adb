@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2003                      --
+--                      Copyright (C) 2000-2004                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -976,9 +976,9 @@ package body Debugger.Gdb is
 
    begin
       if Debugger.Remote_Target = null then
-         Cmd := new String'("file " & Exec);
+         Cmd := new String'("file """ & Exec & '"');
       else
-         Cmd := new String'("load " & Exec);
+         Cmd := new String'("load """ & Exec & '"');
       end if;
 
       if Debugger.Window /= null then
@@ -1442,6 +1442,8 @@ package body Debugger.Gdb is
         or else Command (Command'First .. Index - 1) = "cont"
         or else Command (Command'First .. Index - 1) = "c"
         or else Command = "finish"
+        or else (Command'Length >= 6
+          and then Command (Command'First .. Command'First + 5) = "attach")
         or else (Command'Length >= 6
           and then Command (Command'First .. Command'First + 5) = "target")
         or else (Command'Length >= 3
