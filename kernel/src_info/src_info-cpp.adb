@@ -18,9 +18,11 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 with GNAT.Regpat;       use GNAT.Regpat;
+with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+with Ada.Exceptions;    use Ada.Exceptions;
 
 with Prj;
-with Prj_API;
+with Prj_API;              use Prj_API;
 with Src_Info;             use Src_Info;
 with Src_Info.LI_Utils;    use Src_Info.LI_Utils;
 with Src_Info.Type_Utils;  use Src_Info.Type_Utils;
@@ -206,7 +208,13 @@ package body Src_Info.CPP is
 
    procedure Process_File
      (Source_Filename : in String;
+      Full_Filename   : String;
       Env             : in out Handler_Environment);
+   --  Process the SN databases to create the LI structure for
+   --  Source_Filename. Source_Filename is the name of the file as it appears
+   --  in the sources (for instance, if we have #include "dir/file.h", then
+   --  Source_Filename is "dir/file.h". Full_Filename is the full path to the
+   --  physical file on the disk.
 
    --  Debugging utils
    procedure Info (Msg : String); -- print info message
@@ -259,22 +267,23 @@ package body Src_Info.CPP is
 
    procedure Process_File
      (Source_Filename : in String;
+      Full_Filename   : String;
       Env             : in out Handler_Environment)
    is
+      pragma Unreferenced (Source_Filename);
       P        : Pair_Ptr;
    begin
-
       if not Is_Open (Env.SN_Table (FIL)) then
          --  .fil table does not exist, no data available
          Warn (".fil table does not exist, no data available");
          return;
       end if;
 
-      File_Buffer.Init (Source_Filename);
+      File_Buffer.Init (Full_Filename);
       Init (Env.Module_Typedefs);
       Set_Cursor (Env.SN_Table (FIL),
                   Position => By_Key,
-                  Key => Source_Filename & Field_Sep,
+                  Key => Full_Filename & Field_Sep,
                   Exact_Match => False);
 
       loop -- iterate thru all symbols for specified file
@@ -325,15 +334,23 @@ package body Src_Info.CPP is
       pragma Unreferenced (Predefined_Source_Path);
       pragma Unreferenced (Predefined_Object_Path);
 
-      SN_Dir      : String :=
+      SN_Dir      : constant String :=
         Prj_API.Object_Path (Project, Recursive => False)
         & Browse.DB_Dir_Name;
       --  SN project directory
 
+      Full_Filename : GNAT.OS_Lib.String_Access := Locate_Regular_File
+        (Source_Filename, Include_Path (Project, Recursive => True));
+
       Env         : Handler_Environment;
    begin
+      if Full_Filename = null then
+         Trace (Warn_Stream, "File not found: " & Source_Filename);
+         return;
+      end if;
+
       --  run cbrowser
-      Browse.Browse (Source_Filename, SN_Dir, "cbrowser");
+      Browse.Browse (Full_Filename.all, SN_Dir, "cbrowser");
 
       --  update .to and .by tables
       Browse.Generate_Xrefs (SN_Dir);
@@ -345,7 +362,7 @@ package body Src_Info.CPP is
       Env.File := File;
       Env.List_Of_Files := List;
 
-      Process_File (Source_Filename, Env);
+      Process_File (Source_Filename, Full_Filename.all, Env);
 
       List := Env.List_Of_Files;
       File := Env.File;
@@ -353,6 +370,14 @@ package body Src_Info.CPP is
       Env.File := No_LI_File;
 
       Close_DB_Files (Env.SN_Table);
+
+      Free (Full_Filename);
+
+   exception
+      when E : others =>
+         Trace (Warn_Stream, "Unexpected exception: "
+                & Exception_Information (E));
+         Free (Full_Filename);
    end Create_Or_Complete_LI;
 
    ------------------------------
@@ -1324,9 +1349,8 @@ package body Src_Info.CPP is
          exception
             when Declaration_Not_Found =>
                Decl_Info := new E_Declaration_Info_Node'
-                 (Value =>
-                    (Declaration => No_Declaration,
-                     References => null),
+                 (Value => (Declaration => No_Declaration,
+                            References  => null),
                   Next => Env.File.LI.Body_Info.Declarations);
                Decl_Info.Value.Declaration.Name := new String'(Ref_Id);
                Decl_Info.Value.Declaration.Kind := Overloaded_Entity;
@@ -2191,6 +2215,8 @@ package body Src_Info.CPP is
          Success);
 
       if not Success then
+         Warn ("Class not found: "
+               & Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last));
          return;
       end if;
 
@@ -2235,11 +2261,14 @@ package body Src_Info.CPP is
             Super_Def,
             Success);
          if Success then -- if found, add it to parent list
+            --  ??? MANU we are currently taking the base_name for the parent,
+            --  but we should really keep the directory part that was
+            --  mentionned in the source file, such as #include "dir/file.h"
             Add_Parent
               (Decl_Info,
                Env.List_Of_Files,
-               Super_Def.Buffer
-                 (Super_Def.File_Name.First .. Super_Def.File_Name.Last),
+               Base_Name (Super_Def.Buffer
+                 (Super_Def.File_Name.First .. Super_Def.File_Name.Last)),
                Super_Def.Start_Position);
             Free (Super_Desc);
             Free (Super_Def);
@@ -2578,6 +2607,8 @@ package body Src_Info.CPP is
             Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
             Sym.Start_Position,
             Reference);
+      else
+         Fail ("Sym_FD_Handler: Invalid start position");
       end if;
    exception
       when DB_Error | Not_Found =>
@@ -2735,6 +2766,8 @@ package body Src_Info.CPP is
             Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
             Body_Position,
             Body_Entity);
+      else
+         Fail ("Sym_FU_Handler: Invalid body position");
       end if;
 
 
@@ -3105,7 +3138,8 @@ package body Src_Info.CPP is
    begin
       Info ("Sym_MD_Hanlder: """
             & Sym.Buffer (Sym.Class.First .. Sym.Class.Last) & "::"
-            & Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last)
+            & Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last) & " "
+            & Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last)
             & """");
 
       --  Find this symbol
@@ -3120,8 +3154,8 @@ package body Src_Info.CPP is
         (Env.SN_Table (MD),
          By_Key,
          Sym.Buffer (Sym.Class.First .. Sym.Class.Last) & Field_Sep
-            & Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last)
-            & Field_Sep,
+         & Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last)
+         & Field_Sep,
          False);
 
       loop
@@ -3132,7 +3166,7 @@ package body Src_Info.CPP is
          --  Update position of the first forward declaration
          if Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last)
             = MD_Tab_Tmp.Buffer (MD_Tab_Tmp.File_Name.First ..
-                                 MD_Tab_Tmp.File_Name.Last)
+                                   MD_Tab_Tmp.File_Name.Last)
             and then Cmp_Prototypes
               (MD_Tab.Buffer,
                MD_Tab_Tmp.Buffer,
@@ -3186,7 +3220,7 @@ package body Src_Info.CPP is
          Symbol_Name       =>
             Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
          Source_Filename   =>
-            Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
+           Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
          Location          => First_MD_Pos,
          Kind              => Target_Kind,
          Scope             => Global_Scope,
@@ -3200,6 +3234,8 @@ package body Src_Info.CPP is
             Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
             Sym.Start_Position,
             Reference);
+      else
+         Fail ("Sym_MD_Handler: Invalid Start position ");
       end if;
    exception
       when DB_Error | Not_Found =>
@@ -3355,7 +3391,5 @@ package body Src_Info.CPP is
       Free (Union_Def);
    end Sym_UN_Handler;
 
-begin
-   Parse_Config_File;
 end Src_Info.CPP;
 
