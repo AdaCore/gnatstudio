@@ -499,7 +499,7 @@ package body Entities is
 
    procedure Reset (File : Source_File) is
    begin
-      Trace (Assert_Me, "Reseting " & Full_Name (Get_Filename (File)).all);
+      Trace (Assert_Me, "Reseting " & Full_Name (File.Name).all);
 
       --  Mark all entities as valid temporarily
       --  We also clean them up, so that they don't reference anything else
@@ -762,7 +762,7 @@ package body Entities is
                Tmp := Entity.Name;
                Entity.Name := new String'
                  (Entity.Name.all
-                  & ':' & Base_Name (Get_Filename (Entity.Declaration.File)));
+                  & ':' & Base_Name (Entity.Declaration.File.Name));
                Free (Tmp);
                --  Trace (Debug_Me, "Freeing entity " & Entity.Name.all);
             else
@@ -1369,11 +1369,11 @@ package body Entities is
       H : LI_Handler;
    begin
       if File /= null then
-         H := Get_LI_Handler (File.Db, Get_Filename (File));
+         H := Get_LI_Handler (File.Db, File.Name);
 
          if H /= null then
             F := Get_Source_Info
-              (H, Get_Filename (File), File_Has_No_LI_Report);
+              (H, File.Name, File_Has_No_LI_Report);
          end if;
       end if;
    end Update_Xref;
@@ -1432,7 +1432,7 @@ package body Entities is
      (LI : LI_File; Source : Virtual_File) return Boolean is
    begin
       for F in Source_File_Arrays.First .. Last (LI.Files) loop
-         if Get_Filename (LI.Files.Table (F)) = Source then
+         if LI.Files.Table (F).Name = Source then
             return True;
          end if;
       end loop;
@@ -1742,7 +1742,7 @@ package body Entities is
    function "<" (Loc1, Loc2 : File_Location) return Boolean is
    begin
       if Loc1.File /= Loc2.File then
-         return Get_Filename (Loc1.File) < Get_Filename (Loc2.File);
+         return Loc1.File.Name < Loc2.File.Name;
       elsif Loc1.Line < Loc2.Line then
          return True;
       elsif Loc1.Line = Loc2.Line
