@@ -25,19 +25,18 @@ with Ada_Analyzer; use Ada_Analyzer;
 
 package body Codefix.Ada_Tools is
 
-
    ---------------------
    -- Get_Use_Clauses --
    ---------------------
 
-   --  ??? WARNING ! This function is not yet terminated, it doesn't works on
+   --  ??? WARNING ! This function is not yet terminated, it doesn't work on
    --  instantiated packages.
+
    function Get_Use_Clauses
      (Clause_Name  : String;
       File_Name    : String;
       Current_Text : Text_Navigator_Abstr'Class;
-      Exclusive    : Boolean := False)
-     return Words_Lists.List
+      Exclusive    : Boolean := False) return Words_Lists.List
    is
       List_Of_With : With_Lists.List := List_All_With
         (Current_Text, File_Name);
@@ -45,9 +44,9 @@ package body Codefix.Ada_Tools is
         (Current_Text, File_Name);
       Seek_Node    : With_Lists.List_Node;
       Result       : Words_Lists.List;
+
    begin
       Link_All_Clauses (List_Of_With, List_Of_Use);
-
       Seek_Node := First (List_Of_With);
 
       while Seek_Node /= With_Lists.Null_Node loop
@@ -159,9 +158,9 @@ package body Codefix.Ada_Tools is
          end if;
 
          With_Index := With_Index + 1;
+
          exit when With_Index > With_Clause.Nb_Elems
            or else With_Clause.Clauses (With_Index) = null;
-
       end loop;
    end Try_Link_Clauses;
 
@@ -171,14 +170,14 @@ package body Codefix.Ada_Tools is
 
    function List_All_With
      (Current_Text : Text_Navigator_Abstr'Class;
-      File_Name    : String)
-     return With_Lists.List
+      File_Name    : String) return With_Lists.List
    is
       Structure  : constant Construct_List_Access :=
         Get_Structure (Current_Text, File_Name);
       Iterator   : Construct_Access := Structure.First;
       New_Clause : Ptr_With;
       Result     : With_Lists.List;
+
    begin
       while Iterator /= null loop
          if Iterator.Category = Cat_With then
@@ -202,14 +201,14 @@ package body Codefix.Ada_Tools is
 
    function List_All_Use
      (Current_Text : Text_Navigator_Abstr'Class;
-      File_Name    : String)
-     return Use_Lists.List
+      File_Name    : String) return Use_Lists.List
    is
       Structure  : constant Construct_List_Access :=
         Get_Structure (Current_Text, File_Name);
       Iterator   : Construct_Access := Structure.First;
       New_Clause : Ptr_Use;
       Result     : Use_Lists.List;
+
    begin
       while Iterator /= null loop
          if Iterator.Category = Cat_Use then
@@ -248,9 +247,9 @@ package body Codefix.Ada_Tools is
             Try_Link_Clauses (Data (With_Node), Data (Use_Node));
             With_Node := Next (With_Node);
          end loop;
+
          Use_Node := Next (Use_Node);
       end loop;
-
    end Link_All_Clauses;
 
 end Codefix.Ada_Tools;
