@@ -133,10 +133,12 @@ package body VFS is
       if File.Value = null then
          return Empty_String;
       else
-         if File.Value.Base_Name = null then
-            File.Value.Base_Name := new UTF8_String'
-              (Base_Name (File.Value.Full_Name.all, Suffix));
-         end if;
+         --  Since we can't ensure that Prefix will be the same in two
+         --  successive calls, we have to reallocate the string every time.
+
+         Free (File.Value.Base_Name);
+         File.Value.Base_Name := new UTF8_String'
+           (Base_Name (File.Value.Full_Name.all, Suffix));
          return Cst_UTF8_String_Access (File.Value.Base_Name);
       end if;
    end Base_Name;
