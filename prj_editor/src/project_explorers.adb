@@ -157,10 +157,17 @@ package body Project_Explorers is
    -- Searching --
    ---------------
 
-   type Search_Status is (Match, No_Match);
+   type Search_Status is new Integer;
    --  Values stored in the String_Status hash table:
-   --    - Match: the entry is a direct match
-   --    - No_Match: the node doesn't match and neither do its chidlren.
+   --    - n: the entry or one of its children matches. n is the number of
+   --         children that potentially matches (ie that have an entry set to
+   --         n or -1
+   --    - 0: the node doesn't match and neither do its children.
+   --    - -1: the entry hasn't been examined yet
+
+   Search_Match : constant Search_Status := 1;
+   No_Match     : constant Search_Status := 0;
+   Unknown      : constant Search_Status := -1;
 
    procedure Nop (X : in out Search_Status);
    --  Do nothing, required for instantiation of string_boolean_hash
@@ -2406,10 +2413,7 @@ package body Project_Explorers is
       --  Move to the next node, starting from a file node
 
       function Check_Entities
-        (File      : String;
-         Languages : Glide_Language_Handler;
-         Project   : Project_Id)
-         return Boolean;
+        (File : String; Project : Project_Id) return Boolean;
       pragma Inline (Check_Entities);
       --  Check if File contains any entity matching C.
       --  Return True if there is a match
@@ -2417,11 +2421,16 @@ package body Project_Explorers is
       procedure Mark_File_And_Projects
         (Base           : String;
          Full_Name      : String;
-         Project_Marked : in out Boolean;
-         Project        : Project_Id);
+         Project_Marked : Boolean;
+         Project        : Project_Id;
+         Mark_File      : Search_Status;
+         Increment      : Search_Status);
       pragma Inline (Mark_File_And_Projects);
       --  Mark the file Full_Name/Base as matching, as well as the project it
-      --  belongs to and all its importing projects
+      --  belongs to and all its importing projects.
+      --  Increment is added to the reference count for all directories and
+      --  importing projects (should be 1 if the file is added, -1 if the file
+      --  is removed)
 
       -------------------
       -- Next_Or_Child --
@@ -2430,7 +2439,7 @@ package body Project_Explorers is
       function Next_Or_Child
         (Name : String; Start : Gtk_Ctree_Node) return Gtk_Ctree_Node is
       begin
-         if Get (C.Matches, Name'Unrestricted_Access) /= No_Match then
+         if Get (C.Matches, Name'Unrestricted_Access) >= Search_Match then
             Compute_Children (Explorer, Start);
             return Row_Get_Children (Node_Get_Row (Start));
          else
@@ -2449,21 +2458,54 @@ package body Project_Explorers is
       is
          N : aliased constant String := Node_Get_Text
            (Explorer.Tree, Start, 0);
+         Status : Search_Status;
       begin
-         if Get (C.Matches, N'Unrestricted_Access) /= No_Match then
-            if C.Include_Entities then
+         Status := Get (C.Matches, N'Unrestricted_Access);
+         if C.Include_Entities then
+            --  The file was already parsed, and we know it matched
+            if Status >= Search_Match then
                Compute_Children (Explorer, Start);
                Result := Row_Get_Children (Node_Get_Row (Start));
                Finish := False;
                return;
 
+            --  The file was never parsed
+            elsif Status = Unknown then
+               if Check_Entities
+                 (Get_Directory_From_Node (Explorer, Start) & N,
+                  Get_Project_From_Node (Explorer, Start))
+               then
+                  Set (C.Matches, new String'(N), Search_Match);
+                  Compute_Children (Explorer, Start);
+                  Result := Row_Get_Children (Node_Get_Row (Start));
+                  Finish := False;
+                  return;
+               else
+                  --  Decrease the count for importing directories and
+                  --  projects, so that if no file belonging to them is
+                  --  referenced any more, we simply don't parse them
+
+                  Mark_File_And_Projects
+                    (Base           => N,
+                     Full_Name      =>
+                       Get_Directory_From_Node (Explorer, Start) & N,
+                     Project_Marked => False,
+                     Project        => Get_Project_From_Node (Explorer, Start),
+                     Mark_File      => No_Match,
+                     Increment      => -1);
+               end if;
+            end if;
+
+         elsif Status /= No_Match then
             --  Do not return the initial node
-            elsif C.Current /= Start then
+            if C.Current /= Start then
                Result := Start;
                Finish := True;
                return;
             end if;
          end if;
+
+         --  The file doesn't match
 
          Result := Row_Get_Sibling (Node_Get_Row (Start));
          Finish := False;
@@ -2536,10 +2578,11 @@ package body Project_Explorers is
 
       function Check_Entities
         (File      : String;
-         Languages : Glide_Language_Handler;
          Project   : Project_Id)
          return Boolean
       is
+         Languages : constant Glide_Language_Handler :=
+           Glide_Language_Handler (Get_Language_Handler (Kernel));
          Handler : constant Src_Info.LI_Handler := Get_LI_Handler_From_File
            (Languages, File, Project);
          Constructs : Construct_List;
@@ -2558,11 +2601,11 @@ package body Project_Explorers is
                Status := True;
 
                if Get (C.Matches, Constructs.Current.Name.all'Access) /=
-                 Match
+                 Search_Match
                then
                   Set (C.Matches,
                        new String'(Constructs.Current.Name.all),
-                       Match);
+                       Search_Match);
                end if;
             end if;
 
@@ -2580,8 +2623,10 @@ package body Project_Explorers is
       procedure Mark_File_And_Projects
         (Base           : String;
          Full_Name      : String;
-         Project_Marked : in out Boolean;
-         Project        : Project_Id)
+         Project_Marked : Boolean;
+         Project        : Project_Id;
+         Mark_File      : Search_Status;
+         Increment      : Search_Status)
       is
          --  Directory name without a directory separator.
          Dir  : constant String := Full_Name
@@ -2589,14 +2634,28 @@ package body Project_Explorers is
             Full_Name'Last - Base'Length - 1);
 
       begin
-         Set (C.Matches, new String'(Base), Match);
-         Set (C.Matches, new String'(Dir), Match);
+         Set (C.Matches, new String'(Base), Mark_File);
+
+         --  Mark the number of entries in the directory, so that if a file
+         --  doesn't match we can decrease it later, and finally no longer
+         --  examine the directory
+         if Get (C.Matches, Dir'Unrestricted_Access) /= No_Match then
+            Set (C.Matches, new String'(Dir),
+                 Get (C.Matches, Dir'Unrestricted_Access) + Increment);
+         elsif Increment > 0 then
+            Set (C.Matches, new String'(Dir), 1);
+         end if;
 
          if not Project_Marked then
             --  Mark the current project and all its importing
             --  projects as matching
 
-            Set (C.Matches, new String'(Project_Name (Project)), Match);
+            declare
+               N : constant String := Project_Name (Project);
+            begin
+               Set (C.Matches, new String'(N),
+                    Get (C.Matches, N'Unrestricted_Access) + Increment);
+            end;
 
             declare
                Prjs : constant Project_Id_Array := Find_All_Projects_Importing
@@ -2604,11 +2663,14 @@ package body Project_Explorers is
                   Project      => Project);
             begin
                for P in Prjs'Range loop
-                  Set (C.Matches, new String'(Project_Name (Prjs (P))), Match);
+                  declare
+                     N : constant String := Project_Name (Prjs (P));
+                  begin
+                     Set (C.Matches, new String'(N),
+                          Get (C.Matches, N'Unrestricted_Access) + Increment);
+                  end;
                end loop;
             end;
-
-            Project_Marked := True;
          end if;
       end Mark_File_And_Projects;
 
@@ -2619,8 +2681,6 @@ package body Project_Explorers is
       procedure Initialize_Parser is
          Iter : Imported_Project_Iterator := Start
            (Get_Project (Kernel), Recursive => True);
-         Languages : constant Glide_Language_Handler :=
-           Glide_Language_Handler (Get_Language_Handler (Kernel));
       begin
          while Current (Iter) /= No_Project loop
             declare
@@ -2635,17 +2695,28 @@ package body Project_Explorers is
                   declare
                      Base : constant String := Base_Name (Sources (S).all);
                   begin
-                     if Match (C, Base) /= -1
-                       or   --  not "or else", we need to evaluate the second
-                       (C.Include_Entities
-                        and then Check_Entities
-                          (Sources (S).all, Languages, Current (Iter)))
-                     then
+                     if C.Include_Entities then
                         Mark_File_And_Projects
                           (Base           => Base,
                            Full_Name      => Sources (S).all,
                            Project_Marked => Project_Marked,
-                           Project        => Current (Iter));
+                           Project        => Current (Iter),
+                           Mark_File      => Unknown,
+                           Increment      => 1);
+                        --  Do not change Project_Marked, since we want the
+                        --  total count for directories and projects to be the
+                        --  total number of files in them.
+                        --  ??? Could be more efficient
+
+                     elsif Match (C, Base) /= -1 then
+                        Mark_File_And_Projects
+                          (Base           => Base,
+                           Full_Name      => Sources (S).all,
+                           Project_Marked => Project_Marked,
+                           Project        => Current (Iter),
+                           Mark_File      => Search_Match,
+                           Increment      => 1);
+                        Project_Marked  := True;
                      end if;
                   end;
                end loop;
@@ -2658,16 +2729,16 @@ package body Project_Explorers is
       end Initialize_Parser;
 
    begin
+      --  We need to freeze and block the handlers to speed up the display of
+      --  the node on the screen.
+      Freeze (Explorer.Tree);
+      Gtk.Handlers.Handler_Block (Explorer.Tree, Explorer.Expand_Id);
+
       if C.Current = null then
          Initialize_Parser;
          C.Current := Node_Nth (Explorer.Tree, 0);
       end if;
 
-      --  We need to freeze and block the handlers to speed up the display of
-
-      --  the node on the screen.
-      Freeze (Explorer.Tree);
-      Gtk.Handlers.Handler_Block (Explorer.Tree, Explorer.Expand_Id);
       C.Current := Next;
 
       Thaw (Explorer.Tree);
