@@ -52,7 +52,7 @@ package Codefix.GPS_Io is
    --  Free the memory associated with the Console_Interface
 
    procedure Undo (This : in out Console_Interface);
-   --  Undo the last actio made in This.
+   --  Undo the last action made in This.
 
    function Get
      (This   : Console_Interface;
