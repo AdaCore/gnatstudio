@@ -41,9 +41,9 @@ package Commands.Editor is
    --  that the text is inserted/deleted after the cursor.
 
    procedure Create
-     (Item         : out Check_Modified_State;
-      Box          : Source_Editor_Box;
-      Queue        : Command_Queue);
+     (Item  : out Check_Modified_State;
+      Box   : Source_Editor_Box;
+      Queue : Command_Queue);
    --  Create a new Check_Modified_State command.
 
    function Execute
@@ -64,6 +64,8 @@ package Commands.Editor is
    --  If Force_End then the cursor will always be placed at the end of the
    --  newly inserted text, otherwise it is placed at the end when executing
    --  the command, and at the beginning when undoing it.
+   --  Text is a string in the current charset, and will be converted in
+   --  UTF-8 format.
 
    function Execute
      (Command : access Editor_Replace_Slice_Type) return Boolean;
@@ -94,18 +96,18 @@ package Commands.Editor is
 
    procedure Add_Text
      (Item         : Editor_Command;
-      Text         : String;
+      UTF8         : String;
       Start_Line   : Integer := -1;
       Start_Column : Integer := -1);
-   --  Add some text to the current action.
+   --  Add some text (in UTF-8 format) to the current action.
    --  If values other than -1 are specified, they override the
    --  current values in Item.
 
    function Get_Text (Item : Editor_Command) return String;
-   --  Return the text associated with Item.
+   --  Return the text (in UTF-8 format) associated with Item.
 
    procedure Set_Text (Item : Editor_Command; Text : String);
-   --  Set the text associated with Item.
+   --  Set the text (in UTF-8 format) associated with Item.
 
    function Execute (Command : access Editor_Command_Type) return Boolean;
 
