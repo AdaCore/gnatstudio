@@ -347,11 +347,11 @@ package body Vdiff2_Module.Utils.Shell_Command is
       Basic_Types.Free (Args_Replace_Text);
    end Replace_Text;
 
-   ----------------------
-   -- Unhighlight_Line --
-   ----------------------
+   -----------------
+   -- Unhighlight --
+   -----------------
 
-   procedure Unhighlight_Line
+   procedure Unhighlight
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
       File  : Virtual_File;
       Pos   : Natural;
@@ -365,11 +365,27 @@ package body Vdiff2_Module.Utils.Shell_Command is
    begin
       Execute_GPS_Shell_Command (Kernel, "unhighlight", Args_Highlight);
       Basic_Types.Free (Args_Highlight);
+   end Unhighlight;
+
+   ----------------------
+   -- Unhighlight_Line --
+   ----------------------
+
+   procedure Unhighlight_Line
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+      File  : Virtual_File;
+      Pos   : Natural;
+      Style : String := "")
+   is
+
+   begin
+      Unhighlight (Kernel, File, Pos, Style);
+      Unhighlight_Range (Kernel, File, Fine_Change_Style, Pos);
    end Unhighlight_Line;
 
-   ---------------------
-   -- unhighlight_Range --
-   ---------------------
+   -----------------------
+   -- Unhighlight_Range --
+   -----------------------
 
    procedure Unhighlight_Range
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
