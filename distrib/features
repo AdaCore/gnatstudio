@@ -3,7 +3,7 @@ details, please see the documentation.
 
 New features in GPS 2.1.0
 
-- Python commands' output can now be redirected to any GPS window
+- D617-014 Python commands' output can now be redirected to any GPS window
 
 - GPS can recompute the indentation for an alias after its expansion
 
