@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -40,6 +40,9 @@ with Glide_Kernel;
 with Projects;
 
 package Switches_Editors is
+
+   type Switches_Edit_Record is new Gtk_Notebook_Record with private;
+   type Switches_Edit is access all Switches_Edit_Record'Class;
 
    -----------
    -- Pages --
@@ -143,7 +146,7 @@ package Switches_Editors is
    --  additional switches.
 
    procedure Add_Dependency
-     (Master_Page    : access Switches_Editor_Page_Record'Class;
+     (Master_Page    : Switches_Editor_Page;
       Master_Switch  : String;
       Master_Status  : Boolean;
       Slave_Page     : access Switches_Editor_Page_Record'Class;
@@ -157,6 +160,12 @@ package Switches_Editors is
    --  is "-g" for the compiler, with Master_Status=True and
    --  Slave_Activate=True, then everytime the user selects "-g" for the
    --  builder, "-g" will also be forced for the compiler.
+
+   function Get_Page
+     (Editor : access Switches_Edit_Record'Class;
+      Title  : String) return Switches_Editor_Page;
+   --  Return the page with the given title, or null if no such page has been
+   --  added yet.
 
    procedure Add_Coalesce_Switch
      (Page              : access Switches_Editor_Page_Record'Class;
@@ -201,9 +210,6 @@ package Switches_Editors is
    ---------------------
    -- Switches editor --
    ---------------------
-
-   type Switches_Edit_Record is new Gtk_Notebook_Record with private;
-   type Switches_Edit is access all Switches_Edit_Record'Class;
 
    procedure Gtk_New
      (Editor : out Switches_Edit;

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -27,7 +27,6 @@ with Gtk.Check_Button;     use Gtk.Check_Button;
 with Gtk.Combo;            use Gtk.Combo;
 with Gtk.Dialog;           use Gtk.Dialog;
 with Gtk.Enums;            use Gtk.Enums;
-with Gtk.Frame;            use Gtk.Frame;
 with Gtk.GEntry;           use Gtk.GEntry;
 with Gtk.Handlers;         use Gtk.Handlers;
 with Gtk.Label;            use Gtk.Label;
@@ -59,6 +58,7 @@ with String_Utils;         use String_Utils;
 with Basic_Types;          use Basic_Types;
 with Scenario_Selectors;   use Scenario_Selectors;
 with Projects;             use Projects;
+with Project_Viewers;      use Project_Viewers;
 
 with Types;                use Types;
 with Snames;               use Snames;
@@ -70,81 +70,6 @@ with Traces;               use Traces;
 package body Switches_Editors is
 
    Me : constant Debug_Handle := Create ("Switches_Editors");
-
-
-   --  The following constants are defined to avoid allocating dynamic memory
-   --  in Gtk_New. This should eventually be integrated in the kernel.
-   --  The comments are there so that the script to handle internationalization
-   --  properly finds the constants.
-
-   Cst_No_Optimization : aliased constant String := "No optimization";
-   --  -"No optimization"
-   Cst_Some_Optimization : aliased constant String := "Some optimization";
-   --  -"Some optimization"
-   Cst_Full_Optimization : aliased constant String := "Full optimization";
-   --  -"Full optimization"
-   Cst_Full_Inline_Optimization : aliased constant String :=
-     "Full + Automatic inline";
-   --  -"Full + Automatic inline"
-   Cst_Lower_Case : aliased constant String := "Lower case";
-   --  -"Lower case"
-   Cst_Upper_Case : aliased constant String := "Upper case";
-   --  -"Upper case"
-   Cst_Mixed_Case : aliased constant String := "Mixed case";
-   --  -"Mixed case"
-   Cst_As_Declared : aliased constant String := "As declared";
-   --  -"As declared"
-   Cst_Gnat_Style : aliased constant String := "GNAT style";
-   --  -"GNAT style"
-   Cst_Compact    : aliased constant String := "Compact";
-   --  -"Compact"
-   Cst_Uncompact  : aliased constant String := "Uncompact";
-   --  -"Uncompact"
-   Cst_Gnat_Indent : aliased constant String := "GNAT style line indentation";
-   --  -"GNAT style line indentation"
-   Cst_Std_Indent  : aliased constant String := "Standard line indentation";
-   --  -"Standard line indentation"
-   Cst_Static      : aliased constant String := "Static GNAT run time";
-   --  -"Static GNAT run time"
-   Cst_Shared      : aliased constant String := "Shared GNAT run time";
-   --  -"Shared GNAT run time"
-   Cst_Static_S : aliased constant String := "-static";
-   Cst_Shared_S : aliased constant String := "-shared";
-   Cst_L        : aliased constant String := "L";
-   Cst_M        : aliased constant String := "M";
-   Cst_U        : aliased constant String := "U";
-   Cst_D        : aliased constant String := "D";
-   Cst_Zero     : aliased constant String := "0";
-   Cst_One      : aliased constant String := "1";
-   Cst_Two      : aliased constant String := "2";
-   Cst_Three    : aliased constant String := "3";
-   Cst_Gnat_Y3  : aliased constant String := "-gnaty3";
-   Cst_Gnat_Ya  : aliased constant String := "-gnatya";
-   Cst_Gnat_Yb  : aliased constant String := "-gnatyb";
-   Cst_Gnat_Yc  : aliased constant String := "-gnatyc";
-   Cst_Gnat_Ye  : aliased constant String := "-gnatye";
-   Cst_Gnat_Yf  : aliased constant String := "-gnatyf";
-   Cst_Gnat_Yh  : aliased constant String := "-gnatyh";
-   Cst_Gnat_Yi  : aliased constant String := "-gnatyi";
-   Cst_Gnat_Yk  : aliased constant String := "-gnatyk";
-   Cst_Gnat_Yl  : aliased constant String := "-gnatyl";
-   Cst_Gnat_Ym  : aliased constant String := "-gnatym";
-   Cst_Gnat_Yn  : aliased constant String := "-gnatyn";
-   Cst_Gnat_Yp  : aliased constant String := "-gnatyp";
-   Cst_Gnat_Yr  : aliased constant String := "-gnatyr";
-   Cst_Gnat_Ys  : aliased constant String := "-gnatys";
-   Cst_Gnat_Yt  : aliased constant String := "-gnatyt";
-   Cst_Gnat_Wc  : aliased constant String := "-gnatwc";
-   Cst_Gnat_Wf  : aliased constant String := "-gnatwf";
-   Cst_Gnat_Wi  : aliased constant String := "-gnatwi";
-   Cst_Gnat_Wk  : aliased constant String := "-gnatwk";
-   Cst_Gnat_Wm  : aliased constant String := "-gnatwm";
-   Cst_Gnat_Wo  : aliased constant String := "-gnatwo";
-   Cst_Gnat_Wp  : aliased constant String := "-gnatwp";
-   Cst_Gnat_We  : aliased constant String := "-gnatwe";
-   Cst_Gnat_Wu  : aliased constant String := "-gnatwu";
-   Cst_Gnat_Wv  : aliased constant String := "-gnatwv";
-   Cst_Gnat_Wz  : aliased constant String := "-gnatwz";
 
    -------------------
    -- Check buttons --
@@ -210,6 +135,9 @@ package body Switches_Editors is
      (Switch : Switch_Combo_Widget; List : in out Argument_List);
    procedure Set_And_Filter_Switch
      (Switch : Switch_Combo_Widget; List : in out Argument_List);
+
+   procedure Page_Destroyed (Page : access Gtk_Widget_Record'Class);
+   --  Free the memory occupied by Page
 
    ---------------------
    -- Combo list item --
@@ -326,9 +254,6 @@ package body Switches_Editors is
      (Page   : access Switches_Editor_Page_Record'Class;
       Button : access Switch_Basic_Widget_Record'Class);
    --  Add a new switch to the page.
-
-   procedure Page_Destroyed (Page : access Gtk_Widget_Record'Class);
-   --  Callback when a page is destroyed.
 
    procedure Editor_Destroyed (Editor : access Gtk_Widget_Record'Class);
    --  Callback when the editor is destroyed.
@@ -1105,35 +1030,57 @@ package body Switches_Editors is
       end if;
    end Check_Dependency;
 
+   --------------
+   -- Get_Page --
+   --------------
+
+   function Get_Page
+     (Editor : access Switches_Edit_Record'Class;
+      Title  : String) return Switches_Editor_Page is
+   begin
+      if Editor.Pages /= null then
+         for Num in Editor.Pages'Range loop
+            if Editor.Pages (Num) /= null
+              and then Editor.Pages (Num).Title.all = Title
+            then
+               return Editor.Pages (Num);
+            end if;
+         end loop;
+      end if;
+
+      return null;
+   end Get_Page;
+
    --------------------
    -- Add_Dependency --
    --------------------
 
    procedure Add_Dependency
-     (Master_Page    : access Switches_Editor_Page_Record'Class;
+     (Master_Page    : Switches_Editor_Page;
       Master_Switch  : String;
       Master_Status  : Boolean;
       Slave_Page     : access Switches_Editor_Page_Record'Class;
       Slave_Switch   : String;
       Slave_Activate : Boolean := True)
    is
-      S1 : constant Switch_Basic_Widget := Get_Switch_Widget
-        (Master_Page, Master_Switch);
-      S2 : constant Switch_Basic_Widget := Get_Switch_Widget
-        (Slave_Page, Slave_Switch);
+      S1, S2  : Switch_Basic_Widget;
    begin
-      Assert (Me, S1 /= null
-              and then S2 /= null
-              and then S1.all in Switch_Check_Widget'Class
-              and then S2.all in Switch_Check_Widget'Class,
-              "Can only add dependencies between check button switches "
-              & Master_Page.Title.all & ' ' & Master_Switch
-              & ' ' & Slave_Page.Title.all & ' ' & Slave_Switch);
+      if Master_Page /= null then
+         S1 :=  Get_Switch_Widget (Master_Page, Master_Switch);
+         S2 := Get_Switch_Widget (Slave_Page, Slave_Switch);
+         Assert (Me, S1 /= null
+                 and then S2 /= null
+                 and then S1.all in Switch_Check_Widget'Class
+                 and then S2.all in Switch_Check_Widget'Class,
+                 "Can only add dependencies between check button switches "
+                 & Master_Page.Title.all & ' ' & Master_Switch
+                 & ' ' & Slave_Page.Title.all & ' ' & Slave_Switch);
 
-      Dependency_Callback.Connect
-        (Switch_Check_Widget_Access (S1).Check, "toggled",
-         Dependency_Callback.To_Marshaller (Check_Dependency'Access),
-         (Master_Status, Switch_Check_Widget_Access (S2), Slave_Activate));
+         Dependency_Callback.Connect
+           (Switch_Check_Widget_Access (S1).Check, "toggled",
+            Dependency_Callback.To_Marshaller (Check_Dependency'Access),
+            (Master_Status, Switch_Check_Widget_Access (S2), Slave_Activate));
+      end if;
    end Add_Dependency;
 
    -------------------------
@@ -1220,767 +1167,22 @@ package body Switches_Editors is
       Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
       Tab    : Gtk_Label;
-      Frame  : Gtk_Frame;
-      Box    : Gtk_Box;
-      Page   : Switches_Editor_Page;
-      Group  : Gtk_Size_Group;
-      Table  : Gtk_Table;
-      Style_Box : Gtk_Box;
-      Warn_Box  : Gtk_Box;
 
    begin
       Editor := new Switches_Edit_Record;
       Gtk.Notebook.Initialize (Editor);
 
-      Editor.Pages := new Pages_Array (1 .. 7);
-
-      --  ??? Should be registered by modules
+      Editor.Pages := new Pages_Array (1 .. Switches_Page_Count (Kernel));
 
       for P in Editor.Pages'Range loop
-         case P is
-
-            --  Builder page
-            when 1 =>
-               Gtk_New (Page, "Make", Builder_Package, Ada_String, 1, 2,
-                        Get_Tooltips (Kernel));
-
-               Gtk_New (Frame, -"Dependencies");
-               Set_Border_Width (Frame, 5);
-               Attach (Page, Frame, 0, 1, 0, 1);
-               Gtk_New_Vbox (Box, False, 0);
-               Add (Frame, Box);
-               Create_Check
-                 (Page, Box, -"Consider all files", "-a",
-                  -("Consider all files, even locked files. Locked files are"
-                    & " file whose ALI file is write-protected"));
-               Create_Check
-                 (Page, Box, -"Recompile if switches changed", "-s",
-                  -("Recompile if compiler switches have changed since last"
-                    & " last compilation"));
-               Create_Check
-                 (Page, Box, -"Minimal recompilation", "-m",
-                  -("Specifies that the minimum necessary amount of"
-                    & " recompilation be performed. In this mode, gnatmake"
-                    & " ignores time stamp differences when the only"
-                    & " modification to a source file consist in adding or"
-                    & " removing comments, empty lines, spaces or tabs"));
-
-               Gtk_New (Frame, -"Compilation");
-               Set_Border_Width (Frame, 5);
-               Attach (Page, Frame, 1, 2, 0, 1);
-               Gtk_New_Vbox (Box, False, 0);
-               Add (Frame, Box);
-               Create_Spin
-                 (Page, Box, -"Multiprocessing", "-j", 1, 100, 1,
-                  -("Use N processes to carry out the compilations. On a"
-                    & " multiprocessor machine compilations will occur in"
-                    & " parallel"));
-               Create_Check
-                 (Page, Box, -"Keep going", "-k",
-                  -("Continue as much as possible after a compilation error"));
-               Create_Check
-                 (Page, Box, -"Debug information", "-g",
-                  -("Add debugging information. This forces the corresponding"
-                    & " switch for the compiler, binder and linker"));
-               Create_Check
-                 (Page, Box, -"Use mapping file", "-C",
-                  -("Use a mapping file. A mapping file is a way to"
-                    & " communicate to the compiler two mappings: from unit"
-                    & " name to file names, and from file names to path"
-                    & " names. This will generally improve the compilation"
-                    & " time"));
-
-            --  Ada compiler page
-            when 2 =>
-               Gtk_New (Page, "Ada", Compiler_Package, Ada_String, 3, 2,
-                        Get_Tooltips (Kernel));
-
-               Gtk_New (Frame, -"Code generation");
-               Set_Border_Width (Frame, 5);
-               Attach (Page, Frame, 0, 1, 0, 1);
-               Gtk_New_Vbox (Box, False, 0);
-               Add (Frame, Box);
-               Pack_Start
-                 (Box, Create_Combo
-                  (Page, "",
-                   Switch               => "-O",
-                   Default_No_Switch    => "0",
-                   Default_No_Digit     => "1",
-                   Buttons => (1 => (Cst_No_Optimization'Access,
-                                     Cst_Zero'Access),
-                               2 => (Cst_Some_Optimization'Access,
-                                     Cst_One'Access),
-                               3 => (Cst_Full_Optimization'Access,
-                                     Cst_Two'Access),
-                               4 => (Cst_Full_Inline_Optimization'Access,
-                                     Cst_Three'Access)),
-                   Tip     => -"Controls the optimization level"),
-                  False, False);
-               Create_Check
-                 (Page, Box, -"front-end inlining", "-gnatN",
-                  -("The front end inlining activated by this switch is"
-                    & " generally more extensive and quite often more"
-                    & " effective than the -gnatn inlining"));
-               Create_Check
-                 (Page, Box, -"Unroll loops", "-funroll-loops",
-                  -("Perform the optimization of loop unrolling. This is only"
-                    & " done for loops whose number of iterations can be"
-                    & " determined at compile time or run time"));
-               Create_Check
-                 (Page, Box, -"Position independent code", "-fPIC",
-                  -("If supported for the target machine, emit"
-                    & " position-independent code, suitable for dynamic"
-                    & " linking and avoiding any limit of the size of the"
-                    & " global offset table"));
-               Create_Check
-                 (Page, Box, -"Code coverage", "-ftest-coverage",
-                  -"Create data files for the gcov code-coverage utility");
-               Create_Check
-                 (Page, Box, -"Instrument arcs", "-fprofile-arcs",
-                  -("Instrument arcs during compilation. For each function of"
-                    & " your program, gcc creates a program flow graph, then"
-                    & " finds a spanning tree for the graph. Only arcs that"
-                    & " are not on the spanning tree have to be instrumented:"
-                    & " the compiler adds code to count the number of times"
-                    & " that these arcs are executed"));
-               Add_Dependency (Master_Page    => Page,
-                               Master_Switch  => "-ftest-coverage",
-                               Master_Status  => False,
-                               Slave_Page     => Page,
-                               Slave_Switch   => "-fprofile-arcs",
-                               Slave_Activate => False);
-
-               Gtk_New (Frame, -"Run-time checks");
-               Set_Border_Width (Frame, 5);
-               Attach (Page, Frame, 1, 2, 0, 1);
-               Gtk_New_Vbox (Box, False, 0);
-               Add (Frame, Box);
-               Create_Check
-                 (Page, Box, -"Overflow checking", "-gnato",
-                  -"Enable numerics overflow checking");
-               Create_Check
-                 (Page, Box, -"Suppress all checks", "-gnatp",
-                  -"Suppress all checks");
-               Create_Check
-                 (Page, Box, -"Stack checking", "-fstack-check",
-                  -("Generate code to verify that you do not go beyond the"
-                    & " boundary of the stack. You should specify this flag"
-                    & " if you are running in an environment with multiple"
-                    & " threads, but only rarely need to specify it in a"
-                    & " single-threaded environment"));
-               Create_Check
-                 (Page, Box, -"Dynamic elaboration", "-gnatE",
-                  -"Full dynamic elaboration checks");
-
-               Gtk_New (Frame, -"Messages");
-               Set_Border_Width (Frame, 5);
-               Attach (Page, Frame, 0, 1, 1, 3);
-               Gtk_New_Vbox (Box, False, 0);
-               Add (Frame, Box);
-               Create_Check
-                 (Page, Box, -"Full errors", "-gnatf",
-                  -("Full Errors. Multiple errors per line, all undefined"
-                    & " references"));
-
-               --  Warnings
-
-               Gtk_New_Vbox (Warn_Box, False, 0);
-               Create_Check
-                 (Page, Warn_Box, -"Biased rounding", "-gnatwb",
-                  -("This warning message alerts you to instances where"
-                    & " compile-time rounding and run-time rounding are not"
-                    & " equivalent"));
-               Create_Check
-                 (Page, Warn_Box, -"Constant conditional", "-gnatwc",
-                  -("Activates warnings for conditional expression used in"
-                    & " tests that are known to be True or False at compile"
-                    & " time"));
-               Create_Check
-                 (Page, Warn_Box, -"Implicit dereference", "-gnatwd",
-                  -("If set, the use of a prefix of an access type in an"
-                    & " indexed component, slice or selected component without"
-                    & " an explicit .all will generate a warning. With this"
-                    & " warning enabled, access checks occur only at points"
-                    & " where an explicit .all appears"));
-               Create_Check
-                 (Page, Warn_Box, -"Warnings=Errors", "-gnatwe",
-                  -"Causes warning messages to be treated as errors");
-               Create_Check
-                 (Page, Warn_Box, -"Unreferenced formal", "-gnatwf",
-                  -("Causes warnings to be generated if a formal parameter is"
-                    & " not referenced in the body"));
-               Create_Check
-                 (Page, Warn_Box, -"Hiding variable", "-gnatwh",
-                  -("This switch activates warnings on hiding declarations."
-                    & " A declaration is considered hiding if it is for a non-"
-                    & "overloadable entity, and if it declares an entity with"
-                    & " the same name as some other entity that is directly"
-                    & " or use-visible"));
-               Create_Check
-                 (Page, Warn_Box, -"Implementation unit", "-gnatwi",
-                  -("This switch activates warnings for a with of an internal"
-                    & " GNAT implementation unit"));
-               Create_Check
-                 (Page, Warn_Box, -"Obsolescent feature", "-gnatwj", "");
-               Create_Check
-                 (Page, Warn_Box, -"Constant variable", "-gnatwk",
-                  "");
-               Create_Check
-                 (Page, Warn_Box, -"Missing elaboration pragma", "-gnatwl",
-                  -("This switch activates warnings on missing pragma"
-                    & " Elaborate_All statements"));
-               Create_Check
-                 (Page, Warn_Box,
-                  -"Variable assigned but not read", "-gnatwm",
-                  "");
-               Create_Check
-                 (Page, Warn_Box, -"Address clause overlay", "-gnatwo",
-                  -("This switch activates warnings for possible unintended"
-                    & " initialization effects of defining address clauses"
-                    & " that cause one variable to overlap another"));
-               Create_Check
-                 (Page, Warn_Box, -"Ineffective pragma inline", "-gnatwp",
-                  -("This switch activates warnings for a failure of front"
-                    & " end inlining to inline a particular call"));
-               Create_Check
-                 (Page, Warn_Box, -"Redundant construct", "-gnatwr",
-                  -("This switch activates warnings for redundant constructs:"
-                    & ASCII.LF
-                    & " - Assignment of an item to itself" & ASCII.LF
-                    & " - Type conversion that converts an expression to its"
-                    & " own type" & ASCII.LF
-                    & " - ..."));
-               Create_Check
-                 (Page, Warn_Box, -"Unused entity", "-gnatwu",
-                  -("This switch activates warnings to be generated for"
-                    & " entities that are defined but not referenced"));
-               Create_Check
-                 (Page, Warn_Box, -"Unassigned variable", "-gnatwv", "");
-               Create_Check
-                 (Page, Warn_Box,
-                  -"Size/align warnings for unchecked conversion", "-gnatwz",
-                  "");
-               Pack_Start (Box,
-                           Create_Popup (-"Warnings", Warn_Box),
-                           False, False);
-               Add_Coalesce_Switch (Page, "-gnatw", "-gnatwfikmopeuvz");
-               Add_Custom_Expansion
-                 (Page, "-gnatwa",
-                  (Cst_Gnat_Wc'Access,
-                   Cst_Gnat_Wf'Access,
-                   Cst_Gnat_Wi'Access,
-                   Cst_Gnat_Wk'Access,
-                   Cst_Gnat_Wm'Access,
-                   Cst_Gnat_Wo'Access,
-                   Cst_Gnat_Wp'Access,
-                   Cst_Gnat_We'Access,
-                   Cst_Gnat_Wu'Access,
-                   Cst_Gnat_Wv'Access,
-                   Cst_Gnat_Wz'Access));
-
-               --  Validity checking
-               Gtk_New_Vbox (Warn_Box, False, 0);
-               Create_Check
-                 (Page, Warn_Box, -"Checking for copies", "-gnatVc",
-                  -("The right hand side of assignments, and the initializing"
-                    & " values of object declarations are validity checked"));
-               Create_Check
-                 (Page, Warn_Box,
-                  -"Default Reference Manual checking", "-gnatVd");
-               Create_Check
-                 (Page, Warn_Box, -"Checking for floating-point", "-gnatVf");
-               Create_Check
-                 (Page, Warn_Box,
-                  -"Checking for ""in"" parameters", "-gnatVi",
-                  -("Arguments for parameters of mode in are validity checked"
-                    & " in function and procedure calls at the point of"
-                    & " call"));
-               Create_Check
-                 (Page, Warn_Box,
-                  -"Checking for ""in out"" parameters", "-gnatVm",
-                  -("Arguments for parameters of mode in out are validity"
-                    & " checked in procedure calls at the point of call"));
-               Create_Check
-                 (Page, Warn_Box,
-                  -"Checking for operators and attributes", "-gnatVo",
-                  -("Arguments for predefined operations and attributes are"
-                    & " validity checked"));
-               Create_Check
-                 (Page, Warn_Box, -"Checking for returns", "-gnatVr",
-                  -("The expression in return statements in functions is"
-                    & " validity checked"));
-               Create_Check
-                 (Page, Warn_Box, -"Checking for subscripts", "-gnatVs",
-                  -"All subscripts expressions are checked for validty");
-               Create_Check
-                 (Page, Warn_Box, -"Checking for tests", "-gnatVt",
-                  -("Expressions used as conditions in if, while or exit"
-                    & " statements are checked, as well as guard expressions"
-                    & " in entry calls"));
-               Pack_Start (Box,
-                           Create_Popup (-"Validity checking mode", Warn_Box),
-                           False, False);
-               Add_Coalesce_Switch (Page, "-gnatV");
-
-               --  Styles
-               Gtk_New_Vbox (Style_Box, False, 0);
-               Create_Spin
-                 (Page, Style_Box, -"indentation", "-gnaty", 1, 9, 3);
-               Create_Check (Page, Style_Box, -"Check casing", "-gnatya");
-               Create_Check
-                 (Page, Style_Box, -"Check end of line blanks", "-gnatyb");
-               Create_Check
-                 (Page, Style_Box, -"Check comment format", "-gnatyc");
-               Create_Check
-                 (Page, Style_Box, -"Check end/exit labels", "-gnatye");
-               Create_Check
-                 (Page, Style_Box, -"Check no form feeds", "-gnatyf");
-               Create_Check
-                 (Page, Style_Box, -"Check no horizontal tabs", "-gnatyh");
-               Create_Check
-                 (Page, Style_Box, -"Check if-then layout", "-gnatyi");
-               Create_Check
-                 (Page, Style_Box, -"Check casing rules", "-gnatyk");
-               Create_Check
-                 (Page, Style_Box,
-                  -"Check reference manual layout", "-gnatyl");
-               Create_Check
-                 (Page, Style_Box,
-                  -"Check line length <= 79 characters", "-gnatym");
-               Create_Check
-                 (Page, Style_Box,
-                  -"Check casing of Standard identifiers", "-gnatyn");
-               Create_Check
-                 (Page, Style_Box,
-                  -"Check subprogram bodies in alphabetical order", "-gnatyo");
-               Create_Check
-                 (Page, Style_Box, -"Check pragma casing", "-gnatyp");
-               Create_Check
-                 (Page, Style_Box, -"Check RM column layout", "-gnatyr");
-               Create_Check
-                 (Page, Style_Box, -"Check separate specs present", "-gnatys");
-               Create_Check
-                 (Page, Style_Box, -"Check token separation rules", "-gnatyt");
-               Create_Spin
-                 (Page, Style_Box, -"Line length", "-gnatyM", 0, 255, 79);
-
-               Pack_Start (Box,
-                           Create_Popup (-"Style checks", Style_Box),
-                           False, False);
-               Add_Coalesce_Switch (Page, "-gnaty", "-gnatyabcefhiklmnprst");
-               Add_Custom_Expansion (Page, "-gnaty",
-                                     (Cst_Gnat_Y3'Access,
-                                      Cst_Gnat_Ya'Access,
-                                      Cst_Gnat_Yb'Access,
-                                      Cst_Gnat_Yc'Access,
-                                      Cst_Gnat_Ye'Access,
-                                      Cst_Gnat_Yf'Access,
-                                      Cst_Gnat_Yh'Access,
-                                      Cst_Gnat_Yi'Access,
-                                      Cst_Gnat_Yk'Access,
-                                      Cst_Gnat_Yl'Access,
-                                      Cst_Gnat_Ym'Access,
-                                      Cst_Gnat_Yn'Access,
-                                      Cst_Gnat_Yp'Access,
-                                      Cst_Gnat_Yr'Access,
-                                      Cst_Gnat_Ys'Access,
-                                      Cst_Gnat_Yt'Access));
-
-               Gtk_New (Frame, -"Debugging");
-               Set_Border_Width (Frame, 5);
-               Attach (Page, Frame, 1, 2, 1, 2);
-               Gtk_New_Vbox (Box, False, 0);
-               Add (Frame, Box);
-               Create_Check (Page, Box, -"Debug Information", "-g");
-               Add_Dependency (Master_Page    => Editor.Pages (1),
-                               Master_Switch  => "-g",
-                               Master_Status  => True,
-                               Slave_Page     => Page,
-                               Slave_Switch   => "-g",
-                               Slave_Activate => True);
-
-               Create_Check
-                 (Page, Box, -"Enable assertions", "-gnata",
-                  -("Assertions enabled. Pragma Assert and pragma Debug are"
-                    & " activated"));
-               Create_Check
-                 (Page, Box, -"Debug expanded code", "-gnatD",
-                  -"Output expanded source files for source level debugging");
-
-               Gtk_New (Frame, -"Syntax");
-               Set_Border_Width (Frame, 5);
-               Attach (Page, Frame, 1, 2, 2, 3);
-               Gtk_New_Vbox (Box, False, 0);
-               Add (Frame, Box);
-               Create_Check
-                 (Page, Box, -"Language extensions", "-gnatX",
-                  -("Activates various GNAT-specific extensions to the"
-                    & " language"));
-               Create_Check
-                 (Page, Box, -"Ada 83 mode", "-gnat83",
-                  -"Enforces Ada 83 restrictions");
-
-            --  C compiler page
-            when 3 =>
-               Gtk_New (Page, "C", Compiler_Package, C_String, 2, 2,
-                        Get_Tooltips (Kernel));
-
-               Gtk_New (Frame, -"Code generation");
-               Set_Border_Width (Frame, 5);
-               Attach (Page, Frame, 0, 1, 0, 1);
-               Gtk_New_Vbox (Box, False, 0);
-               Add (Frame, Box);
-               Pack_Start
-                 (Box, Create_Combo
-                  (Page, "",
-                   Switch               => "-O",
-                   Default_No_Switch    => "0",
-                   Default_No_Digit     => "1",
-                   Buttons => (1 => (Cst_No_Optimization'Access,
-                                     Cst_Zero'Access),
-                               2 => (Cst_Some_Optimization'Access,
-                                     Cst_One'Access),
-                               3 => (Cst_Full_Optimization'Access,
-                                     Cst_Two'Access),
-                               4 => (Cst_Full_Inline_Optimization'Access,
-                                     Cst_Three'Access)),
-                   Tip     => -"Optimization level"),
-                  False, False);
-               Create_Check
-                 (Page, Box, -"Unroll loops", "-funroll-loops",
-                  -("Perform the optimization of loop unrolling. This is only"
-                    & " done for loops whose number of iterations can be"
-                    & " determined at compile time or run time"));
-               Create_Check
-                 (Page, Box, -"Position independent code", "-fPIC",
-                  -("If supported for the target machine, emit"
-                    & " position-independent code, suitable for dynamic"
-                    & " linking and avoiding any limit of the size of the"
-                    & " global offset table"));
-               Create_Check
-                 (Page, Box, -"Profiling", "-pg",
-                  -("Generate extra code to write profile information suitable"
-                    & " for the analysis program gprof"));
-               Create_Check
-                 (Page, Box, -"Code coverage", "-ftest-coverage",
-                  -"Create data files for the gcov code-coverage utility");
-               Create_Check
-                 (Page, Box, -"Instrument arcs", "-fprofile-arcs",
-                  -("Instrument arcs during compilation. For each function of"
-                    & " your program, gcc creates a program flow graph, then"
-                    & " finds a spanning tree for the graph. Only arcs that"
-                    & " are not on the spanning tree have to be instrumented:"
-                    & " the compiler adds code to count the number of times"
-                    & " that these arcs are executed"));
-               Add_Dependency (Master_Page    => Page,
-                               Master_Switch  => "-ftest-coverage",
-                               Master_Status  => False,
-                               Slave_Page     => Page,
-                               Slave_Switch   => "-fprofile-arcs",
-                               Slave_Activate => False);
-
-               Gtk_New (Frame, -"Debugging");
-               Set_Border_Width (Frame, 5);
-               Attach (Page, Frame, 1, 2, 0, 1);
-               Gtk_New_Vbox (Box, False, 0);
-               Add (Frame, Box);
-               Create_Check
-                 (Page, Box, -"Debug information", "-g",
-                  -("Produce debugging information in the operating system's"
-                    & " native format"));
-               Add_Dependency (Master_Page    => Editor.Pages (1),
-                               Master_Switch  => "-g",
-                               Master_Status  => True,
-                               Slave_Page     => Page,
-                               Slave_Switch   => "-g",
-                               Slave_Activate => True);
-
-               Gtk_New (Frame, -"Messages");
-               Set_Border_Width (Frame, 5);
-               Attach (Page, Frame, 0, 2, 1, 2);
-               Gtk_New_Vbox (Box, False, 0);
-               Add (Frame, Box);
-               Create_Check
-                 (Page, Box, -"All warnings", "-Wall",
-                  -("This enables all the warnings about constructions that"
-                    & " some users consider questionable, and that are easy"
-                    & " to avoid"));
-               Create_Check
-                 (Page, Box, -"Strict ANSI", "-ansi",
-                  -("In C mode, support all ANSI standard C programs"));
-
-
-            --  C++ compiler page
-            when 4 =>
-               Gtk_New (Page, "C++", Compiler_Package, Cpp_String, 2, 2,
-                        Get_Tooltips (Kernel));
-
-               Gtk_New (Frame, -"Code generation");
-               Set_Border_Width (Frame, 5);
-               Attach (Page, Frame, 0, 1, 0, 1);
-               Gtk_New_Vbox (Box, False, 0);
-               Add (Frame, Box);
-               Pack_Start
-                 (Box, Create_Combo
-                  (Page, "",
-                   Switch               => "-O",
-                   Default_No_Switch    => "0",
-                   Default_No_Digit     => "1",
-                   Buttons => (1 => (Cst_No_Optimization'Access,
-                                     Cst_Zero'Access),
-                               2 => (Cst_Some_Optimization'Access,
-                                     Cst_One'Access),
-                               3 => (Cst_Full_Optimization'Access,
-                                     Cst_Two'Access),
-                               4 => (Cst_Full_Inline_Optimization'Access,
-                                     Cst_Three'Access)),
-                   Tip     => -"Optimization level"),
-                  False, False);
-               Create_Check
-                 (Page, Box, -"Unroll loops", "-funroll-loops",
-                  -("Perform the optimization of loop unrolling. This is only"
-                    & " done for loops whose number of iterations can be"
-                    & " determined at compile time or run time"));
-               Create_Check
-                 (Page, Box, -"Position independent code", "-fPIC",
-                  -("If supported for the target machine, emit"
-                    & " position-independent code, suitable for dynamic"
-                    & " linking and avoiding any limit of the size of the"
-                    & " global offset table"));
-               Create_Check
-                 (Page, Box, -"Profiling", "-pg",
-                  -("Generate extra code to write profile information suitable"
-                    & " for the analysis program gprof"));
-               Create_Check
-                 (Page, Box, -"Code coverage", "-ftest-coverage",
-                  -"Create data files for the gcov code-coverage utility");
-               Create_Check
-                 (Page, Box, -"Instrument arcs", "-fprofile-arcs",
-                  -("Instrument arcs during compilation. For each function of"
-                    & " your program, gcc creates a program flow graph, then"
-                    & " finds a spanning tree for the graph. Only arcs that"
-                    & " are not on the spanning tree have to be instrumented:"
-                    & " the compiler adds code to count the number of times"
-                    & " that these arcs are executed"));
-               Add_Dependency (Master_Page    => Page,
-                               Master_Switch  => "-ftest-coverage",
-                               Master_Status  => False,
-                               Slave_Page     => Page,
-                               Slave_Switch   => "-fprofile-arcs",
-                               Slave_Activate => False);
-               Create_Check
-                 (Page, Box, -"Elide constructor", "-felide-constructor");
-               Create_Check
-                 (Page, Box, -"Conserve space", "-fconserve-space",
-                  -("Put uninitialized or runtime-initialized global variables"
-                    & " into the common segment. This saves space in the"
-                    & " executable at the cost of not diagnosing duplicate"
-                    & " definitions"));
-
-               Gtk_New (Frame, -"Debugging");
-               Set_Border_Width (Frame, 5);
-               Attach (Page, Frame, 1, 2, 0, 1);
-               Gtk_New_Vbox (Box, False, 0);
-               Add (Frame, Box);
-               Create_Check
-                 (Page, Box, -"Debug information", "-g",
-                  -("Produce debugging information in the operating system's"
-                    & " native format"));
-               Add_Dependency (Master_Page    => Editor.Pages (1),
-                               Master_Switch  => "-g",
-                               Master_Status  => True,
-                               Slave_Page     => Page,
-                               Slave_Switch   => "-g",
-                               Slave_Activate => True);
-
-               Gtk_New (Frame, -"Messages");
-               Set_Border_Width (Frame, 5);
-               Attach (Page, Frame, 0, 2, 1, 2);
-               Gtk_New_Vbox (Box, False, 0);
-               Add (Frame, Box);
-               Create_Check
-                 (Page, Box, -"All warnings", "-Wall",
-                  -("This enables all the warnings about constructions that"
-                    & " some users consider questionable, and that are easy"
-                    & " to avoid"));
-               Create_Check
-                 (Page, Box, -"Overloaded virtual", "-Woverloaded-virtual");
-
-
-            --  Pretty printer page
-            when 5 =>
-               Gtk_New (Page, "Pretty Printer", "pretty_Printer", Ada_String,
-                        5, 1, Get_Tooltips (Kernel));
-
-               Gtk_New (Frame, -"Spacing");
-               Set_Border_Width (Frame, 5);
-               Attach (Page, Frame, 0, 1, 0, 1);
-               Gtk_New_Hbox (Box, False, 0);
-               Add (Frame, Box);
-               Create_Spin (Page, Box, -"Indentation", "-i", 1, 100, 3);
-               Create_Spin
-                 (Page, Box, -"Maximum line length", "-M", 20, 100, 79);
-
-               Gtk_New (Frame, -"Casing");
-               Set_Border_Width (Frame, 5);
-               Attach (Page, Frame, 0, 1, 1, 2);
-               Gtk_New (Table, 2, 2, False);
-               Add (Frame, Table);
-               Set_Col_Spacings (Table, 5);
-               Gtk_New (Group);
-               Attach
-                 (Table, Create_Combo
-                  (Page, -"Keyword: ",
-                   Switch               => "-k",
-                   Default_No_Switch    => "L",
-                   Default_No_Digit     => "L",
-                   Buttons =>           (1 => (Cst_Lower_Case'Access,
-                                               Cst_L'Access),
-                                         2 => (Cst_Upper_Case'Access,
-                                               Cst_U'Access)),
-                   Label_Size_Group     => Group),
-                  0, 1, 0, 1);
-               Attach
-                 (Table, Create_Combo
-                  (Page, -"Name: ",
-                   Switch               => "-n",
-                   Default_No_Switch    => "D",
-                   Default_No_Digit     => "D",
-                   Buttons              => (1 => (Cst_As_Declared'Access,
-                                                  Cst_D'Access),
-                                            2 => (Cst_Mixed_Case'Access,
-                                                  Cst_M'Access),
-                                            3 => (Cst_Lower_Case'Access,
-                                                  Cst_L'Access),
-                                            4 => (Cst_Upper_Case'Access,
-                                                  Cst_U'Access)),
-                   Label_Size_Group     => Group),
-                  0, 1, 1, 2);
-               Gtk_New (Group);
-               Attach
-                 (Table, Create_Combo
-                  (Page, -"Attribute: ",
-                   Switch               => "-a",
-                   Default_No_Switch    => "M",
-                   Default_No_Digit     => "M",
-                   Buttons              => (1 => (Cst_Mixed_Case'Access,
-                                                  Cst_M'Access),
-                                            2 => (Cst_Lower_Case'Access,
-                                                  Cst_L'Access),
-                                            3 => (Cst_Upper_Case'Access,
-                                                  Cst_U'Access)),
-                   Label_Size_Group     => Group),
-                  1, 2, 0, 1);
-               Attach
-                 (Table, Create_Combo
-                  (Page, -"Pragma: ",
-                   Switch               => "-p",
-                   Default_No_Switch    => "M",
-                   Default_No_Digit     => "M",
-                   Buttons              => (1 => (Cst_Mixed_Case'Access,
-                                                  Cst_M'Access),
-                                            2 => (Cst_Lower_Case'Access,
-                                                  Cst_L'Access),
-                                            3 => (Cst_Upper_Case'Access,
-                                                  Cst_U'Access)),
-                   Label_Size_Group     => Group),
-                  1, 2, 1, 2);
-
-               Gtk_New (Frame, -"Layout");
-               Set_Border_Width (Frame, 5);
-               Attach (Page, Frame, 0, 1, 2, 3);
-               Gtk_New_Vbox (Box, False, 0);
-               Add (Frame, Box);
-               Gtk_New (Group);
-               Pack_Start
-                 (Box, Create_Combo
-                  (Page, -"Construct: ",
-                   Switch               => "-l",
-                   Default_No_Switch    => "1",
-                   Default_No_Digit     => "1",
-                   Buttons => (1 => (Cst_Gnat_Style'Access,
-                                     Cst_One'Access),
-                               2 => (Cst_Compact'Access,
-                                     Cst_Two'Access),
-                               3 => (Cst_Uncompact'Access,
-                                     Cst_Three'Access)),
-                   Label_Size_Group => Group),
-                  False, False);
-               Pack_Start
-                 (Box, Create_Combo
-                  (Page, -"Comment: ",
-                   Switch               => "-c",
-                   Default_No_Switch    => "1",
-                   Default_No_Digit     => "1",
-                   Buttons => (1 => (Cst_Gnat_Indent'Access, Cst_One'Access),
-                               2 => (Cst_Std_Indent'Access,  Cst_Two'Access)),
-                   Label_Size_Group => Group),
-                  False, False);
-               Create_Check (Page, Box, -"GNAT style beginning", "-c3");
-               Create_Check (Page, Box, -"Reformat blocks", "-c4");
-
-               Gtk_New (Frame, -"Alignment");
-               Set_Border_Width (Frame, 5);
-               Attach (Page, Frame, 0, 1, 3, 4);
-               Gtk_New_Vbox (Box, False, 0);
-               Add (Frame, Box);
-               Create_Check (Page, Box, -"Colons in declarations", "-A1");
-               Create_Check (Page, Box, -"Assignments in declarations", "-A2");
-               Create_Check (Page, Box, -"Assignments in statements", "-A3");
-               Create_Check (Page, Box, -"Arrow delimiters in associations",
-                             "-A4");
-
-               Gtk_New (Frame, -"General");
-               Set_Border_Width (Frame, 5);
-               Attach (Page, Frame, 0, 1, 4, 5);
-               Gtk_New_Vbox (Box, False, 0);
-               Add (Frame, Box);
-               Create_Check (Page, Box, -"Set missing end/exit labels", "-e");
-
-            --  Binder page
-            when 6 =>
-               Gtk_New (Page, "Binder", Binder_Package, Ada_String, 1, 1,
-                        Get_Tooltips (Kernel));
-               Gtk_New_Vbox (Box, False, 0);
-               Attach (Page, Box, 0, 1, 0, 1);
-               Create_Check
-                 (Page, Box, -"Store call stack in expressions", "-E",
-                  -("Store tracebacks in exception occurrences when the target"
-                    & " supports it"));
-               Create_Check
-                 (Page, Box, -"List possible restrictions", "-r");
-               Create_Radio
-                 (Page, Box,
-                  (1 => (Cst_Static'Access, Cst_Static_S'Access, null),
-                   2 => (Cst_Shared'Access, Cst_Shared_S'Access, null)));
-
-            --  Linker page
-            when 7 =>
-               Gtk_New (Page, "Linker", Linker_Package, Ada_String, 1, 1,
-                        Get_Tooltips (Kernel));
-               Gtk_New_Vbox (Box, False, 0);
-               Attach (Page, Box, 0, 1, 0, 1);
-               Create_Check (Page, Box, -"Strip symbols", "-s");
-               Create_Check (Page, Box, -"Debug information", "-g");
-               Add_Dependency (Master_Page    => Editor.Pages (1),
-                               Master_Switch  => "-g",
-                               Master_Status  => True,
-                               Slave_Page     => Page,
-                               Slave_Switch   => "-g",
-                               Slave_Activate => True);
-               --  Create_Check (Page, Box, -"Profiling", "-pg");
-
-            when others =>
-               null;
-         end case;
-
-         Editor.Pages (P) := Page;
-         Gtk_New (Tab, Editor.Pages (P).Title.all);
-         Append_Page (Editor, Editor.Pages (P), Tab);
+         Editor.Pages (P) := Get_Nth_Switches_Page (Kernel, Editor, P);
 
          Widget_Callback.Connect
-           (Page, "destroy",
+           (Editor.Pages (P), "destroy",
             Widget_Callback.To_Marshaller (Page_Destroyed'Access));
+
+         Gtk_New (Tab, Editor.Pages (P).Title.all);
+         Append_Page (Editor, Editor.Pages (P), Tab);
       end loop;
 
       Set_Current_Page (Editor, 0);
