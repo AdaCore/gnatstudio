@@ -1,0 +1,3 @@
+project Child2 modifying "child3" is
+   Source_Files := ("child2_src.adb");
+end Child2;
