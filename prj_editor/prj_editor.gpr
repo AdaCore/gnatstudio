@@ -21,9 +21,9 @@ project Prj_Editor is
           when "Debug" =>
              for Default_Switches ("Ada") use Builder'Default_Switches ("Ada")
                  & ("-gnatVa");
-             for Global_Configuration_Pragmas use "../glide/gnat_debug.adc";
+             for Global_Configuration_Pragmas use "../gps/gnat_debug.adc";
           when "Production" =>
-             for Global_Configuration_Pragmas use "../glide/gnat.adc";
+             for Global_Configuration_Pragmas use "../gps/gnat.adc";
       end case;
    end Builder;
 
