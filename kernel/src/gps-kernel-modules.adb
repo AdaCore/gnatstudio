@@ -387,6 +387,7 @@ package body GPS.Kernel.Modules is
 
       Module.Info := new Module_ID_Information'
         (Name_Length           => Module_Name'Length,
+         Kernel                => Kernel_Handle (Kernel),
          Name                  => Module_Name,
          Priority              => Priority,
          Default_Factory       => Default_Context_Factory,
