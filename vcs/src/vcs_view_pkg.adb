@@ -682,20 +682,14 @@ package body VCS_View_Pkg is
       Explorer : constant VCS_View_Access := VCS_View_Access (View);
       Kernel   : constant Kernel_Handle := Explorer.Kernel;
       Page     : VCS_Page_Access;
+      Path     : Gtk_Tree_Path;
+      Iter     : Gtk_Tree_Iter;
 
-   begin
-      if Get_Button (Event) = 1 then
-         Free (Selection_Context_Access (Context));
-         return False;
-      end if;
+      function Get_Path_At_Event return Gtk_Tree_Path;
+      --  Return the path at which Event has occured.
+      --  User must free memory associated to the returned path.
 
-      Page := VCS_Page_Access (Get_Nth_Page (Explorer.Notebook,
-                               Get_Current_Page (Explorer.Notebook)));
-
-      Gtk_New (Menu);
-
-      --  If there is no selection, select the item under the cursor.
-      declare
+      function Get_Path_At_Event return Gtk_Tree_Path is
          X         : constant Gdouble := Get_X (Event);
          Y         : constant Gdouble := Get_Y (Event);
          Buffer_X  : Gint;
@@ -703,7 +697,6 @@ package body VCS_View_Pkg is
          Row_Found : Boolean;
          Path      : Gtk_Tree_Path;
          Column    : Gtk_Tree_View_Column := null;
-         Iter      : Gtk_Tree_Iter;
 
       begin
          Path := Gtk_New;
@@ -717,21 +710,51 @@ package body VCS_View_Pkg is
             Buffer_Y,
             Row_Found);
 
-         if Path /= null
-           and then not Path_Is_Selected (Get_Selection (Page.Tree), Path)
-         then
-            Unselect_All (Get_Selection (Page.Tree));
-            Select_Path (Get_Selection (Page.Tree), Path);
+         return Path;
+      end Get_Path_At_Event;
 
+   begin
+      Page := VCS_Page_Access
+        (Get_Nth_Page (Explorer.Notebook,
+                       Get_Current_Page (Explorer.Notebook)));
+
+      if Get_Event_Type (Event) = Gdk_2button_Press then
+         Path := Get_Path_At_Event;
+
+         if Path /= null then
             Iter := Get_Iter (Page.Model, Path);
-            Path_Free (Path);
-
-            String_List.Append
-              (Files, Get_String (Page.Model, Iter, Name_Column));
-         else
-            Files := Get_Selected_Files (Explorer);
+            Open_File_Editor
+              (Kernel,
+               Get_String (Page.Model, Iter, Name_Column));
          end if;
-      end;
+
+         return True;
+      end if;
+
+      if Get_Button (Event) = 1 then
+         Free (Selection_Context_Access (Context));
+         return False;
+      end if;
+
+      Gtk_New (Menu);
+
+      --  If there is no selection, select the item under the cursor.
+      Path := Get_Path_At_Event;
+
+      if Path /= null
+        and then not Path_Is_Selected (Get_Selection (Page.Tree), Path)
+      then
+         Unselect_All (Get_Selection (Page.Tree));
+         Select_Path (Get_Selection (Page.Tree), Path);
+
+         Iter := Get_Iter (Page.Model, Path);
+         Path_Free (Path);
+
+         String_List.Append
+           (Files, Get_String (Page.Model, Iter, Name_Column));
+      else
+         Files := Get_Selected_Files (Explorer);
+      end if;
 
       if not String_List.Is_Empty (Files) then
          declare
