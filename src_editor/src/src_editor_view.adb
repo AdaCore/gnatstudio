@@ -848,6 +848,16 @@ package body Src_Editor_View is
          =>
             End_Action (Buffer);
 
+         when GDK_LC_z | GDK_Z =>
+            if (Get_State (Event) and Control_Mask) /= 0 then
+               Undo (Buffer);
+            end if;
+
+         when GDK_LC_r | GDK_R =>
+            if (Get_State (Event) and Control_Mask) /= 0 then
+               Redo (Buffer);
+            end if;
+
          when others =>
             null;
       end case;
