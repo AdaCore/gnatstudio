@@ -3,7 +3,7 @@
 <!--  This file adds support for Ada (GNAT) switches and aliases  -->
 
 <Ada>
-   <tool name="Make" package="Builder" index="Ada">
+   <tool name="Make" package="Builder" index="ada">
       <language>Ada</language>
       <initial-cmd-line>-g -gnatQ</initial-cmd-line>
       <switches columns="2">
@@ -28,7 +28,7 @@
       </switches>
    </tool>
 
-   <tool name="Ada" package="Compiler" index="Ada">
+   <tool name="Ada" package="Compiler" index="ada">
       <language>Ada</language>
       <initial-cmd-line>-g</initial-cmd-line>
       <switches lines="3" columns="2">
@@ -212,7 +212,7 @@
       </switches>
    </tool>
 
-   <tool name="Binder" package="Binder" index="Ada" >
+   <tool name="Binder" package="Binder" index="ada" >
       <language>Ada</language>
       <switches lines="1">
          <check label="Store call stack in exceptions" switch="-E"
@@ -225,7 +225,7 @@
       </switches>
    </tool>
 
-   <tool name="Linker" package="Linker" index="Ada">
+   <tool name="Linker" package="Linker" index="ada">
       <language>Ada</language>
       <initial-cmd-line>-g</initial-cmd-line>
       <switches lines="1">
