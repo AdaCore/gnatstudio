@@ -392,7 +392,7 @@ Full + Automatic inlining
 		  <name>changed</name>
 		  <handler>refresh_comp_switches</handler>
 		  <object>Switches_Editor</object>
-		  <last_modification_time>Fri, 11 May 2001 18:52:54 GMT</last_modification_time>
+		  <last_modification_time>Thu, 12 Jul 2001 12:25:51 GMT</last_modification_time>
 		</signal>
 		<editable>False</editable>
 		<text_visible>True</text_visible>
@@ -1953,7 +1953,7 @@ mixedcase
 	  <widget>
 	    <class>GtkLabel</class>
 	    <name>label53</name>
-	    <label>Default/Current Value</label>
+	    <label>Current Value</label>
 	    <justify>GTK_JUSTIFY_CENTER</justify>
 	    <wrap>False</wrap>
 	    <xalign>0.5</xalign>
