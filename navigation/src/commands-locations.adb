@@ -74,6 +74,16 @@ package body Commands.Locations is
    ------------
 
    procedure Create
+     (Item     : out Html_Location_Command;
+      Kernel   : Kernel_Handle;
+      Filename : String) is
+   begin
+      Item := new Html_Location_Command_Type;
+      Item.Kernel := Kernel;
+      Item.Filename := new String'(Filename);
+   end Create;
+
+   procedure Create
      (Item           : out Source_Location_Command;
       Kernel         : Kernel_Handle;
       Filename       : String;
@@ -100,9 +110,26 @@ package body Commands.Locations is
       Free (X.Filename);
    end Free;
 
+   procedure Free (X : in out Html_Location_Command_Type) is
+   begin
+      Free (X.Filename);
+   end Free;
+
    -------------
    -- Execute --
    -------------
+
+   function Execute
+     (Command : access Html_Location_Command_Type) return Boolean is
+   begin
+      if Command.Filename /= null then
+         Open_Html (Command.Kernel, Command.Filename.all, False);
+      end if;
+
+      Command_Finished (Command, True);
+
+      return True;
+   end Execute;
 
    function Execute
      (Command : access Source_Location_Command_Type) return Boolean

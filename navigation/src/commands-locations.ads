@@ -30,6 +30,17 @@ package Commands.Locations is
    type Source_Location_Command is access all Source_Location_Command_Type;
    --  Commands related to navigation in source files.
 
+   type Html_Location_Command_Type is new Root_Command with private;
+   type Html_Location_Command is access all Html_Location_Command_Type;
+   --  Commands related to navigation in html files.
+
+   procedure Create
+     (Item     : out Html_Location_Command;
+      Kernel   : Kernel_Handle;
+      Filename : String);
+   --  Create a new Html_Location_Command with the specified
+   --  coordinates. Filename must be an absolute file name.
+
    procedure Create
      (Item           : out Source_Location_Command;
       Kernel         : Kernel_Handle;
@@ -58,13 +69,11 @@ package Commands.Locations is
    function Execute
      (Command : access Source_Location_Command_Type) return Boolean;
 
-   function Undo
-     (Command : access Source_Location_Command_Type) return Boolean
-     renames Execute;
-   --  Undoing a location command is the same as doing it, with the
-   --  standard back/forward interfaces.
+   function Execute
+     (Command : access Html_Location_Command_Type) return Boolean;
 
    procedure Free (X : in out Source_Location_Command_Type);
+   procedure Free (X : in out Html_Location_Command_Type);
    --  Free memory associated to X.
 
 private
@@ -76,6 +85,11 @@ private
       Column         : Natural := 0;
       Column_End     : Natural := 0;
       Highlight_Line : Boolean := True;
+   end record;
+
+   type Html_Location_Command_Type is new Root_Command with record
+      Kernel         : Kernel_Handle;
+      Filename       : String_Access;
    end record;
 
 end Commands.Locations;
