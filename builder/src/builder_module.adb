@@ -219,7 +219,7 @@ package body Builder_Module is
                   declare
                      Ada_Compiler : constant String := Get_Attribute_Value
                        (Get_Project_View (Kernel), Compiler_Command_Attribute,
-                        Ide_Package, Default => "gnatmake", Index => "ada");
+                        Ide_Package, Default => "gnatmake", Index => "Ada");
 
                   begin
                      if Ada_Compiler = "gnatmake" then
@@ -384,7 +384,7 @@ package body Builder_Module is
          when GNAT_Syntax =>
             Cmd := new String' (Get_Attribute_Value
               (Project_View, Compiler_Command_Attribute,
-               Ide_Package, Default => "gnatmake", Index => "ada"));
+               Ide_Package, Default => "gnatmake", Index => "Ada"));
 
          when Make_Syntax =>
             Cmd := new String' ("make");
@@ -548,7 +548,7 @@ package body Builder_Module is
          Cmd          : constant String :=
            Get_Attribute_Value
              (Project_View, Compiler_Command_Attribute,
-              Ide_Package, Default => "gnatmake", Index => "ada") & " -q -u ";
+              Ide_Package, Default => "gnatmake", Index => "Ada") & " -q -u ";
          Fd           : Process_Descriptor_Access;
          Args         : Argument_List_Access;
          Id           : Timeout_Handler_Id;
