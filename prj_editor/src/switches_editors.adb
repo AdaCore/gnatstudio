@@ -1731,10 +1731,10 @@ package body Switches_Editors is
    function Generate_Project
      (Switches           : access Switches_Edit_Record'Class;
       Project            : Project_Type;
+      Languages    : Argument_List;
       Scenario_Variables : Scenario_Variable_Array;
       Files              : File_Array) return Boolean
    is
-      Lang    : Argument_List := Get_Languages (Project);
       Changed : Boolean := False;
 
       procedure Change_Switches
@@ -1764,7 +1764,7 @@ package body Switches_Editors is
 
          --  Language not supported => Remove the attribute
 
-         if not Has_Supported_Language (Page, Lang) then
+         if not Has_Supported_Language (Page, Languages) then
             if File_Name /= VFS.No_File then
                Delete_Attribute
                  (Project            => Rename_Prj,
@@ -1875,8 +1875,6 @@ package body Switches_Editors is
          end loop;
       end if;
 
-      Free (Lang);
-
       return Changed;
    end Generate_Project;
 
@@ -1894,6 +1892,7 @@ package body Switches_Editors is
         (Scenario_Variables (Switches.Kernel));
       Scenar : Scenario_Iterator := Start (Scenario);
       Modified : Boolean := False;
+      Languages : Argument_List := Get_Languages (Project);
    begin
       while not At_End (Scenar) loop
          declare
@@ -1902,6 +1901,7 @@ package body Switches_Editors is
             Set_Environment (Scenario_Variables (Switches.Kernel), Cur);
             Modified := Modified or Generate_Project
               (Switches           => Switches,
+               Languages          => Languages,
                Scenario_Variables => Scenario_Variables (Switches.Kernel),
                Project            => Project,
                Files              => Files);
@@ -1910,6 +1910,8 @@ package body Switches_Editors is
 
          Next (Scenar);
       end loop;
+
+      Free (Languages);
 
       Set_Environment (Scenario_Variables (Switches.Kernel), Saved);
       Free (Saved);

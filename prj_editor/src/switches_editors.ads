@@ -258,6 +258,7 @@ package Switches_Editors is
    function Generate_Project
      (Switches           : access Switches_Edit_Record'Class;
       Project            : Projects.Project_Type;
+      Languages          : GNAT.OS_Lib.Argument_List;
       Scenario_Variables : Projects.Scenario_Variable_Array;
       Files              : VFS.File_Array)
       return Boolean;
