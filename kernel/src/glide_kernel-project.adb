@@ -35,6 +35,7 @@ with Prj.Tree;    use Prj.Tree;
 with Errout;      use Errout;
 with Namet;       use Namet;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
+with Text_IO;     use Text_IO;
 
 with Project_Viewers;   use Project_Viewers;
 with Glide_Main_Window; use Glide_Main_Window;
@@ -90,7 +91,6 @@ package body Glide_Kernel.Project is
    procedure Load_Project
      (Kernel : access Kernel_Handle_Record'class; Project : String) is
    begin
-      Prj.Reset;
       Prj.Part.Parse (Kernel.Project, Project, True);
       Kernel.Project_View := No_Project;
       Project_Changed (Kernel);
@@ -122,21 +122,25 @@ package body Glide_Kernel.Project is
    --------------------
 
    procedure Recompute_View
-     (Handle  : access Kernel_Handle_Record'Class) is
+     (Handle  : access Kernel_Handle_Record'Class)
+   is
+      procedure Report_Error (S : String);
+
+      ------------------
+      -- Report_Error --
+      ------------------
+
+      procedure Report_Error (S : String) is
+      begin
+         --  ??? Errors should be reported in the Glide console, rather than
+         --  ??? simply printed on the standard output.
+         Put_Line ("Error: " & S);
+      end Report_Error;
+
    begin
-      --  ??? Need to free as much memory as possible first.
-      --  ??? Maybe a call to Prj.Reset is enough
-      Errout.Initialize;
-      Prj.Com.Units.Set_Last (No_Unit);
-      Prj.Com.Units_Htable.Reset;
-
-      Prj.Proc.Process (Handle.Project_View, Handle.Project, null);
-      --  ??? The last argument should be an access to a procedure that would
-      --  ??? relay the error message to the user and interact with him
-      --  ??? accordingingly. This will be done later, for the moment, all
-      --  ??? error messages are redirected to stdout.
-
-      Errout.Finalize;
+      Prj.Reset;
+      Prj.Proc.Process (Handle.Project_View, Handle.Project,
+                        Report_Error'Unrestricted_Access);
       pragma Assert (Handle.Project_View /= No_Project);
 
       Project_View_Changed (Handle);
