@@ -31,11 +31,11 @@
 with Ada.Unchecked_Deallocation;
 with Ada.Characters.Handling;    use Ada.Characters.Handling;
 with Ada.Exceptions;             use Ada.Exceptions;
-
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
 
 with Traces;                     use Traces;
 with Glib.Xml_Int;               use Glib.Xml_Int;
+with XML_Parsers;
 
 package body Case_Handling is
 
@@ -203,26 +203,33 @@ package body Case_Handling is
       Read_Only : Boolean)
    is
       File, Child : Node_Ptr;
+      Err         : String_Access;
    begin
       if Is_Regular_File (Filename) then
          Trace (Me, "Loading " & Filename);
 
-         File := Parse (Filename);
+         XML_Parsers.Parse (Filename, File, Err);
 
-         --  Get node exceptions
+         if File = null then
+            Trace (Me, Err.all);
+            Free (Err);
+         else
 
-         Child := File.Child;
+            --  Get node exceptions
 
-         --  Get node exception
+            Child := File.Child;
 
-         Child := Child.Child;
+            --  Get node exception
 
-         while Child /= null loop
-            Add_Exception (C, Child.Value.all, Read_Only);
-            Child := Child.Next;
-         end loop;
+            Child := Child.Child;
 
-         Free (File);
+            while Child /= null loop
+               Add_Exception (C, Child.Value.all, Read_Only);
+               Child := Child.Next;
+            end loop;
+
+            Free (File);
+         end if;
       end if;
 
    exception

@@ -25,6 +25,7 @@ with Gtk.Check_Menu_Item; use Gtk.Check_Menu_Item;
 with Gtk.Combo;     use Gtk.Combo;
 with Gtk.GEntry;    use Gtk.GEntry;
 with Glib.Xml_Int;  use Glib.Xml_Int;
+with XML_Parsers;
 with Gtk.List;      use Gtk.List;
 with Gtk.List_Item; use Gtk.List_Item;
 with Gtk.Menu_Item; use Gtk.Menu_Item;
@@ -192,37 +193,43 @@ package body Histories is
       Key   : Node_Ptr;
       Num   : Natural;
       Value : History_Key_Access;
+      Err   : String_Access;
 
    begin
       if not Is_Regular_File (File_Name) then
          return;
       end if;
 
-      File := Parse (File_Name);
-      Key := File.Child;
+      XML_Parsers.Parse (File_Name, File, Err);
 
-      while Key /= null loop
+      if File = null then
+         Trace (Me, "Couldn't load history file: " & Err.all);
+         Free (Err);
+      else
+         Key := File.Child;
 
-         if Key.Attributes = null
-           or else Get_Attribute (Key, "type") = "strings"
-         then
-            Value := Create_New_Key_If_Necessary
-              (Hist, History_Key (Key.Tag.all), Strings);
+         while Key /= null loop
 
-         elsif Get_Attribute (Key, "type") = "booleans" then
-            Value := Create_New_Key_If_Necessary
-              (Hist, History_Key (Key.Tag.all), Booleans);
+            if Key.Attributes = null
+              or else Get_Attribute (Key, "type") = "strings"
+            then
+               Value := Create_New_Key_If_Necessary
+                 (Hist, History_Key (Key.Tag.all), Strings);
 
-         else
-            Value := null;
-            Trace (Me, "Invalid data type in " & File_Name
-                   & " : " & Get_Attribute (Key, "type"));
-         end if;
+            elsif Get_Attribute (Key, "type") = "booleans" then
+               Value := Create_New_Key_If_Necessary
+                 (Hist, History_Key (Key.Tag.all), Booleans);
 
-         if Value /= null then
-            N := Key.Child;
+            else
+               Value := null;
+               Trace (Me, "Invalid data type in " & File_Name
+                      & " : " & Get_Attribute (Key, "type"));
+            end if;
 
-            case Value.Typ is
+            if Value /= null then
+               N := Key.Child;
+
+               case Value.Typ is
                when Strings =>
                   Num := 0;
 
@@ -249,8 +256,11 @@ package body Histories is
                         exception
                            when Constraint_Error => null;
                         end;
-                     else
+                     elsif N.Value /= null then
                         Value.List (Num) := new String'(N.Value.all);
+                        Num := Num + 1;
+                     else
+                        Value.List (Num) := new String'("");
                         Num := Num + 1;
                      end if;
                      N := N.Next;
@@ -264,13 +274,14 @@ package body Histories is
                   else
                      Value.Value := False;
                   end if;
-            end case;
-         end if;
+               end case;
+            end if;
 
-         Key := Key.Next;
-      end loop;
+            Key := Key.Next;
+         end loop;
 
-      Free (File);
+         Free (File);
+      end if;
 
    exception
       when Status_Error | Name_Error =>
