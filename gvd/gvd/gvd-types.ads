@@ -66,6 +66,9 @@ package Odd.Types is
       File        : String_Access;
       --  The file name that contains the breakpoint
 
+      Except      : String_Access;
+      --  Name of the exception on which we break
+
       Line        : Integer;
       --  The line that contains the breakpoint
 
@@ -86,5 +89,18 @@ package Odd.Types is
 
    procedure Free (Br_Access : in out Breakpoint_Array_Ptr);
    --  Free the memory allocate for the array.
+
+   ----------------
+   -- Exceptions --
+   ----------------
+
+   type Exception_Data is record
+      Name : String_Access;
+   end record;
+   --  Description of an exception that can occur in the current application.
+
+   type Exception_Array is array (Natural range <>) of Exception_Data;
+
+   procedure Free (Exception_Access : in out Exception_Array);
 
 end Odd.Types;

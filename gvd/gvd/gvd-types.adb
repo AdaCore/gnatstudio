@@ -42,6 +42,7 @@ package body Odd.Types is
    begin
       Free (Br.Address);
       Free (Br.Expression);
+      Free (Br.Except);
       Free (Br.File);
       Free (Br.Info);
    end Free;
@@ -71,4 +72,14 @@ package body Odd.Types is
       end if;
    end Free;
 
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Exception_Access : in out Exception_Array) is
+   begin
+      for E in Exception_Access'Range loop
+         Free (Exception_Access (E).Name);
+      end loop;
+   end Free;
 end Odd.Types;
