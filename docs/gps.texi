@@ -5420,7 +5420,10 @@ Then, you can simply navigate through the menus, and type the key binding
 you want to associate to a particular item. To remove a key binding, use
 the @key{Backspace} key.
 Your changes will be saved when GPS exits, in a file called
-@file{$HOME/.gps/custom_keys}.
+@file{$HOME/.gps/custom_keys}. In particular, this means that if for some
+reason you need to edit the file manually, you need to do it outside of
+GPS, or save the file under a different name, and rename it after exiting
+GPS.
 
 @subsection Adding menu items
 @cindex menu
