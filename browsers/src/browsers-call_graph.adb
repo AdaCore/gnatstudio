@@ -908,11 +908,13 @@ package body Browsers.Call_Graph is
    is
       pragma Unreferenced (Widget);
 
-      C : constant Entity_Selection_Context_Access :=
+      C      : constant Entity_Selection_Context_Access :=
         Entity_Selection_Context_Access (Context);
-      Entity   : Entity_Information := Get_Entity (C);
+      Entity : constant Entity_Information := Get_Entity (C);
+
    begin
       --  If the body wasn't found then display the specs
+
       Open_File_Editor
         (Get_Kernel (Context),
          Get_Declaration_File_Of (Entity),
