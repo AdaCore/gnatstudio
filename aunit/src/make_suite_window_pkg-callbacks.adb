@@ -38,6 +38,7 @@ with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Gtkada.Dialogs; use Gtkada.Dialogs;
 with Explorer_Pkg; use Explorer_Pkg;
 with String_Utils; use String_Utils;
+with Row_Data; use Row_Data;
 
 package body Make_Suite_Window_Pkg.Callbacks is
    --  Handle callbacks from main "AUnit_Make_Suite" window.  Template
@@ -66,8 +67,18 @@ package body Make_Suite_Window_Pkg.Callbacks is
      (Object : access Gtk_Button_Record'Class)
    is
       --  Open explorer window to select components of the suite
+      Suite_Window : constant Make_Suite_Window_Access :=
+        Make_Suite_Window_Access (Get_Toplevel (Object));
+
    begin
-      Show_All (Explorer);
+      if Suite_Window.Explorer = null then
+         Gtk_New (Suite_Window.Explorer);
+         Suite_Window.Explorer.Suite_Window := Gtk_Window (Suite_Window);
+         Suite_Window.Explorer.Directory := new String' (".");
+         Explorer_Pkg.Fill (Suite_Window.Explorer);
+      end if;
+
+      Show_All (Suite_Window.Explorer);
    end On_Add_Clicked;
 
    -----------------------
@@ -78,13 +89,17 @@ package body Make_Suite_Window_Pkg.Callbacks is
      (Object : access Gtk_Button_Record'Class)
    is
       --  Remove selected files from the suite component list
-      Win : Make_Suite_Window_Access
-        := Make_Suite_Window_Access (Get_Toplevel (Object));
+      Suite_Window : constant Make_Suite_Window_Access :=
+        Make_Suite_Window_Access (Get_Toplevel (Object));
+
       use Gtk.Enums.Gint_List;
-      List : Gtk.Enums.Gint_List.Glist := Get_Selection (Win.Test_List);
+
+      List : Gtk.Enums.Gint_List.Glist :=
+        Get_Selection (Suite_Window.Test_List);
+
    begin
       while List /= Null_List loop
-         Remove (Win.Test_List, Get_Data (List));
+         Remove (Suite_Window.Test_List, Get_Data (List));
          List := Next (List);
       end loop;
    end On_Remove_Clicked;
@@ -98,8 +113,8 @@ package body Make_Suite_Window_Pkg.Callbacks is
    is
       --  Generate suite source file.  Exit program if successful
 
-      Win  : Make_Suite_Window_Access
-        := Make_Suite_Window_Access (Get_Toplevel (Object));
+      Win  : constant Make_Suite_Window_Access :=
+        Make_Suite_Window_Access (Get_Toplevel (Object));
       File : File_Type;
       Name : String := Get_Text (Win.Name_Entry);
       use Row_List;
@@ -120,7 +135,7 @@ package body Make_Suite_Window_Pkg.Callbacks is
             end if;
          end if;
 
-         Ada_Case (Name);
+         Mixed_Case (Name);
 
          if Is_Regular_File (To_File_Name (Name) & ".adb") then
             if Message_Dialog
@@ -144,7 +159,7 @@ package body Make_Suite_Window_Pkg.Callbacks is
             declare
                Name : String := Get (Win.Test_List, Get_Data (List));
             begin
-               Ada_Case (Name);
+               Mixed_Case (Name);
                Put_Line (File, "with "
                          & Name
                          & ";");
@@ -168,8 +183,8 @@ package body Make_Suite_Window_Pkg.Callbacks is
                  := Get_Text (Win.Test_List, Get_Data (List), 1);
                Package_Name : String := Get (Win.Test_List, Get_Data (List));
             begin
-               Ada_Case (S);
-               Ada_Case (Package_Name);
+               Mixed_Case (S);
+               Mixed_Case (Package_Name);
                if S (S'First .. S'First + 2) = "(te" then
                   Put_Line (File,
                             "   Add_Test (Result, new "
@@ -195,6 +210,8 @@ package body Make_Suite_Window_Pkg.Callbacks is
          Close (File);
          Put (To_Lower (Name));
       end if;
+
+      Destroy (Win);
       Main_Quit;
    end On_Ok_Clicked;
 
@@ -206,6 +223,7 @@ package body Make_Suite_Window_Pkg.Callbacks is
      (Object : access Gtk_Button_Record'Class)
    is
    begin
+      Destroy (Get_Toplevel (Object));
       Main_Quit;
    end On_Cancel_Clicked;
 

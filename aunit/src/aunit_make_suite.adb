@@ -33,18 +33,12 @@ with Explorer_Pkg; use Explorer_Pkg;
 procedure Aunit_Make_Suite is
    --  Main for creating an AUnit "Test_Suite" from within Glide.  Generated
    --  by Glade
+   Make_Suite_Window : Make_Suite_Window_Access;
+
 begin
    Gtk.Main.Set_Locale;
    Gtk.Main.Init;
    Gtk_New (Make_Suite_Window);
    Show_All (Make_Suite_Window);
-
-   Gtk_New (Explorer);
-
-   Explorer.Directory := new String' (".");
-
-   Fill (Explorer);
-
-   --  Show_All (Explorer);
    Gtk.Main.Main;
 end Aunit_Make_Suite;

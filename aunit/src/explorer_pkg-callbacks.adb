@@ -29,10 +29,10 @@ with Glib; use Glib;
 with Gtk.Widget; use Gtk.Widget;
 
 with Gtkada.Types; use Gtkada.Types;
-with Ada.Text_IO; use Ada.Text_IO;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 
 with Make_Suite_Window_Pkg; use Make_Suite_Window_Pkg;
+with Row_Data; use Row_Data;
 
 package body Explorer_Pkg.Callbacks is
    --  Handle callbacks from explorer window for composing a test_suite
@@ -53,8 +53,10 @@ package body Explorer_Pkg.Callbacks is
                          New_Dir : String) return String;
       --  Construct directory path string
 
-      Win  : Explorer_Access
-        := Explorer_Access (Get_Toplevel (Object));
+      Explorer : constant Explorer_Access :=
+        Explorer_Access (Get_Toplevel (Object));
+      Suite_Window : Make_Suite_Window_Access :=
+        Make_Suite_Window_Access (Explorer.Suite_Window);
       Arg1 : Gint := To_Gint (Params, 1);
       Arg2 : Gint := To_Gint (Params, 2);
 
@@ -94,28 +96,30 @@ package body Explorer_Pkg.Callbacks is
    begin
       if Arg2 = 0 or else Arg2 = 1 then
          declare
-            Name : String := Get_Text (Object, Arg1, 0);
-            Old_Dir : String := Win.Directory.all;
+            Name       : String := Get_Text (Object, Arg1, 0);
+            Old_Dir    : String := Explorer.Directory.all;
             Dummy_Gint : Gint;
+
          begin
             if Is_Directory (Dir_Name (Old_Dir, Name)) then
-               Free (Win.Directory);
-               Win.Directory := new String'
+               Free (Explorer.Directory);
+               Explorer.Directory := new String'
                  (Dir_Name (Old_Dir, Name));
-               Fill (Win);
+               Fill (Explorer);
+
             else
-               Dummy_Gint
-                 := Append (Make_Suite_Window.Test_List,
-                            Null_Array
-                            + (Explorer.Directory.all
-                               & Directory_Separator
-                               & Get_Text (Object, Arg1, 0))
-                            + Get_Text (Object, Arg1, 1) + "");
-               Set (Make_Suite_Window.Test_List,
+               Dummy_Gint :=
+                 Append (Suite_Window.Test_List,
+                         Null_Array
+                         + (Explorer.Directory.all
+                            & Directory_Separator
+                            & Get_Text (Object, Arg1, 0))
+                         + Get_Text (Object, Arg1, 1) + "");
+               Set (Suite_Window.Test_List,
                     Dummy_Gint,
                     Get (Object, Arg1));
-               Dummy_Gint
-                 := Columns_Autosize (Make_Suite_Window.Test_List);
+               Dummy_Gint :=
+                 Columns_Autosize (Suite_Window.Test_List);
             end if;
          end;
       end if;
@@ -128,17 +132,23 @@ package body Explorer_Pkg.Callbacks is
    procedure On_Close_Clicked
      (Object : access Gtk_Button_Record'Class)
    is
+      Explorer : constant Explorer_Access :=
+        Explorer_Access (Get_Toplevel (Object));
+
    begin
       Hide_All (Explorer);
    end On_Close_Clicked;
 
-   ----------------------
+   -------------------
    -- On_Ok_Clicked --
-   ----------------------
+   -------------------
 
    procedure On_Ok_Clicked
      (Object : access Gtk_Button_Record'Class)
    is
+      Explorer : constant Explorer_Access :=
+        Explorer_Access (Get_Toplevel (Object));
+
    begin
       Hide_All (Explorer);
    end On_Ok_Clicked;
