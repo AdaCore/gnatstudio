@@ -1231,7 +1231,7 @@ package body Project_Viewers is
         (Kernel, Importing_Project);
       Changed : Import_Project_Error;
       Result : Message_Dialog_Buttons;
-      Must_Recompute : Boolean := False
+      Must_Recompute : Boolean := False;
    begin
       loop
          Changed := Add_Imported_Project
