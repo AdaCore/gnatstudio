@@ -103,13 +103,21 @@ package body VFS is
    procedure Ensure_Normalized (File : Virtual_File) is
    begin
       if File.Value.Normalized_Full = null then
-         File.Value.Normalized_Full := new UTF8_String'
-           (Locale_To_UTF8 (To_Host_Pathname (Normalize_Pathname
-                              (Locale_From_UTF8 (File.Value.Full_Name.all),
-                                                 Resolve_Links => True))));
-
-         if not File_Utils.Filenames_Are_Case_Sensitive then
-            To_Lower (File.Value.Normalized_Full.all);
+         --  If the user didn't create a file with a full name, no need to
+         --  spend time now trying to find the file.
+         if not Is_Absolute_Path (File.Value.Full_Name.all) then
+            File.Value.Normalized_Full :=
+              new UTF8_String'(File.Value.Full_Name.all);
+         else
+            File.Value.Normalized_Full := new UTF8_String'
+              (Locale_To_UTF8
+                 (To_Host_Pathname
+                    (Normalize_Pathname
+                       (Locale_From_UTF8 (File.Value.Full_Name.all),
+                        Resolve_Links => True))));
+            if not File_Utils.Filenames_Are_Case_Sensitive then
+               To_Lower (File.Value.Normalized_Full.all);
+            end if;
          end if;
       end if;
    end Ensure_Normalized;
