@@ -338,9 +338,9 @@ package body Glide_Main_Window is
            -("Select the next window in GPS. Any key binding should use a"
              & " modifier such as control for best usage of this function."));
       Bind_Default_Key
-        (Handler        => Get_Key_Handler (Main_Window.Kernel),
-         Action          => "Move to next window",
-         Default_Key    => "alt-Tab");
+        (Kernel      => Main_Window.Kernel,
+         Action      => "Move to next window",
+         Default_Key => "alt-Tab");
 
       Command              := new MDI_Child_Selection_Command;
       Command.Kernel       := Main_Window.Kernel;
@@ -354,9 +354,9 @@ package body Glide_Main_Window is
            -("Select the previous window in GPS. Any key binding should use a"
              & " modifier such as control for best usage of this function."));
       Bind_Default_Key
-        (Handler        => Get_Key_Handler (Main_Window.Kernel),
-         Action         => "Move to previous window",
-         Default_Key    => "alt-shift-ISO_Left_Tab");
+        (Kernel      => Main_Window.Kernel,
+         Action      => "Move to previous window",
+         Default_Key => "alt-shift-ISO_Left_Tab");
 
       Command              := new MDI_Child_Selection_Command;
       Command.Kernel       := Main_Window.Kernel;
