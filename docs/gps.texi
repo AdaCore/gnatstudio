@@ -2346,7 +2346,7 @@ the title of the first column (labelled @i{Select}). This will toggle
 the selection status of the first line, and have the same status for all other
 editors.
 
-If you press @code{Cancel} instead of @code{OK}, no saving will take place,
+If you press @code{Cancel} instead of @code{Save}, no saving will take place,
 and the action that displayed this dialog is also cancelled. Such actions can
 be for instance starting a compilation command, a VCS operation, or quitting
 GPS with unsaved files.
@@ -2551,7 +2551,8 @@ dialog listing the possible choices to resolve the ambiguity.
 @cindex macro
 In addition, the C/C++ parser has the following limitations: namespaces
 are currently ignored (no specific processing is done for namespaces);
-no attempt is made to process the macros and other preprocessor defines.
+minimal support for templates; no attempt is made to process the macros and 
+other preprocessor defines.
 Macros are considered as special entities, so it is possible to navigate
 from a macro use to its definition, but the macro content is ignored,
 which means for example that function calls made through macros
@@ -4817,9 +4818,8 @@ See @ref{Source Browsing} for more details.
 @item Builds, see @ref{Compilation/Build} for more details.
 
 @item Semantic support.
-In particular, future versions of GPS will be able to e.g. differentiate
-variables from types when displaying a contextual menu, which is not possible
-in GVD.
+In particular, GPS is be able to e.g. differentiate variables from types when
+displaying a contextual menu, which is not possible in GVD.
 
 @item Flexibility of project files, see @ref{Project Handling} for more details.
 @end itemize
@@ -9631,6 +9631,7 @@ There are several solutions to handle this issue:
 
 @itemize @bullet
 @item Use scenario variables in the project
+
 The idea is that you define various scenarios in your project (For
 instance compiling in "debug" mode or "production" mode), and change
 the source directories depending on this setup.  Such projects can be
@@ -9641,6 +9642,7 @@ have a combo box displayed for each of the variable, allowing a simple
 switch between scenarios depending on what you want to build.
 
 @item Use extending projects
+
 These projects cannot currently be created through GPS, so you will
 need to edit them by hand. See the GNAT user's guide for more
 information on extending projects.
@@ -9651,6 +9653,7 @@ on a small part of the whole system, you may not want to have a complete
 copy of the code on your local machine).
 
 @item Put all duplicate files in the same project
+
 There is one specific case where a project is allowed to have duplicate source
 files: if the list of source directories is specified explicitely. All
 duplicate files must be in the same project. With these conditions, there is
