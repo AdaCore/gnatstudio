@@ -781,7 +781,7 @@ package body Project_Explorers is
    function Read_Directory
      (D : Append_Directory_Idle_Data_Access) return Boolean
    is
-      File       : String (1 .. 255);
+      File       : String (1 .. 1024);
       Last       : Natural;
       Path_Found : Boolean := False;
       Iter       : Gtk_Tree_Iter;
