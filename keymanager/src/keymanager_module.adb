@@ -768,7 +768,8 @@ package body KeyManager_Module is
 
       procedure Process_Table
         (Table : in out Key_Htable.HTable; Prefix : String);
-      --  Process the contents of a specific keymap
+      --  Process the contents of a specific keymap. This sets the keybindings
+      --  for all associated actions
 
       --------------------------
       -- Process_Menu_Binding --
@@ -820,31 +821,7 @@ package body KeyManager_Module is
          Binding : Key_Description_List;
          Parent  : Gtk_Tree_Iter;
          Action  : Action_Record;
-         Action_Iter : Action_Iterator := Start (Editor.Kernel);
       begin
-         loop
-            Action := Get (Action_Iter);
-            exit when Action = No_Action;
-
-            Parent := Find_Parent (Editor.Model, Action.Context);
-            if Parent = Null_Iter then
-               if Action.Context = null then
-                  Parent := Set (Editor.Model, Null_Iter, -"General");
-               else
-                  Parent := Set
-                    (Editor.Model, Null_Iter, Get_Name (Action.Context));
-               end if;
-            end if;
-
-            Parent := Set
-              (Model   => Editor.Model,
-               Parent  => Parent,
-               Descr   => Get (Action_Iter),
-               Changed => False,
-               Key     => -Disabled_String);
-            Next (Editor.Kernel, Action_Iter);
-         end loop;
-
          Get_First (Table, Iter);
          loop
             Binding := Get_Element (Iter);
@@ -894,7 +871,10 @@ package body KeyManager_Module is
          end loop;
       end Process_Table;
 
-      Sort_Id      : constant Gint := Freeze_Sort (Editor.Model);
+      Sort_Id     : constant Gint := Freeze_Sort (Editor.Model);
+      Parent      : Gtk_Tree_Iter;
+      Action      : Action_Record;
+      Action_Iter : Action_Iterator := Start (Editor.Kernel);
    begin
       Clear (Editor.Model);
 
@@ -902,6 +882,32 @@ package body KeyManager_Module is
 
       Gtk.Accel_Map.Foreach
         (System.Null_Address, Process_Menu_Binding'Unrestricted_Access);
+
+      --  Add all actions in the table
+      loop
+         Action := Get (Action_Iter);
+         exit when Action = No_Action;
+
+         Parent := Find_Parent (Editor.Model, Action.Context);
+         if Parent = Null_Iter then
+            if Action.Context = null then
+               Parent := Set (Editor.Model, Null_Iter, -"General");
+            else
+               Parent := Set
+                 (Editor.Model, Null_Iter, Get_Name (Action.Context));
+            end if;
+         end if;
+
+         Parent := Set
+           (Model   => Editor.Model,
+            Parent  => Parent,
+            Descr   => Get (Action_Iter),
+            Changed => False,
+            Key     => -Disabled_String);
+         Next (Editor.Kernel, Action_Iter);
+      end loop;
+
+      --  Add the key bindings definition
       Process_Table (Handler.Table, "");
 
       Thaw_Sort (Editor.Model, Sort_Id);
