@@ -1309,7 +1309,6 @@ package body VCS_View_Pkg is
 
       Gtk_New (Page.Tree, Page.Model);
 
-
       Gtk_New (Scrolledwindow1);
       Set_Policy (Scrolledwindow1,
                   Gtk.Enums.Policy_Automatic,
@@ -1337,7 +1336,8 @@ package body VCS_View_Pkg is
       New_Tooltip (Page.Tree, Page, Page.Tooltip);
 
       --  Emit a "clicked" signal on the file column to sort it.
-      Object_Callback.Emit_By_Name (Page.File_Column, "clicked");
+
+      Clicked (Page.File_Column);
 
       return Page;
    end Get_Page_For_Identifier;
