@@ -2230,7 +2230,7 @@ Windows acts as containers for other widgets</description>
      <description>If the window is in the central area of the MDI, then all other windows in the central area are unsplit and put below window, so that only the latter remains visible to the customer</description>
   </shell_doc>
 
-  <shell_doc name="GPS.MDIWindow.raise">
+  <shell_doc name="GPS.MDIWindow.raise_window">
      <param name="self">An instance of GPS.MDIWindow</param>
      <description>Raise the window so that it becomes visible to the user</description>
   </shell_doc>
