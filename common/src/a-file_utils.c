@@ -23,20 +23,23 @@
 int
 __gnat_subdirectories_count (name)
 {
+  struct stat statbuf;
+  int ret;
+  
+  ret = __gnat_stat (name, &statbuf);
+  
 #ifdef _WIN32
   /* On windows, stat(2) always return 1 for the number of links, and thus can
      not be used reliably.
      However, for GPS we only want to know if there is at least one
      subdirectory, so we just pretend this is always true.
   */
-  return 1;
+  if (ret || !S_ISDIR (statbuf.st_mode))
+    return -1;
+  else
+    return 1;
   
 #else
-  struct stat statbuf;
-  int ret;
-  
-  ret = __gnat_stat (name, &statbuf);
-  
   if (ret || !S_ISDIR (statbuf.st_mode))
     return -1;
   else
