@@ -3,27 +3,23 @@ STANDALONE_PROJECT=True
 
 ifeq ($(BASE_DIR),)
    include ../../Makefile.common
-   BASE_DIR=$(shell pwd)/..
+   BASE_DIR=$(shell pwd)
    STANDALONE_ROOT=True
 endif
 
 STANDALONE_BASE_DIR := $(BASE_DIR)
 
-#  BASE_DIR=$(STANDALONE_BASE_DIR)/../gtkada
-#  include $(BASE_DIR)/Makefile.gtkada
-BASE_DIR=$(STANDALONE_BASE_DIR)/../gvd
+BASE_DIR=$(STANDALONE_BASE_DIR)/../../gvd
 include $(BASE_DIR)/Makefile.gvd_glide
 
-STANDALONE_SRC_DIRS = $(STANDALONE_BASE_DIR)/src $(STANDALONE_BASE_DIR)/pixmaps
+STANDALONE_SRC_DIRS = $(STANDALONE_BASE_DIR)/../src $(STANDALONE_BASE_DIR)/tests $(STANDALONE_BASE_DIR)/pixmaps
 SRC_DIRS += $(STANDALONE_SRC_DIRS)
 C_SRCS = \
-  $(foreach name,$(STANDALONE_SRC_DIRS),$(notdir $(wildcard $(name)/*$(C_EXT))))
+  $(foreach name,$(STANDALONE_SRC_DIRS), $(notdir $(wildcard $(name)/*$(C_EXT))))
 STANDALONE_SRCS := \
   $(foreach name,$(STANDALONE_SRC_DIRS),$(notdir $(wildcard $(name)/*$(C_EXT))))
 STANDALONE_OBJ_DIR = $(STANDALONE_BASE_DIR)/standalone_obj
 OBJ_DIR = $(STANDALONE_OBJ_DIR)
-
-LIBS := $(LIBS) $(STANDALONE_BASE_DIR)/../common/obj/libcommon.a
 
 CFLAGS = -g -O2
 ADA_SOURCES = test_parse.adb
@@ -37,7 +33,6 @@ endif
 ifeq ($(STANDALONE_ROOT),True)
 
    default: all
-
    include ../../Makefile.gnat
    include ../../builder/src/Makefile.generic
 
