@@ -22,6 +22,9 @@ with System; use System;
 with Glib; use Glib;
 with Gtk.Notebook; use Gtk.Notebook;
 with Gtk.Widget; use Gtk.Widget;
+with Gtk.List; use Gtk.List;
+with Gtk.Label; use Gtk.Label;
+with Gtk.Container; use Gtk.Container;
 with Odd.Process; use Odd.Process;
 with Debugger; use Debugger;
 with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
@@ -185,5 +188,57 @@ package body Odd.Dialogs.Callbacks is
       --  Destroy the dialog, since we will have to recreate it anyway.
       Unregister_Dialog (Convert (Dialog.Main_Window, Dialog.Debugger));
    end On_Question_Close_Clicked;
+
+   ---------------------------------
+   -- On_Replay_Selection_Clicked --
+   ---------------------------------
+
+   procedure On_Replay_Selection_Clicked
+     (Object : access Gtk_Button_Record'Class)
+   is
+      Top  : constant Main_Debug_Window_Access :=
+        Main_Debug_Window_Access
+          (History_Dialog_Access (Get_Toplevel (Object)).Window);
+      Page : constant Gtk_Widget :=
+        Get_Nth_Page
+          (Top.Process_Notebook, Get_Current_Page (Top.Process_Notebook));
+      Tab  : constant Debugger_Process_Tab := Process_User_Data.Get (Page);
+      List : constant Gtk_List :=
+        History_Dialog_Access (Get_Toplevel (Object)).List;
+      Selected : Widget_List.Glist := Get_Selection (List);
+
+      use Widget_List;
+
+   begin
+      while Selected /= Null_List loop
+         Process_User_Command
+           (Tab,
+            Get
+         --  ??? Will not work without Gtk.Type_Conversion
+              (Gtk_Label
+                (Get_Data (Children (Gtk_Container (Get_Data (Selected)))))));
+         Selected := Next (Selected);
+      end loop;
+   end On_Replay_Selection_Clicked;
+
+   -------------------------------
+   -- On_History_Cancel_Clicked --
+   -------------------------------
+
+   procedure On_History_Cancel_Clicked
+     (Object : access Gtk_Button_Record'Class) is
+   begin
+      Hide (Get_Toplevel (Object));
+   end On_History_Cancel_Clicked;
+
+   -----------------------------
+   -- On_History_Help_Clicked --
+   -----------------------------
+
+   procedure On_History_Help_Clicked
+     (Object : access Gtk_Button_Record'Class) is
+   begin
+      null;
+   end On_History_Help_Clicked;
 
 end Odd.Dialogs.Callbacks;
