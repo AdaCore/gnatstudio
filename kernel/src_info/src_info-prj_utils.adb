@@ -245,7 +245,7 @@ package body Src_Info.Prj_Utils is
 
    begin
       --  ??? This should be implemented with mapping files instead. See
-      --  ??? fname.ad[bs] in the GNAT sources
+      --  fname.ad[bs] in the GNAT sources
 
       Namet.Get_Name_String (Unit_Name);
 
@@ -273,7 +273,7 @@ package body Src_Info.Prj_Utils is
       if Result = No_Name then
          --  Special handling for the runtime files
          --  ??? Could be simplified if we have direct access to the default
-         --  ??? naming scheme.
+         --  naming scheme.
          if Part = Unit_Body then
             return Get_String
               (Get_Filename (Short_Uname, "-", All_Lower_Case, ".adb"));
