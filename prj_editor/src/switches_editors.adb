@@ -310,6 +310,12 @@ package body Switches_Editors is
       Language : String) return Boolean;
    --  Return True if Page applies to Language.
 
+   function Has_Supported_Language
+     (Page                : access Switches_Editor_Page_Record'Class;
+      Supported_Languages : Argument_List) return Boolean;
+   --  Return True if Page applies to one of the languages in
+   --  Supported_Language
+
    function Get_Parameter
      (Switch          : String;
       Separator       : String;
@@ -1626,26 +1632,13 @@ package body Switches_Editors is
       Show_Only : Boolean;
       File_Specific : Boolean)
    is
-      Visible : Boolean;
       Current : Gint := Get_Current_Page (Editor);
    begin
       for P in Editor.Pages'Range loop
-         Visible := False;
-
-         for L in Languages'Range loop
-            if Filter_Matches
-              (Editor.Pages (P), To_Lower (Languages (L).all))
-            then
-               Visible := True;
-               exit;
-            end if;
-         end loop;
-
-         Visible := Visible
+         if Has_Supported_Language (Editor.Pages (P), Languages)
            and then (not File_Specific
-                     or else Editor.Pages (P).Pkg.all /= Ide_Package);
-
-         if Visible then
+                     or else Editor.Pages (P).Pkg.all /= Ide_Package)
+         then
             Show (Editor.Pages (P));
          elsif not Show_Only then
             Hide (Editor.Pages (P));
@@ -1690,6 +1683,28 @@ package body Switches_Editors is
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Revert_To_Default;
 
+   ----------------------------
+   -- Has_Supported_Language --
+   ----------------------------
+
+   function Has_Supported_Language
+     (Page                : access Switches_Editor_Page_Record'Class;
+      Supported_Languages : Argument_List) return Boolean is
+   begin
+      if Page.Lang_Filter /= null then
+         for L in Page.Lang_Filter'Range loop
+            for PL in Supported_Languages'Range loop
+               if To_Lower (Page.Lang_Filter (L).all) =
+                 To_Lower (Supported_Languages (PL).all)
+               then
+                  return True;
+               end if;
+            end loop;
+         end loop;
+      end if;
+      return False;
+   end Has_Supported_Language;
+
    ----------------------
    -- Generate_Project --
    ----------------------
@@ -1700,6 +1715,7 @@ package body Switches_Editors is
       Scenario_Variables : Scenario_Variable_Array;
       Files              : File_Array) return Boolean
    is
+      Lang    : Argument_List := Get_Languages (Project);
       Changed : Boolean := False;
 
       procedure Change_Switches
@@ -1721,64 +1737,22 @@ package body Switches_Editors is
          File_Name : Virtual_File)
       is
          Language : constant Name_Id := Get_String (Page.Attribute_Index.all);
-         Args     : Argument_List := Get_Switches (Page, Normalize => False);
          Value    : Prj.Variable_Value;
          Is_Default_Value : Boolean;
          Rename_Prj : Project_Type;
       begin
          Rename_Prj := Find_Project_Of_Package (Project, Page.Pkg.all);
 
-         if Project = No_Project then
-            Is_Default_Value := False;
+         --  Language not supported => Remove the attribute
 
-         else
-            Get_Switches
-              (Project          => Rename_Prj,
-               In_Pkg           => Page.Pkg.all,
-               File             => File_Name,
-               Language         => Language,
-               Value            => Value,
-               Is_Default_Value => Is_Default_Value);
-
-            --  Check if we in fact have the initial value
-            declare
-               Default_Args : Argument_List := To_Argument_List (Value);
-            begin
-               Is_Default_Value := Is_Equal (Default_Args, Args);
-               Free (Default_Args);
-            end;
-         end if;
-
-         if not Is_Default_Value then
+         if not Has_Supported_Language (Page, Lang) then
             if File_Name /= VFS.No_File then
-               if Args'Length /= 0 then
-                  Update_Attribute_Value_In_Scenario
-                    (Project            => Rename_Prj,
-                     Scenario_Variables => Scenario_Variables,
-                     Attribute          =>
-                       Build (Page.Pkg.all, Get_String (Name_Switches)),
-                     Values             => Args,
-                     Attribute_Index    => Base_Name (File_Name),
-                     Prepend            => False);
-               else
-                  Delete_Attribute
-                    (Project            => Rename_Prj,
-                     Scenario_Variables => Scenario_Variables,
-                     Attribute          =>
-                       Build (Page.Pkg.all, Get_String (Name_Switches)),
-                     Attribute_Index    => Base_Name (File_Name));
-               end if;
-
-            elsif Args'Length /= 0 then
-               Update_Attribute_Value_In_Scenario
+               Delete_Attribute
                  (Project            => Rename_Prj,
                   Scenario_Variables => Scenario_Variables,
                   Attribute          =>
-                    Build (Page.Pkg.all, Get_String (Name_Default_Switches)),
-                  Values             => Args,
-                  Attribute_Index    => Page.Attribute_Index.all,
-                  Prepend            => False);
-
+                    Build (Page.Pkg.all, Get_String (Name_Switches)),
+                  Attribute_Index    => Base_Name (File_Name));
             else
                Delete_Attribute
                  (Project            => Rename_Prj,
@@ -1787,11 +1761,77 @@ package body Switches_Editors is
                     Build (Page.Pkg.all, Get_String (Name_Default_Switches)),
                   Attribute_Index    => Page.Attribute_Index.all);
             end if;
-
-            Changed := True;
+            return;
          end if;
 
-         Free (Args);
+         declare
+            Args : Argument_List := Get_Switches (Page, Normalize => False);
+         begin
+            if Project = No_Project then
+               Is_Default_Value := False;
+
+            else
+               Get_Switches
+                 (Project          => Rename_Prj,
+                  In_Pkg           => Page.Pkg.all,
+                  File             => File_Name,
+                  Language         => Language,
+                  Value            => Value,
+                  Is_Default_Value => Is_Default_Value);
+
+               --  Check if we in fact have the initial value
+               declare
+                  Default_Args : Argument_List := To_Argument_List (Value);
+               begin
+                  Is_Default_Value := Is_Equal (Default_Args, Args);
+                  Free (Default_Args);
+               end;
+            end if;
+
+            if not Is_Default_Value then
+               if File_Name /= VFS.No_File then
+                  if Args'Length /= 0 then
+                     Update_Attribute_Value_In_Scenario
+                       (Project            => Rename_Prj,
+                        Scenario_Variables => Scenario_Variables,
+                        Attribute          =>
+                          Build (Page.Pkg.all, Get_String (Name_Switches)),
+                        Values             => Args,
+                        Attribute_Index    => Base_Name (File_Name),
+                        Prepend            => False);
+                  else
+                     Delete_Attribute
+                       (Project            => Rename_Prj,
+                        Scenario_Variables => Scenario_Variables,
+                        Attribute          =>
+                          Build (Page.Pkg.all, Get_String (Name_Switches)),
+                        Attribute_Index    => Base_Name (File_Name));
+                  end if;
+
+               elsif Args'Length /= 0 then
+                  Update_Attribute_Value_In_Scenario
+                    (Project            => Rename_Prj,
+                     Scenario_Variables => Scenario_Variables,
+                     Attribute          =>
+                      Build (Page.Pkg.all, Get_String (Name_Default_Switches)),
+                     Values             => Args,
+                     Attribute_Index    => Page.Attribute_Index.all,
+                     Prepend            => False);
+
+               else
+                  Delete_Attribute
+                    (Project            => Rename_Prj,
+                     Scenario_Variables => Scenario_Variables,
+                     Attribute          =>
+                      Build (Page.Pkg.all, Get_String (Name_Default_Switches)),
+                     Attribute_Index    => Page.Attribute_Index.all);
+               end if;
+
+               Changed := True;
+            end if;
+
+            Free (Args);
+         end;
       end Change_Switches;
 
       ------------------
@@ -1815,6 +1855,8 @@ package body Switches_Editors is
             Process_File (Files (F));
          end loop;
       end if;
+
+      Free (Lang);
 
       return Changed;
    end Generate_Project;
