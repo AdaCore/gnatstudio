@@ -220,16 +220,15 @@ package body Display_Items is
             Item.Entity := Entity;
             Set_Valid (Item.Entity, Value_Found);
 
-            --  If we got an exception while parsing the value, we create the
-            --  item, but indicate there was a parse error. Hopefully, this
-            --  should not happen, but at least the user knows why the variable
-            --  is not displayed correctly.
+            --  If we got an exception while parsing the value, we do not
+            --  create the item, since otherwise the user would be able to
+            --  try to update the value for instance, and the type would have
+            --  nothing to do with what the variable really is.
+            --  ??? Should display an error message somewhere.
          exception
             when Language.Unexpected_Type | Constraint_Error =>
-               Item := new Display_Item_Record;
-               Item.Entity := New_Simple_Type;
-               Set_Value (Simple_Type (Item.Entity.all), "<parse_error>");
-               Set_Valid (Item.Entity, True);
+               Pop_Internal_Command_Status (Get_Process (Debugger.Debugger));
+               return;
          end;
 
          if Id /= "" then
@@ -556,14 +555,12 @@ package body Display_Items is
       --  ??? Should we recompute the address ?
       --  This is part of the bigger picture for aliases detection/update.
 
-      --  Update graphically
+      --  Update graphically.
+      --  Note that we should not change the visibility status of item
+      --  and its children.
 
       Size_Request
         (Item.Entity.all, Font, Hide_Big_Items => Hide_Big_Items);
-      if not Get_Visibility (Item.Entity.all) then
-         Set_Visibility (Item.Entity.all, True);
-         Size_Request (Item.Entity.all, Font);
-      end if;
 
       Update_Display (Item);
       Item_Resized (Canvas, Item);
@@ -853,8 +850,8 @@ package body Display_Items is
          Item.Debugger.Selected_Item := null;
       end if;
 
-      Free (Item.Name);
       Free (Item.Entity);
+      Free (Item.Name);
       Free (Item.Id);
       Remove (Item.Debugger.Data_Canvas, Item);
       --  Warning: the memory has been freed after Remove.
