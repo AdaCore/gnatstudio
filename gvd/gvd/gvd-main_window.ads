@@ -23,6 +23,7 @@ with Gtk.Menu_Bar; use Gtk.Menu_Bar;
 with Gtk.Window; use Gtk.Window;
 with Gtk.Widget; use Gtk.Widget;
 with Gtk.Item_Factory; use Gtk.Item_Factory;
+with Gtk.Accel_Group;  use Gtk.Accel_Group;
 with GVD.Preferences_Dialog; use GVD.Preferences_Dialog;
 with GVD.Open_Program_Dialog; use GVD.Open_Program_Dialog;
 with GVD.Session_Dialog; use GVD.Session_Dialog;
@@ -95,6 +96,9 @@ package GVD.Main_Window is
       Standalone          : Boolean := True;
       --  True if the gvd main window is used on its own (e.g, not as part
       --  of an integrated environment).
+
+      GVD_Accel_Group     : Gtk_Accel_Group;
+      --  The default accelerators for the GVD window.
    end record;
    type GVD_Main_Window is access all GVD_Main_Window_Record'Class;
 
