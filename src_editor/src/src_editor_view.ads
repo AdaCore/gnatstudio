@@ -112,8 +112,8 @@ private
       Current_Line_GC     : Gdk.GC.Gdk_GC;
       Highlight_Current   : Boolean := False;
 
-      Top_Line            : Natural := 1;
-      Bottom_Line         : Natural := 0;
+      Top_Line            : Src_Editor_Buffer.Buffer_Line_Type := 1;
+      Bottom_Line         : Src_Editor_Buffer.Buffer_Line_Type := 0;
 
       Connect_Expose_Id : Gtk.Main.Idle_Handler_Id;
       --  Handler ID for the Connect_Expose idle callback.
