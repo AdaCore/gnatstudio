@@ -1,22 +1,19 @@
 with Glib;            use Glib;
+with Gint_Xml;        use Gint_Xml;
 with Gdk.Event;       use Gdk.Event;
-with Gtk.Box;         use Gtk.Box;
 with Gtk.Enums;       use Gtk.Enums;
 with Gtk.Widget;      use Gtk.Widget;
 with Gtkada.MDI;      use Gtkada.MDI;
 with Gtkada.Handlers; use Gtkada.Handlers;
 with GVD.Process;
 with GNAT.Regpat;     use GNAT.Regpat;
+with Glide_Kernel;    use Glide_Kernel;
 with Glide_Kernel.Editor; use Glide_Kernel.Editor;
-with Project_Trees;   use Project_Trees;
-with Scenario_Views;  use Scenario_Views;
+with Project_Explorers; use Project_Explorers;
+with GNAT.OS_Lib;     use GNAT.OS_Lib;
+with Glide_Consoles;  use Glide_Consoles;
 
 package body Glide_Page is
-
-   function On_Button_Release
-     (Widget : access Gtk_Widget_Record'Class;
-      Event  : Gdk_Event) return Boolean;
-   --  Handler for "button_press_event" signal
 
    -------------
    -- Gtk_New --
@@ -39,109 +36,38 @@ package body Glide_Page is
       Window : access Glide_Window_Record'Class)
    is
       Child    : MDI_Child;
-      Box      : Gtk_Box;
-      Scrolled : Gtk_Scrolled_Window;
+      Iter     : Child_Iterator;
 
    begin
       GVD.Process.Initialize (Page, Window);
 
-      Gtk_New (Page.Console_Sw);
-      Set_Policy (Page.Console_Sw, Policy_Never, Policy_Always);
-      Set_Size_Request (Page.Console_Sw, -1, 100);
-      Child := Put (Page.Process_Mdi, Page.Console_Sw);
-      Set_Title (Child, "Glide Console");
-      Set_Dock_Side (Child, Bottom);
-      Dock_Child (Child);
-      Raise_Child (Child);
+      if Load_Session (Window.Kernel) then
+         Iter := First_Child (Page.Process_Mdi);
+         loop
+            Child := Get (Iter);
+            exit when Child = null;
 
-      Gtk_New_Vbox (Box, Homogeneous => False);
+            if Get_Widget (Child).all in Project_Explorer_Record'Class then
+               Page.Explorer := Project_Explorer (Get_Widget (Child));
+            elsif Get_Widget (Child).all in Glide_Console_Record'Class then
+               Page.Console := Glide_Console (Get_Widget (Child));
+            end if;
+            Next (Iter);
+         end loop;
+      else
+         Gtk_New (Page.Console, Window.Kernel);
+         Child := Put (Page.Process_Mdi, Page.Console);
+         Set_Title (Child, "Glide Console");
+         Set_Dock_Side (Child, Bottom);
+         Dock_Child (Child);
+         Raise_Child (Child);
 
-      Gtk_New (Page.Scenario, Window.Kernel);
-      Pack_Start (Box, Page.Scenario, Fill => True, Expand => False);
-
-      Gtk_New (Scrolled);
-      Set_Size_Request (Scrolled, 300, -1);
-      Pack_Start (Box, Scrolled, Fill => True, Expand => True);
-      Gtk_New (Page.Explorer, Window.Kernel);
-      Add (Scrolled, Page.Explorer);
-
-      Child := Put (Page.Process_Mdi, Box);
-      Set_Title (Child, "Project Explorer");
-      Set_Dock_Side (Child, Left);
-      Dock_Child (Child);
-
-      Gtk_New (Page.Console);
-      Set_Editable (Page.Console, False);
-      Add (Page.Console_Sw, Page.Console);
-
-      Return_Callback.Connect
-        (Page.Console, "button_release_event",
-         Return_Callback.To_Marshaller (On_Button_Release'Access));
+         Gtk_New (Page.Explorer, Window.Kernel);
+         Child := Put (Page.Process_Mdi, Page.Explorer);
+         Set_Title (Child, "Project Explorer");
+         Set_Dock_Side (Child, Left);
+         Dock_Child (Child);
+      end if;
    end Initialize;
-
-   -----------------------
-   -- On_Button_Release --
-   -----------------------
-
-   function On_Button_Release
-     (Widget : access Gtk_Widget_Record'Class;
-      Event  : Gdk_Event) return Boolean
-   is
-      Console     : Gtk_Text := Gtk_Text (Widget);
-      Position    : constant Gint := Get_Position (Console);
-      Contents    : constant String := Get_Chars (Console, 0);
-      Start       : Natural := Natural (Position);
-      Last        : Natural := Start;
-      Pattern     : constant Pattern_Matcher :=
-        Compile ("^([^:]*):(\d+):(\d+:)?");
-      Matched     : Match_Array (0 .. 3);
-      Line        : Positive;
-      Column      : Positive;
-      Top         : constant Glide_Window :=
-        Glide_Window (Get_Toplevel (Widget));
-      --  ??? not always the top level window
-      Ignored     : Boolean;
-
-   begin
-      if Contents'Length = 0 then
-         return False;
-      end if;
-
-      while Start > Contents'First
-        and then Contents (Start - 1) /= ASCII.LF
-      loop
-         Start := Start - 1;
-      end loop;
-
-      while Last < Contents'Last and then Contents (Last + 1) /= ASCII.LF loop
-         Last := Last + 1;
-      end loop;
-
-      Match (Pattern, Contents (Start .. Last), Matched);
-
-      if Matched (0) /= No_Match then
-         Line :=
-           Positive'Value (Contents (Matched (2).First .. Matched (2).Last));
-
-         if Matched (3) = No_Match then
-            Column := 1;
-         else
-            Column := Positive'Value
-                        (Contents (Matched (3).First .. Matched (3).Last - 1));
-         end if;
-
-         if Matched (1).First < Matched (1).Last then
-            Go_To (Top.Kernel,
-                   Contents (Matched (1).First .. Matched (1).Last),
-                   Line, Column, Success => Ignored);
-         end if;
-      end if;
-
-      return False;
-
-   exception
-      when Constraint_Error =>
-         return False;
-   end On_Button_Release;
 
 end Glide_Page;
