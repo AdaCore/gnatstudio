@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 1.2.0
 
+- C312-013 Problem building with relative paths under Windows
+  Problem:    Under Windows, when using projects with relative pathnames,
+              if you change the current drive (by e.g. opening a file in
+              another drive), the build will not succeed.
+  Workaround: Use absolute paths in your project file, or use the menu
+              File->Change Directory... before doing a build.
+
 - Callgraph missing references with extended projects
   Problem:    If your project hierarchy is setup so that A extends B, then
               a callgraph for an entity of A will miss all calls done from
