@@ -31,6 +31,7 @@ with Prj.Com;
 with Prj.Env;                   use Prj.Env;
 with Src_Info.ALI_Maps;         use Src_Info.ALI_Maps;
 with Src_Info.Prj_Utils;        use Src_Info.Prj_Utils;
+with Src_Info.LI_Utils;         use Src_Info.LI_Utils;
 with Types;                     use Types;
 with Traces;                    use Traces;
 
@@ -694,7 +695,6 @@ package body Src_Info.ALI is
    is
       Sname        : constant String := Get_Name_String (Source_Filename);
       ALI_Filename : constant String := Get_ALI_Filename (Sig_Filename);
-      Success      : Boolean;
 
    begin
       File :=
@@ -706,19 +706,13 @@ package body Src_Info.ALI is
       --  create a stub
 
       if File.LI = null then
-         File.LI := new LI_File_Constrained'
-           (LI => (Handler       => LI_Handler (Handler),
-                   Parsed        => False,
-                   LI_Filename   => new String'(Base_Name (ALI_Filename)),
-                   LI_Timestamp  => 0,
-                   Spec_Info     => null,
-                   Body_Info     => null,
-                   Separate_Info => null));
-         Add (List.Table, File.LI, Success);
-
-         if not Success then
-            Destroy (File.LI);
-            Trace (Me, "Get_Unit_Source_File: couldn't add file to list");
+         Create_LI_File
+           (File             => File.LI,
+            List             => List,
+            LI_Full_Filename => ALI_Filename,
+            Handler          => LI_Handler (Handler),
+            Parsed           => False);
+         if File.LI = null then
             raise ALI_Internal_Error;
          end if;
       end if;
@@ -727,26 +721,12 @@ package body Src_Info.ALI is
       case Part is
          when Unit_Spec =>
             if File.LI.LI.Spec_Info = null then
-               File.LI.LI.Spec_Info := new File_Info'
-                 (Unit_Name         => null,
-                  Source_Filename   => new String'(Sname),
-                  Directory_Name    => null,
-                  File_Timestamp    => 0,
-                  Original_Filename => null,
-                  Original_Line     => 1,
-                  Declarations      => null);
+               Create_File_Info (File.LI.LI.Spec_Info, Sname);
             end if;
 
          when Unit_Body =>
             if File.LI.LI.Body_Info = null then
-               File.LI.LI.Body_Info := new File_Info'
-                 (Unit_Name         => null,
-                  Source_Filename   => new String'(Sname),
-                  Directory_Name    => null,
-                  File_Timestamp    => 0,
-                  Original_Filename => null,
-                  Original_Line     => 1,
-                  Declarations      => null);
+               Create_File_Info (File.LI.LI.Body_Info, Sname);
             end if;
 
          when Unit_Separate =>
@@ -770,7 +750,6 @@ package body Src_Info.ALI is
    is
       Sname        : constant String := Get_Name_String (Source_Filename);
       ALI_Filename : constant String := Get_ALI_Filename (Sig_Filename);
-      Success      : Boolean;
       Sep          : File_Info_Ptr_List;
 
    begin
@@ -783,19 +762,14 @@ package body Src_Info.ALI is
       --  create a stub
 
       if File.LI = null then
-         File.LI := new LI_File_Constrained'
-           (LI => (Handler       => LI_Handler (Handler),
-                   Parsed        => False,
-                   LI_Filename   => new String'(Base_Name (ALI_Filename)),
-                   LI_Timestamp  => 0,
-                   Spec_Info     => null,
-                   Body_Info     => null,
-                   Separate_Info => null));
-         Add (List.Table, File.LI, Success);
+         Create_LI_File
+           (File             => File.LI,
+            List             => List,
+            LI_Full_Filename => ALI_Filename,
+            Handler          => LI_Handler (Handler),
+            Parsed           => False);
 
-         if not Success then
-            Destroy (File.LI);
-            Trace (Me, "Get_Subunit_Source_File: couldn't add file to list");
+         if File.LI = null then
             raise ALI_Internal_Error;
          end if;
       end if;
@@ -810,18 +784,11 @@ package body Src_Info.ALI is
       end loop;
 
       if Sep = null then
-         File.LI.LI.Separate_Info :=
-           new File_Info_Ptr_Node'
-             (Value => new File_Info'
-                (Unit_Name         => new String'
-                   (Get_Name_String (Subunit_Name)),
-                 Source_Filename   => new String' (Sname),
-                 Directory_Name    => null,
-                 File_Timestamp    => 0,
-                 Original_Filename => null,
-                 Original_Line     => 1,
-                 Declarations      => null),
-              Next => File.LI.LI.Separate_Info);
+         File.LI.LI.Separate_Info := new File_Info_Ptr_Node'
+           (Value => null, Next => File.LI.LI.Separate_Info);
+         Create_File_Info
+           (File.LI.LI.Separate_Info.Value, Sname,
+            Unit_Name => Get_Name_String (Subunit_Name));
       end if;
 
    exception
@@ -908,20 +875,13 @@ package body Src_Info.ALI is
      (New_LI_File : LI_File_Ptr; Id : Unit_Id)
    is
       Current_Unit  : Unit_Record renames Units.Table (Id);
-      New_File_Info : File_Info_Ptr := new File_Info;
-
+      New_File_Info : File_Info_Ptr;
    begin
-      New_File_Info.all :=
-        (Unit_Name =>
-           new String'(Strip_Unit_Part (Get_Name_String (Current_Unit.Uname))),
-         Source_Filename => new String'(Get_Name_String (Current_Unit.Sfile)),
-         --  The following fields can not be set yet, so we just
-         --  put null values, signaling that they are not set yet.
-         Directory_Name    => null,
-         File_Timestamp    => 0,
-         Original_Filename => null,
-         Original_Line     => 1,
-         Declarations      => null);
+      Create_File_Info
+        (Fi_Ptr         => New_File_Info,
+         Full_Filename  => Get_Name_String (Current_Unit.Sfile),
+         Unit_Name  => Strip_Unit_Part (Get_Name_String (Current_Unit.Uname)),
+         Set_Time_Stamp => False);
 
       --  Now save it in the proper place in New_LI_File
       case Current_Unit.Utype is
@@ -1469,30 +1429,20 @@ package body Src_Info.ALI is
 
       LI_File_Is_New : Boolean;
       LI_File_Copy   : LI_File_Constrained;
-      Success        : Boolean;
 
    begin
       Tmp := Get (List.Table, ALI_Filename);
       LI_File_Is_New := Tmp = null;
 
       if LI_File_Is_New then
-         Tmp := new LI_File_Constrained'
-           (LI => (Parsed                   => True,
-                   Handler                  => LI_Handler (Handler),
-                   LI_Filename              => new String'
-                     (Base_Name (Get_Name_String (New_ALI.Afile))),
-                   LI_Timestamp             => 0,
-                   Spec_Info                => null,
-                   Body_Info                => null,
-                   Separate_Info            => null,
-                   Compilation_Errors_Found => New_ALI.Compile_Errors,
-                   Dependencies_Info        => null));
-
-         --  Add it to the table now, since the rest of the parsing might need
-         --  this entry, for instance if we have separates.
-         Add (List.Table, Tmp, Success);
-         if not Success then
-            Trace (Me, "Create_New_ALI: couldn't add file to list");
+         Create_LI_File
+           (File => Tmp,
+            List => List,
+            LI_Full_Filename => Get_Name_String (New_ALI.Afile),
+            Handler => LI_Handler (Handler),
+            Parsed => True,
+            Compilation_Errors => New_ALI.Compile_Errors);
+         if Tmp = null then
             raise ALI_Internal_Error;
          end if;
 
@@ -1503,7 +1453,6 @@ package body Src_Info.ALI is
          LI_File_Copy := Tmp.all;
 
          --  Blank the LI_File to avoid reading some relics of the old LI_File
-
          Tmp.LI :=
            (Handler                  => LI_Handler (Handler),
             Parsed                   => True,
@@ -1512,13 +1461,11 @@ package body Src_Info.ALI is
             Spec_Info                => null,
             Body_Info                => null,
             Separate_Info            => null,
-            LI_Timestamp             => 0,
+            LI_Timestamp             => To_Timestamp
+              (File_Time_Stamp (Get_Name_String (New_ALI.Afile))),
             Compilation_Errors_Found => New_ALI.Compile_Errors,
             Dependencies_Info        => null);
       end if;
-
-      Tmp.LI.LI_Timestamp := To_Timestamp
-        (File_Time_Stamp (Get_Name_String (New_ALI.Afile)));
 
       --  Build the rest of the structure
 
