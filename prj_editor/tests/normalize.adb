@@ -427,8 +427,15 @@ procedure Normalize is
                   Case_Item := First_Case_Item_Of
                     (Current_Item_Node (Decl_Item));
                   while Case_Item /= Empty_Node loop
+                     --  Do we have a "when others" ?
                      Var_Values (K) :=
                        String_Value_Of (First_Choice_Of (Case_Item));
+                     String_To_Name_Buffer (Var_Values (K));
+
+                     if Name_Buffer (1 .. Name_Len) = "others" then
+                        Var_Values (K) := Empty_Node;
+                     end if;
+
                      Recurse (First_Declarative_Item_Of (Case_Item),
                               To_Case, Parent, Decl_Item_Out);
                      Case_Item := Next_Case_Item (Case_Item);
