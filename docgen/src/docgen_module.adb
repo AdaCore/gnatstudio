@@ -82,7 +82,7 @@ package body Docgen_Module is
       --  aren't being processed
 
       Process_Tagged_Types  : Param_Spec_Boolean;
-      --  True to we want to build a list with all tagged
+      --  True if we want to build a list with all tagged
       --  types declared in the list of files we are processing. For each
       --  tagged types we indicate its parent and children (if they exist)
 
@@ -967,7 +967,8 @@ package body Docgen_Module is
              Default => False,
              Blurb   =>
                -"List of tagged types declared in processed files",
-             Nick    => -"List tagged types"));
+             Nick    => -"List tagged types",
+             Flags   => Param_Readable));
       Register_Property
         (Kernel,
          Param_Spec (Docgen_Module (Docgen_Module_Id).Process_Tagged_Types),
