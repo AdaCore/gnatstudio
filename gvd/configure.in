@@ -179,4 +179,4 @@ AC_SUBST(TARGET_LFLAGS)
 EXEC_PREFIX="$prefix"
 AC_SUBST(EXEC_PREFIX)
 
-AC_OUTPUT(gvd/Makefile gvd/gvd.ads tests/Makefile gnat/Makefile po/Makefile)
+AC_OUTPUT(gvd/Makefile gvd/gvd.ads tests/Makefile gnat/Makefile po/Makefile docs/Makefile)
