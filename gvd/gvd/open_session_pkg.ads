@@ -18,56 +18,38 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Gtk.Window; use Gtk.Window;
-with Gtk.Box; use Gtk.Box;
-with Gtk.Frame; use Gtk.Frame;
-with Gtk.Table; use Gtk.Table;
-with Gtk.Combo; use Gtk.Combo;
+with Gtk.Window;          use Gtk.Window;
+with Gtk.Box;             use Gtk.Box;
+with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
+with Gtk.Viewport;        use Gtk.Viewport;
+with Gtk.List;            use Gtk.List;
+with Gtk.Label;           use Gtk.Label;
 with Gtk.GEntry; use Gtk.GEntry;
-with Gtk.Button; use Gtk.Button;
-with Gtk.Option_Menu; use Gtk.Option_Menu;
-with Gtk.Label; use Gtk.Label;
 with Gtk.Hbutton_Box; use Gtk.Hbutton_Box;
-with Open_Program_Pkg; use Open_Program_Pkg;
-with Odd.Types;
+with Gtk.Button; use Gtk.Button;
+with Odd.Types; use Odd.Types;
 
 package Open_Session_Pkg is
 
    type Open_Session_Record is new Gtk_Window_Record with record
-      Vbox17 : Gtk_Vbox;
-      Frame13 : Gtk_Frame;
-      Table8 : Gtk_Table;
-      Combo12 : Gtk_Combo;
-      Program_Entry : Gtk_Entry;
-      Open_Button : Gtk_Button;
-      Launch_Menu : Gtk_Option_Menu;
-      Label69 : Gtk_Label;
-      Label71 : Gtk_Label;
-      Hbuttonbox9 : Gtk_Hbutton_Box;
-      Ok_Button : Gtk_Button;
-      Cancel_Button : Gtk_Button;
-      Help_Button : Gtk_Button;
-      Valid : Boolean;
+      Vbox17           : Gtk_Vbox;
+      Scrolledwindow10 : Gtk_Scrolled_Window;
+      Viewport1        : Gtk_Viewport;
+      List             : Gtk_List;
+      Hbox6            : Gtk_Hbox;
+      Label73          : Gtk_Label;
+      Entry1           : Gtk_Entry;
+      Hbuttonbox9      : Gtk_Hbutton_Box;
+      Ok_Button        : Gtk_Button;
+      Cancel_Button    : Gtk_Button;
+      Help_Button      : Gtk_Button;
    end record;
-
    type Open_Session_Access is access all Open_Session_Record'Class;
-
-   procedure Open_Session
-     (Open   : in out Open_Session_Access;
-      File   : out Odd.Types.String_Access;
-      Launch : out Launch_Method);
-   --  Open a program window and launch a main loop until the ok or cancel
-   --  button has been pressed.
-   --  Open if null is set to the created window, that is hidden on return.
-   --  If non null, Open_Session will show it instead of creating a new one.
-   --  Return the session file name. If Launch is None,
-   --  this means a cancellation from the user.
-   --  Note that this is your responsibility to free the memory associated with
-   --  Descriptor, using Free below.
-
-private
 
    procedure Gtk_New (Open_Session : out Open_Session_Access);
    procedure Initialize (Open_Session : access Open_Session_Record'Class);
+
+   procedure Open_Session (Open : in out Open_Session_Access;
+                           File : out String_Access);
 
 end Open_Session_Pkg;
