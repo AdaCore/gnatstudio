@@ -144,29 +144,32 @@ private package Src_Info.LI_Utils is
      (LI            : out LI_File_Ptr;
       Handler       : access Src_Info.CPP.CPP_LI_Handler_Record'Class;
       List          : in out LI_File_List;
-      Full_Filename : String;
-      Parsed        : Boolean := False);
+      Full_Filename : String);
    --  Create a stub LI file for Full_Filename, if there is no matching LI file
    --  in List.
    --  If Parsed is True, the LI file will be considered as already parsed,
    --  even though no entity will be declared for it.
 
    procedure Create_LI_File
-     (File               : out LI_File_Ptr;
-      List               : in out LI_File_List;
-      LI_Full_Filename   : String;
-      Handler            : LI_Handler;
-      Parsed             : Boolean;
-      Compilation_Errors : Boolean := False);
+     (File        : out LI_File_Ptr;
+      List        : in out LI_File_List;
+      LI_Filename : String;
+      Handler     : LI_Handler);
    --  Creates an empty LI_File structure.
    --  File is set to null if it couldn't be added to the global list of LI
    --  files.
+   --  LI_Filename can be the base_name of the LI file, since only this will be
+   --  stored in the structure.
 
    procedure Convert_To_Parsed
-     (File : in out LI_File_Ptr; Update_Timestamp : Boolean := True);
+     (File               : in out LI_File_Ptr;
+      Update_Timestamp   : Boolean := True;
+      Compilation_Errors : Boolean := False);
    --  Set File as parsed, ie indicate that the actual database has been parsed
    --  and this is no longer only a stub.
    --  If Update_Timestamp is True, then the timestamp of the LI file is also
    --  recomputed.
+   --  Compilation_Errors should be true if the xref information is potentially
+   --  incomplete because the source file could not be compiled correctly.
 
 end Src_Info.LI_Utils;

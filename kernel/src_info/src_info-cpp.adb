@@ -823,8 +823,7 @@ package body Src_Info.CPP is
         (LI            => File,
          Handler       => Handler,
          List          => List,
-         Full_Filename => Full_Filename,
-         Parsed        => False);
+         Full_Filename => Full_Filename);
 
       --  check timestamps for the parsed file
       if File /= No_LI_File and then File.LI.Parsed then

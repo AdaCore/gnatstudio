@@ -114,7 +114,9 @@ package body Src_Info.LI_Utils is
    -----------------------
 
    procedure Convert_To_Parsed
-     (File : in out LI_File_Ptr; Update_Timestamp : Boolean := True) is
+     (File               : in out LI_File_Ptr;
+      Update_Timestamp   : Boolean := True;
+      Compilation_Errors : Boolean := False) is
    begin
       if not File.LI.Parsed then
          File.LI := (Parsed                   => True,
@@ -124,7 +126,7 @@ package body Src_Info.LI_Utils is
                      Body_Info                => File.LI.Body_Info,
                      Separate_Info            => File.LI.Separate_Info,
                      LI_Timestamp             => File.LI.LI_Timestamp,
-                     Compilation_Errors_Found => False,
+                     Compilation_Errors_Found => Compilation_Errors,
                      Dependencies_Info        => null);
 
          if Update_Timestamp
@@ -227,8 +229,7 @@ package body Src_Info.LI_Utils is
         (LI            => Tmp_LI_File_Ptr,
          Handler       => Handler,
          List          => List,
-         Full_Filename => Referred_Filename,
-         Parsed        => False);
+         Full_Filename => Referred_Filename);
 
       D_Ptr := Find_Declaration
         (File              => Tmp_LI_File_Ptr,
@@ -530,8 +531,7 @@ package body Src_Info.LI_Utils is
      (LI            : out LI_File_Ptr;
       Handler       : access Src_Info.CPP.CPP_LI_Handler_Record'Class;
       List          : in out LI_File_List;
-      Full_Filename : String;
-      Parsed        : Boolean := False)
+      Full_Filename : String)
    is
       Xref_Name : String_Access;
    begin
@@ -541,11 +541,10 @@ package body Src_Info.LI_Utils is
 
       if LI = null then
          Create_LI_File
-           (File             => LI,
-            List             => List,
-            LI_Full_Filename => Get_DB_Dir (Handler) & Xref_Name.all,
-            Handler          => LI_Handler (Handler),
-            Parsed           => Parsed);
+           (File        => LI,
+            List        => List,
+            LI_Filename => Xref_Name.all,
+            Handler     => LI_Handler (Handler));
       end if;
 
       if LI.LI.Body_Info = null then
@@ -702,50 +701,26 @@ package body Src_Info.LI_Utils is
    ----------------------
 
    procedure Create_LI_File
-     (File               : out LI_File_Ptr;
-      List               : in out LI_File_List;
-      LI_Full_Filename   : String;
-      Handler            : LI_Handler;
-      Parsed             : Boolean;
-      Compilation_Errors : Boolean := False)
+     (File        : out LI_File_Ptr;
+      List        : in out LI_File_List;
+      LI_Filename : String;
+      Handler     : LI_Handler)
    is
       Success : Boolean;
-      Name    : constant GNAT.OS_Lib.String_Access :=
-        new String' (Base_Name (LI_Full_Filename));
    begin
-      Trace (Me, "Create_LI_File " & Name.all & " Parsed=" & Parsed'Img);
-      if Parsed then
-         File := new LI_File_Constrained'
-           (LI => (Parsed                   => True,
-                   Handler                  => Handler,
-                   LI_Filename              => Name,
-                   Body_Info                => null,
-                   Spec_Info                => null,
-                   Dependencies_Info        => null,
-                   Compilation_Errors_Found => Compilation_Errors,
-                   Separate_Info            => null,
-                   LI_Timestamp             => 0));
-
-         if Is_Regular_File (File.LI.LI_Filename.all) then
-            File.LI.LI_Timestamp := To_Timestamp
-              (File_Time_Stamp (File.LI.LI_Filename.all));
-         end if;
-
-      else
-         File := new LI_File_Constrained'
-           (LI =>  (Parsed        => False,
-                    Handler       => Handler,
-                    LI_Filename   => Name,
-                    Body_Info     => null,
-                    Spec_Info     => null,
-                    Separate_Info => null,
-                    LI_Timestamp  => 0));
-      end if;
+      File := new LI_File_Constrained'
+        (LI =>  (Parsed        => False,
+                 Handler       => Handler,
+                 LI_Filename   => new String' (Base_Name (LI_Filename)),
+                 Body_Info     => null,
+                 Spec_Info     => null,
+                 Separate_Info => null,
+                 LI_Timestamp  => 0));
 
       Add (List.Table, File, Success);
       if not Success then
          Trace (Me, "Unable to insert LI file in the list (Name="
-                & Name.all & ')');
+                & LI_Filename & ')');
          Destroy (File);
          File := null;
       end if;

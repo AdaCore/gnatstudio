@@ -707,11 +707,10 @@ package body Src_Info.ALI is
 
       if File.LI = null then
          Create_LI_File
-           (File             => File.LI,
-            List             => List,
-            LI_Full_Filename => ALI_Filename,
-            Handler          => LI_Handler (Handler),
-            Parsed           => False);
+           (File        => File.LI,
+            List        => List,
+            LI_Filename => ALI_Filename,
+            Handler     => LI_Handler (Handler));
          if File.LI = null then
             raise ALI_Internal_Error;
          end if;
@@ -763,11 +762,10 @@ package body Src_Info.ALI is
 
       if File.LI = null then
          Create_LI_File
-           (File             => File.LI,
-            List             => List,
-            LI_Full_Filename => ALI_Filename,
-            Handler          => LI_Handler (Handler),
-            Parsed           => False);
+           (File        => File.LI,
+            List        => List,
+            LI_Filename => ALI_Filename,
+            Handler     => LI_Handler (Handler));
 
          if File.LI = null then
             raise ALI_Internal_Error;
@@ -1436,15 +1434,18 @@ package body Src_Info.ALI is
 
       if LI_File_Is_New then
          Create_LI_File
-           (File => Tmp,
-            List => List,
-            LI_Full_Filename => Get_Name_String (New_ALI.Afile),
-            Handler => LI_Handler (Handler),
-            Parsed => True,
-            Compilation_Errors => New_ALI.Compile_Errors);
+           (File               => Tmp,
+            List               => List,
+            LI_Filename        => Get_Name_String (New_ALI.Afile),
+            Handler            => LI_Handler (Handler));
          if Tmp = null then
             raise ALI_Internal_Error;
          end if;
+
+         Convert_To_Parsed
+           (Tmp,
+            Update_Timestamp   => True,
+            Compilation_Errors => New_ALI.Compile_Errors);
 
       else
          --  Make a copy of the old LI_File to be able to restore it later
