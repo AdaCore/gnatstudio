@@ -1606,18 +1606,18 @@ package body GVD.Process is
       --  Hide gdb-AE specific capabilities if we are not using a
       --  debugger targeted to VxWorks AE
 
-      Widget := Get_Widget (Window.Factory, -"/Data/Protection Domains");
+      Info_WTX (Process.Debugger, WTX_Version);
 
-      if Widget = null then
-         --  This means that GVD is part of GPS
-         Widget := Get_Widget
+      if WTX_Version /= 3 then
+         Widget := Get_Widget (Window.Factory, -"/Data/Protection Domains");
+
+         if Widget = null then
+            --  This means that GVD is part of GPS
+            Widget := Get_Widget
            (Window.Factory, -"/Debug/Data/Protection Domains");
-      end if;
+         end if;
 
-      if Widget /= null then
-         Info_WTX (Process.Debugger, WTX_Version);
-
-         if WTX_Version /= 3 then
+         if Widget /= null then
             Set_Sensitive (Widget, False);
          end if;
       end if;
