@@ -1080,7 +1080,7 @@ package body Project_Trees is
    function Category_Name (Category : Language_Category) return String is
    begin
       if Category = Cat_Procedure then
-         return "Subprogram";
+         return "subprogram";
 
       else
          declare
