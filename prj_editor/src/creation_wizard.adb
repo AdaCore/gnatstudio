@@ -236,9 +236,10 @@ package body Creation_Wizard is
       Attach (Table, Label, 0, 2, 2, 3);
 
       Gtk_New (Wiz.Project_Location, 255);
+      Set_Text (Wiz.Project_Location, Get_Current_Dir);
       Attach (Table, Wiz.Project_Location, 0, 1, 3, 4);
 
-      Gtk_New (Button, "...");
+      Gtk_New (Button, "Browse");
       Attach (Table, Button, 1, 2, 3, 4, Xoptions => 0);
       Widget_Callback.Object_Connect
         (Button, "clicked",
@@ -279,7 +280,6 @@ package body Creation_Wizard is
       Pack_Start (Box, Scrolled, Expand => True, Fill => True);
 
       Gtk_New (Wiz.Src_Dir_Selection, "/");
-      Show_Directory (Wiz.Src_Dir_Selection, Get_Current_Dir);
       Add (Scrolled, Wiz.Src_Dir_Selection);
       Gtkada.Handlers.Return_Callback.Object_Connect
         (Wiz.Src_Dir_Selection, "button_press_event",
@@ -328,6 +328,8 @@ package body Creation_Wizard is
       --  scrollbar does not allow us to scroll as far right as possible...
       Set_Column_Auto_Resize (Wiz.Src_Dir_List, 0, True);
 
+      Show_Directory (Wiz.Src_Dir_Selection, Get_Current_Dir);
+
       return Gtk_Widget (Vbox);
    end Second_Page;
 
@@ -353,9 +355,9 @@ package body Creation_Wizard is
       Pack_Start (Vbox, Scrolled, Expand => True, Fill => True);
 
       Gtk_New (Wiz.Obj_Dir_Selection, "/");
-      Show_Directory (Wiz.Obj_Dir_Selection, Get_Current_Dir);
       Add (Scrolled, Wiz.Obj_Dir_Selection);
 
+      Show_Directory (Wiz.Obj_Dir_Selection, Get_Current_Dir);
       return Gtk_Widget (Vbox);
    end Third_Page;
 
@@ -761,7 +763,7 @@ package body Creation_Wizard is
    begin
       if Arr'Length /= 0 then
          Pack := Get_Or_Create_Package (Project, Name);
-         Var := Get_Or_Create_Variable (Pack, "switches", List);
+         Var := Get_Or_Create_Attribute (Pack, "switches", List);
          for J in Arr'Range loop
             Append_To_List (Var, Arr (J).all);
          end loop;
@@ -783,18 +785,18 @@ package body Creation_Wizard is
          Path => Get_Chars (Wiz.Project_Location));
 
       --  Append the source directories
-      Var := Get_Or_Create_Variable (Project, "src_dir", List);
+      Var := Get_Or_Create_Attribute (Project, "source_dirs", List);
       for J in 0 .. Num_Src_Dir - 1 loop
          Append_To_List (Var, Get_Text (Wiz.Src_Dir_List, J, 0));
       end loop;
 
       --  Append the build directory
-      Var := Get_Or_Create_Variable (Project, "obj_dir", Single);
+      Var := Get_Or_Create_Attribute (Project, "object_dir", Single);
       Set_Value (Var, Get_Selection (Wiz.Obj_Dir_Selection));
 
       --  Append the switches
       Emit_Switches (Wiz, Project, "gnatmake", Gnatmake);
-      Emit_Switches (Wiz, Project, "gcc", Compiler);
+      Emit_Switches (Wiz, Project, "compiler", Compiler);
       Emit_Switches (Wiz, Project, "gnatbind", Binder);
       Emit_Switches (Wiz, Project, "gnatlink", Linker);
 
