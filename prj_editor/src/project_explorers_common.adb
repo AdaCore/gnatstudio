@@ -420,7 +420,7 @@ package body Project_Explorers_Common is
             case Node_Types'Val
                  (Integer (Get_Int (Model, Iter, Node_Type_Column))) is
 
-               when Directory_Node | Project_Node =>
+               when Directory_Node | Project_Node | Category_Node =>
                   if Get_Event_Type (Event) = Gdk_2button_Press then
                      declare
                         Path    : Gtk_Tree_Path;
@@ -491,6 +491,27 @@ package body Project_Explorers_Common is
                (Get_Int (Model, Node, Node_Type_Column)));
    end Get_Node_Type;
 
+   -------------------
+   -- Set_Node_Type --
+   -------------------
+
+   procedure Set_Node_Type
+     (Model    : Gtk_Tree_Store;
+      Node     : Gtk_Tree_Iter;
+      N_Type   : Node_Types;
+      Expanded : Boolean) is
+   begin
+      Set (Model, Node, Node_Type_Column, Gint (Node_Types'Pos (N_Type)));
+
+      if Expanded then
+         Set (Model, Node, Icon_Column,
+              C_Proxy (Open_Pixbufs (N_Type)));
+      else
+         Set (Model, Node, Icon_Column,
+              C_Proxy (Close_Pixbufs (N_Type)));
+      end if;
+   end Set_Node_Type;
+
    -----------------------
    -- Get_Category_Type --
    -----------------------
@@ -539,5 +560,16 @@ package body Project_Explorers_Common is
    begin
       return Get_String (Model, Node, Base_Name_Column);
    end Get_Base_Name;
+
+   -----------------------
+   -- Get_Absolute_Name --
+   -----------------------
+
+   function Get_Absolute_Name
+     (Model : Gtk_Tree_Store;
+      Node  : Gtk_Tree_Iter) return String is
+   begin
+      return Get_String (Model, Node, Absolute_Name_Column);
+   end Get_Absolute_Name;
 
 end Project_Explorers_Common;

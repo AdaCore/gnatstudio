@@ -126,6 +126,13 @@ package Project_Explorers_Common is
       Node  : Gtk_Tree_Iter) return Node_Types;
    --  Return the type of Node.
 
+   procedure Set_Node_Type
+     (Model    : Gtk_Tree_Store;
+      Node     : Gtk_Tree_Iter;
+      N_Type   : Node_Types;
+      Expanded : Boolean);
+   --  Set the Node type and the pixmap accordingly.
+
    function Get_Category_Type
      (Model : Gtk_Tree_Store;
       Node  : Gtk_Tree_Iter) return Language_Category;
@@ -146,6 +153,11 @@ package Project_Explorers_Common is
      (Model : Gtk_Tree_Store;
       Node  : Gtk_Tree_Iter) return String;
    --  Return the base name for Node.
+
+   function Get_Absolute_Name
+     (Model : Gtk_Tree_Store;
+      Node  : Gtk_Tree_Iter) return String;
+   --  Return the absolute name for Node.
 
    ----------
    -- Misc --
