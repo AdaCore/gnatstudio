@@ -33,8 +33,6 @@ with Gdk.Event;           use Gdk.Event;
 
 with Gtk;                 use Gtk;
 with Gtk.Arguments;       use Gtk.Arguments;
-with Gtk.Check_Menu_Item; use Gtk.Check_Menu_Item;
-with Gtk.Clist;           use Gtk.Clist;
 with Gtk.Dialog;          use Gtk.Dialog;
 with Gtk.Enums;           use Gtk.Enums;
 with Gtk.Handlers;        use Gtk.Handlers;
@@ -42,7 +40,6 @@ with Gtk.Item_Factory;    use Gtk.Item_Factory;
 with Gtk.Menu;            use Gtk.Menu;
 with Gtk.Menu_Item;       use Gtk.Menu_Item;
 with Gtk.Widget;          use Gtk.Widget;
-with Gtk.Label;           use Gtk.Label;
 with Gtk.Object;          use Gtk.Object;
 with Gtk.Window;          use Gtk.Window;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
@@ -86,27 +83,17 @@ with GVD.Preferences;            use GVD.Preferences;
 with GVD.Text_Box.Source_Editor; use GVD.Text_Box.Source_Editor;
 with GVD.Trace;                  use GVD.Trace;
 with GVD.Types;                  use GVD.Types;
+with GVD.Window_Settings;        use GVD.Window_Settings;
 with Language_Handlers;          use Language_Handlers;
 
 with String_List_Utils;          use String_List_Utils;
 
 package body GVD.Process is
 
-   type Call_Stack_Record is record
-      Process : Visual_Debugger;
-      Mask    : Stack_List_Mask;
-   end record;
-
    package TTY_Timeout is new Gtk.Main.Timeout (Visual_Debugger);
 
    function TTY_Cb (Data : Visual_Debugger) return Boolean;
    --  Callback for communication with a tty.
-
-   procedure Setup (Data : Call_Stack_Record; Id : Handler_Id);
-   --  Make sure that when Data is destroyed, Id is properly removed
-
-   package Call_Stack_Cb is new Gtk.Handlers.User_Callback_With_Setup
-     (Gtk_Menu_Item_Record, Call_Stack_Record, Setup);
 
    package Canvas_Event_Handler is new Gtk.Handlers.Return_Callback
      (Visual_Debugger_Record, Boolean);
@@ -159,11 +146,6 @@ package body GVD.Process is
    -----------------------
    -- Local Subprograms --
    -----------------------
-
-   procedure Change_Mask
-     (Widget : access Gtk_Menu_Item_Record'Class;
-      Mask   : Call_Stack_Record);
-   --  Toggle the display of a specific column in the Stack_List window.
 
    function Debugger_Contextual_Menu
      (Process  : access Visual_Debugger_Record'Class)
@@ -220,16 +202,6 @@ package body GVD.Process is
      (Object : access Glib.Object.GObject_Record'Class;
       Params : Gtk.Arguments.Gtk_Args) return Boolean;
    --  Callback for the "delete_event" signal on the editor text
-
-   procedure On_Stack_List_Select_Row
-     (Object : access Glib.Object.GObject_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args);
-   --  Callback for the "select_row" signal on the stack list.
-
-   function On_Stack_List_Button_Press_Event
-     (Object : access Glib.Object.GObject_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args) return Boolean;
-   --  Callback for the "button_press" signal on the stack list.
 
    function On_Command_Scrolledwindow_Delete_Event
      (Object : access Glib.Object.GObject_Record'Class;
@@ -312,15 +284,6 @@ package body GVD.Process is
 
          return True;
    end TTY_Cb;
-
-   -----------
-   -- Setup --
-   -----------
-
-   procedure Setup (Data : Call_Stack_Record; Id : Handler_Id) is
-   begin
-      Add_Watch (Id, Data.Process);
-   end Setup;
 
    ----------------------
    -- Complete_Command --
@@ -431,7 +394,7 @@ package body GVD.Process is
         Visual_Debugger (Object);
 
    begin
-      Process.Stack_Scrolledwindow := null;
+      Process.Stack := null;
       return False;
    end On_Stack_Delete_Event;
 
@@ -447,47 +410,6 @@ package body GVD.Process is
    begin
       return False;
    end On_Editor_Text_Delete_Event;
-
-   ------------------------------
-   -- On_Stack_List_Select_Row --
-   ------------------------------
-
-   procedure On_Stack_List_Select_Row
-     (Object : access GObject_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args)
-   is
-      Frame     : constant Gint := To_Gint (Params, 1) + 1;
-      Process   : constant Visual_Debugger :=
-        Visual_Debugger (Object);
-
-   begin
-      Stack_Frame (Process.Debugger, Positive (Frame), GVD.Types.Visible);
-   end On_Stack_List_Select_Row;
-
-   --------------------------------------
-   -- On_Stack_List_Button_Press_Event --
-   --------------------------------------
-
-   function On_Stack_List_Button_Press_Event
-     (Object : access GObject_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args) return Boolean
-   is
-      Arg1    : constant Gdk_Event := To_Event (Params, 1);
-      Process : constant Visual_Debugger :=
-        Visual_Debugger (Object);
-
-   begin
-      if Get_Button (Arg1) = 3
-        and then Get_Event_Type (Arg1) = Button_Press
-      then
-         Popup (Call_Stack_Contextual_Menu (Process),
-                Button        => Gdk.Event.Get_Button (Arg1),
-                Activate_Time => Gdk.Event.Get_Time (Arg1));
-         Emit_Stop_By_Name (Process.Stack_List, "button_press_event");
-         return True;
-      end if;
-      return False;
-   end On_Stack_List_Button_Press_Event;
 
    --------------------------------------------
    -- On_Command_Scrolledwindow_Delete_Event --
@@ -567,83 +489,6 @@ package body GVD.Process is
            Regexp => new Pattern_Matcher'(Regexp),
            Next   => Process.Filters);
    end Add_Regexp_Filter;
-
-   --------------------------------
-   -- Call_Stack_Contextual_Menu --
-   --------------------------------
-
-   function Call_Stack_Contextual_Menu
-     (Process : access Visual_Debugger_Record'Class)
-      return Gtk.Menu.Gtk_Menu
-   is
-      Check : Gtk_Check_Menu_Item;
-   begin
-      --  Destroy the old menu (We need to recompute the state of the toggle
-      --  buttons)
-
-      if Process.Call_Stack_Contextual_Menu /= null then
-         Destroy (Process.Call_Stack_Contextual_Menu);
-      end if;
-
-      Gtk_New (Process.Call_Stack_Contextual_Menu);
-      Gtk_New (Check, Label => -"Frame Number");
-      Set_Active (Check, (Process.Backtrace_Mask and Frame_Num) /= 0);
-      Append (Process.Call_Stack_Contextual_Menu, Check);
-      Call_Stack_Cb.Connect
-        (Check, "activate",
-         Call_Stack_Cb.To_Marshaller (Change_Mask'Access),
-         (Visual_Debugger (Process), Frame_Num));
-
-      Gtk_New (Check, Label => -"Program Counter");
-      Set_Active (Check, (Process.Backtrace_Mask and Program_Counter) /= 0);
-      Append (Process.Call_Stack_Contextual_Menu, Check);
-      Call_Stack_Cb.Connect
-        (Check, "activate",
-         Call_Stack_Cb.To_Marshaller (Change_Mask'Access),
-         (Visual_Debugger (Process), Program_Counter));
-
-      Gtk_New (Check, Label => -"Subprogram Name");
-      Set_Active (Check, (Process.Backtrace_Mask and Subprog_Name) /= 0);
-      Append (Process.Call_Stack_Contextual_Menu, Check);
-      Call_Stack_Cb.Connect
-        (Check, "activate",
-         Call_Stack_Cb.To_Marshaller (Change_Mask'Access),
-         (Visual_Debugger (Process), Subprog_Name));
-
-      Gtk_New (Check, Label => -"Parameters");
-      Set_Active (Check, (Process.Backtrace_Mask and Params) /= 0);
-      Append (Process.Call_Stack_Contextual_Menu, Check);
-      Call_Stack_Cb.Connect
-        (Check, "activate",
-         Call_Stack_Cb.To_Marshaller (Change_Mask'Access),
-         (Visual_Debugger (Process), Params));
-
-      Gtk_New (Check, Label => -"File Location");
-      Set_Active (Check, (Process.Backtrace_Mask and File_Location) /= 0);
-      Append (Process.Call_Stack_Contextual_Menu, Check);
-      Call_Stack_Cb.Connect
-        (Check, "activate",
-         Call_Stack_Cb.To_Marshaller (Change_Mask'Access),
-         (Visual_Debugger (Process), File_Location));
-
-      Show_All (Process.Call_Stack_Contextual_Menu);
-      return Process.Call_Stack_Contextual_Menu;
-   end Call_Stack_Contextual_Menu;
-
-   -----------------
-   -- Change_Mask --
-   -----------------
-
-   procedure Change_Mask
-     (Widget : access Gtk_Menu_Item_Record'Class;
-      Mask   : Call_Stack_Record)
-   is
-      pragma Unreferenced (Widget);
-   begin
-      Mask.Process.Backtrace_Mask :=
-        Mask.Process.Backtrace_Mask xor Mask.Mask;
-      Show_Call_Stack_Columns (Mask.Process);
-   end Change_Mask;
 
    -------------
    -- Convert --
@@ -847,11 +692,11 @@ package body GVD.Process is
          Process.Current_Output.all,
          First, Last, Frame_Info);
 
-      if Process.Stack_Scrolledwindow /= null
+      if Process.Stack /= null
         and then Frame_Info = Location_Found
       then
-         Highlight_Stack_Frame
-           (Process,
+         Highlight_Frame
+           (Process.Stack,
             Integer'Value (Process.Current_Output (First .. Last)));
       end if;
 
@@ -1058,59 +903,17 @@ package body GVD.Process is
    procedure Create_Call_Stack
      (Process : access Visual_Debugger_Record'Class)
    is
-      Label : Gtk_Label;
       Child : MDI_Child;
    begin
-      Gtk_New (Process.Stack_Scrolledwindow);
-      Set_Policy
-        (Process.Stack_Scrolledwindow, Policy_Automatic, Policy_Automatic);
+      Gtk_New (Process.Stack);
+
       Object_Return_Callback.Object_Connect
-        (Process.Stack_Scrolledwindow, "delete_event",
+        (Process.Stack, "delete_event",
          On_Stack_Delete_Event'Access, Process);
 
-      Gtk_New (Process.Stack_List, 5);
-      Set_Selection_Mode (Process.Stack_List, Selection_Single);
-      Set_Show_Titles (Process.Stack_List, True);
-      Set_Events (Process.Stack_List,
-        Button_Press_Mask or
-        Button_Release_Mask);
-      Process.Stack_List_Select_Id :=
-        Object_Callback.Object_Connect
-          (Process.Stack_List, "select_row",
-           On_Stack_List_Select_Row'Access, Process);
-      Object_Return_Callback.Object_Connect
-        (Process.Stack_List, "button_press_event",
-         On_Stack_List_Button_Press_Event'Access, Process);
-      Add (Process.Stack_Scrolledwindow, Process.Stack_List);
+      Show_All (Process.Stack);
 
-      Gtk_New (Label, -"Num");
-      Set_Column_Widget (Process.Stack_List, 0, Label);
-
-      Gtk_New (Label, -"PC");
-      Set_Column_Widget (Process.Stack_List, 1, Label);
-
-      Gtk_New (Label, -"Subprogram");
-      Set_Column_Widget (Process.Stack_List, 2, Label);
-
-      Gtk_New (Label, -"Parameters");
-      Set_Column_Widget (Process.Stack_List, 3, Label);
-
-      Gtk_New (Label, -"Location");
-      Set_Column_Widget (Process.Stack_List, 4, Label);
-
-      --  ??? The following may be too costly, but is the only way to get
-      --  proper horizontal scrolling working. Will be fixed when switching
-      --  to TreeView
-
-      for Column in Gint range 0 .. 4 loop
-         Set_Column_Auto_Resize (Process.Stack_List, Column, True);
-      end loop;
-
-      Show_Call_Stack_Columns (Process);
-
-      Show_All (Process.Stack_Scrolledwindow);
-
-      Child := Put (Process.Window.Process_Mdi, Process.Stack_Scrolledwindow);
+      Child := Put (Process.Window.Process_Mdi, Process.Stack);
       Set_Focus_Child (Child);
       Set_Title (Child, -"Call Stack");
       Set_Dock_Side (Child, Right);
@@ -1551,8 +1354,8 @@ package body GVD.Process is
          Close (Window.Process_Mdi, Process.Debugger_Text);
          Close (Window.Process_Mdi, Process.Data_Scrolledwindow);
 
-         if Process.Stack_Scrolledwindow /= null then
-            Close (Window.Process_Mdi, Process.Stack_Scrolledwindow);
+         if Process.Stack /= null then
+            Close (Window.Process_Mdi, Process.Stack);
          end if;
 
          Process.Exiting := False;
