@@ -468,7 +468,7 @@ package body Src_Info.CPP is
          begin
             Enum_Def := Find (SN_Table (E), Type_Name);
             Free (Enum_Def);
-            Desc.Kind := Enumeration_Object;
+            Desc.Kind := Enumeration_Type;
             Success := True;
             return;
          exception
