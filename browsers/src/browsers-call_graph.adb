@@ -25,7 +25,6 @@ with Gdk.Drawable;     use Gdk.Drawable;
 with Gdk.GC;           use Gdk.GC;
 with Gdk.Pixbuf;       use Gdk.Pixbuf;
 with Gdk.Event;        use Gdk.Event;
-with Gdk.Font;         use Gdk.Font;
 with Gtk.Enums;        use Gtk.Enums;
 with Gtk.Main;         use Gtk.Main;
 with Gtk.Menu;         use Gtk.Menu;
@@ -35,6 +34,7 @@ with Gtk.Widget;       use Gtk.Widget;
 with Gtkada.Canvas;    use Gtkada.Canvas;
 with Gtkada.Handlers;  use Gtkada.Handlers;
 with Gtkada.MDI;       use Gtkada.MDI;
+with Pango.Layout;     use Pango.Layout;
 
 with Src_Info;                 use Src_Info;
 with Src_Info.Queries;         use Src_Info.Queries;
@@ -220,34 +220,29 @@ package body Browsers.Call_Graph is
       Entity  : Src_Info.Queries.Entity_Information)
    is
       B : constant Call_Graph_Browser := Call_Graph_Browser (Browser);
-      Font : Gdk_Font;
       Width, Height : Gint;
    begin
       Item.Entity   := Copy (Entity);
       Item.Browser  := Glide_Browser (Browser);
 
-      Font := Get_Text_Font (Browser);
-
+      Item.Layout   := Create_Pango_Layout (Browser);
+      Set_Font_Description
+        (Item.Layout, Get_Pref (Get_Kernel (Browser), Browsers_Link_Font));
       if Get_Declaration_File_Of (Entity) /= "" then
-         Width  := Gint'Max
-           (String_Width (Font, Get_Name (Entity)),
-            String_Width (Font, Get_Declaration_File_Of (Entity)
-                          & ':' & Image (Get_Declaration_Line_Of (Entity))));
+         Set_Text (Item.Layout, Get_Name (Entity) & ASCII.LF
+                   & Get_Declaration_File_Of (Entity)
+                   & ':' & Image (Get_Declaration_Line_Of (Entity)));
       else
-         Width  := Gint'Max
-           (String_Width (Font, Get_Name (Entity)),
-            String_Width (Font, -"<Unresolved>"));
+         Set_Text
+           (Item.Layout, Get_Name (Entity) & ASCII.LF & (-"<Unresolved>"));
       end if;
 
-      Width := Width + 4 * Margin
+      Get_Pixel_Size (Item.Layout, Width, Height);
+      Width := Width + 2 * Margin
         + Get_Width (B.Left_Arrow) + Get_Width (B.Right_Arrow);
 
-      Height := 2 * (Get_Ascent (Font) + Get_Descent (Font));
-      Height := Gint'Max (Height, Get_Height (B.Left_Arrow));
-      Height := Height + 2 * Margin;
-
       Set_Screen_Size_And_Pixmap
-        (Item, Get_Window (Browser), Width, Height);
+        (Item, Get_Window (Browser), Width, Height + 2 * Margin);
    end Initialize;
 
    -------------
@@ -257,6 +252,7 @@ package body Browsers.Call_Graph is
    procedure Destroy (Item : in out Entity_Item_Record) is
    begin
       Destroy (Item.Entity);
+      Unref (Item.Layout);
    end Destroy;
 
    -------------
@@ -268,37 +264,15 @@ package body Browsers.Call_Graph is
       Item    : access Entity_Item_Record)
    is
       B : constant Call_Graph_Browser := Call_Graph_Browser (Browser);
-      Font : constant Gdk_Font := Get_Text_Font (Browser);
    begin
       Draw_Item_Background (Browser, Item);
-      Draw_Text
-        (Pixmap (Item),
-         Font  => Font,
-         GC    => Get_Text_GC (Browser),
-         X     => Margin + Get_Width (B.Left_Arrow),
-         Y     => Margin + Get_Ascent (Font),
-         Text  => Get_Name (Item.Entity));
 
-      --  The file might be the empty string for an unresolved overloaded
-      --  entity.
-      if Get_Declaration_File_Of (Item.Entity) /= "" then
-         Draw_Text
-           (Pixmap (Item),
-            Font  => Font,
-            GC    => Get_Text_GC (Browser),
-            X     => Margin + Get_Width (B.Left_Arrow),
-            Y     => Margin + 2 * Get_Ascent (Font) + Get_Descent (Font),
-            Text  => Get_Declaration_File_Of (Item.Entity)
-            & ':' & Image (Get_Declaration_Line_Of (Item.Entity)));
-      else
-         Draw_Text
-           (Pixmap (Item),
-            Font  => Font,
-            GC    => Get_Text_GC (Browser),
-            X     => Margin + Get_Width (B.Left_Arrow),
-            Y     => Margin + 2 * Get_Ascent (Font) + Get_Descent (Font),
-            Text  => -"<Unresolved>");
-      end if;
+      Draw_Layout
+        (Drawable => Pixmap (Item),
+         GC       => Get_Text_GC (Browser),
+         X        => Margin + Get_Width (B.Left_Arrow),
+         Y        => Margin,
+         Layout   => Item.Layout);
 
       if not Item.From_Parsed then
          Render_To_Drawable_Alpha

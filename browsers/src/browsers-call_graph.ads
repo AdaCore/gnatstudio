@@ -27,6 +27,7 @@ with Gtk.Main;
 with Gtk.Menu;
 with Gtkada.Canvas;
 with Glide_Kernel;
+with Pango.Layout;
 with Browsers.Canvas;
 with Src_Info.Queries;
 
@@ -112,6 +113,7 @@ private
    with record
       Browser     : Browsers.Canvas.Glide_Browser;
       Entity      : Src_Info.Queries.Entity_Information;
+      Layout      : Pango.Layout.Pango_Layout;
 
       From_Parsed, To_Parsed : Boolean := False;
       --  These two booleans are set to True when the parents of the item have
