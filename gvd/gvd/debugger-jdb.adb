@@ -132,24 +132,24 @@ package body Debugger.Jdb is
       --  ??? Should avoid the duplication of this code
 
       if Main_Debug_Window_Access (Window).Debug_Mode then
-         Add_Output_Filter
+         Add_Filter
            (Get_Descriptor (Debugger.Process).all,
-            Output_Filter'Access,
+            Output_Filter'Access, Output,
             Window.all'Address);
-         Add_Input_Filter
+         Add_Filter
            (Get_Descriptor (Debugger.Process).all,
-            Input_Filter'Access,
+            Input_Filter'Access, Input,
             Window.all'Address);
       end if;
 
       if Main_Debug_Window_Access (Window).TTY_Mode then
-         Add_Output_Filter
+         Add_Filter
            (Get_Descriptor (Debugger.Process).all,
-            TTY_Filter'Access,
+            TTY_Filter'Access, Output,
             Debugger.Process.all'Address);
-         Add_Input_Filter
+         Add_Filter
            (Get_Descriptor (Debugger.Process).all,
-            TTY_Filter'Access,
+            TTY_Filter'Access, Input,
             Debugger.Process.all'Address);
       end if;
    end Spawn;

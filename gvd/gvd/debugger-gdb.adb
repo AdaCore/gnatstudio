@@ -124,13 +124,13 @@ package body Debugger.Gdb is
    --  How to get the range of addresses for a given line
 
    procedure Language_Filter
-     (Descriptor : GNAT.Expect.Process_Descriptor;
+     (Descriptor : GNAT.Expect.Process_Descriptor'Class;
       Str        : String;
       Window     : System.Address);
    --  Filter used to detect a change in the current language.
 
    procedure Question_Filter
-     (Descriptor : GNAT.Expect.Process_Descriptor;
+     (Descriptor : GNAT.Expect.Process_Descriptor'Class;
       Str        : String;
       Window     : System.Address);
    --  Filter used to detect questions from gdb.
@@ -153,7 +153,7 @@ package body Debugger.Gdb is
    ---------------------
 
    procedure Language_Filter
-     (Descriptor : GNAT.Expect.Process_Descriptor;
+     (Descriptor : GNAT.Expect.Process_Descriptor'Class;
       Str        : String;
       Window     : System.Address)
    is
@@ -191,7 +191,7 @@ package body Debugger.Gdb is
    ---------------------
 
    procedure Question_Filter
-     (Descriptor : GNAT.Expect.Process_Descriptor;
+     (Descriptor : GNAT.Expect.Process_Descriptor'Class;
       Str        : String;
       Window     : System.Address)
    is
@@ -459,17 +459,17 @@ package body Debugger.Gdb is
       --  access the main_debug_window.
 
       if Window /= null then
-         Add_Output_Filter
+         Add_Filter
            (Get_Descriptor (Debugger.Process).all,
-            Language_Filter'Access,
+            Language_Filter'Access, Output,
             Window.all'Address);
 
          --  Set another filter to detect the cases when gdb asks questions,
          --  so that we can display dialogs.
 
-         Add_Output_Filter
+         Add_Filter
            (Get_Descriptor (Debugger.Process).all,
-            Question_Filter'Access,
+            Question_Filter'Access, Output,
             Window.all'Address);
       end if;
 
@@ -477,24 +477,24 @@ package body Debugger.Gdb is
 
       if Window /= null then
          if Main_Debug_Window_Access (Window).Debug_Mode then
-            Add_Output_Filter
+            Add_Filter
               (Get_Descriptor (Debugger.Process).all,
-               Output_Filter'Access,
+               Output_Filter'Access, Output,
                Window.all'Address);
-            Add_Input_Filter
+            Add_Filter
               (Get_Descriptor (Debugger.Process).all,
-               Input_Filter'Access,
+               Input_Filter'Access, Input,
                Window.all'Address);
          end if;
 
          if Main_Debug_Window_Access (Window).TTY_Mode then
-            Add_Output_Filter
+            Add_Filter
               (Get_Descriptor (Debugger.Process).all,
-               TTY_Filter'Access,
+               TTY_Filter'Access, Output,
                Debugger.Process.all'Address);
-            Add_Input_Filter
+            Add_Filter
               (Get_Descriptor (Debugger.Process).all,
-               TTY_Filter'Access,
+               TTY_Filter'Access, Input,
                Debugger.Process.all'Address);
          end if;
       end if;

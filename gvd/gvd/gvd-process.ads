@@ -185,7 +185,8 @@ package Odd.Process is
    function Convert
      (Main_Debug_Window : access
         Main_Debug_Window_Pkg.Main_Debug_Window_Record'Class;
-      Descriptor : GNAT.Expect.Process_Descriptor) return Debugger_Process_Tab;
+      Descriptor : GNAT.Expect.Process_Descriptor'Class)
+     return Debugger_Process_Tab;
    --  Return the debugger_descriptor associated with a Process_Descriptor.
    --  If no such page is found, an exception Debugger_Not_Found is raised.
 

@@ -30,6 +30,9 @@ with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
 with Ada.Strings;       use Ada.Strings;
 with Ada.Strings.Fixed; use Ada.Strings.Fixed;
 with Gtk.Window;        use Gtk.Window;
+with Odd.Preferences;
+
+with GNAT.Expect.Tty;   use GNAT.Expect.Tty;
 
 package body Debugger is
 
@@ -163,6 +166,13 @@ package body Debugger is
    is
       Descriptor : Process_Descriptor_Access;
    begin
+
+      if Odd.Preferences.Use_Ptys then
+         Descriptor := new Tty_Process_Descriptor;
+      else
+         Descriptor := new Process_Descriptor;
+      end if;
+
       --  Start the external debugger.
       --  Note that there is no limitation on the buffer size, since we can
       --  not control the length of what gdb will return...
@@ -170,11 +180,10 @@ package body Debugger is
       Debugger.Process := Proxy;
 
       if Remote_Machine = "" then
-         Descriptor := new Process_Descriptor'
-           (Non_Blocking_Spawn
-             (Debugger_Name, Arguments,
-              Buffer_Size => 0,
-              Err_To_Out => True));
+         Non_Blocking_Spawn
+           (Descriptor.all, Debugger_Name, Arguments,
+            Buffer_Size => 0,
+            Err_To_Out => True);
       else
          declare
             Real_Arguments : Argument_List (1 .. Arguments'Length + 2);
@@ -183,12 +192,12 @@ package body Debugger is
             Real_Arguments (2) := new String'(Debugger_Name);
             Real_Arguments (3 .. Real_Arguments'Last) := Arguments;
 
-            Descriptor := new Process_Descriptor'
-              (Non_Blocking_Spawn
-                (Remote_Protocol,
-                 Real_Arguments,
-                 Buffer_Size => 0,
-                 Err_To_Out => True));
+            Non_Blocking_Spawn
+              (Descriptor.all,
+               Remote_Protocol,
+               Real_Arguments,
+               Buffer_Size => 0,
+               Err_To_Out => True);
             Free (Real_Arguments (1));
             Free (Real_Arguments (2));
          end;

@@ -24,13 +24,13 @@ with System;
 package Odd.Trace is
 
    procedure Input_Filter
-     (Descriptor : Process_Descriptor;
+     (Descriptor : Process_Descriptor'Class;
       Str        : String;
       User_Data  : System.Address := System.Null_Address);
    --  Filter that should be called when Odd receives inputs.
 
    procedure Output_Filter
-     (Descriptor : Process_Descriptor;
+     (Descriptor : Process_Descriptor'Class;
       Str        : String;
       User_Data  : System.Address := System.Null_Address);
    --  Filter that should be called when Odd receives output from the

@@ -177,7 +177,7 @@ package body Odd.Process is
    --  that were set for the debugger.
 
    procedure Text_Output_Handler
-     (Descriptor : GNAT.Expect.Process_Descriptor;
+     (Descriptor : GNAT.Expect.Process_Descriptor'Class;
       Str        : String;
       Window     : System.Address);
    --  Standard handler to add gdb's output to the debugger window.
@@ -199,7 +199,8 @@ package body Odd.Process is
 
    function Convert
      (Main_Debug_Window : access Main_Debug_Window_Record'Class;
-      Descriptor : GNAT.Expect.Process_Descriptor) return Debugger_Process_Tab
+      Descriptor : GNAT.Expect.Process_Descriptor'Class)
+     return Debugger_Process_Tab
    is
       Page      : Gtk_Widget;
       Num_Pages : constant Gint :=
@@ -387,7 +388,7 @@ package body Odd.Process is
    -------------------------
 
    procedure Text_Output_Handler
-     (Descriptor : GNAT.Expect.Process_Descriptor;
+     (Descriptor : GNAT.Expect.Process_Descriptor'Class;
       Str        : String;
       Window     : System.Address)
    is
@@ -659,9 +660,9 @@ package body Odd.Process is
       --  so that for instance the language detection takes place before we
       --  try to detect any reference to a file/line.
 
-      Add_Output_Filter
+      Add_Filter
         (Get_Descriptor (Get_Process (Process.Debugger)).all,
-         Text_Output_Handler'Access, Window.all'Address,
+         Text_Output_Handler'Access, Output, Window.all'Address,
          After => True);
 
       --  This filter is only required in some rare cases, since most of the

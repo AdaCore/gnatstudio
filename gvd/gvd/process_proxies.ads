@@ -143,7 +143,7 @@ package Process_Proxies is
    -------------
 
    procedure TTY_Filter
-     (Descriptor : GNAT.Expect.Process_Descriptor;
+     (Descriptor : GNAT.Expect.Process_Descriptor'Class;
       Str        : String;
       Proxy      : System.Address);
    --  Can be used as a filter to simulate a command line interface.

@@ -69,7 +69,7 @@ package body Odd.Trace is
    ------------------
 
    procedure Input_Filter
-     (Descriptor : Process_Descriptor;
+     (Descriptor : Process_Descriptor'Class;
       Str        : String;
       User_Data  : System.Address := System.Null_Address)
    is
@@ -105,7 +105,7 @@ package body Odd.Trace is
    -------------------
 
    procedure Output_Filter
-     (Descriptor : Process_Descriptor;
+     (Descriptor : Process_Descriptor'Class;
       Str        : String;
       User_Data  : System.Address := System.Null_Address)
    is

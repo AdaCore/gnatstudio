@@ -45,7 +45,7 @@ package body Process_Proxies is
       procedure Free_Internal is new Unchecked_Deallocation
         (Process_Proxy'Class, Process_Proxy_Access);
       procedure Free_Internal is new Unchecked_Deallocation
-        (GNAT.Expect.Process_Descriptor,
+        (GNAT.Expect.Process_Descriptor'Class,
          GNAT.Expect.Process_Descriptor_Access);
       procedure Free_Internal is new Unchecked_Deallocation
         (Boolean, Boolean_Access);
@@ -318,7 +318,7 @@ package body Process_Proxies is
    ----------------
 
    procedure TTY_Filter
-     (Descriptor : GNAT.Expect.Process_Descriptor;
+     (Descriptor : GNAT.Expect.Process_Descriptor'Class;
       Str        : String;
       Proxy      : System.Address)
    is
