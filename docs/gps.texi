@@ -8335,6 +8335,53 @@ It also accepts any number of @code{<entry>} children, each has a mandatory
 equivalent of the switch. In our example, we need one @code{<entry>} child
 for "-gnatya", one for "-gnatyb",@dots{}.
 
+The exact algorithm used by GPS is the following:
+@itemize
+@item For each switch on the command line, it is expanded either through the
+ standard GNAT handling (thus "-gnatwuv" is made equivalent to
+ "-gnatwu -gnatwv"), or through the definition in the custom file (if an XML
+ node has a @code{switch} attribute that matches exactly, then it is replaced
+ by all the switches given in the @code{<entry>} children).
+
+@smallexample
+If we have
+  <expansion switch="-gnatwa">
+     <entry switch="-gnatwc" />
+     <entry switch="-gnatwd" />
+  </expansion>
+then any occurrence of "-gnatwa" on the command line is expanded to
+"-gnatwc -gnatwd"
+@end smallexample
+
+@item Then the switches on the command line are grouped together as much
+ as possible. For all switch on the command line, if it starts with one of
+ the values given to the @code{switch} attribute of an @code{<expansion>} node,
+ then it is grouped with all other similar switches.
+
+@smallexample
+if the XML file contains
+  <expansion switch="-gnatw" />
+then the command line "-gnatwc -gnatt -gnatwd" is transformed
+into "-gnatwcd -gnatt", grouping the switches that start with
+"-gnatw".
+@end smallexample
+
+@item Finally, the resuling switches are compared with the
+@code{alias} attributes of the @code{<expansion>} nodes, and
+replaced appropriately.
+
+@smallexample
+if the XML file contains
+   <expansion switch="-gnatwa" alias="-gnatwcd" />
+then the command line generated at the second step is further
+transformed into "-gnatwa -gnatt".
+@end smallexample
+
+@end itemize
+
+This rather complex mechanism allows one to either use the various buttons
+and GUI widgets to edit the switches, or to manually edit the command line.
+
 @end table
 
 @c --------------------------------------------------------------------------
