@@ -1445,8 +1445,7 @@ package body VCS_View_API is
             All_Logs_Exist := False;
             Open_File_Editor
               (Kernel,
-               Get_Log_From_File
-                 (Kernel, String_List.Data (Files_Temp), True),
+               Get_Log_From_File (Kernel, String_List.Data (Files_Temp), True),
                From_Path => False);
          end if;
 
