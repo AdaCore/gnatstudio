@@ -55,13 +55,6 @@ begin
    Set_Border_Width (Vdiff.File1_Box, 5);
    Pack_Start (Vdiff.Vbox1, Vdiff.File1_Box, True, True, 0);
 
-   Gtk_New (Vdiff.Frame_Draw1);
-   Set_Shadow_Type (Vdiff.Frame_Draw1, Shadow_In);
-   Pack_Start (Vdiff.File1_Box, Vdiff.Frame_Draw1, False, True, 0);
-
-   Gtk_New (Vdiff.Drawingarea1);
-   Add (Vdiff.Frame_Draw1, Vdiff.Drawingarea1);
-
    Gtk_New (Vdiff.Scrolledwindow1);
    Set_Policy (Vdiff.Scrolledwindow1, Policy_Always, Policy_Always);
    Pack_Start (Vdiff.File1_Box, Vdiff.Scrolledwindow1, True, True, 0);
@@ -115,13 +108,6 @@ begin
    Gtk_New_Hbox (Vdiff.File2_Box, False, 5);
    Set_Border_Width (Vdiff.File2_Box, 5);
    Pack_Start (Vdiff.Vbox2, Vdiff.File2_Box, True, True, 0);
-
-   Gtk_New (Vdiff.Frame_Draw2);
-   Set_Shadow_Type (Vdiff.Frame_Draw2, Shadow_In);
-   Pack_Start (Vdiff.File2_Box, Vdiff.Frame_Draw2, False, True, 0);
-
-   Gtk_New (Vdiff.Drawingarea2);
-   Add (Vdiff.Frame_Draw2, Vdiff.Drawingarea2);
 
    Gtk_New (Vdiff.Scrolledwindow2);
    Set_Policy (Vdiff.Scrolledwindow2, Policy_Always, Policy_Always);
