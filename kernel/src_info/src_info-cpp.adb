@@ -350,7 +350,7 @@ package body Src_Info.CPP is
      (Full_Filename : String;
       Handler       : access CPP_LI_Handler_Record'Class;
       File          : in out LI_File_Ptr;
-      Project_View     : Prj.Project_Id;
+      Project_View  : Prj.Project_Id;
       List_Of_Files : in out LI_File_List);
    --  Process the SN databases to create the LI structure for
    --  Source_Filename. Source_Filename is the name of the file as it appears
@@ -401,6 +401,8 @@ package body Src_Info.CPP is
       Handler      : access CPP_LI_Handler_Record'Class;
       File         : in out LI_File_Ptr;
       List         : in out LI_File_List;
+      Project_View : Prj.Project_Id;
+      Module_Type_Defs : Module_Typedefs_List;
       Decl_Info    : out E_Declaration_Info_List);
    --  Attempts to find/create the first forward declaration
    --  for the method. Returns null if not found
@@ -998,6 +1000,11 @@ package body Src_Info.CPP is
                Kind               => Record_Type,
                Scope              => Global_Scope,
                Declaration_Info   => Decl_Info);
+            Set_End_Of_Scope
+              (Decl_Info,
+               Decl_Info.Value.Declaration.Location.File.LI,
+               CL_Tab.End_Position,
+               End_Of_Spec);
          end if;
       end if;
    end Find_Or_Create_Class;
@@ -1041,21 +1048,24 @@ package body Src_Info.CPP is
    ------------------------------------
 
    procedure Find_First_Forward_Declaration
-     (Buffer       : in String_Access;
-      Class_Name   : in Segment;
-      Name         : in Segment;
-      Filename     : in String;
-      Return_Type  : in Segment;
-      Arg_Types    : in Segment_Vector.Node_Access;
-      Handler      : access CPP_LI_Handler_Record'Class;
-      File         : in out LI_File_Ptr;
-      List         : in out LI_File_List;
-      Decl_Info    : out E_Declaration_Info_List)
+     (Buffer           : in String_Access;
+      Class_Name       : in Segment;
+      Name             : in Segment;
+      Filename         : in String;
+      Return_Type      : in Segment;
+      Arg_Types        : in Segment_Vector.Node_Access;
+      Handler          : access CPP_LI_Handler_Record'Class;
+      File             : in out LI_File_Ptr;
+      List             : in out LI_File_List;
+      Project_View     : Prj.Project_Id;
+      Module_Type_Defs : Module_Typedefs_List;
+      Decl_Info        : out E_Declaration_Info_List)
    is
       P            : Pair_Ptr;
       MD_Tab       : MD_Table;
       MD_Tab_Tmp   : MD_Table;
       First_MD_Pos : Point := Invalid_Point;
+      CL_Tab       : CL_Table;
    begin
       Decl_Info := null;
       if not Is_Open (Handler.SN_Table (MD)) then
@@ -1140,14 +1150,30 @@ package body Src_Info.CPP is
          Decl_Info := Find_Dependency_Declaration
            (File        => File,
             Symbol_Name => Buffer (Name.First .. Name.Last),
---  ??? class name may refer to non-existent class. We may get confused here
---  by an entity with the same name
---            Class_Name  => Buffer (Class_Name.First .. Class_Name.Last),
+            Class_Name  => Buffer (Class_Name.First .. Class_Name.Last),
             Filename    => MD_Tab.Buffer
                (MD_Tab.File_Name.First .. MD_Tab.File_Name.Last),
             Location    => First_MD_Pos);
 
          if Decl_Info = null then
+            begin -- create class declaration if needed
+               CL_Tab := Find
+                 (Handler.SN_Table (CL),
+                  Buffer (Class_Name.First .. Class_Name.Last));
+               Find_Or_Create_Class
+                 (Handler,
+                  CL_Tab,
+                  Filename,
+                  Decl_Info,
+                  File,
+                  List,
+                  Project_View,
+                  Module_Type_Defs);
+               Free (CL_Tab);
+            exception
+               when Not_Found =>
+                  null;
+            end;
             Insert_Dependency_Declaration
               (Handler            => Handler,
                File               => File,
@@ -2184,7 +2210,6 @@ package body Src_Info.CPP is
       Project_View     : Prj.Project_Id;
       Module_Type_Defs : Module_Typedefs_List)
    is
-      pragma Unreferenced (Project_View, Module_Type_Defs);
       P             : Pair_Ptr;
       Fn            : MI_Table;
       MDecl         : MD_Table;
@@ -2287,6 +2312,8 @@ package body Src_Info.CPP is
             Handler,
             File,
             List,
+            Project_View,
+            Module_Type_Defs,
             Decl_Info);
 
          if Decl_Info = null then
@@ -2646,8 +2673,7 @@ package body Src_Info.CPP is
    --------------------
    -- Sym_CL_Handler --
    --------------------
-   --  Note: this handler is called from Find_Or_Create_Class function as
-   --  well
+   --  Note: this handler is called from many different functions
 
    procedure Sym_CL_Handler
      (Sym     : FIL_Table;
@@ -2715,8 +2741,6 @@ package body Src_Info.CPP is
          P := Get_Pair (Handler.SN_Table (SN_IN), Next_By_Key);
          exit when P = null;
          Super := Parse_Pair (P.all);
-         Info ("Found base class: "
-            & Super.Buffer (Super.Base_Class.First .. Super.Base_Class.Last));
          --  Lookup base class definition to find its precise location
          Find_Class
            (Super.Buffer (Super.Base_Class.First .. Super.Base_Class.Last),
@@ -3255,6 +3279,8 @@ package body Src_Info.CPP is
             Handler,
             File,
             List,
+            Project_View,
+            Module_Type_Defs,
             Decl_Info);
          if Decl_Info /= null then -- Body_Entity is inserted only w/ fwd decl
             Body_Position := Sym.Start_Position;
