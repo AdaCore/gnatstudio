@@ -4214,6 +4214,13 @@ use orthogonal links instead, which are displayed only with vertical
 or horizontal lines. Select the entry @code{orthogonal links} in the
 background contextual menu.
 
+@item Exporting
+@cindex export
+@cindex image
+@cindex png
+The entire contents of a browser can be exported as a @code{png} image
+using the entry @code{Export...} in the background contextual menu.
+
 @item Zooming
 Several different zoom levels are available. The contextual menu in
 the background of the browser contains three entries: @code{zoom in},
