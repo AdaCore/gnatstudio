@@ -28,13 +28,17 @@ with GNAT.OS_Lib;
 with Ada.Finalization;
 with Remote_Connections;
 with Ada.Calendar;
+with GNAT.Calendar;
 
 package VFS is
 
-   No_Time : constant Ada.Calendar.Time := Ada.Calendar.Time_Of
+   No_Time : constant Ada.Calendar.Time := GNAT.Calendar.Time_Of
      (GNAT.OS_Lib.GM_Year (GNAT.OS_Lib.Invalid_Time),
       GNAT.OS_Lib.GM_Month (GNAT.OS_Lib.Invalid_Time),
-      GNAT.OS_Lib.GM_Day (GNAT.OS_Lib.Invalid_Time));
+      GNAT.OS_Lib.GM_Day (GNAT.OS_Lib.Invalid_Time),
+      GNAT.OS_Lib.GM_Hour (GNAT.OS_Lib.Invalid_Time),
+      GNAT.OS_Lib.GM_Minute (GNAT.OS_Lib.Invalid_Time),
+      GNAT.OS_Lib.GM_Second (GNAT.OS_Lib.Invalid_Time));
 
    subtype UTF8_String_Access is GNAT.OS_Lib.String_Access;
    type Cst_UTF8_String_Access is access constant Glib.UTF8_String;
