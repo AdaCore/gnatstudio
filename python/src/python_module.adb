@@ -97,17 +97,28 @@ package body Python_Module is
    -- Python_Callback_Data --
    --------------------------
 
+   type PyObject_Array is array (Natural range <>) of PyObject;
+   type PyObject_Array_Access is access PyObject_Array;
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (PyObject_Array, PyObject_Array_Access);
+
    type Python_Callback_Data is new Callback_Data with record
       Script           : Python_Scripting;
-      Args             : PyObject;
+      Args, Kw         : PyObject;
       Return_Value     : PyObject;
       Has_Return_Value : Boolean := False;
       Return_As_List   : Boolean := False;
+      Kw_Params        : PyObject_Array_Access;
+      Is_Method        : Boolean;
    end record;
+   --  Kw_Params is used to handle keyword parameters. They map from positional
+   --  index to the actual object.
 
    function Get_Kernel (Data : Python_Callback_Data)
       return Glide_Kernel.Kernel_Handle;
    function Number_Of_Arguments (Data : Python_Callback_Data) return Natural;
+   procedure Name_Parameters
+     (Data  : in out Python_Callback_Data; Names : Cst_Argument_List);
    function Nth_Arg (Data : Python_Callback_Data; N : Positive) return String;
    function Nth_Arg (Data : Python_Callback_Data; N : Positive) return Integer;
    function Nth_Arg (Data : Python_Callback_Data; N : Positive) return Boolean;
@@ -128,6 +139,14 @@ package body Python_Module is
    procedure Set_Return_Value
      (Data   : in out Python_Callback_Data; Value : Class_Instance);
    --  See doc from inherited subprogram
+
+   function Get_Param (Data : Python_Callback_Data'Class; N : Positive)
+      return PyObject;
+   --  Return the N-th command line parameter, taking into account the keywords
+   --  if any.
+
+   procedure Free (Data : in out Python_Callback_Data'Class);
+   --  Free the memory used by Data
 
    ---------------------------
    -- Python_Class_Instance --
@@ -177,6 +196,7 @@ package body Python_Module is
       Handler : Module_Command_Function;
       Command : String (1 .. Length);
       Minimum_Args, Maximum_Args : Natural;
+      Is_Method : Boolean := False;
    end record;
    type Handler_Data_Access is access Handler_Data;
    --  Information stores with each python function to call the right Ada
@@ -204,7 +224,7 @@ package body Python_Module is
       Kernel : Kernel_Handle);
    --  Create the python console if it doesn't exist yet.
 
-   function First_Level (Self, Args : PyObject) return PyObject;
+   function First_Level (Self, Args, Kw : PyObject) return PyObject;
    pragma Convention (C, First_Level);
    --  First level handler for all functions exported to python. This function
    --  is in charge of dispatching to the actual Ada subprogram.
@@ -333,19 +353,32 @@ package body Python_Module is
       Unchecked_Free (H);
    end Destroy_Handler_Data;
 
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Data : in out Python_Callback_Data'Class) is
+   begin
+      Unchecked_Free (Data.Kw_Params);
+   end Free;
+
    -----------------
    -- First_Level --
    -----------------
 
-   function First_Level (Self, Args : PyObject) return PyObject is
+   function First_Level (Self, Args, Kw : PyObject) return PyObject is
       Handler : constant Handler_Data_Access :=
         Convert (PyCObject_AsVoidPtr (Self));
-      Size : constant Integer := PyTuple_Size (Args);
+      Size : Integer := PyTuple_Size (Args);
       Callback : Python_Callback_Data;
    begin
-      Trace (Me, "First_Level: Number of parameters is "
-             & PyTuple_Size (Args)'Img & ' '
-             & Handler.Command);
+      if Kw /= null then
+         Size := PyDict_Size (Kw) + Size;
+      end if;
+
+      if Handler.Is_Method then
+         Size := Size - 1;  --  First param is always the instance
+      end if;
 
       --  Check number of arguments
       if Handler.Minimum_Args > Size
@@ -364,11 +397,15 @@ package body Python_Module is
       end if;
 
       Callback.Args         := Args;
+      Callback.Kw           := Kw;
       Callback.Return_Value := Py_None;
       Callback.Script       := Handler.Script;
+      Callback.Is_Method    := Handler.Is_Method;
       Py_INCREF (Py_None);
 
       Handler.Handler.all (Callback, Handler.Command);
+
+      Free (Callback);
 
       if Callback.Has_Return_Value then
          return Callback.Return_Value;
@@ -380,14 +417,28 @@ package body Python_Module is
    exception
       when Invalid_Parameter =>
          Trace (Me, "Raised invalid_parameter");
-         PyErr_SetString (Handler.Script.GPS_Invalid_Arg,
-                          "Invalid argument to GPS function");
+
+         if not Callback.Has_Return_Value
+           or else  Callback.Return_Value /= null
+         then
+            PyErr_SetString (Handler.Script.GPS_Invalid_Arg,
+                             -"Invalid argument to GPS function");
+         end if;
+
+         Free (Callback);
          return null;
 
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
-         PyErr_SetString (Handler.Script.GPS_Unexpected_Exception,
-                          "unexpected exception in GPS");
+
+         if not Callback.Has_Return_Value
+           or else  Callback.Return_Value /= null
+         then
+            PyErr_SetString (Handler.Script.GPS_Unexpected_Exception,
+                             -"unexpected exception in GPS");
+         end if;
+
+         Free (Callback);
          return null;
    end First_Level;
 
@@ -405,11 +456,12 @@ package body Python_Module is
       Handler      : Module_Command_Function;
       Class        : Class_Type := No_Class)
    is
-      H   : Handler_Data_Access := new Handler_Data'
+      H   : constant Handler_Data_Access := new Handler_Data'
         (Length       => Command'Length,
          Command      => Command,
          Handler      => Handler,
          Script       => Python_Scripting (Script),
+         Is_Method    => Class /= No_Class,
          Minimum_Args => Minimum_Args,
          Maximum_Args => Maximum_Args);
       User_Data : constant PyObject := PyCObject_FromVoidPtr
@@ -426,11 +478,6 @@ package body Python_Module is
             Self   => User_Data);
 
       else
-         H.Minimum_Args := H.Minimum_Args + 1;
-
-         if H.Maximum_Args /= Natural'Last then
-            H.Maximum_Args := H.Maximum_Args + 1;
-         end if;
          Klass := Lookup_Class_Object (Script.GPS_Module, Get_Name (Class));
 
          if Command = Constructor_Method then
@@ -536,8 +583,115 @@ package body Python_Module is
 
    function Number_Of_Arguments (Data : Python_Callback_Data) return Natural is
    begin
-      return PyTuple_Size (Data.Args);
+      if Data.Kw /= null then
+         return PyDict_Size (Data.Kw) + PyTuple_Size (Data.Args);
+      else
+         return PyTuple_Size (Data.Args);
+      end if;
    end Number_Of_Arguments;
+
+   ---------------------
+   -- Name_Parameters --
+   ---------------------
+
+   procedure Name_Parameters
+     (Data  : in out Python_Callback_Data; Names : Cst_Argument_List)
+   is
+      S : Integer := 0;
+      First : Integer := 0;
+   begin
+      if Data.Kw = null then
+         return;
+      end if;
+
+      if Data.Args /= null then
+         S := PyTuple_Size (Data.Args);
+      end if;
+
+      if Data.Is_Method then
+         First := First + 1;
+      end if;
+
+      --  Parameters can not be both positional and named
+
+      for Index in First .. S - 1 loop
+         if PyDict_GetItemString
+           (Data.Kw, Names (Index + Names'First - First).all) /= null
+         then
+            Set_Error_Msg
+              (Data, -("Parameter cannot be both positional "
+                       & " and named: ") & Names (Index + Names'First).all);
+            raise Invalid_Parameter;
+         end if;
+      end loop;
+
+      --  Check that there are no unknown keywords
+
+      declare
+         Pos : Integer := 0;
+         Key, Value : PyObject;
+      begin
+         loop
+            PyDict_Next (Data.Kw, Pos, Key, Value);
+            exit when Pos = -1;
+
+            declare
+               S : constant String := PyString_AsString (Key);
+               Found : Boolean := False;
+            begin
+               for N in Names'Range loop
+                  if Names (N).all = S then
+                     Found := True;
+                     exit;
+                  end if;
+               end loop;
+
+               if not Found then
+                  Set_Error_Msg
+                    (Data, -"Invalid keyword parameter: " & S);
+                  return;
+               end if;
+            end;
+         end loop;
+      end;
+
+      --  Assign parameters
+
+      Unchecked_Free (Data.Kw_Params);
+      Data.Kw_Params := new PyObject_Array (1 .. Names'Length + First);
+
+      if Data.Is_Method then
+         Data.Kw_Params (Data.Kw_Params'First) :=
+           PyTuple_GetItem (Data.Args, 0);
+      end if;
+
+      for P in Data.Kw_Params'First + First .. Data.Kw_Params'Last loop
+         Data.Kw_Params (P) := PyDict_GetItemString
+           (Data.Kw,
+            Names (P - Data.Kw_Params'First - First + Names'First).all);
+      end loop;
+   end Name_Parameters;
+
+   ---------------
+   -- Get_Param --
+   ---------------
+
+   function Get_Param (Data : Python_Callback_Data'Class; N : Positive)
+      return PyObject is
+   begin
+      if Data.Kw_Params = null and then Data.Kw /= null then
+         PyErr_SetString
+           (Data.Script.GPS_Exception,
+            -"Keyword parameters not supported");
+         raise Invalid_Parameter;
+      elsif Data.Args /= null and then N <= PyTuple_Size (Data.Args) then
+         return PyTuple_GetItem (Data.Args, N - 1);
+      elsif Data.Kw_Params /= null and then N <= Data.Kw_Params'Last then
+         return Data.Kw_Params (N);
+      end if;
+
+      return null;
+   end Get_Param;
 
    -------------
    -- Nth_Arg --
@@ -545,9 +699,9 @@ package body Python_Module is
 
    function Nth_Arg (Data : Python_Callback_Data; N : Positive) return String
    is
-      Item : constant PyObject := PyTuple_GetItem (Data.Args, N - 1);
+      Item : constant PyObject := Get_Param (Data, N);
    begin
-      if Item = null or not PyString_Check (Item) then
+      if Item = null or else not PyString_Check (Item) then
          raise Invalid_Parameter;
       end if;
       return PyString_AsString (Item);
@@ -560,7 +714,7 @@ package body Python_Module is
    function Nth_Arg (Data : Python_Callback_Data; N : Positive)
       return Integer
    is
-      Item : constant PyObject := PyTuple_GetItem (Data.Args, N - 1);
+      Item : constant PyObject := Get_Param (Data, N);
    begin
       if Item = null or else not PyInt_Check (Item) then
          raise Invalid_Parameter;
@@ -576,7 +730,7 @@ package body Python_Module is
    function Nth_Arg
      (Data : Python_Callback_Data; N : Positive) return Boolean
    is
-      Item : constant PyObject := PyTuple_GetItem (Data.Args, N - 1);
+      Item : constant PyObject := Get_Param (Data, N);
    begin
       if Item = null then
          raise Invalid_Parameter;
@@ -596,7 +750,7 @@ package body Python_Module is
    function Nth_Arg
      (Data : Python_Callback_Data; N : Positive) return System.Address
    is
-      Item : constant PyObject := PyTuple_GetItem (Data.Args, N - 1);
+      Item : constant PyObject := Get_Param (Data, N);
    begin
       if Item = null or else not PyCObject_Check (Item) then
          raise Invalid_Parameter;
@@ -612,7 +766,7 @@ package body Python_Module is
      (Data : Python_Callback_Data; N : Positive; Class : Class_Type)
       return Class_Instance
    is
-      Item : constant PyObject := PyTuple_GetItem (Data.Args, N - 1);
+      Item : constant PyObject := Get_Param (Data, N);
       C    : constant PyObject := Lookup_Class_Object
         (Data.Script.GPS_Module, Get_Name (Class));
       Item_Class : PyObject;
