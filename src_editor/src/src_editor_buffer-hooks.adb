@@ -2,7 +2,7 @@
 --                              G P S                                --
 --                                                                   --
 --                        Copyright (C) 2004-2005                    --
---                            ACT-Europe                             --
+--                            AdaCore                                --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -42,7 +42,17 @@ package body Src_Editor_Buffer.Hooks is
    function Compute_Parent_Entity
      (Data : access Src_File_Location_Hooks_Args)
       return Entity_Information;
+   procedure Destroy (Data : in out Src_File_Location_Hooks_Args'Class);
    --  See inherited documentation
+
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (Data : in out Src_File_Location_Hooks_Args'Class) is
+   begin
+      Unref (Data.Parent_Entity);
+   end Destroy;
 
    ---------------------------
    -- Compute_Parent_Entity --
@@ -73,6 +83,7 @@ package body Src_Editor_Buffer.Hooks is
                end if;
             end;
          end if;
+         Ref (Data.Parent_Entity);
       end if;
 
       return Data.Parent_Entity;
@@ -113,6 +124,7 @@ package body Src_Editor_Buffer.Hooks is
          Get_Cursor_Location (Box, Data.Line, Data.Column);
          Run_Hook (Buffer.Kernel, Location_Changed_Hook,
                    Data'Unchecked_Access, False);
+         Destroy (Data);
       end if;
    end Location_Changed;
 
