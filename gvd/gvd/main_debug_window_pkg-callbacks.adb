@@ -820,6 +820,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
                Reparent (Process.Data_Scrolledwindow, Process.Data_Paned);
                Add (Parent, Process.Data_Paned);
                Unref (Process.Data_Paned);
+               Show_All (Parent);
             else
                --  Ref the widget so that it is not destroyed.
                Ref (Process.Data_Paned);
