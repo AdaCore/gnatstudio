@@ -4481,6 +4481,11 @@ currently disabled, meaning that these are planned tools not yet available.
 The list of active items includes:
 
 @table @b
+@item Shell Console
+@cindex shell
+Open a shell console at the bottom are of GPS.
+@xref{The Shell Window}.
+
 @item Call Graph
 @xref{Call Graph}.
 
