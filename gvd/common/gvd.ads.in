@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2003                      --
+--                      Copyright (C) 2000-2004                      --
 --                             ACT-Europe                            --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -106,5 +106,11 @@ package GVD is
 
    Default_Opaque_MDI : constant Boolean := @OPAQUE_MDI@;
    --  Default value for the MDI opaque preference.
+
+   Default_Diff_Cmd : constant String := "@DIFF_CMD@";
+   --  Command used to generate a diff between two files.
+
+   Default_Patch_Cmd : constant String := "@PATCH_CMD@";
+   --  Command used to apply a patch file.
 
 end GVD;
