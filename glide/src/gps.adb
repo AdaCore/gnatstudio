@@ -278,10 +278,10 @@ begin
 
    for J in 1 .. Argument_Count loop
       if File_Extension (Argument (J)) = Project_File_Extension then
-         Load_Project (Glide.Kernel, Argument (J));
+         Load_Project (Glide.Kernel, Normalize_Pathname (Argument (J)));
          Project_Loaded := True;
       else
-         Open_File_Editor (Glide.Kernel, Argument (J));
+         Open_File_Editor (Glide.Kernel, Normalize_Pathname (Argument (J)));
          File_Opened := True;
       end if;
    end loop;
