@@ -1943,13 +1943,11 @@ package body Src_Editor_Module is
       Data   : Hooks_Data'Class)
    is
       D    : constant File_Hooks_Args := File_Hooks_Args (Data);
-      Base : constant String := Base_Name (D.File);
    begin
       --  Insert the saved file in the Recent menu.
 
       if D.File /= VFS.No_File
-        and then (Base'Length <= 2
-                  or else Base (Base'First .. Base'First + 1) /= ".#")
+        and then not Is_Auto_Save (D.File)
       then
          Add_To_Recent_Menu (Kernel, D.File);
       end if;
@@ -4736,5 +4734,28 @@ package body Src_Editor_Module is
    begin
       null;
    end Free;
+
+   --------------------
+   -- Autosaved_File --
+   --------------------
+
+   function Autosaved_File (File : VFS.Virtual_File) return VFS.Virtual_File is
+   begin
+      --  Implementation must be in sync with Is_Auto_Save below.
+      return Create
+        (Full_Filename => Dir_Name (File).all & ".#" & Base_Name (File) & "#");
+   end Autosaved_File;
+
+   ------------------
+   -- Is_Auto_Save --
+   ------------------
+
+   function Is_Auto_Save (File : VFS.Virtual_File) return Boolean is
+      Base : constant String := Base_Name (File);
+   begin
+      return Base'Length >= 2
+        and then Base (Base'First .. Base'First + 1) = ".#"
+        and then Base (Base'Last) = '#';
+   end Is_Auto_Save;
 
 end Src_Editor_Module;
