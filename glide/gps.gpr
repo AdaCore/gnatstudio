@@ -57,6 +57,8 @@ project GPS is
          when "Windows_NT" =>
             for Default_Switches ("Ada") use ("obj/gps.res");
       end case;
+      --  for Default_Switches ("Ada") use ("-lgmem");
+      --  for Default_Switches ("Ada") use ("-pg");
    end Linker;
 
    package Naming is
