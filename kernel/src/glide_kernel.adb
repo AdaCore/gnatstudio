@@ -398,16 +398,13 @@ package body Glide_Kernel is
       Source_Filename : String) return Src_Info.LI_File_Ptr
    is
       use type Prj.Project_Id;
-      File : LI_File_Ptr := Locate_From_Source
-        (Handle.Source_Info_List, Source_Filename);
+      File : LI_File_Ptr;
       Project : Prj.Project_Id := Get_Project_From_File
         (Get_Project_View (Handle), Base_Name (Source_Filename));
    begin
       if Project = Prj.No_Project then
          Project := Get_Project_View (Handle);
       end if;
-
-      Trace (Me, "Locate_From_Source_And_Complete: " & Source_Filename);
 
       Create_Or_Complete_LI
         (Handler                => Get_LI_Handler_From_File
