@@ -120,7 +120,7 @@ package body Glide_Kernel is
         (Handle, Home_Dir & Directory_Separator & "preferences");
 
       --  ??? Shouldn't use naming schemes instead ? This duplicates the
-      --  ??? information uselessly.
+      --  information uselessly.
       Reset_File_Extensions;
       Add_File_Extensions (Ada_Lang, Get_Pref (Handle, Ada_Extensions));
       Add_File_Extensions (C_Lang,   Get_Pref (Handle, C_Extensions));
@@ -240,15 +240,18 @@ package body Glide_Kernel is
              & Get_Name_String (Prj.Projects.Table (Project).Name));
 
       --  ??? Optimization: we could use only the direct object path from
-      --  ??? Project, since we now for sure that the file belongs to it.
+      --  Project, since we know for sure that the file belongs to it.
+
       Create_Or_Complete_LI
-        (Handler           => Handler_From_Filename (Project, Source_Filename),
+        (Handler                =>
+           Handler_From_Filename (Project, Source_Filename),
          File                   => File,
          Source_Filename        => Source_Filename,
          List                   => Handle.Source_Info_List,
          Project                => Project,
          Predefined_Source_Path => Get_Predefined_Source_Path (Handle),
          Predefined_Object_Path => Get_Predefined_Object_Path (Handle));
+
       return File;
    end Locate_From_Source_And_Complete;
 
