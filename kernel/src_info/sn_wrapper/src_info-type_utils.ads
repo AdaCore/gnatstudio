@@ -103,7 +103,6 @@ package Src_Info.Type_Utils is
       End_Position        => Invalid_Point,
       Attributes          => 0,
       Template_Parameters => Invalid_Segment,
-      Comments            => Invalid_Segment,
       Buffer              => null,
       DBI                 => 0
    );
