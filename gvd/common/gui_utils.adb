@@ -725,7 +725,6 @@ package body GUI_Utils is
       Iter          : Gtk_Tree_Iter;
       Path_String   : constant String := Get_String (Nth (Params, 1));
       Text_Value    : constant GValue := Nth (Params, 2);
-
    begin
       Iter := Get_Iter_From_String (M, Path_String);
       Set_Value (M, Iter, Data, Text_Value);
