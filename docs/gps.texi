@@ -6411,7 +6411,7 @@ activation key (by default @key{control-o}, controlled by a
 preference), this name is removed from the source editor, and replaced
 by the text you have associated with it.
 
-Alias names may be composed of any character, but must start with a
+Alias names may be composed of any character except newlines, but must start with a
 letter. GPS will jump to the start of each word before the current
 cursor position, and if the characters between this word start and the
 cursor position is an alias name, this alias is expanded.
