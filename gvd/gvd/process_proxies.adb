@@ -18,7 +18,10 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+pragma Warnings (Off);
 with GNAT.Expect;           use GNAT.Expect;
+pragma Warnings (On);
+
 with GNAT.Regpat;           use GNAT.Regpat;
 with GNAT.IO;               use GNAT.IO;
 with Gtk.Main;              use Gtk.Main;
@@ -32,10 +35,6 @@ package body Process_Proxies is
    procedure Free (Post_Processes : in out Post_Process_Access);
    --  Free the list of post_processes pointed to by
    --  Post_Processes.
-
-   procedure Process_Post_Processes (Proxy : access Process_Proxy'Class);
-   --  Call all of the post-processes to be executed for Proxy.
-   --  Free the list when the execution is completed.
 
    ----------
    -- Free --
@@ -115,60 +114,6 @@ package body Process_Proxies is
    end Empty_Buffer;
 
    ----------
-   -- Wait --
-   ----------
-
-   procedure Wait
-     (Proxy   : access Process_Proxy;
-      Result  : out GNAT.Expect.Expect_Match;
-      Pattern : GNAT.Regpat.Pattern_Matcher;
-      Timeout : Integer := 20) is
-   begin
-      Proxy.Command_In_Process.all := True;
-
-      --  In text mode, there is no race condition with an output filter,
-      --  so we go for the simple solution.
-
-      if Timeout = -1 then
-         Expect (Proxy.Descriptor.all, Result, Pattern, Timeout => -1);
-      else
-         Expect
-           (Proxy.Descriptor.all, Result, Pattern, Timeout => Timeout * 50);
-      end if;
-
-      Proxy.Command_In_Process.all := False;
-      Process_Post_Processes (Proxy);
-   end Wait;
-
-   procedure Wait
-     (Proxy   : access Process_Proxy;
-      Result  : out GNAT.Expect.Expect_Match;
-      Pattern : GNAT.Regpat.Pattern_Matcher;
-      Matched : out GNAT.Regpat.Match_Array;
-      Timeout : Integer := 20) is
-   begin
-      Proxy.Command_In_Process.all := True;
-
-      if Timeout = -1 then
-         Expect (Proxy.Descriptor.all, Result, Pattern, Matched, -1);
-      else
-         Expect (Proxy.Descriptor.all, Result, Pattern, Matched, Timeout * 50);
-      end if;
-
-      Proxy.Command_In_Process.all := False;
-      Process_Post_Processes (Proxy);
-   end Wait;
-
-   procedure Wait
-     (Proxy   : access Process_Proxy;
-      Result  : out GNAT.Expect.Expect_Match;
-      Pattern : String;
-      Timeout : Integer := 20) is
-   begin
-      Wait (Proxy, Result, Compile (Pattern), Timeout);
-   end Wait;
-
-   ----------
    -- Send --
    ----------
 
@@ -195,32 +140,60 @@ package body Process_Proxies is
    ----------
 
    procedure Wait
+     (Proxy   : access Process_Proxy;
+      Result  : out GNAT.Expect.Expect_Match;
+      Pattern : GNAT.Regpat.Pattern_Matcher;
+      Timeout : Integer := 20) is
+   begin
+      if Timeout = -1 then
+         Expect (Proxy.Descriptor.all, Result, Pattern, Timeout => -1);
+      else
+         Expect
+           (Proxy.Descriptor.all, Result, Pattern, Timeout => Timeout * 50);
+      end if;
+   end Wait;
+
+   procedure Wait
+     (Proxy   : access Process_Proxy;
+      Result  : out GNAT.Expect.Expect_Match;
+      Pattern : GNAT.Regpat.Pattern_Matcher;
+      Matched : out GNAT.Regpat.Match_Array;
+      Timeout : Integer := 20) is
+   begin
+      if Timeout = -1 then
+         Expect (Proxy.Descriptor.all, Result, Pattern, Matched, -1);
+      else
+         Expect (Proxy.Descriptor.all, Result, Pattern, Matched, Timeout * 50);
+      end if;
+   end Wait;
+
+   procedure Wait
+     (Proxy   : access Process_Proxy;
+      Result  : out GNAT.Expect.Expect_Match;
+      Pattern : String;
+      Timeout : Integer := 20) is
+   begin
+      Wait (Proxy, Result, Compile (Pattern), Timeout);
+   end Wait;
+
+   procedure Wait
      (Proxy   : access Gui_Process_Proxy;
       Result  : out GNAT.Expect.Expect_Match;
       Pattern : GNAT.Regpat.Pattern_Matcher;
       Matched : out GNAT.Regpat.Match_Array;
       Timeout : Integer := 20)
    is
-      Tmp   : Boolean;
-      Num   : Integer := 1;
+      Tmp        : Boolean;
+      Num        : Integer := 1;
       Num_Events : Positive;
+      Max_Events : constant := 30;
+      --  Limit the number of events to process in one iteration
 
    begin
-      --  ??? We should always avoid concurrent calls to Wait, or the exact
-      --  behavior of the application will depend on specific timing, which is
-      --  not reliable.
-
-      if Proxy.Command_In_Process.all then
-         Put_Line ("!!! already running a Wait command!!");
-      end if;
-
-      Proxy.Command_In_Process.all := True;
-
       --  We do not use a for loop, so that even if the timeout is 0 we
       --  execute the Expect call at least once.
 
       loop
-
          --  In case the external process was killed during the wait.
 
          if Proxy.Descriptor = null then
@@ -235,7 +208,6 @@ package body Process_Proxies is
          Num := Num + 1;
 
          case Result is
-
             when Expect_Full_Buffer =>
                --  If the buffer was already full, we simply exit as if there
                --  had been a timeout. This should not be a problem in odd,
@@ -243,7 +215,6 @@ package body Process_Proxies is
                exit;
 
             when Expect_Timeout =>
-
                --  Process the X events, and loop again.
                --  For efficiency, we stop after a certain number. Otherwise,
                --  it sometimes happens that we keep getting events (input
@@ -251,8 +222,9 @@ package body Process_Proxies is
                --  ??? This might not be the best workaround.
 
                Num_Events := 1;
+
                while Gtk.Main.Events_Pending
-                 and then Num_Events <= 30
+                 and then Num_Events <= Max_Events
                loop
                   Tmp := Gtk.Main.Main_Iteration;
                   Num_Events := Num_Events + 1;
@@ -263,14 +235,7 @@ package body Process_Proxies is
                exit;
          end case;
       end loop;
-
-      Proxy.Command_In_Process.all := False;
-      Process_Post_Processes (Proxy);
    end Wait;
-
-   ----------
-   -- Wait --
-   ----------
 
    procedure Wait
      (Proxy   : access Gui_Process_Proxy;
@@ -422,18 +387,19 @@ package body Process_Proxies is
       type Data_Access is access Data;
       type Widget_Access is access all Widget'Class;
 
-      type Data2 is record
+      type Internal_Data is record
          D    : Data_Access;
          Func : Callback;
          W    : Widget_Access;
       end record;
-      type Data2_Access is access all Data2;
+      type Internal_Data_Access is access all Internal_Data;
 
       function Convert is new Unchecked_Conversion
-        (Data2_Access, System.Address);
+        (Internal_Data_Access, System.Address);
       function Convert is new Unchecked_Conversion
-        (System.Address, Data2_Access);
-      procedure Free is new Unchecked_Deallocation (Data2, Data2_Access);
+        (System.Address, Internal_Data_Access);
+      procedure Free is new
+        Unchecked_Deallocation (Internal_Data, Internal_Data_Access);
       procedure Free is new Unchecked_Deallocation (Data, Data_Access);
 
       procedure Internal_Callback (S : System.Address);
@@ -444,7 +410,7 @@ package body Process_Proxies is
       -----------------------
 
       procedure Internal_Callback (S : System.Address) is
-         D : Data2_Access := Convert (S);
+         D : Internal_Data_Access := Convert (S);
       begin
          D.Func (D.W, D.D.all);
          Free (D.D);
@@ -464,8 +430,8 @@ package body Process_Proxies is
          if Command_In_Process (Proxy) then
             Register_Post_Cmd
               (Proxy, Internal_Callback'Unrestricted_Access,
-               Convert (new Data2'
-                        (new Data'(User_Data), Cmd, Widget_Access (W))));
+               Convert (new Internal_Data'
+                        (new Data' (User_Data), Cmd, Widget_Access (W))));
             return True;
          end if;
 

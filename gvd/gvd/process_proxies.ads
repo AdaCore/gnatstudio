@@ -198,6 +198,10 @@ package Process_Proxies is
    --  This package must be instantiated at library level, since it needs to
    --  reference some internal callback function.
 
+   procedure Process_Post_Processes (Proxy : access Process_Proxy'Class);
+   --  Call all of the post-processes to be executed for Proxy.
+   --  Free the list when the execution is completed.
+
    ----------------
    -- Exceptions --
    ----------------
