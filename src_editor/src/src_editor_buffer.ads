@@ -1082,6 +1082,9 @@ private
 
       Block_Folding : Boolean := False;
       --  Whether the editor buffer should allow block folding.
+
+      Block_Highlighting : Boolean := False;
+      --  Whether the editor buffer should allow block highlighting.
    end record;
 
 end Src_Editor_Buffer;
