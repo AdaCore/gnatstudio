@@ -280,6 +280,8 @@ package body Gtkada.File_Selector is
          File_Selector);
 
       Show_All (File_Selector);
+      Grab_Default (File_Selector.Ok_Button);
+
       File_Selector.Own_Main_Loop := True;
 
       Gtk.Main.Main;
@@ -1377,6 +1379,7 @@ package body Gtkada.File_Selector is
          The_Type => Toolbar_Child_Button,
          Tooltip_Text => -"Go To Parent Directory",
          Icon => Gtk_Widget (File_Selector_Window.Up_Icon));
+
       Widget_Callback.Connect
         (File_Selector_Window.Up_Button, "clicked",
          Widget_Callback.To_Marshaller (On_Up_Button_Clicked'Access));
@@ -1538,6 +1541,7 @@ package body Gtkada.File_Selector is
       Set_Visibility (File_Selector_Window.Selection_Entry, True);
       Pack_Start
         (Hbox5, File_Selector_Window.Selection_Entry, True, True, 3);
+      Set_Activates_Default (File_Selector_Window.Selection_Entry, True);
 
       Return_Callback.Connect
         (File_Selector_Window.Selection_Entry,
