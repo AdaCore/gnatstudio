@@ -9,9 +9,14 @@ with Gtk.Tree_Store; use Gtk.Tree_Store;
 
 with GNAT.OS_Lib;     use GNAT.OS_Lib;
 
-with VCS;            use VCS;
+with VCS; use VCS;
 
 package Vcs_View_Pkg is
+
+   type VCS_View_Record;
+   type Vcs_View_Access is access all Vcs_View_Record'Class;
+
+   --  package VCS_View_VCS is new VCS (Vcs_View_Access);
 
    type Vcs_View_Record is new Gtk_Window_Record with record
       Current_Directory : String_Access;
@@ -41,7 +46,6 @@ package Vcs_View_Pkg is
 
       Message_Text      : Gtk_Text;
    end record;
-   type Vcs_View_Access is access all Vcs_View_Record'Class;
 
    procedure Gtk_New (Vcs_View : out Vcs_View_Access);
    procedure Initialize (Vcs_View : access Vcs_View_Record'Class);
