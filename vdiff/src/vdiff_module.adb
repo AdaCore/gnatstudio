@@ -113,9 +113,10 @@ package body Vdiff_Module is
            (Kernel, Vdiff.Clist1, Vdiff.Clist2, File1, File2, Result);
          Show_All (Vdiff);
          Child := Put
-           (Get_MDI (Kernel), Vdiff,
+           (Kernel, Vdiff,
             Default_Width  => Get_Pref (Kernel, Default_Widget_Width),
-            Default_Height => Get_Pref (Kernel, Default_Widget_Height));
+            Default_Height => Get_Pref (Kernel, Default_Widget_Height),
+            Module => Vdiff_Module_ID);
          Set_Focus_Child (Child);
          Set_Title (Child, -"Visual Comparison");
 
@@ -237,9 +238,10 @@ package body Vdiff_Module is
 
             Show_All (Vdiff);
             Child := Put
-              (Get_MDI (Kernel), Vdiff,
+              (Kernel, Vdiff,
                Default_Width  => Get_Pref (Kernel, Default_Widget_Width),
-               Default_Height => Get_Pref (Kernel, Default_Widget_Height));
+               Default_Height => Get_Pref (Kernel, Default_Widget_Height),
+               Module => Vdiff_Module_ID);
 
             Set_Focus_Child (Child);
             Set_Title (Child, -"Visual Comparison");
