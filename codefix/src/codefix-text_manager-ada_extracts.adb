@@ -273,7 +273,8 @@ package body Codefix.Text_Manager.Ada_Extracts is
       Col       : in out Integer;
       Token     : out Token_Record) is
 
-      Buffer      : constant String := Line.Content (Col .. Line.Content'Last);
+      Content     : constant String := Get_String (Line.all);
+      Buffer      : constant String := Content (Col .. Content'Last);
       Start, Stop : Integer := Col;
 
    begin
@@ -414,8 +415,8 @@ package body Codefix.Text_Manager.Ada_Extracts is
 
       Assign
         (Destination.Back,
-         Current_Line.Content
-           (Current_Token.First_Col .. Current_Line.Content'Last));
+         Get_String (Current_Line.all)
+           (Current_Token.First_Col .. Get_String (Current_Line.all)'Last));
 
       Current_Line := Next (Current_Line.all);
 
@@ -559,18 +560,16 @@ package body Codefix.Text_Manager.Ada_Extracts is
 
       for J in First_Used .. Last_Used loop
 
-         Put_Line ("BEFORE : " & Data (Current_Element).Line.Content.all);
          if Is_Alone (Data (Current_Element)) then
-            Data (Current_Element).Line.Context := Line_Deleted;
-            Put_Line ("IS ALONE");
+            Data (Current_Element).Line.Context := Unit_Deleted;
          else
-            Set_String
-              (Data (Current_Element).Line.all,
-               "",
+            Delete
+              (Data (Current_Element).Line.Content,
                Data (Current_Element).First_Col,
-               Data (Current_Element).Last_Col);
+               Data (Current_Element).Last_Col -
+                 Data (Current_Element).First_Col + 1);
+            Data (Current_Element).Line.Context := Unit_Modified;
          end if;
-         Put_Line ("AFTER : " & Data (Current_Element).Line.Content.all);
 
          Garbage_Node := Current_Element;
          Current_Element := Next (Current_Element);
@@ -640,13 +639,12 @@ package body Codefix.Text_Manager.Ada_Extracts is
 
    function Is_Alone (This : Token_Record)
      return Boolean is
+      Content : constant String := Get_String (This.Line.all);
    begin
       return Is_Blank
-        (This.Line.Content (This.Line.Content'First ..
-                              This.First_Col - 1))
+        (Content (Content'First .. This.First_Col - 1))
         and then Is_Blank
-          (This.Line.Content (This.Line.Content'First + This.Last_Col ..
-                                This.Line.Content'Last));
+          (Content (Content'First + This.Last_Col .. Content'Last));
    end Is_Alone;
 
    ---------------------
