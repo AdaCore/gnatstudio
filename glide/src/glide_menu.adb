@@ -19,13 +19,10 @@
 -----------------------------------------------------------------------
 
 with Glib;                         use Glib;
-with Gtk.Box;                      use Gtk.Box;
-with Gtk.Label;                    use Gtk.Label;
 with Gtk.Main;                     use Gtk.Main;
 with Gtk.Stock;                    use Gtk.Stock;
 with Gtk.Window;                   use Gtk.Window;
 with Gtkada.Dialogs;               use Gtkada.Dialogs;
-with Gtkada.MDI;                   use Gtkada.MDI;
 with Gtkada.File_Selector;         use Gtkada.File_Selector;
 with Gtkada.File_Selector.Filters; use Gtkada.File_Selector.Filters;
 
@@ -44,10 +41,6 @@ with Glide_Kernel.Project;    use Glide_Kernel.Project;
 
 with Glide_Main_Window;       use Glide_Main_Window;
 with Glide_Page;              use Glide_Page;
-
-with Vdiff_Pkg;               use Vdiff_Pkg;
-with Vdiff_Utils;             use Vdiff_Utils;
-with Diff_Utils;              use Diff_Utils;
 
 with GVD.Dialogs;             use GVD.Dialogs;
 
@@ -167,12 +160,6 @@ package body Glide_Menu is
       Action : Guint;
       Widget : Limited_Widget);
    --  Debug->Continue menu
-
-   procedure On_Compare_Two_Files
-     (Object : Data_Type_Access;
-      Action : Guint;
-      Widget : Limited_Widget);
-   --  Tools->Compare->Two Files menu
 
    procedure On_Manual
      (Object : Data_Type_Access;
@@ -325,9 +312,8 @@ package body Glide_Menu is
       Matcher   : constant Pattern_Matcher := Compile
         ("completed ([0-9]+) out of ([0-9]+) \((.*)%\)\.\.\.$",
          Multiple_Lines);
-      Title     : constant String := "foo";
+      Title     : constant String := "";
       --  ??? Should get the name of the real main
-      --  ??? Get_Editor_Filename (Top.Kernel);
       Project   : constant String := Get_Project_File_Name (Top.Kernel);
       Cmd       : constant String :=
         "gnatmake -P" & Project & " "
@@ -335,9 +321,11 @@ package body Glide_Menu is
         & " " & Title;
 
    begin
-      if Title = "" then
-         return;
-      end if;
+      --  ??? if Title = "" then
+      --      return;
+      --   end if;
+
+      Set_Busy (Top.Kernel, True);
 
       if Project = "" then
          --  This is the default internal project
@@ -385,6 +373,8 @@ package body Glide_Menu is
          Console.Insert (Top.Kernel, Expect_Out (Fd), Add_LF => False);
          --  ??? Check returned status.
 
+         Set_Busy (Top.Kernel, False);
+
          if Top.Interrupted then
             Top.Interrupted := False;
             Print_Message
@@ -400,6 +390,7 @@ package body Glide_Menu is
 
       when E : others =>
          Close (Fd);
+         Set_Busy (Top.Kernel, False);
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Build;
 
@@ -626,51 +617,6 @@ package body Glide_Menu is
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Continue;
 
-   --------------------------
-   -- On_Compare_Two_Files --
-   --------------------------
-
-   procedure On_Compare_Two_Files
-     (Object : Data_Type_Access;
-      Action : Guint;
-      Widget : Limited_Widget)
-   is
-      Top    : constant Glide_Window := Glide_Window (Object);
-      Vdiff  : Vdiff_Access;
-      Result : Diff_Occurrence_Link;
-      File1  : constant String := Select_File (-"Select First File");
-      Child  : MDI_Child;
-
-   begin
-      if File1 = "" then
-         return;
-      end if;
-
-      declare
-         File2 : constant String := Select_File (-"Select Second File");
-
-      begin
-         if File2 = "" then
-            return;
-         end if;
-
-         Result := Diff (File1, File2);
-         Gtk_New (Vdiff);
-         Set_Text (Vdiff.File_Label1, File1);
-         Set_Text (Vdiff.File_Label2, File2);
-         Fill_Diff_Lists (Vdiff.Clist1, Vdiff.Clist2, File1, File2, Result);
-         Show_All (Vdiff.Main_Box);
-         Child := Put (Get_MDI (Top.Kernel), Vdiff);
-
-         --  ??? Connect to destroy signal so that we can free result:
-         --  Free (Result);
-      end;
-
-   exception
-      when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
-   end On_Compare_Two_Files;
-
    ---------------
    -- On_Manual --
    ---------------
@@ -685,7 +631,8 @@ package body Glide_Menu is
       case Help_Context'Val (Action) is
          when Welcome_Help =>
             Display_Help (Top.Kernel,
-              Top.Prefix_Directory.all & "/doc/html/glide-welcome.html");
+              Top.Prefix_Directory.all &
+              "/doc/glide2/html/glide-welcome.html");
 
          when GVD_Help =>
             Display_Help (Top.Kernel,
@@ -755,7 +702,6 @@ package body Glide_Menu is
       Data_Sub    : constant String := (-"Data")           & '/';
       Session_Sub : constant String := (-"Session")        & '/';
       Tools       : constant String := "/_" & (-"Tools")    & '/';
-      Compare_Sub : constant String :=        (-"Compare")  & '/';
       Window      : constant String := "/_" & (-"Window");
       Help        : constant String := "/_" & (-"Help")     & '/';
 
@@ -789,8 +735,6 @@ package body Glide_Menu is
                   On_Open_Project'Access),
          Gtk_New (Project & "sep1", Item_Type => Separator),
          Gtk_New (Project & (-"Generate API doc"), "", Stock_Execute, null),
-         Gtk_New (Project & "sep2", Item_Type => Separator),
-         Gtk_New (Project & (-"Task Manager"), "", null),
 
          Gtk_New (Build & (-"Check File"), "", null),
          Gtk_New (Build & (-"Compile File"), "", Stock_Convert, null),
@@ -803,6 +747,7 @@ package body Glide_Menu is
            (Build & (-"Stop Build"), "", Stock_Stop, On_Stop_Build'Access),
 
          Gtk_New (Debug & (-"Start"), "", On_Run'Access),
+         Gtk_New (Debug & (-"Add Symbols..."), "", null),
          Gtk_New (Debug & Debug_Sub & (-"Another Executable..."), "",
                   On_Debug_Executable'Access),
          Gtk_New (Debug & Debug_Sub & (-"Running Process..."), "", null),
@@ -840,14 +785,10 @@ package body Glide_Menu is
          Gtk_New (Debug & (-"Interrupt"), "ESC", Stock_Stop, null),
          Gtk_New (Debug & (-"Detach Process"), "", null),
 
-         Gtk_New (Tools & (-"Pretty Print"), "", null),
          Gtk_New (Tools & (-"Call Graph"), "", null),
          Gtk_New (Tools & (-"Code Fixing"), "", null),
          Gtk_New (Tools & (-"Profile"), "", null),
          Gtk_New (Tools & (-"Memory Analyzer"), "", null),
-         Gtk_New (Tools & Compare_Sub & (-"Two Files..."), "",
-                  On_Compare_Two_Files'Access),
-         Gtk_New (Tools & Compare_Sub & (-"Three Files..."), "", null),
 
          Gtk_New (Window),
 
