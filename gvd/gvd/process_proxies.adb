@@ -70,6 +70,23 @@ package body Process_Proxies is
       return Proxy.Command_In_Process.all;
    end Command_In_Process;
 
+   ------------------
+   -- Empty_Buffer --
+   ------------------
+
+   procedure Empty_Buffer
+     (Proxy        : access Process_Proxy;
+      At_Least_One : Boolean := False)
+   is
+      Result : GNAT.Expect.Expect_Match;
+   begin
+      if At_Least_One then
+         Wait (Proxy, Result, ".+", Timeout => 0);
+      else
+         Wait (Proxy, Result, ".*", Timeout => 0);
+      end if;
+   end Empty_Buffer;
+
    ----------
    -- Wait --
    ----------

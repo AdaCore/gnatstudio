@@ -64,6 +64,14 @@ package Process_Proxies is
       Descriptor : GNAT.Expect.Process_Descriptor_Access);
    --  Set the external process descriptor.
 
+   procedure Empty_Buffer
+     (Proxy        : access Process_Proxy;
+      At_Least_One : Boolean := False);
+   --  Empty the current output buffer for the external process, as well as
+   --  any waiting input.
+   --  If At_Least_One is True, then wait until at least one character is
+   --  available in the buffer.
+
    procedure Wait
      (Proxy   : access Process_Proxy;
       Result  : out GNAT.Expect.Expect_Match;
