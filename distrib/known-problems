@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 2.1.0
 
+- DA11-015 The auto-saved files can confuse some building mechanisms
+  Problem:    When GPS is configured to automatically save the contents of the
+              editors, the files created have the same extension as the
+              original files, and this might be a problem in some building
+              environment.
+  Workaround: Remove all auto-saves before building.
+
 - When using CVS, operation "Query status for directory" is recursive
   Problem:    When using CVS, the operation "Query status for directory"
               the status for files in the sub-directories as well.
