@@ -753,6 +753,12 @@ package body Glide_Kernel is
    -- Free --
    ----------
 
+   procedure Free (X : in out Command_Information) is
+   begin
+      Free (X.Command);
+      Free (X.Help);
+   end Free;
+
    procedure Free (Module : in out Module_ID) is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Module_ID_Record'Class, Module_ID);
@@ -1340,6 +1346,8 @@ package body Glide_Kernel is
       if Handle.Search /= null then
          Destroy (Handle.Search);
       end if;
+
+      Command_List.Free (Handle.Commands_List);
 
       Destroy (Handle.Modules_Data.all);
       Unchecked_Free (Handle.Modules_Data);
