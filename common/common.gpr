@@ -1,3 +1,6 @@
+with "../gtkada/gtkada";
+with "../gnat";
+
 project Common is
 
    for Source_Dirs use ("src");
