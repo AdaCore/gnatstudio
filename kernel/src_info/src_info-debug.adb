@@ -51,6 +51,12 @@ package body Src_Info.Debug is
    --  Print a 'D' line for a dependency to Source_File with the given
    --  Timestamp.
 
+   function Output_E_Kind (Kind : Src_Info.E_Kind) return String;
+   --  Converts from E_Kind to a string that can be output for debug purposes.
+
+   function Output_E_Scope (Scope : Src_Info.E_Scope) return String;
+   --  Converts from E_Scope to a string that can be output for debug purposes.
+
    --------------------------
    -- Print_Exception_Info --
    --------------------------
@@ -75,7 +81,7 @@ package body Src_Info.Debug is
    begin
       Put (Get_File (FL) & ":");
       if Kind /= Overloaded_Entity then
-         Put (Image (FL.Line) & E_Kind_To_Char (Kind) & Image (FL.Column));
+         Put (Image (FL.Line) & Output_E_Kind (Kind) & Image (FL.Column));
       else
          Put (Image (FL.Line) & ' ' & Image (FL.Column));
       end if;
@@ -226,7 +232,7 @@ package body Src_Info.Debug is
    begin
       --  Dump declaration position, kind, scope and name
       Dump_Pos_And_E_Kind (ED.Location, ED.Kind);
-      Put (E_Scope_To_Char (ED.Scope) & ED.Name.all & ' ');
+      Put (Output_E_Scope (ED.Scope) & ED.Name.all & ' ');
 
       --  If there is a parent declaration, print it as well
       Fl := ED.Parent_Location;
@@ -482,6 +488,74 @@ package body Src_Info.Debug is
       Dump_Dependency_File_Info_List (LIF.Dependencies_Info);
 
    end Dump_LI_File;
+
+   -------------------
+   -- Output_E_Kind --
+   -------------------
+
+   function Output_E_Kind (Kind : Src_Info.E_Kind) return String is
+   begin
+      case Kind is
+         when Overloaded_Entity                => return "@";
+         when Unresolved_Entity                => return "#";
+         when Access_Object                    => return "p";
+         when Access_Type                      => return "P";
+         when Array_Object                     => return "a";
+         when Array_Type                       => return "A";
+         when Boolean_Object                   => return "b";
+         when Boolean_Type                     => return "B";
+         when Class_Wide_Object                => return "c";
+         when Class_Wide_Type                  => return "C";
+         when Decimal_Fixed_Point_Object       => return "d";
+         when Decimal_Fixed_Point_Type         => return "D";
+         when Entry_Or_Entry_Family            => return "Y";
+         when Enumeration_Literal              => return "n";
+         when Enumeration_Object               => return "e";
+         when Enumeration_Type                 => return "E";
+         when Exception_Entity                 => return "X";
+         when Floating_Point_Object            => return "f";
+         when Floating_Point_Type              => return "F";
+         when Generic_Function_Or_Operator     => return "v";
+         when Generic_Package                  => return "k";
+         when Generic_Procedure                => return "u";
+         when Label_On_Block                   => return "q";
+         when Label_On_Loop                    => return "l";
+         when Label_On_Statement               => return "L";
+         when Modular_Integer_Object           => return "m";
+         when Modular_Integer_Type             => return "M";
+         when Named_Number                     => return "N";
+         when Non_Generic_Function_Or_Operator => return "V";
+         when Non_Generic_Package              => return "K";
+         when Non_Generic_Procedure            => return "U";
+         when Ordinary_Fixed_Point_Object      => return "o";
+         when Ordinary_Fixed_Point_Type        => return "O";
+         when Private_Type                     => return "+";
+         when Protected_Object                 => return "w";
+         when Protected_Type                   => return "W";
+         when Record_Object                    => return "r";
+         when Record_Type                      => return "R";
+         when Signed_Integer_Object            => return "i";
+         when Signed_Integer_Type              => return "I";
+         when String_Object                    => return "s";
+         when String_Type                      => return "S";
+         when Task_Object                      => return "t";
+         when Task_Type                        => return "T";
+      end case;
+   end Output_E_Kind;
+
+   --------------------
+   -- Output_E_Scope --
+   --------------------
+
+   function Output_E_Scope (Scope : Src_Info.E_Scope) return String is
+   begin
+      case Scope is
+         when Global_Scope => return "*";
+         when Local_Scope  => return " ";
+         when Class_Static => return "-";
+         when Static_Local => return "_";
+      end case;
+   end Output_E_Scope;
 
 end Src_Info.Debug;
 
