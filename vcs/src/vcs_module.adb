@@ -84,7 +84,8 @@ package body VCS_Module is
       VCS       : constant String := '/' & (-"VCS");
 
    begin
-      Register_Menu (Kernel, VCS);
+      Register_Menu
+        (Kernel, VCS, Ref_Item => -"Goto", Add_Before => False);
       Gtk_New (Menu_Item, -"Open VCS Interface");
       Register_Menu (Kernel, VCS, Menu_Item);
       Kernel_Callback.Connect
