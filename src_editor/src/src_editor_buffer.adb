@@ -35,13 +35,15 @@ with Language;               use Language;
 with Language_Handlers;      use Language_Handlers;
 with Src_Highlighting;       use Src_Highlighting;
 
-with GNAT.OS_Lib;            use GNAT.OS_Lib;
 with Interfaces.C.Strings;   use Interfaces.C.Strings;
 with System;
 with String_Utils;           use String_Utils;
+with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with OS_Utils;               use OS_Utils;
 
 with Commands.Editor;        use Commands.Editor;
+with Src_Editor_Module;      use Src_Editor_Module;
+with Glide_Kernel.Modules;   use Glide_Kernel.Modules;
 
 package body Src_Editor_Buffer is
 
@@ -837,10 +839,11 @@ package body Src_Editor_Buffer is
 
    procedure Gtk_New
      (Buffer : out Source_Buffer;
+      Kernel : Glide_Kernel.Kernel_Handle;
       Lang   : Language.Language_Access := null) is
    begin
       Buffer := new Source_Buffer_Record;
-      Initialize (Buffer, Lang);
+      Initialize (Buffer, Kernel, Lang);
    end Gtk_New;
 
    ----------------
@@ -849,6 +852,7 @@ package body Src_Editor_Buffer is
 
    procedure Initialize
      (Buffer : access Source_Buffer_Record'Class;
+      Kernel : Glide_Kernel.Kernel_Handle;
       Lang   : Language.Language_Access := null)
    is
       Tags      : Gtk_Text_Tag_Table;
@@ -859,6 +863,7 @@ package body Src_Editor_Buffer is
          Signal_Parameters);
 
       Buffer.Lang := Lang;
+      Buffer.Kernel := Kernel;
 
       Buffer.Syntax_Tags :=
         Create_Syntax_Tags
@@ -1645,5 +1650,59 @@ package body Src_Editor_Buffer is
    begin
       return Buffer.Queue;
    end Get_Queue;
+
+   ------------------
+   -- Get_Filename --
+   ------------------
+
+   function Get_Filename
+     (Buffer : access Source_Buffer_Record)
+     return String
+   is
+   begin
+      if Buffer.Filename = null then
+         return "";
+      else
+         return Buffer.Filename.all;
+      end if;
+   end Get_Filename;
+
+   ------------------
+   -- Set_Filename --
+   ------------------
+
+   procedure Set_Filename
+     (Buffer : access Source_Buffer_Record;
+      Name   : String)
+   is
+   begin
+      Free (Buffer.Filename);
+      Buffer.Filename := new String' (Name);
+   end Set_Filename;
+
+   ---------------------------
+   -- Source_Lines_Revealed --
+   ---------------------------
+
+   procedure Source_Lines_Revealed
+     (Buffer     : access Source_Buffer_Record;
+      Start_Line : Integer;
+      End_Line   : Integer)
+   is
+      Context : File_Area_Context_Access;
+   begin
+      Context := new File_Area_Context;
+      Set_Context_Information
+        (Context,
+         Buffer.Kernel,
+         Src_Editor_Module_Id);
+      Set_File_Information
+        (Context,
+         Dir_Name (Buffer.Filename.all),
+         Base_Name (Buffer.Filename.all));
+      Set_Area_Information (Context, Start_Line, End_Line);
+      Glide_Kernel.Source_Lines_Revealed (Buffer.Kernel, Context);
+      --  ??? When is this context destroyed ?
+   end Source_Lines_Revealed;
 
 end Src_Editor_Buffer;
