@@ -32,6 +32,44 @@ package body VCS is
    Identifiers_List : Identifiers.List;
    --  Global variable to store all the registered handlers.
 
+   ----------------------
+   -- Copy_String_List --
+   ----------------------
+
+   function Copy_String_List
+     (S : in String_List.List) return String_List.List
+   is
+      use String_List;
+      Result : String_List.List;
+      Temp   : String_List.List := S;
+   begin
+      while not Is_Empty (Temp) loop
+         Append (Result, Head (Temp));
+         Temp := Next (Temp);
+      end loop;
+
+      return Result;
+   end Copy_String_List;
+
+   ----------------------
+   -- Copy_File_Status --
+   ----------------------
+
+   function Copy_File_Status
+     (F : in File_Status_Record) return File_Status_Record
+   is
+      Result : File_Status_Record;
+   begin
+      Result.File_Name := Copy_String_List (F.File_Name);
+      Result.Working_Revision := Copy_String_List (F.Working_Revision);
+      Result.Repository_Revision
+        := Copy_String_List (F.Repository_Revision);
+      Result.Tags := Copy_String_List (F.Tags);
+      Result.Users := Copy_String_List (F.Users);
+      Result.Status := F.Status;
+      return Result;
+   end Copy_File_Status;
+
    ----------
    -- Free --
    ----------
