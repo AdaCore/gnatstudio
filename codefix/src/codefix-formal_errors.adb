@@ -143,27 +143,40 @@ package body Codefix.Formal_Errors is
    is
       Extract_Use, New_Extract  : Ada_List;
       Temp_Extract              : Extract;
-      Use_Info, With_Info       : Construct_Information;
+      Use_Info, Pkg_Info        : Construct_Information;
       Cursor_Use                : File_Cursor := File_Cursor (Cursor);
       Success                   : Boolean := True;
       Index_Name, Prev_Index    : Natural := 0;
    begin
-      With_Info := Search_Unit
+      Pkg_Info := Search_Unit
         (Current_Text, Cursor.File_Name.all, Cat_With, Name);
 
-      Get_Unit (Current_Text, Cursor, New_Extract);
-      Remove_Elements (New_Extract, Name);
+      if Pkg_Info.Category = Cat_Unknown then
+         Pkg_Info := Search_Unit
+           (Current_Text, Cursor.File_Name.all, Cat_Package, Name);
+         Get_Unit (Current_Text, Cursor, Ada_Instruction (New_Extract));
+         Remove_Instruction (New_Extract);
+         Set_Caption
+           (New_Extract,
+            "Delete instantiation and use clauses of unit """ & Name & """");
+      else
+         Get_Unit (Current_Text, Cursor, New_Extract);
+         Remove_Elements (New_Extract, Name);
+         Set_Caption
+           (New_Extract,
+            "Delete with and use clauses for unit """ & Name & """");
+      end if;
 
       loop
          Index_Name := Index_Name + 1;
-         Skip_To_Char (With_Info.Name.all, Index_Name, '.');
-         exit when Index_Name > With_Info.Name'Last + 1;
+         Skip_To_Char (Pkg_Info.Name.all, Index_Name, '.');
+         exit when Index_Name > Pkg_Info.Name'Last + 1;
 
          Use_Info := Search_Unit
            (Current_Text,
             Cursor.File_Name.all,
             Cat_Use,
-            With_Info.Name.all (Prev_Index + 1 .. Index_Name - 1));
+            Pkg_Info.Name.all (Prev_Index + 1 .. Index_Name - 1));
 
          if Use_Info.Category /= Cat_Unknown then
             Cursor_Use.Col := Use_Info.Sloc_Start.Column;
@@ -218,7 +231,7 @@ package body Codefix.Formal_Errors is
            (New_Extract,
             Message,
             Str_Expected,
-            "^([\w]+)",
+            "(^[\w]+)",
             Regular_Expression);
 
          if Caption = "" then
@@ -716,9 +729,6 @@ package body Codefix.Formal_Errors is
          when Cat_With =>
 
             New_Extract_List := Delete_With (Current_Text, Cursor, Name);
-            Set_Caption
-              (New_Extract_List,
-               "Delete with and use clause for unit """ & Name & """");
             Append (New_Solutions, New_Extract_List);
 
          when others =>
