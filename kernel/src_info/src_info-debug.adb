@@ -549,7 +549,7 @@ package body Src_Info.Debug is
 
    procedure Force_Parsing (LIFP : LI_File_Ptr) is
    begin
-      LIFP.LI.LI_Timestamp := Src_Info.No_Time;
+      LIFP.LI.LI_Timestamp := VFS.No_Time;
    end Force_Parsing;
 
    -------------------
