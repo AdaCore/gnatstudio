@@ -334,17 +334,20 @@ package Glide_Kernel.Scripts is
    procedure Execute_Command
      (Script             : access Scripting_Language_Record;
       Command            : String;
-      Display_In_Console : Boolean := True) is abstract;
+      Display_In_Console : Boolean := True;
+      Errors             : out Boolean) is abstract;
    --  Execute a command in the script language.
    --  It isn't possible to retrieve the result of that command, this command
    --  is only used for its side effect.
    --  Depending on the language, Command might be a list of commands to
    --  execute, often semicolon or newline separated.
+   --  Errors is set to True if there was any error executing the script.
 
    function Execute_Command
      (Script             : access Scripting_Language_Record;
       Command            : String;
-      Display_In_Console : Boolean := True) return String;
+      Display_In_Console : Boolean := True;
+      Errors             : access Boolean) return String;
    --  Execute a command, and return its result as a displayable string.
    --  Note: some languages might simply return an empty string if they cannot
    --  capture the output of their interpreter. This command is mostly useful
@@ -355,7 +358,8 @@ package Glide_Kernel.Scripts is
    procedure Execute_File
      (Script             : access Scripting_Language_Record;
       Filename           : String;
-      Display_In_Console : Boolean := True) is abstract;
+      Display_In_Console : Boolean := True;
+      Errors             : out Boolean) is abstract;
    --  Execute a script contained in an external file.
 
    function Get_Name (Script : access Scripting_Language_Record)

@@ -32,10 +32,12 @@ with Gtk.Enums;            use Gtk.Enums;
 with Gtk.GEntry;           use Gtk.GEntry;
 with Gtk.Stock;            use Gtk.Stock;
 with Gtkada.Dialogs;       use Gtkada.Dialogs;
+with Gtkada.MDI;           use Gtkada.MDI;
 with Glide_Kernel.Custom;  use Glide_Kernel.Custom;
 with Glide_Kernel.Modules; use Glide_Kernel.Modules;
 with Glide_Kernel.Project; use Glide_Kernel.Project;
 with Glide_Main_Window;    use Glide_Main_Window;
+with Commands;             use Commands;
 with Src_Info.Queries;     use Src_Info, Src_Info.Queries;
 with String_Hash;
 with System;               use System;
@@ -165,6 +167,8 @@ package body Glide_Kernel.Scripts is
    Package_Cst    : aliased constant String := "package";
    Index_Cst      : aliased constant String := "index";
    Tool_Cst       : aliased constant String := "tool";
+   Force_Cst      : aliased constant String := "force";
+   Action_Cst     : aliased constant String := "action";
    Project_Cmd_Parameters : constant Cst_Argument_List :=
      (1 => Name_Cst'Access);
    Insmod_Cmd_Parameters  : constant Cst_Argument_List :=
@@ -191,6 +195,10 @@ package body Glide_Kernel.Scripts is
       2 => Package_Cst'Access,
       3 => Index_Cst'Access);
    Tool_Parameters : constant Cst_Argument_List := (1 => Tool_Cst'Access);
+   Save_Windows_Parameters : constant Cst_Argument_List :=
+     (1 => Force_Cst'Access);
+   Exec_Action_Parameters : constant Cst_Argument_List :=
+     (1 => Action_Cst'Access);
 
    ----------
    -- Free --
@@ -625,6 +633,36 @@ package body Glide_Kernel.Scripts is
              Justification => Justify_Left,
              Dialog_Type   => Confirmation,
              Parent        => Get_Main_Window (Kernel)) = Button_Yes);
+
+      elsif Command = "save_windows" then
+         Name_Parameters (Data, Save_Windows_Parameters);
+         if not Save_MDI_Children
+           (Kernel, No_Children, Nth_Arg (Data, 1, False))
+         then
+            Set_Error_Msg (Data, -"Cancelled by user");
+         end if;
+
+      elsif Command = "execute_action" then
+         Name_Parameters (Data, Exec_Action_Parameters);
+
+         declare
+            Action : constant Action_Record := Lookup_Action
+              (Kernel, Nth_Arg (Data, 1));
+         begin
+            if Action = No_Action then
+               Set_Error_Msg (Data, -"No such registered action");
+
+            elsif Action.Context /= null
+              and then not Context_Matches (Action.Context, Kernel)
+            then
+               Set_Error_Msg (Data, -"Invalid context for the action");
+
+            else
+               --  Have a small delay, since custom actions would launch
+               --  external commands in background
+               Launch_Synchronous (Action.Command, Wait => 0.1);
+            end if;
+         end;
 
       elsif Command = "input_dialog" then
          declare
@@ -1262,6 +1300,34 @@ package body Glide_Kernel.Scripts is
          Minimum_Args => 2,
          Maximum_Args => 100,
          Handler      => Default_Command_Handler'Access);
+      Register_Command
+        (Kernel,
+         Command      => "save_windows",
+         Params       => Parameter_Names_To_Usage (Save_Windows_Parameters),
+         Description  =>
+           -("Save all currently unsaved windows. This includes open editors,"
+             & " the project, and any other window that has registered some"
+             & " save callbacks." & ASCII.LF
+             & "If the force parameter is false, then a confirmation dialog"
+             & " is displayed so that the user can select which windows"
+             & " to save." & ASCII.LF
+             & "It raises an exception if the user pressed Cancel"),
+         Minimum_Args => 0,
+         Maximum_Args => 1,
+         Handler      => Default_Command_Handler'Access);
+      Register_Command
+        (Kernel,
+         Command      => "execute_action",
+         Params       => Parameter_Names_To_Usage (Exec_Action_Parameters),
+         Description  =>
+           -("Execute a GPS action. These are the same actions to which key"
+             & " bindings can be assigned through the keymanager. They are"
+             & " either exported by GPS itself, or created through XML"
+             & " customization files. The action is not executed if the"
+             & " current context is not appropriate for the action"),
+         Minimum_Args => 1,
+         Maximum_Args => 1,
+         Handler      => Default_Command_Handler'Access);
 
       Register_Command
         (Kernel,
@@ -1669,10 +1735,13 @@ package body Glide_Kernel.Scripts is
 
    function Execute_GPS_Shell_Command
      (Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Command : String) return String is
+      Command : String) return String
+   is
+      Errors : aliased Boolean;
    begin
       return Execute_Command
-        (Lookup_Scripting_Language (Kernel, GPS_Shell_Name), Command, False);
+        (Lookup_Scripting_Language (Kernel, GPS_Shell_Name),
+         Command, False, Errors'Unchecked_Access);
    end Execute_GPS_Shell_Command;
 
    -------------------------------
@@ -1711,8 +1780,10 @@ package body Glide_Kernel.Scripts is
      (Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
       Command : String)
    is
+      Errors : aliased Boolean;
       Str : constant String := Execute_Command
-        (Lookup_Scripting_Language (Kernel, GPS_Shell_Name), Command, False);
+        (Lookup_Scripting_Language (Kernel, GPS_Shell_Name),
+         Command, False, Errors'Unchecked_Access);
       pragma Unreferenced (Str);
    begin
       null;
@@ -1725,10 +1796,11 @@ package body Glide_Kernel.Scripts is
    function Execute_Command
      (Script             : access Scripting_Language_Record;
       Command            : String;
-      Display_In_Console : Boolean := True) return String is
+      Display_In_Console : Boolean := True;
+      Errors             : access Boolean) return String is
    begin
       Execute_Command
-        (Scripting_Language (Script), Command, Display_In_Console);
+        (Scripting_Language (Script), Command, Display_In_Console, Errors.all);
       return "";
    end Execute_Command;
 
