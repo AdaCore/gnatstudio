@@ -1,7 +1,7 @@
 @SET_MAKE@
 
 CC              = @CC@
-LN              = @LN@
+CP              = cp -p
 MKDIR           = mkdir -p
 STRIP           = strip
 INSTALL         = @INSTALL@
@@ -43,7 +43,7 @@ $(EXEC): gvd-proc_utils-builtin.adb force
 	  -largs $(LINK_FLAGS)
 
 gvd-proc_utils-builtin.adb: gvd-proc_utils-builtin_${BUILTIN_PS}.adb Makefile
-	$(LN) gvd-proc_utils-builtin_${BUILTIN_PS}.adb \
+	$(CP) gvd-proc_utils-builtin_${BUILTIN_PS}.adb \
 	      gvd-proc_utils-builtin.adb
 
 libgvd:
