@@ -278,7 +278,10 @@ package body Debugger.Gdb.Ada is
             declare
                Int : constant Natural := Index;
             begin
-               Skip_Simple_Value (Type_Str, Index);
+               Skip_Simple_Value (Type_Str, Index,
+                                  Array_Item_Separator => ',',
+                                  End_Of_Array         => ')',
+                                  Repeat_Item_Start    => '<');
                Set_Value (Simple_Type (Result.all),
                           Type_Str (Int .. Index - 1));
 
@@ -354,7 +357,21 @@ package body Debugger.Gdb.Ada is
       elsif Result'Tag = Array_Type'Tag
         and then Type_Str'Length /= 0   --  for empty Arrays
       then
-         Parse_Array_Value (Lang, Type_Str, Index, Array_Type_Access (Result));
+         --  Some array types can in fact be transformed into access types.
+         --  This is the case for instance in C for empty arrays ("int[0]" can
+         --  have a value of "0x..."), or in Ada for unconstrained arrays
+         --  ("array (1..1) of string" can have a value of "(0x0").
+         --  For such cases, we change the type once and for all, since we will
+         --  never need to go back to an array type.
+
+         if Type_Str (Index) /= '(' then   --   ??? Start of array
+            Free (Result);
+            Result := New_Access_Type;
+            Parse_Value (Lang, Type_Str, Index, Result, Repeat_Num);
+         else
+            Parse_Array_Value
+              (Lang, Type_Str, Index, Array_Type_Access (Result));
+         end if;
 
       -------------------
       -- Record values --
@@ -579,9 +596,9 @@ package body Debugger.Gdb.Ada is
             end if;
          end loop;
 
-         Set_Item_Type
-           (R.all, Parse_Type (Get_Debugger (Lang),
-                               Entity & "(" & To_String (Index_Str) & ")"));
+         Set_Item_Type (R.all,
+            Parse_Type (Get_Debugger (Lang),
+               Array_Item_Name (Lang, Entity, To_String (Index_Str))));
       end if;
    end Parse_Array_Type;
 
