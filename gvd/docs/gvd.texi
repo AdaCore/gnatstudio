@@ -459,6 +459,10 @@ glide.bat, as provided by ACT.
 This command generates a list of processes
 suitable for process actions such as attach. Under Windows, a stand alone
 executable called @code{winps} is provided to implement this capability.
+
+Note that the format expected by GVD of this command is the process id
+in the first column, and then additional information (displayed as is).
+
 @item Remote Shell
 Command to be used to establish a remote connection
 (see @ref{Using GVD with a Remote Debugger}).
