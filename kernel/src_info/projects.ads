@@ -306,6 +306,7 @@ package Projects is
    Builder_Default_Switches_Attribute  : constant Attribute_Pkg;
    Compiler_Default_Switches_Attribute : constant Attribute_Pkg;
    Linker_Default_Switches_Attribute   : constant Attribute_Pkg;
+   Binder_Default_Switches_Attribute   : constant Attribute_Pkg;
    Executable_Attribute                : constant Attribute_Pkg;
 
    type Associative_Array_Element is record
@@ -684,6 +685,8 @@ private
      "compiler#default_switches";
    Linker_Default_Switches_Attribute : constant Attribute_Pkg :=
      "linker#default_switches";
+   Binder_Default_Switches_Attribute   : constant Attribute_Pkg :=
+     "binder#default_switches";
    Executable_Attribute       : constant Attribute_Pkg :=
      "builder#executable";
 
