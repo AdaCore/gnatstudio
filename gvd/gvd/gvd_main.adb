@@ -156,7 +156,7 @@ procedure Odd_Main is
       Put_Line ("This is a beta release of GVD, the GNU Visual Debugger.");
       Put_Line ("Please do not redistribute.");
       Put_Line ("Usage:");
-      Put_Line ("   gvd [options...] executable-file [core-file|process-id]");
+      Put_Line ("   gvd [options...] executable-file");
       Put_Line ("Options:");
       Put_Line ("   --disable-log Disable automatic log file.");
       Put_Line ("   --jdb         Invoke JDB as inferior debugger.");
