@@ -54,6 +54,7 @@ with Commands.External;         use Commands.External;
 
 with Traces;                    use Traces;
 with Ada.Exceptions;            use Ada.Exceptions;
+with Ada.Characters.Handling;   use Ada.Characters.Handling;
 
 package body VCS_View_API is
 
@@ -139,9 +140,6 @@ package body VCS_View_API is
 
    function Get_Current_Ref (Kernel : Kernel_Handle) return VCS_Access;
    --  Return the VCS reference corresponding to the current context in Kernel.
-
-   function Get_Current_Ref (Project : Project_Type) return VCS_Access;
-   --  Return the VCS reference registered in Project.
 
    function Get_Selected_Files
      (Context : Selection_Context_Access) return String_List.List;
@@ -2257,33 +2255,15 @@ package body VCS_View_API is
       Recursive : Boolean := False) return String_List.List
    is
       Result   : String_List.List;
-      Iterator : Imported_Project_Iterator :=
-        Start (Project, Recursive);
    begin
-      while Current (Iterator) /= No_Project loop
-         declare
-            A : constant String_Id_Array
-              := Source_Dirs (Current (Iterator));
-         begin
-            --  Add a directory separator if necessary.
-            --  ??? Should we really need to do that ?
-
-            for J in reverse A'Range loop
-               declare
-                  S : constant String := Get_String (A (J));
-               begin
-                  if S (S'Last) = GNAT.OS_Lib.Directory_Separator then
-                     String_List.Append (Result, S);
-                  else
-                     String_List.Append
-                       (Result, S & GNAT.OS_Lib.Directory_Separator);
-                  end if;
-               end;
-            end loop;
-         end;
-
-         Next (Iterator);
-      end loop;
+      declare
+         A : constant String_Array_Access
+           := Source_Dirs (Project, Recursive);
+      begin
+         for J in A'Range loop
+            String_List.Append (Result, A (J).all);
+         end loop;
+      end;
 
       return Result;
    end Get_Dirs_In_Project;
@@ -2358,5 +2338,35 @@ package body VCS_View_API is
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
          return null;
    end Context_Factory;
+
+   ---------------------------
+   -- Display_Editor_Status --
+   ---------------------------
+
+   procedure Display_Editor_Status
+     (Kernel : access Kernel_Handle_Record'Class;
+      Status : File_Status_Record)
+   is
+      Status_Label   : String_Access;
+      Revision_Label : String_Access;
+
+      use String_List_Utils.String_List;
+   begin
+      Status_Label := new String'
+        (-"VCS Status:" & (-To_Lower (File_Status'Image (Status.Status))));
+
+      if not Is_Empty (Status.Working_Revision) then
+         Revision_Label := new String'
+           (-" - (rev: " & Head (Status.Working_Revision) & ")");
+      else
+         Revision_Label := new String'("");
+      end if;
+
+      Add_Editor_Label
+        (Kernel,
+         Head (Status.File_Name),
+         VCS_Module_Name,
+         Status_Label.all & Revision_Label.all);
+   end Display_Editor_Status;
 
 end VCS_View_API;
