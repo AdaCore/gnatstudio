@@ -100,20 +100,23 @@ package body Custom_Module is
 
                if Current_Child.Tag.all = "Action" then
                   declare
-                     Args : Argument_List_Access
-                       := Argument_String_To_List (Current_Child.Value.all);
+                     Args : Argument_List_Access :=
+                       Argument_String_To_List (Current_Child.Value.all);
                      A : Argument_List_Access;
                      C : Custom_Command_Access;
+
                   begin
                      if Args'Length > 1 then
                         A := new Argument_List'
                           (Args (Args'First + 1 .. Args'Last));
                      end if;
 
-                     Create (C,
-                             Kernel_Handle (Kernel),
-                             Args (Args'First).all,
-                             A);
+                     Create
+                       (C,
+                        Kernel_Handle (Kernel),
+                        Args (Args'First).all,
+                        A);
+
                      if Command = null then
                         Command := Command_Access (C);
                      else
@@ -126,12 +129,13 @@ package body Custom_Module is
             end loop;
 
             if Current_Title /= null and then Current_Title.all /= "" then
-               Register_Menu (Kernel,
-                              Parent_Path,
-                              Current_Title.all,
-                              "",
-                              null,
-                              Command);
+               Register_Menu
+                 (Kernel,
+                  Parent_Path,
+                  Current_Title.all,
+                  "",
+                  null,
+                  Command);
             else
                Gtk_New (Item);
                Register_Menu (Kernel, Parent_Path, Item);
