@@ -471,6 +471,11 @@ package Glide_Kernel is
       Context     : access Selection_Context'Class);
    --  Emits the "source_lines_revealed" signal.
 
+   procedure File_Edited
+     (Handle  : access Kernel_Handle_Record;
+      File    : String);
+   --  Emits the "file_edited" signal.
+
    -------------
    -- Signals --
    -------------
@@ -512,6 +517,9 @@ package Glide_Kernel is
    --                       File       : String;
    --                       Start_Line : Natural;
    --                       End_Line   : Natural);
+   --  - "file_edited"
+   --    procedure Handler (Handle : access Kernel_Handle_Record'Class;
+   --                       File   : String);
    --
    --  </signals>
 
@@ -520,6 +528,7 @@ package Glide_Kernel is
    Context_Changed_Signal       : constant String := "context_changed";
    Variable_Changed_Signal      : constant String := "variable_changed";
    Source_Lines_Revealed_Signal : constant String := "source_lines_revealed";
+   File_Edited_Signal           : constant String := "file_edited";
 
 private
 
