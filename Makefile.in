@@ -6,6 +6,7 @@ INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_DATA    = @INSTALL_DATA@
 prefix          = @prefix@
 bindir          = $(prefix)/bin
+sharedir        = $(prefix)/share/make
 
 default build compile link ada c c++ clean:
 	$(MAKE) -s -C glide -f Makefile.gps $@
@@ -13,6 +14,8 @@ default build compile link ada c c++ clean:
 install:
 	$(MKDIR) $(bindir)
 	$(INSTALL_PROGRAM) glide/obj/gps $(bindir)
+	$(INSTALL_DATA) gnat/Makefile.generic $(sharedir)
+	$(INSTALL_DATA) gnat/Makefile.prolog $(sharedir)
 	$(MAKE) -C kernel/src_info/sn/snsrc install
 	$(MAKE) -C docs install
 
