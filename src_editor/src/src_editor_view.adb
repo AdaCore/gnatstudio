@@ -846,6 +846,9 @@ package body Src_Editor_View is
    is
       Insert_Mark : constant Gtk_Text_Mark := Get_Insert (Get_Buffer (View));
    begin
+      --  Save the cursor location.
+      Save_Cursor_Position (View);
+
       --  We want to use the alignments, so that the line appears in the middle
       --  of the screen if possible. This provides a more user-friendly
       --  behavior.
