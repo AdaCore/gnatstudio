@@ -11,3 +11,12 @@ do the following:
    $ make
    $ make install
 
+It is possible to specify the name of the gnat compiler when it is
+different from gcc (e.g. gnatgcc). The following options are provided:
+   - Specify the name of the compiler at configure time
+      $ CC=<your-gnat-compiler> ./configure <...>
+      $ make
+   - Specify the name of the compiler when invoking make
+      $ ./configure <...>
+      $ make CC=<your-gnat-compiler>
+
