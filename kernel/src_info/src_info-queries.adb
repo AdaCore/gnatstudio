@@ -725,7 +725,6 @@ package body Src_Info.Queries is
    function Is_Subprogram (Node : Scope_Tree_Node) return Boolean is
       K : constant E_Kind := Node.Decl.Kind;
    begin
-      Trace (Me, K'Img);
       return (K = Generic_Function_Or_Operator
               or else K = Generic_Procedure
               or else K = Non_Generic_Function_Or_Operator
