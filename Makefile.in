@@ -11,12 +11,12 @@ sharedir        = $(prefix)/share
 export TP_TASKING = No_Tasking
 
 default build compile link ada c c++:
-	$(MAKE) -s -C glide -f Makefile.gps $@
+	$(MAKE) -s -C gps -f Makefile.gps $@
 
 clean:
 	$(RM) gnat/*.ad*
 	$(RM) obj/*.ali obj/*.o
-	$(MAKE) -s -C glide -f Makefile.gps $@
+	$(MAKE) -s -C gps -f Makefile.gps $@
 
 install-common:
 	$(MKDIR) $(bindir)
@@ -31,14 +31,11 @@ install-common:
 	$(MAKE) -C docs install
 
 install: install-common
-	$(INSTALL_PROGRAM) glide/obj/gps $(bindir)
+	$(INSTALL_PROGRAM) gps/obj/gps $(bindir)
 	$(MAKE) -C kernel/src_info/sn/snsrc install
 
 install-strip: install-common
-	$(INSTALL_PROGRAM) -s glide/obj/gps $(bindir)
+	$(INSTALL_PROGRAM) -s gps/obj/gps $(bindir)
 	$(MAKE) -C kernel/src_info/sn/snsrc install-strip
 
-gvd:
-	$(MAKE) -s -C gvd -f Makefile.gvd EXEC=gvd ADA_SOURCES=gvd_main.adb
-
-.PHONY: gvd install install-common install-strip
+.PHONY: install install-common install-strip
