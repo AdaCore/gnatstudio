@@ -31,11 +31,13 @@ package Vdiff2_Module.Utils.Shell_Command is
    --  Add a blank line at line Pos of a given file editor,
    --  using Style for color.
    --  Return corresponding Mark.
+   pragma Inline (Add_Line);
 
    procedure Edit
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
       File   : Virtual_File);
    --  Open editor for File
+   pragma Inline (Edit);
 
    function Get_Chars
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
@@ -49,19 +51,24 @@ package Vdiff2_Module.Utils.Shell_Command is
    --  and <after> characters after the position.
    --  If <before> or <after> is omitted,
    --  the bounds will be at the beginning and/or the end of the line.
+   pragma Inline (Get_Chars);
 
    function Get_File_Last_Line
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
       File : Virtual_File) return Natural;
    --  Return the number of line in file File
+   pragma Inline (Get_File_Last_Line);
 
    function Get_Line_Number
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
       Mark   : String) return Natural;
    --  Returns the current line of Mark
+   pragma Inline (Get_Line_Number);
+
    procedure Goto_Difference
      (Kernel : Kernel_Handle;
       Link   : Diff_Chunk_Access);
+   pragma Inline (Goto_Difference);
 
    procedure Highlight_Line
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
@@ -70,6 +77,7 @@ package Vdiff2_Module.Utils.Shell_Command is
       Style  : String := "";
       Number : Natural := 1);
    --  Color a line at line Pos in a given file editor, using Style for color
+   pragma Inline (Highlight_Line);
 
    procedure Highlight_Range
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
@@ -79,12 +87,14 @@ package Vdiff2_Module.Utils.Shell_Command is
       Start_C : Integer := -1;
       End_C   : Integer := -1);
    --  Highlights a portion of a line in a file with the given category
+   pragma Inline (Highlight_Range);
 
    function Mark_Diff_Block
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
       File  : Virtual_File;
       Pos   : Natural) return String;
    --  Return the mark corresponding the begining of line number Pos
+   pragma Inline (Mark_Diff_Block);
 
    procedure Register_Highlighting
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
@@ -94,6 +104,7 @@ package Vdiff2_Module.Utils.Shell_Command is
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
       Mark   : in out String_Access);
    --  Remove blank lines located at mark
+   pragma Inline (Remove_Blank_Lines);
 
    procedure Replace_Text
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
@@ -107,6 +118,15 @@ package Vdiff2_Module.Utils.Shell_Command is
    --  before (line, column), and up to <after> characters after are removed,
    --  and the new text is inserted instead. If <before> or <after> is omitted,
    --  the bounds will be at the beginning and/or the end of the line.
+   pragma Inline (Replace_Text);
+
+   procedure Unhighlight
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+      File  : Virtual_File;
+      Pos   : Natural;
+      Style : String := "");
+   pragma Inline (Unhighlight);
+   --  Remove highlighting of line number Pos in file File
 
    procedure Unhighlight_Line
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
@@ -114,6 +134,7 @@ package Vdiff2_Module.Utils.Shell_Command is
       Pos   : Natural;
       Style : String := "");
    --  Remove highlighting of line number Pos in file File
+   pragma Inline (Unhighlight_Line);
 
    procedure Unhighlight_Range
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
@@ -123,5 +144,7 @@ package Vdiff2_Module.Utils.Shell_Command is
       Start_C : Integer := -1;
       End_C   : Integer := -1);
    --  Remove fine highlighting
+   pragma Inline (Unhighlight_Range);
+
 
 end Vdiff2_Module.Utils.Shell_Command;
