@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                              G P S                                --
+--                               G P S                               --
 --                                                                   --
 --                        Copyright (C) 2001                         --
 --                            ACT-Europe                             --
 --                                                                   --
--- GLIDE is free software; you can redistribute it and/or modify  it --
+-- GPS is free software; you can redistribute it and/or modify  it   --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -78,6 +78,7 @@ package body Src_Info is
          if Current_Node.Value.Source_Filename.all = File_Name.all then
             return Current_Node.Value;
          end if;
+         Current_Node := Current_Node.Next;
       end loop;
       --  If we reach this point, this means that the File_Info was not found.
       return null;
