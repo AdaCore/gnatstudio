@@ -973,9 +973,10 @@ package body Src_Editor_Box is
 
       function Get_Enclosing_Subprogram return String is
          L     : Buffer_Line_Type := Buffer_Line_Type (Line);
+         New_L : Buffer_Line_Type;
          Block : Block_Record;
       begin
-         Block := Get_Block (Box.Source_Buffer, L);
+         Block := Get_Block (Box.Source_Buffer, L, Force_Compute => False);
 
          if Block.Block_Type = Cat_Unknown
            and then Block.Indentation_Level = 0
@@ -989,12 +990,23 @@ package body Src_Editor_Box is
             end if;
 
             if Block.First_Line > 1 then
-               L := Get_Buffer_Line (Box.Source_Buffer, Block.First_Line - 1);
+               New_L :=
+                 Get_Buffer_Line (Box.Source_Buffer, Block.First_Line - 1);
+
+               --  At this point, we have to check that we are not stuck on
+               --  the same line, this can happen when block information is not
+               --  up-to-date.
+
+               if New_L < L then
+                  L := New_L;
+               else
+                  L := L - 1;
+               end if;
             else
                exit;
             end if;
 
-            Block := Get_Block (Box.Source_Buffer, L);
+            Block := Get_Block (Box.Source_Buffer, L, Force_Compute => False);
          end loop;
 
          return "";
@@ -1232,11 +1244,11 @@ package body Src_Editor_Box is
       --  Function location area
       Gtk_New (Frame);
       Set_Shadow_Type (Frame, Shadow_None);
-      Pack_Start (Box.Label_Box, Frame,
-                  Expand => False, Fill => False, Padding => 2);
+      Pack_Start (Box.Label_Box, Frame, Expand => False, Fill => True);
+      Gtk_New (Event_Box);
+      Add (Frame, Event_Box);
       Gtk_New (Box.Function_Label);
-      Add (Frame, Box.Function_Label);
-      Set_Justify (Box.Function_Label, Justify_Left);
+      Add (Event_Box, Box.Function_Label);
 
       --  Connect to source buffer signals.
 
