@@ -21,21 +21,21 @@
 --  The case exception file is an XML file with the following structure.
 --
 --  <?xml version="1.0"?>
---  <case_exceptions>
---     <exceptions>
---        <exception>OS_Lib</exception>
---        <exception>GNAT</exception>
---     </exceptions>
---  </case_exceptions>
+--  <custom_section>
+--     <case_exceptions>
+--        <word>OS_Lib</word>
+--        <word>GNAT</word>
+--     </case_exceptions>
+--  </custom_section>
 
 with Ada.Unchecked_Deallocation;
-with Ada.Characters.Handling; use Ada.Characters.Handling;
-with Ada.Exceptions;          use Ada.Exceptions;
+with Ada.Characters.Handling;    use Ada.Characters.Handling;
+with Ada.Exceptions;             use Ada.Exceptions;
 
-with GNAT.OS_Lib;             use GNAT.OS_Lib;
+with GNAT.OS_Lib;                use GNAT.OS_Lib;
 
-with Traces;                  use Traces;
-with Glib.Xml_Int;            use Glib.Xml_Int;
+with Traces;                     use Traces;
+with Glib.Xml_Int;               use Glib.Xml_Int;
 
 package body Case_Handling is
 
@@ -241,10 +241,10 @@ package body Case_Handling is
       N               : W_Node;
    begin
       File     := new Node;
-      File.Tag := new String'("case_exceptions");
+      File.Tag := new String'("custom_section");
 
       Ada_Child     := new Node;
-      Ada_Child.Tag := new String'("exceptions");
+      Ada_Child.Tag := new String'("case_exceptions");
       Add_Child (File, Ada_Child);
 
       String_Hash_Table.Get_First (C.E.all, Iter);
@@ -255,7 +255,7 @@ package body Case_Handling is
 
          if not N.Read_Only then
             Child       := new Node;
-            Child.Tag   := new String'("exception");
+            Child.Tag   := new String'("word");
             Child.Value := new String'(N.Word.all);
             Add_Child (Ada_Child, Child);
          end if;
