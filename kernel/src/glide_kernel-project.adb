@@ -26,7 +26,6 @@ with Prj.Ext;     use Prj.Ext;
 with Prj.Util;    use Prj.Util;
 with Prj.Tree;    use Prj.Tree;
 with Namet;       use Namet;
-with Snames;      use Snames;
 with Stringt;     use Stringt;
 with Types;       use Types;
 with Output;      use Output;
@@ -240,24 +239,8 @@ package body Glide_Kernel.Project is
 
       declare
          Iter : Imported_Project_Iterator := Start (Handle.Project, True);
-         Naming_Pkg : Package_Id;
       begin
          while Current (Iter) /= No_Project loop
-
-            --  ??? Temporary workaround until this is implemented directly by
-            --  ??? the Prj parser.
-            Naming_Pkg := Value_Of
-              (Name_Naming, Projects.Table (Current (Iter)).Decl.Packages);
-            if Naming_Pkg /= No_Package then
-               Projects.Table (Current (Iter)).Naming.Implementation_Exceptions
-                 := Value_Of (Name_Implementation_Exceptions,
-                              Packages.Table (Naming_Pkg).Decl.Arrays);
-               Projects.Table (Current (Iter)).Naming.Specification_Exceptions
-                 := Value_Of (Name_Specification_Exceptions,
-                              Packages.Table (Naming_Pkg).Decl.Arrays);
-            end if;
-
-
             Add_Foreign_Source_Files (Current (Iter));
             Next (Iter);
          end loop;
