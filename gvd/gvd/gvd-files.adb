@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2002                      --
+--                      Copyright (C) 2000-2003                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -22,6 +22,7 @@ with Basic_Types;           use Basic_Types;
 with GVD.Preferences;       use GVD.Preferences;
 with GVD.Main_Window;       use GVD.Main_Window;
 with GNAT.OS_Lib;           use GNAT.OS_Lib;
+with File_Utils;            use File_Utils;
 with String_Utils;          use String_Utils;
 with Gtkada.Intl;           use Gtkada.Intl;
 with GNAT.Expect;           use GNAT.Expect;
