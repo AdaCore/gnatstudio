@@ -151,10 +151,10 @@ package body Glide_Kernel.Console is
          Set_Title (Child, -"Locations");
          Set_Dock_Side (Child, Bottom);
          Dock_Child (Child);
-         return Child;
       else
-         return Child;
+         Raise_Child (Child);
       end if;
+      return Child;
    end Get_Or_Create_Result_View_MDI;
 
    -----------------
@@ -616,6 +616,7 @@ package body Glide_Kernel.Console is
       elsif Widget.all in GPS_Message_Record'Class then
          N := new Node;
          N.Tag := new String'("Message_Window");
+         return N;
       end if;
 
       return null;
