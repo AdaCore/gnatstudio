@@ -3,6 +3,9 @@ details, please see the documentation.
 
 New features in GPS 2.0.0
 
+- New menu Edit->Insert File... to insert the contents of a file in the current
+  editor.
+
 - The locations view now shows the total number of items belonging to each
   category and sub-category.
 
