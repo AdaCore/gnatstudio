@@ -167,18 +167,18 @@ package body Glide_Kernel.Modules is
       Command : Non_Interactive_Action);
    --  Execute a single command.
 
-   function Menu_Button_Press
+   procedure Menu_Button_Press
      (Widget  : access GObject_Record'Class;
       Event   : Gdk_Event;
-      Data    : Menu_Factory_User_Data) return Boolean;
+      Data    : Menu_Factory_User_Data);
    --  Create a menu using the data in Factory.
 
    package Command_Callback is new Gtk.Handlers.User_Callback
      (Glib.Object.GObject_Record, Non_Interactive_Action);
 
-   package Menu_Factory_Return_Callback is
-   new Gtk.Handlers.User_Return_Callback
-     (Glib.Object.GObject_Record, Boolean, Menu_Factory_User_Data);
+   package Menu_Factory_Callback is
+   new Gtk.Handlers.User_Callback
+     (Glib.Object.GObject_Record, Menu_Factory_User_Data);
 
    procedure Add_Contextual_Menu
      (Kernel        : access Kernel_Handle_Record'Class;
@@ -1151,10 +1151,10 @@ package body Glide_Kernel.Modules is
    -- Menu_Button_Press --
    -----------------------
 
-   function Menu_Button_Press
+   procedure Menu_Button_Press
      (Widget  : access GObject_Record'Class;
       Event   : Gdk_Event;
-      Data    : Menu_Factory_User_Data) return Boolean
+      Data    : Menu_Factory_User_Data)
    is
       pragma Unreferenced (Widget);
 
@@ -1205,13 +1205,10 @@ package body Glide_Kernel.Modules is
          Set_Time (Event, Get_Time (Event) + 500);
       end if;
 
-      return False;
-
    exception
       when E : others =>
          Trace (Exception_Handle,
                 "Unexpected exception " & Exception_Information (E));
-         return False;
    end Menu_Button_Press;
 
    ---------------------------
@@ -1255,10 +1252,9 @@ package body Glide_Kernel.Modules is
       Set_Submenu (Item, Menu);
 
       if Factory /= null then
-         Menu_Factory_Return_Callback.Connect
-           (Item, "button_press_event",
-            Menu_Factory_Return_Callback.To_Marshaller
-              (Menu_Button_Press'Access),
+         Menu_Factory_Callback.Connect
+           (Get_Toplevel (Item), "map",
+            Menu_Factory_Callback.To_Marshaller (Menu_Button_Press'Access),
             User_Data => (Kernel_Handle (Kernel), Factory, Menu));
       end if;
    end Register_Dynamic_Menu;
