@@ -403,7 +403,7 @@ package body Src_Editor_Buffer is
             Slice        : Unchecked_String_Access;
             pragma Suppress (Access_Check, Slice);
             Index        : Integer;
-            Command      : Editor_Replace_Slice;
+            Replace_Cmd  : Editor_Replace_Slice;
 
          begin
             if Length = 1 and then Text (1) = ASCII.LF then
@@ -445,62 +445,65 @@ package body Src_Editor_Buffer is
 
                Next_Indentation
                  (Buffer.Lang, Slice (1 .. Slice_Length),
-                  Success, Indent, Next_Indent);
+                  Result, Indent, Next_Indent);
 
-               --  Stop propagation of this signal, since we will completely
-               --  replace the current line in the call to Replace_Slice
-               --  below.
+               if Result then
+                  --  Stop propagation of this signal, since we will completely
+                  --  replace the current line in the call to Replace_Slice
+                  --  below.
 
-               Emit_Stop_By_Name (Buffer, "insert_text");
-               Skip_To_Char (Slice.all, Index, ASCII.LF, -1);
+                  Emit_Stop_By_Name (Buffer, "insert_text");
+                  Skip_To_Char (Slice.all, Index, ASCII.LF, -1);
 
-               if Index < Slice'First then
-                  Index := Slice'First;
-               else
-                  Index := Index + 1;
+                  if Index < Slice'First then
+                     Index := Slice'First;
+                  else
+                     Index := Index + 1;
+                  end if;
+
+                  while Index <= Slice_Length
+                    and then (Slice (Index) = ' '
+                              or else Slice (Index) = ASCII.HT)
+                  loop
+                     Index := Index + 1;
+                  end loop;
+
+                  --  Prevent recursion
+                  Buffer.Inserting := True;
+
+                  --  Replace everything at once, important for efficiency
+                  --  and also because otherwise, some marks will no longer be
+                  --  valid.
+
+                  if Line_Ends then
+                     Slice_Length := Slice_Length - 1;
+                  end if;
+
+                  Create
+                    (Replace_Cmd,
+                     Source_Buffer (Buffer),
+                     Integer (Line), 0,
+                     Integer (Line), Integer (Col),
+                     (1 .. Indent => ' ') &
+                     Slice (Index .. Slice_Length - Offset) & ASCII.LF &
+                     (1 .. Next_Indent => ' ') &
+                     Slice (Blanks .. Slice_Length));
+                  Enqueue (Buffer.Queue, Replace_Cmd);
+                  Indented := True;
+
+                  --  Need to recompute iter, since the slice replacement that
+                  --  we just did has invalidated iter.
+
+                  Get_Iter_At_Line_Offset (Buffer, Pos, Line + 1, 0);
+                  Forward_Chars (Pos, Gint (Next_Indent), Result);
+                  Place_Cursor (Buffer, Pos);
+                  Forward_Chars
+                    (Pos, Gint (Slice_Length - Blanks + 1), Result);
+
+                  Buffer.Inserting := False;
+                  g_free (C_Str);
+                  C_Str := Gtkada.Types.Null_Ptr;
                end if;
-
-               while Index <= Slice_Length
-                 and then (Slice (Index) = ' '
-                           or else Slice (Index) = ASCII.HT)
-               loop
-                  Index := Index + 1;
-               end loop;
-
-               --  Prevent recursion
-               Buffer.Inserting := True;
-
-               --  Replace everything at once, important for efficiency
-               --  and also because otherwise, some marks will no longer be
-               --  valid.
-
-               if Line_Ends then
-                  Slice_Length := Slice_Length - 1;
-               end if;
-
-               Create
-                 (Command,
-                  Source_Buffer (Buffer),
-                  Integer (Line), 0,
-                  Integer (Line), Integer (Col),
-                  (1 .. Indent => ' ') &
-                  Slice (Index .. Slice_Length - Offset) & ASCII.LF &
-                  (1 .. Next_Indent => ' ') &
-                  Slice (Blanks .. Slice_Length));
-               Enqueue (Buffer.Queue, Command);
-               Indented := True;
-
-               --  Need to recompute iter, since the slice replacement that
-               --  we just did has invalidated iter.
-
-               Get_Iter_At_Line_Offset (Buffer, Pos, Line + 1, 0);
-               Forward_Chars (Pos, Gint (Next_Indent), Result);
-               Place_Cursor (Buffer, Pos);
-               Forward_Chars (Pos, Gint (Slice_Length - Blanks + 1), Result);
-
-               Buffer.Inserting := False;
-               g_free (C_Str);
-               C_Str := Gtkada.Types.Null_Ptr;
             end if;
 
          exception
@@ -517,7 +520,6 @@ package body Src_Editor_Buffer is
       if Is_Null_Command (Command) then
          --  If indentation has just been done, the text has already been
          --  taken into account.
-         --  ??? If Indented is True, how can Command be null
 
          if not Indented then
             Create
@@ -532,29 +534,10 @@ package body Src_Editor_Buffer is
             Buffer.Current_Command := Command_Access (Command);
          end if;
 
-      else
-         if Get_Mode (Command) = Insertion then
-            if Length = 1
-              and then (Text (1) = ASCII.LF or else Text (1) = ' ')
-            then
-               End_Action (Buffer);
-               Create
-                 (Command,
-                  Insertion,
-                  Source_Buffer (Buffer),
-                  False,
-                  Natural (Get_Line (Pos)),
-                  Natural (Get_Line_Offset (Pos)));
-               Enqueue (Buffer.Queue, Command);
-               Add_Text (Command, Text);
-               Buffer.Current_Command := Command_Access (Command);
-
-            else
-               Add_Text (Command, Text);
-               Buffer.Current_Command := Command_Access (Command);
-            end if;
-
-         else
+      elsif Get_Mode (Command) = Insertion then
+         if Length = 1
+           and then (Text (1) = ASCII.LF or else Text (1) = ' ')
+         then
             End_Action (Buffer);
             Create
               (Command,
@@ -566,7 +549,24 @@ package body Src_Editor_Buffer is
             Enqueue (Buffer.Queue, Command);
             Add_Text (Command, Text);
             Buffer.Current_Command := Command_Access (Command);
+
+         else
+            Add_Text (Command, Text);
+            Buffer.Current_Command := Command_Access (Command);
          end if;
+
+      else
+         End_Action (Buffer);
+         Create
+           (Command,
+            Insertion,
+            Source_Buffer (Buffer),
+            False,
+            Natural (Get_Line (Pos)),
+            Natural (Get_Line_Offset (Pos)));
+         Enqueue (Buffer.Queue, Command);
+         Add_Text (Command, Text);
+         Buffer.Current_Command := Command_Access (Command);
       end if;
 
    exception
