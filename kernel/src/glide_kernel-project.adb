@@ -31,9 +31,13 @@ with Prj.Com;     use Prj.Com;
 with Prj.Part;    use Prj.Part;
 with Prj.Proc;    use Prj.Proc;
 with Prj.Env;     use Prj.Env;
+with Prj.Ext;     use Prj.Ext;
+with Prj.Util;    use Prj.Util;
 with Prj.Tree;    use Prj.Tree;
 with Errout;      use Errout;
 with Namet;       use Namet;
+with Stringt;     use Stringt;
+with Types;       use Types;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 with Text_IO;     use Text_IO;
 
@@ -42,6 +46,7 @@ with Glide_Main_Window; use Glide_Main_Window;
 with Gtkada.MDI;        use Gtkada.MDI;
 with Glide_Page;        use Glide_Page;
 with GVD.Process;       use GVD.Process;
+with Prj_API;           use Prj_API;
 
 package body Glide_Kernel.Project is
 
@@ -136,12 +141,54 @@ package body Glide_Kernel.Project is
          Put_Line ("Error: " & S);
       end Report_Error;
 
+      Scenario_Variables : constant Project_Node_Array :=
+        Find_Scenario_Variables (Get_Project (Handle));
+      Ext_Ref : String_Id;
+
    begin
       Prj.Reset;
       Prj.Proc.Process
         (Handle.Project_View, Handle.Project,
          Report_Error'Unrestricted_Access);
       pragma Assert (Handle.Project_View /= No_Project);
+
+      --  Check that all the environment variables have values defined through
+      --  Prj.Ext. If this is not the case, then their default value should be
+      --  put there.
+
+      for J in Scenario_Variables'Range loop
+         Ext_Ref := External_Reference_Of (Scenario_Variables (J));
+         pragma Assert
+           (Ext_Ref /= No_String,
+            "Scenario variable is not an external reference");
+         String_To_Name_Buffer (Ext_Ref);
+
+         declare
+            Name : constant String :=
+              Name_Buffer (Name_Buffer'First .. Name_Len);
+            Value : Variable_Value;
+         begin
+            if Prj.Ext.Value_Of (Name_Find) = No_String then
+               Value := Prj.Util.Value_Of
+                 (Variable_Name => Name_Of (Scenario_Variables (J)),
+                  In_Variables => Projects.Table
+                    (Handle.Project_View).Decl.Variables);
+               pragma Assert
+                 (Value.Kind = Single,
+                  "Scenario variables can only be strings");
+               String_To_Name_Buffer (Value.Value);
+
+               Prj.Ext.Add (Name, Name_Buffer (Name_Buffer'First .. Name_Len));
+            end if;
+         end;
+      end loop;
+
+
+      --  ??? In fact, we should also cache the list of scenario variables
+      --  ??? here, so that all the prj_editor packages do not need to
+      --  ??? recompute them every time.
+
+      --  Report the change to every listener
       Project_View_Changed (Handle);
    end Recompute_View;
 
