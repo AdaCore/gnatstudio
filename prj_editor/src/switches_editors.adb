@@ -302,7 +302,7 @@ package body Switches_Editors is
                if Switch = "-gnatR"
                  and then Switches (J).all = "-gnatR"
                then
-                  Select_Item (Get_List (Combo), 2);
+                  Select_Item (Get_List (Combo), 1);
 
                elsif Switch = "-O"
                  and then Switches (J).all = "-O"

@@ -335,9 +335,9 @@ begin
    Set_Use_Arrows (Switches_Editor.Compile_Representation_Info, True);
    Set_Use_Arrows_Always (Switches_Editor.Compile_Representation_Info, False);
    String_List.Append (Compile_Representation_Info_Items, -"None");
-   String_List.Append (Compile_Representation_Info_Items, -"Arrays");
-   String_List.Append (Compile_Representation_Info_Items, -"Objects");
-   String_List.Append (Compile_Representation_Info_Items, -"Symbolic");
+   String_List.Append (Compile_Representation_Info_Items, -"Types");
+   String_List.Append (Compile_Representation_Info_Items, -"All");
+   String_List.Append (Compile_Representation_Info_Items, -"Variables");
    Combo.Set_Popdown_Strings (Switches_Editor.Compile_Representation_Info, Compile_Representation_Info_Items);
    Free_String_List (Compile_Representation_Info_Items);
    Pack_Start (Switches_Editor.Hbox2, Switches_Editor.Compile_Representation_Info, False, False, 0);

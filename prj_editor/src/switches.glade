@@ -839,9 +839,9 @@ Full + Automatic inlining
 		  <use_arrows>True</use_arrows>
 		  <use_arrows_always>False</use_arrows_always>
 		  <items>None
-Arrays
-Objects
-Symbolic
+Types
+All
+Variables
 </items>
 		  <child>
 		    <padding>0</padding>
