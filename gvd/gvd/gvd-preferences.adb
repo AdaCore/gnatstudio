@@ -485,7 +485,9 @@ package body GVD.Preferences is
       Html_Browser := Param_Spec_String (Gnew_String
         (Name     => XML_Prefix & "HTML-Browser",
          Nick     => -"HTML browser",
-         Blurb    => -"Program used to browse HTML pages",
+         Blurb    => -("Program used to browse HTML pages. " &
+                       "No value means automatically try to find a suitable " &
+                       "browser"),
          Flags    => HTML_Flags,
          Default  => ""));
       Register_Property (Prefs, Param_Spec (Html_Browser), Helpers);
@@ -493,7 +495,9 @@ package body GVD.Preferences is
       Print_Command := Param_Spec_String (Gnew_String
          (Name    => XML_Prefix & "Print-Command",
           Nick    => -"Print command",
-          Blurb   => -"Program used to print files",
+          Blurb   => -("Program used to print files. No value means use " &
+                       "the built-in printing capability (available under " &
+                       "Windows only)"),
           Flags   => External_Flags,
           Default => Default_Print_Cmd));
       Register_Property (Prefs, Param_Spec (Print_Command), Helpers);
