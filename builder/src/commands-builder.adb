@@ -293,7 +293,8 @@ package body Commands.Builder is
          Set_Sensitive_Menus (Kernel, True);
          Free (Data.Descriptor);
 
-         Compilation_Finished (Kernel, VFS.No_File);
+         Compilation_Finished
+           (Kernel, VFS.No_File, Command.Main_Error_Category.all);
          return Success;
 
       when E : others =>
