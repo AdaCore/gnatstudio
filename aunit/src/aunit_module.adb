@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2004                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2001-2005                       --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -173,8 +173,11 @@ package body Aunit_Module is
                      Ref_Item => -"Preferences");
       Register_Menu (Kernel, Edit & Unit_Testing,
                      -"New Test _Case...", "", On_New_Test_Case'Access);
-      Register_Menu (Kernel, Edit & Unit_Testing,
-                     -"_Add Routine...", "", null, Sensitive => False);
+
+      --  ??? Add once this is implemented
+      --  Register_Menu (Kernel, Edit & Unit_Testing,
+      --                 -"_Add Routine...", "", null, Sensitive => False);
+
       Register_Menu (Kernel, Edit & Unit_Testing,
                      -"New Test _Suite...", "", On_New_Test_Suite'Access);
       Register_Menu (Kernel, Edit & Unit_Testing,
