@@ -144,21 +144,29 @@ package body GVD.Text_Box.Source_Editor.Glide is
          From_Path => False);
 
       declare
-         Args : constant GNAT.OS_Lib.Argument_List (1 .. 2) :=
+         Args : GNAT.OS_Lib.Argument_List (1 .. 2) :=
            (1 => new String'(Editor.Debugger_Current_File.all),
             2 => new String'(Highlight_Category));
       begin
          Execute_GPS_Shell_Command (Kernel, "unhighlight", Args);
+
+         for A in Args'Range loop
+            GNAT.OS_Lib.Free (Args (A));
+         end loop;
       end;
 
       if Editor.Line /= 0 then
          declare
-            Args : constant GNAT.OS_Lib.Argument_List (1 .. 3) :=
+            Args : GNAT.OS_Lib.Argument_List (1 .. 3) :=
               (1 => new String'(Editor.Debugger_Current_File.all),
                2 => new String'(Highlight_Category),
                3 => new String'(Editor.Line'Img));
          begin
             Execute_GPS_Shell_Command (Kernel, "highlight", Args);
+
+            for A in Args'Range loop
+               GNAT.OS_Lib.Free (Args (A));
+            end loop;
          end;
       end if;
 
@@ -565,11 +573,15 @@ package body GVD.Text_Box.Source_Editor.Glide is
 
       while not Is_Empty (Editor.Highlighted_Files) loop
          declare
-            Args : constant GNAT.OS_Lib.Argument_List (1 .. 2) :=
+            Args : GNAT.OS_Lib.Argument_List (1 .. 2) :=
               (1 => new String'(Head (Editor.Highlighted_Files)),
                2 => new String'(Highlight_Category));
          begin
             Execute_GPS_Shell_Command (Kernel, "unhighlight", Args);
+
+            for A in Args'Range loop
+               GNAT.OS_Lib.Free (Args (A));
+            end loop;
          end;
 
          Next (Editor.Highlighted_Files);
