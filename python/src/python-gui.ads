@@ -63,14 +63,14 @@ package Python.GUI is
    --  Return the current console of the interpreter, or null if the
    --  interpreter is not associated with a console
 
-   procedure Run_Command
+   function Run_Command
      (Interpreter : access Python_Interpreter_Record'Class;
       Command     : String;
       Console     : Interactive_Consoles.Interactive_Console := null;
       Hide_Output : Boolean := False;
-      Errors      : out Boolean);
+      Errors      : access Boolean) return Python.PyObject;
    --  Execute a command in the interpreter, and send its output to the
-   --  console.
+   --  console. Return its return value.
    --  If Hide_Output is True, then nothing is printed on the console. If the
    --  command is incomplete and would require extra input (a secondary prompt
    --  in interactive mode), then it is not executed.
@@ -113,7 +113,7 @@ private
       --  executing.
 
       Current_Output : GNAT.OS_Lib.String_Access;
-      Save_Output    : Boolean;
+      Save_Output    : Boolean := False;
       --  The output of the current command, and whether we should save it,
       --  or discard it as soon as it has been printed in the console.
 
