@@ -873,7 +873,7 @@ package body Breakpoints_Pkg.Callbacks is
          --  WARNING: We must have at least as many elements as there are
          --  columns in the clist.
          Row := Append
-           (Editor.Clist1, "" + "" + "" + "" + "" + "" + "" + "" + "");
+           (Editor.Clist1, "" + "" + "" + "" + "" + "" + "" + "");
 
          Set_Text
            (Editor.Clist1, Row, 0, Breakpoint_Identifier'Image (Br.Num));
