@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003                            --
+--                     Copyright (C) 2003-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -406,6 +406,10 @@ package body Shell_Script is
    is
       Index : Natural := Name'First;
    begin
+      if Name = "null" then
+         return null;
+      end if;
+
       while Index <= Name'Last - 3
         and then Name (Index .. Index + 2) /= "_0x"
       loop
@@ -928,7 +932,10 @@ package body Shell_Script is
          return;
       end if;
 
-      if Class = No_Class or else Static_Method then
+      if Class = No_Class
+        or else Static_Method
+        or else Command = Constructor_Method
+      then
          U := new String'(Params & Ret_Val);
       else
          if Params = "" then
