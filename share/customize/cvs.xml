@@ -82,7 +82,7 @@
    <!-- CVS -->
    <!--------->
 
-   <vcs name="Custom CVS">
+   <vcs name="Custom CVS" absolute_names="FALSE">
       <status action="generic_cvs_status"       label="Query status"/>
       <open action="generic_cvs_open"           label="Open"/>
       <update action="generic_cvs_update"       label="Update"/>
