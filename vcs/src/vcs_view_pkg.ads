@@ -94,14 +94,6 @@ package VCS_View_Pkg is
       Message  : String);
    --  Display a message.
 
-   procedure Edit_Log
-     (Explorer : VCS_View_Access;
-      Kernel   : Kernel_Handle;
-      Files    : String_List.List;
-      Ref      : VCS_Access);
-   --  Launch log editors for these files.
-   --  User must free Files afterwards.
-
    function Get_Current_Dir
      (Kernel : access Kernel_Handle_Record'Class)
      return String;
