@@ -173,6 +173,7 @@ package body Src_Contexts is
    procedure Highlight_Result
      (Kernel      : access Kernel_Handle_Record'Class;
       File_Name   : VFS.Virtual_File;
+      Look_For    : String;
       Match       : Match_Result;
       Interactive : Boolean);
    --  Print the result of the search in the glide console
@@ -425,6 +426,7 @@ package body Src_Contexts is
       Last_Index    : Positive := Buffer_First;
       Section_End   : Integer;
       Old_State     : Recognized_Lexical_States;
+      Language      : Language_Context_Access;
 
    begin  --  Scan_Buffer
       Was_Partial := False;
@@ -444,46 +446,45 @@ package body Src_Contexts is
          return;
       end if;
 
-      declare
-         Language : constant Language_Context := Get_Language_Context (Lang);
-      begin
-         --  Always find the longest possible range, so that we can benefit
-         --  as much as possible from the efficient string searching
-         --  algorithms.
+      Language := Get_Language_Context (Lang);
 
-         while Pos <= Buffer'Last loop
-            Line_Start := Pos;
-            Old_State  := Lexical_State;
+      --  Always find the longest possible range, so that we can benefit
+      --  as much as possible from the efficient string searching
+      --  algorithms.
 
-            Next_Scope_Transition
-              (Buffer, Pos, Lexical_State, Section_End, Language);
+      while Pos <= Buffer'Last loop
+         Line_Start := Pos;
+         Old_State  := Lexical_State;
 
-            if Scanning_Allowed (Old_State) then
-               Scan_Buffer_No_Scope
-                 (Context, Buffer, Line_Start, Section_End,
-                  Callback, Last_Index, Line, Column, Was_Partial);
+         Next_Scope_Transition
+           (Buffer, Pos, Lexical_State, Section_End, Language.all);
 
-               if Was_Partial then
-                  Lexical_State := Old_State;
-                  return;
-               end if;
+         if Scanning_Allowed (Old_State) then
+            Scan_Buffer_No_Scope
+              (Context, Buffer, Line_Start, Section_End,
+               Callback, Last_Index, Line, Column, Was_Partial);
+
+            if Was_Partial then
+               Lexical_State := Old_State;
+               return;
             end if;
+         end if;
 
-            for J in Last_Index .. Pos - 1 loop
-               if Buffer (J) = ASCII.LF then
-                  Line := Line + 1;
-                  Column := 1;
-               else
-                  Column := Column + 1;
-               end if;
-            end loop;
-
-            Last_Index := Pos;
+         for J in Last_Index .. Pos - 1 loop
+            if Buffer (J) = ASCII.LF then
+               Line := Line + 1;
+               Column := 1;
+            else
+               Column := Column + 1;
+            end if;
          end loop;
-      end;
+
+         Last_Index := Pos;
+      end loop;
 
       --  Memorize the lexical state when we found the last match, so that next
       --  time we look for the context we find it correctly.
+
       Lexical_State := Old_State;
    end Scan_Buffer;
 
@@ -579,6 +580,7 @@ package body Src_Contexts is
    procedure Highlight_Result
      (Kernel      : access Kernel_Handle_Record'Class;
       File_Name   : Virtual_File;
+      Look_For    : String;
       Match       : Match_Result;
       Interactive : Boolean)
    is
@@ -604,7 +606,7 @@ package body Src_Contexts is
       else
          Insert_Result
            (Kernel,
-            -"Search Results",
+            -"Search for: " & Look_For,
             File_Name,
             Match.Text,
             To_Positive (Match.Line), To_Positive (Match.Column),
@@ -1487,6 +1489,7 @@ package body Src_Contexts is
          Highlight_Result
            (Kernel      => Kernel,
             File_Name   => Current_File (C),
+            Look_For    => Context_Look_For (C),
             Match       => Match,
             Interactive => not Context.All_Occurrences);
          return True;
