@@ -43,6 +43,8 @@ with Commands;    use Commands;
 with Glide_Kernel;
 with Src_Info;
 
+with String_List_Utils;
+
 package Src_Editor_Buffer is
 
    type Source_Buffer_Record is new Gtk.Text_Buffer.Gtk_Text_Buffer_Record
@@ -335,7 +337,7 @@ package Src_Editor_Buffer is
    --  warnings.
    --  ??? Remove this procedure when the problem is fixed.
 
-   procedure End_Action (Buffer : access Source_Buffer_Record);
+   procedure External_End_Action (Buffer : access Source_Buffer_Record);
    --  This procedure should be called every time that an external
    --  event should cancel the current user action: focus switching
    --  to another window, cursor moved, etc.
@@ -385,7 +387,49 @@ package Src_Editor_Buffer is
    --  If it was the last reference on Buffer, then free the memory associated
    --  to Buffer.
 
+   procedure Do_Completion (Buffer : access Source_Buffer_Record);
+   --  Complete the current insertion, or continue the current completion.
+
 private
+   type Completion_Data is record
+      Prefix : GNAT.OS_Lib.String_Access;
+      --  The current prefix for the search.
+
+      List : String_List_Utils.String_List.List;
+      --  The possible current completions. If empty, then there is no
+      --  current completion operation.
+
+      Node : String_List_Utils.String_List.List_Node;
+      --  The current position in the completions list.
+
+      Mark : Gtk.Text_Mark.Gtk_Text_Mark;
+      --  The position of the start point for the completion,
+      --  The insert mark must always be the end point of the completion.
+
+      Previous_Mark : Gtk.Text_Mark.Gtk_Text_Mark;
+      Next_Mark     : Gtk.Text_Mark.Gtk_Text_Mark;
+      --  The marks for the current back/forward searches.
+
+      Top_Reached    : Boolean;
+      Bottom_Reached : Boolean;
+      --  Whether the top and bottom of the buffer have been reached
+      --  while searching.
+
+      Complete : Boolean;
+      --  Whether the search for the current prefix is complete;
+
+      Backwards : Boolean;
+      --  True if the last direction searched was backwards.
+
+      Buffer : Gtk.Text_Buffer.Gtk_Text_Buffer;
+      --  The buffer on which the marks are effective.
+   end record;
+
+   procedure Clear (Data : in out Completion_Data);
+   --  Free memory associated to Data;
+
+   function Is_Empty (Data : Completion_Data) return Boolean;
+   --  return True if the completion data is unset.
 
    type Source_Buffer_Record is new Gtk.Text_Buffer.Gtk_Text_Buffer_Record with
    record
@@ -437,6 +481,8 @@ private
       End_Delimiters_Highlight   : Gtk.Text_Mark.Gtk_Text_Mark;
       --  Bounds for the parenthesis highlighting.
 
+      Completion : Completion_Data;
+      --  Completion data.
    end record;
 
 end Src_Editor_Buffer;
