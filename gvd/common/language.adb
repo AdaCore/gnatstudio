@@ -174,7 +174,7 @@ package body Language is
            (Next_Char .. Next_Char + Context.Comment_End_Length - 1)
            /= Context.Comment_End
          loop
-            Next_Char := UTF8_Find_Next_Char (Buffer, Next_Char);
+            Next_Char := UTF8_Next_Char (Buffer, Next_Char);
             Column := Column + 1;
 
             if Buffer (Next_Char) = ASCII.LF then
@@ -204,7 +204,7 @@ package body Language is
          while Next_Char <= Buffer'Last
            and then Buffer (Next_Char) /= ASCII.LF
          loop
-            Next_Char := UTF8_Find_Next_Char (Buffer, Next_Char);
+            Next_Char := UTF8_Next_Char (Buffer, Next_Char);
             Column := Column + 1;
          end loop;
 
@@ -222,7 +222,7 @@ package body Language is
            and then Buffer (Next_Char + 1) /= ASCII.LF
          then
             loop
-               Next_Char := UTF8_Find_Next_Char (Buffer, Next_Char);
+               Next_Char := UTF8_Next_Char (Buffer, Next_Char);
                Column := Column + 1;
 
                exit when Next_Char >= Buffer'Last
@@ -237,7 +237,7 @@ package body Language is
          end if;
 
          if Next_Char <= Buffer'Last then
-            Next_Char := UTF8_Find_Next_Char (Buffer, Next_Char);
+            Next_Char := UTF8_Next_Char (Buffer, Next_Char);
             Column := Column + 1;
          end if;
 
@@ -276,7 +276,7 @@ package body Language is
       Match (Keys, Buffer, Matched);
 
       if Matched (0) /= No_Match then
-         Next_Char := UTF8_Find_Next_Char (Buffer, Matched (0).Last);
+         Next_Char := UTF8_Next_Char (Buffer, Matched (0).Last);
          Column := Column + Matched (0).Last - Matched (0).First + 1;
          Entity := Keyword_Text;
          return;
@@ -289,7 +289,7 @@ package body Language is
 
       if not Is_Entity_Letter (UTF8_Get_Char (Buffer)) then
          Entity := Normal_Text;
-         Next_Char := UTF8_Find_Next_Char (Buffer, Buffer'First);
+         Next_Char := UTF8_Next_Char (Buffer, Buffer'First);
          Column := Column + 1;
 
          Comm1 := ASCII.LF;
@@ -315,7 +315,7 @@ package body Language is
               or else C = Character'Pos (Context.Constant_Character)
               or else Is_Alpha (C);
 
-            Next_Char := UTF8_Find_Next_Char (Buffer, Next_Char);
+            Next_Char := UTF8_Next_Char (Buffer, Next_Char);
             Column := Column + 1;
          end loop;
 
@@ -325,7 +325,7 @@ package body Language is
       --  Skip to the next meaningful character. we know we are
       --  starting with a letter
 
-      Next_Char := UTF8_Find_Next_Char (Buffer, Buffer'First);
+      Next_Char := UTF8_Next_Char (Buffer, Buffer'First);
       Column := Column + 1;
       Entity := Normal_Text;
 
@@ -339,7 +339,7 @@ package body Language is
         and then Is_Entity_Letter
           (UTF8_Get_Char (Buffer (Next_Char .. Buffer'Last)))
       loop
-         Next_Char := UTF8_Find_Next_Char (Buffer, Next_Char);
+         Next_Char := UTF8_Next_Char (Buffer, Next_Char);
          Column := Column + 1;
       end loop;
    end Looking_At;
