@@ -54,6 +54,7 @@ package Switches_Editors is
 
    procedure Gtk_New
      (Page             : out Switches_Editor_Page;
+      Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
       Title            : String;
       Project_Package  : String;
       Attribute_Index  : String := "";
@@ -102,6 +103,20 @@ package Switches_Editors is
    --  The actual switch on the command line is "-" & Switch & Level, as in
    --  "-j2".
    --  If Default is selected, then no switch is needed on the command line.
+
+   procedure Create_Field
+     (Page              : access Switches_Editor_Page_Record;
+      Box               : access Gtk.Box.Gtk_Box_Record'Class;
+      Label             : String;
+      Switch            : String;
+      Tip               : String := "";
+      As_Directory      : Boolean := False;
+      As_File           : Boolean := False;
+      Label_Size_Group  : Gtk.Size_Group.Gtk_Size_Group := null);
+   --  Create a new field switch.
+   --  If As_Directory is true, the field is expected to contain a directory,
+   --  and a browse button is added.
+   --  If both As_File and As_Directory are specified, As_File has priority.
 
    type Cst_String_Access is access constant String;
    type Cst_Argument_List is array (Positive range <>) of Cst_String_Access;
@@ -323,6 +338,7 @@ private
    --  created.
 
    type Switches_Editor_Page_Record is new Gtk_Table_Record with record
+      Kernel : Glide_Kernel.Kernel_Handle;
       Lang_Filter : GNAT.OS_Lib.Argument_List_Access;
       --  List of languages for which this page applies
 
