@@ -1,0 +1,29 @@
+Prototype AUnit integration into Glide.
+
+EF 23-Jan-01
+
+I basically adapted Nicolas' work to get it integrated into Glide.
+
+Status:
+
+1.  Everything builds, and we can create all the AUnit artifacts from an user project.
+
+
+Wish List:
+
+1.  Incremental addition to a suite without having to completely rebuild it.
+2.  Path handling - that is, adding the paths needed at the harness level for all the tests and suites involved into the Glide project.
+
+
+Installation:
+
+1.  After building the three programs:
+
+aunit_make_harness
+aunit_make_suite
+aunit_make_test
+
+Move them into the gnat/bin directory. There are makefiles and .adp files in each subdirectory.  The .adp files may need to be modified for directories used.
+A master makefile is in the top-level directory.
+
+2.  When building test cases etc, aunit-1.01/aunit/* needs to be in the source and object paths.
