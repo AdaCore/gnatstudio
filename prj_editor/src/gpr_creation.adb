@@ -144,6 +144,7 @@ package body GPR_Creation is
 
    procedure Generate_Withs
      (Projects          : Project_Type_Array;
+      Root_Project      : Project_Type;
       Related_To        : Is_Related_To;
       Source_Dirs       : String_List;
       Obj_Dirs          : String_List;
@@ -573,6 +574,7 @@ package body GPR_Creation is
 
    procedure Generate_Withs
      (Projects          : Project_Type_Array;
+      Root_Project      : Project_Type;
       Related_To        : Is_Related_To;
       Source_Dirs       : String_List;
       Obj_Dirs          : String_List;
@@ -590,7 +592,8 @@ package body GPR_Creation is
             Current_Dir := D;
          else
             Tmp := Add_Imported_Project
-              (Project           => Projects (Current_Project),
+              (Root_Project      => Root_Project,
+               Project           => Projects (Current_Project),
                Imported_Project  => Projects (Object_Dirs (D).Project_Num),
                Use_Relative_Path => True,
                Limited_With      => True);
@@ -743,6 +746,7 @@ package body GPR_Creation is
                  (Projects          => Projects,
                   Related_To        => Related_To,
                   Source_Dirs       => Source_Dirs,
+                  Root_Project      => Root_Project,
                   Obj_Dirs          => Object_Dirs,
                   Src_Files         => Src_Files,
                   Object_Dirs       => Obj_Dirs,
