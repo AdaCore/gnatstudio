@@ -20,6 +20,7 @@
 
 with Ada.Text_IO;           use Ada.Text_IO;
 with Doc_Types;             use Doc_Types;
+with GNAT.OS_Lib;           use GNAT.OS_Lib;
 
 package Html_Output is
 
@@ -81,16 +82,13 @@ private
       Info   : Doc_Info);
    --  add a type description to the documentation
 
-   procedure Format_HTML_Entity_Header
-     (File              : in Ada.Text_IO.File_Type;
-      New_Entity_List   : Type_Entity_List.List;
-      Here_Process_Body : Boolean;
-      Nr_Lines          : Natural;
-      Header            : String;
+   function Format_HTML
+     (Entity_List       : Type_Entity_List.List;
+      Text              : String;
       File_Name         : String;
-      Def_Line          : Natural;
-      Is_Private        : Boolean);
-   --  passes the headers of entities from the specs to the parser
+      Entity_Name       : String;
+      Is_Body           : Boolean) return GNAT.OS_Lib.String_Access;
+   --  returns the formatted Text as HTML code
 
    procedure Doc_HTML_Header
      (File   : in Ada.Text_IO.File_Type;
@@ -127,7 +125,7 @@ private
     Info   : Doc_Info);
    --  add the footer to the index file, used for all 3 indes files
 
-   procedure Doc_HTML_Body_Line
+   procedure Doc_HTML_Body
    (File   : in Ada.Text_IO.File_Type;
     Info   : in out Doc_Info);
    --  write one line of the body file, after formatting it, in the doc file
