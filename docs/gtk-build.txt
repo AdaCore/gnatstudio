@@ -134,14 +134,13 @@ cd gettext-0.11.5
 make
 make install
 
+# Under HP-UX, remove -R$prefix/lib in $prefix/lib/libintl.la
+
 ########
 # glib #
 ########
 tar xzvf glib-2.0.6.tar.gz
 cd glib-2.0.6
-
-# Under HP-UX, apply the patch libtool-hpux.diff:
-# patch -p0 < .../libtool-hpux.diff
 
 # Under IRIX, apply the following patch:
 # patch -p0 < .../glib-2.0.6-irix-6.5.diff
@@ -169,9 +168,6 @@ cd ..
 tar xzvf atk-1.0.3.tar.gz
 cd atk-1.0.3
 
-# Under HP-UX, apply the patch libtool-hpux.diff:
-# patch -p0 < .../libtool-hpux.diff
-
 ./configure --prefix=$prefix
 make
 make install
@@ -189,9 +185,6 @@ cd pango-1.0.4
 # hangul-x,tamil-x,tamil-xft,thai-x,gurmukhi-x,bengali-x,gujarati-x,
 # devanagari-x,myanmar-x
 
-# Under HP-UX, apply the patch libtool-hpux.diff:
-# patch -p0 < .../libtool-hpux.diff
-
 # Under IRIX, apply the following patch:
 # patch -p0 < .../pango-1.0.4-irix-6.5.diff
 
@@ -206,10 +199,8 @@ cd ..
 tar xzvf gtk+-2.0.6.tar.gz
 cd gtk+-2.0.6
 
-# Under HP-UX, apply the patch libtool-hpux.diff:
-# patch -p0 < .../libtool-hpux.diff
-# Also, make sure that libX11.sl, libXt.sl and libXext.sl can be found under
-# e.g /usr/lib
+# Under HP-UX, make sure that libX11.sl, libXt.sl and libXext.sl can be found
+# under e.g /usr/lib
 
 # Under Solaris 2.5.1, plain Gtk+ will not compile because it uses X11R6
 # specific features. The following patch disables this feature which is only
