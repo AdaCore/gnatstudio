@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                   Copyright (C) 2001-2004                         --
---                            ACT-Europe                             --
+--                   Copyright (C) 2001-2005                         --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -221,6 +221,9 @@ private
 
       Button_Event         : Gdk.Event.Gdk_Event;
       --  Stores a copy of the last button press event for button 1
+
+      Cursor_Position      : Gdouble := Gdouble'Last;
+      --  Stores the cursor position relative to the screen.
    end record;
 
 end Src_Editor_View;
