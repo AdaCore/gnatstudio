@@ -318,9 +318,11 @@ package body Language_Handlers.Glide is
       Default_Spec_Suffix : String;
       Default_Body_Suffix : String)
    is
-      Index : constant Natural := Get_Index_From_Language (Handler, Language_Name);
+      Index : constant Natural :=
+        Get_Index_From_Language (Handler, Language_Name);
       Lang  : Name_Id;
       Spec, Impl : Name_Id;
+
    begin
       if Index /= 0 then
          Handler.Languages (Index).Handler := LI;
