@@ -164,6 +164,7 @@ package body Glide_Kernel.Scripts is
    Attribute_Cst  : aliased constant String := "attribute";
    Package_Cst    : aliased constant String := "package";
    Index_Cst      : aliased constant String := "index";
+   Tool_Cst       : aliased constant String := "tool";
    Project_Cmd_Parameters : constant Cst_Argument_List :=
      (1 => Name_Cst'Access);
    Insmod_Cmd_Parameters  : constant Cst_Argument_List :=
@@ -189,6 +190,7 @@ package body Glide_Kernel.Scripts is
      (1 => Attribute_Cst'Access,
       2 => Package_Cst'Access,
       3 => Index_Cst'Access);
+   Tool_Parameters : constant Cst_Argument_List := (1 => Tool_Cst'Access);
 
    ----------
    -- Free --
@@ -878,6 +880,48 @@ package body Glide_Kernel.Scripts is
      (Data : in out Callback_Data'Class; Command : String)
    is
       Kernel   : constant Kernel_Handle := Get_Kernel (Data);
+
+      procedure Set_Return_Attribute
+        (Project : Project_Type;
+         Attr, Pkg, Index : String;
+         As_List : Boolean);
+      --  Store in Data the value of a specific attribute
+
+      --------------------------
+      -- Set_Return_Attribute --
+      --------------------------
+
+      procedure Set_Return_Attribute
+        (Project : Project_Type; Attr, Pkg, Index : String;  As_List : Boolean)
+      is
+         List  : Argument_List := Get_Attribute_Value
+           (Project, Build (Pkg, Attr), Index);
+      begin
+         Trace (Me, "MANU " & Attr & ' ' & Index & ' ' & Attr);
+
+         if As_List then
+            Set_Return_Value_As_List (Data);
+         end if;
+
+         --  If the attribute was a string in fact
+         if List'Length = 0 then
+            Set_Return_Value
+              (Data, Get_Attribute_Value
+                 (Project, Build (Pkg, Attr), "", Index));
+         else
+            if As_List then
+               for L in List'Range loop
+                  Set_Return_Value (Data, List (L).all);
+               end loop;
+            else
+               Set_Return_Value
+                 (Data, Argument_List_To_String (List, True));
+            end if;
+         end if;
+
+         Basic_Types.Free (List);
+      end Set_Return_Attribute;
+
       Instance : Class_Instance;
       Project  : Project_Type;
    begin
@@ -933,36 +977,32 @@ package body Glide_Kernel.Scripts is
            or else Command = "get_attribute_as_string"
          then
             Name_Parameters (Data, Get_Attributes_Parameters);
-            Project := Get_Data (Instance);
+            Set_Return_Attribute
+              (Project => Get_Data (Instance),
+               Attr => Nth_Arg (Data, 2),
+               Pkg  => Nth_Arg (Data, 3, ""),
+               Index => Nth_Arg (Data, 4, ""),
+               As_List => Command = "get_attribute_as_list");
 
+         elsif Command = "get_tool_switches_as_list"
+           or else Command = "get_tool_switches_as_string"
+         then
+            Name_Parameters (Data, Tool_Parameters);
             declare
-               Attr  : constant String  := Nth_Arg (Data, 2);
-               Pkg   : constant String  := Nth_Arg (Data, 3, "");
-               Index : constant String := Nth_Arg (Data, 4, "");
-               List  : Argument_List := Get_Attribute_Value
-                 (Project, Build (Pkg, Attr), Index);
+               Tool : constant String := Nth_Arg (Data, 2);
+               Props : constant Tool_Properties_Record :=
+                 Get_Tool_Properties (Kernel, Tool);
             begin
-               if Command = "get_attribute_as_list" then
-                  Set_Return_Value_As_List (Data);
-               end if;
-
-               --  If the attribute was a string in fact
-               if List'Length = 0 then
-                  Set_Return_Value
-                    (Data, Get_Attribute_Value
-                       (Project, Build (Pkg, Attr), "", Index));
+               if Props = No_Tool then
+                  Set_Error_Msg (Data, -"No such tool: " & Tool);
                else
-                  if Command = "get_attribute_as_list" then
-                     for L in List'Range loop
-                        Set_Return_Value (Data, List (L).all);
-                     end loop;
-                  else
-                     Set_Return_Value
-                       (Data, Argument_List_To_String (List, True));
-                  end if;
+                  Set_Return_Attribute
+                    (Project => Get_Data (Instance),
+                     Attr    => Props.Project_Attribute.all,
+                     Pkg     => Props.Project_Package.all,
+                     Index   => Props.Project_Index.all,
+                     As_List => Command = "get_tool_switches_as_list");
                end if;
-
-               Basic_Types.Free (List);
             end;
          end if;
       end if;
@@ -1452,6 +1492,31 @@ package body Glide_Kernel.Scripts is
          Maximum_Args => 3,
          Class        => Get_Project_Class (Kernel),
          Handler      => Create_Project_Command_Handler'Access);
+      Register_Command
+        (Kernel,
+         Command    => "get_tool_switches_as_list",
+         Params     => Parameter_Names_To_Usage (Tool_Parameters),
+         Return_Value => "list",
+         Description  =>
+           -("Same as get_attribute_as_list, but specialized for the switches"
+             & " of a specific tool"),
+         Minimum_Args => 1,
+         Maximum_Args => 1,
+         Class        => Get_Project_Class (Kernel),
+         Handler      => Create_Project_Command_Handler'Access);
+      Register_Command
+        (Kernel,
+         Command    => "get_tool_switches_as_string",
+         Params     => Parameter_Names_To_Usage (Tool_Parameters),
+         Return_Value => "list",
+         Description  =>
+           -("Same as get_attribute_as_string, but specialized for the"
+             & " switches of a specific tool"),
+         Minimum_Args => 1,
+         Maximum_Args => 1,
+         Class        => Get_Project_Class (Kernel),
+         Handler      => Create_Project_Command_Handler'Access);
+
 
       Register_Command
         (Kernel,
