@@ -107,7 +107,7 @@ package Src_Info is
    --  The second version returns the full file name, including directory
 
    function Get_Unit_Part
-     (Source_Info_List : LI_File_List; File : String) return Unit_Part;
+     (Lib_Info : LI_File_Ptr; File : String) return Unit_Part;
    --  Return the type of File (a body, a spec or a separate).
    --  See also Prj_API.Get_Unit_Part_From_Filename if you are working with
    --  filenames that don't have a matching LI_File.
@@ -469,8 +469,8 @@ private
       File_Name : String_Access;
       LI_Name   : String_Access;
    end record;
-   --  The information associated to a source file, and that remains valid even
-   --  when the LI file is parsed again.
+   --  The information associated with a source file, and that remains valid
+   --  even when the LI file is parsed again.
 
    type Timestamp is new Integer;
 

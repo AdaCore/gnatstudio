@@ -23,17 +23,11 @@ with Src_Info.Prj_Utils;        use Src_Info.Prj_Utils;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Unchecked_Deallocation;
 with Types;                     use Types;
-with Snames;                    use Snames;
 with Prj;                       use Prj;
-with Prj.Util;                  use Prj.Util;
 with Prj.Env;                   use Prj.Env;
 with Namet;                     use Namet;
-with Stringt;                   use Stringt;
-
---  The following dependencies should be removed when we move this to the GNAT
---  sources (or the GNAT tools)
+with Prj_API;                   use Prj_API;
 with Traces;                    use Traces;
-with String_Utils;              use String_Utils;
 
 package body Src_Info is
 
@@ -91,13 +85,6 @@ package body Src_Info is
      (Source_Info_List : LI_File_List; File : Internal_File)
       return Source_File;
    --  Create a new Source_File structure matching File.
-
-   function Check_Language_Of
-     (Project : Project_Id; Source_Filename : String; Language : Name_Id)
-      return Boolean;
-   --  Return True if Source_Filename belongs to Language, as defined in
-   --  Project.
-   --  ??? This should probably be moved to Prj.Nmsc.
 
    ----------------------------
    -- Get_Separate_File_Info --
@@ -719,17 +706,15 @@ package body Src_Info is
    -------------------
 
    function Get_Unit_Part
-     (Source_Info_List : LI_File_List; File : String) return Unit_Part
-   is
-      LI : LI_File_Ptr := Locate_From_Source (Source_Info_List, File);
+     (Lib_Info : LI_File_Ptr; File : String) return Unit_Part is
    begin
-      if LI.LI.Spec_Info /= null
-        and then LI.LI.Spec_Info.Source_Filename.all = File
+      if Lib_Info.LI.Spec_Info /= null
+        and then Lib_Info.LI.Spec_Info.Source_Filename.all = File
       then
          return Unit_Spec;
 
-      elsif LI.LI.Body_Info /= null
-        and then LI.LI.Body_Info.Source_Filename.all = File
+      elsif Lib_Info.LI.Body_Info /= null
+        and then Lib_Info.LI.Body_Info.Source_Filename.all = File
       then
          return Unit_Body;
       end if;
@@ -805,75 +790,6 @@ package body Src_Info is
       return File.Directory_Name.all;
    end Get_Directory_Name;
 
-   -----------------------
-   -- Check_Language_Of --
-   -----------------------
-
-   function Check_Language_Of
-     (Project : Project_Id; Source_Filename : String; Language : Name_Id)
-      return Boolean
-   is
-      function Check_Exception (List : Array_Element_Id) return Boolean;
-      --  Return True if SourcE_Filename is part of the exceptions List.
-
-      ---------------------
-      -- Check_Exception --
-      ---------------------
-
-      function Check_Exception (List : Array_Element_Id) return Boolean is
-         Elem : Array_Element_Id := List;
-      begin
-         while Elem /= No_Array_Element loop
-            String_To_Name_Buffer (Array_Elements.Table (Elem).Value.Value);
-
-            if Name_Buffer (1 .. Name_Len) = Source_Filename then
-               return True;
-            end if;
-
-            Elem := Array_Elements.Table (Elem).Next;
-         end loop;
-         return False;
-      end Check_Exception;
-
-      Naming : Naming_Data := Projects.Table (Project).Naming;
-      Spec, Bodies : Name_Id;
-
-   begin
-      Spec   := Value_Of (Language, Naming.Specification_Suffix);
-      Bodies := Value_Of (Language, Naming.Implementation_Suffix);
-
-      --  First, check the general extensions
-
-      if Spec /= No_Name
-        and then Suffix_Matches (Source_Filename, Get_Name_String (Spec))
-      then
-         return True;
-
-      elsif Bodies /= No_Name
-        and then Suffix_Matches (Source_Filename, Get_Name_String (Bodies))
-      then
-         return True;
-      end if;
-
-      --  otherwise, check the naming exceptions
-      --  Special case for Ada
-      if Language = Name_Ada then
-         if Naming.Separate_Suffix /= No_Name
-           and then Suffix_Matches (Source_Filename,
-                                    Get_Name_String (Naming.Separate_Suffix))
-         then
-            return True;
-         end if;
-
-         return Check_Exception (Naming.Specifications)
-           or else Check_Exception (Naming.Bodies);
-
-      else
-         return Check_Exception (Naming.Specification_Exceptions)
-           or else Check_Exception (Naming.Implementation_Exceptions);
-      end if;
-   end Check_Language_Of;
-
    ---------------------------
    -- Handler_From_Filename --
    ---------------------------
@@ -882,11 +798,10 @@ package body Src_Info is
      (Project : Project_Id; Source_Filename : String) return LI_Handler
    is
       Tmp : LI_Handler_List := LI_Handlers;
+      Lang : Name_Id := Get_Language_Of (Project, Base_Name (Source_Filename));
    begin
       while Tmp /= null loop
-         if Check_Language_Of
-           (Project, Base_Name (Source_Filename), Tmp.Language)
-         then
+         if Lang = Tmp.Language then
             return Tmp.Handler;
          end if;
 
