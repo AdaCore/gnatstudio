@@ -48,7 +48,6 @@ with Gtk.Window;                   use Gtk.Window;
 with Gtkada.Dialogs;               use Gtkada.Dialogs;
 with Gtkada.Handlers;              use Gtkada.Handlers;
 with Gtkada.MDI;                   use Gtkada.MDI;
-with Gtkada.File_Selector;         use Gtkada.File_Selector;
 
 with Ada.Exceptions;            use Ada.Exceptions;
 with GNAT.Case_Util;            use GNAT.Case_Util;
@@ -64,7 +63,7 @@ with Prj;
 with Projects.Editor;          use Projects, Projects.Editor;
 with Projects.Registry;        use Projects.Registry;
 with Creation_Wizard.Selector; use Creation_Wizard.Selector;
-with Creation_Wizard.Full;     use Creation_Wizard.Full;
+with Creation_Wizard.Dependencies; use Creation_Wizard.Dependencies;
 with Glide_Kernel;             use Glide_Kernel;
 with Glide_Kernel.Console;     use Glide_Kernel.Console;
 with Glide_Kernel.Contexts;    use Glide_Kernel.Contexts;
@@ -301,14 +300,6 @@ package body Project_Viewers is
      (Viewer : access Gtk_Widget_Record'Class);
    --  Edit the switches for all the files selected in Viewer.
 
-   procedure Add_Dependency_Internal
-     (Kernel                : access Kernel_Handle_Record'Class;
-      Importing_Project     : Project_Type;
-      Imported_Project_Path : String);
-   --  Internal function that creates a dependency between two projects. If
-   --  properly handle the case where a project with the same name as
-   --  Imported_Project_Path already exists in the project hierarchy
-
    procedure Project_Command_Handler
      (Data : in out Callback_Data'Class; Command : String);
    --  Handle the interactive commands related to the project editor
@@ -454,24 +445,6 @@ package body Project_Viewers is
      is new Interactive_Command with null record;
    function Execute
      (Command : access Edit_Project_Source_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
-
-   type Add_Dep_From_Wizard_Command
-     is new Interactive_Command with null record;
-   function Execute
-     (Command : access Add_Dep_From_Wizard_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
-
-   type Add_Dep_From_File_Command
-     is new Interactive_Command with null record;
-   function Execute
-     (Command : access Add_Dep_From_File_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
-
-   type Remove_Dep_Command
-     is new Interactive_Command with null record;
-   function Execute
-     (Command : access Remove_Dep_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
 
    ------------------------
@@ -1087,84 +1060,6 @@ package body Project_Viewers is
                 "Unexpected exception " & Exception_Information (E));
    end Save_All_Projects;
 
-   -----------------------------
-   -- Add_Dependency_Internal --
-   -----------------------------
-
-   procedure Add_Dependency_Internal
-     (Kernel                : access Kernel_Handle_Record'Class;
-      Importing_Project     : Project_Type;
-      Imported_Project_Path : String)
-   is
-      procedure Report_Error (S : String);
-      --  Output error messages from the project parser to the glide console.
-
-      ------------------
-      -- Report_Error --
-      ------------------
-
-      procedure Report_Error (S : String) is
-      begin
-         Console.Insert
-           (Kernel, S & ASCII.LF,
-            Mode => Console.Error,
-            Add_LF => False);
-         Parse_File_Locations (Kernel, S, -"Project add dependency");
-      end Report_Error;
-
-      Base : constant String := Project_Directory (Importing_Project);
-      Use_Relative_Path : constant Boolean :=
-        Get_Paths_Type (Importing_Project) = Projects.Relative
-        or else (Get_Paths_Type (Importing_Project) = From_Pref
-                 and then Get_Pref (Kernel, Generate_Relative_Paths));
-      Changed : Import_Project_Error;
-      Result : Message_Dialog_Buttons;
-      Must_Recompute : Boolean := False;
-      Imported_Project : Project_Type;
-
-   begin
-      loop
-         Changed := Add_Imported_Project
-           (Importing_Project,
-            Normalize_Pathname (Imported_Project_Path, Base),
-            Report_Error'Unrestricted_Access,
-            Use_Relative_Path => Use_Relative_Path);
-
-         exit when Changed /= Project_Already_Exists;
-
-         --  If there is already a project by that name in the tree,
-         --  confirm whether we should rename it everywhere
-
-         Result := Message_Dialog
-           (Msg => -("A project with this name already exists in the"
-                     & ASCII.LF
-                     & "project graph. Do you want to replace all"
-                     & ASCII.LF
-                     & "occurences with the new project, or"
-                     & ASCII.LF
-                     & "cancel the new dependency ?"),
-            Dialog_Type => Gtkada.Dialogs.Error,
-            Buttons     => Button_OK or Button_Cancel,
-            Title       => -"Project already exists",
-            Parent      => Get_Current_Window (Kernel));
-
-         exit when Result = Button_Cancel;
-
-         Imported_Project := Load_Or_Find
-           (Get_Registry (Kernel).all, Imported_Project_Path);
-
-         Replace_Project_Occurrences
-           (Root_Project      => Get_Project (Kernel),
-            Project           => Imported_Project,
-            Use_Relative_Path => Use_Relative_Path);
-         Must_Recompute := True;
-      end loop;
-
-      if Changed = Success or else Must_Recompute then
-         Recompute_View (Kernel);
-      end if;
-   end Add_Dependency_Internal;
-
    -------------
    -- Execute --
    -------------
@@ -1205,86 +1100,6 @@ package body Project_Viewers is
         (Kernel,
          Create
            (Full_Filename => Project_Path (Project_Information (File_C))));
-      return Success;
-   end Execute;
-
-   -------------
-   -- Execute --
-   -------------
-
-   function Execute
-     (Command : access Add_Dep_From_Wizard_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
-   is
-      pragma Unreferenced (Command);
-      File : constant File_Selection_Context_Access :=
-        File_Selection_Context_Access (Context.Context);
-      Wiz  : Creation_Wizard.Project_Wizard;
-   begin
-      Creation_Wizard.Gtk_New (Wiz, Get_Kernel (File));
-      Add_Full_Wizard_Pages
-        (Wiz, Creation_Wizard.Add_Name_And_Location_Page (Wiz));
-
-      declare
-         Name : constant String := Creation_Wizard.Run (Wiz);
-      begin
-         if Name /= "" then
-            Add_Dependency_Internal
-              (Get_Kernel (File), Project_Information (File), Name);
-         end if;
-      end;
-      return Success;
-   end Execute;
-
-   -------------
-   -- Execute --
-   -------------
-
-   function Execute
-     (Command : access Add_Dep_From_File_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
-   is
-      pragma Unreferenced (Command);
-      File : constant File_Selection_Context_Access :=
-        File_Selection_Context_Access (Context.Context);
-      Prj : constant Project_Type := Project_Information (File);
-      Dir : constant String := Project_Directory (Prj);
-      Name : constant Virtual_File := Select_File
-        (-"Select Project",
-         Dir,
-         File_Pattern      => "*.gpr",
-         Pattern_Name      => "Project files",
-         Parent            => Get_Current_Window (Get_Kernel (File)),
-         Use_Native_Dialog => Get_Pref (Get_Kernel (File), Use_Native_Dialogs),
-         Kind              => Unspecified,
-         History           => Get_History (Get_Kernel (File)));
-   begin
-      if Name /= VFS.No_File then
-         Add_Dependency_Internal
-           (Get_Kernel (File), Prj, Full_Name (Name).all);
-         return Success;
-      end if;
-      return Failure;
-   end Execute;
-
-   -------------
-   -- Execute --
-   -------------
-
-   function Execute
-     (Command : access Remove_Dep_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
-   is
-      pragma Unreferenced (Command);
-      File : constant File_Selection_Context_Access :=
-        File_Selection_Context_Access (Context.Context);
-      Prj : constant Project_Type := Importing_Project_Information (File);
-   begin
-      Trace (Me, "Removing project dependency "
-             & Project_Name (Prj) & " -> "
-             & Project_Name (Project_Information (File)));
-      Remove_Imported_Project (Prj, Project_Information (File));
-      Recompute_View (Get_Kernel (File));
       return Success;
    end Execute;
 
@@ -1669,7 +1484,8 @@ package body Project_Viewers is
             pragma Unreferenced (Error);
          begin
             Error := Add_Imported_Project
-              (Project                   => Project,
+              (Root_Project              => Get_Project (Kernel),
+               Project                   => Project,
                Imported_Project_Location => Project2,
                Report_Errors             => Set_Error'Unrestricted_Access,
                Use_Relative_Path         => Relative);
@@ -2941,26 +2757,12 @@ package body Project_Viewers is
          Action => Command,
          Filter => Filter);
 
-      Command := new Add_Dep_From_Wizard_Command;
+      Command := new Project_Dependency_Wizard_Command;
       Register_Contextual_Menu
-        (Kernel, "Add dependency from wizard",
+        (Kernel, "Edit project dependencies",
          Action => Command,
          Filter => Filter,
-         Label  => "Edit project/Add dependency/From wizard...");
-
-      Command := new Add_Dep_From_File_Command;
-      Register_Contextual_Menu
-        (Kernel, "Add dependency from file",
-         Action => Command,
-         Filter => Filter,
-         Label  => "Edit project/Add dependency/From project file...");
-
-      Command := new Remove_Dep_Command;
-      Register_Contextual_Menu
-        (Kernel, "Remove dependency",
-         Action => Command,
-         Label  => "Edit project/Remove dependency %i -> %p",
-         Filter => Lookup_Filter (Kernel, "Project only"));
+         Label  => "Edit project/Dependencies...");
 
       Filter := Action_Filter (Create (Module => "Explorer"));
       Register_Contextual_Menu (Kernel, "", Filter => Filter);
