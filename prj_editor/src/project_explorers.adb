@@ -991,6 +991,8 @@ package body Project_Explorers is
          Obj : constant String := Object_Path (Project, False);
       begin
          if Get_Pref (Explorer.Kernel, Show_Directories) then
+            Add_Source_Directories;
+
             --  Object directory
             if Obj /= "" then
                N := Add_Directory_Node
@@ -1001,8 +1003,6 @@ package body Project_Explorers is
                   Files_In_Project => null,
                   Object_Directory => True);
             end if;
-
-            Add_Source_Directories;
          end if;
 
       end Add_Directories;
@@ -1351,16 +1351,6 @@ package body Project_Explorers is
          use String_List_Utils.String_List;
 
       begin
-         --  Object directory
-
-         N := Add_Directory_Node
-           (Explorer         => Explorer,
-            Directory        => Object_Path (Project, False),
-            Project          => Project,
-            Parent_Node      => Node,
-            Files_In_Project => null,
-            Object_Directory => True);
-
          --  Sources directory
 
          for J in Sources'Range loop
@@ -1407,6 +1397,15 @@ package body Project_Explorers is
          end loop;
 
          Free (Dirs);
+         --  Object directory
+
+         N := Add_Directory_Node
+           (Explorer         => Explorer,
+            Directory        => Object_Path (Project, False),
+            Project          => Project,
+            Parent_Node      => Node,
+            Files_In_Project => null,
+            Object_Directory => True);
       end Add_Directories;
 
       procedure Add_Projects is
