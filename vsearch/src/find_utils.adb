@@ -31,6 +31,7 @@ with Basic_Types;               use Basic_Types;
 with Boyer_Moore;               use Boyer_Moore;
 with Glide_Kernel;              use Glide_Kernel;
 with Glide_Kernel.Project;      use Glide_Kernel.Project;
+with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Kernel.Console;      use Glide_Kernel.Console;
 with File_Utils;                use File_Utils;
 with String_Utils;              use String_Utils;
@@ -683,6 +684,7 @@ package body Find_Utils is
 
    exception
       when Expression_Error =>
+         Trace (Me, "Invalid regexp: " & Context.Look_For.all);
          raise Invalid_Context;
    end Context_As_Regexp;
 
@@ -751,6 +753,7 @@ package body Find_Utils is
    procedure Free (Context : in out Current_File_Context) is
    begin
       Free (Context.Next_Matches_In_File);
+      Free (Context.Current_File);
    end Free;
 
    procedure Free (Context : in out Files_Context) is
@@ -778,6 +781,17 @@ package body Find_Utils is
       Free (Context.Next_Matches_In_File);
       Free (Search_Context (Context));
    end Free;
+
+   ----------------------
+   -- Set_Current_File --
+   ----------------------
+
+   procedure Set_Current_File
+     (Context : access Current_File_Context;
+      File    : String) is
+   begin
+      Context.Current_File := new String' (File);
+   end Set_Current_File;
 
    -------------------
    -- Set_File_List --
@@ -821,14 +835,18 @@ package body Find_Utils is
 
    function Current_File_Factory
      (Kernel            : access Glide_Kernel.Kernel_Handle_Record'Class;
+      All_Occurences    : Boolean;
       Extra_Information : Gtk.Widget.Gtk_Widget)
       return Search_Context_Access
    is
-      pragma Unreferenced (Kernel, Extra_Information);
-
+      pragma Unreferenced (Extra_Information);
       Context : Current_File_Context_Access;
+      Editor : constant Source_Editor_Box :=
+        Find_Current_Editor (Kernel);
    begin
       Context := new Current_File_Context;
+      Set_Current_File (Context, Get_Filename (Editor));
+      Context.All_Occurences := All_Occurences;
       return Search_Context_Access (Context);
    end Current_File_Factory;
 
@@ -838,10 +856,11 @@ package body Find_Utils is
 
    function Files_From_Project_Factory
      (Kernel            : access Glide_Kernel.Kernel_Handle_Record'Class;
+      All_Occurences    : Boolean;
       Extra_Information : Gtk.Widget.Gtk_Widget)
       return Search_Context_Access
    is
-      pragma Unreferenced (Extra_Information);
+      pragma Unreferenced (Extra_Information, All_Occurences);
 
       Context : Files_Project_Context_Access;
    begin
@@ -858,10 +877,11 @@ package body Find_Utils is
 
    function Files_Factory
      (Kernel            : access Glide_Kernel.Kernel_Handle_Record'Class;
+      All_Occurences    : Boolean;
       Extra_Information : Gtk.Widget.Gtk_Widget)
       return Search_Context_Access
    is
-      pragma Unreferenced (Kernel);
+      pragma Unreferenced (Kernel, All_Occurences);
 
       Context : Files_Context_Access;
       Extra   : constant Files_Extra_Info_Access := Files_Extra_Info_Access
@@ -898,13 +918,21 @@ package body Find_Utils is
       Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
       Search_Backward : Boolean) return Boolean
    is
-      Editor : constant Source_Editor_Box :=
-        Find_Current_Editor (Kernel);
+      Editor : Source_Editor_Box;
       Lang   : Language_Access;
       Match  : Match_Result_Access;
       Inc    : Integer;
+      Line, Column : Natural;
 
    begin
+      Open_File_Editor (Kernel, Filename => Context.Current_File.all);
+      Editor := Get_Source_Box_From_MDI
+        (Get_File_Editor (Kernel, Context.Current_File.all));
+
+      if Editor = null then
+         return False;
+      end if;
+
       if Search_Backward then
          Inc := -1;
       else
@@ -917,35 +945,33 @@ package body Find_Utils is
       if Context.Next_Matches_In_File /= null then
          Context.Last_Match_Returned := Context.Last_Match_Returned + Inc;
 
-         if Context.Last_Match_Returned > 0
-           and then Context.Last_Match_Returned
-             <= Context.Next_Matches_In_File'Last
-           and then Context.Next_Matches_In_File (Context.Last_Match_Returned)
-             /= null
+         --  Start from the beginning again if possible
+         if Context.Last_Match_Returned <= 0
+           or else Context.Last_Match_Returned
+             > Context.Next_Matches_In_File'Last
+           or else Context.Next_Matches_In_File (Context.Last_Match_Returned)
+           = null
          then
-            Match :=
-              Context.Next_Matches_In_File (Context.Last_Match_Returned);
-            Unhighlight_All (Editor);
+            Context.Last_Match_Returned := Context.Next_Matches_In_File'First;
+         end if;
 
-            if Is_Valid_Location (Editor, Match.Line, Match.End_Column) then
-               Highlight_Region
-                 (Editor,
-                  Match.Line, Match.Column,
-                  Match.Line, Match.End_Column);
-               Set_Cursor_Location (Editor, Match.Line, Match.Column);
+         Match :=
+           Context.Next_Matches_In_File (Context.Last_Match_Returned);
+         Unhighlight_All (Editor);
 
-               return True;
+         if Is_Valid_Location (Editor, Match.Line, Match.End_Column) then
+            Highlight_Region
+              (Editor,
+               Match.Line, Match.Column,
+               Match.Line, Match.End_Column);
+            Set_Cursor_Location (Editor, Match.Line, Match.Column);
 
-            else
-               --  ??? Contents of buffer has changed. See comment below about
-               --  the use of tags.
-
-               Unhighlight_All (Editor);
-               Free (Context.Next_Matches_In_File);
-               return False;
-            end if;
+            return True;
 
          else
+            --  ??? Contents of buffer has changed. See comment below about
+            --  the use of tags.
+
             Unhighlight_All (Editor);
             Free (Context.Next_Matches_In_File);
             return False;
@@ -984,6 +1010,18 @@ package body Find_Utils is
          end loop;
       else
          Context.Last_Match_Returned := Context.Next_Matches_In_File'First;
+
+         if not Context.All_Occurences then
+            Get_Cursor_Location (Editor, Line, Column);
+
+            loop
+               Match :=
+                 Context.Next_Matches_In_File (Context.Last_Match_Returned);
+               exit when Match.Line > Line
+                 or else (Match.Line = Line and then Match.Column >= Column);
+               Context.Last_Match_Returned := Context.Last_Match_Returned + 1;
+            end loop;
+         end if;
       end if;
 
       Match :=

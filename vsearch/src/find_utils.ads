@@ -82,9 +82,6 @@ package Find_Utils is
       Regexp         : Boolean := False;
    end record;
    --  Defines the context for a search.
-   --  All_Occurences is set to True if the search should find all occurences
-   --    of the match, instead of just the first one. This might be used for
-   --    instance to decide on which algorithm to use
    --  Case_Sensitive is set to True if the search is case sensitive
    --  Whole_Word is set to True if only full words should match. For instance,
    --    it would not match "end" in "friend" if True. This also applies to
@@ -186,6 +183,11 @@ package Find_Utils is
    procedure Free (Context : in out Current_File_Context);
    --  Free the memory allocated for the context
 
+   procedure Set_Current_File
+     (Context : access Current_File_Context;
+      File    : String);
+   --  Set the name of the file to search
+
    function Search
      (Context         : access Current_File_Context;
       Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
@@ -244,12 +246,16 @@ package Find_Utils is
 
    type Module_Search_Context_Factory is access function
      (Kernel            : access Glide_Kernel.Kernel_Handle_Record'Class;
+      All_Occurences    : Boolean;
       Extra_Information : Gtk.Widget.Gtk_Widget)
       return Search_Context_Access;
    --  Function called to create the search context.
    --  It should return null if it couldn't create the context, and thus if the
    --  search/replace won't be performed.
-   --  The memory will be freed automatically by GPS
+   --  The memory will be freed automatically by GPS.
+   --  All_Occurences is set to True if the search will be used to find all the
+   --  possible occurences the first time the user presses First. It could be
+   --  used to provide a different algorithm or initial setup.
 
    -----------------------------
    -- Standard search support --
@@ -257,18 +263,21 @@ package Find_Utils is
 
    function Current_File_Factory
      (Kernel            : access Glide_Kernel.Kernel_Handle_Record'Class;
+      All_Occurences    : Boolean;
       Extra_Information : Gtk.Widget.Gtk_Widget)
       return Search_Context_Access;
    --  Factory for "Current File"
 
    function Files_From_Project_Factory
      (Kernel            : access Glide_Kernel.Kernel_Handle_Record'Class;
+      All_Occurences    : Boolean;
       Extra_Information : Gtk.Widget.Gtk_Widget)
       return Search_Context_Access;
    --  Factory for "Files From Project"
 
    function Files_Factory
      (Kernel            : access Glide_Kernel.Kernel_Handle_Record'Class;
+      All_Occurences    : Boolean;
       Extra_Information : Gtk.Widget.Gtk_Widget)
       return Search_Context_Access;
    --  Factory for "Files..."
@@ -312,6 +321,8 @@ private
    package Directory_List is new Generic_List (Dir_Data_Access);
 
    type Current_File_Context is new Search_Context with record
+      Current_File         : GNAT.OS_Lib.String_Access;
+      All_Occurences       : Boolean;
       Next_Matches_In_File : Match_Result_Array_Access := null;
       Last_Match_Returned  : Natural := 0;
       --  These two fields are used to memorize the list of matches in the
