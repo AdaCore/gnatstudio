@@ -20,14 +20,10 @@
 
 with System; use System;
 with Glib; use Glib;
-with Gtk.Label; use Gtk.Label;
-with Gtk.Frame; use Gtk.Frame;
 with Gtk.Notebook; use Gtk.Notebook;
 with Gtk.Widget; use Gtk.Widget;
-with Odd_Intl; use Odd_Intl;
 with Odd.Process; use Odd.Process;
 with Debugger; use Debugger;
-with Odd.Code_Editors; use Odd.Code_Editors;
 with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
 with Process_Proxies; use Process_Proxies;
 with Gtk.Clist;       use Gtk.Clist;
@@ -104,7 +100,6 @@ package body Odd.Dialogs.Callbacks is
    is
       --  Since lists start at 0, increment the value.
       Thread        : constant Gint := To_Gint (Params, 1) + 1;
-      Frame         : Gtk_Frame;
 
       --  Get the process notebook from the main window which is associated
       --  with the task dialog (toplevel (object)).
@@ -118,42 +113,8 @@ package body Odd.Dialogs.Callbacks is
       Process       : Debugger_Process_Tab :=
         Process_User_Data.Get (Get_Nth_Page
           (Notebook, Get_Current_Page (Notebook)));
-      Label         : Gtk_Label;
-      Child         : Page_List.Glist;
-      Page          : Gint;
-      Notebook_Page : Gtk_Notebook_Page;
-
-      use Page_List;
 
    begin
-      Child := Get_Children (Process.Thread_Notebook);
-      Page := 0;
-
-      while Child /= Null_List loop
-         Notebook_Page := Get_Data (Child);
-
-         if Get (Gtk_Label (Get_Tab_Label (Notebook_Page))) =
-           -"Thread" & Gint'Image (Thread)
-         then
-            --  The desired thread has already a page associated with it.
-            --  Note that Set_Page will take care of the actual thread
-            --  switching.
-
-            Reparent (Process.Editor_Text, Get_Child (Notebook_Page));
-            Set_Page (Process.Thread_Notebook, Page);
-            return;
-         end if;
-
-         Child := Next (Child);
-         Page := Page + 1;
-      end loop;
-
-      Gtk_New (Frame);
-      Gtk_New (Label, -"Thread" & Gint'Image (Thread));
-      Append_Page (Process.Thread_Notebook, Frame, Label);
-      Reparent (Process.Editor_Text, Frame);
-      Show (Frame);
-      Set_Page (Process.Thread_Notebook, -1);
       Thread_Switch (Process.Debugger, Natural (Thread));
    end On_Task_List_Select_Row;
 
