@@ -2988,6 +2988,18 @@ package body Src_Editor_Buffer is
       end if;
    end Unref;
 
+   -------------------------
+   -- Get_Total_Ref_Count --
+   -------------------------
+
+   function Get_Total_Ref_Count
+     (Buffer : access Source_Buffer_Record)
+      return Integer
+   is
+   begin
+      return Buffer.Total_References;
+   end Get_Total_Ref_Count;
+
    -------------------
    -- Get_Ref_Count --
    -------------------
@@ -2996,7 +3008,7 @@ package body Src_Editor_Buffer is
      (Buffer : access Source_Buffer_Record)
       return Integer is
    begin
-      return Buffer.Total_References;
+      return Buffer.References;
    end Get_Ref_Count;
 
    -------------------

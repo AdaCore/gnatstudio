@@ -377,6 +377,11 @@ package Src_Editor_Buffer is
       return Integer;
    --  Return the number of times the buffer was referenced.
 
+   function Get_Total_Ref_Count
+     (Buffer : access Source_Buffer_Record)
+      return Integer;
+   --  Return the total number of times the buffer was referenced.
+
    procedure Do_Completion (Buffer : access Source_Buffer_Record);
    --  Complete the current insertion, or continue the current completion.
 
