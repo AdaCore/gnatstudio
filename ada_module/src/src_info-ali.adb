@@ -948,6 +948,12 @@ package body Src_Info.ALI is
 
       --  Save the Source_File associated to this Sdep for later use.
       Sfiles (Id) := Sfile;
+
+   exception
+      when ALI_Internal_Error =>
+         --  Temporary: Do nothing in this case, this is probably a dependency
+         --  on a file other than an ALI file (preprocessing from gnatmake,...)
+         null;
    end Process_Sdep_As_External;
 
    -------------------
