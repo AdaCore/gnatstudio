@@ -35,6 +35,7 @@ with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 with Gtk.Handlers;        use Gtk.Handlers;
 with Gtk.Widget;          use Gtk.Widget;
 with Gtkada.Handlers;     use Gtkada.Handlers;
+with Pango.Font;          use Pango.Font;
 
 with Glide_Kernel;             use Glide_Kernel;
 with Glide_Kernel.Modules;     use Glide_Kernel.Modules;
@@ -164,6 +165,8 @@ package body Glide_Interactive_Consoles is
 
       Apply_Tag
         (Console.Buffer, Console.Uneditable_Tag, First_Iter, Prompt_Iter);
+      Apply_Tag
+        (Console.Buffer, Console.Prompt_Tag, First_Iter, Prompt_Iter);
 
       Move_Mark (Console.Buffer, Console.Prompt_Mark, Prompt_Iter);
 
@@ -346,6 +349,14 @@ package body Glide_Interactive_Consoles is
       Gtk_New (Console.Uneditable_Tag);
       Set_Property (Console.Uneditable_Tag, Editable_Property, False);
       Add (Get_Tag_Table (Console.Buffer), Console.Uneditable_Tag);
+
+      Gtk_New (Console.Prompt_Tag);
+      Set_Property
+        (Console.Prompt_Tag,
+         Gtk.Text_Tag.Font_Desc_Property,
+         Get_Pref (Kernel, Keyword_Font));
+
+      Add (Get_Tag_Table (Console.Buffer), Console.Prompt_Tag);
 
       Add (Console, Console.View);
 
