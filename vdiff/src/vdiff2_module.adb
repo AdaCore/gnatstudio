@@ -50,6 +50,7 @@ with Gdk.Bitmap;                use Gdk.Bitmap;
 with Gtk.Image;                 use Gtk.Image;
 with Gdk.Color;                 use Gdk.Color;
 with Commands;                  use Commands;
+with Gtk.Handlers; use Gtk.Handlers;
 
 
 package body Vdiff2_Module is
@@ -78,10 +79,15 @@ package body Vdiff2_Module is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Callback for Tools->VDiff->Merge Tree Files...
 
-
+   procedure File_Closed_Cb
+     (Widget  : access Glib.Object.GObject_Record'Class;
+      Args    : GValues;
+      Kernel  : Kernel_Handle);
+   --  Callback for the "file_closed" signal.
+   No_Handler : constant Handler_Id := (Null_Signal_Id, null);
    type VDiff2_Module_Record is new Module_ID_Record with record
       Kernel        : Kernel_Handle;
-      Is_Active     : Boolean := false;
+      Is_Active     : Boolean := False;
       Number_active : Natural := 0;
       List_Diff     : Diff_Occurrence_List_Access;
       Command_Prev  : Diff_Command_Access;
@@ -91,6 +97,7 @@ package body Vdiff2_Module is
       Command_Close : Diff_Command_Access;
       Command_Reload      : Diff_Command_Access;
       Command_Unhighlight : Diff_Command_Access;
+      File_Closed_Id           : Handler_Id := No_Handler;
    end record;
    type VDiff2_Module is access all VDiff2_Module_Record'Class;
 
@@ -152,7 +159,7 @@ package body Vdiff2_Module is
                return;
             end if;
 
-            Result := Diff3 (Kernel, File1, File2, File3);
+            Result := Diff (Kernel, File1, File2, File3);
 
             if Result = null then
                Button := Message_Dialog
@@ -161,7 +168,7 @@ package body Vdiff2_Module is
                   Parent      => Get_Main_Window (Kernel));
                return;
             end if;
-            Item := (Result, new String'(File1),
+            Item := (Result, null, new String'(File1),
                      new String'(File2), new String'(File3), Result);
             Append (Id.List_Diff.all, Item);
             Show_Differences (Kernel, Result, File1, File2, File3);
@@ -221,7 +228,7 @@ package body Vdiff2_Module is
                Parent      => Get_Main_Window (Kernel));
             return;
          end if;
-         Item := (Result, new String'(File1),
+         Item := (Result, null, new String'(File1),
                   new String'(File2), null, Result);
          Append (Id.List_Diff.all, Item);
          Show_Differences (Kernel, Result, File1, File2);
@@ -293,7 +300,7 @@ package body Vdiff2_Module is
                   Parent      => Get_Main_Window (Kernel));
                return;
             end if;
-            Item := (Result, new String'(File1),
+            Item := (Result, null, new String'(File1),
                      new String'(File2), new String'(File3), Result);
             Append (Id.List_Diff.all, Item);
             Show_Differences (Kernel, Result, File1, File2, File3);
@@ -370,7 +377,7 @@ package body Vdiff2_Module is
                Parent      => Get_Main_Window (Kernel));
             return;
          end if;
-         Item := (Result, new String'(File1),
+         Item := (Result, null, new String'(File1),
                   new String'(File2), null, Result);
          Append (Id.List_Diff.all, Item);
          Show_Differences (Kernel, Result, File1, File2);
@@ -443,7 +450,7 @@ package body Vdiff2_Module is
                         Parent      => Get_Main_Window (Kernel));
                      return False;
                   end if;
-                  Item := (Result, new String'(Ref_File),
+                  Item := (Result, null, new String'(Ref_File),
                            new String'(New_File), null, Result);
                   Append (Id.List_Diff.all, Item);
                   Show_Differences
@@ -471,7 +478,7 @@ package body Vdiff2_Module is
                         Parent      => Get_Main_Window (Kernel));
                      return False;
                   end if;
-                  Item := (Result, new String'(Orig_File),
+                  Item := (Result, null, new String'(Orig_File),
                            new String'(Ref_File), null, Result);
                   Append (Id.List_Diff.all, Item);
                   Show_Differences
@@ -492,7 +499,7 @@ package body Vdiff2_Module is
                      Parent      => Get_Main_Window (Kernel));
                   return False;
                end if;
-               Item := (Result, new String'(Orig_File),
+               Item := (Result, null, new String'(Orig_File),
                         new String'(New_File), null, Result);
                Append (Id.List_Diff.all, Item);
                Show_Differences
@@ -526,6 +533,12 @@ package body Vdiff2_Module is
       VDiff2_Module (Vdiff_Module_ID).Kernel := Kernel_Handle (Kernel);
       VDiff2_Module (Vdiff_Module_ID).List_Diff :=
         new Diff_Occurrence_List.List;
+      VDiff2_Module (Vdiff_Module_ID).File_Closed_Id :=
+        Kernel_Callback.Connect
+          (Kernel,
+           File_Closed_Signal,
+           File_Closed_Cb'Access,
+           Kernel_Handle (Kernel));
 
       Create (VDiff2_Module (Vdiff_Module_ID).Command_Last,
               VDiff2_Module (Vdiff_Module_ID).Kernel,
@@ -598,43 +611,43 @@ package body Vdiff2_Module is
                          (VDiff2_Module (Vdiff_Module_ID).Command_Next),
                        Image);
 
-      Create_From_Xpm_D
-        (PixMap, Get_Window (Window), Mask, Null_Color, last_xpm);
-      Gtk_New (Image, PixMap, Mask);
-      Register_Button (Kernel, -"Go to the last difference",
-                       Command_Access
-                         (VDiff2_Module (Vdiff_Module_ID).Command_Last),
-                       Image);
-      Create_From_Xpm_D
-        (PixMap, Get_Window (Window), Mask, Null_Color, first_xpm);
-      Gtk_New (Image, PixMap, Mask);
-      Register_Button (Kernel, -"Go to the First difference",
-                       Command_Access
-                         (VDiff2_Module (Vdiff_Module_ID).Command_First),
-                       Image);
-
-      Create_From_Xpm_D
-        (PixMap, Get_Window (Window), Mask, Null_Color, reload_xpm);
-      Gtk_New (Image, PixMap, Mask);
-      Register_Button (Kernel, -"Recalculate Differences",
-                       Command_Access
-                         (VDiff2_Module (Vdiff_Module_ID).Command_Reload),
-                       Image);
-      Create_From_Xpm_D
-        (PixMap, Get_Window (Window), Mask, Null_Color, close_xpm);
-      Gtk_New (Image, PixMap, Mask);
-      Register_Button (Kernel, -"Go to the First difference",
-                       Command_Access
-                         (VDiff2_Module (Vdiff_Module_ID).Command_Close),
-                       Image);
-
-      Create_From_Xpm_D
-        (PixMap, Get_Window (Window), Mask, Null_Color, unhighlight_xpm);
-      Gtk_New (Image, PixMap, Mask);
-      Register_Button (Kernel, -"remove highlighting",
-                       Command_Access
-                         (VDiff2_Module (Vdiff_Module_ID).Command_Unhighlight),
-                       Image);
+--        Create_From_Xpm_D
+--          (PixMap, Get_Window (Window), Mask, Null_Color, last_xpm);
+--        Gtk_New (Image, PixMap, Mask);
+--        Register_Button (Kernel, -"Go to the last difference",
+--                         Command_Access
+--                           (VDiff2_Module (Vdiff_Module_ID).Command_Last),
+--                         Image);
+--        Create_From_Xpm_D
+--          (PixMap, Get_Window (Window), Mask, Null_Color, first_xpm);
+--        Gtk_New (Image, PixMap, Mask);
+--        Register_Button (Kernel, -"Go to the First difference",
+--                         Command_Access
+--                           (VDiff2_Module (Vdiff_Module_ID).Command_First),
+--                         Image);
+--
+--        Create_From_Xpm_D
+--          (PixMap, Get_Window (Window), Mask, Null_Color, reload_xpm);
+--        Gtk_New (Image, PixMap, Mask);
+--        Register_Button (Kernel, -"Recalculate Differences",
+--                         Command_Access
+--                           (VDiff2_Module (Vdiff_Module_ID).Command_Reload),
+--                         Image);
+--        Create_From_Xpm_D
+--          (PixMap, Get_Window (Window), Mask, Null_Color, close_xpm);
+--        Gtk_New (Image, PixMap, Mask);
+--        Register_Button (Kernel, -"Go to the First difference",
+--                         Command_Access
+--                           (VDiff2_Module (Vdiff_Module_ID).Command_Close),
+--                         Image);
+--
+--        Create_From_Xpm_D
+--          (PixMap, Get_Window (Window), Mask, Null_Color, unhighlight_xpm);
+--        Gtk_New (Image, PixMap, Mask);
+--        Register_Button (Kernel, -"remove highlighting",
+--                         Command_Access
+--                       (VDiff2_Module (Vdiff_Module_ID).Command_Unhighlight),
+--                         Image);
    end Register_Module;
 
 
@@ -653,4 +666,40 @@ package body Vdiff2_Module is
 
    end Destroy;
 
+   --------------------
+   -- File_Closed_Cb --
+   --------------------
+
+   procedure File_Closed_Cb
+     (Widget  : access Glib.Object.GObject_Record'Class;
+      Args    : GValues;
+      Kernel  : Kernel_Handle) is
+      Diff : Diff_Head_Access := new Diff_List_Head;
+      File  : constant String := Get_String (Nth (Args, 1));
+      CurrNode : Diff_Occurrence_List.List_Node :=
+        First (VDiff2_Module (Vdiff_Module_ID).List_Diff.all);
+      pragma Unreferenced (Widget);
+   begin
+
+      while CurrNode /= Null_Node
+      loop
+         Diff.all := Data (CurrNode);
+         exit when (Diff.File1.all = File
+                    or else
+                    Diff.File2.all = File
+                    or else
+                    Diff.File3.all = File);
+         CurrNode := Next (CurrNode);
+      end loop;
+
+      if CurrNode /= Null_Node then
+         Hide_Differences (Kernel, Diff.List, Diff.File1,
+                           Diff.File2, Diff.File3);
+         Remove_Nodes (VDiff2_Module (Vdiff_Module_ID).List_Diff.all,
+                        Prev (VDiff2_Module (Vdiff_Module_ID).List_Diff.all,
+                             CurrNode),
+                       CurrNode);
+         Free (Diff);
+      end if;
+   end File_Closed_Cb;
 end Vdiff2_Module;
