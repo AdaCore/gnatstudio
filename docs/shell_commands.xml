@@ -2459,6 +2459,27 @@ highlight_category, style_category and warning_category reference the colors to 
      <see_also name="GPS.Contextual.show" />
   </shell_doc>
 
+  <!--#################################################################
+   ##### Socket class
+   ####################################################################-->
+
+  <shell_doc name="GPS.Socket">
+     <description>This class provides an interface to the sockets created by GPS when using the --server switch</description>
+     <see_also name="GPS.Socket.__init__()" />
+  </shell_doc>
+
+  <shell_doc name="GPS.Socket.__init__">
+     <param name="self">The instance of GPS.Socket</param>
+     <param name="id">A string</param>
+     <description>Creates an interface to one of the specific clients connect to GPS through the --server socket. The id can be set by the client by sending the "id" command to GPS</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.Socket.send">
+     <param name="self">An instance of the Socket class</param>
+     <param name="msg">A string</param>
+     <description>When GPS is running in server mode (using the --server switch), send msg to the socket identified by self.</description>
+  </shell_doc>
+
 
   <!--#################################################################
     ####   Menu class
@@ -2511,12 +2532,4 @@ If ref and add_before are specified, they specify the name of another item in th
      <param name="name">A string</param>
      <description>Change the name of a menu. The first underscore character seen in name will be used as the keyboard shortcut to access this menu from now on. If you actually want to insert an underscore in the name, you need to double it</description>
   </shell_doc>
-
-  <shell_doc name="GPS.send_socket">
-     <param name="id">A string</param>
-     <param name="msg">A string</param>
-     <description>When GPS is running in server mode (using the --server switch), send msg to the socket identified by id. The identification of a socket is done via the "id" command in the GPS socket.</description>
-  </shell_doc>
-
-
 </docs>

@@ -385,16 +385,21 @@ package body Socket_Module is
      (Data    : in out Callback_Data'Class;
       Command : String)
    is
+      Kernel       : constant Kernel_Handle := Get_Kernel (Data);
+      Socket_Class : constant Class_Type := New_Class (Kernel, "Socket");
       Read_Data : Read_Data_Access;
+      Inst      : constant Class_Instance := Nth_Arg (Data, 1, Socket_Class);
    begin
-      if Command = "send_socket" then
-         Read_Data := Find_Data (Nth_Arg (Data, 1));
-
+      if Command = Constructor_Method then
+         Read_Data := Find_Data (Nth_Arg (Data, 2));
          if Read_Data = null then
             Set_Error_Msg (Data, Command & ": " & (-"invalid id"));
             return;
          end if;
+         Set_Data (Inst, Socket_Class, String'(Nth_Arg (Data, 2)));
 
+      elsif Command = "send" then
+         Read_Data := Find_Data (String'(Get_Data (Inst, Socket_Class)));
          String'Write (Read_Data.Channel, Nth_Arg (Data, 2));
       end if;
 
@@ -416,12 +421,18 @@ package body Socket_Module is
       Register_Module (Kernel, Default_GPS_Port);
    end Register_Module;
 
+   ---------------------
+   -- Register_Module --
+   ---------------------
+
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Port   : Natural)
    is
       T : Timeout_Handler_Id;
       pragma Unreferenced (T);
+      Socket_Class : constant Class_Type := New_Class (Kernel, "Socket");
+
    begin
       Socket_Module_ID := new Socket_Module_Record;
       Socket_Module (Socket_Module_ID).Timeout_Handler :=
@@ -468,9 +479,16 @@ package body Socket_Module is
          Priority    => Default_Priority);
 
       Register_Command
-        (Kernel, "send_socket",
-         Minimum_Args => 2,
-         Maximum_Args => 2,
+        (Kernel, Constructor_Method,
+         Class        => Socket_Class,
+         Minimum_Args => 1,
+         Maximum_Args => 1,
+         Handler      => Socket_Command_Handler'Access);
+      Register_Command
+        (Kernel, "send",
+         Class        => Socket_Class,
+         Minimum_Args => 1,
+         Maximum_Args => 1,
          Handler      => Socket_Command_Handler'Access);
 
    exception
