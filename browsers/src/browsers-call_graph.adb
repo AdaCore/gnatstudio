@@ -471,7 +471,7 @@ package body Browsers.Call_Graph is
       Child  : Entity_Item;
    begin
       Child := Add_Entity_If_Not_Present (Browser, Entity);
-      Destroy (Entity);
+      --  Destroy (Entity);
       return Child;
    end Add_Entity_If_Not_Present;
 
@@ -515,8 +515,12 @@ package body Browsers.Call_Graph is
             Column             => Get_Declaration_Column_Of (Entity),
             Location           => Location,
             Status             => Status);
-         Lib_Info := Locate_From_Source_And_Complete
-           (Kernel, Get_File (Location));
+
+         --  In case there is no body, do nothing.
+         if Location /= Null_File_Location then
+            Lib_Info := Locate_From_Source_And_Complete
+              (Kernel, Get_File (Location));
+         end if;
       end if;
 
       if Lib_Info = No_LI_File then
@@ -766,7 +770,7 @@ package body Browsers.Call_Graph is
       --  Look for an existing item corresponding to entity
       Item := Entity_Item (Find_Entity (Browser, Entity));
       if Item = null then
-         Gtk_New (Item, Browser,  Entity => Entity);
+         Gtk_New (Item, Browser, Entity => Entity);
          Put (Get_Canvas (Browser), Item);
       end if;
 
@@ -787,7 +791,6 @@ package body Browsers.Call_Graph is
                Src => Item, Dest => Child, Arrow => Both_Arrow);
          end if;
          Refresh (Browser, Child);
-         Destroy (Rename);
 
       elsif Is_Renaming then
          Insert (Kernel,
@@ -805,7 +808,7 @@ package body Browsers.Call_Graph is
       Browser.Idle_Id := Examine_Ancestors_Idle.Add
         (Cb       => Examine_Ancestors_Call_Graph_Idle'Access,
          D        => Data,
-            Priority => Priority_Low_Idle,
+         Priority => Priority_Low_Idle,
          Destroy  => Destroy_Idle'Access);
 
       --  All memory is freed at the end of
