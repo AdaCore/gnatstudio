@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2001                      --
+--                      Copyright (C) 2000-2002                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -325,6 +325,7 @@ package body Items is
    -----------
 
    function Start (Item : access Generic_Type) return Generic_Iterator'Class is
+      pragma Unreferenced (Item);
       Iter : Generic_Iterator;
    begin
       return Iter;
@@ -335,6 +336,7 @@ package body Items is
    ------------
 
    function At_End (Iter : Generic_Iterator) return Boolean is
+      pragma Unreferenced (Iter);
    begin
       return True;
    end At_End;
@@ -344,6 +346,7 @@ package body Items is
    ----------
 
    procedure Next (Iter : in out Generic_Iterator) is
+      pragma Unreferenced (Iter);
    begin
       null;
    end Next;
@@ -353,6 +356,7 @@ package body Items is
    ----------
 
    function Data (Iter : Generic_Iterator) return Generic_Type_Access is
+      pragma Unreferenced (Iter);
    begin
       return null;
    end Data;

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2001                      --
+--                      Copyright (C) 2000-2002                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -27,6 +27,7 @@ package body Advanced_Breakpoint_Pkg.Callbacks is
    procedure On_Start_Record_Clicked
      (Object : access Gtk_Button_Record'Class)
    is
+      pragma Unreferenced (Object);
    begin
       null;
    end On_Start_Record_Clicked;
@@ -38,6 +39,7 @@ package body Advanced_Breakpoint_Pkg.Callbacks is
    procedure On_Stop_Record_Clicked
      (Object : access Gtk_Button_Record'Class)
    is
+      pragma Unreferenced (Object);
    begin
       null;
    end On_Stop_Record_Clicked;

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                         Copyright (C) 2001                        --
+--                         Copyright (C) 2002                        --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -18,8 +18,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-pragma Warnings (Off);
 with GNAT.Expect; use GNAT.Expect;
+pragma Warnings (Off);
 with GNAT.Expect.TTY; use GNAT.Expect.TTY;
 pragma Warnings (On);
 with GNAT.OS_Lib; use GNAT.OS_Lib;

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2001                      --
+--                      Copyright (C) 2000-2002                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -23,9 +23,6 @@ with Gdk.Bitmap;            use Gdk.Bitmap;
 with Gdk.Color;             use Gdk.Color;
 with Gdk.Event;             use Gdk.Event;
 with Gdk.Pixmap;            use Gdk.Pixmap;
-pragma Warnings (Off);
-with Gdk.Types;             use Gdk.Types;
-pragma Warnings (On);
 with Gtk.Arguments;         use Gtk.Arguments;
 with Gtk.Ctree;             use Gtk.Ctree;
 pragma Elaborate_All (Gtk.Ctree);
@@ -388,6 +385,7 @@ package body GVD.Explorer is
       Lang      : Language.Language_Access;
       File_Name : String)
    is
+      pragma Unreferenced (File_Name);
       Matches      : Match_Array (0 .. 10);
       Categories   : constant Explorer_Categories :=
         Explorer_Regexps (Lang);
@@ -499,7 +497,9 @@ package body GVD.Explorer is
 
    function Drag_Motion
      (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Event  : Gdk.Event.Gdk_Event) return Boolean is
+      Event  : Gdk.Event.Gdk_Event) return Boolean
+   is
+      pragma Unreferenced (Event);
    begin
       Emit_Stop_By_Name (Widget, "motion_notify_event");
       return False;
@@ -884,6 +884,7 @@ package body GVD.Explorer is
       Event    : Gdk_Event)
      return Gtk.Menu.Gtk_Menu
    is
+      pragma Unreferenced (Event);
       Exp : Explorer_Access := Explorer_Access (Explorer);
       --  Check : Gtk_Check_Menu_Item;
       Mitem : Gtk_Menu_Item;

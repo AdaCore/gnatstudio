@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2001                      --
+--                      Copyright (C) 2000-2002                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -19,21 +19,15 @@
 -----------------------------------------------------------------------
 
 with Gtk; use Gtk;
+with Gdk.Event;       use Gdk.Event;
 with Gtk.Enums;       use Gtk.Enums;
 with Gtkada.Handlers; use Gtkada.Handlers;
 with Callbacks_Odd;   use Callbacks_Odd;
-pragma Warnings (Off);
-with Gdk.Event;       use Gdk.Event;
-with Gdk.Types;       use Gdk.Types;
-pragma Warnings (On);
 
 with Process_Tab_Pkg.Callbacks; use Process_Tab_Pkg.Callbacks;
 with Interfaces.C.Strings; use Interfaces.C.Strings;
 with Gtk.Object;      use Gtk.Object;
 with Gtkada.Intl;     use Gtkada.Intl;
---  with Gtk.Style;       use Gtk.Style;
---  with Gdk.Color;       use Gdk.Color;
---  with Gtk.Widget;      use Gtk.Widget;
 
 package body Process_Tab_Pkg is
 

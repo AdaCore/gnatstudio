@@ -53,9 +53,7 @@ with GVD.Open_Program_Dialog; use GVD.Open_Program_Dialog;
 with GNAT.OS_Lib;           use GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.Command_Line; use GNAT.Command_Line;
-pragma Warnings (Off);
 with GNAT.Expect; use GNAT.Expect;
-pragma Warnings (On);
 
 with Ada.Command_Line;  use Ada.Command_Line;
 with Ada.Strings.Fixed; use Ada.Strings.Fixed;

@@ -34,10 +34,6 @@ with Gdk.Bitmap;          use Gdk.Bitmap;
 with Pixmaps_IDE;         use Pixmaps_IDE;
 with Gtk.Frame;           use Gtk.Frame;
 with Gtk.Button;          use Gtk.Button;
---  For some reason, GNAT incorrectly reports these two packages as
---  being unused ???
-pragma Warnings (Off, Gtk.Frame);
-pragma Warnings (Off, Gtk.Button);
 
 with Gdk.Window;          use Gdk.Window;
 

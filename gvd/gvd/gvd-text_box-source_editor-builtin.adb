@@ -262,6 +262,7 @@ package body GVD.Text_Box.Source_Editor.Builtin is
       Strings_Color     : Gdk.Color.Gdk_Color;
       Keywords_Color    : Gdk.Color.Gdk_Color)
    is
+      pragma Unreferenced (TTY_Mode);
       Data : Editor_Tooltip_Data;
       Box  : Builtin_Text_Box;
 
@@ -782,6 +783,7 @@ package body GVD.Text_Box.Source_Editor.Builtin is
       Column   : Natural;
       Position : Position_Type)
    is
+      pragma Unreferenced (Column);
       Last     : Positive;
       Edit     : constant Builtin_Text_Box :=
         Builtin_Text_Box (Editor.Widget);
@@ -1168,6 +1170,7 @@ package body GVD.Text_Box.Source_Editor.Builtin is
      (Widget : access Gtk_Widget_Record'Class;
       Br     : Contextual_Data_Record)
    is
+      pragma Unreferenced (Widget);
       Num : Breakpoint_Identifier;
    begin
       Num := Break_Source
@@ -1182,6 +1185,7 @@ package body GVD.Text_Box.Source_Editor.Builtin is
      (Widget : access Gtk_Widget_Record'Class;
       Br     : Contextual_Data_Record)
    is
+      pragma Unreferenced (Widget);
       Num : Breakpoint_Identifier;
    begin
       Num := Break_Subprogram
@@ -1196,6 +1200,7 @@ package body GVD.Text_Box.Source_Editor.Builtin is
      (Widget : access Gtk_Widget_Record'Class;
       Br     : Contextual_Data_Record)
    is
+      pragma Unreferenced (Widget);
       Num : Breakpoint_Identifier;
    begin
       Num := Break_Source
@@ -1209,7 +1214,9 @@ package body GVD.Text_Box.Source_Editor.Builtin is
 
    procedure Print_Variable
      (Widget : access Gtk_Widget_Record'Class;
-      Br     : Contextual_Data_Record) is
+      Br     : Contextual_Data_Record)
+   is
+      pragma Unreferenced (Widget);
    begin
       Print_Value (Br.Process.Debugger, Br.Name);
    end Print_Variable;
@@ -1220,7 +1227,9 @@ package body GVD.Text_Box.Source_Editor.Builtin is
 
    procedure Print_Dereferenced_Variable
      (Widget : access Gtk_Widget_Record'Class;
-      Br     : Contextual_Data_Record) is
+      Br     : Contextual_Data_Record)
+   is
+      pragma Unreferenced (Widget);
    begin
       Print_Value
         (Br.Process.Debugger,
@@ -1233,7 +1242,9 @@ package body GVD.Text_Box.Source_Editor.Builtin is
 
    procedure Graph_Print_Variable
      (Widget : access Gtk_Widget_Record'Class;
-      Br     : Contextual_Data_Record) is
+      Br     : Contextual_Data_Record)
+   is
+      pragma Unreferenced (Widget);
    begin
       if Br.Auto_Refresh then
          Process_User_Command
@@ -1252,7 +1263,9 @@ package body GVD.Text_Box.Source_Editor.Builtin is
 
    procedure Graph_Print_Dereferenced_Variable
      (Widget : access Gtk_Widget_Record'Class;
-      Br     : Contextual_Data_Record) is
+      Br     : Contextual_Data_Record)
+   is
+      pragma Unreferenced (Widget);
    begin
       if Br.Auto_Refresh then
          Process_User_Command
@@ -1277,6 +1290,7 @@ package body GVD.Text_Box.Source_Editor.Builtin is
      (Widget : access Gtk_Widget_Record'Class;
       Br     : Contextual_Data_Record)
    is
+      pragma Unreferenced (Widget);
       Top  : constant GVD_Main_Window := Br.Process.Window;
       View : constant GVD_Memory_View := Top.Memory_View;
    begin
@@ -1476,6 +1490,7 @@ package body GVD.Text_Box.Source_Editor.Builtin is
       Width, Height : out Glib.Gint;
       Area          : out Gdk_Rectangle)
    is
+      pragma Unreferenced (Widget);
       Edit          : constant GVD_Text_Box := GVD_Text_Box (Data.Box.Widget);
 
       use type Items.Generic_Type_Access;

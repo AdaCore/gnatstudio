@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2001                      --
+--                      Copyright (C) 2000-2002                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -45,6 +45,7 @@ package body Breakpoints_Pkg.Callbacks is
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args) return Boolean
    is
+      pragma Unreferenced (Params);
    begin
       Hide (Object);
       return True;
@@ -193,6 +194,7 @@ package body Breakpoints_Pkg.Callbacks is
    procedure On_Add_Watchpoint_Clicked
      (Object : access Gtk_Widget_Record'Class)
    is
+      pragma Unreferenced (Object);
    begin
       null;
    end On_Add_Watchpoint_Clicked;
@@ -204,6 +206,7 @@ package body Breakpoints_Pkg.Callbacks is
    procedure On_Update_Watchpoint_Clicked
      (Object : access Gtk_Widget_Record'Class)
    is
+      pragma Unreferenced (Object);
    begin
       null;
    end On_Update_Watchpoint_Clicked;

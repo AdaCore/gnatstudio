@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2001                      --
+--                      Copyright (C) 2000-2002                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -27,9 +27,7 @@ with GNAT.OS_Lib;
 with Glib;             use Glib;
 
 with Gdk.Color;        use Gdk.Color;
-pragma Warnings (Off);
 with Gdk.Drawable;     use Gdk.Drawable;
-pragma Warnings (On);
 with Gdk.Font;         use Gdk.Font;
 with Gdk.Window;       use Gdk.Window;
 
@@ -256,6 +254,7 @@ package body GVD.Memory_View is
       Format   : Display_Type;
       Trunc_At : Integer) return String
    is
+      pragma Unreferenced (Size);
       Long  : Long_Long_Integer;
       Test  : Integer := S'First;
       Dummy : constant String := "------------------------";
@@ -319,7 +318,9 @@ package body GVD.Memory_View is
 
    procedure Init_Graphics
      (View   : access GVD_Memory_View_Record'Class;
-      Window : Gdk_Window) is
+      Window : Gdk_Window)
+   is
+      pragma Unreferenced (Window);
    begin
       View.View_Font   := Get_Gdkfont
         (Get_Pref (Memory_View_Font), Get_Pref (Memory_View_Font_Size));

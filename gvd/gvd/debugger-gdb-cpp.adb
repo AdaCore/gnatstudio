@@ -74,7 +74,9 @@ package body Debugger.Gdb.Cpp is
    --------------------
 
    function Is_Simple_Type
-     (Lang : access Gdb_Cpp_Language; Str : String) return Boolean is
+     (Lang : access Gdb_Cpp_Language; Str : String) return Boolean
+   is
+      pragma Unreferenced (Lang);
    begin
       return Is_Simple_Type (Cpp_Lang, Str);
    end Is_Simple_Type;
@@ -84,7 +86,9 @@ package body Debugger.Gdb.Cpp is
    --------------
 
    function Keywords
-     (Lang : access Gdb_Cpp_Language) return GNAT.Regpat.Pattern_Matcher is
+     (Lang : access Gdb_Cpp_Language) return GNAT.Regpat.Pattern_Matcher
+   is
+      pragma Unreferenced (Lang);
    begin
       return Keywords (Cpp_Lang);
    end Keywords;
@@ -94,7 +98,9 @@ package body Debugger.Gdb.Cpp is
    --------------------------
 
    function Get_Language_Context
-     (Lang : access Gdb_Cpp_Language) return Language.Language_Context is
+     (Lang : access Gdb_Cpp_Language) return Language.Language_Context
+   is
+      pragma Unreferenced (Lang);
    begin
       return Get_Language_Context (Cpp_Lang);
    end Get_Language_Context;
@@ -104,7 +110,9 @@ package body Debugger.Gdb.Cpp is
    ----------------------
 
    function Explorer_Regexps
-     (Lang : access Gdb_Cpp_Language) return Language.Explorer_Categories is
+     (Lang : access Gdb_Cpp_Language) return Language.Explorer_Categories
+   is
+      pragma Unreferenced (Lang);
    begin
       return Explorer_Regexps (Cpp_Lang);
    end Explorer_Regexps;
@@ -114,7 +122,9 @@ package body Debugger.Gdb.Cpp is
    --------------------
 
    function Is_System_File
-     (Lang : access Gdb_Cpp_Language; File_Name : String) return Boolean is
+     (Lang : access Gdb_Cpp_Language; File_Name : String) return Boolean
+   is
+      pragma Unreferenced (Lang);
    begin
       return Is_System_File (Cpp_Lang, File_Name);
    end Is_System_File;
@@ -125,7 +135,9 @@ package body Debugger.Gdb.Cpp is
 
    function Dereference_Name
      (Lang : access Gdb_Cpp_Language;
-      Name : String) return String is
+      Name : String) return String
+   is
+      pragma Unreferenced (Lang);
    begin
       return Dereference_Name (Cpp_Lang, Name);
    end Dereference_Name;
@@ -137,7 +149,9 @@ package body Debugger.Gdb.Cpp is
    function Array_Item_Name
      (Lang  : access Gdb_Cpp_Language;
       Name  : String;
-      Index : String) return String is
+      Index : String) return String
+   is
+      pragma Unreferenced (Lang);
    begin
       return Array_Item_Name (Cpp_Lang, Name, Index);
    end Array_Item_Name;
@@ -149,7 +163,9 @@ package body Debugger.Gdb.Cpp is
    function Record_Field_Name
      (Lang  : access Gdb_Cpp_Language;
       Name  : String;
-      Field : String) return String is
+      Field : String) return String
+   is
+      pragma Unreferenced (Lang);
    begin
       return Record_Field_Name (Cpp_Lang, Name, Field);
    end Record_Field_Name;
@@ -164,7 +180,9 @@ package body Debugger.Gdb.Cpp is
       Indent_Params    : Indent_Parameters := Default_Indent_Parameters;
       Reserved_Casing  : Casing_Type       := Lower;
       Ident_Casing     : Casing_Type       := Mixed;
-      Format_Operators : Boolean           := True) is
+      Format_Operators : Boolean           := True)
+   is
+      pragma Unreferenced (Lang);
    begin
       Format_Source
         (Cpp_Lang, Buffer, Indent_Params, Reserved_Casing,
@@ -182,7 +200,9 @@ package body Debugger.Gdb.Cpp is
       Result          : out Construct_List;
       Indent          : out Natural;
       Next_Indent     : out Natural;
-      Indent_Params   : Indent_Parameters := Default_Indent_Parameters) is
+      Indent_Params   : Indent_Parameters := Default_Indent_Parameters)
+   is
+      pragma Unreferenced (Lang);
    begin
       Parse_Constructs
         (Cpp_Lang, Buffer, Buffer_Length, Result,
@@ -199,7 +219,9 @@ package body Debugger.Gdb.Cpp is
       Buffer_Length : Natural;
       Indent        : out Natural;
       Next_Indent   : out Natural;
-      Indent_Params : Indent_Parameters := Default_Indent_Parameters) is
+      Indent_Params : Indent_Parameters := Default_Indent_Parameters)
+   is
+      pragma Unreferenced (Lang);
    begin
       Next_Indentation
         (Cpp_Lang, Buffer, Buffer_Length, Indent, Next_Indent, Indent_Params);
@@ -212,7 +234,9 @@ package body Debugger.Gdb.Cpp is
    function Break_Exception
      (Debugger  : access Gdb_Cpp_Language;
       Name      : String  := "";
-      Unhandled : Boolean := False) return String is
+      Unhandled : Boolean := False) return String
+   is
+      pragma Unreferenced (Debugger, Unhandled);
    begin
       if Name = "" then
          return "break __raise_exception";
@@ -569,6 +593,7 @@ package body Debugger.Gdb.Cpp is
    function Get_Language_Debugger_Context
      (Lang : access Gdb_Cpp_Language) return Language_Debugger_Context
    is
+      pragma Unreferenced (Lang);
       Lang_C : aliased Gdb_C_Language;
    begin
       return Get_Language_Debugger_Context (Lang_C'Access);
@@ -583,6 +608,7 @@ package body Debugger.Gdb.Cpp is
       Var_Name : String;
       Value    : String) return String
    is
+      pragma Unreferenced (Lang);
       Lang_C : aliased Gdb_C_Language;
    begin
       return Set_Variable (Lang_C'Access, Var_Name, Value);
@@ -593,6 +619,7 @@ package body Debugger.Gdb.Cpp is
    -----------
 
    function Start (Debugger : access Gdb_Cpp_Language) return String is
+      pragma Unreferenced (Debugger);
       Lang_C : aliased Gdb_C_Language;
    begin
       return Start (Lang_C'Access);

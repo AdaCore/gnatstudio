@@ -19,10 +19,7 @@
 -----------------------------------------------------------------------
 
 with Glib;             use Glib;
-pragma Warnings (Off);
 with Gdk.Event;        use Gdk.Event;
-with Gdk.Types;        use Gdk.Types;
-pragma Warnings (On);
 with Gdk.Main;         use Gdk.Main;
 with Gdk.Window;       use Gdk.Window;
 with Gtk.Arrow;        use Gtk.Arrow;

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2001                      --
+--                      Copyright (C) 2000-2002                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -114,7 +114,9 @@ package body GVD.Text_Box.Source_Editor.Socket is
      (Editor   : access Socket_Record;
       Line     : Natural;
       Column   : Natural;
-      Position : Position_Type) is
+      Position : Position_Type)
+   is
+      pragma Unreferenced (Column);
    begin
       if Editor.TTY_Mode then
          Print_File_Location
@@ -145,7 +147,9 @@ package body GVD.Text_Box.Source_Editor.Socket is
 
    procedure Show_Message
      (Editor      : access Socket_Record;
-      Message     : String) is
+      Message     : String)
+   is
+      pragma Unreferenced (Editor, Message);
    begin
       --   ??? Must implement and document this procedure.
       null;
@@ -159,7 +163,9 @@ package body GVD.Text_Box.Source_Editor.Socket is
      (Editor      : access Socket_Record;
       File_Name   : String;
       Set_Current : Boolean := True;
-      Force       : Boolean := False) is
+      Force       : Boolean := False)
+   is
+      pragma Unreferenced (Set_Current, Force);
    begin
       Free (Editor.Current_File);
       Editor.Current_File := new String' (File_Name);
@@ -174,6 +180,7 @@ package body GVD.Text_Box.Source_Editor.Socket is
    -------------------------
 
    procedure Preferences_Changed (Editor : access Socket_Record) is
+      pragma Unreferenced (Editor);
    begin
       null;
    end Preferences_Changed;
@@ -199,7 +206,9 @@ package body GVD.Text_Box.Source_Editor.Socket is
    procedure Set_Line
      (Editor      : access Socket_Record;
       Line        : Natural;
-      Set_Current : Boolean := True) is
+      Set_Current : Boolean := True)
+   is
+      pragma Unreferenced (Set_Current);
    begin
       Editor.Line := Line;
 
@@ -214,7 +223,9 @@ package body GVD.Text_Box.Source_Editor.Socket is
 
    procedure Update_Breakpoints
      (Editor : access Socket_Record;
-      Br     : GVD.Types.Breakpoint_Array) is
+      Br     : GVD.Types.Breakpoint_Array)
+   is
+      pragma Unreferenced (Editor, Br);
    begin
       null;
    end Update_Breakpoints;

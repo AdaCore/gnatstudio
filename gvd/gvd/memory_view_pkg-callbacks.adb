@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2001                      --
+--                      Copyright (C) 2000-2002                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -44,6 +44,7 @@ package body Memory_View_Pkg.Callbacks is
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args) return Boolean
    is
+      pragma Unreferenced (Params);
    begin
       Hide (Get_Toplevel (Object));
       return True;
@@ -57,6 +58,7 @@ package body Memory_View_Pkg.Callbacks is
      (Object : access Gtk_Window_Record'Class;
       Params : Gtk.Arguments.Gtk_Args)
    is
+      pragma Unreferenced (Params);
       View : GVD_Memory_View := GVD_Memory_View (Get_Toplevel (Object));
    begin
       Update_Display (View);
@@ -187,6 +189,7 @@ package body Memory_View_Pkg.Callbacks is
      (Object : access Gtk_Text_Record'Class;
       Params : Gtk.Arguments.Gtk_Args)
    is
+      pragma Unreferenced (Object, Params);
    begin
       null;
    end On_View_Move_Cursor;
@@ -199,6 +202,7 @@ package body Memory_View_Pkg.Callbacks is
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args) return Boolean
    is
+      pragma Unreferenced (Params);
       View : GVD_Memory_View := GVD_Memory_View (Get_Toplevel (Object));
       use type Glib.Gint;
       use type Glib.Guint;
@@ -224,6 +228,7 @@ package body Memory_View_Pkg.Callbacks is
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args) return Boolean
    is
+      pragma Unreferenced (Object, Params);
    begin
       return False;
    end On_View_Button_Press_Event;

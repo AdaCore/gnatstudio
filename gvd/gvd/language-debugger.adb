@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2001                      --
+--                      Copyright (C) 2000-2002                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -49,7 +49,9 @@ package body Language.Debugger is
      (Debugger  : access Language_Debugger;
       Name      : String  := "";
       Temporary : Boolean := False;
-      Unhandled : Boolean := False) return String is
+      Unhandled : Boolean := False) return String
+   is
+      pragma Unreferenced (Debugger, Name, Temporary, Unhandled);
    begin
       return "";
    end Break_Exception;

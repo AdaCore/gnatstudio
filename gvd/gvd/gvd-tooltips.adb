@@ -68,7 +68,9 @@ package body GVD.Tooltips is
    function Mouse_Moved_Cb
      (Widget  : access Widget_Type'Class;
       Event   : Gdk.Event.Gdk_Event;
-      Tooltip : Tooltips) return Boolean is
+      Tooltip : Tooltips) return Boolean
+   is
+      pragma Unreferenced (Widget, Event);
    begin
       Set_Tooltip (Tooltip);
       return False;
@@ -81,7 +83,9 @@ package body GVD.Tooltips is
    function Mouse_Enter_Cb
      (Widget  : access Widget_Type'Class;
       Event   : Gdk.Event.Gdk_Event;
-      Tooltip : Tooltips) return Boolean is
+      Tooltip : Tooltips) return Boolean
+   is
+      pragma Unreferenced (Widget, Event);
    begin
       Set_Tooltip (Tooltip);
       return False;
@@ -94,7 +98,9 @@ package body GVD.Tooltips is
    function Mouse_Leave_Cb
      (Widget  : access Widget_Type'Class;
       Event   : Gdk.Event.Gdk_Event;
-      Tooltip : Tooltips) return Boolean is
+      Tooltip : Tooltips) return Boolean
+   is
+      pragma Unreferenced (Widget, Event);
    begin
       Remove_Tooltip (Tooltip);
       return False;

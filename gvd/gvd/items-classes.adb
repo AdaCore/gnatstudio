@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2001                      --
+--                      Copyright (C) 2000-2002                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -24,10 +24,6 @@ with Glib;         use Glib;
 with Gdk.Drawable; use Gdk.Drawable;
 with Gdk.GC;       use Gdk.GC;
 with Language;     use Language;
-pragma Warnings (Off);
-with Gdk.Types;    use Gdk.Types;
-with Gdk.Window;   use Gdk.Window;
-pragma Warnings (On);
 
 with Items.Records;  use Items.Records;
 with GVD.Preferences; use GVD.Preferences;

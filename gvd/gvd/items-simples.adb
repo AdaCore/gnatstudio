@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2001                      --
+--                      Copyright (C) 2000-2002                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -23,12 +23,6 @@ with GNAT.IO;         use GNAT.IO;
 with Glib;            use Glib;
 with Gdk.Font;        use Gdk.Font;
 with Gdk.Drawable;    use Gdk.Drawable;
-
---  ??? Needed with GtkAda 1.2 but not GtkAda 2.0
-pragma Warnings (Off);
-with Gdk.Window;      use Gdk.Window;
-with Gdk.Types;       use Gdk.Types;
-pragma Warnings (On);
 with Gdk.GC;          use Gdk.GC;
 with Language;        use Language;
 
@@ -84,6 +78,7 @@ package body Items.Simples is
    -----------
 
    procedure Print (Value : Simple_Type; Indent : Natural := 0) is
+      pragma Unreferenced (Indent);
    begin
       if Value.Value = null then
          Put ("{Simple: <null>}");
@@ -200,6 +195,7 @@ package body Items.Simples is
       Context        : Drawing_Context;
       Hide_Big_Items : Boolean := False)
    is
+      pragma Unreferenced (Hide_Big_Items);
       Unknown_Height : Glib.Gint;
       Unknown_Width  : Glib.Gint;
    begin
@@ -240,7 +236,9 @@ package body Items.Simples is
      (Item : access Simple_Type;
       Lang : access Language_Root'Class;
       Name : String;
-      X, Y : Glib.Gint) return String is
+      X, Y : Glib.Gint) return String
+   is
+      pragma Unreferenced (Item, Lang, X, Y);
    begin
       return Name;
    end Get_Component_Name;
@@ -251,7 +249,9 @@ package body Items.Simples is
 
    function Get_Component
      (Item : access Simple_Type;
-      X, Y : Glib.Gint) return Generic_Type_Access is
+      X, Y : Glib.Gint) return Generic_Type_Access
+   is
+      pragma Unreferenced (X, Y);
    begin
       return Generic_Type_Access (Item);
    end Get_Component;
@@ -263,7 +263,9 @@ package body Items.Simples is
    function Replace
      (Parent       : access Simple_Type;
       Current      : access Generic_Type'Class;
-      Replace_With : access Generic_Type'Class) return Generic_Type_Access is
+      Replace_With : access Generic_Type'Class) return Generic_Type_Access
+   is
+      pragma Unreferenced (Parent, Current, Replace_With);
    begin
       return null;
    end Replace;
@@ -282,6 +284,7 @@ package body Items.Simples is
    -----------
 
    procedure Print (Value : Enum_Type; Indent : Natural := 0) is
+      pragma Unreferenced (Indent);
    begin
       Put ("{Enumeration = ");
 
@@ -334,6 +337,7 @@ package body Items.Simples is
    -----------
 
    procedure Print (Value : Range_Type; Indent : Natural := 0) is
+      pragma Unreferenced (Indent);
    begin
       Put ("{Range" & Value.Min'Img & " .." & Value.Max'Img & " = ");
 
@@ -349,6 +353,7 @@ package body Items.Simples is
    -----------
 
    procedure Print (Value : Mod_Type; Indent : Natural := 0) is
+      pragma Unreferenced (Indent);
    begin
       Put ("{Modulo " & Value.Modulo'Img & " = ");
 
@@ -364,6 +369,7 @@ package body Items.Simples is
    -----------
 
    procedure Print (Value : Access_Type; Indent : Natural := 0) is
+      pragma Unreferenced (Indent);
    begin
       Put ("{Access ");
 
@@ -474,6 +480,7 @@ package body Items.Simples is
    -----------
 
    procedure Print (Value : Debugger_Output_Type; Indent : Natural := 0) is
+      pragma Unreferenced (Indent);
    begin
       if Value.Value = null then
          Put ("{Debugger_Type: <null>}");
@@ -519,6 +526,7 @@ package body Items.Simples is
       Context        : Drawing_Context;
       Hide_Big_Items : Boolean := False)
    is
+      pragma Unreferenced (Hide_Big_Items);
       Num_Lines  : Gint := 1;
       Width      : Gint := 0;
       Line_Start : Positive;
@@ -774,7 +782,9 @@ package body Items.Simples is
 
    function Structurally_Equivalent
      (Item1 : access Access_Type; Item2 : access Generic_Type'Class)
-      return Boolean is
+      return Boolean
+   is
+      pragma Unreferenced (Item1);
    begin
       return Item2.all in Access_Type'Class;
    end Structurally_Equivalent;
@@ -785,7 +795,9 @@ package body Items.Simples is
 
    function Structurally_Equivalent
      (Item1 : access Enum_Type; Item2 : access Generic_Type'Class)
-      return Boolean is
+      return Boolean
+   is
+      pragma Unreferenced (Item1);
    begin
       return Item2.all in Enum_Type'Class;
    end Structurally_Equivalent;
@@ -796,7 +808,9 @@ package body Items.Simples is
 
    function Structurally_Equivalent
      (Item1 : access Debugger_Output_Type; Item2 : access Generic_Type'Class)
-      return Boolean is
+      return Boolean
+   is
+      pragma Unreferenced (Item1, Item2);
    begin
       --  Never any aliasing
       return False;

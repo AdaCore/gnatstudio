@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2001                      --
+--                      Copyright (C) 2000-2002                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -669,7 +669,9 @@ package body GVD.Preferences is
    ------------------------
 
    procedure Cancel_Preferences
-     (Dialog : GVD.Preferences_Dialog.GVD_Preferences_Access) is
+     (Dialog : GVD.Preferences_Dialog.GVD_Preferences_Access)
+   is
+      pragma Unreferenced (Dialog);
    begin
       Free (Current_Preferences);
       Current_Preferences := Saved_Preferences;

@@ -23,10 +23,7 @@ with Ada.Strings;       use Ada.Strings;
 with Ada.Strings.Fixed; use Ada.Strings.Fixed;
 with Ada.Tags;          use Ada.Tags;
 with GNAT.Regpat;       use GNAT.Regpat;
-
-pragma Warnings (Off);
 with GNAT.Expect;       use GNAT.Expect;
-pragma Warnings (On);
 
 with GNAT.OS_Lib;       use GNAT.OS_Lib;
 
@@ -262,7 +259,9 @@ package body Debugger.Gdb is
    procedure Running_Filter
      (Process : access Debugger_Process_Tab_Record'Class;
       Str     : String;
-      Matched : Match_Array) is
+      Matched : Match_Array)
+   is
+      pragma Unreferenced (Str, Matched);
    begin
       Set_Is_Started (Process.Debugger, False);
    end Running_Filter;
@@ -420,6 +419,7 @@ package body Debugger.Gdb is
    -----------------
 
    function Info_Locals (Debugger : access Gdb_Debugger) return String is
+      pragma Unreferenced (Debugger);
    begin
       return "info locals";
    end Info_Locals;
@@ -429,6 +429,7 @@ package body Debugger.Gdb is
    ---------------
 
    function Info_Args (Debugger : access Gdb_Debugger) return String is
+      pragma Unreferenced (Debugger);
    begin
       return "info args";
    end Info_Args;
@@ -438,6 +439,7 @@ package body Debugger.Gdb is
    --------------------
 
    function Info_Registers (Debugger : access Gdb_Debugger) return String is
+      pragma Unreferenced (Debugger);
    begin
       return "info registers";
    end Info_Registers;
@@ -451,6 +453,7 @@ package body Debugger.Gdb is
       Entity   : String;
       Format   : Value_Format := Decimal) return String
    is
+      pragma Unreferenced (Format);
       S : constant String :=
         Send (Debugger, "print " & Entity, Mode => Internal);
       Index : Natural := S'First;
@@ -785,6 +788,7 @@ package body Debugger.Gdb is
       Executable : String;
       Mode       : Command_Type := Hidden)
    is
+      pragma Unreferenced (Mode);
       Num                 : Breakpoint_Identifier;
       No_Such_File_Regexp : Pattern_Matcher :=
         Compile ("No such file or directory.");
@@ -1191,7 +1195,9 @@ package body Debugger.Gdb is
 
    function Is_Context_Command
      (Debugger : access Gdb_Debugger;
-      Command  : String) return Boolean is
+      Command  : String) return Boolean
+   is
+      pragma Unreferenced (Debugger);
    begin
       return
         (Command'Length >= 6
@@ -1212,6 +1218,7 @@ package body Debugger.Gdb is
      (Debugger : access Gdb_Debugger;
       Command  : String) return Boolean
    is
+      pragma Unreferenced (Debugger);
       Index : Natural := Command'First;
    begin
       --  Note: some of commands below can have a numeric parameter, that needs
@@ -1243,7 +1250,9 @@ package body Debugger.Gdb is
 
    function Is_Load_Command
      (Debugger : access Gdb_Debugger;
-      Command  : String) return Boolean is
+      Command  : String) return Boolean
+   is
+      pragma Unreferenced (Debugger);
    begin
       return
         (Command'Length >= 4
@@ -1261,7 +1270,9 @@ package body Debugger.Gdb is
 
    function Is_Break_Command
      (Debugger : access Gdb_Debugger;
-      Command : String) return Boolean is
+      Command : String) return Boolean
+   is
+      pragma Unreferenced (Debugger);
    begin
       return Looking_At (Command, Command'First, "break")
         or else Looking_At (Command, Command'First, "tbreak")
@@ -1699,7 +1710,9 @@ package body Debugger.Gdb is
    --------------------------
 
    function Highlighting_Pattern
-     (Debugger : access Gdb_Debugger) return GNAT.Regpat.Pattern_Matcher is
+     (Debugger : access Gdb_Debugger) return GNAT.Regpat.Pattern_Matcher
+   is
+      pragma Unreferenced (Debugger);
    begin
       return Highlight_Pattern;
    end Highlighting_Pattern;
@@ -1743,6 +1756,7 @@ package body Debugger.Gdb is
       Addr_First  : out Natural;
       Addr_Last   : out Natural)
    is
+      pragma Unreferenced (Debugger);
       Start    : Natural := Str'First;
       Matched  : Match_Array (0 .. 3);
       Matched2 : Match_Array (0 .. 3);
@@ -1807,6 +1821,7 @@ package body Debugger.Gdb is
       First, Last : out Natural;
       Message     : out Frame_Info_Type)
    is
+      pragma Unreferenced (Debugger);
       Matched : Match_Array (0 .. 1);
    begin
       Match (Frame_Pattern, Str, Matched);

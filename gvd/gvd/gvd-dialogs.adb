@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2001                      --
+--                      Copyright (C) 2000-2002                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -872,6 +872,7 @@ package body GVD.Dialogs is
    procedure Ok_Simple_Entry
      (Simple_Dialog : access Gtk_Widget_Record'Class)
    is
+      pragma Unreferenced (Simple_Dialog);
    begin
       Gtk.Main.Main_Quit;
    end Ok_Simple_Entry;

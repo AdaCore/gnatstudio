@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2001                      --
+--                      Copyright (C) 2000-2002                      --
 --                             ACT-Europe                            --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -78,6 +78,7 @@ package body GVD.Menu is
       Action : Guint;
       Widget : Limited_Widget)
    is
+      pragma Unreferenced (Action, Widget);
       Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
       --  ??? Should be able to remove this test at some point
@@ -121,6 +122,7 @@ package body GVD.Menu is
       Action : Guint;
       Widget : Limited_Widget)
    is
+      pragma Unreferenced (Action, Widget);
       Program : Program_Descriptor;
       List    : Argument_List (1 .. 0);
       Process : Debugger_Process_Tab;
@@ -210,6 +212,7 @@ package body GVD.Menu is
       Action : Guint;
       Widget : Limited_Widget)
    is
+      pragma Unreferenced (Action, Widget);
       Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
       --  ??? Should be able to remove this test at some point
@@ -247,6 +250,7 @@ package body GVD.Menu is
       Action : Guint;
       Widget : Limited_Widget)
    is
+      pragma Unreferenced (Action, Widget);
       Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
       --  ??? Should be able to remove this test at some point
@@ -286,6 +290,8 @@ package body GVD.Menu is
       Action : Guint;
       Widget : Limited_Widget)
    is
+      pragma Unreferenced (Action, Widget);
+
       function Substitute
         (Name : String; File : String; Line : Natural) return String;
       --  Substitute %f and %l in Name by the file name and the line number.
@@ -371,6 +377,7 @@ package body GVD.Menu is
       Action : Guint;
       Widget : Limited_Widget)
    is
+      pragma Unreferenced (Action, Widget);
       File_Name : constant String :=
         File_Selection_Dialog (Title => -"Source name", Must_Exist => True);
       Tab       : constant Debugger_Process_Tab :=
@@ -390,6 +397,7 @@ package body GVD.Menu is
       Action : Guint;
       Widget : Limited_Widget)
    is
+      pragma Unreferenced (Action, Widget);
       Top    : constant GVD_Main_Window := GVD_Main_Window (Object);
       Editor : constant Code_Editor :=
         Get_Current_Process (Object).Editor_Text;
@@ -408,6 +416,7 @@ package body GVD.Menu is
       Action : Guint;
       Widget : Limited_Widget)
    is
+      pragma Unreferenced (Action, Widget);
       Top : constant GVD_Main_Window := GVD_Main_Window (Object);
    begin
       Open_Session (Top, Top.Open_Session, Top.Sessions_Dir.all);
@@ -422,6 +431,7 @@ package body GVD.Menu is
       Action : Guint;
       Widget : Limited_Widget)
    is
+      pragma Unreferenced (Action, Widget);
       Top : constant GVD_Main_Window := GVD_Main_Window (Object);
    begin
       Save_Session (Top, Top.Open_Session, Top.Sessions_Dir.all);
@@ -436,6 +446,7 @@ package body GVD.Menu is
       Action : Guint;
       Widget : Limited_Widget)
    is
+      pragma Unreferenced (Action, Widget);
       Tab           : constant Debugger_Process_Tab :=
         Get_Current_Process (Object);
       Process_List  : List_Select_Access;
@@ -490,6 +501,7 @@ package body GVD.Menu is
       Action : Guint;
       Widget : Limited_Widget)
    is
+      pragma Unreferenced (Action, Widget);
       Tab    : constant Debugger_Process_Tab := Get_Current_Process (Object);
       Button : Message_Dialog_Buttons;
 
@@ -518,6 +530,7 @@ package body GVD.Menu is
       Action : Guint;
       Widget : Limited_Widget)
    is
+      pragma Unreferenced (Action, Widget);
       Tab    : constant Debugger_Process_Tab := Get_Current_Process (Object);
       Button : Message_Dialog_Buttons;
 
@@ -558,6 +571,7 @@ package body GVD.Menu is
       Action : Guint;
       Widget : Limited_Widget)
    is
+      pragma Unreferenced (Action, Widget);
       Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
       if Tab /= null then
@@ -572,7 +586,9 @@ package body GVD.Menu is
    procedure On_Exit
      (Object : Data_Type_Access;
       Action : Guint;
-      Widget : Limited_Widget) is
+      Widget : Limited_Widget)
+   is
+      pragma Unreferenced (Action, Widget);
    begin
       Save_Window_Settings
         (GVD_Main_Window (Object).Home_Dir.all
@@ -589,7 +605,9 @@ package body GVD.Menu is
    procedure On_Undo
      (Object : Data_Type_Access;
       Action : Guint;
-      Widget : Limited_Widget) is
+      Widget : Limited_Widget)
+   is
+      pragma Unreferenced (Object, Action, Widget);
    begin
       null;
    end On_Undo;
@@ -601,7 +619,9 @@ package body GVD.Menu is
    procedure On_Redo
      (Object : Data_Type_Access;
       Action : Guint;
-      Widget : Limited_Widget) is
+      Widget : Limited_Widget)
+   is
+      pragma Unreferenced (Object, Action, Widget);
    begin
       null;
    end On_Redo;
@@ -613,7 +633,9 @@ package body GVD.Menu is
    procedure On_Cut
      (Object : Data_Type_Access;
       Action : Guint;
-      Widget : Limited_Widget) is
+      Widget : Limited_Widget)
+   is
+      pragma Unreferenced (Object, Action, Widget);
    begin
       null;
    end On_Cut;
@@ -625,7 +647,9 @@ package body GVD.Menu is
    procedure On_Copy
      (Object : Data_Type_Access;
       Action : Guint;
-      Widget : Limited_Widget) is
+      Widget : Limited_Widget)
+   is
+      pragma Unreferenced (Object, Action, Widget);
    begin
       null;
    end On_Copy;
@@ -637,7 +661,9 @@ package body GVD.Menu is
    procedure On_Paste
      (Object : Data_Type_Access;
       Action : Guint;
-      Widget : Limited_Widget) is
+      Widget : Limited_Widget)
+   is
+      pragma Unreferenced (Object, Action, Widget);
    begin
       null;
    end On_Paste;
@@ -649,7 +675,9 @@ package body GVD.Menu is
    procedure On_Select_All
      (Object : Data_Type_Access;
       Action : Guint;
-      Widget : Limited_Widget) is
+      Widget : Limited_Widget)
+   is
+      pragma Unreferenced (Object, Action, Widget);
    begin
       null;
    end On_Select_All;
@@ -663,6 +691,7 @@ package body GVD.Menu is
       Action : Guint;
       Widget : Limited_Widget)
    is
+      pragma Unreferenced (Action, Widget);
       Top : constant GVD_Main_Window := GVD_Main_Window (Object);
    begin
       if Top.GVD_Preferences = null then
@@ -684,6 +713,7 @@ package body GVD.Menu is
       Action : Guint;
       Widget : Limited_Widget)
    is
+      pragma Unreferenced (Action, Widget);
       Tab    : constant Debugger_Process_Tab := Get_Current_Process (Object);
       Button : Message_Dialog_Buttons;
 
@@ -733,6 +763,7 @@ package body GVD.Menu is
       Action : Guint;
       Widget : Limited_Widget)
    is
+      pragma Unreferenced (Action, Widget);
       Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
       if Tab /= null then
@@ -749,6 +780,7 @@ package body GVD.Menu is
       Action : Guint;
       Widget : Limited_Widget)
    is
+      pragma Unreferenced (Action, Widget);
       Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
       if Tab /= null then
@@ -765,6 +797,7 @@ package body GVD.Menu is
       Action : Guint;
       Widget : Limited_Widget)
    is
+      pragma Unreferenced (Action, Widget);
       Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
       if Tab /= null then
@@ -781,6 +814,7 @@ package body GVD.Menu is
       Action : Guint;
       Widget : Limited_Widget)
    is
+      pragma Unreferenced (Action, Widget);
       Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
       if Tab /= null then
@@ -797,6 +831,7 @@ package body GVD.Menu is
       Action : Guint;
       Widget : Limited_Widget)
    is
+      pragma Unreferenced (Action, Widget);
       Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
       if Tab /= null then
@@ -813,6 +848,7 @@ package body GVD.Menu is
       Action : Guint;
       Widget : Limited_Widget)
    is
+      pragma Unreferenced (Action, Widget);
       Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
       if Tab /= null then
@@ -827,7 +863,9 @@ package body GVD.Menu is
    procedure On_Kill
      (Object : Data_Type_Access;
       Action : Guint;
-      Widget : Limited_Widget) is
+      Widget : Limited_Widget)
+   is
+      pragma Unreferenced (Object, Action, Widget);
    begin
       null;
    end On_Kill;
@@ -841,6 +879,7 @@ package body GVD.Menu is
       Action : Guint;
       Widget : Limited_Widget)
    is
+      pragma Unreferenced (Action, Widget);
       Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
       if Tab = null then
@@ -886,6 +925,7 @@ package body GVD.Menu is
       Action : Guint;
       Widget : Limited_Widget)
    is
+      pragma Unreferenced (Action, Widget);
       Top  : constant GVD_Main_Window :=
         GVD_Main_Window (Get_Toplevel (Object));
       Page : Gtk_Widget :=
@@ -910,6 +950,7 @@ package body GVD.Menu is
       Action : Guint;
       Widget : Limited_Widget)
    is
+      pragma Unreferenced (Action, Widget);
       Top : constant GVD_Main_Window :=
         GVD_Main_Window (Get_Toplevel (Object));
       Page : constant Gtk_Widget :=
@@ -933,6 +974,7 @@ package body GVD.Menu is
       Action : Guint;
       Widget : Limited_Widget)
    is
+      pragma Unreferenced (Action, Widget);
       Top       : constant GVD_Main_Window := GVD_Main_Window (Object);
       Process   : Debugger_Process_Tab;
       Page      : Gtk_Widget;
@@ -991,6 +1033,7 @@ package body GVD.Menu is
       Action : Guint;
       Widget : Limited_Widget)
    is
+      pragma Unreferenced (Action, Widget);
       Top    : constant GVD_Main_Window := GVD_Main_Window (Object);
       Tab    : constant Debugger_Process_Tab := Get_Current_Process (Object);
       Button : Message_Dialog_Buttons;
@@ -1022,6 +1065,7 @@ package body GVD.Menu is
       Action : Guint;
       Widget : Limited_Widget)
    is
+      pragma Unreferenced (Action, Widget);
       Top    : constant GVD_Main_Window := GVD_Main_Window (Object);
       Tab    : constant Debugger_Process_Tab := Get_Current_Process (Object);
       Button : Message_Dialog_Buttons;
@@ -1053,6 +1097,7 @@ package body GVD.Menu is
       Action : Guint;
       Widget : Limited_Widget)
    is
+      pragma Unreferenced (Action, Widget);
       Top     : constant GVD_Main_Window := GVD_Main_Window (Object);
       Process : constant Debugger_Process_Tab := Get_Current_Process (Object);
       Button  : Message_Dialog_Buttons;
@@ -1083,6 +1128,7 @@ package body GVD.Menu is
       Action : Guint;
       Widget : Limited_Widget)
    is
+      pragma Unreferenced (Action, Widget);
       Top : constant GVD_Main_Window := GVD_Main_Window (Object);
    begin
       Show_All (Top.Memory_View);
@@ -1098,6 +1144,7 @@ package body GVD.Menu is
       Action : Guint;
       Widget : Limited_Widget)
    is
+      pragma Unreferenced (Action, Widget);
       Process : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
       if Process /= null then
@@ -1117,6 +1164,7 @@ package body GVD.Menu is
       Action : Guint;
       Widget : Limited_Widget)
    is
+      pragma Unreferenced (Action, Widget);
       Process : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
       if Process /= null then
@@ -1136,6 +1184,7 @@ package body GVD.Menu is
       Action : Guint;
       Widget : Limited_Widget)
    is
+      pragma Unreferenced (Action, Widget);
       Process : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
       --  ??? Should be able to remove this test at some point
@@ -1156,7 +1205,9 @@ package body GVD.Menu is
    procedure On_Display_Expression
      (Object : Data_Type_Access;
       Action : Guint;
-      Widget : Limited_Widget) is
+      Widget : Limited_Widget)
+   is
+      pragma Unreferenced (Action, Widget);
    begin
       On_Display_Expression (Object);
    end On_Display_Expression;
@@ -1208,6 +1259,7 @@ package body GVD.Menu is
       Action : Guint;
       Widget : Limited_Widget)
    is
+      pragma Unreferenced (Action, Widget);
       function Internal_Update_Item
         (Canvas : access Interactive_Canvas_Record'Class;
          Item   : access Canvas_Item_Record'Class) return Boolean;
@@ -1247,6 +1299,7 @@ package body GVD.Menu is
       Action : Guint;
       Widget : Limited_Widget)
    is
+      pragma Unreferenced (Action, Widget);
       Process : Debugger_Process_Tab;
    begin
       if Get_Pref (Separate_Data) then
@@ -1265,6 +1318,7 @@ package body GVD.Menu is
       Action : Guint;
       Widget : Limited_Widget)
    is
+      pragma Unreferenced (Action, Widget);
       Browse : constant String :=
         Get_Pref (HTML_Browser) & " " &
           GVD_Main_Window (Object).Prefix_Directory.all &
@@ -1304,6 +1358,7 @@ package body GVD.Menu is
       Action : Guint;
       Widget : Limited_Widget)
    is
+      pragma Unreferenced (Object, Action, Widget);
       Button : Message_Dialog_Buttons;
    begin
       Button := Message_Dialog

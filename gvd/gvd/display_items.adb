@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2001                      --
+--                      Copyright (C) 2000-2002                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -25,9 +25,6 @@ with Gtk.Widget;       use Gtk.Widget;
 with Gdk.Font;         use Gdk.Font;
 with Gdk.Pixmap;       use Gdk.Pixmap;
 with Gdk.Window;       use Gdk.Window;
-pragma Warnings (Off);
-with Gdk.Types;        use Gdk.Types;
-pragma Warnings (On);
 with Gdk.Event;        use Gdk.Event;
 with Gtk.Enums;        use Gtk.Enums;
 with Gtk.Menu;         use Gtk.Menu;
@@ -458,7 +455,9 @@ package body Display_Items is
 
       function Search_By_Num
         (Canvas : access Interactive_Canvas_Record'Class;
-         Item   : access Canvas_Item_Record'Class) return Boolean is
+         Item   : access Canvas_Item_Record'Class) return Boolean
+      is
+         pragma Unreferenced (Canvas);
       begin
          if Display_Item (Item).Num = Num then
             Found := Display_Item (Item);
@@ -701,7 +700,9 @@ package body Display_Items is
 
       function Alias_Found
         (Canvas : access Interactive_Canvas_Record'Class;
-         Item   : access Canvas_Item_Record'Class) return Boolean is
+         Item   : access Canvas_Item_Record'Class) return Boolean
+      is
+         pragma Unreferenced (Canvas);
       begin
          if Is_Alias_Of (Display_Item (Item), Id, Name, Deref_Name) then
             if Display_Item (Item).Is_Alias_Of /= null then
@@ -754,6 +755,7 @@ package body Display_Items is
       Item             : access Display_Item_Record'Class;
       Redisplay_Canvas : Boolean := False)
    is
+      pragma Unreferenced (Canvas);
       Value_Found : Boolean;
       Was_Visible : Boolean := Get_Visibility (Item.Entity.all);
 
@@ -898,7 +900,9 @@ package body Display_Items is
 
       function Set_Link_Pos
         (Canvas : access Interactive_Canvas_Record'Class;
-         Link   : access Canvas_Link_Record'Class) return Boolean is
+         Link   : access Canvas_Link_Record'Class) return Boolean
+      is
+         pragma Unreferenced (Canvas);
       begin
          GVD_Link (Link).Source_Component := Deref_Component;
          Compute_Link_Pos (GVD_Link (Link));
@@ -1124,7 +1128,9 @@ package body Display_Items is
 
       function Reattach_All_Links
         (Canvas : access Interactive_Canvas_Record'Class;
-         Link   : access Canvas_Link_Record'Class) return Boolean is
+         Link   : access Canvas_Link_Record'Class) return Boolean
+      is
+         pragma Unreferenced (Canvas);
       begin
          if Canvas_Item (Get_Src (Link)) = Canvas_Item (Item)
            and then GVD_Link (Link).Source_Component /= null
@@ -1165,6 +1171,7 @@ package body Display_Items is
       Auto_Refresh : Boolean;
       Update_Value : Boolean := False)
    is
+      pragma Unreferenced (Win);
       Width : Gint := Gint (Get_Coord (Item).Width);
       Context : constant Box_Drawing_Context :=
         Get_Box_Context (GVD_Canvas (Item.Debugger.Data_Canvas));
@@ -1330,7 +1337,7 @@ package body Display_Items is
         (Canvas : access Interactive_Canvas_Record'Class;
          Item   : access Canvas_Item_Record'Class) return Boolean
       is
-         pragma Warnings (Off, Canvas);
+         pragma Unreferenced (Canvas);
       begin
          Select_Item (Display_Item (Item), null);
          return False;
@@ -1384,7 +1391,9 @@ package body Display_Items is
 
       function Clean_Alias_Chain
         (Canvas : access Interactive_Canvas_Record'Class;
-         Item   : access Canvas_Item_Record'Class) return Boolean is
+         Item   : access Canvas_Item_Record'Class) return Boolean
+      is
+         pragma Unreferenced (Canvas);
       begin
          if Display_Item (Item).Is_Alias_Of = It then
             Display_Item (Item).Is_Alias_Of := It.Is_Alias_Of;
@@ -1573,6 +1582,7 @@ package body Display_Items is
      (Canvas : access Interactive_Canvas_Record'Class;
       Item   : access Canvas_Item_Record'Class) return Boolean
    is
+      pragma Unreferenced (Canvas);
       It : Display_Item := Display_Item (Item);
    begin
       It.Was_Alias := It.Is_Alias_Of /= null;

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2001                      --
+--                      Copyright (C) 2000-2002                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -18,8 +18,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-pragma Warnings (Off);
 with GNAT.Expect;       use GNAT.Expect;
+pragma Warnings (Off);
 with GNAT.Expect.TTY;   use GNAT.Expect.TTY;
 pragma Warnings (On);
 
@@ -300,7 +300,9 @@ package body Debugger is
       First, Last : out Natural;
       Line        : out Natural;
       Addr_First  : out Natural;
-      Addr_Last   : out Natural) is
+      Addr_Last   : out Natural)
+   is
+      pragma Unreferenced (Debugger, Str);
    begin
       First      := 0;
       Last       := 0;
@@ -319,7 +321,9 @@ package body Debugger is
      (Debugger    : access Debugger_Root;
       Str         : String;
       First, Last : out Natural;
-      Message     : out Frame_Info_Type) is
+      Message     : out Frame_Info_Type)
+   is
+      pragma Unreferenced (Debugger, Str);
    begin
       First := 0;
       Last  := 0;
@@ -332,7 +336,9 @@ package body Debugger is
 
    function Get_Uniq_Id
      (Debugger : access Debugger_Root;
-      Entity   : String) return String is
+      Entity   : String) return String
+   is
+      pragma Unreferenced (Debugger);
    begin
       return Entity;
    end Get_Uniq_Id;
@@ -344,6 +350,7 @@ package body Debugger is
    function Source_Files_List
      (Debugger : access Debugger_Root) return String_Array
    is
+      pragma Unreferenced (Debugger);
       A : String_Array (1 .. 0);
    begin
       return A;
@@ -358,6 +365,7 @@ package body Debugger is
       Source    : Gint;
       Condition : Gdk.Types.Gdk_Input_Condition)
    is
+      pragma Unreferenced (Source, Condition);
       Debugger : constant Debugger_Access := Process.Debugger;
    begin
       --  Get everything that is available (and transparently call the
@@ -714,7 +722,9 @@ package body Debugger is
 
    function Variable_Name_With_Frame
      (Debugger : access Debugger_Root;
-      Var      : String) return String is
+      Var      : String) return String
+   is
+      pragma Unreferenced (Debugger);
    begin
       return Var;
    end Variable_Name_With_Frame;
@@ -726,6 +736,7 @@ package body Debugger is
    function List_Exceptions
      (Debugger : access Debugger_Root) return Exception_Array
    is
+      pragma Unreferenced (Debugger);
       Arr : Exception_Array (1 .. 0);
    begin
       return Arr;
@@ -738,7 +749,9 @@ package body Debugger is
    function Get_Type_Info
      (Debugger  : access Debugger_Root;
       Entity    : String;
-      Default   : String) return String is
+      Default   : String) return String
+   is
+      pragma Unreferenced (Debugger, Entity);
    begin
       return Default;
    end Get_Type_Info;
@@ -748,7 +761,9 @@ package body Debugger is
    ---------------
 
    function Find_File
-     (Debugger : access Debugger_Root; File_Name : String) return String is
+     (Debugger : access Debugger_Root; File_Name : String) return String
+   is
+      pragma Unreferenced (Debugger);
    begin
       return File_Name;
    end Find_File;

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2001                      --
+--                      Copyright (C) 2000-2002                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -124,7 +124,7 @@ package body GVD.Canvas is
    --  Zoom out to the next zoom level, if any
 
    procedure Zoom_Level
-     (Canvas : access Gtk_Widget_Record'Class;
+     (Mitem  : access Gtk_Widget_Record'Class;
       Item   : Item_Record);
    --  Zoom directly to a specific level (Item.Zoom)
 
@@ -191,7 +191,9 @@ package body GVD.Canvas is
 
    procedure Change_Detect_Aliases
      (Item   : access Gtk_Check_Menu_Item_Record'Class;
-      Canvas : GVD_Canvas) is
+      Canvas : GVD_Canvas)
+   is
+      pragma Unreferenced (Item);
    begin
       Set_Detect_Aliases (Canvas, not Get_Detect_Aliases (Canvas));
 
@@ -322,7 +324,7 @@ package body GVD.Canvas is
      (Canvas : access Interactive_Canvas_Record'Class;
       Item   : access Canvas_Item_Record'Class) return Boolean
    is
-      pragma Warnings (Off, Canvas);
+      pragma Unreferenced (Canvas);
    begin
       Update_Resize_Display
         (Display_Item (Item), True, Get_Pref (Hide_Big_Items),
@@ -522,7 +524,9 @@ package body GVD.Canvas is
 
    procedure Clone_Component
      (Widget  : access Gtk_Widget_Record'Class;
-      Item    : Item_Record) is
+      Item    : Item_Record)
+   is
+      pragma Unreferenced (Widget);
    begin
       if Is_A_Variable (Item.Item) then
          Process_User_Command
@@ -667,7 +671,9 @@ package body GVD.Canvas is
 
    procedure Hide_All
      (Widget  : access Gtk_Widget_Record'Class;
-      Item    : Item_Record) is
+      Item    : Item_Record)
+   is
+      pragma Unreferenced (Widget);
    begin
       Set_Visibility (Item.Component, False, Recursive => True);
       Update_Resize_Display (Item.Item, True);
@@ -887,7 +893,6 @@ package body GVD.Canvas is
      (Widget  : access Gtk_Widget_Record'Class;
       Item    : Item_Record)
    is
-      pragma Warnings (Off, Widget);
       S : constant String :=
         Simple_Entry_Dialog
         (Parent   => Get_Debugger (Item.Item).Window,
@@ -910,7 +915,9 @@ package body GVD.Canvas is
 
    procedure Show_All
      (Widget : access Gtk_Widget_Record'Class;
-      Item   : Item_Record) is
+      Item   : Item_Record)
+   is
+      pragma Unreferenced (Widget);
    begin
       Set_Visibility (Item.Component, True, Recursive => True);
       Update_Resize_Display (Item.Item, True);
@@ -924,6 +931,7 @@ package body GVD.Canvas is
      (Widget  : access Gtk_Widget_Record'Class;
       Item    : Item_Record)
    is
+      pragma Unreferenced (Widget);
       Top  : constant GVD_Main_Window :=
         GVD_Main_Window (Debugger_Process_Tab (Item.Canvas.Process).Window);
       View : constant GVD_Memory_View := Top.Memory_View;
@@ -943,7 +951,9 @@ package body GVD.Canvas is
 
    procedure Update_Variable
      (Widget : access Gtk_Widget_Record'Class;
-      Item   : Item_Record) is
+      Item   : Item_Record)
+   is
+      pragma Unreferenced (Widget);
    begin
       Display_Items.Update
         (Item.Canvas, Item.Item, Redisplay_Canvas => True);
@@ -955,7 +965,9 @@ package body GVD.Canvas is
 
    procedure Undisplay_Item
      (Widget  : access Gtk_Widget_Record'Class;
-      Item    : Item_Record) is
+      Item    : Item_Record)
+   is
+      pragma Unreferenced (Widget);
    begin
       Process_User_Command
         (Get_Debugger (Item.Item),
@@ -969,7 +981,9 @@ package body GVD.Canvas is
 
    procedure Toggle_Refresh_Mode
      (Widget  : access Gtk_Widget_Record'Class;
-      Item    : Item_Record) is
+      Item    : Item_Record)
+   is
+      pragma Unreferenced (Widget);
    begin
       Set_Auto_Refresh
         (Item.Item,
@@ -1015,8 +1029,10 @@ package body GVD.Canvas is
    ----------------
 
    procedure Zoom_Level
-     (Canvas : access Gtk_Widget_Record'Class;
-      Item   : Item_Record) is
+     (Mitem : access Gtk_Widget_Record'Class;
+      Item   : Item_Record)
+   is
+      pragma Unreferenced (Mitem);
    begin
       Zoom (Item.Canvas, Item.Zoom, 1);
    end Zoom_Level;

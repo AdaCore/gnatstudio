@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2001                      --
+--                      Copyright (C) 2000-2002                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -50,6 +50,7 @@ package body GVD.Dialogs.Callbacks is
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args)
    is
+      pragma Unreferenced (Params);
    begin
       Update_Call_Stack (Object);
    end On_Stack_Process_Stopped;
@@ -116,6 +117,7 @@ package body GVD.Dialogs.Callbacks is
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args)
    is
+      pragma Unreferenced (Params);
       use type Gint_List.Glist;
 
       Dialog    : constant Question_Dialog_Access :=
@@ -146,6 +148,7 @@ package body GVD.Dialogs.Callbacks is
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args)
    is
+      pragma Unreferenced (Params);
       use type Gint_List.Glist;
 
       Dialog    : constant Question_Dialog_Access :=
@@ -176,6 +179,7 @@ package body GVD.Dialogs.Callbacks is
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args)
    is
+      pragma Unreferenced (Params);
       use type Gint_List.Glist;
 
       Dialog    : constant Question_Dialog_Access :=
@@ -302,7 +306,9 @@ package body GVD.Dialogs.Callbacks is
    -----------------------------
 
    procedure On_History_Help_Clicked
-     (Object : access Gtk_Button_Record'Class) is
+     (Object : access Gtk_Button_Record'Class)
+   is
+      pragma Unreferenced (Object);
    begin
       null;
    end On_History_Help_Clicked;

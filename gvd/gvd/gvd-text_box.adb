@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2001                      --
+--                      Copyright (C) 2000-2002                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -22,9 +22,6 @@ with Glib;                use Glib;
 with Gdk.Color;           use Gdk.Color;
 with Gdk.Event;           use Gdk.Event;
 with Gdk.Rectangle;       use Gdk.Rectangle;
-pragma Warnings (Off);
-with Gdk.Types;           use Gdk.Types;
-pragma Warnings (On);
 with Gdk.Window;          use Gdk.Window;
 with Gtk.Box;
 with Gtk.Enums;           use Gtk.Enums;
@@ -660,9 +657,7 @@ package body GVD.Text_Box is
       Button : Natural;
       Line   : Natural) return Boolean
    is
-      pragma Warnings (Off, Box);
-      pragma Warnings (Off, Button);
-      pragma Warnings (Off, Line);
+      pragma Unreferenced (Box, Button, Line);
    begin
       return True;
    end On_Pixmap_Clicked;
@@ -672,7 +667,9 @@ package body GVD.Text_Box is
    ----------------------------
 
    function Invisible_Column_Width
-     (Box : access GVD_Text_Box_Record) return Glib.Gint is
+     (Box : access GVD_Text_Box_Record) return Glib.Gint
+   is
+      pragma Unreferenced (Box);
    begin
       return 0;
    end Invisible_Column_Width;
@@ -686,9 +683,7 @@ package body GVD.Text_Box is
       Line   : Natural;
       Entity : String) return Gtk.Menu.Gtk_Menu
    is
-      pragma Warnings (Off, Box);
-      pragma Warnings (Off, Line);
-      pragma Warnings (Off, Entity);
+      pragma Unreferenced (Box, Line, Entity);
    begin
       return null;
    end Child_Contextual_Menu;

@@ -60,7 +60,9 @@ package body Process_Tab_Pkg.Callbacks is
 
    function On_Process_Tab_Delete_Event
      (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args) return Boolean is
+      Params : Gtk.Arguments.Gtk_Args) return Boolean
+   is
+      pragma Unreferenced (Params);
    begin
       Hide (Get_Toplevel (Object));
       return True;
@@ -74,6 +76,7 @@ package body Process_Tab_Pkg.Callbacks is
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args) return Boolean
    is
+      pragma Unreferenced (Params);
       --  Arg1 : Gdk_Event := To_Event (Params, 1);
       Process : constant Debugger_Process_Tab :=
         Debugger_Process_Tab (Object);
@@ -150,6 +153,7 @@ package body Process_Tab_Pkg.Callbacks is
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args) return Boolean
    is
+      pragma Unreferenced (Object, Params);
       --  Arg1 : Gdk_Event := To_Event (Params, 1);
    begin
       return True;
@@ -163,6 +167,7 @@ package body Process_Tab_Pkg.Callbacks is
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args) return Boolean
    is
+      pragma Unreferenced (Params);
       --  Arg1 : Gdk_Event := To_Event (Params, 1);
       Process : constant Debugger_Process_Tab :=
         Debugger_Process_Tab (Object);

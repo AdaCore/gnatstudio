@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2001                      --
+--                      Copyright (C) 2000-2002                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -19,10 +19,7 @@
 -----------------------------------------------------------------------
 
 with GNAT.Regpat;       use GNAT.Regpat;
-
-pragma Warnings (Off);
 with GNAT.Expect;       use GNAT.Expect;
-pragma Warnings (On);
 
 with GNAT.OS_Lib;       use GNAT.OS_Lib;
 with Language;          use Language;
@@ -84,6 +81,7 @@ package body Debugger.Jdb is
       Entity   : String;
       Format   : Value_Format := Decimal) return String
    is
+      pragma Unreferenced (Format);
       Matches : Match_Array (0 .. 0);
       S       : constant String := Send (Debugger, "dump " & Entity);
       Index   : Natural := S'First;
@@ -127,7 +125,9 @@ package body Debugger.Jdb is
       Remote_Host     : String := "";
       Remote_Target   : String := "";
       Remote_Protocol : String := "";
-      Debugger_Name   : String := "") is
+      Debugger_Name   : String := "")
+   is
+      pragma Unreferenced (Remote_Protocol, Executable_Args, Remote_Target);
    begin
       Debugger.Window := Window;
 
@@ -250,7 +250,9 @@ package body Debugger.Jdb is
    procedure Load_Core_File
      (Debugger : access Jdb_Debugger;
       Core     : String;
-      Mode     : Command_Type := Hidden) is
+      Mode     : Command_Type := Hidden)
+   is
+      pragma Unreferenced (Debugger, Core, Mode);
    begin
       null;
    end Load_Core_File;
@@ -262,7 +264,9 @@ package body Debugger.Jdb is
    procedure Add_Symbols
      (Debugger : access Jdb_Debugger;
       Module   : String;
-      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden)
+   is
+      pragma Unreferenced (Debugger, Module, Mode);
    begin
       null;
    end Add_Symbols;
@@ -274,7 +278,9 @@ package body Debugger.Jdb is
    procedure Attach_Process
      (Debugger : access Jdb_Debugger;
       Process  : String;
-      Mode     : Command_Type := Hidden) is
+      Mode     : Command_Type := Hidden)
+   is
+      pragma Unreferenced (Debugger, Process, Mode);
    begin
       null;
    end Attach_Process;
@@ -285,7 +291,9 @@ package body Debugger.Jdb is
 
    procedure Detach_Process
      (Debugger : access Jdb_Debugger;
-      Mode     : Command_Type := Hidden) is
+      Mode     : Command_Type := Hidden)
+   is
+      pragma Unreferenced (Debugger, Mode);
    begin
       null;
    end Detach_Process;
@@ -340,7 +348,9 @@ package body Debugger.Jdb is
    procedure Run
      (Debugger  : access Jdb_Debugger;
       Arguments : String := "";
-      Mode      : Command_Type := Hidden) is
+      Mode      : Command_Type := Hidden)
+   is
+      pragma Unreferenced (Arguments);
    begin
       if Debugger.Main_Class /= null then
          Send (Debugger, "run " & Debugger.Main_Class.all, Mode => Mode);
@@ -358,7 +368,9 @@ package body Debugger.Jdb is
    procedure Start
      (Debugger  : access Jdb_Debugger;
       Arguments : String := "";
-      Mode      : Command_Type := Hidden) is
+      Mode      : Command_Type := Hidden)
+   is
+      pragma Unreferenced (Arguments);
    begin
       Send
         (Debugger, "stop in " & Debugger.Main_Class.all & '.' &
@@ -438,7 +450,9 @@ package body Debugger.Jdb is
 
    function Is_Context_Command
      (Debugger : access Jdb_Debugger;
-      Command  : String) return Boolean is
+      Command  : String) return Boolean
+   is
+      pragma Unreferenced (Debugger);
    begin
       return Command'Length >= 6
         and then Command (Command'First .. Command'First + 5) = "thread";
@@ -450,7 +464,9 @@ package body Debugger.Jdb is
 
    function Is_Execution_Command
      (Debugger : access Jdb_Debugger;
-      Command  : String) return Boolean is
+      Command  : String) return Boolean
+   is
+      pragma Unreferenced (Debugger);
    begin
       return    Command = "step"
         or else Command = "step up"
@@ -465,7 +481,9 @@ package body Debugger.Jdb is
 
    function Is_Load_Command
      (Debugger : access Jdb_Debugger;
-      Command  : String) return Boolean is
+      Command  : String) return Boolean
+   is
+      pragma Unreferenced (Debugger);
    begin
       return Command'Length >= 4
         and then Command (Command'First .. Command'First + 3) = "load";
@@ -477,7 +495,9 @@ package body Debugger.Jdb is
 
    function Is_Break_Command
      (Debugger : access Jdb_Debugger;
-      Command  : String) return Boolean is
+      Command  : String) return Boolean
+   is
+      pragma Unreferenced (Debugger);
    begin
       return Command'Length >= 6
         and then Command (Command'First .. Command'First + 5) = "break ";
@@ -575,7 +595,9 @@ package body Debugger.Jdb is
      (Debugger  : access Jdb_Debugger;
       Name      : String;
       Temporary : Boolean := False;
-      Mode      : Command_Type := Hidden) return Breakpoint_Identifier is
+      Mode      : Command_Type := Hidden) return Breakpoint_Identifier
+   is
+      pragma Unreferenced (Temporary);
    begin
       Send (Debugger, "stop in " & Name, Mode => Mode);
       return 0;   --   ??? How do we get the breakpoint identifier
@@ -592,6 +614,7 @@ package body Debugger.Jdb is
       Temporary : Boolean := False;
       Mode      : Command_Type := Hidden) return Breakpoint_Identifier
    is
+      pragma Unreferenced (Temporary);
       Str : constant String := Positive'Image (Line);
       Pos : Positive;
    begin
@@ -627,7 +650,9 @@ package body Debugger.Jdb is
       Name      : String  := "";
       Temporary : Boolean := False;
       Unhandled : Boolean := False;
-      Mode      : Command_Type := Hidden) return Breakpoint_Identifier is
+      Mode      : Command_Type := Hidden) return Breakpoint_Identifier
+   is
+      pragma Unreferenced (Temporary);
    begin
       if Unhandled then
          raise Unknown_Command;
@@ -645,7 +670,9 @@ package body Debugger.Jdb is
      (Debugger   : access Jdb_Debugger;
       Address    : String;
       Temporary  : Boolean := False;
-      Mode       : Command_Type := Hidden) return Breakpoint_Identifier is
+      Mode       : Command_Type := Hidden) return Breakpoint_Identifier
+   is
+      pragma Unreferenced (Debugger, Address, Temporary, Mode);
    begin
       raise Unknown_Command;
       --  Error ("Break on address not supported in jdb");
@@ -660,7 +687,9 @@ package body Debugger.Jdb is
      (Debugger   : access Jdb_Debugger;
       Regexp     : String;
       Temporary  : Boolean := False;
-      Mode       : Command_Type := Hidden) return Breakpoint_Identifier is
+      Mode       : Command_Type := Hidden) return Breakpoint_Identifier
+   is
+      pragma Unreferenced (Debugger, Regexp, Temporary, Mode);
    begin
       raise Unknown_Command;
       --  Error ("Break on regular expression not support in jdb");
@@ -675,7 +704,9 @@ package body Debugger.Jdb is
      (Debugger  : access Jdb_Debugger;
       Num       : GVD.Types.Breakpoint_Identifier;
       Condition : String;
-      Mode      : GVD.Types.Command_Type := GVD.Types.Hidden) is
+      Mode      : GVD.Types.Command_Type := GVD.Types.Hidden)
+   is
+      pragma Unreferenced (Debugger, Num, Condition, Mode);
    begin
       null;
    end Set_Breakpoint_Condition;
@@ -688,7 +719,9 @@ package body Debugger.Jdb is
      (Debugger : access Jdb_Debugger;
       Num      : GVD.Types.Breakpoint_Identifier;
       Commands : String;
-      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden)
+   is
+      pragma Unreferenced (Debugger, Num, Commands, Mode);
    begin
       null;
    end Set_Breakpoint_Command;
@@ -701,7 +734,9 @@ package body Debugger.Jdb is
      (Debugger : access Jdb_Debugger;
       Num      : GVD.Types.Breakpoint_Identifier;
       Count    : Integer;
-      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden)
+   is
+      pragma Unreferenced (Debugger, Num, Count, Mode);
    begin
       null;
    end Set_Breakpoint_Ignore_Count;
@@ -778,6 +813,7 @@ package body Debugger.Jdb is
    -----------------
 
    function Info_Locals (Debugger : access Jdb_Debugger) return String is
+      pragma Unreferenced (Debugger);
    begin
       return "locals";
    end Info_Locals;
@@ -787,6 +823,7 @@ package body Debugger.Jdb is
    ---------------
 
    function Info_Args (Debugger : access Jdb_Debugger) return String is
+      pragma Unreferenced (Debugger);
    begin
       raise Unknown_Command;
       return "";
@@ -796,7 +833,9 @@ package body Debugger.Jdb is
    -- Info_Registers --
    --------------------
 
-   function Info_Registers (Debugger : access Jdb_Debugger) return String is
+   function Info_Registers (Debugger : access Jdb_Debugger) return String
+   is
+      pragma Unreferenced (Debugger);
    begin
       raise Unknown_Command;
       return "";
@@ -807,7 +846,9 @@ package body Debugger.Jdb is
    --------------------------
 
    function Highlighting_Pattern
-     (Debugger : access Jdb_Debugger) return GNAT.Regpat.Pattern_Matcher is
+     (Debugger : access Jdb_Debugger) return GNAT.Regpat.Pattern_Matcher
+   is
+      pragma Unreferenced (Debugger);
    begin
       return Highlight_Pattern;
    end Highlighting_Pattern;
@@ -819,7 +860,9 @@ package body Debugger.Jdb is
    function Line_Contains_Code
      (Debugger : access Jdb_Debugger;
       File     : String;
-      Line     : Positive) return Line_Kind is
+      Line     : Positive) return Line_Kind
+   is
+      pragma Unreferenced (Debugger, File, Line);
    begin
       return No_More_Code;
    end Line_Contains_Code;
@@ -863,6 +906,7 @@ package body Debugger.Jdb is
       Addr_First  : out Natural;
       Addr_Last   : out Natural)
    is
+      pragma Unreferenced (Debugger);
       Matched : Match_Array (0 .. 2);
    begin
       Match (Source_Pattern, Str, Matched);
@@ -898,6 +942,7 @@ package body Debugger.Jdb is
      (Debugger  : access Jdb_Debugger)
      return GVD.Types.Breakpoint_Array
    is
+      pragma Unreferenced (Debugger);
       Br : GVD.Types.Breakpoint_Array (1 .. 0);
    begin
       --  Since jdb doesn't support enabling/disabling breakpoints, we should
@@ -914,7 +959,9 @@ package body Debugger.Jdb is
      (Debugger : access Jdb_Debugger;
       Num      : Breakpoint_Identifier;
       Enable   : Boolean := True;
-      Mode     : Command_Type := Hidden) is
+      Mode     : Command_Type := Hidden)
+   is
+      pragma Unreferenced (Debugger, Num, Mode, Enable);
    begin
       null;
       --  ??? Enabling/disabling breakpoints will have to be emulated in jdb
@@ -927,7 +974,9 @@ package body Debugger.Jdb is
    procedure Remove_Breakpoint
      (Debugger : access Jdb_Debugger;
       Num      : Breakpoint_Identifier;
-      Mode     : Command_Type := Hidden) is
+      Mode     : Command_Type := Hidden)
+   is
+      pragma Unreferenced (Debugger, Num, Mode);
    begin
       null;
    end Remove_Breakpoint;
@@ -971,11 +1020,7 @@ package body Debugger.Jdb is
       Start_Address   : String := "";
       End_Address     : String := "")
    is
-      pragma Warnings (Off, Debugger);
-      pragma Warnings (Off, Range_Start);
-      pragma Warnings (Off, Range_End);
-      pragma Warnings (Off, Start_Address);
-      pragma Warnings (Off, End_Address);
+      pragma Unreferenced (Debugger, Start_Address, End_Address);
    begin
       Range_Start (1 .. 1) := " ";
       Range_End (1 .. 1) := " ";
@@ -994,7 +1039,9 @@ package body Debugger.Jdb is
       Range_Start     : out Address_Type;
       Range_End       : out Address_Type;
       Range_Start_Len : out Natural;
-      Range_End_Len   : out Natural) is
+      Range_End_Len   : out Natural)
+   is
+      pragma Unreferenced (Debugger, Line);
    begin
       Range_Start (1 .. 1) := " ";
       Range_End (1 .. 1) := " ";
@@ -1009,7 +1056,9 @@ package body Debugger.Jdb is
    function Get_Memory
      (Debugger : access Jdb_Debugger;
       Size     : in Integer;
-      Address  : in String) return String is
+      Address  : in String) return String
+   is
+      pragma Unreferenced (Debugger, Size, Address);
    begin
       return "";
       --  ??? Must implement this function !
@@ -1022,7 +1071,9 @@ package body Debugger.Jdb is
    procedure Put_Memory_Byte
      (Debugger : access Jdb_Debugger;
       Address  : in String;
-      Byte     : in String) is
+      Byte     : in String)
+   is
+      pragma Unreferenced (Debugger, Address, Byte);
    begin
       null;
       --  ??? Must implement this function !
@@ -1034,7 +1085,9 @@ package body Debugger.Jdb is
 
    function Get_Variable_Address
      (Debugger  : access Jdb_Debugger;
-      Variable  : in String) return String is
+      Variable  : in String) return String
+   is
+      pragma Unreferenced (Debugger, Variable);
    begin
       return "";
       --  ??? Must implement this function !
@@ -1045,7 +1098,9 @@ package body Debugger.Jdb is
    ---------------------
 
    function Get_Endian_Type
-     (Debugger : access Jdb_Debugger) return Endian_Type is
+     (Debugger : access Jdb_Debugger) return Endian_Type
+   is
+      pragma Unreferenced (Debugger);
    begin
       return Big_Endian;
       --  ??? Must implement this function !
@@ -1059,6 +1114,7 @@ package body Debugger.Jdb is
      (Debugger  : access Jdb_Debugger;
       Beginning : String) return Basic_Types.String_Array
    is
+      pragma Unreferenced (Debugger, Beginning);
       Result : Basic_Types.String_Array (1 .. 0);
    begin
       return Result;

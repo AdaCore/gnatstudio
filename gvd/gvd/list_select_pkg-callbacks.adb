@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2001                      --
+--                      Copyright (C) 2000-2002                      --
 --                             ACT-Europe                            --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -51,6 +51,7 @@ package body List_Select_Pkg.Callbacks is
    ---------------------------
 
    procedure On_The_Entry_Activate (Object : access Gtk_Entry_Record'Class) is
+      pragma Unreferenced (Object);
    begin
       Gtk.Main.Main_Quit;
    end On_The_Entry_Activate;
@@ -60,6 +61,7 @@ package body List_Select_Pkg.Callbacks is
    -------------------
 
    procedure On_Ok_Clicked (Object : access Gtk_Button_Record'Class) is
+      pragma Unreferenced (Object);
    begin
       Gtk.Main.Main_Quit;
    end On_Ok_Clicked;

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2001                      --
+--                      Copyright (C) 2000-2002                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -31,7 +31,9 @@ package body Debugger.Jdb.Java is
    --------------------
 
    function Is_Simple_Type
-     (Lang : access Jdb_Java_Language; Str : String) return Boolean is
+     (Lang : access Jdb_Java_Language; Str : String) return Boolean
+   is
+      pragma Unreferenced (Lang);
    begin
       return Is_Simple_Type (Java_Lang, Str);
    end Is_Simple_Type;
@@ -41,7 +43,9 @@ package body Debugger.Jdb.Java is
    --------------
 
    function Keywords
-     (Lang : access Jdb_Java_Language) return GNAT.Regpat.Pattern_Matcher is
+     (Lang : access Jdb_Java_Language) return GNAT.Regpat.Pattern_Matcher
+   is
+      pragma Unreferenced (Lang);
    begin
       return Keywords (Java_Lang);
    end Keywords;
@@ -51,7 +55,9 @@ package body Debugger.Jdb.Java is
    --------------------------
 
    function Get_Language_Context
-     (Lang : access Jdb_Java_Language) return Language.Language_Context is
+     (Lang : access Jdb_Java_Language) return Language.Language_Context
+   is
+      pragma Unreferenced (Lang);
    begin
       return Get_Language_Context (Java_Lang);
    end Get_Language_Context;
@@ -61,7 +67,9 @@ package body Debugger.Jdb.Java is
    ----------------------
 
    function Explorer_Regexps
-     (Lang : access Jdb_Java_Language) return Language.Explorer_Categories is
+     (Lang : access Jdb_Java_Language) return Language.Explorer_Categories
+   is
+      pragma Unreferenced (Lang);
    begin
       return Explorer_Regexps (Java_Lang);
    end Explorer_Regexps;
@@ -71,7 +79,9 @@ package body Debugger.Jdb.Java is
    --------------------
 
    function Is_System_File
-     (Lang : access Jdb_Java_Language; File_Name : String) return Boolean is
+     (Lang : access Jdb_Java_Language; File_Name : String) return Boolean
+   is
+      pragma Unreferenced (Lang);
    begin
       return Is_System_File (Java_Lang, File_Name);
    end Is_System_File;
@@ -82,7 +92,9 @@ package body Debugger.Jdb.Java is
 
    function Dereference_Name
      (Lang : access Jdb_Java_Language;
-      Name : String) return String is
+      Name : String) return String
+   is
+      pragma Unreferenced (Lang);
    begin
       return Dereference_Name (Java_Lang, Name);
    end Dereference_Name;
@@ -94,7 +106,9 @@ package body Debugger.Jdb.Java is
    function Array_Item_Name
      (Lang  : access Jdb_Java_Language;
       Name  : String;
-      Index : String) return String is
+      Index : String) return String
+   is
+      pragma Unreferenced (Lang);
    begin
       return Array_Item_Name (Java_Lang, Name, Index);
    end Array_Item_Name;
@@ -106,7 +120,9 @@ package body Debugger.Jdb.Java is
    function Record_Field_Name
      (Lang  : access Jdb_Java_Language;
       Name  : String;
-      Field : String) return String is
+      Field : String) return String
+   is
+      pragma Unreferenced (Lang);
    begin
       return Record_Field_Name (Java_Lang, Name, Field);
    end Record_Field_Name;
@@ -121,7 +137,9 @@ package body Debugger.Jdb.Java is
       Indent_Params    : Indent_Parameters := Default_Indent_Parameters;
       Reserved_Casing  : Casing_Type       := Lower;
       Ident_Casing     : Casing_Type       := Mixed;
-      Format_Operators : Boolean           := True) is
+      Format_Operators : Boolean           := True)
+   is
+      pragma Unreferenced (Lang);
    begin
       Format_Source
         (Java_Lang, Buffer, Indent_Params, Reserved_Casing,
@@ -139,7 +157,9 @@ package body Debugger.Jdb.Java is
       Result          : out Construct_List;
       Indent          : out Natural;
       Next_Indent     : out Natural;
-      Indent_Params   : Indent_Parameters := Default_Indent_Parameters) is
+      Indent_Params   : Indent_Parameters := Default_Indent_Parameters)
+   is
+      pragma Unreferenced (Lang);
    begin
       Parse_Constructs
         (Java_Lang, Buffer, Buffer_Length,
@@ -156,7 +176,9 @@ package body Debugger.Jdb.Java is
       Buffer_Length : Natural;
       Indent        : out Natural;
       Next_Indent   : out Natural;
-      Indent_Params : Indent_Parameters := Default_Indent_Parameters) is
+      Indent_Params : Indent_Parameters := Default_Indent_Parameters)
+   is
+      pragma Unreferenced (Lang);
    begin
       Next_Indentation
         (Java_Lang, Buffer, Buffer_Length, Indent, Next_Indent, Indent_Params);
@@ -169,7 +191,9 @@ package body Debugger.Jdb.Java is
    function Set_Variable
      (Lang     : access Jdb_Java_Language;
       Var_Name : String;
-      Value    : String) return String is
+      Value    : String) return String
+   is
+      pragma Unreferenced (Lang);
    begin
       return "set " & Var_Name & "=" & Value;
    end Set_Variable;
@@ -179,6 +203,7 @@ package body Debugger.Jdb.Java is
    -----------
 
    function Start (Debugger : access Jdb_Java_Language) return String is
+      pragma Unreferenced (Debugger);
    begin
       return "run";
    end Start;
@@ -192,7 +217,9 @@ package body Debugger.Jdb.Java is
       Type_Str : String;
       Entity   : String;
       Index    : in out Natural;
-      Result   : out Generic_Type_Access) is
+      Result   : out Generic_Type_Access)
+   is
+      pragma Unreferenced (Lang);
    begin
       raise Unexpected_Type;
    end Parse_Type;
@@ -206,7 +233,9 @@ package body Debugger.Jdb.Java is
       Type_Str   : String;
       Index      : in out Natural;
       Result     : in out Generic_Type_Access;
-      Repeat_Num : out Positive) is
+      Repeat_Num : out Positive)
+   is
+      pragma Unreferenced (Lang);
    begin
       raise Program_Error;
    end Parse_Value;
@@ -221,7 +250,9 @@ package body Debugger.Jdb.Java is
       Entity    : String;
       Index     : in out Natural;
       Start_Of_Dim : in Natural;
-      Result    : out Generic_Type_Access) is
+      Result    : out Generic_Type_Access)
+   is
+      pragma Unreferenced (Lang);
    begin
       raise Program_Error;
    end Parse_Array_Type;
@@ -237,7 +268,9 @@ package body Debugger.Jdb.Java is
       Index     : in out Natural;
       Is_Union  : Boolean;
       Result    : out Generic_Type_Access;
-      End_On    : String) is
+      End_On    : String)
+   is
+      pragma Unreferenced (Lang);
    begin
       raise Program_Error;
    end Parse_Record_Type;
@@ -250,7 +283,9 @@ package body Debugger.Jdb.Java is
      (Lang     : access Jdb_Java_Language;
       Type_Str : String;
       Index    : in out Natural;
-      Result   : in out Array_Type_Access) is
+      Result   : in out Array_Type_Access)
+   is
+      pragma Unreferenced (Lang);
    begin
       raise Program_Error;
    end Parse_Array_Value;
@@ -261,7 +296,9 @@ package body Debugger.Jdb.Java is
 
    function Get_Language_Debugger_Context
      (Lang : access Jdb_Java_Language)
-      return Language.Debugger.Language_Debugger_Context is
+      return Language.Debugger.Language_Debugger_Context
+   is
+      pragma Unreferenced (Lang);
    begin
       return (Record_Field_Length  => 1,
               Record_Start         => '{',

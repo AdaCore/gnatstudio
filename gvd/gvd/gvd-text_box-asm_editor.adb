@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2001                      --
+--                      Copyright (C) 2000-2002                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -398,6 +398,7 @@ package body GVD.Text_Box.Asm_Editor is
       Line   : Natural;
       Entity : String) return Gtk.Menu.Gtk_Menu
    is
+      pragma Unreferenced (Line, Entity);
       Menu  : Gtk_Menu;
       Mitem : Gtk_Menu_Item;
    begin

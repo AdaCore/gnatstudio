@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2001                      --
+--                      Copyright (C) 2000-2002                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -41,7 +41,9 @@ package body Debugger.Gdb.Ada is
    --------------------
 
    function Is_Simple_Type
-     (Lang : access Gdb_Ada_Language; Str : String) return Boolean is
+     (Lang : access Gdb_Ada_Language; Str : String) return Boolean
+   is
+      pragma Unreferenced (Lang);
    begin
       return Is_Simple_Type (Ada_Lang, Str);
    end Is_Simple_Type;
@@ -51,7 +53,9 @@ package body Debugger.Gdb.Ada is
    --------------
 
    function Keywords
-     (Lang : access Gdb_Ada_Language) return GNAT.Regpat.Pattern_Matcher is
+     (Lang : access Gdb_Ada_Language) return GNAT.Regpat.Pattern_Matcher
+   is
+      pragma Unreferenced (Lang);
    begin
       return Keywords (Ada_Lang);
    end Keywords;
@@ -61,7 +65,9 @@ package body Debugger.Gdb.Ada is
    --------------------------
 
    function Get_Language_Context
-     (Lang : access Gdb_Ada_Language) return Language.Language_Context is
+     (Lang : access Gdb_Ada_Language) return Language.Language_Context
+   is
+      pragma Unreferenced (Lang);
    begin
       return Get_Language_Context (Ada_Lang);
    end Get_Language_Context;
@@ -71,7 +77,9 @@ package body Debugger.Gdb.Ada is
    ----------------------
 
    function Explorer_Regexps
-     (Lang : access Gdb_Ada_Language) return Language.Explorer_Categories is
+     (Lang : access Gdb_Ada_Language) return Language.Explorer_Categories
+   is
+      pragma Unreferenced (Lang);
    begin
       return Explorer_Regexps (Ada_Lang);
    end Explorer_Regexps;
@@ -81,7 +89,9 @@ package body Debugger.Gdb.Ada is
    --------------------
 
    function Is_System_File
-     (Lang : access Gdb_Ada_Language; File_Name : String) return Boolean is
+     (Lang : access Gdb_Ada_Language; File_Name : String) return Boolean
+   is
+      pragma Unreferenced (Lang);
    begin
       return Is_System_File (Ada_Lang, File_Name);
    end Is_System_File;
@@ -92,7 +102,9 @@ package body Debugger.Gdb.Ada is
 
    function Dereference_Name
      (Lang : access Gdb_Ada_Language;
-      Name : String) return String is
+      Name : String) return String
+   is
+      pragma Unreferenced (Lang);
    begin
       return Dereference_Name (Ada_Lang, Name);
    end Dereference_Name;
@@ -104,7 +116,9 @@ package body Debugger.Gdb.Ada is
    function Array_Item_Name
      (Lang  : access Gdb_Ada_Language;
       Name  : String;
-      Index : String) return String is
+      Index : String) return String
+   is
+      pragma Unreferenced (Lang);
    begin
       return Array_Item_Name (Ada_Lang, Name, Index);
    end Array_Item_Name;
@@ -116,7 +130,9 @@ package body Debugger.Gdb.Ada is
    function Record_Field_Name
      (Lang  : access Gdb_Ada_Language;
       Name  : String;
-      Field : String) return String is
+      Field : String) return String
+   is
+      pragma Unreferenced (Lang);
    begin
       return Record_Field_Name (Ada_Lang, Name, Field);
    end Record_Field_Name;
@@ -131,7 +147,9 @@ package body Debugger.Gdb.Ada is
       Indent_Params    : Indent_Parameters := Default_Indent_Parameters;
       Reserved_Casing  : Casing_Type       := Lower;
       Ident_Casing     : Casing_Type       := Mixed;
-      Format_Operators : Boolean           := True) is
+      Format_Operators : Boolean           := True)
+   is
+      pragma Unreferenced (Lang);
    begin
       Format_Source
         (Ada_Lang, Buffer, Indent_Params, Reserved_Casing,
@@ -149,7 +167,9 @@ package body Debugger.Gdb.Ada is
       Result          : out Construct_List;
       Indent          : out Natural;
       Next_Indent     : out Natural;
-      Indent_Params   : Indent_Parameters := Default_Indent_Parameters) is
+      Indent_Params   : Indent_Parameters := Default_Indent_Parameters)
+   is
+      pragma Unreferenced (Lang);
    begin
       Parse_Constructs
         (Ada_Lang, Buffer, Buffer_Length, Result,
@@ -166,7 +186,9 @@ package body Debugger.Gdb.Ada is
       Buffer_Length : Natural;
       Indent        : out Natural;
       Next_Indent   : out Natural;
-      Indent_Params : Indent_Parameters := Default_Indent_Parameters) is
+      Indent_Params : Indent_Parameters := Default_Indent_Parameters)
+   is
+      pragma Unreferenced (Lang);
    begin
       Next_Indentation
         (Ada_Lang, Buffer, Buffer_Length, Indent, Next_Indent, Indent_Params);
@@ -180,7 +202,9 @@ package body Debugger.Gdb.Ada is
      (Debugger  : access Gdb_Ada_Language;
       Name      : String  := "";
       Temporary : Boolean := False;
-      Unhandled : Boolean := False) return String is
+      Unhandled : Boolean := False) return String
+   is
+      pragma Unreferenced (Debugger);
    begin
       if Unhandled then
          if Temporary then
@@ -448,6 +472,7 @@ package body Debugger.Gdb.Ada is
       Start_Of_Dim : in Natural;
       Result       : out Generic_Type_Access)
    is
+      pragma Unreferenced (Start_Of_Dim);
       Item_Separator : constant Character := ',';
       Dimension_End  : constant Character := ')';
       Num_Dim        : Integer := 1;
@@ -975,7 +1000,9 @@ package body Debugger.Gdb.Ada is
    -----------------------------------
 
    function Get_Language_Debugger_Context
-     (Lang : access Gdb_Ada_Language) return Language_Debugger_Context is
+     (Lang : access Gdb_Ada_Language) return Language_Debugger_Context
+   is
+      pragma Unreferenced (Lang);
    begin
       return (Record_Field_Length  => 2,
               Record_Start         => '(',
@@ -992,7 +1019,9 @@ package body Debugger.Gdb.Ada is
    function Set_Variable
      (Lang     : access Gdb_Ada_Language;
       Var_Name : String;
-      Value    : String) return String is
+      Value    : String) return String
+   is
+      pragma Unreferenced (Lang);
    begin
       return "set variable " & Var_Name & " := " & Value;
    end Set_Variable;
@@ -1002,6 +1031,7 @@ package body Debugger.Gdb.Ada is
    -----------
 
    function Start (Debugger : access Gdb_Ada_Language) return String is
+      pragma Unreferenced (Debugger);
    begin
       return "begin";
    end Start;

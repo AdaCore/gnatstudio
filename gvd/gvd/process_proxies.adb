@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2001                      --
+--                      Copyright (C) 2000-2002                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -18,10 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-pragma Warnings (Off);
 with GNAT.Expect;           use GNAT.Expect;
-pragma Warnings (On);
-
 with Gtk.Main;              use Gtk.Main;
 with GNAT.Regpat;           use GNAT.Regpat;
 with GNAT.IO;               use GNAT.IO;
@@ -347,6 +344,7 @@ package body Process_Proxies is
       Str        : String;
       Proxy      : System.Address)
    is
+      pragma Unreferenced (Descriptor);
       function To_Proxy is new Ada.Unchecked_Conversion
         (System.Address, Process_Proxy_Access);
    begin
