@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2004                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2001-2005                       --
+--                            AdaCore                                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -176,7 +176,8 @@ package body Project_Explorers is
    function Search
      (Context         : access Explorer_Search_Context;
       Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Search_Backward : Boolean) return Boolean;
+      Search_Backward : Boolean;
+      Give_Focus      : Boolean) return Boolean;
    --  Search the next occurrence in the explorer
 
    -----------------------
@@ -2134,9 +2135,10 @@ package body Project_Explorers is
    function Search
      (Context         : access Explorer_Search_Context;
       Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Search_Backward : Boolean) return Boolean
+      Search_Backward : Boolean;
+      Give_Focus      : Boolean) return Boolean
    is
-      pragma Unreferenced (Search_Backward);
+      pragma Unreferenced (Search_Backward, Give_Focus);
       C        : constant Explorer_Search_Context_Access :=
         Explorer_Search_Context_Access (Context);
       Explorer : constant Project_Explorer :=
@@ -2634,7 +2636,9 @@ package body Project_Explorers is
                       Whole_Word     => True,
                       Regexp         => True));
 
-      if not Search (C, Kernel, Search_Backward => False) then
+      if not Search (C, Kernel, Search_Backward => False,
+                     Give_Focus => True)
+      then
          Insert (Kernel,
                  -"File not found in the explorer: "
                  & Base_Name (File_Information (File_C)),
@@ -2670,7 +2674,9 @@ package body Project_Explorers is
                       Whole_Word     => True,
                       Regexp         => False));
 
-      if not Search (C, Kernel, Search_Backward => False) then
+      if not Search (C, Kernel, Search_Backward => False,
+                     Give_Focus => True)
+      then
          Insert (Kernel,
                  -"Project not found in the explorer: "
                  & Project_Name (Project_Information (File_C)));

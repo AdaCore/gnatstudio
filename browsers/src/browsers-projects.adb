@@ -150,7 +150,8 @@ package body Browsers.Projects is
    function Search
      (Context         : access Browser_Search_Context;
       Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Search_Backward : Boolean) return Boolean;
+      Search_Backward : Boolean;
+      Give_Focus      : Boolean) return Boolean;
    --  Search the next occurrence in the explorer
 
    function Find_Project
@@ -655,9 +656,10 @@ package body Browsers.Projects is
    function Search
      (Context         : access Browser_Search_Context;
       Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Search_Backward : Boolean) return Boolean
+      Search_Backward : Boolean;
+      Give_Focus      : Boolean) return Boolean
    is
-      pragma Unreferenced (Search_Backward);
+      pragma Unreferenced (Search_Backward, Give_Focus);
       First_Match  : Canvas_Item;
       Saw_Selected : Boolean;
       Child        : constant MDI_Child := Open_Project_Browser (Kernel);
