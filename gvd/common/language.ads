@@ -473,10 +473,15 @@ package Language is
       Replace         : Replace_Text_Callback;
       From, To        : Natural := 0;
       Indent_Params   : Indent_Parameters := Default_Indent_Parameters;
+      Indent_Offset   : Natural := 0;
       Case_Exceptions : Case_Handling.Casing_Exceptions :=
         Case_Handling.No_Casing_Exception);
    --  Given a Buffer, reformat it, based on Indent_Params.
    --  Reformat only lines comprised between From and To.
+   --  If Indent_Offset is > 0, it represents an additional level of
+   --  indentation when e.g. formatting a substring within a bigger
+   --  construct. Format_Buffer will take this value into account when
+   --  calling the Replace callback.
 
    type Entity_Callback is access function
      (Entity         : Language_Entity;
