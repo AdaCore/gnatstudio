@@ -639,7 +639,9 @@ package body Browsers.Dependency_Items is
    begin
       Child := Open_Dependency_Browser (Kernel);
 
-      if Context.all in File_Name_Selection_Context'Class then
+      if Context /= null
+        and then Context.all in File_Name_Selection_Context'Class
+      then
          Examine_Dependencies
            (Kernel,
             File_Information (File_Name_Selection_Context_Access (Context)));
