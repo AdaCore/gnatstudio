@@ -431,7 +431,6 @@ package body Gtkada.File_Selector is
         := File_Selector_Window_Access (Get_Toplevel (Object));
    begin
       Change_Directory (Win, Get_Text (Win.Location_Combo_Entry));
-      Widget_Callback.Emit_By_Name (Win.Location_Combo_Entry, "changed");
    end Directory_Selected;
 
    ------------------------
@@ -629,8 +628,6 @@ package body Gtkada.File_Selector is
         (File_Selector_Window.Home_Button, "clicked",
          On_Home_Button_Clicked'Access);
 
-
-
       Pack_Start (File_Selector_Window.Hbox3,
                   File_Selector_Window.Toolbar1, True, True, 3);
 
@@ -652,9 +649,10 @@ package body Gtkada.File_Selector is
       Set_Use_Arrows_Always (File_Selector_Window.Location_Combo, False);
       Pack_Start (File_Selector_Window.Hbox2,
                   File_Selector_Window.Location_Combo, True, True, 3);
+
       Widget_Callback.Object_Connect
-        (Get_List (File_Selector_Window.Location_Combo),
-         "button_release_event",
+        (Get_Popup_Window (File_Selector_Window.Location_Combo),
+         "hide",
          Widget_Callback.To_Marshaller (Directory_Selected'Access),
          File_Selector_Window.Location_Combo);
 
@@ -745,11 +743,10 @@ package body Gtkada.File_Selector is
       Set_Use_Arrows_Always (File_Selector_Window.Filter_Combo, False);
 
       Widget_Callback.Object_Connect
-        (Get_List (File_Selector_Window.Filter_Combo),
-         "button_release_event",
+        (Get_Popup_Window (File_Selector_Window.Filter_Combo),
+         "hide",
          Widget_Callback.To_Marshaller (Filter_Selected'Access),
          File_Selector_Window.Filter_Combo);
-
 
       Pack_Start (File_Selector_Window.Hbox4,
                   File_Selector_Window.Filter_Combo, True, True, 3);
@@ -810,7 +807,7 @@ package body Gtkada.File_Selector is
       Widget_Callback.Connect
         (File_Selector_Window, "realize", Realize'Access);
       Widget_Callback.Connect
-        (File_Selector_Window, "delete_event",
+        (File_Selector_Window, "destroy",
          Widget_Callback.To_Marshaller (On_Cancel_Button_Clicked'Access));
    end Initialize;
 
