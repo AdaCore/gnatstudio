@@ -96,13 +96,15 @@ package body Builder_Module is
    Run_Menu_Prefix : constant String := "<gps>/Build_Run/";
    --  Prefixes used in the accel path for the various menus
 
-   Custom_Make_Suffix : constant String := "Custom...";
+   Custom_Make_Suffix  : constant String := "Custom...";
    Current_Make_Suffix : constant String := "<current file>";
    Project_Make_Suffix : constant String := "Project";
+   All_Make_Suffix     : constant String := "All mains";
    --  Name for various menus (need to be translated through)
    --      -"Custom..."
    --      -"<current file>"
    --      -"Project"
+   --      -"All mains"
 
    Me : constant Debug_Handle := Create (Builder_Module_Name);
 
@@ -227,18 +229,24 @@ package body Builder_Module is
    --  Build->Make menu.
    --  If Data contains a null file name, then the current file is compiled.
 
+   procedure On_Build_Project
+     (Kernel : access GObject_Record'Class; Data : File_Project_Record);
+   --  Build->Make->All mains menu.
+
    procedure On_Build
      (Kernel      : Kernel_Handle;
       File        : Virtual_File;
       Project     : Project_Type;
+      Main_Units  : Boolean := False;
       Synchronous : Boolean := False);
    --  Same as On_Build.
    --  If Synchronous is True, this subprogram will block GPS until the
    --  compilation is finished executing.
    --  If Project is No_Project and File is VFS.No_File, the current file is
    --  build.
-   --  If Project is not No_Project and File is VFS.No_File, the main units
-   --  of Project are built.
+   --  If Project is not No_Project and File is VFS.No_File, either
+   --  the main units of Project are built (Main_Units = True), or all the
+   --  files in the project are built.
 
    procedure On_Custom
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
@@ -326,11 +334,13 @@ package body Builder_Module is
                K := K + 1;
                R_Tmp (K) := new String'("-P" & Project_Str);
 
-               K := K + 1;
-
                if File = VFS.No_File then
-                  R_Tmp (K) := new String'("-u");
+                  if Compile_Only then
+                     K := K + 1;
+                     R_Tmp (K) := new String'(Unique_Compile);
+                  end if;
                else
+                  K := K + 1;
                   R_Tmp (K) := new String'(Full_Name (File).all);
                end if;
 
@@ -361,7 +371,7 @@ package body Builder_Module is
                                 Going => Ada.Strings.Backward)) & "o";
 
             begin
-               if Compile_Only then
+               if File /= VFS.No_File and then Compile_Only then
                   --  Compute the name of the object file to build and pass it
                   --  to make
 
@@ -376,10 +386,18 @@ package body Builder_Module is
                      --  supported languages.
 
                      if File = VFS.No_File then
-                        Result := new Argument_List'
-                          (List &
-                           new String'("build") &
-                           new String'("ADAFLAGS=-d -u"));
+                        if Compile_Only then
+                           Result := new Argument_List'
+                             (List &
+                              new String'("build") &
+                              new String'("ADAFLAGS=-d -u"));
+                        else
+                           Result := new Argument_List'
+                             (List &
+                              new String'("build") &
+                              new String'("ADAFLAGS=-d"));
+                        end if;
+
                      else
                         Result := new Argument_List'
                           (List &
@@ -520,6 +538,7 @@ package body Builder_Module is
      (Kernel      : Kernel_Handle;
       File        : Virtual_File;
       Project     : Project_Type;
+      Main_Units  : Boolean := False;
       Synchronous : Boolean := False)
    is
       Top          : constant Glide_Window :=
@@ -643,7 +662,8 @@ package body Builder_Module is
             end case;
 
          else
-            Args := Compute_Arguments (Kernel, Syntax, Project, File);
+            Args := Compute_Arguments
+              (Kernel, Syntax, Project, File, Compile_Only => not Main_Units);
          end if;
 
          Change_Dir (Dir_Name (Project_Path (Project)));
@@ -705,10 +725,6 @@ package body Builder_Module is
          Change_Dir (Old_Dir);
    end On_Build;
 
-   --------------
-   -- On_Build --
-   --------------
-
    procedure On_Build
      (Kernel : access GObject_Record'Class; Data : File_Project_Record) is
    begin
@@ -716,6 +732,18 @@ package body Builder_Module is
         (Kernel_Handle (Kernel), Data.File,
          Data.Project, Synchronous => False);
    end On_Build;
+
+   ----------------------
+   -- On_Build_Project --
+   ----------------------
+
+   procedure On_Build_Project
+     (Kernel : access GObject_Record'Class; Data : File_Project_Record) is
+   begin
+      On_Build
+        (Kernel_Handle (Kernel), Data.File,
+         Data.Project, Main_Units => True);
+   end On_Build_Project;
 
    ---------------------
    -- On_Check_Syntax --
@@ -1377,6 +1405,22 @@ package body Builder_Module is
       File_Project_Cb.Object_Connect
         (Mitem, "activate",
          File_Project_Cb.To_Marshaller (On_Build'Access),
+         Slot_Object => Kernel,
+         User_Data => File_Project_Record'
+           (Project => Get_Project (Kernel),
+            File    => VFS.No_File));
+
+      Gtk_New (Mitem, -All_Make_Suffix);
+      Append (Menu, Mitem);
+
+      if Set_Shortcut then
+         Set_Accel_Path
+           (Mitem, -Make_Menu_Prefix & (-All_Make_Suffix), Group);
+      end if;
+
+      File_Project_Cb.Object_Connect
+        (Mitem, "activate",
+         File_Project_Cb.To_Marshaller (On_Build_Project'Access),
          Slot_Object => Kernel,
          User_Data => File_Project_Record'
            (Project => Get_Project (Kernel),
