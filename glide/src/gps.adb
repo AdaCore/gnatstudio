@@ -494,10 +494,6 @@ procedure GPS is
               (Project_Name.all, Resolve_Links => False));
       end if;
 
-      --  Load_Desktop should call Show_All.
-
-      Load_Desktop (GPS);
-
       --  Then load all the source files given on the command line.
 
       loop
