@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2003                       --
+--                     Copyright (C) 2001-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -209,10 +209,11 @@ package body Traces is
    -- Trace --
    -----------
 
-   procedure Trace (Handle   : Debug_Handle;
-                    Message  : String;
-                    Location : String := GNAT.Source_Info.Source_Location;
-                    Entity   : String := GNAT.Source_Info.Enclosing_Entity) is
+   procedure Trace
+     (Handle   : Debug_Handle;
+      Message  : String;
+      Location : String := GNAT.Source_Info.Source_Location;
+      Entity   : String := GNAT.Source_Info.Enclosing_Entity) is
    begin
       if Debug_Mode and then Handle.Active then
          Log (Handle, Message, Location, Entity);
@@ -223,20 +224,25 @@ package body Traces is
    -- Assert --
    ------------
 
-   procedure Assert (Handle             : Debug_Handle;
-                     Condition          : Boolean;
-                     Error_Message      : String;
-                     Message_If_Success : String := "";
-                     Raise_Exception    : Boolean := True;
-                     Location : String := GNAT.Source_Info.Source_Location;
-                     Entity   : String := GNAT.Source_Info.Enclosing_Entity) is
+   procedure Assert
+     (Handle             : Debug_Handle;
+      Condition          : Boolean;
+      Error_Message      : String;
+      Message_If_Success : String := "";
+      Raise_Exception    : Boolean := True;
+      Location           : String := GNAT.Source_Info.Source_Location;
+      Entity             : String := GNAT.Source_Info.Enclosing_Entity) is
    begin
       if Debug_Mode and then Handle.Active then
          if not Condition then
             Log (Handle, Error_Message, Location, Entity, Red_Bg & Default_Fg);
+
             if Raise_Exception then
-               Raise_Assert_Failure (Error_Message);
+               Raise_Assert_Failure
+                 (Error_Message & " (" & Entity & " at " &
+                  Location & ")");
             end if;
+
          elsif Message_If_Success'Length /= 0 then
             Log (Handle, Message_If_Success,
                  Location, Entity);
