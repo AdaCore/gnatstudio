@@ -162,6 +162,11 @@ package Gtkada.MDI is
    --  Return the child that currently has the focus.
    --  null is returned if no child has the focus.
 
+   procedure Set_Focus_Child
+     (MDI : access MDI_Window_Record;
+      Containing : access Gtk.Widget.Gtk_Widget_Record'Class);
+   --  Give the focus to the child containing Containing.
+
    function Create_Menu
      (MDI : access MDI_Window_Record) return Gtk.Menu.Gtk_Menu;
    --  Create a dynamic menu that can then be inserted into a menu bar. This

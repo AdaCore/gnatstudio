@@ -3160,4 +3160,25 @@ package body Gtkada.MDI is
       MDI.Priorities := Prio;
    end Set_Priorities;
 
+   ---------------------
+   -- Set_Focus_Child --
+   ---------------------
+
+   procedure Set_Focus_Child
+     (MDI : access MDI_Window_Record;
+      Containing : access Gtk.Widget.Gtk_Widget_Record'Class)
+   is
+      Parent : Gtk_Widget := Get_Parent (Containing);
+   begin
+      while Parent /= null
+        and then not (Parent.all in MDI_Child_Record'Class)
+      loop
+         Parent := Get_Parent (Parent);
+      end loop;
+
+      if Parent /= null then
+         Activate_Child (MDI_Child (Parent));
+      end if;
+   end Set_Focus_Child;
+
 end Gtkada.MDI;
