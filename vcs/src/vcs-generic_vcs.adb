@@ -578,11 +578,9 @@ package body VCS.Generic_VCS is
 
    procedure Revert
      (Rep       : access Generic_VCS_Record;
-      Filenames : String_List.List)
-   is
-      pragma Unreferenced (Rep, Filenames);
+      Filenames : String_List.List) is
    begin
-      null;
+      Generic_Command (Rep, Filenames, null, Revert, None);
    end Revert;
 
    ----------
