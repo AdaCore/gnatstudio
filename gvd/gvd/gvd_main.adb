@@ -176,8 +176,8 @@ procedure GVD_Main is
       Button := Message_Dialog
         (-"Please report with the contents of the file " &
          Dir.all & Directory_Separator & "log" & ASCII.LF &
-         (-("and a description as complete as possible " &
-           "(including sources) to reproduce the bug")),
+         (-"and a description as complete as possible (including sources)") &
+         ASCII.LF & (-"to reproduce the bug"),
          Error, Button_OK,
          Title => -"Bug detected in GVD",
          Justification => Justify_Left);
