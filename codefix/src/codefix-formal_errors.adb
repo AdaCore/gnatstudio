@@ -473,6 +473,11 @@ package body Codefix.Formal_Errors is
          New_Position.Line := Declaration.Sloc_End.Line;
          New_Position.Col  := Declaration.Sloc_End.Column;
          Assign (New_Position.File_Name, Cursor.File_Name);
+
+         if New_Position.Col = 0 then
+            New_Position.Col := 1;
+         end if;
+
          Initialize
            (New_Command, Current_Text, New_Position, "Unreferenced", Name);
          Free (New_Position);
@@ -795,6 +800,7 @@ package body Codefix.Formal_Errors is
       Append (Result, New_Command);
 
       Free (With_Cursor);
+      Free (Body_Name);
 
       return Result;
    end Move_With_To_Body;
