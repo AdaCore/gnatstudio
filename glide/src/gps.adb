@@ -52,6 +52,7 @@ with Aunit_Module;
 with Browsers.Dependency_Items;
 with Browsers.Projects;
 with Browsers.Call_Graph;
+with External_Editor_Module;
 with GVD_Module;
 with Metrics_Module;
 with Project_Explorers;
@@ -192,6 +193,19 @@ begin
       end if;
    end;
 
+   --  ??? Should have a cleaner way of initializing Log_File
+
+   declare
+      Log : constant String :=
+        String_Utils.Name_As_Directory (GPS.Home_Dir.all) & "debugger.log";
+   begin
+      GPS.Debug_Mode := True;
+      GPS.Log_Level  := GVD.Types.Hidden;
+      GPS.Log_File   := Create_File (Log, Fmode => Text);
+   end;
+
+   Glide_Page.Gtk_New (Page, GPS);
+
    --  Register all modules
 
    Navigation_Module.Register_Module (GPS.Kernel);
@@ -202,6 +216,7 @@ begin
    Project_Viewers.Register_Module (GPS.Kernel);
    Project_Explorers.Register_Module (GPS.Kernel);
    Src_Editor_Module.Register_Module (GPS.Kernel);
+   External_Editor_Module.Register_Module (GPS.Kernel);
    Glide_Kernel.Help.Register_Module (GPS.Kernel);
    GVD_Module.Register_Module (GPS.Kernel);
    Builder_Module.Register_Module (GPS.Kernel);
@@ -234,20 +249,6 @@ begin
       LI                  => null,
       Default_Spec_Suffix => ".h",
       Default_Body_Suffix => ".cc");
-
-   --  ??? Should have a cleaner way of initializing Log_File
-
-   declare
-      Log : constant String :=
-        String_Utils.Name_As_Directory (GPS.Home_Dir.all) & "debugger.log";
-   begin
-      GPS.Debug_Mode := True;
-      GPS.Log_Level  := GVD.Types.Hidden;
-      GPS.Log_File   := Create_File (Log, Fmode => Text);
-   end;
-
-   Glide_Page.Gtk_New (Page, GPS);
-   Initialize_All_Modules (GPS.Kernel);
 
    --  Temporarily disable unimplemented menu items
 
