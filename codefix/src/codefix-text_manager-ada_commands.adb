@@ -270,7 +270,8 @@ package body Codefix.Text_Manager.Ada_Commands is
      (This         : in out Remove_Pkg_Clauses_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
       Word         : Word_Cursor;
-      Destination  : String := "")
+      Destination  : String := "";
+      Category     : Language_Category := Cat_With)
    is
       Use_Info, Pkg_Info     : Construct_Information;
       Word_Used              : Word_Cursor := Clone (Word);
@@ -285,7 +286,7 @@ package body Codefix.Text_Manager.Ada_Commands is
            (Current_Text, Word.File_Name.all, Cat_With, Word.String_Match.all);
       else
          Pkg_Info := Get_Unit
-           (Current_Text, Word, Before, Cat_With);
+           (Current_Text, Word, Before, Category);
          Assign (Word_Used.String_Match, Pkg_Info.Name.all);
       end if;
 
@@ -317,38 +318,40 @@ package body Codefix.Text_Manager.Ada_Commands is
          This.Is_Instantiation := False;
       end if;
 
-      loop
-         Index_Name := Index_Name + 1;
-         Skip_To_Char (Pkg_Info.Name.all, Index_Name, '.');
-         exit when Index_Name > Pkg_Info.Name'Last + 1;
+      if Category /= Cat_Use then
+         loop
+            Index_Name := Index_Name + 1;
+            Skip_To_Char (Pkg_Info.Name.all, Index_Name, '.');
+            exit when Index_Name > Pkg_Info.Name'Last + 1;
 
-         Use_Info := Search_Unit
-           (Current_Text,
-            Word.File_Name.all,
-            Cat_Use,
-            Pkg_Info.Name.all (Prev_Index + 1 .. Index_Name - 1));
+            Use_Info := Search_Unit
+              (Current_Text,
+               Word.File_Name.all,
+               Cat_Use,
+               Pkg_Info.Name.all (Prev_Index + 1 .. Index_Name - 1));
 
-         if Use_Info.Category /= Cat_Unknown then
-            Word_Used.Col := Use_Info.Sloc_Start.Column;
-            Word_Used.Line := Use_Info.Sloc_Start.Line;
-            Assign (Word_Used.String_Match, Use_Info.Name.all);
-            Add_To_Remove (This.Clauses_Pkg, Current_Text, Word_Used);
+            if Use_Info.Category /= Cat_Unknown then
+               Word_Used.Col := Use_Info.Sloc_Start.Column;
+               Word_Used.Line := Use_Info.Sloc_Start.Line;
+               Assign (Word_Used.String_Match, Use_Info.Name.all);
+               Add_To_Remove (This.Clauses_Pkg, Current_Text, Word_Used);
 
-            if Destination /= "" then
-               if Use_Info.Category = Cat_Use then
-                  Append
-                   (This.Obj_List,
-                     new String'("use " & Use_Info.Name.all & ";"));
-               elsif Use_Info.Category = Cat_With then
-                  Append
-                   (This.Obj_List,
-                     new String'("with " & Use_Info.Name.all & ";"));
+               if Destination /= "" then
+                  if Use_Info.Category = Cat_Use then
+                     Append
+                      (This.Obj_List,
+                        new String'("use " & Use_Info.Name.all & ";"));
+                  elsif Use_Info.Category = Cat_With then
+                     Append
+                      (This.Obj_List,
+                        new String'("with " & Use_Info.Name.all & ";"));
+                  end if;
                end if;
             end if;
-         end if;
 
-         Prev_Index := Index_Name;
-      end loop;
+            Prev_Index := Index_Name;
+         end loop;
+      end if;
 
    end Initialize;
 
@@ -733,13 +736,13 @@ package body Codefix.Text_Manager.Ada_Commands is
    begin
       Destination_Begin := File_Cursor
         (Search_String (Current_Text, Destination, "("));
-      Destination_End := File_Cursor
-        (Search_String (Current_Text, Destination_Begin, ")"));
-
       Source_Begin := File_Cursor
         (Search_String (Current_Text, Source, "("));
+
+      Destination_End := File_Cursor
+        (Get_Right_Paren (Current_Text, Destination_Begin));
       Source_End := File_Cursor
-        (Search_String (Current_Text, Source_Begin, ")"));
+        (Get_Right_Paren (Current_Text, Source_Begin));
 
       This.Destination_Begin := new Mark_Abstr'Class'
         (Get_New_Mark (Current_Text, Destination_Begin));
