@@ -176,19 +176,10 @@ package Main_Debug_Window_Pkg.Callbacks is
    procedure On_Show1_Activate
      (Object : access Gtk_Widget_Record'Class);
 
-   procedure On_Overview1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class);
+   procedure On_Manual_Activate
+     (Object : access Gtk_Widget_Record'Class);
 
-   procedure On_On_Item1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class);
-
-   procedure On_What_Now_1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class);
-
-   procedure On_Tip_Of_The_Day1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class);
-
-   procedure On_About_Odd1_Activate
+   procedure On_About_Gvd_Activate
      (Object : access Gtk_Menu_Item_Record'Class);
 
    procedure On_Run1_Toolbar_Activate

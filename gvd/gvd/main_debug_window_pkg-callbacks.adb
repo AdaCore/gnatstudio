@@ -56,6 +56,9 @@ package body Main_Debug_Window_Pkg.Callbacks is
    use GVD;
    use Gtk.Arguments;
 
+   procedure Free is new Unchecked_Deallocation
+     (Argument_List, Argument_List_Access);
+
    procedure Cleanup_Debuggers (Top : Main_Debug_Window_Access);
    --  Close all the debuggers associated with a given main debug window
    --  by looking at all the pages of the main notebook.
@@ -258,9 +261,6 @@ package body Main_Debug_Window_Pkg.Callbacks is
 
          return Name;
       end Substitute;
-
-      procedure Free is new Unchecked_Deallocation
-        (Argument_List, Argument_List_Access);
 
       Tab    : constant Debugger_Process_Tab := Get_Current_Process (Object);
       Editor : constant String := Substitute
@@ -1083,55 +1083,50 @@ package body Main_Debug_Window_Pkg.Callbacks is
       end if;
    end On_Show1_Activate;
 
+   ------------------------
+   -- On_Manual_Activate --
+   ------------------------
+
+   procedure On_Manual_Activate
+     (Object : access Gtk_Widget_Record'Class)
+   is
+      Tab    : constant Debugger_Process_Tab := Get_Current_Process (Object);
+      Browse : constant String :=
+        Get_Pref (HTML_Browser) & " " &
+          Main_Debug_Window_Access (Tab.Window).Prefix_Directory.all &
+          Directory_Separator & "doc" & Directory_Separator & "gvd" &
+          Directory_Separator & "gvd.html";
+      Args   : Argument_List_Access;
+      Pid    : GNAT.OS_Lib.Process_Id;
+      Prog   : GNAT.OS_Lib.String_Access;
+
+   begin
+      Print_Message
+        (Main_Debug_Window_Access (Tab.Window).Statusbar1, Help, Browse);
+
+      Args := Argument_String_To_List (Browse);
+      Prog := Locate_Exec_On_Path (Args (Args'First).all);
+
+      if Prog /= null then
+         Pid := GNAT.OS_Lib.Non_Blocking_Spawn
+           (Prog.all, Args (Args'First + 1 .. Args'Last));
+         Free (Prog);
+      end if;
+
+      if Args /= null then
+         for J in Args'Range loop
+            Free (Args (J));
+         end loop;
+
+         Free (Args);
+      end if;
+   end On_Manual_Activate;
+
    ---------------------------
-   -- On_Overview1_Activate --
+   -- On_About_Gvd_Activate --
    ---------------------------
 
-   procedure On_Overview1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
-   is
-   begin
-      null;
-   end On_Overview1_Activate;
-
-   --------------------------
-   -- On_On_Item1_Activate --
-   --------------------------
-
-   procedure On_On_Item1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
-   is
-   begin
-      null;
-   end On_On_Item1_Activate;
-
-   ----------------------------
-   -- On_What_Now_1_Activate --
-   ----------------------------
-
-   procedure On_What_Now_1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
-   is
-   begin
-      null;
-   end On_What_Now_1_Activate;
-
-   ---------------------------------
-   -- On_Tip_Of_The_Day1_Activate --
-   ---------------------------------
-
-   procedure On_Tip_Of_The_Day1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
-   is
-   begin
-      null;
-   end On_Tip_Of_The_Day1_Activate;
-
-   ----------------------------
-   -- On_About_Odd1_Activate --
-   ----------------------------
-
-   procedure On_About_Odd1_Activate
+   procedure On_About_Gvd_Activate
      (Object : access Gtk_Menu_Item_Record'Class)
    is
       Button : Message_Dialog_Buttons;
@@ -1145,7 +1140,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
            -("This is the About information box." & ASCII.LF & ASCII.LF &
              "Click on the OK button to close this window."),
          Title => -"About...");
-   end On_About_Odd1_Activate;
+   end On_About_Gvd_Activate;
 
    ------------------------------
    -- On_Run1_Toolbar_Activate --
