@@ -28,7 +28,6 @@ with File_Utils;
 
 package body Docgen_Backend_HTML is
 
-
    ----------------
    -- Initialize --
    ----------------
@@ -183,7 +182,7 @@ package body Docgen_Backend_HTML is
 
    procedure Format_Identifier
      (B                : access Backend_HTML;
-      List_Ref_In_File   : in out List_Reference_In_File.List;
+      List_Ref_In_File : in out List_Reference_In_File.List;
       Start_Index      : Natural;
       Start_Line       : Natural;
       Start_Column     : Natural;

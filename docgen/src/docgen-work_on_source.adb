@@ -902,7 +902,7 @@ package body Docgen.Work_On_Source is
      (B                 : Backend_Handle;
       Kernel            : access Kernel_Handle_Record'Class;
       Doc_File          : File_Type;
-      List_Ref_In_File : in out List_Reference_In_File.List;
+      List_Ref_In_File  : in out List_Reference_In_File.List;
       Package_Name      : String;
       Package_File      : Virtual_File;
       Process_Body_File : Boolean;
@@ -932,15 +932,15 @@ package body Docgen.Work_On_Source is
    --------------------
 
    procedure Process_Footer
-     (B             : Backend_Handle;
-      Kernel        : access Kernel_Handle_Record'Class;
-      Doc_File      : File_Type;
+     (B                : Backend_Handle;
+      Kernel           : access Kernel_Handle_Record'Class;
+      Doc_File         : File_Type;
       List_Ref_In_File : in out List_Reference_In_File.List;
-      Package_File  : Virtual_File;
-      Options       : All_Options;
-      Converter     : Doc_Subprogram_Type;
-      Doc_Directory : String;
-      Doc_Suffix    : String)
+      Package_File     : Virtual_File;
+      Options          : All_Options;
+      Converter        : Doc_Subprogram_Type;
+      Doc_Directory    : String;
+      Doc_Suffix       : String)
    is
       Data_Footer : Doc_Info :=
         (Footer_Info,
@@ -961,16 +961,16 @@ package body Docgen.Work_On_Source is
    ---------------------------------
 
    procedure Process_Package_Description
-     (B             : Backend_Handle;
-      Kernel        : access Kernel_Handle_Record'Class;
-      Doc_File      : File_Type;
+     (B                : Backend_Handle;
+      Kernel           : access Kernel_Handle_Record'Class;
+      Doc_File         : File_Type;
       List_Ref_In_File : in out List_Reference_In_File.List;
-      Package_Name  : String;
-      Text          : String;
-      Options       : All_Options;
-      Converter     : Doc_Subprogram_Type;
-      Doc_Directory : String;
-      Doc_Suffix    : String)
+      Package_Name     : String;
+      Text             : String;
+      Options          : All_Options;
+      Converter        : Doc_Subprogram_Type;
+      Doc_Directory    : String;
+      Doc_Suffix       : String)
    is
       Data_Subtitle : Doc_Info (Info_Type => Subtitle_Info);
       Data_Package  : Doc_Info (Info_Type => Package_Desc_Info);
@@ -1034,7 +1034,7 @@ package body Docgen.Work_On_Source is
    --------------------------
 
    procedure Process_With_Clause
-     (B                  : Backend_Handle;
+     (B                : Backend_Handle;
       Kernel           : access Kernel_Handle_Record'Class;
       Doc_File         : File_Type;
       List_Ref_In_File : in out List_Reference_In_File.List;
@@ -1533,8 +1533,8 @@ package body Docgen.Work_On_Source is
      (B                  : Backend_Handle;
       Kernel             : access Kernel_Handle_Record'Class;
       Doc_File           : File_Type;
-      Entity_List      : in out Type_Entity_List.List;
-      List_Ref_In_File : in out List_Reference_In_File.List;
+      Entity_List        : in out Type_Entity_List.List;
+      List_Ref_In_File   : in out List_Reference_In_File.List;
       Source_Filename    : VFS.Virtual_File;
       Process_Body_File  : Boolean;
       Package_Name       : String;
@@ -1636,8 +1636,8 @@ package body Docgen.Work_On_Source is
      (B                  : Backend_Handle;
       Kernel             : access Kernel_Handle_Record'Class;
       Doc_File           : File_Type;
-      Entity_List      : in out Type_Entity_List.List;
-      List_Ref_In_File : in out List_Reference_In_File.List;
+      Entity_List        : in out Type_Entity_List.List;
+      List_Ref_In_File   : in out List_Reference_In_File.List;
       Source_Filename    : VFS.Virtual_File;
       Process_Body_File  : Boolean;
       Package_Name       : String;
