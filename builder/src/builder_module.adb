@@ -1278,7 +1278,7 @@ package body Builder_Module is
                Title         => -"Arguments Selection",
                Message       => -"Enter the arguments to your application:",
                Check_Msg     => -"Use external terminal",
-               Key           => "gps_run_args",
+               Key           => Cst_Run_Arguments_History,
                History       => Get_History (K),
                Button_Active => Active'Unchecked_Access);
 
