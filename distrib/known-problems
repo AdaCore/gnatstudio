@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 2.1.0
 
+- D701-014 Duplicate menu entries in Build->Make and Build->Run
+  Problem:    Some of the entries in these menus ("custom...", "<current file>")
+              are duplicated one or more times whenever the project is
+              recomputed.
+  Workaround: Restart GPS to get rid of the duplicates, although they sometimes
+              appear from the start when using the default project
+
 - D621-013 GPS crashes when annotating large files
   Problem:    When querying the annotations for large files, GPS crashes before
               displaying the annotations.
