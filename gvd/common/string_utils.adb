@@ -851,6 +851,7 @@ package body String_Utils is
    begin
       for L in List'Range loop
          Length := Length + List (L)'Length + 1;
+
          for S in List (L)'Range loop
             if List (L)(S) = '"'
               or else List (L)(S) = ' '
@@ -861,7 +862,7 @@ package body String_Utils is
       end loop;
 
       declare
-         S : String (1 .. Length);
+         S     : String (1 .. Length);
          Index : Positive := S'First;
       begin
          for L in List'Range loop
