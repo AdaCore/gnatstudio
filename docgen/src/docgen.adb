@@ -29,7 +29,7 @@ with Ada.Exceptions;            use Ada.Exceptions;
 with Language_Handlers;         use Language_Handlers;
 with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
-with Basic_Types;
+with Basic_Types;               use Basic_Types;
 with Language;                  use Language;
 
 package body Docgen is
@@ -118,6 +118,8 @@ package body Docgen is
          Process_Body     : Boolean;
          Info             : Doc_Info)
       is
+         Call_Graph_Entities : Type_Entity_List.List;
+
          function Callback
            (Entity         : Language_Entity;
             Sloc_Start     : Source_Location;
@@ -126,6 +128,12 @@ package body Docgen is
          --  Looks the value of type Language_Entity returned by
          --  Parse_Entities and calls the good subprograms to format
          --  the current entity
+
+         procedure Call_Graph_Packages
+           (Call_Graph_Entities : Type_Entity_List.List);
+         --  Prints the call graph of all subprograms contained in the list
+         --  Call_Graph_Entities. This list is made when we are parsing an
+         --  inner package.
 
          --------------
          -- Callback --
@@ -205,7 +213,8 @@ package body Docgen is
                      Link_All,
                      Is_Body,
                      Process_Body,
-                     Info);
+                     Info,
+                     Call_Graph_Entities);
 
                when others =>
                   null;
@@ -214,12 +223,53 @@ package body Docgen is
             return False;
          end Callback;
 
+         ---------------------------
+         --  Call_Graph_Packages  --
+         ---------------------------
+
+         procedure Call_Graph_Packages
+           (Call_Graph_Entities : Type_Entity_List.List)
+         is
+            use Type_Entity_List;
+            Name_Entity       : Basic_Types.String_Access;
+            Entity_Subprogram : Type_Entity_List.List_Node;
+         begin
+            Entity_Subprogram := Type_Entity_List.First (Call_Graph_Entities);
+            while Entity_Subprogram /= Type_Entity_List.Null_Node loop
+               Name_Entity
+                 := new String'(Get_Name
+                                  (Type_Entity_List.Data
+                                     (Entity_Subprogram).Entity));
+               Print_Ref_List
+                 (B, Kernel, File, Name_Entity,
+                  Data (Entity_Subprogram).Called_List, True);
+               Print_Ref_List
+                 (B, Kernel, File, Name_Entity,
+                  Data (Entity_Subprogram).Calls_List, False);
+               Free (Name_Entity);
+               Entity_Subprogram := Type_Entity_List.Next (Entity_Subprogram);
+            end loop;
+         end Call_Graph_Packages;
+
+
       begin
          Initialize (B, Text);
          Parse_Entities (Get_Language_From_File
                            (Get_Language_Handler (Kernel), File_Name),
                             Text,
-                            Callback'Unrestricted_Access);
+                         Callback'Unrestricted_Access);
+
+         if Info.Doc_Info_Options.References and then
+            --  Call graphs required in the preferences
+           Info.Info_Type = Package_Info and then
+            --  The current entity is a package
+           not Type_Entity_List.Is_Empty (Call_Graph_Entities)
+         then
+            Call_Graph_Packages_Header (B, Kernel, File, Info);
+            Call_Graph_Packages (Call_Graph_Entities);
+            Call_Graph_Packages_Footer (B, Kernel, File, Info);
+            Type_Entity_List.Free (Call_Graph_Entities, True);
+         end if;
          Finish (B, File, Text, Entity_Line);
 
       exception
@@ -234,38 +284,38 @@ package body Docgen is
    ---------------------
 
    procedure Format_All_Link
-     (B                : access Backend'Class;
-      Entity_List      : in out Type_Entity_List.List;
-      List_Ref_In_File : in out List_Reference_In_File.List;
-      Start_Index      : Natural;
-      Start_Line       : Natural;
-      Start_Column     : Natural;
-      End_Index        : Natural;
-      Kernel           : access Kernel_Handle_Record'Class;
-      File             : Ada.Text_IO.File_Type;
-      LI_Unit          : LI_File_Ptr;
-      Text             : String;
-      File_Name        : VFS.Virtual_File;
-      Entity_Line      : Natural;
-      Line_In_Body     : in out Natural;
-      Source_File_List : Type_Source_File_List.List;
-      Link_All         : Boolean;
-      Is_Body          : Boolean;
-      Process_Body     : Boolean;
-      Info             : Doc_Info)
+     (B                   : access Backend'Class;
+      Entity_List         : in out Type_Entity_List.List;
+      List_Ref_In_File    : in out List_Reference_In_File.List;
+      Start_Index         : Natural;
+      Start_Line          : Natural;
+      Start_Column        : Natural;
+      End_Index           : Natural;
+      Kernel              : access Kernel_Handle_Record'Class;
+      File                : Ada.Text_IO.File_Type;
+      LI_Unit             : LI_File_Ptr;
+      Text                : String;
+      File_Name           : VFS.Virtual_File;
+      Entity_Line         : Natural;
+      Line_In_Body        : in out Natural;
+      Source_File_List    : Type_Source_File_List.List;
+      Link_All            : Boolean;
+      Is_Body             : Boolean;
+      Process_Body        : Boolean;
+      Info                : Doc_Info;
+      Call_Graph_Entities : in out Type_Entity_List.List)
    is
       use type Basic_Types.String_Access;
       use List_Reference_In_File;
       use Type_Entity_List;
-      Loc_End          : Natural;
-      Loc_Start        : Natural;
-      Point_In_Column  : Natural := 0;
-      Entity_Info      : Entity_Information;
-      Ref_List_Info    : List_Reference_In_File.List_Node;
-      Ref_List_Info_Prec   : List_Reference_In_File.List_Node;
-      Result           : Boolean;
-      Entity_Abstract  : Boolean;
-
+      Loc_End            : Natural;
+      Loc_Start          : Natural;
+      Point_In_Column    : Natural := 0;
+      Entity_Info        : Entity_Information;
+      Ref_List_Info      : List_Reference_In_File.List_Node;
+      Ref_List_Info_Prec : List_Reference_In_File.List_Node;
+      Result             : Boolean;
+      Entity_Abstract    : Boolean;
       Entity_Node      : Type_Entity_List.List_Node;
       Entity_Node_Succ : Type_Entity_List.List_Node;
       Exist            : Boolean;
@@ -351,6 +401,12 @@ package body Docgen is
                      --  No_Body_Line_Needed because we deal with a package)
                      Line_In_Body := Get_Line
                        (Data (Entity_Node).Line_In_Body);
+                     if Data (Entity_Node).Kind = Subprogram_Entity then
+                        --  Trace (Me, "Inner mi a vrai");
+                        Type_Entity_List.Append
+                          (Call_Graph_Entities,
+                           Clone (Data (Entity_Node), True));
+                     end if;
                      Type_Entity_List.Remove_Nodes
                        (Entity_List,
                         Entity_Node_Succ,
@@ -486,6 +542,39 @@ package body Docgen is
       return Get_Name (X.Entity) < Get_Name (Y.Entity);
    end Compare_Elements_Name;
 
+   -----------------
+   --  Duplicate  --
+   -----------------
+
+   procedure Duplicate
+     (List_Out : in out Type_Reference_List.List;
+      List_In  : in Type_Reference_List.List)
+   is
+      use Type_Reference_List;
+      Node : Type_Reference_List.List_Node;
+   begin
+      if not Type_Reference_List.Is_Empty (List_In) then
+         Node := Type_Reference_List.First (List_In);
+         while Node /= Type_Reference_List.Null_Node loop
+            Type_Reference_List.Append
+              (List_Out,
+               (Copy (Type_Reference_List.Data (Node).Entity),
+                Type_Reference_List.Data (Node).Set_Link));
+            Node := Type_Reference_List.Next (Node);
+         end loop;
+      end if;
+   end Duplicate;
+
+   -------------------------
+   -- Compare_Tagged_Name --
+   -------------------------
+
+   function Compare_Tagged_Name
+     (X, Y : Tagged_Element) return Boolean is
+   begin
+      return Get_Name (X.Me.all) < Get_Name (Y.Me.all);
+   end Compare_Tagged_Name;
+
    -----------------------------------------
    -- Compare_Elements_By_Line_And_Column --
    -----------------------------------------
@@ -497,6 +586,27 @@ package body Docgen is
       (X.Line = Y.Line and then X.Column < Y.Column);
    end Compare_Elements_By_Line_And_Column;
 
+   ------------------
+   -- Find_In_List --
+   ------------------
+
+   function Find_In_List
+     (List : List_Entity_Handle.List;
+      Info : Entity_Information) return Entity_Handle
+   is
+      use List_Entity_Handle;
+      Node : List_Entity_Handle.List_Node;
+   begin
+      Node := List_Entity_Handle.First (List);
+      while Node /= List_Entity_Handle.Null_Node loop
+         if Is_Equal (Info, List_Entity_Handle.Data (Node).all) then
+            return List_Entity_Handle.Data (Node);
+         else
+            Node := List_Entity_Handle.Next (Node);
+         end if;
+      end loop;
+      return null;
+   end Find_In_List;
 
    ----------
    -- Free --
@@ -555,6 +665,26 @@ package body Docgen is
       Destroy (X);
    end Free;
 
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (X : in out Tagged_Element) is
+   pragma Unreferenced (X);
+   begin
+      null;
+   end Free;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (X : in out Entity_Handle) is
+   pragma Unreferenced (X);
+   begin
+      null;
+   end Free;
+
    -----------------
    -- Count_Lines --
    -----------------
@@ -594,16 +724,35 @@ package body Docgen is
    -----------
 
    function Clone
-     (Entity : Entity_List_Information) return Entity_List_Information is
+     (Entity : Entity_List_Information;
+      Also_Lists : Boolean)
+      return Entity_List_Information is
+      Calls  : Type_Reference_List.List;
+      Called : Type_Reference_List.List;
    begin
-      return
-        (Kind         => Entity.Kind,
-         Name         => new String'(Entity.Name.all),
-         Entity       => Copy (Entity.Entity),
-         Is_Private   => Entity.Is_Private,
-         Line_In_Body => Entity.Line_In_Body,
-         Calls_list   => Type_Reference_List.Null_List,   --  ???
-         Called_List  => Type_Reference_List.Null_List);  --  ???
+      if Also_Lists then
+         --  Deep copy required
+         Duplicate (Calls, Entity.Calls_List);
+         Duplicate (Called, Entity.Called_List);
+         return
+           (Kind         => Entity.Kind,
+            Name         => new String'(Entity.Name.all),
+            Entity       => Copy (Entity.Entity),
+            Is_Private   => Entity.Is_Private,
+            Line_In_Body => Entity.Line_In_Body,
+            Calls_list   => Calls,
+            Called_List  => Called);
+      else
+         --  We don't need to copy the list used for call graph
+         return
+           (Kind         => Entity.Kind,
+            Name         => new String'(Entity.Name.all),
+            Entity       => Copy (Entity.Entity),
+            Is_Private   => Entity.Is_Private,
+            Line_In_Body => Entity.Line_In_Body,
+            Calls_list   => Type_Reference_List.Null_List,
+            Called_List  => Type_Reference_List.Null_List);
+      end if;
    end Clone;
 
    -------------------------
