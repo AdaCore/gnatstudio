@@ -44,6 +44,7 @@ with Prj;               use Prj;
 with String_Utils;      use String_Utils;
 with Traces;            use Traces;
 with Glide_Intl;        use Glide_Intl;
+with Glide_Kernel.Console; use Glide_Kernel.Console;
 
 package body Glide_Kernel.Modules is
 
@@ -592,8 +593,7 @@ package body Glide_Kernel.Modules is
       Column   : Natural := 0;
       Highlight_Line : Boolean := True)
    is
-      Value   : GValue_Array (1 .. 4);
-      Success : Boolean;
+      Value : GValue_Array (1 .. 4);
    begin
       Init (Value (1), Glib.GType_String);
       Set_String (Value (1), Filename);
@@ -607,12 +607,34 @@ package body Glide_Kernel.Modules is
       Init (Value (4), Glib.GType_Boolean);
       Set_Boolean (Value (4), Highlight_Line);
 
-      Success := Mime_Action (Kernel, Mime_Source_File, Value);
+      if not Mime_Action (Kernel, Mime_Source_File, Value) then
+         Insert (Kernel, -"No file editor was registered");
+      end if;
 
       for J in Value'Range loop
          Unset (Value (J));
       end loop;
    end Open_File_Editor;
+
+   ---------------
+   -- Open_Html --
+   ---------------
+
+   procedure Open_Html
+     (Kernel         : access Kernel_Handle_Record'Class;
+      Filename       : String)
+   is
+      Value : GValue_Array (1 .. 1);
+   begin
+      Init (Value (1), Glib.GType_String);
+      Set_String (Value (1), Filename);
+
+      if not Mime_Action (Kernel, Mime_Html_File, Value) then
+         Insert (Kernel, -"No html viewer was registered");
+      end if;
+
+      Unset (Value (1));
+   end Open_Html;
 
    -------------------------
    -- Display_Differences --

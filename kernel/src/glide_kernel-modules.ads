@@ -209,13 +209,18 @@ package Glide_Kernel.Modules is
    --  each of its module whether it can display some specific data.
    --  The type of data is indicated through standard MIME types.
 
-   Mime_Source_File : constant String := "application/text";
+   Mime_Source_File : constant String := "glide/source";
    --  There are multiple data associated with this type:
    --     first  : full name of the source file to open (use Get_String)
    --     second : line to display initially (use Get_Int). Ignored if 0
    --     third  : column to display initially (use Get_Int). Ignored if 0
    --     fourth : True if the line should be highlighted (use Get_Boolean)
    --  See also the function Open_File_Editor.
+
+   Mime_Html_File : constant String := "glide/html";
+   --  Request to display a html file
+   --  There are multiple data associated with this type:
+   --     first  : full name of the html file to open (use Get_String)
 
    Mime_Diff_File : constant String := "application/diff";
    --  There are multiple data associated with this type:
@@ -243,6 +248,11 @@ package Glide_Kernel.Modules is
       Column         : Natural := 0;
       Highlight_Line : Boolean := True);
    --  Open, or create, an editor that edits Filename (Mime_Source_File type)
+
+   procedure Open_Html
+     (Kernel         : access Kernel_Handle_Record'Class;
+      Filename       : String);
+   --  Open, or create, an html viewer for Filename (Mime_Html_File type)
 
    procedure Display_Differences
      (Kernel         : access Kernel_Handle_Record'Class;
