@@ -2066,12 +2066,12 @@ package body Src_Editor_Buffer is
         (Kernel, Preferences_Changed_Hook, Hook, Watch => GObject (Buffer));
       Execute (Hook.all, Kernel);
 
-
       for Entity_Kind in Standout_Language_Entity'Range loop
          Text_Tag_Table.Add (Tags, Buffer.Syntax_Tags (Entity_Kind));
       end loop;
 
       --  Create Delimiter_Tag and save it into the source buffer tag table.
+
       Create_Highlight_Line_Tag
         (Buffer.Delimiter_Tag, Get_Pref (Kernel, Delimiter_Color));
       Text_Tag_Table.Add (Tags, Buffer.Delimiter_Tag);
@@ -2082,6 +2082,7 @@ package body Src_Editor_Buffer is
 
       --  Save the insert mark for fast retrievals, since we will need to
       --  access it very often.
+
       Buffer.Insert_Mark := Get_Insert (Buffer);
 
       --  Initialize the queue for editor commands
