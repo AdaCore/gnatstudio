@@ -1,0 +1,15 @@
+This is the README file for the binary distribution of GPS.
+This directory contains the files needed for installing and running GPS.
+
+INSTALLING
+
+The quick way to install GPS is to run the script 'doinstall' contained
+in this directory and then follow the instructions.
+
+USE
+
+Using GPS is documented in the GPS user's guide available in HTML format using
+the help menu under GPS itself, or as text and info files in the directory
+$base/doc/gps, where $base is the base directory chosen when installing GVD
+(using doinstall).
+
