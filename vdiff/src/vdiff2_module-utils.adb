@@ -317,8 +317,7 @@ package body Vdiff2_Module.Utils is
    begin
       Curr_Node := First (Item.List);
 
-      while Curr_Node /= Diff_Chunk_List.Null_Node
-      loop
+      while Curr_Node /= Diff_Chunk_List.Null_Node loop
          Curr_Chunk := Data (Curr_Node);
          Remove_Blank_Lines (Kernel, Curr_Chunk.Range1.Blank_Lines);
          Remove_Blank_Lines (Kernel, Curr_Chunk.Range2.Blank_Lines);
@@ -326,8 +325,7 @@ package body Vdiff2_Module.Utils is
          Curr_Node := Next (Curr_Node);
       end loop;
 
-      for J in VFile'Range
-      loop
+      for J in VFile'Range loop
          if VFile (J) /= VFS.No_File then
             Unhighlight_Line (Kernel, VFile (J), 0, Default_Style);
             Unhighlight_Line (Kernel, VFile (J), 0, Old_Style);
@@ -339,7 +337,6 @@ package body Vdiff2_Module.Utils is
             Unhighlight_Range (Kernel, VFile (J), Fine_Change_Style);
          end if;
       end loop;
-
    end Hide_Differences;
 
    ---------------------
@@ -432,12 +429,10 @@ package body Vdiff2_Module.Utils is
       Offset_Source     : constant Natural :=
         Source_Range.Last - Source_Range.First;
       Offset_Min        : Natural := Offset_Source;
-
-      First_Dest        : constant Natural
-        := Get_Line_Number (Kernel, Dest_Range.Mark.all);
-      First_Source      : constant Natural
-        := Get_Line_Number (Kernel, Source_Range.Mark.all);
-
+      First_Dest        : constant Natural :=
+        Get_Line_Number (Kernel, Dest_Range.Mark.all);
+      First_Source      : constant Natural :=
+        Get_Line_Number (Kernel, Source_Range.Mark.all);
       Current_Line      : String_Access;
 
    begin
@@ -483,10 +478,9 @@ package body Vdiff2_Module.Utils is
          Replace_Text
            (Kernel, Dest_File,
             First_Dest + Offset_Source, 1,
-            "" & ASCII.LF, -1, -1);
+            (1 => ASCII.LF), -1, -1);
 
       elsif Offset_Dest <= 0 then
-
          for J in 1 .. Offset_Source loop
             Current_Line := new String'
               (Get_Chars
