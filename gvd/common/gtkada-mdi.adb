@@ -2221,6 +2221,11 @@ package body Gtkada.MDI is
    procedure Lower_Child (Child : access MDI_Child_Record'Class) is
       Num : Gint;
    begin
+      Ref (Child);
+      Remove (Child.MDI.Items, Gtk_Widget (Child));
+      Append (Child.MDI.Items, Gtk_Widget (Child));
+      Unref (Child);
+
       --  For an docked item, we in fact want to raise its parent dock,
       --  and make sure the current page in that dock is the correct one.
 
@@ -2255,6 +2260,11 @@ package body Gtkada.MDI is
 
    procedure Raise_Child (Child : access MDI_Child_Record'Class) is
    begin
+      Ref (Child);
+      Remove (Child.MDI.Items, Gtk_Widget (Child));
+      Prepend (Child.MDI.Items, Gtk_Widget (Child));
+      Unref (Child);
+
       --  For an docked item, we in fact want to raise its parent dock,
       --  and make sure the current page in that dock is the correct one.
 
