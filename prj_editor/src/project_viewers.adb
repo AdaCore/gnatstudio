@@ -38,6 +38,7 @@ with Gtk.Enums;       use Gtk.Enums;
 with Gtk.Handlers;    use Gtk.Handlers;
 with Gtk.Label;       use Gtk.Label;
 with Gtk.Notebook;    use Gtk.Notebook;
+with Gtk.Stock;       use Gtk.Stock;
 with Gtk.Style;       use Gtk.Style;
 with Gtk.Widget;      use Gtk.Widget;
 with Gtkada.Handlers; use Gtkada.Handlers;
@@ -552,12 +553,16 @@ package body Project_Viewers is
 
       Destroy_Pages (Switches, Gnatmake_Page or Binder_Page or Linker_Page);
 
-      Gtk_New (Button, "Close");
+      Gtk_New_From_Stock (Button, Stock_OK);
       Pack_Start
         (Get_Action_Area (Dialog), Button, Fill => False, Expand => False);
       Widget_Callback.Object_Connect
         (Button, "clicked",
          Widget_Callback.To_Marshaller (Close_Switch_Editor'Access), Dialog);
+
+      Gtk_New_From_Stock (Button, Stock_Cancel);
+      Pack_Start
+        (Get_Action_Area (Dialog), Button, Fill => False, Expand => False);
 
       Switch_Callback.Connect
         (Dialog, "destroy",
