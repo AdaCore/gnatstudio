@@ -1693,19 +1693,32 @@ package body Src_Info.Queries is
       Iterator               : out Entity_Reference_Iterator;
       Project                : Prj.Project_Id := Prj.No_Project;
       LI_Once                : Boolean := False;
+      In_File                : String := "";
       Predefined_Source_Path : String := "";
       Predefined_Object_Path : String := "") is
    begin
       Iterator.Entity := Copy (Entity);
       Iterator.LI_Once := LI_Once;
 
-      Find_Ancestor_Dependencies
-        (Root_Project, Lang_Handler, Get_Declaration_File_Of (Entity), List,
-         Iterator.Decl_Iter,
-         Project                => Project,
-         Include_Self           => True,
-         Predefined_Source_Path => Predefined_Source_Path,
-         Predefined_Object_Path => Predefined_Object_Path);
+      if In_File = "" then
+         Find_Ancestor_Dependencies
+           (Root_Project, Lang_Handler, Get_Declaration_File_Of (Entity), List,
+            Iterator.Decl_Iter,
+            Project                => Project,
+            Include_Self           => True,
+            Predefined_Source_Path => Predefined_Source_Path,
+            Predefined_Object_Path => Predefined_Object_Path);
+      else
+         Find_Ancestor_Dependencies
+           (Root_Project, Lang_Handler, In_File, List,
+            Iterator.Decl_Iter,
+            Project                => Project,
+            Include_Self           => True,
+            Single_Source_File     => True,
+            Predefined_Source_Path => Predefined_Source_Path,
+            Predefined_Object_Path => Predefined_Object_Path);
+      end if;
+
       Next (Lang_Handler, Iterator, List);
    end Find_All_References;
 
@@ -1880,7 +1893,8 @@ package body Src_Info.Queries is
       Project         : Prj.Project_Id := Prj.No_Project;
       Include_Self    : Boolean := False;
       Predefined_Source_Path : String := "";
-      Predefined_Object_Path : String := "")
+      Predefined_Object_Path : String := "";
+      Single_Source_File : Boolean := False)
    is
       Decl_Project : Project_Id := Project;
       Iterator_Decl_Project : Project_Id := Project;
@@ -1914,13 +1928,20 @@ package body Src_Info.Queries is
 
       Iterator.Source_Filename := new String' (Source_Filename);
       Iterator.Include_Self := Include_Self;
-      Iterator.Importing := new Project_Id_Array'
-        (Find_All_Projects_Importing (Root_Project, Iterator_Decl_Project));
+
+      if Single_Source_File then
+         Iterator.Importing := new Project_Id_Array' (1 => Decl_Project);
+         Iterator.Source_Files := new String_Array'
+           (1 => new String' (Source_Filename));
+      else
+         Iterator.Importing := new Project_Id_Array'
+           (Find_All_Projects_Importing (Root_Project, Iterator_Decl_Project));
+         Iterator.Source_Files := Get_Source_Files
+           (Iterator.Importing (Iterator.Current_Project),
+            Recursive => False,
+            Full_Path => False);
+      end if;
       Iterator.Current_Project := Iterator.Importing'First;
-      Iterator.Source_Files := Get_Source_Files
-        (Iterator.Importing (Iterator.Current_Project),
-         Recursive => False,
-         Full_Path => False);
       Iterator.Current_File := Iterator.Source_Files'First - 1;
 
       Next (Lang_Handler, Iterator, List);

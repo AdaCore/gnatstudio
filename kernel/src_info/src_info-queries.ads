@@ -219,6 +219,7 @@ package Src_Info.Queries is
       Iterator               : out Entity_Reference_Iterator;
       Project                : Prj.Project_Id := Prj.No_Project;
       LI_Once                : Boolean := False;
+      In_File                : String := "";
       Predefined_Source_Path : String := "";
       Predefined_Object_Path : String := "");
    --  Find all the references to the entity described in Decl.
@@ -233,6 +234,10 @@ package Src_Info.Queries is
    --  if LI_Once is True, then a single reference will be returned for each LI
    --  file. This can be used for instance if you are only looking for matching
    --  LI files.
+   --
+   --  If In_File is a full file name, then only the references in that file
+   --  will be displayed. This is much faster, since it only requires the
+   --  parsing of a single LI structure.
    --
    --  You must destroy the iterator when you are done with it, to avoid memory
    --  leaks.
@@ -321,7 +326,8 @@ package Src_Info.Queries is
       Project         : Prj.Project_Id := Prj.No_Project;
       Include_Self    : Boolean := False;
       Predefined_Source_Path : String := "";
-      Predefined_Object_Path : String := "");
+      Predefined_Object_Path : String := "";
+      Single_Source_File : Boolean := False);
    --  Prepare Iterator to return the list of all files that import
    --  one of the files associated with the Unit of Source_Filename (that is it
    --  will return files that depend either on the spec or the body of
@@ -336,6 +342,10 @@ package Src_Info.Queries is
    --  If Include_Self is true, then the LI file for Source_Filename will also
    --  be returned. Note, in this case the Dependency returned by Get is pretty
    --  much irrelevant, and shouldn't be used.
+   --
+   --  if Single_Source_File is True, then the iterator returned will only
+   --  return Source_Filename. This might be used in special contexts to either
+   --  work on multiple LI files or a single source file.
    --
    --  You must destroy the iterator when you are done with it, to avoid memory
    --  leaks.
