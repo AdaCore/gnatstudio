@@ -69,6 +69,10 @@ package VCS_View_API is
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
 
+   procedure On_Menu_Diff_Working
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access);
+
    procedure On_Menu_Diff_Base_Head
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
