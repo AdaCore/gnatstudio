@@ -62,6 +62,9 @@ procedure Odd_Main is
    --  Cut Str in lines of no more than Columns columns by replacing spaces
    --  by ASCII.LF characters at the most appropriate place.
 
+   procedure Help;
+   --  Display help on the standard output.
+
    procedure Init is
    begin
       Root := Getenv ("GVD_ROOT");
@@ -147,6 +150,22 @@ procedure Odd_Main is
       Put_Line (Standard_Error, Exception_Information (E));
    end Bug_Dialog;
 
+   procedure Help is
+   begin
+      Put_Line ("GVD " & Odd.Version);
+      Put_Line ("This is a beta release of GVD, the GNU Visual Debugger.");
+      Put_Line ("Please do not redistribute.");
+      Put_Line ("Usage:");
+      Put_Line ("   gvd [options...] executable-file [core-file|process-id]");
+      Put_Line ("Options:");
+      Put_Line ("   --disable-log Disable automatic log file.");
+      Put_Line ("   --jdb         Invoke JDB as inferior debugger.");
+      Put_Line ("   --host HOST   Run inferior debugger on HOST.");
+      Put_Line ("   --tty         Use controlling tty as additional debugger" &
+                " console.");
+      Put_Line ("   --version     Show the GVD version and exit.");
+   end Help;
+
 begin
    Gtk.Main.Set_Locale;
    Gtk.Main.Init;
@@ -182,6 +201,14 @@ begin
 
          elsif Argument (J) = "--jdb" then
             Debug_Type := Debugger.Jdb_Type;
+
+         elsif Argument (J) = "--version" then
+            Put_Line ("GVD Version " & Odd.Version);
+            OS_Exit (0);
+
+         elsif Argument (J) = "--help" then
+            Help;
+            OS_Exit (0);
 
          elsif Argument (J) = "--host" then
             Remote_Host := new String' (Argument (J + 1));
