@@ -332,26 +332,6 @@
 
 	  <widget>
 	    <class>GtkMenuItem</class>
-	    <name>search1</name>
-	    <sensitive>False</sensitive>
-	    <signal>
-	      <name>activate</name>
-	      <handler>on_search1_activate</handler>
-	      <object>main_debug_window</object>
-	      <last_modification_time>Tue, 28 Mar 2000 02:31:42 GMT</last_modification_time>
-	    </signal>
-	    <label>Search...</label>
-	    <right_justify>False</right_justify>
-	  </widget>
-
-	  <widget>
-	    <class>GtkMenuItem</class>
-	    <name>separator8</name>
-	    <right_justify>False</right_justify>
-	  </widget>
-
-	  <widget>
-	    <class>GtkMenuItem</class>
 	    <name>cut1</name>
 	    <sensitive>False</sensitive>
 	    <accelerator>
@@ -406,43 +386,6 @@
 
 	  <widget>
 	    <class>GtkMenuItem</class>
-	    <name>clear1</name>
-	    <sensitive>False</sensitive>
-	    <accelerator>
-	      <modifiers>GDK_CONTROL_MASK</modifiers>
-	      <key>GDK_U</key>
-	      <signal>activate</signal>
-	    </accelerator>
-	    <signal>
-	      <name>activate</name>
-	      <handler>on_clear1_activate</handler>
-	      <last_modification_time>Tue, 28 Mar 2000 02:25:43 GMT</last_modification_time>
-	    </signal>
-	    <label>Clear</label>
-	    <right_justify>False</right_justify>
-	  </widget>
-
-	  <widget>
-	    <class>GtkMenuItem</class>
-	    <name>delete1</name>
-	    <sensitive>False</sensitive>
-	    <signal>
-	      <name>activate</name>
-	      <handler>on_delete1_activate</handler>
-	      <last_modification_time>Tue, 28 Mar 2000 02:25:49 GMT</last_modification_time>
-	    </signal>
-	    <label>Delete</label>
-	    <right_justify>False</right_justify>
-	  </widget>
-
-	  <widget>
-	    <class>GtkMenuItem</class>
-	    <name>separator6</name>
-	    <right_justify>False</right_justify>
-	  </widget>
-
-	  <widget>
-	    <class>GtkMenuItem</class>
 	    <name>select_all1</name>
 	    <sensitive>False</sensitive>
 	    <accelerator>
@@ -456,6 +399,26 @@
 	      <last_modification_time>Tue, 28 Mar 2000 02:25:53 GMT</last_modification_time>
 	    </signal>
 	    <label>Select All</label>
+	    <right_justify>False</right_justify>
+	  </widget>
+
+	  <widget>
+	    <class>GtkMenuItem</class>
+	    <name>separator6</name>
+	    <right_justify>False</right_justify>
+	  </widget>
+
+	  <widget>
+	    <class>GtkMenuItem</class>
+	    <name>search1</name>
+	    <sensitive>False</sensitive>
+	    <signal>
+	      <name>activate</name>
+	      <handler>on_search1_activate</handler>
+	      <object>main_debug_window</object>
+	      <last_modification_time>Tue, 28 Mar 2000 02:31:42 GMT</last_modification_time>
+	    </signal>
+	    <label>Search...</label>
 	    <right_justify>False</right_justify>
 	  </widget>
 

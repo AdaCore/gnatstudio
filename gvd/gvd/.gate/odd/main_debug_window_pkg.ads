@@ -42,15 +42,12 @@ package Main_Debug_Window_Pkg is
       Undo3 : Gtk_Menu_Item;
       Redo1 : Gtk_Menu_Item;
       Separator5 : Gtk_Menu_Item;
-      Search1 : Gtk_Menu_Item;
-      Separator8 : Gtk_Menu_Item;
       Cut1 : Gtk_Menu_Item;
       Copy1 : Gtk_Menu_Item;
       Paste1 : Gtk_Menu_Item;
-      Clear1 : Gtk_Menu_Item;
-      Delete1 : Gtk_Menu_Item;
-      Separator6 : Gtk_Menu_Item;
       Select_All1 : Gtk_Menu_Item;
+      Separator6 : Gtk_Menu_Item;
+      Search1 : Gtk_Menu_Item;
       Separator7 : Gtk_Menu_Item;
       Preferences1 : Gtk_Menu_Item;
       Gdb_Settings1 : Gtk_Menu_Item;

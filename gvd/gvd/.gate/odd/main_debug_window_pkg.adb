@@ -197,18 +197,6 @@ begin
    Add (Main_Debug_Window.Edit2_Menu, Main_Debug_Window.Separator5);
    Set_Right_Justify (Main_Debug_Window.Separator5, False);
 
-   Gtk_New (Main_Debug_Window.Search1, -"Search...");
-   Set_Sensitive (Main_Debug_Window.Search1, False);
-   Widget_Callback.Object_Connect
-     (Main_Debug_Window.Search1, "activate",
-      Widget_Callback.To_Marshaller (On_Search1_Activate'Access), Main_Debug_Window);
-   Add (Main_Debug_Window.Edit2_Menu, Main_Debug_Window.Search1);
-   Set_Right_Justify (Main_Debug_Window.Search1, False);
-
-   Gtk_New (Main_Debug_Window.Separator8);
-   Add (Main_Debug_Window.Edit2_Menu, Main_Debug_Window.Separator8);
-   Set_Right_Justify (Main_Debug_Window.Separator8, False);
-
    Gtk_New (Main_Debug_Window.Cut1, -"Cut");
    Set_Sensitive (Main_Debug_Window.Cut1, False);
    Add_Accelerator (Main_Debug_Window.Cut1, "activate",
@@ -239,28 +227,6 @@ begin
    Add (Main_Debug_Window.Edit2_Menu, Main_Debug_Window.Paste1);
    Set_Right_Justify (Main_Debug_Window.Paste1, False);
 
-   Gtk_New (Main_Debug_Window.Clear1, -"Clear");
-   Set_Sensitive (Main_Debug_Window.Clear1, False);
-   Add_Accelerator (Main_Debug_Window.Clear1, "activate",
-     The_Accel_Group, GDK_U, Gdk.Types.Control_Mask, Accel_Visible);
-   Menu_Item_Callback.Connect
-     (Main_Debug_Window.Clear1, "activate",
-      Menu_Item_Callback.To_Marshaller (On_Clear1_Activate'Access));
-   Add (Main_Debug_Window.Edit2_Menu, Main_Debug_Window.Clear1);
-   Set_Right_Justify (Main_Debug_Window.Clear1, False);
-
-   Gtk_New (Main_Debug_Window.Delete1, -"Delete");
-   Set_Sensitive (Main_Debug_Window.Delete1, False);
-   Menu_Item_Callback.Connect
-     (Main_Debug_Window.Delete1, "activate",
-      Menu_Item_Callback.To_Marshaller (On_Delete1_Activate'Access));
-   Add (Main_Debug_Window.Edit2_Menu, Main_Debug_Window.Delete1);
-   Set_Right_Justify (Main_Debug_Window.Delete1, False);
-
-   Gtk_New (Main_Debug_Window.Separator6);
-   Add (Main_Debug_Window.Edit2_Menu, Main_Debug_Window.Separator6);
-   Set_Right_Justify (Main_Debug_Window.Separator6, False);
-
    Gtk_New (Main_Debug_Window.Select_All1, -"Select All");
    Set_Sensitive (Main_Debug_Window.Select_All1, False);
    Add_Accelerator (Main_Debug_Window.Select_All1, "activate",
@@ -270,6 +236,18 @@ begin
       Menu_Item_Callback.To_Marshaller (On_Select_All1_Activate'Access));
    Add (Main_Debug_Window.Edit2_Menu, Main_Debug_Window.Select_All1);
    Set_Right_Justify (Main_Debug_Window.Select_All1, False);
+
+   Gtk_New (Main_Debug_Window.Separator6);
+   Add (Main_Debug_Window.Edit2_Menu, Main_Debug_Window.Separator6);
+   Set_Right_Justify (Main_Debug_Window.Separator6, False);
+
+   Gtk_New (Main_Debug_Window.Search1, -"Search...");
+   Set_Sensitive (Main_Debug_Window.Search1, False);
+   Widget_Callback.Object_Connect
+     (Main_Debug_Window.Search1, "activate",
+      Widget_Callback.To_Marshaller (On_Search1_Activate'Access), Main_Debug_Window);
+   Add (Main_Debug_Window.Edit2_Menu, Main_Debug_Window.Search1);
+   Set_Right_Justify (Main_Debug_Window.Search1, False);
 
    Gtk_New (Main_Debug_Window.Separator7);
    Add (Main_Debug_Window.Edit2_Menu, Main_Debug_Window.Separator7);

@@ -179,17 +179,6 @@ package body Main_Debug_Window_Pkg.Callbacks is
       null;
    end On_Redo1_Activate;
 
-   -------------------------
-   -- On_Search1_Activate --
-   -------------------------
-
-   procedure On_Search1_Activate
-     (Object : access Gtk_Widget_Record'Class)
-   is
-   begin
-      null;
-   end On_Search1_Activate;
-
    ----------------------
    -- On_Cut1_Activate --
    ----------------------
@@ -223,28 +212,6 @@ package body Main_Debug_Window_Pkg.Callbacks is
       null;
    end On_Paste1_Activate;
 
-   ------------------------
-   -- On_Clear1_Activate --
-   ------------------------
-
-   procedure On_Clear1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
-   is
-   begin
-      null;
-   end On_Clear1_Activate;
-
-   -------------------------
-   -- On_Delete1_Activate --
-   -------------------------
-
-   procedure On_Delete1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
-   is
-   begin
-      null;
-   end On_Delete1_Activate;
-
    -----------------------------
    -- On_Select_All1_Activate --
    -----------------------------
@@ -255,6 +222,17 @@ package body Main_Debug_Window_Pkg.Callbacks is
    begin
       null;
    end On_Select_All1_Activate;
+
+   -------------------------
+   -- On_Search1_Activate --
+   -------------------------
+
+   procedure On_Search1_Activate
+     (Object : access Gtk_Widget_Record'Class)
+   is
+   begin
+      null;
+   end On_Search1_Activate;
 
    ------------------------------
    -- On_Preferences1_Activate --

@@ -48,9 +48,6 @@ package Main_Debug_Window_Pkg.Callbacks is
    procedure On_Redo1_Activate
      (Object : access Gtk_Menu_Item_Record'Class);
 
-   procedure On_Search1_Activate
-     (Object : access Gtk_Widget_Record'Class);
-
    procedure On_Cut1_Activate
      (Object : access Gtk_Menu_Item_Record'Class);
 
@@ -60,14 +57,11 @@ package Main_Debug_Window_Pkg.Callbacks is
    procedure On_Paste1_Activate
      (Object : access Gtk_Menu_Item_Record'Class);
 
-   procedure On_Clear1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class);
-
-   procedure On_Delete1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class);
-
    procedure On_Select_All1_Activate
      (Object : access Gtk_Menu_Item_Record'Class);
+
+   procedure On_Search1_Activate
+     (Object : access Gtk_Widget_Record'Class);
 
    procedure On_Preferences1_Activate
      (Object : access Gtk_Widget_Record'Class);
