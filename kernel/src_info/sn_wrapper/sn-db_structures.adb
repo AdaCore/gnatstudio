@@ -335,7 +335,8 @@ package body SN.DB_Structures is
 
    procedure Get_Field (Key : CSF; Index : Positive; Result : out Segment) is
    begin
-      Result := (Key.Fields (Index - 1), Key.Fields (Index) - 2);
+      Result := (Key.Fields (Index - 1) + Buffer_String'First,
+                 Key.Fields (Index) - 2 + Buffer_String'First);
    end Get_Field;
 
    ---------------

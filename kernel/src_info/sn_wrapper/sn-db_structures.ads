@@ -39,10 +39,10 @@ package SN.DB_Structures is
    Buffer_String_Size : constant := 4_096;
    --  Maximum size for the buffer string
 
-   type Buffer_String is array (0 .. Buffer_String_Size - 1) of Character;
-   --  Used to record a copy of the dbm key and data objects. Note that this
-   --  buffer must start to 0 as indexes to internal fields are computed using
-   --  the C data convention.
+   type Buffer_String is array (1 .. Buffer_String_Size) of Character;
+   --  Used to record a copy of the dbm key and data objects.
+   --  Internal C offsets (starting at 0) are changed to match 'First for this
+   --  array.
 
    Null_Buffer : constant Buffer_String := (others => ' ');
 
