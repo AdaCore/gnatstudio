@@ -41,7 +41,6 @@ with Gtkada.Handlers;           use Gtkada.Handlers;
 with Gtkada.MDI;                use Gtkada.MDI;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
-with String_Utils;              use String_Utils;
 with Traces;                    use Traces;
 with Projects;                  use Projects;
 with Glide_Intl;                use Glide_Intl;
@@ -228,11 +227,7 @@ package body Glide_Main_Window is
      (Kernel : access Kernel_Handle_Record'Class)
    is
       use Glib;
-      Key_Theme  : String := Key_Themes'Image
-        (Key_Themes'Val (Get_Pref (Kernel, Key_Theme_Name)));
-
    begin
-      Mixed_Case (Key_Theme);
       Gtk.Rc.Parse_String
         ("gtk-font-name=""" &
          To_String (Get_Pref (Kernel, Default_Font)) &
@@ -240,8 +235,7 @@ package body Glide_Main_Window is
          "gtk-can-change-accels=" &
          Integer'Image
            (Boolean'Pos
-              (Get_Pref (Kernel, Can_Change_Accels))) & ASCII.LF &
-         "gtk-key-theme-name=""" & Key_Theme & '"');
+              (Get_Pref (Kernel, Can_Change_Accels))));
 
       if Get_Pref (Kernel, Toolbar_Show_Text) then
          Set_Style (Get_Toolbar (Kernel), Toolbar_Both);
