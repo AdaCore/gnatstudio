@@ -88,6 +88,9 @@ package Codefix.Errors_Manager is
    --  Return True if the Error_Id has already been fixed, that means that a
    --  validate function has already be used with it.
 
+   function Get_Number_Of_Fixes (This : Error_Id) return Natural;
+   --  Return the number of possible fixes contained in Error_Id.
+
    ----------------------------------------------------------------------------
    --  type Correction_Manager
    ----------------------------------------------------------------------------
