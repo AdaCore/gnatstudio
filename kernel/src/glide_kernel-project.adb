@@ -37,6 +37,7 @@ with Prj_Normalize;      use Prj_Normalize;
 with Traces;  use Traces;
 with Glide_Intl; use Glide_Intl;
 with Glide_Kernel.Console; use Glide_Kernel.Console;
+with Language_Handlers.Glide; use Language_Handlers.Glide;
 
 package body Glide_Kernel.Project is
 
@@ -295,6 +296,9 @@ package body Glide_Kernel.Project is
       end loop;
 
       Compute_Predefined_Paths (Handle);
+
+      Set_Project_View
+        (Glide_Language_Handler (Handle.Lang_Handler), Handle.Project_View);
 
       --  Report the change to every listener
       Project_View_Changed (Handle);
