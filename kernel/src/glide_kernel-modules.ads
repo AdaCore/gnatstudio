@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2003                       --
+--                     Copyright (C) 2001-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -311,6 +311,12 @@ package Glide_Kernel.Modules is
    -- Menus --
    -----------
 
+   type Dynamic_Menu_Factory is access procedure
+     (Kernel  : access Kernel_Handle_Record'Class;
+      Context : Selection_Context_Access;
+      Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
+   --  Callback that fills Menu according to Context.
+
    procedure Register_Menu
      (Kernel      : access Kernel_Handle_Record'Class;
       Parent_Path : String;
@@ -368,6 +374,16 @@ package Glide_Kernel.Modules is
       Action      : Action_Record := No_Action)
       return Gtk.Menu_Item.Gtk_Menu_Item;
    --  Same as above, but returns the menu item that was created.
+
+   procedure Register_Dynamic_Menu
+     (Kernel      : access Kernel_Handle_Record'Class;
+      Parent_Path : String;
+      Text        : String;
+      Stock_Image : String := "";
+      Ref_Item    : String := "";
+      Add_Before  : Boolean := True;
+      Factory     : Dynamic_Menu_Factory);
+   --  Register a menu that will be generated using Factory.
 
    function Find_Menu_Item
      (Kernel : access Kernel_Handle_Record'Class;
