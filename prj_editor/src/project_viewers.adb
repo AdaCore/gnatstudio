@@ -1456,8 +1456,9 @@ package body Project_Viewers is
       Box.Project_View := Project_View;
       Initialize_Vbox (Box, Homogeneous => False);
 
-      Gtk_New (Label, -("Main files are the possible targets for the"
-                        & "  compilation commands"));
+      Gtk_New
+        (Label,
+         -"Main files are the targets for the builder and the debugger");
       Set_Padding (Label, Xpad => 0, Ypad => 5);
       Set_Alignment (Label, 0.0, 0.0);
       Pack_Start (Box, Label, Expand => False, Fill => True);
@@ -1997,7 +1998,7 @@ package body Project_Viewers is
       Register_Project_Editor_Page
         (Kernel,
          Page  => new Main_Editor_Record,
-         Label => -"Main units",
+         Label => -"Main files",
          Toc   => -"Selecting main units",
          Title => -"Please select the main units for this project");
       Register_Project_Editor_Page
