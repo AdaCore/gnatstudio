@@ -313,9 +313,12 @@ package String_Utils is
    function Next (Path : String; Iter : Path_Iterator) return Path_Iterator;
    --  Return the next iterator in Path
 
+   function At_End (Path : String; Iter : Path_Iterator) return Boolean;
+   --  Return True if there are no more directories to return
+
    function Current (Path : String; Iter : Path_Iterator) return String;
-   --  Return the current directory, or the empty string if there is no more
-   --  directory.
+   --  Return the current directory. The name might be empty if the Path
+   --  contains something like "::" on Unix systems.
 
    ---------------------------
    -- C String manipulation --

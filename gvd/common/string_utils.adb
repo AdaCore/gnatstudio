@@ -1089,6 +1089,15 @@ package body String_Utils is
       end if;
    end Current;
 
+   ------------
+   -- At_End --
+   ------------
+
+   function At_End (Path : String; Iter : Path_Iterator) return Boolean is
+   begin
+      return Iter.First > Path'Last;
+   end At_End;
+
    ----------
    -- Free --
    ----------
