@@ -43,7 +43,7 @@ begin
    Gtk.Dialog.Initialize (Final_Window);
    Set_Title (Final_Window, -"No more errors");
    Set_Policy (Final_Window, True, True, False);
-   Set_Position (Final_Window, Win_Pos_None);
+   Set_Position (Final_Window, Win_Pos_Mouse);
    Set_Modal (Final_Window, True);
 
    Final_Window.Dialog_Vbox1 := Get_Vbox (Final_Window);
