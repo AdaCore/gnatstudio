@@ -317,7 +317,7 @@ package body Src_Editor_Module is
          Attach (Editor, Box);
          Child := Put (MDI, Box);
          --  ??? Should compute the right number.
-         Set_Title (Child, Base_Name (Title) & " <2>");
+         Set_Title (Child, Title & " <2>", Base_Name (Title) & " <2>");
       end if;
    end New_View;
 
@@ -400,7 +400,7 @@ package body Src_Editor_Module is
          Child := Put (MDI, Box);
 
          if File /= "" then
-            Set_Title (Child, Short_File);
+            Set_Title (Child, File, Short_File);
          else
             Set_Title (Child, "No Name");
          end if;
