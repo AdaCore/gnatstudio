@@ -62,6 +62,7 @@ with String_List_Utils;        use String_List_Utils;
 with String_Utils;             use String_Utils;
 with File_Utils;               use File_Utils;
 with GUI_Utils;                use GUI_Utils;
+with OS_Utils;                 use OS_Utils;
 with Traces;                   use Traces;
 with Histories;                use Histories;
 
@@ -966,7 +967,7 @@ package body Project_Explorers_Files is
                   J : Natural := Cur_Dir'First;
                begin
                   while J < Cur_Dir'Last
-                    and then Cur_Dir (J) /= Directory_Separator
+                    and then not Is_Directory_Separator (Cur_Dir (J))
                   loop
                      J := J + 1;
                   end loop;
@@ -1077,9 +1078,9 @@ package body Project_Explorers_Files is
             return (1 => Directory_Separator);
          end if;
 
-         while Greatest_Prefix (Greatest_Prefix'First
-                                + Greatest_Prefix_Length - 1)
-           /= Directory_Separator
+         while not Is_Directory_Separator
+           (Greatest_Prefix (Greatest_Prefix'First
+                               + Greatest_Prefix_Length - 1))
          loop
             Greatest_Prefix_Length := Greatest_Prefix_Length - 1;
          end loop;

@@ -59,6 +59,7 @@ with GUI_Utils;                 use GUI_Utils;
 with String_Utils;              use String_Utils;
 with String_List_Utils;         use String_List_Utils;
 with File_Utils;                use File_Utils;
+with OS_Utils;                  use OS_Utils;
 with Basic_Types;               use Basic_Types;
 with Traces;                    use Traces;
 
@@ -1671,7 +1672,7 @@ package body Directory_Tree is
                J : Natural := Cur_Dir'First;
             begin
                while J < Cur_Dir'Last
-                 and then Cur_Dir (J) /= Directory_Separator
+                 and then not Is_Directory_Separator (Cur_Dir (J))
                loop
                   J := J + 1;
                end loop;
