@@ -32,7 +32,7 @@ with Gdk.Pixmap;
 package Display_Items is
 
    type Display_Item_Record is new
-     Gtkada.Canvas.Canvas_Item_Record with private;
+     Gtkada.Canvas.Buffered_Item_Record with private;
    type Display_Item is access all Display_Item_Record'Class;
 
    type GVD_Link_Record is new Gtkada.Canvas.Canvas_Link_Record with private;
@@ -183,44 +183,52 @@ package Display_Items is
    --  The item will be drawn on Pixmap. Mode indicates which information
    --  should be displayed, and Lang is provided to get type information
    --  when needed (it can null if only the Value is displayed).
+   --  The fonts are automatically scrolled to match the current zoom level.
+
+   function Create_Tooltip_Drawing_Context
+     (Canvas : access Gtkada.Canvas.Interactive_Canvas_Record'Class;
+      Pixmap : Gdk.Pixmap.Gdk_Pixmap) return Items.Drawing_Context;
+   --  Return a context suitable to use to display tooltips. The fonts are
+   --  not scaled with the zoom level.
 
 private
 
-   type Display_Item_Record is new Gtkada.Canvas.Canvas_Item_Record with record
-      Num          : Integer;
-      Name         : GVD.Types.String_Access := null;
-      Entity       : Items.Generic_Type_Access := null;
-      Auto_Refresh : Boolean := True;
-      Debugger     : GVD.Process.Debugger_Process_Tab;
+   type Display_Item_Record is new Gtkada.Canvas.Buffered_Item_Record with
+      record
+         Num          : Integer;
+         Name         : GVD.Types.String_Access := null;
+         Entity       : Items.Generic_Type_Access := null;
+         Auto_Refresh : Boolean := True;
+         Debugger     : GVD.Process.Debugger_Process_Tab;
 
-      Is_A_Variable : Boolean := True;
-      --  Set to False if the item is not related to a variable
+         Is_A_Variable : Boolean := True;
+         --  Set to False if the item is not related to a variable
 
-      Title_Height : Glib.Gint;
+         Title_Height : Glib.Gint;
 
-      Id           : GVD.Types.String_Access := null;
-      --  Uniq ID used for the variable.
-      --  This Id is returned by the debugger, and can be the address of a
-      --  variable (in Ada or C), or simply the name of the variable (in
-      --  Java) when no overloading exists and addresses don't have any
-      --  meaning. This is used to detect aliases.
+         Id           : GVD.Types.String_Access := null;
+         --  Uniq ID used for the variable.
+         --  This Id is returned by the debugger, and can be the address of a
+         --  variable (in Ada or C), or simply the name of the variable (in
+         --  Java) when no overloading exists and addresses don't have any
+         --  meaning. This is used to detect aliases.
 
-      Is_Alias_Of  : Display_Item := null;
-      --  Item for which we are an alias.
+         Is_Alias_Of  : Display_Item := null;
+         --  Item for which we are an alias.
 
-      Is_Dereference : Boolean := False;
-      --  True if the item was created as a result of a derefence of an
-      --  access type. Such items can be hidden as a result of aliases
-      --  detection, whereas items explicitly displayed by the user are
-      --  never hidden.
+         Is_Dereference : Boolean := False;
+         --  True if the item was created as a result of a derefence of an
+         --  access type. Such items can be hidden as a result of aliases
+         --  detection, whereas items explicitly displayed by the user are
+         --  never hidden.
 
-      Was_Alias      : Boolean := False;
-      --  Memorize whether the item was an alias in the previous display, so
-      --  that we can compute a new position for it.
+         Was_Alias      : Boolean := False;
+         --  Memorize whether the item was an alias in the previous display, so
+         --  that we can compute a new position for it.
 
-      Mode           : Items.Display_Mode := Items.Value;
-      --  Whether we should display the mode itself.
-   end record;
+         Mode           : Items.Display_Mode := Items.Value;
+         --  Whether we should display the mode itself.
+      end record;
 
    type GVD_Link_Record is new Gtkada.Canvas.Canvas_Link_Record with record
       Alias_Link : Boolean := False;

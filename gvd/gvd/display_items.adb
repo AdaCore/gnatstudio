@@ -483,10 +483,12 @@ package body Display_Items is
 
       Context : constant Box_Drawing_Context :=
         Get_Box_Context (GVD_Canvas (Item.Debugger.Data_Canvas));
-      Zoom : constant Gint := Gint (Get_Zoom (Item.Debugger.Data_Canvas));
-      Zoom_Spacing : constant Gint := Spacing * Zoom / 100;
-      Zoom_Buttons : constant Gint := Buttons_Size * Zoom / 100;
-      Zoom_Border : constant Gint := Border_Spacing * Zoom / 100;
+      Zoom_Spacing : constant Gint :=
+        To_Canvas (Item.Debugger.Data_Canvas, Spacing);
+      Zoom_Buttons : constant Gint :=
+        To_Canvas (Item.Debugger.Data_Canvas, Buttons_Size);
+      Zoom_Border : constant Gint :=
+        To_Canvas (Item.Debugger.Data_Canvas, Border_Spacing);
       W, H : Gint;
 
    begin
@@ -511,8 +513,7 @@ package body Display_Items is
 
       Alloc_Width := Gint'Max (Alloc_Width, Title_Width);
       Alloc_Width := Gint'Max
-        (Alloc_Width,
-         Gint (40 * Get_Zoom (Item.Debugger.Data_Canvas) / 100));
+        (Alloc_Width, To_Canvas (Item.Debugger.Data_Canvas, 40));
       Alloc_Height := Title_Height + Alloc_Height;
 
       Propagate_Width (Item.Entity.all, Alloc_Width - 2 * Zoom_Border);
@@ -520,12 +521,12 @@ package body Display_Items is
       --  3D Look ? If yes, keep some space for the shadow.
 
       if Get_Pref (Look_3d) then
-         Gtkada.Canvas.Initialize
+         Set_Screen_Size_And_Pixmap
            (Item,
             Get_Window (Item.Debugger.Data_Canvas),
             Alloc_Width + 1, Alloc_Height + 1);
       else
-         Gtkada.Canvas.Initialize
+         Set_Screen_Size_And_Pixmap
            (Item, Get_Window (Item.Debugger.Data_Canvas),
             Alloc_Width, Alloc_Height);
       end if;
@@ -633,9 +634,8 @@ package body Display_Items is
          Ysrc   => 0,
          Xdest  => Alloc_Width - Zoom_Buttons - Zoom_Spacing,
          Ydest  => Zoom_Spacing,
-         --   ??? Use To_Canvas
-         Width  => W * Gint (Get_Zoom (Item.Debugger.Data_Canvas)) / 100,
-         Height => H * Gint (Get_Zoom (Item.Debugger.Data_Canvas)) / 100);
+         Width  => To_Canvas (Item.Debugger.Data_Canvas, W),
+         Height => To_Canvas (Item.Debugger.Data_Canvas, H));
       Set_Clip_Mask (Context.Black_GC, Null_Pixmap);
       Set_Clip_Origin (Context.Black_GC, 0, 0);
 
@@ -854,12 +854,7 @@ package body Display_Items is
          L := new GVD_Link_Record;
          Configure (L, From, To, Arrow, Name);
          L.Alias_Link := Alias_Link;
-
-         if Attach_Links_To_Components then
-            Add_Link (Canvas, L, Straight);
-         else
-            Add_Link (Canvas, L, Automatic);
-         end if;
+         Add_Link (Canvas, L);
       end if;
    end Create_Link;
 
@@ -1011,12 +1006,14 @@ package body Display_Items is
      (Item   : access Display_Item_Record;
       Event  : Gdk.Event.Gdk_Event_Button)
    is
-      Zoom : constant Gint := Gint (Get_Zoom (Item.Debugger.Data_Canvas));
-      Zoom_Spacing : constant Gint := Spacing * Zoom / 100;
-      Zoom_Buttons : constant Gint := Buttons_Size * Zoom / 100;
+      Zoom_Spacing : constant Gint :=
+        To_Canvas (Item.Debugger.Data_Canvas, Spacing);
+      Zoom_Buttons : constant Gint :=
+        To_Canvas (Item.Debugger.Data_Canvas, Buttons_Size);
       Zoom_Buttons_Size : constant Gint :=
         Gint'Min (Buttons_Size, Zoom_Buttons);
-      Zoom_Border  : constant Gint := Border_Spacing * Zoom / 100;
+      Zoom_Border  : constant Gint :=
+        To_Canvas (Item.Debugger.Data_Canvas, Border_Spacing);
 
       Buttons_Start : Gint :=
         Gint (Get_Coord (Item).Width) - Num_Buttons * Zoom_Buttons -
@@ -1197,9 +1194,10 @@ package body Display_Items is
       Auto_Refresh : Boolean;
       Update_Value : Boolean := False)
    is
-      Zoom : constant Gint := Gint (Get_Zoom (Item.Debugger.Data_Canvas));
-      Zoom_Spacing : constant Gint := Spacing * Zoom / 100;
-      Zoom_Buttons : constant Gint := Buttons_Size * Zoom / 100;
+      Zoom_Spacing : constant Gint :=
+        To_Canvas (Item.Debugger.Data_Canvas, Spacing);
+      Zoom_Buttons : constant Gint :=
+        To_Canvas (Item.Debugger.Data_Canvas, Buttons_Size);
 
       Width : Gint := Gint (Get_Coord (Item).Width);
       Context : constant Box_Drawing_Context :=
@@ -1231,8 +1229,8 @@ package body Display_Items is
             Ysrc   => 0,
             Xdest  => Width - 2 * Zoom_Buttons - 2 * Zoom_Spacing,
             Ydest  => Zoom_Spacing,
-            Width  => W * Gint (Get_Zoom (Item.Debugger.Data_Canvas)) / 100,
-            Height => H * Gint (Get_Zoom (Item.Debugger.Data_Canvas)) / 100);
+            Width  => To_Canvas (Item.Debugger.Data_Canvas, W),
+            Height => To_Canvas (Item.Debugger.Data_Canvas, H));
 
       else
          Set_Clip_Mask (Context.Black_GC, Context.Locked_Mask);
@@ -1245,8 +1243,8 @@ package body Display_Items is
             Ysrc   => 0,
             Xdest  => Width - 2 * Zoom_Buttons - 2 * Zoom_Spacing,
             Ydest  => Zoom_Spacing,
-            Width  => W * Gint (Get_Zoom (Item.Debugger.Data_Canvas)) / 100,
-            Height => H * Gint (Get_Zoom (Item.Debugger.Data_Canvas)) / 100);
+            Width  => To_Canvas (Item.Debugger.Data_Canvas, W),
+            Height => To_Canvas (Item.Debugger.Data_Canvas, H));
       end if;
 
       Set_Clip_Mask (Context.Black_GC, Null_Pixmap);
@@ -1813,5 +1811,19 @@ package body Display_Items is
       D.Lang := Lang;
       return D;
    end Create_Drawing_Context;
+
+   ------------------------------------
+   -- Create_Tooltip_Drawing_Context --
+   ------------------------------------
+
+   function Create_Tooltip_Drawing_Context
+     (Canvas : access Gtkada.Canvas.Interactive_Canvas_Record'Class;
+      Pixmap : Gdk.Pixmap.Gdk_Pixmap) return Drawing_Context
+   is
+      D : Drawing_Context := Get_Tooltip_Context (GVD_Canvas (Canvas));
+   begin
+      D.Pixmap := Pixmap;
+      return D;
+   end Create_Tooltip_Drawing_Context;
 
 end Display_Items;
