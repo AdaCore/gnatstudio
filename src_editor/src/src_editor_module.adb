@@ -1491,7 +1491,7 @@ package body Src_Editor_Module is
 
          if File = Get_Filename (Child) then
             Box := Source_Box (Get_Widget (Child));
-            Check_Timestamp (Box.Editor);
+            Check_Timestamp (Box.Editor, Force => True);
          end if;
 
          Next (Iter);
