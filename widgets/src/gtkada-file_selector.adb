@@ -1227,7 +1227,6 @@ package body Gtkada.File_Selector is
       Last            : Natural := S'Last;
       D               : Dir_Type;
       Best_Match      : String (1 .. 1024);
-      Best_File_Match : String (1 .. 1024);
       File            : String (1 .. 1024);
 
       procedure Matcher
@@ -1321,8 +1320,6 @@ package body Gtkada.File_Selector is
                            J);
                end loop;
             end if;
-
-            Best_File_Match := Best_Match;
 
             Open (D, Win.Current_Directory.all);
 
