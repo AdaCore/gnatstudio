@@ -754,7 +754,6 @@ package body Switches_Editors is
    is
       S             : Switches_Edit   := Data.Switches;
       Project       : Project_Node_Id := Get_Project_From_View (Data.Project);
-      Switches_Name : Name_Id;
 
       procedure Change_Switches (Tool : Tool_Names; Pkg_Name : String);
       --  Changes the switches for a specific package and tool.
@@ -764,77 +763,16 @@ package body Switches_Editors is
       ---------------------
 
       procedure Change_Switches (Tool : Tool_Names; Pkg_Name : String) is
-         List : Project_Node_Id := Empty_Node;
-         Case_Item, Decl, Expr, Pkg : Project_Node_Id;
-         Found, F : Boolean := False;
+         Args : Argument_List := Get_Switches (S, Tool);
       begin
-         --  Create the string list for all the switches
-
-         declare
-            Args : Argument_List := Get_Switches (S, Tool);
-         begin
-            if Args'Length /= 0 then
-               List := Default_Project_Node (N_Literal_String_List, Prj.List);
-
-               for A in Args'Range loop
-                  Start_String;
-                  Store_String_Chars (Args (A).all);
-                  Expr := String_As_Expression (End_String);
-                  Set_Next_Expression_In_List
-                    (Expr, First_Expression_In_List (List));
-                  Set_First_Expression_In_List (List, Expr);
-               end loop;
-
-               Free (Args);
-            end if;
-         end;
-
-         --  ??? Shouldn't exist if there is already such a package => remove
-         --  the previous declaration.
-         if List = Empty_Node then
-            return;
-         end if;
-
-         --  Do we already have some declarations for this variable ? If yes,
-         --  we simply update them. Note that we need to update all of the
-         --  declarations, in case the user has put multiple of these.
-
-         Pkg := Get_Or_Create_Package (Project, Pkg_Name);
-         Case_Item := Current_Scenario_Case_Item (Project, Pkg);
-
-         Decl := First_Declarative_Item_Of (Case_Item);
-         while Decl /= Empty_Node loop
-            Expr := Current_Item_Node (Decl);
-
-            if Kind_Of (Expr) = N_Attribute_Declaration
-              and then Name_Of (Expr) = Switches_Name
-            then
-               F := False;
-               if Data.File_Name = No_String then
-                  F := (Associative_Array_Index_Of (Expr) = No_String);
-               else
-                  F := Associative_Array_Index_Of (Expr) /= No_String
-                    and then String_Equal
-                    (Associative_Array_Index_Of (Expr), Data.File_Name);
-               end if;
-
-               if F then
-                  --  ??? Should handle the case where List is Empty_Node
-                  Set_Current_Term (First_Term (Expression_Of (Expr)), List);
-                  Found := True;
-               end if;
-            end if;
-
-            Decl := Next_Declarative_Item (Decl);
-         end loop;
-
-         --  Create the new instruction to be added to the project
-
-         if List /= Empty_Node and then not Found then
-            Decl := Get_Or_Create_Attribute
-              (Case_Item, "switches", Data.File_Name);
-            Set_Expression_Of (Decl, Enclose_In_Expression (List));
-         end if;
+         Update_Attribute_Value_In_Scenario
+           (Project         => Project,
+            Pkg_Name        => Pkg_Name,
+            Attribute_Name  => "switches",
+            Values          => Args,
+            Attribute_Index => Data.File_Name,
+            Prepend         => False);
+         Free (Args);
       end Change_Switches;
 
    begin
@@ -845,10 +783,6 @@ package body Switches_Editors is
       --  ??? Should check whether the project is already normalized.
 
       Normalize_Project (Project);
-
-      Name_Len := 8;
-      Name_Buffer (1 .. Name_Len) := "switches";
-      Switches_Name := Name_Find;
 
       if (Get_Pages (S) and Gnatmake_Page) /= 0 then
          Change_Switches (Gnatmake, "gnatmake");
