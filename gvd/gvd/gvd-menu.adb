@@ -78,13 +78,21 @@ package body GVD.Menu is
       end if;
 
       declare
-         S : constant String := File_Selection_Dialog;
+         S    : constant String := File_Selection_Dialog;
+         Exec : GNAT.OS_Lib.String_Access;
       begin
          if S = "" then
             return;
          end if;
 
-         if Tab.Descriptor.Remote_Host'Length /= 0
+         Exec := Locate_Exec_On_Path (S);
+
+         if Exec /= null then
+            Set_Executable (Tab.Debugger, Exec.all, Mode => Hidden);
+            Change_Dir (Dir_Name (Exec.all));
+            Free (Exec);
+
+         elsif Tab.Descriptor.Remote_Host'Length /= 0
            or else Is_Regular_File (S)
          then
             Set_Executable (Tab.Debugger, S, Mode => Hidden);
