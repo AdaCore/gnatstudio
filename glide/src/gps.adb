@@ -47,10 +47,9 @@ with Gtkada.Dialogs;            use Gtkada.Dialogs;
 with Gtkada.MDI;                use Gtkada.MDI;
 with GVD.Types;
 with OS_Utils;                  use OS_Utils;
+with Projects.Registry;         use Projects;
 with GNAT.Command_Line;         use GNAT.Command_Line;
 with Ada.Text_IO;               use Ada.Text_IO;
-with Prj;                       use Prj;
-with Prj_API;
 with Traces;                    use Traces;
 with Ada.Exceptions;            use Ada.Exceptions;
 with Welcome;                   use Welcome;
@@ -576,6 +575,7 @@ procedure GPS is
 
 begin
    OS_Utils.Install_Ctrl_C_Handler (Ctrl_C_Handler'Unrestricted_Access);
+   Projects.Registry.Initialize;
 
    Gtk.Main.Init;
 
@@ -714,7 +714,7 @@ begin
    Kernel := GPS.Kernel;
    Destroy (GPS);
    Destroy (Kernel, Dir.all);
-   Prj_API.Finalize;
+   Projects.Registry.Finalize;
    Traces.Finalize;
 
    Free (Home);
