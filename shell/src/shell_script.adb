@@ -796,7 +796,17 @@ package body Shell_Script is
 
             L2 := First (L);
             while L2 /= String_List_Utils.String_List.Null_Node loop
-               Insert (" " & String_List_Utils.String_List.Data (L2));
+               declare
+                  Name : constant String :=
+                    String_List_Utils.String_List.Data (L2);
+               begin
+                  if Name'Length > 2
+                    and then Name (Name'First .. Name'First + 1) /= "__"
+                  then
+                     Insert (" " & Name);
+                  end if;
+               end;
+
                L2 := String_List_Utils.String_List.Next (L2);
             end loop;
 
