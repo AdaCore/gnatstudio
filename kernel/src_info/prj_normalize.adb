@@ -63,10 +63,10 @@ package body Prj_Normalize is
    type Variable_Values_Record;
    type Variable_Values is access Variable_Values_Record;
    type Variable_Values_Record is record
-      Variable : Project_Node_Id;  --  N_Variable_Reference
-      Name     : String_Id;        --  External reference name
-      Values   : Value_Array_Access;
-      Seen     : Boolean;          --  Internal use only
+      Name     : String_Id;          --  External reference name
+      Type_Def : Project_Node_Id;    --  N_String_Type_Declaration
+      Values   : Value_Array_Access; --  Current values
+      Seen     : Boolean;            --  Internal use only
       Next     : Variable_Values;
    end record;
    --  This list is used while parsing a case statement to store the current
@@ -78,8 +78,9 @@ package body Prj_Normalize is
    procedure Free (Variable : in out Variable_Values);
    --  Free the element pointed to by Variable
 
-   procedure Clone_Node (From : Project_Node_Id; To : Project_Node_Id);
-   --  Make an exact copy of From to To. This overwrites all the fields in To.
+   function Clone_Node (From : Project_Node_Id) return Project_Node_Id;
+   --  Return a clone of From. Note that it shares all the nodes that are
+   --  linked, like declarative items,...
 
    function Clone_Project (Project : Project_Node_Id) return Project_Node_Id;
    --  Return a duplicate of Project and its declarations. We do not duplicate
@@ -94,11 +95,15 @@ package body Prj_Normalize is
    --  shared. The underlying current item is shared.
 
    function Create_Case_Construction
-     (Value : Variable_Values; Child : Project_Node_Id)
+     (Project : Project_Node_Id;
+      Value   : Variable_Values;
+      Child   : Project_Node_Id)
       return Project_Node_Id;
    --  Return a N_Case_Construction for the variable defined in Value. Note
    --  that this doesn't create a nested case construction, only the first
    --  level for the first variable in Value.
+   --  The declaration for the variable itself is added at the beginning of the
+   --  project if needed.
    --  The list of declarative items in Child is added to each of the items
    --  in the case construction.
 
@@ -113,6 +118,13 @@ package body Prj_Normalize is
    --  This is the internal version of For_Each_Scenario_Case_Item.
    --  Project is the project that should be used to retrieve the name of the
    --  environment variables referenced by the variables.
+
+   function Create_Scenario_Variable
+     (Project : Project_Node_Id; Variable : Project_Node_Id)
+      return Variable_Values;
+   --  Return a new Variable_Values structure for Variable.
+   --  Variable must be a N_Typed_Variable_Declaration or a
+   --  N_Variable_Reference.
 
    ----------
    -- Free --
@@ -132,12 +144,14 @@ package body Prj_Normalize is
    -- Clone_Node --
    ----------------
 
-   procedure Clone_Node (From : Project_Node_Id; To : Project_Node_Id)
-   is
+   function Clone_Node (From : Project_Node_Id) return Project_Node_Id is
+      To : Project_Node_Id;
    begin
-      pragma Assert (From /= Empty_Node and then To /= Empty_Node);
+      pragma Assert (From /= Empty_Node);
+      To := Default_Project_Node (Kind_Of (From));
       Tree_Private_Part.Project_Nodes.Table (To) :=
         Tree_Private_Part.Project_Nodes.Table (From);
+      return To;
    end Clone_Node;
 
    -------------------
@@ -145,15 +159,11 @@ package body Prj_Normalize is
    -------------------
 
    function Clone_Project (Project : Project_Node_Id) return Project_Node_Id is
-      Project2 : Project_Node_Id := Default_Project_Node (N_Project);
-      Decl : Project_Node_Id := Default_Project_Node (N_Project_Declaration);
+      Project2, Decl : Project_Node_Id;
    begin
-      Clone_Node (From => Project, To => Project2);
-
-      --  Redefine the declaration
-      Set_Project_Declaration_Of (Project2, Decl);
-      Clone_Node (From => Project_Declaration_Of (Project), To => Decl);
-
+      Project2 := Clone_Node (Project);
+      Decl     := Clone_Node (Project_Declaration_Of (Project));
+      Set_Project_Declaration_Of    (Project2, Decl);
       Set_First_Declarative_Item_Of (Decl, Empty_Node);
       return Project2;
    end Clone_Project;
@@ -190,25 +200,60 @@ package body Prj_Normalize is
    ------------------------------
 
    function Create_Case_Construction
-     (Value : Variable_Values; Child : Project_Node_Id)
+     (Project : Project_Node_Id;
+      Value   : Variable_Values;
+      Child   : Project_Node_Id)
       return Project_Node_Id
    is
       Construct, Str, S, Item : Project_Node_Id;
+      Ref : String_Id;
    begin
-      pragma Assert
-        (Kind_Of (Value.Variable) = N_Variable_Reference
-         or else Kind_Of (Value.Variable) = N_Typed_Variable_Declaration);
+      --  Makre sure there is a definition for this variable (and its type) at
+      --  the top-level of the project (not in a package nor in another
+      --  project).
+      --  This is required so that normalized projects might be standalone.
 
-      Construct := Default_Project_Node (N_Case_Construction);
 
-      if Kind_Of (Value.Variable) = N_Variable_Reference then
-         Set_Case_Variable_Reference_Of (Construct, Value.Variable);
-      else
-         Set_Case_Variable_Reference_Of
-           (Construct, Create_Variable_Reference (Value.Variable));
+      --  Check if there is already a definition for the variable, and if not
+      --  add it. Note: we do this before testing for the type, since we are
+      --  adding in front of the declarative items list.
+
+      Item := First_Variable_Of (Project);
+      while Item /= Empty_Node loop
+         if Kind_Of (Item) = N_Typed_Variable_Declaration then
+            Ref := External_Reference_Of (Item);
+            exit when Ref /= No_String and then String_Equal (Ref, Value.Name);
+         end if;
+         Item := Next_Variable (Item);
+      end loop;
+
+      --  If not, add the variable.
+      --  ??? Currently, if the variable was already defined in a package, it
+      --  ??? will be duplicated (once at the beginning of the project, one in
+      --  ??? the package). Doesn't seem very important, though.
+
+      if Item = Empty_Node then
+         String_To_Name_Buffer (Value.Name);
+         Item := Get_Or_Create_Typed_Variable
+           (Project, Name_Buffer (1 .. Name_Len), Value.Type_Def,
+            Add_Before_First_Case_Or_Pkg => True);
       end if;
 
-      Str := First_Literal_String (String_Type_Of (Value.Variable));
+
+      --  Check if there is already a definition for the type, and if not add
+      --  it.
+      --  ??? To be implemented
+
+      if Expression_Of (Item) = Empty_Node then
+         String_To_Name_Buffer (Value.Name);
+         Set_Value_As_External (Item, Name_Buffer (1 .. Name_Len));
+      end if;
+
+      Construct := Default_Project_Node (N_Case_Construction);
+      Set_Case_Variable_Reference_Of
+        (Construct, Create_Variable_Reference (Item));
+
+      Str := First_Literal_String (Value.Type_Def);
       while Str /= Empty_Node loop
 
          --  Construct the case item, and add it to the list of
@@ -228,6 +273,52 @@ package body Prj_Normalize is
 
       return Construct;
    end Create_Case_Construction;
+
+   ------------------------------
+   -- Create_Scenario_Variable --
+   ------------------------------
+
+   function Create_Scenario_Variable
+     (Project : Project_Node_Id; Variable : Project_Node_Id)
+      return Variable_Values
+   is
+      Values     : Variable_Values;
+      Num_Values : Natural;
+      Choice     : Project_Node_Id;
+   begin
+      pragma Assert (Kind_Of (Variable) = N_Typed_Variable_Declaration
+                     or else Kind_Of (Variable) = N_Variable_Reference);
+
+      Values := new Variable_Values_Record'
+        (Name     => External_Variable_Name (Project, Variable),
+         Type_Def => String_Type_Of (Variable),
+         Values   => null,
+         Seen     => False,
+         Next     => null);
+
+      --  Count the number of possible values for the variable
+
+      Num_Values := 0;
+      Choice := First_Literal_String (Values.Type_Def);
+      while Choice /= Empty_Node loop
+         Num_Values := Num_Values + 1;
+         Choice := Next_Literal_String (Choice);
+      end loop;
+
+      --  Then allocate the list of values for the variable
+
+      Values.Values := new Value_Array (1 .. Num_Values);
+      Num_Values := 0;
+      Choice := First_Literal_String (Values.Type_Def);
+
+      while Choice /= Empty_Node loop
+         Num_Values := Num_Values + 1;
+         Values.Values (Num_Values).Value := String_Value_Of (Choice);
+         Choice := Next_Literal_String (Choice);
+      end loop;
+
+      return Values;
+   end Create_Scenario_Variable;
 
    ------------------------
    -- For_Each_Case_Stmt --
@@ -316,7 +407,8 @@ package body Prj_Normalize is
                   V := Values;
                   while V /= null loop
                      if not V.Seen then
-                        New_Case := Create_Case_Construction (V, New_Case);
+                        New_Case := Create_Case_Construction
+                          (Project, V, New_Case);
                         Process_Case_Recursive (New_Case);
                         Set_First_Declarative_Item_Of
                           (Current_Item, New_Case);
@@ -353,7 +445,7 @@ package body Prj_Normalize is
       end loop;
 
       if Case_Stmt = Empty_Node then
-         Case_Stmt := Create_Case_Construction (Values, Empty_Node);
+         Case_Stmt := Create_Case_Construction (Project, Values, Empty_Node);
       end if;
 
       Process_Case_Recursive (Case_Stmt);
@@ -392,7 +484,6 @@ package body Prj_Normalize is
          V         : Variable_Values;
          Name      : Name_Id;
          Case_Item : Project_Node_Id;
-         Num_Values : Natural;
 
          procedure Add_Decl_Item (To_Case_Item : Project_Node_Id);
          --  Add Decl_Item to To_Case_Item.
@@ -468,42 +559,11 @@ package body Prj_Normalize is
                   if V = null then
                      Case_Item := First_Case_Item_Of
                        (Current_Item_Node (Decl_Item));
-
-                     Values := new Variable_Values_Record'
-                       (Variable => Case_Variable_Reference_Of
-                          (Current_Item_Node (Decl_Item)),
-                        Name     => No_String,
-                        Values   => null,
-                        Seen     => False,
-                        Next     => Values);
-                     Values.Name := External_Variable_Name
-                       (Project, Values.Variable);
-
-                     --  Count the number of possible values for the variable
-
-                     Num_Values := 0;
-                     Choice := String_Type_Of (Case_Variable_Reference_Of
+                     V := Create_Scenario_Variable
+                       (Project, Case_Variable_Reference_Of
                         (Current_Item_Node (Decl_Item)));
-                     Choice := First_Literal_String (Choice);
-
-                     while Choice /= Empty_Node loop
-                        Num_Values := Num_Values + 1;
-                        Choice := Next_Literal_String (Choice);
-                     end loop;
-
-                     --  Then allocate the list of values for the variable
-
-                     Values.Values := new Value_Array (1 .. Num_Values);
-                     Num_Values := 0;
-                     Choice := String_Type_Of (Case_Variable_Reference_Of
-                        (Current_Item_Node (Decl_Item)));
-                     Choice := First_Literal_String (Choice);
-                     while Choice /= Empty_Node loop
-                        Num_Values := Num_Values + 1;
-                        Values.Values (Num_Values).Value :=
-                          String_Value_Of (Choice);
-                        Choice := Next_Literal_String (Choice);
-                     end loop;
+                     V.Next := Values;
+                     Values := V;
 
                      --  For all the case items in the current case
                      --  construction
@@ -640,6 +700,9 @@ package body Prj_Normalize is
       --  ??? item there
 
       declare
+         --  ??? This call is wrong in fact, since it doesn't fully reflect the
+         --  ??? scenario in case some of the variables were defined in some
+         --  ??? other package (even parent packages)
          Scenario_Variables : constant Project_Node_Array :=
            Find_Scenario_Variables (Project, Parse_Imported => False);
       begin
@@ -647,8 +710,8 @@ package body Prj_Normalize is
             String_To_Name_Buffer
               (External_Reference_Of (Scenario_Variables (J)));
             Values := new Variable_Values_Record'
-              (Variable => Scenario_Variables (J),
-               Name     => External_Reference_Of (Scenario_Variables (J)),
+              (Name     => External_Reference_Of (Scenario_Variables (J)),
+               Type_Def => String_Type_Of (Scenario_Variables (J)),
                Values   => new Value_Array'
                  (1 => (Prj.Ext.Value_Of (Name_Find), In_Process)),
                Seen     => False,
