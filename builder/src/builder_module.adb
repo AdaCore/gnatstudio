@@ -289,7 +289,7 @@ package body Builder_Module is
 
                if File /= VFS.No_File then
                   K := K + 1;
-                  R_Tmp (K) := new String'(Full_Name (File));
+                  R_Tmp (K) := new String'(Full_Name (File).all);
                end if;
 
                Result := new Argument_List'(R_Tmp (1 .. K) & Vars.all);
@@ -320,7 +320,7 @@ package body Builder_Module is
                      File_Arg := new String'("");
                   else
                      File_Arg :=
-                       new String'("ADA_SOURCES=" & Base_Name (File));
+                       new String'("ADA_SOURCES=" & Base_Name (File).all);
                   end if;
 
                   if Build_Progress then
@@ -524,7 +524,7 @@ package body Builder_Module is
                then
                   Args := new Argument_List'
                     (Clone (Default_Builder_Switches)
-                     & new String'(Full_Name (F)));
+                     & new String'(Full_Name (F).all));
                else
                   Args := Compute_Arguments
                     (Kernel, Syntax, Project_Path (Prj), F);
@@ -553,7 +553,7 @@ package body Builder_Module is
                   else
                      Args := new Argument_List'
                        (Clone (Default_Builder_Switches)
-                        & new String'(Full_Name (File)));
+                        & new String'(Full_Name (File).all));
                   end if;
 
                when Make_Syntax =>
@@ -668,12 +668,12 @@ package body Builder_Module is
            Glide_Window (Get_Main_Window (Kernel));
          File_Context : constant File_Selection_Context_Access :=
            File_Selection_Context_Access (Context);
-         File : VFS.Virtual_File := File_Information (File_Context);
+         File : constant VFS.Virtual_File := File_Information (File_Context);
          Cmd  : constant String :=
            Get_Attribute_Value
              (Get_Project (Kernel), Compiler_Command_Attribute,
               Default => "gnatmake", Index => "ada")
-           & " -q -u -gnats " & Full_Name (File);
+           & " -q -u -gnats " & Full_Name (File).all;
          Fd   : Process_Descriptor_Access;
          Args : Argument_List_Access;
          Lang : String := Get_Language_From_File
@@ -784,7 +784,7 @@ package body Builder_Module is
       if Prj = No_Project then
          Console.Insert
            (Kernel, -"Could not determine the project for file: "
-            & Full_Name (File),
+            & Full_Name (File).all,
             Mode => Error);
          return;
 
@@ -1218,17 +1218,17 @@ package body Builder_Module is
                if Active then
                   Args := Argument_String_To_List
                     (Get_Pref (K, GVD.Preferences.Execute_Command) & ' ' &
-                     Full_Name (Data.File) & ' ' & Arguments);
+                     Full_Name (Data.File).all & ' ' & Arguments);
                   Launch
                     (Args (Args'First).all, Args (Args'First + 1 .. Args'Last),
-                     -"Run: " & Base_Name (Data.File) & ' ' &
+                     -"Run: " & Base_Name (Data.File).all & ' ' &
                      Krunch (Arguments, 12));
 
                else
                   Args := Argument_String_To_List (Arguments);
                   Launch
-                    (Full_Name (Data.File),
-                     Args.all, -"Run: " & Base_Name (Data.File)
+                    (Full_Name (Data.File).all,
+                     Args.all, -"Run: " & Base_Name (Data.File).all
                      & ' ' & Krunch (Arguments, 12));
                end if;
 
