@@ -18,17 +18,17 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glide_Kernel; use Glide_Kernel;
-with Glide_Kernel.Modules; use Glide_Kernel.Modules;
-with Glide_Kernel.Console; use Glide_Kernel.Console;
-with Gdk.Event;    use Gdk.Event;
-with Gdk.Types;    use Gdk.Types;
-with Gdk.Types.Keysyms; use Gdk.Types.Keysyms;
-with Glib.Xml_Int; use Glib.Xml_Int;
+with Glide_Kernel;             use Glide_Kernel;
+with Glide_Kernel.Modules;     use Glide_Kernel.Modules;
+with Glide_Kernel.Console;     use Glide_Kernel.Console;
+with Gdk.Event;                use Gdk.Event;
+with Gdk.Types;                use Gdk.Types;
+with Gdk.Types.Keysyms;        use Gdk.Types.Keysyms;
+with Glib.Xml_Int;             use Glib.Xml_Int;
 with Commands.Interactive;     use Commands, Commands.Interactive;
-with HTables;      use HTables;
-with GNAT.OS_Lib;  use GNAT.OS_Lib;
-with GUI_Utils;    use GUI_Utils;
+with HTables;                  use HTables;
+with GNAT.OS_Lib;              use GNAT.OS_Lib;
+with GUI_Utils;                use GUI_Utils;
 with System;                   use System;
 with Ada.Exceptions;           use Ada.Exceptions;
 with Ada.Strings.Fixed;        use Ada.Strings.Fixed;
@@ -41,6 +41,7 @@ with Gtk.Tree_Selection;       use Gtk.Tree_Selection;
 with Gtk.Tree_Store;           use Gtk.Tree_Store;
 with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
 with Gtk.Main;                 use Gtk.Main;
+with Gtk.Menu;                 use Gtk.Menu;
 with Gtk.Menu_Item;            use Gtk.Menu_Item;
 with Gtk.Menu_Shell;           use Gtk.Menu_Shell;
 with Gtk.Paned;                use Gtk.Paned;
@@ -187,7 +188,7 @@ package body KeyManager_Module is
    --  Handle the "Grab", "Remove" and "Add" buttons
 
    function Grab_Multiple_Key
-     (Window : access Gtk_Window_Record'Class;
+     (Widget : access Gtk_Widget_Record'Class;
       Allow_Multiple : Boolean)
       return String;
    --  Grab a key binding, with support for multiple keymaps. Returns the
@@ -942,7 +943,7 @@ package body KeyManager_Module is
    -----------------------
 
    function Grab_Multiple_Key
-     (Window : access Gtk_Window_Record'Class;
+     (Widget : access Gtk_Widget_Record'Class;
       Allow_Multiple : Boolean)
       return String
    is
@@ -952,7 +953,7 @@ package body KeyManager_Module is
       Id    : Timeout_Handler_Id;
 
    begin
-      Key_Grab (Window, Key, Modif);
+      Key_Grab (Widget, Key, Modif);
       if Key /= GDK_Escape or else Modif /= 0 then
          Grabbed := new String'(Image (Key, Modif));
       else
@@ -964,7 +965,7 @@ package body KeyManager_Module is
       if Allow_Multiple then
          loop
             Id := Timeout_Add (500, Cancel_Grab'Access);
-            Key_Grab (Window, Key, Modif);
+            Key_Grab (Widget, Key, Modif);
             Timeout_Remove (Id);
 
             exit when Key = 0 and then Modif = 0;
@@ -1013,7 +1014,7 @@ package body KeyManager_Module is
               (Model, Parent (Model, Iter), Action_Column) =
               -Menu_Context_Name;
             Key : constant String := Grab_Multiple_Key
-              (Ed, Allow_Multiple => not Is_Menu);
+              (Ed.View, Allow_Multiple => not Is_Menu);
          begin
             if Key /= "" then
                Set (Ed.Model, Iter, Key_Column, Key);
@@ -1023,6 +1024,10 @@ package body KeyManager_Module is
 
          Handler.Active := True;
       end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception " & Exception_Information (E));
    end On_Grab_Key;
 
    -------------------
@@ -1047,6 +1052,10 @@ package body KeyManager_Module is
             Remove (Ed.Model, P);
          end if;
       end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception " & Exception_Information (E));
    end On_Remove_Key;
 
    ---------------------------
@@ -1076,6 +1085,10 @@ package body KeyManager_Module is
 
          Set_Text (D.Action_Name, Get_String (Model, Iter, 0));
       end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception " & Exception_Information (E));
    end Add_Selection_Changed;
 
    ---------------------
@@ -1084,11 +1097,15 @@ package body KeyManager_Module is
 
    procedure Add_Dialog_Grab (Dialog : access Gtk_Widget_Record'Class) is
       D   : constant Add_Editor := Add_Editor (Dialog);
-      Key : constant String := Grab_Multiple_Key (D, True);
+      Key : constant String := Grab_Multiple_Key (D.Grab, True);
    begin
       if Key /= "" then
          Set_Text (D.Grab, Key);
       end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception " & Exception_Information (E));
    end Add_Dialog_Grab;
 
    ----------------
@@ -1105,7 +1122,8 @@ package body KeyManager_Module is
       procedure Add_Menu
         (Model  : Gtk_Tree_Store;
          Parent : Gtk_Tree_Iter;
-         Menu   : access Gtk_Menu_Shell_Record'Class);
+         Menu   : access Gtk_Menu_Shell_Record'Class;
+         Path   : String);
       --  Add all the menus and submenus of Menu as children of Parent
 
       --------------
@@ -1115,33 +1133,60 @@ package body KeyManager_Module is
       procedure Add_Menu
         (Model  : Gtk_Tree_Store;
          Parent : Gtk_Tree_Iter;
-         Menu   : access Gtk_Menu_Shell_Record'Class)
+         Menu   : access Gtk_Menu_Shell_Record'Class;
+         Path   : String)
       is
          use Widget_List;
          Children : Widget_List.Glist := Get_Children (Menu);
          Tmp      : Widget_List.Glist := First (Children);
-         W        : Gtk_Widget;
+         W, Child : Gtk_Widget;
          Iter     : Gtk_Tree_Iter;
          pragma Unreferenced (Iter);
       begin
          while Tmp /= Null_List loop
             W := Get_Data (Tmp);
-            if W.all in Gtk_Menu_Shell_Record'Class then
-               Add_Menu (Model, Parent, Gtk_Menu_Shell (W));
+            if W.all in Gtk_Menu_Record'Class then
+               Add_Menu (Model, Parent,
+                         Gtk_Menu (W),
+                         Path & Get_Title (Gtk_Menu (W)) & '/');
+
+            elsif W.all in Gtk_Menu_Shell_Record'Class then
+               Add_Menu (Model, Parent, Gtk_Menu_Shell (W), Path);
+
             elsif W.all in Gtk_Menu_Item_Record'Class then
-               if Get_Submenu (Gtk_Menu_Item (W)) /= null then
-                  Add_Menu
-                    (Model, Parent,
-                     Gtk_Menu_Shell (Get_Submenu (Gtk_Menu_Item (W))));
-               else
-                  null;
-                  declare
-                     S : constant String := Get_Accel_Path (W);
-                  begin
-                     if S /= "" then
-                        Iter := Set (Model, S, Parent);
-                     end if;
-                  end;
+               --  ??? The best thing would be to get the accel_path for W.
+               --  However, the function _gtk_widget_get_accel_path is not
+               --  exported by gtk+ (at least on some architectures like
+               --  Solaris), so we have to emulate this as best we can...
+               --
+               --  This approach is however not really good, since menus
+               --  with no accel_path are still referenced. Maybe we should
+               --  general the accel_path on the fly when saving this dialog...
+
+               Child := Get_Child (Gtk_Menu_Item (W));
+
+               --  Child is null for separators
+               if Child /= null then
+
+                  --  The child is not an accel label only for togglemenu items
+                  --  as far as could be seen (Window menu), and we do not want
+                  --  to generate shortcuts for these anyway
+                  if Child.all in Gtk_Label_Record'Class then
+                     declare
+                        Label : constant String :=
+                          Get_Text (Gtk_Label (Child));
+                     begin
+                        if Get_Submenu (Gtk_Menu_Item (W)) /= null then
+                           Add_Menu
+                             (Model, Parent,
+                              Gtk_Menu_Shell (Get_Submenu (Gtk_Menu_Item (W))),
+                              Path & Label & '/');
+
+                        else
+                           Iter := Set (Model, Path & Label, Parent);
+                        end if;
+                     end;
+                  end if;
                end if;
             end if;
 
@@ -1273,7 +1318,8 @@ package body KeyManager_Module is
 
       Add_Menu (Dialog.Model,
                 Set (Dialog.Model, -"Menus"),
-                Glide_Window (Get_Main_Window (Ed.Kernel)).Menu_Bar);
+                Glide_Window (Get_Main_Window (Ed.Kernel)).Menu_Bar,
+                "<gps>/");
 
       Action_Iter := Start (Ed.Kernel);
       loop
@@ -1312,9 +1358,7 @@ package body KeyManager_Module is
 
       Show_All (Dialog);
 
-      loop
-         exit when Run (Dialog) /= Gtk_Response_OK;
-
+      while Run (Dialog) = Gtk_Response_OK loop
          declare
             Iter  : Gtk_Tree_Iter;
             Model : Gtk_Tree_Model;
@@ -1352,10 +1396,17 @@ package body KeyManager_Module is
                      exit;
                   end if;
                end;
+            else
+               exit;
             end if;
          end;
       end loop;
+
       Destroy (Dialog);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception " & Exception_Information (E));
    end On_Add_Key;
 
    ------------------
