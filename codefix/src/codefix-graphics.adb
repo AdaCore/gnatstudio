@@ -170,24 +170,26 @@ package body Codefix.Graphics is
       procedure Add_Tab;
       --  Add a page in the Notebook and initialize its data.
 
-      Current_Sol         : Extract_List.List_Node;
-      Proposition         : Vdiff_Access;
-      Label               : Gtk_Label;
-      Current_Nb_Tabs     : Integer;
-      Current_Vdiff       : Vdiff_Lists.List_Node;
-      Extended_Extract    : Extract;
-      Success_Update      : Boolean;
-      Already_Fixed       : Boolean;
-      New_Popdown_Str     : String_List.Glist;
+      Current_Sol      : Extract_List.List_Node;
+      Proposition      : Vdiff_Access;
+      Label            : Gtk_Label;
+      Current_Nb_Tabs  : Integer;
+      Current_Vdiff    : Vdiff_Lists.List_Node;
+      Extended_Extract : Extract;
+      Success_Update   : Boolean;
+      Already_Fixed    : Boolean;
+      New_Popdown_Str  : String_List.Glist;
 
       -----------------
       -- Display_Sol --
       -----------------
 
       procedure Display_Sol is
-         Current_Line     : Ptr_Extract_Line;
-         First_Iterator   : Text_Iterator_Access;
-         Current_Iterator : Text_Iterator_Access;
+         Current_Line      : Ptr_Extract_Line;
+         First_Iterator    : Text_Iterator_Access;
+         Current_Iterator  : Text_Iterator_Access;
+         Previous_File     : Dynamic_String := new String'("");
+         Total_Nb_Files    : Natural := Get_Nb_Files (Extended_Extract);
       begin
 
          Current_Line := Get_First_Line (Extended_Extract);
@@ -199,6 +201,20 @@ package body Codefix.Graphics is
          end if;
 
          loop
+            if Total_Nb_Files > 1
+              and then Previous_File.all /=
+                Get_Cursor (Current_Line.all).File_Name.all
+            then
+               Assign (Previous_File, Get_Cursor (Current_Line.all).File_Name);
+               Current_Iterator.New_Line :=
+                 new String'(Previous_File.all);
+               Current_Iterator.Old_Line :=
+                 new String'(Previous_File.all);
+               Current_Iterator.File_Caption := True;
+               Current_Iterator.Next := new Text_Iterator;
+               Current_Iterator := Current_Iterator.Next;
+            end if;
+
             Current_Iterator.New_Line := new String'
               (Get_New_Text (Current_Line.all));
 
@@ -246,13 +262,12 @@ package body Codefix.Graphics is
 
          Set_Text (Proposition.Label1, "Old text");
          Set_Text (Proposition.Label2, "Fixed text");
-         Set_Text (Proposition.File_Label1,
-                   Get_Cursor (Get_First_Line
-                                 (Extended_Extract).all).File_Name.all);
+         Set_Text
+           (Proposition.File_Label1, Get_Files_Names (Extended_Extract));
+         Set_Text
+           (Proposition.File_Label2, Get_Files_Names (Extended_Extract));
 
-         Set_Text (Proposition.File_Label2,
-                   Get_Cursor (Get_First_Line
-                                 (Extended_Extract).all).File_Name.all);
+         Free (Previous_File);
       end Display_Sol;
 
       ----------------
@@ -320,7 +335,6 @@ package body Codefix.Graphics is
 
       while Current_Sol /= Extract_List.Null_Node loop
          Extended_Extract := Clone (Extract (Data (Current_Sol)));
-
          Extend_Before
            (Extended_Extract,
             Graphic_Codefix.Current_Text,
@@ -329,7 +343,6 @@ package body Codefix.Graphics is
            (Extended_Extract,
             Graphic_Codefix.Current_Text,
             Display_Lines_After);
-
          Update_Changes
            (Graphic_Codefix.Corrector,
             Graphic_Codefix.Current_Text,
