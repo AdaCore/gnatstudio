@@ -6294,7 +6294,23 @@ shell commands and predefined commands, as will be explained in more details
 below.
 
 The general form to define new actions is to use the @code{<action>} tag.
-This XML tag requires one attribute, its @code{name}. It can have one or
+This tag accepts the following attributes:
+
+@table @code
+@item name   (mandatory)
+This tag must be specified. It provides the name by which the action is
+referenced in other parts of the customization files, for instance when it is
+associated with a menu or a toolbar button. The name can contain any character,
+although it is recommended to avoid XML special characters.
+
+@item output  (optional)
+If specified, this attribute indicates where the output of the commands will
+be sent by default. This can be overriden by each command, using the same
+attribute for @code{<shell>} and @code{<external>} tags,
+@xref{Redirecting the output of the command}.
+@end table
+
+The @code{<action>} can have one or
 several children, all of which define a particular command to execute. All
 of these commands are executed one after the other, unless one of them
 fails in which case the following commands are not executed.
@@ -7724,7 +7740,6 @@ a window already exists, it is cleared up before any of the command in the
 chain is executed. The output of the command, as well
 as the text of the command itself, are sent to this new window.
 @end table
-
 
 This attribute can also be specified at the @code{<action>} tag level, in which
 case it defines the default value for all @code{<shell>} and @code{<external>}
