@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with Ada.Exceptions;       use Ada.Exceptions;
+with Ada.Unchecked_Deallocation;
 with GNAT.Heap_Sort_G;
 with GNAT.Strings;         use GNAT.Strings;
 
@@ -840,11 +841,12 @@ package body Browsers.Entities is
       Lib_Info : LI_File_Ptr)
    is
       Prim : Primitive_Iterator := Get_Primitive_Operations
-        (Lib_Info => Lib_Info, Entity => Item.Entity);
-      L : constant Natural := Length (Prim);
-
-      Arr : Entity_Information_Array (0 .. L);
-      --  Index 0 is needed for heap sort
+        (Lib_Info => Lib_Info, Entity => Item.Entity,
+         Include_Inherited => Item.Inherited_Primitives);
+      Arr   : Entity_Information_Array_Access :=
+        new Entity_Information_Array (0 .. 50);
+      Arr2  : Entity_Information_Array_Access;
+      Index : Natural := 1;
 
       Parent_Lib_Info : LI_File_Ptr;
       Parent_Iter : Parent_Iterator;
@@ -852,20 +854,42 @@ package body Browsers.Entities is
       Parent_Prim : Primitive_Iterator;
       Op    : Entity_Information;
 
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Entity_Information_Array, Entity_Information_Array_Access);
+
    begin
-      for Index in 1 .. Arr'Last loop
-         Arr (Index) := Get (Prim);
+      Trace (Me, "Add_Primitive_Operations: Inherited_Primitives="
+             & Item.Inherited_Primitives'Img);
+
+      --  Store all primitive operations in an array, so that we can display
+      --  them sorted, and possibly filter them out.
+
+      loop
+         Parent := Get (Prim);
+         exit when Parent = No_Entity_Information;
+
+         if Index >= Arr'Last then
+            Arr2 := Arr;
+            Arr  := new Entity_Information_Array (Arr2'First .. 2 * Arr2'Last);
+            Arr (Arr2'Range) := Arr2.all;
+            Unchecked_Free (Arr2);
+         end if;
+
+         Arr (Index) := Parent;
+         Index := Index + 1;
+
          Next (Prim);
       end loop;
 
-      Sort (Arr);
-
-      Trace (Me, "Add_Primitive_Operations: Inherited_Primitives="
-             & Item.Inherited_Primitives'Img);
+      Sort (Arr (Arr'First .. Index - 1));
 
       if not Item.Inherited_Primitives then
          --  For each inherited operation, remove it from the list of
          --  operations to display.
+         --  ??? Would be more efficient if GNAT simply didn't give that
+         --  information initially, we can easily get it from the
+         --  parent's list.
+         --  This step isn't needed for C++.
          Parent_Iter := Get_Parent_Types (Lib_Info, Item.Entity);
          loop
             Parent := Get (Parent_Iter);
@@ -874,13 +898,13 @@ package body Browsers.Entities is
             Parent_Lib_Info := Locate_From_Source_And_Complete
               (Kernel, Get_Declaration_File_Of (Parent));
             Parent_Prim := Get_Primitive_Operations
-              (Parent_Lib_Info, Parent);
+              (Parent_Lib_Info, Parent, Include_Inherited => False);
 
             loop
                Op := Get (Parent_Prim);
                exit when Op = No_Entity_Information;
 
-               for A in 1 .. L loop
+               for A in 1 .. Index - 1 loop
                   if Arr (A) /= No_Entity_Information
                     and then Is_Equal (Arr (A), Op)
                   then
@@ -893,16 +917,22 @@ package body Browsers.Entities is
                Next (Parent_Prim);
             end loop;
 
+            Destroy (Parent_Prim);
             Destroy (Parent);
             Next (Parent_Iter);
          end loop;
+
+         Destroy (Parent_Iter);
       end if;
 
-      for E in 1 .. L loop
+      for E in 1 .. Index - 1 loop
          if Arr (E) /= No_Entity_Information then
             Add_Subprogram (List, Item, Arr (E));
          end if;
       end loop;
+
+      Unchecked_Free (Arr);
+      Destroy (Prim);
    end Add_Primitive_Operations;
 
    --------------------
@@ -1287,6 +1317,8 @@ package body Browsers.Entities is
          Next (Iter);
       end loop;
 
+      Destroy (Iter);
+
       Set_Parents_Shown (It, True);
       Redraw_Title_Bar (Item);
       Pop_State (Kernel);
@@ -1332,8 +1364,7 @@ package body Browsers.Entities is
 
          Destroy (Child);
 
-         Next (Get_Language_Handler (Data.Kernel), Data.Iter.all,
-               Get_LI_File_List (Data.Kernel));
+         Next (Get_Language_Handler (Data.Kernel), Data.Iter.all);
          return True;
       end if;
 
@@ -1373,7 +1404,6 @@ package body Browsers.Entities is
         (Root_Project => Get_Project (Kernel),
          Lang_Handler => Get_Language_Handler (Kernel),
          Entity       => Type_Item (Item).Entity,
-         List         => Get_LI_File_List (Kernel),
          Iterator     => Data.Iter.all,
          LI_Once      => True);
 
@@ -1407,6 +1437,8 @@ package body Browsers.Entities is
         and then Get_Event_Type (Event) = Button_Release
       then
          It.Inherited_Primitives := not It.Inherited_Primitives;
+         Trace (Me, "Hide_Show_Inherited => "
+                & It.Inherited_Primitives'Img);
          Refresh (It);
          Item_Updated (Get_Canvas (Get_Browser (It)), It);
       end if;
