@@ -47,7 +47,7 @@ package body GVD.Trace is
    procedure Output_Error (Window : GVD_Main_Window; Str : String) is
    begin
       Output_Line (Window, "# " & Str);
-      Print_Message (Window.Statusbar1, Error, Str);
+      Print_Message (Window.Statusbar, Error, Str);
    end Output_Error;
 
    -----------------
@@ -57,7 +57,7 @@ package body GVD.Trace is
    procedure Output_Info (Window : GVD_Main_Window; Str : String) is
    begin
       Output_Line (Window, "% " & Str);
-      Print_Message (Window.Statusbar1, Help, Str);
+      Print_Message (Window.Statusbar, Help, Str);
    end Output_Info;
 
    -----------------
