@@ -1787,14 +1787,15 @@ package body Src_Editor_Buffer.Line_Information is
 
    procedure Fold_All (Buffer : access Source_Buffer_Record'Class) is
       Buffer_Lines : Line_Data_Array_Access renames Buffer.Line_Data;
-      Command : Command_Access;
-
+      Command      : Command_Access;
+      Result       : Command_Return_Type;
+      pragma Unreferenced (Result);
    begin
       if Buffer.Block_Highlighting_Column = -1 then
          return;
       end if;
 
-      for Line in Buffer_Lines'Range loop
+      for Line in reverse Buffer_Lines'Range loop
          if Buffer_Lines (Line).Side_Info_Data /= null
            and then Buffer_Lines (Line).Side_Info_Data
            (Buffer.Block_Highlighting_Column).Info /= null
@@ -1806,13 +1807,12 @@ package body Src_Editor_Buffer.Line_Information is
             if Command /= null
               and then Command.all in Hide_Editable_Lines_Type'Class
             then
-               Buffer.Blocks_Timeout_Registered := False;
+               Result := Execute (Command);
 
-               if Execute (Command) = Success then
-                  Fold_All (Buffer);
-               end if;
-
-               return;
+               --  Set the field Blocks_Need_Parsing to False to indicate that
+               --  even though lines have been deleted, the block information
+               --  hasn't changed.
+               Buffer.Blocks_Need_Parsing := False;
             end if;
          end if;
       end loop;
@@ -1824,13 +1824,15 @@ package body Src_Editor_Buffer.Line_Information is
 
    procedure Unfold_All (Buffer : access Source_Buffer_Record'Class) is
       Buffer_Lines : Line_Data_Array_Access renames Buffer.Line_Data;
-      Command : Command_Access;
+      Command      : Command_Access;
+      Result       : Command_Return_Type;
+      pragma Unreferenced (Result);
    begin
       if Buffer.Block_Highlighting_Column = -1 then
          return;
       end if;
 
-      for Line in Buffer_Lines'Range loop
+      for Line in reverse Buffer_Lines'Range loop
          if Buffer_Lines (Line).Side_Info_Data /= null
            and then Buffer_Lines
              (Line).Side_Info_Data
@@ -1843,13 +1845,12 @@ package body Src_Editor_Buffer.Line_Information is
             if Command /= null
               and then Command.all in Unhide_Editable_Lines_Type'Class
             then
-               Buffer.Blocks_Timeout_Registered := False;
+               Result := Execute (Command);
 
-               if Execute (Command) = Success then
-                  Unfold_All (Buffer);
-               end if;
-
-               return;
+               --  Set the field Blocks_Need_Parsing to False to indicate that
+               --  even though lines have been deleted, the block information
+               --  hasn't changed.
+               Buffer.Blocks_Need_Parsing := False;
             end if;
          end if;
       end loop;
