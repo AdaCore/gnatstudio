@@ -49,6 +49,7 @@ with Vdiff_Pkg;             use Vdiff_Pkg;
 with Vdiff_Utils;           use Vdiff_Utils;
 with Diff_Utils;            use Diff_Utils;
 
+with Prj_Editor_Window;     use Prj_Editor_Window;
 with Src_Editor_Box;        use Src_Editor_Box;
 
 with GVD.Dialogs;           use GVD.Dialogs;
@@ -678,13 +679,12 @@ package body Glide_Menu is
       Action : Guint;
       Widget : Limited_Widget)
    is
-      --  Top  : constant Glide_Window := Glide_Window (Object);
-      --  Page : constant Glide_Page.Glide_Page :=
-      --    Glide_Page.Glide_Page (Get_Current_Process (Top));
+      Top  : constant Glide_Window := Glide_Window (Object);
+      Win  : Project_Editor;
 
    begin
-      --  Edit_Project (Top.Kernel)
-      null;
+      Gtk_New (Win, Get_Project_File_Name (Top.Kernel));
+      Show_All (Win);
    end On_Edit_Project;
 
    -------------------------
