@@ -18,8 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Prj.Attr; use Prj, Prj.Attr;
-
 with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
 with Glib.Values;               use Glib.Values;
@@ -64,18 +62,17 @@ with Gtk.Size_Group;            use Gtk.Size_Group;
 with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Tooltips;              use Gtk.Tooltips;
 with Gtk.Widget;                use Gtk.Widget;
+with Prj.Attr;                  use Prj, Prj.Attr;
 with Projects.Editor;           use Projects, Projects.Editor;
 with Projects.Registry;         use Projects.Registry;
 with File_Utils;                use File_Utils;
 with Basic_Types;               use Basic_Types;
 with Language_Handlers;         use Language_Handlers;
-with Language;                  use Language;
 with Ada.Unchecked_Deallocation;
 with Scenario_Selectors;        use Scenario_Selectors;
 with Traces;                    use Traces;
 with Ada.Exceptions;            use Ada.Exceptions;
 with Project_Viewers;           use Project_Viewers;
-with Languages_Lists;           use Languages_Lists;
 with Gtk.Event_Box;             use Gtk.Event_Box;
 with VFS;                       use VFS;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
@@ -389,39 +386,19 @@ package body Project_Properties is
    --  widgets like combo boxes,... depending on the type of the attribute)
 
 
-
-
    type Widget_Array is array (Natural range <>) of Gtk_Widget;
    type Widget_Array_Access is access Widget_Array;
 
-   type Lang_Widget_Info is record
-      Language  : GNAT.OS_Lib.String_Access;
-      Widget    : Gtk_Widget;
-      Attribute : Project_Field;
-   end record;
-   type Lang_Widget_Array is array (Natural range <>) of Lang_Widget_Info;
-   type Lang_Widget_Array_Access is access Lang_Widget_Array;
-
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Widget_Array, Widget_Array_Access);
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Lang_Widget_Array, Lang_Widget_Array_Access);
 
    type Properties_Editor_Record is new Gtk.Dialog.Gtk_Dialog_Record with
    record
       Name               : Gtk.GEntry.Gtk_Entry;
       Path               : Gtk.GEntry.Gtk_Entry;
-      Debugger           : Gtk.GEntry.Gtk_Entry;
-      Global_Pragmas     : Gtk.GEntry.Gtk_Entry;
-      Local_Pragmas      : Gtk.GEntry.Gtk_Entry;
-      Compilers          : Lang_Widget_Array_Access;
-      Languages          : Languages_Lists.Languages_List;
       Use_Relative_Paths : Gtk.Check_Button.Gtk_Check_Button;
-      Tools_Host         : Gtk.GEntry.Gtk_Entry;
-      Program_Host       : Gtk.GEntry.Gtk_Entry;
-      Protocol           : Gtk.GEntry.Gtk_Entry;
 
-      Selector     : Scenario_Selector;
+      Selector           : Scenario_Selector;
       Prj_Selector : Project_Selector;
 
       Pages              : Widget_Array_Access;
@@ -444,13 +421,12 @@ package body Project_Properties is
       Kernel  : access Kernel_Handle_Record'Class);
    --  Internal initialization function
 
-   procedure Selected_Languages_Changed
-     (Editor : access Gtk_Widget_Record'Class);
-   --  Refresh the list of sensitive fields for compiler,... when the list of
-   --  languages has changed.
-
    procedure Destroyed (Editor : access Gtk_Widget_Record'Class);
    --  Called when the editor is destroyed
+
+   function Get_Languages
+     (Editor : Properties_Editor) return GNAT.OS_Lib.String_List;
+   --  Return the list of languages currently set in the editor
 
    function Create_General_Page
      (Editor  : access Properties_Editor_Record'Class;
@@ -478,17 +454,6 @@ package body Project_Properties is
       return Project_Edition_Type;
    --  Display a warning dialog to indicate that the current view is
    --  incomplete, and it might be dangereous to edit the properties.
-
-   procedure Add_Widget
-     (List      : in out Lang_Widget_Array_Access;
-      Lang      : String;
-      Widget    : access Gtk_Widget_Record'Class;
-      Attribute : Project_Field);
-   --  Add a new entry in List. Resize as needed
-
-   function Get_Value (Project : Project_Type; Attribute : Project_Field)
-      return String;
-   --  Return the value of Attribute in Project.
 
    function Get_Current_Value
      (Project : Project_Type;
@@ -1396,32 +1361,6 @@ package body Project_Properties is
       end loop;
    end Customize;
 
-   ----------------
-   -- Add_Widget --
-   ----------------
-
-   procedure Add_Widget
-     (List      : in out Lang_Widget_Array_Access;
-      Lang      : String;
-      Widget    : access Gtk_Widget_Record'Class;
-      Attribute : Project_Field)
-   is
-      Tmp : Lang_Widget_Array_Access := List;
-   begin
-      if List = null then
-         List := new Lang_Widget_Array (1 .. 1);
-      else
-         List := new Lang_Widget_Array (Tmp'First .. Tmp'Last + 1);
-         List (Tmp'Range) := Tmp.all;
-         Unchecked_Free (Tmp);
-      end if;
-
-      List (List'Last) :=
-        (Language  => new String'(Lang),
-         Widget    => Gtk_Widget (Widget),
-         Attribute => Attribute);
-   end Add_Widget;
-
    ------------------------
    -- Paths_Are_Relative --
    ------------------------
@@ -1458,70 +1397,8 @@ package body Project_Properties is
    procedure Destroyed (Editor : access Gtk_Widget_Record'Class) is
       E : constant Properties_Editor := Properties_Editor (Editor);
    begin
-      if E.Compilers /= null then
-         for C in E.Compilers'Range loop
-            Free (E.Compilers (C).Language);
-         end loop;
-         Unchecked_Free (E.Compilers);
-      end if;
-
       Unchecked_Free (E.Pages);
    end Destroyed;
-
-   ---------------
-   -- Get_Value --
-   ---------------
-
-   function Get_Value (Project : Project_Type; Attribute : Project_Field)
-      return String is
-   begin
-      if Attribute.Attribute_Index = null then
-         if Attribute.Values /= null then
-            return Get_Attribute_Value
-              (Project,
-               Build (Ide_Package, Attribute.Attribute_Name.all),
-               Default => Attribute.Values (Attribute.Values'First).all);
-         else
-            return Get_Attribute_Value
-              (Project, Build (Ide_Package, Attribute.Attribute_Name.all));
-         end if;
-
-      else
-         if Attribute.Values /= null then
-            return Get_Attribute_Value
-              (Project,
-               Build (Ide_Package, Attribute.Attribute_Name.all),
-               Default => Attribute.Values (Attribute.Values'First).all,
-               Index   => Attribute.Attribute_Index.all);
-         else
-            return Get_Attribute_Value
-              (Project,
-               Build (Ide_Package, Attribute.Attribute_Name.all),
-               Index   => Attribute.Attribute_Index.all);
-         end if;
-      end if;
-   end Get_Value;
-
-   --------------------------------
-   -- Selected_Languages_Changed --
-   --------------------------------
-
-   procedure Selected_Languages_Changed
-     (Editor : access Gtk_Widget_Record'Class)
-   is
-      Ed   : constant Properties_Editor := Properties_Editor (Editor);
-      Lang : Argument_List := Get_Languages (Ed.Languages);
-   begin
-      if Ed.Compilers /= null then
-         for F in Ed.Compilers'Range loop
-            Set_Sensitive
-              (Ed.Compilers (F).Widget,
-               Contains (Lang, Ed.Compilers (F).Language.all,
-                         Case_Sensitive => False));
-         end loop;
-      end if;
-      Free (Lang);
-   end Selected_Languages_Changed;
 
    -------------------------
    -- Create_General_Page --
@@ -1535,16 +1412,10 @@ package body Project_Properties is
    is
       Button2      : Gtk_Button;
       Label        : Gtk_Label;
-      Ent     : Gtk_GEntry;
-      Combo        : Gtk_Combo;
-      Items        : Gtk.Enums.String_List.Glist;
       Frame        : Gtk_Frame;
       Group        : Gtk_Size_Group;
       Vbox, Box, Hbox : Gtk_Box;
       Event        : Gtk_Event_Box;
-      Languages : Argument_List := Known_Languages
-        (Get_Language_Handler (Kernel), Sorted => False);
-      Project_Languages : Argument_List :=  Get_Languages (Project);
 
       use Gtk.Enums.String_List;
 
@@ -1620,278 +1491,6 @@ package body Project_Properties is
                  & " between projects,...) will be stored as paths relative"
                  & " to the location of the project file. It will thus be"
                  & " easier to move the project file to another directory"));
-
-      --  Languages frame
-
-      Gtk_New (Editor.Languages, Kernel, Project);
-      Pack_Start (Vbox, Editor.Languages, Expand => True);
-      Widget_Callback.Object_Connect
-        (Editor.Languages, "changed",
-         Widget_Callback.To_Marshaller (Selected_Languages_Changed'Access),
-         Editor);
-
-      --  Tools frame
-
-      Gtk_New (Frame, -"Tools");
-      Set_Border_Width (Frame, 5);
-      Pack_Start (Vbox, Frame, Expand => False);
-
-      Gtk_New_Vbox (Box, Homogeneous => True);
-      Add (Frame, Box);
-
-      for L in Languages'Range loop
-         declare
-            Fields : constant Project_Field_Array := Get_Project_Fields
-              (Get_Language_By_Name
-               (Get_Language_Handler (Kernel), Languages (L).all));
-         begin
-            for F in Fields'Range loop
-               Gtk_New_Hbox (Hbox, Homogeneous => False);
-               Pack_Start (Box, Hbox);
-
-               Gtk_New (Event);
-               Pack_Start (Hbox, Event, Expand => False);
-
-               Gtk_New (Label, Fields (F).Description.all);
-               Set_Alignment (Label, 0.0, 0.5);
-               Add (Event, Label);
-               Add_Widget (Group, Label);
-               --  Set_Tip (Get_Tooltips (Kernel), Event,
-               --           Fields (F).Description.all);
-               --  ??? Should use real tooltip
-
-               if Fields (F).Values /= null then
-                  Gtk_New (Combo);
-                  Set_Width_Chars (Get_Entry (Combo), 0);
-                  Pack_Start (Hbox, Combo);
-
-                  for V in Fields (F).Values'Range loop
-                     Append (Items, Fields (F).Values (V).all);
-                  end loop;
-
-                  Set_Popdown_Strings (Combo, Items);
-                  Free_String_List (Items);
-
-                  Ent := Get_Entry (Combo);
-                  Add_Widget
-                    (Editor.Compilers, Languages (L).all, Combo, Fields (F));
-               else
-                  Gtk_New (Ent);
-                  Pack_Start (Hbox, Ent);
-                  Add_Widget
-                    (Editor.Compilers, Languages (L).all, Ent, Fields (F));
-               end if;
-
-               Set_Editable (Ent, Fields (F).Editable);
-               Set_Text (Ent, Get_Value (Project, Fields (F)));
-            end loop;
-         end;
-      end loop;
-
-      --  Debugger
-
-      Gtk_New_Hbox (Hbox, Homogeneous => False);
-      Pack_Start (Box, Hbox);
-
-      Gtk_New (Event);
-      Pack_Start (Hbox, Event, Expand => False);
-      Gtk_New (Label, -"Debugger:");
-      Add_Widget (Group, Label);
-      Set_Alignment (Label, 0.0, 0.5);
-      Add (Event, Label);
-      Set_Tip (Get_Tooltips (Kernel), Event,
-               -"Name and location of the debugger to use");
-
-      Gtk_New (Combo);
-      Set_Width_Chars (Get_Entry (Combo), 0);
-      Pack_Start (Hbox, Combo, Expand => True);
-
-      Append (Items, "gdb");
-      Append (Items, "powerpc-wrs-vxworks-gdb");
-      Append (Items, "powerpc-wrs-vxworksae-gdb");
-      Append (Items, "powerpc-elf-gdb");
-      Append (Items, "i386-wrs-vxworks-gdb");
-      Append (Items, "m68k-wrs-vxworks-gdb");
-      Append (Items, "mips-wrs-vxworks-gdb");
-      Append (Items, "sparc-wrs-vxworks-gdb");
-      Append (Items, "sparc64-wrs-vxworks-gdb");
-      Append (Items, "xscale-wrs-vxworks-gdb");
-      Append (Items, "powerpc-elf-lynxos-gdb");
-      Append (Items, "powerpc-xcoff-lynxos-gdb");
-      Set_Popdown_Strings (Combo, Items);
-      Free_String_List (Items);
-      Editor.Debugger := Get_Entry (Combo);
-      Set_Text
-        (Editor.Debugger,
-         Get_Attribute_Value
-         (Project, Debugger_Command_Attribute, Default => "gdb"));
-
-      --  Configuration frame
-
-      Gtk_New (Frame, -"External configuration");
-      Set_Border_Width (Frame, 5);
-      Pack_Start (Vbox, Frame, Expand => False);
-
-      Gtk_New_Vbox (Box, Homogeneous => True);
-      Add (Frame, Box);
-
-      Gtk_New_Hbox (Hbox, Homogeneous => False);
-      Pack_Start (Box, Hbox);
-
-      Gtk_New (Event);
-      Pack_Start (Hbox, Event, Expand => False);
-      Gtk_New (Label, -"Global pragmas:");
-      Add_Widget (Group, Label);
-      Set_Alignment (Label, 0.0, 0.5);
-      Add (Event, Label);
-      Set_Tip (Get_Tooltips (Kernel), Event,
-               -("External file that contains the configuration pragmas to use"
-                 & " for Ada sources. This file will be used both for this"
-                 & " project and all its imported projects"));
-
-      Gtk_New (Editor.Global_Pragmas);
-      Set_Width_Chars (Editor.Global_Pragmas, 0);
-      Pack_Start (Hbox, Editor.Global_Pragmas, Expand => True);
-      Set_Text
-        (Editor.Global_Pragmas,
-         Get_Attribute_Value
-         (Project, Global_Pragmas_Attribute,
-          Default => ""));
-
-      Gtk_New (Button2, -"Browse");
-      Pack_Start (Hbox, Button2, Expand => False);
-      Widget_Callback.Object_Connect
-        (Button2, "clicked",
-         Widget_Callback.To_Marshaller (Browse_Location'Access),
-         Slot_Object => Editor.Global_Pragmas);
-
-      Gtk_New_Hbox (Hbox, Homogeneous => False);
-      Pack_Start (Box, Hbox);
-
-      Gtk_New (Event);
-      Pack_Start (Hbox, Event, Expand => False);
-      Gtk_New (Label, -"Local pragmas:");
-      Add_Widget (Group, Label);
-      Set_Alignment (Label, 0.0, 0.5);
-      Add (Event, Label);
-      Set_Tip (Get_Tooltips (Kernel), Event,
-               -("External file that contains the configuration pragmas to use"
-                 & " for Ada sources of this project. This is combined with"
-                 & " the pragmas found in the Global Pragmas section of the"
-                 & " root project." & ASCII.NUL
-                 & "This file isn't used for imported projects"));
-
-      Gtk_New (Editor.Local_Pragmas);
-      Set_Width_Chars (Editor.Local_Pragmas, 0);
-      Pack_Start (Hbox, Editor.Local_Pragmas, Expand => True);
-      Set_Text
-        (Editor.Local_Pragmas,
-         Get_Attribute_Value
-         (Project, Local_Pragmas_Attribute,
-          Default => ""));
-
-      Gtk_New (Button2, -"Browse");
-      Pack_Start (Hbox, Button2, Expand => False);
-      Widget_Callback.Object_Connect
-        (Button2, "clicked",
-         Widget_Callback.To_Marshaller (Browse_Location'Access),
-         Slot_Object => Editor.Local_Pragmas);
-
-      --  Cross environment frame
-
-      Gtk_New (Frame, -"Cross environment");
-      Set_Border_Width (Frame, 5);
-      Pack_Start (Vbox, Frame, Expand => False);
-
-      Gtk_New_Vbox (Box, Homogeneous => True);
-      Add (Frame, Box);
-
-      --  Tools host
-
-      Gtk_New_Hbox (Hbox, Homogeneous => False);
-      Pack_Start (Box, Hbox);
-
-      Gtk_New (Event);
-      Pack_Start (Hbox, Event, Expand => False);
-      Gtk_New (Label, -"Tools host:");
-      Add_Widget (Group, Label);
-      Set_Alignment (Label, 0.0, 0.5);
-      Add (Event, Label);
-      Set_Tip (Get_Tooltips (Kernel), Event,
-               -("Name or IP address of the machine on which the application"
-                 & " should be compiled, debugged and run. It is recommended"
-                 & " that you always start GPS locally, and work remotely"
-                 & " on your application. Leave this field blank when working"
-                 & " locally"));
-
-
-      Gtk_New (Editor.Tools_Host);
-      Set_Width_Chars (Editor.Tools_Host, 0);
-      Pack_Start (Hbox, Editor.Tools_Host, Expand => True);
-      Set_Text
-        (Editor.Tools_Host,
-         Get_Attribute_Value
-           (Project, Remote_Host_Attribute, Default => ""));
-
-      --  Program host
-
-      Gtk_New_Hbox (Hbox, Homogeneous => False);
-      Pack_Start (Box, Hbox);
-
-      Gtk_New (Event);
-      Pack_Start (Hbox, Event, Expand => False);
-      Gtk_New (Label, -"Program host:");
-      Add_Widget (Group, Label);
-      Add (Event, Label);
-      Set_Alignment (Label, 0.0, 0.5);
-      Set_Tip (Get_Tooltips (Kernel), Event,
-               -("Name or IP address of the embedded target. This field"
-                 & " should be left blank if you are not working on an"
-                 & " embedded application"));
-
-      Gtk_New (Editor.Program_Host);
-      Set_Width_Chars (Editor.Tools_Host, 0);
-      Pack_Start (Hbox, Editor.Program_Host, Expand => True);
-      Set_Text
-        (Editor.Program_Host,
-         Get_Attribute_Value
-         (Project, Program_Host_Attribute, Default => ""));
-
-      --  Protocol
-
-      Gtk_New_Hbox (Hbox, Homogeneous => False);
-      Pack_Start (Box, Hbox);
-
-      Gtk_New (Event);
-      Pack_Start (Hbox, Event, Expand => False);
-      Gtk_New (Label, -"Protocol:");
-      Add_Widget (Group, Label);
-      Add (Event, Label);
-      Set_Alignment (Label, 0.0, 0.5);
-      Set_Tip (Get_Tooltips (Kernel), Event,
-               -("Protocol used to connect to the embedded target. This"
-                 & " field should be left blank if you are not working"
-                 & " on an embedded application"));
-
-      Gtk_New (Combo);
-      Set_Width_Chars (Get_Entry (Combo), 0);
-      Pack_Start (Hbox, Combo, Expand => True);
-      Append (Items, "wtx");
-      Append (Items, "vxworks");
-      Append (Items, "remote");
-      Set_Popdown_Strings (Combo, Items);
-      Free_String_List (Items);
-      Editor.Protocol := Get_Entry (Combo);
-      Set_Text
-        (Editor.Protocol,
-         Get_Attribute_Value
-         (Project, Protocol_Attribute, Default => ""));
-
-      Free (Languages);
-      Free (Project_Languages);
-
-      --  Force a refresh of the sensitive fields
-      Changed (Editor.Languages);
 
       return Gtk_Widget (Vbox);
    end Create_General_Page;
@@ -3351,6 +2950,8 @@ package body Project_Properties is
          Append_Page (Main_Note, Event, Label);
       end loop;
 
+      Set_Current_Page (Main_Note, 0);
+
       --  Connect this only once we have created the pages
       Object_User_Callback.Connect
         (Main_Note, "switch_page",
@@ -3358,6 +2959,42 @@ package body Project_Properties is
          User_Data => GObject (Editor),
          After => True);
    end Initialize;
+
+   -------------------
+   -- Get_Languages --
+   -------------------
+
+   function Get_Languages
+     (Editor : Properties_Editor) return GNAT.OS_Lib.String_List
+   is
+      pragma Unreferenced (Editor);
+      Attr : constant Attribute_Description_Access :=
+        Get_Attribute_Type_From_Name (Pkg => "", Name => "languages");
+      Iter : Gtk_Tree_Iter;
+      List : constant List_Attribute_Editor :=
+        List_Attribute_Editor (Attr.Editor);
+   begin
+      if Attr.Editor /= null then
+         declare
+            Languages : GNAT.OS_Lib.String_List
+              (1 .. Integer (N_Children (List.Model)));
+            Index     : Natural := Languages'First;
+         begin
+            Iter := Get_Iter_First (List.Model);
+            while Iter /= Null_Iter loop
+               if Get_Boolean (List.Model, Iter, 1) then
+                  Languages (Index) := new String'
+                    (Get_String (List.Model, Iter, 0));
+                  Index := Index + 1;
+               end if;
+               Next (List.Model, Iter);
+            end loop;
+            return Languages (Languages'First .. Index - 1);
+         end;
+      else
+         return GNAT.OS_Lib.String_List'(1 .. 0 => null);
+      end if;
+   end Get_Languages;
 
    -----------------
    -- Switch_Page --
@@ -3370,27 +3007,29 @@ package body Project_Properties is
       Note  : constant Gtk_Notebook := Gtk_Notebook (Notebook);
       Ed    : constant Properties_Editor := Properties_Editor (Editor);
       Page  : constant Integer := Integer (Get_Current_Page (Note));
+      P     : Project_Editor_Page;
       Flags : Selector_Flags;
-
-      pragma Warnings (Off);
    begin
-      return;
-
-      if Page >= 1
+      if Page >= Properties_Module_ID.Pages'Length + 1
         and then not Gtk.Object.In_Destruction_Is_Set (Ed)
       then
+         P := Get_Nth_Project_Editor_Page
+           (Ed.Kernel, Page - Properties_Module_ID.Pages'Length);
+      end if;
+
+      if P /= null then
          declare
-            Languages : Argument_List := Get_Languages (Ed.Languages);
+            Languages : Argument_List := Get_Languages (Ed);
          begin
             Refresh
-              (Page         => Get_Nth_Project_Editor_Page (Ed.Kernel, Page),
-               Widget       => Ed.Pages (Page),
-               Project      => Ed.Project,
-               Languages    => Languages);
+              (Page     => P,
+               Widget   => Ed.Pages (Page - Properties_Module_ID.Pages'Length),
+               Project  => Ed.Project,
+               Languages => Languages);
             Free (Languages);
          end;
 
-         Flags := Get_Flags (Get_Nth_Project_Editor_Page (Ed.Kernel, Page));
+         Flags := Get_Flags (P);
 
          Set_Sensitive
            (Ed.Prj_Selector, (Flags and Multiple_Projects) /= 0);
@@ -3477,7 +3116,6 @@ package body Project_Properties is
       function Process_General_Page
         (Editor : Properties_Editor;
          Project : Project_Type;
-         Scenario_Variables : Scenario_Variable_Array;
          Project_Renamed_Or_Moved : Boolean)
          return Boolean;
       --  Modify the attributes set on the general page
@@ -3537,14 +3175,11 @@ package body Project_Properties is
       function Process_General_Page
         (Editor : Properties_Editor;
          Project : Project_Type;
-         Scenario_Variables : Scenario_Variable_Array;
          Project_Renamed_Or_Moved : Boolean)
          return Boolean
       is
          Changed  : Boolean := False;
          Relative : Boolean := Get_Active (Editor.Use_Relative_Paths);
-         New_Languages : Argument_List := Get_Languages (Editor.Languages);
-         Project_Languages : Argument_List := Get_Languages (Project);
       begin
          --  If we are moving the project through the GUI, then we need to
          --  convert the paths to absolute or the semantics changes.
@@ -3561,201 +3196,13 @@ package body Project_Properties is
                Set_Paths_Type (Project, Absolute);
             end if;
 
-            Changed := Changed
-              or Convert_Paths (Project                => Project,
-                                Use_Relative_Paths     => Relative,
-                                Update_With_Statements => True);
-
+            Changed := Convert_Paths (Project                => Project,
+                                      Use_Relative_Paths     => Relative,
+                                      Update_With_Statements => True);
             if Changed then
                Trace (Me, "Paths have changed relative/absolute");
             end if;
          end if;
-
-         --  List of languages has changed
-
-         if Project = Projects.No_Project
-           or else not Is_Equal
-           (New_Languages, Project_Languages, Case_Sensitive => False)
-         then
-            Changed := True;
-            Update_Attribute_Value_In_Scenario
-              (Project            => Project,
-               Scenario_Variables => Scenario_Variables,
-               Attribute          => Languages_Attribute,
-               Values             => New_Languages);
-            Trace (Me, "List of languages changed");
-         end if;
-
-         --  Process the tools
-
-         for C in Editor.Compilers'Range loop
-            if Contains (New_Languages,
-                         Editor.Compilers (C).Language.all,
-                         Case_Sensitive => False)
-            then
-               declare
-                  F   : Lang_Widget_Info renames Editor.Compilers (C);
-                  Att : Project_Field renames Editor.Compilers (C).Attribute;
-                  Ent : Gtk_Entry;
-               begin
-                  if F.Widget.all in Gtk_Entry_Record'Class then
-                     Ent := Gtk_Entry (F.Widget);
-                  elsif F.Widget.all in Gtk_Combo_Record'Class then
-                     Ent := Get_Entry (Gtk_Combo (F.Widget));
-                  end if;
-
-                  if Ent /= null
-                    and then
-                      (Project = Projects.No_Project
-                       or else Get_Text (Ent) /= Get_Value (Project, Att))
-                  then
-                     Changed := True;
-
-                     if Att.Attribute_Index /= null then
-                        Trace (Me, Att.Attribute_Name.all
-                               & ' ' & Att.Attribute_Index.all
-                               & " changed");
-                        Update_Attribute_Value_In_Scenario
-                          (Project          => Project,
-                           Scenario_Variables => Scenario_Variables,
-                           Attribute        => Build
-                             (Ide_Package, Att.Attribute_Name.all),
-                           Value            => Get_Text (Ent),
-                           Attribute_Index  => Att.Attribute_Index.all);
-                     else
-                        Trace (Me, Att.Attribute_Name.all & " changed");
-                        Update_Attribute_Value_In_Scenario
-                          (Project         => Project,
-                           Scenario_Variables => Scenario_Variables,
-                           Attribute       => Build
-                           (Ide_Package, Att.Attribute_Name.all),
-                           Value           => Get_Text (Ent));
-                     end if;
-                  end if;
-               end;
-            end if;
-         end loop;
-
-         if Project = Projects.No_Project
-           or else Get_Text (Editor.Debugger) /= Get_Attribute_Value
-           (Project, Debugger_Command_Attribute, Default => "gdb")
-         then
-            Update_Attribute_Value_In_Scenario
-              (Project            => Project,
-               Scenario_Variables => Scenario_Variables,
-               Attribute          => Debugger_Command_Attribute,
-               Value              => Get_Text (Editor.Debugger));
-            Changed := True;
-            Trace (Me, "debugger command changed");
-         end if;
-
-         if Project = Projects.No_Project
-           or else Get_Text (Editor.Tools_Host) /= Get_Attribute_Value
-           (Project, Remote_Host_Attribute, Default => "")
-         then
-            Changed := True;
-            Trace (Me, "Remote_Host changed");
-
-            if Get_Text (Editor.Tools_Host) /= "" then
-               Update_Attribute_Value_In_Scenario
-                 (Project            => Project,
-                  Scenario_Variables => Scenario_Variables,
-                  Attribute          => Remote_Host_Attribute,
-                  Value              => Get_Text (Editor.Tools_Host));
-            else
-               Delete_Attribute
-                 (Project            => Project,
-                  Scenario_Variables => Scenario_Variables,
-                  Attribute          => Remote_Host_Attribute);
-            end if;
-         end if;
-
-         if Project = Projects.No_Project
-           or else Get_Text (Editor.Program_Host) /= Get_Attribute_Value
-           (Project, Program_Host_Attribute, Default => "")
-         then
-            Changed := True;
-            Trace (Me, "Program_Host changed");
-
-            if Get_Text (Editor.Program_Host) /= "" then
-               Update_Attribute_Value_In_Scenario
-                 (Project            => Project,
-                  Scenario_Variables => Scenario_Variables,
-                  Attribute          => Program_Host_Attribute,
-                  Value              => Get_Text (Editor.Program_Host));
-            else
-               Delete_Attribute
-                 (Project            => Project,
-                  Scenario_Variables => Scenario_Variables,
-                  Attribute          => Program_Host_Attribute);
-            end if;
-         end if;
-
-         if Project = Projects.No_Project
-           or else Get_Text (Editor.Protocol) /= Get_Attribute_Value
-           (Project, Protocol_Attribute, Default => "")
-         then
-            Changed := True;
-            Trace (Me, "Protocol changed");
-
-            if Get_Text (Editor.Protocol) /= "" then
-               Update_Attribute_Value_In_Scenario
-                 (Project            => Project,
-                  Scenario_Variables => Scenario_Variables,
-                  Attribute          => Protocol_Attribute,
-                  Value              => Get_Text (Editor.Protocol));
-            else
-               Delete_Attribute
-                 (Project            => Project,
-                  Scenario_Variables => Scenario_Variables,
-                  Attribute          => Protocol_Attribute);
-            end if;
-         end if;
-
-         if Project = Projects.No_Project
-           or else Get_Text (Editor.Global_Pragmas) /= Get_Attribute_Value
-           (Project, Global_Pragmas_Attribute, Default => "")
-         then
-            Changed := True;
-            Trace (Me, "global pragmas changed");
-
-            if Get_Text (Editor.Global_Pragmas) /= "" then
-               Update_Attribute_Value_In_Scenario
-                 (Project            => Project,
-                  Scenario_Variables => Scenario_Variables,
-                  Attribute          => Global_Pragmas_Attribute,
-                  Value              => Get_Text (Editor.Global_Pragmas));
-            else
-               Delete_Attribute
-                 (Project            => Project,
-                  Scenario_Variables => Scenario_Variables,
-                  Attribute          => Global_Pragmas_Attribute);
-            end if;
-         end if;
-
-         if Project = Projects.No_Project
-           or else Get_Text (Editor.Local_Pragmas) /= Get_Attribute_Value
-           (Project, Local_Pragmas_Attribute, Default => "")
-         then
-            Changed := True;
-            Trace (Me, "local pragmas changed");
-
-            if Get_Text (Editor.Local_Pragmas) /= "" then
-               Update_Attribute_Value_In_Scenario
-                 (Project            => Project,
-                  Scenario_Variables => Scenario_Variables,
-                  Attribute          => Local_Pragmas_Attribute,
-                  Value              => Get_Text (Editor.Local_Pragmas));
-            else
-               Delete_Attribute
-                 (Project            => Project,
-                  Scenario_Variables => Scenario_Variables,
-                  Attribute          => Local_Pragmas_Attribute);
-            end if;
-         end if;
-
-         Free (New_Languages);
-         Free (Project_Languages);
 
          return Changed;
       end Process_General_Page;
@@ -3869,18 +3316,10 @@ package body Project_Properties is
                         Free (Curr);
                      end;
 
-                     if Process_XML_Attributes (Current (Prj_Iter), Vars) then
-                        Trace (Me, "XML Attributes modified the project");
-                        Changed := True;
-                     end if;
-
-                     if Process_General_Page
-                       (Editor, Current (Prj_Iter), Vars,
-                        Project_Renamed_Or_Moved)
-                     then
-                        Trace (Me, "General page modified the project");
-                        Changed := True;
-                     end if;
+                     Changed := Process_XML_Attributes
+                       (Current (Prj_Iter), Vars)
+                       or Process_General_Page
+                        (Editor, Current (Prj_Iter), Project_Renamed_Or_Moved);
 
                      --  Modify each projects
 
