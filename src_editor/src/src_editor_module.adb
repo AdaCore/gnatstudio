@@ -96,7 +96,6 @@ with Gdk.Pixbuf;                  use Gdk.Pixbuf;
 
 with Generic_List;
 with File_Utils;                  use File_Utils;
-with GVD.Preferences;             use GVD.Preferences;
 
 with Src_Editor_Module.Line_Highlighting;
 with Src_Editor_Buffer.Buffer_Commands; use Src_Editor_Buffer.Buffer_Commands;
