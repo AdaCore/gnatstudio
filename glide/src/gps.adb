@@ -25,6 +25,7 @@ with Pango.Font;                use Pango.Font;
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
 with Gtk;                       use Gtk;
 with Gtk.Accel_Map;             use Gtk.Accel_Map;
+with Gtk.Arguments;             use Gtk.Arguments;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Handlers;              use Gtk.Handlers;
 with Gtk.Image;                 use Gtk.Image;
@@ -83,6 +84,7 @@ with VCS.CVS;
 with VCS.ClearCase;
 with VFS_Module;
 with Vdiff_Module;
+with Vdiff2_Module;
 with Builder_Module;
 with Glide_Kernel.Console;
 with Navigation_Module;
@@ -161,6 +163,12 @@ procedure GPS is
    procedure Child_Selected
      (MDI : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Called when a new child is selected
+
+   procedure Title_Changed
+     (MDI    : access GObject_Record'Class;
+      Child  : Gtk_Args;
+      Kernel : Kernel_Handle);
+   --  Called when the title of an MDI child has changed
 
    procedure Execute_Batch (Batch : String; As_File : Boolean);
    --  Execute a batch command (either loading the file Batch if As_File is
@@ -402,6 +410,9 @@ procedure GPS is
         (Get_MDI (GPS.Kernel), "child_selected",
          Kernel_Callback.To_Marshaller (Child_Selected'Unrestricted_Access),
          GPS.Kernel);
+      Kernel_Callback.Connect
+        (Get_MDI (GPS.Kernel), "child_title_changed",
+         Title_Changed'Unrestricted_Access, GPS.Kernel);
 
       DDE.Register_DDE_Server (GPS.Kernel);
 
@@ -819,6 +830,7 @@ procedure GPS is
       GVD_Module.Register_Module (GPS.Kernel);
       Builder_Module.Register_Module (GPS.Kernel);
       Vdiff_Module.Register_Module (GPS.Kernel);
+      Vdiff2_Module.Register_Module (GPS.Kernel);
       VCS_Module.Register_Module (GPS.Kernel);
       VCS.CVS.Register_Module (GPS.Kernel);
       VCS.ClearCase.Register_Module (GPS.Kernel);
@@ -1028,6 +1040,22 @@ procedure GPS is
 
       return False;
    end Finish_Setup;
+
+   -------------------
+   -- Title_Changed --
+   -------------------
+
+   procedure Title_Changed
+     (MDI    : access GObject_Record'Class;
+      Child  : Gtk_Args;
+      Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (MDI);
+      C : constant MDI_Child := MDI_Child (To_Object (Child, 1));
+   begin
+      --  Set the title of the main window.
+      Reset_Title (Glide_Window (Get_Main_Window (Kernel)), Get_Title (C));
+   end Title_Changed;
 
    --------------------
    -- Child_Selected --
