@@ -120,6 +120,7 @@ Source Navigation
 
 Project Handling
 * Description of the Projects::
+* Supported Languages::
 * Scenarios and Configuration Variables::
 * The Project Explorer (Editing Projects)::
 * The Project Menu::
@@ -519,6 +520,8 @@ displayed under the corresponding nodes. Note that in the
 @code{Project View}, only the source files that actually belong to the
 project (i.e. are written in a language supported by that project and
 follow its naming scheme) are actually visible.
+For more information on supported languages, @xref{Supported Languages}.
+
 
 @cindex Show files from project only
 The @code{File View} will display all the files that actually exist
@@ -2558,6 +2561,7 @@ how such projects can be created and maintained.
 
 @menu
 * Description of the Projects::
+* Supported Languages::
 * Scenarios and Configuration Variables::
 * The Project Explorer (Editing Projects)::
 * The Project Menu::
@@ -2767,6 +2771,44 @@ Each project contains the following information, among other things
 
 @end itemize
 
+@c -------------------------------------------------------------------
+@node Supported Languages
+@section Supported Languages
+@cindex languages
+@cindex text files
+@c -------------------------------------------------------------------
+
+@noindent
+Another information stored in the project is the list of languages that
+this project knows about. GPS support any number of language, with any name
+you choose. However, advanced support is only provided by default for some
+languages (Ada, C and C++), and you can specify other properties of the
+languages through customization files
+(@pxref{Adding Support for New Languages}).
+
+By default, the graphical interface will only give you a choice of languages
+among the ones that are known to GPS at that point, either through the default
+GPS support or your customization files. But you can also edit the project
+files by hand to add support for any language.
+
+Languages are a very important part of the project definition. For each
+language, you should specify a naming scheme that allows GPS to associate
+files with that language. You would for instance specify that all @file{.adb}
+files are Ada, all @file{.txt} files are standard text files, and so on.
+
+Only the files that have a known language associated with them are displayed
+in the @code{Project View}, or available for easy selection through the
+@code{File->Open From Project} menu. Similarly, only these files are shown
+in the Version Control System interface.
+
+It is therefore important to properly setup your project to make these files
+available conveniently in GPS, although of course you can still open any file
+through the @code{File->Open} menu.
+
+If your project includes some README files, or other text files, you should
+add "txt" as a language (or any other name you want), and make sure that
+these files are associated with that language in the @code{Project properties
+editor}.
 
 @c -------------------------------------------------------------------
 @node Scenarios and Configuration Variables
