@@ -60,6 +60,10 @@ package Python is
    procedure Py_XDECREF (Obj : PyObject);
    --  Same as above, but Obj can be null.
 
+   procedure Print_Refcount (Obj : PyObject; Msg : String);
+   --  A debug procedure that prints the reference count of the object on
+   --  stdout
+
    function PyObject_Str (Obj : PyObject) return PyObject;
    --  Compute the string representation of Obj.  Returns the string
    --  representation on success, NULL on failure.  This is the equivalent of
