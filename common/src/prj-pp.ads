@@ -33,7 +33,10 @@ with Types;     use Types;
 
 package Prj.PP is
 
-   type Write_Eol_Ap is access procedure;
+   --  The following access to procedure types are used
+   --  to redirect output when calling Pretty_Print.
+
+   type Write_Empty_Line_Ap is access procedure;
 
    type Write_Char_Ap is access procedure (C : Character);
 
@@ -49,21 +52,31 @@ package Prj.PP is
      access procedure (Name       : Name_Id;
                        Capitalize : Boolean := True);
 
-   procedure Initialize (W_Eol     : Write_Eol_Ap;
-                         W_Char    : Write_Char_Ap;
-                         W_Str     : Write_Str_Ap;
-                         W_Line    : Write_Line_Ap;
-                         S_Line    : Start_Line_Ap;
-                         O_String  : Output_String_Ap;
-                         O_Name    : Output_Name_Ap;
-                         Inc       : Positive);
+   procedure Initialize (W_Empty_Line : Write_Empty_Line_Ap;
+                         W_Char       : Write_Char_Ap;
+                         W_Str        : Write_Str_Ap;
+                         W_Line       : Write_Line_Ap;
+                         S_Line       : Start_Line_Ap;
+                         O_String     : Output_String_Ap;
+                         O_Name       : Output_Name_Ap;
+                         Inc          : Positive);
    --  Initialize the project pretty printer.
-   --  This procedure does not need to be called before calling
-   --  Pretty_Print, because every one of its parameters
-   --  have internal default values.
+   --  This procedure need to be called before calling
+   --  Pretty_Print, only if the default putput procedures
+   --  need to be changed.
+   --  The default output procedures send text to the current
+   --  output.
 
    procedure Pretty_Print (Project : Project_Node_Id);
    --  Output a project file, using either the default output
    --  routines, or the ones specified by a call to Initialize.
+
+private
+
+   procedure Output_Statistics;
+   --  This procedure can be used after one or more calls to Pretty_Print
+   --  to display what Project_Node_Kinds have not been exercised
+   --  by the call(s) to Pretty_Print.
+   --  It is used only for testing.
 
 end Prj.PP;
