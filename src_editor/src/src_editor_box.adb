@@ -1225,8 +1225,10 @@ package body Src_Editor_Box is
 
       if Editor.Writable then
          Set_Text (Editor.Read_Only_Label, -"Writable");
+         Add_Controls (Editor.Source_Buffer);
       else
          Set_Text (Editor.Read_Only_Label, -"Read Only");
+         Remove_Controls (Editor.Source_Buffer);
       end if;
 
       return False;
