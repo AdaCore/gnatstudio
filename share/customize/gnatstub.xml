@@ -12,7 +12,7 @@
 
       <!-- Generate and load the body -->
       <shell>MDI.save_all</shell>
-      <shell>Project.scenario_variables_cmd_line -X</shell>
+      <shell>Project.scenario_variables_cmd_line "-X "</shell>
       <external show-command="true"
                 output="">gnat stub "%pps" "%1" "%F" "%d"</external>
       <on-failure>Locations.parse """%1 """ gnatstub</on-failure>
