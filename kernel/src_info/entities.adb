@@ -42,6 +42,9 @@ package body Entities is
    use Entity_Reference_Arrays;
    use Dependency_Arrays;
 
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Entity_Information_Record'Class, Entity_Information);
+
    function String_Hash is new HTables.Hash (HTable_Header);
 
    procedure Mark_Dependencies_As_Invalid
@@ -52,6 +55,11 @@ package body Entities is
      (E : Dependency_List; File : Source_File)
       return Dependency_Arrays.Index_Type;
    --  Find a specific file in the list of dependencies
+
+   procedure Fast_Reset (File : Source_File);
+   --  Free the memory occupied by File and its entities. No attempt is made
+   --  to respect the reference counter of the entities, and therefore all
+   --  existing Entity_Information become obsolete.
 
    procedure Isolate
      (Entity           : in out Entity_Information;
@@ -455,6 +463,36 @@ package body Entities is
       Free (Iter);
    end Remove_Marked_Entities_In_List;
 
+   ----------------
+   -- Fast_Reset --
+   ----------------
+
+   procedure Fast_Reset (File : Source_File) is
+      Iter   : Entities_Tries.Iterator := Start (File.Entities, "");
+      EL     : Entity_Information_List_Access;
+   begin
+      loop
+         EL := Get (Iter);
+         exit when EL = null;
+
+         for E in Entity_Information_Arrays.First .. Last (EL.all) loop
+            Isolate (EL.Table (E), Clear_References => True);
+
+            Free (EL.Table (E).Name);
+            Unchecked_Free (EL.Table (E));
+         end loop;
+
+         Next (Iter);
+      end loop;
+      Free (Iter);
+
+      Clear (File.All_Entities);
+      Clear (File.Entities);
+      Free (File.Unit_Name);
+      Free (File.Depends_On);
+      Free (File.Depended_On);
+   end Fast_Reset;
+
    -----------
    -- Reset --
    -----------
@@ -710,8 +748,6 @@ package body Entities is
    -----------
 
    procedure Unref (Entity : in out Entity_Information) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Entity_Information_Record'Class, Entity_Information);
       Tmp : String_Access;
    begin
       if Entity /= null then
@@ -815,7 +851,7 @@ package body Entities is
       loop
          File := Get_Element (Iter);
          exit when File = null;
-         Reset (File);
+         Fast_Reset (File);
          Get_Next (Db.Files, Iter);
       end loop;
 

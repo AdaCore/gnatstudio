@@ -79,6 +79,11 @@ package Entities is
 
    procedure Reset (Db : Entities_Database);
    --  Empty the contents of the database.
+   --  All Source_File and Entity_Information structures become invalid, and
+   --  are freed from memory, even if a Ref is kept on them. Therefore,
+   --  modules that rely on keeping such information should connect to the
+   --  Project_Changed_Hook and reset their internal structures when the hook
+   --  is called.
 
    ------------
    -- E_Kind --
