@@ -1345,8 +1345,7 @@ package body Debugger.Gdb is
       pragma Unreferenced (Debugger);
    begin
       return Looking_At (Command, Command'First, "break")
-        or else Looking_At (Command, Command'First, "tbreak")
-        or else Looking_At (Command, Command'First, "rbreak")
+        or else Looking_At (Command, Command'First + 1, "break")
         or else Looking_At (Command, Command'First, "b ")
         or else Looking_At (Command, Command'First, "delete")
         or else Looking_At (Command, Command'First, "del ")
