@@ -26,8 +26,8 @@ with Language.Ada;              use Language.Ada;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Language.Ada;              use Language.Ada;
 
-package body Docgen.Texi_Output is
 
+package body Docgen.Texi_Output is
    package TEL renames Type_Entity_List;
 
    procedure Doc_TEXI_Create
