@@ -26,7 +26,7 @@ with Gdk.Font;         use Gdk.Font;
 with Gdk.Pixmap;       use Gdk.Pixmap;
 with Gdk.GC;           use Gdk.GC;
 with Gdk.Bitmap;       use Gdk.Bitmap;
-with Gdk.Types.Keysyms; use Gdk.Types.Keysyms;
+--  with Gdk.Types.Keysyms; use Gdk.Types.Keysyms;
 with Gtk.Enums;        use Gtk.Enums;
 with Gtk.Handlers;     use Gtk.Handlers;
 with Gtk.Widget;       use Gtk.Widget;
@@ -595,18 +595,18 @@ package body GVD.Canvas is
       Widget_Callback.Object_Connect
         (Mitem, "activate",
          Widget_Callback.To_Marshaller (Zoom_In'Access), Canvas);
-      Add_Accelerator
-        (Mitem, "activate",
-         Accel_Group, GDK_equal, 0, Accel_Visible);
+      --  Add_Accelerator
+      --    (Mitem, "activate",
+      --     Accel_Group, GDK_equal, 0, Accel_Visible);
 
       Gtk_New (Mitem, Label => -"Zoom out");
       Append (Canvas.Contextual_Background_Menu, Mitem);
       Widget_Callback.Object_Connect
         (Mitem, "activate",
          Widget_Callback.To_Marshaller (Zoom_Out'Access), Canvas);
-      Add_Accelerator
-        (Mitem, "activate",
-         Accel_Group, GDK_minus, 0, Accel_Visible);
+      --  Add_Accelerator
+      --    (Mitem, "activate",
+      --     Accel_Group, GDK_minus, 0, Accel_Visible);
 
       Gtk_New (Zooms_Menu);
 
