@@ -113,8 +113,9 @@ package body Navigation_Module is
       pragma Unreferenced (Mode);
       Location_Command : Source_Location_Command;
 
-      N_Data : Navigation_Info_Access
-        := Get_Navigation_Data (Kernel_Handle (Kernel));
+      N_Data : constant Navigation_Info_Access :=
+        Get_Navigation_Data (Kernel_Handle (Kernel));
+
    begin
       if Mime_Type = Mime_Source_File then
          --  ??? The decapsulating and re-encapsulating of Values is
@@ -128,6 +129,7 @@ package body Navigation_Module is
               Get_Boolean (Data (Data'First + 3));
             Navigate  : constant Boolean :=
               Get_Boolean (Data (Data'First + 4));
+
          begin
             if not Navigate then
                return False;
@@ -184,7 +186,7 @@ package body Navigation_Module is
       Data : Navigation_Info_Access := new Navigation_Info;
    begin
       Button := Insert_Stock
-        (Toolbar, Stock_Go_Back, -"Go To Previous Location", Position => 0);
+        (Toolbar, Stock_Go_Back, -"Go To Previous Location");
       Data.Back_Button := Gtk_Widget (Button);
 
       Kernel_Callback.Connect
@@ -193,7 +195,7 @@ package body Navigation_Module is
          Kernel_Handle (Kernel));
 
       Button := Insert_Stock
-        (Toolbar, Stock_Go_Forward, -"Go To Next Location", Position => 1);
+        (Toolbar, Stock_Go_Forward, -"Go To Next Location");
       Data.Forward_Button := Gtk_Widget (Button);
 
       Kernel_Callback.Connect
@@ -201,7 +203,7 @@ package body Navigation_Module is
          Kernel_Callback.To_Marshaller (On_Forward'Access),
          Kernel_Handle (Kernel));
 
-      Insert_Space (Toolbar, Position => 2);
+      Append_Space (Toolbar);
 
       Data.Locations_Queue := New_Queue;
       Set_Navigation_Data (Kernel_Handle (Kernel), Data);
@@ -290,8 +292,8 @@ package body Navigation_Module is
    procedure Refresh_Location_Buttons
      (Handle : access Kernel_Handle_Record'Class)
    is
-      Data : Navigation_Info_Access
-        := Get_Navigation_Data (Kernel_Handle (Handle));
+      Data : constant Navigation_Info_Access :=
+        Get_Navigation_Data (Kernel_Handle (Handle));
    begin
       Set_Sensitive (Data.Back_Button,
                      not Undo_Queue_Empty (Data.Locations_Queue));
