@@ -582,6 +582,15 @@ package body Src_Info.CPP is
    --  Desc and Union_Def arguments
    --  Success returns error status
 
+   procedure Find_Enum
+     (Type_Name : in String;
+      Desc      : in out CType_Description;
+      Enum_Def  : out E_Table;
+      Success   : out Boolean);
+   --  Finds enum and stores information about it in the
+   --  Desc and Enum_Def arguments
+   --  Success returns error status
+
    -----------------------
    -- Type_Name_To_Kind --
    -----------------------
@@ -700,25 +709,11 @@ package body Src_Info.CPP is
          declare
             Enum_Def : E_Table;
          begin
-            Enum_Def := Find (SN_Table (E), Type_Name);
-            Desc.Kind := Enumeration_Type;
-            Desc.Parent_Point    := Enum_Def.Start_Position;
-            Desc.Parent_Filename := new String' (Enum_Def.Buffer (
-                    Enum_Def.File_Name.First .. Enum_Def.File_Name.Last));
-
-            if Desc.Ancestor_Point = Invalid_Point then -- was not set yet
-               Desc.Ancestor_Point    := Enum_Def.Start_Position;
-               Desc.Ancestor_Filename := new String' (Enum_Def.Buffer (
-                     Enum_Def.File_Name.First .. Enum_Def.File_Name.Last));
+            Find_Enum (Type_Name, Desc, Enum_Def, Success);
+            if Success then
+               Free (Enum_Def);
+               return;
             end if;
-
-            Free (Enum_Def);
-            Success := True;
-            return;
-         exception
-            when  DB_Error |   -- non-existent table
-                  Not_Found => -- missed, fall thru'
-               null;
          end;
       end if;
 
@@ -813,6 +808,7 @@ package body Src_Info.CPP is
    ----------------
    -- Find_Class --
    ----------------
+
    procedure Find_Class
      (Type_Name : in String;
       Desc      : in out CType_Description;
@@ -844,7 +840,7 @@ package body Src_Info.CPP is
       Desc.Kind := Record_Type;
       Success := True;
    exception
-      when  DB_Error | -- non-existent table
+      when  DB_Error |   -- non-existent table
             Not_Found => -- missed, fall thru'
          null;
    end Find_Class;
@@ -852,6 +848,7 @@ package body Src_Info.CPP is
    ----------------
    -- Find_Union --
    ----------------
+
    procedure Find_Union
      (Type_Name : in String;
       Desc      : in out CType_Description;
@@ -883,10 +880,52 @@ package body Src_Info.CPP is
       Desc.Kind := Record_Type;
       Success := True;
    exception
-      when  DB_Error | -- non-existent table
+      when  DB_Error |   -- non-existent table
             Not_Found => -- missed, fall thru'
          null;
    end Find_Union;
+
+   ---------------
+   -- Find_Enum --
+   ---------------
+
+   procedure Find_Enum
+     (Type_Name : in String;
+      Desc      : in out CType_Description;
+      Enum_Def  : out E_Table;
+      Success   : out Boolean)
+   is
+      Matches      : Match_Array (0 .. 1);
+   begin
+      Success := False;
+      Match (Template_Type_Pat, Type_Name, Matches);
+      if Matches (0) /= No_Match then
+         Enum_Def := Find (SN_Table (E), Type_Name
+            (Matches (1).First .. Matches (1).Last));
+         Desc.IsTemplate := True;
+      else
+         Enum_Def := Find (SN_Table (E), Type_Name);
+      end if;
+
+      Desc.Parent_Point    := Enum_Def.Start_Position;
+      Desc.Parent_Filename := new String'
+        (Enum_Def.Buffer
+          (Enum_Def.File_Name.First .. Enum_Def.File_Name.Last));
+
+      if Desc.Ancestor_Point = Invalid_Point then -- was not set yet
+         Desc.Ancestor_Point    := Enum_Def.Start_Position;
+         Desc.Ancestor_Filename := new String'
+           (Enum_Def.Buffer
+             (Enum_Def.File_Name.First .. Enum_Def.File_Name.Last));
+      end if;
+
+      Desc.Kind := Record_Type;
+      Success := True;
+   exception
+      when  DB_Error |   -- non-existent table
+            Not_Found => -- missed, fall thru'
+         null;
+   end Find_Enum;
 
    ----------
    -- Free --
