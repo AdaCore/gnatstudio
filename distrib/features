@@ -4,6 +4,7 @@ details, please see the documentation.
 New features in GPS 1.3.0
 
 - New key shortcuts manager, for easier configuration of keys and multiple
-  keymaps a la Emacs.
+  keymaps a la Emacs. This gives access to usual operations like center
+  cursor on screen, word navigation and deletion,...
 
 - Ability to revert files to VCS repository revision.
