@@ -25,6 +25,7 @@ with Prj.Tree;         use Prj.Tree;
 with Prj.Part;         use Prj.Part;
 with Prj.Attr;         use Prj.Attr;
 with Prj.Util;         use Prj.Util;
+with Prj.Env;          use Prj.Env;
 with Prj.Ext;          use Prj.Ext;
 with Prj.PP;           use Prj.PP;
 with Prj_Normalize;    use Prj_Normalize;
@@ -44,6 +45,7 @@ with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Ada.Text_IO; use Ada.Text_IO;
 
 with Glide_Intl;    use Glide_Intl;
+with Basic_Types;   use Basic_Types;
 
 with Traces; use Traces;
 
@@ -3118,8 +3120,7 @@ package body Prj_API is
       if Iterator.Current > Iterator.List'Last then
          return Empty_Node;
       else
-         return Prj.Tree.Tree_Private_Part.Projects_Htable.Get
-           (Iterator.List (Iterator.Current)).Node;
+         return Get_Project_From_Name (Iterator.List (Iterator.Current));
       end if;
    end Current;
 
@@ -3140,6 +3141,117 @@ package body Prj_API is
    begin
       Iterator.Current := Iterator.List'First;
    end Reset;
+
+   ----------------------
+   -- Ada_Include_Path --
+   ----------------------
+
+   function Ada_Include_Path
+     (Project_View : Prj.Project_Id; Recursive : Boolean) return String
+   is
+      Current : String_List_Id;
+      Dir : String_Element;
+      Length : Natural := 0;
+   begin
+      if Recursive then
+         return Prj.Env.Ada_Include_Path (Project_View).all;
+      else
+         Current := Projects.Table (Project_View).Source_Dirs;
+         while Current /= Nil_String loop
+            Dir := String_Elements.Table (Current);
+            Length := Length + Natural (String_Length (Dir.Value)) + 1;
+            Current := Dir.Next;
+         end loop;
+
+         declare
+            Path : String (1 .. Length);
+            Index : Natural := Path'First;
+         begin
+            Current := Projects.Table (Project_View).Source_Dirs;
+            while Current /= Nil_String loop
+               Dir := String_Elements.Table (Current);
+               String_To_Name_Buffer (Dir.Value);
+               Path (Index .. Index + Name_Len - 1) :=
+                 Name_Buffer (1 .. Name_Len);
+               Index := Index + Name_Len + 1;
+               Path (Index - 1) := ':';
+               Current := Dir.Next;
+            end loop;
+            return Path;
+         end;
+      end if;
+   end Ada_Include_Path;
+
+   ----------------------
+   -- Get_Source_Files --
+   ----------------------
+
+   function Get_Source_Files
+     (Project : Prj.Tree.Project_Node_Id; Recursive : Boolean)
+      return String_Array_Access
+   is
+      Src     : String_List_Id;
+      Count   : Natural := 0;
+      Sources : String_Array_Access;
+      Index   : Natural := 1;
+      Iter    : Imported_Project_Iterator := Start (Project, Recursive);
+      View    : Project_Id;
+
+   begin
+      while Current (Iter) /= Empty_Node loop
+         View := Get_Project_View_From_Name
+           (Prj.Tree.Name_Of (Current (Iter)));
+         Src := Projects.Table (View).Sources;
+
+         while Src /= Nil_String loop
+            Count := Count + 1;
+            Src := String_Elements.Table (Src).Next;
+         end loop;
+
+         Next (Iter);
+      end loop;
+
+      Reset (Iter);
+      Sources := new String_Array (1 .. Count);
+
+      while Current (Iter) /= Empty_Node loop
+         View := Get_Project_View_From_Name
+           (Prj.Tree.Name_Of (Current (Iter)));
+         declare
+            Path : constant String := Ada_Include_Path (View, False);
+         begin
+            Src := Projects.Table (View).Sources;
+
+            while Src /= Nil_String loop
+               Sources (Index) := Basic_Types.String_Access
+                 (Locate_Regular_File
+                  (Get_String (String_Elements.Table (Src).Value), Path));
+               if Sources (Index) = null then
+                  Trace (Me, "File not found "
+                         & Get_String (String_Elements.Table (Src).Value)
+                         & " " & Path);
+               else
+                  Index := Index + 1;
+               end if;
+               Src := String_Elements.Table (Src).Next;
+            end loop;
+         end;
+
+         Next (Iter);
+      end loop;
+
+      return Sources;
+   end Get_Source_Files;
+
+   ---------------------------
+   -- Get_Project_From_Name --
+   ---------------------------
+
+   function Get_Project_From_Name (Name : Types.Name_Id)
+      return Project_Node_Id is
+   begin
+      return Prj.Tree.Tree_Private_Part.Projects_Htable.Get (Name).Node;
+   end Get_Project_From_Name;
 
    -------------------------------------
    -- Register_Default_Naming_Schemes --

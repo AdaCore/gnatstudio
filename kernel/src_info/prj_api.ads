@@ -34,6 +34,7 @@ with Prj;        use Prj;
 with Prj.Tree;   use Prj.Tree;
 with Src_Info;   use Src_Info;
 with Project_Browsers;
+with Basic_Types;
 
 package Prj_API is
 
@@ -63,6 +64,10 @@ package Prj_API is
    --  Return the project whose name is Name.
    --  Note that this returns an entry in the processed project, not in the
    --  tree itself.
+
+   function Get_Project_From_Name (Name : Types.Name_Id)
+      return Project_Node_Id;
+   --  Return the project, from its name
 
    function Get_Project_From_View (View : Project_Id) return Project_Node_Id;
    --  Converts from a project view to the associated node in the tree.
@@ -105,6 +110,19 @@ package Prj_API is
       Recursive : Boolean := False);
    --  Save the project to the corresponding file.
    --  If Recursive is True, all the imported projects are saved as well.
+
+   function Ada_Include_Path
+     (Project_View : Prj.Project_Id; Recursive : Boolean) return String;
+   --  Return the source path for this project. If Recursive is True, it also
+   --  includes the source path for all imported projects.
+
+   function Get_Source_Files
+     (Project : Prj.Tree.Project_Node_Id; Recursive : Boolean)
+      return Basic_Types.String_Array_Access;
+   --  Return the list of source files belonging to the project described in
+   --  Handle. Only the direct sources of the project are currently returned,
+   --  i.e. not those found in subprojects.
+   --  It is the caller's responsability to free the list.
 
    --------------------
    -- Creating nodes --
