@@ -7,7 +7,7 @@
          <check label="Consider all files" switch="-a"
                 tip="Consider all files, even locked files. Locked files are file whose ALI file is write-protected" />
          <check label="Recompile if switches changed" switch="-s"
-                tip="ecompile if compiler switches have changed since last ast compilation" />
+                tip="Recompile if compiler switches have changed since last compilation" />
          <check label="Minimal recompilation" switch="-m"
                 tip="Specifies that the minimum necessary amount of recompilation be performed. In this mode, gnatmake ignores time stamp differences when the only modification to a source file consist in adding or removing comments, empty lines, spaces or tabs" />
         
