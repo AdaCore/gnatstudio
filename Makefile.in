@@ -20,7 +20,7 @@ install-common:
 	$(MKDIR) $(bindir)
 	$(MKDIR) $(sharedir)
 	$(MKDIR) $(sharedir)/gps
-	(cd share; tar cf - customize/) | (cd $(sharedir)/gps; tar xf -)
+	(cd share; tar cf - customize/*.xml) | (cd $(sharedir)/gps; tar xf -)
 	(cd share; tar cf - python/)    | (cd $(sharedir)/gps; tar xf -)
 	(cd share; tar cf - icons/)     | (cd $(sharedir)/gps; tar xf -)
 	$(MAKE) -C docs install
