@@ -2382,27 +2382,21 @@ package body Codefix.Text_Manager is
    is
       Line_Cursor         : File_Cursor := File_Cursor (Clone (Cursor));
       Previous_Line       : Dynamic_String;
-      Lang                : aliased Unknown_Language;
       Indent, Next_Indent : Natural;
+
    begin
       Line_Cursor.Col := 1;
       Previous_Line := new String'(Get_Line (Current_Text, Line_Cursor));
-
-      Next_Indentation (Lang'Access, Previous_Line.all, Indent, Next_Indent);
-
-      declare
-         Indent_Str : constant String (1 .. Next_Indent) := (others => ' ');
-      begin
-         Add_Element
-           (This, new Extract_Line'
-              (Context         => Unit_Created,
-               Cursor          => Line_Cursor,
-               Original_Length => 0,
-               Content         => To_Mergable_String (Indent_Str & Text),
-               Next            => null,
-               Coloration      => True));
-      end;
-
+      Next_Indentation (Unknown_Lang, Previous_Line.all, Indent, Next_Indent);
+      Add_Element
+        (This, new Extract_Line'
+          (Context         => Unit_Created,
+           Cursor          => Line_Cursor,
+           Original_Length => 0,
+           Content         =>
+             To_Mergable_String ((1 .. Next_Indent => ' ') & Text),
+           Next            => null,
+           Coloration      => True));
       Free (Previous_Line);
    end Add_Indented_Line;
 
@@ -2975,8 +2969,8 @@ package body Codefix.Text_Manager is
       Line_Cursor  : File_Cursor;
       Space_Cursor : File_Cursor;
       Word         : Word_Cursor;
-   begin
 
+   begin
       Make_Word_Cursor (This.Word, Current_Text, Word);
       Line_Cursor := File_Cursor (Word);
 
