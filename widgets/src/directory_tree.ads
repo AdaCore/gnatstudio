@@ -28,15 +28,22 @@
 --  or GNAT.OS_Lib.Directory_Separator as a separator.
 --  They must end with a directory separator.
 
-with Gdk.Pixmap;
-with Gdk.Bitmap;
 with Gdk.Window;
 with Gtk.Clist;
-with Gtk.Ctree;
 with Gtk.Menu;
 with Gtk.Main;
 with Gtk.Paned;
 with GNAT.OS_Lib;
+
+with Gtk.Main;
+with Gtk.Handlers;
+with Gtk.Tree_Model;
+with Gtk.Tree_View;
+with Gtk.Tree_Store;
+with Gtk.Scrolled_Window;
+
+with Generic_List;
+with Gtk.Tree_Selection;
 
 package Directory_Tree is
 
@@ -50,13 +57,21 @@ package Directory_Tree is
    --  directory. See below for another widget that provides multiple directory
    --  selection.
 
-   type Dir_Tree_Record is new Gtk.Ctree.Gtk_Ctree_Record with private;
+   type Dir_Tree_Record is new
+     Gtk.Scrolled_Window.Gtk_Scrolled_Window_Record with private;
    type Dir_Tree is access all Dir_Tree_Record'Class;
 
-   procedure Gtk_New (Tree : out Dir_Tree; Root : String);
-   --  Create a new tree, whose root node points to the directory Root.
+   procedure Gtk_New
+     (Tree    : out Dir_Tree;
+      Root    : String;
+      Initial : String := "");
+   --  Create a new tree, whose root node points to the directory Root,
+   --  pointing at the Initial directory, if it is a subdirectory of Root.
 
-   procedure Initialize (Tree : access Dir_Tree_Record'Class; Root : String);
+   procedure Initialize
+     (Tree    : access Dir_Tree_Record'Class;
+      Root    : String;
+      Initial : String);
    --  Internal function used to create the tree.
 
    procedure Show_Parent (Tree : access Dir_Tree_Record);
@@ -77,6 +92,11 @@ package Directory_Tree is
    function Get_Selection (Tree : access Dir_Tree_Record) return String;
    --  Return the absolute directory for the selected node.
    --  An empty string "" is returned if there is no selection currently.
+
+   function Get_Tree_Selection
+     (Tree : access Dir_Tree_Record)
+      return Gtk.Tree_Selection.Gtk_Tree_Selection;
+   --  Return the selection associated with the internal tree.
 
    -----------------------------------
    -- High-level directory selector --
@@ -126,19 +146,31 @@ package Directory_Tree is
    --  array of size 1 is returned.
    --  The return list must be freed by the caller
 
-   function Get_Tree (Selector : access Directory_Selector_Record)
-      return Dir_Tree;
-   --  Return the directory selector used internal by the selector.
-
 private
-   type Dir_Tree_Record is new Gtk.Ctree.Gtk_Ctree_Record with record
-      Folder_Pix, Ofolder_Pix : Gdk.Pixmap.Gdk_Pixmap;
-      Folder_Mask, Ofolder_Mask : Gdk.Bitmap.Gdk_Bitmap;
-      Idle      : Gtk.Main.Idle_Handler_Id;
 
-      Moveto_Node : Gtk.Ctree.Gtk_Ctree_Node;
-      --  Nove that should be displayed when the tree is made visible. This
-      --  needs to be done only when mapped, since it has no effect otherwise.
+   type Append_Directory_Idle_Data;
+   type Append_Directory_Idle_Data_Access is access Append_Directory_Idle_Data;
+   --  Custom data for the asynchronous fill function.
+
+   package File_Append_Directory_Timeout is
+      new Gtk.Main.Timeout (Append_Directory_Idle_Data_Access);
+
+   procedure Free (D : in out Gtk.Main.Timeout_Handler_Id);
+
+   package Timeout_Id_List is new Generic_List (Gtk.Main.Timeout_Handler_Id);
+
+   type Dir_Tree_Record is new
+     Gtk.Scrolled_Window.Gtk_Scrolled_Window_Record
+   with record
+      File_Tree  : Gtk.Tree_View.Gtk_Tree_View;
+      File_Model : Gtk.Tree_Store.Gtk_Tree_Store;
+      Expanding  : Boolean := False;
+
+      Scroll_To_Directory : Boolean := False;
+      Path                : Gtk.Tree_Model.Gtk_Tree_Path;
+      Realize_Cb_Id       : Gtk.Handlers.Handler_Id;
+
+      Fill_Timeout_Ids : Timeout_Id_List.List;
    end record;
 
    type Directory_Selector_Record is new Gtk.Paned.Gtk_Paned_Record with record

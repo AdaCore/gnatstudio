@@ -23,19 +23,21 @@ with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Interfaces.C.Strings;      use Interfaces.C.Strings;
 with Glib;                      use Glib;
-with Gdk.Color;                 use Gdk.Color;
-with Gdk.Event;                 use Gdk.Event;
-with Gdk.Pixmap;                use Gdk.Pixmap;
+with Glib.Convert;              use Glib.Convert;
+with Glib.Object;               use Glib.Object;
+with Glib.Values;               use Glib.Values;
 with Gdk;                       use Gdk;
+with Gdk.Pixbuf;                use Gdk.Pixbuf;
 with Gtk.Arguments;             use Gtk.Arguments;
 with Gtk.Arrow;                 use Gtk.Arrow;
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Button;                use Gtk.Button;
 with Gtk.Clist;                 use Gtk.Clist;
-with Gtk.Ctree;                 use Gtk.Ctree;
 with Gtk.Dialog;                use Gtk.Dialog;
 with Gtk.Enums;                 use Gtk.Enums;
+with Gdk.Event;                 use Gdk.Event;
 with Gtk.GEntry;                use Gtk.GEntry;
+with Gtk.Handlers;              use Gtk.Handlers;
 with Gtk.Hbutton_Box;           use Gtk.Hbutton_Box;
 with Gtk.Label;                 use Gtk.Label;
 with Gtk.Main;                  use Gtk.Main;
@@ -43,6 +45,13 @@ with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Paned;                 use Gtk.Paned;
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
+with Gtk.Tree_View;             use Gtk.Tree_View;
+with Gtk.Tree_Store;            use Gtk.Tree_Store;
+with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
+with Gtk.Cell_Renderer_Pixbuf;  use Gtk.Cell_Renderer_Pixbuf;
+with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
+with Gtk.Tree_Model;            use Gtk.Tree_Model;
+with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
 with Gtk.Widget;                use Gtk.Widget;
 with Gtk.Window;                use Gtk.Window;
 with Gtkada.Handlers;           use Gtkada.Handlers;
@@ -52,91 +61,170 @@ with Pixmaps_IDE;               use Pixmaps_IDE;
 with Glide_Intl;                use Glide_Intl;
 with GUI_Utils;                 use GUI_Utils;
 with String_Utils;              use String_Utils;
+with String_List_Utils;         use String_List_Utils;
 with File_Utils;                use File_Utils;
+with Basic_Types;               use Basic_Types;
 with Traces;                    use Traces;
-with Ada.Characters.Handling;   use Ada.Characters.Handling;
-with Ada.Unchecked_Deallocation;
+
+with Unchecked_Deallocation;
+with Generic_List;
 
 package body Directory_Tree is
 
-   Drives_String : constant String := "Drives";
-   --  String used on systems that support the notion of drives (e.g Windows).
+   Icon_Column          : constant := 0;
+   Base_Name_Column     : constant := 1;
+   Absolute_Name_Column : constant := 2;
+   Node_Type_Column     : constant := 3;
+   User_Data_Column     : constant := 4;
+   Line_Column          : constant := 5;
+   Column_Column        : constant := 6;
+   Project_Column       : constant := 7;
+   Category_Column      : constant := 8;
+   Up_To_Date_Column    : constant := 9;
+   Entity_Base_Column   : constant := 10;
+
+   --------------
+   -- Graphics --
+   --------------
+
+   type Node_Types is
+     (Directory_Node);
+   --  The kind of nodes one might find in the tree
+
+   type Pixbuf_Array is array (Node_Types) of Gdk.Pixbuf.Gdk_Pixbuf;
+
+   Open_Pixbufs  : Pixbuf_Array;
+   Close_Pixbufs : Pixbuf_Array;
+
+   procedure Init_Graphics;
+   --  Initialize the pixbufs.
+
+   -------------------
+   -- Init_Graphics --
+   -------------------
+
+   procedure Init_Graphics is
+   begin
+      --  If initialization has already been done, exit.
+      if Open_Pixbufs (Directory_Node) /= null then
+         return;
+      end if;
+
+      Open_Pixbufs (Directory_Node)  :=
+        Gdk_New_From_Xpm_Data (mini_ofolder_xpm);
+      Close_Pixbufs (Directory_Node) :=
+        Gdk_New_From_Xpm_Data (mini_folder_xpm);
+
+   end Init_Graphics;
 
    Me : constant Debug_Handle := Create ("Directory_Tree");
-
-   package Boolean_Data is new Gtk.Ctree.Row_Data (Boolean);
-
-   type Idle_Data is record
-      Tree        : Dir_Tree;
-      Dir         : String_Access;
-      Node        : Gtk_Ctree_Node;
-      Index       : Natural;
-      Busy_Cursor : Gdk_Window;
-   end record;
-   type Idle_Data_Access is access Idle_Data;
-   procedure Free is new
-     Ada.Unchecked_Deallocation (Idle_Data, Idle_Data_Access);
-
-   package Dir_Idle is new Gtk.Main.Idle (Idle_Data_Access);
 
    package Widget_Menus is new GUI_Utils.User_Contextual_Menus
      (User_Data => Directory_Selector);
    --  Used to register contextual menus with a user data.
 
-   function Get_File_Names_Case_Sensitive return Integer;
-   pragma Import
-     (C, Get_File_Names_Case_Sensitive,
-      "__gnat_get_file_names_case_sensitive");
+   function Columns_Types return GType_Array;
+   --  Returns the types for the columns in the Model.
+   --  This is not implemented as
+   --       Columns_Types : constant GType_Array ...
+   --  because Gdk.Pixbuf.Get_Type cannot be called before
+   --  Gtk.Main.Init.
 
-   Case_Sensitive_File_Name : constant Boolean :=
-     Get_File_Names_Case_Sensitive = 1;
+   type Append_Directory_Idle_Data is record
+      Explorer      : Dir_Tree;
+      Norm_Dest     : Basic_Types.String_Access;
+      Norm_Dir      : Basic_Types.String_Access;
+      D             : GNAT.Directory_Operations.Dir_Type;
+      Depth         : Integer := 0;
+      Base          : Gtk_Tree_Iter;
+      Dirs          : String_List_Utils.String_List.List;
+      Idle          : Boolean := False;
+      Physical_Read : Boolean := True;
+   end record;
 
-   function Add_Directory_Node
-     (Tree               : access Dir_Tree_Record'Class;
-      Dir                : String;
-      Parent             : Gtk_Ctree_Node;
-      Num_Subdirectories : Integer) return Gtk_Ctree_Node;
-   --  Add a new node in tree to reference Dir. The new node is created as
-   --  a child of Parent (or at the root of the tree if Parent is null).
-   --  Num_Subdirectories should be different from 0 if Dir contains
-   --  subdirectories.
+   procedure Free is
+     new Unchecked_Deallocation (Append_Directory_Idle_Data,
+                                 Append_Directory_Idle_Data_Access);
 
-   function Directory
-     (Tree     : access Dir_Tree_Record'Class;
-      N        : Gtk_Ctree_Node;
-      Absolute : Boolean := False) return String;
-   --  Return the directory associated with node. This doesn't include the
-   --  absolute path to the directory, unless Absolute is True.
+   procedure Set_Column_Types (Tree : Gtk_Tree_View);
+   --  Sets the types of columns to be displayed in the tree_view.
 
-   function Find_Node
-     (Tree : access Dir_Tree_Record'Class;
-      Directory : String) return Gtk_Ctree_Node;
-   --  Return the node for Directory, or null if not found.
+   procedure File_Append_Directory
+     (Explorer      : access Dir_Tree_Record'Class;
+      Dir           : String;
+      Base          : Gtk_Tree_Iter;
+      Depth         : Integer := 0;
+      Append_To_Dir : String  := "";
+      Idle          : Boolean := False;
+      Physical_Read : Boolean := True);
+   --  Add to the file view the directory Dir, at node given by Iter.
+   --  If Append_To_Dir is not "", and is a sub-directory of Dir, then
+   --  the path is expanded recursively all the way to Append_To_Dir.
 
-   procedure Add_Sub_Directories
-     (Tree : access Dir_Tree_Record'Class;
-      N    : Gtk_Ctree_Node);
-   --  Check on the disk what the subdirectories of Directory (N) are, and
-   --  add them to the tree.
-   --  Nothing is done if the subdirectories of N have already been parsed
+   procedure File_Tree_Expand_Row_Cb
+     (Explorer : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Values   : GValues);
+   --  Called every time a node is expanded in the file view.
+   --  It is responsible for automatically adding the children of the current
+   --  node if they are not there already.
+
+   function Expose_Event_Cb
+     (Explorer : access Glib.Object.GObject_Record'Class;
+      Values   : GValues) return Boolean;
+   --  Scroll the explorer to the current directory.
+
+   procedure File_Tree_Collapse_Row_Cb
+     (Explorer : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Values   : GValues);
+   --  Called every time a node is collapsed in the file view.
+
+   procedure On_File_Destroy
+     (Explorer : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Params : Glib.Values.GValues);
+   --  Callback for the "destroy" event on the file view.
+
+   procedure File_Remove_Idle_Calls
+     (Explorer : access Dir_Tree_Record'Class);
+   --  Remove the idle calls for filling the file view.
+
+   function On_Button_Press
+     (Tree      : access Gtk_Tree_View_Record'Class;
+      Model     : Gtk_Tree_Store;
+      Event     : Gdk_Event;
+      Add_Dummy : Boolean) return Boolean;
+   --  If the Event is a button click, expand the node or jump to the
+   --  location accordingly, and return whether the event should be propagated.
+   --  If Add_Dummy is true, a dummy node will be added to nodes collapsed
+   --  by this call.
+
+   function File_Button_Press
+     (Explorer : access Gtk_Widget_Record'Class;
+      Event    : Gdk_Event) return Boolean;
+   --  Callback for the "button_press" event on the file view.
+
+   procedure Free_Children
+     (T    : Dir_Tree;
+      Iter : Gtk_Tree_Iter);
+   --  Free all the children of iter Iter in the file view.
+
+   function Read_Directory
+     (D : Append_Directory_Idle_Data_Access) return Boolean;
+   --  Atomic function to read a directory using the information in D.
+   --  Called by File_Append_Directory.
+
+   procedure Refresh
+     (Explorer : access Dir_Tree_Record'Class);
+   --  Refresh the contents of the explorer.
+   pragma Unreferenced (Refresh);
+
+   procedure Append_Dummy_Iter
+     (Model : Gtk_Tree_Store;
+      Base  : Gtk_Tree_Iter);
+   --  Append an empty iter to Base.
 
    procedure Create_Directory_Cb
      (W : access Gtk_Widget_Record'Class);
    --  Create a new subdirectory of the selected directory.
-
-   procedure Expand_Tree_Cb
-     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Args   : Gtk_Args);
-   --  Called every time a node is expanded. It is responsible for
-   --  automatically adding the children of the current node if they are not
-   --  there already.
-
-   procedure Collapse_Tree_Cb
-     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Args   : Gtk_Args);
-   --  called every time a node is collapsed. The children of the node are
-   --  deleted, so that the contents is parsed again next time (in case the
-   --  user has manually created directories)
 
    procedure Add_Directory
      (Selector  : access Directory_Selector_Record'Class;
@@ -191,189 +279,20 @@ package body Directory_Tree is
       Event    : Gdk.Event.Gdk_Event) return Gtk_Menu;
    --  Return the contextual menu to use for a single directory selector.
 
-   function Select_Directory_Idle (Data : Idle_Data_Access) return Boolean;
-   --  Select a new directory in an idle loop (so that we can properly display
-   --  the busy cursor, and the tree is not frozen graphically for very long).
-
    function Filter
-     (Tree : access Dir_Tree_Record'Class; Dir_Name : String) return Boolean;
+     (Tree     : access Dir_Tree_Record'Class;
+      Dir_Name : String) return Boolean;
    --  Should return True if Dir_Name should be displayed in the tree.
    --  Dir_Name is the last part of the full path, ie shouldn't include its
    --  parent's name.
-
-   procedure On_Destroy (Tree : access Gtk_Widget_Record'Class);
-   --  Callback for the "destroy" signal
-
-   procedure On_Map (Tree : access Gtk_Widget_Record'Class);
-   --  Callback for the "map" signal. This is used to scroll the tree to show
-   --  the appropriate node. This can't be done if the tree is not visible,
-   --  since it has no effect otherwise.
-
-   function Button_Press_Cb
-     (Selector : access Gtk_Widget_Record'Class; Args : Gtk_Args)
-      return Boolean;
-   --  Callback for the "button_press" event
-
-   -------------
-   -- Gtk_New --
-   -------------
-
-   procedure Gtk_New (Tree : out Dir_Tree; Root : String) is
-   begin
-      Tree := new Dir_Tree_Record;
-      Directory_Tree.Initialize (Tree, Root);
-   end Gtk_New;
-
-   ----------------
-   -- Initialize --
-   ----------------
-
-   procedure Initialize
-     (Tree : access Dir_Tree_Record'Class; Root : String)
-   is
-      N : Gtk_Ctree_Node;
-      pragma Unreferenced (N);
-   begin
-      Gtk.Ctree.Initialize (Tree, Columns => 1);
-
-      Create_From_Xpm_D
-        (Tree.Ofolder_Pix,
-         Window      => null,
-         Colormap    => Get_Default_Colormap,
-         Mask        => Tree.Ofolder_Mask,
-         Transparent => Null_Color,
-         Data        => mini_ofolder_xpm);
-      Create_From_Xpm_D
-        (Tree.Folder_Pix,
-         Window      => null,
-         Colormap    => Get_Default_Colormap,
-         Mask        => Tree.Folder_Mask,
-         Transparent => Null_Color,
-         Data        => mini_folder_xpm);
-
-      Tree.Idle := 0;
-
-      N := Add_Directory_Node
-        (Tree, Root, null, Subdirectories_Count (Root));
-      Widget_Callback.Connect (Tree, "tree_expand", Expand_Tree_Cb'Access);
-      Widget_Callback.Connect (Tree, "tree_collapse", Collapse_Tree_Cb'Access);
-      Widget_Callback.Connect
-        (Tree, "destroy", Widget_Callback.To_Marshaller (On_Destroy'Access));
-
-      Widget_Callback.Connect
-        (Tree, "map", Widget_Callback.To_Marshaller (On_Map'Access));
-
-      --  ??? This is a workaround for a horizontal scrollbar problem: When the
-      --  ctree is put in a scrolled window, and if this is not called, the
-      --  scrollbar does not allow us to scroll as far right as possible...
-      Set_Column_Auto_Resize (Tree, 0, True);
-   end Initialize;
-
-   ----------------
-   -- On_Destroy --
-   ----------------
-
-   procedure On_Destroy (Tree : access Gtk_Widget_Record'Class) is
-   begin
-      if Dir_Tree (Tree).Idle /= 0 then
-         Idle_Remove (Dir_Tree (Tree).Idle);
-      end if;
-   end On_Destroy;
-
-   ------------
-   -- On_Map --
-   ------------
-
-   procedure On_Map (Tree : access Gtk_Widget_Record'Class) is
-      T : Dir_Tree := Dir_Tree (Tree);
-   begin
-      if T.Moveto_Node /= null then
-         Node_Moveto (T, T.Moveto_Node, 0, 0.1, 0.2);
-         T.Moveto_Node := null;
-      end if;
-   end On_Map;
-
-   ---------------
-   -- Directory --
-   ---------------
-
-   function Directory
-     (Tree     : access Dir_Tree_Record'Class;
-      N        : Gtk_Ctree_Node;
-      Absolute : Boolean := False) return String
-   is
-      S : constant String := Node_Get_Text (Tree, N, 0);
-   begin
-      if Absolute
-        and then Row_Get_Parent (Node_Get_Row (N)) /= null
-      then
-         return Directory (Tree, Row_Get_Parent (Node_Get_Row (N)), Absolute)
-           & S;
-      else
-         if S = -Drives_String then
-            return "";
-         else
-            return S;
-         end if;
-      end if;
-   end Directory;
-
-   ---------------
-   -- Find_Node --
-   ---------------
-
-   function Find_Node
-     (Tree : access Dir_Tree_Record'Class;
-      Directory : String) return Gtk_Ctree_Node
-   is
-      Current : Gtk_Ctree_Node := Node_Nth (Tree, 0);
-      Children : Gtk_Ctree_Node;
-      First, Last : Integer;
-   begin
-      --  Skip the first '/'
-      First := Directory'First + 1;
-      Last := First;
-
-      while Last <= Directory'Last
-        and then Directory (Last) /= '/'
-        and then Directory (Last) /= Directory_Separator
-      loop
-         Last := Last + 1;
-      end loop;
-
-      Children := Row_Get_Children (Node_Get_Row (Current));
-
-      while Children /= null loop
-         if Node_Get_Text (Tree, Children, 0) = Directory (First .. Last) then
-            Current := Children;
-            Children := Row_Get_Children (Node_Get_Row (Current));
-            First := Last + 1;
-            Last := First;
-
-            while Last <= Directory'Last
-              and then Directory (Last) /= '/'
-              and then Directory (Last) /= Directory_Separator
-            loop
-               Last := Last + 1;
-            end loop;
-
-            if Last > Directory'Last then
-               return Current;
-            end if;
-         else
-            Children := Row_Get_Sibling (Node_Get_Row (Children));
-         end if;
-      end loop;
-
-      return null;
-   end Find_Node;
 
    ------------
    -- Filter --
    ------------
 
    function Filter
-     (Tree : access Dir_Tree_Record'Class; Dir_Name : String) return Boolean
+     (Tree : access Dir_Tree_Record'Class; Dir_Name : String)
+      return Boolean
    is
       pragma Unreferenced (Tree);
    begin
@@ -382,333 +301,32 @@ package body Directory_Tree is
         and then Dir_Name /= "CVS";
    end Filter;
 
-   ---------------------
-   -- Button_Press_Cb --
-   ---------------------
-
-   function Button_Press_Cb
-     (Selector : access Gtk_Widget_Record'Class; Args : Gtk_Args)
-      return Boolean
-   is
-      Sel      : constant Directory_Selector := Directory_Selector (Selector);
-      Event    : constant Gdk_Event := To_Event (Args, 1);
-      Row      : Gint;
-      Column   : Gint;
-      Is_Valid : Boolean;
-
-   begin
-      Get_Selection_Info
-        (Sel.Directory, Gint (Get_X (Event)), Gint (Get_Y (Event)),
-         Row, Column, Is_Valid);
-
-      if not Is_Valid then
-         return False;
-      end if;
-
-      if Get_Button (Event) = 1
-        and then Get_Event_Type (Event) = Gdk_2button_Press
-      then
-         --  Need to force the selection: if the user double-clicked on an
-         --  already selected line, it has been deselected by the double-click.
-         Select_Row (Sel.Directory, Row, -1);
-
-         Add_Single_Directory_Cb (Sel);
-
-         --  Stop the propagation of the event, otherwise the
-         --  node will also be expanded, which is confusing.
-
-         return True;
-      end if;
-
-      return False;
-
-   exception
-      when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
-         return False;
-   end Button_Press_Cb;
-
-   --------------------
-   -- Expand_Tree_Cb --
-   --------------------
-
-   procedure Expand_Tree_Cb
-     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class; Args : Gtk_Args)
-   is
-      Tree : constant Dir_Tree := Dir_Tree (Widget);
-      Node : constant Gtk_Ctree_Node := Gtk_Ctree_Node (To_C_Proxy (Args, 1));
-      Win  : constant Gdk_Window := Get_Window (Widget);
-
-   begin
-      if Win /= null then
-         Set_Busy_Cursor (Win, True, True);
-      end if;
-
-      Add_Sub_Directories (Tree, Node);
-      Node_Moveto (Tree, Node, 0, 0.1, 0.2);
-
-      if Win /= null then
-         Set_Busy_Cursor (Win, False);
-      end if;
-
-   exception
-      when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
-   end Expand_Tree_Cb;
-
-   ----------------------
-   -- Collapse_Tree_Cb --
-   ----------------------
-
-   procedure Collapse_Tree_Cb
-     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class; Args : Gtk_Args)
-   is
-      Tree    : constant Dir_Tree := Dir_Tree (Widget);
-      Node    : constant Gtk_Ctree_Node :=
-        Gtk_Ctree_Node (To_C_Proxy (Args, 1));
-      Current : Gtk_Ctree_Node;
-      Sibling : Gtk_Ctree_Node;
-
-   begin
-      --  It might happen that this signal is emitted with Node = null, for
-      --  instance if we are expanding a directory that has no children. In
-      --  this case, either Node or Current will be null.
-
-      if Node = null then
-         return;
-      end if;
-
-      Current := Row_Get_Children (Node_Get_Row (Node));
-
-      if Current = null
-        or else Node_Get_Text (Tree, Node, 0) = -Drives_String
-      then
-         return;
-      end if;
-
-      Freeze (Tree);
-
-      --  Leave only one child, so as to keep the "[+]" visible
-
-      loop
-         Sibling := Row_Get_Sibling (Node_Get_Row (Current));
-
-         exit when Sibling = null;
-
-         Remove_Node (Tree, Current);
-         Current := Sibling;
-      end loop;
-
-      Boolean_Data.Node_Set_Row_Data (Tree, Node, False);
-      Thaw (Tree);
-
-   exception
-      when E : others =>
-         Thaw (Tree);
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
-   end Collapse_Tree_Cb;
-
-   -------------------------
-   -- Add_Sub_Directories --
-   -------------------------
-
-   procedure Add_Sub_Directories
-     (Tree : access Dir_Tree_Record'Class;
-      N    : Gtk_Ctree_Node)
-   is
-      D       : Dir_Type;
-      File    : String (1 .. 1024);
-      Last    : Natural;
-      N2      : Gtk_Ctree_Node;
-      pragma Unreferenced (N2);
-
-      Num_Dir : Natural := 0;
-      Num_Subdirectories : Integer;
-      Has_Dummy_Node : Boolean;
-
-   begin
-      --  Have we already parsed the subdirectories ?
-
-      if Boolean_Data.Node_Get_Row_Data (Tree, N) then
-         return;
-      end if;
-
-      Freeze (Tree);
-
-      Has_Dummy_Node := Row_Get_Children (Node_Get_Row (N)) /= null;
-
-      declare
-         Absolute : constant String := Directory (Tree, N, Absolute => True);
-      begin
-         begin
-            Open (D, Absolute);
-
-            loop
-               Read (D, File, Last);
-
-               exit when Last = 0;
-
-               Num_Subdirectories :=
-                 Subdirectories_Count (Absolute & File (File'First .. Last));
-
-               if Num_Subdirectories /= -1
-                 and then Filter (Tree, File (File'First .. Last))
-               then
-                  Num_Dir := Num_Dir + 1;
-                  N2 := Add_Directory_Node
-                    (Tree,
-                     File (File'First .. Last) & Directory_Separator,
-                     N,
-                     Num_Subdirectories);
-               end if;
-            end loop;
-
-            Close (D);
-
-         exception
-            when Directory_Error =>
-               null;
-         end;
-      end;
-
-      --  Remove the dummy node inserted when this node was created
-      --  This can be done only after there are some other children, or the
-      --  parent node is collapsed, thus causing another dummy node to be
-      --  inserted.
-
-      if Has_Dummy_Node then
-         Remove_Node (Tree, Row_Get_Children (Node_Get_Row (N)));
-         Boolean_Data.Node_Set_Row_Data (Tree, N, True);
-      end if;
-
-      if Num_Dir /= 0 then
-         Sort_Node (Tree, N);
-      end if;
-
-      Thaw (Tree);
-   end Add_Sub_Directories;
-
-   ------------------------
-   -- Add_Directory_Node --
-   ------------------------
-
-   function Add_Directory_Node
-     (Tree               : access Dir_Tree_Record'Class;
-      Dir                : String;
-      Parent             : Gtk_Ctree_Node;
-      Num_Subdirectories : Integer) return Gtk_Ctree_Node
-   is
-      N, N2     : Gtk_Ctree_Node;
-      Buffer    : aliased String (1 .. 1024);
-      Last, Len : Integer;
-
-      function Insert_Directory_Node
-        (Parent   : Gtk_Ctree_Node;
-         Dir      : String;
-         Expanded : Boolean := False) return Gtk_Ctree_Node;
-      --  Insert a directory node in Tree given a parent and a sibling node.
-      --  Dir is the name of the directory to insert.
-
-      procedure Add_Dummy_Node (N : Gtk_Ctree_Node);
-      --  Add a dummy node in Tree for a given node N.
-
-      function Insert_Directory_Node
-        (Parent   : Gtk_Ctree_Node;
-         Dir      : String;
-         Expanded : Boolean := False) return Gtk_Ctree_Node
-      is
-         Strings : Gtkada.Types.Chars_Ptr_Array (1 .. 1);
-         Node    : Gtk_Ctree_Node;
-      begin
-         Strings (1) := New_String (Dir);
-         Node := Insert_Node
-           (Tree,
-            Parent        => Parent,
-            Sibling       => null,
-            Text          => Strings,
-            Spacing       => 5,
-            Pixmap_Closed => Tree.Folder_Pix,
-            Mask_Closed   => Tree.Folder_Mask,
-            Pixmap_Opened => Tree.Ofolder_Pix,
-            Mask_Opened   => Tree.Ofolder_Mask,
-            Is_Leaf       => False,
-            Expanded      => Expanded);
-         Free (Strings);
-         Boolean_Data.Node_Set_Row_Data (Tree, Node, False);
-         return Node;
-      end Insert_Directory_Node;
-
-      procedure Add_Dummy_Node (N : Gtk_Ctree_Node) is
-         Strings    : Gtkada.Types.Chars_Ptr_Array (1 .. 1);
-         Dummy_Node : Gtk_Ctree_Node;
-         pragma Unreferenced (Dummy_Node);
-
-      begin
-         Strings (1) := New_String (".");
-         Dummy_Node := Insert_Node
-           (Tree,
-            Parent        => N,
-            Sibling       => null,
-            Text          => Strings,
-            Spacing       => 5,
-            Pixmap_Closed => null,
-            Mask_Closed   => null,
-            Pixmap_Opened => null,
-            Mask_Opened   => null,
-            Is_Leaf       => True,
-            Expanded      => False);
-         Free (Strings);
-      end Add_Dummy_Node;
-
-   begin
-      --  Always create a node for directories, in case the user wants to add
-      --  some extra information (files, ...) later on
-
-      if Dir = (1 => Directory_Separator) then
-         Get_Logical_Drive_Strings (Buffer, Len);
-
-         if Len /= 0 then
-            N := Insert_Directory_Node (Parent, -Drives_String, True);
-            Boolean_Data.Node_Set_Row_Data (Tree, N, True);
-            Last := 1;
-
-            for J in 1 .. Len loop
-               if Buffer (J) = ASCII.NUL then
-                  N2 := Insert_Directory_Node (N, Buffer (Last .. J - 1));
-                  Add_Dummy_Node (N2);
-                  Last := J + 1;
-               end if;
-            end loop;
-
-            return N;
-         end if;
-      end if;
-
-      N := Insert_Directory_Node (Parent, Dir);
-
-      --  Add a dummy node so that it is possible to expand dynamically a
-      --  directory
-
-      if Num_Subdirectories > 0 then
-         Add_Dummy_Node (N);
-      end if;
-
-      return N;
-   end Add_Directory_Node;
-
    -----------------
    -- Show_Parent --
    -----------------
 
    procedure Show_Parent (Tree : access Dir_Tree_Record) is
-      N : Gtk_Ctree_Node;
+      Iter  : Gtk_Tree_Iter;
+      Model : Gtk_Tree_Model;
+      Path  : Gtk_Tree_Path;
    begin
-      N := Row_Get_Parent
-        (Node_Get_Row (Node_List.Get_Data (Get_Selection (Tree))));
-      if N /= null then
-         Gtk_Select (Tree, N);
-         Node_Moveto (Tree, N, 0, 0.1, 0.2);
+      Get_Selected (Get_Selection (Tree.File_Tree), Model, Iter);
+
+      if Iter = Null_Iter then
+         return;
       end if;
+
+      Iter := Parent (Tree.File_Model, Iter);
+
+      if Iter = Null_Iter then
+         return;
+      end if;
+
+      Select_Iter (Get_Selection (Tree.File_Tree), Iter);
+
+      Path := Get_Path (Tree.File_Model, Iter);
+      Scroll_To_Cell (Tree.File_Tree, Path, null, True, 0.1, 0.1);
+      Path_Free (Path);
    end Show_Parent;
 
    --------------------
@@ -720,133 +338,52 @@ package body Directory_Tree is
       Dir            : String;
       Busy_Cursor_On : Gdk.Window.Gdk_Window := null)
    is
-      Root     : constant Gtk_Ctree_Node := Node_Nth (Tree, 0);
-      Root_Dir : constant String := Directory (Tree, Root, False);
       D        : constant String := Name_As_Directory (Dir);
-
+      Parent   : Gtk_Tree_Iter;
+      Iter     : Gtk_Tree_Iter;
+      Path     : Gtk_Tree_Path;
+      pragma Unreferenced (Busy_Cursor_On);
    begin
-      if Dir'Length < Root_Dir'Length
-        or else D (D'First .. D'First + Root_Dir'Length - 1) /= Root_Dir
-      then
-         return;
-      end if;
+      --  Find the first non-expanded iter
 
-      if Busy_Cursor_On /= null then
-         Set_Busy_Cursor (Busy_Cursor_On, True);
-      end if;
+      Parent := Get_Iter_First (Tree.File_Model);
 
-      Tree.Idle := Dir_Idle.Add
-        (Select_Directory_Idle'Access,
-         new Idle_Data'(Tree        => Dir_Tree (Tree),
-                        Dir         => new String'(D),
-                        Node        => Node_Nth (Tree, 0),
-                        Index       => D'First + Root_Dir'Length - 1,
-                        Busy_Cursor => Busy_Cursor_On));
-   end Show_Directory;
+      Iter := Parent;
 
-   ---------------------------
-   -- Select_Directory_Idle --
-   ---------------------------
+      while Iter /= Null_Iter loop
+         Path := Get_Path (Tree.File_Model, Iter);
 
-   function Select_Directory_Idle (Data : Idle_Data_Access) return Boolean is
-      Dir_End : Natural := Data.Index + 1;
-      Tmp     : Gtk_Ctree_Node;
-      D       : Idle_Data_Access := Data;
+         declare
+            Curr_Dir : constant String := Get_String
+              (Tree.File_Model, Iter, Absolute_Name_Column);
+         begin
+            if Curr_Dir = D then
+               Select_Iter (Get_Selection (Tree.File_Tree), Iter);
+               Scroll_To_Cell (Tree.File_Tree, Path, null, True, 0.1, 0.1);
+               Path_Free (Path);
 
-   begin
-      --  Parse the directory name
-
-      while Dir_End <= Data.Dir'Last
-        and then Data.Dir (Dir_End) /= '/'
-        and then Data.Dir (Dir_End) /= GNAT.OS_Lib.Directory_Separator
-      loop
-         Dir_End := Dir_End + 1;
-      end loop;
-
-      if Dir_End > Data.Dir'Last then
-         Dir_End := Data.Dir'Last;
-      end if;
-
-      --  Find the node for the directory
-
-      Expand (Data.Tree, Data.Node);
-
-      Tmp := Row_Get_Children (Node_Get_Row (Data.Node));
-
-      while Tmp /= null loop
-         if Case_Sensitive_File_Name then
-            if Node_Get_Text (Data.Tree, Tmp, 0) =
-              Data.Dir (Data.Index + 1 .. Dir_End)
-            then
-               exit;
+               return;
             end if;
 
-         elsif To_Lower (Node_Get_Text (Data.Tree, Tmp, 0)) =
-           To_Lower (Data.Dir (Data.Index + 1 .. Dir_End))
-         then
-            exit;
-         end if;
+            if Curr_Dir'Length < D'Length
+              and then D (D'First .. D'First + Curr_Dir'Length - 1) = Curr_Dir
+            then
+               if Row_Expanded (Tree.File_Tree, Path) then
+                  Iter := Children (Tree.File_Model, Iter);
+               else
+                  File_Append_Directory
+                    (Tree, Curr_Dir, Iter, 1, D, True, True);
+                  Path_Free (Path);
+                  return;
+               end if;
+            else
+               Next (Tree.File_Model, Iter);
+            end if;
+         end;
 
-         Tmp := Row_Get_Sibling (Node_Get_Row (Tmp));
+         Path_Free (Path);
       end loop;
-
-      if Tmp = null
-        or else Dir_End >= Data.Dir'Last
-      then
-         if Tmp = null then
-            Tmp := Data.Node;
-         end if;
-
-         Gtk_Select (Data.Tree, Tmp);
-         Expand (Data.Tree, Tmp);
-
-         if Mapped_Is_Set (Data.Tree) then
-            Node_Moveto (Data.Tree, Tmp, 0, 0.1, 0.2);
-         else
-            Data.Tree.Moveto_Node := Tmp;
-         end if;
-
-         if Data.Busy_Cursor /= null then
-            Set_Busy_Cursor (Data.Busy_Cursor, False);
-         end if;
-
-         --  Force a recomputation of the scrollbars, since otherwise they
-         --  won't appear until after the user has explicitly resized the
-         --  widget.
-         Queue_Resize (D.Tree);
-
-         D.Tree.Idle := 0;
-         Free (D.Dir);
-         Free (D);
-
-         return False;
-
-      else
-         Data.Node := Tmp;
-         Data.Index := Dir_End;
-         return True;
-      end if;
-
-   exception
-      when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
-         return False;
-   end Select_Directory_Idle;
-
-   -------------------
-   -- Get_Selection --
-   -------------------
-
-   function Get_Selection (Tree : access Dir_Tree_Record) return String is
-      use type Node_List.Glist;
-   begin
-      if Get_Selection (Tree) = Node_List.Null_List then
-         return "";
-      else
-         return Directory
-           (Tree, Node_List.Get_Data (Get_Selection (Tree)), Absolute => True);
-      end if;
-   end Get_Selection;
+   end Show_Directory;
 
    ---------------------------------
    -- Find_Directory_In_Selection --
@@ -926,14 +463,43 @@ package body Directory_Tree is
          null;
    end Add_Directory;
 
+   -------------------
+   -- Get_Selection --
+   -------------------
+
+   function Get_Selection
+     (Tree : access Dir_Tree_Record) return String
+   is
+      Iter     : Gtk_Tree_Iter;
+      Model    : Gtk_Tree_Model;
+   begin
+      Get_Selected (Get_Selection (Tree.File_Tree), Model, Iter);
+
+      if Iter = Null_Iter then
+         return "";
+      else
+         return Get_String
+           (Tree.File_Model, Iter, Absolute_Name_Column);
+      end if;
+   end Get_Selection;
+
+   ------------------------
+   -- Get_Tree_Selection --
+   ------------------------
+
+   function Get_Tree_Selection
+     (Tree : access Dir_Tree_Record) return Gtk_Tree_Selection is
+   begin
+      return Gtk.Tree_View.Get_Selection (Tree.File_Tree);
+   end Get_Tree_Selection;
+
    ----------------------
    -- Add_Directory_Cb --
    ----------------------
 
    procedure Add_Directory_Cb (W : access Gtk_Widget_Record'Class) is
       Selector : constant Directory_Selector := Directory_Selector (W);
-      Dir      : constant String    := Get_Selection (Selector.Directory);
-
+      Dir      : constant String  := Get_Selection (Selector.Directory);
    begin
       pragma Assert
         (Selector.List /= null, "Not a multiple-directory selector");
@@ -1042,6 +608,7 @@ package body Directory_Tree is
 
    procedure Add_Single_Directory_Cb (W : access Gtk_Widget_Record'Class) is
       Selector : constant Directory_Selector := Directory_Selector (W);
+
    begin
       Unselect_All (Selector.List);
       Add_Directory (Selector, Get_Selection (Selector.Directory), False);
@@ -1062,21 +629,23 @@ package body Directory_Tree is
       Event    : Gdk.Event.Gdk_Event) return Gtk_Menu
    is
       Item         : Gtk_Menu_Item;
-      Selected_Row : Gint;
-      Selected_Col : Gint;
       Is_Valid     : Boolean := False;
       Menu         : Gtk_Menu;
 
+      Path         : Gtk_Tree_Path;
+      Column       : Gtk_Tree_View_Column;
+      Cell_X, Cell_Y : Gint;
+
    begin
       if Get_Event_Type (Event) in Button_Press .. Button_Release then
-         Get_Selection_Info
-           (Selector.Directory,
+         Get_Path_At_Pos
+           (Selector.Directory.File_Tree,
             Gint (Get_X (Event)), Gint (Get_Y (Event)),
-            Selected_Row, Selected_Col, Is_Valid);
+            Path, Column, Cell_X, Cell_Y, Is_Valid);
       end if;
 
       if Is_Valid then
-         Select_Row (Selector.Directory, Selected_Row, Selected_Col);
+         Select_Path (Get_Selection (Selector.Directory.File_Tree), Path);
 
          Gtk_New (Menu);
          Gtk_New (Item, -"Add directory recursive");
@@ -1125,28 +694,14 @@ package body Directory_Tree is
      (Selector : Directory_Selector;
       Event    : Gdk.Event.Gdk_Event) return Gtk_Menu
    is
+      pragma Unreferenced (Event);
       use type Gint_List.Glist;
 
       Item        : Gtk_Menu_Item;
       Is_Valid    : constant Boolean :=
         Get_Selection (Selector.List) /= Gint_List.Null_List;
       Menu        : Gtk_Menu;
-      Row, Column : Gint;
-      Valid       : Boolean;
-
    begin
-      Get_Selection_Info
-        (Selector.Directory,
-         Gint (Get_X (Event)),
-         Gint (Get_Y (Event)),
-         Row, Column, Valid);
-
-      if not Valid then
-         return null;
-      end if;
-
-      Select_Row (Selector.Directory, Row, Column);
-
       Gtk_New (Menu);
       Gtk_New (Item, -"Remove directory recursive");
       Widget_Callback.Object_Connect
@@ -1183,8 +738,6 @@ package body Directory_Tree is
       Widget      : Gtk_Widget;
       pragma Unreferenced (Widget);
 
-      N, Parent : Gtk_Ctree_Node;
-
    begin
       Gtk_New (Dialog,
                Title  => -"Create directory",
@@ -1206,35 +759,29 @@ package body Directory_Tree is
 
       if Run (Dialog) = Gtk_Response_OK then
          declare
-            D : constant String := Name_As_Directory (Get_Text (Ent));
-            Parent_D : constant String := Dir_Name
-              (D (D'First .. D'Last - 1));
-            Base_D : constant String :=
-              Name_As_Directory (Base_Name (D (D'First .. D'Last - 1)));
+            Iter  : Gtk_Tree_Iter;
+            Model : Gtk_Tree_Model;
+            Path  : Gtk_Tree_Path;
 
+            Success : Boolean;
+            pragma Unreferenced (Success);
          begin
-            --  Make sure the parent is expanded first. This will read the
-            --  currently existing directories, and will avoid duplicating the
-            --  new one, which would happen if we did if afterwards.
-            Parent := Find_Node (Selector.Directory, Parent_D);
-            if Parent /= null then
-               Expand (Selector.Directory, Parent);
-            end if;
+            Get_Selected
+              (Get_Selection (Selector.Directory.File_Tree), Model, Iter);
+
+            Path := Get_Path (Selector.Directory.File_Model, Iter);
 
             --  ??? Should we create the intermediate directories.
             Make_Dir (Get_Text (Ent));
 
-            --  Refresh the tree to show the new directory
-            if Parent /= null then
-               N := Add_Directory_Node (Selector.Directory, Base_D, Parent, 0);
-               Sort_Node (Selector.Directory, Parent);
-               Node_Moveto (Selector.Directory, N, 0, 0.5, 0.5);
-            end if;
+            Success := Collapse_Row (Selector.Directory.File_Tree, Path);
+            Success := Expand_Row (Selector.Directory.File_Tree, Path, False);
+
+            Path_Free (Path);
 
          exception
             when Directory_Error =>
                Trace (Me, "Cannot create directory " & Get_Text (Ent));
-               --  Insert (Kernel, "Cannot create directory" & Get_Text (Ent));
          end;
       end if;
 
@@ -1253,25 +800,10 @@ package body Directory_Tree is
      (Selector : Directory_Selector;
       Event    : Gdk.Event.Gdk_Event) return Gtk_Menu
    is
-      --  pragma Unreferenced (Event);
+      pragma Unreferenced (Event);
       Menu : Gtk_Menu;
       Item : Gtk_Menu_Item;
-      Row, Column : Gint;
-      Valid : Boolean;
-
    begin
-      Get_Selection_Info
-        (Selector.Directory,
-         Gint (Get_X (Event)),
-         Gint (Get_Y (Event)),
-         Row, Column, Valid);
-
-      if not Valid then
-         return null;
-      end if;
-
-      Select_Row (Selector.Directory, Row, Column);
-
       Gtk_New (Menu);
       Gtk_New (Item, -"Create new subdirectory");
       Append (Menu, Item);
@@ -1313,6 +845,7 @@ package body Directory_Tree is
       Busy_Cursor_On       : Gdk.Window.Gdk_Window := null;
       Initial_Selection    : GNAT.OS_Lib.Argument_List := No_Selection)
    is
+      pragma Unreferenced (Busy_Cursor_On);
       Scrolled : Gtk_Scrolled_Window;
       Bbox     : Gtk_Hbutton_Box;
       Button   : Gtk_Button;
@@ -1322,22 +855,13 @@ package body Directory_Tree is
    begin
       Initialize_Vpaned (Selector);
 
-      Gtk_New (Scrolled);
-      Set_Policy (Scrolled, Policy_Automatic, Policy_Automatic);
-      Pack1 (Selector, Scrolled, Resize => True);
-
-      Gtk_New (Selector.Directory, Root_Directory);
-      Add (Scrolled, Selector.Directory);
-
-      Show_Directory (Selector.Directory, Initial_Directory, Busy_Cursor_On);
-
-      Gtkada.Handlers.Return_Callback.Object_Connect
-        (Selector.Directory, "button_press_event",
-         Button_Press_Cb'Access, Selector);
+      Gtk_New (Selector.Directory, Root_Directory, Initial_Directory);
+      Pack1 (Selector, Selector.Directory, Resize => True);
 
       if Multiple_Directories then
          Widget_Menus.Register_Contextual_Menu
-           (Selector.Directory, Directory_Selector (Selector),
+           (Selector.Directory.File_Tree,
+            Directory_Selector (Selector),
             Tree_Contextual_Menu'Access);
 
          Gtk_New_Vbox (Vbox, Homogeneous => False);
@@ -1452,14 +976,761 @@ package body Directory_Tree is
       end if;
    end Get_Multiple_Selection;
 
-   --------------
-   -- Get_Tree --
-   --------------
+   -----------------------
+   -- Append_Dummy_Iter --
+   -----------------------
 
-   function Get_Tree (Selector : access Directory_Selector_Record)
-      return Dir_Tree is
+   procedure Append_Dummy_Iter
+     (Model : Gtk_Tree_Store;
+      Base  : Gtk_Tree_Iter)
+   is
+      Iter : Gtk_Tree_Iter;
    begin
-      return Selector.Directory;
-   end Get_Tree;
+      Append (Model, Iter, Base);
+   end Append_Dummy_Iter;
+
+   --------------------
+   -- Read_Directory --
+   --------------------
+
+   function Read_Directory
+     (D : Append_Directory_Idle_Data_Access) return Boolean
+   is
+      File       : String (1 .. 1024);
+      Last       : Natural;
+      Path_Found : Boolean := False;
+      Iter       : Gtk_Tree_Iter;
+      New_D      : Append_Directory_Idle_Data_Access;
+
+      use String_List_Utils.String_List;
+
+   begin
+      --  If we are appending at the base, create a node indicating the
+      --  absolute path to the directory.
+
+      if D.Base = Null_Iter then
+         Append (D.Explorer.File_Model, Iter, D.Base);
+
+         Set (D.Explorer.File_Model, Iter, Absolute_Name_Column,
+              Locale_To_UTF8 (D.Norm_Dir.all));
+         Set (D.Explorer.File_Model, Iter, Base_Name_Column,
+              Locale_To_UTF8 (D.Norm_Dir.all));
+         Set (D.Explorer.File_Model, Iter, Node_Type_Column,
+              Gint (Node_Types'Pos (Directory_Node)));
+
+         if D.Physical_Read then
+            Set (D.Explorer.File_Model, Iter, Icon_Column,
+                 Glib.C_Proxy (Open_Pixbufs (Directory_Node)));
+            D.Base := Iter;
+
+            return Read_Directory (D);
+
+         else
+            Append_Dummy_Iter (D.Explorer.File_Model, Iter);
+            Set (D.Explorer.File_Model, Iter, Icon_Column,
+                 Glib.C_Proxy (Close_Pixbufs (Directory_Node)));
+            New_D := D;
+            Free (New_D);
+
+            return False;
+         end if;
+
+      else
+         declare
+            Path    : constant Gtk_Tree_Path :=
+              Get_Path (D.Explorer.File_Model, D.Base);
+            Success : Boolean;
+            Expanding : constant Boolean := D.Explorer.Expanding;
+            pragma Unreferenced (Success);
+         begin
+            D.Explorer.Expanding := True;
+            Success := Expand_Row
+              (D.Explorer.File_Tree,
+               Path, False);
+            D.Explorer.Expanding := Expanding;
+            Path_Free (Path);
+         end;
+      end if;
+
+      Read (D.D, File, Last);
+
+      if D.Depth >= 0 and then Last /= 0 then
+         if not (Last = 1 and then File (1) = '.')
+           and then not (Last = 2 and then File (1 .. 2) = "..")
+         then
+            if Is_Directory (D.Norm_Dir.all & File (File'First .. Last)) then
+               Append (D.Dirs, File (File'First .. Last));
+            end if;
+
+            if D.Depth = 0 then
+               D.Depth := -1;
+            end if;
+         end if;
+
+         return True;
+      end if;
+
+      Close (D.D);
+
+      if Filenames_Are_Case_Sensitive then
+         Sort (D.Dirs);
+      else
+         Sort_Case_Insensitive (D.Dirs);
+      end if;
+
+      if Is_Empty (D.Dirs) then
+         Set (D.Explorer.File_Model, D.Base, Icon_Column,
+              Glib.C_Proxy (Close_Pixbufs (Directory_Node)));
+      end if;
+
+      while not Is_Empty (D.Dirs) loop
+         declare
+            Dir : constant String := Head (D.Dirs);
+         begin
+            Append (D.Explorer.File_Model, Iter, D.Base);
+            Set (D.Explorer.File_Model, Iter, Absolute_Name_Column,
+                 Locale_To_UTF8 (D.Norm_Dir.all & Dir & Directory_Separator));
+            Set (D.Explorer.File_Model, Iter, Base_Name_Column,
+                 Locale_To_UTF8 (Dir));
+            Set (D.Explorer.File_Model, Iter, Node_Type_Column,
+                 Gint (Node_Types'Pos (Directory_Node)));
+
+            if D.Depth = 0 then
+               exit;
+            end if;
+
+            --  Are we on the path to the target directory ?
+
+            if not Path_Found
+              and then D.Norm_Dir'Length + Dir'Length <= D.Norm_Dest'Length
+                and then
+                  ((Filenames_Are_Case_Sensitive
+                    and then (D.Norm_Dest
+                               (D.Norm_Dest'First
+                                .. D.Norm_Dest'First
+                                  + D.Norm_Dir'Length + Dir'Length - 1)
+                                   = D.Norm_Dir.all & Dir))
+                   or else
+                     (not Filenames_Are_Case_Sensitive
+                      and then Case_Insensitive_Equal
+                        (D.Norm_Dest.all
+                           (D.Norm_Dest.all'First
+                              .. D.Norm_Dest.all'First
+                                + D.Norm_Dir.all'Length
+                                  + Dir'Length - 1),
+                         D.Norm_Dir.all & Dir)))
+            then
+               Path_Found := True;
+
+               declare
+                  Success   : Boolean;
+                  pragma Unreferenced (Success);
+
+                  Path      : Gtk_Tree_Path;
+                  Expanding : constant Boolean := D.Explorer.Expanding;
+               begin
+                  Path := Get_Path (D.Explorer.File_Model, D.Base);
+
+                  D.Explorer.Expanding := True;
+                  Success := Expand_Row (D.Explorer.File_Tree, Path, False);
+                  D.Explorer.Expanding := Expanding;
+
+                  Set (D.Explorer.File_Model, D.Base, Icon_Column,
+                       Glib.C_Proxy (Open_Pixbufs (Directory_Node)));
+
+                  Path_Free (Path);
+               end;
+
+               --  Are we on the target directory ?
+
+               if D.Norm_Dest.all = D.Norm_Dir.all & Dir
+                  & Directory_Separator
+               then
+                  declare
+                     Success   : Boolean;
+                     pragma Unreferenced (Success);
+
+                     Expanding : constant Boolean := D.Explorer.Expanding;
+                  begin
+                     D.Explorer.Path := Get_Path (D.Explorer.File_Model, Iter);
+
+                     File_Append_Directory
+                       (D.Explorer, D.Norm_Dir.all & Dir & Directory_Separator,
+                        Iter, D.Depth, D.Norm_Dest.all,
+                        False);
+
+                     D.Explorer.Expanding := True;
+                     Success := Expand_Row
+                       (D.Explorer.File_Tree,
+                        D.Explorer.Path, False);
+                     D.Explorer.Expanding := Expanding;
+
+                     Set (D.Explorer.File_Model, Iter, Icon_Column,
+                          Glib.C_Proxy (Open_Pixbufs (Directory_Node)));
+                     D.Explorer.Scroll_To_Directory := True;
+                     D.Explorer.Realize_Cb_Id :=
+                       Gtkada.Handlers.Object_Return_Callback.Object_Connect
+                         (D.Explorer.File_Tree, "expose_event",
+                          Expose_Event_Cb'Access, D.Explorer, True);
+                  end;
+
+               else
+                  File_Append_Directory
+                    (D.Explorer, D.Norm_Dir.all & Dir & Directory_Separator,
+                     Iter, D.Depth, D.Norm_Dest.all, D.Idle);
+               end if;
+
+            else
+               Append_Dummy_Iter (D.Explorer.File_Model, Iter);
+
+               Set (D.Explorer.File_Model, Iter, Icon_Column,
+                    Glib.C_Proxy (Close_Pixbufs (Directory_Node)));
+            end if;
+
+            Next (D.Dirs);
+         end;
+      end loop;
+
+      Free (D.Norm_Dir);
+      Free (D.Norm_Dest);
+
+      New_D := D;
+      Free (New_D);
+
+      return False;
+
+   exception
+      when Directory_Error =>
+         --  The directory couldn't be open, probably because of permissions.
+
+         New_D := D;
+         Free (New_D);
+         return False;
+
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         return False;
+   end Read_Directory;
+
+   ---------------------------
+   -- File_Append_Directory --
+   ---------------------------
+
+   procedure File_Append_Directory
+     (Explorer      : access Dir_Tree_Record'Class;
+      Dir           : String;
+      Base          : Gtk_Tree_Iter;
+      Depth         : Integer := 0;
+      Append_To_Dir : String  := "";
+      Idle          : Boolean := False;
+      Physical_Read : Boolean := True)
+   is
+      D : Append_Directory_Idle_Data_Access := new Append_Directory_Idle_Data;
+      --  D is freed when Read_Directory ends (i.e. returns False)
+
+      Timeout_Id : Timeout_Handler_Id;
+
+   begin
+      if Physical_Read then
+         begin
+            Open (D.D, Dir);
+         exception
+            when Directory_Error =>
+               Free (D);
+               return;
+         end;
+
+         D.Norm_Dir := new String'(Normalize_Pathname (Dir));
+
+      else
+         D.Norm_Dir := new String'(Normalize_Pathname (Dir));
+      end if;
+
+      D.Norm_Dest     := new String'(Normalize_Pathname (Append_To_Dir));
+      D.Depth         := Depth;
+      D.Base          := Base;
+      D.Explorer      := Dir_Tree (Explorer);
+      D.Idle          := Idle;
+      D.Physical_Read := Physical_Read;
+
+      if Idle then
+         --  Do not append the first item in an idle loop.
+         --  Necessary for preserving order in drive names.
+
+         if Read_Directory (D) then
+            Timeout_Id :=
+              File_Append_Directory_Timeout.Add (1, Read_Directory'Access, D);
+            Timeout_Id_List.Append (Explorer.Fill_Timeout_Ids, Timeout_Id);
+         end if;
+      else
+         loop
+            exit when not Read_Directory (D);
+         end loop;
+      end if;
+   end File_Append_Directory;
+
+   ----------------------
+   -- Set_Column_Types --
+   ----------------------
+
+   procedure Set_Column_Types (Tree : Gtk_Tree_View) is
+      Col           : Gtk_Tree_View_Column;
+      Text_Rend     : Gtk_Cell_Renderer_Text;
+      Pixbuf_Rend   : Gtk_Cell_Renderer_Pixbuf;
+      Dummy         : Gint;
+      pragma Unreferenced (Dummy);
+
+   begin
+      Gtk_New (Text_Rend);
+      Gtk_New (Pixbuf_Rend);
+
+      Set_Rules_Hint (Tree, False);
+
+      Gtk_New (Col);
+      Pack_Start (Col, Pixbuf_Rend, False);
+      Pack_Start (Col, Text_Rend, True);
+      Add_Attribute (Col, Pixbuf_Rend, "pixbuf", Icon_Column);
+      Add_Attribute (Col, Text_Rend, "text", Base_Name_Column);
+      Dummy := Append_Column (Tree, Col);
+   end Set_Column_Types;
+
+   -------------------
+   -- Columns_Types --
+   -------------------
+
+   function Columns_Types return GType_Array is
+   begin
+      return GType_Array'
+        (Icon_Column          => Gdk.Pixbuf.Get_Type,
+         Absolute_Name_Column => GType_String,
+         Base_Name_Column     => GType_String,
+         Node_Type_Column     => GType_Int,
+         User_Data_Column     => GType_Pointer,
+         Line_Column          => GType_Int,
+         Column_Column        => GType_Int,
+         Project_Column       => GType_Int,
+         Category_Column      => GType_Int,
+         Up_To_Date_Column    => GType_Boolean,
+         Entity_Base_Column   => GType_String);
+   end Columns_Types;
+
+   -------------
+   -- Gtk_New --
+   -------------
+
+   procedure Gtk_New
+     (Tree    : out Dir_Tree;
+      Root    : String;
+      Initial : String := "") is
+   begin
+      Tree := new Dir_Tree_Record;
+      Directory_Tree.Initialize (Tree, Root, Initial);
+   end Gtk_New;
+
+   ----------------
+   -- Initialize --
+   ----------------
+
+   procedure Initialize
+     (Tree    : access Dir_Tree_Record'Class;
+      Root    : String;
+      Initial : String)
+   is
+   begin
+      Gtk.Scrolled_Window.Initialize (Tree);
+      Set_Policy (Tree, Policy_Automatic, Policy_Automatic);
+
+      Gtk_New (Tree.File_Model, Columns_Types);
+      Gtk_New (Tree.File_Tree, Tree.File_Model);
+
+      --  The model should be destroyed as soon as the tree view is destroyed
+      Unref (Tree.File_Model);
+
+      Add (Tree, Tree.File_Tree);
+
+      Set_Headers_Visible (Tree.File_Tree, False);
+
+      Gtkada.Handlers.Return_Callback.Object_Connect
+        (Tree.File_Tree,
+         "button_press_event",
+         Gtkada.Handlers.Return_Callback.To_Marshaller
+           (File_Button_Press'Access),
+         Slot_Object => Tree,
+         After       => False);
+
+      Set_Column_Types (Tree.File_Tree);
+
+      Init_Graphics;
+
+      Widget_Callback.Object_Connect
+        (Tree.File_Tree, "row_expanded",
+         File_Tree_Expand_Row_Cb'Access, Tree, False);
+
+      Widget_Callback.Object_Connect
+        (Tree.File_Tree, "row_collapsed",
+         File_Tree_Collapse_Row_Cb'Access, Tree, False);
+
+      Widget_Callback.Object_Connect
+        (Tree.File_Tree, "destroy",
+         On_File_Destroy'Access, Tree, False);
+
+      Set_Size_Request
+        (Tree,
+         400,
+         400);
+
+      declare
+         Root_Dir    : GNAT.OS_Lib.String_Access;
+         Initial_Dir : GNAT.OS_Lib.String_Access;
+      begin
+         if Root = "" then
+            Root_Dir := new String'("" & Directory_Separator);
+         else
+            Root_Dir := new String'(Root);
+         end if;
+
+         if Initial = "" then
+            Initial_Dir := new String'(Get_Current_Dir);
+         else
+            Initial_Dir := new String'(Initial);
+         end if;
+
+         File_Append_Directory
+           (Tree,
+            Root_Dir.all,
+            Null_Iter,
+            1,
+            Initial_Dir.all);
+
+         Free (Root_Dir);
+         Free (Initial_Dir);
+      end;
+   end Initialize;
+
+   ----------------------------
+   -- File_Remove_Idle_Calls --
+   ----------------------------
+
+   procedure File_Remove_Idle_Calls
+     (Explorer : access Dir_Tree_Record'Class) is
+   begin
+      while not Timeout_Id_List.Is_Empty (Explorer.Fill_Timeout_Ids) loop
+         Timeout_Remove (Timeout_Id_List.Head (Explorer.Fill_Timeout_Ids));
+         Timeout_Id_List.Next (Explorer.Fill_Timeout_Ids);
+      end loop;
+   end File_Remove_Idle_Calls;
+
+   ---------------------
+   -- On_File_Destroy --
+   ---------------------
+
+   procedure On_File_Destroy
+     (Explorer : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Params : Glib.Values.GValues)
+   is
+      pragma Unreferenced (Params);
+      E : constant Dir_Tree :=
+        Dir_Tree (Explorer);
+   begin
+      File_Remove_Idle_Calls (E);
+   end On_File_Destroy;
+
+   -------------------------------
+   -- File_Tree_Collapse_Row_Cb --
+   -------------------------------
+
+   procedure File_Tree_Collapse_Row_Cb
+     (Explorer : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Values   : GValues)
+   is
+      T    : constant Dir_Tree :=
+        Dir_Tree (Explorer);
+      Path : constant Gtk_Tree_Path :=
+        Gtk_Tree_Path (Get_Proxy (Nth (Values, 2)));
+      Iter : Gtk_Tree_Iter;
+
+   begin
+      Iter := Get_Iter (T.File_Model, Path);
+
+      if Iter /= Null_Iter then
+         declare
+            Iter_Name : constant String :=
+              Get_String (T.File_Model, Iter, Absolute_Name_Column);
+
+         begin
+            if Is_Directory (Iter_Name) then
+               Set (T.File_Model, Iter, Icon_Column,
+                    Glib.C_Proxy (Close_Pixbufs (Directory_Node)));
+            end if;
+         end;
+      end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Message (E));
+   end File_Tree_Collapse_Row_Cb;
+
+   ---------------------
+   -- Expose_Event_Cb --
+   ---------------------
+
+   function Expose_Event_Cb
+     (Explorer : access Glib.Object.GObject_Record'Class;
+      Values   : GValues) return Boolean
+   is
+      pragma Unreferenced (Values);
+      T       : Dir_Tree := Dir_Tree (Explorer);
+
+   begin
+      if T.Scroll_To_Directory then
+         Scroll_To_Cell
+           (T.File_Tree,
+            T.Path, null, True,
+            0.1, 0.1);
+         Disconnect (T.File_Tree, T.Realize_Cb_Id);
+         T.Scroll_To_Directory := False;
+      end if;
+
+      return True;
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Message (E));
+         return True;
+   end Expose_Event_Cb;
+
+   -----------------------------
+   -- File_Tree_Expand_Row_Cb --
+   -----------------------------
+
+   procedure File_Tree_Expand_Row_Cb
+     (Explorer : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Values   : GValues)
+   is
+      T       : Dir_Tree := Dir_Tree (Explorer);
+      Path    : constant Gtk_Tree_Path :=
+        Gtk_Tree_Path (Get_Proxy (Nth (Values, 2)));
+      Iter    : Gtk_Tree_Iter;
+      Success : Boolean;
+      pragma Unreferenced (Success);
+
+   begin
+      if T.Expanding then
+         return;
+      end if;
+
+      Iter := Get_Iter (T.File_Model, Path);
+
+      if Iter /= Null_Iter then
+         T.Expanding := True;
+
+         declare
+            Iter_Name : constant String :=
+              Get_String (T.File_Model, Iter, Absolute_Name_Column);
+            N_Type : constant Node_Types := Node_Types'Val
+              (Integer (Get_Int (T.File_Model, Iter, Node_Type_Column)));
+
+         begin
+            case N_Type is
+               when Directory_Node =>
+                  Free_Children (T, Iter);
+                  Set (T.File_Model, Iter, Icon_Column,
+                       Glib.C_Proxy (Open_Pixbufs (Directory_Node)));
+                  File_Append_Directory (T, Iter_Name, Iter, 1);
+
+            end case;
+         end;
+
+         Success := Expand_Row (T.File_Tree, Path, False);
+         Scroll_To_Cell
+           (T.File_Tree,
+            Path, null, True,
+            0.1, 0.1);
+
+         T.Expanding := False;
+      end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Message (E));
+   end File_Tree_Expand_Row_Cb;
+
+   ---------------------
+   -- On_Button_Press --
+   ---------------------
+
+   function On_Button_Press
+     (Tree      : access Gtk_Tree_View_Record'Class;
+      Model     : Gtk_Tree_Store;
+      Event     : Gdk_Event;
+      Add_Dummy : Boolean) return Boolean
+   is
+      Iter         : Gtk_Tree_Iter;
+   begin
+      if Get_Button (Event) = 1 then
+         Iter := Find_Iter_For_Event (Tree, Model, Event);
+
+         if Iter /= Null_Iter then
+            Select_Iter (Get_Selection (Tree), Iter);
+            case Node_Types'Val
+                 (Integer (Get_Int (Model, Iter, Node_Type_Column))) is
+
+               when Directory_Node =>
+                  if Get_Event_Type (Event) = Gdk_2button_Press then
+                     declare
+                        Path    : Gtk_Tree_Path;
+                        Success : Boolean;
+                        pragma Unreferenced (Success);
+                     begin
+                        Path := Get_Path (Model, Iter);
+
+                        if Row_Expanded (Tree, Path) then
+                           Success := Collapse_Row (Tree, Path);
+                        else
+                           if Add_Dummy then
+                              Append_Dummy_Iter (Model, Iter);
+                           end if;
+
+                           Success := Expand_Row
+                             (Tree, Path, False);
+                        end if;
+
+                        Path_Free (Path);
+                     end;
+                  end if;
+
+                  return False;
+
+               when others =>
+                  return False;
+            end case;
+
+         end if;
+      end if;
+
+      return False;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         return False;
+   end On_Button_Press;
+
+   -----------------------
+   -- File_Button_Press --
+   -----------------------
+
+   function File_Button_Press
+     (Explorer : access Gtk_Widget_Record'Class;
+      Event    : Gdk_Event) return Boolean
+   is
+      T    : constant Dir_Tree :=
+        Dir_Tree (Explorer);
+   begin
+      return On_Button_Press
+        (T.File_Tree, T.File_Model, Event, True);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         return False;
+   end File_Button_Press;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (D : in out Gtk.Main.Timeout_Handler_Id) is
+      pragma Unreferenced (D);
+   begin
+      null;
+   end Free;
+
+   -------------
+   -- Refresh --
+   -------------
+
+   procedure Refresh
+     (Explorer : access Dir_Tree_Record'Class)
+   is
+      Buffer       : aliased String (1 .. 1024);
+      Last, Len    : Integer;
+      Cur_Dir      : constant String := Get_Current_Dir;
+      Dir_Inserted : Boolean := False;
+
+   begin
+      Clear (Explorer.File_Model);
+      File_Remove_Idle_Calls (Explorer);
+
+      Get_Logical_Drive_Strings (Buffer, Len);
+
+      if Len = 0 then
+         File_Append_Directory
+           (Explorer, (1 => Directory_Separator),
+            Null_Iter, 1, Cur_Dir, True);
+
+      else
+         Last := 1;
+
+         for J in 1 .. Len loop
+            if Buffer (J) = ASCII.NUL then
+               if File_Equal
+                 (Buffer (Last .. J - 1),
+                  Cur_Dir (Cur_Dir'First ..
+                       Cur_Dir'First + J - Last - 1))
+               then
+                  File_Append_Directory
+                    (Explorer, Buffer (Last .. J - 1),
+                     Null_Iter, 1, Cur_Dir, True);
+                  Dir_Inserted := True;
+
+               else
+                  File_Append_Directory
+                    (Explorer, Buffer (Last .. J - 1),
+                     Null_Iter, 0, "", False, False);
+               end if;
+
+               Last := J + 1;
+            end if;
+         end loop;
+
+         if not Dir_Inserted then
+            declare
+               J : Natural := Cur_Dir'First;
+            begin
+               while J < Cur_Dir'Last
+                 and then Cur_Dir (J) /= Directory_Separator
+               loop
+                  J := J + 1;
+               end loop;
+
+               File_Append_Directory
+                 (Explorer, Cur_Dir (Cur_Dir'First .. J),
+                  Null_Iter, 1, Cur_Dir, True);
+            end;
+         end if;
+      end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+   end Refresh;
+
+   -------------------
+   -- Free_Children --
+   -------------------
+
+   procedure Free_Children
+     (T    : Dir_Tree;
+      Iter : Gtk_Tree_Iter)
+   is
+      Current : Gtk_Tree_Iter := Children (T.File_Model, Iter);
+   begin
+      if Has_Child (T.File_Model, Iter) then
+         while Current /= Null_Iter loop
+            Remove (T.File_Model, Current);
+            Current := Children (T.File_Model, Iter);
+         end loop;
+      end if;
+   end Free_Children;
 
 end Directory_Tree;
