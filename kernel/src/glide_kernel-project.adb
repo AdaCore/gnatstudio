@@ -1,13 +1,40 @@
+
+with Prj;         use Prj;
+with Prj.Pars;    use Prj.Pars;
+with Prj.Env;     use Prj.Env;
+with Namet;       use Namet;
+with Csets;       use Csets;
+with Snames;      use Snames;
+with GNAT.OS_Lib; use GNAT.OS_Lib;
+
 package body Glide_Kernel.Project is
 
-   ---------------
-   -- Find_File --
-   ---------------
+   ----------------------
+   -- Find_Source_File --
+   ----------------------
 
-   function Find_File (Short_File_Name : String) return String is
+   function Find_Source_File
+     (Kernel : Kernel_Handle; Short_File_Name : String)
+      return String
+   is
+      Path : String_Access;
    begin
-      return "";
-   end Find_File;
+      Path := Locate_Regular_File
+        (Short_File_Name,
+         Ada_Include_Path (Kernel.Project).all);
+
+      if Path = null then
+         return "";
+
+      else
+         declare
+            Full_Path : constant String := Path.all;
+         begin
+            Free (Path);
+            return Full_Path;
+         end;
+      end if;
+   end Find_Source_File;
 
    ---------------------------
    -- Get_Project_File_Name --
@@ -15,17 +42,22 @@ package body Glide_Kernel.Project is
 
    function Get_Project_File_Name (Kernel : Kernel_Handle) return String is
    begin
-      return "";
+      return Get_Name_String (Projects.Table (Kernel.Project).Name);
    end Get_Project_File_Name;
 
    ------------------
    -- Load_Project --
    ------------------
 
-   procedure Load_Project (Project : String) is
+   procedure Load_Project (Kernel : in out Kernel_Handle; Project : String) is
    begin
-      null;
+      Prj.Pars.Parse (Kernel.Project, Project);
    end Load_Project;
 
+begin
+   Namet.Initialize;
+   Csets.Initialize;
+   Snames.Initialize;
+   Prj.Initialize;
 end Glide_Kernel.Project;
 

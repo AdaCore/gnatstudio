@@ -1,7 +1,8 @@
 --  This package is the root of the glide's kernel API.
 
+with Prj;
+
 package Glide_Kernel is
-   pragma Pure;
 
    type Kernel_Handle is private;
    --  A kernel handle used to share information throughout Glide.
@@ -9,6 +10,9 @@ package Glide_Kernel is
 
 private
 
-   type Kernel_Handle is null record;
+   type Kernel_Handle is record
+      Project : Prj.Project_Id;
+      --  The project currently loaded.
+   end record;
 
 end Glide_Kernel;
