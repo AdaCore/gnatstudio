@@ -139,10 +139,10 @@ package body CPP_Parser is
       File_Has_No_LI_Report : File_Error_Reporter := null) return Source_File;
    function Case_Insensitive_Identifiers
      (Handler         : access CPP_Handler_Record) return Boolean;
-   procedure Parse_All_LI_Information
+   function Parse_All_LI_Information
      (Handler         : access CPP_Handler_Record;
       Project         : Projects.Project_Type;
-      In_Directory    : String := "");
+      Recursive       : Boolean := False) return Integer;
    function Generate_LI_For_Project
      (Handler       : access CPP_Handler_Record;
       Project       : Projects.Project_Type;
@@ -2219,14 +2219,14 @@ package body CPP_Parser is
    -- Parse_All_LI_Information --
    ------------------------------
 
-   procedure Parse_All_LI_Information
+   function Parse_All_LI_Information
      (Handler         : access CPP_Handler_Record;
       Project         : Projects.Project_Type;
-      In_Directory    : String := "")
+      Recursive       : Boolean := False) return Integer
    is
-      pragma Unreferenced (Handler, Project, In_Directory);
+      pragma Unreferenced (Handler, Project, Recursive);
    begin
-      null;
+      return 0;
    end Parse_All_LI_Information;
 
    ------------------------
