@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2003                         --
+--                     Copyright (C) 2003 - 2004                     --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -121,7 +121,7 @@ package body Glide_Kernel.Task_Manager is
 
       Previous_Interface : constant Gtk_Widget := Get_GUI (Manager);
    begin
-      if not Has_Running_Commands (Manager) then
+      if not Has_Running_Commands (Manager, Consider_Silent => False) then
          return True;
       end if;
 
