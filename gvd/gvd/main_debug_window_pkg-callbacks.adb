@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with Gdk.Window;          use Gdk.Window;
+with Gtk.Container;       use Gtk.Container;
 with Gtk.Widget;          use Gtk.Widget;
 with Gtk.Main;            use Gtk.Main;
 with Gtk.Handlers;        use Gtk.Handlers;
@@ -799,9 +800,10 @@ package body Main_Debug_Window_Pkg.Callbacks is
       Page      : Gtk_Widget;
       Num_Pages : constant Gint :=
         Gint (Page_List.Length (Get_Children (Top.Process_Notebook)));
+      Parent    : Gtk_Container;
 
    begin
-      --  ??? Is there a memory leak here ? Hpaned1 might be ref'd, but
+      --  ??? Is there a memory leak here ? Data_Paned might be ref'd, but
       --  not actually in a parent, and this means that it isn't destroyed
       --  when the process_tab is destroyed.
 
@@ -812,23 +814,26 @@ package body Main_Debug_Window_Pkg.Callbacks is
             Process := Process_User_Data.Get (Page);
 
             if Get_Active (Top.Call_Stack) then
-               --  Put back the canvas into the hpaned.
-               Ref (Process.Scrolledwindow12);
-               Remove (Process.Vpaned6, Process.Scrolledwindow12);
-               Add (Process.Hpaned1, Process.Scrolledwindow12);
-               Unref (Process.Scrolledwindow12);
+               --  Put back the canvas into the data/editor paned.
+               Ref (Process.Data_Scrolledwindow);
+               Parent :=
+                 Gtk_Container (Get_Parent (Process.Data_Scrolledwindow));
+               Remove (Parent, Process.Data_Scrolledwindow);
+               Add (Process.Data_Paned, Process.Data_Scrolledwindow);
+               Unref (Process.Data_Scrolledwindow);
 
-               Add (Process.Vpaned6, Process.Hpaned1);
-               Unref (Process.Hpaned1);
+               Add (Parent, Process.Data_Paned);
+               Unref (Process.Data_Paned);
             else
                --  Ref the widget so that it is not destroyed.
-               Ref (Process.Hpaned1);
-               Remove (Process.Vpaned6, Process.Hpaned1);
+               Ref (Process.Data_Paned);
+               Parent := Gtk_Container (Get_Parent (Process.Data_Paned));
+               Remove (Parent, Process.Data_Paned);
 
-               Ref (Process.Scrolledwindow12);
-               Remove (Process.Hpaned1, Process.Scrolledwindow12);
-               Add (Process.Vpaned6, Process.Scrolledwindow12);
-               Show_All (Process.Scrolledwindow12);
+               Ref (Process.Data_Scrolledwindow);
+               Remove (Process.Data_Paned, Process.Data_Scrolledwindow);
+               Add (Parent, Process.Data_Scrolledwindow);
+               Show_All (Process.Data_Scrolledwindow);
             end if;
          end if;
       end loop;
@@ -1061,6 +1066,19 @@ package body Main_Debug_Window_Pkg.Callbacks is
          Refresh_Canvas (Tab.Data_Canvas);
       end if;
    end On_Refresh1_Activate;
+
+   -----------------------
+   -- On_Show1_Activate --
+   -----------------------
+
+   procedure On_Show1_Activate
+     (Object : access Gtk_Widget_Record'Class)
+   is
+   begin
+      if Get_Pref (Separate_Data) then
+         Show (Get_Current_Process (Object));
+      end if;
+   end On_Show1_Activate;
 
    ---------------------------
    -- On_Overview1_Activate --
