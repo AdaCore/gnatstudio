@@ -21,6 +21,8 @@
 --  This package handles build commands.
 
 with Glide_Kernel.Timeout; use Glide_Kernel.Timeout;
+with VFS;                  use VFS;
+with GNAT.OS_Lib;
 
 package Commands.Builder is
 
@@ -30,14 +32,20 @@ package Commands.Builder is
    --  -"Builder warnings"
    Style_Category   : constant String := "Style errors";
    --  -"Style errors"
+   Shadow_Category  : constant String := "Syntax check";
+   --  -"Syntax check"
 
    type Build_Command is new Root_Command with private;
    type Build_Command_Access is access all Build_Command;
 
    procedure Create
-     (Item : out Build_Command_Access;
-      Data : Process_Data);
+     (Item  : out Build_Command_Access;
+      Data  : Process_Data;
+      Quiet : Boolean := False;
+      Files : File_Array_Access := null);
    --  Create a new Build_Command.
+   --  Files contain an array of files that are to be deleted when the
+   --  command is destroyed. User must not free Files.
 
    procedure Free (D : in out Build_Command);
    --  Free memory associated to D.
@@ -53,7 +61,11 @@ package Commands.Builder is
 private
 
    type Build_Command is new Root_Command with record
-      Data : Process_Data;
+      Quiet : Boolean := False;
+      Data  : Process_Data;
+      Files : File_Array_Access := null;
+      Main_Error_Category : GNAT.OS_Lib.String_Access;
    end record;
 
 end Commands.Builder;
+
