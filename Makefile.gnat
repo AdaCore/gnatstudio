@@ -18,6 +18,8 @@ GNAT_SOURCES= \
   elists.adb \
   errout.ads \
   errout.adb \
+  fmap.ads \
+  fmap.adb \
   fname.ads \
   fname.adb \
   gnatvsn.ads \
