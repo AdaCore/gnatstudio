@@ -1,3 +1,25 @@
+Known Problems fixed in GPS 2.0.2
+
+- D715-005 Regular expression search fails sometimes
+  Problem:    When you search for a regular expression in a source editor,
+              it happens that GPS highlights the first line of the editor
+              instead of a matching line (this indicates there is a match,
+              since you didn't get the "No match" dialog)
+  Workaround: Search for a static string instead, although this will likely
+              not be the exact same result the regular expression would
+              have returned.
+
+- D707-017 Unexpected paste operation under Windows
+  Problem:    Under Windows, when scrolling using some mouse wheels, extra
+              paste operations are sometimes performed during the scroll.
+  Workaround: Scroll using the pg-up/down keys or the scrollbar.
+
+- D525-001 GPS and Python on Windows
+  Problem:    On Windows, GPS Python support does not work properly if GPS
+              is installed on a directory whose name starts with a letter 'n',
+              'r' or 't'.
+  Workaround: Install GPS in another directory.
+
 Known Problems fixed in GPS 2.0.1
 
 - D701-001 Can't edit file-specific switches
