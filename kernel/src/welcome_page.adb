@@ -139,7 +139,7 @@ package body Welcome_Page is
       Main_Box := new Welcome_Page_Record;
       Initialize_Vbox (Main_Box);
 
-      Gtk_New (Image, Pics_Dir & "gps_title.jpg");
+      Gtk_New (Image, Pics_Dir & "gps_title.gif");
       Pack_Start (Main_Box, Image);
 
       Gtk_New_Hbox (Hbox, Homogeneous => True, Spacing => 3);
