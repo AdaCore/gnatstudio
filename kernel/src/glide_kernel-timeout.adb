@@ -263,7 +263,12 @@ package body Glide_Kernel.Timeout is
             Gtk_New
               (Console, "", Data_Handler'Access,
                GObject (Data), Get_Pref (Kernel, Source_Editor_Font),
-               Wrap_Char);
+               History_List => Get_History (Kernel),
+               Key          => "external_process",
+               Wrap_Mode    => Wrap_Char);
+            Set_Max_Length (Get_History (Kernel).all, 100, "external_process");
+            Allow_Duplicates
+              (Get_History (Kernel).all, "external_process", True, True);
 
             Data.D := (Kernel, Fd, new String'(Name), Callback, Exit_Cb);
 
