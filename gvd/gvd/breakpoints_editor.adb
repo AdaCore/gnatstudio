@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2001                      --
+--                      Copyright (C) 2000-2002                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -67,8 +67,7 @@ package body Breakpoints_Editor is
    --  Called when a row of the breakpoint editor was selected.
 
    procedure Breakpoint_Row_Unselected
-     (Widget : access Gtk_Widget_Record'Class;
-      Args   : Gtk.Arguments.Gtk_Args);
+     (Widget : access Gtk_Widget_Record'Class);
    --  Called when a row of the breakpoint editor was unselected.
 
    procedure Fill_Advanced_Dialog
@@ -247,8 +246,7 @@ package body Breakpoints_Editor is
    -------------------------------
 
    procedure Breakpoint_Row_Unselected
-     (Widget : access Gtk_Widget_Record'Class;
-      Args   : Gtk_Args)
+     (Widget : access Gtk_Widget_Record'Class)
    is
       Editor  : constant Breakpoints_Access := Breakpoints_Access (Widget);
    begin
@@ -728,7 +726,7 @@ package body Breakpoints_Editor is
          Slot_Object => Editor);
       Widget_Callback.Object_Connect
         (Editor.Breakpoint_List, "unselect_row",
-         Breakpoint_Row_Unselected'Access,
+         Widget_Callback.To_Marshaller (Breakpoint_Row_Unselected'Access),
          Slot_Object => Editor);
 
       Thaw (Editor.Breakpoint_List);
