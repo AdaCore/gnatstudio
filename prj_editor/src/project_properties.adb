@@ -2839,7 +2839,6 @@ package body Project_Properties is
       Dialog    : Gtk_Dialog;
       Button    : Gtk_Widget;
       Typ       : Attribute_Type;
-      Edit_Mode : Boolean;
    begin
       Get_Path_At_Pos
         (Ed.View, Gint (Get_X (Event)), Gint (Get_Y (Event)),
