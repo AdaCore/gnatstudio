@@ -98,7 +98,14 @@ package body GVD_Module is
 
    type GVD_Module_User_Data is new Module_ID_Record with record
       Kernel           : Kernel_Handle;
+
       Unexplored_Lines : File_Line_List.List := File_Line_List.Null_List;
+      --  The list of lines which are currently revealed in the editor
+      --  but the status of which has not yet been queried from the debugger.
+
+      List_Modified    : Boolean := False;
+      --  Set to True when the list has been modified by a callback.
+
       Initialize_Menu  : Gtk_Menu;
    end record;
 
@@ -1045,60 +1052,66 @@ package body GVD_Module is
    ------------------------
 
    function Idle_Reveal_Lines return Boolean is
-      D : GVD_Module_User_Data renames
-        GVD_Module_User_Data (GVD_Module_ID.all);
       Kind         : Line_Kind;
-      A            : Line_Information_Array (1 .. 1);
       C            : Set_Breakpoint_Command_Access;
       File_Line    : File_Line_Record;
       Debugger     : constant Debugger_Access :=
-        Get_Current_Process (Get_Main_Window (D.Kernel)).Debugger;
-      --  ??? Should attach the right debugger with D.
+        Get_Current_Process
+        (Get_Main_Window (GVD_Module_User_Data
+                          (GVD_Module_ID.all).Kernel)).Debugger;
+      --  ??? Should attach the right debugger with GVD_Module_Id.
 
    begin
-      if File_Line_List.Is_Empty (D.Unexplored_Lines) then
+      if File_Line_List.Is_Empty
+        (GVD_Module_User_Data (GVD_Module_ID.all).Unexplored_Lines)
+      then
          return False;
 
       elsif Command_In_Process (Get_Process (Debugger)) then
          return True;
       end if;
 
-      File_Line := File_Line_List.Head (D.Unexplored_Lines);
+      File_Line := File_Line_List.Head
+        (GVD_Module_User_Data (GVD_Module_ID.all).Unexplored_Lines);
 
       Kind := Line_Contains_Code
         (Debugger, File_Line.File.all, File_Line.Line);
 
-      case Kind is
-         when Have_Code =>
+      if GVD_Module_User_Data (GVD_Module_ID.all).List_Modified then
+         GVD_Module_User_Data (GVD_Module_ID.all).List_Modified := False;
+         return True;
+      end if;
+
+      --  ??? we could make smart use of the case Kind = No_More_Code
+      --  Clear the list and return False.
+      declare
+         L : Integer := File_Line.Line;
+         A : Line_Information_Array (L .. L);
+      begin
+         if Kind = Have_Code then
             Create (C,
-                    D.Kernel,
+                    GVD_Module_User_Data (GVD_Module_ID.all).Kernel,
                     Debugger,
                     Set,
                     File_Line.File.all,
                     File_Line.Line);
+            A (L).Image := Line_Has_Code_Pixbuf;
+            A (L).Associated_Command := Command_Access (C);
+         end if;
 
-            A (1).Line := File_Line.Line;
-            A (1).Image := Line_Has_Code_Pixbuf;
-            A (1).Associated_Command := Command_Access (C);
-            Add_Line_Information
-              (D.Kernel,
-               File_Line.File.all,
-               GVD_Module_Name & "/Line Information",
-               new Line_Information_Array' (A));
+         Add_Line_Information
+           (GVD_Module_User_Data (GVD_Module_ID.all).Kernel,
+            File_Line.File.all,
+            GVD_Module_Name & "/Line Information",
+            new Line_Information_Array' (A));
+      end;
 
-         when No_Code =>
-            null;
+      File_Line_List.Next
+        (GVD_Module_User_Data (GVD_Module_ID.all).Unexplored_Lines);
 
-         when No_More_Code =>
-            null;
-            --  ??? we could make smarter use of this information:
-            --  Clear the list and return False.
-
-      end case;
-
-      File_Line_List.Next (D.Unexplored_Lines);
-
-      if File_Line_List.Is_Empty (D.Unexplored_Lines) then
+      if File_Line_List.Is_Empty
+        (GVD_Module_User_Data (GVD_Module_ID.all).Unexplored_Lines)
+      then
          return False;
       end if;
 
@@ -1133,20 +1146,27 @@ package body GVD_Module is
             File : constant String := Directory_Information (Area_Context) &
               File_Information (Area_Context);
             Line1, Line2 : Integer;
-            Data : GVD_Module_User_Data renames
-              GVD_Module_User_Data (GVD_Module_ID.all);
 
          begin
             Get_Area (Area_Context, Line1, Line2);
 
-            if File_Line_List.Is_Empty (Data.Unexplored_Lines) then
+            if File_Line_List.Is_Empty
+              (GVD_Module_User_Data (GVD_Module_ID.all).Unexplored_Lines)
+            then
                Timeout_Id := Timeout_Add
                  (1, Idle_Reveal_Lines'Access);
+            else
+               GVD_Module_User_Data (GVD_Module_ID.all).List_Modified := True;
+               File_Line_List.Free
+                 (GVD_Module_User_Data (GVD_Module_ID.all).Unexplored_Lines);
+               GVD_Module_User_Data (GVD_Module_ID.all).Unexplored_Lines
+                 := File_Line_List.Null_List;
             end if;
 
             for J in Line1 .. Line2 loop
                File_Line_List.Append
-                 (Data.Unexplored_Lines, (new String' (File), J));
+                 (GVD_Module_User_Data (GVD_Module_ID.all).Unexplored_Lines,
+                  (new String' (File), J));
                --  ??? We might want to use a LIFO structure here
                --  instead of FIFO, so that the lines currently shown
                --  are displayed first.
