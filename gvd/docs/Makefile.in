@@ -1,3 +1,8 @@
+prefix = @prefix@
+docdir = $(prefix)/doc/gvd
+INSTALL = @INSTALL@
+INSTALL_DATA = @INSTALL_DATA@
+
 all: gvd.texi
 	echo x | tex gvd.texi
 	texindex gvd.cp
@@ -7,6 +12,13 @@ all: gvd.texi
 	makeinfo --force -o gvd.info gvd.texi
 	makeinfo --force --no-headers --no-split -o gvd.txt gvd.texi
 	-$(RM) *.aux *.cp *.cps *.dvi *.fn *.ky *.log *.pg *.toc *.tp *.vr
+
+install:
+	$(INSTALL_DATA) gvd.html $(docdir)
+	$(INSTALL_DATA) gvd.info $(docdir)
+	$(INSTALL_DATA) gvd.ps   $(docdir)
+	$(INSTALL_DATA) gvd.texi $(docdir)
+	$(INSTALL_DATA) gvd.txt  $(docdir)
 
 clean:
 	-$(RM) *.aux *.cp *.cps *.dvi *.fn *.ky *.log *.pg *.toc *.tp *.vr
