@@ -59,11 +59,14 @@ package Prj_API is
    Default_Switches2 : aliased String := "-gnatQ";
    Default_Builder_Switches  : constant GNAT.OS_Lib.Argument_List :=
      (1 => Default_Switches1'Access, 2 => Default_Switches2'Access);
+   Default_Compiler_Switches : constant GNAT.OS_Lib.Argument_List :=
+     (1 => Default_Switches1'Access);
+   Default_Linker_Switches   : constant GNAT.OS_Lib.Argument_List :=
+     (1 => Default_Switches1'Access);
    --  Default switches for new projects (From wizard, or default initial
    --  project).
    --  ??? gnatmake -s is apparently not fully functionnal, so disable this
    --  default setting for now
-
 
    Name_C_Plus_Plus : Types.Name_Id;
    --  The equivalent of Cpp_String. You should never use Name_CPP, which
@@ -594,6 +597,8 @@ package Prj_API is
    --  List are prepended to the current value of the attribute.
    --  Attribute_Index is the associative array index for the attribute (for
    --  instance the file name when modifying the switches).
+   --
+   --  Values remains under the responsability of the caller, memory-wise.
 
    procedure Update_Attribute_Value_In_Scenario
      (Project            : Project_Node_Id;
