@@ -42,7 +42,6 @@ with Gtkada.Types;        use Gtkada.Types;
 with Language;            use Language;
 with Debugger;            use Debugger;
 with GNAT.OS_Lib;         use GNAT.OS_Lib;
-with Ada.Direct_IO;
 
 with Odd.Explorer;        use Odd.Explorer;
 with Odd.Menus;           use Odd.Menus;
@@ -695,22 +694,16 @@ package body Odd.Code_Editors is
 
       --  Read the size of the file
       F      := Open_Read (Name'Address, Text);
-      Length := Positive (File_Length (F));
-      Close (F);
 
-      --  Allocate the buffer
-      Free (Editor.Buffer);
-      Editor.Buffer := new String (1 .. Length);
+      if F /= Invalid_FD then
+         Length := Positive (File_Length (F));
 
-      declare
-         type Fixed_String is new String (1 .. Positive (Length));
-         package String_Direct_IO is new Ada.Direct_IO (Fixed_String);
-         F : String_Direct_IO.File_Type;
-      begin
-         String_Direct_IO.Open (F, String_Direct_IO.In_File, File_Name);
-         String_Direct_IO.Read (F, Fixed_String (Editor.Buffer.all));
-         String_Direct_IO.Close (F);
-      end;
+         --  Allocate the buffer
+         Free (Editor.Buffer);
+         Editor.Buffer := new String (1 .. Length);
+         Length := Read (F, Editor.Buffer (1)'Address, Length);
+         Close (F);
+      end if;
 
       --  Create the explorer tree.
 
