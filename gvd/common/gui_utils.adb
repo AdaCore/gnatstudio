@@ -44,6 +44,9 @@ with Gtk.Menu;                 use Gtk.Menu;
 with Gtk.Menu_Item;            use Gtk.Menu_Item;
 with Gtk.Tree_Model;           use Gtk.Tree_Model;
 with Gtk.Tree_Store;           use Gtk.Tree_Store;
+with Gtk.Tree_View;            use Gtk.Tree_View;
+with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
+with Gtk.Tree_Selection;       use Gtk.Tree_Selection;
 with Gtk.Widget;               use Gtk.Widget;
 with Pango.Enums;              use Pango.Enums;
 with Pango.Font;               use Pango.Font;
@@ -632,5 +635,53 @@ package body GUI_Utils is
    begin
       return Menu_Item.Full_Path;
    end Get_Path;
+
+   -------------------------
+   -- Find_Iter_For_Event --
+   -------------------------
+
+   function Find_Iter_For_Event
+     (Tree  : access Gtk_Tree_View_Record'Class;
+      Model : access Gtk.Tree_Model.Gtk_Tree_Model_Record'Class;
+      Event : Gdk_Event) return Gtk_Tree_Iter
+   is
+      X         : Gdouble;
+      Y         : Gdouble;
+      Buffer_X  : Gint;
+      Buffer_Y  : Gint;
+      Row_Found : Boolean;
+      Path      : Gtk_Tree_Path;
+      Column    : Gtk_Tree_View_Column := null;
+      Iter      : Gtk_Tree_Iter := Null_Iter;
+      N_Model   : Gtk_Tree_Model;
+   begin
+      if Event /= null then
+         X := Get_X (Event);
+         Y := Get_Y (Event);
+         Path := Gtk_New;
+         Get_Path_At_Pos
+           (Tree,
+            Gint (X),
+            Gint (Y),
+            Path,
+            Column,
+            Buffer_X,
+            Buffer_Y,
+            Row_Found);
+
+         if Path = null then
+            return Iter;
+         end if;
+
+         Iter := Get_Iter (Model, Path);
+         Path_Free (Path);
+      else
+         Get_Selected (Get_Selection (Tree),
+                       N_Model,
+                       Iter);
+      end if;
+
+      return Iter;
+   end Find_Iter_For_Event;
 
 end GUI_Utils;

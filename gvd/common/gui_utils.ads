@@ -38,10 +38,16 @@ with Gtk.List;
 with Gtk.List_Item;
 with Gtk.Menu;
 with Gtk.Tree_Store;
+with Gtk.Tree_Model;
+with Gtk.Tree_View;
 with Gtk.Widget;
 with Pango.Font;
 
 package GUI_Utils is
+
+   ----------------------
+   -- Combos and lists --
+   ----------------------
 
    procedure Add_Unique_List_Entry
      (List : access Gtk.List.Gtk_List_Record'Class;
@@ -102,6 +108,10 @@ package GUI_Utils is
    --  If Container is a menu, this empties the menu, thus allowing dynamic
    --  menus.
 
+   ---------------
+   -- Tree view --
+   ---------------
+
    package Tree_Model_Callback is new Gtk.Handlers.User_Callback
      (Glib.Object.GObject_Record, Glib.Gint);
 
@@ -118,6 +128,15 @@ package GUI_Utils is
       Column   : Glib.Gint);
    --  Set the renderer as editable, and make sure that its text is updated
    --  when the user has finished editing it.
+
+   function Find_Iter_For_Event
+     (Tree  : access Gtk.Tree_View.Gtk_Tree_View_Record'Class;
+      Model : access Gtk.Tree_Model.Gtk_Tree_Model_Record'Class;
+      Event : Gdk.Event.Gdk_Event) return Gtk.Tree_Model.Gtk_Tree_Iter;
+   --  Get the iter in the tree view under the cursor corresponding to Event,
+   --  if any.
+   --  If Event is null, then the current selection is returned.
+   --  ??? The column is also available, but not returned.
 
    -------------------------
    -- Full_Path_Menu_Item --
