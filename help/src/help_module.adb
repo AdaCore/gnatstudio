@@ -167,7 +167,7 @@ package body Help_Module is
       is
          pragma Unreferenced (Widget);
       begin
-         Display_Help (Kernel, File_Name (Kernel));
+         Open_Html (Kernel, File_Name (Kernel));
 
       exception
          when E : others =>
