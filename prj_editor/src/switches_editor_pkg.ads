@@ -57,7 +57,6 @@ package Switches_Editor_Pkg is
       Vbox19 : Gtk_Vbox;
       Ada_Optimization_Level : Gtk_Combo;
       Ada_Optimization_Level_Entry : Gtk_Entry;
-      Ada_No_Inline : Gtk_Check_Button;
       Ada_Interunit_Inlining : Gtk_Check_Button;
       Ada_Unroll_Loops : Gtk_Check_Button;
       Ada_Pic : Gtk_Check_Button;
@@ -72,7 +71,6 @@ package Switches_Editor_Pkg is
       Frame23 : Gtk_Frame;
       Vbox21 : Gtk_Vbox;
       Ada_Full_Errors : Gtk_Check_Button;
-      Ada_No_Warnings : Gtk_Check_Button;
       Ada_Warning_Error : Gtk_Check_Button;
       Ada_Elab_Warning : Gtk_Check_Button;
       Ada_Unused_Warning : Gtk_Check_Button;
@@ -93,13 +91,11 @@ package Switches_Editor_Pkg is
       Frame41 : Gtk_Frame;
       Vbox48 : Gtk_Vbox;
       C_All_Warnings : Gtk_Check_Button;
-      C_No_Warnings : Gtk_Check_Button;
       C_Ansi : Gtk_Check_Button;
       C_Codegen_Frame : Gtk_Frame;
       Vbox46 : Gtk_Vbox;
       C_Optimization_Level : Gtk_Combo;
       C_Optimization_Level_Entry : Gtk_Entry;
-      C_No_Inline : Gtk_Check_Button;
       C_Unroll_Loops : Gtk_Check_Button;
       C_Pic : Gtk_Check_Button;
       C_Profile : Gtk_Check_Button;
@@ -114,14 +110,12 @@ package Switches_Editor_Pkg is
       Frame43 : Gtk_Frame;
       Vbox50 : Gtk_Vbox;
       Cpp_All_Warnings : Gtk_Check_Button;
-      Cpp_No_Warnings : Gtk_Check_Button;
       Cpp_Overloaded_Virtual : Gtk_Check_Button;
       Cpp_Switches_Entry : Gtk_Entry;
       Cpp_Codegen_Frame : Gtk_Frame;
       Vbox49 : Gtk_Vbox;
       Cpp_Optimization_Level : Gtk_Combo;
       Cpp_Optimization_Level_Entry : Gtk_Entry;
-      Cpp_No_Inline : Gtk_Check_Button;
       Cpp_Unroll_Loops : Gtk_Check_Button;
       Cpp_Pic : Gtk_Check_Button;
       Cpp_Profile : Gtk_Check_Button;
