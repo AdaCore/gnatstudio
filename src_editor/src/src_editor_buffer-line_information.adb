@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                       Copyright (C) 2003                          --
+--                    Copyright (C) 2003-2004                        --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
@@ -1971,29 +1971,31 @@ package body Src_Editor_Buffer.Line_Information is
          return;
       end if;
 
-      for Line in Buffer_Lines'Range loop
-         if Buffer_Lines (Line).Side_Info_Data /= null
-           and then Buffer_Lines (Line).Side_Info_Data
-           (Buffer.Block_Highlighting_Column).Info /= null
-         then
-            Command :=
-              Buffer_Lines (Line).Side_Info_Data
-              (Buffer.Block_Highlighting_Column).Info.Associated_Command;
+      if Buffer_Lines /= null then
+         for Line in Buffer_Lines'Range loop
+            if Buffer_Lines (Line).Side_Info_Data /= null
+              and then Buffer_Lines (Line).Side_Info_Data
+              (Buffer.Block_Highlighting_Column).Info /= null
+            then
+               Command :=
+                 Buffer_Lines (Line).Side_Info_Data
+                 (Buffer.Block_Highlighting_Column).Info.Associated_Command;
 
-            if Command /= null then
-               if Command.all in Hide_Editable_Lines_Type'Class
-                 or else
-                   (Remove_Unfold_Commands
-                    and then Command.all in
-                      Unhide_Editable_Lines_Type'Class)
-               then
-                  Add_Block_Command (Buffer, Line, null, null);
-               else
-                  Other_Command_Found := True;
+               if Command /= null then
+                  if Command.all in Hide_Editable_Lines_Type'Class
+                    or else
+                      (Remove_Unfold_Commands
+                       and then Command.all in
+                         Unhide_Editable_Lines_Type'Class)
+                  then
+                     Add_Block_Command (Buffer, Line, null, null);
+                  else
+                     Other_Command_Found := True;
+                  end if;
                end if;
             end if;
-         end if;
-      end loop;
+         end loop;
+      end if;
 
       if not Other_Command_Found then
          Remove_Line_Information_Column (Buffer, Block_Info_Column);
