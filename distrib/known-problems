@@ -1,6 +1,6 @@
 Known Problems fixed in GPS 1.0.1
 
-- Exception raises when processing Ada separate units
+- B702-004 Exception raises when processing Ada separate units
   Problem:    When GPS displays tooltips or computes cross-references on a
               separate unit, it crashes.
   Workaround: <none found>
