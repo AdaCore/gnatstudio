@@ -794,6 +794,12 @@ package body Src_Contexts is
       Free (Search_Context (Context));
    end Free;
 
+   procedure Free (Context : in out Open_Files_Context) is
+   begin
+      Unchecked_Free (Context.Files);
+      Free (Search_Context (Context));
+   end Free;
+
    -------------------
    -- Set_File_List --
    -------------------
@@ -823,6 +829,43 @@ package body Src_Contexts is
 
    function Get_Total_Progress
      (Context : access Files_Project_Context) return Integer is
+   begin
+      if Context.Files = null then
+         return 0;
+      else
+         return Context.Files'Length;
+      end if;
+   end Get_Total_Progress;
+
+   -------------------
+   -- Set_File_List --
+   -------------------
+
+   procedure Set_File_List
+     (Context : access Open_Files_Context;
+      Files   : File_Array_Access) is
+   begin
+      Unchecked_Free (Context.Files);
+      Context.Files := Files;
+      Context.Current_File := Context.Files'First - 1;
+   end Set_File_List;
+
+   --------------------------
+   -- Get_Current_Progress --
+   --------------------------
+
+   function Get_Current_Progress
+     (Context : access Open_Files_Context) return Integer is
+   begin
+      return Context.Current_File;
+   end Get_Current_Progress;
+
+   ------------------------
+   -- Get_Total_Progress --
+   ------------------------
+
+   function Get_Total_Progress
+     (Context : access Open_Files_Context) return Integer is
    begin
       if Context.Files = null then
          return 0;
@@ -947,6 +990,31 @@ package body Src_Contexts is
       Context.Begin_Line      := 0;
       return Context;
    end Files_From_Project_Factory;
+
+   ------------------------
+   -- Open_Files_Factory --
+   ------------------------
+
+   function Open_Files_Factory
+     (Kernel             : access Glide_Kernel.Kernel_Handle_Record'Class;
+      All_Occurrences    : Boolean;
+      Extra_Information  : Gtk.Widget.Gtk_Widget) return Search_Context_Access
+   is
+      Scope : constant Scope_Selector := Scope_Selector (Extra_Information);
+      Context : Open_Files_Context_Access := new Open_Files_Context;
+      Open_File_List : VFS.File_Array_Access;
+   begin
+      --  Glide_Kernel.Open_Files returns a File_Array, but Set_File_List
+      --  takes a File_Array_Access. Memory will be properly freed in
+      --  Set_File_List
+      Open_File_List := new VFS.File_Array'(Open_Files (Kernel));
+
+      Context.Scope      := Search_Scope'Val (Get_Index_In_List (Scope.Combo));
+      Context.All_Occurrences := All_Occurrences;
+      Context.Begin_Line      := 0;
+      Set_File_List (Context, Open_File_List);
+      return Search_Context_Access (Context);
+   end Open_Files_Factory;
 
    -------------------
    -- Files_Factory --
@@ -1551,6 +1619,43 @@ package body Src_Contexts is
    -----------------------
 
    procedure Move_To_Next_File (Context : access Files_Project_Context) is
+   begin
+      Context.Current_File    := Context.Current_File + 1;
+      Context.Current_Lexical := Statements;
+   end Move_To_Next_File;
+
+   ------------------
+   -- Current_File --
+   ------------------
+
+   function Current_File
+     (Context : access Open_Files_Context) return VFS.Virtual_File
+   is
+   begin
+      if Context.Files /= null
+        and then Context.Current_File in Context.Files'Range
+      then
+         return Context.Files (Context.Current_File);
+      else
+         return VFS.No_File;
+      end if;
+   end Current_File;
+
+   ------------------------
+   -- Move_To_First_File --
+   ------------------------
+
+   procedure Move_To_First_File (Context : access Open_Files_Context) is
+   begin
+      Context.Current_File    := 1;
+      Context.Current_Lexical := Statements;
+   end Move_To_First_File;
+
+   -----------------------
+   -- Move_To_Next_File --
+   -----------------------
+
+   procedure Move_To_Next_File (Context : access Open_Files_Context) is
    begin
       Context.Current_File    := Context.Current_File + 1;
       Context.Current_Lexical := Statements;

@@ -196,6 +196,31 @@ package Src_Contexts is
    --  Same as above, but suitable for use outside the GUI.
    --  No file it set, you need to call Set_File_List explicitely
 
+   ------------------------
+   -- Open Files context --
+   ------------------------
+   type Open_Files_Context is new Abstract_Files_Context with private;
+   type Open_Files_Context_Access is access all Open_Files_Context'Class;
+
+   function Get_Current_Progress
+     (Context : access Open_Files_Context) return Integer;
+   function Get_Total_Progress
+     (Context : access Open_Files_Context) return Integer;
+   --  Get the current/total search progress.
+
+   procedure Set_File_List
+     (Context : access Open_Files_Context;
+      Files   : VFS.File_Array_Access);
+   --  Set the list of files to search.
+   --  No copy of Files is made, the memory will be freed automatically.
+
+   function Open_Files_Factory
+     (Kernel             : access Glide_Kernel.Kernel_Handle_Record'Class;
+      All_Occurrences    : Boolean;
+      Extra_Information  : Gtk.Widget.Gtk_Widget) return Search_Context_Access;
+   --  Factory for "Open Files".
+   --  The list of files is automatically set to the currently opend files
+
 private
 
    function Search
@@ -265,14 +290,14 @@ private
      (Context         : access Abstract_Files_Context;
       Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
       Search_Backward : Boolean) return Boolean;
-   --  Search function for "Files From Project"
+   --  Search function for "Files From Project" and "Open_Files"
 
    function Replace
      (Context         : access Abstract_Files_Context;
       Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
       Replace_String  : String;
       Search_Backward : Boolean) return Boolean;
-   --  Replace function for "Files From Project"
+   --  Replace function for "Files From Project" and "Open_Files"
 
    type Files_Context is new Abstract_Files_Context with record
       Files_Pattern : GNAT.Regexp.Regexp;
@@ -292,6 +317,11 @@ private
       Current_File  : Natural;
    end record;
 
+   type Open_Files_Context is new Abstract_Files_Context with record
+      Files        : VFS.File_Array_Access := null;
+      Current_File : Natural := 0;
+   end record;
+
    function Current_File
      (Context : access Files_Project_Context) return VFS.Virtual_File;
    procedure Move_To_Next_File (Context : access Files_Project_Context);
@@ -303,6 +333,12 @@ private
    procedure Move_To_Next_File (Context : access Files_Context);
    procedure Move_To_First_File (Context : access Files_Context);
    procedure Free (Context : in out Files_Context);
+
+   function Current_File
+     (Context : access Open_Files_Context) return VFS.Virtual_File;
+   procedure Move_To_Next_File (Context : access Open_Files_Context);
+   procedure Move_To_First_File (Context : access Open_Files_Context);
+   procedure Free (Context : in out Open_Files_Context);
 
    type Scope_Selector_Record is new Gtk.Frame.Gtk_Frame_Record with record
       Combo : Gtk.Combo.Gtk_Combo;
