@@ -1142,6 +1142,11 @@ package body Glide_Kernel.Modules is
         (Gtk_Widget (Item),
          Command.Filter = null
          or else Filter_Matches_Primitive (Command.Filter, Context));
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception " & Exception_Information (E));
    end Map_Menu;
 
    -----------------------
