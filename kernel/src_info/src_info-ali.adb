@@ -806,8 +806,6 @@ package body Src_Info.ALI is
       Filename_Id : File_Name_Type;
 
    begin
-      Initialize_ALI;
-
       FD := Open_Read (ALI_Filename & ASCII.NUL, Fmode => Binary);
 
       if FD = Invalid_FD then
@@ -854,6 +852,9 @@ package body Src_Info.ALI is
          Namet.Name_Buffer (1 .. ALI_Filename'Length) := ALI_Filename;
          Namet.Name_Len := ALI_Filename'Length;
          Filename_Id := Namet.Name_Find;
+
+         --  Free the memory occupied by previous runs
+         Initialize_ALI;
 
          return Scan_ALI
            (Filename_Id, Buffer_Ptr,
