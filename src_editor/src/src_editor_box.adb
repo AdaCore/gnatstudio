@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with Ada.Exceptions;             use Ada.Exceptions;
+with Ada.Characters.Handling;    use Ada.Characters.Handling;
 with Glib;                       use Glib;
 with Glib.Convert;
 with Glib.Object;                use Glib.Object;
@@ -58,8 +59,10 @@ with Glide_Intl;                 use Glide_Intl;
 with GNAT.Directory_Operations;  use GNAT.Directory_Operations;
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
 
+with Basic_Types;
 with Commands.Controls;          use Commands.Controls;
 with Language;                   use Language;
+with Language.Ada;               use Language.Ada;
 with Language_Handlers;          use Language_Handlers;
 with Language_Handlers.Glide;    use Language_Handlers.Glide;
 with String_Utils;               use String_Utils;
@@ -67,6 +70,7 @@ with Src_Editor_Buffer;          use Src_Editor_Buffer;
 with Src_Editor_View;            use Src_Editor_View;
 with Src_Editor_Module;          use Src_Editor_Module;
 with Src_Info;                   use Src_Info;
+with Src_Info.Prj_Utils;         use Src_Info.Prj_Utils;
 with Src_Info.Queries;           use Src_Info.Queries;
 with Traces;                     use Traces;
 with GVD.Dialogs;                use GVD.Dialogs;
@@ -414,7 +418,7 @@ package body Src_Editor_Box is
          when Internal_Error =>
             Console.Insert
               (Kernel, -"Cross-reference internal error detected",
-               Mode           => Error);
+               Mode => Error);
             Pop_State (Kernel_Handle (Kernel));
             return;
 
@@ -422,11 +426,13 @@ package body Src_Editor_Box is
             if To_Body then
                Console.Insert
                  (Kernel,
-                  -"This entity does not have an associated body");
+                  -"This entity does not have an associated body",
+                  Mode => Error);
             else
                Console.Insert
                  (Kernel,
-                  -"This entity does not have an associated declaration");
+                  -"This entity does not have an associated declaration",
+                  Mode => Error);
             end if;
 
             Pop_State (Kernel_Handle (Kernel));
@@ -536,8 +542,8 @@ package body Src_Editor_Box is
 
    exception
       when Unsupported_Language =>
-         Insert (Kernel, "No parser is registered for this language",
-                 Mode => Glide_Kernel.Console.Error);
+         Insert (Kernel, -"No parser is registered for this language",
+                 Mode => Error);
          Pop_State (Kernel_Handle (Kernel));
 
       when E : others =>
@@ -733,7 +739,6 @@ package body Src_Editor_Box is
          end if;
 
          declare
-            --  ??? Missing full name of enclosing scope
             Str : constant String :=
               Scope_To_String (Get_Scope (Entity)) & ' ' &
               Kind_To_String (Get_Kind (Entity)) & ' ' &
@@ -743,7 +748,7 @@ package body Src_Editor_Box is
                    (Data.Box.Kernel, Get_Declaration_File_Of (Entity)),
                  ".")
               & ASCII.LF
-              & "declared at " & Get_Declaration_File_Of (Entity) & ':'
+              & (-"declared at ") & Get_Declaration_File_Of (Entity) & ':'
               & Image (Get_Declaration_Line_Of (Entity));
 
          begin
@@ -1129,7 +1134,9 @@ package body Src_Editor_Box is
       --  is pop up on the screen, and since it is modal, then button release
       --  event is never sent to the editor, and there is a drag selection
       --  taking place.
+
       Id := Object_Idle.Add (Check_Timestamp_Idle'Access, GObject (Box));
+
       --  If we are not currently asking the user (it is possible that we still
       --  get a focus in event, if the mouse has moved outside of the dialog,
       --  even though the dialog is modal ???
@@ -1153,9 +1160,10 @@ package body Src_Editor_Box is
    ---------------
 
    function Focus_Out (Box : access GObject_Record'Class) return Boolean is
-      B         : constant Source_Editor_Box := Source_Editor_Box (Box);
+      B : constant Source_Editor_Box := Source_Editor_Box (Box);
    begin
       --  If we are not currently asking the user about a timestamp change.
+
       if B.Timestamp_Mode /= Checking then
          Unset_Controls (Get_Queue (B.Source_Buffer));
       end if;
@@ -1165,7 +1173,6 @@ package body Src_Editor_Box is
    exception
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
-
          return False;
    end Focus_Out;
 
@@ -1175,14 +1182,7 @@ package body Src_Editor_Box is
 
    function Is_Entity_Letter (Char : Character) return Boolean is
    begin
-      --  ??? Does not handle accentuated letters
-
-      case Char is
-         when 'a' .. 'z' | 'A' .. 'Z' | '0' .. '9' | '_' =>
-            return True;
-         when others =>
-            return False;
-      end case;
+      return Char = '_' or else Is_Alphanumeric (Char);
    end Is_Entity_Letter;
 
    ------------------------
@@ -1769,7 +1769,12 @@ package body Src_Editor_Box is
       Filename : String := "";
       Success  : out Boolean)
    is
-      File : constant String := Get_Filename (Editor.Source_Buffer);
+      File       : constant String := Get_Filename (Editor.Source_Buffer);
+      Constructs : Construct_List;
+      Info       : Construct_Access;
+      New_Name   : String_Access;
+
+      use type Basic_Types.String_Access;
    begin
       if not Editor.Writable then
          Success := False;
@@ -1782,15 +1787,54 @@ package body Src_Editor_Box is
          if File = ""
            or else Base_Name (File) = File
          then
+            --  ??? This is Ada specific
+            --  Figure out what the name of the file should be, based on the
+            --  unit <-> file name mapping
+
+            Parse_Constructs
+              (Ada_Lang, Get_Slice (Editor.Source_Buffer, 0, 0), Constructs);
+            Info := Constructs.Last;
+
+            if Info = null
+              or else
+                (Info.Category /= Cat_Procedure
+                 and then Info.Category /= Cat_Function
+                 and then Info.Category /= Cat_Package)
+              or else Info.Name = null
+            then
+               --  No unit name found
+
+               New_Name := new String'("");
+            else
+               --  Info.Name is a valid Ada unit name
+
+               if Info.Is_Declaration then
+                  New_Name := new String'
+                    (Get_Source_Filename
+                       (Info.Name.all & "%s",
+                        Get_Project_View (Editor.Kernel)));
+               else
+                  New_Name := new String'
+                    (Get_Source_Filename
+                       (Info.Name.all & "%b",
+                        Get_Project_View (Editor.Kernel)));
+               end if;
+            end if;
+
+            Free (Constructs);
+
             declare
                Name : constant String :=
                  Select_File
                    (Title             => -"Save File As",
+                    Default_Name      => New_Name.all,
                     Use_Native_Dialog =>
                       Get_Pref (Editor.Kernel, Use_Native_Dialogs),
                     History           => Get_History (Editor.Kernel));
 
             begin
+               Free (New_Name);
+
                if Name = "" then
                   Success := False;
                   return;
