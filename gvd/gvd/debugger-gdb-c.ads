@@ -28,6 +28,8 @@ with Items.Arrays;
 
 package Debugger.Gdb.C is
 
+   use Language;
+
    type Gdb_C_Language is new
      Language.Debugger.Language_Debugger with private;
 
@@ -186,6 +188,35 @@ package Debugger.Gdb.C is
       Result    : out Items.Generic_Type_Access;
       End_On    : String);
    --  Generic function to parse records for C-related languages.
+
+   ----------------------
+   -- Source Analyzing --
+   ----------------------
+
+   procedure Format_Source
+     (Lang             : access Gdb_C_Language;
+      Buffer           : String;
+      Indent_Params    : Indent_Parameters := Default_Indent_Parameters;
+      Reserved_Casing  : Casing_Type       := Lower;
+      Ident_Casing     : Casing_Type       := Mixed;
+      Format_Operators : Boolean           := True);
+
+   procedure Parse_Constructs
+     (Lang            : access Gdb_C_Language;
+      Buffer          : Interfaces.C.Strings.chars_ptr;
+      Buffer_Length   : Natural;
+      Result          : out Construct_List;
+      Indent          : out Natural;
+      Next_Indent     : out Natural;
+      Indent_Params   : Indent_Parameters := Default_Indent_Parameters);
+
+   procedure Next_Indentation
+     (Lang          : access Gdb_C_Language;
+      Buffer        : Interfaces.C.Strings.chars_ptr;
+      Buffer_Length : Natural;
+      Indent        : out Natural;
+      Next_Indent   : out Natural;
+      Indent_Params : Indent_Parameters := Default_Indent_Parameters);
 
 private
 

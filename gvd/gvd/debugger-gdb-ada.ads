@@ -29,6 +29,8 @@ with Items.Arrays;
 
 package Debugger.Gdb.Ada is
 
+   use Language;
+
    type Gdb_Ada_Language is new
      Language.Debugger.Language_Debugger with private;
 
@@ -134,6 +136,35 @@ package Debugger.Gdb.Ada is
    function Can_Tooltip_On_Entity
      (Lang   : access Gdb_Ada_Language;
       Entity : String) return Boolean;
+
+   ----------------------
+   -- Source Analyzing --
+   ----------------------
+
+   procedure Format_Source
+     (Lang             : access Gdb_Ada_Language;
+      Buffer           : String;
+      Indent_Params    : Indent_Parameters := Default_Indent_Parameters;
+      Reserved_Casing  : Casing_Type       := Lower;
+      Ident_Casing     : Casing_Type       := Mixed;
+      Format_Operators : Boolean           := True);
+
+   procedure Parse_Constructs
+     (Lang            : access Gdb_Ada_Language;
+      Buffer          : Interfaces.C.Strings.chars_ptr;
+      Buffer_Length   : Natural;
+      Result          : out Construct_List;
+      Indent          : out Natural;
+      Next_Indent     : out Natural;
+      Indent_Params   : Indent_Parameters := Default_Indent_Parameters);
+
+   procedure Next_Indentation
+     (Lang          : access Gdb_Ada_Language;
+      Buffer        : Interfaces.C.Strings.chars_ptr;
+      Buffer_Length : Natural;
+      Indent        : out Natural;
+      Next_Indent   : out Natural;
+      Indent_Params : Indent_Parameters := Default_Indent_Parameters);
 
 private
 

@@ -121,6 +121,57 @@ package body Debugger.Gdb.Ada is
       return Record_Field_Name (Ada_Lang, Name, Field);
    end Record_Field_Name;
 
+   -------------------
+   -- Format_Source --
+   -------------------
+
+   procedure Format_Source
+     (Lang             : access Gdb_Ada_Language;
+      Buffer           : String;
+      Indent_Params    : Indent_Parameters := Default_Indent_Parameters;
+      Reserved_Casing  : Casing_Type       := Lower;
+      Ident_Casing     : Casing_Type       := Mixed;
+      Format_Operators : Boolean           := True) is
+   begin
+      Format_Source
+        (Ada_Lang, Buffer, Indent_Params, Reserved_Casing,
+         Ident_Casing, Format_Operators);
+   end Format_Source;
+
+   ----------------------
+   -- Parse_Constructs --
+   ----------------------
+
+   procedure Parse_Constructs
+     (Lang            : access Gdb_Ada_Language;
+      Buffer          : Interfaces.C.Strings.chars_ptr;
+      Buffer_Length   : Natural;
+      Result          : out Construct_List;
+      Indent          : out Natural;
+      Next_Indent     : out Natural;
+      Indent_Params   : Indent_Parameters := Default_Indent_Parameters) is
+   begin
+      Parse_Constructs
+        (Ada_Lang, Buffer, Buffer_Length, Result,
+         Indent, Next_Indent, Indent_Params);
+   end Parse_Constructs;
+
+   ----------------------
+   -- Next_Indentation --
+   ----------------------
+
+   procedure Next_Indentation
+     (Lang          : access Gdb_Ada_Language;
+      Buffer        : Interfaces.C.Strings.chars_ptr;
+      Buffer_Length : Natural;
+      Indent        : out Natural;
+      Next_Indent   : out Natural;
+      Indent_Params : Indent_Parameters := Default_Indent_Parameters) is
+   begin
+      Next_Indentation
+        (Ada_Lang, Buffer, Buffer_Length, Indent, Next_Indent, Indent_Params);
+   end Next_Indentation;
+
    ---------------------
    -- Break Exception --
    ---------------------
