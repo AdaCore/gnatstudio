@@ -451,11 +451,6 @@ procedure GPS is
             Put_Line (File, "DEBUG.STACK_TRACE=no");
             Put_Line (File, "DEBUG.LOCATION=no");
             Put_Line (File, "DEBUG.ENCLOSING_ENTITY=no");
-            Put_Line (File, "SRC_INFO.ALI=no");
-            Put_Line (File, "CPP.INFO=no");
-            Put_Line (File, "CPP.FAIL=no");
-            Put_Line (File, "HOOKS=no");
-            Put_Line (File, "PROJECTS.DEBUG=no");
             Close (File);
          end if;
 
