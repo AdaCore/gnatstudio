@@ -1269,469 +1269,224 @@ package body Glide_Kernel.Scripts is
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class) is
    begin
       Register_Command
-        (Kernel,
-         Command      => "get_system_dir",
-         Description  => -("Return the installation directory for GPS. This"
-                           & " always ends up with a directory separator"),
-         Handler      => Default_Command_Handler'Access);
-
+        (Kernel, "get_system_dir",
+         Handler => Default_Command_Handler'Access);
       Register_Command
-        (Kernel,
-         Command      => "get_home_dir",
-         Description  => -("Return the user's home directory for GPS, for"
-                           & " instance $HOME/.gps/. This"
-                           & " always ends up with a directory separator"),
-         Handler      => Default_Command_Handler'Access);
-
+        (Kernel, "get_home_dir",
+         Handler => Default_Command_Handler'Access);
       Register_Command
-        (Kernel,
-         Command      => "insmod",
-         Params       => Parameter_Names_To_Usage (Insmod_Cmd_Parameters),
-         Description  => -"Dynamically register from shared-lib a new module.",
+        (Kernel, "insmod",
          Minimum_Args => 2,
          Maximum_Args => 2,
          Handler      => Default_Command_Handler'Access);
-
       Register_Command
-        (Kernel,
-         Command      => "lsmod",
-         Return_Value => "list of modules",
-         Description  => -"List modules currently loaded.",
-         Minimum_Args => 0,
-         Maximum_Args => 0,
-         Handler      => Default_Command_Handler'Access);
-
+        (Kernel, "lsmod",
+         Handler => Default_Command_Handler'Access);
       Register_Command
-        (Kernel,
-         Command      => "supported_languages",
-         Return_Value => "sorted list of languages",
-         Description  =>
-            -"List of languages for which GPS has special support.",
-         Minimum_Args => 0,
-         Maximum_Args => 0,
-         Handler      => Default_Command_Handler'Access);
-
+        (Kernel, "supported_languages",
+         Handler => Default_Command_Handler'Access);
       Register_Command
-        (Kernel,
-         Command      => "execute_action",
-         Params       => Parameter_Names_To_Usage (Exec_Action_Parameters),
-         Description  =>
-           -("Execute a GPS action. These are the same actions to which key"
-             & " bindings can be assigned through the keymanager. They are"
-             & " either exported by GPS itself, or created through XML"
-             & " customization files. The action is not executed if the"
-             & " current context is not appropriate for the action. This"
-             & " function is asynchronous, ie will return immediately before"
-             & " the action is completed."),
+        (Kernel, "execute_action",
          Minimum_Args => 1,
          Maximum_Args => 1,
          Handler      => Default_Command_Handler'Access);
       Register_Command
-        (Kernel,
-         Command      => "parse_xml",
-         Params       => Parameter_Names_To_Usage (Xml_Custom_Parameters),
-         Description  =>
-           -("Load an XML customization string. This string should contain"
-             & " one or more toplevel tags similar to what is normally found"
-             & " in custom files, such as <key>, <alias>, <action>,.."
-             & ASCII.LF
-             & "Optionally you can also pass the full contents of an XML file,"
-             & " starting from the <?xml?> header"),
+        (Kernel, "parse_xml",
          Minimum_Args => 1,
          Maximum_Args => 1,
          Handler      => Default_Command_Handler'Access);
       Register_Command
-        (Kernel,
-         Command      => "scenario_variables",
-         Return_Value => "hash",
-         Description  =>
-           -("Return the list of scenario variables for the current project "
-             & " hierarchy, and their current value"),
-         Minimum_Args => 0,
-         Maximum_Args => 0,
+        (Kernel, "set_busy",
+         Handler      => Default_Command_Handler'Access);
+      Register_Command
+        (Kernel, "unset_busy",
+         Handler      => Default_Command_Handler'Access);
+
+      Register_Command
+        (Kernel, "scenario_variables",
          Class         => Get_Project_Class (Kernel),
          Static_Method => True,
-         Handler      => Default_Command_Handler'Access);
+         Handler       => Default_Command_Handler'Access);
       Register_Command
-        (Kernel,
-         Command      => "scenario_variables_cmd_line",
-         Params       => Parameter_Names_To_Usage (Scenar_Var_Parameters, 1),
-         Return_Value => "string",
-         Description  =>
-           -("Return a concatenation of VARIABLE=VALUE, each preceded by the"
-             & " given prefix. This string will generally be used when calling"
-             & " external tool, for instance make or GNAT"),
+        (Kernel, "scenario_variables_cmd_line",
          Minimum_Args => 0,
          Maximum_Args => 1,
          Class         => Get_Project_Class (Kernel),
          Static_Method => True,
-         Handler      => Default_Command_Handler'Access);
+         Handler       => Default_Command_Handler'Access);
 
       Register_Command
-        (Kernel,
-         Command      => "set_busy",
-         Params       => "()",
-         Description  =>
-           -("Activate the ""busy"" indicator in GPS."),
-         Minimum_Args => 0,
-         Maximum_Args => 0,
-         Handler      => Default_Command_Handler'Access);
-      Register_Command
-        (Kernel,
-         Command      => "unset_busy",
-         Params       => "()",
-         Description  =>
-           -("Deactivate the ""busy"" indicator in GPS."),
-         Minimum_Args => 0,
-         Maximum_Args => 0,
-         Handler      => Default_Command_Handler'Access);
-
-      Register_Command
-        (Kernel,
-         Command      => Constructor_Method,
-         Params       => Parameter_Names_To_Usage (File_Cmd_Parameters),
-         Return_Value => "file",
-         Description  => -"Create a new file, from its name.",
+        (Kernel, Constructor_Method,
          Minimum_Args => 1,
          Maximum_Args => 1,
          Class        => Get_File_Class (Kernel),
          Handler      => Create_File_Command_Handler'Access);
       Register_Command
-        (Kernel,
-         Command      => "name",
-         Return_Value => "string",
-         Description  => -"Return the name of the file",
+        (Kernel, "name",
          Class        => Get_File_Class (Kernel),
          Handler      => Create_File_Command_Handler'Access);
       Register_Command
-        (Kernel,
-         Command      => "other_file",
-         Return_Value => "file",
-         Description  =>
-           -("Return the name of the other file semantically associated with"
-             & " this one. In Ada this is the spec or body of the same package"
-             & " depending on the type of this file."),
+        (Kernel, "other_file",
          Class        => Get_File_Class (Kernel),
          Handler      => Create_File_Command_Handler'Access);
       Register_Command
-        (Kernel,
-         Command      => "project",
-         Return_Value => "project",
-         Description  =>
-           -("Return the project to which file belongs. If file is not one"
-             & " of the souces of the project, the root project is returned"),
+        (Kernel, "project",
          Class        => Get_File_Class (Kernel),
          Handler      => Create_File_Command_Handler'Access);
 
       Register_Command
-        (Kernel,
-         Command      => Constructor_Method,
-         Params       => Parameter_Names_To_Usage (Entity_Cmd_Parameters, 2),
-         Return_Value => "entity",
-         Description  =>
-           -("Create a new entity, from any of its references. File must be"
-             & " an instance of the File method, or omitted for predefined"
-             & " entities of the language"),
+        (Kernel, Constructor_Method,
          Minimum_Args => 1,
          Maximum_Args => 4,
          Class        => Get_Entity_Class (Kernel),
          Handler      => Create_Entity_Command_Handler'Access);
       Register_Command
-        (Kernel,
-         Command      => "name",
-         Return_Value => "string",
-         Description  => -"Return the name of the entity",
+        (Kernel, "name",
          Class        => Get_Entity_Class (Kernel),
          Handler      => Create_Entity_Command_Handler'Access);
       Register_Command
-        (Kernel,
-         Command      => "decl_file",
-         Return_Value => "GPS.File",
-         Description  =>
-           -("Return the file in which the entity is declared. This file's"
-             & " name is empty for predefined entities"),
+        (Kernel, "decl_file",
          Class        => Get_Entity_Class (Kernel),
          Handler      => Create_Entity_Command_Handler'Access);
       Register_Command
-        (Kernel,
-         Command      => "decl_line",
-         Return_Value => "integer",
-         Description  => -("Return the line in decl_file() at which the"
-                           & " entity is defined"),
+        (Kernel, "decl_line",
          Class        => Get_Entity_Class (Kernel),
          Handler      => Create_Entity_Command_Handler'Access);
       Register_Command
-        (Kernel,
-         Command      => "decl_column",
-         Return_Value => "integer",
-         Description  => -("Return the column in decl_file() at which the"
-                           & " entity is defined"),
+        (Kernel, "decl_column",
          Class        => Get_Entity_Class (Kernel),
          Handler      => Create_Entity_Command_Handler'Access);
       Register_Command
-        (Kernel,
-         Command      => "body",
-         Return_Value => "FileLocation",
-         Description  =>
-           -("Return the location of the body for this entity. This is the"
-             & " place where the subprogram is implemented, or where the full"
-             & " definition of a type is visible. For types which do not have"
-             & " the notion of body, this returns the location of the"
-             & " declaration"),
+        (Kernel, "body",
          Class        => Get_Entity_Class (Kernel),
          Handler      => Create_Entity_Command_Handler'Access);
 
       Register_Command
-        (Kernel,
-         Command      => Constructor_Method,
+        (Kernel, Constructor_Method,
          Params       => Parameter_Names_To_Usage (Location_Cmd_Parameters),
-         Return_Value => "location",
-         Description  => -"Create a new file location, from its position.",
          Minimum_Args => 3,
          Maximum_Args => 3,
          Class        => Get_File_Location_Class (Kernel),
          Handler      => Create_Location_Command_Handler'Access);
       Register_Command
-        (Kernel,
-         Command       => "line",
-         Return_Value  => "integer",
-         Description   => -"Return the line of the location",
+        (Kernel, "line",
          Class         => Get_File_Location_Class (Kernel),
          Handler       => Create_Location_Command_Handler'Access);
       Register_Command
-        (Kernel,
-         Command       => "column",
-         Return_Value  => "integer",
-         Description   => -"Return the column of the location",
+        (Kernel, "column",
          Class         => Get_File_Location_Class (Kernel),
          Handler       => Create_Location_Command_Handler'Access);
       Register_Command
-        (Kernel,
-         Command      => "file",
-         Return_Value => "File",
-         Description  => -"Return the file of the location",
+        (Kernel, "file",
          Class        => Get_File_Location_Class (Kernel),
          Handler      => Create_Location_Command_Handler'Access);
 
       Register_Command
-        (Kernel,
-         Command      => Constructor_Method,
-         Params       => Parameter_Names_To_Usage (Project_Cmd_Parameters),
-         Return_Value => "project",
-         Description  =>
-           -("Create a project handle, from its name. The project must have"
-             & " been loaded already."),
+        (Kernel, Constructor_Method,
          Minimum_Args => 1,
          Maximum_Args => 1,
          Class        => Get_Project_Class (Kernel),
          Handler      => Create_Project_Command_Handler'Access);
       Register_Command
-        (Kernel,
-         Command       => "root",
-         Return_Value  => "project",
-         Description   =>
-           -("Return the root project of the currently loaded hierarchy"),
+        (Kernel, "root",
          Class         => Get_Project_Class (Kernel),
          Static_Method => True,
          Handler       => Create_Project_Command_Handler'Access);
       Register_Command
-        (Kernel,
-         Command       => "recompute",
-         Description   =>
-            -("Recompute the contents of a project, including the list of"
-              & " source files that are automatically loaded from the"
-              & " source directories"),
+        (Kernel, "recompute",
          Class         => Get_Project_Class (Kernel),
          Static_Method => True,
          Handler       => Create_Project_Command_Handler'Access);
       Register_Command
-        (Kernel,
-         Command       => "load",
-         Params        => Parameter_Names_To_Usage (Open_Cmd_Parameters),
-         Return_Value  => "project",
-         Description   =>
-         -("Load a new project, which replaces the current root project, and"
-           & " return a handle to it. All imported projects are also"
-           & " loaded at the same time. If the project is not found, a"
-           & " default project is loaded"),
+        (Kernel, "load",
          Minimum_Args  => 1,
          Maximum_Args  => 1,
          Class         => Get_Project_Class (Kernel),
          Static_Method => True,
          Handler       => Create_Project_Command_Handler'Access);
       Register_Command
-        (Kernel,
-         Command      => "name",
-         Return_Value => "string",
-         Description  => -"Return the name of the project",
+        (Kernel, "name",
          Class        => Get_Project_Class (Kernel),
          Handler      => Create_Project_Command_Handler'Access);
       Register_Command
-        (Kernel,
-         Command      => "file",
-         Return_Value => "File",
-         Description  => -"Return a handle to the project file itself",
+        (Kernel, "file",
          Class        => Get_Project_Class (Kernel),
          Handler      => Create_Project_Command_Handler'Access);
       Register_Command
-        (Kernel,
-         Command      => "ancestor_deps",
-         Return_Value => "list",
-         Description  =>
-           -("Return the list of projects that might contain sources that"
-             & " depend on the project's sources. When doing extensive"
-             & " searches it isn't worth checking other projects. Project"
-             & " itself is included in the list."),
+        (Kernel, "ancestor_deps",
          Class        => Get_Project_Class (Kernel),
          Handler      => Create_Project_Command_Handler'Access);
       Register_Command
-        (Kernel,
-         Command      => "get_attribute_as_string",
-         Params       =>
-           Parameter_Names_To_Usage (Get_Attributes_Parameters, 2),
-         Return_Value => "string",
-         Description  =>
-           -("Fetch the value of the attribute in the project." & ASCII.LF
-             & "If the package is not specified, the attribute at the"
-             & " toplevel of the project is queried." & ASCII.LF
-             & "The index only needs to be specified if it applies to that"
-             & " attribute." & ASCII.LF
-             & "If the attribute value is stored as a list, the result string"
-             & " is a concatenation of all the elements of the list."
-             & " This function always returns the value of the attribute in"
-             & " the currently selected scenario."),
+        (Kernel, "get_attribute_as_string",
          Minimum_Args => 2,
          Maximum_Args => 4,
          Class        => Get_Project_Class (Kernel),
          Handler      => Create_Project_Command_Handler'Access);
       Register_Command
-        (Kernel,
-         Command      => "get_attribute_as_list",
-         Params       =>
-           Parameter_Names_To_Usage (Get_Attributes_Parameters, 2),
-         Return_Value => "list",
-         Description  =>
-           -("Fetch the value of the attribute in the project." & ASCII.LF
-             & "If the package is not specified, the attribute at the"
-             & " toplevel of the project is queried." & ASCII.LF
-             & "The index only needs to be specified if it applies to that"
-             & " attribute." & ASCII.LF
-             & "If the attribute value is stored as a simple string, a list"
-             & " with a single element is returned."
-             & " This function always returns the value of the attribute in"
-             & " the currently selected scenario."),
+        (Kernel, "get_attribute_as_list",
          Minimum_Args => 1,
          Maximum_Args => 3,
          Class        => Get_Project_Class (Kernel),
          Handler      => Create_Project_Command_Handler'Access);
       Register_Command
-        (Kernel,
-         Command      => "get_tool_switches_as_list",
-         Params       => Parameter_Names_To_Usage (Tool_Parameters),
-         Return_Value => "list",
-         Description  =>
-           -("Same as get_attribute_as_list, but specialized for the switches"
-             & " of a specific tool"),
+        (Kernel, "get_tool_switches_as_list",
          Minimum_Args => 1,
          Maximum_Args => 1,
          Class        => Get_Project_Class (Kernel),
          Handler      => Create_Project_Command_Handler'Access);
       Register_Command
-        (Kernel,
-         Command      => "get_tool_switches_as_string",
-         Params       => Parameter_Names_To_Usage (Tool_Parameters),
-         Return_Value => "list",
-         Description  =>
-           -("Same as get_attribute_as_string, but specialized for the"
-             & " switches of a specific tool"),
+        (Kernel, "get_tool_switches_as_string",
          Minimum_Args => 1,
          Maximum_Args => 1,
          Class        => Get_Project_Class (Kernel),
          Handler      => Create_Project_Command_Handler'Access);
 
       Register_Command
-        (Kernel,
-         Command      => Constructor_Method,
+        (Kernel, Constructor_Method,
          Return_Value => "FileContext",
-         Description  => -"Prevents creation of FileContext instances",
          Class        => Get_File_Context_Class (Kernel),
          Handler      => Context_Command_Handler'Access);
       Register_Command
-        (Kernel,
-         Command      => "file",
-         Return_Value => "File",
-         Description  => -"Return the name of the file in the context",
+        (Kernel, "file",
          Class        => Get_File_Context_Class (Kernel),
          Handler      => Context_Command_Handler'Access);
       Register_Command
-        (Kernel,
-         Command      => "project",
-         Return_Value => "Project",
-         Description  =>
-           -("Return the project in the context, or the root project if none"
-             & " was specified in the context"),
+        (Kernel, "project",
          Class        => Get_File_Context_Class (Kernel),
          Handler      => Context_Command_Handler'Access);
       Register_Command
-        (Kernel,
-         Command      => "directory",
-         Return_Value => "string",
-         Description  => -("Return the current directory in the context"),
+        (Kernel, "directory",
          Class        => Get_File_Context_Class (Kernel),
          Handler      => Context_Command_Handler'Access);
 
       Register_Command
-        (Kernel,
-         Command      => Constructor_Method,
-         Return_Value => "AreaContext",
-         Description  => -"Prevents creation of AreaContext instances",
+        (Kernel, Constructor_Method,
          Class        => Get_Area_Context_Class (Kernel),
          Handler      => Context_Command_Handler'Access);
       Register_Command
-        (Kernel,
-         Command      => "start_line",
-         Return_Value => "integer",
-         Description  => -"Return the first selected line",
+        (Kernel, "start_line",
          Class        => Get_Area_Context_Class (Kernel),
          Handler      => Context_Command_Handler'Access);
       Register_Command
-        (Kernel,
-         Command      => "end_line",
-         Return_Value => "integer",
-         Description  => -"Return the last selected line",
+        (Kernel, "end_line",
          Class        => Get_Area_Context_Class (Kernel),
          Handler      => Context_Command_Handler'Access);
 
       Register_Command
-        (Kernel,
-         Command      => Constructor_Method,
-         Return_Value => "EntityContext",
-         Description  => -"Prevents creation of EntityContext instances",
+        (Kernel, Constructor_Method,
          Class        => Get_Entity_Context_Class (Kernel),
          Handler      => Context_Command_Handler'Access);
       Register_Command
-        (Kernel,
-         Command      => "entity",
-         Return_Value => "Entity",
-         Description  => -"Return the entity stored in the context",
+        (Kernel, "entity",
          Class        => Get_Entity_Context_Class (Kernel),
          Handler      => Entity_Context_Command_Handler'Access);
       Register_Command
-        (Kernel,
-         Command      => "location",
-         Return_Value => "FileLocation",
-         Description  => -"Return the file location stored in the context",
+        (Kernel, "location",
          Class        => Get_Entity_Context_Class (Kernel),
          Handler      => Entity_Context_Command_Handler'Access);
 
       Register_Command
-        (Kernel,
-         Command      => "current_context",
-         Return_Value => "FileContext",
-         Description  =>
-           -("Returns the current context in GPS. This is the currently"
-             & " selected file, line, column, project,... depending on"
-             & " what window is currently active"),
+        (Kernel, "current_context",
          Handler      => Context_Command_Handler'Access);
    end Register_Default_Script_Commands;
 
