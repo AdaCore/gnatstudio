@@ -19,8 +19,8 @@
 -----------------------------------------------------------------------
 
 with Glib;                        use Glib;
-with Glib.Object;                 use Glib.Object;
 with Glib.Xml_Int;                use Glib.Xml_Int;
+with Glib.Object;                 use Glib.Object;
 with Gtk.Box;                     use Gtk.Box;
 with Gtk.Enums;                   use Gtk.Enums;
 with Gtk.Event_Box;               use Gtk.Event_Box;
@@ -39,6 +39,7 @@ with Glide_Kernel.Contexts;       use Glide_Kernel.Contexts;
 with Glide_Kernel.Console;        use Glide_Kernel.Console;
 with Glide_Kernel.Hooks;          use Glide_Kernel.Hooks;
 with Glide_Kernel.Modules;        use Glide_Kernel.Modules;
+with Glide_Kernel.Preferences;    use Glide_Kernel.Preferences;
 with Glide_Kernel.Project;        use Glide_Kernel.Project;
 with Glide_Kernel.Scripts;        use Glide_Kernel.Scripts;
 with Glide_Kernel.Standard_Hooks; use Glide_Kernel.Standard_Hooks;
@@ -76,6 +77,12 @@ package body VCS_Module is
    type VCS_Module_ID_Record is new Module_ID_Record with record
       VCS_List : Argument_List_Access;
       --  The list of all VCS systems recognized by the kernel.
+
+      Explorer : VCS_View_Access;
+      --  The VCS Explorer
+
+      Explorer_Child : MDI_Child;
+      --  The child containing the VCS Explorer.
    end record;
    type VCS_Module_ID_Access is access all VCS_Module_ID_Record'Class;
 
@@ -524,17 +531,14 @@ package body VCS_Module is
       User : Kernel_Handle) return MDI_Child
    is
       pragma Unreferenced (MDI);
-      Child : MDI_Child;
+      M : constant VCS_Module_ID_Access :=
+            VCS_Module_ID_Access (VCS_Module_ID);
+      Explorer : VCS_View_Access;
+      pragma Unreferenced (Explorer);
    begin
       if Node.Tag.all = "VCS_View_Record" then
-         if Get_Attribute (Node, "hidden") = "TRUE" then
-            Child := Open_Explorer (User, Context => null, Visible => False);
-            Load_State (VCS_View_Access (Get_Widget (Child)), Node);
-         else
-            Child := Open_Explorer (User, Context => null);
-            Load_State (VCS_View_Access (Get_Widget (Child)), Node);
-            return Child;
-         end if;
+         Explorer := Get_Explorer (User, True, True);
+         return M.Explorer_Child;
       end if;
 
       return null;
@@ -554,11 +558,6 @@ package body VCS_Module is
          N := new Node;
          N.Tag := new String'("VCS_View_Record");
 
-         if not Visible_Is_Set (Widget) then
-            Set_Attribute (N, "hidden", "TRUE");
-         end if;
-
-         Save_State (VCS_View_Access (Widget), N);
          return N;
       end if;
 
@@ -589,6 +588,7 @@ package body VCS_Module is
          Priority                => Default_Priority,
          Contextual_Menu_Handler => VCS_Contextual_Menu'Access,
          Default_Context_Factory => VCS_View_API.Context_Factory'Access);
+
       Glide_Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
 
@@ -1012,6 +1012,10 @@ package body VCS_Module is
       Ref    := Get_Current_Ref
         (Get_Project_From_File (Get_Registry (Kernel), D.File, True));
 
+      if Ref = null then
+         return;
+      end if;
+
       Status := Get_Cached_Status
         (Get_Explorer (Kernel_Handle (Kernel), False), D.File, Ref);
 
@@ -1029,5 +1033,60 @@ package body VCS_Module is
          Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
    end File_Edited_Cb;
+
+   ------------------
+   -- Get_Explorer --
+   ------------------
+
+   function Get_Explorer
+     (Kernel      : Kernel_Handle;
+      Raise_Child : Boolean := True;
+      Show        : Boolean := False) return VCS_View_Access
+   is
+      M : VCS_Module_ID_Access := VCS_Module_ID_Access (VCS_Module_ID);
+   begin
+      if M.Explorer = null then
+         Gtk_New (M.Explorer, Kernel);
+      end if;
+
+      if Show
+        and then M.Explorer_Child = null
+      then
+         M.Explorer_Child := Put
+           (Kernel, M.Explorer,
+            Default_Width  => Get_Pref (Kernel, Default_Widget_Width),
+            Default_Height => Get_Pref (Kernel, Default_Widget_Height),
+            Module         => VCS_Module_ID);
+
+         Set_Focus_Child (M.Explorer_Child);
+         Set_Title (M.Explorer_Child, -"VCS Explorer");
+      end if;
+
+      if M.Explorer_Child /= null
+        and then Raise_Child
+      then
+         Gtkada.MDI.Raise_Child (M.Explorer_Child);
+      end if;
+
+      return M.Explorer;
+   end Get_Explorer;
+
+   -----------------------
+   -- Hide_VCS_Explorer --
+   -----------------------
+
+   procedure Hide_VCS_Explorer is
+      M : VCS_Module_ID_Access := VCS_Module_ID_Access (VCS_Module_ID);
+   begin
+      if M.Explorer = null
+        or else M.Explorer_Child = null
+      then
+         return;
+      else
+         Ref (M.Explorer);
+         Close_Child (M.Explorer_Child, True);
+         M.Explorer_Child := null;
+      end if;
+   end Hide_VCS_Explorer;
 
 end VCS_Module;
