@@ -68,6 +68,8 @@ package body VCS_View_API is
    --  The maximum length of a revision string, in characters. Revisions longer
    --  than this will be krunched when displayed in the editors.
 
+   VCS_Menu_Prefix : constant String := "<gps>/VCS/";
+
    -----------------------
    -- Local subprograms --
    -----------------------
@@ -364,7 +366,7 @@ package body VCS_View_API is
 
             if Show_Everything then
                Set_Accel_Path
-                 (Item, (-"_VCS") & "/" & Actions (Action).all, Group);
+                 (Item, VCS_Menu_Prefix & Actions (Action).all, Group);
             end if;
 
             Items_Inserted := True;
