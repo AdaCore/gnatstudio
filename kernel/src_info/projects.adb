@@ -1323,10 +1323,9 @@ package body Projects is
       if Root_Project.Data.Imported_Projects = null then
          Root_Project.Data.Imported_Projects := new Name_Id_Array'
            (Topological_Sort (Root_Project.Node));
-         Trace (Me, "Start: compute deps for "
-                & Project_Name (Root_Project));
-
          if Active (Debug) then
+            Trace (Debug, "Start: compute deps for "
+                   & Project_Name (Root_Project));
             Trace (Debug, "Start: " & Project_Name (Root_Project));
             for N in Root_Project.Data.Imported_Projects'Range loop
                Trace (Debug, "    => "
@@ -1997,7 +1996,7 @@ package body Projects is
         (Project_Registry'Class (Registry));
       Project.Data.View := Prj.No_Project;
 
-      Trace (Me, "Create_From_Node: "  & Project_Name (Project));
+      Trace (Debug, "Create_From_Node: "  & Project_Name (Project));
    end Create_From_Node;
 
    -------------
