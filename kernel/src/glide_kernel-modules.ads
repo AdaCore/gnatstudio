@@ -223,8 +223,7 @@ package Glide_Kernel.Modules is
       Accel_Mods  : Gdk.Types.Gdk_Modifier_Type := 0;
       Ref_Item    : String := "";
       Add_Before  : Boolean := True;
-      Sensitive   : Boolean := True)
-     return Gtk.Menu_Item.Gtk_Menu_Item;
+      Sensitive   : Boolean := True) return Gtk.Menu_Item.Gtk_Menu_Item;
    --  Same as above, but returns the menu item that was created.
 
    function Find_Menu_Item
