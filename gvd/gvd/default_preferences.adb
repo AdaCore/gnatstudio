@@ -1621,12 +1621,14 @@ package body Default_Preferences is
                Had_Apply := True;
 
             when others =>  --  including Cancel
+               Destroy (Dialog);
                Free (Manager.Preferences);
                Manager.Preferences := Saved_Pref;
-               Destroy (Dialog);
+
                if Had_Apply and then On_Changed /= null then
                   On_Changed (Manager);
                end if;
+
                exit;
          end case;
       end loop;
