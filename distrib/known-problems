@@ -1,5 +1,14 @@
 Known Problems fixed in GPS 2.0.0
 
+- CB18-012 Different behavior between VCS global and contextual menus.
+  Problem:    When you use the global menu VCS->Query status for all projects,
+              only the status for project source files are queried, whereas
+              when using the corresponding contextual menu, the status for all
+              files, including non-source files, in the project directories
+              are queried.
+- Workaround: Use the contextual menu if you want to query status for
+              non-source files.
+
 - Block folding not compatible with extended character sets
   Problem:    When a block contains extended characters, folding this block
               causes loss of text.
