@@ -1,5 +1,10 @@
 Known Problems fixed in GVD 1.2.0
 
+- Selecting a non-existent file in Open Source generates a bug box
+  Problem:    When entering a non-existent file in the File->Open Source
+              dialog, GVD generates a bug box.
+  Workaround: The bug box can be ignored.
+
 - Incorrect log-level causes a Constraint_Error.
   Problem:    Invoking GVD with a log level outside of the [0-4] range
               causes a Constraint_Error.
