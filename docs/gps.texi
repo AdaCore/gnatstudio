@@ -5377,10 +5377,11 @@ GPS.
 @subsection Adding menu items
 @cindex menu
 @noindent
-The GPS menu bar can be customized through an XML file called
-@file{custom} in the gps home directory (@file{$HOME/.gps} on Unix
-systems, @file{%HOME%\.gps} on Windows systems).
-
+The GPS menu bar can be customized through an XML file put under the
+directory @file{$HOME/.gps/customize} on Unix
+systems, and @file{%HOME%\.gps\customize} on Windows systems.
+Any file in the @file{customize} directory will be loaded by GPS at
+start up.
 
 @cindex Unix
 @cindex Windows
@@ -5633,6 +5634,9 @@ You can define new languages in a custom file by using the @code{Language}
 tag. Defining languages gives GPS the ability to highlight the syntax of a
 file, explore a file (using e.g. the project explorer), and find files
 associated with a given language.
+
+As described previousely for menu items, any file in the @file{customize}
+directory will be loaded by GPS at start up.
 
 The following tags are available in a @code{Language} section:
 
@@ -6756,6 +6760,7 @@ File containing the user-defined aliases (@pxref{Defining Text Aliases}).
 
    @item $HOME/.gps/customize
 Directory containing files with user-defined customizations.
+All files found under this directory are loaded by GPS during start up.
 You can create/edit these files to add your own menu/tool-bar entries in GPS,
 or define support for new languages.
 @pxref{Customizing the Menu and Tool Bar} and
