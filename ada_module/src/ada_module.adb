@@ -252,8 +252,8 @@ package body Ada_Module is
         (Gnew_Boolean
           (Name    => "Ada-Align-On-Colons",
            Default => False,
-           Blurb   => -"Whether to align declarations on colons",
-           Nick    => -"Align declarations on colons"));
+           Blurb   => -"Whether to align colons in declaration statements",
+           Nick    => -"Align colons in declarations"));
       Register_Property
         (Kernel, Param_Spec (Ada_Align_On_Colons), -"Editor:Ada");
 
@@ -274,7 +274,7 @@ package body Ada_Module is
            Blurb   =>
              -("Whether to align continuation lines after a declaration " &
                "based on the colon character"),
-           Nick    => -"Align declarations on colon"));
+           Nick    => -"Align declarations after colon"));
       Register_Property
         (Kernel, Param_Spec (Ada_Align_Decl_On_Colon), -"Editor:Ada");
 
