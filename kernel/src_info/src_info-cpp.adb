@@ -784,12 +784,19 @@ package body Src_Info.CPP is
       end if;
 
       --  check timestamps for the parsed file
-      if File /= No_LI_File
-        and then File.LI.Parsed
-        and then To_Timestamp (File_Time_Stamp (Full_Filename)) <=
-          File.LI.LI_Timestamp
-      then
-         return;
+      if File /= No_LI_File and then File.LI.Parsed then
+         if To_Timestamp (File_Time_Stamp (Full_Filename)) <=
+            File.LI.LI_Timestamp
+         then
+            return;
+         end if;
+         --  File is parsed, but not up-to-date. Destroy
+         --  internals of the File to make sure we won't get
+         --  duplicate references
+         Destroy (File.LI.Body_Info.Declarations);
+         File.LI.Body_Info.Declarations := null;
+         Destroy (File.LI.Dependencies_Info);
+         File.LI.Dependencies_Info := null;
       end if;
 
       Trace (Info_Stream, "Create_Or_Complete_LI " & Full_Filename);
