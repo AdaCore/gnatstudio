@@ -239,6 +239,9 @@ package body Src_Editor_Buffer is
       Column : Gint);
    --  Return the iter at position (Line, Column), tab expansion included.
 
+   procedure Clear (Buffer : access Source_Buffer_Record);
+   --  Delete all characters from the given buffer, leaving an empty buffer.
+
    --------------------
    -- Automatic_Save --
    --------------------
@@ -1368,6 +1371,9 @@ package body Src_Editor_Buffer is
 
       Buffer.Timestamp := To_Timestamp (File_Time_Stamp (Filename));
 
+      Empty_Queue (Buffer.Queue);
+      Buffer.Current_Command := null;
+
    exception
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
@@ -2020,29 +2026,6 @@ package body Src_Editor_Buffer is
          Buffer.Inserting := Previous_Inserting_Value;
       end if;
    end Replace_Slice;
-
-   ------------------
-   -- Delete_Slice --
-   ------------------
-
-   procedure Delete_Slice
-     (Buffer       : access Source_Buffer_Record;
-      Start_Line   : Gint;
-      Start_Column : Gint;
-      End_Line     : Gint;
-      End_Column   : Gint)
-   is
-      Start_Iter : Gtk_Text_Iter;
-      End_Iter   : Gtk_Text_Iter;
-   begin
-      pragma Assert (Is_Valid_Position (Buffer, Start_Line, Start_Column));
-      pragma Assert (Is_Valid_Position (Buffer, End_Line, End_Column));
-
-      Get_Iter_At_Line_Offset (Buffer, Start_Iter, Start_Line, Start_Column);
-      Get_Iter_At_Line_Offset (Buffer, End_Iter, End_Line, End_Column);
-
-      Delete (Buffer, Start_Iter, End_Iter);
-   end Delete_Slice;
 
    ----------------
    -- Select_All --
@@ -2727,7 +2710,6 @@ package body Src_Editor_Buffer is
             True);
          Enqueue (Buffer.Queue, Command);
       end if;
-
 
       Buffer.Current_Command := null;
 
