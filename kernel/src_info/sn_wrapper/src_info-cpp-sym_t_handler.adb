@@ -51,10 +51,29 @@ begin
          Declaration_Info  => Decl_Info);
    else
       --  could not get E_Kind for the original type
-
       Warn ("Typedef " & Identifier & ": original type not found");
 
       if Desc.Ancestor_Point /= Invalid_Point then
+         --  We know location of orignal type, e.g:
+         --    typedef old_type new_type;
+         --  where old_type is unknown.
+         --  In such case we insert declaration with
+         --  E_Kind = Unresolved_Entity.
+         Insert_Declaration
+           (Handler           => LI_Handler (Global_CPP_Handler),
+            File              => Global_LI_File,
+            List              => Global_LI_File_List,
+            Symbol_Name       =>
+              Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
+            Source_Filename   =>
+              Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
+            Location          => Sym.Start_Position,
+            Parent_Filename   => Desc.Ancestor_Filename.all,
+            Parent_Location   => Desc.Ancestor_Point,
+            Kind              => Unresolved_Entity,
+            Scope             => Global_Scope,
+            Declaration_Info  => Decl_Info);
+      else
          null;
       end if;
 
