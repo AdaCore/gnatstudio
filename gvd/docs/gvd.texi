@@ -1312,11 +1312,12 @@ accessed using the arrow located at the left of the status line.
      @i{gvd --tty} and the name of the program to be debugged. Process as
      usual.
 
-     A file @file{gvd.el} is provided in the @file{distrib/} directory of
-     the GVD distribution. This file provides a function called @code{gvd},
+     A file @file{gvd.el} is provided with the GVD binaries and in the
+     @file{distrib/} directory of the GVD sources.
+     This file provides a function called @code{gvd},
      that can be used just like the standard @code{gdb} command, but that
      adds some special arguments to the command line so that an Emacs frame
-     is automatically swallowd inside GVD and used as the source editor (see
+     is automatically swallowed inside GVD and used as the source editor (see
      description in @ref{Using GVD with Glide}).
 
      Simply load that file in Emacs, with a command like
