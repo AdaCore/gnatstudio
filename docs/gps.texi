@@ -153,7 +153,7 @@ improvements (see @ref{Reporting Suggestions and Bugs}).
 GPS gives access to built-in file editing; HTML based help system;
 complete compile/build/run cycle; intelligent source navigation;
 project management; general graph technology giving access to many different
-browsers such as source dependency, project dependency, call graphs, etc...;
+browsers such as source dependency, project dependency, call graphs, etc@dots{};
 fully integrated visual debugger, based on the GVD technology, and enhanced
 for inclusion in GPS; generic version control system, providing access
 to CVS, ClearCase, and possibly others in the future; many other tools
@@ -224,7 +224,7 @@ show a full view of the various components of your projects. These
 various components are presented below.
 
 The following snapshot displays the two pages side-by-side: on the
-left, the @code{Project View}, and on the right the @code{Files View}.
+left, the @code{Project View}, and on the right the @code{File View}.
 
 @iftex
 @image{explorer-views, 12.7cm}
@@ -268,17 +268,17 @@ compilation.
 The files inside a project can be organized into several physical
 directories on the disk. These directories are displayed under each
 project node in the @code{Project View}, or directly mimicking their
-physical organization on the disk (include windows drives) in the
-@code{Files View}.
+physical organization on the disk (including windows drives) in the
+@code{File View}.
 
 @item files
 The source files themselves are stored in the directories, and
 displayed under the corresponding nodes. Note that in the
 @code{Project View}, only the source files that actually belong to the
-project (ie are written in a language supported by that project and
-respect its naming scheme) are actually visible.
+project (i.e. are written in a language supported by that project and
+follow its naming scheme) are actually visible.
 
-The @code{Files View} will display all the files that actually exist
+The @code{File View} will display all the files that actually exist
 on the disk.
 
 A given file might appear multiple times in the @code{Project View},
@@ -286,7 +286,7 @@ if the project it belongs to is imported by several other projects.
 
 @item entities
 If you open the node for a source file, the file is parsed by one of the
-extra fast parsers integrated in GPS so that all entities declared in
+fast parsers integrated in GPS so that all entities declared in
 the project can be shown. These entities are grouped into various
 categories, which depend on the language. Typical categories include
 subprograms, packages, types, variables, tasks,@dots{}
@@ -308,12 +308,11 @@ Explorer}, and that will automatically search for the first entry for
 this file in the explorer.
 
 
-
 @subsection The configuration variables
 
 As described in the GNAT User's Guide, the project files can be
 configured through external variables (typically environment
-variables). This means that the exact list of source files, or the
+variables). This means that e.g. the exact list of source files, or the
 exact switches to use to compile the application can be changed when
 the value of these external variables is changed.
 
@@ -375,7 +374,7 @@ windows are put into a bigger window which is itself under control of
 the system or the windows manager.
 
 This means that, by default, no matter how many editors, browsers,
-explorers,... windows you have opened, your system will still see only
+explorers,@dots{} windows you have opened, your system will still see only
 one window (On Windows systems, the task bar shows only one
 icon). However, you can organize the GPS windows exactly the way you
 want, all inside the GPS main window.
@@ -555,7 +554,7 @@ see by clicking on its name in the tabs area.
 GPS includes four such areas, one on each side of the main area. Some
 widgets will initially be displayed in one of these docking areas
 instead of in the central one, like the project explorer, the message
-window, ... Although you can not control this initial position, it is
+window,@dots{} Although you can not control this initial position, it is
 possible to change it later on (@ref{Moving Windows}).
 
 However, you can still choose precisely the dimension you want for
@@ -590,7 +589,7 @@ it is possible that you prefer to have several top-level windows under
 direct control of your system or window manager. This would be the
 case for instance if you want to benefit from some extra possibilities
 that your system might provide (virtual desktops, different window
-decoration depending on the window's type, transparent windows,...).
+decoration depending on the window's type, transparent windows,@dots{}).
 
 GPS is fully compatible with this behavior, since windows can also be
 @b{floating windows}. Any window that is currenty embedded in the MDI
@@ -972,7 +971,7 @@ elements. For instance, it is possible to search in the currently
 edited source file, or in all the source files belonging to the
 project, even those that are not currently open. It is also possible
 to search in the project explorer (on the left side of the main GPS
-window), or the help modules,...
+window), or the help modules,@dots{}
 
 All these search contexts are grouped into a single graphical window,
 that you can open either through the menu @code{Navigate->Find}, or
@@ -1004,7 +1003,7 @@ In this combo box, a number of predefined patterns are provided. The
 top two ones are empty patterns, that automatically set up the
 appropriate fixed strings/regular expression mode. The other regular
 expressions are language-specific, and will match patterns like Ada
-type definition, C++ method declaration,...
+type definition, C++ method declaration,@dots{}
 
 @item @code{"Replace with"}
 This field should contain the string that will replace the occurrences
