@@ -380,12 +380,6 @@ package body Vdiff2_Module.Utils is
             Args_Highlight_Range (3) := new String'
               (Natural'Image (Dest_Range.First + J));
          end loop;
-
-         if Offset_Source < Offset_Dest then
-            for J in Offset_Source .. Offset_Dest loop
-               null;
-            end loop;
-         end if;
       end if;
 
       Basic_Types.Free (Args_Get_Chars_Dest);
