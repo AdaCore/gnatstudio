@@ -353,6 +353,10 @@ package body Src_Info.CPP is
    --  Source_Filename is "dir/file.h". Full_Filename is the full path to the
    --  physical file on the disk.
 
+   procedure Create_DB_Directory
+     (Handler : access CPP_LI_Handler_Record'Class);
+   --  Create the database directory if it doesn't exist yet.
+
    --  Debugging utils
    procedure Info (Msg : String);
    --  Print info message
@@ -448,6 +452,18 @@ package body Src_Info.CPP is
    --  Strict controls how arguments for functions and methods
    --  are compared (see Cmp_Arg_Types).
 
+   -------------------------
+   -- Create_DB_Directory --
+   -------------------------
+
+   procedure Create_DB_Directory
+     (Handler : access CPP_LI_Handler_Record'Class) is
+   begin
+      if not Is_Directory (Handler.DB_Dir.all) then
+         Make_Dir (Handler.DB_Dir.all);
+      end if;
+   end Create_DB_Directory;
+
    ----------------------------
    -- Generate_LI_For_Source --
    ----------------------------
@@ -458,12 +474,12 @@ package body Src_Info.CPP is
       File_Project  : Prj.Project_Id;
       Full_Filename : String) return LI_Handler_Iterator'Class
    is
-      pragma Unreferenced (Handler);
       pragma Unreferenced (Root_Project);
       pragma Unreferenced (File_Project);
       pragma Unreferenced (Full_Filename);
       HI : CPP_LI_Handler_Iterator;
    begin
+      Create_DB_Directory (Handler);
       HI.State := Done;
       return HI;
    end Generate_LI_For_Source;
@@ -494,6 +510,12 @@ package body Src_Info.CPP is
 
       HI.Handler := CPP_LI_Handler (Handler);
       HI.List_Filename := new String' (Handler.DB_Dir.all & "gps_list");
+
+      --  If there is at least one source file, make sure the database
+      --  directory exists.
+      if Current_Source_File (HI) /= "" then
+         Create_DB_Directory (Handler);
+      end if;
 
       --  Create the list of files that need to be analyzed.
       Create (Tmp_File, Out_File, Name => HI.List_Filename.all);
@@ -793,12 +815,8 @@ package body Src_Info.CPP is
          end if;
 
          Handler.DB_Dir := new String' (Dir);
-         Load (Handler.Xrefs, Handler.DB_Dir.all & Browse.Xref_Pool_Filename);
 
-         --  Check that DB_Directory exists. If not, create it.
-         if not Is_Directory (Handler.DB_Dir.all) then
-            Make_Dir (Handler.DB_Dir.all);
-         end if;
+         Load (Handler.Xrefs, Handler.DB_Dir.all & Browse.Xref_Pool_Filename);
       end if;
       Close_DB_Files (Handler.SN_Table);
       Open_DB_Files
@@ -830,6 +848,9 @@ package body Src_Info.CPP is
          Warn ("File not found: " & Source_Filename);
          return;
       end if;
+
+      --  Make sure the directory exists
+      Create_DB_Directory (Handler);
 
       --  Find the existing LI, or create a stub (However, we create the file
       --  as unparsed, for the following test).
