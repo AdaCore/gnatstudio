@@ -584,7 +584,10 @@ package body Glide_Kernel is
          Window.Busy_Level := Window.Busy_Level + 1;
       end if;
 
-      if Window.State_Level = 0 and then Window.Timeout_Id = 0 then
+      if Window.State_Level = 0
+        and then Window.Timeout_Id = 0
+        and then Window.Animation_Iter /= null
+      then
          Window.Timeout_Id := Process_Timeout.Add
            (Guint32 (Get_Delay_Time (Window.Animation_Iter)),
             Process_Anim'Access, (Kernel_Handle (Handle), null, null));
@@ -617,7 +620,9 @@ package body Glide_Kernel is
             end if;
          end if;
 
-         if Window.State_Level = 0 then
+         if Window.State_Level = 0
+           and then Window.Timeout_Id /= 0
+         then
             Timeout_Remove (Window.Timeout_Id);
             Window.Timeout_Id := 0;
          end if;
