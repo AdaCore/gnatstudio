@@ -246,8 +246,8 @@ package body Generic_List is
       else
          L1_Last := L1;
 
-         while not Is_Empty (Tail (L1_Last)) loop
-            L1_Last := Tail (L1_Last);
+         while not Is_Empty (Next (L1_Last)) loop
+            L1_Last := Next (L1_Last);
          end loop;
 
          L1_Last.Next := L2;
@@ -287,15 +287,33 @@ package body Generic_List is
    end Free;
 
    ----------
-   -- Tail --
+   -- Next --
    ----------
 
-   function Tail (L : List) return List is
+   function Next (L : List) return List is
    begin
       if L = null then
          raise List_Empty;
       else
          return L.Next;
+      end if;
+   end Next;
+
+   ----------
+   -- Tail --
+   ----------
+
+   procedure Tail (L : in out List)
+   is
+      First : List := L;
+   begin
+      if L = null then
+         raise List_Empty;
+      else
+         First := L;
+         L := L.Next;
+         Free_Element (First.Element);
+         Free_Node (First);
       end if;
    end Tail;
 

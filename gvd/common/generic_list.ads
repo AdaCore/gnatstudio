@@ -48,9 +48,17 @@ package Generic_List is
    procedure Free (L : in out List);
    --  Free memory associated to L.
 
-   function Tail (L : List) return List;
+   function Next (L : List) return List;
    --  Return the list following the first element.
    --  Raise List_Empty if L is empty.
+   --  Attention : the first element is not freed !!
+   --  If you want to move through a list and free it on
+   --  the fly, use Tail instead.
+
+   procedure Tail (L : in out List);
+   --  Return the list following the first element.
+   --  Raise List_Empty if L is empty.
+   --  Attention : the first element is freed !!
 
    function Head (L : List) return Data_Type;
    --  Return the first element contained in the list.
