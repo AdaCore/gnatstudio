@@ -25,8 +25,262 @@ with VFS;                       use VFS;
 with Src_Info.Queries;          use Src_Info.Queries;
 with Glide_Kernel.Project;      use Glide_Kernel, Glide_Kernel.Project;
 with Projects.Registry;         use Projects, Projects.Registry;
+with Traces;                    use Traces;
+with Ada.Exceptions;            use Ada.Exceptions;
+with Language;                  use Language;
+with Language_Handlers;         use Language_Handlers;
+with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 
 package body Docgen is
+
+   Me : constant Debug_Handle := Create ("Docgen");
+
+   -------------------------
+   -- Docgen_Backend body --
+   -------------------------
+
+   package body Docgen_Backend is
+
+      --------------------
+      -- Get_Last_Index --
+      --------------------
+
+      function Get_Last_Index (B : Backend'Class) return Natural is
+      begin
+         return B.Last_Index;
+      end Get_Last_Index;
+
+      -------------------
+      -- Get_Last_Line --
+      -------------------
+
+      function Get_Last_Line (B : Backend'Class) return Natural is
+      begin
+         return B.Last_Line;
+      end Get_Last_Line;
+
+      --------------------
+      -- Set_Last_Index --
+      --------------------
+
+      procedure Set_Last_Index (B : in out Backend'Class; Value : Natural) is
+      begin
+         B.Last_Index := Value;
+      end Set_Last_Index;
+
+      -------------------
+      -- Set_Last_Line --
+      -------------------
+
+      procedure Set_Last_Line (B : in out Backend'Class; Value : Natural) is
+      begin
+         B.Last_Line := Value;
+      end Set_Last_Line;
+
+      -----------------------
+      -- Launch_Doc_Create --
+      -----------------------
+
+      procedure Launch_Doc_Create
+        (B             : Backend_Handle;
+         Kernel        : access Glide_Kernel.Kernel_Handle_Record'Class;
+         File          : in Ada.Text_IO.File_Type;
+         Info          : in out Docgen.Doc_Info;
+         Doc_Directory : String;
+         Doc_Suffix    : String) is
+      begin
+         Doc_Create (B, Kernel, File, Info, Doc_Directory, Doc_Suffix);
+      end Launch_Doc_Create;
+
+      -----------------
+      -- Format_File --
+      -----------------
+
+      procedure Format_File
+         (B                : access Backend'Class;
+         Kernel           : access Kernel_Handle_Record'Class;
+         File             : Ada.Text_IO.File_Type;
+         LI_Unit          : LI_File_Ptr;
+         Text             : String;
+         File_Name        : VFS.Virtual_File;
+         Entity_Line      : Natural;
+         Line_In_Body     : Natural;
+         Source_File_List : Type_Source_File_List.List;
+         Link_All         : Boolean;
+         Is_Body          : Boolean;
+         Process_Body     : Boolean)
+      is
+         function Callback
+           (Entity         : Language_Entity;
+            Sloc_Start     : Source_Location;
+            Sloc_End       : Source_Location;
+            Partial_Entity : Boolean) return Boolean;
+
+         --------------
+         -- Callback --
+         --------------
+
+         function Callback
+           (Entity         : Language_Entity;
+            Sloc_Start     : Source_Location;
+            Sloc_End       : Source_Location;
+            Partial_Entity : Boolean) return Boolean  is
+         pragma Unreferenced (Partial_Entity);
+         begin
+            case Entity is
+               when Comment_Text =>
+                  Format_Comment
+                    (B,
+                     File,
+                     Text,
+                     Sloc_Start.Index,
+                     Sloc_Start.Line,
+                     Sloc_End.Index - 1,
+                     Sloc_End.Line,
+                     Entity_Line);
+
+               when Keyword_Text =>
+                  Format_Keyword
+                    (B,
+                     File,
+                     Text,
+                     Sloc_Start.Index,
+                     Sloc_Start.Line,
+                     Sloc_End.Index,
+                     Sloc_End.Line,
+                     Entity_Line);
+
+               when String_Text =>
+                  Format_String
+                    (B,
+                     File,
+                     Text,
+                     Sloc_Start.Index,
+                     Sloc_Start.Line,
+                     Sloc_End.Index,
+                     Sloc_End.Line,
+                     Entity_Line);
+
+               when Character_Text =>
+                  Format_Character
+                    (B,
+                     File,
+                     Text,
+                     Sloc_Start.Index,
+                     Sloc_Start.Line,
+                     Sloc_End.Index,
+                     Sloc_End.Line,
+                     Entity_Line);
+
+               when Identifier_Text =>
+                  Format_Identifier
+                    (B,
+                     Sloc_Start.Index,
+                     Sloc_Start.Line,
+                     Sloc_Start.Column,
+                     Sloc_End.Index,
+                     Sloc_End.Line,
+                     Kernel,
+                     File,
+                     LI_Unit,
+                     Text,
+                     File_Name,
+                     Entity_Line,
+                     Line_In_Body,
+                     Source_File_List,
+                     Link_All,
+                     Is_Body,
+                     Process_Body);
+
+               when others =>
+                  null;
+            end case;
+            return False;
+         end Callback;
+      begin
+         Initialize (B, Text);
+         Parse_Entities (Get_Language_From_File
+                           (Get_Language_Handler (Kernel), File_Name),
+                            Text,
+                            Callback'Unrestricted_Access);
+         Finish (B, File, Text, Entity_Line);
+      exception
+         when E : others =>
+            Trace (Me, "Unexpected exception: " & Exception_Information (E));
+      end Format_File;
+
+   end Docgen_Backend;
+
+   ---------------------
+   -- Format_All_Link --
+   ---------------------
+
+   procedure Format_All_Link
+     (B                : access Backend'Class;
+      Start_Index      : Natural;
+      Start_Line       : Natural;
+      Start_Column     : Natural;
+      End_Index        : Natural;
+      Kernel           : access Kernel_Handle_Record'Class;
+      File             : Ada.Text_IO.File_Type;
+      LI_Unit          : LI_File_Ptr;
+      Text             : String;
+      File_Name        : VFS.Virtual_File;
+      Entity_Line      : Natural;
+      Line_In_Body     : Natural;
+      Source_File_List : Type_Source_File_List.List;
+      Link_All         : Boolean;
+      Is_Body          : Boolean;
+      Process_Body     : Boolean)
+   is
+      Loc_End         : Natural;
+      Loc_Start       : Natural;
+      Point_In_Column : Natural;
+      Entity_Info     : Entity_Information;
+      Status          : Find_Decl_Or_Body_Query_Status;
+   begin
+      Loc_Start := Start_Index;
+
+      --  Take apart parsed entites with any "."'s in the middle
+      for J in 1 ..
+        1 + Count_Points (Text (Start_Index .. End_Index))
+      loop
+         Point_In_Column :=
+           Index (Text (Loc_Start .. End_Index), ".");
+
+         if Point_In_Column > 0 then
+            Loc_End := Point_In_Column - 1;
+         else
+            Loc_End := End_Index;
+         end if;
+
+         if LI_Unit /= No_LI_File then
+            --  We search the declaration of the entity
+            --  (which is an identifier)
+            Find_Declaration
+              (LI_Unit,
+               File_Name,
+               Text (Loc_Start .. Loc_End),
+               Start_Line + Entity_Line - 1,
+               Start_Column + Loc_Start - Start_Index,
+               Entity_Info,
+               Status);
+            if Status = Success or Status = Fuzzy_Match then
+               --  We create a link on the declaration for this entity
+               Format_Link
+                 (B,
+                  Start_Index, Start_Line, Start_Column, End_Index,
+                  Kernel, File, LI_Unit, Text, File_Name, Entity_Line,
+                  Line_In_Body, Source_File_List, Link_All, Is_Body,
+                  Process_Body, Loc_End, Loc_Start, Entity_Info);
+            end if;
+         end if;
+
+         if Point_In_Column > 0 then
+            Loc_Start := Point_In_Column + 1;
+         end if;
+      end loop;
+   end Format_All_Link;
 
    ----------------------
    -- Compare_Elements --
@@ -186,7 +440,7 @@ package body Docgen is
          Is_Private   => Entity.Is_Private,
          Line_In_Body => Entity.Line_In_Body,
          Calls_list   => Type_Reference_List.Null_List,    --  ???
-         Called_List  => Type_Reference_List.Null_List);   --  ???
+         Called_List  => Type_Reference_List.Null_List);    --  ???
    end Clone;
 
    -------------------------
