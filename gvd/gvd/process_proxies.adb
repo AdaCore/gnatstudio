@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2002                      --
+--                      Copyright (C) 2000-2003                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -26,6 +26,7 @@ with System;                use System;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 with GVD.Types;             use GVD.Types;
+with Glib.Convert;          use Glib.Convert;
 
 package body Process_Proxies is
 
@@ -138,7 +139,7 @@ package body Process_Proxies is
       Cmd : String;
       Empty_Buffer : Boolean := False) is
    begin
-      Send (Proxy.Descriptor.all, Cmd, Add_LF => True,
+      Send (Proxy.Descriptor.all, Locale_From_UTF8 (Cmd), Add_LF => True,
             Empty_Buffer => Empty_Buffer);
    end Send;
 
