@@ -139,7 +139,7 @@ begin
 
    Gtk_New (Codefix_Window.Refresh, -"Refresh");
    Set_Flags (Codefix_Window.Refresh, Can_Default);
-   Set_Tip (Tooltips, Codefix_Window.Refresh, -"Recalculate the fix with last user's changes");
+   Set_Tip (Tooltips, Codefix_Window.Refresh, -"Recompute fix with last user's changes");
    Widget_Callback.Object_Connect
      (Codefix_Window.Refresh, "clicked",
       Widget_Callback.To_Marshaller (On_Refresh_Clicked'Access), Codefix_Window);
