@@ -35,7 +35,8 @@ package body Src_Info.Debug is
    --  message, and the name of the subprogram (where the exception was
    --  raised).
 
-   procedure Dump_Pos_And_E_Kind (FL : File_Location; Kind : E_Kind);
+   procedure Dump_Pos_And_E_Kind
+     (FL : File_Location; Kind : E_Kind := Overloaded_Entity);
    --  Print the line/column position separated by the character associated
    --  to the given E_Kind.
 
@@ -69,9 +70,14 @@ package body Src_Info.Debug is
    -- Dump_Pos_And_E_Kind --
    -------------------------
 
-   procedure Dump_Pos_And_E_Kind (FL : File_Location; Kind : E_Kind) is
+   procedure Dump_Pos_And_E_Kind
+     (FL : File_Location; Kind : E_Kind := Overloaded_Entity) is
    begin
-      Put (Image (FL.Line) & E_Kind_To_Char (Kind) & Image (FL.Column));
+      if Kind /= Overloaded_Entity then
+         Put (Image (FL.Line) & E_Kind_To_Char (Kind) & Image (FL.Column));
+      else
+         Put (Image (FL.Line) & ' ' & Image (FL.Column));
+      end if;
    end Dump_Pos_And_E_Kind;
 
    -------------------------
@@ -226,7 +232,7 @@ package body Src_Info.Debug is
             Dump_Source_File (ED.Parent_Location.File);
             Put ('|');
          end if;
-         Dump_Pos_And_E_Kind (ED.Parent_Location, Overloaded_Entity);
+         Dump_Pos_And_E_Kind (ED.Parent_Location);
          Put ('>');
       end if;
       --  If there is an end of scope reference, print it too.
