@@ -191,8 +191,6 @@ package body Vdiff2_Module is
         (Kernel, Tools, -"Merge Three Files...", "",
          On_Merge_Three_Files'Access);
 
-      VDiff_Toolbar (Kernel);
-
       Register_Action
         (Kernel,
          "First difference",
