@@ -782,6 +782,8 @@ package body SN.DB_Structures is
       Get_Field       (Key,  1, Tab.Class);
       Get_Position
         (Data, 1, To_Unchecked_String (Key_Data_Pair.Data), Tab.End_Position);
+      Get_Hex
+        (Data, 2, To_Unchecked_String (Key_Data_Pair.Data), Tab.Attributes);
       Get_No_Brackets (Data, 3, Tab.Return_Type);
       Get_No_Brackets (Data, 4, Tab.Arg_Types);
       Get_No_Brackets (Data, 5, Tab.Arg_Names);

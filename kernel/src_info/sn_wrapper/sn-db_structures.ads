@@ -394,7 +394,7 @@ package SN.DB_Structures is
       Key                      : Buffer_String;
 
       End_Position             : Point;
---      Attributes               : SN_Attributes;
+      Attributes               : SN_Attributes;
       Return_Type              : Segment;
       Arg_Types                : Segment;
       Arg_Names                : Segment;
