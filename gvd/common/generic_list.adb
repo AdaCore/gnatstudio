@@ -442,6 +442,7 @@ package body Generic_List is
          raise List_Empty;
       else
          Free (Node.Element.all);
+         Free_Element (Node.Element);
          Node.Element := new Data_Type' (D);
       end if;
    end Set_Data;
