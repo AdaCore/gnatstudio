@@ -131,6 +131,11 @@ package String_Utils is
 
    function To_Unix_Pathname (Path : String) return String;
    --  Convert all occurences of Directory_Separator to '/'.
+   --  If Directory_Separator is different than '/', the following
+   --  additional substitutions are operated:
+   --  /cydrive/x/ -> x:\
+   --  //x/        -> x:\
+   --  where x is an arbitrary character
 
    function To_Host_Pathname (Path : String) return String;
    --  Convert all occurences of '/' to Directory_Separator.

@@ -479,9 +479,33 @@ package body String_Utils is
 
    function To_Host_Pathname (Path : String) return String is
       Result : String (Path'Range);
+      Cygdrv : constant String := "/cygdrive/";
    begin
       if GNAT.OS_Lib.Directory_Separator = '/' then
          return Path;
+      end if;
+
+      --  Replace /cygdrive/x/ by x:\
+
+      if Path'Length > Cygdrv'Length + 1
+        and then Path (Path'First .. Path'First + Cygdrv'Length - 1) = Cygdrv
+        and then Path (Path'First + Cygdrv'Length + 1) = '/'
+      then
+         return
+           To_Host_Pathname
+             (Path (Path'First + Cygdrv'Length) & ":\" &
+              Path (Path'First + Cygdrv'Length + 2 .. Path'Last));
+
+      --  Replace //x/ by x:\
+      elsif Path'Length >= 4
+        and then Path (Path'First) = '/'
+        and then Path (Path'First + 1) = '/'
+        and then Path (Path'First + 3) = '/'
+      then
+         return
+           To_Host_Pathname
+             (Path (Path'First + 2) & ":\" &
+              Path (Path'First + 4 .. Path'Last));
       end if;
 
       for J in Result'Range loop
@@ -539,13 +563,12 @@ package body String_Utils is
 
       if Num_Tabs = 0 then
          return Text;
-
       else
          declare
-            S : String
-              (1 .. Num_Tabs * Tab_Size + Text'Length);
+            S       : String (1 .. Num_Tabs * Tab_Size + Text'Length);
             S_Index : Integer := 1;
             Bound   : Integer;
+
          begin
             for K in Text'Range loop
                case Text (K) is
