@@ -3,9 +3,6 @@
 # switches to the compiler, binder or linker
 CFLAGS=-g
 
-# Location of GNAT sources
-GNAT_SRC=../../gnat/
-
 .PHONY: all force
 
 all: force
