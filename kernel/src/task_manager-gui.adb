@@ -22,6 +22,7 @@ with Glib;                     use Glib;
 with Glib.Object;              use Glib.Object;
 with Glib.Values;              use Glib.Values;
 with Gdk.Pixbuf;               use Gdk.Pixbuf;
+with Gtk.Progress_Bar;         use Gtk.Progress_Bar;
 with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
 with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Pixbuf; use Gtk.Cell_Renderer_Pixbuf;
@@ -71,6 +72,12 @@ package body Task_Manager.GUI is
       Params : GValues);
    --  Callback for a "destroy" signal.
 
+   procedure Refresh_Command
+     (Manager : Task_Manager_Access;
+      Index   : Integer);
+   --  Refresh only one command line.
+   --  Index corresponds to the index of the command in View.Manager.Queues
+
    ---------------------
    -- On_View_Destroy --
    ---------------------
@@ -88,33 +95,75 @@ package body Task_Manager.GUI is
    -- Refresh --
    -------------
 
-   procedure Refresh (View : access Task_Manager_Interface_Record'Class) is
-      Global : constant Boolean :=
-        View.Manager.Need_Global_Refresh or else View.Lines = null;
+   procedure Refresh (Manager : Task_Manager_Access) is
+      View : Task_Manager_Interface;
+      Need_GUI_Refresh : Boolean;
+
    begin
-      if Global then
-         Clear (View.Tree.Model);
-
-         Unchecked_Free (View.Lines);
-
-         if View.Manager.Queues = null then
-            return;
-         end if;
-
-         View.Lines := new Iter_Array (View.Manager.Queues'Range);
+      if Manager.GUI /= null then
+         View := Task_Manager_Interface (Manager.GUI);
       end if;
 
-      for J in View.Manager.Queues'Range loop
-         View.Manager.Queues (J).Need_Refresh := True;
+      --  Clear the GUIs if there is need for a global refresh.
 
-         if Global then
+      Need_GUI_Refresh := View /= null
+        and then (Manager.Need_Global_Refresh or else View.Lines = null);
+
+      if Need_GUI_Refresh then
+         Clear (View.Tree.Model);
+         Unchecked_Free (View.Lines);
+      end if;
+
+      --  Clear the progress bars
+
+      if Manager.Need_Global_Refresh
+        and then Manager.Progress_Area /= null
+        and then Manager.Queues /= null
+      then
+         for J in Manager.Queues'Range loop
+            if Manager.Queues (J).Bar /= null then
+               Remove (Manager.Progress_Area, Manager.Queues (J).Bar);
+            end if;
+
+            Gtk_New (Manager.Queues (J).Bar);
+         end loop;
+      end if;
+
+      if Manager.Queues = null then
+         return;
+      else
+         if View /= null
+           and then View.Lines = null
+         then
+            View.Lines := new Iter_Array (View.Manager.Queues'Range);
+         end if;
+      end if;
+
+      for J in Manager.Queues'Range loop
+         if Need_GUI_Refresh then
             Append (View.Tree.Model, View.Lines (J), Null_Iter);
          end if;
 
-         Refresh_Command (View, J);
+         if Manager.Need_Global_Refresh or else Need_GUI_Refresh then
+            Manager.Queues (J).Need_Refresh := True;
+         end if;
+
+         if Manager.Need_Global_Refresh
+           and then Manager.Progress_Area /= null
+         then
+            Pack_End
+              (Manager.Progress_Area,
+               Manager.Queues (J).Bar,
+               Expand => True,
+               Fill   => True,
+               Padding => 1);
+            Show_All (Manager. Queues (J).Bar);
+         end if;
+
+         Refresh_Command (Manager, J);
       end loop;
 
-      View.Manager.Need_Global_Refresh := False;
+      Manager.Need_Global_Refresh := False;
    end Refresh;
 
    ---------------------
@@ -122,49 +171,71 @@ package body Task_Manager.GUI is
    ---------------------
 
    procedure Refresh_Command
-     (View  : access Task_Manager_Interface_Record'Class;
-      Index : Integer)
+     (Manager : Task_Manager_Access;
+      Index   : Integer)
    is
       Command  : Command_Access;
       Progress : Progress_Record;
       Length   : Natural;
+      View     : Task_Manager_Interface;
+      Progress_String : String_Access;
+      Name_String     : String_Access;
    begin
-      if not (Index in View.Manager.Queues'Range)
-        or else not View.Manager.Queues (Index).Need_Refresh
-        or else View.Lines = null
-        or else not (Index in View.Lines'Range)
+      if not (Index in Manager.Queues'Range)
+        or else not Manager.Queues (Index).Need_Refresh
       then
          return;
       end if;
 
-      Length := Command_Queues.Length (View.Manager.Queues (Index).Queue);
+      if Manager.GUI /= null then
+         View := Task_Manager_Interface (Manager.GUI);
+      end if;
+
+      Length := Command_Queues.Length (Manager.Queues (Index).Queue);
 
       if Length /= 0 then
-         Command := Command_Queues.Head (View.Manager.Queues (Index).Queue);
-
-         Set
-           (View.Tree.Model, View.Lines (Index), Command_Name_Column,
-            Name (Command));
+         Command := Command_Queues.Head (Manager.Queues (Index).Queue);
 
          Progress := Commands.Progress (Command);
 
-         Set
-           (View.Tree.Model, View.Lines (Index), Command_Status_Column,
-              -(To_Lower (Progress.Activity'Img)));
-
          if Length = 1 then
-            Set
-              (View.Tree.Model, View.Lines (Index), Command_Progress_Column,
-               Image (Progress.Current) & "/" & Image (Progress.Total));
+            Progress_String := new String'
+              (Image (Progress.Current) & "/" & Image (Progress.Total));
          else
-            Set
-              (View.Tree.Model, View.Lines (Index), Command_Progress_Column,
-               Image (Progress.Current) & "/" & Image (Progress.Total)
+            Progress_String := new String'
+              (Image (Progress.Current) & "/" & Image (Progress.Total)
                & " (" & Image (Length) & (-" queued)"));
          end if;
 
+         Name_String := new String'(Name (Command));
+
+         if View /= null then
+            Set
+              (View.Tree.Model, View.Lines (Index), Command_Name_Column,
+               Name_String.all);
+            Set
+              (View.Tree.Model, View.Lines (Index), Command_Status_Column,
+                 -(To_Lower (Progress.Activity'Img)));
+            Set
+              (View.Tree.Model, View.Lines (Index), Command_Progress_Column,
+               Progress_String.all);
+         end if;
+
+         if Manager.Queues (Index).Bar /= null then
+            Set_Text
+              (Manager.Queues (Index).Bar,
+               Name_String.all & " " & Progress_String.all);
+
+            Set_Fraction
+              (Manager.Queues (Index).Bar,
+               Gdouble (Progress.Current) / Gdouble (Progress.Total));
+         end if;
+
+         Free (Name_String);
+         Free (Progress_String);
       end if;
-      View.Manager.Queues (Index).Need_Refresh := False;
+
+      Manager.Queues (Index).Need_Refresh := False;
    end Refresh_Command;
 
    ----------------------
@@ -263,7 +334,7 @@ package body Task_Manager.GUI is
 
       View.Manager.GUI := Gtk_Widget (View);
 
-      Refresh (View);
+      Refresh (Manager);
 
       Object_Callback.Object_Connect
         (View,
