@@ -1257,6 +1257,7 @@ package body Default_Preferences is
          Title  => -"Preferences",
          Parent => Gtk_Window (Parent),
          Flags  => Modal or Destroy_With_Parent);
+      Set_Position (Dialog, Win_Pos_Mouse);
       Gtk_New (Tips);
 
       Gtk_New (Main_Note);
