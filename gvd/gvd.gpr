@@ -1,0 +1,5 @@
+project GVD is
+
+  for Source_Dirs use ("gvd", "gnat");
+
+end GVD;
