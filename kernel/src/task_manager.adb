@@ -373,8 +373,10 @@ package body Task_Manager is
       then
          Manager.Running_Active := True;
 
-         Idle_Handler := Task_Manager_Idle.Add
-           (Active_Incremental'Access, Manager);
+         if Active_Incremental (Manager) then
+            Idle_Handler := Task_Manager_Idle.Add
+              (Active_Incremental'Access, Manager);
+         end if;
 
          Result := Execute (Manager.Push_Command);
       end if;
