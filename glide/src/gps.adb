@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2003                       --
+--                     Copyright (C) 2001-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -787,15 +787,15 @@ procedure GPS is
 
             if As_File then
                Execute_File
-                 (Script             => Script,
-                  Filename           => Normalize_Pathname
+                 (Script   => Script,
+                  Filename => Normalize_Pathname
                     (Batch (J + 1 .. Batch'Last), Startup_Dir.all),
-                  Errors             => Errors);
+                  Errors   => Errors);
             else
                Execute_Command
-                 (Script             => Script,
-                  Command            => Batch (J + 1 .. Batch'Last),
-                  Errors             => Errors);
+                 (Script   => Script,
+                  Command  => Batch (J + 1 .. Batch'Last),
+                  Errors   => Errors);
             end if;
 
             Executed := True;
@@ -805,13 +805,15 @@ procedure GPS is
 
       if not Executed then
          if As_File then
-            Insert (GPS.Kernel,
-                    -"Language unknown for --load command line switch",
-                    Mode => Error);
+            Insert
+              (GPS.Kernel,
+               -"Language unknown for --load command line switch",
+               Mode => Error);
          else
-            Insert (GPS.Kernel,
-                    -"Language unknown for --script command line switch",
-                    Mode => Error);
+            Insert
+              (GPS.Kernel,
+               -"Language unknown for --script command line switch",
+               Mode => Error);
          end if;
       end if;
 
