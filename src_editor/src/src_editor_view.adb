@@ -1112,6 +1112,23 @@ package body Src_Editor_View is
       end if;
 
       Get_Selection_Bounds (Buffer, Start, Pos, Result);
+
+      if Result then
+         --  Do not consider a line selected if only the first character
+         --  is selected.
+
+         if Get_Line_Offset (Pos) = 0 then
+            Backward_Char (Pos, Result);
+         end if;
+
+         --  Do not consider a line selected if only the last character is
+         --  selected.
+
+         if Ends_Line (Start) then
+            Forward_Char (Start, Result);
+         end if;
+      end if;
+
       Copy (Pos, Iter);
 
       --  Go to last char of the line pointed by Iter
@@ -1251,7 +1268,7 @@ package body Src_Editor_View is
                Global_Offset := Global_Offset - Offset + Indent;
             end if;
 
-            exit when Current_Line >= Line - 1;
+            exit when Current_Line >= Line;
 
             Current_Line := Current_Line + 1;
             Get_Iter_At_Line_Offset (Buffer, Start, Current_Line);
