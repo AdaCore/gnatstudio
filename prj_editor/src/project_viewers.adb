@@ -324,6 +324,13 @@ package body Project_Viewers is
       Args    : GNAT.OS_Lib.Argument_List) return String;
    --  Handle the interactive commands related to the project editor
 
+   procedure Update_Contents
+     (Viewer    : access Project_Viewer_Record'Class;
+      Project   : Project_Type;
+      Directory : String := "";
+      File      : String := "");
+   --  Update the contents of the viewer
+
    --------------------------
    -- Project editor pages --
    --------------------------
@@ -550,7 +557,7 @@ package body Project_Viewers is
       Name_Buffer (1 .. Name_Len) := Language;
 
       Get_Switches
-        (Viewer.Project_Filter, "compiler", File_Name,
+        (Viewer.Current_Project, "compiler", File_Name,
          Name_Find, Value, Is_Default);
       Line := New_String (To_String (Value));
 
@@ -719,7 +726,7 @@ package body Project_Viewers is
                   Use_Source_Path => True,
                   Use_Object_Path => False),
                File_Name    => Get_String (User.File_Name),
-               Project      => V.Project_Filter);
+               Project      => V.Current_Project);
 
             Callback (V, Column, File);
             Free (Selection_Context_Access (File));
@@ -735,23 +742,24 @@ package body Project_Viewers is
       V : Project_Viewer := Project_Viewer (Viewer);
    begin
       Clear (V);  --  ??? Should delete selectively
-      if V.Project_Filter /= No_Project then
+      if V.Current_Project /= No_Project then
          V.Current_Project := Get_Project (V.Kernel);
-         Show_Project (V, V.Project_Filter);
+         Show_Project (V, V.Current_Project);
       end if;
    end Project_View_Changed;
 
-   --------------------------------
-   -- Explorer_Selection_Changed --
-   --------------------------------
+   ---------------------
+   -- Update_Contents --
+   ---------------------
 
-   procedure Explorer_Selection_Changed
-     (Viewer  : access Project_Viewer_Record'Class;
-      Context : Selection_Context_Access)
+   procedure Update_Contents
+     (Viewer    : access Project_Viewer_Record'Class;
+      Project   : Project_Type;
+      Directory : String := "";
+      File      : String := "")
    is
       User : User_Data;
       Rows : Gint;
-      File : File_Selection_Context_Access;
       Child : MDI_Child;
 
    begin
@@ -761,55 +769,64 @@ package body Project_Viewers is
          return;
       end if;
 
+      --  If the context is invalid, keep the currently displayed lines, so
+      --  that when a new MDI child is selected, the contents of the viewer is
+      --  not necessarily reset.
+
+      if Directory = "" then
+         Set_Title (Child,
+                    Title => -"Editing switches for project "
+                    & Project_Name (Project),
+                    Short_Title => Project_Switches_Name);
+      else
+         Set_Title (Child,
+                    Title => -"Editing switches for directory " & Directory,
+                    Short_Title => Project_Switches_Name);
+      end if;
+
+      Viewer.Current_Project := Project;
+      Clear (Viewer);  --  ??? Should delete selectively
+
+      if Viewer.Current_Project /= No_Project then
+         Show_Project (Viewer, Viewer.Current_Project, Directory);
+      end if;
+
+      if File /= "" then
+         Rows := Get_Rows (Viewer.List);
+
+         for J in 0 .. Rows - 1 loop
+            User := Project_User_Data.Get (Viewer.List, J);
+
+            if Get_String (User.File_Name) = File then
+               Select_Row (Viewer.List, J, 0);
+               return;
+            end if;
+         end loop;
+      end if;
+   end Update_Contents;
+
+   --------------------------------
+   -- Explorer_Selection_Changed --
+   --------------------------------
+
+   procedure Explorer_Selection_Changed
+     (Viewer  : access Project_Viewer_Record'Class;
+      Context : Selection_Context_Access)
+   is
+      File : File_Selection_Context_Access;
+   begin
+      --  If the context is invalid, keep the currently displayed lines, so
+      --  that when a new MDI child is selected, the contents of the viewer is
+      --  not necessarily reset.
+
       if Context /= null
         and then Context.all in File_Selection_Context'Class
       then
          File := File_Selection_Context_Access (Context);
-
-         if File.all in File_Selection_Context'Class
-           and then not Has_Directory_Information (File)
-         then
-            Set_Title (Child,
-                       Title => -"Editing switches for project "
-                         & Project_Name (Project_Information (File)),
-                       Short_Title => Project_Switches_Name);
-         else
-            Set_Title (Child,
-                       Title => -"Editing switches for directory "
-                         & Directory_Information (File),
-                       Short_Title => Project_Switches_Name);
-         end if;
-
-         Viewer.Current_Project := Project_Information (File);
-         Clear (Viewer);  --  ??? Should delete selectively
-
-         if Viewer.Current_Project /= No_Project then
-            Show_Project (Viewer, Viewer.Current_Project,
-                          Directory_Information (File));
-         end if;
-
-         if Has_File_Information (File) then
-            Rows := Get_Rows (Viewer.List);
-
-            for J in 0 .. Rows - 1 loop
-               User := Project_User_Data.Get (Viewer.List, J);
-
-               if Get_String (User.File_Name) = File_Information (File) then
-                  Select_Row (Viewer.List, J, 0);
-                  return;
-               end if;
-            end loop;
-         end if;
-
-      else
-         Clear (Viewer);
-
-         Viewer.Current_Project := Get_Project (Viewer.Kernel);
-         Set_Title (Child,
-                    Title => -"Editing switches for project "
-                    & Project_Name (Viewer.Current_Project),
-                    Short_Title => Project_Switches_Name);
-         Show_Project (Viewer, Viewer.Current_Project, "");
+         Update_Contents (Viewer,
+                          Project_Information (File),
+                          Directory_Information (File),
+                          File_Information (File));
       end if;
    end Explorer_Selection_Changed;
 
@@ -819,12 +836,11 @@ package body Project_Viewers is
 
    procedure Explorer_Selection_Changed
      (Viewer  : access Gtk_Widget_Record'Class;
-      Args    : Gtk_Args)
-   is
-      Context      : constant Selection_Context_Access :=
-        To_Selection_Context_Access (To_Address (Args, 1));
+      Args    : Gtk_Args) is
    begin
-      Explorer_Selection_Changed (Project_Viewer (Viewer), Context);
+      Explorer_Selection_Changed
+        (Project_Viewer (Viewer),
+         To_Selection_Context_Access (To_Address (Args, 1)));
    end Explorer_Selection_Changed;
 
    -------------
@@ -848,7 +864,6 @@ package body Project_Viewers is
       Kernel   : access Kernel_Handle_Record'Class)
    is
       Scrolled : Gtk_Scrolled_Window;
-
    begin
       Gtk.Box.Initialize_Hbox (Viewer);
       Register_Contextual_Menu
@@ -892,6 +907,11 @@ package body Project_Viewers is
          Slot_Object => Viewer,
          User_Data   => Kernel_Handle (Kernel));
 
+      Set_Size_Request
+        (Viewer,
+         Get_Pref (Kernel, Default_Widget_Width),
+         Get_Pref (Kernel, Default_Widget_Height));
+
       Show_All (Viewer);
    end Initialize;
 
@@ -921,7 +941,7 @@ package body Project_Viewers is
       Files : constant String_Id_Array := Get_Source_Files
         (Project_Filter, Recursive => False);
    begin
-      Viewer.Project_Filter := Project_Filter;
+      Viewer.Current_Project := Project_Filter;
       Freeze (Viewer.List);
 
       for F in Files'Range loop
@@ -1024,22 +1044,23 @@ package body Project_Viewers is
 
       if Child /= null then
          Raise_Child (Child);
+         Viewer := Project_Viewer (Get_Widget (Child));
       else
          Gtk_New (Viewer, Kernel);
-
-         Set_Size_Request
-           (Viewer,
-            Get_Pref (Kernel, Default_Widget_Width),
-            Get_Pref (Kernel, Default_Widget_Height));
          Child := Put (Get_MDI (Kernel), Viewer);
-         Set_Focus_Child (Child);
-         Set_Title (Child, Project_Switches_Name);
-
-         --  The initial contents of the viewer should be read immediately from
-         --  the explorer, without forcing the user to do a new selection.
-
-         Explorer_Selection_Changed (Viewer, Context);
       end if;
+
+      --  The initial contents of the viewer should be read immediately from
+      --  the explorer, without forcing the user to do a new selection.
+
+      if Context /= null then
+         Explorer_Selection_Changed (Viewer, Context);
+      else
+         Update_Contents (Viewer, Get_Project (Kernel));
+      end if;
+
+      --  Set the focus child only afterward, otherwise Context becomes invalid
+      Set_Focus_Child (Child);
 
    exception
       when E : others =>
@@ -1566,10 +1587,10 @@ package body Project_Viewers is
                 Use_Source_Path => True,
                 Use_Object_Path => False),
             File_Name    => Get_String (User.File_Name),
-            Project      => V.Project_Filter);
+            Project      => V.Current_Project);
       else
          Set_File_Information
-           (Context, Project => V.Project_Filter);
+           (Context, Project => V.Current_Project);
       end if;
 
       if Has_File_Information (Context) then

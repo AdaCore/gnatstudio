@@ -87,7 +87,5 @@ private
       --  The project to which the files currently in the viewer belong. This
       --  indicates which project file should be normalized when a modification
       --  takes place.
-
-      Project_Filter : Projects.Project_Type := Projects.No_Project;
    end record;
 end Project_Viewers;
