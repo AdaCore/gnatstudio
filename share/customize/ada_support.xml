@@ -5,7 +5,7 @@
 <Ada>
    <tool name="Make" package="Builder" index="ada">
       <language>Ada</language>
-      <initial-cmd-line>-g -gnatQ</initial-cmd-line>
+      <initial-cmd-line></initial-cmd-line>
       <switches columns="2">
          <title column="1" line="1" >Dependencies</title>
          <title column="2" line="1" >Compilation</title>
@@ -28,7 +28,7 @@
 
    <tool name="Ada" package="Compiler" index="ada">
       <language>Ada</language>
-      <initial-cmd-line>-g</initial-cmd-line>
+      <initial-cmd-line>-g -gnatQ</initial-cmd-line>
       <switches lines="3" columns="2">
          <title line="1" column="1" >Code generation</title>
          <title line="1" column="2" >Run-time checks</title>
