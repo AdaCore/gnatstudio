@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2002                      --
+--                      Copyright (C) 2000-2003                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -13,7 +13,7 @@
 -- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
 -- General Public License for more details. You should have received --
--- a copy of the GNU General Public License along with this library; --
+-- a copy of the GNU General Public License along with this program; --
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
@@ -57,9 +57,6 @@ package GVD.Code_Editors is
    type Code_Editor_Record is new Gtk.Box.Gtk_Hbox_Record with private;
    type Code_Editor is access all Code_Editor_Record'Class;
 
-   type View_Mode is (Source, Asm, Source_Asm);
-   --  Describe what kind of source GVD should display.
-
    procedure Gtk_New_Hbox
      (Editor      : out Code_Editor;
       Process     : access Glib.Object.GObject_Record'Class);
@@ -73,7 +70,8 @@ package GVD.Code_Editors is
    --  Internal procedure.
 
    procedure Apply_Mode
-     (Editor : access Code_Editor_Record; Mode : View_Mode);
+     (Editor : access Code_Editor_Record;
+      Mode   : GVD.Text_Box.Source_Editor.View_Mode);
    --  Apply mode changes to the editor.
 
    procedure Show_Message
@@ -138,10 +136,13 @@ package GVD.Code_Editors is
    function Get_Line (Editor : access Code_Editor_Record) return Natural;
    --  Return the current line.
 
-   procedure Set_Mode (Editor : access Code_Editor_Record; Mode : View_Mode);
+   procedure Set_Mode (Editor : access Code_Editor_Record;
+                       Mode   : GVD.Text_Box.Source_Editor.View_Mode);
    --  Set the current view mode of Editor.
 
-   function Get_Mode (Editor : access Code_Editor_Record) return View_Mode;
+   function Get_Mode
+     (Editor : access Code_Editor_Record)
+      return GVD.Text_Box.Source_Editor.View_Mode;
    --  Return the current view mode of Editor.
 
    function Get_Process
@@ -218,7 +219,8 @@ private
       Asm              : GVD.Text_Box.Asm_Editor.Asm_Editor;
       Source_Asm_Pane  : Gtk.Paned.Gtk_Paned;
 
-      Mode             : View_Mode := GVD.Code_Editors.Source;
+      Mode             : GVD.Text_Box.Source_Editor.View_Mode :=
+        GVD.Text_Box.Source_Editor.Source;
 
       Source_Line      : Natural;
       Asm_Address      : Basic_Types.String_Access;
