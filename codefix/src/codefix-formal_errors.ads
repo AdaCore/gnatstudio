@@ -13,6 +13,8 @@ package Codefix.Formal_Errors is
 
    type Error_Message is new File_Cursor with private;
 
+   Invalid_Error_Message : constant Error_Message;
+
    procedure Initialize (This : in out Error_Message; Message : String);
    --  Parse the message headed in order to get the col number and the
    --  line number.
@@ -123,5 +125,7 @@ private
 
    procedure Parse_Head (Message : String; This : out Error_Message);
    function Clone (This : Error_Message) return Error_Message;
+
+   Invalid_Error_Message : constant Error_Message := (0, 0, null, null);
 
 end Codefix.Formal_Errors;
