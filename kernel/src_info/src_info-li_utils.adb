@@ -4,6 +4,7 @@ with GNAT.OS_Lib; use GNAT.OS_Lib;
 with Traces; use Traces;
 with SN; use SN;
 with SN.Xref_Pools; use SN.Xref_Pools;
+with Src_Info.CPP;  use Src_Info.CPP;
 
 package body Src_Info.LI_Utils is
 
@@ -12,7 +13,6 @@ package body Src_Info.LI_Utils is
    procedure Insert_Declaration_Internal
      (D_Ptr                   : in out E_Declaration_Info_List;
       File                    : LI_File_Ptr;
-      Xref_Filename           : String;
       List                    : in out LI_File_List;
       Symbol_Name             : String;
       Location                : Point;
@@ -21,9 +21,7 @@ package body Src_Info.LI_Utils is
       Kind                    : E_Kind;
       Scope                   : E_Scope;
       End_Of_Scope_Location   : Point := Invalid_Point;
-      Rename_Location         : Point := Invalid_Point;
-      DB_Directory            : String;
-      Xrefs                   : SN.Xref_Pools.Xref_Pool);
+      Rename_Location         : Point := Invalid_Point);
    --  Inserts declaration into specified E_Declaration_Info_List
 
 
@@ -51,11 +49,9 @@ package body Src_Info.LI_Utils is
 
    procedure Create_Stub_For_File
      (LI            : out LI_File_Ptr;
-      Handler       : LI_Handler;
+      Handler       : CPP_LI_Handler;
       List          : in out LI_File_List;
-      Full_Filename : String;
-      DB_Directory  : String;
-      Xrefs         : SN.Xref_Pools.Xref_Pool);
+      Full_Filename : String);
    --  Create a stub LI file for Full_Filename. This function doesn't test
    --  whether there is already an entry in List for Full_Filename.
 
@@ -64,9 +60,8 @@ package body Src_Info.LI_Utils is
    --------------------------
 
    procedure Insert_Declaration
-     (Handler                 : LI_Handler;
+     (Handler                : access Src_Info.CPP.CPP_LI_Handler_Record'Class;
       File                    : in out LI_File_Ptr;
-      LI_Full_Filename        : String;
       List                    : in out LI_File_List;
       Symbol_Name             : String;
       Source_Filename         : String;
@@ -77,16 +72,16 @@ package body Src_Info.LI_Utils is
       Scope                   : E_Scope;
       End_Of_Scope_Location   : Point := Invalid_Point;
       Rename_Location         : Point := Invalid_Point;
-      DB_Directory            : String;
-      Xrefs                   : SN.Xref_Pools.Xref_Pool;
       Declaration_Info        : out E_Declaration_Info_List) is
    begin
       if File = No_LI_File then
          Create_LI_File
-           (Handler          => Handler,
+           (Handler          => LI_Handler (Handler),
             List             => List,
             File             => File,
-            LI_Full_Filename => LI_Full_Filename,
+            LI_Full_Filename => Get_DB_Dir (Handler) &
+              Xref_Filename_For
+              (Source_Filename, Get_DB_Dir (Handler), Get_Xrefs (Handler)).all,
             Parsed           => True);
       else
          --  Check that we parsed the correct file.
@@ -124,10 +119,9 @@ package body Src_Info.LI_Utils is
          end loop;
       end if;
       Insert_Declaration_Internal
-        (Declaration_Info, File, LI_Full_Filename, List, Symbol_Name,
+        (Declaration_Info, File, List, Symbol_Name,
          Location, Parent_Filename, Parent_Location, Kind, Scope,
-         End_Of_Scope_Location, Rename_Location,
-         DB_Directory, Xrefs);
+         End_Of_Scope_Location, Rename_Location);
    end Insert_Declaration;
 
    -----------------------
@@ -154,23 +148,24 @@ package body Src_Info.LI_Utils is
    -------------------------
 
    procedure Insert_Dependency
-     (Handler              : LI_Handler;
+     (Handler              : access Src_Info.CPP.CPP_LI_Handler_Record'Class;
       File                 : in out LI_File_Ptr;
-      LI_Full_Filename     : String;
       List                 : in out LI_File_List;
-      Referred_Filename    : String;
-      Referred_LI_Filename : String)
+      Source_Filename      : String;
+      Referred_Filename    : String)
    is
       Dep_Ptr : Dependency_File_Info_List;
       Tmp_LI_File_Ptr : LI_File_Ptr;
    begin
-      --  checking existance of given LI_File and create new one if necessary
+      --  checking existence of given LI_File and create new one if necessary
       if File = No_LI_File then
          Create_LI_File
            (File             => File,
             List             => List,
-            LI_Full_Filename => LI_Full_Filename,
-            Handler          => Handler,
+            LI_Full_Filename => Get_DB_Dir (Handler) & Xref_Filename_For
+              (Source_Filename,
+               Get_DB_Dir (Handler), Get_Xrefs (Handler)).all,
+            Handler          => LI_Handler (Handler),
             Parsed           => True);
       else
          Assert (Me,
@@ -178,9 +173,9 @@ package body Src_Info.LI_Utils is
                  "Invalid Handler");
          if File.LI.Parsed = False then
             Convert_To_Parsed (File);
-            if Is_Regular_File (LI_Full_Filename) then
+            if Is_Regular_File (File.LI.LI_Filename.all) then
                File.LI.LI_Timestamp := To_Timestamp
-                 (File_Time_Stamp (LI_Full_Filename));
+                 (File_Time_Stamp (File.LI.LI_Filename.all));
             end if;
          end if;
       end if;
@@ -188,18 +183,14 @@ package body Src_Info.LI_Utils is
       --  Now we are searching through common list of LI_Files and
       --  trying to locate file with given name. If not found we are
       --  inserting new dependency
-      Tmp_LI_File_Ptr := Locate (List, Base_Name (Referred_LI_Filename));
+      Tmp_LI_File_Ptr := Locate_From_Source (List, Referred_Filename);
 
       if Tmp_LI_File_Ptr = No_LI_File then
-         Create_LI_File
-           (File             => Tmp_LI_File_Ptr,
-            List             => List,
-            LI_Full_Filename => Referred_LI_Filename,
-            Handler          => Handler,
-            Parsed           => True);
-         Create_File_Info
-           (FI_Ptr          => Tmp_LI_File_Ptr.LI.Body_Info,
-            Full_Filename   => Referred_Filename);
+         Create_Stub_For_File
+           (LI            => Tmp_LI_File_Ptr,
+            Handler       => CPP_LI_Handler (Handler),
+            List          => List,
+            Full_Filename => Referred_Filename);
       end if;
 
       --  Is this a first dependencies info in this file?
@@ -221,6 +212,7 @@ package body Src_Info.LI_Utils is
                --  Unable to find suitable Dependency_File_Info.
                --  Creating a new one.
                Dep_Ptr.Next := new Dependency_File_Info_Node;
+               Dep_Ptr := Dep_Ptr.Next;
                exit;
             end if;
             Dep_Ptr := Dep_Ptr.Next;
@@ -243,13 +235,12 @@ package body Src_Info.LI_Utils is
    -------------------------------------
 
    procedure Insert_Dependency_Declaration
-     (Handler                 : LI_Handler;
+     (Handler                : access Src_Info.CPP.CPP_LI_Handler_Record'Class;
       File                    : in out LI_File_Ptr;
       LI_Full_Filename        : String;
       List                    : in out LI_File_List;
       Symbol_Name             : String;
       Referred_Filename       : String;
-      Referred_LI_Filename    : String;
       Location                : Point;
       Parent_Filename         : String := "";
       Parent_Location         : Point := Invalid_Point;
@@ -257,8 +248,6 @@ package body Src_Info.LI_Utils is
       Scope                   : E_Scope;
       End_Of_Scope_Location   : Point := Invalid_Point;
       Rename_Location         : Point := Invalid_Point;
-      DB_Directory            : String;
-      Xrefs                   : SN.Xref_Pools.Xref_Pool;
       Declaration_Info        : out E_Declaration_Info_List)
    is
       D_Ptr, Tmp_Ptr : E_Declaration_Info_List;
@@ -271,28 +260,27 @@ package body Src_Info.LI_Utils is
            (File             => File,
             List             => List,
             LI_Full_Filename => LI_Full_Filename,
-            Handler          => Handler,
+            Handler          => LI_Handler (Handler),
             Parsed           => True);
       else
          pragma Assert (LI_Handler (Handler) = File.LI.Handler,
                         "Invalid Handler");
          Convert_To_Parsed (File);
-         if Is_Regular_File (LI_Full_Filename) then
+         if Is_Regular_File (File.LI.LI_Filename.all) then
             File.LI.LI_Timestamp := To_Timestamp
-              (File_Time_Stamp (LI_Full_Filename));
+              (File_Time_Stamp (File.LI.LI_Filename.all));
          end if;
       end if;
       --  Now we are searching through common list of LI_Files and
       --  trying to locate file with given name. If not found or if there
       --  are no such symbol declared in the found file then
       --  we are inserting new declaration
-      Tmp_LI_File_Ptr := Locate (List, Base_Name (Referred_LI_Filename));
+      Tmp_LI_File_Ptr := Locate_From_Source (List, Referred_Filename);
 
       if Tmp_LI_File_Ptr = No_LI_File then
          Insert_Declaration
            (Handler               => Handler,
             File                  => Tmp_LI_File_Ptr,
-            LI_Full_Filename      => Referred_LI_Filename,
             List                  => List,
             Symbol_Name           => Symbol_Name,
             Source_Filename       => Referred_Filename,
@@ -302,8 +290,6 @@ package body Src_Info.LI_Utils is
             Kind                  => Kind,
             Scope                 => Scope,
             End_Of_Scope_Location => End_Of_Scope_Location,
-            DB_Directory          => DB_Directory,
-            Xrefs                 => Xrefs,
             Declaration_Info      => Tmp_Ptr);
       else
          D_Ptr := Find_Declaration
@@ -315,7 +301,6 @@ package body Src_Info.LI_Utils is
             Insert_Declaration
               (Handler            => Handler,
                File               => Tmp_LI_File_Ptr,
-               LI_Full_Filename   => Referred_LI_Filename,
                List               => List,
                Symbol_Name        => Symbol_Name,
                Source_Filename    => Referred_Filename,
@@ -325,8 +310,6 @@ package body Src_Info.LI_Utils is
                Kind               => Kind,
                Scope              => Scope,
                End_Of_Scope_Location => End_Of_Scope_Location,
-               DB_Directory       => DB_Directory,
-               Xrefs              => Xrefs,
                Declaration_Info   => Tmp_Ptr);
          end if;
       end if;
@@ -400,7 +383,6 @@ package body Src_Info.LI_Utils is
       Insert_Declaration_Internal
         (D_Ptr,
          Tmp_LI_File_Ptr,
-         Referred_LI_Filename,
          List,
          Symbol_Name,
          Location,
@@ -409,9 +391,7 @@ package body Src_Info.LI_Utils is
          Kind,
          Scope,
          End_Of_Scope_Location,
-         Rename_Location,
-         DB_Directory,
-         Xrefs);
+         Rename_Location);
       Declaration_Info := D_Ptr;
    end Insert_Dependency_Declaration;
 
@@ -421,9 +401,7 @@ package body Src_Info.LI_Utils is
 
    procedure Add_Parent
      (Declaration_Info : in out E_Declaration_Info_List;
-      Handler          : LI_Handler;
-      DB_Directory     : String;
-      Xrefs            : Xref_Pool;
+      Handler          : CPP_LI_Handler;
       List             : in out LI_File_List;
       Parent_Filename  : String;
       Parent_Location  : Point)
@@ -453,7 +431,8 @@ package body Src_Info.LI_Utils is
             FL_Ptr := FL_Ptr.Next;
          end loop;
       end if;
-      Tmp_LI_File_Ptr := Get (List.Table, Parent_Filename);
+
+      Tmp_LI_File_Ptr := Locate_From_Source (List, Parent_Filename);
       if Tmp_LI_File_Ptr = No_LI_File then
          Tmp_LI_File_Ptr :=
            Declaration_Info.Value.Declaration.Location.File.LI;
@@ -466,10 +445,7 @@ package body Src_Info.LI_Utils is
               (LI            => Tmp_LI_File_Ptr,
                Handler       => Handler,
                List          => List,
-               Full_Filename => Parent_Filename,
-               DB_Directory  => DB_Directory,
-               Xrefs         => Xrefs);
-            --  raise Parent_Not_Available;
+               Full_Filename => Parent_Filename);
          end if;
       end if;
       FL_Ptr.all :=
@@ -629,22 +605,20 @@ package body Src_Info.LI_Utils is
 
    procedure Create_Stub_For_File
      (LI            : out LI_File_Ptr;
-      Handler       : LI_Handler;
+      Handler       : CPP_LI_Handler;
       List          : in out LI_File_List;
-      Full_Filename : String;
-      DB_Directory  : String;
-      Xrefs         : SN.Xref_Pools.Xref_Pool)
+      Full_Filename : String)
    is
       Xref_Name : String_Access;
    begin
-      Xref_Name := Xref_Filename_For (Full_Filename, DB_Directory, Xrefs);
+      Xref_Name := Xref_Filename_For
+        (Full_Filename, Get_DB_Dir (Handler), Get_Xrefs (Handler));
       Create_LI_File
         (File             => LI,
          List             => List,
-         LI_Full_Filename => Xref_Name.all,
-         Handler          => Handler,
+         LI_Full_Filename => Get_DB_Dir (Handler) & Xref_Name.all,
+         Handler          => LI_Handler (Handler),
          Parsed           => False);
-      Free (Xref_Name);
       Create_File_Info
         (FI_Ptr           => LI.LI.Body_Info,
          Full_Filename    => Full_Filename);
@@ -657,7 +631,6 @@ package body Src_Info.LI_Utils is
    procedure Insert_Declaration_Internal
      (D_Ptr                   : in out E_Declaration_Info_List;
       File                    : LI_File_Ptr;
-      Xref_Filename           : String;
       List                    : in out LI_File_List;
       Symbol_Name             : String;
       Location                : Point;
@@ -666,9 +639,7 @@ package body Src_Info.LI_Utils is
       Kind                    : E_Kind;
       Scope                   : E_Scope;
       End_Of_Scope_Location   : Point := Invalid_Point;
-      Rename_Location         : Point := Invalid_Point;
-      DB_Directory            : String;
-      Xrefs                   : SN.Xref_Pools.Xref_Pool)
+      Rename_Location         : Point := Invalid_Point)
    is
       Tmp_LI_File_Ptr : LI_File_Ptr;
    begin
@@ -696,8 +667,12 @@ package body Src_Info.LI_Utils is
 
       else
          --  Processing parent information
-         if Base_Name (Xref_Filename) = Parent_Filename then
+         if File.LI.Body_Info /= null
+           and then Base_Name (File.LI.Body_Info.Source_Filename.all) =
+           Base_Name (Parent_Filename)
+         then
             Tmp_LI_File_Ptr := File;
+
          else
             Tmp_LI_File_Ptr := Locate_From_Source (List, Parent_Filename);
             if Tmp_LI_File_Ptr = No_LI_File then
@@ -706,11 +681,9 @@ package body Src_Info.LI_Utils is
                       & Parent_Filename);
                Create_Stub_For_File
                  (LI            => Tmp_LI_File_Ptr,
-                  Handler       => File.LI.Handler,
+                  Handler       => CPP_LI_Handler (File.LI.Handler),
                   List          => List,
-                  Full_Filename => Parent_Filename,
-                  DB_Directory  => DB_Directory,
-                  Xrefs         => Xrefs);
+                  Full_Filename => Parent_Filename);
             end if;
          end if;
          D_Ptr.Value.Declaration.Parent_Location := new File_Location_Node'
@@ -843,9 +816,12 @@ package body Src_Info.LI_Utils is
 
       Add (List.Table, File, Success);
       if not Success then
-         Trace (Me, "Unable to insert LI file in the list");
+         Trace (Me, "Unable to insert LI file in the list (Name="
+                & Name.all & ')');
          Destroy (File);
          File := null;
+      else
+         Trace (Me, "Successfully inserted and parsed " & Name.all);
       end if;
    end Create_LI_File;
 

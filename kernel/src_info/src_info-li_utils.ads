@@ -19,14 +19,13 @@
 -----------------------------------------------------------------------
 
 with SN;
-with SN.Xref_Pools;
+with Src_Info.CPP;
 
 private package Src_Info.LI_Utils is
 
    procedure Insert_Declaration
-     (Handler               : LI_Handler;
+     (Handler               : access Src_Info.CPP.CPP_LI_Handler_Record'Class;
       File                  : in out LI_File_Ptr;
-      LI_Full_Filename      : String;
       List                  : in out LI_File_List;
       Symbol_Name           : String;
       Source_Filename       : String;
@@ -37,15 +36,10 @@ private package Src_Info.LI_Utils is
       Scope                 : E_Scope;
       End_Of_Scope_Location : SN.Point := SN.Invalid_Point;
       Rename_Location       : SN.Point := SN.Invalid_Point;
-      DB_Directory          : String;
-      Xrefs                 : SN.Xref_Pools.Xref_Pool;
       Declaration_Info      : out E_Declaration_Info_List);
    --  Insert a new entity declaration in File. File is created if needed, as
    --  well as the entry for Source_Filename (Body_Part).
    --  The newly created declaration is returned in Declaration_Info.
-   --  LI_Full_Filename should contain the full path to the LI filename (.ali
-   --  file in Ada or .xref file for source navigator). Its basename is used as
-   --  an index for File in List.
    --  (Parent_Filename, Parent_Location) points to the declaration of the
    --  parent entity, when available (classes, subtypes, ...), and should be
    --  left to the default value if not available.
@@ -57,23 +51,21 @@ private package Src_Info.LI_Utils is
    --  ??? Shouldn't we create a stub LI file for the parent instead.
 
    procedure Insert_Dependency
-     (Handler              : LI_Handler;
+     (Handler              : access Src_Info.CPP.CPP_LI_Handler_Record'Class;
       File                 : in out LI_File_Ptr;
-      LI_Full_Filename     : String;
       List                 : in out LI_File_List;
-      Referred_Filename    : String;
-      Referred_LI_Filename : String);
+      Source_Filename      : String;
+      Referred_Filename    : String);
    --  Create a new dependency, from the files described in File to the source
    --  file Referred_Filename.
 
    procedure Insert_Dependency_Declaration
-     (Handler                 : LI_Handler;
+     (Handler                : access Src_Info.CPP.CPP_LI_Handler_Record'Class;
       File                    : in out LI_File_Ptr;
       LI_Full_Filename        : String;
       List                    : in out LI_File_List;
       Symbol_Name             : String;
       Referred_Filename       : String;
-      Referred_LI_Filename    : String;
       Location                : SN.Point;
       Parent_Filename         : String := "";
       Parent_Location         : SN.Point := SN.Invalid_Point;
@@ -81,8 +73,6 @@ private package Src_Info.LI_Utils is
       Scope                   : E_Scope;
       End_Of_Scope_Location   : SN.Point := SN.Invalid_Point;
       Rename_Location         : SN.Point := SN.Invalid_Point;
-      DB_Directory            : String;
-      Xrefs                   : SN.Xref_Pools.Xref_Pool;
       Declaration_Info        : out E_Declaration_Info_List);
    --  Inserts new dependency declaration with specified parameters
    --  to given LI structure tree.
@@ -93,9 +83,7 @@ private package Src_Info.LI_Utils is
 
    procedure Add_Parent
      (Declaration_Info : in out E_Declaration_Info_List;
-      Handler          : LI_Handler;
-      DB_Directory     : String;
-      Xrefs            : SN.Xref_Pools.Xref_Pool;
+      Handler          : Src_Info.CPP.CPP_LI_Handler;
       List             : in out LI_File_List;
       Parent_Filename  : String;
       Parent_Location  : SN.Point);
