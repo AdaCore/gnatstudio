@@ -1028,6 +1028,7 @@ package body GVD.Process is
      (Debugger : access Debugger_Process_Tab_Record'Class) is
    begin
       --  If the context has changed, it means that the debugger has started
+      --  ??? Not always actually, see e.g the "file" command in gdb.
       Set_Is_Started (Debugger.Debugger, True);
 
       --  Emit the signal
@@ -1068,6 +1069,9 @@ package body GVD.Process is
    procedure Process_Stopped
      (Debugger : access Debugger_Process_Tab_Record'Class) is
    begin
+      --  ??? Will not work when commands like "step" are send before
+      --  e.g "run".
+      Set_Is_Started (Debugger.Debugger, True);
       Widget_Callback.Emit_By_Name (Gtk_Widget (Debugger), "process_stopped");
    end Process_Stopped;
 
