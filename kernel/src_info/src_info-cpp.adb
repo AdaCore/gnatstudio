@@ -336,8 +336,10 @@ package body Src_Info.CPP is
    procedure Open_DB_Files
      (DB_Dirs     : in GNAT.OS_Lib.String_List_Access;
       SN_Table    : out SN_Table_Array);
+   --  ???
 
    procedure Close_DB_Files (SN_Table : in out SN_Table_Array);
+   --  ???
 
    procedure Browse_Project
      (Project    : Prj.Project_Id;
@@ -683,12 +685,11 @@ package body Src_Info.CPP is
       Recursive     : Boolean := False)
       return LI_Handler_Iterator'Class
    is
-      HI       : CPP_LI_Handler_Iterator;
+      HI : CPP_LI_Handler_Iterator;
    begin
       HI.Handler      := CPP_LI_Handler (Handler);
-      HI.Prj_Iterator := new Imported_Project_Iterator'(
-         Prj_API.Start (Get_Project_From_View (Project), Recursive)
-      );
+      HI.Prj_Iterator := new Imported_Project_Iterator'
+        (Prj_API.Start (Get_Project_From_View (Project), Recursive));
       HI.Project      := Project;
       HI.Root_Project := Root_Project;
 
@@ -697,6 +698,7 @@ package body Src_Info.CPP is
       else
          HI.State := Done;
       end if;
+
       return HI;
    end Generate_LI_For_Project;
 
@@ -957,7 +959,8 @@ package body Src_Info.CPP is
 
    procedure Open_DB_Files
      (DB_Dirs   : in GNAT.OS_Lib.String_List_Access;
-      SN_Table  : out SN_Table_Array) is
+      SN_Table  : out SN_Table_Array)
+   is
       Success : Boolean;
    begin
       for Table in Table_Type loop
@@ -1040,6 +1043,7 @@ package body Src_Info.CPP is
 
          Free (P);
       end loop;
+
       Release_Cursor (Handler.SN_Table (FIL));
       Free (Module_Typedefs);
    exception
@@ -1456,8 +1460,8 @@ package body Src_Info.CPP is
    -----------------------
 
    function Get_Function_Kind
-     (Return_Type             : String;
-      Attributes              : SN_Attributes) return E_Kind
+     (Return_Type : String;
+      Attributes  : SN_Attributes) return E_Kind
    is
       Is_Template : constant Boolean := (Attributes and SN_TEMPLATE) /= 0;
    begin
@@ -1481,9 +1485,9 @@ package body Src_Info.CPP is
    ---------------------
 
    function Get_Method_Kind
-     (Class_Def               : CL_Table;
-      Return_Type             : String;
-      Attributes              : SN_Attributes) return E_Kind
+     (Class_Def   : CL_Table;
+      Return_Type : String;
+      Attributes  : SN_Attributes) return E_Kind
    is
       Is_Template : Boolean := (Attributes and SN_TEMPLATE) /= 0;
    begin
@@ -1681,8 +1685,8 @@ package body Src_Info.CPP is
                Scope              => Global_Scope,
                Declaration_Info   => Decl_Info);
          end if;
-
       end if;
+
       Free (MD_Tab);
    exception
       when DB_Error => null;
@@ -1734,18 +1738,21 @@ package body Src_Info.CPP is
       loop
          Match := False;
          P := Get_Pair (FD_File, Next_By_Key);
+
          exit when P = null;
+
          FD_Tab := Parse_Pair (P.all);
          Free (P);
          Match := True;
+
          exit when Cmp_Prototypes
-              (FD_Tab.Buffer,
-               Buffer,
-               FD_Tab.Arg_Types,
-               Arg_Types,
-               FD_Tab.Return_Type,
-               Return_Type,
-               Strict => Strict);
+           (FD_Tab.Buffer,
+            Buffer,
+            FD_Tab.Arg_Types,
+            Arg_Types,
+            FD_Tab.Return_Type,
+            Return_Type,
+            Strict => Strict);
          Free (FD_Tab);
       end loop;
 
@@ -1788,6 +1795,7 @@ package body Src_Info.CPP is
          if Match and then FD_Tab_Tmp.Start_Position < First_FD_Pos then
             First_FD_Pos := FD_Tab_Tmp.Start_Position;
          end if;
+
          Free (FD_Tab_Tmp);
       end loop;
 
@@ -1836,7 +1844,9 @@ package body Src_Info.CPP is
                Declaration_Info   => Decl_Info);
          end if;
       end if;
+
       Free (FD_Tab);
+
    exception
       when DB_Error => null;
    end Find_First_Forward_Declaration;
@@ -2074,6 +2084,7 @@ package body Src_Info.CPP is
                   Parent_Filename   => Desc.Parent_Filename.all,
                   Declaration_Info  => Decl_Info);
             end if;
+
             Free (Desc);
          end if;
       end if;
@@ -2110,10 +2121,10 @@ package body Src_Info.CPP is
       Module_Type_Defs : Module_Typedefs_List)
    is
       pragma Unreferenced (Module_Type_Defs);
-      Ref_Id : constant String := Ref.Buffer
+      Ref_Id     : constant String := Ref.Buffer
         (Ref.Referred_Symbol_Name.First .. Ref.Referred_Symbol_Name.Last);
-      Enum_Desc : CType_Description;
-      Enum_Def  : E_Table;
+      Enum_Desc  : CType_Description;
+      Enum_Def   : E_Table;
       Success    : Boolean;
       Decl_Info  : E_Declaration_Info_List;
 
@@ -2325,8 +2336,10 @@ package body Src_Info.CPP is
                   Module_Type_Defs,
                   Decl_Info);
             end if;
+
             Free (MDecl);
          end loop;
+
          Release_Cursor (Handler.SN_Table (MD));
       end if;
 
@@ -2339,9 +2352,12 @@ package body Src_Info.CPP is
 
          loop
             P := Get_Pair (Handler.SN_Table (MI), Next_By_Key);
+
             exit when P = null;
+
             MBody := Parse_Pair (P.all);
             Free (P);
+
             if MBody.Buffer (MBody.File_Name.First .. MBody.File_Name.Last)
                /= Filename
             then
@@ -2363,12 +2379,14 @@ package body Src_Info.CPP is
                --  MI symbols do not appear without MD
                --  add end of scope and body entity references
                if Decl_Info /= null
-                  and then Decl_Info.Value.Declaration.End_Of_Scope
-                     = No_Reference then
+                 and then Decl_Info.Value.Declaration.End_Of_Scope
+                   = No_Reference
+               then
                   MI_File := Locate_From_Source
                     (List,
                      MBody.Buffer
-                        (MBody.File_Name.First .. MBody.File_Name.Last));
+                       (MBody.File_Name.First .. MBody.File_Name.Last));
+
                   if MI_File = No_LI_File then
                      Create_Stub_For_File
                        (LI            => MI_File,
@@ -2378,6 +2396,7 @@ package body Src_Info.CPP is
                         Full_Filename => MBody.Buffer
                            (MBody.File_Name.First .. MBody.File_Name.Last));
                   end if;
+
                   Insert_Reference
                     (Decl_Info,
                      MI_File,
@@ -2386,8 +2405,10 @@ package body Src_Info.CPP is
                   Set_End_Of_Scope (Decl_Info, MI_File, MBody.End_Position);
                end if;
             end if;
+
             Free (MBody);
          end loop;
+
          Release_Cursor (Handler.SN_Table (MI));
       end if;
    end Create_Overload_List;
@@ -2397,28 +2418,32 @@ package body Src_Info.CPP is
    --------------------------
 
    procedure Create_Overload_List
-     (Name             : String;
-      Filename         : String;
-      Handler          : access CPP_LI_Handler_Record'Class;
-      Project          : Prj.Project_Id;
-      File             : out LI_File_Ptr;
-      List             : out LI_File_List)
+     (Name     : String;
+      Filename : String;
+      Handler  : access CPP_LI_Handler_Record'Class;
+      Project  : Prj.Project_Id;
+      File     : out LI_File_Ptr;
+      List     : out LI_File_List)
    is
-      P              : Pair_Ptr;
-      FDecl          : FD_Table;
-      Fn             : FU_Table;
-      Decl_Info      : E_Declaration_Info_List;
-      Fn_File        : LI_File_Ptr;
-      Target_Kind    : E_Kind;
+      P           : Pair_Ptr;
+      FDecl       : FD_Table;
+      Fn          : FU_Table;
+      Decl_Info   : E_Declaration_Info_List;
+      Fn_File     : LI_File_Ptr;
+      Target_Kind : E_Kind;
+
    begin
       if Is_Open (Handler.SN_Table (FD)) then
          Set_Cursor (Handler.SN_Table (FD), By_Key, Name & Field_Sep, False);
 
          loop
             P := Get_Pair (Handler.SN_Table (FD), Next_By_Key);
+
             exit when P = null;
+
             FDecl := Parse_Pair (P.all);
             Free (P);
+
             if FDecl.Buffer (FDecl.File_Name.First .. FDecl.File_Name.Last)
                /= Filename
             then
@@ -2435,6 +2460,7 @@ package body Src_Info.CPP is
                   List,
                   Decl_Info);
             end if;
+
             Free (FDecl);
          end loop;
          Release_Cursor (Handler.SN_Table (FD));
@@ -2445,9 +2471,12 @@ package body Src_Info.CPP is
 
          loop
             P := Get_Pair (Handler.SN_Table (FU), Next_By_Key);
+
             exit when P = null;
+
             Fn := Parse_Pair (P.all);
             Free (P);
+
             if Fn.Buffer (Fn.File_Name.First .. Fn.File_Name.Last)
                /= Filename
             then
@@ -2482,10 +2511,12 @@ package body Src_Info.CPP is
                      Scope              => Global_Scope,
                      End_Of_Scope_Location => Fn.End_Position,
                      Declaration_Info   => Decl_Info);
+
                else -- add end of scope and body entity references
                   Fn_File := Locate_From_Source
                     (List,
                      Fn.Buffer (Fn.File_Name.First .. Fn.File_Name.Last));
+
                   if Fn_File = No_LI_File then
                      Create_Stub_For_File
                        (LI            => Fn_File,
@@ -2495,6 +2526,7 @@ package body Src_Info.CPP is
                         Full_Filename => Fn.Buffer
                            (Fn.File_Name.First .. Fn.File_Name.Last));
                   end if;
+
                   Insert_Reference
                     (Decl_Info,
                      Fn_File,
@@ -2503,6 +2535,7 @@ package body Src_Info.CPP is
                   Set_End_Of_Scope (Decl_Info, Fn_File, Fn.End_Position);
                end if;
             end if;
+
             Free (Fn);
          end loop;
          Release_Cursor (Handler.SN_Table (FU));
@@ -2547,9 +2580,12 @@ package body Src_Info.CPP is
 
          loop
             P := Get_Pair (Handler.SN_Table (FD), Next_By_Key);
+
             exit when P = null;
+
             FDecl_Tmp := Parse_Pair (P.all);
             Free (P);
+
             if not Forward_Declared then
                FDecl := FDecl_Tmp;
                Forward_Declared := True;
@@ -2561,9 +2597,11 @@ package body Src_Info.CPP is
                    FDecl_Tmp.Arg_Types,
                    Strict => True);
                Free (FDecl_Tmp);
+
                exit when Overloaded;
             end if;
          end loop;
+
          Release_Cursor (Handler.SN_Table (FD));
       end if;
 
@@ -2575,9 +2613,12 @@ package body Src_Info.CPP is
 
          loop
             P := Get_Pair (Handler.SN_Table (FU), Next_By_Key);
+
             exit when P = null;
+
             Fn_Tmp := Parse_Pair (P.all);
             Free (P);
+
             if not Forward_Declared and No_Body then
                --  No forward decls, but we found the first function
                --  with the same name
@@ -2609,6 +2650,7 @@ package body Src_Info.CPP is
                Overloaded := True;
                Free (Fn_Tmp);
             end if;
+
             exit when Overloaded;
          end loop;
          Release_Cursor (Handler.SN_Table (FU));
@@ -2641,6 +2683,7 @@ package body Src_Info.CPP is
          --  this is a function defined in the current file
          --  it may be either forward declared or implemented
          --  right away
+
          if Forward_Declared then
             Find_First_Forward_Declaration
               (FDecl.Buffer,
@@ -2654,6 +2697,7 @@ package body Src_Info.CPP is
                List,
                Decl_Info,
                Strict => True);
+
          else -- when only body is available
             Decl_Info := Find_Declaration
               (File        => File,
