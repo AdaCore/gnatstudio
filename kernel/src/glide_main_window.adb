@@ -82,7 +82,7 @@ package body Glide_Main_Window is
       Window : constant Glide_Window :=
         Glide_Window (Get_Main_Window (Kernel));
    begin
-      if Window /= null and then Window.Animation /= null then
+      if Window.Animation /= null and then Window.Animation_Image /= null then
          Set (Window.Animation_Image, Get_Static_Image (Window.Animation));
       end if;
    end Display_Default_Image;
