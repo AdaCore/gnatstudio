@@ -57,6 +57,7 @@ package body Project_Browsers is
    -------------
 
    procedure Destroy (V : in out Name_Vertex) is
+      pragma Unreferenced (V);
    begin
       null;
    end Destroy;
@@ -66,6 +67,7 @@ package body Project_Browsers is
    -------------
 
    procedure Destroy (E : in out Name_Edge) is
+      pragma Unreferenced (E);
    begin
       null;
    end Destroy;
