@@ -492,6 +492,8 @@ package body Debugger.Gdb.Cpp is
                Tmp := Tmp + 10;
             elsif Looking_At (Type_Str, Tmp, "private") then
                Tmp := Tmp + 8;
+            elsif Looking_At (Type_Str, Tmp, "virtual") then
+               Tmp := Tmp + 8;
             end if;
 
             Ancestor_Start := Tmp;
