@@ -130,9 +130,6 @@ msgstr "Changer de répertoire..."
 msgid  "Choice"
 msgstr "Choix"
 
-msgid  "Classes"
-msgstr "Classes"
-
 msgid  "Clear Window"
 msgstr "Éffacer la fenêtre"
 
@@ -403,9 +400,6 @@ msgstr "Numero de frame"
 msgid  "Frozen"
 msgstr "Bloqué"
 
-msgid  "Functions"
-msgstr "Fonctions"
-
 msgid  "GDB"
 msgstr "GDB"
 
@@ -559,6 +553,9 @@ msgstr "Fichiers sans extension"
 msgid  "(no file)"
 msgstr "(pas de fichier)"
 
+msgid  "No file to edit"
+msgstr "Pas de fichier"
+
 msgid  "Num"
 msgstr "Num"
 
@@ -591,9 +588,6 @@ msgstr "Ouvrir fichier source..."
 
 msgid  "Options:"
 msgstr "Options :"
-
-msgid  "Packages"
-msgstr "Paquetages"
 
 msgid  "Parameters"
 msgstr "Parametres"
@@ -633,9 +627,6 @@ msgstr "Fichier du programme"
 
 msgid  "Program Host"
 msgstr "Hôte pour le programme"
-
-msgid  "Protected"
-msgstr "Objets Protégés"
 
 msgid  "Protocol"
 msgstr "Protocole"
@@ -787,9 +778,6 @@ msgstr "Endroit du source"
 msgid  "Source name"
 msgstr "Nom du fichier"
 
-msgid  "Specs"
-msgstr "Specs"
-
 msgid  "Start the debugged program"
 msgstr "Démarrer le programme à débogguer"
 
@@ -844,9 +832,6 @@ msgstr "Routine"
 msgid  "Subprogram Name"
 msgstr "Nom de la routine"
 
-msgid  "Subprograms"
-msgstr "Routines"
-
 msgid  "Syntax Highlighting"
 msgstr "Mise en évidence de la syntaxe"
 
@@ -855,9 +840,6 @@ msgstr "   --target=TARG:PRO   "
 
 msgid  "Tasks..."
 msgstr "Tâches..."
-
-msgid  "Tasks"
-msgstr "Tâches"
 
 msgid  "Task Status"
 msgstr "État des tâches"
@@ -894,9 +876,6 @@ msgstr "   --tty               Utilise le terminal comme additionel "
 
 msgid  "Type"
 msgstr "Type"
-
-msgid  "Types"
-msgstr "Types"
 
 msgid  "Undo"
 msgstr "Défaire"

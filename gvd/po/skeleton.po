@@ -130,9 +130,6 @@ msgstr "Change Directory..."
 msgid  "Choice"
 msgstr "Choice"
 
-msgid  "Classes"
-msgstr "Classes"
-
 msgid  "Clear Window"
 msgstr "Clear Window"
 
@@ -403,9 +400,6 @@ msgstr "Frame Number"
 msgid  "Frozen"
 msgstr "Frozen"
 
-msgid  "Functions"
-msgstr "Functions"
-
 msgid  "GDB"
 msgstr "GDB"
 
@@ -559,6 +553,9 @@ msgstr "No extension files"
 msgid  "(no file)"
 msgstr "(no file)"
 
+msgid  "No file to edit"
+msgstr "No file to edit"
+
 msgid  "Num"
 msgstr "Num"
 
@@ -591,9 +588,6 @@ msgstr "Open Source..."
 
 msgid  "Options:"
 msgstr "Options:"
-
-msgid  "Packages"
-msgstr "Packages"
 
 msgid  "Parameters"
 msgstr "Parameters"
@@ -633,9 +627,6 @@ msgstr "Program File"
 
 msgid  "Program Host"
 msgstr "Program Host"
-
-msgid  "Protected"
-msgstr "Protected"
 
 msgid  "Protocol"
 msgstr "Protocol"
@@ -787,9 +778,6 @@ msgstr "Source location"
 msgid  "Source name"
 msgstr "Source name"
 
-msgid  "Specs"
-msgstr "Specs"
-
 msgid  "Start the debugged program"
 msgstr "Start the debugged program"
 
@@ -844,9 +832,6 @@ msgstr "Subprogram"
 msgid  "Subprogram Name"
 msgstr "Subprogram Name"
 
-msgid  "Subprograms"
-msgstr "Subprograms"
-
 msgid  "Syntax Highlighting"
 msgstr "Syntax Highlighting"
 
@@ -855,9 +840,6 @@ msgstr "   --target=TARG:PRO   "
 
 msgid  "Tasks..."
 msgstr "Tasks..."
-
-msgid  "Tasks"
-msgstr "Tasks"
 
 msgid  "Task Status"
 msgstr "Task Status"
@@ -894,9 +876,6 @@ msgstr "   --tty               Use controlling tty as additional "
 
 msgid  "Type"
 msgstr "Type"
-
-msgid  "Types"
-msgstr "Types"
 
 msgid  "Undo"
 msgstr "Undo"
