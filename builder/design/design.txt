@@ -234,7 +234,9 @@ directories.
 The variable <PROJECT>_ROOT is used to know whether the current Makefile acts
 as the main project or as a sub project.
 
-- project dependencies (with clauses) are handled by the following translation:
+- project dependencies (with and limited-with clauses, there is no need to
+  differenciate them at the Makefile level, since Makefile.generic supports
+  mutually dependent inclusion) are handled by the following translation:
 
    with "../src1/project1"
 
