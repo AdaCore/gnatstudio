@@ -282,22 +282,6 @@ package body Project_Explorers is
    --  is directly associated with a projet, we return the importing project,
    --  note the one associated with Node.
 
-   function Get_File_From_Node
-     (Explorer  : access Project_Explorer_Record'Class;
-      Node      : Gtk_Tree_Iter;
-      Full_Path : Boolean := False) return String;
-   --  Return the name of the file containing Node (or, in case Node is an
-   --  Entity_Node, the name of the file that contains the entity).
-   --  The full name, including directory, is returned if Full_Path is True.
-
-   function Get_Directory_From_Node
-     (Explorer : access Project_Explorer_Record'Class;
-      Node     : Gtk_Tree_Iter)
-      return String;
-   --  Return the name of the directory to which Node belongs. This returns the
-   --  full directory name, relative to the project.
-   --  The return strings always ends with a directory separator.
-
    procedure Update_Node
      (Explorer         : access Project_Explorer_Record'Class;
       Node             : Gtk_Tree_Iter;
@@ -480,8 +464,8 @@ package body Project_Explorers is
       Set_File_Information
         (Context,
          Directory    =>
-           Normalize_Pathname (Get_Directory_From_Node (T, Node)),
-         File_Name    => Get_File_From_Node (T, Node),
+           Normalize_Pathname (Get_Directory_From_Node (T.Tree.Model, Node)),
+         File_Name    => Get_File_From_Node (T.Tree.Model, Node),
          Project_View => Get_Project_From_Node (T, Node));
       Context_Changed (T.Kernel, Selection_Context_Access (Context));
       Free (Selection_Context_Access (Context));
@@ -583,7 +567,8 @@ package body Project_Explorers is
 
       if Node = Null_Iter
         or else (Get_Title (Child) = " ")
-        or else (Get_Title (Child) = Get_File_From_Node (E, Node, True))
+        or else (Get_Title (Child) =
+                   Get_File_From_Node (E.Tree.Model, Node, True))
       then
          return;
       end if;
@@ -646,7 +631,7 @@ package body Project_Explorers is
 
       Push_State (E.Kernel, Busy);
       Parse_All_LI_Information
-        (E.Kernel, Get_Directory_From_Node (E, Node));
+        (E.Kernel, Get_Directory_From_Node (E.Tree.Model, Node));
       Pop_State (E.Kernel);
 
    exception
@@ -666,81 +651,24 @@ package body Project_Explorers is
       Event        : Gdk.Event.Gdk_Event;
       Menu         : Gtk_Menu) return Selection_Context_Access
    is
-      pragma Unreferenced (Kernel, Event_Widget);
-
-      function Entity_Base (Name : String) return String;
-      --  Return the "basename" for the entity, ie convert "parent.name" to
-      --  "name", in the case of Ada parent packages.
-      --  ??? Should this be done by the parser itself
-
-      function Entity_Base (Name : String) return String is
-      begin
-         for C in reverse Name'Range loop
-            if Name (C) = '.' then
-               return Name (C + 1 .. Name'Last);
-            end if;
-         end loop;
-         return Name;
-      end Entity_Base;
+      pragma Unreferenced (Event_Widget);
+      Context : Selection_Context_Access;
+      T       : constant Project_Explorer := Project_Explorer (Object);
+      Item    : Gtk_Menu_Item;
 
       Importing_Project : Project_Id := No_Project;
-
-      T         : constant Project_Explorer := Project_Explorer (Object);
-      Iter      : constant Gtk_Tree_Iter := Find_Iter_For_Event
+      Iter    : constant Gtk_Tree_Iter := Find_Iter_For_Event
         (T.Tree, T.Tree.Model, Event);
-      Parent_Iter : Gtk_Tree_Iter;
-      Context   : Selection_Context_Access;
-      Item      : Gtk_Menu_Item;
       Node_Type : Node_Types;
-
    begin
       if Iter /= Null_Iter then
-         Node_Type := Node_Types'Val
-           (Integer
-              (Get_Int
-                 (Gtk_Tree_Model (T.Tree.Model),
-                  Iter, Node_Type_Column)));
-
+         Node_Type := Get_Node_Type (T.Tree.Model, Iter);
       else
          return Context;
       end if;
 
-      Parent_Iter := Parent (Gtk_Tree_Model (T.Tree.Model), Iter);
-
-      if Node_Type = Entity_Node then
-         Context := new Entity_Selection_Context;
-      else
-         Context := new File_Selection_Context;
-      end if;
-
-      if Node_Type = Entity_Node then
-         Set_File_Information
-           (Context   => File_Selection_Context_Access (Context),
-            Directory    => Normalize_Pathname
-              (Get_Directory_From_Node (T, Iter)),
-            File_Name    => Get_File_From_Node (T, Iter));
-         Set_Entity_Information
-           (Context     => Entity_Selection_Context_Access (Context),
-            Entity_Name => Entity_Base (Get_Base_Name (T.Tree.Model, Iter)),
-            Category    => Get_Category_Type (T.Tree.Model, Parent_Iter),
-            Line        => Integer
-              (Get_Int (Gtk_Tree_Model (T.Tree.Model), Iter, Line_Column)),
-            Column      => Integer
-              (Get_Int (Gtk_Tree_Model (T.Tree.Model), Iter, Column_Column)));
-
-      else
-         if Parent_Iter /= Null_Iter then
-            Importing_Project := Get_Project_From_Node (T, Parent_Iter);
-         end if;
-
-         Set_File_Information
-           (Context   => File_Selection_Context_Access (Context),
-            Directory    =>
-              Normalize_Pathname (Get_Directory_From_Node (T, Iter)),
-            File_Name    => Get_File_From_Node (T, Iter),
-            Project_View => Get_Project_From_Node (T, Iter),
-            Importing_Project => Importing_Project);
-      end if;
+      Context := Project_Explorers_Common.Context_Factory
+        (Kernel_Handle (Kernel), T.Tree, T.Tree.Model, Event, Menu);
 
       if Node_Type = Obj_Directory_Node
         and then Menu /= null
@@ -753,8 +681,21 @@ package body Project_Explorers is
             T);
       end if;
 
-      return Context;
+      if Node_Type = Project_Node
+        or else Node_Type = Modified_Project_Node
+      then
+         Importing_Project := Get_Project_From_Node (T, Iter);
+         Set_File_Information
+           (Context   => File_Selection_Context_Access (Context),
+            Directory    =>
+              Normalize_Pathname
+                (Get_Directory_From_Node (T.Tree.Model, Iter)),
+            File_Name    => Get_File_From_Node (T.Tree.Model, Iter),
+            Project_View => Get_Project_From_Node (T, Iter),
+            Importing_Project => Importing_Project);
+      end if;
 
+      return Context;
    exception
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Message (E));
@@ -920,15 +861,8 @@ package body Project_Explorers is
 
       Set (Explorer.Tree.Model, N, Base_Name_Column, Text.all);
 
-      --  Strip the ending directory terminator, if necessary.
-      --  For homogeneity reasons.
-
-      if Directory (Directory'Last) = Directory_Separator then
-         Set (Explorer.Tree.Model, N, Absolute_Name_Column,
-              Directory (Directory'First .. Directory'Last - 1));
-      else
-         Set (Explorer.Tree.Model, N, Absolute_Name_Column, Directory);
-      end if;
+      Set (Explorer.Tree.Model, N, Absolute_Name_Column,
+           Name_As_Directory (Directory));
 
       if Object_Directory then
          Set (Explorer.Tree.Model, N, Icon_Column,
@@ -1098,7 +1032,7 @@ package body Project_Explorers is
       Src          : String_List_Id;
 
       Dir          : constant String :=
-        Get_Directory_From_Node (Explorer, Node);
+        Get_Directory_From_Node (Explorer.Tree.Model, Node);
 
       use String_List_Utils.String_List;
 
@@ -1148,7 +1082,7 @@ package body Project_Explorers is
       Node     : Gtk_Tree_Iter)
    is
       File_Name  : constant String :=
-        Get_File_From_Node (Explorer, Node, Full_Path => True);
+        Get_File_From_Node (Explorer.Tree.Model, Node, Full_Path => True);
    begin
       Append_File_Info (Explorer.Kernel, Explorer.Tree.Model, Node, File_Name);
 
@@ -1324,55 +1258,6 @@ package body Project_Explorers is
       end if;
    end Collapse_Tree_Cb;
 
-   ------------------------
-   -- Get_File_From_Node --
-   ------------------------
-
-   function Get_File_From_Node
-     (Explorer  : access Project_Explorer_Record'Class;
-      Node      : Gtk_Tree_Iter;
-      Full_Path : Boolean := False)
-      return String
-   is
-      S : constant String :=
-        Get_String (Explorer.Tree.Model,
-                    Node, Absolute_Name_Column);
-   begin
-      if S = "" then
-         return "";
-      else
-         if Full_Path then
-            return S;
-         else
-            return Base_Name (S);
-         end if;
-      end if;
-   end Get_File_From_Node;
-
-   -----------------------------
-   -- Get_Directory_From_Node --
-   -----------------------------
-
-   function Get_Directory_From_Node
-     (Explorer : access Project_Explorer_Record'Class;
-      Node     : Gtk_Tree_Iter)
-      return String
-   is
-      S : constant String :=
-        Get_String (Gtk_Tree_Model (Explorer.Tree.Model),
-                    Node, Absolute_Name_Column);
-   begin
-      if S = "" then
-         return "";
-      else
-         if Get_Node_Type (Explorer.Tree.Model, Node) = Directory_Node then
-            return S & Directory_Separator;
-         else
-            return Dir_Name (S);
-         end if;
-      end if;
-   end Get_Directory_From_Node;
-
    -------------------------
    -- Update_Project_Node --
    -------------------------
@@ -1538,7 +1423,8 @@ package body Project_Explorers is
             Prj  : Project_Id;
             Obj  : String_Id;
             pragma Unreferenced (Obj);
-            Dir  : constant String := Get_Directory_From_Node (Explorer, N);
+            Dir  : constant String :=
+              Get_Directory_From_Node (Explorer.Tree.Model, N);
 
          begin
             case Get_Node_Type (Explorer.Tree.Model, N) is
@@ -1636,8 +1522,10 @@ package body Project_Explorers is
    is
       Index : Natural;
       N, N2 : Gtk_Tree_Iter;
-      Dir : constant String := Name_As_Directory (Normalize_Pathname
-         (Get_Directory_From_Node (Explorer, Node), Resolve_Links => False));
+      Dir : constant String := Name_As_Directory
+        (Normalize_Pathname
+           (Get_Directory_From_Node (Explorer.Tree.Model, Node),
+            Resolve_Links => False));
 
       type Boolean_Array is array (Files_In_Project'Range) of Boolean;
       New_File : Boolean_Array := (others => True);
@@ -2142,7 +2030,7 @@ package body Project_Explorers is
             --  The file was never parsed
             elsif Status = Unknown then
                if Check_Entities
-                 (Get_Directory_From_Node (Explorer, Start) & N,
+                 (Get_Directory_From_Node (Explorer.Tree.Model, Start) & N,
                   Get_Project_From_Node (Explorer, Start))
                then
                   Set (C.Matches, N, Search_Match);
@@ -2157,8 +2045,8 @@ package body Project_Explorers is
 
                   Mark_File_And_Projects
                     (Base           => N,
-                     Full_Name      =>
-                       Get_Directory_From_Node (Explorer, Start) & N,
+                     Full_Name      => Get_Directory_From_Node
+                       (Explorer.Tree.Model, Start) & N,
                      Project_Marked => False,
                      Project        => Get_Project_From_Node (Explorer, Start),
                      Mark_File      => No_Match,
@@ -2210,7 +2098,8 @@ package body Project_Explorers is
 
                   when Directory_Node =>
                      Next_Or_Child
-                       (Get_Directory_From_Node (Explorer, Start_Node),
+                       (Get_Directory_From_Node
+                          (Explorer.Tree.Model, Start_Node),
                         Start_Node,
                         Context.Include_Directories, Tmp, Finish);
                      if Finish and then Context.Include_Directories then
