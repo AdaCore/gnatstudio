@@ -360,7 +360,7 @@ package body Src_Info.ALI is
 
    function Locate_ALI
      (Short_ALI_Filename : String;
-      Project                : Project_Type) return String;
+      Project            : Project_Type) return String;
    --  Locate an ALI file on the object path. If not found, it will possibly
    --  search for the parent unit's ALI file (for proper handling of
    --  separates). There is no garantee that the returned file matches the
@@ -374,15 +374,17 @@ package body Src_Info.ALI is
 
    function Get_Source_Filename
      (Unit_Name : Unit_Name_Type;
-      Project : Project_Type) return String
+      Project   : Project_Type) return String
    is
-      Unit : constant String := Locale_To_UTF8 (Get_String (Unit_Name));
+      Unit            : constant String :=
+                          Locale_To_UTF8 (Get_String (Unit_Name));
       --  Need to do a copy, since Name_Buffer is modified afterward
 
       Part_Marker_Len : constant := 2; --  It is either '%s' or '%b'
-      Part        : Unit_Part;
-      Iter : Imported_Project_Iterator := Start (Project, Recursive => True);
-      Count : Natural := 0;
+      Part            : Unit_Part;
+      Iter            : Imported_Project_Iterator :=
+                          Start (Project, Recursive => True);
+      Count           : Natural := 0;
    begin
       --  Check that the '%' marker is there
       if Unit'Length < Part_Marker_Len + 1
