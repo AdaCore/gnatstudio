@@ -253,8 +253,8 @@ private
       Instantiation_Pkg : Remove_Instruction_Cmd;
       Clauses_Pkg       : Remove_Elements_Cmd;
       Is_Instantiation  : Boolean;
-      Destination       : Dynamic_String;
       Obj_List          : String_List.List;
+      Last_With         : Ptr_Mark;
    end record;
 
    type Remove_Entity_Cmd is new Text_Command with record
