@@ -190,7 +190,7 @@ Customizing through XML files
 * Adding contextual menus::
 * Adding tool bar buttons::
 * Binding actions to keys::
-* Setting preferences in custom files::
+* Preferences support in custom files::
 * Creating themes::
 * Defining new search patterns::
 * Adding support for new languages::
@@ -6372,7 +6372,7 @@ items yet.
 * Adding contextual menus::
 * Adding tool bar buttons::
 * Binding actions to keys::
-* Setting preferences in custom files::
+* Preferences support in custom files::
 * Creating themes::
 * Defining new search patterns::
 * Adding support for new languages::
@@ -6469,7 +6469,9 @@ described in later sections. It includes:
 @item <submenu>
 (@pxref{Adding new menus})
 @item <pref>
- (@pxref{Setting preferences in custom files})
+ (@pxref{Preferences support in custom files})
+@item <preference>
+ (@pxref{Preferences support in custom files})
 @item <alias>
 (@pxref{Defining text aliases})
 @item <language>
@@ -7365,10 +7367,146 @@ filter valid for the current context is executed. If no action with a filter
 can be executed, then the first action with no filter will be executed.
 
 @c ----------------------------------------------------------------
-@node Setting preferences in custom files
-@subsection Setting preferences in custom files
-@cindex <pref>
+@node Preferences support in custom files
+@subsection Preferences support in custom files
 @c ----------------------------------------------------------------
+
+@subsubsection Creating new preferences
+@cindex <preference>
+
+@noindent
+GPS has a number of predefined preferences to configure its behavior and its
+appearance. They are all customizable through the Edit->Preferences menu.
+
+However, you might wish to add your own kind of preferences for your extension
+modules. This can easily be done through the usual GPS customization files.
+Preferences are different from project attributes (@pxref{Defining project attributes}), in that the latter will vary depending on which project is loaded
+by the user, whereas preferences are always set to the same value no matter
+what project is loaded.
+
+Such preferences are created with the @code{<preference>} tag, which takes
+a number of attributes.
+
+@table @code
+@item name (mandatory)
+
+This is the name of the preference, used when the preference is saved by
+GPS in the @file{$HOME/.gps/preferences} file, and to query the value of
+a preference interactively through the @code{GPS.Preference} class in the
+GPS shell or python. There are a few limitation to the form of these names:
+they cannot contain space or underscore characters. You should replace the
+latter with minus signs for instance.
+
+@item page (optional, default is "General")
+
+The name of the page in the preferences editor where the preference can
+be edited. If this is the name of a non-existing page, GPS will automatically
+create it. If this is the empty string (""), the preference will not be
+editable interactively. This could be used to save a value from one session
+of GPS to the next, without allowing the user to alter it.
+
+@item default (optional, default depends on the type of the preference)
+
+The default value of the preference, when not set by the user. This is 0 for integer preferences, the empty string for string preferences, True for boolean values, and the first possible choice for choice preferences.
+
+@item tip (optional, default is "")
+
+This is the text of the tooltip that appears in the preferences editor
+dialog.
+
+@item label (mandatory)
+
+This is the name of the preference as it appears in the preferences editor
+dialog
+
+@item type (mandatory)
+
+This is the type of the preference, and should be one of:
+
+@itemize
+@item "boolean"
+
+The preference can be True or False.
+
+@item "integer"
+
+The preference is an integer. Two optional attributes can be specified for
+@code{<preference>}, "minimum" and "maximum", which define the range of
+valid values for that integer. Default values are 0 and 10 respectively.
+
+@item "string"
+
+The preference is a string, which might contain any value
+
+@item "color"
+
+The preference is a color name, in the format of a named color such as
+"yellow", or a string similar to "#RRGGBB", where RR is the red component,
+GG is the green component, and BB is the blue component
+
+@item "font"
+
+The preference is a font
+
+@item "choices"
+
+The preference is a string, whose value is chosen among a static list of
+possible values. Each possible value is defined in a @code{<choice>} child
+of the @code{<preference>} node.
+
+@end itemize
+
+@end table
+
+Here is an example that defines a few new preferences:
+
+@smallexample
+<?xml version="1.0"?>
+<custom>
+   <preference name="my-int"
+               page="Editor"
+               label="My Integer"
+               default="30"
+               minimum="20"
+               maximum="35"
+               page="Manu"
+               type="integer" />
+
+   <preference name="my-enum"
+               label="My Enum"
+               type="choices" >
+     <choice>Choice1</choice>
+     <choice>Choice2</choice>
+     <choice>Choice3</choice>
+   </preference>
+</custom>
+@end smallexample
+
+The values of the above preferences can be queries in the scripting languages:
+
+@itemize
+
+@item GPS shell
+
+@smallexample
+Preference "my-enum"
+Preference.get %1
+@end smallexample
+
+@ifset python
+@item Python
+
+@smallexample
+val = GPS.Preference ("my-enum").get ()
+val2 = GPS.Preference ("my-int").get ()
+@end smallexample
+
+@end ifset
+@end itemize
+
+
+@subsubsection Setting preferences values
+@cindex <pref>
 
 @noindent
 You can force specific default values for the preferences in the customization
