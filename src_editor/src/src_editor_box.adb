@@ -85,6 +85,7 @@ with Entities.Queries;            use Entities.Queries;
 with Traces;                      use Traces;
 with VFS;                         use VFS;
 with Projects;                    use Projects;
+with Projects.Registry;           use Projects.Registry;
 with GVD.Dialogs;                 use GVD.Dialogs;
 --  ??? Used for Simple_Entry_Dialog. Should move this procedure in GUI_Utils
 
@@ -1606,15 +1607,6 @@ package body Src_Editor_Box is
                Pop_State (Get_Kernel (Context));
             end if;
 
---              Gtk_New (Item, -"Goto file spec/body");
---              Add (Menu, Item);
---              Context_Callback.Object_Connect
---                (Item, "activate",
---                 Context_Callback.To_Marshaller (On_Goto_Other_File'Access),
---                 User_Data   => Selection_Context_Access (Context),
---                 Slot_Object => Editor,
---                 After       => True);
-
             Gtk_New (Item, -"Goto parent unit");
             Add (Menu, Item);
             Set_Sensitive (Item, False);
@@ -1636,11 +1628,16 @@ package body Src_Editor_Box is
       C      : constant File_Selection_Context_Access :=
         File_Selection_Context_Access (Context.Context);
       Kernel : constant Kernel_Handle := Get_Kernel (C);
+      File   : constant VFS.Virtual_File := File_Information (C);
+      Project : constant Project_Type := Get_Project_From_File
+        (Get_Registry (Kernel).all, File);
       Other_File : constant Virtual_File := Create
-        (Other_File_Base_Name
-           (Project_Information (C), File_Information (C)),
-         Project_Information (C));
+        (Other_File_Base_Name (Project, File), Project);
    begin
+      Trace (Me, "MANU Goto_Other_File_Command File="
+             & Full_Name (File).all
+             & " Project=" & Project_Name (Project)
+             & " Other_File=" & Full_Name (Other_File).all);
       if Other_File /= VFS.No_File then
          Open_File_Editor (Kernel, Other_File, Line => 0);
          return Commands.Success;

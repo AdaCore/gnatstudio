@@ -3772,11 +3772,11 @@ package body Src_Editor_Module is
 
       Command := new Goto_Other_File_Command;
       Register_Contextual_Menu
-        (Kernel, -"Goto file spec/body",
+        (Kernel, -"Goto file spec<->body",
          Action => Command,
-         Filter => Line_Numbers_Area_Filter);
-
-
+         Filter => Action_Filter
+           (not Line_Numbers_Area_Filter
+            and Create (Module => Src_Editor_Module_Name)));
 
       Command := new Edit_File_Command;
       Register_Contextual_Menu
