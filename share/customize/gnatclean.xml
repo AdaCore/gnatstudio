@@ -8,7 +8,7 @@
   </action>
   <menu action="build-clean-root-project"
         after="Make">
-    <title>/Build/C_lean</title>
+    <title>/Build/C_lean/_Current Project</title>
   </menu>
   <action name="build-clean-all-root-project">
     <external>gnatclean -r "%PPs"</external>
@@ -18,11 +18,12 @@
   </action>
   <menu action="build-clean-all-root-project"
         after="Clean">
-    <title>/Build/Clean all</title>
+    <title>/Build/C_lean/_All</title>
   </menu>
 
   <action name="build-clean-subproject">
-    <external>gnat clean "%pps"</external>
+    <external>gnatclean %PPs</external>
+    <filter id="Explorer_Project_Node"/>
   </action>
 
   <contextual action="build-clean-subproject">
