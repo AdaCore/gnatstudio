@@ -274,6 +274,7 @@ package body Glide_Kernel.Project is
       end if;
 
       Output.Set_Special_Output (Report_Error'Unrestricted_Access);
+      Prj.Ext.Reset;
       Free (Kernel.Scenario_Variables);
       Prj.Part.Parse (New_Project, Project, True);
 
