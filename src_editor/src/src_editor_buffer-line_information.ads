@@ -129,4 +129,9 @@ package Src_Editor_Buffer.Line_Information is
    procedure Unfold_All (Buffer : access Source_Buffer_Record'Class);
    --  Unfold all top-level foldable blocks.
 
+   procedure Unfold_Line
+     (Buffer : access Source_Buffer_Record'Class;
+      Line   : Editable_Line_Type);
+   --  Unfold the block(s) containing Line.
+
 end Src_Editor_Buffer.Line_Information;
