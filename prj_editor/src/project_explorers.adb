@@ -42,6 +42,7 @@ with Gdk.Pixbuf;               use Gdk.Pixbuf;
 with Gtk.Enums;                use Gtk.Enums;
 with Gtk.Arguments;            use Gtk.Arguments;
 with Gtk.Check_Button;         use Gtk.Check_Button;
+with Gtk.Clist;                use Gtk.Clist;
 with Gtk.Ctree;                use Gtk.Ctree;
 with Gtk.Frame;                use Gtk.Frame;
 with Gtk.Main;                 use Gtk.Main;
@@ -92,6 +93,19 @@ with Unchecked_Conversion;
 package body Project_Explorers is
 
    Me : constant Debug_Handle := Create ("Project_Explorers");
+
+   Show_Relative_Paths : constant Boolean := True;
+   --  <preference> If True, only relative paths are show in the project view,
+   --  otherwise the full path is displayed.
+
+   Normalized_Directories : constant Boolean := True;
+   --  <preference> True if directories should be fully normalized, eg links
+   --  should be resolved. False if the explorer should display the name as
+   --  given in the project file"
+
+   Projects_Before_Directories : constant Boolean := False;
+   --  <preference> True if the projects should be displayed, when sorted,
+   --  before the directories in the project view.
 
    ---------------------
    -- Local constants --
@@ -261,6 +275,7 @@ package body Project_Explorers is
      (Explorer         : access Project_Explorer_Record'Class;
       Directory        : String;
       Parent_Node      : Gtk_Ctree_Node := null;
+      Project          : Project_Id;
       Directory_String : String_Id;
       Files_In_Project : String_Array_Access;
       Object_Directory : Boolean := False) return Gtk_Ctree_Node;
@@ -268,6 +283,7 @@ package body Project_Explorers is
    --  Directory is expected to be an absolute path name.
    --  Directory_String should be specified for source directories only, and is
    --  not required for object directories.
+   --  Project is the project to which the directory belongs
 
    function Add_File_Node
      (Explorer    : access Project_Explorer_Record'Class;
@@ -565,6 +581,12 @@ package body Project_Explorers is
    procedure On_Parse_Xref (Explorer : access Gtk_Widget_Record'Class);
    --  Parse all the LI information contained in the object directory of the
    --  current selection.
+
+   function Project_View_Compare
+     (Tree : access Gtk_Clist_Record'Class;
+      Row1 : Gtk_Clist_Row;
+      Row2 : Gtk_Clist_Row) return Gint;
+   --  The ordering function used for the project view.
 
    -------------------
    -- Columns_Types --
@@ -1080,6 +1102,95 @@ package body Project_Explorers is
       Dummy := Append_Column (Tree, Col);
    end Set_Column_Types;
 
+   --------------------------
+   -- Project_View_Compare --
+   --------------------------
+
+   function Project_View_Compare
+     (Tree : access Gtk_Clist_Record'Class;
+      Row1 : Gtk_Clist_Row;
+      Row2 : Gtk_Clist_Row) return Gint
+   is
+      T  : constant Gtk_Ctree := Gtk_Ctree (Tree);
+      N1 : constant Gtk_Ctree_Node := Find_Node_Ptr (T, Gtk_Ctree_Row (Row1));
+      N2 : constant Gtk_Ctree_Node := Find_Node_Ptr (T, Gtk_Ctree_Row (Row2));
+      D1 : constant User_Data := Node_Get_Row_Data (T, N1);
+      D2 : constant User_Data := Node_Get_Row_Data (T, N2);
+      Is_Project1 : constant Boolean :=
+        D1.Node_Type in Project_Node .. Extends_Project_Node;
+      Is_Project2 : constant Boolean :=
+        D2.Node_Type in Project_Node .. Extends_Project_Node;
+      Is_Dir1 : constant Boolean :=
+        D1.Node_Type in Directory_Node .. Obj_Directory_Node;
+      Is_Dir2 : constant Boolean :=
+        D2.Node_Type in Directory_Node .. Obj_Directory_Node;
+
+      Text1 : constant String := Node_Get_Text (T, N1, 0);
+      Text2 : constant String := Node_Get_Text (T, N2, 0);
+
+   begin
+      --  At least one of the nodes is a project
+
+      if Is_Project1 then
+         if Is_Project2 then
+            if Text1 < Text2 then
+               return -1;
+            elsif Text1 = Text2 then
+               return 0;
+            else
+               return 1;
+            end if;
+         elsif Projects_Before_Directories then
+            return -1;
+         else
+            return 1;
+         end if;
+
+      elsif Is_Project2 then
+         if Projects_Before_Directories then
+            return 1;
+         else
+            return -1;
+         end if;
+      end if;
+
+      --  None of the nodes is a project, is at least one a directory ?
+
+      if Is_Dir1 then
+         if Is_Dir2 then
+            --  Object directories come last
+            if D1.Node_Type = Obj_Directory_Node then
+               return 1;
+            elsif D2.Node_Type = Obj_Directory_Node then
+               return -1;
+            end if;
+
+            if Text1 < Text2 then
+               return -1;
+            elsif Text1 = Text2 then
+               return 0;
+            else
+               return 1;
+            end if;
+         else
+            return 1;
+         end if;
+      elsif Is_Dir2 then
+         return -1;
+      end if;
+
+      --  None of the nodes is a directory. the two nodes necessarily have the
+      --  same type, so we just compare the strings
+
+      if Text1 < Text2 then
+         return -1;
+      elsif Text1 = Text2 then
+         return 0;
+      else
+         return 1;
+      end if;
+   end Project_View_Compare;
+
    -------------
    -- Gtk_New --
    -------------
@@ -1151,6 +1262,8 @@ package body Project_Explorers is
 
       Gtk_New (Explorer.Tree, Number_Of_Columns, 0);
       Add (Scrolled, Explorer.Tree);
+
+      Set_Compare_Func (Explorer.Tree, Project_View_Compare'Access);
 
       Register_Contextual_Menu
         (Kernel          => Kernel,
@@ -1844,6 +1957,7 @@ package body Project_Explorers is
      (Explorer         : access Project_Explorer_Record'Class;
       Directory        : String;
       Parent_Node      : Gtk_Ctree_Node := null;
+      Project          : Project_Id;
       Directory_String : String_Id;
       Files_In_Project : String_Array_Access;
       Object_Directory : Boolean := False) return Gtk_Ctree_Node
@@ -1863,18 +1977,24 @@ package body Project_Explorers is
 
       --  Compute the absolute directory
 
-      if Get_Pref (Explorer.Kernel, Normalized_Directories) then
+      if Normalized_Directories then
          Node_Text := new String'
            (Name_As_Directory (Normalize_Pathname (Directory)));
       else
          Node_Text := new String' (Name_As_Directory (Directory));
       end if;
 
+      if Show_Relative_Paths then
+         Text := Create_Line_Text (Relative_Path_Name
+            (Node_Text.all, Dir_Name (Project_Path (Project))));
+      else
+         Text := Create_Line_Text (Node_Text.all);
+      end if;
+
       Is_Leaf := Node_Type = Obj_Directory_Node
         or else not Has_Entries
           (Name_As_Directory (Directory), Files_In_Project);
 
-      Text := Create_Line_Text (Node_Text.all);
       N := Insert_Node
         (Ctree         => Explorer.Tree,
          Parent        => Parent_Node,
@@ -2093,6 +2213,7 @@ package body Project_Explorers is
             N := Add_Directory_Node
               (Explorer         => Explorer,
                Directory        => Name_Buffer (1 .. Name_Len),
+               Project          => Project,
                Parent_Node      => Node,
                Files_In_Project => Files,
                Directory_String => String_Elements.Table (Dir).Value);
@@ -2109,6 +2230,7 @@ package body Project_Explorers is
            (Explorer         => Explorer,
             Directory        =>
               Get_String (Projects.Table (Project).Object_Directory),
+            Project          => Project,
             Parent_Node      => Node,
             Directory_String => End_String,
             Files_In_Project => null,
@@ -2562,9 +2684,10 @@ package body Project_Explorers is
                   Obj := End_String;
                   Tmp := Add_Directory_Node
                     (Explorer,
-                     Directory   => Get_String
+                     Directory        => Get_String
                        (Projects.Table (Prj).Object_Directory),
-                     Parent_Node => Node,
+                     Project          => Project,
+                     Parent_Node      => Node,
                      Directory_String => Obj,
                      Files_In_Project => null,
                      Object_Directory => True);
@@ -2625,6 +2748,7 @@ package body Project_Explorers is
               (Explorer         => Explorer,
                Directory        => Name_Buffer (1 .. Name_Len),
                Parent_Node      => Node,
+               Project          => Project,
                Directory_String => Sources (J),
                Files_In_Project => Files,
                Object_Directory => False);
@@ -2720,7 +2844,7 @@ package body Project_Explorers is
       if Files = null then
          Files := Get_Source_Files
            (Prj, Recursive => False, Full_Path => True,
-            Normalized => Get_Pref (Explorer.Kernel, Normalized_Directories));
+            Normalized => Normalized_Directories);
       end if;
 
       --  If the information about the node hasn't been computed before,
@@ -3160,7 +3284,7 @@ package body Project_Explorers is
      (Explorer : access Gtk_Widget_Record'Class; Args : Gtk_Args)
       return Boolean
    is
-      use Row_List;
+      use Gtk.Ctree.Row_List;
       T        : constant Project_Explorer := Project_Explorer (Explorer);
       Event    : constant Gdk_Event := To_Event (Args, 1);
       Row      : Gint;
