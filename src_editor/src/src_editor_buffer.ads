@@ -367,7 +367,6 @@ package Src_Editor_Buffer is
    --  this procedure. An incorrect position will cause an Assertion_Failure
    --  when compiled with assertion checks, or an undefined behavior otherwise.
 
-
    procedure Select_All (Buffer : access Source_Buffer_Record);
    --  Set the selection bounds from the begining to the end of the buffer.
 
