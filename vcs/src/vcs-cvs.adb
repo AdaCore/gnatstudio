@@ -722,12 +722,21 @@ package body VCS.CVS is
       User_Name : String           := "")
    is
       pragma Unreferenced (User_Name);
+
+      use String_List;
+
       Arguments : String_List.List;
+      Node      : String_List.List_Node := First (Filenames);
    begin
       String_List.Append (Arguments, "-Q");
       String_List.Append (Arguments, "edit");
 
       Simple_Action (Rep, Filenames, Arguments);
+
+      while Node /= Null_Node loop
+         Open_File_Editor (Rep.Kernel, Data (Node));
+         Node := Next (Node);
+      end loop;
    end Open;
 
    ------------
