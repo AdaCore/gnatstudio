@@ -2,7 +2,7 @@
 --                               G P S                               --
 --                                                                   --
 --                     Copyright (C) 2003-2005                       --
---                             AdaCore                               --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,10 +18,10 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GPS.Kernel;                      use GPS.Kernel;
-with GPS.Intl;                        use GPS.Intl;
-with GPS.Kernel.MDI;                  use GPS.Kernel.MDI;
-with GPS.Kernel.Standard_Hooks;       use GPS.Kernel.Standard_Hooks;
+with GPS.Kernel;                        use GPS.Kernel;
+with GPS.Intl;                          use GPS.Intl;
+with GPS.Kernel.MDI;                    use GPS.Kernel.MDI;
+with GPS.Kernel.Standard_Hooks;         use GPS.Kernel.Standard_Hooks;
 with GPS.Location_View;                 use GPS.Location_View;
 
 with GNAT.OS_Lib;                       use GNAT.OS_Lib;
@@ -548,6 +548,10 @@ package body Vdiff2_Module.Utils is
       --  Add the specified symbol to the side of lines Line_Start to Line_End
       --  in editors for File.
 
+      ---------------------
+      -- Add_Side_Symbol --
+      ---------------------
+
       procedure Add_Side_Symbol
         (File       : Virtual_File;
          Line_Start : Natural;
@@ -596,8 +600,7 @@ package body Vdiff2_Module.Utils is
       Edit (Kernel, Item.File2, Ref = 1);
       Edit (Kernel, Item.File1, Ref = 2);
 
-
-      --  Synchronize the scrollings.
+      --  Synchronize the scrollings
 
       Synchronize_Scrolling (Kernel, Item.File1, Item.File2);
 
@@ -713,7 +716,7 @@ package body Vdiff2_Module.Utils is
                null;
          end case;
 
-         --  Insert the diff chunk in the Locations View.
+         --  Insert the diff chunk in the Locations View
 
          if Other = 1 then
             Line := Curr_Chunk.Range1.First;
@@ -745,11 +748,11 @@ package body Vdiff2_Module.Utils is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Item   : in out Diff_Head)
    is
-      Res                 : Diff_List;
-      Curr_Node           : Diff_List_Node;
-      Curr_Chunk          : Diff_Chunk_Access;
-      Cmd                 : Diff_Command_Access;
-      Info                : T_VLine_Information;
+      Res        : Diff_List;
+      Curr_Node  : Diff_List_Node;
+      Curr_Chunk : Diff_Chunk_Access;
+      Cmd        : Diff_Command_Access;
+      Info       : T_VLine_Information;
 
    begin
       Register_Highlighting (Kernel);
@@ -774,7 +777,7 @@ package body Vdiff2_Module.Utils is
       Split (Get_MDI (Kernel), Orientation_Horizontal,
              Reuse_If_Possible => True);
 
-      --  Synchronize the scrollings.
+      --  Synchronize the scrollings
 
       Synchronize_Scrolling (Kernel, Item.File1, Item.File2, Item.File3);
 
@@ -849,7 +852,7 @@ package body Vdiff2_Module.Utils is
         ((Curr_Chunk.Range1.Last - Curr_Chunk.Range1.First),
          (Curr_Chunk.Range2.Last - Curr_Chunk.Range2.First),
          (Curr_Chunk.Range3.Last - Curr_Chunk.Range3.First));
-      VStyle : T_VStr;
+      VStyle  : T_VStr;
 
    begin
       for J in 1 .. 3 loop
@@ -870,7 +873,8 @@ package body Vdiff2_Module.Utils is
       if Loc = 0 then
          if Curr_Chunk.Conflict then
             if VRange (Other).Action = Change
-              and VRange (Other2).Action = Change then
+              and VRange (Other2).Action = Change
+            then
                VStyle (Other2) := new String'(Change_Style);
                VStyle (Ref)    := new String'(Old_Style);
                VStyle (Other)  := new String'(Change_Style);
@@ -893,6 +897,7 @@ package body Vdiff2_Module.Utils is
                   VRange (Other2));
 
                Free (VStyle);
+
             else
                for J in 1 .. 3 loop
                   for K in 1 .. 3 loop
@@ -1035,9 +1040,9 @@ package body Vdiff2_Module.Utils is
    begin
       if Is_Regular_File (Merge) then
          Button := Message_Dialog
-           (Msg         => -"Would you overwrite this file: "& Merge,
-            Buttons     => Button_Yes or Button_No,
-            Parent      => Get_Current_Window (Kernel));
+           (Msg     => -"Would you overwrite this file: "& Merge,
+            Buttons => Button_Yes or Button_No,
+            Parent  => Get_Current_Window (Kernel));
 
          if Button = Button_No then
             return;
@@ -1089,9 +1094,9 @@ package body Vdiff2_Module.Utils is
 
       if Result = Diff_Chunk_List.Null_List then
          Button := Message_Dialog
-           (Msg         => -"No differences found.",
-            Buttons     => Button_OK,
-            Parent      => Get_Current_Window (Kernel));
+           (Msg     => -"No differences found.",
+            Buttons => Button_OK,
+            Parent  => Get_Current_Window (Kernel));
          return;
       end if;
 
