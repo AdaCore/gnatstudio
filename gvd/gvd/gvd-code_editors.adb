@@ -621,6 +621,8 @@ package body Odd.Code_Editors is
       Line  : Positive := 1;
       Pix   : Gtk_Pixmap;
       Debug : Debugger_Access;
+      Kind  : Line_Kind;
+
    begin
       if Editor.Buffer = null then
          return;
@@ -649,14 +651,18 @@ package body Odd.Code_Editors is
          Set_Parse_File_Name (Get_Process (Debug), False);
          while Index <= Editor.Buffer'Last loop
             if Editor.Buffer (Index) = ASCII.LF then
-               if Line_Contains_Code
-                 (Debug, Editor.Current_File.all, Line)
-               then
+               Kind := Line_Contains_Code
+                 (Debug, Editor.Current_File.all, Line);
+
+               exit when Kind = No_More_Code;
+
+               if Kind = Have_Code then
                   Gtk_New (Pix, Editor.Default_Pixmap, Editor.Default_Mask);
                   Put (Editor.Buttons, Pix,
                        X => 0,
                        Y => Gint (Line - 1) * Line_Height + 3);
                end if;
+
                Line := Line + 1;
             end if;
             Index := Index + 1;
