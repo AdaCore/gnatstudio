@@ -373,7 +373,7 @@ package body Glide_Kernel.Preferences is
          Nick    => -"Current line color"));
       Register_Property
         (Kernel.Preferences, Param_Spec (Current_Line_Color),
-           -"Editor:Fonts & Colors");
+         -"Editor:Fonts & Colors");
 
       Current_Block_Color := Param_Spec_Color (Gnew_Color
         (Name    => "Src-Editor-Current-Block-Color",
@@ -382,25 +382,15 @@ package body Glide_Kernel.Preferences is
          Nick    => -"Current block color"));
       Register_Property
         (Kernel.Preferences, Param_Spec (Current_Block_Color),
-           -"Editor:Fonts & Colors");
-
-      Default_HL_Line_Color := Param_Spec_Color (Gnew_Color
-        (Name    => "Src-Editor-Highlight-Line-Color",
-         Default => "cyan",
-         Blurb   => -"Color for highlighting lines",
-         Nick    => -"Line highlighting color"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Default_HL_Line_Color),
          -"Editor:Fonts & Colors");
 
-      Default_HL_Region_Color := Param_Spec_Color (Gnew_Color
-        (Name    => "Src-Editor-Highlight-Region-Color",
+      Delimiter_Color := Param_Spec_Color (Gnew_Color
+        (Name    => "Src-Editor-Highlight-Delimiters-Color",
          Default => "cyan",
-         Blurb   => -"Color for highlighting regions",
-         Flags   => Param_Readable,
-         Nick    => -"Region highlighting color"));
+         Blurb   => -"Color for highlighting delimiters",
+         Nick    => -"Delimiter highlighting color"));
       Register_Property
-        (Kernel.Preferences, Param_Spec (Default_HL_Region_Color),
+        (Kernel.Preferences, Param_Spec (Delimiter_Color),
          -"Editor:Fonts & Colors");
 
       -- Debugger --
