@@ -394,7 +394,7 @@ package body Glide_Kernel.Console is
                "",
                null,
                GObject (Kernel),
-               Get_Pref (Kernel, Default_Font),
+               Get_Pref (Kernel, Source_Editor_Font),
                Wrap_Char);
       Enable_Prompt_Display (Console, False);
 
@@ -409,7 +409,7 @@ package body Glide_Kernel.Console is
                "GPS> ",
                Interpret_Command_Handler'Access,
                GObject (Kernel),
-               Get_Pref (Kernel, Default_Font),
+               Get_Pref (Kernel, Source_Editor_Font),
                Wrap_Char);
       Child := Put
         (Get_MDI (Kernel), Interactive_Console,
