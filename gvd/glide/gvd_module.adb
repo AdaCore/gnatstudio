@@ -145,6 +145,57 @@ package body GVD_Module is
    --  Called every time the project view changes, to recompute the dynamic
    --  menus.
 
+   procedure Create_Debugger_Columns
+     (Kernel : Kernel_Handle;
+      File   : String);
+   --  Create the side information columns corresponding to the debugger
+   --  in the editors for file.
+
+   procedure Remove_Debugger_Columns
+     (Kernel : Kernel_Handle;
+      File   : String);
+   --  Remove the side information columns corresponding to the debugger
+   --  in the editors for file.
+
+   -----------------------------
+   -- Create_Debugger_Columns --
+   -----------------------------
+
+   procedure Create_Debugger_Columns
+     (Kernel : Kernel_Handle;
+      File   : String) is
+   begin
+      --  Create the information column for the current line.
+      Create_Line_Information_Column
+        (Kernel,
+         File,
+         "Current Line",
+         --  ??? That should be centralized somewhere !!!
+         Stick_To_Data => True,
+         Every_Line    => False);
+
+      --  Create the information column for the breakpoints
+      Create_Line_Information_Column
+        (Kernel,
+         File,
+         GVD_Module_Name & "/Line Information",
+         Stick_To_Data => True,
+         Every_Line    => True);
+   end Create_Debugger_Columns;
+
+   -----------------------------
+   -- Remove_Debugger_Columns --
+   -----------------------------
+
+   procedure Remove_Debugger_Columns
+     (Kernel : Kernel_Handle;
+      File   : String) is
+   begin
+      Remove_Line_Information_Column (Kernel, File, "Current Line");
+      Remove_Line_Information_Column
+        (Kernel, File, GVD_Module_Name & "/Line Information");
+   end Remove_Debugger_Columns;
+
    ---------------------------
    -- Generic_Debug_Command --
    ---------------------------
@@ -349,6 +400,11 @@ package body GVD_Module is
 
    procedure On_Destroy_Window (Object : access Gtk_Widget_Record'Class);
    --  Callback for the "destroy" signal to clean up the debugger.
+
+   procedure File_Edited_Cb
+     (Widget  : access Gtk_Widget_Record'Class;
+      Args    : GValues);
+   --  Callback for the "file_edited" signal.
 
    procedure Lines_Revealed_Cb
      (Widget  : access Gtk_Widget_Record'Class;
@@ -809,6 +865,11 @@ package body GVD_Module is
          end;
       end if;
 
+      --  Add columns for debugging information to all the files that
+      --  are currently open.
+
+      Create_Debugger_Columns (K, "");
+
       Pop_State (K);
 
    exception
@@ -851,6 +912,8 @@ package body GVD_Module is
          Set_Sensitive (Kernel, False);
          Pop_State (Kernel);
       end if;
+
+      Remove_Debugger_Columns (Kernel, "");
 
    exception
       when E : others =>
@@ -1126,6 +1189,20 @@ package body GVD_Module is
 
       return True;
    end Idle_Reveal_Lines;
+
+   --------------------
+   -- File_Edited_Cb --
+   --------------------
+
+   procedure File_Edited_Cb
+     (Widget  : access Gtk_Widget_Record'Class;
+      Args    : GValues)
+   is
+      Top          : constant Glide_Window := Glide_Window (Widget);
+      File         : String := Get_String (Nth (Args, 1));
+   begin
+      Create_Debugger_Columns (Top.Kernel, File);
+   end File_Edited_Cb;
 
    -----------------------
    -- Lines_Revealed_Cb --
@@ -1425,6 +1502,12 @@ package body GVD_Module is
         (Kernel,
          Source_Lines_Revealed_Signal,
          Lines_Revealed_Cb'Access,
+         Top);
+
+      Widget_Callback.Object_Connect
+        (Kernel,
+         File_Edited_Signal,
+         File_Edited_Cb'Access,
          Top);
 
       Init_Graphics;
