@@ -384,11 +384,13 @@ package Src_Info.Queries is
    procedure Destroy (Iter : in out Child_Type_Iterator);
    --  Free the memory used by the iterator.
 
-   --------------------------------------
-   -- Methods and primitive operations --
-   --------------------------------------
+   --------------------------------------------------
+   -- Methods, primitive operations, discriminants --
+   --------------------------------------------------
 
-   type Primitive_Iterator is private;
+   type Special_Iterator is private;
+   subtype Primitive_Iterator    is Special_Iterator;
+   subtype Discriminant_Iterator is Special_Iterator;
 
    function Get_Primitive_Operations
      (Lib_Info : LI_File_Ptr;
@@ -396,16 +398,23 @@ package Src_Info.Queries is
    --  Return the first primitive operation for the type Entity. This will not
    --  return anything if Entity is a variable.
 
-   function Get (Iter : Primitive_Iterator) return Entity_Information;
-   --  Return the current primitive operation, or No_Entity_Information if
-   --  there are no more.
+   function Get_Discriminants
+     (Lib_Info : LI_File_Ptr;
+      Entity   : Entity_Information) return Discriminant_Iterator;
+   --  Return all discriminants of Entity. This is only relevant for Ada
+   --  entities currently.
+   --  Returned value must be freed by the user
+
+   function Get (Iter : Special_Iterator) return Entity_Information;
+   --  Return the current entity, or No_Entity_Information if there are no
+   --  more.
    --  The returned entity must be freed by the user.
 
-   procedure Next (Iter : in out Primitive_Iterator);
-   --  Move the next primitive operation.
+   procedure Next (Iter : in out Special_Iterator);
+   --  Move the next entity.
 
-   function Length (Iter : Primitive_Iterator) return Natural;
-   --  Return the number of primitive operations that remain to be returned by
+   function Length (Iter : Special_Iterator) return Natural;
+   --  Return the number of entities that remain to be returned by
    --  Iter, including the current one. If Iter is the direct result of
    --  Get_Primitive_Operations, this is the total number of primitive
    --  operations for the entity.
@@ -928,7 +937,8 @@ private
       Current     : E_Declaration_Info_List;
    end record;
 
-   type Primitive_Iterator is record
+   type Special_Iterator is record
+      Kind        : Reference_Kind;
       Lib_Info    : LI_File_Ptr;
       Current     : E_Reference_List;
    end record;

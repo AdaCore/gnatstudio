@@ -3479,21 +3479,50 @@ package body Src_Info.Queries is
         (Lib_Info, Entity);
    begin
       if Decl = null then
-         return (Lib_Info => Lib_Info, Current => null);
+         return (Lib_Info => Lib_Info,
+                 Kind     => Primitive_Operation,
+                 Current  => null);
       else
          return (Lib_Info => Lib_Info,
-                 Current => Decl.Value.Declaration.Primitive_Subprograms);
+                 Kind     => Primitive_Operation,
+                 Current  => Decl.Value.Declaration.Primitive_Subprograms);
       end if;
    end Get_Primitive_Operations;
+
+   -----------------------
+   -- Get_Discriminants --
+   -----------------------
+
+   function Get_Discriminants
+     (Lib_Info : LI_File_Ptr;
+      Entity   : Entity_Information) return Discriminant_Iterator
+   is
+      Decl : constant E_Declaration_Info_List := Find_Declaration_In_LI
+        (Lib_Info, Entity);
+   begin
+      if Decl = null then
+         return (Lib_Info => Lib_Info,
+                 Kind     => Discriminant,
+                 Current  => null);
+      else
+         return (Lib_Info => Lib_Info,
+                 Kind     => Discriminant,
+                 Current  => Decl.Value.References);
+      end if;
+   end Get_Discriminants;
 
    ----------
    -- Next --
    ----------
 
-   procedure Next (Iter : in out Primitive_Iterator) is
+   procedure Next (Iter : in out Special_Iterator) is
    begin
       if Iter.Current /= null then
-         Iter.Current := Iter.Current.Next;
+         loop
+            Iter.Current := Iter.Current.Next;
+            exit when Iter.Current = null
+              or else Iter.Current.Value.Kind = Iter.Kind;
+         end loop;
       end if;
    end Next;
 
@@ -3501,7 +3530,7 @@ package body Src_Info.Queries is
    -- Get --
    ---------
 
-   function Get (Iter : Primitive_Iterator) return Entity_Information is
+   function Get (Iter : Special_Iterator) return Entity_Information is
    begin
       if Iter.Current = null then
          return No_Entity_Information;
@@ -3515,12 +3544,14 @@ package body Src_Info.Queries is
    -- Length --
    ------------
 
-   function Length (Iter : Primitive_Iterator) return Natural is
+   function Length (Iter : Special_Iterator) return Natural is
       L : Natural := 0;
       C : E_Reference_List := Iter.Current;
    begin
       while C /= null loop
-         L := L + 1;
+         if C.Value.Kind = Iter.Kind then
+            L := L + 1;
+         end if;
          C := C.Next;
       end loop;
       return L;
