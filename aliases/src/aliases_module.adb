@@ -24,7 +24,6 @@ with Ada.IO_Exceptions;        use Ada.IO_Exceptions;
 with Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
 with GNAT.Calendar.Time_IO;    use GNAT.Calendar.Time_IO;
-with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;              use GNAT.OS_Lib;
 with GUI_Utils;                use GUI_Utils;
 with Gdk.Color;                use Gdk.Color;
@@ -110,6 +109,9 @@ package body Aliases_Module is
       From_Env : Boolean;
       Next     : Param_Access;
    end record;
+
+   procedure Free (P : in out Param_Access);
+   --  Free the memory occupied by P
 
    type Alias_Record is record
       Expansion : String_Access;
@@ -209,10 +211,6 @@ package body Aliases_Module is
    --  Return the expanded version of Name.
    --  Cursor is the index in the returnef string for the cursor position.
    --  The empty string is returned if there is no such alias.
-
-   procedure Load_Aliases
-     (Kernel : access Kernel_Handle_Record'Class);
-   --  Load aliases from all system files and user-specific file
 
    procedure Parse_File
      (Kernel    : access Kernel_Handle_Record'Class;
@@ -345,6 +343,17 @@ package body Aliases_Module is
    procedure Show_Read_Only_Toggled (Editor : access Gtk_Widget_Record'Class);
    --  Called when the "show read-only" toggle is changed
 
+   procedure Customize
+     (Kernel : access Kernel_Handle_Record'Class;
+      Node   : Node_Ptr;
+      Level  : Customization_Level);
+   procedure Customize
+     (Kernel : access Kernel_Handle_Record'Class;
+      Node   : Node_Ptr;
+      Level  : Customization_Level;
+      Read_Only : Boolean);
+   --  Called when a new customization in parsed
+
    ----------------
    -- Do_Nothing --
    ----------------
@@ -457,10 +466,20 @@ package body Aliases_Module is
    -- Free --
    ----------
 
-   procedure Free (Alias : in out Alias_Record) is
+   procedure Free (P : in out Param_Access) is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Param_Record, Param_Access);
+   begin
+      Free (P.Name);
+      Free (P.Initial);
+      Unchecked_Free (P);
+   end Free;
 
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Alias : in out Alias_Record) is
       P : Param_Access;
    begin
       Free (Alias.Expansion);
@@ -468,10 +487,7 @@ package body Aliases_Module is
       while Alias.Params /= null loop
          P := Alias.Params;
          Alias.Params := P.Next;
-
-         Free (P.Name);
-         Free (P.Initial);
-         Unchecked_Free (P);
+         Free (P);
       end loop;
    end Free;
 
@@ -540,73 +556,16 @@ package body Aliases_Module is
       Filename  : String;
       Read_Only : Boolean)
    is
-      Alias       : Node_Ptr;
-      File, Child : Node_Ptr;
-      Expand      : String_Ptr;
-      P           : Param_Access;
+      File        : Node_Ptr;
    begin
-      if not Is_Regular_File (Filename) then
+      if Is_Regular_File (Filename) then
+         Trace (Me, "Loading " & Filename);
+         File  := Parse (Filename);
+         Customize (Kernel, File.Child, User_Specific, Read_Only);
+         Free (File);
+      else
          Trace (Me, "No such file: " & Filename);
-         return;
       end if;
-
-      Trace (Me, "Loading " & Filename);
-      File  := Parse (Filename);
-      Alias := File.Child;
-
-      while Alias /= null loop
-         declare
-            Name : constant String := Get_Attribute (Alias, "name");
-         begin
-            Expand := null;
-            P := null;
-
-            if Alias.Tag.all /= "alias"
-              or else Name = ""
-            then
-               Insert
-                 (Kernel, "Invalid format for " & Filename, Mode => Error);
-            end if;
-
-            Child := Alias.Child;
-            while Child /= null loop
-               if Child.Tag.all = "text" then
-                  Expand := Child.Value;
-
-               elsif Child.Tag.all = "param" then
-                  P := new Param_Record'
-                    (Name     => new String'(Get_Attribute (Child, "name")),
-                     Initial  => new String'(Child.Value.all),
-                     From_Env => Get_Attribute (Child, "environment") = "true",
-                     Next     => P);
-
-               else
-                  Insert (Kernel, "Unknown XML tag in " & Filename,
-                          Mode => Error);
-               end if;
-
-               Child := Child.Next;
-            end loop;
-
-            if Expand /= null then
-               Set (Aliases_Module_Id.Aliases,
-                    Get_Attribute (Alias, "name"),
-                    (Expansion => new String'(Expand.all),
-                     Params    => P,
-                     Read_Only => Read_Only));
-            else
-               Set (Aliases_Module_Id.Aliases,
-                    Get_Attribute (Alias, "name"),
-                    (Expansion => new String'(""),
-                     Params    => P,
-                     Read_Only => Read_Only));
-            end if;
-         end;
-
-         Alias := Alias.Next;
-      end loop;
-
-      Free (File);
 
    exception
       when System.Assertions.Assert_Failure =>
@@ -617,45 +576,10 @@ package body Aliases_Module is
          Trace (Me, "No aliases file " & Filename);
 
       when E : others =>
-         Trace (Me, "Load_Aliases: unexcepted exception "
+         Trace (Me, "Unexcepted exception "
                 & Exception_Information (E));
          Free (File);
    end Parse_File;
-
-   ------------------
-   -- Load_Aliases --
-   ------------------
-
-   procedure Load_Aliases (Kernel : access Kernel_Handle_Record'Class) is
-      Filename : constant String := Get_Home_Dir (Kernel) & "aliases";
-      Sys_Dir  : constant String :=
-        Normalize_Pathname (Get_System_Dir (Kernel) & "share/gps/aliases/");
-      File     : String (1 .. 1024);
-      Last     : Natural;
-      Dir      : Dir_Type;
-   begin
-      if Is_Directory (Sys_Dir) then
-         begin
-            Open (Dir, Sys_Dir);
-            loop
-               Read (Dir, File, Last);
-               exit when Last = 0;
-
-               Parse_File (Kernel,
-                           Sys_Dir & File (File'First .. Last),
-                           Read_Only => True);
-            end loop;
-
-            Close (Dir);
-
-         exception
-            when Directory_Error =>
-               null;
-         end;
-      end if;
-
-      Parse_File (Kernel, Filename, Read_Only => False);
-   end Load_Aliases;
 
    -------------------------
    -- Find_Current_Entity --
@@ -2036,6 +1960,103 @@ package body Aliases_Module is
          return Invalid_Expansion;
    end Special_Entities;
 
+   ---------------
+   -- Customize --
+   ---------------
+
+   procedure Customize
+     (Kernel : access Kernel_Handle_Record'Class;
+      Node   : Node_Ptr;
+      Level  : Customization_Level) is
+   begin
+      Customize (Kernel, Node, Level, Read_Only => True);
+   end Customize;
+
+   ---------------
+   -- Customize --
+   ---------------
+
+   procedure Customize
+     (Kernel    : access Kernel_Handle_Record'Class;
+      Node      : Node_Ptr;
+      Level     : Customization_Level;
+      Read_Only : Boolean)
+   is
+      pragma Unreferenced (Level);
+      Alias       : Node_Ptr := Node;
+      Child       : Node_Ptr;
+      Expand      : String_Ptr;
+      P           : Param_Access;
+      Old          : Alias_Record;
+   begin
+      while Alias /= null loop
+         if Alias.Tag.all = "alias" then
+            declare
+               Name : constant String := Get_Attribute (Alias, "name");
+            begin
+               Expand := null;
+               P := null;
+
+               if Alias.Tag.all /= "alias"
+                 or else Name = ""
+               then
+                  Insert
+                    (Kernel, -"Invalid alias format for " & Name,
+                     Mode => Error);
+               end if;
+
+               Child := Alias.Child;
+               while Child /= null loop
+                  if Child.Tag.all = "text" then
+                     Expand := Child.Value;
+
+                  elsif Child.Tag.all = "param" then
+                     P := new Param_Record'
+                       (Name     => new String'(Get_Attribute (Child, "name")),
+                        Initial  => new String'(Child.Value.all),
+                        From_Env =>
+                          Get_Attribute (Child, "environment") = "true",
+                        Next     => P);
+
+                  else
+                     Insert (Kernel,
+                               -"Unknown XML tag in alias definition for "
+                             & Name,
+                             Mode => Error);
+                  end if;
+
+                  Child := Child.Next;
+               end loop;
+
+               --  Do not override a read-only alias: they have been parsed
+               --  before all others, but should in fact have higher priority
+
+               Old := Get (Aliases_Module_Id.Aliases, Name);
+
+               if Old = No_Alias or else Old.Read_Only = True then
+                  if Expand /= null then
+                     Set (Aliases_Module_Id.Aliases,
+                          Name,
+                          (Expansion => new String'(Expand.all),
+                           Params    => P,
+                           Read_Only => Read_Only));
+                  else
+                     Set (Aliases_Module_Id.Aliases,
+                          Name,
+                          (Expansion => new String'(""),
+                           Params    => P,
+                           Read_Only => Read_Only));
+                  end if;
+               else
+                  Free (P);
+               end if;
+            end;
+         end if;
+
+         Alias := Alias.Next;
+      end loop;
+   end Customize;
+
    ---------------------
    -- Register_Module --
    ---------------------
@@ -2051,7 +2072,8 @@ package body Aliases_Module is
         (Module                  => Module_ID (Aliases_Module_Id),
          Kernel                  => Kernel,
          Module_Name             => "Aliases",
-         Priority                => Default_Priority);
+         Priority                => Default_Priority,
+         Customization_Handler   => Customize'Access);
 
       Register_Menu
         (Kernel, Edit, -"_Aliases",
@@ -2059,7 +2081,8 @@ package body Aliases_Module is
          Add_Before => False,
          Callback   => On_Edit_Aliases'Access);
 
-      Load_Aliases (Kernel);
+      Parse_File
+        (Kernel, Get_Home_Dir (Kernel) & "aliases", Read_Only => False);
 
       Command := new Interactive_Alias_Expansion_Command;
       Command.Kernel := Kernel_Handle (Kernel);
