@@ -49,6 +49,7 @@ with Glide_Intl;                use Glide_Intl;
 
 with Language_Handlers.Glide;   use Language_Handlers.Glide;
 with Commands.Editor;           use Commands.Editor;
+with Commands.Controls;         use Commands.Controls;
 with Src_Editor_Module;         use Src_Editor_Module;
 with Glide_Kernel;              use Glide_Kernel;
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
@@ -324,6 +325,10 @@ package body Src_Editor_Buffer is
               (Dir_Name (Buffer.Filename.all) & ".#" &
                Base_Name (Buffer.Filename.all), Result);
          end if;
+      end if;
+
+      if Buffer.Controls_Set then
+         Remove_Controls (Buffer);
       end if;
 
       Free_Queue (Buffer.Queue);
@@ -2775,5 +2780,33 @@ package body Src_Editor_Buffer is
    begin
       return (Data.Prefix = null);
    end Is_Empty;
+
+   ------------------
+   -- Add_Controls --
+   ------------------
+
+   procedure Add_Controls (Buffer : access Source_Buffer_Record) is
+      Undo_Redo : Undo_Redo_Information;
+   begin
+      Undo_Redo := Undo_Redo_Data.Get (Buffer.Kernel, Undo_Redo_Id);
+
+      Set_Controls
+        (Buffer.Queue,
+         Undo_Redo.Undo_Button,
+         Undo_Redo.Redo_Button,
+         Undo_Redo.Undo_Menu_Item,
+         Undo_Redo.Redo_Menu_Item);
+      Buffer.Controls_Set := True;
+   end Add_Controls;
+
+   ---------------------
+   -- Remove_Controls --
+   ---------------------
+
+   procedure Remove_Controls (Buffer : access Source_Buffer_Record) is
+   begin
+      Unset_Controls (Buffer.Queue);
+      Buffer.Controls_Set := False;
+   end Remove_Controls;
 
 end Src_Editor_Buffer;
