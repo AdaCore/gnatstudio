@@ -742,8 +742,15 @@ package body Glide_Kernel.Modules is
       Button  : Gtk_Button;
       Toolbar : constant Gtk_Toolbar := Get_Toolbar (Kernel);
    begin
-      Button := Append_Item (Toolbar, Text, Text, Tooltip, Gtk_Widget (Image));
-      Show_All (Button);
+      if Image = null then
+         Gtk_New (Button, Text);
+         Set_Relief (Button, Relief_None);
+         Append_Widget (Toolbar, Button);
+      else
+         Button := Append_Item
+           (Toolbar, Text, Text, Tooltip, Gtk_Widget (Image));
+      end if;
+
       Command_Callback.Object_Connect
         (Button, "clicked",
          Command_Callback.To_Marshaller (Execute_Command'Access),
@@ -765,7 +772,7 @@ package body Glide_Kernel.Modules is
       Toolbar : constant Gtk_Toolbar := Get_Toolbar (Kernel);
    begin
       Button := Insert_Stock (Toolbar, Stock_Id, Tooltip);
-      Show_All (Button);
+
       Command_Callback.Object_Connect
         (Button, "clicked",
          Command_Callback.To_Marshaller (Execute_Command'Access),
