@@ -153,7 +153,8 @@ package body Codefix.Errors_Manager is
          Get_Message (Errors_List, Source_Text, Current_Message);
 
          if Current_Message /= Invalid_Error_Message then
-            Solutions := Get_Solutions (Source_Text, Current_Message);
+            Get_Solutions
+              (Source_Text, Errors_List, Current_Message, Solutions);
 
             if Length (Solutions) > 0 then
                Add_Error (This, Current_Message, Solutions, New_Error);
@@ -291,13 +292,12 @@ package body Codefix.Errors_Manager is
       Current_Text  : Text_Navigator_Abstr'Class;
       Object        : in out Extract'Class;
       Success       : out Boolean;
-      Already_Fixed : out Boolean) is
-
+      Already_Fixed : out Boolean)
+   is
       Line_Object, Line_This : Ptr_Extract_Line;
       Merged_Extract         : Extract;
       Little_Fix_List        : Extract;
       Old_Cursor             : File_Cursor;
-
    begin
       Success := True;
 
