@@ -124,7 +124,9 @@ package body Codefix.Text_Manager is
       end loop;
 
       New_Text := New_Text_Interface (This);
+
       Append (This.Files.all, New_Text);
+
       New_Text.File_Name := new String'(Name);
       Initialize (New_Text.all, Name);
       Buffer := Read_File (New_Text.all);
@@ -142,20 +144,6 @@ package body Codefix.Text_Manager is
          Callback => null);
 
       Free (Buffer);
-
---      declare
---         Current : Construct_Access;
---      begin
---         Current := New_Text.Tokens_List.First;
---         while Current /= null loop
---            Put (Current.Name.all);
---            Put (" (");
---            Put (Language_Category'Image (Current.Category));
---            Put (")");
---            New_Line;
---            Current := Current.Next;
---         end loop;
---      end;
 
       return New_Text;
    end Get_File;
@@ -274,7 +262,8 @@ package body Codefix.Text_Manager is
 
    procedure Free (This : in out Text_Interface) is
    begin
-      Free (This.Tokens_List.all); --  Detruire aussi le pointeur
+      Free (This.Tokens_List.all);
+      Free (This.Tokens_List);
       Free (This.File_Name);
    end Free;
 
