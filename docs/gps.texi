@@ -2849,8 +2849,12 @@ Switches Editor}.
 @cindex recompute project
 @cindex C
 @cindex C++
-This menu forces GPS to recompute the current project view. In particular,
-it will take into account new files added externally to the source directories.
+Recompute the contents of the project after modifications outside of GPS. In
+particular, it will take into account new files added externally to the source
+directories.
+This isn't needed for modifications made through GPS. Note also that
+this doesn't reparse the physical project file on disk. Instead, you can
+reopen the project if you have done manual modifications to it.
 
 @item File View and Project View
 These two menus will open (or raise if they are already open) the
