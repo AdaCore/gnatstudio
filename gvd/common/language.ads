@@ -68,25 +68,31 @@ package Language is
    procedure Looking_At
      (Lang      : access Language_Root;
       Buffer    : String;
+      First     : Natural;
       Entity    : out Language_Entity;
       Next_Char : out Positive);
    --  Should return the type of entity that is present at the first position
-   --  in the buffer (ie starting at Buffer'First).
+   --  in the buffer (starting at First).
    --  Next_Char should be set to the index of the first character after the
    --  entity.
+   --  First is required so that regexps can be used to match on e.g. start
+   --  of lines.
+
+   type Pattern_Matcher_Access is access all GNAT.Regpat.Pattern_Matcher;
 
    function Keywords
-     (Lang : access Language_Root)
-      return GNAT.Regpat.Pattern_Matcher is abstract;
+     (Lang : access Language_Root) return Pattern_Matcher_Access is abstract;
    --  Return a regular expression that matches the keywords for the current
    --  language.
+   --  Note: we return an access type (instead of a Pattern_Matcher) for
+   --  efficiency.
 
    ----------------------------
    -- Tooltips in the editor --
    ----------------------------
 
    function Can_Tooltip_On_Entity
-     (Lang : access Language_Root;
+     (Lang   : access Language_Root;
       Entity : String) return Boolean;
    --  Return True if we should display a tooltip for the Entity.
    --  Note that Entity is analyzed in the current context. This is used at
@@ -161,9 +167,8 @@ package Language is
    ----------------------
 
    type Language_Context
-     (Comment_Start_Length          : Natural;
-      Comment_End_Length            : Natural;
-      New_Line_Comment_Start_Length : Natural) is
+     (Comment_Start_Length : Natural;
+      Comment_End_Length   : Natural) is
    --  Set any of the length to 0 if there is no such comment
    record
       Comment_Start : String (1 .. Comment_Start_Length);
@@ -173,7 +178,7 @@ package Language is
       Comment_End : String (1 .. Comment_End_Length);
       --  How comments end for this language
 
-      New_Line_Comment_Start : String (1 .. New_Line_Comment_Start_Length);
+      New_Line_Comment_Start : Pattern_Matcher_Access;
       --  How comments start. These comments end on the next newline character.
 
       String_Delimiter : Character;
@@ -494,8 +499,6 @@ package Language is
      (Str      : String;
       Matched  : GNAT.Regpat.Match_Array) return String;
    --  Function that builds the string to be inserted in the tree.
-
-   type Pattern_Matcher_Access is access all GNAT.Regpat.Pattern_Matcher;
 
    type Explorer_Category is record
       Category       : Language_Category;

@@ -33,12 +33,13 @@ package body Language is
    procedure Looking_At
      (Lang      : access Language_Root;
       Buffer    : String;
+      First     : Natural;
       Entity    : out Language_Entity;
       Next_Char : out Positive;
       Line      : out Natural;
       Column    : out Natural);
    --  Internal version of Looking_At, which also returns the Line and Column,
-   --  considering that Buffer'First is at line 1 column 1.
+   --  considering that Buffer (First) is at line 1 column 1.
 
    ---------------------------
    -- Can_Tooltip_On_Entity --
@@ -121,36 +122,38 @@ package body Language is
    procedure Looking_At
      (Lang      : access Language_Root;
       Buffer    : String;
+      First     : Natural;
       Entity    : out Language_Entity;
       Next_Char : out Positive)
    is
       Line, Column : Natural;
    begin
-      Looking_At (Lang, Buffer, Entity, Next_Char, Line, Column);
+      Looking_At (Lang, Buffer, First, Entity, Next_Char, Line, Column);
    end Looking_At;
 
    procedure Looking_At
      (Lang      : access Language_Root;
       Buffer    : String;
+      First     : Natural;
       Entity    : out Language_Entity;
       Next_Char : out Positive;
       Line      : out Natural;
       Column    : out Natural)
    is
-      Matched : Match_Array (0 .. 1);
-      Context : constant Language_Context_Access :=
+      Matched       : Match_Array (0 .. 1);
+      Context       : constant Language_Context_Access :=
         Get_Language_Context (Language_Access (Lang));
-      Keys    : constant Pattern_Matcher := Keywords (Language_Access (Lang));
-      Comm1   : Character;
-      Comm2   : Character;
-      C       : Gunichar;
+      Keys          : constant Pattern_Matcher_Access :=
+        Keywords (Language_Access (Lang));
+      C             : Gunichar;
+      Buffer_Length : constant Natural := Buffer'Last - First + 1;
 
    begin
       Line   := 1;
       Column := 1;
 
-      if Buffer (Buffer'First) = ASCII.LF then
-         Next_Char := Buffer'First + 1;
+      if Buffer (First) = ASCII.LF then
+         Next_Char := First + 1;
          Line := Line + 1;
          Column := 1;
          Entity := Normal_Text;
@@ -160,18 +163,18 @@ package body Language is
       --  Do we have a comment ?
 
       if Context.Comment_Start_Length /= 0
-        and then Buffer'Length > Context.Comment_Start_Length
+        and then Buffer_Length > Context.Comment_Start_Length
         and then Buffer
-          (Buffer'First .. Buffer'First + Context.Comment_Start_Length - 1)
+          (First .. First + Context.Comment_Start_Length - 1)
            = Context.Comment_Start
       then
          Entity := Comment_Text;
-         Next_Char := Buffer'First + Context.Comment_Start_Length;
+         Next_Char := First + Context.Comment_Start_Length;
          Column := Column + Context.Comment_Start_Length;
 
          while Next_Char + Context.Comment_End_Length - 1 <= Buffer'Last
            and then Buffer
-           (Next_Char .. Next_Char + Context.Comment_End_Length - 1)
+             (Next_Char .. Next_Char + Context.Comment_End_Length - 1)
            /= Context.Comment_End
          loop
             Next_Char := UTF8_Next_Char (Buffer, Next_Char);
@@ -188,18 +191,14 @@ package body Language is
          return;
       end if;
 
-      --  Do we have a comment that end on newline ?
+      --  Do we have a comment that ends on newline ?
 
-      if Context.New_Line_Comment_Start_Length /= 0
-        and then Buffer'Length > Context.New_Line_Comment_Start_Length
-        and then Buffer
-        (Buffer'First .. Buffer'First
-         + Context.New_Line_Comment_Start_Length - 1)
-        = Context.New_Line_Comment_Start
+      if Match
+        (Context.New_Line_Comment_Start.all,
+         Buffer (First .. Buffer'Last))
       then
          Entity := Comment_Text;
-         Next_Char := Buffer'First + Context.New_Line_Comment_Start_Length;
-         Column := Column + Context.New_Line_Comment_Start_Length;
+         Next_Char := UTF8_Next_Char (Buffer, First);
 
          while Next_Char <= Buffer'Last
            and then Buffer (Next_Char) /= ASCII.LF
@@ -214,9 +213,9 @@ package body Language is
       --  Do we have a string ?
       --  Note that we consider that strings never span over multiple lines...
 
-      if Buffer (Buffer'First) = Context.String_Delimiter then
+      if Buffer (First) = Context.String_Delimiter then
          Entity := String_Text;
-         Next_Char := Buffer'First;
+         Next_Char := First;
 
          if Next_Char < Buffer'Last
            and then Buffer (Next_Char + 1) /= ASCII.LF
@@ -248,32 +247,32 @@ package body Language is
       --  ??? The following test still does not handle cases such as
       --  '\012' for instance, or multi-byte character constants.
 
-      if Buffer'Length > 4
-        and then Buffer (Buffer'First) = Context.Constant_Character
-        and then Buffer (Buffer'First + 1) = Context.Quote_Character
-        and then Buffer (Buffer'First + 3) = Context.Constant_Character
+      if Buffer_Length > 4
+        and then Buffer (First) = Context.Constant_Character
+        and then Buffer (First + 1) = Context.Quote_Character
+        and then Buffer (First + 3) = Context.Constant_Character
       then
          Entity := Character_Text;
-         Next_Char := Buffer'First + 4;
+         Next_Char := First + 4;
          Column := Column + 4;
          return;
       end if;
 
       --  A constant character
 
-      if Buffer'Length > 3
-        and then Buffer (Buffer'First) = Context.Constant_Character
-        and then Buffer (Buffer'First + 2) = Context.Constant_Character
+      if Buffer_Length > 3
+        and then Buffer (First) = Context.Constant_Character
+        and then Buffer (First + 2) = Context.Constant_Character
       then
          Entity := Character_Text;
-         Next_Char := Buffer'First + 3;
+         Next_Char := First + 3;
          Column := Column + 3;
          return;
       end if;
 
       --  Do we have a keyword ?
 
-      Match (Keys, Buffer, Matched);
+      Match (Keys.all, Buffer (First .. Buffer'Last), Matched);
 
       if Matched (0) /= No_Match then
          Next_Char := UTF8_Next_Char (Buffer, Matched (0).Last);
@@ -287,33 +286,18 @@ package body Language is
       --  It is better to return a pointer to the newline, so that the icons
       --  on the side might be displayed properly.
 
-      if not Is_Entity_Letter (UTF8_Get_Char (Buffer)) then
+      if not Is_Entity_Letter
+        (UTF8_Get_Char (Buffer (First .. Buffer'Last)))
+      then
          Entity := Normal_Text;
-         Next_Char := UTF8_Next_Char (Buffer, Buffer'First);
+         Next_Char := UTF8_Next_Char (Buffer, First);
          Column := Column + 1;
-
-         Comm1 := ASCII.LF;
-         Comm2 := ASCII.LF;
-
-         if Context.Comment_Start_Length /= 0 then
-            Comm1 := Context.Comment_Start (Context.Comment_Start'First);
-         end if;
-
-         if Context.New_Line_Comment_Start_Length /= 0 then
-            Comm2 :=
-              Context.New_Line_Comment_Start (Context.Comment_Start'First);
-         end if;
 
          while Next_Char <= Buffer'Last loop
             C := UTF8_Get_Char (Buffer (Next_Char .. Buffer'Last));
 
             exit when C = Character'Pos (ASCII.LF)
-              or else C = Character'Pos (ASCII.HT)
-              or else C = Character'Pos (Context.String_Delimiter)
-              or else C = Character'Pos (Comm1)
-              or else C = Character'Pos (Comm2)
-              or else C = Character'Pos (Context.Constant_Character)
-              or else Is_Alpha (C);
+              or else not Is_Space (C);
 
             Next_Char := UTF8_Next_Char (Buffer, Next_Char);
             Column := Column + 1;
@@ -325,7 +309,7 @@ package body Language is
       --  Skip to the next meaningful character. we know we are
       --  starting with a letter
 
-      Next_Char := UTF8_Next_Char (Buffer, Buffer'First);
+      Next_Char := UTF8_Next_Char (Buffer, First);
       Column := Column + 1;
       Entity := Normal_Text;
 
@@ -514,8 +498,7 @@ package body Language is
 
       while Index < Buffer'Last loop
          Looking_At
-           (Lang, Buffer (Index .. Buffer'Last), Entity, Next_Char,
-            Line_Inc, Column_Inc);
+           (Lang, Buffer, Index, Entity, Next_Char, Line_Inc, Column_Inc);
 
          if Next_Char = Buffer'Last then
             End_Char := Buffer'Last;
