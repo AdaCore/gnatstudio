@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2003                       --
+--                     Copyright (C) 2001-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -807,9 +807,11 @@ package body Switches_Editors is
       Str : constant String := Get_Text (Page.Cmd_Line);
       Null_Argument_List : Argument_List (1 .. 0);
       List               : Argument_List_Access;
+      First_Non_Blank    : Natural := Str'First;
    begin
-      if Str /= "" then
-         List := Argument_String_To_List (Str);
+      Skip_Blanks (Str, First_Non_Blank);
+      if First_Non_Blank <= Str'Last then
+         List := Argument_String_To_List (Str (First_Non_Blank .. Str'Last));
 
          if Normalize then
             declare
