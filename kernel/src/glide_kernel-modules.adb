@@ -56,6 +56,7 @@ with Glide_Kernel.Standard_Hooks; use Glide_Kernel.Standard_Hooks;
 with Ada.Exceptions;    use Ada.Exceptions;
 with VFS;               use VFS;
 with File_Utils;        use File_Utils;
+with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 
 package body Glide_Kernel.Modules is
 
@@ -425,7 +426,7 @@ package body Glide_Kernel.Modules is
       Parent := Find_Or_Create_Menu_Tree
         (Menu_Bar     => Glide_Window (Kernel.Main_Window).Menu_Bar,
          Menu         => null,
-         Path         => Name_As_Directory (Parent_Path),
+         Path         => Name_As_Directory (Parent_Path, UNIX),
          Accelerators => Get_Default_Accelerators (Kernel),
          Add_Before   => Add_Before,
          Ref_Item     => Ref_Item,
