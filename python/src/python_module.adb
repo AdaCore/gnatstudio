@@ -754,6 +754,7 @@ package body Python_Module is
    procedure Load_Python_Startup_Files
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
+      Sys    : constant String := Get_System_Dir (Kernel) & "share/gps/python";
       Dir    : constant String := Get_Home_Dir (Kernel) & "python_startup";
       D      : Dir_Type;
       File   : String (1 .. 1024);
@@ -765,6 +766,15 @@ package body Python_Module is
    begin
       if Python_Module_Id = null then
          return;
+      end if;
+
+      if Is_Regular_File (Sys & "/site.py") then
+         Trace (Me, "Load python files from " & Sys & "/site.py");
+
+         Execute_Command
+           (Python_Module_Id.Script,
+            "execfile (""" & Sys & "/site.py"")",
+            Errors => Errors);
       end if;
 
       if Is_Directory (Dir) then
