@@ -1002,7 +1002,7 @@ package body Default_Preferences is
       Gtk_New
         (Dialog => Dialog,
          Title  => -"Preferences",
-         Parent => Parent,
+         Parent => Gtk_Window (Parent),
          Flags  => Modal or Destroy_With_Parent);
       Gtk_New (Tips);
 
