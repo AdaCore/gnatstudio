@@ -9432,6 +9432,28 @@ parse_xml ("""
 
 @end smallexample
 
+Several complex examples are provided in the GPS distribution, in the
+directory @file{examples/python}. These are modules that you might want
+to use for your own GPS, but more important that will show how GPS can
+be extended from Python.
+
+If your script doesn't do what you expect it to do, there are several
+ways to debug it, among which the easiest is probably to add some "print"
+statements. Since some output of the scripts is sometimes hidden by GPS
+(for instance for interactive commands), you might not see this output
+however.
+
+In this case, you can reuse the tracing facility embedded in GPS itself.
+Modify the file @file{$HOME/.gps/traces.cfg}, and add the following line:
+
+@smallexample
+PYTHON.OUT=yes
+@end smallexample
+
+This will put in the file @file{$HOME/.gps/log} all the output from
+python, among other traces. However, it will also slow down GPS somewhat
+since there might be a lot of output going on.
+
 @end ifset
 
 @c --------------------------------------------------------------------
