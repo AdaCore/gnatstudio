@@ -38,6 +38,14 @@ package Src_Info.ALI is
       return Boolean;
    pragma Inline (Case_Insensitive_Identifiers);
 
+   procedure Parse_All_LI_Information
+     (Handler                : access ALI_Handler_Record;
+      List                   : in out LI_File_List;
+      In_Directory           : String;
+      Project                : Prj.Project_Id;
+      Predefined_Source_Path : String;
+      Predefined_Object_Path : String);
+
    function LI_Filename_From_Source
      (Handler                : access ALI_Handler_Record;
       Source_Filename        : String;

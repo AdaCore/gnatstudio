@@ -267,6 +267,16 @@ package body Src_Info.ALI is
    --  a handle to the Unit Info corresponding to this ALI file to avoid
    --  searching right-back for this handle for immediate queries.
 
+   procedure Create_Or_Complete_LI
+     (Handler                : access ALI_Handler_Record'Class;
+      File                   : in out LI_File_Ptr;
+      Ali_File               : String;
+      List                   : in out LI_File_List;
+      Project                : Prj.Project_Id;
+      Predefined_Source_Path : String;
+      Predefined_Object_Path : String);
+   --  Internal version of Create_Or_Complete_LI
+
    -------------
    -- Destroy --
    -------------
@@ -1893,48 +1903,18 @@ package body Src_Info.ALI is
       Predefined_Source_Path : String;
       Predefined_Object_Path : String)
    is
-      Success : Boolean := True;
-      F       : File_Info_Ptr_List;
       Base    : constant String := Base_Name (Source_Filename);
+      F       : File_Info_Ptr_List;
    begin
-      if File = No_LI_File then
-         declare
-            Ali_File : constant String := LI_Filename_From_Source
-              (Handler, Source_Filename, Project, Predefined_Source_Path);
-         begin
-            Parse_ALI_File
-              (ALI_Handler (Handler), Ali_File, Project,
-               Predefined_Source_Path, Predefined_Object_Path,
-               List, File, Success);
-
-            if not Success then
-               Trace (Me, "Couldn't parse LI file " & Ali_File);
-               File := No_LI_File;
-            end if;
-         end;
-
-      else
-         declare
-            Full_File : constant String := Find_File
-              (File.LI.LI_Filename.all, Ada_Objects_Path (Project).all,
-               Predefined_Object_Path);
-         begin
-            if Is_Incomplete (File)
-              or else To_Timestamp (File_Time_Stamp (Full_File)) >
-              File.LI.LI_Timestamp
-            then
-               Parse_ALI_File
-                 (ALI_Handler (Handler), File.LI.LI_Filename.all, Project,
-                  Predefined_Source_Path, Predefined_Object_Path,
-                  List, File, Success);
-
-               if not Success then
-                  Trace (Me, "Couldn't parse LI file " & Full_File);
-                  File := No_LI_File;
-               end if;
-            end if;
-         end;
-      end if;
+      Create_Or_Complete_LI
+        (Handler                => Handler,
+         File                   => File,
+         Ali_File               => LI_Filename_From_Source
+           (Handler, Source_Filename, Project, Predefined_Source_Path),
+         List                   => List,
+         Project                => Project,
+         Predefined_Source_Path => Predefined_Source_Path,
+         Predefined_Object_Path => Predefined_Object_Path);
 
       --  Make sure that the LI file we just parsed does contain the
       --  information for the initial source file name. Since for separate
@@ -1966,6 +1946,57 @@ package body Src_Info.ALI is
       end if;
    end Create_Or_Complete_LI;
 
+
+   ---------------------------
+   -- Create_Or_Complete_LI --
+   ---------------------------
+
+   procedure Create_Or_Complete_LI
+     (Handler                : access ALI_Handler_Record'Class;
+      File                   : in out LI_File_Ptr;
+      Ali_File               : String;
+      List                   : in out LI_File_List;
+      Project                : Prj.Project_Id;
+      Predefined_Source_Path : String;
+      Predefined_Object_Path : String)
+   is
+      Success : Boolean := True;
+   begin
+      if File = No_LI_File then
+         Parse_ALI_File
+           (ALI_Handler (Handler), Ali_File, Project,
+            Predefined_Source_Path, Predefined_Object_Path,
+            List, File, Success);
+
+         if not Success then
+            Trace (Me, "Couldn't parse LI file " & Ali_File);
+            File := No_LI_File;
+         end if;
+
+      else
+         declare
+            Full_File : constant String := Find_File
+              (File.LI.LI_Filename.all, Object_Path (Project, True),
+               Predefined_Object_Path);
+         begin
+            if Is_Incomplete (File)
+              or else To_Timestamp (File_Time_Stamp (Full_File)) >
+              File.LI.LI_Timestamp
+            then
+               Parse_ALI_File
+                 (ALI_Handler (Handler), File.LI.LI_Filename.all, Project,
+                  Predefined_Source_Path, Predefined_Object_Path,
+                  List, File, Success);
+
+               if not Success then
+                  Trace (Me, "Couldn't parse LI file " & Full_File);
+                  File := No_LI_File;
+               end if;
+            end if;
+         end;
+      end if;
+   end Create_Or_Complete_LI;
+
    ----------------------------------
    -- Case_Insensitive_Identifiers --
    ----------------------------------
@@ -1977,6 +2008,50 @@ package body Src_Info.ALI is
    begin
       return True;
    end Case_Insensitive_Identifiers;
+
+   ------------------------------
+   -- Parse_All_LI_Information --
+   ------------------------------
+
+   procedure Parse_All_LI_Information
+     (Handler                : access ALI_Handler_Record;
+      List                   : in out LI_File_List;
+      In_Directory           : String;
+      Project                : Prj.Project_Id;
+      Predefined_Source_Path : String;
+      Predefined_Object_Path : String)
+   is
+      Dir : Dir_Type;
+      File : String (1 .. 1024);
+      Last : Natural;
+      LI : LI_File_Ptr;
+   begin
+      Open (Dir, In_Directory);
+
+      loop
+         Read (Dir, File, Last);
+         exit when Last = 0;
+
+         if File_Extension (File (File'First .. Last)) = ".ali" then
+            LI := Locate (List, File (File'First .. Last));
+            Create_Or_Complete_LI
+              (Handler                => Handler,
+               File                   => LI,
+               Ali_File               => File (File'First .. Last),
+               List                   => List,
+               Project                => Project,
+               Predefined_Source_Path => Predefined_Source_Path,
+               Predefined_Object_Path => Predefined_Object_Path);
+         end if;
+      end loop;
+
+      Close (Dir);
+
+   exception
+      when Directory_Error =>
+         Trace (Me, "Couldn't open the directory " & In_Directory);
+         null;
+   end Parse_All_LI_Information;
 
 end Src_Info.ALI;
 

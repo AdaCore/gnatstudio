@@ -174,6 +174,16 @@ package Src_Info is
    --  Note that for case insensitive languages, the identifier names must be
    --  storer in lower cases in the LI structure.
 
+   procedure Parse_All_LI_Information
+     (Handler                : access LI_Handler_Record;
+      List                   : in out LI_File_List;
+      In_Directory           : String;
+      Project                : Prj.Project_Id;
+      Predefined_Source_Path : String;
+      Predefined_Object_Path : String) is abstract;
+   --  Parse all the LI information in the directory In_Directory, and store it
+   --  in the internal structures
+
    --------------
    -- Entities --
    --------------

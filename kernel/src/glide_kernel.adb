@@ -720,4 +720,31 @@ package body Glide_Kernel is
       return "";
    end Get_Other_File_Of;
 
+   ------------------------------
+   -- Parse_All_LI_Information --
+   ------------------------------
+
+   procedure Parse_All_LI_Information
+     (Kernel       : access Kernel_Handle_Record;
+      In_Directory : String)
+   is
+      Handler : Glide_Language_Handler :=
+        Glide_Language_Handler (Get_Language_Handler (Kernel));
+      Num : constant Natural := Languages_Count (Handler);
+      LI  : LI_Handler;
+   begin
+      for L in 1 .. Num loop
+         LI := Get_Nth_Handler (Handler, L);
+         if LI /= null then
+            Parse_All_LI_Information
+              (LI,
+               Kernel.Source_Info_List,
+               In_Directory,
+               Get_Project_View (Kernel),
+               Get_Predefined_Source_Path (Kernel),
+               Get_Predefined_Object_Path (Kernel));
+         end if;
+      end loop;
+   end Parse_All_LI_Information;
+
 end Glide_Kernel;

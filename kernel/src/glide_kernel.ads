@@ -213,6 +213,14 @@ package Glide_Kernel is
    --  See Src_Info.Queries.
    --  You must call Destroy on the returned entity.
 
+   procedure Parse_All_LI_Information
+     (Kernel       : access Kernel_Handle_Record;
+      In_Directory : String);
+   --  Parse all the LI information in In_Directory, for all the supported
+   --  languages. This can be used in cases where there is no obvious way to
+   --  find the LI file matching a given source file (for instance, with a
+   --  separate krunched file in Ada).
+
    --------------
    -- Contexts --
    --------------
