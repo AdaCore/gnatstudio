@@ -130,10 +130,6 @@ package body Src_Editor_Buffer is
    --  cursor position may have changed by emitting the
    --  "cursor_position_changed" signal.
 
-   procedure Buffer_Information_Changed
-     (Buffer : access Source_Buffer_Record'Class);
-   --  Emit the "buffer_information_changed" signal.
-
    procedure Side_Column_Changed
      (Buffer : access Source_Buffer_Record'Class);
    --  Emit the "side_column_changed" signal.
@@ -1656,6 +1652,10 @@ package body Src_Editor_Buffer is
         not Equal (Get_Pref (Kernel, Current_Block_Color),
                    White (Get_Default_Colormap));
 
+      if Prev /= B.Parse_Blocks then
+         Buffer_Information_Changed (B);
+      end if;
+
       if not Prev and then B.Parse_Blocks then
          Compute_Blocks (B);
       end if;
@@ -2065,7 +2065,9 @@ package body Src_Editor_Buffer is
             end if;
          end if;
 
+         Buffer.Parse_Blocks := True;
          Compute_Blocks (Buffer);
+         Buffer_Information_Changed (Buffer);
       end if;
    end Set_Language;
 
@@ -4026,5 +4028,15 @@ package body Src_Editor_Buffer is
 
       return New_Block;
    end Get_Block;
+
+   ---------------------------
+   -- Has_Block_Information --
+   ---------------------------
+
+   function Has_Block_Information
+     (Editor : access Source_Buffer_Record) return Boolean is
+   begin
+      return Editor.Parse_Blocks;
+   end Has_Block_Information;
 
 end Src_Editor_Buffer;
