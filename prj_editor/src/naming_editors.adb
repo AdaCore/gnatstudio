@@ -246,8 +246,6 @@ package body Naming_Editors is
    is
       Languages : Argument_List := Get_Languages (Project_View);
    begin
-      Set_Visible_Pages (Editor, Languages, Project_View);
-
       for P in Editor.Pages'Range loop
          if Editor.Pages (P).Ada_Naming /= null then
             Show_Project_Settings
