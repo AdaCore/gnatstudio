@@ -5,6 +5,7 @@
 
 <gnatstub>
    <action name="Generate body" output="none" >
+      <description>Generate the body for an Ada spec file</description>
       <!-- This action only applies to Ada files -->
       <filter language="ada" 
               error="Body generation for non Ada files not yet supported" />
