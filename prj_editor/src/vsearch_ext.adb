@@ -22,6 +22,7 @@ with Gdk.Event;             use Gdk.Event;
 with Gdk.Types;             use Gdk.Types;
 with Gdk.Types.Keysyms;     use Gdk.Types.Keysyms;
 with Glib.Object;           use Glib.Object;
+with Gtk.Alignment;         use Gtk.Alignment;
 with Gtk.Box;               use Gtk.Box;
 with Gtk.Button;            use Gtk.Button;
 with Gtk.Check_Button;      use Gtk.Check_Button;
@@ -29,6 +30,7 @@ with Gtk.Combo;             use Gtk.Combo;
 with Gtk.Enums;             use Gtk.Enums;
 with Gtk.Frame;             use Gtk.Frame;
 with Gtk.GEntry;            use Gtk.GEntry;
+with Gtk.Image;             use Gtk.Image;
 with Gtk.Label;             use Gtk.Label;
 with Gtk.List;              use Gtk.List;
 with Gtk.List_Item;         use Gtk.List_Item;
@@ -520,11 +522,31 @@ package body Vsearch_Ext is
 
    procedure Set_First_Next_Mode
      (Vsearch : access Vsearch_Extended_Record'Class;
-      Find_Next : Boolean) is
+      Find_Next : Boolean)
+   is
+      Box : Gtk_Box;
+      Label : Gtk_Label;
+      Image : Gtk_Image;
+      Align : Gtk_Alignment;
    begin
       Vsearch.Find_Next := Find_Next;
       if Find_Next then
-         Set_Label (Vsearch.Search_Next_Button, -"Next");
+         Remove (Vsearch.Search_Next_Button,
+                 Get_Child (Vsearch.Search_Next_Button));
+
+         Gtk_New_Hbox (Box, Homogeneous => False, Spacing => 2);
+
+         Gtk_New (Image, Stock_Id => Stock_Find, Size => Icon_Size_Button);
+         Pack_Start (Box, Image, Expand => False, Fill => False);
+
+         Gtk_New (Label, -"Next");
+         Pack_End (Box, Label, Expand => False, Fill => False);
+
+         Gtk_New (Align, 0.5, 0.5, 0.0, 0.0);
+
+         Add (Vsearch.Search_Next_Button, Align);
+         Add (Align, Box);
+         Show_All (Align);
       else
          Set_Label (Vsearch.Search_Next_Button, Stock_Find);
       end if;
