@@ -659,7 +659,17 @@ package body C_Analyzer is
                   Constructs.Current.Category := Cat_Case_Statement;
                when Tok_Void =>
                   --  Tok_Void is used for blocks: {}
-                  Constructs.Current.Category := Cat_Simple_Block;
+
+                  if Value.Curly_Level = 0 then
+                     --  ??? Would be nice to be able to find the name
+                     --  and parameters of this function
+
+                     Constructs.Current.Category := Cat_Function;
+
+                  else
+                     Constructs.Current.Category := Cat_Simple_Block;
+                  end if;
+
                when Tok_Struct =>
                   Constructs.Current.Category := Cat_Structure;
                when Tok_Union =>
@@ -1094,10 +1104,6 @@ package body C_Analyzer is
       end Identifier_Keyword;
 
    begin  -- Analyze_C_Source
-      --  ??? Need to reliably parse/recognize function specs:
-      --  detect opening bracket at level 0, which is not an
-      --  enum, struct, union, class nor assignment.
-
       --  Push a dummy token so that stack will never be empty.
       Push (Tokens, Default_Extended);
 
