@@ -34,8 +34,9 @@ package body Docgen is
    is
    begin
       if File_Name_Without_Suffix (X.File_Name.all) =
-         File_Name_Without_Suffix (Y.File_Name.all) then
-         if not Is_Spec_File (X.File_Name.all) then
+        File_Name_Without_Suffix (Y.File_Name.all)
+      then
+         if not Is_Spec_File (X.File_Name.all)then
             return False;
          else
             return True;
@@ -90,29 +91,34 @@ package body Docgen is
       if X.File_Name /= null then
          Free (X.File_Name);
       end if;
+
       if X.Prj_File_Name /= null then
          Free (X.Prj_File_Name);
       end if;
+
       if X.Package_Name /= null then
          Free (X.Package_Name);
       end if;
    end Free;
-
 
    procedure Free (X : in out Entity_List_Information) is
    begin
       if X.Name /= null then
          Free (X.Name);
       end if;
+
       if X.Short_Name /= null then
          Free (X.Short_Name);
       end if;
+
       if X.File_Name /= null then
          Free (X.File_Name);
       end if;
+
       if not Type_Reference_List.Is_Empty (X.Calls_List) then
          Type_Reference_List.Free (X.Calls_List);
       end if;
+
       if not Type_Reference_List.Is_Empty (X.Called_List) then
          Type_Reference_List.Free (X.Called_List);
       end if;
@@ -123,6 +129,7 @@ package body Docgen is
       if X.File_Name /= null then
          Free (X.File_Name);
       end if;
+
       if X.Subprogram_Name /= null then
          Free (X.Subprogram_Name);
       end if;
@@ -137,11 +144,13 @@ package body Docgen is
       Line_Nr : Natural;
    begin
       Line_Nr := 1;
-      for J in Line'First .. Line'Last loop
+
+      for J in Line'Range loop
          if Line (J) = ASCII.LF then
             Line_Nr := Line_Nr + 1;
          end if;
       end loop;
+
       return Line_Nr;
    end Count_Lines;
 
@@ -164,14 +173,19 @@ package body Docgen is
             return 0;
          end if;
       end if;
+
       New_Index := Index;
+
       while New_Index + L <= Type_Str'Last
         and then Type_Str (New_Index .. New_Index + L) /= Substring
       loop
          New_Index := New_Index + 1;
       end loop;
-      if New_Index + L > Type_Str'Last then return 0;
-      else return New_Index;
+
+      if New_Index + L > Type_Str'Last then
+         return 0;
+      else
+         return New_Index;
       end if;
    end Get_String_Index;
 
@@ -182,16 +196,18 @@ package body Docgen is
    function Get_Doc_File_Name
      (Source_Filename : String;
       Source_Path     : String;
-      Doc_Suffix      : String) return String is
-      --  returns the complete name of the doc file
+      Doc_Suffix      : String) return String
+   is
+      --  Return the complete name of the doc file
+
       Doc_File : constant String := Base_Name (Source_Filename);
-      Extens   : constant String := File_Extension (Source_Filename);
+      Ext      : constant String := File_Extension (Source_Filename);
    begin
       return Source_Path &
-      File_Name_Without_Suffix (Doc_File)
-      & "_"
-      & Extens (Extens'First + 1 .. Extens'Last)
-      & Doc_Suffix;
+        File_Name_Without_Suffix (Doc_File)
+        & "_"
+        & Ext (Ext'First + 1 .. Ext'Last)
+        & Doc_Suffix;
    end Get_Doc_File_Name;
 
    ------------------------------
@@ -199,15 +215,17 @@ package body Docgen is
    ------------------------------
 
    function Is_Defined_In_Subprogram
-     (Entity          : String;
-      Short_Entity    : String;
-      Package_Name    : String) return Boolean is
+     (Entity       : String;
+      Short_Entity : String;
+      Package_Name : String) return Boolean is
    begin
-      --  check if the short name of the entity starts right
+      --  Check if the short name of the entity starts right
       --  after the package name followed by "."
+
       if not (Get_String_Index (Entity, 1, To_Lower (Package_Name)) +
                 Package_Name'Length + 1
-                  < Get_String_Index (Entity, 1, Short_Entity)) and
+                  < Get_String_Index (Entity, 1, Short_Entity))
+        and then
       --  and that it is really the name at the end of the
       --  entity name, followed by nothing
         Entity'Last = (Get_String_Index (Entity, 1, Short_Entity)) +
@@ -217,7 +235,6 @@ package body Docgen is
       else
          return True;
       end if;
-
    end Is_Defined_In_Subprogram;
 
    -------------------------
@@ -235,13 +252,17 @@ package body Docgen is
    begin
       Found := False;
       Source_File_Node := TSFL.First (Source_File_List);
+
       for J in 1 .. TSFL.Length (Source_File_List) loop
          if File_Name  (TSFL.Data (Source_File_Node).File_Name.all)
-           = (Name) then
+           = (Name)
+         then
             Found := True;
          end if;
+
          Source_File_Node := TSFL.Next (Source_File_Node);
       end loop;
+
       return Found;
    end Source_File_In_List;
 
@@ -249,16 +270,17 @@ package body Docgen is
    -- Count_Points --
    ------------------
 
-   function Count_Points
-     (Text : String) return Natural is
+   function Count_Points (Text : String) return Natural is
       Counter : Natural;
    begin
       Counter := 0;
+
       for J in Text'First .. Text'Last loop
          if Text (J) = '.' then
             Counter := Counter + 1;
          end if;
       end loop;
+
       return Counter;
    end Count_Points;
 
@@ -266,22 +288,19 @@ package body Docgen is
    -- File_Name_Without_Suffix --
    ------------------------------
 
-   function File_Name_Without_Suffix
-     (Name_Of_File : String) return String is
+   function File_Name_Without_Suffix (Name_Of_File : String) return String is
       Short_Name : constant String := File_Name (Name_Of_File);
    begin
-      return Name_Of_File (Name_Of_File'First ..
-                             Get_String_Index (Short_Name,
-                                               Short_Name'First,
-                                               ".") - 1);
+      return Name_Of_File
+        (Name_Of_File'First ..
+         Get_String_Index (Short_Name, Short_Name'First, ".") - 1);
    end  File_Name_Without_Suffix;
 
    -----------------
    -- Spec_Suffix --
    -----------------
 
-   function Spec_Suffix
-     (Name_Of_File : String) return String is
+   function Spec_Suffix (Name_Of_File : String) return String is
    begin
       --  not using File_Extension, because don't want the point
       if Is_Spec_File (Name_Of_File) then
@@ -338,8 +357,7 @@ package body Docgen is
    -- Is_Spec_File --
    ------------------
 
-   function Is_Spec_File
-     (Name_Of_File : String) return Boolean is
+   function Is_Spec_File (Name_Of_File : String) return Boolean is
    begin
       --  ??? replace this by the the call of the function from the Prj_API
       return File_Extension (Name_Of_File) = ".ads";
@@ -349,10 +367,10 @@ package body Docgen is
    -- Other_File_Name --
    ---------------------
 
-   function Other_File_Name
-     (Name_Of_File : String) return String is
+   function Other_File_Name (Name_Of_File : String) return String is
    begin
       --  ??? replace this later by the the call of the real Other_File_Name
+
       if Is_Spec_File (Name_Of_File) then
          return File_Name_Without_Suffix (Name_Of_File)
          & ".adb";
