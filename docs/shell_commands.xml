@@ -1495,7 +1495,10 @@ format of the gps_index.xml files</description>
   <shell_doc name="GPS.browse" real_name="GPS.HTML.browse" >
      <param name="URL">Name of the file to browse</param>
      <param name="anchor" default="">Location in the file where to jump to</param>
+     <param name="navigation" default="True">A boolean</param>
      <description>Open the GPS html viewer, and load the given URL. If anchor matches a &lt;a&gt; tag in this file, GPS will jump to it. If URL isn't an absolute file name, it is searched in the path set by the environment variable GPS_DOC_PATH.
+
+If navigation is True, then the URL is saved in the navigation list, so that users can move back and forward from and to this location later on.
 
 The URL can be a network file name, with the following general format:
    protocol://username@host:port/full/path
