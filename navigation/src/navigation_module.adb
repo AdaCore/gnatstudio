@@ -45,7 +45,7 @@ package body Navigation_Module is
 
    Me : constant Debug_Handle := Create ("Navigation");
 
-   type Navigation_Info is record
+   type Navigation_Module_Record is new Module_ID_Record with record
       --  Fields related to back/forward navigation.
 
       Moving_Back : Boolean := False;
@@ -60,17 +60,14 @@ package body Navigation_Module is
       --  Back and forward buttons on the toolbar.
       --  ??? This might be put elsewhere.
    end record;
-
-   type Navigation_Info_Access is access Navigation_Info;
-
-   package Navigation_Data is new User_Data (Navigation_Info_Access);
-
-   Navigation_ID : constant String := "glide_navigation_module";
-   --  Reference string for calls to Navigation_Data functions.
+   type Navigation_Module is access all Navigation_Module_Record'Class;
 
    -----------------------
    -- Local subprograms --
    -----------------------
+
+   procedure Destroy (Id : in out Navigation_Module_Record);
+   --  Free memory associated to Id.
 
    procedure Refresh_Location_Buttons
      (Handle : access Kernel_Handle_Record'Class);
@@ -81,15 +78,6 @@ package body Navigation_Module is
    procedure On_Forward
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Callbacks for the back/forward buttons.
-
-   procedure Set_Navigation_Data
-     (Kernel : Kernel_Handle;
-      Data   : Navigation_Info_Access);
-   --  Set the navigation data in the kernel.
-
-   function Get_Navigation_Data
-     (Kernel : Kernel_Handle) return Navigation_Info_Access;
-   --  Get the navigation data from the kernel.
 
    procedure Navigation_Contextual_Menu
      (Object  : access Glib.Object.GObject_Record'Class;
@@ -121,8 +109,8 @@ package body Navigation_Module is
       pragma Unreferenced (Mode);
       Location_Command : Source_Location_Command;
 
-      N_Data : constant Navigation_Info_Access :=
-        Get_Navigation_Data (Kernel_Handle (Kernel));
+      N_Data : constant Navigation_Module :=
+        Navigation_Module (Navigation_Module_ID);
 
    begin
       if Mime_Type = Mime_Source_File then
@@ -160,27 +148,6 @@ package body Navigation_Module is
       return False;
    end Mime_Action;
 
-   -------------------------
-   -- Set_Navigation_Data --
-   -------------------------
-
-   procedure Set_Navigation_Data
-     (Kernel : Kernel_Handle;
-      Data   : Navigation_Info_Access) is
-   begin
-      Navigation_Data.Set (Kernel, Data, Navigation_ID);
-   end Set_Navigation_Data;
-
-   -------------------------
-   -- Get_Navigation_Data --
-   -------------------------
-
-   function Get_Navigation_Data
-     (Kernel : Kernel_Handle) return Navigation_Info_Access is
-   begin
-      return (Navigation_Data.Get (Kernel, Navigation_ID));
-   end Get_Navigation_Data;
-
    -------------
    -- On_Back --
    -------------
@@ -189,7 +156,8 @@ package body Navigation_Module is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
       pragma Unreferenced (Widget);
-      Data : Navigation_Info_Access := Get_Navigation_Data (Kernel);
+      Data : Navigation_Module :=
+        Navigation_Module (Navigation_Module_ID);
    begin
       --  If we are not already navigating backwards, that means that
       --  the first location on the undo pile is the one that we are
@@ -213,7 +181,8 @@ package body Navigation_Module is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
       pragma Unreferenced (Widget);
-      Data : Navigation_Info_Access := Get_Navigation_Data (Kernel);
+      Data : Navigation_Module :=
+        Navigation_Module (Navigation_Module_ID);
    begin
       if Data.Moving_Back then
          Redo (Data.Locations_Queue);
@@ -289,11 +258,12 @@ package body Navigation_Module is
    is
       Toolbar       : constant Gtk_Toolbar := Get_Toolbar (Kernel);
       Button        : Gtk_Button;
-      Data          : constant Navigation_Info_Access := new Navigation_Info;
       Navigate_Root : constant String := -"Navigate";
       Navigate      : constant String := "/" & Navigate_Root;
       Menu_Item     : Gtk_Menu_Item;
    begin
+      Navigation_Module_ID := new Navigation_Module_Record;
+
       Register_Module
         (Module                  => Navigation_Module_ID,
          Kernel                  => Kernel,
@@ -325,7 +295,8 @@ package body Navigation_Module is
 
       Button := Insert_Stock
         (Toolbar, Stock_Go_Back, -"Goto Previous Location");
-      Data.Back_Button := Gtk_Widget (Button);
+      Navigation_Module (Navigation_Module_ID).Back_Button
+        := Gtk_Widget (Button);
 
       Kernel_Callback.Connect
         (Button, "clicked",
@@ -334,15 +305,16 @@ package body Navigation_Module is
 
       Button := Insert_Stock
         (Toolbar, Stock_Go_Forward, -"Goto Next Location");
-      Data.Forward_Button := Gtk_Widget (Button);
+      Navigation_Module (Navigation_Module_ID).Forward_Button
+        := Gtk_Widget (Button);
 
       Kernel_Callback.Connect
         (Button, "clicked",
          Kernel_Callback.To_Marshaller (On_Forward'Access),
          Kernel_Handle (Kernel));
 
-      Data.Locations_Queue := New_Queue;
-      Set_Navigation_Data (Kernel_Handle (Kernel), Data);
+      Navigation_Module (Navigation_Module_ID).Locations_Queue
+        := New_Queue;
       Refresh_Location_Buttons (Kernel);
    end Register_Module;
 
@@ -353,13 +325,23 @@ package body Navigation_Module is
    procedure Refresh_Location_Buttons
      (Handle : access Kernel_Handle_Record'Class)
    is
-      Data : constant Navigation_Info_Access :=
-        Get_Navigation_Data (Kernel_Handle (Handle));
+      pragma Unreferenced (Handle);
+      Data : constant Navigation_Module :=
+        Navigation_Module (Navigation_Module_ID);
    begin
       Set_Sensitive (Data.Back_Button,
                      not Undo_Queue_Empty (Data.Locations_Queue));
       Set_Sensitive (Data.Forward_Button,
                      not Redo_Queue_Empty (Data.Locations_Queue));
    end Refresh_Location_Buttons;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (Id : in out Navigation_Module_Record) is
+   begin
+      Free_Queue (Id.Locations_Queue);
+   end Destroy;
 
 end Navigation_Module;
