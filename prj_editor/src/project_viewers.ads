@@ -19,8 +19,9 @@
 -----------------------------------------------------------------------
 
 with Gtk.Box;
-with Gtk.Clist;
-with Gtk.Style;
+with Gtk.Tree_Store;
+with Gtk.Tree_View;
+with Gdk.Color;
 
 with Projects;
 
@@ -74,11 +75,12 @@ package Project_Viewers is
 
 private
    type Project_Viewer_Record is new Gtk.Box.Gtk_Hbox_Record with record
-      List : Gtk.Clist.Gtk_Clist;
+      Tree  : Gtk.Tree_View.Gtk_Tree_View;
+      Model : Gtk.Tree_Store.Gtk_Tree_Store;
       --  The actual contents of the viewer
 
-      Default_Switches_Style : Gtk.Style.Gtk_Style;
-      --  Style to use when displaying switches that are set at the project
+      Default_Switches_Color : Gdk.Color.Gdk_Color;
+      --  Color to use when displaying switches that are set at the project
       --  level, rather than file specific
 
       Kernel  : Glide_Kernel.Kernel_Handle;

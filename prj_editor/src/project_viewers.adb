@@ -29,7 +29,6 @@ with Gtk.Box;                      use Gtk.Box;
 with Gtk.Button;                   use Gtk.Button;
 with Gtk.Cell_Renderer_Text;       use Gtk.Cell_Renderer_Text;
 with Gtk.Check_Button;             use Gtk.Check_Button;
-with Gtk.Clist;                    use Gtk.Clist;
 with Gtk.Dialog;                   use Gtk.Dialog;
 with Gtk.Enums;                    use Gtk.Enums;
 with Gtk.Event_Box;                use Gtk.Event_Box;
@@ -41,10 +40,10 @@ with Gtk.Menu;                     use Gtk.Menu;
 with Gtk.Menu_Item;                use Gtk.Menu_Item;
 with Gtk.Scrolled_Window;          use Gtk.Scrolled_Window;
 with Gtk.Stock;                    use Gtk.Stock;
-with Gtk.Style;                    use Gtk.Style;
 with Gtk.Tooltips;                 use Gtk.Tooltips;
 with Gtk.Tree_Model;               use Gtk.Tree_Model;
 with Gtk.Tree_Selection;           use Gtk.Tree_Selection;
+with Gtk.Tree_Store;               use Gtk.Tree_Store;
 with Gtk.Tree_View;                use Gtk.Tree_View;
 with Gtk.Tree_View_Column;         use Gtk.Tree_View_Column;
 with Gtk.Vbutton_Box;              use Gtk.Vbutton_Box;
@@ -54,13 +53,11 @@ with Gtkada.Dialogs;               use Gtkada.Dialogs;
 with Gtkada.Handlers;              use Gtkada.Handlers;
 with Gtkada.MDI;                   use Gtkada.MDI;
 with Gtkada.File_Selector;         use Gtkada.File_Selector;
-with Gtkada.Types;                 use Gtkada.Types;
 
 with Ada.Exceptions;            use Ada.Exceptions;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
-with Interfaces.C.Strings;      use Interfaces.C.Strings;
-with Interfaces.C;              use Interfaces.C;
+with System;
 
 with Basic_Types;              use Basic_Types;
 with String_Utils;
@@ -107,81 +104,9 @@ package body Project_Viewers is
 
    Project_Switches_Name : constant String := "Project Switches";
 
-   type View_Display is access procedure
-     (Viewer    : access Project_Viewer_Record'Class;
-      File_Name : String;
-      Directory : String;
-      Fd        : File_Descriptor;
-      Line      : out Interfaces.C.Strings.chars_ptr;
-      Style     : out Gtk_Style);
-   --  Procedure used to return the contents of one of the columns.
-   --  The returned string (Line) will be freed by the caller.
-   --  Style is the style to apply to the matching cell in the clist.
-
-   type View_Callback is access procedure
-     (Viewer    : access Project_Viewer_Record'Class;
-      Column    : Gint;
-      Context   : File_Selection_Context_Access);
-   --  Callback called every time the user selects a column in one of the
-   --  view. The view is not passed as a parameter, but can be obtained
-   --  directly from the Viewer, since this is the current view displayed in
-   --  the viewer
-
-   type View_Display_Array is array (Interfaces.C.size_t range <>)
-     of View_Display;
-
-   type View_Callback_Array is array (Interfaces.C.size_t range <>)
-     of View_Callback;
-
-   type View_Description (Num_Columns : Interfaces.C.size_t) is record
-      Titles : Interfaces.C.Strings.chars_ptr_array (1 .. Num_Columns);
-      --  The titles for all the columns
-
-      Display : View_Display_Array (1 .. Num_Columns);
-      --  The functions to display each of the columns. null can be provided
-      --  if the columns doesn't contain any information.
-
-      Callbacks : View_Callback_Array (1 .. Num_Columns);
-      --  The callbacks to call when a column is clicked. If null, no callback
-      --  is called.
-   end record;
-
-   procedure Name_Display
-     (Viewer : access Project_Viewer_Record'Class;
-      File_Name : String;
-      Directory : String;
-      Fd        : File_Descriptor;
-      Line      : out Interfaces.C.Strings.chars_ptr;
-      Style     : out Gtk_Style);
-   --  Return the name of the file
-
-   procedure Compiler_Switches_Display
-     (Viewer : access Project_Viewer_Record'Class;
-      File_Name : String;
-      Directory : String;
-      Fd        : File_Descriptor;
-      Line      : out Interfaces.C.Strings.chars_ptr;
-      Style     : out Gtk_Style);
-   --  Return the switches used for the compiler
-
-   procedure Edit_Switches_Callback
-     (Viewer    : access Project_Viewer_Record'Class;
-      Column    : Gint;
-      Context   : File_Selection_Context_Access);
-   --  Called every time the user wants to edit some specific switches
-
-   View_Switches : aliased constant View_Description :=
-     (Num_Columns => 2,
-      Titles      => (-"File Name") + (-"Compiler"),
-      Display     => (Name_Display'Access,
-                      Compiler_Switches_Display'Access),
-      Callbacks   => (null,
-                      Edit_Switches_Callback'Access));
-
-   type User_Data is record
-      File_Name : String_Id;
-   end record;
-   package Project_User_Data is new Row_Data (User_Data);
+   File_Name_Column         : constant := 0;
+   Compiler_Switches_Column : constant := 1;
+   Compiler_Color_Column    : constant := 2;
 
    procedure Refresh_Reopen_Menu (Kernel : access Kernel_Handle_Record'Class);
    --  Fill the reopen menu.
@@ -199,16 +124,9 @@ package body Project_Viewers is
    --  The file is automatically searched in all the source directories of
    --  Project_View.
 
-   function Append_Line_With_Full_Name
-     (Viewer         : access Project_Viewer_Record'Class;
-      File_Name      : String;
-      Directory_Name : String) return Gint;
-   --  Same as above, except we have already found the proper location for
-   --  the file.
-   --  Return the number of the newly inserted row
-
-   procedure Select_Row
-     (Viewer : access Gtk_Widget_Record'Class; Args : Gtk_Args);
+   function Select_Row
+     (Viewer : access Gtk_Widget_Record'Class; Event : Gdk_Event)
+     return Boolean;
    --  Callback when a row/column has been selected in the clist
 
    procedure Explorer_Selection_Changed
@@ -330,6 +248,14 @@ package body Project_Viewers is
       Directory : String := "";
       File      : String := "");
    --  Update the contents of the viewer
+
+   procedure Project_Viewers_Set
+     (Viewer            : access Project_Viewer_Record'Class;
+      Iter              : Gtk_Tree_Iter;
+      File              : String;
+      Compiler_Switches : String;
+      Compiler_Color    : Gdk_Color);
+   --  Set the contents of the line Iter in the model
 
    --------------------------
    -- Project editor pages --
@@ -534,123 +460,30 @@ package body Project_Viewers is
       Refresh_Reopen_Menu (Kernel);
    end Add_To_Reopen;
 
-   -------------------------------
-   -- Compiler_Switches_Display --
-   -------------------------------
+   -------------------------
+   -- Project_Viewers_Set --
+   -------------------------
 
-   procedure Compiler_Switches_Display
-     (Viewer : access Project_Viewer_Record'Class;
-      File_Name : String;
-      Directory : String;
-      Fd        : File_Descriptor;
-      Line      : out Interfaces.C.Strings.chars_ptr;
-      Style     : out Gtk_Style)
+   procedure Project_Viewers_Set
+     (Viewer            : access Project_Viewer_Record'Class;
+      Iter              : Gtk_Tree_Iter;
+      File              : String;
+      Compiler_Switches : String;
+      Compiler_Color    : Gdk_Color)
    is
-      pragma Unreferenced (Directory, Fd);
-      Value      : Prj.Variable_Value;
-      Is_Default : Boolean;
-      Language   : constant String := Get_Language_From_File
-        (Glide_Language_Handler (Get_Language_Handler (Viewer.Kernel)),
-         File_Name);
+      procedure Internal
+        (Tree, Iter : System.Address;
+         Col1  : Gint; Value1 : String;
+         Col2  : Gint; Value2 : String;
+         Col3  : Gint; Value3 : Gdk_Color;
+         Final : Gint := -1);
+      pragma Import (C, Internal, "gtk_tree_store_set");
    begin
-      Name_Len := Language'Length;
-      Name_Buffer (1 .. Name_Len) := Language;
-
-      Get_Switches
-        (Viewer.Current_Project, "compiler", File_Name,
-         Name_Find, Value, Is_Default);
-      Line := New_String (To_String (Value));
-
-      if Is_Default then
-         Style := Viewer.Default_Switches_Style;
-      end if;
-   end Compiler_Switches_Display;
-
-   ------------------
-   -- Name_Display --
-   ------------------
-
-   procedure Name_Display
-     (Viewer    : access Project_Viewer_Record'Class;
-      File_Name : String;
-      Directory : String;
-      Fd        : File_Descriptor;
-      Line      : out Interfaces.C.Strings.chars_ptr;
-      Style     : out Gtk_Style)
-   is
-      pragma Unreferenced (Viewer, Directory, Fd);
-   begin
-      Style := null;
-      Line  := New_String (File_Name);
-   end Name_Display;
-
-   ----------------------------
-   -- Edit_Switches_Callback --
-   ----------------------------
-
-   procedure Edit_Switches_Callback
-     (Viewer    : access Project_Viewer_Record'Class;
-      Column    : Gint;
-      Context   : File_Selection_Context_Access)
-   is
-      pragma Unreferenced (Column, Viewer);
-   begin
-      Edit_Switches_For_Context
-        (Selection_Context_Access (Context), Force_Default => False);
-
-   exception
-      when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
-   end Edit_Switches_Callback;
-
-   --------------------------------
-   -- Append_Line_With_Full_Name --
-   --------------------------------
-
-   function Append_Line_With_Full_Name
-     (Viewer         : access Project_Viewer_Record'Class;
-      File_Name      : String;
-      Directory_Name : String) return Gint
-   is
-      Line      : Gtkada.Types.Chars_Ptr_Array
-        (1 .. View_Switches.Num_Columns);
-      Row       : Gint;
-      File_Desc : File_Descriptor;
-      Style     : array (1 .. View_Switches.Num_Columns) of Gtk_Style;
-
-   begin
-      if Is_Absolute_Path (Directory_Name) then
-         File_Desc := Open_Read
-           (String_Utils.Name_As_Directory (Directory_Name) & File_Name, Text);
-      else
-         File_Desc := Open_Read
-           (Get_Current_Dir & String_Utils.Name_As_Directory (Directory_Name)
-            & File_Name, Text);
-      end if;
-
-      for Column in Line'Range loop
-         if View_Switches.Display (Column) /= null then
-            View_Switches.Display (Column)
-              (Viewer, File_Name, Directory_Name, File_Desc,
-               Line (Column), Style (Column));
-         else
-            Line (Column) := New_String ("");
-            Style (Column) := null;
-         end if;
-      end loop;
-
-      Close (File_Desc);
-
-      Row := Append (Viewer.List, Line);
-
-      for S in Style'Range loop
-         Set_Cell_Style
-           (Viewer.List, Row, Gint (S - Style'First), Style (S));
-      end loop;
-
-      Free (Line);
-      return Row;
-   end Append_Line_With_Full_Name;
+      Internal (Get_Object (Viewer.Model), Iter'Address,
+                File_Name_Column,         File & ASCII.NUL,
+                Compiler_Switches_Column, Compiler_Switches & ASCII.NUL,
+                Compiler_Color_Column,    Compiler_Color);
+   end Project_Viewers_Set;
 
    -----------------
    -- Append_Line --
@@ -661,77 +494,92 @@ package body Project_Viewers is
       File_Name        : String_Id;
       Directory_Filter : String := "")
    is
-      File_N   : String (1 .. Integer (String_Length (File_Name)));
+      File_N     : String (1 .. Integer (String_Length (File_Name)));
+      Iter       : Gtk_Tree_Iter;
+      Color      : Gdk_Color;
+      Value      : Prj.Variable_Value;
+      Is_Default : Boolean;
+      Language   : Name_Id;
 
    begin
       String_To_Name_Buffer (File_Name);
       File_N := Name_Buffer (1 .. Name_Len);
 
-      if Directory_Filter /= ""
-        and then not Is_Regular_File
+      if Directory_Filter = ""
+        or else Is_Regular_File
           (String_Utils.Name_As_Directory (Directory_Filter) & File_N)
       then
-         return;
-      end if;
+         Language := Get_String
+           (Get_Language_From_File
+            (Glide_Language_Handler (Get_Language_Handler (Viewer.Kernel)),
+             File_N));
+         Get_Switches
+           (Viewer.Current_Project, Compiler_Package, File_N,
+            Language, Value, Is_Default);
 
-      Project_User_Data.Set
-        (Viewer.List,
-         Append_Line_With_Full_Name
-           (Viewer, File_N,
-            Get_Full_Path_From_File
-              (Registry        => Get_Registry (Viewer.Kernel),
-               Filename        => File_N,
-               Use_Source_Path => True,
-               Use_Object_Path => False)),
-         (File_Name => File_Name));
+         if Is_Default then
+            Color := Viewer.Default_Switches_Color;
+         else
+            Color := Black (Get_Default_Colormap);
+         end if;
+
+         Append (Viewer.Model, Iter, Null_Iter);
+         Project_Viewers_Set
+           (Viewer, Iter, File_N, To_String (Value), Color);
+      end if;
    end Append_Line;
 
    ----------------
    -- Select_Row --
    ----------------
 
-   procedure Select_Row
-     (Viewer : access Gtk_Widget_Record'Class; Args : Gtk_Args)
+   function Select_Row
+     (Viewer : access Gtk_Widget_Record'Class; Event : Gdk_Event)
+     return Boolean
    is
       V            : constant Project_Viewer := Project_Viewer (Viewer);
-      Row          : constant Gint := To_Gint (Args, 1);
-      Column       : constant Gint := To_Gint (Args, 2);
-      Event        : constant Gdk_Event := To_Event (Args, 3);
-      User         : User_Data;
-      Callback     : View_Callback;
       File         : File_Selection_Context_Access;
+      Iter         : Gtk_Tree_Iter;
 
    begin
-      --  Unless we selected the full row
-      if Column /= -1 then
-         Callback :=
-           View_Switches.Callbacks (Interfaces.C.size_t (Column + 1));
+      if Get_Event_Type (Event) = Gdk_2button_Press
+        and then Get_Button (Event) = 1
+      then
+         Iter := Find_Iter_For_Event (V.Tree, V.Model, Event);
+         if Iter /= Null_Iter then
+            declare
+               File_Name : constant String := Get_String
+                 (V.Model, Iter, File_Name_Column);
+            begin
+               File := new File_Selection_Context;
+               Set_Context_Information
+                 (File, Kernel => V.Kernel,
+                  Creator => Module_ID (Prj_Editor_Module_ID));
+               Set_File_Information
+                 (File,
+                  Directory    => Dir_Name (Get_Full_Path_From_File
+                  (Registry        => Get_Registry (V.Kernel),
+                   Filename        => File_Name,
+                   Use_Source_Path => True,
+                   Use_Object_Path => False)),
+                  File_Name    => File_Name,
+                  Project      => V.Current_Project);
 
-         --  Event could be null when the row was selected programmatically
-         if Event /= null
-           and then Get_Event_Type (Event) = Gdk_2button_Press
-           and then Callback /= null
-         then
-            User := Project_User_Data.Get (V.List, Row);
-
-            File := new File_Selection_Context;
-            Set_Context_Information
-              (File, Kernel => V.Kernel,
-               Creator => Module_ID (Prj_Editor_Module_ID));
-            Set_File_Information
-              (File,
-               Directory    => Get_Full_Path_From_File
-                 (Registry        => Get_Registry (V.Kernel),
-                  Filename        => Get_String (User.File_Name),
-                  Use_Source_Path => True,
-                  Use_Object_Path => False),
-               File_Name    => Get_String (User.File_Name),
-               Project      => V.Current_Project);
-
-            Callback (V, Column, File);
-            Free (Selection_Context_Access (File));
+               Edit_Switches_For_Context
+                 (Selection_Context_Access (File), Force_Default => False);
+               Free (Selection_Context_Access (File));
+            end;
          end if;
+
+         return True;
       end if;
+
+      return False;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         return False;
    end Select_Row;
 
    --------------------------
@@ -758,9 +606,8 @@ package body Project_Viewers is
       Directory : String := "";
       File      : String := "")
    is
-      User : User_Data;
-      Rows : Gint;
       Child : MDI_Child;
+      Iter  : Gtk_Tree_Iter;
 
    begin
       Child := Find_MDI_Child (Get_MDI (Viewer.Kernel), Viewer);
@@ -792,15 +639,14 @@ package body Project_Viewers is
       end if;
 
       if File /= "" then
-         Rows := Get_Rows (Viewer.List);
-
-         for J in 0 .. Rows - 1 loop
-            User := Project_User_Data.Get (Viewer.List, J);
-
-            if Get_String (User.File_Name) = File then
-               Select_Row (Viewer.List, J, 0);
-               return;
+         Iter := Get_Iter_First (Viewer.Model);
+         while Iter /= Null_Iter loop
+            if Get_String (Viewer.Model, Iter, File_Name_Column) = File then
+               Unselect_All (Get_Selection (Viewer.Tree));
+               Select_Iter (Get_Selection (Viewer.Tree), Iter);
+               exit;
             end if;
+            Next (Viewer.Model, Iter);
          end loop;
       end if;
    end Update_Contents;
@@ -863,31 +709,54 @@ package body Project_Viewers is
      (Viewer   : access Project_Viewer_Record'Class;
       Kernel   : access Kernel_Handle_Record'Class)
    is
-      Scrolled : Gtk_Scrolled_Window;
+      Column_Types : constant GType_Array :=
+        (File_Name_Column         => GType_String,
+         Compiler_Switches_Column => GType_String,
+         Compiler_Color_Column    => Gdk_Color_Type);
+
+      Scrolled   : Gtk_Scrolled_Window;
+      Col        : Gtk_Tree_View_Column;
+      Render     : Gtk_Cell_Renderer_Text;
+      Col_Number : Gint;
+      pragma Unreferenced (Col_Number);
    begin
       Gtk.Box.Initialize_Hbox (Viewer);
-      Register_Contextual_Menu
-        (Kernel          => Kernel,
-         Event_On_Widget => Viewer,
-         Object          => Viewer,
-         ID              => Module_ID (Prj_Editor_Module_ID),
-         Context_Func    => Project_Editor_Context_Factory'Access);
-
       Viewer.Kernel := Kernel_Handle (Kernel);
 
       Gtk_New (Scrolled);
       Set_Policy (Scrolled, Policy_Automatic, Policy_Automatic);
       Add (Viewer, Scrolled);
 
-      Gtk_New (Viewer.List,
-               Columns => Gint (View_Switches.Num_Columns),
-               Titles  => View_Switches.Titles);
-      Set_Selection_Mode (Viewer.List, Selection_Multiple);
-      Add (Scrolled, Viewer.List);
-      Set_Column_Auto_Resize (Viewer.List, 0, True);
+      Gtk_New (Viewer.Model, Column_Types);
+      Gtk_New (Viewer.Tree,  Viewer.Model);
+      Set_Mode (Get_Selection (Viewer.Tree), Selection_Multiple);
+      Add (Scrolled, Viewer.Tree);
 
-      Widget_Callback.Object_Connect
-        (Viewer.List, "select_row",  Select_Row'Access, Viewer);
+      Gtk_New (Col);
+      Col_Number := Append_Column (Viewer.Tree, Col);
+      Set_Title (Col, -"File");
+      Gtk_New (Render);
+      Pack_Start (Col, Render, False);
+      Add_Attribute (Col, Render, "text", File_Name_Column);
+
+      Gtk_New (Col);
+      Col_Number := Append_Column (Viewer.Tree, Col);
+      Set_Title (Col, -"Compiler switches");
+      Gtk_New (Render);
+      Pack_Start (Col, Render, False);
+      Add_Attribute (Col, Render, "text", Compiler_Switches_Column);
+      Add_Attribute (Col, Render, "foreground_gdk", Compiler_Color_Column);
+
+      Register_Contextual_Menu
+        (Kernel          => Kernel,
+         Event_On_Widget => Viewer.Tree,
+         Object          => Viewer,
+         ID              => Module_ID (Prj_Editor_Module_ID),
+         Context_Func    => Project_Editor_Context_Factory'Access);
+
+      Return_Callback.Object_Connect
+        (Viewer.Tree, "button_press_event",
+         Return_Callback.To_Marshaller (Select_Row'Access), Viewer);
 
       Widget_Callback.Object_Connect
         (Kernel, Context_Changed_Signal,
@@ -898,7 +767,6 @@ package body Project_Viewers is
          Widget_Callback.To_Marshaller (Project_View_Changed'Access),
          Viewer);
 
-      Viewer.Default_Switches_Style := Copy (Get_Style (Viewer));
       Preferences_Changed (Viewer, Kernel_Handle (Kernel));
 
       Kernel_Callback.Object_Connect
@@ -923,10 +791,9 @@ package body Project_Viewers is
      (Viewer : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
       V     : constant Project_Viewer := Project_Viewer (Viewer);
-      Color : Gdk_Color;
    begin
-      Color := Get_Pref (Kernel, Default_Switches_Color);
-      Set_Foreground (V.Default_Switches_Style, State_Normal, Color);
+      V.Default_Switches_Color := Get_Pref (Kernel, Default_Switches_Color);
+      --  ??? Do we need to change the model to reflect this change
    end Preferences_Changed;
 
    ------------------
@@ -942,13 +809,10 @@ package body Project_Viewers is
         (Project_Filter, Recursive => False);
    begin
       Viewer.Current_Project := Project_Filter;
-      Freeze (Viewer.List);
 
       for F in Files'Range loop
          Append_Line (Viewer, Files (F), Directory_Filter);
       end loop;
-
-      Thaw (Viewer.List);
    end Show_Project;
 
    -----------
@@ -957,9 +821,7 @@ package body Project_Viewers is
 
    procedure Clear (Viewer : access Project_Viewer_Record) is
    begin
-      Freeze (Viewer.List);
-      Clear (Viewer.List);
-      Thaw (Viewer.List);
+      Clear (Viewer.Model);
    end Clear;
 
    --------------------
@@ -1561,36 +1423,32 @@ package body Project_Viewers is
         new File_Selection_Context;
       V           : constant Project_Viewer := Project_Viewer (Object);
       Item        : Gtk_Menu_Item;
-      Row, Column : Gint;
-      Is_Valid    : Boolean;
-      User        : User_Data;
+      Iter        : Gtk_Tree_Iter;
 
    begin
       --  ??? Should call Project_Editor_Contextual
+      Unselect_All (Get_Selection (V.Tree));
+      Iter := Find_Iter_For_Event (V.Tree, V.Model, Event);
 
-      Get_Selection_Info
-        (V.List, Gint (Get_X (Event)), Gint (Get_Y (Event)),
-         Row, Column, Is_Valid);
-
-      if not Is_Valid then
-         return null;
-      end if;
-
-      User := Project_User_Data.Get (V.List, Row);
-
-      if User.File_Name /= No_String then
-         Set_File_Information
-           (Context,
-            Directory    => Get_Full_Path_From_File
-               (Registry        => Get_Registry (Kernel),
-                Filename        => Get_String (User.File_Name),
-                Use_Source_Path => True,
-                Use_Object_Path => False),
-            File_Name    => Get_String (User.File_Name),
-            Project      => V.Current_Project);
-      else
+      if Iter = Null_Iter then
          Set_File_Information
            (Context, Project => V.Current_Project);
+      else
+         declare
+            File_Name   : constant String := Get_String
+              (V.Model, Iter, File_Name_Column);
+         begin
+            Set_File_Information
+              (Context,
+               Directory    => Dir_Name
+                 (Get_Full_Path_From_File
+                  (Registry        => Get_Registry (Kernel),
+                   Filename        => File_Name,
+                   Use_Source_Path => True,
+                   Use_Object_Path => False)),
+               File_Name    => File_Name,
+               Project      => V.Current_Project);
+         end;
       end if;
 
       if Has_File_Information (Context) then
@@ -1617,21 +1475,37 @@ package body Project_Viewers is
       File : constant File_Selection_Context_Access :=
         File_Selection_Context_Access (Context);
       V : constant Project_Viewer := Project_Viewer (Viewer);
-      Selection : Glist := Get_Selection (V.List);
-      Names : Argument_List (1 .. Integer (Length (Selection)));
-      User        : User_Data;
+      Selection : constant Gtk_Tree_Selection := Get_Selection (V.Tree);
+      Length : Natural := 0;
+      Iter : Gtk_Tree_Iter := Get_Iter_First (V.Model);
    begin
-      for N in Names'Range loop
-         User := Project_User_Data.Get (V.List, Get_Data (Selection));
-         Names (N) := new String'(Get_String (User.File_Name));
-         Selection := Next (Selection);
+      while Iter /= Null_Iter loop
+         if Iter_Is_Selected (Selection, Iter) then
+            Length := Length + 1;
+         end if;
+         Next (V.Model, Iter);
       end loop;
 
-      Edit_Switches_For_Files
-        (Get_Kernel (File),
-         Project_Information (File),
-         Names);
-      Free (Names);
+      declare
+         Names : Argument_List (1 .. Length);
+         N     : Natural := Names'First;
+      begin
+         Iter := Get_Iter_First (V.Model);
+         while Iter /= Null_Iter loop
+            if Iter_Is_Selected (Selection, Iter) then
+               Names (N) := new String'
+                 (Get_String (V.Model, Iter, File_Name_Column));
+               N := N + 1;
+            end if;
+            Next (V.Model, Iter);
+         end loop;
+
+         Edit_Switches_For_Files
+           (Get_Kernel (File),
+            Project_Information (File),
+            Names);
+         Free (Names);
+      end;
 
    exception
       when E : others =>
