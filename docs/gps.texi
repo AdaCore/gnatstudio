@@ -443,18 +443,17 @@ the main subprogram will be located). Then a node is displayed for
 each imported project, and recursively for their own imported
 projects.
 
-A given project might appear multiple times in the @code{Project
-View}, if it is imported by several other projects.
+A given project might appear multiple times in the
+@code{Project View}, if it is imported by several other projects.
 
-There exists a second display for this project view, which displays a
-list of all projects, with no hierarchy visible. All projects appear
-only once in the explorer, all at the toplevel. This display might be
-useful for deep project hierarchies, to make it easier to find
-projects in the explorer.
+There exists a second display for this project view, which lists
+all projects with no hierarchy: all projects appear only once in the explorer,
+at the toplevel. This display might be useful for deep project hierarchies, to
+make it easier to find projects in the explorer.
 
 @cindex Show flat view
-This display is activated through the contextual menu entry @cod{Show
-flat view}, which acts as a switch between the two displays.
+This display is activated through the contextual menu entry
+@code{Show flat view}, which acts as a switch between the two displays.
 
 A special icon with an exclamation mark is displayed if the project
 was modified, but not saved yet. You can choose to save it at any time
@@ -5480,12 +5479,30 @@ example, this adds a sub menu named @code{Olga} containing an item named
 Adding an item with an empty title or no title at all inserts a
 menu separator.
 
+The following tags are available in a @code{Submenu} section:
+
+@table @code
+@item Title
+Found inside a @code{Submenu} or @code{Menu_Item}: set title of the submenu or
+menu item.
+
+@item Menu_Item
+A menu item inside a submenu.
+
+@item Action
+External command associated with a menu item.
+
+@item GPS_Action
+GPS specific command associated with a menu item.
+
+@end table
+
 @subsection Adding tool bar buttons
 @cindex tool bar
 @noindent
 As an alternative to creating new menu items, you can create new
 buttons on the tool bar, with exactly the same syntax, by using
-the @code{<Toolbar_Item>} tag in place of the @code{<Menu_Item>} tag.
+the @code{<Toolbar_Item>} tag in place of the @code{<Submenu>} tag.
 @cindex jpeg
 @cindex png
 @cindex gif
@@ -5498,22 +5515,40 @@ or @code{xpm}) to be used as icon for the button. An empty
 @cindex example
 @smallexample
 
-<Submenu>
-   <Title>Toolbar Items</Title>
-   <Toolbar_Item></Toolbar_Item>
-   <Toolbar_Item>
-     <Title>Custom Button</Title>
-     <Pixmap>/my_pixmaps/button.jpg</Pixmap>
-     <GPS_Action>my gps command</GPS_Action>
-   </Toolbar_Item>
-</Submenu>
+<Toolbar_Item>
+  <Title>Custom Button</Title>
+  <Pixmap>/my_pixmaps/button.jpg</Pixmap>
+  <GPS_Action>my gps command</GPS_Action>
+</Toolbar_Item>
 
 @end smallexample
 
-You can use macro arguments to pass to your shell
-commands. Macro arguments are special parameters that are transformed
-every time that the command is about to be executed. The following
-macro arguments exist in GPS:
+The following tags are available in a @code{Toolbar_Item} section:
+
+@table @code
+@item Title
+Name of the custom button.
+
+@item Pixmap
+Pixmap file associated with the tool bar button.
+
+@item Action
+External command associated with a tool bar button.
+
+@item GPS_Action
+GPS specific command associated with a tool bar button.
+
+@end table
+
+@subsection Macro arguments
+@cindex menu
+@cindex argument
+@cindex substitution
+@noindent
+When using an @code{Action} node in a menu or tool bar item,
+you can use macro arguments to pass to your shell commands. Macro arguments
+are special parameters that are transformed every time the command is executed.
+The following macro arguments are provided:
 
 @table @code
 @item %f
@@ -5525,8 +5560,11 @@ Absolute name of the currently opened file.
 @item %p
 The current project. This is the name of the project, not the project file.
 
-@item %P
-The root project. This is the name of the project, not the project file.
+@item %pp
+The current project file pathname.
+
+@item %PP
+The root project pathname.
 
 @item %(p|P)[r](d|s)[f]
 Substituted by the list of sources or directories of a given project:
@@ -5578,6 +5616,137 @@ recursively.
 @c --------------------------------------------------------------------------
 
 @noindent
+You can define new languages in a custom file by using the @code{Language}
+tag. Defining languages gives GPS the ability to highlight the syntax of a
+file, explore a file (using e.g. the project explorer), and find files
+associated with a given language.
+
+The following tags are available in a @code{Language} section:
+
+@table @code
+@item Name
+A short string describing the name of the language.
+
+@item Spec_Suffix
+A string describing the suffix of spec/definition files for this language.
+If the language does not have the notion of spec or definition file, you
+can ignore this value.
+
+@item Body_Suffix
+A string describing the suffix of body/implementation files for this language.
+
+@item Keywords
+A V7 style regular expression for recognizing and highlighting keywords.
+Multiple @code{Keywords} tags can be specified, and will be concatenated
+into a single regular expression.
+
+The full grammar of the regular expression can be found in the spec of the
+file @file{g-regpat.ads} in the GNAT run time.
+
+@item Context
+Describes the context used to highlight the syntax of a file.
+
+   @table @code
+   @item Comment_Start
+   A string defining the beginning of a multiple-line comment.
+
+   @item Comment_End
+   A string defining the end of a multiple-line comment.
+
+   @item New_Line_Comment_Start
+   A string defining the beginning of a single line comment (ended at the next
+   end of line).
+
+   @item String_Delimiter
+   A character defining the string delimiter.
+
+   @item Quote_Character
+   A character defining the quote character, used for e.g. cancelling the
+   meaning of a string delimiter (@code{\} in C).
+
+   @item Constant_Character
+   A character defining the beginning of a character litteral.
+
+   @item Can_Indent
+   A boolean indicating whether indentation should be enabled for this
+   language. The indentation mechanism used will be the same for all languages:
+   the number of spaces at the beginning of the current line is used when
+   indenting the next line.
+
+   @item Syntax_Highlighting
+   A boolean indicating whether the syntax should be highlighted/colorized.
+
+   @item Case_Sensitive
+   A boolean indicating whether the language (and in particular the identifiers
+   and keywords) is case sensitive.
+   @end table
+
+@item Categories
+Optional node to describe the categories supported by the project explorer
+for the current language. This node contains a list of @code{Category} nodes,
+each describing the characteristics of a given category, with the following
+nodes:
+
+   @table @code
+   @item Name
+   Name of the category, which can be one of: 
+   package, namespace, procedure, function, task, method, constructor,
+   destructor, protected, entry,
+   class, structure, union, type, subtype, variable, local_variable,
+   representation_clause,
+   with, use, include,
+   loop_statement, case_statement, if_statement, select_statement,
+   accept_statement, declare_block, simple_block, exception_handler.
+
+   @item Pattern
+   Regular expression used to detect a language category.
+   As for the @code{Keywords} node, multiple @code{Pattern} tags can be
+   specified and will be concatenated into a single regular expression.
+
+   @item Index
+   Index in the pattern used to extract the name of the entity contained in
+   this category.
+   @end table
+
+@end table
+
+@noindent
+Here is an example of a language definition for the GPS project files:
+
+@cindex example
+@smallexample
+<Language>
+  <Name>Project File</Name>
+  <Spec_Suffix>.gpr</Spec_Suffix>
+
+  <Keywords>^(case|e(nd|xte(nds|rnal))|for|is|</Keywords>
+  <Keywords>limited|null|others|</Keywords>
+  <Keywords>p(ackage|roject)|renames|type|use|w(hen|ith))\b</Keywords>
+
+  <Context>
+    <New_Line_Comment_Start>--</New_Line_Comment_Start>
+    <String_Delimiter>"</String_Delimiter>
+    <Constant_Character>'</Constant_Character>
+    <Can_Indent>True</Can_Indent>
+    <Syntax_Highlighting>True</Syntax_Highlighting>
+    <Case_Sensitive>False</Case_Sensitive>
+  </Context>
+
+  <Categories>
+    <Category>
+      <Name>package</Name>
+      <Pattern>^[ \t]*package[ \t]+((\w|\.)+)</Pattern>
+      <Index>1</Index>
+    </Category>
+    <Category>
+      <Name>type</Name>
+      <Pattern>^[ \t]*type[ \t]+(\w+)</Pattern>
+      <Index>1</Index>
+    </Category>
+  </Categories>
+</Language>
+@end smallexample
+
 
 @c --------------------------------------------------------------------------
 @node Defining Text Aliases
@@ -5628,7 +5797,7 @@ the editor, and select the entity in the contextual menu.
 
 The following special entities are currently defined:
 
-@table @b
+@table @code
 @item %_
 This is the position where the cursor should be put once the
 replacement text has been inserted in the editor.
@@ -6271,7 +6440,7 @@ Usage:
 Options:
    --help              Show this help message and exit
    --version           Show the GPS version and exit
-   --debug [program]   Start a debug session and load the given program with
+   --debug [program]   Start a debug session and load the program with
                        the given arguments
    --debugger debugger Specify the debugger's command line
    --target=TARG:PRO   Load program on machine TARG using protocol PRO
