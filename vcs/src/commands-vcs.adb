@@ -22,6 +22,7 @@ with Glide_Intl; use Glide_Intl;
 with VFS;        use VFS;
 with Traces;     use Traces;
 with Glide_Kernel.Console; use Glide_Kernel.Console;
+with Basic_Types; use Basic_Types;
 
 package body Commands.VCS is
 
@@ -31,7 +32,7 @@ package body Commands.VCS is
    -- Free --
    ----------
 
-   procedure Free (X : in out Commit_Command_Type) is
+   procedure Free (X : in out Log_Action_Command_Type) is
    begin
       String_List.Free (X.Filenames);
       String_List.Free (X.Logs);
@@ -58,15 +59,17 @@ package body Commands.VCS is
    ------------
 
    procedure Create
-     (Item      : out Commit_Command_Access;
+     (Item      : out Log_Action_Command_Access;
       Rep       : VCS_Access;
+      Action    : VCS_Action;
       Filenames : String_List.List;
       Logs      : String_List.List) is
    begin
-      Item := new Commit_Command_Type;
+      Item := new Log_Action_Command_Type;
       Item.Rep       := Rep;
       Item.Filenames := Copy_String_List (Filenames);
       Item.Logs      := Copy_String_List (Logs);
+      Item.Action    := Action;
    end Create;
 
    -------------
@@ -74,7 +77,7 @@ package body Commands.VCS is
    -------------
 
    function Execute
-     (Command : access Commit_Command_Type) return Command_Return_Type
+     (Command : access Log_Action_Command_Type) return Command_Return_Type
    is
       use String_List;
 
@@ -92,7 +95,20 @@ package body Commands.VCS is
 
       while Node /= Null_Node loop
          Append (File, Data (Node));
-         Commit (Command.Rep, File, Data (Log));
+
+         case Command.Action is
+            when Commit =>
+               Commit (Command.Rep, File, Data (Log));
+
+            when Add =>
+               Add (Command.Rep, File, Data (Log));
+
+            when Remove =>
+               Remove (Command.Rep, File, Data (Log));
+
+            when others =>
+               raise Program_Error;
+         end case;
 
          Free (File);
          Node := Next (Node);
@@ -194,10 +210,15 @@ package body Commands.VCS is
    -- Name --
    ----------
 
-   function Name (X : access Commit_Command_Type) return String is
-      pragma Unreferenced (X);
+   function Name (X : access Log_Action_Command_Type) return String is
+      Action_String : constant Basic_Types.String_Access :=
+        Get_Identified_Actions (X.Rep) (X.Action);
    begin
-      return -"Committing files";
+      if Action_String /= null then
+         return Action_String.all;
+      else
+         return -"Unnamed VCS action";
+      end if;
    end Name;
 
    function Name (X : access Get_Status_Command_Type) return String is
