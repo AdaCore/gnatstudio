@@ -28,6 +28,7 @@ with Glide_Kernel;           use Glide_Kernel;
 with Codefix;                use Codefix;
 with Codefix.Text_Manager;   use Codefix.Text_Manager;
 with Codefix.Errors_Manager; use Codefix.Errors_Manager;
+with Glide_Intl;             use Glide_Intl;
 
 package Codefix_Module is
 
@@ -73,7 +74,9 @@ package Codefix_Module is
    procedure Remove_Pixmap (Error : Error_Id);
    --  Remove from the location box the pixmap of the error.
 
-   Compilation_Category : constant String := "Builder Results";
+   Compilation_Category : constant String := -"Builder results";
+   --  ??? This is a duplicate from commands-builder.ads.
+
    Location_Button_Name : constant String := "Codefix";
 
 end Codefix_Module;
