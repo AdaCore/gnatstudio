@@ -1438,15 +1438,14 @@ package body Builder_Module is
       pragma Unreferenced (Widget);
    begin
       if Builder_Module_ID_Access (Builder_Module_ID).Last_Command /= null then
-         Console.Raise_Console (Kernel);
+         Interrupt_Queue
+           (Kernel,
+            Builder_Module_ID_Access (Builder_Module_ID).Last_Command);
+      else
          Console.Insert
            (Kernel,
-            "menu not implemented yet, please use task manager instead",
-            Mode => Error);
-
-         --  ??? not implemented yet:
-         --  Interrupt_Task
-         --    (Builder_Module_ID_Access (Builder_Module_ID).Last_Command);
+            -"No build to interrupt",
+            Mode => Info);
       end if;
    end On_Stop_Build;
 
