@@ -3358,8 +3358,16 @@ Selecting this menu item will remove all items but the selected one.
 @c --------------------------------------------------------------------
 
 @noindent
-The call graph shows graphically the relationship between subprogram callers
-and callees.
+The call graph shows graphically the relationship between subprogram
+callers and callees. A link between two items indicate that one of
+them is calling the other.
+
+@cindex renaming entities
+A special handling is provided for renaming entities (in Ada): if a
+subprogram is a renaming of another one, both items will be displayed
+in the browser, with a special hashed link between the two. Since the
+renaming subprogram doesn't have a proper body, you will then need to
+ask for the subprograms called by the renamed to get the list.
 
 @iftex
 @cindex screen shot
@@ -4273,12 +4281,15 @@ Font and colors used to highlight keywords.
 
 @item Current line color
 Color for highlighting the current line. Leave it to blank for no highlighting.
+Setting the color to white will set a transparent color.
 
 @item Comments
 Font and colors used to highlight comments.
+Setting the color to white will set a transparent color.
 
 @item Strings
 Font and colors used to highlight strings.
+Setting the color to white will set a transparent color.
 
 @item Line highlighting color
 Color for highlighting lines.
