@@ -471,10 +471,15 @@ package body Switches_Editors is
       end case;
 
       declare
+         Str : constant String := Get_Chars (Cmd_Line);
          Arr : Argument_List := Get_Switches (Editor, Tool);
          Current : Argument_List_Access;
       begin
-         Current := Argument_String_To_List (Get_Chars (Cmd_Line));
+         if Str'Length = 0 then
+            Current := new Argument_List (1 .. 0);
+         else
+            Current := Argument_String_To_List (Get_Chars (Cmd_Line));
+         end if;
          Delete_Text (Cmd_Line);
          for J in Arr'Range loop
             Append_Text (Cmd_Line, Arr (J).all & " ");
