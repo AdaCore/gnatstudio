@@ -112,6 +112,7 @@ package Main_Debug_Window_Pkg is
       Separator0 : Gtk_Menu_Item;
       Edit_Source1 : Gtk_Menu_Item;
       Open_Source1 : Gtk_Menu_Item;
+      Reload_Sources1 : Gtk_Menu_Item;
       Separator1 : Gtk_Menu_Item;
       Open_Session1 : Gtk_Menu_Item;
       Save_Session_As1 : Gtk_Menu_Item;
