@@ -66,6 +66,7 @@ unsigned long attr_from_declaration( Declaration_t Declaration );
 
 int get_template_argument (const char* class_name, const char* fn_name,
     const char* name, char* /*out*/ type_name);
+void f_TemplateArguments (char* str, int lineno, int charno);
 
 extern Declaration_t f_Declaration( int iLevel )
 {
@@ -1836,8 +1837,10 @@ extern Type_t f_TypeBasic( Type_t Type, int lineno, int charno )
       if (cmp_prev)
           break;
 
-      /* for now template arguments are not supported */
-      if ( ptr = strchr (name, '<') ) *ptr = 0;
+      if ( ptr = strchr (name, '<') ) {
+          f_TemplateArguments (ptr, lineno, charno);
+          *ptr = 0;
+      }
 
       if ( (paf_type = Get_class_or_typedef( name, acType )) == 0
           && (paf_type = get_template_argument (scope_g, sym_name_g, name, 0)) == 0 )
@@ -2155,4 +2158,27 @@ unsigned long attr_from_declaration( Declaration_t Declaration )
     }
 
     return attr;
+}
+
+void f_TemplateArguments (char* str, int lineno, int charno) {
+    char* ptr = str + 1, *end, c;
+    Type_t Type;
+
+    while ( ptr && *ptr && *ptr != '>' ) {
+
+        if ( !(end = strchr (ptr, ',')) ) {
+            end = ptr + strlen (ptr);
+        }
+
+        c = *end;
+        *end = 0;
+
+        Type = f_TypeFromString (ptr);
+
+        if ( Type != 0 )
+            f_TypeBasic (Type, lineno, charno);
+
+        ptr = end + 1;
+        *end = c;
+    }
 }

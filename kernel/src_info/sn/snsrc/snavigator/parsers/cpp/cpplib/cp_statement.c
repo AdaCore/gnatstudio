@@ -155,7 +155,7 @@ extern Boolean_t f_CompoundStatement( char *types, char *names, char* positions,
              arg_type_charno_end = 0;
          }
 
-         if( *names_beg && types_beg[0] != '.' )
+         if( *types_beg && *types_beg != '.' )
          {
             Type_t Type;
 
@@ -169,27 +169,29 @@ extern Boolean_t f_CompoundStatement( char *types, char *names, char* positions,
                Type = f_TypeCreateInt();
             }
 
-            if( Type->Declarator == 0 )
-            {
-               Type->Declarator = f_DeclaratorCreate();
-               Type->Declarator->Name = f_NameCreate( names_beg );
-            }
-            else
-            {
-               if( Type->Declarator->Name )
-               {
-                  f_InternalError( 62 );
-               }
-               else
-               {
-                  Type->Declarator->Name = f_NameCreate( names_beg );
-               }
+            if ( *names_beg ) {
+                if( Type->Declarator == 0 )
+                {
+                   Type->Declarator = f_DeclaratorCreate();
+                   Type->Declarator->Name = f_NameCreate( names_beg );
+                }
+                else
+                {
+                   if( Type->Declarator->Name )
+                   {
+                      f_InternalError( 62 );
+                   }
+                   else
+                   {
+                      Type->Declarator->Name = f_NameCreate( names_beg );
+                   }
+                }
             }
 
             /* felodjuk az esetleges typedef-eket */
             Type = f_TypeBasic( Type, arg_type_lineno_beg, arg_type_charno_beg );
 
-            if( SymtabInsert( SymtabVariable
+            if( *names_beg && SymtabInsert( SymtabVariable
                             , Type->Declarator->Name->pcName
                             , (void *) Type
                             , niveauComp ))
