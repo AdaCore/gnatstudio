@@ -486,7 +486,13 @@ package body Glide_Kernel.Project is
       Prj.Proc.Process
         (Handle.Project_View, Handle.Project,
          Report_Error'Unrestricted_Access);
-      pragma Assert (Handle.Project_View /= No_Project);
+
+      if Handle.Project_View = No_Project then
+         --  Parsing was not successful: revert to the default project
+
+         Load_Default_Project (Handle, Get_Current_Dir, False);
+         return;
+      end if;
 
       --  Parse the list of source files for languages other than Ada.
       --  At the same time, check that the gnatls attribute is coherent between
