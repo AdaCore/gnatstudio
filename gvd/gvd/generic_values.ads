@@ -91,13 +91,17 @@ package Generic_Values is
    --  Xref_GC is the graphic context to use when the text being displayed
    --  is clickable by the user.
 
-   procedure Size_Request (Item   : in out Generic_Type;
-                           Font   : Gdk.Font.Gdk_Font)
+   procedure Size_Request
+     (Item           : in out Generic_Type;
+      Font           : Gdk.Font.Gdk_Font;
+      Hide_Big_Items : Boolean := False)
       is abstract;
    --  Compute the size that Item needs to display itself on the screen.
    --  The two fields Width and Height are initialized by this function.
    --  This function is always guaranteed to be called when an item is resized,
    --  its value is changed, or the font is changed.
+   --  If Hide_Big_Items is True, then items bigger than a certain limit will
+   --  be automatically hidden before their size is computed.
 
    function Get_Width (Item : Generic_Type) return Glib.Gint;
    --  Return the width that Item needs to display itself on the screen.
@@ -457,8 +461,10 @@ private
                     Font    : Gdk.Font.Gdk_Font;
                     Pixmap  : Gdk.Pixmap.Gdk_Pixmap;
                     X, Y    : Glib.Gint := 0);
-   procedure Size_Request (Item   : in out Simple_Type;
-                           Font   : Gdk.Font.Gdk_Font);
+   procedure Size_Request
+     (Item           : in out Simple_Type;
+      Font           : Gdk.Font.Gdk_Font;
+      Hide_Big_Items : Boolean := False);
    function Get_Component_Name (Item : access Simple_Type;
                                 Lang : access Language.Language_Root'Class;
                                 Name : String;
@@ -546,8 +552,10 @@ private
                     Font    : Gdk.Font.Gdk_Font;
                     Pixmap  : Gdk.Pixmap.Gdk_Pixmap;
                     X, Y    : Glib.Gint := 0);
-   procedure Size_Request (Item   : in out Array_Type;
-                           Font   : Gdk.Font.Gdk_Font);
+   procedure Size_Request
+     (Item           : in out Array_Type;
+      Font           : Gdk.Font.Gdk_Font;
+      Hide_Big_Items : Boolean := False);
    function Get_Component_Name (Item : access Array_Type;
                                 Lang : access Language.Language_Root'Class;
                                 Name : String;
@@ -583,8 +591,10 @@ private
                     Pixmap  : Gdk.Pixmap.Gdk_Pixmap;
                     X, Y    : Glib.Gint := 0);
 
-   procedure Size_Request (Item   : in out Repeat_Type;
-                           Font   : Gdk.Font.Gdk_Font);
+   procedure Size_Request
+     (Item           : in out Repeat_Type;
+      Font           : Gdk.Font.Gdk_Font;
+      Hide_Big_Items : Boolean := False);
    function Get_Component_Name (Item : access Repeat_Type;
                                 Lang : access Language.Language_Root'Class;
                                 Name : String;
@@ -641,8 +651,10 @@ private
                     Font    : Gdk.Font.Gdk_Font;
                     Pixmap  : Gdk.Pixmap.Gdk_Pixmap;
                     X, Y    : Glib.Gint := 0);
-   procedure Size_Request (Item   : in out Record_Type;
-                           Font   : Gdk.Font.Gdk_Font);
+   procedure Size_Request
+     (Item           : in out Record_Type;
+      Font           : Gdk.Font.Gdk_Font;
+      Hide_Big_Items : Boolean := False);
    function Get_Component_Name (Item : access Record_Type;
                                 Lang : access Language.Language_Root'Class;
                                 Name : String;
@@ -678,8 +690,10 @@ private
                     Font    : Gdk.Font.Gdk_Font;
                     Pixmap  : Gdk.Pixmap.Gdk_Pixmap;
                     X, Y    : Glib.Gint := 0);
-   procedure Size_Request (Item   : in out Class_Type;
-                           Font   : Gdk.Font.Gdk_Font);
+   procedure Size_Request
+     (Item           : in out Class_Type;
+      Font           : Gdk.Font.Gdk_Font;
+      Hide_Big_Items : Boolean := False);
    function Get_Component_Name (Item : access Class_Type;
                                 Lang : access Language.Language_Root'Class;
                                 Name : String;

@@ -47,6 +47,9 @@ package body Generic_Values is
    --  Space of the column on the left of records and arrays, where the user
    --  can click to select the whole array or record.
 
+   Big_Item_Height : constant Gint := 150;
+   --  Items taller than this value will start hidden.
+
    Hidden_Pixmap : Gdk_Pixmap;
    Hidden_Mask   : Gdk_Bitmap;
    Hidden_Height : Gint;
@@ -1437,8 +1440,10 @@ package body Generic_Values is
    -- Size_Request --
    ------------------
 
-   procedure Size_Request (Item   : in out Simple_Type;
-                           Font   : Gdk.Font.Gdk_Font)
+   procedure Size_Request
+     (Item           : in out Simple_Type;
+      Font           : Gdk.Font.Gdk_Font;
+      Hide_Big_Items : Boolean := False)
    is
    begin
       if Item.Value /= null then
@@ -1453,50 +1458,61 @@ package body Generic_Values is
    -- Size_Request --
    ------------------
 
-   procedure Size_Request (Item   : in out Array_Type;
-                           Font   : Gdk.Font.Gdk_Font)
+   procedure Size_Request
+     (Item           : in out Array_Type;
+      Font           : Gdk.Font.Gdk_Font;
+      Hide_Big_Items : Boolean := False)
    is
       Total_Height, Total_Width : Gint := 0;
    begin
+      if Item.Visible then
+         Item.Index_Width := 20;  --  minimal width
+         if Item.Values /= null then
+            for V in Item.Values'Range loop
+               Size_Request (Item.Values (V).Value.all, Font, Hide_Big_Items);
+               Total_Width  :=
+                 Gint'Max (Total_Width, Item.Values (V).Value.Width);
+               Total_Height := Total_Height + Item.Values (V).Value.Height;
+               Item.Index_Width :=
+                 Gint'Max (Item.Index_Width, String_Width
+                           (Font,
+                            Index_String (Item, Item.Values (V).Index,
+                                          Item.Num_Dimensions)));
+            end loop;
+            Total_Height :=
+              Total_Height + (Item.Values'Length - 1) * Line_Spacing;
+         end if;
+
+         Item.Index_Width :=
+           Item.Index_Width + Text_Width (Font, String'(" => "));
+
+         --  Keep enough space for the border (Border_Spacing on each side)
+
+         Item.Width  := Total_Width + Item.Index_Width + Left_Border
+           + 2 * Border_Spacing;
+         Item.Height := Total_Height + 2 * Border_Spacing;
+
+         --  Hide big items for efficiency
+         if Hide_Big_Items and then Item.Height > Big_Item_Height then
+            Item.Visible := False;
+         end if;
+      end if;
+
       if not Item.Visible then
+         Item.Index_Width := 0;
          Item.Width := Left_Border + 2 * Border_Spacing + Hidden_Width;
          Item.Height := 2 * Border_Spacing + Hidden_Height;
-         return;
       end if;
-
-      Item.Index_Width := 20;  --  minimal width
-      if Item.Values /= null then
-         for V in Item.Values'Range loop
-            Size_Request (Item.Values (V).Value.all, Font);
-            Total_Width  :=
-              Gint'Max (Total_Width, Item.Values (V).Value.Width);
-            Total_Height := Total_Height + Item.Values (V).Value.Height;
-            Item.Index_Width :=
-              Gint'Max (Item.Index_Width, String_Width
-                        (Font,
-                         Index_String (Item, Item.Values (V).Index,
-                                       Item.Num_Dimensions)));
-         end loop;
-         Total_Height :=
-           Total_Height + (Item.Values'Length - 1) * Line_Spacing;
-      end if;
-
-      Item.Index_Width :=
-        Item.Index_Width + Text_Width (Font, String'(" => "));
-
-      --  Keep enough space for the border (Border_Spacing on each side)
-
-      Item.Width  := Total_Width + Item.Index_Width + Left_Border
-        + 2 * Border_Spacing;
-      Item.Height := Total_Height + 2 * Border_Spacing;
    end Size_Request;
 
    ------------------
    -- Size_Request --
    ------------------
 
-   procedure Size_Request (Item   : in out Record_Type;
-                           Font   : Gdk.Font.Gdk_Font)
+   procedure Size_Request
+     (Item           : in out Record_Type;
+      Font           : Gdk.Font.Gdk_Font;
+      Hide_Big_Items : Boolean := False)
    is
       Total_Height, Total_Width : Gint := 0;
       Largest_Name : String_Access := null;
@@ -1504,77 +1520,88 @@ package body Generic_Values is
       --  null record ?
 
       if Item.Fields'Length = 0 then
+         Item.Gui_Fields_Width := 0;
          Item.Width := 0;
          Item.Height := 0;
          return;
       end if;
 
+      if Item.Visible then
+         for F in Item.Fields'Range loop
+            if Largest_Name = null
+              or else Item.Fields (F).Name.all'Length > Largest_Name'Length
+            then
+               Largest_Name := Item.Fields (F).Name;
+            end if;
+
+            --  not a variant part ?
+
+            if Item.Fields (F).Value /= null then
+               Size_Request (Item.Fields (F).Value.all, Font, Hide_Big_Items);
+
+               Total_Width  :=
+                 Gint'Max (Total_Width, Item.Fields (F).Value.Width);
+               Total_Height :=
+                 Total_Height + Item.Fields (F).Value.Height;
+            end if;
+
+            --  a variant part ?
+
+            if Item.Fields (F).Variant_Part /= null then
+               for V in Item.Fields (F).Variant_Part'Range loop
+                  Size_Request (Item.Fields (F).Variant_Part (V).all, Font,
+                                Hide_Big_Items);
+
+                  Total_Width  := Gint'Max
+                    (Total_Width,
+                     Item.Fields (F).Variant_Part (V).Width);
+                  Total_Height := Total_Height
+                    + Item.Fields (F).Variant_Part (V).Height;
+               end loop;
+               Total_Height := Total_Height +
+                 (Item.Fields (F).Variant_Part'Length - 1) * Line_Spacing;
+            end if;
+         end loop;
+
+         Total_Height := Total_Height
+           + (Item.Fields'Length - 1) * Line_Spacing;
+
+         if Largest_Name = null then
+            Item.Gui_Fields_Width := Text_Width (Font, String' (" => "));
+         else
+            Item.Gui_Fields_Width :=
+              Text_Width (Font, Largest_Name.all & " => ");
+         end if;
+
+         --  Keep enough space for the border (Border_Spacing on each side)
+         Item.Width  := Total_Width + Item.Gui_Fields_Width + Left_Border
+           + 2 * Border_Spacing;
+         Item.Height := Total_Height + 2 * Border_Spacing;
+
+         if Hide_Big_Items and then Item.Height > Big_Item_Height then
+            Item.Visible := False;
+         end if;
+      end if;
+
       if not Item.Visible then
+         Item.Gui_Fields_Width := 0;
          Item.Width := Left_Border + 2 * Border_Spacing + Hidden_Width;
          Item.Height := 2 * Border_Spacing + Hidden_Height;
-         return;
       end if;
-
-      for F in Item.Fields'Range loop
-         if Largest_Name = null
-           or else Item.Fields (F).Name.all'Length > Largest_Name'Length
-         then
-            Largest_Name := Item.Fields (F).Name;
-         end if;
-
-         --  not a variant part ?
-
-         if Item.Fields (F).Value /= null then
-            Size_Request (Item.Fields (F).Value.all, Font);
-
-            Total_Width  :=
-              Gint'Max (Total_Width, Item.Fields (F).Value.Width);
-            Total_Height :=
-              Total_Height + Item.Fields (F).Value.Height;
-         end if;
-
-         --  a variant part ?
-
-         if Item.Fields (F).Variant_Part /= null then
-            for V in Item.Fields (F).Variant_Part'Range loop
-               Size_Request (Item.Fields (F).Variant_Part (V).all, Font);
-
-               Total_Width  := Gint'Max
-                 (Total_Width,
-                  Item.Fields (F).Variant_Part (V).Width);
-               Total_Height := Total_Height
-                 + Item.Fields (F).Variant_Part (V).Height;
-            end loop;
-            Total_Height := Total_Height +
-              (Item.Fields (F).Variant_Part'Length - 1) * Line_Spacing;
-         end if;
-      end loop;
-
-      Total_Height := Total_Height
-        + (Item.Fields'Length - 1) * Line_Spacing;
-
-      if Largest_Name = null then
-         Item.Gui_Fields_Width := Text_Width (Font, String' (" => "));
-      else
-         Item.Gui_Fields_Width := Text_Width (Font, Largest_Name.all & " => ");
-      end if;
-
-      --  Keep enough space for the border (Border_Spacing on each side)
-      Item.Width  := Total_Width + Item.Gui_Fields_Width + Left_Border
-        + 2 * Border_Spacing;
-      Item.Height := Total_Height + 2 * Border_Spacing;
    end Size_Request;
 
    ------------------
    -- Size_Request --
    ------------------
 
-   procedure Size_Request (Item   : in out Repeat_Type;
-                           Font   : Gdk.Font.Gdk_Font)
+   procedure Size_Request
+     (Item           : in out Repeat_Type;
+      Font           : Gdk.Font.Gdk_Font;
+      Hide_Big_Items : Boolean := False)
    is
       Str : String := "<repeat " & Integer'Image (Item.Repeat_Num) & "> ";
    begin
-      Size_Request (Item.Value.all, Font);
+      Size_Request (Item.Value.all, Font, Hide_Big_Items);
       Item.Width :=
         Item.Value.Width + Text_Width (Font, Str) + 2 * Border_Spacing;
       Item.Height :=
@@ -1586,39 +1613,46 @@ package body Generic_Values is
    -- Size_Request --
    ------------------
 
-   procedure Size_Request (Item   : in out Class_Type;
-                           Font   : Gdk.Font.Gdk_Font)
+   procedure Size_Request
+     (Item           : in out Class_Type;
+      Font           : Gdk.Font.Gdk_Font;
+      Hide_Big_Items : Boolean := False)
    is
       Total_Height, Total_Width : Gint := 0;
    begin
+      if Item.Visible then
+         for A in Item.Ancestors'Range loop
+            if Item.Ancestors (A) /= null then
+               Size_Request (Item.Ancestors (A).all, Font, Hide_Big_Items);
+
+               --  If we don't have an null record
+               if Item.Ancestors (A).Height /= 0 then
+                  Total_Height := Total_Height + Item.Ancestors (A).Height
+                    + Line_Spacing;
+               end if;
+               Total_Width := Gint'Max (Total_Width, Item.Ancestors (A).Width);
+            end if;
+         end loop;
+
+         Size_Request (Item.Child.all, Font, Hide_Big_Items);
+
+         Total_Width := Gint'Max (Total_Width, Item.Child.Width) + Left_Border;
+         Item.Child.Width := Total_Width;
+
+         --  Dont print an extra border around, since each ancestors and child
+         --  are records and already have their own borders.
+         Item.Width  := Total_Width;
+         Item.Height := Total_Height + Item.Child.Height;
+
+         if Hide_Big_Items and then Item.Height > Big_Item_Height then
+            Item.Visible := False;
+         end if;
+      end if;
+
       if not Item.Visible then
          Item.Width := Left_Border + 2 * Border_Spacing + Hidden_Width;
          Item.Height := 2 * Border_Spacing + Hidden_Height;
-         return;
       end if;
-
-      for A in Item.Ancestors'Range loop
-         if Item.Ancestors (A) /= null then
-            Size_Request (Item.Ancestors (A).all, Font);
-
-            --  If we don't have an null record
-            if Item.Ancestors (A).Height /= 0 then
-               Total_Height := Total_Height + Item.Ancestors (A).Height
-                 + Line_Spacing;
-            end if;
-            Total_Width := Gint'Max (Total_Width, Item.Ancestors (A).Width);
-         end if;
-      end loop;
-
-      Size_Request (Item.Child.all, Font);
-
-      Total_Width := Gint'Max (Total_Width, Item.Child.Width) + Left_Border;
-      Item.Child.Width := Total_Width;
-
-      --  Dont print an extra border around, since each ancestors and child are
-      --  records and already have their own borders.
-      Item.Width  := Total_Width;
-      Item.Height := Total_Height + Item.Child.Height;
    end Size_Request;
 
    ---------------------
