@@ -1,5 +1,5 @@
-# This is the generic part of the support for multi-language
-# in Glide.
+# Generic Makefile to support compilation for multiple languages.
+# Copyright (C) 2001 ACT-Europe
 
 # This Makefile provides a very generic framework of the following
 # functionnalities:
@@ -20,10 +20,10 @@
 # ada:           compile all Ada files that are not up-to-date
 # c:             ditto for C files
 # c++:           ditto for C++ files
-# <ada file>:    recompile the specified file if needed.
+# <ada file>:    compile the specified file if needed.
 # <object file>: compile the corresponding source file if needed.
 
-# This Makefile expects the following variable to be set by the caller
+# This Makefile expects the following variables to be set by the caller
 # (typically another Makefile):
 #
 # C_EXT        extension of C files (optional)
