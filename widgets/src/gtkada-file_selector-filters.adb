@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --               GtkAda - Ada95 binding for Gtk+/Gnome               --
 --                                                                   --
---                   Copyright (C) 2001 ACT-Europe                   --
+--                   Copyright (C) 2001-2002 ACT-Europe              --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -65,7 +65,9 @@ package body Gtkada.File_Selector.Filters is
       State     : out File_State;
       Pixmap    : out Gdk.Pixmap.Gdk_Pixmap;
       Mask      : out Gdk.Bitmap.Gdk_Bitmap;
-      Text      : out GNAT.OS_Lib.String_Access) is
+      Text      : out GNAT.OS_Lib.String_Access)
+   is
+      pragma Unreferenced (Dir, Win, Filter);
    begin
       Text   := null;
       Pixmap := null;
