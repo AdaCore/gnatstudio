@@ -60,7 +60,7 @@ package body Debugger.Gdb.C is
    --------------------------
 
    function Get_Language_Context
-     (Lang : access Gdb_C_Language) return Language.Language_Context
+     (Lang : access Gdb_C_Language) return Language.Language_Context_Access
    is
       pragma Unreferenced (Lang);
    begin

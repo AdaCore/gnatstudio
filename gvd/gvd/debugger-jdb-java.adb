@@ -55,7 +55,7 @@ package body Debugger.Jdb.Java is
    --------------------------
 
    function Get_Language_Context
-     (Lang : access Jdb_Java_Language) return Language.Language_Context
+     (Lang : access Jdb_Java_Language) return Language.Language_Context_Access
    is
       pragma Unreferenced (Lang);
    begin

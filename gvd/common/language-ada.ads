@@ -39,7 +39,7 @@ package Language.Ada is
      return GNAT.Regpat.Pattern_Matcher;
 
    function Get_Language_Context
-     (Lang : access Ada_Language) return Language_Context;
+     (Lang : access Ada_Language) return Language_Context_Access;
 
    --------------
    -- Explorer --

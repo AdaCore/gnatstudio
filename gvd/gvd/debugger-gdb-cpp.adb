@@ -99,7 +99,7 @@ package body Debugger.Gdb.Cpp is
    --------------------------
 
    function Get_Language_Context
-     (Lang : access Gdb_Cpp_Language) return Language.Language_Context
+     (Lang : access Gdb_Cpp_Language) return Language.Language_Context_Access
    is
       pragma Unreferenced (Lang);
    begin

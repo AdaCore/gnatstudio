@@ -381,24 +381,26 @@ package body Language.Ada is
    -- Get_Language_Context --
    --------------------------
 
+   Ada_Context : aliased Language_Context :=
+     (Comment_Start_Length          => 0,
+      Comment_End_Length            => 0,
+      New_Line_Comment_Start_Length => 2,
+      Comment_Start                 => "",
+      Comment_End                   => "",
+      New_Line_Comment_Start        => "--",
+      String_Delimiter              => '"',
+      Quote_Character               => ASCII.NUL,
+      Constant_Character            => ''',
+      Can_Indent                    => True,
+      Syntax_Highlighting           => True,
+      Case_Sensitive                => False);
+
    function Get_Language_Context
-     (Lang : access Ada_Language) return Language_Context
+     (Lang : access Ada_Language) return Language_Context_Access
    is
       pragma Unreferenced (Lang);
    begin
-      return
-        (Comment_Start_Length          => 0,
-         Comment_End_Length            => 0,
-         New_Line_Comment_Start_Length => 2,
-         Comment_Start                 => "",
-         Comment_End                   => "",
-         New_Line_Comment_Start        => "--",
-         String_Delimiter              => '"',
-         Quote_Character               => ASCII.NUL,
-         Constant_Character            => ''',
-         Can_Indent                    => True,
-         Syntax_Highlighting           => True,
-         Case_Sensitive                => False);
+      return Ada_Context'Access;
    end Get_Language_Context;
 
    ------------------

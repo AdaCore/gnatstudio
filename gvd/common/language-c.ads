@@ -43,7 +43,7 @@ package Language.C is
      (Lang : access C_Language) return GNAT.Regpat.Pattern_Matcher;
 
    function Get_Language_Context
-     (Lang : access C_Language) return Language_Context;
+     (Lang : access C_Language) return Language_Context_Access;
 
    C_Keywords_Regexp : constant String :=
      "auto|break|c(ase|on(st|tinue)|har)|d(efault|o|ouble)|e(lse|num|xtern)|" &

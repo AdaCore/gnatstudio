@@ -95,24 +95,26 @@ package body Language.Unknown is
    -- Get_Language_Context --
    --------------------------
 
+   Unknown_Context : aliased Language_Context :=
+     (Comment_Start_Length          => 0,
+      Comment_End_Length            => 0,
+      New_Line_Comment_Start_Length => 0,
+      Comment_Start                 => "",
+      Comment_End                   => "",
+      New_Line_Comment_Start        => "",
+      String_Delimiter              => ASCII.NUL,
+      Quote_Character               => ASCII.NUL,
+      Constant_Character            => ASCII.NUL,
+      Can_Indent                    => False,
+      Syntax_Highlighting           => False,
+      Case_Sensitive                => True);
+
    function Get_Language_Context
-     (Lang : access Unknown_Language) return Language_Context
+     (Lang : access Unknown_Language) return Language_Context_Access
    is
       pragma Unreferenced (Lang);
    begin
-      return
-        (Comment_Start_Length          => 0,
-         Comment_End_Length            => 0,
-         New_Line_Comment_Start_Length => 0,
-         Comment_Start                 => "",
-         Comment_End                   => "",
-         New_Line_Comment_Start        => "",
-         String_Delimiter              => ASCII.NUL,
-         Quote_Character               => ASCII.NUL,
-         Constant_Character            => ASCII.NUL,
-         Can_Indent                    => False,
-         Syntax_Highlighting           => False,
-         Case_Sensitive                => True);
+      return Unknown_Context'Access;
    end Get_Language_Context;
 
    ------------------------

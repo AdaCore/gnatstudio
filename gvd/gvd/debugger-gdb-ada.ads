@@ -45,7 +45,7 @@ package Debugger.Gdb.Ada is
      (Lang : access Gdb_Ada_Language) return GNAT.Regpat.Pattern_Matcher;
 
    function Get_Language_Context
-     (Lang : access Gdb_Ada_Language) return Language.Language_Context;
+     (Lang : access Gdb_Ada_Language) return Language.Language_Context_Access;
 
    --------------
    -- Explorer --

@@ -38,7 +38,7 @@ package Language.Cpp is
      (Lang : access Cpp_Language) return GNAT.Regpat.Pattern_Matcher;
 
    function Get_Language_Context
-     (Lang : access Cpp_Language) return Language_Context;
+     (Lang : access Cpp_Language) return Language_Context_Access;
 
    --------------
    -- Explorer --

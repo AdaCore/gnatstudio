@@ -35,7 +35,7 @@ package Language.Java is
      return GNAT.Regpat.Pattern_Matcher;
 
    function Get_Language_Context
-     (Lang : access Java_Language) return Language_Context;
+     (Lang : access Java_Language) return Language_Context_Access;
 
    function Dereference_Name
      (Lang : access Java_Language;

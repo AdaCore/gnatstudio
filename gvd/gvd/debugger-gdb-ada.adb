@@ -65,7 +65,7 @@ package body Debugger.Gdb.Ada is
    --------------------------
 
    function Get_Language_Context
-     (Lang : access Gdb_Ada_Language) return Language.Language_Context
+     (Lang : access Gdb_Ada_Language) return Language.Language_Context_Access
    is
       pragma Unreferenced (Lang);
    begin

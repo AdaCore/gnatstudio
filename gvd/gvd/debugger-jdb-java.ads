@@ -45,7 +45,7 @@ package Debugger.Jdb.Java is
      return GNAT.Regpat.Pattern_Matcher;
 
    function Get_Language_Context
-     (Lang : access Jdb_Java_Language) return Language.Language_Context;
+     (Lang : access Jdb_Java_Language) return Language.Language_Context_Access;
 
    --------------
    -- Explorer --

@@ -34,7 +34,7 @@ package Language.Unknown is
      return GNAT.Regpat.Pattern_Matcher;
 
    function Get_Language_Context
-     (Lang : access Unknown_Language) return Language_Context;
+     (Lang : access Unknown_Language) return Language_Context_Access;
 
    function Dereference_Name
      (Lang : access Unknown_Language;

@@ -110,24 +110,26 @@ package body Language.Cpp is
    -- Get_Language_Context --
    --------------------------
 
+   Cpp_Context : aliased Language_Context :=
+     (Comment_Start_Length          => 2,
+      Comment_End_Length            => 2,
+      New_Line_Comment_Start_Length => 2,
+      Comment_Start                 => "/*",
+      Comment_End                   => "*/",
+      New_Line_Comment_Start        => "//",
+      String_Delimiter              => '"',
+      Quote_Character               => '\',
+      Constant_Character            => ''',
+      Can_Indent                    => True,
+      Syntax_Highlighting           => True,
+      Case_Sensitive                => True);
+
    function Get_Language_Context
-     (Lang : access Cpp_Language) return Language_Context
+     (Lang : access Cpp_Language) return Language_Context_Access
    is
       pragma Unreferenced (Lang);
    begin
-      return
-        (Comment_Start_Length          => 2,
-         Comment_End_Length            => 2,
-         New_Line_Comment_Start_Length => 2,
-         Comment_Start                 => "/*",
-         Comment_End                   => "*/",
-         New_Line_Comment_Start        => "//",
-         String_Delimiter              => '"',
-         Quote_Character               => '\',
-         Constant_Character            => ''',
-         Can_Indent                    => True,
-         Syntax_Highlighting           => True,
-         Case_Sensitive                => True);
+      return Cpp_Context'Access;
    end Get_Language_Context;
 
    --------------------
