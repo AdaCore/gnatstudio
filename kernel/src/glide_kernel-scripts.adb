@@ -32,6 +32,7 @@ with Gtk.Enums;            use Gtk.Enums;
 with Gtk.GEntry;           use Gtk.GEntry;
 with Gtk.Stock;            use Gtk.Stock;
 with Gtkada.Dialogs;       use Gtkada.Dialogs;
+with Glide_Kernel.Custom;  use Glide_Kernel.Custom;
 with Glide_Kernel.Modules; use Glide_Kernel.Modules;
 with Glide_Kernel.Project; use Glide_Kernel.Project;
 with Glide_Main_Window;    use Glide_Main_Window;
@@ -158,6 +159,7 @@ package body Glide_Kernel.Scripts is
    Module_Cst     : aliased constant String := "module";
    Msg_Cst        : aliased constant String := "msg";
    Param1_Cst     : aliased constant String := "param1";
+   Xml_Cst        : aliased constant String := "xml";
    Project_Cmd_Parameters : constant Cst_Argument_List :=
      (1 => Name_Cst'Access);
    Insmod_Cmd_Parameters  : constant Cst_Argument_List :=
@@ -177,6 +179,8 @@ package body Glide_Kernel.Scripts is
    Input_Dialog_Cmd_Parameters : constant Cst_Argument_List :=
      (1 => Msg_Cst'Access,
       2 => Param1_Cst'Access);
+   Xml_Custom_Parameters : constant Cst_Argument_List :=
+     (1 => Xml_Cst'Access);
 
    ----------
    -- Free --
@@ -577,6 +581,11 @@ package body Glide_Kernel.Scripts is
 
       elsif Command = "exit" then
          Quit (Glide_Window (Get_Main_Window (Kernel)));
+
+      elsif Command = "add_xml_customization" then
+         Name_Parameters (Data, Xml_Custom_Parameters);
+         Glide_Kernel.Custom.Add_Customization_String
+           (Kernel, Nth_Arg (Data, 1));
 
       elsif Command = "dialog" then
          Name_Parameters (Data, Dialog_Cmd_Parameters);
@@ -1163,6 +1172,20 @@ package body Glide_Kernel.Scripts is
              & "An empty list is returned if the user presses Cancel"),
          Minimum_Args => 2,
          Maximum_Args => 100,
+         Handler      => Default_Command_Handler'Access);
+      Register_Command
+        (Kernel,
+         Command      => "add_xml_customization",
+         Params       => Parameter_Names_To_Usage (Xml_Custom_Parameters),
+         Description  =>
+           -("Load an XML customization string. This string should contain"
+             & " one or more toplevel tags similar to what is normally found"
+             & " in custom files, such as <key>, <alias>, <action>,.."
+             & ASCII.LF
+             & "Optionally you can also pass the full contents of an XML file,"
+             & " starting from the <?xml?> header"),
+         Minimum_Args => 1,
+         Maximum_Args => 1,
          Handler      => Default_Command_Handler'Access);
 
 
