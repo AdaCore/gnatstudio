@@ -18,7 +18,7 @@ end Gtk_New;
 
 procedure Initialize (Main_Debug_Window : access Main_Debug_Window_Record'Class) is
    The_Accel_Group : Gtk_Accel_Group;
-   Combo1_Items : String_List.Glist;
+   Combo6_Items : String_List.Glist;
 
 begin
    Gtk.Window.Initialize (Main_Debug_Window, Window_Toplevel);
@@ -1064,193 +1064,181 @@ begin
    Add (Main_Debug_Window.Help1_Menu, Main_Debug_Window.About_Odd1);
    Set_Right_Justify (Main_Debug_Window.About_Odd1, False);
 
-   Gtk_New (Main_Debug_Window.Handlebox1);
-   Pack_Start (Main_Debug_Window.Vbox1, Main_Debug_Window.Handlebox1, False, False, 0);
-   Set_Shadow_Type (Main_Debug_Window.Handlebox1, Shadow_Out);
-   Set_Handle_Position (Main_Debug_Window.Handlebox1, Pos_Left);
-   Set_Snap_Edge (Main_Debug_Window.Handlebox1, Pos_Top);
-
    Gtk_New (Main_Debug_Window.Toolbar1, Orientation_Horizontal, Toolbar_Icons);
-   Add (Main_Debug_Window.Handlebox1, Main_Debug_Window.Toolbar1);
+   Pack_Start (Main_Debug_Window.Vbox1, Main_Debug_Window.Toolbar1, False, False, 0);
    Set_Space_Size (Main_Debug_Window.Toolbar1, 5);
    Set_Space_Style (Main_Debug_Window.Toolbar1, Toolbar_Space_Empty);
    Set_Tooltips (Main_Debug_Window.Toolbar1, True);
    Set_Button_Relief (Main_Debug_Window.Toolbar1, Relief_Normal);
-   Main_Debug_Window.Button12 := Append_Element
+   Main_Debug_Window.Button62 := Append_Element
      (Toolbar => Main_Debug_Window.Toolbar1,
       The_Type => Toolbar_Child_Button,
       Text => -"",
       Tooltip_Text => -"Lookup () in the source",
       Icon => Gtk_Widget (Create_Pixmap ("lookup.xpm", Main_Debug_Window)));
-   Main_Debug_Window.Button13 := Append_Element
+   Main_Debug_Window.Button63 := Append_Element
      (Toolbar => Main_Debug_Window.Toolbar1,
       The_Type => Toolbar_Child_Button,
       Text => -"",
       Icon => Gtk_Widget (Create_Pixmap ("findfwd.xpm", Main_Debug_Window)));
-   Main_Debug_Window.Button14 := Append_Element
+   Main_Debug_Window.Button64 := Append_Element
      (Toolbar => Main_Debug_Window.Toolbar1,
       The_Type => Toolbar_Child_Button,
       Text => -"",
       Tooltip_Text => -"Set/Delete breakpoint at ()",
       Icon => Gtk_Widget (Create_Pixmap ("breakat.xpm", Main_Debug_Window)));
-   Main_Debug_Window.Button15 := Append_Element
+   Main_Debug_Window.Button65 := Append_Element
      (Toolbar => Main_Debug_Window.Toolbar1,
       The_Type => Toolbar_Child_Button,
       Text => -"",
       Tooltip_Text => -"Stop whenever () changes",
       Icon => Gtk_Widget (Create_Pixmap ("watch.xpm", Main_Debug_Window)));
-   Main_Debug_Window.Button16 := Append_Element
+   Main_Debug_Window.Button66 := Append_Element
      (Toolbar => Main_Debug_Window.Toolbar1,
       The_Type => Toolbar_Child_Button,
       Text => -"",
       Tooltip_Text => -"Print ()",
       Icon => Gtk_Widget (Create_Pixmap ("print.xpm", Main_Debug_Window)));
-   Main_Debug_Window.Button17 := Append_Element
+   Main_Debug_Window.Button67 := Append_Element
      (Toolbar => Main_Debug_Window.Toolbar1,
       The_Type => Toolbar_Child_Button,
       Text => -"",
       Tooltip_Text => -"Display ()",
       Icon => Gtk_Widget (Create_Pixmap ("display.xpm", Main_Debug_Window)));
-   Main_Debug_Window.Button18 := Append_Element
+   Main_Debug_Window.Button68 := Append_Element
      (Toolbar => Main_Debug_Window.Toolbar1,
       The_Type => Toolbar_Child_Button,
       Text => -"",
       Tooltip_Text => -"Plot ()",
       Icon => Gtk_Widget (Create_Pixmap ("plot.xpm", Main_Debug_Window)));
-   Main_Debug_Window.Button19 := Append_Element
+   Main_Debug_Window.Button69 := Append_Element
      (Toolbar => Main_Debug_Window.Toolbar1,
       The_Type => Toolbar_Child_Button,
       Text => -"",
       Icon => Gtk_Widget (Create_Pixmap ("show.xpm", Main_Debug_Window)));
-   Main_Debug_Window.Button20 := Append_Element
+   Main_Debug_Window.Button70 := Append_Element
      (Toolbar => Main_Debug_Window.Toolbar1,
       The_Type => Toolbar_Child_Button,
       Text => -"",
       Icon => Gtk_Widget (Create_Pixmap ("rotate.xpm", Main_Debug_Window)));
-   Main_Debug_Window.Button21 := Append_Element
+   Main_Debug_Window.Button71 := Append_Element
      (Toolbar => Main_Debug_Window.Toolbar1,
       The_Type => Toolbar_Child_Button,
       Text => -"",
       Tooltip_Text => -"Set the value of ()",
       Icon => Gtk_Widget (Create_Pixmap ("set.xpm", Main_Debug_Window)));
-   Main_Debug_Window.Button22 := Append_Element
+   Main_Debug_Window.Button72 := Append_Element
      (Toolbar => Main_Debug_Window.Toolbar1,
       The_Type => Toolbar_Child_Button,
       Text => -"",
       Icon => Gtk_Widget (Create_Pixmap ("undisplay.xpm", Main_Debug_Window)));
 
-   Gtk_New (Main_Debug_Window.Label1, -("( ): "));
-   Append_Widget (Main_Debug_Window.Toolbar1, Main_Debug_Window.Label1);
-   Set_Alignment (Main_Debug_Window.Label1, 0.5, 0.5);
-   Set_Padding (Main_Debug_Window.Label1, 0, 0);
-   Set_Justify (Main_Debug_Window.Label1, Justify_Center);
-   Set_Line_Wrap (Main_Debug_Window.Label1, False);
+   Gtk_New (Main_Debug_Window.Label53, -("( ): "));
+   Append_Widget (Main_Debug_Window.Toolbar1, Main_Debug_Window.Label53);
+   Set_Alignment (Main_Debug_Window.Label53, 0.5, 0.5);
+   Set_Padding (Main_Debug_Window.Label53, 0, 0);
+   Set_Justify (Main_Debug_Window.Label53, Justify_Center);
+   Set_Line_Wrap (Main_Debug_Window.Label53, False);
 
-   Gtk_New (Main_Debug_Window.Combo1);
-   Append_Widget (Main_Debug_Window.Toolbar1, Main_Debug_Window.Combo1);
-   Set_Case_Sensitive (Main_Debug_Window.Combo1, False);
-   Set_Use_Arrows (Main_Debug_Window.Combo1, True);
-   Set_Use_Arrows_Always (Main_Debug_Window.Combo1, False);
-   String_List.Append (Combo1_Items, -"");
-   Combo.Set_Popdown_Strings (Main_Debug_Window.Combo1, Combo1_Items);
-   Free_String_List (Combo1_Items);
+   Gtk_New (Main_Debug_Window.Combo6);
+   Append_Widget (Main_Debug_Window.Toolbar1, Main_Debug_Window.Combo6);
+   Set_Case_Sensitive (Main_Debug_Window.Combo6, False);
+   Set_Use_Arrows (Main_Debug_Window.Combo6, True);
+   Set_Use_Arrows_Always (Main_Debug_Window.Combo6, False);
+   String_List.Append (Combo6_Items, -"");
+   Combo.Set_Popdown_Strings (Main_Debug_Window.Combo6, Combo6_Items);
+   Free_String_List (Combo6_Items);
 
-   Main_Debug_Window.Entry1 := Get_Entry (Main_Debug_Window.Combo1);
-   Set_Editable (Main_Debug_Window.Entry1, True);
-   Set_Max_Length (Main_Debug_Window.Entry1, 0);
-   Set_Text (Main_Debug_Window.Entry1, -"");
-   Set_Visibility (Main_Debug_Window.Entry1, True);
-
-   Gtk_New (Main_Debug_Window.Handlebox2);
-   Pack_Start (Main_Debug_Window.Vbox1, Main_Debug_Window.Handlebox2, False, False, 0);
-   Set_Shadow_Type (Main_Debug_Window.Handlebox2, Shadow_Out);
-   Set_Handle_Position (Main_Debug_Window.Handlebox2, Pos_Left);
-   Set_Snap_Edge (Main_Debug_Window.Handlebox2, Pos_Top);
+   Main_Debug_Window.Entry15 := Get_Entry (Main_Debug_Window.Combo6);
+   Set_Editable (Main_Debug_Window.Entry15, True);
+   Set_Max_Length (Main_Debug_Window.Entry15, 0);
+   Set_Text (Main_Debug_Window.Entry15, -"");
+   Set_Visibility (Main_Debug_Window.Entry15, True);
 
    Gtk_New (Main_Debug_Window.Toolbar2, Orientation_Horizontal, Toolbar_Icons);
-   Add (Main_Debug_Window.Handlebox2, Main_Debug_Window.Toolbar2);
+   Pack_Start (Main_Debug_Window.Vbox1, Main_Debug_Window.Toolbar2, False, False, 0);
    Set_Space_Size (Main_Debug_Window.Toolbar2, 5);
    Set_Space_Style (Main_Debug_Window.Toolbar2, Toolbar_Space_Empty);
    Set_Tooltips (Main_Debug_Window.Toolbar2, True);
    Set_Button_Relief (Main_Debug_Window.Toolbar2, Relief_Normal);
-   Main_Debug_Window.Button23 := Append_Element
+   Main_Debug_Window.Button49 := Append_Element
      (Toolbar => Main_Debug_Window.Toolbar2,
       The_Type => Toolbar_Child_Button,
       Text => -"",
       Tooltip_Text => -"Start the debugged program",
       Icon => Gtk_Widget (Create_Pixmap ("run.xpm", Main_Debug_Window)));
-   Main_Debug_Window.Button24 := Append_Element
+   Main_Debug_Window.Button50 := Append_Element
      (Toolbar => Main_Debug_Window.Toolbar2,
       The_Type => Toolbar_Child_Button,
       Text => -"",
       Tooltip_Text => -"Start the debugged program, stopping at the beginning of the main procedure",
       Icon => Gtk_Widget (Create_Pixmap ("start.xpm", Main_Debug_Window)));
-   Main_Debug_Window.Button25 := Append_Element
-     (Toolbar => Main_Debug_Window.Toolbar2,
-      The_Type => Toolbar_Child_Button,
-      Text => -"",
-      Tooltip_Text => -"Interrupt debugged program",
-      Icon => Gtk_Widget (Create_Pixmap ("interrupt.xpm", Main_Debug_Window)));
-   Main_Debug_Window.Button26 := Append_Element
+   Main_Debug_Window.Button52 := Append_Element
      (Toolbar => Main_Debug_Window.Toolbar2,
       The_Type => Toolbar_Child_Button,
       Text => -"",
       Tooltip_Text => -"Step program until it reaches a different source line",
       Icon => Gtk_Widget (Create_Pixmap ("step.xpm", Main_Debug_Window)));
-   Main_Debug_Window.Button27 := Append_Element
+   Main_Debug_Window.Button53 := Append_Element
      (Toolbar => Main_Debug_Window.Toolbar2,
       The_Type => Toolbar_Child_Button,
       Text => -"",
       Tooltip_Text => -"Step one instruction exactly",
       Icon => Gtk_Widget (Create_Pixmap ("stepi.xpm", Main_Debug_Window)));
-   Main_Debug_Window.Button28 := Append_Element
+   Main_Debug_Window.Button54 := Append_Element
      (Toolbar => Main_Debug_Window.Toolbar2,
       The_Type => Toolbar_Child_Button,
       Text => -"",
       Tooltip_Text => -"Step program, proceeding through subroutine calls",
       Icon => Gtk_Widget (Create_Pixmap ("next.xpm", Main_Debug_Window)));
-   Main_Debug_Window.Button29 := Append_Element
+   Main_Debug_Window.Button55 := Append_Element
      (Toolbar => Main_Debug_Window.Toolbar2,
       The_Type => Toolbar_Child_Button,
       Text => -"",
       Tooltip_Text => -"Step one instruction, but proceed through subroutine calls",
       Icon => Gtk_Widget (Create_Pixmap ("nexti.xpm", Main_Debug_Window)));
-   Main_Debug_Window.Button30 := Append_Element
+   Main_Debug_Window.Button56 := Append_Element
      (Toolbar => Main_Debug_Window.Toolbar2,
       The_Type => Toolbar_Child_Button,
       Text => -"",
       Tooltip_Text => -"Execute until the program reaches a source line greater than the current",
       Icon => Gtk_Widget (Create_Pixmap ("until.xpm", Main_Debug_Window)));
-   Main_Debug_Window.Button31 := Append_Element
-     (Toolbar => Main_Debug_Window.Toolbar2,
-      The_Type => Toolbar_Child_Button,
-      Text => -"",
-      Tooltip_Text => -"Execute until selected stack frame returns",
-      Icon => Gtk_Widget (Create_Pixmap ("finish.xpm", Main_Debug_Window)));
-   Main_Debug_Window.Button32 := Append_Element
+   Main_Debug_Window.Button58 := Append_Element
      (Toolbar => Main_Debug_Window.Toolbar2,
       The_Type => Toolbar_Child_Button,
       Text => -"",
       Tooltip_Text => -"Continue program being debugged, after signal or breakpoint",
       Icon => Gtk_Widget (Create_Pixmap ("cont.xpm", Main_Debug_Window)));
-   Main_Debug_Window.Button33 := Append_Element
-     (Toolbar => Main_Debug_Window.Toolbar2,
-      The_Type => Toolbar_Child_Button,
-      Text => -"",
-      Tooltip_Text => -"Kill execution of program being debugged",
-      Icon => Gtk_Widget (Create_Pixmap ("kill.xpm", Main_Debug_Window)));
-   Main_Debug_Window.Button34 := Append_Element
+   Main_Debug_Window.Button60 := Append_Element
      (Toolbar => Main_Debug_Window.Toolbar2,
       The_Type => Toolbar_Child_Button,
       Text => -"",
       Tooltip_Text => -"Select and print stack frame that called this one",
       Icon => Gtk_Widget (Create_Pixmap ("up.xpm", Main_Debug_Window)));
-   Main_Debug_Window.Button35 := Append_Element
+   Main_Debug_Window.Button61 := Append_Element
      (Toolbar => Main_Debug_Window.Toolbar2,
       The_Type => Toolbar_Child_Button,
       Text => -"",
       Tooltip_Text => -"Select and print stack frame called by this one",
       Icon => Gtk_Widget (Create_Pixmap ("down.xpm", Main_Debug_Window)));
+   Main_Debug_Window.Button57 := Append_Element
+     (Toolbar => Main_Debug_Window.Toolbar2,
+      The_Type => Toolbar_Child_Button,
+      Text => -"",
+      Tooltip_Text => -"Execute until selected stack frame returns",
+      Icon => Gtk_Widget (Create_Pixmap ("finish.xpm", Main_Debug_Window)));
+   Main_Debug_Window.Button51 := Append_Element
+     (Toolbar => Main_Debug_Window.Toolbar2,
+      The_Type => Toolbar_Child_Button,
+      Text => -"",
+      Tooltip_Text => -"Interrupt debugged program",
+      Icon => Gtk_Widget (Create_Pixmap ("interrupt.xpm", Main_Debug_Window)));
+   Main_Debug_Window.Button59 := Append_Element
+     (Toolbar => Main_Debug_Window.Toolbar2,
+      The_Type => Toolbar_Child_Button,
+      Text => -"",
+      Tooltip_Text => -"Kill execution of program being debugged",
+      Icon => Gtk_Widget (Create_Pixmap ("kill.xpm", Main_Debug_Window)));
 
    Gtk_New (Main_Debug_Window.Frame7);
    Pack_Start (Main_Debug_Window.Vbox1, Main_Debug_Window.Frame7, True, True, 0);
