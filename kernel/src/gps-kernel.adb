@@ -88,7 +88,6 @@ with Language_Handlers.GPS;     use Language_Handlers.GPS;
 with Traces;                    use Traces;
 
 with Ada.Exceptions;            use Ada.Exceptions;
-with Ada.Text_IO;               use Ada.Text_IO;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with System; use System;
@@ -592,7 +591,6 @@ package body GPS.Kernel is
       MDI          : constant MDI_Window := Get_MDI (Handle);
       File_Name    : constant String := Handle.Home_Dir.all & Desktop_Name;
       Project_Name : constant String := Get_Project_Name;
-      File         : File_Type;
       N            : Node_Ptr;
       M            : Node_Ptr;
       Old          : Node_Ptr;
@@ -613,9 +611,6 @@ package body GPS.Kernel is
             Free (Err);
          end if;
       end if;
-
-      Create (File, Mode => Out_File, Name => File_Name);
-      Set_Output (File);
 
       N := new Node'
         (Tag           => new String'("GPS_Desktop"),
@@ -689,11 +684,8 @@ package body GPS.Kernel is
       M.Value := new String'(Gdk_Window_State'Image (State));
       Add_Child (N, M);
 
-      Print (N);
+      Print (N, File_Name);
       Free (N);
-
-      Set_Output (Standard_Output);
-      Close (File);
    end Save_Desktop;
 
    ----------------------
