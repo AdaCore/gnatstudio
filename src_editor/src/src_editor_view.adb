@@ -393,6 +393,10 @@ package body Src_Editor_View is
       pragma Unreferenced (Params, Buffer);
    begin
       if Realized_Is_Set (User) then
+         --  Clear the side columns cache.
+         User.Buffer_Top_Line := 0;
+
+         --  Redraw the side columns.
          Redraw_Columns (User);
       end if;
    end Side_Columns_Change_Handler;
@@ -1288,8 +1292,6 @@ package body Src_Editor_View is
 
       Set_Border_Window_Size (View, Enums.Text_Window_Left, Total_Width);
 
-      --  If the cache corresponds to the lines, redraw it.
-
       --  Create the graphical elements.
       Left_Window := Get_Window (View, Text_Window_Left);
 
@@ -1297,6 +1299,8 @@ package body Src_Editor_View is
         and then View.Top_Line = View.Buffer_Top_Line
         and then View.Bottom_Line = View.Buffer_Bottom_Line
       then
+         --  If the cache corresponds to the lines, redraw it.
+
          Draw_Pixmap
            (Drawable => Left_Window,
             Src      => View.Side_Column_Buffer,
@@ -1306,9 +1310,13 @@ package body Src_Editor_View is
             Xdest    => 0,
             Ydest    => 0);
       else
+         --  The lines have changed or the cache is not created : create it.
          if View.Side_Column_Buffer /= null then
             Gdk.Pixmap.Unref (View.Side_Column_Buffer);
          end if;
+
+         View.Buffer_Top_Line    := View.Top_Line;
+         View.Buffer_Bottom_Line := View.Bottom_Line;
 
          Layout := Create_Pango_Layout (View);
          Set_Font_Description (Layout, View.Pango_Font);
