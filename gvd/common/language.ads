@@ -19,6 +19,8 @@
 -----------------------------------------------------------------------
 
 with Interfaces.C.Strings; use Interfaces.C.Strings;
+with GNAT.Regpat;
+with Odd.Types;
 
 package Language is
 
@@ -43,6 +45,10 @@ package Language is
    --  be known, ie we can save a call to the debugger when parsing the value
    --  of a variable.
 
+   --------------------------------
+   -- Highlighting in the editor --
+   --------------------------------
+
    type Language_Entity is
      (Normal_Text, Keyword_Text, Comment_Text, String_Text);
    --  The entities found in a language, and that can have a different scheme
@@ -57,6 +63,10 @@ package Language is
    --  in the buffer (ie starting at Buffer'First).
    --  Next_Char should be set to the index of the first character after the
    --  entity.
+
+   ------------------------
+   -- Naming conventions --
+   ------------------------
 
    function Dereference_Name
      (Lang : access Language_Root;
@@ -78,6 +88,58 @@ package Language is
       Name  : String;
       Field : String) return String is abstract;
    --  Return the name to use for a specific field of a record.
+
+   ------------------
+   -- The explorer --
+   ------------------
+   --  These functions are provided as a support for the source code explorer.
+
+   type Category_Index is new Positive;
+   type Make_Entry_Func is access function
+     (Str      : String;
+      Matched  : GNAT.Regpat.Match_Array;
+      Category : access Category_Index)
+     return String;
+   --  Function that builds the string to be inserted in the tree.
+   --  It is possible for the function to change the category used for the
+   --  item (for instance when subprograms declarations and bodies have
+   --  basically the same aspect, it is possible to use only one regular
+   --  expression and distinguish only by testing for some special substring
+   --  in this function.
+
+   type Pattern_Matcher_Access is access all GNAT.Regpat.Pattern_Matcher;
+
+   type Explorer_Category is record
+      Name           : Odd.Types.String_Access;
+      Regexp         : Pattern_Matcher_Access;
+      Position_Index : Natural;
+      Icon           : Odd.Types.Chars_Ptr_Array_Access;
+      Make_Entry     : Make_Entry_Func;
+   end record;
+   --  Definition for a category (ie one of the subtrees of the explorer).
+   --  Icon is the icon to use for items in this category.
+   --  Regexp is the general regular expression to use for entries in this
+   --  category, while Make_Entry is the function that will return the
+   --  actual string to be displayed in the explorer.
+   --  Position_Index is the index of the parenthesis-pair that the entity
+   --  name starts at. When the user clicks on this item in the explorer,
+   --  the cursor will be moved to that location in the editor.
+   --
+   --  If Make_Entry is null, then the regexp is never tested against the
+   --  source code. You can only add items to this category by modifying the
+   --  Category parameter of another category's Make_Entry (see
+   --  language-debugger-ada.adb).
+
+   type Explorer_Categories is array (Category_Index range <>)
+     of Explorer_Category;
+   --  A list of categories. Each category is assigned an internal number which
+   --  is the index in this table, and is passed to each Make_Entry_Func
+   --  functions.
+
+   function Explorer_Regexps (Lang : access Language_Root)
+                             return Explorer_Categories;
+   --  Return the list of categories for a given language.
+   --  By default, no category is defined, and thus the explorer is empty.
 
    ------------------------
    -- Exception Handling --

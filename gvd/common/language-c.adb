@@ -20,6 +20,7 @@
 
 with GNAT.Regpat;  use GNAT.Regpat;
 with Odd.Strings;  use Odd.Strings;
+with Odd.Pixmaps;  use Odd.Pixmaps;
 
 package body Language.Debugger.C is
 
@@ -37,6 +38,27 @@ package body Language.Debugger.C is
    --
    --  for java: ("finally" "synchronized" "implements" "extends" "throws"
    --  "threadsafe" "transient" "native" "volatile"
+
+   function Make_Entry_Subprogram
+     (Str : String; Matched : Match_Array; Category : access Category_Index)
+     return String;
+
+   Subprogram_RE : aliased Pattern_Matcher :=
+     Compile
+     ("^\w+\s+"           --  type specs; there can be no
+--        & "([\w_*]+\s+)?"   --  more than 3 tokens, right?
+--        & "([\w_*]+\s+)?"
+      & "([*&]+\s*)?"     --  pointer
+      & "([\w_*]+)\s*\(",  --  Name
+      Multiple_Lines);
+
+   C_Explorer_Categories : constant Explorer_Categories (1 .. 1) :=
+     (1 => (Name           => new String'("Functions"),
+            Regexp         => Subprogram_RE'Access,
+            Position_Index => 4,
+            Icon           => Subprogram_Xpm'Unrestricted_Access,
+            Make_Entry     => Make_Entry_Subprogram'Access)
+      );
 
    --------------------
    -- Is_Simple_Type --
@@ -201,5 +223,28 @@ package body Language.Debugger.C is
    begin
       return "tbreak main" & ASCII.LF & "run";
    end Start;
+
+   ----------------------
+   -- Explorer_Regexps --
+   ----------------------
+
+   function Explorer_Regexps (Lang : access C_Language)
+                             return Explorer_Categories
+   is
+   begin
+      return C_Explorer_Categories;
+   end Explorer_Regexps;
+
+   ---------------------------
+   -- Make_Entry_Subprogram --
+   ---------------------------
+
+   function Make_Entry_Subprogram
+     (Str : String; Matched : Match_Array; Category : access Category_Index)
+     return String
+   is
+   begin
+      return Str (Matched (4).First .. Matched (4).Last);
+   end Make_Entry_Subprogram;
 
 end Language.Debugger.C;

@@ -25,18 +25,41 @@ package Language.Debugger.Ada is
 
    type Ada_Language is abstract new Language_Debugger with private;
 
+   -------------
+   -- Parsing --
+   -------------
+
    function Is_Simple_Type
      (Lang : access Ada_Language; Str : String) return Boolean;
+
+   --------------------------------
+   -- Language specific commands --
+   --------------------------------
 
    function Start
      (Debugger  : access Ada_Language)
      return String;
+
+   ------------------
+   -- Highlighting --
+   ------------------
 
    procedure Looking_At
      (Lang      : access Ada_Language;
       Buffer    : String;
       Entity    : out Language_Entity;
       Next_Char : out Positive);
+
+   --------------
+   -- Explorer --
+   --------------
+
+   function Explorer_Regexps (Lang : access Ada_Language)
+                             return Explorer_Categories;
+
+   ------------------------
+   -- Naming conventions --
+   ------------------------
 
    function Dereference_Name (Lang : access Ada_Language;
                               Name : String)

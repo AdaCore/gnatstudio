@@ -25,8 +25,16 @@ package Language.Debugger.C is
 
    type C_Language is abstract new Language_Debugger with private;
 
+   -------------
+   -- Parsing --
+   -------------
+
    function Is_Simple_Type
      (Lang : access C_Language; Str : String) return Boolean;
+
+   ------------------
+   -- Highlighting --
+   ------------------
 
    procedure Looking_At
      (Lang      : access C_Language;
@@ -34,9 +42,24 @@ package Language.Debugger.C is
       Entity    : out Language_Entity;
       Next_Char : out Positive);
 
+   ---------------------------------
+   -- Language specific functions --
+   ---------------------------------
+
    function Start
      (Debugger  : access C_Language)
      return String;
+
+   --------------
+   -- Explorer --
+   --------------
+
+   function Explorer_Regexps (Lang : access C_Language)
+                             return Explorer_Categories;
+
+   ------------------------
+   -- Naming Conventions --
+   ------------------------
 
    function Dereference_Name (Lang : access C_Language;
                               Name : String)

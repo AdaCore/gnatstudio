@@ -19,12 +19,81 @@
 -----------------------------------------------------------------------
 
 with GNAT.Regpat;  use GNAT.Regpat;
+with Odd.Pixmaps;  use Odd.Pixmaps;
+with Odd.Strings;  use Odd.Strings;
 
 package body Language.Debugger.Ada is
 
    Keywords : Pattern_Matcher (1292);
    --  The size is hard-coded to save a little bit on the compilation time
    --  for the regular expression (we need to compile the regexp only once).
+
+   --  Make_Entry functions for the explorer.
+
+   function Make_Entry_Subprogram
+     (Str : String; Matched : Match_Array; Category : access Category_Index)
+     return String;
+   function Make_Entry_Package
+     (Str : String; Matched : Match_Array; Category : access Category_Index)
+     return String;
+   function Make_Entry_Type
+     (Str : String; Matched : Match_Array; Category : access Category_Index)
+     return String;
+   function Make_Entry_Task
+     (Str : String; Matched : Match_Array; Category : access Category_Index)
+     return String;
+
+   Subprogram_RE : aliased Pattern_Matcher :=
+     Compile
+       ("^[ \t]*(procedure|function)\s+" &
+        "(\w+)(\s+|\s*\([^\)]+\))" &
+        "(\s*return\s+(\w|\.)+\s*)?(is\W|;)", Multiple_Lines);
+
+   Package_RE    : aliased Pattern_Matcher :=
+     Compile
+       ("^[ \t]*package[ \t]+((body[ \t]+)?((\w|\.)+))", Multiple_Lines);
+
+   Type_Def_RE   : aliased Pattern_Matcher :=
+     Compile ("^[ \t]*(sub)?type[ \t]+(\w+)", Multiple_Lines);
+
+   Task_RE       : aliased Pattern_Matcher :=
+     Compile ("^[ \t]*task[ \t]+((body|type)[ \t]+)?(\w+)", Multiple_Lines);
+
+   --  The Specs are not parsed specifically. Instead, all the work is done
+   --  while parsing for subprograms, and the function Make_Entry_Subprogram
+   --  distinguishes between the two cases.
+
+   Ada_Explorer_Categories : constant Explorer_Categories :=
+     ((Name           => new String'("Subprograms"),
+       Regexp         => Subprogram_RE'Access,
+       Position_Index => 2,
+       Icon           => Subprogram_Xpm'Unrestricted_Access,
+       Make_Entry     => Make_Entry_Subprogram'Access),
+
+      (Name           => new String'("Specs"),
+       Regexp         => Subprogram_RE'Access,
+       Position_Index => 2,
+       Icon           => subprogram_xpm'Unrestricted_Access,
+       Make_Entry     => null),
+
+      (Name           => new String'("Packages"),
+       Regexp         => Package_RE'Access,
+       Position_Index => 3,
+       Icon           => package_xpm'Unrestricted_Access,
+       Make_Entry     => Make_Entry_Package'Access),
+
+      (Name           => new String'("Types"),
+       Regexp         => Type_Def_RE'Access,
+       Position_Index => 2,
+       Icon           => var_xpm'Unrestricted_Access,
+       Make_Entry     => Make_Entry_Type'Access),
+
+      (Name           => new String'("Tasks"),
+       Regexp         => Task_RE'Access,
+       Position_Index => 3,
+       Icon           => package_xpm'Unrestricted_Access,
+       Make_Entry     => Make_Entry_Task'Access));
+
 
    --------------------
    -- Is_Simple_Type --
@@ -185,6 +254,75 @@ package body Language.Debugger.Ada is
    begin
       return "begin";
    end Start;
+
+   ----------------------
+   -- Explorer_Regexps --
+   ----------------------
+
+   function Explorer_Regexps (Lang : access Ada_Language)
+                             return Explorer_Categories
+   is
+   begin
+      return Ada_Explorer_Categories;
+   end Explorer_Regexps;
+
+   ---------------------------
+   -- Make_Entry_Subprogram --
+   ---------------------------
+
+   function Make_Entry_Subprogram
+     (Str : String; Matched : Match_Array; Category : access Category_Index)
+     return String
+   is
+   begin
+      if Str (Matched (6).First) = ';' then
+         Category.all := 2;  --  specs
+      end if;
+
+      if Matched (4) = No_Match then
+         return Str (Matched (2).First .. Matched (2).Last);
+      else
+         return (Str (Matched (2).First .. Matched (2).Last) & ' ' &
+                 Reduce (Str (Matched (3).First .. Matched (3).Last)));
+      end if;
+   end Make_Entry_Subprogram;
+
+   ------------------------
+   -- Make_Entry_Package --
+   ------------------------
+
+   function Make_Entry_Package
+     (Str : String; Matched : Match_Array; Category : access Category_Index)
+     return String
+   is
+   begin
+      return Str (Matched (3).First .. Matched (3).Last);
+   end Make_Entry_Package;
+
+   ---------------------
+   -- Make_Entry_Type --
+   ---------------------
+
+   function Make_Entry_Type
+     (Str : String; Matched : Match_Array; Category : access Category_Index)
+     return String
+   is
+   begin
+      return Str (Matched (2).First .. Matched (2).Last);
+   end Make_Entry_Type;
+
+   ---------------------
+   -- Make_Entry_Task --
+   ---------------------
+
+   function Make_Entry_Task
+     (Str : String; Matched : Match_Array; Category : access Category_Index)
+     return String
+   is
+   begin
+      return Str (Matched (3).First .. Matched (3).Last) & " (" &
+        Reduce (Str (Matched (2).First .. Matched (2).Last)) & ")";
+   end Make_Entry_Task;
 
 begin
    Compile (Keywords,

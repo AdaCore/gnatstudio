@@ -84,4 +84,16 @@ package body Language is
       return Variable;
    end Dereference;
 
+   ----------------------
+   -- Explorer_Regexps --
+   ----------------------
+
+   function Explorer_Regexps (Lang : access Language_Root)
+                             return Explorer_Categories
+   is
+      E : Explorer_Categories (1 .. 0);
+   begin
+      return E;
+   end Explorer_Regexps;
+
 end Language;

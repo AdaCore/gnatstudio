@@ -5,7 +5,9 @@ with Gtk.Handlers; use Gtk.Handlers;
 with Gtkada.Types; use Gtkada.Types;
 with Odd.Pixmaps;  use Odd.Pixmaps;
 with GNAT.Regpat;  use GNAT.Regpat;
-with GNAT.IO;      use GNAT.IO;
+with Language;     use Language;
+
+with Text_IO; use Text_IO;
 
 package body Odd.Explorer is
 
@@ -14,32 +16,18 @@ package body Odd.Explorer is
       Widget  : Gtk_Widget;
    end record;
 
+   type Internal_Category is record
+      Pixmap  : Gdk.Pixmap.Gdk_Pixmap;
+      Mask    : Gdk.Bitmap.Gdk_Bitmap;
+      Node    : Gtk_Ctree_Node;
+   end record;
+   type Internal_Categories is array (Category_Index range <>)
+     of Internal_Category;
+
    package Tree_Cb is new
      Gtk.Handlers.User_Callback (Gtk_Ctree_Record, Explorer_Data);
 
    package Row_Data_Explorer is new Gtk.Ctree.Row_Data (Position_Type);
-
-   Subprogram_RE : constant Pattern_Matcher :=
-     Compile
-       ("^[ \t]*(procedure|function)\s+" &
-        "(\w+)(\s+|\s*\([^\)]+\))" &
-        "(\s*return\s+(\w|\.)+\s*)?(is\W|;)", Multiple_Lines);
-
-   Package_RE    : constant Pattern_Matcher :=
-     Compile
-       ("^[ \t]*package[ \t]+((body[ \t]+)?((\w|\.)+))", Multiple_Lines);
-
-   Type_Def_RE   : constant Pattern_Matcher :=
-     Compile ("^[ \t]*(sub)?type[ \t]+(\w+)", Multiple_Lines);
-
-   Task_RE       : constant Pattern_Matcher :=
-     Compile
-       ("^[ \t]*task[ \t]+((body|type)[ \t]+)?(\w+)", Multiple_Lines);
-
-   function Reduce (S : String) return String;
-   --  Replace in string S all ASCII.LF and ASCII.HT characters with a space,
-   --  and replace multiple spaces with a single one.
-   --  Return the resulting string.
 
    procedure First_Handler
      (Ctree : access Gtk_Ctree_Record'Class;
@@ -93,33 +81,6 @@ package body Odd.Explorer is
         (Data.Widget, Row_Data_Explorer.Node_Get_Row_Data (Ctree, Node));
    end First_Handler;
 
-   ------------
-   -- Reduce --
-   ------------
-
-   function Reduce (S : String) return String is
-      Result : String (S'Range);
-      Len    : Positive := Result'First;
-      Blank  : Boolean  := False;
-
-   begin
-      for J in S'Range loop
-         if S (J) = ASCII.LF or else S (J) = ASCII.HT or else S (J) = ' ' then
-            if not Blank then
-               Result (Len) := ' ';
-               Len := Len + 1;
-               Blank := True;
-            end if;
-         else
-            Blank := False;
-            Result (Len) := S (J);
-            Len := Len + 1;
-         end if;
-      end loop;
-
-      return Result (Result'First .. Len - 1);
-   end Reduce;
-
    -------------
    -- Explore --
    -------------
@@ -127,23 +88,21 @@ package body Odd.Explorer is
    function Explore
      (Window  : access Gtk_Widget_Record'Class;
       Buffer  : String;
+      Lang    : Language.Language_Access;
       Handler : Explorer_Handler := null) return Gtk_Ctree
    is
       Matches            : Match_Array (0 .. 10);
+
+      Categories         : constant Explorer_Categories :=
+        Explorer_Regexps (Lang);
+      Internal_Cat       : Internal_Categories (Categories'Range);
+
       First              : Natural;
       Tree               : Gtk_Ctree;
       Folder_Pixmap      : Gdk_Pixmap;
       Folder_Mask        : Gdk_Bitmap;
       Folder_Open_Pixmap : Gdk_Pixmap;
       Folder_Open_Mask   : Gdk_Bitmap;
-      Package_Pixmap     : Gdk_Pixmap;
-      Package_Mask       : Gdk_Bitmap;
-      Subprogram_Pixmap  : Gdk_Pixmap;
-      Subprogram_Mask    : Gdk_Bitmap;
-      Var_Pixmap         : Gdk_Pixmap;
-      Var_Mask           : Gdk_Bitmap;
-      Parent_Node,
-      Parent2_Node,
       Node               : Gtk_Ctree_Node;
 
    begin
@@ -156,182 +115,83 @@ package body Odd.Explorer is
         (Tree, "tree_select_row", Tree_Cb.To_Marshaller (First_Handler'Access),
          (Handler, Window.all'Access));
 
-      Create_From_Xpm_D
-        (Folder_Pixmap, Get_Window (Window), Folder_Mask, Null_Color,
-         mini_folder_xpm);
+      --  Create all required icons
+
+      for C in Categories'Range loop
+         Create_From_Xpm_D
+           (Internal_Cat (C).Pixmap,
+            Get_Window (Window),
+            Internal_Cat (C).Mask,
+            Null_Color,
+            Categories (C).Icon.all);
+      end loop;
       Create_From_Xpm_D
         (Folder_Open_Pixmap, Get_Window (Window), Folder_Open_Mask, Null_Color,
          mini_ofolder_xpm);
       Create_From_Xpm_D
-        (Package_Pixmap, Get_Window (Window), Package_Mask, Null_Color,
-         package_xpm);
-      Create_From_Xpm_D
-        (Subprogram_Pixmap, Get_Window (Window), Subprogram_Mask, Null_Color,
-         subprogram_xpm);
-      Create_From_Xpm_D
-        (Var_Pixmap, Get_Window (Window), Var_Mask, Null_Color, var_xpm);
+        (Folder_Pixmap, Get_Window (Window), Folder_Mask, Null_Color,
+         mini_folder_xpm);
 
-      --  Subprograms
+      --  For each category, parse the file
 
-      Node := null;
-      Parent_Node := null;
-      Parent2_Node := null;
-      First := Buffer'First;
-      loop
-         Match (Subprogram_RE, Buffer (First .. Buffer'Last), Matches);
+      for C in Categories'Range loop
+         if Categories (C).Make_Entry /= null then
+            Node := null;
+            First := Buffer'First;
+            loop
+               Match (Categories (C).Regexp.all,
+                      Buffer (First .. Buffer'Last),
+                      Matches);
 
-         exit when Matches (0) = No_Match;
+               exit when Matches (0) = No_Match;
 
-         --  A specification
+               declare
+                  Cat : aliased Category_Index := C;
+                  S : String := Categories (C).Make_Entry
+                    (Buffer, Matches, Cat'Access);
+               begin
+                  --  Create the parent node for the category, if needed.
 
-         if Buffer (Matches (6).First) = ';' then
+                  if Internal_Cat (Cat).Node = null then
+                     Internal_Cat (Cat).Node := Insert_Node
+                       (Tree, null, null,
+                        Null_Array + Categories (Cat).Name.all,
+                        5, Folder_Pixmap, Folder_Mask,
+                        Folder_Open_Pixmap, Folder_Open_Mask,
+                        False, False);
+                  end if;
 
-            if Parent_Node = null then
-               Parent_Node := Insert_Node
-                 (Tree, null, null, Null_Array + "Specs", 5,
-                  Folder_Pixmap, Folder_Mask,
-                  Folder_Open_Pixmap, Folder_Open_Mask,
-                  False, False);
-            end if;
-            Node := Parent_Node;
+                  Node := Insert_Node
+                    (Tree, Internal_Cat (Cat).Node, null,
+                     Null_Array + S,
+                     5,
+                     Internal_Cat (Cat).Pixmap, Internal_Cat (Cat).Mask,
+                     null, null,
+                     True, False);
+               end;
 
-         --  A body
-
-         else
-            if Parent2_Node = null then
-               Parent2_Node := Insert_Node
-                 (Tree, null, null, Null_Array + "Subprograms", 5,
-                  Folder_Pixmap, Folder_Mask,
-                  Folder_Open_Pixmap, Folder_Open_Mask,
-                  False, False);
-            end if;
-            Node := Parent2_Node;
+               Row_Data_Explorer.Node_Set_Row_Data
+                 (Tree, Node, Get_Pos (Buffer,
+                  Matches (Categories (C).Position_Index).First));
+               First := Matches (0).Last;
+            end loop;
          end if;
-
-         if Matches (4) = No_Match then
-            Node := Insert_Node
-              (Tree, Node, null,
-               Null_Array + Buffer (Matches (2).First .. Matches (2).Last),
-               5,
-               Subprogram_Pixmap, Subprogram_Mask,
-               null, null,
-                  True, False);
-         else
-            Node := Insert_Node
-              (Tree, Node, null,
-               Null_Array +
-               (Buffer (Matches (2).First .. Matches (2).Last) & ' ' &
-                Reduce
-                (Buffer (Matches (3).First .. Matches (3).Last))), 5,
-               Subprogram_Pixmap, Subprogram_Mask,
-               null, null,
-               True, False);
-         end if;
-
-         Row_Data_Explorer.Node_Set_Row_Data
-           (Tree, Node, Get_Pos (Buffer, Matches (2).First));
-         First := Matches (0).Last;
-      end loop;
-
-      --  Packages
-
-      Node := null;
-      First := Buffer'First;
-      loop
-         Match (Package_RE, Buffer (First .. Buffer'Last), Matches);
-
-         exit when Matches (0) = No_Match;
-
-         if Node = null then
-            Parent_Node := Insert_Node
-              (Tree, null, null, Null_Array + "Packages", 5,
-               Folder_Pixmap, Folder_Mask,
-               Folder_Open_Pixmap, Folder_Open_Mask,
-               False, False);
-         end if;
-
-         Node := Insert_Node
-           (Tree, Parent_Node, null,
-            Null_Array + Buffer (Matches (3).First .. Matches (3).Last), 5,
-            Package_Pixmap, Package_Mask,
-            null, null,
-            True, False);
-         Row_Data_Explorer.Node_Set_Row_Data
-           (Tree, Node, Get_Pos (Buffer, Matches (3).First));
-         First := Matches (0).Last;
-      end loop;
-
-      --  Types
-
-      Node := null;
-      First := Buffer'First;
-      loop
-         Match (Type_Def_RE, Buffer (First .. Buffer'Last), Matches);
-
-         exit when Matches (0) = No_Match;
-
-         if Node = null then
-            Parent_Node := Insert_Node
-              (Tree, null, null, Null_Array + "Types", 5,
-               Folder_Pixmap, Folder_Mask,
-               Folder_Open_Pixmap, Folder_Open_Mask,
-               False, False);
-         end if;
-
-         Node := Insert_Node
-           (Tree, Parent_Node, null,
-            Null_Array + Buffer (Matches (2).First .. Matches (2).Last), 5,
-            Var_Pixmap, Var_Mask,
-            null, null,
-            True, False);
-         Row_Data_Explorer.Node_Set_Row_Data
-           (Tree, Node, Get_Pos (Buffer, Matches (2).First));
-         First := Matches (0).Last;
-      end loop;
-
-      --  Tasks
-
-      Node := null;
-      First := Buffer'First;
-      loop
-         Match (Task_RE, Buffer (First .. Buffer'Last), Matches);
-
-         exit when Matches (0) = No_Match;
-
-         if Node = null then
-            Parent_Node := Insert_Node
-              (Tree, null, null, Null_Array + "Tasks", 5,
-               Folder_Pixmap, Folder_Mask,
-               Folder_Open_Pixmap, Folder_Open_Mask,
-               False, False);
-         end if;
-
-         if Matches (2) = No_Match then
-            Node := Insert_Node
-              (Tree, Parent_Node, null,
-               Null_Array + Buffer (Matches (3).First .. Matches (3).Last), 5,
-               Package_Pixmap, Package_Mask,
-               null, null,
-               True, False);
-         else
-            Node := Insert_Node
-              (Tree, Parent_Node, null,
-               Null_Array +
-                 (Buffer (Matches (3).First .. Matches (3).Last) & " (" &
-                  Reduce (Buffer (Matches (2).First .. Matches (2).Last)) &
-                  ")"),
-               5,
-               Package_Pixmap, Package_Mask,
-               null, null,
-               True, False);
-         end if;
-
-         Row_Data_Explorer.Node_Set_Row_Data
-           (Tree, Node, Get_Pos (Buffer, Matches (3).First));
-         First := Matches (0).Last;
       end loop;
 
       Thaw (Tree);
+
+      --  Free all icons
+
+      for C in Categories'Range loop
+         Gdk.Pixmap.Unref (Internal_Cat (C).Pixmap);
+         Gdk.Bitmap.Unref (Internal_Cat (C).Mask);
+      end loop;
+      Gdk.Pixmap.Unref (Folder_Open_Pixmap);
+      Gdk.Bitmap.Unref (Folder_Open_Mask);
+      Gdk.Pixmap.Unref (Folder_Pixmap);
+      Gdk.Bitmap.Unref (Folder_Mask);
+
+
       return Tree;
    end Explore;
 
