@@ -24,4 +24,4 @@ AC_SUBST(ODD_VERSION)
 EXEC_PREFIX="$prefix"
 AC_SUBST(EXEC_PREFIX)
 
-AC_OUTPUT(odd/Makefile)
+AC_OUTPUT(odd/Makefile tests/Makefile)
