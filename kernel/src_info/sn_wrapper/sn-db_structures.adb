@@ -55,6 +55,14 @@ package body SN.DB_Structures is
    --  Parses comment string to find Name=Value pair, then
    --  parses value into point
 
+   function Get_Segment_From_Comment
+     (Comment  : Segment;
+      Buffer   : GNAT.OS_Lib.String_Access;
+      Name     : String) return Segment;
+   --  Parses comment string to find Name=Value pair, then
+   --  returns segment coordinates that spans upto next semicolon or
+   --  end of string
+
    -------------------------------------------------------------------------
    --                   Parse_Pair function bodies                        --
    -------------------------------------------------------------------------
@@ -439,6 +447,10 @@ package body SN.DB_Structures is
       tab.Comments.First := cur_pos;
       tab.Comments.Last := cur_pos + Len - 1;
       cur_pos := cur_pos + Len;
+      tab.Template_Parameters := Get_Segment_From_Comment
+        (tab.Comments,
+         tab.Buffer,
+         "template_args");
       Number_Of_Allocated_Buffers := Number_Of_Allocated_Buffers + 1;
       return tab;
    end Parse_Pair;
@@ -608,6 +620,10 @@ package body SN.DB_Structures is
       tab.Comments.Last := cur_pos + Len - 1;
       cur_pos := cur_pos + Len;
 
+      tab.Template_Parameters := Get_Segment_From_Comment
+        (tab.Comments,
+         tab.Buffer,
+         "template_args");
       Number_Of_Allocated_Buffers := Number_Of_Allocated_Buffers + 1;
       return tab;
    end Parse_Pair;
@@ -922,6 +938,10 @@ package body SN.DB_Structures is
       tab.Comments.First := cur_pos;
       tab.Comments.Last := cur_pos + Len - 1;
       cur_pos := cur_pos + Len;
+      tab.Template_Parameters := Get_Segment_From_Comment
+        (tab.Comments,
+         tab.Buffer,
+         "template_args");
       Number_Of_Allocated_Buffers := Number_Of_Allocated_Buffers + 1;
       return tab;
    end Parse_Pair;
@@ -1449,4 +1469,32 @@ package body SN.DB_Structures is
       end if;
       return Pos;
    end Get_Position_From_Comment;
+
+   ------------------------------
+   -- Get_Segment_From_Comment --
+   ------------------------------
+
+   function Get_Segment_From_Comment
+     (Comment  : Segment;
+      Buffer   : GNAT.OS_Lib.String_Access;
+      Name     : String) return Segment
+   is
+      I, J     : Natural;
+   begin
+      I := Ada.Strings.Fixed.Index
+         (Buffer (Comment.First .. Comment.Last),
+          Name & "=");
+      if I /= 0 then
+         I := I + Name'Length + 1;
+         J := I;
+
+         while J <= Comment.Last and Buffer (J) /= ';' loop
+            J := J + 1;
+         end loop;
+
+         return (I, J - 1);
+      end if;
+
+      return (1, 0);
+   end Get_Segment_From_Comment;
 end SN.DB_Structures;

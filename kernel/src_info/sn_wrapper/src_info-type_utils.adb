@@ -286,7 +286,8 @@ package body Src_Info.Type_Utils is
             Symbol,
             FU_Tab.Buffer (FU_Tab.Name.First .. FU_Tab.Name.Last),
             FU_Tab.Buffer (FU_Tab.File_Name.First .. FU_Tab.File_Name.Last),
-            "", -- template arguments not available yet
+            FU_Tab.Buffer (FU_Tab.Template_Parameters.First ..
+                           FU_Tab.Template_Parameters.Last),
             Success);
          if Success then
             return;

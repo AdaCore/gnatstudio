@@ -140,6 +140,7 @@ package SN.DB_Structures is
       Arg_Types : Segment_Vector.Node_Access;
       Arg_Names : Segment_Vector.Node_Access;
       Comments : Segment;
+      Template_Parameters : Segment;
       Buffer : GNAT.OS_Lib.String_Access;
    end record;
    --  Function declarations
@@ -183,6 +184,7 @@ package SN.DB_Structures is
       Arg_Types : Segment_Vector.Node_Access;
       Arg_Names : Segment_Vector.Node_Access;
       Comments : Segment;
+      Template_Parameters : Segment;
       Buffer : GNAT.OS_Lib.String_Access;
    end record;
    --  Function implementations
@@ -272,6 +274,7 @@ package SN.DB_Structures is
       Return_Type : Segment;
       Arg_Types : Segment_Vector.Node_Access;
       Arg_Names : Segment_Vector.Node_Access;
+      Template_Parameters : Segment;
       Comments : Segment;
       Buffer : GNAT.OS_Lib.String_Access;
    end record;

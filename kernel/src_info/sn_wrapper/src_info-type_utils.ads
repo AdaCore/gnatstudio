@@ -106,17 +106,18 @@ package Src_Info.Type_Utils is
    --  is a builtin C type. If conversion fails returns False
 
    Invalid_FU_Table    : constant FU_Table := (
-      Class          => Invalid_Segment,
-      Name           => Invalid_Segment,
-      File_Name      => Invalid_Segment,
-      Start_Position => Invalid_Point,
-      End_Position   => Invalid_Point,
-      Attributes     => 0,
-      Return_Type    => Invalid_Segment,
-      Arg_Types      => null,
-      Arg_Names      => null,
-      Comments       => Invalid_Segment,
-      Buffer         => null
+      Class               => Invalid_Segment,
+      Name                => Invalid_Segment,
+      File_Name           => Invalid_Segment,
+      Start_Position      => Invalid_Point,
+      End_Position        => Invalid_Point,
+      Attributes          => 0,
+      Return_Type         => Invalid_Segment,
+      Arg_Types           => null,
+      Arg_Names           => null,
+      Comments            => Invalid_Segment,
+      Template_Parameters => Invalid_Segment,
+      Buffer              => null
    );
 
    Invalid_CL_Table    : constant CL_Table := (
