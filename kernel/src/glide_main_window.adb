@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2003                       --
+--                     Copyright (C) 2001-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
@@ -431,9 +431,14 @@ package body Glide_Main_Window is
       Register_Command
         (Main_Window.Kernel,
          Command     => "split_horizontally",
-         Description => -"Split the current window in two parts horizontally",
+         Params      => "([reuse])",
+         Description =>
+           -("Split the current window in two parts horizontally."
+             & " If reuse is true, attempt to reuse an existing space."),
          Class         => MDI_Class,
          Static_Method => True,
+         Minimum_Args  => 0,
+         Maximum_Args  => 1,
          Handler => Default_Command_Handler'Access);
 
       Command2        := new MDI_Window_Actions_Command;
@@ -447,9 +452,14 @@ package body Glide_Main_Window is
       Register_Command
         (Main_Window.Kernel,
          Command     => "split_vertically",
-         Description => -"Split the current window in two parts vertically",
+         Params      => "([reuse])",
+         Description =>
+           -("Split the current window in two parts vertically."
+             & " If reuse is true, attempt to reuse an existing space."),
          Class         => MDI_Class,
          Static_Method => True,
+         Minimum_Args  => 0,
+         Maximum_Args  => 1,
          Handler => Default_Command_Handler'Access);
 
       Command2        := new MDI_Window_Actions_Command;
@@ -656,9 +666,17 @@ package body Glide_Main_Window is
             Set_Error_Msg (Data, -"Cancelled by user");
          end if;
       elsif Command = "split_horizontally" then
-         Split (Get_MDI (Kernel), Orientation_Horizontal, After => True);
+         Split
+           (Get_MDI (Kernel),
+            Orientation       => Orientation_Horizontal,
+            After             => True,
+            Reuse_If_Possible => Nth_Arg (Data, 1, False));
       elsif Command = "split_vertically" then
-         Split (Get_MDI (Kernel), Orientation_Vertical, After => True);
+         Split
+           (Get_MDI (Kernel),
+            Orientation       => Orientation_Vertical,
+            After             => True,
+            Reuse_If_Possible => Nth_Arg (Data, 1, False));
       elsif Command = "tile_horizontally" then
          Tile_Horizontally (Get_MDI (Kernel));
       elsif Command = "tile_vertically" then
