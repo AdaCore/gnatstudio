@@ -361,6 +361,12 @@ package body SN.DB_Structures is
             if Seg.First = Seg.Last then
                return T;
             else
+               if Buffer (Seg.First + 1) = 'a'
+                 and then Seg.First + 1 = Seg.Last
+               then
+                  return TA;
+               end if;
+
                Trace (Me, "Unknown symbol: "
                       & Buffer (Seg.First .. Seg.Last));
                return Undef;
@@ -637,6 +643,7 @@ package body SN.DB_Structures is
       Get_Position    (Data, 1, Tab.Data, Tab.End_Position);
       Get_Hex         (Data, 2, Tab.Data, Tab.Attributes);
       Get_No_Brackets (Data, 3, Tab.Value_Type);
+      Get_No_Brackets (Data, 4, Tab.Class);
       Get_No_Brackets (Data, 6, Tab.Comments);
       Tab.Type_Start_Position :=
         Get_Position_From_Comment (Tab.Data, Tab.Comments, "type_beg=");
@@ -812,7 +819,7 @@ package body SN.DB_Structures is
 
       Parse_Key
         (Key, Tab.Key, Tab.Name, Tab.File_Name, Tab.Start_Position, 2);
-      Get_Field       (Key,  1, Tab.Scope);
+      Get_Field       (Key,  1, Tab.Class);
       Get_Position    (Data, 1, Tab.Data, Tab.Type_Position);
       Get_Hex         (Data, 2, Tab.Data, Tab.Attributes);
       Get_No_Brackets (Data, 3, Tab.Value_Type);

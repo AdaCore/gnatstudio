@@ -252,6 +252,7 @@ package SN.DB_Structures is
       End_Position             : Point;
       Attributes               : SN_Attributes;
       Value_Type               : Segment;
+      Class                    : Segment;
       --  Template_Parameters  : Segment;
       Comments                 : Segment;
       Type_Start_Position      : Point;
@@ -420,17 +421,17 @@ package SN.DB_Structures is
    --     data => end_position?attributes?{original}?{}?{comment}
 
    type TA_Table is record
-      Scope                  : Segment; -- name of the class or function/method
+      Class                 : Segment; -- name of the class or function/method
       Name                   : Segment;
+      File_Name              : Segment;
       Start_Position         : Point;
       Key                    : Buffer_String;
 
-      Class_Name             : Segment; -- name of method's class
-      File_Name              : Segment;
       Type_Position          : Point;
       Attributes             : SN_Attributes;
       Value_Type             : Segment;
       Template_Parameters    : Segment;
+      Class_Name             : Segment; -- name of method's class
       Comments               : Segment;
       Data                   : Buffer_String;
 
