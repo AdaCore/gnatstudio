@@ -29,6 +29,8 @@ with Gtk.Scrolled_Window;
 
 with Glide_Kernel;
 
+with Basic_Types; use Basic_Types;
+
 package Glide_Interactive_Consoles is
 
    type Glide_Interactive_Console_Record is new
@@ -46,8 +48,20 @@ package Glide_Interactive_Consoles is
       Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class);
    --  Internal initialization function.
 
+   procedure Insert
+     (Console : access Glide_Interactive_Console_Record;
+      Text    : String;
+      Add_LF  : Boolean := True);
+   --  Suspend the user insertion and insert Text as an information message.
+
    procedure Clear (Console : access Glide_Interactive_Console_Record);
    --  Clear all the text in the Console.
+
+   procedure Enable_Prompt_Display
+     (Console : access Glide_Interactive_Console_Record;
+      Enable  : Boolean);
+   --  When Enable is False, the Prompt is not redisplayed automatically
+   --  and the console is uneditable by the user.
 
 private
 
@@ -77,6 +91,18 @@ private
       Button_Press : Boolean := False;
       --  Whether a mouse button is currently pressed.
       --  Used to enable selection in places where the cursor is not allowed.
+
+      User_Input : String_Access;
+      --  The text that was entered at the prompt but was never validated.
+      --  Used when commands are issued by menus, etc, replacing the user
+      --  input.
+
+      Input_Blocked : Boolean := False;
+      --  Set to True means that the console is in uneditable mode.
+
+      Message_Was_Displayed : Boolean := False;
+      --  Indicate that a message was displayed, ie the last input point is
+      --  not a prompt.
    end record;
 
 end Glide_Interactive_Consoles;
