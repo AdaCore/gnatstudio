@@ -1291,16 +1291,23 @@ package body Glide_Kernel is
       Source_Filename : String;
       Full_Name       : Boolean := True) return String
    is
-      Project : constant Project_Id := Get_Project_From_File
+      Project : Project_Id := Get_Project_From_File
         (Get_Project_View (Kernel), Source_Filename);
-      Other : constant String := Other_File_Name (Project, Source_Filename);
    begin
-      if Full_Name then
-         return Find_On_Path
-           (Get_Project_From_View (Project), Project, Other, False);
-      else
-         return Other;
+      if Project = No_Project then
+         Project := Get_Project_View (Kernel);
       end if;
+
+      declare
+         Other : constant String := Other_File_Name (Project, Source_Filename);
+      begin
+         if Full_Name then
+            return Find_On_Path
+              (Get_Project_From_View (Project), Project, Other, False);
+         else
+            return Other;
+         end if;
+      end;
    end Other_File_Name;
 
    ------------------------------
