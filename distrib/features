@@ -54,11 +54,6 @@ New features in GPS 2.1.0
 
 - D930-007 Add support for substring case exceptions
 
-- D914-021 Default diff and patch utilities provided under Windows
-  These are gnu implementations and are called gnudiff and gnupatch.
-  It is still possible to change the default utilities by editing the
-  preferences.
-
 - D625-008 AUnit integration has been enhanced. It is now possible to select
   the directory in which the generated code is saved. The generated code is
   now following the GNAT Style convention so it can be compiled with the
