@@ -786,7 +786,7 @@ package body Src_Info.CPP is
       --  check timestamps for the parsed file
       if File /= No_LI_File
         and then File.LI.Parsed
-        and then To_Timestamp (File_Time_Stamp (Full_Filename)) /=
+        and then To_Timestamp (File_Time_Stamp (Full_Filename)) <=
           File.LI.LI_Timestamp
       then
          return;
