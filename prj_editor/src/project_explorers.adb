@@ -40,6 +40,7 @@ with Gtk.Arguments;        use Gtk.Arguments;
 with Gtk.Ctree;            use Gtk.Ctree;
 with Gtk.Enums;            use Gtk.Enums;
 with Gtk.Menu;             use Gtk.Menu;
+with Gtk.Menu_Item;        use Gtk.Menu_Item;
 with Gtk.Widget;           use Gtk.Widget;
 with Gtkada.Handlers;      use Gtkada.Handlers;
 with Gtkada.Types;         use Gtkada.Types;
@@ -347,6 +348,10 @@ package body Project_Explorers is
      (Widget : access Gtk.Widget.Gtk_Widget_Record'Class)
       return Node_Ptr;
    --  Restore the status of the explorer from a saved XML tree.
+
+   procedure On_Open_Explorer
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Raise the existing explorer, or open a new one.
 
    -------------
    -- Gtk_New --
@@ -1869,6 +1874,31 @@ package body Project_Explorers is
       return False;
    end Button_Press;
 
+   ----------------------
+   -- On_Open_Explorer --
+   ----------------------
+
+   procedure On_Open_Explorer
+     (Widget : access GObject_Record'Class;
+      Kernel : Kernel_Handle)
+   is
+      Explorer : Project_Explorer;
+      Child    : MDI_Child;
+   begin
+      Child := Find_MDI_Child_By_Tag
+        (Get_MDI (Kernel), Project_Explorer_Record'Tag);
+      if Child = null then
+         Gtk_New (Explorer, Kernel);
+         Child := Put (Get_MDI (Kernel), Explorer);
+         Set_Title (Child, -"Project Explorer");
+         Set_Dock_Side (Child, Left);
+         Dock_Child (Child);
+      else
+         Raise_Child (Child);
+         Set_Focus_Child (Get_MDI (Kernel), Child);
+      end if;
+   end On_Open_Explorer;
+
    -----------------------
    -- Initialize_Module --
    -----------------------
@@ -1876,19 +1906,20 @@ package body Project_Explorers is
    procedure Initialize_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
-      Explorer : Project_Explorer;
-      Child    : MDI_Child;
+      Mitem    : Gtk_Menu_Item;
    begin
-      --  If no explorer was already created by reading the desktop:
-      if Find_MDI_Child_By_Tag
-        (Get_MDI (Kernel), Project_Explorer_Record'Tag) = null
-      then
-         Gtk_New (Explorer, Kernel);
-         Child := Put (Get_MDI (Kernel), Explorer);
-         Set_Title (Child, -"Project Explorer");
-         Set_Dock_Side (Child, Left);
-         Dock_Child (Child);
+      --  If a desktop was loaded, we do not want to force an explorer if none
+      --  was saved. However, in the default case we want to open an explorer.
+      if not Desktop_Was_Loaded (Get_MDI (Kernel)) then
+         On_Open_Explorer (Kernel, Kernel_Handle (Kernel));
       end if;
+
+      Gtk_New (Mitem, -"Explorer");
+      Register_Menu (Kernel, '/' & (-"Tools"), Mitem);
+      Kernel_Callback.Connect
+        (Mitem, "activate",
+         Kernel_Callback.To_Marshaller (On_Open_Explorer'Access),
+         Kernel_Handle (Kernel));
    end Initialize_Module;
 
    ---------------------
