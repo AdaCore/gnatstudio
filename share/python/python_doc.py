@@ -29,7 +29,8 @@ def generate_doc (entity):
 
 def browse_doc (entity):
   """Open a browser for the documentation relative to the specified entity"""
-  GPS.HTML.browse (generate_doc (entity))
+  ## Use a hook, so that users can substitute their internal browser if they wish
+  GPS.Hook ("html_action_hook").run (GPS.File (generate_doc (entity)), 1, "")
 
 ## Create a default menu for the python documentation
 GPS.parse_xml("""
