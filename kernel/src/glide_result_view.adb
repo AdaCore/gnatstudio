@@ -167,6 +167,14 @@ package body Glide_Result_View is
    procedure On_Destroy (View : access Gtk_Widget_Record'Class);
    --  Callback for the "destroy" signal
 
+   function Context_Func
+     (Kernel       : access Kernel_Handle_Record'Class;
+      Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Object       : access Glib.Object.GObject_Record'Class;
+      Event        : Gdk.Event.Gdk_Event;
+      Menu         : Gtk.Menu.Gtk_Menu) return Selection_Context_Access;
+   --  Default context factory.
+
    --------------------
    -- File_Closed_Cb --
    --------------------
@@ -717,12 +725,114 @@ package body Glide_Result_View is
 
    procedure Gtk_New
      (View   : out Result_View;
-      Kernel : Kernel_Handle := null)
+      Kernel : Kernel_Handle;
+      Module : Module_ID)
    is
    begin
       View := new Result_View_Record;
-      Initialize (View, Kernel);
+      Initialize (View, Kernel, Module);
    end Gtk_New;
+
+   ------------------
+   -- Context_Func --
+   ------------------
+
+   function Context_Func
+     (Kernel       : access Kernel_Handle_Record'Class;
+      Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Object       : access Glib.Object.GObject_Record'Class;
+      Event        : Gdk.Event.Gdk_Event;
+      Menu         : Gtk.Menu.Gtk_Menu) return Selection_Context_Access
+   is
+      pragma Unreferenced (Kernel, Event_Widget, Event);
+      Mitem    : Gtk_Menu_Item;
+
+      Explorer : constant Result_View := Result_View (Object);
+      Path     : Gtk_Tree_Path;
+      Iter     : Gtk_Tree_Iter;
+      Model    : Gtk_Tree_Model;
+
+      Result   : File_Location_Context_Access := null;
+
+   begin
+      Get_Selected (Get_Selection (Explorer.Tree), Model, Iter);
+      Path := Get_Path (Model, Iter);
+
+      if Path /= null then
+         if not Path_Is_Selected (Get_Selection (Explorer.Tree), Path) then
+            Unselect_All (Get_Selection (Explorer.Tree));
+            Select_Path (Get_Selection (Explorer.Tree), Path);
+         end if;
+
+         Iter := Get_Iter (Explorer.Model, Path);
+
+         if Get_Depth (Path) = 1 then
+            Gtk_New (Mitem, "Remove category");
+            Gtkada.Handlers.Widget_Callback.Object_Connect
+              (Mitem, "activate",
+               Gtkada.Handlers.Widget_Callback.To_Marshaller
+                 (Remove_Category'Access),
+               Explorer,
+               After => False);
+            Append (Menu, Mitem);
+
+         elsif Get_Depth (Path) = 2 then
+            Gtk_New (Mitem, "Remove File");
+            Gtkada.Handlers.Widget_Callback.Object_Connect
+              (Mitem, "activate",
+               Gtkada.Handlers.Widget_Callback.To_Marshaller
+                 (Remove_Category'Access),
+               Explorer,
+               After => False);
+            Append (Menu, Mitem);
+
+         elsif Get_Depth (Path) = 3 then
+            Gtk_New (Mitem, "Jump to location");
+            Gtkada.Handlers.Widget_Callback.Object_Connect
+              (Mitem, "activate",
+               Gtkada.Handlers.Widget_Callback.To_Marshaller
+                 (Goto_Location'Access),
+               Explorer,
+               After => False);
+
+            Append (Menu, Mitem);
+
+            declare
+               Line   : constant Positive := Positive'Value
+                 (Get_String (Model, Iter, Line_Column));
+               Column : constant Positive := Positive'Value
+                 (Get_String (Model, Iter, Column_Column));
+               Par    : constant Gtk_Tree_Iter := Parent (Model, Iter);
+               Granpa : constant Gtk_Tree_Iter := Parent (Model, Par);
+               File   : constant String :=
+                 Get_String (Model, Par, Absolute_Name_Column);
+               Category : constant String :=
+                 Get_String (Model, Granpa, Base_Name_Column);
+               Message : constant String :=
+                 Get_String (Model, Iter, Base_Name_Column) &
+                 Get_String (Model, Iter, Message_Column);
+            begin
+               Result := new File_Location_Context;
+
+               Set_File_Information
+                 (Result,
+                  Dir_Name (File),
+                  Base_Name (File));
+
+               Set_Location_Information
+                 (Result,
+                  Category,
+                  Message,
+                  Line,
+                  Column);
+            end;
+         end if;
+
+         Path_Free (Path);
+      end if;
+
+      return Selection_Context_Access (Result);
+   end Context_Func;
 
    ----------------
    -- Initialize --
@@ -730,7 +840,8 @@ package body Glide_Result_View is
 
    procedure Initialize
      (View   : access Result_View_Record'Class;
-      Kernel : Kernel_Handle := null)
+      Kernel : Kernel_Handle;
+      Module : Module_ID)
    is
       Scrolled : Gtk_Scrolled_Window;
       Success  : Boolean;
@@ -784,6 +895,13 @@ package body Glide_Result_View is
          File_Opened_Cb'Access,
          View,
          View.Kernel);
+
+      Register_Contextual_Menu
+        (View.Kernel,
+         View.Tree,
+         View,
+         Module,
+         Context_Func'Access);
    end Initialize;
 
    ------------
@@ -848,12 +966,8 @@ package body Glide_Result_View is
       Event    : Gdk_Event)
      return Boolean
    is
-      Menu     : Gtk_Menu;
-      Mitem    : Gtk_Menu_Item;
-
       Explorer : constant Result_View := Result_View (View);
       Path     : Gtk_Tree_Path;
-      Iter     : Gtk_Tree_Iter;
 
       function Get_Path_At_Event return Gtk_Tree_Path;
       --  Return the path at which Event has occured.
@@ -914,50 +1028,6 @@ package body Glide_Result_View is
             if not Path_Is_Selected (Get_Selection (Explorer.Tree), Path) then
                Unselect_All (Get_Selection (Explorer.Tree));
                Select_Path (Get_Selection (Explorer.Tree), Path);
-            end if;
-
-            Iter := Get_Iter (Explorer.Model, Path);
-
-            if Get_Depth (Path) in 1 .. 3 then
-               Gtk_New (Menu);
-            end if;
-
-            if Get_Depth (Path) = 1 then
-               Gtk_New (Mitem, "Remove category");
-               Gtkada.Handlers.Widget_Callback.Object_Connect
-                 (Mitem, "activate",
-                  Gtkada.Handlers.Widget_Callback.To_Marshaller
-                    (Remove_Category'Access),
-                  Explorer,
-                  After => False);
-               Append (Menu, Mitem);
-
-            elsif Get_Depth (Path) = 2 then
-               Gtk_New (Mitem, "Remove File");
-               Gtkada.Handlers.Widget_Callback.Object_Connect
-                 (Mitem, "activate",
-                  Gtkada.Handlers.Widget_Callback.To_Marshaller
-                    (Remove_Category'Access),
-                  Explorer,
-                  After => False);
-               Append (Menu, Mitem);
-
-            elsif Get_Depth (Path) = 3 then
-               Gtk_New (Mitem, "Jump to location");
-               Gtkada.Handlers.Widget_Callback.Object_Connect
-                 (Mitem, "activate",
-                  Gtkada.Handlers.Widget_Callback.To_Marshaller
-                    (Goto_Location'Access),
-                  Explorer,
-                  After => False);
-
-               Append (Menu, Mitem);
-            end if;
-
-            if Get_Depth (Path) in 1 .. 3 then
-               Grab_Focus (Explorer);
-               Show_All (Menu);
-               Popup (Menu);
             end if;
 
             Path_Free (Path);
