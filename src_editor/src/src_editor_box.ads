@@ -335,6 +335,10 @@ package Src_Editor_Box is
       Line   : Src_Editor_Buffer.Editable_Line_Type) return String;
    --  Return the name for the subprogram enclosing Line
 
+   procedure Check_Writable (Editor : access Source_Editor_Box_Record);
+   --  Check whether the file in Editor is writable, and update the read-only
+   --  label accordingly.
+
    ---------------------
    -- Contextual menu --
    ---------------------
