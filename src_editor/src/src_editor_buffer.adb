@@ -1827,10 +1827,20 @@ package body Src_Editor_Buffer is
         (Context,
          Buffer.Kernel,
          Src_Editor_Module_Id);
-      Set_File_Information
-        (Context,
-         Dir_Name (Buffer.Filename.all),
-         Base_Name (Buffer.Filename.all));
+
+      if Buffer.Filename /= null then
+         if Base_Name (Buffer.Filename.all) = Buffer.Filename.all then
+            Set_File_Information
+              (Context, "", Base_Name (Buffer.Filename.all));
+
+         else
+            Set_File_Information
+              (Context,
+               Dir_Name (Buffer.Filename.all),
+               Base_Name (Buffer.Filename.all));
+         end if;
+      end if;
+
       Set_Area_Information (Context, Start_Line, End_Line);
       Glide_Kernel.Source_Lines_Revealed (Buffer.Kernel, Context);
       Free (Selection_Context_Access (Context));
