@@ -551,6 +551,12 @@ package body Browsers.Entities is
             end;
          end if;
       end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Show_Entity_Command_Handler, unexpected exception "
+                & Exception_Information (E));
+         Set_Error_Msg (Data, -"Internal error");
    end Show_Entity_Command_Handler;
 
    -----------------------------
