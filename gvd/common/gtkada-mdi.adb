@@ -1148,6 +1148,11 @@ package body Gtkada.MDI is
             Remove_From_Notebook (C, C.Dock);
             Unref (C.Initial_Child);
          end if;
+
+      --  for maximized children
+      elsif C.State = Normal and then C.MDI.Docks (None) /= null then
+         Set_Show_Tabs
+           (C.MDI.Docks (None), Get_Nth_Page (C.MDI.Docks (None), 1) /= null);
       end if;
 
       --  Destroy the toplevel Child is associated with
