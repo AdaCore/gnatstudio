@@ -167,7 +167,7 @@ package body Diff_Utils is
       Diff_File : String;
       Revert    : Boolean := False) return Diff_Occurrence_Link
    is
-      Args       : Argument_List (1 .. 7);
+      Args       : Argument_List (1 .. 6);
       Ret        : Diff_Occurrence_Link;
       Occurrence : Diff_Occurrence_Link;
       Cmd        : String_Access;
@@ -185,21 +185,21 @@ package body Diff_Utils is
       Cmd_Args := Argument_String_To_List (Get_Pref (Kernel, Patch_Cmd));
       Cmd      := Locate_Exec_On_Path (Cmd_Args (Cmd_Args'First).all);
       Args (1) := new String' ("-s");
-      Args (2) := new String' ("-i");
-      Args (3) := new String' (Diff_File);
-      Args (4) := new String' ("-o");
+      Args (2) := new String' ("-o");
 
       if Revert then
-         Args (5) := new String' (Orig_File);
-         Args (6) := new String' ("-R");
-         Args (7) := new String' (New_File);
-         Num_Args := 7;
+         Args (3) := new String' (Orig_File);
+         Args (4) := new String' ("-R");
+         Args (5) := new String' (New_File);
+         Num_Args := 6;
 
       else
-         Args (5) := new String' (New_File);
-         Args (6) := new String' (Orig_File);
-         Num_Args := 6;
+         Args (3) := new String' (New_File);
+         Args (4) := new String' (Orig_File);
+         Num_Args := 5;
       end if;
+
+      Args (Num_Args) := new String' (Diff_File);
 
       Spawn (Cmd.all, Cmd_Args (Cmd_Args'First + 1 .. Cmd_Args'Last)
              & Args (1 .. Num_Args), Success);
