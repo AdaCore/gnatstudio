@@ -1592,6 +1592,7 @@ package body Browsers.Entities is
       Display_Lines (Item, Meth_Lines, Margin + Xoffset + Left_Margin, Y,
                      Meth_Layout_W1, Layout);
 
+      Free (General_Lines);
       Free (Attr_Lines);
       Free (Meth_Lines);
    end Resize_And_Draw;
