@@ -82,7 +82,6 @@ package Diff_Utils2 is
       File3        : VFS.Virtual_File := VFS.No_File;
       Current_Node : Diff_List_Node;
       Ref_File     : T_Loc := 2;
-      Tmp_File     : VFS.Virtual_File := VFS.No_File;
    end record;
    type Diff_Head_Access is access all Diff_Head;
 
@@ -99,7 +98,7 @@ package Diff_Utils2 is
 
    Null_Head : constant Diff_Head :=
      (Diff_Chunk_List.Null_List, VFS.No_File, VFS.No_File,
-      VFS.No_File, Diff_Chunk_List.Null_Node, 2, VFS.No_File);
+      VFS.No_File, Diff_Chunk_List.Null_Node, 2);
 
    procedure Free is
       new Ada.Unchecked_Deallocation (Diff_Head, Diff_Head_Access);
