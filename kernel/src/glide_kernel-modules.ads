@@ -319,7 +319,8 @@ package Glide_Kernel.Modules is
    --  Add new menu items to the menu bar, as a child of Parent_Path.
    --  Parent_Path should have a form like "/main_main/submenu".
    --  Menus will be created if they don't exist.
-   --  This must be an absolute path, starting with '/'.
+   --  This is considered as an absolute path, as if it always started with
+   --  a '/'.
    --
    --  Item might be null, in which case only the parent menu items are
    --  created, and Add_Before applies to the deepest one instead of Item.
