@@ -102,6 +102,7 @@ package body Python_Module is
       Args             : PyObject;
       Return_Value     : PyObject;
       Has_Return_Value : Boolean := False;
+      Return_As_List   : Boolean := False;
    end record;
 
    function Get_Kernel (Data : Python_Callback_Data)
@@ -109,6 +110,7 @@ package body Python_Module is
    function Number_Of_Arguments (Data : Python_Callback_Data) return Natural;
    function Nth_Arg (Data : Python_Callback_Data; N : Positive) return String;
    function Nth_Arg (Data : Python_Callback_Data; N : Positive) return Integer;
+   function Nth_Arg (Data : Python_Callback_Data; N : Positive) return Boolean;
    function Nth_Arg
      (Data : Python_Callback_Data; N : Positive) return System.Address;
    function Nth_Arg
@@ -118,17 +120,13 @@ package body Python_Module is
    procedure Set_Return_Value_As_List
      (Data : in out Python_Callback_Data; Size : Natural := 0);
    procedure Set_Return_Value
-     (Data   : in out Python_Callback_Data;
-      Value  : Integer; Append : Boolean := False);
+     (Data   : in out Python_Callback_Data; Value : Integer);
    procedure Set_Return_Value
-     (Data   : in out Python_Callback_Data;
-      Value  : String; Append : Boolean := False);
+     (Data   : in out Python_Callback_Data; Value : String);
    procedure Set_Return_Value
-     (Data   : in out Python_Callback_Data;
-      Value  : System.Address; Append : Boolean := False);
+     (Data   : in out Python_Callback_Data; Value : System.Address);
    procedure Set_Return_Value
-     (Data   : in out Python_Callback_Data;
-      Value  : Class_Instance; Append : Boolean := False);
+     (Data   : in out Python_Callback_Data; Value : Class_Instance);
    --  See doc from inherited subprogram
 
    ---------------------------
@@ -544,8 +542,8 @@ package body Python_Module is
    -- Nth_Arg --
    -------------
 
-   function Nth_Arg
-     (Data : Python_Callback_Data; N : Positive) return Integer
+   function Nth_Arg (Data : Python_Callback_Data; N : Positive)
+      return Integer
    is
       Item : constant PyObject := PyTuple_GetItem (Data.Args, N - 1);
    begin
@@ -554,6 +552,22 @@ package body Python_Module is
       end if;
 
       return Integer (PyInt_AsLong (Item));
+   end Nth_Arg;
+
+   -------------
+   -- Nth_Arg --
+   -------------
+
+   function Nth_Arg
+     (Data : Python_Callback_Data; N : Positive) return Boolean
+   is
+      Item : constant PyObject := PyTuple_GetItem (Data.Args, N - 1);
+   begin
+      if Item = null or else not PyBool_Check (Item) then
+         raise Invalid_Parameter;
+      end if;
+
+      return Item = Py_True;
    end Nth_Arg;
 
    -------------
@@ -656,6 +670,7 @@ package body Python_Module is
       pragma Unreferenced (Size);
    begin
       Setup_Return_Value (Data);
+      Data.Return_As_List := True;
       Data.Has_Return_Value := True;
       Data.Return_Value := PyList_New;
    end Set_Return_Value_As_List;
@@ -665,13 +680,12 @@ package body Python_Module is
    ----------------------
 
    procedure Set_Return_Value
-     (Data   : in out Python_Callback_Data;
-      Value  : Integer; Append : Boolean := False)
+     (Data : in out Python_Callback_Data; Value : Integer)
    is
       Num : Integer;
       pragma Unreferenced (Num);
    begin
-      if Append then
+      if Data.Return_As_List then
          Num := PyList_Append
            (Data.Return_Value, PyInt_FromLong (long (Value)));
       else
@@ -685,13 +699,12 @@ package body Python_Module is
    ----------------------
 
    procedure Set_Return_Value
-     (Data   : in out Python_Callback_Data;
-      Value  : String; Append : Boolean := False)
+     (Data : in out Python_Callback_Data; Value : String)
    is
       Num : Integer;
       pragma Unreferenced (Num);
    begin
-      if Append and then Data.Return_Value /= null then
+      if Data.Return_As_List then
          Num := PyList_Append (Data.Return_Value, PyString_FromString (Value));
       else
          Setup_Return_Value (Data);
@@ -704,13 +717,12 @@ package body Python_Module is
    ----------------------
 
    procedure Set_Return_Value
-     (Data   : in out Python_Callback_Data;
-      Value  : System.Address; Append : Boolean := False)
+     (Data : in out Python_Callback_Data; Value : System.Address)
    is
       Num : Integer;
       pragma Unreferenced (Num);
    begin
-      if Append then
+      if Data.Return_As_List then
          Num := PyList_Append
            (Data.Return_Value, PyCObject_FromVoidPtr (Value));
       else
@@ -724,14 +736,13 @@ package body Python_Module is
    ----------------------
 
    procedure Set_Return_Value
-     (Data   : in out Python_Callback_Data;
-      Value  : Class_Instance; Append : Boolean := False)
+     (Data : in out Python_Callback_Data; Value : Class_Instance)
    is
       V   : constant Python_Class_Instance := Python_Class_Instance (Value);
       Num : Integer;
       pragma Unreferenced (Num);
    begin
-      if Append then
+      if Data.Return_As_List then
          Num := PyList_Append (Data.Return_Value, V.Data);
       else
          Setup_Return_Value (Data);
