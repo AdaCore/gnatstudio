@@ -2064,7 +2064,7 @@ submenu 'Update Directory' of the submenu 'Directory' of the menu 'VCS'. Path is
   </shell_doc>
 
   <shell_doc name="GPS.create" real_name="GPS.Menu.create">
-     <param name="path">A string</paramm>
+     <param name="path">A string</param>
      <param name="on_activate" default="">A subprogram, see the GPS documentation on subprogram parameters</param>
      <param name="ref" default="">A string</param>
      <param name="add_before" default="True">A boolean</param>
@@ -2079,6 +2079,12 @@ If ref and add_before are specified, they specify the name of another item in th
          menu = GPS.Menu.create ("/Edit/My Company/My Action", on_activate)
          menu.data = "my own data"   ## Store your own data in the instance
      </example>
+  </shell_doc>
+
+  <shell_doc name="GPS.Menu.rename">
+     <param name="self">The instance of GPS.Menu</param>
+     <param name="name">A string</param>
+     <description>Change the name of a menu. The first underscore character seen in name will be used as the keyboard shortcut to access this menu from now on. If you actually want to insert an underscore in the name, you need to double it</description>
   </shell_doc>
 
 
