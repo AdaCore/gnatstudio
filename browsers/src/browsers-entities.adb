@@ -524,7 +524,7 @@ package body Browsers.Entities is
             declare
                Lib_Info : constant LI_File_Ptr :=
                  Locate_From_Source_And_Complete
-                   (Kernel, Get_Declaration_File_Of (Entity));
+                   (Kernel, Get_Declaration_File_Of (Entity).all);
                Discriminants : Discriminant_Iterator := Get_Discriminants
                  (Lib_Info, Entity);
                Discr : Entity_Information;
@@ -544,7 +544,7 @@ package body Browsers.Entities is
             declare
                Lib_Info : constant LI_File_Ptr :=
                  Locate_From_Source_And_Complete
-                   (Kernel, Get_Declaration_File_Of (Entity));
+                   (Kernel, Get_Declaration_File_Of (Entity).all);
                Subs : Subprogram_Iterator := Get_Subprogram_Parameters
                  (Lib_Info   => Lib_Info, Subprogram => Entity);
                Param : Entity_Information;
@@ -564,7 +564,7 @@ package body Browsers.Entities is
             declare
                Lib_Info : constant LI_File_Ptr :=
                  Locate_From_Source_And_Complete
-                   (Kernel, Get_Declaration_File_Of (Entity));
+                   (Kernel, Get_Declaration_File_Of (Entity).all);
                Returned : Entity_Information := Returned_Type
                  (Lib_Info, Entity);
             begin
@@ -579,7 +579,7 @@ package body Browsers.Entities is
             declare
                Lib_Info : constant LI_File_Ptr :=
                  Locate_From_Source_And_Complete
-                   (Kernel, Get_Declaration_File_Of (Entity));
+                   (Kernel, Get_Declaration_File_Of (Entity).all);
                Node : Scope_Tree_Node;
                Iter : Scope_Tree_Node_Iterator;
                Field : Entity_Information;
@@ -895,7 +895,7 @@ package body Browsers.Entities is
             exit when Parent = No_Entity_Information;
 
             Parent_Lib_Info := Locate_From_Source_And_Complete
-              (Kernel, Get_Declaration_File_Of (Parent));
+              (Kernel, Get_Declaration_File_Of (Parent).all);
             Parent_Prim := Get_Primitive_Operations
               (Parent_Lib_Info, Parent, Include_Inherited => False);
 
@@ -1300,7 +1300,7 @@ package body Browsers.Entities is
    begin
       Push_State (Kernel, Busy);
       Lib_Info := Locate_From_Source_And_Complete
-        (Kernel, Get_Declaration_File_Of (It.Entity));
+        (Kernel, Get_Declaration_File_Of (It.Entity).all);
       Iter := Get_Parent_Types (Lib_Info, It.Entity);
 
       loop
@@ -1468,7 +1468,7 @@ package body Browsers.Entities is
       Trace (Me, "Resize_And_Draw: " & Get_Name (Item.Entity));
 
       Lib_Info := Locate_From_Source_And_Complete
-        (Kernel, Get_Declaration_File_Of (Item.Entity));
+        (Kernel, Get_Declaration_File_Of (Item.Entity).all);
 
       if Lib_Info = No_LI_File then
          Trace (Me, "Resize_And_Draw: no LI file found");
@@ -1745,7 +1745,7 @@ package body Browsers.Entities is
    begin
       Open_File_Editor
         (Kernel     => Get_Kernel (B),
-         Filename   => Get_Declaration_File_Of (It.Entity),
+         Filename   => Get_Declaration_File_Of (It.Entity).all,
          Line       => Get_Declaration_Line_Of (It.Entity),
          Column     => Get_Declaration_Column_Of (It.Entity),
          Column_End => Get_Declaration_Column_Of (It.Entity)
@@ -1773,7 +1773,7 @@ package body Browsers.Entities is
          Entity_Column => Get_Declaration_Column_Of (Item.Entity));
       Set_File_Information
         (Context     => Context,
-         File        => Get_Declaration_File_Of (Item.Entity),
+         File        => Get_Declaration_File_Of (Item.Entity).all,
          Line        => Get_Declaration_Line_Of (Item.Entity),
          Column      => Get_Declaration_Column_Of (Item.Entity));
       --  We need to set the file information, even though it will also display
