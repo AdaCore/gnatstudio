@@ -122,7 +122,15 @@ package body Codefix.Text_Manager.Ada_Commands is
    begin
       Free (This.Cursor);
       Free (This.Correct_Word);
+      Free (Text_Command (This));
    end Free;
+
+   procedure Unchecked_Free (This : in out Recase_Word_Cmd) is
+   begin
+      This.Cursor := null;
+      This.Correct_Word := null;
+      Unchecked_Free (Text_Command (This));
+   end Unchecked_Free;
 
    ----------------------------
    -- Remove_Instruction_Cmd --
@@ -155,7 +163,14 @@ package body Codefix.Text_Manager.Ada_Commands is
    procedure Free (This : in out Remove_Instruction_Cmd) is
    begin
       Free (This.Begin_Mark);
+      Free (Text_Command (This));
    end Free;
+
+   procedure Unchecked_Free (This : in out Remove_Instruction_Cmd) is
+   begin
+      This.Begin_Mark := null;
+      Unchecked_Free (Text_Command (This));
+   end Unchecked_Free;
 
    -------------------------
    -- Remove_Elements_Cmd --
@@ -247,7 +262,14 @@ package body Codefix.Text_Manager.Ada_Commands is
    procedure Free (This : in out Remove_Elements_Cmd) is
    begin
       Free (This.Remove_List);
+      Free (Text_Command (This));
    end Free;
+
+   procedure Unchecked_Free (This : in out Remove_Elements_Cmd) is
+   begin
+      This.Remove_List := Mark_List.Null_List;
+      Unchecked_Free (Text_Command (This));
+   end Unchecked_Free;
 
    ----------------------------
    -- Remove_Pkg_Clauses_Cmd --
@@ -257,8 +279,11 @@ package body Codefix.Text_Manager.Ada_Commands is
    procedure Initialize
      (This         : in out Remove_Pkg_Clauses_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
-      Word         : Word_Cursor)
+      Word         : Word_Cursor;
+      Destination  : String := "")
    is
+      pragma Unreferenced (Destination);
+
       Use_Info, Pkg_Info     : Construct_Information;
       Word_Use               : Word_Cursor := Word;
       Index_Name, Prev_Index : Natural := 0;
@@ -318,7 +343,15 @@ package body Codefix.Text_Manager.Ada_Commands is
    begin
       Free (This.Instantiation_Pkg);
       Free (This.Clauses_Pkg);
+      Free (Text_Command (This));
    end Free;
+
+   procedure Unchecked_Free (This : in out Remove_Pkg_Clauses_Cmd) is
+   begin
+      Unchecked_Free (This.Instantiation_Pkg);
+      Unchecked_Free (This.Clauses_Pkg);
+      Unchecked_Free (Text_Command (This));
+   end Unchecked_Free;
 
    -----------------------
    -- Remove_Entity_Cmd --
@@ -420,7 +453,17 @@ package body Codefix.Text_Manager.Ada_Commands is
       Free (This.Spec_End);
       Free (This.Body_Begin);
       Free (This.Body_End);
+      Free (Text_Command (This));
    end Free;
+
+   procedure Unchecked_Free (This : in out Remove_Entity_Cmd) is
+   begin
+      This.Spec_Begin := null;
+      This.Spec_End := null;
+      This.Body_Begin := null;
+      This.Body_End := null;
+      Unchecked_Free (Text_Command (This));
+   end Unchecked_Free;
 
    --------------------
    -- Add_Pragma_Cmd --
@@ -462,7 +505,16 @@ package body Codefix.Text_Manager.Ada_Commands is
       Free (This.Position);
       Free (This.Name);
       Free (This.Argument);
+      Free (Text_Command (This));
    end Free;
+
+   procedure Unchecked_Free (This : in out Add_Pragma_Cmd) is
+   begin
+      This.Position := null;
+      This.Name := null;
+      This.Argument := null;
+      Unchecked_Free (Text_Command (This));
+   end Unchecked_Free;
 
    -----------------------
    -- Make_Constant_Cmd --
@@ -539,6 +591,108 @@ package body Codefix.Text_Manager.Ada_Commands is
    begin
       Free (This.Position);
       Free (This.Name);
+      Free (Text_Command (This));
    end Free;
+
+   procedure Unchecked_Free (This : in out Make_Constant_Cmd) is
+   begin
+      This.Position := null;
+      This.Name := null;
+      Unchecked_Free (Text_Command (This));
+   end Unchecked_Free;
+
+
+   ----------------------------
+   -- Remove_Parenthesis_Cmd --
+   ----------------------------
+
+   procedure Initialize
+     (This         : in out Remove_Parenthesis_Cmd;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Cursor       : File_Cursor'Class) is
+   begin
+      This.Cursor := new Mark_Abstr'Class'
+        (Get_New_Mark (Current_Text, Cursor));
+   end Initialize;
+
+   procedure Execute
+     (This         : Remove_Parenthesis_Cmd;
+      Current_Text : Text_Navigator_Abstr'Class;
+      New_Extract  : in out Extract'Class)
+   is
+      procedure Right_Paren (Current_Index : in out Integer);
+      --  Put Current_Index extactly on the right paren correponding the last
+      --  left paren.
+
+      Work_Extract  : Ada_Instruction;
+      Current_Line  : Ptr_Extract_Line;
+      Cursor        : File_Cursor;
+      Line_Cursor   : File_Cursor;
+      Current_Index : Natural := 1;
+
+      procedure Right_Paren (Current_Index : in out Integer) is
+      begin
+         loop
+            if Current_Index > Get_String (Current_Line.all)'Last then
+               Current_Index := 1;
+               Current_Line := Next (Current_Line.all);
+            end if;
+
+            case Get_String (Current_Line.all) (Current_Index) is
+               when '(' =>
+                  Current_Index := Current_Index + 1;
+                  Right_Paren (Current_Index);
+               when ')' =>
+                  return;
+               when others =>
+                  Current_Index := Current_Index + 1;
+            end case;
+         end loop;
+      end Right_Paren;
+
+   begin
+
+      Cursor := File_Cursor
+        (Get_Current_Cursor (Current_Text, This.Cursor.all));
+
+      Line_Cursor := Cursor;
+      Line_Cursor.Col := 1;
+      Get_Unit (Current_Text, Cursor, Work_Extract);
+      Current_Line := Get_Line (Work_Extract, Line_Cursor);
+
+      Erase
+        (Work_Extract,
+         Cursor,
+         Search_String (Work_Extract, "(", Cursor));
+
+      Current_Index := Cursor.Col;
+
+      Right_Paren (Current_Index);
+
+      Cursor := Current_Line.Cursor;
+      Cursor.Col := Current_Index;
+
+      Erase
+        (Work_Extract,
+         Cursor,
+         Cursor);
+
+      Unchecked_Assign (New_Extract, Extract (Work_Extract));
+      Unchecked_Free (Extract (Work_Extract));
+      Free (Work_Extract);
+
+   end Execute;
+
+   procedure Free (This : in out Remove_Parenthesis_Cmd) is
+   begin
+      Free (This.Cursor);
+      Free (Text_Command (This));
+   end Free;
+
+   procedure Unchecked_Free (This : in out Remove_Parenthesis_Cmd) is
+   begin
+      This.Cursor := null;
+      Unchecked_Free (Text_Command (This));
+   end Unchecked_Free;
 
 end Codefix.Text_Manager.Ada_Commands;
