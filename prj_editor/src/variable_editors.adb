@@ -110,12 +110,13 @@ package body Variable_Editors is
    is
       procedure Internal
         (Tree, Iter : System.Address;
-         Col1 : Gint; Value1 : Gint;
-         Col2 : Gint; Value2 : String;
-         Col3 : Gint; Value3 : Gint;
-         Col4 : Gint; Value4 : String;
+         Col1  : Gint; Value1 : Gint;
+         Col2  : Gint; Value2 : String;
+         Col3  : Gint; Value3 : Gint;
+         Col4  : Gint; Value4 : String;
          Final : Gint := -1);
       pragma Import (C, Internal, "gtk_tree_store_set");
+
    begin
       Internal
         (Get_Object (Tree_Store), Iter'Address,
@@ -135,17 +136,18 @@ package body Variable_Editors is
       Var    : Prj.Tree.Project_Node_Id :=  Prj.Tree.Empty_Node;
       Title  : String)
    is
-      Item          : Gtk_List_Item;
-      Index         : Natural := 0;
-      S             : chars_ptr;
-      Col           : Gtk_Tree_View_Column;
-      Col_Number    : Gint;
+      Item            : Gtk_List_Item;
+      Index           : Natural := 0;
+      S               : chars_ptr;
+      Col             : Gtk_Tree_View_Column;
+      Col_Number      : Gint;
       Toggle_Renderer : Gtk_Cell_Renderer_Toggle;
-      Button        : Gtk_Widget;
-      Iter          : Gtk_Tree_Iter;
-      E             : String_List_Iterator;
-      Expr          : Project_Node_Id;
-      Is_Default    : Boolean;
+      Button          : Gtk_Widget;
+      Iter            : Gtk_Tree_Iter;
+      E               : String_List_Iterator;
+      Expr            : Project_Node_Id;
+      Is_Default      : Boolean;
+
    begin
       Editor := new New_Var_Edit_Record;
       Editor.Var := Var;
@@ -274,12 +276,15 @@ package body Variable_Editors is
      (Editor : access Gtk_Widget_Record'Class;
       Params : Glib.Values.GValues)
    is
-      M : Gtk_Tree_Store := Gtk_Tree_Store (New_Var_Edit (Editor).Model);
+      M           : Gtk_Tree_Store :=
+        Gtk_Tree_Store (New_Var_Edit (Editor).Model);
       Path_String : constant String := Get_String (Nth (Params, 1));
       Iter        : Gtk_Tree_Iter;
+
    begin
       --  Once a cell has been edited, it is no longer editable, until the user
       --  presses the Rename button.
+
       Iter := Get_Iter_From_String (M, Path_String);
       Set (M, Iter, Editable_Column, False);
    end Edited_Callback;
@@ -291,9 +296,11 @@ package body Variable_Editors is
    procedure New_Variable (Editor : access Gtk_Widget_Record'Class) is
       E    : New_Var_Edit := New_Var_Edit (Editor);
       Iter : Gtk_Tree_Iter;
+
    begin
       --  Add a new entry. This will become the default value if this is also
       --  the first one in the list.
+
       Iter := Get_Iter_Root (E.Model);
       Append (E.Model, Iter, Null_Iter);
       Variable_Editor_Set
@@ -308,12 +315,14 @@ package body Variable_Editors is
    ---------------------
 
    procedure Rename_Variable (Editor : access Gtk_Widget_Record'Class) is
-      E           : New_Var_Edit := New_Var_Edit (Editor);
-      Iter        : Gtk_Tree_Iter := Null_Iter;
-      Success     : Boolean;
-      Selection   : Gtk_Tree_Selection := Get_Selection (E.Values_List);
+      E         : New_Var_Edit  := New_Var_Edit (Editor);
+      Iter      : Gtk_Tree_Iter := Null_Iter;
+      Success   : Boolean;
+      Selection : Gtk_Tree_Selection := Get_Selection (E.Values_List);
+
    begin
       Success := Get_Selected (Selection, E.Model, Iter);
+
       if Success then
          Set (E.Model, Iter, Editable_Column, True);
          Set_Cursor
@@ -329,12 +338,14 @@ package body Variable_Editors is
    ---------------------
 
    procedure Delete_Variable (Editor : access Gtk_Widget_Record'Class) is
-      E           : New_Var_Edit := New_Var_Edit (Editor);
-      Iter        : Gtk_Tree_Iter := Null_Iter;
-      Success     : Boolean;
-      Selection   : Gtk_Tree_Selection := Get_Selection (E.Values_List);
+      E         : New_Var_Edit := New_Var_Edit (Editor);
+      Iter      : Gtk_Tree_Iter := Null_Iter;
+      Success   : Boolean;
+      Selection : Gtk_Tree_Selection := Get_Selection (E.Values_List);
+
    begin
       Success := Get_Selected (Selection, E.Model, Iter);
+
       if Success then
          Remove (E.Model, Iter);
       end if;
@@ -349,13 +360,14 @@ package body Variable_Editors is
    is
       New_Name : constant String :=
         Get_Text (Get_Entry (Editor.Variable_Name));
-      Var : Project_Node_Id := Editor.Var;
+      Var      : Project_Node_Id := Editor.Var;
       Changed  : Boolean := False;
       Iter     : Gtk_Tree_Iter;
       Val_Iter : String_List_Iterator;
       Found    : Boolean;
       Num_Rows : Natural := 0;
       Message  : Message_Dialog_Buttons;
+
    begin
       if New_Name = "" then
          Message := Message_Dialog
@@ -487,14 +499,16 @@ package body Variable_Editors is
             Found := False;
 
             declare
-               Name : constant String := Get_String
+               Name    : constant String := Get_String
                  (Editor.Model, Iter, Value_Column);
-               Default : Boolean := Boolean_Get
+               Default : Boolean := Get_Boolean
                  (Editor.Model, Iter, Default_Value_Column);
-               Id : String_Id := No_String;
+               Id      : String_Id := No_String;
+
             begin
                if Name /= New_Value_Name then
                   Val_Iter := Type_Values (Var);
+
                   while not Done (Val_Iter) loop
                      if Name =
                        Get_String (String_Value_Of (Data (Val_Iter)))
@@ -593,11 +607,13 @@ package body Variable_Editors is
       Gtk_New (Edit, Get_Kernel (Context),
                Title => -"Creating a new variable");
       Show_All (Edit);
+
       while Run (Edit) = Gtk_Response_OK
         and then not Update_Variable (Edit)
       loop
          null;
       end loop;
+
       Destroy (Edit);
    end On_Add_Variable;
 
