@@ -340,7 +340,6 @@ procedure GPS is
 
       declare
          File     : constant String := '/' & (-"File") & '/';
-         Edit     : constant String := '/' & (-"Edit") & '/';
          Navigate : constant String := '/' & (-"Navigate") & '/';
          Tools    : constant String := '/' & (-"Tools") & '/';
 
@@ -348,10 +347,6 @@ procedure GPS is
          Set_Sensitive (Find_Menu_Item (GPS.Kernel, File & (-"Print")), False);
          Set_Sensitive (Find_Menu_Item
            (GPS.Kernel, File & (-"Close All")), False);
-
-         Set_Sensitive (Find_Menu_Item
-           (GPS.Kernel, Edit & (-"Preferences")), False);
-
          Set_Sensitive (Find_Menu_Item
            (GPS.Kernel, Navigate & (-"Goto Parent Unit")), False);
          Set_Sensitive (Find_Menu_Item
@@ -532,7 +527,7 @@ begin
    Free (Dir);
    Free (Prefix);
 
-   Free_Preferences (GPS.Kernel);
+   Destroy (GPS.Kernel);
    Prj_API.Finalize;
 
 exception
