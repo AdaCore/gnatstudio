@@ -448,7 +448,15 @@ package body Odd.Text_Boxes is
 
                         Index := Index + 1;
                      end loop;
-                     Index := Index + Integer (X) - Box.Buffer'First;
+
+                     --  Go to the right column, but make sure we are still on
+                     --  the current line
+                     Index := Index - Box.Buffer'First;
+                     for J in 1 .. Integer (X) loop
+                        Index := Index + 1;
+                        exit when Box.Buffer (Index) = ASCII.LF;
+                     end loop;
+                     --  Index := Index + Integer (X) - Box.Buffer'First;
                   end if;
 
                   Start_Index := Index
