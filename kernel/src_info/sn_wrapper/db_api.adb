@@ -312,16 +312,18 @@ package body DB_API is
      (The_CSF : CSF;
       Separator : Character := ' ') return String
    is
-      N : Natural := Get_Field_Count (The_CSF);
+      N : constant Natural := Get_Field_Count (The_CSF);
       S : Unbounded_String;
    begin
       for F in 1 .. N - 1 loop
          Append (S, Get_Field (The_CSF, F));
          Append (S, Separator);
       end loop;
-      if (N > 0) then
+
+      if N > 0 then
          Append (S, Get_Field (The_CSF, N));
       end if;
+
       return To_String (S);
    end Get_All_Fields;
 
@@ -353,13 +355,14 @@ package body DB_API is
    ---------------
 
    function Get_Field (The_CSF : CSF; Index : Positive) return String is
-      function I_Get_Field (The_CSF : CSF; Index : C.int)
-        return CStrings.chars_ptr;
+      function I_Get_Field
+        (The_CSF : CSF; Index : C.int) return CStrings.chars_ptr;
       pragma Import (C, I_Get_Field, "csf_get_field");
-      R : CStrings.chars_ptr :=
+
+      R : constant CStrings.chars_ptr :=
         I_Get_Field (The_CSF, C.int (Index));
    begin
-      if (R = CStrings.Null_Ptr) then
+      if R = CStrings.Null_Ptr then
          Raise_Exception (Index_Out_Of_Range'Identity,
            "Index out of range: " & Positive'Image (Index) & " > "
              & Positive'Image (Get_Field_Count (The_CSF)));
