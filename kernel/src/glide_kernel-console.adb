@@ -18,7 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib.Xml_Int;         use Glib.Xml_Int;
 with Glib.Object;          use Glib.Object;
 with Glide_Main_Window;    use Glide_Main_Window;
 with Glide_Page;           use Glide_Page;
@@ -29,6 +28,7 @@ with GVD.Process;          use GVD.Process;
 with GNAT.IO;              use GNAT.IO;
 with Gtk.Widget;           use Gtk.Widget;
 with Gtkada.Handlers;      use Gtkada.Handlers;
+with Gtkada.MDI;           use Gtkada.MDI;
 
 package body Glide_Kernel.Console is
 
@@ -51,15 +51,6 @@ package body Glide_Kernel.Console is
    procedure On_Clear_Console
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Callback for File->Console->Clear menu.
-
-   function Load_Desktop
-     (Node : Node_Ptr; User : Kernel_Handle) return Gtk_Widget;
-   --  Save the status of the console to an XML tree
-
-   function Save_Desktop
-     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class)
-      return Node_Ptr;
-   --  Restore the status of the console from a saved XML tree.
 
    -----------------
    -- Get_Console --
@@ -161,9 +152,22 @@ package body Glide_Kernel.Console is
    procedure Initialize_Console
      (Kernel         : access Kernel_Handle_Record'Class)
    is
-      Console : constant Glide_Console := Get_Console (Kernel);
+      Top : constant Glide_Window := Glide_Window (Get_Main_Window (Kernel));
+      Console : Glide_Console;
+      Child : MDI_Child;
    begin
-      if Console /= null then
+      if Top /= null
+        and then Get_Current_Process (Top) /= null
+      then
+         Gtk_New (Console, Kernel);
+         Child := Put (Get_MDI (Kernel), Console);
+         Set_Title (Child, "GPS Console");
+         Set_Dock_Side (Child, Bottom);
+         Dock_Child (Child);
+         Raise_Child (Child);
+
+         Glide_Page.Glide_Page (Get_Current_Process (Top)).Console := Console;
+
          Kernel_Callback.Connect
            (Console, "destroy",
             Kernel_Callback.To_Marshaller (Console_Destroyed'Access),
@@ -173,42 +177,6 @@ package body Glide_Kernel.Console is
             Return_Callback.To_Marshaller (Console_Delete_Event'Access));
       end if;
    end Initialize_Console;
-
-   ------------------
-   -- Load_Desktop --
-   ------------------
-
-   function Load_Desktop
-     (Node : Node_Ptr; User : Kernel_Handle) return Gtk_Widget
-   is
-      Console : Glide_Console;
-   begin
-      if Node.Tag.all = "Console" then
-         Gtk_New (Console, User);
-         return Gtk_Widget (Console);
-      end if;
-
-      return null;
-   end Load_Desktop;
-
-   ------------------
-   -- Save_Desktop --
-   ------------------
-
-   function Save_Desktop
-     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class)
-      return Node_Ptr
-   is
-      N : Node_Ptr;
-   begin
-      if Widget.all in Glide_Console_Record'Class then
-         N := new Node;
-         N.Tag := new String' ("Console");
-         return N;
-      end if;
-
-      return null;
-   end Save_Desktop;
 
    ---------------------
    -- Register_Module --
@@ -235,9 +203,6 @@ package body Glide_Kernel.Console is
       Register_Menu
         (Kernel, Console, -"Load Contents...", "", null, Sensitive => False);
       --             On_Load_To_Console'Access);
-
-      Glide_Kernel.Kernel_Desktop.Register_Desktop_Functions
-        (Save_Desktop'Access, Load_Desktop'Access);
    end Register_Module;
 
 end Glide_Kernel.Console;
