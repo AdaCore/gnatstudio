@@ -194,6 +194,11 @@ package body GVD.Canvas is
       Canvas : GVD_Canvas) is
    begin
       Align_On_Grid (Canvas, Get_Active (Item));
+
+   exception
+      when others =>
+         --  Ignore unexpected exceptions
+         null;
    end Change_Align_On_Grid;
 
    ---------------------------
@@ -212,6 +217,11 @@ package body GVD.Canvas is
       Recompute_All_Aliases (Canvas);
 
       Refresh_Canvas (Canvas);
+
+   exception
+      when others =>
+         --  Ignore unexpected exceptions
+         null;
    end Change_Detect_Aliases;
 
    ------------------------
@@ -224,6 +234,11 @@ package body GVD.Canvas is
    begin
       On_Display_Expression
         (Process.Window.all'Access, 0, Factory_Data.Null_Widget);
+
+   exception
+      when others =>
+         --  Ignore unexpected exceptions
+         null;
    end Display_Expression;
 
    ------------------------
@@ -263,6 +278,7 @@ package body GVD.Canvas is
          when GDK_minus => Zoom_Out (Canvas);
          when others    => null;
       end case;
+
       return False;
    end Key_Press;
 
@@ -946,6 +962,11 @@ package body GVD.Canvas is
            (Get_Debugger (Item.Item).Debugger, Item.Component_Name, S);
          Update_Variable (Widget, Item);
       end if;
+
+   exception
+      when others =>
+         --  Ignore unexpected exceptions
+         null;
    end Set_Value;
 
    --------------
@@ -960,6 +981,11 @@ package body GVD.Canvas is
    begin
       Set_Visibility (Item.Component, True, Recursive => True);
       Update_Resize_Display (Item.Item, True);
+
+   exception
+      when others =>
+         --  Ignore unexpected exceptions
+         null;
    end Show_All;
 
    ----------------------
@@ -983,6 +1009,11 @@ package body GVD.Canvas is
 
       Display_Memory (View, Item.Component_Name);
       Gdk_Raise (Get_Window (View));
+
+   exception
+      when others =>
+         --  Ignore unexpected exceptions
+         null;
    end View_Into_Memory;
 
    ---------------------
@@ -997,6 +1028,11 @@ package body GVD.Canvas is
    begin
       Display_Items.Update
         (Item.Canvas, Item.Item, Redisplay_Canvas => True);
+
+   exception
+      when others =>
+         --  Ignore unexpected exceptions
+         null;
    end Update_Variable;
 
    --------------------
@@ -1013,6 +1049,11 @@ package body GVD.Canvas is
         (Get_Debugger (Item.Item),
          "graph undisplay" & Integer'Image (Get_Num (Item.Item)),
          Output_Command => True);
+
+   exception
+      when others =>
+         --  Ignore unexpected exceptions
+         null;
    end Undisplay_Item;
 
    -------------------------
@@ -1030,6 +1071,11 @@ package body GVD.Canvas is
          Get_Window (Item.Canvas),
          not Get_Auto_Refresh (Item.Item),
          True);
+
+   exception
+      when others =>
+         --  Ignore unexpected exceptions
+         null;
    end Toggle_Refresh_Mode;
 
    -------------
@@ -1070,11 +1116,16 @@ package body GVD.Canvas is
 
    procedure Zoom_Level
      (Mitem : access Gtk_Widget_Record'Class;
-      Item   : Item_Record)
+      Item  : Item_Record)
    is
       pragma Unreferenced (Mitem);
    begin
       Zoom (Item.Canvas, Item.Zoom, 1);
+
+   exception
+      when others =>
+         --  Ignore unexpected exceptions
+         null;
    end Zoom_Level;
 
 end GVD.Canvas;
