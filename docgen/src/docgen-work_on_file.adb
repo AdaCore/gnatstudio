@@ -560,15 +560,6 @@ package body Docgen.Work_On_File is
             then
                --  Info_Output is set, if further information are wished
 
-               Trace
-                 (Me, "Entity found: "
-                  & Get_Full_Name (Info, LI_Unit, ".", Tree) &
-                  " in " & Full_Name (Source_Filename).all &
-                  " defined at " &
-                  Full_Name (Get_Declaration_File_Of (Info)).all &
-                  ":" & Image (Get_Declaration_Line_Of (Info)) &
-                  ":" & Image (Get_Declaration_Column_Of (Info)));
-
                --  Get the parameters needed by all entities
 
                Entity_Node.Name   :=
