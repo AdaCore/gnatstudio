@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2002-2003                       --
+--                     Copyright (C) 2002-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -128,8 +128,9 @@ package body SN.Browse is
          Read (Dir, Dir_Entry, Last); -- read first directory entry
 
          while Last /= 0 loop
-            if Tail (Dir_Entry (1 .. Last), Xref_Suffix'Length)
-               = Xref_Suffix then
+            if Tail (Dir_Entry (1 .. Last), Xref_Suffix'Length) =
+              Xref_Suffix
+            then
                Content := OS_Utils.Read_File
                   (Name_As_Directory (DB_Directories (1).all)
                     & Dir_Entry (1 .. Last));

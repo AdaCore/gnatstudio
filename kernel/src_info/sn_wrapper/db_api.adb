@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2002-2003                    --
+--                        Copyright (C) 2002-2004                    --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -210,13 +210,12 @@ package body DB_API is
       Result   : out Pair)
    is
       procedure I_Get_Pair
-        (DB : DB_File; Move  : Cursor_Movement; Result : out Pair);
+        (DB : DB_File; Move : Cursor_Movement; Result : out Pair);
       pragma Import (C, I_Get_Pair, "ada_db_get_pair");
 
    begin
       if DB = null then
-         Raise_Exception (DB_Error'Identity,
-           E_Init_Failed);
+         Raise_Exception (DB_Error'Identity, E_Init_Failed);
       else
          I_Get_Pair (DB, Movement, Result);
 

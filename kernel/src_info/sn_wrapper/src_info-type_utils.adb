@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2002                         --
+--                      Copyright (C) 2002-2004                      --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -629,8 +629,8 @@ package body Src_Info.Type_Utils is
       Success         : out Boolean)
    is
       pragma Unreferenced (Symbol);
-      Arg             : TA_Table;
-      P               : Pair;
+      Arg : TA_Table;
+      P   : Pair;
    begin
       Success := False;
       if not Is_Open (SN_Table (TA)) then

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2002-2003                       --
+--                     Copyright (C) 2002-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -181,11 +181,11 @@ package body Src_Info.CPP is
    -----------------------
 
    procedure Insert_Dependency
-     (Handler              : access Src_Info.CPP.CPP_LI_Handler_Record'Class;
-      File                 : in out LI_File_Ptr;
-      Referred_Filename    : VFS.Virtual_File;
-      Referred_LI          : out LI_File_Ptr;
-      Dep_Ptr              : out Dependency_File_Info_List)
+     (Handler           : access Src_Info.CPP.CPP_LI_Handler_Record'Class;
+      File              : in out LI_File_Ptr;
+      Referred_Filename : VFS.Virtual_File;
+      Referred_LI       : out LI_File_Ptr;
+      Dep_Ptr           : out Dependency_File_Info_List)
    is
       Set_Contents : Boolean := False;
    begin
@@ -335,14 +335,14 @@ package body Src_Info.CPP is
    ------------------------
 
    procedure Insert_Declaration
-     (File                    : in out LI_File_Ptr;
-      Symbol_Name             : String;
-      Location                : Point;
-      Kind                    : E_Kind;
-      Scope                   : E_Scope;
-      End_Of_Scope_Location   : Point := Invalid_Point;
-      Rename_Location         : Point := Invalid_Point;
-      Declaration_Info        : out E_Declaration_Info_List) is
+     (File                  : in out LI_File_Ptr;
+      Symbol_Name           : String;
+      Location              : Point;
+      Kind                  : E_Kind;
+      Scope                 : E_Scope;
+      End_Of_Scope_Location : Point := Invalid_Point;
+      Rename_Location       : Point := Invalid_Point;
+      Declaration_Info      : out E_Declaration_Info_List) is
    begin
       if File.LI.Body_Info.Declarations = null then
          File.LI.Body_Info.Declarations := new E_Declaration_Info_Node;
@@ -384,14 +384,14 @@ package body Src_Info.CPP is
    ------------------------
 
    procedure Insert_Declaration
-     (D_Ptr                   : in out E_Declaration_Info_List;
-      File                    : LI_File_Ptr;
-      Symbol_Name             : String;
-      Location                : Point;
-      Kind                    : E_Kind;
-      Scope                   : E_Scope;
-      End_Of_Scope_Location   : Point := Invalid_Point;
-      Rename_Location         : Point := Invalid_Point) is
+     (D_Ptr                 : in out E_Declaration_Info_List;
+      File                  : LI_File_Ptr;
+      Symbol_Name           : String;
+      Location              : Point;
+      Kind                  : E_Kind;
+      Scope                 : E_Scope;
+      End_Of_Scope_Location : Point := Invalid_Point;
+      Rename_Location       : Point := Invalid_Point) is
    begin
       if D_Ptr = null then
          return;
@@ -3029,6 +3029,7 @@ package body Src_Info.CPP is
 
          Release_Cursor (Handler.SN_Table (MI));
       end if;
+
    end Create_Overload_List;
 
    --------------------------
@@ -3153,6 +3154,7 @@ package body Src_Info.CPP is
 
          Release_Cursor (Handler.SN_Table (FU));
       end if;
+
    end Create_Overload_List;
 
    ----------------------
@@ -3166,20 +3168,20 @@ package body Src_Info.CPP is
       Module_Type_Defs : Module_Typedefs_List)
    is
       pragma Unreferenced (Module_Type_Defs);
-      P              : Pair;
-      Fn             : FU_Table;
-      Fn_Tmp         : FU_Table;
-      Decl_Info      : E_Declaration_Info_List;
-      Overloaded     : Boolean := False;
+      P                : Pair;
+      Fn               : FU_Table;
+      Fn_Tmp           : FU_Table;
+      Decl_Info        : E_Declaration_Info_List;
+      Overloaded       : Boolean := False;
       Forward_Declared : Boolean := False;
-      No_Body        : Boolean := True;
-      Kind           : E_Kind;
-      FDecl          : FD_Table;
-      FDecl_Tmp      : FD_Table;
-      Ref_Id         : constant String := String (Ref.Key
+      No_Body          : Boolean := True;
+      Kind             : E_Kind;
+      FDecl            : FD_Table;
+      FDecl_Tmp        : FD_Table;
+      Ref_Id           : constant String := String (Ref.Key
         (Ref.Referred_Symbol_Name.First .. Ref.Referred_Symbol_Name.Last));
-      Data           : Buffer_String;
-      Return_Type    : Segment;
+      Data             : Buffer_String;
+      Return_Type      : Segment;
 
    begin
       --  Info ("Fu_To_Fu_Handler: " & Ref_Id);
@@ -3361,6 +3363,7 @@ package body Src_Info.CPP is
          File,
          Ref.Position,
          Reference);
+
    exception
       when Not_Found  | DB_Error => -- ignore
          Fail ("unable to find function " & Ref_Id);
@@ -4568,7 +4571,7 @@ package body Src_Info.CPP is
          String (Sym.Key (Sym.File_Name.First .. Sym.File_Name.Last)),
          Tab => FD_Tab);
 
-      Is_Static  := (FD_Tab.Attributes and SN_STATIC) = SN_STATIC;
+      Is_Static := (FD_Tab.Attributes and SN_STATIC) = SN_STATIC;
 
       Set_Cursor
         (Handler.SN_Table (FD),
