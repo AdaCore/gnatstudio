@@ -154,6 +154,7 @@ package Projects.Registry is
       return Project_Type;
    --  Select a project by one of its source files. If no project was found and
    --  Root_If_Not_Found is true, the root project is returned instead.
+   --  Source_Filename can either be the full pathname or the base name.
 
    procedure Reset_Name_Table
      (Registry           : Project_Registry;

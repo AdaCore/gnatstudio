@@ -835,7 +835,7 @@ package body Projects.Registry is
       return Project_Type
    is
       P : constant Project_Type :=
-        Get (Registry.Data.Sources, Source_Filename).Project;
+        Get (Registry.Data.Sources, Base_Name (Source_Filename)).Project;
    begin
       if P = No_Project and then Root_If_Not_Found then
          return Registry.Data.Root;
