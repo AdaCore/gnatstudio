@@ -66,6 +66,10 @@ package Tries is
    --  As a special case, if Prefix is the empty string, the whole contents
    --  of the table will be returned.
 
+   function Length (Iter : Iterator) return Natural;
+   --  Return the number of elements that remains to be returned by Iter,
+   --  including the current one.
+
    procedure Next (Iter : in out Iterator);
    --  Move to the next entry
 
@@ -100,6 +104,8 @@ private
    --  which is the emphasis for this tree.
 
    type Cell_Child is record
+      First_Char_Of_Key : Character;
+
       Index_Length : Natural := 0;
       --  The number of characters that should be considered in
       --  Get_Index (Data) for this node.
@@ -118,7 +124,8 @@ private
    end record;
 
    Empty_Trie_Tree : constant Trie_Tree :=
-     (Child => (Index_Length => 0, Data => No_Data, Children => null));
+     (Child => (Index_Length => 0, First_Char_Of_Key => 'a',
+                Data => No_Data, Children => null));
 
    type Iterator is record
       Cells : Cell_Child_Array_Access;
