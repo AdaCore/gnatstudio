@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with Glib.Error;                use Glib.Error;
+with Glib.Messages;             use Glib.Messages;
 with Glib.Object;               use Glib.Object;
 with Pango.Font;                use Pango.Font;
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
@@ -151,6 +152,12 @@ procedure GPS is
    --  Execute a batch command (either loading the file Batch if As_File is
    --  true, or as a standard command otherwise).
 
+   procedure Gtk_Log
+     (Log_Domain : String;
+      Log_Level  : Log_Level_Flags;
+      Message    : String);
+   --  Log level glib handler for redirecting Gtk+ messages to our log file.
+
    ---------------------
    -- Clean_Parameter --
    ---------------------
@@ -193,6 +200,24 @@ procedure GPS is
       end if;
    end Display_Splash_Screen;
 
+   -------------
+   -- Gtk_Log --
+   -------------
+
+   procedure Gtk_Log
+     (Log_Domain : String;
+      Log_Level  : Log_Level_Flags;
+      Message    : String) is
+   begin
+      if (Log_Level and Log_Level_Critical) /= 0 then
+         Trace (Gtk_Trace, Log_Domain & "-CRITICAL: " & Message);
+      elsif (Log_Level and Log_Level_Warning) /= 0 then
+         Trace (Gtk_Trace, Log_Domain & "-WARNING: " & Message);
+      else
+         Trace (Gtk_Trace, Log_Domain & "-MISC: " & Message);
+      end if;
+   end Gtk_Log;
+
    ----------
    -- Init --
    ----------
@@ -200,6 +225,9 @@ procedure GPS is
    procedure Init_Settings is
       Dir_Created : Boolean := False;
       File        : File_Type;
+      Ignored     : Log_Handler_Id;
+      pragma Unreferenced (Ignored);
+
    begin
       --  Set the TERM variable to a dummy value, since we only know how to
       --  handle simple terminals
@@ -237,6 +265,25 @@ procedure GPS is
 
       Bind_Text_Domain
         ("gps", Format_Pathname (Prefix.all & "/share/locale"));
+
+      --  Redirect all default Gtk+ logs to our own trace mechanism
+
+      Ignored := Log_Set_Handler
+        ("", Log_Level_Mask, Gtk_Log'Unrestricted_Access);
+      Ignored := Log_Set_Handler
+        ("GLib", Log_Level_Mask, Gtk_Log'Unrestricted_Access);
+      Ignored := Log_Set_Handler
+        ("GLib-GObject", Log_Level_Mask, Gtk_Log'Unrestricted_Access);
+      Ignored := Log_Set_Handler
+        ("Pango", Log_Level_Mask, Gtk_Log'Unrestricted_Access);
+      Ignored := Log_Set_Handler
+        ("Atk", Log_Level_Mask, Gtk_Log'Unrestricted_Access);
+      Ignored := Log_Set_Handler
+        ("GdkPixbuf", Log_Level_Mask, Gtk_Log'Unrestricted_Access);
+      Ignored := Log_Set_Handler
+        ("Gdk", Log_Level_Mask, Gtk_Log'Unrestricted_Access);
+      Ignored := Log_Set_Handler
+        ("Gtk", Log_Level_Mask, Gtk_Log'Unrestricted_Access);
 
       Dir := new String'(String_Utils.Name_As_Directory (Home.all) & ".gps");
 
