@@ -1888,9 +1888,20 @@ editors.
 
 @item Print
 @cindex print
-Print the current file by first saving it interactively (if it has
-been modified) and then by launching the command defined in the preferences
-if the command is defined. (On Windows the command is optional.)
+Print the current window contents, optionally saving it interactively if it has
+been modified. The Print Command specified in the preferences is used if it is
+defined. On Unix this command is required; on Windows it is optional.
+
+On Windows, if no command is specified in the preferences the standard Windows
+print dialog box is displayed. This dialog box allows the user to specify the
+target printer, the properties of the printer, which pages to print (all, or a
+specific range of pages), the number of copies to print, and, when more than
+one copy is specified, whether the pages should be collated.  Pressing the
+Cancel button on the dialog box returns to GPS without printing the window
+contents; otherwise the specified pages and copies are printed on the selected
+printer. Each page is printed with a header containing the name of the file
+(if the window has ever been saved). The page number is printed on the bottom
+of each page.
 @xref{Print Command}.
 
 @item Exit
@@ -5471,7 +5482,7 @@ Program used to print files. On GNU/Linux systems this program is required and
 is @code{a2ps} by default. The @code{a2ps} utility can be used on most Unix
 systems and can be downloaded from @url{http://www.inf.enst.fr/~demaille/a2ps}
 
-On Windows systems this program is not required and is empty by default. A
+On Windows systems this program is optional and is empty by default. A
 replacement will be used if specified. A possible replacement is the PrintFile
 freeware utility available from @url{http://www.lerup.com/printfile/descr.html}
 
