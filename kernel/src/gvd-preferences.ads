@@ -19,8 +19,8 @@
 -----------------------------------------------------------------------
 
 with Glib; use Glib;
-with Default_Preferences;      use Default_Preferences;
 with Glib.Properties.Creation; use Glib.Properties.Creation;
+with Default_Preferences;      use Default_Preferences;
 
 package GVD.Preferences is
 
@@ -37,19 +37,6 @@ package GVD.Preferences is
    --  values. This doesn't override existing values of the preferences.
    --  Page_Prefix is added to all the page descriptions
 
-   type Tooltips_In_Source_Type is (None, Simple, Full);
-   pragma Convention (C, Tooltips_In_Source_Type);
-   for Tooltips_In_Source_Type'Size use Gint'Size;
-   --  The types of tooltips that can be displayed in the source window:
-   --    None: no tooltips will be displayed.
-   --    Simple: the output of the debugger is displayed, no post-processing
-   --    Full: the variable is parsed and the tooltip will contain the
-   --     equivalent of the canvas'items.
-
-   function Get_Tab_Size (Pref : access GVD_Preferences_Manager) return Gint;
-   --  Special function since Tab_Size is used very often and we need fast
-   --  access to it.
-
    procedure Set_Pref
      (Manager : access GVD_Preferences_Manager;
       Name    : String;
@@ -65,31 +52,11 @@ package GVD.Preferences is
    --  preferences should be used for.
 
    -- General Preferences --
-   Default_Font                  : Param_Spec_Font;
-   Fixed_Style                   : Param_Spec_Style;
    Break_On_Exception            : Param_Spec_Boolean;
-   Hide_Delay                    : Param_Spec_Int;
-   Ada_Extensions                : Param_Spec_String;
-   C_Extensions                  : Param_Spec_String;
-   Cpp_Extensions                : Param_Spec_String;
    Execution_Window              : Param_Spec_Boolean;
 
-   -- Explorer Window --
-   Display_Explorer              : Param_Spec_Boolean;
-   File_Name_Bg_Color            : Param_Spec_Color;
-
    -- Source Window --
-   Editor_Show_Line_Nums         : Param_Spec_Boolean;
    Editor_Show_Line_With_Code    : Param_Spec_Boolean;
-   Do_Color_Highlighting         : Param_Spec_Boolean;
-   Comments_Color                : Param_Spec_Color;
-   Strings_Color                 : Param_Spec_Color;
-   Keywords_Color                : Param_Spec_Color;
-   Editor_Highlight_Current_Line : Param_Spec_Boolean;
-   Editor_Highlight_Color        : Param_Spec_Color;
-   Tab_Size                      : Param_Spec_Int;
-   Tooltips_In_Source            : Param_Spec_Enum;
-   Should_Strip_CR               : Param_Spec_Boolean;
 
    -- Assembly Window --
    Asm_Highlight_Color           : Param_Spec_Color;
@@ -119,7 +86,6 @@ package GVD.Preferences is
 
    -- Helpers --
    List_Processes                : Param_Spec_String;
-   Default_External_Editor       : Param_Spec_String;
    Remote_Protocol               : Param_Spec_String;
    Remote_Copy                   : Param_Spec_String;
    Html_Browser                  : Param_Spec_String;
@@ -127,10 +93,6 @@ package GVD.Preferences is
    Print_Command                 : Param_Spec_String;
 
 private
-   Default_Tab_Size : constant Gint := 8;
-
-   type GVD_Preferences_Manager is new Preferences_Manager_Record with record
-      Tab_Size : Gint := Default_Tab_Size;
-      --  Cached value of the tab_size preference
-   end record;
+   type GVD_Preferences_Manager is new Preferences_Manager_Record with
+   null record;
 end GVD.Preferences;

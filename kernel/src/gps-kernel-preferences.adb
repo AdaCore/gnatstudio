@@ -278,7 +278,6 @@ package body GPS.Kernel.Preferences is
          Nick    => -"Default font"));
       Register_Property
         (Kernel.Preferences, Param_Spec (Default_Font), -"General");
-      GVD.Preferences.Default_Font := Default_Font;
 
       Default_Charset := Param_Spec_String (Gnew_String
         (Name    => "General-Charset",
@@ -576,7 +575,6 @@ package body GPS.Kernel.Preferences is
       Register_Property
         (Kernel.Preferences, Param_Spec (Default_Style),
          -"Editor:Fonts & Colors");
-      GVD.Preferences.Fixed_Style := Default_Style;
 
       Keywords_Style := Gnew_Style
         (Name    => "Src-Editor-Keywords-Style",
