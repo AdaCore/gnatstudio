@@ -180,13 +180,9 @@ package body VCS.CVS is
       use String_List;
 
       C               : External_Command_Access;
-      Command         : List;
       Args            : List;
-      Dir             : List;
 
    begin
-      Append (Dir, Dir_Name (Head (Filenames)));
-
       declare
          Args_Temp : List_Node := First (Arguments);
       begin
@@ -196,7 +192,6 @@ package body VCS.CVS is
          end loop;
       end;
 
-      Append (Command, Get_Pref (Rep.Kernel, CVS_Command));
 
       if Head (Filenames) /= Dir_Name (Head (Filenames)) then
          declare
@@ -211,17 +206,15 @@ package body VCS.CVS is
 
       Create (C,
               Rep.Kernel,
-              Command,
-              Dir,
+              Get_Pref (Rep.Kernel, CVS_Command),
+              Dir_Name (Head (Filenames)),
               Args,
               Null_List,
               Error_Output_Handler'Access);
 
       Enqueue (Rep.Queue, C);
 
-      Free (Command);
       Free (Args);
-      Free (Dir);
    end Real_Simple_Action;
 
    -------------------
@@ -452,14 +445,11 @@ package body VCS.CVS is
 
       Files           : List_Node := First (Filenames);
       C               : External_Command_Access;
-      Command         : List;
       Command_Head    : List;
       Args            : List;
-      Dir             : List;
+      Dir             : constant String := Dir_Name (Data (Files));
 
    begin
-      Append (Dir, Dir_Name (Data (Files)));
-      Append (Command, Get_Pref (Rep.Kernel, CVS_Command));
       Append (Command_Head, Dir_Name (Data (Files)));
 
       --  Generate arguments list.
@@ -487,7 +477,7 @@ package body VCS.CVS is
 
       Create (C,
               Rep.Kernel,
-              Command,
+              Get_Pref (Rep.Kernel, CVS_Command),
               Dir,
               Args,
               Command_Head,
@@ -495,10 +485,8 @@ package body VCS.CVS is
 
       Enqueue (Rep.Queue, C);
 
-      Free (Command);
       Free (Command_Head);
       Free (Args);
-      Free (Dir);
    end Real_Get_Status;
 
    ---------------------------
@@ -937,13 +925,9 @@ package body VCS.CVS is
    is
       use String_List;
       C               : External_Command_Access;
-      Command         : List;
       Command_Head    : List;
       Args            : List;
-      Dir             : List;
    begin
-      Append (Dir, Dir_Name (File));
-      Append (Command, Get_Pref (Rep.Kernel, CVS_Command));
       Append (Args, "diff");
 
       if Version_1 = ""
@@ -973,18 +957,16 @@ package body VCS.CVS is
 
       Create (C,
               Rep.Kernel,
-              Command,
-              Dir,
+              Get_Pref (Rep.Kernel, CVS_Command),
+              Dir_Name (File),
               Args,
               Command_Head,
               Diff_Handler'Access);
 
       Enqueue (Rep.Queue, C);
 
-      Free (Command);
       Free (Command_Head);
       Free (Args);
-      Free (Dir);
    end Diff;
 
    -------------------------------
@@ -1101,32 +1083,26 @@ package body VCS.CVS is
       use String_List;
 
       C            : External_Command_Access;
-      Command      : List;
       Command_Head : List;
       Args         : List;
-      Dir          : List;
 
    begin
-      Append (Dir, Dir_Name (File));
-      Append (Command, Get_Pref (Rep.Kernel, CVS_Command));
       Append (Args, "log");
       Append (Args, Base_Name (File));
       Append (Command_Head, Base_Name (File) & "_changelog");
 
       Create (C,
               Rep.Kernel,
-              Command,
-              Dir,
+              Get_Pref (Rep.Kernel, CVS_Command),
+              Dir_Name (File),
               Args,
               Command_Head,
               Text_Output_Handler'Access);
 
       Enqueue (Rep.Queue, C);
 
-      Free (Command);
       Free (Command_Head);
       Free (Args);
-      Free (Dir);
    end Log;
 
    --------------
@@ -1140,14 +1116,10 @@ package body VCS.CVS is
       use String_List;
 
       C            : External_Command_Access;
-      Command      : List;
       Command_Head : List;
       Args         : List;
-      Dir          : List;
 
    begin
-      Append (Dir, Dir_Name (File));
-      Append (Command, Get_Pref (Rep.Kernel, CVS_Command));
       Append (Args, "annotate");
       Append (Args, Base_Name (File));
       Append (Command_Head, File);
@@ -1155,18 +1127,16 @@ package body VCS.CVS is
       Create
         (C,
          Rep.Kernel,
-         Command,
-         Dir,
+         Get_Pref (Rep.Kernel, CVS_Command),
+         Dir_Name (File),
          Args,
          Command_Head,
          Annotation_Output_Handler'Access);
 
       Enqueue (Rep.Queue, C);
 
-      Free (Command);
       Free (Command_Head);
       Free (Args);
-      Free (Dir);
    end Annotate;
 
    ------------------
