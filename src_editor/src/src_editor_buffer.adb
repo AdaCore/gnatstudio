@@ -3890,8 +3890,9 @@ package body Src_Editor_Buffer is
    ---------------
 
    function Get_Block
-     (Editor : access Source_Buffer_Record;
-      Line   : Buffer_Line_Type) return Block_Record
+     (Editor        : access Source_Buffer_Record;
+      Line          : Buffer_Line_Type;
+      Force_Compute : Boolean := True) return Block_Record
    is
       Prev : Boolean;
    begin
@@ -3902,7 +3903,9 @@ package body Src_Editor_Buffer is
       --  If the editor hasn't calculated block information on-the-fly,
       --  calculate the block information now.
 
-      if Editor.Blocks_Need_Parsing then
+      if Force_Compute
+        and then Editor.Blocks_Need_Parsing
+      then
          --  We need to temporarily change the value of
          --  Editor.Block_Highlighting so that Compute_Blocks parses the
          --  information that we want.
