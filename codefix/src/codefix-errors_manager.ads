@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2002-2003                    --
+--                     Copyright (C) 2002-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -122,9 +122,8 @@ package Codefix.Errors_Manager is
       Source_Text : Text_Navigator_Abstr'Class;
       Errors_List : in out Errors_Interface'Class;
       Callback    : Error_Callback := null);
-   --  Cover the whole list of errors, and add then into This. If Callback
-   --  is not null, then each time a correctible error is found the function
-   --  is call.
+   --  Cover the whole list of errors, and add them into This. If Callback
+   --  is not null, it is called each time a correctible error is found.
 
    procedure Validate_And_Commit
      (This         : in out Correction_Manager;
@@ -145,6 +144,9 @@ package Codefix.Errors_Manager is
 
    function Get_First_Error (This : Correction_Manager) return Error_Id;
    --  Return the first error found in the correction manager.
+
+   function Get_Number_Of_Errors (This : Correction_Manager) return Natural;
+   --  Return the number of errors found in This.
 
    function Search_Error
      (This         : Correction_Manager;
