@@ -21,9 +21,9 @@ package body Odd.Explorer is
 
    Subprogram_RE : constant Pattern_Matcher :=
      Compile
-       ("^[ \t]*(procedure|function)[\s]+" &
-        "((\w|_)+)[\s]*([\s]|\([^\)]+\))[\s]*" &
-        "(return[\s]+(\w|[_\.])+[\s]*)?is[\s]", Multiple_Lines);
+       ("^[ \t]*(procedure|function)\s+" &
+        "((\w|_)+)(\s+|\s*\([^\)]+\))\s*" &
+        "(return\s+(\w|[_\.])+\s*)?is\s", Multiple_Lines);
 
    Package_RE    : constant Pattern_Matcher :=
      Compile
@@ -38,13 +38,13 @@ package body Odd.Explorer is
 
    Spec_RE       : constant Pattern_Matcher :=
      Compile
-       ("^[ \t]*(procedure|function)[\s]+((\w|_)+)" &
-        "(([\s]+|[\s]*\([^\)]+\))([\s]*return[\s]+(\w|[_\.])+[\s]*)?)?;",
+       ("^[ \t]*(procedure|function)\s+((\w|_)+)" &
+        "((\s+|\s*\([^\)]+\))(\s*return\s+(\w|[_\.])+\s*)?)?;",
         Multiple_Lines);
 
    function Reduce (S : String) return String;
-   --  Replace in string S all ASCII.LF and ASCII.HT characters by a space,
-   --  and replace multiple spaces by a single one.
+   --  Replace in string S all ASCII.LF and ASCII.HT characters with a space,
+   --  and replace multiple spaces with a single one.
    --  Return the resulting string.
 
    procedure First_Handler
