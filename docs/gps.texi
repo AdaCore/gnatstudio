@@ -2320,22 +2320,95 @@ When you want to quit the debugger without quitting GPS, go to the menu
 * The Version Control Contextual Menu::
 @end menu
 
-@c ??? add introduction to VCS here
-@c what is provided. integration with other components. how different VCS
-@c are handled, list of VCS currently supported, ...
+GPS offers the possibility for multiple developers to work on the same project,
+through the intergration of version control systems (VCS). Each project can be
+associated to a VCS, through the ``VCS'' tab in the Project property
+editor. @xref{The project properties editor}.
+
+The systems that are currently supported in GPS are CVS and ClearCase.
+Associating a VCS to a project enables the use of basic VCS features on the
+source files contained in the project. Those basic features typically include
+the checking in and out of files, the querying of file status, file revision
+history, comparison between various revisions, and so on.
 
 @node The VCS Explorer
 @section The VCS Explorer
 @cindex VCS explorer
 @cindex version control
 @noindent
+
+The VCS Explorer provides an overview of source files and their status.
+
 @c ??? incomplete
 @c add screen shot
-@c explain how the explorer works
-@c columns: Status, Log, File name, Working rev. Head rev.
-@c explain sorting on columns
-@c explain single and multiple selections
-@c mention contextual menu and @xref{The Version Control Contextual Menu}.
+
+The easiest way to bring up the VCS Explorer is through the menu
+@file{VCS->Explorer}. The Explorer can also be brought up using the
+contextual menu @file{Version Control->Query Status} on files,
+directories and projects in the file and project views, and on file
+editors. @xref{The Version Control Contextual Menu}.
+
+The VCS Explorer contains the following columns :
+
+@table @b
+@item Status
+Shows the status of the file. This column can be sorted by clicking on
+the header. The different possible status for files are the following:
+  
+@table @file
+@item Unknown
+The status is not yet determined or the VCS repository is not able to
+give this information (for example if it is unavailable, or locked,
+and so on).
+
+@item Not_Registered
+The file is unknown of the VCS repository.
+
+@item Up_To_Date
+The file corresponds to the latest version in the corresponding branch
+on the repository.
+
+@item Removed
+The file still exists locally but is known to have been removed from
+the VCS repository.
+
+@item Modified
+The file has been modified by the user or has been explicitly opened
+for editing.
+
+@item Needs_Merge
+The file has been modified locally and on the repository.
+
+@item Needs_Update
+The file has been modified in the repository but not locally.
+
+@end table
+
+@item Log
+This column indicates whether a revision log exists for this file.
+
+@item File
+The name of the file. This column can be sorted by clicking on the
+header.
+
+@item Working rev.
+Indicates the version of the local file.
+
+@item Head rev.
+Indicates the most recent version of the file in the repository.
+
+@end table
+
+The VCS Explorer supports multiple selections. To select a single
+line, simply left-click on it. To select a range of lines, select the
+first line in the range, then hold down the @file{Shift} key and select the
+last line in the range. To add or remove single columns from the
+selection, hold down the @file{Control} key and left-click on the
+columns that you want to select/unselect.
+
+The VCS contextual menu can be brought up from the VCS explorer by
+left-clicking on a selection or on a single line. @xref{The Version
+Control Contextual Menu}.
 
 @node The VCS Menu
 @section The VCS Menu
@@ -2347,19 +2420,36 @@ When you want to quit the debugger without quitting GPS, go to the menu
 @c mention that it is usually simpler to use contextual menus.
 @c @xref{The Version Control Contextual Menu}.
 
+Basic VCS operations can be accessed through the VCS menu. Most of
+these functions act on the current selection, ie on the selected items
+in the VCS Explorer if it is present, or on the currently selected
+file editor, or on the currently selected item in the Project/File
+View. In most cases, the VCS contextual menu offers more control on
+VCS operations. @xref{The Version Control Contextual Menu}.
+
 @table @b
 @item Explorer
 Open or raise the VCS Explorer. @xref{The VCS Explorer}.
 
 @item Update all projects
+Update the source files in the current project, and all imported
+subprojects, recursively.
 
 @item Query status for all projects
+Query the status of all files in the project and all imported subprojects.
 
 @item Update
+@anchor{Update}
+Update the currently selected item (file, directory or project).
 
 @item Start Editing
+@anchor{Start Editing}
+Open the currently selected file for writing. On some VCS systems,
+this is a necessary operation, and on other systems it is not.
 
 @item View revision history
+@anchor{View revision history}
+Show the revision logs for all previous revisions of this file.
 
 @item Compare
 @cindex compare
@@ -2367,23 +2457,56 @@ Open or raise the VCS Explorer. @xref{The VCS Explorer}.
 
 @table @i
 @item Against head revision
+Show a visual comparison between the local file and the most recent
+version of that file in the repository.
+
 @item Against working revision
+Show a visual comparison between the local file and the corresponding
+version of that file in the repository.
+
 @item Working revision against head revision
+Show a visual comparison between the corresponding version of the
+file in the repository and the most recent version of that file.
+
 @end table
 
 @item Annotate
 @anchor{Annotate}
+Display the annotations for the file, ie the information for each
+line of the file showing the revision corresponding to that file, and
+additional information depending on the VCS system.
 
 @item Remove annotations
-@item Edit changelog
+Remove the annotations from the selected file.
+
+@item Edit revision log
+Edit the current revision log for the selected file.
+
 @item Commit
 @anchor{Commit}
-@c explain what actions are performed when a commit is made:
-@c ci_check, log_check, status update, ...
+Submits the changes made to the file to the repository, and queries
+the status for the file once the change is made.
+
+It is possible to tell GPS to check the file before the actual commit
+happens. This is done by specifying a @file{File checker} in the
+@file{VCS} tab of the project properties dialog. This @file{File
+checker} is in fact a script or executable that takes an absolute file
+name as argument, and displays any error message on the standard
+output. The VCS commit operation will actually occur only if nothing
+was written on the standard output.
+
+It is also possible to check the changelog of a file before commit, by
+specifying a @file{Log checker} in the project properties dialog. This
+works on changelog files in the same way as the @file{File checker} works on
+source files.
 
 @c @item Revert
 @item Add to repository
+Add a file to the repository.
+
 @item Remove from repository
+Remove a file from the repository.
+
 @end table
 
 @node The Version Control Contextual Menu
@@ -2393,16 +2516,23 @@ This section describes the version control contextual menu displayed when you
 right-click on an entity (e.g. a file, a directory, a project) from various
 parts of GPS, including the project explorer, the source editor and the VCS
 Explorer.
-@c ??? incomplete
 
 Depending on the context, some of the items described in this section won't
 be shown, which means that they are not relevant to the current context.
 
 @table @b
 @item Query status
+Query the status of the selected item. Brings up the VCS Explorer.
+
 @item Update
+Update the selected item. @xref{Update}.
+
 @item Start editing
+Open the selected file for editing. @xref{Start Editing}.
+
 @item View revision history
+View the revision history for the selected file. @xref{View revision history}.
+
 @item Compare
 @cindex compare
 Compare selected files. @xref{Compare}.
@@ -2413,23 +2543,43 @@ Enable annotations for the selected files.
 @xref{Annotate}.
 
 @item Remove annotations
+Remove annotations for the selected files.
+
 @item Edit revision log
+Edit the revision log file corresponding to the selected files.
+
 @item Commit via revision log
 This menu item is titled @i{Commit} when a revision log has already been
 created.
 @xref{Commit}.
 
 @item Remove revision log
+Deletes the revision log file corresponding to the selected files.
+
 @item Add to repository
+Add the selected items to the repository.
+
 @item Remove from repository
+Remove the selected items from the repository.
+
 @item Directory
 Only available when the current context contains directory information
 
 @table @i
 @item Query status for directory
+Query status for the files contained in the selected directory.
+
 @item Query status for directory recursively
+Query status for the files in the selected directory and all
+subdirectories recursively, links not included.
+
 @item Update directory
+Update the files in the selected directory.
+
 @item Update directory recursively
+Update the files in the selected directory and all
+subdirectories recursively, links not included..
+
 @end table
 
 @item Project
@@ -2437,11 +2587,26 @@ Only available when the current context contains project information
 
 @table @i
 @item List all files in project
+Brings up the VCS Explorer with all the source files contained in the project.
+
 @item Query status for project
+Queries the status for all the source files contained in the project.
+
 @item Update project
+Updates all the source files in the project.
+
 @item List all files in project and subprojects
+Brings up the VCS Explorer with all the source files contained in the
+project and all imported subprojects.
+
 @item Query status for project and subprojects
+Queries the status for all the source files contained in the project
+and all imported subprojects.
+
 @item Update project and subprojects
+Updates all the source files in the project and all imported
+subprojects.
+
 @end table
 
 @item Hide up-to-date files
@@ -2702,7 +2867,7 @@ when saving the file; @i{Unix} will use LF line terminators;
 @i{Windows} will use CRLF line terminators.
 
 @item Display line numbers
-@cindex display lilne numbers
+@cindex display line numbers
 Whether the line numbers should be displayed in file editors.
 
 @item Tooltips
@@ -3166,6 +3331,14 @@ and @file{custom menu number 2}. The first one contains a menu item named
 @file{item 1}, which is associated to the shell command @file{shell command
 1}, and a sub menu named @file{other menu}, and so on.
 
+Note for Windows users: like under UNIX, dos scripts can be called
+from custom menu. In order to do that, you must write your script in a
+@file{.bat} file, and call this file using @file{cmd /C}. Thus, the
+@file{Action} tag would look like:
+@smallexample
+<Action>cmd /C c:\.gps\my_scripts\my_command.bat</Action>
+@end smallexample
+
 @cindex shell
 @cindex interactive command
 As well as shell commands, you can use custom menu items to invoke GPS
@@ -3263,10 +3436,10 @@ Base name of the currently opened file.
 Absolute name of the currently opened file.
 
 @item %p
-The current project.
+The current project. This is the name of the project, not the project file.
 
 @item %P
-The root project.
+The root project. This is the name of the project, not the project file.
 
 @item %(p|P)[r](d|s)[f]
 Substituted by the contents of a project :
