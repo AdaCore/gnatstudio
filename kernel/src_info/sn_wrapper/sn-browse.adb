@@ -141,35 +141,40 @@ package body SN.Browse is
       --  enumerate all .xref files in the target directory
       --  and copy them into the temp file
 
-      Open (Dir, DB_Directories (1).all);
+      --  check the directory exists
+      if Is_Directory (DB_Directories (1).all) then
+         Open (Dir, DB_Directories (1).all);
 
-      if not Is_Open (Dir) then
-         raise Directory_Error;
-      end if;
-
-      Read (Dir, Dir_Entry, Last); -- read first directory entry
-
-      while Last /= 0 loop
-         if Tail (Dir_Entry (1 .. Last), Xref_Suffix'Length) = Xref_Suffix then
-            Content := OS_Utils.Read_File
-               (Name_As_Directory (DB_Directories (1).all)
-                 & Dir_Entry (1 .. Last));
-
-            if Content /= null then
-               if Content'Length /=
-                 Write (Temp_File, Content.all'Address, Content'Length)
-               then
-                  raise Temp_File_Failure;
-               end if;
-
-               Free (Content);
-            end if;
+         if not Is_Open (Dir) then
+            raise Directory_Error;
          end if;
 
-         Read (Dir, Dir_Entry, Last); -- read next directory entry
-      end loop;
+         Read (Dir, Dir_Entry, Last); -- read first directory entry
 
-      Close (Dir);
+         while Last /= 0 loop
+            if Tail (Dir_Entry (1 .. Last), Xref_Suffix'Length)
+               = Xref_Suffix then
+               Content := OS_Utils.Read_File
+                  (Name_As_Directory (DB_Directories (1).all)
+                    & Dir_Entry (1 .. Last));
+
+               if Content /= null then
+                  if Content'Length /=
+                    Write (Temp_File, Content.all'Address, Content'Length)
+                  then
+                     raise Temp_File_Failure;
+                  end if;
+
+                  Free (Content);
+               end if;
+            end if;
+
+            Read (Dir, Dir_Entry, Last); -- read next directory entry
+         end loop;
+
+         Close (Dir);
+      end if;
+
       Close (Temp_File);
 
       Args := new Argument_List (1 .. DB_Directories'Length + 3);

@@ -581,16 +581,14 @@ package body Src_Info.CPP is
      (Project    : Prj.Project_Id;
       Iterator   : in out CPP_LI_Handler_Iterator)
    is
-      DB_Dir           : constant String
-         := Prj_API.Object_Path (Project, False)
-            & Name_As_Directory (SN.Browse.DB_Dir_Name);
+      DB_Dir           : constant String := Get_DB_Dir (Project);
       Num_Source_Files : Natural := 0;
       Tmp_File         : File_Type;
       Success          : Boolean;
       Xref_File_Name   : String_Access;
    begin
-      --  Do nothing if we couldn't create the database directory
-      if DB_Dir = Name_As_Directory (SN.Browse.DB_Dir_Name) then
+      --  Do nothing if we couldn't find out the object directory
+      if DB_Dir = "" then
          return;
       end if;
 
@@ -897,8 +895,7 @@ package body Src_Info.CPP is
       N        : Integer := 0;
       Dirs     : GNAT.OS_Lib.String_List_Access;
       Path     : constant String := Prj_API.Object_Path (Project, True);
-      Main_Dir : constant String := Prj_API.Object_Path (Project, False)
-        & Name_As_Directory (Browse.DB_Dir_Name);
+      Main_Dir : constant String := Get_DB_Dir (Project);
       J        : Integer := Path'First;
       K        : Integer;
       Tmp      : GNAT.OS_Lib.String_Access;
@@ -5048,9 +5045,14 @@ package body Src_Info.CPP is
 
    function Get_DB_Dir (Project : Prj.Project_Id) return String
    is
+      Obj_Dir : constant String := Prj_API.Object_Path (Project, False);
    begin
-      return Prj_API.Object_Path (Project, False)
-         & Name_As_Directory (SN.Browse.DB_Dir_Name);
+      if Obj_Dir = "" then
+         return "";
+      else
+         return Name_As_Directory (Obj_Dir)
+            & Name_As_Directory (SN.Browse.DB_Dir_Name);
+      end if;
    end Get_DB_Dir;
 
    -----------------------------
