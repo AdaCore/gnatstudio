@@ -61,7 +61,6 @@ with Commands.Interactive;      use Commands, Commands.Interactive;
 with Glib.Generic_Properties;   use Glib.Generic_Properties;
 with Glib.Properties.Creation;  use Glib.Properties.Creation;
 with Interfaces.C.Strings;      use Interfaces.C.Strings;
-with GVD.Types;                 use GVD.Types;
 with Gtkada.Types;
 with Factory_Data;
 
@@ -424,6 +423,7 @@ package body GPS.Main_Window is
       Home_Dir         : String;
       Prefix_Directory : String)
    is
+      Vbox : Gtk_Vbox;
       Menu : Gtk_Widget;
       Box1 : Gtk_Hbox;
    begin
@@ -477,19 +477,19 @@ package body GPS.Main_Window is
       Set_Modal (Main_Window, False);
       Set_Default_Size (Main_Window, 800, 700);
 
-      Gtk_New_Vbox (Main_Window.Vbox, False, 0);
-      Add (Main_Window, Main_Window.Vbox);
+      Gtk_New_Vbox (Vbox, False, 0);
+      Add (Main_Window, Vbox);
 
       Gtk_New_Vbox (Main_Window.Toolbar_Box, False, 0);
-      Pack_Start (Main_Window.Vbox, Main_Window.Toolbar_Box, False, False, 0);
+      Pack_Start (Vbox, Main_Window.Toolbar_Box, False, False, 0);
 
       Gtk_New (Main_Window.Statusbar);
-      Pack_End (Main_Window.Vbox, Main_Window.Statusbar, False, False, 0);
+      Pack_End (Vbox, Main_Window.Statusbar, False, False, 0);
 
       Gtk_New (Main_Window.Main_Accel_Group);
       Add_Accel_Group (Main_Window, Main_Window.Main_Accel_Group);
       Gtk_New (Main_Window.Process_Mdi, Main_Window.Main_Accel_Group);
-      Add (Main_Window.Vbox, Main_Window.Process_Mdi);
+      Add (Vbox, Main_Window.Process_Mdi);
       Gtk_New
         (Main_Window.Factory, Gtk.Menu_Bar.Get_Type,
          Key, Main_Window.Main_Accel_Group);
@@ -498,9 +498,9 @@ package body GPS.Main_Window is
       Menu := Get_Widget (Main_Window.Factory, Key);
       Main_Window.Menu_Bar := Gtk_Menu_Bar (Menu);
       Gtk_New_Hbox (Main_Window.Menu_Box, False, 0);
-      Pack_Start (Main_Window.Vbox, Main_Window.Menu_Box, False, False);
+      Pack_Start (Vbox, Main_Window.Menu_Box, False, False);
       Pack_Start (Main_Window.Menu_Box, Menu);
-      Reorder_Child (Main_Window.Vbox, Main_Window.Menu_Box, 0);
+      Reorder_Child (Vbox, Main_Window.Menu_Box, 0);
       Set_Submenu
         (Gtk_Menu_Item (Get_Widget (Main_Window.Factory, '/' & (-"Window"))),
          Create_Menu (Main_Window.Process_Mdi));
