@@ -26,6 +26,7 @@ with GNAT.OS_Lib;                       use GNAT.OS_Lib;
 with Gtkada.MDI;                        use Gtkada.MDI;
 with Gtk.Enums;                         use Gtk.Enums;
 
+with Vdiff2_Module;                     use Vdiff2_Module;
 with Vdiff2_Module.Utils.Shell_Command; use Vdiff2_Module.Utils.Shell_Command;
 with Vdiff2_Module.Utils.Text;          use Vdiff2_Module.Utils.Text;
 with Vdiff2_Command_Block;              use Vdiff2_Command_Block;
@@ -507,6 +508,12 @@ package body Vdiff2_Module.Utils is
       pragma Unreferenced (Button);
 
    begin
+
+      if not VDiff2_Module (Vdiff_Module_ID).Is_Active then
+         VDiff2_Module (Vdiff_Module_ID).Is_Active := true;
+         VDiff_Toolbar (Kernel);
+      end if;
+
       if Is_In_Diff_List
           (Item_Local.File1, Diff_List.all) = Diff_Head_List.Null_Node
         and then Is_In_Diff_List
