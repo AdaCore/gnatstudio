@@ -116,8 +116,8 @@ package Debugger is
    procedure Send_Completed
      (Debugger : access Debugger_Root;
       Cmd      : String);
-   --  Called by Send right after sending Cmd to the debugger, and before
-   --  any other post-processing (like Wait_Prompt).
+   --  Hook called by Send right after it has sent Cmd to the debugger, and
+   --  before any other post-processing (like Wait_Prompt).
 
    function Highlighting_Pattern
      (Debugger : access Debugger_Root)
@@ -372,16 +372,23 @@ package Debugger is
    -------------------------
 
    procedure Break_Subprogram
-     (Debugger : access Debugger_Root; Name : String) is abstract;
+     (Debugger  : access Debugger_Root;
+      Name      : String;
+      Temporary : Boolean := False) is abstract;
    --  Break at the beginning of a specific subprogram.
-   --  GDB_COMMAND: "break name"
+   --  If Temporary is True, then the breakpoint should be deleted
+   --  automatically the first time it is hit.
+   --  GDB_COMMAND: "break name" or "tbreak name"
 
    procedure Break_Source
-     (Debugger : access Debugger_Root;
-      File     : String;
-      Line     : Positive) is abstract;
+     (Debugger  : access Debugger_Root;
+      File      : String;
+      Line      : Positive;
+      Temporary : Boolean := False) is abstract;
    --  Break at a specific source location.
-   --  GDB_COMMAND: "break file:line"
+   --  If Temporary is True, then the breakpoint should be deleted
+   --  automatically the first time it is hit.
+   --  GDB_COMMAND: "break file:line" or "tbreak file:line"
 
    procedure Break_Exception
      (Debugger  : access Debugger_Root;

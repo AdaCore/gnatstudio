@@ -130,13 +130,15 @@ package Debugger.Gdb is
       Display  : Boolean := False);
 
    procedure Break_Subprogram
-     (Debugger : access Gdb_Debugger;
-      Name     : String);
+     (Debugger  : access Gdb_Debugger;
+      Name      : String;
+      Temporary : Boolean := False);
 
    procedure Break_Source
-     (Debugger : access Gdb_Debugger;
-      File     : String;
-      Line     : Positive);
+     (Debugger  : access Gdb_Debugger;
+      File      : String;
+      Line      : Positive;
+      Temporary : Boolean := False);
 
    procedure Break_Exception
      (Debugger  : access Gdb_Debugger;

@@ -609,14 +609,13 @@ package body Debugger.Gdb is
    is
    begin
       return Is_Execution_Command (Debugger, Command)
-        or else (Command'Length >= 5
-           and then Command (Command'First .. Command'First + 4) = "break")
-        or else (Command'Length >= 2
-           and then Command (Command'First .. Command'First + 1) = "b ")
-        or else (Command'Length >= 6
-           and then Command (Command'First .. Command'First + 5) = "delete")
-        or else (Command'Length >= 4
-           and then Command (Command'First .. Command'First + 3) = "del ");
+        or else Looking_At (Command, Command'First, "break")
+        or else Looking_At (Command, Command'First, "b ")
+        or else Looking_At (Command, Command'First, "delete")
+        or else Looking_At (Command, Command'First, "del ")
+        or else Looking_At (Command, Command'First, "tbreak")
+        or else Looking_At (Command, Command'First, "disable")
+        or else Looking_At (Command, Command'First, "enable");
    end Is_Break_Command;
 
    ----------------
@@ -709,9 +708,15 @@ package body Debugger.Gdb is
    ----------------------
 
    procedure Break_Subprogram
-     (Debugger : access Gdb_Debugger; Name : String) is
+     (Debugger  : access Gdb_Debugger;
+      Name      : String;
+      Temporary : Boolean := False) is
    begin
-      Send (Debugger, "break " & Name);
+      if Temporary then
+         Send (Debugger, "tbreak " & Name);
+      else
+         Send (Debugger, "break " & Name);
+      end if;
    end Break_Subprogram;
 
    ------------------
@@ -719,15 +724,22 @@ package body Debugger.Gdb is
    ------------------
 
    procedure Break_Source
-     (Debugger : access Gdb_Debugger;
-      File     : String;
-      Line     : Positive)
+     (Debugger  : access Gdb_Debugger;
+      File      : String;
+      Line      : Positive;
+      Temporary : Boolean := False)
    is
       Str : constant String := Positive'Image (Line);
    begin
-      Send (Debugger,
-            "break " & Base_File_Name (File)
-            & ':' & Str (Str'First + 1 .. Str'Last));
+      if Temporary then
+         Send (Debugger,
+               "tbreak " & Base_File_Name (File)
+               & ":" & Str (Str'First + 1 .. Str'Last));
+      else
+         Send (Debugger,
+               "break " & Base_File_Name (File)
+               & ':' & Str (Str'First + 1 .. Str'Last));
+      end if;
    end Break_Source;
 
    ---------------------

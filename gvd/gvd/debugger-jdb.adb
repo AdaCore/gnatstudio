@@ -410,7 +410,10 @@ package body Debugger.Jdb is
    ----------------------
 
    procedure Break_Subprogram
-     (Debugger : access Jdb_Debugger; Name : String) is
+     (Debugger  : access Jdb_Debugger;
+      Name      : String;
+      Temporary : Boolean := False)
+   is
    begin
       Send (Debugger, "stop in " & Name);
    end Break_Subprogram;
@@ -420,9 +423,10 @@ package body Debugger.Jdb is
    ------------------
 
    procedure Break_Source
-     (Debugger : access Jdb_Debugger;
-      File     : String;
-      Line     : Positive)
+     (Debugger  : access Jdb_Debugger;
+      File      : String;
+      Line      : Positive;
+      Temporary : Boolean := False)
    is
       Str : constant String := Positive'Image (Line);
       Pos : Positive;

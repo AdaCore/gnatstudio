@@ -114,13 +114,15 @@ package Debugger.Jdb is
       Display  : Boolean := False);
 
    procedure Break_Subprogram
-     (Debugger : access Jdb_Debugger;
-      Name     : String);
+     (Debugger  : access Jdb_Debugger;
+      Name      : String;
+      Temporary : Boolean := False);
 
    procedure Break_Source
-     (Debugger : access Jdb_Debugger;
-      File     : String;
-      Line     : Positive);
+     (Debugger  : access Jdb_Debugger;
+      File      : String;
+      Line      : Positive;
+      Temporary : Boolean := False);
 
    procedure Break_Exception
      (Debugger  : access Jdb_Debugger;
