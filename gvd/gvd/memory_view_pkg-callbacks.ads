@@ -19,6 +19,8 @@
 -----------------------------------------------------------------------
 
 with Gtk.Arguments;
+with Glib.Values; use Glib.Values;
+
 with Gtk.Widget; use Gtk.Widget;
 
 package Memory_View_Pkg.Callbacks is
@@ -53,17 +55,13 @@ package Memory_View_Pkg.Callbacks is
 
    function On_View_Key_Press_Event
      (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args) return Boolean;
+      Params : GValues) return Boolean;
 
    procedure On_View_Move_Cursor
      (Object : access Gtk_Text_Record'Class;
       Params : Gtk.Arguments.Gtk_Args);
 
    function On_View_Button_Release_Event
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args) return Boolean;
-
-   function On_View_Button_Press_Event
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args) return Boolean;
 
