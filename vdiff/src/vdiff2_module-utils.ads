@@ -36,21 +36,21 @@ package Vdiff2_Module.Utils is
 
    procedure Process_Differences
      (Kernel    : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Item      : Diff_Head;
+      Item      : in out Diff_Head;
       Diff_List : Diff_Head_List_Access);
    --  Verify if Item is  not in Diff_List
    --  then show differences and append Item to diff_List
 
    procedure Modify_Differences
      (Kernel    : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Item      : Diff_Head;
+      Item      : in out Diff_Head;
       Diff_List : Diff_Head_List_Access);
    --  Verify if Item is  not in Diff_List
    --  then show differences and modify Item to diff_List
 
    procedure Show_Differences3
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Item   : Diff_Head);
+      Item   : in out Diff_Head);
    --  Show a result of diff Item
 
    procedure Hide_Differences
@@ -110,4 +110,3 @@ package Vdiff2_Module.Utils is
    --  objects linked to this one.
 
 end Vdiff2_Module.Utils;
-
