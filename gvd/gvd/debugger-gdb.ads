@@ -393,16 +393,18 @@ private
       return String;
 
    type Gdb_Debugger is new Debugger.Debugger_Root with record
-      Executable      : GNAT.OS_Lib.String_Access;
-      Executable_Args : GNAT.OS_Lib.String_Access;
-      Stored_Language : GNAT.OS_Lib.String_Access;
-      WTX_List        : GNAT.OS_Lib.String_Access;
-      WTX_Index       : Natural;
-      WTX_Version     : Integer := -1;
-      Endian          : Endian_Type := Unknown_Endian;
-      Has_Terminated  : Boolean := False;
-      Default_Scope   : GVD.Types.Scope_Type := GVD.Types.No_Scope;
-      Default_Action  : GVD.Types.Action_Type := GVD.Types.No_Action;
+      Executable       : GNAT.OS_Lib.String_Access;
+      Executable_Args  : GNAT.OS_Lib.String_Access;
+      Stored_Language  : GNAT.OS_Lib.String_Access;
+      WTX_List         : GNAT.OS_Lib.String_Access;
+      WTX_Index        : Natural;
+      WTX_Version      : Integer := -1;
+      Endian           : Endian_Type := Unknown_Endian;
+      Has_Terminated   : Boolean := False;
+      Default_Scope    : GVD.Types.Scope_Type := GVD.Types.No_Scope;
+      Default_Action   : GVD.Types.Action_Type := GVD.Types.No_Action;
+      Debuggee_Pid     : Integer := 0;
+      Execution_Window : Boolean;
    end record;
 
    procedure Internal_Parse_Value
