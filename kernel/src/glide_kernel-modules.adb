@@ -2225,6 +2225,7 @@ package body Glide_Kernel.Modules is
             then
                return Data.Command_Handler (Kernel, Command, Args);
             else
+               Trace (Me, "Incorrect number of arguments for " & Command);
                return -"Incorrect number of arguments." & ASCII.LF
                  & Data.Usage.all;
             end if;
