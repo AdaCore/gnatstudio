@@ -335,6 +335,25 @@ package Python is
    function PyDict_Size (Dict : PyObject) return Integer;
    --  Return the number of elements in Dict
 
+   ---------------
+   -- Functions --
+   ---------------
+
+   function PyFunction_Check (Func : PyObject) return Boolean;
+   --  Whether Func is a function object
+
+   function PyFunction_Get_Code (Func : PyObject) return PyCodeObject;
+   --  Return the code of the function (see PyEval_EvalCodeEx)
+
+   function PyFunction_Get_Globals (Func : PyObject) return PyObject;
+   --  Return the globals dictionary the function belongs to
+
+   function PyFunction_Get_Defaults (Func : PyObject) return PyObject;
+   --  Return a tuple of the default values for all the parameters of Func
+
+   function PyFunction_Get_Closure (Func : PyObject) return PyObject;
+   --  ???
+
    ----------------
    -- Exceptions --
    ----------------
@@ -459,6 +478,18 @@ package Python is
       Locals  : PyObject) return PyObject;
    --  Evaluate a precompiled code object
 
+   function PyEval_EvalCodeEx
+     (Code     : PyCodeObject;
+      Globals  : PyObject;
+      Locals   : PyObject;
+      Args     : PyTuple      := null;
+      Kwds     : PyDictObject := null;
+      Defaults : PyTuple      := null;
+      Closure  : PyObject     := null) return PyObject;
+   --  Evaluate a precompiled code object. This is mostly used to execute a
+   --  function (get its code with PyFunction_Get_Code), specifying some of
+   --  the parameters
+
    --------------------------------------
    -- Evaluating and Tracing execution --
    --------------------------------------
@@ -531,6 +562,7 @@ private
    pragma Import (C, PyErr_Print, "PyErr_Print");
    pragma Import (C, PyObject_Str, "PyObject_Str");
    pragma Import (C, PyEval_EvalCode, "PyEval_EvalCode");
+   pragma Import (C, PyEval_EvalCodeEx, "ada_PyEval_EvalCodeEx");
    pragma Import (C, PyErr_SetInterrupt, "PyErr_SetInterrupt");
    pragma Import (C, PyTuple_New, "PyTuple_New");
    pragma Import (C, PyTuple_GetItem, "PyTuple_GetItem");
@@ -555,4 +587,8 @@ private
    pragma Import (C, PyList_Size, "PyList_Size");
    pragma Import (C, PyDict_SetItem, "PyDict_SetItem");
    pragma Import (C, PyDict_GetItem, "PyDict_GetItem");
+   pragma Import (C, PyFunction_Get_Code, "ada_pyfunction_get_code");
+   pragma Import (C, PyFunction_Get_Globals, "ada_pyfunction_get_globals");
+   pragma Import (C, PyFunction_Get_Closure, "ada_pyfunction_get_closure");
+   pragma Import (C, PyFunction_Get_Defaults, "ada_pyfunction_get_defaults");
 end Python;
