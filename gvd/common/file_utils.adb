@@ -349,7 +349,10 @@ package body File_Utils is
          return ".";
       end if;
 
-      while Base_End >= Base'First loop
+      --  Do not use >=, since if only '/' is the common part, we want to use
+      --  an absolute path instead.
+
+      while Base_End > Base'First loop
          Length := Base_End - Base'First + 1;
 
          if File'Length >= Length
