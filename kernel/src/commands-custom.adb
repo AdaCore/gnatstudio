@@ -47,6 +47,14 @@ package body Commands.Custom is
 
    Me : constant Debug_Handle := Create ("Commands.Custom");
 
+   No_Output : constant String := "none";
+   --  Value of the "output" attribute that specifies that no output should be
+   --  visible.
+
+   Console_Output : constant String := "";
+   --  Value of the "output" attribute that specifies that the output should be
+   --  sent to the console.
+
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Boolean_Array, Boolean_Array_Access);
 
@@ -338,10 +346,16 @@ package body Commands.Custom is
       --  Index is the number of the current command we are executing
 
       function Execute_Simple_Command
-        (Script       : Scripting_Language;
-         Command_Line : String) return Boolean;
+        (Script          : Scripting_Language;
+         Command_Line    : String;
+         Output_Location : String := No_Output) return Boolean;
       --  Execute a single command, and return whether it succeeded.
-      --  Index is the number of the current command we are executing
+      --  Index is the number of the current command we are executing.
+      --  Output_Location is the console where the output of the command should
+      --  be displayed:
+      --    "none"  => not displayed
+      --    ""      => Messages window
+      --    others  => A process-specific console.
 
       function Terminate_Command return Command_Return_Type;
       --  Terminate the command and free associated memory
@@ -533,8 +547,9 @@ package body Commands.Custom is
       ----------------------------
 
       function Execute_Simple_Command
-        (Script       : Scripting_Language;
-         Command_Line : String) return Boolean
+        (Script          : Scripting_Language;
+         Command_Line    : String;
+         Output_Location : String := No_Output) return Boolean
       is
          --  Perform arguments substitutions for the command.
          Subst_Cmd_Line : constant String := Substitute
@@ -555,13 +570,13 @@ package body Commands.Custom is
                Command.Outputs (Command.Cmd_Index) := new String'
                  (Execute_Command
                     (Script, Subst_Cmd_Line,
-                     Display_In_Console => False,
-                     Errors             => Errors'Unchecked_Access));
+                     Display_In_Console => Output_Location /= No_Output,
+                     Errors => Errors'Unchecked_Access));
             else
                Execute_Command
                  (Script, Subst_Cmd_Line,
-                  Display_In_Console => False,
-                  Errors             => Errors);
+                  Display_In_Console => Output_Location /= No_Output,
+                  Errors => Errors);
             end if;
 
             Success := not Errors;
@@ -579,12 +594,11 @@ package body Commands.Custom is
               (Command.Kernel,
                Command       => Args (Args'First).all,
                Arguments     => Args (Args'First + 1 .. Args'Last),
-               Title         => "",
+               Title         => Output_Location,
                Callback      => Callback,
                Exit_Cb       => Exit_Cb'Access,
-               Name          => "",
                Success       => Success,
-               Interactive   => False,
+               Hide_Output   => Output_Location = No_Output,
                Callback_Data => Convert (Custom_Command_Access (Command)));
             Free (Args);
 
@@ -630,10 +644,15 @@ package body Commands.Custom is
                     (Lookup_Scripting_Language
                        (Command.Kernel,
                         Get_Attribute (N, "lang", GPS_Shell_Name)),
-                     N.Value.all);
+                     N.Value.all,
+                     Output_Location => No_Output);
 
                elsif To_Lower (N.Tag.all) = "external" then
-                  Success := Execute_Simple_Command (null, N.Value.all);
+                  Success := Execute_Simple_Command
+                    (null,
+                     N.Value.all,
+                     Output_Location =>
+                       Get_Attribute (N, "output", Console_Output));
 
                   --  We'll have to run again to check for completion
                   return True;
