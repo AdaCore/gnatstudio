@@ -18,7 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
---  This package is used to define custom combo entries in the
+--  This package is used to define custom combo entries in the GPS toolbar
 
 with Glide_Kernel;         use Glide_Kernel;
 with Glide_Kernel.Actions; use Glide_Kernel.Actions;
