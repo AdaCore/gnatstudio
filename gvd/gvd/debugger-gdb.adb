@@ -1773,6 +1773,7 @@ package body Debugger.Gdb is
             --  If we have an extra indication like
             --      <gtk_window_finalize>
             --  in the value, keep it.
+
             if Index < Type_Str'Last - 2
               and then Type_Str (Index + 1) = '<'
               and then not Looking_At (Type_Str, Index + 2, "repeats ")
