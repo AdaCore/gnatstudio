@@ -1569,7 +1569,7 @@ This is a useful extension compared to the default Emacs key bindings.
 
 @noindent
 GPS provides a mechanism known as @b{aliases}. These are defined
-through the menu @code{Edit->Aliases...}. Each alias has a name, which
+through the menu @code{Edit->Aliases}. Each alias has a name, which
 is generally a short string of characters. When you type them in any
 textual entry in GPS (generally a source editor, but also entry fields
 for instance in the file selector), and then press the special
@@ -1598,7 +1598,9 @@ It is divided into three main parts: on the left side, the list of
 currently defined aliases is shown. Clicking on any of them will
 display the replacement text for this alias. If you click again the
 selected alias, GPS displays a text entry which you can use to rename
-an existing alias. Alias names must start with a letter.
+an existing alias. Alias names must start with a letter. A check
+button at the bottom selects whether the read-only aliases
+(i.e. system-wide aliases) should be displayed.
 
 The second part is the expansion text for the alias, at the bottom
 right corner. This replacement text can used multiple lines, and
@@ -1651,6 +1653,9 @@ name to the project file (directory and base name).
 
 @end table
 
+The indentation as set in the expansion of the alias is preserved when
+the alias is expanded. All the lines will be indented the same amount
+to the right as the alias name.
 
 The third part of the aliases editor, at the top right corner, lists
 the parameters for the currently selected alias. Any time you insert a
@@ -1684,13 +1689,23 @@ interactively enter this value, which replaces all the @i{%(name)}
 entities in the expansion text.
 
 
-@subsection Aliases file
+@subsection Aliases files
 
 @noindent
-Aliases are saved in an XML file, @file{$HOME/.gps/aliases}.
+GPS managed multiple aliases files. One of them is editable
+interactively by the user through the @code{Edit->Aliases} menu,
+whereas all the others are defined system-wide, and are not editable
+interactively.
 
-It has a simple format, which can be seen in the following
-example. Each alias has its own @i{<alias>} tag.
+The user-defined file is @file{$HOME/.gps/aliases}.
+
+The system files are all the files stored in the directory
+@file{<prefix>/share/gps/aliases}, where @file{<prefix>} is the path
+in which GPS was installed. The aliases defined in these files are
+read-only, and indicated as such in the aliases editor.
+
+All the files have the same XML format, which can be seen in the
+following example. Each alias has its own @i{<alias>} tag.
 
 @smallexample
 <?xml version="1.0"?>
