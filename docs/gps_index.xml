@@ -36,13 +36,6 @@
    </file>
 
    <file>
-      <name>gnathie_ug.html</name>
-      <descr>GNAT High Integrity User's Guide</descr>
-      <category>GNAT</category>
-      <menu>/Help/GNAT/GNAT High Integrity User's Guide</menu>
-   </file>
-
-   <file>
       <name>gnat_rm.html</name>
       <descr>GNAT Reference Manual</descr>
       <menu>/Help/GNAT/GNAT Reference Manual</menu>
