@@ -720,8 +720,7 @@ package body Src_Editor_Box is
       end if;
 
       Ref (Box.Source_Buffer);
-      Gtk_New (Box.Source_View, Box.Source_Buffer,
-               Get_Pref (Kernel, Default_Source_Editor_Font));
+      Gtk_New (Box.Source_View, Box.Source_Buffer, Kernel);
       Add (Scrolling_Area, Box.Source_View);
 
       Data.Box := Source_Editor_Box (Box);
