@@ -2,22 +2,43 @@ with Gtk.Arguments;
 with Gtk.Widget; use Gtk.Widget;
 
 package Breakpoints_Pkg.Callbacks is
-   procedure On_Advanced_Bp_Clicked
-     (Object : access Gtk_Button_Record'Class);
+   procedure On_Location_Selected_Toggled
+     (Object : access Gtk_Widget_Record'Class);
 
-   procedure On_Add_Bp_Clicked
-     (Object : access Gtk_Button_Record'Class);
+   procedure On_Subprogam_Selected_Toggled
+     (Object : access Gtk_Widget_Record'Class);
 
-   procedure On_Remove_Bp_Clicked
-     (Object : access Gtk_Button_Record'Class);
+   procedure On_Address_Selected_Toggled
+     (Object : access Gtk_Widget_Record'Class);
 
-   procedure On_Remove_All_Bp_Clicked
-     (Object : access Gtk_Button_Record'Class);
+   procedure On_Regexp_Selected_Toggled
+     (Object : access Gtk_Widget_Record'Class);
+
+   procedure On_Add_Location_Clicked
+     (Object : access Gtk_Widget_Record'Class);
+
+   procedure On_Advanced_Location_Clicked
+     (Object : access Gtk_Widget_Record'Class);
+
+   procedure On_Add_Watchpoint_Clicked
+     (Object : access Gtk_Widget_Record'Class);
+
+   procedure On_Advanced_Watchpoint_Clicked
+     (Object : access Gtk_Widget_Record'Class);
+
+   procedure On_Add_Exception_Clicked
+     (Object : access Gtk_Widget_Record'Class);
+
+   procedure On_Advanced_Exception_Clicked
+     (Object : access Gtk_Widget_Record'Class);
+
+   procedure On_Remove_Clicked
+     (Object : access Gtk_Widget_Record'Class);
+
+   procedure On_View_Clicked
+     (Object : access Gtk_Widget_Record'Class);
 
    procedure On_Ok_Bp_Clicked
-     (Object : access Gtk_Button_Record'Class);
-
-   procedure On_Cancel_Bp_Clicked
-     (Object : access Gtk_Button_Record'Class);
+     (Object : access Gtk_Widget_Record'Class);
 
 end Breakpoints_Pkg.Callbacks;
