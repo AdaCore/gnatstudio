@@ -1,5 +1,6 @@
 #!/bin/sh
-# Warning: this scripts must be run using gnu textutils (sort, uniq)
+# Warning: this script must be run using the C locale, otherwise sort might
+# behave differently.
 
 grep -- '-".*"' ../gvd/*.ad[sb] > skeleton.tmp
 grep -- '-(".*"' ../gvd/*.ad[sb] >> skeleton.tmp
