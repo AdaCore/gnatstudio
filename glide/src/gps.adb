@@ -269,6 +269,7 @@ procedure GPS is
             Put_Line (File, "SRC_INFO.ALI=no");
             Put_Line (File, "CPP.INFO=no");
             Put_Line (File, "CPP.FAIL=no");
+            Put_Line (File, "PROJECTS.DEBUG=no");
             Close (File);
          end if;
 
@@ -334,7 +335,7 @@ procedure GPS is
            (-"   --load=lang:file    Execute an external file written");
          Put_Line (-"                        in the language lang");
          Put_Line
-           (-"   --eval=lang:file    Execute a command written in the");
+           (-"   --eval=lang:cmd     Execute a command written in the");
          Put_Line (-"                        language lang. This is executed");
          Put_Line (-"                        before the --load command");
          New_Line;
@@ -353,7 +354,7 @@ procedure GPS is
             (-"   --load=lang:file    Execute an external file written")
             & LF &
             (-"                        in the language lang") & LF &
-            (-"   --eval=lang:file    Execute a command written in the")
+            (-"   --eval=lang:cmd     Execute a command written in the")
             & LF &
             (-"                        language lang. This is executed") & LF &
             (-"                        before the --load command") & LF &
