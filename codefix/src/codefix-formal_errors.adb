@@ -291,51 +291,40 @@ package body Codefix.Formal_Errors is
       First_String  : String;
       Second_String : String) return Solution_List
    is
-      pragma Unreferenced (Current_Text, Message, First_String, Second_String);
---      New_Command   : Invert_Words_Cmd;
---      Word1, Word2  : Word_Cursor;
---      Matches       : Match_Array (1 .. 1);
---      Matcher       : constant Pattern_Matcher :=
---        Compile ("(" & Second_String & ") ", Case_Insensitive);
---      Second_Cursor : File_Cursor := File_Cursor (Message);
---      Line_Cursor   : File_Cursor := File_Cursor (Message);
---      Result        : Solution_List;
+      New_Command   : Invert_Words_Cmd;
+      Word1, Word2  : Word_Cursor;
+      Matches       : Match_Array (1 .. 1);
+      Matcher       : constant Pattern_Matcher :=
+        Compile ("(" & Second_String & ") ", Case_Insensitive);
+      Second_Cursor : File_Cursor := File_Cursor (Message);
+      Result        : Solution_List;
 
    begin
-      return Command_List.Null_List;
---      Second_Cursor.Col := 1;
+      Second_Cursor.Col := 1;
 
---      loop
---         Match (Matcher, Get_Line (Current_Text, Second_Cursor), Matches);
---         exit when Matches (1) /= No_Match;
---         Second_Cursor.Line := Second_Cursor.Line - 1;
---      end loop;
+      loop
+         Match (Matcher, Get_Line (Current_Text, Second_Cursor), Matches);
+         exit when Matches (1) /= No_Match;
+         Second_Cursor.Line := Second_Cursor.Line - 1;
+      end loop;
 
---      Line_Cursor.Col := 1;
---      Get_Line (Current_Text, Line_Cursor, New_Extract);
+      Second_Cursor.Col := Matches (1).First;
 
---      if Message.Line /= Second_Cursor.Line then
---         Get_Line (Current_Text, Second_Cursor, New_Extract);
---      end if;
-
---      Second_Cursor.Col := Matches (1).First;
-
---      Word1 := (File_Cursor (Message)
---               with new String'(First_String), Text_Ascii);
+      Word1 := (File_Cursor (Message)
+               with new String'(First_String), Text_Ascii);
 
 
---      Word2 := (File_Cursor (Second_Cursor)
---               with new String'(Second_String), Text_Ascii);
+      Word2 := (Second_Cursor with new String'(Second_String), Text_Ascii);
 
---      Inititialize (New_Command, Current_Text, Word1, Word2);
+      Initialize (New_Command, Current_Text, Word1, Word2);
 
---      Set_Caption
---        (New_Command,
---         "Invert """ & First_String & """ and """ & Second_String & """");
+      Set_Caption
+        (New_Command,
+         "Invert """ & First_String & """ and """ & Second_String & """");
 
---      Append (Result, New_Command);
+      Append (Result, New_Command);
 
---      return Result;
+      return Result;
    end Wrong_Order;
 
    --------------
