@@ -29,6 +29,7 @@ with Gtk.Image;       use Gtk.Image;
 with Gtk.Label;       use Gtk.Label;
 with Gtk.List;        use Gtk.List;
 with Gtk.List_Item;   use Gtk.List_Item;
+with Gtk.Handlers;
 with Gtk.Stock;       use Gtk.Stock;
 with Gtk.Table;       use Gtk.Table;
 with Gtk.Tooltips;    use Gtk.Tooltips;
@@ -81,8 +82,18 @@ package body Scenario_Views is
      (Button : access Gtk_Widget_Record'Class; Data : Variable_User_Data);
    --  Called when removing a variable
 
-   package View_Callback is new Gtk.Handlers.User_Callback
-     (Gtk_Widget_Record, Variable_User_Data);
+   procedure Setup (Data : Variable_User_Data; Id : Handler_Id);
+   package View_Callback is new Gtk.Handlers.User_Callback_With_Setup
+     (Gtk_Widget_Record, Variable_User_Data, Setup);
+
+   -----------
+   -- Setup --
+   -----------
+
+   procedure Setup (Data : Variable_User_Data; Id : Handler_Id) is
+   begin
+      Add_Watch (Id, Data.View);
+   end Setup;
 
    -------------
    -- Gtk_New --
