@@ -1388,19 +1388,26 @@ package body Project_Viewers is
       Dirs : constant String_Id_Array := Source_Dirs (Ed.Project_View);
    begin
       if Dirs'Length = 0 then
-         Add_Main_File
-           (Ed, Base_Name
-            (Select_File
-             (Title          => -"Select the main unit to add",
-              Base_Directory => Dir_Name (Project_Path (Ed.Project_View)))));
+         declare
+            File : constant String := Select_File
+              (Title          => -"Select the main unit to add",
+               Base_Directory => Dir_Name (Project_Path (Ed.Project_View)));
+         begin
+            if File /= "" then
+               Add_Main_File (Ed, Base_Name (File));
+            end if;
+         end;
+
       else
-         Trace (Me, "Add_Main_Unit="
-                & Get_String (Dirs (Dirs'First)));
-         Add_Main_File
-           (Ed, Base_Name
-            (Select_File
-             (Title          => -"Select the main unit to add",
-              Base_Directory => Get_String (Dirs (Dirs'First)))));
+         declare
+            File : constant String := Select_File
+              (Title          => -"Select the main unit to add",
+               Base_Directory => Get_String (Dirs (Dirs'First)));
+         begin
+            if File /= "" then
+               Add_Main_File (Ed, Base_Name (File));
+            end if;
+         end;
       end if;
    end Add_Main_Unit;
 
@@ -1477,14 +1484,14 @@ package body Project_Viewers is
       Set_Layout (Bbox, Buttonbox_Start);
       Pack_Start (Hbox, Bbox, Expand => False, Fill => False);
 
-      Gtk_New (Button2, -"Add");
+      Gtk_New_From_Stock (Button2, Stock_Add);
       Pack_Start (Bbox, Button2);
       Widget_Callback.Object_Connect
         (Button2, "clicked",
          Widget_Callback.To_Marshaller (Add_Main_Unit'Access),
          Slot_Object => Box);
 
-      Gtk_New (Button2, -"Remove");
+      Gtk_New_From_Stock (Button2, Stock_Remove);
       Pack_Start (Bbox, Button2);
       Widget_Callback.Object_Connect
         (Button2, "clicked",
