@@ -1,5 +1,10 @@
 Known Problems fixed in GPS 2.1.0
 
+- D721-004 Typing in floating read-only editors writes in other editors
+  Problem:    When you type characters in a read-only floating editor, the
+              actual editing might occur in a non-floating editor instead.
+  Workaround: Do not type in read-only floating editors.
+
 - D715-006 Drag-and-drop a window on another floating window fails
   Problem:    If you are trying to make a window floating by dragging it
               and dropping over an already floating window, GPS will in
