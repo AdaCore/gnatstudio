@@ -40,10 +40,12 @@ with Gtk.Stock;            use Gtk.Stock;
 with Gtk.Tooltips;         use Gtk.Tooltips;
 with Gtk.Widget;           use Gtk.Widget;
 with Gtk.Window;           use Gtk.Window;
+with Gtkada.File_Selector; use Gtkada.File_Selector;
 with Gtkada.Handlers;      use Gtkada.Handlers;
 
 with GNAT.OS_Lib;          use GNAT.OS_Lib;
 with GNAT.Case_Util;       use GNAT.Case_Util;
+with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Unchecked_Deallocation;
 
@@ -51,6 +53,7 @@ with Prj;
 with Projects.Editor;      use Projects, Projects.Editor;
 with Glide_Kernel;         use Glide_Kernel;
 with Glide_Kernel.Project; use Glide_Kernel.Project;
+with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
 with Glide_Kernel.Modules; use Glide_Kernel.Modules;
 with Glide_Intl;           use Glide_Intl;
 with Language_Handlers;    use Language_Handlers;
@@ -86,6 +89,21 @@ package body Switches_Editors is
      (Switch : Switch_Check_Widget; List : in out Argument_List);
    procedure Set_And_Filter_Switch
      (Switch : Switch_Check_Widget; List : in out Argument_List);
+
+   ------------
+   -- Fields --
+   ------------
+
+   type Switch_Field_Widget is new Switch_Basic_Widget_Record with record
+      Field : Gtk.GEntry.Gtk_Entry;
+   end record;
+   type Switch_Field_Widget_Access is access all Switch_Field_Widget'Class;
+
+   function Get_Switch (Switch : Switch_Field_Widget) return String;
+   procedure Filter_Switch
+     (Switch : Switch_Field_Widget; List : in out Argument_List);
+   procedure Set_And_Filter_Switch
+     (Switch : Switch_Field_Widget; List : in out Argument_List);
 
    ------------------
    -- Spin buttons --
@@ -207,6 +225,12 @@ package body Switches_Editors is
    --  File_Name is the name of the file whose switches we are changing, or ""
    --  if we are changing the default switches.
    --  Return True if the switches were modified
+
+   procedure Browse_Directory
+     (Field : access GObject_Record'Class; Kernel : Kernel_Handle);
+   procedure Browse_File
+     (Field : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Open a dialog to select a directory or a file
 
    procedure Revert_To_Default (Switches : access Gtk_Widget_Record'Class);
    --  Revert to the default switches in the editor
@@ -340,6 +364,67 @@ package body Switches_Editors is
       end loop;
 
       Set_Active (Switch.Check, Active);
+   end Set_And_Filter_Switch;
+
+   ----------------
+   -- Get_Switch --
+   ----------------
+
+   function Get_Switch (Switch : Switch_Field_Widget) return String is
+      Text : constant String := Get_Text (Switch.Field);
+   begin
+      if Text = "" then
+         return "";
+      else
+         declare
+            T : GNAT.OS_Lib.String_Access := new String'(Text);
+            Result : constant String := Switch.Switch & ' '
+               & Argument_List_To_Quoted_String ((1 => T));
+         begin
+            Free (T);
+            return Result;
+         end;
+      end if;
+   end Get_Switch;
+
+   -------------------
+   -- Filter_Switch --
+   -------------------
+
+   procedure Filter_Switch
+     (Switch : Switch_Field_Widget; List : in out Argument_List) is
+   begin
+      for L in List'Range loop
+         if List (L) /= null and then List (L).all = Switch.Switch then
+            Free (List (L));
+
+            if L < List'Last then
+               Free (List (L + 1));
+            end if;
+         end if;
+      end loop;
+   end Filter_Switch;
+
+   ---------------------------
+   -- Set_And_Filter_Switch --
+   ---------------------------
+
+   procedure Set_And_Filter_Switch
+     (Switch : Switch_Field_Widget; List : in out Argument_List) is
+   begin
+      for L in List'Range loop
+         if List (L) /= null
+           and then List (L).all = Switch.Switch
+         then
+            if L < List'Last then
+               Set_Text (Switch.Field, List (L + 1).all);
+               Free (List (L + 1));
+            else
+               Set_Text (Switch.Field, "");
+            end if;
+            Free (List (L));
+         end if;
+      end loop;
    end Set_And_Filter_Switch;
 
    ----------------
@@ -831,6 +916,110 @@ package body Switches_Editors is
       Append_Switch (Page, S);
    end Create_Spin;
 
+   ----------------------
+   -- Browse_Directory --
+   ----------------------
+
+   procedure Browse_Directory
+     (Field : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      F   : constant Gtk_Entry := Gtk_Entry (Field);
+      Dir : constant String := Select_Directory
+        (Base_Directory    => Get_Text (F),
+         Parent            => Gtk_Window (Get_Toplevel (F)),
+         Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs));
+   begin
+      if Dir /= "" then
+         Set_Text (F, Dir);
+      end if;
+   end Browse_Directory;
+
+   -----------------
+   -- Browse_File --
+   -----------------
+
+   procedure Browse_File
+     (Field : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      F   : constant Gtk_Entry := Gtk_Entry (Field);
+      File : constant Virtual_File := Select_File
+        (Base_Directory    => Dir_Name (Get_Text (F)),
+         Default_Name      => Base_Name (Get_Text (F)),
+         Parent            => Gtk_Window (Get_Toplevel (F)),
+         Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs));
+   begin
+      if File /= VFS.No_File then
+         Set_Text (F, Full_Name (File).all);
+      end if;
+   end Browse_File;
+
+   ------------------
+   -- Create_Field --
+   ------------------
+
+   procedure Create_Field
+     (Page              : access Switches_Editor_Page_Record;
+      Box               : access Gtk.Box.Gtk_Box_Record'Class;
+      Label             : String;
+      Switch            : String;
+      Tip               : String := "";
+      As_Directory      : Boolean := False;
+      As_File           : Boolean := False;
+      Label_Size_Group  : Gtk.Size_Group.Gtk_Size_Group := null)
+   is
+      Hbox   : Gtk_Box;
+      S      : Switch_Field_Widget_Access := new Switch_Field_Widget
+        (Switch'Length);
+      L      : Gtk_Label;
+      Button : Gtk_Button;
+
+   begin
+      Gtk_New_Hbox (Hbox, False, 0);
+      Pack_Start (Box, Hbox, False, False);
+      S.Switch := Switch;
+
+      Gtk_New (L, Label);
+      Set_Alignment (L, 0.0, 0.5);
+      Pack_Start (Hbox, L, False, False, 0);
+
+      if Label_Size_Group /= null then
+         Add_Widget (Label_Size_Group, L);
+      end if;
+
+      Gtk_New (S.Field);
+      Pack_Start (Hbox, S.Field, True, True, 0);
+      Widget_Callback.Object_Connect
+        (S.Field, "changed",
+         Widget_Callback.To_Marshaller (Refresh_Page'Access), Page);
+
+      if As_File then
+         Gtk_New (Button, -"Browse");
+         Pack_Start (Hbox, Button, Expand => False);
+         Kernel_Callback.Object_Connect
+           (Button, "clicked",
+            Kernel_Callback.To_Marshaller (Browse_File'Access),
+            User_Data   => Page.Kernel,
+            Slot_Object => S.Field);
+
+      elsif As_Directory then
+         Gtk_New (Button, -"Browse");
+         Pack_Start (Hbox, Button, Expand => False);
+         Kernel_Callback.Object_Connect
+           (Button, "clicked",
+            Kernel_Callback.To_Marshaller (Browse_Directory'Access),
+            User_Data   => Page.Kernel,
+            Slot_Object => S.Field);
+      end if;
+
+      if Tip /= "" then
+         Set_Tip (Page.Tips, S.Field, '(' & Switch & ") " & ASCII.LF & Tip);
+      else
+         Set_Tip (Page.Tips, S.Field, '(' & Switch & ')');
+      end if;
+
+      Append_Switch (Page, S);
+   end Create_Field;
+
    ------------------
    -- Create_Radio --
    ------------------
@@ -1187,6 +1376,7 @@ package body Switches_Editors is
 
    procedure Gtk_New
      (Page            : out Switches_Editor_Page;
+      Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
       Title           : String;
       Project_Package : String;
       Attribute_Index : String := "";
@@ -1194,6 +1384,7 @@ package body Switches_Editors is
       Tips            : access Gtk.Tooltips.Gtk_Tooltips_Record'Class) is
    begin
       Page := new Switches_Editor_Page_Record;
+      Page.Kernel := Kernel_Handle (Kernel);
       Gtk.Table.Initialize (Page, Lines + 1, Cols, False);
       Set_Row_Spacings (Page, 0);
       Set_Col_Spacings (Page, 0);
