@@ -635,21 +635,24 @@ package body Project_Properties is
          Attr      => Attr,
          Ignore_Editor => True,
          Index     => Attribute_Index);
+      Lower_Attribute_Index : String := Attribute_Index;
    begin
       if Value /= Old_Value then
+         To_Lower (Lower_Attribute_Index);
+
          if Attr.Omit_If_Default and then Value = Default_Value then
             Delete_Attribute
               (Project            => Project,
                Scenario_Variables => Scenario_Variables,
                Attribute          => Attribute,
-               Attribute_Index    => Attribute_Index);
+               Attribute_Index    => Lower_Attribute_Index);
          else
             Update_Attribute_Value_In_Scenario
               (Project            => Project,
                Scenario_Variables => Scenario_Variables,
                Attribute          => Attribute,
                Value              => Value,
-               Attribute_Index    => Attribute_Index);
+               Attribute_Index    => Lower_Attribute_Index);
          end if;
          Trace (Me, "Change for attribute "
                 & Attr.Pkg.all & "'" & Attr.Name.all
@@ -677,6 +680,7 @@ package body Project_Properties is
         (Project   => Project,
          Attribute => Attribute,
          Index     => Attribute_Index);
+      Lower_Attribute_Index : String := Attribute_Index;
       Equal : Boolean;
    begin
       if Old_Values'Length /= 0 then
@@ -693,32 +697,33 @@ package body Project_Properties is
          begin
             Equal := Is_Equal (Values, Default, Case_Sensitive => False);
 
-            if not Equal then
-               for V in Default'Range loop
-                  Trace (Me, "MANU Default=" & Default (V).all);
-               end loop;
-            end if;
+--              if not Equal then
+--                 for V in Default'Range loop
+--                    Trace (Me, "MANU Default=" & Default (V).all);
+--                 end loop;
+--              end if;
 
             Free (Default);
          end;
       end if;
 
       if not Equal then
+         To_Lower (Lower_Attribute_Index);
          Update_Attribute_Value_In_Scenario
            (Project            => Project,
             Scenario_Variables => Scenario_Variables,
             Attribute          => Attribute,
             Values             => Values,
-            Attribute_Index    => Attribute_Index);
+            Attribute_Index    => Lower_Attribute_Index);
          Trace (Me, "Change for attribute "
                 & Attr.Pkg.all & "'" & Attr.Name.all & "("
                 & Attribute_Index & ")");
-         for V in Old_Values'Range loop
-            Trace (Me, "MANU Old=" & Old_Values (V).all);
-         end loop;
-         for V in Values'Range loop
-            Trace (Me, "MANU New=" & Values (V).all);
-         end loop;
+--           for V in Old_Values'Range loop
+--              Trace (Me, "MANU Old=" & Old_Values (V).all);
+--           end loop;
+--           for V in Values'Range loop
+--              Trace (Me, "MANU New=" & Values (V).all);
+--           end loop;
 
          Project_Changed := True;
       end if;
