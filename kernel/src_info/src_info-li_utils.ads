@@ -33,6 +33,7 @@ private package Src_Info.LI_Utils is
       Parent_Location       : SN.Point := SN.Invalid_Point;
       Kind                  : E_Kind;
       Scope                 : E_Scope;
+      Project               : Projects.Project_Type;
       End_Of_Scope_Location : SN.Point := SN.Invalid_Point;
       Rename_Location       : SN.Point := SN.Invalid_Point;
       Declaration_Info      : out E_Declaration_Info_List);
@@ -54,6 +55,7 @@ private package Src_Info.LI_Utils is
       DB_Dir               : String;
       File                 : in out LI_File_Ptr;
       List                 : in out LI_File_List;
+      Project              : Projects.Project_Type;
       Referred_Filename    : String);
    --  Create a new dependency, from the files described in File to the source
    --  file Referred_Filename.
@@ -70,6 +72,7 @@ private package Src_Info.LI_Utils is
       Parent_Location       : SN.Point := SN.Invalid_Point;
       Kind                  : E_Kind;
       Scope                 : E_Scope;
+      Project               : Projects.Project_Type;
       End_Of_Scope_Location : SN.Point := SN.Invalid_Point;
       Rename_Location       : SN.Point := SN.Invalid_Point;
       Declaration_Info      : out E_Declaration_Info_List);
@@ -85,6 +88,7 @@ private package Src_Info.LI_Utils is
       Handler          : Src_Info.CPP.CPP_LI_Handler;
       DB_Dir           : String;
       List             : in out LI_File_List;
+      Project          : Projects.Project_Type;
       Parent_Filename  : String;
       Parent_Location  : SN.Point);
    --  Add a new parent entity to the list of parents for
@@ -147,6 +151,7 @@ private package Src_Info.LI_Utils is
       Handler       : access Src_Info.CPP.CPP_LI_Handler_Record'Class;
       DB_Dir        : String;
       List          : in out LI_File_List;
+      Project       : Projects.Project_Type;
       Full_Filename : String);
    --  Create a stub LI file for Full_Filename, if there is no matching LI file
    --  in List.

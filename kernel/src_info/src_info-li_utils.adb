@@ -25,8 +25,7 @@ with Traces; use Traces;
 with Types;  use Types;
 with SN; use SN;
 with Src_Info.CPP;  use Src_Info.CPP;
-with Prj;
-with Prj_API; use Prj_API;
+with Projects; use Projects;
 
 package body Src_Info.LI_Utils is
 
@@ -43,6 +42,7 @@ package body Src_Info.LI_Utils is
       Parent_Location         : Point := Invalid_Point;
       Kind                    : E_Kind;
       Scope                   : E_Scope;
+      Project                 : Project_Type;
       End_Of_Scope_Location   : Point := Invalid_Point;
       Rename_Location         : Point := Invalid_Point);
    --  Inserts declaration into specified E_Declaration_Info_List
@@ -80,6 +80,7 @@ package body Src_Info.LI_Utils is
       Parent_Location         : Point := Invalid_Point;
       Kind                    : E_Kind;
       Scope                   : E_Scope;
+      Project                 : Project_Type;
       End_Of_Scope_Location   : Point := Invalid_Point;
       Rename_Location         : Point := Invalid_Point;
       Declaration_Info        : out E_Declaration_Info_List) is
@@ -119,6 +120,7 @@ package body Src_Info.LI_Utils is
          Parent_Location,
          Kind,
          Scope,
+         Project,
          End_Of_Scope_Location,
          Rename_Location);
    end Insert_Declaration;
@@ -162,6 +164,7 @@ package body Src_Info.LI_Utils is
       DB_Dir               : String;
       File                 : in out LI_File_Ptr;
       List                 : in out LI_File_List;
+      Project              : Project_Type;
       Referred_Filename    : String)
    is
       Dep_Ptr : Dependency_File_Info_List;
@@ -176,6 +179,7 @@ package body Src_Info.LI_Utils is
          Handler       => CPP_LI_Handler (Handler),
          DB_Dir        => DB_Dir,
          List          => List,
+         Project       => Project,
          Full_Filename => Referred_Filename);
 
       --  Is this a first dependencies info in this file?
@@ -237,6 +241,7 @@ package body Src_Info.LI_Utils is
       Parent_Location       : Point := Invalid_Point;
       Kind                  : E_Kind;
       Scope                 : E_Scope;
+      Project               : Projects.Project_Type;
       End_Of_Scope_Location : Point := Invalid_Point;
       Rename_Location       : Point := Invalid_Point;
       Declaration_Info      : out E_Declaration_Info_List)
@@ -256,6 +261,7 @@ package body Src_Info.LI_Utils is
          Handler       => Handler,
          DB_Dir        => DB_Dir,
          List          => List,
+         Project       => Project,
          Full_Filename => Referred_Filename);
 
       D_Ptr := Find_Declaration
@@ -274,6 +280,7 @@ package body Src_Info.LI_Utils is
             Parent_Location       => Parent_Location,
             Kind                  => Kind,
             Scope                 => Scope,
+            Project               => Project,
             End_Of_Scope_Location => End_Of_Scope_Location,
             Declaration_Info      => Tmp_Ptr);
       end if;
@@ -364,6 +371,7 @@ package body Src_Info.LI_Utils is
          Parent_Location,
          Kind,
          Scope,
+         Project,
          End_Of_Scope_Location,
          Rename_Location);
       Declaration_Info := D_Ptr;
@@ -378,6 +386,7 @@ package body Src_Info.LI_Utils is
       Handler          : CPP_LI_Handler;
       DB_Dir           : String;
       List             : in out LI_File_List;
+      Project          : Project_Type;
       Parent_Filename  : String;
       Parent_Location  : Point)
    is
@@ -418,6 +427,7 @@ package body Src_Info.LI_Utils is
          Handler       => Handler,
          DB_Dir        => DB_Dir,
          List          => List,
+         Project       => Project,
          Full_Filename => Parent_Filename);
       FL_Ptr.all :=
         (Value => (File   => (LI              => Tmp_LI_File_Ptr,
@@ -588,18 +598,15 @@ package body Src_Info.LI_Utils is
       Handler       : access Src_Info.CPP.CPP_LI_Handler_Record'Class;
       DB_Dir        : String;
       List          : in out LI_File_List;
+      Project       : Project_Type;
       Full_Filename : String)
    is
-      use type Prj.Project_Id;
       Xref_Name : String_Access;
-      Project   : constant Prj.Project_Id :=
-        Get_Project_From_File (Get_Root_Project (Handler), Full_Filename);
-
       pragma Unreferenced (DB_Dir);
       --  ??? DB_Dir is unreferenced, but it should be used to avoid
       --  call to Get_Project_From_File. See also Sym_IU handler.
    begin
-      if Project = Prj.No_Project then
+      if Project = No_Project then
          Xref_Name := Xref_Filename_For
            (Full_Filename,
             Get_DB_Dir (Get_Root_Project (Handler)),
@@ -643,6 +650,7 @@ package body Src_Info.LI_Utils is
       Parent_Location         : Point := Invalid_Point;
       Kind                    : E_Kind;
       Scope                   : E_Scope;
+      Project                 : Project_Type;
       End_Of_Scope_Location   : Point := Invalid_Point;
       Rename_Location         : Point := Invalid_Point)
    is
@@ -692,6 +700,7 @@ package body Src_Info.LI_Utils is
                Handler       => CPP_LI_Handler (File.LI.Handler),
                DB_Dir        => DB_Dir,
                List          => List,
+               Project       => Project,
                Full_Filename => Parent_Filename);
          end if;
          D_Ptr.Value.Declaration.Parent_Location := new File_Location_Node'
@@ -901,8 +910,7 @@ package body Src_Info.LI_Utils is
       Ref_Ptr : E_Reference_List := Declaration_Info.Value.References;
    begin
       while Ref_Ptr /= null loop
-         if Get_LI_Filename (Ref_Ptr.Value.Location.File.LI)
-            = Get_LI_Filename (File)
+         if Ref_Ptr.Value.Location.File.LI = File
            and Ref_Ptr.Value.Location.Line = Location.Line
            and Ref_Ptr.Value.Location.Column = Location.Column
            and Ref_Ptr.Value.Kind = Kind
