@@ -1800,7 +1800,6 @@ package body Docgen.Work_On_Source is
             Subtitle_Package => new String'(Package_Name));
          Entity_Node := TEL.First (Entity_List);
 
-         --  for J in 1 .. TEL.Length (Entity_List) loop
          while Entity_Node /= TEL.Null_Node loop
             --  Check if the entity is a procedure or a function
 
