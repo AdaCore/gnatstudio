@@ -22,6 +22,7 @@ with Basic_Types;
 with Gtk.Box;
 with Gtk.Combo;
 with Gtk.Tree_Store;
+with Gtk.Tree_View;
 
 package Gtkada.Entry_Completion is
 
@@ -56,6 +57,7 @@ private
       --  The index, in Completions, of the last string inserted. 0 if no
       --  completion has been attempted yet.
 
+      View             : Gtk.Tree_View.Gtk_Tree_View;
       List             : Gtk.Tree_Store.Gtk_Tree_Store;
       --  The widget that displays the list of possible completions
    end record;

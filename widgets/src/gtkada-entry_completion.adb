@@ -18,24 +18,26 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Basic_Types;       use Basic_Types;
-with Glib;              use Glib;
-with Gdk.Event;         use Gdk.Event;
-with Gdk.Types;         use Gdk.Types;
-with Gdk.Types.Keysyms; use Gdk.Types.Keysyms;
-with Gtk.Box;           use Gtk.Box;
-with Gtk.GEntry;        use Gtk.GEntry;
-with Gtk.Combo;         use Gtk.Combo;
-with Gtk.Label;         use Gtk.Label;
-with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
-with Gtk.Tree_View;     use Gtk.Tree_View;
-with Gtk.Tree_Model;    use Gtk.Tree_Model;
-with Gtk.Tree_Store;    use Gtk.Tree_Store;
+with Basic_Types;            use Basic_Types;
+with Glib;                   use Glib;
+with Gdk.Event;              use Gdk.Event;
+with Gdk.Types;              use Gdk.Types;
+with Gdk.Types.Keysyms;      use Gdk.Types.Keysyms;
+with Gtk.Box;                use Gtk.Box;
+with Gtk.Enums;              use Gtk.Enums;
+with Gtk.GEntry;             use Gtk.GEntry;
+with Gtk.Combo;              use Gtk.Combo;
+with Gtk.Frame;              use Gtk.Frame;
+with Gtk.Scrolled_Window;    use Gtk.Scrolled_Window;
+with Gtk.Tree_View;          use Gtk.Tree_View;
+with Gtk.Tree_Selection;     use Gtk.Tree_Selection;
+with Gtk.Tree_Model;         use Gtk.Tree_Model;
+with Gtk.Tree_Store;         use Gtk.Tree_Store;
 with Gtk.Cell_Renderer_Text; use Gtk.Cell_Renderer_Text;
-with Gtk.Tree_View_Column; use Gtk.Tree_View_Column;
-with Gtk.Widget;        use Gtk.Widget;
-with Gtkada.Handlers;   use Gtkada.Handlers;
-with Glide_Intl;        use Glide_Intl;
+with Gtk.Tree_View_Column;   use Gtk.Tree_View_Column;
+with Gtk.Widget;             use Gtk.Widget;
+with Gtkada.Handlers;        use Gtkada.Handlers;
+with Glide_Intl;             use Glide_Intl;
 
 package body Gtkada.Entry_Completion is
 
@@ -46,6 +48,10 @@ package body Gtkada.Entry_Completion is
      (The_Entry : access Gtk_Widget_Record'Class;
       Event     : Gdk_Event) return Boolean;
    --  Handles the completion key in the entry.
+
+   procedure Selection_Changed (The_Entry : access Gtk_Widget_Record'Class);
+   --  Called when a line has been selected in the list of possible
+   --  completions.
 
    -------------
    -- Gtk_New --
@@ -62,12 +68,11 @@ package body Gtkada.Entry_Completion is
    ----------------
 
    procedure Initialize (The_Entry : access Gtkada_Entry_Record'Class) is
-      View     : Gtk_Tree_View;
       Renderer : Gtk_Cell_Renderer_Text;
       Col      : Gtk_Tree_View_Column;
       Num      : Gint;
       Scrolled : Gtk_Scrolled_Window;
-      Label    : Gtk_Label;
+      Frame    : Gtk_Frame;
    begin
       Initialize_Vbox (The_Entry, Homogeneous => False, Spacing => 5);
       Gtk_New (The_Entry.Combo);
@@ -76,31 +81,34 @@ package body Gtkada.Entry_Completion is
       Set_Width_Chars (Get_Entry (The_Entry.Combo), 25);
       Pack_Start (The_Entry, The_Entry.Combo, Expand => False);
 
-      Gtk_New (Label, -"Completions:");
-      Set_Alignment (Label, 0.0, 0.0);
-      Pack_Start (The_Entry, Label, Expand => False);
+      Gtk_New (Frame);
+      Pack_Start (The_Entry, Frame, Expand => True, Fill => True);
 
       Gtk_New (Scrolled);
-      Pack_Start (The_Entry, Scrolled, Expand => True, Fill => True);
+      Add (Frame, Scrolled);
 
-      Gtk_New (View);
-      Add (Scrolled, View);
-      Set_Headers_Visible (View, False);
+      Gtk_New (The_Entry.View);
+      Add (Scrolled, The_Entry.View);
+      --  Set_Headers_Visible (The_Entry.View, False);
+      Set_Mode (Get_Selection (The_Entry.View), Selection_Single);
 
-      Gtk_New (The_Entry.List, (0 .. 1 => GType_String));
-      Set_Model (View, Gtk_Tree_Model (The_Entry.List));
+      Gtk_New (The_Entry.List, (0 .. 0 => GType_String));
+      Set_Model (The_Entry.View, Gtk_Tree_Model (The_Entry.List));
 
       Gtk_New (Renderer);
 
       Gtk_New (Col);
-      Num := Append_Column (View, Col);
+      Set_Title (Col, -"Completions");
+      Set_Sort_Column_Id (Col, 0);
+
+      Num := Append_Column (The_Entry.View, Col);
       Pack_Start (Col, Renderer, False);
       Add_Attribute (Col, Renderer, "text", 0);
 
-      Gtk_New (Col);
-      Num := Append_Column (View, Col);
-      Pack_Start (Col, Renderer, False);
-      Add_Attribute (Col, Renderer, "text", 1);
+      Widget_Callback.Object_Connect
+        (Get_Selection (The_Entry.View), "changed",
+         Widget_Callback.To_Marshaller (Selection_Changed'Access),
+         Slot_Object => The_Entry);
 
       Widget_Callback.Connect
         (The_Entry, "destroy",
@@ -109,6 +117,24 @@ package body Gtkada.Entry_Completion is
         (Get_Entry (The_Entry.Combo), "key_press_event",
          Return_Callback.To_Marshaller (On_Entry_Tab'Access), The_Entry);
    end Initialize;
+
+   -----------------------
+   -- Selection_Changed --
+   -----------------------
+
+   procedure Selection_Changed (The_Entry : access Gtk_Widget_Record'Class) is
+      Ent   : constant Gtkada_Entry := Gtkada_Entry (The_Entry);
+      Model : Gtk_Tree_Model;
+      Iter  : Gtk_Tree_Iter;
+   begin
+      Get_Selected (Selection => Get_Selection (Ent.View),
+                    Model     => Model,
+                    Iter      => Iter);
+
+      Set_Text (Get_Entry (Ent.Combo), Get_String (Model, Iter, 0));
+      Ent.Completion_Index := Integer'First;
+      Grab_Focus (Get_Entry (Ent.Combo));
+   end Selection_Changed;
 
    ---------------
    -- Get_Combo --
@@ -190,7 +216,6 @@ package body Gtkada.Entry_Completion is
             Completion, Tmp       : String_Access;
             Index, S, First_Index : Integer;
             Iter                  : Gtk_Tree_Iter;
-            Col                   : Gint := 1;
 
          begin
             --  If there is no current series of tab (ie the user has pressed a
@@ -218,12 +243,9 @@ package body Gtkada.Entry_Completion is
                      S := Next_Matching (T, S + 1, GEntry.Completions'Last);
                      exit when S = Integer'First;
 
-                     if Col = 0 then
-                        Append
-                          (GEntry.List, Iter => Iter, Parent => Null_Iter);
-                     end if;
-                     Set (GEntry.List, Iter, Col, GEntry.Completions (S).all);
-                     Col := 1 - Col;
+                     Append
+                       (GEntry.List, Iter => Iter, Parent => Null_Iter);
+                     Set (GEntry.List, Iter, 0, GEntry.Completions (S).all);
 
                      Index := Completion'First;
                      while Index <= Completion'Last
@@ -249,6 +271,7 @@ package body Gtkada.Entry_Completion is
                      GEntry.Completion_Index := GEntry.Completions'First - 1;
                      Free (Completion);
                   end if;
+
                   return True;
                end if;
 
