@@ -14,7 +14,9 @@ CFLAGS  = -g -O2 -DSYSTEM_INCLUDE=@opsysfile@ \
 	 @DEFS@
 LDFLAGS  = $(shell gtkada-config --libs)
 OBJ_DIR  = $(ROOT)/obj
-SRC_DIRS = $(ROOT)/gvd/gnat $(ROOT)/gvd/pixmaps $(ROOT)/prj_editor/src \
+SRC_DIRS = $(ROOT)/gvd/gnat $(ROOT)/gvd/pixmaps \
+	   $(ROOT)/prj_editor/src \
+	   $(ROOT)/prj_editor/pixmaps \
            $(ROOT)/gbuilder/pixmaps $(ROOT)/gbuilder/src \
            $(GTK_PREFIX)/include/gtk-2.0 \
            $(GTK_PREFIX)/lib/gtk-2.0/include \
