@@ -422,8 +422,7 @@ package Debugger is
 
    function Variable_Name_With_Frame
      (Debugger : access Debugger_Root;
-      Var      : String)
-     return String;
+      Var      : String) return String;
    --  Return the name for the variable Var, in the current frame.
    --  This is used to memorize the block along with the variable in the
    --  canvas.
