@@ -1937,7 +1937,7 @@ package body Src_Info.Queries is
          Iterator.Importing := new Project_Id_Array'
            (Find_All_Projects_Importing (Root_Project, Iterator_Decl_Project));
          Iterator.Source_Files := Get_Source_Files
-           (Iterator.Importing (Iterator.Current_Project),
+           (Iterator.Importing (Iterator.Importing'First),
             Recursive => False,
             Full_Path => False);
       end if;
