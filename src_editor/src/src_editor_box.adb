@@ -924,7 +924,6 @@ package body Src_Editor_Box is
 
    function Check_Timestamp_Idle (Box : GObject) return Boolean is
       B         : constant Source_Editor_Box := Source_Editor_Box (Box);
-      Undo_Redo : Undo_Redo_Information;
    begin
       if B.Timestamp_Mode = Check_At_Focus then
          B.Timestamp_Mode := Checking;
@@ -937,6 +936,23 @@ package body Src_Editor_Box is
          B.Timestamp_Mode := Check_At_Focus;
       end if;
 
+      return False;
+   end Check_Timestamp_Idle;
+
+   --------------
+   -- Focus_In --
+   --------------
+
+   function Focus_In (Box : access GObject_Record'Class) return Boolean is
+      Id        : Idle_Handler_Id;
+      Undo_Redo : Undo_Redo_Information;
+      B         : constant Source_Editor_Box := Source_Editor_Box (Box);
+   begin
+      --  We must do the check in an idle callback: otherwise, when the dialog
+      --  is pop up on the screen, and since it is modal, then button release
+      --  event is never sent to the editor, and there is a drag selection
+      --  taking place.
+      Id := Object_Idle.Add (Check_Timestamp_Idle'Access, GObject (Box));
       --  If we are not currently asking the user (it is possible that we still
       --  get a focus in event, if the mouse has moved outside of the dialog,
       --  even though the dialog is modal ???
@@ -952,21 +968,6 @@ package body Src_Editor_Box is
             Undo_Redo.Redo_Menu_Item);
       end if;
 
-      return False;
-   end Check_Timestamp_Idle;
-
-   --------------
-   -- Focus_In --
-   --------------
-
-   function Focus_In (Box : access GObject_Record'Class) return Boolean is
-      Id : Idle_Handler_Id;
-   begin
-      --  We must do the check in an idle callback: otherwise, when the dialog
-      --  is pop up on the screen, and since it is modal, then button release
-      --  event is never sent to the editor, and there is a drag selection
-      --  taking place.
-      Id := Object_Idle.Add (Check_Timestamp_Idle'Access, GObject (Box));
       return False;
    end Focus_In;
 
