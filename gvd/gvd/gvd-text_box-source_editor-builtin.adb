@@ -1074,7 +1074,6 @@ package body Odd.Source_Editors is
       Debug   : constant Debugger_Access := Process.Debugger;
 
    begin
-      Push_Internal_Command_Status (Get_Process (Debug), True);
       Set_Parse_File_Name (Get_Process (Debug), False);
 
       --  Check whether the line contains code
@@ -1083,7 +1082,6 @@ package body Odd.Source_Editors is
       Editor.Current_File_Cache.Line_Parsed (Line) := True;
 
       Set_Parse_File_Name (Get_Process (Debug), True);
-      Pop_Internal_Command_Status (Get_Process (Debug));
 
       --  Deactivate the idle callback if we have finished
       if Kind = No_More_Code then

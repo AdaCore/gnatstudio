@@ -29,7 +29,6 @@ with Language;          use Language;
 with Odd.Types;         use Odd.Types;
 with Debugger;          use Debugger;
 with Language.Debugger; use Language.Debugger;
-with Process_Proxies;   use Process_Proxies;
 
 package body Items is
 
@@ -271,14 +270,12 @@ package body Items is
                Default_Start := Default_Start + 1;
             end loop;
 
-            Push_Internal_Command_Status (Get_Process (Debugger), True);
             Set_Type_Name
               (Item,
                Get_Type_Info
                (Debugger,
                 Item.Type_Name (Entity_Start .. Default_Start - 1),
                 Item.Type_Name (Default_Start + 1 .. Item.Type_Name'Last)));
-            Pop_Internal_Command_Status (Get_Process (Debugger));
             return Item.Type_Name.all;
          end;
       else

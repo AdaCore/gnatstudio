@@ -33,7 +33,6 @@ with Gdk.Event;        use Gdk.Event;
 with Gtk.Menu;         use Gtk.Menu;
 with Gtkada.Canvas;    use Gtkada.Canvas;
 
-with Process_Proxies;  use Process_Proxies;
 with Debugger;         use Debugger;
 with Language;         use Language;
 with Items;            use Items;
@@ -246,8 +245,6 @@ package body Display_Items is
       Value_Found : Boolean := False;
 
    begin
-      Push_Internal_Command_Status (Get_Process (Debugger.Debugger), True);
-
       if Default_Entity = null then
 
          declare
@@ -265,8 +262,6 @@ package body Display_Items is
                   Print_Message
                     (Debugger.Window.Statusbar1,
                      Error, "Could not get the type of " & Variable_Name);
-                  Pop_Internal_Command_Status
-                    (Get_Process (Debugger.Debugger));
                   return;
                else
                   Parse_Value
@@ -294,8 +289,6 @@ package body Display_Items is
                   Print_Message
                     (Debugger.Window.Statusbar1,
                      Error, "Could not parse type for " & Variable_Name);
-                  Pop_Internal_Command_Status
-                    (Get_Process (Debugger.Debugger));
                   return;
             end;
 
@@ -314,7 +307,6 @@ package body Display_Items is
       end if;
 
       Item.Debugger := Debugger_Process_Tab (Debugger);
-      Pop_Internal_Command_Status (Get_Process (Debugger.Debugger));
       Display_Items.Initialize (Item, Win, Variable_Name, Auto_Refresh);
    end Gtk_New;
 
@@ -801,9 +793,6 @@ package body Display_Items is
    begin
       --  Parse the value
 
-      Push_Internal_Command_Status
-        (Get_Process (Item.Debugger.Debugger), True);
-
       if Item.Entity.all in Debugger_Output_Type'Class then
          Set_Value
            (Debugger_Output_Type (Item.Entity.all),
@@ -819,14 +808,12 @@ package body Display_Items is
       Update_Resize_Display
         (Item, Was_Visible, Hide_Big_Items,
          Redisplay_Canvas => Redisplay_Canvas);
-      Pop_Internal_Command_Status (Get_Process (Item.Debugger.Debugger));
 
       --  If we got an exception while parsing the value, we register the new
       --  value as being incorrect.
    exception
       when Language.Unexpected_Type | Constraint_Error =>
          Set_Valid (Item.Entity, False);
-         Pop_Internal_Command_Status (Get_Process (Item.Debugger.Debugger));
    end Update;
 
    ---------------------------

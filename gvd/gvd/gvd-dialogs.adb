@@ -172,8 +172,6 @@ package body Odd.Dialogs is
       end if;
 
       --  Read the information from the debugger
-      Push_Internal_Command_Status (Process, True);
-
       declare
          Info : Thread_Information_Array :=
            Info_Threads (Debugger_Process_Tab (Debugger).Debugger);
@@ -209,7 +207,6 @@ package body Odd.Dialogs is
          Free (Info);
       end;
 
-      Pop_Internal_Command_Status (Process);
       Thaw (Task_Dialog.List);
    end Update;
 
@@ -240,9 +237,7 @@ package body Odd.Dialogs is
 
       --  Parse the information from the debugger
 
-      Push_Internal_Command_Status (Process, True);
       Backtrace (Debugger_Process_Tab (Debugger).Debugger, Bt, Len);
-      Pop_Internal_Command_Status (Process);
 
       --  Update the contents of the window
 

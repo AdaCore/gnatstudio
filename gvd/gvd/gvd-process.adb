@@ -337,8 +337,6 @@ package body Odd.Process is
 
       --  Display the file
 
-      Push_Internal_Command_Status (Get_Process (Data.Process.Debugger), True);
-
       --  Update the list of breakpoints in the editor.
       --  If there is no breakpoint defined, we force an update (in fact,
       --  "start" will always define such a breakpoint, and this is used to
@@ -353,7 +351,6 @@ package body Odd.Process is
       end if;
 
       Load_File (Data.Process.Editor_Text, Data.File_Name.all);
-      Pop_Internal_Command_Status (Get_Process (Data.Process.Debugger));
 
       --  Free unused memory
       Free (Data.File_Name);
@@ -409,7 +406,7 @@ package body Odd.Process is
 
       --  Do not show the output if we have an internal command
 
-      if not Is_Internal_Command (Get_Process (Process.Debugger))  then
+      if Get_Command_Mode (Get_Process (Process.Debugger)) /= Internal then
          if First = 0 then
             Text_Output_Handler (Process, Str);
          else
