@@ -450,15 +450,14 @@ package body Codefix_Module is
      (Kernel : access Kernel_Handle_Record'Class;
       Data   : Hooks_Data'Class)
    is
-      pragma Unreferenced (Data);
-      Compilation_Category : constant String := -"Builder results";
-      --  ??? This is a duplicate from commands-builder.ads
+      Compilation_Data : constant Compilation_Hooks_Args :=
+        Compilation_Hooks_Args (Data);
 
    begin
       Activate_Codefix
         (Kernel_Handle (Kernel),
          Execute_GPS_Shell_Command (Kernel, "get_build_output"),
-         Compilation_Category);
+         Compilation_Data.Category);
    exception
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
