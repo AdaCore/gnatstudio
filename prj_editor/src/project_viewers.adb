@@ -241,9 +241,14 @@ package body Project_Viewers is
      return Boolean;
    --  Callback when a row/column has been selected in the clist
 
-   procedure Explorer_Selection_Changed
-     (Viewer  : access Gtk_Widget_Record'Class;
-      Args    : Gtk_Args);
+   type Context_Hook_Record is new Hook_Args_Record with record
+      Viewer : Project_Viewer;
+   end record;
+   type Context_Hook is access all Context_Hook_Record'Class;
+   procedure Execute
+     (Hook   : Context_Hook_Record;
+      Kernel : access Kernel_Handle_Record'Class;
+      Data   : Hooks_Data'Class);
    --  Called every time the selection has changed in the tree
 
    procedure Explorer_Selection_Changed
@@ -779,27 +784,27 @@ package body Project_Viewers is
          Trace (Me, "Unexpected exception " & Exception_Information (E));
    end Explorer_Selection_Changed;
 
-   --------------------------------
-   -- Explorer_Selection_Changed --
-   --------------------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure Explorer_Selection_Changed
-     (Viewer  : access Gtk_Widget_Record'Class;
-      Args    : Gtk_Args)
+   procedure Execute
+     (Hook   : Context_Hook_Record;
+      Kernel : access Kernel_Handle_Record'Class;
+      Data   : Hooks_Data'Class)
    is
-      V     : constant Project_Viewer := Project_Viewer (Viewer);
-      Child : constant MDI_Child := Get_Focus_Child (Get_MDI (V.Kernel));
+      D : constant Context_Hooks_Args := Context_Hooks_Args (Data);
+      Child : constant MDI_Child := Get_Focus_Child (Get_MDI (Kernel));
    begin
       --  Do nothing if we forced the selection change ourselves. For instance,
       --  when a new switch editor is created in On_Edit_Switches, to avoid
       --  doing extra work.
       if Child = null
-        or else Get_Widget (Child) /= Gtk_Widget (Viewer)
+        or else Get_Widget (Child) /= Gtk_Widget (Hook.Viewer)
       then
-         Explorer_Selection_Changed
-           (V, To_Selection_Context_Access (To_Address (Args, 1)));
+         Explorer_Selection_Changed (Hook.Viewer, D.Context);
       end if;
-   end Explorer_Selection_Changed;
+   end Execute;
 
    -------------
    -- Gtk_New --
@@ -832,6 +837,7 @@ package body Project_Viewers is
       Col_Number : Gint;
       Hook       : Preferences_Hook;
       Hook2      : Project_View_Hook;
+      Hook3      : Context_Hook;
       pragma Unreferenced (Col_Number);
    begin
       Gtk.Box.Initialize_Hbox (Viewer);
@@ -876,10 +882,10 @@ package body Project_Viewers is
         (Viewer.Tree, "button_press_event",
          Return_Callback.To_Marshaller (Select_Row'Access), Viewer);
 
-      Widget_Callback.Object_Connect
-        (Kernel, Context_Changed_Signal,
-         Explorer_Selection_Changed'Access,
-         Viewer);
+      Hook3 := new Context_Hook_Record'
+        (Hook_Args_Record with Viewer => Project_Viewer (Viewer));
+      Add_Hook
+        (Kernel, Context_Changed_Hook, Hook3, Watch => GObject (Viewer));
 
       Hook2 := new Project_View_Hook_Record'
         (Hook_No_Args_Record with Viewer => Project_Viewer (Viewer));
