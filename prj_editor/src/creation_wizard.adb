@@ -416,7 +416,7 @@ package body Creation_Wizard is
       Free (Languages);
       Pop_State (Wiz.Kernel);
 
-      return Dir & To_File_Name (Name) & Project_File_Extension;
+      return Project_Path (Project);
    end Generate_Prj;
 
    ---------
