@@ -48,11 +48,12 @@ package body Glide_Kernel.Project is
    procedure Compute_Predefined_Paths
      (Handle : access Kernel_Handle_Record'Class)
    is
-      Gnatls      : constant String := Get_Attribute_Value
+      Gnatls       : constant String := Get_Attribute_Value
         (Get_Project (Handle), Gnatlist_Attribute, Default => "gnatls");
-      Gnatls_Args : Argument_List_Access :=
-        Argument_String_To_List (Gnatls & " -v");
-      Path        : String_Access;
+      Gnatls_Args  : Argument_List_Access :=
+                       Argument_String_To_List (Gnatls & " -v");
+      Path         : String_Access;
+      GNAT_Version : aliased String_Access;
 
    begin
       --  If the gnatls commands hasn't changed, no need to recompute the
@@ -76,7 +77,8 @@ package body Glide_Kernel.Project is
            (Handle.Registry.all,
             Gnatls_Path  => Handle.Gnatls_Cache.all,
             Gnatls_Args  => Gnatls_Args,
-            GNAT_Version => Handle.GNAT_Version);
+            GNAT_Version => GNAT_Version'Unchecked_Access);
+         Handle.GNAT_Version := GNAT_Version;
 
          Free (Path);
          Free (Gnatls_Args);
