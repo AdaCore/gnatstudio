@@ -201,7 +201,6 @@ package body Glide_Menu is
    begin
       Save_Desktop (Top.Kernel);
 
-
    exception
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
