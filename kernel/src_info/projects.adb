@@ -101,7 +101,7 @@ package body Projects is
       View_Is_Complete : Boolean := False;
       --  True if the view for the project was correctly computed
 
-      Is_Default : Boolean := False;
+      Status : Project_Status := From_File;
       --  True if the current project is the default project (ie is not
       --  associated with a file on the disk)
    end record;
@@ -258,7 +258,7 @@ package body Projects is
             Close (File);
 
             Set_Project_Modified (Project, False);
-            Set_Is_Default (Project, False);
+            Set_Status (Project, From_File);
 
          exception
             when Ada.Text_IO.Name_Error =>
@@ -277,7 +277,7 @@ package body Projects is
 
    function Project_Name (Project : Project_Type) return String is
    begin
-      if Project = No_Project or else Is_Default (Project) then
+      if Project = No_Project then
          return "default";
       else
          return Get_String (Prj.Tree.Name_Of (Project.Node));
@@ -290,7 +290,7 @@ package body Projects is
 
    function Project_Name (Project : Project_Type) return Name_Id is
    begin
-      if Project = No_Project or else Is_Default (Project) then
+      if Project = No_Project then
          return Name_Default;
       else
          return Prj.Tree.Name_Of (Project.Node);
@@ -303,7 +303,7 @@ package body Projects is
 
    function Project_Path (Project : Project_Type) return String is
    begin
-      if Project = No_Project or else Is_Default (Project) then
+      if Project = No_Project or else Status (Project) /= From_File then
          return "";
       else
          return Get_String (Path_Name_Of (Project.Node));
@@ -663,22 +663,28 @@ package body Projects is
       Unit_Name : out Name_Id;
       Lang      : out Name_Id)
    is
-      View   : constant Project_Id := Get_View (Project);
-      Naming : constant Naming_Data := Prj.Projects.Table (View).Naming;
+      View   : Project_Id;
+      Naming : Naming_Data;
       F    : String := Filename;
       Arr  : Array_Element_Id;
       Len  : Natural;
       File : Name_Id;
       Langs : String_List_Id;
    begin
+      if Project = No_Project then
+         Naming := Standard_Naming_Data;
+      else
+         View := Get_View (Project);
+         Naming := Prj.Projects.Table (View).Naming;
+      end if;
+
       Canonical_Case_File_Name (F);
 
       --  Check Ada exceptions
 
       File := Get_String (F);
 
-      Arr := Check_Full_File
-        (File, Prj.Projects.Table (View).Naming.Bodies);
+      Arr := Check_Full_File (File, Naming.Bodies);
 
       if Arr = No_Array_Element then
          Arr := Check_Full_File (File, Naming.Specs);
@@ -721,7 +727,11 @@ package body Projects is
 
       --  Check standard extensions. The index in this table is the language
 
-      Langs := Get_Attribute_Value (Project, Languages_Attribute).Values;
+      if Project /= No_Project then
+         Langs := Get_Attribute_Value (Project, Languages_Attribute).Values;
+      else
+         Langs := Nil_String;
+      end if;
 
       Arr := Naming.Spec_Suffix;
       Check_Suffix_List (F, Langs, Arr, Len);
@@ -2206,23 +2216,23 @@ package body Projects is
       end if;
    end External_Reference_Of;
 
-   ----------------
-   -- Is_Default --
-   ----------------
+   ------------
+   -- Status --
+   ------------
 
-   function Is_Default (Project : Project_Type) return Boolean is
+   function Status (Project : Project_Type) return Project_Status is
    begin
-      return Project.Data.Is_Default;
-   end Is_Default;
+      return Project.Data.Status;
+   end Status;
 
-   --------------------
-   -- Set_Is_Default --
-   --------------------
+   ----------------
+   -- Set_Status --
+   ----------------
 
-   procedure Set_Is_Default (Project : Project_Type; Default : Boolean) is
+   procedure Set_Status (Project : Project_Type; Status : Project_Status) is
    begin
-      Project.Data.Is_Default := Default;
-   end Set_Is_Default;
+      Project.Data.Status := Status;
+   end Set_Status;
 
    --------------
    -- Value_Of --
@@ -2359,7 +2369,7 @@ package body Projects is
 
    function View_Is_Complete (Project : Project_Type) return Boolean is
    begin
-      return Project.Data.Is_Default
+      return Status (Project) /= From_File
         or else Project.Data.View_Is_Complete;
    end View_Is_Complete;
 

@@ -274,6 +274,7 @@ package Projects is
    --  Build an attribute reference
 
    Source_Dirs_Attribute      : constant Attribute_Pkg;
+   Source_Files_Attribute     : constant Attribute_Pkg;
    Gnatlist_Attribute         : constant Attribute_Pkg;
    Compiler_Command_Attribute : constant Attribute_Pkg;
    Debugger_Command_Attribute : constant Attribute_Pkg;
@@ -518,9 +519,20 @@ package Projects is
    --  Return the empy string if Project is normalized, or an error message if
    --  otherwise.
 
-   function Is_Default (Project : Project_Type) return Boolean;
+   type Project_Status is (From_File, Default, From_Executable);
+   --  How the project was created: either read from a file, automatically
+   --  created from a directory, or automatically created from an executable
+   --  (debugger case). An actual project file exists on disk only in the
+   --  From_File case.
+
+   function Status (Project : Project_Type) return Project_Status;
    --  Return true if the project is a default project, ie not associated with
-   --  a physical file on the disk
+   --  a physical file on the disk.
+
+   procedure Set_Status
+     (Project : Project_Type; Status : Project_Status);
+   --  Indicate whether the project is a default project.
+   --  You shouldn't use this function unless you are creating a new project.
 
    function View_Is_Complete (Project : Project_Type) return Boolean;
    --  Return True if the view was correctly computed for this project.
@@ -578,9 +590,6 @@ private
    procedure Set_Is_Normalized (Project : Project_Type; Normalized : Boolean);
    --  Indicate the normalization status of the project
 
-   procedure Set_Is_Default (Project : Project_Type; Default : Boolean);
-   --  Indicate whether the project is a default project
-
    procedure Set_View_Is_Complete (Project : Project_Type; Complete : Boolean);
    --  Indicate whether the view for the project was correctly computed.
 
@@ -607,6 +616,8 @@ private
       Lang      : out Types.Name_Id);
    --  Return the unit name and unit part for Filename.
    --  This procedure doesn't fully handle krunched file name.
+   --  Project can be No_Project, in which case the default naming scheme is
+   --  used.
 
    type Scenario_Variable is record
       Name        : Types.Name_Id;
@@ -647,6 +658,7 @@ private
 
    type Attribute_Pkg is new String;
    Source_Dirs_Attribute      : constant Attribute_Pkg := "source_dirs";
+   Source_Files_Attribute     : constant Attribute_Pkg := "source_files";
    Gnatlist_Attribute         : constant Attribute_Pkg := "ide#gnatlist";
    Compiler_Command_Attribute : constant Attribute_Pkg :=
      "ide#compiler_command";
