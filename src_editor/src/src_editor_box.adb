@@ -735,7 +735,7 @@ package body Src_Editor_Box is
          declare
             Str : constant String :=
               Scope_To_String (Get_Scope (Entity)) & ' ' &
-              Kind_To_String (Get_Kind (Entity)) & ' ' &
+              (-Kind_To_String (Get_Kind (Entity))) & ' ' &
               Get_Full_Name
                 (Entity,
                  Locate_From_Source_And_Complete
