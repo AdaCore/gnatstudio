@@ -47,6 +47,7 @@ with Commands;                  use Commands;
 with Commands.External;         use Commands.External;
 with Traces;                    use Traces;
 with VFS;                       use VFS;
+with File_Utils;                use File_Utils;
 
 package body VCS.CVS is
 
@@ -561,9 +562,19 @@ package body VCS.CVS is
               & Dir_Name (Data (Files)),
               Mode => Verbose);
 
-      if Data (Files) = Dir_Name (Data (Files)) then
+      if Is_Directory (Create (Data (Files))) then
          Append (Args, "status");
          Append (Args, "-l");
+
+         declare
+            F : File_Array_Access := Read_Files_From_Dirs (Data (Files));
+         begin
+            for J in F'Range loop
+               Append (Args, Base_Name (F (J)).all);
+            end loop;
+
+            Unchecked_Free (F);
+         end;
 
       else
          Append (Args, "status");
