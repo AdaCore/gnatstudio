@@ -635,8 +635,15 @@ package body Browsers.Dependency_Items is
    is
       pragma Unreferenced (Widget);
       Child : MDI_Child;
+      Context : Selection_Context_Access := Get_Current_Context (Kernel);
    begin
       Child := Open_Dependency_Browser (Kernel);
+
+      if Context.all in File_Name_Selection_Context'Class then
+         Examine_Dependencies
+           (Kernel,
+            File_Information (File_Name_Selection_Context_Access (Context)));
+      end if;
 
    exception
       when E : others =>
