@@ -701,7 +701,6 @@ package body Vdiff2_Module.Utils is
       end if;
 
       if Offset_Source > 0 then
-
          for J in 1 .. Offset_Min loop
             Current_Line := new String'
               (Execute_GPS_Shell_Command
@@ -720,6 +719,7 @@ package body Vdiff2_Module.Utils is
 
          if Offset_Source = Offset_Min then
             Args_Replace_Text (4) := new String'("");
+
             for J in Offset_Source .. Offset_Dest loop
                Free (Args_Replace_Text (2));
                Args_Replace_Text (2) := new String'
@@ -750,6 +750,7 @@ package body Vdiff2_Module.Utils is
                Args_Replace_Text (2) := new String'
                  (Image (Dest_Range.First + J));
             end loop;
+
             Free (Args_Replace_Text (4));
             Args_Replace_Text (4) := new String'(1 => ASCII.LF);
             Execute_GPS_Shell_Command
@@ -810,6 +811,7 @@ package body Vdiff2_Module.Utils is
             Goto_Difference (Kernel_Handle (Kernel),
                              Data (Item_Local.Current_Node));
             return;
+
          elsif Item_Local.File3 = VFS.No_File then
             Append (Diff_List.all, Item_Local);
             Show_Differences3 (Kernel, Item_Local);
@@ -819,10 +821,10 @@ package body Vdiff2_Module.Utils is
          end if;
       end if;
 
-         Button := Message_Dialog
-           (Msg     => -"One of these files is already used in VDiff.",
-            Buttons => Button_OK,
-            Parent  => Get_Main_Window (Kernel));
+      Button := Message_Dialog
+        (Msg     => -"One of these files is already used in VDiff",
+         Buttons => Button_OK,
+         Parent  => Get_Main_Window (Kernel));
    end Process_Differences;
 
    ------------------
@@ -839,7 +841,7 @@ package body Vdiff2_Module.Utils is
       VStyle   : T_VStr;
       Action   : Handler_Action_Line := null)
    is
-      Cmd : Diff_Command_Line_Access;
+      Cmd                 : Diff_Command_Line_Access;
       Green_Button_Pixbuf : constant Gdk_Pixbuf :=
         Gdk_New_From_Xpm_Data (green_button_xpm);
       Red_Button_Pixbuf   : constant Gdk_Pixbuf :=
@@ -852,6 +854,7 @@ package body Vdiff2_Module.Utils is
             VDiff2_Module (Vdiff_Module_ID).List_Diff,
             VFile (Pos), VRange (Pos).First,
             Action);
+
          if not Conflict then
             Info (Pos)(VRange (Pos).First).Image := Green_Button_Pixbuf;
          else
@@ -932,6 +935,7 @@ package body Vdiff2_Module.Utils is
       VStyle     : T_VStr;
       Ref        : T_Loc := Item.Ref_File;
       Other      : T_Loc := 2;
+
    begin
       Trace (Me, "Show_Differences");
 
@@ -956,6 +960,7 @@ package body Vdiff2_Module.Utils is
 
       while Curr_Node /= Diff_Chunk_List.Null_Node loop
          Curr_Chunk := Data (Curr_Node);
+
          case Curr_Chunk.Range2.Action is
             when Append =>
                VStyle (Other) := new String'(Append_Style);
@@ -1069,6 +1074,7 @@ package body Vdiff2_Module.Utils is
          Show_Differences (Kernel, Item);
          return;
       end if;
+
       Trace (Me, "Show_Differences3");
       Execute_GPS_Shell_Command (Kernel, "edit", Args_edit);
       Basic_Types.Free (Args_edit);
@@ -1122,6 +1128,7 @@ package body Vdiff2_Module.Utils is
       Free_List (Res);
       Free (Res);
       Trace (Me, "End Show_Differences3");
+
    exception
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
@@ -1232,10 +1239,9 @@ package body Vdiff2_Module.Utils is
                      exit;
                   end if;
                end loop;
-
             end if;
-         else
 
+         else
             if VRange (Other).Action = Append then
                VStyle (Other)  := new String'(Append_Style);
                VStyle (Ref)    := new String'(Old_Style);
