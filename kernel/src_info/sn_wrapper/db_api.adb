@@ -62,36 +62,22 @@ package body DB_API is
 
    procedure Open
      (DB         : out DB_File;
-      File_Names : String_List_Access;
+      Files      : chars_ptr_array;
       Success    : out Boolean)
    is
       function Internal_Open
-        (Num_Of_Files : Integer;
-         File_Names   : System.Address) return DB_File;
+        (Num_Of_Files : Integer; Files : System.Address) return DB_File;
       pragma Import (C, Internal_Open, "ada_db_open");
 
-      C_File_Names : aliased array (File_Names'Range) of chars_ptr;
-
    begin
-      for J in C_File_Names'Range loop
-         C_File_Names (J) := New_String (File_Names (J).all);
-      end loop;
-
-      DB := Internal_Open (C_File_Names'Length, C_File_Names'Address);
-
-      for J in C_File_Names'Range loop
-         Free (C_File_Names (J));
-      end loop;
+      DB := Internal_Open (Files'Length, Files'Address);
 
       if DB = null then
          Success := False;
-         return;
-
       elsif Last_ErrNo (DB) /= 0 then
          Internal_Free (DB);
          DB      := null;
          Success := False;
-
       else
          Success := True;
       end if;
