@@ -6733,6 +6733,10 @@ all references to that entity in the location window
 >>> e.find_all_refs()
 @end smallexample
 
+The screen representation of the classes exported by GPS to python has
+been modified, so that most GPS functions will return an instance of a
+class, but still display their output in a user-readable manner.
+
 Python has extensive introspection capabilities. Continuing the
 previous example, one can find what class @code{e} is an instance of
 with the following command:
