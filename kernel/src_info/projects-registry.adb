@@ -920,12 +920,54 @@ package body Projects.Registry is
       Errors   : Put_Line_Access)
    is
       Sources_Specified : Boolean := False;
+      Specified_Sources_Count : Natural := 0;
 
       procedure Record_Source (Dir, File : String; Lang : Name_Id);
       --  Add file to the list of source files for Project.
 
       function File_In_Sources (File : String) return Boolean;
       --  Whether File belongs to the list of source files for this project
+
+      procedure Process_Explicit_Source (File : String);
+      --  Do the required processing for a source file that has been specified
+      --  explicitly by the user, either through Source_Files or
+      --  Source_List_File attributes
+
+      -----------------------------
+      -- Process_Explicit_Source --
+      -----------------------------
+
+      procedure Process_Explicit_Source (File : String) is
+         F   : String := File;
+         Src : Source_File_Data;
+      begin
+         Canonical_Case_File_Name (F);
+         Specified_Sources_Count := Specified_Sources_Count + 1;
+
+         Src := Get (Registry.Data.Sources, F);
+         if Src.Lang = Name_Ada then
+            --  No warning, this was already processed
+            null;
+
+         elsif Src.Lang = No_Name then
+            Set (Registry.Data.Sources,
+                 K => F,
+                 E => (No_Project, Unknown_Language, No_Name));
+
+         elsif Src.Project /= No_Project then
+            Errors (-("Warning, duplicate source file ") & F
+                    & " (already in "
+                    & Project_Name (Src.Project) & ')',
+                    Get_View (Project));
+         else
+            Errors (-("Warning, duplicate source file ")
+                    & F, Get_View (Project));
+         end if;
+      end Process_Explicit_Source;
+
+      -------------------
+      -- Record_Source --
+      -------------------
 
       procedure Record_Source (Dir, File : String; Lang : Name_Id) is
          Full_Path : constant Name_Id := Get_String (Dir & File);
@@ -999,34 +1041,13 @@ package body Projects.Registry is
          Sources : constant Variable_Value :=
            Prj.Util.Value_Of (Name_Source_Files, Data.Decl.Attributes);
          File : String_List_Id := Sources.Values;
-         Src  : Source_File_Data;
 
       begin
          if not Sources.Default then
             Sources_Specified := True;
             while File /= Nil_String loop
                Get_Name_String (String_Elements.Table (File).Value);
-               Canonical_Case_File_Name (Name_Buffer (1 .. Name_Len));
-
-               Src := Get (Registry.Data.Sources, Name_Buffer (1 .. Name_Len));
-               if Src.Lang = Name_Ada then
-                  --  No warning, this was already processed
-                  null;
-
-               elsif Src.Lang = No_Name then
-                  Set (Registry.Data.Sources,
-                       K => Name_Buffer (1 .. Name_Len),
-                       E => (No_Project, Unknown_Language, No_Name));
-               elsif Src.Project /= No_Project then
-                  Errors (-("Warning, duplicate source file ")
-                          & Name_Buffer (1 .. Name_Len)
-                          & " (already in "
-                          & Project_Name (Src.Project) & ')',
-                          Get_View (Project));
-               else
-                  Errors (-("Warning, duplicate source file ")
-                          & Name_Buffer (1 .. Name_Len), Get_View (Project));
-               end if;
+               Process_Explicit_Source (Name_Buffer (1 .. Name_Len));
                File := String_Elements.Table (File).Next;
             end loop;
          end if;
@@ -1043,7 +1064,6 @@ package body Projects.Registry is
          File : Prj.Util.Text_File;
          Line : String (1 .. 2000);
          Last : Natural;
-         Src  : Source_File_Data;
 
       begin
          if not Source_List_File.Default then
@@ -1062,27 +1082,7 @@ package body Projects.Registry is
                      if Last /= 0
                        and then (Last = 1 or else Line (1 .. 2) /= "--")
                      then
-                        Canonical_Case_File_Name (Line (1 .. Last));
-
-                        Src := Get (Registry.Data.Sources, Line (1 .. Last));
-                        if Src.Lang = Name_Ada then
-                           --  Has already been processed
-                           null;
-
-                        elsif Src.Lang = No_Name then
-                           Set (Registry.Data.Sources,
-                                K => Line (1 .. Last),
-                                E => (No_Project, Unknown_Language, No_Name));
-                        elsif Src.Project /= No_Project then
-                           Errors (-("Warning, duplicate source file ")
-                                   & Line (1 .. Last)
-                                   & " (already in "
-                                   & Project_Name (Src.Project) & ')',
-                                   Get_View (Project));
-                        else
-                           Errors (-("Warning, duplicate source file ")
-                                   & Line (1 .. Last), Get_View (Project));
-                        end if;
+                        Process_Explicit_Source (Line (1 .. Last));
                      end if;
                   end loop;
 
@@ -1183,36 +1183,40 @@ package body Projects.Registry is
 
       --  Print error messages for remaining messages
 
-      Length := 0;
-      for L in Languages2'Range loop
-         if Languages3 (L) /= No_Name
-           and then Languages3 (L) /= Name_Ada
-         then
-            Length := Length + Languages (L)'Length + 2;
-         end if;
-      end loop;
-
-      if Length /= 0 then
-         declare
-            Error : String (1 .. Length);
-            Index : Natural := Error'First;
-         begin
-            for L in Languages2'Range loop
-               if Languages3 (L) /= No_Name
-                 and then Languages3 (L) /= Name_Ada
-               then
-                  Error (Index .. Index + Languages (L)'Length + 1) :=
-                    Languages (L).all & ", ";
-                  Index := Index + Languages (L).all'Length + 2;
-               end if;
-            end loop;
-
-            if Errors /= null then
-               Errors (-("Warning, no source files for ")
-                       & Error (Error'First .. Error'Last - 2),
-                       Get_View (Project));
+      if not Sources_Specified
+        or else Specified_Sources_Count /= 0
+      then
+         Length := 0;
+         for L in Languages2'Range loop
+            if Languages3 (L) /= No_Name
+              and then Languages3 (L) /= Name_Ada
+            then
+               Length := Length + Languages (L)'Length + 2;
             end if;
-         end;
+         end loop;
+
+         if Length /= 0 then
+            declare
+               Error : String (1 .. Length);
+               Index : Natural := Error'First;
+            begin
+               for L in Languages2'Range loop
+                  if Languages3 (L) /= No_Name
+                    and then Languages3 (L) /= Name_Ada
+                  then
+                     Error (Index .. Index + Languages (L)'Length + 1) :=
+                       Languages (L).all & ", ";
+                     Index := Index + Languages (L).all'Length + 2;
+                  end if;
+               end loop;
+
+               if Errors /= null then
+                  Errors (-("Warning, no source files for ")
+                          & Error (Error'First .. Error'Last - 2),
+                          Get_View (Project));
+               end if;
+            end;
+         end if;
       end if;
 
       Free (Languages);
