@@ -39,9 +39,19 @@ package Glide_Kernel.Editor is
    --  is not an editor, nothing happens.
 
    procedure Open_File
+     (Kernel  : access Kernel_Handle_Record'Class;
+      File    : String;
+      Success : out Boolean);
+   --  Open a given file. Print an error message if we failed to open or read
+   --  the file.
+   --  Depending on the preferences, a new editor will be opened each time
+   --  this function is called, or the same editor will be used, or a
+   --  new editor will be opened only for different files.
+
+   procedure Open_Or_Create
      (Kernel : access Kernel_Handle_Record'Class;
       File   : String);
-   --  Open a given file.
+   --  Open a given file, or open an empty editor if the file does not exist.
    --  Depending on the preferences, a new editor will be opened each time
    --  this function is called, or the same editor will be used, or a
    --  new editor will be opened only for different files.
@@ -51,7 +61,8 @@ package Glide_Kernel.Editor is
       File      : String;
       Line      : Natural := 0;
       Column    : Natural := 0;
-      Highlight : Boolean := True);
+      Highlight : Boolean := True;
+      Success   : out Boolean);
    --  Go to the specified file at Line:Column
    --  Depending on the preferences, this may or may not open a new editor.
    --  If Highlight is True, Line will be highlighted.
