@@ -1088,21 +1088,20 @@ package body Prj_API is
          end if;
       end Source_Belongs_To_Project;
 
-      --  procedure For_All_Projects is new For_Every_Project_Imported
-      --    (Project_Id, Source_Belongs_To_Project);
+      procedure For_All_Projects is new For_Every_Project_Imported
+        (Project_Id, Source_Belongs_To_Project);
 
-      --  Result : Project_Id := No_Project;
+      Result : Project_Id := No_Project;
 
    begin
-      return Root_Project_View;
-      --  For_All_Projects (Root_Project_View, Result);
+      For_All_Projects (Root_Project_View, Result);
 
-      --  if Result = No_Project then
-      --     --  Trace (Me, "Project not found for " & Source_Filename);
-      --     Result := Root_Project_View;
-      --  end if;
+      if Result = No_Project then
+         --  Trace (Me, "Project not found for " & Source_Filename);
+         Result := Root_Project_View;
+      end if;
 
-      --  return Result;
+      return Result;
    end Get_Project_From_File;
 
    -------------------------------
