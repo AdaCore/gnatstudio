@@ -48,6 +48,8 @@ with Basic_Types;               use Basic_Types;
 with Prj;                       use Prj;
 with Prj.Tree;                  use Prj.Tree;
 with Types;                     use Types;
+with Fname;                     use Fname;
+with Namet;                     use Namet;
 
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Ada.Exceptions;            use Ada.Exceptions;
@@ -386,32 +388,11 @@ package body Browsers.Dependency_Items is
       Source : Internal_File) return Boolean
    is
       Name : constant String := Get_Source_Filename (Source);
-      Ada_Runtime_File, Gtk_System_File : Boolean;
    begin
-      --  ??? The implementation here is too GNAT specific. However, getting
-      --  the Unit_Name would be expensive.
+      Name_Len := Name'Length;
+      Name_Buffer (1 .. Name_Len) := Name;
 
-      Ada_Runtime_File := Name'Length > 2
-        and then (Name (Name'First .. Name'First + 1) = "a-"
-                  or else Name (Name'First .. Name'First + 1) = "s-"
-                  or else Name (Name'First .. Name'First + 1) = "i-"
-                  or else Name (Name'First .. Name'First + 1) = "g-");
-
-      Ada_Runtime_File := Ada_Runtime_File
-        or else Name = "ada.ads"
-        or else Name = "interfac.ads"
-        or else Name = "system.ads"
-        or else Name = "unchconv.ads"
-        or else Name = "unchdeal.ads"
-        or else Name = "text_io.ads"
-        or else Name = "gnat.ads";
-
-      Gtk_System_File := Name'Length > 4
-        and then (Name (Name'First .. Name'First + 2) = "gtk"
-                  or else Name (Name'First .. Name'First + 3) = "glib"
-                  or else Name (Name'First .. Name'First + 2) = "gdk");
-
-      return Ada_Runtime_File or else Gtk_System_File;
+      return Is_Internal_File_Name (Name_Find, Renamings_Included => True);
    end Is_System_File;
 
    ------------
