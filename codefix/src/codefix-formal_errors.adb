@@ -142,7 +142,8 @@ package body Codefix.Formal_Errors is
      (Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Str_Expected : String;
-      Str_Red      : String := "") return Extract
+      Str_Red      : String := "";
+      Format_Red   : String_Mode := Text_Ascii) return Extract
    is
       New_Extract : Extract;
       Line_Cursor : File_Cursor := File_Cursor (Message);
@@ -151,13 +152,18 @@ package body Codefix.Formal_Errors is
       Get_Line (Current_Text, Line_Cursor, New_Extract);
 
       if Str_Red = "" then
-         Replace_Word (New_Extract, Message, Str_Expected);
+         Replace_Word
+           (New_Extract,
+            Message,
+            Str_Expected,
+            "^([\w]+)",
+            Regular_Expression);
          Set_Caption
            (New_Extract,
             "Replace misspelled word by """ & Str_Expected & """");
       else
          Replace_Word
-           (New_Extract, Message, Str_Expected, "^(" & Str_Red & ")");
+           (New_Extract, Message, Str_Expected, Str_Red);
          Set_Caption
            (New_Extract,
             "Replace """ & Str_Red & """ by """ & Str_Expected & """");
@@ -476,7 +482,8 @@ package body Codefix.Formal_Errors is
       Replace_Word
         (New_Extract,
          Cursor,
-         Word_Chosen (Word_Chosen'Last - Size + 1 .. Word_Chosen'Last));
+         Word_Chosen (Word_Chosen'Last - Size + 1 .. Word_Chosen'Last),
+         Size);
 
       Set_Caption
         (New_Extract,
@@ -694,7 +701,55 @@ package body Codefix.Formal_Errors is
       Get_Line (Current_Text, Line_Cursor, New_Extract);
       Add_Line (New_Extract, Begin_Cursor, Get_String (New_Extract, 1));
       Delete_Line (New_Extract, Line_Cursor);
+
+      Set_Caption
+        (New_Extract,
+         "Move the pragma to the beginnig of the file");
+
       return New_Extract;
    end First_Line_Pragma;
+
+   ------------------
+   -- Not_Modified --
+   ------------------
+
+   function Not_Modified
+     (Current_Text : Text_Navigator_Abstr'Class;
+      Cursor       : File_Cursor'Class;
+      Name         : String) return Extract is
+
+      New_Extract : Ada_List;
+      New_Instr   : Dynamic_String;
+      Col_Decl    : Natural;
+
+   begin
+      Get_Unit (Current_Text, Cursor, New_Extract);
+
+      if Get_Number_Of_Elements (New_Extract) = 1 then
+         Replace_Word
+           (New_Extract,
+            Search_String (New_Extract, ":"),
+            ": constant",
+            ":");
+      else
+         Cut_Off_Elements (New_Extract, New_Instr, Name);
+
+         Col_Decl := New_Instr'First;
+         Skip_To_Char (New_Instr.all, Col_Decl, ':');
+
+         Assign
+           (New_Instr,
+            New_Instr (New_Instr'First .. Col_Decl) & " constant" &
+              New_Instr (Col_Decl + 1 .. New_Instr'Last));
+
+         Add_Line (New_Extract, Get_Stop (New_Extract), New_Instr.all);
+      end if;
+
+      Set_Caption
+        (New_Extract,
+         "Add ""constant"" to the declaration of """ & Name & """");
+
+      return Extract (New_Extract);
+   end Not_Modified;
 
 end Codefix.Formal_Errors;
