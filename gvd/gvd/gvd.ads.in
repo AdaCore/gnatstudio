@@ -44,6 +44,9 @@ package GVD is
 
    Host : constant Host_Type := @HOST_TYPE@;
    --  Host kind where GPS is built.
+   --  Note: it is in most cases inappropriate to test the value of this
+   --  variable and do different things based on it. Consider using this
+   --  variable as a last resort, to address very target specific issues.
 
    Source_Date : constant String := "unknown date";
 
