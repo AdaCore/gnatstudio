@@ -150,7 +150,6 @@ package Glide_Kernel.Preferences is
    Keyword_Font              : Param_Spec_Font;
    Comment_Font              : Param_Spec_Font;
    String_Font               : Param_Spec_Font;
-   Tooltip_Font              : Param_Spec_Font;
    Display_Tooltip           : Param_Spec_Boolean;
    Highlight_Delimiters      : Param_Spec_Boolean;
    Periodic_Save             : Param_Spec_Int;
@@ -163,7 +162,6 @@ package Glide_Kernel.Preferences is
    -- MDI --
    MDI_Opaque            : Param_Spec_Boolean;
    MDI_Destroy_Floats    : Param_Spec_Boolean;
-   MDI_Title_Font        : Param_Spec_Font;
    MDI_Background_Color  : Param_Spec_Color;
    MDI_Title_Bar_Color   : Param_Spec_Color;
    MDI_Focus_Title_Color : Param_Spec_Color;
@@ -192,17 +190,16 @@ package Glide_Kernel.Preferences is
    Wizard_Title_Font : Param_Spec_Font;
 
    -- Browsers --
-   Browsers_Bg_Color        : Param_Spec_Color;
-   Browsers_Bg_Image        : Param_Spec_String;
-   Browsers_Draw_Grid       : Param_Spec_Boolean;
-   Browsers_Link_Font       : Param_Spec_Font;
+   Browsers_Bg_Color         : Param_Spec_Color;
+   Browsers_Bg_Image         : Param_Spec_String;
+   Browsers_Draw_Grid        : Param_Spec_Boolean;
    Browsers_Hyper_Link_Color : Param_Spec_Color;
-   Selected_Link_Color      : Param_Spec_Color;
-   Unselected_Link_Color    : Param_Spec_Color;
-   Parent_Linked_Item_Color : Param_Spec_Color;
-   Child_Linked_Item_Color  : Param_Spec_Color;
-   Browsers_Vertical_Layout : Param_Spec_Boolean;
-   Selected_Item_Color      : Param_Spec_Color
+   Selected_Link_Color       : Param_Spec_Color;
+   Unselected_Link_Color     : Param_Spec_Color;
+   Parent_Linked_Item_Color  : Param_Spec_Color;
+   Child_Linked_Item_Color   : Param_Spec_Color;
+   Browsers_Vertical_Layout  : Param_Spec_Boolean;
+   Selected_Item_Color       : Param_Spec_Color
      renames GVD.Preferences.Selected_Item_Color;
 
    Dep_Browser_Show_System_Files : Param_Spec_Boolean;
