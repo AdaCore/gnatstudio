@@ -2067,15 +2067,19 @@ package body Debugger.Gdb is
       Line     : Positive) return Line_Kind is
    begin
       Set_Parse_File_Name (Get_Process (Debugger), False);
+      --  ??? The following would avoid having gdb ask unexpected questions
+      --  in Ada mode, but is too costly:
+      --  Switch_Language (Debugger, "c");
 
       declare
-         S : constant String :=
-           Send (Debugger, "info line "
-                   & Base_Name (File)
-                   & ':' & Image (Line),
-                 Mode => Internal);
+         S : constant String := Send
+           (Debugger, "info line " & Base_Name (File) & ':' & Image (Line),
+            Mode => Internal);
 
       begin
+         --  ??? See comment above
+         --  Restore_Language (Debugger);
+
          Set_Parse_File_Name (Get_Process (Debugger), True);
 
          if Index (S, "starts at address") /= 0 then
@@ -3111,11 +3115,13 @@ package body Debugger.Gdb is
       end if;
 
       Set_Parse_File_Name (Get_Process (Debugger), False);
+      Switch_Language (Debugger, "c");
 
       declare
          Str : constant String :=
            Send (Debugger, "info line " & File_Name & ":1", Mode => Internal);
       begin
+         Restore_Language (Debugger);
          Set_Parse_File_Name (Get_Process (Debugger), True);
          Found_File_Name
            (Debugger,
@@ -3234,6 +3240,7 @@ package body Debugger.Gdb is
       Range_End_Len   : out Natural) is
    begin
       Set_Parse_File_Name (Get_Process (Debugger), False);
+      Switch_Language (Debugger, "c");
 
       declare
          S : constant String := Send
@@ -3260,6 +3267,7 @@ package body Debugger.Gdb is
          end if;
       end;
 
+      Restore_Language (Debugger);
       Set_Parse_File_Name (Get_Process (Debugger), True);
    end Get_Line_Address;
 
@@ -3587,21 +3595,6 @@ package body Debugger.Gdb is
    begin
       if Debugger.Stored_Language /= null then
          Send (Debugger, "set lang " & Debugger.Stored_Language.all);
-
-         declare
-            S : constant String :=
-              Send (Debugger, "show lang", Mode => Internal);
-         begin
-            --  If gdb isn't able to figure out what the current language
-            --  is, default to Ada. This is the case if gdb prints:
-            --  <<The current source language is "auto".>>
-
-            if S'Length > 4
-              and then S (S'Last - 5 .. S'Last - 2) = "auto"
-            then
-               Send (Debugger, "set lang ada");
-            end if;
-         end;
       end if;
    end Restore_Language;
 
