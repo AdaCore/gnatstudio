@@ -1759,7 +1759,7 @@ package body Src_Editor_Module is
          begin
             Set_Title
               (Child,
-               Full_Name (Title).all & " <" & Im & ">",
+               URL_File_Name (Title) & " <" & Im & ">",
                Base_Name (Title) & " <" & Im & ">");
          end;
 
@@ -1920,7 +1920,7 @@ package body Src_Editor_Module is
          Raise_Child (Child);
 
          if File /= VFS.No_File then
-            Set_Title (Child, Full_Name (File).all, Base_Name (File));
+            Set_Title (Child, URL_File_Name (File), Base_Name (File));
             File_Edited (Kernel, Get_Filename (Child));
 
          else
@@ -2046,7 +2046,7 @@ package body Src_Editor_Module is
 
             if Old_Name /= New_Name then
                Set_Title
-                 (Child, Full_Name (New_Name).all, Base_Name (New_Name));
+                 (Child, URL_File_Name (New_Name), Base_Name (New_Name));
                Recompute_View (Kernel);
             end if;
          end;
