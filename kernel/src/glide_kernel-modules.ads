@@ -789,6 +789,21 @@ package Glide_Kernel.Modules is
       Message       : String);
    --  Remove action corresponding to Identifier at specified location.
 
+   ------------------
+   -- URL contexts --
+   ------------------
+
+   type URL_Context is new Selection_Context with private;
+   type URL_Context_Access is access all URL_Context'Class;
+
+   procedure Set_URL_Information
+     (Context : access URL_Context;
+      URL     : String := "");
+   --  Set the information in this context.
+
+   procedure Destroy (Context : in out URL_Context);
+   --  Free the memory associated with the context
+
    ------------------------
    -- File_Name contexts --
    ------------------------
@@ -1021,6 +1036,10 @@ package Glide_Kernel.Modules is
    --  Return the list of commands. The list must be freed by the caller.
 
 private
+
+   type URL_Context is new Selection_Context with record
+      URL : GNAT.OS_Lib.String_Access := null;
+   end record;
 
    type File_Selection_Context is new Selection_Context with record
       Directory         : GNAT.OS_Lib.String_Access := null;
