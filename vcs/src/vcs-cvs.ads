@@ -85,10 +85,15 @@ package VCS.CVS is
      (Rep       : access CVS_Record;
       File      :        String;
       Version_1 :        String     := "";
-      Version_2 :        String)
+      Version_2 :        String     := "")
      return String_List.List;
 
    function Log
+     (Rep  : access CVS_Record;
+      File :        String)
+      return String_List.List;
+
+   function Annotate
      (Rep  : access CVS_Record;
       File :        String)
       return String_List.List;

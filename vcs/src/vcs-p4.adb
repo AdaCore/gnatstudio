@@ -63,7 +63,7 @@ package body VCS.P4 is
      (Rep       : access P4_Record;
       File      :        String;
       Version_1 :        String     := "";
-      Version_2 :        String)
+      Version_2 :        String     := "")
       return String_List.List
    is
    begin
@@ -122,6 +122,19 @@ package body VCS.P4 is
    begin
       return Log (Rep, File);
    end Log;
+
+   --------------
+   -- Annotate --
+   --------------
+
+   function Annotate
+     (Rep  : access P4_Record;
+      File :        String)
+      return String_List.List
+   is
+   begin
+      return Annotate (Rep, File);
+   end Annotate;
 
    -----------
    -- Merge --

@@ -27,11 +27,8 @@
 -----------------------------------------------------------------------
 
 with Generic_List;
-
 with Gtk.Widget;
 
--- generic
---    type Data_Type is private;
 package VCS is
 
    --  This package provides utilities for communicating with a VCS
@@ -122,7 +119,8 @@ package VCS is
    --
    --  Filenames must be a list of absolute file names or absolute
    --  directory names.
-   --  The returned list must correspond to the order in Filenames.
+   --  If the list contains file names then the returned list must correspond
+   --  to the order in Filenames.
    --
    --  Implementations for this procedure should document which fields are
    --  costly to obtain and which are easy.
@@ -164,8 +162,7 @@ package VCS is
    procedure Update
      (Rep       : access VCS_Record;
       Filenames :        String_List.List) is abstract;
-   --  Check a file out the specified repository.
-   --  Name is the name of the local file.
+   --  Synchronize the local files or directories.
 
    procedure Merge
      (Rep       : access VCS_Record;
@@ -188,12 +185,13 @@ package VCS is
      (Rep       : access VCS_Record;
       File      :        String;
       Version_1 :        String     := "";
-      Version_2 :        String)
+      Version_2 :        String     := "")
      return String_List.List is abstract;
    --  Return a diff between two versions of one file.
    --  The result is a String_List.List with one element for each line,
    --  in the standard basic diff format.
    --  If Version_1 is empty, then the local file is taken.
+   --  If Version_2 is empty, then the latest revision is taken.
 
    function Log
      (Rep  : access VCS_Record;
@@ -202,6 +200,12 @@ package VCS is
    --  Return a changelog for the corresponding file.
    --  The result String_List.List with one element for each line.
 
+   function Annotate
+     (Rep  : access VCS_Record;
+      File :        String)
+      return String_List.List is abstract;
+   --  Return annotations for the corresponding file.
+   --  The result String_List.List with one element for each line.
 
    --  ??? The following two functions make this package thread-unsafe.
 
@@ -249,7 +253,6 @@ package VCS is
 
 
    --  missing:
-   --  annotate
    --  init
    --  tag
    --  other version

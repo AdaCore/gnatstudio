@@ -84,10 +84,15 @@ package VCS.P4 is
      (Rep       : access P4_Record;
       File      :        String;
       Version_1 :        String     := "";
-      Version_2 :        String)
+      Version_2 :        String     := "")
      return String_List.List;
 
    function Log
+     (Rep  : access P4_Record;
+      File :        String)
+      return String_List.List;
+
+   function Annotate
      (Rep  : access P4_Record;
       File :        String)
       return String_List.List;
