@@ -1707,8 +1707,9 @@ package body Switches_Editors is
 
       Show_All (Dialog);
 
-      --  Unrestricted_Access is safe, since Switches is a local variables
+      --  Unrestricted_Access is safe, since Switches is a local variable
       --  destroyed when the dialog is destroyed at the end of this procedure.
+
       Switches.Files := Files'Unrestricted_Access;
 
       Fill_Editor (Switches, Project_View, Files);
