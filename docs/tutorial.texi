@@ -74,7 +74,7 @@ desktop calculator.
 It is important to realize that the features that you are about to
 experiment are available on multiple platforms, using the same user
 interface and capabilities, providing a user-friendly environment
-with a tight intergration between the tools.
+with a tight integration between the tools.
 
 @c --------------------------------------------------------------------
 @node Quick overview of the GPS areas
@@ -116,7 +116,7 @@ several areas:
 @noindent
 
 By default when you start GPS, the working area contains a help window
-displaying HTML help files. Online help for the GNAT tools is available
+displaying HTML help files. On-line help for the GNAT tools is available
 from the @code{Help} menu item.
 
 @c --------------------------------------------------------------------
@@ -145,7 +145,7 @@ Select the @code{Editor} page by clicking on the tab named @code{Editor}.
 Similarly, select the @code{Fonts & Colors} page.
 
 As you go over the various lines and labels, you will notice that by
-letting the mouse over a label, a tooltip pops up display online help
+letting the mouse over a label, a tooltip pops up display on-line help
 about the selected item.
 
 Change the @code{Keyword color} by clicking on the down arrow on the right
@@ -189,7 +189,7 @@ Fix the error by hand, by inserting a space.
 Now, you can fix the next error by moving the cursor to the line 30 (press
 the @key{down} arrow twice), and by using @key{<Ctrl>-Tab} (press first the
 @key{Control} key, and then the @key{Tab} key on your keyboard): this key
-combination asks the source editor to automatically reindent the current
+combination asks the source editor to automatically re-indent the current
 line.
 
 You can then fix all the remaining errors by selecting the whole block
@@ -330,7 +330,7 @@ On @code{T} data display, select the contextual menu
 value.
 
 Special colors are used in the data display: blue for pointers that can be
-deferenced by a double-click (double click on @code{T.val}); red for fields that
+dereferenced by a double-click (double click on @code{T.val}); red for fields that
 have been modified since last step.
 
 On @code{T}, contextual menu, select @code{View memory at &T}: the
@@ -529,7 +529,7 @@ Click on @code{Cancel} to close the wizard.
 In the project explorer, on the project @i{sdc}, use the contextual menu
 @code{Edit project properties}.
 All the properties set in the project wizard can be found here as well.
-You can also switch betwen pages by clicking on the tabs.
+You can also switch between pages by clicking on the tabs.
 
 Once you're done exploring the property pages, click on the @code{Close}
 button to close the properties window.
@@ -553,7 +553,7 @@ the two values defined.
 
 Now click on the button at the left (@code{Edit variable properties}): this
 is the variable editor, where values can be added, renamed.
-Close the variable editor by clicing on the @code{Close} button.
+Close the variable editor by clicking on the @code{Close} button.
 
 Now, let's take a look at the switches set in the project.
 
@@ -568,7 +568,7 @@ the gray area shows the default (global) switches; you will also notice
 that output.adb has specific switches, which are highlighted.
 
 Switch between @code{Debug} and @code{Production} mode in the @code{Build}
-combobox: the switches are updated at the same time.
+combo box: the switches are updated at the same time.
 
 Back to our project, let's now examine the dependencies between sources.
 
@@ -590,7 +590,7 @@ Double click on the right arrow of @file{tokens.ads} to display the files that
 
 On the @i{sdc} project, select the contextual menu
 @code{Add dependency->From file...}, then open the @i{sdc} directory and click
-on the @code{projects} subdirecty. Select the file @code{prj1.gpr}.
+on the @code{projects} subdirectory. Select the file @code{prj1.gpr}.
 
 You can see the new dependencies added in the project explorer, as a tree of
 projects. In particular, project dependencies are duplicated.
