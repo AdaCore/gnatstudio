@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                   Copyright (C) 2001-2002                         --
+--                   Copyright (C) 2001-2003                         --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
@@ -34,6 +34,7 @@ package Pixmaps_Prj is
    project_ext_xpm             : aliased Chars_Ptr_Array (0 .. 0);
    project_ext_closed_xpm      : aliased Chars_Ptr_Array (0 .. 0);
    mini_folder_object_xpm      : aliased Chars_Ptr_Array (0 .. 0);
+   mini_folder_exec_xpm        : aliased Chars_Ptr_Array (0 .. 0);
 
 private
 
@@ -43,6 +44,7 @@ private
    pragma Import (C, project_ext_xpm);
    pragma Import (C, project_ext_closed_xpm);
    pragma Import (C, mini_folder_object_xpm, "mini_folder_object_xpm");
+   pragma Import (C, mini_folder_exec_xpm, "mini_folder_exec_xpm");
    pragma Import (C, project_modified_xpm);
    pragma Import (C, project_modified_closed_xpm);
 
