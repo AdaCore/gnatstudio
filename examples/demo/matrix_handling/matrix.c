@@ -155,8 +155,9 @@ Matrix *matrixAdd (const Matrix *a, const Matrix *b)
         {
           int val_1 = matrixGet (a, row, column);
           int val_2 = matrixGet (b, row, column);
+          int val_res = val_1 / val_2;
 
-          matrixSet (result, row, column, val_1 / val_2);
+          matrixSet (result, row, column, val_res);
         }
     }
 

@@ -11,7 +11,7 @@ typedef struct matrix
 {
   int rows, columns;
   int **value;
-  } Matrix;
+} Matrix;
 
 int matrixGet (const Matrix *matrix, int row, int column);
 /* Get the value of the element at row, column */
