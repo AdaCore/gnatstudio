@@ -83,7 +83,7 @@ package body Creation_Wizard is
    -------------
 
    procedure Gtk_New
-     (Wiz : out Prj_Wizard;
+     (Wiz    : out Prj_Wizard;
       Kernel : access Glide_Kernel.Kernel_Handle_Record'Class) is
    begin
       Wiz := new Prj_Wizard_Record;
@@ -95,10 +95,10 @@ package body Creation_Wizard is
    ----------------
 
    procedure Initialize
-     (Wiz : out Prj_Wizard;
+     (Wiz    : access Prj_Wizard_Record'Class;
       Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
-      Page : Project_Editor_Page;
+      Page  : Project_Editor_Page;
       Count : constant Natural := Project_Editor_Pages_Count (Kernel);
    begin
       Wiz.Kernel := Kernel_Handle (Kernel);
