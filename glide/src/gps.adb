@@ -70,6 +70,7 @@ with Navigation_Module;
 
 --  The LI parsers
 with Src_Info.ALI;
+with Src_Info.CPP;
 
 procedure GPS is
    use Glide_Main_Window;
@@ -299,14 +300,14 @@ begin
    Register_Language (Handler, "c", C_Lang);
    Add_Language_Info
      (Handler, "c",
-      LI                  => null,
+      LI                  => new Src_Info.CPP.CPP_LI_Handler_Record,
       Default_Spec_Suffix => ".h",
       Default_Body_Suffix => ".c");
 
    Register_Language (Handler, "c++", Cpp_Lang);
    Add_Language_Info
      (Handler, "c++",
-      LI                  => null,
+      LI                  => new Src_Info.CPP.CPP_LI_Handler_Record,
       Default_Spec_Suffix => ".h",
       Default_Body_Suffix => ".cc");
 
