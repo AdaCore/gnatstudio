@@ -46,7 +46,6 @@ package body Src_Editor_Buffer.Blocks is
       Block         : Block_Access;
       Buffer_Line   : Buffer_Line_Type;
       First_Buffer_Line : Buffer_Line_Type;
-      Block_Folded  : Boolean;
 
    begin
       if not Buffer.Parse_Blocks then
@@ -83,10 +82,9 @@ package body Src_Editor_Buffer.Blocks is
       Current := Constructs.First;
 
       while Current /= null loop
-         Block_Folded := False;
-
-         if Current.Category in Construct_Category
-           or else Current.Category in Enclosing_Entity_Category
+         if Buffer.Block_Highlighting
+           and then (Current.Category in Construct_Category
+                     or else Current.Category in Enclosing_Entity_Category)
          then
             Line_Start := Editable_Line_Type (Current.Sloc_Start.Line);
             Line_End   := Editable_Line_Type (Current.Sloc_End.Line);
@@ -103,28 +101,21 @@ package body Src_Editor_Buffer.Blocks is
 
             First_Buffer_Line := Get_Buffer_Line (Buffer, Line_Start);
 
-            --  Make sure the block is not folded.
-
-            if First_Buffer_Line = 0 or else
-              Get_Buffer_Line (Buffer, Line_End) - First_Buffer_Line /=
-              Buffer_Line_Type (Line_End - Line_Start)
-            then
-               Block_Folded := True;
-            end if;
-
-            if Block_Folded then
-               Unchecked_Free (Block);
-            else
+            if First_Buffer_Line /= 0 then
                for J in Line_Start .. Line_End loop
                   Buffer_Line := Get_Buffer_Line (Buffer, J);
 
-                  if Buffer.Line_Data (Buffer_Line).Block = null then
-                     Buffer.Line_Data (Buffer_Line).Block := Block;
+                  if Buffer_Line /= 0 then
+                     if Buffer.Line_Data (Buffer_Line).Block = null then
+                        Buffer.Line_Data (Buffer_Line).Block := Block;
+                     end if;
                   end if;
                end loop;
 
                Buffer.Line_Data (First_Buffer_Line).Block := Block;
                Append (Buffer.Blocks, Block);
+            else
+               Unchecked_Free (Block);
             end if;
          end if;
 
@@ -137,33 +128,39 @@ package body Src_Editor_Buffer.Blocks is
          --  when the notion of block nesting level is introduced.
 
          if Buffer.Block_Folding
-           and then not Block_Folded
            and then Current.Category in Subprogram_Category
            and then Current.Sloc_End.Line /= Current.Sloc_Start.Line
          then
-            declare
-               Command : Hide_Editable_Lines_Command;
-               Iter    : Gtk_Text_Iter;
-               Buffer_Line : Buffer_Line_Type;
-            begin
-               Buffer_Line := Get_Buffer_Line
-                 (Buffer, Editable_Line_Type (Current.Sloc_Start.Line));
+            --  Do nothing if the block is folded.
 
-               if Buffer_Line /= 0 then
-                  Command := new Hide_Editable_Lines_Type;
-                  Command.Buffer := Source_Buffer (Buffer);
-                  Get_Iter_At_Line (Buffer, Iter, Gint (Buffer_Line - 1) + 1);
-                  Command.Mark   := Create_Mark (Buffer, "", Iter);
-                  Command.Number := Editable_Line_Type
-                    (Current.Sloc_End.Line - Current.Sloc_Start.Line) - 1;
+            if Get_Buffer_Line
+              (Buffer, Editable_Line_Type (Current.Sloc_Start.Line + 1)) /= 0
+            then
+               declare
+                  Command : Hide_Editable_Lines_Command;
+                  Iter    : Gtk_Text_Iter;
+                  Buffer_Line : Buffer_Line_Type;
+               begin
+                  Buffer_Line := Get_Buffer_Line
+                    (Buffer, Editable_Line_Type (Current.Sloc_Start.Line));
 
-                  Add_Block_Command
-                    (Buffer,
-                     Buffer_Line,
-                     Command_Access (Command),
-                     Hide_Block_Pixbuf);
-               end if;
-            end;
+                  if Buffer_Line /= 0 then
+                     Command := new Hide_Editable_Lines_Type;
+                     Command.Buffer := Source_Buffer (Buffer);
+                     Get_Iter_At_Line
+                       (Buffer, Iter, Gint (Buffer_Line - 1) + 1);
+                     Command.Mark   := Create_Mark (Buffer, "", Iter);
+                     Command.Number := Editable_Line_Type
+                       (Current.Sloc_End.Line - Current.Sloc_Start.Line) - 1;
+
+                     Add_Block_Command
+                       (Buffer,
+                        Buffer_Line,
+                        Command_Access (Command),
+                        Hide_Block_Pixbuf);
+                  end if;
+               end;
+            end if;
          end if;
 
          Current := Current.Next;
