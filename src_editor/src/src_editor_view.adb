@@ -317,7 +317,7 @@ package body Src_Editor_View is
       Y_In_Buffer              : Gint;
       Y_In_Window              : Gint;
       Line_Height              : Gint;
-      Line_Number              : Gint;
+      Line_Number              : Natural;
       Dummy_Gint               : Gint;
       Dummy_Boolean            : Boolean;
 
@@ -354,7 +354,7 @@ package body Src_Editor_View is
          --  ??? X11 query. Otherwise, cache it in the source_view object.
 
          --  Get the line number...
-         Line_Number := Get_Line (Iter) + 1;
+         Line_Number := Natural (Get_Line (Iter)) + 1;
          --  ... and draw.
          Draw_Text
            (Drawable => Left_Window,
