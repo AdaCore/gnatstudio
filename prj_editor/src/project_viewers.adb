@@ -2856,15 +2856,9 @@ package body Project_Viewers is
       Set_Tip
         (Get_Tooltips (Kernel),
          Register_Menu
-         (Kernel, Project, -"R_ecompute Project", "",
-          On_Project_Recompute'Access, Ref_Item => -"Edit File Switches",
-          Add_Before => False),
-         Tip_Text => -("Recompute the contents of the project after"
-                       & " modifications outside of GPS. This isn't needed"
-                       & " for modifications through GPS. Note also that"
-                       & " this doesn't reparse the physical project file"
-                       & " on disk. Re-open the project if you have done"
-                       & " manual modifications to it."));
+           (Kernel, Project, -"R_ecompute Project", "",
+            On_Project_Recompute'Access, Ref_Item => -"Edit File Switches",
+            Add_Before => False));
 
       Register_Project_Editor_Page
         (Kernel,
