@@ -6648,6 +6648,11 @@ with its output.
 This attribute can be overridden for each command.
 @end table
 
+If you are defining the same action multiple times, the last definition will
+be kept. However, existing menus, buttons,@dots that already reference that
+action will keep their existing semantic. The new definition will only be
+used for all new menus created from that point on.
+
 The @code{<action>} can have one or
 several children, all of which define a particular command to execute. All
 of these commands are executed one after the other, unless one of them
