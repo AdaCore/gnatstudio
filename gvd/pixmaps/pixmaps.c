@@ -8,6 +8,7 @@
 #include "down_xpm"
 #include "finish_xpm"
 #include "grey_dot_xpm"
+#include "i_page_xpm"
 #include "interrupt_xpm"
 #include "lock_xpm"
 #include "mini-folder_xpm"
