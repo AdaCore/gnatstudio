@@ -111,7 +111,6 @@ several areas:
 @item a working area on the right of the project explorer
 @item a messages window under the working area
 @item a status bar at the bottom left
-@item a progress bar at the bottom right
 @end itemize
 
 @c --------------------------------------------------------------------
@@ -196,9 +195,9 @@ Press the @key{F4} key to build again. GPS will automatically save the
 modified files, and start a build. This behavior (automatic saving of files
 before building) can be configured in the preferences dialog.
 
-If you look at the progress bar, you will see that while the build is in
-progress the state of the compilation is displayed, giving you
-the current number of files compiled, and the number of remaining files.
+If you look at the bottom right of the GPS window, you will notice that a
+progress bar has appeared, displaying the current number of files compiled,
+and the number of remaining files.
 
 This should now report a successful build.
 
@@ -398,7 +397,7 @@ the right). Also click on the right arrow of @code{error_msg}.
 
 Select @code{Orthogonal links} in the contextual menu of the graph to change the
 way links are displayed in the graph.
-Click on the canvas, then play with the zoom (@key{=} and @key{-} keys).
+You may then play with the zoom (@key{=} and @key{-} keys).
 
 If you select @code{Hide links} from @code{error_msg} contextual menu, this
 will hide all the links that are related to this item: the link between the
