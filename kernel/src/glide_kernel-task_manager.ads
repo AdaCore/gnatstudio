@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003 - 2005                     --
+--                      Copyright (C) 2003-2005                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -49,8 +49,8 @@ package Glide_Kernel.Task_Manager is
    procedure Interrupt_Queue
      (Kernel  : access Kernel_Handle_Record'Class;
       Command : Command_Access);
-   --  Interrupt the Queue that contains Command. Does nothing if there is no
-   --  such queue.
+   --  Interrupt the Queue that contains Command.
+   --  Do nothing if there is no such queue.
 
    procedure Register_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);

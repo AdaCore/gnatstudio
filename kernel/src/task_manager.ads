@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003 - 2005                     --
+--                      Copyright (C) 2003-2005                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -55,8 +55,8 @@ package Task_Manager is
    procedure Interrupt_Queue
      (Manager : Task_Manager_Access;
       Command : Command_Access);
-   --  Interrupt the Queue that contains Command. Does nothing if there is no
-   --  such queue.
+   --  Interrupt the Queue that contains Command.
+   --  Do nothing if there is no such queue.
 
    procedure Set_Progress_Area
      (Manager : Task_Manager_Access;
