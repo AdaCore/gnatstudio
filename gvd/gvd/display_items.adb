@@ -826,7 +826,8 @@ package body Display_Items is
          Set_Value
            (Debugger_Output_Type (Item.Entity.all),
             Send (Item.Debugger.Debugger,
-                  Refresh_Command (Debugger_Output_Type (Item.Entity.all))));
+                  Refresh_Command (Debugger_Output_Type (Item.Entity.all)),
+                  Mode => Internal));
 
       elsif Item.Name /= null then
          Parse_Value (Item.Debugger.Debugger, Item.Name.all,
@@ -1291,8 +1292,10 @@ package body Display_Items is
    -- Free --
    ----------
 
-   procedure Free (Item : access Display_Item_Record) is
-
+   procedure Free
+     (Item : access Display_Item_Record;
+      Remove_Aliases : Boolean := True)
+   is
       function Free_Alias
         (Canvas : access Interactive_Canvas_Record'Class;
          It     : access Canvas_Item_Record'Class) return Boolean;
@@ -1312,13 +1315,13 @@ package body Display_Items is
          if Display_Item (It).Is_Alias_Of = Display_Item (Item)
            and then Display_Item (It).Is_Dereference
          then
-            Free (Display_Item (It));
+            Free (Display_Item (It), Remove_Aliases => False);
 
          --  If It is hidden, and was linked to Item
          elsif Display_Item (It).Is_Alias_Of /= null
            and then Has_Link (Canvas, Item, It)
          then
-            Free (Display_Item (It));
+            Free (Display_Item (It), Remove_Aliases => False);
          end if;
 
          return True;
@@ -1335,7 +1338,9 @@ package body Display_Items is
       --  to this one, since the user was probably expecting them not to be
       --  visible any more).
 
-      For_Each_Item (Canvas, Free_Alias'Unrestricted_Access);
+      if Remove_Aliases then
+         For_Each_Item (Canvas, Free_Alias'Unrestricted_Access);
+      end if;
 
       Free (Item.Entity);
       Free (Item.Name);
@@ -1343,7 +1348,9 @@ package body Display_Items is
       Remove (Canvas, Item);
       --  Warning: the memory has been freed after Remove.
 
-      Recompute_All_Aliases (Canvas, Recompute_Values => False);
+      if Remove_Aliases then
+         Recompute_All_Aliases (Canvas, Recompute_Values => False);
+      end if;
    end Free;
 
    -------------------------

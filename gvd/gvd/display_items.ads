@@ -72,9 +72,13 @@ package Display_Items is
    --  Same as above, but also create a link from Link_From to the new item.
    --  Link_Name is the label used for the link between the two items.
 
-   procedure Free (Item : access Display_Item_Record);
+   procedure Free
+     (Item : access Display_Item_Record;
+      Remove_Aliases : Boolean := True);
    --  Remove the item from the canvas and free the memory occupied by it,
    --  including its type description.
+   --  If Remove_Aliases is True, then all the items on the canvas that are
+   --  aliases of Item are also removed.
 
    function Find_Item
      (Canvas : access Odd.Canvas.Odd_Canvas_Record'Class;
