@@ -161,12 +161,15 @@ package body Debugger is
    ---------------------
 
    procedure Found_File_Name
-     (Debugger   : access Debugger_Root;
-      Str        : String;
-      Name_First : out Natural;
-      Name_Last  : out Positive;
-      Line       : out Natural) is
+     (Debugger    : access Debugger_Root;
+      Str         : String;
+      Name_First  : out Natural;
+      Name_Last   : out Positive;
+      First, Last : out Natural;
+      Line        : out Natural) is
    begin
+      First      := 0;
+      Last       := 0;
       Name_First := 0;
       Name_Last  := 1;
       Line       := 0;
