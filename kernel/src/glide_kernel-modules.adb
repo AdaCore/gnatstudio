@@ -488,7 +488,11 @@ package body Glide_Kernel.Modules is
 
    function Module_Name (ID : access Module_ID_Record'Class) return String is
    begin
-      return ID.Info.Name;
+      if ID.Info /= null then
+         return ID.Info.Name;
+      else
+         return "";
+      end if;
    end Module_Name;
 
    -----------------------
