@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with Ada.Strings.Maps;  use Ada.Strings.Maps;
+with Ada.Strings.Fixed; use Ada.Strings.Fixed;
 with Gtk.Text_Iter;     use Gtk.Text_Iter;
 with Commands.Editor;   use Commands.Editor;
 
@@ -281,6 +282,7 @@ package body Src_Editor_Buffer.Text_Handling is
       --  these are values from the parsed buffer which is a single word here.
       --  We use insted the Line, First and Last variable below which represent
       --  the real word position on the line.
+
       Lang          : Language_Access;
       Line          : Editable_Line_Type;
       Column        : Positive;
@@ -300,22 +302,27 @@ package body Src_Editor_Buffer.Text_Handling is
       is
          pragma Unreferenced (Ln, F, L);
       begin
-         if Replace'Length > 0 then
+         if Replace'Length > 0
+           and then Count (Replace, To_Set (" " & ASCII.HT)) /= Replace'Length
+         then
+            --  ??? The parser sometimes callback with an empty or null
+            --  replacement. Ignore those cases. This should probably be fixed
+            --  in the parser.
             Replace_Slice
               (Buffer, Replace, Line, First,
                Before => 0, After => Replace'Length);
          end if;
       end Replace_Text;
+
    begin
       Lang := Get_Language (Buffer);
-
-      Get_Cursor_Position (Buffer, W_End);
 
       if Lang = null then
          --  No language information
          return;
 
       else
+         Get_Cursor_Position (Buffer, W_End);
          Get_Indentation_Parameters (Lang, Indent_Params, Indent_Kind);
 
          if Indent_Params.Casing_Policy /= On_The_Fly
@@ -334,11 +341,10 @@ package body Src_Editor_Buffer.Text_Handling is
 
       --  Look for the start of the word
 
-      First := Column;
-
       declare
          Result : Boolean;
       begin
+         First := Column;
          loop
             Backward_Char (W_Start, Result);
             exit when not Result
