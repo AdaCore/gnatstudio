@@ -20,7 +20,7 @@
 
 with Ada.Calendar; use Ada.Calendar;
 with GNAT.Calendar; use GNAT.Calendar;
-with GNAT.IO;      use GNAT.IO;
+with Ada.Text_IO;   use Ada.Text_IO;
 with String_Utils; use String_Utils;
 with VFS;          use VFS;
 with GNAT.Strings; use GNAT.Strings;
@@ -71,7 +71,7 @@ package body Entities.Debug is
    function Image (Col : Column_Type) return String;
    --  Image of the column number
 
-   procedure Low_Level_Dump is new Entities_Tries.Dump (GNAT.IO.Put, Dump);
+   procedure Low_Level_Dump is new Entities_Tries.Dump (Put, Dump);
    pragma Unreferenced (Low_Level_Dump);
 
    Reference_Kind_To_Char : constant array (Reference_Kind) of Character :=
