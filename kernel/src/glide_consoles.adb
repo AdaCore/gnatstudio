@@ -30,7 +30,6 @@ with Gtkada.Handlers;          use Gtkada.Handlers;
 with Glide_Kernel;             use Glide_Kernel;
 with Glide_Kernel.Modules;     use Glide_Kernel.Modules;
 with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
-with Glide_Kernel.Project;     use Glide_Kernel.Project;
 with Traces;                   use Traces;
 
 with GNAT.Regpat;              use GNAT.Regpat;
@@ -234,10 +233,7 @@ package body Glide_Consoles is
             Thaw (Console.Text);
             Open_File_Editor
               (Console.Kernel,
-               Find_Source_File
-                 (Console.Kernel,
-                  Contents (Matched (1).First .. Matched (1).Last),
-                  True),
+               Contents (Matched (1).First .. Matched (1).Last),
                Line, Column);
          end if;
       end if;
