@@ -771,12 +771,8 @@ package body ALI_Parser is
       Entity : Entity_Information;
       Status : Find_Decl_Or_Body_Query_Status;
    begin
-      --  ??? Must search in references also. For instance, we have in
-      --  rename/rename.adb:
-      --     32i4 X{integer} 33m24 50m4
-      --     33i4 Y=33:24{integer} 51r4
-
       for Sect in First_Sect .. Last_Sect loop
+         --  Check declarations only in the current file
          if Xref_Section.Table (Sect).File_Num = File_Num then
             for Entity in Xref_Section.Table (Sect).First_Entity ..
               Xref_Section.Table (Sect).Last_Entity
@@ -794,6 +790,30 @@ package body ALI_Parser is
                end if;
             end loop;
          end if;
+
+         --  Check all references in the ALI file, since we can have:
+         --     32i4 X{integer} 33m24 50m4
+         --     33i4 Y=33:24{integer} 51r4
+         for Entity in Xref_Section.Table (Sect).First_Entity ..
+           Xref_Section.Table (Sect).Last_Entity
+         loop
+            for Ref in Xref_Entity.Table (Entity).First_Xref
+               .. Xref_Entity.Table (Entity).Last_Xref
+            loop
+               if Xref.Table (Ref).File_Num = File_Num
+                 and then Xref.Table (Ref).Line = Line
+                 and then Xref.Table (Ref).Col = Column
+               then
+                  return Get_Or_Create
+                    (Db   => Get_Database (LI),
+                     Name => Locale_To_UTF8 (To_Lower
+                        (Get_String (Xref_Entity.Table (Entity).Entity))),
+                     File => Sfiles (Xref_Section.Table (Sect).File_Num).File,
+                     Line => Integer (Xref_Entity.Table (Entity).Line),
+                     Column => Integer (Xref_Entity.Table (Entity).Col));
+               end if;
+            end loop;
+         end loop;
       end loop;
 
       Trace (Assert_Me, "Need to resolve closure: parsing "
@@ -818,6 +838,7 @@ package body ALI_Parser is
       if Status = Success or else Status = Fuzzy_Match then
          return Entity;
       else
+         Trace (Assert_Me, "Couldn't resolve closure");
          return null;
       end if;
    end Find_Entity_In_ALI;
