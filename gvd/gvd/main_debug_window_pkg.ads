@@ -156,9 +156,6 @@ package Main_Debug_Window_Pkg is
       Threads1 : Gtk_Menu_Item;
       Processes1 : Gtk_Menu_Item;
       Signals1 : Gtk_Menu_Item;
-      Separator19 : Gtk_Menu_Item;
-      Up1 : Gtk_Menu_Item;
-      Down1 : Gtk_Menu_Item;
       Source1 : Gtk_Menu_Item;
       Source1_Menu : Gtk_Menu;
       Lookup_1 : Gtk_Menu_Item;
@@ -222,10 +219,7 @@ package Main_Debug_Window_Pkg is
       Button66 : Gtk_Widget;
       Button67 : Gtk_Widget;
       Button68 : Gtk_Widget;
-      Button69 : Gtk_Widget;
-      Button70 : Gtk_Widget;
       Button71 : Gtk_Widget;
-      Button72 : Gtk_Widget;
       Toolbar2 : Gtkada_Toolbar;
       Button49 : Gtk_Widget;
       Button50 : Gtk_Widget;

@@ -186,12 +186,6 @@ package Main_Debug_Window_Pkg.Callbacks is
    procedure On_Signals1_Activate
      (Object : access Gtk_Widget_Record'Class);
 
-   procedure On_Up1_Activate
-     (Object : access Gtk_Widget_Record'Class);
-
-   procedure On_Down1_Activate
-     (Object : access Gtk_Widget_Record'Class);
-
    procedure On_Lookup_1_Activate
      (Object : access Gtk_Menu_Item_Record'Class);
 
@@ -295,6 +289,14 @@ package Main_Debug_Window_Pkg.Callbacks is
      (Object : access Gtk_Menu_Item_Record'Class);
 
    procedure On_Print1_Activate
+     (Object : access Gtk_Widget_Record'Class;
+      Params : Gtk.Arguments.Gtk_Args);
+
+   procedure On_Up1_Activate
+     (Object : access Gtk_Widget_Record'Class;
+      Params : Gtk.Arguments.Gtk_Args);
+
+   procedure On_Down1_Activate
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args);
 

@@ -688,28 +688,6 @@ begin
    Add (Main_Debug_Window.Status1_Menu, Main_Debug_Window.Signals1);
    Set_Right_Justify (Main_Debug_Window.Signals1, False);
 
-   Gtk_New (Main_Debug_Window.Separator19);
-   Add (Main_Debug_Window.Status1_Menu, Main_Debug_Window.Separator19);
-   Set_Right_Justify (Main_Debug_Window.Separator19, False);
-
-   Gtk_New (Main_Debug_Window.Up1, -"Up");
-   Add_Accelerator (Main_Debug_Window.Up1, "activate",
-     The_Accel_Group, GDK_Up, Gdk.Types.Control_Mask, Accel_Visible);
-   Widget_Callback.Object_Connect
-     (Main_Debug_Window.Up1, "activate",
-      Widget_Callback.To_Marshaller (On_Up1_Activate'Access), Main_Debug_Window);
-   Add (Main_Debug_Window.Status1_Menu, Main_Debug_Window.Up1);
-   Set_Right_Justify (Main_Debug_Window.Up1, False);
-
-   Gtk_New (Main_Debug_Window.Down1, -"Down");
-   Add_Accelerator (Main_Debug_Window.Down1, "activate",
-     The_Accel_Group, GDK_Down, Gdk.Types.Control_Mask, Accel_Visible);
-   Widget_Callback.Object_Connect
-     (Main_Debug_Window.Down1, "activate",
-      Widget_Callback.To_Marshaller (On_Down1_Activate'Access), Main_Debug_Window);
-   Add (Main_Debug_Window.Status1_Menu, Main_Debug_Window.Down1);
-   Set_Right_Justify (Main_Debug_Window.Down1, False);
-
    Gtk_New (Main_Debug_Window.Source1, -"Source");
    Set_Sensitive (Main_Debug_Window.Source1, False);
    Add (Main_Debug_Window.Menubar1, Main_Debug_Window.Source1);
@@ -1129,27 +1107,12 @@ begin
       Text => -"",
       Tooltip_Text => -"Plot ()",
       Icon => Gtk_Widget (Create_Pixmap (plot_xpm, Main_Debug_Window)));
-   Main_Debug_Window.Button69 := Append_Element
-     (Toolbar => Main_Debug_Window.Toolbar1,
-      The_Type => Toolbar_Child_Button,
-      Text => -"",
-      Icon => Gtk_Widget (Create_Pixmap (show_xpm, Main_Debug_Window)));
-   Main_Debug_Window.Button70 := Append_Element
-     (Toolbar => Main_Debug_Window.Toolbar1,
-      The_Type => Toolbar_Child_Button,
-      Text => -"",
-      Icon => Gtk_Widget (Create_Pixmap (rotate_xpm, Main_Debug_Window)));
    Main_Debug_Window.Button71 := Append_Element
      (Toolbar => Main_Debug_Window.Toolbar1,
       The_Type => Toolbar_Child_Button,
       Text => -"",
       Tooltip_Text => -"Set the value of ()",
       Icon => Gtk_Widget (Create_Pixmap (set_xpm, Main_Debug_Window)));
-   Main_Debug_Window.Button72 := Append_Element
-     (Toolbar => Main_Debug_Window.Toolbar1,
-      The_Type => Toolbar_Child_Button,
-      Text => -"",
-      Icon => Gtk_Widget (Create_Pixmap (undisplay_xpm, Main_Debug_Window)));
 
    Main_Debug_Window.Entry15 := Get_Entry (Main_Debug_Window.Combo6);
    Set_Editable (Main_Debug_Window.Entry15, True);
@@ -1235,7 +1198,7 @@ begin
       Tooltip_Text => -"Select and print stack frame that called this one",
       Icon => Gtk_Widget (Create_Pixmap (up_xpm, Main_Debug_Window)));
    Widget_Callback.Object_Connect
-     (Main_Debug_Window.Button60, "clicked", Widget_Callback.To_Marshaller (On_Up1_Activate'Access), Main_Debug_Window);
+     (Main_Debug_Window.Button60, "clicked", On_Up1_Activate'Access, Main_Debug_Window);
    Main_Debug_Window.Button61 := Append_Element
      (Toolbar => Main_Debug_Window.Toolbar2,
       The_Type => Toolbar_Child_Button,
@@ -1243,7 +1206,7 @@ begin
       Tooltip_Text => -"Select and print stack frame called by this one",
       Icon => Gtk_Widget (Create_Pixmap (down_xpm, Main_Debug_Window)));
    Widget_Callback.Object_Connect
-     (Main_Debug_Window.Button61, "clicked", Widget_Callback.To_Marshaller (On_Down1_Activate'Access), Main_Debug_Window);
+     (Main_Debug_Window.Button61, "clicked", On_Down1_Activate'Access, Main_Debug_Window);
    Main_Debug_Window.Button57 := Append_Element
      (Toolbar => Main_Debug_Window.Toolbar2,
       The_Type => Toolbar_Child_Button,

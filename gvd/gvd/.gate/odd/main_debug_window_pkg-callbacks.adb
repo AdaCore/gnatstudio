@@ -685,28 +685,6 @@ package body Main_Debug_Window_Pkg.Callbacks is
       null;
    end On_Signals1_Activate;
 
-   ---------------------
-   -- On_Up1_Activate --
-   ---------------------
-
-   procedure On_Up1_Activate
-     (Object : access Gtk_Widget_Record'Class)
-   is
-   begin
-      null;
-   end On_Up1_Activate;
-
-   -----------------------
-   -- On_Down1_Activate --
-   -----------------------
-
-   procedure On_Down1_Activate
-     (Object : access Gtk_Widget_Record'Class)
-   is
-   begin
-      null;
-   end On_Down1_Activate;
-
    --------------------------
    -- On_Lookup_1_Activate --
    --------------------------
@@ -1092,5 +1070,29 @@ package body Main_Debug_Window_Pkg.Callbacks is
    begin
       null;
    end On_Print1_Activate;
+
+   ---------------------
+   -- On_Up1_Activate --
+   ---------------------
+
+   procedure On_Up1_Activate
+     (Object : access Gtk_Widget_Record'Class;
+      Params : Gtk.Arguments.Gtk_Args)
+   is
+   begin
+      null;
+   end On_Up1_Activate;
+
+   -----------------------
+   -- On_Down1_Activate --
+   -----------------------
+
+   procedure On_Down1_Activate
+     (Object : access Gtk_Widget_Record'Class;
+      Params : Gtk.Arguments.Gtk_Args)
+   is
+   begin
+      null;
+   end On_Down1_Activate;
 
 end Main_Debug_Window_Pkg.Callbacks;

@@ -1191,48 +1191,6 @@
 	    <label>Signals...</label>
 	    <right_justify>False</right_justify>
 	  </widget>
-
-	  <widget>
-	    <class>GtkMenuItem</class>
-	    <name>separator19</name>
-	    <right_justify>False</right_justify>
-	  </widget>
-
-	  <widget>
-	    <class>GtkMenuItem</class>
-	    <name>up1</name>
-	    <accelerator>
-	      <modifiers>GDK_CONTROL_MASK</modifiers>
-	      <key>GDK_Up</key>
-	      <signal>activate</signal>
-	    </accelerator>
-	    <signal>
-	      <name>activate</name>
-	      <handler>on_up1_activate</handler>
-	      <object>main_debug_window</object>
-	      <last_modification_time>Tue, 28 Mar 2000 02:38:42 GMT</last_modification_time>
-	    </signal>
-	    <label>Up</label>
-	    <right_justify>False</right_justify>
-	  </widget>
-
-	  <widget>
-	    <class>GtkMenuItem</class>
-	    <name>down1</name>
-	    <accelerator>
-	      <modifiers>GDK_CONTROL_MASK</modifiers>
-	      <key>GDK_Down</key>
-	      <signal>activate</signal>
-	    </accelerator>
-	    <signal>
-	      <name>activate</name>
-	      <handler>on_down1_activate</handler>
-	      <object>main_debug_window</object>
-	      <last_modification_time>Tue, 28 Mar 2000 02:38:54 GMT</last_modification_time>
-	    </signal>
-	    <label>Down</label>
-	    <right_justify>False</right_justify>
-	  </widget>
 	</widget>
       </widget>
 
@@ -1980,34 +1938,10 @@
       <widget>
 	<class>GtkButton</class>
 	<child_name>Toolbar:button</child_name>
-	<name>button69</name>
-	<label></label>
-	<icon>show_xpm</icon>
-      </widget>
-
-      <widget>
-	<class>GtkButton</class>
-	<child_name>Toolbar:button</child_name>
-	<name>button70</name>
-	<label></label>
-	<icon>rotate_xpm</icon>
-      </widget>
-
-      <widget>
-	<class>GtkButton</class>
-	<child_name>Toolbar:button</child_name>
 	<name>button71</name>
 	<tooltip>Set the value of ()</tooltip>
 	<label></label>
 	<icon>set_xpm</icon>
-      </widget>
-
-      <widget>
-	<class>GtkButton</class>
-	<child_name>Toolbar:button</child_name>
-	<name>button72</name>
-	<label></label>
-	<icon>undisplay_xpm</icon>
       </widget>
     </widget>
 
