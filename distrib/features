@@ -24,3 +24,6 @@ New features in GPS 1.2.0
 
 - New documentation can now be added through simple XML index files
   A new menu Help->Contents provides a list of all registered documentation.
+
+- (Windows specific) Support for DDE to allow opening source files in the
+  same instance of GPS
