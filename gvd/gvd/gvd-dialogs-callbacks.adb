@@ -18,20 +18,24 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib; use Glib;
-with Gtk.Notebook; use Gtk.Notebook;
-with Gtk.Widget; use Gtk.Widget;
-with Gtk.List; use Gtk.List;
-with Gtk.List_Item; use Gtk.List_Item;
-with Gtk.Label; use Gtk.Label;
-with Gtk.Container; use Gtk.Container;
-with GVD.Process; use GVD.Process;
-with Debugger; use Debugger;
+with Glib;                  use Glib;
+with Gtk.Clist;             use Gtk.Clist;
+with Gtk.Container;         use Gtk.Container;
+with Gtk.Enums;             use Gtk.Enums;
+with Gtk.Handlers;          use Gtk.Handlers;
+with Gtk.Notebook;          use Gtk.Notebook;
+with Gtk.Label;             use Gtk.Label;
+with Gtk.List;              use Gtk.List;
+with Gtk.List_Item;         use Gtk.List_Item;
+with Gtk.Widget;            use Gtk.Widget;
+with Gtkada.Dialogs;        use Gtkada.Dialogs;
+
+with Odd_Intl;              use Odd_Intl;
+with GVD.Process;           use GVD.Process;
+with Debugger;              use Debugger;
 with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
-with Gtk.Clist;       use Gtk.Clist;
-with Gtk.Enums;       use Gtk.Enums;
-with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
-with GVD.Types; use GVD.Types;
+with GVD.Types;             use GVD.Types;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
 package body GVD.Dialogs.Callbacks is
 
@@ -121,12 +125,22 @@ package body GVD.Dialogs.Callbacks is
       Selection : constant Gint_List.Glist := Get_Selection (Dialog.List);
       S         : Unbounded_String;
       Tmp       : Gint_List.Glist := Gint_List.First (Selection);
+      Button    : Message_Dialog_Buttons;
 
    begin
       while Tmp /= Gint_List.Null_List loop
          Append (S, Get_Text (Dialog.List, Gint_List.Get_Data (Tmp), 0));
          Tmp := Gint_List.Next (Tmp);
       end loop;
+
+      if Length (S) = 0 then
+         Button :=
+           Message_Dialog
+             (-"You must select at least one of the choices",
+              Error, Button_OK);
+         Emit_Stop_By_Name (Object, "clicked");
+         return;
+      end if;
 
       Send (Dialog.Debugger,
             To_String (S),
