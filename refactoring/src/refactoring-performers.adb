@@ -180,7 +180,6 @@ package body Refactoring.Performers is
 
       elsif Ref /= No_Entity_Reference then
          Source := Get_File (Get_Location (Ref));
-
          if Is_Up_To_Date (Source) then
             Append (Data.Refs,
                     (File   => Source,
@@ -189,11 +188,18 @@ package body Refactoring.Performers is
 
          --  If we have duplicates, they will always come one after the
          --  other. So we just have to check the previous one.
-         elsif Length (Data.Stale_LI_List) = 0
-           or else Source /=
-             Data.Stale_LI_List.Table (Last (Data.Stale_LI_List))
-         then
-            Append (Data.Stale_LI_List, Source);
+         else
+            Append (Data.Refs,
+                    (File   => Source,
+                     Line   => Get_Line (Get_Location (Ref)),
+                     Column => Get_Column (Get_Location (Ref))));
+
+            if Length (Data.Stale_LI_List) = 0
+              or else Source /=
+                Data.Stale_LI_List.Table (Last (Data.Stale_LI_List))
+            then
+               Append (Data.Stale_LI_List, Source);
+            end if;
          end if;
 
          Next (Data.Iter.all);
