@@ -321,6 +321,7 @@ EOS
          Set_Cursor (DB, By_Key, Key.all, False);
          Delete (Key);
          P   := Get_Pair (DB, Next_By_Key);
+         Release_Cursor (DB);
          if null = P then
             raise Not_Found;
          end if;
