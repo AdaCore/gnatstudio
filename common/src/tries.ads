@@ -40,7 +40,8 @@ generic
 
 package Tries is
 
-   type Trie_Tree is limited private;
+   type Trie_Tree is private;
+   Empty_Trie_Tree : constant Trie_Tree;
 
    procedure Clear (Tree : in out Trie_Tree);
    --  Clear the full contents of the tree
@@ -51,10 +52,8 @@ package Tries is
    --  Insert a new entry in the tree.
    --  Index mustn't be the empty string.
 
-   procedure Remove
-     (Tree  : in out Trie_Tree;
-      Index : String);
-   --  Remove the entry at Index
+   procedure Remove (Tree : in out Trie_Tree; Index : String);
+   --  Remove an entry from the tree.
 
    function Get (Tree : Trie_Tree; Index : String) return Data_Type;
    --  Return the data stored at a specific location in the tree
@@ -117,6 +116,9 @@ private
    type Trie_Tree is record
       Child : Cell_Child;
    end record;
+
+   Empty_Trie_Tree : constant Trie_Tree :=
+     (Child => (Index_Length => 0, Data => No_Data, Children => null));
 
    type Iterator is record
       Cells : Cell_Child_Array_Access;
