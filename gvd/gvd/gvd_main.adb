@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2002                      --
+--                      Copyright (C) 2000-2003                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -574,8 +574,6 @@ begin
    --  call Create_Debugger. Unset the busy cursor right after the call.
 
    Show_All (Main_Debug_Window);
-   Set_Busy_Cursor (Get_Window (Main_Debug_Window), True);
-
    Process := Create_Debugger
      (Window          => Main_Debug_Window,
       Kind            => Debug_Type,
@@ -586,7 +584,6 @@ begin
       Remote_Target   => Target.all,
       Remote_Protocol => Protocol.all,
       Debugger_Name   => Debugger_Name.all);
-   Set_Busy_Cursor (Get_Window (Main_Debug_Window), False);
 
    Free (Program_Args);
 
