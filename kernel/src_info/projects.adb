@@ -288,9 +288,12 @@ package body Projects is
          exit when P = No_Project;
 
          Src := Prj.Projects.Table (Get_View (P)).Source_Dirs;
+
          while Src /= Nil_String loop
-            Sources (Index) := new String'(Normalize_Pathname
-               (Get_String (String_Elements.Table (Src).Value)));
+            Sources (Index) := new String'
+              (Name_As_Directory
+                 (Normalize_Pathname
+                    (Get_String (String_Elements.Table (Src).Value))));
             Index := Index + 1;
             Src   := String_Elements.Table (Src).Next;
          end loop;
