@@ -1957,6 +1957,20 @@ package body Src_Editor_Box is
 
       use type Basic_Types.String_Access;
    begin
+      --  Do not authorize saving a read-only file, unless we save it to
+      --  another disk file.
+
+      if not Editor.Writable
+        and then Filename = VFS.No_File
+      then
+         Success := False;
+         return;
+      end if;
+
+      --  ??? Should we reset the read-only status to False: either the
+      --  file already had that status, or we just saved a read-only file to
+      --  a different disk file, and thus this is now writable
+
       Success := True;
 
       if Filename = VFS.No_File then
