@@ -28,11 +28,7 @@ with Gtkada.File_Selector.Filters; use Gtkada.File_Selector.Filters;
 
 with Glide_Intl;              use Glide_Intl;
 
-with GVD.Menu;                use GVD.Menu;
-with GVD.Types;               use GVD.Types;
 with GVD.Status_Bar;          use GVD.Status_Bar;
-with GVD.Process;             use GVD.Process;
-with Debugger;                use Debugger;
 
 with Glide_Kernel;            use Glide_Kernel;
 with Glide_Kernel.Console;    use Glide_Kernel.Console;
@@ -40,7 +36,6 @@ with Glide_Kernel.Modules;    use Glide_Kernel.Modules;
 with Glide_Kernel.Project;    use Glide_Kernel.Project;
 
 with Glide_Main_Window;       use Glide_Main_Window;
-with Glide_Page;              use Glide_Page;
 
 with GVD.Dialogs;             use GVD.Dialogs;
 
@@ -118,48 +113,6 @@ package body Glide_Menu is
       Action : Guint;
       Widget : Limited_Widget);
    --  Build->Stop Build menu
-
-   procedure On_Debug_Executable
-     (Object : Data_Type_Access;
-      Action : Guint;
-      Widget : Limited_Widget);
-   --  Debug->Debug->Another Executable menu
-
-   procedure On_Step
-     (Object : Data_Type_Access;
-      Action : Guint;
-      Widget : Limited_Widget);
-   --  Debug->Step menu
-
-   procedure On_Step_Instruction
-     (Object : Data_Type_Access;
-      Action : Guint;
-      Widget : Limited_Widget);
-   --  Debug->Step Instruction menu
-
-   procedure On_Next
-     (Object : Data_Type_Access;
-      Action : Guint;
-      Widget : Limited_Widget);
-   --  Debug->Next menu
-
-   procedure On_Next_Instruction
-     (Object : Data_Type_Access;
-      Action : Guint;
-      Widget : Limited_Widget);
-   --  Debug->Next Instruction menu
-
-   procedure On_Finish
-     (Object : Data_Type_Access;
-      Action : Guint;
-      Widget : Limited_Widget);
-   --  Debug->Finish menu
-
-   procedure On_Continue
-     (Object : Data_Type_Access;
-      Action : Guint;
-      Widget : Limited_Widget);
-   --  Debug->Continue menu
 
    procedure On_Manual
      (Object : Data_Type_Access;
@@ -445,188 +398,6 @@ package body Glide_Menu is
       Top.Interrupted := True;
    end On_Stop_Build;
 
-   -------------------------
-   -- On_Debug_Executable --
-   -------------------------
-
-   procedure On_Debug_Executable
-     (Object : Data_Type_Access;
-      Action : Guint;
-      Widget : Limited_Widget)
-   is
-      Top  : constant Glide_Window := Glide_Window (Object);
-      Page : constant Glide_Page.Glide_Page :=
-        Glide_Page.Glide_Page (Get_Current_Process (Top));
-      use Debugger;
-
-   begin
-      if Page.Debugger = null then
-         Configure (Page, Gdb_Type, "", (1 .. 0 => null), "");
-      end if;
-
-      GVD.Menu.On_Open_Program (Object, Action, Widget);
-
-   exception
-      when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
-   end On_Debug_Executable;
-
-   -------------
-   -- On_Step --
-   -------------
-
-   procedure On_Step
-     (Object : Data_Type_Access;
-      Action : Guint;
-      Widget : Limited_Widget)
-   is
-      Top  : constant Glide_Window := Glide_Window (Object);
-      Page : constant Glide_Page.Glide_Page :=
-        Glide_Page.Glide_Page (Get_Current_Process (Top));
-      use Debugger;
-
-   begin
-      if Page.Debugger = null then
-         return;
-      end if;
-
-      GVD.Menu.On_Step (Object, Action, Widget);
-
-   exception
-      when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
-   end On_Step;
-
-   -------------------------
-   -- On_Step_Instruction --
-   -------------------------
-
-   procedure On_Step_Instruction
-     (Object : Data_Type_Access;
-      Action : Guint;
-      Widget : Limited_Widget)
-   is
-      Top  : constant Glide_Window := Glide_Window (Object);
-      Page : constant Glide_Page.Glide_Page :=
-        Glide_Page.Glide_Page (Get_Current_Process (Top));
-      use Debugger;
-
-   begin
-      if Page.Debugger = null then
-         return;
-      end if;
-
-      GVD.Menu.On_Step_Instruction (Object, Action, Widget);
-
-   exception
-      when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
-   end On_Step_Instruction;
-
-   -------------
-   -- On_Next --
-   -------------
-
-   procedure On_Next
-     (Object : Data_Type_Access;
-      Action : Guint;
-      Widget : Limited_Widget)
-   is
-      Top  : constant Glide_Window := Glide_Window (Object);
-      Page : constant Glide_Page.Glide_Page :=
-        Glide_Page.Glide_Page (Get_Current_Process (Top));
-      use Debugger;
-
-   begin
-      if Page.Debugger = null then
-         return;
-      end if;
-
-      GVD.Menu.On_Next (Object, Action, Widget);
-
-   exception
-      when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
-   end On_Next;
-
-   -------------------------
-   -- On_Next_Instruction --
-   -------------------------
-
-   procedure On_Next_Instruction
-     (Object : Data_Type_Access;
-      Action : Guint;
-      Widget : Limited_Widget)
-   is
-      Top  : constant Glide_Window := Glide_Window (Object);
-      Page : constant Glide_Page.Glide_Page :=
-        Glide_Page.Glide_Page (Get_Current_Process (Top));
-      use Debugger;
-
-   begin
-      if Page.Debugger = null then
-         return;
-      end if;
-
-      GVD.Menu.On_Next_Instruction (Object, Action, Widget);
-
-   exception
-      when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
-   end On_Next_Instruction;
-
-   ---------------
-   -- On_Finish --
-   ---------------
-
-   procedure On_Finish
-     (Object : Data_Type_Access;
-      Action : Guint;
-      Widget : Limited_Widget)
-   is
-      Top  : constant Glide_Window := Glide_Window (Object);
-      Page : constant Glide_Page.Glide_Page :=
-        Glide_Page.Glide_Page (Get_Current_Process (Top));
-      use Debugger;
-
-   begin
-      if Page.Debugger = null then
-         return;
-      end if;
-
-      GVD.Menu.On_Finish (Object, Action, Widget);
-
-   exception
-      when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
-   end On_Finish;
-
-   -----------------
-   -- On_Continue --
-   -----------------
-
-   procedure On_Continue
-     (Object : Data_Type_Access;
-      Action : Guint;
-      Widget : Limited_Widget)
-   is
-      Top  : constant Glide_Window := Glide_Window (Object);
-      Page : constant Glide_Page.Glide_Page :=
-        Glide_Page.Glide_Page (Get_Current_Process (Top));
-      use Debugger;
-
-   begin
-      if Page.Debugger = null then
-         return;
-      end if;
-
-      GVD.Menu.On_Continue (Object, Action, Widget);
-
-   exception
-      when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
-   end On_Continue;
-
    ---------------
    -- On_Manual --
    ---------------
@@ -685,7 +456,7 @@ package body Glide_Menu is
       Button : Message_Dialog_Buttons;
    begin
       Button := Message_Dialog
-        (-"Glide II" & ASCII.LF & ASCII.LF & "(c) 2001 ACT-Europe",
+        (-"Glide 2" & ASCII.LF & ASCII.LF & "(c) 2001 ACT-Europe",
          Help_Msg =>
            (-"This is the About information box.") & ASCII.LF & ASCII.LF &
            (-"Click on the OK button to close this window."),
@@ -706,11 +477,9 @@ package body Glide_Menu is
       Gotom       : constant String := "/_" & (-"Navigate") & '/';
       Project     : constant String := "/_" & (-"Project")  & '/';
       Build       : constant String := "/_" & (-"Build")    & '/';
-      Debug_Sub   : constant String := (-"Debug")          & '/';
-      Debug       : constant String := "/_" & Debug_Sub;
-      Data_Sub    : constant String := (-"Data")           & '/';
-      Session_Sub : constant String := (-"Session")        & '/';
       Tools       : constant String := "/_" & (-"Tools")    & '/';
+      Debug       : constant String := "/_" & (-"Debug")    & '/';
+      Data_Sub    : constant String := (-"Data")            & '/';
       Window      : constant String := "/_" & (-"Window");
       Help        : constant String := "/_" & (-"Help")     & '/';
 
@@ -755,44 +524,7 @@ package body Glide_Menu is
          Gtk_New
            (Build & (-"Stop Build"), "", Stock_Stop, On_Stop_Build'Access),
 
-         Gtk_New (Debug & (-"Start"), "", On_Run'Access),
-         Gtk_New (Debug & (-"Add Symbols..."), "", null),
-         Gtk_New (Debug & Debug_Sub & (-"Another Executable..."), "",
-                  On_Debug_Executable'Access),
-         Gtk_New (Debug & Debug_Sub & (-"Running Process..."), "", null),
-         Gtk_New (Debug & Debug_Sub & (-"Core File..."), "", null),
-         Gtk_New (Debug & Session_Sub & (-"Open..."), "", Stock_Open, null),
-         Gtk_New (Debug & Session_Sub & (-"Save As..."), "",
-                  Stock_Save_As, null),
-         Gtk_New (Debug & Session_Sub & (-"Command History"), "",
-                  Stock_Index, null),
          Gtk_New (Debug & Data_Sub & (-"Call Stack"), "", null, Check_Item),
-         Gtk_New (Debug & Data_Sub & (-"Threads"), "", null),
-         Gtk_New (Debug & Data_Sub & (-"Tasks"), "", null),
-         Gtk_New (Debug & Data_Sub & "sep1", Item_Type => Separator),
-         Gtk_New (Debug & Data_Sub & (-"Edit Breakpoints"), "", null),
-         Gtk_New (Debug & Data_Sub & (-"Examine Memory"), "", null),
-         Gtk_New (Debug & Data_Sub & "sep2", Item_Type => Separator),
-         Gtk_New (Debug & Data_Sub & (-"Display Local Variables"),
-                  "<alt>L", null),
-         Gtk_New (Debug & Data_Sub & (-"Display Arguments"), "<alt>U", null),
-         Gtk_New (Debug & Data_Sub & (-"Display Registers"), "", null),
-         Gtk_New (Debug & Data_Sub & (-"Display Any Expression..."), "", null),
-         Gtk_New (Debug & Data_Sub & "sep3", Item_Type => Separator),
-         Gtk_New (Debug & Data_Sub & (-"Refresh"), "<control>L",
-                  Stock_Refresh, null),
-         Gtk_New (Debug & Data_Sub & (-"Show"), "", null),
-         Gtk_New (Debug & "sep2", Item_Type => Separator),
-         Gtk_New (Debug & (-"Step"), "F5", On_Step'Access),
-         Gtk_New (Debug & (-"Step Instruction"), "<shift>F5",
-                  On_Step_Instruction'Access),
-         Gtk_New (Debug & (-"Next"), "F6", On_Next'Access),
-         Gtk_New (Debug & (-"Next Instruction"), "<shift>F6",
-                  On_Next_Instruction'Access),
-         Gtk_New (Debug & (-"Finish"), "F7", On_Finish'Access),
-         Gtk_New (Debug & (-"Continue"), "F8", On_Continue'Access),
-         Gtk_New (Debug & (-"Interrupt"), "ESC", Stock_Stop, null),
-         Gtk_New (Debug & (-"Detach Process"), "", null),
 
          Gtk_New (Tools & (-"Call Graph"), "", null),
          Gtk_New (Tools & (-"Code Fixing"), "", null),
