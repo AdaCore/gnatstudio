@@ -25,7 +25,6 @@ cp_gvd:
 	done
 
 stamp-eps: $(IMAGES)
-	$(MAKE) clean
 	@-for img in [^g]*.gif; do \
 	  convert -compress rle $${img} `basename $${img} .gif`.eps; \
 	done
