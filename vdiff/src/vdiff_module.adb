@@ -29,10 +29,12 @@ with Gtkada.File_Selector;      use Gtkada.File_Selector;
 
 with Glide_Kernel;              use Glide_Kernel;
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
+with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
 with Glide_Intl;                use Glide_Intl;
 with Diff_Utils;                use Diff_Utils;
 with Vdiff_Pkg;                 use Vdiff_Pkg;
 with Vdiff_Utils;               use Vdiff_Utils;
+with String_Utils;
 
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
@@ -40,14 +42,6 @@ with Ada.Exceptions;            use Ada.Exceptions;
 with Traces;                    use Traces;
 
 package body Vdiff_Module is
-
-   Vdiff_Module_Id : Module_ID;
-   Vdiff_Module_Name : constant String := "Visual_Diff";
-
-   Default_Width  : constant := 400;
-   Default_Height : constant := 400;
-   Tmp_Dir        : constant String := "/tmp/";
-   --  <preferences>
 
    Me : Debug_Handle := Create (Vdiff_Module_Name);
 
@@ -140,7 +134,10 @@ package body Vdiff_Module is
 
                declare
                   Base     : constant String := Base_Name (New_File);
-                  Ref_File : constant String := Tmp_Dir & Base & "_ref";
+                  Ref_File : constant String :=
+                    String_Utils.Name_As_Directory
+                      (Get_Pref (Kernel, Tmp_Dir)) & Base & "_ref";
+
                begin
                   Result := Diff
                     (Ref_File, New_File, Diff_File, Revert => True);
@@ -162,7 +159,10 @@ package body Vdiff_Module is
 
                declare
                   Base     : constant String := Base_Name (Orig_File);
-                  Ref_File : constant String := Tmp_Dir & Base & "_ref";
+                  Ref_File : constant String :=
+                    String_Utils.Name_As_Directory
+                      (Get_Pref (Kernel, Tmp_Dir)) & Base & "_ref";
+
                begin
                   Result := Diff (Orig_File, Ref_File, Diff_File);
                   Gtk_New (Vdiff);
@@ -190,7 +190,10 @@ package body Vdiff_Module is
                --  Free (Result);
             end if;
 
-            Set_Size_Request (Vdiff, Default_Width, Default_Height);
+            Set_Size_Request
+              (Vdiff,
+               Get_Pref (Kernel, Default_Widget_Width),
+               Get_Pref (Kernel, Default_Widget_Height));
             Show_All (Vdiff.Main_Box);
             Child := Put (Get_MDI (Kernel), Vdiff);
             return True;
@@ -217,10 +220,12 @@ package body Vdiff_Module is
    -- Register_Module --
    ---------------------
 
-   procedure Register_Module is
+   procedure Register_Module
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class) is
    begin
-      Vdiff_Module_Id := Register_Module
-        (Module_Name  => Vdiff_Module_Name,
+      Vdiff_Module_ID := Register_Module
+        (Kernel       => Kernel,
+         Module_Name  => Vdiff_Module_Name,
          Priority     => Default_Priority,
          Initializer  => Initialize_Module'Access,
          Mime_Handler => Mime_Action'Access);

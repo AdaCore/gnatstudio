@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                          G L I D E  I I                           --
 --                                                                   --
---                        Copyright (C) 2001                         --
+--                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GLIDE is free software; you can redistribute it and/or modify  it --
@@ -20,9 +20,15 @@
 
 --  Visual Diff module.
 
+with Glide_Kernel;
+
 package Vdiff_Module is
 
-   procedure Register_Module;
+   Vdiff_Module_ID   : Glide_Kernel.Module_ID;
+   Vdiff_Module_Name : constant String := "Visual_Diff";
+
+   procedure Register_Module
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
    --  Register the module in the list
 
 end Vdiff_Module;
