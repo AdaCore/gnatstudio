@@ -46,6 +46,7 @@ package body Glide_Kernel.Help is
    Me : constant Debug_Handle := Create ("Glide_Kernel.Help");
 
    type Help_Browser_Record is new Gtk_Scrolled_Window_Record with record
+      Kernel : Kernel_Handle;
       Current_Help_File : GNAT.OS_Lib.String_Access;
       --  The current help file displayed. Used to find relative (hyper) links.
 
@@ -165,6 +166,11 @@ package body Glide_Kernel.Help is
    begin
       Trace (Me, "url requested: " & Url);
 
+      if not Is_Regular_File (Url) then
+         Insert (Html.Kernel, Url & (-": File not found"), Mode => Error);
+         return;
+      end if;
+
       if Is_Absolute_Path (Url) then
          Buffer := Read_File (Url);
       else
@@ -223,6 +229,11 @@ package body Glide_Kernel.Help is
    begin
       if Anchor = 0 then
          Anchor := Url'Last + 1;
+      end if;
+
+      if not Is_Regular_File (Url) then
+         Insert (Html.Kernel, Url & (-": File not found"), Mode => Error);
+         return;
       end if;
 
       if Is_Absolute_Path (Url) then
@@ -353,6 +364,7 @@ package body Glide_Kernel.Help is
       Result : Boolean;
    begin
       Html := new Help_Browser_Record;
+      Html.Kernel := Kernel_Handle (Kernel);
       Gtk.Scrolled_Window.Initialize (Html);
       Set_Policy (Html, Policy_Automatic, Policy_Always);
       Gtk_New (Html.Csc);
