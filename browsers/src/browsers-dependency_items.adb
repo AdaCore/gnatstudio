@@ -23,7 +23,6 @@ with Gdk.Drawable;      use Gdk.Drawable;
 with Gdk.Event;         use Gdk.Event;
 with Gdk.Font;          use Gdk.Font;
 with Gdk.Window;        use Gdk.Window;
-with Gtkada.Canvas;     use Gtkada.Canvas;
 
 with Src_Info;                 use Src_Info;
 with Src_Info.ALI;             use Src_Info.ALI;
@@ -41,11 +40,6 @@ package body Browsers.Dependency_Items is
    --  <preference> True if the unit name should be displayed
 
    Margin : constant := 2;
-
-   procedure Update_Display
-     (Browser : access Glide_Browser_Record'Class;
-      Item : access Buffered_Item_Record'Class);
-   --  Update the display of the item
 
    -------------
    -- Gtk_New --
@@ -130,21 +124,19 @@ package body Browsers.Dependency_Items is
       Set_Screen_Size_And_Pixmap
         (Item, Get_Window (Item.Browser), Width, Height);
 
-      Update_Display (Item.Browser, Item);
+      Refresh (Item.Browser, Item);
    end Initialize;
 
-   --------------------
-   -- Update_Display --
-   --------------------
+   -------------
+   -- Refresh --
+   -------------
 
-   procedure Update_Display
-     (Browser : access Glide_Browser_Record'Class;
-      Item    : access Buffered_Item_Record'Class)
+   procedure Refresh (Browser : access Glide_Browser_Record'Class;
+                      Item    : access File_Item_Record)
    is
       use type Gdk.Gdk_GC;
       Font : Gdk_Font := Get_Text_Font (Browser);
       Str2 : String_Access;
-
    begin
       Draw_Item_Background (Browser, Item);
       Draw_Text
@@ -153,11 +145,10 @@ package body Browsers.Dependency_Items is
          GC    => Get_Text_GC (Browser),
          X     => Margin,
          Y     => Margin + Get_Ascent (Font),
-         Text  => Get_Source_Filename (File_Item (Item).Source));
+         Text  => Get_Source_Filename (Item.Source));
 
       if Display_Unit_Name then
-         Get_Unit_Name
-           (File_Item (Item).Kernel, File_Item (Item).Source, Str2);
+         Get_Unit_Name (Item.Kernel, Item.Source, Str2);
          if Str2 /= null then
             Draw_Text
               (Pixmap (Item),
@@ -176,7 +167,7 @@ package body Browsers.Dependency_Items is
                Text  => "<unknown unit name>");
          end if;
       end if;
-   end Update_Display;
+   end Refresh;
 
    ---------------------
    -- On_Button_Click --
@@ -192,7 +183,7 @@ package body Browsers.Dependency_Items is
          Examine_Dependencies
            (Item.Kernel, Item.Browser, Get_Source_Filename (Item.Source));
       elsif Get_Event_Type (Event) = Button_Press then
-         Select_Item (Item.Browser, Item, Update_Display'Access);
+         Select_Item (Item.Browser, Item, True);
       end if;
    end On_Button_Click;
 
