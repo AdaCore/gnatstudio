@@ -1627,15 +1627,14 @@ package body Glide_Kernel.Modules is
          Anchor := HTML_File'Last + 1;
       end if;
 
-      if Path = null then
-         Full := Locate_Regular_File
-           (HTML_File (HTML_File'First .. Anchor - 1),
-            Top.Prefix_Directory.all & "/doc/gps/html/");
-      else
-         Full := Locate_Regular_File
-           (HTML_File (HTML_File'First .. Anchor - 1), Path.all);
+      if Path = null or else Path.all = "" then
          Free (Path);
+         Path := new String'(Top.Prefix_Directory.all & "/doc/gps/html/");
       end if;
+
+      Full := Locate_Regular_File
+        (HTML_File (HTML_File'First .. Anchor - 1), Path.all);
+      Free (Path);
 
       if Full = null then
          return "";
@@ -1676,6 +1675,7 @@ package body Glide_Kernel.Modules is
            (Kernel, Filename (Filename'First .. Anchor - 1));
       begin
          if F = "" then
+            Insert (Kernel, "File not found: " & Filename, Mode => Error);
             --  File not found, nothing to do
             return;
          end if;
