@@ -1266,10 +1266,10 @@ package body Debugger.Gdb is
       Info     : out Thread_Information_Array;
       Len      : out Natural)
    is
-      EOL         : Positive;
+      EOL         : Natural;
       Output      : constant String :=
         Send (Debugger, "info threads", Mode => Internal);
-      Index       : Positive := Output'First;
+      Index       : Integer := Output'Last;
 
    begin
       Len := Info'First;
@@ -1277,18 +1277,22 @@ package body Debugger.Gdb is
         (Num_Fields => 1,
          Information => (1 => New_String ("Thread")));
 
-      while Index < Output'Last loop
+      while Index > Output'First loop
          Len := Len + 1;
          EOL := Index;
 
-         while EOL <= Output'Last and then Output (EOL) /= ASCII.LF loop
-            EOL := EOL + 1;
+         while EOL >= Output'First and then Output (EOL) /= ASCII.LF loop
+            EOL := EOL - 1;
          end loop;
+
+         if EOL = Output'First then
+            EOL := EOL - 1;
+         end if;
 
          Info (Len) :=
            (Num_Fields => 1,
-            Information => (1 => New_String (Output (Index .. EOL - 1))));
-         Index := EOL + 1;
+            Information => (1 => New_String (Output (EOL + 1 .. Index))));
+         Index := EOL - 1;
       end loop;
    end Info_Threads;
 
