@@ -52,6 +52,7 @@ with Gtk.Widget;    use Gtk.Widget;
 with Gtkada.Canvas; use Gtkada.Canvas;
 with Gtkada.MDI;    use Gtkada.MDI;
 with Pango.Layout;  use Pango.Layout;
+with Gtkada.Types;
 
 package body Browsers.Entities is
 
@@ -530,7 +531,10 @@ package body Browsers.Entities is
    function Open_Type_Browser
      (Kernel : access Kernel_Handle_Record'Class) return Type_Browser
    is
-      Browser : constant Type_Browser := new Type_Browser_Record;
+      Browser    : constant Type_Browser := new Type_Browser_Record;
+      i_page_xpm : aliased Gtkada.Types.Chars_Ptr_Array (0 .. 0);
+      pragma Import (C, i_page_xpm, "i_page_xpm");
+
    begin
       Initialize (Browser, Kernel,
                   Create_Toolbar  => False,
@@ -538,8 +542,7 @@ package body Browsers.Entities is
                   Children_Pixmap => Stock_Go_Down);
 
       --  ??? Should be freed when browser is destroyed.
-      Browser.Primitive_Button := Render_Icon
-        (Browser, Stock_Properties, Icon_Size_Menu);
+      Browser.Primitive_Button := Gdk_New_From_Xpm_Data (i_page_xpm);
 
       Register_Contextual_Menu
         (Kernel          => Kernel,
