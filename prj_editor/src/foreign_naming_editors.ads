@@ -52,9 +52,13 @@ package Foreign_Naming_Editors is
    --  Return if the project was changed.
 
    procedure Show_Project_Settings
-     (Editor       : access Foreign_Naming_Editor_Record;
-      Project_View : Prj.Project_Id);
+     (Editor             : access Foreign_Naming_Editor_Record;
+      Project_View       : Prj.Project_Id;
+      Display_Exceptions : Boolean := True);
    --  Show the settings used for Project_View, and the language Language.
+   --  If Display_Exceptions is False, then the files in the exception list
+   --  will not be displayed, only the suffixes will be. This is intended to be
+   --  used when creating new projects based on an existing one.
 
 private
    type Foreign_Naming_Editor_Record is

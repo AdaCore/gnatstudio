@@ -33,6 +33,8 @@ with Gtk.Widget;                       use Gtk.Widget;
 with Gtkada.Types;                     use Gtkada.Types;
 with Interfaces.C.Strings;             use Interfaces.C.Strings;
 with Namet;                            use Namet;
+with Prj;                              use Prj;
+with Prj.Util;                         use Prj.Util;
 with Prj.Tree;                         use Prj.Tree;
 with Prj_API;                          use Prj_API;
 with Snames;                           use Snames;
@@ -126,8 +128,9 @@ package body Foreign_Naming_Editors is
    ---------------------------
 
    procedure Show_Project_Settings
-     (Editor       : access Foreign_Naming_Editor_Record;
-      Project_View : Prj.Project_Id)
+     (Editor             : access Foreign_Naming_Editor_Record;
+      Project_View       : Prj.Project_Id;
+      Display_Exceptions : Boolean := True)
    is
       Naming : constant String := Get_Name_String (Name_Naming);
       Lang   : constant String := Get_Name_String (Editor.Language);
@@ -138,30 +141,42 @@ package body Foreign_Naming_Editors is
          Index          => Lang);
       Row  : Gint;
       Text : Gtkada.Types.Chars_Ptr_Array (0 .. 0);
+      Ext  : Name_Id;
    begin
-      --  ??? How do we get access to the default extensions registered in prj
-      Set_Text
-        (Get_Entry (Editor.Header_File_Extension),
-         Get_Attribute_Value
-           (Project_View,
-            Attribute_Name => Get_Name_String (Name_Specification_Suffix),
-            Package_Name   => Naming,
-            Index          => Lang));
+      --  We directly access the tables in Prj, instead of using
+      --  Get_Attribute_Value, so that we also get access to the default
+      --  extensions.
+      Ext := Value_Of
+        (Index => Editor.Language,
+         In_Array => Projects.Table
+           (Project_View).Naming.Specification_Suffix);
+      if Ext /= No_Name then
+         Set_Text
+           (Get_Entry (Editor.Header_File_Extension), Get_Name_String (Ext));
+      else
+         Set_Text (Get_Entry (Editor.Header_File_Extension), "");
+      end if;
 
-      Set_Text
-        (Get_Entry (Editor.Implementation_Extension),
-         Get_Attribute_Value
-           (Project_View,
-            Attribute_Name => Get_Name_String (Name_Implementation_Suffix),
-            Package_Name   => Naming,
-            Index          => Lang));
+      Ext := Value_Of
+        (Index => Editor.Language,
+         In_Array => Projects.Table
+           (Project_View).Naming.Implementation_Suffix);
+      if Ext /= No_Name then
+         Set_Text
+           (Get_Entry (Editor.Implementation_Extension),
+            Get_Name_String (Ext));
+      else
+         Set_Text (Get_Entry (Editor.Implementation_Extension), "");
+      end if;
 
-      Clear (Editor.Exception_List);
-      for B in Bodies'Range loop
-         Text (0) := New_String (Bodies (B).all);
-         Row := Append (Editor.Exception_List, Text);
-         Free (Text);
-      end loop;
+      if Display_Exceptions then
+         Clear (Editor.Exception_List);
+         for B in Bodies'Range loop
+            Text (0) := New_String (Bodies (B).all);
+            Row := Append (Editor.Exception_List, Text);
+            Free (Text);
+         end loop;
+      end if;
       Free (Bodies);
    end Show_Project_Settings;
 end Foreign_Naming_Editors;
