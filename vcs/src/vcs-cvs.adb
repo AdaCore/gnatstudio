@@ -600,27 +600,22 @@ package body VCS.CVS is
       use String_List;
       use File_Status_List;
 
-      Result  : File_Status_List.List;
-
-      Old_Dir : constant Dir_Name_Str := Get_Current_Dir;
-      New_Dir : constant Dir_Name_Str := Dir_Name (Head (Filenames));
-
-      Blank_Status   : File_Status_Record;
-      Current_Status : File_Status_Record := Blank_Status;
-
-      File   : File_Type;
-      Buffer : String (1 .. 8192);
-      Last   : Integer := 1;
-
-      Index  : Natural;
-      Next_Index : Natural;
-
+      Result            : File_Status_List.List;
+      Old_Dir           : constant Dir_Name_Str := Get_Current_Dir;
+      New_Dir           : constant Dir_Name_Str := Dir_Name (Head (Filenames));
+      Blank_Status      : File_Status_Record;
+      Current_Status    : File_Status_Record := Blank_Status;
+      File              : File_Type;
+      Buffer            : String (1 .. 8192);
+      Last              : Integer := 1;
+      Index             : Natural;
+      Next_Index        : Natural;
       Entries_Timestamp : Timestamp;
       File_Timestamp    : Timestamp;
 
    begin
-      --  ??? Do we really have to change the current (global) directory ?
-      --  This may have unexpected side effects, so would be nice to avoid it.
+      --  Note: we will restore the current directory to its previous value
+      --  (Old_Dir) at the end of this procedure.
 
       Change_Dir (New_Dir);
 
