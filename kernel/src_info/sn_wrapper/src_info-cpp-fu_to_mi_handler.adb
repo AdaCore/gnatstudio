@@ -51,18 +51,23 @@ begin
          = Get_LI_Filename (Global_LI_File) then
          begin
             --  this is a function defined in the current file
+            Info ("************** >" & Method.Buffer
+               (Method.Name.First .. Method.Name.Last) & "< "
+               & Method.Buffer
+                  (Method.Class.First .. Method.Class.Last));
             Decl_Info := Find_Declaration
               (File        => Global_LI_File,
                Symbol_Name => Method.Buffer
                      (Method.Name.First .. Method.Name.Last),
-               Class_Name  => Method.Buffer
-                     (Method.Class.First .. Method.Class.Last),
+               Class_Name  => "", -- Method.Buffer
+--                     (Method.Class.First .. Method.Class.Last),
                Location    => Method.Start_Position);
          exception
             when Declaration_Not_Found =>
                pragma Assert (False, "How did we get here?");
                null;
          end;
+         Info ("************** 5");
       else
          begin
             --  this function is defined somewhere else...
@@ -112,6 +117,7 @@ begin
             and then Ptr.Value.Declaration.Name.all =
                Method.Buffer (Method.Name.First .. Method.Name.Last);
          Ptr := Ptr.Next;
+         Info ("************** 4");
       end loop;
       if Ptr = null then -- no, we have not. Do it now
          Decl_Info := new E_Declaration_Info_Node'

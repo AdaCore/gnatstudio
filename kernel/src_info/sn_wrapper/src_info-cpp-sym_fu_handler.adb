@@ -214,7 +214,6 @@ begin
       Body_Position  := Sym.Start_Position;
       Free (FU_Tab);
    end if;
-
    if Decl_Info = null then
       Insert_Declaration
         (Handler               => LI_Handler (Global_CPP_Handler),

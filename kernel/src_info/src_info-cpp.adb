@@ -170,6 +170,7 @@ package body Src_Info.CPP is
    procedure Sym_IV_Handler      (Sym : FIL_Table);
    procedure Sym_IU_Handler      (Sym : FIL_Table);
    procedure Sym_MA_Handler      (Sym : FIL_Table);
+   procedure Sym_MD_Handler      (Sym : FIL_Table);
 
    ---------------------
    -- Symbol_Handlers --
@@ -186,7 +187,8 @@ package body Src_Info.CPP is
       CL     => Sym_CL_Handler'Access,
       UN     => Sym_UN_Handler'Access,
       MA     => Sym_MA_Handler'Access,
-      MI     => Sym_FU_Handler'Access,
+--      MI     => Sym_FU_Handler'Access,
+      MD     => Sym_MD_Handler'Access,
       IV     => Sym_IV_Handler'Access,
       IU     => Sym_IU_Handler'Access,
       others => Sym_Default_Handler'Access);
@@ -1039,6 +1041,9 @@ package body Src_Info.CPP is
       Ptr_B : Segment_Vector.Node_Access := Args_B;
    begin
       while Ptr_A /= null and Ptr_B /= null loop
+         Info ("Comparing >" & Buffer_A (Ptr_A.Data.First .. Ptr_A.Data.Last)
+            & "< vs. >" & Buffer_B (Ptr_B.Data.First .. Ptr_B.Data.Last) &
+            "<");
          if Buffer_A (Ptr_A.Data.First .. Ptr_A.Data.Last)
             /= Buffer_B (Ptr_B.Data.First .. Ptr_B.Data.Last) then
             return False;
@@ -1072,6 +1077,7 @@ package body Src_Info.CPP is
    procedure Sym_IV_Handler      (Sym : FIL_Table) is separate;
    procedure Sym_UN_Handler      (Sym : FIL_Table) is separate;
    procedure Sym_IU_Handler      (Sym : FIL_Table) is separate;
+   procedure Sym_MD_Handler      (Sym : FIL_Table) is separate;
 
    procedure Fu_To_Gv_Handler    (Ref : TO_Table) is separate;
    procedure Fu_To_Fu_Handler    (Ref : TO_Table) is separate;
