@@ -5691,10 +5691,6 @@ calling external tools (e.g. before a build).
 Whether the desktop (size and positions of all windows) should be saved when
 exiting.
 
-@item Relative paths
-@cindex relative path
-Whether paths should be absolute or relative when the projects are modified.
-
 @item Jump to first location
 @cindex location
 Whether the first entry of the location window should be selected
@@ -6315,6 +6311,40 @@ Index of the warning identifier in the file pattern.
 @item Style index
 @cindex column index
 Index of the style error identifier in the file pattern.
+
+@end table
+
+@item @b{Project}
+@table @i
+
+@item Relative project paths
+@cindex relative project path
+Whether paths should be absolute or relative when the projects are modified.
+
+@item Fast Project Loading
+@cindex fast project loading
+If the project respects a number of restrictions, activating the preference
+will provide major speed up when GPS parses the project. This is especially
+noticeable if the source files are on a network drive.
+
+GPS assumes that the following restricitions are true when the preference
+is activated. If this isn't the case, no error is reported, and only minor
+drawacks will be visible in GPS (no detection that two files are the same
+if one of them is a symbolic link for instance, although GPS will still
+warn you if you are trying to overwrite a file modified on the disk).
+
+The restrictions are the following:
+@itemize -
+@item Symbolic links shouldn't be used in the project.
+  More precisely, you can only have symbolic links that point to files
+  outside of the project, but not to another file in the project
+
+@item Directories can't have source names.
+  No directory name should match the naming scheme defined in the
+  project. For instance, if you are using the default GNAT naming scheme,
+  you cannot have directories with names ending with ".ads" or ".adb"
+
+@end itemize
 
 @end table
 
