@@ -32,10 +32,8 @@ with Gtk.Menu;
 with Gtk.Style;
 
 with Prj;
-with Types;
 
 with Glide_Kernel;
-with Project_Trees;
 
 package Project_Viewers is
 
@@ -43,35 +41,33 @@ package Project_Viewers is
    type Project_Viewer is access all Project_Viewer_Record'Class;
 
    type View_Type is (System, Version_Control, Switches);
-   subtype Filter is Types.String_Id;
-   No_Filter : constant Filter := Types.No_String;
+
+   procedure Initialize_Module
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
+   --  Initialize the project editor module. This must be invoked prior to any
+   --  other function in this package.
 
    procedure Gtk_New
      (Viewer  : out Project_Viewer;
-      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Explorer : access Project_Trees.Project_Tree_Record'Class);
+      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class);
    --  Create a new project viewer.
    --  Every time the selection in Explorer changes, the info displayed in
    --  the viewer is changed.
 
    procedure Initialize
      (Viewer : access Project_Viewer_Record'Class;
-      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Explorer : access Project_Trees.Project_Tree_Record'Class);
+      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class);
    --  Internal subprogram for creating widgets
 
    procedure Show_Project
      (Viewer              : access Project_Viewer_Record;
       Project_Filter      : Prj.Project_Id;
-      Directory_Filter    : Filter := No_Filter);
+      Directory_Filter    : String := "");
    --  Shows all the direct source files of Project_Filter (ie not including
    --  imported projects, but including all source directories).
    --  This doesn't clear the list first!
    --  Directory_Filter should be used to limit the search path for the files.
-   --  Only the files in one of the directories in Directory_Filter will be
-   --  displayed. If Directory_Filter is an empty array, no filter is applied.
-   --  Note that if Parent/ is not in the filter, but Parent/Child is, then
-   --  all the files from Child will be shown.
+   --  Only the files in Directory_Filter will be displayed.
    --
    --  Project_View mustn't be No_Project.
 
@@ -95,7 +91,6 @@ private
       --  level, rather than file specific
 
       Kernel  : Glide_Kernel.Kernel_Handle;
-      Explorer : Project_Trees.Project_Tree;
 
       Current_Project : Prj.Project_Id;
       --  The project to which the files currently in the viewer belong. This
