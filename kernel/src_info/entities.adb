@@ -44,6 +44,7 @@ package body Entities is
    --  will slow down the parsing a little, but might help customers work
    --  around bugs in GPS. This should never be needed however, and is just
    --  provided as a backdoor.
+   --  ??? Comment above is obsolete and should be updated
 
 
    use Entities_Tries;
