@@ -2626,8 +2626,7 @@ package body Docgen.Work_On_Source is
       Line                : Natural;
       Header_Lines        : Natural;
       Package_Description : Boolean;
-      Options             : All_Options)
-      return GNAT.OS_Lib.String_Access
+      Options             : All_Options) return GNAT.OS_Lib.String_Access
    is
       use type Ada.Strings.Unbounded.Unbounded_String;
       Location : Natural;
@@ -2717,10 +2716,9 @@ package body Docgen.Work_On_Source is
    ------------------------
 
    function Get_Location_Start
-     (Text            : in String;
-      Line            : in Natural;
-      Comments_Before : in Boolean)
-      return Natural
+     (Text            : String;
+      Line            : Natural;
+      Comments_Before : Boolean) return Natural
    is
       Lines          : Natural;
       Index          : Natural;
@@ -2755,10 +2753,9 @@ package body Docgen.Work_On_Source is
    ---------------------------------------
 
    function Get_Line_From_Location_And_String
-     (Text            : in String;
-      Location        : in Natural;
-      Comments_Before : in Boolean)
-      return String
+     (Text            : String;
+      Location        : Natural;
+      Comments_Before : Boolean) return String
    is
       Index_Start : Natural;
       Index_End   : Natural;
@@ -2800,10 +2797,9 @@ package body Docgen.Work_On_Source is
    -----------------------
 
    function Get_Next_Location
-     (Text            : in String;
-      Old_Location    : in Natural;
-      Comments_Before : in Boolean)
-      return Natural
+     (Text            : String;
+      Old_Location    : Natural;
+      Comments_Before : Boolean) return Natural
    is
       Index : Natural;
    begin
