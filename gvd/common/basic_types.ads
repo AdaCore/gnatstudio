@@ -78,6 +78,12 @@ package Basic_Types is
    --  Return True if List1 has the same contents of List2 (no matter the order
    --  of the strings in both arrays).
 
+   function Contains
+     (List           : GNAT.OS_Lib.Argument_List;
+      Str            : String;
+      Case_Sensitive : Boolean := True) return Boolean;
+   --  Return True if List contains Str
+
    -----------------
    -- File caches --
    -----------------

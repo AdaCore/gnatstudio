@@ -87,4 +87,34 @@ package body Basic_Types is
       end if;
    end Is_Equal;
 
+   --------------
+   -- Contains --
+   --------------
+
+   function Contains
+     (List           : GNAT.OS_Lib.Argument_List;
+      Str            : String;
+      Case_Sensitive : Boolean := True) return Boolean is
+   begin
+      if not Case_Sensitive then
+         declare
+            S : constant String := To_Lower (Str);
+         begin
+            for L in List'Range loop
+               if To_Lower (List (L).all) = S then
+                  return True;
+               end if;
+            end loop;
+         end;
+      else
+         for L in List'Range loop
+            if List (L).all = Str then
+               return True;
+            end if;
+         end loop;
+      end if;
+
+      return False;
+   end Contains;
+
 end Basic_Types;
