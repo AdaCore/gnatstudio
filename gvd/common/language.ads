@@ -273,6 +273,10 @@ package Language is
    subtype Construct_Category is Language_Category
      range Cat_Loop_Statement .. Cat_Exception_Handler;
 
+   function Category_Name
+     (Category : Language.Language_Category) return String;
+   --  Return the external name to display in GUIs for a given category.
+
    type Construct_Information;
    type Construct_Access is access Construct_Information;
 

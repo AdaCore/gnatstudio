@@ -23,6 +23,7 @@ with Basic_Types;                 use Basic_Types;
 with GNAT.Regpat;                 use GNAT.Regpat;
 with GNAT.OS_Lib;
 with GNAT.IO;                     use GNAT.IO;
+with Odd_Intl;                    use Odd_Intl;
 with OS_Utils;                    use OS_Utils;
 with Ada.Characters.Handling;     use Ada.Characters.Handling;
 with Ada.Exceptions;              use Ada.Exceptions;
@@ -541,5 +542,45 @@ package body Language is
 
       Next_Indent := Indent;
    end Next_Indentation;
+
+   -------------------
+   -- Category_Name --
+   -------------------
+
+   function Category_Name (Category : Language_Category) return String is
+   begin
+      case Category is
+         when Cat_Unknown               => return "";
+         when Cat_Package               => return -"package";
+         when Cat_Namespace             => return -"namespace";
+         when Cat_Task                  => return -"task";
+         when Cat_Procedure             => return -"subprogram";
+         when Cat_Function              => return -"subprogram";
+         when Cat_Method                => return -"method";
+         when Cat_Constructor           => return -"constructor";
+         when Cat_Destructor            => return -"destructor";
+         when Cat_Protected             => return -"protected";
+         when Cat_Entry                 => return -"entry";
+         when Cat_Class                 => return -"class";
+         when Cat_Structure             => return -"structure";
+         when Cat_Union                 => return -"union";
+         when Cat_Type                  => return -"type";
+         when Cat_Subtype               => return -"subtype";
+         when Cat_Variable              => return -"variable";
+         when Cat_Local_Variable        => return -"variable";
+         when Cat_Representation_Clause => return -"representation clause";
+         when Cat_With                  => return -"with";
+         when Cat_Use                   => return -"use";
+         when Cat_Include               => return -"include";
+         when Cat_Loop_Statement        => return "";
+         when Cat_If_Statement          => return "";
+         when Cat_Case_Statement        => return "";
+         when Cat_Select_Statement      => return "";
+         when Cat_Accept_Statement      => return "";
+         when Cat_Declare_Block         => return "";
+         when Cat_Simple_Block          => return "";
+         when Cat_Exception_Handler     => return "";
+      end case;
+   end Category_Name;
 
 end Language;
