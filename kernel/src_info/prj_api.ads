@@ -34,7 +34,6 @@
 with Types;
 with Prj;        use Prj;
 with Prj.Tree;   use Prj.Tree;
-with Snames;
 
 package Prj_API is
 
@@ -115,78 +114,47 @@ package Prj_API is
    --  If Var is a typed variable, the default value is checked against the
    --  list of possible values (Invalid_Value raised if not).
 
-   function Get_Expression
-     (Var_Or_Attribute : Project_Node_Id) return Project_Node_Id;
-   --  Return the expression associated with the current value of a variable
-   --  or an attribute. For a variable whose value is defined through an
-   --  external reference, this is the default value.
-
    function Get_Environment (Var_Or_Attribute : Project_Node_Id)
       return Types.String_Id;
    --  Return the name of the environment variable associated with
    --  Var_Or_Attribute. No_String is returned in case there is no such
    --  variable.
 
+   -----------
+   -- Lists --
+   -----------
+
+   type String_List_Iterator is private;
+
+   function Done (Iter : String_List_Iterator) return Boolean;
+   --  Return True if Iter is past the end of the list of strings
+
+   function Next (Iter : String_List_Iterator) return String_List_Iterator;
+   --  Return the next item in the list
+
+   function Data (Iter : String_List_Iterator) return Project_Node_Id;
+   function Data (Iter : String_List_Iterator) return Types.String_Id;
+   --  Return the value pointed to by Iter.
+   --  This could be either a N_String_Literal or a N_Expression node in the
+   --  first case.
+   --  The second case only works if Iter points to N_String_Literal.
+
+   function Type_Values (Var_Or_Type : Project_Node_Id)
+      return String_List_Iterator;
+   --  Return an iterator over the list of possible values for the
+   --  N_Typed_Variable_Declaration or N_String_Type_Declaration Var.
+
+   function Value_Of (Var : Project_Node_Id) return String_List_Iterator;
+   --  Return an iterator over the value of the variable. If the variable
+   --  is a single element, the list will have only one item.
+   --  For variables defined as external references, this return a pointer
+   --  to the default value.
+
    Invalid_Value : exception;
 
-
-   ---------------------------------------
-   --  Table interface to project files --
-   ---------------------------------------
-   --  The functions below should be removed eventually, but are kept until
-   --  they are converted to Prj.Tree interface. They still use the table
-   --  interface to projects.
-
-   function Parse_Project (Name : String) return Prj.Project_Id;
-   --  Parse the project Name, and return a handler to it.
-
-   function Get_File_Specific_Switches
-     (Project    : Prj.Project_Id;
-      File_Name  : String;
-      In_Package : Types.Name_Id := Snames.Name_Compiler)
-     return Prj.Variable_Value;
-   --  Return the list of specific switches to use for a file.
-   --  Note that the return value can be either a single switch or a list of
-   --  them.
-   --  In_Package should be one of Name_Compiler, Name_Binder, Name_Linker
-
-   function Get_Default_Switches
-     (Project    : Prj.Project_Id;
-      In_Package : Types.Name_Id := Snames.Name_Compiler)
-     return Prj.Variable_Value;
-   --  Return the list of default switches to use for a file
-   --  In_Package should be one of Name_Compiler, Name_Binder, Name_Linker
-
-   function Find_Project_Containing
-     (Root : Prj.Project_Id; File : String) return Prj.Project_Id;
-   --  Find the sub-project of Root to which File_Name belong.
-
-   function Find_Project (Name : String) return Prj.Project_Id;
-   --  Find the project whose name is Name.
-
-   -------------------------
-   -- Setting up projects --
-   -------------------------
-
-   procedure Set_File_Specific_Switches
-     (Project    : Prj.Project_Id;
-      File_Name  : String;
-      Switches   : String;
-      In_Package : Types.Name_Id := Snames.Name_Compiler);
-   --  Set the switches to use to compile File_Name.
-   --  The string Switches is split as required.
-   --
-   --  In_Package should be one of "Name_Compiler", "Name_Binder",
-   --  "Name_Linker".
-
-   function Create_Project (Name : String) return Prj.Project_Id;
-   --  Create a new empty project.
-
-   procedure Import_Project (Parent, Imported : Prj.Project_Id);
-   --  Make Parent import Imported
-
-   procedure Add_Source_Dir (Project : Prj.Project_Id; Dir : String);
-   --  Add a new directory to the list of source directories for Project.
-   --  It doesn't check if the directory is already there.
-
+private
+   type String_List_Iterator is record
+      Current : Project_Node_Id;
+      --  pointer to N_Literal_String or N_Expression
+   end record;
 end Prj_API;
