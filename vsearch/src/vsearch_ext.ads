@@ -111,6 +111,9 @@ package Vsearch_Ext is
       return String;
    --  Return the Num-th regular expression
 
+   function Get_Tab_Width return Natural;
+   --  Return the default Tab width.
+
 private
    type Vsearch_Extended_Record is new Vsearch_Pkg.Vsearch_Record with record
       Kernel                 : Glide_Kernel.Kernel_Handle;
