@@ -23,7 +23,7 @@ with Prj;
 package Src_Info.CPP is
 
    type CPP_LI_Handler_Record is new LI_Handler_Record with null record;
-   type CCP_LI_Handler is access all CPP_LI_Handler_Record'Class;
+   type CPP_LI_Handler is access all CPP_LI_Handler_Record'Class;
 
    procedure Create_Or_Complete_LI
      (Handler                : access CPP_LI_Handler_Record;
