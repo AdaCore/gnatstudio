@@ -313,7 +313,7 @@ package body Language_Handlers.Glide is
          Prj.Register_Default_Naming_Scheme
            (Language => Lang,
             Default_Spec_Suffix => Spec,
-            Default_Impl_Suffix => Impl);
+            Default_Body_Suffix => Impl);
       end if;
    end Add_Language_Info;
 
