@@ -56,6 +56,8 @@ package body VFS is
          return File2.Value = null;
       elsif File2.Value = null then
          return False;
+      elsif File1.Value = File2.Value then
+         return True;
       else
          Ensure_Normalized (File1);
          Ensure_Normalized (File2);
