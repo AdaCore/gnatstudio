@@ -433,4 +433,30 @@ package body Language_Handlers.Glide is
       end if;
    end Get_Nth_Language;
 
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (Handler : in out Glide_Language_Handler) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Glide_Language_Handler_Record'Class, Glide_Language_Handler);
+   begin
+      if Handler.Languages /= null then
+         for L in Handler.Languages'Range loop
+            Free (Handler.Languages (L).Language_Name);
+            Free (Handler.Languages (L).Lang);
+         end loop;
+         Unchecked_Free (Handler.Languages);
+      end if;
+
+      if Handler.Handlers /= null then
+         for H in Handler.Handlers'Range loop
+            Destroy (Handler.Handlers (H).Handler);
+            Free (Handler.Handlers (H).Name);
+         end loop;
+         Unchecked_Free (Handler.Handlers);
+      end if;
+      Unchecked_Free (Handler);
+   end Destroy;
+
 end Language_Handlers.Glide;

@@ -48,6 +48,10 @@ package Language_Handlers.Glide is
    procedure Gtk_New (Handler : out Glide_Language_Handler);
    --  Create a new language handler
 
+   procedure Destroy (Handler : in out Glide_Language_Handler);
+   --  Free the memory occupied by Handler, and removes all the registered LI
+   --  handlers. They are destroyed individually.
+
    procedure Set_Project_View
      (Handler : access Glide_Language_Handler_Record;
       Project_View : Prj.Project_Id);
