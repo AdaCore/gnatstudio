@@ -166,5 +166,4 @@ package body Log_Editor_Window_Pkg is
       Destroy (Log_Editor_Window);
    end Close;
 
-
 end Log_Editor_Window_Pkg;
