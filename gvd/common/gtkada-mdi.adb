@@ -390,6 +390,10 @@ package body Gtkada.MDI is
          Class_Record => MDI_Layout_Class_Record,
          Type_Name    => "GtkAdaMDI_Layout");
 
+      --  All the resizing for the children is handled by the MDI itself, and
+      --  resize events should not be propagated to the parent of the MDI.
+      Set_Resize_Mode (MDI, Resize_Queue);
+
       Put (MDI, MDI.Layout, 0, 0);
 
       Widget_Callback.Connect
@@ -927,7 +931,7 @@ package body Gtkada.MDI is
          if M.Docks_Size (J) = -1
            and then M.Docks (J) /= null
          then
-            Size_Request (M.Docks (J), Req);
+            Req := Get_Child_Requisition (M.Docks (J));
 
             case J is
                when Left | Right =>
@@ -2571,9 +2575,6 @@ package body Gtkada.MDI is
       Gtk_New (Label, Child.Title.all);
       Append_Page (MDI.Docks (Side), Child, Label);
       Unref (Child);
-
-      Set_Show_Tabs
-        (MDI.Docks (Side), Get_Nth_Page (MDI.Docks (Side), 1) /= null);
 
       Set_Page (MDI.Docks (Side), -1);
 
