@@ -203,10 +203,6 @@ package Glide_Kernel is
    procedure Reset_LI_File_List (Handle : access Kernel_Handle_Record);
    --  Reset the LI files currently in memory, and free associated memory
 
-   function Get_LI_File_List (Handle : access Kernel_Handle_Record)
-      return Src_Info.LI_File_List;
-   --  Return the list of all LI file parsed so far.
-
    function Locate_From_Source_And_Complete
      (Handle          : access Kernel_Handle_Record;
       Source_Filename : VFS.Virtual_File;
@@ -988,10 +984,6 @@ private
       Gnatls_Cache : GNAT.OS_Lib.String_Access;
       --  The name of the gnatls command used to get the predefined source
       --  path.
-
-      Source_Info_List : Src_Info.LI_File_List;
-      --  The semantic information associated with the files for the current
-      --  project.
 
       Preferences : Default_Preferences.Preferences_Manager;
       --  The current setting for the preferences.
