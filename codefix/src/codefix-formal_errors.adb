@@ -82,18 +82,17 @@ package body Codefix.Formal_Errors is
    begin
       Match (Matcher, Message, Matches);
 
-      begin
-         Assign (This.File_Name,
-                 Message (Matches (1).First .. Matches (1).Last));
-         This.Line := Positive'Value
-            (Message (Matches (2).First .. Matches (2).Last));
-         This.Col := Positive'Value
-            (Message (Matches (3).First .. Matches (3).Last));
+      if Matches (0) = No_Match then
+         This := Invalid_Error_Message;
+         return;
+      end if;
 
-      exception
-         when Constraint_Error => -- et tester No_Match
-            null; -- Lever une exception due au 'Value
-      end;
+      Assign (This.File_Name,
+              Message (Matches (1).First .. Matches (1).Last));
+      This.Line := Positive'Value
+        (Message (Matches (2).First .. Matches (2).Last));
+      This.Col := Positive'Value
+        (Message (Matches (3).First .. Matches (3).Last));
    end Parse_Head;
 
    -----------
@@ -505,73 +504,18 @@ package body Codefix.Formal_Errors is
       Correct_Word : String := "";
       Word_Case    : Case_Type := Mixed) return Solution_List
    is
-      pragma Unreferenced (Current_Text, Cursor, Correct_Word, Word_Case);
---      function To_Correct_Case (Str : String) return String;
-      --  Return the string after having re-cased it (with Word_Case).
-
-      ---------------------
-      -- To_Correct_Case --
-      ---------------------
-
---      function To_Correct_Case (Str : String) return String is
---         New_String : String (Str'Range);
---      begin
---         case Word_Case is
---            when Mixed =>
---               New_String := Str;
---               Mixed_Case (New_String);
-
---            when Upper =>
---               for J in Str'Range loop
---                  New_String (J) := To_Upper (Str (J));
---               end loop;
-
---            when Lower =>
---               for J in Str'Range loop
---                  New_String (J) := To_Lower (Str (J));
---               end loop;
---         end case;
-
---         return New_String;
---      end To_Correct_Case;
-
---      New_Extract : Extract;
---      Cursor_Line : File_Cursor := File_Cursor (Cursor);
---      Word        : constant Pattern_Matcher := Compile ("([\w]+)");
---      Matches     : Match_Array (0 .. 1);
---      Size        : Integer;
---      Line        : Dynamic_String;
---      Word_Chosen : Dynamic_String;
-
+      Result      : Solution_List;
+      New_Command : Recase_Word_Cmd;
    begin
-      return Command_List.Null_List;
---      Cursor_Line.Col := 1;
---      Get_Line (Current_Text, Cursor_Line, New_Extract);
---      Assign (Line, Get_String (New_Extract));
---      Match (Word, Line (Cursor.Col .. Line'Length), Matches);
+      Initialize (New_Command, Current_Text, Cursor, Correct_Word, Word_Case);
 
---      Size := Matches (1).Last - Matches (1).First + 1;
+      Set_Caption
+        (New_Command,
+         "Recase bad-cased word");
 
---      if Correct_Word /= "" then
---         Word_Chosen := new String'(Correct_Word);
---      else
---         Word_Chosen := new String'
---           (To_Correct_Case (Line (Matches (1).First .. Matches (1).Last)));
---      end if;
+      Append (Result, New_Command);
 
---      Replace_Word
---        (New_Extract,
---         Cursor,
---         Word_Chosen (Word_Chosen'Last - Size + 1 .. Word_Chosen'Last),
---         Size);
-
---      Set_Caption
---        (New_Extract,
---         "Replace bad-cased word by """ & Word_Chosen.all & """");
-
---      Free (Word_Chosen);
---
---      return New_Extract;
+      return Result;
    end Bad_Casing;
 
    --------------------
@@ -590,6 +534,7 @@ package body Codefix.Formal_Errors is
       --  after the body.
 
       function Add_Parameter_Pragma return Add_Pragma_Cmd;
+      --  Add a pragma after the 'is' of the subprogram
 
       ----------------
       -- Add_Pragma --
