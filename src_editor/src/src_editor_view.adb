@@ -460,17 +460,18 @@ package body Src_Editor_View is
 
          begin
             --  Get the window coordinates.
+
             Get_Visible_Rect (View, Rect);
             Buffer_To_Window_Coords
               (View, Text_Window_Text, Rect.X, Rect.Y, X, Y);
 
-
             --  ??? Maybe the following could be cached.
+
             declare
-               Line_Y : Gint;
-               Line_Height : Gint;
-               Cursor_Iter : Gtk_Text_Iter;
-               Dummy : Gint := 0;
+               Line_Y        : Gint;
+               Line_Height   : Gint;
+               Cursor_Iter   : Gtk_Text_Iter;
+               Dummy         : Gint := 0;
                Buffer_Line_Y : Gint;
             begin
                Get_Iter_At_Mark
@@ -488,8 +489,8 @@ package body Src_Editor_View is
                   Rect.Width, Line_Height);
             end;
 
-
             --  Redraw the line showing the 80th column
+
             X := Column * View.Char_Width - Rect.X;
             Draw_Line (Window, View.Default_GC, X, Y, X, Y + Rect.Height);
          end;
@@ -497,6 +498,7 @@ package body Src_Editor_View is
 
       --  Return false, so that the signal is not blocked, and other
       --  clients can use it.
+
       return False;
 
    exception
