@@ -1,5 +1,3 @@
-LN = ln -s -f
-
 GNAT_SOURCES= \
   ali.ads \
   ali.adb \
