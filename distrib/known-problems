@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 2.1.0
 
+- D701-001 Can't edit file-specific switches
+  Problem:    If you select the menu "Edit switches for <file>", the project
+              file is not modified
+  Workaround: Edit the project by hand through "Edit project source file"
+              contextual menu
+
 - D707-010 In the Locations View, line numbers are hard to read
   Problem:     On the currently selected line in the locations view, the line
                and column number are written in black on a dark blue background
