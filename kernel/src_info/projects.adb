@@ -1036,7 +1036,7 @@ package body Projects is
          if N /= "" then
             return N;
 
-         else
+         elsif Lang = Name_Ada then
             --  Default to the GNAT naming scheme (for runtime files)
             declare
                N2 : constant String := Get_Filename_From_Unit
