@@ -54,8 +54,12 @@ with GVD.Preferences;  use GVD.Preferences;
 with GVD.Process;      use GVD.Process;
 
 with String_Utils;     use String_Utils;
+with Traces;           use Traces;
+with Ada.Exceptions;   use Ada.Exceptions;
 
 package body GVD.Canvas is
+
+   Me : constant Debug_Handle := Create ("GVD.Canvas");
 
    -----------------
    -- Local Types --
@@ -195,9 +199,8 @@ package body GVD.Canvas is
       Align_On_Grid (Canvas, Get_Active (Item));
 
    exception
-      when others =>
-         --  Ignore unexpected exceptions
-         null;
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Change_Align_On_Grid;
 
    ---------------------------
@@ -218,9 +221,8 @@ package body GVD.Canvas is
       Refresh_Canvas (Canvas);
 
    exception
-      when others =>
-         --  Ignore unexpected exceptions
-         null;
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Change_Detect_Aliases;
 
    ------------------------
@@ -235,9 +237,8 @@ package body GVD.Canvas is
         (Process.Window.all'Access, 0, Factory_Data.Null_Widget);
 
    exception
-      when others =>
-         --  Ignore unexpected exceptions
-         null;
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Display_Expression;
 
    ------------------------
@@ -1026,9 +1027,8 @@ package body GVD.Canvas is
       end if;
 
    exception
-      when others =>
-         --  Ignore unexpected exceptions
-         null;
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Set_Value;
 
    --------------
@@ -1045,9 +1045,8 @@ package body GVD.Canvas is
       Update_Resize_Display (Item.Item, True);
 
    exception
-      when others =>
-         --  Ignore unexpected exceptions
-         null;
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Show_All;
 
    ----------------------
@@ -1073,9 +1072,8 @@ package body GVD.Canvas is
       Gdk_Raise (Get_Window (View));
 
    exception
-      when others =>
-         --  Ignore unexpected exceptions
-         null;
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end View_Into_Memory;
 
    ---------------------
@@ -1092,9 +1090,8 @@ package body GVD.Canvas is
         (Item.Canvas, Item.Item, Redisplay_Canvas => True);
 
    exception
-      when others =>
-         --  Ignore unexpected exceptions
-         null;
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Update_Variable;
 
    --------------------
@@ -1113,9 +1110,8 @@ package body GVD.Canvas is
          Output_Command => True);
 
    exception
-      when others =>
-         --  Ignore unexpected exceptions
-         null;
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Undisplay_Item;
 
    -------------------------
@@ -1134,9 +1130,8 @@ package body GVD.Canvas is
          True);
 
    exception
-      when others =>
-         --  Ignore unexpected exceptions
-         null;
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Toggle_Refresh_Mode;
 
    -------------
@@ -1184,9 +1179,8 @@ package body GVD.Canvas is
       Zoom (Item.Canvas, Item.Zoom, 1);
 
    exception
-      when others =>
-         --  Ignore unexpected exceptions
-         null;
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Zoom_Level;
 
 end GVD.Canvas;

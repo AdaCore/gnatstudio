@@ -36,11 +36,15 @@ with GVD.Main_Window;       use GVD.Main_Window;
 with GVD.Types;             use GVD.Types;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with GNAT.Regpat;           use GNAT.Regpat;
+with Ada.Exceptions;        use Ada.Exceptions;
+with Traces;                use Traces;
 
 package body GVD.Dialogs.Callbacks is
 
    use GVD;
    use Gtk.Arguments;
+
+   Me : constant Debug_Handle := Create ("GVD.Dialogs");
 
    -----------------------------
    -- On_Task_List_Select_Row --
@@ -107,9 +111,8 @@ package body GVD.Dialogs.Callbacks is
       end if;
 
    exception
-      when others =>
-         --  ??? Should log unexpected exception
-         null;
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Task_List_Select_Row;
 
    -----------------------------
@@ -120,6 +123,10 @@ package body GVD.Dialogs.Callbacks is
      (Object : access Gtk_Button_Record'Class) is
    begin
       Hide (Get_Toplevel (Object));
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Close_Button_Clicked;
 
    -----------------------------
@@ -152,6 +159,10 @@ package body GVD.Dialogs.Callbacks is
             Mode => GVD.Types.Visible,
             Empty_Buffer => False,
             Wait_For_Prompt => False);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Question_Yes_Clicked;
 
    -----------------------------
@@ -184,6 +195,10 @@ package body GVD.Dialogs.Callbacks is
             Mode => GVD.Types.Visible,
             Empty_Buffer => False,
             Wait_For_Prompt => False);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Question_No_Clicked;
 
    ----------------------------
@@ -235,6 +250,10 @@ package body GVD.Dialogs.Callbacks is
             Mode => GVD.Types.Visible,
             Empty_Buffer => False,
             Wait_For_Prompt => False);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Question_OK_Clicked;
 
    -------------------------------
@@ -253,6 +272,10 @@ package body GVD.Dialogs.Callbacks is
 
       --  Destroy the dialog, since we will have to recreate it anyway.
       Unregister_Dialog (Convert (Dialog.Main_Window, Dialog.Debugger));
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Question_Close_Clicked;
 
    ---------------------------------
@@ -303,6 +326,10 @@ package body GVD.Dialogs.Callbacks is
       end loop;
 
       Thaw (History_Dialog);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Replay_Selection_Clicked;
 
    -------------------------------
@@ -313,6 +340,10 @@ package body GVD.Dialogs.Callbacks is
      (Object : access Gtk_Button_Record'Class) is
    begin
       Hide (Get_Toplevel (Object));
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_History_Cancel_Clicked;
 
 end GVD.Dialogs.Callbacks;
