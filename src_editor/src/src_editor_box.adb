@@ -256,7 +256,8 @@ package body Src_Editor_Box is
       if Source_Info = No_LI_File then
          Console.Insert
            (Kernel,
-            -"Failed to find or parse ALI file for " & Get_Filename (Editor),
+            -"No cross-reference information found for "
+            & Get_Filename (Editor),
             Mode           => Error,
             Highlight_Sloc => False);
          Pop_State (Kernel_Handle (Kernel));
