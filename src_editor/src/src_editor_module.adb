@@ -583,8 +583,11 @@ package body Src_Editor_Module is
                   Box         : Source_Box;
                   Child       : MDI_Child;
                   Mark_Record : Mark_Identifier_Record;
-                  File        : constant String :=
-                    Find_Source_File (Kernel, Filename.all, True);
+                  File        : constant String := Get_Full_Path_From_File
+                    (Registry        => Get_Registry (Kernel),
+                     Filename        => Filename.all,
+                     Use_Source_Path => True,
+                     Use_Object_Path => False);
 
                begin
                   if File /= "" then
@@ -1972,7 +1975,8 @@ package body Src_Editor_Module is
            (Project   => Get_Project (Kernel),
             Recursive => True,
             Full_Path => False);
-         List2 : String_Array_Access := Get_Predefined_Source_Files (Kernel);
+         List2 : String_Array_Access :=
+           Get_Predefined_Source_Files (Get_Registry (Kernel));
       begin
          Set_Completions
            (Id.Open_File_Entry, new String_Array'(List1.all & List2.all));
