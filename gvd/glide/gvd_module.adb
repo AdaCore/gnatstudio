@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                     Copyright (C) 2001-2004                       --
+--                     Copyright (C) 2001-2005                       --
 --                             ACT-Europe                            --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -906,7 +906,6 @@ package body GVD_Module is
          File,
          "Current Line",
          --  ??? That should be centralized somewhere !!!
-         Stick_To_Data => True,
          Every_Line    => False);
 
       --  Create the information column for the breakpoints
@@ -914,7 +913,6 @@ package body GVD_Module is
         (Kernel,
          File,
          Breakpoints_Column_Id,
-         Stick_To_Data => True,
          Every_Line    => True);
    end Create_Debugger_Columns;
 
