@@ -685,14 +685,7 @@ package body Glide_Kernel is
          else
             Handle.Open_Files :=
               new File_Array (Files'First .. Files'Last + 1);
-
-            if Files'Length > 0 then
-               --  ??? Work around GNAT bug wrt null slice assignment and
-               --  controlled objects
-
-               Handle.Open_Files (Files'Range) := Files.all;
-            end if;
-
+            Handle.Open_Files (Files'Range) := Files.all;
             Unchecked_Free (Files);
          end if;
 
@@ -733,20 +726,10 @@ package body Glide_Kernel is
             if Files (F) = File then
                Handle.Open_Files :=
                  new File_Array (Files'First .. Files'Last - 1);
-
-               if F > Files'First then
-                  --  ??? Work around a bug in GNAT 5.03w wrt null slice
-                  --  assignment of controlled components
-
-                  Handle.Open_Files (Files'First .. F - 1) :=
-                    Files (Files'First .. F - 1);
-               end if;
-
-               if F <= Handle.Open_Files'Last then
-                  Handle.Open_Files (F .. Handle.Open_Files'Last) :=
-                    Files (F + 1 .. Files'Last);
-               end if;
-
+               Handle.Open_Files (Files'First .. F - 1) :=
+                 Files (Files'First .. F - 1);
+               Handle.Open_Files (F .. Handle.Open_Files'Last) :=
+                 Files (F + 1 .. Files'Last);
                Unchecked_Free (Files);
                exit;
             end if;
