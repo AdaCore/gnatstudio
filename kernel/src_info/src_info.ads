@@ -951,7 +951,7 @@ private
 
    type LI_Handler_Iterator is abstract tagged record
       Source_Files : Basic_Types.String_Array_Access;
-      Current_File : Integer;
+      Current_File : Integer := 0;
    end record;
 
    procedure Compute_Sources
