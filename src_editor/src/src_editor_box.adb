@@ -1578,14 +1578,16 @@ package body Src_Editor_Box is
       if Context.all in Entity_Selection_Context'Class then
          Entity := Get_Entity
            (Entity_Selection_Context_Access (Context));
-         if Is_Container (Get_Kind (Entity).Kind) then
-            return -"Goto body of " & Get_Name (Entity).all;
-         else
-            return -"Goto full declaration of " & Get_Name (Entity).all;
+         if Entity /= null then
+            if Is_Container (Get_Kind (Entity).Kind) then
+               return -"Goto body of " & Get_Name (Entity).all;
+            else
+               return -"Goto full declaration of " & Get_Name (Entity).all;
+            end if;
          end if;
-      else
-         return "";
       end if;
+
+      return "";
    end Get_Label;
 
    ------------------------------
