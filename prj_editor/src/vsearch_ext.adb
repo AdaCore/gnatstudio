@@ -33,17 +33,18 @@ with Gtk.Widget;            use Gtk.Widget;
 with Gtkada.Handlers;       use Gtkada.Handlers;
 with Glide_Intl;            use Glide_Intl;
 with Glide_Kernel;          use Glide_Kernel;
+with Glide_Kernel.Project;  use Glide_Kernel.Project;
 with Glide_Kernel.Help;
 
 with Find_Utils;            use Find_Utils;
+with Prj_API;               use Prj_API;
 
 with GNAT.Regpat;           use GNAT.Regpat;
 with GNAT.Regexp;           use GNAT.Regexp;
+with Basic_Types;           use Basic_Types;
 with Ada.Exceptions;        use Ada.Exceptions;
 
-with Glide_Kernel.Project;
 with Glide_Kernel.Console;
-with Basic_Types;           use Basic_Types;
 with String_Utils;          use String_Utils;
 with Gdk.Color;             use Gdk.Color;
 with Gtk.Main;
@@ -86,7 +87,6 @@ package body Vsearch_Ext is
 
    procedure On_Search_Next (Object : access Gtk_Widget_Record'Class) is
       use Glide_Kernel;
-      use Glide_Kernel.Project;
 
       Highlight_File : constant String := "#FF0000000000";
       Vsearch        : constant Vsearch_Extended := Vsearch_Extended (Object);
@@ -164,7 +164,8 @@ package body Vsearch_Ext is
                   Sources := new String_Array' (1 => new String' (""));
 
                else
-                  Sources := Get_Source_Files (Vsearch.Kernel);
+                  Sources := Get_Source_Files
+                    (Get_Project (Vsearch.Kernel), True);
                end if;
 
                Init_Search
@@ -203,7 +204,7 @@ package body Vsearch_Ext is
          Set_Sensitive (Vsearch.Stop_Button,  False);
          Set_Sensitive (Vsearch.Search_Next_Button, True);
          Free (S);
-         Free (Sources);
+         Basic_Types.Free (Sources);
 
       else
          --  Search only once
