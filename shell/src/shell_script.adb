@@ -51,7 +51,7 @@ package body Shell_Script is
    Me : constant Debug_Handle := Create ("Shell_Script");
 
    Num_Previous_Returns : constant := 9;
-   --  Number of parameters $1, $2,... which are used to memorize the result of
+   --  Number of parameters %1, %2,... which are used to memorize the result of
    --  previous commands.
 
    type Shell_Console_Record
@@ -473,19 +473,26 @@ package body Shell_Script is
 
    function Interpret_Command_Handler
      (Input  : String;
-      Kernel : access GObject_Record'Class) return String
-   is
-      S : constant String := Execute_GPS_Shell_Command
-        (Kernel_Handle (Kernel), Input);
+      Kernel : access GObject_Record'Class) return String is
    begin
-      if S = ""
-        or else S (S'Last) = ASCII.LF
-        or else S (S'Last) = ASCII.CR
-      then
-         return S;
-      else
-         return S & ASCII.LF;
-      end if;
+      declare
+         S : constant String := Execute_GPS_Shell_Command
+           (Kernel_Handle (Kernel), Input);
+      begin
+         if S = ""
+           or else S (S'Last) = ASCII.LF
+           or else S (S'Last) = ASCII.CR
+         then
+            return S;
+         else
+            return S & ASCII.LF;
+         end if;
+      end;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         return "";
    end Interpret_Command_Handler;
 
    ---------------------
@@ -990,7 +997,7 @@ package body Shell_Script is
 
                for A in Args'Range loop
                   if Args (A)'Length > 0
-                    and then Args (A) (Args (A)'First) = '$'
+                    and then Args (A) (Args (A)'First) = '%'
                   then
                      declare
                         Num : Integer;
@@ -1026,16 +1033,23 @@ package body Shell_Script is
 
                --  Save the return value for the future
                Free (Shell.Returns (Shell.Returns'Last));
-               Shell.Returns (Shell.Returns'First + 1 .. Shell.Returns'Last) :=
-                 Shell.Returns (Shell.Returns'First .. Shell.Returns'Last - 1);
+               Shell.Returns
+                 (Shell.Returns'First + 1 .. Shell.Returns'Last) :=
+                 Shell.Returns
+                 (Shell.Returns'First .. Shell.Returns'Last - 1);
 
                if Callback.Return_Value = null then
                   Shell.Returns (Shell.Returns'First) := new String'("");
                else
-                  Shell.Returns (Shell.Returns'First) := Callback.Return_Value;
+                  Shell.Returns (Shell.Returns'First) :=
+                    Callback.Return_Value;
                end if;
 
-               return Shell.Returns (Shell.Returns'First).all;
+               if Callback.Return_Value = null then
+                  return "";
+               else
+                  return Callback.Return_Value.all;
+               end if;
 
             else
                Trace (Me, "Incorrect number of arguments for " & Command
