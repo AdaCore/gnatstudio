@@ -31,6 +31,7 @@ with Gtk.Button;               use Gtk.Button;
 with Gtk.Combo;                use Gtk.Combo;
 with Gtk.Dialog;               use Gtk.Dialog;
 with Gtk.Enums;                use Gtk.Enums;
+with Gtk.Event_Box;            use Gtk.Event_Box;
 with Gtk.Font_Selection;       use Gtk.Font_Selection;
 with Gtk.GEntry;               use Gtk.GEntry;
 with Gtk.Handlers;             use Gtk.Handlers;
@@ -43,6 +44,7 @@ with Gtk.Stock;                use Gtk.Stock;
 with Gtk.Style;                use Gtk.Style;
 with Gtk.Table;                use Gtk.Table;
 with Gtk.Toggle_Button;        use Gtk.Toggle_Button;
+with Gtk.Tooltips;             use Gtk.Tooltips;
 with Gtk.Widget;               use Gtk.Widget;
 with Gtk.Window;               use Gtk.Window;
 with Gtkada.Handlers;          use Gtkada.Handlers;
@@ -55,6 +57,7 @@ with String_Utils;             use String_Utils;
 with GUI_Utils;                use GUI_Utils;
 with Odd_Intl;                 use Odd_Intl;
 with Pango.Layout;             use Pango.Layout;
+with Pango.Context;            use Pango.Context;
 
 package body Default_Preferences is
 
@@ -135,6 +138,9 @@ package body Default_Preferences is
      (Ent  : access GObject_Record'Class;
       Data : Nodes) return Boolean;
    --  Called when the entry for a font selection has changed.
+
+   procedure Reset_Font (Ent : access Gtk_Widget_Record'Class);
+   --  Update the font used for the entry Ent, based on its contents.
 
    procedure Color_Changed
      (Combo : access GObject_Record'Class;
@@ -667,6 +673,21 @@ package body Default_Preferences is
       Set_Pref (Data.Top, Data.Node, Pspec_Name (Data.Param), Get_Text (E));
    end Entry_Changed;
 
+   ----------------
+   -- Reset_Font --
+   ----------------
+
+   procedure Reset_Font (Ent : access Gtk_Widget_Record'Class) is
+      E : Gtk_Entry := Gtk_Entry (Ent);
+      Desc : Pango_Font_Description := From_String (Get_Text (E));
+   begin
+      --  Also set the context, so that every time the pango layout is
+      --  recreated by the entry (key press,...), we still use the correct
+      --  font.
+      Set_Font_Description (Get_Pango_Context (E), Desc);
+      Set_Font_Description (Get_Layout (E), Desc);
+   end Reset_Font;
+
    ------------------------
    -- Font_Entry_Changed --
    ------------------------
@@ -676,11 +697,9 @@ package body Default_Preferences is
       Data : Nodes) return Boolean
    is
       E : Gtk_Entry := Gtk_Entry (Ent);
-      Desc : Pango_Font_Description;
    begin
       Set_Pref (Data.Top, Data.Node, Pspec_Name (Data.Param), Get_Text (E));
-      Desc := From_String (Get_Text (E));
-      Set_Font_Description (Get_Layout (E), Desc);
+      Reset_Font (E);
       return False;
    end Font_Entry_Changed;
 
@@ -710,7 +729,6 @@ package body Default_Preferences is
       Dialog : Gtk_Dialog;
       Tmp : Gtk_Widget;
       Result : Boolean;
-      Desc : Pango_Font_Description;
    begin
       Gtk_New (Dialog,
                Title  => -"Select font",
@@ -728,10 +746,8 @@ package body Default_Preferences is
 
       if Run (Dialog) = Gtk_Response_OK then
          Set_Text (E, Get_Font_Name (F));
-
          Set_Pref (Data.Top, Data.Node, Pspec_Name (Data.Param), Get_Text (E));
-         Desc := From_String (Get_Text (E));
-         Set_Font_Description (Get_Layout (E), Desc);
+         Reset_Font (E);
       end if;
 
       Destroy (Dialog);
@@ -841,7 +857,6 @@ package body Default_Preferences is
          begin
             Gtk_New_Hbox (Box, Homogeneous => False);
             Gtk_New (Ent);
-            Set_Style (Ent, Copy (Get_Style (Ent)));
             Pack_Start (Box, Ent, Expand => True, Fill => True);
 
             Gtk_New (Button, -"Browse");
@@ -857,10 +872,10 @@ package body Default_Preferences is
                Return_Param_Handlers.To_Marshaller (Font_Entry_Changed'Access),
                User_Data   => N);
 
-            --  Done after the callbacks have been set, to show the font in the
-            --  style.
-            Set_Text (Ent, To_String (Get_Pref (Manager, Prop)));
+            Set_Style (Ent, Copy (Get_Style (Ent)));
             Set_Font_Description (Get_Style (Ent), Get_Pref (Manager, Prop));
+            Set_Text (Ent, To_String (Get_Pref (Manager, Prop)));
+            Reset_Font (Ent);
 
             return Gtk_Widget (Box);
          end;
@@ -963,6 +978,8 @@ package body Default_Preferences is
       Had_Apply  : Boolean := False;
       Row        : Guint;
       Widget     : Gtk_Widget;
+      Tips       : Gtk_Tooltips;
+      Event      : Gtk_Event_Box;
 
    begin
       Gtk_New
@@ -970,6 +987,7 @@ package body Default_Preferences is
          Title  => -"Preferences",
          Parent => Parent,
          Flags  => Modal or Destroy_With_Parent);
+      Gtk_New (Tips);
 
       Gtk_New (Main_Note);
       Set_Show_Tabs (Main_Note, False);
@@ -1027,9 +1045,12 @@ package body Default_Preferences is
             end if;
          end;
 
+         Gtk_New (Event);
          Gtk_New (Label, Nick_Name (Prefs.Param));
+         Add (Event, Label);
+         Set_Tip (Tips, Event, Description (Prefs.Param));
          Set_Alignment (Label, 0.0, 0.5);
-         Attach (Table, Label, 0, 1, Row, Row + 1,
+         Attach (Table, Event, 0, 1, Row, Row + 1,
                  Xoptions => Fill, Yoptions => 0);
 
          Widget := Editor_Widget (Manager, Prefs.Param);
@@ -1043,6 +1064,8 @@ package body Default_Preferences is
       Tmp := Add_Button (Dialog, Stock_Ok, Gtk_Response_OK);
       Tmp := Add_Button (Dialog, Stock_Apply, Gtk_Response_Apply);
       Tmp := Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel);
+
+      Enable (Tips);
 
       Show_All (Dialog);
 
@@ -1081,6 +1104,8 @@ package body Default_Preferences is
                null;
          end;
       end loop;
+
+      Destroy (Tips);
    end Edit_Preferences;
 
 end Default_Preferences;
