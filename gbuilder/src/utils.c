@@ -1,5 +1,4 @@
-#include <gobject/gobject.h>
-#include <gobject/gparam.h>
+#include <glib-object.h>
 
 guint ada_properties_count (gpointer klass) {
   return G_OBJECT_CLASS (klass)->n_property_specs;
