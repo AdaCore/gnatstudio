@@ -2148,18 +2148,6 @@ The specific list depends on the hook type</param>
      <description>Tile the windows in the central area either horizontally or vertically</description>
   </shell_doc>
 
-  <shell_doc name="GPS.maximize" real_name="GPS.MDI.maximize">
-     <description>Maximize all windows in the central area</description>
-  </shell_doc>
-
-  <shell_doc name="GPS.unmaximize" real_name="GPS.MDI.unmaximize">
-     <description>Unmaximize all windows in the central area</description>
-  </shell_doc>
-
-  <shell_doc name="GPS.cascade" real_name="GPS.MDI.cascade">
-     <description>Cascade all windows in the central area, so that at least part of each one is visible</description>
-  </shell_doc>
-
   <shell_doc name="GPS.get" real_name="GPS.MDI.get">
      <param name="name">A string</param>
      <return>An instance of GPS.MDIWindow</return>
@@ -2240,29 +2228,10 @@ Windows acts as containers for other widgets</description>
      <see_also name="GPS.MDIWindow.single()" />
   </shell_doc>
 
-  <shell_doc name="GPS.MDIWindow.iconify">
-     <param name="self">An instance of GPS.MDIWindow</param>
-     <param name="iconify" default="True">A boolean</param>
-     <description>Iconify the window. This only works if windows are unmaximized within the MDI. If iconify is False, the window is de-iconified instead</description>
-     <see_also name="GPS.MDI.unmaximize()"/>
-  </shell_doc>
-
   <shell_doc name="GPS.MDIWindow.float">
      <param name="self">An instance of GPS.MDIWindow</param>
      <param name="float" default="True">A boolean</param>
      <description>Float the window, ie create a new toplevel window to display it. It is then under control of the user's operating system or window manager. If float is False, the window is reintegrated within the GPS MDI instead</description>
-  </shell_doc>
-
-  <shell_doc name="GPS.MDIWindow.dock">
-     <param name="self">An instance of GPS.MDIWindow</param>
-     <param name="dock" default="True">A boolean</param>
-     <param name="side" default="bottom">One of "bottom", "top", "left", "right"</param>
-     <description>Dock the window in one of the sides of GPS main window. If dock is False, the window is put in the central area instead</description>
-  </shell_doc>
-
-  <shell_doc name="GPS.MDIWindow.single">
-     <param name="self">An instance of GPS.MDIWindow</param>
-     <description>If the window is in the central area of the MDI, then all other windows in the central area are unsplit and put below window, so that only the latter remains visible to the customer</description>
   </shell_doc>
 
   <shell_doc name="GPS.MDIWindow.raise_window">
