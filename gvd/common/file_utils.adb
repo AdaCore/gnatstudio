@@ -66,71 +66,55 @@ package body File_Utils is
    function Read_Files_From_Dirs
      (Dirs : String) return File_Array_Access
    is
-      First, Last  : Natural := Dirs'First;
       Dir          : Dir_Type;
       File         : String (1 .. 1024);
       File_Last    : Natural;
       Tmp          : File_Array_Access;
       Result       : File_Array_Access := new File_Array (1 .. 128);
       Result_Index : Natural := Result'First;
+      Iter         : Path_Iterator := Start (Dirs);
 
    begin
-      --  Avoid case where Dirs starts with a path separator
+      while not At_End (Dirs, Iter) loop
+         declare
+            Normalized_Dir : constant String := Name_As_Directory
+              (Current (Dirs, Iter));
+         begin
+            Open (Dir, Normalized_Dir);
 
-      if First <= Dirs'Last and then Dirs (First) = Path_Separator then
-         First := First + 1;
-      end if;
+            loop
+               Read (Dir, File, File_Last);
+               exit when File_Last = 0;
 
-      while First <= Dirs'Last loop
-         Last := First + 1;
+               --  We just need one more item in the array, so doubling
+               --  is more than enough, we do not need to loop until the
+               --  length is correct
 
-         while Last <= Dirs'Last
-           and then Dirs (Last) /= Path_Separator
-         loop
-            Last := Last + 1;
-         end loop;
+               if Result_Index > Result'Last then
+                  Tmp := Result;
+                  Result := new File_Array (1 .. Result'Last * 2);
+                  Result (1 .. Tmp'Last) := Tmp.all;
+                  Unchecked_Free (Tmp);
+               end if;
 
-         if Dirs (First .. Last - 1) /= "" then
-            declare
-               Normalized_Dir : constant String := Name_As_Directory
-                 (Dirs (First .. Last - 1));
-            begin
-               Open (Dir, Dirs (First .. Last - 1));
+               Result (Result_Index) := Create
+                 (Full_Filename =>
+                    Normalized_Dir & File (File'First .. File_Last));
+               Result_Index := Result_Index + 1;
+            end loop;
 
-               loop
-                  Read (Dir, File, File_Last);
-                  exit when File_Last = 0;
+            Close (Dir);
 
-                  --  We just need one more item in the array, so doubling
-                  --  is more than enough, we do not need to loop until the
-                  --  length is correct
+         exception
+            when Directory_Error =>
+               null;
+         end;
 
-                  if Result_Index > Result'Last then
-                     Tmp := Result;
-                     Result := new File_Array (1 .. Result'Last * 2);
-                     Result (1 .. Tmp'Last) := Tmp.all;
-                     Unchecked_Free (Tmp);
-                  end if;
-
-                  Result (Result_Index) := Create
-                    (Full_Filename =>
-                       Normalized_Dir & File (File'First .. File_Last));
-                  Result_Index := Result_Index + 1;
-               end loop;
-
-               Close (Dir);
-
-            exception
-               when Directory_Error =>
-                  null;
-            end;
-         end if;
-
-         First := Last + 1;
+         Iter := Next (Dirs, Iter);
       end loop;
 
-      Tmp := Result;
-      Result := new File_Array (1 .. Result_Index - 1);
+      Tmp        := Result;
+      Result     := new File_Array (1 .. Result_Index - 1);
       Result.all := Tmp (1 .. Result_Index - 1);
       Unchecked_Free (Tmp);
 
