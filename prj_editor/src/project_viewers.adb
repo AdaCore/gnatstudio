@@ -1158,13 +1158,14 @@ package body Project_Viewers is
      (Widget : access GObject_Record'Class;
       Kernel : Kernel_Handle)
    is
-      pragma Unreferenced (Widget);
+      Tmp : Boolean;
+      pragma Unreferenced (Widget, Tmp);
    begin
       if Status (Get_Project (Kernel)) /= From_File then
          Read_Project_Name (Kernel, Get_Project (Kernel));
       end if;
 
-      Save_Project (Kernel, Get_Project (Kernel), Recursive => True);
+      Tmp := Save_Project (Kernel, Get_Project (Kernel), Recursive => True);
 
    exception
       when E : others =>
@@ -1258,7 +1259,8 @@ package body Project_Viewers is
      (Command : access Save_Project_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Command);
+      Tmp     : Boolean;
+      pragma Unreferenced (Command, Tmp);
       File    : constant File_Selection_Context_Access :=
         File_Selection_Context_Access (Context.Context);
       Kernel  : constant Kernel_Handle := Get_Kernel (File);
@@ -1268,7 +1270,7 @@ package body Project_Viewers is
          Read_Project_Name (Kernel, Project);
       end if;
 
-      Save_Project (Kernel, Project);
+      Tmp := Save_Project (Kernel, Project);
       return Success;
    end Execute;
 
