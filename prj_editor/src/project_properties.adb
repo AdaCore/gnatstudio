@@ -20,6 +20,7 @@
 
 with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
+with Glib.Values;               use Glib.Values;
 with Glide_Intl;                use Glide_Intl;
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Kernel.Project;      use Glide_Kernel.Project;
@@ -28,6 +29,7 @@ with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Button;                use Gtk.Button;
+with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
 with Gtk.Check_Button;          use Gtk.Check_Button;
 with Gtkada.File_Selector;      use Gtkada.File_Selector;
 with Gtkada.Handlers;           use Gtkada.Handlers;
@@ -35,9 +37,15 @@ with Gtk.Dialog;                use Gtk.Dialog;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.GEntry;                use Gtk.GEntry;
 with Gtk.Label;                 use Gtk.Label;
-with Gtk.Text;                  use Gtk.Text;
+with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
 with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Table;                 use Gtk.Table;
+with Gtk.Tree_Model;            use Gtk.Tree_Model;
+with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
+with Gtk.Tree_View;             use Gtk.Tree_View;
+with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
+with Gtk.List_Store;            use Gtk.List_Store;
+with Gtk.Vbutton_Box;           use Gtk.Vbutton_Box;
 with Gtk.Widget;                use Gtk.Widget;
 with Prj;                       use Prj;
 with Prj.Tree;                  use Prj.Tree;
@@ -49,6 +57,7 @@ with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Unchecked_Deallocation;
 
 package body Project_Properties is
+   use Widget_List;
 
    type Widget_Array is array (Natural range <>) of Gtk_Widget;
    type Widget_Array_Access is access Widget_Array;
@@ -60,7 +69,8 @@ package body Project_Properties is
       record
          Name        : Gtk.GEntry.Gtk_Entry;
          Path        : Gtk.GEntry.Gtk_Entry;
-         Executables : Gtk.Text.Gtk_Text;
+         Executables : Gtk_List_Store;
+         Tree_View   : Gtk_Tree_View;
          Gnatls      : Gtk.GEntry.Gtk_Entry;
          Compiler    : Gtk.GEntry.Gtk_Entry;
          Debugger    : Gtk.GEntry.Gtk_Entry;
@@ -93,6 +103,23 @@ package body Project_Properties is
 
    procedure Destroyed (Editor : access Gtk_Widget_Record'Class);
    --  Called when the editor is destroyed
+
+   procedure Add_Main_Unit (Editor : access Gtk_Widget_Record'Class);
+   --  Add a main unit to the list of main units for the edited project
+
+   procedure Remove_Main_Unit (Editor : access Gtk_Widget_Record'Class);
+   --  Remove the selected main units.
+
+   procedure Add_Main_File
+     (Editor : access Properties_Editor_Record'Class;
+      File   : String);
+   --  Add a new file entry in the list of main units.
+
+   function Is_Equal
+     (List1, List2   : Argument_List;
+      Case_Sensitive : Boolean := True) return Boolean;
+   --  Return True if List1 has the same contents of List2 (no matter the order
+   --  of the strings in both arrays).
 
    -------------
    -- Gtk_New --
@@ -129,6 +156,28 @@ package body Project_Properties is
       Set_Sensitive (Gtk_Widget (Ent), Get_Active (Gtk_Check_Button (Check)));
    end Command_Set_Sensitive;
 
+   -------------------
+   -- Add_Main_File --
+   -------------------
+
+   procedure Add_Main_File
+     (Editor : access Properties_Editor_Record'Class;
+      File   : String)
+   is
+      Val : GValue;
+      Iter : Gtk_Tree_Iter;
+   begin
+      Init (Val, GType_String);
+      Set_String (Val, File);
+      Append (Editor.Executables, Iter);
+      Set_Value
+        (Editor.Executables,
+         Iter   => Iter,
+         Column => 0,
+         Value  => Val);
+      Unset (Val);
+   end Add_Main_File;
+
    ----------------
    -- Initialize --
    ----------------
@@ -148,6 +197,13 @@ package body Project_Properties is
       Project_Languages : Argument_List :=
         Get_Attribute_Value (Project_View, Languages_Attribute);
       Ent     : Gtk_GEntry;
+      Box     : Gtk_Box;
+      Bbox    : Gtk_Vbutton_Box;
+      Column : Gtk_Tree_View_Column;
+      Renderer : Gtk_Cell_Renderer_Text;
+      Col : Gint;
+      Scrolled : Gtk_Scrolled_Window;
+
    begin
       Gtk.Dialog.Initialize
         (Dialog => Editor,
@@ -155,6 +211,10 @@ package body Project_Properties is
            & Project_Name (Project_View),
          Parent => Get_Main_Window (Kernel),
          Flags  => Modal or Destroy_With_Parent);
+      Set_Policy (Editor,
+                  Allow_Shrink => True,
+                  Allow_Grow   => True,
+                  Auto_Shrink  => True);
 
       Widget_Callback.Connect
         (Editor, "destroy",
@@ -166,20 +226,20 @@ package body Project_Properties is
 
       Gtk_New (Label, -"Name:");
       Set_Alignment (Label, 0.0, 0.0);
-      Attach (Table, Label, 0, 1, 0, 1, Xoptions => Fill);
+      Attach (Table, Label, 0, 1, 0, 1, Xoptions => Fill, Yoptions => 0);
       Gtk_New (Editor.Name);
-      Attach (Table, Editor.Name, 1, 3, 0, 1);
+      Attach (Table, Editor.Name, 1, 3, 0, 1, Yoptions => 0);
 
       Set_Text (Editor.Name, Project_Name (Project_View));
 
       Gtk_New (Label, -"Path:");
       Set_Alignment (Label, 0.0, 0.0);
-      Attach (Table, Label, 0, 1, 1, 2, Xoptions => Fill);
+      Attach (Table, Label, 0, 1, 1, 2, Xoptions => Fill, Yoptions => 0);
       Gtk_New (Editor.Path);
-      Attach (Table, Editor.Path, 1, 2, 1, 2);
-      Set_Width_Chars (Editor.Path, 40);
+      Attach (Table, Editor.Path, 1, 2, 1, 2, Yoptions => 0);
+      Set_Width_Chars (Editor.Path, 20);
       Gtk_New (Button2, -"Browse");
-      Attach (Table, Button2, 2, 3, 1, 2, Xoptions => 0);
+      Attach (Table, Button2, 2, 3, 1, 2, Xoptions => 0, Yoptions => 0);
 
       Widget_Callback.Object_Connect
         (Button2, "clicked",
@@ -187,34 +247,78 @@ package body Project_Properties is
          Slot_Object => Editor);
 
       Gtk_New (Editor.Convert, "Convert paths to absolute");
-      Attach (Table, Editor.Convert, 1, 2, 2, 3);
+      Attach (Table, Editor.Convert, 1, 2, 2, 3, Yoptions => 0);
 
       Set_Active (Editor.Convert, True);
       Set_Text (Editor.Path, Dir_Name (Project_Path (Project_View)));
 
+
       Gtk_New (Label, -"Main files:");
       Set_Alignment (Label, 0.0, 0.0);
       Attach (Table, Label, 0, 1, 3, 4, Xoptions => Fill);
-      Gtk_New (Editor.Executables);
-      Attach (Table, Editor.Executables, 1, 3, 3, 4);
 
-      Set_Sensitive (Editor.Executables, False);
-      Set_Sensitive (Label, False);
+      Gtk_New_Hbox (Box, Homogeneous => False);
+      Attach (Table, Box, 1, 3, 3, 4);
+
+      --  Create the module and the associated view
+      Gtk_New (Editor.Executables, (1 => GType_String));
+      Gtk_New (Editor.Tree_View, Model => Editor.Executables);
+      Set_Mode (Get_Selection (Editor.Tree_View), Selection_Multiple);
+      Set_Headers_Visible (Editor.Tree_View, False);
+      Gtk_New (Renderer);
+      Gtk_New (Column);
+      Pack_Start (Column, Renderer, Expand => True);
+      Add_Attribute (Column, Renderer, "text", 0);
+      Col := Append_Column (Editor.Tree_View, Column);
+
+      Gtk_New (Scrolled);
+      Set_Policy (Scrolled, Policy_Automatic, Policy_Automatic);
+      Set_Shadow_Type (Scrolled, Shadow_In);
+      Add (Scrolled, Editor.Tree_View);
+      Pack_Start (Box, Scrolled, Expand => True, Fill => True);
+      Gtk_New (Bbox);
+      Set_Layout (Bbox, Buttonbox_Start);
+      Pack_Start (Box, Bbox, Expand => False, Fill => False);
+
+      Gtk_New (Button2, -"Add");
+      Pack_Start (Bbox, Button2);
+      Widget_Callback.Object_Connect
+        (Button2, "clicked",
+         Widget_Callback.To_Marshaller (Add_Main_Unit'Access),
+         Slot_Object => Editor);
+
+      Gtk_New (Button2, -"Remove");
+      Pack_Start (Bbox, Button2);
+      Widget_Callback.Object_Connect
+        (Button2, "clicked",
+         Widget_Callback.To_Marshaller (Remove_Main_Unit'Access),
+         Slot_Object => Editor);
+
+      declare
+         Mains : Argument_List := Get_Attribute_Value
+           (Project_View,
+            Attribute_Name => Main_Attribute);
+      begin
+         for M in Mains'Range loop
+            Add_Main_File (Editor, Mains (M).all);
+         end loop;
+         Free (Mains);
+      end;
 
       Gtk_New (Label, -"Gnatls:");
       Set_Alignment (Label, 0.0, 0.0);
-      Attach (Table, Label, 0, 1, 4, 5, Xoptions => Fill);
+      Attach (Table, Label, 0, 1, 4, 5, Xoptions => Fill, Yoptions => 0);
       Gtk_New (Editor.Gnatls);
-      Attach (Table, Editor.Gnatls, 1, 3, 4, 5);
+      Attach (Table, Editor.Gnatls, 1, 3, 4, 5, Yoptions => 0);
       Set_Text
         (Editor.Gnatls,
          Get_Attribute_Value (Project_View, Gnatlist_Attribute, Ide_Package));
 
       Gtk_New (Label, -"Debugger:");
       Set_Alignment (Label, 0.0, 0.0);
-      Attach (Table, Label, 0, 1, 5, 6, Xoptions => Fill);
+      Attach (Table, Label, 0, 1, 5, 6, Xoptions => Fill, Yoptions => 0);
       Gtk_New (Editor.Debugger);
-      Attach (Table, Editor.Debugger, 1, 3, 5, 6);
+      Attach (Table, Editor.Debugger, 1, 3, 5, 6, Yoptions => 0);
       Set_Text
         (Editor.Debugger,
          Get_Attribute_Value
@@ -225,10 +329,10 @@ package body Project_Properties is
 
       Gtk_New (Label, (-"Languages") & " & " & ASCII.LF & (-"Compilers:"));
       Set_Alignment (Label, 0.0, 0.0);
-      Attach (Table, Label, 0, 1, 6, 7, Xoptions => Fill);
+      Attach (Table, Label, 0, 1, 6, 7, Xoptions => Fill, Yoptions => 0);
       Gtk_New (Lang, Rows => Languages'Length, Columns => 2,
                Homogeneous => False);
-      Attach (Table, Lang, 1, 3, 6, 7);
+      Attach (Table, Lang, 1, 3, 6, 7, Yoptions => 0);
 
       Editor.Compilers := new Widget_Array (Languages'Range);
       Editor.Languages := new Widget_Array (Languages'Range);
@@ -274,6 +378,39 @@ package body Project_Properties is
       Free (Project_Languages);
    end Initialize;
 
+   -------------------
+   -- Add_Main_Unit --
+   -------------------
+
+   procedure Add_Main_Unit (Editor : access Gtk_Widget_Record'Class) is
+      File : constant String := Select_File
+        (Title => -"Select the main unit to add");
+      --  ??? Would be nice to allow the selection of multiple files from the
+      --  ??? same dialog.
+   begin
+      Add_Main_File (Properties_Editor (Editor), Base_Name (File));
+   end Add_Main_Unit;
+
+   ----------------------
+   -- Remove_Main_Unit --
+   ----------------------
+
+   procedure Remove_Main_Unit (Editor : access Gtk_Widget_Record'Class) is
+      Ed : Properties_Editor := Properties_Editor (Editor);
+      Iter, Tmp : Gtk_Tree_Iter;
+      Selection : Gtk_Tree_Selection := Get_Selection (Ed.Tree_View);
+   begin
+      Iter := Get_Iter_First (Ed.Executables);
+      while Iter /= Null_Iter loop
+         Tmp := Iter;
+         Next (Ed.Executables, Iter);
+
+         if Iter_Is_Selected (Selection, Tmp) then
+            Remove (Ed.Executables, Tmp);
+         end if;
+      end loop;
+   end Remove_Main_Unit;
+
    ---------------------
    -- Browse_Location --
    ---------------------
@@ -288,6 +425,44 @@ package body Project_Properties is
          Set_Text (Ed.Path, Name);
       end if;
    end Browse_Location;
+
+   --------------
+   -- Is_Equal --
+   --------------
+
+   function Is_Equal
+     (List1, List2   : Argument_List;
+      Case_Sensitive : Boolean := True) return Boolean is
+   begin
+      if List1'Length /= List2'Length then
+         return False;
+
+      else
+         declare
+            L1 : Argument_List := List1;
+            L2 : Argument_List := List2;
+         begin
+            for A in L1'Range loop
+               for B in L2'Range loop
+                  if L2 (B) /= null and then
+                    ((Case_Sensitive and then L1 (A).all = L2 (B).all)
+                     or else
+                     (not Case_Sensitive
+                      and then To_Lower (L1 (A).all) =
+                               To_Lower (L2 (B).all)))
+                  then
+                     L1 (A) := null;
+                     L2 (B) := null;
+                     exit;
+                  end if;
+               end loop;
+            end loop;
+
+            return L1 = (L1'Range => null)
+              and then L2 = (L2'Range => null);
+         end;
+      end if;
+   end Is_Equal;
 
    ---------------------
    -- Edit_Properties --
@@ -368,6 +543,37 @@ package body Project_Properties is
             end if;
 
             declare
+               Num_Children : constant Gint := N_Children (Editor.Executables);
+               New_Mains : Argument_List (1 .. Integer (Num_Children));
+               Iter : Gtk_Tree_Iter := Get_Iter_First (Editor.Executables);
+               N : Natural := New_Mains'First;
+               Old_Mains : Argument_List := Get_Attribute_Value
+                 (Project_View,
+                  Attribute_Name => Main_Attribute);
+            begin
+               --  First get the list of main files
+               while Iter /= Null_Iter loop
+                  New_Mains (N) := new String'
+                    (Get_String (Editor.Executables, Iter, 0));
+                  N := N + 1;
+                  Next (Editor.Executables, Iter);
+               end loop;
+
+               if not Is_Equal (Old_Mains, New_Mains) then
+                  Changed := True;
+                  Update_Attribute_Value_In_Scenario
+                    (Project  => Project,
+                     Pkg_Name => "",
+                     Scenario_Variables => Scenario_Variables (Kernel),
+                     Attribute_Name => Main_Attribute,
+                     Values => New_Mains);
+               end if;
+
+               Free (Old_Mains);
+               Free (New_Mains);
+            end;
+
+            declare
                New_Languages : Argument_List (Editor.Languages'Range);
             begin
                Num_Languages := New_Languages'First;
@@ -397,22 +603,12 @@ package body Project_Properties is
                   end if;
                end loop;
 
-               if Num_Languages - New_Languages'First /=
-                 Project_Languages'Length
+               if not Is_Equal
+                 (New_Languages (New_Languages'First .. Num_Languages - 1),
+                  Project_Languages,
+                  Case_Sensitive => False)
                then
                   Changed := True;
-               else
-                  for N in New_Languages'First .. Num_Languages - 1 loop
-                     if New_Languages (N).all /= Project_Languages
-                       (N + Project_Languages'First - New_Languages'First).all
-                     then
-                        Changed := True;
-                        exit;
-                     end if;
-                  end loop;
-               end if;
-
-               if Changed then
                   Update_Attribute_Value_In_Scenario
                     (Project           => Project,
                      Pkg_Name          => "",
