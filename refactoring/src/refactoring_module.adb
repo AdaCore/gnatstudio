@@ -23,7 +23,7 @@ with Glide_Kernel.Contexts; use Glide_Kernel.Contexts;
 with Glide_Kernel.Modules;  use Glide_Kernel.Modules;
 with Glide_Intl;            use Glide_Intl;
 with Refactoring.Rename;    use Refactoring.Rename;
-with Src_Info.Queries;      use Src_Info.Queries;
+with Entities;              use Entities;
 with String_Utils;          use String_Utils;
 with Glib.Object;           use Glib.Object;
 with Gtk.Menu;              use Gtk.Menu;
@@ -69,7 +69,7 @@ package body Refactoring_Module is
 
       Entity := Get_Entity (Selection);
 
-      if Entity = No_Entity_Information then
+      if Entity = null then
          return;
       end if;
 

@@ -40,6 +40,7 @@ with Glide_Kernel.Hooks;       use Glide_Kernel.Hooks;
 with Glide_Kernel.Modules;     use Glide_Kernel.Modules;
 with Glide_Kernel.Console;     use Glide_Kernel.Console;
 with Glide_Kernel.Contexts;    use Glide_Kernel.Contexts;
+with Glide_Kernel.Project;     use Glide_Kernel.Project;
 with Glide_Kernel.Scripts;     use Glide_Kernel.Scripts;
 with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
 with Glide_Kernel.Task_Manager; use Glide_Kernel.Task_Manager;
@@ -48,6 +49,8 @@ with Glide_Kernel.Standard_Hooks; use Glide_Kernel.Standard_Hooks;
 
 with Traces;                 use Traces;
 with Basic_Types;            use Basic_Types;
+with Projects;               use Projects;
+with Projects.Registry;      use Projects.Registry;
 
 with Codefix;                use Codefix;
 with Codefix.Graphics;       use Codefix.Graphics;
@@ -261,9 +264,17 @@ package body Codefix_Module is
    ----------------------
 
    function Get_Body_Or_Spec
-     (Text : GPS_Navigator; File_Name : Virtual_File) return Virtual_File is
+     (Text : GPS_Navigator; File_Name : Virtual_File) return Virtual_File
+   is
+      Kernel : constant Kernel_Handle := Get_Kernel (Text);
    begin
-      return Other_File_Name (Get_Kernel (Text), File_Name);
+      return Create
+        (Name           => Other_File_Base_Name
+           (Get_Project_From_File
+              (Project_Registry (Get_Registry (Kernel)), File_Name),
+            File_Name),
+         Kernel         => Kernel,
+         Use_Object_Path => False);
    end Get_Body_Or_Spec;
 
    ------------

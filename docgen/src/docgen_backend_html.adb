@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2003                         --
+--                        Copyright (C) 2003-2004                    --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -27,8 +27,8 @@ with Glide_Kernel.Project; use Glide_Kernel.Project;
 with File_Utils;
 
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
-with Src_Info;                  use Src_Info;
-with Src_Info.Queries;          use Src_Info.Queries;
+with Entities;                  use Entities;
+with Entities.Queries;          use Entities.Queries;
 
 package body Docgen_Backend_HTML is
 
@@ -57,8 +57,8 @@ package body Docgen_Backend_HTML is
    --  always use the Sloc_Index values.
 
    function Get_Html_File_Name
-     (Kernel : access Kernel_Handle_Record'Class;
-      File   : Virtual_File_Access) return String;
+     (Kernel    : access Kernel_Handle_Record'Class;
+      File_Name : String) return String;
    --  Create a .htm file name from the full path of the source file
    --  for ex.: from util/src/docgen.adb the name docgen_adb.htm is created
 
@@ -70,16 +70,14 @@ package body Docgen_Backend_HTML is
    --  Set a "<a name="line_number"> <a>" in front of each line in the
    --  given strings (if in body file) and writes it to the doc file.
 
-   procedure Print_Ref_List_HTML
-     (Kernel      : access Kernel_Handle_Record'Class;
-      File        : File_Descriptor;
-      Local_List  : Type_Reference_List.List;
-      Called_Subp : Boolean;
-      Level       : Natural;
-      Indent      : Natural);
-   --  For the current entity which is a subprogram, print the list
-   --  of called subprograms (if Called_Sub = True) or the list of
-   --  subprograms which call it (if Called_Sub = False).
+   procedure Output_Entity
+     (Space             : String;
+      File              : File_Descriptor;
+      Kernel            : access Kernel_Handle_Record'Class;
+      Options           : All_Options;
+      Entity            : Entity_Information;
+      Processed_Sources : Type_Source_File_Table.HTable);
+   --  Print a reference to a specific entity, possibly with an hyper-link.
 
    procedure Replace_HTML_Tags
      (Input_Text : String;
@@ -92,15 +90,15 @@ package body Docgen_Backend_HTML is
    --------------
 
    procedure Doc_Open
-     (B      : access Backend_HTML;
-      Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
-      File   : File_Descriptor;
-      Info   : in out Docgen.Doc_Info_Open)
+     (B          : access Backend_HTML;
+      Kernel     : access Glide_Kernel.Kernel_Handle_Record'Class;
+      File       : File_Descriptor;
+      Open_Title : String)
    is
       pragma Unreferenced (B, Kernel);
    begin
       Put_Line (File, "<HTML>" & ASCII.LF & "<HEAD>");
-      Put_Line (File, "<TITLE>" & Info.Open_Title.all & "</TITLE>");
+      Put_Line (File, "<TITLE>" & Open_Title & "</TITLE>");
       Put_Line
         (File,
          "<META NAME=""generator"" CONTENT=""DocGen"">" & ASCII.LF &
@@ -117,10 +115,9 @@ package body Docgen_Backend_HTML is
    procedure Doc_Close
      (B      : access Backend_HTML;
       Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
-      File   : File_Descriptor;
-      Info   : in out Docgen.Doc_Info_Base)
+      File   : File_Descriptor)
    is
-      pragma Unreferenced (B, Kernel, Info);
+      pragma Unreferenced (B, Kernel);
    begin
       Put_Line (File, "</BODY>" & ASCII.LF & "</HTML>");
    end Doc_Close;
@@ -130,11 +127,11 @@ package body Docgen_Backend_HTML is
    ------------------
 
    procedure Doc_Subtitle
-     (B      : access Backend_HTML;
-      Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
-      File   : File_Descriptor;
-      Info   : in out Docgen.Doc_Info_Subtitle;
-      Level  : Natural)
+     (B                : access Backend_HTML;
+      Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
+      File             : File_Descriptor;
+      Level            : Natural;
+      Subtitle_Name    : String)
    is
       pragma Unreferenced (Kernel);
    begin
@@ -146,7 +143,7 @@ package body Docgen_Backend_HTML is
          & "</PRE></TD>"
          & "<TD bgcolor=""#9999FF"">"
          & "<H" & Image (Level) & "><B>"
-         & Info.Subtitle_Name.all
+         & Subtitle_Name
          & "</B></H" & Image (Level) & ">"
          & "</TD></TR></TABLE>");
    end Doc_Subtitle;
@@ -156,17 +153,15 @@ package body Docgen_Backend_HTML is
    ----------------------
 
    procedure Doc_Package_Desc
-     (B                : access Backend_HTML;
-      Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
-      File             : in File_Descriptor;
-      Info             : in out Docgen.Doc_Info_Package_Desc;
-      Level            : Natural)
+     (B           : access Backend_HTML;
+      Kernel      : access Glide_Kernel.Kernel_Handle_Record'Class;
+      File        : File_Descriptor;
+      Level       : Natural;
+      Description : String)
    is
       pragma Unreferenced (B, Kernel, Level);
    begin
-      Put_Line
-        (File,
-         "<H4><PRE>" & Info.Package_Desc_Description.all & "</PRE></H4>");
+      Put_Line (File, "<H4><PRE>" & Description & "</PRE></H4>");
    end Doc_Package_Desc;
 
    -----------------
@@ -174,16 +169,19 @@ package body Docgen_Backend_HTML is
    -----------------
 
    procedure Doc_Package
-     (B                : access Backend_HTML;
-      Kernel           : access Kernel_Handle_Record'Class;
-      File             : File_Descriptor;
-      List_Ref_In_File : in out List_Reference_In_File.List;
-      Info             : in out Doc_Info_Package;
-      Level            : Natural) is
+     (B                   : access Backend_HTML;
+      Kernel              : access Glide_Kernel.Kernel_Handle_Record'Class;
+      File                : in File_Descriptor;
+      List_Ref_In_File    : in out List_Reference_In_File.List;
+      Source_File_List    : Type_Source_File_Table.HTable;
+      Options             : All_Options;
+      Level               : Natural;
+      Package_Entity      : Entity_Information;
+      Package_Header      : String) is
    begin
       Put_Line
         (File, "  <A NAME="""
-         & Image (Get_Declaration_Line_Of (Info.Package_Entity.Entity))
+         & Image (Get_Line (Get_Declaration_Of (Package_Entity)))
          & """></A><BR>");
       Put_Line
         (File,
@@ -193,17 +191,19 @@ package body Docgen_Backend_HTML is
          & (1 .. Level * Get_Indent (B.all) => ' ')
          & "</PRE></TD>"
          & "<TD bgcolor=""#DDDDDD""><PRE>");
-      Format_File
+      Format_Code
         (B,
          Kernel,
          File,
          List_Ref_In_File,
-         Info.Package_Header.all,
-         Get_Declaration_File_Of (Info.Package_Entity.Entity).all,
-         Get_Declaration_Line_Of (Info.Package_Entity.Entity),
+         Package_Header,
+         Get_Filename
+           (Get_File (Get_Declaration_Of (Package_Entity))),
+         Get_Line (Get_Declaration_Of (Package_Entity)),
          No_Body_Line_Needed,
          False,
-         Info,
+         Options,
+         Source_File_List,
          Level,
          Get_Indent (B.all));
       Put_Line (File, "</PRE></TD></TR></TABLE>");
@@ -214,20 +214,22 @@ package body Docgen_Backend_HTML is
    ----------------------------
 
    procedure Doc_Package_Open_Close
-     (B                : access Backend_HTML;
-      Kernel           : access Kernel_Handle_Record'Class;
-      File             : File_Descriptor;
-      List_Ref_In_File : in out List_Reference_In_File.List;
-      Info             : in out Doc_Info_Package_Open_Close;
-      Level            : Natural) is
+     (B                 : access Backend_HTML;
+      Kernel            : access Glide_Kernel.Kernel_Handle_Record'Class;
+      File              : in File_Descriptor;
+      List_Ref_In_File  : in out List_Reference_In_File.List;
+      Source_File_List  : Type_Source_File_Table.HTable;
+      Options           : All_Options;
+      Level             : Natural;
+      Entity            : Entity_Information;
+      Header            : String) is
    begin
       --  This package contains declarations.
       --  Here we print either the header (package ... is)
       --  or the footer (end ...;)
       Put_Line
         (File, "  <A NAME="""
-         & Image (Get_Declaration_Line_Of
-                    (Info.Package_Open_Close_Entity.Entity))
+         & Image (Get_Line (Get_Declaration_Of (Entity)))
          & """></A><BR>");
       Put_Line
         (File,
@@ -237,16 +239,17 @@ package body Docgen_Backend_HTML is
          & (1 .. Level * Get_Indent (B.all) => ' ')
          & "</PRE></TD>"
          & "<TD bgcolor=""#DDDDDD""><PRE>");
-      Format_File
+      Format_Code
         (B,
          Kernel,
          File,
          List_Ref_In_File,
-         Info.Package_Open_Close_Header.all,
-         Get_Declaration_File_Of (Info.Package_Open_Close_Entity.Entity).all,
-         Get_Declaration_Line_Of (Info.Package_Open_Close_Entity.Entity),
+         Header,
+         Get_Filename (Get_File (Get_Declaration_Of (Entity))),
+         Get_Line (Get_Declaration_Of (Entity)),
          No_Body_Line_Needed,
-         False, Info, Level, Get_Indent (B.all));
+         False, Options, Source_File_List, Level,
+         Get_Indent (B.all));
       Put_Line (File, "</PRE></TD></TR></TABLE>");
    end Doc_Package_Open_Close;
 
@@ -256,11 +259,15 @@ package body Docgen_Backend_HTML is
 
    procedure Doc_With
      (B                : access Backend_HTML;
-      Kernel           : access Kernel_Handle_Record'Class;
-      File             : File_Descriptor;
+      Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
+      File             : in File_Descriptor;
       List_Ref_In_File : in out List_Reference_In_File.List;
-      Info             : in out Doc_Info_With;
-      Level            : Natural)
+      Source_File_List : Type_Source_File_Table.HTable;
+      Options          : All_Options;
+      Level            : Natural;
+      With_Header      : String;
+      With_File        : VFS.Virtual_File;
+      With_Header_Line : Natural)
    is
       pragma Unreferenced (Level);
    begin
@@ -272,16 +279,16 @@ package body Docgen_Backend_HTML is
          & (1 .. Get_Indent (B.all) => ' ')
          & "</PRE></TD>"
          & "<TD bgcolor=""#DDDDDD""><PRE>");
-      Format_File
+      Format_Code
         (B,
          Kernel,
          File,
          List_Ref_In_File,
-         Info.With_Header.all,
-         Info.With_File.all,
-         Info.With_Header_Line,
+         With_Header,
+         With_File,
+         With_Header_Line,
          No_Body_Line_Needed,
-         False, Info, 0, Get_Indent (B.all));
+         False, Options, Source_File_List, 0, Get_Indent (B.all));
       Put_Line (File, "</PRE></TD></TR></TABLE>");
    end Doc_With;
 
@@ -291,15 +298,18 @@ package body Docgen_Backend_HTML is
 
    procedure Doc_Var
      (B                : access Backend_HTML;
-      Kernel           : access Kernel_Handle_Record'Class;
-      File             : File_Descriptor;
+      Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
+      File             : in File_Descriptor;
       List_Ref_In_File : in out List_Reference_In_File.List;
-      Info             : in out Doc_Info_Var;
-      Level            : Natural) is
+      Source_File_List : Type_Source_File_Table.HTable;
+      Options          : All_Options;
+      Level            : Natural;
+      Entity           : Entity_Information;
+      Header           : String) is
    begin
       Put_Line
         (File, "  <A NAME="""
-         & Image (Get_Declaration_Line_Of (Info.Var_Entity.Entity))
+         & Image (Get_Line (Get_Declaration_Of (Entity)))
          & """></A><BR>");
       Put_Line
         (File,
@@ -309,17 +319,18 @@ package body Docgen_Backend_HTML is
          & (1 .. Level * Get_Indent (B.all) => ' ')
          & "</PRE></TD>"
          & "<TD bgcolor=""#DDDDDD""><PRE>");
-      Format_File
+      Format_Code
         (B,
          Kernel,
          File,
          List_Ref_In_File,
-         Info.Var_Header.all,
-         Get_Declaration_File_Of (Info.Var_Entity.Entity).all,
-         Get_Declaration_Line_Of (Info.Var_Entity.Entity),
+         Header,
+         Get_Filename (Get_File (Get_Declaration_Of (Entity))),
+         Get_Line (Get_Declaration_Of (Entity)),
          No_Body_Line_Needed,
          False,
-         Info,
+         Options,
+         Source_File_List,
          Level,
          Get_Indent (B.all));
       Put_Line (File, "</PRE></TD></TR></TABLE>");
@@ -331,15 +342,18 @@ package body Docgen_Backend_HTML is
 
    procedure Doc_Exception
      (B                : access Backend_HTML;
-      Kernel           : access Kernel_Handle_Record'Class;
+      Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
       File             : File_Descriptor;
       List_Ref_In_File : in out List_Reference_In_File.List;
-      Info             : in out Doc_Info_Exception;
-      Level            : Natural) is
+      Source_File_List : Type_Source_File_Table.HTable;
+      Options          : All_Options;
+      Level            : Natural;
+      Entity           : Entity_Information;
+      Header           : String) is
    begin
       Put_Line
         (File, "  <A NAME="""
-         & Image (Get_Declaration_Line_Of (Info.Exception_Entity.Entity))
+         & Image (Get_Line (Get_Declaration_Of (Entity)))
          & """></A><BR>");
       Put_Line
         (File,
@@ -349,16 +363,17 @@ package body Docgen_Backend_HTML is
          & (1 .. Level * Get_Indent (B.all) => ' ')
          & "</PRE></TD>"
          & "<TD bgcolor=""#DDDDDD""><PRE>");
-      Format_File
+      Format_Code
         (B,
          Kernel,
          File,
          List_Ref_In_File,
-         Info.Exception_Header.all,
-         Get_Declaration_File_Of (Info.Exception_Entity.Entity).all,
-         Get_Declaration_Line_Of (Info.Exception_Entity.Entity),
+         Header,
+         Get_Filename (Get_File (Get_Declaration_Of (Entity))),
+         Get_Line (Get_Declaration_Of (Entity)),
          No_Body_Line_Needed,
-         False, Info, Level, Get_Indent (B.all));
+         False, Options, Source_File_List, Level,
+         Get_Indent (B.all));
       Put_Line (File, "</PRE></TD></TR></TABLE>");
    end Doc_Exception;
 
@@ -368,15 +383,18 @@ package body Docgen_Backend_HTML is
 
    procedure Doc_Type
      (B                : access Backend_HTML;
-      Kernel           : access Kernel_Handle_Record'Class;
+      Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
       File             : File_Descriptor;
       List_Ref_In_File : in out List_Reference_In_File.List;
-      Info             : in out Doc_Info_Type;
-      Level            : Natural) is
+      Source_File_List : Type_Source_File_Table.HTable;
+      Options          : All_Options;
+      Level            : Natural;
+      Entity           : Entity_Information;
+      Header           : String) is
    begin
       Put_Line
         (File, "  <A NAME="""
-         & Image (Get_Declaration_Line_Of (Info.Type_Entity.Entity))
+         & Image (Get_Line (Get_Declaration_Of (Entity)))
          & """></A><BR>");
       Put_Line
         (File,
@@ -386,16 +404,17 @@ package body Docgen_Backend_HTML is
          & (1 .. Level * Get_Indent (B.all) => ' ')
          & "</PRE></TD>"
          & "<TD bgcolor=""#DDDDDD""><PRE>");
-      Format_File
+      Format_Code
         (B,
          Kernel,
          File,
          List_Ref_In_File,
-         Info.Type_Header.all,
-         Get_Declaration_File_Of (Info.Type_Entity.Entity).all,
-         Get_Declaration_Line_Of (Info.Type_Entity.Entity),
+         Header,
+         Get_Filename (Get_File (Get_Declaration_Of (Entity))),
+         Get_Line (Get_Declaration_Of (Entity)),
          No_Body_Line_Needed,
-         False, Info, Level, Get_Indent (B.all));
+         False, Options, Source_File_List, Level,
+         Get_Indent (B.all));
       Put_Line (File, "</PRE></TD></TR></TABLE>");
    end Doc_Type;
 
@@ -407,153 +426,84 @@ package body Docgen_Backend_HTML is
      (B                : access Backend_HTML;
       Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
       File             : File_Descriptor;
-      Info             : in out Doc_Info_Tagged_Type;
-      Level            : Natural)
+      Source_File_List : Type_Source_File_Table.HTable;
+      Level            : Natural;
+      Entity           : Entity_Information)
    is
       pragma Unreferenced (Kernel);
-      use Type_List_Tagged_Element;
-      use List_Entity_Handle;
-      Parent_Node : List_Entity_Handle.List_Node;
-      Child_Node  : List_Entity_Handle.List_Node;
-      Entity      : Entity_Handle;
-      F           : VFS.Virtual_File_Access;
       Space       : constant String :=
-        (1 .. Level * Get_Indent (B.all) => ' ');
+         (1 .. Level * Get_Indent (B.all) => ' ');
 
+      procedure Output_Entity (Entity : Entity_Information);
+
+      procedure Output_Entity (Entity : Entity_Information) is
+         F : constant Source_File := Get_File (Get_Declaration_Of (Entity));
+         Info : constant Source_File_Information :=
+            Type_Source_File_Table.Get (Source_File_List, F);
+      begin
+         if Info /= No_Source_File_Information then
+            Put_Line
+              (File, "<TR><TD><PRE>" & Space & "<A HREF="""
+               & Info.Doc_File_Name.all
+               & "#" & Image (Get_Line (Get_Declaration_Of (Entity)))
+               & """ TARGET=""main"">"
+               & Get_Name (Entity)
+               & "</A> at&nbsp;"
+               & Base_Name (Get_Filename (F))
+               & "&nbsp;"
+               & Image (Get_Line (Get_Declaration_Of (Entity)))
+               & ":"
+               & Image (Get_Column (Get_Declaration_Of (Entity)))
+               & "</PRE></TD><TR>");
+
+         else
+            Put_Line
+              (File, "<TR><TD><PRE>" & Space
+               & Get_Name (Entity)
+               & " at&nbsp;"
+               & Base_Name (Get_Filename (F))
+               & "&nbsp;"
+               & Image (Get_Line (Get_Declaration_Of (Entity)))
+               & ":"
+               & Image (Get_Column (Get_Declaration_Of (Entity)))
+               & "</PRE></TD><TR>");
+         end if;
+      end Output_Entity;
+
+      Parents : constant Entity_Information_Array := Get_Parent_Types (Entity);
+      Child   : Child_Type_Iterator;
    begin
       Put_Line
         (File, "<TABLE BGCOLOR=""white"" WIDTH=""100%""><TR><TD>");
 
-      --  Print parents
-      if Info.Tagged_Entity.Number_Of_Parents > 0 then
-         --  There is at least one parent
+      if Parents'Length > 0 then
          Put_Line
-           (File, "<TR><TD><PRE>"
-            & Space
-            & "<B>Parents</B>"
-            & "</PRE></TD></TR>");
-         Parent_Node := List_Entity_Handle.First
-           (Info.Tagged_Entity.My_Parents);
-
-         while Parent_Node /= List_Entity_Handle.Null_Node loop
-            Entity := List_Entity_Handle.Data (Parent_Node);
-
-            if Entity /= null then
-               F := Get_Declaration_File_Of (Entity.all);
-
-               if Source_File_In_List (Info.Tagged_Source_File_List, F) then
-                  --  Linkage is possible
-                  Put_Line
-                    (File, "<TR><TD><PRE>"
-                     & Space
-                     & "<A HREF="""
-                     & Base_Name
-                       (Get_Doc_File_Name
-                          (F,
-                           Info.Tagged_Directory.all,
-                           Info.Tagged_Suffix.all))
-                     & "#" & Image (Get_Declaration_Line_Of (Entity.all))
-                     & """ TARGET=""main"">"
-                     & Get_Name (Entity.all)
-                     & "</A> at&nbsp;"
-                     & Base_Name (F.all)
-                     & "&nbsp;"
-                     & Image (Get_Declaration_Line_Of (Entity.all))
-                     & ":"
-                     & Image (Get_Declaration_Column_Of (Entity.all))
-                     & "</PRE></TD><TR>");
-
-               else
-                  --  No link for this parent
-                  Put_Line
-                    (File, "<TR><TD><PRE>"
-                     & Space
-                     & Get_Name (Entity.all)
-                     & " at&nbsp;"
-                     & Base_Name (F.all)
-                     & "&nbsp;"
-                     & Image (Get_Declaration_Line_Of (Entity.all))
-                     & ":"
-                     & Image (Get_Declaration_Column_Of (Entity.all))
-                     & "</PRE></TD><TR>");
-               end if;
-            end if;
-
-            Parent_Node := List_Entity_Handle.Next (Parent_Node);
+           (File, "<TR><TD><PRE>" & Space & "<B>Parents</B></PRE></TD></TR>");
+         for P in Parents'Range loop
+            Output_Entity (Parents (P));
          end loop;
 
       else
          --  There's no parent
          Put_Line
            (File, "<TR><TD><PRE>"
-            & Space
-            & "<B>No parent</B>"
-            & "</PRE></TD></TR>");
+            & Space & "<B>No parent</B></PRE></TD></TR>");
       end if;
 
-      --  Print chidren
-      if Info.Tagged_Entity.Number_Of_Children > 0 then
-         --  There is at least one child
-         Put_Line
-           (File, "<TR><TD><PRE>"
-            & Space
-            & "<B>Children</B>"
-            & "</PRE></TD></TR>");
-
-         Child_Node := List_Entity_Handle.First
-           (Info.Tagged_Entity.My_Children);
-
-         while Child_Node /= List_Entity_Handle.Null_Node loop
-            Entity := List_Entity_Handle.Data (Child_Node);
-
-            if Entity /= null then
-               F := Get_Declaration_File_Of (Entity.all);
-
-               if Source_File_In_List (Info.Tagged_Source_File_List, F) then
-                  --  Linkage is possible
-
-                  Put_Line
-                    (File, "<TR><TD><PRE>"
-                     & Space
-                     & "<A HREF="""
-                     & Base_Name
-                       (Get_Doc_File_Name
-                          (F,
-                           Info.Tagged_Directory.all,
-                           Info.Tagged_Suffix.all))
-                     & "#" & Image (Get_Declaration_Line_Of (Entity.all))
-                     & """ TARGET=""main"">"
-                     & Get_Name (Entity.all)
-                     & "</A> at&nbsp;"
-                     & Base_Name (F.all)
-                     & "&nbsp;"
-                     & Image (Get_Declaration_Line_Of (Entity.all))
-                     & ":"
-                     & Image (Get_Declaration_Column_Of (Entity.all))
-                     & "</PRE></TD><TR>");
-
-               else
-                  --  No link for this child
-                  Put_Line
-                    (File, "<TR><TD><PRE>"
-                     & Space
-                     & Get_Name (Entity.all)
-                     & " at&nbsp;"
-                     & Base_Name (F.all)
-                     & "&nbsp;"
-                     & Image (Get_Declaration_Line_Of (Entity.all))
-                     & ":"
-                     & Image (Get_Declaration_Column_Of (Entity.all))
-                     & "</PRE></TD><TR>");
-               end if;
-            end if;
-
-            Child_Node := List_Entity_Handle.Next (Child_Node);
-         end loop;
-      else
-         --  There's no child
+      Get_Child_Types (Iter => Child, Entity => Entity);
+      if At_End (Child) then
          Put_Line
            (File, "<TR><TD><PRE>" & Space & "<B>No child</B></PRE></TD></TR>");
+      else
+         Put_Line
+           (File, "<TR><TD><PRE>" & Space & "<B>Children</B></PRE></TD></TR>");
+         while not At_End (Child) loop
+            if Get (Child) /= null then
+               Output_Entity (Get (Child));
+            end if;
+            Next (Child);
+         end loop;
+         Destroy (Child);
       end if;
 
       Put_Line (File, "</TD></TR></TABLE>");
@@ -565,16 +515,19 @@ package body Docgen_Backend_HTML is
 
    procedure Doc_Entry
      (B                : access Backend_HTML;
-      Kernel           : access Kernel_Handle_Record'Class;
+      Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
       File             : File_Descriptor;
       List_Ref_In_File : in out List_Reference_In_File.List;
-      Info             : in out Doc_Info_Entry;
-      Level            : Natural) is
+      Source_File_List : Type_Source_File_Table.HTable;
+      Options          : All_Options;
+      Level            : Natural;
+      Entity           : Entity_Information;
+      Header           : String) is
    begin
       Put_Line
         (File,
          "  <A NAME="""
-         & Image (Get_Declaration_Line_Of (Info.Entry_Entity.Entity))
+         & Image (Get_Line (Get_Declaration_Of (Entity)))
          & """></A><BR>");
       Put_Line
         (File,
@@ -584,131 +537,145 @@ package body Docgen_Backend_HTML is
          & (1 .. Level * Get_Indent (B.all) => ' ')
          & "</PRE></TD>"
          & "<TD bgcolor=""#DDDDDD""><PRE>");
-      Format_File
+      Format_Code
         (B,
          Kernel,
          File,
          List_Ref_In_File,
-         Info.Entry_Header.all,
-         Get_Declaration_File_Of (Info.Entry_Entity.Entity).all,
-         Get_Declaration_Line_Of (Info.Entry_Entity.Entity),
+         Header,
+         Get_Filename (Get_File (Get_Declaration_Of (Entity))),
+         Get_Line (Get_Declaration_Of (Entity)),
          No_Body_Line_Needed,
-         False, Info, Level, Get_Indent (B.all));
+         False, Options, Source_File_List, Level,
+         Get_Indent (B.all));
       Put_Line (File, "</PRE></TD></TR></TABLE>");
    end Doc_Entry;
 
-   --------------------
-   -- Doc_References --
-   --------------------
+   ---------------------------
+   -- Doc_Caller_References --
+   ---------------------------
 
-   procedure Doc_References
-     (B                : access Backend_HTML;
-      Kernel           : access Kernel_Handle_Record'Class;
-      File             : File_Descriptor;
-      Info             : in out Doc_Info_References;
-      Level            : Natural) is
-   begin
-      Put_Line
-        (File, "<TABLE BGCOLOR=""white"" WIDTH=""100%""><TR><TD>");
-      Print_Ref_List_HTML
-        (Kernel, File, Info.References_Entity.Called_List, True,
-         Level, Get_Indent (B.all));
-      Print_Ref_List_HTML
-        (Kernel, File, Info.References_Entity.Calls_List, False,
-         Level, Get_Indent (B.all));
-      Put_Line (File, "</TD></TR></TABLE>");
-   end Doc_References;
-
-   -------------------------
-   -- Print_Ref_List_HTML --
-   -------------------------
-
-   procedure Print_Ref_List_HTML
-     (Kernel      : access Kernel_Handle_Record'Class;
-      File        : File_Descriptor;
-      Local_List  : Type_Reference_List.List;
-      Called_Subp : Boolean;
-      Level       : Natural;
-      Indent      : Natural)
+   procedure Doc_Caller_References
+     (B                 : access Backend_HTML;
+      Kernel            : access Kernel_Handle_Record'Class;
+      File              : File_Descriptor;
+      Options           : All_Options;
+      Level             : Natural;
+      Callers           : Entities.Entity_Information_Arrays.Instance;
+      Processed_Sources : Type_Source_File_Table.HTable)
    is
-      use Type_Reference_List;
-      Node : Type_Reference_List.List_Node;
-      Data : Type_Reference_List.Data_Access;
-      F    : VFS.Virtual_File_Access;
-
+      use Entity_Information_Arrays;
+      Space      : constant String := (1 .. Level * Get_Indent (B.all) => ' ');
    begin
-      if Type_Reference_List.Is_Empty (Local_List) then
-         return;
+      if Entity_Information_Arrays.Length (Callers) /= 0 then
+         Put_Line (File, "<TABLE BGCOLOR=""white"" WIDTH=""100%""><TR><TD>");
+         Put_Line
+           (File, "<TR><TD><PRE>"
+            & Space & "<B>Subprogram is called by: </B></PRE></TD><TR>");
+
+         for C in Entity_Information_Arrays.First .. Last (Callers) loop
+            Output_Entity
+              (Space, File, Kernel, Options, Callers.Table (C),
+               Processed_Sources);
+         end loop;
+
+         Put_Line (File, "</TD></TR></TABLE>");
+      end if;
+   end Doc_Caller_References;
+
+   --------------------------
+   -- Doc_Calls_References --
+   --------------------------
+
+   procedure Doc_Calls_References
+     (B                 : access Backend_HTML;
+      Kernel            : access Kernel_Handle_Record'Class;
+      File              : File_Descriptor;
+      Options           : All_Options;
+      Level             : Natural;
+      Calls             : Entities.Entity_Information_Arrays.Instance;
+      Processed_Sources : Type_Source_File_Table.HTable)
+   is
+      use Entity_Information_Arrays;
+      Space      : constant String := (1 .. Level * Get_Indent (B.all) => ' ');
+   begin
+      if Entity_Information_Arrays.Length (Calls) /= 0 then
+         Put_Line (File, "<TABLE BGCOLOR=""white"" WIDTH=""100%""><TR><TD>");
+         Put_Line
+           (File, "<TR><TD><PRE>" & Space
+            & "<B>Subprogram calls: </B></PRE></TD><TR>");
+
+         for C in Entity_Information_Arrays.First .. Last (Calls) loop
+            Output_Entity
+              (Space, File, Kernel, Options, Calls.Table (C),
+               Processed_Sources);
+         end loop;
+
+         Put_Line (File, "</TD></TR></TABLE>");
+      end if;
+   end Doc_Calls_References;
+
+   -------------------
+   -- Output_Entity --
+   -------------------
+
+   procedure Output_Entity
+     (Space             : String;
+      File              : File_Descriptor;
+      Kernel            : access Kernel_Handle_Record'Class;
+      Options           : All_Options;
+      Entity            : Entity_Information;
+      Processed_Sources : Type_Source_File_Table.HTable)
+   is
+      F : constant Virtual_File := Get_Filename
+        (Get_File (Get_Declaration_Of (Entity)));
+      Set_Link       : Boolean;
+      Source_Visible : Boolean;
+   begin
+      Set_Link := Options.Link_All
+        or else Source_File_In_List
+          (Processed_Sources, Get_File (Get_Declaration_Of (Entity)));
+
+      if Set_Link then
+         Source_Visible := (Get_Attributes (Entity)(Global)
+                            or else Options.Show_Private)
+           and then
+             (Options.Process_Body_Files
+              or else Type_Source_File_Table.Get
+                (Processed_Sources,
+                 Get_File (Get_Declaration_Of (Entity))).Is_Spec);
       end if;
 
-      declare
-         Space : constant String := (1 .. Level * Indent => ' ');
-      begin
-         if Called_Subp then
-            Put_Line
-              (File, "<TR><TD><PRE>"
-               & Space
-               & "<B>Subprogram is called by: </B>"
-               & "</PRE></TD><TR>");
-         else
-            Put_Line
-              (File, "<TR><TD><PRE>"
-               & Space
-               & "<B>Subprogram calls: </B>"
-               & "</PRE></TD><TR>");
-         end if;
+      if Set_Link and then Source_Visible then
+         Put_Line
+           (File,
+            "<TR><TD><PRE>" & Space & "<A HREF="""
+            & Get_Html_File_Name (Kernel, Full_Name (F).all)
+            & "#"
+            & Image (Get_Line (Get_Declaration_Of (Entity)))
+            & """>"
+            & Get_Name (Entity)
+            & "</A> declared at&nbsp;"
+            & Base_Name (F)
+            & "&nbsp;"
+            & Image (Get_Line (Get_Declaration_Of (Entity)))
+            & ":"
+            & Image (Get_Column (Get_Declaration_Of (Entity)))
+            & "</PRE></TD><TR>");
 
-         Node := Type_Reference_List.First (Local_List);
-
-         --  For every reference found write the information to doc file
-
-         while Node /= Type_Reference_List.Null_Node loop
-            --  Check if the creating of a link is possible
-
-            Data := Type_Reference_List.Data_Ref (Node);
-            F    := Get_Declaration_File_Of (Data.Entity);
-
-            if Data.Set_Link then
-               --  If a called subprogram => link to spec
-
-               Put_Line
-                 (File,
-                  "<TR><TD><PRE>"
-                  & Space
-                  & "<A HREF="""
-                  & Get_Html_File_Name (Kernel, F)
-                  & "#"
-                  & Image (Get_Declaration_Line_Of (Data.Entity))
-                  & """>"
-                  & Get_Name (Data.Entity)
-                  & "</A> declared at&nbsp;"
-                  & Base_Name (F.all)
-                  & "&nbsp;"
-                  & Image (Get_Declaration_Line_Of (Data.Entity))
-                  & ":"
-                  & Image (Get_Declaration_Column_Of (Data.Entity))
-                  & "</PRE></TD><TR>");
-
-            else
-               --  No link at all
-               Put_Line
-                 (File,
-                  "<TR><TD><PRE>"
-                  & Space
-                  & Get_Name (Data.Entity)
-                  & " declared at&nbsp;"
-                  & Base_Name (F.all)
-                  & "&nbsp;"
-                  & Image (Get_Declaration_Line_Of (Data.Entity))
-                  & ":"
-                  & Image (Get_Declaration_Column_Of (Data.Entity))
-                  & "</PRE></TD></TR>");
-            end if;
-
-            Node := Type_Reference_List.Next (Node);
-         end loop;
-      end;
-   end Print_Ref_List_HTML;
+      else
+         Put_Line
+           (File,
+            "<TR><TD><PRE>" & Space & Get_Name (Entity)
+            & " declared at&nbsp;"
+            & Base_Name (F)
+            & "&nbsp;"
+            & Image (Get_Line (Get_Declaration_Of (Entity)))
+            & ":"
+            & Image (Get_Column (Get_Declaration_Of (Entity)))
+            & "</PRE></TD></TR>");
+      end if;
+   end Output_Entity;
 
    --------------------
    -- Doc_Subprogram --
@@ -716,15 +683,19 @@ package body Docgen_Backend_HTML is
 
    procedure Doc_Subprogram
      (B                : access Backend_HTML;
-      Kernel           : access Kernel_Handle_Record'Class;
+      Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
       File             : File_Descriptor;
       List_Ref_In_File : in out List_Reference_In_File.List;
-      Info             : in out Doc_Info_Subprogram;
-      Level            : Natural) is
+      Source_File_List : Type_Source_File_Table.HTable;
+      Options          : All_Options;
+      Level            : Natural;
+      Entity           : Entity_List_Information;
+      Header           : String) is
    begin
       Put_Line
         (File, "  <A NAME="""
-         & Image (Get_Declaration_Line_Of (Info.Subprogram_Entity.Entity))
+         & Image
+           (Get_Line (Get_Declaration_Of (Entity.Entity)))
          & """></A><BR>");
       Put_Line
         (File,
@@ -734,16 +705,17 @@ package body Docgen_Backend_HTML is
          & (1 .. Level * Get_Indent (B.all) => ' ')
          & "</PRE></TD>"
          & "<TD bgcolor=""#DDDDDD""><PRE>");
-      Format_File
+      Format_Code
         (B,
          Kernel,
          File,
          List_Ref_In_File,
-         Info.Subprogram_Header.all,
-         Get_Declaration_File_Of (Info.Subprogram_Entity.Entity).all,
-         Get_Declaration_Line_Of (Info.Subprogram_Entity.Entity),
-         Get_Line (Info.Subprogram_Entity.Line_In_Body),
-         False, Info, Level, Get_Indent (B.all));
+         Header,
+         Get_Filename (Get_File (Get_Declaration_Of (Entity.Entity))),
+         Get_Line (Get_Declaration_Of (Entity.Entity)),
+         Get_Line (Entity.Line_In_Body),
+         False, Options, Source_File_List, Level,
+         Get_Indent (B.all));
       Put_Line (File, "</PRE></TD></TR></TABLE>");
    end Doc_Subprogram;
 
@@ -752,11 +724,13 @@ package body Docgen_Backend_HTML is
    ----------------
 
    procedure Doc_Header
-     (B       : access Backend_HTML;
-      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
-      LI_Unit : LI_File_Ptr;
-      File    : File_Descriptor;
-      Info    : in out Docgen.Doc_Info_Header)
+     (B              : access Backend_HTML;
+      Kernel         : access Glide_Kernel.Kernel_Handle_Record'Class;
+      File           : File_Descriptor;
+      Header_File    : Virtual_File;
+      Header_Package : String;
+      Header_Line    : Natural;
+      Header_Link    : Boolean)
    is
       pragma Unreferenced (B);
    begin
@@ -766,20 +740,25 @@ package body Docgen_Backend_HTML is
          " <H1>Package<I>" & ASCII.LF &
          " <A NAME=""" & Image (First_File_Line) & """>");
       --  Static anchor used by the unit index file
-      Put_Line (File, " <A NAME=""" & Image (Info.Header_Line) & """>");
+      Put_Line (File, " <A NAME=""" & Image (Header_Line) & """>");
 
       --  Check if should set a link to the body file
 
-      if Info.Header_Link then
+      if Header_Link then
          Put_Line
            (File, "<A HREF=""" &
             Get_Html_File_Name
-              (Kernel, Get_Other_File_Of (LI_Unit, Info.Header_File.all))
+              (Kernel,
+               Other_File_Base_Name
+                 (Get_Project_From_File
+                    (Project_Registry (Get_Registry (Kernel)),
+                     Header_File),
+                  Header_File))
             & """> ");
-         Put_Line (File, Info.Header_Package.all & "</A></I></H1>");
+         Put_Line (File, Header_Package & "</A></I></H1>");
 
       else
-         Put_Line (File, Info.Header_Package.all & "</A></I></H1>");
+         Put_Line (File, Header_Package & "</A></I></H1>");
       end if;
 
       Put_Line (File, "</TD></TR></TABLE>" & ASCII.LF & "<PRE>");
@@ -793,7 +772,7 @@ package body Docgen_Backend_HTML is
      (B                : access Backend_HTML;
       Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
       File             : File_Descriptor;
-      Info             : in out Doc_Info_Header_Private;
+      Header_Title     : String;
       Level            : Natural)
    is
       pragma Unreferenced (Kernel);
@@ -805,7 +784,7 @@ package body Docgen_Backend_HTML is
         (File,
          "<H" & Image (Level) & "><B>"
          & (1 .. Level * Get_Indent (B.all) => ' ')
-         & Info.Header_Title.all
+         & Header_Title
          & "</B></H" & Image (Level) & ">");
       Put_Line (File, "</PRE></TD></TR></TABLE>");
    end Doc_Header_Private;
@@ -817,10 +796,9 @@ package body Docgen_Backend_HTML is
    procedure Doc_Footer
      (B                : access Backend_HTML;
       Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
-      File             : File_Descriptor;
-      Info             : in out Docgen.Doc_Info_Footer)
+      File             : File_Descriptor)
    is
-      pragma Unreferenced (B, Kernel, Info);
+      pragma Unreferenced (B, Kernel);
    begin
       Put_Line (File, "</PRE>");
    end Doc_Footer;
@@ -833,17 +811,22 @@ package body Docgen_Backend_HTML is
      (B                : access Backend_HTML;
       Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
       File             : File_Descriptor;
-      Info             : in out Docgen.Doc_Info_Unit_Index;
+      Source_File_List : Type_Source_File_Table.HTable;
+      Options          : All_Options;
       Level            : Natural;
-      Doc_Directory    : String;
-      Doc_Suffix       : String)
+      Doc_Directory    : String)
    is
       pragma Unreferenced (B, Kernel, Level);
+      use Type_Source_File_Table;
       Frame_File       : File_Descriptor;
-      Source_File_Node : constant Type_Source_File_List.List_Node :=
-        Type_Source_File_List.First (Info.Unit_File_List);
+      Node             : Type_Source_File_Table.Iterator;
+      FInfo            : Source_File_Information;
 
    begin
+      --  ??? Should get the first one in alphabetical order
+      Get_First (Source_File_List, Node);
+      FInfo := Type_Source_File_Table.Get (Source_File_List, Get_Key (Node));
+
       --  Create the main frame file
       Frame_File := Create_File (Doc_Directory & "index.htm", Binary);
       Put_Line
@@ -856,12 +839,8 @@ package body Docgen_Backend_HTML is
          "<FRAME SRC=""index_unit.htm"" NAME=""index"" >");
       Put_Line
         (Frame_File,
-         "<FRAME SRC=""" &
-         Base_Name
-           (Get_Doc_File_Name
-              (Type_Source_File_List.Data_Ref
-                 (Source_File_Node).File_Name'Unchecked_Access,
-               Doc_Directory, Doc_Suffix)) & """ NAME=""main"" >");
+         "<FRAME SRC="""
+         & Base_Name (FInfo.Doc_File_Name.all) & """ NAME=""main"" >");
       Put_Line
         (Frame_File,
          "</FRAMESET>" & ASCII.LF &
@@ -889,7 +868,7 @@ package body Docgen_Backend_HTML is
          "<H4> <A HREF=""index_sub.htm"" " &
          "TARGET=""index"">Subprogram Index</A><BR>");
 
-      if Info.Doc_Info_Options.Tagged_Types then
+      if Options.Tagged_Types then
          Put_Line (File, "<A HREF=""index_tagged_type.htm"" " &
                    "TARGET=""index""> Tagged Type Index </A><BR>");
       end if;
@@ -909,7 +888,7 @@ package body Docgen_Backend_HTML is
      (B                : access Backend_HTML;
       Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
       File             : File_Descriptor;
-      Info             : in out Docgen.Doc_Info_Subprogram_Index)
+      Options          : All_Options)
    is
       pragma Unreferenced (B, Kernel);
    begin
@@ -929,7 +908,7 @@ package body Docgen_Backend_HTML is
          "<H4> <A HREF=""index_unit.htm""  " &
          "target=""index"">Unit Index</A><BR>");
 
-      if Info.Doc_Info_Options.Tagged_Types then
+      if Options.Tagged_Types then
          Put_Line
            (File,
             "<A HREF=""index_tagged_type.htm""  " &
@@ -951,7 +930,7 @@ package body Docgen_Backend_HTML is
      (B                : access Backend_HTML;
       Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
       File             : in File_Descriptor;
-      Info             : in out Docgen.Doc_Info_Type_Index)
+      Options          : All_Options)
    is
       pragma Unreferenced (B, Kernel);
    begin
@@ -973,7 +952,7 @@ package body Docgen_Backend_HTML is
          "<H4> <A HREF=""index_unit.htm"" " &
          "TARGET=""index"">Unit Index</A><BR>");
 
-      if Info.Doc_Info_Options.Tagged_Types then
+      if Options.Tagged_Types then
          Put_Line (File, "<A HREF=""index_tagged_type.htm"" " &
                    "TARGET=""index""> Tagged Type Index </A><BR>");
       end if;
@@ -992,10 +971,9 @@ package body Docgen_Backend_HTML is
    procedure Doc_Tagged_Type_Index
      (B                : access Backend_HTML;
       Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
-      File             : File_Descriptor;
-      Info             : in out Docgen.Doc_Info_Tagged_Type_Index)
+      File             : File_Descriptor)
    is
-      pragma Unreferenced (B, Kernel, Info);
+      pragma Unreferenced (B, Kernel);
    begin
       Put_Line
         (File,
@@ -1028,24 +1006,26 @@ package body Docgen_Backend_HTML is
      (B                : access Backend_HTML;
       Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
       File             : File_Descriptor;
-      Info             : in out Docgen.Doc_Info_Index_Tagged_Type)
+      Source_File_List : Type_Source_File_Table.HTable;
+      Entity           : Entity_Information;
+      Family           : Family_Type)
    is
       pragma Unreferenced (B, Kernel);
+      FInfo : Source_File_Information;
    begin
-      case Info.Doc_Family is
+      case Family is
          when Main =>
             --  The tagged type itself
+            FInfo := Type_Source_File_Table.Get
+              (Source_File_List, Get_File (Get_Declaration_Of (Entity)));
             Put_Line
               (File,
                "<BR><A HREF="""
-               & Base_Name
-                 (Get_Doc_File_Name
-                    (Get_Declaration_File_Of (Info.Doc_Tagged_Type),
-                     Info.Directory.all,
-                     Info.Suffix.all))
-               & "#" & Image (Get_Declaration_Line_Of (Info.Doc_Tagged_Type))
+               & FInfo.Doc_File_Name.all
+               & "#"
+               & Image (Get_Line (Get_Declaration_Of (Entity)))
                & """ target=""main""><B>"
-               & Get_Name (Info.Doc_Tagged_Type) & "</B></A><BR>" & ASCII.LF);
+               & Get_Name (Entity) & "</B></A><BR>" & ASCII.LF);
 
          when No_Parent =>
             Put_Line (File, "No parent.<BR>");
@@ -1054,25 +1034,22 @@ package body Docgen_Backend_HTML is
             --  The parent of the tagged type is declared in one of the
             --  processed files.
             --  A link can be made.
+            FInfo := Type_Source_File_Table.Get
+              (Source_File_List, Get_File (Get_Declaration_Of (Entity)));
             Put_Line
-              (File, "<B>Parent object: </B><A HREF=""" &
-               Base_Name
-                 (Get_Doc_File_Name
-                    (Get_Declaration_File_Of (Info.Doc_Tagged_Type),
-                     Info.Directory.all,
-                     Info.Suffix.all))
-               & "#" & Image (Get_Declaration_Line_Of (Info.Doc_Tagged_Type))
+              (File, "<B>Parent object: </B><A HREF="""
+               & FInfo.Doc_File_Name.all
+               & "#"
+               & Image (Get_Line (Get_Declaration_Of (Entity)))
                & """ TARGET=""main"">"
-               & Get_Name (Info.Doc_Tagged_Type) & "</A><BR>"
+               & Get_Name (Entity) & "</A><BR>"
                & ASCII.LF);
 
          when Parent_Without_Link =>
             --  The parent of the tagged type is not declared in the processed
             --  files. Link can't be made.
-            Put_Line (File,
-                      "<B>Parent object: </B>"
-                      & Get_Name (Info.Doc_Tagged_Type)
-                      & "<BR>");
+            Put_Line
+              (File, "<B>Parent object: </B>" & Get_Name (Entity) & "<BR>");
 
          when No_Child =>
             Put_Line (File, "No child.<BR>");
@@ -1081,22 +1058,21 @@ package body Docgen_Backend_HTML is
             --  This child of the tagged type is declared in one of the
             --  processed files.
             --  Link can be made.
+            FInfo := Type_Source_File_Table.Get
+              (Source_File_List, Get_File (Get_Declaration_Of (Entity)));
             Put_Line
               (File, "<B>Child object: </B><A HREF=""" &
-               Base_Name
-                 (Get_Doc_File_Name
-                    (Get_Declaration_File_Of (Info.Doc_Tagged_Type),
-                     Info.Directory.all,
-                     Info.Suffix.all))
-               & "#" & Image (Get_Declaration_Line_Of (Info.Doc_Tagged_Type))
+               FInfo.Doc_File_Name.all
+               & "#"
+               & Image (Get_Line (Get_Declaration_Of (Entity)))
                & """ TARGET=""main"">"
-               & Get_Name (Info.Doc_Tagged_Type) & "</A><BR>" & ASCII.LF);
+               & Get_Name (Entity) & "</A><BR>" & ASCII.LF);
 
          when Child_Without_Link =>
             --  This child of the tagged type is not declared in the processed
             --  files. Link can't be made.
             Put_Line (File, "<B>Child object: </B>"
-                      & Get_Name (Info.Doc_Tagged_Type)
+                      & Get_Name (Entity)
                       & "<BR>");
       end case;
    end Doc_Index_Tagged_Type;
@@ -1109,18 +1085,21 @@ package body Docgen_Backend_HTML is
      (B                : access Backend_HTML;
       Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
       File             : File_Descriptor;
-      Info             : in out Docgen.Doc_Info_Index_Item)
+      Name             : String;
+      Item_File        : Entities.Source_File;
+      Line             : Natural;
+      Doc_File         : String)
    is
       pragma Unreferenced (B, Kernel);
    begin
       Put_Line
-        (File, " <A HREF=""" & Info.Item_Doc_File.all
-         & "#" & Image (Info.Item_Line)
+        (File, " <A HREF=""" & Doc_File
+         & "#" & Image (Line)
          & """ TARGET=""main""> "
-         & Info.Item_Name.all & "</A>");
+         & Name & "</A>");
       Put_Line
         (File, " <BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; in " &
-         Base_Name (Info.Item_File.all) &
+         Base_Name (Get_Filename (Item_File)) &
          ASCII.LF & ASCII.LF & "<BR>" & ASCII.LF);
    end Doc_Index_Item;
 
@@ -1132,12 +1111,12 @@ package body Docgen_Backend_HTML is
      (B                : access Backend_HTML;
       Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
       File             : File_Descriptor;
-      Info             : in out Docgen.Doc_Info_Private_Index)
+      Title            : String)
    is
       pragma Unreferenced (B, Kernel);
    begin
       Put_Line (File, "<TABLE BGCOLOR=""#9999FF"" WIDTH=""100%""><TR><TD>");
-      Put_Line (File, " <BR><B>" & Info.Private_Index_Title.all & "</B><BR>");
+      Put_Line (File, " <BR><B>" & Title & "</B><BR>");
       Put_Line (File, "</TD></TR></TABLE>");
    end Doc_Private_Index;
 
@@ -1149,12 +1128,12 @@ package body Docgen_Backend_HTML is
      (B                : access Backend_HTML;
       Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
       File             : File_Descriptor;
-      Info             : in out Docgen.Doc_Info_Public_Index)
+      Title            : String)
    is
       pragma Unreferenced (B, Kernel);
    begin
       Put_Line (File, "<TABLE BGCOLOR=""#9999FF"" WIDTH=""100%""><TR><TD>");
-      Put_Line (File, " <BR><b> " & Info.Public_Index_Title.all & "</b><BR>");
+      Put_Line (File, " <BR><b> " & Title & "</b><BR>");
       Put_Line (File, "</TD></TR></TABLE>");
    end Doc_Public_Index;
 
@@ -1165,10 +1144,9 @@ package body Docgen_Backend_HTML is
    procedure Doc_End_Of_Index
      (B                : access Backend_HTML;
       Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
-      File             : File_Descriptor;
-      Info             : in out Docgen.Doc_Info_End_Of_Index)
+      File             : File_Descriptor)
    is
-      pragma Unreferenced (B, Kernel, Info);
+      pragma Unreferenced (B, Kernel);
    begin
       Put_Line (File, "</BODY>" & ASCII.LF & "</HTML>");
    end Doc_End_Of_Index;
@@ -1182,19 +1160,23 @@ package body Docgen_Backend_HTML is
       Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
       File             : File_Descriptor;
       List_Ref_In_File : in out List_Reference_In_File.List;
-      Info             : in out Docgen.Doc_Info_Body_Line;
-      Level            : Natural) is
+      Source_File_List : Type_Source_File_Table.HTable;
+      Options          : All_Options;
+      Level            : Natural;
+      Body_File        : VFS.Virtual_File;
+      Body_Text        : String) is
    begin
-      Format_File
+      Format_Code
         (B,
          Kernel,
          File,
          List_Ref_In_File,
-         Info.Body_Text.all,
-         Info.Body_File.all,
+         Body_Text,
+         Body_File,
          First_File_Line,
          No_Body_Line_Needed,
-         True, Info, Level, Get_Indent (B.all));
+         True, Options, Source_File_List, Level,
+         Get_Indent (B.all));
    end Doc_Body_Line;
 
    ---------------------
@@ -1205,8 +1187,8 @@ package body Docgen_Backend_HTML is
      (B                : access Backend_HTML;
       Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
       File             : File_Descriptor;
-      Info             : in out Docgen.Doc_Info_Description;
-      Level            : Natural)
+      Level            : Natural;
+      Description      : String)
    is
       pragma Unreferenced (Kernel);
       Space : constant String := (1 .. Level * Get_Indent (B.all) => ' ');
@@ -1216,7 +1198,7 @@ package body Docgen_Backend_HTML is
          "<TABLE BGCOLOR=""white"" WIDTH=""1%"" "
          & "CELLPADDING=""0"" CELLSPACING=""0"">"
          & "<TR><TD><PRE>" & Space & "</PRE></TD>"
-         & "<TD><PRE><I>" & Info.Description.all & "</I></PRE></TD></TR>"
+         & "<TD><PRE><I>" & Description & "</I></PRE></TD></TR>"
          & "</TABLE>");
    end Doc_Description;
 
@@ -1225,12 +1207,12 @@ package body Docgen_Backend_HTML is
    ------------------------
 
    function Get_Html_File_Name
-     (Kernel : access Kernel_Handle_Record'Class;
-      File   : Virtual_File_Access) return String
+     (Kernel    : access Kernel_Handle_Record'Class;
+      File_Name : String) return String
    is
       pragma Unreferenced (Kernel);
-      Ext  : constant String := File_Extension (File.all);
-      Temp : constant String := Base_Name (File.all, Ext) & '_'
+      Ext  : constant String := File_Extension (File_Name);
+      Temp : constant String := Base_Name (File_Name, Ext) & '_'
         & Ext (Ext'First + 1 .. Ext'Last) & ".htm";
    begin
       return Temp;
@@ -1469,12 +1451,11 @@ package body Docgen_Backend_HTML is
       End_Line            : Natural;
       Kernel              : access Kernel_Handle_Record'Class;
       File                : File_Descriptor;
-      LI_Unit             : LI_File_Ptr;
       Text                : String;
       File_Name           : VFS.Virtual_File;
       Entity_Line         : Natural;
       Line_In_Body        : Natural;
-      Source_File_List    : Type_Source_File_List.List;
+      Source_File_List    : Type_Source_File_Table.HTable;
       Link_All            : Boolean;
       Is_Body             : Boolean;
       Process_Body        : Boolean;
@@ -1499,7 +1480,6 @@ package body Docgen_Backend_HTML is
          End_Index,
          Kernel,
          File,
-         LI_Unit,
          Text,
          File_Name,
          Entity_Line,
@@ -1524,12 +1504,11 @@ package body Docgen_Backend_HTML is
       End_Index        : Natural;
       Kernel           : access Kernel_Handle_Record'Class;
       File             : File_Descriptor;
-      LI_Unit          : LI_File_Ptr;
       Text             : String;
       File_Name        : VFS.Virtual_File;
       Entity_Line      : Natural;
       Line_In_Body     : Natural;
-      Source_File_List : Type_Source_File_List.List;
+      Source_File_List : Type_Source_File_Table.HTable;
       Link_All         : Boolean;
       Is_Body          : Boolean;
       Process_Body     : Boolean;
@@ -1564,6 +1543,8 @@ package body Docgen_Backend_HTML is
       ---------------------------------
 
       procedure Create_Special_Link_To_Body is
+         Decl_File : constant Virtual_File := Get_Filename
+            (Get_File (Get_Declaration_Of (Entity_Info)));
       begin
          if Start_Line > Get_Last_Line (B.all) then
             Set_Name_Tags
@@ -1578,8 +1559,11 @@ package body Docgen_Backend_HTML is
          Put (File,
               "<A HREF="""
               & Get_Html_File_Name
-                (Kernel, Get_Other_File_Of
-                   (LI_Unit, Get_Declaration_File_Of (Entity_Info).all))
+                (Kernel,
+                 Other_File_Base_Name
+                   (Get_Project_From_File
+                      (Project_Registry (Get_Registry (Kernel)), Decl_File),
+                    Decl_File))
               & '#' & Image (Line_In_Body)
               & """>" & Text (Loc_Start .. Loc_End) & "</A>");
          Set_Last_Index (B.all, Loc_End + 1);
@@ -1602,11 +1586,13 @@ package body Docgen_Backend_HTML is
             Put (File, Text (Get_Last_Index (B.all) .. Loc_Start - 1));
          end if;
 
-         Line_To_Use := Get_Declaration_Line_Of (Entity_Info);
+         Line_To_Use := Get_Line (Get_Declaration_Of (Entity_Info));
          Put (File,
               "<A HREF="""
               & Get_Html_File_Name
-                (Kernel, Get_Declaration_File_Of (Entity_Info))
+                (Kernel, Full_Name
+                   (Get_Filename
+                      (Get_File (Get_Declaration_Of (Entity_Info)))).all)
               & "#" & Image (Line_To_Use) &
               """>" & Text (Loc_Start .. Loc_End) & "</A>");
          Set_Last_Index (B.all, Loc_End + 1);
@@ -1626,13 +1612,15 @@ package body Docgen_Backend_HTML is
             and then
               (Link_All
                or else Source_File_In_List
-                 (Source_File_List, Get_Declaration_File_Of (Entity_Info)))
+                 (Source_File_List,
+                  Get_File (Get_Declaration_Of (Entity_Info))))
          --  create no links if it is the declaration line itself;
          --  only if it's a subprogram or entry in a spec sometimes
          --  a link can be created to it body, so don't filter these ones.
             and then
-             (not Is_Declaration_File_Of (Entity_Info, File_Name)
-              or else Get_Declaration_Line_Of (Entity_Info) /=
+              (Get_Filename (Get_File (Get_Declaration_Of (Entity_Info))) /=
+                 File_Name
+              or else Get_Line (Get_Declaration_Of (Entity_Info)) /=
                 Start_Line + Entity_Line - 1
               or else Special_Link_Should_Be_Set));
       end Link_Should_Be_Set;
@@ -1711,7 +1699,7 @@ package body Docgen_Backend_HTML is
 
    function Get_Doc_Directory
      (B      : access Backend_HTML;
-      Kernel : Kernel_Handle) return String
+      Kernel : access Kernel_Handle_Record'Class) return String
    is
       pragma Unreferenced (B);
    begin

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2003                       --
+--                     Copyright (C) 2001-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -25,12 +25,11 @@
 
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with List_Utils;                use List_Utils;
-with Src_Info;                  use Src_Info;
-with Src_Info.Queries;          use Src_Info.Queries;
+with Entities;                  use Entities;
 with Glide_Kernel;              use Glide_Kernel;
 with VFS;
 with Generic_List;
-with Projects;
+with HTables;
 
 package Docgen is
 
@@ -39,25 +38,33 @@ package Docgen is
    No_Body_Line_Needed : constant Natural := 0;
 
    type Source_File_Information is record
-      File_Name    : aliased VFS.Virtual_File;
-      Package_Name : GNAT.OS_Lib.String_Access;
+      Package_Name  : GNAT.OS_Lib.String_Access;
+      Doc_File_Name : GNAT.OS_Lib.String_Access;
+      --  The base name of the output file that contains the documentation for
+      --  this source file.
+      Is_Spec       : Boolean;
    end record;
+   No_Source_File_Information : constant Source_File_Information :=
+     (Package_Name => null, Doc_File_Name => null, Is_Spec => False);
    --  Description of a source file for which documentation should be
    --  generated.
 
    procedure Free (X : in out Source_File_Information);
    --  Free the information associated with X
 
-   package Type_Source_File_List is
-     new Generic_List (Source_File_Information);
-
-   function Compare_Elements (X, Y : Source_File_Information) return Boolean;
-   procedure Sort_List_Name is
-     new Sort (Type_Source_File_List, "<" => Compare_Elements);
-   --  Sort elements by name (BUT: the spec file in front of body file)
+   type HTable_Header is new Natural range 0 .. 3000;
+   function Hash (Key : Entities.Source_File) return HTable_Header;
+   package Type_Source_File_Table is new HTables.Simple_HTable
+     (Header_Num   => HTable_Header,
+      Element      => Source_File_Information,
+      No_Element   => No_Source_File_Information,
+      Free_Element => Free,
+      Key          => Entities.Source_File,
+      Hash         => Hash,
+      Equal        => Entities."=");
 
    type Reference_List_Information is record
-      Entity          : Src_Info.Queries.Entity_Information;
+      Entity          : Entity_Information;
       Set_Link        : Boolean;
       --  if False, no link will be set
    end record;
@@ -75,11 +82,11 @@ package Docgen is
    function Compare_Elements_Name
      (X, Y : Reference_List_Information) return Boolean;
    procedure Sort_List_Column is
-     new Sort (Type_Reference_List, "<" => Compare_Elements_Column);
+     new List_Utils.Sort (Type_Reference_List, "<" => Compare_Elements_Column);
    --  Sort the list by column
 
    procedure Sort_List_Name is
-     new Sort (Type_Reference_List, "<" => Compare_Elements_Name);
+     new List_Utils.Sort (Type_Reference_List, "<" => Compare_Elements_Name);
    --  Sort the list by name
 
    procedure Duplicate
@@ -87,13 +94,10 @@ package Docgen is
       List_In : in Type_Reference_List.List);
    --  Makes a deep copy of the list List_In into the list List_Out
 
-   type Entity_Handle is access Src_Info.Queries.Entity_Information;
-
    type Reference_In_File is record
-      Name         : GNAT.OS_Lib.String_Access;
       Line         : Natural;
       Column       : Natural;
-      Entity       : Entity_Handle;
+      Entity       : Entity_Information;
    end record;
    --  Record used to save a reference in a file.
    --  Line   : line of the reference in this file.
@@ -111,14 +115,14 @@ package Docgen is
      (X, Y : Reference_In_File) return Boolean;
 
    procedure Sort_List_By_Line_And_Column is
-     new Sort (List_Reference_In_File,
+     new List_Utils.Sort (List_Reference_In_File,
                "<" => Compare_Elements_By_Line_And_Column);
    --  Sort the list by line and column.
 
-   procedure Free (X : in out Src_Info.Queries.Entity_Information);
+   procedure Free (X : in out Entity_Information);
 
    package List_Entity_In_File is
-     new Generic_List (Src_Info.Queries.Entity_Information);
+     new Generic_List (Entity_Information);
    --  List used to record the declaration of references of a file.
 
    type Entity_Type is
@@ -133,42 +137,29 @@ package Docgen is
 
    type Entity_List_Information is record
       Kind                : Entity_Type;
-      Name                : GNAT.OS_Lib.String_Access;
-      Entity              : Src_Info.Queries.Entity_Information;
+      Entity              : Entity_Information;
       Is_Private          : Boolean;
-      --  The following items won't be used in the index lists
-      Line_In_Body        : Src_Info.File_Location;
-      Calls_List          : Type_Reference_List.List;
-      Called_List         : Type_Reference_List.List;
-      Public_Declaration  : Src_Info.Queries.Entity_Information
-        := No_Entity_Information;
+      Line_In_Body        : File_Location;
+      Public_Declaration  : Entity_Information := null;
    end record;
    --  Description of an entity.
    --  Kind   : Simplified type of the entity.
-   --  Name   : Name of the entity.
    --  Entity : Pointer on the current entity.
-   --  Calls_List, Called_List : only used for subprograms. Calls_List
-   --  contains the list of the subprograms called by the current entity.
-   --  Called_List contains the list of the subprograms which call current
-   --  entity.
    --  Public_Declaration : when a public type has at least one private field,
    --  we need 2 Entity_List_Information: one for the public type itself and
    --  one in order to generate doc for the private part. This last element
    --  need to have a "pointer" on the public declaration. For all other
    --  entities (subprograms, exceptions, types without private fields ...),
-   --  the field Public_Declaration has the value No_Entity_Information.
+   --  the field Public_Declaration has the value null.
    --  Line_In_Body : for types with private fields, it refers to the public
    --  declaration.
 
    type Entity_List_Information_Handle is access Entity_List_Information;
 
    function Clone
-     (Entity     : Entity_List_Information;
-      Copy_Lists : Boolean) return Entity_List_Information;
+     (Entity     : Entity_List_Information) return Entity_List_Information;
    --  Return a deep-copy of Entity.
    --  Entity can be freed without impacting the copy
-   --  If Copy_List is true, it copies also the lists used for the call graph
-   --  Calls_List and Called_List.
 
    procedure Free (X : in out Entity_List_Information);
    --  Free the memory associated with X.
@@ -183,87 +174,22 @@ package Docgen is
      (X, Y : Entity_List_Information) return Boolean;
 
    procedure Sort_List_Line   is
-     new Sort (Type_Entity_List, "<" => Compare_Elements_Line);
+     new List_Utils.Sort (Type_Entity_List, "<" => Compare_Elements_Line);
    --  Sort list by line.
 
    procedure Sort_List_Column is
-     new Sort (Type_Entity_List, "<" => Compare_Elements_Column);
+     new List_Utils.Sort (Type_Entity_List, "<" => Compare_Elements_Column);
    --  Sort list by column.
 
    procedure Sort_List_Name   is
-     new Sort (Type_Entity_List, "<" => Compare_Elements_Name);
+     new List_Utils.Sort (Type_Entity_List, "<" => Compare_Elements_Name);
    --  Sort the entities in alphabetical order by name,
    --  BUT all public entites stand in front of the private.
 
-   procedure Free (X : in out Entity_Handle);
-
-   package List_Entity_Handle is
-     new Generic_List (Entity_Handle);
-
-   function Compare_Name
-     (X, Y : Entity_Handle) return Boolean;
+   package List_Entity_Information is new Generic_List (Entity_Information);
 
    procedure Sort_List_Name   is
-     new Sort (List_Entity_Handle, "<" => Compare_Name);
-
-   type Tagged_Element is record
-      Me                   : Entity_Handle;
-      My_Parents           : List_Entity_Handle.List;
-      My_Children          : List_Entity_Handle.List;
-      Number_Of_Parents    : Natural;
-      Number_Of_Children   : Natural;
-      Print_Me             : Boolean;
-   end record;
-   --  Represent a tagged type.
-   --  Me         : Pointer on the tagged type itself.
-   --  My_Parents : list of pointers on the entities which are parents of Me.
-   --  My_Children: list of pointers on the entities which are children of Me.
-   --  Print_Me   : indicates that the tagged type is defined in the
-   --  processed files, it must be printed in the specific index file.
-
-   type Tagged_Element_Handle is access Tagged_Element;
-
-   procedure Free (X : in out Tagged_Element);
-
-   package Type_List_Tagged_Element is new Generic_List (Tagged_Element);
-   --  Contains tagged types which are declared in the list of files we are
-   --  processing
-
-   function Compare_Tagged_Name
-     (X, Y : Tagged_Element) return Boolean;
-
-   procedure Sort_List_Name   is
-     new Sort (Type_List_Tagged_Element, "<" => Compare_Tagged_Name);
-   --  Sort the tagged types in alphabetical order by name,
-
-   function Find_In_List
-     (List : List_Entity_Handle.List;
-      Info : Entity_Information) return Entity_Handle;
-   --  Search if Info is in List. Return a pointer on Info in List if success.
-
-   procedure Add_Child
-     (List   : in out Type_List_Tagged_Element.List;
-      Target : Entity_Handle;
-      Patch  : Entity_Handle);
-   --  For a current tagged type: update of the list of children with the
-   --  local child in the current file.
-   --  Target : tagged type which is updated.
-   --  Patch  : child entity added the list My_Children of the Target.
-
-   procedure Add_Parent
-     (List   : in out Type_List_Tagged_Element.List;
-      Target : Entity_Handle;
-      Patch  : Entity_Handle);
-   --  For a current tagged type: update of the list of parents with the
-   --  local parent in the current file.
-   --  Target : tagged type which is updated.
-   --  Patch  : parent entity added the list My_Parents of the Target.
-
-   procedure Must_Print_Tagged_Type
-     (List : in out Type_List_Tagged_Element.List;
-      Target : in Entity_Handle);
-   --  Updates the field Print_Me if necessary.
-   --  Target : tagged type which is updated.
+     new List_Utils.Sort (List_Entity_Information, "<" => Entities."<");
 
    type Type_Api_Doc is (HTML, TEXI);
    --  Type of documentation that can be generated.
@@ -305,192 +231,6 @@ package Docgen is
    --  is put in the index and also if we can link this item to its
    --  declaration
 
-   type Doc_Info_Base is tagged record
-      Doc_Info_Options : All_Options;
-      Doc_LI_Unit      : LI_File_Ptr;
-      Doc_File_List    : Type_Source_File_List.List;
-   end record;
-
-   type Doc_Info_Open is new Doc_Info_Base with record
-      Open_Title        : GNAT.OS_Lib.String_Access;
-      Open_Package_Next : GNAT.OS_Lib.String_Access;
-      Open_Package_Prev : GNAT.OS_Lib.String_Access;
-   end record;
-   --  Used at the very beginning of the file
-
-   type Doc_Info_Header is new Doc_Info_Base with record
-      Header_Package : GNAT.OS_Lib.String_Access;
-      Header_File    : VFS.Virtual_File_Access;
-      Header_Link    : Boolean;
-      Header_Line    : Natural;
-   end record;
-   --  Used to start an entity information
-
-   type Doc_Info_Header_Private is new Doc_Info_Base with record
-      Header_Title : GNAT.OS_Lib.String_Access;
-   end record;
-   --  Used to start the private part of the file
-
-   type Doc_Info_Footer is new Doc_Info_Base with record
-      Footer_Title : GNAT.OS_Lib.String_Access;
-   end record;
-   --  Used to finish an entity information
-
-   type Doc_Info_Subtitle is new Doc_Info_Base with record
-      Subtitle_Name    : GNAT.OS_Lib.String_Access;
-      Subtitle_Package : GNAT.OS_Lib.String_Access;
-   end record;
-   --  Used to add a subtitle to the information file
-
-   type Doc_Info_With is new Doc_Info_Base with record
-      With_Header      : GNAT.OS_Lib.String_Access;
-      With_File        : VFS.Virtual_File_Access;
-      With_Header_Line : Natural;
-   end record;
-   --  With clauses for imported packages
-
-   type Doc_Info_Package is new Doc_Info_Base with record
-      Package_Entity      : Entity_List_Information;
-      Package_Header      : GNAT.OS_Lib.String_Access;
-      Package_Header_Line : Natural;
-   end record;
-   --  Used to add a package info to the information file
-
-   type Doc_Info_Package_Open_Close is new Doc_Info_Base with record
-      Package_Open_Close_Entity      : Entity_List_Information;
-      Package_Open_Close_Header      : GNAT.OS_Lib.String_Access;
-      Package_Open_Close_Header_Line : Natural;
-   end record;
-   --  Used to add a header or a footer of an inner package
-
-   type Doc_Info_Package_Desc is new Doc_Info_Base with record
-      Package_Desc_Description : GNAT.OS_Lib.String_Access;
-   end record;
-   --  Used to add the package description
-
-   type Doc_Info_Var is new Doc_Info_Base with record
-      Var_Entity      : Entity_List_Information;
-      Var_Header      : GNAT.OS_Lib.String_Access;
-      Var_Header_Line : Natural;
-   end record;
-   --  Used to add a constant and named numbers
-
-   type Doc_Info_Exception is new Doc_Info_Base with record
-      Exception_Entity      : Entity_List_Information;
-      Exception_Header      : GNAT.OS_Lib.String_Access;
-      Exception_Header_Line : Natural;
-   end record;
-   --  Used to add an exception info to the information file
-
-   type Doc_Info_Type is new Doc_Info_Base with record
-      Type_Entity      : Entity_List_Information;
-      Type_Header      : GNAT.OS_Lib.String_Access;
-      Type_Header_Line : Natural;
-   end record;
-   --  Used to add a type info to the information file
-
-   type Doc_Info_Entry is new Doc_Info_Base with record
-      Entry_Entity      : Entity_List_Information;
-      Entry_Header      : GNAT.OS_Lib.String_Access;
-      Entry_Header_Line : Natural;
-      Entry_Link        : Boolean;
-   end record;
-   --  Used to add an entry info to the information file
-
-   type Doc_Info_Subprogram is new Doc_Info_Base with record
-      Subprogram_Entity      : Entity_List_Information;
-      Subprogram_Header      : GNAT.OS_Lib.String_Access;
-      Subprogram_Header_Line : Natural;
-      Subprogram_Link        : Boolean;
-      Subprogram_List        : Type_Entity_List.List;
-   end record;
-   --  Used to add a subprogram info to the information file
-
-   type Doc_Info_References is new Doc_Info_Base with record
-      References_Entity           : Entity_List_Information;
-      References_Source_File_List : Type_Source_File_List.List;
-      References_Directory        : GNAT.OS_Lib.String_Access;
-      References_Suffix           : GNAT.OS_Lib.String_Access;
-   end record;
-   --  Used to add the callgraph of a subprogram
-
-   type Doc_Info_Tagged_Type is new Doc_Info_Base with record
-      Tagged_Entity           : Tagged_Element;
-      Tagged_Source_File_List : Type_Source_File_List.List;
-      Tagged_Directory        : GNAT.OS_Lib.String_Access;
-      Tagged_Suffix           : GNAT.OS_Lib.String_Access;
-   end record;
-   --  Used to list parents and children of a tagged type
-
-   type Doc_Info_Unit_Index is new Doc_Info_Base with record
-      Unit_File_List       : Type_Source_File_List.List;
-      --  The name doc file name without the suffix
-      Unit_Index_File_Name : GNAT.OS_Lib.String_Access;
-      Unit_Project_Name    : Projects.Project_Type;
-   end record;
-   --  Used to start the package index file
-
-   type Doc_Info_Subprogram_Index is new Doc_Info_Base with record
-      Subprogram_Index_File_Name : GNAT.OS_Lib.String_Access;
-      --  The doc file name without the suffix
-   end record;
-   --  Used to start the subprogram index file
-
-   type Doc_Info_Type_Index is new Doc_Info_Base with record
-      Type_Index_File_Name : GNAT.OS_Lib.String_Access;
-      --  The name doc file name without the suffix
-   end record;
-   --  Used to start the type index file
-
-   type Doc_Info_Tagged_Type_Index is new Doc_Info_Base with record
-      Tagged_Type_Index_File_Name   : GNAT.OS_Lib.String_Access;
-   end record;
-   --  The doc file name without the suffix
-
-   type Doc_Info_Private_Index is new Doc_Info_Base with record
-      Private_Index_Title : GNAT.OS_Lib.String_Access;
-   end record;
-   --  Used to start private types/subprograms in the index frame
-
-   type Doc_Info_Public_Index is new Doc_Info_Base with record
-      Public_Index_Title : GNAT.OS_Lib.String_Access;
-   end record;
-   --  Used to start public types/subprograms in the index frame
-
-   type Doc_Info_End_Of_Index is new Doc_Info_Base with record
-      End_Index_Title : GNAT.OS_Lib.String_Access;
-   end record;
-   --  Used to finish all 4 kinds of index files
-
-   type Doc_Info_Index_Tagged_Type is new Doc_Info_Base with record
-      Doc_Tagged_Type : Entity_Information;
-      Doc_Family      : Family_Type;
-      Directory       : GNAT.OS_Lib.String_Access;
-      Suffix          : GNAT.OS_Lib.String_Access;
-   end record;
-   --  Used to add items to the tagged types index files
-
-   type Doc_Info_Index_Item is new Doc_Info_Base with record
-      Item_Name     : GNAT.OS_Lib.String_Access;
-      Item_File     : VFS.Virtual_File_Access;
-      Item_Line     : Natural;
-      Item_Doc_File : GNAT.OS_Lib.String_Access;
-   end record;
-   --  Used to add items to 3 kinds of index files (units, types
-   --  and subprograms index)
-
-   type Doc_Info_Body_Line is new Doc_Info_Base with record
-      Body_File : VFS.Virtual_File_Access;
-      Body_Text : GNAT.OS_Lib.String_Access;
-   end record;
-   --  Used to pass the information of one line in the body file
-
-   type Doc_Info_Description is new Doc_Info_Base with record
-      Description : GNAT.OS_Lib.String_Access;
-   end record;
-   --  Used to pass the comments written after or before of the
-   --  source code
-
    package Docgen_Backend is
 
       type Backend is abstract tagged private;
@@ -501,45 +241,46 @@ package Docgen is
       --  process.
 
       procedure Doc_Open
-        (B      : access Backend;
-         Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
-         File   : File_Descriptor;
-         Info   : in out Docgen.Doc_Info_Open) is abstract;
+        (B          : access Backend;
+         Kernel     : access Glide_Kernel.Kernel_Handle_Record'Class;
+         File       : File_Descriptor;
+         Open_Title : String) is abstract;
       --  Called each time a new file is created
 
       procedure Doc_Close
         (B      : access Backend;
          Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
-         File   : File_Descriptor;
-         Info   : in out Docgen.Doc_Info_Base) is abstract;
+         File   : File_Descriptor) is abstract;
       --  Called each time a file is closed
 
       procedure Doc_Header
-        (B       : access Backend;
-         Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
-         LI_Unit : LI_File_Ptr;
-         File    : File_Descriptor;
-         Info    : in out Docgen.Doc_Info_Header) is abstract;
+        (B              : access Backend;
+         Kernel         : access Glide_Kernel.Kernel_Handle_Record'Class;
+         File           : File_Descriptor;
+         Header_File    : VFS.Virtual_File;
+         Header_Package : String;
+         Header_Line    : Natural;
+         Header_Link    : Boolean) is abstract;
 
       procedure Doc_Header_Private
         (B                : access Backend;
          Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
          File             : File_Descriptor;
-         Info             : in out Docgen.Doc_Info_Header_Private;
+         Header_Title     : String;
          Level            : Natural) is abstract;
 
       procedure Doc_Footer
         (B                : access Backend;
          Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
-         File             : File_Descriptor;
-         Info             : in out Docgen.Doc_Info_Footer) is abstract;
+         File             : File_Descriptor) is abstract;
+      --  Called when we finished processing an entity.
 
       procedure Doc_Subtitle
-        (B      : access Backend;
-         Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
-         File   : File_Descriptor;
-         Info   : in out Docgen.Doc_Info_Subtitle;
-         Level  : Natural) is abstract;
+        (B                : access Backend;
+         Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
+         File             : File_Descriptor;
+         Level            : Natural;
+         Subtitle_Name    : String) is abstract;
       --  Add a subtitle for the entity type to the documentation
 
       procedure Doc_With
@@ -547,157 +288,222 @@ package Docgen is
          Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
          File             : File_Descriptor;
          List_Ref_In_File : in out List_Reference_In_File.List;
-         Info             : in out Docgen.Doc_Info_With;
-         Level            : Natural) is abstract;
+         Source_File_List : Type_Source_File_Table.HTable;
+         Options          : All_Options;
+         Level            : Natural;
+         With_Header      : String;
+         With_File        : VFS.Virtual_File;
+         With_Header_Line : Natural) is abstract;
+      --  With clauses for imported packages
 
       procedure Doc_Package
-        (B                : access Backend;
-         Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
-         File             : File_Descriptor;
-         List_Ref_In_File : in out List_Reference_In_File.List;
-         Info             : in out Docgen.Doc_Info_Package;
-         Level            : Natural) is abstract;
+        (B                   : access Backend;
+         Kernel              : access Glide_Kernel.Kernel_Handle_Record'Class;
+         File                : in File_Descriptor;
+         List_Ref_In_File    : in out List_Reference_In_File.List;
+         Source_File_List    : Type_Source_File_Table.HTable;
+         Options             : All_Options;
+         Level               : Natural;
+         Package_Entity      : Entity_Information;
+         Package_Header      : String) is abstract;
+      --  Used to add a package info to the information file
 
       procedure Doc_Package_Open_Close
-        (B                : access Backend;
-         Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
-         File             : File_Descriptor;
-         List_Ref_In_File : in out List_Reference_In_File.List;
-         Info             : in out Docgen.Doc_Info_Package_Open_Close;
-         Level            : Natural) is abstract;
+        (B                 : access Backend;
+         Kernel            : access Glide_Kernel.Kernel_Handle_Record'Class;
+         File              : in File_Descriptor;
+         List_Ref_In_File  : in out List_Reference_In_File.List;
+         Source_File_List  : Type_Source_File_Table.HTable;
+         Options           : All_Options;
+         Level             : Natural;
+         Entity            : Entity_Information;
+         Header            : String) is abstract;
+      --  Used to add a header or a gooter for an inner package
 
       procedure Doc_Package_Desc
-        (B      : access Backend;
-         Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
-         File   : File_Descriptor;
-         Info   : in out Docgen.Doc_Info_Package_Desc;
-         Level  : Natural) is abstract;
+        (B           : access Backend;
+         Kernel      : access Glide_Kernel.Kernel_Handle_Record'Class;
+         File        : File_Descriptor;
+         Level       : Natural;
+         Description : String) is abstract;
+      --  Used to add a package description
 
       procedure Doc_Var
         (B                : access Backend;
          Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
-         File             : File_Descriptor;
+         File             : in File_Descriptor;
          List_Ref_In_File : in out List_Reference_In_File.List;
-         Info             : in out Docgen.Doc_Info_Var;
-         Level            : Natural) is abstract;
+         Source_File_List : Type_Source_File_Table.HTable;
+         Options          : All_Options;
+         Level            : Natural;
+         Entity           : Entity_Information;
+         Header           : String) is abstract;
+      --  Used to add a constant or a named number
 
       procedure Doc_Exception
         (B                : access Backend;
          Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
          File             : File_Descriptor;
          List_Ref_In_File : in out List_Reference_In_File.List;
-         Info             : in out Docgen.Doc_Info_Exception;
-         Level            : Natural) is abstract;
+         Source_File_List : Type_Source_File_Table.HTable;
+         Options          : All_Options;
+         Level            : Natural;
+         Entity           : Entity_Information;
+         Header           : String) is abstract;
+      --  Used to add an exception info to the information file
 
       procedure Doc_Type
         (B                : access Backend;
          Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
          File             : File_Descriptor;
          List_Ref_In_File : in out List_Reference_In_File.List;
-         Info             : in out Docgen.Doc_Info_Type;
-         Level            : Natural) is abstract;
+         Source_File_List : Type_Source_File_Table.HTable;
+         Options          : All_Options;
+         Level            : Natural;
+         Entity           : Entity_Information;
+         Header           : String) is abstract;
+      --  Used to add type information
 
       procedure Doc_Entry
         (B                : access Backend;
          Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
          File             : File_Descriptor;
          List_Ref_In_File : in out List_Reference_In_File.List;
-         Info             : in out Docgen.Doc_Info_Entry;
-         Level            : Natural) is abstract;
+         Source_File_List : Type_Source_File_Table.HTable;
+         Options          : All_Options;
+         Level            : Natural;
+         Entity           : Entity_Information;
+         Header           : String) is abstract;
 
       procedure Doc_Subprogram
         (B                : access Backend;
          Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
          File             : File_Descriptor;
          List_Ref_In_File : in out List_Reference_In_File.List;
-         Info             : in out Docgen.Doc_Info_Subprogram;
-         Level            : Natural) is abstract;
+         Source_File_List : Type_Source_File_Table.HTable;
+         Options          : All_Options;
+         Level            : Natural;
+         Entity           : Entity_List_Information;
+         Header           : String) is abstract;
+      --  Add subprogram information
 
-      procedure Doc_References
-        (B                : access Backend;
-         Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
-         File             : File_Descriptor;
-         Info             : in out Docgen.Doc_Info_References;
-         Level            : Natural) is abstract;
+      procedure Doc_Caller_References
+        (B                 : access Backend;
+         Kernel            : access Kernel_Handle_Record'Class;
+         File              : File_Descriptor;
+         Options           : All_Options;
+         Level             : Natural;
+         Callers           : Entities.Entity_Information_Arrays.Instance;
+         Processed_Sources : Type_Source_File_Table.HTable) is abstract;
+      --  Add the list of callers for a given entity
+
+      procedure Doc_Calls_References
+        (B                 : access Backend;
+         Kernel            : access Kernel_Handle_Record'Class;
+         File              : File_Descriptor;
+         Options           : All_Options;
+         Level             : Natural;
+         Calls             : Entities.Entity_Information_Arrays.Instance;
+         Processed_Sources : Type_Source_File_Table.HTable) is abstract;
+      --  Add the list of entities called by the current entity
 
       procedure Doc_Tagged_Type
         (B                : access Backend;
          Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
          File             : File_Descriptor;
-         Info             : in out Docgen.Doc_Info_Tagged_Type;
-         Level            : Natural) is abstract;
+         Source_File_List : Type_Source_File_Table.HTable;
+         Level            : Natural;
+         Entity           : Entity_Information) is abstract;
+      --  Add the list of parent and children for a tagged type
 
       procedure Doc_Unit_Index
         (B                : access Backend;
          Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
          File             : File_Descriptor;
-         Info             : in out Docgen.Doc_Info_Unit_Index;
+         Source_File_List : Type_Source_File_Table.HTable;
+         Options          : All_Options;
          Level            : Natural;
-         Doc_Directory    : String;
-         Doc_Suffix       : String) is abstract;
+         Doc_Directory    : String) is abstract;
+      --  Start the output the Unit index file
 
       procedure Doc_Subprogram_Index
-        (B      : access Backend;
-         Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
-         File   : File_Descriptor;
-         Info   : in out Docgen.Doc_Info_Subprogram_Index) is abstract;
+        (B       : access Backend;
+         Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
+         File    : File_Descriptor;
+         Options : All_Options) is abstract;
+      --  Start the output of the subprogram index file
 
       procedure Doc_Type_Index
         (B                : access Backend;
          Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
          File             : File_Descriptor;
-         Info             : in out Docgen.Doc_Info_Type_Index) is abstract;
+         Options          : All_Options) is abstract;
+      --  Start the output of the type index file
 
       procedure Doc_Tagged_Type_Index
         (B      : access Backend;
          Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
-         File   : File_Descriptor;
-         Info   : in out Docgen.Doc_Info_Tagged_Type_Index) is abstract;
+         File   : File_Descriptor) is abstract;
+      --  Start the output of the index for tagged types
 
       procedure Doc_Private_Index
         (B                : access Backend;
          Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
          File             : File_Descriptor;
-         Info             : in out Docgen.Doc_Info_Private_Index) is abstract;
+         Title            : String) is abstract;
+      --  Start a new section in the current index for private entities
 
       procedure Doc_Public_Index
         (B                : access Backend;
          Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
          File             : File_Descriptor;
-         Info             : in out Docgen.Doc_Info_Public_Index) is abstract;
+         Title            : String) is abstract;
+      --  Start a new section in the current index for public entities
 
       procedure Doc_End_Of_Index
         (B                : access Backend;
          Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
-         File             : File_Descriptor;
-         Info             : in out Docgen.Doc_Info_End_Of_Index) is abstract;
+         File             : File_Descriptor) is abstract;
+      --  Terminate the current index file
 
       procedure Doc_Index_Tagged_Type
-        (B      : access Backend;
-         Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
-         File   : File_Descriptor;
-         Info   : in out Docgen.Doc_Info_Index_Tagged_Type) is abstract;
+        (B                : access Backend;
+         Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
+         File             : File_Descriptor;
+         Source_File_List : Type_Source_File_Table.HTable;
+         Entity           : Entity_Information;
+         Family           : Family_Type) is abstract;
+      --  Add items to the tagged types index file
 
       procedure Doc_Index_Item
         (B                : access Backend;
          Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
          File             : File_Descriptor;
-         Info             : in out Docgen.Doc_Info_Index_Item) is abstract;
+         Name             : String;
+         Item_File        : Entities.Source_File;
+         Line             : Natural;
+         Doc_File         : String) is abstract;
+      --  Add items to one of the index files (units, types and subprograms)
 
       procedure Doc_Body_Line
         (B                : access Backend;
          Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
          File             : File_Descriptor;
          List_Ref_In_File : in out List_Reference_In_File.List;
-         Info             : in out Docgen.Doc_Info_Body_Line;
-         Level            : Natural) is abstract;
+         Source_File_List : Type_Source_File_Table.HTable;
+         Options          : All_Options;
+         Level            : Natural;
+         Body_File        : VFS.Virtual_File;
+         Body_Text        : String) is abstract;
+      --  Process one line of the body file
 
       procedure Doc_Description
         (B                : access Backend;
          Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
          File             : File_Descriptor;
-         Info             : in out Docgen.Doc_Info_Description;
-         Level            : Natural) is abstract;
+         Level            : Natural;
+         Description      : String) is abstract;
+      --  Pass comments written after or before the current entity
 
       procedure Format_Comment
         (B           : access Backend;
@@ -753,12 +559,11 @@ package Docgen is
          End_Line            : Natural;
          Kernel              : access Kernel_Handle_Record'Class;
          File                : File_Descriptor;
-         LI_Unit             : LI_File_Ptr;
          Text                : String;
          File_Name           : VFS.Virtual_File;
          Entity_Line         : Natural;
          Line_In_Body        : Natural;
-         Source_File_List    : Type_Source_File_List.List;
+         Source_File_List    : Type_Source_File_Table.HTable;
          Link_All            : Boolean;
          Is_Body             : Boolean;
          Process_Body        : Boolean;
@@ -772,7 +577,7 @@ package Docgen is
       --  contained in the list made in Process_One_File
       --  (see docgen-work_on_File.adb).
 
-      procedure Format_File
+      procedure Format_Code
         (B                : access Backend'Class;
          Kernel           : access Kernel_Handle_Record'Class;
          File             : File_Descriptor;
@@ -782,7 +587,8 @@ package Docgen is
          Entity_Line      : Natural;
          Line_In_Body     : Natural;
          Is_Body          : Boolean;
-         Info             : Doc_Info_Base'Class;
+         Options          : All_Options;
+         Source_File_List : Type_Source_File_Table.HTable;
          Level            : Natural;
          Indent           : Natural);
       --  Generate documentation for a type of code in the file
@@ -819,12 +625,11 @@ package Docgen is
          End_Index        : Natural;
          Kernel           : access Kernel_Handle_Record'Class;
          File             : File_Descriptor;
-         LI_Unit          : LI_File_Ptr;
          Text             : String;
          File_Name        : VFS.Virtual_File;
          Entity_Line      : Natural;
          Line_In_Body     : Natural;
-         Source_File_List : Type_Source_File_List.List;
+         Source_File_List : Type_Source_File_Table.HTable;
          Link_All         : Boolean;
          Is_Body          : Boolean;
          Process_Body     : Boolean;
@@ -855,7 +660,7 @@ package Docgen is
 
       function Get_Doc_Directory
         (B      : access Backend;
-         Kernel : Kernel_Handle) return String is abstract;
+         Kernel : access Kernel_Handle_Record'Class) return String is abstract;
       --  Return the path which must contain the documentation (eg.
       --  "/..../gps/glide/obj/html/" for an instance of object
       --  Backend_HTML).
@@ -890,12 +695,11 @@ package Docgen is
       End_Index           : Natural;
       Kernel              : access Kernel_Handle_Record'Class;
       File                : File_Descriptor;
-      LI_Unit             : LI_File_Ptr;
       Text                : String;
       File_Name           : VFS.Virtual_File;
       Entity_Line         : Natural;
       Line_In_Body        : in out Natural;
-      Source_File_List    : Type_Source_File_List.List;
+      Source_File_List    : Type_Source_File_Table.HTable;
       Link_All            : Boolean;
       Is_Body             : Boolean;
       Process_Body        : Boolean;
@@ -917,17 +721,13 @@ package Docgen is
    --  Return the number of point in the given string
 
    function Get_Doc_File_Name
-     (Source_Filename : VFS.Virtual_File_Access;
-      Source_Path     : String;
+     (Source_Filename : VFS.Virtual_File;
       Doc_Suffix      : String) return String;
-   --  Return a string with the name for the new doc file:
-   --  first the doc path is added in front of the created name
-   --  then the "." in front of the suffix is replaced by "_",
-   --  so that a new output format suffix can be added
+   --  Return a string with the base name for the new doc file:
 
    function Source_File_In_List
-     (Source_File_List : Type_Source_File_List.List;
-      Name             : VFS.Virtual_File_Access) return Boolean;
+     (Source_File_List : Type_Source_File_Table.HTable;
+      File             : Entities.Source_File) return Boolean;
    --  Return true if the file is found in the source file list
 
    function Is_Spec_File

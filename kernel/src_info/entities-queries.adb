@@ -21,6 +21,8 @@
 with VFS;      use VFS;
 with Traces;   use Traces;
 with Projects; use Projects;
+with Projects.Registry; use Projects.Registry;
+with Language_Handlers.Glide; use Language_Handlers.Glide;
 
 with Glib.Unicode; use Glib.Unicode;
 
@@ -53,7 +55,7 @@ package body Entities.Queries is
    --  Check in EL the entities which has a reference as close as possible
    --  to (Line, Column). Distance is the initial closest distance known, and
    --  is changed to reflect the result of the find. It is set to 0 if an
-   --  exact match was found.
+   --  exact match was
    --  If Check_Decl_Only is True, then it only tries to match a declaration,
    --  and doesn't check references to the entity.
 
@@ -87,18 +89,23 @@ package body Entities.Queries is
    --  Same as above, but restricted to a subset of the entities only
 
    function Get_Start_Of_Scope_In_File
-     (Entity : Entity_Information; File : Source_File) return File_Location;
+     (Entity     : Entity_Information;
+      File       : Source_File;
+      Force_Spec : Boolean) return File_Location;
    function Get_End_Of_Scope_In_File
-     (Entity : Entity_Information; File : Source_File) return File_Location;
+     (Entity     : Entity_Information;
+      File       : Source_File;
+      Force_Spec : Boolean) return File_Location;
    --  Get the range of lines that Entity encloses in File.
    --  If Entity doesn't have the notion of enclosed lines (a simple integer
-   --  for instance), then No_File_Location is returned
+   --  for instance), then No_File_Location is returned.
+   --  If Force_Spec is True, then the scope of the spec is returned, otherwise
+   --  the scope of the body is returned.
 
    type Scope_Tree;
    type Scope_Tree_Access is access Scope_Tree;
    type Scope_Tree is record
       Sibling     : Scope_Tree_Access;
-      Parent      : Scope_Tree_Access;
       First_Child : Scope_Tree_Access;
 
       Entity      : Entity_Information;
@@ -112,7 +119,6 @@ package body Entities.Queries is
 
    procedure Add_To_Tree
      (Tree           : in out Scope_Tree_Access;
-      Parent         : Scope_Tree_Access;
       Entity         : Entity_Information;
       Start_Of_Scope : File_Location;
       End_Of_Scope   : File_Location);
@@ -128,6 +134,12 @@ package body Entities.Queries is
 
    procedure Compute_Callers_And_Called (File : Source_File);
    --  Compute all the calls/called by relationships in the File
+
+   function Get_Entity_From_Ref
+     (Entity : Entity_Information; Ref : E_Reference)
+      return Entity_Information;
+   --  Return the actual entity corresponding to a specific reference to
+   --  Entity.
 
    ----------
    -- Find --
@@ -287,8 +299,8 @@ package body Entities.Queries is
      (Db              : Entities_Database;
       File_Name       : VFS.Virtual_File;
       Entity_Name     : String := "";
-      Line            : Positive;
-      Column          : Positive;
+      Line            : Natural;
+      Column          : Natural;
       Entity          : out Entity_Information;
       Status          : out Find_Decl_Or_Body_Query_Status;
       Check_Decl_Only : Boolean := False)
@@ -297,16 +309,61 @@ package body Entities.Queries is
       Source   : constant Source_File := Get_Source_Info (Handler, File_Name);
    begin
       if Source = null then
-         Trace (Me, "No such file registered: " & Full_Name (File_Name).all);
+         Trace (Me, "No such file registered: "
+                & Full_Name (File_Name).all);
          Status := Entity_Not_Found;
          Entity := null;
-
-      elsif Case_Insensitive_Identifiers (Handler) then
-         Find (Source, UTF8_Strdown (Entity_Name), Line, Column,
-               Check_Decl_Only, Entity, Status);
       else
-         Find (Source, Entity_Name, Line, Column, Check_Decl_Only,
-               Entity, Status);
+         Find_Declaration
+           (Db, Source, Entity_Name, Line, Column, Entity, Status,
+            Check_Decl_Only, Handler);
+      end if;
+   end Find_Declaration;
+
+   ----------------------
+   -- Find_Declaration --
+   ----------------------
+
+   procedure Find_Declaration
+     (Db              : Entities_Database;
+      Source          : Source_File;
+      Entity_Name     : String := "";
+      Line            : Natural;
+      Column          : Natural;
+      Entity          : out Entity_Information;
+      Status          : out Find_Decl_Or_Body_Query_Status;
+      Check_Decl_Only : Boolean := False;
+      Handler         : LI_Handler := null)
+   is
+      H       : LI_Handler := Handler;
+      Updated : Source_File;
+      pragma Unreferenced (Updated);
+   begin
+      if Source = Get_Predefined_File (Db) then
+         Entity := Get_Or_Create
+           (Name         => Entity_Name,
+            File         => Source,
+            Line         => Line,
+            Column       => Column,
+            Allow_Create => True);
+         Status := Success;
+         return;
+      end if;
+
+      if H = null then
+         H := Get_LI_Handler (Db, Get_Filename (Source));
+      end if;
+
+      if H /= null then
+         Updated := Get_Source_Info (H, Get_Filename (Source));
+
+         if Case_Insensitive_Identifiers (H) then
+            Find (Source, UTF8_Strdown (Entity_Name), Line, Column,
+                  Check_Decl_Only, Entity, Status);
+         else
+            Find (Source, Entity_Name, Line, Column, Check_Decl_Only,
+                  Entity, Status);
+         end if;
       end if;
    end Find_Declaration;
 
@@ -356,6 +413,78 @@ package body Entities.Queries is
       end if;
    end Find_Next_Body;
 
+   ---------------------
+   -- Is_Discriminant --
+   ---------------------
+
+   function Is_Discriminant
+     (Discr, Entity : Entity_Information) return Boolean
+   is
+      Iter : Entity_Reference_Iterator;
+   begin
+      Find_All_References
+        (Iter    => Iter,
+         Entity  => Entity,
+         In_File => Get_File (Get_Declaration_Of (Entity)),
+         Filter  => (Discriminant => True, others => False));
+
+      while not At_End (Iter) loop
+         if Get_Entity (Iter) = Discr then
+            Destroy (Iter);
+            return True;
+         end if;
+         Next (Iter);
+      end loop;
+
+      Destroy (Iter);
+      return False;
+   end Is_Discriminant;
+
+   --------------
+   -- In_Range --
+   --------------
+
+   function In_Range
+     (Loc : File_Location; Entity : Entity_Information) return Boolean
+   is
+      Bod : File_Location := No_File_Location;
+      Start, Last : Integer;
+   begin
+      --  An entity is never in its own range
+      if Loc = Get_Declaration_Of (Entity) then
+         return False;
+      end if;
+
+      if Entity.Declaration.File = Loc.File then
+         Start := Get_Start_Of_Scope_In_File
+           (Entity, Loc.File, Force_Spec => True).Line;
+         Last  := Get_End_Of_Scope_In_File
+           (Entity, Loc.File, Force_Spec => True).Line;
+         if In_Range (Loc, Entity.Declaration.File, Start, Last) then
+            return True;
+         end if;
+      end if;
+
+      loop
+         Find_Next_Body
+           (Entity, Bod, Location => Bod, No_Location_If_First => True);
+         exit when Bod = No_File_Location
+           or else Bod.File = Loc.File;
+      end loop;
+
+      if Bod /= No_File_Location then
+         Start := Get_Start_Of_Scope_In_File
+           (Entity, Loc.File, Force_Spec => False).Line;
+         Last  := Get_End_Of_Scope_In_File
+           (Entity, Loc.File, Force_Spec => False).Line;
+         if In_Range (Loc, Bod.File, Start, Last) then
+            return True;
+         end if;
+      end if;
+
+      return False;
+   end In_Range;
+
    -------------------------
    -- Find_All_References --
    -------------------------
@@ -365,7 +494,8 @@ package body Entities.Queries is
       Entity                : Entity_Information;
       File_Has_No_LI_Report : File_Error_Reporter := null;
       In_File               : Source_File := null;
-      In_Scope              : Entity_Information := null)
+      In_Scope              : Entity_Information := null;
+      Filter                : Reference_Kind_Filter := Real_References_Filter)
    is
       Deps : Dependency_Iterator;
       F    : Source_File := In_File;
@@ -381,13 +511,17 @@ package body Entities.Queries is
                             No_Location_If_First => True);
             if Loc = No_File_Location then
                F := Entity.Declaration.File;
-               Start := Get_Start_Of_Scope_In_File (In_Scope, F).Line;
-               Last  := Get_End_Of_Scope_In_File   (In_Scope, F).Line;
+               Start := Get_Start_Of_Scope_In_File
+                 (In_Scope, F, Force_Spec => True).Line;
+               Last  := Get_End_Of_Scope_In_File
+                 (In_Scope, F, Force_Spec => True).Line;
                exit;
             else
                F := Loc.File;
-               Start := Get_Start_Of_Scope_In_File (In_Scope, F).Line;
-               Last  := Get_End_Of_Scope_In_File   (In_Scope, F).Line;
+               Start := Get_Start_Of_Scope_In_File
+                 (In_Scope, F, Force_Spec => False).Line;
+               Last  := Get_End_Of_Scope_In_File
+                 (In_Scope, F, Force_Spec => False).Line;
                exit when Last /= 0;
             end if;
          end loop;
@@ -415,26 +549,50 @@ package body Entities.Queries is
       Iter :=
         (Need_To_Update_Files => F = null,
          Index                => Entity_Reference_Arrays.First,
-         Decl_Returned        => In_Scope /= null
-            and then not In_Range (Entity.Declaration, F, Start, Last),
+         Decl_Returned        => not Filter (Declaration)
+           or else
+             (In_Scope /= null
+              and then not In_Range (Entity.Declaration, F, Start, Last)),
          Entity               => Entity,
          Deps                 => Deps,
          In_File              => F,
          Start_Line           => Start,
+         Filter               => Filter,
          Last_Line            => Last);
 
-      if Iter.Entity.References /= Null_Entity_Reference_List then
-         if (In_Scope /= null
-             and then not In_Range
-               (Iter.Entity.References.Table (Iter.Index).Location,
-                Iter.In_File, Iter.Start_Line, Iter.Last_Line))
-           or else not Is_Real_Reference
-             (Iter.Entity.References.Table (Iter.Index).Kind)
-         then
-            Next (Iter);
-         end if;
+      if Iter.Entity.References /= Null_Entity_Reference_List
+        and then Iter.Decl_Returned
+        and then
+          ((In_Scope /= null
+            and then not In_Range
+              (Iter.Entity.References.Table (Iter.Index).Location,
+               Iter.In_File, Iter.Start_Line, Iter.Last_Line))
+           or else not Filter
+             (Iter.Entity.References.Table (Iter.Index).Kind))
+      then
+         Next (Iter);
       end if;
    end Find_All_References;
+
+   --------------------------
+   -- Get_Current_Progress --
+   --------------------------
+
+   function Get_Current_Progress
+     (Iter : Entity_Reference_Iterator) return Integer is
+   begin
+      return Get_Current_Progress (Iter.Deps);
+   end Get_Current_Progress;
+
+   ------------------------
+   -- Get_Total_Progress --
+   ------------------------
+
+   function Get_Total_Progress
+     (Iter : Entity_Reference_Iterator) return Integer is
+   begin
+      return Get_Total_Progress (Iter.Deps);
+   end Get_Total_Progress;
 
    ------------
    -- At_End --
@@ -474,23 +632,30 @@ package body Entities.Queries is
            or else Get (Iter.Deps) /= null
          then
             Iter.Need_To_Update_Files := False;
+            if Iter.Decl_Returned then
+               Next (Iter);
+            end if;
          else
             Next (Iter.Deps);
          end if;
-      elsif Iter.Decl_Returned then
-         loop
-            Iter.Index := Iter.Index + 1;
-            exit when Iter.Index > Last (Iter.Entity.References)
-              or else
-                (Is_Real_Reference
-                     (Iter.Entity.References.Table (Iter.Index).Kind)
-                 and then In_Range
-                   (Iter.Entity.References.Table (Iter.Index).Location,
-                    Iter.In_File, Iter.Start_Line, Iter.Last_Line));
-         end loop;
-      else
-         Iter.Decl_Returned := True;
+         return;
       end if;
+
+      if not Iter.Decl_Returned then
+         Iter.Decl_Returned := True;
+      else
+         Iter.Index := Iter.Index + 1;
+      end if;
+
+      while Iter.Index <= Last (Iter.Entity.References)
+        and then
+          (not Iter.Filter (Iter.Entity.References.Table (Iter.Index).Kind)
+           or else not In_Range
+             (Iter.Entity.References.Table (Iter.Index).Location,
+              Iter.In_File, Iter.Start_Line, Iter.Last_Line))
+      loop
+         Iter.Index := Iter.Index + 1;
+      end loop;
    end Next;
 
    ---------
@@ -509,6 +674,24 @@ package body Entities.Queries is
       end if;
    end Get;
 
+   ----------------
+   -- Get_Entity --
+   ----------------
+
+   function Get_Entity
+     (Iter : Entity_Reference_Iterator) return Entity_Information is
+   begin
+      if Iter.Need_To_Update_Files then
+         return null;
+      elsif not Iter.Decl_Returned then
+         return Iter.Entity;
+      else
+         return Get_Entity_From_Ref
+           (Iter.Entity,
+            Iter.Entity.References.Table (Iter.Index));
+      end if;
+   end Get_Entity;
+
    -------------
    -- Destroy --
    -------------
@@ -516,6 +699,20 @@ package body Entities.Queries is
    procedure Destroy (Iter : in out Entity_Reference_Iterator) is
    begin
       Destroy (Iter.Deps);
+   end Destroy;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (Iter : in out Entity_Reference_Iterator_Access) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Entity_Reference_Iterator, Entity_Reference_Iterator_Access);
+   begin
+      if Iter /= null then
+         Destroy (Iter.all);
+         Unchecked_Free (Iter);
+      end if;
    end Destroy;
 
    --------------------------------
@@ -530,54 +727,78 @@ package body Entities.Queries is
       Single_Source_File    : Boolean := False)
    is
       Importing : Imported_Project_Iterator;
+      Project   : Project_Type;
+      Count     : Natural;
+      pragma Unreferenced (Count);
    begin
-      Trace (Me, "Find_Ancestor_Dependencies: "
-             & Full_Name (Get_Filename (File)).all
-             & " Self=" & Boolean'Image (Include_Self)
-             & " Single=" & Boolean'Image (Single_Source_File));
+--        Trace (Me, "Find_Ancestor_Dependencies: "
+--               & Full_Name (Get_Filename (File)).all
+--               & " Self=" & Boolean'Image (Include_Self)
+--               & " Single=" & Boolean'Image (Single_Source_File));
 
       Update_Xref (File, File_Has_No_LI_Report);
 
-      Assert (Me, File.LI /= null, "No LI file known");
+      Project := Get_Project_From_File
+        (File.Db.Registry.all, Get_Filename (File), Root_If_Not_Found => True);
 
       if Single_Source_File then
-         Iter := (Importing             =>
-                    Start (Get_Project (File.LI), Recursive => False),
-                  Source_Files          =>
-                    new File_Array'(1 => Get_Filename (File)),
-                  Current_File          => 0,
+         Iter := (Importing             => Start (Project, Recursive => False),
+                  Db                    => File.Db,
                   Include_Self          => Include_Self,
                   File_Has_No_LI_Report => File_Has_No_LI_Report,
                   Single_Source_File    => Single_Source_File,
+                  Handler               => null,
                   Total_Progress        => 1,
                   Current_Progress      => 0,
                   Dep_Index             => Dependency_Arrays.First,
                   File                  => File);
       else
          Importing := Find_All_Projects_Importing
-           (Get_Project (File.LI), Include_Self => True);
+           (Project, Include_Self => True);
          Iter := (Importing             => Importing,
-                  Source_Files          => Get_Source_Files
-                    (Current (Importing), Recursive => False),
-                  Current_File          => 0,
+                  Db                    => File.Db,
                   Include_Self          => Include_Self,
                   File_Has_No_LI_Report => File_Has_No_LI_Report,
                   Single_Source_File    => Single_Source_File,
+                  Handler               => Get_LI_Handler_From_File
+                    (Glide_Language_Handler (File.Db.Lang),
+                     Get_Filename (File)),
                   Total_Progress        => 0,
                   Current_Progress      => 0,
                   Dep_Index             => Dependency_Arrays.First,
                   File                  => File);
-         Iter.Current_File := Iter.Source_Files'First - 1;
 
          while Current (Importing) /= No_Project loop
-            Iter.Total_Progress := Iter.Total_Progress
-              + Direct_Sources_Count (Current (Importing));
+            Iter.Total_Progress := Iter.Total_Progress + 1;
             Next (Importing);
          end loop;
+
+         Count := Parse_All_LI_Information
+           (Handler   => Iter.Handler,
+            Project   => Current (Iter.Importing),
+            Recursive => False);
       end if;
 
       Next (Iter);
    end Find_Ancestor_Dependencies;
+
+   --------------------------
+   -- Get_Current_Progress --
+   --------------------------
+
+   function Get_Current_Progress (Iter : Dependency_Iterator) return Integer is
+   begin
+      return Iter.Current_Progress;
+   end Get_Current_Progress;
+
+   ------------------------
+   -- Get_Total_Progress --
+   ------------------------
+
+   function Get_Total_Progress (Iter : Dependency_Iterator) return Integer is
+   begin
+      return Iter.Total_Progress;
+   end Get_Total_Progress;
 
    ------------
    -- At_End --
@@ -585,7 +806,7 @@ package body Entities.Queries is
 
    function At_End (Iter : Dependency_Iterator) return Boolean is
    begin
-      return Iter.Source_Files = null
+      return Iter.Handler = null
         and then Iter.Dep_Index > Last (Iter.File.Depended_On);
    end At_End;
 
@@ -595,40 +816,22 @@ package body Entities.Queries is
 
    procedure Next (Iter : in out Dependency_Iterator) is
       Source : Source_File;
-      pragma Unreferenced (Source);
+      Count  : Natural;
+      pragma Unreferenced (Source, Count);
    begin
-      if Iter.Source_Files = null then
+      if Iter.Handler = null then
          Iter.Dep_Index := Iter.Dep_Index + 1;
       else
-         loop
-            loop
-               Iter.Current_File := Iter.Current_File + 1;
-               exit when Iter.Current_File > Iter.Source_Files'Last;
-
-               if Iter.Include_Self
-                 or else Iter.Source_Files (Iter.Current_File) /=
-                    Get_Filename (Iter.File)
-               then
-                  Iter.Current_Progress := Iter.Current_Progress + 1;
-                  Source := Get_Source_Info
-                    (Get_LI_Handler
-                       (Iter.File.Db, Iter.Source_Files (Iter.Current_File)),
-                     Iter.Source_Files (Iter.Current_File),
-                     Iter.File_Has_No_LI_Report);
-                  return;
-               end if;
-            end loop;
-
-            Unchecked_Free (Iter.Source_Files);
-            Next (Iter.Importing);
-            if Current (Iter.Importing) = No_Project then
-               return;
-            end if;
-
-            Iter.Source_Files := Get_Source_Files
-              (Current (Iter.Importing), Recursive => False);
-            Iter.Current_File := Iter.Source_Files'First - 1;
-         end loop;
+         Next (Iter.Importing);
+         if Current (Iter.Importing) = No_Project then
+            Iter.Handler := null;
+         else
+            Iter.Current_Progress := Iter.Current_Progress + 1;
+            Count := Parse_All_LI_Information
+              (Handler   => Iter.Handler,
+               Project   => Current (Iter.Importing),
+               Recursive => False);
+         end if;
       end if;
    end Next;
 
@@ -638,7 +841,7 @@ package body Entities.Queries is
 
    function Get (Iter : Dependency_Iterator) return Source_File is
    begin
-      if Iter.Source_Files /= null then
+      if Iter.Handler /= null then
          --  Not available yet
          return null;
       else
@@ -652,7 +855,7 @@ package body Entities.Queries is
 
    function Is_Explicit (Iter : Dependency_Iterator) return Boolean is
    begin
-      if Iter.Source_Files /= null then
+      if Iter.Handler /= null then
          --  Not available yet
          return False;
       else
@@ -665,8 +868,22 @@ package body Entities.Queries is
    -------------
 
    procedure Destroy (Iter : in out Dependency_Iterator) is
+      pragma Unreferenced (Iter);
    begin
-      Unchecked_Free (Iter.Source_Files);
+      --      Unchecked_Free (Iter.Source_Files);
+      null;
+   end Destroy;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (Iter : in out Dependency_Iterator_Access) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Dependency_Iterator, Dependency_Iterator_Access);
+   begin
+      Destroy (Iter.all);
+      Unchecked_Free (Iter);
    end Destroy;
 
    -----------------------
@@ -815,6 +1032,20 @@ package body Entities.Queries is
       end case;
    end Get_Type;
 
+   -----------
+   -- Image --
+   -----------
+
+   function Image (Kind : Parameter_Type) return String is
+   begin
+      case Kind is
+         when In_Parameter     => return "in";
+         when Out_Parameter    => return "out";
+         when In_Out_Parameter => return "in out";
+         when Access_Parameter => return "access";
+      end case;
+   end Image;
+
    -----------------
    -- Renaming_Of --
    -----------------
@@ -830,18 +1061,41 @@ package body Entities.Queries is
    --------------------------------
 
    function Get_Start_Of_Scope_In_File
-     (Entity : Entity_Information; File : Source_File) return File_Location
+     (Entity     : Entity_Information;
+      File       : Source_File;
+      Force_Spec : Boolean) return File_Location
    is
       Loc : File_Location := No_File_Location;
+      Ref : E_Reference;
    begin
-      if Entity.Declaration.File = File then
-         return Entity.Declaration;
+      if Force_Spec then
+         for R in
+           Entity_Reference_Arrays.First .. Last (Entity.References)
+         loop
+            Ref := Entity.References.Table (R);
+
+            --  Use this as the "declaration", since otherwise the
+            --  End_Of_Spec reference is meaningless
+            if Ref.Kind = Completion_Of_Private_Or_Incomplete_Type
+              and then Get_File (Ref.Location) = File
+            then
+               return Ref.Location;
+            end if;
+         end loop;
+
+         if Entity.Declaration.File = File then
+            return Entity.Declaration;
+         else
+            return No_File_Location;
+         end if;
+
       else
          loop
             Find_Next_Body
-              (Entity           => Entity,
-               Current_Location => Loc,
-               Location         => Loc);
+              (Entity               => Entity,
+               Current_Location     => Loc,
+               Location             => Loc,
+               No_Location_If_First => True);
             exit when Loc = No_File_Location
               or else Loc.File = File;
          end loop;
@@ -855,18 +1109,25 @@ package body Entities.Queries is
    ------------------------------
 
    function Get_End_Of_Scope_In_File
-     (Entity : Entity_Information; File : Source_File) return File_Location
+     (Entity     : Entity_Information;
+      File       : Source_File;
+      Force_Spec : Boolean) return File_Location
    is
-      Ref : E_Reference;
+      Ref          : E_Reference;
    begin
-      if Entity.End_Of_Scope.Location.File = File then
+      if Entity.End_Of_Scope.Location.File = File
+        and then ((Force_Spec and then Entity.End_Of_Scope.Kind = End_Of_Spec)
+                  or else (not Force_Spec
+                           and then Entity.End_Of_Scope.Kind = End_Of_Body))
+      then
          return Entity.End_Of_Scope.Location;
       else
          for R in
            Entity_Reference_Arrays.First .. Last (Entity.References)
          loop
             Ref := Entity.References.Table (R);
-            if (Ref.Kind = End_Of_Spec or else Ref.Kind = End_Of_Body)
+            if ((Force_Spec and then Ref.Kind = End_Of_Spec)
+                or else (not Force_Spec and then Ref.Kind = End_Of_Body))
               and then Ref.Location.File = File
             then
                return Ref.Location;
@@ -900,7 +1161,6 @@ package body Entities.Queries is
 
    procedure Add_To_Tree
      (Tree           : in out Scope_Tree_Access;
-      Parent         : Scope_Tree_Access;
       Entity         : Entity_Information;
       Start_Of_Scope : File_Location;
       End_Of_Scope   : File_Location)
@@ -912,7 +1172,6 @@ package body Entities.Queries is
       if Tree = null then
          Tree := new Scope_Tree'
            (Sibling     => null,
-            Parent      => Parent,
             First_Child => null,
             Entity      => Entity,
             Start_Line  => Start_Of_Scope.Line,
@@ -926,7 +1185,6 @@ package body Entities.Queries is
                if Previous = null then
                   Tree  := new Scope_Tree'
                     (Sibling     => Tree,
-                     Parent      => Tree.Parent,
                      First_Child => null,
                      Entity      => Entity,
                      Start_Line  => Start_Of_Scope.Line,
@@ -934,7 +1192,6 @@ package body Entities.Queries is
                else
                   Previous.Sibling := new Scope_Tree'
                     (Sibling     => Previous.Sibling,
-                     Parent      => Tree.Parent,
                      First_Child => null,
                      Entity      => Entity,
                      Start_Line  => Start_Of_Scope.Line,
@@ -950,7 +1207,6 @@ package body Entities.Queries is
             elsif Start_Of_Scope.Line >= T.Start_Line then
                Add_To_Tree
                  (Tree           => T.First_Child,
-                  Parent         => Tree,
                   Entity         => Entity,
                   Start_Of_Scope => Start_Of_Scope,
                   End_Of_Scope   => End_Of_Scope);
@@ -969,7 +1225,6 @@ package body Entities.Queries is
                if Previous = null then
                   Tree := new Scope_Tree'
                     (Sibling     => Sib.Sibling,
-                     Parent      => Tree.Parent,
                      First_Child => T,
                      Entity      => Entity,
                      Start_Line  => Start_Of_Scope.Line,
@@ -977,7 +1232,6 @@ package body Entities.Queries is
                else
                   Previous.Sibling := new Scope_Tree'
                     (Sibling     => Sib.Sibling,
-                     Parent      => Tree.Parent,
                      First_Child => T,
                      Entity      => Entity,
                      Start_Line  => Start_Of_Scope.Line,
@@ -993,7 +1247,6 @@ package body Entities.Queries is
 
          Previous.Sibling := new Scope_Tree'
            (Sibling     => null,
-            Parent      => Tree,
             First_Child => null,
             Entity      => Entity,
             Start_Line  => Start_Of_Scope.Line,
@@ -1001,12 +1254,44 @@ package body Entities.Queries is
       end if;
    end Add_To_Tree;
 
+   procedure Dump (T : Scope_Tree_Access; Prefix : String);
+   procedure Dump (T : Scope_Tree_Access; Prefix : String) is
+      T2 : Scope_Tree_Access := T;
+   begin
+      while T2 /= null loop
+         Trace
+           (Me, Prefix
+              & Get_Name (T2.Entity) & T2.Start_Line'Img & T2.End_Line'Img);
+         Dump (T2.First_Child, Prefix & "  ");
+         T2 := T2.Sibling;
+      end loop;
+   end Dump;
+
+   -----------------------------
+   -- Compute_All_Call_Graphs --
+   -----------------------------
+
+   procedure Compute_All_Call_Graphs (Db : Entities_Database) is
+      use Files_HTable;
+      Iter : Files_HTable.Iterator;
+      File : Source_File;
+   begin
+      Get_First (Db.Files, Iter);
+      loop
+         File := Get_Element (Iter);
+         exit when File = null;
+
+         Compute_Callers_And_Called (File);
+
+         Get_Next (Db.Files, Iter);
+      end loop;
+   end Compute_All_Call_Graphs;
+
    --------------------------------
    -- Compute_Callers_And_Called --
    --------------------------------
 
    procedure Compute_Callers_And_Called (File : Source_File) is
-
       type Entity_Info_Array is array (Natural range <>) of Entity_Information;
       --  Matches a line number with the inner-most enclosing entity
 
@@ -1016,17 +1301,19 @@ package body Entities.Queries is
       --  Add all entities from Trie to the tree
 
       procedure Fill_Table
-        (Tree       : Scope_Tree_Access;
-         Line_Start : Natural;
+        (Tree             : Scope_Tree_Access;
+         Line_Start       : Natural;
          Enclosing_Entity : Entity_Information;
-         Line_Last  : out Natural;
-         Info       : in out Entity_Info_Array);
+         Line_Last        : out Natural;
+         Info             : in out Entity_Info_Array;
+         Info_For_Decl    : in out Entity_Info_Array);
       --  Set the information in Info based on Tre
 
       procedure Process_All_Entities_Refs
-        (Info         : Entity_Info_Array;
-         For_Entities : Entities_Tries.Trie_Tree;
-         Add_Deps     : Boolean);
+        (Info           : Entity_Info_Array;
+         Info_For_Decl  : Entity_Info_Array;
+         For_Entities   : Entities_Tries.Trie_Tree;
+         Add_Deps       : Boolean);
       --  We now have in Lines the inner-most entity at that scope, used
       --  for computing the parent for specific references.
       --  Traverse all the entities in For_Entities, for all
@@ -1035,8 +1322,9 @@ package body Entities.Queries is
       --  the declaration file of the entities.
 
       procedure Process_All_Refs
-        (Info         : Entity_Info_Array;
-         Entity       : Entity_Information);
+        (Info          : Entity_Info_Array;
+         Entity        : Entity_Information;
+         Info_For_Decl : Entity_Info_Array);
       --  Process a list of references as in Process_All_Entities_Refs
 
       -----------------
@@ -1060,16 +1348,37 @@ package body Entities.Queries is
             for E in Entity_Information_Arrays.First .. Last (EL.all) loop
                Entity := EL.Table (E);
 
-               End_Of_Scope := Get_End_Of_Scope_In_File (Entity, File);
+               --  Add the spec too, since if it is on multiple lines, we
+               --  want the parameters to be associated with that subprogram,
+               --  and not to the caller
+
+               End_Of_Scope := Get_End_Of_Scope_In_File
+                 (Entity, File, Force_Spec => True);
+               if End_Of_Scope /= No_File_Location then
+                  Start_Of_Scope := Get_Start_Of_Scope_In_File
+                    (Entity, File, Force_Spec => True);
+                  if Start_Of_Scope /= No_File_Location then
+                     Add_To_Tree
+                       (Tree           => Tree,
+                        Entity         => Entity,
+                        Start_Of_Scope => Start_Of_Scope,
+                        End_Of_Scope   => End_Of_Scope);
+                  end if;
+               end if;
+
+               End_Of_Scope := Get_End_Of_Scope_In_File
+                 (Entity, File, Force_Spec => False);
 
                if End_Of_Scope /= No_File_Location then
-                  Start_Of_Scope := Get_Start_Of_Scope_In_File (Entity, File);
-                  Add_To_Tree
-                    (Tree           => Tree,
-                     Parent         => null,
-                     Entity         => Entity,
-                     Start_Of_Scope => Start_Of_Scope,
-                     End_Of_Scope   => End_Of_Scope);
+                  Start_Of_Scope := Get_Start_Of_Scope_In_File
+                    (Entity, File, Force_Spec => False);
+                  if Start_Of_Scope /= No_File_Location then
+                     Add_To_Tree
+                       (Tree           => Tree,
+                        Entity         => Entity,
+                        Start_Of_Scope => Start_Of_Scope,
+                        End_Of_Scope   => End_Of_Scope);
+                  end if;
                end if;
             end loop;
 
@@ -1082,11 +1391,12 @@ package body Entities.Queries is
       ----------------
 
       procedure Fill_Table
-        (Tree       : Scope_Tree_Access;
-         Line_Start : Natural;
+        (Tree             : Scope_Tree_Access;
+         Line_Start       : Natural;
          Enclosing_Entity : Entity_Information;
-         Line_Last  : out Natural;
-         Info       : in out Entity_Info_Array)
+         Line_Last        : out Natural;
+         Info             : in out Entity_Info_Array;
+         Info_For_Decl    : in out Entity_Info_Array)
       is
          T    : Scope_Tree_Access := Tree;
          Line : Natural := Line_Start;
@@ -1094,21 +1404,29 @@ package body Entities.Queries is
          Line_Last := Line_Start;
 
          while T /= null loop
-            Info (Line .. T.Start_Line) := (others => Enclosing_Entity);
+            if T.Start_Line <= Info'Last then
+               Info (Line .. T.Start_Line - 1) := (others => Enclosing_Entity);
+            end if;
+
+            Info_For_Decl (T.Start_Line) := Enclosing_Entity;
 
             if T.First_Child = null then
-               Line := T.Start_Line + 1;
+               Line := T.Start_Line;
             else
                Fill_Table
                  (Tree             => Tree.First_Child,
-                  Line_Start       => T.Start_Line + 1,
+                  Line_Start       => T.Start_Line,
                   Enclosing_Entity => T.Entity,
                   Line_Last        => Line,
-                  Info             => Info);
+                  Info             => Info,
+                  Info_For_Decl    => Info_For_Decl);
                Line := Line + 1;
             end if;
 
-            Info (Line .. T.End_Line - 1) := (others => T.Entity);
+            if T.End_Line - 1 <= Info'Last then
+               Info (Line .. T.End_Line - 1) := (others => T.Entity);
+            end if;
+
             Line := T.End_Line;
 
             Line_Last := T.End_Line;
@@ -1122,6 +1440,7 @@ package body Entities.Queries is
 
       procedure Process_All_Entities_Refs
         (Info           : Entity_Info_Array;
+         Info_For_Decl  : Entity_Info_Array;
          For_Entities   : Entities_Tries.Trie_Tree;
          Add_Deps       : Boolean)
       is
@@ -1138,8 +1457,15 @@ package body Entities.Queries is
                   Add_Depends_On (EL.Table (E).Declaration.File, File);
                end if;
 
-               if EL.Table (E).Declaration.Line in Info'Range then
+               if EL.Table (E).Declaration.File = File
+                 and then EL.Table (E).Declaration.Line in Info'Range
+               then
                   Caller := Info (EL.Table (E).Declaration.Line);
+
+                  if Caller = EL.Table (E) then
+                     Caller := Info_For_Decl (EL.Table (E).Declaration.Line);
+                  end if;
+
                   EL.Table (E).Caller_At_Declaration := Caller;
 
                   if Caller /= null then
@@ -1149,8 +1475,7 @@ package body Entities.Queries is
                   end if;
                end if;
 
-
-               Process_All_Refs (Info, EL.Table (E));
+               Process_All_Refs (Info, EL.Table (E), Info_For_Decl);
             end loop;
 
             Next (Iter);
@@ -1162,8 +1487,9 @@ package body Entities.Queries is
       ----------------------
 
       procedure Process_All_Refs
-        (Info         : Entity_Info_Array;
-         Entity       : Entity_Information)
+        (Info          : Entity_Info_Array;
+         Entity        : Entity_Information;
+         Info_For_Decl : Entity_Info_Array)
       is
          Refs   : Entity_Reference_List := Entity.References;
          Caller : Entity_Information;
@@ -1171,9 +1497,15 @@ package body Entities.Queries is
          for R in Entity_Reference_Arrays.First .. Last (Refs) loop
             if Refs.Table (R).Location.File = File
               and then Is_Real_Reference (Refs.Table (R).Kind)
+              and then Refs.Table (R).Kind /= Label
               and then Refs.Table (R).Location.Line <= Info'Last
             then
                Caller := Info (Refs.Table (R).Location.Line);
+
+               if Caller = Entity then
+                  Caller := Info_For_Decl (Refs.Table (R).Location.Line);
+               end if;
+
                Refs.Table (R).Caller := Caller;
 
                if Caller /= null then
@@ -1193,9 +1525,6 @@ package body Entities.Queries is
          return;
       end if;
 
-      Trace (Me, "Computing scope tree for "
-             & Full_Name (Get_Filename (File)).all);
-
       Add_To_Tree (Tree, File.Entities);
       Add_To_Tree (Tree, File.All_Entities);
 
@@ -1212,26 +1541,143 @@ package body Entities.Queries is
          end if;
 
          declare
-            Line_Info : Entity_Info_Array (1 .. Line_Max);
-            Last      : Integer;
+            --  We need two tables to memorize the entity enclosing a given
+            --  line: in the case of "procedure A (B : Integer)", the caller
+            --  of A is the package, whereas the caller of B is A itself.
+
+            Line_Info     : Entity_Info_Array (1 .. Line_Max);
+            Info_For_Decl : Entity_Info_Array (1 .. Line_Max);
+            Last          : Integer;
          begin
             Fill_Table
               (Tree             => Tree,
                Line_Start       => 1,
                Enclosing_Entity => null,
                Line_Last        => Last,
-               Info             => Line_Info);
+               Info             => Line_Info,
+               Info_For_Decl    => Info_For_Decl);
             Free (Tree);
 
+--              for L in Line_Info'Range loop
+--                 if Line_Info (L) /= null then
+--                 Trace (Me, "Line" & L'Img & " " & Get_Name (Line_Info (L)));
+--                 end if;
+--              end loop;
+
             Process_All_Entities_Refs
-              (Line_Info, File.Entities, Add_Deps => False);
+              (Line_Info, Info_For_Decl, File.Entities, Add_Deps => False);
             Process_All_Entities_Refs
-              (Line_Info, File.All_Entities, Add_Deps => True);
+              (Line_Info, Info_For_Decl, File.All_Entities, Add_Deps => True);
          end;
       end if;
 
       File.Scope_Tree_Computed := True;
    end Compute_Callers_And_Called;
+
+   -------------------------
+   -- Get_Entity_From_Ref --
+   -------------------------
+
+   function Get_Entity_From_Ref
+     (Entity : Entity_Information;
+      Ref    : E_Reference)
+      return Entity_Information
+   is
+      Result : Entity_Information;
+      Status : Find_Decl_Or_Body_Query_Status;
+   begin
+      if Is_Real_Reference (Ref.Kind) then
+         return Entity;
+      else
+         Find_Declaration
+           (Db        => Entity.Declaration.File.Db,
+            File_Name => Get_Filename (Get_File (Ref.Location)),
+            Line      => Get_Line (Ref.Location),
+            COlumn    => Get_Column (Ref.Location),
+            Entity    => Result,
+            Status    => Status);
+
+         if Status = Success or else Status = Fuzzy_Match then
+            return Result;
+         else
+            return null;
+         end if;
+      end if;
+   end Get_Entity_From_Ref;
+
+   ------------------------
+   -- Get_Parent_Package --
+   ------------------------
+
+   function Get_Parent_Package
+     (Pkg : Entity_Information) return Entity_Information is
+   begin
+      Update_Xref (Pkg.Declaration.File);
+      for R in Entity_Reference_Arrays.First .. Last (Pkg.References) loop
+         if Pkg.References.Table (R).Kind = Parent_Package then
+            return Get_Entity_From_Ref (Pkg, Pkg.References.Table (R));
+         end if;
+      end loop;
+      return null;
+   end Get_Parent_Package;
+
+   -------------------
+   -- Get_Full_Name --
+   -------------------
+
+   function Get_Full_Name
+     (Entity    : Entity_Information;
+      Separator : String := ".") return String
+   is
+      E : Entity_Information := Entity;
+      Last_Not_Null : Entity_Information := Entity;
+      Length : Natural := 0;
+   begin
+      while E /= null loop
+         Length := Length + E.Name'Length + Separator'Length;
+         Compute_Callers_And_Called (E.Declaration.File);
+         Last_Not_Null := E;
+         E := E.Caller_At_Declaration;
+      end loop;
+
+      --  If there is no more caller in the tree, we still need to
+      --  look for possible parent packages
+
+      E := Last_Not_Null;
+      loop
+         E := Get_Parent_Package (E);
+         exit when E = null;
+         Length := Length + E.Name'Length + Separator'Length;
+      end loop;
+
+
+      declare
+         Result : String (1 .. Length);
+         Index  : Natural := Result'Last;
+      begin
+         E := Entity;
+         while E /= null loop
+            Result (Index - Separator'Length + 1 .. Index) := Separator;
+            Index := Index - Separator'Length;
+            Result (Index - E.Name'Length + 1 .. Index) := E.Name.all;
+            Index := Index - E.Name'Length;
+
+            E := E.Caller_At_Declaration;
+         end loop;
+
+         E := Last_Not_Null;
+         loop
+            E := Get_Parent_Package (E);
+            exit when E = null;
+            Result (Index - Separator'Length + 1 .. Index) := Separator;
+            Index := Index - Separator'Length;
+            Result (Index - E.Name'Length + 1 .. Index) := E.Name.all;
+            Index := Index - E.Name'Length;
+         end loop;
+
+         return Result (Result'First .. Result'Last - 1);
+      end;
+   end Get_Full_Name;
 
    ----------------
    -- Get_Caller --
@@ -1239,7 +1685,9 @@ package body Entities.Queries is
 
    function Get_Caller (Ref : Entity_Reference) return Entity_Information is
    begin
-      if Ref.Index = Entity_Reference_Arrays.Index_Type'Last then
+      if Ref.Entity = null then
+         return null;
+      elsif Ref.Index = Entity_Reference_Arrays.Index_Type'Last then
          Compute_Callers_And_Called (Ref.Entity.Declaration.File);
          return Ref.Entity.Caller_At_Declaration;
       else
@@ -1397,6 +1845,283 @@ package body Entities.Queries is
    begin
       Free (Iter.Iter);
       Free (Iter.Prefix);
+   end Destroy;
+
+   -----------------------
+   -- Get_Variable_Type --
+   -----------------------
+
+   function Get_Variable_Type
+     (Entity : Entity_Information) return Entity_Information is
+   begin
+      if Entity.Parent_Types = Null_Entity_Information_List then
+         return null;
+      else
+         --  For a variable, the first parent is the variable's type
+         return Entity.Parent_Types.Table (Entity_Information_Arrays.First);
+      end if;
+   end Get_Variable_Type;
+
+   -------------------------
+   -- Array_Contents_Type --
+   -------------------------
+
+   function Array_Contents_Type
+     (Entity : Entity_Information) return Entity_Information is
+   begin
+      Update_Xref (Get_File (Get_Declaration_Of (Entity)));
+      return Entity.Pointed_Type;
+   end Array_Contents_Type;
+
+   ------------------
+   -- Pointed_Type --
+   ------------------
+
+   function Pointed_Type
+     (Entity : Entity_Information) return Entity_Information is
+   begin
+      Update_Xref (Get_File (Get_Declaration_Of (Entity)));
+      return Entity.Pointed_Type;
+   end Pointed_Type;
+
+   -------------------
+   -- Returned_Type --
+   -------------------
+
+   function Returned_Type
+     (Entity : Entity_Information) return Entity_Information is
+   begin
+      Update_Xref (Get_File (Get_Declaration_Of (Entity)));
+      return Entity.Returned_Type;
+   end Returned_Type;
+
+   ----------------
+   -- Is_Subtype --
+   ----------------
+
+   function Is_Subtype (Entity : Entity_Information) return Boolean is
+   begin
+      if not Entity.Kind.Is_Type then
+         return False;
+      end if;
+
+      --  ??? Unimplemented
+      return False;
+   end Is_Subtype;
+
+   -----------------------------------
+   -- Find_All_Primitive_Operations --
+   -----------------------------------
+
+   procedure Find_All_Primitive_Operations
+     (Iter              : out Primitive_Operations_Iterator;
+      Entity            : Entity_Information;
+      Include_Inherited : Boolean)
+   is
+   begin
+      if Include_Inherited then
+         Iter.Parents := new Entity_Information_Array'
+           (Entity & Get_Parent_Types (Entity, Recursive => True));
+      else
+         Iter.Parents := new Entity_Information_Array'(1 => Entity);
+      end if;
+
+      Iter.Current_Parent    := Iter.Parents'First;
+      Iter.Current_Primitive := Entity_Information_Arrays.First;
+
+      Find_All_References
+        (Iter.Refs,
+         Entity => Entity,
+         In_File => Get_File (Get_Declaration_Of (Entity)),
+         Filter => (Primitive_Operation => True,
+                    others              => False));
+
+      if Iter.Current_Primitive >
+        Last (Iter.Parents (Iter.Current_Parent).Primitive_Subprograms)
+      then
+         Next (Iter);
+      end if;
+   end Find_All_Primitive_Operations;
+
+   ------------
+   -- At_End --
+   ------------
+
+   function At_End (Iter : Primitive_Operations_Iterator) return Boolean is
+   begin
+      return Iter.Current_Parent > Iter.Parents'Last;
+   end At_End;
+
+   ----------
+   -- Next --
+   ----------
+
+   procedure Next (Iter : in out Primitive_Operations_Iterator) is
+   begin
+      if Iter.Current_Parent <= Iter.Parents'Last then
+         Iter.Current_Primitive := Iter.Current_Primitive + 1;
+
+         while Iter.Current_Primitive >
+           Last (Iter.Parents (Iter.Current_Parent).Primitive_Subprograms)
+         loop
+            Iter.Current_Parent := Iter.Current_Parent + 1;
+            exit when Iter.Current_Parent > Iter.Parents'Last;
+
+            Iter.Current_Primitive := Entity_Information_Arrays.First;
+         end loop;
+      end if;
+   end Next;
+
+   ---------
+   -- Get --
+   ---------
+
+   function Get
+     (Iter : Primitive_Operations_Iterator) return Entity_Information is
+   begin
+      return Iter.Parents (Iter.Current_Parent).Primitive_Subprograms.Table
+        (Iter.Current_Primitive);
+   end Get;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (Iter : in out Primitive_Operations_Iterator) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Entity_Information_Array, Entity_Information_Array_Access);
+   begin
+      Destroy (Iter.Refs);
+      Unchecked_Free (Iter.Parents);
+   end Destroy;
+
+   ----------------------
+   -- Get_Parent_Types --
+   ----------------------
+
+   function Get_Parent_Types
+     (Entity    : Entity_Information;
+      Recursive : Boolean := False) return Entity_Information_Array
+   is
+      Result : Entity_Information_List;
+
+      procedure Process_Recursive (Entity : Entity_Information);
+      --  Add Entity and possibly all its parents to Result
+
+      -----------------------
+      -- Process_Recursive --
+      -----------------------
+
+      procedure Process_Recursive (Entity : Entity_Information) is
+      begin
+         Append (Result, Entity);
+
+         if Recursive then
+            Update_Xref (Get_File (Get_Declaration_Of (Entity)));
+
+            for P in
+              Entity_Information_Arrays.First .. Last (Entity.Parent_Types)
+            loop
+               Process_Recursive (Entity.Parent_Types.Table (P));
+            end loop;
+         end if;
+      end Process_Recursive;
+
+   begin
+      for P in
+        Entity_Information_Arrays.First .. Last (Entity.Parent_Types)
+      loop
+         Process_Recursive (Entity.Parent_Types.Table (P));
+      end loop;
+
+      declare
+         R : Entity_Information_Array
+           (Integer (Entity_Information_Arrays.First) ..
+              Integer (Last (Result)));
+      begin
+         for E in R'Range loop
+            R (E) := Result.Table (Entity_Information_Arrays.Index_Type (E));
+         end loop;
+
+         Free (Result);
+         return R;
+      end;
+   end Get_Parent_Types;
+
+   ---------------------
+   -- Get_Child_Types --
+   ---------------------
+
+   procedure Get_Child_Types
+     (Iter   : out Child_Type_Iterator;
+      Entity : Entity_Information) is
+   begin
+      --  Parse all the files that might contain a reference to the entity
+      Find_Ancestor_Dependencies
+        (Iter         => Iter.Dep,
+         File         => Get_File (Get_Declaration_Of (Entity)),
+         Include_Self => True);
+      Iter.Entity := Entity;
+      Iter.Index  := Entity_Information_Arrays.First;
+   end Get_Child_Types;
+
+   ------------
+   -- At_End --
+   ------------
+
+   function At_End (Iter : Child_Type_Iterator) return Boolean is
+   begin
+      return At_End (Iter.Dep)
+        and then Iter.Index > Last (Iter.Entity.Child_Types);
+   end At_End;
+
+   ----------
+   -- Next --
+   ----------
+
+   procedure Next (Iter : in out Child_Type_Iterator) is
+   begin
+      if At_End (Iter.Dep) then
+         Iter.Index := Iter.Index + 1;
+      else
+         Next (Iter.Dep);
+      end if;
+   end Next;
+
+   ---------
+   -- Get --
+   ---------
+
+   function Get (Iter : Child_Type_Iterator) return Entity_Information is
+   begin
+      if At_End (Iter.Dep) then
+         return Iter.Entity.Child_Types.Table (Iter.Index);
+      else
+         return null;
+      end if;
+   end Get;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (Iter : in out Child_Type_Iterator) is
+   begin
+      Destroy (Iter.Dep);
+   end Destroy;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (Iter : in out Child_Type_Iterator_Access) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Child_Type_Iterator, Child_Type_Iterator_Access);
+   begin
+      if Iter /= null then
+         Destroy (Iter.all);
+         Unchecked_Free (Iter);
+      end if;
    end Destroy;
 
 end Entities.Queries;

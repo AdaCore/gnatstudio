@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003                            --
+--                     Copyright (C) 2003-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
@@ -30,7 +30,7 @@ with Glib.Object;              use Glib.Object;
 with VFS;                      use VFS;
 with Docgen.Work_On_File;      use Docgen.Work_On_File;
 with Docgen;                   use Docgen;
-with Src_Info;                 use Src_Info;
+with Entities;                 use Entities;
 with Traces;                   use Traces;
 with Ada.Exceptions;           use Ada.Exceptions;
 with Gtkada.File_Selector;     use Gtkada.File_Selector;
@@ -40,15 +40,12 @@ with Glib.Generic_Properties;
 with Glib.Properties.Creation; use Glib.Properties.Creation;
 with Gtk.Menu_Item;            use Gtk.Menu_Item;
 with Gtk.Menu;                 use Gtk.Menu;
-with Src_Info.Queries;         use Src_Info.Queries;
 with String_Utils;             use String_Utils;
-with Docgen_Backend_HTML;      use Docgen_Backend_HTML;
 with Docgen;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Projects.Registry;         use Projects.Registry;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
---  with Docgen_Backend_TEXI;     use Docgen_Backend_TEXI;
---  this Backend is not ready
+with Docgen_Backend_HTML;       use Docgen_Backend_HTML;
 
 package body Docgen_Module is
 
@@ -92,9 +89,8 @@ package body Docgen_Module is
       Options : All_Options;
       --  Group all the preferences
 
-      B : Docgen.Docgen_Backend.Backend_Handle;
-      --  An instance of this object is used to lead the documentation process
-      --  through the good method (ie. for the good format)
+      HTML_Backend : Docgen.Docgen_Backend.Backend_Handle;
+      --  A backend suitable for generating HTML output
    end record;
    type Docgen_Module is access all Docgen_Module_Record'Class;
 
@@ -131,9 +127,10 @@ package body Docgen_Module is
    --    tagged types we indicate his parent and his children (if they exist).
 
    procedure Array2List
-     (Kernel : Kernel_Handle;
-      Tab    : VFS.File_Array_Access;
-      List   : in out Type_Source_File_List.List);
+     (Kernel     : Kernel_Handle;
+      Tab        : VFS.File_Array_Access;
+      List       : in out Type_Source_File_Table.HTable;
+      Doc_Suffix : String);
    --  Create a list of files with those contained in the array
 
    procedure On_Preferences_Changed
@@ -210,9 +207,13 @@ package body Docgen_Module is
    -- main procedure for the documentation --
    ------------------------------------------
 
+   function Get_Backend return Docgen.Docgen_Backend.Backend_Handle;
+   --  Return the backend to use given the current options
+
    procedure Generate
      (Kernel : Kernel_Handle;
-      List : in out Type_Source_File_List.List);
+      List   : in out Type_Source_File_Table.HTable;
+      Backend : access Docgen.Docgen_Backend.Backend'Class);
    --  With the list of source files, it generates the documentation
 
    -----------------
@@ -221,24 +222,25 @@ package body Docgen_Module is
 
    procedure Get_Options (My_Options : in out All_Options) is
    begin
-      My_Options.Type_Of_File
-        := Docgen_Module (Docgen_Module_ID).Options.Type_Of_File;
-      My_Options.Process_Body_Files
-        := Docgen_Module (Docgen_Module_ID).Options.Process_Body_Files;
-      My_Options.Ignorable_Comments
-        := Docgen_Module (Docgen_Module_ID).Options.Ignorable_Comments;
-      My_Options.Comments_Above
-        := Docgen_Module (Docgen_Module_ID).Options.Comments_Above;
-      My_Options.Show_Private
-        := Docgen_Module (Docgen_Module_ID).Options.Show_Private;
-      My_Options.References
-        := Docgen_Module (Docgen_Module_ID).Options.References;
-      My_Options.One_Doc_File
-        := Docgen_Module (Docgen_Module_ID).Options.One_Doc_File;
-      My_Options.Link_All
-        := Docgen_Module (Docgen_Module_ID).Options.Link_All;
-      My_Options.Tagged_Types
-        := Docgen_Module (Docgen_Module_ID).Options.Tagged_Types;
+      My_Options :=
+        (Type_Of_File       =>
+           Docgen_Module (Docgen_Module_ID).Options.Type_Of_File,
+         Process_Body_Files =>
+           Docgen_Module (Docgen_Module_ID).Options.Process_Body_Files,
+         Ignorable_Comments =>
+           Docgen_Module (Docgen_Module_ID).Options.Ignorable_Comments,
+         Comments_Above     =>
+           Docgen_Module (Docgen_Module_ID).Options.Comments_Above,
+         Show_Private       =>
+           Docgen_Module (Docgen_Module_ID).Options.Show_Private,
+         References         =>
+           Docgen_Module (Docgen_Module_ID).Options.References,
+         One_Doc_File       =>
+           Docgen_Module (Docgen_Module_ID).Options.One_Doc_File,
+         Link_All           =>
+           Docgen_Module (Docgen_Module_ID).Options.Link_All,
+         Tagged_Types       =>
+           Docgen_Module (Docgen_Module_ID).Options.Tagged_Types);
    end Get_Options;
 
    -----------------
@@ -280,25 +282,34 @@ package body Docgen_Module is
    ----------------
 
    procedure Array2List
-     (Kernel : Kernel_Handle;
-      Tab    : VFS.File_Array_Access;
-      List   : in out Type_Source_File_List.List)
+     (Kernel     : Kernel_Handle;
+      Tab        : VFS.File_Array_Access;
+      List       : in out Type_Source_File_Table.HTable;
+      Doc_Suffix : String)
    is
-      use Type_Source_File_List;
-      File : aliased Virtual_File;
-      LI   : LI_File_Ptr;
+      File   : aliased Virtual_File;
+      Source : Source_File;
+      Is_Spec : Boolean;
    begin
       for J in 1 .. Tab'Length loop
          File := Tab (J);
 
-         if Is_Spec_File (Kernel, File)
-           or else Docgen_Module (Docgen_Module_ID).Options.Process_Body_Files
+         Is_Spec := Is_Spec_File (Kernel, File);
+
+         if Docgen_Module (Docgen_Module_ID).Options.Process_Body_Files
+           or else Is_Spec
          then
-            LI := Locate_From_Source_And_Complete (Kernel, File, False);
-            Append
+            Source := Get_Or_Create
+              (Db           => Get_Database (Kernel),
+               File         => File,
+               Allow_Create => True);
+            Type_Source_File_Table.Set
               (List,
-               (File_Name    => File,
-                Package_Name => new String'(Get_Unit_Name (LI, File))));
+               Source,
+               (Package_Name  => new String'(Get_Unit_Name (Source)),
+                Doc_File_Name => new String'
+                  (Get_Doc_File_Name (File, Doc_Suffix)),
+                Is_Spec       => Is_Spec));
          end if;
       end loop;
    end Array2List;
@@ -448,7 +459,6 @@ package body Docgen_Module is
       Generate_Project (Kernel_Handle (Kernel), True);
    end On_Generate_Project_Recursive;
 
-
    ----------------------
    -- On_Generate_File --
    ----------------------
@@ -521,11 +531,13 @@ package body Docgen_Module is
       Project : Project_Type;
       Context : constant Selection_Context_Access :=
         Get_Current_Context (Kernel);
-      Source_File_List : Type_Source_File_List.List;
+      Source_File_List : Type_Source_File_Table.HTable;
+      B       : constant Docgen.Docgen_Backend.Backend_Handle := Get_Backend;
 
    begin
-      --  ??? Should use the root project if current context has not
-      --  project info
+      if Context = null then
+         return;
+      end if;
 
       if Context.all in File_Selection_Context'Class
         and then Has_Project_Information
@@ -537,9 +549,25 @@ package body Docgen_Module is
          Project := Get_Root_Project (Get_Registry (Kernel));
       end if;
 
+      --  To save time, parse everything that we'll need in advance
+      --  ??? Doesn't work, since the call graph for instance will require that
+      --  more files be parsed (try generating doc for traces.ads)
+      Trace (Me, "Parsing files");
+      Parse_All_LI_Information (Kernel, Project, Recursive => Recursive);
+      Trace (Me, "Generating HTML files");
+
       Sources := Get_Source_Files (Project, Recursive);
-      Array2List (Kernel, Sources, Source_File_List);
-      Generate (Kernel, Source_File_List);
+      Array2List (Kernel, Sources, Source_File_List,
+                  Docgen.Docgen_Backend.Get_Extension (B));
+      Generate (Kernel, Source_File_List, B);
+      VFS.Unchecked_Free (Sources);
+      Type_Source_File_Table.Reset (Source_File_List);
+
+      Trace (Me, "Done generating for project");
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception " & Exception_Information (E));
    end Generate_Project;
 
    ----------------------
@@ -571,49 +599,87 @@ package body Docgen_Module is
    -------------------
 
    procedure Generate_File
-     (Kernel : Kernel_Handle;
-      File   : Virtual_File_Access)
+     (Kernel     : Kernel_Handle;
+      File       : Virtual_File_Access)
    is
-      use Type_Source_File_List;
-      Source_File_List : Type_Source_File_List.List;
-      LI               : LI_File_Ptr;
-      Body_File        : Virtual_File_Access;
-      Is_Spec          : Boolean;
+      Source_File_List : Type_Source_File_Table.HTable;
+      Body_File        : Virtual_File;
+      Is_Spec          : constant Boolean := Is_Spec_File (Kernel, File);
       Process_Body     : constant Boolean :=
-        Docgen_Module (Docgen_Module_ID).Options.Process_Body_Files;
+         Docgen_Module (Docgen_Module_ID).Options.Process_Body_Files;
+      Source           : Source_File;
+      B         : constant Docgen.Docgen_Backend.Backend_Handle := Get_Backend;
+      Doc_Suffix       : constant String :=
+         Docgen.Docgen_Backend.Get_Extension (B);
 
    begin
-      Is_Spec := Is_Spec_File (Kernel, File);
-
       if not Is_Spec and then not Process_Body then
          return;
       end if;
 
-      LI := Locate_From_Source_And_Complete (Kernel, File.all, False);
+      Source := Get_Or_Create
+        (Db           => Get_Database (Kernel),
+         File         => File.all,
+         Allow_Create => True);
+      Update_Xref (Source);
 
-      if LI = No_LI_File then
-         return;
-      end if;
-
-      Append
+      Type_Source_File_Table.Set
         (Source_File_List,
-         (File_Name        => File.all,
-          Package_Name     => new String'(Get_Unit_Name (LI, File.all))));
+         Source,
+         (Package_Name  => new String'(Get_Unit_Name (Source)),
+          Doc_File_Name => new String'
+            (Get_Doc_File_Name (File.all, Doc_Suffix)),
+          Is_Spec       => Is_Spec_File (Kernel, File.all)));
 
       if Is_Spec and then Process_Body then
-         Body_File := Get_Other_File_Of (LI, File.all);
-
-         if Body_File.all /= No_File then
-            Append
+         Body_File := Create
+           (Other_File_Base_Name
+              (Get_Project_From_File
+                 (Project_Registry (Get_Registry (Kernel)),
+                  File.all),
+               File.all),
+            Kernel,
+            Use_Object_Path => False);
+         Source := Get_Or_Create
+           (Db           => Get_Database (Kernel),
+            File         => Body_File,
+            Allow_Create => True);
+         if Body_File /= No_File then
+            Type_Source_File_Table.Set
               (Source_File_List,
-               (File_Name    => Body_File.all,
-                Package_Name =>
-                  new String'(Get_Unit_Name (LI, Body_File.all))));
+               Source,
+               (Package_Name => new String'(Get_Unit_Name (Source)),
+                Doc_File_Name => new String'
+                  (Get_Doc_File_Name (Body_File, Doc_Suffix)),
+                Is_Spec      => Is_Spec_File (Kernel, Body_File)));
          end if;
       end if;
 
-      Generate (Kernel, Source_File_List);
+      Generate (Kernel, Source_File_List, B);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception " & Exception_Information (E));
    end Generate_File;
+
+   -----------------
+   -- Get_Backend --
+   -----------------
+
+   function Get_Backend return Docgen.Docgen_Backend.Backend_Handle is
+   begin
+      case Docgen_Module (Docgen_Module_ID).Options.Type_Of_File is
+         when HTML =>
+            return Docgen_Module (Docgen_Module_ID).HTML_Backend;
+
+            --  ???
+            --       when TEXI =>
+            --          return Docgen_Module (Docgen_Module_ID).TEXI_Backend
+
+         when others =>
+            return null;
+      end case;
+   end Get_Backend;
 
    --------------
    -- Generate --
@@ -621,51 +687,30 @@ package body Docgen_Module is
 
    procedure Generate
      (Kernel : Kernel_Handle;
-      List   : in out Type_Source_File_List.List)
+      List   : in out Type_Source_File_Table.HTable;
+      Backend : access Docgen.Docgen_Backend.Backend'Class)
    is
-      use Type_Source_File_List;
       use Docgen.Docgen_Backend;
    begin
       Push_State (Kernel, Busy);
-
-      --  Reset all the LI files currently in memory. For optimization
-      --  purposes, docgen will not check the timestamp of the LI files on the
-      --  disk once they are in memory, so we just make sure that we have
-      --  a clean list.
-
-      Reset_LI_File_List (Kernel);
-
-      case Docgen_Module (Docgen_Module_ID).Options.Type_Of_File is
-         when HTML =>
-            Docgen_Module (Docgen_Module_ID).B := new Backend_HTML;
-
-            --  ???
-            --       when TEXI =>
-            --          Docgen_Module (Docgen_Module_ID).B
-            --       := new Backend_TEXI;
-
-         when others =>
-            Docgen_Module (Docgen_Module_ID).B := new Backend_HTML;
-      end case;
 
       --  We override old documentations which has the same format and
       --  which has been already processed.
       --  Documentation for new files is added.
 
       if not Is_Directory
-        (Get_Doc_Directory (Docgen_Module (Docgen_Module_ID).B, Kernel))
+        (Get_Doc_Directory (Backend, Kernel))
       then
          Make_Dir
-           (Get_Doc_Directory (Docgen_Module (Docgen_Module_ID).B, Kernel));
+           (Get_Doc_Directory (Backend, Kernel));
       end if;
 
       Process_Files
-        (Docgen_Module (Docgen_Module_ID).B,
+        (Backend,
          List,
          Kernel,
-         Docgen_Module (Docgen_Module_ID).Options,
-         Doc_Suffix => Get_Extension (Docgen_Module (Docgen_Module_ID).B));
-      Free (List);
+         Docgen_Module (Docgen_Module_ID).Options);
+      Type_Source_File_Table.Reset (List);
 
       --  ??? <frameset> not supported by internal html viewer.
 
@@ -673,8 +718,8 @@ package body Docgen_Module is
         (Kernel,
          Filename => Create
            (Full_Filename =>
-              Get_Doc_Directory (Docgen_Module (Docgen_Module_ID).B, Kernel)
-            & "index" & Get_Extension (Docgen_Module (Docgen_Module_ID).B)));
+              Get_Doc_Directory (Backend, Kernel)
+            & "index" & Get_Extension (Backend)));
 
       Pop_State (Kernel);
 
@@ -695,6 +740,7 @@ package body Docgen_Module is
       Generate : constant String := '/' & (-"_Documentation");
    begin
       Docgen_Module_ID := new Docgen_Module_Record;
+      Docgen_Module (Docgen_Module_ID).HTML_Backend := new Backend_HTML;
 
       Register_Module
         (Module                  => Docgen_Module_ID,

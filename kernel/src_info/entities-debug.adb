@@ -75,6 +75,7 @@ package body Entities.Debug is
      (Reference                                => 'r',
       Instantiation_Reference                  => ' ',
       Modification                             => 'm',
+      Declaration                              => 'D',
       Body_Entity                              => 'b',
       Completion_Of_Private_Or_Incomplete_Type => 'c',
       Type_Extension                           => 'x',
@@ -328,7 +329,6 @@ package body Entities.Debug is
       Dump (File.Timestamp);
       Put_Line
         (" ref_count=" & Image (File.Ref_Count)
-         & " is_valid=" & Boolean'Image (File.Is_Valid)
          & " has_scope_tree=" & Boolean'Image (File.Scope_Tree_Computed));
 
       if File.LI /= null then
@@ -367,6 +367,10 @@ package body Entities.Debug is
          Dump (Entity.Declaration);
 
          if Full then
+            if not Entity.Is_Valid then
+               Put (" is_valid=FALSE");
+            end if;
+
             Put_Line (" ref_count=" & Image (Entity.Ref_Count));
             if Entity.Kind /= Unresolved_Entity_Kind then
                Put ("   kind="); Dump (Entity.Kind); New_Line;
@@ -517,14 +521,7 @@ package body Entities.Debug is
          begin
             Dump (Db.LIs);
             Dump (Files, Show_Entities => False);
-
-            if Db.Entities = Entities_Tries.Empty_Trie_Tree then
-               Dump_Entities_From_Files (Files);
-            else
-               Dump (Db.Entities, Full => True, Name => "");
-            end if;
-
-            --  Low_Level_Dump (Db.Entities);
+            Dump_Entities_From_Files (Files);
          end;
       end if;
    end Dump;

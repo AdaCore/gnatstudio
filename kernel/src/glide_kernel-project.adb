@@ -28,6 +28,7 @@ with Projects.Registry;  use Projects.Registry;
 with Basic_Types;
 with Prj;
 with Types;                    use Types;
+with Entities;
 
 with Glide_Kernel.Console;     use Glide_Kernel.Console;
 with Glide_Kernel.Timeout;     use Glide_Kernel.Timeout;
@@ -205,7 +206,7 @@ package body Glide_Kernel.Project is
          --  When loading a new project, we need to reset the cache containing
          --  LI information, otherwise this cache might contain dangling
          --  references to projects that have been freed.
-         Reset_LI_File_List (Kernel);
+         Entities.Reset (Get_Database (Kernel));
          Load (Registry           => Kernel.Registry.all,
                Root_Project_Path  => Project,
                Errors             => Report_Error'Unrestricted_Access,

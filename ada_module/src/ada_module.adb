@@ -24,7 +24,8 @@ with Glide_Kernel;             use Glide_Kernel;
 with Glide_Kernel.Hooks;       use Glide_Kernel.Hooks;
 with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
 with Glide_Kernel.Project;     use Glide_Kernel.Project;
-with Src_Info.ALI;             use Src_Info.ALI;
+with ALI_Parser;               use ALI_Parser;
+with Entities;                 use Entities;
 with Language.Ada;             use Language.Ada;
 with Language_Handlers.Glide;  use Language_Handlers.Glide;
 with Glide_Intl;               use Glide_Intl;
@@ -121,11 +122,10 @@ package body Ada_Module is
    is
       Handler : constant Glide_Language_Handler := Glide_Language_Handler
         (Get_Language_Handler (Kernel));
-      LI      : ALI_Handler;
+      LI      : constant Entities.LI_Handler := Create_ALI_Handler
+        (Get_Database (Kernel), Project_Registry (Get_Registry (Kernel)));
    begin
-      LI := new Src_Info.ALI.ALI_Handler_Record;
-      Reset (LI);
-      Register_LI_Handler (Handler, "Ada", Src_Info.LI_Handler (LI));
+      Register_LI_Handler (Handler, "Ada", LI);
 
       Register_Language (Handler, "Ada", Ada_Lang);
       Set_Language_Handler

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003                            --
+--                     Copyright (C) 2003-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -38,6 +38,8 @@ with String_Utils;              use String_Utils;
 with Interfaces.C.Strings;      use Interfaces.C.Strings;
 with Types;                     use Types;
 with Snames;                    use Snames;
+with Language_Handlers;         use Language_Handlers;
+with Language;
 
 pragma Warnings (Off);
 with GNAT.Expect.TTY;   use GNAT.Expect.TTY;
@@ -147,6 +149,12 @@ package body CPP_Parser is
      (Handler       : access CPP_Handler_Record;
       Project       : Projects.Project_Type;
       Recursive     : Boolean := False) return LI_Handler_Iterator'Class;
+   procedure Parse_File_Constructs
+     (Handler      : access CPP_Handler_Record;
+      Root_Project : Projects.Project_Type;
+      Languages    : access Language_Handlers.Language_Handler_Record'Class;
+      File_Name    : VFS.Virtual_File;
+      Result       : out Language.Construct_List);
    --  See doc for inherited subprograms
 
    type Iterator_State_Type is
@@ -212,8 +220,7 @@ package body CPP_Parser is
    --  there is none.
 
    function Entity_From_FIL
-     (Handler : access CPP_Handler_Record'Class;
-      Sym     : FIL_Table;
+     (Sym     : FIL_Table;
       Source  : Source_File) return Entity_Information;
    --  Create an entity from the information in Sym
 
@@ -246,6 +253,10 @@ package body CPP_Parser is
       Entity  : Entity_Information;
       Sym     : FIL_Table);
    procedure Parse_FU_Table
+     (Handler : access CPP_Handler_Record'Class;
+      Source  : Source_File;
+      Sym     : FIL_Table);
+   procedure Parse_FD_Table
      (Handler : access CPP_Handler_Record'Class;
       Source  : Source_File;
       Sym     : FIL_Table);
@@ -454,8 +465,7 @@ package body CPP_Parser is
    -----------------
 
    function Get_DB_Dirs (Project : Project_Type) return String_List_Access is
-      Obj_Dir : constant String := Object_Path
-        (Get_Root_Project (Project_Registry (Get_Registry (Project))), True);
+      Obj_Dir : constant String := Object_Path (Project, True);
       Db_Dir  : constant String := Name_As_Directory (DB_Dir_Name);
       Iter    : Path_Iterator := Start (Obj_Dir);
       Length  : Natural := 0;
@@ -579,8 +589,7 @@ package body CPP_Parser is
    begin
       --  Do we already have a predefined entity with this name ?
       Entity := Get_Or_Create
-        (Db           => Handler.Db,
-         Name         => Clean_Name,
+        (Name         => Clean_Name,
          File         => Get_Predefined_File (Handler.Db),
          Line         => Predefined_Line,
          Column       => Predefined_Column,
@@ -620,8 +629,7 @@ package body CPP_Parser is
          end if;
 
          Entity := Get_Or_Create
-           (Db           => Handler.Db,
-            Name         => Clean_Name,
+           (Name         => Clean_Name,
             File         => Get_Predefined_File (Handler.Db),
             Line         => Predefined_Line,
             Column       => Predefined_Column,
@@ -793,8 +801,7 @@ package body CPP_Parser is
                           (Handler,
                            F.Key (F.File_Name.First .. F.File_Name.Last));
                         Entity := Get_Or_Create
-                          (Db     => Handler.Db,
-                           Name   => Name (Name'First .. Last),
+                          (Name   => Name (Name'First .. Last),
                            File   => Source,
                            Line   => F.Start_Position.Line,
                            Column => F.Start_Position.Column);
@@ -815,8 +822,7 @@ package body CPP_Parser is
                            Key.Key
                              (Key.File_Name.First .. Key.File_Name.Last));
                         Entity := Get_Or_Create
-                          (Db     => Handler.Db,
-                           Name   => Name (Name'First .. Last),
+                          (Name   => Name (Name'First .. Last),
                            File   => Source,
                            Line   => Key.Start_Position.Line,
                            Column => Key.Start_Position.Column);
@@ -840,8 +846,7 @@ package body CPP_Parser is
                               Key2.Key
                                 (Key2.File_Name.First .. Key2.File_Name.Last));
                            Entity := Get_Or_Create
-                             (Db     => Handler.Db,
-                              Name   => Name (Name'First .. Last),
+                             (Name   => Name (Name'First .. Last),
                               File   => Source,
                               Line   => Key2.Start_Position.Line,
                               Column => Key2.Start_Position.Column);
@@ -863,8 +868,7 @@ package body CPP_Parser is
                            Key3.Key
                              (Key3.File_Name.First .. Key3.File_Name.Last));
                         Entity := Get_Or_Create
-                          (Db     => Handler.Db,
-                           Name   => Name (Name'First .. Last),
+                          (Name   => Name (Name'First .. Last),
                            File   => Source,
                            Line   => Key3.Start_Position.Line,
                            Column => Key3.Start_Position.Column);
@@ -908,8 +912,7 @@ package body CPP_Parser is
 
             if Name (Last) /= ' ' then
                Real_Entity := Get_Or_Create
-                 (Handler.Db,
-                  Name         => Name (Name'First .. Last),
+                 (Name         => Name (Name'First .. Last),
                   File         => Current_Source,
                   Line         => Predefined_Line,
                   Column       => Predefined_Column);
@@ -962,8 +965,7 @@ package body CPP_Parser is
 
       if Success then
          Entity := Get_Or_Create
-           (Db     => Handler.Db,
-            Name   => G.Key (G.Name.First .. G.Name.Last),
+           (Name   => G.Key (G.Name.First .. G.Name.Last),
             File   => Get_Or_Create
               (Handler, Var.Key (Var.File_Name.First .. Var.File_Name.Last)),
             Line   => Var.Start_Position.Line,
@@ -1031,7 +1033,7 @@ package body CPP_Parser is
          end if;
 
          if Entity = null then
-            Entity := Entity_From_FIL (Handler, Sym, Source);
+            Entity := Entity_From_FIL (Sym, Source);
 
             Set_Parent
               (Handler        => Handler,
@@ -1215,6 +1217,13 @@ package body CPP_Parser is
             Arg_Names => Var.Data (Var.Arg_Names.First .. Var.Arg_Names.Last),
             Source    => Source,
             Class     => Class);
+
+         Set_End_Of_Scope
+           (Entity,
+            Location => (File   => Source,
+                         Line   => Var.End_Position.Line,
+                         Column => Var.End_Position.Column),
+            Kind     => End_Of_Spec);
       end if;
    end Parse_MD_Table;
 
@@ -1236,8 +1245,7 @@ package body CPP_Parser is
       Class        : out Entity_Information) is
    begin
       Entity := Get_Or_Create
-        (Db     => Handler.Db,
-         Name   => Entity_Name,
+        (Name   => Entity_Name,
          File   => Source,
          Line   => Entity_Start.Line,
          Column => Entity_Start.Column);
@@ -1311,8 +1319,7 @@ package body CPP_Parser is
          --  Insert the declaration. Extra info will be/has been inserted when
          --  the MD table is parsed.
          Entity := Get_Or_Create
-           (Db     => Handler.Db,
-            Name   => D.Key (D.Name.First .. D.Name.Last),
+           (Name   => D.Key (D.Name.First .. D.Name.Last),
             File   => Get_Or_Create
               (Handler, D.Key (D.File_Name.First .. D.File_Name.Last)),
             Line   => D.Start_Position.Line,
@@ -1327,10 +1334,15 @@ package body CPP_Parser is
                Kind     => Body_Entity);
          end if;
 
+         Set_End_Of_Scope
+           (Entity,
+            Location => (File   => Source,
+                         Line   => D.End_Position.Line,
+                         Column => D.End_Position.Column),
+            Kind => End_Of_Spec);
       else
          Entity := Get_Or_Create
-           (Db     => Handler.Db,
-            Name   => Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last),
+           (Name   => Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last),
             File   => Source,
             Line   => Sym.Start_Position.Line,
             Column => Sym.Start_Position.Column);
@@ -1354,7 +1366,7 @@ package body CPP_Parser is
 
       if SuccessI then
          --  The class might not have been computed if the entity was already
-         --  in the class. Compute it now in that case.
+         --  in the table. Compute it now in that case.
          if Class = null then
             Class := Lookup_Entity_In_Tables
               (Handler,
@@ -1547,7 +1559,7 @@ package body CPP_Parser is
    -- Find_Forward_Declaration --
    ------------------------------
    --  The following information is not used currently:
-   --    End_Position, Attributes, Return_Type, Arg_Types, Template_Parameters
+   --    Attributes, Return_Type, Arg_Types, Template_Parameters
 
    function Find_Forward_Declaration
      (Handler  : access CPP_Handler_Record'Class;
@@ -1559,6 +1571,7 @@ package body CPP_Parser is
       pragma Unreferenced (Args);
       P      : Pair;
       FD_Tab : FD_Table;
+      Decl   : Entity_Information;
    begin
       if Is_Open (Handler.SN_Table (FD)) then
          Set_Cursor (Handler.SN_Table (FD), By_Key, Name & Field_Sep, False);
@@ -1581,12 +1594,21 @@ package body CPP_Parser is
          Release_Cursor (Handler.SN_Table (FD));
 
          if P /= No_Pair then
-            return Get_Or_Create
-              (Db     => Handler.Db,
-               Name   => Name,
+            Decl := Get_Or_Create
+              (Name   => Name,
                File   => Source,
                Line   => FD_Tab.Start_Position.Line,
                Column => FD_Tab.Start_Position.Column);
+
+            --  ??? The following will add duplicate references in some cases
+--              Add_Reference
+--                (Decl,
+--                 Location => (File   => Source,
+--                              Line   => FD_Tab.End_Position.Line,
+--                              Column => FD_Tab.End_Position.Column),
+--                 Kind     => End_Of_Spec);
+
+            return Decl;
          end if;
       end if;
 
@@ -1622,6 +1644,26 @@ package body CPP_Parser is
    end Set_Subprogram_Return_Type;
 
    --------------------
+   -- Parse_FD_Table --
+   --------------------
+
+   procedure Parse_FD_Table
+     (Handler : access CPP_Handler_Record'Class;
+      Source  : Source_File;
+      Sym     : FIL_Table)
+   is
+      Entity : Entity_Information;
+      pragma Unreferenced (Entity);
+   begin
+      Entity := Find_Forward_Declaration
+        (Handler,
+         Name     => Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last),
+         Filename => Sym.Key (Sym.File_Name.First .. Sym.File_Name.Last),
+         Args     => "",
+         Source   => Source);
+   end Parse_FD_Table;
+
+   --------------------
    -- Parse_FU_Table --
    --------------------
    --  The following information is not used currently:
@@ -1635,6 +1677,7 @@ package body CPP_Parser is
       C       : FU_Table;
       Success : Boolean;
       Entity  : Entity_Information;
+      End_Of_Scope_Kind : Reference_Kind;
    begin
       Find (DB       => Handler.SN_Table (FU),
             Name     => Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last),
@@ -1654,7 +1697,8 @@ package body CPP_Parser is
       end if;
 
       if Entity = null then
-         Entity := Entity_From_FIL (Handler, Sym, Source);
+         Entity := Entity_From_FIL (Sym, Source);
+         End_Of_Scope_Kind := End_Of_Spec;
       else
          --  Sym is the body in this case
          Add_Reference
@@ -1664,6 +1708,7 @@ package body CPP_Parser is
                Line   => Sym.Start_Position.Line,
                Column => Sym.Start_Position.Column),
             Kind     => Body_Entity);
+         End_Of_Scope_Kind := End_Of_Body;
       end if;
 
       if Success then
@@ -1672,7 +1717,7 @@ package body CPP_Parser is
             Location => (File   => Get_File (Get_Declaration_Of (Entity)),
                          Line   => C.End_Position.Line,
                          Column => C.End_Position.Column),
-            Kind     => End_Of_Spec);
+            Kind     => End_Of_Scope_Kind);
 
          Set_Subprogram_Return_Type
            (Handler, Entity,
@@ -1755,8 +1800,7 @@ package body CPP_Parser is
                --  An undefined entity ?
                if R.Referred_Symbol = UD then
                   Ref := Get_Or_Create
-                    (Db           => Handler.Db,
-                     Name         => R.Key
+                    (Name         => R.Key
                        (R.Referred_Symbol_Name.First
                         .. R.Referred_Symbol_Name.Last),
                      File         => Sym_File,
@@ -1885,8 +1929,7 @@ package body CPP_Parser is
               Entity_Arg_Types
             then
                Local := Get_Or_Create
-                 (Db     => Handler.Db,
-                  Name   => Var.Key (Var.Name.First .. Var.Name.Last),
+                 (Name   => Var.Key (Var.Name.First .. Var.Name.Last),
                   File   => Source,
                   Line   => Var.Start_Position.Line,
                   Column => Var.Start_Position.Column);
@@ -2030,13 +2073,11 @@ package body CPP_Parser is
    ---------------------
 
    function Entity_From_FIL
-     (Handler : access CPP_Handler_Record'Class;
-      Sym     : FIL_Table;
+     (Sym     : FIL_Table;
       Source  : Source_File) return Entity_Information is
    begin
       return Get_Or_Create
-        (Db     => Handler.Db,
-         Name   => String
+        (Name   => String
            (Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last)),
          File   => Source,
          Line   => Sym.Start_Position.Line,
@@ -2075,26 +2116,26 @@ package body CPP_Parser is
                   Parse_IU_Table (Handler, Source, Sym);
 
                when T =>
-                  Entity := Entity_From_FIL (Handler, Sym, Source);
+                  Entity := Entity_From_FIL (Sym, Source);
                   Parse_T_Table (Handler, Entity, Sym);
 
                when CL =>
-                  Entity := Entity_From_FIL (Handler, Sym, Source);
+                  Entity := Entity_From_FIL (Sym, Source);
                   Parse_CL_Table (Handler, Entity, Sym);
 
                when CON =>
-                  Entity := Entity_From_FIL (Handler, Sym, Source);
+                  Entity := Entity_From_FIL (Sym, Source);
                   Parse_CON_Table (Handler, Entity, Sym);
 
                when MA =>
-                  Entity := Entity_From_FIL (Handler, Sym, Source);
+                  Entity := Entity_From_FIL (Sym, Source);
                   Set_Kind (Entity, Macro_Entity);
 
                when FU =>
                   Parse_FU_Table (Handler, Source, Sym);
 
                when IV =>
-                  Entity := Entity_From_FIL (Handler, Sym, Source);
+                  Entity := Entity_From_FIL (Sym, Source);
                   Parse_IV_Table (Handler, Entity, Sym);
 
                when MD =>
@@ -2104,10 +2145,11 @@ package body CPP_Parser is
                   Parse_MI_Table (Handler, Sym, Source);
 
                when TA =>
-                  Entity := Entity_From_FIL (Handler, Sym, Source);
+                  Entity := Entity_From_FIL (Sym, Source);
                   Parse_TA_Table (Handler, Entity, Sym);
 
-               when FD    => null; --  Parsed when handling FU
+               when FD    =>
+                  Parse_FD_Table (Handler, Source, Sym);
                   --  Do something for cpp_ellipsis1 (we have one warning
                   --  in FD)
 
@@ -2134,9 +2176,10 @@ package body CPP_Parser is
      (Handler : access CPP_Handler_Record'Class;
       Source  : Source_File) is
    begin
-      --  Init (Module_Typedefs);
+      Trace (Me, "Parse_File " & Full_Name (Get_Filename (Source)).all);
+      Set_Time_Stamp (Source, File_Time_Stamp (Get_Filename (Source)));
       Parse_FIL_Table (Handler, Source);
-      --  Free (Module_Typedefs);
+
    exception
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
@@ -2534,5 +2577,22 @@ package body CPP_Parser is
 
       return "";
    end Set_Executables;
+
+   ---------------------------
+   -- Parse_File_Constructs --
+   ---------------------------
+
+   procedure Parse_File_Constructs
+     (Handler      : access CPP_Handler_Record;
+      Root_Project : Projects.Project_Type;
+      Languages    : access Language_Handlers.Language_Handler_Record'Class;
+      File_Name    : VFS.Virtual_File;
+      Result       : out Language.Construct_List)
+   is
+      pragma Unreferenced (Handler, Root_Project, Languages, File_Name,
+                           Result);
+   begin
+      null;
+   end Parse_File_Constructs;
 
 end CPP_Parser;

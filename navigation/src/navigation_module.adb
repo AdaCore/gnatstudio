@@ -29,6 +29,7 @@ with Gtk.Stock;                   use Gtk.Stock;
 with Gtk.Toolbar;                 use Gtk.Toolbar;
 with Gtk.Widget;                  use Gtk.Widget;
 
+with Projects;                    use Projects;
 with Glide_Kernel.Console;        use Glide_Kernel.Console;
 with Glide_Kernel.Contexts;       use Glide_Kernel.Contexts;
 with Glide_Kernel.Modules;        use Glide_Kernel.Modules;
@@ -668,8 +669,10 @@ package body Navigation_Module is
       then
          File := File_Selection_Context_Access (Context);
          declare
-            Other_File : constant Virtual_File := Other_File_Name
-              (Kernel, File_Information (File));
+            Other_File : constant Virtual_File := Create
+              (Other_File_Base_Name
+                 (Project_Information (File), File_Information (File)),
+               Project_Information (File));
          begin
             if Dir_Name (Other_File).all /= "" then
                Open_File_Editor (Kernel, Other_File, Line => 0);

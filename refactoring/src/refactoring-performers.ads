@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003                            --
+--                     Copyright (C) 2003-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -19,7 +19,7 @@
 -----------------------------------------------------------------------
 
 with Glide_Kernel;
-with Src_Info.Queries;
+with Entities;
 
 package Refactoring.Performers is
 
@@ -29,7 +29,7 @@ package Refactoring.Performers is
    procedure Execute
      (Factory       : access Refactor_Performer_Record;
       Kernel        : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Entity        : Src_Info.Queries.Entity_Information;
+      Entity        : Entities.Entity_Information;
       Refs          : Location_Arrays.Instance;
       No_LI_List    : File_Arrays.Instance;
       Stale_LI_List : File_Arrays.Instance) is abstract;
@@ -48,7 +48,7 @@ package Refactoring.Performers is
 
    procedure Get_All_Locations
      (Kernel                : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Entity                : Src_Info.Queries.Entity_Information;
+      Entity                : Entities.Entity_Information;
       On_Completion         : access Refactor_Performer_Record'Class;
       Auto_Compile          : Boolean := False);
    --  Get all the locations in which Entity is referenced.

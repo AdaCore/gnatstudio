@@ -22,7 +22,7 @@
 --  contexts and selections in GPS.
 
 with VFS;
-with Src_Info.Queries;
+with Entities;
 with Projects;
 
 package Glide_Kernel.Contexts is
@@ -193,7 +193,7 @@ package Glide_Kernel.Contexts is
 
    function Get_Entity
      (Context : access Entity_Selection_Context)
-      return Src_Info.Queries.Entity_Information;
+      return Entities.Entity_Information;
    --  Return the location of the declaration for the entity in Context.
    --  This information is automatically cached in the context, in case several
    --  modules need to compute it;
@@ -232,8 +232,7 @@ private
    type Entity_Selection_Context is new File_Selection_Context with record
       Entity_Name   : GNAT.OS_Lib.String_Access := null;
       Entity_Column : Integer := 0;
-      Entity        : Src_Info.Queries.Entity_Information :=
-        Src_Info.Queries.No_Entity_Information;
+      Entity        : Entities.Entity_Information := null;
    end record;
 
    pragma Inline (Has_Project_Information);

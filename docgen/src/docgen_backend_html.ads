@@ -24,9 +24,8 @@
 
 with Docgen;            use Docgen;
 with VFS;               use VFS;
-with Src_Info;          use Src_Info;
+with Entities;          use Entities;
 with GNAT.OS_Lib;       use GNAT.OS_Lib;
-with Src_Info.Queries;  use Src_Info.Queries;
 with Glide_Kernel;      use Glide_Kernel;
 
 package Docgen_Backend_HTML is
@@ -50,200 +49,243 @@ package Docgen_Backend_HTML is
    --  Initialize the private fields before the documentation process
 
    procedure Doc_Open
-     (B      : access Backend_HTML;
-      Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
-      File   : File_Descriptor;
-      Info   : in out Docgen.Doc_Info_Open);
+     (B          : access Backend_HTML;
+      Kernel     : access Glide_Kernel.Kernel_Handle_Record'Class;
+      File       : File_Descriptor;
+      Open_Title : String);
 
    procedure Doc_Close
      (B      : access Backend_HTML;
       Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
-      File   : File_Descriptor;
-      Info   : in out Docgen.Doc_Info_Base);
+      File   : File_Descriptor);
 
    procedure Doc_Header
-     (B       : access Backend_HTML;
-      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
-      LI_Unit : LI_File_Ptr;
-      File    : File_Descriptor;
-      Info    : in out Docgen.Doc_Info_Header);
+     (B              : access Backend_HTML;
+      Kernel         : access Glide_Kernel.Kernel_Handle_Record'Class;
+      File           : File_Descriptor;
+      Header_File    : Virtual_File;
+      Header_Package : String;
+      Header_Line    : Natural;
+      Header_Link    : Boolean);
 
    procedure Doc_Header_Private
      (B                : access Backend_HTML;
       Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
       File             : File_Descriptor;
-      Info             : in out Docgen.Doc_Info_Header_Private;
+      Header_Title     : String;
       Level            : Natural);
 
    procedure Doc_Footer
      (B                : access Backend_HTML;
       Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
-      File             : in File_Descriptor;
-      Info             : in out Docgen.Doc_Info_Footer);
+      File             : in File_Descriptor);
 
    procedure Doc_Subtitle
-     (B      : access Backend_HTML;
-      Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
-      File   : File_Descriptor;
-      Info   : in out Docgen.Doc_Info_Subtitle;
-      Level  : Natural);
+     (B                : access Backend_HTML;
+      Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
+      File             : File_Descriptor;
+      Level            : Natural;
+      Subtitle_Name    : String);
 
    procedure Doc_With
      (B                : access Backend_HTML;
       Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
       File             : in File_Descriptor;
       List_Ref_In_File : in out List_Reference_In_File.List;
-      Info             : in out Docgen.Doc_Info_With;
-      Level            : Natural);
+      Source_File_List : Type_Source_File_Table.HTable;
+      Options          : All_Options;
+      Level            : Natural;
+      With_Header      : String;
+      With_File        : VFS.Virtual_File;
+      With_Header_Line : Natural);
 
    procedure Doc_Package
-     (B                : access Backend_HTML;
-      Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
-      File             : in File_Descriptor;
-      List_Ref_In_File : in out List_Reference_In_File.List;
-      Info             : in out Docgen.Doc_Info_Package;
-      Level            : Natural);
+     (B                   : access Backend_HTML;
+      Kernel              : access Glide_Kernel.Kernel_Handle_Record'Class;
+      File                : in File_Descriptor;
+      List_Ref_In_File    : in out List_Reference_In_File.List;
+      Source_File_List    : Type_Source_File_Table.HTable;
+      Options             : All_Options;
+      Level               : Natural;
+      Package_Entity      : Entity_Information;
+      Package_Header      : String);
 
    procedure Doc_Package_Open_Close
-     (B                : access Backend_HTML;
-      Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
-      File             : in File_Descriptor;
-      List_Ref_In_File : in out List_Reference_In_File.List;
-      Info             : in out Docgen.Doc_Info_Package_Open_Close;
-      Level            : Natural);
+     (B                 : access Backend_HTML;
+      Kernel            : access Glide_Kernel.Kernel_Handle_Record'Class;
+      File              : in File_Descriptor;
+      List_Ref_In_File  : in out List_Reference_In_File.List;
+      Source_File_List  : Type_Source_File_Table.HTable;
+      Options           : All_Options;
+      Level             : Natural;
+      Entity            : Entity_Information;
+      Header            : String);
 
    procedure Doc_Package_Desc
-     (B      : access Backend_HTML;
-      Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
-      File   : File_Descriptor;
-      Info   : in out Docgen.Doc_Info_Package_Desc;
-      Level  : Natural);
+     (B           : access Backend_HTML;
+      Kernel      : access Glide_Kernel.Kernel_Handle_Record'Class;
+      File        : File_Descriptor;
+      Level       : Natural;
+      Description : String);
 
    procedure Doc_Var
      (B                : access Backend_HTML;
       Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
       File             : in File_Descriptor;
       List_Ref_In_File : in out List_Reference_In_File.List;
-      Info             : in out Docgen.Doc_Info_Var;
-      Level            : Natural);
+      Source_File_List : Type_Source_File_Table.HTable;
+      Options          : All_Options;
+      Level            : Natural;
+      Entity           : Entity_Information;
+      Header           : String);
 
    procedure Doc_Exception
      (B                : access Backend_HTML;
       Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
       File             : File_Descriptor;
       List_Ref_In_File : in out List_Reference_In_File.List;
-      Info             : in out Docgen.Doc_Info_Exception;
-      Level            : Natural);
+      Source_File_List : Type_Source_File_Table.HTable;
+      Options          : All_Options;
+      Level            : Natural;
+      Entity           : Entity_Information;
+      Header           : String);
 
    procedure Doc_Type
      (B                : access Backend_HTML;
       Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
       File             : File_Descriptor;
       List_Ref_In_File : in out List_Reference_In_File.List;
-      Info             : in out Docgen.Doc_Info_Type;
-      Level            : Natural);
+      Source_File_List : Type_Source_File_Table.HTable;
+      Options          : All_Options;
+      Level            : Natural;
+      Entity           : Entity_Information;
+      Header           : String);
 
    procedure Doc_Entry
      (B                : access Backend_HTML;
       Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
       File             : File_Descriptor;
       List_Ref_In_File : in out List_Reference_In_File.List;
-      Info             : in out Docgen.Doc_Info_Entry;
-      Level            : Natural);
+      Source_File_List : Type_Source_File_Table.HTable;
+      Options          : All_Options;
+      Level            : Natural;
+      Entity           : Entity_Information;
+      Header           : String);
 
    procedure Doc_Subprogram
      (B                : access Backend_HTML;
       Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
       File             : File_Descriptor;
       List_Ref_In_File : in out List_Reference_In_File.List;
-      Info             : in out Docgen.Doc_Info_Subprogram;
-      Level            : Natural);
+      Source_File_List : Type_Source_File_Table.HTable;
+      Options          : All_Options;
+      Level            : Natural;
+      Entity           : Entity_List_Information;
+      Header           : String);
 
-   procedure Doc_References
-     (B                : access Backend_HTML;
-      Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
-      File             : in File_Descriptor;
-      Info             : in out Docgen.Doc_Info_References;
-      Level            : Natural);
+   procedure Doc_Caller_References
+     (B                 : access Backend_HTML;
+      Kernel            : access Kernel_Handle_Record'Class;
+      File              : File_Descriptor;
+      Options           : All_Options;
+      Level             : Natural;
+      Callers           : Entities.Entity_Information_Arrays.Instance;
+      Processed_Sources : Type_Source_File_Table.HTable);
+
+   procedure Doc_Calls_References
+     (B                 : access Backend_HTML;
+      Kernel            : access Kernel_Handle_Record'Class;
+      File              : File_Descriptor;
+      Options           : All_Options;
+      Level             : Natural;
+      Calls             : Entities.Entity_Information_Arrays.Instance;
+      Processed_Sources : Type_Source_File_Table.HTable);
 
    procedure Doc_Tagged_Type
      (B                : access Backend_HTML;
       Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
       File             : File_Descriptor;
-      Info             : in out Docgen.Doc_Info_Tagged_Type;
-      Level            : Natural);
+      Source_File_List : Type_Source_File_Table.HTable;
+      Level            : Natural;
+      Entity           : Entity_Information);
 
    procedure Doc_Unit_Index
      (B                : access Backend_HTML;
       Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
       File             : File_Descriptor;
-      Info             : in out Docgen.Doc_Info_Unit_Index;
+      Source_File_List : Type_Source_File_Table.HTable;
+      Options          : All_Options;
       Level            : Natural;
-      Doc_Directory    : String;
-      Doc_Suffix       : String);
+      Doc_Directory    : String);
 
    procedure Doc_Subprogram_Index
      (B                : access Backend_HTML;
       Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
       File             : File_Descriptor;
-      Info             : in out Docgen.Doc_Info_Subprogram_Index);
+      Options          : All_Options);
 
    procedure Doc_Type_Index
      (B                : access Backend_HTML;
       Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
       File             : File_Descriptor;
-      Info             : in out Docgen.Doc_Info_Type_Index);
+      Options          : All_Options);
 
    procedure Doc_Tagged_Type_Index
      (B                : access Backend_HTML;
       Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
-      File             : File_Descriptor;
-      Info             : in out Docgen.Doc_Info_Tagged_Type_Index);
+      File             : File_Descriptor);
 
    procedure Doc_Private_Index
      (B                : access Backend_HTML;
       Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
       File             : File_Descriptor;
-      Info             : in out Docgen.Doc_Info_Private_Index);
+      Title            : String);
 
    procedure Doc_Public_Index
      (B                : access Backend_HTML;
       Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
       File             : File_Descriptor;
-      Info             : in out Docgen.Doc_Info_Public_Index);
+      Title            : String);
 
    procedure Doc_End_Of_Index
      (B                : access Backend_HTML;
       Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
-      File             : File_Descriptor;
-      Info             : in out Docgen.Doc_Info_End_Of_Index);
+      File             : File_Descriptor);
 
    procedure Doc_Index_Tagged_Type
      (B                : access Backend_HTML;
       Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
       File             : File_Descriptor;
-      Info             : in out Docgen.Doc_Info_Index_Tagged_Type);
+      Source_File_List : Type_Source_File_Table.HTable;
+      Entity           : Entity_Information;
+      Family           : Family_Type);
 
    procedure Doc_Index_Item
      (B                : access Backend_HTML;
       Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
       File             : File_Descriptor;
-      Info             : in out Docgen.Doc_Info_Index_Item);
+      Name             : String;
+      Item_File        : Entities.Source_File;
+      Line             : Natural;
+      Doc_File         : String);
 
    procedure Doc_Body_Line
      (B                : access Backend_HTML;
       Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
       File             : File_Descriptor;
       List_Ref_In_File : in out List_Reference_In_File.List;
-      Info             : in out Docgen.Doc_Info_Body_Line;
-      Level            : Natural);
+      Source_File_List : Type_Source_File_Table.HTable;
+      Options          : All_Options;
+      Level            : Natural;
+      Body_File        : VFS.Virtual_File;
+      Body_Text        : String);
 
    procedure Doc_Description
      (B                : access Backend_HTML;
       Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
       File             : File_Descriptor;
-      Info             : in out Docgen.Doc_Info_Description;
-      Level            : Natural);
+      Level            : Natural;
+      Description      : String);
 
    procedure Format_Comment
      (B           : access Backend_HTML;
@@ -299,12 +341,11 @@ package Docgen_Backend_HTML is
       End_Line            : Natural;
       Kernel              : access Kernel_Handle_Record'Class;
       File                : File_Descriptor;
-      LI_Unit             : LI_File_Ptr;
       Text                : String;
       File_Name           : VFS.Virtual_File;
       Entity_Line         : Natural;
       Line_In_Body        : Natural;
-      Source_File_List    : Type_Source_File_List.List;
+      Source_File_List    : Type_Source_File_Table.HTable;
       Link_All            : Boolean;
       Is_Body             : Boolean;
       Process_Body        : Boolean;
@@ -320,12 +361,11 @@ package Docgen_Backend_HTML is
       End_Index        : Natural;
       Kernel           : access Kernel_Handle_Record'Class;
       File             : File_Descriptor;
-      LI_Unit          : LI_File_Ptr;
       Text             : String;
       File_Name        : VFS.Virtual_File;
       Entity_Line      : Natural;
       Line_In_Body     : Natural;
-      Source_File_List : Type_Source_File_List.List;
+      Source_File_List : Type_Source_File_Table.HTable;
       Link_All         : Boolean;
       Is_Body          : Boolean;
       Process_Body     : Boolean;
@@ -348,7 +388,7 @@ package Docgen_Backend_HTML is
 
    function Get_Doc_Directory
      (B      : access Backend_HTML;
-      Kernel : Kernel_Handle) return String;
+      Kernel : access Kernel_Handle_Record'Class) return String;
    --  Return the path which must contains the documentation, e.g:
    --  "/..../gps/glide/obj/html/"
 

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2002-2003                       --
+--                     Copyright (C) 2002-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software; you  can redistribute it and/or modify  it --
@@ -35,7 +35,7 @@
 
 with Language;
 with Basic_Types;
-with Src_Info;
+with Entities;
 with Projects;
 with GNAT.OS_Lib;
 
@@ -68,7 +68,7 @@ package Language_Handlers.Glide is
    procedure Register_LI_Handler
      (Handler : access Glide_Language_Handler_Record;
       Name    : String;
-      LI      : Src_Info.LI_Handler);
+      LI      : Entities.LI_Handler);
    --  Register a new LI handler that can generate xref.
    --  The Name is used both for retrieval of the handler by
    --  Get_LI_Handler_By_Name, and to print in the console when recomputing the
@@ -76,7 +76,7 @@ package Language_Handlers.Glide is
 
    function Get_LI_Handler_By_Name
      (Handler : access Glide_Language_Handler_Record;
-      Name    : String) return Src_Info.LI_Handler;
+      Name    : String) return Entities.LI_Handler;
    --  Return the LI handler which name is Name.
    --  Name is case-sensitive.
 
@@ -88,7 +88,7 @@ package Language_Handlers.Glide is
    function Get_LI_Handler_From_File
      (Handler         : access Glide_Language_Handler_Record;
       Source_Filename : VFS.Virtual_File)
-      return Src_Info.LI_Handler;
+      return Entities.LI_Handler;
    --  Return the LI handler to use for a specific file name.
    --  null is returned if the language is unknown.
    --  Project is the project that contains Source_Filename, or No_Project if
@@ -102,7 +102,7 @@ package Language_Handlers.Glide is
 
    function Get_Nth_Handler
      (Handler : access Glide_Language_Handler_Record;
-      Num     : Positive) return Src_Info.LI_Handler;
+      Num     : Positive) return Entities.LI_Handler;
    --  Return the handler for the Num-th language.
    --  The first handler is number 1.
 
@@ -137,7 +137,7 @@ package Language_Handlers.Glide is
    procedure Set_Language_Handler
      (Handler       : access Glide_Language_Handler_Record;
       Language_Name : String;
-      LI            : Src_Info.LI_Handler);
+      LI            : Entities.LI_Handler);
    --  Register some extra information for a specific language.
    --  Nothing is done if Language_Name hasn't been registered first.
    --  See also Projects.Registry.Register_Default_Language_Extension and
@@ -157,7 +157,7 @@ private
    type Language_Info is record
       Language_Name : Basic_Types.String_Access;
       Lang          : Language.Language_Access;
-      Handler       : Src_Info.LI_Handler;
+      Handler       : Entities.LI_Handler;
    end record;
 
    type Language_Info_Array is array (Positive range <>) of Language_Info;
@@ -165,7 +165,7 @@ private
 
    type Handler_Info is record
       Name    : Basic_Types.String_Access;
-      Handler : Src_Info.LI_Handler;
+      Handler : Entities.LI_Handler;
    end record;
 
    type Handler_Info_Array is array (Positive range <>) of Handler_Info;

@@ -23,6 +23,8 @@
 with Basic_Mapper;
 with GNAT.OS_Lib;
 with Generic_List;
+with Entities;
+with Entities.Queries;
 with Glib.Object;  use Glib;
 with Glib.Xml_Int;
 with Gdk;
@@ -37,8 +39,6 @@ with Gtk.Widget;
 with Gtk.Window;
 with Gtkada.MDI;
 with Language_Handlers;
-with Src_Info;
-with Src_Info.Queries;
 with String_Hash;
 with System;
 with Ada.Unchecked_Conversion;
@@ -198,92 +198,6 @@ package Glide_Kernel is
    --  opened from the command line. As a result, Name might be found even
    --  if it doesn't directly belong to a project.
 
-   -------------
-   -- Queries --
-   -------------
-   --  The following programs are provided as proxies for the ones in
-   --  Src_Info.Queries. They should be used instead of the other ones so that
-   --  the list of parsed LI files can be kept in the kernel
-
-   procedure Reset_LI_File_List (Handle : access Kernel_Handle_Record);
-   --  Reset the LI files currently in memory, and free associated memory
-
-   function Locate_From_Source_And_Complete
-     (Handle          : access Kernel_Handle_Record;
-      Source_Filename : VFS.Virtual_File;
-      Check_Timestamp : Boolean := True) return Src_Info.LI_File_Ptr;
-   --  Find the ALI file for Source_Filename, and return a handle to it.
-   --  null is returned if the LI file couldn't be parsed. It is guaranteed
-   --  that the returned LI file has been fully parsed.
-   --  If Check_Timestamp is False, and there is already a version of this
-   --  LI file in memory, that version is not updated, and just returned as is.
-
-   function Other_File_Name
-     (Kernel          : access Kernel_Handle_Record;
-      Source_Filename : VFS.Virtual_File) return VFS.Virtual_File;
-   --  Return the other file associated with Source_Filename (the spec if
-   --  Source_Filename is a body or separate, the body if Source_Filename is
-   --  the spec).
-   --  No_File is returned if the file wasn't found (and error
-   --  messages are printed to the console appropriately).
-
-   procedure Find_Declaration_Or_Overloaded
-     (Kernel        : access Kernel_Handle_Record;
-      Lib_Info      : Src_Info.LI_File_Ptr;
-      File_Name     : VFS.Virtual_File;
-      Entity_Name   : String;
-      Line          : Positive;
-      Column        : Positive;
-      Entity        : out Src_Info.Queries.Entity_Information;
-      Status        : out Src_Info.Queries.Find_Decl_Or_Body_Query_Status);
-   --  See Src_Info.Queries.Find_Declaration.
-   --  If the request to Src_Info.Queries.Find_Declaration returns an
-   --  unresolved overloaded entity, this subprogram automatically asks the
-   --  user to chose among the possible completions. The declaration for the
-   --  user's choice is returned, and Status set to Success if necessary.
-
-   procedure Find_Next_Body
-     (Kernel      : access Kernel_Handle_Record;
-      Lib_Info    : Src_Info.LI_File_Ptr;
-      File_Name   : VFS.Virtual_File;
-      Entity_Name : String;
-      Line        : Positive;
-      Column      : Positive;
-      Location    : out Src_Info.File_Location;
-      Status      : out Src_Info.Queries.Find_Decl_Or_Body_Query_Status);
-   --  See Src_Info.Queries.
-   --  If the request to Src_Info.Queries.Find_Next_Body returns an unresolved
-   --  overloaded entity, this subprogram automatically asks the user to chose
-   --  among the possible completions.
-
-   procedure Find_Next_Body
-     (Kernel      : access Kernel_Handle_Record;
-      Lib_Info    : Src_Info.LI_File_Ptr;
-      Entity      : Src_Info.Queries.Entity_Information;
-      Location    : out Src_Info.File_Location;
-      Status      : out Src_Info.Queries.Find_Decl_Or_Body_Query_Status);
-   --  Same as above, but with a slightly simpler parameter list.
-   --  This only gives access to the first body.
-
-   procedure Parse_All_LI_Information
-     (Kernel       : access Kernel_Handle_Record;
-      In_Directory : String);
-   --  Parse all the LI information in In_Directory, for all the supported
-   --  languages. This can be used in cases where there is no obvious way to
-   --  find the LI file matching a given source file (for instance, with a
-   --  separate krunched file in Ada).
-
-   procedure Get_Scope_Tree
-     (Kernel : access Kernel_Handle_Record;
-      Entity : Src_Info.Queries.Entity_Information;
-      Node   : out Src_Info.Scope_Tree_Node);
-   --  Create the scope tree for the entity, and set node to point to the node
-   --  for Entity.
-   --  The returned Tree must be freed by the caller, if not Null_Scope_Tree.
-
-   function Scope_To_String (Scope : Src_Info.E_Scope) return String;
-   --  Return a printable string for the scope.
-
    function Is_Open
      (Kernel   : access Kernel_Handle_Record;
       Filename : VFS.Virtual_File) return Boolean;
@@ -292,6 +206,34 @@ package Glide_Kernel is
    function Open_Files
      (Kernel : access Kernel_Handle_Record) return VFS.File_Array;
    --  Return a list of currently open files.
+
+   -------------
+   -- Queries --
+   -------------
+
+   procedure Parse_All_LI_Information
+     (Kernel       : access Kernel_Handle_Record;
+      Project      : Projects.Project_Type;
+      Recursive    : Boolean);
+   --  Parse all the LI information in Project, for all the supported
+   --  languages. This can be used in cases where there is no obvious way to
+   --  find the LI file matching a given source file (for instance, with a
+   --  separate krunched file in Ada).
+
+   function Get_Database
+     (Kernel : access Kernel_Handle_Record) return Entities.Entities_Database;
+   --  Return the database used for cross-references
+
+   procedure Find_Declaration_Or_Overloaded
+     (Kernel        : access Kernel_Handle_Record;
+      File          : Entities.Source_File;
+      Entity_Name   : String;
+      Line          : Natural;
+      Column        : Natural;
+      Entity        : out Entities.Entity_Information;
+      Status        : out Entities.Queries.Find_Decl_Or_Body_Query_Status);
+   --  Find the declaration of the given entity in the file. If multiple
+   --  entities match, an interactive dialog is open for the user
 
    ---------------
    -- Module ID --
@@ -911,6 +853,9 @@ private
    type GPS_MDI_Child is access all GPS_MDI_Child_Record'Class;
 
    type Kernel_Handle_Record is new Glib.Object.GObject_Record with record
+      Database : Entities.Entities_Database;
+      --  The cross-reference information
+
       Tools   : Tools_Htable.String_Hash_Table.HTable;
       --  The tools registered in the kernel
 

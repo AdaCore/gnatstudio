@@ -1,7 +1,7 @@
 with "../../gtkada/gtkada";
 project Standalone is
    for Source_Dirs use
-     ("common", "gvd", "sn_wrapper", "gnat", ".", "tests");
+     ("common", "gvd", "../../kernel/src_info/sn_wrapper", "gnat", ".", "tests");
    for Object_Dir use "standalone_obj/";
 
    package Builder is
@@ -10,7 +10,10 @@ project Standalone is
 
    package Compiler is
       for Switches ("sdefault.adb") use ("-g");
-      for Default_Switches ("ada") use ("-gnatwue", "-gnata", "-gnatg", "-g");
+      for Default_Switches ("ada") use (
+         --  "-pg",
+             "-O2", "-gnata", "-gnatn",
+             "-gnatwue", "-gnata", "-gnatg", "-g");
    end Compiler;
 
    package Binder is
@@ -19,7 +22,9 @@ project Standalone is
 
    package Linker is
       for Default_Switches ("Ada") use 
-        ("-lgccprefix", Project'Object_Dir & "file-utils.o");
+        ("-lgccprefix", 
+     --  "-pg",
+         Project'Object_Dir & "file-utils.o");
    end Linker;
 
    package Naming is

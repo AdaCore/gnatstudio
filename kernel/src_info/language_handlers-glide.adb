@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2002-2003                      --
+--                      Copyright (C) 2002-2004                      --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
@@ -21,7 +21,7 @@
 with Language;                  use Language;
 with Language.Unknown;          use Language.Unknown;
 with Basic_Types;               use Basic_Types;
-with Src_Info;                  use Src_Info;
+with Entities;                  use Entities;
 with Ada.Unchecked_Deallocation;
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Types;                     use Types;
@@ -151,7 +151,7 @@ package body Language_Handlers.Glide is
    procedure Register_LI_Handler
      (Handler : access Glide_Language_Handler_Record;
       Name    : String;
-      LI      : Src_Info.LI_Handler)
+      LI      : LI_Handler)
    is
       Tmp   : Handler_Info_Access;
       Index : Natural;
@@ -203,7 +203,7 @@ package body Language_Handlers.Glide is
 
    function Get_LI_Handler_By_Name
      (Handler : access Glide_Language_Handler_Record;
-      Name    : String) return Src_Info.LI_Handler
+      Name    : String) return LI_Handler
    is
       Index : constant Natural := Get_LI_Handler_By_Name
         (Handler, Name);
@@ -300,7 +300,7 @@ package body Language_Handlers.Glide is
    procedure Set_Language_Handler
      (Handler       : access Glide_Language_Handler_Record;
       Language_Name : String;
-      LI            : Src_Info.LI_Handler)
+      LI            : LI_Handler)
    is
       Index : constant Natural :=
         Get_Index_From_Language (Handler, Language_Name);
@@ -317,7 +317,7 @@ package body Language_Handlers.Glide is
    function Get_LI_Handler_From_File
      (Handler         : access Glide_Language_Handler_Record;
       Source_Filename : VFS.Virtual_File)
-      return Src_Info.LI_Handler
+      return LI_Handler
    is
       Lang : constant String :=
         Get_Language_From_File (Handler, Source_Filename);
@@ -372,7 +372,7 @@ package body Language_Handlers.Glide is
 
    function Get_Nth_Handler
      (Handler : access Glide_Language_Handler_Record;
-      Num     : Positive) return Src_Info.LI_Handler is
+      Num     : Positive) return LI_Handler is
    begin
       if Handler.Handlers = null
         or else Num > Handler.Handlers'Length

@@ -33,7 +33,8 @@ with Language.Ada;
 with Language.C;
 with Language.Cpp;
 with Language.Java;
-with Src_Info.Dummy;            use Src_Info.Dummy;
+with Entities;
+with Dummy_Parser;              use Dummy_Parser;
 with Language_Handlers.Glide;   use Language_Handlers.Glide;
 with Projects.Registry;         use Projects.Registry;
 with Custom_Naming_Editors;     use Custom_Naming_Editors;
@@ -72,6 +73,8 @@ package body Language.Custom is
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class; Lang : String)
       return Naming_Editors.Language_Naming_Editor;
    --  Create the naming scheme editor page
+
+   Dummy_Handler : constant Entities.LI_Handler := Create_Dummy_LI_Handler;
 
    ---------------------
    -- Array_Item_Name --
@@ -325,7 +328,7 @@ package body Language.Custom is
       Register_Language (Handler, Get_Name (Lang), Language_Access (Lang));
       Set_Language_Handler
         (Handler, Get_Name (Lang),
-         LI     => Dummy_Handler.all'Access);
+         LI     => Dummy_Handler);
       Register_Default_Language_Extension
         (Get_Registry (Kernel),
          Language_Name       => Get_Name (Lang),

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2003                       --
+--                     Copyright (C) 2001-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -19,14 +19,12 @@
 -----------------------------------------------------------------------
 
 with Ada.Exceptions;       use Ada.Exceptions;
-with Ada.Unchecked_Deallocation;
 with GNAT.Heap_Sort_G;
 with GNAT.Strings;         use GNAT.Strings;
 
-with Src_Info.Queries;     use Src_Info, Src_Info.Queries;
+with Entities.Queries;     use Entities, Entities.Queries;
 with Glide_Kernel;         use Glide_Kernel;
 with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
-with Glide_Kernel.Project; use Glide_Kernel.Project;
 with Glide_Kernel.Contexts; use Glide_Kernel.Contexts;
 with Glide_Kernel.Modules; use Glide_Kernel.Modules;
 with Glide_Kernel.Standard_Hooks; use Glide_Kernel.Standard_Hooks;
@@ -96,7 +94,7 @@ package body Browsers.Entities is
    ---------------
 
    type Type_Item_Record is new Browsers.Canvas.Arrow_Item_Record with record
-      Entity : Src_Info.Queries.Entity_Information;
+      Entity : Entity_Information;
       Inherited_Primitives : Boolean := False;
    end record;
    type Type_Item is access all Type_Item_Record'Class;
@@ -104,14 +102,14 @@ package body Browsers.Entities is
    procedure Gtk_New
      (Item    : out Type_Item;
       Browser : access Browsers.Canvas.General_Browser_Record'Class;
-      Entity  : Src_Info.Queries.Entity_Information);
+      Entity  : Entity_Information);
    --  Open a new item in the browser that represents Entity.
    --  A copy of Entity is made, thus the caller should free Entity.
 
    procedure Initialize
      (Item    : access Type_Item_Record'Class;
       Browser : access Browsers.Canvas.General_Browser_Record'Class;
-      Entity  : Src_Info.Queries.Entity_Information);
+      Entity  : Entity_Information);
    --  Internal initialization function
 
    function Get_Background_GC
@@ -261,24 +259,19 @@ package body Browsers.Entities is
 
    procedure Add_Primitive_Operations
      (List     : in out Xref_List;
-      Kernel   : access Kernel_Handle_Record'Class;
-      Item     : access Type_Item_Record'Class;
-      Lib_Info : LI_File_Ptr);
+      Item     : access Type_Item_Record'Class);
    --  Add the sorted list of primitive operations for Entity at the end of
    --  Meth_Layout.
 
    procedure Add_Parameters
      (List     : in out Xref_List;
-      Item     : access Type_Item_Record'Class;
-      Lib_Info : LI_File_Ptr);
+      Item     : access Type_Item_Record'Class);
    --  Add the list of parameters for Entity (a subprogram) to the end of
    --  Attr_Layout.
 
    procedure Add_Fields
-     (Kernel   : access Kernel_Handle_Record'Class;
-      List     : in out Xref_List;
-      Item     : access Type_Item_Record'Class;
-      Lib_Info : LI_File_Ptr);
+     (List     : in out Xref_List;
+      Item     : access Type_Item_Record'Class);
    --  Add the list of fields for a record-like entity to the end of
    --  Attr_Layout.
    --  This is also usable to get the enumeration literals for an enumeration
@@ -288,8 +281,7 @@ package body Browsers.Entities is
      (General_List : in out Xref_List;
       Attr_List    : in out Xref_List;
       Meth_List    : in out Xref_List;
-      Item         : access Type_Item_Record'Class;
-      Lib_Info     : LI_File_Ptr);
+      Item         : access Type_Item_Record'Class);
    --  Add the parent package for Entity at the end of Attr_Layout
 
    function Load_Desktop
@@ -324,7 +316,6 @@ package body Browsers.Entities is
    procedure Add_Type
      (List     : in out Xref_List;
       Item     : access Type_Item_Record'Class;
-      Lib_Info : LI_File_Ptr;
       Entity   : Entity_Information;
       Prefix   : String);
    --  Add a new line in List, starting with prefix and followed by an
@@ -333,7 +324,6 @@ package body Browsers.Entities is
    procedure Add_Array_Type
      (List       : in out Xref_List;
       Item       : access Type_Item_Record'Class;
-      Lib_Info   : LI_File_Ptr;
       Entity     : Entity_Information;
       Info_Added : out Boolean);
    --  Add the information for an array type
@@ -341,7 +331,6 @@ package body Browsers.Entities is
    procedure Add_Access_Type
      (List       : in out Xref_List;
       Item       : access Type_Item_Record'Class;
-      Lib_Info   : LI_File_Ptr;
       Entity     : Entity_Information;
       Info_Added : out Boolean);
    --  Add the information for an access type
@@ -357,13 +346,12 @@ package body Browsers.Entities is
    --  Add a line that describes the subprogram Entity.
    --  Entity should not be freed by the caller
 
-   procedure Sort (Arr : in out Entity_Information_Array);
+   procedure Sort (Arr : in out Entity_Information_Arrays.Instance);
    --  Sort the array alphabetically
 
    type Find_Children_Types_Data is record
-      Iter    : Entity_Reference_Iterator_Access;
+      Iter    : Child_Type_Iterator_Access;
       Item    : Type_Item;
-      Kernel  : Kernel_Handle;
       Browser : Type_Browser;
    end record;
 
@@ -399,7 +387,7 @@ package body Browsers.Entities is
 
    procedure Destroy (Callback : in out Show_Entity_Callback) is
    begin
-      Destroy (Callback.Entity);
+      Unref (Callback.Entity);
       Free (Callback.Link_Name);
    end Destroy;
 
@@ -412,6 +400,7 @@ package body Browsers.Entities is
       Entity : Entity_Information;
       Link_Name : String := "") return Active_Area_Cb is
    begin
+      Ref (Entity);
       return new Show_Entity_Callback'
         (Active_Area_Callback with
          Item => Browser_Item (Item),
@@ -513,7 +502,7 @@ package body Browsers.Entities is
       Item       : Type_Item;
       pragma Unreferenced (Item);
    begin
-      if Entity /= No_Entity_Information then
+      if Entity /= null then
          if Command = "show" then
             Child := Open_Type_Browser_Child (Kernel);
             Item := Add_Or_Select_Item
@@ -522,88 +511,82 @@ package body Browsers.Entities is
 
          elsif Command = "discriminants" then
             declare
-               Lib_Info : constant LI_File_Ptr :=
-                 Locate_From_Source_And_Complete
-                   (Kernel, Get_Declaration_File_Of (Entity).all);
-               Discriminants : Discriminant_Iterator := Get_Discriminants
-                 (Lib_Info, Entity);
-               Discr : Entity_Information;
+               Iter   : Entity_Reference_Iterator;
+               Discr  : Entity_Information;
             begin
+               Find_All_References
+                 (Iter   => Iter,
+                  Entity => Entity,
+                  Filter => (Discriminant => True, others => False));
+
                Set_Return_Value_As_List (Data);
-               loop
-                  Discr := Get (Discriminants);
-                  exit when Discr = No_Entity_Information;
-                  Set_Return_Value
-                    (Data, Create_Entity (Get_Script (Data), Discr));
-                  Destroy (Discr);
-                  Next (Discriminants);
+
+               while not At_End (Iter) loop
+                  Discr := Get_Entity (Iter);
+                  if Discr /= null then
+                     Set_Return_Value
+                       (Data, Create_Entity (Get_Script (Data), Discr));
+                  end if;
+
+                  Next (Iter);
                end loop;
+
+               Destroy (Iter);
             end;
 
          elsif Command = "parameters" then
             declare
-               Lib_Info : constant LI_File_Ptr :=
-                 Locate_From_Source_And_Complete
-                   (Kernel, Get_Declaration_File_Of (Entity).all);
-               Subs : Subprogram_Iterator := Get_Subprogram_Parameters
-                 (Lib_Info   => Lib_Info, Subprogram => Entity);
+               Iter  : Subprogram_Iterator;
                Param : Entity_Information;
             begin
+               Iter := Get_Subprogram_Parameters
+                 (Subprogram            => Entity,
+                  File_Has_No_LI_Report => null);
+
                Set_Return_Value_As_List (Data);
                loop
-                  Param := Get (Subs);
-                  exit when Param = No_Entity_Information;
+                  Get (Iter, Param);
+                  exit when Param = null;
+
                   Set_Return_Value
                     (Data, Create_Entity (Get_Script (Data), Param));
-                  Destroy (Param);
-                  Next (Subs);
+                  Next (Iter);
                end loop;
             end;
 
          elsif Command = "return_type" then
             declare
-               Lib_Info : constant LI_File_Ptr :=
-                 Locate_From_Source_And_Complete
-                   (Kernel, Get_Declaration_File_Of (Entity).all);
-               Returned : Entity_Information := Returned_Type
-                 (Lib_Info, Entity);
+               Returned : constant Entity_Information :=
+                            Returned_Type (Entity);
             begin
-               if Returned /= No_Entity_Information then
+               if Returned /= null then
                   Set_Return_Value
                     (Data, Create_Entity (Get_Script (Data), Returned));
-                  Destroy (Returned);
                end if;
             end;
 
          elsif Command = "fields" then
             declare
-               Lib_Info : constant LI_File_Ptr :=
-                 Locate_From_Source_And_Complete
-                   (Kernel, Get_Declaration_File_Of (Entity).all);
-               Node : Scope_Tree_Node;
-               Iter : Scope_Tree_Node_Iterator;
+               Iter : Calls_Iterator;
                Field : Entity_Information;
             begin
                Set_Return_Value_As_List (Data);
-               Get_Scope_Tree (Kernel, Entity, Node);
-               Iter := Start (Node);
-               loop
-                  Node := Get (Iter);
-                  exit when Node = Null_Scope_Tree_Node;
 
-                  if Is_Declaration (Node) then
-                     Field := Get_Entity (Node);
+               Iter := Get_All_Called_Entities (Entity);
+               while not At_End (Iter) loop
+                  Field := Get (Iter);
 
-                     if not Is_Discriminant (Field, Lib_Info, Entity) then
+                  if In_Range (Get_Declaration_Of (Field), Entity) then
+                     if not Is_Discriminant (Field, Entity) then
                         Set_Return_Value
                           (Data, Create_Entity (Get_Script (Data), Field));
                      end if;
-
-                     Destroy (Field);
                   end if;
 
                   Next (Iter);
                end loop;
+
+               Destroy (Iter);
             end;
          end if;
       end if;
@@ -634,7 +617,7 @@ package body Browsers.Entities is
          if Has_Entity_Name_Information (Entity_Context) then
             Push_State (Get_Kernel (Context), Busy);
 
-            if Get_Entity (Entity_Context) /= No_Entity_Information then
+            if Get_Entity (Entity_Context) /= null then
                Gtk_New
                  (Item, Label => (-"Examine entity ")
                   & Krunch (Entity_Name_Information (Entity_Context)));
@@ -780,7 +763,8 @@ package body Browsers.Entities is
            (Item, Browser, Get_Name (Entity),
             Find_Parent_Types'Access, Find_Children_Types'Access);
       end if;
-      Item.Entity := Copy (Entity);
+      Ref (Entity);
+      Item.Entity := Entity;
    end Initialize;
 
    --------
@@ -809,24 +793,51 @@ package body Browsers.Entities is
    -- Sort --
    ----------
 
-   procedure Sort (Arr : in out Entity_Information_Array) is
+   procedure Sort (Arr : in out Entity_Information_Arrays.Instance) is
+      use type Entity_Information_Arrays.Index_Type;
+      First : constant Integer :=
+                Integer (Entity_Information_Arrays.First) - 1;
+
       procedure Move (From, To : Natural);
       function Lt (Op1, Op2 : Natural) return Boolean;
       --  See GNAT.Heap_Sort_G
 
+      Tmp : Entity_Information;
+
       procedure Move (From, To : Natural) is
       begin
-         Arr (To) := Arr (From);
+         if From = 0 then
+            Arr.Table (Entity_Information_Arrays.Index_Type (To + First)) :=
+              Tmp;
+         elsif To = 0 then
+            Tmp :=
+              Arr.Table (Entity_Information_Arrays.Index_Type (From + First));
+         else
+            Arr.Table (Entity_Information_Arrays.Index_Type (To + First)) :=
+              Arr.Table (Entity_Information_Arrays.Index_Type (From + First));
+         end if;
       end Move;
 
       function Lt (Op1, Op2 : Natural) return Boolean is
       begin
-         return Arr (Op1) < Arr (Op2);
+         if Op1 = 0 then
+            return Tmp <
+              Arr.Table (Entity_Information_Arrays.Index_Type (Op2 + First));
+         elsif Op2 = 0 then
+            return
+              Arr.Table (Entity_Information_Arrays.Index_Type (Op1 + First)) <
+              Tmp;
+         else
+            return
+              Arr.Table (Entity_Information_Arrays.Index_Type (Op1 + First)) <
+              Arr.Table (Entity_Information_Arrays.Index_Type (Op2 + First));
+         end if;
       end Lt;
 
       package Entity_Sort is new GNAT.Heap_Sort_G (Move, Lt);
    begin
-      Entity_Sort.Sort (Arr'Last);
+      Entity_Sort.Sort
+        (Integer (Entity_Information_Arrays.Last (Arr)) - First);
    end Sort;
 
    ------------------------------
@@ -835,52 +846,31 @@ package body Browsers.Entities is
 
    procedure Add_Primitive_Operations
      (List     : in out Xref_List;
-      Kernel   : access Kernel_Handle_Record'Class;
-      Item     : access Type_Item_Record'Class;
-      Lib_Info : LI_File_Ptr)
+      Item     : access Type_Item_Record'Class)
    is
-      Prim : Primitive_Iterator := Get_Primitive_Operations
-        (Lib_Info => Lib_Info, Entity => Item.Entity,
-         Include_Inherited => Item.Inherited_Primitives);
-      Arr   : Entity_Information_Array_Access :=
-        new Entity_Information_Array (0 .. 50);
-      Arr2  : Entity_Information_Array_Access;
-      Index : Natural := 1;
-
-      Parent_Lib_Info : LI_File_Ptr;
-      Parent_Iter : Parent_Iterator;
-      Parent : Entity_Information;
-      Parent_Prim : Primitive_Iterator;
-      Op    : Entity_Information;
-
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Entity_Information_Array, Entity_Information_Array_Access);
-
+      use Entity_Information_Arrays;
+      Prim  : Primitive_Operations_Iterator;
+      Arr   : Entity_Information_Arrays.Instance;
    begin
       Trace (Me, "Add_Primitive_Operations: Inherited_Primitives="
              & Item.Inherited_Primitives'Img);
 
+      Find_All_Primitive_Operations
+        (Iter              => Prim,
+         Entity            => Item.Entity,
+         Include_Inherited => Item.Inherited_Primitives);
+
       --  Store all primitive operations in an array, so that we can display
       --  them sorted, and possibly filter them out.
 
-      loop
-         Parent := Get (Prim);
-         exit when Parent = No_Entity_Information;
-
-         if Index >= Arr'Last then
-            Arr2 := Arr;
-            Arr  := new Entity_Information_Array (Arr2'First .. 2 * Arr2'Last);
-            Arr (Arr2'Range) := Arr2.all;
-            Unchecked_Free (Arr2);
-         end if;
-
-         Arr (Index) := Parent;
-         Index := Index + 1;
-
+      while not At_End (Prim) loop
+         Append (Arr, Get (Prim));
          Next (Prim);
       end loop;
 
-      Sort (Arr (Arr'First .. Index - 1));
+      Destroy (Prim);
+
+      Sort (Arr);
 
       if not Item.Inherited_Primitives then
          --  For each inherited operation, remove it from the list of
@@ -889,48 +879,44 @@ package body Browsers.Entities is
          --  information initially, we can easily get it from the
          --  parent's list.
          --  This step isn't needed for C++.
-         Parent_Iter := Get_Parent_Types (Lib_Info, Item.Entity);
-         loop
-            Parent := Get (Parent_Iter);
-            exit when Parent = No_Entity_Information;
 
-            Parent_Lib_Info := Locate_From_Source_And_Complete
-              (Kernel, Get_Declaration_File_Of (Parent).all);
-            Parent_Prim := Get_Primitive_Operations
-              (Parent_Lib_Info, Parent, Include_Inherited => False);
+         declare
+            Parents     : constant Entity_Information_Array :=
+                            Get_Parent_Types (Item.Entity);
+            Parent_Prim : Primitive_Operations_Iterator;
+            Op          : Entity_Information;
+         begin
+            for Parent in Parents'Range loop
+               Find_All_Primitive_Operations
+                 (Iter              => Parent_Prim,
+                  Entity            => Parents (Parent),
+                  Include_Inherited => False);
 
-            loop
-               Op := Get (Parent_Prim);
-               exit when Op = No_Entity_Information;
+               while not At_End (Parent_Prim) loop
+                  Op := Get (Parent_Prim);
 
-               for A in 1 .. Index - 1 loop
-                  if Arr (A) /= No_Entity_Information
-                    and then Is_Equal (Arr (A), Op)
-                  then
-                     Destroy (Arr (A));
-                     exit;
-                  end if;
+                  for A in Entity_Information_Arrays.First .. Last (Arr) loop
+                     if Arr.Table (A) = Op then
+                        Arr.Table (A) := null;
+                        exit;
+                     end if;
+                  end loop;
+
+                  Next (Parent_Prim);
                end loop;
 
-               Destroy (Op);
-               Next (Parent_Prim);
+               Destroy (Parent_Prim);
             end loop;
-
-            Destroy (Parent_Prim);
-            Destroy (Parent);
-            Next (Parent_Iter);
-         end loop;
-
-         Destroy (Parent_Iter);
+         end;
       end if;
 
-      for E in 1 .. Index - 1 loop
-         if Arr (E) /= No_Entity_Information then
-            Add_Subprogram (List, Item, Arr (E));
+      for A in Entity_Information_Arrays.First .. Last (Arr) loop
+         if Arr.Table (A) /= null then
+            Add_Subprogram (List, Item, Arr.Table (A));
          end if;
       end loop;
 
-      Unchecked_Free (Arr);
+      Free (Arr);
       Destroy (Prim);
    end Add_Primitive_Operations;
 
@@ -957,33 +943,31 @@ package body Browsers.Entities is
 
    procedure Add_Parameters
      (List     : in out Xref_List;
-      Item     : access Type_Item_Record'Class;
-      Lib_Info : LI_File_Ptr)
+      Item     : access Type_Item_Record'Class)
    is
-      Subs : Subprogram_Iterator := Get_Subprogram_Parameters
-        (Lib_Info   => Lib_Info, Subprogram => Item.Entity);
+      Subs : Subprogram_Iterator;
       Typ, Parameter : Entity_Information;
-      Returned       : constant Entity_Information := Returned_Type
-        (Lib_Info, Item.Entity);
-
+      Returned    : constant Entity_Information := Returned_Type (Item.Entity);
    begin
+      Subs := Get_Subprogram_Parameters (Item.Entity);
+
       loop
-         Parameter := Get (Subs);
-         exit when Parameter = No_Entity_Information;
+         Get (Subs, Parameter);
+         exit when Parameter = null;
 
          --  In some cases, access parameters reference their pointed type
          --  through Pointed_Type. However, if that access type is a renaming
          --  of another type, we'll need to try Get_Variable_Type if
          --  Pointed_Type didn't return anything.
 
-         Typ := No_Entity_Information;
-
          if Get_Kind (Parameter).Kind = Access_Kind then
-            Typ := Pointed_Type (Lib_Info, Parameter);
+            Typ := Pointed_Type (Parameter);
+         else
+            Typ := null;
          end if;
 
-         if Typ = No_Entity_Information then
-            Typ := Get_Variable_Type (Lib_Info, Parameter);
+         if Typ = null then
+            Typ := Get_Variable_Type (Parameter);
          end if;
 
          Add_Line
@@ -994,11 +978,10 @@ package body Browsers.Entities is
             Callback => (1 => Build (Item, Typ)));
          --  Do not free Typ, it is needed for callbacks
 
-         Destroy (Parameter);
          Next (Subs);
       end loop;
 
-      if Returned /= No_Entity_Information then
+      if Returned /= null then
          Add_Line
            (List,
             "return " & Entity_As_Link (Returned),
@@ -1016,73 +999,63 @@ package body Browsers.Entities is
      (General_List : in out Xref_List;
       Attr_List    : in out Xref_List;
       Meth_List    : in out Xref_List;
-      Item         : access Type_Item_Record'Class;
-      Lib_Info     : LI_File_Ptr)
+      Item         : access Type_Item_Record'Class)
    is
-      Parent : constant Entity_Information :=
-        Get_Parent_Package (Lib_Info, Item.Entity);
-      Iter, Iter2 : Scope_Tree_Node_Iterator;
-      Count : Natural := 0;
+      use Entity_Information_Arrays;
+      Parent : constant Entity_Information := Get_Parent_Package (Item.Entity);
+      Iter   : Calls_Iterator;
+      Arr    : Entity_Information_Arrays.Instance;
+      Called : Entity_Information;
    begin
-      if Parent /= No_Entity_Information then
+      if Parent /= null then
          Add_Line (General_List, "Parent: " & Entity_As_Link (Parent),
                    Callback => (1 => Build (Item, Parent)));
          --  Do not destroy parent, needed for callbacks
       end if;
 
-      Iter := Start (Find_Entity_Scope (Lib_Info, Item.Entity));
-      Iter2 := Iter;
+      Iter := Get_All_Called_Entities (Item.Entity);
+      while not At_End (Iter) loop
+         Called := Get (Iter);
 
-      while Get (Iter2) /= Null_Scope_Tree_Node loop
-         if Is_Declaration (Get (Iter2)) then
-            Count := Count + 1;
+         if Called /= null then
+            if In_Range (Get_Declaration_Of (Called), Item.Entity) then
+               Append (Arr, Called);
+            end if;
          end if;
-         Next (Iter2);
+
+         Next (Iter);
       end loop;
 
-      declare
-         --  Index 0 is needed for heap sort
-         Arr : Entity_Information_Array (0 .. Count);
-      begin
-         Count := 1;
+      Sort (Arr);
 
-         while Get (Iter) /= Null_Scope_Tree_Node loop
-            if Is_Declaration (Get (Iter)) then
-               Arr (Count) := Get_Entity (Get (Iter));
-               Count := Count + 1;
-            end if;
-            Next (Iter);
-         end loop;
+      for A in Entity_Information_Arrays.First .. Last (Arr) loop
+         if Is_Container (Get_Kind (Arr.Table (A)).Kind) then
+            Add_Subprogram (Meth_List, Item, Arr.Table (A));
 
-         Sort (Arr);
+         elsif Get_Kind (Arr.Table (A)).Is_Type then
+            declare
+               Name : constant String := Entity_As_Link (Arr.Table (A));
+            begin
+               if Is_Subtype (Arr.Table (A)) then
+                  Add_Line
+                    (Attr_List, Name & "(subtype)",
+                     Length1 => Name'Length,
+                     Callback => (1 => Build (Item, Arr.Table (A), "")));
+               else
+                  Add_Line
+                    (Attr_List, Name & "(type)",
+                     Length1 => Name'Length,
+                     Callback => (1 => Build (Item, Arr.Table (A), "")));
+               end if;
+            end;
 
-         for A in Arr'First + 1 .. Arr'Last loop
-            if Is_Container (Arr (A)) then
-               Add_Subprogram (Meth_List, Item, Arr (A));
+         else
+            Add_Type
+              (Attr_List, Item, Arr.Table (A), Get_Name (Arr.Table (A)));
+         end if;
+      end loop;
 
-            elsif Get_Kind (Arr (A)).Is_Type then
-               declare
-                  Name : constant String := Entity_As_Link (Arr (A));
-               begin
-                  if Is_Subtype (Lib_Info, Arr (A)) then
-                     Add_Line
-                       (Attr_List, Name & "(subtype)",
-                        Length1 => Name'Length,
-                        Callback => (1 => Build (Item, Arr (A), "")));
-                  else
-                     Add_Line
-                       (Attr_List, Name & "(type)",
-                        Length1 => Name'Length,
-                        Callback => (1 => Build (Item, Arr (A), "")));
-                  end if;
-               end;
-
-            else
-               Add_Type (Attr_List, Item, Lib_Info, Arr (A),
-                         Get_Name (Arr (A)));
-            end if;
-         end loop;
-      end;
+      Free (Arr);
    end Add_Package_Contents;
 
    ----------------
@@ -1090,55 +1063,50 @@ package body Browsers.Entities is
    ----------------
 
    procedure Add_Fields
-     (Kernel      : access Kernel_Handle_Record'Class;
-      List        : in out Xref_List;
-      Item        : access Type_Item_Record'Class;
-      Lib_Info    : LI_File_Ptr)
+     (List        : in out Xref_List;
+      Item        : access Type_Item_Record'Class)
    is
-      Node : Scope_Tree_Node;
-      Iter : Scope_Tree_Node_Iterator;
-      Field : Entity_Information;
+      Field   : Entity_Information;
       Is_Enum : constant Boolean :=
         Get_Kind (Item.Entity).Kind = Enumeration_Kind;
-      Discriminants : Discriminant_Iterator := Get_Discriminants
-        (Lib_Info, Item.Entity);
+      Discriminants : Entity_Reference_Iterator;
+      Iter    : Calls_Iterator;
 
    begin
-      --  Discriminants will not be displayed for GNAT <= 20030309
-      loop
-         Field := Get (Discriminants);
-         exit when Field = No_Entity_Information;
+      Find_All_References
+        (Iter    => Discriminants,
+         Entity  => Item.Entity,
+         In_File => Get_File (Get_Declaration_Of (Item.Entity)),
+         Filter  => (Discriminant => True, others => False));
 
-         Add_Type (List, Item, Lib_Info, Field,
-                   -"Discriminant: " & Get_Name (Field));
+      while not At_End (Discriminants) loop
+         Field := Get_Entity (Discriminants);
+         if Field /= null then
+            Add_Type (List, Item, Field,
+                      -"Discriminant: " & Get_Name (Field));
+         end if;
 
          Next (Discriminants);
       end loop;
 
+      Iter := Get_All_Called_Entities (Item.Entity);
+      while not At_End (Iter) loop
+         Field := Get (Iter);
 
-      Get_Scope_Tree (Kernel, Item.Entity, Node);
-      Iter := Start (Node);
-
-      loop
-         Node := Get (Iter);
-         exit when Node = Null_Scope_Tree_Node;
-
-         if Is_Declaration (Node) then
-            Field := Get_Entity (Node);
-
-            --  Hide discriminants (already displayed) and subprograms (would
-            --  happen in C++, but these are primitive operations in this case)
-            if not Is_Discriminant (Field, Lib_Info, Item.Entity)
-              and then not Is_Container (Field)
+         if Field /= null then
+            --  Hide discriminants (already displayed) and subprograms
+            --  (would happen in C++, but these are primitive operations in
+            --  this case)
+            if In_Range (Get_Declaration_Of (Field), Item.Entity)
+              and then not Is_Discriminant (Field, Item.Entity)
+              and then not Is_Container (Get_Kind (Field).Kind)
             then
                if Is_Enum then
                   Add_Line (List, Get_Name (Field));
                else
-                  Add_Type (List, Item, Lib_Info, Field, Get_Name (Field));
+                  Add_Type (List, Item, Field, Get_Name (Field));
                end if;
             end if;
-
-            Destroy (Field);
          end if;
 
          Next (Iter);
@@ -1152,22 +1120,19 @@ package body Browsers.Entities is
    procedure Add_Type
      (List     : in out Xref_List;
       Item     : access Type_Item_Record'Class;
-      Lib_Info : LI_File_Ptr;
       Entity   : Entity_Information;
       Prefix   : String)
    is
-      Typ : constant Entity_Information :=
-        Get_Variable_Type (Lib_Info, Entity);
+      Typ : constant Entity_Information := Get_Variable_Type (Entity);
       Info_Added : Boolean := False;
    begin
-      if Typ = No_Entity_Information then
-
+      if Typ = null then
          --  Special handling for anonymous types, as generated by GNAT
 
          if Get_Kind (Entity).Kind = Array_Kind then
-            Add_Array_Type (List, Item, Lib_Info, Entity, Info_Added);
+            Add_Array_Type (List, Item, Entity, Info_Added);
          elsif Get_Kind (Entity).Kind = Access_Kind then
-            Add_Access_Type (List, Item, Lib_Info, Entity, Info_Added);
+            Add_Access_Type (List, Item, Entity, Info_Added);
          end if;
 
          if Info_Added then
@@ -1194,14 +1159,12 @@ package body Browsers.Entities is
    procedure Add_Array_Type
      (List       : in out Xref_List;
       Item       : access Type_Item_Record'Class;
-      Lib_Info   : LI_File_Ptr;
       Entity     : Entity_Information;
       Info_Added : out Boolean)
    is
-      Typ : constant Entity_Information :=
-        Array_Contents_Type (Lib_Info, Entity);
+      Typ : constant Entity_Information := Array_Contents_Type (Entity);
    begin
-      if Typ /= No_Entity_Information then
+      if Typ /= null then
          Add_Line
            (List, "array of " & Entity_As_Link (Typ),
             Callback => (1 => Build (Item, Typ)));
@@ -1219,13 +1182,12 @@ package body Browsers.Entities is
    procedure Add_Access_Type
      (List       : in out Xref_List;
       Item       : access Type_Item_Record'Class;
-      Lib_Info   : LI_File_Ptr;
       Entity     : Entity_Information;
       Info_Added : out Boolean)
    is
-      Typ : constant Entity_Information := Pointed_Type (Lib_Info, Entity);
+      Typ : constant Entity_Information := Pointed_Type (Entity);
    begin
-      if Typ /= No_Entity_Information then
+      if Typ /= null then
          Add_Line
            (List, "access to " & Entity_As_Link (Typ),
             Callback => (1 => Build (Item, Typ)));
@@ -1292,37 +1254,20 @@ package body Browsers.Entities is
    -----------------------
 
    procedure Find_Parent_Types (Item  : access Arrow_Item_Record'Class) is
-      Kernel : constant Kernel_Handle := Get_Kernel (Get_Browser (Item));
-      Iter : Parent_Iterator;
-      Lib_Info : LI_File_Ptr;
       It : constant Type_Item := Type_Item (Item);
-      Parent : Entity_Information;
+      Parents : constant Entity_Information_Array :=
+                  Get_Parent_Types (It.Entity);
    begin
-      Push_State (Kernel, Busy);
-      Lib_Info := Locate_From_Source_And_Complete
-        (Kernel, Get_Declaration_File_Of (It.Entity).all);
-      Iter := Get_Parent_Types (Lib_Info, It.Entity);
-
-      loop
-         Parent := Get (Iter);
-         exit when Parent = No_Entity_Information;
-
-         Add_Item_And_Link (It, Parent, "", Parent_Link => True);
-
-         Destroy (Parent);
-         Next (Iter);
+      for P in Parents'Range loop
+         Add_Item_And_Link (It, Parents (P), "", Parent_Link => True);
       end loop;
-
-      Destroy (Iter);
 
       Set_Parents_Shown (It, True);
       Redraw_Title_Bar (Item);
-      Pop_State (Kernel);
 
    exception
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
-         Pop_State (Kernel);
    end Find_Parent_Types;
 
    ------------------------------
@@ -1332,34 +1277,20 @@ package body Browsers.Entities is
    function Find_Children_Types_Idle
      (Data : Find_Children_Types_Data) return Boolean
    is
-      LI    : LI_File_Ptr;
-      Child : Child_Type_Iterator;
       C     : Entity_Information;
    begin
-      if Get (Data.Iter.all) = No_Reference then
+      if At_End (Data.Iter.all) then
          return False;
 
       else
-         LI := Get_LI (Data.Iter.all);
-
-         --  The following loop is fast enough that we should do it all at once
-         --  in the idle callback. It only acts on a single LI file
-         Child := Get_Children_Types (LI, Data.Item.Entity);
-
-         loop
-            C := Get (Child);
-            exit when C = No_Entity_Information;
-
+         C := Get (Data.Iter.all);
+         if C /= null then
             Add_Item_And_Link
               (Data.Item, C, "", Parent_Link => True,
                Reverse_Link => True);
-            Destroy (C);
-            Next (Child);
-         end loop;
+         end if;
 
-         Destroy (Child);
-
-         Next (Get_Language_Handler (Data.Kernel), Data.Iter.all);
+         Next (Data.Iter.all);
          return True;
       end if;
 
@@ -1377,7 +1308,7 @@ package body Browsers.Entities is
    begin
       Layout (Data.Browser, Force => False);
       Destroy (Data.Iter);
-      Pop_State (Data.Kernel);
+      Pop_State (Get_Kernel (Data.Browser));
       Refresh_Canvas (Get_Canvas (Data.Browser));
       Data.Browser.Idle_Id := 0;
    end Destroy_Idle;
@@ -1389,18 +1320,12 @@ package body Browsers.Entities is
    procedure Find_Children_Types  (Item  : access Arrow_Item_Record'Class) is
       Kernel : constant Kernel_Handle := Get_Kernel (Get_Browser (Item));
       Data   : Find_Children_Types_Data :=
-        (Kernel  => Kernel,
-         Browser => Type_Browser (Get_Browser (Item)),
-         Item    => Type_Item (Item),
-         Iter    => new Entity_Reference_Iterator);
+                 (Item    => Type_Item (Item),
+                  Browser => Type_Browser (Get_Browser (Item)),
+                  Iter    => new Child_Type_Iterator);
    begin
       Push_State (Kernel, Busy);
-      Find_All_References
-        (Root_Project => Get_Project (Kernel),
-         Lang_Handler => Get_Language_Handler (Kernel),
-         Entity       => Type_Item (Item).Entity,
-         Iterator     => Data.Iter.all,
-         LI_Once      => True);
+      Get_Child_Types (Data.Iter.all, Data.Item.Entity);
 
       Data.Browser.Idle_Id := Children_Types_Idle.Add
         (Cb       => Find_Children_Types_Idle'Access,
@@ -1450,8 +1375,6 @@ package body Browsers.Entities is
       Xoffset, Yoffset : in out Glib.Gint;
       Layout           : access Pango.Layout.Pango_Layout_Record'Class)
    is
-      Kernel                         : constant Kernel_Handle :=
-        Get_Kernel (Get_Browser (Item));
       W, H                           : Gint;
       Layout_H, Layout_W1, Layout_W2 : Gint;
       Meth_Layout_W1, Meth_Layout_W2 : Gint;
@@ -1461,27 +1384,19 @@ package body Browsers.Entities is
       Attr_Lines                     : Xref_List;
       Meth_Lines                     : Xref_List;
       Parent                         : Entity_Information;
-      Lib_Info                       : LI_File_Ptr;
       Added                          : Boolean;
 
    begin
       Trace (Me, "Resize_And_Draw: " & Get_Name (Item.Entity));
-
-      Lib_Info := Locate_From_Source_And_Complete
-        (Kernel, Get_Declaration_File_Of (Item.Entity).all);
-
-      if Lib_Info = No_LI_File then
-         Trace (Me, "Resize_And_Draw: no LI file found");
-         return;
-      end if;
+      Update_Xref (Get_File (Get_Declaration_Of (Item.Entity)));
 
       Add_Line (General_Lines, -Kind_To_String (Get_Kind (Item.Entity)));
 
       if not Get_Kind (Item.Entity).Is_Type then
-         Add_Type (Attr_Lines, Item, Lib_Info, Item.Entity, "of type");
+         Add_Type (Attr_Lines, Item, Item.Entity, "of type");
 
-      elsif Is_Subtype (Lib_Info, Item.Entity) then
-         Parent := Get_Variable_Type (Lib_Info, Item.Entity);
+      elsif Is_Subtype (Item.Entity) then
+         Parent := Get_Variable_Type (Item.Entity);
          Add_Line
            (Attr_Lines, -"subtype of " & Entity_As_Link (Parent),
             Callback => (1 => Build (Item, Parent)));
@@ -1503,51 +1418,51 @@ package body Browsers.Entities is
               | Enumeration_Literal
               | Exception_Entity
               | Floating_Point
+              | Macro
               | Modular_Integer
               | Named_Number
               | Ordinary_Fixed_Point
+              | Reference
               | Signed_Integer
               | String_Kind =>
                null;
 
             when Enumeration_Kind =>
-               Add_Fields (Kernel, Attr_Lines, Item, Lib_Info);
+               Add_Fields (Attr_Lines, Item);
 
             when Access_Kind =>
-               Add_Access_Type
-                 (Attr_Lines, Item, Lib_Info, Item.Entity, Added);
+               Add_Access_Type (Attr_Lines, Item, Item.Entity, Added);
 
             when Array_Kind =>
-               Add_Array_Type
-                 (Attr_Lines, Item, Lib_Info, Item.Entity, Added);
+               Add_Array_Type (Attr_Lines, Item, Item.Entity, Added);
 
             when Class_Wide
               | Class
+              | Union
               | Record_Kind
               | Protected_Kind
               | Task_Kind =>
-               Add_Primitive_Operations (Meth_Lines, Kernel, Item, Lib_Info);
-               Add_Fields (Kernel, Attr_Lines, Item, Lib_Info);
+               Add_Primitive_Operations (Meth_Lines, Item);
+               Add_Fields (Attr_Lines, Item);
 
             when Entry_Or_Entry_Family
               | Function_Or_Operator
               | Procedure_Kind =>
-               Add_Parameters (Attr_Lines, Item, Lib_Info);
+               Add_Parameters (Attr_Lines, Item);
                Set_Children_Shown (Item, True);
 
             when Package_Kind =>
                Add_Package_Contents
-                 (General_Lines, Attr_Lines, Meth_Lines, Item, Lib_Info);
+                 (General_Lines, Attr_Lines, Meth_Lines, Item);
          end case;
       end if;
 
       if not Parents_Shown (Item) then
          declare
-            Parent : Entity_Information := Get
-              (Get_Parent_Types (Lib_Info, Item.Entity));
+            Parents : constant Entity_Information_Array :=
+                        Get_Parent_Types (Item.Entity);
          begin
-            Set_Parents_Shown (Item, Parent = No_Entity_Information);
-            Destroy (Parent);
+            Set_Parents_Shown (Item, Parents'Length = 0);
          end;
       end if;
 
@@ -1647,11 +1562,11 @@ package body Browsers.Entities is
       loop
          Found := Type_Item (Get (Iter));
          exit when Found = null
-           or else Is_Equal (Found.Entity, Entity);
+           or else Found.Entity = Entity;
          Next (Iter);
       end loop;
 
-      if Found = null and then Entity /= No_Entity_Information then
+      if Found = null and then Entity /= null then
          Gtk_New (Found, Browser, Entity);
          Put (Get_Canvas (Browser), Found);
          Refresh (Found);
@@ -1744,11 +1659,11 @@ package body Browsers.Entities is
       It : constant Type_Item    := Type_Item (Item);
    begin
       Open_File_Editor
-        (Kernel     => Get_Kernel (B),
-         Filename   => Get_Declaration_File_Of (It.Entity).all,
-         Line       => Get_Declaration_Line_Of (It.Entity),
-         Column     => Get_Declaration_Column_Of (It.Entity),
-         Column_End => Get_Declaration_Column_Of (It.Entity)
+        (Kernel    => Get_Kernel (B),
+         Filename  => Get_Filename (Get_File (Get_Declaration_Of (It.Entity))),
+         Line      => Get_Line (Get_Declaration_Of (It.Entity)),
+         Column    => Get_Column (Get_Declaration_Of (It.Entity)),
+         Column_End => Get_Column (Get_Declaration_Of (It.Entity))
            + Get_Name (It.Entity)'Length);
    end On_Show_Source;
 
@@ -1770,12 +1685,13 @@ package body Browsers.Entities is
       Set_Entity_Information
         (Context       => Context,
          Entity_Name   => Get_Name (Item.Entity),
-         Entity_Column => Get_Declaration_Column_Of (Item.Entity));
+         Entity_Column => Get_Column (Get_Declaration_Of (Item.Entity)));
       Set_File_Information
         (Context     => Context,
-         File        => Get_Declaration_File_Of (Item.Entity).all,
-         Line        => Get_Declaration_Line_Of (Item.Entity),
-         Column      => Get_Declaration_Column_Of (Item.Entity));
+         File        =>
+           Get_Filename (Get_File (Get_Declaration_Of (Item.Entity))),
+         Line        => Get_Line (Get_Declaration_Of (Item.Entity)),
+         Column      => Get_Column (Get_Declaration_Of (Item.Entity)));
       --  We need to set the file information, even though it will also display
       --  some contextual menus (file dependencies,...), otherwise the call
       --  graph will not work.

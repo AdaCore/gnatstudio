@@ -44,15 +44,26 @@ package Entities.Queries is
      (Db              : Entities_Database;
       File_Name       : VFS.Virtual_File;
       Entity_Name     : String := "";
-      Line            : Positive;
-      Column          : Positive;
+      Line            : Natural;
+      Column          : Natural;
       Entity          : out Entity_Information;
       Status          : out Find_Decl_Or_Body_Query_Status;
       Check_Decl_Only : Boolean := False);
+   procedure Find_Declaration
+     (Db              : Entities_Database;
+      Source          : Source_File;
+      Entity_Name     : String := "";
+      Line            : Natural;
+      Column          : Natural;
+      Entity          : out Entity_Information;
+      Status          : out Find_Decl_Or_Body_Query_Status;
+      Check_Decl_Only : Boolean := False;
+      Handler         : LI_Handler := null);
    --  Find the entity that is referenced at the given location.
    --  If Entity_Name is unspecified, GPS will no take this into account
    --  If Check_Decl_Only is True, then only declarations are checked, not
    --  any other kind of reference.
+   --  The Handler is computed automatically if not passed as an argument.
 
    procedure Find_Next_Body
      (Entity               : Entity_Information;
@@ -101,13 +112,15 @@ package Entities.Queries is
    ----------------
 
    type Entity_Reference_Iterator is private;
+   type Entity_Reference_Iterator_Access is access Entity_Reference_Iterator;
 
    procedure Find_All_References
      (Iter                  : out Entity_Reference_Iterator;
       Entity                : Entity_Information;
       File_Has_No_LI_Report : File_Error_Reporter := null;
       In_File               : Source_File := null;
-      In_Scope              : Entity_Information := null);
+      In_Scope              : Entity_Information := null;
+      Filter                : Reference_Kind_Filter := Real_References_Filter);
    --  Find all the references to the entity. This also return the location
    --  for the declaration of the entity.
    --  if In_File is specified, then only the references in that file will be
@@ -131,8 +144,22 @@ package Entities.Queries is
    --  The search is done with small steps, so that this can be easily put in
    --  the background, including the parsing of the source files.
 
+   function Get_Entity
+     (Iter : Entity_Reference_Iterator) return Entity_Information;
+   --  Return the entity referenced at the current location. Most of the time,
+   --  it will be the entity passed in argument to Find_All_Reference. However,
+   --  if Is_Real_Reference is false, it might be a different one, such as
+   --  the name of a discriminant or a subprogram parameter for instance
+
    procedure Destroy (Iter : in out Entity_Reference_Iterator);
+   procedure Destroy (Iter : in out Entity_Reference_Iterator_Access);
    --  Free the memory used by Iter
+
+   function Get_Current_Progress
+     (Iter : Entity_Reference_Iterator) return Integer;
+   function Get_Total_Progress
+     (Iter : Entity_Reference_Iterator) return Integer;
+   --  Return the progress indicators for the iterator
 
    --------------
    -- Renaming --
@@ -177,6 +204,9 @@ package Entities.Queries is
    function Get_Type (Iterator : Subprogram_Iterator) return Parameter_Type;
    --  Return information on how the parameter is passed to the subprogram.
 
+   function Image (Kind : Parameter_Type) return String;
+   --  Return a string suitable for display
+
    ------------------
    -- Dependencies --
    ------------------
@@ -208,6 +238,7 @@ package Entities.Queries is
    ---------------------------
 
    type Dependency_Iterator is private;
+   type Dependency_Iterator_Access is access Dependency_Iterator;
 
    procedure Find_Ancestor_Dependencies
      (Iter                  : out Dependency_Iterator;
@@ -244,11 +275,19 @@ package Entities.Queries is
    --  Return true if the dependency was explicitely specified by the user.
 
    procedure Destroy (Iter : in out Dependency_Iterator);
+   procedure Destroy (Iter : in out Dependency_Iterator_Access);
    --  Free the memory occupied by Iter
+
+   function Get_Current_Progress (Iter : Dependency_Iterator) return Integer;
+   function Get_Total_Progress (Iter : Dependency_Iterator) return Integer;
+   --  Return the progress indicators for the iterator
 
    -------------
    -- Callers --
    -------------
+
+   procedure Compute_All_Call_Graphs (Db : Entities_Database);
+   --  Compute the callgraphs for all the files already parsed
 
    function Get_Caller (Ref : Entity_Reference) return Entity_Information;
    --  Return the entity that encloses the reference
@@ -276,34 +315,120 @@ package Entities.Queries is
    procedure Destroy (Iter : in out Calls_Iterator);
    --  Free the memory used by the iterator
 
-   -------------
-   -- Parents --
-   -------------
+   function In_Range
+     (Loc : File_Location; Entity : Entity_Information) return Boolean;
+   --  True if Loc is in the scope of Entity.
+   --  If Entity is a class, its scope extends for the whole range of {}, if
+   --  it is a subprogram, it extends until the end of the subprogram,...
 
---     type Parent_Iterator is private;
+   function Is_Discriminant
+     (Discr, Entity : Entity_Information) return Boolean;
+   --  Return True if Discr is a discriminant of Entity
 
---     function Get_Parent_Types
---       (Entity    : Entity_Information;
---        Recursive : Boolean := False) return Parent_Iterator;
-   --  Return the first parent of the entity. In object-oriented languages,
-   --  this would be the classes Entities derives from. In Ada, this includes
-   --  the parent type of a type or subtype.
---
---     procedure Next (Iter : in out Parent_Iterator);
---     --  Move to the next parent of the entity
---
---     function At_End (Iter : Parent_Iterator) return Boolean;
---     --  Return True if there are no more remaining parent for this entity
---
---     function Get (Iter : Parent_Iterator) return Entity_Information;
-   --  Return the current parent of the entity. null might be returned if GPS
-   --  hasn't finished parsing all the files.
---
---     procedure Destroy (Iter : in out Parent_Iterator);
-   --  Free the memory occupied by the iterator
+   ---------------
+   -- Full_Name --
+   ---------------
 
+   function Get_Full_Name
+     (Entity    : Entity_Information;
+      Separator : String := ".") return String;
+   --  Return the fully qualified name for the entity
+
+   -----------------------
+   -- Parents and types --
+   -----------------------
+
+   function Get_Variable_Type
+     (Entity : Entity_Information) return Entity_Information;
+   --  Return the type of a variable. This is not suitable for a class type,
+   --  since there can be multiple parents
+
+   function Array_Contents_Type
+     (Entity : Entity_Information) return Entity_Information;
+   --  Return the type of entities contained in an array
+
+   function Pointed_Type
+     (Entity : Entity_Information) return Entity_Information;
+   --  Return the type pointed to by entity
+
+   function Returned_Type
+     (Entity : Entity_Information) return Entity_Information;
+   --  Return the type returned by the entity
+
+   function Is_Subtype (Entity : Entity_Information) return Boolean;
+   --  Whether the entity is a subtype of another (Ada sense)
+
+   ------------------
+   -- Parent types --
+   ------------------
+
+   function Get_Parent_Types
+     (Entity    : Entity_Information;
+      Recursive : Boolean := False) return Entity_Information_Array;
+   --  Return the list of parent entities for Entity. In
+   --  Object-oriented languages, this would be the classes Entity derives
+   --  from. In Ada, this includes the parent type of a type or subtype
+
+   function Get_Parent_Package
+     (Pkg : Entity_Information) return Entity_Information;
+   --  Return the parent package for the package Pkg.
+
+   type Child_Type_Iterator is private;
+   type Child_Type_Iterator_Access is access Child_Type_Iterator;
+
+   procedure Get_Child_Types
+     (Iter   : out Child_Type_Iterator;
+      Entity : Entity_Information);
+   --  Return all the entities derived from Entity
+
+   function  At_End  (Iter : Child_Type_Iterator) return Boolean;
+   procedure Next    (Iter : in out Child_Type_Iterator);
+   function  Get     (Iter : Child_Type_Iterator) return Entity_Information;
+   procedure Destroy (Iter : in out Child_Type_Iterator);
+   procedure Destroy (Iter : in out Child_Type_Iterator_Access);
+   --  Usual subprograms for iterators. Get might return null if not all source
+   --  files have been parsed.
+
+   --------------------------
+   -- Primitive operations --
+   --------------------------
+
+   type Primitive_Operations_Iterator is private;
+
+   procedure Find_All_Primitive_Operations
+     (Iter              : out Primitive_Operations_Iterator;
+      Entity            : Entity_Information;
+      Include_Inherited : Boolean);
+   --  Get all the primitive operations of the entity, including the ones
+   --  inherited from its various parents
+
+   function At_End (Iter : Primitive_Operations_Iterator) return Boolean;
+   --  Whether there remains any primitive operation to return
+
+   function Get
+     (Iter : Primitive_Operations_Iterator) return Entity_Information;
+   procedure Next    (Iter : in out Primitive_Operations_Iterator);
+   procedure Destroy (Iter : in out Primitive_Operations_Iterator);
+   --  Usual subprograms for iterators
 
 private
+
+   type Entity_Information_Array_Access is access Entity_Information_Array;
+
+   type Primitive_Operations_Iterator is record
+      Refs              : Entity_Reference_Iterator;
+
+      Parents           : Entity_Information_Array_Access;
+      Current_Parent    : Integer;
+
+      Current_Primitive : Entity_Information_Arrays.Index_Type;
+   end record;
+
+   type Child_Type_Iterator is record
+      Entity : Entity_Information;
+      Dep    : Dependency_Iterator;
+      Index  : Entity_Information_Arrays.Index_Type;
+   end record;
 
    type Entity_Iterator is record
       Prefix : GNAT.OS_Lib.String_Access;
@@ -319,9 +444,11 @@ private
       Importing             : Projects.Imported_Project_Iterator;
       --  List of projects to check
 
-      Source_Files : VFS.File_Array_Access;
-      Current_File : Natural;
-      --  The list of source files in the current project
+      Db           : Entities_Database;
+
+      Handler      : LI_Handler;
+      --  The handler used to parse all LI information.
+      --  Set to null when we have finished parsing all projects' LI files
 
       Total_Progress        : Natural;
       Current_Progress      : Natural;
@@ -357,6 +484,7 @@ private
       Entity  : Entity_Information;
       In_File : Source_File;
       Start_Line, Last_Line  : Integer;
+      Filter  : Reference_Kind_Filter;
 
       Deps    : Dependency_Iterator;
    end record;

@@ -207,8 +207,7 @@ package Projects is
 
    function Get_Unit_Part_From_Filename
      (Project : Project_Type; Filename : VFS.Virtual_File) return Unit_Part;
-   --  Return the type of File. As opposed to Src_Info.Get_Unit_Part, this one
-   --  doesn't require that the LI file has been parsed before.
+   --  Return the type of File.
    --  This function doesn't assume any knowledge of the language, and will
    --  check in all the languages known to the project.
    --  Unit_Separate is returned if the file is neither a spec nor a body.
@@ -231,7 +230,6 @@ package Projects is
    --  Return the base name of the spec or body for Source_Filename, depending
    --  on what Source_Filename is. Source_Filename is returned if there is no
    --  other file.
-   --  See also Src_Info.Queries.Get_Other_File_Of
 
    function Get_Filename_From_Unit
      (Project                  : Project_Type;

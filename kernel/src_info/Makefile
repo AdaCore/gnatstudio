@@ -1,5 +1,5 @@
 GNATMAKE_FLAGS=
-LARGS = -aO../../gvd/gnat -largs sn/lib/db_capi.o -Lsn/snsrc/db/PORT -ldb ../../gvd/common/obj/gexpect_tty.o
+LARGS = -aO../../gvd/gnat -largs ../../kernel/src_info/sn/lib/db_capi.o -L../../kernel/src_info/sn/snsrc/db/PORT -ldb ../../gvd/common/obj/gexpect_tty.o
 
 CP=cp -p
 

@@ -84,7 +84,7 @@ with Histories;                 use Histories;
 with VFS;                       use VFS;
 with Scenario_Views;            use Scenario_Views;
 
-with Src_Info;
+with Entities;
 with String_Hash;
 
 with Project_Explorers_Common;  use Project_Explorers_Common;
@@ -421,8 +421,7 @@ package body Project_Explorers is
    --  that the selected node in the explorer doesn't reflect false information
 
    procedure On_Parse_Xref (Explorer : access Gtk_Widget_Record'Class);
-   --  Parse all the LI information contained in the object directory of the
-   --  current selection.
+   --  Parse all the LI information contained in the selected project.
 
    function Get_Imported_Projects
      (Project         : Project_Type;
@@ -706,7 +705,10 @@ package body Project_Explorers is
 
       Push_State (E.Kernel, Busy);
       Parse_All_LI_Information
-        (E.Kernel, Get_Directory_From_Node (E.Tree.Model, Node));
+        (E.Kernel,
+         Project => Get_Project_From_Node
+           (E.Tree.Model, E.Kernel, Node, False),
+         Recursive => False);
       Pop_State (E.Kernel);
 
    exception
@@ -769,7 +771,8 @@ package body Project_Explorers is
             Slot_Object => T);
       end if;
 
-      if Node_Type = Obj_Directory_Node
+      if (Node_Type = Project_Node
+          or else Node_Type = Extends_Project_Node)
         and then Menu /= null
       then
          Gtk_New (Item, -"Parse all xref information");
@@ -2386,10 +2389,10 @@ package body Project_Explorers is
         (File    : VFS.Virtual_File;
          Project : Project_Type) return Boolean
       is
-         use type Src_Info.LI_Handler;
+         use type Entities.LI_Handler;
          Languages  : constant Glide_Language_Handler :=
            Glide_Language_Handler (Get_Language_Handler (Kernel));
-         Handler    : constant Src_Info.LI_Handler := Get_LI_Handler_From_File
+         Handler    : constant Entities.LI_Handler := Get_LI_Handler_From_File
            (Languages, File);
          Constructs : Construct_List;
          Status     : Boolean := False;
@@ -2401,7 +2404,7 @@ package body Project_Explorers is
             return False;
          end if;
 
-         Src_Info.Parse_File_Constructs
+         Entities.Parse_File_Constructs
            (Handler, Project, Languages, File, Constructs);
 
          Constructs.Current := Constructs.First;

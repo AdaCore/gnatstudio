@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                     Copyright (C) 2001-2003                       --
+--                     Copyright (C) 2001-2004                       --
 --                             ACT-Europe                            --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -87,8 +87,7 @@ with String_Utils;              use String_Utils;
 with VFS;                       use VFS;
 with Projects.Registry;         use Projects.Registry;
 with Projects.Editor;           use Projects.Editor;
-with Src_Info;                  use Src_Info;
-with Src_Info.Queries;          use Src_Info.Queries;
+with Entities;                  use Entities;
 
 with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
@@ -1235,7 +1234,7 @@ package body GVD_Module is
    -- GVD_Contextual --
    --------------------
 
-   Is_Printable_Entity : constant E_Kind_Set :=
+   Is_Printable_Entity : constant array (E_Kinds) of Boolean :=
      (Overloaded_Entity     => True,
       Unresolved_Entity     => True,
       Access_Kind           => True,
@@ -1244,29 +1243,20 @@ package body GVD_Module is
       Class_Wide            => True,
       Class                 => True,
       Decimal_Fixed_Point   => True,
-      Entry_Or_Entry_Family => False,
       Enumeration_Literal   => True,
       Enumeration_Kind      => True,
       Exception_Entity      => True,
       Floating_Point        => True,
-      Function_Or_Operator  => False,
-      Package_Kind          => False,
-      Procedure_Kind        => False,
-      Label_On_Block        => False,
-      Label_On_Loop         => False,
-      Label_On_Statement    => False,
       Modular_Integer       => True,
       Named_Number          => True,
       Ordinary_Fixed_Point  => True,
-      Private_Type          => False,
-      Protected_Kind        => False,
       Record_Kind           => True,
       Signed_Integer        => True,
       String_Kind           => True,
-      Task_Kind             => False);
+      others                => False);
    --  Set of printable entities
 
-   Is_Access_Entity : constant E_Kind_Set :=
+   Is_Access_Entity : constant array (E_Kinds) of Boolean :=
      (Overloaded_Entity => True,
       Unresolved_Entity => True,
       Access_Kind       => True,
@@ -1315,12 +1305,12 @@ package body GVD_Module is
                Ent_Deref : constant String :=
                  Krunch (Get_Variable_Name
                            (Selection_Context_Access (Context), True));
-               Entity_Info : constant Src_Info.Queries.Entity_Information :=
+               Entity_Info : constant Entity_Information :=
                  Get_Entity (Entity);
                Kind        : constant E_Kind := Get_Kind (Entity_Info);
 
             begin
-               if Entity_Info = No_Entity_Information
+               if Entity_Info = null
                  or else (not Kind.Is_Type
                           and then Is_Printable_Entity (Kind.Kind))
                then
@@ -1339,7 +1329,7 @@ package body GVD_Module is
                      Selection_Context_Access (Context));
                end if;
 
-               if Entity_Info = No_Entity_Information
+               if Entity_Info = null
                  or else (not Kind.Is_Type
                           and then Is_Access_Entity (Kind.Kind))
                then
@@ -1359,7 +1349,7 @@ package body GVD_Module is
                      Selection_Context_Access (Context));
                end if;
 
-               if Entity_Info = No_Entity_Information
+               if Entity_Info = null
                  or else (not Kind.Is_Type
                           and then Is_Printable_Entity (Kind.Kind))
                then
@@ -1382,7 +1372,7 @@ package body GVD_Module is
                   Append (Submenu, Mitem);
                end if;
 
-               if Entity_Info = No_Entity_Information
+               if Entity_Info = null
                  or else Is_Subprogram (Entity_Info)
                then
                   Gtk_New (Mitem, -"Set breakpoint on " & Ent);

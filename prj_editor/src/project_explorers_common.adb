@@ -31,7 +31,7 @@ with Glide_Kernel.Project;        use Glide_Kernel.Project;
 with Glide_Kernel.Contexts;       use Glide_Kernel.Contexts;
 with Glide_Kernel.Standard_Hooks; use Glide_Kernel.Standard_Hooks;
 with String_Utils;                use String_Utils;
-with Src_Info;                    use Src_Info;
+with Entities;                    use Entities;
 with GUI_Utils;                   use GUI_Utils;
 with Traces;                      use Traces;
 with Projects.Registry;           use Projects, Projects.Registry;
@@ -271,8 +271,6 @@ package body Project_Explorers_Common is
       Node      : Gtk_Tree_Iter;
       File_Name : VFS.Virtual_File)
    is
-      use Src_Info;
-
       N, N2      : Gtk_Tree_Iter;
 
       Lang       : Language_Access;
@@ -284,7 +282,7 @@ package body Project_Explorers_Common is
       Categories : Gtk_Tree_Iter_Array := (others => Null_Iter);
       Languages  : constant Glide_Language_Handler :=
         Glide_Language_Handler (Get_Language_Handler (Kernel));
-      Handler    : Src_Info.LI_Handler;
+      Handler    : LI_Handler;
 
    begin
       --  Mark the file information as up-to-date

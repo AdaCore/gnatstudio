@@ -51,7 +51,7 @@ with Projects;                  use Projects;
 with Language_Handlers;         use Language_Handlers;
 with Language_Handlers.Glide;   use Language_Handlers.Glide;
 with Projects.Registry;         use Projects.Registry;
-with Src_Info;                  use Src_Info;
+with Entities;                  use Entities;
 with Histories;                 use Histories;
 with Glide_Kernel.Scripts;      use Glide_Kernel.Scripts;
 
@@ -1275,7 +1275,6 @@ package body Builder_Module is
             D.Iter.all := new LI_Handler_Iterator'Class'
               (Generate_LI_For_Project
                  (Handler      => LI,
-                  Root_Project => Get_Project (D.Kernel),
                   Project      => Get_Project (D.Kernel),
                   Recursive    => True));
             Continue (D.Iter.all.all, Not_Finished);

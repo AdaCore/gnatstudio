@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003                            --
+--                     Copyright (C) 2003-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -23,11 +23,10 @@ with Ada.Unchecked_Deallocation;
 
 with Commands;              use Commands;
 with Glide_Kernel;          use Glide_Kernel;
-with Glide_Kernel.Project;  use Glide_Kernel.Project;
 with Glide_Kernel.Task_Manager; use Glide_Kernel.Task_Manager;
 with Glide_Intl;            use Glide_Intl;
-with Src_Info;              use Src_Info;
-with Src_Info.Queries;      use Src_Info.Queries;
+with Entities;              use Entities;
+with Entities.Queries;      use Entities.Queries;
 with Traces;                use Traces;
 with VFS;                   use VFS;
 with Commands.Generic_Asynchronous;
@@ -132,15 +131,13 @@ package body Refactoring.Performers is
 
       Append
         (Data.Refs,
-         (File   => Get_Declaration_File_Of (Entity).all,
-          Line   => Get_Declaration_Line_Of (Entity),
-          Column => Get_Declaration_Column_Of (Entity)));
+         (File   => Get_Filename (Get_File (Get_Declaration_Of (Entity))),
+          Line   => Get_Line (Get_Declaration_Of (Entity)),
+          Column => Get_Column (Get_Declaration_Of (Entity))));
       Find_All_References
-        (Root_Project          => Get_Project (Kernel),
-         Lang_Handler          => Get_Language_Handler (Kernel),
+        (Iter                  => Data.Iter.all,
          Entity                => Entity,
-         File_Has_No_LI_Report => File_Error_Reporter (Data.Errors),
-         Iterator              => Data.Iter.all);
+         File_Has_No_LI_Report => File_Error_Reporter (Data.Errors));
 
       Create (C, -"Refactoring", Data, Find_Next_Location'Access);
       Set_Progress
@@ -166,9 +163,10 @@ package body Refactoring.Performers is
       Command : Command_Access;
       Result  : out Command_Return_Type)
    is
-      Ref : constant E_Reference := Get (Data.Iter.all);
+      Ref    : constant Entity_Reference := Get (Data.Iter.all);
+      Source : Source_File;
    begin
-      if Ref = No_Reference then
+      if Ref = No_Entity_Reference then
          Pop_State (Data.Kernel);
 
          if Confirm_Files
@@ -188,32 +186,24 @@ package body Refactoring.Performers is
          Result := Success;
 
       else
-         if Is_Up_To_Date
-           (Get_LI (Data.Iter.all), Compare_With_Sources => True)
-         then
+         Source := Get_File (Get_Location (Ref));
+
+         if Is_Up_To_Date (Source) then
             Append (Data.Refs,
-                    (File   => Get_File (Get_Location (Ref)),
+                    (File   => Get_Filename (Source),
                      Line   => Get_Line (Get_Location (Ref)),
                      Column => Get_Column (Get_Location (Ref))));
 
          --  If we have duplicates, they will always come one after the
             --  other. So we just have to check the previous one.
          elsif Length (Data.Stale_LI_List) = 0
-           or else Get_LI_Filename (Get_LI (Data.Iter.all)) /=
+           or else Get_Filename (Source) /=
              Data.Stale_LI_List.Table (Last (Data.Stale_LI_List))
          then
-            declare
-               Tmp : Boolean;
-               pragma Unreferenced (Tmp);
-            begin
-               Tmp := Is_Up_To_Date (Get_LI (Data.Iter.all),
-                                     Compare_With_Sources => True);
-            end;
-            Append
-              (Data.Stale_LI_List, Get_LI_Filename (Get_LI (Data.Iter.all)));
+            Append (Data.Stale_LI_List, Get_Filename (Source));
          end if;
 
-         Next (Get_Language_Handler (Data.Kernel), Data.Iter.all);
+         Next (Data.Iter.all);
 
          Set_Progress (Command,
                        (Running,

@@ -38,30 +38,25 @@
 --  and body files. The private functions used will call the subprogram from
 --  an output package (like Docgen.Html_Output or Docgen.Texi_Output).
 
-with GNAT.OS_Lib;
 with VFS;
 with Glide_Kernel;
 
 package Docgen.Work_On_Source is
 
    procedure Process_Source
-     (B                         : Docgen_Backend.Backend_Handle;
+     (B                         : access Docgen_Backend.Backend'Class;
       Kernel                    : access
         Glide_Kernel.Kernel_Handle_Record'Class;
       Doc_File                  : File_Descriptor;
-      Next_Package              : GNAT.OS_Lib.String_Access;
-      Prev_Package              : GNAT.OS_Lib.String_Access;
-      Source_File_List          : in out Type_Source_File_List.List;
+      Source_File_List          : in out Type_Source_File_Table.HTable;
       Source_Filename           : VFS.Virtual_File;
+      Source_Is_Spec            : Boolean;
       Package_Name              : String;
       Entity_List               : in out Type_Entity_List.List;
       List_Ref_In_File          : in out List_Reference_In_File.List;
-      Tagged_Types_List         : in out Type_List_Tagged_Element.List;
-      Private_Tagged_Types_List : in out Type_List_Tagged_Element.List;
-      LI_Unit                   : LI_File_Ptr;
+      Tagged_Types_List         : in out List_Entity_Information.List;
+      Private_Tagged_Types_List : in out List_Entity_Information.List;
       Options                   : All_Options;
-      Doc_Directory             : String;
-      Doc_Suffix                : String;
       Level                     : in out Natural);
    --  With the data from the lists, the source file and the config file,
    --  create the Strings for the output.
@@ -84,50 +79,44 @@ package Docgen.Work_On_Source is
    --  each inner package
 
    procedure Process_Unit_Index
-     (B                : Docgen_Backend.Backend_Handle;
+     (B                : access Docgen_Backend.Backend'Class;
       Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Source_File_List : Docgen.Type_Source_File_List.List;
+      Source_File_List : Docgen.Type_Source_File_Table.HTable;
       Options          : Docgen.All_Options;
-      Doc_Directory    : String;
-      Doc_Suffix       : String;
       Level            : in out Natural);
    --  Create the index file for the packages
 
    procedure Process_Subprogram_Index
-     (B                             : Docgen_Backend.Backend_Handle;
+     (B                             : access Docgen_Backend.Backend'Class;
       Kernel                        : access
         Glide_Kernel.Kernel_Handle_Record'Class;
       Subprogram_Index_List         : Docgen.Type_Entity_List.List;
       Private_Subprogram_Index_List : in out Type_Entity_List.List;
-      Options                       : Docgen.All_Options;
-      Doc_Directory                 : String;
-      Doc_Suffix                    : String);
+      Source_File_List              : Type_Source_File_Table.HTable;
+      Options                       : Docgen.All_Options);
    --  Create the index file for the subprograms
    --  Subprogram_Index_List         : list of public subprograms.
    --  Private_Subprogram_Index_List : list of private subprograms.
 
    procedure Process_Type_Index
-     (B                       : Docgen_Backend.Backend_Handle;
+     (B                       : access Docgen_Backend.Backend'Class;
       Kernel                  : access Glide_Kernel.Kernel_Handle_Record'Class;
       Type_Index_List         : Docgen.Type_Entity_List.List;
       Private_Type_Index_List : in out Type_Entity_List.List;
-      Options                 : All_Options;
-      Doc_Directory           : String;
-      Doc_Suffix              : String);
+      Source_File_List        : Type_Source_File_Table.HTable;
+      Options                 : All_Options);
    --  Create the index file for the types.
    --  Type_Index_List         : list of public types.
    --  Private_Type_Index_List : list of private types.
 
    procedure Process_Tagged_Type_Index
-     (B                         : Docgen_Backend.Backend_Handle;
+     (B                         : access Docgen_Backend.Backend'Class;
       Kernel                    : access
         Glide_Kernel.Kernel_Handle_Record'Class;
-      Tagged_Type_Index_List    : Docgen.Type_List_Tagged_Element.List;
-      Private_Tagged_Types_List : in out Type_List_Tagged_Element.List;
-      Source_File_List          : in out Type_Source_File_List.List;
-      Options                   : All_Options;
-      Doc_Directory             : String;
-      Doc_Suffix                : String);
+      Tagged_Type_Index_List    : List_Entity_Information.List;
+      Private_Tagged_Types_List : in out List_Entity_Information.List;
+      Source_File_List          : in out Type_Source_File_Table.HTable;
+      Options                   : All_Options);
    --  Create the index file for the tagged types.
    --  Tagged_Type_Index_List    : list of public tagged types.
    --  Private_Tagged_Types_List : list of private tagged types.

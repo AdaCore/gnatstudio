@@ -29,7 +29,7 @@ with Glide_Kernel.Modules; use Glide_Kernel.Modules;
 with Glide_Kernel.Project; use Glide_Kernel.Project;
 with Glide_Kernel.Contexts; use Glide_Kernel.Contexts;
 with Glide_Kernel.Task_Manager; use Glide_Kernel.Task_Manager;
-with Src_Info.Queries;     use Src_Info, Src_Info.Queries;
+with Entities.Queries;     use Entities, Entities.Queries;
 with String_Hash;
 with System;               use System;
 with String_Utils;         use String_Utils;
@@ -74,11 +74,8 @@ package body Glide_Kernel.Scripts is
    end record;
    type Scripting_Data is access all Scripting_Data_Record'Class;
 
-   type Entity_Information_Access is access Entity_Information;
    function Convert is new Ada.Unchecked_Conversion
-     (System.Address, Entity_Information_Access);
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Entity_Information, Entity_Information_Access);
+     (System.Address, Entity_Information);
    procedure On_Destroy_Entity (Value : System.Address);
    pragma Convention (C, On_Destroy_Entity);
 
@@ -331,10 +328,9 @@ package body Glide_Kernel.Scripts is
    -----------------------
 
    procedure On_Destroy_Entity (Value : System.Address) is
-      Ent : Entity_Information_Access := Convert (Value);
+      Ent : Entity_Information := Convert (Value);
    begin
-      Destroy (Ent.all);
-      Unchecked_Free (Ent);
+      Unref (Ent);
    end On_Destroy_Entity;
 
    ----------
@@ -366,10 +362,7 @@ package body Glide_Kernel.Scripts is
      (Instance : access Class_Instance_Record'Class;
       Entity   : Entity_Information)
    is
-      Ent    : constant Entity_Information_Access :=
-        new Entity_Information'(Copy (Entity));
       Script : constant Scripting_Language := Get_Script (Instance);
-
    begin
       if not Is_Subclass
         (Script, Get_Class (Instance), Get_Entity_Class (Get_Kernel (Script)))
@@ -377,9 +370,10 @@ package body Glide_Kernel.Scripts is
          raise Invalid_Data;
       end if;
 
+      Ref (Entity);
       Set_Data
         (Instance,
-         Value      => Ent.all'Address,
+         Value      => Entity.all'Address,
          On_Destroy => On_Destroy_Entity'Access);
    end Set_Data;
 
@@ -424,14 +418,14 @@ package body Glide_Kernel.Scripts is
    -- Get_Data --
    --------------
 
-   function Get_Data (Data : Callback_Data; N : Positive)
-                      return Src_Info.Queries.Entity_Information
+   function Get_Data
+     (Data : Callback_Data; N : Positive) return Entity_Information
    is
       Value : constant System.Address := Nth_Arg_Data
         (Data, N, Get_Entity_Class (Get_Kernel (Data)));
-      Ent   : constant Entity_Information_Access := Convert (Value);
+      Ent   : constant Entity_Information := Convert (Value);
    begin
-      return Ent.all;
+      return Ent;
    end Get_Data;
 
    --------------
@@ -719,42 +713,26 @@ package body Glide_Kernel.Scripts is
               Nth_Arg (Data, 3, Get_File_Class (Kernel),
                        Default    => null,
                        Allow_Null => True);
-            L        : constant Integer := Nth_Arg (Data, 4, Default => 1);
-            C        : constant Integer := Nth_Arg (Data, 5, Default => 1);
+            L        : Integer := Nth_Arg (Data, 4, Default => 1);
+            C        : Integer := Nth_Arg (Data, 5, Default => 1);
             Status   : Find_Decl_Or_Body_Query_Status;
-            Lib_Info : LI_File_Ptr;
             F        : File_Info;
+            Source   : Source_File;
 
          begin
             if File = null then
-               declare
-                  Instance : constant Class_Instance :=
-                    Nth_Arg (Data, 1, Get_Entity_Class (Kernel));
-               begin
-                  Entity := Create_Predefined_Entity
-                    (Name, (Unresolved_Entity, False, True, False));
-                  Set_Data (Instance, Entity);
-                  Destroy (Entity);
-                  Free (Instance);
-                  return;
-               end;
-            end if;
-
-            F := Get_Data (File);
-            Free (File);
-            Lib_Info := Locate_From_Source_And_Complete (Kernel, Get_File (F));
-
-            if Lib_Info = No_LI_File then
-               Set_Error_Msg
-                 (Data, -"Xref information not found for: """
-                  & Full_Name (Get_File (F)).all & '"');
-               return;
+               Source := Get_Predefined_File (Get_Database (Kernel));
+               L      := Predefined_Line;
+               C      := Predefined_Column;
+            else
+               F := Get_Data (File);
+               Free (File);
+               Source := Get_Or_Create (Get_Database (Kernel), Get_File (F));
             end if;
 
             Find_Declaration_Or_Overloaded
               (Kernel      => Kernel,
-               Lib_Info    => Lib_Info,
-               File_Name   => Get_File (F),
+               File        => Source,
                Entity_Name => Name,
                Line        => L,
                Column      => C,
@@ -763,14 +741,12 @@ package body Glide_Kernel.Scripts is
 
             if Status /= Success and then Status /= Fuzzy_Match then
                Set_Error_Msg (Data, -"Entity not found");
-               Destroy (Entity);
             else
                declare
                   Instance : constant Class_Instance :=
                     Nth_Arg (Data, 1, Get_Entity_Class (Kernel));
                begin
                   Set_Data (Instance, Entity);
-                  Destroy (Entity);
                   Free (Instance);
                end;
             end if;
@@ -783,46 +759,33 @@ package body Glide_Kernel.Scripts is
       elsif Command = "decl_file" then
          Entity := Get_Data (Data, 1);
 
-         if not Is_Predefined_Entity (Entity) then
-            Set_Return_Value
-              (Data,
-               Create_File
-                 (Get_Script (Data), Get_Declaration_File_Of (Entity).all));
-         end if;
+         Set_Return_Value
+           (Data,
+            Create_File
+              (Get_Script (Data), Get_Filename
+                 (Get_File (Get_Declaration_Of (Entity)))));
 
       elsif Command = "decl_line" then
          Entity := Get_Data (Data, 1);
-         Set_Return_Value (Data, Get_Declaration_Line_Of (Entity));
+         Set_Return_Value (Data, Get_Line (Get_Declaration_Of (Entity)));
 
       elsif Command = "decl_column" then
          Entity := Get_Data (Data, 1);
-         Set_Return_Value (Data, Get_Declaration_Column_Of (Entity));
+         Set_Return_Value (Data, Get_Column (Get_Declaration_Of (Entity)));
 
       elsif Command = "body" then
          declare
-            Status : Find_Decl_Or_Body_Query_Status;
-            Lib_Info : LI_File_Ptr;
             Location : File_Location;
          begin
             Entity := Get_Data (Data, 1);
-            Lib_Info := Locate_From_Source_And_Complete
-              (Kernel, Get_Declaration_File_Of (Entity).all);
-            Find_Next_Body
-              (Kernel,
-               Lib_Info    => Lib_Info,
-               File_Name   => Get_Declaration_File_Of (Entity).all,
-               Entity_Name => Get_Name (Entity),
-               Line        => Get_Declaration_Line_Of (Entity),
-               Column      => Get_Declaration_Column_Of (Entity),
-               Location    => Location,
-               Status      => Status);
+            Find_Next_Body (Entity, Location => Location);
 
-            if Status = Success then
+            if Location /= Entities.No_File_Location then
                Set_Return_Value
                  (Data, Create_File_Location
                     (Get_Script (Data),
                      File   => Create_File
-                       (Get_Script (Data), Get_File (Location)),
+                       (Get_Script (Data), Get_Filename (Get_File (Location))),
                      Line   => Get_Line (Location),
                      Column => Get_Column (Location)));
 
@@ -870,10 +833,22 @@ package body Glide_Kernel.Scripts is
               Root_If_Not_Found => True)));
 
       elsif Command = "other_file" then
-         Info := Get_Data (Data, 1);
-         Set_Return_Value
-           (Data, Create_File
-            (Get_Script (Data), Other_File_Name (Kernel, Info.File)));
+         declare
+            Other   : Virtual_File;
+            Project : Project_Type;
+         begin
+            Info := Get_Data (Data, 1);
+
+            Project := Get_Project_From_File
+              (Project_Registry (Get_Registry (Kernel)),
+               Info.File,
+               Root_If_Not_Found => True);
+            Other := Create
+              (Other_File_Base_Name (Project, Info.File), Project,
+               Use_Object_Path => False);
+
+            Set_Return_Value (Data, Create_File (Get_Script (Data), Other));
+         end;
       end if;
    end Create_File_Command_Handler;
 
@@ -2025,7 +2000,7 @@ package body Glide_Kernel.Scripts is
 
    function Create_Entity
      (Script : access Scripting_Language_Record'Class;
-      Entity : Src_Info.Queries.Entity_Information) return Class_Instance
+      Entity : Entity_Information) return Class_Instance
    is
       Instance : constant Class_Instance := New_Instance
         (Script, Get_Entity_Class (Get_Kernel (Script)));

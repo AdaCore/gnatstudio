@@ -27,7 +27,7 @@
 with System;
 with GNAT.OS_Lib;
 with Glib.Object;
-with Src_Info.Queries;
+with Entities;
 with Projects;
 with Glide_Kernel.Contexts;
 with Interactive_Consoles;
@@ -600,16 +600,16 @@ package Glide_Kernel.Scripts is
 
    procedure Set_Data
      (Instance : access Class_Instance_Record'Class;
-      Entity   : Src_Info.Queries.Entity_Information);
+      Entity   : Entities.Entity_Information);
    function Get_Data (Data : Callback_Data; N : Positive)
-      return Src_Info.Queries.Entity_Information;
+      return Entities.Entity_Information;
    --  The Entity class stores some Entity_Information data in Instance
    --  You should destroy the entity passed to Set_Data, but not the value
    --  returned by Get_Data
 
    function Create_Entity
      (Script : access Scripting_Language_Record'Class;
-      Entity : Src_Info.Queries.Entity_Information) return Class_Instance;
+      Entity : Entities.Entity_Information) return Class_Instance;
    --  Return a new entity. Entity parameter should be freed by the caller.
 
    ----------------

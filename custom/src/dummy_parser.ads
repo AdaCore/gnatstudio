@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2004                       --
+--                     Copyright (C) 2004                            --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -18,20 +18,11 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
---  This package is the part of the Docgen tool responsable for the
---  processing of the program structure information for the source file
---  list passed by the procedure Docgen.
+with Entities;
 
-with Glide_Kernel;
+package Dummy_Parser is
 
-package Docgen.Work_On_File is
+   function Create_Dummy_LI_Handler return Entities.LI_Handler;
+   --  Create a new LI handler
 
-   procedure Process_Files
-     (B                : access Docgen_Backend.Backend'Class;
-      Source_File_List : in out Type_Source_File_Table.HTable;
-      Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Options          : Docgen.All_Options);
-   --  Process all files from Source_File_List, and generate their
-   --  documentation.
-
-end Docgen.Work_On_File;
+end Dummy_Parser;

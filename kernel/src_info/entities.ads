@@ -24,7 +24,9 @@ with HTables;
 with Tries;
 with VFS;
 with Dynamic_Arrays;
-with Projects;
+with Projects.Registry;
+with Language_Handlers;
+with Language;
 
 --  This package contains the list of all files and entities used in the
 --  current project.
@@ -56,7 +58,9 @@ package Entities is
 
    type Entities_Database is private;
 
-   function Create return Entities_Database;
+   function Create
+     (Registry : Projects.Registry.Project_Registry_Access)
+      return Entities_Database;
    --  Return a new empty database
 
    procedure Destroy (Db : in out Entities_Database);
@@ -69,8 +73,12 @@ package Entities is
    --  that file.
 
    procedure Register_Language_Handler
-     (Db : Entities_Database; Handler : LI_Handler);
+     (Db   : Entities_Database;
+      Lang : access Language_Handlers.Language_Handler_Record'Class);
    --  Register a new language handler
+
+   procedure Reset (Db : Entities_Database);
+   --  Empty the contents of the database.
 
    ------------
    -- E_Kind --
@@ -137,6 +145,36 @@ package Entities is
    Unresolved_Entity_Kind : constant E_Kind :=
      (Unresolved_Entity, False, False, False);
 
+   function Is_Container (Kind : E_Kinds) return Boolean;
+   pragma Inline (Is_Container);
+   --  Return True if Kind may contain calls or declarations of other
+   --  entities (packages, namespaces, subprograms,...)
+
+   function Kind_To_String (Kind : E_Kind) return String;
+   --  Return a string suitable to describe the kind
+
+   ----------------
+   -- Attributes --
+   ----------------
+
+   type Entity_Attributes_Names is
+     (Global,
+      Class_Static,
+      Static_Local,
+      Protected_Field,
+      Public_Field,
+      Private_Field,
+      Virtual,
+      Abstract_Entity);
+
+   type Entity_Attributes is array (Entity_Attributes_Names) of Boolean;
+   pragma Pack (Entity_Attributes);
+   --  Various attributes that can apply to an entity:
+   --    - Global: publicly visible entity in a top level library.
+
+   function Attributes_To_String (Attr : Entity_Attributes) return String;
+   --  Return a string suitable to describe the attributes
+
    --------------------
    -- Reference_Kind --
    --------------------
@@ -148,6 +186,7 @@ package Entities is
       Body_Entity,
       Completion_Of_Private_Or_Incomplete_Type,
       Discriminant,
+      Declaration,
       Type_Extension,
       Implicit,
       Primitive_Operation,
@@ -201,6 +240,9 @@ package Entities is
    --    - Discriminant: points to the declaration of the discriminants for
    --      this type.
 
+   type Reference_Kind_Filter is array (Reference_Kind) of Boolean;
+   Real_References_Filter : constant Reference_Kind_Filter;
+
    function Is_End_Reference (Kind : Reference_Kind) return Boolean;
    pragma Inline (Is_End_Reference);
    --  Whether Kind represents a reference that indicates the end of scope for
@@ -215,6 +257,14 @@ package Entities is
    function Is_Parameter_Reference (Kind : Reference_Kind) return Boolean;
    pragma Inline (Is_Parameter_Reference);
    --  Whether Kind represents a parameter to a subprogram
+
+   function Is_Read_Reference  (Kind : Reference_Kind) return Boolean;
+   pragma Inline (Is_Read_Reference);
+   function Is_Write_Reference (Kind : Reference_Kind) return Boolean;
+   pragma Inline (Is_Write_Reference);
+   --  Return true if this is a read-only or write reference to an entity.
+   --  It is possible that none of the two return True for some special
+   --  entities.
 
    -------------
    -- LI_File --
@@ -244,9 +294,9 @@ package Entities is
    --  You need to Ref the entry if you intend to keep it in a separate
    --  structure.
 
-   procedure Update_Timestamp
+   procedure Set_Time_Stamp
      (LI : LI_File; Timestamp : Ada.Calendar.Time := VFS.No_Time);
-   pragma Inline (Update_Timestamp);
+   pragma Inline (Set_Time_Stamp);
    --  Update the timestamp that indicates when LI was last parsed
 
    function Get_Project (LI : LI_File) return Projects.Project_Type;
@@ -303,6 +353,9 @@ package Entities is
    --  Update_Xref if needed.
    --  The file is automatically added to the list of files for that LI.
 
+   function Is_Up_To_Date (File : Source_File) return Boolean;
+   --  Whether the cross-reference information is up-to-date for File
+
    procedure Update_Xref
      (File                  : Source_File;
       File_Has_No_LI_Report : File_Error_Reporter := null);
@@ -328,16 +381,34 @@ package Entities is
    --  Returns a special source file, which should be used for all
    --  predefined entities of the languages
 
-   procedure Update_Time_Stamp
-     (File : Source_File; Timestamp : Ada.Calendar.Time := VFS.No_Time);
-   pragma Inline (Update_Time_Stamp);
-   --  Update the timestamp that indicates when LI was last parsed.
-   --  The exact meaning of that timestamp depends on the LI_Handler used to
-   --  parse the file, it isn't necessary the timestamp of the file itself.
-
    function Get_Time_Stamp (File : Source_File) return Ada.Calendar.Time;
+   procedure Set_Time_Stamp
+     (File : Source_File; Timestamp : Ada.Calendar.Time);
    pragma Inline (Get_Time_Stamp);
+   pragma Inline (Set_Time_Stamp);
    --  Return the timestamp last set through Update_Timestamp
+
+   procedure Set_Unit_Name (File : Source_File; Name : String);
+   function  Get_Unit_Name (File : Source_File) return String;
+   --  Changes the name of the toplevel unit stored in File
+   --  ??? What if there are multiple of these ?
+   --  ??? What do we do for C files ?
+
+   package Source_File_Arrays is new Dynamic_Arrays
+     (Data                    => Source_File,
+      Table_Multiplier        => 1,
+      Table_Minimum_Increment => 10,
+      Table_Initial_Size      => 5);
+
+   type Source_File_Sort_Criteria is (Full_Name, Base_Name, Unit_Name);
+
+   procedure Sort
+     (Sources  : Source_File_Arrays.Instance;
+      Criteria : Source_File_Sort_Criteria);
+   --  Sort the array of source files alphabetically
+
+   function "<" (Source1, Source2 : Source_File) return Boolean;
+   --  Whether Source1 comes before Source2 is alphabetical order
 
    -------------------
    -- File_Location --
@@ -358,12 +429,24 @@ package Entities is
    pragma Inline (Get_Column);
    --  Return the various components of the location
 
+   function "<" (Loc1, Loc2 : File_Location) return Boolean;
+   --  Whether Loc1 comes before Loc2. If the two locations are not in the same
+   --  file, then the order is the one given by comparing the file names.
+
    ------------------------
    -- Entity_Information --
    ------------------------
 
    type Entity_Information_Record is tagged private;
    type Entity_Information is access Entity_Information_Record'Class;
+   type Entity_Information_Array
+     is array (Integer range <>) of Entity_Information;
+
+   package Entity_Information_Arrays is new Dynamic_Arrays
+     (Data                    => Entity_Information,
+      Table_Multiplier        => 1,
+      Table_Minimum_Increment => 10,
+      Table_Initial_Size      => 5);
 
    procedure Unref (Entity : in out Entity_Information);
    procedure Ref   (Entity : Entity_Information);
@@ -375,8 +458,7 @@ package Entities is
    --  Line and column to use for predefined entities
 
    function Get_Or_Create
-     (Db           : Entities_Database;
-      Name         : String;
+     (Name         : String;
       File         : Source_File;
       Line         : Natural;
       Column       : Natural;
@@ -403,6 +485,10 @@ package Entities is
    function Get_Kind (Entity : Entity_Information) return E_Kind;
    --  Return the kind of the entity.
 
+   function Get_Attributes
+     (Entity : Entity_Information) return Entity_Attributes;
+   --  Return the attributes of the entity
+
    function Get_Returned_Type
      (Entity : Entity_Information) return Entity_Information;
    --  Return the type returned by a subprogram
@@ -411,6 +497,12 @@ package Entities is
      (Entity : Entity_Information) return Entity_Information;
    --  Return the type of the entity
 
+   function Is_Predefined_Entity (Entity : Entity_Information) return Boolean;
+   --  Whether the Entity is a predefined entity
+
+   function "<" (Entity1, Entity2 : Entity_Information) return Boolean;
+   --  sort two entities alphabetically
+
    ----------------------
    -- Setting entities --
    ----------------------
@@ -418,6 +510,9 @@ package Entities is
    --  properties.
 
    procedure Set_Kind (Entity : Entity_Information; Kind : E_Kind);
+   procedure Set_Attributes
+     (Entity     : Entity_Information;
+      Attributes : Entity_Attributes);
    procedure Set_End_Of_Scope
      (Entity   : Entity_Information;
       Location : File_Location;
@@ -434,10 +529,14 @@ package Entities is
    --  reference already exists.
 
    procedure Set_Type_Of
-     (Entity : Entity_Information; Is_Of_Type : Entity_Information);
+     (Entity     : Entity_Information;
+      Is_Of_Type : Entity_Information;
+      Is_Subtype : Boolean := False);
    --  Specifies the type of a variable. If Entity is a type, this also
    --  registers it as a child of Is_Of_Type for faster lookup. Multiple
    --  parents are supported.
+   --  Is_Subtype should be set to True for Ada subtypes (ie both Entity
+   --  and Is_Of_Type are equivalent type entities).
 
    procedure Add_Primitive_Subprogram
      (Entity : Entity_Information; Primitive : Entity_Information);
@@ -463,6 +562,18 @@ package Entities is
 
    function Get_Location (Ref : Entity_Reference) return File_Location;
    --  Return the location of the reference
+
+   function Get_Kind (Ref : Entity_Reference) return Reference_Kind;
+   --  Return the type of reference we have
+
+   function "<" (Ref1, Ref2 : Entity_Reference) return Boolean;
+   --  Whether Ref1 comes before Ref2.
+   --  If the two references are not in the same file, the order is the one
+   --  given by sorted the files.
+
+   function Declaration_As_Reference
+     (Entity : Entity_Information) return Entity_Reference;
+   --  Return a reference corresponding to the entity's declaration
 
    -------------------------
    -- LI_Handler_Iterator --
@@ -528,6 +639,16 @@ package Entities is
    --  Note that only the database on the disk needs to be regenerated, not the
    --  LI structures themselves, which will be done by Get_Source_Info.
 
+   procedure Parse_File_Constructs
+     (Handler      : access LI_Handler_Record;
+      Root_Project : Projects.Project_Type;
+      Languages    : access Language_Handlers.Language_Handler_Record'Class;
+      File_Name    : VFS.Virtual_File;
+      Result       : out Language.Construct_List);
+   --  Build a Construct_List, either using the src_info tools (like SN)
+   --  or a language parser.
+
+
 private
 
    ----------------
@@ -558,11 +679,6 @@ private
    -- Entity_Information_List --
    -----------------------------
 
-   package Entity_Information_Arrays is new Dynamic_Arrays
-     (Data                    => Entity_Information,
-      Table_Multiplier        => 1,
-      Table_Minimum_Increment => 10,
-      Table_Initial_Size      => 5);
    subtype Entity_Information_List is Entity_Information_Arrays.Instance;
    Null_Entity_Information_List : constant Entity_Information_List :=
      Entity_Information_Arrays.Empty_Instance;
@@ -625,6 +741,7 @@ private
    type Entity_Information_Record is tagged record
       Name                  : GNAT.OS_Lib.String_Access;
       Kind                  : E_Kind;
+      Attributes            : Entity_Attributes;
 
       Declaration           : File_Location;
       Caller_At_Declaration : Entity_Information;
@@ -669,6 +786,12 @@ private
       --  List of entities that have a reference between the body and the
       --  end-of-scope of the entity.
 
+      Is_Valid              : Boolean := True;
+      --  Whether the entity still exists in its source file. This is set to
+      --  False when some other entity references this one, but we have
+      --  reparsed the source file since then and the entity is no longer
+      --  valid.
+
       Ref_Count             : Natural := 1;
       --  The reference count for this entity. When it reaches 0, the entity
       --  is released from memory.
@@ -691,11 +814,6 @@ private
    -- Source_File_List --
    ----------------------
 
-   package Source_File_Arrays is new Dynamic_Arrays
-     (Data                    => Source_File,
-      Table_Multiplier        => 1,
-      Table_Minimum_Increment => 10,
-      Table_Initial_Size      => 5);
    subtype Source_File_List is Source_File_Arrays.Instance;
    Null_Source_File_List : constant Source_File_List :=
      Source_File_Arrays.Empty_Instance;
@@ -733,6 +851,10 @@ private
       Entities    : Entities_Tries.Trie_Tree;
       --  All the entities defined in the source file
 
+      Unit_Name   : GNAT.OS_Lib.String_Access;
+      --  The name of the toplevel unit.
+      --  Only relevant for Ada files
+
       Depends_On  : Dependency_List;
       Depended_On : Dependency_List;
       --  The list of dependencies on or from this file
@@ -745,15 +867,13 @@ private
       --  the file was created appart from parsing a LI file.
 
       All_Entities : Entities_Tries.Trie_Tree;
-      --  The list of all entities referenced in the file, and that are defined
-      --  in other files.
+      --  The list of all entities referenced by entities in the file, and that
+      --  are defined in other files.
       --  ??? This could be computed by traversing all the files in Depends_On,
       --  and check whether their entities have references in the current file.
 
       Ref_Count   : Integer := 0;
-      Is_Valid    : Boolean;
-      --  The reference counter. If Is_Valid is True, this indicates that the
-      --  information for that file is not up-to-date and not available.
+      --  The reference counter
    end record;
 
    -----------------
@@ -809,16 +929,28 @@ private
    -----------------------
 
    type Entities_Database_Record is record
-      Entities : Entities_Tries.Trie_Tree := Entities_Tries.Empty_Trie_Tree;
       Files    : Files_HTable.HTable;
       LIs      : LI_HTable.HTable;
 
       Predefined_File : Source_File;
-      ALI_Handlers        : LI_Handler;   --  ??? should be Language_Handler
-      CPP_Handlers        : LI_Handler;   --  ??? Merge with previous
+      Lang     : Language_Handlers.Language_Handler;
+      Registry : Projects.Registry.Project_Registry_Access;
    end record;
    type Entities_Database is access Entities_Database_Record;
 
    type LI_Handler_Record is abstract tagged limited null record;
+
+   Real_References_Filter : constant Reference_Kind_Filter :=
+     (Reference                                => True,
+      Declaration                              => True,
+      Instantiation_Reference                  => True,
+      Modification                             => True,
+      Body_Entity                              => True,
+      Completion_Of_Private_Or_Incomplete_Type => True,
+      Type_Extension                           => True,
+      Label                                    => True,
+      With_Line                                => True,
+      others                                   => False);
+   --  See Is_Real_Reference
 
 end Entities;

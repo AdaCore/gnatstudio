@@ -62,15 +62,14 @@ with Glide_Kernel.Hooks;        use Glide_Kernel.Hooks;
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
 with Glide_Kernel.Project;      use Glide_Kernel.Project;
-with Glide_Kernel.Console;      use Glide_Kernel.Console;
 with Glide_Kernel.Scripts;      use Glide_Kernel.Scripts;
 with Glide_Kernel.Standard_Hooks; use Glide_Kernel.Standard_Hooks;
 with GVD.Preferences;           use GVD.Preferences;
 with GVD.Main_Window;           use GVD.Main_Window;
 with GUI_Utils;                 use GUI_Utils;
 with String_Utils;              use String_Utils;
-with Src_Info;                  use Src_Info;
-with Src_Info.Queries;          use Src_Info.Queries;
+with Entities;                  use Entities;
+with Entities.Queries;          use Entities.Queries;
 with Basic_Mapper;              use Basic_Mapper;
 with Histories;                 use Histories;
 with VFS;                       use VFS;
@@ -114,10 +113,10 @@ package body Glide_Kernel is
 
    procedure Select_Entity_Declaration
      (Kernel        : access Kernel_Handle_Record'Class;
-      Lib_Info      : LI_File_Ptr;
+      File          : Source_File;
       Entity_Name   : String;
       Decl          : out Entity_Information;
-      Status        : out Src_Info.Queries.Find_Decl_Or_Body_Query_Status);
+      Status        : out Entities.Queries.Find_Decl_Or_Body_Query_Status);
    --  Open a dialog to ask the user to select among multiple declaration for
    --  the entity with name Entity_Name.
    --  Decl is set to No_Entity_Information and Status to Entity_Not_Found if
@@ -209,7 +208,8 @@ package body Glide_Kernel is
       --  is more efficient in case the current directory has lots of source
       --  files.
 
-      Reset_LI_File_List (Handle);
+      Handle.Database := Create (Handle.Registry);
+      Register_Language_Handler (Handle.Database, Handler);
 
       Gtk_New (Handle.Icon_Factory);
       Add_Default (Handle.Icon_Factory);
@@ -234,6 +234,16 @@ package body Glide_Kernel is
 
       Glide_Kernel.Scripts.Initialize (Handle);
    end Gtk_New;
+
+   ------------------
+   -- Get_Database --
+   ------------------
+
+   function Get_Database
+     (Kernel : access Kernel_Handle_Record) return Entities_Database is
+   begin
+      return Kernel.Database;
+   end Get_Database;
 
    ----------------------
    -- Load_Preferences --
@@ -634,39 +644,6 @@ package body Glide_Kernel is
          end if;
       end loop;
    end Close_All_Children;
-
-   -------------------------------------
-   -- Locate_From_Source_And_Complete --
-   -------------------------------------
-
-   function Locate_From_Source_And_Complete
-     (Handle          : access Kernel_Handle_Record;
-      Source_Filename : VFS.Virtual_File;
-      Check_Timestamp : Boolean := True) return Src_Info.LI_File_Ptr
-   is
-      File : LI_File_Ptr;
-      Project : constant Project_Type := Get_Project_From_File
-        (Handle.Registry.all, Source_Filename);
-      Handler : constant LI_Handler := Get_LI_Handler_From_File
-        (Glide_Language_Handler (Handle.Lang_Handler), Source_Filename);
-
-   begin
-      if Handler = null then
-         Trace (Me,
-                "Locate_From_Source_And_Complete: Unsupported_Language for "
-                & Base_Name (Source_Filename));
-         return No_LI_File;
-
-      else
-         Create_Or_Complete_LI
-           (Handler         => Handler,
-            File            => File,
-            Source_Filename => Source_Filename,
-            Project         => Project,
-            Check_Timestamp => Check_Timestamp);
-         return File;
-      end if;
-   end Locate_From_Source_And_Complete;
 
    ---------------------------
    -- Source_Lines_Revealed --
@@ -1429,101 +1406,24 @@ package body Glide_Kernel is
 
    procedure Parse_All_LI_Information
      (Kernel       : access Kernel_Handle_Record;
-      In_Directory : String)
+      Project      : Project_Type;
+      Recursive    : Boolean)
    is
       Handler : constant Glide_Language_Handler :=
         Glide_Language_Handler (Get_Language_Handler (Kernel));
       Num     : constant Natural := LI_Handlers_Count (Handler);
       LI      : LI_Handler;
+      Count   : Natural := 0;
 
    begin
       for L in 1 .. Num loop
          LI := Get_Nth_Handler (Handler, L);
 
          if LI /= null then
-            Parse_All_LI_Information
-              (LI,
-               In_Directory,
-               Get_Project (Kernel));
+            Count := Count + Parse_All_LI_Information (LI, Project, Recursive);
          end if;
       end loop;
    end Parse_All_LI_Information;
-
-   --------------------
-   -- Find_Next_Body --
-   --------------------
-
-   procedure Find_Next_Body
-     (Kernel      : access Kernel_Handle_Record;
-      Lib_Info    : Src_Info.LI_File_Ptr;
-      Entity      : Src_Info.Queries.Entity_Information;
-      Location    : out Src_Info.File_Location;
-      Status      : out Src_Info.Queries.Find_Decl_Or_Body_Query_Status) is
-   begin
-      Find_Next_Body
-        (Kernel,
-         Lib_Info,
-         Get_Declaration_File_Of (Entity).all,
-         Get_Name (Entity),
-         Get_Declaration_Line_Of (Entity),
-         Get_Declaration_Column_Of (Entity),
-         Location,
-         Status);
-   end Find_Next_Body;
-
-   --------------------
-   -- Find_Next_Body --
-   --------------------
-
-   procedure Find_Next_Body
-     (Kernel      : access Kernel_Handle_Record;
-      Lib_Info    : LI_File_Ptr;
-      File_Name   : VFS.Virtual_File;
-      Entity_Name : String;
-      Line        : Positive;
-      Column      : Positive;
-      Location    : out Src_Info.File_Location;
-      Status      : out Find_Decl_Or_Body_Query_Status)
-   is
-      Project : constant Project_Type := Get_Project_From_File
-        (Kernel.Registry.all, File_Name);
-      Entity : Entity_Information;
-
-   begin
-      Find_Next_Body
-        (Lib_Info, File_Name, Entity_Name, Line, Column,
-         Get_LI_Handler_From_File
-           (Glide_Language_Handler (Kernel.Lang_Handler), File_Name),
-         Project,
-         Location, Status);
-
-      if Status = Overloaded_Entity_Found then
-         --  Ask the user what entity he is speaking about
-         Find_Declaration_Or_Overloaded
-           (Kernel      => Kernel,
-            Lib_Info    => Lib_Info,
-            File_Name   => File_Name,
-            Entity_Name => Entity_Name,
-            Line        => Line,
-            Column      => Column,
-            Entity      => Entity,
-            Status      => Status);
-
-         --  And search for the body of that one
-         if Status = Success or else Status = Fuzzy_Match then
-            Find_Next_Body
-              (Kernel      => Kernel,
-               Lib_Info    => Lib_Info,
-               File_Name   => Get_Declaration_File_Of (Entity).all,
-               Entity_Name => Entity_Name,
-               Line        => Get_Declaration_Line_Of (Entity),
-               Column      => Get_Declaration_Column_Of (Entity),
-               Location    => Location,
-               Status      => Status);
-            Destroy (Entity);
-         end if;
-      end if;
-   end Find_Next_Body;
 
    -------------------
    -- Row_Activated --
@@ -1540,28 +1440,31 @@ package body Glide_Kernel is
 
    procedure Select_Entity_Declaration
      (Kernel        : access Kernel_Handle_Record'Class;
-      Lib_Info      : LI_File_Ptr;
+      File          : Source_File;
       Entity_Name   : String;
       Decl          : out Entity_Information;
-      Status        : out Src_Info.Queries.Find_Decl_Or_Body_Query_Status)
+      Status        : out Entities.Queries.Find_Decl_Or_Body_Query_Status)
    is
       procedure Set
         (Tree, Iter : System.Address;
          Col1 : Gint; Value1 : String;
          Col2, Value2, Col3, Value3 : Gint;
          Col4 : Gint; Value4 : String;
-         Col5 : Gint; Value5 : Gint;
+         Col5 : Gint; Value5 : System.Address;
          Final : Gint := -1);
       pragma Import (C, Set, "gtk_tree_store_set");
+
+      function Convert is new Ada.Unchecked_Conversion
+        (System.Address, Entity_Information);
 
       Column_Types : constant GType_Array :=
         (0 => GType_String,
          1 => GType_Int,
          2 => GType_Int,
          3 => GType_String,
-         4 => GType_Int);
+         4 => GType_Pointer);
 
-      Iter      : Entity_Declaration_Iterator;
+      Iter      : Entity_Iterator;
       Candidate : Entity_Information;
       Button    : Gtk_Widget;
       pragma Unreferenced (Button);
@@ -1577,96 +1480,96 @@ package body Glide_Kernel is
       View      : Gtk_Tree_View;
       Col       : Gtk_Tree_View_Column;
       Col_Num   : Gint;
-      Index     : Gint := 1;
       pragma Unreferenced (Col_Num);
 
    begin
-      Iter := Find_All_Possible_Declarations
-        (Lib_Info    => Lib_Info,
-         Entity_Name => Entity_Name);
+      Find_All_Entities_In_File
+        (Iter        => Iter,
+         File        => File,
+         Prefix      => Entity_Name);
 
       while not At_End (Iter) loop
          Count := Count + 1;
          Candidate := Get (Iter);
 
-         if Count = 1 then
-            Gtk_New (Dialog,
-                     Title  => -"Select the declaration",
-                     Parent => Get_Main_Window (Kernel),
-                     Flags  => Modal or Destroy_With_Parent);
-            Set_Default_Size (Dialog, 500, 500);
+         if Get_Name (Candidate) = Entity_Name then
+            if Count = 1 then
+               Gtk_New (Dialog,
+                        Title  => -"Select the declaration",
+                        Parent => Get_Main_Window (Kernel),
+                        Flags  => Modal or Destroy_With_Parent);
+               Set_Default_Size (Dialog, 500, 500);
 
-            Gtk_New (Label, -"This entity is overloaded.");
-            Pack_Start (Get_Vbox (Dialog), Label, Expand => False);
+               Gtk_New (Label, -"This entity is overloaded.");
+               Pack_Start (Get_Vbox (Dialog), Label, Expand => False);
 
-            Gtk_New (Label, -"Please select the appropriate declaration.");
-            Pack_Start (Get_Vbox (Dialog), Label, Expand => False);
+               Gtk_New (Label, -"Please select the appropriate declaration.");
+               Pack_Start (Get_Vbox (Dialog), Label, Expand => False);
 
-            Gtk_New (Scrolled);
-            Set_Policy (Scrolled, Policy_Automatic, Policy_Automatic);
-            Pack_Start (Get_Vbox (Dialog), Scrolled);
+               Gtk_New (Scrolled);
+               Set_Policy (Scrolled, Policy_Automatic, Policy_Automatic);
+               Pack_Start (Get_Vbox (Dialog), Scrolled);
 
-            Gtk_New (View);
-            Set_Mode (Get_Selection (View), Selection_Single);
-            Add (Scrolled, View);
+               Gtk_New (View);
+               Set_Mode (Get_Selection (View), Selection_Single);
+               Add (Scrolled, View);
 
-            Gtk_New (Model, Column_Types);
-            Set_Model (View, Gtk_Tree_Model (Model));
+               Gtk_New (Model, Column_Types);
+               Set_Model (View, Gtk_Tree_Model (Model));
 
-            Gtk_New (Renderer);
+               Gtk_New (Renderer);
 
-            Gtk_New (Col);
-            Col_Num := Append_Column (View, Col);
-            Set_Title (Col, -"File");
-            Pack_Start (Col, Renderer, False);
-            Add_Attribute (Col, Renderer, "text", 0);
+               Gtk_New (Col);
+               Col_Num := Append_Column (View, Col);
+               Set_Title (Col, -"File");
+               Pack_Start (Col, Renderer, False);
+               Add_Attribute (Col, Renderer, "text", 0);
 
-            Gtk_New (Col);
-            Col_Num := Append_Column (View, Col);
-            Set_Title (Col, -"Line");
-            Pack_Start (Col, Renderer, False);
-            Add_Attribute (Col, Renderer, "text", 1);
+               Gtk_New (Col);
+               Col_Num := Append_Column (View, Col);
+               Set_Title (Col, -"Line");
+               Pack_Start (Col, Renderer, False);
+               Add_Attribute (Col, Renderer, "text", 1);
 
-            Gtk_New (Col);
-            Col_Num := Append_Column (View, Col);
-            Set_Title (Col, -"Column");
-            Pack_Start (Col, Renderer, False);
-            Add_Attribute (Col, Renderer, "text", 2);
+               Gtk_New (Col);
+               Col_Num := Append_Column (View, Col);
+               Set_Title (Col, -"Column");
+               Pack_Start (Col, Renderer, False);
+               Add_Attribute (Col, Renderer, "text", 2);
 
-            Gtk_New (Col);
-            Col_Num := Append_Column (View, Col);
-            Set_Title (Col, -"Entity name");
-            Pack_Start (Col, Renderer, False);
-            Add_Attribute (Col, Renderer, "text", 3);
+               Gtk_New (Col);
+               Col_Num := Append_Column (View, Col);
+               Set_Title (Col, -"Entity name");
+               Pack_Start (Col, Renderer, False);
+               Add_Attribute (Col, Renderer, "text", 3);
 
-            Widget_Callback.Object_Connect
-              (View, "row_activated",
-               Widget_Callback.To_Marshaller (Row_Activated'Access),
-               Dialog);
+               Widget_Callback.Object_Connect
+                 (View, "row_activated",
+                  Widget_Callback.To_Marshaller (Row_Activated'Access),
+                  Dialog);
 
-            Button := Add_Button (Dialog, Stock_Ok, Gtk_Response_OK);
-            Button := Add_Button
-              (Dialog, Stock_Cancel, Gtk_Response_Cancel);
+               Button := Add_Button (Dialog, Stock_Ok, Gtk_Response_OK);
+               Button := Add_Button
+                 (Dialog, Stock_Cancel, Gtk_Response_Cancel);
+            end if;
+
+            Append (Model, It, Null_Iter);
+            Set (Get_Object (Model), It'Address,
+                 0, Full_Name (Get_Filename
+                    (Get_File (Get_Declaration_Of (Candidate)))).all
+                 & ASCII.NUL,
+                 1, Gint (Get_Line (Get_Declaration_Of (Candidate))),
+                 2, Gint (Get_Column (Get_Declaration_Of (Candidate))),
+                 3, Entity_Name & ASCII.NUL,
+                 4, Candidate.all'Address);
          end if;
-
-         Append (Model, It, Null_Iter);
-         Set (Get_Object (Model), It'Address,
-              0, Full_Name (Get_Declaration_File_Of (Candidate).all).all
-              & ASCII.NUL,
-              1, Gint (Get_Declaration_Line_Of (Candidate)),
-              2, Gint (Get_Declaration_Column_Of (Candidate)),
-              3, Entity_Name & ASCII.NUL,
-              4, Index);
-
-         Index := Index + 1;
-         Destroy (Candidate);
 
          Next (Iter);
       end loop;
 
       Destroy (Iter);
 
-      Decl := No_Entity_Information;
+      Decl := null;
       Status := Entity_Not_Found;
 
       if Count > 0 then
@@ -1675,17 +1578,7 @@ package body Glide_Kernel is
          if Run (Dialog) = Gtk_Response_OK then
             Status := Success;
             Get_Selected (Get_Selection (View), Gtk_Tree_Model (Model), It);
-            Index := Get_Int (Model, It, 4);
-            Iter := Find_All_Possible_Declarations
-              (Lib_Info    => Lib_Info,
-               Entity_Name => Entity_Name);
-
-            while Index /= 1 loop
-               Next  (Iter);
-            end loop;
-
-            Decl := Get (Iter);
-            Destroy (Iter);
+            Decl := Convert (Get_Address (Model, It, 4));
          end if;
 
          Destroy (Dialog);
@@ -1709,16 +1602,16 @@ package body Glide_Kernel is
 
    procedure Find_Declaration_Or_Overloaded
      (Kernel        : access Kernel_Handle_Record;
-      Lib_Info      : Src_Info.LI_File_Ptr;
-      File_Name     : VFS.Virtual_File;
+      File          : Source_File;
       Entity_Name   : String;
-      Line          : Positive;
-      Column        : Positive;
-      Entity        : out Src_Info.Queries.Entity_Information;
-      Status        : out Src_Info.Queries.Find_Decl_Or_Body_Query_Status) is
+      Line          : Natural;
+      Column        : Natural;
+      Entity        : out Entities.Entity_Information;
+      Status        : out Entities.Queries.Find_Decl_Or_Body_Query_Status) is
    begin
       Find_Declaration
-        (Lib_Info, File_Name, Entity_Name, Line, Column, Entity, Status);
+        (Kernel.Database, File, Entity_Name,
+         Line, Column, Entity, Status);
 
       --  ??? Should have the preference for the handling of fuzzy matches:
       --   - consider it as a no match: set Status to Entity_Not_Found;
@@ -1727,7 +1620,7 @@ package body Glide_Kernel is
 
       if Status = Overloaded_Entity_Found then
          Select_Entity_Declaration
-           (Kernel, Lib_Info, Entity_Name, Entity, Status);
+           (Kernel, File, Entity_Name, Entity, Status);
       end if;
    end Find_Declaration_Or_Overloaded;
 
@@ -1769,7 +1662,7 @@ package body Glide_Kernel is
       Glide_Kernel.Scripts.Finalize (Handle);
 
       Destroy (Glide_Language_Handler (Handle.Lang_Handler));
-      Reset_LI_File_List (Handle);
+      Destroy (Handle.Database);
       Free (Handle.Logs_Mapper);
       Free_Modules (Handle);
       Unref (Handle.Tooltips);
@@ -1802,100 +1695,6 @@ package body Glide_Kernel is
    begin
       Add_To_History (Handle.History.all, Key, New_Entry);
    end Add_To_History;
-
-   ---------------------
-   -- Scope_To_String --
-   ---------------------
-
-   function Scope_To_String (Scope : Src_Info.E_Scope) return String is
-   begin
-      case Scope is
-         when Global_Scope => return -"global";
-         when Local_Scope  => return -"local";
-         when Class_Static => return -"static";
-         when Static_Local => return -"static";
-      end case;
-   end Scope_To_String;
-
-   --------------------
-   -- Get_Scope_Tree --
-   --------------------
-
-   procedure Get_Scope_Tree
-     (Kernel : access Kernel_Handle_Record;
-      Entity : Entity_Information;
-      Node   : out Src_Info.Scope_Tree_Node)
-   is
-      Lib_Info : LI_File_Ptr;
-      Location : File_Location;
-      Status   : Find_Decl_Or_Body_Query_Status;
-   begin
-      Lib_Info := Locate_From_Source_And_Complete
-        (Kernel, Get_Declaration_File_Of (Entity).all);
-
-      if Lib_Info /= No_LI_File then
-         --  We need to find the body of the entity in fact. In Ada, this
-         --  will always be the same LI as the spec, but this is no
-         --  longer true for C or C++.
-
-         Find_Next_Body
-           (Kernel      => Kernel,
-            Lib_Info    => Lib_Info,
-            File_Name   => Get_Declaration_File_Of (Entity).all,
-            Entity_Name => Get_Name (Entity),
-            Line        => Get_Declaration_Line_Of (Entity),
-            Column      => Get_Declaration_Column_Of (Entity),
-            Location    => Location,
-            Status      => Status);
-
-         --  In case there is no body, do nothing.
-         if Location /= Null_File_Location then
-            Lib_Info := Locate_From_Source_And_Complete
-              (Kernel, Get_File (Location));
-         end if;
-      end if;
-
-      if Lib_Info = No_LI_File then
-         Insert (Kernel, -"LI file not found for "
-                 & Full_Name (Get_Declaration_File_Of (Entity).all).all);
-         Node := Null_Scope_Tree_Node;
-
-      else
-         Node := Find_Entity_Scope (Lib_Info, Entity);
-
-         if Node = Null_Scope_Tree_Node then
-            Insert (Kernel,
-                    -"Couldn't find the scope tree for " & Get_Name (Entity));
-            Trace (Me, "Couldn't find entity "
-                   & Get_Name (Entity) & " in "
-                   & Base_Name (Get_LI_Filename (Lib_Info))
-                   & " at line" & Get_Declaration_Line_Of (Entity)'Img
-                   & " column"  & Get_Declaration_Column_Of (Entity)'Img);
-            Node := Null_Scope_Tree_Node;
-         end if;
-      end if;
-   end Get_Scope_Tree;
-
-   ---------------------
-   -- Other_File_Name --
-   ---------------------
-
-   function Other_File_Name
-     (Kernel          : access Kernel_Handle_Record;
-      Source_Filename : VFS.Virtual_File) return VFS.Virtual_File
-   is
-      Project : constant Project_Type := Get_Project_From_File
-        (Kernel.Registry.all, Source_Filename);
-      Other : constant String :=
-        Other_File_Base_Name (Project, Source_Filename);
-      F : constant Virtual_File := Create (Other, Project);
-   begin
-      if F = VFS.No_File then
-         return Create_From_Base (Other);
-      end if;
-
-      return F;
-   end Other_File_Name;
 
    ---------
    -- Put --
@@ -2356,29 +2155,6 @@ package body Glide_Kernel is
       Unref (C);
       return Result;
    end Filter_Matches;
-
-   ------------------------
-   -- Reset_LI_File_List --
-   ------------------------
-
-   procedure Reset_LI_File_List (Handle : access Kernel_Handle_Record) is
-      Handler : constant Glide_Language_Handler :=
-        Glide_Language_Handler (Get_Language_Handler (Handle));
-      Num     : Natural;
-      LI      : LI_Handler;
-   begin
-      if Handler /= null then
-         Num := LI_Handlers_Count (Handler);
-
-         for L in 1 .. Num loop
-            LI := Get_Nth_Handler (Handler, L);
-
-            if LI /= null then
-               Reset (LI);
-            end if;
-         end loop;
-      end if;
-   end Reset_LI_File_List;
 
    ----------
    -- Free --

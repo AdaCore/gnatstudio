@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003                            --
+--                     Copyright (C) 2003-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -23,13 +23,10 @@ with Projects.Registry;    use Projects.Registry;
 with Glide_Kernel.Project; use Glide_Kernel.Project;
 with VFS;                  use VFS;
 with GNAT.OS_Lib;          use GNAT.OS_Lib;
-with Src_Info;             use Src_Info;
-with Src_Info.Queries;     use Src_Info.Queries;
-with Traces;               use Traces;
+with Entities;             use Entities;
+with Entities.Queries;     use Entities.Queries;
 
 package body Glide_Kernel.Contexts is
-
-   Me : constant Debug_Handle := Create ("Contexts");
 
    --------------------------
    -- Set_File_Information --
@@ -340,34 +337,25 @@ package body Glide_Kernel.Contexts is
 
    function Get_Entity
      (Context : access Entity_Selection_Context)
-      return Src_Info.Queries.Entity_Information
+      return Entities.Entity_Information
    is
-      Lib_Info : LI_File_Ptr;
       Status   : Find_Decl_Or_Body_Query_Status;
 
    begin
-      if Context.Entity = No_Entity_Information then
-         Lib_Info := Locate_From_Source_And_Complete
-           (Get_Kernel (Context), File_Information (Context));
+      if Context.Entity = null then
+         Find_Declaration_Or_Overloaded
+           (Kernel      => Get_Kernel (Context),
+            File        => Get_Or_Create
+              (Db   => Get_Database (Get_Kernel (Context)),
+               File => File_Information (Context)),
+            Entity_Name => Entity_Name_Information (Context),
+            Line        => Line_Information (Context),
+            Column      => Entity_Column_Information (Context),
+            Entity      => Context.Entity,
+            Status      => Status);
 
-         if Lib_Info = No_LI_File then
-            Trace (Me, "Couldn't find LI file for "
-                   & Full_Name (File_Information (Context)).all);
-         else
-            Find_Declaration_Or_Overloaded
-              (Kernel      => Get_Kernel (Context),
-               Lib_Info    => Lib_Info,
-               File_Name   => File_Information (Context),
-               Entity_Name => Entity_Name_Information (Context),
-               Line        => Line_Information (Context),
-               Column      => Entity_Column_Information (Context),
-               Entity      => Context.Entity,
-               Status      => Status);
-
-            if Status /= Success and then Status /= Fuzzy_Match then
-               Destroy (Context.Entity);
-               Context.Entity := No_Entity_Information;
-            end if;
+         if Status /= Success and then Status /= Fuzzy_Match then
+            Context.Entity := null;
          end if;
       end if;
 
@@ -381,7 +369,6 @@ package body Glide_Kernel.Contexts is
    procedure Destroy (Context : in out Entity_Selection_Context) is
    begin
       Destroy (File_Selection_Context (Context));
-      Destroy (Context.Entity);
       Free (Context.Entity_Name);
    end Destroy;
 

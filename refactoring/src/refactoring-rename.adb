@@ -25,8 +25,8 @@ with Glide_Kernel;           use Glide_Kernel;
 with Glide_Kernel.Contexts;  use Glide_Kernel.Contexts;
 with Glide_Kernel.Scripts;   use Glide_Kernel.Scripts;
 with Glide_Intl;             use Glide_Intl;
-with Src_Info;               use Src_Info;
-with Src_Info.Queries;       use Src_Info.Queries;
+with Entities;               use Entities;
+with Entities.Queries;       use Entities.Queries;
 with Traces;                 use Traces;
 with VFS;                    use VFS;
 with Refactoring.Performers; use Refactoring.Performers;
@@ -103,13 +103,7 @@ package body Refactoring.Rename is
          Parent => Get_Main_Window (Kernel),
          Flags  => Destroy_With_Parent);
 
-      Gtk_New
-        (Label,
-         -"Renaming " &
-         Get_Full_Name
-           (Entity    => Entity,
-            Decl_File => Locate_From_Source_And_Complete
-              (Kernel, Get_Declaration_File_Of (Entity).all)));
+      Gtk_New (Label, -"Renaming " & Get_Full_Name (Entity => Entity));
       Set_Alignment (Label, 0.0, 0.0);
       Pack_Start (Get_Vbox (Dialog), Label, Expand => False);
 
@@ -209,7 +203,7 @@ package body Refactoring.Rename is
    begin
       Ref (Selection_Context_Access (Ent));
 
-      if Entity /= No_Entity_Information then
+      if Entity /= null then
          Gtk_New (Dialog, Get_Kernel (Context), Entity);
          Show_All (Dialog);
 

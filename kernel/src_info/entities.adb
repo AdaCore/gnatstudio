@@ -24,6 +24,8 @@ with VFS;          use VFS;
 with GNAT.OS_Lib;  use GNAT.OS_Lib;
 with Projects;     use Projects;
 with Traces;       use Traces;
+with Language_Handlers.Glide; use Language_Handlers.Glide;
+with GNAT.Heap_Sort_G;
 
 package body Entities is
    Assert_Me : constant Debug_Handle := Create ("Entities.Assert", Off);
@@ -31,12 +33,6 @@ package body Entities is
    Debug_Me  : constant Debug_Handle := Create ("Entities.Debug", Off);
    --  If True, no memory is freed, this makes the structure more robust and
    --  easier to debug, but will of course use more memory.
-
-   Manage_Global_Entities_Table : constant Boolean := False;
-   --  True if we should try and create a global table for all entities
-   --  defined in the project. The same information can be computed by
-   --  traversing all files and their .Entities tables, and this saves some
-   --  memory and time when creating the structure.
 
    use Entities_Tries;
    use Files_HTable;
@@ -48,35 +44,44 @@ package body Entities is
 
    function String_Hash is new HTables.Hash (HTable_Header);
 
-   procedure Reset (Entity : Entity_Information; File : Source_File);
-   --  Remove all references to File in Entity.
+   procedure Mark_Dependencies_As_Invalid
+     (Entity : Entity_Information; Dependencies_On : Source_File);
+   --  Remove all references to Dependencies_On in Entity.
 
    function Find
      (E : Dependency_List; File : Source_File)
       return Dependency_Arrays.Index_Type;
    --  Find a specific file in the list of dependencies
 
-   procedure Isolate (Entity : in out Entity_Information);
+   procedure Isolate
+     (Entity           : in out Entity_Information;
+      Clear_References : Boolean);
    --  Isolate the entity from the rest of the LI structure. This should be
    --  used when we are removing the entity from the internal tables, but the
    --  user has kept a handle on it, to avoid memory leaks.
-
-   procedure Cleanup_All_Entities_Field (File : Source_File);
-   --  Cleanup the All_Entities field for all the files in the database,
-   --  to remove references to File.
+   --  The references are cleared only if Clear_References is True.
 
    procedure Add_All_Entities
      (File : Source_File; Entity : Entity_Information);
    --  Add Entity to the list of All_Entities known in File, if Entity is not
    --  there yet and is not declared in File.
 
-   procedure Reset_All_Entities (File : Source_File);
-   --  Reset all the entities declared in File
+   procedure Mark_And_Isolate_Entities (File : Source_File);
+   --  All entities declared in file are marked as valid, and all information
+   --  known about them is cleared (we just keep their name and declaration)
 
-   procedure Free_All_Entities (File : Source_File);
-   --  Free all entities declared in File, and remove them from internal
-   --  tables. This ensures that the entities that are still referenced
-   --  externally will still be usable.
+   procedure Mark_Dependencies_As_Invalid
+     (Tree : Entities_Tries.Trie_Tree; Dependencies_On : Source_File);
+   --  All entities in Tree that are referenced elsewhere are marked as invalid
+
+   procedure Remove_Marked_Entities (File : Source_File);
+   --  Unref all entities declared in File that are marked as valid.
+
+   procedure Remove_Marked_Entities_In_List
+     (Tree : in out Entities_Tries.Trie_Tree; File : Source_File);
+   --  Remove from Tree all the entities declared in File and that are marked
+   --  as valid. These entities are about to be removed from memory anyway
+
 
    Is_Subprogram_Entity : constant array (E_Kinds) of Boolean :=
      (Procedure_Kind        => True,
@@ -86,31 +91,63 @@ package body Entities is
    --  This table should contain true if the corresponding element is
    --  considered as a subprogram (see Is_Subprogram)
 
-   Is_End_Reference_Array : constant array (Reference_Kind) of Boolean :=
+   Is_Container_Array : constant array (E_Kinds) of Boolean :=
+     (Procedure_Kind        => True,
+      Function_Or_Operator  => True,
+      Entry_Or_Entry_Family => True,
+      Task_Kind             => True,
+      Package_Kind          => True,
+      Overloaded_Entity     => True,
+      --  ??? Should we check that at least one of the possible
+      --  completions is a subprogram
+      others                => False);
+
+   Is_End_Reference_Array : constant Reference_Kind_Filter :=
      (End_Of_Spec           => True,
       End_Of_Body           => True,
       others                => False);
    --  True if the matching entity indicates an end-of-scope (end of subprogram
    --  declaration, end of record definition, ...)
 
-   Is_Real_Reference_Array : constant array (Reference_Kind) of Boolean :=
-     (Reference                                => True,
-      Instantiation_Reference                  => True,
-      Modification                             => True,
-      Body_Entity                              => True,
-      Completion_Of_Private_Or_Incomplete_Type => True,
-      Type_Extension                           => True,
-      Label                                    => True,
-      With_Line                                => True,
-      others                                   => False);
-   --  See Is_Real_Reference
-
-   Is_Parameter_Array : constant array (Reference_Kind) of Boolean :=
+   Is_Parameter_Array : constant Reference_Kind_Filter :=
      (Subprogram_In_Parameter                  => True,
       Subprogram_In_Out_Parameter              => True,
       Subprogram_Out_Parameter                 => True,
       Subprogram_Access_Parameter              => True,
       others                                   => False);
+
+   Is_Read_Reference_Array : constant Reference_Kind_Filter :=
+     (Reference                                => True,
+      Instantiation_Reference                  => True,
+      Body_Entity                              => True,
+      Completion_Of_Private_Or_Incomplete_Type => True,
+      Type_Extension                           => True,
+      Label                                    => True,
+      With_Line                                => True,
+      Declaration                              => True,
+      others                                   => False);
+
+   Is_Write_Reference_Array : constant Reference_Kind_Filter :=
+     (Modification                             => True,
+      others                                   => False);
+
+   -----------------------
+   -- Is_Read_Reference --
+   -----------------------
+
+   function Is_Read_Reference  (Kind : Reference_Kind) return Boolean is
+   begin
+      return Is_Read_Reference_Array (Kind);
+   end Is_Read_Reference;
+
+   ------------------------
+   -- Is_Write_Reference --
+   ------------------------
+
+   function Is_Write_Reference (Kind : Reference_Kind) return Boolean is
+   begin
+      return Is_Write_Reference_Array (Kind);
+   end Is_Write_Reference;
 
    ----------------------------
    -- Is_Parameter_Reference --
@@ -136,8 +173,17 @@ package body Entities is
 
    function Is_Real_Reference (Kind : Reference_Kind) return Boolean is
    begin
-      return Is_Real_Reference_Array (Kind);
+      return Real_References_Filter (Kind);
    end Is_Real_Reference;
+
+   ------------------
+   -- Is_Container --
+   ------------------
+
+   function Is_Container (Kind : E_Kinds) return Boolean is
+   begin
+      return Is_Container_Array (Kind);
+   end Is_Container;
 
    --------------
    -- Get_Name --
@@ -210,50 +256,6 @@ package body Entities is
       end if;
    end Unref;
 
-   --------------------------------
-   -- Cleanup_All_Entities_Field --
-   --------------------------------
-
-   procedure Cleanup_All_Entities_Field (File : Source_File) is
-      procedure Clean_All_Entities_In_File (Dep : Source_File);
-      --  Clean the All_Entities list in Dep
-
-      procedure Clean_All_Entities_In_File (Dep : Source_File) is
-         Iter : Entities_Tries.Iterator := Start (Dep.All_Entities, "");
-         EL   : Entity_Information_List_Access;
-      begin
-         loop
-            EL := Get (Iter);
-            exit when EL = null;
-
-            Next (Iter);
-
-            for E in
-               reverse Entity_Information_Arrays.First .. Last (EL.all)
-            loop
-               if EL.Table (E).Declaration.File = File then
-                  if Length (EL.all) = 1 then
-                     Remove (Dep.All_Entities, Get_Name (EL.Table (E)).all);
-                  else
-                     Remove (EL.all, E);
-                  end if;
-               end if;
-            end loop;
-         end loop;
-
-         Free (Iter);
-      end Clean_All_Entities_In_File;
-
-   begin
-      for F in Dependency_Arrays.First .. Last (File.Depended_On) loop
-         Clean_All_Entities_In_File (File.Depended_On.Table (F).File);
-      end loop;
-
-      for F in Dependency_Arrays.First .. Last (File.Depends_On) loop
-         Clean_All_Entities_In_File (File.Depends_On.Table (F).File);
-      end loop;
-   end Cleanup_All_Entities_Field;
-
    ----------------------
    -- Add_All_Entities --
    ----------------------
@@ -271,71 +273,13 @@ package body Entities is
       end if;
    end Add_All_Entities;
 
-   ------------------------
-   -- Reset_All_Entities --
-   ------------------------
-
-   procedure Reset_All_Entities (File : Source_File) is
-      Iter : Entities_Tries.Iterator := Start (File.All_Entities, "");
-      EL   : Entity_Information_List_Access;
-   begin
-      loop
-         EL := Get (Iter);
-         exit when EL = null;
-
-         for E in reverse Entity_Information_Arrays.First .. Last (EL.all) loop
-            Reset (EL.Table (E), File);
-         end loop;
-
-         Next (Iter);
-      end loop;
-      Free (Iter);
-   end Reset_All_Entities;
-
-   -----------------------
-   -- Free_All_Entities --
-   -----------------------
-
-   procedure Free_All_Entities (File : Source_File) is
-      Iter : Entities_Tries.Iterator := Start (File.Entities, "");
-      EL   : Entity_Information_List_Access;
-      Entity : Entity_Information;
-   begin
-      loop
-         EL := Get (Iter);
-         exit when EL = null;
-
-         for E in reverse Entity_Information_Arrays.First .. Last (EL.all) loop
-            Entity := EL.Table (E);
-
-            if Manage_Global_Entities_Table then
-               Remove (File.Db.Entities, Entity);
-            end if;
-
-            --  No need to remove from the list itself, since it will be
-            --  freed anyway when it is removed from the trie
-            if E = Entity_Information_Arrays.First then
-               Remove (File.Entities, Get_Name (Entity).all);
-            end if;
-
-            if Entity.Ref_Count > 1 then
-               Isolate (Entity);
-            end if;
-
-            Unref (Entity);
-         end loop;
-
-         Next (Iter);
-      end loop;
-      Free (Iter);
-   end Free_All_Entities;
-
    -----------
    -- Reset --
    -----------
 
    procedure Reset (LI : LI_File) is
    begin
+      Trace (Assert_Me, "Reseting LI " & Full_Name (LI.Name).all);
       for F in Source_File_Arrays.First .. Last (LI.Files) loop
          Reset (LI.Files.Table (F));
       end loop;
@@ -369,6 +313,134 @@ package body Entities is
       return Dependency_Arrays.First - 1;
    end Find;
 
+   -------------------------------
+   -- Mark_And_Isolate_Entities --
+   -------------------------------
+
+   procedure Mark_And_Isolate_Entities (File : Source_File) is
+      Iter   : Entities_Tries.Iterator := Start (File.Entities, "");
+      EL     : Entity_Information_List_Access;
+      Entity : Entity_Information;
+   begin
+      loop
+         EL := Get (Iter);
+         exit when EL = null;
+
+         for E in reverse Entity_Information_Arrays.First .. Last (EL.all) loop
+            Entity := EL.Table (E);
+            Entity.Is_Valid := True;
+
+            --  If the entity has references in other files, do not mark is
+            --  as valid, so that it isn't removed later on, or we would lose
+            --  trace of these references.
+            --  ??? Could be more efficient and remove ranges at once
+            for R in reverse
+              Entity_Reference_Arrays.First .. Last (Entity.References)
+            loop
+               if Entity.References.Table (R).Location.File /= File then
+                  Entity.Is_Valid := False;
+               else
+                  Remove (Entity.References, R);
+               end if;
+            end loop;
+
+            Isolate (Entity, Clear_References => False);
+         end loop;
+
+         Next (Iter);
+      end loop;
+      Free (Iter);
+   end Mark_And_Isolate_Entities;
+
+   ----------------------------------
+   -- Mark_Dependencies_As_Invalid --
+   ----------------------------------
+
+   procedure Mark_Dependencies_As_Invalid
+     (Tree : Entities_Tries.Trie_Tree; Dependencies_On : Source_File)
+   is
+      Iter : Entities_Tries.Iterator := Start (Tree, "");
+      EL   : Entity_Information_List_Access;
+   begin
+      loop
+         EL := Get (Iter);
+         exit when EL = null;
+
+         for E in reverse Entity_Information_Arrays.First .. Last (EL.all) loop
+            Mark_Dependencies_As_Invalid (EL.Table (E), Dependencies_On);
+         end loop;
+
+         Next (Iter);
+      end loop;
+      Free (Iter);
+   end Mark_Dependencies_As_Invalid;
+
+   ----------------------------
+   -- Remove_Marked_Entities --
+   ----------------------------
+
+   procedure Remove_Marked_Entities (File : Source_File) is
+      Iter   : Entities_Tries.Iterator := Start (File.Entities, "");
+      EL     : Entity_Information_List_Access;
+      Entity : Entity_Information;
+   begin
+      loop
+         EL := Get (Iter);
+         exit when EL = null;
+
+         for E in reverse Entity_Information_Arrays.First .. Last (EL.all) loop
+            Entity := EL.Table (E);
+
+            if Entity.Is_Valid then
+               if E = Entity_Information_Arrays.First then
+                  Remove (File.Entities, Get_Name (Entity).all);
+               else
+                  Remove (EL.all, E);
+               end if;
+
+               Unref (Entity);
+            end if;
+         end loop;
+
+         Next (Iter);
+      end loop;
+      Free (Iter);
+   end Remove_Marked_Entities;
+
+   ------------------------------------
+   -- Remove_Marked_Entities_In_List --
+   ------------------------------------
+
+   procedure Remove_Marked_Entities_In_List
+     (Tree : in out Entities_Tries.Trie_Tree; File : Source_File)
+   is
+      Iter   : Entities_Tries.Iterator := Start (Tree, "");
+      EL     : Entity_Information_List_Access;
+      Entity : Entity_Information;
+   begin
+      loop
+         EL := Get (Iter);
+         exit when EL = null;
+
+         for E in reverse Entity_Information_Arrays.First .. Last (EL.all) loop
+            Entity := EL.Table (E);
+
+            if Entity.Declaration.File = File
+              and then Entity.Is_Valid
+            then
+               if E = Entity_Information_Arrays.First then
+                  Remove (Tree, Get_Name (Entity).all);
+               else
+                  Remove (EL.all, E);
+               end if;
+            end if;
+         end loop;
+
+         Next (Iter);
+      end loop;
+      Free (Iter);
+   end Remove_Marked_Entities_In_List;
+
    -----------
    -- Reset --
    -----------
@@ -376,34 +448,75 @@ package body Entities is
    procedure Reset (File : Source_File) is
    begin
       Trace (Assert_Me, "Reseting " & Full_Name (Get_Filename (File)).all);
-      Cleanup_All_Entities_Field (File);
-      Reset_All_Entities (File);
+
+      --  Mark all entities as valid temporarily
+      --  We also clean them up, so that they don't reference anything else
+
+      Mark_And_Isolate_Entities (File);
+
+      --  Mark as invalid all entities that are pointed to by other files.
+      --  At the same time, references in File are removed, since they are no
+      --  longer valid.
+
+      for F in Dependency_Arrays.First .. Last (File.Depended_On) loop
+         Mark_Dependencies_As_Invalid
+           (File.Depended_On.Table (F).File.Entities, Dependencies_On => File);
+      end loop;
+
+      --  Other files can no longer reference entities in File that are no
+      --  longer valid
+
+      for F in Dependency_Arrays.First .. Last (File.Depends_On) loop
+         Remove_Marked_Entities_In_List
+           (File.Depends_On.Table (F).File.All_Entities, File);
+      end loop;
+
+      for F in Dependency_Arrays.First .. Last (File.Depended_On) loop
+         Remove_Marked_Entities_In_List
+           (File.Depended_On.Table (F).File.All_Entities, File);
+      end loop;
+
+      --  Remove all entities that are still marked as valid (ie that are not
+      --  referenced)
+
+      Remove_Marked_Entities (File);
+
+      --  Remove all entities referenced in other files, since there can't be
+      --  any left (all entities that we have kept in File have been isolated
+      --  and do not reference any other file).
 
       Clear (File.All_Entities);
 
-      Free_All_Entities (File);
-
-      for F in Dependency_Arrays.First .. Last (File.Depended_On) loop
-         Remove (File.Depended_On.Table (F).File.Depends_On, File);
-      end loop;
+      --  We can't reset the Depended_On field, since these other files still
+      --  referenced File (we haven't broken up the links between entities).
+      --  The current file itself might depend on others, in case some entities
+      --  had references in other files. But such references do not need to be
+      --  in the Depends_On array
 
       for F in Dependency_Arrays.First .. Last (File.Depends_On) loop
          Remove (File.Depends_On.Table (F).File.Depended_On, File);
       end loop;
 
-      Clear (File.Entities);
       Free (File.Depends_On);
-      Free (File.Depended_On);
+
+      --  Clean up various other fields
+
       File.Scope_Tree_Computed := False;
-      File.Is_Valid := False;
+      Free (File.Unit_Name);
+
+      --  Fields which have not been cleaned (see comments above):
+      --     - Entities
+      --     - Depended_On (cleaned "magically" when the other files are Reset)
    end Reset;
 
    -------------
    -- Isolate --
    -------------
 
-   procedure Isolate (Entity : in out Entity_Information) is
+   procedure Isolate
+     (Entity : in out Entity_Information; Clear_References : Boolean) is
    begin
+      Entity.Caller_At_Declaration := null;
       Entity.End_Of_Scope    := No_E_Reference;
       Entity.Pointed_Type    := null;
       Entity.Returned_Type   := null;
@@ -413,14 +526,19 @@ package body Entities is
       Free (Entity.Parent_Types);
       Free (Entity.Primitive_Subprograms);
       Free (Entity.Child_Types);
-      Free (Entity.References);
+
+      if Clear_References then
+         Free (Entity.References);
+      end if;
    end Isolate;
 
-   -----------
-   -- Reset --
-   -----------
+   ----------------------------------
+   -- Mark_Dependencies_As_Invalid --
+   ----------------------------------
 
-   procedure Reset (Entity : Entity_Information; File : Source_File) is
+   procedure Mark_Dependencies_As_Invalid
+     (Entity : Entity_Information; Dependencies_On : Source_File)
+   is
       procedure Check_And_Remove (E : in out Entity_Information);
       procedure Check_And_Remove (E : in out Entity_Information_List);
       procedure Check_And_Remove (E : in out Entity_Reference_List);
@@ -430,8 +548,8 @@ package body Entities is
 
       procedure Check_And_Remove (E : in out Entity_Information) is
       begin
-         if E /= null and then E.Declaration.File = File then
-            E := null;
+         if E /= null and then E.Declaration.File = Dependencies_On then
+            E.Is_Valid := False;
          end if;
       end Check_And_Remove;
 
@@ -442,8 +560,8 @@ package body Entities is
             Assert
               (Assert_Me, E.Table (J).Declaration.File /= null,
                "Invalid declaration");
-            if E.Table (J).Declaration.File = File then
-               Remove (E, J);
+            if E.Table (J).Declaration.File = Dependencies_On then
+               E.Table (J).Is_Valid := False;
             end if;
          end loop;
       end Check_And_Remove;
@@ -463,7 +581,7 @@ package body Entities is
 
       procedure Check_And_Remove (E : in out E_Reference) is
       begin
-         if E.Location.File = File then
+         if E.Location.File = Dependencies_On then
             E := No_E_Reference;
          end if;
       end Check_And_Remove;
@@ -471,21 +589,20 @@ package body Entities is
       procedure Check_And_Remove (E : in out Entity_Reference_List) is
       begin
          for R in reverse Entity_Reference_Arrays.First .. Last (E) loop
-            if E.Table (R).Location.File = File then
+            if E.Table (R).Location.File = Dependencies_On then
                Remove (E, R);
 
             elsif E.Table (R).Caller /= null
-              and then E.Table (R).Caller.Declaration.File = File
+              and then E.Table (R).Caller.Declaration.File = Dependencies_On
             then
-               E.Table (R).Caller := null;
+               E.Table (R).Caller.Is_Valid := False;
             end if;
          end loop;
       end Check_And_Remove;
 
    begin
-      Assert (Assert_Me, Entity.Declaration.File /= File,
+      Assert (Assert_Me, Entity.Declaration.File /= Dependencies_On,
               "Entity should have been on .Entities list, not .All_Entities");
-
       Check_And_Remove (Entity.Caller_At_Declaration);
       Check_And_Remove (Entity.End_Of_Scope);
       Check_And_Remove (Entity.Parent_Types);
@@ -497,7 +614,7 @@ package body Entities is
       Check_And_Remove (Entity.Primitive_Subprograms);
       Check_And_Remove (Entity.Child_Types);
       Check_And_Remove (Entity.References);
-   end Reset;
+   end Mark_Dependencies_As_Invalid;
 
    ------------
    -- Remove --
@@ -587,15 +704,7 @@ package body Entities is
          Assert (Assert_Me, Entity.Ref_Count > 0, "too many calls to unref");
          Entity.Ref_Count := Entity.Ref_Count - 1;
          if Entity.Ref_Count = 0 then
-            Free (Entity.Parent_Types);
-            Free (Entity.Primitive_Subprograms);
-            Free (Entity.Child_Types);
-            Free (Entity.References);
-
-            Entity.Pointed_Type := null;
-            Entity.Returned_Type := null;
-            Entity.Primitive_Op_Of := null;
-            Entity.Rename := null;
+            Isolate (Entity, Clear_References => True);
 
             --  If we are debugging, we do not free the memory, to keep a
             --  debuggable structure.
@@ -605,6 +714,7 @@ package body Entities is
                  (Entity.Name.all
                   & ':' & Base_Name (Get_Filename (Entity.Declaration.File)));
                Free (Tmp);
+               --  Trace (Debug_Me, "Freeing entity " & Entity.Name.all);
             else
                Free (Entity.Name);
                Unchecked_Free (Entity);
@@ -648,9 +758,15 @@ package body Entities is
    -- Create --
    ------------
 
-   function Create return Entities_Database is
+   function Create
+     (Registry : Projects.Registry.Project_Registry_Access)
+      return Entities_Database
+   is
+      Db : Entities_Database;
    begin
-      return new Entities_Database_Record;
+      Db          := new Entities_Database_Record;
+      Db.Registry := Registry;
+      return Db;
    end Create;
 
    -------------------------------
@@ -658,13 +774,10 @@ package body Entities is
    -------------------------------
 
    procedure Register_Language_Handler
-     (Db : Entities_Database; Handler : LI_Handler) is
+     (Db   : Entities_Database;
+      Lang : access Language_Handlers.Language_Handler_Record'Class) is
    begin
-      if Db.ALI_Handlers = null then
-         Db.ALI_Handlers := Handler;
-      else
-         Db.CPP_Handlers := Handler;
-      end if;
+      Db.Lang := Language_Handlers.Language_Handler (Lang);
    end Register_Language_Handler;
 
    ----------
@@ -676,13 +789,11 @@ package body Entities is
       return String_Hash (Full_Name (Key).all);
    end Hash;
 
-   -------------
-   -- Destroy --
-   -------------
+   -----------
+   -- Reset --
+   -----------
 
-   procedure Destroy (Db : in out Entities_Database) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Entities_Database_Record, Entities_Database);
+   procedure Reset (Db : Entities_Database) is
       Iter : Files_HTable.Iterator;
       File : Source_File;
    begin
@@ -696,10 +807,17 @@ package body Entities is
 
       Reset (Db.Files);
       Reset (Db.LIs);
+   end Reset;
 
-      if Manage_Global_Entities_Table then
-         Clear (Db.Entities);
-      end if;
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (Db : in out Entities_Database) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Entities_Database_Record, Entities_Database);
+   begin
+      Reset (Db);
       Unchecked_Free (Db);
    end Destroy;
 
@@ -723,6 +841,7 @@ package body Entities is
          S := new Source_File_Record'
            (Db             => Db,
             Timestamp      => Timestamp,
+            Unit_Name      => null,
             Name           => File,
             Entities       => Empty_Trie_Tree,
             Depends_On     => Null_Dependency_List,
@@ -730,7 +849,6 @@ package body Entities is
             All_Entities   => Empty_Trie_Tree,
             Scope_Tree_Computed => False,
             LI             => LI,
-            Is_Valid       => True,
             Ref_Count      => 1);
          Set (Db.Files, File, S);
 
@@ -748,10 +866,6 @@ package body Entities is
             Append (LI.Files, S);
          end if;
       end if;
-
-      --  ??? Should we reset this. Probably not, unless we have a parameter
-      --  that tells us to do so.
-      --  S.Is_Valid := True;
 
       return S;
    end Get_Or_Create;
@@ -817,15 +931,15 @@ package body Entities is
       end if;
    end Add;
 
-   ----------------------
-   -- Update_Timestamp --
-   ----------------------
+   --------------------
+   -- Set_Time_Stamp --
+   --------------------
 
-   procedure Update_Timestamp
+   procedure Set_Time_Stamp
      (LI : LI_File; Timestamp : Ada.Calendar.Time := VFS.No_Time) is
    begin
       LI.Timestamp := Timestamp;
-   end Update_Timestamp;
+   end Set_Time_Stamp;
 
    -------------------
    -- Get_Or_Create --
@@ -877,6 +991,17 @@ package body Entities is
       Entity.Kind := Kind;
    end Set_Kind;
 
+   --------------------
+   -- Set_Attributes --
+   --------------------
+
+   procedure Set_Attributes
+     (Entity     : Entity_Information;
+      Attributes : Entity_Attributes) is
+   begin
+      Entity.Attributes := Attributes;
+   end Set_Attributes;
+
    ----------------------
    -- Set_End_Of_Scope --
    ----------------------
@@ -914,7 +1039,7 @@ package body Entities is
    begin
       Assert (Assert_Me, Renaming_Of /= null, "Invalid renamed entity");
       Entity.Rename := Renaming_Of;
-      Add_All_Entities (Renaming_Of.Declaration.File, Entity);
+      Add_All_Entities (Entity.Declaration.File, Renaming_Of);
    end Set_Is_Renaming_Of;
 
    -------------------
@@ -936,8 +1061,11 @@ package body Entities is
    -----------------
 
    procedure Set_Type_Of
-     (Entity : Entity_Information; Is_Of_Type : Entity_Information)
+     (Entity     : Entity_Information;
+      Is_Of_Type : Entity_Information;
+      Is_Subtype : Boolean := False)
    is
+      pragma Unreferenced (Is_Subtype);
    begin
       Assert (Assert_Me, Is_Of_Type /= null, "Invalid type for entity");
       Append (Entity.Parent_Types, Is_Of_Type);
@@ -1015,8 +1143,7 @@ package body Entities is
    -------------------
 
    function Get_Or_Create
-     (Db           : Entities_Database;
-      Name         : String;
+     (Name         : String;
       File         : Source_File;
       Line         : Natural;
       Column       : Natural;
@@ -1025,7 +1152,6 @@ package body Entities is
       --  Speed up the search by checking in the file itself. However, we'll
       --  have to add the new entity to the global entities table as well.
       EL  : Entity_Information_List_Access;
-      EL2 : Entity_Information_List_Access;
       E   : Entity_Information;
       Is_Null : Boolean;
    begin
@@ -1047,6 +1173,7 @@ package body Entities is
          E := new Entity_Information_Record'
            (Name                  => new String'(Name),
             Kind                  => Unresolved_Entity_Kind,
+            Attributes            => (others => False),
             Declaration           => (File, Line, Column),
             Caller_At_Declaration => null,
             End_Of_Scope          => No_E_Reference,
@@ -1059,6 +1186,7 @@ package body Entities is
             Primitive_Subprograms => Null_Entity_Information_List,
             Child_Types           => Null_Entity_Information_List,
             References            => Null_Entity_Reference_List,
+            Is_Valid              => True,
             Ref_Count             => 1);
 
          Append (EL.all, E);
@@ -1067,21 +1195,8 @@ package body Entities is
             Insert (File.Entities, EL);
          end if;
 
-         if Manage_Global_Entities_Table then
-            EL2     := Get (Db.Entities, Name);
-            Is_Null := (EL2 = null);
-
-            if EL2 = null then
-               EL2 := new Entity_Information_List'
-                 (Null_Entity_Information_List);
-            end if;
-
-            Append (EL2.all, E);
-
-            if Is_Null then
-               Insert (Db.Entities, EL2);
-            end if;
-         end if;
+      elsif E /= null then
+         E.Is_Valid := True;
       end if;
 
       return E;
@@ -1130,7 +1245,6 @@ package body Entities is
    function Is_Subprogram (Entity : Entity_Information) return Boolean is
    begin
       return Is_Subprogram_Entity (Entity.Kind.Kind);
-
    end Is_Subprogram;
 
    -------------
@@ -1172,17 +1286,8 @@ package body Entities is
      (Db              : Entities_Database;
       Source_Filename : VFS.Virtual_File) return LI_Handler is
    begin
-      --  ??? Hard coded, needs extensions in Language_Handlers.Glide
-
-      if File_Extension (Source_Filename) = ".c"
-        or else File_Extension (Source_Filename) = ".h"
-        or else File_Extension (Source_Filename) = ".cc"
-        or else File_Extension (Source_Filename) = ".cpp"
-      then
-         return Db.CPP_Handlers;
-      else
-         return Db.ALI_Handlers;
-      end if;
+      return Get_LI_Handler_From_File
+        (Glide_Language_Handler (Db.Lang), Source_Filename);
    end Get_LI_Handler;
 
    -------------------
@@ -1204,14 +1309,26 @@ package body Entities is
    is
       F : Source_File;
       pragma Unreferenced (F);
+      H : LI_Handler;
    begin
       if File /= null then
-         F := Get_Source_Info
-           (Get_LI_Handler (File.Db, Get_Filename (File)),
-            Get_Filename (File),
-            File_Has_No_LI_Report);
+         H := Get_LI_Handler (File.Db, Get_Filename (File));
+
+         if H /= null then
+            F := Get_Source_Info
+              (H, Get_Filename (File), File_Has_No_LI_Report);
+         end if;
       end if;
    end Update_Xref;
+
+   -------------------
+   -- Is_Up_To_Date --
+   -------------------
+
+   function Is_Up_To_Date (File : Source_File) return Boolean is
+   begin
+      return Get_Time_Stamp (File) < File.Timestamp;
+   end Is_Up_To_Date;
 
    ------------------------
    -- Get_Declaration_Of --
@@ -1289,16 +1406,6 @@ package body Entities is
       end if;
    end Free;
 
-   -----------------------
-   -- Update_Time_Stamp --
-   -----------------------
-
-   procedure Update_Time_Stamp
-     (File : Source_File; Timestamp : Ada.Calendar.Time := VFS.No_Time) is
-   begin
-      File.Timestamp := Timestamp;
-   end Update_Time_Stamp;
-
    --------------------
    -- Get_Time_Stamp --
    --------------------
@@ -1307,6 +1414,16 @@ package body Entities is
    begin
       return File.Timestamp;
    end Get_Time_Stamp;
+
+   --------------------
+   -- Set_Time_Stamp --
+   --------------------
+
+   procedure Set_Time_Stamp
+     (File : Source_File; Timestamp : Ada.Calendar.Time) is
+   begin
+      File.Timestamp := Timestamp;
+   end Set_Time_Stamp;
 
    --------------
    -- Get_Kind --
@@ -1336,5 +1453,377 @@ package body Entities is
          return No_File_Location;
       end if;
    end Get_Location;
+
+   --------------------------
+   -- Is_Predefined_Entity --
+   --------------------------
+
+   function Is_Predefined_Entity
+     (Entity : Entity_Information) return Boolean is
+   begin
+      return Entity /= null
+        and then Entity.Declaration.File =
+          Get_Predefined_File (Entity.Declaration.File.Db);
+   end Is_Predefined_Entity;
+
+   --------------
+   -- Get_Kind --
+   --------------
+
+   function Get_Kind (Ref : Entity_Reference) return Reference_Kind is
+   begin
+      if Ref.Entity /= null
+        and then Ref.Entity.References /= Null_Entity_Reference_List
+        and then Ref.Index <= Last (Ref.Entity.References)
+      then
+         return Ref.Entity.References.Table (Ref.Index).Kind;
+
+      elsif Ref.Index = Entity_Reference_Arrays.Index_Type'Last then
+         return Declaration;
+
+      else
+         return Reference;
+      end if;
+   end Get_Kind;
+
+   --------------------
+   -- Kind_To_String --
+   --------------------
+
+   function Kind_To_String (Kind : E_Kind) return String is
+      function Get_Value (Typ, Obj : String) return String;
+      --  Return the appropriate string, depending on the properties of Kind
+      --  (generic type, generic object, type, object)
+
+      function Get_Value (Typ, Obj : String) return String is
+      begin
+         if Kind.Is_Type then
+            if Kind.Is_Generic then
+               return "generic " & Typ;
+            else
+               return Typ;
+            end if;
+         elsif Kind.Is_Generic then
+            return "generic " & Obj;
+         else
+            return Obj;
+         end if;
+      end Get_Value;
+
+   begin
+      --  ??? Would be nice to do it as a primitive subprogram of the
+      --  LI_Handlers, unfortunately they currently don't have access to
+      --  Glide_Intl for proper translations.
+
+      --  Special comments are put in place so that the script to find
+      --  translatable string find these as well
+
+      case Kind.Kind is
+         when Overloaded_Entity =>
+            return "???";
+         when Unresolved_Entity =>
+            return "unknown"; --  -"unknown"
+         when Access_Kind =>
+            return Get_Value ("access type", "pointer");
+            --  -"access type"  -"pointer"
+         when Array_Kind =>
+            return Get_Value ("array type", "array");
+            --  -"array type"   -"array"
+         when Boolean_Kind =>
+            return Get_Value ("boolean type", "boolean");
+            --  -"boolean type"  -"boolean"
+         when Class_Wide =>
+            return Get_Value ("class wide type", "class wide");
+            --  -"class wide type"   -"class wide"
+         when Class =>
+            return Get_Value ("class type", "class instance");
+            --  -"class type"    -"class instance"
+         when Decimal_Fixed_Point =>
+            return Get_Value
+              ("decimal fixed point type", "decimal fixed point");
+            --  -"decimal fixed point type"   -"decimal fixed point"
+         when Entry_Or_Entry_Family =>
+            return "entry";   --  -"entry";
+         when Enumeration_Literal =>
+            return "enumeration literal";
+            --  -"enumeration literal"
+         when Enumeration_Kind =>
+            return Get_Value ("enumeration type", "enumeration");
+            --  -"enumeration type"   -"enumeration"
+         when Exception_Entity =>
+            return "exception";  --  -"exception"
+         when Floating_Point =>
+            return Get_Value ("floating point type", "floating point");
+            --  -"floating point type"  -"floating point"
+         when Function_Or_Operator =>
+            return Get_Value ("function", "function"); --  -"function"
+         when Package_Kind =>
+            return Get_Value ("package", "package");  --  -"package"
+         when Procedure_Kind =>
+            return Get_Value ("procedure", "procedure");  --  -"procedure"
+         when Label_On_Block =>
+            return "block label";              --  -"block label"
+         when Label_On_Loop =>
+            return "loop label";               --  -"loop label"
+         when Label_On_Statement =>
+            return "statement label";          --  -"statement label"
+         when Macro =>
+            return "macro";  -- -"macro"
+         when Modular_Integer =>
+            return Get_Value ("unsigned integer type", "unsigned integer");
+            --  -"unsigned integer type"   -"unsigned integer"
+         when Named_Number =>
+            return "named number"; --  -"named number"
+         when Ordinary_Fixed_Point =>
+            return Get_Value ("fixed point type", "fixed point");
+            --  -"fixed point type"   -"fixed point"
+         when Reference =>
+            return "reference";  --  -"reference"
+         when Private_Type =>
+            return "generic formal";
+            --  -"generic formal"
+         when Protected_Kind =>
+            return Get_Value ("protected type", "protected object");
+            --  -"protected type"   -"protected object"
+         when Record_Kind =>
+            return Get_Value ("record type", "record");
+            --  -"record type"   -"record"
+         when Signed_Integer =>
+            return Get_Value ("integer type", "integer");
+            --  -"integer type"   -"integer"
+         when String_Kind =>
+            return Get_Value ("string type", "string");
+            --  -"string type"   -"string"
+         when Task_Kind =>
+            return Get_Value ("task type", "task");
+            --  -"task type"   -"task"
+         when Union =>
+            return "union";   --  -"union"
+      end case;
+   end Kind_To_String;
+
+   --------------------------
+   -- Attributes_To_String --
+   --------------------------
+
+   function Attributes_To_String (Attr : Entity_Attributes) return String is
+      Str   : String (1 .. 1024);
+      Index : Natural := Str'First;
+   begin
+      if Attr (Global) then
+         Str (Index .. Index + 6) := "global ";
+         Index := Index + 7;
+      else
+         Str (Index .. Index + 5) := "local ";
+         Index := Index + 6;
+      end if;
+
+      if Attr (Class_Static) or else Attr (Static_Local) then
+         Str (Index .. Index + 6) := "static ";
+         Index := Index + 7;
+      end if;
+
+      if Attr (Protected_Field) then
+         Str (Index .. Index + 9) := "protected ";
+         Index := Index + 10;
+      end if;
+
+      if Attr (Private_Field) then
+         Str (Index .. Index + 7) := "private ";
+         Index := Index + 8;
+      end if;
+
+      if Attr (Virtual) then
+         Str (Index .. Index + 7) := "virtual ";
+         Index := Index + 8;
+      end if;
+
+      if Attr (Abstract_Entity) then
+         Str (Index .. Index + 8) := "abstract ";
+         Index := Index + 9;
+      end if;
+
+      return Str (Str'First .. Index - 2);
+   end Attributes_To_String;
+
+   --------------------
+   -- Get_Attributes --
+   --------------------
+
+   function Get_Attributes
+     (Entity : Entity_Information) return Entity_Attributes is
+   begin
+      return Entity.Attributes;
+   end Get_Attributes;
+
+   ---------------------------
+   -- Parse_File_Constructs --
+   ---------------------------
+
+   procedure Parse_File_Constructs
+     (Handler      : access LI_Handler_Record;
+      Root_Project : Projects.Project_Type;
+      Languages    : access Language_Handlers.Language_Handler_Record'Class;
+      File_Name    : VFS.Virtual_File;
+      Result       : out Language.Construct_List)
+   is
+      pragma Unreferenced (Handler, Root_Project);
+      use Language;
+
+      Lang : constant Language.Language_Access :=
+        Get_Language_From_File (Glide_Language_Handler (Languages), File_Name);
+
+   begin
+      --  Call the language specific syntax analyzer
+
+      Parse_File_Constructs (Lang, File_Name, Result);
+   end Parse_File_Constructs;
+
+   ---------
+   -- "<" --
+   ---------
+
+   function "<" (Ref1, Ref2 : Entity_Reference) return Boolean is
+   begin
+      return Get_Location (Ref1) < Get_Location (Ref2);
+   end "<";
+
+   ---------
+   -- "<" --
+   ---------
+
+   function "<" (Loc1, Loc2 : File_Location) return Boolean is
+   begin
+      if Loc1.File /= Loc2.File then
+         return Get_Filename (Loc1.File) < Get_Filename (Loc2.File);
+      elsif Loc1.Line < Loc2.Line then
+         return True;
+      elsif Loc1.Line = Loc2.Line
+        and then Loc1.Column < Loc2.Column
+      then
+         return True;
+      else
+         return False;
+      end if;
+   end "<";
+
+   ---------
+   -- "<" --
+   ---------
+
+   function "<" (Entity1, Entity2 : Entity_Information) return Boolean is
+   begin
+      return Entity1.Name.all < Entity2.Name.all;
+   end "<";
+
+   ------------------------------
+   -- Declaration_As_Reference --
+   ------------------------------
+
+   function Declaration_As_Reference
+     (Entity : Entity_Information) return Entity_Reference
+   is
+   begin
+      return (Entity, Entity_Reference_Arrays.Index_Type'Last);
+   end Declaration_As_Reference;
+
+   -------------------
+   -- Set_Unit_Name --
+   -------------------
+
+   procedure Set_Unit_Name (File : Source_File; Name : String) is
+   begin
+      Free (File.Unit_Name);
+      File.Unit_Name := new String'(Name);
+   end Set_Unit_Name;
+
+   -------------------
+   -- Get_Unit_Name --
+   -------------------
+
+   function Get_Unit_Name (File : Source_File) return String is
+   begin
+      if File.Unit_Name = null then
+         return "";
+      else
+         return File.Unit_Name.all;
+      end if;
+   end Get_Unit_Name;
+
+   ---------
+   -- "<" --
+   ---------
+
+   function "<" (Source1, Source2 : Source_File) return Boolean is
+   begin
+      return Source1.Name < Source2.Name;
+   end "<";
+
+   ----------
+   -- Sort --
+   ----------
+
+   procedure Sort
+     (Sources  : Source_File_Arrays.Instance;
+      Criteria : Source_File_Sort_Criteria)
+   is
+      First : constant Integer := Integer (Source_File_Arrays.First - 1);
+      Tmp   : Source_File;
+
+      procedure Move (From, To : Natural);
+      function Lt   (Op1, Op2 : Natural) return Boolean;
+
+      procedure Move (From, To : Natural) is
+      begin
+         if From = 0 then
+            Sources.Table (Source_File_Arrays.Index_Type (To + First)) := Tmp;
+         elsif To = 0 then
+            Tmp :=
+              Sources.Table (Source_File_Arrays.Index_Type (From + First));
+         else
+            Sources.Table (Source_File_Arrays.Index_Type (To + First)) :=
+              Sources.Table (Source_File_Arrays.Index_Type (From + First));
+         end if;
+      end Move;
+
+      function Lt (Op1, Op2 : Natural) return Boolean is
+         S1, S2 : Source_File;
+      begin
+         if Op1 = 0 then
+            S1 := Tmp;
+         else
+            S1 := Sources.Table (Source_File_Arrays.Index_Type (Op1 + First));
+         end if;
+
+         if Op2 = 0 then
+            S2 := Tmp;
+         else
+            S2 := Sources.Table (Source_File_Arrays.Index_Type (Op2 + First));
+         end if;
+
+         case Criteria is
+            when Source_File_Sort_Criteria'(Full_Name) =>
+               return S1 < S2;
+            when Source_File_Sort_Criteria'(Base_Name) =>
+               return Base_Name (S1.Name) < Base_Name (S2.Name);
+            when Source_File_Sort_Criteria'(Unit_Name) =>
+               if S1.Unit_Name = null then
+                  if S2.Unit_Name = null then
+                     return Base_Name (S1.Name) < Base_Name (S2.Name);
+                  else
+                     return True;
+                  end if;
+               elsif S2.Unit_Name = null then
+                  return False;
+               else
+                  return S1.Unit_Name.all < S2.Unit_Name.all;
+               end if;
+         end case;
+      end Lt;
+
+      package Sort is new GNAT.Heap_Sort_G (Move, Lt);
+   begin
+      Sort.Sort (Integer (Last (Sources)) - First);
+   end Sort;
 
 end Entities;

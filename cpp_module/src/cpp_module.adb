@@ -24,8 +24,8 @@ with Glide_Kernel.Project;     use Glide_Kernel.Project;
 with Language_Handlers.Glide;  use Language_Handlers.Glide;
 with Language.C;               use Language.C;
 with Language.Cpp;             use Language.Cpp;
-with Src_Info;                 use Src_Info;
-with Src_Info.CPP;             use Src_Info.CPP;
+with Entities;                 use Entities;
+with CPP_Parser;               use CPP_Parser;
 with Traces;                   use Traces;
 with Ada.Exceptions;           use Ada.Exceptions;
 with Ada.Unchecked_Deallocation;
@@ -55,7 +55,7 @@ package body Cpp_Module is
    C_Indentation_Level       : Param_Spec_Int;
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (CPP_LI_Handler_Record'Class, CPP_LI_Handler);
+     (LI_Handler_Record'Class, LI_Handler);
 
    procedure Project_View_Changed
      (Kernel : access Kernel_Handle_Record'Class);
@@ -136,10 +136,8 @@ package body Cpp_Module is
                    & " C/C++ browsing is disabled"), Mode => Error);
       end if;
 
-      Reset
-        (CPP_LI_Handler
-         (Get_LI_Handler_By_Name (Handler, CPP_LI_Handler_Name)),
-         Get_Project (Kernel));
+      CPP_Parser.On_Project_View_Changed
+        (Get_LI_Handler_By_Name (Handler, CPP_LI_Handler_Name));
 
    exception
       when E : others =>
@@ -155,7 +153,8 @@ package body Cpp_Module is
    is
       Handler : constant Glide_Language_Handler := Glide_Language_Handler
         (Get_Language_Handler (Kernel));
-      LI      : CPP_LI_Handler := new Src_Info.CPP.CPP_LI_Handler_Record;
+      LI      : LI_Handler := Create_CPP_Handler
+        (Get_Database (Kernel), Project_Registry (Get_Registry (Kernel)));
       Msg     : constant String := Set_Executables (LI);
 
    begin
@@ -170,13 +169,13 @@ package body Cpp_Module is
            (Kernel, Project_View_Changed_Hook, Project_View_Changed'Access);
       end if;
 
-      Reset (LI);
-      Register_LI_Handler (Handler, CPP_LI_Handler_Name, LI_Handler (LI));
+      On_Project_View_Changed (LI);
+      Register_LI_Handler (Handler, CPP_LI_Handler_Name, LI);
 
       Register_Language (Handler, "c", C_Lang);
       Set_Language_Handler
         (Handler, "c",
-         LI                  => LI_Handler (LI));
+         LI                  => LI);
       Register_Default_Language_Extension
         (Get_Registry (Kernel),
          Language_Name       => "c",
@@ -186,7 +185,7 @@ package body Cpp_Module is
       Register_Language (Handler, "c++", Cpp_Lang);
       Set_Language_Handler
         (Handler, "c++",
-         LI                  => LI_Handler (LI));
+         LI                  => LI);
       Register_Default_Language_Extension
         (Get_Registry (Kernel),
          Language_Name       => "c++",

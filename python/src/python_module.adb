@@ -43,7 +43,7 @@ with System;                   use System;
 with Traces;                   use Traces;
 with String_Utils;             use String_Utils;
 with Projects;                 use Projects;
-with Src_Info.Queries;         use Src_Info.Queries;
+with Entities;                 use Entities;
 with VFS;                      use VFS;
 with Interactive_Consoles;
 with HTables;
@@ -801,24 +801,25 @@ package body Python_Module is
             Set_Return_Value
               (Data,
                Get_Name (Entity) & ':'
-               & Base_Name (Get_Declaration_File_Of (Entity).all)
+               & Base_Name (Get_Filename
+                              (Get_File (Get_Declaration_Of (Entity))))
                & ':'
-               & Image (Get_Declaration_Line_Of (Entity)) & ':'
-               & Image (Get_Declaration_Column_Of (Entity)));
+               & Image (Get_Line (Get_Declaration_Of (Entity))) & ':'
+               & Image (Get_Column (Get_Declaration_Of (Entity))));
          end if;
 
       elsif Command = "__hash__" then
          Set_Return_Value
            (Data, Integer
             (Hash (Get_Name (Entity)
-                   & Full_Name (Get_Declaration_File_Of (Entity).all).all
-                   & Image (Get_Declaration_Line_Of (Entity))
-                   & Image (Get_Declaration_Column_Of (Entity)))));
+                   & Full_Name (Get_Filename
+                       (Get_File (Get_Declaration_Of (Entity)))).all
+                   & Image (Get_Line (Get_Declaration_Of (Entity)))
+                   & Image (Get_Column (Get_Declaration_Of (Entity))))));
 
       elsif Command = "__cmp__" then
          declare
             Entity2 : constant Entity_Information := Get_Data (Data, 2);
-            Line1, Line2 : Integer;
             Name1 : constant String := Get_Name (Entity);
             Name2 : constant String := Get_Name (Entity2);
          begin
@@ -826,31 +827,15 @@ package body Python_Module is
                Set_Return_Value (Data, -1);
             elsif Name1 = Name2 then
                declare
-                  File1 : constant String :=
-                    Full_Name (Get_Declaration_File_Of (Entity).all).all;
-                  File2 : constant String :=
-                    Full_Name (Get_Declaration_File_Of (Entity2).all).all;
+                  File1 : constant Virtual_File := Get_Filename
+                    (Get_File (Get_Declaration_Of (Entity)));
+                  File2 : constant Virtual_File := Get_Filename
+                    (Get_File (Get_Declaration_Of (Entity)));
                begin
                   if File1 < File2 then
                      Set_Return_Value (Data, -1);
                   elsif File1 = File2 then
-                     Line1 := Get_Declaration_Line_Of (Entity);
-                     Line2 := Get_Declaration_Line_Of (Entity2);
-                     if Line1 < Line2 then
-                        Set_Return_Value (Data, -1);
-                     elsif Line1 = Line2 then
-                        Line1 := Get_Declaration_Column_Of (Entity);
-                        Line2 := Get_Declaration_Column_Of (Entity2);
-                        if Line1 < Line2 then
-                           Set_Return_Value (Data, -1);
-                        elsif Line1 = Line2 then
-                           Set_Return_Value (Data, 0);
-                        else
-                           Set_Return_Value (Data, 1);
-                        end if;
-                     else
-                        Set_Return_Value (Data, 1);
-                     end if;
+                     Set_Return_Value (Data, 0);
                   else
                      Set_Return_Value (Data, 1);
                   end if;

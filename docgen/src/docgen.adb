@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2003                       --
+--                     Copyright (C) 2001-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -34,6 +34,8 @@ with Language;                  use Language;
 package body Docgen is
 
    Me : constant Debug_Handle := Create ("Docgen");
+
+   function String_Hash is new HTables.Hash (HTable_Header);
 
    -------------------------
    -- Docgen_Backend body --
@@ -87,10 +89,10 @@ package body Docgen is
       end Set_Last_Line;
 
       -----------------
-      -- Format_File --
+      -- Format_Code --
       -----------------
 
-      procedure Format_File
+      procedure Format_Code
         (B                : access Backend'Class;
          Kernel           : access Kernel_Handle_Record'Class;
          File             : File_Descriptor;
@@ -100,18 +102,14 @@ package body Docgen is
          Entity_Line      : Natural;
          Line_In_Body     : Natural;
          Is_Body          : Boolean;
-         Info             : Doc_Info_Base'Class;
+         Options          : All_Options;
+         Source_File_List : Type_Source_File_Table.HTable;
          Level            : Natural;
          Indent           : Natural)
       is
-         LI_Unit          : LI_File_Ptr renames Info.Doc_LI_Unit;
-         Source_File_List : Type_Source_File_List.List renames
-           Info.Doc_File_List;
-         Link_All         : Boolean renames Info.Doc_Info_Options.Link_All;
-         Process_Body     : Boolean renames
-           Info.Doc_Info_Options.Process_Body_Files;
+--         Is_Spec : constant Boolean := Is_Spec_File (Kernel, File_Name);
 
-         function Is_Operator (Op : String) return Boolean;
+--         function Is_Operator (Op : String) return Boolean;
          --  Indicates if op is a subprogram which overloads an operator
 
          function Callback
@@ -127,36 +125,34 @@ package body Docgen is
          --  Is_Operator  --
          -------------------
 
-         function Is_Operator (Op : String) return Boolean is
-            use List_Reference_In_File;
-            Ref_List_Info : List_Reference_In_File.List_Node;
-            Ref           : List_Reference_In_File.Data_Access;
-            Kind          : E_Kinds;
-
-         begin
-            --  Can this function be simplified ???
-
-            Ref_List_Info := List_Reference_In_File.First (List_Ref_In_File);
-
-            while Ref_List_Info /= List_Reference_In_File.Null_Node loop
-               Ref := List_Reference_In_File.Data_Ref (Ref_List_Info);
-
-               if Ref.Name /= null and then Op = Ref.Name.all then
-                  Kind := Get_Kind (Ref.Entity.all).Kind;
-
-                  if Kind = Function_Or_Operator
-                    or else Kind = Procedure_Kind
-                  then
-                     --  The entity of this reference overloads an operator
-                     return True;
-                  end if;
-               end if;
-
-               Ref_List_Info := List_Reference_In_File.Next (Ref_List_Info);
-            end loop;
-
-            return False;
-         end Is_Operator;
+--           function Is_Operator (Op : String) return Boolean is
+--              use List_Reference_In_File;
+--              Ref_List_Info : List_Reference_In_File.List_Node;
+--              Ref           : List_Reference_In_File.Data_Access;
+--
+--           begin
+--              --  Can this function be simplified ???
+--
+--            Ref_List_Info := List_Reference_In_File.First (List_Ref_In_File);
+--
+--              while Ref_List_Info /= List_Reference_In_File.Null_Node loop
+--                 Ref := List_Reference_In_File.Data_Ref (Ref_List_Info);
+--
+--                 if Get_Name (Ref.Entity) = Op then
+--                    case Get_Kind (Ref.Entity).Kind is
+--                       when Function_Or_Operator | Procedure_Kind =>
+--                      --  The entity of this reference overloads an operator
+--                          return True;
+--                       when others  =>
+--                          return False;
+--                    end case;
+--                 end if;
+--
+--                Ref_List_Info := List_Reference_In_File.Next (Ref_List_Info);
+--              end loop;
+--
+--              return False;
+--           end Is_Operator;
 
          --------------
          -- Callback --
@@ -194,55 +190,54 @@ package body Docgen is
                      Entity_Line);
 
                when String_Text =>
-                  --  In this context, we must detect overriden operators
-                  if Text (Sloc_Start.Index) = '"'
-                    and then
-                      Text (Sloc_End.Index) = '"'
-                    and then
-                      Sloc_Start.Index + 1 <= Sloc_End.Index - 1
-                  then
-                     if (not Is_Spec_File (Kernel, File_Name)
-                         and then
-                        --  For a body file, we must search the word in the
-                        --  list of reference that has been made before
-                        --  because the body is formated in one piece and we
-                        --  don't have any information about this word
-                           Is_Operator
-                             (Text (Sloc_Start.Index + 1 ..
-                                      Sloc_End.Index - 1)))
-                       or else
-                         (Is_Spec_File (Kernel, File_Name)
-                           --  For a spec file, we know immediatly the nature
-                           --  of the word
-                          and then Info in Doc_Info_Subprogram'Class
-                          and then
-                            Text (Sloc_Start.Index + 1 .. Sloc_End.Index - 1) =
-                            Get_Name (Doc_Info_Subprogram
-                                        (Info).Subprogram_Entity.Entity))
-                     then
-                        --  Function which overrides an operator
-                           Format_Identifier
-                             (B,
-                              List_Ref_In_File,
-                              Sloc_Start.Index + 1,
-                              Sloc_Start.Line,
-                              Sloc_Start.Column,
-                              Sloc_End.Index - 1,
-                              Sloc_End.Line,
-                              Kernel,
-                              File,
-                              LI_Unit,
-                              Text,
-                              File_Name,
-                              Entity_Line,
-                              Line_In_Body,
-                              Source_File_List,
-                              Link_All,
-                              Is_Body,
-                              Process_Body,
-                              Level,
-                              Indent);
-                     else
+--                    --  In this context, we must detect overriden operators
+--                    if Text (Sloc_Start.Index) = '"'
+--                      and then
+--                        Text (Sloc_End.Index) = '"'
+--                      and then
+--                        Sloc_Start.Index + 1 <= Sloc_End.Index - 1
+--                    then
+--                       if (not Is_Spec
+--                           and then
+--                          --  For a body file, we must search the word in the
+--                          --  list of reference that has been made before
+--                         --  because the body is formated in one piece and we
+--                          --  don't have any information about this word
+--                             Is_Operator
+--                               (Text (Sloc_Start.Index + 1 ..
+--                                        Sloc_End.Index - 1)))
+--                         or else
+--                           (Is_Spec
+--                          --  For a spec file, we know immediatly the nature
+--                             --  of the word
+--                            and then Info in Doc_Info_Subprogram'Class
+--                            and then
+--                         Text (Sloc_Start.Index + 1 .. Sloc_End.Index - 1) =
+--                              Get_Name (Doc_Info_Subprogram
+--                                          (Info).Subprogram_Entity.Entity))
+--                       then
+--                          --  Function which overrides an operator
+--                          Format_Identifier
+--                            (B,
+--                             List_Ref_In_File,
+--                             Sloc_Start.Index + 1,
+--                             Sloc_Start.Line,
+--                             Sloc_Start.Column,
+--                             Sloc_End.Index - 1,
+--                             Sloc_End.Line,
+--                             Kernel,
+--                             File,
+--                             Text,
+--                             File_Name,
+--                             Entity_Line,
+--                             Line_In_Body,
+--                             Source_File_List,
+--                             Options.Link_All,
+--                             Is_Body,
+--                             Options.Process_Body_Files,
+--                             Level,
+--                             Indent);
+--                       else
                         --  Simple string
                         Format_String
                           (B,
@@ -253,19 +248,20 @@ package body Docgen is
                            Sloc_End.Index,
                            Sloc_End.Line,
                            Entity_Line);
-                     end if;
-                  else
-                     --  Simple string
-                     Format_String
-                       (B,
-                        File,
-                        Text,
-                        Sloc_Start.Index,
-                        Sloc_Start.Line,
-                        Sloc_End.Index,
-                        Sloc_End.Line,
-                        Entity_Line);
-                  end if;
+--                       end if;
+--                    else
+--                       --  Simple string
+--                       Format_String
+--                         (B,
+--                          File,
+--                          Text,
+--                          Sloc_Start.Index,
+--                          Sloc_Start.Line,
+--                          Sloc_End.Index,
+--                          Sloc_End.Line,
+--                          Entity_Line);
+--                    end if;
+
                when Character_Text =>
                   Format_Character
                     (B,
@@ -278,8 +274,6 @@ package body Docgen is
                      Entity_Line);
 
                when Identifier_Text =>
---                    Trace (Me, "Id :: "
---                      & Text (Sloc_Start.Index .. Sloc_End.Index));
                   if Text (Sloc_Start.Index .. Sloc_End.Index) /= ";" then
                      --  ???  This test is necessary because Parse_Entity
                      --  consider the last ";" of the text as an identifier.
@@ -297,15 +291,14 @@ package body Docgen is
                         Sloc_End.Line,
                         Kernel,
                         File,
-                        LI_Unit,
                         Text,
                         File_Name,
                         Entity_Line,
                         Line_In_Body,
                         Source_File_List,
-                        Link_All,
+                        Options.Link_All,
                         Is_Body,
-                        Process_Body,
+                        Options.Process_Body_Files,
                         Level,
                         Indent);
                   end if;
@@ -327,8 +320,7 @@ package body Docgen is
       exception
          when E : others =>
             Trace (Me, "Unexpected exception: " & Exception_Information (E));
-      end Format_File;
-
+      end Format_Code;
    end Docgen_Backend;
 
    ---------------------
@@ -344,12 +336,11 @@ package body Docgen is
       End_Index           : Natural;
       Kernel              : access Kernel_Handle_Record'Class;
       File                : File_Descriptor;
-      LI_Unit             : LI_File_Ptr;
       Text                : String;
       File_Name           : VFS.Virtual_File;
       Entity_Line         : Natural;
       Line_In_Body        : in out Natural;
-      Source_File_List    : Type_Source_File_List.List;
+      Source_File_List    : Type_Source_File_Table.HTable;
       Link_All            : Boolean;
       Is_Body             : Boolean;
       Process_Body        : Boolean;
@@ -373,7 +364,7 @@ package body Docgen is
 
       procedure Get_Declaration
         (Text             : String;
-         E_I              : in out Src_Info.Queries.Entity_Information;
+         E_I              : in out Entity_Information;
          Line             : Natural;
          Column           : Natural;
          E_L_I            : in List_Reference_In_File.List_Node;
@@ -384,7 +375,7 @@ package body Docgen is
 
       procedure Get_Declaration
         (Text             : String;
-         E_I              : in out Src_Info.Queries.Entity_Information;
+         E_I              : in out Entity_Information;
          Line             : Natural;
          Column           : Natural;
          E_L_I            : in List_Reference_In_File.List_Node;
@@ -396,11 +387,11 @@ package body Docgen is
          Ref := List_Reference_In_File.Data_Ref (E_L_I);
 
          if Ref.Line = Line
-           and then To_Lower (Text) = Ref.Name.all
+           and then To_Lower (Text) = Get_Name (Ref.Entity)
            and then Ref.Column = Column
          then
             Result := True;
-            E_I := Ref.Entity.all;
+            E_I := Ref.Entity;
 
             if Get_Kind (E_I).Is_Abstract then
                Entity_Abstract := True;
@@ -434,58 +425,54 @@ package body Docgen is
             Loc_End := End_Index;
          end if;
 
-         if LI_Unit /= No_LI_File then
-            --  We search the declaration of the entity
-            --  (which is an identifier)
+         --  We search the declaration of the entity
+         --  (which is an identifier)
 
-            Result := False;
-            Entity_Abstract := False;
-            Ref_List_Info
-              := List_Reference_In_File.First (List_Ref_In_File);
-            Ref_List_Info_Prec := List_Reference_In_File.Null_Node;
+         Result := False;
+         Entity_Abstract := False;
+         Ref_List_Info := List_Reference_In_File.First (List_Ref_In_File);
+         Ref_List_Info_Prec := List_Reference_In_File.Null_Node;
 
-            --  Text(Loc_Start .. Loc_End) is a reference.
-            --  We search it in the list we have made before in order to
-            --  find its declaration.
-            while Ref_List_Info /= List_Reference_In_File.Null_Node loop
-               Get_Declaration
-                 (Text (Loc_Start .. Loc_End),
-                  Entity_Info,
-                  Start_Line + Entity_Line - 1,
-                  Start_Column + Loc_Start - Start_Index + Indentation,
-                  Ref_List_Info,
-                  Result,
-                  Entity_Abstract);
+         --  Text(Loc_Start .. Loc_End) is a reference.
+         --  We search it in the list we have made before in order to
+         --  find its declaration.
+         while Ref_List_Info /= List_Reference_In_File.Null_Node loop
+            Get_Declaration
+              (Text (Loc_Start .. Loc_End),
+               Entity_Info,
+               Start_Line + Entity_Line - 1,
+               Start_Column + Loc_Start - Start_Index + Indentation,
+               Ref_List_Info,
+               Result,
+               Entity_Abstract);
 
-               if Result then
-                  List_Reference_In_File.Remove_Nodes
-                    (List_Ref_In_File, Ref_List_Info_Prec,
-                     Ref_List_Info);
-               end if;
-
-               exit when Is_Body;
-
-               --  For body files, no loop because references in the list
-               --  are sorted. So the first element met in list is the right
-               --  one (for this elements are removed after being met).
-
-               exit when Result;
-
-               Ref_List_Info_Prec := Ref_List_Info;
-               Ref_List_Info := List_Reference_In_File.Next (Ref_List_Info);
-            end loop;
-
-            --  We create a link on the declaration for this entity
             if Result then
-               Docgen_Backend.Format_Link
-                 (B,
-                  Start_Index, Start_Line, Start_Column, End_Index,
-                  Kernel, File, LI_Unit, Text, File_Name, Entity_Line,
-                  Line_In_Body, Source_File_List, Link_All, Is_Body,
-                  Process_Body, Loc_End, Loc_Start, Entity_Info,
-                  Entity_Abstract);
+               List_Reference_In_File.Remove_Nodes
+                 (List_Ref_In_File, Ref_List_Info_Prec,
+                  Ref_List_Info);
             end if;
 
+            exit when Is_Body;
+
+            --  For body files, no loop because references in the list
+            --  are sorted. So the first element met in list is the right
+            --  one (for this elements are removed after being met).
+
+            exit when Result;
+
+            Ref_List_Info_Prec := Ref_List_Info;
+            Ref_List_Info := List_Reference_In_File.Next (Ref_List_Info);
+         end loop;
+
+         --  We create a link on the declaration for this entity
+         if Result then
+            Docgen_Backend.Format_Link
+              (B,
+               Start_Index, Start_Line, Start_Column, End_Index,
+               Kernel, File, Text, File_Name, Entity_Line,
+               Line_In_Body, Source_File_List, Link_All, Is_Body,
+               Process_Body, Loc_End, Loc_Start, Entity_Info,
+               Entity_Abstract);
          end if;
 
          if Point_In_Column > 0 then
@@ -493,21 +480,6 @@ package body Docgen is
          end if;
       end loop;
    end Format_All_Link;
-
-   ----------------------
-   -- Compare_Elements --
-   ----------------------
-
-   function Compare_Elements (X, Y : Source_File_Information) return Boolean is
-   begin
-      if X.File_Name = Y.File_Name then
-         --  ??? Strange test: if one is the spec, the other is also the spec
-         --  return Is_Spec_File (Kernel, X.File_Name);
-         return True;
-      else
-         return Full_Name (X.File_Name).all < Full_Name (Y.File_Name).all;
-      end if;
-   end Compare_Elements;
 
    ---------------------------
    -- Compare_Elements_Name --
@@ -525,22 +497,6 @@ package body Docgen is
       end if;
    end Compare_Elements_Name;
 
-   ------------------
-   -- Compare_Name --
-   ------------------
-
-   function Compare_Name
-     (X, Y : Entity_Handle) return Boolean is
-   begin
-      if X /= null and Y /= null then
-         return Get_Name (X.all) < Get_Name (Y.all);
-      else
-         --  This case normally never happens
-
-         return X /= null;
-      end if;
-   end Compare_Name;
-
    ---------------------------
    -- Compare_Elements_Line --
    ---------------------------
@@ -548,8 +504,8 @@ package body Docgen is
    function Compare_Elements_Line
      (X, Y : Entity_List_Information) return Boolean is
    begin
-      return Get_Declaration_Line_Of (X.Entity) <
-        Get_Declaration_Line_Of (Y.Entity);
+      return Get_Line (Get_Declaration_Of (X.Entity)) <
+        Get_Line (Get_Declaration_Of (Y.Entity));
    end Compare_Elements_Line;
 
    -----------------------------
@@ -559,8 +515,8 @@ package body Docgen is
    function Compare_Elements_Column
      (X, Y : Entity_List_Information) return Boolean is
    begin
-      return Get_Declaration_Column_Of (X.Entity) <
-        Get_Declaration_Column_Of (Y.Entity);
+      return Get_Column (Get_Declaration_Of (X.Entity)) <
+        Get_Column (Get_Declaration_Of (Y.Entity));
    end Compare_Elements_Column;
 
    -----------------------------
@@ -570,8 +526,8 @@ package body Docgen is
    function Compare_Elements_Column
      (X, Y : Reference_List_Information) return Boolean is
    begin
-      return Get_Declaration_Column_Of (X.Entity) <
-        Get_Declaration_Column_Of (Y.Entity);
+      return Get_Column (Get_Declaration_Of (X.Entity)) <
+        Get_Column (Get_Declaration_Of (Y.Entity));
    end Compare_Elements_Column;
 
    ---------------------------
@@ -602,22 +558,13 @@ package body Docgen is
 
          while Node /= Type_Reference_List.Null_Node loop
             Data := Type_Reference_List.Data_Ref (Node);
+            Ref (Data.Entity);
             Type_Reference_List.Append
-              (List_Out, (Copy (Data.Entity), Data.Set_Link));
+              (List_Out, (Data.Entity, Data.Set_Link));
             Node := Type_Reference_List.Next (Node);
          end loop;
       end if;
    end Duplicate;
-
-   -------------------------
-   -- Compare_Tagged_Name --
-   -------------------------
-
-   function Compare_Tagged_Name
-     (X, Y : Tagged_Element) return Boolean is
-   begin
-      return Get_Name (X.Me.all) < Get_Name (Y.Me.all);
-   end Compare_Tagged_Name;
 
    -----------------------------------------
    -- Compare_Elements_By_Line_And_Column --
@@ -630,257 +577,6 @@ package body Docgen is
       (X.Line = Y.Line and then X.Column < Y.Column);
    end Compare_Elements_By_Line_And_Column;
 
-   ------------------
-   -- Find_In_List --
-   ------------------
-
-   function Find_In_List
-     (List : List_Entity_Handle.List;
-      Info : Entity_Information) return Entity_Handle
-   is
-      use List_Entity_Handle;
-      Node   : List_Entity_Handle.List_Node;
-      Entity : Entity_Handle;
-   begin
-      Node := List_Entity_Handle.First (List);
-
-      while Node /= List_Entity_Handle.Null_Node loop
-         Entity := List_Entity_Handle.Data (Node);
-
-         if Entity /= null then
-            if Is_Equal (Entity.all, Info) then
-               return Entity;
-            end if;
-         end if;
-
-         Node := List_Entity_Handle.Next (Node);
-      end loop;
-
-      return null;
-   end Find_In_List;
-
-   ---------------
-   -- Add_Child --
-   ---------------
-
-   procedure Add_Child
-     (List   : in out Type_List_Tagged_Element.List;
-      Target : in Entity_Handle;
-      Patch  : in Entity_Handle)
-   is
-      use Type_List_Tagged_Element;
-      Node        : Type_List_Tagged_Element.List_Node;
-      Follow_Node : Type_List_Tagged_Element.List_Node;
-      Found       : Boolean;
-      Tag_Elem    : Tagged_Element_Handle;
-      Element     : Type_List_Tagged_Element.Data_Access;
-
-   begin
-      Found       := False;
-      Node        := Type_List_Tagged_Element.First (List);
-      Follow_Node := Type_List_Tagged_Element.Null_Node;
-
-      if Node /= Type_List_Tagged_Element.Null_Node then
-         Element := Data_Ref (Node);
-
-         --  Work on the first node first
-
-         if Is_Equal (Element.Me.all, Target.all) then
-            --  Target found: update if needed and exit
-
-            if Find_In_List (Element.My_Children, Patch.all) = null then
-               Tag_Elem := new Tagged_Element'(Element.all);
-               List_Entity_Handle.Append (Tag_Elem.My_Children, Patch);
-               Tag_Elem.Number_Of_Children := Tag_Elem.Number_Of_Children + 1;
-               Type_List_Tagged_Element.Remove_Nodes (List, Follow_Node, Node);
-               Type_List_Tagged_Element.Append (List, Tag_Elem.all);
-            end if;
-
-            Found := True;
-         end if;
-
-         --  Work on the other element of the list
-
-         if not Found then
-            Follow_Node := Node;
-            Node := Type_List_Tagged_Element.Next (Node);
-
-            while Node /= Type_List_Tagged_Element.Null_Node loop
-               Element := Data_Ref (Node);
-
-               if Is_Equal (Element.Me.all, Target.all) then
-                  --  Target found: update if needed and exit
-
-                  if Find_In_List (Element.My_Children, Patch.all) = null then
-                     Tag_Elem := new Tagged_Element'(Element.all);
-                     List_Entity_Handle.Append (Tag_Elem.My_Children, Patch);
-                     Tag_Elem.Number_Of_Children :=
-                       Tag_Elem.Number_Of_Children + 1;
-                     Type_List_Tagged_Element.Remove_Nodes
-                       (List, Follow_Node, Node);
-                     Type_List_Tagged_Element.Append (List, Tag_Elem.all);
-                  end if;
-
-                  Found := True;
-
-               else
-                  Follow_Node := Node;
-                  Node := Type_List_Tagged_Element.Next (Node);
-               end if;
-
-               exit when Found;
-            end loop;
-         end if;
-      end if;
-   end Add_Child;
-
-   ----------------
-   -- Add_Parent --
-   ----------------
-
-   procedure Add_Parent
-     (List   : in out Type_List_Tagged_Element.List;
-      Target : in Entity_Handle;
-      Patch  : in Entity_Handle)
-   is
-      use Type_List_Tagged_Element;
-      Node        : Type_List_Tagged_Element.List_Node;
-      Follow_Node : Type_List_Tagged_Element.List_Node;
-      Found       : Boolean;
-      Tag_Elem    : Tagged_Element_Handle;
-      Element     : Type_List_Tagged_Element.Data_Access;
-
-   begin
-      Found       := False;
-      Node        := Type_List_Tagged_Element.First (List);
-      Follow_Node := Type_List_Tagged_Element.Null_Node;
-
-      if Node /= Type_List_Tagged_Element.Null_Node then
-         Element := Data_Ref (Node);
-
-         --  Work on the first node first
-
-         if Is_Equal (Element.Me.all, Target.all) then
-            --  Target found: update if needed and exit
-
-            if Find_In_List (Element.My_Parents, Patch.all) = null then
-               Tag_Elem := new Tagged_Element'(Element.all);
-               List_Entity_Handle.Append (Tag_Elem.My_Parents, Patch);
-               Tag_Elem.Number_Of_Parents := Tag_Elem.Number_Of_Parents + 1;
-               Type_List_Tagged_Element.Remove_Nodes (List, Follow_Node, Node);
-               Type_List_Tagged_Element.Append (List, Tag_Elem.all);
-            end if;
-
-            Found := True;
-         end if;
-
-         --  Work on the other element of the list
-
-         if not Found then
-            Follow_Node := Node;
-            Node := Type_List_Tagged_Element.Next (Node);
-
-            while Node /= Type_List_Tagged_Element.Null_Node loop
-               Element := Data_Ref (Node);
-
-               if Is_Equal (Element.Me.all, Target.all) then
-                  if Find_In_List (Element.My_Parents, Patch.all) = null then
-                     --  Target found: update if needed and exit
-
-                     Tag_Elem := new Tagged_Element'(Element.all);
-                     List_Entity_Handle.Append (Tag_Elem.My_Parents, Patch);
-                     Tag_Elem.Number_Of_Parents :=
-                       Tag_Elem.Number_Of_Parents + 1;
-                     Type_List_Tagged_Element.Remove_Nodes
-                       (List, Follow_Node, Node);
-                     Type_List_Tagged_Element.Append (List, Tag_Elem.all);
-                  end if;
-
-                  Found := True;
-
-               else
-                  Follow_Node := Node;
-                  Node := Type_List_Tagged_Element.Next (Node);
-               end if;
-
-               exit when Found;
-            end loop;
-         end if;
-      end if;
-   end Add_Parent;
-
-   ----------------------------
-   -- Must_Print_Tagged_Type --
-   ----------------------------
-
-   procedure Must_Print_Tagged_Type
-     (List : in out Type_List_Tagged_Element.List;
-      Target : in Entity_Handle)
-   is
-      use Type_List_Tagged_Element;
-      Node        : Type_List_Tagged_Element.List_Node;
-      Follow_Node : Type_List_Tagged_Element.List_Node;
-      Found       : Boolean;
-      Tag_Elem    : Tagged_Element_Handle;
-      Element     : Type_List_Tagged_Element.Data_Access;
-
-   begin
-      Found := False;
-      Node        := Type_List_Tagged_Element.First (List);
-      Follow_Node := Type_List_Tagged_Element.Null_Node;
-
-      if Node /= Type_List_Tagged_Element.Null_Node then
-         --  Work on the first node first
-
-         Element := Data_Ref (Node);
-
-         if Is_Equal (Element.Me.all, Target.all) then
-            --  Target found: update if needed and exit
-
-            if not Element.Print_Me then
-               Tag_Elem := new Tagged_Element'(Element.all);
-               Tag_Elem.Print_Me := True;
-               Type_List_Tagged_Element.Remove_Nodes
-                 (List, Follow_Node, Node);
-               Type_List_Tagged_Element.Append (List, Tag_Elem.all);
-            end if;
-
-            Found := True;
-         end if;
-
-         --  Work on the other element of the list
-
-         if not Found then
-            Follow_Node := Node;
-            Node := Type_List_Tagged_Element.Next (Node);
-
-            while Node /= Type_List_Tagged_Element.Null_Node loop
-               Element := Data_Ref (Node);
-
-               if Is_Equal (Element.Me.all, Target.all) then
-                  --  Target found: update if needed and exit
-
-                  if not Element.Print_Me then
-                     Tag_Elem := new Tagged_Element'(Element.all);
-                     Tag_Elem.Print_Me := True;
-                     Type_List_Tagged_Element.Remove_Nodes
-                       (List, Follow_Node, Node);
-                     Type_List_Tagged_Element.Append (List, Tag_Elem.all);
-                  end if;
-
-                  Found := True;
-
-               else
-                  Follow_Node := Node;
-                  Node := Type_List_Tagged_Element.Next (Node);
-               end if;
-
-               exit when Found;
-            end loop;
-         end if;
-      end if;
-   end Must_Print_Tagged_Type;
-
    ----------
    -- Free --
    ----------
@@ -888,6 +584,7 @@ package body Docgen is
    procedure Free (X : in out Source_File_Information) is
    begin
       Free (X.Package_Name);
+      Free (X.Doc_File_Name);
    end Free;
 
    ----------
@@ -896,18 +593,9 @@ package body Docgen is
 
    procedure Free (X : in out Entity_List_Information) is
    begin
-      Free (X.Name);
-      Destroy (X.Entity);
-      if X.Public_Declaration /= No_Entity_Information then
-         Destroy (X.Public_Declaration);
-      end if;
-
-      if not Type_Reference_List.Is_Empty (X.Calls_List) then
-         Type_Reference_List.Free (X.Calls_List);
-      end if;
-
-      if not Type_Reference_List.Is_Empty (X.Called_List) then
-         Type_Reference_List.Free (X.Called_List);
+      Unref (X.Entity);
+      if X.Public_Declaration /= null then
+         Unref (X.Public_Declaration);
       end if;
    end Free;
 
@@ -917,7 +605,7 @@ package body Docgen is
 
    procedure Free (X : in out Reference_List_Information) is
    begin
-      Destroy (X.Entity);
+      Unref (X.Entity);
    end Free;
 
    ----------
@@ -925,8 +613,9 @@ package body Docgen is
    ----------
 
    procedure Free (X : in out Reference_In_File) is
+      pragma Unreferenced (X);
    begin
-      Free (X.Name);
+      null;
       --  Memory accessed by the field Entity is free separately: those
       --  records are saved in a list. When we destroy this list, it calls
       --  subprogram Free (Entity_Information).
@@ -936,26 +625,7 @@ package body Docgen is
    -- Free --
    ----------
 
-   procedure Free (X : in out Src_Info.Queries.Entity_Information) is
-   begin
-      Destroy (X);
-   end Free;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (X : in out Tagged_Element) is
-   pragma Unreferenced (X);
-   begin
-      null;
-   end Free;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (X : in out Entity_Handle) is
+   procedure Free (X : in out Entity_Information) is
       pragma Unreferenced (X);
    begin
       null;
@@ -982,14 +652,12 @@ package body Docgen is
    -----------------------
 
    function Get_Doc_File_Name
-     (Source_Filename : VFS.Virtual_File_Access;
-      Source_Path     : String;
+     (Source_Filename : VFS.Virtual_File;
       Doc_Suffix      : String) return String
    is
-      Ext : constant String := File_Extension (Source_Filename.all);
+      Ext : constant String := File_Extension (Source_Filename);
    begin
-      return Source_Path &
-        Base_Name (Source_Filename.all, Ext)
+      return Base_Name (Source_Filename, Ext)
         & "_"
         & Ext (Ext'First + 1 .. Ext'Last)
         & Doc_Suffix;
@@ -1000,70 +668,40 @@ package body Docgen is
    -----------
 
    function Clone
-     (Entity     : Entity_List_Information;
-      Copy_Lists : Boolean) return Entity_List_Information
-   is
-      Calls  : Type_Reference_List.List := Type_Reference_List.Null_List;
-      Called : Type_Reference_List.List := Type_Reference_List.Null_List;
+     (Entity     : Entity_List_Information) return Entity_List_Information is
    begin
-      if Copy_Lists then
-         --  Deep copy required
-         Duplicate (Calls, Entity.Calls_List);
-         Duplicate (Called, Entity.Called_List);
+      if Entity.Public_Declaration /= null then
+         Ref (Entity.Public_Declaration);
       end if;
-      if Entity.Public_Declaration /= No_Entity_Information then
-         return
-           (Kind         => Entity.Kind,
-            Name         => new String'(Entity.Name.all),
-            Entity       => Copy (Entity.Entity),
-            Is_Private   => Entity.Is_Private,
-            Line_In_Body => Entity.Line_In_Body,
-            Calls_List   => Calls,
-            Called_List  => Called,
-            Public_Declaration => Copy (Entity.Public_Declaration));
-      else
-         return
-           (Kind         => Entity.Kind,
-            Name         => new String'(Entity.Name.all),
-            Entity       => Copy (Entity.Entity),
-            Is_Private   => Entity.Is_Private,
-            Line_In_Body => Entity.Line_In_Body,
-            Calls_List   => Calls,
-            Called_List  => Called,
-            Public_Declaration => No_Entity_Information);
-      end if;
+
+      Ref (Entity.Entity);
+      return
+        (Kind               => Entity.Kind,
+         Entity             => Entity.Entity,
+         Is_Private         => Entity.Is_Private,
+         Line_In_Body       => Entity.Line_In_Body,
+         Public_Declaration => Entity.Public_Declaration);
    end Clone;
+
+   ----------
+   -- Hash --
+   ----------
+
+   function Hash (Key : Entities.Source_File) return HTable_Header is
+   begin
+      return String_Hash (Full_Name (Get_Filename (Key)).all);
+   end Hash;
 
    -------------------------
    -- Source_File_In_List --
    -------------------------
 
    function Source_File_In_List
-     (Source_File_List : Type_Source_File_List.List;
-      Name             : Virtual_File_Access) return Boolean
-   is
-      package TSFL renames Type_Source_File_List;
-      use type TSFL.List_Node;
-      Source_File_Node : TSFL.List_Node := TSFL.First (Source_File_List);
-      Data             : TSFL.Data_Access;
-
+     (Source_File_List : Type_Source_File_Table.HTable;
+      File             : Source_File) return Boolean is
    begin
-      while Source_File_Node /= TSFL.Null_Node loop
-         Data := TSFL.Data_Ref (Source_File_Node);
-
-         if Data.File_Name = Name.all then
-            return True;
-         end if;
-
-         if Full_Name (Data.File_Name).all > Full_Name (Name.all).all then
-            --  The list is sorted, we can exit
-            return False;
-         end if;
-
-         Source_File_Node := TSFL.Next (Source_File_Node);
-      end loop;
-
-      return False;
+      return Type_Source_File_Table.Get (Source_File_List, File) /=
+        No_Source_File_Information;
    end Source_File_In_List;
 
    ------------------

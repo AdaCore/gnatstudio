@@ -78,11 +78,11 @@ with Src_Editor_Buffer.Line_Information;
 use Src_Editor_Buffer.Line_Information;
 with Src_Editor_View;             use Src_Editor_View;
 with Src_Editor_Module;           use Src_Editor_Module;
-with Src_Info;                    use Src_Info;
-with Src_Info.Queries;            use Src_Info.Queries;
+with Entities;                    use Entities;
+with Entities.Queries;            use Entities.Queries;
 with Traces;                      use Traces;
 with VFS;                         use VFS;
-with Projects;
+with Projects;                    use Projects;
 with GVD.Dialogs;                 use GVD.Dialogs;
 --  ??? Used for Simple_Entry_Dialog. Should move this procedure in GUI_Utils
 
@@ -379,8 +379,7 @@ package body Src_Editor_Box is
       Context : access Entity_Selection_Context'Class)
    is
       Source          : Source_Editor_Box;
-      Source_Info     : LI_File_Ptr;
-      Status          : Src_Info.Queries.Find_Decl_Or_Body_Query_Status;
+      Status          : Find_Decl_Or_Body_Query_Status;
       Entity          : Entity_Information;
       Location        : File_Location;
       L, C            : Natural;
@@ -398,15 +397,21 @@ package body Src_Editor_Box is
 
       Push_State (Kernel_Handle (Kernel), Busy);
 
-      Source_Info := Locate_From_Source_And_Complete
-        (Kernel, Get_Filename (Editor));
+      Find_Declaration_Or_Overloaded
+        (Kernel      => Kernel,
+         File        => Get_Or_Create
+           (Get_Database (Kernel), Get_Filename (Editor)),
+         Entity_Name => Entity_Name_Information (Context),
+         Line        => Contexts.Line_Information (Context),
+         Column      => Entity_Column_Information (Context),
+         Entity      => Entity,
+         Status      => Status);
 
-      --  Abort if we could not locate the associated Source_Info.
-      --  Probably means that we either could not locate the ALI file,
-      --  or it could also be that we failed to parse it. Either way,
-      --  a message should have already been printed. So, just abort.
+      if Entity = null then
+         --  Probably means that we either could not locate the ALI file,
+         --  or it could also be that we failed to parse it. Either way,
+         --  a message should have already been printed. So, just abort.
 
-      if Source_Info = No_LI_File then
          Console.Insert
            (Kernel,
             -"No cross-reference information found for "
@@ -416,29 +421,6 @@ package body Src_Editor_Box is
             Mode           => Error);
          Pop_State (Kernel_Handle (Kernel));
          return;
-      end if;
-
-      if To_Body then
-         Find_Next_Body
-           (Kernel      => Kernel,
-            Lib_Info    => Source_Info,
-            File_Name   => Get_Filename (Editor),
-            Entity_Name => Entity_Name_Information (Context),
-            Line        => Contexts.Line_Information (Context),
-            Column      => Entity_Column_Information (Context),
-            Location    => Location,
-            Status      => Status);
-
-      else
-         Find_Declaration_Or_Overloaded
-           (Kernel      => Kernel,
-            Lib_Info    => Source_Info,
-            File_Name   => Get_Filename (Editor),
-            Entity_Name => Entity_Name_Information (Context),
-            Line        => Contexts.Line_Information (Context),
-            Column      => Entity_Column_Information (Context),
-            Entity      => Entity,
-            Status      => Status);
       end if;
 
       case Status is
@@ -486,15 +468,19 @@ package body Src_Editor_Box is
       Length := Entity_Name_Information (Context)'Length;
 
       if To_Body then
+         Find_Next_Body
+           (Entity      => Entity,
+            Location    => Location);
+
          --  Open the file, and reset Source to the new editor in order to
          --  highlight the region returned by the Xref query.
 
          L := Get_Line (Location);
          C := Get_Column (Location);
 
+         Filename := Get_Filename (Get_File (Location));
          Trace (Me, "Goto_Declaration_Or_Body: Opening file "
-                & Full_Name (Get_File (Location)).all);
-         Filename := Get_File (Location);
+                & Full_Name (Filename).all);
          if Dir_Name (Filename).all = "" then
             Insert (Kernel, -"File not found: "
                     & Base_Name (Filename), Mode => Error);
@@ -504,9 +490,9 @@ package body Src_Editor_Box is
          --  Open the file, and reset Source to the new editor in order to
          --  highlight the region returned by the Xref query.
 
-         L := Get_Declaration_Line_Of (Entity);
-         C := Get_Declaration_Column_Of (Entity);
-         Filename := Get_Declaration_File_Of (Entity).all;
+         L := Get_Line (Get_Declaration_Of (Entity));
+         C := Get_Column (Get_Declaration_Of (Entity));
+         Filename := Get_Filename (Get_File (Get_Declaration_Of (Entity)));
 
          if Dir_Name (Filename).all = "" then
             Insert (Kernel, -"File not found: "
@@ -521,7 +507,6 @@ package body Src_Editor_Box is
             Enable_Navigation => True);
 
       else
-         Destroy (Entity);
          Pop_State (Kernel_Handle (Kernel));
          return;
       end if;
@@ -567,7 +552,6 @@ package body Src_Editor_Box is
          end if;
       end if;
 
-      Destroy (Entity);
       Pop_State (Kernel_Handle (Kernel));
 
    exception
@@ -585,39 +569,27 @@ package body Src_Editor_Box is
       Context     : access Entity_Selection_Context'Class;
       Entity      : out Entity_Information)
    is
-      Source_Info : LI_File_Ptr;
-      Status      : Src_Info.Queries.Find_Decl_Or_Body_Query_Status;
+      Status      : Find_Decl_Or_Body_Query_Status;
       Filename    : constant Virtual_File := Get_Filename (Editor);
 
    begin
       if Filename = VFS.No_File then
-         Entity := No_Entity_Information;
+         Entity := null;
          return;
       end if;
 
       Push_State (Editor.Kernel, Busy);
-      Source_Info := Locate_From_Source_And_Complete (Editor.Kernel, Filename);
 
-      --  Exit if we could not locate the associated Source_Info.
-
-      if Source_Info /= No_LI_File then
-         --  Don't use Find_Declaration_Or_Overloaded, since we don't want to
-         --  ask the user interactively for the tooltips.
-         Find_Declaration
-           (Lib_Info    => Source_Info,
-            File_Name   => Filename,
-            Entity_Name => Entity_Name_Information (Context),
-            Line        => Contexts.Line_Information (Context),
-            Column      => Entity_Column_Information (Context),
-            Entity      => Entity,
-            Status      => Status);
-
-         if Status /= Success and then Status /= Fuzzy_Match then
-            Destroy (Entity);
-         end if;
-      else
-         Entity := No_Entity_Information;
-      end if;
+      --  Don't use Find_Declaration_Or_Overloaded, since we don't want to
+      --  ask the user interactively for the tooltips.
+      Find_Declaration
+        (Db          => Get_Database (Editor.Kernel),
+         File_Name   => Get_Filename (Editor),
+         Entity_Name => Entity_Name_Information (Context),
+         Line        => Contexts.Line_Information (Context),
+         Column      => Entity_Column_Information (Context),
+         Entity      => Entity,
+         Status      => Status);
 
       Pop_State (Editor.Kernel);
 
@@ -625,7 +597,7 @@ package body Src_Editor_Box is
       when E : others =>
          Pop_State (Editor.Kernel);
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
-         Entity := No_Entity_Information;
+         Entity := null;
    end Get_Declaration_Info;
 
    ----------------
@@ -759,23 +731,20 @@ package body Src_Editor_Box is
 
          Destroy (Context);
 
-         if Entity = No_Entity_Information then
+         if Entity = null then
             return;
          end if;
 
          declare
             Str : constant String :=
-              Scope_To_String (Get_Scope (Entity)) & ' ' &
+              Attributes_To_String (Get_Attributes (Entity)) & ' ' &
               (-Kind_To_String (Get_Kind (Entity))) & ' ' &
-              Get_Full_Name
-                (Entity,
-                 Locate_From_Source_And_Complete
-                   (Data.Box.Kernel, Get_Declaration_File_Of (Entity).all),
-                 ".")
+               Get_Full_Name (Entity, ".")
               & ASCII.LF
               & (-"declared at ")
-              & Base_Name (Get_Declaration_File_Of (Entity).all) & ':'
-              & Image (Get_Declaration_Line_Of (Entity));
+              & Base_Name (Get_Filename
+                  (Get_File (Get_Declaration_Of (Entity)))) & ':'
+              & Image (Get_Line (Get_Declaration_Of (Entity)));
 
          begin
             Create_Pixmap_From_Text
@@ -787,8 +756,6 @@ package body Src_Editor_Box is
                Width    => Width,
                Height   => Height);
          end;
-
-         Destroy (Entity);
       end;
 
    exception
@@ -1589,11 +1556,10 @@ package body Src_Editor_Box is
                declare
                   Name   : constant String :=
                     Krunch (Entity_Name_Information (Context));
-                  Entity : constant Src_Info.Queries.Entity_Information :=
-                    Get_Entity (Context);
+                  Entity : constant Entity_Information := Get_Entity (Context);
 
                begin
-                  if Entity /= No_Entity_Information then
+                  if Entity /= null then
                      Gtk_New (Item, -"Goto declaration of " & Name);
                      Add (Menu, Item);
                      Context_Callback.Object_Connect
@@ -1604,7 +1570,7 @@ package body Src_Editor_Box is
                         Slot_Object => Editor,
                         After       => True);
 
-                     if Is_Container (Entity) then
+                     if Is_Container (Get_Kind (Entity).Kind) then
                         Gtk_New (Item, -"Goto body of " & Name);
                      else
                         Gtk_New (Item, -"Goto full declaration of " & Name);
@@ -1660,8 +1626,10 @@ package body Src_Editor_Box is
 
       if Has_File_Information (C) then
          declare
-            Other_File : constant Virtual_File := Other_File_Name
-              (Kernel, File_Information (C));
+            Other_File : constant Virtual_File := Create
+              (Other_File_Base_Name
+                 (Project_Information (C), File_Information (C)),
+               Project_Information (C));
          begin
             if Other_File /= VFS.No_File then
                Open_File_Editor (Kernel, Other_File, Line => 0);
