@@ -547,9 +547,8 @@ package body GVD.Menu is
 
       Top  : constant GVD_Main_Window :=
         GVD_Main_Window (Get_Toplevel (Object));
-      Page : Gtk_Widget :=
-        Get_Nth_Page
-          (Top.Process_Notebook, Get_Current_Page (Top.Process_Notebook));
+      Page : constant Gtk_Widget := Get_Nth_Page
+        (Top.Process_Notebook, Get_Current_Page (Top.Process_Notebook));
       Tab  : constant Debugger_Process_Tab := Process_User_Data.Get (Page);
 
       use String_History;
