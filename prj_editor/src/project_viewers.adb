@@ -4,7 +4,7 @@
 --                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
--- GPS is free  software; you can  redistribute it and/or modify  it --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -13,7 +13,7 @@
 -- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
 -- General Public License for more details. You should have received --
--- a copy of the GNU General Public License along with this library; --
+-- a copy of the GNU General Public License along with this program; --
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
@@ -984,6 +984,8 @@ package body Project_Viewers is
       Load_Project_Page : Gtk_Alignment;
       Frame             : Gtk_Frame;
       Load_Project      : Gtk_Check_Button;
+      Box               : Gtk_Vbox;
+      Label             : Gtk_Label;
 
    begin
       Gtk_New (Load_Project_Page, 0.0, 0.5, 1.0, 0.0);
@@ -993,9 +995,16 @@ package body Project_Viewers is
       Set_Border_Width (Frame, 5);
       Add (Load_Project_Page, Frame);
 
+      Gtk_New_Vbox (Box, Spacing => 10);
+      Add (Frame, Box);
+      Gtk_New (Label, (-"Clicking on apply will generate the project") &
+                 ASCII.LF &
+                 (-"Warning: this operation may take a long time"));
+      Set_Alignment (Label, 0.0, 0.5);
+      Add (Box, Label);
       Gtk_New (Load_Project, -"Automatically load the project");
       Set_Active (Load_Project, True);
-      Add (Frame, Load_Project);
+      Add (Box, Load_Project);
 
       Gtk_New (Wiz, Kernel);
       Add_Page
@@ -1672,56 +1681,49 @@ package body Project_Viewers is
 
    procedure Add_Main_Unit (Editor : access Gtk_Widget_Record'Class) is
       Ed : constant Executables_Editor := Executables_Editor (Editor);
+
+      procedure Add_File (Base_Dir : String := "");
+      --  Open a file selection dialog in Base_Dir (or current directory if
+      --  null) and if a file is selected, add this file to the list of main
+      --  units. If Base_Dir is null, change the current directory to
+      --  Dir_Name (File).
+
+      --------------
+      -- Add_File --
+      --------------
+
+      procedure Add_File (Base_Dir : String := "") is
+         File : constant String := Select_File
+           (Title             => -"Select the main file to add",
+            Base_Directory    => Base_Dir,
+            File_Pattern      => "*.ad*",
+            Pattern_Name      => -"Ada source files",
+            Use_Native_Dialog => Get_Pref (Ed.Kernel, Use_Native_Dialogs),
+            History           => Get_History (Ed.Kernel));
+
+      begin
+         if File /= "" then
+            if Base_Dir = "" then
+               Change_Dir (Dir_Name (File));
+            end if;
+
+            Add_Main_File (Ed, Base_Name (File));
+         end if;
+      end Add_File;
+
    begin
       if Ed.Project_View /= No_Project then
          declare
             Dirs : constant String_Id_Array := Source_Dirs (Ed.Project_View);
          begin
             if Dirs'Length = 0 then
-               declare
-                  File : constant String := Select_File
-                    (Title             => -"Select the main file to add",
-                     Base_Directory    => Dir_Name
-                       (Project_Path (Ed.Project_View)),
-                     File_Pattern      => "*.ad*",
-                     Pattern_Name      => "Ada source files",
-                     Use_Native_Dialog =>
-                       Get_Pref (Ed.Kernel, Use_Native_Dialogs),
-                     History           => Get_History (Ed.Kernel));
-
-               begin
-                  if File /= "" then
-                     Add_Main_File (Ed, Base_Name (File));
-                  end if;
-               end;
+               Add_File (Dir_Name (Project_Path (Ed.Project_View)));
             else
-               declare
-                  File : constant String := Select_File
-                    (Title             => -"Select the main file to add",
-                     Base_Directory    => Get_String (Dirs (Dirs'First)),
-                     Use_Native_Dialog =>
-                       Get_Pref (Ed.Kernel, Use_Native_Dialogs),
-                     History           => Get_History (Ed.Kernel));
-               begin
-                  if File /= "" then
-                     Add_Main_File (Ed, Base_Name (File));
-                  end if;
-               end;
+               Add_File (Get_String (Dirs (Dirs'First)));
             end if;
          end;
       else
-         declare
-            File : constant String := Select_File
-              (Title             => -"Select the main file to add",
-               Use_Native_Dialog =>
-                 Get_Pref (Ed.Kernel, Use_Native_Dialogs),
-               History           => Get_History (Ed.Kernel));
-
-         begin
-            if File /= "" then
-               Add_Main_File (Ed, Base_Name (File));
-            end if;
-         end;
+         Add_File;
       end if;
    end Add_Main_Unit;
 
@@ -1827,6 +1829,7 @@ package body Project_Viewers is
             for M in Mains'Range loop
                Add_Main_File (Box, Mains (M).all);
             end loop;
+
             Free (Mains);
          end;
       end if;
@@ -2480,6 +2483,12 @@ package body Project_Viewers is
          Flags => Multiple_Scenarios);
       Register_Project_Editor_Page
         (Kernel,
+         Page  => new Naming_Editor_Record,
+         Label => -"Naming",
+         Toc   => -"Naming scheme",
+         Title => -"Please select the naming scheme to use");
+      Register_Project_Editor_Page
+        (Kernel,
          Page  => new Main_Editor_Record,
          Label => -"Main files",
          Toc   => -"Selecting main units",
@@ -2491,12 +2500,6 @@ package body Project_Viewers is
          Label => -"Switches",
          Toc   => -"Switches",
          Title => -"Please select the switches to build the project");
-      Register_Project_Editor_Page
-        (Kernel,
-         Page  => new Naming_Editor_Record,
-         Label => -"Naming",
-         Toc   => -"Naming scheme",
-         Title => -"Please select the naming scheme to use");
    end Register_Module;
 
 end Project_Viewers;
