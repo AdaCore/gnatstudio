@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                          G L I D E  I I                           --
 --                                                                   --
---                        Copyright (C) 2001                         --
+--                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GLIDE is free software; you can redistribute it and/or modify  it --
@@ -38,7 +38,6 @@ with Glib;                 use Glib;
 with Glib.Object;          use Glib.Object;
 with Gtk.Arguments;        use Gtk.Arguments;
 with Gtk.Ctree;            use Gtk.Ctree;
-with Gtk.Enums;            use Gtk.Enums;
 with Gtk.Menu;             use Gtk.Menu;
 with Gtk.Widget;           use Gtk.Widget;
 with Gtkada.Handlers;      use Gtkada.Handlers;
