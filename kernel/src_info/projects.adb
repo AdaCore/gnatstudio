@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2002-2003                        --
+--                    Copyright (C) 2002-2004                        --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -2258,12 +2258,14 @@ package body Projects is
    begin
       if Recurse then
          Extend := Project.Node;
+
          while Extending_Project_Of
            (Project_Declaration_Of (Extend)) /= Empty_Node
          loop
             Extend := Extending_Project_Of
               (Project_Declaration_Of (Extend));
          end loop;
+
       else
          Extend := Extending_Project_Of
            (Project_Declaration_Of (Project.Node));
@@ -2308,6 +2310,7 @@ package body Projects is
             return N;
          end if;
       end loop;
+
       return Attribute'First - 1;
    end Split_Package;
 
@@ -2329,14 +2332,16 @@ package body Projects is
    function Get_Executable_Name
      (Project : Project_Type; File : String) return String
    is
-      Base : constant String := Base_Name (File);
+      Base         : constant String := Base_Name (File);
       Default_Exec : constant String := Base
         (Base'First .. Delete_File_Suffix (Base, Project));
+
    begin
       if Project = No_Project then
          --  Simply remove the current extension, since we don't have any
          --  information on the file itself.
          return Default_Exec;
+
       else
          declare
             From_Project : constant String := Get_Attribute_Value
@@ -2347,6 +2352,7 @@ package body Projects is
             if From_Project = "" then
                return Default_Exec;
             end if;
+
             return From_Project;
          end;
       end if;
