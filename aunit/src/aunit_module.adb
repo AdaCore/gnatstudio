@@ -68,7 +68,7 @@ package body Aunit_Module is
      (Widget : access GObject_Record'Class;
       Kernel : Kernel_Handle)
    is
-      pragma Warnings (Off, Widget);
+      pragma Unreferenced (Widget);
       Make_Test_Window : Make_Test_Window_Access;
    begin
       Gtk_New (Make_Test_Window);
@@ -102,7 +102,7 @@ package body Aunit_Module is
      (Widget : access GObject_Record'Class;
       Kernel : Kernel_Handle)
    is
-      pragma Warnings (Off, Widget);
+      pragma Unreferenced (Widget);
       Make_Suite_Window : Make_Suite_Window_Access;
    begin
       Gtk_New (Make_Suite_Window);
@@ -134,7 +134,7 @@ package body Aunit_Module is
      (Widget : access GObject_Record'Class;
       Kernel : Kernel_Handle)
    is
-      pragma Warnings (Off, Widget);
+      pragma Unreferenced (Widget);
       Make_Harness_Window : Make_Harness_Window_Access;
    begin
       Gtk_New (Make_Harness_Window);
