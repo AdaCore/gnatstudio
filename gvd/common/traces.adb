@@ -73,6 +73,7 @@ package body Traces is
       Stream : File_Type_Access;
       Timer  : Ada.Calendar.Time;
       Next   : Debug_Handle;
+      Count  : Natural;
    end record;
    --  ??? Should Be protected So That Streams Are Correctly Closed On exit
 
@@ -159,6 +160,7 @@ package body Traces is
                Active => Default_Activation,
                Stream => Default_Output,
                Timer  => Ada.Calendar.Clock,
+               Count  => 1,
                Next   => Handles_List);
             Handles_List := Tmp;
          end if;
@@ -184,6 +186,7 @@ package body Traces is
    Enclosing_Entity : constant Debug_Handle :=
      Create ("DEBUG.ENCLOSING_ENTITY");
    Location         : constant Debug_Handle := Create ("DEBUG.LOCATION");
+   Count            : constant Debug_Handle := Create ("DEBUG.COUNT");
 
    ---------------
    -- Unit_Name --
@@ -310,6 +313,19 @@ package body Traces is
          Put (Handle.Stream.all, Cyan_Fg);
       end if;
       Put (Handle.Stream.all, '[' & Handle.Name.all & "] ");
+
+      if Count.Active then
+         declare
+            C : constant String := Integer'Image (Count.Count);
+            H : constant String := Integer'Image (Handle.Count);
+         begin
+            Put (Handle.Stream.all, H (H'First + 1 .. H'Last)
+                 & '/' & C (C'First + 1 .. C'Last) & ' ');
+         end;
+         Count.Count := Count.Count + 1;
+         Handle.Count := Handle.Count + 1;
+      end if;
+
       if Colors.Active then
          Put (Handle.Stream.all, Message_Color);
       end if;

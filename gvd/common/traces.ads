@@ -177,6 +177,13 @@ package Traces is
    --  If this handle is activated, the name of the enclosing entity at the
    --  location of the call to Trace will be displayed.
 
+   --  "DEBUG.COUNT"
+   --  If this handle is actived, two numbers are associated with each output
+   --  trace: one of them is unique for the handle, the other is unique in the
+   --  whole application life. These can for instance be used to set
+   --  conditional breakpoints for a specific trace (break on traces.Log or
+   --  traces.Trace, and check the value of Handle.Count
+
 private
    type Debug_Handle_Record;
    type Debug_Handle is access Debug_Handle_Record;
