@@ -70,6 +70,7 @@ int pass = 2;
 FILE *hig_fp;
 FILE *test_fp;
 FILE *pf;
+char prev_filename_g[MAXPATHLEN] = {0};
 
 /* az aktualis sor elemei */
 int type_g;
@@ -113,11 +114,120 @@ extern void Paf_Cpp_Cross_Ref_Clean()
    }
 }
 
+extern Boolean_t f_Statement ();
+
+extern void Paf_decl_xref (char* pcLine) {
+   char *pcEnd, c;
+   int i = 0;
+
+   while( pcEnd = strchr( pcLine, ';' ) )
+   {
+      *pcEnd = 0;
+      switch( i++ )
+      {
+      case  0: break;
+      case  1: type_g         = atoi  ( pcLine ); break;
+      case  2: file_g         = SN_StrDup( pcLine ); break;
+      case  3: start_lineno_g = atoi  ( pcLine ); break;
+      case  4: start_charno_g = atoi  ( pcLine ); break;
+      case  5: end_lineno_g   = atoi  ( pcLine ); break;
+      case  6: end_charno_g   = atoi  ( pcLine ); break;
+      case  7: scope_g        = SN_StrDup( pcLine ); break;
+      case  8: sym_name_g     = SN_StrDup( pcLine ); break;
+      case  9: arg_types_g    = SN_StrDup( pcLine ); break;
+      case 10: is_cpp_g       = atoi  ( pcLine ); break;
+      }
+      pcLine = pcEnd + 1;
+   }
+   if (strcmp(file_g,prev_filename_g) != 0)
+   {
+      printf("Scanning %s\n",file_g);  /* Informs SN which file is being parsed. */
+      fflush(stdout);
+
+      strcpy(prev_filename_g,file_g);
+   }
+
+   if( filename_g == 0 || strcmp( filename_g, file_g ) != 0 )
+   {
+      if( yyfd >= 0 )
+      {
+         close( yyfd );
+         yyfd = -1;
+      }
+
+      if( test_fp )
+      {
+         fclose( test_fp );
+         test_fp = 0;
+      }
+
+      yyfd = open( file_g, OPEN_MODE );
+
+      if( yyfd == -1 )
+      {
+         fprintf( stderr, "file cannot open: %s, %d\n", file_g, errno );
+         return;
+      }
+
+      mode_g = 0;
+      keyw_cpp = is_cpp_g;      /* default keyword processing is equal to
+                                   default keyword highlighting */
+      ivt = 0;
+      iva = 0;
+      init_stack();
+      niveau = 0;
+      niveauComp = 0;
+      CompAct = 0;
+      template_arg = False;
+
+      if( filename_g )
+      {
+         ckfree( (char*)filename_g );
+      }
+
+      filename_g = SN_StrDup( file_g );
+
+      /* beolvassuk az egesz file-t */
+      if( f_ReadFile( yyfd ))
+      {
+         return;
+      }
+   }
+
+   while( token( 0 ) != 0 )
+   {
+      if( f_lineno( 0 ) == start_lineno_g && f_charno( 0 ) == start_charno_g )
+      {
+         f_Statement();
+         break;
+      }
+      step( 1 );
+   }
+
+   if( file_g )
+   {
+      ckfree( (char*)file_g );
+      file_g = NULL;
+   }
+   if( scope_g )
+   {
+      ckfree( (char*)scope_g );
+      scope_g = NULL;
+   }
+   if( sym_name_g )
+   {
+      ckfree( (char*)sym_name_g );
+      sym_name_g = NULL;
+   }
+   f_read_end();
+
+   return;
+}
+
 extern void Paf_insert_cross_ref_qry( char *pcLine )
 {
    char *pcEnd, c;
    int i = 0;
-   static char prev_filename[MAXPATHLEN]={0};
 #if DEBUG_CROSS_REF
    char acFilename[1000];
 #endif
@@ -155,12 +265,12 @@ extern void Paf_insert_cross_ref_qry( char *pcLine )
       }
       pcLine = pcEnd + 1;
    }
-   if (strcmp(file_g,prev_filename) != 0)
+   if (strcmp(file_g,prev_filename_g) != 0)
    {
       printf("Scanning %s\n",file_g);  /* Informs SN which file is being parsed. */
       fflush(stdout);
 
-      strcpy(prev_filename,file_g);
+      strcpy(prev_filename_g,file_g);
    }
 
    if( filename_g == 0 || strcmp( filename_g, file_g ) != 0 )

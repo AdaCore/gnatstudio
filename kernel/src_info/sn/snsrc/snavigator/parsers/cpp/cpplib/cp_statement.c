@@ -345,6 +345,31 @@ static Boolean_t compound_statement( void )
    }
 }
 
+extern Boolean_t f_Statement ()
+{
+   int retval;
+
+   if( SymtabVariable == 0 )
+   {
+      SymtabVariable = SymtabCreate((void (*)(void*)) f_TypeDestroy );
+   }
+
+   if( SymtabClass == 0 )
+   {
+      SymtabClass = SymtabCreate((void (*)(void*)) f_ClassDestroy );
+   }
+
+   CompCreate ();
+   retval = statement();
+
+   CompDestroy ();
+   SymtabClear( SymtabVariable );
+   SymtabClear( SymtabClass    );
+   
+
+   return retval;
+}
+
 static Boolean_t statement( void )
 {
 /*    printf( "statement: %s\n", ident( 0 )); */

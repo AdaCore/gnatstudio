@@ -392,6 +392,8 @@ extern void HighLight( void );
 extern void HighLightEnd( void );
 
 void free_template_param (template_param* tp);
+extern void put_cross2 (int sym_type, char *scope, char *sym_name, char *file,
+    int start_lineno, int start_colpos, int end_lineno, int end_colpos, char *types);
 
 extern void start_parser( char *filename_a, int is_cpp, FILE *pf_hig, int mode )
 {
@@ -4436,6 +4438,12 @@ extern void class_member( Class_t Class, Declaration_t Declaration, Declarator_t
                    , Declarator->lineno_end
                    , Declarator->charno_end
                    );
+
+         if ( Declaration->lineno_beg != 0 && Declaration->charno_beg != 0 )
+                 put_cross2 (PAF_MBR_VAR_DEF, "", Class->name.buf, filename_g,
+                     Declaration->lineno_beg, Declaration->charno_beg,
+                     Declaration->lineno_end, Declaration->charno_end,
+                     "");
       }
    }
    LongStringMyFree( &type );
@@ -6646,6 +6654,29 @@ extern char *get_name( char *name )
    else
    {
       return name;
+   }
+}
+
+extern void put_cross2 (int sym_type, char *scope, char *sym_name, char *file, int start_lineno, int start_colpos, int end_lineno, int end_colpos, char *types)
+{
+   if( cross_ref_fp )
+   {
+      char tmp[1000];
+
+      fprintf (cross_ref_fp, "%d;%d;%s;%d;%d;%d;%d;%s;%s;%s;%d;\n"
+          , PAF_DECL_XREF
+          , sym_type
+          , null_safe (file)
+          , start_lineno
+          , start_colpos
+          , end_lineno
+          , end_colpos
+          , null_safe (scope)
+          , null_safe (sym_name)
+          , null_safe (types)
+          , keyw_cpp
+          );
+
    }
 }
 

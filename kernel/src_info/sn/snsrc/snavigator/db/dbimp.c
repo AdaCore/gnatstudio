@@ -687,6 +687,16 @@ main(int argc, char **argv)
 			}
 			Paf_insert_cross_ref_qry(bufp);
 		}
+      else if (type == PAF_DECL_XREF)
+      {
+			if (first_xref)
+			{
+				first_xref = FALSE;
+
+				open_tables_for_cross_ref();
+			}
+         Paf_decl_xref (bufp);
+      }
 		else
 		{
 			*data = '\0';

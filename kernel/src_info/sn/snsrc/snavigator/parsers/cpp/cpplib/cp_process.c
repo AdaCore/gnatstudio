@@ -1553,7 +1553,7 @@ extern void Put_cross_ref( int type, int scope_type, int scope_lev, char *fnc_cl
 #endif /*TEST*/
    if( pf )
    {
-      fprintf( pf, "put_cross  : |%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%d|%d|%d|\n"
+      fprintf( stderr, "put_cross  : |%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%d|%d|%d|\n"
                , paf_type_to_string( type )
                , paf_type_to_string( scope_type )
                , paf_type_to_string( scope_lev )

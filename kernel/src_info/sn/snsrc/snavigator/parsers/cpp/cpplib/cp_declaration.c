@@ -1828,11 +1828,11 @@ extern Type_t f_TypeBasic( Type_t Type, int lineno, int charno )
       cmp_prev = 0;
       for (i=0; i<PREV_I; i++)
       {
-	  if( name_prev[i] && strcmp( name_prev[i], name ) == 0 )
-	  {
-	      cmp_prev = 1;
-	      break;
-	  }
+      	  if( name_prev[i] && strcmp( name_prev[i], name ) == 0 )
+	        {
+	            cmp_prev = 1;
+      	      break;
+	        }
       }
       if (cmp_prev)
           break;
@@ -1842,14 +1842,19 @@ extern Type_t f_TypeBasic( Type_t Type, int lineno, int charno )
           *ptr = 0;
       }
 
-      if ( (paf_type = Get_class_or_typedef( name, acType )) == 0
-          && (paf_type = get_template_argument (scope_g, sym_name_g, name, 0)) == 0 )
+      paf_type = Get_class_or_typedef( name, acType );
+
+      if ( !paf_type )
+          paf_type = get_template_argument (scope_g, sym_name_g, name, 0);
+
+      if ( !paf_type )
       {
 	      break;
       }
 
       Put_cross_ref( paf_type
-                   , scope_g[0] ? PAF_MBR_FUNC_DEF : PAF_FUNC_DEF
+                   , type_g == PAF_MBR_VAR_DEF ? PAF_CLASS_DEF
+                      : (scope_g[0] ? PAF_MBR_FUNC_DEF : PAF_FUNC_DEF)
                    , PAF_REF_SCOPE_GLOBAL
                    , scope_g[0] ? scope_g : 0
                    , sym_name_g

@@ -74,6 +74,8 @@ MA 02111-1307, USA.
 #define  PAF_REF_UNDEFINED 30
 #define PAF_CROSS_REF_FILE 31
 
+#define PAF_DECL_XREF      32
+
 
 /* Cross reference values. */
 #define PAF_REF_TO_TYPEDEF PAF_TYPE_DEF
@@ -214,6 +216,7 @@ extern void Paf_db_init_tables _ANSI_ARGS_((char *arg,char *cache,char *cross_ca
 extern void Paf_set_dbnum _ANSI_ARGS_ ((unsigned int));
 
 extern void Paf_insert_cross_ref_qry _ANSI_ARGS_ ((char *pcLine));
+extern void Paf_decl_xref _ANSI_ARGS_ ((char *pcLine));
 
 extern void Paf_panic (int level);
 
