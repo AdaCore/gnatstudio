@@ -382,8 +382,16 @@ package Glide_Kernel.Modules is
      (Kernel  : access Kernel_Handle_Record'Class;
       Text    : String;
       Command : Command_Access := null;
-      Image   : Gtk.Image.Gtk_Image := null);
+      Image   : Gtk.Image.Gtk_Image := null;
+      Tooltip : String := "");
    --  Add a button at the end of the toolbar.
+
+   procedure Register_Button
+     (Kernel   : access Kernel_Handle_Record'Class;
+      Stock_Id : String;
+      Command  : Command_Access := null;
+      Tooltip  : String := "");
+   --  Same as above but with a stock button
 
    --------------------
    -- Mime callbacks --

@@ -1143,12 +1143,34 @@ package body Glide_Kernel.Modules is
      (Kernel  : access Kernel_Handle_Record'Class;
       Text    : String;
       Command : Command_Access := null;
-      Image   : Gtk.Image.Gtk_Image := null)
+      Image   : Gtk.Image.Gtk_Image := null;
+      Tooltip : String := "")
    is
       Button  : Gtk_Button;
       Toolbar : constant Gtk_Toolbar := Get_Toolbar (Kernel);
    begin
-      Button := Append_Item (Toolbar, Text, Text, "", Gtk_Widget (Image));
+      Button := Append_Item (Toolbar, Text, Text, Tooltip, Gtk_Widget (Image));
+
+      Command_Callback.Connect
+        (Button, "clicked",
+         Command_Callback.To_Marshaller (Execute_Command'Access),
+         Command);
+   end Register_Button;
+
+   ---------------------
+   -- Register_Button --
+   ---------------------
+
+   procedure Register_Button
+     (Kernel   : access Kernel_Handle_Record'Class;
+      Stock_Id : String;
+      Command  : Command_Access := null;
+      Tooltip  : String := "")
+   is
+      Button  : Gtk_Button;
+      Toolbar : constant Gtk_Toolbar := Get_Toolbar (Kernel);
+   begin
+      Button := Insert_Stock (Toolbar, Stock_Id, Tooltip);
 
       Command_Callback.Connect
         (Button, "clicked",
