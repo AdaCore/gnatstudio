@@ -254,7 +254,7 @@ package body Glide_Kernel.Timeout is
          when Invalid_Process =>
             Success := False;
             Glide_Kernel.Console.Insert
-              (Kernel, -"invalid command", Mode => Error);
+              (Kernel, -"Invalid command", Mode => Error);
       end Spawn;
 
    begin

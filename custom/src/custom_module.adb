@@ -262,7 +262,7 @@ package body Custom_Module is
 
                      if File_Node = null then
                         Console.Insert
-                          (Kernel, -"Syntax error in customer file " & F,
+                          (Kernel, -"Syntax error in custom file " & F,
                            Mode => Error);
                      else
                         Node := File_Node.Child;
@@ -280,7 +280,7 @@ package body Custom_Module is
                exception
                   when Assert_Failure =>
                      Console.Insert
-                       (Kernel, -"could not parse custom file " & F,
+                       (Kernel, -"Could not parse custom file " & F,
                         Mode => Error);
                end;
             end loop;

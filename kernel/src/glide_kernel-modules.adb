@@ -188,7 +188,7 @@ package body Glide_Kernel.Modules is
          if Module_List.Data (Current).Info.Name = Module_Name then
             Console.Insert
               (Kernel,
-               (-"module already registered: ") & Module_Name, Mode => Error);
+               (-"Module already registered: ") & Module_Name, Mode => Error);
             return;
          end if;
 

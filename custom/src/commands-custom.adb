@@ -321,7 +321,7 @@ package body Commands.Custom is
    exception
       when E : others =>
          Insert (Command.Kernel,
-                 -("An unexpect error occured while executing the customer"
+                 -("An unexpected error occured while executing the custom"
                    & " command. See the log file for more information."),
                  Mode => Error);
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
