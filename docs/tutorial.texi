@@ -12,12 +12,12 @@
 @subtitle Version @value{GPSVersion}
 @subtitle Document revision level $Revision$
 @subtitle Date: $Date$
-@author ACT-Europe
+@author AdaCore
 
 @page
 @vskip 0pt plus 1filll
 
-Copyright @copyright{} 2002-2005, ACT-Europe.
+Copyright @copyright{} 2002-2005, AdaCore.
 This document may be copied, in whole or in part, in any form or by any
 means, as is or with alterations, provided that (1) alterations are clearly
 marked as alterations and (2) this copyright notice is included
@@ -39,7 +39,7 @@ Version @value{GPSVersion}
 
 Date: $Date$
 
-Copyright @copyright{} 2002-2005, ACT-Europe.
+Copyright @copyright{} 2002-2005, AdaCore.
 This document may be copied, in whole or in part, in any form or by any
 means, as is or with alterations, provided that (1) alterations are clearly
 marked as alterations and (2) this copyright notice is included
@@ -90,13 +90,6 @@ prefix directory of the GPS installation.
 
 Alternatively, if you have already started GPS in another directory, you
 can load the project @code{sdc.gpr} by using the menu @code{Project->Open...}
-
-If you are reading this document from GPS itself, we recommend that you
-select the window displaying this document by clicking on it: the title
-bar should be displayed in @i{blue}; then select the menu item
-@code{Window->Floating}: this will move the @i{Help} window outside GPS
-itself, allowing you to easily read this document while following the
-tutorial steps in the main window of GPS.
 
 @c --------------------------------------------------------------------
 @node Quick overview of the GPS areas
@@ -512,11 +505,6 @@ project we've used in this tutorial.
 @node Project Wizard
 @section Project Wizard
 @noindent
-
-@b{WARNING}: while in the project wizard, you will not be able to scroll
-through the tutorial if you are reading it within GPS. You may want to resize
-the window now so that the entire section on the wizard is visible, or reopen
-the tutorial in another browser.
 
 Go to the menu @code{Project->New...}: this is a standard wizard, with various
 steps listed on the left area of the window.
