@@ -46,16 +46,17 @@ package body Language.Custom is
 
    Me : constant Debug_Handle := Create ("Language.Custom");
 
+   No_Match : aliased Pattern_Matcher := Never_Match;
+
    procedure Unchecked_Free is new Standard.Ada.Unchecked_Deallocation
      (Project_Field_Array, Project_Field_Array_Access);
 
    Null_Context : aliased Language_Context :=
      (Comment_Start_Length          => 0,
       Comment_End_Length            => 0,
-      New_Line_Comment_Start_Length => 0,
       Comment_Start                 => "",
       Comment_End                   => "",
-      New_Line_Comment_Start        => "",
+      New_Line_Comment_Start        => No_Match'Access,
       String_Delimiter              => ASCII.NUL,
       Quote_Character               => ASCII.NUL,
       Constant_Character            => ASCII.NUL,
@@ -168,8 +169,7 @@ package body Language.Custom is
       New_Line_Comment_Start        : String_Ptr;
       Num_Categories,
       Comment_Start_Length,
-      Comment_End_Length,
-      New_Line_Comment_Start_Length : Natural := 0;
+      Comment_End_Length            : Natural := 0;
       Tmp                           : Project_Field_Array_Access;
       Str                           : Unbounded_String;
 
@@ -434,14 +434,9 @@ package body Language.Custom is
          New_Line_Comment_Start :=
            Get_Field (Node, "New_Line_Comment_Start");
 
-         if New_Line_Comment_Start /= null then
-            New_Line_Comment_Start_Length := New_Line_Comment_Start'Length;
-         end if;
-
          Lang.Context := new Language_Context
            (Comment_Start_Length,
-            Comment_End_Length,
-            New_Line_Comment_Start_Length);
+            Comment_End_Length);
 
          if Comment_Start /= null then
             Lang.Context.Comment_Start := Comment_Start.all;
@@ -451,8 +446,12 @@ package body Language.Custom is
             Lang.Context.Comment_End := Comment_End.all;
          end if;
 
-         if New_Line_Comment_Start /= null then
-            Lang.Context.New_Line_Comment_Start := New_Line_Comment_Start.all;
+         if New_Line_Comment_Start = null then
+            Lang.Context.New_Line_Comment_Start := No_Match'Access;
+         else
+            Lang.Context.New_Line_Comment_Start :=
+              new Pattern_Matcher'(Compile
+                ("^(" & New_Line_Comment_Start.all & ")"));
          end if;
 
          Parse_Character
@@ -493,7 +492,7 @@ package body Language.Custom is
       begin
          if Keywords /= "" then
             Lang.Keywords := new Pattern_Matcher'
-              (Compile (Keywords, Flags and not Multiple_Lines));
+              (Compile ("^(" & Keywords & ")", Flags and not Multiple_Lines));
          end if;
       end;
 
@@ -580,16 +579,16 @@ package body Language.Custom is
    --------------
 
    function Keywords
-     (Lang : access Custom_Language) return GNAT.Regpat.Pattern_Matcher is
+     (Lang : access Custom_Language) return Pattern_Matcher_Access is
    begin
       if Lang.Keywords = null then
          if Lang.Parent = null then
-            return Never_Match;
+            return No_Match'Access;
          else
             return Keywords (Lang.Parent);
          end if;
       else
-         return Lang.Keywords.all;
+         return Lang.Keywords;
       end if;
    end Keywords;
 
