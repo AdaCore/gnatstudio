@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2002                         --
+--                     Copyright (C) 2002-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -27,6 +27,7 @@ with Basic_Types;
 with SN.Xref_Pools; use SN.Xref_Pools;
 
 with String_Utils; use String_Utils;
+with Traces; use Traces;
 
 use  GNAT.Directory_Operations,
      GNAT.IO_Aux,
@@ -36,6 +37,8 @@ use  GNAT.Directory_Operations,
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 
 package body SN.Browse is
+
+   Me : constant Debug_Handle := Create ("SN.Browse");
 
    ------------
    -- Browse --
@@ -58,6 +61,9 @@ package body SN.Browse is
          4 => new String'(DBIMP_Path),
          5 => new String'("-y"),
          6 => new String'(File_Name));
+
+      Trace (Me, "Spawn: " & Cbrowser_Path &
+             " " & Argument_List_To_String (Args));
 
       GNAT.Expect.Non_Blocking_Spawn
         (PD, Cbrowser_Path, Args, Err_To_Out => True);
@@ -160,6 +166,8 @@ package body SN.Browse is
            new String'(DB_Directories (J).all & DB_File_Name);
       end loop;
 
+      Trace (Me, "Spawn: " & DBIMP_Path &
+             " " & Argument_List_To_String (Args.all));
       Non_Blocking_Spawn
         (PD, DBIMP_Path, Args.all, Err_To_Out => True);
       GNAT.OS_Lib.Free (Args);
