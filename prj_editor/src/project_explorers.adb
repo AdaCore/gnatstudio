@@ -346,6 +346,15 @@ package body Project_Explorers is
       Values   : GValues);
    --  Called every time a node is collapsed in the file view.
 
+   procedure On_File_Destroy
+     (Explorer : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Params : Glib.Values.GValues);
+   --  Callback for the "destroy" event on the file view.
+
+   procedure File_Remove_Idle_Calls
+     (Explorer : Project_Explorer);
+   --  Remove the idle calls for filling the file view.
+
    --------------------
    -- Updating nodes --
    --------------------
@@ -1111,6 +1120,10 @@ package body Project_Explorers is
         (Explorer.File_Tree, "row_collapsed",
          File_Tree_Collapse_Row_Cb'Access, Explorer, False);
 
+      Widget_Callback.Object_Connect
+        (Explorer.File_Tree, "destroy",
+         On_File_Destroy'Access, Explorer, False);
+
       Set_Line_Style (Explorer.Tree, Ctree_Lines_Solid);
 
       --  The contents of the nodes is computed on demand. We need to be aware
@@ -1361,6 +1374,35 @@ package body Project_Explorers is
       end if;
       return Context;
    end Explorer_Context_Factory;
+
+   ----------------------------
+   -- File_Remove_Idle_Calls --
+   ----------------------------
+
+   procedure File_Remove_Idle_Calls
+     (Explorer : Project_Explorer)
+   is
+   begin
+      while not Timeout_Id_List.Is_Empty (Explorer.Fill_Timeout_Ids) loop
+         Pop_State (Explorer.Kernel);
+         Timeout_Remove (Timeout_Id_List.Head (Explorer.Fill_Timeout_Ids));
+         Timeout_Id_List.Next (Explorer.Fill_Timeout_Ids);
+      end loop;
+   end File_Remove_Idle_Calls;
+
+   ---------------------
+   -- On_File_Destroy --
+   ---------------------
+
+   procedure On_File_Destroy
+     (Explorer : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Params : Glib.Values.GValues)
+   is
+      T       : Project_Explorer := Project_Explorer (Explorer);
+      pragma Unreferenced (Params);
+   begin
+      File_Remove_Idle_Calls (T);
+   end On_File_Destroy;
 
    -------------------------------
    -- File_Tree_Collapse_Row_Cb --
@@ -2543,15 +2585,8 @@ package body Project_Explorers is
          return;
       end if;
 
-      --       Free_Children (T, Get_Iter_Root (T.File_Model));
-
-      while not Timeout_Id_List.Is_Empty (T.Fill_Timeout_Ids) loop
-         Pop_State (K);
-         Timeout_Remove (Timeout_Id_List.Head (T.Fill_Timeout_Ids));
-         Timeout_Id_List.Next (T.Fill_Timeout_Ids);
-      end loop;
-
       Clear (T.File_Model);
+      File_Remove_Idle_Calls (T);
 
       if Get_Pref (K, File_View_Shows_Only_Project) then
          declare
