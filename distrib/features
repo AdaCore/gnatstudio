@@ -1,5 +1,8 @@
 New features in GPS 1.0.2
 
+- New editors for the GNAT switches: style warnings, validity tests, and
+  general warnings.
+
 - Implement recursive directory operations for version control.
 
 - Possibility in the editor to jump to the matching parenthesis/brackets.
