@@ -728,8 +728,9 @@ package body Odd.Process is
 
       --  Update the backtrace and thread windows as well, if the debugger
       --  is the current one
-      if Debugger_Process_Tab (Debugger)
-        = Get_Current_Process (Debugger.Window)
+
+      if Debugger_Process_Tab (Debugger) =
+        Get_Current_Process (Debugger.Window)
       then
          Update_External_Dialogs (Debugger.Window);
       end if;
