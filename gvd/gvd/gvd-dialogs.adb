@@ -499,10 +499,9 @@ package body GVD.Dialogs is
       Title       : String;
       Main_Window : Gtk_Window) is
    begin
-      Gtk.Dialog.Initialize (Dialog);
+      Gtk.Dialog.Initialize (Dialog, Title, Main_Window, 0);
       Dialog.Main_Window := Main_Window;
 
-      Set_Title (Dialog, Title);
       Set_Policy (Dialog, False, True, False);
       Set_Position (Dialog, Win_Pos_Mouse);
       Set_Default_Size (Dialog, -1, 200);
