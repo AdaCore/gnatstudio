@@ -164,7 +164,8 @@ package Docgen is
    procedure Free (X : in out Entity_List_Information);
    --  Free the memory associated with X.
 
-   package Type_Entity_List is new Generic_List (Entity_List_Information);
+   package Type_Entity_List is new
+     Generic_List (Entity_List_Information, Free);
 
    function Compare_Elements_Name
      (X, Y : Entity_List_Information) return Boolean;
