@@ -3622,6 +3622,9 @@ package body Src_Editor_Module is
       --  Initialize graphics
       --  ??? We should use a smaller and more adequate pixbuf than trash_xpm.
       Remove_Blank_Lines_Pixbuf := Gdk_New_From_Xpm_Data (trash_xpm);
+
+      Hide_Block_Pixbuf   := Gdk_New_From_Xpm_Data (grey_dot_xpm);
+      Unhide_Block_Pixbuf := Gdk_New_From_Xpm_Data (dot_xpm);
    end Register_Module;
 
    -------------------------
@@ -3699,6 +3702,8 @@ package body Src_Editor_Module is
 
       --  Destroy graphics
       Unref (Remove_Blank_Lines_Pixbuf);
+      Unref (Hide_Block_Pixbuf);
+      Unref (Unhide_Block_Pixbuf);
    end Destroy;
 
    -----------------
