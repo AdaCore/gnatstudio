@@ -19,6 +19,9 @@
  *********************************************************************/
 
 #include <sys/stat.h>
+#ifdef _WIN32
+#include <windows.h>
+#endif
 
 int
 __gnat_subdirectories_count (name)
@@ -45,5 +48,14 @@ __gnat_subdirectories_count (name)
   else
     /* Do not count the subdirectories . and .. */
     return statbuf.st_nlink - 2;
+#endif
+}
+
+int __gnat_get_logical_drive_strings (char *buffer, int len)
+{
+#ifdef _WIN32
+  return GetLogicalDriveStringsA ((DWORD)len, (LPSTR)buffer);
+#else
+  return 0;
 #endif
 }
