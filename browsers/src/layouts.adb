@@ -282,23 +282,25 @@ package body Layouts is
       Relative_Position : Natural_Array (0 .. Max_Index (G) - 1);
 
       function Barycenter_Weight_P (Vertex : Vertex_Access) return Integer;
-      pragma Warnings (Off, Barycenter_Weight_P);
+--      pragma Unreferenced (Barycenter_Weight_P);
       --  Return the weight to use for the vertex Vertex.
       --  This is the weight computed in the top-down loop
       --  Currently unused, but could replace median_weight_p function below.
 
       function Barycenter_Weight_S (Vertex : Vertex_Access) return Integer;
-      pragma Warnings (Off, Barycenter_Weight_S);
+--      pragma Unreferenced (Barycenter_Weight_S);
       --  Return the weight to use for the vertex Vertex.
       --  This is the weight computed in the bottom-up loop
       --  Currently unused, but could replace median_weight_s function below.
 
       function Median_Weight_P (Vertex : Vertex_Access) return Integer;
+      pragma Unreferenced (Median_Weight_P);
       --  Return the median weight for Vertex.
       --  In case there is an even number of values, we choose an interpolated
       --  value biased toward the side where vertices are more closely packed.
 
       function Median_Weight_S (Vertex : Vertex_Access) return Integer;
+      pragma Unreferenced (Median_Weight_S);
       --  Return the median weight for Vertex.
 
       procedure Process_Layer (Row : Natural; Top_Bottom : Boolean);
@@ -321,7 +323,7 @@ package body Layouts is
          while not At_End (Iter) loop
             Src := Get_Src (Get (Iter));
 
-            --  The test above is used to support edges that span multiple
+            --  The test below is used to support edges that span multiple
             --  layers. In practice, it is better to insert dummy nodes to
             --  split the edges.
             if abs (Layers (Get_Index (Src)) - Layers (Get_Index (Vertex)))
@@ -365,6 +367,7 @@ package body Layouts is
          else
             F := Prev - F;
             L := L - Relative_Position (Get_Index (Src));
+
             pragma Assert (F + L /= 0,
                            "Edges should not cross multiple-layers");
             return (Prev * L + Relative_Position (Get_Index (Src)) * F)
@@ -450,8 +453,9 @@ package body Layouts is
          else
             F := Prev - F;
             L := L - Relative_Position (Get_Index (Src));
-            pragma Assert (F + L /= 0,
-                           "Edges should not cross multiple-layers");
+
+            pragma Assert
+              (F + L /= 0, "Edges should not cross multiple-layers");
             return
               (Prev * L + Relative_Position (Get_Index (Src)) * F) / (F + L);
          end if;
@@ -499,10 +503,10 @@ package body Layouts is
          for Column in 0 .. Num_Per_Line (Row) - 1 loop
             if Top_Bottom then
                Weights (Get_Index (Lines (Row, Column))) :=
-                 Median_Weight_P (Lines (Row, Column));
+                 Barycenter_Weight_P (Lines (Row, Column));
             else
                Weights (Get_Index (Lines (Row, Column))) :=
-                 Median_Weight_S (Lines (Row, Column));
+                 Barycenter_Weight_S (Lines (Row, Column));
             end if;
          end loop;
 
