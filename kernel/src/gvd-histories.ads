@@ -19,7 +19,7 @@
 -----------------------------------------------------------------------
 
 --  This package handles all the history lists that are used throughout
---  odd, like for instance the command history.
+--  the debugger, like for instance the command history.
 --  All these histories can be viewed as lists, with a pointer to the
 --  last item retrieved.
 --
