@@ -168,6 +168,7 @@ package String_Utils is
    --  Return the number of digits for the given Integer number;
 
    function Is_Entity_Letter (Char : Glib.Gunichar) return Boolean;
+   pragma Inline (Is_Entity_Letter);
    --  Return True if the given letter is a valid letter for an entity name
    --  (ie if the letter is either alphanumeric or an '_').
 
