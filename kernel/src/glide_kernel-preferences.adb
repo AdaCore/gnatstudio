@@ -37,6 +37,9 @@ package body Glide_Kernel.Preferences is
    package Key_Themes_Properties is new Generic_Enumeration_Property
      ("Key_Themes", Key_Themes);
 
+   package Speed_Column_Policy_Properties is new Generic_Enumeration_Property
+     ("Speed_Column_Policies", Speed_Column_Policies);
+
    Preferences_Pages : Preferences_Page_Array_Access;
    --  ??? To be included in the kernel
 
@@ -326,6 +329,15 @@ package body Glide_Kernel.Preferences is
          Nick    => -"Block folding"));
       Register_Property
         (Kernel.Preferences, Param_Spec (Block_Folding), -"Editor");
+
+      Speed_Column_Policy := Param_Spec_Enum
+        (Speed_Column_Policy_Properties.Gnew_Enum
+           (Name    => "Src-Editor-Speed-Column-Policy",
+            Nick    => "Speed column policy",
+            Blurb   => "When the speed column should be displayed",
+            Default => Automatic));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (Speed_Column_Policy), -"Editor");
 
       Source_Editor_Font := Param_Spec_Font (Gnew_Font
         (Name    => "Src-Editor-Default-Font",

@@ -144,6 +144,11 @@ package Glide_Kernel.Preferences is
    pragma Convention (C, Key_Themes);
    --  The list of supported key themes.
 
+   type Speed_Column_Policies is (Never, Automatic, Always);
+   for Speed_Column_Policies'Size use Glib.Gint'Size;
+   pragma Convention (C, Speed_Column_Policies);
+   --  The list of possible behaviours for the speed column.
+
    -----------------------
    -- List of constants --
    -----------------------
@@ -163,7 +168,7 @@ package Glide_Kernel.Preferences is
    Splash_Screen         : Param_Spec_Boolean;
    Display_Welcome       : Param_Spec_Boolean;
    Toolbar_Show_Text     : Param_Spec_Boolean;
-   Auto_Save              : Param_Spec_Boolean;
+   Auto_Save             : Param_Spec_Boolean;
    Save_Desktop_On_Exit  : Param_Spec_Boolean;
 
    -- Messages --
@@ -206,6 +211,7 @@ package Glide_Kernel.Preferences is
    Periodic_Save             : Param_Spec_Int;
    Tab_Width                 : Param_Spec_Int;
    Highlight_Column          : Param_Spec_Int;
+   Speed_Column_Policy       : Param_Spec_Enum;
 
    -- MDI --
    MDI_Opaque            : Param_Spec_Boolean;
