@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2002                      --
+--                      Copyright (C) 2000-2003                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -20,7 +20,6 @@
 
 with Breakpoints_Pkg; use Breakpoints_Pkg;
 with Advanced_Breakpoint_Pkg; use Advanced_Breakpoint_Pkg;
-with GVD.Types; use GVD.Types;
 with GVD.Process;
 with Gdk.Bitmap;
 with Gdk.Pixmap;
@@ -28,12 +27,10 @@ with Gdk.Pixmap;
 package Breakpoints_Editor is
 
    type Breakpoint_Editor_Record is new Breakpoints_Record with record
-      Advanced_Breakpoints_Location    : Advanced_Breakpoint_Access;
-      Advanced_Breakpoints_Watchpoints : Advanced_Breakpoint_Access;
-      Advanced_Breakpoints_Exceptions  : Advanced_Breakpoint_Access;
-      Process                          : GVD.Process.Visual_Debugger;
-      Enabled_Pixmap                   : Gdk.Pixmap.Gdk_Pixmap;
-      Enabled_Mask                     : Gdk.Bitmap.Gdk_Bitmap;
+      Advanced_Breakpoints : Advanced_Breakpoint_Access;
+      Process              : GVD.Process.Visual_Debugger;
+      Enabled_Pixmap       : Gdk.Pixmap.Gdk_Pixmap;
+      Enabled_Mask         : Gdk.Bitmap.Gdk_Bitmap;
    end record;
    type Breakpoint_Editor_Access is access all Breakpoint_Editor_Record'Class;
 
@@ -61,33 +58,26 @@ package Breakpoints_Editor is
    --  Change the process on which the dialogs applies.
    --  The list of breakpoints is automatically updated for the new process.
 
-   procedure Toggle_Advanced_Dialog
-     (Editor : access Breakpoint_Editor_Record'Class);
-   --  Toggle the visibility of the advanced breakpoints dialog
+   procedure Run_Advanced_Dialog
+     (Editor  : access Breakpoint_Editor_Record'Class;
+      Current : Integer);
+   --  Run the advanced breakpoints dialog
+   --  Current is the breakpoint currently selected.
 
    procedure Update_Breakpoint_List
      (Editor : access Breakpoint_Editor_Record'Class);
    --  Update the list of breakpoints in the dialog.
    --  The list is taken from the one stored in the current debugger session.
 
-   function Set_Location_Breakpoint
-     (Editor : access Breakpoint_Editor_Record'Class; Current : Integer := -1)
-      return Breakpoint_Identifier;
+   procedure Set_Location_Breakpoint
+     (Editor : access Breakpoint_Editor_Record'Class; Current : Integer := -1);
    --  Set the breakpoint that is currently described in the location page.
    --  If Current is not -1, then the breakpoint currently displayed at line
    --  Current is updated (first removed if some of the information has
    --  changed).
 
-   function Set_Exception_Breakpoint
-     (Editor : access Breakpoint_Editor_Record'Class; Current : Integer := -1)
-      return Breakpoint_Identifier;
+   procedure Set_Exception_Breakpoint
+     (Editor : access Breakpoint_Editor_Record'Class; Current : Integer := -1);
    --  Set the breakpoint that is currently described in the exception page.
-
-   procedure Set_Advanced
-     (Editor : access Breakpoint_Editor_Record'Class;
-      Adv    : Advanced_Breakpoint_Access;
-      Bpt    : Breakpoint_Identifier);
-   --  Set the advanced options for the breakpoint Bpt, based on the contents
-   --  of the advanced breakpoint editor Adv.
 
 end Breakpoints_Editor;

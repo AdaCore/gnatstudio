@@ -30,10 +30,12 @@ with Gtk.Button;       use Gtk.Button;
 with Gtk.Check_Button; use Gtk.Check_Button;
 with Gtk.Clist;        use Gtk.Clist;
 with Gtk.Combo;        use Gtk.Combo;
+with Gtk.Dialog;       use Gtk.Dialog;
 with Gtk.Enums;        use Gtk.Enums;
 with Gtk.GEntry;       use Gtk.GEntry;
 with Gtk.Handlers;     use Gtk.Handlers;
 with Gtk.List;         use Gtk.List;
+with Gtk.Main;         use Gtk.Main;
 with Gtk.Notebook;     use Gtk.Notebook;
 with Gtk.Radio_Button; use Gtk.Radio_Button;
 with Gtk.Spin_Button;  use Gtk.Spin_Button;
@@ -67,13 +69,20 @@ package body Breakpoints_Editor is
    --  Called when a row of the breakpoint editor was selected.
 
    procedure Breakpoint_Row_Unselected
-     (Widget : access Gtk_Widget_Record'Class);
+     (Widget : access Gtk_Widget_Record'Class;
+      Args   : Gtk_Args);
    --  Called when a row of the breakpoint editor was unselected.
 
    procedure Fill_Advanced_Dialog
      (Advanced : Advanced_Breakpoint_Access; Br : Breakpoint_Data);
    --  Fills the contents of the Advanced dialog with the values contained in
    --  Br.
+
+   procedure Set_Advanced
+     (Editor : access Breakpoint_Editor_Record'Class;
+      Br     : Breakpoint_Data);
+   --  Set the advanced options for the breakpoint Br, based on the contents
+   --  of its advanced breakpoint editor.
 
    -----------------------
    -- Breakpoint_Editor --
@@ -88,6 +97,10 @@ package body Breakpoints_Editor is
       if Editor = null then
          Editor := new Breakpoint_Editor_Record;
          Breakpoints_Pkg.Initialize (Editor);
+         Set_Sensitive (Editor.Advanced_Location, False);
+         Set_Sensitive (Editor.Remove, False);
+         Set_Sensitive (Editor.View, False);
+         Set_Transient_For (Editor, Process.Window);
 
          Realize (Editor);
          Create_From_Xpm_D
@@ -131,12 +144,9 @@ package body Breakpoints_Editor is
             Widget_Callback.To_Marshaller (On_Add_Location_Clicked'Access),
             Editor);
 
-         --  ??? Until Break_Subprogram is fixed to compute asynchronously
-         --  the breakpoint id.
+         --  ??? Disable watchpoint page for now, until we support them
+         --  properly
 
-         Set_Sensitive (Editor.Subprogram_Selected, False);
-
-         --  ??? Temporary
          Set_Sensitive (Editor.Hbox3, False);
       end if;
 
@@ -166,7 +176,6 @@ package body Breakpoints_Editor is
       --  Click in the second column => change the enable/disable state
 
       if Column = Enable_Column then
-
          --  For efficiency, no need to reparse the list of breakpoints, since
          --  only the state of one of them as changed and we know all about
          --  it.
@@ -185,10 +194,14 @@ package body Breakpoints_Editor is
             Set_Text (Editor.Breakpoint_List, Row, Enable_Column, "");
          end if;
 
-         --  Make sure the row is selected
+         --  Stop propagation of the current signal, to avoid extra calls
+         --  to Select/Unselect row.
 
          Emit_Stop_By_Name (Editor.Breakpoint_List, "select_row");
-         Unselect_Row (Editor.Breakpoint_List, Row, -1);
+
+         --  Put the selection back to its previous state.
+
+         Select_Row (Editor.Breakpoint_List, Row, -1);
 
          Thaw (Editor.Breakpoint_List);
 
@@ -224,9 +237,7 @@ package body Breakpoints_Editor is
             end if;
 
             Set_Active (Editor.Temporary_Exception, Br.Disposition /= Keep);
-            Set_Sensitive (Editor.Update_Exception, True);
 
-            Fill_Advanced_Dialog (Editor.Advanced_Breakpoints_Exceptions, Br);
          else
             Set_Page (Editor.Notebook1, 0);
 
@@ -242,9 +253,11 @@ package body Breakpoints_Editor is
                Add_Unique_Combo_Entry (Editor.Address_Combo, Br.Address.all);
                Set_Text (Get_Entry (Editor.Address_Combo), Br.Address.all);
             end if;
-            Set_Sensitive (Editor.Update_Location, True);
-            Fill_Advanced_Dialog (Editor.Advanced_Breakpoints_Location, Br);
          end if;
+
+         Set_Sensitive (Editor.Advanced_Location, True);
+         Set_Sensitive (Editor.Remove, True);
+         Set_Sensitive (Editor.View, True);
       end if;
    end Breakpoint_Row_Selected;
 
@@ -253,13 +266,36 @@ package body Breakpoints_Editor is
    -------------------------------
 
    procedure Breakpoint_Row_Unselected
-     (Widget : access Gtk_Widget_Record'Class)
+     (Widget : access Gtk_Widget_Record'Class;
+      Args   : Gtk_Args)
    is
-      Editor  : constant Breakpoints_Access := Breakpoints_Access (Widget);
+      Editor  : constant Breakpoint_Editor_Access :=
+        Breakpoint_Editor_Access (Widget);
+      Row     : constant Gint := To_Gint (Args, 1);
+      Column  : constant Gint := To_Gint (Args, 2);
    begin
-      Set_Sensitive (Editor.Update_Location, False);
-      Set_Sensitive (Editor.Update_Watchpoint, False);
-      Set_Sensitive (Editor.Update_Exception, False);
+      if Column = Enable_Column then
+         Freeze (Editor.Breakpoint_List);
+
+         if Toggle_Breakpoint_State
+           (Editor.Process,
+            Breakpoint_Num => Breakpoint_Identifier'Value
+              (Get_Text (Editor.Breakpoint_List, Row, 0)))
+         then
+            Set_Pixmap
+              (Editor.Breakpoint_List, Row, Enable_Column,
+               Editor.Enabled_Pixmap, Editor.Enabled_Mask);
+         else
+            Set_Text (Editor.Breakpoint_List, Row, Enable_Column, "");
+         end if;
+
+         Emit_Stop_By_Name (Editor.Breakpoint_List, "unselect_row");
+         Thaw (Editor.Breakpoint_List);
+      end if;
+
+      Set_Sensitive (Editor.Advanced_Location, False);
+      Set_Sensitive (Editor.Remove, False);
+      Set_Sensitive (Editor.View, False);
    end Breakpoint_Row_Unselected;
 
    -------------------------
@@ -299,46 +335,48 @@ package body Breakpoints_Editor is
    is
       Position : Gint := 0;
    begin
-      if Advanced /= null then
-         if Br.Condition /= null then
-            Set_Text (Get_Entry (Advanced.Condition_Combo), Br.Condition.all);
-            Add_Unique_Combo_Entry
-              (Advanced.Condition_Combo, Br.Condition.all);
-         else
-            Set_Text (Get_Entry (Advanced.Condition_Combo), "");
-         end if;
-
-         Set_Value (Advanced.Ignore_Count_Combo, Grange_Float (Br.Ignore));
-
-         Delete_Text (Advanced.Command_Descr);
-
-         if Br.Commands /= null then
-            Insert_Text (Advanced.Command_Descr, Br.Commands.all, Position);
-         end if;
-
-         --  Set the scope and action, if appropriate
-         if Br.Scope /= No_Scope then
-            if Br.Scope = Current_Task then
-               Set_Active (Advanced.Scope_Task, True);
-            elsif Br.Scope = Tasks_In_PD then
-               Set_Active (Advanced.Scope_Pd, True);
-            elsif Br.Scope = Any_Task then
-               Set_Active (Advanced.Scope_Any, True);
-            end if;
-         end if;
-
-         if Br.Action /= No_Action then
-            if Br.Action = Current_Task then
-               Set_Active (Advanced.Action_Task, True);
-            elsif Br.Action = Tasks_In_PD then
-               Set_Active (Advanced.Action_Pd, True);
-            elsif Br.Action = All_Tasks then
-               Set_Active (Advanced.Action_All, True);
-            end if;
-         end if;
-
-         Set_Active (Advanced.Set_Default, False);
+      if Advanced = null then
+         return;
       end if;
+
+      if Br.Condition /= null then
+         Set_Text (Get_Entry (Advanced.Condition_Combo), Br.Condition.all);
+         Add_Unique_Combo_Entry
+           (Advanced.Condition_Combo, Br.Condition.all);
+      else
+         Set_Text (Get_Entry (Advanced.Condition_Combo), "");
+      end if;
+
+      Set_Value (Advanced.Ignore_Count_Combo, Grange_Float (Br.Ignore));
+
+      Delete_Text (Advanced.Command_Descr);
+
+      if Br.Commands /= null then
+         Insert_Text (Advanced.Command_Descr, Br.Commands.all, Position);
+      end if;
+
+      --  Set the scope and action, if appropriate
+      if Br.Scope /= No_Scope then
+         if Br.Scope = Current_Task then
+            Set_Active (Advanced.Scope_Task, True);
+         elsif Br.Scope = Tasks_In_PD then
+            Set_Active (Advanced.Scope_Pd, True);
+         elsif Br.Scope = Any_Task then
+            Set_Active (Advanced.Scope_Any, True);
+         end if;
+      end if;
+
+      if Br.Action /= No_Action then
+         if Br.Action = Current_Task then
+            Set_Active (Advanced.Action_Task, True);
+         elsif Br.Action = Tasks_In_PD then
+            Set_Active (Advanced.Action_Pd, True);
+         elsif Br.Action = All_Tasks then
+            Set_Active (Advanced.Action_All, True);
+         end if;
+      end if;
+
+      Set_Active (Advanced.Set_Default, False);
    end Fill_Advanced_Dialog;
 
    ------------------
@@ -347,14 +385,14 @@ package body Breakpoints_Editor is
 
    procedure Set_Advanced
      (Editor : access Breakpoint_Editor_Record'Class;
-      Adv    : Advanced_Breakpoint_Access;
-      Bpt    : Breakpoint_Identifier)
+      Br     : Breakpoint_Data)
    is
+      Adv      : constant Advanced_Breakpoint_Access :=
+        Editor.Advanced_Breakpoints;
       Modified : Boolean := False;
+
    begin
-      if Adv /= null
-        and then Visible_Is_Set (Adv.Condition_Box)
-      then
+      if Visible_Is_Set (Adv.Condition_Box) then
          declare
             S : constant String :=
               Get_Text (Get_Entry (Adv.Condition_Combo));
@@ -365,22 +403,29 @@ package body Breakpoints_Editor is
          begin
             --  Send all these commands in "internal" mode, so that no
             --  "info breakpoint" is emitted each time. However, we must
-            --  make sure to send at least one
-            if S /= "" then
+            --  make sure to send at least one.
+
+            if S /= ""
+              or else (Br.Condition /= null and then Br.Condition.all /= "")
+            then
                Set_Breakpoint_Condition
-                 (Editor.Process.Debugger, Bpt, S, Internal);
+                 (Editor.Process.Debugger, Br.Num, S, Internal);
                Modified := True;
             end if;
 
-            if C /= 0 then
+            if C /= 0
+              or else Br.Ignore /= 0
+            then
                Set_Breakpoint_Ignore_Count
-                 (Editor.Process.Debugger, Bpt, C, Internal);
+                 (Editor.Process.Debugger, Br.Num, C, Internal);
                Modified := True;
             end if;
 
-            if T /= "" then
+            if T /= ""
+              or else (Br.Commands /= null and then Br.Commands.all /= "")
+            then
                Set_Breakpoint_Command
-                 (Editor.Process.Debugger, Bpt, T, Internal);
+                 (Editor.Process.Debugger, Br.Num, T, Internal);
                Modified := True;
             end if;
 
@@ -395,9 +440,8 @@ package body Breakpoints_Editor is
    -- Set_Exception_Breakpoint --
    ------------------------------
 
-   function Set_Exception_Breakpoint
+   procedure Set_Exception_Breakpoint
      (Editor : access Breakpoint_Editor_Record'Class; Current : Integer := -1)
-      return Breakpoint_Identifier
    is
       Temporary : Boolean;
       Name      : constant String :=
@@ -405,7 +449,6 @@ package body Breakpoints_Editor is
       Unhandled : constant Boolean :=
         Get_Active (Editor.Stop_Not_Handled_Exception);
       Br        : Breakpoint_Data;
-      B         : Breakpoint_Identifier;
       Remove    : Boolean := False;
 
    begin
@@ -427,7 +470,7 @@ package body Breakpoints_Editor is
            or else (not Unhandled and then Br.Except.all /= "all exceptions")
          then
             Remove := True;
-            B := Break_Exception
+            Break_Exception
               (Editor.Process.Debugger,
                Name      => "",
                Unhandled => Unhandled,
@@ -441,7 +484,7 @@ package body Breakpoints_Editor is
            or else Br.Except.all /= "assert failure"
          then
             Remove := True;
-            B := Break_Subprogram
+            Break_Subprogram
               (Editor.Process.Debugger,
                Name      => "assert",
                Temporary => Temporary,
@@ -454,7 +497,7 @@ package body Breakpoints_Editor is
         or else (Unhandled and then Br.Except.all /= "unhandled exception")
       then
          Remove := True;
-         B := Break_Exception
+         Break_Exception
            (Editor.Process.Debugger,
             Name      => Name,
             Unhandled => Unhandled,
@@ -462,31 +505,24 @@ package body Breakpoints_Editor is
             Mode      => GVD.Types.Visible);
       end if;
 
-      if Remove then
-         if Current /= -1 then
-            Remove_Breakpoint (Editor.Process.Debugger,
-                               Editor.Process.Breakpoints (Current).Num);
-         end if;
-      else
-         B := Br.Num;
+      if Remove and then Current /= -1 then
+         Remove_Breakpoint
+           (Editor.Process.Debugger,
+            Editor.Process.Breakpoints (Current).Num);
       end if;
-
-      Set_Advanced (Editor, Editor.Advanced_Breakpoints_Exceptions, B);
-      return B;
    end Set_Exception_Breakpoint;
 
    -----------------------------
    -- Set_Location_Breakpoint --
    -----------------------------
 
-   function Set_Location_Breakpoint
+   procedure Set_Location_Breakpoint
      (Editor : access Breakpoint_Editor_Record'Class; Current : Integer := -1)
-      return Breakpoint_Identifier
    is
       Temporary : Boolean;
-      Br : Breakpoint_Data;
-      B  : Breakpoint_Identifier;
-      Remove : Boolean := False;
+      Br        : Breakpoint_Data;
+      Remove    : Boolean := False;
+
    begin
       if Current /= -1 then
          Br := Editor.Process.Breakpoints (Current);
@@ -500,15 +536,17 @@ package body Breakpoints_Editor is
               Get_Text (Get_Entry (Editor.File_Combo));
             Line : constant Integer :=
               Integer (Get_Value_As_Int (Editor.Line_Spin));
+
          begin
             --  ??? Should also check Temporary
+
             if Current = -1
               or else Br.File = null
               or else Base_Name (Br.File.all) /= File
               or else Br.Line /= Line
             then
                Remove := True;
-               B := Break_Source
+               Break_Source
                  (Editor.Process.Debugger,
                   File      => File,
                   Line      => Line,
@@ -521,14 +559,16 @@ package body Breakpoints_Editor is
          declare
             Name : constant String :=
               Get_Text (Get_Entry (Editor.Subprogram_Combo));
+
          begin
             --  ??? Should also check Temporary
+
             if Current = -1
               or else Br.Except = null
               or else Br.Except.all = Name
             then
                Remove := True;
-               B := Break_Subprogram
+               Break_Subprogram
                  (Editor.Process.Debugger,
                   Name      => Name,
                   Temporary => Temporary,
@@ -546,7 +586,7 @@ package body Breakpoints_Editor is
               or else Br.Address.all = Addr
             then
                Remove := True;
-               B := Break_Address
+               Break_Address
                  (Editor.Process.Debugger,
                   Address   => Addr,
                   Temporary => Temporary,
@@ -556,23 +596,16 @@ package body Breakpoints_Editor is
 
       else
          Remove := True;
-         B := Break_Regexp
+         Break_Regexp
            (Editor.Process.Debugger,
             Regexp    => Get_Text (Get_Entry (Editor.Regexp_Combo)),
             Temporary => Temporary,
             Mode      => GVD.Types.Visible);
       end if;
 
-      if Remove then
-         if Current /= -1 then
-            Remove_Breakpoint (Editor.Process.Debugger, Br.Num);
-         end if;
-      else
-         B := Br.Num;
+      if Remove and then Current /= -1 then
+         Remove_Breakpoint (Editor.Process.Debugger, Br.Num);
       end if;
-
-      Set_Advanced (Editor, Editor.Advanced_Breakpoints_Location, B);
-      return B;
    end Set_Location_Breakpoint;
 
    -----------------
@@ -600,85 +633,81 @@ package body Breakpoints_Editor is
         (Editor.Exception_Name, -"All assertions");
    end Set_Process;
 
-   ----------------------------
-   -- Toggle_Advanced_Dialog --
-   ----------------------------
+   -------------------------
+   -- Run_Advanced_Dialog --
+   -------------------------
 
-   procedure Toggle_Advanced_Dialog
-     (Editor : access Breakpoint_Editor_Record'Class)
+   procedure Run_Advanced_Dialog
+     (Editor  : access Breakpoint_Editor_Record'Class;
+      Current : Integer)
    is
       WTX_Version : Natural;
    begin
       --  Create all three dialogs
-      if Editor.Advanced_Breakpoints_Location = null then
-         --  Location
-         Gtk_New (Editor.Advanced_Breakpoints_Location);
-         Ref (Editor.Advanced_Breakpoints_Location.Main_Notebook);
-         Unparent (Editor.Advanced_Breakpoints_Location.Main_Notebook);
-         Pack_Start
-           (Editor.Hbox2, Editor.Advanced_Breakpoints_Location.Main_Notebook);
-         Unref (Editor.Advanced_Breakpoints_Location.Main_Notebook);
-         Set_Sensitive
-           (Editor.Advanced_Breakpoints_Location.Record_Button, False);
-         Set_Sensitive
-           (Editor.Advanced_Breakpoints_Location.End_Button, False);
 
-         --  Watchpoints
-         Gtk_New (Editor.Advanced_Breakpoints_Watchpoints);
-         Ref (Editor.Advanced_Breakpoints_Watchpoints.Main_Notebook);
-         Unparent (Editor.Advanced_Breakpoints_Watchpoints.Main_Notebook);
-         Pack_Start (Editor.Hbox3,
-                     Editor.Advanced_Breakpoints_Watchpoints.Main_Notebook);
-         Unref (Editor.Advanced_Breakpoints_Watchpoints.Main_Notebook);
-         Set_Sensitive
-           (Editor.Advanced_Breakpoints_Watchpoints.Record_Button, False);
-         Set_Sensitive
-           (Editor.Advanced_Breakpoints_Watchpoints.End_Button, False);
-
-         --  Exceptions
-         Gtk_New (Editor.Advanced_Breakpoints_Exceptions);
-         Ref (Editor.Advanced_Breakpoints_Exceptions.Main_Notebook);
-         Unparent (Editor.Advanced_Breakpoints_Exceptions.Main_Notebook);
-         Pack_Start (Editor.Hbox4,
-                     Editor.Advanced_Breakpoints_Exceptions.Main_Notebook);
-         Unref (Editor.Advanced_Breakpoints_Exceptions.Main_Notebook);
-         Set_Sensitive
-           (Editor.Advanced_Breakpoints_Exceptions.Record_Button, False);
-         Set_Sensitive
-           (Editor.Advanced_Breakpoints_Exceptions.End_Button, False);
+      if Editor.Advanced_Breakpoints = null then
+         Gtk_New (Editor.Advanced_Breakpoints);
+         Set_Transient_For (Editor.Advanced_Breakpoints, Editor);
+         Set_Sensitive (Editor.Advanced_Breakpoints.Record_Button, False);
+         Set_Sensitive (Editor.Advanced_Breakpoints.End_Button, False);
       end if;
 
-      if Visible_Is_Set
-        (Editor.Advanced_Breakpoints_Location.Main_Notebook)
-      then
-         Hide_All (Editor.Advanced_Breakpoints_Location.Main_Notebook);
-         Hide_All (Editor.Advanced_Breakpoints_Watchpoints.Main_Notebook);
-         Hide_All (Editor.Advanced_Breakpoints_Exceptions.Main_Notebook);
-         Set_Label (Editor.Advanced_Location, "Advanced >>");
-         Set_Label (Editor.Advanced_Watchpoint, "Advanced >>");
-         Set_Label (Editor.Advanced_Exception, "Advanced >>");
+      Fill_Advanced_Dialog
+        (Editor.Advanced_Breakpoints, Editor.Process.Breakpoints (Current));
+      Show_All (Editor.Advanced_Breakpoints);
+
+      Info_WTX (Editor.Process.Debugger, WTX_Version);
+
+      if WTX_Version = 3 then
+         Set_Show_Tabs (Editor.Advanced_Breakpoints.Main_Notebook);
       else
-         Show_All (Editor.Advanced_Breakpoints_Location.Main_Notebook);
-         Show_All (Editor.Advanced_Breakpoints_Watchpoints.Main_Notebook);
-         Show_All (Editor.Advanced_Breakpoints_Exceptions.Main_Notebook);
+         Hide (Editor.Advanced_Breakpoints.Scope_Box);
+         Set_Show_Tabs (Editor.Advanced_Breakpoints.Main_Notebook, False);
+      end if;
 
-         Info_WTX (Editor.Process.Debugger, WTX_Version);
+      Editor.Advanced_Breakpoints.Response_Action := Gtk_Response_None;
+      Gtk.Main.Main;
 
-         if WTX_Version /= 3 then
-            Hide (Editor.Advanced_Breakpoints_Location.Scope_Box);
-            Hide (Editor.Advanced_Breakpoints_Watchpoints.Scope_Box);
-            Hide (Editor.Advanced_Breakpoints_Exceptions.Scope_Box);
-         else
-            Show (Editor.Advanced_Breakpoints_Location.Scope_Box);
-            Show (Editor.Advanced_Breakpoints_Watchpoints.Scope_Box);
-            Show (Editor.Advanced_Breakpoints_Exceptions.Scope_Box);
+      if Editor.Advanced_Breakpoints.Response_Action = Gtk_Response_Apply then
+         --  If we are using AE and the user has activated the "Set as
+         --  default" checkbox for the scope and action values, send the
+         --  appropriate commands to the debugger
+
+         if WTX_Version = 3 then
+            declare
+               Scope_Value  : Scope_Type;
+               Action_Value : Action_Type;
+            begin
+               if Get_Active (Editor.Advanced_Breakpoints.Scope_Task) then
+                  Scope_Value := Current_Task;
+               elsif Get_Active (Editor.Advanced_Breakpoints.Scope_Pd) then
+                  Scope_Value := Tasks_In_PD;
+               elsif Get_Active (Editor.Advanced_Breakpoints.Scope_Any) then
+                  Scope_Value := Any_Task;
+               end if;
+
+               if Get_Active (Editor.Advanced_Breakpoints.Action_Task) then
+                  Action_Value := Current_Task;
+               elsif Get_Active (Editor.Advanced_Breakpoints.Action_Pd) then
+                  Action_Value := Tasks_In_PD;
+               elsif Get_Active (Editor.Advanced_Breakpoints.Action_All) then
+                  Action_Value := All_Tasks;
+               end if;
+
+               if Get_Active (Editor.Advanced_Breakpoints.Set_Default) then
+                  Set_Scope_Action
+                    (Editor.Process.Debugger, Scope_Value, Action_Value);
+               end if;
+
+               Set_Scope_Action
+                 (Editor.Process.Debugger, Scope_Value,
+                  Action_Value, Editor.Process.Breakpoints (Current).Num);
+            end;
          end if;
 
-         Set_Label (Editor.Advanced_Location, "Advanced <<");
-         Set_Label (Editor.Advanced_Watchpoint, "Advanced <<");
-         Set_Label (Editor.Advanced_Exception, "Advanced <<");
+         Set_Advanced (Editor, Editor.Process.Breakpoints (Current));
       end if;
-   end Toggle_Advanced_Dialog;
+   end Run_Advanced_Dialog;
 
    ----------------------------
    -- Update_Breakpoint_List --
@@ -781,12 +810,13 @@ package body Breakpoints_Editor is
          Slot_Object => Editor);
       Widget_Callback.Object_Connect
         (Editor.Breakpoint_List, "unselect_row",
-         Widget_Callback.To_Marshaller (Breakpoint_Row_Unselected'Access),
+         Breakpoint_Row_Unselected'Access,
          Slot_Object => Editor);
 
       Thaw (Editor.Breakpoint_List);
 
       --  Reselect the same item as before
+
       if Selected_Row /= -1 then
          Select_Row (Editor.Breakpoint_List, Selected_Row, -1);
       end if;
