@@ -258,10 +258,15 @@ package body Src_Editor_View is
       Event : Gdk_Event) return Boolean
    is
       pragma Unreferenced (Event);
-      The_View : constant Source_View := Source_View (View);
+      Src_View : constant Source_View := Source_View (View);
    begin
-      Delete (The_View);
+      Delete (Src_View);
       return False;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         return False;
    end On_Delete;
 
    ----------------
@@ -690,6 +695,9 @@ package body Src_Editor_View is
      (View : access GObject_Record'Class; Kernel : Kernel_Handle) is
    begin
       Set_Font (Source_View (View), Get_Pref (Kernel, Source_Editor_Font));
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Preferences_Changed;
 
    --------------
@@ -903,6 +911,7 @@ package body Src_Editor_View is
       Lang     : Language_Access;
       New_Line : Boolean := True) return Boolean
    is
+      Kernel        : constant Kernel_Handle := Get_Kernel (Buffer);
       Start         : Gtk_Text_Iter;
       Pos           : Gtk_Text_Iter;
       Iter          : Gtk_Text_Iter;
@@ -928,6 +937,7 @@ package body Src_Editor_View is
       Use_Tabs      : Boolean := False;
       Indented      : Boolean := False;
       Char          : Character;
+      Indent_Params : Indent_Parameters;
 
       procedure Find_Non_Blank (Last : Natural);
       --  Set Index to the first non blank character in Slice (Index .. Last)
@@ -953,12 +963,16 @@ package body Src_Editor_View is
 
    begin
       if Lang = null
-        or else not Get_Pref (Get_Kernel (Buffer), Automatic_Indentation)
+        or else not Get_Pref (Kernel, Automatic_Indentation)
         or else not Can_Indent (Lang)
       then
          return False;
       end if;
 
+      Indent_Params :=
+        (Indent_Level    => Integer (Get_Pref (Kernel, Indentation_Level)),
+         Indent_Continue => Integer (Get_Pref (Kernel, Continuation_Level)),
+         Indent_Decl     => Integer (Get_Pref (Kernel, Declaration_Level)));
       Get_Selection_Bounds (Buffer, Start, Pos, Result);
       Copy (Pos, Iter);
 
@@ -1000,12 +1014,14 @@ package body Src_Editor_View is
 
          if Line_Ends then
             Next_Indentation
-              (Lang, Slice (1 .. Slice_Length), Indent, Next_Indent);
+              (Lang, Slice (1 .. Slice_Length), Indent, Next_Indent,
+               Indent_Params);
          else
             Index := Integer (Get_Offset (Pos)) + 1;
             Char  := Slice (Index);
             Slice (Index) := ASCII.LF;
-            Next_Indentation (Lang, Slice (1 .. Index), Indent, Ignore);
+            Next_Indentation
+              (Lang, Slice (1 .. Index), Indent, Ignore, Indent_Params);
             Slice (Index) := Char;
 
             --  ??? Would be nice to call Next_Indentation once, which would
@@ -1015,7 +1031,7 @@ package body Src_Editor_View is
               (Lang,
                Slice (1 .. Index - 1) & ASCII.LF &
                  Slice (Index .. Slice_Length),
-               Next_Indent, Ignore);
+               Next_Indent, Ignore, Indent_Params);
          end if;
 
          Set_Line_Offset (Iter, 0);
@@ -1066,7 +1082,8 @@ package body Src_Editor_View is
 
             Line_End := Natural (Get_Offset (Start)) + 1 - Global_Offset;
             Next_Indentation
-              (Lang, Slice (1 .. Line_End), Indent, Next_Indent);
+              (Lang, Slice (1 .. Line_End),
+               Indent, Next_Indent, Indent_Params);
 
             Find_Non_Blank (Line_End);
             Offset := Index - Line_Start;
@@ -1190,26 +1207,28 @@ package body Src_Editor_View is
               (1 .. Line * 2);
 
             View.Real_Lines (A'Range) := A;
-            View.Real_Lines (A'Last + 1 .. View.Real_Lines'Last)
-              := (others => 0);
+            View.Real_Lines (A'Last + 1 .. View.Real_Lines'Last) :=
+              (others => 0);
          end;
       end if;
 
-      --  If needed, increase the size of the target array.
+      --  If needed, increase the size of the target array
+
       if (not View.Line_Info (Column).Stick_To_Data)
         and then Line > View.Line_Info (Column).Column_Info'Last
       then
          declare
             A : Line_Info_Width_Array (1 .. Line * 2);
          begin
-            A (1 .. View.Line_Info (Column).Column_Info'Last)
-              := View.Line_Info (Column).Column_Info.all;
+            A (1 .. View.Line_Info (Column).Column_Info'Last) :=
+              View.Line_Info (Column).Column_Info.all;
             View.Line_Info (Column).Column_Info :=
               new Line_Info_Width_Array' (A);
          end;
       end if;
 
-      --  Insert the data in the array.
+      --  Insert the data in the array
+
       if not (View.Line_Info (Column).Stick_To_Data
               and then Line > View.Original_Lines_Number)
       then
@@ -1217,8 +1236,8 @@ package body Src_Editor_View is
             Free (View.Line_Info (Column).Column_Info (Line));
          end if;
 
-         View.Line_Info (Column).Column_Info (Line)
-           := Line_Info_Width' (new Line_Information_Record' (Info), Width);
+         View.Line_Info (Column).Column_Info (Line) :=
+           Line_Info_Width' (new Line_Information_Record' (Info), Width);
       end if;
    end Insert_At_Position;
 
@@ -1394,7 +1413,7 @@ package body Src_Editor_View is
       --  If some of the data was in the display range, draw it.
 
       if not (Info'Last < View.Top_Line
-                or else Info'First > View.Bottom_Line)
+              or else Info'First > View.Bottom_Line)
       then
          Redraw_Columns (View);
       end if;
@@ -1456,13 +1475,13 @@ package body Src_Editor_View is
       end;
 
       for J in Column .. View.Line_Info.all'Last loop
-         View.Line_Info (J).Starting_X
-           := View.Line_Info (J).Starting_X - Width - 2;
+         View.Line_Info (J).Starting_X :=
+           View.Line_Info (J).Starting_X - Width - 2;
       end loop;
 
       View.Total_Column_Width := View.Total_Column_Width - Width - 2;
-      Set_Border_Window_Size (View, Enums.Text_Window_Left,
-                              Gint (View.Total_Column_Width));
+      Set_Border_Window_Size
+        (View, Enums.Text_Window_Left, Gint (View.Total_Column_Width));
    end Remove_Line_Information_Column;
 
    ------------------------------------
@@ -1491,13 +1510,14 @@ package body Src_Editor_View is
       Width      : Integer;
       Column     : out Integer) is
    begin
+      --  Browse through existing columns and try to match Identifier
 
-      --  Browse through existing columns and try to match Identifier.
       for J in View.Line_Info'Range loop
          if View.Line_Info (J).Identifier.all = Identifier then
             Column := J;
 
-            --  Set the new width of the column.
+            --  Set the new width of the column
+
             if View.Line_Info (J).Width < Width then
                for K in (J + 1) .. View.Line_Info.all'Last loop
                   View.Line_Info (K).Starting_X :=
@@ -1597,7 +1617,8 @@ package body Src_Editor_View is
          end if;
       end loop;
 
-      --  Reset the last lines.
+      --  Reset the last lines
+
       View.Real_Lines
         (Start + 1 .. Integer'Min (Start + Number, View.Real_Lines'Last)) :=
         (others => 0);
