@@ -1466,7 +1466,7 @@ package body Src_Editor_Box is
 
       if Has_File_Information (C) then
          declare
-            Other_File : constant String := Get_Other_File_Of
+            Other_File : constant String := Other_File_Name
               (Kernel, File_Information (C));
          begin
             if Other_File /= "" then
