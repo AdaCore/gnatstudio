@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with Glib;                use Glib;
+with Glib.Convert;
 with Glib.Values;         use Glib.Values;
 with Glib.Object;         use Glib.Object;
 with Glib.Properties;     use Glib.Properties;
@@ -145,12 +146,13 @@ package body Interactive_Consoles is
    ------------
 
    procedure Insert
-     (Console   : access Interactive_Console_Record;
+     (Console        : access Interactive_Console_Record;
       Text           : String;
       Add_LF         : Boolean := True;
       Highlight      : Boolean := False;
       Add_To_History : Boolean := False)
    is
+      UTF8        : constant String := Glib.Convert.Locale_To_UTF8 (Text);
       Prompt_Iter : Gtk_Text_Iter;
       Last_Iter   : Gtk_Text_Iter;
       Success     : Boolean;
@@ -168,19 +170,19 @@ package body Interactive_Consoles is
       end if;
 
       if Add_LF then
-         Insert (Console.Buffer, Last_Iter, Text & ASCII.LF);
+         Insert (Console.Buffer, Last_Iter, UTF8 & ASCII.LF);
       else
-         Insert (Console.Buffer, Last_Iter, Text);
+         Insert (Console.Buffer, Last_Iter, UTF8);
       end if;
 
       if Add_To_History and then Console.History /= null then
-         if Text (Text'Last) = ASCII.LF then
+         if UTF8 (UTF8'Last) = ASCII.LF then
             Histories.Add_To_History
               (Console.History.all, History_Key (Console.Key.all),
-               Text (Text'First .. Text'Last - 1));
+               UTF8 (UTF8'First .. UTF8'Last - 1));
          else
             Histories.Add_To_History
-              (Console.History.all, History_Key (Console.Key.all), Text);
+              (Console.History.all, History_Key (Console.Key.all), UTF8);
          end if;
       end if;
 
@@ -208,6 +210,16 @@ package body Interactive_Consoles is
       Console.Message_Was_Displayed := True;
       Console.Internal_Insert := Internal;
    end Insert;
+
+   -----------------
+   -- Is_Editable --
+   -----------------
+
+   function Is_Editable
+     (Console : access Interactive_Console_Record) return Boolean is
+   begin
+      return not Console.Input_Blocked;
+   end Is_Editable;
 
    --------------------------
    -- Button_Press_Handler --
