@@ -1,4 +1,5 @@
 with "../gtkada/gtkada";
+with "../common/common";
 
 project VDiff is
 
