@@ -459,9 +459,9 @@ package body GVD.Preferences is
       Set (String (Title_Font), "Helvetica-Bold");
       Set (Title_Font_Size, Default_Font_Size);
       Set (String (Value_Font), "Helvetica");
+      Set (Value_Font_Size, Default_Font_Size);
       Set (String (Command_Font), "Courier");
       Set (String (Type_Font), "Helvetica-Oblique");
-      Set (Value_Font_Size, Default_Font_Size);
       Set (Type_Font_Size, Default_Font_Size);
       Set (Annotation_Font_Size, Default_Link_Font_Size);
       Set (Hide_Big_Items, True);
@@ -472,12 +472,14 @@ package body GVD.Preferences is
       Set (String (Debugger_Highlight_Color), "#0000FF");
       Set (String (Debugger_Font), "Courier");
       Set (Debugger_Font_Size, Gint' (12));
+
       Set (String (Memory_View_Font), "Courier");
       Set (Memory_View_Font_Size, Gint (12));
       Set (String (Memory_View_Color), "#333399");
       Set (String (Memory_Highlighted_Color), "#DDDDDD");
       Set (String (Memory_Selected_Color), "#00009c");
       Set (String (Memory_Modified_Color), "#FF0000");
+
       Set (String (List_Processes),
            "ps x 2> /dev/null || ps -ef 2> /dev/null || ps");
       Set (String (Default_External_Editor), "glide %f -emacs +%l");
@@ -618,6 +620,23 @@ package body GVD.Preferences is
       Hide (Get_Bold_Button (Dialog.Debug_Font_Combo));
       Hide (Get_Italic_Button (Dialog.Debug_Font_Combo));
 
+      --  Memory window
+      Font_Combo_Select
+        (Dialog.Memory_Font_Combo,
+         Get_Pref (Memory_View_Font),
+         Bold => False,
+         Italic => False,
+         Height => Get_Pref (Memory_View_Font_Size));
+      Hide (Get_Bold_Button (Dialog.Memory_Font_Combo));
+      Hide (Get_Italic_Button (Dialog.Memory_Font_Combo));
+      Set_Color (Dialog.Memory_Default_Combo, Get_Pref (Memory_View_Color));
+      Set_Color
+        (Dialog.Memory_Highlight_Combo, Get_Pref (Memory_Highlighted_Color));
+      Set_Color
+        (Dialog.Memory_Selection_Combo, Get_Pref (Memory_Selected_Color));
+      Set_Color
+        (Dialog.Memory_Modified_Combo, Get_Pref (Memory_Modified_Color));
+
       --  Helpers
       Set_Text (Dialog.Edit_Source_Entry, Get_Pref (Default_External_Editor));
       Set_Text (Dialog.List_Processes_Entry, Get_Pref (List_Processes));
@@ -669,9 +688,21 @@ package body GVD.Preferences is
            True);
       Set (Display_Grid, Get_Active (Dialog.Display_Grid_Check), True);
       Set (Align_Items_On_Grid, Get_Active (Dialog.Align_Grid_Check), True);
+
       Set (Debugger_Highlight_Color, Get_Color (Dialog.Debug_Highlight_Combo),
            True);
       Set (Debugger_Font, Debugger_Font_Size, Dialog.Debug_Font_Combo, True);
+
+      Set (Memory_View_Font, Memory_View_Font_Size, Dialog.Memory_Font_Combo,
+           True);
+      Set (Memory_View_Color, Get_Color (Dialog.Memory_Default_Combo), True);
+      Set (Memory_Highlighted_Color, Get_Color (Dialog.Memory_Highlight_Combo),
+           True);
+      Set (Memory_Selected_Color, Get_Color (Dialog.Memory_Selection_Combo),
+           True);
+      Set (Memory_Modified_Color, Get_Color (Dialog.Memory_Modified_Combo),
+           True);
+
       Set (String (Default_External_Editor),
            Get_Chars (Dialog.Edit_Source_Entry), True);
       Set (String (List_Processes), Get_Chars (Dialog.List_Processes_Entry),
