@@ -1,40 +1,29 @@
 project Sdc is
 
    for Languages use ("ada");
-   for Source_Dirs use ("common/", "struct/");
+   for Source_Dirs use ("common", "struct");
    for Main use ("sdc.adb");
-   type Build_Type is
-      ("PRODUCTION", "DEBUG");
+   type Build_Type is ("PRODUCTION", "DEBUG");
    Build : Build_Type := external ("Build", "DEBUG");
 
-   case Build is
-
-      when "DEBUG" =>
-         for Exec_Dir use "obj/";
-         for Object_Dir use "obj/";
-
-      when "PRODUCTION" =>
-         for Exec_Dir use "obj/";
-         for Object_Dir use "obj/";
-   end case;
+   for Object_Dir use "obj";
 
    package Compiler is
-
       case Build is
-
          when "DEBUG" =>
-            for Default_Switches ("ada") use ("-gnatwe", "-gnaty", "-gnato", "-g");
-            for Switches ("output.adb") use ("-gnatwe", "-gnaty", "-g");
+            for Default_Switches ("ada") use
+              ("-gnatwe", "-gnaty", "-gnato", "-g");
+            for Switches ("output.adb") use
+              ("-gnatwe", "-gnaty", "-g");
 
          when "PRODUCTION" =>
-            for Default_Switches ("ada") use ("-O2", "-gnatN", "-gnatwe", "-gnaty", "-gnatp");
+            for Default_Switches ("ada") use
+              ("-O2", "-gnatN", "-gnatwe", "-gnaty", "-gnatp");
       end case;
    end Compiler;
 
    package Builder is
-
       case Build is
-
          when "DEBUG" =>
             for Default_Switches ("ada") use ("-s", "-g");
 
@@ -45,19 +34,7 @@ project Sdc is
 
    package Ide is
       for Vcs_Kind use "CVS";
-      for Gnatlist use "gnatls";
-      for Debugger_Command use "gdb";
-      for Compiler_Command ("Ada") use "gnatmake";
    end Ide;
-
-   package Linker is
-
-      case Build is
-
-         when "DEBUG" =>
-            for Default_Switches ("ada") use ("-g");
-      end case;
-   end Linker;
 
 end Sdc;
 
