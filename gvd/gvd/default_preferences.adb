@@ -829,9 +829,9 @@ package body Default_Preferences is
       T : constant Gtk_Toggle_Button := Gtk_Toggle_Button (Toggle);
    begin
       if Get_Active (T) then
-         Set_Text (Gtk_Label (Get_Child (T)), -"Enabled");
+         Set_Text (Gtk_Label (Get_Child (T)), -"(Enabled)");
       else
-         Set_Text (Gtk_Label (Get_Child (T)), -"Disabled");
+         Set_Text (Gtk_Label (Get_Child (T)), -"(Disabled)");
       end if;
    end Toggled_Boolean;
 
