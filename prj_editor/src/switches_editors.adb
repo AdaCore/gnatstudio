@@ -1217,6 +1217,9 @@ package body Switches_Editors is
       Files        : Argument_List) return Project_Node_Array
    is
       Max_Modified_Packages : constant := 5;
+      --  Maximum number of packages that can be renamed (Builder, Compiler,
+      --  Binder, Linker, IDE).
+
       Result                : Project_Node_Array (1 .. Max_Modified_Packages);
       Current               : Natural := Result'First;
 
