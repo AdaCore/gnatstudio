@@ -6,11 +6,11 @@ CFLAGS=-g
 .PHONY: all force
 
 all: force
-	make -C src CFLAGS="${CFLAGS}" all
-	make -C tests CFLAGS="${CFLAGS}" all
+	@make -C src CFLAGS="${CFLAGS}" all
+	@make -C tests CFLAGS="${CFLAGS}" all
 
 clean: force
-	make -C src clean
-	make -C tests clean
+	@make -C src clean
+	@make -C tests clean
 
 force:
