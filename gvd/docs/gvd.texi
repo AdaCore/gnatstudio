@@ -12,12 +12,12 @@
 @subtitle Version @value{GVDVersion}
 @subtitle Document revision level $Revision$
 @subtitle Date: $Date$
-@author ACT-Europe
+@author ACT Europe
 
 @page
 @vskip 0pt plus 1filll
 
-Copyright @copyright{} 2000-2001, ACT-Europe.
+Copyright @copyright{} 2000-2001, ACT Europe.
 This document may be copied, in whole or in part, in any form or by any
 means, as is or with alterations, provided that (1) alterations are clearly
 marked as alterations and (2) this copyright notice is included
@@ -37,7 +37,7 @@ Version @value{GVDVersion}
 
 Date: $Date$
 
-Copyright @copyright{} 2000-2001, ACT-Europe.
+Copyright @copyright{} 2000-2001, ACT Europe.
 This document may be copied, in whole or in part, in any form or by any
 means, as is or with alterations, provided that (1) alterations are clearly
 marked as alterations and (2) this copyright notice is included
