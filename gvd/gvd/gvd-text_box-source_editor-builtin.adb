@@ -941,7 +941,8 @@ package body GVD.Text_Box.Source_Editor.Builtin is
 
    procedure Set_Show_Lines_With_Code
      (Editor : access Builtin_Record;
-      Show   : Boolean) is
+      Show   : Boolean)
+   is
    begin
       if Show /= Editor.Show_Lines_With_Code then
          Editor.Show_Lines_With_Code := Show;
@@ -952,7 +953,9 @@ package body GVD.Text_Box.Source_Editor.Builtin is
            and then Editor.Debugger_Current_File.all =
              Editor.Current_File.all
          then
-            Set_Line (Editor, Get_Line (Editor), Set_Current => True);
+            Set_Line (Editor, Get_Line (Editor),
+                      Set_Current => True,
+                      Process => Editor.Process);
          end if;
       end if;
    end Set_Show_Lines_With_Code;
@@ -1143,7 +1146,8 @@ package body GVD.Text_Box.Source_Editor.Builtin is
       end if;
 
       Value := Get_Value (Get_Vadj (Get_Child (Edit)));
-      Set_Line (Editor, Get_Line (Editor), Set_Current => False);
+      Set_Line (Editor, Get_Line (Editor), Set_Current => False,
+                Process => Editor.Process);
 
       if not Reset_Line then
          Set_Value (Get_Vadj (Get_Child (Edit)), Value);
@@ -1346,7 +1350,9 @@ package body GVD.Text_Box.Source_Editor.Builtin is
            (Process.Editor_Text,
             Find_File (Process.Debugger, Name),
             Set_Current => True);
-         Set_Line (Editor, Get_Line (Editor), Set_Current => True);
+         Set_Line (Editor, Get_Line (Editor),
+                   Set_Current => True,
+                   Process     => Editor.Process);
          Highlight_Current_Line (Editor);
       end if;
    end Show_Current_Line_Menu;
@@ -1781,10 +1787,12 @@ package body GVD.Text_Box.Source_Editor.Builtin is
       if Editor.Debugger_Current_File = null
         or else Get_Current_File (Editor) = Editor.Debugger_Current_File.all
       then
-         Set_Line (Editor, Get_Line (Editor), True);
+         Set_Line (Editor, Get_Line (Editor), True,
+                   Process => Editor.Process);
          Highlight_Current_Line (Editor);
       else
-         Set_Line (Editor, 1, False);
+         Set_Line (Editor, 1, False,
+                   Process => Editor.Process);
       end if;
 
       --  Hide or display the lines with code. This needs to be done after we
@@ -1802,7 +1810,10 @@ package body GVD.Text_Box.Source_Editor.Builtin is
    procedure Set_Line
      (Editor      : access Builtin_Record;
       Line        : Natural;
-      Set_Current : Boolean := True) is
+      Set_Current : Boolean := True;
+      Process     : Gtk.Widget.Gtk_Widget)
+   is
+      pragma Unreferenced (Process);
    begin
       Set_Line (Builtin_Text_Box (Editor.Widget), Line, Set_Current);
    end Set_Line;
