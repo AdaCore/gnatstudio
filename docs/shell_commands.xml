@@ -1683,11 +1683,52 @@ The subprogram on_destroy is called whenever the user closes the console. It is 
      </example>
   </shell_doc>
 
+  <shell_doc name="GPS.Toolbar.get_by_pos">
+     <param name="self">The instance of GPS.Toolbar</param>
+     <param name="position">An integer, starting at 0</param>
+     <return>An instance of a child of GPS.GUI</return>
+     <description>Return the position-th widget in the toolbar. If the widget was created from a scripting language, its instance is returned. Otherwise, a generic instance of GPS.GUI is returned. This can be used to remove some items from the toolbar for instance</description>
+     <example lang="python">
+         GPS.Toolbar().get_by_pos (0).set_sensitive (False)
+         can be used to gray out the first item in the toolbar
+     </example>
+  </shell_doc>
+
   <shell_doc name="GPS.Toolbar.append">
      <param name="self">The instance of GPS.Toolbar</param>
      <param name="widget">An instance of GPS.GUI</param>
      <param name="tooltip">A string</param>
      <description>Add a new widget in the toolbar. This should generally be an instance of GPS.Combo for proper rendering on the screen</description>
+  </shell_doc>
+
+  <!--#################################################################
+    ####   Button class
+    ###################################################################-->
+
+  <shell_doc name="GPS.Button">
+     <description>This class represents a button that can be pressed to trigger various actions</description>
+      <see_also name="GPS.Button.__init__()"/>
+  </shell_doc>
+
+  <shell_doc name="GPS.Button.__init__">
+     <param name="self">An instance of GPS.Button</param>
+     <param name="id">A string, a unique identifier for the button</param>
+     <param name="label">A string, the text that appears on the button</param>
+     <param name="on_click">A subprogram, see the GPS documentation</param>
+     <description>Initializes a new button. When the button is pressed by the user, on_click is called with the following single parameter:
+   - $1 = The instance of GPS.Button</description>
+     <example lang="python">
+         def on_click (button):
+             print "Button pressed"
+         button = GPS.Button ("my_id", label="Press me", on_click=on_click)
+         GPS.Toolbar().append (button)
+     </example>
+  </shell_doc>
+
+  <shell_doc name="GPS.Button.set_text">
+     <param name="self">An instance of GPS.Button</param>
+     <param name="label">A string</param>
+     <description>Change the text that appears on the button</description>
   </shell_doc>
 
   <!--#################################################################
