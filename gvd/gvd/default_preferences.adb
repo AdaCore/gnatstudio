@@ -1264,13 +1264,15 @@ package body Default_Preferences is
                Flags  => Modal or Destroy_With_Parent);
 
       Gtk_New (F);
-      Result := Set_Font_Name (F, Get_Text (E));
       Pack_Start (Get_Vbox (Dialog), F, Expand => True, Fill => True);
 
       Tmp := Add_Button (Dialog, Stock_Ok,     Gtk_Response_OK);
       Tmp := Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel);
 
       Show_All (Dialog);
+
+      --  Must be done only after the widget is visible
+      Result := Set_Font_Name (F, Get_Text (E));
 
       if Run (Dialog) = Gtk_Response_OK then
          Set_Text (E, Get_Font_Name (F));
