@@ -202,7 +202,7 @@ package GPS.Kernel.Modules is
    --  Return the list of currently loaded modules.
 
    function Module_Name (ID : access Module_ID_Record'Class) return String;
-   --  Return the name of the module registered as ID.
+   --  Return the name of the module registered as ID
 
    procedure Free_Modules (Kernel : access Kernel_Handle_Record'Class);
    --  Free all the registered modules, and call Destroy for each of these.
