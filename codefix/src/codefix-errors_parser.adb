@@ -1382,6 +1382,34 @@ package body Codefix.Errors_Parser is
       end loop;
    end Fix;
 
+   --------------------------
+   -- Redundant_Conversion --
+   --------------------------
+
+   procedure Initialize (This : in out Redundant_Conversion) is
+   begin
+      This.Matcher := (1 => new Pattern_Matcher'
+        (Compile ("useless conversion, ""([^""])"" has this type")));
+   end Initialize;
+
+   procedure Fix
+     (This         : Redundant_Conversion;
+      Errors_List  : in out Errors_Interface'Class;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message      : Error_Message;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array)
+   is
+      pragma Unreferenced (This, Errors_List);
+   begin
+      Append (Solutions, Remove_Conversion
+                (Current_Text,
+                 Message,
+                 Get_Message (Message)
+                   (Matches (1).First .. Matches (1).Last)));
+   end Fix;
+
+
 begin
 
    Add_Parser (new Agregate_Misspelling);
@@ -1421,6 +1449,7 @@ begin
    Add_Parser (new Pragma_Missplaced);
    Add_Parser (new Constant_Expected);
    Add_Parser (new Possible_Interpretation);
+   Add_Parser (new Redundant_Conversion);
 
    Initialize_Parsers;
 end Codefix.Errors_Parser;
