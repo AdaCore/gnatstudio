@@ -13,6 +13,7 @@ default build compile link ada c c++:
 
 clean:
 	$(RM) gnat/*.ad*
+	$(RM) obj/*.ali obj/*.o
 	$(MAKE) -s -C glide -f Makefile.gps $@
 
 install-common:
