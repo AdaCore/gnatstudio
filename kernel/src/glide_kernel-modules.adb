@@ -869,18 +869,18 @@ package body Glide_Kernel.Modules is
       end loop;
    end Display_Differences;
 
-   ---------------------
-   -- Get_Declaration --
-   ---------------------
+   ----------------
+   -- Get_Entity --
+   ----------------
 
-   function Get_Declaration (Context : access Entity_Selection_Context)
-      return Src_Info.E_Declaration_Info
+   function Get_Entity (Context : access Entity_Selection_Context)
+      return Src_Info.Queries.Entity_Information
    is
       Lib_Info : LI_File_Ptr;
       Location : File_Location;
-      Status : Find_Decl_Or_Body_Query_Status;
+      Status   : Find_Decl_Or_Body_Query_Status;
    begin
-      if Context.Decl = No_Declaration_Info then
+      if Context.Entity = No_Entity_Information then
          Lib_Info := Locate_From_Source_And_Complete
            (Get_Kernel (Context), File_Information (Context));
 
@@ -894,17 +894,29 @@ package body Glide_Kernel.Modules is
                Entity_Name        => Entity_Name_Information (Context),
                Line               => Line_Information (Context),
                Column             => Column_Information (Context),
-               Entity_Declaration => Context.Decl,
+               Entity             => Context.Entity,
                Location           => Location,
                Status             => Status);
 
             if Status /= Success then
-               Context.Decl := No_Declaration_Info;
+               Destroy (Context.Entity);
+               Context.Entity := No_Entity_Information;
             end if;
          end if;
       end if;
 
-      return Context.Decl;
-   end Get_Declaration;
+      return Context.Entity;
+   end Get_Entity;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (Context : in out Entity_Selection_Context) is
+   begin
+      Destroy (File_Name_Selection_Context (Context));
+      Destroy (Context.Entity);
+      Free (Context.Entity_Name);
+   end Destroy;
 
 end Glide_Kernel.Modules;

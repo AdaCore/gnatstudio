@@ -389,14 +389,19 @@ package Glide_Kernel.Modules is
       return Language.Language_Category;
    --  Return the category for the entity
 
-   function Get_Declaration (Context : access Entity_Selection_Context)
-      return Src_Info.E_Declaration_Info;
+   function Get_Entity (Context : access Entity_Selection_Context)
+      return Src_Info.Queries.Entity_Information;
    --  Return the location of the declaration for the entity in Context.
    --  This information is automatically cached in the context, in case several
    --  modules need to compute it;
-   --  No_Declaration_Info is returned if the information could not be found.
+   --  No_Entity_Information is returned if the information could not be found.
    --  No also that in most cases you should set the busy cursor before calling
    --  this function, since it might take some time.
+   --  You do not need to free the memory, since it will automatically be freed
+   --  when the context is destroyed.
+
+   procedure Destroy (Context : in out Entity_Selection_Context);
+   --  Destroy the memory associated with the entity
 
 private
 
@@ -411,11 +416,11 @@ private
    end record;
 
    type Entity_Selection_Context is new File_Name_Selection_Context with record
-      Category     : Language.Language_Category := Language.Cat_Unknown;
-      Entity_Name  : GNAT.OS_Lib.String_Access := null;
-      Line, Column : Integer := 0;
-      Decl         : Src_Info.E_Declaration_Info :=
-        Src_Info.No_Declaration_Info;
+      Category      : Language.Language_Category := Language.Cat_Unknown;
+      Entity_Name   : GNAT.OS_Lib.String_Access := null;
+      Line, Column  : Integer := 0;
+      Entity        : Src_Info.Queries.Entity_Information :=
+        Src_Info.Queries.No_Entity_Information;
    end record;
 
    pragma Inline (Has_Project_Information,
