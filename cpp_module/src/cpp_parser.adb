@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with Entities;          use Entities;
+with Entities.Queries;  use Entities.Queries;
 with Projects.Registry; use Projects.Registry;
 with SN.Browse;         use SN.Browse;
 with SN.DB_Structures;  use SN.DB_Structures;
@@ -53,6 +54,11 @@ package body CPP_Parser is
    DBIMP    : constant String := "dbimp";    --  SN database engine
    CBrowser : constant String := "cbrowser"; --  SN C and C++ parser
 
+   Unresolved : constant E_Kind :=
+     (Entities.Unresolved_Entity,
+      Is_Type     => False,
+      Is_Generic  => False,
+      Is_Abstract => False);
    Modular_Integer_Entity : constant E_Kind :=
      (Modular_Integer,
       Is_Type     => True,
@@ -263,10 +269,17 @@ package body CPP_Parser is
      (Handler : access CPP_Handler_Record'Class;
       Entity  : Entity_Information;
       Sym     : FIL_Table);
+   procedure Parse_E_Table
+     (Handler : access CPP_Handler_Record'Class;
+      Entity  : Entity_Information;
+      Sym     : FIL_Table);
+   procedure Parse_EC_Table
+     (Handler : access CPP_Handler_Record'Class;
+      Entity  : Entity_Information;
+      Sym     : FIL_Table);
    procedure Parse_TO_Table
      (Handler   : access CPP_Handler_Record'Class;
       Sym_Name  : String;
-      Sym_File  : Source_File;
       Sym_Class : String;
       Sym_Arg_Types : String);
    procedure Parse_LV_Table
@@ -337,6 +350,13 @@ package body CPP_Parser is
    --  Search the declaration of the entity in some of the SN tables
    --  (as indicated by Tables), or in the list of predefined entities.
    --  The entity is not searched in the already parsed memory.
+
+   function Lookup_Non_Overloaded_Entity
+     (In_File : Source_File;
+      Name    : String) return Entity_Information;
+   pragma Unreferenced (Lookup_Non_Overloaded_Entity);
+   --  In there is only one possible declaration for Name so far, return it.
+   --  Otherwise, this is an overloaded entity, and null is returned.
 
    function Get_Or_Create
      (Handler    : access CPP_Handler_Record'Class;
@@ -943,6 +963,36 @@ package body CPP_Parser is
       return Entity;
    end Lookup_Entity_In_Tables;
 
+   ----------------------------------
+   -- Lookup_Non_Overloaded_Entity --
+   ----------------------------------
+
+   function Lookup_Non_Overloaded_Entity
+     (In_File : Source_File;
+      Name    : String) return Entity_Information
+   is
+      Iter   : Entity_Iterator;
+      Count  : Natural := 0;
+      Entity : Entity_Information;
+   begin
+      Find_All_Entities_In_File (Iter, In_File, Prefix => Name);
+      while not At_End (Iter) loop
+         if Get_Name (Get (Iter)) = Name then
+            Count := Count + 1;
+            Entity := Get (Iter);
+            exit when Count >= 2;
+         end if;
+         Next (Iter);
+      end loop;
+
+      if Count /= 1 then
+         Entity := null;
+      end if;
+
+      Destroy (Iter);
+      return Entity;
+   end Lookup_Non_Overloaded_Entity;
+
    ----------------------
    -- Get_Static_Field --
    ----------------------
@@ -1263,7 +1313,6 @@ package body CPP_Parser is
          Parse_TO_Table
            (Handler       => Handler,
             Sym_Name      => Entity_Name,
-            Sym_File      => Source,
             Sym_Class     => Entity_Class,
             Sym_Arg_Types => Arg_Types);
          Class := Lookup_Entity_In_Tables
@@ -1522,6 +1571,78 @@ package body CPP_Parser is
       end if;
    end Parse_TA_Table;
 
+   --------------------
+   -- Parse_EC_Table --
+   --------------------
+   --  The following information is not used currently:
+   --     End_Position, Attributes
+
+   procedure Parse_EC_Table
+     (Handler : access CPP_Handler_Record'Class;
+      Entity  : Entity_Information;
+      Sym     : FIL_Table)
+   is
+      C       : EC_Table;
+      Success : Boolean;
+      Parent  : Entity_Information;
+   begin
+      Find (DB        => Handler.SN_Table (EC),
+            Name      => Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last),
+            Filename  => Sym.Key (Sym.File_Name.First .. Sym.File_Name.Last),
+            Start_Position => Sym.Start_Position,
+            Tab       => C,
+            Success   => Success);
+
+      if Success then
+         Parent := Lookup_Entity_In_Tables
+           (Handler => Handler,
+            Name    => C.Data
+              (C.Enumeration_Name.First .. C.Enumeration_Name.Last),
+            Current_Source    => Get_File (Get_Declaration_Of (Entity)),
+            Tables                         => (E => True, others => False),
+            Check_Predefined               => False,
+            Check_Template_Arguments       => False,
+            Check_Class_Template_Arguments => False);
+
+         if Parent /= null then
+            Set_Type_Of (Entity, Is_Of_Type => Parent);
+         end if;
+      end if;
+
+      Set_Kind_From_Table_If_Not_Set (Entity, EC);
+   end Parse_EC_Table;
+
+   -------------------
+   -- Parse_E_Table --
+   -------------------
+   --  The following information is not used currently:
+   --     Attributes
+
+   procedure Parse_E_Table
+     (Handler : access CPP_Handler_Record'Class;
+      Entity  : Entity_Information;
+      Sym     : FIL_Table)
+   is
+      ET      : E_Table;
+      Success : Boolean;
+   begin
+      Find (DB        => Handler.SN_Table (E),
+            Name      => Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last),
+            Filename  => Sym.Key (Sym.File_Name.First .. Sym.File_Name.Last),
+            Start_Position => Sym.Start_Position,
+            Tab       => ET,
+            Success   => Success);
+
+      if Success then
+         Set_End_Of_Scope
+           (Entity   => Entity,
+            Location => (File   => Get_File (Get_Declaration_Of (Entity)),
+                         Line   => ET.End_Position.Line,
+                         Column => ET.End_Position.Column),
+            Kind     => End_Of_Spec);
+      end if;
+   end Parse_E_Table;
+
    ---------------------
    -- Parse_CON_Table --
    ---------------------
@@ -1735,7 +1856,6 @@ package body CPP_Parser is
          Parse_TO_Table
            (Handler     => Handler,
             Sym_Name    => C.Key (C.Name.First .. C.Name.Last),
-            Sym_File    => Source,
             Sym_Class   => C.Key (C.Class.First .. C.Class.Last),
             Sym_Arg_Types => C.Data (C.Arg_Types.First .. C.Arg_Types.Last));
       end if;
@@ -1750,7 +1870,6 @@ package body CPP_Parser is
    procedure Parse_TO_Table
      (Handler   : access CPP_Handler_Record'Class;
       Sym_Name  : String;
-      Sym_File  : Source_File;
       Sym_Class : String;
       Sym_Arg_Types : String)
    is
@@ -1796,21 +1915,36 @@ package body CPP_Parser is
                      Arr (R.Referred_Symbol) := True;
                end case;
 
+               Ref_Source := Get_Or_Create
+                 (Handler,
+                  R.Key (R.File_Name.First .. R.File_Name.Last));
+
                --  An undefined entity ?
                if R.Referred_Symbol = UD then
+
+                  --  We can't really be smarter than SN, especially since we
+                  --  might be referencing a field of a record. Perhaps we
+                  --  could do this only if we have a function, but even then
+                  --  this is doubtful.
+--                    Ref := Lookup_Non_Overloaded_Entity
+--                      (In_File => Sym_File,
+--                       Name    => R.Key
+--                         (R.Referred_Symbol_Name.First
+--                          .. R.Referred_Symbol_Name.Last));
+
                   Ref := Get_Or_Create
                     (Name         => R.Key
                        (R.Referred_Symbol_Name.First
                         .. R.Referred_Symbol_Name.Last),
-                     File         => Sym_File,
+                     File         => Ref_Source,
                      Line         => Predefined_Line,
                      Column       => Predefined_Column,
                      Allow_Create => True);
-                  Set_Kind (Ref, Function_Entity);
+                  Set_Kind (Ref, Unresolved);
 
                elsif R.Referred_Symbol = TA then
-                  --  Bug in SN: the class for a TA is left to "#", so we use
-                  --  the name of the generic entity instead
+                  --  Bug in SN: the class for a TA is left to "#", so we
+                  --  use the name of the generic entity instead
                   Ref := Lookup_Entity_In_Tables
                     (Handler => Handler,
                      Name    => R.Key
@@ -1854,19 +1988,15 @@ package body CPP_Parser is
                         Kind := Reference;
                   end case;
 
-                  --  Parameters declaration are also visible in the TO table,
-                  --  but we shouldn't list these as a reference.
+                  --  Parameters declaration are also visible in the TO
+                  --  table, but we shouldn't list these as a reference.
 
                   if R.Key (R.Access_Type.First) /= 'p'
                     or else Get_Line (Get_Declaration_Of (Ref)) /=
-                       R.Position.Line
+                    R.Position.Line
                     or else Get_Column (Get_Declaration_Of (Ref)) /=
-                       R.Position.Column
+                    R.Position.Column
                   then
-                     Ref_Source := Get_Or_Create
-                       (Handler,
-                        R.Key (R.File_Name.First .. R.File_Name.Last));
-
                      Add_Reference
                        (Entity   => Ref,
                         Location => (File   => Ref_Source,
@@ -2154,7 +2284,15 @@ package body CPP_Parser is
 
                when SN_IN => null; --  Parsed when handling CL
 
-               when E | EC | UN | Undef | COM | COV | FR | LV | SU | UD =>
+               when E =>
+                  Entity := Entity_From_FIL (Sym, Source);
+                  Parse_E_Table (Handler, Entity, Sym);
+
+               when EC =>
+                  Entity := Entity_From_FIL (Sym, Source);
+                  Parse_EC_Table (Handler, Entity, Sym);
+
+               when UN | Undef | COM | COV | FR | LV | SU | UD =>
                   Trace
                     (Me, "Parse_FIL_Table: "
                      & Base_Name (Get_Filename (Source))
