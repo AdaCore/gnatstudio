@@ -1672,7 +1672,9 @@ package body Src_Info.ALI is
       --  Compute the search path. If the objects path of the project is
       --  not null, then prepend it to the total search path.
 
-      if Prj.Env.Ada_Objects_Path (Project) /= null then
+      if Project /= No_Project
+        and then Prj.Env.Ada_Objects_Path (Project) /= null
+      then
          Dir := Locate_Regular_File
            (Short_ALI_Filename,
             Prj.Env.Ada_Objects_Path (Project).all & Path_Separator &
