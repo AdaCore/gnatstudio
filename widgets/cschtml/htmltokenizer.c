@@ -660,7 +660,8 @@ html_tokenizer_write (HTMLTokenizer *t, const gchar *string, size_t size)
 			else {
 				if(entityValue) {
 					/* Insert plain ASCII */
-					*(t->dest)++ = (gchar) entityValue;
+	                                *(t->dest)+= g_unichar_to_utf8
+	                                             ((gunichar) entityValue, t->dest);
 					if (t->pre)
 						t->prePos++;
 					if (*src == ';')
