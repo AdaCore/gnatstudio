@@ -18,6 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Odd_Intl;     use Odd_Intl;
 with GNAT.Regpat;  use GNAT.Regpat;
 with GVD.Pixmaps;  use GVD.Pixmaps;
 
@@ -55,7 +56,7 @@ package body Language.Debugger.C is
         Multiple_Lines);
 
    C_Explorer_Categories : constant Explorer_Categories (1 .. 1) :=
-     (1 => (Name           => new String' ("Functions"),
+     (1 => (Name           => new String' (-"Functions"),
             Regexp         => Subprogram_RE'Access,
             Position_Index => 4,
             Icon           => subprogram_xpm'Access,
@@ -122,15 +123,6 @@ package body Language.Debugger.C is
       end if;
    end Record_Field_Name;
 
-   -----------
-   -- Start --
-   -----------
-
-   function Start (Debugger  : access C_Language) return String is
-   begin
-      return "tbreak main" & ASCII.LF & "run";
-   end Start;
-
    ----------------------
    -- Explorer_Regexps --
    ----------------------
@@ -157,9 +149,8 @@ package body Language.Debugger.C is
    -- Keywords --
    --------------
 
-   function Keywords (Lang : access C_Language)
-                     return GNAT.Regpat.Pattern_Matcher
-   is
+   function Keywords
+     (Lang : access C_Language) return GNAT.Regpat.Pattern_Matcher is
    begin
       return Keywords_List;
    end Keywords;
@@ -169,8 +160,7 @@ package body Language.Debugger.C is
    --------------------------
 
    function Get_Language_Context
-     (Lang : access C_Language) return Language_Context
-   is
+     (Lang : access C_Language) return Language_Context is
    begin
       return (Comment_Start_Length => 2,
               Comment_End_Length   => 2,

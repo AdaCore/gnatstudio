@@ -42,12 +42,6 @@ package Language.Debugger.C is
    function Get_Language_Context
      (Lang : access C_Language) return Language_Context;
 
-   ---------------------------------
-   -- Language specific functions --
-   ---------------------------------
-
-   function Start (Debugger  : access C_Language) return String;
-
    --------------
    -- Explorer --
    --------------
