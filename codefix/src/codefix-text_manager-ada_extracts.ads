@@ -38,7 +38,7 @@ package Codefix.Text_Manager.Ada_Extracts is
    procedure Remove_Instruction (This : in out Ada_Instruction);
    --  Delete the instruction recored in This.
 
-   function Get_Stop (This : Ada_Instruction) return File_Cursor;
+   function Get_Start (This : Ada_Instruction) return File_Cursor;
    --  Return the cursor stands at the beginning of the instruction/
 
    function Get_Stop (This : Ada_Instruction) return File_Cursor;
