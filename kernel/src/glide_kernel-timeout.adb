@@ -151,9 +151,12 @@ package body Glide_Kernel.Timeout is
 
    exception
       when Process_Died =>
+         if Data.D.Callback /= null then
+            Data.D.Callback (Data.D, Strip_CR (Expect_Out (Fd.all)));
+         end if;
+
          if Data.Console /= null then
             --  Capture all remaining output
-            Expect (Fd.all, Result, "[.\n]*$", Timeout => -1);
             Insert
               (Data.Console, Strip_CR (Expect_Out (Fd.all)), Add_LF => False);
             Highlight_Child
@@ -303,7 +306,8 @@ package body Glide_Kernel.Timeout is
          if Line_By_Line then
             Data.Expect_Regexp := new Pattern_Matcher'(Compile ("^.*?\n"));
          else
-            Data.Expect_Regexp := new Pattern_Matcher'(Compile (".$"));
+            Data.Expect_Regexp := new Pattern_Matcher'
+              (Compile (".*$", Single_Line));
          end if;
 
          Data.D       := (Kernel, Fd, Callback, Exit_Cb, Callback_Data);
