@@ -529,6 +529,11 @@ package body Aliases_Module is
       Expand      : String_Ptr;
       P           : Param_Access;
    begin
+      if not Is_Regular_File (Filename) then
+         Trace (Me, "No such file: " & Filename);
+         return;
+      end if;
+
       Trace (Me, "Loading " & Filename);
       File  := Parse (Filename);
       Alias := File.Child;
@@ -620,11 +625,9 @@ package body Aliases_Module is
                Read (Dir, File, Last);
                exit when Last = 0;
 
-               if Is_Regular_File (Sys_Dir & File (File'First .. Last)) then
-                  Parse_File (Kernel,
-                              Sys_Dir & File (File'First .. Last),
-                              Read_Only => True);
-               end if;
+               Parse_File (Kernel,
+                           Sys_Dir & File (File'First .. Last),
+                           Read_Only => True);
             end loop;
 
             Close (Dir);
