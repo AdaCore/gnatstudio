@@ -20,6 +20,7 @@
 
 with Glib;                use Glib;
 with Glib.Graphs;         use Glib.Graphs;
+with Glib.Object;         use Glib.Object;
 with Gdk.Color;           use Gdk.Color;
 with Gdk.GC;              use Gdk.GC;
 with Gtkada.Canvas;       use Gtkada.Canvas;
@@ -44,12 +45,9 @@ with Pango.Font;          use Pango.Font;
 with Glide_Kernel;              use Glide_Kernel;
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
-with Browsers.Dependency_Items; use Browsers.Dependency_Items;
+with Glide_Intl;                use Glide_Intl;
 with Browsers.Module;           use Browsers.Module;
-with Browsers.Projects;         use Browsers.Projects;
 with Layouts;                   use Layouts;
-with Src_Info;                  use Src_Info;
-with Prj_API;                   use Prj_API;
 
 package body Browsers.Canvas is
 
@@ -75,6 +73,7 @@ package body Browsers.Canvas is
 
    type Cb_Data is record
       Browser : Glide_Browser;
+      Item    : Canvas_Item;
       Zoom    : Guint;
    end record;
 
@@ -98,6 +97,13 @@ package body Browsers.Canvas is
      (Browser : access Gtk_Widget_Record'Class; Event : Gdk_Event)
       return Boolean;
    --  Callback for the key press event
+
+   procedure On_Refresh (Browser : access Gtk_Widget_Record'Class);
+   --  Recompute the layout of the canvas
+
+   procedure Toggle_Links
+     (Mitem : access Gtk_Widget_Record'Class; Data : Cb_Data);
+   --  Toggle the display of links for the item
 
    -------------
    -- Gtk_New --
@@ -213,6 +219,20 @@ package body Browsers.Canvas is
       return Browser.Canvas;
    end Get_Canvas;
 
+   ------------------------
+   -- Contextual_Factory --
+   ------------------------
+
+   function Contextual_Factory
+     (Item  : access Glide_Browser_Item_Record;
+      Browser : access Glide_Browser_Record'Class;
+      Event : Gdk.Event.Gdk_Event;
+      Menu  : Gtk.Menu.Gtk_Menu) return Glide_Kernel.Selection_Context_Access
+   is
+   begin
+      return null;
+   end Contextual_Factory;
+
    -----------------------------
    -- Browser_Context_Factory --
    -----------------------------
@@ -231,12 +251,13 @@ package body Browsers.Canvas is
       Check      : Gtk_Check_Menu_Item;
       Zooms_Menu : Gtk_Menu;
       Item       : Canvas_Item;
-      Src        : Src_Info.Internal_File;
       Xr, Yr     : Gint;
+      Xsave, Ysave : Gdouble;
       Success    : Boolean;
 
    begin
       --  Click on an item: this is a file selection
+      --  ??? Should we convert to world coordinates here ?
 
       Get_Origin (Get_Window (B.Canvas), Xr, Yr, Success);
       Set_X (Event, Get_X_Root (Event) - Gdouble (Xr));
@@ -244,35 +265,35 @@ package body Browsers.Canvas is
 
       Item := Item_At_Coordinates (B.Canvas, Event);
 
-      --  ??? Should test whether this is a file-related item
-      if Item /= null
-        and then Item.all in File_Item_Record'Class
-      then
-         Context := new File_Selection_Context;
-         Src := Get_Source (File_Item (Item));
+      if Item /= null then
+         if Glide_Browser_Item (Item).Hide_Links then
+            Gtk_New (Mitem, Label => -"Show links");
+         else
+            Gtk_New (Mitem, Label => -"Hide links");
+         end if;
+         Append (Menu, Mitem);
+         Contextual_Cb.Connect
+           (Mitem, "activate",
+            Contextual_Cb.To_Marshaller (Toggle_Links'Access),
+            (Browser => B, Item => Item, Zoom => 100));
 
-         Set_File_Information
-           (File_Selection_Context_Access (Context),
-            File_Name => Get_Source_Filename (Src));
+         Xsave := Get_X (Event);
+         Ysave := Get_Y (Event);
+         Set_X (Event, Get_X (Event) - Gdouble (Get_Coord (Item).X));
+         Set_Y (Event, Get_Y (Event) - Gdouble (Get_Coord (Item).Y));
+         Context := Contextual_Factory
+           (Glide_Browser_Item (Item), B, Event, Menu);
+         Set_X (Event, Xsave);
+         Set_Y (Event, Ysave);
+      end if;
 
-      elsif Item /= null
-        and then Item.all in Browser_Project_Vertex'Class
-      then
-         Context := new File_Selection_Context;
-
-         Set_File_Information
-           (File_Selection_Context_Access (Context),
-            Project_View => Get_Project_View_From_Name
-              (Project_Name (Browser_Project_Vertex_Access (Item))));
-
-      --  Else, a general browser selection
-      else
+      if Context = null then
          Unlock (Get_Default_Accelerators (Kernel));
 
          Context := new Selection_Context;
 
          --  ??? Should be set only for browsers related to files
-         Gtk_New (Mitem, Label => "Open file...");
+         Gtk_New (Mitem, Label => -"Open file...");
          Append (Menu, Mitem);
          Context_Callback.Object_Connect
            (Mitem, "activate",
@@ -280,17 +301,23 @@ package body Browsers.Canvas is
             Slot_Object => B,
             User_Data   => Selection_Context_Access (Context));
 
-         Gtk_New (Check, Label => "Hide system files");
+         Gtk_New (Check, Label => -"Hide system files");
          Set_Active (Check, True);
          Set_Sensitive (Check, False);
          Append (Menu, Check);
 
-         Gtk_New (Check, Label => "Hide implicit dependencies");
+         Gtk_New (Check, Label => -"Hide implicit dependencies");
          Set_Active (Check, True);
          Set_Sensitive (Check, False);
          Append (Menu, Check);
 
-         Gtk_New (Mitem, Label => "Zoom in");
+         Gtk_New (Mitem, Label => -"Refresh");
+         Append (Menu, Mitem);
+         Widget_Callback.Object_Connect
+           (Mitem, "activate",
+            Widget_Callback.To_Marshaller (On_Refresh'Access), B);
+
+         Gtk_New (Mitem, Label => -"Zoom in");
          Append (Menu, Mitem);
          Widget_Callback.Object_Connect
            (Mitem, "activate",
@@ -299,7 +326,7 @@ package body Browsers.Canvas is
            (Mitem, "activate",
             Get_Default_Accelerators (Kernel), GDK_equal, 0, Accel_Visible);
 
-         Gtk_New (Mitem, Label => "Zoom out");
+         Gtk_New (Mitem, Label => -"Zoom out");
          Append (Menu, Mitem);
          Widget_Callback.Object_Connect
            (Mitem, "activate",
@@ -317,10 +344,11 @@ package body Browsers.Canvas is
               (Mitem, "activate",
                Contextual_Cb.To_Marshaller (Zoom_Level'Access),
                (Browser => B,
+                Item    => null,
                 Zoom    => Zoom_Levels (J)));
          end loop;
 
-         Gtk_New (Mitem, Label => "Zoom");
+         Gtk_New (Mitem, Label => -"Zoom");
          Append (Menu, Mitem);
          Set_Submenu (Mitem, Zooms_Menu);
 
@@ -329,6 +357,30 @@ package body Browsers.Canvas is
 
       return Context;
    end Browser_Context_Factory;
+
+   ------------------
+   -- Toggle_Links --
+   ------------------
+
+   procedure Toggle_Links
+     (Mitem : access Gtk_Widget_Record'Class; Data : Cb_Data)
+   is
+      It : Glide_Browser_Item := Glide_Browser_Item (Data.Item);
+   begin
+      It.Hide_Links := not It.Hide_Links;
+      Refresh_Canvas (Get_Canvas (Data.Browser));
+   end Toggle_Links;
+
+   ----------------
+   -- On_Refresh --
+   ----------------
+
+   procedure On_Refresh (Browser : access Gtk_Widget_Record'Class) is
+      B : Glide_Browser := Glide_Browser (Browser);
+   begin
+      Layout (Get_Canvas (B), Force => False, Vertical_Layout => True);
+      Refresh_Canvas (Get_Canvas (B));
+   end On_Refresh;
 
    -------------
    -- Zoom_In --
@@ -546,18 +598,24 @@ package body Browsers.Canvas is
    is
       Browser : Glide_Browser := To_Brower (Canvas);
    begin
-      if Invert_Mode
-        or else
-        (Get_Src (Link) /= Vertex_Access (Selected_Item (Browser))
-         and then Get_Dest (Link) /= Vertex_Access (Selected_Item (Browser)))
+      if not Glide_Browser_Item (Get_Src (Link)).Hide_Links
+        and then not Glide_Browser_Item (Get_Dest (Link)).Hide_Links
       then
-         Draw_Link
-           (Canvas, Canvas_Link_Access (Link), Window,
-            Invert_Mode, GC, Edge_Number);
-      else
-         Draw_Link
-           (Canvas, Canvas_Link_Access (Link),
-            Window, Invert_Mode, Get_Selected_Link_GC (Browser), Edge_Number);
+         if Invert_Mode
+           or else
+           (Get_Src (Link) /= Vertex_Access (Selected_Item (Browser))
+            and then Get_Dest (Link) /=
+               Vertex_Access (Selected_Item (Browser)))
+         then
+            Draw_Link
+              (Canvas, Canvas_Link_Access (Link), Window,
+               Invert_Mode, GC, Edge_Number);
+         else
+            Draw_Link
+              (Canvas, Canvas_Link_Access (Link),
+               Window, Invert_Mode, Get_Selected_Link_GC (Browser),
+               Edge_Number);
+         end if;
       end if;
    end Draw_Link;
 

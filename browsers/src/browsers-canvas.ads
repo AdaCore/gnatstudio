@@ -89,6 +89,30 @@ package Browsers.Canvas is
    --  selected item.
 
    -----------
+   -- Items --
+   -----------
+
+   type Glide_Browser_Item_Record is new Gtkada.Canvas.Buffered_Item_Record
+     with private;
+   type Glide_Browser_Item is access all Glide_Browser_Item_Record'Class;
+   --  The type of items that are put in the canvas. They are associated with
+   --  contextual menus, and also allows hiding the links to and from this
+   --  item.
+
+   function Contextual_Factory
+     (Item  : access Glide_Browser_Item_Record;
+      Browser : access Glide_Browser_Record'Class;
+      Event : Gdk.Event.Gdk_Event;
+      Menu  : Gtk.Menu.Gtk_Menu) return Glide_Kernel.Selection_Context_Access;
+   --  Return the selection context to use when an item is clicked on.
+   --  The coordinates in Event are relative to the upper-left corner of the
+   --  item.
+   --  If there are specific contextual menu entries that should be used for
+   --  this item, they should be added to Menu.
+   --  null should be return if there is no special contextual for this
+   --  item. In that case, the context for the browser itself will be used.
+
+   -----------
    -- Links --
    -----------
 
@@ -165,6 +189,11 @@ private
 
    type Glide_Browser_Link_Record is new Gtkada.Canvas.Canvas_Link_Record
      with null record;
+
+   type Glide_Browser_Item_Record is new Gtkada.Canvas.Buffered_Item_Record
+   with record
+      Hide_Links : Boolean := False;
+   end record;
 
    pragma Inline (Get_Mask);
    pragma Inline (Get_Canvas);
