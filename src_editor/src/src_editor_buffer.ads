@@ -1094,6 +1094,11 @@ private
       --  The column (index in Buffer_Line_Info_Columns) that contains the
       --  block information. Set to a negative value if the column does not
       --  exist.
+
+      Modifying_Real_Lines : Boolean := False;
+      --  Set to True when we are currently modifying the range of the real
+      --  lines (ie when we are folding/unfolding text or adding/removing
+      --  blank lines.
    end record;
 
 end Src_Editor_Buffer;
