@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2004                      --
---                             ACT-Europe                            --
+--                      Copyright (C) 2001-2005                      --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -61,7 +61,6 @@ with Gtkada.File_Selector;      use Gtkada.File_Selector;
 with GPS.Kernel;              use GPS.Kernel;
 with GPS.Kernel.Hooks;        use GPS.Kernel.Hooks;
 with GPS.Kernel.Preferences;  use GPS.Kernel.Preferences;
-with GVD.Preferences;
 with GPS.Intl;                use GPS.Intl;
 with Layouts;                   use Layouts;
 with VFS;                       use VFS;
@@ -430,8 +429,7 @@ package body Browsers.Canvas is
            (Hook.Browser.Text_GC,
             Get_Pref (Kernel, Browsers_Hyper_Link_Color));
          Set_Foreground
-           (Hook.Browser.Title_GC,
-            Get_Pref (Kernel, GVD.Preferences.Title_Color));
+           (Hook.Browser.Title_GC, Get_Pref (Kernel, Title_Color));
          Set_Foreground (Image_Canvas (Hook.Browser.Canvas).Bg_GC,
                          Get_Pref (Hook.Browser.Kernel, Browsers_Bg_Color));
       end if;
@@ -564,8 +562,7 @@ package body Browsers.Canvas is
            (B.Text_GC, Get_Pref (B.Kernel, Browsers_Hyper_Link_Color));
 
          Gdk_New (B.Title_GC, Get_Window (B.Canvas));
-         Set_Foreground (B.Title_GC,
-                         Get_Pref (B.Kernel, GVD.Preferences.Title_Color));
+         Set_Foreground (B.Title_GC, Get_Pref (B.Kernel, Title_Color));
 
          Gdk_New (Image_Canvas (B.Canvas).Bg_GC, Get_Window (B.Canvas));
          Set_Foreground (Image_Canvas (B.Canvas).Bg_GC,
