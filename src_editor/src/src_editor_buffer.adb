@@ -117,9 +117,10 @@ package body Src_Editor_Buffer is
    Signals : constant Interfaces.C.Strings.chars_ptr_array :=
      (1 => New_String ("cursor_position_changed"),
       2 => New_String ("side_column_changed"),
-      3 => New_String ("line_highlights_changed"),
-      4 => New_String ("status_changed"),
-      5 => New_String ("buffer_information_changed"));
+      3 => New_String ("side_column_configuration_changed"),
+      4 => New_String ("line_highlights_changed"),
+      5 => New_String ("status_changed"),
+      6 => New_String ("buffer_information_changed"));
    --  The list of new signals supported by this GObject
 
    Signal_Parameters : constant Glib.Object.Signal_Parameter_Types :=
@@ -127,7 +128,8 @@ package body Src_Editor_Buffer is
       2 => (GType_None, GType_None),
       3 => (GType_None, GType_None),
       4 => (GType_None, GType_None),
-      5 => (GType_None, GType_None));
+      5 => (GType_None, GType_None),
+      6 => (GType_None, GType_None));
    --  The parameters associated to each new signal
 
    package Buffer_Callback is new Gtk.Handlers.Callback
@@ -2445,6 +2447,7 @@ package body Src_Editor_Buffer is
       End_Iter   : Gtk_Text_Iter;
    begin
       Get_Selection_Bounds (Buffer, Start_Iter, End_Iter, Found);
+
       if Found then
          Start_Line   := Get_Line (Start_Iter);
          Start_Column := Get_Line_Offset (Start_Iter);

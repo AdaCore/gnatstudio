@@ -707,6 +707,11 @@ package Src_Editor_Buffer is
    --    Emitted when the information in the side column has been
    --    changed.
    --
+   --  - "side_column_configuration_changed"
+   --    procedure Handler (Buffer : Gtk_Object_Record'Class);
+   --    Emitted when the side column configuration has changed (ie lines have
+   --    been added or removed.)
+   --
    --  - "line_highlights_changed"
    --    procedure Handler (Buffer : Gtk_Object_Record'Class);
    --    Emitted when the line highlightings have been updated.
