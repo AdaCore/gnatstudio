@@ -113,13 +113,11 @@ package body GVD.Code_Editors is
       Initialize_Hbox (Editor);
 
       Gtk_New_Hpaned (Editor.Explorer_Editor_Pane);
-
       Gtk_New_Hbox (Editor.Editor_Container);
 
       Editor.Process := Gtk_Widget (Process);
 
       Gtk_New (Editor.Source, Process);
-
       Add (Editor.Editor_Container, Editor.Source);
 
       Gtk_New (Editor.Asm, Process);
@@ -136,6 +134,7 @@ package body GVD.Code_Editors is
          Add (Editor, Editor.Explorer_Editor_Pane);
          Add1 (Editor.Explorer_Editor_Pane, Editor.Explorer_Scroll);
          Add2 (Editor.Explorer_Editor_Pane, Editor.Editor_Container);
+
       else
          Ref (Editor.Explorer_Editor_Pane);
          Add (Editor, Editor.Editor_Container);
@@ -424,6 +423,7 @@ package body GVD.Code_Editors is
          case Data.Editor.Mode is
             when Source_Only =>
                Add (Data.Editor.Editor_Container, Data.Editor.Source);
+               --  Why is this line commented out ???
                --  Add2 (Data.Editor.Explorer_Editor_Pane, Data.Editor.Source);
                Show_All (Data.Editor.Source);
                Set_Line (Data.Editor.Source, Data.Editor.Source_Line,
@@ -435,13 +435,17 @@ package body GVD.Code_Editors is
 
             when Asm_Only =>
                Add (Data.Editor.Editor_Container, Data.Editor.Asm);
+               --  Why is this line commented out ???
                --  Add2 (Data.Editor.Explorer_Editor_Pane, Data.Editor.Asm);
                Show_All (Data.Editor.Asm);
+
                if Data.Editor.Asm_Address /= null then
                   Set_Address (Data.Editor.Asm, Data.Editor.Asm_Address.all);
                end if;
+
                Highlight_Address_Range
                  (Data.Editor.Asm, Data.Editor.Source_Line);
+
                if Process.Breakpoints /= null then
                   Update_Breakpoints
                     (Data.Editor.Asm, Process.Breakpoints.all);
@@ -456,10 +460,12 @@ package body GVD.Code_Editors is
                if Data.Editor.Asm_Address /= null then
                   Set_Address (Data.Editor.Asm, Data.Editor.Asm_Address.all);
                end if;
+
                Highlight_Address_Range
                  (Data.Editor.Asm, Data.Editor.Source_Line);
                Set_Line (Data.Editor.Source, Data.Editor.Source_Line,
                          Set_Current => True);
+
                if Process.Breakpoints /= null then
                   Update_Breakpoints
                     (Data.Editor.Source, Process.Breakpoints.all);
@@ -539,9 +545,9 @@ package body GVD.Code_Editors is
 
          GVD.Explorer.Preferences_Changed (Edit.Explorer);
          Set_Current_File (Edit.Explorer, Get_Current_File (Edit.Source));
+
       else
          if Get_Parent (Edit.Explorer_Editor_Pane) /= null then
-
             Ref (Edit.Explorer_Editor_Pane);
             Remove (Edit, Edit.Explorer_Editor_Pane);
 
