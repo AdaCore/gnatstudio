@@ -221,8 +221,15 @@ GPS also integrates with existing editors such as Emacs and Vi, see
 * The Work Space::
 * The Project Explorer::
 * The Messages Window::
-@c * The Shell and Python Windows::
+
+@ifset python
+* The Shell and Python Windows::
+@end ifset
+
+@ifclear python
 * The Shell Window::
+@end ifclear
+
 * The Locations Tree::
 * The Execution Window::
 * The Status Line::
@@ -600,17 +607,27 @@ no input is possible.
 @cindex shell window
 @cindex shell
 For an input/output window, see @ref{The Execution Window} and also
-@c @ref{The Shell and Python Windows}.
-@ref{The Shell Window}
+@ifset python
+@ref{The Shell and Python Windows}.
+@end ifset
+@ifclear python
+@ref{The Shell Window}.
+@end ifclear
 
 @c --------------------------------------------------------------------
-@c @node The Shell and Python Windows
-@c @section The Shell and Python Windows
+@ifset python
+@node The Shell and Python Windows
+@section The Shell and Python Windows
+@cindex python window
+@end ifset
+
+@ifclear python
 @node The Shell Window
 @section The Shell Window
+@end ifclear
+
 @cindex shell
 @cindex shell window
-@c @cindex python window
 @cindex interactive command
 @cindex command
 @c --------------------------------------------------------------------
@@ -620,9 +637,11 @@ These windows give access to the various scripting languages supported
 by GPS, and allow you to type commands such as editing a file or
 compiling without using the menu items or the mouse.
 
-@c Some of these windows, especially the python window, might not be
-@c visible in your version of GPS, if GPS wasn't compiled with the
-@c support for that specific scripting language.
+@ifset python
+Some of these windows, especially the python window, might not be
+visible in your version of GPS, if GPS wasn't compiled with the
+support for that specific scripting language.
+@end ifset
 
 See @ref{Scripting GPS} for more information on using
 scripting languages within GPS.
@@ -4697,6 +4716,10 @@ to the current debug session, use the menu
 @code{Debug->Debug->Add Symbols...} to load the symbol tables in the current
 debugger.
 
+Similarly, if you are running the underlying debugger (gdb) on a remote
+machine, you can specify the name of this machine by setting the
+@code{Tools host} field of the project properties.
+
 @c --------------------------------------------------------------------
 @node Customizing and Extending GPS
 @chapter Customizing and Extending GPS
@@ -5525,7 +5548,9 @@ the language as an attribute of the XML node. The name of the
 attribute is @code{lang}. The default value for this attribute is
 @code{shell}, ie the command is written with the GPS shell.
 
-@c The value of this attribute could also be "python".
+@ifset python
+The value of this attribute could also be "python".
+@end ifset
 
 When programming with the GPS shell, you can execute multiple commands
 by separating them with semicolons. Therefore, the following example
@@ -6518,7 +6543,9 @@ The possible values of the parameters listed above are:
 @menu
 * Scripts::
 * The GPS Shell::
-@c * The Python Interpreter::
+@ifset python
+* The Python Interpreter::
+@end ifset
 @end menu
 
 @node Scripts
@@ -6632,100 +6659,104 @@ is mostly useful when used for command-line scripts (see @code{--eval}
 and @code{--load}), or for custom files, @xref{Customizing the Menu
 and Tool Bar}.
 
-
+@ifclear python
 In future versions of GPS, it will be possible to use more advanced scripting
 languages such as @code{Python}.
+@end ifclear
 
-@c @node The Python Interpreter
-@c @subsection The Python Interpreter
-@c @cindex python
-@c @noindent
-@c
-@c Python is an interpreted object-oriented language, created by Guido
-@c Van Rossum. It is similar in its capabilities to languages such as
-@c Perl, Tcl or Lisp. This section is not a tutorial on python
-@c programming. See @url{http://www.python.org/doc/current/} to access the
-@c documentation for the current version of python.
-@c
-@c The python shell is accessible through the @code{Python} window at the
-@c bottom of the GPS window. However, GPS might not have been compiled
-@c with support for python, and therefore python might not be available
-@c to you.
-@c
-@c If a script is executed that requires user input, the whole GPS environment
-@c is frozen. This is to prevent the user from selecting a menu that would in
-@c turn launch a new python command while the previous one has not finished to
-@c execute.
-@c
-@c Type @code{help(GPS)} to see the list of functions exported by GPS to
-@c python. This list is also given in @ref{Python Commands} at the end
-@c of this documentation.
-@c
-@c The same example that was used to show the GPS shell is now done
-@c through python. As you can notice, the name of the commands is
-@c similar, although they are not run exactly in the same
-@c way. Specifically, GPS benefits from the object-oriented aspects of
-@c python to create classes and instances of these classes.
-@c
-@c In the first line, a new instance of the class Entity is created
-@c through the @code{create_entity} function. Various methods can then be
-@c applied to that instance, including @code{find_all_refs}, which lists
-@c all references to that entity in the location window
-@c 
-@c @smallexample
-@c >>> e=GPS.Entity ("entity_name", "file_name.adb")
-@c >>> e.find_all_refs()
-@c @end smallexample
-@c 
-@c Python has extensive introspection capabilities. Continuing the
-@c previous example, one can find what class @code{e} is an instance of
-@c with the following command:
-@c 
-@c @smallexample
-@c >>> help(e)
-@c Help on instance of Entity:
-@c 
-@c <GPS.Entity instance>
-@c @end smallexample
-@c 
-@c It is also possible to find all attributes and methods that can be
-@c applied to @code{e}, as in the following example:
-@c 
-@c @smallexample
-@c >>> dir (e)
-@c ['__doc__', '__gps_data__', '__module__', 'called_by', 'calls',
-@c 'find_all_refs']
-@c @end smallexample
+@ifset python
+@node The Python Interpreter
+@subsection The Python Interpreter
+@cindex python
+@noindent
 
-@c Note that the list of methods may vary depending on what modules were
-@c loaded in GPS, since each module can add its own methods to any class.
+Python is an interpreted object-oriented language, created by Guido
+Van Rossum. It is similar in its capabilities to languages such as
+Perl, Tcl or Lisp. This section is not a tutorial on python
+programming. See @url{http://www.python.org/doc/current/} to access the
+documentation for the current version of python.
 
-@c Finally, the list of all existing modules and objects currently known
-@c in the interpreter can be found with the following command:
-@c 
-@c @smallexample
-@c >>> dir ()
-@c ['GPS', 'GPSStdout', '__builtins__', '__doc__', '__name__', 'e', 'sys']
-@c @end smallexample
+The python shell is accessible through the @code{Python} window at the
+bottom of the GPS window. However, GPS might not have been compiled
+with support for python, and therefore python might not be available
+to you.
 
-@c You can load and execute python scripts with the @code{execfile} command,
-@c as in the following example:
+If a script is executed that requires user input, the whole GPS environment
+is frozen. This is to prevent the user from selecting a menu that would in
+turn launch a new python command while the previous one has not finished to
+execute.
 
-@c @smallexample
-@c >>> execfile ("test.py")
-@c @end smallexample
+Type @code{help(GPS)} to see the list of functions exported by GPS to
+python. This list is also given in @ref{Python Commands} at the end
+of this documentation.
 
-@c Python supports named parameters. Most functions exported by GPS define
-@c names for their parameters, so that you can use this Python's feature, and
-@c make your scripts more readable. A notable exception to this rule are the
-@c functions that take a variable number of parameters,
+The same example that was used to show the GPS shell is now done
+through python. As you can notice, the name of the commands is
+similar, although they are not run exactly in the same
+way. Specifically, GPS benefits from the object-oriented aspects of
+python to create classes and instances of these classes.
 
-@c Using named parameters allows you to specify the parameters in any order
-@c you wish.
+In the first line, a new instance of the class Entity is created
+through the @code{create_entity} function. Various methods can then be
+applied to that instance, including @code{find_all_refs}, which lists
+all references to that entity in the location window
 
-@c #smallexample
-@c >>> e=GPS.Entity (name="foo", file="file.adb")
-@c end smallexample
+@smallexample
+>>> e=GPS.Entity ("entity_name", "file_name.adb")
+>>> e.find_all_refs()
+@end smallexample
+
+Python has extensive introspection capabilities. Continuing the
+previous example, one can find what class @code{e} is an instance of
+with the following command:
+
+@smallexample
+>>> help(e)
+Help on instance of Entity:
+
+<GPS.Entity instance>
+@end smallexample
+
+It is also possible to find all attributes and methods that can be
+applied to @code{e}, as in the following example:
+
+@smallexample
+>>> dir (e)
+['__doc__', '__gps_data__', '__module__', 'called_by', 'calls',
+'find_all_refs']
+@end smallexample
+
+Note that the list of methods may vary depending on what modules were
+loaded in GPS, since each module can add its own methods to any class.
+
+Finally, the list of all existing modules and objects currently known
+in the interpreter can be found with the following command:
+
+@smallexample
+>>> dir ()
+['GPS', 'GPSStdout', '__builtins__', '__doc__', '__name__', 'e', 'sys']
+@end smallexample
+
+You can load and execute python scripts with the @code{execfile} command,
+as in the following example:
+
+@smallexample
+>>> execfile ("test.py")
+@end smallexample
+
+Python supports named parameters. Most functions exported by GPS define
+names for their parameters, so that you can use this Python's feature, and
+make your scripts more readable. A notable exception to this rule are the
+functions that take a variable number of parameters,
+
+Using named parameters allows you to specify the parameters in any order
+you wish.
+
+@smallexample
+>>> e=GPS.Entity (name="foo", file="file.adb")
+@end smallexample
+
+@end ifset
 
 @c --------------------------------------------------------------------
 @node Environment
@@ -7058,29 +7089,31 @@ directory (see @ref{Files}) to start from a fresh set up.
 
 @end table
 
+@ifset python
 @c --------------------------------------------------------------------
-@c @node Python Commands
-@c @appendix Python Commands
+@node Python Commands
+@appendix Python Commands
 @c --------------------------------------------------------------------
 
-@c This section lists all functions that GPS exports to python. This is
-@c the result of interactively running the following commands in the
-@c python interpreter:
+This section lists all functions that GPS exports to python. This is
+the result of interactively running the following commands in the
+python interpreter:
 
-@c @smallexample
-@c >>> e=file("/tmp/foo", "w")
-@c >>> sys.stdout=e
-@c >>> help(GPS)
-@c >>> e.flush()
-@c >>> sys.stdout=sys.__stdout__
-@c @end smallexample
-@c 
+@smallexample
+>>> e=file("/tmp/foo", "w")
+>>> sys.stdout=e
+>>> help(GPS)
+>>> e.flush()
+>>> sys.stdout=sys.__stdout__
+@end smallexample
+
 @c Here is the list:
-@c 
+
 @c @example
 @c @end example
-@c 
-@c 
+
+@end ifset
+
 @c --------------------------------------------------------------------
 @unnumbered Index
 @printindex cp
