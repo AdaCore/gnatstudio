@@ -148,6 +148,17 @@ package SN.DB_Structures is
    --     key  => name?start_position?filename
    --     data => end_position?attributes?{enum_name}?{}?{}?{comment}
 
+   type F_Table is record
+      File_Name           : Segment;
+      Key                 : Buffer_String;
+
+      Language            : Segment;
+      Timestamp           : Segment;
+      Data                : Buffer_String;
+   end record;
+   --  Interface to the ".f" tables.
+   --  Used for list of files in a project
+
    type FD_Table is record
       Name                : Segment;
       File_Name           : Segment;
@@ -486,6 +497,7 @@ package SN.DB_Structures is
    procedure Parse_Pair (Key_Data_Pair : Pair; Tab : out CON_Table);
    procedure Parse_Pair (Key_Data_Pair : Pair; Tab : out E_Table);
    procedure Parse_Pair (Key_Data_Pair : Pair; Tab : out EC_Table);
+   procedure Parse_Pair (Key_Data_Pair : Pair; Tab : out F_Table);
    procedure Parse_Pair (Key_Data_Pair : Pair; Tab : out FD_Table);
    procedure Parse_Pair (Key_Data_Pair : Pair; Tab : out FIL_Table);
    procedure Parse_Pair (Key_Data_Pair : Pair; Tab : out FR_Table);

@@ -518,6 +518,23 @@ package body SN.DB_Structures is
    -- Parse_Pair --
    ----------------
 
+   procedure Parse_Pair (Key_Data_Pair : Pair; Tab : out F_Table) is
+      Key, Data : CSF;
+   begin
+      CSF_Init (Key_Data_Pair.Key,  Key);
+      CSF_Init (Key_Data_Pair.Data, Data);
+
+      Copy (Tab.Key,  Key_Data_Pair.Key,  Key_Data_Pair.Key_Size);
+      Copy (Tab.Data, Key_Data_Pair.Data, Key_Data_Pair.Data_Size);
+
+      Get_Field    (Key,  1, Tab.File_Name);
+      Get_Field    (Data, 1, Tab.Language);
+   end Parse_Pair;
+
+   ----------------
+   -- Parse_Pair --
+   ----------------
+
    procedure Parse_Pair (Key_Data_Pair : Pair; Tab : out FD_Table) is
       Key, Data : CSF;
    begin
