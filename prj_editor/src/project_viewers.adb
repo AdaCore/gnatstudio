@@ -290,6 +290,11 @@ package body Project_Viewers is
       Context : Selection_Context_Access);
    --  Save the project described in the context.
 
+   procedure Edit_Project_File
+     (Widget  : access Glib.Object.GObject_Record'Class;
+      Context : Glide_Kernel.Selection_Context_Access);
+   --  Callback for a menu item. Edits the project source file.
+
    procedure Project_View_Changed (Viewer  : access Gtk_Widget_Record'Class);
    --  Called when the project view has changed.
 
@@ -1217,6 +1222,32 @@ package body Project_Viewers is
       Save_Project (Kernel, Project);
    end Save_Specific_Project;
 
+   -----------------------
+   -- Edit_Project_File --
+   -----------------------
+
+   procedure Edit_Project_File
+     (Widget  : access Glib.Object.GObject_Record'Class;
+      Context : Glide_Kernel.Selection_Context_Access)
+   is
+      pragma Unreferenced (Widget);
+      Kernel   : constant Kernel_Handle := Get_Kernel (Context);
+      File_C   : File_Selection_Context_Access;
+   begin
+      if Context /= null
+        and then Context.all in File_Selection_Context'Class
+      then
+         File_C := File_Selection_Context_Access (Context);
+
+         if Has_Project_Information (File_C) then
+            Open_File_Editor
+              (Kernel,
+               Project_Path (Project_Information (File_C)),
+               From_Path => False);
+         end if;
+      end if;
+   end Edit_Project_File;
+
    -----------------------------------
    -- On_Add_Dependency_From_Wizard --
    -----------------------------------
@@ -1437,6 +1468,22 @@ package body Project_Viewers is
               (Item, "activate",
                Context_Callback.To_Marshaller
                (Edit_Project_Properties'Access),
+               Selection_Context_Access (Context));
+
+            Gtk_New (Item, Label => -"Save the project "
+                     & Project_Name (Project_Information (File_Context)));
+            Append (Menu, Item);
+            Context_Callback.Connect
+              (Item, "activate",
+               Context_Callback.To_Marshaller
+               (Save_Specific_Project'Access),
+               Selection_Context_Access (Context));
+
+            Gtk_New (Item, Label => -"Edit project source file");
+            Append (Menu, Item);
+            Context_Callback.Connect
+              (Item, "activate",
+               Context_Callback.To_Marshaller (Edit_Project_File'Access),
                Selection_Context_Access (Context));
 
             Gtk_New (Item, -"Add dependency");
