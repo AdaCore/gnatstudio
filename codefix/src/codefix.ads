@@ -18,7 +18,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
---  ??? Description of this package
+--  This is the main package of Codefix, it define constants, exceptions and
+--  tools that are used in others package.
 
 with Ada.Text_IO; use Ada.Text_IO;
 with Ada.Unchecked_Deallocation;
@@ -35,6 +36,9 @@ package Codefix is
 
    Indentation_Width : constant := 3;
    --  Width of an identation in GNAT
+
+   EOL_Str : constant String := (1 => Character'Val (13));
+   --  String used to insert an end of line.
 
    ----------------------------------------------------------------------------
    --  type Dynamic_String
