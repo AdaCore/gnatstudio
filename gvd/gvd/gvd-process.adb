@@ -228,7 +228,7 @@ package body GVD.Process is
 
    function Complete_Command
      (Input  : in String;
-      Object : access GObject_Record'Class)
+      Object : GObject)
       return String_List_Utils.String_List.List;
    --  Return the list of completions for Input.
 
@@ -290,7 +290,7 @@ package body GVD.Process is
 
    function Complete_Command
      (Input  : in String;
-      Object : access GObject_Record'Class)
+      Object : GObject)
      return String_List_Utils.String_List.List
    is
       use String_List_Utils.String_List;
