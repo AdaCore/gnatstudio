@@ -63,8 +63,10 @@ unmodified in any copy.
 * Version Control System::
 * Tools::
 * Working in a Cross Environment::
+* Scripting GPS::
 * Customization::
 * Environment::
+* Python Commands::
 
 @detailmenu
 
@@ -77,7 +79,7 @@ Description of the main windows
 * The Work Space::
 * The Project Explorer::
 * The Messages Window::
-* The Shell Window::
+* The Shell and Python Windows::
 * The Locations Tree::
 * The Status Line::
 
@@ -152,6 +154,11 @@ Working in a Cross Environment
 * Customizing your Projects::
 * Debugger Issues::
 
+Scripting GPS
+* Scripts::
+* The GPS Shell::
+* The Python Interpreter::
+
 Customization
 * The Preferences Dialog::
 * Customizing the Menu Bar and the Tool Bar::
@@ -217,7 +224,7 @@ GPS also integrates with existing editors such as Emacs and Vi, see
 * The Work Space::
 * The Project Explorer::
 * The Messages Window::
-* The Shell Window::
+* The Shell and Python Windows::
 * The Locations Tree::
 * The Execution Window::
 * The Status Line::
@@ -595,21 +602,29 @@ no input is possible.
 @cindex shell window
 @cindex shell
 For an input/output window, see @ref{The Execution Window} and also
-@ref{The Shell Window}.
+@ref{The Shell and Python Windows}.
 
 @c --------------------------------------------------------------------
-@node The Shell Window
-@section The Shell Window
+@node The Shell and Python Windows
+@section The Shell and Python Windows
 @cindex shell
 @cindex shell window
+@cindex python window
 @cindex interactive command
 @cindex command
 @c --------------------------------------------------------------------
 
 @noindent
-This window gives access to a shell specific to GPS, that allows you to
-type commands such as editing a file, compiling without using the menu
-items or the mouse.
+These windows give access to the various scripting languages supported
+by GPS, and allow you to type commands such as editing a file or
+compiling without using the menu items or the mouse.
+
+Some of these windows, especially the python window, might not be
+visible in your version of GPS, if GPS wasn't compiled with the
+support for that specific scripting language.
+
+See the section @ref{Scripting GPS} for more information on using the
+scripting languages within GPS.
 
 @iftex
 @cindex screen shot
@@ -621,19 +636,9 @@ items or the mouse.
 @image{shell-window}
 @end ifhtml
 
-The Shell Window is a work in progress so only a few commands are currently
-available. To get the full list of currently available commands, simply
-type @code{help} at the prompt, or @code{help} followed by the name of a
-command, to get more information about a specific command.
-
 @cindex key
 You can use the @key{up} and @key{down} keys to navigate through the
 history of commands.
-
-The intent is to provide all the commands available in GPS via the GPS
-shell, as well as providing access to the shell capabilities in batch
-mode, in order to help automate processes such as builds, automatic
-generation of graphs, @dots{}
 
 @c --------------------------------------------------------------------
 @node The Locations Tree
@@ -4681,6 +4686,154 @@ to the current debug session, use the menu
 debugger.
 
 @c --------------------------------------------------------------------
+@node Scripting GPS
+@chapter Scripting GPS
+@cindex scripts
+@c
+--------------------------------------------------------------------
+
+@menu
+* Scripts::
+* The GPS Shell::
+* The Python Interpreter::
+@end menu
+
+@node Scripts
+@section Scripts
+@noindent
+
+Scripts are small programs that interact with GPS and allow you to
+perform complex tasks repetitively and easily. GPS includes support
+for two scripting languages currently, although additional languages
+might be added in the future. These two languages are described in the
+following section.
+
+Support for scripting is currently work in progress in GPS. As a
+result, not many commands are currently exported by GPS, although
+their number is increasing daily. These commands are similar to what
+is available to people who extend GPS directly in Ada, but with a
+strong advantage: they do not require any recompilation of the GPS
+core, and can be tested and executed interactively.
+
+The goal of such scripts is to be able to help automate processes such
+as builds, automatic generation of graphs,@dots{}
+
+All the scripting languages share the same set of commands exported by
+GPS, thanks to a abstract interface defined in the GPS core. As a
+result, GPS modules do not have to be modified when new scripting
+languages are added.
+
+
+@node The GPS Shell
+@section The GPS Shell
+@cindex gps shell
+@noindent
+
+The GPS shell is a very simple-minded, line-oriented language. It is
+accessible through the @code{Shell} window at the bottom of the GPS
+window. It is similar to a Unix shell, or a command window on Windows
+systems.
+
+Type @code{help} at the prompt to get the list of available commands,
+or @code{help} followed by the name of a command to get more
+information on that specific command.
+
+The following example shows how to get some informatino on a source
+entity, and find all references to this entity in the application. It
+searches for the entity "entity_name", which has at least one
+reference anywhere in the file "file_name.adb". After the first
+command, GPS returns an identifier for this entity, which can be used
+for all commands that need an entity as a parameter, as is the case
+for the second command. When run, the second command will
+automatically display all matching references in the location window.
+
+@smallexample
+GPS> create_entity entity_name file_name.adb
+<Entity_0x09055790>
+GPS> Entity.find_all_refs <Entity_0x09055790>
+@end smallexample
+
+Since the GPS shell is very simple, it doesn't provide any reference
+counting for the result types. As a result, all the values returned by
+a command, such as @code{<Entity_0x09055790>} in the example above,
+are kept in memory.
+
+@cindex clear_cache command
+The GPS shell provides the command @code{clear_cache} which removes
+all such values from the memory. After this command is run, you can no
+longer use references obtained from previous commands, although of
+course you can run these commands again to get a new reference.
+
+
+@node The Python Interpreter
+@section The Python Interpreter
+@cindex python
+@noindent
+
+Python is an interpreted object-oriented language, created by Guido
+Van Rossum. It is similar in its capabilities to languages such as
+Perl, Tcl or Lisp. This section is not a tutorial on python
+programming. See @url{http://www.python.orgdoc/current/} to access the
+documentation for the current version of python.
+
+The python shell is accessible through the @code{Python} window at the
+bottom of the GPS window. However, GPS might not have been compiled
+with support for python, and therefore python might not be available
+to you.
+
+Type @code{help(GPS)} to see the list of functions exported by GPS to
+python. This list is also given in @ref{Python Commands} at the end
+of this documentation.
+
+The same example that was used to show the GPS shell is now done
+through python. As you can notice, the name of the commands is
+similar, although they are not run exactly in the same
+way. Specifically, GPS benefits from the object-oriented aspects of
+python to create classes and instances of these classes.
+
+In the first line, a new instance of the class Entity is created
+through the @code{create_entity} function. Various methods can then be
+applied to that instance, including @code{find_all_refs}, which lists
+all references to that entity in the location window
+
+@smallexample
+>>> e=GPS.create_entity ("entity_name", "file_name.adb")
+>>> e.find_all_refs()
+@end smallexample
+
+Python has extensive introspection capabilities. Continuing the
+previous example, one can find what class @code{e} is an instance of
+with the following command:
+
+@smallexample
+>>> help(e)
+Help on instance of Entity:
+
+<GPS.Entity instance>
+@end smallexample
+
+It is also possible to find all attributes and methods that can be
+applied to @code{e}, as in the following example:
+
+@smallexample
+>>> dir (e)
+['__doc__', '__gps_data__', '__module__', 'called_by', 'calls',
+'find_all_refs']
+@end smallexample
+
+Note that the list of methods may vary depending on what modules were
+loaded in GPS, since each module can add its own methods to any class.
+
+Finally, the list of all existing modules and objects currently known
+in the interpreter can be found with the following command:
+
+@smallexample
+>>> dir ()
+['GPS', 'GPSStdout', '__builtins__', '__doc__', '__name__', 'e', 'sys']
+@end smallexample
+
+
+@c --------------------------------------------------------------------
 @node Customization
 @chapter Customization
 @cindex customization
@@ -6779,6 +6932,111 @@ If when launching GPS, nothing happens, you can try to rename the @file{.gps}
 directory (see @ref{Files}) to start from a fresh set up.
 
 @end table
+
+@c --------------------------------------------------------------------
+@node Python Commands
+@appendix Python Commands
+@c --------------------------------------------------------------------
+
+This section lists all functions that GPS exports to python. This is
+the result of interactively running the following commands in the
+python interpreter:
+
+@smallexample
+>>> e=file("/tmp/foo", "w")
+>>> sys.stdout=e
+>>> help(GPS)
+>>> e.flush()
+>>> sys.stdout=sys.__stdout__
+@end smallexample
+
+Here is the list:
+
+@example
+Help on module GPS:
+
+NAME
+    GPS - Interface with the GPS environment
+
+FILE
+    (built-in)
+
+CLASSES
+    Entity
+    
+    class Entity
+     |  Represents an entity from the source, based on the location of its declaration
+     |  
+     |  Methods defined here:
+     |  
+     |  called_by(...)
+     |      called_by () -> None
+     |      
+     |      Display the list of entities that call the entity.
+     |  
+     |  calls(...)
+     |      calls () -> None
+     |      
+     |      Display the list of entities called by the entity.
+     |  
+     |  find_all_refs(...)
+     |      find_all_refs () -> None
+     |      
+     |      Display in the location window all the references to the entity.
+     |  
+     |  ----------------------------------------------------------------------
+     |  Data and non-method functions defined here:
+     |  
+     |  __doc__ = 'Represents an entity from the source, based on the location...
+     |  
+     |  __module__ = 'GPS'
+
+FUNCTIONS
+    cd(...)
+        cd (dir) -> None
+        
+        Change the current directory to dir.
+    
+    create_entity(...)
+        create_entity (entity_name, file_name, [line], [column]) -> Entity
+        
+        Create a new entity, from any of its references.
+    
+    delete(...)
+        delete (name) -> None
+        
+        Delete file/directory name from the file system.
+    
+    dir(...)
+        dir ([pattern]) -> None
+        
+        list files following pattern (all files by default).
+    
+    insmod(...)
+        insmod (shared-lib, module) -> None
+        
+        Dynamically register from shared-lib a new module.
+    
+    ls(...)
+        ls ([pattern]) -> None
+        
+        list files following pattern (all files by default).
+    
+    lsmod(...)
+        lsmod () -> None
+        
+        List modules currently loaded.
+    
+    pwd(...)
+        pwd () -> None
+        
+        Print name of current/working directory.
+
+DATA
+    __name__ = 'GPS'
+
+@end example
+
 
 @c --------------------------------------------------------------------
 @unnumbered Index
