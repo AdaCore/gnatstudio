@@ -445,6 +445,11 @@ package body Projects.Registry is
          return;
       end if;
 
+      Trace (Me, "Set project path to "
+             & Get_Predefined_Project_Path (Registry));
+      Prj.Ext.Set_Project_Path
+        (Get_Predefined_Project_Path (Registry));
+
       New_Project_Loaded := True;
 
       --  Use the full path name so that the messages are sent to the result
