@@ -102,7 +102,7 @@ package body Commands.External is
    exception
       when Process_Died =>
          declare
-            S       : String := Expect_Out (D.Fd);
+            S       : constant String := Expect_Out (D.Fd);
             Success : Boolean;
          begin
             if S /= "" then
@@ -143,7 +143,7 @@ package body Commands.External is
         (1 .. String_List.Length (Command.Args));
       Temp_Args : List_Node := First (Command.Args);
 
-      Old_Dir   : Dir_Name_Str := Get_Current_Dir;
+      Old_Dir   : constant Dir_Name_Str := Get_Current_Dir;
 
    begin
       --  ??? Must add many checks for empty lists, etc.

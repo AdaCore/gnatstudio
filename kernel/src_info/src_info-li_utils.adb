@@ -1,3 +1,23 @@
+-----------------------------------------------------------------------
+--                              G P S                                --
+--                                                                   --
+--                     Copyright (C) 2001-2002                       --
+--                            ACT-Europe                             --
+--                                                                   --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
+-- under the terms of the GNU General Public License as published by --
+-- the Free Software Foundation; either version 2 of the License, or --
+-- (at your option) any later version.                               --
+--                                                                   --
+-- This program is  distributed in the hope that it will be  useful, --
+-- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
+-- General Public License for more details. You should have received --
+-- a copy of the GNU General Public License along with this program; --
+-- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
+-- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
+-----------------------------------------------------------------------
+
 with Text_IO; use Text_IO;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
@@ -8,7 +28,7 @@ with Src_Info.CPP;  use Src_Info.CPP;
 
 package body Src_Info.LI_Utils is
 
-   Me : Debug_Handle := Create ("Src_Info.LI_Utils");
+   Me : constant Debug_Handle := Create ("Src_Info.LI_Utils");
 
    procedure Insert_Declaration_Internal
      (D_Ptr                   : in out E_Declaration_Info_List;
@@ -795,7 +815,7 @@ package body Src_Info.LI_Utils is
 
          File := new LI_File_Constrained'
            (LI => (Parsed                   => True,
-                   Handler                  => LI_Handler (Handler),
+                   Handler                  => Handler,
                    LI_Filename              => Name,
                    Body_Info                => null,
                    Spec_Info                => null,
@@ -806,7 +826,7 @@ package body Src_Info.LI_Utils is
       else
          File := new LI_File_Constrained'
            (LI =>  (Parsed        => False,
-                    Handler       => LI_Handler (Handler),
+                    Handler       => Handler,
                     LI_Filename   => Name,
                     Body_Info     => null,
                     Spec_Info     => null,
