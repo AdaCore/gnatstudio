@@ -110,8 +110,7 @@ package body GVD.Main_Window is
       Key         : String;
       Menu_Items  : Gtk_Item_Factory_Entry_Array)
    is
-      Menu        : Gtk_Widget;
-
+      Menu : Gtk_Widget;
    begin
       Main_Debug_Window_Pkg.Initialize (Main_Window);
       Initialize_Class_Record
@@ -119,7 +118,9 @@ package body GVD.Main_Window is
 
       Gtk_New (Main_Window.Main_Accel_Group);
       Add_Accel_Group (Main_Window, Main_Window.Main_Accel_Group);
-      Gtk_New (Main_Window.Factory, Gtk.Menu_Bar.Get_Type, Key, Main_Window.Main_Accel_Group);
+      Gtk_New
+        (Main_Window.Factory, Gtk.Menu_Bar.Get_Type,
+         Key, Main_Window.Main_Accel_Group);
       Factory_Data.Create_Items
         (Main_Window.Factory, Menu_Items, Main_Window.all'Access);
       Lock (Main_Window.Main_Accel_Group);
