@@ -1354,8 +1354,13 @@ package body CPP_Parser is
              (R.Caller_Argument_Types.First .. R.Caller_Argument_Types.Last)
            and then R.Referred_Symbol /= Undef
          then
-            Arr := (others => False);
-            Arr (R.Referred_Symbol) := True;
+            case R.Referred_Symbol is
+               when FU | FD => Arr := (FU | FD => True, others => False);
+               when MI | MD => Arr := (MI | MD => True, others => False);
+               when others =>
+                  Arr := (others => False);
+                  Arr (R.Referred_Symbol) := True;
+            end case;
 
             --  From the standard library ?
             if R.Referred_Symbol = UD then
@@ -1395,14 +1400,24 @@ package body CPP_Parser is
                      Kind := Reference;
                end case;
 
-               Ref_Source := Get_Or_Create
-                 (Handler, R.Key (R.File_Name.First .. R.File_Name.Last));
-               Add_Reference
-                 (Entity   => Ref,
-                  Location => (File   => Ref_Source,
-                               Line   => R.Position.Line,
-                               Column => R.Position.Column),
-                  Kind     => Kind);
+               --  Parameters declaration are also visible in the TO table,
+               --  but we shouldn't list these as a reference.
+
+               if R.Key (R.Access_Type.First) /= 'p'
+                 or else Get_Line (Get_Declaration_Of (Ref)) /= R.Position.Line
+                 or else Get_Column (Get_Declaration_Of (Ref)) /=
+                 R.Position.Column
+               then
+                  Ref_Source := Get_Or_Create
+                    (Handler, R.Key (R.File_Name.First .. R.File_Name.Last));
+
+                  Add_Reference
+                    (Entity   => Ref,
+                     Location => (File   => Ref_Source,
+                                  Line   => R.Position.Line,
+                                  Column => R.Position.Column),
+                     Kind     => Kind);
+               end if;
             else
                Trace (Me, "Entity not found from TO table: "
                       & R.Key (R.Referred_Symbol_Name.First
@@ -1419,7 +1434,7 @@ package body CPP_Parser is
    -- Parse_LV_Table --
    --------------------
    --  The following information is not used currently:
-   --    End_Position, Attributes
+   --    End_Position, Attributes, Type_Start_Position
 
    procedure Parse_LV_Table
      (Handler : access CPP_Handler_Record'Class;
@@ -1474,12 +1489,13 @@ package body CPP_Parser is
                end if;
             end loop;
 
+            --  Do not store a reference to the parent, since this is also
+            --  mentionned in the TO table, and thus would be duplicated
             Set_Parent
               (Handler     => Handler,
                Entity      => Local,
                Parent_Name =>
-                 Var.Data (Var.Value_Type.First .. Var.Value_Type.Last),
-               Parent_Reference => Var.Type_Start_Position);
+                 Var.Data (Var.Value_Type.First .. Var.Value_Type.Last));
          end if;
       end loop;
 
