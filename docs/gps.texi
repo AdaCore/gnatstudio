@@ -7930,8 +7930,8 @@ places, such as buttons, menus, toolbars, and so on.
 The stock icons must be declared using the tag @code{<icon>}, within the global
 tag @code{<stock>}. The attribute @code{id} indicates the label used to identify
 the stock icon, and the attribute @code{file} points to the file which contains
-the actual picture, either in absolute format, or relative to the directory which
-contains the XML file
+the actual picture, either in absolute format, or relative to the directory
+which contains the XML file.
 
 For a better rendering, icons that are to be used in menus and buttons should
 have a size of 24x24 pixels, whereas icons used in toolbars should be 48x48 pixels.
@@ -7941,14 +7941,14 @@ Here is an example:
 <?xml version="1.0"?>
 <my_visual_preferences>
   <stock>
-    <icon id="gps-my-picture" file="icons/my-picture.png" />
+    <icon id="myproject-my-picture" file="icons/my-picture.png" />
   </stock>
 </my_visual_preferences>
 @end smallexample
 
-Note: as shown in the example above, it is a good practice to prefix the label by
-@code{gps-}, in order to make sure that predefined stock icons will not get
-overridden by your icons.
+Note: as shown in the example above, it is a good practice to prefix the label
+by a unique name (e.g. @code{myproject-}), in order to make sure that
+predefined stock icons will not get overridden by your icons.
 
 @c --------------------------------------------------------------------------
 @node Adding support for new tools
@@ -9497,6 +9497,7 @@ GPS> run %2 "arg1" "arg2" "arg3"
 @node Custom VCS interfaces
 @subsection Custom VCS interfaces
 
+@noindent
 The Version Control interface in GPS can be customized, either to
 refine the behavior of the existing system and adapt it to specific
 needs, or to add support for other Version Control systems. 
@@ -9531,6 +9532,7 @@ reference for implementing new custom VCS interfaces.
 @node The VCS node
 @subsubsection The VCS node
 
+@noindent
 The @code{vcs} node is the toplevel node which contains the
 description of the general behavior expected from the VCS. It has two
 attributes.
@@ -9541,7 +9543,7 @@ the project files.
 
 The attribute @code{absolute_name} indicates the behavior of the
 VCS relative to file names, and can take the values @code{TRUE} or
-@code{FALSE}. If it is set to @code{TRUE}, it means that in all
+@code{FALSE}. If it is set to @code{TRUE}, it means that all
 commands in the VCS will work on absolute file names. If it set to
 @code{FALSE}, it means that all actions work on base file names, and
 that GPS will move to the appropriate directory before executing an
@@ -9562,6 +9564,7 @@ Here is an example, adapted to the use of CVS:
 @node Associating actions to operations
 @subsubsection Associating actions to operations
 
+@noindent
 GPS knows about a certain set of predefined ``operations'' that a VCS
 can perform. The user can decide to implement some of them - not
 necessarily all of them - in this section.
@@ -9591,6 +9594,7 @@ under the control of the defined VCS.
 @node Defining status
 @subsubsection Defining status
 
+@noindent
 All VCS have the notion of ``status'' or ``state'' to describe the
 relationship between the local file and the repository. The XML node
 @code{status} is used to describe the status that are known to a
@@ -9619,29 +9623,30 @@ status ``Up-to-date'' or equivalent.
 @node Output parsers
 @subsubsection Output parsers
 
+@noindent
 There are cases in which GPS needs to parse the output of the VCS
 commands: when querying the status, or when ``annotating'' a
 file. Three parsers can be implemented in the @code{vcs} node: these
-correspond to the nodes @code{status_parser} and
-@code{local_status_parser}, which parse the output of the status
-command (see next section for more information), and the node
-@code{annotations_parser}, which parses annotations.
+correspond to the @code{status_parser} and
+@code{local_status_parser} nodes, which parse the output of the status
+command (see next section for more information), and the
+@code{annotations_parser} node, which parses annotations.
 
-Each node corresponding to a parser must contain a node @code{regexp},
-the value of which is a standard system V regular expression used to
+Each node corresponding to a parser must contain a @code{regexp} node
+whose value is a standard system V regular expression used to
 parse the output. 
 
-In this regular expression, parenthezised subexpressions can be
+In this regular expression, parenthesized subexpressions can be
 indicated, identifying the file name, the status, the local revision,
 and the repository revision. The indexes of these subexpressions are
 indicated, respectively, in the values of nodes @code{file_index},
 @code{status_index}, @code{local_revision_index}, and
 @code{repository_revision_index}.
 
-The nodes @code{status_parser} and @code{local_status_parser} may also
+The @code{status_parser} and @code{local_status_parser} node may also
 contain nodes containing a regular expression used to identify the
-status. These nodes have the tag @code{status_matcher}, and a
-compulsory attribute @code{label}, which contains the label
+status. These nodes have the @code{status_matcher} tag, and a
+compulsory @code{label} attribute, which contains the label
 identifying the status (see @ref{Defining status}).
 
 In the case of the @code{annotations_parser}, the @code{file_index}
@@ -9652,6 +9657,7 @@ indicated by the annotations.
 @node Implementing VCS actions
 @subsection Implementing VCS actions
 
+@noindent
 A number of ``standard'' VCS operations are known to GPS. Each of
 these operations can be implemented, using Actions. See @ref{Defining
 Actions}) for a complete description of how to implement actions. 
@@ -9674,7 +9680,6 @@ parameters:
     @item $1 = the directory.
   @end table
   Same as above, but works on all the files in one directory.
-
 
 @item local_status_files
   @table @code
