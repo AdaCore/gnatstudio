@@ -26,6 +26,7 @@ with Pango.Layout; use Pango.Layout;
 with Glib; use Glib;
 
 with Gdk.Pixmap;
+with Gdk.Pixbuf; use Gdk.Pixbuf;
 with Gtk.Widget; use Gtk.Widget;
 with Gtk.Text_View; use Gtk.Text_View;
 
@@ -101,5 +102,25 @@ package Src_Editor_Buffer.Line_Information is
       Mark   : Gtk.Text_Mark.Gtk_Text_Mark;
       Number : Natural);
    --  Remove Number blank lines associated with Mark.
+
+   procedure Hide_Lines
+     (Buffer     : access Source_Buffer_Record'Class;
+      Mark       : Gtk.Text_Mark.Gtk_Text_Mark;
+      Number     : Editable_Line_Type);
+   --  Hide Number editable lines from Mark.
+
+   procedure Unhide_Lines
+     (Buffer     : access Source_Buffer_Record'Class;
+      Mark       : Gtk.Text_Mark.Gtk_Text_Mark;
+      First_Line : Editable_Line_Type;
+      Last_Line  : Editable_Line_Type);
+   --  Unhide editable lines from First_Line to Last_Line.
+
+   procedure Add_Block_Command
+     (Buffer      : access Source_Buffer_Record'Class;
+      Buffer_Line : Buffer_Line_Type;
+      Command     : Command_Access;
+      Image       : Gdk_Pixbuf);
+   --  Add a command in the block column information.
 
 end Src_Editor_Buffer.Line_Information;
