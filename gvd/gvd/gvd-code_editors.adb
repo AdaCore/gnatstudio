@@ -27,16 +27,16 @@ with Gtk.Menu_Item;       use Gtk.Menu_Item;
 with Gtk.Paned;           use Gtk.Paned;
 with Gtk.Radio_Menu_Item; use Gtk.Radio_Menu_Item;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
-with Gtk.Socket;          use Gtk.Socket;
 with Gtk.Widget;          use Gtk.Widget;
-with Gtk.Window;          use Gtk.Window;
 with Gtkada.Handlers;     use Gtkada.Handlers;
 
-with GVD.Asm_Editors;     use GVD.Asm_Editors;
 with GVD.Explorer;        use GVD.Explorer;
 with GVD.Preferences;     use GVD.Preferences;
-with GVD.Source_Editors;  use GVD.Source_Editors;
 with GVD.Types;           use GVD.Types;
+with GVD.Text_Box.Asm_Editor; use GVD.Text_Box.Asm_Editor;
+with GVD.Text_Box.Source_Editor; use GVD.Text_Box.Source_Editor;
+with GVD.Text_Box.Source_Editor.Builtin;
+with GVD.Text_Box.Source_Editor.Socket;
 with Odd_Intl;            use Odd_Intl;
 
 with Process_Proxies;     use Process_Proxies;
@@ -119,9 +119,6 @@ package body GVD.Code_Editors is
 
       Editor.Process := Gtk_Widget (Process);
 
-      Gtk_New (Editor.Source, Process);
-      Add (Editor.Editor_Container, Editor.Source);
-
       Gtk_New (Editor.Asm, Process);
       Gtk_New_Vpaned (Editor.Source_Asm_Pane);
 
@@ -148,20 +145,8 @@ package body GVD.Code_Editors is
       --  ??? Should add a "destroy" callback to the editor to free the
       --  memory.
       Ref (Editor.Editor_Container);
-      Ref (Editor.Source);
       Ref (Editor.Asm);
       Ref (Editor.Source_Asm_Pane);
-
-      Widget_Callback.Object_Connect
-        (Editor.Source, "size_allocate",
-         Widget_Callback.To_Marshaller (Update_Editor_Frame'Access),
-         Editor, After => True);
-
-      Widget_Callback.Object_Connect
-        (Editor.Asm, "size_allocate",
-         Widget_Callback.To_Marshaller (Update_Editor_Frame'Access),
-         Editor, After => True);
-
       Show_All (Editor);
    end Initialize;
 
@@ -204,16 +189,6 @@ package body GVD.Code_Editors is
       return Editor.Editor_Container;
    end Get_Editor_Container;
 
-   -------------------------
-   -- Get_External_Source --
-   -------------------------
-
-   function Get_External_Source
-     (Editor : access Code_Editor_Record'Class) return Gtk.Socket.Gtk_Socket is
-   begin
-      return Editor.External_Source;
-   end Get_External_Source;
-
    --------------
    -- Get_Line --
    --------------
@@ -248,7 +223,7 @@ package body GVD.Code_Editors is
 
    function Get_Source
      (Editor : access Code_Editor_Record'Class)
-      return GVD.Source_Editors.Source_Editor is
+      return GVD.Text_Box.Source_Editor.Source_Editor is
    begin
       return Editor.Source;
    end Get_Source;
@@ -281,7 +256,7 @@ package body GVD.Code_Editors is
 
    function Get_Asm
      (Editor : access Code_Editor_Record'Class)
-     return GVD.Asm_Editors.Asm_Editor is
+     return GVD.Text_Box.Asm_Editor.Asm_Editor is
    begin
       return Editor.Asm;
    end Get_Asm;
@@ -342,25 +317,39 @@ package body GVD.Code_Editors is
       Strings_Color     : Gdk.Color.Gdk_Color;
       Keywords_Color    : Gdk.Color.Gdk_Color;
       TTY_Mode          : Boolean;
-      External_XID      : Guint32) is
+      External_XID      : Guint32)
+   is
+      Builtin_Source  : Builtin.Builtin;
+      External_Source : Socket.Socket;
+
    begin
-      Configure (Editor.Source, Ps_Font_Name, Font_Size, Default_Icon,
-                 Current_Line_Icon, Stop_Icon, Comments_Color, Strings_Color,
-                 Keywords_Color);
       Configure (Editor.Asm, Ps_Font_Name, Font_Size, Current_Line_Icon,
                  Stop_Icon, Strings_Color, Keywords_Color);
-      Configure (Editor.Explorer, TTY_Mode);
 
-      if External_XID /= 0 then
-         Editor.External_XID := External_XID;
-         Realize (Editor.Source);
-         Remove (Editor.Editor_Container, Editor.Source);
-         Gtk_New (Editor.External_Source);
-         Show (Editor.External_Source);
-         Add (Editor.Editor_Container, Editor.External_Source);
-         Realize (Editor.External_Source);
-         Steal (Editor.External_Source, External_XID);
+      if External_XID = 0 then
+         pragma Assert (Editor.Source = null);
+         Builtin.Gtk_New
+           (Builtin_Source, Editor.Process, TTY_Mode, Ps_Font_Name,
+            Font_Size, Default_Icon, Current_Line_Icon, Stop_Icon,
+            Comments_Color, Strings_Color, Keywords_Color);
+         Editor.Source := Source_Editor (Builtin_Source);
+      else
+         pragma Assert (Editor.Source = null);
+         Socket.Gtk_New (External_Source, External_XID, TTY_Mode);
+         Editor.Source := Source_Editor (External_Source);
       end if;
+
+      Attach (Editor.Source, Editor.Editor_Container);
+
+      Widget_Callback.Object_Connect
+        (Get_Widget (Editor.Source), "size_allocate",
+         Widget_Callback.To_Marshaller (Update_Editor_Frame'Access),
+         Editor, After => True);
+
+      Widget_Callback.Object_Connect
+        (Editor.Asm, "size_allocate",
+         Widget_Callback.To_Marshaller (Update_Editor_Frame'Access),
+         Editor, After => True);
    end Configure;
 
    ----------------------
@@ -438,34 +427,18 @@ package body GVD.Code_Editors is
    is
       Process : constant Debugger_Process_Tab :=
         Debugger_Process_Tab (Editor.Process);
-      Win     : Gtk_Window;
    begin
       if Mode = Editor.Mode then
          return;
       end if;
 
-      if Editor.External_XID /= 0 then
-         if Editor.Mode = Asm then
-            Win := Gtk_Window (Get_Toplevel (Editor.External_Source));
-         else
-            Gtk_New (Win);
-            Show (Win);
-            Reparent (Editor.External_Source, Win);
-         end if;
-      end if;
-
       case Editor.Mode is
          when Source =>
-            if Editor.External_XID = 0 then
-               Remove (Editor.Editor_Container, Editor.Source);
-            end if;
+            Detach (Editor.Source);
          when Asm =>
             Remove (Editor.Editor_Container, Editor.Asm);
          when Source_Asm =>
-            if Editor.External_XID = 0 then
-               Remove (Editor.Source_Asm_Pane, Editor.Source);
-            end if;
-
+            Detach (Editor.Source);
             Remove (Editor.Source_Asm_Pane, Editor.Asm);
             Remove (Editor.Editor_Container, Editor.Source_Asm_Pane);
       end case;
@@ -474,15 +447,7 @@ package body GVD.Code_Editors is
 
       case Editor.Mode is
          when Source =>
-            if Editor.External_XID /= 0 then
-               Reparent (Editor.External_Source, Editor.Editor_Container);
-               Destroy (Win);
-
-            else
-               Add (Editor.Editor_Container, Editor.Source);
-               Show_All (Editor.Source);
-            end if;
-
+            Attach (Editor.Source, Editor.Editor_Container);
             Set_Line (Editor.Source, Editor.Source_Line, Set_Current => True);
 
             if Process.Breakpoints /= null then
@@ -505,15 +470,7 @@ package body GVD.Code_Editors is
 
          when Source_Asm =>
             Add (Editor.Editor_Container, Editor.Source_Asm_Pane);
-
-            if Editor.External_XID /= 0 then
-               Reparent (Editor.External_Source, Editor.Source_Asm_Pane);
-               Destroy (Win);
-
-            else
-               Add1 (Editor.Source_Asm_Pane, Editor.Source);
-            end if;
-
+            Attach (Editor.Source, Editor.Source_Asm_Pane);
             Add2 (Editor.Source_Asm_Pane, Editor.Asm);
             Show_All (Editor.Source_Asm_Pane);
 
@@ -587,7 +544,7 @@ package body GVD.Code_Editors is
       --  displayed.
 
       if Edit.Asm /= null then
-         GVD.Asm_Editors.On_Executable_Changed (Edit.Asm);
+         GVD.Text_Box.Asm_Editor.On_Executable_Changed (Edit.Asm);
       end if;
    end On_Executable_Changed;
 
@@ -599,38 +556,27 @@ package body GVD.Code_Editors is
      (Editor : access Gtk.Widget.Gtk_Widget_Record'Class)
    is
       Edit : constant Code_Editor := Code_Editor (Editor);
-      Win  : Gtk_Window;
    begin
       if Edit.Mode = Source or else Edit.Mode = Source_Asm then
-         GVD.Source_Editors.Preferences_Changed (Edit.Source);
+         GVD.Text_Box.Source_Editor.Preferences_Changed (Edit.Source);
       end if;
 
       if Edit.Mode = Asm or else Edit.Mode = Source_Asm then
-         GVD.Asm_Editors.Preferences_Changed (Edit.Asm);
+         GVD.Text_Box.Asm_Editor.Preferences_Changed (Edit.Asm);
          Highlight_Address_Range (Edit.Asm, Edit.Source_Line);
       end if;
 
       if Get_Pref (Display_Explorer) then
          if Get_Parent (Edit.Explorer_Editor_Pane) = null then
-            if Edit.External_XID /= 0 then
-               Gtk_New (Win);
-               Show (Win);
-               Reparent (Edit.External_Source, Win);
-            end if;
-
+            Detach (Edit.Source);
             Ref (Edit.Editor_Container);
             Remove (Edit, Edit.Editor_Container);
 
             Add (Edit, Edit.Explorer_Editor_Pane);
             Add1 (Edit.Explorer_Editor_Pane, Edit.Explorer_Scroll);
             Add2 (Edit.Explorer_Editor_Pane, Edit.Editor_Container);
-
-            Show_All (Edit.Explorer_Editor_Pane);
-
-            if Edit.External_XID /= 0 then
-               Reparent (Edit.External_Source, Edit.Editor_Container);
-               Destroy (Win);
-            end if;
+            Attach (Edit.Source, Edit.Editor_Container);
+            Show_All (Edit);
          end if;
 
          GVD.Explorer.Preferences_Changed (Edit.Explorer);
@@ -638,12 +584,7 @@ package body GVD.Code_Editors is
 
       else
          if Get_Parent (Edit.Explorer_Editor_Pane) /= null then
-            if Edit.External_XID /= 0 then
-               Gtk_New (Win);
-               Show (Win);
-               Reparent (Edit.External_Source, Win);
-            end if;
-
+            Detach (Edit.Source);
             Ref (Edit.Explorer_Editor_Pane);
             Remove (Edit, Edit.Explorer_Editor_Pane);
 
@@ -651,11 +592,8 @@ package body GVD.Code_Editors is
             Remove (Edit.Explorer_Editor_Pane, Edit.Editor_Container);
 
             Add (Edit, Edit.Editor_Container);
-
-            if Edit.External_XID /= 0 then
-               Reparent (Edit.External_Source, Edit.Editor_Container);
-               Destroy (Win);
-            end if;
+            Attach (Edit.Source, Edit.Editor_Container);
+            Show_All (Edit);
          end if;
       end if;
    end Preferences_Changed;
@@ -667,13 +605,11 @@ package body GVD.Code_Editors is
    function Get_Window_Size
      (Editor : access Code_Editor_Record'Class) return Gint is
    begin
-      if Editor.External_XID /= 0 then
-         return Gint (Get_Allocation_Width (Editor.External_Source)) -
-           Layout_Width;
-      elsif Editor.Mode = Asm then
+      if Editor.Mode = Asm then
          return Gint (Get_Allocation_Width (Editor.Asm)) - Layout_Width;
       else
-         return Gint (Get_Allocation_Width (Editor.Source)) - Layout_Width;
+         return Gint (Get_Allocation_Width
+           (Get_Widget (Editor.Source))) - Layout_Width;
       end if;
    end Get_Window_Size;
 
