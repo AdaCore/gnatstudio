@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2003                         --
---                            ACT-Europe                             --
+--                      Copyright (C) 2003-2005                      --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -17,8 +17,6 @@
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
-
-with Glide_Intl; use Glide_Intl;
 
 package body Commands.Generic_Asynchronous is
 
@@ -83,7 +81,7 @@ package body Commands.Generic_Asynchronous is
      (Command : access Generic_Asynchronous_Command) return String is
    begin
       if Command.Description = null then
-         return -"Generic asynchronous command";
+         return "Generic asynchronous command";
       else
          return Command.Description.all;
       end if;

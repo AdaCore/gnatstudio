@@ -19,7 +19,6 @@
 -----------------------------------------------------------------------
 
 with String_List_Utils; use String_List_Utils;
-with Glide_Intl;        use Glide_Intl;
 with Unchecked_Deallocation;
 
 package body Commands is
@@ -116,7 +115,7 @@ package body Commands is
    function Name (Command : access Root_Command) return String is
       pragma Unreferenced (Command);
    begin
-      return -"Generic command";
+      return "Generic command";
    end Name;
 
    --------------
