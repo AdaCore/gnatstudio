@@ -1751,7 +1751,7 @@ remote
 	  <class>GtkCheckButton</class>
 	  <name>replace_check</name>
 	  <can_focus>True</can_focus>
-	  <label>Replace Current Debugger</label>
+	  <label>Replace Current Debug Session</label>
 	  <active>True</active>
 	  <draw_indicator>True</draw_indicator>
 	  <child>
