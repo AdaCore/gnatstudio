@@ -236,15 +236,27 @@ package body Vdiff2_Command is
      (Kernel : Kernel_Handle;
       Diff   : in out Diff_Head_Access)
    is
-      Args : Argument_List := (1 => new String'(Diff.File1.all));
+      Args1 : Argument_List := (1 => new String'(Diff.File1.all));
+      Args2 : Argument_List := (1 => new String'(Diff.File2.all));
+      Args3 : Argument_List (1 .. 1);
    begin
-      if Diff.File2 /= null then
-         Execute_GPS_Shell_Command (Kernel, "close", Args);
+      if Diff.File3 /= null then
+         Args3 := (1 => new String'(Diff.File3.all));
       end if;
 
-      Free (Diff);
+      Execute_GPS_Shell_Command (Kernel, "close", Args1);
 
-      Free (Args);
+      if Args2 (1) /= null then
+         Execute_GPS_Shell_Command (Kernel, "close", Args2);
+      end if;
+
+      if Args3 (1) /= null then
+         Execute_GPS_Shell_Command (Kernel, "close", Args3);
+      end if;
+
+      Free (Args1);
+      Free (Args2);
+      Free (Args3);
    end Close_Difference;
 
    ----------------------------
