@@ -107,12 +107,12 @@ package body Codefix.Text_Manager is
          if Get_File_Name (Data (Iterator).all) = Name then
             return Data (Iterator);
          end if;
+         Iterator := Next (Iterator);
       end loop;
       New_Text := New_Text_Interface (This);
       Append (This.Files.all, New_Text);
       New_Text.File_Name := new String'(Name);
       Initialize (New_Text.all, Name);
-
       Analyze_Ada_Source
         (Buffer => Read_File (New_Text.all).all,
          New_Buffer => New_Buffer,
@@ -126,19 +126,19 @@ package body Codefix.Text_Manager is
          Prev_Indent => Indent,
          Callback => null);
 
-      declare
-         Current : Construct_Access;
-      begin
-         Current := New_Text.Tokens_List.First;
-         while Current /= null loop
-            Put (Current.Name.all);
-            Put (" (");
-            Put (Language_Category'Image (Current.Category));
-            Put (")");
-            New_Line;
-            Current := Current.Next;
-         end loop;
-      end;
+--      declare
+--         Current : Construct_Access;
+--      begin
+--         Current := New_Text.Tokens_List.First;
+--         while Current /= null loop
+--            Put (Current.Name.all);
+--            Put (" (");
+--            Put (Language_Category'Image (Current.Category));
+--            Put (")");
+--            New_Line;
+--            Current := Current.Next;
+--         end loop;
+--      end;
 
       return New_Text;
    end Get_File;
@@ -745,6 +745,8 @@ package body Codefix.Text_Manager is
             when Line_Deleted =>
                Put ("(D)");
          end case;
+      else
+         Put ("   ");
       end if;
 
       Put (Natural'Image (This.Cursor.Line));
