@@ -31,11 +31,8 @@ with File_Utils;                 use File_Utils;
 with OS_Utils;                   use OS_Utils;
 with String_Utils;               use String_Utils;
 with GNAT.Case_Util;             use GNAT.Case_Util;
-with Traces;                     use Traces;
 
 package body VFS is
-
-   Me : constant Debug_Handle := Create ("VFS");
 
    type Contents_Record is record
       Ref_Count       : Natural := 1;
