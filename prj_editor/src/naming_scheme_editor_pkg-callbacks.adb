@@ -12,8 +12,6 @@ with Gtk.Combo;  use Gtk.Combo;
 with Gtk.List;   use Gtk.List;
 with Naming_Editors; use Naming_Editors;
 
-with Ada.Text_IO; use Ada.Text_IO;
-
 package body Naming_Scheme_Editor_Pkg.Callbacks is
 
    use Gtk.Arguments;
