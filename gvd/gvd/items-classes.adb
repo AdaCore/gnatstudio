@@ -323,7 +323,9 @@ package body Items.Classes is
          Item.Height := Total_Height + Get_Height (Item.Child.all)
            + 2 * Item.Border_Spacing;
 
-         if Hide_Big_Items and then Item.Height > Big_Item_Height then
+         if Hide_Big_Items
+           and then Item.Height > Current_Preferences.Big_Item_Height
+         then
             Item.Visible := False;
          end if;
       end if;

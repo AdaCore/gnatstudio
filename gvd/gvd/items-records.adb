@@ -603,7 +603,9 @@ package body Items.Records is
            + 2 * Item.Border_Spacing;
          Item.Height := Total_Height + 2 * Item.Border_Spacing;
 
-         if Hide_Big_Items and then Item.Height > Big_Item_Height then
+         if Hide_Big_Items
+           and then Item.Height > Current_Preferences.Big_Item_Height
+         then
             Item.Visible := False;
          end if;
       end if;
