@@ -6,6 +6,12 @@ Known Problems fixed in GPS 2.1.1
               time the dialog is open
   Workaround: Relaunch GPS after modifying the list of themes you are loading
 
+- E103-007 Cannot paste last character under Windows
+  Problem:    Under windows, when pasting a text, the last character is not
+              copied, or replaced by random characters.
+  Workaround: Either use the Gtk+ DLLs from the previous version of GPS, or
+              fix the resulting paste by hand.
+
 - DC30-003 Completion in File/Open From Project is always case sensitive
   Problem:    On windows, if you use the dialog Open From Project, you must
               type the file name with exactly the same casing as on the file
