@@ -174,6 +174,9 @@ package GVD.Process is
       Post_Processing         : Boolean := False;
       --  True if the debugger is handling post processing of a command.
 
+      Exiting                 : Boolean := False;
+      --  True if the debugger is exiting.
+
       Filters                 : Regexp_Filter_List;
       --  List of regexp filters registered to this process.
 
@@ -310,12 +313,6 @@ package GVD.Process is
    --  command window. An ASCII.LF is appended at the end before printing.
    --  Mode is the type of the command which will be transmitted to the
    --  debugger.
-
-   procedure Wait_User_Command
-     (Debugger : Debugger_Process_Tab);
-   --  Wait until the current user command ends.
-   --  This is useful in particular when handling batches of command,
-   --  e.g when replaying sessions or a set of user commands.
 
    procedure Output_Text
      (Process      : Debugger_Process_Tab;
