@@ -97,7 +97,8 @@ package Codefix.Text_Manager.Ada_Commands is
      (This         : in out Remove_Pkg_Clauses_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
       Word         : Word_Cursor;
-      Destination  : String := "");
+      Destination  : String := "";
+      Category     : Language_Category := Cat_With);
    --  Set all the marks that will be needed to remove package clauses.
    --  If Destination is different from "", then the procedure Execute will add
    --  the removed Pkg clauses at the beginning of the destination file. If
