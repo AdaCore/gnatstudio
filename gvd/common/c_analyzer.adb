@@ -48,6 +48,7 @@ package body C_Analyzer is
 
       Tok_Dot,                   -- .
       Tok_Semicolon,             -- ;
+      Tok_Colon,                 -- :
 
       Tok_Left_Paren,            -- (
       Tok_Right_Paren,           -- )
@@ -1360,11 +1361,15 @@ package body C_Analyzer is
                   Paren_Index :=
                     Index - Line_Start (Buffer, Index) + Padding + 1;
                else
-                  --  Open parenthesis on start of line, e.g:
-                  --  foo
-                  --    (bar);
+                  if Prev_Token = Tok_Identifier then
+                     --  Open parenthesis on start of line, e.g:
+                     --  foo
+                     --    (bar);
 
-                  Paren_Index := Indent_Level + 2;
+                     Paren_Index := Indent + 2;
+                  else
+                     Paren_Index := Indent;
+                  end if;
                end if;
 
                --  ??? Could optimize by caching Line_Start
@@ -1391,6 +1396,9 @@ package body C_Analyzer is
                else
                   Token := Tok_Assign;
                end if;
+
+            when ':' =>
+               Token := Tok_Colon;
 
             when ',' =>
                Token := Tok_Comma;
