@@ -422,6 +422,9 @@ package body Src_Editor_Module is
    --  If Child is a file editor, return the corresponding filename,
    --  otherwise return an empty string.
 
+   function Get_File_Identifier (Child  : MDI_Child) return VFS.Virtual_File;
+   --  Return the file identifier if Child is a file editor
+
    function Expand_Aliases_Entities
      (Kernel    : access Kernel_Handle_Record'Class;
       Expansion : String;
@@ -495,6 +498,22 @@ package body Src_Editor_Module is
             Black (Get_Default_Colormap));
       end if;
    end Map_Cb;
+
+   -------------------------
+   -- Get_File_Identifier --
+   -------------------------
+
+   function Get_File_Identifier (Child  : MDI_Child) return VFS.Virtual_File is
+   begin
+      if Child /= null
+        and then Get_Widget (Child).all in Source_Box_Record'Class
+      then
+         return Get_File_Identifier
+           (Get_Buffer (Source_Box (Get_Widget (Child)).Editor));
+      else
+         return VFS.No_File;
+      end if;
+   end Get_File_Identifier;
 
    ------------------
    -- Get_Filename --
@@ -2075,6 +2094,7 @@ package body Src_Editor_Module is
       Focus      : Boolean := True;
       Force      : Boolean := False) return Source_Box
    is
+      No_Name    : constant String := -"Untitled";
       MDI        : constant MDI_Window := Get_MDI (Kernel);
       Editor     : Source_Editor_Box;
       Box        : Source_Box;
@@ -2137,8 +2157,7 @@ package body Src_Editor_Module is
             declare
                Iterator    : Child_Iterator := First_Child (MDI);
                The_Child   : MDI_Child;
-               Nb_Untitled : Natural := 0;
-               No_Name     : constant String := -"Untitled";
+               Nb_Untitled : Integer := -1;
                Ident       : Virtual_File;
             begin
                The_Child := Get (Iterator);
@@ -2149,23 +2168,45 @@ package body Src_Editor_Module is
                     Source_Box_Record'Class
                     and then Get_Filename (The_Child) = VFS.No_File
                   then
-                     Nb_Untitled := Nb_Untitled + 1;
+                     declare
+                        Ident : constant String := Base_Name
+                          (Get_File_Identifier (The_Child));
+                        Index : Natural;
+                     begin
+                        if Ident = No_Name then
+                           Nb_Untitled := Natural'Max (Nb_Untitled, 0);
+                        else
+                           Index := Natural'Value
+                             (Ident (Ident'First + No_Name'Length + 2
+                                     .. Ident'Last - 1));
+                           Nb_Untitled := Natural'Max (Nb_Untitled, Index);
+                        end if;
+
+                     exception
+                        when Constraint_Error =>
+                           null;
+                     end;
                   end if;
 
                   Next (Iterator);
                   The_Child := Get (Iterator);
                end loop;
 
-               if Nb_Untitled = 0 then
+               --  The identifier is set as an absolute path to avoid
+               --  conversions later on, for instance through shell commands,
+               --  that would otherwise receive a relative path name and try
+               --  to resolve it.
+
+               if Nb_Untitled = -1 then
                   Set_Title (Child, No_Name);
-                  Ident := Create (Full_Filename => No_Name);
+                  Ident := Create (Full_Filename => '/' & No_Name);
                else
                   declare
                      Identifier : constant String :=
                        No_Name & " (" & Image (Nb_Untitled + 1) & ")";
                   begin
                      Set_Title (Child, Identifier);
-                     Ident := Create (Full_Filename => Identifier);
+                     Ident := Create (Full_Filename => '/' & Identifier);
                   end;
                end if;
 
@@ -4199,6 +4240,7 @@ package body Src_Editor_Module is
 
          exit when Child = null
            or else Get_Filename (Child) = Full
+           or else Get_File_Identifier (Child) = Full
 
             --  Handling of file identifiers
            or else Get_Title (Child) = Full_Name (File).all;
