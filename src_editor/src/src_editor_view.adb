@@ -874,7 +874,9 @@ package body Src_Editor_View is
             end loop;
 
             --  If a command exists at the specified position, execute it.
-            Info := Get_Side_Info (View, Line, Column_Index);
+            if Line > 0 and then Column_Index > 0 then
+               Info := Get_Side_Info (View, Line, Column_Index);
+            end if;
 
             if Info.Info /= null
               and then Info.Info.Associated_Command /= null
