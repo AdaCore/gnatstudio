@@ -2389,7 +2389,7 @@ package body Src_Editor_Module is
            & ASCII.LF
            & (-"Create a mark for file_name," &
               " at position given by line and column.") & ASCII.LF
-           & (-"Length corresponds of the text length to be highlighted"
+           & (-"Length corresponds to the text length to highlight"
               & " after the mark.") & ASCII.LF
            & (-"The identifier of the mark is returned.") & ASCII.LF
            & (-"Use the command goto_mark to jump to this mark."),
