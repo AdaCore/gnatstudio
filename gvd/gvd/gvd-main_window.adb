@@ -45,7 +45,7 @@ package body GVD.Main_Window is
 
    Signals : constant Gtkada.Types.Chars_Ptr_Array :=
      (1 => New_String ("preferences_changed"));
-   Class_Record : System.Address := System.Null_Address;
+   Class_Record : GObject_Class := Uninitialized_Class;
 
    -----------------------
    -- Cleanup_Debuggers --
@@ -102,7 +102,8 @@ package body GVD.Main_Window is
    procedure Initialize (Main_Window : access GVD_Main_Window_Record'Class) is
    begin
       Main_Debug_Window_Pkg.Initialize (Main_Window);
-      Initialize_Class_Record (Main_Window, Signals, Class_Record);
+      Initialize_Class_Record
+        (Main_Window, Signals, Class_Record, Name => "GvdMainWindow");
 
       Gtk_New (Main_Window.Task_Dialog, Gtk_Window (Main_Window));
       Gtk_New (Main_Window.Thread_Dialog, Gtk_Window (Main_Window));

@@ -112,7 +112,7 @@ package body GVD.Process is
    --  This pointer will keep a pointer to the C 'class record' for
    --  gtk. To avoid allocating memory for each widget, this may be done
    --  only once, and reused
-   Class_Record : System.Address := System.Null_Address;
+   Class_Record : GObject_Class := Uninitialized_Class;
 
    --  Array of the signals created for this widget
    Signals : Chars_Ptr_Array :=
@@ -707,7 +707,8 @@ package body GVD.Process is
    begin
       Process := new Debugger_Process_Tab_Record;
       Initialize (Process);
-      Initialize_Class_Record (Process, Signals, Class_Record);
+      Initialize_Class_Record
+        (Process, Signals, Class_Record, Name => "GvdDebuggerProcessTab");
 
       --  Remove the stack window if needed.
 
