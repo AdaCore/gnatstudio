@@ -1239,6 +1239,12 @@ package body Browsers.Entities is
       if not Get_Kind (Item.Entity).Is_Type then
          Add_Type (Attr_Lines, Item, Lib_Info, Item.Entity, "of type");
 
+      elsif Is_Subtype (Lib_Info, Item.Entity) then
+         Parent := Get_Variable_Type (Lib_Info, Item.Entity);
+         Add_Line
+           (Attr_Lines, -"subtype of " & Entity_As_Link (Parent),
+            Callback => Build (Item, Parent));
+
       else
          case Get_Kind (Item.Entity).Kind is
             when Overloaded_Entity
