@@ -19,7 +19,7 @@ clean:
 install-common:
 	$(MKDIR) $(bindir)
 	$(MKDIR) $(sharedir) $(sharedir)/make
-	$(MKDIR) $(sharedir)/gps/aliases $(sharedir)/gps/customize
+	$(MKDIR) $(sharedir)/gps/customize
 	$(INSTALL_DATA) gnat/Makefile.generic $(sharedir)/make
 	$(INSTALL_DATA) gnat/Makefile.prolog $(sharedir)/make
 	$(INSTALL_DATA) share/ada_support.xml $(sharedir)/gps/customize
