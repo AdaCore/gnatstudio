@@ -83,7 +83,7 @@ package body Aliases_Module is
 
    Alias_Key : Param_Spec_Key;
 
-   Special : constant Character := '$';
+   Special : constant Character := '%';
 
    Highlight_Color : constant String := "#DD0000";
    --  Color used to highlight special entities in the expansion
@@ -136,6 +136,7 @@ package body Aliases_Module is
       Variables       : Gtk_Tree_View;
       Variables_Model : Gtk_Tree_Store;
       Expansion       : Gtk_Text_View;
+      Alias_Col       : Gtk_Tree_View_Column;
 
       Current_Var     : String_Access;
       Highlight_Tag   : Gtk_Text_Tag;
@@ -783,14 +784,29 @@ package body Aliases_Module is
                         Get_Slice (Buffer, First_Iter, Last_Iter),
                         Cursor'Unchecked_Access);
                      Result : Boolean;
+                     Event : Gdk_Event;
                   begin
                      if Replace /= "" then
+                        --  Simulate a focus_in/focus_out event, needed for the
+                        --  GPS source editor, which saves and restores the
+                        --  cursor position when the focus changes (for the
+                        --  handling of multiple views).
+                        Allocate (Event, Enter_Notify, Get_Window (W));
+                        Result := Return_Callback.Emit_By_Name
+                          (W, "focus_in_event", Event);
+                        Free (Event);
+
                         Delete (Buffer, First_Iter, Last_Iter);
                         Insert (Buffer, First_Iter, Replace);
                         Backward_Chars (First_Iter,
                                         Gint (Replace'Length - Cursor),
                                         Result);
                         Place_Cursor (Buffer, First_Iter);
+
+                        Allocate (Event, Leave_Notify, Get_Window (W));
+                        Result := Return_Callback.Emit_By_Name
+                          (W, "focus_out_event", Event);
+                        Free (Event);
                      end if;
                   end;
                   return True;
@@ -1330,21 +1346,25 @@ package body Aliases_Module is
       Gtk_New (Frame);
       Pack1 (Pane, Frame);
 
+      Gtk_New (Scrolled);
+      Set_Policy (Scrolled, Policy_Automatic, Policy_Automatic);
+      Add (Frame, Scrolled);
+
       Gtk_New (Editor.Aliases_Model,
                (0 => GType_String, 1 => GType_Boolean));
       Gtk_New (Editor.Aliases, Editor.Aliases_Model);
-      Add (Frame, Editor.Aliases);
+      Add (Scrolled, Editor.Aliases);
       Set_Mode (Get_Selection (Editor.Aliases), Selection_Single);
 
       Gtk_New (Render);
-      Gtk_New (Col);
-      Set_Clickable (Col, True);
-      Set_Sort_Column_Id (Col, 0);
-      Number := Append_Column (Editor.Aliases, Col);
-      Set_Title (Col, -"Aliases");
-      Pack_Start (Col, Render, True);
-      Add_Attribute (Col, Render, "text", 0);
-      Add_Attribute (Col, Render, "editable", 1);
+      Gtk_New (Editor.Alias_Col);
+      Set_Clickable (Editor.Alias_Col, True);
+      Set_Sort_Column_Id (Editor.Alias_Col, 0);
+      Number := Append_Column (Editor.Aliases, Editor.Alias_Col);
+      Set_Title (Editor.Alias_Col, -"Aliases");
+      Pack_Start (Editor.Alias_Col, Render, True);
+      Add_Attribute (Editor.Alias_Col, Render, "text", 0);
+      Add_Attribute (Editor.Alias_Col, Render, "editable", 1);
 
       Set_Editable_And_Callback (Editor.Aliases_Model, Render, 0);
 
@@ -1525,6 +1545,8 @@ package body Aliases_Module is
          Add_New_Alias (Editor, Get_Key (Iter));
          Get_Next (Aliases_Module_Id.Aliases, Iter);
       end loop;
+
+      Clicked (Editor.Alias_Col);
 
       It := Get_Iter_First (Editor.Aliases_Model);
       if It /= Null_Iter then
