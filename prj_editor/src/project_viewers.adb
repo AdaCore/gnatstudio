@@ -24,11 +24,9 @@ with Glib;                         use Glib;
 with Glib.Convert;                 use Glib.Convert;
 with Glib.Object;                  use Glib.Object;
 with Glib.Xml_Int;                 use Glib.Xml_Int;
-with Gtk.Alignment;                use Gtk.Alignment;
 with Gtk.Arguments;                use Gtk.Arguments;
 with Gtk.Box;                      use Gtk.Box;
 with Gtk.Cell_Renderer_Text;       use Gtk.Cell_Renderer_Text;
-with Gtk.Check_Button;             use Gtk.Check_Button;
 with Gtk.Dialog;                   use Gtk.Dialog;
 with Gtk.Enums;                    use Gtk.Enums;
 with Gtk.Frame;                    use Gtk.Frame;
@@ -65,7 +63,8 @@ with File_Utils;               use File_Utils;
 with Prj;
 with Projects.Editor;          use Projects, Projects.Editor;
 with Projects.Registry;        use Projects.Registry;
-with Creation_Wizard;          use Creation_Wizard;
+with Creation_Wizard.Selector; use Creation_Wizard.Selector;
+with Creation_Wizard.Full;     use Creation_Wizard.Full;
 with Glide_Kernel;             use Glide_Kernel;
 with Glide_Kernel.Console;     use Glide_Kernel.Console;
 with Glide_Kernel.Contexts;    use Glide_Kernel.Contexts;
@@ -272,11 +271,6 @@ package body Project_Viewers is
       Event        : Gdk.Event.Gdk_Event;
       Menu         : Gtk.Menu.Gtk_Menu) return Selection_Context_Access;
    --  Return the current context for the contextual menu
-
-   procedure On_New_Project
-     (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle);
-   --  Callback for the Project->New menu
 
    procedure On_Edit_Switches
      (Widget : access GObject_Record'Class;
@@ -906,89 +900,6 @@ package body Project_Viewers is
       Unchecked_Free (Files);
    end Show_Project;
 
-   --------------------
-   -- On_New_Project --
-   --------------------
-
-   procedure On_New_Project
-     (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle)
-   is
-      pragma Unreferenced (Widget);
-
-      Wiz               : Creation_Wizard.Prj_Wizard;
-      Load_Project_Page : Gtk_Alignment;
-      Frame             : Gtk_Frame;
-      Load_Project      : Gtk_Check_Button;
-      Box               : Gtk_Vbox;
-      Label             : Gtk_Label;
-
-   begin
-      Gtk_New (Load_Project_Page, 0.0, 0.5, 1.0, 0.0);
-      Set_Border_Width (Load_Project_Page, 5);
-
-      Gtk_New (Frame);
-      Set_Border_Width (Frame, 5);
-      Add (Load_Project_Page, Frame);
-
-      Gtk_New_Vbox (Box, Spacing => 10);
-      Add (Frame, Box);
-      Gtk_New (Label, (-"Clicking on apply will generate the project") &
-                 ASCII.LF &
-                 (-"Warning: this operation may take a long time"));
-      Set_Alignment (Label, 0.0, 0.5);
-      Add (Box, Label);
-      Gtk_New (Load_Project, -"Automatically load the project");
-      Set_Active (Load_Project, True);
-      Add (Box, Load_Project);
-
-      Gtk_New (Wiz, Kernel);
-      Add_Page
-        (Wiz, Load_Project_Page, -"Loading the project", -"Load project");
-
-      Show_All (Load_Project_Page);
-
-      declare
-         Name : constant String := Run (Wiz);
-      begin
-         --  If we have a child project, report limitations.
-         --  Ignore trailing ".gpr" file extension in this check
-
-         for J in reverse Name'First .. Name'Last - 4 loop
-            if Name (J) = '.' then
-               Insert
-                 (Kernel,
-                  -("Child projects must import or extend their parent"
-                    & " project. This is not done automatically by GPS, and"
-                    & " you will have to edit the project by hand to make it"
-                    & " valid."));
-               Set_Active (Load_Project, False);
-               exit;
-            elsif Name (J) = '/' or else Name (J) = Directory_Separator then
-               exit;
-            end if;
-         end loop;
-
-         --  Load the project if needed
-
-         if Name /= ""
-           and then Get_Active (Load_Project)
-         then
-            Glide_Kernel.Project.Load_Project (Kernel, Name);
-         end if;
-      end;
-
-      Destroy (Wiz);
-
-   exception
-      when E : others =>
-         if Wiz /= null then
-            Destroy (Wiz);
-         end if;
-         Trace (Exception_Handle,
-                "Unexpected exception " & Exception_Information (E));
-   end On_New_Project;
-
    ------------------------
    -- On_Editor_Switches --
    ------------------------
@@ -1305,20 +1216,18 @@ package body Project_Viewers is
       pragma Unreferenced (Command);
       File : constant File_Selection_Context_Access :=
         File_Selection_Context_Access (Context.Context);
-      Wiz  : Creation_Wizard.Prj_Wizard;
+      Wiz  : Creation_Wizard.Full.Prj_Wizard;
    begin
       Gtk_New (Wiz, Get_Kernel (File));
 
       declare
-         Name : constant String := Run (Wiz);
+         Name : constant String := Creation_Wizard.Run (Wiz);
       begin
          if Name /= "" then
             Add_Dependency_Internal
               (Get_Kernel (File), Project_Information (File), Name);
          end if;
       end;
-
-      Destroy (Wiz);
       return Success;
    end Execute;
 
@@ -2939,6 +2848,7 @@ package body Project_Viewers is
       Reopen_Menu : Gtk.Menu_Item.Gtk_Menu_Item;
       Filter : Action_Filter;
       Command : Interactive_Command_Access;
+      Mitem   : Gtk_Menu_Item;
    begin
       Prj_Editor_Module_ID := new Prj_Editor_Module_Id_Record;
       Register_Module
@@ -2950,16 +2860,18 @@ package body Project_Viewers is
 
       Register_Menu (Kernel, Project, null, Ref_Item => -"Edit",
                      Add_Before => False);
-      Register_Menu (Kernel, Project, -"_New...", "", On_New_Project'Access,
-                     Ref_Item => -"Open...", Add_Before => True);
+      Register_Menu (Kernel, Project, -"_New...", "",
+                     Creation_Wizard.Selector.On_New_Project'Access,
+                     Ref_Item => -"Open...", Add_Before => False);
       Reopen_Menu := Register_Menu
         (Kernel, Project, -"_Recent", "",
-         null, Ref_Item => -"Open...", Add_Before => False);
+         null, Ref_Item => -"New...", Add_Before => False);
       Associate (Get_History (Kernel).all,
                  Project_History_Key,
                  Reopen_Menu,
                  new On_Reopen'(Menu_Callback_Record with
                                 Kernel => Kernel_Handle (Kernel)));
+
       Register_Menu
         (Kernel, Project, -"Edit File _Switches", "",
          On_Edit_Switches'Access, Ref_Item => -"Recent", Add_Before => False);
@@ -2975,6 +2887,10 @@ package body Project_Viewers is
         (Kernel, Project, -"R_ecompute Project", "",
          On_Project_Recompute'Access, Ref_Item => -"Edit File Switches",
          Add_Before => False);
+
+      Gtk_New (Mitem);
+      Register_Menu (Kernel, Project, Mitem, Ref_Item => "Recent",
+                     Add_Before => False);
 
       Add_Hook (Kernel, Project_Changed_Hook, On_Project_Changed'Access);
 
