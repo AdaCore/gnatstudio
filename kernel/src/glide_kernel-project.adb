@@ -236,11 +236,28 @@ package body Glide_Kernel.Project is
       pragma Assert (Handle.Project_View /= No_Project);
 
       --  Parse the list of source files for languages other than Ada.
+      --  At the same time, check that the gnatls attribute is coherent between
+      --  all projects and subprojects
 
       declare
          Iter : Imported_Project_Iterator := Start (Handle.Project, True);
+         Gnatls : constant String := Get_Attribute_Value
+           (Get_Project_View (Handle), Gnatlist_Attribute, Ide_Package);
       begin
          while Current (Iter) /= No_Project loop
+            declare
+               Ls : constant String := Get_Attribute_Value
+                 (Current (Iter), Gnatlist_Attribute, Ide_Package);
+            begin
+               if Ls /= "" and then Ls /= Gnatls then
+                  Insert (Handle,
+                          "gnatls attribute is not the same in the "
+                          & "subproject """ & Project_Name (Current (Iter))
+                          & """ as in the root project."
+                          & " It will be ignored in the subproject.");
+               end if;
+            end;
+
             Add_Foreign_Source_Files (Current (Iter));
             Next (Iter);
          end loop;
