@@ -1,6 +1,6 @@
 Known Problems fixed in GPS 1.2.0
 
-- Crash when opening multiple new files.
+- Crash when opening multiple new files. (C130-023)
   Problem:    When when opening new files using the menu File->New or the
               toolbar icon, opening multiple new files when the line numbers
               are displayed causes GPS to crash.
