@@ -275,14 +275,12 @@ package body Prj_Normalize is
    ---------------------------
 
    procedure Reset_Normalized_Flag (Project : Prj.Tree.Project_Node_Id) is
-      With_Clause : Project_Node_Id := First_With_Clause_Of (Project);
+      Iter : Imported_Project_Iterator := Start (Project);
    begin
-      Tree_Private_Part.Project_Nodes.Table (Project).Location :=
-        No_Location;
-
-      while With_Clause /= Empty_Node loop
-         Reset_Normalized_Flag (Project_Node_Of (With_Clause));
-         With_Clause := Next_With_Clause_Of (With_Clause);
+      while Current (Iter) /= Empty_Node loop
+         Tree_Private_Part.Project_Nodes.Table (Current (Iter)).Location :=
+           No_Location;
+         Next (Iter);
       end loop;
    end Reset_Normalized_Flag;
 
@@ -317,7 +315,7 @@ package body Prj_Normalize is
    ---------------
 
    procedure Normalize
-     (Project     : Project_Node_Id;
+     (Root_Project     : Project_Node_Id;
       Print_Error : Prj.Put_Line_Access := null;
       Recurse     : Boolean := False)
    is
@@ -333,8 +331,8 @@ package body Prj_Normalize is
       --  On exit of the case construction, the entries for the variable are
       --  removed from this list.
 
-      Project_Norm : Project_Node_Id := Clone_Project (Project);
-      Current_Pkg : Project_Node_Id := Empty_Node;
+      Project_Norm : Project_Node_Id;
+      Current_Pkg : Project_Node_Id;
 
       procedure Process_Declarative_List
         (From, To : Project_Node_Id; Case_Stmt : in out Project_Node_Id);
@@ -539,74 +537,67 @@ package body Prj_Normalize is
 
 
       Decl, Case_Stmt : Project_Node_Id;
-      Was_Normalized : constant Boolean := Has_Been_Normalized (Project);
+      Iter : Imported_Project_Iterator := Start (Root_Project, Recurse);
+      Project : Project_Node_Id;
 
    begin
-      --  Memorize the project as normalized, to avoid recursions
-      Tree_Private_Part.Project_Nodes.Table (Project).Location :=
-        Standard_Location;
+      while Current (Iter) /= Empty_Node loop
+         Project := Current (Iter);
 
-      if Recurse then
-         declare
-            With_Clause : Project_Node_Id := First_With_Clause_Of (Project);
-         begin
-            while With_Clause /= Empty_Node loop
-               Normalize
-                 (Project_Node_Of (With_Clause), Print_Error, Recurse);
-               With_Clause := Next_With_Clause_Of (With_Clause);
-            end loop;
-         end;
-      end if;
+         Project_Norm := Clone_Project (Project);
+         Current_Pkg := Empty_Node;
 
-      --  Nothing to do if the list of declarative items is empty, or the
-      --  project has already been normalized
-      if Was_Normalized then
-         return;
-      end if;
+         --  Memorize the project as normalized, to avoid recursions
+         Tree_Private_Part.Project_Nodes.Table (Project).Location :=
+           Standard_Location;
 
-      --  The top-level part of the project
-      Case_Stmt := Empty_Node;
-
-      Process_Declarative_List
-        (From => First_Declarative_Item_Of (Project_Declaration_Of (Project)),
-         To   => Project_Declaration_Of (Project_Norm),
-         Case_Stmt => Case_Stmt);
-
-      if Last_Values /= Values'First - 1 then
-         raise Normalize_Error;
-      end if;
-
-      --  All the subpackages
-
-      Current_Pkg := First_Package_Of (Project);
-      while Current_Pkg /= Empty_Node loop
-         Decl := First_Declarative_Item_Of (Current_Pkg);
-         Set_First_Declarative_Item_Of (Current_Pkg, Empty_Node);
-
+         --  The top-level part of the project
          Case_Stmt := Empty_Node;
+
          Process_Declarative_List
-           (From      => Decl,
-            To        => Current_Pkg,
+           (From => First_Declarative_Item_Of
+              (Project_Declaration_Of (Project)),
+            To   => Project_Declaration_Of (Project_Norm),
             Case_Stmt => Case_Stmt);
+
          if Last_Values /= Values'First - 1 then
             raise Normalize_Error;
          end if;
 
-         Add_At_End (Project_Declaration_Of (Project_Norm), Current_Pkg);
-         Current_Pkg := Next_Package_In_Project (Current_Pkg);
+         --  All the subpackages
+
+         Current_Pkg := First_Package_Of (Project);
+         while Current_Pkg /= Empty_Node loop
+            Decl := First_Declarative_Item_Of (Current_Pkg);
+            Set_First_Declarative_Item_Of (Current_Pkg, Empty_Node);
+
+            Case_Stmt := Empty_Node;
+            Process_Declarative_List
+              (From      => Decl,
+               To        => Current_Pkg,
+               Case_Stmt => Case_Stmt);
+            if Last_Values /= Values'First - 1 then
+               raise Normalize_Error;
+            end if;
+
+            Add_At_End (Project_Declaration_Of (Project_Norm), Current_Pkg);
+            Current_Pkg := Next_Package_In_Project (Current_Pkg);
+         end loop;
+
+         Free (Values);
+
+         Post_Process_After_Clone (Project_Norm);
+
+         --  Directly replace in the table, so that all references to this
+         --  project are automatically updated. There is a small memory leak,
+         --  but since most of the project tree is shared, it doesn't really
+         --  matter in the life of the project editor
+
+         Tree_Private_Part.Project_Nodes.Table (Project) :=
+           Tree_Private_Part.Project_Nodes.Table (Project_Norm);
+
+         Next (Iter);
       end loop;
-
-      Free (Values);
-
-      Post_Process_After_Clone (Project_Norm);
-
-      --  Directly replace in the table, so that all references to this project
-      --  are automatically updated. There is a small memory leak, but since
-      --  most of the project tree is shared, it doesn't really matter in the
-      --  life of the project editor
-
-      Tree_Private_Part.Project_Nodes.Table (Project) :=
-        Tree_Private_Part.Project_Nodes.Table (Project_Norm);
    end Normalize;
 
    -------------------

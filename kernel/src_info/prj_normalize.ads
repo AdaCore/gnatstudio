@@ -109,9 +109,9 @@ package Prj_Normalize is
    --  normalized to False.
 
    procedure Normalize
-     (Project     : Prj.Tree.Project_Node_Id;
-      Print_Error : Prj.Put_Line_Access := null;
-      Recurse     : Boolean := False);
+     (Root_Project : Prj.Tree.Project_Node_Id;
+      Print_Error  : Prj.Put_Line_Access := null;
+      Recurse      : Boolean := False);
    --  Normalize Project.
    --  For efficiency, no check is done to make sure Project is not already
    --  normalized. Some modifications might still happen.
