@@ -28,6 +28,9 @@
 
 with Glib;            use Glib;
 with Glib.Object;     use Glib.Object;
+with Gdk.Bitmap;      use Gdk.Bitmap;
+with Gdk.Color;       use Gdk.Color;
+with Gdk.Pixmap;      use Gdk.Pixmap;
 with Gtk.Button;      use Gtk.Button;
 with Gtk.Combo;       use Gtk.Combo;
 with Gtk.Enums;       use Gtk.Enums;
@@ -36,6 +39,7 @@ with Gtk.Handlers;    use Gtk.Handlers;
 with Gtk.Label;       use Gtk.Label;
 with Gtk.List;        use Gtk.List;
 with Gtk.List_Item;   use Gtk.List_Item;
+with Gtk.Pixmap;      use Gtk.Pixmap;
 with Gtk.Table;       use Gtk.Table;
 with Gtkada.Handlers; use Gtkada.Handlers;
 with Gtk.Widget;      use Gtk.Widget;
@@ -44,6 +48,8 @@ with Prj_API;          use Prj_API;
 with Glide_Kernel;     use Glide_Kernel;
 with Glide_Kernel.Project; use Glide_Kernel.Project;
 with Variable_Editors; use Variable_Editors;
+with Pixmaps_Prj;   use Pixmaps_Prj;
+with Pixmaps_IDE;   use Pixmaps_IDE;
 
 with Prj;      use Prj;
 with Prj.Ext;  use Prj.Ext;
@@ -53,9 +59,6 @@ with Namet;    use Namet;
 with Types;    use Types;
 
 package body Scenario_Views is
-
-   procedure On_Edit_Scenario (View : access Gtk_Widget_Record'Class);
-   --  Callback for editing the current scenario
 
    procedure Refresh (View : access GObject_Record'Class; Data : GObject);
    --  Callback when the current view of the project has changed
@@ -77,8 +80,15 @@ package body Scenario_Views is
    --  This recomputes the scenario view, so that changes are reflected in
    --  other parts of Glide.
 
+   procedure Edit_Variable
+     (Button : access Gtk_Widget_Record'Class; Data : Variable_User_Data);
+   --  Called when editing a variable (name and possible values)
+
    package View_Callback is new User_Callback
      (Gtk_Widget_Record, Variable_User_Data);
+
+   procedure On_Add_Variable (View : access Gtk_Widget_Record'Class);
+   --  Called when the user wants to add a new scenario variable
 
    -------------
    -- Gtk_New --
@@ -105,17 +115,26 @@ package body Scenario_Views is
       Gtk.Table.Initialize
         (View,
          Rows        => 1,
-         Columns     => 2,
+         Columns     => 4,
          Homogeneous => False);
+      Set_Col_Spacing (View, 0, 0);
+      Set_Col_Spacing (View, 1, 10);
 
-      Gtk_New (View.Edit_Button, "Edit Scenario");
+      Create_From_Xpm_D
+        (View.Edit_Pixmap, null, Get_System, View.Edit_Mask, Null_Color,
+         stock_preferences_xpm);
+      Create_From_Xpm_D
+        (View.Delete_Pixmap, null, Get_System, View.Delete_Mask, Null_Color,
+         delete_var_xpm);
+
+      Gtk_New (View.Add_Button, "Add variable");
       --  Activated only when a project is loaded
-      Set_Sensitive (View.Edit_Button, False);
-      Attach (View, View.Edit_Button, 0, 2, 0, 1);
+      Set_Sensitive (View.Add_Button, False);
+      Attach (View, View.Add_Button, 0, 4, 0, 1);
 
       Widget_Callback.Object_Connect
-        (View.Edit_Button, "clicked",
-         Widget_Callback.To_Marshaller (On_Edit_Scenario'Access), View);
+        (View.Add_Button, "clicked",
+         Widget_Callback.To_Marshaller (On_Add_Variable'Access), View);
 
       --  We do not need to connect to "project_changed", since it is always
       --  emitted at the same time as a "project_view_changed", and we do the
@@ -127,26 +146,6 @@ package body Scenario_Views is
       --  Update the viewer with the current project
       Refresh (Kernel, GObject (View));
    end Initialize;
-
-   ----------------------
-   -- On_Edit_Scenario --
-   ----------------------
-
-   procedure On_Edit_Scenario (View : access Gtk_Widget_Record'Class) is
-      V          : constant Scenario_View := Scenario_View (View);
-      Edit       : Variable_Edit;
-      Scenar_Var : Project_Node_Array :=
-        Find_Scenario_Variables (Get_Project (V.Kernel));
-
-   begin
-      Gtk_New (Edit, V.Kernel);
-
-      for J in Scenar_Var'Range loop
-         Refresh (Edit, Scenar_Var (J));
-      end loop;
-
-      Show_All (Edit);
-   end On_Edit_Scenario;
 
    ----------------------------
    -- Variable_Value_Changed --
@@ -193,6 +192,32 @@ package body Scenario_Views is
       Show_All (List);
    end Add_Possible_Values;
 
+   -------------------
+   -- Edit_Variable --
+   -------------------
+
+   procedure Edit_Variable
+     (Button : access Gtk_Widget_Record'Class; Data : Variable_User_Data)
+   is
+      Edit : New_Var_Edit;
+   begin
+      Gtk_New
+        (Edit, Data.View.Kernel, Data.Var, Scenario_Variable_Only => True);
+      Show_All (Edit);
+   end Edit_Variable;
+
+   ---------------------
+   -- On_Add_Variable --
+   ---------------------
+
+   procedure On_Add_Variable (View : access Gtk_Widget_Record'Class) is
+      V : Scenario_View := Scenario_View (View);
+      Edit : New_Var_Edit;
+   begin
+      Gtk_New (Edit, V.Kernel, Scenario_Variable_Only => True);
+      Show_All (Edit);
+   end On_Add_Variable;
+
    -------------
    -- Refresh --
    -------------
@@ -203,6 +228,8 @@ package body Scenario_Views is
       Combo : Gtk_Combo;
       Row : Guint;
       Str : String_Id;
+      Button : Gtk_Button;
+      Pix    : Gtk_Pixmap;
 
       use type Widget_List.Glist;
       Child, Tmp : Widget_List.Glist;
@@ -224,7 +251,7 @@ package body Scenario_Views is
       Tmp := Widget_List.First (Child);
 
       while Tmp /= Widget_List.Null_List loop
-         if Widget_List.Get_Data (Tmp) /= Gtk_Widget (V.Edit_Button) then
+         if Widget_List.Get_Data (Tmp) /= Gtk_Widget (V.Add_Button) then
             Destroy (Widget_List.Get_Data (Tmp));
          end if;
          Tmp := Widget_List.Next (Tmp);
@@ -235,30 +262,48 @@ package body Scenario_Views is
 
       --  No project view => Clean up the scenario viewer
       if Get_Project_View (V.Kernel) = No_Project then
-         Resize (V, Rows => 1, Columns => 2);
+         Resize (V, Rows => 1, Columns => 4);
          Hide_All (V);
-         Set_Sensitive (V.Edit_Button, False);
+         Set_Sensitive (V.Add_Button, False);
 
       else
          declare
             Scenar_Var : constant Project_Node_Array :=
               Find_Scenario_Variables (Get_Project (V.Kernel));
          begin
-            Set_Sensitive (V.Edit_Button, True);
-            Resize (V, Rows => Guint (Scenar_Var'Length) + 1, Columns => 2);
+            Set_Sensitive (V.Add_Button, True);
+            Resize (V, Rows => Guint (Scenar_Var'Length) + 1, Columns => 4);
 
             for J in Scenar_Var'Range loop
                Row := Guint (J - Scenar_Var'First) + 1;
+
+               Gtk_New (Button);
+               Gtk_New (Pix, V.Edit_Pixmap, V.Edit_Mask);
+               Add (Button, Pix);
+               Attach
+                 (V, Button, 0, 1, Row, Row + 1, Xoptions => 0, Yoptions => 0);
+               View_Callback.Connect
+                 (Button, "clicked",
+                  View_Callback.To_Marshaller (Edit_Variable'Access),
+                  (View => V, Var => Scenar_Var (J)));
+
+               Gtk_New (Button);
+               Gtk_New (Pix, V.Delete_Pixmap, V.Delete_Mask);
+               Add (Button, Pix);
+               Attach
+                 (V, Button, 1, 2, Row, Row + 1, Xoptions => 0, Yoptions => 0);
+
+
                Str := External_Reference_Of (Scenar_Var (J));
                String_To_Name_Buffer (Str);
                Gtk_New (Label, Name_Buffer (Name_Buffer'First .. Name_Len));
                Set_Alignment (Label, 0.0, 0.5);
-               Attach (V, Label, 0, 1, Row, Row + 1, Xoptions => Fill);
+               Attach (V, Label, 2, 3, Row, Row + 1, Xoptions => Fill);
 
                Gtk_New (Combo);
                Set_Editable (Get_Entry (Combo), False);
                Set_Width_Chars (Get_Entry (Combo), 0);
-               Attach (V, Combo, 1, 2, Row, Row + 1);
+               Attach (V, Combo, 3, 4, Row, Row + 1);
 
                Add_Possible_Values
                  (Get_List (Combo), String_Type_Of (Scenar_Var (J)));

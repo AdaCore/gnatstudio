@@ -34,6 +34,8 @@
 --
 --  </description>
 
+with Gdk.Bitmap;
+with Gdk.Pixmap;
 with Gtk.Button;
 with Gtk.Table;
 with Glide_Kernel;
@@ -58,7 +60,12 @@ package Scenario_Views is
 private
    type Scenario_View_Record is new Gtk.Table.Gtk_Table_Record with record
       Kernel      : Glide_Kernel.Kernel_Handle;
-      Edit_Button : Gtk.Button.Gtk_Button;
+      Add_Button  : Gtk.Button.Gtk_Button;
+
+      Edit_Pixmap   : Gdk.Pixmap.Gdk_Pixmap;
+      Edit_Mask     : Gdk.Bitmap.Gdk_Bitmap;
+      Delete_Pixmap : Gdk.Pixmap.Gdk_Pixmap;
+      Delete_Mask   : Gdk.Bitmap.Gdk_Bitmap;
 
       Combo_Is_Open : Boolean := False;
       --  Flag temporarily set to True when a user is modifying the value of
