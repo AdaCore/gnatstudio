@@ -232,7 +232,7 @@ package body Glide_Kernel.Project is
       procedure Report_Error (S : String) is
       begin
          Console.Insert (Kernel, S, Mode => Console.Error, Add_LF => False);
-         Parse_File_Locations (Kernel, S, "Project load");
+         Parse_File_Locations (Kernel, S, "Project");
       end Report_Error;
 
       Had_Project_Desktop : Boolean;
@@ -283,22 +283,14 @@ package body Glide_Kernel.Project is
 
       procedure Report_Error (S : String) is
       begin
+         --  No need to send to the result view, since these error messages do
+         --  not contain line numbers.
          Console.Insert (Handle, S, Mode => Console.Error);
-         Parse_File_Locations (Handle, S, "Recompute view");
       end Report_Error;
 
-      N : constant String := Project_Name (Get_Project (Handle));
    begin
       Recompute_View (Handle.Registry.all, Report_Error'Unrestricted_Access);
       Compute_Predefined_Paths (Handle);
-
-      --  The project might have changed if it couldn't be processed in
-      --  Recompute_View. In this case, we must report that is has changed.
-
-      if Project_Name (Get_Project (Handle)) /= N then
-         Project_Changed (Handle);
-      end if;
-
       Project_View_Changed (Handle);
    end Recompute_View;
 
