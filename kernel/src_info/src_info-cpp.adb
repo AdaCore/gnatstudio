@@ -3823,8 +3823,9 @@ package body Src_Info.CPP is
             Body_Entity);
       end if;
 
-      if (Target_Kind = Generic_Function_Or_Operator)
-         or (Target_Kind = Generic_Procedure) then
+      if Target_Kind = Generic_Function_Or_Operator
+        or else Target_Kind = Generic_Procedure
+      then
          Process_Template_Arguments
            (Fu_Id,
             "",
@@ -4853,8 +4854,9 @@ package body Src_Info.CPP is
                = Arg.Buffer (Arg.Template_Parameters.First ..
                   Arg.Template_Parameters.Last)
          then
-            if (Arg.Attributes = SN_TA_TYPE)
-               or (Arg.Attributes = SN_TA_TEMPLATE) then
+            if Arg.Attributes = SN_TA_TYPE
+              or else Arg.Attributes = SN_TA_TEMPLATE
+            then
                Insert_Declaration
                  (File             => File,
                   List             => List,
@@ -4919,4 +4921,3 @@ package body Src_Info.CPP is
       Release_Cursor (Handler.SN_Table (TA));
    end Process_Template_Arguments;
 end Src_Info.CPP;
-
