@@ -1622,22 +1622,17 @@ package body GVD_Module is
       then
          return False;
 
-      elsif Id.Show_Lines_With_Code then
-         if Command_In_Process (Get_Process (Debugger)) then
-            Id.Slow_Query := True;
-            Timeout_Id := Timeout_Add (100, Idle_Reveal_Lines'Access);
-            return False;
+      elsif Id.Show_Lines_With_Code
+        and then Command_In_Process (Get_Process (Debugger))
+      then
+         Id.Slow_Query := True;
+         Timeout_Id := Timeout_Add (100, Idle_Reveal_Lines'Access);
+         return False;
 
-         elsif Id.Slow_Query then
-            Id.Slow_Query := False;
-            Timeout_Id := Timeout_Add (1, Idle_Reveal_Lines'Access);
-            return False;
-         end if;
-      end if;
-
-      if Id.List_Modified then
-         Id.List_Modified := False;
-         return True;
+      elsif Id.Slow_Query then
+         Id.Slow_Query := False;
+         Timeout_Id := Timeout_Add (1, Idle_Reveal_Lines'Access);
+         return False;
       end if;
 
       File_Line := File_Line_List.Head (Id.Unexplored_Lines);
@@ -1647,6 +1642,11 @@ package body GVD_Module is
            (Debugger, File_Line.File.all, File_Line.Line);
       else
          Kind := Have_Code;
+      end if;
+
+      if Id.List_Modified then
+         Id.List_Modified := False;
+         return True;
       end if;
 
       declare
@@ -1791,6 +1791,7 @@ package body GVD_Module is
       Process      : constant Visual_Debugger :=
         Get_Current_Process (Get_Main_Window (Get_Kernel (Context)));
       Id           : constant GVD_Module := GVD_Module (GVD_Module_ID);
+
    begin
       if Process = null or else Process.Debugger = null then
          return;
@@ -1807,10 +1808,14 @@ package body GVD_Module is
          begin
             Get_Area (Area_Context, Line1, Line2);
 
-            if not File_Line_List.Is_Empty (Id.Unexplored_Lines) then
+            if File_Line_List.Is_Empty (Id.Unexplored_Lines) then
+               Timeout_Id := Timeout_Add (1, Idle_Reveal_Lines'Access);
+            else
                Id.List_Modified := True;
-               File_Line_List.Free (Id.Unexplored_Lines);
-               Id.Unexplored_Lines := File_Line_List.Null_List;
+               File_Line_List.Free
+                 (Id.Unexplored_Lines);
+               Id.Unexplored_Lines
+                 := File_Line_List.Null_List;
             end if;
 
             for J in Line1 .. Line2 loop
@@ -1819,12 +1824,6 @@ package body GVD_Module is
                --  ??? We might want to use a LIFO structure here
                --  instead of FIFO, so that the lines currently shown
                --  are displayed first.
-
-               --  If we have set Id.List_Modified to True, then necessarily
-               --  a timeout function was already registered.
-               if Id.List_Modified then
-                  Timeout_Id := Timeout_Add (1, Idle_Reveal_Lines'Access);
-               end if;
             end loop;
          end;
       end if;
