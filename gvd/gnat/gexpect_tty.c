@@ -765,10 +765,8 @@ setup_pty (fd)
 
      Since the latter lossage is more benign, we may as well
      lose that way.  -- cph */
-#ifdef FIONBIO
-#if defined(SYSV_PTYS) || defined(UNIX98_PTYS)
+#if defined (FIONBIO) && defined (SYSV_PTYS)
   ioctl (fd, FIONBIO, &on);
-#endif
 #endif
 #ifdef IBMRTAIX
   /* On AIX, the parent gets SIGHUP when a pty attached child dies.  So, we */
@@ -788,23 +786,178 @@ setup_pty (fd)
 }
 #endif /* HAVE_PTYS */
 
+#ifdef HAVE_PTYS
+
+static int allocate_pty_the_old_fashioned_way (void);
 
 /*********************************************************
  **  allocate_pty ()
  **  Open an available pty, returning a file descriptor.
+ **  Finds in the case of unix by checking devices
+ ** /dev/ptmx /dev/ptm/clone /dev/ptc and /dev/ptmx_bsd
+ **  On failure it tries allocate_pty_the_old_fashioned_way
+ **  Return -1 for final failure.
+ **  The file name of the terminal corresponding to the pty
+ **  is left in the variable pty_name.
+ **
+ *********************************************************/
+
+
+static int
+allocate_pty (void)
+{
+  /* Unix98 standardized grantpt, unlockpt, and ptsname, but not the
+     functions required to open a master pty in the first place :-(
+
+     Modern Unix systems all seems to have convenience methods to open
+     a master pty fd in one function call, but there is little
+     agreement on how to do it.
+
+     allocate_pty() tries all the different known easy ways of opening
+     a pty.  In case of failure, we resort to the old BSD-style pty
+     grovelling code in allocate_pty_the_old_fashioned_way(). */
+
+  int master_fd = -1;
+  const char *slave_name = NULL;
+  const char *clone = NULL;
+  static const char * const clones[] = /* Different pty master clone devices */
+    {
+      "/dev/ptmx",      /* Various systems */
+      "/dev/ptm/clone", /* HPUX */
+      "/dev/ptc",       /* AIX */
+      "/dev/ptmx_bsd"   /* Tru64 */
+    };
+
+#ifdef HAVE_GETPT /* glibc */
+  master_fd = getpt ();
+  if (master_fd >= 0)
+    goto have_master;
+#endif /* HAVE_GETPT */
+
+#if defined(HAVE_OPENPTY) /* BSD, Tru64, glibc */
+  {
+    int slave_fd = -1;
+    int rc;
+    BLOCK_SIGNAL (SIGCHLD);
+    rc = openpty (&master_fd, &slave_fd, NULL, NULL, NULL);
+    UNBLOCK_SIGNAL (SIGCHLD);
+    if (rc == 0)
+      {
+	slave_name = ttyname (slave_fd);
+	close (slave_fd);
+	goto have_slave_name;
+      }
+    else
+      {
+	if (master_fd >= 0)
+	  close (master_fd);
+	if (slave_fd >= 0)
+	  close (slave_fd);
+      }
+  }
+#endif /* HAVE_OPENPTY */
+
+#if defined(HAVE__GETPTY) && defined (O_NDELAY) /* SGI */
+  master_fd = -1;
+  BLOCK_SIGNAL (SIGCHLD);
+  slave_name = _getpty (&master_fd, O_RDWR | O_NDELAY, 0600, 0);
+  UNBLOCK_SIGNAL (SIGCHLD);
+  if (master_fd >= 0 && slave_name != NULL)
+    goto have_slave_name;
+#endif /* HAVE__GETPTY */
+
+  /* Master clone devices are available on most systems */
+  {
+    int i;
+    for (i = 0; i < sizeof(clones)/sizeof(char*); i++)
+      {
+	clone = clones[i];
+	master_fd = open (clone, O_RDWR | O_NONBLOCK, 0);
+	if (master_fd >= 0)
+	  goto have_master;
+      }
+    clone = NULL;
+  }
+
+  goto lose;
+
+ have_master:
+
+#if defined (HAVE_PTSNAME)
+  slave_name = (char *)ptsname (master_fd);
+  if (slave_name)
+    goto have_slave_name;
+#endif
+
+  /* AIX docs say to use ttyname, not ptsname, to get slave_name */
+  if (clone
+      && !strcmp (clone, "/dev/ptc")
+      && (slave_name = ttyname (master_fd)) != NULL)
+    goto have_slave_name;
+
+  goto lose;
+
+ have_slave_name:
+  strncpy (pty_name, slave_name, sizeof (pty_name));
+  pty_name[sizeof (pty_name) - 1] = '\0';
+  setup_pty (master_fd);
+
+  /* We jump through some hoops to frob the pty.
+     It's not obvious that checking the return code here is useful. */
+  
+  /* "The grantpt() function will fail if it is unable to successfully
+      invoke the setuid root program.  It may also fail if the
+      application has installed a signal handler to catch SIGCHLD
+      signals." */
+
+#if defined (HAVE_GRANTPT) || defined (HAVE_UNLOCKPT)
+  BLOCK_SIGNAL (SIGCHLD);
+
+#if defined (HAVE_GRANTPT)
+  grantpt (master_fd);
+#ifdef HPUX
+  /* grantpt() behavior on some versions of HP-UX differs from what's
+     specified in the man page: the group of the slave PTY is set to
+     the user's primary group, and we fix that. */
+  { 
+    struct group *tty_group = getgrnam ("tty");
+    if (tty_group != NULL)
+      chown (pty_name, (uid_t) -1, tty_group->gr_gid);
+  }
+#endif /* HPUX has broken grantpt() */
+#endif /* HAVE_GRANTPT */
+
+#if defined (HAVE_UNLOCKPT)
+  unlockpt (master_fd);
+#endif
+  
+  UNBLOCK_SIGNAL (SIGCHLD);
+#endif /* HAVE_GRANTPT || HAVE_UNLOCKPT */
+  
+  return master_fd;
+ 
+ lose:
+  if (master_fd >= 0)
+    close (master_fd);
+
+  return allocate_pty_the_old_fashioned_way ();
+}
+
+/*********************************************************
+ **  allocate_pty_the_old_fashioned_way ()
+ **  Open an available pty, returning a file descriptor.
+ **  Finds in the case of unix the bsd type ptys by search.
  **  Return -1 on failure.
  **  The file name of the terminal corresponding to the pty
  **  is left in the variable pty_name.
  **
  *********************************************************/
 
-#ifdef HAVE_PTYS
-
 static int
-allocate_pty ()
+allocate_pty_the_old_fashioned_way ()
 {
   struct stat stb;
-  register int c, i;
+  int c, i;
   int fd;
 
   /* Some systems name their pseudoterminals so that there are gaps in
@@ -830,14 +983,6 @@ allocate_pty ()
 #ifdef PTY_OPEN
 	PTY_OPEN;
 #else /* no PTY_OPEN */
-#ifdef IRIS
-	/* Unusual IRIS code */
- 	*ptyv = gvd_open ("/dev/ptc", O_RDWR | O_NDELAY, 0);
- 	if (fd < 0)
- 	  return -1;
-	if (fstat (fd, &stb) < 0)
-	  return -1;
-#else /* not IRIS */
 	if (stat (pty_name, &stb) < 0)
 	  {
 	    failed_count++;
@@ -851,7 +996,6 @@ allocate_pty ()
 #else
 	fd = gvd_open (pty_name, O_RDWR | O_NDELAY, 0);
 #endif
-#endif /* not IRIS */
 #endif /* no PTY_OPEN */
 
 	if (fd >= 0)
@@ -863,21 +1007,12 @@ allocate_pty ()
 #else
             sprintf (pty_name, "/dev/tty%c%x", c, i);
 #endif /* no PTY_TTY_NAME_SPRINTF */
-#ifndef UNIPLUS
-	    if (access (pty_name, 6) != 0)
-	      {
-		gvd_close (fd);
-#if !defined(IRIS) && !defined(__sgi)
-		fprintf (stderr, "Could not access pty_name --%s--\n",
-			 pty_name);
-		continue;
-#else
-		return -1;
-#endif /* IRIS */
-	      }
-#endif /* not UNIPLUS */
-	    setup_pty (fd);
-	    return fd;
+            if (access (pty_name, 6) == 0)
+              { 
+                setup_pty (fd);
+                return fd;
+              }
+            close (fd);
 	  }
       }
   fprintf (stderr, "return -1 from allocate_tty\n");
