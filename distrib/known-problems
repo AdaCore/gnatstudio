@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 1.0.1
 
+- Incorrect search when starting from middle of a line
+  Problem:    If you start a search when you cursor is not in the first
+              column and there is a match on that line, that match is
+              incorrectly highlighted.
+  Workaround: Look forward a few columns on the same line, you will see the
+              occurence.
+
 - Editing switches for a specific file from an open editor doesn't work
   Problem:    From an editor, if you display the contextual menu and select
               the edit switches item, GPS doesn't display the dialog.
