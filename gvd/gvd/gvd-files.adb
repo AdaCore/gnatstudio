@@ -68,18 +68,17 @@ package body GVD.Files is
       Cache       : GVD.Types.File_Cache_List;
       Remote_Host : GVD.Types.String_Access := null)
    is
-      F      : File_Descriptor;
-      Length : Positive;
-      Name   : aliased constant String := Cache.File_Name.all & ASCII.NUL;
-
-      Tmp_File : GNAT.OS_Lib.Temp_File_Name;
-      Args     : Argument_List (1 .. 2);
-      Result   : Expect_Match;
-      Descriptor : GNAT.Expect.Process_Descriptor;
+      F             : File_Descriptor;
+      Length        : Positive;
+      Name          : aliased constant String :=
+        Cache.File_Name.all & ASCII.NUL;
+      Tmp_File      : GNAT.OS_Lib.Temp_File_Name;
+      Args          : Argument_List (1 .. 2);
+      Result        : Expect_Match;
+      Descriptor    : GNAT.Expect.Process_Descriptor;
       Should_Delete : Boolean := False;
 
    begin
-
       Error_Msg := null;
       Contents  := null;
 
@@ -147,7 +146,12 @@ package body GVD.Files is
             S : String (1 .. Length);
          begin
             Length := Read (F, S'Address, Length);
-            Contents := new String' (Strip_Control_M (S));
+
+            if Need_To_Strip_Control_M then
+               Contents := new String' (Strip_Control_M (S));
+            else
+               Contents := new String' (S);
+            end if;
 
             --  Only save the contents in the cache for remote files
             if Remote_Host /= null
