@@ -2514,6 +2514,7 @@ package body Debugger.Gdb is
 
       if Start_Index < Disassembled'Last
         and then Disassembled (Start_Index .. Start_Index + 1) = "0x"
+        and then Tmp - Start_Index <= Range_Start'Length
       then
          Range_Start_Len := Tmp - Start_Index;
          Range_Start (1 .. Range_Start_Len) :=
@@ -2524,14 +2525,24 @@ package body Debugger.Gdb is
 
       --  Get the actual end address, in case the disassembled zone doesn't end
       --  exactly on End_Address.
+      --  The output line from gdb can look like:
+      --       0x379214 <_ada_main+260>:\tmr\tr1,r11
+      --    or 0x379250:\tstfd\tf14,160(r1)
 
       Skip_To_Char (Disassembled, End_Index, ASCII.LF, Step => -1);
       End_Index := End_Index + 1;
       Tmp := End_Index;
-      Skip_To_Char (Disassembled, Tmp, ' ');
+      while Tmp <= Disassembled'Last
+        and then Disassembled (Tmp) /= ' '
+        and then Disassembled (Tmp) /= ':'
+      loop
+         Tmp := Tmp + 1;
+      end loop;
+      --  Skip_To_Char (Disassembled, Tmp, ' ');
 
       if End_Index < Disassembled'Last
         and then Disassembled (End_Index .. End_Index + 1) = "0x"
+        and then Tmp - End_Index <= Range_End'Length
       then
          Range_End_Len := Tmp - End_Index;
          Range_End (1 .. Range_End_Len) := Disassembled (End_Index .. Tmp - 1);
