@@ -36,7 +36,6 @@ package body Casing_Exceptions is
    Case_Exceptions_Filename : constant String := "case_exceptions.xml";
 
    type Casing_Module_Record is new Module_ID_Record with record
-      Kernel                  : Kernel_Handle;
       Casing_Exceptions_Table : Case_Handling.Casing_Exceptions;
    end record;
    type Casing_Module is access all Casing_Module_Record'Class;
@@ -350,12 +349,11 @@ package body Casing_Exceptions is
       Filter  : Action_Filter;
    begin
       Casing_Module_Id := new Casing_Module_Record;
-      Casing_Module_Id.Kernel := Kernel_Handle (Kernel);
       Register_Module
-        (Module                  => Module_ID (Casing_Module_Id),
-         Kernel                  => Kernel,
-         Module_Name             => "Casing",
-         Priority                => Default_Priority - 1);
+        (Module      => Module_ID (Casing_Module_Id),
+         Kernel      => Kernel,
+         Module_Name => "Casing",
+         Priority    => Default_Priority - 1);
       Load_Exceptions
         (Casing_Module_Id.Casing_Exceptions_Table,
          Filename,
@@ -456,7 +454,7 @@ package body Casing_Exceptions is
 
    procedure Destroy (Id : in out Casing_Module_Record) is
       Filename : constant String :=
-        Get_Home_Dir (Id.Kernel) & Case_Exceptions_Filename;
+        Get_Home_Dir (Get_Kernel (Id)) & Case_Exceptions_Filename;
    begin
       Save_Exceptions (Id.Casing_Exceptions_Table, Filename);
       Destroy (Id.Casing_Exceptions_Table);
