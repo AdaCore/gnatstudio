@@ -3534,24 +3534,50 @@ strings.
 @item Look in
 @cindex look in
 This field defines the context in which the search should
-occur. Clicking on the arrow on the right will display the list of all
-possible contexts. The exact list will depend on what modules were
-loaded by GPS, since each module can add its own contexts.
-
-Depending on the selected context, extra fields might be displayed on
-the screen. For instance, if you select the context @code{Files...}
-you will be asked what files or directories should be searched. These
-are regular expressions.
-
-When searching one or more source files, an extra field to select the
-scope is provided. This is used to avoid matching on comments when you
-are only interested in actual code, or to only search strings and
-comments, and ignore the code.
-
+occur.
 @cindex search context
 GPS will automatically select the most appropriate context when you
 open the search dialog, depending on which component currently has the
 focus. You can of course change the context to another one if needed.
+
+Clicking on the arrow on the right will display the list of all
+possible contexts. This list includes:
+
+@table @code
+@item Project Explorer
+Search in the project explorer. An extra @i{Scope} box will be displayed
+where you can specify the scope of your search, which can be a set of:
+@code{Projects, Directories, Files, Entities}. The search in entities
+may take a long time, search each file is parsed during the search.
+
+@item Files...
+Search in a given set of files. An extra @i{Files} box will be displayed
+where you can specify the files by using standard shell (Unix or Windows)
+regular expression, e.g. @code{*.ad?} for all files ending with .ad and any
+trailing character. The directory specified where the search starts, and
+the @i{Recursive search} button whether sub directories will be searched
+as well.
+
+The @i{Scope} entry is used to restrict the search to a set of language 
+constructs, e.g. to avoid matching on comments when you
+are only interested in actual code, or to only search strings and
+comments, and ignore the code.
+
+@item Files From Project
+Search in all the files from the project, including files from project
+dependencies. The @i{Scope} entry is described in the @code{Files...}
+section above.
+
+@item Current File
+Search in the current source editor.
+The @i{Scope} entry is described in the @code{Files...} section above.
+
+@item Project Browser
+Search in the project browser (@pxref{The Project Browser}).
+
+@item Help
+Search in the help window.
+@end table
 
 @end table
 
