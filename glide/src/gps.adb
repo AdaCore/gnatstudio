@@ -42,10 +42,12 @@ with String_Utils;
 with Glide_Kernel;              use Glide_Kernel;
 with Glide_Kernel.Console;      use Glide_Kernel.Console;
 with Glide_Kernel.Custom;       use Glide_Kernel.Custom;
+with Glide_Kernel.Hooks;        use Glide_Kernel.Hooks;
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
 with Glide_Kernel.Project;      use Glide_Kernel.Project;
 with Glide_Kernel.Scripts;      use Glide_Kernel.Scripts;
+with Glide_Kernel.Standard_Hooks; use Glide_Kernel.Standard_Hooks;
 with Glide_Kernel.Timeout;      use Glide_Kernel.Timeout;
 with Glide_Kernel.Task_Manager; use Glide_Kernel.Task_Manager;
 with Gtkada.Intl;               use Gtkada.Intl;
@@ -66,6 +68,7 @@ with GUI_Utils;                 use GUI_Utils;
 with Remote_Connections;
 with System;
 with VFS;
+with Glide_Kernel.Standard_Hooks; use Glide_Kernel.Standard_Hooks;
 
 --  Modules registered by GPS.
 with Ada_Module;
@@ -902,13 +905,20 @@ procedure GPS is
       Python_Module.Register_Module (GPS.Kernel);
       Register_Default_Script_Commands (GPS.Kernel);
 
-      Glide_Kernel.Console.Register_Commands (GPS.Kernel);
+      Glide_Result_View.Register_Commands (GPS.Kernel);
 
       --  We then must register the keymanager, so that other modules can
       --  register their keys
 
       KeyManager_Module.Register_Module (GPS.Kernel);
       Register_Keys (GPS);
+
+      --  Register the standard hooks. Other modules were able to connect to
+      --  these earlier anyway, but these add shell commands, and therefore
+      --  must be loaded after the script modules
+
+      Register_Standard_Hooks (GPS.Kernel);
+      Register_Action_Hooks (GPS.Kernel);
 
       --  Load the theme manager module immediately, so that any customization
       --  file or module can provide its own themes.
@@ -1150,7 +1160,7 @@ procedure GPS is
       --  created, to be sure they are realized and will take the preferences
       --  into acocunt.
 
-      Preferences_Changed (GPS.Kernel);
+      Run_Hook (GPS.Kernel, Preferences_Changed_Hook);
 
       Started := True;
 
