@@ -1619,6 +1619,36 @@ This is the name of a parameter. @i{name} can be any string you want,
 excluding closing parenthesis. See below for more information on
 parameters.
 
+@item %D
+This is the current date, in ISO format. The year is displayed first,
+then the month and the day
+
+@item %H
+This is the current time (hour, minutes and seconds)
+
+@item %l
+If the expansion of the alias is done in a source editor, this is the
+line on which the cursor is when pressing @key{control-o}.
+
+@item %c
+This is similar to @i{%l}, except it returns the current column.
+
+@item %f
+If the expansion is done in a source editor, this is the name of the
+current file (its base name only, this doesn't include the directory)
+
+@item %d
+If the expansion is done in a source editor, this is the directory in
+which the current file is
+
+@item %p
+If the expansion is done in a source editor, this is the base name of
+the project file to which the file belongs.
+
+@item %P
+If the expansion is done in a source editor, this is the full path
+name to the project file (directory and base name).
+
 @end table
 
 
