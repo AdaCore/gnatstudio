@@ -30,7 +30,7 @@ with Gtk.Window;       use Gtk.Window;
 with Gtkada.Handlers;  use Gtkada.Handlers;
 
 with GNAT.OS_Lib; use GNAT.OS_Lib;
---  with Text_IO; use Text_IO;
+with Text_IO; use Text_IO;
 
 package body Gtkada.MDI is
 
@@ -108,6 +108,9 @@ package body Gtkada.MDI is
    procedure Destroy_Child (Child : access Gtk_Widget_Record'Class);
    --  A child is destroyed, and memory should be freed
 
+   procedure Destroy_MDI (MDI : access Gtk_Widget_Record'Class);
+   --  Called when the MDI is destroyed.
+
    procedure Iconify_Child (Child : access Gtk_Widget_Record'Class);
    --  Iconify a child
 
@@ -118,11 +121,6 @@ package body Gtkada.MDI is
 
    procedure Close_Child (Child : access Gtk_Widget_Record'Class);
    --  A child should be destroyed (we first check with the application)
-
-   function MDI_From_Child (Child : access Gtk_Widget_Record'Class)
-      return MDI_Window;
-   pragma Inline (MDI_From_Child);
-   --  Return the MDI window that contains child
 
    procedure Move_Dock_Notebook (MDI : access MDI_Window_Record'Class);
    --  Reposition the docks on each side of MDI, given their contents
@@ -173,6 +171,9 @@ package body Gtkada.MDI is
       Widget_Callback.Connect
         (MDI, "realize",
          Widget_Callback.To_Marshaller (Realize_MDI'Access));
+      Widget_Callback.Connect
+        (MDI, "destroy",
+         Widget_Callback.To_Marshaller (Destroy_MDI'Access));
    end Initialize;
 
    -------------------
@@ -213,26 +214,24 @@ package body Gtkada.MDI is
          Child.Uniconified_Height := Child_Req.Height;
          Tmp := Next (Tmp);
       end loop;
+      Move_Dock_Notebook (M);
       Free (List);
    end Realize_MDI;
 
-   --------------------
-   -- MDI_From_Child --
-   --------------------
+   -----------------
+   -- Destroy_MDI --
+   -----------------
 
-   function MDI_From_Child (Child : access Gtk_Widget_Record'Class)
-      return MDI_Window
-   is
-      P : Gtk_Widget := Get_Parent (Child);
+   procedure Destroy_MDI (MDI : access Gtk_Widget_Record'Class) is
+      use Widget_List;
+      Tmp : Widget_List.Glist := First (MDI_Window (MDI).Embedded_Items);
    begin
-      if P = null then
-         return null;
-      elsif P.all in MDI_Window_Record'Class then
-         return MDI_Window (P);
-      else  --  We have a notebook
-         return MDI_Window (Get_Parent (Get_Parent (Get_Parent (P))));
-      end if;
-   end MDI_From_Child;
+      while Tmp /= Null_List loop
+         Destroy (Get_Data (Tmp));
+         Tmp := Next (Tmp);
+      end loop;
+      Free (MDI_Window (MDI).Embedded_Items);
+   end Destroy_MDI;
 
    -------------------
    -- Iconify_Child --
@@ -282,7 +281,9 @@ package body Gtkada.MDI is
    procedure Destroy_Child (Child : access Gtk_Widget_Record'Class) is
    begin
       Free (MDI_Child (Child).Title);
-      Destroy (MDI_Child (Child).Initial);
+      if MDI_Child (Child).Initial /= MDI_Child (Child).Initial_Child then
+         Destroy (MDI_Child (Child).Initial);
+      end if;
    end Destroy_Child;
 
    ----------------
@@ -292,7 +293,7 @@ package body Gtkada.MDI is
    procedure Draw_Child
      (Child : access MDI_Child_Record'Class; Area : Gdk_Rectangle)
    is
-      MDI : MDI_Window := MDI_From_Child (Child);
+      MDI : MDI_Window := Child.MDI;
       F : Gdk_Font := Get_Gdkfont (Title_Font_Name, Title_Font_Height);
       GC : Gdk_GC := MDI.GC;
    begin
@@ -397,8 +398,8 @@ package body Gtkada.MDI is
      (Child : access Gtk_Widget_Record'Class;
       Event  : Gdk_Event) return Boolean
    is
-      MDI : MDI_Window := MDI_From_Child (Child);
       C : MDI_Child := MDI_Child (Child);
+      MDI : MDI_Window := C.MDI;
       Cursor : Gdk.Cursor.Gdk_Cursor;
       Tmp : Boolean;
       Curs : Gdk_Cursor_Type;
@@ -465,7 +466,7 @@ package body Gtkada.MDI is
      (Child : access Gtk_Widget_Record'Class;
       Event  : Gdk_Event) return Boolean
    is
-      MDI : MDI_Window := MDI_From_Child (Child);
+      MDI : MDI_Window := MDI_Child (Child).MDI;
    begin
       if MDI.Selected_Child /= null then
          if Do_Grabs then
@@ -505,8 +506,8 @@ package body Gtkada.MDI is
      (Child : access Gtk_Widget_Record'Class;
       Event  : Gdk_Event) return Boolean
    is
-      MDI : MDI_Window := MDI_From_Child (Child);
       C : MDI_Child := MDI_Child (Child);
+      MDI : MDI_Window := C.MDI;
       Delta_X, Delta_Y : Gint;
       Cursor : Gdk_Cursor;
       Curs : Gdk_Cursor_Type;
@@ -636,7 +637,7 @@ package body Gtkada.MDI is
      (Child : access Gtk_Widget_Record'Class;
       Event  : Gdk_Event) return Boolean
    is
-      MDI : MDI_Window := MDI_From_Child (Child);
+      MDI : MDI_Window := MDI_Child (Child).MDI;
       Cursor : Gdk_Cursor;
    begin
       if Get_State (Event) = 0
@@ -817,6 +818,7 @@ package body Gtkada.MDI is
       X, Y : Gint;
    begin
       Gtk_New (C, Child);
+      C.MDI := MDI_Window (MDI);
 
       --  ??? Should have a better algorithm for automatic placement
       X := 10;
@@ -871,6 +873,8 @@ package body Gtkada.MDI is
       Widget : access Gtk.Widget.Gtk_Widget_Record'Class)
       return MDI_Child
    is
+      use Widget_List;
+      Tmp   : Widget_List.Glist;
       Found : MDI_Child;
 
       procedure Action (W : access Gtk_Widget_Record'Class);
@@ -891,6 +895,18 @@ package body Gtkada.MDI is
       end Action;
    begin
       Forall (MDI, Action'Unrestricted_Access);
+      if Found = null then
+         Tmp := First (MDI.Embedded_Items);
+         while Tmp /= Null_List loop
+            if MDI_Child (Get_Data (Tmp)).Initial = Gtk_Widget (Widget)
+              or else MDI_Child (Get_Data (Tmp)).Initial_Child =
+              Gtk_Widget (Widget)
+            then
+               return MDI_Child (Get_Data (Tmp));
+            end if;
+            Tmp := Next (Tmp);
+         end loop;
+      end if;
       return Found;
    end Find_MDI_Child;
 
@@ -1064,7 +1080,7 @@ package body Gtkada.MDI is
    ------------------
 
    procedure Remove_Child (C : access Gtk_Widget_Record'Class) is
-      MDI : MDI_Window := MDI_From_Child (C);
+      MDI : MDI_Window := MDI_Child (C).MDI;
    begin
       if MDI /= null then
          Remove (MDI, C);
@@ -1182,12 +1198,14 @@ package body Gtkada.MDI is
      (Docked_Child : access Gtk_Widget_Record'Class)
    is
       Child : MDI_Child := MDI_Child (Docked_Child);
-      MDI : MDI_Window := MDI_From_Child (Child);
+      MDI : MDI_Window := Child.MDI;
       Note : Gtk_Notebook := Gtk_Notebook (Child.Initial);
-      C : MDI_Child := Find_MDI_Child (MDI, Get_Child (Get_Cur_Page (Note)));
    begin
-      Free (Child.Title);
-      Child.Title := new String' (C.Title.all);
+      if Get_Current_Page (Note) /= -1 then
+         Free (Child.Title);
+         Child.Title := new String'
+           (Find_MDI_Child (MDI, Get_Child (Get_Cur_Page (Note))).Title.all);
+      end if;
    end Docked_Switch_Page;
 
    ----------------
@@ -1198,12 +1216,16 @@ package body Gtkada.MDI is
      (Child : access MDI_Child_Record'Class;
       Dock : Boolean := True)
    is
-      MDI : MDI_Window := MDI_From_Child (Child);
+      MDI : MDI_Window := Child.MDI;
       C : MDI_Child;
       Label : Gtk_Label;
       Note : Gtk_Notebook;
    begin
-      if Child.State /= Docked and then Dock and then Child.Dock /= None then
+      if Child.State /= Docked
+        and then Child.State /= Embedded
+        and then Dock
+        and then Child.Dock /= None
+      then
          Float_Child (Child, False);
          Minimize_Child (Child, False);
 
@@ -1241,7 +1263,12 @@ package body Gtkada.MDI is
          Remove (Gtk_Box (Get_Child (Child)), Child.Initial_Child);
          Append_Page (Note, Child.Initial_Child, Label);
          Unref (Child.Initial_Child);
-         Hide (Child);
+
+         --  Remove the child from the MDI, but keep it in a list so that we
+         --  can restore it in exactly the same state.
+         Ref (Child);
+         Widget_List.Prepend (MDI.Embedded_Items, Gtk_Widget (Child));
+         Remove (MDI, Child);
 
          --  The size of the notebook will be reinitialized based on its new
          --  contents
@@ -1252,27 +1279,32 @@ package body Gtkada.MDI is
          Activate_Child (MDI, MDI.Docks (Child.Dock));
          Move_Dock_Notebook (MDI);
 
-      elsif Child.State = Embedded and then not Dock then
-         --  ??? Should handle this case: search for the notebook that
-         --  contains child, and work on this
-         null;
-
       elsif Child.State = Docked and then not Dock then
          Note := Gtk_Notebook (MDI.Docks (Child.Dock).Initial);
          C := Find_MDI_Child (MDI, Get_Child (Get_Cur_Page (Note)));
+         Dock_Child (C, Dock);
 
-         --  Reassign the widget to Child instead of Note
-         C.State := Normal;
-         Reparent (C.Initial_Child, Gtk_Box (Get_Child (C)));
-         Show_All (C);
+      elsif Child.State = Embedded and then not Dock then
+         Gtk.Layout.Put
+           (Gtk_Layout_Record (MDI.all)'Access, Child, Child.X, Child.Y);
 
-         Activate_Child (MDI, C);
+         --  Reassign the widget to Child instead of the notebook
+         Child.State := Normal;
+         Reparent (Child.Initial_Child, Gtk_Box (Get_Child (Child)));
+         Show_All (Child);
 
+         --  Remove the widget from the list of embedded children
+         Widget_List.Remove (MDI.Embedded_Items, Gtk_Widget (Child));
+         Unref (Child);
+
+         Activate_Child (MDI, Child);
+
+         Note := Gtk_Notebook (MDI.Docks (Child.Dock).Initial);
          if Get_Nth_Page (Note, 0) = null then
-            Destroy (MDI.Docks (Child.Dock));
+            Destroy (Note);
             MDI.Docks (Child.Dock) := null;
          else
-            Set_USize (MDI.Docks (Child.Dock), -1, -1);
+            Set_USize (Note, -1, -1);  --  Force a resize
             Set_Show_Tabs (Note, Get_Nth_Page (Note, 1) /= null);
          end if;
          Move_Dock_Notebook (MDI);
@@ -1297,7 +1329,7 @@ package body Gtkada.MDI is
    procedure Minimize_Child
      (Child : access MDI_Child_Record'Class; Minimize : Boolean)
    is
-      MDI : MDI_Window := MDI_From_Child (Child);
+      MDI : MDI_Window := Child.MDI;
       Icon_Height : constant Gint := Title_Bar_Height + 2 * Border_Thickness;
    begin
       if Child.State /= Iconified and then Minimize then
@@ -1375,9 +1407,16 @@ package body Gtkada.MDI is
    -- Get_Focus_Child --
    ---------------------
 
-   function Get_Focus_Child
-     (MDI : access MDI_Window_Record) return MDI_Child is
+   function Get_Focus_Child (MDI : access MDI_Window_Record)
+      return MDI_Child
+   is
+      Note : Gtk_Notebook;
    begin
-      return MDI.Focus_Child;
+      if MDI.Focus_Child.State = Docked then
+         Note := Gtk_Notebook (MDI.Focus_Child.Initial);
+         return Find_MDI_Child (MDI, Get_Child (Get_Cur_Page (Note)));
+      else
+         return MDI.Focus_Child;
+      end if;
    end Get_Focus_Child;
 end Gtkada.MDI;

@@ -231,6 +231,11 @@ private
       Uniconified_X, Uniconified_Y : Glib.Gint;
       --  Initial coordinates of the item when it is not iconified. These
       --  fields are only relevant while the item is iconified.
+
+      MDI : MDI_Window;
+      --  The MDI to which the child belongs. We cannot get this information
+      --  directly from Get_Parent since some children are actually embedded
+      --  in docks (aka Gtk_Notebooks), and do not belong to the MDI anymore.
    end record;
 
    procedure Gtk_New (Child : out MDI_Child;
@@ -269,6 +274,11 @@ private
       --  The graphic contexts to draw the children.
 
       Docks : Notebook_Array;
+      --  The docks on each side of the MDI, where items can be docked.
+      --  Note that these are also inserted into the list of children of MDI.
+
+      Embedded_Items : Gtk.Widget.Widget_List.Glist;
+      --  The widgets that are embedded in one of the dock items
    end record;
 
    pragma Inline (Get_Window);
