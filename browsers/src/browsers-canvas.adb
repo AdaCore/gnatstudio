@@ -353,23 +353,52 @@ package body Browsers.Canvas is
    ---------------
 
    procedure Destroyed (Browser : access Gtk_Widget_Record'Class) is
+      use type Gdk_GC, Gdk_Pixmap;
       B : constant General_Browser := General_Browser (Browser);
    begin
-      Unref (B.Up_Arrow);
-      Unref (B.Down_Arrow);
-      Unref (B.Close_Pixmap);
-      Unref (B.Default_Item_GC);
-      Unref (B.Selected_Item_GC);
-      Unref (B.Parent_Linked_Item_GC);
-      Unref (B.Child_Linked_Item_GC);
-      Unref (B.Text_GC);
-      Unref (B.Title_GC);
+      if B.Up_Arrow /= null then
+         Unref (B.Up_Arrow);
+      end if;
+
+      if B.Down_Arrow /= null then
+         Unref (B.Down_Arrow);
+      end if;
+
+      if B.Close_Pixmap /= null then
+         Unref (B.Close_Pixmap);
+      end if;
+
+      if B.Default_Item_GC /= null then
+         Unref (B.Default_Item_GC);
+      end if;
+
+      if B.Selected_Item_GC /= null then
+         Unref (B.Selected_Item_GC);
+      end if;
+
+      if B.Parent_Linked_Item_GC /= null then
+         Unref (B.Parent_Linked_Item_GC);
+      end if;
+
+      if B.Child_Linked_Item_GC /= null then
+         Unref (B.Child_Linked_Item_GC);
+      end if;
+
+      if B.Text_GC /= null then
+         Unref (B.Text_GC);
+      end if;
+
+      if B.Title_GC /= null then
+         Unref (B.Title_GC);
+      end if;
 
       if Image_Canvas (B.Canvas).Background /= null then
          Unref (Image_Canvas (B.Canvas).Background);
       end if;
 
-      Unref (Image_Canvas (B.Canvas).Bg_GC);
+      if Image_Canvas (B.Canvas).Bg_GC /= null then
+         Unref (Image_Canvas (B.Canvas).Bg_GC);
+      end if;
    end Destroyed;
 
    -------------
