@@ -13,7 +13,7 @@ project Sdc is
          when "DEBUG" =>
             for Default_Switches ("ada") use
               ("-gnatwe", "-gnaty", "-gnato", "-g");
-            for Switches ("output.adb") use
+            for Switches ("screen_output.adb") use
               ("-gnatwe", "-gnaty", "-g");
 
          when "PRODUCTION" =>

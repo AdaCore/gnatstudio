@@ -606,8 +606,8 @@ select the menu item @code{Project->Edit switches}: a global
 switch editor is displayed in the working area.
 This editor lists the switches associated with each file and
 the gray area shows the default (global) switches; you will also notice
-that @file{output.adb} has specific switches, which are highlighted using a
-different font.
+that @file{screen_output.adb} has specific switches, which are highlighted
+using a different font.
 
 Switch between @code{Debug} and @code{Production} mode in the @code{Build}
 combo box: the switches are updated at the same time.
