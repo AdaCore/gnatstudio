@@ -293,7 +293,8 @@ package body Codefix.Graphics is
             then
                Previous_File := Get_File (Get_Cursor (Current_Line.all));
 
-               --  Commented out, since we seem to be mixing lines and files...
+               --  ??? Commented out, since we seem to be mixing lines and
+               --  files...
 --                 Current_Iterator.New_Line :=
 --                   new String'(Previous_File.all);
 --                 Current_Iterator.Old_Line :=
