@@ -200,6 +200,10 @@ package body Builder_Module is
          Err_To_Out  => True);
       Free (Args);
       Id := Builder_Idle.Add (Timeout, Idle_Build'Access, (Kernel, Fd));
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Build;
 
    ---------------------
