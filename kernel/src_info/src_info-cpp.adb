@@ -26,7 +26,6 @@ with SN,
      SN.Find_Fns,
      SN.Browse,
      Src_Info,
---     Src_Info.CPP.LI_Utils,
      Ada.Text_IO,
      DB_API,
      Src_Info.LI_Utils;
@@ -35,7 +34,6 @@ use  SN,
      SN.DB_Structures,
      SN.Find_Fns,
      Src_Info,
---     Src_Info.CPP.LI_Utils,
      Ada.Text_IO,
      DB_API,
      Src_Info.LI_Utils;
@@ -280,6 +278,23 @@ package body Src_Info.CPP is
       Builtin_Type_To_Kind (Type_Name, Kind, Success);
       if Success then
          return;
+      end if;
+
+      if Type_Name (Type_Name'Last) = '*' then
+         Success := True;
+         Kind    := Access_Type;
+      end if;
+
+      if Type_Name (Type_Name'Last) = ')' then
+         --  function pointer
+         Success := True;
+         Kind    := Access_Type;
+      end if;
+
+      if Type_Name (Type_Name'Last) = ']' then
+         --  array
+         Success := True;
+         Kind    := Array_Type;
       end if;
 
       --  look in typedefs
