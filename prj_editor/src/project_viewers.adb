@@ -35,6 +35,7 @@ with Gtk.Button;      use Gtk.Button;
 with Gtk.Clist;       use Gtk.Clist;
 with Gtk.Dialog;      use Gtk.Dialog;
 with Gtk.Enums;       use Gtk.Enums;
+with Gtk.Handlers;    use Gtk.Handlers;
 with Gtk.Label;       use Gtk.Label;
 with Gtk.Notebook;    use Gtk.Notebook;
 with Gtk.Style;       use Gtk.Style;
@@ -44,7 +45,6 @@ with Gtkada.Types;    use Gtkada.Types;
 with Pango.Font;      use Pango.Font;
 
 with Ada.Calendar;
-with Ada.Text_IO;               use Ada.Text_IO;
 with GNAT.Calendar.Time_IO;     use GNAT.Calendar.Time_IO;
 with GNAT.Calendar;             use GNAT.Calendar;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
@@ -52,11 +52,13 @@ with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Interfaces.C.Strings;      use Interfaces.C.Strings;
 with Interfaces.C;              use Interfaces.C;
 
-with Prj;          use Prj;
-with Prj_API;      use Prj_API;
-with Stringt;      use Stringt;
-with Types;        use Types;
-with Namet;        use Namet;
+with Prj_API;       use Prj_API;
+with Prj_Manager;   use Prj_Manager;
+
+with Prj;           use Prj;
+with Stringt;       use Stringt;
+with Types;         use Types;
+with Namet;         use Namet;
 
 with Switches_Editors; use Switches_Editors;
 
@@ -116,6 +118,15 @@ package body Project_Viewers is
    end record;
    type View_Description_Access is access constant View_Description;
 
+
+   type Switch_Editor_User_Data is record
+      Viewer    : Project_Viewer;
+      File_Name : String_Id;
+      Directory : String_Id;
+   end record;
+
+   package Switch_Callback is new Gtk.Handlers.User_Callback
+     (Gtk_Widget_Record, Switch_Editor_User_Data);
 
    procedure Name_Display
      (Viewer : access Project_Viewer_Record'Class;
@@ -208,7 +219,9 @@ package body Project_Viewers is
    --  Project_View.
 
    procedure Close_Switch_Editor (Dialog : access Gtk_Widget_Record'Class);
-   procedure Destroy_Switch_Editor (Switches : access Gtk_Widget_Record'Class);
+   procedure Destroy_Switch_Editor
+     (Dialog : access Gtk_Widget_Record'Class;
+      Data   : Switch_Editor_User_Data);
    --  Called when the user has closed a switch editor for a specific file.
    --  The first version if the callback for the Close button, the second one
    --  is for the "destroy".
@@ -357,7 +370,8 @@ package body Project_Viewers is
       Name_Buffer (1 .. Name_Len) := File_Name;
       File := Name_Find;
 
-      Get_Switches (Viewer.Project_View, "compiler", File, Value, Is_Default);
+      Get_Switches
+        (Viewer.Project_Filter, "compiler", File, Value, Is_Default);
       Line := New_String (To_String (Value));
       if Is_Default then
          Style := Viewer.Default_Switches_Style;
@@ -464,9 +478,17 @@ package body Project_Viewers is
    ---------------------------
 
    procedure Destroy_Switch_Editor
-     (Switches : access Gtk_Widget_Record'Class) is
+     (Dialog : access Gtk_Widget_Record'Class;
+      Data   : Switch_Editor_User_Data) is
    begin
-      Put_Line ("destroyed");
+      --  ??? Doesn't work the second time, even on different project, since
+      --  ??? Manager believes the whole project has been normalized.
+
+      --  ??? Doesn't work on projects other than the top-level
+
+      Normalize
+        (Data.Viewer.Manager,
+         Get_Project_From_View (Data.Viewer.Project_Filter));
    end Destroy_Switch_Editor;
 
    ----------------------------
@@ -519,7 +541,8 @@ package body Project_Viewers is
                   Get_Window (Switches), Fill => True, Expand => True);
 
       --  Set the switches for all the pages
-      Get_Switches (Viewer.Project_View, "compiler", File, Value, Is_Default);
+      Get_Switches
+        (Viewer.Project_Filter, "compiler", File, Value, Is_Default);
       declare
          List : Argument_List := To_Argument_List (Value);
       begin
@@ -536,9 +559,12 @@ package body Project_Viewers is
         (Button, "clicked",
          Widget_Callback.To_Marshaller (Close_Switch_Editor'Access), Dialog);
 
-      Widget_Callback.Connect
+      Switch_Callback.Connect
         (Dialog, "destroy",
-         Widget_Callback.To_Marshaller (Destroy_Switch_Editor'Access));
+         Switch_Callback.To_Marshaller (Destroy_Switch_Editor'Access),
+         (Viewer => Project_Viewer (Viewer),
+          File_Name => File_Name,
+          Directory => Directory));
 
       Show_All (Dialog);
       Set_Page (Switches, Tool);
@@ -694,7 +720,7 @@ package body Project_Viewers is
             Project_User_Data.Set
               (V.Pages (Current_View),
                Append_Line_With_Full_Name
-                  (V, Current_View, V.Project_View, N, D),
+                  (V, Current_View, V.Project_Filter, N, D),
                User);
          end;
 
@@ -735,21 +761,28 @@ package body Project_Viewers is
    -- Gtk_New --
    -------------
 
-   procedure Gtk_New (Viewer : out Project_Viewer) is
+   procedure Gtk_New
+     (Viewer  : out Project_Viewer;
+      Manager : access Prj_Manager.Project_Manager_Record'Class)
+   is
    begin
       Viewer := new Project_Viewer_Record;
-      Project_Viewers.Initialize (Viewer);
+      Project_Viewers.Initialize (Viewer, Manager);
    end Gtk_New;
 
    ----------------
    -- Initialize --
    ----------------
 
-   procedure Initialize (Viewer : access Project_Viewer_Record'Class) is
+   procedure Initialize
+     (Viewer : access Project_Viewer_Record'Class;
+      Manager : access Prj_Manager.Project_Manager_Record'Class)
+   is
       Label : Gtk_Label;
       Color : Gdk_Color;
    begin
       Gtk.Notebook.Initialize (Viewer);
+      Viewer.Manager := Project_Manager (Manager);
 
       for View in View_Type'Range loop
          Gtk_New (Viewer.Pages (View),
@@ -795,22 +828,22 @@ package body Project_Viewers is
    ------------------
 
    procedure Show_Project
-     (Viewer           : access Project_Viewer_Record;
-      Project_View     : Prj.Project_Id;
-      Directory_Filter : Filter := No_Filter)
+     (Viewer              : access Project_Viewer_Record;
+      Project_Filter      : Prj.Project_Id;
+      Directory_Filter    : Filter := No_Filter)
    is
-      Src : String_List_Id := Projects.Table (Project_View).Sources;
+      Src : String_List_Id := Projects.Table (Project_Filter).Sources;
       Current_View : constant View_Type := Current_Page (Viewer);
 
    begin
       Viewer.Page_Is_Up_To_Date := (others => False);
       Viewer.Page_Is_Up_To_Date (Current_View) := True;
-      Viewer.Project_View := Project_View;
+      Viewer.Project_Filter := Project_Filter;
 
       Freeze (Viewer.Pages (Current_View));
 
       while Src /= Nil_String loop
-         Append_Line (Viewer, Project_View,
+         Append_Line (Viewer, Project_Filter,
                       String_Elements.Table (Src).Value,
                       Directory_Filter);
          Src := String_Elements.Table (Src).Next;

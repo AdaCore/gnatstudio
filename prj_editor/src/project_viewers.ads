@@ -1,12 +1,39 @@
+-----------------------------------------------------------------------
+--                                                                   --
+--                     Copyright (C) 2001                            --
+--                          ACT-Europe                               --
+--                                                                   --
+-- This library is free software; you can redistribute it and/or     --
+-- modify it under the terms of the GNU General Public               --
+-- License as published by the Free Software Foundation; either      --
+-- version 2 of the License, or (at your option) any later version.  --
+--                                                                   --
+-- This library is distributed in the hope that it will be useful,   --
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of    --
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
+-- General Public License for more details.                          --
+--                                                                   --
+-- You should have received a copy of the GNU General Public         --
+-- License along with this library; if not, write to the             --
+-- Free Software Foundation, Inc., 59 Temple Place - Suite 330,      --
+-- Boston, MA 02111-1307, USA.                                       --
+--                                                                   --
+-- As a special exception, if other files instantiate generics from  --
+-- this unit, or you link this unit with other files to produce an   --
+-- executable, this  unit  does not  by itself cause  the resulting  --
+-- executable to be covered by the GNU General Public License. This  --
+-- exception does not however invalidate any other reasons why the   --
+-- executable file  might be covered by the  GNU Public License.     --
+-----------------------------------------------------------------------
 
---  Dependencies on GtkAda
 with Gtk.Notebook; use Gtk.Notebook;
 with Gtk.Clist;
 with Gtk.Style;
 
---  Dependencies on GNAT sources
 with Prj;
 with Types;
+
+with Prj_Manager;
 
 package Project_Viewers is
 
@@ -17,17 +44,21 @@ package Project_Viewers is
    subtype Filter is Types.Name_Id;
    No_Filter : constant Filter := Types.No_Name;
 
-   procedure Gtk_New (Viewer : out Project_Viewer);
+   procedure Gtk_New
+     (Viewer  : out Project_Viewer;
+      Manager : access Prj_Manager.Project_Manager_Record'Class);
    --  Create a new project viewer.
 
-   procedure Initialize (Viewer : access Project_Viewer_Record'Class);
+   procedure Initialize
+     (Viewer : access Project_Viewer_Record'Class;
+      Manager : access Prj_Manager.Project_Manager_Record'Class);
    --  Internal subprogram for creating widgets
 
    procedure Show_Project
-     (Viewer           : access Project_Viewer_Record;
-      Project_View     : Prj.Project_Id;
-      Directory_Filter : Filter := No_Filter);
-   --  Shows all the direct source files of Project_View (ie not including
+     (Viewer              : access Project_Viewer_Record;
+      Project_Filter      : Prj.Project_Id;
+      Directory_Filter    : Filter := No_Filter);
+   --  Shows all the direct source files of Project_Filter (ie not including
    --  imported projects, but including all source directories).
    --  This doesn't clear the list first!
    --  Directory_Filter should be used to limit the search path for the files.
@@ -57,6 +88,8 @@ private
       --  Style to use when displaying switches that are set at the project
       --  level, rather than file specific
 
-      Project_View : Prj.Project_Id := Prj.No_Project;
+      Manager : Prj_Manager.Project_Manager;
+
+      Project_Filter : Prj.Project_Id := Prj.No_Project;
    end record;
 end Project_Viewers;
