@@ -143,7 +143,7 @@ package body Creation_Wizard is
       Set_Toc (Wiz, 1, "Naming the project");
       Set_Toc (Wiz, 2, "Selecting sources");
       Set_Toc (Wiz, 3, "Build directory");
-      Set_Toc (Wiz, 4, "Compilation switches");
+      Set_Toc (Wiz, 4, "Switches");
       Set_Toc (Wiz, 5, "Naming scheme");
       Set_Toc (Wiz, 6, "Load project");
 
