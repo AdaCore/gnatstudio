@@ -44,24 +44,26 @@ package body Log_Utils is
 
    procedure Initialize (Kernel : access Kernel_Handle_Record'Class) is
       Logs_Dir : constant String :=
-        Format_Pathname (Get_Home_Dir (Kernel) & "/log_files");
+        Normalize_Pathname (Get_Home_Dir (Kernel) & "/log_files");
+      Mapping  : constant String :=
+        Normalize_Pathname (Logs_Dir & "/mapping");
       Mapper   : File_Mapper_Access;
    begin
       if not Is_Directory (Logs_Dir) then
          Make_Dir (Logs_Dir);
       end if;
 
-      if not Is_Regular_File (Format_Pathname (Logs_Dir & "/mapping")) then
+      if not Is_Regular_File (Mapping) then
          declare
             File : File_Descriptor;
          begin
             File :=
-              Create_New_File (Format_Pathname (Logs_Dir & "/mapping"), Text);
+              Create_New_File (Mapping, Text);
             Close (File);
          end;
       end if;
 
-      Load_Mapper (Mapper, Format_Pathname (Logs_Dir & "/mapping"));
+      Load_Mapper (Mapper, Mapping);
       Set_Logs_Mapper (Kernel, Mapper);
    end Initialize;
 
@@ -74,7 +76,8 @@ package body Log_Utils is
       File_Name : String) return String
    is
       Mapper      : File_Mapper_Access := Get_Logs_Mapper (Kernel);
-      Return_Name : constant String := Get_Other_File (Mapper, File_Name);
+      Real_Name   : constant String := Normalize_Pathname (File_Name);
+      Return_Name : constant String := Get_Other_File (Mapper, Real_Name);
    begin
       --  ??? Right now, we save the mapping every time that we add
       --  an entry. This is a bit inefficient, we should save the mapping
@@ -83,21 +86,21 @@ package body Log_Utils is
       if Return_Name = "" then
          declare
             Logs_Dir : constant String :=
-              Format_Pathname (Get_Home_Dir (Kernel) & "/log_files");
+              Normalize_Pathname (Get_Home_Dir (Kernel) & "/log_files");
             File     : File_Descriptor;
             S : constant String := Logs_Dir
               & Directory_Separator
-              & Base_Name (File_Name)
+              & Base_Name (Real_Name)
               & "_log";
          begin
             if not Is_Regular_File
-              (Logs_Dir & Directory_Separator & Base_Name (File_Name) & "_log")
+              (Logs_Dir & Directory_Separator & Base_Name (Real_Name) & "_log")
             then
                File := Create_New_File (S, Text);
                Close (File);
-               Add_Entry (Mapper, File_Name, S);
+               Add_Entry (Mapper, Real_Name, S);
                Save_Mapper
-                 (Mapper, Format_Pathname (Logs_Dir & "/mapping"));
+                 (Mapper, Normalize_Pathname (Logs_Dir & "/mapping"));
                return S;
 
             else
@@ -105,15 +108,15 @@ package body Log_Utils is
                   declare
                      S : constant String := Logs_Dir
                        & Directory_Separator
-                       & Base_Name (File_Name)
+                       & Base_Name (Real_Name)
                        & "_" & Image (J) & "_log";
                   begin
                      if not Is_Regular_File (S) then
                         File := Create_New_File (S, Text);
                         Close (File);
-                        Add_Entry (Mapper, File_Name, S);
+                        Add_Entry (Mapper, Real_Name, S);
                         Save_Mapper
-                          (Mapper, Format_Pathname (Logs_Dir & "/mapping"));
+                          (Mapper, Normalize_Pathname (Logs_Dir & "/mapping"));
                         return S;
                      end if;
                   end;
@@ -137,7 +140,7 @@ package body Log_Utils is
    is
       Mapper : constant File_Mapper_Access := Get_Logs_Mapper (Kernel);
    begin
-      return Get_Other_File (Mapper, Log_Name);
+      return Get_Other_File (Mapper, Normalize_Pathname (Log_Name));
    end Get_File_From_Log;
 
    -------------
@@ -150,7 +153,8 @@ package body Log_Utils is
    is
       R : String_Access;
    begin
-      R := Read_File (Get_Log_From_File (Kernel, File_Name));
+      R := Read_File
+        (Get_Log_From_File (Kernel, Normalize_Pathname (File_Name)));
 
       if R = null then
          return "";
