@@ -1,5 +1,10 @@
 Known Problems fixed in GPS 1.2.0
 
+- Bad handling of item icon when saving new file
+  Problem:    After saving an untitled file, the icon corresponding to the
+              editor still shows the "modified" icon.
+  Workaround: Save the file twice.
+
 - Extended project nodes duplicated in explorer when recomputing view
   Problem:    If your project hierarchy includes extended project, and you
               select the menu Project->Recompute View, the extended project
