@@ -383,8 +383,8 @@ package body ALI_Parser is
       File := Get_Or_Create
         (Db            => Get_Database (LI),
          Full_Filename => Base_Name,
-         LI            => LI,
-         Timestamp     => File_Time_Stamp (File_Name));
+         LI            => LI);
+      Set_File_Stamp (File, VFS.No_Time);
 
       --  Strip the %s or %b terminator
       Set_Unit_Name (File, Unit (Unit'First .. Unit'Last - 2));
