@@ -224,18 +224,27 @@ package body Codefix.Text_Manager.Ada_Extracts is
 
    end Remove_Instruction;
 
+   --------------
+   -- Get_Stop --
+   --------------
+
+   function Get_Start (This : Ada_Instruction) return File_Cursor is
+   begin
+      return This.Start;
+   end Get_Start;
+
+   --------------
+   -- Get_Stop --
+   --------------
+
+   function Get_Stop (This : Ada_Instruction) return File_Cursor is
+   begin
+      return This.Stop;
+   end Get_Stop;
+
    ----------------------------------------------------------------------------
    --  type Ada_List
    ----------------------------------------------------------------------------
-
-   ------------------
-   -- Is_Separator --
-   ------------------
-
-   function Is_Separator (Str : String) return Boolean is
-   begin
-      return Str = "," or else Str = ":" or else Str = ";";
-   end Is_Separator;
 
    ---------------
    -- Get_Token --
@@ -243,10 +252,9 @@ package body Codefix.Text_Manager.Ada_Extracts is
 
    --  Maybe without Buffer ???
    procedure Get_Token
-     (Line      : Extract_Line;
+     (Line      : Ptr_Extract_Line;
       Col       : in out Integer;
-      Token     : out Token_Record;
-      Str_Token : in out Dynamic_String) is
+      Token     : out Token_Record) is
 
       Buffer      : constant String := Line.Content (Col .. Line.Content'Last);
       Start, Stop : Integer := Col;
@@ -278,61 +286,19 @@ package body Codefix.Text_Manager.Ada_Extracts is
          Stop := Stop + 1;
       end loop;
 
-      Assign (Str_Token, Buffer (Start .. Stop));
+      Token.Content := new String (1 .. Stop - Start + 1);
+      Token.Content.all := Buffer (Start .. Stop);
+
       Token.First_Col := Start;
       Token.Last_Col := Stop;
+      Token.Is_Separator :=
+        Token.Content.all = ","
+        or else Token.Content.all = ":"
+        or else Token.Content.all = ";";
+      Token.Line := Line;
       Col := Token.Last_Col + 1;
 
    end Get_Token;
-
-   ---------
-   -- Add --
-   ---------
-
-   procedure Add
-     (File_Name      : String;
-      Destination    : in out Ada_List;
-      First_Token    : Token_Record;
-      Last_Token     : Token_Record;
-      Str_Last_Token : String) is
-
-      New_Element : Element;
-      Line_Cursor : File_Cursor;
-      Name_Cursor : File_Cursor;
-
-   begin
-
-      Assign (Line_Cursor.File_Name, File_Name);
-      Assign (Name_Cursor.File_Name, File_Name);
-
-      Name_Cursor.Col := First_Token.First_Col;
-      Name_Cursor.Line := First_Token.Line;
-
-      Assign (New_Element.Name,
-              Get_String (Get_Line (Destination, Name_Cursor).all)
-                (First_Token.First_Col .. First_Token.Last_Col));
-
-      Line_Cursor.Col := 1;
-      New_Element.Lines :=
-        new Lines_Array (1 .. Last_Token.Line - First_Token.Line + 1);
-
-      for J in New_Element.Lines'Range loop
-         Line_Cursor.Line := J + First_Token.Line - 1;
-         New_Element.Lines (J) := Get_Line (Destination, Line_Cursor);
-      end loop;
-
-      New_Element.First_Col := First_Token.First_Col;
-
-      if Str_Last_Token = "," then
-         New_Element.Last_Col := Last_Token.Last_Col;
-      else
-         New_Element.Last_Col := Last_Token.Last_Col - 1;
-      end if;
-
-      Append (Destination.Elements_List, New_Element);
-
-      Free (Line_Cursor);
-   end Add;
 
    -----------
    -- Clone --
@@ -347,10 +313,9 @@ package body Codefix.Text_Manager.Ada_Extracts is
    -- Free --
    ----------
 
-   procedure Free (This : in out Element) is
-      pragma Unreferenced (This);
+   procedure Free (This : in out Token_Record) is
    begin
-      null;
+      Free (This.Content);
    end Free;
 
    -----------------
@@ -358,9 +323,9 @@ package body Codefix.Text_Manager.Ada_Extracts is
    -----------------
 
    function Get_Element (This : Ada_List; Num : Natural)
-     return Elements_Lists.List_Node is
+     return Tokens_List.List_Node is
 
-      Current_Node : Elements_Lists.List_Node := First (This.Elements_List);
+      Current_Node : Tokens_List.List_Node := First (This.Elements_List);
 
    begin
       for I in 1 .. Num - 1 loop
@@ -378,10 +343,11 @@ package body Codefix.Text_Manager.Ada_Extracts is
       Position     : File_Cursor'Class;
       Destination  : in out Ada_List) is
 
-      Current_Token, Old_Token : Token_Record;
-      Current_Line             : Ptr_Extract_Line;
-      Str_Token                : Dynamic_String;
-      Current_Col              : Natural;
+      Current_Token  : Token_Record;
+      Current_Line   : Ptr_Extract_Line;
+      Current_Col    : Natural;
+      Minus          : Natural;
+      Line_Cursor    : File_Cursor;
 
    begin
       Get_Unit (Current_Text, Position, Ada_Instruction (Destination));
@@ -390,35 +356,50 @@ package body Codefix.Text_Manager.Ada_Extracts is
 
       Current_Col := 1;
 
-      Old_Token.Line := Get_First_Line (Destination).Cursor.Line;
-
       Get_Token
-        (Current_Line.all, Current_Col, Current_Token, Str_Token);
+        (Current_Line, Current_Col, Current_Token);
 
       loop
          while Current_Col = 1 loop
             Current_Line := Next (Current_Line.all);
             Get_Token
-              (Current_Line.all, Current_Col, Current_Token, Str_Token);
+              (Current_Line, Current_Col, Current_Token);
          end loop;
-         Current_Token.Line := Get_Cursor (Current_Line.all).Line;
 
-         if Is_Separator (Str_Token.all) then
-            Add
-              (Position.File_Name.all,
-               Destination,
-               Old_Token,
-               Current_Token,
-               Str_Token.all);
+         exit when Current_Token.Content.all = ":";
 
-            exit when Str_Token.all /= ",";
-         else
-            Old_Token := Current_Token;
-         end if;
+         Append (Destination.Elements_List, Current_Token);
 
          Get_Token
-           (Current_Line.all, Current_Col, Current_Token, Str_Token);
+           (Current_Line, Current_Col, Current_Token);
+
       end loop;
+
+      Assign
+        (Destination.Back,
+         Current_Line.Content
+           (Current_Token.First_Col .. Current_Line.Content'Last));
+
+      Current_Line := Next (Current_Line.all);
+
+      loop
+         exit when Current_Line = null;
+         Assign
+           (Destination.Back,
+            Destination.Back.all & Get_String (Current_Line.all));
+         Current_Line := Next (Current_Line.all);
+      end loop;
+
+      Line_Cursor := File_Cursor (Destination.Stop);
+      Line_Cursor.Col := 1;
+      Minus := Get_Line (Current_Text, Line_Cursor)'Last -
+        Destination.Stop.Col;
+
+      Assign
+        (Destination.Back,
+         Destination.Back.all
+           (Destination.Back'First ..
+              Destination.Back'Last - Minus));
 
    end Get_Unit;
 
@@ -428,14 +409,52 @@ package body Codefix.Text_Manager.Ada_Extracts is
 
    procedure Cut_Off_Elements
      (This        : in out Ada_List;
-      Destination : out Ada_List;
+      New_Instr   : out Dynamic_String;
       First       : Natural;
-      Last        : Natural := 0)
-   is
-      pragma Unreferenced (This, First, Last);
-      pragma Warnings (Off, Destination);
+      Last        : Natural := 0) is
+
+      function Elements_Select
+        (Current_Element : Tokens_List.List_Node;
+         Number_Left     : Natural) return String;
+
+      Last_Used  : Natural;
+
+      function Elements_Select
+        (Current_Element : Tokens_List.List_Node;
+         Number_Left     : Natural) return String is
+      begin
+
+
+         if Number_Left = 0 then
+            return This.Back.all;
+         end if;
+
+         return Data (Current_Element).Content.all &
+           Elements_Select (Next (Current_Element), Number_Left - 1);
+
+      end Elements_Select;
+
    begin
-      null;
+      if Last = 0 then
+         Last_Used := First;
+      else
+         Last_Used := Last;
+      end if;
+
+      New_Instr := new String'
+        (Elements_Select
+           (Get_Element (This, First),
+            Last_Used - First + 1));
+
+      if First > 1 then
+         Remove_Elements (This, First - 1, Last_Used);
+         --  -1 deletes the precedent character, the ','.
+      else
+         Remove_Elements (This, First, Last_Used + 1);
+         --  In this case, there is no precedent character, so the next ','
+         --  is deleted.
+      end if;
+
    end Cut_Off_Elements;
 
    ----------------------
@@ -444,25 +463,30 @@ package body Codefix.Text_Manager.Ada_Extracts is
 
    procedure Cut_Off_Elements
      (This        : in out Ada_List;
-      Destination : out Ada_List;
+      New_Instr   : out Dynamic_String;
       First       : String;
-      Last        : String := "")
-   is
-      pragma Unreferenced (This, First, Last);
-      pragma Warnings (Off, Destination);
+      Last        : String := "") is
    begin
-      null;
+      if Last = "" then
+         Cut_Off_Elements
+           (This, New_Instr, Get_Nth_Element (This, First), 0);
+      else
+         Cut_Off_Elements
+           (This,
+            New_Instr,
+            Get_Nth_Element (This, First),
+            Get_Nth_Element (This, Last));
+      end if;
    end Cut_Off_Elements;
 
    -------------------------
    -- Get_Number_Elements --
    -------------------------
 
-   function Get_Number_Elements (This : Ada_List) return Natural is
-      pragma Unreferenced (This);
+   function Get_Number_Of_Elements (This : Ada_List) return Natural is
    begin
-      return 0;
-   end Get_Number_Elements;
+      return Length (This.Elements_List);
+   end Get_Number_Of_Elements;
 
    ---------------------
    -- Remove_Elements --
@@ -471,12 +495,14 @@ package body Codefix.Text_Manager.Ada_Extracts is
    procedure Remove_Elements
      (This  : in out Ada_List; First : Natural; Last : Natural := 0) is
 
-      Current_Element : Elements_Lists.List_Node;
-      Garbage_Node    : Elements_Lists.List_Node;
+      Current_Element : Tokens_List.List_Node;
+      Garbage_Node    : Tokens_List.List_Node;
       Last_Used       : Natural;
 
+      Offset_Char    : Integer := 0;
+      Previous_Line  : Ptr_Extract_Line;
+
    begin
-      Current_Element := Get_Element (This, First);
 
       if Last = 0 then
          Last_Used := First;
@@ -484,17 +510,36 @@ package body Codefix.Text_Manager.Ada_Extracts is
          Last_Used := Last;
       end if;
 
+      Current_Element := Get_Element (This, First);
+
       if First - Last_Used + 1 =  Length (This.Elements_List) then
          Remove_Instruction (This);
          return;
       end if;
 
       for J in First .. Last_Used loop
-         if Is_Alone (Data (Current_Element)) then
-            Delete_All_Lines (Data (Current_Element));
-         else
-            Erase (Data (Current_Element));
+         if Data (Current_Element).Line /= Previous_Line then
+            Offset_Char := 0;
+            Previous_Line := Data (Current_Element).Line;
          end if;
+
+         if Is_Alone (Data (Current_Element), -Offset_Char) then
+            Data (Current_Element).Line.Context := Line_Deleted;
+         else
+            Set_String
+              (Data (Current_Element).Line.all,
+               "",
+               Data (Current_Element).First_Col - Offset_Char,
+               Data (Current_Element).Last_Col - Offset_Char);
+
+            if Data (Current_Element).First_Col /= 1 then
+               Offset_Char := Offset_Char + Data (Current_Element).Last_Col -
+                 Data (Current_Element).First_Col + 1;
+               --  If First_Col = 1, then the columns in the string are not
+               --  corrupted.
+            end if;
+         end if;
+
          Garbage_Node := Current_Element;
          Current_Element := Next (Current_Element);
          Remove_Nodes
@@ -537,17 +582,17 @@ package body Codefix.Text_Manager.Ada_Extracts is
    function Get_Nth_Element (This : Ada_List; Name : String) return Natural is
 
       Current_Num  : Natural := 1;
-      Current_Node : Elements_Lists.List_Node := First (This.Elements_List);
+      Current_Node : Tokens_List.List_Node := First (This.Elements_List);
 
    begin
       loop
-         if Compare_Pkg (Data (Current_Node).Name.all, Name) then
+         if Compare_Pkg (Data (Current_Node).Content.all, Name) then
             return Current_Num;
          end if;
 
          Current_Num := Current_Num + 1;
          Current_Node := Next (Current_Node);
-         exit when Current_Node = Elements_Lists.Null_Node;
+         exit when Current_Node = Tokens_List.Null_Node;
       end loop;
 
       return 0;
@@ -557,45 +602,15 @@ package body Codefix.Text_Manager.Ada_Extracts is
    -- Is_Alone --
    --------------
 
-   function Is_Alone (This : Element) return Boolean is
+   function Is_Alone (This : Token_Record; Offset_Col : Integer)
+     return Boolean is
    begin
-
-      return Is_Blank (This.Lines (1).Content (1 .. This.First_Col - 1))
+      return Is_Blank
+        (This.Line.Content (This.Line.Content'First ..
+                              This.First_Col - 1 + Offset_Col))
         and then Is_Blank
-          (This.Lines (This.Lines'Last).Content
-            (This.Last_Col  + 1 .. This.Lines (This.Lines'Last).Content'Last));
-
+          (This.Line.Content (This.Last_Col + 1 + Offset_Col ..
+                                This.Line.Content'Last));
    end Is_Alone;
-
-   ----------------------
-   -- Delete_All_Lines --
-   ----------------------
-
-   procedure Delete_All_Lines (This : Element) is
-   begin
-      for J in This.Lines'Range loop
-         This.Lines (J).Context := Line_Deleted;
-      end loop;
-   end Delete_All_Lines;
-
-   -----------
-   -- Erase --
-   -----------
-
-   procedure Erase (This : Element) is
-   begin
-      if This.Lines'Length = 1 then
-         Set_String (This.Lines (1).all, "", This.First_Col, This.Last_Col);
-         return;
-      end if;
-
-      Set_String (This.Lines (1).all, "", This.First_Col);
-
-      for J in This.Lines'First + 1 .. This.Lines'Last - 1 loop
-         This.Lines (J).Context := Line_Deleted;
-      end loop;
-
-      Set_String (This.Lines (This.Lines'Last).all, "", 1, This.Last_Col);
-   end Erase;
 
 end Codefix.Text_Manager.Ada_Extracts;
