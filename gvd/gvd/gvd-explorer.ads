@@ -104,6 +104,11 @@ package GVD.Explorer is
      (Explorer : access Explorer_Record'Class);
    --  Called when the executable associated with the explorer has changed.
 
+   procedure Preferences_Changed
+     (Explorer : access Explorer_Record'Class);
+   --  Called when the preferences have changed, and the explorer should be
+   --  redisplayed with the new setup.
+
 private
    type Explorer_Record is new Gtk.Ctree.Gtk_Ctree_Record with record
       Explorer_Root      : Gtk.Ctree.Gtk_Ctree_Node;

@@ -721,8 +721,7 @@ package body GVD.Explorer is
       File_Name : String)
    is
       use type Row_List.Glist;
-      Node : Gtk_Ctree_Node :=
-        Find_Node_From_File (Tree, File_Name);
+      Node : Gtk_Ctree_Node := Find_Node_From_File (Tree, File_Name);
 
    begin
       --  Get rid of the highlight on the previous current file
@@ -1073,5 +1072,30 @@ package body GVD.Explorer is
          end if;
       end if;
    end Show_Current_File;
+
+   -------------------------
+   -- Preferences_Changed --
+   -------------------------
+
+   procedure Preferences_Changed
+     (Explorer : access Explorer_Record'Class)
+   is
+      Color : Gdk_Color;
+   begin
+      --  Change the highlighting color
+      Color := Get_Pref (File_Name_Bg_Color);
+      Set_Base (Explorer.Current_File_Style, State_Normal, Color);
+      Set_Base (Explorer.Current_File_Style, State_Selected, Color);
+      Set_Current_File (Explorer, Get_Current_File (Explorer));
+
+      --  If the explorer is currently empty, this might be because it was
+      --  just displayed for the first time. In that case, force a reading
+      --  of the list of files.
+      if Row_List.Length (Get_Row_List (Explorer)) = 1 then
+         GVD.Explorer.On_Executable_Changed (Explorer);
+      end if;
+
+      --  ???? Should_Strip_CR
+   end Preferences_Changed;
 
 end GVD.Explorer;
