@@ -280,10 +280,9 @@ package body Src_Editor_View is
    -------------------
 
    function Get_Side_Info
-     (View          : access Source_View_Record'Class;
-      Line          : Positive;
-      Column        : Positive) return Line_Info_Width
-   is
+     (View   : access Source_View_Record'Class;
+      Line   : Positive;
+      Column : Positive) return Line_Info_Width is
    begin
       if View.Line_Info (Column).Stick_To_Data then
          if Line > View.Real_Lines'Last
