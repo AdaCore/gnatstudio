@@ -66,9 +66,11 @@ package body Src_Editor_View is
    Me : constant Debug_Handle := Create ("Source_View");
 
    use type Pango.Font.Pango_Font_Description;
-   package Source_Buffer_Callback is new Gtk.Handlers.User_Callback
+   procedure Setup (Data : Source_View; Id : Gtk.Handlers.Handler_Id);
+   package Source_Buffer_Callback is new Gtk.Handlers.User_Callback_With_Setup
      (Widget_Type => Source_Buffer_Record,
-      User_Type => Source_View);
+      User_Type   => Source_View,
+      Setup       => Setup);
 
    procedure Free (X : in out Line_Info_Width);
    --  Free memory associated to X.
@@ -218,6 +220,15 @@ package body Src_Editor_View is
       Args    : GValues;
       Kernel  : Kernel_Handle);
    --  Callback for "File_Saved_Signal".
+
+   -----------
+   -- Setup --
+   -----------
+
+   procedure Setup (Data : Source_View; Id : Gtk.Handlers.Handler_Id) is
+   begin
+      Gtk.Handlers.Add_Watch (Id, Data);
+   end Setup;
 
    --------------------------
    -- Save_Cursor_Position --
@@ -660,29 +671,21 @@ package body Src_Editor_View is
          Marsh => Return_Callback.To_Marshaller (Key_Press_Event_Cb'Access),
          After => False);
 
-      Gtk.Handlers.Add_Watch
-        (Source_Buffer_Callback.Connect
-         (Buffer, "insert_text",
-          Cb        => Insert_Text_Handler'Access,
-          User_Data => Source_View (View),
-          After     => True),
-         View);
-
-      Gtk.Handlers.Add_Watch
-        (Source_Buffer_Callback.Connect
-         (Buffer, "delete_range",
-          Cb        => Delete_Range_Handler'Access,
-          User_Data => Source_View (View),
-          After     => False),
-         View);
-
-      Gtk.Handlers.Add_Watch
-        (Source_Buffer_Callback.Connect
-         (Buffer, "cursor_position_changed",
-          Cb        => Change_Handler'Access,
-          User_Data => Source_View (View),
-          After     => True),
-         View);
+      Source_Buffer_Callback.Connect
+        (Buffer, "insert_text",
+         Cb        => Insert_Text_Handler'Access,
+         User_Data => Source_View (View),
+         After     => True);
+      Source_Buffer_Callback.Connect
+        (Buffer, "delete_range",
+         Cb        => Delete_Range_Handler'Access,
+         User_Data => Source_View (View),
+         After     => False);
+      Source_Buffer_Callback.Connect
+        (Buffer, "cursor_position_changed",
+         Cb        => Change_Handler'Access,
+         User_Data => Source_View (View),
+         After     => True);
 
       Gtkada.Handlers.Return_Callback.Object_Connect
         (View,
