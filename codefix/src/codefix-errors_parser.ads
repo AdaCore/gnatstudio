@@ -164,7 +164,7 @@ package Codefix.Errors_Parser is
       Ambiguous_Expression,
       Useless_Conversion,
       Movable_With_Clause);
-   --  Those subcatgeroies are the reals categories of errors that an user can
+   --  Those subcategories are the real categories of errors that a user can
    --  choose to correct or not.
 
    type Error_State is (Enabled, Disabled);
