@@ -735,8 +735,8 @@ package body Projects is
                   N : constant String := Unit_Name & Get_String
                     (Prj.Projects.Table (View).Naming.Separate_Suffix);
                begin
-                  if Get_Project_From_File (Project.Data.Registry.all, N)
-                    = Project
+                  if Get_Project_From_File
+                    (Project.Data.Registry.all, N, False) = Project
                   then
                      return N;
                   end if;
@@ -759,8 +759,8 @@ package body Projects is
                      N : constant String := Uname
                        & Get_String (Array_Elements.Table (Arr).Value.Value);
                   begin
-                     if Get_Project_From_File (Project.Data.Registry.all, N)
-                       = Project
+                     if Get_Project_From_File
+                       (Project.Data.Registry.all, N, False) = Project
                      then
                         return N;
                      end if;
