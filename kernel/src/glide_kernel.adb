@@ -1349,7 +1349,8 @@ package body Glide_Kernel is
       then
          Window.Timeout_Id := Process_Timeout.Add
            (Guint32 (Get_Delay_Time (Window.Animation_Iter)),
-            Process_Anim'Access, (Handle, null, null, null, null));
+            Process_Anim'Access,
+            (Handle, null, null, null, null, System.Null_Address));
       end if;
 
       Window.State_Level := Window.State_Level + 1;
