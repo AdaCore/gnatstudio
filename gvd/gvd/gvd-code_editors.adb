@@ -97,6 +97,7 @@ package body GVD.Code_Editors is
       Gtk_New (Editor.Source, Process);
       Gtk_New (Editor.Asm, Process);
       Gtk_New_Vpaned (Editor.Pane);
+
       Gtk_New (Editor.Explorer_Scroll);
       Set_Policy (Editor.Explorer_Scroll, Policy_Automatic, Policy_Automatic);
       Set_USize (Editor.Explorer_Scroll, Explorer_Width, -1);
@@ -104,7 +105,9 @@ package body GVD.Code_Editors is
       Gtk_New (Editor.Explorer, Editor);
       Add (Editor.Explorer_Scroll, Editor.Explorer);
 
-      Add1 (Editor, Editor.Explorer_Scroll);
+      if Current_Preferences.Display_Explorer then
+         Add1 (Editor, Editor.Explorer_Scroll);
+      end if;
 
       Add2 (Editor, Editor.Source);
 
@@ -206,7 +209,7 @@ package body GVD.Code_Editors is
          Set_Current_File (Editor.Explorer, File_Name);
       end if;
 
-      if not Display_Explorer then
+      if not Current_Preferences.Display_Explorer then
          Hide (Editor.Explorer_Scroll);
       end if;
    end Load_File;
@@ -421,12 +424,15 @@ package body GVD.Code_Editors is
    procedure On_Executable_Changed
      (Editor : access Gtk.Widget.Gtk_Widget_Record'Class)
    is
-      Edit : Code_Editor := Code_Editor (Editor);
+      Edit : constant Code_Editor := Code_Editor (Editor);
    begin
-      GVD.Explorer.On_Executable_Changed (Edit.Explorer);
+      if Current_Preferences.Display_Explorer then
+         GVD.Explorer.On_Executable_Changed (Edit.Explorer);
+      end if;
 
       --  Always clear the cache for the assembly editor, even if it is not
       --  displayed.
+
       if Edit.Asm /= null then
          GVD.Asm_Editors.On_Executable_Changed (Edit.Asm);
       end if;
