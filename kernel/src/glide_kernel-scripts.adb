@@ -2600,9 +2600,11 @@ package body Glide_Kernel.Scripts is
          end if;
 
       elsif Command = "hide" then
+         Set_Child_Visible (Get_Data (Inst), False);
          Hide (Get_Data (Inst));
 
       elsif Command = "show" then
+         Set_Child_Visible (Get_Data (Inst), True);
          Show (Get_Data (Inst));
       end if;
 
