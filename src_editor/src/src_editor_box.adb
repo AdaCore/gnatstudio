@@ -22,7 +22,8 @@ with Glib;                       use Glib;
 with Glib.Object;
 with Glib.Values;
 with Glide_Kernel;               use Glide_Kernel;
-with Glide_Kernel.Editor;
+with Glide_Kernel.Console;       use Glide_Kernel.Console;
+with Glide_Kernel.Modules;       use Glide_Kernel.Modules;
 with Glide_Kernel.Project;       use Glide_Kernel.Project;
 with Gdk;                        use Gdk;
 with Gdk.Event;                  use Gdk.Event;
@@ -49,7 +50,9 @@ with Language;                   use Language;
 with String_Utils;               use String_Utils;
 with Src_Editor_Buffer;          use Src_Editor_Buffer;
 with Src_Editor_View;            use Src_Editor_View;
-with Src_Info.Queries;
+with Src_Editor_Module;          use Src_Editor_Module;
+with Src_Info;                   use Src_Info;
+with Src_Info.Queries;           use Src_Info.Queries;
 with Traces;                     use Traces;
 
 package body Src_Editor_Box is
@@ -99,13 +102,6 @@ package body Src_Editor_Box is
    --  Convert to a column number in the Source Box to a column number
    --  in the Source Buffer. Same rationale as in To_Box_Line.
 
-   procedure Prepend_Source_Directory
-     (Kernel          : access Kernel_Handle_Record'Class;
-      Source_Filename : in out String_Access);
-   --  Search for the path of Source_Filename and prepend it if found.
-   --  The search includes the Project Include Path, and the Source Path
-   --  of the given Kernel Handle.
-
    procedure Show_Cursor_Position
      (Box    : Source_Editor_Box;
       Line   : Gint;
@@ -140,12 +136,6 @@ package body Src_Editor_Box is
    --  Find the position of the begining and the end of the entity pointed to
    --  by Start_Iter.
 
-   function Focus_In_Event_Cb
-     (Widget : access Source_View_Record'Class;
-      Event  : Gdk.Event.Gdk_Event_Focus;
-      Box    : Source_Editor_Box) return Boolean;
-   --  Set the current editor child in Kernel.
-
    ----------------------------------
    -- The contextual menu handling --
    ----------------------------------
@@ -164,6 +154,155 @@ package body Src_Editor_Box is
       Params : Glib.Values.GValues;
       Editor : Source_Editor_Box);
    --  Callback for the "Goto Declaration<->Body" contextual menu
+
+   procedure Entity_At_Cursor
+     (Editor                   : access Source_Editor_Box_Record;
+      Line, Column             : Natural := 0;
+      Entity_Start, Entity_End : out Gtk_Text_Iter);
+   --  Return the beginning position of the entity at (Line, Column), or under
+   --  the cursor if Line or Column is 0.
+   --  The entity itself can be read through a call to Get_Text.
+
+   ----------------------
+   -- Entity_At_Cursor --
+   ----------------------
+
+   procedure Entity_At_Cursor
+     (Editor                   : access Source_Editor_Box_Record;
+      Line, Column             : Natural := 0;
+      Entity_Start, Entity_End : out Gtk_Text_Iter)
+   is
+      Tmp_Line   : Natural := Line;
+      Tmp_Col    : Natural := Column;
+
+   begin
+      --  Get the cursor position if either Line or Column is equal to 0
+      if Tmp_Line = 0 or else Tmp_Col = 0 then
+         Get_Cursor_Location (Editor, Tmp_Line, Tmp_Col);
+      end if;
+
+      --  Transform this position into an iterator, and then locate the
+      --  bounds of the entity...
+      Get_Iter_At_Line_Offset
+        (Editor.Source_Buffer, Entity_Start,
+         To_Buffer_Line (Tmp_Line), To_Buffer_Column (Tmp_Col));
+      Search_Entity_Bounds (Editor.Source_Buffer, Entity_Start, Entity_End);
+   end Entity_At_Cursor;
+
+   ------------------------------
+   -- Goto_Declaration_Or_Body --
+   ------------------------------
+
+   procedure Goto_Declaration_Or_Body
+     (Kernel : access Kernel_Handle_Record'Class;
+      Line   : Natural := 0;
+      Column : Natural := 0)
+   is
+      Source        : Source_Editor_Box := Find_Current_Editor (Kernel);
+      Source_Info   : LI_File_Ptr;
+      Filename      : String_Access;
+      Entity_Start, Entity_End : Gtk_Text_Iter;
+      Start_Line    : Positive;
+      Start_Column  : Positive;
+      End_Line      : Positive;
+      End_Column    : Positive;
+      Status        : Src_Info.Queries.Find_Decl_Or_Body_Query_Status;
+
+   begin
+      if Source = null or else Get_Filename (Source) = "" then
+         Console.Insert
+           (Kernel, "Cross-references not possible on unamed files!",
+            Highlight_Sloc => False);
+         return;
+      end if;
+
+      Entity_At_Cursor (Source, Line, Column, Entity_Start, Entity_End);
+
+      Source_Info := Locate_From_Source_And_Complete
+        (Kernel, Get_Filename (Source));
+
+      --  Abort if we could not locate the associated Source_Info.
+      --  Probably means that we either could not locate the ALI file,
+      --  or it could also be that we failed to parse it. Either way,
+      --  a message should have already been printed. So, just abort.
+      if Source_Info = No_LI_File then
+         Console.Insert
+           (Kernel,
+            "Failed to find or parse ALI file " & Get_Filename (Source),
+            Highlight_Sloc => False);
+         return;
+      end if;
+
+      Src_Info.Queries.Find_Declaration_Or_Body
+        (Lib_Info        => Source_Info,
+         File_Name       => Base_Name (Source.Filename.all),
+         Entity_Name     => Get_Text (Entity_Start, Entity_End),
+         Line            => To_Box_Line (Get_Line (Entity_Start)),
+         Column          => To_Box_Column (Get_Line_Offset (Entity_Start)),
+         File_Name_Found => Filename,
+         Start_Line      => Start_Line,
+         Start_Column    => Start_Column,
+         End_Line        => End_Line,
+         End_Column      => End_Column,
+         Status          => Status);
+
+      case Status is
+         when Entity_Not_Found =>
+            Console.Insert
+              (Kernel, "Cross-reference failed.", Highlight_Sloc => False);
+            Free (Filename);
+            return;
+         when Internal_Error =>
+            Console.Insert
+              (Kernel, "Cross-reference internal error detected.",
+               Highlight_Sloc => False);
+            Free (Filename);
+            return;
+         when No_Body_Entity_Found =>
+            Console.Insert
+              (Kernel,
+               "This entity does not have an associated declaration or body.",
+               Highlight_Sloc => False);
+            Free (Filename);
+            return;
+         when Success =>
+            null; --  No error message to print
+      end case;
+
+      --  Extra safety check, verify that Filename is not null before starting
+      --  dereferencing it. That would be a programing error
+      if Filename = null then
+         Console.Insert
+           (Kernel, "Internal error detected.", Highlight_Sloc => False);
+         --  Note that the error message is different from the internal error
+         --  message above. This will help us pin-pointing the location of
+         --  the error message without any doubt, thus helping us debug the
+         --  situation, should this happen. (but it won't, of course :-)
+         Free (Filename);
+         return;
+      end if;
+
+      --  Open the file, and reset Source to the new editor in order to
+      --  highlight the region returned by the Xref query.
+      Open_File_Editor
+        (Kernel,
+         Find_Source_File (Kernel, Filename.all,
+                           Use_Predefined_Source_Path => True),
+         Start_Line, Start_Column, False);
+      Source := Find_Current_Editor (Kernel);
+
+      --  Abort if we failed to go to the xref location. An error message
+      --  has already been printed, so just bail-out.
+      if Source /= null then
+         --  Get the source box that was just opened/raised, and highlight
+         --  the target entity.
+         Unhighlight_All (Source);
+         Highlight_Region
+           (Source, Start_Line, Start_Column, End_Line, End_Column);
+      end if;
+
+      Free (Filename);
+   end Goto_Declaration_Or_Body;
 
    ------------------
    -- Draw_Tooltip --
@@ -243,24 +382,6 @@ package body Src_Editor_Box is
    begin
       return Gint (Col - 1);
    end To_Buffer_Column;
-
-   ------------------------------
-   -- Prepend_Source_Directory --
-   ------------------------------
-
-   procedure Prepend_Source_Directory
-     (Kernel          : access Kernel_Handle_Record'Class;
-      Source_Filename : in out String_Access)
-   is
-      Path : constant String :=
-        Find_Source_File
-          (Kernel, Source_Filename.all, Use_Predefined_Source_Path => True);
-   begin
-      if Path /= "" then
-         Free (Source_Filename);
-         Source_Filename := new String'(Path);
-      end if;
-   end Prepend_Source_Directory;
 
    --------------------------
    -- Show_Cursor_Position --
@@ -397,14 +518,6 @@ package body Src_Editor_Box is
 
       Show_Cursor_Position (Source_Editor_Box (Box), Line => 0, Column => 0);
 
-      Return_Callback.Connect
-        (Widget    => Box.Source_View,
-         Name      => "focus_in_event",
-         Marsh     => Return_Callback.To_Marshaller (Focus_In_Event_Cb'Access),
-         User_Data => Source_Editor_Box (Box),
-         After     => True);
-      --  ??? Should also connect to destroy signal to reset the editor child
-
       --  The Contextual Menu handling
       CMenu.Register_Contextual_Menu
         (Box.Source_View, Source_Editor_Box (Box), Get_Contextual_Menu'Access);
@@ -455,19 +568,6 @@ package body Src_Editor_Box is
          end if;
       end loop;
    end Search_Entity_Bounds;
-
-   -----------------------
-   -- Focus_In_Event_Cb --
-   -----------------------
-
-   function Focus_In_Event_Cb
-     (Widget : access Source_View_Record'Class;
-      Event  : Gdk.Event.Gdk_Event_Focus;
-      Box    : Source_Editor_Box) return Boolean is
-   begin
-      Editor.Set_Editor_Child (Box.Kernel);
-      return False;
-   end Focus_In_Event_Cb;
 
    -------------------------
    -- Get_Contextual_Menu --
@@ -568,7 +668,7 @@ package body Src_Editor_Box is
       Params : Glib.Values.GValues;
       Editor : Source_Editor_Box) is
    begin
-      Glide_Kernel.Editor.Goto_Declaration_Or_Body
+      Goto_Declaration_Or_Body
         (Editor.Kernel, Editor.Menu_Line_Pos, Editor.Menu_Col_Pos);
    end On_Goto_Declaration_Or_Body;
 
@@ -1079,59 +1179,5 @@ package body Src_Editor_Box is
    begin
       return Get_Show_Line_Numbers (Editor.Source_View);
    end Get_Show_Line_Numbers;
-
-   ------------------------------
-   -- Find_Declaration_Or_Body --
-   ------------------------------
-
-   procedure Find_Declaration_Or_Body
-     (Editor       : access Source_Editor_Box_Record;
-      Line         : Natural := 0;
-      Column       : Natural := 0;
-      Lib_Info     : Src_Info.LI_File_Ptr;
-      Filename     : out GNAT.OS_Lib.String_Access;
-      Start_Line   : out Positive;
-      Start_Column : out Positive;
-      End_Line     : out Positive;
-      End_Column   : out Positive;
-      Status       : out Src_Info.Queries.Find_Decl_Or_Body_Query_Status)
-   is
-      Tmp_Line   : Natural := Line;
-      Tmp_Col    : Natural := Column;
-
-      Start_Iter : Gtk_Text_Iter;
-      End_Iter   : Gtk_Text_Iter;
-
-   begin
-      --  Get the cursor position if either Line or Column is equal to 0
-      if Tmp_Line = 0 or else Tmp_Col = 0 then
-         Get_Cursor_Location (Editor, Tmp_Line, Tmp_Col);
-      end if;
-
-      --  Transform this position into an iterator, and then locate the
-      --  bounds of the entity...
-      Get_Iter_At_Line_Offset
-        (Editor.Source_Buffer, Start_Iter,
-         To_Buffer_Line (Tmp_Line), To_Buffer_Column (Tmp_Col));
-      Search_Entity_Bounds (Editor.Source_Buffer, Start_Iter, End_Iter);
-
-      --  Compute the start of entity position
-      Tmp_Line := To_Box_Line (Get_Line (Start_Iter));
-      Tmp_Col  := To_Box_Column (Get_Line_Offset (Start_Iter));
-
-      declare
-         Entity_Name : constant String := Get_Text (Start_Iter, End_Iter);
-      begin
-         Src_Info.Queries.Find_Declaration_Or_Body
-           (Lib_Info, Base_Name (Editor.Filename.all),
-            Entity_Name, Tmp_Line, Tmp_Col,
-            Filename, Start_Line, Start_Column, End_Line, End_Column, Status);
-      end;
-
-      --  If a filename is returned, then prepend the path to this filename.
-      if Filename /= null then
-         Prepend_Source_Directory (Editor.Kernel, Filename);
-      end if;
-   end Find_Declaration_Or_Body;
 
 end Src_Editor_Box;
