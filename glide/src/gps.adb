@@ -92,7 +92,7 @@ with VCS.CVS;
 with VCS.ClearCase;
 with VFS_Module;
 with Vdiff_Module;
---  with Vdiff2_Module;
+with Vdiff2_Module;
 with Builder_Module;
 with Glide_Kernel.Console;
 with Glide_Result_View;
@@ -104,7 +104,7 @@ with Codefix_Module;
 with Python_Module;
 with KeyManager_Module;
 with Theme_Manager_Module;
---   with Docgen_Module;
+with Docgen_Module;
 with SSH_Protocol;
 
 procedure GPS is
@@ -113,6 +113,12 @@ procedure GPS is
    Me        : constant Debug_Handle := Create ("GPS");
    Gtk_Trace : constant Debug_Handle := Create ("Gtk+");
    Pid_Image : constant String := String_Utils.Image (Get_Process_Id);
+
+   Docgen_Trace  : constant Debug_Handle := Create ("MODULE.Docgen", Off);
+   Vdiff2_Trace  : constant Debug_Handle := Create ("MODULE.Vdiff2", Off);
+   Metrics_Trace : constant Debug_Handle := Create ("MODULE.Metrics", On);
+   --  If any of these debug handles is active, the correponsing module
+   --  is loaded.
 
    subtype String_Access is GNAT.OS_Lib.String_Access;
 
@@ -930,7 +936,11 @@ procedure GPS is
       Help_Module.Register_Module (GPS.Kernel);
 
       Navigation_Module.Register_Module (GPS.Kernel);
-      Metrics_Module.Register_Module (GPS.Kernel);
+
+      if Active (Metrics_Trace) then
+         Metrics_Module.Register_Module (GPS.Kernel);
+      end if;
+
       Browsers.Call_Graph.Register_Module (GPS.Kernel);
       Browsers.Dependency_Items.Register_Module (GPS.Kernel);
       Browsers.Projects.Register_Module (GPS.Kernel);
@@ -943,8 +953,13 @@ procedure GPS is
       External_Editor_Module.Register_Module (GPS.Kernel);
       GVD_Module.Register_Module (GPS.Kernel);
       Builder_Module.Register_Module (GPS.Kernel);
---      Vdiff2_Module.Register_Module (GPS.Kernel);
-      Vdiff_Module.Register_Module (GPS.Kernel);
+
+      if Active (Vdiff2_Trace) then
+         Vdiff2_Module.Register_Module (GPS.Kernel);
+      else
+         Vdiff_Module.Register_Module (GPS.Kernel);
+      end if;
+
       VCS_Module.Register_Module (GPS.Kernel);
       VCS.CVS.Register_Module (GPS.Kernel);
       VCS.ClearCase.Register_Module (GPS.Kernel);
@@ -954,7 +969,10 @@ procedure GPS is
       Glide_Kernel.Task_Manager.Register_Module (GPS.Kernel);
       Custom_Module.Register_Module (GPS.Kernel);
       Glide_Result_View.Register_Module (GPS.Kernel);
---      Docgen_Module.Register_Module (GPS.Kernel);
+
+      if Active (Docgen_Trace) then
+         Docgen_Module.Register_Module (GPS.Kernel);
+      end if;
 
       --  Register the supported languages and their associated LI handlers.
 
