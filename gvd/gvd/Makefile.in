@@ -67,6 +67,10 @@ gvd_test: gvd_test.o libgvd
 gvd_test.o: gvd_test.c gvd-api.h
 	$(CC) -c $(CFLAGS) `gtk-config --cflags` gvd_test.c
 
+# This rule should only be used under Windows NT/2000 systems
+winps: force
+	gnatmake -m $(ALL_CFLAGS) $@
+
 install-nocheck: force
 	$(MKDIR) $(bindir)
 	$(INSTALL_PROGRAM) $(EXEC) $(bindir)
