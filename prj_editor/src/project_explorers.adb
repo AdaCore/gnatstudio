@@ -1181,8 +1181,8 @@ package body Project_Explorers is
       Construct   : Construct_Information;
       Parent_Node : Gtk_Ctree_Node) return Gtk_Ctree_Node
    is
-      N       : Gtk_Ctree_Node;
-      Text    : Tree_Chars_Ptr_Array;
+      N    : Gtk_Ctree_Node;
+      Text : Tree_Chars_Ptr_Array;
 
    begin
       if Construct.Is_Declaration then
