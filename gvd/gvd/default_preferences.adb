@@ -1316,8 +1316,9 @@ package body Default_Preferences is
    -------------------
 
    function Editor_Widget
-     (Manager : access Preferences_Manager_Record; Param : Param_Spec)
-      return Gtk.Widget.Gtk_Widget
+     (Manager : access Preferences_Manager_Record;
+      Param   : Param_Spec;
+      Tips    : Gtk_Tooltips) return Gtk.Widget.Gtk_Widget
    is
       Typ : constant GType := Value_Type (Param);
       N   : constant Nodes := (Manager.Preferences, Param);
@@ -1426,25 +1427,37 @@ package body Default_Preferences is
 
       elsif Typ = Gtk.Style.Get_Type then
          declare
-            Prop : constant Param_Spec_Style := Param_Spec_Style (Param);
-            Box : Gtk_Box;
-            F   : constant Gtk_Box := Create_Box_For_Font
+            Prop  : constant Param_Spec_Style := Param_Spec_Style (Param);
+            Event : Gtk_Event_Box;
+            Box   : Gtk_Box;
+            F     : constant Gtk_Box := Create_Box_For_Font
               (N, Get_Pref_Font (Manager, Prop), "...");
             Combo : Gvd_Color_Combo;
-         begin
-            Gtk_New_Hbox (Box, Homogeneous => False);
-            Pack_Start (Box, F, Expand => True, Fill => True);
 
+         begin
+            Gtk_New (Event);
+            Add (Event, F);
+            Set_Tip
+              (Tips, Event, -"Click on ... to display the font selector");
+            Gtk_New_Hbox (Box, Homogeneous => False);
+            Pack_Start (Box, Event, Expand => True, Fill => True);
+
+            Gtk_New (Event);
             Gtk_New (Combo);
-            Pack_Start (Box, Combo, Expand => False);
+            Add (Event, Combo);
+            Set_Tip (Tips, Event, -"Foreground color");
+            Pack_Start (Box, Event, Expand => False);
             Set_Color (Combo, Get_Pref_Fg (Manager, Prop));
             Param_Handlers.Connect
               (Combo, "color_changed",
                Param_Handlers.To_Marshaller (Fg_Color_Changed'Access),
                User_Data   => N);
 
+            Gtk_New (Event);
             Gtk_New (Combo);
-            Pack_Start (Box, Combo, Expand => False);
+            Add (Event, Combo);
+            Set_Tip (Tips, Event, -"Background color");
+            Pack_Start (Box, Event, Expand => False);
             Set_Color (Combo, Get_Pref_Bg (Manager, Prop));
             Param_Handlers.Connect
               (Combo, "color_changed",
@@ -1523,7 +1536,7 @@ package body Default_Preferences is
          declare
             Label : Gtk_Label;
          begin
-            Gtk_New (Label, "Preference cannot be edited");
+            Gtk_New (Label, -"Preference cannot be edited");
             return Gtk_Widget (Label);
          end;
       end if;
@@ -1718,7 +1731,7 @@ package body Default_Preferences is
             Attach (Table, Event, 0, 1, Row, Row + 1,
                     Xoptions => Fill, Yoptions => 0);
 
-            Widget := Editor_Widget (Manager, Prefs.Param);
+            Widget := Editor_Widget (Manager, Prefs.Param, Tips);
             if Widget /= null then
                Attach (Table, Widget, 1, 2, Row, Row + 1, Yoptions => 0);
             end if;
