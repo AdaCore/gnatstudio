@@ -28,6 +28,7 @@ with Debugger.Jdb.Java; use Debugger.Jdb.Java;
 with Process_Proxies;   use Process_Proxies;
 with Gtk.Window;        use Gtk.Window;
 with Odd.Process;       use Odd.Process;
+with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
 
 package body Debugger.Jdb is
 
@@ -47,6 +48,9 @@ package body Debugger.Jdb is
 
    Frame_Pattern : constant Pattern_Matcher := Compile
      ("^ +\[(\d+)\] (.+) \((.+:\d+)?\), pc = (\d+)$", Multiple_Lines);
+
+   Source_Pattern : constant Pattern_Matcher := Compile
+     ("\((.+):(\d+)?\)$", Multiple_Lines);
 
    Jdb_Command : constant String := "jdb";
    --  The default Jdb executable name.
@@ -122,12 +126,24 @@ package body Debugger.Jdb is
          Debugger.Main_Class := new String' (Executable);
       end if;
 
-      Add_Output_Filter
-        (Get_Descriptor (Debugger.Process).all,
-         Trace_Filter'Access);
-      Add_Input_Filter
-        (Get_Descriptor (Debugger.Process).all,
-         Trace_Filter'Access);
+      --  ??? Should avoid the duplication of this code
+
+      if Main_Debug_Window_Access (Window).Debug_Mode then
+         Add_Output_Filter
+           (Get_Descriptor (Debugger.Process).all, Trace_Filter'Access);
+         Add_Input_Filter
+           (Get_Descriptor (Debugger.Process).all, Trace_Filter'Access);
+
+      elsif Main_Debug_Window_Access (Window).TTY_Mode then
+         Add_Output_Filter
+           (Get_Descriptor (Debugger.Process).all,
+            TTY_Filter'Access,
+            Debugger.Process.all'Address);
+         Add_Input_Filter
+           (Get_Descriptor (Debugger.Process).all,
+            TTY_Filter'Access,
+            Debugger.Process.all'Address);
+      end if;
    end Spawn;
 
    ----------------
@@ -142,7 +158,8 @@ package body Debugger.Jdb is
       Push_Internal_Command_Status (Get_Process (Debugger), True);
 
       if Debugger.Main_Class /= null then
-         Set_Executable (Debugger, Debugger.Main_Class.all);
+         --  Set_Executable (Debugger, Debugger.Main_Class.all);
+         null;
       else
          --  Indicate that a new executable is present (even if there is none,
          --  we still need to reset some data).
@@ -196,11 +213,21 @@ package body Debugger.Jdb is
    -- Wait_Prompt --
    -----------------
 
+   In_Wait : Boolean := False;
+
    procedure Wait_Prompt (Debugger : access Jdb_Debugger) is
       Num     : Expect_Match;
-      Matches : Match_Array (0 .. 2);
+      Matches : Match_Array (0 .. 4);
 
    begin
+      if In_Wait then
+         return;
+      end if;
+
+      In_Wait := True;
+
+      Wait (Get_Process (Debugger), Num, Prompt_Regexp, Matches, -1);
+      Send (Debugger, "where", Wait_For_Prompt => False);
       Wait (Get_Process (Debugger), Num, Prompt_Regexp, Matches, -1);
 
       if Matches (2) /= No_Match then
@@ -211,6 +238,8 @@ package body Debugger.Jdb is
               Natural'Value (S (Matches (2).First .. Matches (2).Last));
          end;
       end if;
+
+      In_Wait := False;
    end Wait_Prompt;
 
    ---------
@@ -220,7 +249,12 @@ package body Debugger.Jdb is
    procedure Run (Debugger : access Jdb_Debugger;
                   Display  : Boolean := False) is
    begin
-      Send (Debugger, "run", Display => Display);
+      if Debugger.Main_Class /= null then
+         Send (Debugger, "run " & Debugger.Main_Class.all, Display => Display);
+      else
+         Send (Debugger, "run", Display => Display);
+      end if;
+
       Set_Is_Started (Debugger, True);
    end Run;
 
@@ -231,8 +265,9 @@ package body Debugger.Jdb is
    procedure Start (Debugger : access Jdb_Debugger;
                     Display  : Boolean := False) is
    begin
-      Send (Debugger, "run", Display => Display);
-      Set_Is_Started (Debugger, True);
+      Send (Debugger, "stop in " & Debugger.Main_Class.all & '.' &
+         Debugger.Main_Class.all, Display => Display);
+      Run (Debugger, Display);
    end Start;
 
    ---------------
@@ -370,7 +405,7 @@ package body Debugger.Jdb is
 
       declare
          S       : String := Expect_Out (Get_Process (Debugger));
-         Matched : Match_Array (0 .. 4);
+         Matched : Match_Array (0 .. 6);
          First   : Positive := S'First;
       begin
          Len := 0;
@@ -590,6 +625,39 @@ package body Debugger.Jdb is
    begin
       Send (Debugger, "  ", Wait_For_Prompt => Wait_For_Prompt);
    end Display_Prompt;
+
+   procedure Found_File_Name
+     (Debugger    : access Jdb_Debugger;
+      Str         : String;
+      Name_First  : out Natural;
+      Name_Last   : out Positive;
+      First, Last : out Natural;
+      Line        : out Natural)
+   is
+      Matched : Match_Array (0 .. 2);
+   begin
+      Match (Source_Pattern, Str, Matched);
+
+      First := Matched (0).First;
+      Last := Matched (0).Last;
+
+      if Matched (0) = No_Match then
+         Name_First := 0;
+         Name_Last  := 1;
+         Line       := 0;
+         return;
+      end if;
+
+      Name_First := Matched (1).First;
+      Name_Last  := Matched (1).Last;
+      Line := Natural'Value (Str (Matched (2).First .. Matched (2).Last));
+
+      loop
+         Match (Source_Pattern, Str (Last + 1 .. Str'Last), Matched);
+         exit when Matched (0) = No_Match;
+         Last := Matched (0).Last;
+      end loop;
+   end Found_File_Name;
 
    ----------------------
    -- List_Breakpoints --

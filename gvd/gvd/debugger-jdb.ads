@@ -173,6 +173,14 @@ package Debugger.Jdb is
       Value    : out Backtrace_Array;
       Len      : out Natural);
 
+   procedure Found_File_Name
+     (Debugger    : access Jdb_Debugger;
+      Str         : String;
+      Name_First  : out Natural;
+      Name_Last   : out Positive;
+      First, Last : out Natural;
+      Line        : out Natural);
+
    function Info_Threads
      (Debugger : access Jdb_Debugger)
       return Language.Thread_Information_Array;
