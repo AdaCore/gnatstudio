@@ -206,7 +206,7 @@ package body Breakpoints_Pkg.Callbacks is
 
          if WTX_Version = 3 then
             declare
-               Scope_Action : Advanced_Breakpoint_Access :=
+               Scope_Action : constant Advanced_Breakpoint_Access :=
                  Editor.Advanced_Breakpoints_Location;
                Scope_Value  : GVD.Types.Scope_Type;
                Action_Value : GVD.Types.Action_Type;
@@ -434,14 +434,13 @@ package body Breakpoints_Pkg.Callbacks is
    procedure On_Ok_Bp_Clicked
      (Object : access Gtk_Widget_Record'Class)
    is
-      Editor    : constant Breakpoint_Editor_Access :=
+      Editor       : constant Breakpoint_Editor_Access :=
         Breakpoint_Editor_Access (Object);
-
-      Scope_Action : Advanced_Breakpoint_Access :=
+      Scope_Action : constant Advanced_Breakpoint_Access :=
         Editor.Advanced_Breakpoints_Location;
-
       Debugger     : Debugger_Access;
       WTX_Version  : Natural;
+
    begin
       Debugger := Editor.Process.Debugger;
       Info_WTX (Debugger, WTX_Version);
