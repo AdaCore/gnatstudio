@@ -1808,7 +1808,7 @@
 	<class>GtkButton</class>
 	<child_name>Toolbar:button</child_name>
 	<name>button66</name>
-	<tooltip>Print Dialog</tooltip>
+	<tooltip>Print selection</tooltip>
 	<signal>
 	  <name>clicked</name>
 	  <handler>on_print1_activate</handler>
@@ -1823,7 +1823,7 @@
 	<class>GtkButton</class>
 	<child_name>Toolbar:button</child_name>
 	<name>button67</name>
-	<tooltip>Display Dialog</tooltip>
+	<tooltip>Display selection</tooltip>
 	<signal>
 	  <name>clicked</name>
 	  <handler>on_display1_activate</handler>

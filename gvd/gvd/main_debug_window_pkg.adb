@@ -1062,7 +1062,7 @@ begin
      (Toolbar => Main_Debug_Window.Toolbar1,
       The_Type => Toolbar_Child_Button,
       Text => -"",
-      Tooltip_Text => -"Print Dialog",
+      Tooltip_Text => -"Print selection",
       Icon => Gtk_Widget (Create_Pixmap (print_xpm, Main_Debug_Window)));
    Widget_Callback.Object_Connect
      (Main_Debug_Window.Button66, "clicked", On_Print1_Activate'Access, Main_Debug_Window);
@@ -1070,7 +1070,7 @@ begin
      (Toolbar => Main_Debug_Window.Toolbar1,
       The_Type => Toolbar_Child_Button,
       Text => -"",
-      Tooltip_Text => -"Display Dialog",
+      Tooltip_Text => -"Display selection",
       Icon => Gtk_Widget (Create_Pixmap (display_xpm, Main_Debug_Window)));
    Widget_Callback.Object_Connect
      (Main_Debug_Window.Button67, "clicked", On_Display1_Activate'Access, Main_Debug_Window);
