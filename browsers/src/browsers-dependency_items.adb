@@ -192,6 +192,11 @@ package body Browsers.Dependency_Items is
    procedure On_Destroy (Browser : access Gtk_Widget_Record'Class);
    --  Called when the browser is destroyed
 
+   function Default_Factory
+     (Kernel : access Kernel_Handle_Record'Class;
+      Child  : Gtk.Widget.Gtk_Widget) return Selection_Context_Access;
+   --  Create a current kernel context, based on the currently selected item
+
    -----------------------------
    -- Browser_Context_Factory --
    -----------------------------
@@ -772,6 +777,28 @@ package body Browsers.Dependency_Items is
    end Browser_Contextual_Menu;
 
    ---------------------
+   -- Default_Factory --
+   ---------------------
+
+   function Default_Factory
+     (Kernel : access Kernel_Handle_Record'Class;
+      Child  : Gtk.Widget.Gtk_Widget) return Selection_Context_Access
+   is
+      pragma Unreferenced (Kernel);
+      Browser : Dependency_Browser := Dependency_Browser (Child);
+   begin
+      if Selected_Item (Browser) = null then
+         return null;
+      end if;
+
+      return Contextual_Factory
+        (Item    => Glide_Browser_Item (Selected_Item (Browser)),
+         Browser => Browser,
+         Event   => null,
+         Menu    => null);
+   end Default_Factory;
+
+   ---------------------
    -- Register_Module --
    ---------------------
 
@@ -783,7 +810,9 @@ package body Browsers.Dependency_Items is
          Module_Name             => Dependency_Browser_Module_Name,
          Priority                => Default_Priority,
          Initializer             => Initialize_Module'Access,
-         Contextual_Menu_Handler => Browser_Contextual_Menu'Access);
+         Contextual_Menu_Handler => Browser_Contextual_Menu'Access,
+         MDI_Child_Tag           => Dependency_Browser_Record'Tag,
+         Default_Context_Factory => Default_Factory'Access);
       Glide_Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
    end Register_Module;
@@ -1057,31 +1086,34 @@ package body Browsers.Dependency_Items is
         (File_Selection_Context_Access (Context),
          Project_View => Project_Of (Get_Kernel (Browser), Item));
 
-      Gtk_New (Mitem, -"Analyze other file (spec or body)");
-      Add (Menu, Mitem);
-      Context_Callback.Object_Connect
-        (Mitem, "activate",
-         Context_Callback.To_Marshaller (On_Examine_Other_File'Access),
-         User_Data   => Context,
-         Slot_Object => Browser);
+      if Menu /= null then
+         Gtk_New (Mitem, -"Analyze other file (spec or body)");
+         Add (Menu, Mitem);
+         Context_Callback.Object_Connect
+           (Mitem, "activate",
+            Context_Callback.To_Marshaller (On_Examine_Other_File'Access),
+            User_Data   => Context,
+            Slot_Object => Browser);
 
-      Gtk_New (Mitem, Label => (-"Examine dependencies for ") & Filename);
-      Append (Menu, Mitem);
-      Context_Callback.Connect
-        (Mitem, "activate",
-         Context_Callback.To_Marshaller
-           (Edit_Dependencies_From_Contextual'Access),
-         Context);
-      Set_Sensitive (Mitem, not Item.To_Parsed);
+         Gtk_New (Mitem, Label => (-"Examine dependencies for ") & Filename);
+         Append (Menu, Mitem);
+         Context_Callback.Connect
+           (Mitem, "activate",
+            Context_Callback.To_Marshaller
+              (Edit_Dependencies_From_Contextual'Access),
+            Context);
+         Set_Sensitive (Mitem, not Item.To_Parsed);
 
-      Gtk_New (Mitem, Label => (-"Examining files depending on ") & Filename);
-      Append (Menu, Mitem);
-      Context_Callback.Connect
-        (Mitem, "activate",
-         Context_Callback.To_Marshaller
-           (Edit_Ancestor_Dependencies_From_Contextual'Access),
-         Context);
-      Set_Sensitive (Mitem, not Item.From_Parsed);
+         Gtk_New
+           (Mitem, Label => (-"Examining files depending on ") & Filename);
+         Append (Menu, Mitem);
+         Context_Callback.Connect
+           (Mitem, "activate",
+            Context_Callback.To_Marshaller
+              (Edit_Ancestor_Dependencies_From_Contextual'Access),
+            Context);
+         Set_Sensitive (Mitem, not Item.From_Parsed);
+      end if;
 
       return Context;
    end Contextual_Factory;

@@ -86,7 +86,6 @@ package body Browsers.Call_Graph is
 
    procedure Examine_Entity_Call_Graph
      (Kernel        : access Kernel_Handle_Record'Class;
-      Lib_Info      : LI_File_Ptr;
       Entity        : Entity_Information);
    --  Display the call graph for the node.
 
@@ -156,6 +155,11 @@ package body Browsers.Call_Graph is
    procedure On_Destroy (Browser : access Gtk_Widget_Record'Class);
    --  Called when the browser is destroyed
 
+   procedure On_Call_Graph
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Create a callgraph for the entity described in the current kernel
+   --  context (if any)
+
    function Load_Desktop
      (Node : Gint_Xml.Node_Ptr; User : Kernel_Handle)
       return Gtk_Widget;
@@ -163,6 +167,11 @@ package body Browsers.Call_Graph is
      (Widget : access Gtk.Widget.Gtk_Widget_Record'Class)
       return Node_Ptr;
    --  Support functions for the MDI
+
+   function Default_Factory
+     (Kernel : access Kernel_Handle_Record'Class;
+      Child  : Gtk.Widget.Gtk_Widget) return Selection_Context_Access;
+   --  Create a current kernel context, based on the currently selected item
 
    -------------
    -- Gtk_New --
@@ -415,7 +424,6 @@ package body Browsers.Call_Graph is
 
    procedure Examine_Entity_Call_Graph
      (Kernel   : access Kernel_Handle_Record'Class;
-      Lib_Info : LI_File_Ptr;
       Entity   : Entity_Information)
    is
       Iter : Scope_Tree_Node_Iterator;
@@ -425,9 +433,20 @@ package body Browsers.Call_Graph is
       Link : Glide_Browser_Link;
       Tree : Scope_Tree;
       Node : Scope_Tree_Node;
+      Lib_Info : LI_File_Ptr;
 
    begin
       Push_State (Kernel_Handle (Kernel), Busy);
+
+      Lib_Info := Locate_From_Source_And_Complete
+        (Kernel, Get_Declaration_File_Of (Entity));
+
+      if Lib_Info = No_LI_File then
+         Insert (Kernel,
+                 -"LI file not found for "
+                   & Get_Declaration_File_Of (Entity));
+         return;
+      end if;
 
       Tree := Create_Tree (Lib_Info);
 
@@ -671,7 +690,6 @@ package body Browsers.Call_Graph is
 
       Entity      : Entity_Selection_Context_Access :=
         Entity_Selection_Context_Access (Context);
-      Lib_Info    : LI_File_Ptr;
       Node_Entity : Entity_Information;
 
    begin
@@ -681,13 +699,7 @@ package body Browsers.Call_Graph is
       if Node_Entity /= No_Entity_Information then
          --  ??? Should check that Decl.Kind is a subprogram
 
-         Lib_Info := Locate_From_Source_And_Complete
-           (Get_Kernel (Entity), Get_Declaration_File_Of (Node_Entity));
-
-         if Lib_Info /= No_LI_File then
-            Examine_Entity_Call_Graph
-              (Get_Kernel (Entity), Lib_Info, Node_Entity);
-         end if;
+         Examine_Entity_Call_Graph (Get_Kernel (Entity), Node_Entity);
 
       else
          Insert (Get_Kernel (Entity),
@@ -836,9 +848,7 @@ package body Browsers.Call_Graph is
 
    procedure On_Button_Click
      (Item  : access Entity_Item_Record;
-      Event : Gdk.Event.Gdk_Event_Button)
-   is
-      LI : LI_File_Ptr;
+      Event : Gdk.Event.Gdk_Event_Button) is
    begin
       if Get_Button (Event) = 1
         and then Get_Event_Type (Event) = Gdk_2button_Press
@@ -851,20 +861,8 @@ package body Browsers.Call_Graph is
 
          --  Or the subprograms we are calling ?
          else
-            LI := Locate_From_Source_And_Complete
-              (Get_Kernel (Item.Browser),
-               Get_Declaration_File_Of (Item.Entity));
-
-            if LI /= No_LI_File then
-               Examine_Entity_Call_Graph
-                 (Get_Kernel (Item.Browser), LI, Item.Entity);
-            end if;
+            Examine_Entity_Call_Graph (Get_Kernel (Item.Browser), Item.Entity);
             Item.To_Parsed := True;
-         end if;
-
-         if LI = No_LI_File then
-            Trace (Me, "LI file not found for "
-                   & Get_Declaration_File_Of (Item.Entity));
          end if;
 
          --  Make sure that the item we clicked on is still visible
@@ -968,50 +966,111 @@ package body Browsers.Call_Graph is
          Column      => Get_Declaration_Column_Of (Item.Entity),
          Category    => Language.Cat_Procedure);
 
-      Gtk_New (Mitem, Get_Name (Item.Entity) & (-" calls..."));
-      Append (Menu, Mitem);
-      Context_Callback.Connect
-        (Mitem, "activate",
-         Context_Callback.To_Marshaller
-           (Edit_Entity_Call_Graph_From_Contextual'Access),
-               Selection_Context_Access (Context));
-      Set_Sensitive (Mitem, not Item.To_Parsed);
+      if Menu /= null then
+         Gtk_New (Mitem, Get_Name (Item.Entity) & (-" calls..."));
+         Append (Menu, Mitem);
+         Context_Callback.Connect
+           (Mitem, "activate",
+            Context_Callback.To_Marshaller
+              (Edit_Entity_Call_Graph_From_Contextual'Access),
+            Selection_Context_Access (Context));
+         Set_Sensitive (Mitem, not Item.To_Parsed);
 
-      Gtk_New (Mitem, Get_Name (Item.Entity) & (-" is called by..."));
-      Append (Menu, Mitem);
-      Context_Callback.Connect
-        (Mitem, "activate",
-         Context_Callback.To_Marshaller
-           (Edit_Ancestors_Call_Graph_From_Contextual'Access),
-         Context);
-      Set_Sensitive (Mitem, not Item.From_Parsed);
+         Gtk_New (Mitem, Get_Name (Item.Entity) & (-" is called by..."));
+         Append (Menu, Mitem);
+         Context_Callback.Connect
+           (Mitem, "activate",
+            Context_Callback.To_Marshaller
+              (Edit_Ancestors_Call_Graph_From_Contextual'Access),
+            Context);
+         Set_Sensitive (Mitem, not Item.From_Parsed);
 
-      Gtk_New (Mitem, -"Edit source");
-      Append (Menu, Mitem);
-      Context_Callback.Connect
-        (Mitem, "activate",
-         Context_Callback.To_Marshaller
-         (Edit_Source_From_Contextual'Access),
-         Context);
+         Gtk_New (Mitem, -"Edit source");
+         Append (Menu, Mitem);
+         Context_Callback.Connect
+           (Mitem, "activate",
+            Context_Callback.To_Marshaller
+              (Edit_Source_From_Contextual'Access),
+            Context);
+      end if;
 
       return Context;
    end Contextual_Factory;
+
+   -------------------
+   -- On_Call_Graph --
+   -------------------
+
+   procedure On_Call_Graph
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+      Child       : MDI_Child;
+      Context     : Selection_Context_Access := Get_Current_Context (Kernel);
+      Entity      : Entity_Selection_Context_Access;
+      Node_Entity : Entity_Information;
+   begin
+      Child := Open_Call_Graph_Browser (Kernel);
+
+      if Context /= null
+        and then Context.all in Entity_Selection_Context'Class
+      then
+         Entity := Entity_Selection_Context_Access (Context);
+         Node_Entity := Get_Entity (Entity);
+         if Node_Entity /= No_Entity_Information then
+            Examine_Entity_Call_Graph (Kernel, Node_Entity);
+         end if;
+      end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception in On_Call_Graph "
+                & Exception_Information (E));
+   end On_Call_Graph;
+
+   ---------------------
+   -- Default_Factory --
+   ---------------------
+
+   function Default_Factory
+     (Kernel : access Kernel_Handle_Record'Class;
+      Child  : Gtk.Widget.Gtk_Widget) return Selection_Context_Access
+   is
+      pragma Unreferenced (Kernel);
+      Browser : Call_Graph_Browser := Call_Graph_Browser (Child);
+   begin
+      if Selected_Item (Browser) = null then
+         return null;
+      end if;
+
+      return Contextual_Factory
+        (Item    => Glide_Browser_Item (Selected_Item (Browser)),
+         Browser => Browser,
+         Event   => null,
+         Menu    => null);
+   end Default_Factory;
 
    ---------------------
    -- Register_Module --
    ---------------------
 
    procedure Register_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class) is
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+   is
+      Tools : constant String := '/' & (-"Tools");
    begin
       Call_Graph_Module_Id := Register_Module
         (Kernel                  => Kernel,
          Module_Name             => Call_Graph_Module_Name,
          Priority                => Default_Priority,
          Initializer             => null,
-         Contextual_Menu_Handler => Call_Graph_Contextual_Menu'Access);
+         Contextual_Menu_Handler => Call_Graph_Contextual_Menu'Access,
+         MDI_Child_Tag           => Call_Graph_Browser_Record'Tag,
+         Default_Context_Factory => Default_Factory'Access);
       Glide_Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
+
+      Register_Menu (Kernel, Tools, -"Call Graph", "", On_Call_Graph'Access);
    end Register_Module;
 
    ------------------
