@@ -33,12 +33,12 @@ begin
    Gtk_New_Vbox (Vsearch.Vbox_Search, False, 0);
    Add (Vsearch, Vsearch.Vbox_Search);
 
-   Gtk_New (Vsearch.Table, 6, 2, False);
+   Gtk_New (Vsearch.Table, 5, 2, False);
    Set_Row_Spacings (Vsearch.Table, 2);
    Set_Col_Spacings (Vsearch.Table, 3);
    Pack_Start (Vsearch.Vbox_Search, Vsearch.Table, True, True, 0);
 
-   Gtk_New (Vsearch.Replace_Label, -("Replace by:"));
+   Gtk_New (Vsearch.Replace_Label, -("Replace with:"));
    Set_Alignment (Vsearch.Replace_Label, 0.0, 0.5);
    Set_Padding (Vsearch.Replace_Label, 0, 0);
    Set_Justify (Vsearch.Replace_Label, Justify_Center);
@@ -103,13 +103,13 @@ begin
    Set_Tip (Tooltips, Vsearch.Context_Entry, -"The context of the search");
 
    Gtk_New_Hbox (Vsearch.Buttons_Hbox, False, 3);
-   Attach (Vsearch.Table, Vsearch.Buttons_Hbox, 0, 2, 4, 5,
+   Attach (Vsearch.Table, Vsearch.Buttons_Hbox, 0, 2, 3, 4,
      Fill, 0,
      2, 0);
 
    Gtk_New (Vsearch.Options_Frame, -"Options");
    Set_Shadow_Type (Vsearch.Options_Frame, Shadow_Etched_In);
-   Attach (Vsearch.Table, Vsearch.Options_Frame, 0, 2, 5, 6,
+   Attach (Vsearch.Table, Vsearch.Options_Frame, 0, 2, 4, 5,
      Fill, 0,
      2, 0);
 

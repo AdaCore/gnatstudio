@@ -33,7 +33,7 @@
     <widget>
       <class>GtkTable</class>
       <name>table</name>
-      <rows>6</rows>
+      <rows>5</rows>
       <columns>2</columns>
       <homogeneous>False</homogeneous>
       <row_spacing>2</row_spacing>
@@ -47,7 +47,7 @@
       <widget>
 	<class>GtkLabel</class>
 	<name>replace_label</name>
-	<label>Replace by:</label>
+	<label>Replace with:</label>
 	<justify>GTK_JUSTIFY_CENTER</justify>
 	<wrap>False</wrap>
 	<xalign>0</xalign>
@@ -204,8 +204,8 @@
 	<child>
 	  <left_attach>0</left_attach>
 	  <right_attach>2</right_attach>
-	  <top_attach>4</top_attach>
-	  <bottom_attach>5</bottom_attach>
+	  <top_attach>3</top_attach>
+	  <bottom_attach>4</bottom_attach>
 	  <xpad>2</xpad>
 	  <ypad>0</ypad>
 	  <xexpand>False</xexpand>
@@ -230,8 +230,8 @@
 	<child>
 	  <left_attach>0</left_attach>
 	  <right_attach>2</right_attach>
-	  <top_attach>5</top_attach>
-	  <bottom_attach>6</bottom_attach>
+	  <top_attach>4</top_attach>
+	  <bottom_attach>5</bottom_attach>
 	  <xpad>2</xpad>
 	  <ypad>0</ypad>
 	  <xexpand>False</xexpand>
