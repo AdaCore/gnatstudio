@@ -103,7 +103,8 @@ package GVD.Text_Box.Source_Editor is
    --  this procedure does nothing.
 
    procedure Unhighlight_Current_Line
-     (Editor : access Source_Editor_Record) is abstract;
+     (Editor  : access Source_Editor_Record;
+      Process : Glib.Object.GObject) is abstract;
    --  Unhighlight the current line in the editor if it is highlighted.
    --  Do nothing otherwise.
 

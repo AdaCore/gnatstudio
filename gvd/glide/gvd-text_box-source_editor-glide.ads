@@ -81,7 +81,9 @@ package GVD.Text_Box.Source_Editor.Glide is
    procedure Highlight_Current_Line (Editor : access GEdit_Record);
    --  See GVD.Text_Box.Source_Editor for more information.
 
-   procedure Unhighlight_Current_Line (Editor : access GEdit_Record);
+   procedure Unhighlight_Current_Line
+     (Editor  : access GEdit_Record;
+      Process : Glib.Object.GObject);
    --  See GVD.Text_Box.Source_Editor for more information.
 
    procedure Preferences_Changed (Editor : access GEdit_Record);
