@@ -25,6 +25,7 @@ package Codefix.Text_Manager.Ada_Extracts is
    type Ada_Instruction is new Extract with private;
 
    procedure Free (This : in out Ada_Instruction);
+   --  Free the memory associated to an Ada_Instruction.
 
    procedure Get_Unit
      (Current_Text : Text_Navigator_Abstr'Class;
@@ -49,6 +50,7 @@ package Codefix.Text_Manager.Ada_Extracts is
    type Ada_List is new Ada_Instruction with private;
 
    procedure Free (This : in out Ada_List);
+   --  Free the memory associated to an Ada_List.
 
    procedure Get_Unit
      (Current_Text : Text_Navigator_Abstr'Class;
@@ -133,10 +135,13 @@ private
       Back          : Dynamic_String;
    end record;
 
-   function Is_Alone (This : Token_Record; Offset_Col : Integer)
+   function Is_Alone (This : Token_Record)
      return Boolean;
 
    function Get_Element (This : Ada_List; Num : Natural)
      return Tokens_List.List_Node;
+
+   procedure Update_Deletion
+     (This : in out Ada_List; Token_Deleted : Token_Record);
 
 end Codefix.Text_Manager.Ada_Extracts;
