@@ -21,37 +21,37 @@
 --  This package contains the implementation for a specific scripting language,
 --  the simple GPS shell.
 
-with Ada.Exceptions;           use Ada.Exceptions;
-with Ada.Strings.Fixed;        use Ada.Strings.Fixed;
+with Ada.Exceptions;            use Ada.Exceptions;
+with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 with Generic_List;
-with GNAT.Debug_Utilities;     use GNAT.Debug_Utilities;
-with GNAT.OS_Lib;              use GNAT.OS_Lib;
-with Glib.Xml_Int;             use Glib.Xml_Int;
-with Glib.Object;              use Glib.Object;
-with Glide_Intl;               use Glide_Intl;
-with Glide_Kernel.Actions;     use Glide_Kernel.Actions;
-with Glide_Kernel.Modules;     use Glide_Kernel.Modules;
-with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
+with GNAT.Debug_Utilities;      use GNAT.Debug_Utilities;
+with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with Glib.Xml_Int;              use Glib.Xml_Int;
+with Glib.Object;               use Glib.Object;
+with Glide_Intl;                use Glide_Intl;
+with Glide_Kernel.Actions;      use Glide_Kernel.Actions;
+with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
+with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
 with Glide_Kernel.Task_Manager; use Glide_Kernel.Task_Manager;
-with Glide_Kernel.Scripts;     use Glide_Kernel.Scripts;
-with Glide_Kernel;             use Glide_Kernel;
-with Gtk.Enums;                use Gtk.Enums;
-with Gtk.Widget;               use Gtk.Widget;
-with Gtkada.MDI;               use Gtkada.MDI;
-with Commands;                 use Commands;
-with Commands.Interactive;     use Commands.Interactive;
-with Histories;                use Histories;
-with Interactive_Consoles;     use Interactive_Consoles;
-with String_List_Utils;        use String_List_Utils;
+with Glide_Kernel.Scripts;      use Glide_Kernel.Scripts;
+with Glide_Kernel;              use Glide_Kernel;
+with Gtk.Enums;                 use Gtk.Enums;
+with Gtk.Widget;                use Gtk.Widget;
+with Gtkada.MDI;                use Gtkada.MDI;
+with Commands;                  use Commands;
+with Commands.Interactive;      use Commands.Interactive;
+with Histories;                 use Histories;
+with Interactive_Consoles;      use Interactive_Consoles;
+with String_List_Utils;         use String_List_Utils;
 with String_Hash;
 with System.Address_Image;
-with System;                   use System;
-with Traces;                   use Traces;
-with Basic_Types;              use Basic_Types;
-with String_Utils;             use String_Utils;
-with OS_Utils;                 use OS_Utils;
+with System;                    use System;
+with Traces;                    use Traces;
+with Basic_Types;               use Basic_Types;
+with String_Utils;              use String_Utils;
+with OS_Utils;                  use OS_Utils;
 
 package body Shell_Script is
 
@@ -144,12 +144,12 @@ package body Shell_Script is
    ---------------------
 
    type Shell_Scripting_Record is new Scripting_Language_Record with record
-      Kernel  : Glide_Kernel.Kernel_Handle;
-      Console : Shell_Console;
+      Kernel    : Glide_Kernel.Kernel_Handle;
+      Console   : Shell_Console;
       Instances : Instances_List.List;
       --  All the instances that were created
 
-      Returns : Argument_List (1 .. Num_Previous_Returns);
+      Returns   : Argument_List (1 .. Num_Previous_Returns);
       --  The result of the Num_Previous_Returns previous commands
    end record;
    type Shell_Scripting is access all Shell_Scripting_Record'Class;
@@ -168,44 +168,44 @@ package body Shell_Script is
       Name          : String;
       Base          : Class_Type := No_Class);
    procedure Execute_Command
-     (Script             : access Shell_Scripting_Record;
-      Command            : String;
-      Console            : Interactive_Consoles.Interactive_Console := null;
-      Hide_Output        : Boolean := False;
-      Show_Command       : Boolean := True;
-      Errors             : out Boolean);
+     (Script        : access Shell_Scripting_Record;
+      Command       : String;
+      Console       : Interactive_Consoles.Interactive_Console := null;
+      Hide_Output   : Boolean := False;
+      Show_Command  : Boolean := True;
+      Errors        : out Boolean);
    function Execute_Command
-     (Script             : access Shell_Scripting_Record;
-      Command            : String;
-      Console            : Interactive_Consoles.Interactive_Console := null;
-      Hide_Output        : Boolean := False;
-      Show_Command       : Boolean := True;
-      Errors             : access Boolean) return String;
+     (Script        : access Shell_Scripting_Record;
+      Command       : String;
+      Console       : Interactive_Consoles.Interactive_Console := null;
+      Hide_Output   : Boolean := False;
+      Show_Command  : Boolean := True;
+      Errors        : access Boolean) return String;
    function Execute_Command
-     (Script             : access Shell_Scripting_Record;
-      Command            : String;
-      Console            : Interactive_Consoles.Interactive_Console := null;
-      Hide_Output        : Boolean := False;
-      Errors             : access Boolean) return Boolean;
+     (Script        : access Shell_Scripting_Record;
+      Command       : String;
+      Console       : Interactive_Consoles.Interactive_Console := null;
+      Hide_Output   : Boolean := False;
+      Errors        : access Boolean) return Boolean;
    function Execute_Command
      (Script  : access Shell_Scripting_Record;
       Command : String;
       Args    : Callback_Data'Class) return Boolean;
    function Execute_Command_With_Args
-     (Script             : access Shell_Scripting_Record;
-      Command            : String;
-      Args               : GNAT.OS_Lib.Argument_List) return String;
+     (Script        : access Shell_Scripting_Record;
+      Command       : String;
+      Args          : GNAT.OS_Lib.Argument_List) return String;
    procedure Execute_File
-     (Script             : access Shell_Scripting_Record;
-      Filename           : String;
-      Console            : Interactive_Consoles.Interactive_Console := null;
-      Hide_Output        : Boolean := False;
-      Errors             : out Boolean);
+     (Script        : access Shell_Scripting_Record;
+      Filename      : String;
+      Console       : Interactive_Consoles.Interactive_Console := null;
+      Hide_Output   : Boolean := False;
+      Errors        : out Boolean);
    function Get_Name (Script : access Shell_Scripting_Record) return String;
    function Is_Subclass
-     (Script : access Shell_Scripting_Record;
+     (Script   : access Shell_Scripting_Record;
       Instance : access Class_Instance_Record'Class;
-      Base   : Class_Type) return Boolean;
+      Base     : Class_Type) return Boolean;
    function Get_Kernel
      (Script : access Shell_Scripting_Record)
       return Kernel_Handle;
@@ -213,7 +213,7 @@ package body Shell_Script is
 
    function New_Instance
      (Script : access Shell_Scripting_Record; Class : Class_Type)
-         return Class_Instance;
+      return Class_Instance;
 
    ----------------------
    -- Shell_Subprogram --
@@ -390,8 +390,7 @@ package body Shell_Script is
    --  Command must be a single command (no semicolon-separated list).
 
    function Save_Desktop
-     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class)
-     return Node_Ptr;
+     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class) return Node_Ptr;
    function Load_Desktop
      (MDI  : MDI_Window;
       Node : Node_Ptr;
@@ -458,7 +457,7 @@ package body Shell_Script is
 
    function Instance_From_Address
      (Script : access Shell_Scripting_Record'Class;
-      Add : System.Address) return Shell_Class_Instance
+      Add    : System.Address) return Shell_Class_Instance
    is
       L   : List_Node := First (Script.Instances);
    begin
@@ -546,9 +545,9 @@ package body Shell_Script is
    -----------------
 
    function Is_Subclass
-     (Script : access Shell_Scripting_Record;
+     (Script   : access Shell_Scripting_Record;
       Instance : access Class_Instance_Record'Class;
-      Base   : Class_Type) return Boolean
+      Base     : Class_Type) return Boolean
    is
       pragma Unreferenced (Script, Instance, Base);
    begin
@@ -577,8 +576,8 @@ package body Shell_Script is
 
    function Interpret_Command_Handler
      (Console : access Interactive_Console_Record'Class;
-      Input  : String;
-      Kernel : System.Address) return String
+      Input   : String;
+      Kernel  : System.Address) return String
    is
       pragma Unreferenced (Console);
       K : constant Kernel_Handle := Convert (Kernel);
@@ -726,10 +725,10 @@ package body Shell_Script is
    begin
       Shell_Module_Id := new Shell_Module_Id_Record;
       Register_Module
-        (Module                  => Module_ID (Shell_Module_Id),
-         Kernel                  => Kernel,
-         Module_Name             => "Shell script",
-         Priority                => Glide_Kernel.Default_Priority);
+        (Module      => Module_ID (Shell_Module_Id),
+         Kernel      => Kernel,
+         Module_Name => "Shell script",
+         Priority    => Glide_Kernel.Default_Priority);
       Glide_Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
 
@@ -776,7 +775,7 @@ package body Shell_Script is
          Handler      => Module_Command_Handler'Access);
       Register_Command
         (Script, "clear_cache",
-         Handler      => Module_Command_Handler'Access);
+         Handler => Module_Command_Handler'Access);
    end Register_Module;
 
    ----------------------------
@@ -789,14 +788,18 @@ package body Shell_Script is
    is
       use String_List_Utils.String_List;
 
-      L            : String_List_Utils.String_List.List;
-      L2           : String_List_Utils.String_List.List_Node;
-      Result       : GNAT.OS_Lib.String_Access := new String'("");
-      Kernel       : constant Kernel_Handle := Get_Kernel (Data);
+      L      : String_List_Utils.String_List.List;
+      L2     : String_List_Utils.String_List.List_Node;
+      Result : GNAT.OS_Lib.String_Access := new String'("");
+      Kernel : constant Kernel_Handle := Get_Kernel (Data);
 
       procedure Insert (S : String; Separator : Character := ASCII.LF);
       --  Appends S & Separator to Result.
       --  Result must not be set to Null when calling this subprogram.
+
+      ------------
+      -- Insert --
+      ------------
 
       procedure Insert (S : String; Separator : Character := ASCII.LF) is
          R : constant String := Result.all & S & Separator;
@@ -861,8 +864,8 @@ package body Shell_Script is
       elsif Command = "load" then
          declare
             Filename : constant String := Nth_Arg (Data, 1);
-            Buffer : GNAT.OS_Lib.String_Access := Read_File (Filename);
-            Errors : Boolean;
+            Buffer   : GNAT.OS_Lib.String_Access := Read_File (Filename);
+            Errors   : Boolean;
          begin
             if Buffer /= null then
                Execute_Command
@@ -893,13 +896,13 @@ package body Shell_Script is
    ----------------------
 
    procedure Register_Command
-     (Script         : access Shell_Scripting_Record;
-      Command        : String;
-      Minimum_Args   : Natural := 0;
-      Maximum_Args   : Natural := 0;
-      Handler        : Module_Command_Function;
-      Class          : Class_Type := No_Class;
-      Static_Method  : Boolean := False)
+     (Script        : access Shell_Scripting_Record;
+      Command       : String;
+      Minimum_Args  : Natural := 0;
+      Maximum_Args  : Natural := 0;
+      Handler       : Module_Command_Function;
+      Class         : Class_Type := No_Class;
+      Static_Method : Boolean := False)
    is
       pragma Unreferenced (Script);
       Cmd  : GNAT.OS_Lib.String_Access;
@@ -955,9 +958,9 @@ package body Shell_Script is
    --------------------
 
    procedure Register_Class
-     (Script        : access Shell_Scripting_Record;
-      Name          : String;
-      Base          : Class_Type := No_Class)
+     (Script : access Shell_Scripting_Record;
+      Name   : String;
+      Base   : Class_Type := No_Class)
    is
       pragma Unreferenced (Script, Name, Base);
    begin
@@ -970,16 +973,16 @@ package body Shell_Script is
    ---------------------
 
    procedure Execute_Command
-     (Script             : access Shell_Scripting_Record;
-      Command            : String;
-      Console            : Interactive_Consoles.Interactive_Console := null;
-      Hide_Output        : Boolean := False;
-      Show_Command       : Boolean := True;
-      Errors             : out Boolean)
+     (Script       : access Shell_Scripting_Record;
+      Command      : String;
+      Console      : Interactive_Consoles.Interactive_Console := null;
+      Hide_Output  : Boolean := False;
+      Show_Command : Boolean := True;
+      Errors       : out Boolean)
    is
       pragma Unreferenced (Show_Command);
       Err : aliased Boolean;
-      S : constant String := Execute_GPS_Shell_Command
+      S   : constant String := Execute_GPS_Shell_Command
         (Script.Kernel, Command, Err'Unchecked_Access);
    begin
       Errors := Err;
@@ -999,9 +1002,9 @@ package body Shell_Script is
    -------------------------------
 
    function Execute_Command_With_Args
-     (Script             : access Shell_Scripting_Record;
-      Command            : String;
-      Args               : GNAT.OS_Lib.Argument_List) return String
+     (Script  : access Shell_Scripting_Record;
+      Command : String;
+      Args    : GNAT.OS_Lib.Argument_List) return String
    is
       Errors : aliased Boolean;
    begin
@@ -1014,11 +1017,11 @@ package body Shell_Script is
    ------------------
 
    procedure Execute_File
-     (Script             : access Shell_Scripting_Record;
-      Filename           : String;
-      Console            : Interactive_Consoles.Interactive_Console := null;
-      Hide_Output        : Boolean := False;
-      Errors             : out Boolean)
+     (Script      : access Shell_Scripting_Record;
+      Filename    : String;
+      Console     : Interactive_Consoles.Interactive_Console := null;
+      Hide_Output : Boolean := False;
+      Errors      : out Boolean)
    is
       Err  : aliased Boolean;
       Args : Argument_List := (1 => new String'(Filename));
@@ -1026,7 +1029,7 @@ package body Shell_Script is
       Trace (Me, "Execute_File: load " & Filename);
 
       declare
-         S    : constant String := Execute_GPS_Shell_Command
+         S : constant String := Execute_GPS_Shell_Command
            (Script.Kernel, "load", Args, Err'Unchecked_Access);
       begin
          Errors := Err;
@@ -1068,15 +1071,15 @@ package body Shell_Script is
    ---------------------
 
    function Execute_Command
-     (Script             : access Shell_Scripting_Record;
-      Command            : String;
-      Console            : Interactive_Consoles.Interactive_Console := null;
-      Hide_Output        : Boolean := False;
-      Show_Command       : Boolean := True;
-      Errors             : access Boolean) return String
+     (Script       : access Shell_Scripting_Record;
+      Command      : String;
+      Console      : Interactive_Consoles.Interactive_Console := null;
+      Hide_Output  : Boolean := False;
+      Show_Command : Boolean := True;
+      Errors       : access Boolean) return String
    is
       pragma Unreferenced (Show_Command);
-      Err : aliased Boolean;
+      Err    : aliased Boolean;
       Result : constant String := Execute_GPS_Shell_Command
         (Script.Kernel, Command, Err'Unchecked_Access);
 
@@ -1101,11 +1104,11 @@ package body Shell_Script is
    ---------------------
 
    function Execute_Command
-     (Script             : access Shell_Scripting_Record;
-      Command            : String;
-      Console            : Interactive_Consoles.Interactive_Console := null;
-      Hide_Output        : Boolean := False;
-      Errors             : access Boolean) return Boolean
+     (Script      : access Shell_Scripting_Record;
+      Command     : String;
+      Console     : Interactive_Consoles.Interactive_Console := null;
+      Hide_Output : Boolean := False;
+      Errors      : access Boolean) return Boolean
    is
       Err    : aliased Boolean;
       Result : constant String := Trim
@@ -1279,6 +1282,10 @@ package body Shell_Script is
       function Unprotect (Str : String) return String;
       --  Remove the \ protections in Str
 
+      ---------------
+      -- Unprotect --
+      ---------------
+
       function Unprotect (Str : String) return String is
          Result : String (Str'Range);
          Index  : Natural := Result'First;
@@ -1303,10 +1310,10 @@ package body Shell_Script is
       end Unprotect;
 
 
-      Args         : Argument_List_Access;
-      First, Last  : Integer;
-      Tmp          : GNAT.OS_Lib.String_Access;
-      Quoted       : Boolean;
+      Args          : Argument_List_Access;
+      First, Last   : Integer;
+      Tmp           : GNAT.OS_Lib.String_Access;
+      Quoted        : Boolean;
       Triple_Quoted : Boolean;
    begin
       if Command /= "" then
@@ -1581,7 +1588,9 @@ package body Shell_Script is
    -------------
 
    function Nth_Arg
-     (Data : Shell_Callback_Data; N : Positive; Class : Class_Type;
+     (Data       : Shell_Callback_Data;
+      N          : Positive;
+      Class      : Class_Type;
       Allow_Null : Boolean := False)
       return Class_Instance
    is
@@ -1705,7 +1714,7 @@ package body Shell_Script is
    ----------------------
 
    procedure Set_Return_Value
-     (Data   : in out Shell_Callback_Data; Value : Boolean) is
+     (Data : in out Shell_Callback_Data; Value : Boolean) is
    begin
       if not Data.Return_As_List then
          Free (Data.Return_Value);
