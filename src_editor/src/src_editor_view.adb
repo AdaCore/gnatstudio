@@ -705,7 +705,9 @@ package body Src_Editor_View is
    --------------------
 
    procedure Size_Allocated (View : access Gtk_Widget_Record'Class) is
-      V : constant Source_View := Source_View (View);
+      V      : constant Source_View := Source_View (View);
+      Buffer : constant Source_Buffer := Source_Buffer (Get_Buffer (V));
+
    begin
       --  Keep the cursor on screen when the editor is resized.
       --  Do not do this if the editor is synchronized with another editor.
@@ -714,10 +716,8 @@ package body Src_Editor_View is
         and then V.Cursor_Position >= 0.0
         and then V.Cursor_Position <= 1.0
       then
-         Save_Cursor_Position (V);
-         Scroll_To_Mark
-           (V, Get_Insert (Get_Buffer (V)), Use_Align => True,
-            Within_Margin => 0.0, Xalign => 0.5, Yalign => V.Cursor_Position);
+         Scroll_To_Cursor_Location
+           (V, Center => Position_Set_Explicitely (Buffer));
       end if;
 
    exception
