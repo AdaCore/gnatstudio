@@ -63,6 +63,10 @@ package body GVD.Dialogs.Callbacks is
       Params : Gtk.Arguments.Gtk_Args)
    is
       --  Since lists start at 0, increment the value.
+      --  ??? This will only work with info tasks where there are no
+      --  holes, but info threads can have holes when e.g threads are
+      --  terminated, see 9019-008.
+
       Thread        : constant Gint := To_Gint (Params, 1) + 1;
 
       Top           : constant GVD_Dialog :=
