@@ -195,7 +195,9 @@ package body Switches_Editors is
                Check_Toggle
                  (Editor.Compile_No_Inline, "-fno-inline", Arr, Index);
                Check_Toggle
-                 (Editor.Compile_Interunit_Inlining, "-gnatn", Arr, Index);
+                 (Editor.Compile_Interunit_Inlining, "-gnatN", Arr, Index);
+               Check_Toggle
+                 (Editor.Compile_Unroll_Loops, "-funroll-loops", Arr, Index);
                Check_Toggle
                  (Editor.Compile_Full_Errors, "-gnatf", Arr, Index);
                Check_Toggle
@@ -205,7 +207,7 @@ package body Switches_Editors is
                Check_Toggle
                  (Editor.Compile_Elab_Warning, "-gnatwl", Arr, Index);
                Check_Toggle
-                 (Editor.Compile_Unused_Warning, "-gnawu", Arr, Index);
+                 (Editor.Compile_Unused_Warning, "-gnatwu", Arr, Index);
                Check_Toggle
                  (Editor.Compile_Style_Checks, "-gnaty", Arr, Index);
                Check_Toggle
@@ -218,7 +220,7 @@ package body Switches_Editors is
                  (Editor.Compile_Dynamic_Elaboration, "-gnatE", Arr, Index);
                Check_Toggle (Editor.Compile_Assertions, "-gnata", Arr, Index);
                Check_Toggle
-                 (Editor.Compile_Debug_Expanded_Code, "-gnatdg", Arr, Index);
+                 (Editor.Compile_Debug_Expanded_Code, "-gnatD", Arr, Index);
                Check_Toggle
                  (Editor.Compile_Language_Extensions, "-gnatX", Arr, Index);
                Check_Toggle (Editor.Compile_Ada83_Mode, "-gnat83", Arr, Index);
@@ -352,12 +354,14 @@ package body Switches_Editors is
             Set_Combo (Editor.Optimization_Level, "-O");
             Set_Combo (Editor.Compile_Representation_Info, "-gnatR");
             Set_Active (Editor.Compile_No_Inline, Is_Set ("-fno-inline"));
-            Set_Active (Editor.Compile_Interunit_Inlining, Is_Set ("-gnatn"));
+            Set_Active (Editor.Compile_Interunit_Inlining, Is_Set ("-gnatN"));
+            Set_Active
+              (Editor.Compile_Unroll_Loops, Is_Set ("-funroll-loops"));
             Set_Active (Editor.Compile_Full_Errors, Is_Set ("-gnatf"));
             Set_Active (Editor.Compile_No_Warnings, Is_Set ("-gnatws"));
             Set_Active (Editor.Compile_Warning_Error, Is_Set ("-gnatwe"));
             Set_Active (Editor.Compile_Elab_Warning, Is_Set ("-gnatwl"));
-            Set_Active (Editor.Compile_Unused_Warning, Is_Set ("-gnawu"));
+            Set_Active (Editor.Compile_Unused_Warning, Is_Set ("-gnatwu"));
             Set_Active (Editor.Compile_Style_Checks, Is_Set ("-gnaty"));
             Set_Active (Editor.Compile_Overflow_Checking, Is_Set ("-gnato"));
             Set_Active (Editor.Compile_Suppress_All_Checks, Is_Set ("-gnatp"));
@@ -366,7 +370,7 @@ package body Switches_Editors is
             Set_Active (Editor.Compile_Dynamic_Elaboration, Is_Set ("-gnatE"));
             Set_Active (Editor.Compile_Assertions, Is_Set ("-gnata"));
             Set_Active
-              (Editor.Compile_Debug_Expanded_Code, Is_Set ("-gnatdg"));
+              (Editor.Compile_Debug_Expanded_Code, Is_Set ("-gnatD"));
             Set_Active (Editor.Compile_Language_Extensions, Is_Set ("-gnatX"));
             Set_Active (Editor.Compile_Ada83_Mode, Is_Set ("-gnat83"));
 
@@ -421,7 +425,8 @@ package body Switches_Editors is
                    and then Switches (J)
                    (Switches (J)'First .. Switches (J)'First + 5) = "-gnatR")
                   or else Switches (J).all = "-fno-inline"
-                  or else Switches (J).all = "-gnatn"
+                  or else Switches (J).all = "-gnatN"
+                  or else Switches (J).all = "-funroll-loops"
                   or else Switches (J).all = "-gnatf"
                   or else Switches (J).all = "-gnatws"
                   or else Switches (J).all = "-gnatwe"
@@ -433,7 +438,7 @@ package body Switches_Editors is
                   or else Switches (J).all = "-fstack-check"
                   or else Switches (J).all = "-gnatE"
                   or else Switches (J).all = "-gnata"
-                  or else Switches (J).all = "-gnatdg"
+                  or else Switches (J).all = "-gnatD"
                   or else Switches (J).all = "-gnatX"
                   or else Switches (J).all = "-gnat83")
                then
