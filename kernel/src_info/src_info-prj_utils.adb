@@ -27,14 +27,9 @@ with Types;                   use Types;
 with Snames;
 with Prj.Util;                use Prj.Util;
 with Prj_API;                 use Prj_API;
+with Prj;                     use Prj;
 
 package body Src_Info.Prj_Utils is
-
-   Full_Naming_Scheme_Handling : constant Boolean := False;
-   --  <preference> Should be set to True if different naming schemes can be
-   --  seen in various subprojects (ie naming_scheme1 for project A and a
-   --  different naming_scheme2 for project B).
-   --  This must be synchronized with the matching constant in Src_Info.ALI,
 
    function Get_Filename
      (Unit_Name_Id       : Name_Id;
@@ -236,10 +231,7 @@ package body Src_Info.Prj_Utils is
             end case;
          end if;
 
-         if not Full_Naming_Scheme_Handling then
-            Result := Candidate;
-
-         elsif Candidate /= No_Name
+         if Candidate /= No_Name
            and then Is_Direct_Source (Get_Name_String (Candidate), View)
          then
             Result := Candidate;
@@ -278,14 +270,10 @@ package body Src_Info.Prj_Utils is
       Namet.Name_Len := Namet.Name_Len - Part_Marker_Len;
       Short_Uname := Namet.Name_Find;
 
-      if Full_Naming_Scheme_Handling then
-         For_All_Projects (Project, Result);
-      else
-         Check_Project (Project, Result);
-      end if;
+      For_All_Projects (Project, Result);
 
       if Result = No_Name then
-         --  ??? Special handling for the runtime files
+         --  Special handling for the runtime files
          --  ??? Could be simplified if we have direct access to the default
          --  ??? naming scheme.
 
@@ -296,7 +284,7 @@ package body Src_Info.Prj_Utils is
          Name_Len := 4;
 
          if Part = Unit_Body then
-            Name_Buffer (1 .. Name_Len) := ".ads";
+            Name_Buffer (1 .. Name_Len) := ".adb";
          else
             Name_Buffer (1 .. Name_Len) := ".ads";
          end if;
@@ -304,7 +292,6 @@ package body Src_Info.Prj_Utils is
          S := Name_Find;
          return Get_Name_String
            (Get_Filename (Short_Uname, D, All_Lower_Case, S));
-
       else
          return Get_Name_String (Result);
       end if;

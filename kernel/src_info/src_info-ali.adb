@@ -42,13 +42,6 @@ package body Src_Info.ALI is
    --  ??? but this is not terribly important since most of the time, only the
    --  ??? Run-time file are krunched, and we know that their max_len is 8.
 
-   Full_Naming_Scheme_Handling : constant Boolean := True;
-   --  <preference> Should be set to True if different naming schemes can be
-   --  seen in various subprojects (ie naming_scheme1 for project A and a
-   --  different naming_scheme2 for project B).
-   --  This must be synchronized with the matching constant in
-   --  Src_Info.Prj_Utils.
-
    type Sdep_To_Sfile_Table is array (Sdep_Id range <>) of Source_File;
    --  An array used to store the Source_File data for each Sdep ID in
    --  the Sdep table.
@@ -535,12 +528,8 @@ package body Src_Info.ALI is
       --
       --    end loop Strip_Loop;
 
-      if Full_Naming_Scheme_Handling then
-         Prj := Get_Project_From_File
-           (Project, Get_Name_String (Source_Filename));
-      else
-         Prj := Project;
-      end if;
+      Prj := Get_Project_From_File
+        (Project, Get_Name_String (Source_Filename));
 
       if Subunit_Name = No_Name then
          Get_Unit_Source_File
