@@ -1012,7 +1012,7 @@ package body Project_Viewers is
 
       procedure Report_Error (Msg : String) is
       begin
-         Console.Insert (Kernel, Msg);
+         Console.Insert (Kernel, Msg, Mode => Console.Error);
       end Report_Error;
 
       Dialog : Gtk_Dialog;
