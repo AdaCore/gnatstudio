@@ -1214,6 +1214,11 @@ package body Project_Explorers is
 
       Success := Expand_Row (T.Tree, Path, False);
 
+      Scroll_To_Cell
+        (T.Tree,
+         Path, null, True,
+         0.1, 0.1);
+
       T.Expanding := False;
 
    exception
