@@ -873,8 +873,6 @@ package body Src_Editor_Buffer is
       Column_End   : Gint;
 
    begin
-      User_Edit_Hook (Buffer);
-
       Get_Text_Iter (Nth (Params, 1), Start_Iter);
       Get_Text_Iter (Nth (Params, 2), End_Iter);
 
@@ -911,6 +909,8 @@ package body Src_Editor_Buffer is
       if Buffer.Inserting then
          return;
       end if;
+
+      User_Edit_Hook (Buffer);
 
       if not Is_Null_Command (Command)
         and then (Get_Mode (Command) /= Deletion
@@ -2586,14 +2586,6 @@ package body Src_Editor_Buffer is
 
       --  Currently, Gtk_Text_Buffer does not export a service to replace
       --  some text, so we delete the slice first, then insert the text...
-
-      if Start_Line /= End_Line then
-         Lines_Remove_Hook_Before
-           (Buffer,
-            Buffer_Line_Type (Start_Line + 1),
-            Buffer_Line_Type (End_Line + 1));
-      end if;
-
       Delete (Buffer, Start_Iter, End_Iter);
 
       Get_Iter_At_Line_Offset (Buffer, Start_Iter, Start_Line, Start_Column);
@@ -3177,33 +3169,15 @@ package body Src_Editor_Buffer is
       Buffer.Controls_Set := False;
    end Remove_Controls;
 
-   ----------------------
-   -- Get_Columns_Info --
-   ----------------------
+   ----------------------------
+   -- Get_Total_Column_Width --
+   ----------------------------
 
-   function Get_Columns_Info
-     (Buffer : access Source_Buffer_Record)
-      return Line_Info_Display_Array_Access
-   is
+   function Get_Total_Column_Width
+     (Buffer : access Source_Buffer_Record) return Natural is
    begin
-      if Buffer.Buffer_Line_Info_Columns.all = null then
-         if Buffer.Editable_Line_Info_Columns.all /= null then
-            return new Line_Info_Display_Array'
-              (Buffer.Editable_Line_Info_Columns.all.all);
-         end if;
-      else
-         if Buffer.Editable_Line_Info_Columns.all /= null then
-            return new Line_Info_Display_Array'
-              (Buffer.Buffer_Line_Info_Columns.all.all
-               & Buffer.Editable_Line_Info_Columns.all.all);
-         else
-            return new Line_Info_Display_Array'
-              (Buffer.Editable_Line_Info_Columns.all.all);
-         end if;
-      end if;
-
-      return null;
-   end Get_Columns_Info;
+      return Buffer.Total_Column_Width;
+   end Get_Total_Column_Width;
 
    ------------------------
    -- Line_Needs_Refresh --
@@ -3243,49 +3217,6 @@ package body Src_Editor_Buffer is
 
       return False;
    end Line_Needs_Refresh;
-
-   -------------------
-   -- Get_Side_Info --
-   -------------------
-
-   function Get_Side_Info
-     (Buffer : access Source_Buffer_Record;
-      Line   : Buffer_Line_Type) return Line_Info_Width_Array_Access
-   is
-      Editable_Line : Editable_Line_Type;
-   begin
-      Editable_Line := Get_Editable_Line (Buffer, Line);
-
-      if Line in Buffer.Line_Data'Range then
-         if Buffer.Line_Data (Line).Side_Info_Data = null then
-            if Editable_Line /= 0 then
-               if Buffer.Editable_Lines
-                 (Editable_Line).Side_Info_Data /= null
-               then
-                  return new Line_Info_Width_Array'
-                    (Buffer.Editable_Lines
-                       (Editable_Line).Side_Info_Data.all);
-               end if;
-            end if;
-         else
-            if Editable_Line /= 0
-              and then Buffer.Editable_Lines
-                (Editable_Line).Side_Info_Data /= null
-            then
-               return new Line_Info_Width_Array'
-                 (Buffer.Line_Data (Line).Side_Info_Data.all
-                  & Buffer.Editable_Lines
-                    (Editable_Line).Side_Info_Data.all);
-
-            else
-               return new Line_Info_Width_Array'
-                 (Buffer.Line_Data (Line).Side_Info_Data.all);
-            end if;
-         end if;
-      end if;
-
-      return null;
-   end Get_Side_Info;
 
    ----------------------
    -- Create_Side_Info --
@@ -3786,10 +3717,55 @@ package body Src_Editor_Buffer is
       Lang        : Language_Access;
       New_Line    : Boolean := True) return Boolean
    is
-      Iter : Gtk_Text_Iter;
+      Iter, Pos : Gtk_Text_Iter;
+      Result    : Boolean;
+      Ending    : Boolean;
+      Success   : Boolean := True;
+      Count     : Natural := 0;
    begin
       Get_Iter_At_Mark (Buffer, Iter, Buffer.Insert_Mark);
-      return Do_Indentation (Buffer, Lang, Iter, New_Line);
+      Ending := Ends_Line (Iter);
+
+      if not New_Line then
+         Copy (Iter, Pos);
+
+         Set_Line_Offset (Pos, 0);
+         while Success and then Get_Char (Pos) = ' ' loop
+            Forward_Char (Pos, Success);
+         end loop;
+
+         Success := True;
+         while Success and then not Equal (Iter, Pos) loop
+            Forward_Char (Pos, Success);
+            Count := Count + 1;
+         end loop;
+      end if;
+
+      Result := Do_Indentation (Buffer, Lang, Iter, New_Line);
+
+      --  If the cursor was set in the middle of a line, restore its position
+      --  within the line. Otherwise, restore it at the first non-blank
+      --  character.
+
+      if not Ending then
+         Get_Iter_At_Mark (Buffer, Iter, Buffer.Insert_Mark);
+         Set_Line_Offset (Iter, 0);
+
+         Success := True;
+         while Success and then Get_Char (Iter) = ' ' loop
+            Forward_Char (Iter, Success);
+         end loop;
+
+         if not New_Line then
+            while Success and then Count > 0 loop
+               Forward_Char (Iter, Success);
+               Count := Count - 1;
+            end loop;
+         end if;
+         Place_Cursor (Buffer, Iter);
+      end if;
+
+      return Result;
    end Do_Indentation;
 
    --------------------
@@ -3948,6 +3924,10 @@ package body Src_Editor_Buffer is
          if Ends_Line (Start) then
             Forward_Char (Start, Result);
          end if;
+
+      else
+         Copy (Cursor_Iter, Start);
+         Copy (Cursor_Iter, Pos);
       end if;
 
       Copy (Pos, Iter);
@@ -4036,12 +4016,6 @@ package body Src_Editor_Buffer is
          --  Need to recompute iter, since the slice replacement that
          --  we just did has invalidated iter.
 
-         if Is_Valid_Position (Buffer, Line + 1, Gint (Next_Indent)) then
-            Get_Iter_At_Line_Offset
-              (Buffer, Pos, Line + 1, Gint (Next_Indent));
-            Place_Cursor (Buffer, Pos);
-         end if;
-
       else
          Current_Line := Get_Line (Start);
          Set_Line_Offset (Start, 0);
@@ -4099,14 +4073,6 @@ package body Src_Editor_Buffer is
             Current_Line := Current_Line + 1;
             Get_Iter_At_Line_Offset (Buffer, Start, Current_Line);
          end loop;
-
-         --  Replace the cursor.
-
-         if Use_Tabs then
-            Set_Screen_Position (Buffer, Cursor_Line, Cursor_Column);
-         else
-            Set_Cursor_Position (Buffer, Cursor_Line, Cursor_Column);
-         end if;
       end if;
 
       g_free (C_Str);
