@@ -995,7 +995,8 @@ package body Src_Editor_Module is
 
                if Line >= 0 and then Number > 0 then
                   --  Create a new mark record and insert it in the list.
-
+                  Mark_Record.Child := Child;
+                  Mark_Record.Line := 0;
                   Mark_Record.File := new String'(Filename);
                   Mark_Record.Id := Id.Next_Mark_Id;
 
@@ -1193,7 +1194,6 @@ package body Src_Editor_Module is
       Node        : List_Node;
       Mark_Record : Mark_Identifier_Record;
       Added       : Boolean := False;
-
       Box         : Source_Box;
 
    begin
@@ -1209,6 +1209,7 @@ package body Src_Editor_Module is
 
             if Mark_Record.Child /= null
               and then Mark_Record.Mark /= null
+              and then Mark_Record.Line /= 0
             then
                Box := Source_Box (Get_Widget (Mark_Record.Child));
 
