@@ -28,8 +28,10 @@ with Glib.Convert;              use Glib.Convert;
 with Glib.Object;               use Glib.Object;
 with Glib.Values;               use Glib.Values;
 with Glib.Xml_Int;              use Glib.Xml_Int;
+with Gdk.Dnd;                   use Gdk.Dnd;
 with Gdk.Event;                 use Gdk.Event;
 with Gtk.Check_Menu_Item;       use Gtk.Check_Menu_Item;
+with Gtk.Dnd;                   use Gtk.Dnd;
 with Gtk.Handlers;              use Gtk.Handlers;
 with Gtk.Main;                  use Gtk.Main;
 with Gtk.Tree_View;             use Gtk.Tree_View;
@@ -623,6 +625,12 @@ package body Project_Explorers_Files is
       Widget_Callback.Object_Connect
         (Explorer.File_Tree, "destroy",
          On_File_Destroy'Access, Explorer, False);
+
+      Gtk.Dnd.Dest_Set
+        (Explorer.File_Tree, Dest_Default_All, Target_Table_Url, Action_Any);
+      Kernel_Callback.Connect
+        (Explorer.File_Tree, "drag_data_received",
+         Drag_Data_Received'Access, Kernel_Handle (Kernel));
    end Initialize;
 
    ------------------------------

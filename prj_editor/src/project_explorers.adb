@@ -32,9 +32,11 @@ with Glib.Object;               use Glib.Object;
 with Glib.Values;               use Glib.Values;
 with Glib.Xml_Int;              use Glib.Xml_Int;
 
+with Gdk.Dnd;                   use Gdk.Dnd;
 with Gdk.Event;                 use Gdk.Event;
 with Gdk.Rectangle;             use Gdk.Rectangle;
 
+with Gtk.Dnd;                   use Gtk.Dnd;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Arguments;             use Gtk.Arguments;
 with Gtk.Check_Button;          use Gtk.Check_Button;
@@ -586,6 +588,12 @@ package body Project_Explorers is
       Widget_Callback.Object_Connect
         (Get_MDI (Kernel), "child_selected",
          Child_Selected'Access, Explorer, After => True);
+
+      Gtk.Dnd.Dest_Set
+        (Explorer.Tree, Dest_Default_All, Target_Table_Url, Action_Any);
+      Kernel_Callback.Connect
+        (Explorer.Tree, "drag_data_received",
+         Drag_Data_Received'Access, Kernel_Handle (Kernel));
    end Initialize;
 
    --------------------

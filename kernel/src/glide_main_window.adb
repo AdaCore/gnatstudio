@@ -20,12 +20,15 @@
 
 with Glib.Values;
 with Pango.Font;                use Pango.Font;
+with Gdk.Dnd;                   use Gdk.Dnd;
 with Gdk.Event;                 use Gdk.Event;
 with Glib.Error;                use Glib.Error;
 with Glib.Object;               use Glib.Object;
 with Glide_Kernel;              use Glide_Kernel;
+with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
 with Gtk.Box;                   use Gtk.Box;
+with Gtk.Dnd;                   use Gtk.Dnd;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Frame;                 use Gtk.Frame;
 with Gtk.Image;                 use Gtk.Image;
@@ -260,6 +263,14 @@ package body Glide_Main_Window is
          Delete_Callback'Access,
          Gtk_Widget (Main_Window),
          After => False);
+
+      --  Support for Win32 WM_DROPFILES drag'n'drop
+
+      Gtk.Dnd.Dest_Set
+        (Main_Window, Dest_Default_All, Target_Table_Url, Action_Any);
+      Kernel_Callback.Connect
+        (Main_Window, "drag_data_received",
+         Drag_Data_Received'Access, Kernel_Handle (Main_Window.Kernel));
    end Initialize;
 
    -------------------
