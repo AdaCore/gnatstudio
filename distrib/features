@@ -3,7 +3,7 @@ For more details, please see the documentation.
 
 New features in GPS 3.0.0
 
-- E329-005 Software metrics generation
+- E329-005 Support for metrics generation via gnatmetric
 
 - E221-026 Support for multiple memory views
 
