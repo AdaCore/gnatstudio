@@ -141,7 +141,9 @@ package body Glide_Kernel.Timeout is
       Push_State (Kernel, Processing);
       Spawn (Command, Arguments, Success);
 
-      if Success then
+      if Success
+        and then Callback /= null
+      then
          Id := Process_Timeout.Add
            (Timeout, Process_Cb'Access,
             (Kernel, Fd, new String' (Name), Callback));
