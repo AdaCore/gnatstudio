@@ -993,6 +993,10 @@ package body Src_Editor_Module is
                      On_Goto_Declaration_Or_Body'Access,
                      Ref_Item => -"Goto Line...");
 
+      --  ??? Not implemented yet
+      Register_Menu (Kernel, Gotom, -"Goto Body", "", null,
+                     Ref_Item => -"Goto Declaration<->Body");
+
       --  Toolbars
 
       Button := Insert_Stock
