@@ -27,6 +27,7 @@ with Glib.Generic_Properties;  use Glib.Generic_Properties;
 with Gdk.Color;                use Gdk.Color;
 with Pango.Font;               use Pango.Font;
 with Glide_Intl;               use Glide_Intl;
+with Language;                 use Language;
 
 package body Glide_Kernel.Preferences is
 
@@ -35,9 +36,6 @@ package body Glide_Kernel.Preferences is
 
    package Key_Themes_Properties is new Generic_Enumeration_Property
      ("Key_Themes", Key_Themes);
-
-   package Indentation_Properties is new Generic_Enumeration_Property
-     ("Indentation_Kind", Indentation_Kind);
 
    ---------------------------------
    -- Register_Global_Preferences --
@@ -391,108 +389,16 @@ package body Glide_Kernel.Preferences is
 
       -- Editor:Languages --
 
-      Ada_Automatic_Indentation := Param_Spec_Enum
-        (Indentation_Properties.Gnew_Enum
-           (Name    => "Ada-Auto-Indentation",
-            Default => Extended,
-            Blurb   => -"How the editor should indent Ada sources",
-            Nick    => -"Auto indentation"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Ada_Automatic_Indentation),
-         -"Editor:Ada");
-
-      Ada_Use_Tabs := Param_Spec_Boolean
+      Auto_Casing := Param_Spec_Boolean
         (Gnew_Boolean
-          (Name    => "Ada-Use-Tabs",
-           Default => False,
-           Blurb   =>
-             -("Whether the editor should use tabulations when indenting"),
-           Nick    => -"Use tabulations"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Ada_Use_Tabs), -"Editor:Ada");
-
-      Ada_Indentation_Level := Param_Spec_Int
-        (Gnew_Int
-          (Name    => "Ada-Indent-Level",
-           Minimum => 1,
-           Maximum => 9,
-           Default => 3,
-           Blurb   => -"The number of spaces for the default Ada indentation",
-           Nick    => -"Default indentation"));
-      Register_Property
-        (Kernel.Preferences,
-         Param_Spec (Ada_Indentation_Level),
-         -"Editor:Ada");
-
-      Ada_Continuation_Level := Param_Spec_Int
-        (Gnew_Int
-          (Name    => "Ada-Continuation-Level",
-           Minimum => 0,
-           Maximum => 9,
-           Default => 2,
-           Blurb   => -"The number of extra spaces for continuation lines",
-           Nick    => -"Continuation lines"));
-      Register_Property
-        (Kernel.Preferences,
-         Param_Spec (Ada_Continuation_Level),
-         -"Editor:Ada");
-
-      Ada_Declaration_Level := Param_Spec_Int
-        (Gnew_Int
-          (Name    => "Ada-Declaration-Level",
-           Minimum => 0,
-           Maximum => 9,
-           Default => 0,
-           Blurb   =>
-             -"The number of extra spaces for multiple line declarations",
-           Nick    => -"Declaration lines"));
-      Register_Property
-        (Kernel.Preferences,
-         Param_Spec (Ada_Declaration_Level),
-         -"Editor:Ada");
-
-      Ada_Indent_Case_Extra := Param_Spec_Boolean
-        (Gnew_Boolean
-          (Name    => "Ada-Indent-Case-Extra",
-           Default => True,
-           Blurb   => -"Indent case statements with an extra level",
-           Nick    => -"RM style case indentation"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Ada_Indent_Case_Extra),
-         -"Editor:Ada");
-
-      C_Automatic_Indentation := Param_Spec_Enum
-        (Indentation_Properties.Gnew_Enum
-           (Name    => "C-Auto-Indentation",
-            Default => Extended,
-            Blurb   => -"How the editor should indent C/C++ sources",
-            Nick    => -"Auto indentation"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (C_Automatic_Indentation),
-         -"Editor:C/C++");
-
-      C_Use_Tabs := Param_Spec_Boolean
-        (Gnew_Boolean
-          (Name    => "C-Use-Tabs",
+          (Name    => "Auto-Casing",
            Default => True,
            Blurb   =>
-             -("Whether the editor should use tabulations when indenting"),
-           Nick    => -"Use tabulations"));
+             -("Whether the editor should do auto casing of words for case"
+               & " insensitive languages"),
+           Nick    => -"Auto Casing"));
       Register_Property
-        (Kernel.Preferences, Param_Spec (C_Use_Tabs), -"Editor:C/C++");
-
-      C_Indentation_Level := Param_Spec_Int
-        (Gnew_Int
-          (Name    => "C-Indent-Level",
-           Minimum => 1,
-           Maximum => 9,
-           Default => 2,
-           Blurb   => -"The number of spaces for the default indentation",
-           Nick    => -"Default indentation"));
-      Register_Property
-        (Kernel.Preferences,
-         Param_Spec (C_Indentation_Level),
-         -"Editor:C/C++");
+        (Kernel.Preferences, Param_Spec (Auto_Casing), -"Editor");
 
       -- Editor:Keys --
       Indentation_Key := Gnew_Key

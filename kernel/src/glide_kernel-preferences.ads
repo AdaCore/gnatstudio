@@ -24,6 +24,8 @@ with Gdk.Color;
 with Gdk.Types;
 with Pango.Font;
 with GVD.Preferences;
+with Language;
+with Glib.Generic_Properties;
 
 package Glide_Kernel.Preferences is
 
@@ -111,14 +113,6 @@ package Glide_Kernel.Preferences is
    pragma Convention (C, Key_Themes);
    --  The list of supported key themes.
 
-   type Indentation_Kind is (None, Simple, Extended);
-   for Indentation_Kind'Size use Glib.Gint'Size;
-   pragma Convention (C, Indentation_Kind);
-   --  Indentation kinds:
-   --  None: no indentation should be performed
-   --  Simple: use the amount of white spaces from previous line
-   --  Extended: use a language specific parser to compute indentation
-
    -----------------------
    -- List of constants --
    -----------------------
@@ -173,6 +167,8 @@ package Glide_Kernel.Preferences is
    Tab_Width                 : Param_Spec_Int;
    Highlight_Column          : Param_Spec_Int;
 
+   Auto_Casing               : Param_Spec_Boolean;
+
    Indentation_Key           : Param_Spec_Key;
    Completion_Key            : Param_Spec_Key;
    Delimiters_Jump_Key       : Param_Spec_Key;
@@ -185,17 +181,6 @@ package Glide_Kernel.Preferences is
    MDI_Focus_Title_Color : Param_Spec_Color;
    MDI_Switch_Child      : Param_Spec_Key;
    MDI_All_Floating      : Param_Spec_Boolean;
-
-   -- Languages --
-   Ada_Automatic_Indentation : Param_Spec_Enum;
-   Ada_Use_Tabs              : Param_Spec_Boolean;
-   Ada_Indentation_Level     : Param_Spec_Int;
-   Ada_Continuation_Level    : Param_Spec_Int;
-   Ada_Declaration_Level     : Param_Spec_Int;
-   Ada_Indent_Case_Extra     : Param_Spec_Boolean;
-   C_Automatic_Indentation   : Param_Spec_Enum;
-   C_Use_Tabs                : Param_Spec_Boolean;
-   C_Indentation_Level       : Param_Spec_Int;
 
    -- Project Editor --
    Default_Switches_Color          : Param_Spec_Color;
@@ -231,6 +216,11 @@ package Glide_Kernel.Preferences is
    ClearCase_Command   : Param_Spec_String;
 
    --  Debugger preferences are registered in GVD.Preferences
+
+
+   package Indentation_Properties is new
+     Glib.Generic_Properties.Generic_Enumeration_Property
+     ("Indentation_Kind", Language.Indentation_Kind);
 
 private
    type GPS_Preferences_Record is new GVD.Preferences.GVD_Preferences_Manager
