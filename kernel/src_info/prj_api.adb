@@ -78,6 +78,7 @@ package body Prj_API is
    --  declarative list contained in Parent.
    --  The returned value is the last such declaration, or Empty_Node if there
    --  was none.
+   --  This returns the current item of the declarative item
 
    function Find_Node_By_Name
      (Project : Project_Node_Id;
@@ -1949,7 +1950,7 @@ package body Prj_API is
          Previous_Decl := Find_Last_Declaration_Of
            (Case_Item, Attribute_N, Attribute_Index);
 
-         --  Do we already have some declarations for this attribute ? If yes,
+         --  Do we already have some declarations for this attribute ?
          --  If we found a previous declaration, update it
 
          if Previous_Decl /= Empty_Node then
@@ -2083,37 +2084,40 @@ package body Prj_API is
       For_Each_Matching_Case_Item
         (Project, Pkg, All_Case_Items, Add_Item'Unrestricted_Access);
 
-      Node := First_Declarative_Item_Of (Parent);
-      while Node /= Empty_Node loop
-         if Attribute_Matches
-           (Current_Item_Node (Node), Attribute_Name, Attribute_Index)
-         then
-            for Parent in Case_Items'First .. Case_Items_Last loop
-               Tmp := Default_Project_Node (N_Declarative_Item);
-               Set_Current_Item_Node
-                 (Tmp, Clone_Node (Current_Item_Node (Node), True));
+      --  Nothing to do if there are no case items
+      if Case_Items_Last > Case_Items'First then
+         Node := First_Declarative_Item_Of (Parent);
+         while Node /= Empty_Node loop
+            if Attribute_Matches
+              (Current_Item_Node (Node), Attribute_Name, Attribute_Index)
+            then
+               for Parent in Case_Items'First .. Case_Items_Last loop
+                  Tmp := Default_Project_Node (N_Declarative_Item);
+                  Set_Current_Item_Node
+                    (Tmp, Clone_Node (Current_Item_Node (Node), True));
 
-               if Kind_Of (Case_Items (Parent)) /= N_Declarative_Item then
-                  Set_Next_Declarative_Item
-                    (Tmp, First_Declarative_Item_Of (Case_Items (Parent)));
-                  Set_First_Declarative_Item_Of (Case_Items (Parent), Tmp);
+                  if Kind_Of (Case_Items (Parent)) /= N_Declarative_Item then
+                     Set_Next_Declarative_Item
+                       (Tmp, First_Declarative_Item_Of (Case_Items (Parent)));
+                     Set_First_Declarative_Item_Of (Case_Items (Parent), Tmp);
 
-               else
-                  Set_Next_Declarative_Item
-                    (Tmp, Next_Declarative_Item (Case_Items (Parent)));
-                  Set_Next_Declarative_Item (Case_Items (Parent), Tmp);
-               end if;
-               Case_Items (Parent) := Tmp;
-            end loop;
-         end if;
+                  else
+                     Set_Next_Declarative_Item
+                       (Tmp, Next_Declarative_Item (Case_Items (Parent)));
+                     Set_Next_Declarative_Item (Case_Items (Parent), Tmp);
+                  end if;
+                  Case_Items (Parent) := Tmp;
+               end loop;
+            end if;
 
-         Node := Next_Declarative_Item (Node);
-      end loop;
+            Node := Next_Declarative_Item (Node);
+         end loop;
 
-      Free (Case_Items);
+         Free (Case_Items);
 
-      Remove_Attribute_Declarations
-        (Parent, Attribute_Name, Attribute_Index);
+         Remove_Attribute_Declarations
+           (Parent, Attribute_Name, Attribute_Index);
+      end if;
    end Move_From_Common_To_Case_Construct;
 
    ----------------------------------------
@@ -3496,6 +3500,22 @@ package body Prj_API is
          Values             => Default_Builder_Switches,
          Attribute_Index    => Ada_String,
          Pkg_Name           => "builder");
+
+      Update_Attribute_Value_In_Scenario
+        (Project,
+         Scenario_Variables => No_Scenario,
+         Attribute_Name     => "default_switches",
+         Values             => Default_Compiler_Switches,
+         Attribute_Index    => Ada_String,
+         Pkg_Name           => "compiler");
+
+      Update_Attribute_Value_In_Scenario
+        (Project,
+         Scenario_Variables => No_Scenario,
+         Attribute_Name     => "default_switches",
+         Values             => Default_Linker_Switches,
+         Attribute_Index    => Ada_String,
+         Pkg_Name           => "linker");
 
       return Project;
    end Create_Default_Project;
