@@ -1240,7 +1240,8 @@ parse_object (HTMLEngine *e, HTMLObject *clue, gint max_width,
 		el = html_embedded_new_widget(GTK_WIDGET (e->widget), eb);
 		
 		gtk_object_set_data(GTK_OBJECT(eb), "embeddedelement", el);
-		gtk_signal_connect(GTK_OBJECT(eb), "changed", html_object_changed, e);
+		gtk_signal_connect(GTK_OBJECT(eb), "changed",
+			       GTK_SIGNAL_FUNC (html_object_changed), e);
 		
 		ret_val = FALSE;
 		gtk_signal_emit (GTK_OBJECT (e), signals[OBJECT_REQUESTED], eb, &ret_val);
@@ -2835,6 +2836,8 @@ html_engine_destroy (GtkObject *object)
 	HTMLEngine *engine;
 	GList *p;
 
+	g_return_if_fail (HTML_IS_ENGINE (object));
+
 	engine = HTML_ENGINE (object);
 
 	html_undo_destroy (engine->undo);
@@ -2845,7 +2848,7 @@ html_engine_destroy (GtkObject *object)
 	html_color_set_destroy (engine->color_set);
 
 	if (engine->invert_gc != NULL)
-		gdk_gc_destroy (engine->invert_gc);
+	   gdk_gc_destroy (engine->invert_gc);
 
 	html_cursor_destroy (engine->cursor);
 	if (engine->mark != NULL)
@@ -4102,8 +4105,6 @@ move_to_found (HTMLEngine *e, HTMLSearch *info)
 	w = ex - x + last->width;
 	h = ey - y + last->ascent+last->descent;
 
-	printf ("html_engine_display_area %d %d %d %d\n", x, y, w, h);
-
 	/* now calculate cschtml adustments */
 	if (x <= e->x_offset)
 		nx = x;
@@ -4143,8 +4144,6 @@ display_search_results (HTMLEngine *e, HTMLSearch *info)
 		/* go thru all objects (Text's) in found list and do select_range on it */
 		while (cur) {
 			cur_len = HTML_TEXT (cur->data)->text_len;
-			printf ("select len: %d range obj: %p pos: %d len: %d\n", info->found_len,
-				HTML_OBJECT (cur->data), pos, (cur_len-pos < len) ? cur_len-pos : len);
 			html_object_select_range (HTML_OBJECT (cur->data), e, pos,
 						  (cur_len-pos < len) ? cur_len-pos : len, TRUE);
 			len -= cur_len-pos;
@@ -4162,8 +4161,6 @@ html_engine_search (HTMLEngine *e, const gchar *text,
 {
 	gboolean retval;
 	HTMLSearch *info;
-
-	printf ("html_engine_search cs: %d fw: %d re: %d\n", case_sensitive, forward, regular);
 
 	if (e->search_info) {
 		html_search_destroy (e->search_info);
@@ -4189,8 +4186,6 @@ html_engine_search_next (HTMLEngine *e)
 	if (!info) {
 		return FALSE;
 	}
-
-	printf ("search_next\n");
 
 	if (info->stack) {
 		retval = html_object_search (HTML_OBJECT (info->stack->data), info);
@@ -4219,8 +4214,6 @@ html_engine_replace (HTMLEngine *e, const gchar *text, const gchar *rep_text,
 		     gboolean case_sensitive, gboolean forward, gboolean regular,
 		     void (*ask)(HTMLEngine *, gpointer), gpointer ask_data)
 {
-	printf ("html_engine_replace\n");
-
 	if (e->replace_info)
 		html_replace_destroy (e->replace_info);
 	e->replace_info = html_replace_new (rep_text, ask, ask_data);
