@@ -1,5 +1,4 @@
 pragma Warnings (Off);
-with Generic_Stack;
 with HTables;
 with Prj.PP;
 with Sdefault;
