@@ -248,6 +248,11 @@ package body GVD.Process is
    --  History will be used for the various dialog's combo boxes to store the
    --  values used by the user
 
+   procedure Setup_Command_Window
+     (Process : access Visual_Debugger_Record'Class;
+      History : Histories.History);
+   --  Set up/initialize the command window associated with Process.
+
    -----------
    -- Setup --
    -----------
@@ -1049,7 +1054,8 @@ package body GVD.Process is
    --------------------------
 
    procedure Setup_Command_Window
-     (Process : access Visual_Debugger_Record'Class)
+     (Process : access Visual_Debugger_Record'Class;
+      History : Histories.History)
    is
       Child : MDI_Child;
    begin
@@ -1058,7 +1064,11 @@ package body GVD.Process is
          "",
          Interpret_Command_Handler'Access,
          GObject (Process),
-         Process.Debugger_Text_Font);
+         Process.Debugger_Text_Font,
+         History_List => History,
+         Key          => "gvd_console");
+      Set_Max_Length (History, 100, "gvd_console");
+      Allow_Duplicates (History, "gvd_console", True, True);
 
       Set_Highlight_Color
         (Process.Debugger_Text,
@@ -1260,7 +1270,7 @@ package body GVD.Process is
    begin
       pragma Assert (Process.Data_Paned = null);
 
-      Setup_Command_Window (Process);
+      Setup_Command_Window (Process, History);
       Process.History := History;
       Setup_Data_Window (Process);
 
@@ -1411,7 +1421,11 @@ package body GVD.Process is
             "",
             Debuggee_Console_Handler'Access,
             GObject (Process),
-            Process.Debugger_Text_Font);
+            Process.Debugger_Text_Font,
+            History_List => History,
+            Key          => "gvd_tty_console");
+         Set_Max_Length (History, 100, "gvd_tty_console");
+         Allow_Duplicates (History, "gvd_tty_console", True, True);
 
          Object_Return_Callback.Object_Connect
            (Process.Debuggee_Console, "delete_event",

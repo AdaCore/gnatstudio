@@ -250,10 +250,6 @@ package GVD.Process is
    --
    --  Success is set to true is the debugger could be successfully started.
 
-   procedure Setup_Command_Window
-     (Process : access Visual_Debugger_Record'Class);
-   --  Set up/initialize the command window associated with Process.
-
    Debugger_Not_Supported : exception;
    --  Raised by Create_Debugger when the debugger type is not supported.
 
