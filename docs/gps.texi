@@ -6356,8 +6356,48 @@ Thus, the @code{external} tag would look like:
 </action>
 @end smallexample
 
-This tag supports the same @code{show-command} and @code{output} attributes
-as the @code{<action>} tag.
+This tag accepts the following attributes:
+
+   @table @code
+   @item show-command (optional)
+   This attribute can be used to override the homonym attribute specified for
+   the @code{<action>} tag.
+
+   @item output (optional)
+   This attribute can be used to override the homonym attribute specified for
+   the @code{<action>} tag.
+
+   @item on-failure (optional)
+   @cindex on-failure
+   This attribute specifies a shell command to be executed if the external
+   command fails. Typically, this is used to parse the output of the command
+   and fill the location window appropriately (@pxref{Processing the tool
+   output}).
+
+   For instance, the following action spawn an external tool, and parses its
+   output to the location window and the automatic fixing tool if the external
+   tool happens to fail. You must put the value of the @code{on-failure} on a
+   single line in the XML file.
+
+   Remember also to quote special XML character like '"' in the value of the
+   attribute. The output of the command that failed can be obtained through the
+   "%1" parameter.
+
+   @smallexample
+<action name="launch tool to location" >
+  <external on-failure="locations_parse &quot;
+     &quot;&quot;%1 &quot;&quot;&quot; category;
+     codefix_parse &quot;&quot;&quot;%1 &quot;
+     &quot;&quot; category" >tool-path</external>
+</action>
+   @end smallexample
+
+   @item on-failure-lang (optional)
+   @cindex on-failure-lang
+   This attribute specifies the shell language in which the above attribute is
+   written. By default, this is the GPS shell.
+
+   @end table
 
 
 @cindex shell
