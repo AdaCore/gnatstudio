@@ -30,6 +30,7 @@ with Gtk.Box;                   use Gtk.Box;
 with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Pixbuf;  use Gtk.Cell_Renderer_Pixbuf;
 with Gtk.Enums;
+with Gtk.Handlers;              use Gtk.Handlers;
 with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Label;                 use Gtk.Label;
@@ -972,7 +973,10 @@ package body VCS_View_Pkg is
 
       Grab_Focus (Explorer);
       Show_All (Menu);
-      Popup (Menu);
+      Popup (Menu,
+             Button        => Gdk.Event.Get_Button (Event),
+             Activate_Time => Gdk.Event.Get_Time (Event));
+      Emit_Stop_By_Name (Page.Tree, "button_press_event");
 
       Free (Selection_Context_Access (Context));
       return True;
