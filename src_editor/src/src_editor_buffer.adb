@@ -1722,10 +1722,7 @@ package body Src_Editor_Buffer is
    procedure Forward_To_Line_End (Iter : in out Gtk.Text_Iter.Gtk_Text_Iter) is
       Result_Ignored : Boolean;
    begin
-      --  ??? Can we use Gtk.Text_Iter.Forward_To_Line_End, and if not why not
-      while not Is_End (Iter) and then not Ends_Line (Iter) loop
-         Forward_Char (Iter, Result_Ignored);
-      end loop;
+      Forward_To_Line_End (Iter, Result_Ignored);
    end Forward_To_Line_End;
 
    -------------
@@ -2323,11 +2320,7 @@ package body Src_Editor_Buffer is
             end if;
          end if;
 
-         Buffer.Parse_Blocks :=
-            not Equal (Get_Pref (Buffer.Kernel, Current_Block_Color),
-                       White (Get_Default_Colormap));
-
-         Compute_Blocks (Buffer);
+         Request_Blocks (Buffer);
 
          Buffer_Information_Changed (Buffer);
       end if;
