@@ -327,6 +327,8 @@ package body Odd.Code_Editors is
                if Data.Editor.Asm_Address /= null then
                   Set_Address (Data.Editor.Asm, Data.Editor.Asm_Address.all);
                end if;
+               Highlight_Address_Range
+                 (Data.Editor.Asm, Data.Editor.Source_Line);
 
             when Source_Asm =>
                Add2 (Data.Editor,      Data.Editor.Pane);
@@ -339,6 +341,8 @@ package body Odd.Code_Editors is
                if Data.Editor.Asm_Address /= null then
                   Set_Address (Data.Editor.Asm, Data.Editor.Asm_Address.all);
                end if;
+               Highlight_Address_Range
+                 (Data.Editor.Asm, Data.Editor.Source_Line);
          end case;
       end if;
    end Change_Mode;
