@@ -837,7 +837,10 @@ package body Project_Viewers is
    begin
       Callback := Views (Current_View).Callbacks
         (Interfaces.C.size_t (Column + 1));
-      if Get_Event_Type (Event) = Gdk_2button_Press
+
+      --  Event could be null when the row was selected programmatically
+      if Event /= null
+        and then Get_Event_Type (Event) = Gdk_2button_Press
         and then Callback /= null
       then
          User := Project_User_Data.Get (V.Pages (Current_View), Row);
@@ -853,7 +856,10 @@ package body Project_Viewers is
      (Viewer : access Gtk_Widget_Record'Class)
    is
       View : Project_Viewer := Project_Viewer (Viewer);
-      Dir : String_Id;
+      Current_View : constant View_Type := Current_Page (View);
+      Dir, File : String_Id;
+      User   : User_Data;
+      Rows : Gint;
    begin
       View.Current_Project := Get_Selected_Project (View.Explorer);
 
@@ -862,6 +868,19 @@ package body Project_Viewers is
       if View.Current_Project /= No_Project then
          Dir := Get_Selected_Directory (View.Explorer);
          Show_Project (View, View.Current_Project, Dir);
+      end if;
+
+      File := Get_Selected_File (View.Explorer);
+      if File /= No_String then
+         Rows := Get_Rows (View.Pages (Current_View));
+         for J in 0 .. Rows - 1 loop
+            User := Project_User_Data.Get (View.Pages (Current_View), J);
+
+            if User.File_Name = File then
+               Select_Row (View.Pages (Current_View), J, 0);
+               return;
+            end if;
+         end loop;
       end if;
    end Explorer_Selection_Changed;
 
