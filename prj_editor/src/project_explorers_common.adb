@@ -25,7 +25,7 @@ with Glib.Convert;                use Glib.Convert;
 with Gdk.Pixbuf;                  use Gdk.Pixbuf;
 with Language.Unknown;            use Language.Unknown;
 with Language;                    use Language;
-with Language_Handlers.Glide;     use Language_Handlers.Glide;
+with Language_Handlers.GPS;     use Language_Handlers.GPS;
 with GNAT.Directory_Operations;   use GNAT.Directory_Operations;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
@@ -132,7 +132,7 @@ package body Project_Explorers_Common is
       Set (Model, Iter, Up_To_Date_Column, False);
 
       Lang := Get_Language_From_File
-        (Glide_Language_Handler (Get_Language_Handler (Kernel)), File);
+        (GPS_Language_Handler (Get_Language_Handler (Kernel)), File);
 
       if Lang /= Unknown_Lang then
          Append_Dummy_Iter (Model, Iter);
@@ -283,8 +283,8 @@ package body Project_Explorers_Common is
       type Gtk_Tree_Iter_Array is array (Language_Category'Range)
         of Gtk_Tree_Iter;
       Categories : Gtk_Tree_Iter_Array := (others => Null_Iter);
-      Languages  : constant Glide_Language_Handler :=
-        Glide_Language_Handler (Get_Language_Handler (Kernel));
+      Languages  : constant GPS_Language_Handler :=
+        GPS_Language_Handler (Get_Language_Handler (Kernel));
       Handler    : LI_Handler;
 
    begin

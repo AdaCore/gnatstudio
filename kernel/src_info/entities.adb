@@ -24,7 +24,7 @@ with VFS;                     use VFS;
 with GNAT.OS_Lib;             use GNAT.OS_Lib;
 with Projects;                use Projects;
 with Traces;                  use Traces;
-with Language_Handlers.Glide; use Language_Handlers.Glide;
+with Language_Handlers.GPS; use Language_Handlers.GPS;
 with GNAT.Heap_Sort_G;
 with Namet;                   use Namet;
 with Projects.Registry;       use Projects.Registry;
@@ -1641,7 +1641,7 @@ package body Entities is
       Source_Filename : VFS.Virtual_File) return LI_Handler is
    begin
       return Get_LI_Handler_From_File
-        (Glide_Language_Handler (Db.Lang), Source_Filename);
+        (GPS_Language_Handler (Db.Lang), Source_Filename);
    end Get_LI_Handler;
 
    -------------------
@@ -2058,7 +2058,7 @@ package body Entities is
       use Language;
 
       Lang : constant Language.Language_Access :=
-        Get_Language_From_File (Glide_Language_Handler (Languages), File_Name);
+        Get_Language_From_File (GPS_Language_Handler (Languages), File_Name);
 
    begin
       --  Call the language specific syntax analyzer
@@ -2282,7 +2282,7 @@ package body Entities is
       Declaration_File : constant Virtual_File :=
         Get_Filename (Get_Declaration_Of (Entity).File);
       Lang         : constant Language_Access := Get_Language_From_File
-        (Glide_Language_Handler (Entity.Declaration.File.Db.Lang),
+        (GPS_Language_Handler (Entity.Declaration.File.Db.Lang),
          Declaration_File);
       Current, Beginning : Natural;
       Context : Language_Context_Access;

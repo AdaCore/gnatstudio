@@ -22,7 +22,7 @@ with VFS;                     use VFS;
 with Traces;                  use Traces;
 with Projects;                use Projects;
 with Projects.Registry;       use Projects.Registry;
-with Language_Handlers.Glide; use Language_Handlers.Glide;
+with Language_Handlers.GPS; use Language_Handlers.GPS;
 
 with Glib.Unicode;            use Glib.Unicode;
 
@@ -890,7 +890,7 @@ package body Entities.Queries is
                   File_Has_No_LI_Report => File_Has_No_LI_Report,
                   Single_Source_File    => Single_Source_File,
                   Handler               => Get_LI_Handler_From_File
-                    (Glide_Language_Handler (File.Db.Lang),
+                    (GPS_Language_Handler (File.Db.Lang),
                      Get_Filename (File)),
                   Total_Progress        => 0,
                   Current_Progress      => 1,

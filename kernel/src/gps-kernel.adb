@@ -84,7 +84,7 @@ with GPS.Kernel.Timeout;      use GPS.Kernel.Timeout;
 with Generic_List;
 
 with Language_Handlers;         use Language_Handlers;
-with Language_Handlers.Glide;   use Language_Handlers.Glide;
+with Language_Handlers.GPS;   use Language_Handlers.GPS;
 
 with Traces;                    use Traces;
 
@@ -177,7 +177,7 @@ package body GPS.Kernel is
       Main_Window : Gtk.Window.Gtk_Window;
       Home_Dir    : String)
    is
-      Handler : Glide_Language_Handler;
+      Handler : GPS_Language_Handler;
       Dir     : constant String := Name_As_Directory (Home_Dir);
 
    begin
@@ -200,7 +200,7 @@ package body GPS.Kernel is
       Load_Default_Project (Handle.Registry.all, Get_Current_Dir);
 
       Set_Registry
-        (Glide_Language_Handler (Handle.Lang_Handler), Handle.Registry);
+        (GPS_Language_Handler (Handle.Lang_Handler), Handle.Registry);
 
       Handle.Gnatls_Cache := null;
 
@@ -1098,8 +1098,8 @@ package body GPS.Kernel is
       Project   : Project_Type;
       Recursive : Boolean)
    is
-      Handler : constant Glide_Language_Handler :=
-        Glide_Language_Handler (Get_Language_Handler (Kernel));
+      Handler : constant GPS_Language_Handler :=
+        GPS_Language_Handler (Get_Language_Handler (Kernel));
       Num     : constant Natural := LI_Handlers_Count (Handler);
       LI      : LI_Handler;
       Count   : Natural := 0;
@@ -1352,7 +1352,7 @@ package body GPS.Kernel is
       Tools_Htable.String_Hash_Table.Reset (Handle.Tools);
       GPS.Kernel.Scripts.Finalize (Handle);
 
-      Destroy (Glide_Language_Handler (Handle.Lang_Handler));
+      Destroy (GPS_Language_Handler (Handle.Lang_Handler));
       Destroy (Handle.Database);
       Free (Handle.Logs_Mapper);
       Free_Modules (Handle);

@@ -51,7 +51,7 @@ with Entities;                    use Entities;
 with String_Utils;                use String_Utils;
 with Projects;                    use Projects;
 with Language;                    use Language;
-with Language_Handlers.Glide;     use Language_Handlers.Glide;
+with Language_Handlers.GPS;     use Language_Handlers.GPS;
 with Basic_Types;                 use Basic_Types;
 with Gtk.Scrolled_Window;         use Gtk.Scrolled_Window;
 with Project_Explorers_Common;    use Project_Explorers_Common;
@@ -546,8 +546,8 @@ package body Outline_View is
       Iter, Root : Gtk_Tree_Iter := Null_Iter;
       Lang       : Language_Access;
       Handler    : LI_Handler;
-      Languages  : constant Glide_Language_Handler :=
-        Glide_Language_Handler (Get_Language_Handler (Outline.Kernel));
+      Languages  : constant GPS_Language_Handler :=
+        GPS_Language_Handler (Get_Language_Handler (Outline.Kernel));
       Constructs : Construct_List;
       Show_Profiles : constant Boolean :=
         Get_Pref (Outline.Kernel, Outline_View_Profiles);

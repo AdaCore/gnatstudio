@@ -54,7 +54,7 @@ with Language;                  use Language;
 with Language_Handlers;         use Language_Handlers;
 with Src_Highlighting;          use Src_Highlighting;
 
-with Language_Handlers.Glide;   use Language_Handlers.Glide;
+with Language_Handlers.GPS;   use Language_Handlers.GPS;
 with Commands.Editor;           use Commands.Editor;
 with Commands.Controls;         use Commands.Controls;
 with GPS.Intl;                use GPS.Intl;
@@ -2839,7 +2839,7 @@ package body Src_Editor_Buffer is
             Set_Language
               (Buffer,
                Get_Language_From_File
-                 (Glide_Language_Handler
+                 (GPS_Language_Handler
                     (Get_Language_Handler (Buffer.Kernel)),
                   Buffer.Filename));
 

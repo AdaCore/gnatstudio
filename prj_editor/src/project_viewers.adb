@@ -79,7 +79,7 @@ with GPS.Intl;               use GPS.Intl;
 with Switches_Editors;         use Switches_Editors;
 with Naming_Editors;           use Naming_Editors;
 with Language_Handlers;        use Language_Handlers;
-with Language_Handlers.Glide;  use Language_Handlers.Glide;
+with Language_Handlers.GPS;  use Language_Handlers.GPS;
 with Switches_Editors;         use Switches_Editors;
 with Traces;                   use Traces;
 with Variable_Editors;         use Variable_Editors;
@@ -497,7 +497,7 @@ package body Project_Viewers is
       Is_Default : Boolean;
       Language   : constant Name_Id := Get_String
         (Get_Language_From_File
-         (Glide_Language_Handler (Get_Language_Handler (Viewer.Kernel)),
+         (GPS_Language_Handler (Get_Language_Handler (Viewer.Kernel)),
           File_Name));
    begin
       Get_Switches

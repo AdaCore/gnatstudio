@@ -21,7 +21,7 @@
 with GPS.Kernel;             use GPS.Kernel;
 with GPS.Kernel.Console;     use GPS.Kernel.Console;
 with GPS.Kernel.Project;     use GPS.Kernel.Project;
-with Language_Handlers.Glide;  use Language_Handlers.Glide;
+with Language_Handlers.GPS;  use Language_Handlers.GPS;
 with Language.C;               use Language.C;
 with Language.Cpp;             use Language.Cpp;
 with Entities;                 use Entities;
@@ -129,7 +129,7 @@ package body Cpp_Module is
    procedure Project_View_Changed
      (Kernel : access Kernel_Handle_Record'Class)
    is
-      Handler : constant Glide_Language_Handler := Glide_Language_Handler
+      Handler : constant GPS_Language_Handler := GPS_Language_Handler
         (Get_Language_Handler (Kernel));
    begin
       if Object_Path (Get_Project (Kernel), False) = "" then
@@ -154,7 +154,7 @@ package body Cpp_Module is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Handler : constant Glide_Language_Handler := Glide_Language_Handler
+      Handler : constant GPS_Language_Handler := GPS_Language_Handler
         (Get_Language_Handler (Kernel));
       LI      : LI_Handler := Create_CPP_Handler
         (Get_Database (Kernel), Project_Registry (Get_Registry (Kernel).all));

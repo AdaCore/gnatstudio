@@ -1,15 +1,15 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2002-2004                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2002-2005                       --
+--                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
 --                                                                   --
--- This program is   distributed in the hope that it will be  useful, --
+-- This program is  distributed in the hope that it will be  useful, --
 -- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
 -- General Public License for more details. You should have received --
@@ -20,15 +20,15 @@
 
 with Glib.Generic_Properties;  use Glib;
 with Glib.Properties.Creation; use Glib.Properties.Creation;
-with GPS.Kernel;             use GPS.Kernel;
-with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
-with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
-with GPS.Kernel.Project;     use GPS.Kernel.Project;
+with GPS.Kernel;               use GPS.Kernel;
+with GPS.Kernel.Hooks;         use GPS.Kernel.Hooks;
+with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
+with GPS.Kernel.Project;       use GPS.Kernel.Project;
 with ALI_Parser;               use ALI_Parser;
 with Entities;                 use Entities;
 with Language.Ada;             use Language.Ada;
-with Language_Handlers.Glide;  use Language_Handlers.Glide;
-with GPS.Intl;               use GPS.Intl;
+with Language_Handlers.GPS;    use Language_Handlers.GPS;
+with GPS.Intl;                 use GPS.Intl;
 with Language;                 use Language;
 with Project_Viewers;          use Project_Viewers;
 with Naming_Editors;           use Naming_Editors;
@@ -130,7 +130,7 @@ package body Ada_Module is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Handler : constant Glide_Language_Handler := Glide_Language_Handler
+      Handler : constant GPS_Language_Handler := GPS_Language_Handler
         (Get_Language_Handler (Kernel));
       LI      : constant Entities.LI_Handler := Create_ALI_Handler
         (Get_Database (Kernel), Project_Registry (Get_Registry (Kernel).all));

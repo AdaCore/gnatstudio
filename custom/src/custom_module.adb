@@ -46,7 +46,7 @@ with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Language;                  use Language;
 with Language.Custom;           use Language.Custom;
 with Language_Handlers;         use Language_Handlers;
-with Language_Handlers.Glide;   use Language_Handlers.Glide;
+with Language_Handlers.GPS;   use Language_Handlers.GPS;
 
 with Commands;                  use Commands;
 with Commands.Interactive;      use Commands.Interactive;
@@ -116,7 +116,7 @@ package body Custom_Module is
    is
       pragma Unreferenced (Level);
 
-      Handler      : constant Glide_Language_Handler := Glide_Language_Handler
+      Handler      : constant GPS_Language_Handler := GPS_Language_Handler
         (Get_Language_Handler (Kernel));
 
       procedure Add_Child

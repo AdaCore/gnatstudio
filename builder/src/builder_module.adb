@@ -50,7 +50,7 @@ with VFS;                       use VFS;
 with Projects;                  use Projects;
 
 with Language_Handlers;         use Language_Handlers;
-with Language_Handlers.Glide;   use Language_Handlers.Glide;
+with Language_Handlers.GPS;   use Language_Handlers.GPS;
 with Projects.Registry;         use Projects.Registry;
 with Entities;                  use Entities;
 with Histories;                 use Histories;
@@ -1206,8 +1206,8 @@ package body Builder_Module is
       Result    : out Command_Return_Type)
    is
       D            : Compute_Xref_Data_Access renames Xref_Data;
-      Handler      : constant Glide_Language_Handler :=
-        Glide_Language_Handler (Get_Language_Handler (D.Kernel));
+      Handler      : constant GPS_Language_Handler :=
+        GPS_Language_Handler (Get_Language_Handler (D.Kernel));
       Num_Handlers : constant Natural := LI_Handlers_Count (Handler);
       Not_Finished : Boolean;
       LI           : LI_Handler;

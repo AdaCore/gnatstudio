@@ -35,7 +35,7 @@ with Language.Cpp;
 with Language.Java;
 with Entities;
 with Dummy_Parser;              use Dummy_Parser;
-with Language_Handlers.Glide;   use Language_Handlers.Glide;
+with Language_Handlers.GPS;   use Language_Handlers.GPS;
 with Projects.Registry;         use Projects.Registry;
 with Custom_Naming_Editors;     use Custom_Naming_Editors;
 with GPS.Kernel;              use GPS.Kernel;
@@ -162,7 +162,7 @@ package body Language.Custom is
 
    procedure Initialize
      (Lang     : access Custom_Language'Class;
-      Handler  : access Glide_Language_Handler_Record'Class;
+      Handler  : access GPS_Language_Handler_Record'Class;
       Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
       Top      : Glib.Xml_Int.Node_Ptr)
    is
