@@ -36,7 +36,7 @@ package Src_Editor_Defaults is
    Default_Font_Name : constant String := "Courier";
    --  The name of the default font.
 
-   Default_Font_Size : constant := 10;
+   Default_Font_Size : constant := 12;
    --  The size of the default font.
 
    Default_Font_Description : constant String :=
