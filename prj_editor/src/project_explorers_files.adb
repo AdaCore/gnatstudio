@@ -86,22 +86,22 @@ package body Project_Explorers_Files is
    Line_Column          : constant := 5;
    Column_Column        : constant := 6;
 
-
    type Append_Directory_Idle_Data is record
-      Explorer  : Project_Explorer_Files;
-      Norm_Dest : Basic_Types.String_Access;
-      Norm_Dir  : Basic_Types.String_Access;
-      D         : GNAT.Directory_Operations.Dir_Type;
-      Depth     : Integer := 0;
-      Base      : Gtk_Tree_Iter;
-      Dirs      : String_List_Utils.String_List.List;
-      Files     : String_List_Utils.String_List.List;
-      Idle      : Boolean := False;
+      Explorer      : Project_Explorer_Files;
+      Norm_Dest     : Basic_Types.String_Access;
+      Norm_Dir      : Basic_Types.String_Access;
+      D             : GNAT.Directory_Operations.Dir_Type;
+      Depth         : Integer := 0;
+      Base          : Gtk_Tree_Iter;
+      Dirs          : String_List_Utils.String_List.List;
+      Files         : String_List_Utils.String_List.List;
+      Idle          : Boolean := False;
+      Physical_Read : Boolean := True;
    end record;
 
    procedure Free is
-      new Unchecked_Deallocation (Append_Directory_Idle_Data,
-                                  Append_Directory_Idle_Data_Access);
+     new Unchecked_Deallocation (Append_Directory_Idle_Data,
+                                 Append_Directory_Idle_Data_Access);
 
    procedure Set_Column_Types (Tree : Gtk_Tree_View);
    --  Sets the types of columns to be displayed in the tree_view.
@@ -147,7 +147,8 @@ package body Project_Explorers_Files is
       Base          : Gtk_Tree_Iter;
       Depth         : Integer := 0;
       Append_To_Dir : String  := "";
-      Idle          : Boolean := False);
+      Idle          : Boolean := False;
+      Physical_Read : Boolean := True);
    --  Add to the file view the directory Dir, at node given by Iter.
    --  If Append_To_Dir is not "", and is a sub-directory of Dir, then
    --  the path is expanded recursively all the way to Append_To_Dir.
@@ -176,7 +177,7 @@ package body Project_Explorers_Files is
    function Find_Iter_For_Event
      (Explorer : access Project_Explorer_Files_Record'Class;
       Event    : Gdk_Event)
-     return Gtk_Tree_Iter;
+      return Gtk_Tree_Iter;
    --  Get the iter in the file view under the cursor corresponding to Event,
    --  if any.
 
@@ -483,21 +484,30 @@ package body Project_Explorers_Files is
       if D.Base = Null_Iter then
          Append (D.Explorer.File_Model, Iter, D.Base);
 
-         --   ??? if D.Norm_Dir.all = Directory_Separator then
-         --      check for drive letters.
-
          Set (D.Explorer.File_Model, Iter, Absolute_Name_Column,
               D.Norm_Dir.all);
          Set (D.Explorer.File_Model, Iter, Base_Name_Column,
               D.Norm_Dir.all);
          Set (D.Explorer.File_Model, Iter, Node_Type_Column,
               Gint (Node_Types'Pos (Directory_Node)));
-         Set (D.Explorer.File_Model, Iter, Icon_Column,
-              C_Proxy (D.Explorer.Open_Pixbufs (Directory_Node)));
 
-         D.Base := Iter;
+         if D.Physical_Read then
+            Set (D.Explorer.File_Model, Iter, Icon_Column,
+                 C_Proxy (D.Explorer.Open_Pixbufs (Directory_Node)));
+            D.Base := Iter;
 
-         return Read_Directory (D);
+            return Read_Directory (D);
+
+         else
+            File_Append_Dummy_Iter (D.Explorer, Iter);
+            Set (D.Explorer.File_Model, Iter, Icon_Column,
+                 C_Proxy (D.Explorer.Close_Pixbufs (Directory_Node)));
+            Pop_State (D.Explorer.Kernel);
+            New_D := D;
+            Free (New_D);
+
+            return False;
+         end if;
       end if;
 
       Read (D.D, File, Last);
@@ -623,7 +633,6 @@ package body Project_Explorers_Files is
 
                Set (D.Explorer.File_Model, Iter, Icon_Column,
                     C_Proxy (D.Explorer.Close_Pixbufs (Directory_Node)));
-
             end if;
 
             Next (D.Dirs);
@@ -669,28 +678,36 @@ package body Project_Explorers_Files is
       Base          : Gtk_Tree_Iter;
       Depth         : Integer := 0;
       Append_To_Dir : String  := "";
-      Idle          : Boolean := False)
+      Idle          : Boolean := False;
+      Physical_Read : Boolean := True)
    is
       D : Append_Directory_Idle_Data_Access := new Append_Directory_Idle_Data;
-      --  ??? where is this freed ?
+      --  D is freed when Read_Directory ends (i.e. returns False)
 
       Timeout_Id : Timeout_Handler_Id;
 
    begin
-      begin
-         Open (D.D, Dir);
-      exception
-         when Directory_Error =>
-            Free (D);
-            return;
-      end;
+      if Physical_Read then
+         begin
+            Open (D.D, Dir);
+         exception
+            when Directory_Error =>
+               Free (D);
+               return;
+         end;
 
-      D.Norm_Dest := new String'(Normalize_Pathname (Append_To_Dir));
-      D.Norm_Dir  := new String'(Normalize_Pathname (Dir));
-      D.Depth     := Depth;
-      D.Base      := Base;
-      D.Explorer  := Project_Explorer_Files (Explorer);
-      D.Idle      := Idle;
+         D.Norm_Dir := new String'(Normalize_Pathname (Dir));
+
+      else
+         D.Norm_Dir := new String'(Dir);
+      end if;
+
+      D.Norm_Dest     := new String'(Normalize_Pathname (Append_To_Dir));
+      D.Depth         := Depth;
+      D.Base          := Base;
+      D.Explorer      := Project_Explorer_Files (Explorer);
+      D.Idle          := Idle;
+      D.Physical_Read := Physical_Read;
 
       if Idle then
          Push_State (Explorer.Kernel, Processing);
@@ -1003,18 +1020,14 @@ package body Project_Explorers_Files is
                   Free_Children (T, Iter);
                   File_Append_File_Info (T, Iter, Iter_Name);
 
-               when Extends_Project_Node =>
+               when Project_Node | Extends_Project_Node =>
                   null;
 
                when Category_Node | Entity_Node =>
                   null;
 
-               when Project_Node =>
-                  null;
-
                when Obj_Directory_Node =>
                   null;
-
             end case;
          end;
 
@@ -1173,7 +1186,13 @@ package body Project_Explorers_Files is
 
    procedure Refresh
      (Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Explorer : access Project_Explorer_Files_Record'Class) is
+      Explorer : access Project_Explorer_Files_Record'Class)
+   is
+      Buffer       : aliased String (1 .. 1024);
+      Last, Len    : Integer;
+      Cur_Dir      : constant String := Get_Current_Dir;
+      Dir_Inserted : Boolean := False;
+
    begin
       Clear (Explorer.File_Model);
       File_Remove_Idle_Calls (Explorer);
@@ -1195,9 +1214,42 @@ package body Project_Explorers_Files is
             String_List_Utils.String_List.Free (Inc);
          end;
       else
-         File_Append_Directory
-           (Explorer, (1 => Directory_Separator),
-            Null_Iter, 1, Get_Current_Dir, True);
+         Get_Logical_Drive_Strings (Buffer, Len);
+
+         if Len = 0 then
+            File_Append_Directory
+              (Explorer, (1 => Directory_Separator),
+               Null_Iter, 1, Cur_Dir, True);
+
+         else
+            Last := 1;
+
+            for J in 1 .. Len loop
+               if Buffer (J) = ASCII.NUL then
+                  if Buffer (Last .. J - 1) =
+                    Cur_Dir (Cur_Dir'First .. Cur_Dir'First + Last - J + 1)
+                  then
+                     File_Append_Directory
+                       (Explorer, Buffer (Last .. J - 1),
+                        Null_Iter, 1, Cur_Dir, True);
+                     Dir_Inserted := True;
+
+                  else
+                     File_Append_Directory
+                       (Explorer, Buffer (Last .. J - 1),
+                        Null_Iter, 0, "", False, False);
+                  end if;
+
+                  Last := J + 1;
+               end if;
+            end loop;
+
+            if not Dir_Inserted then
+               File_Append_Directory
+                 (Explorer, (1 => Directory_Separator),
+                  Null_Iter, 1, Cur_Dir, True);
+            end if;
+         end if;
       end if;
 
    exception
