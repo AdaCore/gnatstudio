@@ -55,6 +55,7 @@ with Commands.External;         use Commands.External;
 with Traces;                    use Traces;
 with Ada.Exceptions;            use Ada.Exceptions;
 with VFS;                       use VFS;
+with File_Utils;                use File_Utils;
 
 package body VCS_View_API is
 
@@ -1785,6 +1786,35 @@ package body VCS_View_API is
       Files        : String_List.List;
       File_Context : File_Selection_Context_Access;
       Ref          : constant VCS_Access := Get_Current_Ref (Context);
+      Kernel       : constant Kernel_Handle := Get_Kernel (Context);
+
+      procedure Add_Directory_Files (Dir : String);
+      --  Fill the explorer with blank status for all files in Dir.
+
+      procedure Add_Directory_Files (Dir : String) is
+         use String_List;
+
+         F      : File_Array_Access := Read_Files_From_Dirs (Dir);
+         Status : File_Status_List.List;
+      begin
+         for J in F'Range loop
+            declare
+               File : String_List.List;
+            begin
+               if not Is_Directory (F (J)) then
+                  Append (File, Full_Name (F (J)).all);
+                  File_Status_List.Append
+                    (Status,
+                     (File, Unknown,
+                      Null_List, Null_List, Null_List, Null_List));
+               end if;
+            end;
+         end loop;
+
+         Display_File_Status (Kernel, Status, Ref, False, True, False);
+         File_Status_List.Free (Status);
+         Unchecked_Free (F);
+      end Add_Directory_Files;
 
       procedure Add_Directory_Recursively;
       --  Add Dir and all subdirectories in Dir to Files, and make Node point
@@ -1820,6 +1850,8 @@ package body VCS_View_API is
                            Append (Files,
                                    Data (Node) & File (1 .. Last)
                                    & GNAT.OS_Lib.Directory_Separator);
+                           Add_Directory_Files
+                             (Data (Node) & File (1 .. Last));
                         end if;
                      end if;
 
@@ -1847,6 +1879,8 @@ package body VCS_View_API is
 
          if Has_Directory_Information (File_Context) then
             String_List.Append (Files, Directory_Information (File_Context));
+
+            Add_Directory_Files (Directory_Information (File_Context));
 
             if Recursive then
                Add_Directory_Recursively;
