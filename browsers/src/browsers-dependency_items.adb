@@ -41,6 +41,7 @@ with Pango.Layout;         use Pango.Layout;
 with Browsers.Canvas;           use Browsers.Canvas;
 with Glide_Intl;                use Glide_Intl;
 with Glide_Kernel.Contexts;     use Glide_Kernel.Contexts;
+with Glide_Kernel.Hooks;        use Glide_Kernel.Hooks;
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
 with Glide_Kernel.Project;      use Glide_Kernel.Project;
@@ -79,6 +80,14 @@ package body Browsers.Dependency_Items is
       Idle_Id : Gtk.Main.Idle_Handler_Id;
    end record;
    type Dependency_Browser is access all Dependency_Browser_Record'Class;
+
+   type Project_Changed_Hook_Record is new Hook_No_Args_Record with record
+      Browser         : Dependency_Browser;
+   end record;
+   type Project_Changed_Hook is access all Project_Changed_Hook_Record'Class;
+   procedure Execute (Hook   : Project_Changed_Hook_Record;
+                      Kernel : access Kernel_Handle_Record'Class);
+   --  Called when the project as changed
 
    ----------------
    -- File items --
@@ -473,6 +482,31 @@ package body Browsers.Dependency_Items is
       end if;
    end On_Destroy;
 
+   -------------
+   -- Execute --
+   -------------
+
+   procedure Execute
+     (Hook   : Project_Changed_Hook_Record;
+      Kernel : access Kernel_Handle_Record'Class)
+   is
+      pragma Unreferenced (Kernel);
+      Iter : Item_Iterator := Start (Get_Canvas (Hook.Browser));
+      Item : Canvas_Item;
+   begin
+      --  Remove all items from the browser, since they are pointing to invalid
+      --  Source_File anyway, and are no longer relevant for the new project
+
+      loop
+         Item := Get (Iter);
+         exit when Item = null;
+
+         Remove (Get_Canvas (Hook.Browser), Item);
+
+         Next (Iter);
+      end loop;
+   end Execute;
+
    -----------------------------
    -- Open_Dependency_Browser --
    -----------------------------
@@ -483,6 +517,7 @@ package body Browsers.Dependency_Items is
    is
       Child   : MDI_Child;
       Browser : Dependency_Browser;
+      Hook    : Project_Changed_Hook;
    begin
       Child := Find_MDI_Child_By_Tag
         (Get_MDI (Kernel), Dependency_Browser_Record'Tag);
@@ -499,6 +534,13 @@ package body Browsers.Dependency_Items is
             Module => Dependency_Browser_Module_ID);
          Set_Focus_Child (Child);
          Set_Title (Child, -"Dependency Browser");
+
+         Hook := new Project_Changed_Hook_Record'
+           (Hook_No_Args_Record with
+            Browser         => Browser);
+         Add_Hook
+           (Kernel, Glide_Kernel.Project_Changed_Hook,
+            Hook, Watch => GObject (Browser));
       end if;
 
       return Child;
