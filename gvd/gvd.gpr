@@ -8,7 +8,7 @@ project GVD is
   for Object_Dir use "gvd";
 
    package Compiler is
-      for Default_Switches ("Ada") use ("-g", "-O2", "-gnaty", "-gnatwue");
+      for Default_Switches ("Ada") use ("-gnata", "-g", "-O2", "-gnaty", "-gnatwue");
       for Switches ("advanced_breakpoint_pkg.adb") use ("-g", "-O2");
       for Switches ("breakpoints_pkg.adb") use ("-g", "-O2");
       for Switches ("general_preferences_pkg.adb") use ("-g", "-O2");

@@ -16,7 +16,7 @@ project Prj_Editor is
    end Builder;
 
    package Compiler is
-      for Default_Switches ("Ada") use ("-g", "-O2", "-gnaty", "-gnatwue");
+      for Default_Switches ("Ada") use ("-g", "-gnata", "-O2", "-gnaty", "-gnatwue");
       for Switches ("naming_scheme_editor_pkg.adb") use ("-g", "-O2");
       for Switches ("new_variable_editor_pkg.adb") use ("-g", "-O2");
       for Switches ("switches_editor_pkg.adb") use ("-g", "-O2");

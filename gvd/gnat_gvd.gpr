@@ -8,7 +8,7 @@ project GNAT_GVD is
    end Builder;
 
    package Compiler is
-      for Default_Switches ("Ada") use ("-gnatpg", "-g", "-O2");
+      for Default_Switches ("Ada") use ("-gnata", "-gnatpg", "-g", "-O2");
    end Compiler;
 
 end GNAT_GVD;

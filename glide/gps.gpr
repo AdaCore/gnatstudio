@@ -31,10 +31,14 @@ project Glide is
       case Build is
          when "Debug" => 
             for Default_Switches ("Ada") use
-              ("-g", "-O2", "-gnaty", "-gnatwu", "-gnatwe");
+              ("-g", "-O2", "-gnata", "-gnaty", "-gnatwu", "-gnatwe");
          when others =>
             for Default_Switches ("Ada") use
-              ("-O2", "-gnaty", "-gnatwu", "-gnatwe");
+              ("-O2", "-gnaty", "-gnata", "-gnatwu", "-gnatwe");
       end case;
    end Compiler;
+
+   package Binder is
+      for Default_Switches ("Ada") use ("-E");
+   end Binder;
 end Glide;

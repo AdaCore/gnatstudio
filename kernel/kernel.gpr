@@ -50,7 +50,7 @@ project Kernel is
       "src_info.ads");
 
    package Compiler is
-      for Default_Switches ("Ada") use ("-g", "-O2", "-gnaty", "-gnatwue");
+      for Default_Switches ("Ada") use ("-g", "-gnata", "-O2", "-gnaty", "-gnatwue");
    end Compiler;
 
 end Kernel;
