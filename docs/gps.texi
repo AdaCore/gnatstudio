@@ -7008,10 +7008,10 @@ You will find the required specification for the C and Ada languages
 to implement the following functions in the directory
 @file{<prefix>/share/gps/doc/examples/language} of your GPS installation.
 @file{language_custom.ads} is the Ada spec file; @file{language_custom.h} is
-the C spec file; @file{gprcustom.c} is an example file showing a possible
-C implementation of the functions @code{Comment_Line} and @code{Uncomment_Line}
-for the GPS project files (@file{.gpr} files), or any other Ada-like
-language.
+the C spec file; @file{gpr_custom.ad?} are example files showing a possible Ada
+implementation of the functions @code{Comment_Line} and @code{Uncomment_Line}
+for the GPS project files (@file{.gpr} files), or any other Ada-like language;
+@file{gprcustom.c} is the C version of gpr_custom.adb.
 
 @item Comment_Line
 Name of a symbol in the specified shared library corresponding to a
@@ -7984,11 +7984,11 @@ instance the way the GPS builder itself analyzes the output of @code{make}.
 This can be done for your own tools using the shell command
 @code{locations_parse}. This command takes several arguments, so that you
 can specify your own regular expression to find the file name, line number and
-so on in the error message. By default, however, it is configured to work
-seamlessly with error message of one of the forms
+so on in the error message. By default, it is configured to work
+seamlessly with error message of the forms:
 
 @smallexample
-file:line message
+file:line: message
 file:line:column: message
 @end smallexample
 
@@ -8023,7 +8023,7 @@ with a quote.
 
 @item Auto-correcting errors
 @cindex codefix_parse
-GPS has support for automatically correctiong errors for some of the languages.
+GPS has support for automatically correcting errors for some of the languages.
 You can get access to this auto-fixing feature through the @code{codefix_parse}
 shell command, which takes the same arguments as for @code{locations_parse}.
 
