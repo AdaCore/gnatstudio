@@ -281,7 +281,7 @@ package body Glide_Main_Window is
         (Handler        => Get_Key_Handler (Main_Window.Kernel),
          Name           => "Move to next window",
          Default_Key    => GDK_Tab,
-         Default_Mod    => Control_Mask,
+         Default_Mod    => Mod1_Mask,
          Command        => Command);
 
       Command              := new MDI_Child_Selection_Command;
@@ -291,7 +291,7 @@ package body Glide_Main_Window is
         (Handler        => Get_Key_Handler (Main_Window.Kernel),
          Name           => "Move to previous window",
          Default_Key    => GDK_ISO_Left_Tab,
-         Default_Mod    => Control_Mask + Shift_Mask,
+         Default_Mod    => Mod1_Mask + Shift_Mask,
          Command        => Command);
    end Register_Keys;
 
