@@ -78,21 +78,25 @@ package body Language.Ada is
      Compile
        ("^[ \t]*(procedure|function)\s+" &
         "(\w+)(" & Comment_RE & "\s*|\s*\([^\)]+\)" & Comment_RE & ")\s*" &
-        "(return\s+(\w|\.)+\s*)?(is\s|;)", Multiple_Lines);
+        "(return\s+(\w|\.)+\s*)?(is\s|;)", Multiple_Lines or Case_Insensitive);
 
    Package_RE    : aliased Pattern_Matcher :=
      Compile
-       ("^[ \t]*package[ \t]+((body[ \t]+)?((\w|\.)+))", Multiple_Lines);
+       ("^[ \t]*package[ \t]+((body[ \t]+)?((\w|\.)+))",
+        Multiple_Lines or Case_Insensitive);
 
    Type_Def_RE   : aliased Pattern_Matcher :=
-     Compile ("^[ \t]*(sub)?type[ \t]+(\w+)", Multiple_Lines);
+     Compile
+       ("^[ \t]*(sub)?type[ \t]+(\w+)", Multiple_Lines or Case_Insensitive);
 
    Task_RE       : aliased Pattern_Matcher :=
-     Compile ("^[ \t]*task[ \t]+((body|type)[ \t]+)?(\w+)", Multiple_Lines);
+     Compile
+       ("^[ \t]*task[ \t]+((body|type)[ \t]+)?(\w+)",
+        Multiple_Lines or Case_Insensitive);
 
    Protected_RE : aliased Pattern_Matcher :=
      Compile ("^[ \t]*protected[ \t]+((type|body)[ \t]+)?(\w+)",
-              Multiple_Lines);
+              Multiple_Lines or Case_Insensitive);
 
    --  The Specs are not parsed specifically. Instead, all the work is done
    --  while parsing for subprograms, and the function Make_Entry_Subprogram
