@@ -26,6 +26,8 @@
 -- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
 
+with Src_Info.Queries;
+
 package Glide_Kernel.Editor is
 
    procedure New_Editor
@@ -105,5 +107,15 @@ package Glide_Kernel.Editor is
    --  for more details on the behavior of this query) and highlight
    --  the entity found, opening a new editor if needed (this may depend
    --  on the user preferences).
+
+   procedure Find_Dependencies
+     (Kernel          : access Kernel_Handle_Record'Class;
+      Source_Name     : String;
+      Dependencies    : out Src_Info.Queries.Dependency_List;
+      Status          : out Src_Info.Queries.Dependencies_Query_Status);
+   --  Return the list of units on which the unit associated to the given
+   --  filename depends. An Internal_Error status is returned if the
+   --  LI information of the given file can not be found or if the associated
+   --  LI file can not be found.
 
 end Glide_Kernel.Editor;
