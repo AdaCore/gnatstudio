@@ -71,10 +71,10 @@ with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
 with Glide_Kernel.Modules;     use Glide_Kernel.Modules;
 with Glide_Intl;               use Glide_Intl;
 with Language_Handlers.Glide;  use Language_Handlers.Glide;
+with Project_Explorers_Files;  use Project_Explorers_Files;
 with Traces;                   use Traces;
 with Find_Utils;               use Find_Utils;
 with File_Utils;               use File_Utils;
-with Project_Explorers_Files;  use Project_Explorers_Files;
 with Src_Info;
 with String_Hash;
 
@@ -740,15 +740,11 @@ package body Project_Explorers is
      (Node : Node_Ptr; User : Kernel_Handle) return Gtk_Widget
    is
       Explorer : Project_Explorer;
-      Files    : Project_Explorer_Files;
    begin
       if Node.Tag.all = "Project_Explorer_Project" then
          Gtk_New (Explorer, User);
          Refresh (User, GObject (Explorer));
          return Gtk_Widget (Explorer);
-      elsif Node.Tag.all = "Project_Explorer_Files" then
-         Gtk_New (Files, User);
-         return Gtk_Widget (Files);
       end if;
 
       return null;
@@ -767,10 +763,6 @@ package body Project_Explorers is
       if Widget.all in Project_Explorer_Record'Class then
          N := new Node;
          N.Tag := new String'("Project_Explorer_Project");
-         return N;
-      elsif Widget.all in Project_Explorer_Files_Record'Class then
-         N := new Node;
-         N.Tag := new String'("Project_Explorer_Files");
          return N;
       end if;
 
@@ -2401,26 +2393,7 @@ package body Project_Explorers is
    is
       pragma Unreferenced (Widget);
       Explorer : Project_Explorer;
-      Files    : Project_Explorer_Files;
-      Child    : MDI_Child;
    begin
-      --  Start with the files view, so that if both are needed, the project
-      --  view ends up on top of the files view
-      Child := Find_MDI_Child_By_Tag
-        (Get_MDI (Kernel), Project_Explorer_Files_Record'Tag);
-
-      if Child = null then
-         Gtk_New (Files, Kernel);
-         Child := Put (Get_MDI (Kernel), Files);
-         Set_Title
-           (Child, -"Project Explorer - File View",  -"File View");
-         Set_Dock_Side (Child, Left);
-         Dock_Child (Child);
-      else
-         Raise_Child (Child);
-         Set_Focus_Child (Get_MDI (Kernel), Child);
-      end if;
-
       Explorer := Get_Or_Create_Project_View (Kernel);
 
    exception
@@ -2996,17 +2969,6 @@ package body Project_Explorers is
 
       --  Add a project explorer to the default desktop.
       N := new Node;
-      N.Tag := new String'("Project_Explorer_Files");
-
-      Add_Default_Desktop_Item
-        (Kernel, N,
-         10, 10,
-         300, 600,
-         "File View", "Project Explorer - File View",
-         Docked, Left,
-         False);
-
-      N := new Node;
       N.Tag := new String'("Project_Explorer_Project");
 
       Add_Default_Desktop_Item
@@ -3018,7 +2980,7 @@ package body Project_Explorers is
          True);
 
       Register_Menu
-        (Kernel, Project, -"Explorer", "", On_Open_Explorer'Access);
+        (Kernel, Project, -"Project View", "", On_Open_Explorer'Access);
 
       Extra := new Explorer_Search_Extra_Record;
       Gtk.Frame.Initialize (Extra);
