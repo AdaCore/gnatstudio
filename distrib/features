@@ -3,6 +3,8 @@ details, please see the documentation.
 
 New features in GPS 1.3.0
 
+- C513-007 Support for multiple log files
+
 - Projects can automatically be generated from an executable when using the
   --debug command line switch
 
