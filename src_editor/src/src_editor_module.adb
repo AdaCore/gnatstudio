@@ -69,10 +69,6 @@ package body Src_Editor_Module is
      (Box : access Source_Box_Record'Class; Editor : Source_Editor_Box);
    --  Internal initialization function.
 
-   procedure Initialize_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
-   --  Initialize the module and all its menus
-
    function Mime_Action
      (Kernel    : access Kernel_Handle_Record'Class;
       Mime_Type : String;
@@ -567,12 +563,17 @@ package body Src_Editor_Module is
    is
       pragma Unreferenced (Widget);
       Success : Boolean;
+      Source : constant Source_Editor_Box := Find_Current_Editor (Kernel);
    begin
-      declare
-         Name : constant String := Select_File (-"Save File As");
-      begin
-         Save_To_File (Kernel, Name, Success);
-      end;
+      if Source /= null then
+         declare
+            Name : constant String := Select_File
+              (-"Save File As",
+               Base_Directory => Dir_Name (Get_Filename (Source)));
+         begin
+            Save_To_File (Kernel, Name, Success);
+         end;
+      end if;
 
    exception
       when E : others =>
@@ -887,8 +888,8 @@ package body Src_Editor_Module is
       Context : Selection_Context_Access)
    is
       pragma Unreferenced (Widget);
-      File : File_Selection_Context_Access := File_Selection_Context_Access
-        (Context);
+      File : File_Name_Selection_Context_Access :=
+        File_Name_Selection_Context_Access (Context);
    begin
       Trace (Me, "On_Edit_File: " & File_Information (File));
       Open_File_Editor
@@ -909,11 +910,11 @@ package body Src_Editor_Module is
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class)
    is
       pragma Unreferenced (Object);
-      File  : File_Selection_Context_Access;
+      File  : File_Name_Selection_Context_Access;
       Mitem : Gtk_Menu_Item;
    begin
-      if Context.all in File_Selection_Context'Class then
-         File := File_Selection_Context_Access (Context);
+      if Context.all in File_Name_Selection_Context'Class then
+         File := File_Name_Selection_Context_Access (Context);
 
          if Has_Directory_Information (File)
            and then Has_File_Information (File)
@@ -941,11 +942,11 @@ package body Src_Editor_Module is
       return Get_Contextual_Menu (Kernel, Child, C.Editor, null, null);
    end Default_Factory;
 
-   -----------------------
-   -- Initialize_Module --
-   -----------------------
+   ---------------------
+   -- Register_Module --
+   ---------------------
 
-   procedure Initialize_Module
+   procedure Register_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
       File    : constant String := '/' & (-"File") & '/';
@@ -954,8 +955,18 @@ package body Src_Editor_Module is
       Mitem   : Gtk_Menu_Item;
       Button  : Gtk_Button;
       Toolbar : constant Gtk_Toolbar := Get_Toolbar (Kernel);
-
    begin
+      Src_Editor_Module_Id := Register_Module
+        (Kernel                  => Kernel,
+         Module_Name             => Src_Editor_Module_Name,
+         Priority                => Default_Priority,
+         Contextual_Menu_Handler => Source_Editor_Contextual'Access,
+         Mime_Handler            => Mime_Action'Access,
+         MDI_Child_Tag           => Source_Box_Record'Tag,
+         Default_Context_Factory => Default_Factory'Access);
+      Glide_Kernel.Kernel_Desktop.Register_Desktop_Functions
+        (Save_Desktop'Access, Load_Desktop'Access);
+
       --  Menus
 
       Register_Menu (Kernel, File, -"Open...",  Stock_Open,
@@ -1052,26 +1063,6 @@ package body Src_Editor_Module is
         (Toolbar, Stock_Copy, -"Copy to Clipboard", Position => 8);
       Button := Insert_Stock
         (Toolbar, Stock_Paste, -"Paste from Clipboard", Position => 9);
-   end Initialize_Module;
-
-   ---------------------
-   -- Register_Module --
-   ---------------------
-
-   procedure Register_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class) is
-   begin
-      Src_Editor_Module_Id := Register_Module
-        (Kernel                  => Kernel,
-         Module_Name             => Src_Editor_Module_Name,
-         Priority                => Default_Priority,
-         Initializer             => Initialize_Module'Access,
-         Contextual_Menu_Handler => Source_Editor_Contextual'Access,
-         Mime_Handler            => Mime_Action'Access,
-         MDI_Child_Tag           => Source_Box_Record'Tag,
-         Default_Context_Factory => Default_Factory'Access);
-      Glide_Kernel.Kernel_Desktop.Register_Desktop_Functions
-        (Save_Desktop'Access, Load_Desktop'Access);
    end Register_Module;
 
 end Src_Editor_Module;
