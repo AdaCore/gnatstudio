@@ -157,6 +157,7 @@ package body Glide_Kernel.Modules is
    --  Destroy the contextual menu that was created before
 
    type Non_Interactive_Action is record
+      Kernel  : Kernel_Handle;
       Command : Command_Access;
       Filter  : Action_Filter;
    end record;
@@ -190,6 +191,12 @@ package body Glide_Kernel.Modules is
      (Kernel : access Kernel_Handle_Record'Class;
       Name   : String) return Contextual_Menu_Access;
    --  Find a contextual menu by name
+
+   procedure Map_Menu
+     (Item : access GObject_Record'Class;
+      Command : Non_Interactive_Action);
+   --  Called when a registered menu is displayed, so that we can check whether
+   --  it should be made sensitive or not
 
    ---------------
    -- Get_Label --
@@ -1098,18 +1105,47 @@ package body Glide_Kernel.Modules is
          Command_Callback.Object_Connect
            (Item, "activate", Execute_Command'Access,
             Slot_Object => Kernel_Handle (Kernel),
-            User_Data   => (Command, null));
+            User_Data   => (Kernel_Handle (Kernel),
+                            Command,
+                            null));
       end if;
 
       if Action /= null then
          Command_Callback.Object_Connect
            (Item, "activate", Execute_Command'Access,
             Slot_Object => Kernel_Handle (Kernel),
-            User_Data   => (Command_Access (Action.Command), Action.Filter));
+            User_Data   => (Kernel_Handle (Kernel),
+                            Command_Access (Action.Command),
+                            Action.Filter));
+         if Action.Filter /= null then
+            Command_Callback.Object_Connect
+              (Get_Toplevel (Item), "map", Map_Menu'Access,
+               Slot_Object => Item,
+               User_Data   => (Kernel_Handle (Kernel),
+                               Command_Access (Action.Command),
+                               Action.Filter));
+         end if;
       end if;
 
       return Item;
    end Register_Menu;
+
+   --------------
+   -- Map_Menu --
+   --------------
+
+   procedure Map_Menu
+     (Item : access GObject_Record'Class;
+      Command : Non_Interactive_Action)
+   is
+      Context : constant Selection_Context_Access :=
+        Get_Current_Context (Command.Kernel);
+   begin
+      Set_Sensitive
+        (Gtk_Widget (Item),
+         Command.Filter = null
+         or else Filter_Matches_Primitive (Command.Filter, Context));
+   end Map_Menu;
 
    -----------------------
    -- Menu_Button_Press --
@@ -1253,7 +1289,7 @@ package body Glide_Kernel.Modules is
       Command_Callback.Object_Connect
         (Button, "clicked", Execute_Command'Access,
          Slot_Object => Kernel_Handle (Kernel),
-         User_Data   => (Command, null));
+         User_Data   => (Kernel_Handle (Kernel), Command, null));
    end Register_Button;
 
    ---------------------
@@ -1274,7 +1310,7 @@ package body Glide_Kernel.Modules is
       Command_Callback.Object_Connect
         (Button, "clicked", Execute_Command'Access,
          Slot_Object => Kernel_Handle (Kernel),
-         User_Data   => (Command, null));
+         User_Data   => (Kernel_Handle (Kernel), Command, null));
    end Register_Button;
 
    ------------------
