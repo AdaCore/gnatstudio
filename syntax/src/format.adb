@@ -768,7 +768,6 @@ package body Format is
       Semicolon           : Boolean           := False;
       Type_Decl           : Boolean           := False;
       Was_Type_Decl       : Boolean           := False;
-      Select_Token        : Natural           := 0;
       End_Token           : Boolean           := False;
       Or_Token            : Boolean           := False;
       And_Token           : Boolean           := False;
@@ -919,6 +918,7 @@ package body Format is
            or else Word = Tok_Package
            or else Word = Tok_Task
            or else Word = Tok_Protected
+           or else Word = Tok_Entry
          then
             Type_Decl     := False;
             Was_Type_Decl := False;
@@ -974,8 +974,6 @@ package body Format is
                Val := Pop;
 
                case Val is
-                  when Tok_Select =>
-                     Select_Token := Select_Token - 1;
                   when Tok_Exception | Tok_Case =>
                      --  Additional level of indentation, as in:
                      --     ...
@@ -1003,7 +1001,6 @@ package body Format is
          elsif     Word = Tok_Is
            or else Word = Tok_Declare
            or else Word = Tok_Begin
-           or else Word = Tok_When
            or else Word = Tok_Do
            or else (not Or_Token  and then Word = Tok_Else)
            or else (not And_Token and then Word = Tok_Then)
@@ -1012,6 +1009,8 @@ package body Format is
            or else (not End_Token and then Word = Tok_Loop)
            or else (not End_Token and then Prev_Reserved /= Tok_Null
                       and then Word = Tok_Record)
+           or else ((Top = Tok_Exception or else Top = Tok_Case)
+                     and then Word = Tok_When)
            or else ((Top = Tok_Declare or else Top = Tok_Package)
                       and then Word = Tok_Private
                       and then Prev_Reserved /= Tok_Is
@@ -1028,7 +1027,6 @@ package body Format is
                if Word = Tok_Select then
                   --  Start of a select statement
                   Push (Word);
-                  Select_Token := Select_Token + 1;
                end if;
 
                if Word = Tok_Else
@@ -1115,6 +1113,7 @@ package body Format is
            or else Word = Tok_Subtype
          then
             --  Entering a type declaration/definition.
+            --  ??? Should use the stack instead
 
             Type_Decl := True;
 
