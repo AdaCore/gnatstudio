@@ -353,16 +353,14 @@ package body Project_Viewers is
      (Page         : access Source_Editor_Record;
       Project      : Project_Type;
       Full_Project : String;
-      Kernel       : access Kernel_Handle_Record'Class)
-      return Gtk_Widget;
+      Kernel       : access Kernel_Handle_Record'Class) return Gtk_Widget;
    function Project_Editor
      (Page         : access Source_Editor_Record;
       Project      : Project_Type;
       Kernel       : access Kernel_Handle_Record'Class;
       Widget       : access Gtk_Widget_Record'Class;
       Scenario_Variables : Scenario_Variable_Array;
-      Ref_Project  : Project_Type)
-      return Boolean;
+      Ref_Project  : Project_Type) return Boolean;
 
    type Object_Editor_Widget_Record is new Gtk_Box_Record with record
       Obj_Dir  : Gtk_Entry;
@@ -1995,8 +1993,7 @@ package body Project_Viewers is
      (Page : access Object_Editor_Record;
       Project : Project_Type;
       Full_Project : String;
-      Kernel : access Kernel_Handle_Record'Class)
-     return Gtk_Widget
+      Kernel : access Kernel_Handle_Record'Class) return Gtk_Widget
    is
       pragma Unreferenced (Page);
       Obj_Dir : Object_Editor_Widget;
@@ -2149,6 +2146,18 @@ package body Project_Viewers is
                Attribute_Name     => Get_String (Name_Object_Dir));
 
          else
+            if not Is_Directory (New_Dir.all) then
+               if Message_Dialog
+                 (Msg => New_Dir.all
+                  & (-" is not a directory, would you like to create it ?"),
+                  Title => -"Directory not found",
+                  Dialog_Type => Information,
+                  Buttons => Button_Yes or Button_No) = Button_Yes
+               then
+                  Make_Dir (New_Dir.all);
+               end if;
+            end if;
+
             Update_Attribute_Value_In_Scenario
               (Project            => Project,
                Scenario_Variables => Scenario_Variables,
@@ -2174,6 +2183,18 @@ package body Project_Viewers is
                Attribute_Name     => Exec_Dir_Attribute);
 
          else
+            if not Is_Directory (Exec_Dir.all) then
+               if Message_Dialog
+                 (Msg => Exec_Dir.all
+                  & (-" is not a directory, would you like to create it ?"),
+                  Title => -"Directory not found",
+                  Dialog_Type => Information,
+                  Buttons => Button_Yes or Button_No) = Button_Yes
+               then
+                  Make_Dir (Exec_Dir.all);
+               end if;
+            end if;
+
             Update_Attribute_Value_In_Scenario
               (Project            => Project,
                Scenario_Variables => Scenario_Variables,
