@@ -177,7 +177,6 @@ package body Builder_Module is
       Args    : Argument_List_Access;
       Cmd     : String_Access;
       Id      : Timeout_Handler_Id;
-      Tmp     : Boolean;
 
    begin
       --  Are we using the default internal project ?
@@ -191,7 +190,10 @@ package body Builder_Module is
 
       --  Ask for saving sources/projects before building
 
-      Tmp := Save_All_MDI_Children (K, Force => False);
+      if Save_All_MDI_Children (K, Force => False) = False then
+         return;
+      end if;
+
       Console.Clear (K);
       Console.Insert (K, "gnatmake " & Cmd.all, False);
 
@@ -260,8 +262,13 @@ package body Builder_Module is
             return;
          end if;
 
+         if Save_Child (Kernel, Get_File_Editor (Kernel, File), Force => False)
+           = Cancel
+         then
+            return;
+         end if;
+
          Trace (Me, "On_Check_Syntax: " & Cmd);
-         --  ??? Ask for saving sources/projects before building
          Push_State (Kernel, Processing);
          Console.Clear (Kernel);
          Set_Sensitive_Menus (Kernel, False);
@@ -319,14 +326,15 @@ package body Builder_Module is
          Fd      : Process_Descriptor_Access;
          Args    : Argument_List_Access;
          Id      : Timeout_Handler_Id;
-         Tmp     : Boolean;
 
       begin
          if File = "" then
             return;
          end if;
 
-         Tmp := Save_All_MDI_Children (Kernel, Force => False);
+         if Save_All_MDI_Children (Kernel, Force => False) = False then
+            return;
+         end if;
 
          Push_State (Kernel, Processing);
          Console.Clear (Kernel);
@@ -406,7 +414,10 @@ package body Builder_Module is
          Id      : Timeout_Handler_Id;
 
       begin
-         --  ??? Ask for saving sources/projects before building
+         if Save_All_MDI_Children (Kernel, Force => False) = False then
+            return;
+         end if;
+
          Push_State (Kernel, Processing);
          Console.Clear (Kernel);
          Set_Sensitive_Menus (Kernel, False);
