@@ -134,7 +134,7 @@ package body Glide_Kernel.Editor is
          declare
             ALI_Filename : constant String := ALI_Filename_From_Source
               (Source_Filename, Get_Project_View (Kernel),
-               Get_Source_Path (Kernel));
+               Get_Predefined_Source_Path (Kernel));
 
             --  ??? We only have the ALI_Filename
 
@@ -142,7 +142,8 @@ package body Glide_Kernel.Editor is
          begin
             Parse_ALI_File
               (ALI_Filename, Get_Project_View (Kernel),
-               Get_Source_Path (Kernel), Get_Object_Path (Kernel),
+               Get_Predefined_Source_Path (Kernel),
+               Get_Predefined_Object_Path (Kernel),
                Kernel.Source_Info_List, Source_Info, Success);
             if not Success then
                Console.Insert

@@ -169,10 +169,10 @@ package body Glide_Kernel is
       Create_Default_Project (Handle);
       Reset_Source_Info_List (Handle);
 
-      Set_Source_Path
+      Set_Predefined_Source_Path
         (Handle, ".:" &
          "/usr/local/gnat/lib/gcc-lib/i686-pc-linux-gnu/2.8.1/adainclude");
-      Set_Object_Path
+      Set_Predefined_Object_Path
         (Handle, ".:" &
          "/usr/local/gnat/lib/gcc-lib/i686-pc-linux-gnu/2.8.1/adalib");
       --  ??? This is a temporary hack for the demo. We should really compute
@@ -207,55 +207,55 @@ package body Glide_Kernel is
       end loop;
    end Initialize_All_Modules;
 
-   ---------------------
-   -- Set_Source_Path --
-   ---------------------
+   --------------------------------
+   -- Set_Predefined_Source_Path --
+   --------------------------------
 
-   procedure Set_Source_Path
+   procedure Set_Predefined_Source_Path
      (Handle : access Kernel_Handle_Record;
       Path   : String) is
    begin
-      GNAT.OS_Lib.Free (Handle.Source_Path);
-      Handle.Source_Path := new String'(Path);
-   end Set_Source_Path;
+      GNAT.OS_Lib.Free (Handle.Predefined_Source_Path);
+      Handle.Predefined_Source_Path := new String'(Path);
+   end Set_Predefined_Source_Path;
 
-   ---------------------
-   -- Get_Source_Path --
-   ---------------------
+   --------------------------------
+   -- Get_Predefined_Source_Path --
+   --------------------------------
 
-   function Get_Source_Path
+   function Get_Predefined_Source_Path
      (Handle : access Kernel_Handle_Record) return String is
    begin
-      if Handle.Source_Path = null then
+      if Handle.Predefined_Source_Path = null then
          return "";
       end if;
-      return Handle.Source_Path.all;
-   end Get_Source_Path;
+      return Handle.Predefined_Source_Path.all;
+   end Get_Predefined_Source_Path;
 
-   ---------------------
-   -- Set_Object_Path --
-   ---------------------
+   --------------------------------
+   -- Set_Predefined_Object_Path --
+   --------------------------------
 
-   procedure Set_Object_Path
+   procedure Set_Predefined_Object_Path
      (Handle : access Kernel_Handle_Record;
       Path   : String) is
    begin
-      GNAT.OS_Lib.Free (Handle.Object_Path);
-      Handle.Object_Path := new String'(Path);
-   end Set_Object_Path;
+      GNAT.OS_Lib.Free (Handle.Predefined_Object_Path);
+      Handle.Predefined_Object_Path := new String'(Path);
+   end Set_Predefined_Object_Path;
 
-   ---------------------
-   -- Get_Object_Path --
-   ---------------------
+   --------------------------------
+   -- Get_Predefined_Object_Path --
+   --------------------------------
 
-   function Get_Object_Path
+   function Get_Predefined_Object_Path
      (Handle : access Kernel_Handle_Record) return String is
    begin
-      if Handle.Object_Path = null then
+      if Handle.Predefined_Object_Path = null then
          return "";
       end if;
-      return Handle.Object_Path.all;
-   end Get_Object_Path;
+      return Handle.Predefined_Object_Path.all;
+   end Get_Predefined_Object_Path;
 
    --------------------
    -- Parse_ALI_File --
@@ -268,13 +268,13 @@ package body Glide_Kernel is
       Success      : out Boolean) is
    begin
       Src_Info.ALI.Parse_ALI_File
-        (ALI_Filename      => ALI_Filename,
-         Project           => Get_Project_View (Handle),
-         Extra_Source_Path => Get_Source_Path (Handle),
-         Extra_Object_Path => Get_Object_Path (Handle),
-         List              => Handle.Source_Info_List,
-         Unit              => Unit,
-         Success           => Success);
+        (ALI_Filename           => ALI_Filename,
+         Project                => Get_Project_View (Handle),
+         Predefined_Source_Path => Get_Predefined_Source_Path (Handle),
+         Predefined_Object_Path => Get_Predefined_Object_Path (Handle),
+         List                   => Handle.Source_Info_List,
+         Unit                   => Unit,
+         Success                => Success);
    end Parse_ALI_File;
 
    ------------------------
@@ -289,12 +289,12 @@ package body Glide_Kernel is
       File : Src_Info.LI_File_Ptr;
    begin
       Src_Info.ALI.Locate_From_Source
-        (List              => Handle.Source_Info_List,
-         Source_Filename   => Source_Filename,
-         Project           => Get_Project_View (Handle),
-         Extra_Source_Path => Get_Source_Path (Handle),
-         Extra_Object_Path => Get_Object_Path (Handle),
-         File              => File);
+        (List                   => Handle.Source_Info_List,
+         Source_Filename        => Source_Filename,
+         Project                => Get_Project_View (Handle),
+         Predefined_Source_Path => Get_Predefined_Source_Path (Handle),
+         Predefined_Object_Path => Get_Predefined_Object_Path (Handle),
+         File                   => File);
       return File;
    end Locate_From_Source;
 
@@ -415,12 +415,12 @@ package body Glide_Kernel is
       Unit_Name : out String_Access) is
    begin
       Get_Unit_Name
-        (File              => File,
-         Source_Info_List  => Handle.Source_Info_List,
-         Project           => Get_Project_View (Handle),
-         Extra_Source_Path => Get_Source_Path (Handle),
-         Extra_Object_Path => Get_Object_Path (Handle),
-         Unit_Name         => Unit_Name);
+        (File                   => File,
+         Source_Info_List       => Handle.Source_Info_List,
+         Project                => Get_Project_View (Handle),
+         Predefined_Source_Path => Get_Predefined_Source_Path (Handle),
+         Predefined_Object_Path => Get_Predefined_Object_Path (Handle),
+         Unit_Name              => Unit_Name);
    end Get_Unit_Name;
 
    ---------------------------------
