@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 1.4.0
 
+- C901-002 Internal error when binding control-x and another control-x exists
+  Problem:    If you have previously a multi-key bindings starting with
+              control-x through the keyshortcuts editor, and you then try to
+              assign control-x, an internal error is displayed
+  Workaround: Use another multi-key binding in the last case, instead of only
+              control-x
+
 - C822-014 Cross-references fail on Ada files with file-specific naming schemes
   Problem:    If you are using Ada files with an irregular naming scheme (ie
               you don't specificy a general way to compute the name of the
