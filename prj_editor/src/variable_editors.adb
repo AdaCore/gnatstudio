@@ -31,25 +31,18 @@ with Gtk.Alignment;       use Gtk.Alignment;
 with Gtk.Button;          use Gtk.Button;
 with Gtk.Combo;           use Gtk.Combo;
 with Gtk.Label;           use Gtk.Label;
-with Gtk.Table;           use Gtk.Table;
 with Gtk.List;            use Gtk.List;
 with Gtk.List_Item;       use Gtk.List_Item;
 with Gtk.GEntry;          use Gtk.GEntry;
-with Gtk.Enums;           use Gtk.Enums;
 with Gtk.Frame;           use Gtk.Frame;
-with Gtk.Pixmap;          use Gtk.Pixmap;
-with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 with Gtk.Check_Button;    use Gtk.Check_Button;
 with Gtk.Radio_Button;    use Gtk.Radio_Button;
-with Gtk.Handlers;        use Gtk.Handlers;
 with Gtk.Text;            use Gtk.Text;
-pragma Elaborate_All (Gtk.Handlers);
 with Gtk.Widget;          use Gtk.Widget;
 with Gtkada.Dialogs;      use Gtkada.Dialogs;
 
 with Prj.Tree;   use Prj.Tree;
 with Prj;        use Prj;
-with Prj.Ext;    use Prj.Ext;
 
 with Namet;      use Namet;
 with Stringt;    use Stringt;
@@ -57,10 +50,7 @@ with Types;      use Types;
 with Interfaces.C.Strings; use Interfaces.C.Strings;
 with System;     use System;
 with Ada.Text_IO; use Ada.Text_IO;
-with Unchecked_Deallocation;
 
-with Pixmaps_IDE;   use Pixmaps_IDE;
-with Pixmaps_Prj;   use Pixmaps_Prj;
 with Prj_API;       use Prj_API;
 with Value_Editors; use Value_Editors;
 with Glide_Kernel;  use Glide_Kernel;
@@ -90,66 +80,13 @@ package body Variable_Editors is
    --  Return the string describing the nth environment variable. The strings
    --  have the format "name=value".
 
-   type Var_Handler_Data is record
-      Var : Project_Node_Id := Empty_Node;
-      --  Edited variable
-
-      Editor : Variable_Edit;
-      --  The editor
-   end record;
-   --  Data to be passed to Var_Handler.
-   --  ??? Not needed if object_connect could get a user_data.
-
-   package Var_Handler is new User_Callback
-     (Gtk_Widget_Record, Var_Handler_Data);
-
-   type Editor_Row_Data is record
-      Editor : Variable_Edit;
-      Row    : Guint;
-   end record;
-
-   package Editor_Callback is new Gtk.Handlers.User_Callback
-     (Gtk_Widget_Record, Editor_Row_Data);
-
-   procedure Edit_Variable
-     (Button : access Gtk_Widget_Record'Class; Data : Var_Handler_Data);
-   --  Called when editing a variable.
-
-   procedure Refresh_Row
-     (Editor : access Variable_Edit_Record'Class;
-      Row    : Guint;
-      Var    : Project_Node_Id);
-   --  Refresh the contents of a specific row in the table. If Row is greated
-   --  than the number of rows in the table, a new one is created.
-   --  The description of Var is displayed in that row.
-
-   procedure Typed_Value_Changed
-     (GEntry : access Gtk_Widget_Record'Class; User : Editor_Row_Data);
-   --  Called when the entry giving the current value of a typed variable
-   --  has changed.
-
-   -------------
-   -- Gtk_New --
-   -------------
-
-   procedure Gtk_New
-     (Editor  : out Variable_Edit;
-      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Pkg     : Prj.Tree.Project_Node_Id := Empty_Node) is
-   begin
-      Editor := new Variable_Edit_Record;
-      Initialize (Editor);
-      Editor.Kernel := Kernel_Handle (Kernel);
-      Editor.Pkg := Pkg;
-   end Gtk_New;
-
    -------------
    -- Gtk_New --
    -------------
 
    procedure Gtk_New
      (Editor : out New_Var_Edit;
-      Var_Edit : access Variable_Edit_Record'Class;
+      Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
       Var : Prj.Tree.Project_Node_Id :=  Prj.Tree.Empty_Node;
       Scenario_Variable_Only : Boolean)
    is
@@ -161,7 +98,7 @@ package body Variable_Editors is
    begin
       Editor := new New_Var_Edit_Record;
       Editor.Var := Var;
-      Editor.Var_Editor := Variable_Edit (Var_Edit);
+      Editor.Kernel := Kernel_Handle (Kernel);
       Initialize (Editor);
       Set_Variable_Kind (Editor.Single_Value, Prj.Single);
       Set_Visible_Lines (Editor.Single_Value, 1);
@@ -400,219 +337,6 @@ package body Variable_Editors is
       Set_Visible_Lines (Text, Num_Lines);
    end Resize_Text_Area;
 
-   -------------------------
-   -- Typed_Value_Changed --
-   -------------------------
-
-   procedure Typed_Value_Changed
-     (GEntry : access Gtk_Widget_Record'Class;
-      User   : Editor_Row_Data)
-   is
-      use type Widget_List.Glist;
-      Editor : Variable_Edit renames User.Editor;
-      Var    : Project_Node_Id renames Editor.Data (User.Row).Var;
-      Str    : String_Id;
-      List   : Gtk_List := Get_List (Editor.Data (User.Row).Type_Combo);
-
-   begin
-      if Get_Selection (List) /= Widget_List.Null_List then
-         Str := External_Reference_Of (Var);
-         if Str /= No_String then
-            String_To_Name_Buffer (Str);
-            Prj.Ext.Add
-              (Name_Buffer (Name_Buffer'First .. Name_Len),
-               Get_Chars (Get_Entry (Editor.Data (User.Row).Type_Combo)));
-            Recompute_View (User.Editor.Kernel);
-         end if;
-      end if;
-   end Typed_Value_Changed;
-
-   -----------------
-   -- Refresh_Row --
-   -----------------
-
-   procedure Refresh_Row
-     (Editor : access Variable_Edit_Record'Class;
-      Row    : Guint;
-      Var    : Project_Node_Id)
-   is
-      procedure Free is new Unchecked_Deallocation
-        (Row_Data_Array, Row_Data_Array_Access);
-      Button   : Gtk_Button;
-      Data     : Var_Handler_Data;
-      Row_Data : Row_Data_Array_Access;
-      Str      : String_Id;
-
-   begin
-      if Row > Editor.Num_Rows then
-         Resize (Editor.List_Variables, Rows => Row, Columns => 5);
-         Editor.Num_Rows := Row;
-         Row_Data := new Row_Data_Array (0 .. Editor.Num_Rows);
-         if Editor.Data /= null then
-            Row_Data (0 .. Editor.Num_Rows - 1) := Editor.Data.all;
-            Free (Editor.Data);
-         end if;
-         Editor.Data := Row_Data;
-
-         Editor.Data (Row).Var := Var;
-
-         --  Insert the widgets
-         Gtk_New (Button);
-         Add (Button, Create_Pixmap (stock_preferences_xpm, Editor));
-         Attach (Editor.List_Variables, Button, 0, 1,
-                 Editor.Num_Rows - 1, Editor.Num_Rows,
-                 Xoptions => 0, Yoptions => 0);
-         Data := (Var => Var, Editor => Variable_Edit (Editor));
-         Var_Handler.Connect
-           (Button, "clicked",
-            Var_Handler.To_Marshaller (Edit_Variable'Access), Data);
-
-         Set_Col_Spacing (Editor.List_Variables, 0, 0);
-
-         Gtk_New (Button);
-         Add (Button, Create_Pixmap (delete_var_xpm, Editor));
-         Attach (Editor.List_Variables, Button, 1, 2,
-                 Editor.Num_Rows - 1, Editor.Num_Rows,
-                 Xoptions => 0, Yoptions => 0);
-
-         Set_Col_Spacing (Editor.List_Variables, 1, 10);
-
-         --  Name of the variable
-         Gtk_New (Editor.Data (Row).Name_Label, "");
-         Set_Alignment (Editor.Data (Row).Name_Label, 0.0, 0.0);
-         Attach (Editor.List_Variables, Editor.Data (Row).Name_Label, 2, 3,
-                 Editor.Num_Rows - 1, Editor.Num_Rows,
-                 Yoptions => 0);
-
-         --  Environment variables
-         Gtk_New (Editor.Data (Row).Env_Label, "");
-         Set_Alignment (Editor.Data (Row).Env_Label, 0.0, 0.0);
-         Attach (Editor.List_Variables, Editor.Data (Row).Env_Label, 4, 5,
-                 Editor.Num_Rows - 1, Editor.Num_Rows,
-                 Yoptions => 0);
-
-         Show_All (Editor.List_Variables);
-      end if;
-
-      --  Set the correct values for the widgets
-
-      Get_Name_String (Name_Of (Var));
-      Set_Text (Editor.Data (Row).Name_Label,
-                Name_Buffer (Name_Buffer'First .. Name_Len));
-
-      --  Note that the type of the variable might have changed since the
-      --  last time we did the update, so we have to recreate some of the
-      --  widgets now
-
-      if Editor.Data (Row).Type_Combo /= null then
-         Destroy (Editor.Data (Row).Type_Combo);
-         Editor.Data (Row).Type_Combo := null;
-      elsif Editor.Data (Row).Scrolled /= null then
-         Destroy (Editor.Data (Row).Scrolled);
-         Editor.Data (Row).Scrolled := null;
-         Editor.Data (Row).Value_Edit := null;
-      elsif Editor.Data (Row).Value_Edit /= null then
-         Destroy (Editor.Data (Row).Value_Edit);
-         Editor.Data (Row).Value_Edit := null;
-      end if;
-
-      if Kind_Of (Var) = N_Typed_Variable_Declaration then
-         Gtk_New (Editor.Data (Row).Type_Combo);
-         Set_Editable (Get_Entry (Editor.Data (Row).Type_Combo), False);
-         Attach (Editor.List_Variables, Editor.Data (Row).Type_Combo, 3, 4,
-                 Row - 1, Row, Yoptions => 0);
-         Add_Possible_Values
-           (Get_List (Editor.Data (Row).Type_Combo),
-            String_Type_Of (Var));
-         Set_Text (Get_Entry (Editor.Data (Row).Type_Combo), "");
-
-         --  The value of the variable is necessarily defined through Prj.Ext
-         --  (when the project view was recomputed). We now read its current
-         --  value from there.
-         Str := External_Reference_Of (Var);
-         if Str /= No_String then
-            String_To_Name_Buffer (Str);
-            Str := Prj.Ext.Value_Of (Name_Find);
-            String_To_Name_Buffer (Str);
-            Set_Text
-              (Get_Entry (Editor.Data (Row).Type_Combo),
-               Name_Buffer (Name_Buffer'First .. Name_Len));
-         end if;
-
-         Show_All (Editor.Data (Row).Type_Combo);
-         Editor_Callback.Connect
-           (Get_Entry (Editor.Data (Row).Type_Combo),
-            "changed",
-            Editor_Callback.To_Marshaller (Typed_Value_Changed'Access),
-            (Variable_Edit (Editor), Row));
-
-      elsif Expression_Kind_Of (Var) = Prj.List then
-         Gtk_New (Editor.Data (Row).Scrolled);
-         Set_Policy
-           (Editor.Data (Row).Scrolled, Policy_Never, Policy_Automatic);
-         Gtk_New (Editor.Data (Row).Value_Edit);
-         Add (Editor.Data (Row).Scrolled, Editor.Data (Row).Value_Edit);
-         Attach (Editor.List_Variables, Editor.Data (Row).Scrolled, 3, 4,
-                 Row - 1, Row, Yoptions => 0);
-         Resize_Text_Area (Editor.Data (Row).Value_Edit, Var, 5);
-         Display_Expr (Editor.Data (Row).Value_Edit, Value_Of (Var));
-         Set_Position (Editor.Data (Row).Value_Edit, 0);
-         Show_All (Editor.Data (Row).Scrolled);
-
-      else
-         Gtk_New (Editor.Data (Row).Value_Edit);
-         Attach (Editor.List_Variables, Editor.Data (Row).Value_Edit, 3, 4,
-                 Row - 1, Row, Yoptions => 0);
-         Set_Visible_Lines (Editor.Data (Row).Value_Edit, 1);
-         Display_Expr (Editor.Data (Row).Value_Edit, Value_Of (Var));
-         Show_All (Editor.Data (Row).Value_Edit);
-      end if;
-
-      --  The environment variable
-      Str := External_Reference_Of (Var);
-      if Str /= No_String then
-         String_To_Name_Buffer (Str);
-         Set_Text (Editor.Data (Row).Env_Label,
-                   Name_Buffer (Name_Buffer'First .. Name_Len));
-      end if;
-   end Refresh_Row;
-
-   -------------
-   -- Refresh --
-   -------------
-
-   procedure Refresh
-     (Editor : access Variable_Edit_Record;
-      Var    : Prj.Tree.Project_Node_Id := Empty_Node) is
-   begin
-      pragma Assert
-        (Kind_Of (Var) = N_Typed_Variable_Declaration
-         or else Kind_Of (Var) = N_Variable_Declaration);
-
-      if Editor.Data /= null then
-         for J in Editor.Data'Range loop
-            if Editor.Data (J).Var = Var then
-               Refresh_Row (Editor, J, Var);
-               return;
-            end if;
-         end loop;
-      end if;
-      Refresh_Row (Editor, Editor.Num_Rows + 1, Var);
-   end Refresh;
-
-   -------------------
-   -- Edit_Variable --
-   -------------------
-
-   procedure Edit_Variable
-     (Button : access Gtk_Widget_Record'Class; Data : Var_Handler_Data)
-   is
-      Edit : New_Var_Edit;
-   begin
-      Gtk_New (Edit, Data.Editor, Data.Var, Scenario_Variable_Only => True);
-      Show_All (Edit);
-   end Edit_Variable;
-
    ---------------------
    -- Update_Variable --
    ---------------------
@@ -669,13 +393,10 @@ package body Variable_Editors is
 
       case V is
          when Valid =>
-            Expr := Get_Value (Value, Get_Project (Editor.Var_Editor.Kernel));
+            Expr := Get_Value (Value, Get_Project (Editor.Kernel));
 
             if Editor.Var = Empty_Node then
-               Parent := Editor.Var_Editor.Pkg;
-               if Parent = Empty_Node then
-                  Parent := Get_Project (Editor.Var_Editor.Kernel);
-               end if;
+               Parent := Get_Project (Editor.Kernel);
 
                if Get_Active (Editor.Typed_Variable) then
                   Editor.Var := Get_Or_Create_Typed_Variable
@@ -735,14 +456,12 @@ package body Variable_Editors is
                Set_Expression_Of (Editor.Var, Expr);
             end if;
 
-            Recompute_View (Editor.Var_Editor.Kernel);
+            Recompute_View (Editor.Kernel);
             --  ??? We don't really need to recompute the whole view, since
             --  ??? after all we only added a variable that doesn't have any
             --  ??? influence yet.
             --
             --  ??? We should register that the project is no longer normalized
-
-            Refresh (Editor.Var_Editor, Editor.Var);
 
             Destroy (Editor);
 
