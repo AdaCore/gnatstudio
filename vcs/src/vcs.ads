@@ -84,6 +84,10 @@ package VCS is
       --  The file corresponds to the latest version in the corresponding
       --  branch on the repository.
 
+      Added,
+      --  The file has been locally added to the VCS repository but the change
+      --  has not been committed.
+
       Removed,
       --  The file still exists locally but is known to have been removed from
       --  the VCS repository.
