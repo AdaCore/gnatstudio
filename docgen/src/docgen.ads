@@ -2,7 +2,7 @@
 --                               G P S                               --
 --                                                                   --
 --                     Copyright (C) 2001-2005                       --
---                            ACT-Europe                             --
+--                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -202,8 +202,6 @@ package Docgen is
       --  Create also the body documentation
       Ignorable_Comments : Boolean := False;
       --  Ignore all comments with "--!"
-      Comments_Above     : Boolean := False;
-      --  Doc comments for entities above the header
       Show_Private       : Boolean := False;
       --  Show also private entities
       References         : Boolean := False;
