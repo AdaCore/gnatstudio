@@ -49,8 +49,12 @@ package Prj_API is
 
    Ada_String : constant String := "ada";  --  See also Snames.Name_Ada
    C_String   : constant String := "c";    --  See also Snames.Name_C
-   Cpp_String : constant String := "c++";  --  See also Snames.Name_Cpp
+   Cpp_String : constant String := "c++";  --  See also Name_C_Plus_Plus.
    --  Strings used for the various languages supported by Glide
+
+   Name_C_Plus_Plus : Types.Name_Id;
+   --  The equivalent of Cpp_String. You should never use Name_CPP, which
+   --  contains "cpp" instead of the expect "c++" in projects.
 
    Any_Attribute : constant String := "@@";
    --  Special value for all the subprograms that take an Attribute_Index
@@ -155,7 +159,8 @@ package Prj_API is
    function Get_Source_Files
      (Project_View : Prj.Project_Id;
       Recursive    : Boolean;
-      Full_Path    : Boolean := True)
+      Full_Path    : Boolean := True;
+      Matching_Language : Types.Name_Id := Types.No_Name)
       return Basic_Types.String_Array_Access;
    --  Return the list of source files belonging to the project described in
    --  Handle. Only the direct sources of the project are currently returned,
@@ -163,6 +168,9 @@ package Prj_API is
    --  It is the caller's responsability to free the list.
    --  If Full_Path is true, then the file names will also include the
    --  directory. The directory names are normalized.
+   --
+   --  If Matching_Language is not No_Name, then only the source files matching
+   --  the specific language are returned.
 
    function Get_Source_Files
      (Project_View : Prj.Project_Id;

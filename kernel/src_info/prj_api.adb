@@ -56,6 +56,9 @@ package body Prj_API is
 
    Me : Debug_Handle := Create ("Prj_API");
 
+   procedure Initialize;
+   --  Initialize this package and the GNAT packages.
+
    procedure Set_Expression
      (Var_Or_Attribute : Project_Node_Id; Expr : Project_Node_Id);
    --  Set Var as the expression to use for the value of Var. This
@@ -399,7 +402,7 @@ package body Prj_API is
 
       --  Find the correct package id to use
 
-      for Index in Package_Attributes.First .. Package_Attributes.Last loop
+      for Index in Package_First .. Package_Attributes.Last loop
          if N = Package_Attributes.Table (Index).Name then
             Set_Package_Id_Of (Pack, Index);
             exit;
@@ -3152,13 +3155,13 @@ package body Prj_API is
          Value              => ".");
 
       Values := (1 => new String' ("-g"));
-      Update_Attribute_Value_In_Scenario
-        (Project,
-         Scenario_Variables => No_Scenario,
-         Attribute_Name     => "default_switches",
-         Values             => Values,
-         Attribute_Index    => Ada_String,
-         Pkg_Name           => "builder");
+      --  Update_Attribute_Value_In_Scenario
+      --    (Project,
+      --     Scenario_Variables => No_Scenario,
+      --     Attribute_Name     => "default_switches",
+      --     Values             => Values,
+      --     Attribute_Index    => Ada_String,
+      --     Pkg_Name           => "builder");
       Free (Values (1));
 
       return Project;
@@ -3433,7 +3436,8 @@ package body Prj_API is
    function Get_Source_Files
      (Project_View : Prj.Project_Id;
       Recursive : Boolean;
-      Full_Path : Boolean := True)
+      Full_Path : Boolean := True;
+      Matching_Language : Types.Name_Id := Types.No_Name)
       return Basic_Types.String_Array_Access
    is
       Src     : String_List_Id;
@@ -3469,26 +3473,37 @@ package body Prj_API is
             Src := Projects.Table (View).Sources;
 
             while Src /= Nil_String loop
-               --  ??? We could avoid calls to Normalize_Pathname here if
-               --  ??? Include_Path included normalized directory names
-               if Full_Path then
-                  S := Locate_Regular_File
-                    (Get_String (String_Elements.Table (Src).Value), Path);
-                  if S /= null then
+
+               --  ??? Probably not the most efficient way to do. If we had a
+               --  ??? single function to check that a file belongs to a
+               --  ??? specific language, it might be more efficient.
+
+               if Matching_Language = No_Name
+                 or else Get_Language_Of
+                 (View, Get_String (String_Elements.Table (Src).Value)) =
+                 Matching_Language
+               then
+                  --  ??? We could avoid calls to Normalize_Pathname here if
+                  --  ??? Include_Path included normalized directory names
+                  if Full_Path then
+                     S := Locate_Regular_File
+                       (Get_String (String_Elements.Table (Src).Value), Path);
+                     if S /= null then
+                        Sources (Index) := new String'
+                          (Normalize_Pathname (S.all));
+                        Free (S);
+                     end if;
+                  else
                      Sources (Index) := new String'
-                       (Normalize_Pathname (S.all));
-                     Free (S);
+                       (Get_String (String_Elements.Table (Src).Value));
                   end if;
-               else
-                  Sources (Index) := new String'
-                    (Get_String (String_Elements.Table (Src).Value));
-               end if;
-               if Sources (Index) = null then
-                  Trace (Me, "File not found "
-                         & Get_String (String_Elements.Table (Src).Value)
-                         & " " & Path);
-               else
-                  Index := Index + 1;
+                  if Sources (Index) = null then
+                     Trace (Me, "File not found "
+                              & Get_String (String_Elements.Table (Src).Value)
+                              & " " & Path);
+                  else
+                     Index := Index + 1;
+                  end if;
                end if;
                Src := String_Elements.Table (Src).Next;
             end loop;
@@ -3497,7 +3512,20 @@ package body Prj_API is
          Next (Iter);
       end loop;
 
-      return Sources;
+      --  Shrink the array if needed
+      if Index > Sources'Last then
+         return Sources;
+
+      else
+         declare
+            S : String_Array_Access := new String_Array
+              (Sources'First .. Index - 1);
+         begin
+            S.all := Sources (Sources'First .. Index - 1);
+            Basic_Types.Unchecked_Free (Sources);
+            return S;
+         end;
+      end if;
    end Get_Source_Files;
 
    ----------------------
@@ -4024,10 +4052,23 @@ package body Prj_API is
       end if;
    end Get_Languages;
 
+   ----------------
+   -- Initialize --
+   ----------------
+
+   procedure Initialize is
+   begin
+      Namet.Initialize;
+      Csets.Initialize;
+      Snames.Initialize;
+      Prj.Initialize;
+      Prj.Tree.Initialize;
+
+      Name_Len := Cpp_String'Length;
+      Name_Buffer (1 .. Name_Len) := Cpp_String;
+      Name_C_Plus_Plus := Name_Find;
+   end Initialize;
+
 begin
-   Namet.Initialize;
-   Csets.Initialize;
-   Snames.Initialize;
-   Prj.Initialize;
-   Prj.Tree.Initialize;
+   Initialize;
 end Prj_API;
