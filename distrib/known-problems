@@ -5,7 +5,8 @@ Known Problems fixed in GPS 2.0.2
               GPS doesn't go to the actual body of the entity, but only to the
               stub that contains the "is separate".
   Workaround: Compile explicitely the file that contains the separate body,
-              with shift-F4
+              with shift-F4, or use "Find all references" to find the reference
+              to the real body.
 
 - D722-009 Window unmaximized unexpectedly under Windows
   Problem:    Under windows only, when using a floating and maximized window
