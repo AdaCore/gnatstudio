@@ -1,8 +1,6 @@
 with String_Utils;            use String_Utils;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Text_IO;             use Ada.Text_IO;
-with GNAT.OS_Lib;             use GNAT.OS_Lib;
-with Scans;                   use Scans;
 with Ada.Unchecked_Deallocation;
 with Generic_Stack;
 
@@ -36,7 +34,11 @@ package body Source_Analyzer is
 
       Ident_Len   : Natural := 0;
       --  Actual length of Indentifier
+
+      Sloc        : Source_Location;
+      --  Source location for this entity
    end record;
+   --  Extended information for a token
 
    package Token_Stack is new Generic_Stack (Extended_Token);
    use Token_Stack;
@@ -133,6 +135,21 @@ package body Source_Analyzer is
       Num_Spaces  : Integer;
       Indent_Done : in out Boolean);
    --  Perform indentation by inserting spaces in the buffer.
+
+   type Construct_List_Access is access all Construct_List;
+
+   procedure Analyze_Ada_Source
+     (Buffer           : String;
+      New_Buffer       : in out Extended_Line_Buffer;
+      Indent_Level     : Natural               := 3;
+      Indent_Continue  : Natural               := 2;
+      Reserved_Casing  : Casing_Type           := Lower;
+      Ident_Casing     : Casing_Type           := Mixed;
+      Format_Operators : Boolean               := True;
+      Indent           : Boolean               := True;
+      Constructs       : Construct_List_Access := null);
+   --  Analyze a given Ada source in Buffer, and store the result in New_Buffer
+   --  if New_Buffer.First isn't null.
 
    ------------------
    -- Is_Word_Char --
@@ -505,26 +522,28 @@ package body Source_Analyzer is
       end if;
    end Do_Indent;
 
-   ----------------
-   -- Format_Ada --
-   ----------------
+   ------------------------
+   -- Analyze_Ada_Source --
+   ------------------------
 
-   procedure Format_Ada
+   procedure Analyze_Ada_Source
      (Buffer           : String;
-      Indent_Level     : Natural     := 3;
-      Indent_Continue  : Natural     := 2;
-      Reserved_Casing  : Casing_Type := Lower;
-      Ident_Casing     : Casing_Type := Mixed;
-      Format_Operators : Boolean     := True)
+      New_Buffer       : in out Extended_Line_Buffer;
+      Indent_Level     : Natural               := 3;
+      Indent_Continue  : Natural               := 2;
+      Reserved_Casing  : Casing_Type           := Lower;
+      Ident_Casing     : Casing_Type           := Mixed;
+      Format_Operators : Boolean               := True;
+      Indent           : Boolean               := True;
+      Constructs       : Construct_List_Access := null)
    is
-      New_Buffer          : Extended_Line_Buffer;
-      Line_Count          : Integer           := 0;
+      Line_Count          : Integer           := 1;
       Str                 : String (1 .. 1024);
       Str_Len             : Natural           := 0;
       Current             : Natural;
       Prec                : Natural           := 1;
       Num_Spaces          : Integer           := 0;
-      Indent_Done         : Boolean           := False;
+      Indent_Done         : Boolean           := not Indent;
       Num_Parens          : Integer           := 0;
       Prev_Num_Parens     : Integer           := 0;
       In_Generic          : Boolean           := False;
@@ -559,6 +578,21 @@ package body Source_Analyzer is
       pragma Inline (New_Line);
       --  Increment Count and poll if needed (e.g for graphic events).
 
+      --------------------
+      -- Stack Routines --
+      --------------------
+
+      procedure Push
+        (Stack : in out Token_Stack.Simple_Stack; Value : Extended_Token);
+      --  Push Value on top of Stack.
+
+      procedure Pop
+        (Stack : in out Token_Stack.Simple_Stack; Value : out Extended_Token);
+      --  Pop Value on top of Stack.
+
+      procedure Pop (Stack : in out Token_Stack.Simple_Stack);
+      --  Pop Value on top of Stack. Ignore returned value.
+
       --------------
       -- New_Line --
       --------------
@@ -568,6 +602,64 @@ package body Source_Analyzer is
          Count := Count + 1;
       end New_Line;
 
+      ---------
+      -- Pop --
+      ---------
+
+      procedure Pop
+        (Stack : in out Token_Stack.Simple_Stack;
+         Value : out Extended_Token)
+      is
+         Column : Natural;
+      begin
+         Token_Stack.Pop (Stack, Value);
+
+         if Constructs /= null then
+            Column := Prec - Line_Start (Buffer, Prec) + 1;
+
+            if Value.Ident_Len > 0 then
+               Put_Line (Value.Token'Img & ", Start => "
+                 & Image (Value.Sloc.Line) & ':' & Image (Value.Sloc.Column)
+                 & ", End => " & Image (Line_Count) & ':' & Image (Column));
+            else
+               Put_Line (Value.Token'Img & ", Start => "
+                 & Image (Value.Sloc.Line) & ':' & Image (Value.Sloc.Column)
+                 & ", End => " & Image (Line_Count) & ':' & Image (Column));
+            end if;
+         end if;
+      end Pop;
+
+      procedure Pop (Stack : in out Token_Stack.Simple_Stack) is
+         Value  : Extended_Token;
+         Column : Natural;
+      begin
+         Token_Stack.Pop (Stack, Value);
+
+         if Constructs /= null then
+            Column := Prec - Line_Start (Buffer, Prec) + 1;
+
+            if Value.Ident_Len > 0 then
+               Put_Line (Value.Token'Img & ", Start => "
+                 & Image (Value.Sloc.Line) & ':' & Image (Value.Sloc.Column)
+                 & ", End => " & Image (Line_Count) & ':' & Image (Column));
+            else
+               Put_Line (Value.Token'Img & ", Start => "
+                 & Image (Value.Sloc.Line) & ':' & Image (Value.Sloc.Column)
+                 & ", End => " & Image (Line_Count) & ':' & Image (Column));
+            end if;
+         end if;
+      end Pop;
+
+      ----------
+      -- Push --
+      ----------
+
+      procedure Push
+        (Stack : in out Token_Stack.Simple_Stack; Value : Extended_Token) is
+      begin
+         Token_Stack.Push (Stack, Value);
+      end Push;
+
       --------------------------
       -- Handle_Reserved_Word --
       --------------------------
@@ -575,7 +667,9 @@ package body Source_Analyzer is
       procedure Handle_Reserved_Word (Reserved : Token_Type) is
          Temp : Extended_Token;
       begin
-         Temp.Token := Reserved;
+         Temp.Token       := Reserved;
+         Temp.Sloc.Line   := Line_Count;
+         Temp.Sloc.Column := Prec - Line_Start (Buffer, Prec) + 1;
 
          if Reserved = Tok_Body then
             Subprogram_Decl := False;
@@ -895,11 +989,17 @@ package body Source_Analyzer is
          Start_Of_Line := Line_Start (Buffer, P);
          End_Of_Line   := Line_End (Buffer, Start_Of_Line);
 
-         if New_Buffer.Current.Line'First = Start_Of_Line then
-            Padding := New_Buffer.Current.Line'Length - New_Buffer.Current.Len;
-         else
-            Padding := 0;
-            Indent_Done := False;
+         if New_Buffer.Current /= null then
+            if New_Buffer.Current.Line'First = Start_Of_Line then
+               Padding :=
+                 New_Buffer.Current.Line'Length - New_Buffer.Current.Len;
+            else
+               Padding := 0;
+
+               if Indent then
+                  Indent_Done := False;
+               end if;
+            end if;
          end if;
 
          loop
@@ -908,7 +1008,10 @@ package body Source_Analyzer is
                End_Of_Line   := Line_End (Buffer, Start_Of_Line);
                New_Line (Line_Count);
                Padding       := 0;
-               Indent_Done := False;
+
+               if Indent then
+                  Indent_Done := False;
+               end if;
             end if;
 
             --  Skip comments
@@ -921,7 +1024,10 @@ package body Source_Analyzer is
                End_Of_Line   := Line_End (Buffer, P);
                New_Line (Line_Count);
                Padding       := 0;
-               Indent_Done := False;
+
+               if Indent then
+                  Indent_Done := False;
+               end if;
             end loop;
 
             exit when P = Buffer'Last or else Is_Word_Char (Buffer (P));
@@ -937,8 +1043,7 @@ package body Source_Analyzer is
                      then
                         Spaces (2) := Buffer (P);
                         Replace_Text (New_Buffer, P, P + 1, Spaces (1 .. 2));
-                        Padding := New_Buffer.Current.Line'Length
-                          - New_Buffer.Current.Len;
+                        Padding := Padding + 1;
                      end if;
 
                   else
@@ -1151,6 +1256,22 @@ package body Source_Analyzer is
                when ',' | ';' =>
                   if Buffer (P) = ';' then
                      Prev_Token := Tok_Semicolon;
+
+                     if Subprogram_Decl and then Num_Parens = 0 then
+                        Subprogram_Decl := False;
+
+                        if not In_Generic then
+                           --  subprogram spec, e.g:
+                           --  procedure xxx (...);
+
+                           if Constructs /= null then
+                              Put ("Spec of ");
+                           end if;
+
+                           Token_Stack.Pop (Tokens);
+                        end if;
+                     end if;
+
                   else
                      Prev_Token := Tok_Comma;
                   end if;
@@ -1199,9 +1320,7 @@ package body Source_Analyzer is
          end loop;
       end Next_Word;
 
-   begin  --  Format_Ada
-      New_Buffer := To_Line_Buffer (Buffer);
-
+   begin  --  Analyze_Ada_Source
       --  Push a dummy token so that stack will never be empty.
       Push (Tokens, Default_Extended);
 
@@ -1214,82 +1333,62 @@ package body Source_Analyzer is
       while Current < Buffer'Last loop
          Str_Len := Current - Prec + 1;
 
-         if Str_Len > 1 or else Buffer (Prec - 1) /= ''' then
-            for J in Prec .. Current loop
-               Str (J - Prec + 1) := To_Lower (Buffer (J));
-            end loop;
+         for J in Prec .. Current loop
+            Str (J - Prec + 1) := To_Lower (Buffer (J));
+         end loop;
 
-            Token := Get_Token (Str (1 .. Str_Len));
+         Token := Get_Token (Str (1 .. Str_Len));
 
-            if Subprogram_Decl then
-               if Num_Parens = 0 then
-                  if Prev_Token = Tok_Semicolon
-                    or else Prev_Num_Parens > 0
-                  then
-                     Subprogram_Decl := False;
+         if Token = Tok_Identifier then
+            Val := Top (Tokens);
 
-                     if Prev_Token = Tok_Semicolon and then not In_Generic then
-                        --  subprogram decl with no following reserved word,
-                        --  e.g:
-                        --  procedure ... ();
-
-                        Pop (Tokens);
-                     end if;
-                  end if;
-               end if;
-            end if;
-
-            if Token = Tok_Identifier then
-               Val := Top (Tokens);
-
-               if Val.Token in Token_Class_Declk
-                 and then Val.Ident_Len = 0
-               then
-                  --  Store enclosing entity name
-
-                  Val.Identifier (1 .. Str_Len) := Buffer (Prec .. Current);
-                  Val.Ident_Len := Str_Len;
-               end if;
-
-               Casing := Ident_Casing;
-
-            elsif Prev_Token = Tok_Apostrophe
-              and then (Token = Tok_Delta or else Token = Tok_Digits
-                        or else Token = Tok_Range or else Token = Tok_Access)
+            if Val.Token in Token_Class_Declk
+              and then Val.Ident_Len = 0
             then
-               --  This token should not be considered as a reserved word
+               --  Store enclosing entity name
 
-               Casing := Ident_Casing;
-
-            else
-               Casing := Reserved_Casing;
-               Handle_Reserved_Word (Token);
+               Val.Identifier (1 .. Str_Len) := Buffer (Prec .. Current);
+               Val.Ident_Len := Str_Len;
             end if;
 
-            case Casing is
-               when Unchanged =>
-                  null;
+            Casing := Ident_Casing;
 
-               when Upper =>
-                  for J in 1 .. Str_Len loop
-                     Str (J) := To_Upper (Str (J));
-                  end loop;
+         elsif Prev_Token = Tok_Apostrophe
+           and then (Token = Tok_Delta or else Token = Tok_Digits
+                     or else Token = Tok_Range or else Token = Tok_Access)
+         then
+            --  This token should not be considered as a reserved word
 
-                  Replace_Text
-                    (New_Buffer, Prec, Current + 1, Str (1 .. Str_Len));
+            Casing := Ident_Casing;
 
-               when Lower =>
-                  --  Str already contains lowercase characters.
-
-                  Replace_Text
-                    (New_Buffer, Prec, Current + 1, Str (1 .. Str_Len));
-
-               when Mixed =>
-                  Mixed_Case (Str (1 .. Str_Len));
-                  Replace_Text
-                    (New_Buffer, Prec, Current + 1, Str (1 .. Str_Len));
-            end case;
+         else
+            Casing := Reserved_Casing;
+            Handle_Reserved_Word (Token);
          end if;
+
+         case Casing is
+            when Unchanged =>
+               null;
+
+            when Upper =>
+               for J in 1 .. Str_Len loop
+                  Str (J) := To_Upper (Str (J));
+               end loop;
+
+               Replace_Text
+                 (New_Buffer, Prec, Current + 1, Str (1 .. Str_Len));
+
+            when Lower =>
+               --  Str already contains lowercase characters.
+
+               Replace_Text
+                 (New_Buffer, Prec, Current + 1, Str (1 .. Str_Len));
+
+            when Mixed =>
+               Mixed_Case (Str (1 .. Str_Len));
+               Replace_Text
+                 (New_Buffer, Prec, Current + 1, Str (1 .. Str_Len));
+         end case;
 
          if Started then
             Do_Indent
@@ -1314,10 +1413,7 @@ package body Source_Analyzer is
 
          Current := End_Of_Word (Buffer, Prec);
       end loop;
-
-      Print (New_Buffer);
-      Free (New_Buffer);
-   end Format_Ada;
+   end Analyze_Ada_Source;
 
    --------------------
    -- To_Line_Buffer --
@@ -1368,7 +1464,7 @@ package body Source_Analyzer is
    -----------
 
    procedure Print (Buffer : Extended_Line_Buffer) is
-      Tmp  : Line_Buffer := Buffer.First;
+      Tmp : Line_Buffer := Buffer.First;
    begin
       loop
          exit when Tmp = null;
@@ -1412,6 +1508,11 @@ package body Source_Analyzer is
       Padding    : Integer;
 
    begin
+      if Buffer.First = null then
+         --  No replacing actually requested
+         return;
+      end if;
+
       if Buffer.Current.Line'First + Buffer.Current.Len - 1 < First then
          loop
             Buffer.Current := Buffer.Current.Next;
@@ -1444,5 +1545,64 @@ package body Source_Analyzer is
          Buffer.Current.Line := S;
       end if;
    end Replace_Text;
+
+   ----------------
+   -- Format_Ada --
+   ----------------
+
+   procedure Format_Ada
+     (Buffer           : String;
+      Indent_Level     : Natural     := 3;
+      Indent_Continue  : Natural     := 2;
+      Reserved_Casing  : Casing_Type := Lower;
+      Ident_Casing     : Casing_Type := Mixed;
+      Format_Operators : Boolean     := True)
+   is
+      New_Buffer : Extended_Line_Buffer;
+   begin
+      New_Buffer := To_Line_Buffer (Buffer);
+      Analyze_Ada_Source
+        (Buffer, New_Buffer, Indent_Level, Indent_Continue,
+         Reserved_Casing, Ident_Casing, Format_Operators);
+      Print (New_Buffer);
+      Free (New_Buffer);
+   end Format_Ada;
+
+   --------------------------
+   -- Parse_Ada_Constructs --
+   --------------------------
+
+   procedure Parse_Ada_Constructs
+     (Buffer : String;
+      Result : out Construct_List)
+   is
+      New_Buffer : Extended_Line_Buffer;
+      Constructs : aliased Construct_List;
+
+   begin
+      Analyze_Ada_Source
+        (Buffer, New_Buffer,
+         Reserved_Casing  => Unchanged,
+         Ident_Casing     => Unchanged,
+         Format_Operators => False,
+         Indent           => False,
+         Constructs       => Constructs'Unchecked_Access);
+      Result := Constructs;
+   end Parse_Ada_Constructs;
+
+   --------------------------
+   -- Next_Ada_Indentation --
+   --------------------------
+
+   procedure Next_Ada_Indentation
+     (Buffer           : String;
+      Indent_Level     : Natural := 3;
+      Indent_Continue  : Natural := 2;
+      Indent           : out Natural;
+      Indent_Next_Line : out Natural) is
+   begin
+      Indent := 0;
+      Indent_Next_Line := 0;
+   end Next_Ada_Indentation;
 
 end Source_Analyzer;
