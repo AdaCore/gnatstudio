@@ -66,6 +66,8 @@ package Commands is
 
    type Command_Queue is private;
 
+   Null_Command_Queue : constant Command_Queue;
+
    function New_Queue return Command_Queue;
    --  Create a new empty Command_Queue.
 
@@ -98,6 +100,7 @@ package Commands is
    --  Add an action that will be enqueued if Item executes successfully.
 
 private
+
    procedure Execute (Command : access Root_Command);
    --  Convenience subprogram: same as function Execute, but does not
    --  return any value.
@@ -150,6 +153,8 @@ private
       --  of the queue changes.
    end record;
    type Command_Queue is access Command_Queue_Record;
+
+   Null_Command_Queue : constant Command_Queue := null;
 
    type Command_Mode is (Normal, Done, Undone);
    --  Normal actions are enqueued normally. When they end, they are
