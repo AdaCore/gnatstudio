@@ -1082,7 +1082,8 @@ package body Src_Info.CPP is
       Project_View     : Prj.Project_Id;
       Module_Type_Defs : Module_Typedefs_List)
    is
-      Sym       : FIL_Table;
+      Sym        : FIL_Table;
+      Class_Kind : E_Kind := Record_Type;
    begin
       if Source_Filename
          = CL_Tab.Buffer (CL_Tab.File_Name.First .. CL_Tab.File_Name.Last)
@@ -1120,6 +1121,10 @@ package body Src_Info.CPP is
               (CL_Tab.Name.First .. CL_Tab.Name.Last),
             Location     => CL_Tab.Start_Position);
 
+         if Is_Template (CL_Tab) then
+            Class_Kind := Generic_Class;
+         end if;
+
          if Decl_Info = null then
             Insert_Dependency_Declaration
               (Handler            => Handler,
@@ -1130,7 +1135,7 @@ package body Src_Info.CPP is
                Referred_Filename  => CL_Tab.Buffer
                  (CL_Tab.File_Name.First .. CL_Tab.File_Name.Last),
                Location           => CL_Tab.Start_Position,
-               Kind               => Record_Type,
+               Kind               => Class_Kind,
                Scope              => Global_Scope,
                Declaration_Info   => Decl_Info);
             Set_End_Of_Scope
@@ -1147,15 +1152,14 @@ package body Src_Info.CPP is
    ---------------------
    function Get_Method_Kind
      (Handler                 : access CPP_LI_Handler_Record'Class;
-      Class_Name, Return_Type : String)
-      return E_Kind is
-      Class_Def          : CL_Table;
-      Is_Template         : Boolean := False;
+      Class_Name, Return_Type : String) return E_Kind
+   is
+      Class_Def   : CL_Table;
+      Is_Template : Boolean := False;
    begin
       begin -- check if this class is template
          Class_Def := Find (Handler.SN_Table (CL), Class_Name);
-         Is_Template := Class_Def.Template_Parameters.First
-            < Class_Def.Template_Parameters.Last;
+         Is_Template := Type_Utils.Is_Template (Class_Def);
          Free (Class_Def);
       exception
          when DB_Error | Not_Found =>
@@ -1522,6 +1526,7 @@ package body Src_Info.CPP is
       Class_Def  : CL_Table;
       Success    : Boolean;
       Decl_Info  : E_Declaration_Info_List;
+      Class_Kind : E_Kind := Record_Type;
       Ref_Id     : constant String := Ref.Buffer
         (Ref.Referred_Symbol_Name.First .. Ref.Referred_Symbol_Name.Last);
 
@@ -1540,6 +1545,10 @@ package body Src_Info.CPP is
          return;
       end if;
 
+      if Is_Template (Class_Def) then
+         Class_Kind := Generic_Class;
+      end if;
+
       if Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last) /=
           Class_Def.Buffer (Class_Def.File_Name.First ..
                             Class_Def.File_Name.Last)
@@ -1548,7 +1557,7 @@ package body Src_Info.CPP is
            (File        => File,
             Symbol_Name => Class_Def.Buffer
               (Class_Def.Name.First .. Class_Def.Name.Last),
-            Kind        => Record_Type,
+            Kind        => Class_Kind,
             Location    => Class_Def.Start_Position,
             Filename    => Class_Def.Buffer
               (Class_Def.File_Name.First .. Class_Def.File_Name.Last));
@@ -1563,7 +1572,7 @@ package body Src_Info.CPP is
                Referred_Filename  => Class_Def.Buffer
                  (Class_Def.File_Name.First .. Class_Def.File_Name.Last),
                Location           => Class_Def.Start_Position,
-               Kind               => Record_Type,
+               Kind               => Class_Kind,
                Scope              => Global_Scope,
                Declaration_Info   => Decl_Info);
          end if;
@@ -1573,7 +1582,7 @@ package body Src_Info.CPP is
            (File        => File,
             Symbol_Name => Class_Def.Buffer
               (Class_Def.Name.First .. Class_Def.Name.Last),
-            Kind        => Record_Type,
+            Kind        => Class_Kind,
             Location    => Class_Def.Start_Position);
 
          if Decl_Info = null then
@@ -1583,7 +1592,7 @@ package body Src_Info.CPP is
                Symbol_Name        => Class_Def.Buffer
                  (Class_Def.Name.First .. Class_Def.Name.Last),
                Location           => Class_Def.Start_Position,
-               Kind               => Record_Type,
+               Kind               => Class_Kind,
                Scope              => Global_Scope,
                Declaration_Info   => Decl_Info);
          end if;
@@ -1616,7 +1625,6 @@ package body Src_Info.CPP is
       Desc         : CType_Description;
       Success      : Boolean;
       Scope        : E_Scope := Global_Scope;
-      Attributes   : SN_Attributes;
       Sym          : FIL_Table;
 
    begin
@@ -1688,9 +1696,7 @@ package body Src_Info.CPP is
                return;
             end if;
 
-            Attributes := SN_Attributes (Var.Attributes);
-
-            if (Attributes and SN_STATIC) = SN_STATIC then
+            if (Var.Attributes and SN_STATIC) = SN_STATIC then
                Scope := Static_Local;
             end if;
 
@@ -2383,7 +2389,6 @@ package body Src_Info.CPP is
       Desc         : CType_Description;
       Success      : Boolean;
       Scope        : E_Scope := Global_Scope;
-      Attributes   : SN_Attributes;
       Ref_Id       : constant String := Ref.Buffer
         (Ref.Referred_Symbol_Name.First .. Ref.Referred_Symbol_Name.Last);
       Sym          : FIL_Table;
@@ -2449,9 +2454,7 @@ package body Src_Info.CPP is
                return;
             end if;
 
-            Attributes := SN_Attributes (Var.Attributes);
-
-            if (Attributes and SN_STATIC) = SN_STATIC then
+            if (Var.Attributes and SN_STATIC) = SN_STATIC then
                Scope := Static_Local;
             end if;
 
@@ -2617,7 +2620,6 @@ package body Src_Info.CPP is
         (Ref.Referred_Symbol_Name.First .. Ref.Referred_Symbol_Name.Last);
       Ref_Class     : constant String := Ref.Buffer
         (Ref.Referred_Class.First .. Ref.Referred_Class.Last);
-      Attributes    : SN_Attributes;
    begin
       --  Info ("Fu_To_Mi_Handler: " & Ref_Id);
 
@@ -2683,8 +2685,7 @@ package body Src_Info.CPP is
 
          if Init then -- implementation for the referred method not found
             --  this must be a pure virtual method
-            Attributes := SN_Attributes (MDecl.Attributes);
-            if (Attributes and SN_PUREVIRTUAL) /= SN_PUREVIRTUAL then
+            if (MDecl.Attributes and SN_PUREVIRTUAL) /= SN_PUREVIRTUAL then
                Fail ("failed to locate method implementation, but it is not"
                   & " an abstract one: " & Ref_Class & "::" & Ref_Id);
                Free (MDecl);
@@ -3109,7 +3110,7 @@ package body Src_Info.CPP is
          Symbol_Name           =>
            Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
          Location              => Sym.Start_Position,
-         Kind                  => Record_Type,
+         Kind                  => Desc.Kind,
          Scope                 => Global_Scope,
          End_Of_Scope_Location => Class_Def.End_Position,
          Declaration_Info      => Decl_Info);
@@ -3179,7 +3180,6 @@ package body Src_Info.CPP is
       Var               : GV_Table;
       Success           : Boolean;
       Decl_Info         : E_Declaration_Info_List;
-      Attributes        : SN_Attributes;
       Scope             : E_Scope := Global_Scope;
    begin
       --  Info ("Sym_CON_Handler: """
@@ -3208,9 +3208,7 @@ package body Src_Info.CPP is
          Desc.Kind := Unresolved_Entity;
       end if;
 
-      Attributes := SN_Attributes (Var.Attributes);
-
-      if (Attributes and SN_STATIC) = SN_STATIC then
+      if (Var.Attributes and SN_STATIC) = SN_STATIC then
          Scope := Static_Local;
       end if;
 
@@ -3407,7 +3405,6 @@ package body Src_Info.CPP is
       FD_Tab       : FD_Table;
       FD_Tab_Tmp   : FD_Table;
       FU_Tab       : FU_Table;
-      Attributes   : SN_Attributes;
       Is_Static    : Boolean;
       Match        : Boolean;
       FU_File      : LI_File_Ptr;
@@ -3423,8 +3420,7 @@ package body Src_Info.CPP is
          Sym.Start_Position,
          Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last));
 
-      Attributes := SN_Attributes (FD_Tab.Attributes);
-      Is_Static  := (Attributes and SN_STATIC) = SN_STATIC;
+      Is_Static  := (FD_Tab.Attributes and SN_STATIC) = SN_STATIC;
 
       Set_Cursor
         (Handler.SN_Table (FD),
@@ -3582,7 +3578,7 @@ package body Src_Info.CPP is
       Start_Position : constant Point := Sym.Start_Position;
       Body_Position  : Point := Invalid_Point;
       End_Position   : Point;
-      Is_Template     : Boolean := False;
+      Is_Template    : Boolean := False;
       Ref            : TO_Table;
       Our_Ref        : Boolean;
 
@@ -3609,8 +3605,7 @@ package body Src_Info.CPP is
                Class_Def := Find
                  (Handler.SN_Table (CL),
                   Sym.Buffer (Sym.Class.First .. Sym.Class.Last));
-               Is_Template := Class_Def.Template_Parameters.First
-                  < Class_Def.Template_Parameters.Last;
+               Is_Template := Type_Utils.Is_Template (Class_Def);
                Find_Or_Create_Class
                   (Handler,
                    Class_Def,
@@ -3820,7 +3815,6 @@ package body Src_Info.CPP is
       Var               : GV_Table;
       Success           : Boolean;
       Decl_Info         : E_Declaration_Info_List;
-      Attributes        : SN_Attributes;
       Scope             : E_Scope := Global_Scope;
 
    begin
@@ -3851,9 +3845,7 @@ package body Src_Info.CPP is
          Desc.Kind := Unresolved_Entity;
       end if;
 
-      Attributes := SN_Attributes (Var.Attributes);
-
-      if (Attributes and SN_STATIC) = SN_STATIC then
+      if (Var.Attributes and SN_STATIC) = SN_STATIC then
          Scope := Static_Local;
       end if;
 
@@ -4159,8 +4151,7 @@ package body Src_Info.CPP is
          Class_Def := Find
            (Handler.SN_Table (CL),
             Sym.Buffer (Sym.Class.First .. Sym.Class.Last));
-         Is_Template := Class_Def.Template_Parameters.First
-            < Class_Def.Template_Parameters.Last;
+         Is_Template := Type_Utils.Is_Template (Class_Def);
          --  Add reference to the class we belong to
          Find_Or_Create_Class
            (Handler,
@@ -4411,7 +4402,7 @@ package body Src_Info.CPP is
             Symbol_Name           =>
               Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
             Location              => Sym.Start_Position,
-            Kind                  => Record_Type,
+            Kind                  => Desc.Kind,
             Scope                 => Global_Scope,
             End_Of_Scope_Location => Union_Def.End_Position,
             Declaration_Info      => Decl_Info);
@@ -4463,7 +4454,6 @@ package body Src_Info.CPP is
       pragma Unreferenced (Project_View);
       P           : Pair_Ptr;
       Var         : LV_Table;
-      Attributes  : SN_Attributes;
       Decl_Info   : E_Declaration_Info_List;
 
       Fu_Id       : constant String := FU_Tab.Buffer
@@ -4530,9 +4520,8 @@ package body Src_Info.CPP is
                   --  which have unknown type.
                   Desc.Kind := Unresolved_Entity;
                end if;
-               Attributes := SN_Attributes (Var.Attributes);
 
-               if (Attributes and SN_STATIC) = SN_STATIC then
+               if (Var.Attributes and SN_STATIC) = SN_STATIC then
                   Scope := Static_Local;
                end if;
 
