@@ -288,15 +288,24 @@ package Glide_Kernel is
    --  Note that implementations of this subprogram should always call the
    --  parent's Destroy subprogram as well
 
-   procedure Free (Context : in out Selection_Context_Access);
+   procedure Ref (Context : in out Selection_Context_Access);
+   --  Increments the reference counter for the context
+
+   procedure Unref (Context : in out Selection_Context_Access);
    --  Free the memory occupied by Context. It automatically calls the
-   --  primitive subprogram Destroy as well
+   --  primitive subprogram Destroy as well.
+   --  It in fact decrements the reference counter for Context, and frees the
+   --  memory only if this counter reaches 0.
 
    function Get_Current_Context
      (Kernel : access Kernel_Handle_Record) return Selection_Context_Access;
    --  Return the context associated with the current MDI child.
    --  The caller should not free the returned value, this is taken care of by
-   --  the kernel automatically.
+   --  the kernel automatically. However, if the caller needs to keep the
+   --  context valid throughout its executing, it should first call Ref, and
+   --  then Unref on the context. However, any subprogram it calls might be
+   --  calling Get_Current_Context as well, and thus raise a Storage_Error
+   --  later on.
    --  The returned value might be null, if the current child doesn't support
    --  selection contexts.
    --  This function is mostly intended to be called for the callbacks in the
@@ -707,6 +716,7 @@ private
    type Selection_Context is tagged record
       Kernel  : Kernel_Handle;
       Creator : Module_ID;
+      Ref_Count : Natural;
    end record;
 
    procedure Free (Module : in out Module_ID);

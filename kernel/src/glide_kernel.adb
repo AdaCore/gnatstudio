@@ -711,7 +711,7 @@ package body Glide_Kernel is
       Module : Module_ID;
    begin
       if Kernel.Current_Context /= null then
-         Free (Kernel.Current_Context);
+         Unref (Kernel.Current_Context);
       end if;
 
       Module := Get_Current_Module (Kernel);
@@ -974,18 +974,30 @@ package body Glide_Kernel is
       Unchecked_Free (Module);
    end Free;
 
-   ----------
-   -- Free --
-   ----------
+   -----------
+   -- Unref --
+   -----------
 
-   procedure Free (Context : in out Selection_Context_Access) is
+   procedure Unref (Context : in out Selection_Context_Access) is
       procedure Internal is new Ada.Unchecked_Deallocation
         (Selection_Context'Class, Selection_Context_Access);
-
    begin
-      Destroy (Context.all);
-      Internal (Context);
-   end Free;
+      if Context.Ref_Count > 1 then
+         Context.Ref_Count := Context.Ref_Count - 1;
+      else
+         Destroy (Context.all);
+         Internal (Context);
+      end if;
+   end Unref;
+
+   ---------
+   -- Ref --
+   ---------
+
+   procedure Ref (Context : in out Selection_Context_Access) is
+   begin
+      Context.Ref_Count := Context.Ref_Count + 1;
+   end Ref;
 
    ----------------
    -- Get_Kernel --
@@ -1018,6 +1030,7 @@ package body Glide_Kernel is
    begin
       Context.Kernel := Kernel_Handle (Kernel);
       Context.Creator := Creator;
+      Context.Ref_Count := 1;
    end Set_Context_Information;
 
    -------------
@@ -1513,11 +1526,11 @@ package body Glide_Kernel is
       Unchecked_Free (Handle.Registry);
 
       if Handle.Current_Context /= null then
-         Free (Handle.Current_Context);
+         Unref (Handle.Current_Context);
       end if;
 
       if Handle.Last_Context_For_Contextual /= null then
-         Free (Handle.Last_Context_For_Contextual);
+         Unref (Handle.Last_Context_For_Contextual);
       end if;
 
       Command_List.Free (Handle.Commands_List);
