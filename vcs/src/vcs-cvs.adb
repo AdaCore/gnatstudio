@@ -573,6 +573,7 @@ package body VCS.CVS is
       Filenames   : String_List.List) return File_Status_List.List
    is
       use String_List;
+      use File_Status_List;
 
       Result  : File_Status_List.List;
 
@@ -624,15 +625,65 @@ package body VCS.CVS is
 
       Close (File);
       Change_Dir (Old_Dir);
-      return Result;
+
+      --  We have gathered information about all files in the directory,
+      --  now we build a list corresponding to what the user wants.
+
+      if Head (Filenames) = New_Dir then
+         return Result;
+      else
+         declare
+            The_Result     : File_Status_List.List;
+            Filenames_Temp : String_List.List := Filenames;
+            Status_Temp    : File_Status_List.List;
+            Found          : Boolean;
+         begin
+            while not String_List.Is_Empty (Filenames_Temp) loop
+               Status_Temp := Result;
+               Found       := False;
+
+               while not Is_Empty (Status_Temp)
+                 and then not Found
+               loop
+                  if String_List.Head (Head (Status_Temp).File_Name)
+                    = String_List.Head (Filenames_Temp)
+                  then
+                     Found := True;
+                     Append (The_Result,
+                             Copy_File_Status (Head (Status_Temp)));
+                  end if;
+
+                  Status_Temp := Next (Status_Temp);
+               end loop;
+
+               if not Found then
+                  declare
+                     New_Status : File_Status_Record;
+                  begin
+                     String_List.Append (New_Status.File_Name,
+                                         String_List.Head (Filenames_Temp));
+                     Append (The_Result, New_Status);
+                  end;
+               end if;
+
+               Filenames_Temp := String_List.Next (Filenames_Temp);
+            end loop;
+
+            Free (Result);
+            return The_Result;
+         end;
+      end if;
 
    exception
       when End_Error =>
+         Set_Error (Rep, "CVS: End_Error while reading " & New_Dir);
          Close (File);
          return Result;
       when Use_Error =>
+         Set_Error (Rep, "CVS: Use_Error while reading " & New_Dir);
          return Result;
       when Name_Error =>
+         Set_Error (Rep, "CVS: Name_Error while reading " & New_Dir);
          return Result;
       when Directory_Error =>
          Set_Error (Rep, "CVS: Could not open directory: " & New_Dir);
@@ -937,25 +988,37 @@ package body VCS.CVS is
    is
       C       : Command_Record;
    begin
+      String_List.Append (C.Dir, Get_Path (File));
+      String_List.Append (C.Command, CVS_Command);
+      String_List.Append (C.Args, "diff");
+
       if Version_1 = ""
         and then Version_2 = ""
       then
-         String_List.Append (C.Dir, Get_Path (File));
-         String_List.Append (C.Command, CVS_Command);
-         String_List.Append (C.Args, "diff");
-         String_List.Append (C.Args, Base_Name (File));
-         String_List.Append (C.Head, File);
-         C.Handler := Diff_Handler'Access;
-
-         Insert (Rep.Kernel,
-                 -"CVS: Getting differences for file " & File & "...",
-                 Highlight_Sloc => False,
-                 Mode => Verbose);
-
-         Command (CVS_Access (Rep), C);
+         String_List.Append (C.Args, "-r");
+         String_List.Append (C.Args, "HEAD");
       end if;
 
-      --  ??? deal with other cases (different versions)
+      if Version_1 /= "" then
+         String_List.Append (C.Args, "-r");
+         String_List.Append (C.Args, Version_1);
+      end if;
+
+      if Version_2 /= "" then
+         String_List.Append (C.Args, "-r");
+         String_List.Append (C.Args, Version_2);
+      end if;
+
+      String_List.Append (C.Args, Base_Name (File));
+      String_List.Append (C.Head, File);
+      C.Handler := Diff_Handler'Access;
+
+      Insert (Rep.Kernel,
+              -"CVS: Getting differences for file " & File & "...",
+              Highlight_Sloc => False,
+              Mode => Verbose);
+
+      Command (CVS_Access (Rep), C);
    end Diff;
 
    -------------------------
