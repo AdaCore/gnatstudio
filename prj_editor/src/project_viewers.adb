@@ -2828,6 +2828,10 @@ package body Project_Viewers is
         (Kernel, Project, -"Save _All", "",
          Save_All_Projects'Access, Ref_Item => -"Edit Project Properties",
          Add_Before => False);
+      Register_Menu
+        (Kernel, Project, -"R_ecompute Project", "",
+         On_Project_Recompute'Access, Ref_Item => -"Edit File Switches",
+         Add_Before => False);
 
       Register_Project_Editor_Page
         (Kernel,
