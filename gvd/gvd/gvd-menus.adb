@@ -277,7 +277,8 @@ package body Odd.Menus is
 --           Append (Menu, Check);
 --           Check_Canvas_Handler.Connect
 --             (Check, "activate",
---              Check_Canvas_Handler.To_Marshaller (Change_Detect_Aliases'Access),
+--              Check_Canvas_Handler.To_Marshaller
+--                (Change_Detect_Aliases'Access),
 --              Interactive_Canvas (Canvas));
 
          Show_All (Menu);
