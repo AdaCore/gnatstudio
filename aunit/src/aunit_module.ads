@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                          G L I D E  I I                           --
 --                                                                   --
---                        Copyright (C) 2001                         --
+--                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GLIDE is free software; you can redistribute it and/or modify  it --
@@ -20,9 +20,15 @@
 
 --  This package defines the GLIDE module for Unit testing.
 
+with Glide_Kernel;
+
 package Aunit_Module is
 
-   procedure Register_Module;
+   Aunit_Module_ID   : Glide_Kernel.Module_ID;
+   Aunit_Module_Name : constant String := "Unit_Testing";
+
+   procedure Register_Module
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
    --  Register the module into the list
 
 end Aunit_Module;
