@@ -946,12 +946,11 @@ package body Src_Editor_Box is
       Line       : Gint;
       Column     : Gint;
       X, Y       : Gint;
-      L, C       : Integer;
       Item       : Gtk_Menu_Item;
       Start_Iter : Gtk_Text_Iter;
       End_Iter   : Gtk_Text_Iter;
       Context    : Entity_Selection_Context_Access;
-      Filename   : String := Get_Filename (Editor.Source_Buffer);
+      Filename   : constant String := Get_Filename (Editor.Source_Buffer);
       Result     : Boolean;
       Out_Of_Bounds : Boolean := False;
 
@@ -966,6 +965,8 @@ package body Src_Editor_Box is
          Directory => Dir_Name (Filename),
          File_Name => Base_Name (Filename));
 
+      --  Click in the line numbers area ?
+
       if Event /= null
         and then Get_Window (Event) = Get_Window (V, Text_Window_Left)
       then
@@ -976,6 +977,7 @@ package body Src_Editor_Box is
          Get_Iter_At_Location (Editor.Source_View, Start_Iter, X, Y);
          Line := Get_Line (Start_Iter);
          Set_Entity_Information (Context, Line => To_Box_Line (Line));
+         Place_Cursor (Editor.Source_Buffer, Start_Iter);
 
          if Menu /= null then
             Gtk_New (Item, -"Goto line...");
@@ -1000,6 +1002,8 @@ package body Src_Editor_Box is
             Set_Sensitive (Item, False);
          end if;
 
+      --  Else click in the text area
+
       else
          if Event = null then
             Get_Iter_At_Mark (Editor.Source_Buffer, Start_Iter,
@@ -1019,9 +1023,6 @@ package body Src_Editor_Box is
               (Editor.Source_Buffer, Start_Iter, Line, Column);
 
          else
-            L := To_Box_Line (Line);
-            C := To_Box_Column (Column);
-
             --  Check whether there is a selection
 
             Get_Selection_Bounds
@@ -1035,23 +1036,21 @@ package body Src_Editor_Box is
 
                Get_Iter_At_Line_Offset
                  (Editor.Source_Buffer, Start_Iter, Line, Column);
-
                Search_Entity_Bounds
                  (Editor.Source_Buffer, Start_Iter, End_Iter);
             end if;
 
             Set_Entity_Information
               (Context, Get_Text (Start_Iter, End_Iter),
-               Integer (Get_Line (Start_Iter)) + 1,
-               Integer (Get_Line_Offset (Start_Iter)) + 1);
+               To_Box_Line   (Get_Line (Start_Iter)),
+               To_Box_Column (Get_Line_Offset (Start_Iter)));
          end if;
 
-         --  Get the focus now. If we let the contextual menu handler in the
-         --  kernel do the grab focus, then the source window will be
-         --  scrolled up.
+         --  Move the cursor at the correct location. The cursor is grabbed
+         --  automatically by the kernel when displaying the menu, and this
+         --  would result in unwanted scrolling otherwise.
 
          Place_Cursor (Editor.Source_Buffer, Start_Iter);
-         Grab_Focus (Editor.Source_View);
 
          if Menu /= null then
             if Has_Entity_Name_Information (Context) then
