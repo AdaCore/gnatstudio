@@ -478,6 +478,11 @@ project we've used in this tutorial.
 @section Project Wizard
 @noindent
 
+@b{WARNING}: while in the project wizard, you will not be able to scroll the
+tutorial if you are reading it within GPS. You may want to resize the window
+now so that the entire section on the wizard is visible, or reopen the tutorial
+in another browser.
+
 Go to the menu @code{Project->New...}: this is a standard wizard, with various
 steps listed on the left area of the window.
 
