@@ -87,8 +87,7 @@ package body Welcome is
    procedure Gtk_New
      (Screen              : out Welcome_Screen;
       Kernel              : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Project_Name        : String := "";
-      Default_Is_Tutorial : Boolean)
+      Project_Name        : String := "")
    is
       Box, Hbox    : Gtk_Box;
       Sep          : Gtk_Separator;
@@ -210,23 +209,6 @@ package body Welcome is
       Set_Sensitive (Screen.Open_Project, False);
       Set_Sensitive (Screen.Open_Browse, False);
 
-      --  Tutorial
-
-      Gtk_New_Hseparator (Sep);
-      Pack_Start (Box, Sep, Expand => False, Padding => 5);
-
-      Gtk_New
-        (Screen.Open_Tutorial_Button,
-         Screen.Create_Project,
-         -"Load the tutorial");
-      Pack_Start (Box, Screen.Open_Tutorial_Button, Expand => False);
-
-      if Default_Is_Tutorial then
-         Set_Active (Screen.Open_Tutorial_Button, True);
-      else
-         Set_Active (Screen.Default_Project, True);
-      end if;
-
       --  Always displaying the welcome dialog
 
       Gtk_New (Screen.Always_Show,
@@ -277,10 +259,6 @@ package body Welcome is
             elsif Get_Active (Screen.Open_Project_Button) then
                On_Load_Project (Screen);
                return Project_Loaded;
-
-            elsif Get_Active (Screen.Open_Tutorial_Button) then
-               On_Default_Project (Screen);
-               return Show_Tutorial;
 
             else
                --  A new project was loaded.

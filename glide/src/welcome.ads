@@ -35,16 +35,13 @@ package Welcome is
    procedure Gtk_New
      (Screen              : out Welcome_Screen;
       Kernel              : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Project_Name        : String := "";
-      Default_Is_Tutorial : Boolean);
+      Project_Name        : String := "");
    --  Create a new welcome dialog. Project_Name is the project that should be
    --  suggested by default (empty string for the default project).
    --  If Default_Is_Tutorial is true, then the choice initially activated is
    --  to display the tutorial
 
-   type Welcome_Result is (Project_Loaded,
-                           Quit_GPS,
-                           Show_Tutorial);
+   type Welcome_Result is (Project_Loaded, Quit_GPS);
    --  The various possible choices the user made in the welcome screen.
    --  - Show_Tutorial is returned if the user wishes to see the tutorial.
    --    The default project was loaded.
@@ -52,8 +49,8 @@ package Welcome is
    --  - Project_Loaded if either a specific project or the default project was
    --    loaded
 
-   function Run_Welcome (Screen : access Welcome_Screen_Record)
-      return Welcome_Result;
+   function Run_Welcome
+     (Screen : access Welcome_Screen_Record) return Welcome_Result;
    --  Display the screen dialog on the screen, and let the user choose the
    --  initial project. If the preference Display_Welcome is false, the dialog
    --  is not actually displayed on the screen, but the project specified in
@@ -67,7 +64,6 @@ private
       Create_Project      : Gtk.Radio_Button.Gtk_Radio_Button;
       Open_Project        : Gtk.Combo.Gtk_Combo;
       Open_Project_Button : Gtk.Radio_Button.Gtk_Radio_Button;
-      Open_Tutorial_Button : Gtk.Radio_Button.Gtk_Radio_Button;
       Open_Browse         : Gtk.Button.Gtk_Button;
       Always_Show         : Gtk.Check_Button.Gtk_Check_Button;
       Kernel              : Glide_Kernel.Kernel_Handle;
