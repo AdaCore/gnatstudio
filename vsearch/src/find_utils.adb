@@ -22,36 +22,15 @@ with Ada.Unchecked_Deallocation;
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Boyer_Moore;               use Boyer_Moore;
 with Glide_Kernel;              use Glide_Kernel;
-with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Traces;                    use Traces;
 with GNAT.Regpat;               use GNAT.Regpat;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
-with Generic_List;
 with Gtk.Widget;                use Gtk.Widget;
+with Vsearch_Ext;               use Vsearch_Ext;
 
 package body Find_Utils is
 
    Me : constant Debug_Handle := Create ("Find_Utils");
-
-   procedure Free (Data : in out Search_Module_Data);
-
-   package Search_Modules_List is new Generic_List (Search_Module_Data);
-   use Search_Modules_List;
-
-   Search_Module_Name : constant String := "Search";
-
-   type Search_Module_ID_Record is new Module_ID_Record with record
-      Search_Modules : Search_Modules_List.List;
-      --  Global variable that contains the list of all registered search
-      --  functions.
-   end record;
-   type Search_Module_ID_Access is access all Search_Module_ID_Record'Class;
-
-   procedure Destroy (Module : in out Search_Module_ID_Record);
-   --  Unregister and free the memory for all the search functions that have
-   --  been registered
-
-   Search_Module_Id : Search_Module_ID_Access;
 
    procedure Free_Pattern_Matcher is new Ada.Unchecked_Deallocation
      (Pattern_Matcher, Pattern_Matcher_Access);
@@ -66,6 +45,11 @@ package body Find_Utils is
    function End_Of_Line (Buffer : String; Pos : Natural) return Integer;
    pragma Inline (End_Of_Line);
    --  Return the index for the end of the line containing Pos
+
+   procedure Register_Search_Function
+     (Kernel            : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Data              : Search_Module_Data)
+     renames Vsearch_Ext.Register_Search_Function;
 
    -----------------------
    -- Is_Word_Delimiter --
@@ -412,105 +396,5 @@ package body Find_Utils is
    begin
       Search_Reset (Kernel);
    end Reset_Search;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (Data : in out Search_Module_Data) is
-   begin
-      if Data.Extra_Information /= null then
-         Unref (Data.Extra_Information);
-      end if;
-   end Free;
-
-   ------------------------------
-   -- Register_Search_Function --
-   ------------------------------
-
-   procedure Register_Search_Function
-     (Kernel            : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Data              : Search_Module_Data) is
-   begin
-      Prepend (Search_Module_Id.Search_Modules, Data);
-
-      if Data.Extra_Information /= null then
-         Ref (Data.Extra_Information);
-         Sink (Data.Extra_Information);
-      end if;
-
-      Search_Functions_Changed (Kernel);
-   end Register_Search_Function;
-
-   -----------------
-   -- Find_Module --
-   -----------------
-
-   function Find_Module
-     (Kernel : access Kernel_Handle_Record'Class;
-      Label  : String) return Search_Module_Data
-   is
-      pragma Unreferenced (Kernel);
-      use Search_Modules_List;
-
-      List : List_Node := First (Search_Module_Id.Search_Modules);
-   begin
-      while List /= Null_Node loop
-         if Data (List).Label = Label then
-            return Data (List);
-         end if;
-
-         List := Next (List);
-      end loop;
-
-      return No_Search;
-   end Find_Module;
-
-   ---------------------------
-   -- Get_Nth_Search_Module --
-   ---------------------------
-
-   function Get_Nth_Search_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Num    : Positive) return Search_Module_Data
-   is
-      pragma Unreferenced (Kernel);
-      Node : Search_Modules_List.List_Node := First
-        (Search_Module_Id.Search_Modules);
-   begin
-      for N in 1 .. Num - 1 loop
-         Node := Next (Node);
-      end loop;
-
-      if Node = Null_Node then
-         return No_Search;
-      else
-         return Data (Node);
-      end if;
-   end Get_Nth_Search_Module;
-
-   -------------
-   -- Destroy --
-   -------------
-
-   procedure Destroy (Module : in out Search_Module_ID_Record) is
-   begin
-      Search_Modules_List.Free (Module.Search_Modules);
-   end Destroy;
-
-   ---------------------
-   -- Register_Module --
-   ---------------------
-
-   procedure Register_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class) is
-   begin
-      Search_Module_Id := new Search_Module_ID_Record;
-      Register_Module
-        (Module      => Module_ID (Search_Module_Id),
-         Kernel      => Kernel,
-         Module_Name => Search_Module_Name,
-         Priority    => Default_Priority);
-   end Register_Module;
 
 end Find_Utils;

@@ -255,27 +255,11 @@ package Find_Utils is
    --  This will be available under the title Label in the search combo box.
    --  This emits the kernel signal "search_functions_changed".
 
-   function Find_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Label  : String) return Search_Module_Data;
-   --  Search the list of registered search functions for a matching module.
-   --  No_Search is returned if no such module was found.
-
-   function Get_Nth_Search_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Num    : Positive) return Search_Module_Data;
-   --  Return the Num-th registered module, or No_Search if there is no such
-   --  module.
-
    procedure Reset_Search
      (Object : access Glib.Object.GObject_Record'Class;
       Kernel : Glide_Kernel.Kernel_Handle);
    --  Raises the kernel signal Search_Reset_Signal. This is just a convenience
    --  callback function. Object is ignored, and can be anything.
-
-   procedure Register_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
-   --  Register the module in the list.
 
 private
 
