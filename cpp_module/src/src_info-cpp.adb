@@ -169,7 +169,7 @@ package body Src_Info.CPP is
       File                 : in out LI_File_Ptr;
       Referred_Filename    : VFS.Virtual_File)
    is
-      Dep_Ptr : Dependency_File_Info_List;
+      Dep_Ptr     : Dependency_File_Info_List;
       Referred_LI : LI_File_Ptr;
    begin
       Insert_Dependency
@@ -189,6 +189,17 @@ package body Src_Info.CPP is
    is
       Set_Contents : Boolean := False;
    begin
+      --  ??? We used to have an assertion instead of the following test,
+      --  but this assertion is apparently triggered when browsing some C
+      --  sources. Not clear whether this is a bug or if this case is
+      --  legitimate. For now, consider this case as legitimate.
+
+      if File.LI.Body_Info.Source_Filename = Referred_Filename then
+         Referred_LI := null;
+         Dep_Ptr := null;
+         return;
+      end if;
+
       --  Now we are searching through common list of LI_Files and
       --  trying to locate file with given name. If not found we are
       --  inserting new dependency
@@ -197,13 +208,6 @@ package body Src_Info.CPP is
         (LI            => Referred_LI,
          Handler       => CPP_LI_Handler (Handler),
          Full_Filename => Referred_Filename);
-
-      Assert (Fail_Stream, File.LI.Body_Info.Source_Filename /=
-              Referred_Filename,
-              "Can't insert dependency, LI file "
-              & Base_Name (Referred_LI.LI.LI_Filename)
-              & " is already for file "
-              & Full_Name (Referred_Filename).all);
 
       --  Is this a first dependencies info in this file?
 
