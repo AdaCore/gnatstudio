@@ -822,7 +822,7 @@ package body VCS_View_API is
          Context_Callback.Connect
            (Item, "activate",
             Context_Callback.To_Marshaller
-            (On_Menu_Get_Status_Dir'Access),
+              (On_Menu_Get_Status_Dir'Access),
             Selection_Context_Access (File_Name));
 
          Gtk_New (Item, Label => -"Query status for directory recursively");
@@ -840,7 +840,6 @@ package body VCS_View_API is
             Context_Callback.To_Marshaller
             (On_Menu_Update_Dir'Access),
             Selection_Context_Access (File_Name));
-
 
          Gtk_New (Item, Label => -"Update directory recursively");
          Append (Submenu, Item);
@@ -2270,7 +2269,7 @@ package body VCS_View_API is
       Result  : String_List.List;
       Files   : String_Array_Access;
    begin
-      Files   := Get_Source_Files (Project, Recursive);
+      Files := Get_Source_Files (Project, Recursive);
 
       for J in reverse Files.all'Range loop
          String_List.Prepend (Result, Files (J).all);
@@ -2348,6 +2347,95 @@ package body VCS_View_API is
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Update_All;
+
+   --------------------------------
+   -- Query_Status_For_Directory --
+   --------------------------------
+
+   procedure Query_Status_For_Directory
+     (Widget : access GObject_Record'Class;
+      Kernel : Kernel_Handle)
+   is
+      Context : constant Selection_Context_Access :=
+        Get_Current_Context (Kernel);
+   begin
+      if Context = null then
+         Console.Insert (Kernel, -"No directory selected", Mode => Error);
+      else
+         On_Menu_Get_Status_Dir (Widget, Context);
+      end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+   end Query_Status_For_Directory;
+
+   ---------------------
+   -- Context_Factory --
+   ---------------------
+
+   procedure Update_Directory
+     (Widget : access GObject_Record'Class;
+      Kernel : Kernel_Handle)
+   is
+      Context : constant Selection_Context_Access :=
+        Get_Current_Context (Kernel);
+   begin
+      if Context = null then
+         Console.Insert (Kernel, -"No directory selected", Mode => Error);
+      else
+         On_Menu_Update_Dir (Widget, Get_Current_Context (Kernel));
+      end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+   end Update_Directory;
+
+   ------------------------------------------
+   -- Query_Status_For_Directory_Recursive --
+   ------------------------------------------
+
+   procedure Query_Status_For_Directory_Recursive
+     (Widget : access GObject_Record'Class;
+      Kernel : Kernel_Handle)
+   is
+      Context : constant Selection_Context_Access :=
+        Get_Current_Context (Kernel);
+   begin
+      if Context = null then
+         Console.Insert (Kernel, -"No directory selected", Mode => Error);
+      else
+         On_Menu_Get_Status_Dir_Recursive
+           (Widget, Get_Current_Context (Kernel));
+      end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+   end Query_Status_For_Directory_Recursive;
+
+   --------------------------------
+   -- Update_Directory_Recursive --
+   --------------------------------
+
+   procedure Update_Directory_Recursive
+     (Widget : access GObject_Record'Class;
+      Kernel : Kernel_Handle)
+   is
+      Context : constant Selection_Context_Access :=
+        Get_Current_Context (Kernel);
+   begin
+      if Context = null then
+         Console.Insert (Kernel, -"No directory selected", Mode => Error);
+      else
+         On_Menu_Update_Dir_Recursive (Widget, Get_Current_Context (Kernel));
+      end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+   end Update_Directory_Recursive;
 
    ---------------------
    -- Context_Factory --
