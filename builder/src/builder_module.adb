@@ -902,7 +902,8 @@ package body Builder_Module is
 
       if Buffer_Pos /= Buffer'First then
          Console.Insert
-           (Kernel, Buffer (Buffer'First .. Buffer_Pos - 1), Add_LF => False);
+           (Kernel, Buffer (Buffer'First .. Buffer_Pos - 1), Add_LF => False,
+            Location_Id => "Builder");
       end if;
 
       Free (Buffer);
@@ -915,13 +916,16 @@ package body Builder_Module is
             Console.Insert
               (Kernel,
                Buffer (Buffer'First .. Buffer_Pos - 1) & Expect_Out (Fd.all),
-               Add_LF => False);
+               Add_LF => False,
+               Location_Id => "Builder");
          end if;
 
          Free (Buffer);
          Set_Fraction (Top.Statusbar, 0.0);
          Set_Progress_Text (Top.Statusbar, "");
-         Console.Insert (Kernel, Expect_Out (Fd.all), Add_LF => True);
+         Console.Insert
+           (Kernel, Expect_Out (Fd.all), Add_LF => True,
+            Location_Id => "Builder");
          Close (Fd.all, Status);
 
          if Status = 0 then
