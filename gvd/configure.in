@@ -68,7 +68,7 @@ case "${host}" in
     machine=ibmrs6000 opsys=aix4-1
     TARGET_LFLAGS="-Wl,-bbigtoc"
   ;;
-  rs6000-ibm-aix4.2* | powerpc-ibm-aix4.2*  )
+  rs6000-ibm-aix4.2* | powerpc-ibm-aix4.2* | powerpc-ibm-aix4.3* )
     machine=ibmrs6000 opsys=aix4-2
     TARGET_LFLAGS="-Wl,-bbigtoc"
   ;;
