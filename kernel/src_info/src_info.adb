@@ -1,3 +1,4 @@
+with String_Utils; use String_Utils;
 with Unchecked_Deallocation;
 
 package body Src_Info is
@@ -43,6 +44,15 @@ package body Src_Info is
       return null;
    end Get_Separate_File_Info;
 
+   -------------------
+   -- Is_Incomplete --
+   -------------------
+
+   function Is_Incomplete (Source_Info : LI_File_Ptr) return Boolean is
+   begin
+      return not Source_Info.Parsed;
+   end Is_Incomplete;
+
    -----------
    -- Reset --
    -----------
@@ -73,8 +83,9 @@ package body Src_Info is
       Source_Filename : String)
       return LI_File_Ptr
    is
-      Current_LI  : LI_File_Ptr;
-      Current_Sep : File_Info_Ptr_List;
+      Short_Filename : constant String := Base_File_Name (Source_Filename);
+      Current_LI     : LI_File_Ptr;
+      Current_Sep    : File_Info_Ptr_List;
       Table : LI_File_HTable.HTable := List.Table;
       --  ??? Make a copy of the table since Get_First and Get_Next need
       --  ??? a Read/Writable HTable. This is temporary since we should stop
@@ -92,14 +103,14 @@ package body Src_Info is
       while Current_LI /= null loop
          --  See if the filename matches the spec filename
          if Current_LI.Spec_Info /= null
-           and then Current_LI.Spec_Info.Source_Filename.all = Source_Filename
+           and then Current_LI.Spec_Info.Source_Filename.all = Short_Filename
          then
             return Current_LI;
          end if;
 
          --  Check if the filename matches the body filename
          if Current_LI.Body_Info /= null
-           and then Current_LI.Body_Info.Source_Filename.all = Source_Filename
+           and then Current_LI.Body_Info.Source_Filename.all = Short_Filename
          then
             return Current_LI;
          end if;
@@ -108,7 +119,7 @@ package body Src_Info is
          Current_Sep := Current_LI.Separate_Info;
          Separate_Loop :
          while Current_Sep /= null loop
-            if Current_Sep.Value.Source_Filename.all = Source_Filename then
+            if Current_Sep.Value.Source_Filename.all = Short_Filename then
                return Current_LI;
             end if;
             Current_Sep := Current_Sep.Next;
