@@ -477,6 +477,12 @@ package Codefix.Text_Manager is
       New_String : String);
    --  Replace 'len' characters from 'start' column with 'New_String'.
 
+   procedure Replace_To_End
+     (This  : in out Extract_Line;
+      Start : Natural;
+      Value : String);
+   --  Replace by Value the characters from Start to the end of the line.
+
    procedure Set_Coloration (This : in out Extract_Line; Value : Boolean);
    --  Set the boolean used to know if the line has to be colored in the window
    --  or not.
@@ -566,8 +572,18 @@ package Codefix.Text_Manager is
       Start, Length : Natural;
       Value         : String;
       Line_Number   : Natural := 1);
-   --  Replace 'len' characters from 'start' column and 'line_numbner' line
+   --  Replace 'len' characters from 'start' column and 'line_number' line
    --  with 'Value'.
+
+   procedure Replace
+     (This                      : in out Extract;
+      Dest_Start, Dest_Stop     : File_Cursor'Class;
+      Source_Start, Source_Stop : File_Cursor'Class;
+      Current_Text              : Text_Navigator_Abstr'Class);
+   --  Replace in this the text from Start to Stop by the one from Source_Start
+   --  to Source_End. Please note that This must have been previously
+   --  initialised with lines from 'Dest_Start' to 'Dest_Stop'.
+
 
    procedure Commit
      (This         : Extract;
