@@ -246,7 +246,7 @@ package body Glide_Result_View is
       Args    : GNAT.OS_Lib.Argument_List (1 .. 3) :=
         (1 => new String'(Full_Name (Filename).all),
          2 => new String'(Highlight_Category),
-         3 => new String'(Line'Img));
+         3 => new String'(Image (Line)));
       Command : GNAT.OS_Lib.String_Access;
    begin
       if Highlight then
