@@ -595,7 +595,7 @@ package body Builder_Module is
          when GNAT_Syntax =>
             Cmd := new String'(Get_Attribute_Value
               (Project, Compiler_Command_Attribute,
-               Default => "gnatmake", Index => "Ada"));
+               Default => "gnatmake", Index => "ada"));
 
          when Make_Syntax =>
             Cmd := new String'("make");
@@ -669,7 +669,7 @@ package body Builder_Module is
          Cmd  : constant String :=
            Get_Attribute_Value
              (Get_Project (Kernel), Compiler_Command_Attribute,
-              Default => "gnatmake", Index => "Ada")
+              Default => "gnatmake", Index => "ada")
            & " -q -u -gnats " & File;
          Fd   : Process_Descriptor_Access;
          Args : Argument_List_Access;
@@ -769,7 +769,7 @@ package body Builder_Module is
 
       if Lang /= "ada" then
          Console.Insert
-           (Kernel, -"Compilation of non Ada file not yet supported",
+           (Kernel, -"Compilation of non Ada file not supported yet",
             Mode => Error);
          return;
       end if;
@@ -790,7 +790,7 @@ package body Builder_Module is
          Cmd := new String'
            (Get_Attribute_Value
               (Prj, Compiler_Command_Attribute,
-               Default => "gnatmake", Index => "Ada"));
+               Default => "gnatmake", Index => "ada"));
       end if;
 
       Push_State (Kernel, Processing);
