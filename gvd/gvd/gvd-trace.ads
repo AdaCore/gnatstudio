@@ -31,6 +31,17 @@ package GVD.Trace is
    --  Input_Kind means input strings sent to the debugger.
    --  Output_Kind means output strings received from the debugger.
 
+   procedure Output_Error (Window : Main_Debug_Window_Access; Str : String);
+   --  Output an error line on the statusbar associated with Window, and
+   --  on its log file.
+
+   procedure Output_Info (Window : Main_Debug_Window_Access; Str : String);
+   --  Output an information line on the statusbar associated with Window, and
+   --  on its log file.
+
+   procedure Output_Line (Window : Main_Debug_Window_Access; Str : String);
+   --  Write on the log file associated with Window.
+
    procedure Output_Message
      (Process : Debugger_Process_Tab;
       Str     : String;
@@ -38,11 +49,6 @@ package GVD.Trace is
       Kind    : IO_Kind := Input_Kind);
    --  Write on the log file associated with Process.
    --  Replace ASCII.LF by "\n" and ASCII.HT by "\t", and put lines in quotes.
-
-   procedure Output_Line
-     (Window : Main_Debug_Window_Access;
-      Str    : String);
-   --  Write on the log file associated with Window.
 
    procedure Input_Filter
      (Descriptor : Process_Descriptor'Class;

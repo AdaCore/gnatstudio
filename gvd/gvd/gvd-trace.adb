@@ -20,6 +20,7 @@
 
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
+with GVD.Status_Bar; use GVD.Status_Bar;
 with GVD.Types; use GVD.Types;
 with Process_Proxies; use Process_Proxies;
 with Debugger; use Debugger;
@@ -38,16 +39,33 @@ package body GVD.Trace is
    function To_Main_Window is new
      Ada.Unchecked_Conversion (System.Address, Main_Debug_Window_Access);
 
+   ------------------
+   -- Output_Error --
+   ------------------
+
+   procedure Output_Error (Window : Main_Debug_Window_Access; Str : String) is
+   begin
+      Output_Line (Window, "# " & Str);
+      Print_Message (Window.Statusbar1, Error, Str);
+   end Output_Error;
+
+   -----------------
+   -- Output_Info --
+   -----------------
+
+   procedure Output_Info (Window : Main_Debug_Window_Access; Str : String) is
+   begin
+      Output_Line (Window, "% " & Str);
+      Print_Message (Window.Statusbar1, Help, Str);
+   end Output_Info;
+
    -----------------
    -- Output_Line --
    -----------------
 
-   procedure Output_Line
-     (Window : Main_Debug_Window_Access;
-      Str    : String)
-   is
-      LF   : aliased constant String := (1 => ASCII.LF);
-      N    : Integer;
+   procedure Output_Line (Window : Main_Debug_Window_Access; Str : String) is
+      N  : Integer;
+      LF : aliased constant String := (1 => ASCII.LF);
 
    begin
       N := Write (Window.Log_File, Str'Address, Str'Length);
