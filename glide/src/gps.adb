@@ -383,6 +383,19 @@ procedure GPS is
          Free (Python_Home);
       end if;
 
+      --  Python startup path
+
+      Tmp := Getenv ("PYTHONPATH");
+      if Tmp.all = "" then
+         Setenv ("PYTHONPATH", File_Utils.Name_As_Directory (Prefix.all)
+                 & "share/gps/python");
+      else
+         Setenv ("PYTHONPATH", Tmp.all & Path_Separator
+                 & File_Utils.Name_As_Directory (Prefix.all)
+                 & "share/gps/python/");
+      end if;
+      Free (Tmp);
+
       Bind_Text_Domain
         ("gps", Format_Pathname (Prefix.all & "/share/locale"));
 
