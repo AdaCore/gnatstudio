@@ -2457,6 +2457,9 @@ package body Src_Editor_Buffer is
                   --  If the word has the right prefix, and is not already
                   --  in the list, then add it to the list and point to it,
                   --  otherwise continue extending the search.
+                  --
+                  --  The string comparison below is correct, since both
+                  --  strings are UTF-8.
 
                   if S'Length > Data.Prefix'Length
                     and then S
