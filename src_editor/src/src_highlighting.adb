@@ -27,11 +27,11 @@
 -- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
 
-with Gdk.Color;             use Gdk.Color;
-with Gtk.Text_Tag;          use Gtk.Text_Tag;
-with Gtk.Widget;            use Gtk.Widget;
+with Gdk.Color;    use Gdk.Color;
+with Gtk.Text_Tag; use Gtk.Text_Tag;
+with Gtk.Widget;   use Gtk.Widget;
 
-with Language;              use Language;
+with Language;     use Language;
 
 package body Src_Highlighting is
 
@@ -41,8 +41,7 @@ package body Src_Highlighting is
 
    function New_Tag
      (Tag_Name   : String;
-      Color_Name : String)
-      return Gtk_Text_Tag;
+      Color_Name : String) return Gtk_Text_Tag;
    --  Create a new Gtk_Text_Tag with the given name. If Color_Name can
    --  be parsed, then the Foreground_Gdk_Property is set with the given
    --  color.
@@ -53,17 +52,18 @@ package body Src_Highlighting is
 
    function New_Tag
      (Tag_Name   : String;
-      Color_Name : String)
-      return Gtk_Text_Tag
+      Color_Name : String) return Gtk_Text_Tag
    is
-      Result  : Gtk_Text_Tag;
+      Result    : Gtk_Text_Tag;
       New_Color : Gdk_Color;
-      Success : Boolean;
+      Success   : Boolean;
+
    begin
       Gtk_New (Result, Tag_Name);
 
       New_Color := Parse (Color_Name);
       Alloc_Color (Get_Default_Colormap, New_Color, Success => Success);
+
       if Success then
          Set_Property (Result, Foreground_Gdk_Property, New_Color);
       end if;
@@ -82,14 +82,13 @@ package body Src_Highlighting is
    function Create_Tags
      (Keyword_Color : String;
       Comment_Color : String;
-      String_Color  : String)
-      return Highlighting_Tags
+      String_Color  : String) return Highlighting_Tags
    is
       Result : Highlighting_Tags;
    begin
       Result (Keyword_Text) := New_Tag (Keyword_Color_Tag_Name, Keyword_Color);
       Result (Comment_Text) := New_Tag (Comment_Color_Tag_Name, Comment_Color);
-      Result (String_Text) := New_Tag (String_Color_Tag_Name, String_Color);
+      Result (String_Text)  := New_Tag (String_Color_Tag_Name, String_Color);
 
       return Result;
    end Create_Tags;

@@ -45,7 +45,7 @@ package Src_Highlighting is
 
    Keyword_Color_Tag_Name : constant String := "keyword_tag";
    Comment_Color_Tag_Name : constant String := "comment_tag";
-   String_Color_Tag_Name    : constant String := "string_tag";
+   String_Color_Tag_Name  : constant String := "string_tag";
    --  Respectively, the name of the tags use to highlight keywords, comments,
    --  and strings. Declared as public so that one can retrieve them from
    --  the source buffer using their names.
@@ -53,8 +53,7 @@ package Src_Highlighting is
    function Create_Tags
      (Keyword_Color : String;
       Comment_Color : String;
-      String_Color    : String)
-      return Highlighting_Tags;
+      String_Color  : String) return Highlighting_Tags;
    --  Create a Highlighting_Tags object using the given color names.
    --  If some colors name can not be parsed, then no special color will
    --  be used to highlight the associated source parts.
