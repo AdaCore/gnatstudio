@@ -237,6 +237,7 @@ package Projects is
    Linker_Package             : constant String := "linker";
    Binder_Package             : constant String := "binder";
    Naming_Package             : constant String := "naming";
+   Ide_Package                : constant String := "ide";
 
    type Attribute_Pkg (<>) is private;
 
