@@ -318,7 +318,8 @@ package body Builder_Module is
       Prj          : Project_Id;
       Project_View : constant Project_Id := Get_Project_View (K);
       Project_Name : constant String := Get_Project_File_Name (K);
-      Langs        : Argument_List := Get_Languages (Project_View);
+      Langs        : Argument_List := Get_Languages
+        (Project_View, Recursive => True);
       Syntax       : Command_Syntax;
       State_Pushed : Boolean := False;
 
