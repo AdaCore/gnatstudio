@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -134,6 +134,12 @@ package body Src_Editor_View is
       Params : Glib.Values.GValues;
       User   : Source_View);
    --  Callback for the "side_columns_changed" signal.
+
+   procedure Line_Highlight_Change_Handler
+     (Buffer : access Source_Buffer_Record'Class;
+      Params : Glib.Values.GValues;
+      User   : Source_View);
+   --  Callback for the "line_highlight_change" signal.
 
    procedure Redraw_Columns (View : access Source_View_Record'Class);
    --  Redraw the left and right areas around View.
@@ -336,6 +342,27 @@ package body Src_Editor_View is
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Realize_Cb;
 
+   -----------------------------------
+   -- Line_Highlight_Change_Handler --
+   -----------------------------------
+
+   procedure Line_Highlight_Change_Handler
+     (Buffer : access Source_Buffer_Record'Class;
+      Params : Glib.Values.GValues;
+      User   : Source_View)
+   is
+      pragma Unreferenced (Params, Buffer);
+
+      Win           : constant Gdk.Window.Gdk_Window :=
+        Get_Window (User, Text_Window_Text);
+      X, Y, W, H, D : Gint;
+      Rect          : Gdk_Rectangle;
+   begin
+      Get_Geometry (Win, X, Y, W, H, D);
+      Rect := Gdk_Rectangle'(X, Y, W, H);
+      Gdk.Window.Invalidate_Rect (Win, Rect, True);
+   end Line_Highlight_Change_Handler;
+
    ---------------------------------
    -- Side_Columns_Change_Handler --
    ---------------------------------
@@ -507,12 +534,63 @@ package body Src_Editor_View is
             Dummy         : Gint := 0;
             Buffer_Line_Y : Gint;
 
-         begin
-            --  Get the window coordinates.
+            Dummy_Gint                 : Gint;
+            Success : Boolean;
+            Iter                       : Gtk_Text_Iter;
+            Top_Line                   : Natural;
+            Bottom_Line                : Natural;
+            Top_In_Buffer    : Gint;
+            Bottom_In_Buffer : Gint;
+            GC               : Gdk.GC.Gdk_GC;
+            Buffer           : constant Source_Buffer :=
+              Source_Buffer (Get_Buffer (View));
 
+         begin
             Get_Visible_Rect (View, Rect);
             Buffer_To_Window_Coords
               (View, Text_Window_Text, Rect.X, Rect.Y, X, Y);
+
+            --  Get the window coordinates.
+
+            Get_Geometry (Window, X, Y, Width, Height, Depth);
+
+            Window_To_Buffer_Coords
+              (View, Text_Window_Text,
+               Window_X => 0, Window_Y => Y,
+               Buffer_X => Dummy_Gint, Buffer_Y => Top_In_Buffer);
+            Window_To_Buffer_Coords
+              (View, Text_Window_Text,
+               Window_X => 0, Window_Y => Y + Height,
+               Buffer_X => Dummy_Gint, Buffer_Y => Bottom_In_Buffer);
+
+            Get_Line_At_Y (View, Iter, Bottom_In_Buffer, Dummy_Gint);
+            Bottom_Line := Natural (Get_Line (Iter) + 1);
+
+            Get_Line_At_Y (View, Iter, Top_In_Buffer, Dummy_Gint);
+            Top_Line := Natural (Get_Line (Iter) + 1);
+
+
+            for Line in Top_Line .. Bottom_Line loop
+               GC := Get_Highlight_GC (Buffer, Line);
+
+               if GC /= null then
+                  Get_Line_Yrange (View, Iter, Line_Y, Line_Height);
+                  Buffer_To_Window_Coords
+                    (View, Text_Window_Text,
+                     Dummy, Line_Y, Dummy, Buffer_Line_Y);
+
+                  Draw_Rectangle
+                    (Window,
+                     GC,
+                     True,
+                     0, Buffer_Line_Y,
+                     Rect.Width, Line_Height);
+               end if;
+
+               Forward_Line (Iter, Success);
+            end loop;
+
+            --  Highlight the line that contains the cursor.
 
             if View.Highlight_Current then
                Get_Iter_At_Mark
@@ -523,11 +601,8 @@ package body Src_Editor_View is
                  (View, Text_Window_Text, Dummy, Line_Y, Dummy, Buffer_Line_Y);
 
                Draw_Rectangle
-                 (Window,
-                  View.Current_Line_GC,
-                  True,
-                  0, Buffer_Line_Y,
-                  Rect.Width, Line_Height);
+                 (Window, View.Current_Line_GC, False, 0, Buffer_Line_Y,
+                  Rect.Width - 1, Line_Height - 1);
             end if;
 
             --  Redraw the line showing the nth column if needed
@@ -726,6 +801,12 @@ package body Src_Editor_View is
       Source_Buffer_Callback.Connect
         (Buffer, "side_column_changed",
          Cb        => Side_Columns_Change_Handler'Access,
+         User_Data => Source_View (View),
+         After     => True);
+
+      Source_Buffer_Callback.Connect
+        (Buffer, "line_highlights_changed",
+         Cb        => Line_Highlight_Change_Handler'Access,
          User_Data => Source_View (View),
          After     => True);
 
@@ -1545,9 +1626,6 @@ package body Src_Editor_View is
 
       Total_Width : Gint;
    begin
-      --  ??? The following could be attached to a signal such as
-      --  "side_info_column_changed" for better efficiency.
-
       Total_Width := 2;
 
       for J in Line_Info'Range loop
