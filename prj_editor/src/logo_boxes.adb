@@ -122,7 +122,6 @@ package body Logo_Boxes is
       Gtk_New (Win.Title, Title);
       Set_Alignment (Win.Title, 0.5, 0.5);
       Set_Padding (Win.Title, 0, 10);
-      Set_Justify (Win.Title, Justify_Center);
       Set_Line_Wrap (Win.Title, False);
       Set_Style (Win.Title, Style);
       Add (Event, Win.Title);
