@@ -30,6 +30,7 @@
 with Prj;       use Prj;
 pragma Elaborate_All (Prj);
 with Prj.Tree;  use Prj.Tree;
+with Prj.Attr;  use Prj.Attr;
 with Prj.Util;  use Prj.Util;
 with Snames;    use Snames;
 pragma Elaborate_All (Snames);
@@ -250,7 +251,7 @@ package body Prj_API is
      (Project : Project_Node_Id; Pkg : String) return Project_Node_Id
    is
       Decl : constant Project_Node_Id := Get_Or_Create_Declaration (Project);
-      Decl_Item : Project_Node_Id;
+      Decl_Item, Item : Project_Node_Id;
       Pack : Project_Node_Id;
       N : Name_Id;
    begin
@@ -267,14 +268,35 @@ package body Prj_API is
          Pack := Next_Package_In_Project (Pack);
       end loop;
 
-      --  Otherwise create the declarative item
+      --  Otherwise create the declarative item, and put it at the end. We can
+      --  not put it at the beginning, since otherwise this would skip the
+      --  section were scenario variables are declared, and they might be
+      --  referenced in the new package.
+
       Decl_Item := Default_Project_Node (N_Declarative_Item);
-      Set_Next_Declarative_Item (Decl_Item, First_Declarative_Item_Of (Decl));
-      Set_First_Declarative_Item_Of (Decl, Decl_Item);
+      Item := First_Declarative_Item_Of (Decl);
+      if Item = Empty_Node then
+         Set_First_Declarative_Item_Of (Decl, Decl_Item);
+      else
+         while Next_Declarative_Item (Item) /= Empty_Node loop
+            Item := Next_Declarative_Item (Item);
+         end loop;
+
+         Set_Next_Declarative_Item (Item, Decl_Item);
+      end if;
 
       --  Create the package and add it to the declarative item
-      Pack := Default_Project_Node (N_Package_Declaration, Undefined);
+      Pack := Default_Project_Node (N_Package_Declaration);
       Set_Current_Item_Node (Decl_Item, Pack);
+
+      --  Find the correct package id to use
+
+      for Index in Package_Attributes.First .. Package_Attributes.Last loop
+         if N = Package_Attributes.Table (Index).Name then
+            Set_Package_Id_Of (Pack, Index);
+            exit;
+         end if;
+      end loop;
 
       --  Add it to the list of packages
       Set_Next_Package_In_Project (Pack, First_Package_Of (Project));
