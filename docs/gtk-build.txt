@@ -11,6 +11,9 @@ is on the various Gtk+ lists.
 On linux systems, you can skip the steps from libiconv to libjpeg, and
 ignore the special comments.
 
+Under HP-UX, a recent version of GCC (e.g 3.1), or the HP ansi C compiler
+should be used.
+
 Once all these steps have been done successfully, only glib, atk, pango and gtk
 need to be rebuilt when their version change.
 
@@ -59,6 +62,12 @@ tar xzvf zlib-1.1.4.tar.gz
 ln -s zlib-* zlib
 cd zlib
 ./configure --prefix=$prefix
+
+# Under HP-UX: add -fPIC to CFLAGS in Makefile
+# make
+# ld -z -b -o libz.sl `ar t libz.a`
+# cp libz.sl $prefix/lib
+
 make
 make install
 cd ..
@@ -70,6 +79,12 @@ tar xzvf libpng-1.0.10.tar.gz
 cd libpng-1.0.10
 cp scripts/makefile.gcc makefile
 # check makefile & pngconf.h
+
+# Under HP-UX:
+# make CFLAGS="-O2 -fPIC"
+# ld -z -b -o libpng.sl `ar t libpng.a` $LDFLAGS -lz
+# cp -p libpng.sl $prefix/lib
+
 make
 mkdir -p $prefix/include $prefix/lib
 cp -p png.h pngconf.h $prefix/include
@@ -158,7 +173,7 @@ cd pango-1.0.2
 # Use instead:
 # ./configure --prefix=$prefix
 #
-# Modifying configure as follows works aroundi the configure bug, but then
+# Modifying configure as follows works around the configure bug, but then
 # make fails:
 # Replace the following line:
 #  elif echo $module | grep -- "-x\($\|,\)" > /dev/null; then
@@ -177,6 +192,8 @@ cd gtk+-2.0.3
 
 # Under HP-UX, apply the patch libtool-hpux.diff:
 # patch -p0 < .../libtool-hpux.diff
+# Also, make sure that libX11.sl, libXt.sl and libXext.sl can be found under
+# e.g /usr/lib
 
 ./configure --disable-modules --without-libtiff \
   --with-included-loaders=xpm,png,gif,jpeg --prefix=$prefix \
