@@ -96,30 +96,17 @@ package body Commands.External is
    exception
       when Process_Died =>
          declare
-            S : String := Expect_Out (D.Fd);
+            S       : String := Expect_Out (D.Fd);
+            Success : Boolean;
          begin
             if S /= "" then
                String_List.Append (D.Output, S);
             end if;
-         end;
 
-         Close (D.Fd);
-
-         declare
-            Success : Boolean;
-         begin
+            Close (D.Fd);
             Success := D.Handler (D.Kernel, D.Head, D.Output);
-
-            if Success then
-               while not Command_Queues.Is_Empty (D.Next_Commands) loop
-                  Enqueue
-                    (D.Queue, Command_Queues.Head (D.Next_Commands), True);
-                  D.Next_Commands := Command_Queues.Next (D.Next_Commands);
-               end loop;
-            end if;
-
             Pop_State (D.Kernel);
-            Command_Finished (D.Queue);
+            Command_Finished (D.Queue, D, Success);
          end;
 
          return False;
@@ -182,17 +169,5 @@ package body Commands.External is
                  False, True, Error);
          return False;
    end Execute;
-
-   ----------------------------
-   -- Add_Consequence_Action --
-   ----------------------------
-
-   procedure Add_Consequence_Action
-     (Item   : External_Command_Access;
-      Action : Command_Access)
-   is
-   begin
-      Command_Queues.Append (Item.Next_Commands, Action);
-   end Add_Consequence_Action;
 
 end Commands.External;
