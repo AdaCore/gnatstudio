@@ -998,19 +998,24 @@ package body Switches_Editors is
       Set_Alignment (L, 0.0, 0.5);
       Pack_Start (Hbox, L, Expand => True, Fill => True);
 
+      Gtk_New (L, "...");
+      --  ??? Should indicate the number of selected switches in the popup
+      Set_Alignment (L, 1.0, 0.5);
+      Pack_End (Hbox, L, Expand => True, Fill => True);
+
       B        := new Switch_Popup_Widget (Label'Length);
-      Gtk.Button.Initialize (B, "...");
+      Gtk.Button.Initialize (B, "");
+      Add (B, Hbox);
       B.Widget := Gtk_Widget (Widget);
       Ref (Widget);
       B.Label := Label;
-      Pack_Start (Hbox, B, Expand => False);
 
       Widget_Callback.Connect
         (B, "clicked", Widget_Callback.To_Marshaller (Popup_New_Page'Access));
       Widget_Callback.Connect
         (B, "destroy", Widget_Callback.To_Marshaller (Destroy_Popup'Access));
 
-      return Gtk_Widget (Hbox);
+      return Gtk_Widget (B);
    end Create_Popup;
 
    ----------------------
