@@ -22,25 +22,19 @@ package body Odd.Explorer is
    Subprogram_RE : constant Pattern_Matcher :=
      Compile
        ("^[ \t]*(procedure|function)\s+" &
-        "((\w|_)+)(\s+|\s*\([^\)]+\))\s*" &
-        "(return\s+(\w|[_\.])+\s*)?is\s", Multiple_Lines);
+        "(\w+)(\s+|\s*\([^\)]+\))" &
+        "(\s*return\s+(\w|\.)+\s*)?(is\W|;)", Multiple_Lines);
 
    Package_RE    : constant Pattern_Matcher :=
      Compile
-       ("^[ \t]*package[ \t]+((body[ \t]+)?((\w|[_\.])+))", Multiple_Lines);
+       ("^[ \t]*package[ \t]+((body[ \t]+)?((\w|\.)+))", Multiple_Lines);
 
    Type_Def_RE   : constant Pattern_Matcher :=
-     Compile ("^[ \t]*(sub)?type[ \t]+((\w|_)+)", Multiple_Lines);
+     Compile ("^[ \t]*(sub)?type[ \t]+(\w+)", Multiple_Lines);
 
    Task_RE       : constant Pattern_Matcher :=
      Compile
-       ("^[ \t]*task[ \t]+((body|type)[ \t]+)?((\w|_)+)", Multiple_Lines);
-
-   Spec_RE       : constant Pattern_Matcher :=
-     Compile
-       ("^[ \t]*(procedure|function)\s+((\w|_)+)" &
-        "((\s+|\s*\([^\)]+\))(\s*return\s+(\w|[_\.])+\s*)?)?;",
-        Multiple_Lines);
+       ("^[ \t]*task[ \t]+((body|type)[ \t]+)?(\w+)", Multiple_Lines);
 
    function Reduce (S : String) return String;
    --  Replace in string S all ASCII.LF and ASCII.HT characters with a space,
@@ -149,6 +143,7 @@ package body Odd.Explorer is
       Var_Pixmap         : Gdk_Pixmap;
       Var_Mask           : Gdk_Bitmap;
       Parent_Node,
+      Parent2_Node,
       Node               : Gtk_Ctree_Node;
 
    begin
@@ -179,34 +174,55 @@ package body Odd.Explorer is
       --  Subprograms
 
       Node := null;
+      Parent_Node := null;
+      Parent2_Node := null;
       First := Buffer'First;
       loop
          Match (Subprogram_RE, Buffer (First .. Buffer'Last), Matches);
 
          exit when Matches (0) = No_Match;
 
-         if Node = null then
-            Parent_Node := Insert_Node
-              (Tree, null, null, Null_Array + "Subprograms", 5,
-               Folder_Pixmap, Folder_Mask,
-               Folder_Open_Pixmap, Folder_Open_Mask,
-               False, False);
+         --  A specification
+
+         if Buffer (Matches (6).First) = ';' then
+
+            if Parent_Node = null then
+               Parent_Node := Insert_Node
+                 (Tree, null, null, Null_Array + "Specs", 5,
+                  Folder_Pixmap, Folder_Mask,
+                  Folder_Open_Pixmap, Folder_Open_Mask,
+                  False, False);
+            end if;
+            Node := Parent_Node;
+
+         --  A body
+
+         else
+            if Parent2_Node = null then
+               Parent2_Node := Insert_Node
+                 (Tree, null, null, Null_Array + "Subprograms", 5,
+                  Folder_Pixmap, Folder_Mask,
+                  Folder_Open_Pixmap, Folder_Open_Mask,
+                  False, False);
+            end if;
+            Node := Parent2_Node;
          end if;
 
          if Matches (4) = No_Match then
             Node := Insert_Node
-              (Tree, Parent_Node, null,
-               Null_Array + Buffer (Matches (2).First .. Matches (2).Last), 5,
+              (Tree, Node, null,
+               Null_Array + Buffer (Matches (2).First .. Matches (2).Last),
+               5,
                Subprogram_Pixmap, Subprogram_Mask,
                null, null,
-               True, False);
+                  True, False);
          else
             Node := Insert_Node
-              (Tree, Parent_Node, null,
+              (Tree, Node, null,
                Null_Array +
-                 (Buffer (Matches (2).First .. Matches (2).Last) & ' ' &
-                  Reduce
-                    (Buffer (Matches (4).First .. Matches (4).Last))), 5,
+               (Buffer (Matches (2).First .. Matches (2).Last) & ' ' &
+                Reduce
+                (Buffer (Matches (3).First .. Matches (3).Last))), 5,
                Subprogram_Pixmap, Subprogram_Mask,
                null, null,
                True, False);
@@ -312,48 +328,6 @@ package body Odd.Explorer is
 
          Row_Data_Explorer.Node_Set_Row_Data
            (Tree, Node, Get_Pos (Buffer, Matches (3).First));
-         First := Matches (0).Last;
-      end loop;
-
-      --  Specs
-
-      Node := null;
-      First := Buffer'First;
-      loop
-         Match (Spec_RE, Buffer (First .. Buffer'Last), Matches);
-
-         exit when Matches (0) = No_Match;
-
-         if Node = null then
-            Parent_Node := Insert_Node
-              (Tree, null, null, Null_Array + "Specs", 5,
-               Folder_Pixmap, Folder_Mask,
-               Folder_Open_Pixmap, Folder_Open_Mask,
-               False, False);
-         end if;
-
-         if Matches (5) = No_Match then
-            Node := Insert_Node
-              (Tree, Parent_Node, null,
-               Null_Array + Buffer (Matches (2).First .. Matches (2).Last), 5,
-               Var_Pixmap, Var_Mask,
-               null, null,
-               True, False);
-         else
-            Node := Insert_Node
-              (Tree, Parent_Node, null,
-               Null_Array +
-                 (Buffer (Matches (2).First .. Matches (2).Last) &
-                  Reduce
-                    (Buffer (Matches (5).First .. Matches (5).Last))),
-               5,
-               Var_Pixmap, Var_Mask,
-               null, null,
-               True, False);
-         end if;
-
-         Row_Data_Explorer.Node_Set_Row_Data
-           (Tree, Node, Get_Pos (Buffer, Matches (2).First));
          First := Matches (0).Last;
       end loop;
 
