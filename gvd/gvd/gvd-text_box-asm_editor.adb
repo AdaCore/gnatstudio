@@ -43,6 +43,7 @@ with Odd.Types;        use Odd.Types;
 with Odd_Intl;         use Odd_Intl;
 
 with GNAT.Regpat;      use GNAT.Regpat;
+with Ada.Text_IO; use Ada.Text_IO;
 
 package body Odd.Asm_Editors is
 
@@ -305,6 +306,8 @@ package body Odd.Asm_Editors is
       Pos_End         : Natural;
 
    begin
+      Freeze (Get_Buttons (Editor));
+
       Get_Line_Address
         (Debugger_Process_Tab (Editor.Process).Debugger,
          Source_Line, Range_Start, Range_End, Range_Start_Len, Range_End_Len);
@@ -329,42 +332,43 @@ package body Odd.Asm_Editors is
       --  Restore the previous range tothe default color
 
       if Editor.Highlight_Start /= 0 then
+         Freeze (Get_Child (Editor));
          Delete_Text
            (Get_Child (Editor),
             Gint (Editor.Highlight_Start) - 1,
             Gint (Editor.Highlight_End) - 1);
-         Set_Position
-           (Get_Child (Editor), Gint (Editor.Highlight_Start));
+         Set_Point
+           (Get_Child (Editor), Guint (Editor.Highlight_Start) - 1);
          Insert
            (Editor,
             Chars => Get_Buffer (Editor)
             (Editor.Highlight_Start .. Editor.Highlight_End - 1));
          Editor.Highlight_Start := 0;
+         Thaw (Get_Child (Editor));
       end if;
 
       --  Highlight the new range
       if Pos_Start /= 0 then
          if Pos_End /= 0 then
+            Freeze (Get_Child (Editor));
             Editor.Highlight_Start := Pos_Start;
             Editor.Highlight_End   := Pos_End;
             Delete_Text
               (Get_Child (Editor),
                Gint (Editor.Highlight_Start) - 1,
                Gint (Editor.Highlight_End) - 1);
-            Set_Position
-              (Get_Child (Editor), Gint (Editor.Highlight_Start));
+            Set_Point
+              (Get_Child (Editor), Guint (Editor.Highlight_Start) - 1);
             Insert
               (Editor,
                Fore  => Editor.Highlight_Color,
                Chars => Get_Buffer (Editor)
                (Editor.Highlight_Start .. Editor.Highlight_End - 1));
+            Thaw (Get_Child (Editor));
          end if;
-
-         --  Reset the position, so that the current line is always visible in
-         --  the assembly editor.
-         Set_Position
-           (Get_Child (Editor), Gint (Editor.Highlight_Start));
       end if;
+
+      Thaw (Get_Buttons (Editor));
    end Highlight_Address_Range;
 
    -----------------------
