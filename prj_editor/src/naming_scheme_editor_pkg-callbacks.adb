@@ -99,11 +99,13 @@ package body Naming_Scheme_Editor_Pkg.Callbacks is
 
    begin
       Set_Text (E.Unit_Name_Entry, Get_Text (E.Exception_List, Row, 0));
+
       if Spec_Name = "" then
          Reset_Exception_Fields (E, E.Spec_Filename_Entry);
       else
          Set_Text (E.Spec_Filename_Entry, Spec_Name);
       end if;
+
       if Body_Name = "" then
          Reset_Exception_Fields (E, E.Body_Filename_Entry);
       else

@@ -83,7 +83,7 @@ package body Naming_Editors is
    -------------
 
    procedure Gtk_New
-     (Editor    : out Naming_Editor;
+     (Editor       : out Naming_Editor;
       Project_View : Prj.Project_Id)
    is
       Languages : Argument_List := Get_Languages (Project_View);
@@ -110,8 +110,8 @@ package body Naming_Editors is
 
       procedure Create_Page (Name : String) is
          Label  : Gtk_Label;
-         Old  : Language_Naming_Array_Access;
-         Last : Natural;
+         Old    : Language_Naming_Array_Access;
+         Last   : Natural;
          Exists : Boolean := False;
 
       begin

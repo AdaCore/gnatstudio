@@ -1904,7 +1904,7 @@ package body Project_Viewers is
    --------------------
 
    function Widget_Factory
-     (Page : access Naming_Editor_Record;
+     (Page         : access Naming_Editor_Record;
       Project_View : Project_Id; Kernel : access Kernel_Handle_Record'Class)
       return Gtk_Widget
    is

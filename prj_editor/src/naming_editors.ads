@@ -39,7 +39,7 @@ package Naming_Editors is
    --  It is the responsability of the caller to free Languages.
 
    procedure Gtk_New
-     (Editor    : out Naming_Editor;
+     (Editor       : out Naming_Editor;
       Project_View : Prj.Project_Id);
    --  Create a new naming scheme editor, that edits the languages supported by
    --  Project_View.
@@ -82,8 +82,8 @@ private
       Foreign_Naming : Foreign_Naming_Editors.Foreign_Naming_Editor;
       Is_Visible     : Boolean;
       --  ??? Should have a common ancestor for all naming editors, registered
-      --  ??? in Language_Handlers.Glide. However, the latter must be
-      --  ??? independent of GtkAda...
+      --  in Language_Handlers.Glide. However, the latter must be independent
+      --  of GtkAda...
    end record;
 
    type Language_Naming_Array is array (Natural range <>) of Language_Naming;

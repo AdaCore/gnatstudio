@@ -70,7 +70,7 @@ package body Ada_Naming_Editors is
 
    procedure Gtk_New (Editor : out Ada_Naming_Editor) is
       Casing_Items : Gtk.Enums.String_List.Glist;
-      Size_Group : Gtk_Size_Group;
+      Size_Group   : Gtk_Size_Group;
    begin
       Editor := new Ada_Naming_Editor_Record;
       Initialize (Editor);
@@ -536,13 +536,13 @@ package body Ada_Naming_Editors is
    -----------------------
 
    procedure Add_New_Exception (Editor : access Ada_Naming_Editor_Record) is
-
-      Unit : constant String := Get_Text (Editor.Unit_Name_Entry);
+      Unit      : constant String := Get_Text (Editor.Unit_Name_Entry);
       Spec_Name : constant String := Get_Text (Editor.Spec_Filename_Entry);
       Body_Name : constant String := Get_Text (Editor.Body_Filename_Entry);
-      Text : Gtkada.Types.Chars_Ptr_Array (0 .. 2);
-      Num_Rows : constant Gint := Get_Rows (Editor.Exception_List);
-      Row : Gint := -1;
+      Text      : Gtkada.Types.Chars_Ptr_Array (0 .. 2);
+      Num_Rows  : constant Gint := Get_Rows (Editor.Exception_List);
+      Row       : Gint := -1;
+
    begin
       if Unit /= Empty_Unit_Name then
 
