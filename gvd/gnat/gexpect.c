@@ -1,6 +1,7 @@
 #ifdef _WIN32
 
 #include <windows.h>
+#include "system/windows.h"
 
 /* ??/ Provide a no-op for now */
 
@@ -16,66 +17,7 @@ ada_g_expect_fork () {
 
 void
 ada_g_expect_portable_execvp (char* cmd, char* argv[]) {
-  spawnvp (P_WAIT, cmd, args);
-
-
-  /* ??? GNAT does 
-     pid = win32_no_block_spawn (args[0], args);
-     in a-adaint.c:portable_no_block_spawn
-     which ends up as a call to CreateProcess
-
-
-  BOOL result;
-  STARTUPINFO SI;
-  PROCESS_INFORMATION PI;
-  SECURITY_ATTRIBUTES SA;
-
-  char full_command [2000];
-  int k;
-
-  // startup info
-  SI.cb          = sizeof (STARTUPINFO);
-  SI.lpReserved  = NULL;
-  SI.lpReserved2 = NULL;
-  SI.lpDesktop   = NULL;
-  SI.cbReserved2 = 0;
-  SI.lpTitle     = NULL;
-  SI.dwFlags     = 0;
-  SI.wShowWindow = SW_HIDE;
-
-  // security attributes
-  SA.nLength = sizeof (SECURITY_ATTRIBUTES);
-  SA.bInheritHandle = TRUE;
-  SA.lpSecurityDescriptor = NULL;
-
-  // prepare the command string
-  strcpy (full_command, command);
-  strcat (full_command, " ");
-
-  k = 1;
-  while (args[k]) {
-    strcat (full_command, args[k]);
-    strcat (full_command, " ");
-    k++;
-  }
-
-  result = CreateProcess (NULL,
-                          (char *)full_command,
-                          &SA,
-                          NULL,
-                          TRUE,
-                          NORMAL_PRIORITY_CLASS,
-                          NULL,
-                          NULL,
-                          &SI,
-                          &PI);
-  if (result == TRUE) {
-    add_handle (PI.hProcess);
-    CloseHandle (PI.hThread);
-    return (int)PI.hProcess;
-  } else
-    return -1;
-  */
+  int pid = spawnve (_P_NOWAIT, cmd, argv, NULL);
 }
 
 int
@@ -86,7 +28,7 @@ __gnat_pipe (int *fd)
   CreatePipe (&read, &write, NULL, 0);
   fd[0]=_open_osfhandle (read, 0);
   fd[1]=_open_osfhandle (write, 0);
-  return 0; /* always success */
+  return 0;  /* always success */
 }
 
 int
