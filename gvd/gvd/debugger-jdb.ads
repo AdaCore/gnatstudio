@@ -90,6 +90,14 @@ package Debugger.Jdb is
      (Debugger : access Jdb_Debugger;
       Display  : Boolean := False);
 
+   procedure Step_Into_Instruction
+     (Debugger : access Jdb_Debugger;
+      Display  : Boolean := False);
+
+   procedure Step_Over_Instruction
+     (Debugger : access Jdb_Debugger;
+      Display  : Boolean := False);
+
    procedure Continue
      (Debugger : access Jdb_Debugger;
       Display  : Boolean := False);
@@ -179,7 +187,9 @@ package Debugger.Jdb is
       Name_First  : out Natural;
       Name_Last   : out Positive;
       First, Last : out Natural;
-      Line        : out Natural);
+      Line        : out Natural;
+      Addr_First  : out Natural;
+      Addr_Last   : out Natural);
 
    function Info_Threads
      (Debugger : access Jdb_Debugger)
@@ -197,6 +207,24 @@ package Debugger.Jdb is
    procedure Send_Completed
      (Debugger : access Jdb_Debugger;
       Cmd      : String);
+
+   procedure Get_Machine_Code
+     (Debugger        : access Jdb_Debugger;
+      Range_Start     : out Address_Type;
+      Range_End       : out Address_Type;
+      Range_Start_Len : out Natural;
+      Range_End_Len   : out Natural;
+      Code            : out Odd.Types.String_Access;
+      Start_Address   : String := "";
+      End_Address     : String := "");
+
+   procedure Get_Line_Address
+     (Debugger        : access Jdb_Debugger;
+      Line            : Natural;
+      Range_Start     : out Address_Type;
+      Range_End       : out Address_Type;
+      Range_Start_Len : out Natural;
+      Range_End_Len   : out Natural);
 
 private
 

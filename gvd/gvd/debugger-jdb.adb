@@ -29,6 +29,7 @@ with Process_Proxies;   use Process_Proxies;
 with Gtk.Window;        use Gtk.Window;
 with Odd.Process;       use Odd.Process;
 with Odd.Trace;         use Odd.Trace;
+with Odd.Types;         use Odd.Types;
 with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
 
 package body Debugger.Jdb is
@@ -296,6 +297,28 @@ package body Debugger.Jdb is
    begin
       Send (Debugger, "next", Display => Display);
    end Step_Over;
+
+   ---------------------------
+   -- Step_Into_Instruction --
+   ---------------------------
+
+   procedure Step_Into_Instruction
+     (Debugger : access Jdb_Debugger;
+      Display  : Boolean := False) is
+   begin
+      Send (Debugger, "stepi", Display => Display);
+   end Step_Into_Instruction;
+
+   ---------------------------
+   -- Step_Over_Instruction --
+   ---------------------------
+
+   procedure Step_Over_Instruction
+     (Debugger : access Jdb_Debugger;
+      Display  : Boolean := False) is
+   begin
+      Send (Debugger, "stepi", Display => Display);
+   end Step_Over_Instruction;
 
    --------------
    -- Continue --
@@ -639,7 +662,9 @@ package body Debugger.Jdb is
       Name_First  : out Natural;
       Name_Last   : out Positive;
       First, Last : out Natural;
-      Line        : out Natural)
+      Line        : out Natural;
+      Addr_First  : out Natural;
+      Addr_Last   : out Natural)
    is
       Matched : Match_Array (0 .. 2);
    begin
@@ -647,6 +672,8 @@ package body Debugger.Jdb is
 
       First := Matched (0).First;
       Last := Matched (0).Last;
+      Addr_First := 0;
+      Addr_Last  := 1;
 
       if Matched (0) = No_Match then
          Name_First := 0;
@@ -755,5 +782,51 @@ package body Debugger.Jdb is
          return "";
       end if;
    end Send;
+
+   ----------------------
+   -- Get_Machine_Code --
+   ----------------------
+
+   procedure Get_Machine_Code
+     (Debugger        : access Jdb_Debugger;
+      Range_Start     : out Address_Type;
+      Range_End       : out Address_Type;
+      Range_Start_Len : out Natural;
+      Range_End_Len   : out Natural;
+      Code            : out Odd.Types.String_Access;
+      Start_Address   : String := "";
+      End_Address     : String := "")
+   is
+      pragma Warnings (Off, Debugger);
+      pragma Warnings (Off, Range_Start);
+      pragma Warnings (Off, Range_End);
+      pragma Warnings (Off, Start_Address);
+      pragma Warnings (Off, End_Address);
+   begin
+      Range_Start (1 .. 1) := " ";
+      Range_End (1 .. 1) := " ";
+      Range_Start_Len := 0;
+      Range_End_Len := 0;
+      Code := null;
+   end Get_Machine_Code;
+
+   ----------------------
+   -- Get_Line_Address --
+   ----------------------
+
+   procedure Get_Line_Address
+     (Debugger        : access Jdb_Debugger;
+      Line            : Natural;
+      Range_Start     : out Address_Type;
+      Range_End       : out Address_Type;
+      Range_Start_Len : out Natural;
+      Range_End_Len   : out Natural)
+   is
+   begin
+      Range_Start (1 .. 1) := " ";
+      Range_End (1 .. 1) := " ";
+      Range_Start_Len := 0;
+      Range_End_Len := 0;
+   end Get_Line_Address;
 
 end Debugger.Jdb;

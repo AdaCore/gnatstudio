@@ -37,6 +37,7 @@ with Process_Proxies;   use Process_Proxies;
 with Odd.Process;       use Odd.Process;
 with Odd.Strings;       use Odd.Strings;
 with Odd.Dialogs;       use Odd.Dialogs;
+with Odd.Strings;       use Odd.Strings;
 with Odd.Types;         use Odd.Types;
 with Odd.Trace;         use Odd.Trace;
 with Items;             use Items;
@@ -78,7 +79,7 @@ package body Debugger.Gdb is
 
    File_Name_Pattern : constant Pattern_Matcher :=
      Compile (ASCII.SUB & ASCII.SUB
-              & "(.+):(\d+):\d+:beg:0x[0-9a-f]+", Multiple_Lines);
+              & "(.+):(\d+):\d+:[^:]+:(0x[0-9a-f]+)", Multiple_Lines);
    --  Matches a file name/line indication in gdb's output.
 
    File_Name_Pattern2 : constant Pattern_Matcher :=
@@ -95,7 +96,7 @@ package body Debugger.Gdb is
 
    Breakpoint_Pattern : constant Pattern_Matcher := Compile
      ("^(\d+)\s+(breakpoint|\w+? watchpoint)\s+(keep|dis|del)\s+([yn])"
-      & "\s+(\S+)\s+(.*)",
+      & "\s+((0x0*)?(\S+))\s+(.*)",
       Multiple_Lines);
    --  Pattern to match a single line in "info breakpoint"
 
@@ -114,6 +115,10 @@ package body Debugger.Gdb is
    Question_Filter_Pattern : constant Pattern_Matcher := Compile
      ("^\[0\] ", Multiple_Lines);
    --  How to detect a question in gdb's output
+
+   Address_Range_Pattern : constant Pattern_Matcher := Compile
+     ("starts at address (0x[0-9a-f]+) <[^>]+> and ends at (0x[0-9a-f]+)");
+   --  How to get the range of addresses for a given line
 
    procedure Language_Filter
      (Descriptor : GNAT.Expect.Process_Descriptor;
@@ -666,6 +671,30 @@ package body Debugger.Gdb is
       Send (Debugger, "next", Display => Display);
    end Step_Over;
 
+   ---------------------------
+   -- Step_Into_Instruction --
+   ---------------------------
+
+   procedure Step_Into_Instruction
+     (Debugger : access Gdb_Debugger;
+      Display  : Boolean := False)
+   is
+   begin
+      Send (Debugger, "stepi", Display => Display);
+   end Step_Into_Instruction;
+
+   ---------------------------
+   -- Step_Over_Instruction --
+   ---------------------------
+
+   procedure Step_Over_Instruction
+     (Debugger : access Gdb_Debugger;
+      Display  : Boolean := False)
+   is
+   begin
+      Send (Debugger, "nexti", Display => Display);
+   end Step_Over_Instruction;
+
    --------------
    -- Continue --
    --------------
@@ -1013,9 +1042,11 @@ package body Debugger.Gdb is
       Name_First  : out Natural;
       Name_Last   : out Positive;
       First, Last : out Natural;
-      Line        : out Natural)
+      Line        : out Natural;
+      Addr_First  : out Natural;
+      Addr_Last   : out Natural)
    is
-      Matched : Match_Array (0 .. 2);
+      Matched : Match_Array (0 .. 3);
    begin
       Match (File_Name_Pattern, Str, Matched);
 
@@ -1032,6 +1063,8 @@ package body Debugger.Gdb is
          if Matched (0) = No_Match then
             Name_First := 0;
             Name_Last  := 1;
+            Addr_First := 0;
+            Addr_Last  := 0;
             Line       := 0;
             return;
          end if;
@@ -1046,6 +1079,8 @@ package body Debugger.Gdb is
 
       Name_First := Matched (1).First;
       Name_Last  := Matched (1).Last;
+      Addr_First := Matched (3).First;
+      Addr_Last  := Matched (3).Last;
       Line       := Natural'Value
         (Str (Matched (2).First .. Matched (2).Last));
    end Found_File_Name;
@@ -1455,16 +1490,17 @@ package body Debugger.Gdb is
 
                if Br (Num).The_Type = Breakpoint then
                   Br (Num).Address :=
-                    new String'(S (Matched (5).First .. Matched (5).Last));
+                    new String'("0x"
+                                & S (Matched (7).First .. Matched (7).Last));
                else
                   Br (Num).Expression :=
-                    new String'(S (Matched (5).First .. Matched (5).Last));
+                    new String'(S (Matched (7).First .. Matched (7).Last));
                end if;
 
                --  Go to beginning of next line.
                --  If we don't have a new breackpoint, add the line to the
                --  information.
-               Tmp := Matched (6).First;
+               Tmp := Matched (8).First;
                Index := Tmp;
             else
                Tmp := Index;
@@ -1672,6 +1708,8 @@ package body Debugger.Gdb is
       File_Last   : Positive;
       Line        : Natural := 0;
       First, Last : Natural;
+      Addr_First,
+      Addr_Last   : Natural;
    begin
       Set_Parse_File_Name (Get_Process (Debugger), False);
 
@@ -1683,7 +1721,8 @@ package body Debugger.Gdb is
          Set_Parse_File_Name (Get_Process (Debugger), True);
          Found_File_Name
            (Debugger,
-            Str, File_First, File_Last, First, Last, Line);
+            Str, File_First, File_Last, First, Last, Line,
+            Addr_First, Addr_Last);
          if First = 0 then
             return File_Name;
          else
@@ -1691,5 +1730,108 @@ package body Debugger.Gdb is
          end if;
       end;
    end Find_File;
+
+   ----------------------
+   -- Get_Machine_Code --
+   ----------------------
+
+   procedure Get_Machine_Code
+     (Debugger        : access Gdb_Debugger;
+      Range_Start     : out Address_Type;
+      Range_End       : out Address_Type;
+      Range_Start_Len : out Natural;
+      Range_End_Len   : out Natural;
+      Code            : out Odd.Types.String_Access;
+      Start_Address   : String := "";
+      End_Address     : String := "")
+   is
+      Index : Natural;
+      Tmp   : Natural;
+   begin
+      Code := new String'
+        (Send
+         (Debugger, "disassemble " & Start_Address & " " & End_Address,
+          Is_Internal => True));
+      if Start_Address /= "" then
+         Range_Start_Len := Start_Address'Length;
+         Range_Start (1 .. Range_Start_Len) := Start_Address;
+      else
+         Index := Code'First;
+         Skip_To_Char (Code.all, Index, ASCII.LF);
+         Index := Index + 1;
+         Tmp := Index;
+         Skip_To_Char (Code.all, Tmp, ' ');
+
+         if Index < Code'Last
+           and then Code (Index .. Index + 1) = "0x"
+         then
+            Range_Start_Len := Tmp - Index;
+            Range_Start (1 .. Tmp - Index) := Code (Index .. Tmp - 1);
+         else
+            Range_Start_Len := 0;
+         end if;
+      end if;
+
+      if End_Address /= "" then
+         Range_End_Len := End_Address'Length;
+         Range_End (1 .. Range_End_Len) := End_Address;
+      else
+         Index := Code'Last;
+         Skip_To_Char (Code.all, Index, ASCII.LF, Step => -1);
+         Index := Index - 1;
+         Skip_To_Char (Code.all, Index, ASCII.LF, Step => -1);
+         Index := Index + 1;
+         Tmp := Index;
+         Skip_To_Char (Code.all, Tmp, ' ');
+
+         if Index < Code'Last
+           and then Code (Index .. Index + 1) = "0x"
+         then
+            Range_End_Len := Tmp - Index;
+            Range_End (1 .. Tmp - Index) := Code (Index .. Tmp - 1);
+         else
+            Range_End_Len := 0;
+         end if;
+      end if;
+   end Get_Machine_Code;
+
+   ----------------------
+   -- Get_Line_Address --
+   ----------------------
+
+   procedure Get_Line_Address
+     (Debugger        : access Gdb_Debugger;
+      Line            : Natural;
+      Range_Start     : out Address_Type;
+      Range_End       : out Address_Type;
+      Range_Start_Len : out Natural;
+      Range_End_Len   : out Natural)
+   is
+   begin
+      Set_Parse_File_Name (Get_Process (Debugger), False);
+
+      declare
+         S : constant String := Send
+           (Debugger, "info line" & Natural'Image (Line), Is_Internal => True);
+         Matched : Match_Array (0 .. 2);
+      begin
+         Match (Address_Range_Pattern, S, Matched);
+         if Matched (0) /= No_Match then
+            Range_Start_Len := Matched (1).Last - Matched (1).First + 1;
+            Range_Start (1 .. Range_Start_Len) :=
+              S (Matched (1).First .. Matched (1).Last);
+
+            Range_End_Len := Matched (2).Last - Matched (2).First + 1;
+            Range_End (1 .. Range_End_Len) :=
+              S (Matched (2).First .. Matched (2).Last);
+         else
+            Range_Start (1 .. 1) := " ";
+            Range_End (1 .. 1) := " ";
+            Range_Start_Len := 0;
+            Range_End_Len := 0;
+         end if;
+      end;
+      Set_Parse_File_Name (Get_Process (Debugger), True);
+   end Get_Line_Address;
 
 end Debugger.Gdb;

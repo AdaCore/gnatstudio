@@ -62,7 +62,9 @@ package Debugger.Gdb is
       Name_First  : out Natural;
       Name_Last   : out Positive;
       First, Last : out Natural;
-      Line        : out Natural);
+      Line        : out Natural;
+      Addr_First  : out Natural;
+      Addr_Last   : out Natural);
 
    function Source_Files_List (Debugger : access Gdb_Debugger)
                               return Odd.Types.String_Array;
@@ -112,6 +114,14 @@ package Debugger.Gdb is
       Display  : Boolean := False);
 
    procedure Step_Over
+     (Debugger : access Gdb_Debugger;
+      Display  : Boolean := False);
+
+   procedure Step_Into_Instruction
+     (Debugger : access Gdb_Debugger;
+      Display  : Boolean := False);
+
+   procedure Step_Over_Instruction
      (Debugger : access Gdb_Debugger;
       Display  : Boolean := False);
 
@@ -219,6 +229,24 @@ package Debugger.Gdb is
    function List_Exceptions
      (Debugger : access Gdb_Debugger)
      return Odd.Types.Exception_Array;
+
+   procedure Get_Machine_Code
+     (Debugger        : access Gdb_Debugger;
+      Range_Start     : out Address_Type;
+      Range_End       : out Address_Type;
+      Range_Start_Len : out Natural;
+      Range_End_Len   : out Natural;
+      Code            : out Odd.Types.String_Access;
+      Start_Address   : String := "";
+      End_Address     : String := "");
+
+   procedure Get_Line_Address
+     (Debugger        : access Gdb_Debugger;
+      Line            : Natural;
+      Range_Start     : out Address_Type;
+      Range_End       : out Address_Type;
+      Range_Start_Len : out Natural;
+      Range_End_Len   : out Natural);
 
 private
 
