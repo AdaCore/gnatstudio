@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2003                      --
+--                      Copyright (C) 2000-2004                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -569,8 +569,31 @@ package body GVD.Text_Box.Asm_Editor is
    is
       Buffer    : constant String_Access := Get_Buffer (Editor);
       Index     : Natural;
+      New_Index : Natural;
+
+      Zeros : constant String := "0x00000000000000";
+
+      Address_First  : Natural := Address'First;
+      Address_Length : Natural;
 
    begin
+      --  Address might have the form "0xABCD" but be in the the disass might
+      --  appear with leading 0s, such as "0x00ABCD".
+
+      if Address'Length > 2
+        and then Address (Address_First .. Address_First + 1) = "0x"
+      then
+         Address_First := Address_First + 2;
+
+         while Address_First <= Address'Last
+           and then Address (Address_First) = '0'
+         loop
+            Address_First := Address_First + 1;
+         end loop;
+      end if;
+
+      Address_Length := Address'Last - Address_First + 1;
+
       if Buffer = null then
          return 0;
       end if;
@@ -578,8 +601,15 @@ package body GVD.Text_Box.Asm_Editor is
       Index     := Buffer'First;
 
       while Index <= Buffer'Last loop
-         if Index + Address'Length - 1 <= Buffer'Last
-           and then Buffer (Index .. Index + Address'Length - 1) = Address
+         New_Index := Index;
+         Skip_To_Char (Buffer.all, New_Index, ' ');
+
+         if Buffer (New_Index - Address_Length .. New_Index - 1)
+           = Address (Address_First .. Address'Last)
+           and then
+             Buffer (Index .. New_Index - Address_Length - 1)
+             = Zeros (Zeros'First ..
+                      Zeros'First + New_Index - Address_Length - 1 - Index)
          then
             return Index;
          end if;
