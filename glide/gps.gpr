@@ -36,10 +36,4 @@ project Glide is
               ("-O2", "-gnaty", "-gnatwu", "-gnatwe");
       end case;
    end Compiler;
-
-   package Naming is
-      for Specification_Suffix ("Ada") use ".ads";
-      for Implementation_Suffix ("Ada") use ".adb";
-   end Naming;
-
 end Glide;
