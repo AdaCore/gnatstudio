@@ -628,7 +628,8 @@ package body Vdiff2_Module.Utils is
 
       Synchronize_Scrolling (Kernel, Item.File1, Item.File2);
 
-      Split (Get_MDI (Kernel), Orientation_Horizontal);
+      Split (Get_MDI (Kernel), Orientation_Horizontal,
+             Reuse_If_Possible => True);
 
       Create_Line_Information_Column
         (Kernel, Item.File1, Id_Col_Vdiff, True, True, True);
@@ -759,9 +760,11 @@ package body Vdiff2_Module.Utils is
       Edit (Kernel, Item.File2);
       Edit (Kernel, Item.File1);
 
-      Split (Get_MDI (Kernel), Orientation_Horizontal);
+      Split (Get_MDI (Kernel), Orientation_Horizontal,
+             Reuse_If_Possible => True);
       Edit (Kernel, Item.File3);
-      Split (Get_MDI (Kernel), Orientation_Horizontal);
+      Split (Get_MDI (Kernel), Orientation_Horizontal,
+             Reuse_If_Possible => True);
 
       --  Synchronize the scrollings.
 
