@@ -11,7 +11,7 @@ INSTALL = @INSTALL@
 INSTALL_DATA = @INSTALL_DATA@
 IMAGES = launch.gif
 
-TEXI2HTML_FLAGS=--split-chapter -menu
+TEXI2HTML_FLAGS=--split chapter -menu
 
 all: doc clean-temp-files
 non-ps: common clean-temp-files
