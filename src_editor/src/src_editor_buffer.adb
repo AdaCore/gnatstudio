@@ -72,14 +72,15 @@ with Ada.Unchecked_Deallocation;
 with VFS;                       use VFS;
 
 with Src_Editor_Module.Line_Highlighting;
-use Src_Editor_Module.Line_Highlighting;
 
-with Src_Editor_Buffer.Blocks;          use Src_Editor_Buffer.Blocks;
+with Src_Editor_Buffer.Blocks;
 with Src_Editor_Buffer.Line_Information;
-use Src_Editor_Buffer.Line_Information;
 
 package body Src_Editor_Buffer is
 
+   use Src_Editor_Buffer.Blocks;
+   use Src_Editor_Module.Line_Highlighting;
+   use Src_Editor_Buffer.Line_Information;
    use type System.Address;
 
    Me : constant Debug_Handle := Create ("Source_Editor_Buffer");
@@ -313,7 +314,7 @@ package body Src_Editor_Buffer is
    --  Timeout that recomputes the blocks if needed.
 
    type Src_String is record
-      Contents  : GNAT.OS_Lib.String_Access;
+      Contents  : Unchecked_String_Access;
       Length    : Natural := 0;
       Read_Only : Boolean := False;
    end record;
@@ -366,6 +367,7 @@ package body Src_Editor_Buffer is
       Start_Iter, End_Iter : Gtk_Text_Iter;
       Success              : Boolean;
       Result               : Src_String;
+      Chars                : Interfaces.C.Strings.chars_ptr;
 
    begin
       if Line not in Buffer.Editable_Lines'Range then
@@ -385,17 +387,15 @@ package body Src_Editor_Buffer is
                return Result;
             end if;
 
-            --  ??? Could this be more efficient (avoid function returning
-            --  unconstrained array)
-
-            Result.Contents := new String'
-              (Get_Text (Buffer, Start_Iter, End_Iter, True));
-            Result.Length := Result.Contents'Length;
+            Chars := Get_Text (Buffer, Start_Iter, End_Iter, True);
+            Result.Contents := To_Unchecked_String (Chars);
+            Result.Length := Integer (Strlen (Chars));
 
          when In_Mark =>
             if Buffer.Editable_Lines (Line).Text /= null then
                Result.Read_Only := True;
-               Result.Contents  := Buffer.Editable_Lines (Line).Text;
+               Result.Contents  := To_Unchecked_String
+                 (Buffer.Editable_Lines (Line).Text.all'Address);
                Result.Length    := Result.Contents'Length;
             end if;
       end case;
@@ -407,11 +407,21 @@ package body Src_Editor_Buffer is
      (Buffer : Source_Buffer) return GNAT.OS_Lib.String_Access
    is
       Start, The_End : Gtk_Text_Iter;
+      Result         : GNAT.OS_Lib.String_Access;
+      Chars          : Interfaces.C.Strings.chars_ptr;
+
    begin
       if Lines_Are_Real (Buffer) then
          Get_Bounds (Buffer, Start, The_End);
-         return new String'
-           (Value (Get_Text (Buffer, Start, The_End, True)));
+         Chars := Get_Text (Buffer, Start, The_End, True);
+
+         --  ??? Need to find a way to avoid the call to Value which is
+         --  inneficient.
+
+         Result := new String'(Value (Chars));
+         Free (Chars);
+         return Result;
+
       else
          return Get_First_Lines (Buffer, Buffer.Last_Editable_Line);
       end if;
@@ -442,8 +452,7 @@ package body Src_Editor_Buffer is
          Len := A (J).Length;
 
          if Len /= 0 then
-            Output (Index .. Index + Len - 1) :=
-              A (J).Contents (1 .. Len);
+            Output (Index .. Index + Len - 1) := A (J).Contents (1 .. Len);
          end if;
 
          Output (Index + Len) := ASCII.LF;
@@ -2050,32 +2059,36 @@ package body Src_Editor_Buffer is
            Buffer.Editable_Lines'First .. Buffer.Last_Editable_Line
          loop
             declare
-               Str : Src_String := Get_String (Buffer, Line);
-               Contents : constant String :=
-                 Locale_From_UTF8 (Str.Contents.all);
-               C : Gunichar;
+               Str      : Src_String := Get_String (Buffer, Line);
+               C        : Gunichar;
+
             begin
                if Str.Length > 0 then
-                  if Strip_Blank then
-                     Index := Contents'Length;
+                  declare
+                     Contents : constant String :=
+                       Locale_From_UTF8 (Str.Contents (1 .. Str.Length));
+                  begin
+                     if Strip_Blank then
+                        Index := Contents'Length;
 
-                     while Index >= Contents'First loop
-                        C := UTF8_Get_Char
-                          (Contents (Index .. Contents'First));
-                        exit when C /= Character'Pos (' ')
-                          and then C /= Character'Pos (ASCII.HT);
+                        while Index >= Contents'First loop
+                           C := UTF8_Get_Char
+                             (Contents (Index .. Contents'First));
+                           exit when C /= Character'Pos (' ')
+                             and then C /= Character'Pos (ASCII.HT);
 
-                        Index := UTF8_Find_Prev_Char (Contents, Index);
-                     end loop;
+                           Index := UTF8_Find_Prev_Char (Contents, Index);
+                        end loop;
 
-                     Bytes_Written := Write
-                       (FD, Contents (Contents'First)'Address, Index);
+                        Bytes_Written := Write
+                          (FD, Contents (Contents'First)'Address, Index);
 
-                  else
-                     Bytes_Written := Write
-                       (FD, Contents (Contents'First)'Address,
-                        Contents'Length);
-                  end if;
+                     else
+                        Bytes_Written := Write
+                          (FD, Contents (Contents'First)'Address,
+                           Contents'Length);
+                     end if;
+                  end;
                end if;
 
                Free (Str);
