@@ -823,7 +823,7 @@ package body Gtkada.MDI is
             Alloc.Y := 0;
          end if;
 
-         Alloc.Height := Mdi_Alloc.Height - Allocation_Int (Alloc.Y);
+         Alloc.Height := MDI_Alloc.Height - Allocation_Int (Alloc.Y);
          if M.Priorities (Bottom) < M.Priorities (Left) then
             Alloc.Height := Alloc.Height
               - Allocation_Int (M.Docks_Size (Bottom));
@@ -1385,8 +1385,9 @@ package body Gtkada.MDI is
 
       Pointer_Ungrab (Time => 0);
 
-      Alloc := (MDI.Current_X, MDI.Current_Y,
-                Allocation_Int (MDI.Current_W), Allocation_Int (MDI.Current_H));
+      Alloc :=
+        (MDI.Current_X, MDI.Current_Y,
+         Allocation_Int (MDI.Current_W), Allocation_Int (MDI.Current_H));
 
       if (not Opaque_Resize and then MDI.Current_Cursor /= Left_Ptr)
         or else (not Opaque_Move and then MDI.Current_Cursor = Left_Ptr)

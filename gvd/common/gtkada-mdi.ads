@@ -314,7 +314,8 @@ private
       --  this represents the size of the window, since we can not rely on
       --  Get_Allocation_Width and Get_Allocation_Height (in case for instance
       --  we just resized the widget but didn't go back to the main gtk loop).
-      --  If these are set to -1, the child will be assigned its requested size.
+      --  If these are set to -1, the child will be assigned its requested
+      --  size.
 
       Uniconified_X, Uniconified_Y : Glib.Gint;
       --  Initial coordinates of the item when it is not iconified. These
