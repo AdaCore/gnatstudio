@@ -26,7 +26,12 @@
 -- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
 
+with Unchecked_Deallocation;
+
 package body Src_Info.Queries is
+
+   procedure Free is new
+     Unchecked_Deallocation (Dependency_Node, Dependency_List);
 
    function Search_Is_Completed
      (Status : Find_Decl_Or_Body_Query_Status)
@@ -77,6 +82,9 @@ package body Src_Info.Queries is
       End_Column      : out Positive;
       Status          : out Find_Decl_Or_Body_Query_Status);
    --  ??? Document...
+
+   procedure Destroy (Dep : in out Dependency);
+   --  Deallocates the memory associated with the given Dependency record.
 
    -------------------------
    -- Search_Is_Completed --
@@ -299,11 +307,11 @@ package body Src_Info.Queries is
       --  instance.
 
       --  Search a matching entity declaration in the Spec
-      if Lib_Info.Spec_Info /= null
-        and then Lib_Info.Spec_Info.Declarations /= null
+      if Lib_Info.LI.Spec_Info /= null
+        and then Lib_Info.LI.Spec_Info.Declarations /= null
       then
          Find_Spec_Or_Body
-           (Lib_Info.Spec_Info.Declarations,
+           (Lib_Info.LI.Spec_Info.Declarations,
             File_Name, Entity_Name, Line, Column,
             File_Name_Found, Start_Line, Start_Column, End_Line, End_Column,
             Status);
@@ -314,11 +322,11 @@ package body Src_Info.Queries is
       end if;
 
       --  Search in the Body
-      if Lib_Info.Body_Info /= null
-        and then Lib_Info.Body_Info.Declarations /= null
+      if Lib_Info.LI.Body_Info /= null
+        and then Lib_Info.LI.Body_Info.Declarations /= null
       then
          Find_Spec_Or_Body
-           (Lib_Info.Body_Info.Declarations,
+           (Lib_Info.LI.Body_Info.Declarations,
             File_Name, Entity_Name, Line, Column,
             File_Name_Found, Start_Line, Start_Column, End_Line, End_Column,
             Status);
@@ -328,7 +336,7 @@ package body Src_Info.Queries is
       end if;
 
       --  Search in the separates
-      Current_Sep := Lib_Info.Separate_Info;
+      Current_Sep := Lib_Info.LI.Separate_Info;
       while Current_Sep /= null loop
          if Current_Sep.Value.Declarations /= null then
             Find_Spec_Or_Body
@@ -346,7 +354,7 @@ package body Src_Info.Queries is
       end loop;
 
       --  Search in the list of dependencies, if any
-      Current_Dep := Lib_Info.Dependencies_Info;
+      Current_Dep := Lib_Info.LI.Dependencies_Info;
       while Current_Dep /= null loop
          if Current_Dep.Value.Declarations /= null then
             Find_Spec_Or_Body
@@ -383,14 +391,37 @@ package body Src_Info.Queries is
          Status := Internal_Error;
    end Find_Declaration_Or_Body;
 
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (Dep : in out Dependency) is
+   begin
+      Destroy (Dep.File);
+   end Destroy;
+
+   procedure Destroy (List : in out Dependency_List) is
+      Current_Dep : Dependency_List renames List;
+      Next_Dep    : Dependency_List;
+   begin
+      while Current_Dep /= null loop
+         Next_Dep := Current_Dep.Next;
+         Destroy (Current_Dep.Value);
+         Free (Current_Dep);
+         Current_Dep := Next_Dep;
+      end loop;
+   end Destroy;
+
    -----------------------
    -- Find_Dependencies --
    -----------------------
 
    procedure Find_Dependencies
      (Lib_Info     : LI_File_Ptr;
-      Dependencies : out Dependency_File_Info_List;
-      Status       : out Dependencies_Query_Status) is
+      Dependencies : out Dependency_List;
+      Status       : out Dependencies_Query_Status)
+   is
+      Current_Dep : Dependency_File_Info_List;
    begin
       if Lib_Info = null then
          Dependencies := null;
@@ -398,8 +429,59 @@ package body Src_Info.Queries is
          return;
       end if;
 
-      Dependencies := Lib_Info.Dependencies_Info;
+      Current_Dep  := Lib_Info.LI.Dependencies_Info;
+      Dependencies := null;
+
+      while Current_Dep /= null loop
+         declare
+            FI : constant File_Info_Ptr :=
+              Get_File_Info (Current_Dep.Value.File);
+         begin
+            if FI = null or else FI.Source_Filename = null then
+               Destroy (Dependencies);
+               Dependencies := null;
+               Status := Internal_Error;
+               return;
+            end if;
+
+            Dependencies := new Dependency_Node'
+              (Value =>
+                 (File =>
+                    (File_Name => new String' (FI.Source_Filename.all),
+                     Unit_Name => null,
+                     LI_Name   => new String'
+                       (Current_Dep.Value.File.LI.LI.LI_Filename.all)),
+                  Dep  => Current_Dep.Value.Dep_Info),
+               Next  => Dependencies);
+
+            if FI.Unit_Name /= null then
+               Dependencies.Value.File.Unit_Name :=
+                 new String' (FI.Unit_Name.all);
+            end if;
+
+            Current_Dep := Current_Dep.Next;
+         end;
+      end loop;
+
       Status := Success;
    end Find_Dependencies;
+
+   ----------------------
+   -- File_Information --
+   ----------------------
+
+   function File_Information (Dep : Dependency) return Internal_File is
+   begin
+      return Dep.File;
+   end File_Information;
+
+   ----------------------------
+   -- Dependency_Information --
+   ----------------------------
+
+   function Dependency_Information (Dep : Dependency) return Dependency_Info is
+   begin
+      return Dep.Dep;
+   end Dependency_Information;
 
 end Src_Info.Queries;
