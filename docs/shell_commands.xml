@@ -1562,10 +1562,10 @@ Access the various suggested fixes through the methods of the Codefix class</des
      <description>Interface to commands related to the toolbar. This allows you to add new combo boxes to the GPS toolbars. Note that this can also be done through XML files, see the GPS documentation</description>
      <example lang="python">
          import GPS
-         def on_changed (id, choice):
-             print "changed " + choice + " in " + id
-         def on_selected (id, choice):
-             print "on_selected " + choice + " in " + id
+         def on_changed (entry, choice):
+             print "changed " + choice
+         def on_selected (entry, choice):
+             print "on_selected " + choice
 
          ent=GPS.ToolbarEntry("foo", on_changed=on_changed)
          GPS.Toolbar().append (ent, label="Foo")   ## The default toolbar
@@ -1594,7 +1594,14 @@ Access the various suggested fixes through the methods of the Codefix class</des
      <param name="self">The instance of GPS.Toolbar</param>
      <param name="id">A string, the name of the entry to get</param>
      <return>An instance of GPS.ToolbarEntry</return>
-     <description>Return the toolbar entry matching the given id. An error is raised if no such entry exists</description>
+     <description>Return the toolbar entry matching the given id. An error is raised if no such entry exists. The same instance of GPS.ToolbarEntry is always returned for each specific id, therefore you can store your own fields in this instance and access it later.</description>
+     <example lang="python">
+         ent=GPS.ToolbarEntry ("foo")
+         GPS.Toolbar().append (ent)
+         ent.my_custom_field="Whatever"
+
+         print GPS.Toolbar().entry ("foo").my_custom_field   ## "Whatever"
+     </example>
   </shell_doc>
 
   <shell_doc name="GPS.Toolbar.append">
@@ -1617,7 +1624,10 @@ Access the various suggested fixes through the methods of the Codefix class</des
      <param name="self">The instance of GPS.ToolbarEntry</param>
      <param name="id">A string, The unique id of the combo box to create</param>
      <param name="on_changed" default="None">A subprogram, see the GPS documentaion on Subprogram parameters</param>
-     <description>Create a new entry, which isn't added to any toolbar yet.On_Changed will be called every time the user selects a new value for the combo box</description>
+     <description>Create a new entry, which isn't added to any toolbar yet. On_Changed will be called every time the user selects a new value for the combo box. Its parameters are the following:
+   - $1 = The instance of GPS.ToolbarEntry (self)
+   - $2 = The newly selected text (a string)
+</description>
      <see_also name="GPS.Toolbar.append()" />
   </shell_doc>
 
@@ -1625,7 +1635,10 @@ Access the various suggested fixes through the methods of the Codefix class</des
      <param name="self">The instance of GPS.ToolbarEntry</param>
      <param name="choice">A string</param>
      <param name="on_selected" default="">A subprogram, see the GPS documentation on Subprogram parameters</param>
-     <description>Add a choice to specified entry, action will be executed whenever this choice is selected</description>
+     <description>Add a choice to specified entry, action will be executed whenever this choice is selected. It is called with the following parameters:
+   - $1 = The instance of GPS.ToolbarEntry (self)
+   - $2 = The newly selected text (a string)
+</description>
   </shell_doc>
 
   <shell_doc name="GPS.ToolbarEntry.remove">
