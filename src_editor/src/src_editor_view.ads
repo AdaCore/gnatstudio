@@ -155,28 +155,28 @@ private
       Buffer_Bottom_Line  : Src_Editor_Buffer.Buffer_Line_Type := 0;
       Buffer_Column_Size  : Gint := 1;
       Side_Column_Buffer  : Gdk.Pixmap.Gdk_Pixmap;
-      --  Cache for avoiding to redraw the side columns too often.
+      --  Cache for avoiding to redraw the side columns too often
 
       Side_Columns_Up_To_Date : Boolean := False;
 
       Connect_Expose_Id : Gtk.Main.Idle_Handler_Id := 0;
-      --  Handler ID for the Connect_Expose idle callback.
+      --  Handler ID for the Connect_Expose idle callback
       Connect_Expose_Registered : Boolean := False;
       --  Whether the Connect_Expose idle callback has been registered.
 
       Idle_Redraw_Id : Gtk.Main.Idle_Handler_Id := 0;
-      --  Handler ID for Idle redraw of the side columns.
+      --  Handler ID for Idle redraw of the side columns
       Idle_Redraw_Registered : Boolean := False;
-      --  Whether the Idle_Redraw has been registered.
+      --  Whether the Idle_Redraw has been registered
 
       Has_Focus           : Boolean := False;
-      --  Whether the view currently has the focus.
+      --  Whether the view currently has the focus
 
       Char_Width          : Gint;
 
       Current_Block_GC    : Gdk.GC.Gdk_GC;
       Highlight_Blocks    : Boolean := False;
-      --  Whether source blocks should be highlighted.
+      --  Whether source blocks should be highlighted
 
       Current_Block       : Src_Editor_Buffer.Block_Record;
       --  Cache used to prevent redrawing the whole buffer when the cursor
@@ -191,32 +191,36 @@ private
       --  editor.
 
       Speed_Column_Buffer  : Gdk.Pixmap.Gdk_Pixmap;
-      --  Cache for avoiding to redraw the speed column too often.
+      --  Cache for avoiding to redraw the speed column too often
 
       Speed_Column_Mode    : Speed_Column_Policies := Automatic;
-      --  The display policy for the speed column.
+      --  The display policy for the speed column
 
       Speed_Column_Hide_Timeout : Gtk.Main.Timeout_Handler_Id := 0;
-      --  The timeout to hide the speed column.
+      --  The timeout to hide the speed column
 
       Speed_Column_Hide_Registered : Boolean := False;
-      --  Whether the timeout to hide the speed column has been registered.
+      --  Whether the timeout to hide the speed column has been registered
 
       Scroll_Timeout       : Gtk.Main.Timeout_Handler_Id := 0;
       Scroll_To_Value      : Gdouble := 0.0;
       Scroll_Requested     : Boolean := False;
 
       Background_Color     : Gdk.Color.Gdk_Color := Gdk.Color.Null_Color;
-      --  The editor background color.
+      --  The editor background color
 
       Text_Color           : Gdk.Color.Gdk_Color := Gdk.Color.Null_Color;
-      --  The editor text color.
+      --  The editor text color
 
       Button_Pressed       : Boolean := False;
-      --  Whether the button 1 is pressed.
+      --  Whether the button 1 is pressed
+
+      As_Is_Mode           : Boolean := False;
+      --  Set to True of the as-key has been pressed, in this case the
+      --  indentation and casing is disabled for the next key.
 
       Button_Event         : Gdk.Event.Gdk_Event;
-      --  Stores a copy of the last button press event for button 1.
+      --  Stores a copy of the last button press event for button 1
    end record;
 
 end Src_Editor_View;
