@@ -1212,6 +1212,18 @@ package body C_Analyzer is
 
             when '(' =>
                Token := Tok_Left_Paren;
+               Top_Token := Top (Tokens);
+
+               if (Top_Token.Token = Tok_Enum
+                   or else Top_Token.Token = Tok_Struct
+                   or else Top_Token.Token = Tok_Class
+                   or else Top_Token.Token = Tok_Union)
+                 and then Top_Token.Curly_Level = Curly_Level
+                 and then Top_Token.Paren_Level = Paren_Level
+               then
+                  Pop (Tokens);
+                  Indent := Indent - Indent_Level;
+               end if;
 
                if Indent_Done then
                   Paren_Index :=
