@@ -35,6 +35,7 @@ with Variable_Editor_Pkg;     use Variable_Editor_Pkg;
 with New_Variable_Editor_Pkg; use New_Variable_Editor_Pkg;
 with Value_Editors;
 with Prj_API;
+with Prj_Manager;
 with Prj.Tree;
 
 package Variable_Editors is
@@ -47,7 +48,7 @@ package Variable_Editors is
 
    procedure Gtk_New
      (Editor  : out Variable_Edit;
-      Project : Prj.Tree.Project_Node_Id;
+      Manager : access Prj_Manager.Project_Manager_Record'Class;
       Pkg     : Prj.Tree.Project_Node_Id := Prj.Tree.Empty_Node);
    --  Create a new variable editor, associated with Project (and possibly
    --  one of the packages inside that project).
@@ -88,21 +89,6 @@ package Variable_Editors is
    --  It also displays the other expressions in the list.
    --  GEntry is not deleted first.
 
-   -------------
-   -- Signals --
-   -------------
-
-   --  <signals>
-   --  The following new signals are defined for this widget:
-   --
-   --  - "changed"
-   --    procedure Handler (View      : access Variable_Edit_Record'Class;
-   --                       Var_Decl  : Project_Node_Id);
-   --
-   --    Emitted every time one of the scenario variables' value has changed.
-   --    The modified variable's definition can be found at Var_Decl.
-   --  </signals>
-
 private
 
    type Row_Data is record
@@ -122,7 +108,7 @@ private
 
    type Variable_Edit_Record is new Variable_Editor_Record with record
       Num_Rows : Guint := 2;
-      Project  : Prj.Tree.Project_Node_Id;
+      Manager  : Prj_Manager.Project_Manager;
       Pkg      : Prj.Tree.Project_Node_Id;
       Data     : Row_Data_Array_Access := null;
    end record;

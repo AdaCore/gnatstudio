@@ -27,7 +27,6 @@
 -----------------------------------------------------------------------
 
 with Glib;                use Glib;
-with Glib.Object;         use Glib.Object;
 with Gtk.Button;          use Gtk.Button;
 with Gtk.Combo;           use Gtk.Combo;
 with Gtk.Label;           use Gtk.Label;
@@ -46,7 +45,6 @@ with Gtk.Text;            use Gtk.Text;
 pragma Elaborate_All (Gtk.Handlers);
 with Gtk.Widget;          use Gtk.Widget;
 with Gtkada.Dialogs;      use Gtkada.Dialogs;
-with Gtkada.Handlers;     use Gtkada.Handlers;
 
 with Prj.Tree;   use Prj.Tree;
 with Prj;        use Prj;
@@ -62,6 +60,7 @@ with Unchecked_Deallocation;
 
 with Pixmaps_IDE;   use Pixmaps_IDE;
 with Prj_API;       use Prj_API;
+with Prj_Manager;   use Prj_Manager;
 with Value_Editors; use Value_Editors;
 
 package body Variable_Editors is
@@ -116,11 +115,6 @@ package body Variable_Editors is
      (Button : access Gtk_Widget_Record'Class; Data : Var_Handler_Data);
    --  Called when editing a variable.
 
-   procedure Changed
-     (Editor : access Variable_Edit_Record'Class;
-      Var    : Project_Node_Id);
-   --  Emits the "changed" signal on the editor
-
    procedure Refresh_Row
      (Editor : access Variable_Edit_Record'Class;
       Row    : Guint;
@@ -134,31 +128,18 @@ package body Variable_Editors is
    --  Called when the entry giving the current value of a typed variable
    --  has changed.
 
-   Var_Edit_Class : GObject_Class := Uninitialized_Class;
-   --  The class structure for this widget
-
-   Signals : constant chars_ptr_array :=
-     (1 => New_String ("changed"));
-   --  The list of signals defined for this widget
-
    -------------
    -- Gtk_New --
    -------------
 
-   procedure Gtk_New (Editor  : out Variable_Edit;
-                      Project : Prj.Tree.Project_Node_Id;
-                      Pkg     : Prj.Tree.Project_Node_Id := Empty_Node)
-   is
-      Signal_Parameters : constant Signal_Parameter_Types :=
-        (1 => (1 => GType_Int, 2 => GType_None));
+   procedure Gtk_New
+     (Editor  : out Variable_Edit;
+      Manager : access Project_Manager_Record'Class;
+      Pkg     : Prj.Tree.Project_Node_Id := Empty_Node) is
    begin
       Editor := new Variable_Edit_Record;
       Initialize (Editor);
-
-      Initialize_Class_Record
-        (Editor, Signals, Var_Edit_Class, "VarEditor", Signal_Parameters);
-
-      Editor.Project := Project;
+      Editor.Manager := Project_Manager (Manager);
       Editor.Pkg := Pkg;
    end Gtk_New;
 
@@ -267,17 +248,6 @@ package body Variable_Editors is
          Set_Text (Gtk_Label (Get_Child (Editor.Add_Button)), "Add");
       end if;
    end Gtk_New;
-
-   -------------
-   -- Changed --
-   -------------
-
-   procedure Changed
-     (Editor : access Variable_Edit_Record'Class;
-      Var    : Project_Node_Id) is
-   begin
-      Widget_Callback.Emit_By_Name (Editor, "changed", Gint (Var));
-   end Changed;
 
    ------------------
    -- Display_Expr --
@@ -449,12 +419,12 @@ package body Variable_Editors is
          Str := External_Reference_Of (Var);
          if Str /= No_String then
             String_To_Name_Buffer (Str);
-            Prj.Ext.Add
-              (Name_Buffer (Name_Buffer'First .. Name_Len),
+            Change_Scenario_Variable
+              (User.Editor.Manager,
+               Name_Buffer (Name_Buffer'First .. Name_Len),
                Get_Chars (Get_Entry (Editor.Data (User.Row).Type_Combo)));
+            Recompute_View (User.Editor.Manager);
          end if;
-
-         Changed (Editor, Var);
       end if;
    end Typed_Value_Changed;
 
@@ -703,12 +673,12 @@ package body Variable_Editors is
 
       case V is
          when Valid =>
-            Expr := Get_Value (Value, Editor.Var_Editor.Project);
+            Expr := Get_Value (Value, Get_Project (Editor.Var_Editor.Manager));
 
             if Editor.Var = Empty_Node then
                Parent := Editor.Var_Editor.Pkg;
                if Parent = Empty_Node then
-                  Parent := Editor.Var_Editor.Project;
+                  Parent := Get_Project (Editor.Var_Editor.Manager);
                end if;
 
                if Get_Active (Editor.Typed_Variable) then
@@ -766,7 +736,12 @@ package body Variable_Editors is
             end if;
 
             Refresh (Editor.Var_Editor, Editor.Var);
-            Changed (Editor.Var_Editor, Editor.Var);
+
+            Recompute_View (Editor.Var_Editor.Manager);
+            --  ??? We don't really need to recompute the whole view, since
+            --  ??? after all we only added a variable that doesn't have any
+            --  ??? influence yet.
+
             Destroy (Editor);
 
          when others =>
