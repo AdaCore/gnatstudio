@@ -191,7 +191,7 @@ private
       --  Width of the Left Window, in pixels.
 
       Original_Lines_Number : Natural := 1;
-      --  The number of lines in the file when it was first opened.
+      --  The number of lines in the file on disk.
 
       Real_Lines            : Natural_Array_Access;
       --  This array associates original line numbers (ie lines that were
