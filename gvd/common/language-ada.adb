@@ -342,15 +342,18 @@ package body Language.Ada is
    is
       pragma Unreferenced (Lang);
    begin
-      return (Comment_Start_Length          => 0,
-              Comment_End_Length            => 0,
-              New_Line_Comment_Start_Length => 2,
-              Comment_Start                 => "",
-              Comment_End                   => "",
-              New_Line_Comment_Start        => "--",
-              String_Delimiter              => '"',
-              Quote_Character               => ASCII.NUL,
-              Constant_Character            => ''');
+      return
+        (Comment_Start_Length          => 0,
+         Comment_End_Length            => 0,
+         New_Line_Comment_Start_Length => 2,
+         Comment_Start                 => "",
+         Comment_End                   => "",
+         New_Line_Comment_Start        => "--",
+         String_Delimiter              => '"',
+         Quote_Character               => ASCII.NUL,
+         Constant_Character            => ''',
+         Can_Indent                    => True,
+         Syntax_Highlighting           => True);
    end Get_Language_Context;
 
    -------------------

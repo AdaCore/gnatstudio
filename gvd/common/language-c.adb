@@ -505,7 +505,9 @@ package body Language.C is
          New_Line_Comment_Start        => "//",
          String_Delimiter              => '"',
          Quote_Character               => '\',
-         Constant_Character            => ''');
+         Constant_Character            => ''',
+         Can_Indent                    => True,
+         Syntax_Highlighting           => True);
    end Get_Language_Context;
 
    ----------------------
