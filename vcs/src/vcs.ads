@@ -21,7 +21,6 @@
 with Generic_List;
 with String_List_Utils; use String_List_Utils;
 
-with Commands;
 with VFS;
 
 with Basic_Types;  use Basic_Types;
@@ -313,8 +312,6 @@ package VCS is
    --  tag
    --  other version
 
-   function Get_Queue (VCS : access VCS_Record) return Commands.Command_Queue;
-
    procedure Parse_Status
      (Rep        : access VCS_Record;
       Text       : String;
@@ -402,10 +399,6 @@ private
 
    type VCS_Record is abstract tagged limited record
       Kernel : Glide_Kernel.Kernel_Handle;
-      Queue  : Commands.Command_Queue;
-      --  ??? Right now, for testing purposes, the command queue is
-      --  here. It would be better to put it at kernel-level or at least
-      --  at module-level.
    end record;
 
 end VCS;
