@@ -57,23 +57,31 @@ package body Aunit_Filters is
 
       Ada.Text_IO.Open (File, In_File, File_Name);
 
+      --  Find the name of the main unit.
+
       while not Found loop
          Get_Line (File, Line, Line_Last);
          Index_End := 1;
-         Skip_To_String (Line, Index_End, " is");
-         if Index_End < Line_Last - 1 then
-            Index := Index_End - 1;
-            while Index >= Line'First
-              and then Line (Index) /= ' ' loop
-               Index := Index - 1;
-            end loop;
-            Package_Name := new String'(Line (Index + 1 .. Index_End - 1));
-            Found := True;
+         Skip_To_String (Line, Index_End, "--");
+         if Index_End > Line_Last - 2 then
+            Index_End := 1;
+            Skip_To_String (Line, Index_End, " is");
+            if Index_End < Line_Last - 1 then
+               Index := Index_End - 1;
+               while Index >= Line'First
+                 and then Line (Index) /= ' ' loop
+                  Index := Index - 1;
+               end loop;
+               Package_Name := new String'(Line (Index + 1 .. Index_End - 1));
+               Found := True;
+            end if;
          end if;
       end loop;
 
       Reset (File);
       Found := False;
+
+      --  Find the name of the suite or test case.
 
       if File_Name (File_Name'Last - 3 .. File_Name'Last) = ".ads" then
          while not Found loop
@@ -145,6 +153,9 @@ package body Aunit_Filters is
       Suite_Name   : String_Access := null;
       Package_Name : String_Access;
    begin
+
+      --  To find suites, look for tests and suites in body files.
+
       if File'Length > 4
         and then File (File'Last - 3 .. File'Last) = ".adb"
       then

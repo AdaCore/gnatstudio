@@ -26,8 +26,6 @@
 -- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
 
---  This is a very dirty package used to test the Gtkada.File_Selector.
-
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 
 with Gdk.Pixmap;
@@ -37,10 +35,15 @@ with Gtkada.File_Selector; use Gtkada.File_Selector;
 
 package Aunit_Filters is
 
+   --  This package provides file selector filters to use with Aunit dialogs.
+
    procedure Get_Suite_Name
      (File_Name : in String;
       Package_Name : out String_Access;
       Suite_Name : out String_Access);
+   --  Open File_Name, do a basic parsing on it to look for aunit tests or
+   --  tests suite. If found, then Suite_Name is initialized to this test/suite
+   --  name, and Package_Name to the name of the main unit in the file.
 
    type Filter_Show_Ada is new File_Filter_Record (new String'("Ada Files"))
      with record
@@ -50,6 +53,7 @@ package Aunit_Filters is
         Body_Bitmap : Gdk.Bitmap.Gdk_Bitmap;
      end record;
    type Filter_Show_Ada_Access is access all Filter_Show_Ada'Class;
+   --  This filter shows all files, leaving only Ada files selectable.
 
    type Filter_Show_Tests is
      new File_Filter_Record (new String'("Suite and Test files"))
@@ -58,6 +62,7 @@ package Aunit_Filters is
         Suite_Bitmap : Gdk.Bitmap.Gdk_Bitmap;
      end record;
    type Filter_Show_Tests_Access is access all Filter_Show_Tests'Class;
+   --  This filter shows only files containing tests.
 
    type Filter_Show_Suites is
      new File_Filter_Record (new String'("Suite files"))
@@ -66,6 +71,7 @@ package Aunit_Filters is
         Suite_Bitmap : Gdk.Bitmap.Gdk_Bitmap;
      end record;
    type Filter_Show_Suites_Access is access all Filter_Show_Suites'Class;
+   --  This filter shows only files containing tests or test suites.
 
    procedure Use_File_Filter
      (Filter    : access Filter_Show_Ada;
@@ -76,6 +82,8 @@ package Aunit_Filters is
       Pixmap    : out Gdk.Pixmap.Gdk_Pixmap;
       Mask      : out Gdk.Bitmap.Gdk_Bitmap;
       Text      : out String_Access);
+   --  Use_File_Filter procedure for Filter_Show_Ada.
+   --  Text is set to the name of the main unit in the file.
 
    procedure Use_File_Filter
      (Filter    : access Filter_Show_Suites;
@@ -86,6 +94,8 @@ package Aunit_Filters is
       Pixmap    : out Gdk.Pixmap.Gdk_Pixmap;
       Mask      : out Gdk.Bitmap.Gdk_Bitmap;
       Text      : out String_Access);
+   --  Use_File_Filter procedure for Filter_Show_Suites.
+   --  Text is set to the name of the suite found in the file.
 
    procedure Use_File_Filter
      (Filter    : access Filter_Show_Tests;
@@ -96,5 +106,7 @@ package Aunit_Filters is
       Pixmap    : out Gdk.Pixmap.Gdk_Pixmap;
       Mask      : out Gdk.Bitmap.Gdk_Bitmap;
       Text      : out String_Access);
+   --  Use_File_Filter procedure for Filter_Show_Tests.
+   --  Text is set to the name of the suite/test case found in the file.
 
 end Aunit_Filters;
