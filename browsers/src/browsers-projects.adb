@@ -29,6 +29,7 @@ with Glide_Kernel.Project;     use Glide_Kernel.Project;
 with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
 with Glide_Intl;               use Glide_Intl;
 with Gtk.Menu;                 use Gtk.Menu;
+with Gtk.Stock;                use Gtk.Stock;
 with Gtk.Widget;               use Gtk.Widget;
 with Gtkada.Canvas;            use Gtkada.Canvas;
 with Gtkada.MDI;               use Gtkada.MDI;
@@ -747,13 +748,13 @@ package body Browsers.Projects is
       Glide_Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
 
-      --  ??? not handled yet  Gtk_New (Pix, Stock_Go_Forward, Icon_Size_Menu);
       --  ??? will be done in hook
       --     Set_Sensitive (Mitem, not Children_Shown (Item));
       Command := new Imported_By_Command;
       Register_Contextual_Menu
         (Kernel, "Show projects imported",
          Label  => -"Show projects imported by %p",
+         Stock_Image => Stock_Go_Forward,
          Action => Command,
          Filter => Lookup_Filter (Kernel, "Project only"));
 
@@ -766,13 +767,13 @@ package body Browsers.Projects is
          Filter => Action_Filter
            (Create (Module => Project_Browser_Module_Name)));
 
-      --  ??? Gtk_New (Pix, Stock_Go_Back, Icon_Size_Menu);
       --  ??? Set_Sensitive (Mitem, not Parents_Shown (Item));
       Command := new Imported_By_Command;
       Imported_By_Command (Command.all).Show_Ancestors := True;
       Register_Contextual_Menu
         (Kernel, "Show projects importing",
-         Label => -"Show projects dependening on %p",
+         Label  => -"Show projects dependening on %p",
+         Stock_Image => Stock_Go_Back,
          Action => Command,
          Filter => Action_Filter
            (Create (Module => Project_Browser_Module_Name)));

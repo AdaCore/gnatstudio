@@ -28,6 +28,7 @@ with Gtk.Check_Menu_Item;  use Gtk.Check_Menu_Item;
 with Gtk.Main;             use Gtk.Main;
 with Gtk.Menu;             use Gtk.Menu;
 with Gtk.Menu_Item;        use Gtk.Menu_Item;
+with Gtk.Stock;            use Gtk.Stock;
 with Gtk.Widget;           use Gtk.Widget;
 with Gtk.Window;           use Gtk.Window;
 with Gtkada.Canvas;        use Gtkada.Canvas;
@@ -1013,23 +1014,20 @@ package body Browsers.Dependency_Items is
         (Save_Desktop'Access, Load_Desktop'Access);
 
       --  ??? Sensitivity will be handled in the hook "contextual_menu"
-      --  ??? Images not yet handled
 
       Command := new Show_Dep_Command;
-      --  Gtk_New (Pix, Get_Children_Arrow (Get_Browser (Item)));
---           Set_Sensitive (Mitem, not Children_Shown (Item));
       Register_Contextual_Menu
         (Kernel, "File dependencies",
          Action => Command,
-         Label  => -"Show dependencies for %f");
+         Label  => -"Show dependencies for %f",
+         Stock_Image => Stock_Go_Forward);
 
       Command := new Show_Depending_On_Command;
-      --  Gtk_New (Pix, Get_Parents_Arrow (Get_Browser (Item)));
---           Set_Sensitive (Mitem, not Parents_Shown (Item));
       Register_Contextual_Menu
         (Kernel, "File depending on",
-         Action => Command,
-         Label  => -"Show files depending on %f");
+         Action      => Command,
+         Label       => -"Show files depending on %f",
+         Stock_Image => Stock_Go_Back);
 
       Command := new Examine_Other_File_Command;
       Register_Contextual_Menu
