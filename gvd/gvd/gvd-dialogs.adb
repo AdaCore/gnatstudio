@@ -44,7 +44,6 @@ with Gtk.List_Item;         use Gtk.List_Item;
 with Gtk.Check_Button;      use Gtk.Check_Button;
 with Gtk.Stock;             use Gtk.Stock;
 with Process_Proxies;       use Process_Proxies;
-with GVD.Main_Window;       use GVD.Main_Window;
 with GNAT.OS_Lib;
 with Histories;             use Histories;
 with Interactive_Consoles;  use Interactive_Consoles;
@@ -319,8 +318,6 @@ package body GVD.Dialogs is
      (History_Dialog : History_Dialog_Access;
       Debugger       : access Glib.Object.GObject_Record'Class)
    is
-      use String_History;
-
       Tab     : constant Visual_Debugger :=
         Visual_Debugger (Debugger);
       Item    : Gtk_List_Item;
