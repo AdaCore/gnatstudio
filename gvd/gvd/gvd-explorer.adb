@@ -53,7 +53,6 @@ package body Odd.Explorer is
    File_Name_Bg_Color : constant String := "#BEBEBE";
    --  Color used for the background of the file name in the editor (grey).
 
-
    type Node_Data (Length : Integer) is record
       Extension    : String (1 .. Length);
       --  Extension associated with the node, or full file name
@@ -70,17 +69,16 @@ package body Odd.Explorer is
       Mask    : Gdk.Bitmap.Gdk_Bitmap;
       Node    : Gtk_Ctree_Node;
    end record;
-   type Internal_Categories is array (Category_Index range <>)
-     of Internal_Category;
+   type Internal_Categories is
+     array (Category_Index range <>) of Internal_Category;
 
    package Tree_Cb is new Gtk.Handlers.Callback (Explorer_Record);
-   package Boolean_Tree_Cb is new Gtk.Handlers.Return_Callback
-     (Explorer_Record, Boolean);
+   package Boolean_Tree_Cb is new
+     Gtk.Handlers.Return_Callback (Explorer_Record, Boolean);
 
    package Row_Data_Explorer is new Gtk.Ctree.Row_Data (Position_Type);
 
-   procedure First_Handler
-     (Explorer : access Explorer_Record'Class);
+   procedure First_Handler (Explorer : access Explorer_Record'Class);
    --  Callback handler for Ctree signals.
 
    function Get_Pos (Buffer : String; Index : Positive) return Position_Type;
@@ -887,11 +885,8 @@ package body Odd.Explorer is
    ----------------------
 
    procedure Set_Current_Line
-     (Tree : access Explorer_Record;
-      Line : Natural)
-   is
+     (Tree : access Explorer_Record; Line : Natural) is
    begin
-      Put_Line ("Set_Current_Line=" & Line'Img);
       Tree.Current_Line := Line;
    end Set_Current_Line;
 
