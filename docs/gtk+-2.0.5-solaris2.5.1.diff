@@ -1,0 +1,54 @@
+--- gdk/x11/gdkmain-x11.c.old	Wed Jul  3 18:15:46 2002
++++ gdk/x11/gdkmain-x11.c	Wed Jul  3 18:16:31 2002
+@@ -133,7 +133,7 @@
+ 
+   GDK_THREADS_ENTER ();
+ 
+-  XProcessInternalConnection ((Display*)connection->display, connection->fd);
++  //  XProcessInternalConnection ((Display*)connection->display, connection->fd);
+ 
+   GDK_THREADS_LEAVE ();
+ 
+@@ -200,7 +200,7 @@
+   if (!gdk_display)
+     return FALSE;
+ 
+-  XAddConnectionWatch (gdk_display, gdk_internal_connection_watch, NULL);
++  //  XAddConnectionWatch (gdk_display, gdk_internal_connection_watch, NULL);
+   
+   if (gdk_synchronize)
+     XSynchronize (gdk_display, True);
+--- modules/input/gtkimcontextxim.c.old	Thu Jul  4 09:55:51 2002
++++ modules/input/gtkimcontextxim.c	Thu Jul  4 10:15:42 2002
+@@ -153,6 +153,7 @@
+ static void
+ setup_im (GtkXIMInfo *info)
+ {
++#if 0
+   XIMStyles *xim_styles = NULL;
+   XIMValuesList *ic_values = NULL;
+   int i;
+@@ -186,6 +187,7 @@
+     XFree (xim_styles);
+   if (ic_values)
+     XFree (ic_values);
++#endif
+ }
+ 
+ static GtkXIMInfo *
+@@ -492,6 +494,7 @@
+ static void
+ gtk_im_context_xim_reset (GtkIMContext *context)
+ {
++#if 0
+   GtkIMContextXIM *context_xim = GTK_IM_CONTEXT_XIM (context);
+   XIC ic = gtk_im_context_xim_get_ic (context_xim);
+   gchar *result;
+@@ -547,6 +550,7 @@
+     }
+ 
+   XFree (result);
++#endif
+ }
+ 
+ /* Mask of feedback bits that we render
