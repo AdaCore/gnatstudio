@@ -8,7 +8,10 @@ TEX= @TEX@
 MKDIR = mkdir -p
 INSTALL = @INSTALL@
 INSTALL_DATA = @INSTALL_DATA@
-IMAGES = gps_title.jpg
+IMAGES = gps_title.jpg explorer-views.gif mdi-icons.gif mdi-title-bar.gif \
+	 gps-animation.gif mdi-scroll-tabs.gif search-hide.gif \
+	 locations-view.gif mdi-tile-horizontal.gif search-options.gif \
+	 mdi-cascade.gif mdi-tile-vertical.gif
 
 TEXI2HTML_FLAGS=-split_chapter -menu
 
