@@ -148,8 +148,8 @@ package body Navigation_Module is
    is
       Data    : Navigation_Module :=
         Navigation_Module (Navigation_Module_ID);
-      Success : Boolean;
-      pragma Unreferenced (Widget, Success);
+      Result  : Command_Return_Type;
+      pragma Unreferenced (Widget, Result);
 
    begin
       if not Is_Empty (Data.Back) then
@@ -159,7 +159,7 @@ package body Navigation_Module is
          end if;
 
          Data.Current_Location := Head (Data.Back);
-         Success := Execute (Data.Current_Location);
+         Result := Execute (Data.Current_Location);
          Next (Data.Back, Free_Data => False);
       end if;
 
@@ -179,8 +179,8 @@ package body Navigation_Module is
    is
       Data    : Navigation_Module :=
         Navigation_Module (Navigation_Module_ID);
-      Success : Boolean;
-      pragma Unreferenced (Widget, Success);
+      Result : Command_Return_Type;
+      pragma Unreferenced (Widget, Result);
 
    begin
       if not Is_Empty (Data.Forward) then
@@ -189,7 +189,7 @@ package body Navigation_Module is
          end if;
 
          Data.Current_Location := Head (Data.Forward);
-         Success := Execute (Data.Current_Location);
+         Result := Execute (Data.Current_Location);
          Next (Data.Forward, Free_Data => False);
       end if;
 
