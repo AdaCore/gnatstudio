@@ -100,7 +100,7 @@ package body Projects is
       View_Is_Complete : Boolean := False;
       --  True if the view for the project was correctly computed
 
-      Status : Project_Status := Default;
+      Status : Project_Status := From_File;
    end record;
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
