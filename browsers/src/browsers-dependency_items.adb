@@ -903,9 +903,9 @@ package body Browsers.Dependency_Items is
       Node    : List_Node := First (Args);
    begin
       while Node /= Null_Node loop
-         if Command = "uses" then
+         if Command = "file.uses" then
             Examine_Dependencies (Kernel, File => Data (Node));
-         elsif Command = "used_by" then
+         elsif Command = "file.used_by" then
             Examine_From_Dependencies (Kernel, File => Data (Node));
          end if;
          Node := Next (Node);
