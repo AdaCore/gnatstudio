@@ -33,6 +33,7 @@ with Odd.Pixmaps; use Odd.Pixmaps;
 with Odd.Types;   use Odd.Types;
 with Odd.Dialogs; use Odd.Dialogs;
 with Odd.Process; use Odd.Process;
+with Odd.Memory_View; use Odd.Memory_View;
 
 package body Main_Debug_Window_Pkg is
 
@@ -756,6 +757,7 @@ begin
      (Main_Debug_Window.Backtrace_Dialog, Gtk_Window (Main_Debug_Window));
    Gtk_New (Main_Debug_Window.Task_Dialog, Gtk_Window (Main_Debug_Window));
    Gtk_New (Main_Debug_Window.History_Dialog, Gtk_Window (Main_Debug_Window));
+   Gtk_New (Main_Debug_Window.Memory_View, Gtk_Widget (Main_Debug_Window));
    Lock (The_Accel_Group);
    Lock (Gtk.Accel_Group.Get_Default);
 end Initialize;
