@@ -485,6 +485,12 @@ package body Src_Editor_Module is
       User   : Virtual_File);
    --  Callback to call when an editor is about to be destroyed.
 
+   procedure Update_Cache_On_Focus
+     (Child : access Gtk_Widget_Record'Class);
+   --  Make sure that the last view for a file is reflected in the cache, so
+   --  that we always used that one by default when search for the last editor
+   --  for a given file
+
    -----------------------
    -- On_Editor_Destroy --
    -----------------------
@@ -2261,6 +2267,24 @@ package body Src_Editor_Module is
       Box.Editor := Editor;
    end Initialize;
 
+   ---------------------------
+   -- Update_Cache_On_Focus --
+   ---------------------------
+
+   procedure Update_Cache_On_Focus
+     (Child : access Gtk_Widget_Record'Class)
+   is
+      Id    : constant Source_Editor_Module :=
+        Source_Editor_Module (Src_Editor_Module_Id);
+      Box : constant Source_Editor_Box :=
+        Get_Source_Box_From_MDI (MDI_Child (Child));
+   begin
+      --  Update the cache, so that the view is used when possible, since it
+      --  was the last open in any case
+      Editors_Hash.Set
+        (Id.Editors, Get_Filename (Box), (Child => MDI_Child (Child)));
+   end Update_Cache_On_Focus;
+
    --------------
    -- New_View --
    --------------
@@ -2272,7 +2296,6 @@ package body Src_Editor_Module is
       Editor : Source_Editor_Box;
       Box    : Source_Box;
       Child  : MDI_Child;
-
    begin
       if Current = null then
          return null;
@@ -2293,6 +2316,8 @@ package body Src_Editor_Module is
             Default_Width  => Get_Pref (Kernel, Default_Widget_Width),
             Default_Height => Get_Pref (Kernel, Default_Widget_Height),
             Module         => Src_Editor_Module_Id);
+         Widget_Callback.Connect
+           (Child, "selected", Update_Cache_On_Focus'Access);
 
          Set_Icon (Child, Gdk_New_From_Xpm_Data (editor_xpm));
          Set_Focus_Child (Child);
@@ -2467,6 +2492,8 @@ package body Src_Editor_Module is
             Default_Height => Get_Pref (Kernel, Default_Widget_Height),
             Module         => Src_Editor_Module_Id);
          Set_Icon (Child, Gdk_New_From_Xpm_Data (editor_xpm));
+         Widget_Callback.Connect
+           (Child, "selected", Update_Cache_On_Focus'Access);
 
          --  Add child to the hash table of editors.
          Editors_Hash.Set (Id.Editors, File, (Child => Child));
