@@ -67,6 +67,7 @@ package body Src_Contexts is
 
    procedure Scan_Buffer
      (Buffer        : String;
+      Buffer_First  : Natural;
       Context       : access Search_Context'Class;
       Callback      : Scan_Callback;
       Scope         : Search_Scope;
@@ -75,7 +76,8 @@ package body Src_Contexts is
       Ref_Line      : Natural         := 1;
       Ref_Column    : Natural         := 1;
       Was_Partial   : out Boolean);
-   --  Search Context in buffer, searching only in the appropriate scope.
+   --  Search Context in buffer (Buffer_First .. Buffer'Last), searching only
+   --  in the appropriate scope.
    --  Buffer is assumed to contain complete contexts (e.g the contents of
    --  a whole file).
    --  (Ref_Line, Ref_Column) is the position in the actual file that Buffer
@@ -207,6 +209,7 @@ package body Src_Contexts is
 
    procedure Scan_Buffer
      (Buffer        : String;
+      Buffer_First  : Natural;
       Context       : access Search_Context'Class;
       Callback      : Scan_Callback;
       Scope         : Search_Scope;
@@ -290,7 +293,7 @@ package body Src_Contexts is
                         exit;
 
                      elsif Buffer (Pos) = Str_Delim
-                       and then (Pos = Buffer'First
+                       and then (Pos = Buffer_First
                                  or else Pos = Buffer'Last
                                  or else Buffer (Pos - 1) /= Char_Delim
                                  or else Buffer (Pos + 1) /= Char_Delim)
@@ -310,7 +313,7 @@ package body Src_Contexts is
                   while Pos <= Buffer'Last loop
                      if Buffer (Pos) = Str_Delim
                        and then (Quote_Char = ASCII.NUL or else
-                                 (Pos > Buffer'First and then
+                                 (Pos > Buffer_First and then
                                   Buffer (Pos - 1) /= Quote_Char))
                      then
                         State := Statements;
@@ -362,11 +365,11 @@ package body Src_Contexts is
          end if;
       end Next_Scope_Transition;
 
-      Pos           : Positive := Buffer'First;
+      Pos           : Positive := Buffer_First;
       Line_Start    : Positive;
       Line          : Natural := Ref_Line;
       Column        : Natural := Ref_Column;
-      Last_Index    : Positive := Buffer'First;
+      Last_Index    : Positive := Buffer_First;
       Section_End   : Integer;
       Old_State     : Recognized_Lexical_States;
 
@@ -382,7 +385,7 @@ package body Src_Contexts is
       if Scope = Whole or else Lang = null then
          Scan_Buffer_No_Scope
            (Context,
-            Buffer, Buffer'First, Buffer'Last,
+            Buffer, Buffer_First, Buffer'Last,
             Callback,
             Pos, Line, Column, Was_Partial);
          return;
@@ -505,7 +508,7 @@ package body Src_Contexts is
 
       if Start <= Buffer'Last then
          Scan_Buffer
-           (Buffer (Start .. Buffer'Last), Context, Callback, Scope,
+           (Buffer.all, Start, Context, Callback, Scope,
             Lexical_State, Lang, Start_Line, Start_Column, Was_Partial);
       end if;
 
@@ -616,12 +619,12 @@ package body Src_Contexts is
 
       if Backward then
          Scan_Buffer
-           (Get_Slice (Editor, 1, 1), Context,
+           (Get_Slice (Editor, 1, 1), 1, Context,
             Backward_Callback'Unrestricted_Access, Scope,
             Lexical_State, Lang, Was_Partial => Was_Partial);
       else
          Scan_Buffer
-           (Get_Slice (Editor, Current_Line, Current_Column), Context,
+           (Get_Slice (Editor, Current_Line, 1), Current_Column, Context,
             Stop_At_First_Callback'Unrestricted_Access, Scope,
             Lexical_State, Lang, Current_Line, Current_Column,
             Was_Partial);
@@ -633,7 +636,7 @@ package body Src_Contexts is
 
             Lexical_State := Statements;
             Scan_Buffer
-              (Get_Slice (Editor, 1, 1), Context,
+              (Get_Slice (Editor, 1, 1), 1, Context,
                Stop_At_First_Callback'Unrestricted_Access, Scope,
                Lexical_State, Lang, Was_Partial => Was_Partial);
          end if;
@@ -687,7 +690,8 @@ package body Src_Contexts is
                     Lexical_State => State, Force_Read => Kernel = null,
                     Was_Partial => Was_Partial);
       else
-         Scan_Buffer (Str, Context, Callback'Unrestricted_Access, Scope,
+         Scan_Buffer (Str, Str'First, Context,
+                      Callback'Unrestricted_Access, Scope,
                       Lexical_State => State,
                       Lang          => Lang,
                       Was_Partial   => Was_Partial);
