@@ -43,7 +43,6 @@ with Interfaces.C.Strings;      use Interfaces.C.Strings;
 with Interfaces.C;              use Interfaces.C;
 with GUI_Utils;                 use GUI_Utils;
 with Src_Info;                  use Src_Info;
-with Src_Info.ALI;
 
 with Glide_Kernel.Timeout;
 with Prj_API;                  use Prj_API;
@@ -219,26 +218,6 @@ package body Glide_Kernel is
       return Handle.Predefined_Object_Path.all;
    end Get_Predefined_Object_Path;
 
-   --------------------
-   -- Parse_ALI_File --
-   --------------------
-
-   procedure Parse_ALI_File
-     (Handle       : access Kernel_Handle_Record;
-      ALI_Filename : String;
-      Unit         : out Src_Info.LI_File_Ptr;
-      Success      : out Boolean) is
-   begin
-      Src_Info.ALI.Parse_ALI_File
-        (ALI_Filename           => ALI_Filename,
-         Project                => Get_Project_View (Handle),
-         Predefined_Source_Path => Get_Predefined_Source_Path (Handle),
-         Predefined_Object_Path => Get_Predefined_Object_Path (Handle),
-         List                   => Handle.Source_Info_List,
-         Unit                   => Unit,
-         Success                => Success);
-   end Parse_ALI_File;
-
    -------------------------------------
    -- Locate_From_Source_And_Complete --
    -------------------------------------
@@ -247,15 +226,28 @@ package body Glide_Kernel is
      (Handle          : access Kernel_Handle_Record;
       Source_Filename : String) return Src_Info.LI_File_Ptr
    is
-      File : Src_Info.LI_File_Ptr;
+      use type Prj.Project_Id;
+      File : LI_File_Ptr := Locate_From_Source
+        (Handle.Source_Info_List, Source_Filename);
+
+      --  ??? Should we use the project the file actually belongs to
+      --  Project : Prj.Project_Id := Get_Project_From_File
+      --    (Get_Project_View (Handle), Source_Filename);
+      Project : Prj.Project_Id := Get_Project_View (Handle);
    begin
-      Src_Info.ALI.Locate_From_Source
-        (List                   => Handle.Source_Info_List,
+      --  pragma Assert (Project /= Prj.No_Project);
+      --  Trace (Me, "Locate_From_Source_And_Complete: "
+      --         & Source_Filename
+      --         & " "
+      --         & Get_Name_String (Prj.Projects.Table (Project).Name));
+      Create_Or_Complete_LI
+        (Handler           => Handler_From_Filename (Project, Source_Filename),
+         File                   => File,
          Source_Filename        => Source_Filename,
-         Project                => Get_Project_View (Handle),
+         List                   => Handle.Source_Info_List,
+         Project                => Project,
          Predefined_Source_Path => Get_Predefined_Source_Path (Handle),
-         Predefined_Object_Path => Get_Predefined_Object_Path (Handle),
-         File                   => File);
+         Predefined_Object_Path => Get_Predefined_Object_Path (Handle));
       return File;
    end Locate_From_Source_And_Complete;
 

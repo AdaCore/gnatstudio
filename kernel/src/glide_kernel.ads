@@ -90,14 +90,6 @@ package Glide_Kernel is
    --  Return the predefined Object_Path associated to the given Kernel Handle.
    --  Return the empty string if no object path has been set yet.
 
-   procedure Parse_ALI_File
-     (Handle       : access Kernel_Handle_Record;
-      ALI_Filename : String;
-      Unit         : out Src_Info.LI_File_Ptr;
-      Success      : out Boolean);
-   --  Parse the given ALI file and return the new LI_File_Ptr created if
-   --  the parsing was successful.
-
    function Get_Source_Info_List
      (Handle : access Kernel_Handle_Record) return Src_Info.LI_File_List;
    --  Return the Source Information List for the given Kernel Handle
