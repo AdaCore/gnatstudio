@@ -32,8 +32,6 @@ with Basic_Types;           use Basic_Types;
 with GVD.Process;           use GVD.Process;
 with Odd_Intl;              use Odd_Intl;
 pragma Elaborate_All (Odd_Intl);
-with Gtk.Check_Menu_Item;   use Gtk.Check_Menu_Item;
-with Gtk.Item_Factory;      use Gtk.Item_Factory;
 with Gtk.GEntry;            use Gtk.GEntry;
 with Gtk.Widget;            use Gtk.Widget;
 with Gtk.Dialog;            use Gtk.Dialog;
@@ -341,20 +339,9 @@ package body GVD.Dialogs is
 
       Index    : Integer;
       Subp     : String_Access;
-      Widget   : Gtk_Widget;
 
    begin
-      --  Do nothing if the stack list has been hidden
-
-      Widget := Get_Widget (Tab.Window.Factory, -"/Data/Call Stack");
-
-      if Widget = null then
-         --  This means that GVD is part of Glide
-         Widget :=
-           Get_Widget (Tab.Window.Factory, -"/Debug/Data/Call Stack");
-      end if;
-
-      if not Get_Active (Gtk_Check_Menu_Item (Widget)) then
+      if Tab.Stack_Scrolledwindow = null then
          return;
       end if;
 

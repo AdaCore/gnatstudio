@@ -20,14 +20,12 @@
 
 with Glib;                use Glib;
 with Gdk.Window;          use Gdk.Window;
-with Gtk.Check_Menu_Item; use Gtk.Check_Menu_Item;
-with Gtk.Widget;          use Gtk.Widget;
-with Gtk.Item_Factory;    use Gtk.Item_Factory;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 with Gtk.Window;          use Gtk.Window;
 with Gtkada.Dialogs;      use Gtkada.Dialogs;
 with Gtkada.File_Selection; use Gtkada.File_Selection;
 with Gtkada.Canvas;       use Gtkada.Canvas;
+with Gtkada.MDI;          use Gtkada.MDI;
 
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
@@ -45,7 +43,6 @@ with GVD.Memory_View;     use GVD.Memory_View;
 with Basic_Types;         use Basic_Types;
 with Histories;           use Histories;
 with List_Select_Pkg;     use List_Select_Pkg;
-with Dock_Paned;          use Dock_Paned;
 with Debugger;            use Debugger;
 with Process_Proxies;     use Process_Proxies;
 with Breakpoints_Editor;  use Breakpoints_Editor;
@@ -633,46 +630,44 @@ package body GVD.Menu is
    is
       Top       : constant GVD_Main_Window := GVD_Main_Window (Object);
       Process   : Visual_Debugger;
+      Child     : MDI_Child;
       Button    : Message_Dialog_Buttons;
+      List      : Debugger_List_Link := Top.First_Debugger;
       pragma Unreferenced (Action, Widget, Button);
 
-      Item      : Gtk_Widget;
-      List      : Debugger_List_Link := Top.First_Debugger;
-
    begin
-      --  ??? Is there a memory leak here ? Data_Paned might be ref'd, but
-      --  not actually in a parent, and this means that it isn't destroyed
-      --  when the process_tab is destroyed.
-
       while List /= null loop
          Process := Visual_Debugger (List.Debugger);
 
          if Process.Debugger /= null then
-            Item := Get_Item (Top.Factory, -"/Data/Call Stack");
-
-            if Item = null then
-               Item := Get_Item (Top.Factory, -"/Debug/Data/Call Stack");
-            end if;
-
-            if Get_Active (Gtk_Check_Menu_Item (Item)) then
-               Add1 (Process.Data_Paned, Process.Stack_Scrolledwindow);
-               Unref (Process.Stack_Scrolledwindow);
+            if Process.Stack_Scrolledwindow = null then
+               Create_Call_Stack (Process);
 
                if Command_In_Process (Get_Process (Process.Debugger)) then
                   Button := Message_Dialog
                     ((-"Cannot show call stack while the debugger is busy.") &
                      ASCII.LF &
                      (-"Interrupt the debugger or wait for its availability."),
-                    Dialog_Type => Warning,
-                    Buttons => Button_OK);
+                     Dialog_Type => Warning,
+                     Buttons => Button_OK);
 
                else
                   Update_Call_Stack (Process);
                end if;
-
             else
-               Ref (Process.Stack_Scrolledwindow);
-               Dock_Remove (Process.Data_Paned, Process.Stack_Scrolledwindow);
+               Child := Find_MDI_Child
+                 (Top.Process_Mdi, Process.Stack_Scrolledwindow);
+
+               if Child /= null then
+                  Raise_Child (Child);
+               else
+                  --  Something really bad happened: the stack window is not
+                  --  part of the MDI, reset it.
+
+                  Destroy (Process.Stack_Scrolledwindow);
+                  Process.Stack_Scrolledwindow := null;
+                  Create_Call_Stack (Process);
+               end if;
             end if;
          end if;
 
