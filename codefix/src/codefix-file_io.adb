@@ -32,6 +32,7 @@ package body Codefix.File_Io is
    procedure Free (This : in out File_Interface) is
    begin
       Free (This.Content);
+      Free (Text_Interface (This));
    end Free;
 
    ---------
@@ -184,6 +185,15 @@ package body Codefix.File_Io is
 
       Close (Current_File);
    end Update;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (This : in out Errors_File) is
+   begin
+      Free (This.File);
+   end Free;
 
    ------------------------
    -- Get_Direct_Message --

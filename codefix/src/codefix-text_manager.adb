@@ -33,7 +33,8 @@ package body Codefix.Text_Manager is
 
    procedure Free (This : in out Text_Navigator_Abstr) is
    begin
-      null;
+      Free (This.Files.all);
+      Free (This.Files);
    end Free;
 
    --------------
@@ -111,6 +112,7 @@ package body Codefix.Text_Manager is
       New_Buffer  : Extended_Line_Buffer;
       Indent      : Natural;
       Next_Indent : Natural;
+      Buffer      : Dynamic_String;
 
    begin
       while Iterator /= Text_List.Null_Node loop
@@ -125,8 +127,9 @@ package body Codefix.Text_Manager is
       Append (This.Files.all, New_Text);
       New_Text.File_Name := new String'(Name);
       Initialize (New_Text.all, Name);
+      Buffer := Read_File (New_Text.all);
       Analyze_Ada_Source
-        (Buffer => Read_File (New_Text.all).all,
+        (Buffer => Buffer.all,
          New_Buffer => New_Buffer,
          Indent_Params => Default_Indent_Parameters,
          Reserved_Casing  => Unchanged,
@@ -137,6 +140,8 @@ package body Codefix.Text_Manager is
          Current_Indent => Next_Indent,
          Prev_Indent => Indent,
          Callback => null);
+
+      Free (Buffer);
 
 --      declare
 --         Current : Construct_Access;
@@ -267,10 +272,21 @@ package body Codefix.Text_Manager is
    -- Free --
    ----------
 
+   procedure Free (This : in out Text_Interface) is
+   begin
+      Free (This.Tokens_List.all); --  Detruire aussi le pointeur
+      Free (This.File_Name);
+   end Free;
+
+   ----------
+   -- Free --
+   ----------
+
    procedure Free (This : in out Ptr_Text) is
       procedure Delete is new
          Ada.Unchecked_Deallocation (Text_Interface'Class, Ptr_Text);
    begin
+      Free (This.all);
       Delete (This);
    end Free;
 
