@@ -36,7 +36,7 @@ begin
 
    Gtk_New (Gui_Builder.Menubar1);
    Pack_Start (Gui_Builder.Vbox4, Gui_Builder.Menubar1, False, False, 0);
-   Set_Shadow_Type (Gui_Builder.Menubar1, Shadow_Out);
+   --  Set_Shadow_Type (Gui_Builder.Menubar1, Shadow_Out);
 
    Gtk_New (Gui_Builder.Menuitem13, -"File");
    Add (Gui_Builder.Menubar1, Gui_Builder.Menuitem13);
@@ -87,10 +87,10 @@ begin
 
    Gtk_New (Gui_Builder.Toolbar7, Orientation_Horizontal, Toolbar_Both);
    Add (Gui_Builder.Handlebox5, Gui_Builder.Toolbar7);
-   Set_Space_Size (Gui_Builder.Toolbar7, 5);
-   Set_Space_Style (Gui_Builder.Toolbar7, Toolbar_Space_Empty);
+   --  Set_Space_Size (Gui_Builder.Toolbar7, 5);
+   --  Set_Space_Style (Gui_Builder.Toolbar7, Toolbar_Space_Empty);
    Set_Tooltips (Gui_Builder.Toolbar7, True);
-   Set_Button_Relief (Gui_Builder.Toolbar7, Relief_Normal);
+   --  Set_Button_Relief (Gui_Builder.Toolbar7, Relief_Normal);
    Gui_Builder.Button15 := Append_Element
      (Toolbar => Gui_Builder.Toolbar7,
       The_Type => Toolbar_Child_Button,
@@ -134,10 +134,10 @@ begin
 
    Gtk_New (Gui_Builder.Toolbar8, Orientation_Horizontal, Toolbar_Icons);
    Pack_Start (Gui_Builder.Vbox13, Gui_Builder.Toolbar8, False, False, 0);
-   Set_Space_Size (Gui_Builder.Toolbar8, 5);
-   Set_Space_Style (Gui_Builder.Toolbar8, Toolbar_Space_Empty);
+   --  Set_Space_Size (Gui_Builder.Toolbar8, 5);
+   --  Set_Space_Style (Gui_Builder.Toolbar8, Toolbar_Space_Empty);
    Set_Tooltips (Gui_Builder.Toolbar8, True);
-   Set_Button_Relief (Gui_Builder.Toolbar8, Relief_None);
+   --  Set_Button_Relief (Gui_Builder.Toolbar8, Relief_None);
    Gui_Builder.Togglebutton67 := Append_Element
      (Toolbar => Gui_Builder.Toolbar8,
       The_Type => Toolbar_Child_ToggleButton,
