@@ -165,9 +165,9 @@ package body Docgen_Module is
      (Kernel    : Kernel_Handle;
       Project   : Project_Type := No_Project;
       Recursive : Boolean);
-   --  Generate the doc for the project
-   --  If Recursive is true, it generates the direct sources of
-   --  the project and also the sources from imported projects
+   --  Generate documentation for a project.
+   --  If Recursive is true, documentation is generated for the project and
+   --  the imported ones.
 
    procedure Choose_Menu_File
       (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
@@ -177,11 +177,11 @@ package body Docgen_Module is
    procedure Generate_File
      (Kernel : Kernel_Handle;
       File   : Virtual_File);
-   --  In order to generate the documentation of one file
+   --  Generate documentation for a single file
 
-   ------------------------------------------
-   -- main procedure for the documentation --
-   ------------------------------------------
+   -------------------------------------------
+   -- Main procedures for the documentation --
+   -------------------------------------------
 
    function Get_Backend
      (Kernel  : Kernel_Handle) return Docgen.Backend.Backend_Handle;
@@ -418,7 +418,7 @@ package body Docgen_Module is
       Recursive : Boolean)
    is
       B                : constant Docgen.Backend.Backend_Handle :=
-                           Get_Backend (Kernel);
+        Get_Backend (Kernel);
       Sources          : VFS.File_Array_Access;
       Source_File_List : Type_Source_File_Table.HTable;
       P                : Project_Type := Project;
@@ -656,6 +656,7 @@ package body Docgen_Module is
       Source_File_List : Type_Source_File_Table.HTable;
       Body_File        : Virtual_File;
       Source           : Source_File;
+      Nb_Files         : Natural := 1;
 
    begin
       if B = null or else (not Is_Spec and then not Process_Body) then
@@ -677,6 +678,7 @@ package body Docgen_Module is
           Is_Spec       => Is_Spec_File (Kernel, File)));
 
       if Is_Spec and then Process_Body then
+         Nb_Files := 2;
          Body_File := Create
            (Other_File_Base_Name
               (Get_Project_From_File
@@ -685,23 +687,26 @@ package body Docgen_Module is
                File),
             Kernel,
             Use_Object_Path => False);
+
          Source := Get_Or_Create
            (Db           => Get_Database (Kernel),
             File         => Body_File,
             Allow_Create => True);
+
          if Body_File /= No_File then
             Type_Source_File_Table.Set
               (Source_File_List,
                Source,
-               (Package_Name => new String'(Get_Unit_Name (Source)),
+               (Package_Name  => new String'(Get_Unit_Name (Source)),
                 Doc_File_Name => new String'
-                  (Get_Doc_File_Name (Body_File,
-                                      Docgen.Backend.Get_Extension (B))),
-                Is_Spec      => Is_Spec_File (Kernel, Body_File)));
+                  (Get_Doc_File_Name
+                     (Body_File,
+                      Docgen.Backend.Get_Extension (B))),
+                Is_Spec       => Is_Spec_File (Kernel, Body_File)));
          end if;
       end if;
 
-      Generate (Kernel, Source_File_List, 2, B);
+      Generate (Kernel, Source_File_List, Nb_Files, B);
 
    exception
       when E : others =>
