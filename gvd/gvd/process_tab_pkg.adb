@@ -29,8 +29,7 @@ pragma Warnings (On);
 
 with Process_Tab_Pkg.Callbacks; use Process_Tab_Pkg.Callbacks;
 with Interfaces.C.Strings; use Interfaces.C.Strings;
-with System;
-with Gtk.Object; use Gtk.Object;
+with Gtk.Object;      use Gtk.Object;
 with Gtkada.Intl;     use Gtkada.Intl;
 with GVD.Canvas;      use GVD.Canvas;
 with Gtk.Style;       use Gtk.Style;
@@ -44,7 +43,7 @@ package body Process_Tab_Pkg is
 
    Signals : constant Chars_Ptr_Array :=
      (1 => New_String ("executable_changed"));
-   Class_Record : System.Address := System.Null_Address;
+   Class_Record : GObject_Class := Uninitialized_Class;
 
 procedure Gtk_New (Process_Tab : out Process_Tab_Access) is
 begin
@@ -60,7 +59,8 @@ procedure Initialize (Process_Tab : access Process_Tab_Record'Class) is
 
 begin
    Gtk.Window.Initialize (Process_Tab, Window_Toplevel);
-   Initialize_Class_Record (Process_Tab, Signals, Class_Record);
+   Initialize_Class_Record
+     (Process_Tab, Signals, Class_Record, Name => "GvdProcessTab");
    Set_Title (Process_Tab, -"Data");
    Set_Policy (Process_Tab, False, True, False);
    Set_Position (Process_Tab, Win_Pos_None);
