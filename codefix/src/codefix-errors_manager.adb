@@ -173,6 +173,15 @@ package body Codefix.Errors_Manager is
       return Data (This).Fixed.all;
    end Is_Fixed;
 
+   -------------------------
+   -- Get_Number_Of_Fixes --
+   -------------------------
+
+   function Get_Number_Of_Fixes (This : Error_Id) return Natural is
+   begin
+      return Length (Data (This).Solutions);
+   end Get_Number_Of_Fixes;
+
    -------------
    -- Analyse --
    -------------
