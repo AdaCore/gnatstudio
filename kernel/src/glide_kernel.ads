@@ -161,6 +161,11 @@ package Glide_Kernel is
       return Language_Handlers.Language_Handler;
    --  Return the language handler used by this kernel.
 
+   function GNAT_Version
+     (Handle : access Kernel_Handle_Record) return String;
+   --  Return a string containing the GNAT version number.
+   --  The string has the form "3.16w (20020610)"
+
    function Get_Predefined_Source_Files
      (Handle : access Kernel_Handle_Record)
       return Basic_Types.String_Array_Access;
@@ -778,6 +783,9 @@ private
 
       Registry : Projects.Registry.Project_Registry_Access;
       --  The project registry
+
+      GNAT_Version : GNAT.OS_Lib.String_Access;
+      --  Full GNAT Version, if relevant
 
       Predefined_Object_Path : GNAT.OS_Lib.String_Access;
       --  Predefined object path for the runtime library

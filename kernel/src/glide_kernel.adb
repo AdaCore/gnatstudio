@@ -153,6 +153,20 @@ package body Glide_Kernel is
       return Handle.Lang_Handler;
    end Get_Language_Handler;
 
+   ------------------
+   -- GNAT_Version --
+   ------------------
+
+   function GNAT_Version
+     (Handle : access Kernel_Handle_Record) return String is
+   begin
+      if Handle.GNAT_Version = null then
+         return -"<unknown version>";
+      else
+         return Handle.GNAT_Version.all;
+      end if;
+   end GNAT_Version;
+
    -------------
    -- Gtk_New --
    -------------
