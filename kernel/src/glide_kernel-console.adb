@@ -39,6 +39,7 @@ with Traces;               use Traces;
 with Ada.Exceptions;       use Ada.Exceptions;
 with Glide_Result_View;    use Glide_Result_View;
 with Gtkada.Handlers;      use Gtkada.Handlers;
+with Histories;            use Histories;
 
 package body Glide_Kernel.Console is
 
@@ -494,12 +495,16 @@ package body Glide_Kernel.Console is
       Child       : MDI_Child;
 
    begin
+      --  ??? Using an interactive_console seems overkill, since the user
+      --  cannot write in the messages window
       Gtk_New (Console,
                "",
                null,
                GObject (Kernel),
                Get_Pref (Kernel, Source_Editor_Font),
-               Wrap_Char);
+               History_List => null,
+               Key          => "",
+               Wrap_Mode    => Wrap_Char);
       Enable_Prompt_Display (Console, False);
 
       Child := Put
@@ -514,13 +519,19 @@ package body Glide_Kernel.Console is
                Interpret_Command_Handler'Access,
                GObject (Kernel),
                Get_Pref (Kernel, Source_Editor_Font),
-               Wrap_Char);
+               History_List => Get_History (Kernel),
+               Key          => "shell",
+               Wrap_Mode    => Wrap_Char);
       Child := Put
         (Get_MDI (Kernel), Interactive,
          Iconify_Button or Maximize_Button);
       Set_Title (Child, -"Shell");
       Set_Dock_Side (Child, Bottom);
       Dock_Child (Child);
+
+      --  Only remember the last 100 commands.
+      Set_Max_Length (Get_History (Kernel).all, 100, "shell");
+      Allow_Duplicates (Get_History (Kernel).all, "shell", True, True);
 
       Console_Module_Id.Console := Console;
       Console_Module_Id.Interactive_Console := Interactive;
