@@ -115,6 +115,10 @@ package Prj_API is
    --  ??? Should always create, since we can use a find_* function to get an
    --  existing one.
 
+   function Get_String (Id : Types.Name_Id) return String;
+   --  Same as Namet.Get_Name_String, but return "" in case of
+   --  failure, instead of raising Assert_Failure.
+
    function Is_Direct_Source
      (Source_Filename : String; Of_Project : Prj.Project_Id) return Boolean;
    --  Return True if Source_Filename is a direct source of Of_Project.

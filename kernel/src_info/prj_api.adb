@@ -19,36 +19,37 @@
 -----------------------------------------------------------------------
 
 --  Gnat sources dependencies
-with Prj;              use Prj;
+with Prj;                       use Prj;
 pragma Elaborate_All (Prj);
-with Prj.Tree;         use Prj.Tree;
-with Prj.Part;         use Prj.Part;
-with Prj.Attr;         use Prj.Attr;
-with Prj.Com;          use Prj.Com;
-with Prj.Util;         use Prj.Util;
-with Prj.Env;          use Prj.Env;
-with Prj.Ext;          use Prj.Ext;
-with Prj.PP;           use Prj.PP;
-with Prj_Normalize;    use Prj_Normalize;
-with Snames;           use Snames;
+with Prj.Tree;                  use Prj.Tree;
+with Prj.Part;                  use Prj.Part;
+with Prj.Attr;                  use Prj.Attr;
+with Prj.Com;                   use Prj.Com;
+with Prj.Util;                  use Prj.Util;
+with Prj.Env;                   use Prj.Env;
+with Prj.Ext;                   use Prj.Ext;
+with Prj.PP;                    use Prj.PP;
+with Prj_Normalize;             use Prj_Normalize;
+with Snames;                    use Snames;
 pragma Elaborate_All (Snames);
-with Namet;            use Namet;
+with Namet;                     use Namet;
 pragma Elaborate_All (Namet);
-with Types;            use Types;
-with Csets;            use Csets;
+with Types;                     use Types;
+with Csets;                     use Csets;
 pragma Elaborate_All (Csets);
-with Stringt;          use Stringt;
-with Osint;            use Osint;
-with GNAT.OS_Lib;      use GNAT.OS_Lib;
-with String_Utils;     use String_Utils;
-with Project_Browsers; use Project_Browsers;
+with Stringt;                   use Stringt;
+with Osint;                     use Osint;
+with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with String_Utils;              use String_Utils;
+with Project_Browsers;          use Project_Browsers;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
-with Ada.Characters.Handling; use Ada.Characters.Handling;
-with Ada.Text_IO; use Ada.Text_IO;
+with Ada.Characters.Handling;   use Ada.Characters.Handling;
+with Ada.Text_IO;               use Ada.Text_IO;
+with Ada.Exceptions;            use Ada.Exceptions;
 
-with Glide_Intl;    use Glide_Intl;
-with Basic_Types;   use Basic_Types;
-with Project_Hash;  use Project_Hash;
+with Glide_Intl;                use Glide_Intl;
+with Basic_Types;               use Basic_Types;
+with Project_Hash;              use Project_Hash;
 with ALI;
 with Atree;
 
@@ -179,7 +180,18 @@ package body Prj_API is
       for J in R'Range loop
          R (J) := Get_Character (Get_String_Char (Str, Int (J)));
       end loop;
+
       return R;
+   end Get_String;
+
+   function Get_String (Id : Types.Name_Id) return String is
+   begin
+      if Id in Name_Entries.First .. Name_Entries.Last then
+         return Get_Name_String (Id);
+      else
+         Trace (Me, "Invalid string requested, returning null string instead");
+         return "";
+      end if;
    end Get_String;
 
    --------------------
