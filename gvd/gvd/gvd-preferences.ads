@@ -1,0 +1,152 @@
+-----------------------------------------------------------------------
+--                 Odd - The Other Display Debugger                  --
+--                                                                   --
+--                         Copyright (C) 2000                        --
+--                 Emmanuel Briot and Arnaud Charlet                 --
+--                                                                   --
+-- Odd is free  software;  you can redistribute it and/or modify  it --
+-- under the terms of the GNU General Public License as published by --
+-- the Free Software Foundation; either version 2 of the License, or --
+-- (at your option) any later version.                               --
+--                                                                   --
+-- This program is  distributed in the hope that it will be  useful, --
+-- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
+-- General Public License for more details. You should have received --
+-- a copy of the GNU General Public License along with this library; --
+-- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
+-- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
+-----------------------------------------------------------------------
+
+with Glib; use Glib;
+
+package Odd.Preferences is
+
+   -------------------------
+   -- General Preferences --
+   -------------------------
+
+   Hide_Delay : constant Guint32 := 5000;
+   --  Delay (in ms) after which the current message is hidden
+
+   ---------------------
+   -- Explorer Window --
+   ---------------------
+
+   Display_Explorer : constant Boolean := True;
+   --  True if we should associate an explorer tree to each editor.
+
+   File_Name_Bg_Color : constant String := "#BEBEBE";
+   --  Color used for the background of the file name in the editor (grey).
+
+   -------------------
+   -- Source Window --
+   -------------------
+
+   Editor_Font : constant String := "Courier";
+   --  Font used in the editor.
+
+   Editor_Font_Size : constant Gint := 12;
+   --  Size of the font used in the editor.
+
+   Editor_Show_Line_Nums : constant Boolean := True;
+   --  Whether line numbers should be shown in the code editor
+
+   Editor_Show_Line_With_Code : constant Boolean := True;
+   --  Whether dots should be shown in the code editor for lines that
+   --  contain code.
+
+   Do_Color_Highlighting : constant Boolean := True;
+   --  Indicate whether the editor should provide color highlighting.
+
+   Comments_Color : constant String := "#FF0000";
+   --  Color used for comments.
+
+   Strings_Color  : constant String := "#A52A2A";
+   --  Color used for strings (brown).
+
+   Keywords_Color : constant String := "#0000FF";
+   --  Color used for keywords (blue).
+
+   ---------------------
+   -- Assembly Window --
+   ---------------------
+
+   Editor_Highlight_Color : constant String := "#FF0000";
+   --  Color to use to highlight the assembly code for the current line (red)
+
+   -----------------
+   -- Data Window --
+   -----------------
+
+   Xref_Color : constant String := "#0000FF";
+   --  Color to use for the items that are clickable (blue).
+
+   Title_Color : constant String := "#BEBEBE";
+   --  Color to use for the background of the title (grey).
+
+   Change_Color : constant String := "#FF0000"; 
+   --  Color used to highlight fields that have changed since the last update
+   --  (red).
+
+   Thaw_Bg_Color : constant String := "#FFFFFF";
+   --  Color used for auto-refreshed items (white)
+
+   Freeze_Bg_Color : constant String := "#AAAAAA";
+   --  Color used for frozen items (light grey)
+
+   Look_3d : constant Boolean := True; 
+   --  Should the items have a 3d look ?
+
+   Title_Font_Name : constant String := "Helvetica-Bold";
+   --  Font used for the name of the item.
+
+   Title_Font_Size : constant Gint := 10;
+   --  Size of the font used for the name of the item.
+
+   Value_Font_Name : constant String := "Helvetica";
+   --  Font used to display the value of the item.
+
+   Type_Font_Name : constant String := "Helvetica-Oblique";
+   --  Font used to display the type of the item.
+
+   Value_Font_Size : constant Gint := 10;
+   --  Size of the font used to display the value of the item.
+
+   Type_Font_Size : constant Gint := 10;
+   --  Size of the font used to display the type of the item.
+
+   Num_Buttons : constant := 2;
+   --  Number of buttons in the title bar.
+   --  This is not user-configurable.
+
+   Hide_Big_Items : constant Boolean := True;
+   --  If True, items higher than a given limit will start in a hidden state.
+
+   Big_Item_Height : constant Glib.Gint := 150;
+   --  Items taller than this value will start hidden.
+
+   Default_Detect_Aliases : constant Boolean := True;
+   --  If True, do not create new items when a matching item is already
+   --  present in the canvas.
+
+   Display_Grid : constant Boolean := True;
+   --  Whether the grid should be displayed in the canvas.
+
+   Align_Items_On_Grid : constant Boolean := True;
+   --  Should items be aligned on the grid.
+
+   --------------------
+   -- Command Window --
+   --------------------
+
+   Debugger_Highlight_Color : constant String := "#0000FF";
+   --  Color used for highlighting in the debugger window (blue).
+
+   Debugger_Font : constant String := "Courier";
+   --  Font used in the debugger text window.
+
+   Debugger_Font_Size : constant Gint := 12;
+   --  Size of the font used in the debugger text window.
+
+end Odd.Preferences;
