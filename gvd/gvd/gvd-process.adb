@@ -66,6 +66,10 @@ pragma Warnings (Off, Debugger.Jdb);
 
 package body Odd.Process is
 
+   Enable_Block_Search : constant Boolean := False;
+   --  Whether we should try to find the block of a variable when printing
+   --  it, and memorize it with the item.
+
    Process_User_Data_Name : constant String := "odd_editor_to_process";
    --  User data string.
    --  ??? Should use some quarks, which would be just a little bit faster.
@@ -524,6 +528,7 @@ package body Odd.Process is
       Item     : Display_Item;
       Command2 : String := To_Lower (Command);
       First    : Natural := Command2'First;
+      Start    : Natural;
       Cursor   : Gdk_Cursor;
    begin
       Append (Debugger.Command_History, Command);
@@ -545,25 +550,34 @@ package body Odd.Process is
 
       Skip_Blanks (Command2, First);
 
-      if First + 12 <= Command2'Last
-        and then Command2 (First .. First + 12) = "graph display"
+      if Looking_At (Command2, First, "graph display")
+        or else Looking_At (Command2, First, "graph print")
       then
-         Gtk_New (Item, Get_Window (Debugger.Data_Canvas),
-                  Variable_Name => Command (First + 14 .. Command2'Last),
-                  Debugger      => Debugger,
-                  Auto_Refresh  => True);
-         if Item /= null then
-            Put (Debugger.Data_Canvas, Item);
-         end if;
-         Display_Prompt (Debugger.Debugger);
+         Start := First + 11;
+         Skip_To_Blank (Command2, Start);
+         Skip_Blanks (Command2, Start);
 
-      elsif First + 10 <= Command2'Length
-        and then Command2 (First .. First + 10) = "graph print"
-      then
-         Gtk_New (Item, Get_Window (Debugger.Data_Canvas),
-                  Variable_Name => Command (First + 12 .. Command2'Last),
-                  Debugger      => Debugger,
-                  Auto_Refresh  => False);
+         if Enable_Block_Search then
+            Gtk_New
+              (Item, Get_Window (Debugger.Data_Canvas),
+               Variable_Name => Variable_Name_With_Frame
+               (Debugger.Debugger, Command (Start .. Command2'Last)),
+               Debugger      => Debugger,
+               Auto_Refresh  => Command2 (First + 6) = 'd');
+         end if;
+
+         --  If we could not get the variable with the block, try without,
+         --  since some debuggers (gdb most notably) can have more efficient
+         --  algorithms to find the variable.
+
+         if Item = null then
+            Gtk_New
+              (Item, Get_Window (Debugger.Data_Canvas),
+               Variable_Name => Command (Start .. Command2'Last),
+               Debugger      => Debugger,
+               Auto_Refresh  => Command2 (First + 6) = 'd');
+         end if;
+
          if Item /= null then
             Put (Debugger.Data_Canvas, Item);
          end if;
