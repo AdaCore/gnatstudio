@@ -1030,9 +1030,6 @@ package body Glide_Kernel.Scripts is
 
                --  If the attribute was a string in fact
                if List'Length = 0 then
-                  Trace (Me, "MANU Attr="
-                         & Get_Attribute_Value
-                           (Project, Build (Pkg, Attr), "", Index));
                   Set_Return_Value
                     (Data, Get_Attribute_Value
                        (Project, Build (Pkg, Attr), "", Index));
