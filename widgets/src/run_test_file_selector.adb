@@ -1,6 +1,5 @@
 with Gtk; use Gtk;
 with Gtk.Main;
-with Gtk.Widget; use Gtk.Widget;
 
 with Test_File_Selector; use Test_File_Selector;
 with Gtkada.File_Selector; use Gtkada.File_Selector;
