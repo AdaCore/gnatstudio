@@ -5,5 +5,5 @@
 ModuleFiles =
 
 [PangoX]
-AliasFiles = @prefix@/share/gps/pangox.aliases
+AliasFiles = @prefix@/etc/gps/pangox.aliases
 
