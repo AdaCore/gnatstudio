@@ -280,9 +280,9 @@ package body Project_Explorers_Files is
                   end if;
 
                elsif Is_Directory (D.Norm_Dir.all & Name) then
-                  Append (D.Dirs, Name);
+                  Append (D.Dirs, Locale_To_UTF8 (Name));
                else
-                  Append (D.Files, Name);
+                  Append (D.Files, Locale_To_UTF8 (Name));
                end if;
             end;
 
