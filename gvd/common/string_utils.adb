@@ -978,8 +978,10 @@ package body String_Utils is
                First := First + 1;
             end loop;
          else
+            --  Special case for -, since it used for $2-
             while First <= Str'Last
-              and then Is_Alphanumeric (Str (First))
+              and then (Is_Alphanumeric (Str (First))
+                        or else Str (First) = '-')
               and then Str (First) /= ' '
               and then Str (First) /= '"'
             loop
