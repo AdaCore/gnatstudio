@@ -22,7 +22,7 @@ with Gtk.Arguments;
 with Gtk.Widget; use Gtk.Widget;
 
 package General_Preferences_Pkg.Callbacks is
-   function On_Odd_Preferences_Delete_Event
+   function On_Gvd_Preferences_Delete_Event
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args) return Boolean;
 
