@@ -63,15 +63,13 @@ package Src_Info is
 
    function Locate
      (List : LI_File_List;
-      LI_Filename : String)
-      return LI_File_Ptr;
+      LI_Filename : String) return LI_File_Ptr;
    --  Return a pointer to the LI_File whose filename is LI_Filename.
    --  Return No_LI_File if no such LI_File is found.
 
    function Locate_From_Source
      (List            : LI_File_List;
-      Source_Filename : String)
-      return LI_File_Ptr;
+      Source_Filename : String) return LI_File_Ptr;
    --  Return a pointer to the LI_File which has a source file named
    --  Source_Filename. Return No_LI_File if not found.
    --  Note that the path to the file is ignored during the search, only
@@ -96,9 +94,9 @@ package Src_Info is
    --  later on.  File might be destroyed, the copy will remain valid.
 
    function Make_Source_File
-     (Source_Filename        : String;
+     (Source_Filename : String;
       Handler         : access Language_Handlers.Language_Handler_Record'Class;
-      Project                : Projects.Project_Type;
+      Project         : Projects.Project_Type;
       Predefined_Source_Path : String) return Internal_File;
    --  Converts from a source filename to a File_Info structure.
    --  The returned result will need to be destroyed.
@@ -217,8 +215,8 @@ package Src_Info is
    --  associated with the same LI file.
    --  This name is used as an index into the LI_File_List.
 
-   function Case_Insensitive_Identifiers (Handler : access LI_Handler_Record)
-      return Boolean is abstract;
+   function Case_Insensitive_Identifiers
+     (Handler : access LI_Handler_Record) return Boolean is abstract;
    --  Return True if the language associated with Handler is case-insensitive.
    --  Note that for case insensitive languages, the identifier names must be
    --  storer in lower cases in the LI structure.

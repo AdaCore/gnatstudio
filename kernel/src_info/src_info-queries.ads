@@ -225,7 +225,7 @@ package Src_Info.Queries is
    --  Only the short path name is returned.
    --
    --  This method is based on LI files.
-   --  See also Projects..Other_File_Name for a method based on naming schemes
+   --  See also Projects.Other_File_Name for a method based on naming schemes
 
    ------------------
    -- Declarations --
@@ -234,8 +234,8 @@ package Src_Info.Queries is
    type Entity_Declaration_Iterator is private;
 
    function Find_All_Possible_Declarations
-     (Lib_Info    : LI_File_Ptr;
-      Entity_Name : String := "";
+     (Lib_Info       : LI_File_Ptr;
+      Entity_Name    : String := "";
       In_Source_File : String := "") return Entity_Declaration_Iterator;
    --  Return the first entity declaration in Lib_Info or its imported units
    --  whose name is Entity_Name. Note that the fake declarations for
@@ -247,8 +247,8 @@ package Src_Info.Queries is
    --  If In_Source_File is not the empty string, the search is limited to that
    --  file and doesn't include the dependencies.
 
-   function Get (Iterator : Entity_Declaration_Iterator)
-      return Entity_Information;
+   function Get
+     (Iterator : Entity_Declaration_Iterator) return Entity_Information;
    --  Return the current entity, or No_Entity_Information if there is no more
    --  matching entity.
    --  It is the responsability of the caller to free the returned value.
