@@ -58,6 +58,7 @@ with Interfaces.C.Strings;
 
 with File_Utils;                use File_Utils;
 with GUI_Utils;                 use GUI_Utils;
+with String_Utils;              use String_Utils;
 with Traces;                    use Traces;
 
 with GNAT.Regexp;               use GNAT.Regexp;
@@ -312,7 +313,7 @@ package body Gtkada.File_Selector is
          return "";
       else
          return Normalize_Pathname
-           (Dialog.Current_Directory.all &
+           (Name_As_Directory (Dialog.Current_Directory.all) &
             Locale_From_UTF8 (Get_Text (Dialog.Selection_Entry)));
       end if;
    end Get_Selection;
