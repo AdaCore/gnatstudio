@@ -30,7 +30,7 @@ with Gtk.Frame; use Gtk.Frame;
 with Gtk.Notebook; use Gtk.Notebook;
 with GVD.Status_Bar; use GVD.Status_Bar;
 with GVD.Preferences_Dialog; use GVD.Preferences_Dialog;
-with Open_Program_Pkg; use Open_Program_Pkg;
+with GVD.Open_Program_Dialog; use GVD.Open_Program_Dialog;
 with Open_Session_Pkg; use Open_Session_Pkg;
 with GVD.Dialogs; use GVD.Dialogs;
 with Gtkada.Toolbar; use Gtkada.Toolbar;
@@ -67,7 +67,7 @@ package Main_Debug_Window_Pkg is
 
       Memory_View         : GVD.Memory_View.GVD_Memory_View;
       GVD_Preferences     : GVD_Preferences_Access;
-      Open_Program        : Open_Program_Access;
+      Open_Program        : GVD_Open_Program;
       Open_Session        : Open_Session_Access;
       History_Dialog      : History_Dialog_Access;
       Thread_Dialog       : Thread_Dialog_Access;
