@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2003                       --
+--                     Copyright (C) 2001-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -1040,7 +1040,7 @@ package body Commands.Custom is
               (Command.Kernel,
                Command       => Args (Args'First).all,
                Arguments     => Args (Args'First + 1 .. Args'Last),
-               Console       => null,
+               Console       => Console,
                Callback      => Store_Command_Output'Access,
                Exit_Cb       => Exit_Cb'Access,
                Success       => Success,
