@@ -1107,6 +1107,46 @@ package body Glide_Kernel.Modules is
       end if;
    end Clear_Highlighting;
 
+   -----------------
+   -- Create_Mark --
+   -----------------
+
+   function Create_Mark
+     (Kernel            : access Kernel_Handle_Record'Class;
+      Filename          : String;
+      Line              : Natural := 1;
+      Column            : Natural := 1) return String
+   is
+      File : Basic_Types.String_Access;
+   begin
+      if Is_Absolute_Path (Filename) then
+         File := new String'(Normalize_Pathname (Filename));
+
+      else
+         declare
+            F : constant String := Find_Source_File
+              (Kernel, Filename, True);
+         begin
+            if Is_Absolute_Path (F) then
+               File := new String'(F);
+
+            else
+               File := new String'(Filename);
+            end if;
+         end;
+      end if;
+
+      declare
+         F : constant String := File.all;
+      begin
+         Free (File);
+
+         return Interpret_Command
+           (Kernel,
+            "create_mark -l" & Line'Img & " -c" & Column'Img & " " & F);
+      end;
+   end Create_Mark;
+
    ----------------------
    -- Open_File_Editor --
    ----------------------
@@ -1844,6 +1884,8 @@ package body Glide_Kernel.Modules is
       if Command = "" then
          return "";
       end if;
+
+      Trace (Me, "Launching interactive command: " & Command);
 
       Result := new String'("");
       Args := Argument_String_To_List (Command);
