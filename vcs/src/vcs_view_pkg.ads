@@ -118,7 +118,8 @@ package VCS_View_Pkg is
    --  Return the vcs explorer, if created, null otherwise.
 
    function Get_Files_In_Project
-     (Project_View : Prj.Project_Id) return String_List.List;
+     (Project_View : Prj.Project_Id;
+      Recursive    : Boolean := True) return String_List.List;
 
    function Get_Dirs_In_Project
      (Kernel : Kernel_Handle) return String_List.List;
