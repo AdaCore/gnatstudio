@@ -162,14 +162,12 @@ package Src_Editor_Buffer.Line_Information is
 
    function Get_Line
      (Buffer   : access Source_Buffer_Record'Class;
-      Position : Gtk.Text_Mark.Gtk_Text_Mark)
-     return Editable_Line_Type;
+      Position : Gtk.Text_Mark.Gtk_Text_Mark) return Editable_Line_Type;
    --  Return the line of Position.
 
    function Get_Column
      (Buffer   : access Source_Buffer_Record'Class;
-      Position : Gtk.Text_Mark.Gtk_Text_Mark)
-     return Positive;
+      Position : Gtk.Text_Mark.Gtk_Text_Mark) return Positive;
    --  Return the column of Position.
 
 end Src_Editor_Buffer.Line_Information;

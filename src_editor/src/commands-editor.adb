@@ -357,7 +357,7 @@ package body Commands.Editor is
             Command.Start_Line,
             Command.Start_Column,
             Integer (g_utf8_strlen
-                         (Command.Text_After.all, Command.Text_After'Length)),
+                       (Command.Text_After.all, Command.Text_After'Length)),
             Command.End_Line_After,
             Command.End_Column_After);
       end if;

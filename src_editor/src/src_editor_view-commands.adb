@@ -69,7 +69,8 @@ package body Src_Editor_View.Commands is
       View   : constant Source_View   :=
         Source_View (Get_Current_Focus_Widget (Command.Kernel));
       Buffer : constant Source_Buffer := Source_Buffer (Get_Buffer (View));
-      Iter        : Gtk_Text_Iter;
+      Iter   : Gtk_Text_Iter;
+
    begin
       Get_Iter_At_Mark (Buffer, Iter, View.Saved_Cursor_Mark);
       Move_Iter (Iter, Command.Kind, Command.Step);
@@ -87,8 +88,9 @@ package body Src_Editor_View.Commands is
       return Standard.Commands.Command_Return_Type
    is
       pragma Unreferenced (Event);
-      View   : constant Source_View   :=
+      View : constant Source_View :=
         Source_View (Get_Current_Focus_Widget (Command.Kernel));
+
    begin
       Scroll_To_Mark
         (View,
@@ -113,6 +115,7 @@ package body Src_Editor_View.Commands is
         Source_View (Get_Current_Focus_Widget (Command.Kernel));
       Buffer : constant Source_Buffer := Source_Buffer (Get_Buffer (View));
       Iter, Start : Gtk_Text_Iter;
+
    begin
       Get_Iter_At_Mark (Buffer, Iter, View.Saved_Cursor_Mark);
       Copy (Source => Iter, Dest => Start);
@@ -133,6 +136,7 @@ package body Src_Editor_View.Commands is
       View   : constant Source_View   :=
         Source_View (Get_Current_Focus_Widget (Command.Kernel));
       Buffer : constant Source_Buffer := Source_Buffer (Get_Buffer (View));
+
    begin
       if Do_Indentation (Buffer) then
          return Success;
