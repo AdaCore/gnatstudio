@@ -386,7 +386,7 @@ package body VCS.Generic_VCS is
             Launch_Background_Command
               (Kernel,
                Custom,
-               True,
+               False,
                Show_Bar,
                Ref.Id.all,
                True);
@@ -490,7 +490,7 @@ package body VCS.Generic_VCS is
             Launch_Background_Command
               (Kernel,
                Custom,
-               True,
+               False,
                Show_Bar,
                Ref.Id.all,
                True);
@@ -554,7 +554,7 @@ package body VCS.Generic_VCS is
       Launch_Background_Command
         (Kernel,
          Custom,
-         True,
+         False,
          True,
          Ref.Id.all,
          True);
