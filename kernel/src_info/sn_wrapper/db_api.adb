@@ -83,6 +83,22 @@ package body DB_API is
       Set_Cursor (DB, First);
    end Open;
 
+   ---------
+   -- Dup --
+   ---------
+
+   function Dup (DB : DB_File) return DB_File is
+      function Internal_Dup (DB : DB_File) return DB_File;
+      pragma Import (C, Internal_Dup, "ada_db_dup");
+   begin
+      if Is_Null (DB) then
+         Raise_Exception (DB_Error'Identity,
+           E_Init_Failed);
+      else
+         return Internal_Dup (DB);
+      end if;
+   end Dup;
+
    -------------
    -- Is_Open --
    -------------
@@ -126,12 +142,13 @@ package body DB_API is
       procedure I_Set_Cursor
         (DB          : DB_File;
          Pos         : C.int;
-         Key         : String;
+         Key         : System.Address;
          Exact_Match : C.int);
       pragma Import (C, I_Set_Cursor, "ada_db_set_cursor");
 
       Pos : C.int;
       EM  : C.int := 1;
+      I_Key : constant String := Key & ASCII.NUL;
 
    begin
       if Is_Null (DB) then
@@ -146,9 +163,31 @@ package body DB_API is
             when Last   => Pos := POS_LAST;
             when By_Key => Pos := POS_BY_KEY;
          end case;
-         I_Set_Cursor (DB, Pos, Key & ASCII.NUL, EM);
+         if Position = By_Key then
+            I_Set_Cursor (DB, Pos, I_Key'Address, EM);
+         else
+            I_Set_Cursor (DB, Pos, System.Null_Address, EM);
+         end if;
+         if Last_ErrNo (DB) /= 0 then
+            Raise_Exception (DB_Error'Identity,
+              Error_Message (DB));
+         end if;
       end if;
    end Set_Cursor;
+
+   --------------------
+   -- Release_Cursor --
+   --------------------
+
+   procedure Release_Cursor (DB : DB_File) is
+      procedure I_Release_Cursor (DB : DB_File);
+      pragma Import (C, I_Release_Cursor, "ada_db_free_cursor");
+   begin
+      if Is_Null (DB) then
+         return;
+      end if;
+      I_Release_Cursor (DB);
+   end Release_Cursor;
 
    --------------
    -- Get_Pair --

@@ -1,6 +1,6 @@
 package DB_API is
 
-   type DB_File is limited private;
+   type DB_File is private;
    --  Database file descriptor.
 
    type Cursor_Position is (First, Last, By_Key);
@@ -34,6 +34,10 @@ package DB_API is
    --  Sets cursor to the first key/data pair in database (see
    --  Set_Cursor).
 
+   function Dup (DB : DB_File) return DB_File;
+   --  Reopens DB file and returns new DB file descriptor.
+   --  Throws DB_Error if DB file was not opened.
+
    function Is_Open (DB : DB_File) return Boolean;
    --  Returns True if given DB ws successfully open,
    --  False otherwise.
@@ -59,6 +63,12 @@ package DB_API is
    --    The smallest one greater than or equals to specified Key, if
    --    Exact_Match is False.
    --  Throws DB_Error if DB was not opened.
+   --  Note: only one cursor per DB file can be used (use Dup for
+   --  using two or more cursors simultaneously).
+
+   procedure Release_Cursor (DB : DB_File);
+   --  Releases resources allocated before by Set_Cursor.
+   --  Does nothing if cursor was not set.
 
    function Get_Pair
      (DB       : DB_File;
