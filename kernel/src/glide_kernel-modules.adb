@@ -22,8 +22,6 @@
 with Gtk.Image_Menu_Item;
 pragma Warnings (Off, Gtk.Image_Menu_Item);
 
-with Config;            use Config;
-
 with GUI_Utils;         use GUI_Utils;
 with Gdk.Dnd;           use Gdk.Dnd;
 with Gdk.Event;         use Gdk.Event;
@@ -1156,7 +1154,7 @@ package body Glide_Kernel.Modules is
       Event   : Gdk_Event;
       Data    : Menu_Factory_User_Data)
    is
-      pragma Unreferenced (Widget);
+      pragma Unreferenced (Widget, Event);
 
       procedure Remove_Item
         (Item : access Gtk.Widget.Gtk_Widget_Record'Class);
@@ -1195,15 +1193,6 @@ package body Glide_Kernel.Modules is
       Data.Factory
         (Data.Kernel, Data.Kernel.Last_Context_For_Contextual, Data.Menu);
       Show_All (Data.Menu);
-
-      --  Hack around a problem in the generation of time for button press
-      --  events in gtk+-2.4.13.
-      --  ??? Would be nice to investigate more and fix this bug.
-      --  ??? Check whether this bug is specific to Windows or to gtk+-2.4
-
-      if Host = Windows then
-         Set_Time (Event, Get_Time (Event) + 500);
-      end if;
 
    exception
       when E : others =>
