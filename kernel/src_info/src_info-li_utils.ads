@@ -7,6 +7,8 @@ private package Src_Info.LI_Utils is
       --  Library Information handler
       File                    : in out LI_File_Ptr;
       --  root pointer to whole LI_File structure
+      List                    : in out LI_File_List;
+      --  common list of LI_Files
       Symbol_Name             : in String;
       --  Name of the declared symbol
       Source_Filename         : in String;

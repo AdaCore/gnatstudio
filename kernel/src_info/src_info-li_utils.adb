@@ -3,6 +3,7 @@ package body Src_Info.LI_Utils is
    procedure Insert_Declaration_Internal
      (D_Ptr                   : in out E_Declaration_Info_List;
       File                    : in LI_File_Ptr;
+      List                    : in LI_File_List;
       Symbol_Name             : in String;
       Source_Filename         : in String;
       Location                : in Point;
@@ -36,6 +37,7 @@ package body Src_Info.LI_Utils is
    procedure Insert_Declaration
      (Handler                 : in LI_Handler;
       File                    : in out LI_File_Ptr;
+      List                    : in out LI_File_List;
       Symbol_Name             : in String;
       Source_Filename         : in String;
       Location                : in Point;
@@ -90,11 +92,14 @@ package body Src_Info.LI_Utils is
             exit when D_Ptr.Next = null;
             D_Ptr := D_Ptr.Next;
          end loop;
+         --  ??? Shouldn't we try to locate existent declaration for
+         --  that Symbol_Name?
          D_Ptr.Next := new E_Declaration_Info_Node;
          D_Ptr.Next.Next := null;
          D_Ptr := D_Ptr.Next;
       end if;
-      Insert_Declaration_Internal (D_Ptr, File, Symbol_Name, Source_Filename,
+      Insert_Declaration_Internal (D_Ptr, File, List, Symbol_Name,
+            Source_Filename,
             Location, Parent_Filename, Parent_Location, Kind, Scope,
             End_Of_Scope_Location, Rename_Filename, Rename_Location);
       Declaration_Info := D_Ptr;
@@ -124,6 +129,7 @@ package body Src_Info.LI_Utils is
       Dep_Ptr : Dependency_File_Info_List;
       Tmp_LI_File : LI_File;
       Tmp_LI_File_Ptr : LI_File_Ptr;
+      Success : Boolean;
    begin
       --  checking existance of given LI_File and create new one if necessary
       if File = No_LI_File then
@@ -138,7 +144,7 @@ package body Src_Info.LI_Utils is
                     Compilation_Errors_Found => False,
                     Dependencies_Info => null));
       else
-         pragma Assert (LI_Handler (Handler) /= File.LI.Handler,
+         pragma Assert (LI_Handler (Handler) = File.LI.Handler,
                      "Invalid Handler");
          if File.LI.Parsed = False then
             Tmp_LI_File := File.LI;
@@ -162,6 +168,7 @@ package body Src_Info.LI_Utils is
          Insert_Declaration
            (Handler            => Handler,
             File               => Tmp_LI_File_Ptr,
+            List               => List,
             Symbol_Name        => Symbol_Name,
             Source_Filename    => Source_Filename,
             Location           => Location,
@@ -172,6 +179,9 @@ package body Src_Info.LI_Utils is
             End_Of_Scope_Location => End_Of_Scope_Location,
             Rename_Filename    => Rename_Filename,
             Declaration_Info   => Tmp_Ptr);
+         Add (List.Table, Tmp_LI_File_Ptr, Success);
+         pragma Assert (Success,
+               "unable to insert new LI_File into the common LI_File_List");
       else
          begin
             D_Ptr := Find_Declaration
@@ -183,6 +193,7 @@ package body Src_Info.LI_Utils is
                Insert_Declaration
                  (Handler            => Handler,
                   File               => Tmp_LI_File_Ptr,
+                  List               => List,
                   Symbol_Name        => Symbol_Name,
                   Source_Filename    => Source_Filename,
                   Location           => Location,
@@ -243,8 +254,11 @@ package body Src_Info.LI_Utils is
          D_Ptr.Next := new E_Declaration_Info_Node;
          D_Ptr.Next.Next := null;
          D_Ptr := D_Ptr.Next;
+         --  ??? shouldn't we try to locate existent declaration
+         --  with specified Symbol_Name
       end if;
-      Insert_Declaration_Internal (D_Ptr, File, Symbol_Name, Source_Filename,
+      Insert_Declaration_Internal (D_Ptr, File, List, Symbol_Name,
+            Source_Filename,
             Location, Parent_Filename, Parent_Location, Kind, Scope,
             End_Of_Scope_Location, Rename_Filename, Rename_Location);
       Declaration_Info := D_Ptr;
@@ -263,7 +277,7 @@ package body Src_Info.LI_Utils is
    is
       R_Ptr : E_Reference_List;
    begin
-      if R_Ptr = null then
+      if Declaration_Info.Value.References = null then
          Declaration_Info.Value.References := new E_Reference_Node;
          Declaration_Info.Value.References.Next := null;
          R_Ptr := Declaration_Info.Value.References;
@@ -276,6 +290,8 @@ package body Src_Info.LI_Utils is
          R_Ptr.Next := new E_Reference_Node;
          R_Ptr.Next.Next := null;
          R_Ptr := R_Ptr.Next;
+         --  ??? Shouldn't we try to locate existent reference with
+         --  given attributes
       end if;
       R_Ptr.Value :=
          (Location => (File => (LI => File,
@@ -285,6 +301,8 @@ package body Src_Info.LI_Utils is
                        Line => Location.Line,
                        Column => Location.Column),
           Kind => Kind);
+      --  ??? We have R_Ptr.Value.Location.File.LI set to File because
+      --  we always insert references only from the current file.
    end Insert_Reference;
 
    ------------------------
@@ -354,6 +372,7 @@ package body Src_Info.LI_Utils is
    procedure Insert_Declaration_Internal
      (D_Ptr                   : in out E_Declaration_Info_List;
       File                    : in LI_File_Ptr;
+      List                    : in LI_File_List;
       Symbol_Name             : in String;
       Source_Filename         : in String;
       Location                : in Point;
@@ -363,7 +382,9 @@ package body Src_Info.LI_Utils is
       Scope                   : in E_Scope;
       End_Of_Scope_Location   : in Point := Invalid_Point;
       Rename_Filename         : in String := "";
-      Rename_Location         : in Point := Invalid_Point) is
+      Rename_Location         : in Point := Invalid_Point)
+   is
+      Tmp_LI_File_Ptr : LI_File_Ptr;
    begin
       if D_Ptr = null then
          return;
@@ -382,14 +403,23 @@ package body Src_Info.LI_Utils is
       elsif Parent_Location = Predefined_Point then
          D_Ptr.Value.Declaration.Parent_Location := Predefined_File_Location;
       else
+         --  Processing parent information
+         if eq (Source_Filename, Parent_Filename) then
+            Tmp_LI_File_Ptr := File;
+         else
+            Tmp_LI_File_Ptr := Get (List.Table, Parent_Filename);
+            --  Is LI_File for parent exists?
+            if (Tmp_LI_File_Ptr = No_LI_File) then
+               --  ??? What should we do if LI_File for parent does not exists?
+               null;
+            end if;
+         end if;
          D_Ptr.Value.Declaration.Parent_Location :=
-               (File => (LI => No_LI_File,
+               (File => (LI => Tmp_LI_File_Ptr,
                          Part => Unit_Body,
                          Source_Filename => new String'(Parent_Filename)),
                 Line => Parent_Location.Line,
                 Column => Parent_Location.Column);
-         --  ??? we need to search for appropriate File in which
-         --  parent is really declared
       end if;
       D_Ptr.Value.Declaration.Scope := Scope;
       if End_Of_Scope_Location = Invalid_Point then
