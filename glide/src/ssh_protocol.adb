@@ -49,6 +49,9 @@ package body SSH_Protocol is
    Prompt_String : constant String := "---GPS--#";
    --  The string to print to simulate a prompt. It should match Prompt_Regexp
 
+   Internal_Prompt_Regexp : constant Pattern_Matcher :=
+     Compile ('^' & Prompt_String & '$', Multiple_Lines);
+
    End_Of_File_Mark : constant String := "GPSEOF";
    --  Mark sent at the end of a file when it is written back to the remote
    --  host
@@ -291,7 +294,7 @@ package body SSH_Protocol is
             & " and the remote host is assumed to be a Unix-like system, which"
             & " can execute a /bin/sh shell. ""ssh"" itself must be found in"
             & " your PATH."),
-         Shell_Cmd           => new String'("ssh %h -l %u -e none -q /bin/sh"),
+         Shell_Cmd        => new String'("ssh %h -C -l %u -e none -q /bin/sh"),
          Has_Shell_Prompt    => False,
          Inline_Read_File_Cmd => new String'("cat %F"),
          Read_File_Cmd       => null,
@@ -318,9 +321,9 @@ package body SSH_Protocol is
             & " files, the latter is used to transfer files in both"
             & " direction");
       Scp.Commands.Inline_Read_File_Cmd  := null;
-      Scp.Commands.Read_File_Cmd         := new String'("@scp -p %u@%h:%F %t");
+      Scp.Commands.Read_File_Cmd      := new String'("@scp -C -p %u@%h:%F %t");
       Scp.Commands.Inline_Write_File_Cmd := null;
-      Scp.Commands.Write_File_Cmd        := new String'("@scp -p %t %u@%h:%F");
+      Scp.Commands.Write_File_Cmd     := new String'("@scp -C -p %t %u@%h:%F");
       Remote_Connections.Register_Protocol (Scp);
 
       Telnet.Commands                  := SSH.Commands;
@@ -514,8 +517,11 @@ package body SSH_Protocol is
                if Is_Interactive_Shell
                  and then Connection.Commands.Has_Shell_Prompt
                then
+                  Send (Fd, "PS1=" & Prompt_String, Add_LF => True);
+                  Expect (Fd, Result, Internal_Prompt_Regexp);
                   Send (Fd, "stty -echo", Add_LF => True);
-                  Expect (Fd, Result, Shell_Prompt_Regexp.all);
+
+                  Expect (Fd, Result, Internal_Prompt_Regexp);
                   Flush (Fd);
                end if;
 
@@ -587,7 +593,7 @@ package body SSH_Protocol is
          Send (Connection.Fd, "echo " & Prompt_String, Add_LF => True);
       end if;
 
-      Expect (Connection.Fd, Result, Shell_Prompt_Regexp.all, Matched);
+      Expect (Connection.Fd, Result, Internal_Prompt_Regexp, Matched);
 
       declare
          Output : constant String := Expect_Out (Connection.Fd);
