@@ -1874,11 +1874,9 @@ int
 gvd_interrupt_process (struct GVD_Process* p)
 {
   volatile child_process cp;
-  HANDLE proc_hand;
   int rc = 0;
 
   cp.procinfo = &p->procinfo;
-  proc_hand = cp.procinfo->hProcess;
 
   if (os_subtype == OS_UNKNOWN)
     cache_system_info ();
