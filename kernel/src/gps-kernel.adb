@@ -1183,7 +1183,7 @@ package body GPS.Kernel is
       Find_All_Entities_In_File
         (Iter        => Iter,
          File        => File,
-         Prefix      => Entity_Name);
+         Name        => Entity_Name);
 
       while not At_End (Iter) loop
          Count := Count + 1;

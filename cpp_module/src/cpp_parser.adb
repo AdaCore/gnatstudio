@@ -1028,7 +1028,7 @@ package body CPP_Parser is
       Count  : Natural := 0;
       Entity : Entity_Information;
    begin
-      Find_All_Entities_In_File (Iter, In_File, Prefix => Name);
+      Find_All_Entities_In_File (Iter, In_File, null, Name);
       while not At_End (Iter) loop
          if Get_Name (Get (Iter)).all = Name then
             Count := Count + 1;
