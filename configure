@@ -310,7 +310,7 @@ ac_includes_default="\
 
 ac_subdirs_all="$ac_subdirs_all kernel/src_info/sn"
 ac_subdirs_all="$ac_subdirs_all kernel/src_info/sn/snsrc"
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os target target_cpu target_vendor target_os XMLADA_GPR CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP GNATMAKE PYTHON_BASE SET_MAKE INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA RANLIB ac_ct_RANLIB DVIPS MAKEINFO TEXI2DVI PKG_CONFIG GTK_CONFIG GTK_PREFIX GLIB_PREFIX ATK_PREFIX PANGO_PREFIX GTKADA_SRC GTK_CFLAGS GTK_LIBS GTK_STATIC_LIBS GPS_VERSION GVD_VERSION opsysfile ROOT TARGET EXEC_PREFIX STRIP_CR USE_PTYS CAN_OUTPUT TARGET_CFLAGS TARGET_LFLAGS EXEC_COMMAND DEFAULT_PS DEFAULT_FONT HTML_BROWSER PRINT_CMD OPAQUE_MDI HOST_TYPE PYTHON_VERSION PYTHON_ADA_SOURCE PYTHON_DIR PYTHON_LIBS subdirs LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os target target_cpu target_vendor target_os XMLADA_GPR CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP GNATMAKE PYTHON_BASE SET_MAKE INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA RANLIB ac_ct_RANLIB DVIPS MAKEINFO TEXI2DVI PKG_CONFIG GTK_CONFIG GTK_PREFIX GLIB_PREFIX ATK_PREFIX PANGO_PREFIX GTKADA_SRC GTK_CFLAGS GTK_LIBS GTK_STATIC_LIBS GPS_VERSION GVD_VERSION opsysfile ROOT TARGET EXEC_PREFIX STRIP_CR USE_PTYS CAN_OUTPUT TARGET_CFLAGS TARGET_LFLAGS EXEC_COMMAND DEFAULT_PS DEFAULT_FONT HTML_BROWSER PRINT_CMD DIFF_CMD PATCH_CMD OPAQUE_MDI HOST_TYPE PYTHON_VERSION PYTHON_ADA_SOURCE PYTHON_DIR PYTHON_LIBS subdirs LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -1373,7 +1373,7 @@ test -n "$target_alias" &&
     NONENONEs,x,x, &&
   program_prefix=${target_alias}-
 
-GPS_VERSION=2.1.0w
+GPS_VERSION=2.1.0
 GVD_VERSION=$GPS_VERSION
 STRIP_CR=False
 CAN_OUTPUT=True
@@ -1387,6 +1387,8 @@ PRINT_CMD="a2ps"
 OPAQUE_MDI=False
 HOST_TYPE=Unix
 PYTHON_LIBS=""
+DIFF_CMD="diff"
+PATCH_CMD="patch"
 
 ROOT=`pwd`
 TARGET=$host
@@ -4070,6 +4072,8 @@ case "${host}" in
 	DEFAULT_FONT="tahoma 8"
 	HTML_BROWSER="c:\progra~1\intern~1\iexplore"
 	PRINT_CMD=""
+	DIFF_CMD="windiff"
+	PATCH_CMD="winpatch"
 	OPAQUE_MDI=True
 	HOST_TYPE=Windows
 	;;
@@ -4318,6 +4322,8 @@ echo "$as_me: error: Test for GtkAda failed. See the file 'INSTALL' for help." >
 
 
 # Set the version number of GPS/GVD
+
+
 
 
 
@@ -5068,6 +5074,8 @@ s,@DEFAULT_PS@,$DEFAULT_PS,;t t
 s,@DEFAULT_FONT@,$DEFAULT_FONT,;t t
 s,@HTML_BROWSER@,$HTML_BROWSER,;t t
 s,@PRINT_CMD@,$PRINT_CMD,;t t
+s,@DIFF_CMD@,$DIFF_CMD,;t t
+s,@PATCH_CMD@,$PATCH_CMD,;t t
 s,@OPAQUE_MDI@,$OPAQUE_MDI,;t t
 s,@HOST_TYPE@,$HOST_TYPE,;t t
 s,@PYTHON_VERSION@,$PYTHON_VERSION,;t t
