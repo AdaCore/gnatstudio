@@ -29,6 +29,7 @@ with Ada.Strings.Fixed; use Ada.Strings.Fixed;
 with Ada.Unchecked_Deallocation;
 
 with Glib;              use Glib;
+with Glib.Convert;
 with Gtk.Main;          use Gtk.Main;
 with Gtk.Window;        use Gtk.Window;
 with Gtkada.Types;      use Gtkada.Types;
@@ -516,7 +517,7 @@ package body Debugger is
       end if;
 
       if Debugger.Window /= null then
-         Process := Convert (Debugger.Window, Debugger);
+         Process := GVD.Process.Convert (Debugger.Window, Debugger);
 
          if Mode >= Visible then
             Set_Busy (Process);
@@ -573,7 +574,7 @@ package body Debugger is
       end if;
 
       if Debugger.Window /= null then
-         Process := Convert (Debugger.Window, Debugger);
+         Process := GVD.Process.Convert (Debugger.Window, Debugger);
          Final_Post_Process (Process, Mode);
 
          if Mode /= Internal then
@@ -662,7 +663,8 @@ package body Debugger is
                         --  Asynchronous handling of commands, install a
                         --  callback on the debugger's output file descriptor.
 
-                        Process := Convert (Debugger.Window, Debugger);
+                        Process :=
+                          GVD.Process.Convert (Debugger.Window, Debugger);
                         Process.Current_Command :=
                           new String'(Cmd (First .. Last - 1));
 
@@ -680,7 +682,8 @@ package body Debugger is
                         --  which is delicate.
 
                         Process_Proxies.Empty_Buffer (Get_Process (Debugger));
-                        Process := Convert (Debugger.Window, Debugger);
+                        Process :=
+                          GVD.Process.Convert (Debugger.Window, Debugger);
                         Set_Busy (Process, False);
                      end if;
                   end if;
@@ -694,7 +697,7 @@ package body Debugger is
 
    exception
       when Process_Died =>
-         Process := Convert (Debugger.Window, Debugger);
+         Process := GVD.Process.Convert (Debugger.Window, Debugger);
 
          if Process.Exiting then
             return;
@@ -729,7 +732,8 @@ package body Debugger is
       Debugger.Continuation_Line := False;
 
       declare
-         S : constant String := Expect_Out (Get_Process (Debugger));
+         S : constant String :=
+           Glib.Convert.Locale_To_UTF8 (Expect_Out (Get_Process (Debugger)));
       begin
          Send_Internal_Post (Debugger, Cmd, Mode);
 
@@ -745,8 +749,8 @@ package body Debugger is
          Set_Command_In_Process (Get_Process (Debugger), False);
 
          if Debugger.Window /= null then
-            Process := Convert (Debugger.Window, Debugger);
-            Set_Busy (Convert (Debugger.Window, Debugger), False);
+            Process := GVD.Process.Convert (Debugger.Window, Debugger);
+            Set_Busy (GVD.Process.Convert (Debugger.Window, Debugger), False);
             Unregister_Dialog (Process);
             Close_Debugger (Process);
          end if;
