@@ -53,6 +53,7 @@ with Commands.Custom;           use Commands.Custom;
 
 with VFS;                       use VFS;
 
+with Custom_Combos;             use Custom_Combos;
 with Expect_Interface;          use Expect_Interface;
 
 package body Custom_Module is
@@ -177,6 +178,7 @@ package body Custom_Module is
       procedure Parse_Action_Node (Node : Node_Ptr);
       procedure Parse_Contextual_Node (Node : Node_Ptr);
       procedure Parse_Button_Node (Node : Node_Ptr);
+      procedure Parse_Entry_Node (Node : Node_Ptr);
       procedure Parse_Tool_Node (Node : Node_Ptr);
       procedure Parse_Stock_Node (Node : Node_Ptr);
       procedure Parse_Menu_Node (Node : Node_Ptr; Parent_Path : UTF8_String);
@@ -504,6 +506,86 @@ package body Custom_Module is
          Free (Pixmap);
       end Parse_Button_Node;
 
+      ----------------------
+      -- Parse_Entry_Node --
+      ----------------------
+
+      procedure Parse_Entry_Node (Node : Node_Ptr) is
+         Child   : Node_Ptr;
+         Id      : constant String := Get_Attribute (Node, "id", "");
+      begin
+         if Id = "" then
+            Insert
+              (Kernel,
+               -"<entry> nodes must have a non-empty ""id"" attribute",
+               Mode => Error);
+
+            return;
+         end if;
+
+         Child := Node.Child;
+
+         --  Determine the title of the combo and register it.
+
+         if Child /=
+           null and then To_Lower (Child.Tag.all) = "label"
+         then
+            Register_Combo (Kernel, Child.Value.all, Id);
+         else
+            Register_Combo (Kernel, "", Id);
+         end if;
+
+         --  Determine the default action for this entry
+
+         declare
+            Action  : constant String := Get_Attribute (Node, "on-changed");
+            Command : Action_Record_Access;
+         begin
+            if Action /= "" then
+               Command := Lookup_Action (Kernel, Action);
+
+               if Command = null then
+                  Insert
+                    (Kernel,
+                     -"Action not registered: " & Action,
+                     Mode => Error);
+               else
+                  Set_Combo_Changed_Action (Kernel, Id, Command);
+               end if;
+            end if;
+         end;
+
+         --  Parse the child nodes
+
+         Child := Child.Next;
+
+         while Child /= null loop
+            if To_Lower (Child.Tag.all) = "choice" then
+               --  ??? Need to implement "default" attribute.
+
+               Add_Combo_Entry
+                 (Kernel,
+                  Id,
+                  Child.Value.all,
+                  Lookup_Action
+                    (Kernel, Get_Attribute (Child, "on-selected")));
+
+            elsif To_Lower (Child.Tag.all) = "label" then
+               Insert
+                 (Kernel,
+                  -"<label> node must be the first child in an <entry> node",
+                  Mode => Error);
+            else
+               Insert
+                 (Kernel,
+                  -"Invalid child node for <entry> tag: " & Child.Tag.all,
+                  Mode => Error);
+            end if;
+
+            Child := Child.Next;
+         end loop;
+      end Parse_Entry_Node;
+
       ------------------------
       -- Parse_Submenu_Node --
       ------------------------
@@ -796,6 +878,9 @@ package body Custom_Module is
          elsif To_Lower (Current_Node.Tag.all) = "stock" then
             Parse_Stock_Node (Current_Node);
 
+         elsif To_Lower (Current_Node.Tag.all) = "entry" then
+            Parse_Entry_Node (Current_Node);
+
          end if;
       end Add_Child;
 
@@ -814,6 +899,8 @@ package body Custom_Module is
    procedure Register_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
+      Toolbar_Class       : constant Class_Type := New_Class
+        (Kernel, "Toolbar", "Interface to commands related to the toolbar.");
       Process_Class       : constant Class_Type := New_Class
         (Kernel, "Process", "Interface to expect-related commands");
    begin
@@ -916,6 +1003,56 @@ package body Custom_Module is
          Class         => Process_Class,
          Static_Method => True,
          Handler       => Custom_Spawn_Handler'Access);
+
+      Register_Command
+        (Kernel,
+         Command       => "entry_add",
+         Params        => "(entry_label, choice_label, [action])",
+         Minimum_Args  => 2,
+         Maximum_Args  => 3,
+         Return_Value  => "(null)",
+         Description   =>
+         -("Add a choice to specified entry, action will be executed whenever"
+           & " this choice is selected"),
+         Class         => Toolbar_Class,
+         Static_Method => True,
+         Handler       => Custom_Entry_Handler'Access);
+
+      Register_Command
+        (Kernel,
+         Command       => "entry_remove",
+         Params        => "(entry_label, choice_label)",
+         Minimum_Args  => 2,
+         Maximum_Args  => 2,
+         Return_Value  => "(null)",
+         Description   => -"Remove a choice from specified entry",
+         Class         => Toolbar_Class,
+         Static_Method => True,
+         Handler       => Custom_Entry_Handler'Access);
+
+      Register_Command
+        (Kernel,
+         Command       => "entry_clear",
+         Params        => "(entry_label)",
+         Minimum_Args  => 1,
+         Maximum_Args  => 1,
+         Return_Value  => "(null)",
+         Description   => -"Remove all choices from specified entry",
+         Class         => Toolbar_Class,
+         Static_Method => True,
+         Handler       => Custom_Entry_Handler'Access);
+
+      Register_Command
+        (Kernel,
+         Command       => "entry_get_text",
+         Params        => "(entry_label)",
+         Minimum_Args  => 1,
+         Maximum_Args  => 1,
+         Return_Value  => "(string)",
+         Description   => -"Return the current selection in specified entry",
+         Class         => Toolbar_Class,
+         Static_Method => True,
+         Handler       => Custom_Entry_Handler'Access);
    end Register_Module;
 
    ----------
@@ -941,6 +1078,21 @@ package body Custom_Module is
    procedure Free (X : in out Expect_Filter) is
    begin
       Unchecked_Free (X.Pattern);
+   end Free;
+
+   procedure Free (X : in out Entry_Action_Record) is
+   begin
+      Free (X.Label);
+   end Free;
+
+   procedure Free (X : in out GPS_Combo_Access) is
+   begin
+      if X /= null then
+         Free (X.Label);
+         Entry_List.Free (X.Entries);
+
+         Unchecked_Free (X);
+      end if;
    end Free;
 
    ----------
