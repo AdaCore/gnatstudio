@@ -23,12 +23,16 @@ package Entities.Queries is
    procedure Find_Declaration
      (Db              : Entities_Database;
       File_Name       : VFS.Virtual_File;
-      Entity_Name     : String;
+      Entity_Name     : String := "";
       Line            : Positive;
       Column          : Positive;
       Entity          : out Entity_Information;
-      Status          : out Find_Decl_Or_Body_Query_Status);
+      Status          : out Find_Decl_Or_Body_Query_Status;
+      Check_Decl_Only : Boolean := False);
    --  Find the entity that is referenced at the given location.
+   --  If Entity_Name is unspecified, GPS will no take this into account
+   --  If Check_Decl_Only is True, then only declarations are checked, not
+   --  any other kind of reference.
 
    procedure Find_Next_Body
      (Entity           : Entity_Information;
@@ -74,6 +78,39 @@ package Entities.Queries is
 
    procedure Destroy (Iter : in out Entity_Reference_Iterator);
    --  Free the memory used by Iter
+
+   ----------------------------
+   -- Subprograms parameters --
+   ----------------------------
+
+   type Subprogram_Iterator is private;
+
+   function Get_Subprogram_Parameters
+     (Subprogram            : Entity_Information;
+      File_Has_No_LI_Report : File_Error_Reporter := null)
+      return Subprogram_Iterator;
+   --  Return an iterator that will get all the parameters associated with the
+   --  subprogram.
+   --  If Subprogram doesn't have any, or isn't a subprogram, the iterator will
+   --  not return any value.
+
+   procedure Next (Iterator : in out Subprogram_Iterator);
+   --  Move to the next parameter
+
+   procedure Get
+     (Iterator  : in out Subprogram_Iterator;
+      Parameter : out Entity_Information);
+   --  Return the current parameter.
+   --  null is returned if there are no more parameters.
+
+   type Parameter_Type is
+     (In_Parameter,
+      Out_Parameter,
+      In_Out_Parameter,
+      Access_Parameter);
+
+   function Get_Type (Iterator : Subprogram_Iterator) return Parameter_Type;
+   --  Return information on how the parameter is passed to the subprogram.
 
    ------------------
    -- Dependencies --
@@ -132,8 +169,8 @@ package Entities.Queries is
    --  Fetch the next dependency
 
    function Get (Iter : Dependency_Iterator) return Source_File;
-   --  Return the current dependency. This might be null if GPS is in the
-   --  process of parsing files to get the information. You should always
+   --  Return the current dependency. This will be null until GPS is done
+   --  parsing files to compute the information. You should always
    --  check At_End to know whether there are dependencies remaining
 
    function Is_Explicit (Iter : Dependency_Iterator) return Boolean;
@@ -142,8 +179,12 @@ package Entities.Queries is
    procedure Destroy (Iter : in out Dependency_Iterator);
    --  Free the memory occupied by Iter
 
-
 private
+   type Scope_Tree_Iterator is record
+      File   : Source_File;
+      Entity : Entity_Information;
+   end record;
+
    type Dependency_Iterator is record
       Importing             : Projects.Imported_Project_Iterator;
       --  List of projects to check
@@ -168,6 +209,12 @@ private
       Dep_Index             : Dependency_Arrays.Index_Type;
    end record;
 
+   type Subprogram_Iterator is record
+      Index  : Entity_Reference_Arrays.Index_Type;
+      Entity : Entity_Information;
+      Cache_Current : Entity_Information;
+   end record;
+
    type Entity_Reference_Iterator is record
       Need_To_Update_Files : Boolean;
       --  True if we are in the process of parsing all the required files to
@@ -176,6 +223,8 @@ private
       Index   : Entity_Reference_Arrays.Index_Type;
       Entity  : Entity_Information;
       In_File : Source_File;
+
+      Deps    : Dependency_Iterator;
    end record;
 
 end Entities.Queries;
