@@ -155,6 +155,7 @@ package body Language is
       C             : Gunichar;
       Buffer_Length : constant Natural := Buffer'Last - First + 1;
       Tmp           : Natural;
+      Found         : Boolean;
 
    begin
       Line   := 1;
@@ -202,10 +203,15 @@ package body Language is
 
       --  Do we have a comment that ends on newline ?
 
-      if Match
-        (Context.New_Line_Comment_Start.all,
-         Buffer (First .. Buffer'Last))
-      then
+      if Context.New_Line_Comment_Start /= null then
+         Found := Context.New_Line_Comment_Start.all =
+           Buffer (First .. First + Context.New_Line_Comment_Start'Length - 1);
+      else
+         Found := Match (Context.New_Line_Comment_Start.all,
+                         Buffer (First .. Buffer'Last));
+      end if;
+
+      if Found  then
          Entity := Comment_Text;
          Next_Char := UTF8_Next_Char (Buffer, First);
 
