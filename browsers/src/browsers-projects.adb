@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                          G L I D E  I I                           --
 --                                                                   --
---                        Copyright (C) 2001                         --
+--                        Copyright (C) 2001-2002                    --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GLIDE is free software; you can redistribute it and/or modify  it --
@@ -118,6 +118,7 @@ package body Browsers.Projects is
       In_Browser : access Browsers.Canvas.Glide_Browser_Record'Class;
       Project    : Prj.Tree.Project_Node_Id)
    is
+      pragma Unreferenced (Kernel);
       Font : Gdk_Font := Get_Text_Font (In_Browser);
 
       function Vertex_Factory (Project_Name : Types.Name_Id)
@@ -135,6 +136,7 @@ package body Browsers.Projects is
       function Edge_Factory (V1, V2 : access Vertex'Class)
          return Edge_Access
       is
+         pragma Unreferenced (V1, V2);
          L : Glide_Browser_Link := new Glide_Browser_Link_Record;
       begin
          return Edge_Access (L);
@@ -186,6 +188,7 @@ package body Browsers.Projects is
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access)
    is
+      pragma Unreferenced (Widget);
       Browser : MDI_Child;
    begin
       Push_State (Get_Kernel (Context), Busy);
@@ -208,6 +211,7 @@ package body Browsers.Projects is
       Event   : Gdk.Event.Gdk_Event;
       Menu    : Gtk.Menu.Gtk_Menu) return Selection_Context_Access
    is
+      pragma Unreferenced (Browser, Event, Menu);
       Context : Selection_Context_Access := new File_Selection_Context;
    begin
       Set_File_Information
@@ -269,6 +273,7 @@ package body Browsers.Projects is
       Context : access Selection_Context'Class;
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class)
    is
+      pragma Unreferenced (Object);
       Item         : Gtk_Menu_Item;
       File_Context : File_Selection_Context_Access;
    begin
