@@ -577,6 +577,7 @@ package body Src_Editor_Module is
                   Set_Return_Value (Data, Image (Mark_Record.Id));
                end;
             end if;
+
             Free (Filename);
          end if;
 
@@ -763,9 +764,10 @@ package body Src_Editor_Module is
 
       elsif Command = "get_buffer" then
          declare
-            File : constant String := Nth_Arg (Data, 1);
+            File  : constant String := Nth_Arg (Data, 1);
             Child : constant MDI_Child := Find_Editor (Kernel, File);
-            A : GNAT.OS_Lib.String_Access;
+            A     : GNAT.OS_Lib.String_Access;
+
          begin
             if Child /= null then
                Set_Return_Value
@@ -773,7 +775,8 @@ package body Src_Editor_Module is
             else
                --  The buffer is not currently open, read directly from disk.
 
-               A := Read_File (Filename.all);
+               A := Read_File (File);
+
                if A /= null then
                   Set_Return_Value (Data, A.all);
                   Free (A);
