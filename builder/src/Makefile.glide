@@ -214,11 +214,17 @@ DEP_FILES := $(OBJ_FILES:$(OBJ_EXT)=.d)
 # Ada compilations are taken care of automatically, so do not mess with Ada
 # objects, only with main sources.
 
+ifeq ($(strip $(OBJECTS)),)
+internal-compile:
+
+else
 internal-compile: lib$(PROJECT_BASE)$(AR_EXT)
 
 lib$(PROJECT_BASE)$(AR_EXT): $(OBJECTS)
 	@echo creating archive file for $(PROJECT_BASE)
 	cd $(OBJ_DIR); $(AR_CMD) $@ $(strip $(OBJECTS))
+	-ranlib $(OBJ_DIR)/$@
+endif
 
 # Linking rules
 
