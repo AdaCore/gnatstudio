@@ -48,6 +48,7 @@ with String_List_Utils;
 with System;
 with Ada.Unchecked_Conversion;
 with Default_Preferences;
+with Basic_Types;
 
 package Glide_Kernel is
 
@@ -161,6 +162,12 @@ package Glide_Kernel is
      (Handle : access Kernel_Handle_Record)
       return Language_Handlers.Language_Handler;
    --  Return the language handler used by this kernel.
+
+   function Get_Predefined_Source_Files
+     (Handle : access Kernel_Handle_Record)
+      return Basic_Types.String_Array_Access;
+   --  Return the list of sources found in the predefined project (e.g. the Ada
+   --  runtime). Returned memory must be freed by the caller
 
    function Get_Predefined_Source_Path
      (Handle : access Kernel_Handle_Record) return String;
@@ -741,13 +748,14 @@ private
       Tooltips : Gtk.Tooltips.Gtk_Tooltips;
       --  The widget used to register all tooltips
 
-      Predefined_Source_Path : GNAT.OS_Lib.String_Access;
-      --  The path of the sources used to compile the project which are not
-      --  directly part of the project (eg the Ada run-time files).
-
       Predefined_Object_Path : GNAT.OS_Lib.String_Access;
-      --  The path for the object files associated the sources in the
-      --  Source Path above.
+      --  Predefined object path for the runtime library
+
+      Predefined_Source_Path : GNAT.OS_Lib.String_Access;
+      --  Predefined source paths for the runtime library
+
+      Predefined_Source_Files : Basic_Types.String_Array_Access;
+      --  The list of source files in Predefined_Source_Path.
 
       Gnatls_Cache : GNAT.OS_Lib.String_Access;
       --  The name of the gnatls command used to get the predefined source

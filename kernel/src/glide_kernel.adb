@@ -58,9 +58,11 @@ with GVD.Main_Window;           use GVD.Main_Window;
 with Interfaces.C.Strings;      use Interfaces.C.Strings;
 with Interfaces.C;              use Interfaces.C;
 with GUI_Utils;                 use GUI_Utils;
+with File_Utils;                use File_Utils;
 with Src_Info;                  use Src_Info;
 with Src_Info.Queries;          use Src_Info.Queries;
 with Basic_Mapper;              use Basic_Mapper;
+with Basic_Types;               use Basic_Types;
 
 with Glide_Kernel.Timeout;      use Glide_Kernel.Timeout;
 with Prj_API;                   use Prj_API;
@@ -179,8 +181,6 @@ package body Glide_Kernel is
 
       Handle.Project := Create_Default_Project ("default", Get_Current_Dir);
       Handle.Project_Is_Default     := True;
-      Handle.Predefined_Source_Path := null;
-      Handle.Predefined_Object_Path := null;
       Handle.Gnatls_Cache           := null;
 
       --  Note: we do not compute the view of this project yet. This will be
@@ -240,6 +240,34 @@ package body Glide_Kernel is
          return Handle.Predefined_Object_Path.all;
       end if;
    end Get_Predefined_Object_Path;
+
+   ---------------------------------
+   -- Get_Predefined_Source_Files --
+   ---------------------------------
+
+   function Get_Predefined_Source_Files
+     (Handle : access Kernel_Handle_Record) return String_Array_Access
+   is
+      Result : String_Array_Access;
+   begin
+      --  ??? A nicer way would be to implement this with a predefined project,
+      --  and rely on the project parser to return the source
+      --  files. Unfortunately, this doesn't work with the current
+      --  implementation of this parser, since one cannot have two separate
+      --  project hierarchies at the same time.
+
+      if Handle.Predefined_Source_Files = null then
+         Handle.Predefined_Source_Files := Read_Files_From_Dirs
+           (Handle.Predefined_Source_Path.all);
+      end if;
+
+      --  Make a copy of the result, so that we can keep a cache in the kernel
+      Result := new String_Array (Handle.Predefined_Source_Files'Range);
+      for S in Handle.Predefined_Source_Files'Range loop
+         Result (S) := new String'(Handle.Predefined_Source_Files (S).all);
+      end loop;
+      return Result;
+   end Get_Predefined_Source_Files;
 
    ----------------
    -- Save_Child --
@@ -1430,8 +1458,6 @@ package body Glide_Kernel is
    begin
       Destroy (Handle.Preferences);
       Project_Hash.Project_Htable.Reset (Handle.Projects_Data);
-      Free (Handle.Predefined_Source_Path);
-      Free (Handle.Predefined_Object_Path);
       Free (Handle.Gnatls_Cache);
       Free (Handle.Home_Dir);
       Free (Handle.Scenario_Variables);
