@@ -13,6 +13,8 @@ with Debugger; use Debugger;
 with Gtkada.Code_Editors; use Gtkada.Code_Editors;
 with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
 
+with Ada.Text_IO; use Ada.Text_IO;
+
 package body Odd.Dialogs.Callbacks is
 
    use Odd;
@@ -118,5 +120,48 @@ package body Odd.Dialogs.Callbacks is
    begin
       Hide (Get_Toplevel (Object));
    end On_Close_Button_Clicked;
+
+   ---------------------------------
+   -- On_Question_List_Select_Row --
+   ---------------------------------
+
+   procedure On_Question_List_Select_Row
+     (Object : access Gtk_Widget_Record'Class;
+      Params : Gtk.Arguments.Gtk_Args)
+   is
+      Row         : Gint := To_Gint (Params, 1);
+      Dialog      : Question_Dialog_Access :=
+        Question_Dialog_Access (Get_Toplevel (Object));
+   begin
+      Put_Line ("Selected row was " & Row'Img);
+      Put_Line ("Contents is " & Get_Text (Dialog.List, Row, 0));
+      Send (Dialog.Debugger,
+            Get_Text (Dialog.List, Row, 0),
+            Display => True,
+            Empty_Buffer => False,
+            Wait_For_Prompt => False);
+
+      --  This dialog is destroyed, not simply hidden, since it has to
+      --  be recreated from scratch every time anyway.
+      Destroy (Dialog);
+   end On_Question_List_Select_Row;
+
+   -------------------------------
+   -- On_Question_Close_Clicked --
+   -------------------------------
+
+   procedure On_Question_Close_Clicked
+     (Object : access Gtk_Widget_Record'Class)
+   is
+      Dialog      : Question_Dialog_Access :=
+        Question_Dialog_Access (Get_Toplevel (Object));
+   begin
+      --  Send the interrupt signal to the debugger, so that it does not keep
+      --  waiting for user input.
+      Interrupt (Dialog.Debugger);
+
+      --  Destroy the dialog, since we will have to recreate it anyway.
+      Destroy (Dialog);
+   end On_Question_Close_Clicked;
 
 end Odd.Dialogs.Callbacks;

@@ -8,11 +8,26 @@ with Callbacks_Odd;   use Callbacks_Odd;
 with Gtkada.Handlers; use Gtkada.Handlers;
 with Interfaces.C;    use Interfaces.C;
 with Interfaces.C.Strings;
+with Generic_Values;  use Generic_Values;
 
 package body Odd.Dialogs is
 
    pragma Suppress (All_Checks);
    --  Checks are expensive (in code size) and not needed in this package.
+
+   Question_Titles : constant Chars_Ptr_Array :=
+     "" + "Choice";
+   --  ??? Should be translatable.
+
+   Backtrace_Titles : constant Chars_Ptr_Array :=
+     "PC" + "Subprogram" + "Source";
+   --  ???  Should be translate through odd.Intl
+
+   procedure Initialize
+     (Dialog      : access Odd_Dialog_Record'Class;
+      Title       : String;
+      Main_Window : Gtk_Window);
+   --  Create a standard dialog.
 
    -------------
    -- Gtk_New --
@@ -34,6 +49,17 @@ package body Odd.Dialogs is
    begin
       Backtrace_Dialog := new Backtrace_Dialog_Record;
       Initialize (Backtrace_Dialog, Main_Window, Backtrace);
+   end Gtk_New;
+
+   procedure Gtk_New
+     (Question_Dialog : out Question_Dialog_Access;
+      Main_Window     : Gtk_Window;
+      Debugger        : Debugger_Access;
+      Questions       : Question_Array)
+   is
+   begin
+      Question_Dialog := new Question_Dialog_Record;
+      Initialize (Question_Dialog, Main_Window, Debugger, Questions);
    end Gtk_New;
 
    ------------
@@ -58,7 +84,7 @@ package body Odd.Dialogs is
          Pack_Start
            (Task_Dialog.Vbox1, Task_Dialog.Scrolledwindow1, True, True, 0);
          Set_Policy
-           (Task_Dialog.Scrolledwindow1, Policy_Never, Policy_Automatic);
+           (Task_Dialog.Scrolledwindow1, Policy_Automatic, Policy_Automatic);
 
          Num_Columns := Information (Information'First).Num_Fields;
          Gtk_New
@@ -80,9 +106,6 @@ package body Odd.Dialogs is
 
       Show_All (Task_Dialog);
    end Update;
-
-   Backtrace_Titles : constant Chars_Ptr_Array :=
-      "PC" + "Subprogram" + "Source";
 
    procedure Update
      (Backtrace_Dialog : access Backtrace_Dialog_Record;
@@ -141,41 +164,49 @@ package body Odd.Dialogs is
    ----------------
 
    procedure Initialize
+     (Dialog      : access Odd_Dialog_Record'Class;
+      Title       : String;
+      Main_Window : Gtk_Window)
+   is
+   begin
+      Gtk.Dialog.Initialize (Dialog);
+      Dialog.Main_Window := Main_Window;
+
+      Set_Title (Dialog, Title);
+      Set_Policy (Dialog, False, True, False);
+      Set_Position (Dialog, Win_Pos_Center);
+      Set_Default_Size (Dialog, -1, 200);
+
+      Dialog.Vbox1 := Get_Vbox (Dialog);
+      Set_Homogeneous (Dialog.Vbox1, False);
+      Set_Spacing (Dialog.Vbox1, 0);
+
+      Dialog.Hbox1 := Get_Action_Area (Dialog);
+      Set_Border_Width (Dialog.Hbox1, 5);
+      Set_Homogeneous (Dialog.Hbox1, True);
+      Set_Spacing (Dialog.Hbox1, 5);
+
+      Gtk_New (Dialog.Hbuttonbox1);
+      Pack_Start (Dialog.Hbox1, Dialog.Hbuttonbox1, True, True, 0);
+      Set_Spacing (Dialog.Hbuttonbox1, 10);
+      Set_Child_Size (Dialog.Hbuttonbox1, 85, 27);
+      Set_Child_Ipadding (Dialog.Hbuttonbox1, 7, 0);
+
+      Gtk_New (Dialog.Close_Button, "Close");
+      Set_Flags (Dialog.Close_Button, Can_Default);
+      Add (Dialog.Hbuttonbox1, Dialog.Close_Button);
+   end Initialize;
+
+   procedure Initialize
      (Task_Dialog : access Task_Dialog_Record'Class;
       Main_Window : Gtk_Window;
       Information : Thread_Information_Array) is
    begin
-      Gtk.Dialog.Initialize (Task_Dialog);
-      Task_Dialog.Main_Window := Main_Window;
-
-      Set_Title (Task_Dialog, "Task Status");
-      Set_Policy (Task_Dialog, False, True, False);
-      Set_Position (Task_Dialog, Win_Pos_Center);
-      Set_Default_Size (Task_Dialog, -1, 200);
-
-      Task_Dialog.Vbox1 := Get_Vbox (Task_Dialog);
-      Set_Homogeneous (Task_Dialog.Vbox1, False);
-      Set_Spacing (Task_Dialog.Vbox1, 0);
-
-      Update (Task_Dialog, Information);
-
-      Task_Dialog.Hbox1 := Get_Action_Area (Task_Dialog);
-      Set_Border_Width (Task_Dialog.Hbox1, 5);
-      Set_Homogeneous (Task_Dialog.Hbox1, True);
-      Set_Spacing (Task_Dialog.Hbox1, 5);
-
-      Gtk_New (Task_Dialog.Hbuttonbox1);
-      Pack_Start (Task_Dialog.Hbox1, Task_Dialog.Hbuttonbox1, True, True, 0);
-      Set_Spacing (Task_Dialog.Hbuttonbox1, 10);
-      Set_Child_Size (Task_Dialog.Hbuttonbox1, 85, 27);
-      Set_Child_Ipadding (Task_Dialog.Hbuttonbox1, 7, 0);
-
-      Gtk_New (Task_Dialog.Close_Button, "Close");
-      Set_Flags (Task_Dialog.Close_Button, Can_Default);
+      Initialize (Task_Dialog, "Task Status", Main_Window);
       Button_Callback.Connect
         (Task_Dialog.Close_Button, "clicked",
          Button_Callback.To_Marshaller (On_Close_Button_Clicked'Access));
-      Add (Task_Dialog.Hbuttonbox1, Task_Dialog.Close_Button);
+      Update (Task_Dialog, Information);
    end Initialize;
 
    procedure Initialize
@@ -183,38 +214,69 @@ package body Odd.Dialogs is
       Main_Window      : Gtk_Window;
       Backtrace        : Backtrace_Array) is
    begin
-      Gtk.Dialog.Initialize (Backtrace_Dialog);
-      Backtrace_Dialog.Main_Window := Main_Window;
-
-      Set_Title (Backtrace_Dialog, "Backtrace");
-      Set_Policy (Backtrace_Dialog, False, True, False);
-      Set_Position (Backtrace_Dialog, Win_Pos_Center);
-      Set_Default_Size (Backtrace_Dialog, -1, 200);
-
-      Backtrace_Dialog.Vbox1 := Get_Vbox (Backtrace_Dialog);
-      Set_Homogeneous (Backtrace_Dialog.Vbox1, False);
-      Set_Spacing (Backtrace_Dialog.Vbox1, 0);
-
-      Update (Backtrace_Dialog, Backtrace);
-
-      Backtrace_Dialog.Hbox1 := Get_Action_Area (Backtrace_Dialog);
-      Set_Border_Width (Backtrace_Dialog.Hbox1, 5);
-      Set_Homogeneous (Backtrace_Dialog.Hbox1, True);
-      Set_Spacing (Backtrace_Dialog.Hbox1, 5);
-
-      Gtk_New (Backtrace_Dialog.Hbuttonbox1);
-      Pack_Start
-        (Backtrace_Dialog.Hbox1, Backtrace_Dialog.Hbuttonbox1, True, True, 0);
-      Set_Spacing (Backtrace_Dialog.Hbuttonbox1, 10);
-      Set_Child_Size (Backtrace_Dialog.Hbuttonbox1, 85, 27);
-      Set_Child_Ipadding (Backtrace_Dialog.Hbuttonbox1, 7, 0);
-
-      Gtk_New (Backtrace_Dialog.Close_Button, "Close");
-      Set_Flags (Backtrace_Dialog.Close_Button, Can_Default);
+      Initialize (Backtrace_Dialog, "Backtrace", Main_Window);
       Button_Callback.Connect
         (Backtrace_Dialog.Close_Button, "clicked",
          Button_Callback.To_Marshaller (On_Close_Button_Clicked'Access));
-      Add (Backtrace_Dialog.Hbuttonbox1, Backtrace_Dialog.Close_Button);
+      Update (Backtrace_Dialog, Backtrace);
    end Initialize;
+
+   procedure Initialize
+     (Question_Dialog : access Question_Dialog_Record'Class;
+      Main_Window     : Gtk_Window;
+      Debugger        : Debugger_Access;
+      Questions       : Question_Array)
+   is
+      Temp : Chars_Ptr_Array (0 .. 1);
+      Row  : Gint;
+   begin
+      Initialize (Question_Dialog, "Question", Main_Window);
+      Widget_Callback.Connect
+        (Question_Dialog.Close_Button, "clicked",
+         Widget_Callback.To_Marshaller (On_Question_Close_Clicked'Access));
+
+      Question_Dialog.Debugger := Debugger;
+
+      Gtk_New (Question_Dialog.Scrolledwindow1);
+      Pack_Start
+        (Question_Dialog.Vbox1, Question_Dialog.Scrolledwindow1,
+         True, True, 0);
+      Set_Policy
+        (Question_Dialog.Scrolledwindow1, Policy_Never, Policy_Automatic);
+
+      Gtk_New (Question_Dialog.List, 2, Question_Titles);
+      Widget_Callback.Connect
+        (Question_Dialog.List,
+         "select_row",
+         On_Question_List_Select_Row'Access);
+      Add (Question_Dialog.Scrolledwindow1, Question_Dialog.List);
+
+      for J in Questions'Range loop
+         Temp (0) := Strings.New_String (Questions (J).Choice.all);
+         Temp (1) := Strings.New_String (Questions (J).Description.all);
+         Row := Append (Question_Dialog.List, Temp);
+         Free (Temp);
+      end loop;
+
+      Set_Column_Width
+        (Question_Dialog.List, 0,
+         Optimal_Column_Width (Question_Dialog.List, 0));
+      Set_Column_Width
+        (Question_Dialog.List, 1,
+         Gint'Min (Optimal_Column_Width (Question_Dialog.List, 1),
+                   Max_Column_Width));
+   end Initialize;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Questions : in out Question_Array) is
+   begin
+      for Q in Questions'Range loop
+         Free (Questions (Q).Choice);
+         Free (Questions (Q).Description);
+      end loop;
+   end Free;
 
 end Odd.Dialogs;
