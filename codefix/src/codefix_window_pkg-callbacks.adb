@@ -1,32 +1,52 @@
-with Ada.Text_IO; use Ada.Text_IO;
+-----------------------------------------------------------------------
+--                               G P S                               --
+--                                                                   --
+--                        Copyright (C) 2002                         --
+--                            ACT-Europe                             --
+--                                                                   --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
+-- under the terms of the GNU General Public License as published by --
+-- the Free Software Foundation; either version 2 of the License, or --
+-- (at your option) any later version.                               --
+--                                                                   --
+-- This program is  distributed in the hope that it will be  useful, --
+-- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
+-- General Public License for more details. You should have received --
+-- a copy of the GNU General Public License along with this program; --
+-- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
+-- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
+-----------------------------------------------------------------------
 
-with System; use System;
-with Glib; use Glib;
-with Gdk.Event; use Gdk.Event;
-with Gdk.Types; use Gdk.Types;
-with Gtk.Accel_Group; use Gtk.Accel_Group;
-with Gtk.Object; use Gtk.Object;
-with Gtk.Enums; use Gtk.Enums;
-with Gtk.Style; use Gtk.Style;
-with Gtk.Widget; use Gtk.Widget;
-with Gtk.Label; use Gtk.Label;
-with Gtk.Text; use Gtk.Text;
-with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
-with Gtk.Enums; use Gtk.Enums; use Gtk.Enums.String_List;
-with Gtk.Combo; use Gtk.Combo;
-with Gtk.List; use Gtk.List;
-with Gtk.Main; use Gtk.Main;
+with Ada.Text_IO;                 use Ada.Text_IO;
 
-with Codefix; use Codefix;
-with Codefix.Text_Manager; use Codefix.Text_Manager;
-with Codefix.Errors_Manager; use Codefix.Errors_Manager;
-with Codefix.Errors_Parser; use Codefix.Errors_Parser;
-with Codefix.Formal_Errors; use Codefix.Formal_Errors;
-with Codefix.File_Io; use Codefix.File_Io;
+with System;                      use System;
+with Glib;                        use Glib;
+with Gdk.Event;                   use Gdk.Event;
+with Gdk.Types;                   use Gdk.Types;
+with Gtk.Accel_Group;             use Gtk.Accel_Group;
+with Gtk.Object;                  use Gtk.Object;
+with Gtk.Enums;                   use Gtk.Enums;
+with Gtk.Style;                   use Gtk.Style;
+with Gtk.Widget;                  use Gtk.Widget;
+with Gtk.Label;                   use Gtk.Label;
+with Gtk.Text;                    use Gtk.Text;
+with Gtk.Scrolled_Window;         use Gtk.Scrolled_Window;
+with Gtk.Enums;                   use Gtk.Enums;
+use Gtk.Enums.String_List;
+with Gtk.Combo;                   use Gtk.Combo;
+with Gtk.List;                    use Gtk.List;
+
+with Codefix;                     use Codefix;
+with Codefix.Text_Manager;        use Codefix.Text_Manager;
+with Codefix.Errors_Manager;      use Codefix.Errors_Manager;
+with Codefix.Errors_Parser;       use Codefix.Errors_Parser;
+with Codefix.Formal_Errors;       use Codefix.Formal_Errors;
+with Codefix.File_Io;             use Codefix.File_Io;
 with Codefix.Text_Navigators;
 use Codefix.Formal_Errors.Extract_List;
+with Codefix.Graphics; use Codefix.Graphics;
 
-with Codefix.Graphic_Codefix_Pkg; use Codefix.Graphic_Codefix_Pkg;
 with Gen_Proposition_Pkg; use Gen_Proposition_Pkg;
 
 package body Codefix_Window_Pkg.Callbacks is
@@ -41,9 +61,11 @@ package body Codefix_Window_Pkg.Callbacks is
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args) return Boolean
    is
+      Graphic_Codefix : Graphic_Codefix_Access :=
+        Graphic_Codefix_Access (Object);
       Arg1 : Gdk_Event := To_Event (Params, 1);
    begin
-      Gtk.Main.Main_Quit;
+      Quit (Graphic_Codefix);
       return False;
    end On_Codefix_Window_Delete_Event;
 
@@ -103,6 +125,8 @@ package body Codefix_Window_Pkg.Callbacks is
    procedure On_Cancel_Changes_Clicked
      (Object : access Gtk_Widget_Record'Class)
    is
+      Graphic_Codefix : Graphic_Codefix_Access :=
+        Graphic_Codefix_Access (Object);
    begin
       null;
    end On_Cancel_Changes_Clicked;
@@ -114,8 +138,17 @@ package body Codefix_Window_Pkg.Callbacks is
    procedure On_Apply_Changes_Clicked
      (Object : access Gtk_Widget_Record'Class)
    is
+      Graphic_Codefix : Graphic_Codefix_Access :=
+        Graphic_Codefix_Access (Object);
+      Success : Boolean;
    begin
-      null;
+      Update
+        (Graphic_Codefix.Corrector,
+         Success,
+         Graphic_Codefix.Current_Text,
+         null);
+
+      Quit (Graphic_Codefix);
    end On_Apply_Changes_Clicked;
 
 end Codefix_Window_Pkg.Callbacks;
