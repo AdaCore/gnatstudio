@@ -14,7 +14,8 @@ In particular:
 - gnatls: ditto.
 
 Requirements:
-- Be easily extensible to new programming languages
+- Be extensible to new programming languages without having to modify
+  gprmake itself
 - Handle source dependencies automatically
 - Handle different compilers for different languages
   - including Ada
@@ -28,7 +29,10 @@ Requirements:
 - Should be independent of the compiler version (in particular of the
   gnat version) as much as possible.
 - Be as compatible as possible with gpr2make
-- Provide useful defaults to ease set up and use with GNU compilers.
+- Provide useful defaults to ease set up and use with GNU compilers so
+  that gprmake can either be very simple to use in the default cases (by
+  not having to change dozens of settings), and also be configured for many
+  different languages and toolchains.
 
 Note: a prototype implementation of gprmake exists, which mimic closely the
 implementation of gpr2make+Makefile.generic. In the document below, we will,
@@ -36,8 +40,8 @@ for simplicity, refer to the whole gpr2make+Makefile.generic+Makefile.prolog+
 gprcmd as 'gpr2make', without distinguishing which file does actually what.
 
 Since gpr2make was based on GNU makefiles, and gprmake is a tool written in
-Ada, sharing code with other GNAT tools (in particular the project parser),
-some decisions made for gpr2make do not necessarily make sense for gprmake.
+Ada, some decisions made for gpr2make do not necessarily make sense for gprmake.
+this document is a good opportunity to fix these.
 
 Although the behavior of the tool will be similar, the design and
 implementation is expected to be different.
@@ -98,8 +102,8 @@ Input needed from gprmake:
   Currently specified using IDE'Compiler_Command (<language>)
 
   IDE is not the best package to store this info now that we are using it
-  in non IDE tools. So this design seems a good opportunity to change that now
-  rather than later.
+  in non IDE tools and that we are generalizing the notion of multi-language
+  support.
 
   Question:
   - Should the GNAT compiler command be "gcc" or "gnatmake" ?
@@ -110,7 +114,7 @@ Input needed from gprmake:
     a distinction between how Ada and non-Ada files are compiled. However,
     from a practical point of view, being able to delegate to gnatmake the
     process of compiling Ada files has also its advantages, in particular it
-    insulates more gprmake from incompatible changes in e.g. ALI format.
+    insulates gprmake from incompatible changes in e.g. ALI format.
 
     Therefore, in order to support and generalize the use of gnatmake for Ada
     files on one hand, and on the other hand, support the invocation of
@@ -120,8 +124,8 @@ Input needed from gprmake:
     won't perform any timestamp check nor compilation for the sources of the
     designated language.
 
-  Suggestion:
-  - Use existing packages 'Compiler', 'Builder'
+  For new attributes, we will reuse when it makes sense existing packages such
+  as 'Compiler', 'Builder', 'Linker'.
 
   - Add new attributes:
     - Builder'Driver (<language>): If set, use this tool to check
@@ -151,18 +155,11 @@ Input needed from gprmake:
       Defaults to ("-c", "-x", <language>) for GNU compilers.
 
       Note: there's a potential risk of misuse of this attribute vs
-      Default_Switches (<language>)
+      Default_Switches (<language>) by end users. Clarify in the documentation.
+      -> use another name for this attribute ?
 
     See below 'Specify how to handle dependencies' for more info on the
     following attributes:
-
-    - Compiler'Dependency_Kind (<language>): kind of dependency produced
-      by Compiler'Driver (<language>).
-      Recognized values are:
-      - "ali"  (default for "Ada")
-      - "makefile"  (default for other languages)
-
-      This option tells gprmake how to retrieve the dependency information
 
     - Compiler'Dependency_Option (<language>): list of switches to
       be used to tell the Compiler'Driver to generate a dependency file
@@ -172,8 +169,6 @@ Input needed from gprmake:
       to "GNU".
       Defaults to () otherwise
 
-      See related attribute Compiler'Compute_Dependency below.
- 
       Question: How to specify whether the filename is part of the option,
       or should be the next option on the command line ?
 
@@ -183,28 +178,28 @@ Input needed from gprmake:
 
       If set, the Compute_Dependency attribute is ignored.
 
-      If not set, gprmake assumes that a separate tool needs to be launched
-      before the compilation in order to compute the dependencies (such as
-      gcc -M, makedep, or a wrapper, etc...).
-
     - Compiler'Compute_Dependency (<language>): Command used to compute
       the dependency for a given language. This is a list of strings, the
       first string being the command itself, and the remaining strings are
       the options. The path to the filename will be appended to the command,
       and the source search path will be set via additional switches or
-      environment variables.
+      environment variables using Compiler'Path_Env and Compiler'Include_Option
       Defaults to:
       (Compiler'Driver (<language>), "-M") & Default_Switches (<language>)
 
       If set and Compiler'Dependency_Option isn't, this command is called right
-      after a source file has been recompiled.
+      after a source file has been recompiled to create or update its
+      dependencies.
 
     -> If Dependency_Option and Compute_Dependency are both undefined or set
        to the empty value, gprmake will consider that sources for this language
        have no dependencies and will only compare the timestamp of the object
        and source file.
 
-    - Handle of search path
+    -> Dependency files are assumed to be generated in Makefile format:
+       source_file: source_dependencies
+
+    - Handling of search path
       The source search path is extracted from the Source_Dirs attribute.
       Depending on the compiler, gprmake will need to:
 
@@ -286,10 +281,6 @@ Input needed from gprmake:
   fragments (*.d files), gprmake does not need to modify these files, since
   the extra capability can be handled by the tool directly. Namely, handling
   of added/removed files in the project.
-
-  - switch added to the compiler to generate the dependency (optional)
-
-  - post processing command to call to generate/update the dependency (optional)
 
 - Ability to specify that a given project should not be compiled
   This is needed so that external scripts/makefiles can be provided
