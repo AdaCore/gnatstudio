@@ -866,6 +866,7 @@ package body Src_Editor_Buffer is
             --  region to the end of the following region.
 
             Entity_Kind := Current_Entity;
+
             Backward_To_Tag_Toggle
               (Start_Iter, Tags (Current_Entity), Result => Ignored);
             Forward_To_Tag_Toggle (End_Iter, Tags (Entity_Kind), Ignored);
@@ -1706,6 +1707,16 @@ package body Src_Editor_Buffer is
    begin
       Copy (Source => Start_Iter, Dest => Entity_Start);
       Copy (Source => End_Iter, Dest => Entity_End);
+
+      --  Highlight from the previous tag if on the same line, to handle
+      --  special language semantics requiring information from previous
+      --  characters, such as x.all'address in Ada.
+
+      Backward_To_Tag_Toggle (Entity_Start, Result => Result);
+
+      if Get_Line (Entity_Start) /= Get_Line (Start_Iter) then
+         Copy (Source => Start_Iter, Dest => Entity_Start);
+      end if;
 
       --  Highlight to the end of line, to avoid missing most of the
       --  partial entities (strings, characters, ...)
@@ -4090,7 +4101,8 @@ package body Src_Editor_Buffer is
          --  Convert byte offsets into char counts
 
          Get_Iter_At_Line_Index
-           (Buffer, Iter, Gint (Buffer_Line - 1), Gint (First - 1));
+           (Buffer, Iter,
+            Gint (Buffer_Line - 1), Gint (First - 1));
          Start_Column := Integer (Get_Line_Offset (Iter) + 1);
          Set_Line_Index (Iter, Gint (Last - 1));
          End_Column := Integer (Get_Line_Offset (Iter) + 1);
