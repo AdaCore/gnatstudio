@@ -42,7 +42,12 @@ with Process_Proxies;          use Process_Proxies;
 with Basic_Types;              use Basic_Types;
 with String_Utils;             use String_Utils;
 
+with Traces;                   use Traces;
+with Ada.Exceptions;           use Ada.Exceptions;
+
 package body GVD.Call_Stack is
+
+   Me : constant Debug_Handle := Create ("Debugger");
 
    type Call_Stack_Frame_Record is record
       Stack      : Call_Stack;
@@ -118,6 +123,10 @@ package body GVD.Call_Stack is
         (Stack.Debugger,
          Natural'Value (Get_String (Stack.Model, Iter, Frame_Num_Column)) + 1,
          GVD.Types.Visible);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Selection_Changed;
 
    -----------------
@@ -220,6 +229,11 @@ package body GVD.Call_Stack is
       end if;
 
       return False;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         return False;
    end On_Button_Press_Event;
 
    -------------------
