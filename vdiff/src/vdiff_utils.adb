@@ -123,7 +123,7 @@ package body Vdiff_Utils is
       Set_Base (Append_Style, State_Normal, Color);
       Set_Rgb (Color, 56000, 0, 0);
       Set_Base (Remove_Style, State_Normal, Color);
-      Set_Rgb (Color, 0, 0, 56000);
+      Set_Rgb (Color, 0, 40000, 65000);
       Set_Base (Change_Style, State_Normal, Color);
 
       Open (Infile1, In_File, File1);
