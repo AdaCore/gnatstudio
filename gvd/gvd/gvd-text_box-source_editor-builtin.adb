@@ -50,7 +50,7 @@ with Odd.Explorer;          use Odd.Explorer;
 with Odd.Menus;             use Odd.Menus;
 with Odd.Preferences;       use Odd.Preferences;
 with Odd.Process;           use Odd.Process;
-with Odd.Strings;           use Odd.Strings;
+with GVD.Strings;           use GVD.Strings;
 with Odd.Text_Boxes;        use Odd.Text_Boxes;
 with Odd.Types;             use Odd.Types;
 with Odd_Intl;              use Odd_Intl;

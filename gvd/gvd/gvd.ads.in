@@ -34,4 +34,7 @@ package GVD is
    Max_Column_Width : constant := 200;
    --  Maximum width (in pixels) for a column in a list.
 
+   Need_To_Strip_Control_M : constant Boolean := False;
+   --  True on systems where lines are separated by both LF and CR.
+
 end GVD;

@@ -60,8 +60,8 @@ with Breakpoints_Pkg;           use Breakpoints_Pkg;
 with Breakpoints_Pkg.Callbacks; use Breakpoints_Pkg.Callbacks;
 with Odd.Canvas;                use Odd.Canvas;
 with Odd.Dialogs;               use Odd.Dialogs;
-with Odd.Pixmaps;               use Odd.Pixmaps;
-with Odd.Strings;               use Odd.Strings;
+with GVD.Pixmaps;               use GVD.Pixmaps;
+with GVD.Strings;               use GVD.Strings;
 with Odd.Types;                 use Odd.Types;
 with Odd.Code_Editors;          use Odd.Code_Editors;
 with Odd.Menus;                 use Odd.Menus;
@@ -259,8 +259,7 @@ package body Odd.Process is
       Set_Position : Boolean := False)
    is
       Matched : GNAT.Regpat.Match_Array (0 .. 0);
-      Str2    : String := Strip_Control_M (Str);
-      Start   : Positive := Str2'First;
+      Start   : Positive := Str'First;
 
    begin
       Freeze (Process.Debugger_Text);
@@ -274,14 +273,14 @@ package body Odd.Process is
             Process.Debugger_Text_Font,
             Process.Debugger_Text_Highlight_Color,
             Null_Color,
-            Str2);
+            Str);
 
       --  If not, highlight only parts of it
 
       else
-         while Start <= Str2'Last loop
+         while Start <= Str'Last loop
             Match (Highlighting_Pattern (Process.Debugger),
-                   Str2 (Start .. Str2'Last),
+                   Str (Start .. Str'Last),
                    Matched);
 
             if Matched (0) /= No_Match then
@@ -290,14 +289,14 @@ package body Odd.Process is
                           Process.Debugger_Text_Font,
                           Black (Get_System),
                           Null_Color,
-                          Str2 (Start .. Matched (0).First - 1));
+                          Str (Start .. Matched (0).First - 1));
                end if;
 
                Insert (Process.Debugger_Text,
                        Process.Debugger_Text_Font,
                        Process.Debugger_Text_Highlight_Color,
                        Null_Color,
-                       Str2 (Matched (0).First .. Matched (0).Last));
+                       Str (Matched (0).First .. Matched (0).Last));
                Start := Matched (0).Last + 1;
 
             else
@@ -305,8 +304,8 @@ package body Odd.Process is
                        Process.Debugger_Text_Font,
                        Black (Get_System),
                        Null_Color,
-                       Str2 (Start .. Str2'Last));
-               Start := Str2'Last + 1;
+                       Str (Start .. Str'Last));
+               Start := Str'Last + 1;
             end if;
          end loop;
       end if;

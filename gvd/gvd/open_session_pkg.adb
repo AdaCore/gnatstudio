@@ -34,7 +34,7 @@ with GNAT.OS_Lib; use GNAT.OS_Lib;
 with Ada.Text_IO; use Ada.Text_IO;
 with Debugger; use Debugger;
 with Odd.Process; use Odd.Process;
-with Odd.Strings; use Odd.Strings;
+with GVD.Strings; use GVD.Strings;
 with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
 
 with Unchecked_Deallocation;

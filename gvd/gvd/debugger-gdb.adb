@@ -39,9 +39,8 @@ with Debugger.Gdb.Ada;  use Debugger.Gdb.Ada;
 with Debugger.Gdb.C;    use Debugger.Gdb.C;
 with Process_Proxies;   use Process_Proxies;
 with Odd.Process;       use Odd.Process;
-with Odd.Strings;       use Odd.Strings;
+with GVD.Strings;       use GVD.Strings;
 with Odd.Dialogs;       use Odd.Dialogs;
-with Odd.Strings;       use Odd.Strings;
 with Odd.Types;         use Odd.Types;
 with Odd.Trace;         use Odd.Trace;
 with Items;             use Items;
@@ -344,7 +343,7 @@ package body Debugger.Gdb is
      (Debugger : access Gdb_Debugger; Entity : String) return String
    is
       S : constant String :=
-        Strip_Control_M (Send (Debugger, "ptype " & Entity, Mode => Internal));
+        Send (Debugger, "ptype " & Entity, Mode => Internal);
    begin
       if S'Length > 6
         and then S (S'First .. S'First + 5) = "type ="
@@ -392,7 +391,7 @@ package body Debugger.Gdb is
       Format   : Value_Format := Decimal) return String
    is
       S : constant String :=
-        Strip_Control_M (Send (Debugger, "print " & Entity, Mode => Internal));
+        Send (Debugger, "print " & Entity, Mode => Internal);
       Index : Natural := S'First;
    begin
       --  The value is valid only if it starts with '$'
@@ -1929,8 +1928,7 @@ package body Debugger.Gdb is
       Default   : String) return String
    is
       S : constant String :=
-        Strip_Control_M
-          (Send (Debugger, "whatis " & Entity, Mode => Internal));
+        Send (Debugger, "whatis " & Entity, Mode => Internal);
 
    begin
       if S'Length > 6

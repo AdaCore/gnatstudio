@@ -22,7 +22,7 @@ with Ada.Characters.Handling; use Ada.Characters.Handling;
 with GNAT.OS_Lib;
 with Odd.Preferences;         use Odd.Preferences;
 
-package body Odd.Strings is
+package body GVD.Strings is
 
    -----------------
    -- Skip_Blanks --
@@ -540,4 +540,4 @@ package body Odd.Strings is
       end if;
    end Do_Tab_Expansion;
 
-end Odd.Strings;
+end GVD.Strings;

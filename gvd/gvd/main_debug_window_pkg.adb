@@ -29,7 +29,7 @@ with Gtkada.Handlers; use Gtkada.Handlers;
 with Callbacks_Odd; use Callbacks_Odd;
 with Odd_Intl; use Odd_Intl;
 with Main_Debug_Window_Pkg.Callbacks; use Main_Debug_Window_Pkg.Callbacks;
-with Odd.Pixmaps; use Odd.Pixmaps;
+with GVD.Pixmaps; use GVD.Pixmaps;
 with Odd.Types;   use Odd.Types;
 with Odd.Dialogs; use Odd.Dialogs;
 with Odd.Process; use Odd.Process;

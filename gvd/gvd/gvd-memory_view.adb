@@ -40,7 +40,7 @@ with Gtkada.Canvas;    use Gtkada.Canvas;
 with Debugger;              use Debugger;
 with Memory_View_Pkg;       use Memory_View_Pkg;
 
-with Odd.Strings;     use Odd.Strings;
+with GVD.Strings;     use GVD.Strings;
 with Odd.Types;       use Odd.Types;
 with Odd.Process;     use Odd.Process;
 with Odd.Preferences; use Odd.Preferences;

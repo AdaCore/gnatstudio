@@ -38,7 +38,7 @@ with Gtk.Adjustment;      use Gtk.Adjustment;
 with Gtk.Widget;          use Gtk.Widget;
 with Odd.Types;           use Odd.Types;
 with Odd.Preferences;     use Odd.Preferences;
-with Odd.Strings;         use Odd.Strings;
+with GVD.Strings;         use GVD.Strings;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 
 with Ada.Text_IO; use Ada.Text_IO;

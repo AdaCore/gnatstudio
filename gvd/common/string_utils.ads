@@ -21,7 +21,7 @@
 --  This package provides a set of subprograms for manipulating and parsing
 --  strings.
 
-package Odd.Strings is
+package GVD.Strings is
 
    procedure Skip_Blanks
      (Type_Str : String;
@@ -140,4 +140,4 @@ private
    pragma Inline (Looking_At);
    pragma Inline (Skip_Blanks);
    pragma Inline (Skip_To_Char);
-end Odd.Strings;
+end GVD.Strings;

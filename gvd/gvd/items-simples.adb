@@ -28,7 +28,7 @@ with Gdk.Types;    use Gdk.Types;
 with Language;     use Language;
 
 with Odd.Types;    use Odd.Types;
-with Odd.Strings;  use Odd.Strings;
+with GVD.Strings;  use GVD.Strings;
 
 package body Items.Simples is
 
@@ -617,8 +617,7 @@ package body Items.Simples is
    ---------------
 
    procedure Set_Value (Item : in out Debugger_Output_Type; Value : String) is
-      S              : constant String :=
-        Do_Tab_Expansion (Strip_Control_M (Value));
+      S              : constant String := Do_Tab_Expansion (Value);
       V              : String_Access := Item.Value;
 
       Index_New      : Positive := S'First;

@@ -18,7 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Odd.Strings; use Odd.Strings;
+with GVD.Strings;   use GVD.Strings;
 with Language.Debugger; use Language.Debugger;
 
 with Items;         use Items;

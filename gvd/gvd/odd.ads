@@ -19,18 +19,5 @@
 -----------------------------------------------------------------------
 
 package Odd is
-
-   ---------------
-   -- Constants --
-   ---------------
-
-   Version : constant String := "0.7w";
-   --  Version number of this software.
-
-   Max_Frame : constant := 500;
-   --  Maximum number of frames displayed in the backtrace window.
-
-   Max_Column_Width : constant := 200;
-   --  Maximum width (in pixels) for a column in a list.
-
+   pragma Pure;
 end Odd;

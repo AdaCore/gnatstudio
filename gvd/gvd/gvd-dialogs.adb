@@ -22,6 +22,7 @@ with Glib;                  use Glib;
 with Gtk;                   use Gtk;
 with Gtk.Enums;             use Gtk.Enums;
 with Gtkada.Types;          use Gtkada.Types;
+with GVD;                   use GVD;
 with Odd.Dialogs.Callbacks; use Odd.Dialogs.Callbacks;
 with Callbacks_Odd;         use Callbacks_Odd;
 with Gtkada.Handlers;       use Gtkada.Handlers;

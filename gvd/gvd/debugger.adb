@@ -34,10 +34,12 @@ with Gtk.Window;        use Gtk.Window;
 with Gdk.Input;
 with Gdk.Types;
 
+with GVD;               use GVD;
 with Items;             use Items;
 with Process_Proxies;   use Process_Proxies;
 with Language;          use Language;
 with Language.Debugger; use Language.Debugger;
+with GVD.Strings;       use GVD.Strings;
 with Odd.Types;         use Odd.Types;
 with Odd.Process;       use Odd.Process;
 with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
@@ -545,7 +547,12 @@ package body Debugger is
             S : String := Expect_Out (Get_Process (Debugger));
          begin
             Send_Internal_Post (Debugger, Cmd, Mode);
-            return S;
+
+            if Need_To_Strip_Control_M then
+               return Strip_Control_M (S);
+            else  
+               return S;
+            end if;
          end;
       end if;
 

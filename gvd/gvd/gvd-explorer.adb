@@ -44,11 +44,11 @@ with Debugger;              use Debugger;
 
 with Odd.Code_Editors;      use Odd.Code_Editors;
 with Odd.Menus;             use Odd.Menus;
-with Odd.Pixmaps;           use Odd.Pixmaps;
+with GVD.Pixmaps;           use GVD.Pixmaps;
 with Odd.Preferences;       use Odd.Preferences;
 with Odd.Process;           use Odd.Process;
 with Odd.Source_Editors;    use Odd.Source_Editors;
-with Odd.Strings;           use Odd.Strings;
+with GVD.Strings;           use GVD.Strings;
 with Odd.Types;             use Odd.Types;
 with Odd_Intl;              use Odd_Intl;
 

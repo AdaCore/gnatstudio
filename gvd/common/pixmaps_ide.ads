@@ -20,7 +20,7 @@
 
 with Gtkada.Types; use Gtkada.Types;
 
-package Odd.Pixmaps is
+package GVD.Pixmaps is
 
    --  Note that the following pixmaps are in alphabetical order.
    --  The actual size of the pixmaps is only known by GtkAda, which is
@@ -102,4 +102,4 @@ private
    pragma Import (C, up_xpm, "up_xpm");
    pragma Import (C, var_xpm, "var_xpm");
    pragma Import (C, watch_xpm, "watch_xpm");
-end Odd.Pixmaps;
+end GVD.Pixmaps;

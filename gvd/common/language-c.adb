@@ -19,7 +19,7 @@
 -----------------------------------------------------------------------
 
 with GNAT.Regpat;  use GNAT.Regpat;
-with Odd.Pixmaps;  use Odd.Pixmaps;
+with GVD.Pixmaps;  use GVD.Pixmaps;
 
 package body Language.Debugger.C is
 

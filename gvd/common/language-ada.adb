@@ -19,8 +19,8 @@
 -----------------------------------------------------------------------
 
 with GNAT.Regpat;  use GNAT.Regpat;
-with Odd.Pixmaps;  use Odd.Pixmaps;
-with Odd.Strings;  use Odd.Strings;
+with GVD.Pixmaps;  use GVD.Pixmaps;
+with GVD.Strings;  use GVD.Strings;
 
 package body Language.Debugger.Ada is
 

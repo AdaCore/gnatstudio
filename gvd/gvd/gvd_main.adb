@@ -43,9 +43,9 @@ with Language.Debugger.Ada; use Language.Debugger.Ada;
 with Language.Debugger.C;   use Language.Debugger.C;
 with Language;              use Language;
 with Display_Items;         use Display_Items;
-with Odd.Strings;           use Odd.Strings;
+with GVD.Strings;           use GVD.Strings;
 
-procedure Odd_Main is
+procedure GVD_Main is
    Process_Tab       : Debugger_Process_Tab;
    List              : Argument_List (1 .. Argument_Count);
    Main_Debug_Window : Main_Debug_Window_Access;
@@ -176,13 +176,13 @@ procedure Odd_Main is
                 "Please report with the contents of the file " &
                 Dir.all & Directory_Separator & "log");
       Put_Line (Standard_Error, "and the following information:");
-      Put_Line (Standard_Error, "Version: " & Odd.Version);
+      Put_Line (Standard_Error, "Version: " & GVD.Version);
       Put_Line (Standard_Error, Exception_Information (E));
       Button := Message_Dialog
         ("Please report with the contents of the file " &
          Dir.all & Directory_Separator & "log" & ASCII.LF &
          "and the following information:" & ASCII.LF &
-         "Version: " & Odd.Version & ASCII.LF &
+         "Version: " & GVD.Version & ASCII.LF &
          Format (Exception_Information (E), Columns => 80),
          Error, Button_OK,
          Title => -"Bug detected in GVD",
@@ -191,7 +191,7 @@ procedure Odd_Main is
 
    procedure Help is
    begin
-      Put_Line ("GVD " & Odd.Version);
+      Put_Line ("GVD " & GVD.Version);
       Put_Line ("This is a beta release of GVD, the GNU Visual Debugger.");
       Put_Line ("Please do not redistribute.");
       Put_Line ("Usage:");
@@ -288,7 +288,7 @@ begin
 
                -- --version --
                when 'v' =>
-                  Put_Line ("GVD Version " & Odd.Version);
+                  Put_Line ("GVD Version " & GVD.Version);
                   OS_Exit (0);
 
                when 'h' =>
@@ -369,4 +369,4 @@ exception
    when E : others =>
       Bug_Dialog (E);
       Destroy (Main_Debug_Window);
-end Odd_Main;
+end GVD_Main;
