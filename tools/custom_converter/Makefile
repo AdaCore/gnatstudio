@@ -1,2 +1,2 @@
 all:
-	gnatmake -Pcustom_convert -largs `pkg-config gobject-2.0 --libs`
+	gnatmake -Pcustom_convert -largs `gtkada-config --libs`
