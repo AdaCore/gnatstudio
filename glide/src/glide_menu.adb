@@ -165,8 +165,10 @@ package body Glide_Menu is
            Buttons        => Button_Yes or Button_No,
            Default_Button => Button_No,
            Parent         => Gtk_Window (Object));
+
    begin
       if Button = Button_Yes then
+         Destroy (Object);
          Main_Quit;
       end if;
 
@@ -324,10 +326,9 @@ package body Glide_Menu is
                   Stock_Preferences, On_Preferences'Access),
 
          Gtk_New (Gotom & (-"Goto Line..."), "", Stock_Jump_To, null),
-         Gtk_New (Gotom & (-"Goto Body"), "", "", null),
          Gtk_New (Gotom & (-"Goto File Spec<->Body"), "", Stock_Convert, null),
-         Gtk_New (Gotom & (-"Goto Previous Reference"), "", Stock_Undo, null),
          Gtk_New (Gotom & (-"Goto Parent Unit"), "", Stock_Go_Up, null),
+         Gtk_New (Gotom & (-"Goto Previous Reference"), "", Stock_Undo, null),
          Gtk_New (Gotom & (-"List References"), "", Stock_Index, null),
          Gtk_New (Gotom & "sep1", Item_Type => Separator),
          Gtk_New (Gotom & (-"Start Of Statement"), "", Stock_Go_Up, null),
