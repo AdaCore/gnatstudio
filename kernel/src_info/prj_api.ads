@@ -215,9 +215,12 @@ package Prj_API is
    --  Same as above, but return the string ids.
    --  Only the short file names are returned.
 
-   procedure Add_Foreign_Source_Files (Project_View : Prj.Project_Id);
+   function Add_Foreign_Source_Files (Project_View : Prj.Project_Id)
+      return String;
    --  Add to Project_View the list of source files for languages other than
    --  Ada.
+   --  Returns an error message to display in the console, or the empty string
+   --  if all went well.
 
    --------------------
    -- Creating nodes --

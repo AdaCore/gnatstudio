@@ -4029,7 +4029,9 @@ package body Prj_API is
    -- Add_Foreign_Source_Files --
    ------------------------------
 
-   procedure Add_Foreign_Source_Files (Project_View : Prj.Project_Id) is
+   function Add_Foreign_Source_Files (Project_View : Prj.Project_Id)
+      return String
+   is
       procedure Record_Source (File : String);
       --  Add file to the list of source files for Project_View
 
@@ -4074,7 +4076,7 @@ package body Prj_API is
            and then Is_Equal
            (String_Elements.Table (Current_Language).Value, Ada_String))
       then
-         return;
+         return "";
       end if;
 
       --  Note: we do not have to check Source_File_List and Source_Files
@@ -4085,46 +4087,95 @@ package body Prj_API is
       --  it anyway for the explorer, so it is better to cache the result
       --  directly in the project itself.
 
-      Current_Dir := Projects.Table (Project_View).Source_Dirs;
-      while Current_Dir /= Nil_String loop
+      declare
+         Lang : Argument_List := Get_Languages (Project_View);
+         Length : Natural;
+      begin
+         Current_Dir := Projects.Table (Project_View).Source_Dirs;
+         while Current_Dir /= Nil_String loop
 
-         Open (Dir, Get_String (String_Elements.Table (Current_Dir).Value));
-         loop
-            Read (Dir, Name_Buffer, Name_Len);
-            exit when Name_Len = 0;
+            Open (Dir, Get_String (String_Elements.Table (Current_Dir).Value));
+            loop
+               Read (Dir, Name_Buffer, Name_Len);
+               exit when Name_Len = 0;
 
-            declare
-               File : constant String := Name_Buffer (1 .. Name_Len);
-            begin
-               --  Check if it matches one of the naming schemes
-               Elem := Check_Suffix_List (File, Naming.Implementation_Suffix);
-               if Elem = No_Array_Element then
-                  Elem := Check_Suffix_List
-                    (File, Naming.Specification_Suffix);
-               end if;
+               declare
+                  File : constant String := Name_Buffer (1 .. Name_Len);
+               begin
+                  --  Check if it matches one of the naming schemes
+                  Elem :=
+                    Check_Suffix_List (File, Naming.Implementation_Suffix);
+                  if Elem = No_Array_Element then
+                     Elem := Check_Suffix_List
+                       (File, Naming.Specification_Suffix);
+                  end if;
 
-               --  Check if it matches one of the exception lists
-               if Elem = No_Array_Element then
-                  Elem := Check_Full_File
-                    (File, Naming.Implementation_Exceptions);
-               end if;
+                  --  Check if it matches one of the exception lists
+                  if Elem = No_Array_Element then
+                     Elem := Check_Full_File
+                       (File, Naming.Implementation_Exceptions);
+                  end if;
 
-               if Elem = No_Array_Element then
-                  Elem := Check_Full_File
-                    (File, Naming.Specification_Exceptions);
-               end if;
+                  if Elem = No_Array_Element then
+                     Elem := Check_Full_File
+                       (File, Naming.Specification_Exceptions);
+                  end if;
 
-               if Elem /= No_Array_Element
-                 and then Array_Elements.Table (Elem).Index /= Name_Ada
-               then
-                  Record_Source (File);
-               end if;
-            end;
+                  if Elem /= No_Array_Element
+                    and then Array_Elements.Table (Elem).Index /= Name_Ada
+                  then
+                     for L in Lang'Range loop
+                        if Lang (L) /= null
+                          and then Lang (L).all =
+                            Get_String (Array_Elements.Table (Elem).Index)
+                        then
+                           Free (Lang (L));
+                           exit;
+                        end if;
+                     end loop;
+
+                     Record_Source (File);
+                  end if;
+               end;
+            end loop;
+            Close (Dir);
+
+            Current_Dir := String_Elements.Table (Current_Dir).Next;
          end loop;
-         Close (Dir);
 
-         Current_Dir := String_Elements.Table (Current_Dir).Next;
-      end loop;
+         Length := 0;
+         for L in Lang'Range loop
+            if Lang (L) /= null
+              and then Lang (L).all /= Ada_String
+            then
+               Length := Length + Lang (L)'Length + 2;
+            end if;
+         end loop;
+
+         if Length = 0 then
+            Free (Lang);
+            return "";
+         else
+            declare
+               Error : String (1 .. Length);
+               Index : Natural := Error'First;
+            begin
+               for L in Lang'Range loop
+                  if Lang (L) /= null
+                    and then Lang (L).all /= Ada_String
+                  then
+                     Error (Index .. Index + Lang (L)'Length + 1) :=
+                       Lang (L).all & ", ";
+                     Index := Index + Lang (L)'Length + 2;
+                  end if;
+               end loop;
+
+               Free (Lang);
+               return "No source files for "
+                 & Error (Error'First .. Error'Last - 2);
+            end;
+         end if;
+      end;
    end Add_Foreign_Source_Files;
 
    ---------------------
