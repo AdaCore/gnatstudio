@@ -48,6 +48,8 @@ with GNAT.OS_Lib;
 
 with String_Utils;             use String_Utils;
 with Glide_Kernel.Modules;     use Glide_Kernel.Modules;
+with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
+with Glib.Properties.Creation; use Glib.Properties.Creation;
 with Glide_Kernel.Scripts;     use Glide_Kernel.Scripts;
 with Pixmaps_IDE;              use Pixmaps_IDE;
 with Glide_Intl;               use Glide_Intl;
@@ -67,6 +69,9 @@ package body Glide_Result_View is
 
    Non_Leaf_Color_Name : constant String := "blue";
    --  <preference> color to use for category and file names
+
+   Auto_Jump_To_First : Param_Spec_Boolean;
+   --  Preferences local to this module
 
    ---------------------
    -- Local constants --
@@ -695,7 +700,11 @@ package body Glide_Result_View is
          Path := Get_Path (View.Tree.Model, Iter);
          Select_Path (Get_Selection (View.Tree), Path);
          Scroll_To_Cell (View.Tree, Path, null, True, 0.1, 0.1);
-         Goto_Location (View);
+
+         if Get_Pref (View.Kernel, Auto_Jump_To_First) then
+            Goto_Location (View);
+         end if;
+
          Path_Free (Path);
       end if;
    end Add_Location;
@@ -1192,5 +1201,26 @@ package body Glide_Result_View is
          end loop;
       end if;
    end Add_Action_Item;
+
+   ---------------------
+   -- Register_Module --
+   ---------------------
+
+   procedure Register_Module
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+   is
+   begin
+      Auto_Jump_To_First := Param_Spec_Boolean
+        (Gnew_Boolean
+          (Name    => "Auto-Jump-To-First",
+           Default => True,
+           Blurb   =>
+             -("Whether GPS should automatically jump to the first location"
+               & " when entries are added to the Location window (error"
+               & " messages, find results, ...)"),
+           Nick    => -"Jump to First Location"));
+      Register_Property
+        (Kernel, Param_Spec (Auto_Jump_To_First), -"General");
+   end Register_Module;
 
 end Glide_Result_View;
