@@ -72,6 +72,11 @@ package Glide_Kernel is
       return Gtk.Accel_Group.Gtk_Accel_Group;
    --  Returns the defauls accelerators group for the main window.
 
+   function Has_User_Desktop
+     (Handle : access Kernel_Handle_Record) return Boolean;
+   --  Return True if an user-defined desktop is present, and False
+   --  if the default desktop is used.
+
    procedure Save_Desktop
      (Handle : access Kernel_Handle_Record);
    --  Save the current desktop.
