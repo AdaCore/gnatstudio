@@ -95,19 +95,19 @@ package body CPP_Parser is
       Is_Type     => False,
       Is_Generic  => False,
       Is_Abstract => False);
-   Access_Entity : constant E_Kind :=
+   Access_Entity_Type : constant E_Kind :=
      (Access_Kind,
-      Is_Type     => False,
+      Is_Type     => True,
       Is_Generic  => False,
       Is_Abstract => False);
-   Reference_Entity : constant E_Kind :=
+   Reference_Entity_Type : constant E_Kind :=
      (Reference,
-      Is_Type     => False,
+      Is_Type     => True,
       Is_Generic  => False,
       Is_Abstract => False);
-   Array_Entity : constant E_Kind :=
+   Array_Entity_Type : constant E_Kind :=
      (Array_Kind,
-      Is_Type     => False,
+      Is_Type     => True,
       Is_Generic  => False,
       Is_Abstract => False);
    Function_Entity : constant E_Kind :=
@@ -678,6 +678,10 @@ package body CPP_Parser is
             else
                Kind := Signed_Integer_Entity;
             end if;
+         elsif Clean_Name (Name_Start .. Clean_Name'Last) = "uint"
+           or else Clean_Name (Name_Start .. Clean_Name'Last) = "uchar"
+         then
+            Kind := Modular_Integer_Entity;
          elsif Clean_Name (Name_Start .. Clean_Name'Last) = "float"
            or else Clean_Name (Name_Start .. Clean_Name'Last) = "double"
          then
@@ -691,6 +695,7 @@ package body CPP_Parser is
          else
             return null;
          end if;
+         Kind.Is_Type := True;
 
          Entity := Get_Or_Create
            (Name         => Clean_Name,
@@ -987,22 +992,30 @@ package body CPP_Parser is
             end if;
 
             if Name (Last) /= ' ' then
-               Real_Entity := Get_Or_Create
-                 (Name         => Name (Name'First .. Last),
-                  File         => Current_Source,
-                  Line         => Predefined_Line,
-                  Column       => Predefined_Column);
+               if Is_Predefined_Entity (Entity) then
+                  Real_Entity := Get_Or_Create
+                    (Name         => Name (Name'First .. Last),
+                     File         => Get_Predefined_File (Handler.Db),
+                     Line         => Predefined_Line,
+                     Column       => Predefined_Column);
+               else
+                  Real_Entity := Get_Or_Create
+                    (Name         => Name (Name'First .. Last),
+                     File         => Current_Source,
+                     Line         => Predefined_Line,
+                     Column       => Predefined_Column);
+               end if;
 
                if Name (Last) = '*' then
-                  Set_Kind (Real_Entity, Access_Entity);
+                  Set_Kind (Real_Entity, Access_Entity_Type);
                   Set_Pointed_Type (Real_Entity, Entity);
 
                elsif Name (Last) = '&' then
-                  Set_Kind (Real_Entity, Reference_Entity);
+                  Set_Kind (Real_Entity, Reference_Entity_Type);
                   Set_Pointed_Type (Real_Entity, Entity);
 
                elsif Name (Last) = ']' then
-                  Set_Kind (Real_Entity, Array_Entity);
+                  Set_Kind (Real_Entity, Array_Entity_Type);
                   Set_Pointed_Type (Real_Entity, Entity);
 
                   Last := Last + 1;
@@ -1203,6 +1216,7 @@ package body CPP_Parser is
       Sym     : FIL_Table)
    is
       Original : Entity_Information;
+      Kind     : E_Kind;
       Success  : Boolean;
       V        : T_Table;
       Index    : Natural;
@@ -1236,7 +1250,9 @@ package body CPP_Parser is
 
          if Original /= null then
             Set_Is_Renaming_Of (Entity, Renaming_Of => Original);
-            Set_Kind           (Entity, Get_Kind (Original));
+            Kind := Get_Kind (Original);
+            Kind.Is_Type := True;
+            Set_Kind           (Entity, Kind);
 
             --  Register an approximate reference to the renamed entity. At
             --  least, the "look around" algorithms in the queries will know
@@ -2819,7 +2835,6 @@ package body CPP_Parser is
          Iterator.List_Filename := new String'(DB_Dir & "gps_list");
          Create (Tmp_File, Out_File, Name => Iterator.List_Filename.all);
       else
-         Trace (Me, "MANU No source file");
          Iterator.State := Skip_Project;
          return;
       end if;
