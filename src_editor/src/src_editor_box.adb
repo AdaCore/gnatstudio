@@ -151,7 +151,7 @@ package body Src_Editor_Box is
      (Box    : Source_Editor_Box;
       Line   : Editable_Line_Type;
       Column : Integer);
-   --  Redraw the cursor position in the Line/Column areas of the status bar.
+   --  Redraw the cursor position in the Line/Column areas of the status bar
 
    procedure Show_Which_Function
      (Box  : Source_Editor_Box;
@@ -172,19 +172,19 @@ package body Src_Editor_Box is
      (Buffer : access Glib.Object.GObject_Record'Class;
       Params : Glib.Values.GValues;
       Box    : Source_Editor_Box);
-   --  Reflect the change in buffer information.
+   --  Reflect the change in buffer information
 
    procedure Status_Changed_Handler
      (Buffer : access Glib.Object.GObject_Record'Class;
       Params : Glib.Values.GValues;
       Box    : Source_Editor_Box);
-   --  Reflect the change in buffer status.
+   --  Reflect the change in buffer status
 
    procedure On_Box_Destroy
      (Object : access Glib.Object.GObject_Record'Class;
       Params : Glib.Values.GValues;
       Box    : Source_Editor_Box);
-   --  Callback for the "destroy" signal.
+   --  Callback for the "destroy" signal
 
    procedure On_Toggle_Overwrite
      (Object : access Glib.Object.GObject_Record'Class;
@@ -207,17 +207,17 @@ package body Src_Editor_Box is
    --  on the disk is more recent than the one that was read for the editor.
 
    function Focus_Out (Box : access GObject_Record'Class) return Boolean;
-   --  Callback for the focus_out event.
+   --  Callback for the focus_out event
 
    function Key_Press (Box : access GObject_Record'Class) return Boolean;
    --  Check whether the file has been modified on disk
 
    function On_Read_Only_Pressed
      (Box : access GObject_Record'Class) return Boolean;
-   --  Toggle read-only/writable state of a given box.
+   --  Toggle read-only/writable state of a given box
 
    function Check_Timestamp_Idle (Box : GObject) return Boolean;
-   --  Idle callback to check that the timestamp of a file hasn't changed.
+   --  Idle callback to check that the timestamp of a file hasn't changed
 
    procedure Go_To_Closest_Match
      (Kernel         : access Kernel_Handle_Record'Class;
@@ -2431,9 +2431,9 @@ package body Src_Editor_Box is
       Mark   : Gtk.Text_Mark.Gtk_Text_Mark;
       Length : Natural := 0)
    is
-      Iter           : Gtk_Text_Iter;
-      Mark_Iter      : Gtk_Text_Iter;
-      Success        : Boolean;
+      Iter      : Gtk_Text_Iter;
+      Mark_Iter : Gtk_Text_Iter;
+      Success   : Boolean;
 
    begin
       Get_Iter_At_Mark (Editor.Source_Buffer, Iter, Mark);
@@ -2474,7 +2474,7 @@ package body Src_Editor_Box is
    -------------------
 
    function Get_Last_Line
-     (Editor   : access Source_Editor_Box_Record) return Positive
+     (Editor : access Source_Editor_Box_Record) return Positive
    is
       Iter : Gtk_Text_Iter;
    begin
@@ -2508,7 +2508,7 @@ package body Src_Editor_Box is
    is
       B_Line : constant Buffer_Line_Type :=
         Get_Buffer_Line (Editor.Source_Buffer, Line);
-      Block : constant Block_Record :=
+      Block  : constant Block_Record :=
         Get_Block (Editor.Source_Buffer, B_Line);
    begin
       return Natural (Block.Last_Line);
@@ -2524,7 +2524,7 @@ package body Src_Editor_Box is
    is
       B_Line : constant Buffer_Line_Type :=
         Get_Buffer_Line (Editor.Source_Buffer, Line);
-      Block : constant Block_Record :=
+      Block  : constant Block_Record :=
         Get_Block (Editor.Source_Buffer, B_Line);
 
    begin
@@ -2545,7 +2545,7 @@ package body Src_Editor_Box is
    is
       B_Line : constant Buffer_Line_Type :=
         Get_Buffer_Line (Editor.Source_Buffer, Line);
-      Block : constant Block_Record :=
+      Block  : constant Block_Record :=
         Get_Block (Editor.Source_Buffer, B_Line);
 
    begin
@@ -2562,7 +2562,7 @@ package body Src_Editor_Box is
    is
       B_Line : constant Buffer_Line_Type :=
         Get_Buffer_Line (Editor.Source_Buffer, Line);
-      Block : constant Block_Record :=
+      Block  : constant Block_Record :=
         Get_Block (Editor.Source_Buffer, B_Line);
    begin
       return Natural (Block.Indentation_Level);

@@ -18,14 +18,14 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib;                         use Glib;
-with Glib.Convert;                 use Glib.Convert;
-with Glib.Object;                  use Glib.Object;
-with Glib.Xml_Int;                 use Glib.Xml_Int;
+with Glib;                       use Glib;
+with Glib.Convert;               use Glib.Convert;
+with Glib.Object;                use Glib.Object;
+with Glib.Xml_Int;               use Glib.Xml_Int;
 with XML_Parsers;
 with Config;
-with GNAT.Directory_Operations;    use GNAT.Directory_Operations;
-with GNAT.OS_Lib;                  use GNAT.OS_Lib;
+with GNAT.Directory_Operations;  use GNAT.Directory_Operations;
+with GNAT.OS_Lib;                use GNAT.OS_Lib;
 with GPS.Kernel;                 use GPS.Kernel;
 with GPS.Kernel.Console;         use GPS.Kernel.Console;
 with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
@@ -34,27 +34,27 @@ with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
 with GPS.Kernel.Standard_Hooks;  use GPS.Kernel.Standard_Hooks;
 with GPS.Main_Window;            use GPS.Main_Window;
-with Gtkada.Dialogs;               use Gtkada.Dialogs;
-with Gtkada.File_Selector;         use Gtkada.File_Selector;
-with Gtkada.MDI;                   use Gtkada.MDI;
-with Gtk.Menu_Item;                use Gtk.Menu_Item;
-with Gtk.Widget;                   use Gtk.Widget;
+with Gtkada.Dialogs;             use Gtkada.Dialogs;
+with Gtkada.File_Selector;       use Gtkada.File_Selector;
+with Gtkada.MDI;                 use Gtkada.MDI;
+with Gtk.Menu_Item;              use Gtk.Menu_Item;
+with Gtk.Widget;                 use Gtk.Widget;
 with GPS.Intl;                   use GPS.Intl;
-with Traces;                       use Traces;
-with OS_Utils;                     use OS_Utils;
-with Ada.Exceptions;               use Ada.Exceptions;
-with File_Utils;                   use File_Utils;
-with String_Utils;                 use String_Utils;
+with Traces;                     use Traces;
+with OS_Utils;                   use OS_Utils;
+with Ada.Exceptions;             use Ada.Exceptions;
+with File_Utils;                 use File_Utils;
+with String_Utils;               use String_Utils;
 with Generic_List;
 with Ada.Unchecked_Deallocation;
 with Ada.Unchecked_Conversion;
-with Ada.Strings.Fixed;            use Ada.Strings.Fixed;
-with Ada.Strings.Unbounded;        use Ada.Strings.Unbounded;
-with Histories;                    use Histories;
+with Ada.Strings.Fixed;          use Ada.Strings.Fixed;
+with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
+with Histories;                  use Histories;
 with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
-with VFS;                          use VFS;
-with System;                       use System;
-with Welcome_Page;                 use Welcome_Page;
+with VFS;                        use VFS;
+with System;                     use System;
+with Welcome_Page;               use Welcome_Page;
 
 package body Help_Module is
 
@@ -81,7 +81,7 @@ package body Help_Module is
       File       : VFS.Virtual_File;
       Shell_Cmd  : GNAT.OS_Lib.String_Access;
       Shell_Lang : GNAT.OS_Lib.String_Access;
-      Descr : GNAT.OS_Lib.String_Access;
+      Descr      : GNAT.OS_Lib.String_Access;
    end record;
 
    procedure Free (Data : in out Help_File_Record);
@@ -102,7 +102,7 @@ package body Help_Module is
       Categories : Help_Category_List.List;
       --  The registered help files
 
-      Doc_Path : GNAT.OS_Lib.String_Access;
+      Doc_Path   : GNAT.OS_Lib.String_Access;
 
       Html_Class : Class_Type;
       Help_Class : Class_Type;
@@ -177,7 +177,7 @@ package body Help_Module is
    --  Handles customization strings for this module
 
    procedure Command_Handler
-     (Data    : in out Callback_Data'Class; Command : String);
+     (Data : in out Callback_Data'Class; Command : String);
    --  Handler for HTML commands.
 
    function Default_Factory
@@ -251,7 +251,7 @@ package body Help_Module is
       --  query the module from the kernel instead of keeping a global
       --  variable to store it.
       pragma Unreferenced (Kernel);
-      Full : GNAT.OS_Lib.String_Access;
+      Full   : GNAT.OS_Lib.String_Access;
       Anchor : Natural := Index (Name, "#");
    begin
       if Is_Absolute_Path_Or_URL (Name) then
@@ -419,11 +419,11 @@ package body Help_Module is
    ---------------------
 
    procedure Command_Handler
-     (Data    : in out Callback_Data'Class; Command : String)
+     (Data : in out Callback_Data'Class; Command : String)
    is
-      Kernel   : constant Kernel_Handle := Get_Kernel (Data);
-      Inst     : Class_Instance;
-      XML      : Node_Ptr;
+      Kernel : constant Kernel_Handle := Get_Kernel (Data);
+      Inst   : Class_Instance;
+      XML    : Node_Ptr;
    begin
       if Command = Constructor_Method then
          Inst := Nth_Arg (Data, 1, Help_Module_ID.Help_Class);
@@ -553,7 +553,7 @@ package body Help_Module is
    procedure On_Load_HTML
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
-      Item : constant String_Menu_Item := String_Menu_Item (Widget);
+      Item      : constant String_Menu_Item := String_Menu_Item (Widget);
       HTML_File : VFS.Virtual_File := VFS.No_File;
    begin
       if Item.File /= VFS.No_File then
@@ -599,13 +599,13 @@ package body Help_Module is
    -------------------
 
    procedure Register_Help
-     (Kernel     : access Kernel_Handle_Record'Class;
-      HTML_File  : VFS.Virtual_File := VFS.No_File;
-      Shell_Cmd  : String := "";
-      Shell_Lang : String := "";
-      Descr      : String;
-      Category   : String;
-      Menu_Path  : String;
+     (Kernel      : access Kernel_Handle_Record'Class;
+      HTML_File   : VFS.Virtual_File := VFS.No_File;
+      Shell_Cmd   : String := "";
+      Shell_Lang  : String := "";
+      Descr       : String;
+      Category    : String;
+      Menu_Path   : String;
       Menu_Before : String := "";
       Menu_After  : String := "")
    is
@@ -738,8 +738,8 @@ package body Help_Module is
    --------------------
 
    function Open_Help_Hook
-     (Kernel    : access Kernel_Handle_Record'Class;
-      Data      : access Hooks_Data'Class) return Boolean
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class) return Boolean
    is
       D    : constant Html_Hooks_Args := Html_Hooks_Args (Data.all);
       Html : constant Virtual_File :=

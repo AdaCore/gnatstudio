@@ -1068,7 +1068,7 @@ package body Src_Editor_View is
    function Focus_In_Event_Cb
      (Widget : access Gtk_Widget_Record'Class) return Boolean
    is
-      View   : constant Source_View   := Source_View (Widget);
+      View : constant Source_View   := Source_View (Widget);
    begin
       if not Selection_Exists (Get_Buffer (View)) then
          Set_Disable_Scroll_On_Focus (View, True);

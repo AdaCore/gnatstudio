@@ -801,12 +801,8 @@ package body Navigation_Module is
       Data : constant Navigation_Module :=
         Navigation_Module (Navigation_Module_ID);
    begin
-      Set_Sensitive
-        (Data.Back_Button,
-         not Is_Empty (Data.Back));
-      Set_Sensitive
-        (Data.Forward_Button,
-         not Is_Empty (Data.Forward));
+      Set_Sensitive (Data.Back_Button, not Is_Empty (Data.Back));
+      Set_Sensitive (Data.Forward_Button, not Is_Empty (Data.Forward));
    end Refresh_Location_Buttons;
 
    -------------

@@ -231,7 +231,7 @@ package Src_Editor_Box is
    --  needed (this may depend on the user preferences).
 
    procedure Grab_Focus (Editor : access Source_Editor_Box_Record);
-   --  Set the focus on the source view.
+   --  Set the focus on the source view
 
    procedure Clear_Subprogram_Name
      (Editor : access Source_Editor_Box_Record);

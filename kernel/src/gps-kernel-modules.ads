@@ -228,11 +228,11 @@ package GPS.Kernel.Modules is
    ----------------------
 
    procedure Add_Default_Desktop_Item
-     (Kernel      : access Kernel_Handle_Record'Class;
-      Tag_Name    : String;
-      Position    : Gtkada.MDI.Child_Position := Gtkada.MDI.Position_Default;
-      Focus       : Boolean := False;
-      Raised      : Boolean := False);
+     (Kernel   : access Kernel_Handle_Record'Class;
+      Tag_Name : String;
+      Position : Gtkada.MDI.Child_Position := Gtkada.MDI.Position_Default;
+      Focus    : Boolean := False;
+      Raised   : Boolean := False);
    --  Add an item to the default desktop.
    --  If Focus is True, then the widget will be given the focus, unless
    --  another widget is also registered later on with Focus set to True.
@@ -298,14 +298,14 @@ package GPS.Kernel.Modules is
    --  empty string is returned, the contextual entry will not be displayed
 
    procedure Register_Contextual_Menu
-     (Kernel        : access Kernel_Handle_Record'Class;
-      Name          : String;
-      Action        : Action_Record_Access;
-      Label         : String := "";
-      Custom        : Custom_Expansion := null;
-      Stock_Image   : String := "";
-      Ref_Item      : String := "";
-      Add_Before    : Boolean := True);
+     (Kernel      : access Kernel_Handle_Record'Class;
+      Name        : String;
+      Action      : Action_Record_Access;
+      Label       : String := "";
+      Custom      : Custom_Expansion := null;
+      Stock_Image : String := "";
+      Ref_Item    : String := "";
+      Add_Before  : Boolean := True);
    --  Register a new contextual menu entry to tbe displayed.
    --  This menu will only be shown when the filter associated with the Action
    --  matches. The name used in the menu will be Label (or Name if label isn't
@@ -330,24 +330,24 @@ package GPS.Kernel.Modules is
    --  menu instead. It is added in a submenu if Label is not the empty string
 
    procedure Register_Contextual_Menu
-     (Kernel        : access Kernel_Handle_Record'Class;
-      Name          : String;
-      Action        : Action_Record_Access;
-      Label         : access Contextual_Menu_Label_Creator_Record'Class;
-      Stock_Image   : String := "";
-      Ref_Item      : String := "";
-      Add_Before    : Boolean := True);
+     (Kernel      : access Kernel_Handle_Record'Class;
+      Name        : String;
+      Action      : Action_Record_Access;
+      Label       : access Contextual_Menu_Label_Creator_Record'Class;
+      Stock_Image : String := "";
+      Ref_Item    : String := "";
+      Add_Before  : Boolean := True);
    --  Same as above, except the label of the menu is computed dynamically
 
    procedure Register_Contextual_Menu
-     (Kernel        : access Kernel_Handle_Record'Class;
-      Name          : String;
-      Action        : Commands.Interactive.Interactive_Command_Access;
-      Filter        : GPS.Kernel.Action_Filter := null;
-      Label         : access Contextual_Menu_Label_Creator_Record'Class;
-      Stock_Image   : String := "";
-      Ref_Item      : String := "";
-      Add_Before    : Boolean := True);
+     (Kernel      : access Kernel_Handle_Record'Class;
+      Name        : String;
+      Action      : Commands.Interactive.Interactive_Command_Access;
+      Filter      : GPS.Kernel.Action_Filter := null;
+      Label       : access Contextual_Menu_Label_Creator_Record'Class;
+      Stock_Image : String := "";
+      Ref_Item    : String := "";
+      Add_Before  : Boolean := True);
    --  Same as above, except the action to execute is defined internally
    --  When the command is executed, the Context.Context field will be set to
    --  the current selection context, and Context.Event to the event that
@@ -357,27 +357,27 @@ package GPS.Kernel.Modules is
    --  code shorter.
 
    procedure Register_Contextual_Menu
-     (Kernel        : access Kernel_Handle_Record'Class;
-      Name          : String;
-      Action        : Commands.Interactive.Interactive_Command_Access := null;
-      Filter        : GPS.Kernel.Action_Filter := null;
-      Label         : String := "";
-      Custom        : Custom_Expansion := null;
-      Stock_Image   : String := "";
-      Ref_Item      : String := "";
-      Add_Before    : Boolean := True);
+     (Kernel      : access Kernel_Handle_Record'Class;
+      Name        : String;
+      Action      : Commands.Interactive.Interactive_Command_Access := null;
+      Filter      : GPS.Kernel.Action_Filter := null;
+      Label       : String := "";
+      Custom      : Custom_Expansion := null;
+      Stock_Image : String := "";
+      Ref_Item    : String := "";
+      Add_Before  : Boolean := True);
    --  Same as above, but the menu title is a string where %p, %f,... are
    --  substituted.
    --  A separator is inserted if Action is null and the Filter matches
 
    procedure Register_Contextual_Submenu
-     (Kernel        : access Kernel_Handle_Record'Class;
-      Name          : String;
-      Label         : String := "";
-      Filter        : GPS.Kernel.Action_Filter := null;
-      Submenu       : Module_Menu_Handler := null;
-      Ref_Item      : String := "";
-      Add_Before    : Boolean := True);
+     (Kernel     : access Kernel_Handle_Record'Class;
+      Name       : String;
+      Label      : String := "";
+      Filter     : GPS.Kernel.Action_Filter := null;
+      Submenu    : Module_Menu_Handler := null;
+      Ref_Item   : String := "";
+      Add_Before : Boolean := True);
    --  Register a new submenu. Its contents can be computed dynamically by
    --  providing a Submenu callback. This can be left to null if all entries
    --  are added through Register_Contextual_Menu (in which case the call to
