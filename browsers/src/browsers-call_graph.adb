@@ -461,7 +461,9 @@ package body Browsers.Call_Graph is
             exit when It = null;
 
             Removed := False;
-            Line := 1;
+
+            --  Skip first line, which is the declaration location
+            Line := 2;
             loop
                Get_Line (Entity_Item (It).Refs, Line, 1, Callback, Text);
                exit when Text = null;
@@ -650,7 +652,9 @@ package body Browsers.Call_Graph is
          Iter  : Scope_Tree_Node_Iterator := Start (Node);
       begin
          while Get (Iter) /= Null_Scope_Tree_Node loop
-            if Is_Subprogram (Get (Iter)) then
+            if Is_Subprogram (Get (Iter))
+              and then not Is_Declaration (Get (Iter))
+            then
                Rename := Get_Entity (Get (Iter));
                Execute (Callback, Rename,
                         Get_Reference (Get (Iter)), Is_Renaming => False);
@@ -798,7 +802,7 @@ package body Browsers.Call_Graph is
          Parent : Scope_Tree_Node;
          E      : Entity_Information;
       begin
-         if Is_Subprogram (Node) then
+         if Is_Container (Node) then
 
             --  A renaming entity ? Create a special link
             if Is_Renaming then
@@ -810,7 +814,7 @@ package body Browsers.Call_Graph is
             else
                Parent := Get_Parent (Node);
                while Parent /= Null_Scope_Tree_Node
-                 and then not Is_Subprogram (Parent)
+                 and then not Is_Container (Parent)
                loop
                   Parent := Get_Parent (Parent);
                end loop;
@@ -994,7 +998,7 @@ package body Browsers.Call_Graph is
             Get_Line (Cb.Item.Refs, Line, 1, Callback, Text);
             exit when Text = null;
 
-            if Show_Location_Callback_Access (Callback).Parent = Cb.Item then
+            if Show_Location_Callback_Access (Callback).Parent = Child then
                Expand_Line
                  (Cb.Item.Refs, Line,
                   " @" & Image (Get_Line (Loc))
@@ -1012,7 +1016,6 @@ package body Browsers.Call_Graph is
                            Locate_From_Source_And_Complete
                              (Get_Kernel (Get_Browser (Child)),
                               Get_Declaration_File_Of (Child.Entity)))
---              Get_Name (Child.Entity)
             & ": @"
             & Image (Get_Line (Loc)) & ':' & Image (Get_Column (Loc)) & '@',
             Callback => (1 => New_Cb));
@@ -1528,7 +1531,7 @@ package body Browsers.Call_Graph is
                   Set_Submenu (Item, Gtk_Widget (Submenu));
                   Append (Menu, Item);
 
-                  if Is_Subprogram (Entity) then
+                  if Is_Container (Entity) then
                      Gtk_New (Item, Label => Name & (-" calls"));
                      Append (Submenu, Item);
                      Context_Callback.Connect
