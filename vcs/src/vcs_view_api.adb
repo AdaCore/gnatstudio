@@ -342,6 +342,10 @@ package body VCS_View_API is
       procedure Add_Separator;
       --  Add a separator in the menu if needed.
 
+      ----------------
+      -- Add_Action --
+      ----------------
+
       procedure Add_Action
         (Action   : VCS_Action;
          Callback : Context_Callback.Marshallers.Void_Marshaller.Handler;
@@ -372,6 +376,10 @@ package body VCS_View_API is
             Items_Inserted := True;
          end if;
       end Add_Action;
+
+      -------------------
+      -- Add_Separator --
+      -------------------
 
       procedure Add_Separator is
       begin
@@ -429,7 +437,7 @@ package body VCS_View_API is
                Log_Action := Commit;
 
                declare
-                  Index  : Natural;
+                  Index : Natural;
                begin
                   --  Attempt to read Action from the name of the log file
 
@@ -1814,6 +1822,14 @@ package body VCS_View_API is
       procedure Add_Directory_Files (Dir : String);
       --  Fill the explorer with blank status for all files in Dir.
 
+      procedure Add_Directory_Recursively;
+      --  Add Dir and all subdirectories in Dir to Files, and make Node point
+      --  to the next node.
+
+      -------------------------
+      -- Add_Directory_Files --
+      -------------------------
+
       procedure Add_Directory_Files (Dir : String) is
          use String_List;
 
@@ -1831,9 +1847,9 @@ package body VCS_View_API is
          Unchecked_Free (F);
       end Add_Directory_Files;
 
-      procedure Add_Directory_Recursively;
-      --  Add Dir and all subdirectories in Dir to Files, and make Node point
-      --  to the next node.
+      -------------------------------
+      -- Add_Directory_Recursively --
+      -------------------------------
 
       procedure Add_Directory_Recursively is
          use String_List_Utils.String_List;
@@ -1947,7 +1963,6 @@ package body VCS_View_API is
       Context : Selection_Context_Access)
    is
       pragma Unreferenced (Widget);
-
    begin
       Process_Dirs
         (Context, Recursive => True, Update => True, Get_Status => True);
@@ -1967,7 +1982,6 @@ package body VCS_View_API is
       Context : Selection_Context_Access)
    is
       pragma Unreferenced (Widget);
-
    begin
       Process_Dirs
         (Context, Recursive => False, Update => False, Get_Status => True);
@@ -1987,7 +2001,6 @@ package body VCS_View_API is
       Context : Selection_Context_Access)
    is
       pragma Unreferenced (Widget);
-
    begin
       Process_Dirs
         (Context, Recursive => True, Update => False, Get_Status => True);
@@ -2082,11 +2095,15 @@ package body VCS_View_API is
       procedure Query_Status_For_Project (The_Project : Project_Type);
       --  Display the status for The_Project only.
 
+      ------------------------------
+      -- Query_Status_For_Project --
+      ------------------------------
+
       procedure Query_Status_For_Project (The_Project : Project_Type) is
          use String_List;
-         Status         : File_Status_List.List;
-         Files          : String_List.List;
-         Ref            : constant VCS_Access := Get_Current_Ref (The_Project);
+         Ref    : constant VCS_Access := Get_Current_Ref (The_Project);
+         Status : File_Status_List.List;
+         Files  : String_List.List;
 
       begin
          if Ref = Unknown_VCS_Reference then
@@ -2127,8 +2144,8 @@ package body VCS_View_API is
      (Context   : Selection_Context_Access;
       Recursive : Boolean)
    is
-      File_Context : File_Selection_Context_Access;
       Kernel       : constant Kernel_Handle := Get_Kernel (Context);
+      File_Context : File_Selection_Context_Access;
    begin
       Open_Explorer (Get_Kernel (Context), Context);
       Clear (Get_Explorer (Get_Kernel (Context)));
@@ -2194,8 +2211,8 @@ package body VCS_View_API is
      (Context   : Selection_Context_Access;
       Recursive : Boolean)
    is
-      File_Context : File_Selection_Context_Access;
       Kernel       : constant Kernel_Handle := Get_Kernel (Context);
+      File_Context : File_Selection_Context_Access;
    begin
       Open_Explorer (Kernel, Context);
       Clear (Get_Explorer (Kernel));
@@ -2432,9 +2449,9 @@ package body VCS_View_API is
       use File_Status_List;
       pragma Unreferenced (Widget);
 
-      Files  : String_List.List;
-      Ref    : constant VCS_Access := Get_Current_Ref (Context);
-      Status : File_Status_List.List;
+      Ref         : constant VCS_Access := Get_Current_Ref (Context);
+      Files       : String_List.List;
+      Status      : File_Status_List.List;
       Status_Temp : List_Node;
 
    begin
@@ -2517,12 +2534,10 @@ package body VCS_View_API is
    is
       use String_List;
 
-      Files      : String_List.List;
       Ref        : constant VCS_Access := Get_Current_Ref (Context);
-
       Kernel     : constant Kernel_Handle := Get_Kernel (Context);
-      Explorer   : constant VCS_View_Access :=
-        Get_Explorer (Kernel, False);
+      Explorer   : constant VCS_View_Access := Get_Explorer (Kernel, False);
+      Files      : String_List.List;
       Status     : File_Status_Record;
       Revision_1 : String_Access;
       Revision_2 : String_Access;
@@ -2616,8 +2631,8 @@ package body VCS_View_API is
       use File_Status_List;
       pragma Unreferenced (Widget);
 
-      Files  : String_List.List;
       Ref    : constant VCS_Access := Get_Current_Ref (Context);
+      Files  : String_List.List;
       Status : File_Status_List.List;
       Status_Temp : List_Node;
 
@@ -2665,8 +2680,8 @@ package body VCS_View_API is
      (Project   : Project_Type;
       Recursive : Boolean := True) return String_List.List
    is
-      Result  : String_List.List;
-      Files   : File_Array_Access;
+      Result : String_List.List;
+      Files  : File_Array_Access;
    begin
       Files := Get_Source_Files (Project, Recursive);
 
@@ -2687,7 +2702,7 @@ package body VCS_View_API is
      (Project   : Project_Type;
       Recursive : Boolean := False) return String_List.List
    is
-      Result   : String_List.List;
+      Result : String_List.List;
    begin
       declare
          A : constant String_Array_Access
@@ -2711,7 +2726,6 @@ package body VCS_View_API is
    is
       pragma Unreferenced (Widget);
       Explorer : VCS_View_Access;
-
    begin
       Open_Explorer (Kernel, null);
       Explorer := Get_Explorer (Kernel);
@@ -2786,6 +2800,10 @@ package body VCS_View_API is
 
       function Short_Revision (R : String) return String;
       --  If R is too long, return only the last digits.
+
+      --------------------
+      -- Short_Revision --
+      --------------------
 
       function Short_Revision (R : String) return String is
       begin
