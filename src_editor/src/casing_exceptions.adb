@@ -40,8 +40,8 @@ package body Casing_Exceptions is
    Case_Exceptions_Filename : constant String := "case_exceptions.xml";
 
    type Casing_Module_Record is new Module_ID_Record with record
-      Kernel                   : Kernel_Handle;
-      Casing_Exceptions_Table  : Case_Handling.Casing_Exceptions;
+      Kernel                  : Kernel_Handle;
+      Casing_Exceptions_Table : Case_Handling.Casing_Exceptions;
    end record;
    type Casing_Module is access all Casing_Module_Record'Class;
 

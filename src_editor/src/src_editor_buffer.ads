@@ -36,11 +36,11 @@ with Gtk.Text_Tag;
 with Language;
 with Src_Highlighting;
 
-with GNAT.OS_Lib; use GNAT.OS_Lib;
+with GNAT.OS_Lib;                 use GNAT.OS_Lib;
 with Ada.Unchecked_Deallocation;
 with Ada.Calendar;
 with Glide_Kernel;
-with Glide_Kernel.Standard_Hooks;       use Glide_Kernel.Standard_Hooks;
+with Glide_Kernel.Standard_Hooks; use Glide_Kernel.Standard_Hooks;
 with Generic_List;
 with VFS;
 

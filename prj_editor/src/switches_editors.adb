@@ -1150,15 +1150,15 @@ package body Switches_Editors is
    ------------------
 
    procedure Create_Field
-     (Page              : access Switches_Editor_Page_Record;
-      Box               : access Gtk.Box.Gtk_Box_Record'Class;
-      Label             : String;
-      Switch            : String;
-      Tip               : String := "";
-      As_Directory      : Boolean := False;
-      As_File           : Boolean := False;
-      Label_Size_Group  : Gtk.Size_Group.Gtk_Size_Group := null;
-      Separator         : String := " ")
+     (Page             : access Switches_Editor_Page_Record;
+      Box              : access Gtk.Box.Gtk_Box_Record'Class;
+      Label            : String;
+      Switch           : String;
+      Tip              : String := "";
+      As_Directory     : Boolean := False;
+      As_File          : Boolean := False;
+      Label_Size_Group : Gtk.Size_Group.Gtk_Size_Group := null;
+      Separator        : String := " ")
    is
       Hbox   : Gtk_Box;
       S      : constant Switch_Field_Widget_Access := new Switch_Field_Widget
