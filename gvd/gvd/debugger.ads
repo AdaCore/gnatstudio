@@ -34,17 +34,6 @@ package Debugger is
 
    type Debugger_Access is access all Debugger_Root'Class;
 
-   type Debugger_Type is
-     (Gdb_Type,
-      Dbx_Type,
-      Xdb_Type,
-      Jdb_Type,
-      Pydb_Type,
-      Perl_Type,
-      Ladebug_Type);
-   --  Type of debugger handled.
-   --  Beware that some debuggers might not be available.
-
    procedure Spawn
      (Debugger        : access Debugger_Root;
       Executable      : String;
