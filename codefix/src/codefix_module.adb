@@ -25,7 +25,6 @@ with Ada.Exceptions;         use Ada.Exceptions;
 with Gtk.Menu;               use Gtk.Menu;
 with Gtk.Menu_Item;          use Gtk.Menu_Item;
 with Gtkada.MDI;             use Gtkada.MDI;
-with Gtk.Widget;             use Gtk.Widget;
 with Gdk.Pixbuf;             use Gdk.Pixbuf;
 
 with Glib.Object;            use Glib.Object;
@@ -36,7 +35,6 @@ with Glide_Kernel.Console;   use Glide_Kernel.Console;
 
 with Traces;                 use Traces;
 with Basic_Types;            use Basic_Types;
-with String_Utils;           use String_Utils;
 
 with Codefix;                use Codefix;
 with Codefix.Graphics;       use Codefix.Graphics;
@@ -153,20 +151,6 @@ package body Codefix_Module is
       Current_Error : Error_Id;
       New_Action    : Action_Item;
 
-      function Cut_Message (Str : String) return String;
-
-      function Cut_Message (Str : String) return String is
-         Ind : Natural := Str'First;
-      begin
-         Skip_To_Char (Str, Ind, ':');
-         Ind := Ind + 1;
-         Skip_To_Char (Str, Ind, ':');
-         Ind := Ind + 1;
-         Skip_To_Char (Str, Ind, ':');
-
-         return Str (Ind .. Str'Last);
-      end Cut_Message;
-
    begin
       Free (Codefix_Module_ID.Errors_Found.all);
       Free (Codefix_Module_ID.Corrector.all);
@@ -212,7 +196,6 @@ package body Codefix_Module is
            Codefix_Module_ID.Corrector;
          Codefix_Command (New_Action.Associated_Command.all).Kernel :=
            Codefix_Module_ID.Kernel;
-
 
          Add_Location_Action
            (Kernel        => Codefix_Module_ID.Kernel,
@@ -277,9 +260,7 @@ package body Codefix_Module is
       Location      : File_Location_Context_Access;
       Error         : Error_Id;
       Error_Caption : Dynamic_String := null;
-      Solution_Node : Command_List.List_Node;
       Menu_Item     : Gtk_Menu_Item;
-      Submenu       : Gtk_Menu;
 
    begin
       if Context.all in File_Location_Context'Class then
@@ -296,34 +277,14 @@ package body Codefix_Module is
          end if;
 
          Gtk_New (Menu_Item, -"Code fixing");
-         Gtk_New (Submenu);
 
          Error := Search_Error
            (Codefix_Module_ID.Corrector.all, Error_Caption.all);
 
          if Error /= Null_Error_Id and then not Is_Fixed (Error) then
-            Solution_Node := First (Get_Solutions (Error));
-
-            while Solution_Node /= Command_List.Null_Node loop
-               declare
-                  Mitem : Codefix_Menu_Item;
-               begin
-                  Gtk_New (Mitem, Get_Caption (Data (Solution_Node)));
-                  Mitem.Fix_Command := new Text_Command'Class'
-                    (Data (Solution_Node));
-                  Mitem.Error := Error;
-                  Context_Callback.Connect
-                    (Mitem,
-                     "activate",
-                     Context_Callback.To_Marshaller (On_Fix'Access),
-                     Selection_Context_Access (Context));
-                  Append (Submenu, Mitem);
-               end;
-
-               Solution_Node := Next (Solution_Node);
-            end loop;
-
-            Set_Submenu (Menu_Item, Gtk_Widget (Submenu));
+            Set_Submenu
+              (Menu_Item,
+               Create_Submenu (Error));
             Append (Menu, Menu_Item);
          end if;
       end if;
@@ -436,5 +397,49 @@ package body Codefix_Module is
    begin
       Gtk.Menu_Item.Initialize (Menu_Item, Label);
    end Initialize;
+
+   --------------------
+   -- Create_Submenu --
+   --------------------
+
+   function Create_Submenu (Error : Error_Id) return Gtk_Menu is
+      Menu          : Gtk_Menu;
+      Solution_Node : Command_List.List_Node;
+      Context       : Selection_Context_Access;
+      --  ??? Where this context is freed ?
+   begin
+      Gtk_New (Menu);
+      Context := new Selection_Context;
+      Glide_Kernel.Set_Context_Information
+        (Context,
+         Codefix_Module_ID.Kernel,
+         Module_ID (Codefix_Module_ID));
+
+      Solution_Node := First (Get_Solutions (Error));
+
+      while Solution_Node /= Command_List.Null_Node loop
+         declare
+            Mitem : Codefix_Menu_Item;
+            Str : Dynamic_String;
+         begin
+            Gtk_New (Mitem, Get_Caption (Data (Solution_Node)));
+            Assign (Str, Get_Caption (Data (Solution_Node)));
+            Mitem.Fix_Command := new Text_Command'Class'
+              (Data (Solution_Node));
+            Free (Str);
+            Mitem.Error := Error;
+            Context_Callback.Connect
+              (Mitem,
+               "activate",
+               Context_Callback.To_Marshaller (On_Fix'Access),
+               Context);
+            Append (Menu, Mitem);
+         end;
+
+         Solution_Node := Next (Solution_Node);
+      end loop;
+
+      return Menu;
+   end Create_Submenu;
 
 end Codefix_Module;
