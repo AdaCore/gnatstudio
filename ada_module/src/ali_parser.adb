@@ -34,6 +34,7 @@ with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Unchecked_Conversion;
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with GNAT.Case_Util;            use GNAT.Case_Util;
+with GNAT.Calendar.Time_IO;     use GNAT.Calendar.Time_IO;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 
@@ -784,7 +785,16 @@ package body ALI_Parser is
                       & Xref.Table (Current_Ref).Line'Img
                       & Xref.Table (Current_Ref).Col'Img);
             else
-               Add_Primitive_Subprogram (Entity, Primitive);
+               --  Only add the primitive if it is a new one. That keeps the
+               --  database shorter without redundant information. This also
+               --  avoids cases where the entity points to its primitive op,
+               --  but the latter points to another one as its parent.
+
+               if Sfiles (Current_Sfile).File =
+                 Get_Declaration_Of (Entity).File
+               then
+                  Add_Primitive_Subprogram (Entity, Primitive);
+               end if;
             end if;
 
          else
@@ -1131,11 +1141,21 @@ package body ALI_Parser is
       New_Timestamp := File_Time_Stamp (Get_LI_Filename (LI));
 
       if New_Timestamp /= Get_Timestamp (LI) then
+         if Active (Assert_Me) then
+            Trace (Assert_Me, "Load_And_Scan_ALI: "
+                   & Full_Name (Get_LI_Filename (LI)).all
+                   & " since timestamp incorrect: old="
+                   & Image (Get_Timestamp (LI), "%D-%T")
+                   & " new="
+                   & Image (New_Timestamp, "%D-%T"));
+         else
+            Trace (Me, "Load_And_Scan_ALI: "
+                   & Full_Name (Get_LI_Filename (LI)).all);
+         end if;
+
          Set_Time_Stamp (LI, New_Timestamp);
          Reset (LI);
 
-         Trace (Me, "Load_And_Scan_ALI: "
-                & Full_Name (Get_LI_Filename (LI)).all);
          Load_And_Scan_ALI
            (ALI_Filename   => Get_LI_Filename (LI),
             Reset_First    => Reset_ALI,
@@ -1424,7 +1444,8 @@ package body ALI_Parser is
       Source := Get_Or_Create
         (Db           => Handler.Db,
          File         => Source_Filename,
-         LI           => null);
+         LI           => null,
+         Allow_Create => False);
       if Source /= null
         and then Get_LI (Source) /= null
         and then Name_As_Directory (Object_Path
@@ -1479,12 +1500,17 @@ package body ALI_Parser is
          LI := null;
       end if;
 
-      --  Do another lookup, to update the LI file, since apparently we didn't
-      --  know it before
-      return Get_Or_Create
-        (Db           => Handler.Db,
-         File         => Source_Filename,
-         LI           => LI);
+      if Source = null then
+         --  Do another lookup, to update the LI file, since apparently we
+         --  didn't know it before
+         return Get_Or_Create
+           (Db           => Handler.Db,
+            File         => Source_Filename,
+            LI           => LI,
+            Allow_Create => False);
+      else
+         return Source;
+      end if;
    end Get_Source_Info_Internal;
 
    ----------------------------------
