@@ -18,8 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Traces;                   use Traces;
-with String_Utils;             use String_Utils;
 with Src_Editor_Box;           use Src_Editor_Box;
 with Src_Editor_Module;        use Src_Editor_Module;
 with Src_Editor_Buffer.Line_Information;
@@ -32,8 +30,6 @@ package body Commands.Editor is
      (P : String; Max : Interfaces.C.size_t) return Long_Integer;
    pragma Import (C, g_utf8_strlen);
    --  Return the text size of an UTF8 string.
-
-   Me : constant Debug_Handle := Create ("Commands.Editor");
 
    ------------
    -- Create --
@@ -252,20 +248,6 @@ package body Commands.Editor is
       if Command.User_Executed then
          Command.User_Executed := False;
       else
-         if not Is_Valid_Position
-           (Command.Buffer, Command.Line, Command.Column)
-         then
-            --  This should never happen. If it does, it probably means
-            --  that a command with wrong settings has been recorded.
-
-            Trace (Me, "Invalid location: " &
-                   Image (Natural (Command.Line)) &
-                   ':' & Image (Natural (Command.Column)));
-            Command_Finished (Command, True);
-
-            return Success;
-         end if;
-
          Editor := Get_Source_Box_From_MDI
            (Find_Current_Editor (Get_Kernel (Command.Buffer)));
 
@@ -358,27 +340,6 @@ package body Commands.Editor is
       Editor : Source_Editor_Box;
 
    begin
-      if not
-        Is_Valid_Position
-          (Command.Buffer,
-           Command.Start_Line, Command.Start_Column)
-        or else not Is_Valid_Position
-          (Command.Buffer,
-           Command.End_Line_Before, Command.End_Column_Before)
-      then
-         --  This should never happen. If it does, it probably means
-         --  that a command with wrong settings has been recorded.
-
-         Trace (Me, "Invalid location: start:" &
-                Image (Natural (Command.Start_Line)) & ':' &
-                Image (Natural (Command.Start_Column)) & " end: " &
-                Image (Natural (Command.End_Line_Before)) & ':' &
-                Image (Natural (Command.End_Column_Before)));
-         Command_Finished (Command, True);
-
-         return Success;
-      end if;
-
       Replace_Slice
         (Command.Buffer,
          Command.Start_Line,
@@ -529,9 +490,7 @@ package body Commands.Editor is
      (Command : access Unhide_Editable_Lines_Type)
       return Command_Return_Type is
    begin
-      if Blocks_Valid (Command.Buffer) then
-         Unhide_Lines (Command.Buffer, Command.Mark);
-      end if;
+      Unhide_Lines (Command.Buffer, Command.Mark);
 
       return Success;
    end Execute;
