@@ -32,6 +32,9 @@ package body VCS.CVS is
    --  ??? Should we make commands customizable ?
    --  ??? Should we make expect timeouts customizable ?
 
+   CVS_Command : constant String := "cvs";
+   --  <preferences>
+
    -----------------------
    -- Local Subprograms --
    -----------------------
@@ -244,16 +247,16 @@ package body VCS.CVS is
                Arguments_Temp := Next (Arguments_Temp);
             end loop;
 
-            Output := Command (Rep, "cvs", Args, Output_To_Message);
+            Output := Command (Rep, CVS_Command, Args, Output_To_Message);
 
             for J in Args'Range loop
                Free (Args (J));
             end loop;
          end;
+
       else
          declare
-            Args             : Argument_List
-              (1 .. Filenames_Length + Args_Length);
+            Args : Argument_List (1 .. Filenames_Length + Args_Length);
          begin
             for J in 1 .. Args_Length loop
                Args (J) := new String'(Head (Arguments_Temp));
@@ -264,7 +267,7 @@ package body VCS.CVS is
                Args (J) := new String'(Base_Name (Head (Filenames_Temp)));
                Filenames_Temp := Next (Filenames_Temp);
             end loop;
-            Output := Command (Rep, "cvs", Args, Output_To_Message);
+            Output := Command (Rep, CVS_Command, Args, Output_To_Message);
 
             for J in Args'Range loop
                Free (Args (J));
@@ -371,11 +374,11 @@ package body VCS.CVS is
          declare
             Args    : Argument_List (1 .. 2);
          begin
-            Args (1) := new String'("status");
-            Args (2) := new String'("-l");
+            Args (1) := new String' ("status");
+            Args (2) := new String' ("-l");
 
             --  Spawn command.
-            Output := Command (Rep, "cvs", Args);
+            Output := Command (Rep, CVS_Command, Args);
 
             Free (Args (1));
          end;
@@ -383,7 +386,7 @@ package body VCS.CVS is
          declare
             Args    : Argument_List (1 .. Filenames_Length + 1);
          begin
-            Args (1) := new String'("status");
+            Args (1) := new String' ("status");
 
             for J in 2 .. Filenames_Length + 1 loop
                Args (J) := new String'(Base_Name (Head (Files)));
@@ -391,7 +394,7 @@ package body VCS.CVS is
             end loop;
 
             --  Spawn command.
-            Output := Command (Rep, "cvs", Args);
+            Output := Command (Rep, CVS_Command, Args);
 
             --  Free arguments list.
             for J in Args'Range loop
@@ -880,14 +883,14 @@ package body VCS.CVS is
             Old_Dir : Dir_Name_Str := Get_Current_Dir;
             New_Dir : Dir_Name_Str := Get_Path (File);
 
-            Args    : Argument_List (1 .. 3);
+            Args    : Argument_List (1 .. 2);
+
          begin
             Change_Dir (New_Dir);
             Args (1) := new String' ("diff");
-            Args (2) := new String' ("-c");
-            Args (3) := new String' (Base_Name (File));
+            Args (2) := new String' (Base_Name (File));
 
-            Result := Command (Rep, "cvs", Args);
+            Result := Command (Rep, CVS_Command, Args);
 
             Change_Dir (Old_Dir);
 
@@ -920,7 +923,7 @@ package body VCS.CVS is
       Args (1) := new String' ("log");
       Args (2) := new String' (Base_Name (File));
 
-      Result := Command (Rep, "cvs", Args);
+      Result := Command (Rep, CVS_Command, Args);
 
       Change_Dir (Old_Dir);
 
@@ -954,7 +957,7 @@ package body VCS.CVS is
       Args (1) := new String' ("annotate");
       Args (2) := new String' (Base_Name (File));
 
-      Result := Command (Rep, "cvs", Args);
+      Result := Command (Rep, CVS_Command, Args);
 
       Change_Dir (Old_Dir);
 
