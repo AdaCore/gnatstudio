@@ -8771,7 +8771,16 @@ If python support has been enabled, the python shell is accessible through the
 display it by using the menu @file{Tools->Python Console}.
 
 You can type @code{help(GPS)} in the python console to see the list of
-functions exported by GPS to python.
+functions exported by GPS to python. If you want to save the output of
+this (or any) command to a file, you can do:
+
+@smallexample
+>>> e=file("/tmp/gps-help.txt", "w")
+>>> sys.stdout=e
+>>> help(GPS)
+>>> e.flush()
+>>> sys.stdout=sys.__stdout__
+@end smallexample
 
 The same example that was used to show the GPS shell follows, now using
 python. As you can notice, the name of the commands is
