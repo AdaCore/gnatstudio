@@ -1175,7 +1175,7 @@ package body Project_Explorers is
          end if;
       end loop;
 
-      Sort (File_Node);
+      Sort (File_Node (File_Node'First .. File_Node_Index - 1));
 
       for J in File_Node'First .. File_Node_Index - 1 loop
          Append_File
