@@ -940,7 +940,7 @@ package body Entities is
       if Filenames_Are_Case_Sensitive then
          return K1 = K2 or else K1.all = K2.all;
       else
-         return To_Lower (K1.all) = To_Lower (K2.all);
+         return K1 = K2 or else To_Lower (K1.all) = To_Lower (K2.all);
       end if;
    end Equal;
 
