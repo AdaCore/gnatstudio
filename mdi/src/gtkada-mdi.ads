@@ -2,26 +2,24 @@ with Glib;
 with Gdk.GC;
 with Gdk.Types;
 with Gtk.Event_Box;
+with Gtk.Handlers;
 with Gtk.Layout;
+with Gtk.Menu;
+with Gtk.Check_Menu_Item;
 with Gtk.Widget;
 with Gtk.Window;
 with GNAT.OS_Lib;
 
 --  TODO:
---  - handles docking (widgets that can't move)
 --  - handles multiple views of the MDI (through several top-level windows)
 --  - have an icon-bar somewhere (or notebook) to list all the children
 --  - Provide automatic initial placement of widgets
 --  - Saving and restoring sessions (window location,...)
 --  - When in a scrolled window, shouldn't constrain the possible coordinates
---  - When a toplevel window is destroyed, we must remove the child from
---    the MDI
 --  - Icons should be put at the bottom, and automatically moved when the
 --    MDI window is resized.
 --  - When items are maximized, they should be put in a notebook.
 --  - Icons should be placed correctly when there are also docked items
---  - Multiple items docked at the same location should be put in a notebook
---  - Add a set_title for children.
 --
 --  From GNOME MDI documentation:
 --  - GnomeMDI also provides means to create global menus and toolbar that
@@ -81,6 +79,9 @@ package Gtkada.MDI is
    --
    --  On the other hand, if you insert any other widget, toplevel windows
    --  are created on the fly when needed, and destroyed automatically.
+   --
+   --  Note: You might have to call Set_USize on Child to set its initial
+   --  size. This won't prevent it from being resized by the user.
 
    procedure Set_Title (Child : access MDI_Child_Record; Title : String);
    --  Set the title for a child.
@@ -103,6 +104,21 @@ package Gtkada.MDI is
      (MDI : access MDI_Window_Record) return MDI_Child;
    --  Return the child that currently has the focus.
    --  null is returned if no child has the focus.
+
+   function Create_Menu
+     (MDI : access MDI_Window_Record) return Gtk.Menu.Gtk_Menu;
+   --  Create a dynamic menu that can then be inserted into a menu bar. This
+   --  menu is dynamic, ie its content will changed based on the focus
+   --  child.
+   --  If this function is called several times, the same menu is returned
+   --  every time.
+
+   function Create_Child_Menu (Child : access MDI_Child_Record'Class)
+      return Gtk.Menu.Gtk_Menu;
+   --  Create and return a static menu that should be put in a child-specific
+   --  menu bar. The recommended way to use this is to put this menu in the
+   --  menu bar for a floating child. This will allow thie child to be
+   --  unfloated, or even docked.
 
    -----------------------------------------
    -- MDI_Child and encapsulated children --
@@ -295,6 +311,14 @@ private
       MDI_Width, MDI_Height : Glib.Guint := 0;
       --  Size of the MDI. This is used to avoid infinite loops in
       --  size_allocate
+
+      Menu : Gtk.Menu.Gtk_Menu;
+      Dock_Menu_Item : Gtk.Check_Menu_Item.Gtk_Check_Menu_Item;
+      Dock_Menu_Item_Id : Gtk.Handlers.Handler_Id;
+      Float_Menu_Item : Gtk.Check_Menu_Item.Gtk_Check_Menu_Item;
+      Float_Menu_Item_Id : Gtk.Handlers.Handler_Id;
+      --  The dynamic menu used to provide access to the most common functions
+      --  of MDI.
    end record;
 
    pragma Inline (Get_Window);
