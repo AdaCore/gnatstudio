@@ -306,12 +306,6 @@ package body Src_Editor_Buffer is
       Set    : Boolean);
    --  Common function for [Add|Remove]_Line_Highlighting.
 
-   function Get_Editable_Line
-     (Buffer : access Source_Buffer_Record'Class;
-      Line   : Buffer_Line_Type) return Editable_Line_Type;
-   --  Return the editable line corresponding to Line.
-   --  Return 0 if no editable line was found.
-
    ---------------------
    -- Get_Buffer_Line --
    ---------------------
@@ -740,8 +734,8 @@ package body Src_Editor_Buffer is
             Insertion,
             Source_Buffer (Buffer),
             False,
-            Natural (Get_Line (Pos)),
-            Natural (Get_Line_Offset (Pos)));
+            Get_Editable_Line (Buffer, Buffer_Line_Type (Get_Line (Pos) + 1)),
+            Natural (Get_Line_Offset (Pos) + 1));
 
          Buffer.Inserting := True;
          Enqueue (Buffer, Command_Access (Command));
@@ -760,8 +754,9 @@ package body Src_Editor_Buffer is
                Insertion,
                Source_Buffer (Buffer),
                False,
-               Natural (Get_Line (Pos)),
-               Natural (Get_Line_Offset (Pos)));
+               Get_Editable_Line
+                 (Buffer, Buffer_Line_Type (Get_Line (Pos) + 1)),
+               Natural (Get_Line_Offset (Pos) + 1));
 
             Buffer.Inserting := True;
             Enqueue (Buffer, Command_Access (Command));
@@ -778,8 +773,8 @@ package body Src_Editor_Buffer is
             Insertion,
             Source_Buffer (Buffer),
             False,
-            Natural (Get_Line (Pos)),
-            Natural (Get_Line_Offset (Pos)));
+            Get_Editable_Line (Buffer, Buffer_Line_Type (Get_Line (Pos) + 1)),
+            Natural (Get_Line_Offset (Pos) + 1));
          Enqueue (Buffer, Command_Access (Command));
          Add_Text (Command, Text);
          Buffer.Current_Command := Command_Access (Command);
@@ -926,10 +921,11 @@ package body Src_Editor_Buffer is
             Deletion,
             Source_Buffer (Buffer),
             True,
-            Integer (Line_Start),
-            Integer (Column_Start),
+            Get_Editable_Line (Buffer, Buffer_Line_Type (Line_Start + 1)),
+            Natural (Column_Start + 1),
             Direction,
-            Integer (Line), Integer (Column));
+            Get_Editable_Line (Buffer, Buffer_Line_Type (Line + 1)),
+            Natural (Column + 1));
 
          Buffer.Inserting := True;
          Enqueue (Buffer, Command_Access (Command));
@@ -938,15 +934,15 @@ package body Src_Editor_Buffer is
          Add_Text
            (Command,
             Get_Slice (Buffer, Start_Iter, End_Iter),
-            Integer (Line_Start),
+            Get_Editable_Line (Buffer, Buffer_Line_Type (Line_Start + 1)),
             Integer (Column_Start));
       else
          if Direction = Forward then
             Add_Text
               (Command,
                Get_Slice (Buffer, Start_Iter, End_Iter),
-               Integer (Line_Start),
-               Integer (Column_Start));
+               Get_Editable_Line (Buffer, Buffer_Line_Type (Line_Start + 1)),
+               Natural (Column_Start + 1));
          else
             Add_Text
               (Command,
@@ -2141,6 +2137,22 @@ package body Src_Editor_Buffer is
       return True;
    end Is_Valid_Position;
 
+   function Is_Valid_Position
+     (Buffer : access Source_Buffer_Record;
+      Line   : Editable_Line_Type;
+      Column : Natural := 1) return Boolean
+   is
+      Buffer_Line : constant Buffer_Line_Type :=
+        Get_Buffer_Line (Buffer, Line);
+   begin
+      if Buffer_Line = 0 then
+         raise Program_Error;
+      end if;
+
+      return Is_Valid_Position
+        (Buffer, Gint (Buffer_Line - 1), Gint (Column - 1));
+   end Is_Valid_Position;
+
    -------------------------
    -- Set_Cursor_Position --
    -------------------------
@@ -2162,6 +2174,23 @@ package body Src_Editor_Buffer is
          Get_Iter_At_Line_Offset (Buffer, Iter, Line, Column);
          Place_Cursor (Buffer, Iter);
       end if;
+   end Set_Cursor_Position;
+
+   procedure Set_Cursor_Position
+     (Buffer  : access Source_Buffer_Record;
+      Line    : Editable_Line_Type;
+      Column  : Natural)
+   is
+      Buffer_Line : constant Buffer_Line_Type :=
+        Get_Buffer_Line (Buffer, Line);
+   begin
+      --  ??? We should be able to set cursor in non-visible lines, by making
+      --  them visible.
+      if Buffer_Line = 0 then
+         raise Program_Error;
+      end if;
+
+      Set_Cursor_Position (Buffer, Gint (Buffer_Line - 1), Gint (Column - 1));
    end Set_Cursor_Position;
 
    ---------------------------------
@@ -2443,6 +2472,24 @@ package body Src_Editor_Buffer is
       end if;
    end Insert;
 
+   procedure Insert
+     (Buffer      : access Source_Buffer_Record;
+      Line        : Editable_Line_Type;
+      Column      : Natural;
+      Text        : String;
+      Enable_Undo : Boolean := True)
+   is
+      Buffer_Line : constant Buffer_Line_Type :=
+        Get_Buffer_Line (Buffer, Line);
+   begin
+      if Buffer_Line = 0 then
+         raise Program_Error;
+      end if;
+
+      Insert (Buffer, Gint (Buffer_Line - 1), Gint (Column - 1), Text,
+              Enable_Undo);
+   end Insert;
+
    ------------
    -- Delete --
    ------------
@@ -2477,6 +2524,25 @@ package body Src_Editor_Buffer is
       if not Enable_Undo then
          Buffer.Inserting := Previous_Inserting_Value;
       end if;
+   end Delete;
+
+   procedure Delete
+     (Buffer      : access Source_Buffer_Record;
+      Line        : Editable_Line_Type;
+      Column      : Natural;
+      Length      : Natural;
+      Enable_Undo : Boolean := True)
+   is
+      Buffer_Line : constant Buffer_Line_Type :=
+        Get_Buffer_Line (Buffer, Line);
+
+   begin
+      if Buffer_Line = 0 then
+         raise Program_Error;
+      end if;
+
+      Delete (Buffer, Gint (Buffer_Line - 1), Gint (Column - 1), Gint (Length),
+              Enable_Undo);
    end Delete;
 
    -------------------
@@ -2529,6 +2595,34 @@ package body Src_Editor_Buffer is
       if not Enable_Undo then
          Buffer.Inserting := Previous_Inserting_Value;
       end if;
+   end Replace_Slice;
+
+   procedure Replace_Slice
+     (Buffer       : access Source_Buffer_Record;
+      Start_Line   : Editable_Line_Type;
+      Start_Column : Natural;
+      End_Line     : Editable_Line_Type;
+      End_Column   : Natural;
+      Text         : String;
+      Enable_Undo  : Boolean := True)
+   is
+      Buffer_Start_Line : constant Buffer_Line_Type :=
+        Get_Buffer_Line (Buffer, Start_Line);
+      Buffer_End_Line : constant Buffer_Line_Type :=
+        Get_Buffer_Line (Buffer, End_Line);
+   begin
+      if Buffer_Start_Line = 0 or else Buffer_End_Line = 0 then
+         raise Program_Error;
+      end if;
+
+      Replace_Slice
+        (Buffer,
+         Gint (Buffer_Start_Line - 1),
+         Gint (Start_Column - 1),
+         Gint (Buffer_End_Line - 1),
+         Gint (End_Column - 1),
+         Text,
+         Enable_Undo);
    end Replace_Slice;
 
    ----------------
@@ -3950,8 +4044,9 @@ package body Src_Editor_Buffer is
          Create
            (Replace_Cmd,
             Buffer,
-            Integer (Line), 0,
-            Integer (Line), Integer (Col),
+            Get_Editable_Line (Buffer, Buffer_Line_Type (Line + 1)), 1,
+            Get_Editable_Line (Buffer, Buffer_Line_Type (Line + 1)),
+            Natural (Col + 1),
             Blank_Slice (Indent, Use_Tabs) &
             Slice (Index .. Slice_Length - Offset) & ASCII.LF &
             Blank_Slice (Next_Indent, Use_Tabs) &
@@ -4008,8 +4103,12 @@ package body Src_Editor_Buffer is
                Create
                  (Replace_Cmd,
                   Buffer,
-                  Integer (Current_Line), 0,
-                  Integer (Current_Line), Offset,
+                  Get_Editable_Line
+                    (Buffer, Buffer_Line_Type (Current_Line + 1)),
+                  1,
+                  Get_Editable_Line
+                    (Buffer, Buffer_Line_Type (Current_Line + 1)),
+                  Natural (Offset + 1),
                   Blank_Slice (Indent, Use_Tabs));
                Enqueue (Buffer, Command_Access (Replace_Cmd));
                Global_Offset := Global_Offset - Offset + Indent;
@@ -4191,5 +4290,68 @@ package body Src_Editor_Buffer is
          Unchecked_Free (X.Info);
       end if;
    end Free;
+
+   ----------------------
+   -- Forward_Position --
+   ----------------------
+
+   procedure Forward_Position
+     (Buffer       : access Source_Buffer_Record;
+      Start_Line   : Editable_Line_Type;
+      Start_Column : Natural;
+      Length       : Integer;
+      End_Line     : out Editable_Line_Type;
+      End_Column   : out Natural)
+   is
+      Iter    : Gtk_Text_Iter;
+      Success : Boolean;
+   begin
+      --  ??? Should move past non-editable lines.
+
+      Get_Iter_At_Line_Offset
+        (Buffer,
+         Iter,
+         Gint (Get_Buffer_Line (Buffer, Start_Line) - 1),
+         Gint (Start_Column - 1));
+
+      Forward_Chars (Iter, Gint (Length), Success);
+
+      End_Line := Get_Editable_Line
+        (Buffer, Buffer_Line_Type (Get_Line (Iter) + 1));
+
+      End_Column := Natural (Get_Line_Offset (Iter) + 1);
+   end Forward_Position;
+
+   --------------
+   -- Get_Text --
+   --------------
+
+   function Get_Text
+     (Buffer       : access Source_Buffer_Record;
+      Start_Line   : Editable_Line_Type;
+      Start_Column : Natural;
+      End_Line     : Editable_Line_Type;
+      End_Column   : Natural) return String
+   is
+      Start_Iter, End_Iter : Gtk_Text_Iter;
+   begin
+      --  ??? Should remove non-editable lines / include hidden lines ?
+      --  ??? Should we provide a Get_Iter_At_Line_Offset function
+      --  generalized to Editable_Line_Type ?
+
+      Get_Iter_At_Line_Offset
+        (Buffer,
+         Start_Iter,
+         Gint (Get_Buffer_Line (Buffer, Start_Line) - 1),
+         Gint (Start_Column - 1));
+
+      Get_Iter_At_Line_Offset
+        (Buffer,
+         End_Iter,
+         Gint (Get_Buffer_Line (Buffer, End_Line) - 1),
+         Gint (End_Column - 1));
+
+      return Get_Text (Buffer, Start_Iter, End_Iter, True);
+   end Get_Text;
 
 end Src_Editor_Buffer;
