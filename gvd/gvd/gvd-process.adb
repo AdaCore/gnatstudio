@@ -58,6 +58,7 @@ with Odd.Code_Editors; use Odd.Code_Editors;
 with GNAT.Regpat;     use GNAT.Regpat;
 with Gtk.Handlers;    use Gtk.Handlers;
 with Odd.Menus;       use Odd.Menus;
+with Items.Simples;   use Items.Simples;
 
 with Main_Debug_Window_Pkg;      use Main_Debug_Window_Pkg;
 with Breakpoints_Pkg;            use Breakpoints_Pkg;
@@ -532,6 +533,7 @@ package body Odd.Process is
       Command2 : String := To_Lower (Command);
       First    : Natural := Command2'First;
       Start    : Natural;
+      Tmp      : Natural;
       Cursor   : Gdk_Cursor;
    begin
       Append (Debugger.Command_History, Command);
@@ -560,7 +562,27 @@ package body Odd.Process is
          Skip_To_Blank (Command2, Start);
          Skip_Blanks (Command2, Start);
 
-         if Enable_Block_Search then
+         if Command (Start) = '`' then
+            Tmp := Start + 1;
+            Skip_To_Char (Command, Tmp, '`');
+
+            declare
+               Entity : Items.Generic_Type_Access :=
+                 New_Debugger_Type (Command (Start + 1 .. Tmp - 1));
+            begin
+               Set_Value
+                 (Debugger_Output_Type (Entity.all),
+                  Send (Debugger.Debugger,
+                        Refresh_Command (Debugger_Output_Type (Entity.all))));
+               Gtk_New
+                 (Item, Get_Window (Debugger.Data_Canvas),
+                  Variable_Name  => Command (Start + 1 .. Tmp - 1),
+                  Debugger       => Debugger,
+                  Auto_Refresh   => Command2 (First + 6) = 'd',
+                  Default_Entity => Entity);
+            end;
+
+         elsif Enable_Block_Search then
             Gtk_New
               (Item, Get_Window (Debugger.Data_Canvas),
                Variable_Name => Variable_Name_With_Frame

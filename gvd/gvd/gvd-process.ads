@@ -37,7 +37,7 @@ with Gtkada.Canvas;
 with Debugger; use Debugger;
 with Main_Debug_Window_Pkg;
 with Process_Tab_Pkg;
-with Generic_Values;
+with Items;
 with Odd.Code_Editors;
 with Odd.Histories;
 with Odd.Types;
@@ -117,7 +117,7 @@ package Odd.Process is
        --  Font used in the debugger window.
 
       Selected_Item      : Gtkada.Canvas.Canvas_Item := null;
-      Selected_Component : Generic_Values.Generic_Type_Access := null;
+      Selected_Component : Items.Generic_Type_Access := null;
        --  The currently selected item, and its specific component.
 
       Command_History : String_History.History_List
