@@ -417,7 +417,6 @@ package body Socket_Module is
          Read_Data := Find_Data (String'(Get_Data (Inst, Socket_Class)));
          if Read_Data /= null then
             Timeout_Remove (Read_Data.Timeout);
-            --  Close (Read_Data);
          end if;
       end if;
 
