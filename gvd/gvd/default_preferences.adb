@@ -811,6 +811,11 @@ package body Default_Preferences is
 
          Free (File);
       end if;
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Load_Preferences;
 
    ----------------------
@@ -1886,7 +1891,7 @@ package body Default_Preferences is
    exception
       when E : others =>
          Trace (Exception_Handle,
-                "Unexpected information " & Exception_Information (E));
+                "Unexpected exception: " & Exception_Information (E));
          Destroy (Dialog);
    end Edit_Preferences;
 
