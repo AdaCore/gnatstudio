@@ -617,11 +617,11 @@ package body Python_Module is
       Num : Integer;
       pragma Unreferenced (Num);
    begin
-      Setup_Return_Value (Data);
       if Append then
          Num := PyList_Append
            (Data.Return_Value, PyInt_FromLong (long (Value)));
       else
+         Setup_Return_Value (Data);
          Data.Return_Value := PyInt_FromLong (long (Value));
       end if;
    end Set_Return_Value;
@@ -637,10 +637,10 @@ package body Python_Module is
       Num : Integer;
       pragma Unreferenced (Num);
    begin
-      Setup_Return_Value (Data);
-      if Append then
+      if Append and then Data.Return_Value /= null then
          Num := PyList_Append (Data.Return_Value, PyString_FromString (Value));
       else
+         Setup_Return_Value (Data);
          Data.Return_Value := PyString_FromString (Value);
       end if;
    end Set_Return_Value;
@@ -656,11 +656,11 @@ package body Python_Module is
       Num : Integer;
       pragma Unreferenced (Num);
    begin
-      Setup_Return_Value (Data);
       if Append then
          Num := PyList_Append
            (Data.Return_Value, PyCObject_FromVoidPtr (Value));
       else
+         Setup_Return_Value (Data);
          Data.Return_Value := PyCObject_FromVoidPtr (Value);
       end if;
    end Set_Return_Value;
@@ -677,10 +677,10 @@ package body Python_Module is
       Num : Integer;
       pragma Unreferenced (Num);
    begin
-      Setup_Return_Value (Data);
       if Append then
          Num := PyList_Append (Data.Return_Value, V.Data);
       else
+         Setup_Return_Value (Data);
          Py_INCREF (V.Data);
          Data.Return_Value := V.Data;
       end if;
