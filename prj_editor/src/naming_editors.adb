@@ -43,6 +43,8 @@ with Naming_Scheme_Editor_Pkg; use Naming_Scheme_Editor_Pkg;
 with GUI_Utils;                use GUI_Utils;
 with Glide_Intl;               use Glide_Intl;
 with Prj_API;                  use Prj_API;
+with Glide_Kernel;             use Glide_Kernel;
+with Glide_Kernel.Project;     use Glide_Kernel.Project;
 
 with Interfaces.C.Strings;     use Interfaces.C.Strings;
 
@@ -111,7 +113,7 @@ package body Naming_Editors is
 
    function Edit_Naming_Scheme
      (Parent       : access Gtk_Window_Record'Class;
-      Project      : Prj.Tree.Project_Node_Id;
+      Kernel       : access Kernel_Handle_Record'Class;
       Project_View : Prj.Project_Id) return Boolean
    is
       Dialog : Gtk_Dialog;
@@ -135,7 +137,8 @@ package body Naming_Editors is
       Show_Project_Settings (Editor, Project_View);
 
       if Run (Dialog) = Gtk_Response_OK then
-         Create_Project_Entry (Editor, Project);
+         Create_Project_Entry
+           (Editor, Kernel, Get_Project_From_View (Project_View));
          Destroy (Dialog);
          return True;
       end if;
@@ -225,6 +228,7 @@ package body Naming_Editors is
 
    procedure Create_Project_Entry
      (Editor  : access Naming_Editor_Record;
+      Kernel  : access Kernel_Handle_Record'Class;
       Project : Prj.Tree.Project_Node_Id)
    is
       Num_Rows : constant Gint := Get_Rows (Editor.Exception_List);
@@ -237,34 +241,34 @@ package body Naming_Editors is
          Update_Attribute_Value_In_Scenario
            (Project            => Project,
             Pkg_Name           => Get_Name_String (Name_Naming),
-            Scenario_Variables => (1 .. 0 => Empty_Node),
+            Scenario_Variables => Scenario_Variables (Kernel),
             Attribute_Name     => Get_Name_String (Name_Specification_Suffix),
             Value              => Get_Text (Get_Entry (Editor.Spec_Extension)),
             Attribute_Index    => Ada_String);
          Update_Attribute_Value_In_Scenario
            (Project            => Project,
             Pkg_Name           => Get_Name_String (Name_Naming),
-            Scenario_Variables => (1 .. 0 => Empty_Node),
+            Scenario_Variables => Scenario_Variables (Kernel),
             Attribute_Name     => Get_Name_String (Name_Implementation_Suffix),
             Value              => Get_Text (Get_Entry (Editor.Body_Extension)),
             Attribute_Index    => Ada_String);
          Update_Attribute_Value_In_Scenario
            (Project            => Project,
             Pkg_Name           => Get_Name_String (Name_Naming),
-            Scenario_Variables => (1 .. 0 => Empty_Node),
+            Scenario_Variables => Scenario_Variables (Kernel),
             Attribute_Name     => Get_Name_String (Name_Separate_Suffix),
             Value         => Get_Text (Get_Entry (Editor.Separate_Extension)));
          Update_Attribute_Value_In_Scenario
            (Project            => Project,
             Pkg_Name           => Get_Name_String (Name_Naming),
-            Scenario_Variables => (1 .. 0 => Empty_Node),
+            Scenario_Variables => Scenario_Variables (Kernel),
             Attribute_Name     => Get_Name_String (Name_Casing),
             Value              => Image
               (Casing_Type'Val (Get_Index_In_List (Editor.Casing))));
          Update_Attribute_Value_In_Scenario
            (Project            => Project,
             Pkg_Name           => Get_Name_String (Name_Naming),
-            Scenario_Variables => (1 .. 0 => Empty_Node),
+            Scenario_Variables => Scenario_Variables (Kernel),
             Attribute_Name     => Get_Name_String (Name_Dot_Replacement),
             Value              => Get_Text (Editor.Dot_Replacement));
       end if;
@@ -281,7 +285,7 @@ package body Naming_Editors is
                Update_Attribute_Value_In_Scenario
                  (Project            => Project,
                   Pkg_Name           => Get_Name_String (Name_Naming),
-                  Scenario_Variables => (1 .. 0 => Empty_Node),
+                  Scenario_Variables => Scenario_Variables (Kernel),
                   Attribute_Name     => Get_Name_String (Name_Specification),
                   Value              => Spec,
                   Attribute_Index    => U);
@@ -290,7 +294,7 @@ package body Naming_Editors is
                Update_Attribute_Value_In_Scenario
                  (Project            => Project,
                   Pkg_Name           => Get_Name_String (Name_Naming),
-                  Scenario_Variables => (1 .. 0 => Empty_Node),
+                  Scenario_Variables => Scenario_Variables (Kernel),
                   Attribute_Name     => Get_Name_String (Name_Implementation),
                   Value              => Bod,
                   Attribute_Index    => U);
