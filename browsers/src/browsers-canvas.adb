@@ -111,6 +111,17 @@ package body Browsers.Canvas is
      (Mitem : access Gtk_Widget_Record'Class; Data : Cb_Data);
    --  Remove all items except the one described in Data from the canvas.
 
+   procedure On_Background_Click
+     (Browser : access Gtk_Widget_Record'Class);
+   --  Called when the user clicked in the background of the canvas
+
+   procedure Internal_Select
+     (Browser : access Glide_Browser_Record'Class;
+      Item    : Canvas_Item := null;
+      Refresh_Items : Boolean := False);
+   --  Internal version of Select_Item, that can also be used to unselect an
+   --  item.
+
    ----------------
    -- Initialize --
    ----------------
@@ -141,6 +152,10 @@ package body Browsers.Canvas is
       Widget_Callback.Object_Connect
         (Browser.Canvas, "draw_links", On_Draw_Links'Access,
          Browser, After => True);
+
+      Widget_Callback.Object_Connect
+        (Browser.Canvas, "background_click",
+         Widget_Callback.To_Marshaller (On_Background_Click'Access), Browser);
    end Initialize;
 
    ------------------
@@ -580,13 +595,13 @@ package body Browsers.Canvas is
          Height      => Coord.Height);
    end Draw_Item_Background;
 
-   -----------------
-   -- Select_Item --
-   -----------------
+   ---------------------
+   -- Internal_Select --
+   ---------------------
 
-   procedure Select_Item
-     (Browser : access Glide_Browser_Record;
-      Item    : access Gtkada.Canvas.Canvas_Item_Record'Class;
+   procedure Internal_Select
+     (Browser : access Glide_Browser_Record'Class;
+      Item    : Canvas_Item := null;
       Refresh_Items : Boolean := False)
    is
       function Refresh_Item
@@ -609,7 +624,7 @@ package body Browsers.Canvas is
       end Refresh_Item;
 
    begin
-      Browser.Selected_Item := Canvas_Item (Item);
+      Browser.Selected_Item := Item;
 
       if Refresh_Items then
          --  ??? We should redraw only the items that were previously
@@ -617,7 +632,29 @@ package body Browsers.Canvas is
          For_Each_Item (Browser.Canvas, Refresh_Item'Unrestricted_Access);
          Refresh_Canvas (Browser.Canvas);
       end if;
+   end Internal_Select;
+
+   -----------------
+   -- Select_Item --
+   -----------------
+
+   procedure Select_Item
+     (Browser : access Glide_Browser_Record;
+      Item    : access Gtkada.Canvas.Canvas_Item_Record'Class;
+      Refresh_Items : Boolean := False) is
+   begin
+      Internal_Select (Browser, Canvas_Item (Item), Refresh_Items);
    end Select_Item;
+
+   -------------------------
+   -- On_Background_Click --
+   -------------------------
+
+   procedure On_Background_Click
+     (Browser : access Gtk_Widget_Record'Class) is
+   begin
+      Internal_Select (Glide_Browser (Browser), null, True);
+   end On_Background_Click;
 
    -----------------
    -- Get_Text_GC --
