@@ -634,6 +634,12 @@ package body Ada_Analyzer is
                  new String' (Value.Identifier (1 .. Value.Ident_Len));
             end if;
 
+            if Top_Token.Token in Token_Class_Declk then
+               Constructs.Current.Profile :=
+                 new String'
+                   (Buffer (Value.Profile_Start .. Value.Profile_End));
+            end if;
+
             Constructs.Current.Sloc_Start     := Value.Sloc;
             Constructs.Current.Sloc_End       := (Line_Count, Column);
             Constructs.Current.Is_Declaration :=
@@ -1149,6 +1155,14 @@ package body Ada_Analyzer is
                      end if;
                   end if;
 
+                  Top_Token := Top (Tokens);
+
+                  if Num_Parens = 0
+                    and then Top_Token.Token in Token_Class_Declk
+                  then
+                     Top_Token.Profile_Start := P;
+                  end if;
+
                   Push (Indents, P - Start_Of_Line + Padding + 1);
                   Num_Parens := Num_Parens + 1;
 
@@ -1161,6 +1175,12 @@ package body Ada_Analyzer is
                   else
                      Pop (Indents);
                      Num_Parens := Num_Parens - 1;
+
+                     if Num_Parens = 0
+                       and then Top_Token.Token in Token_Class_Declk
+                     then
+                        Top_Token.Profile_End := P;
+                     end if;
                   end if;
 
                when '"' =>
