@@ -18,6 +18,9 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+--  This package implements commands related to navigation in any
+--  location viewable by the user: source locations, documentation, etc.
+
 with GNAT.OS_Lib;   use GNAT.OS_Lib;
 with Glide_Kernel;  use Glide_Kernel;
 
@@ -25,6 +28,7 @@ package Commands.Locations is
 
    type Source_Location_Command_Type is new Root_Command with private;
    type Source_Location_Command is access all Source_Location_Command_Type;
+   --  Commands related to navigation in source files.
 
    procedure Create
      (Item           : out Source_Location_Command;
@@ -33,6 +37,8 @@ package Commands.Locations is
       Line           : Natural := 0;
       Column         : Natural := 0;
       Highlight_Line : Boolean := True);
+   --  Create a new Source_Location_Command with the specified
+   --  coordinates. Filename must be an absolute file name.
 
    function Execute
      (Command : access Source_Location_Command_Type) return Boolean;
