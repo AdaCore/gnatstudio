@@ -1230,6 +1230,10 @@ package body Gtkada.MDI is
       end if;
 
       if not Result then
+         if C.State = Docked then
+            Dock_Child (C, False);
+         end if;
+
          Destroy (C);
       end if;
 
@@ -1249,6 +1253,8 @@ package body Gtkada.MDI is
       --  We know at that stage that Child has already been unparent-ed
 
       pragma Assert (Get_Parent (Child) = null);
+
+      Ref (C);
 
       if C.Menu_Item /= null then
          Destroy (C.Menu_Item);
@@ -1294,6 +1300,8 @@ package body Gtkada.MDI is
       C.Initial := null;
       Free (C.Title);
       Free (C.Short_Title);
+
+      Unref (C);
    end Destroy_Child;
 
    ---------------------------
@@ -2332,6 +2340,10 @@ package body Gtkada.MDI is
    begin
       if Child = null then
          Child := Data.MDI.Focus_Child;
+      end if;
+
+      if Child = null then
+         return False;
       end if;
 
       Ref (Child);
