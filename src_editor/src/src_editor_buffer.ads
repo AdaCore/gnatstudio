@@ -384,36 +384,6 @@ package Src_Editor_Buffer is
    --  when compiled with assertion checks, or an undefined behavior otherwise.
    --  Takes Tabs into account when Expand_Tabs = True.
 
-   procedure Highlight_Region
-     (Buffer       : access Source_Buffer_Record;
-      Start_Line   : Gint;
-      Start_Column : Gint;
-      End_Line     : Gint;
-      End_Column   : Gint);
-   --  Highlight the given region. The color used in this case is different
-   --  from the color used for highlighting lines.
-   --
-   --  Both start and end positions must be verified before calling this
-   --  procedure. An incorrect position will cause an Assertion_Failure
-   --  when compiled with assertion checks, or an undefined behavior otherwise.
-
-   procedure Unhighlight_Region
-     (Buffer : access Source_Buffer_Record;
-      Start_Line   : Gint;
-      Start_Column : Gint;
-      End_Line     : Gint;
-      End_Column   : Gint);
-   --  Restore the given region unhighlighted.
-   --
-   --  Both start and end positions must be verified before calling this
-   --  procedure. An incorrect position will cause an Assertion_Failure
-   --  when compiled with assertion checks, or an undefined behavior otherwise.
-
-   procedure Unhighlight_All (Buffer : access Source_Buffer_Record);
-   --  Restore all highlighted regions to unhighlighted. Only the region
-   --  highlighting is canceled, the other potential highlightings (line,
-   --  syntax) are preserved.
-
    procedure Forward_To_Line_End (Iter : in out Gtk.Text_Iter.Gtk_Text_Iter);
    --  This is a temporary implementation of Gtk.Text_Iter.Forward_To_Line_End
    --  because the gtk+ one is broken at the moment, and causes Critical
@@ -949,11 +919,8 @@ private
 
       Lang          : Language.Language_Access;
       Syntax_Tags   : Src_Highlighting.Highlighting_Tags;
-      HL_Line_Tag   : Gtk.Text_Tag.Gtk_Text_Tag;
-      --  A tag used when highlighting lines
-
-      HL_Region_Tag : Gtk.Text_Tag.Gtk_Text_Tag;
-      --  A tag used when highlighting regions
+      Delimiter_Tag : Gtk.Text_Tag.Gtk_Text_Tag;
+      --  A tag used when highlighting delimiters (e.g. parens).
 
       Non_Editable_Tag : Gtk.Text_Tag.Gtk_Text_Tag;
       --  A tag for text that cannot be interactively deleted.

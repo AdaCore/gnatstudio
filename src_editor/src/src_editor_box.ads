@@ -292,36 +292,6 @@ package Src_Editor_Box is
    --  ??? what is the relationship with the clipboard?
    --  ??? This function is commented out since it was removed in gtk-1.3.7.
 
-   procedure Highlight_Region
-     (Editor       : access Source_Editor_Box_Record;
-      Start_Line   : Positive;
-      Start_Column : Positive;
-      End_Line     : Positive;
-      End_Column   : Positive);
-   --  Highlight the given region. The color used in this case is different
-   --  from the color used for highlighting lines.
-   --
-   --  Both start and end positions must be verified before calling this
-   --  procedure. An incorrect position will cause an Assertion_Failure
-   --  when compiled with assertion checks, or an undefined behavior otherwise.
-
-   procedure Unhighlight_Region
-     (Editor       : access Source_Editor_Box_Record;
-      Start_Line   : Positive;
-      Start_Column : Positive;
-      End_Line     : Positive;
-      End_Column   : Positive);
-   --  Restore the given region unhighlighted.
-   --
-   --  Both start and end positions must be verified before calling this
-   --  procedure. An incorrect position will cause an Assertion_Failure
-   --  when compiled with assertion checks, or an undefined behavior otherwise.
-
-   procedure Unhighlight_All (Editor : access Source_Editor_Box_Record);
-   --  Restore all highlighted regions to unhighlighted. Only the region
-   --  highlighting is cancelled, the other potential highlightings (line,
-   --  syntax) are preserved.
-
    procedure Goto_Declaration_Or_Body
      (Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
       To_Body : Boolean;
