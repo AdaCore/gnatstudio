@@ -122,6 +122,6 @@ package Vdiff2_Module.Utils.Shell_Command is
       Line    : Natural := 0;
       Start_C : Integer := -1;
       End_C   : Integer := -1);
-   -- Remove fine highlighting
+   --  Remove fine highlighting
 
 end Vdiff2_Module.Utils.Shell_Command;
