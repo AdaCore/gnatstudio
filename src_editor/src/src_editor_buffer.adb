@@ -698,6 +698,32 @@ package body Src_Editor_Buffer is
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Delete_Range_Before_Handler;
 
+   -----------------------
+   -- Jump_To_Delimiter --
+   -----------------------
+
+   procedure Jump_To_Delimiter (Buffer : access Source_Buffer_Record) is
+      On_Cursor_Iter       : Gtk_Text_Iter;
+      First_Highlight_Iter : Gtk_Text_Iter;
+      Last_Highlight_Iter  : Gtk_Text_Iter;
+   begin
+      if not Buffer.Has_Delimiters_Highlight then
+         return;
+      end if;
+
+      Get_Iter_At_Mark
+        (Buffer, First_Highlight_Iter, Buffer.Start_Delimiters_Highlight);
+      Get_Iter_At_Mark
+        (Buffer, Last_Highlight_Iter, Buffer.End_Delimiters_Highlight);
+      Get_Iter_At_Mark (Buffer, On_Cursor_Iter, Buffer.Insert_Mark);
+
+      if Equal (First_Highlight_Iter, On_Cursor_Iter) then
+         Place_Cursor (Buffer, Last_Highlight_Iter);
+      else
+         Place_Cursor (Buffer, First_Highlight_Iter);
+      end if;
+   end Jump_To_Delimiter;
+
    ------------------------------
    -- Emit_New_Cursor_Position --
    ------------------------------
@@ -718,6 +744,8 @@ package body Src_Editor_Buffer is
       Emit_By_Name
         (Get_Object (Buffer), "cursor_position_changed" & ASCII.NUL,
          Line => Line, Column => Column);
+
+      --  Remove delimiters highlight.
 
       if Buffer.Has_Delimiters_Highlight then
          declare
@@ -743,8 +771,6 @@ package body Src_Editor_Buffer is
          Current              : Gtk_Text_Iter;
 
          On_Cursor_Iter       : Gtk_Text_Iter;
-
-
          First_Highlight_Iter : Gtk_Text_Iter;
          Last_Highlight_Iter  : Gtk_Text_Iter;
          Highlight_Necessary  : Boolean := False;
