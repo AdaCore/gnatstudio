@@ -279,6 +279,19 @@ procedure GPS is
             end if;
          end if;
 
+         if not Is_Directory
+           (String_Utils.Name_As_Directory (Dir.all) & "customize")
+         then
+            Make_Dir (String_Utils.Name_As_Directory (Dir.all) & "customize");
+
+            if not Dir_Created then
+               Button := Message_Dialog
+                 ((-"Created config directory ")
+                  & String_Utils.Name_As_Directory (Dir.all) & "customize",
+                  Information, Button_OK, Justification => Justify_Left);
+            end if;
+         end if;
+
       exception
          when Directory_Error =>
             Button := Message_Dialog
