@@ -26,7 +26,6 @@ with Unchecked_Conversion;
 with Odd.Process; use Odd.Process;
 with Gdk.Types.Keysyms;  use Gdk.Types.Keysyms;
 with Gdk.Event;   use Gdk.Event;
-with Odd.Histories;
 with Odd_Intl; use Odd_Intl;
 with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
 with Debugger; use Debugger;
@@ -36,18 +35,8 @@ with Ada.Text_IO; use Ada.Text_IO;
 
 package body Process_Tab_Pkg.Callbacks is
 
-   Command_History_Size : constant := 100;
-   --  Number of items in the command history list.
-
-   Command_History_Collapse_Entries : constant Boolean := True;
-   --  Whether we should collapse entries in the history list.
-
    use Gtk.Arguments;
-
-   package String_History is new Odd.Histories (String);
    use String_History;
-   Command_History : String_History.History_List
-     (Command_History_Size, Command_History_Collapse_Entries);
 
    ------------------------------------
    -- On_Thread_Notebook_Switch_Page --
@@ -135,12 +124,12 @@ package body Process_Tab_Pkg.Callbacks is
 
                if S'Length = 0 then
                   begin
-                     Move_To_Previous (Command_History);
+                     Move_To_Previous (Top.Command_History);
                      Text_Output_Handler
-                       (Top, Get_Current (Command_History) & ASCII.LF,
+                       (Top, Get_Current (Top.Command_History) & ASCII.LF,
                         Is_Command => True);
-                     Process_User_Command (Top, Get_Current (Command_History));
-                     Append (Command_History, Get_Current (Command_History));
+                     Process_User_Command
+                       (Top, Get_Current (Top.Command_History));
                   exception
                      --  No previous command => do nothing
                      when No_Such_Item =>
@@ -151,9 +140,8 @@ package body Process_Tab_Pkg.Callbacks is
                   --  Insert the newline character after the user's command.
                   Text_Output_Handler (Top, "" & ASCII.LF);
 
-                  --  Process the command, and save it into the history.
+                  --  Process the command.
                   Process_User_Command (Top, S);
-                  Append (Command_History, S);
                end if;
 
                --  Move the cursor after the output of the command.
@@ -209,14 +197,14 @@ package body Process_Tab_Pkg.Callbacks is
             Gint (Get_Length (Top.Debugger_Text)));
          begin
             if Get_Key_Val (Arg1) = Gdk_Up then
-               Move_To_Previous (Command_History);
+               Move_To_Previous (Top.Command_History);
             else
-               Move_To_Next (Command_History);
+               Move_To_Next (Top.Command_History);
             end if;
 
             Set_Point (Top.Debugger_Text, Top.Edit_Pos);
             Text_Output_Handler
-              (Top, Get_Current (Command_History), Is_Command => True);
+              (Top, Get_Current (Top.Command_History), Is_Command => True);
             Set_Position
               (Top.Debugger_Text, Gint (Get_Length (Top.Debugger_Text)));
          exception
