@@ -282,6 +282,10 @@ package body Odd.Dialogs is
       Item    : Gtk_List_Item;
 
    begin
+      if not Visible_Is_Set (History_Dialog) then
+         return;
+      end if;
+
       Remove_Items
         (History_Dialog.List, Get_Children (History_Dialog.List));
       Wind (History, Backward);
@@ -303,6 +307,30 @@ package body Odd.Dialogs is
    exception
       when No_Such_Item => null;
    end Update;
+
+   -----------------------------
+   -- On_Task_Process_Stopped --
+   -----------------------------
+
+   procedure On_Task_Process_Stopped
+     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class)
+   is
+      Tab : constant Debugger_Process_Tab := Debugger_Process_Tab (Widget);
+   begin
+      Update (Tab.Window.Task_Dialog, Tab);
+   end On_Task_Process_Stopped;
+
+   ----------------------------------
+   -- On_Backtrace_Process_Stopped --
+   ----------------------------------
+
+   procedure On_Backtrace_Process_Stopped
+     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class)
+   is
+      Tab : constant Debugger_Process_Tab := Debugger_Process_Tab (Widget);
+   begin
+      Update (Tab.Window.Backtrace_Dialog, Tab);
+   end On_Backtrace_Process_Stopped;
 
    ----------------
    -- Initialize --
