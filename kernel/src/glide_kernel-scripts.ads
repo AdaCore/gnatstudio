@@ -127,7 +127,10 @@ package Glide_Kernel.Scripts is
    function Nth_Arg
      (Data : Callback_Data; N : Positive) return System.Address is abstract;
    function Nth_Arg
-     (Data : Callback_Data; N : Positive; Class : Class_Type)
+     (Data       : Callback_Data;
+      N          : Positive;
+      Class      : Class_Type;
+      Allow_Null : Boolean := False)
       return Class_Instance is abstract;
    --  Get the nth argument to the function, starting from 1.
    --  If there is not enough parameters, No_Such_Parameter is raised
@@ -135,6 +138,9 @@ package Glide_Kernel.Scripts is
    --  raised.
    --  In the last case, the class_instance must belong to Class or its
    --  children, or Invalid_Parameter is also raised.
+   --  If Allow_Null is true, then a null instance might be passed as a
+   --  parameter. If it is false, passing a null instance will raise
+   --  Invalid_Parameter.
 
    function Nth_Arg
      (Data : Callback_Data; N : Positive; Default : String)
@@ -152,7 +158,8 @@ package Glide_Kernel.Scripts is
      (Data    : Callback_Data;
       N       : Positive;
       Class   : Class_Type;
-      Default : Class_Instance)
+      Default : Class_Instance;
+      Allow_Null : Boolean := False)
       return Class_Instance;
    --  Same as above, except that if there are not enough parameters, Default
    --  is returned.

@@ -652,13 +652,23 @@ package body Glide_Kernel.Scripts is
          declare
             Name   : constant String  := Nth_Arg (Data, 2);
             File   : constant Class_Instance  :=
-              Nth_Arg (Data, 3, Get_File_Class (Kernel));
+              Nth_Arg (Data, 3, Get_File_Class (Kernel), Default => null,
+                       Allow_Null => True);
             L      : constant Integer := Nth_Arg (Data, 4, Default => 1);
             C      : constant Integer := Nth_Arg (Data, 5, Default => 1);
             Status : Find_Decl_Or_Body_Query_Status;
             Lib_Info : LI_File_Ptr;
-            F        : constant File_Info := Get_Data (File);
+            F        : File_Info;
          begin
+            if File = null then
+               Entity := Create_Predefined_Entity
+                 (Name, (Unresolved_Entity, False, True, False));
+               Set_Data (Instance, Entity);
+               Destroy (Entity);
+               return;
+            end if;
+
+            F := Get_Data (File);
             Lib_Info := Locate_From_Source_And_Complete (Kernel, Get_Name (F));
             if Lib_Info = No_LI_File then
                Set_Error_Msg
@@ -679,6 +689,7 @@ package body Glide_Kernel.Scripts is
 
             if Status /= Success and then Status /= Fuzzy_Match then
                Set_Error_Msg (Data, -"Entity not found");
+               Destroy (Entity);
             else
                Set_Data (Instance, Entity);
                Destroy (Entity);
@@ -691,10 +702,12 @@ package body Glide_Kernel.Scripts is
 
       elsif Command = "decl_file" then
          Entity := Get_Data (Instance);
-         Set_Return_Value
-           (Data,
-            Create_File
-            (Get_Script (Data), Get_Declaration_File_Of (Entity)));
+         if not Is_Predefined_Entity (Entity) then
+            Set_Return_Value
+              (Data,
+               Create_File
+                 (Get_Script (Data), Get_Declaration_File_Of (Entity)));
+         end if;
 
       elsif Command = "decl_line" then
          Entity := Get_Data (Instance);
@@ -1021,8 +1034,9 @@ package body Glide_Kernel.Scripts is
          Return_Value => "entity",
          Description  =>
            -("Create a new entity, from any of its references. File must be"
-             & " an instance of the File method"),
-         Minimum_Args => 2,
+             & " an instance of the File method, or omitted for predefined"
+             & " entities of the language"),
+         Minimum_Args => 1,
          Maximum_Args => 4,
          Class        => Get_Entity_Class (Kernel),
          Handler      => Create_Entity_Command_Handler'Access);
@@ -1378,10 +1392,11 @@ package body Glide_Kernel.Scripts is
      (Data    : Callback_Data;
       N       : Positive;
       Class   : Class_Type;
-      Default : Class_Instance)
+      Default : Class_Instance;
+      Allow_Null : Boolean := False)
       return Class_Instance is
    begin
-      return Nth_Arg (Callback_Data'Class (Data), N, Class);
+      return Nth_Arg (Callback_Data'Class (Data), N, Class, Allow_Null);
    exception
       when No_Such_Parameter =>
          return Default;
