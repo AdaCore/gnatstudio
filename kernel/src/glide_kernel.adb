@@ -875,9 +875,9 @@ package body Glide_Kernel is
         (Selection_Context'Class, Selection_Context_Access);
    begin
       if Context /= null then
-         if Context.Ref_Count > 1 then
-            Context.Ref_Count := Context.Ref_Count - 1;
-         else
+         Context.Ref_Count := Context.Ref_Count - 1;
+
+         if Context.Ref_Count = 0 then
             Destroy (Context.all);
             Internal (Context);
          end if;
