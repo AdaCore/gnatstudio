@@ -48,7 +48,7 @@ package Entities is
    type File_Error_Reporter_Record is abstract tagged null record;
    type File_Error_Reporter is access all File_Error_Reporter_Record'Class;
    procedure Error
-     (Report : in out File_Error_Reporter_Record; File : VFS.Virtual_File)
+     (Report : in out File_Error_Reporter_Record; File : Source_File)
      is abstract;
    --  Used to report errors while parsing files
 
