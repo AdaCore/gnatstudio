@@ -53,7 +53,7 @@ dnl Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
 
 dnl Checks for library functions.
-AC_CHECK_FUNCS(strerror)
+AC_CHECK_FUNCS([strerror getopt])
 
 CY_AC_BERKELEY_DB
 
