@@ -126,6 +126,10 @@ private
       Current_Block_GC    : Gdk.GC.Gdk_GC;
       Highlight_Blocks    : Boolean := False;
       --  Whether source blocks should be highlighted.
+
+      Current_Block       : Src_Editor_Buffer.Block_Record;
+      --  Cache used to prevent redrawing the whole buffer when the cursor
+      --  doesn't leave the current block.
    end record;
 
 end Src_Editor_View;
