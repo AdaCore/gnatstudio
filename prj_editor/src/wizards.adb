@@ -136,33 +136,25 @@ package body Wizards is
       Set_Sensitive (Wiz.Previous, False);
       Pack_Start (Get_Action_Area (Wiz), Wiz.Previous);
       Widget_Callback.Object_Connect
-        (Wiz.Previous, "clicked",
-         Widget_Callback.To_Marshaller (Previous_Page'Access),
-         Wiz);
+        (Wiz.Previous, "clicked", Previous_Page'Access, Wiz);
 
       Gtk_New_From_Stock (Wiz.Next, Stock_Go_Forward);
       Pack_Start (Get_Action_Area (Wiz), Wiz.Next);
       Set_Flags (Wiz.Next, Can_Default);
       Widget_Callback.Object_Connect
-        (Wiz.Next, "clicked",
-         Widget_Callback.To_Marshaller (Next_Page'Access),
-         Wiz);
+        (Wiz.Next, "clicked", Next_Page'Access, Wiz);
 
       Wiz.Finish :=
         Gtk_Button (Add_Button (Wiz, Stock_Apply, Gtk_Response_Apply));
       Set_Flags (Wiz.Finish, Can_Default);
       Widget_Callback.Object_Connect
-        (Wiz.Finish, "clicked",
-         Widget_Callback.To_Marshaller (On_Finish'Access),
-         Wiz);
+        (Wiz.Finish, "clicked", On_Finish'Access, Wiz);
 
       Wiz.Cancel :=
         Gtk_Button (Add_Button (Wiz, Stock_Cancel, Gtk_Response_Cancel));
 
-      Widget_Callback.Connect
-        (Wiz, "map", Widget_Callback.To_Marshaller (Map'Access));
-      Widget_Callback.Connect
-        (Wiz, "destroy", Widget_Callback.To_Marshaller (On_Destroy'Access));
+      Widget_Callback.Connect (Wiz, "map", Map'Access);
+      Widget_Callback.Connect (Wiz, "destroy", On_Destroy'Access);
 
       Wiz.Normal_Style := Copy (Get_Style (Wiz));
       Set_Foreground

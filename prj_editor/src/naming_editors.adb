@@ -118,9 +118,7 @@ package body Naming_Editors is
       Set_Current_Page (Editor, 0);
       Set_Visible_Pages (Editor, Kernel, Languages, No_Project);
 
-      Widget_Callback.Connect
-        (Editor, "destroy",
-         Widget_Callback.To_Marshaller (On_Destroy'Access));
+      Widget_Callback.Connect (Editor, "destroy", On_Destroy'Access);
 
       Free (Supported);
    end Gtk_New;

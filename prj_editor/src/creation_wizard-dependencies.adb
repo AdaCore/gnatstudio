@@ -470,23 +470,17 @@ package body Creation_Wizard.Dependencies is
       Gtk_New (Button, -"Add from file");
       Pack_Start (Box2, Button, Expand => False);
       Widget_Callback.Object_Connect
-        (Button, "clicked",
-         Widget_Callback.To_Marshaller (Add_New_Project'Access),
-         Box);
+        (Button, "clicked", Add_New_Project'Access, Box);
 
       Gtk_New (Button, -"Add from wizard");
       Pack_Start (Box2, Button, Expand => False);
       Widget_Callback.Object_Connect
-        (Button, "clicked",
-         Widget_Callback.To_Marshaller (Add_New_Project_From_Wizard'Access),
-         Box);
+        (Button, "clicked", Add_New_Project_From_Wizard'Access, Box);
 
       Gtk_New_From_Stock (Button, Stock_Remove);
       Pack_Start (Box2, Button, Expand => False);
       Widget_Callback.Object_Connect
-        (Button, "clicked",
-         Widget_Callback.To_Marshaller (Remove_Project'Access),
-         Box);
+        (Button, "clicked", Remove_Project'Access, Box);
       return Gtk_Widget (Box);
    end Create_Content;
 

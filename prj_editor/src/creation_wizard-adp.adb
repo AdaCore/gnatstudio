@@ -146,13 +146,11 @@ package body Creation_Wizard.Adp is
       Gtk_New (Button, -"Browse");
       Pack_Start (Box2, Button, Expand => False);
       Page_Handlers.Connect
-        (Button, "clicked",
-         Page_Handlers.To_Marshaller (On_Browse'Access),
+        (Button, "clicked", On_Browse'Access,
          User_Data => Project_Wizard_Page (Page));
 
       Widget_Callback.Object_Connect
-        (Page.Adp_File_Name, "changed",
-         Widget_Callback.To_Marshaller (Update_Buttons_Sensitivity'Access),
+        (Page.Adp_File_Name, "changed", Update_Buttons_Sensitivity'Access,
          Wiz);
 
       Grab_Focus (Page.Adp_File_Name);

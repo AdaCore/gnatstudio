@@ -1600,8 +1600,7 @@ package body Project_Properties is
       Gtk_New (Button2, -"Browse");
       Pack_Start (Hbox, Button2, Expand => False);
       Widget_Callback.Object_Connect
-        (Button2, "clicked",
-         Widget_Callback.To_Marshaller (Browse_Location'Access),
+        (Button2, "clicked", Browse_Location'Access,
          Slot_Object => Editor.Path);
 
       Gtk_New (Editor.Use_Relative_Paths, -"Paths should be relative paths");
@@ -2171,15 +2170,13 @@ package body Project_Properties is
          Gtk_New_From_Stock (Button, Stock_Add);
          Pack_Start (Box, Button, Expand => False);
          Widget_Callback.Object_Connect
-           (Button, "clicked",
-            Widget_Callback.To_Marshaller (Add_String_In_List'Access),
+           (Button, "clicked", Add_String_In_List'Access,
             Slot_Object => Editor);
 
          Gtk_New_From_Stock (Button, Stock_Remove);
          Pack_Start (Box, Button, Expand => False);
          Widget_Callback.Object_Connect
-           (Button, "clicked",
-            Widget_Callback.To_Marshaller (Remove_String_From_List'Access),
+           (Button, "clicked", Remove_String_From_List'Access,
             Slot_Object => Editor);
 
          if Description.Ordered_List then
@@ -2188,8 +2185,7 @@ package body Project_Properties is
             Gtk_New (Arrow, Arrow_Up, Shadow_None);
             Add (Button, Arrow);
             Widget_Callback.Object_Connect
-              (Button, "clicked",
-               Widget_Callback.To_Marshaller (Move_String_Up'Access),
+              (Button, "clicked", Move_String_Up'Access,
                Slot_Object => Editor);
 
             Gtk_New (Button);
@@ -2197,8 +2193,7 @@ package body Project_Properties is
             Gtk_New (Arrow, Arrow_Down, Shadow_None);
             Add (Button, Arrow);
             Widget_Callback.Object_Connect
-              (Button, "clicked",
-               Widget_Callback.To_Marshaller (Move_String_Down'Access),
+              (Button, "clicked", Move_String_Down'Access,
                Slot_Object => Editor);
          end if;
 
@@ -2230,8 +2225,7 @@ package body Project_Properties is
             Add_Attribute (Col, Toggle, "active", 1);
 
             Widget_Callback.Object_Connect
-              (Path_Widget, "changed",
-               Widget_Callback.To_Marshaller (Project_Path_Changed'Access),
+              (Path_Widget, "changed", Project_Path_Changed'Access,
                Slot_Object => Editor);
          end if;
 
@@ -2302,8 +2296,7 @@ package body Project_Properties is
          if Attr.Typ /= Attribute_As_String then
             Gtk_New (Button, -"Browse");
             Widget_Callback.Object_Connect
-              (Button, "clicked",
-               Widget_Callback.To_Marshaller (Select_File'Access),
+              (Button, "clicked", Select_File'Access,
                Slot_Object => Editor);
             Pack_Start (Editor, Button, Expand => False);
          end if;
@@ -3103,8 +3096,7 @@ package body Project_Properties is
       Initialize_Vbox (Ed, Homogeneous => True);
 
       Widget_Callback.Connect
-        (Ed, "destroy",
-         Widget_Callback.To_Marshaller (On_Indexed_Editor_Destroy'Access));
+        (Ed, "destroy", On_Indexed_Editor_Destroy'Access);
 
       Gtk_New (Scrolled);
       Pack_Start (Ed, Scrolled, Expand => True, Fill => True);
@@ -3252,9 +3244,7 @@ package body Project_Properties is
       end if;
 
       Attribute_Handler.Connect
-        (Attr.Editor, "destroy",
-         Attribute_Handler.To_Marshaller (Editor_Destroyed'Access),
-         Attr);
+        (Attr.Editor, "destroy", Editor_Destroyed'Access, Attr);
 
       if Attr.Editor /= null then
          Pack_Start (Box, Attr.Editor, Expand => True, Fill => True);
@@ -3417,8 +3407,7 @@ package body Project_Properties is
 
       --  Connect this only once we have created the pages
       Object_User_Callback.Connect
-        (Main_Note, "switch_page",
-         Object_User_Callback.To_Marshaller (Switch_Page'Access),
+        (Main_Note, "switch_page", Switch_Page'Access,
          User_Data => GObject (Editor),
          After => True);
    end Initialize;

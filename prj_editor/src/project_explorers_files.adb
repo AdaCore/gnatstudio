@@ -619,7 +619,7 @@ package body Project_Explorers_Files is
       Widget_Callback.Object_Connect
         (Get_Selection (Explorer.File_Tree),
          "changed",
-         Widget_Callback.To_Marshaller (File_Selection_Changed'Access),
+         File_Selection_Changed'Access,
          Slot_Object => Explorer,
          After       => True);
 
@@ -713,10 +713,7 @@ package body Project_Explorers_Files is
          Associate
            (Get_History (Kernel).all, File_View_Shows_Only_Project, Check);
          Append (Menu, Check);
-         Widget_Callback.Object_Connect
-           (Check, "toggled",
-            Widget_Callback.To_Marshaller (Refresh'Access),
-            T);
+         Widget_Callback.Object_Connect (Check, "toggled", Refresh'Access, T);
       end if;
 
       return Context;

@@ -822,8 +822,7 @@ package body Project_Explorers is
            (Get_History (Kernel).all, Show_Absolute_Paths, Check);
          Append (Menu, Check);
          Widget_Callback.Object_Connect
-           (Check, "toggled",
-            Widget_Callback.To_Marshaller (Update_Absolute_Paths'Access),
+           (Check, "toggled", Update_Absolute_Paths'Access,
             Slot_Object => T);
 
          Gtk_New (Check, Label => -"Show flat view");
@@ -831,8 +830,7 @@ package body Project_Explorers is
            (Get_History (Kernel).all, Show_Flat_View, Check);
          Append (Menu, Check);
          Widget_Callback.Object_Connect
-           (Check, "toggled",
-            Widget_Callback.To_Marshaller (Update_Flat_View'Access),
+           (Check, "toggled", Update_Flat_View'Access,
             Slot_Object => T);
       end if;
 
@@ -843,9 +841,7 @@ package body Project_Explorers is
          Gtk_New (Item, -"Parse all xref information");
          Add (Menu, Item);
          Widget_Callback.Object_Connect
-           (Item, "activate",
-            Widget_Callback.To_Marshaller (On_Parse_Xref'Access),
-            T);
+           (Item, "activate", On_Parse_Xref'Access, T);
       end if;
 
       return Context;
@@ -2758,32 +2754,28 @@ package body Project_Explorers is
       Set_Active (Extra.Include_Projects, True);
       Kernel_Callback.Connect
         (Extra.Include_Projects, "toggled",
-         Kernel_Callback.To_Marshaller (Reset_Search'Access),
-         Kernel_Handle (Kernel));
+         Reset_Search'Access, Kernel_Handle (Kernel));
 
       Gtk_New (Extra.Include_Directories, -"Directories");
       Pack_Start (Box, Extra.Include_Directories);
       Set_Active (Extra.Include_Directories, True);
       Kernel_Callback.Connect
         (Extra.Include_Directories, "toggled",
-         Kernel_Callback.To_Marshaller (Reset_Search'Access),
-         Kernel_Handle (Kernel));
+         Reset_Search'Access, Kernel_Handle (Kernel));
 
       Gtk_New (Extra.Include_Files, -"Files");
       Pack_Start (Box, Extra.Include_Files);
       Set_Active (Extra.Include_Files, True);
       Kernel_Callback.Connect
         (Extra.Include_Files, "toggled",
-         Kernel_Callback.To_Marshaller (Reset_Search'Access),
-         Kernel_Handle (Kernel));
+         Reset_Search'Access, Kernel_Handle (Kernel));
 
       Gtk_New (Extra.Include_Entities, -"Entities (might be slow)");
       Pack_Start (Box, Extra.Include_Entities);
       Set_Active (Extra.Include_Entities, False);
       Kernel_Callback.Connect
         (Extra.Include_Entities, "toggled",
-         Kernel_Callback.To_Marshaller (Reset_Search'Access),
-         Kernel_Handle (Kernel));
+         Reset_Search'Access, Kernel_Handle (Kernel));
 
       Register_Filter
         (Kernel,

@@ -192,9 +192,7 @@ package body Creation_Wizard is
       Grab_Focus (Page.Project_Name);
 
       Widget_Callback.Object_Connect
-        (Page.Project_Name, "changed",
-         Widget_Callback.To_Marshaller (Update_Buttons_Sensitivity'Access),
-         Wiz);
+        (Page.Project_Name, "changed", Update_Buttons_Sensitivity'Access, Wiz);
 
       Set_Row_Spacing (Table, 1, 20);
 
@@ -209,14 +207,12 @@ package body Creation_Wizard is
       Set_Activates_Default (Page.Project_Location, True);
       Widget_Callback.Object_Connect
         (Page.Project_Location, "changed",
-         Widget_Callback.To_Marshaller (Update_Buttons_Sensitivity'Access),
-         Wiz);
+         Update_Buttons_Sensitivity'Access, Wiz);
 
       Gtk_New (Button, -"Browse");
       Attach (Table, Button, 1, 2, 3, 4, Xoptions => 0);
       Page_Handlers.Connect
-        (Button, "clicked",
-         Page_Handlers.To_Marshaller (Advanced_Prj_Location'Access),
+        (Button, "clicked", Advanced_Prj_Location'Access,
          User_Data => Project_Wizard_Page (Page));
 
       if not Page.Force_Relative_Dirs then

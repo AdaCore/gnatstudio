@@ -188,9 +188,7 @@ package body Naming_Exceptions is
       Editor := new Exceptions_Editor_Record;
       Editor.Language := new String'(Language);
       Initialize_Vbox (Editor, Homogeneous => False);
-      Widget_Callback.Connect
-        (Editor, "destroy",
-         Widget_Callback.To_Marshaller (Destroy_Editor'Access));
+      Widget_Callback.Connect (Editor, "destroy", Destroy_Editor'Access);
 
       Gtk_New (Scrolled);
       Pack_Start (Editor, Scrolled, Expand => True, Fill => True);
@@ -216,8 +214,7 @@ package body Naming_Exceptions is
       Add_Attribute (Col, Render, "editable", 1);
       Set_Editable_And_Callback (Editor.Exceptions, Render, 0);
       Widget_Callback.Object_Connect
-        (Render, "edited",
-         Widget_Callback.To_Marshaller (Exception_Edited'Access), Editor);
+        (Render, "edited", Exception_Edited'Access, Editor);
 
       Clicked (Col);
 
@@ -229,16 +226,14 @@ package body Naming_Exceptions is
       Pack_Start (Box, Editor.Filename_Entry, Expand => True, Fill => True);
       Return_Callback.Object_Connect
         (Editor.Filename_Entry, "key_press_event",
-         Return_Callback.To_Marshaller (On_Edit_Filename'Access), Editor);
+         On_Edit_Filename'Access, Editor);
       Widget_Callback.Object_Connect
-        (Editor.Filename_Entry, "activate",
-         Widget_Callback.To_Marshaller (On_Add'Access), Editor);
+        (Editor.Filename_Entry, "activate", On_Add'Access, Editor);
 
       Gtk_New (Button, -"Add");
       Pack_Start (Box, Button, Expand => False);
       Widget_Callback.Object_Connect
-        (Button, "clicked",
-         Widget_Callback.To_Marshaller (On_Add'Access), Editor);
+        (Button, "clicked", On_Add'Access, Editor);
    end Gtk_New;
 
    --------------------------

@@ -158,7 +158,7 @@ package body Scenario_Selectors is
          Selector.Show_As_Hierarchy);
       Widget_Callback.Object_Connect
         (Selector.Show_As_Hierarchy, "toggled",
-         Widget_Callback.To_Marshaller (Toggle_Hierarchy'Access), Selector);
+         Toggle_Hierarchy'Access, Selector);
 
       Gtk_New (Scrolled);
       Pack_Start (Selector, Scrolled, Expand => True, Fill => True);
@@ -177,9 +177,7 @@ package body Scenario_Selectors is
       Set_Clickable (Col, True);
       Num := Append_Column (View, Col);
       Widget_Callback.Object_Connect
-        (Col, "clicked",
-         Widget_Callback.To_Marshaller (Select_All_Project'Access),
-         Slot_Object => Selector);
+        (Col, "clicked", Select_All_Project'Access, Slot_Object => Selector);
 
       Gtk_New (Toggle_Render);
       Pack_Start (Col, Toggle_Render, False);
@@ -456,9 +454,7 @@ package body Scenario_Selectors is
       Set_Clickable (Col, True);
       Num := Append_Column (View, Col);
       Widget_Callback.Object_Connect
-        (Col, "clicked",
-         Widget_Callback.To_Marshaller (Select_All_Var'Access),
-         Slot_Object => Selector);
+        (Col, "clicked", Select_All_Var'Access, Slot_Object => Selector);
 
       Gtk_New (Toggle_Render);
       Pack_Start (Col, Toggle_Render, False);

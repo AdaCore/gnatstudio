@@ -1108,8 +1108,7 @@ package body Project_Viewers is
          Gtk_New (Item, -"Edit switches for all selected files");
          Add (Menu, Item);
          Widget_Callback.Object_Connect
-           (Item, "activate",
-            Widget_Callback.To_Marshaller (Edit_Multiple_Switches'Access),
+           (Item, "activate", Edit_Multiple_Switches'Access,
             Slot_Object => V);
       end if;
 

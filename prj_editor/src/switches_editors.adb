@@ -1107,8 +1107,7 @@ package body Switches_Editors is
       Gtk_New (S.Spin, Adj, 1.0, 0);
       Pack_Start (Hbox, S.Spin, True, True, 0);
       Widget_Callback.Object_Connect
-        (S.Spin, "changed",
-         Widget_Callback.To_Marshaller (Refresh_Page'Access), Page);
+        (S.Spin, "changed", Refresh_Page'Access, Page);
 
       if Tip /= "" then
          Set_Tip (Page.Tips, S.Spin, '(' & Switch & ") " & ASCII.LF & Tip);
@@ -1194,15 +1193,13 @@ package body Switches_Editors is
       Gtk_New (S.Field);
       Pack_Start (Hbox, S.Field, True, True, 0);
       Widget_Callback.Object_Connect
-        (S.Field, "changed",
-         Widget_Callback.To_Marshaller (Refresh_Page'Access), Page);
+        (S.Field, "changed", Refresh_Page'Access, Page);
 
       if As_File then
          Gtk_New (Button, -"Browse");
          Pack_Start (Hbox, Button, Expand => False);
          Kernel_Callback.Object_Connect
-           (Button, "clicked",
-            Kernel_Callback.To_Marshaller (Browse_File'Access),
+           (Button, "clicked", Browse_File'Access,
             User_Data   => Page.Kernel,
             Slot_Object => S.Field);
 
@@ -1211,7 +1208,7 @@ package body Switches_Editors is
          Pack_Start (Hbox, Button, Expand => False);
          Kernel_Callback.Object_Connect
            (Button, "clicked",
-            Kernel_Callback.To_Marshaller (Browse_Directory'Access),
+            Browse_Directory'Access,
             User_Data   => Page.Kernel,
             Slot_Object => S.Field);
       end if;
@@ -1250,8 +1247,7 @@ package body Switches_Editors is
          S.Switch    := Buttons (B).Switch.all;
          Pack_Start (Box, Last, False, False);
          Widget_Callback.Object_Connect
-           (Last, "toggled",
-            Widget_Callback.To_Marshaller (Refresh_Page'Access), Page);
+           (Last, "toggled", Refresh_Page'Access, Page);
 
          if Buttons (B).Tip /= null then
             Set_Tip (Page.Tips, Last,
@@ -1284,8 +1280,7 @@ package body Switches_Editors is
       Pack_Start (Box, S.Check, False, False);
       Set_Active (S.Check, False);
       Widget_Callback.Object_Connect
-        (S.Check, "toggled",
-         Widget_Callback.To_Marshaller (Refresh_Page'Access), Page);
+        (S.Check, "toggled", Refresh_Page'Access, Page);
 
       if Tip /= "" then
          Set_Tip (Page.Tips, S.Check, '(' & Switch & ") " & ASCII.LF & Tip);
@@ -1352,8 +1347,7 @@ package body Switches_Editors is
       Append_Switch (Page, S);
 
       Widget_Callback.Object_Connect
-        (Get_Entry (S.Combo), "changed",
-         Widget_Callback.To_Marshaller (Refresh_Page'Access), Page);
+        (Get_Entry (S.Combo), "changed", Refresh_Page'Access, Page);
 
       if Tip /= "" then
          Set_Tip (Page.Tips, S.Combo, '(' & Switch & ") " & ASCII.LF & Tip);
@@ -1437,10 +1431,8 @@ package body Switches_Editors is
       Ref (Widget);
       B.Label := Label;
 
-      Widget_Callback.Connect
-        (B, "clicked", Widget_Callback.To_Marshaller (Popup_New_Page'Access));
-      Widget_Callback.Connect
-        (B, "destroy", Widget_Callback.To_Marshaller (Destroy_Popup'Access));
+      Widget_Callback.Connect (B, "clicked", Popup_New_Page'Access);
+      Widget_Callback.Connect (B, "destroy", Destroy_Popup'Access);
 
       return Gtk_Widget (B);
    end Create_Popup;
@@ -1563,16 +1555,14 @@ package body Switches_Editors is
                if S1.all in Switch_Check_Widget'Class then
                   Dependency_Callback.Connect
                     (Switch_Check_Widget_Access (S1).Check, "toggled",
-                     Dependency_Callback.To_Marshaller
-                       (Check_Dependency'Access),
+                     Check_Dependency'Access,
                      (Dep.Master_Status,
                       Switch_Check_Widget_Access (S2),
                       Dep.Slave_Status));
                else
                   Dependency_Callback.Connect
                     (Switch_Field_Widget_Access (S1).Field, "changed",
-                     Dependency_Callback.To_Marshaller
-                       (Check_Field_Dependency'Access),
+                     Check_Field_Dependency'Access,
                      (Dep.Master_Status,
                       Switch_Check_Widget_Access (S2),
                       Dep.Slave_Status));
@@ -1661,8 +1651,7 @@ package body Switches_Editors is
       Gtk_New (Page.Cmd_Line);
       Set_Editable (Page.Cmd_Line, True);
       Widget_Callback.Object_Connect
-        (Page.Cmd_Line, "changed",
-         Widget_Callback.To_Marshaller (On_Cmd_Line_Changed'Access), Page);
+        (Page.Cmd_Line, "changed", On_Cmd_Line_Changed'Access, Page);
       Attach (Page, Page.Cmd_Line, 0, Cols, Lines, Lines + 1,
               Expand or Fill, 0, 5, 0);
    end Gtk_New;
@@ -1722,8 +1711,7 @@ package body Switches_Editors is
          Editor.Pages (P) := Get_Nth_Switches_Page (Kernel, P);
 
          Widget_Callback.Connect
-           (Editor.Pages (P), "destroy",
-            Widget_Callback.To_Marshaller (Page_Destroyed'Access));
+           (Editor.Pages (P), "destroy", Page_Destroyed'Access);
 
          Gtk_New (Tab, Editor.Pages (P).Title.all);
          Append_Page (Editor, Editor.Pages (P), Tab);
@@ -1737,8 +1725,7 @@ package body Switches_Editors is
       Set_Current_Page (Editor, 0);
 
       Widget_Callback.Connect
-        (Editor, "destroy",
-         Widget_Callback.To_Marshaller (Editor_Destroyed'Access));
+        (Editor, "destroy", Editor_Destroyed'Access);
    end Gtk_New;
 
    --------------------
@@ -2272,8 +2259,7 @@ package body Switches_Editors is
          Gtk_New_From_Stock (B, Stock_Revert_To_Saved);
          Pack_Start (Get_Action_Area (Dialog), B);
          Widget_Callback.Object_Connect
-           (B, "clicked",
-            Widget_Callback.To_Marshaller (Revert_To_Default'Access),
+           (B, "clicked", Revert_To_Default'Access,
             Slot_Object => Switches);
          Show_All (B);
       end if;

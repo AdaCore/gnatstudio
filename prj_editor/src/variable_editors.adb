@@ -193,14 +193,11 @@ package body Variable_Editors is
       Button := Add_Button (Editor, Stock_Cancel, Gtk_Response_Cancel);
 
       Widget_Callback.Object_Connect
-        (Editor.New_Variable, "clicked",
-         Widget_Callback.To_Marshaller (New_Variable'Access), Editor);
+        (Editor.New_Variable, "clicked", New_Variable'Access, Editor);
       Widget_Callback.Object_Connect
-        (Editor.Rename_Variable, "clicked",
-         Widget_Callback.To_Marshaller (Rename_Variable'Access), Editor);
+        (Editor.Rename_Variable, "clicked", Rename_Variable'Access, Editor);
       Widget_Callback.Object_Connect
-        (Editor.Delete_Variable, "clicked",
-         Widget_Callback.To_Marshaller (Delete_Variable'Access), Editor);
+        (Editor.Delete_Variable, "clicked", Delete_Variable'Access, Editor);
 
       --  Fill the list of existing environment variables before we put the
       --  currently referenced variable (in case it doesn't represent an

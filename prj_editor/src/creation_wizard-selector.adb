@@ -257,7 +257,7 @@ package body Creation_Wizard.Selector is
 
       Page_Handlers.Object_Connect
         (Get_Selection (Page.View), "changed",
-         Page_Handlers.To_Marshaller (Selection_Changed'Access),
+         Selection_Changed'Access,
          Slot_Object => Page.View,
          User_Data => Project_Wizard_Page (Page));
       Select_Iter (Get_Selection (Page.View), From_Scratch_Iter);
