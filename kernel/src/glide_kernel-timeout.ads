@@ -61,7 +61,8 @@ package Glide_Kernel.Timeout is
       Exit_Cb       : Exit_Callback := null;
       Success       : out Boolean;
       Show_Command  : Boolean := True;
-      Callback_Data : System.Address := System.Null_Address);
+      Callback_Data : System.Address := System.Null_Address;
+      Line_By_Line  : Boolean := False);
    --  Launch a given command with arguments.
    --  Set Success to True if the command could be spawned.
    --  Callback will be called asynchronousely when some new data is
@@ -73,5 +74,9 @@ package Glide_Kernel.Timeout is
    --  Glide_Kernel.Console.Get_Console.
    --  If Show_Command is True and the output is displayed, the command
    --  itself is displayed in the console.
+   --
+   --  If Line_By_Line is True, then the output of the command is processed
+   --  line by line, instead of being processed with as big chunks as possible.
+   --  If it is false, there is no garantee where the chunks will be splitted.
 
 end Glide_Kernel.Timeout;

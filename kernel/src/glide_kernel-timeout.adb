@@ -28,6 +28,7 @@ with GNAT.Expect;          use GNAT.Expect;
 pragma Warnings (Off);
 with GNAT.Expect.TTY;      use GNAT.Expect.TTY;
 pragma Warnings (On);
+with GNAT.Regpat;          use GNAT.Regpat;
 
 with GNAT.OS_Lib;          use GNAT.OS_Lib;
 with Ada.Exceptions;       use Ada.Exceptions;
@@ -44,6 +45,8 @@ with Glide_Intl;           use Glide_Intl;
 with Gtkada.MDI;           use Gtkada.MDI;
 with Gtkada.Dialogs;       use Gtkada.Dialogs;
 
+with Ada.Unchecked_Deallocation;
+
 package body Glide_Kernel.Timeout is
 
    Me : constant Debug_Handle := Create ("Glide_Kernel.Timeout");
@@ -51,6 +54,8 @@ package body Glide_Kernel.Timeout is
    type Console_Process_Data is new GObject_Record with record
       Console   : Interactive_Console;
       Delete_Id : Gtk.Handlers.Handler_Id;
+
+      Expect_Regexp : GNAT.Expect.Pattern_Matcher_Access;
 
       D       : Process_Data;
       Died    : Boolean := False;
@@ -61,6 +66,9 @@ package body Glide_Kernel.Timeout is
    type Console_Process is access all Console_Process_Data'Class;
 
    package Console_Process_Timeout is new Gtk.Main.Timeout (Console_Process);
+
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (GNAT.Regpat.Pattern_Matcher, GNAT.Expect.Pattern_Matcher_Access);
 
    function Process_Cb (Data : Console_Process) return Boolean;
    --  Generic callback for async spawn of processes.
@@ -121,7 +129,7 @@ package body Glide_Kernel.Timeout is
       end if;
 
       Fd := Data.D.Descriptor;
-      Expect (Fd.all, Result, ".+", Timeout => 1);
+      Expect (Fd.all, Result, Data.Expect_Regexp.all, Timeout => 1);
 
       if Result /= Expect_Timeout then
          declare
@@ -160,12 +168,14 @@ package body Glide_Kernel.Timeout is
 
          Data.Died := True;
          Cleanup (Data.D);
+         Unchecked_Free (Data.Expect_Regexp);
          Unref (Data);
 
          return False;
 
       when E : others =>
          Cleanup (Data.D);
+         Unchecked_Free (Data.Expect_Regexp);
          Unref (Data);
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
          return False;
@@ -190,6 +200,7 @@ package body Glide_Kernel.Timeout is
    exception
       when E : others =>
          Timeout_Remove (Console.Id);
+         Unchecked_Free (Console.Expect_Regexp);
          Cleanup (Console.D);
          Unref (Console);
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
@@ -209,7 +220,8 @@ package body Glide_Kernel.Timeout is
       Exit_Cb       : Exit_Callback := null;
       Success       : out Boolean;
       Show_Command  : Boolean := True;
-      Callback_Data : System.Address := System.Null_Address)
+      Callback_Data : System.Address := System.Null_Address;
+      Line_By_Line  : Boolean := False)
    is
       Timeout : constant Guint32 := 50;
       Fd      : Process_Descriptor_Access;
@@ -285,6 +297,13 @@ package body Glide_Kernel.Timeout is
       Spawn (Command, Arguments, Success);
 
       if Success then
+         --  Precompile the regular expression for more efficiency
+         if Line_By_Line then
+            Data.Expect_Regexp := new Pattern_Matcher'(Compile ("^.*?\n"));
+         else
+            Data.Expect_Regexp := new Pattern_Matcher'(Compile (".+"));
+         end if;
+
          Data.D       := (Kernel, Fd, Callback, Exit_Cb, Callback_Data);
          Data.Delete_Id.Signal := Null_Signal_Id;
          Data.Id      :=
@@ -330,6 +349,7 @@ package body Glide_Kernel.Timeout is
       if Button = Button_Yes then
          Timeout_Remove (Console.Id);
          Cleanup (Console.D);
+         Unchecked_Free (Console.Expect_Regexp);
          Unref (Console);
          return False;
 
@@ -340,6 +360,7 @@ package body Glide_Kernel.Timeout is
    exception
       when E : others =>
          Timeout_Remove (Console.Id);
+         Unchecked_Free (Console.Expect_Regexp);
          Cleanup (Console.D);
          Unref (Console);
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
