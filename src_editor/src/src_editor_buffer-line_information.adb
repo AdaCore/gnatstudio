@@ -218,6 +218,9 @@ package body Src_Editor_Buffer.Line_Information is
                     (Buffer.Line_Data (J).Side_Info_Data'First
                        .. Buffer.Line_Data (J).Side_Info_Data'Last + 1);
                begin
+                  A (A'First .. A'Last - 1) :=
+                    Buffer.Line_Data (J).Side_Info_Data.all;
+
                   Unchecked_Free (Buffer.Line_Data (J).Side_Info_Data);
                   Buffer.Line_Data (J).Side_Info_Data :=
                     new Line_Info_Width_Array'(A);
@@ -251,6 +254,9 @@ package body Src_Editor_Buffer.Line_Information is
                     (Buffer.Editable_Lines (J).Side_Info_Data'First
                        .. Buffer.Editable_Lines (J).Side_Info_Data'Last + 1);
                begin
+                  A (A'First .. A'Last - 1) :=
+                    Buffer.Editable_Lines (J).Side_Info_Data.all;
+
                   Unchecked_Free (Buffer.Editable_Lines (J).Side_Info_Data);
                   Buffer.Editable_Lines (J).Side_Info_Data :=
                     new Line_Info_Width_Array'(A);
@@ -573,6 +579,7 @@ package body Src_Editor_Buffer.Line_Information is
 
          if Columns_Config.all = null then
             Unref (Layout);
+            Side_Column_Changed (Buffer);
             return;
          end if;
 
@@ -638,6 +645,8 @@ package body Src_Editor_Buffer.Line_Information is
 
          Recalculate_Side_Column_Width (Buffer);
       end if;
+
+
 
       Side_Column_Changed (Buffer);
 
