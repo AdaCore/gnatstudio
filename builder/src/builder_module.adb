@@ -221,6 +221,7 @@ package body Builder_Module is
 
       if Data.Length = 0 then
          Context := Get_Current_Context (K);
+
          if Context /= null
            and then Context.all in File_Selection_Context'Class
            and then Has_File_Information
@@ -229,10 +230,12 @@ package body Builder_Module is
             Prj := Get_Project_From_File
               (Get_Project_View (K),
                File_Information (File_Selection_Context_Access (Context)));
-            if Prj = No_Project then
+
+            if Prj = No_Project
+              or else Get_Project_File_Name (K) = ""
+            then
                Cmd := new String'
-                 (File_Information
-                  (File_Selection_Context_Access (Context)));
+                 (File_Information (File_Selection_Context_Access (Context)));
             else
                Cmd := new String'
                  ("-P" & Project_Path (Prj) & " "
@@ -247,6 +250,7 @@ package body Builder_Module is
 
       else
          --  Are we using the default internal project ?
+
          if Get_Project_File_Name (K) = "" then
             Cmd := new String' (Data.File);
          else
