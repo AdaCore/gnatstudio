@@ -202,7 +202,7 @@ machfile="'\"machine/${machine}.h\"'"
 opsysfile="\\\"system/${opsys}.h\\\""
 
 # checking for gtk
-AM_PATH_GTK(2.0.0,,AC_MSG_ERROR(Test for GtkAda failed. See the file 'INSTALL' for help.))
+AM_PATH_GTK(2.2.1,,AC_MSG_ERROR(Test for GtkAda failed. See the file 'INSTALL' for help.))
 
 # Set the version number of GPS/GVD
 AC_SUBST(GPS_VERSION)
