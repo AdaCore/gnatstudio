@@ -200,11 +200,20 @@ package body Debugger.Gdb.C is
 
       case Type_Str (Index) is
          when 'e' =>
-            --  Enumeration type
+            --  Enumeration type.
+            --  Either this is the type itself "enum {....}", or this is the
+            --  field of a struct or union "enum name;".
 
             if Looking_At (Type_Str, Index, "enum ") then
-               Skip_To_Char (Type_Str, Index, '}');
+               Index := Index + 5;
+               Skip_Word (Type_Str, Index);  --  skips enum name
                Index := Index + 1;
+
+               if Index <= Type_Str'Last and then Type_Str (Index) = '{' then
+                  Skip_To_Char (Type_Str, Index, '}');
+                  Index := Index + 1;
+               end if;
+
                Result := New_Enum_Type;
                Set_Type_Name (Result, Type_Str (Type_Str'First .. Index - 1));
                return;
@@ -252,7 +261,11 @@ package body Debugger.Gdb.C is
             if Looking_At (Type_Str, Index, "union ") then
                Tmp   := Index;
                Index := Index + 6;           --  skips "union "
-               Skip_Word (Type_Str, Index);  --  skips union name
+
+               if Type_Str (Index) /= Context.Record_Start then
+                  Skip_Word (Type_Str, Index);  --  skips union name
+               end if;
+
                Skip_Blanks (Type_Str, Index);
 
                if Index <= Type_Str'Last
@@ -446,6 +459,14 @@ package body Debugger.Gdb.C is
       --  gdb seems to ignore all the parameters to the function, so
       --  we take the simplest way and consider there is always '()' for
       --  the parameter list.
+      --  We also skip embedded unions or structs ("struct foo {..}" or
+      --  "struct {...}" completly).
+
+      if Looking_At (Type_Str, Tmp, "struct {")
+        or else Looking_At (Type_Str, Tmp, "union {")
+      then
+         Skip_To_Char (Type_Str, Tmp, '}');
+      end if;
 
       Skip_To_Char (Type_Str, Tmp, ';');
       Semi_Colon_Pos := Tmp;
@@ -547,7 +568,11 @@ package body Debugger.Gdb.C is
       while Index <= Type_Str'Last
         and then Type_Str (Index) /= '}'
       loop
-         if Type_Str (Index) = ';' then
+         --  embedded unions or structs
+         if Type_Str (Index) = '{' then
+            Skip_To_Char (Type_Str, Index, '}');
+
+         elsif Type_Str (Index) = ';' then
             Num_Fields := Num_Fields + 1;
          end if;
          Index := Index + 1;
