@@ -274,10 +274,12 @@ package body String_Utils is
                Index := Index + 1;
 
                --  In cases like {field = 0x8048f88 "bar"}, we need to consider
-               --  the string finished.
+               --  the string finished, but not for
+               --     "bar", 'cd' <repeats 12 times>
                if not In_String
                  and then Index <= Type_Str'Last
                  and then Type_Str (Index) /= ' '
+                 and then Type_Str (Index) /= ','
                then
                   Index := Index + 1;
                   return;
