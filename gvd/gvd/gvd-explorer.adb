@@ -126,6 +126,9 @@ package body Odd.Explorer is
    procedure Show_System_Files (Explorer : access Explorer_Record'Class);
    --  Toggle the display of system files
 
+   procedure Clear_Explorer (Explorer : access Explorer_Record'Class);
+   --  Remove all the files from the explorer.
+
    -------------
    -- Gtk_New --
    -------------
@@ -200,6 +203,33 @@ package body Odd.Explorer is
 --       Set_Spacing (Explorer, 0);
 --       Set_Expander_Style (Explorer, Ctree_Expander_None);
    end Gtk_New;
+
+   --------------------
+   -- Clear_Explorer --
+   --------------------
+
+   procedure Clear_Explorer (Explorer : access Explorer_Record'Class) is
+   begin
+      Freeze (Explorer);
+
+      Clear (Explorer);
+      Explorer.Current_File_Node := null;
+      Explorer.Current_Line := 1;
+      Explorer.Explorer_Root := Insert_Node
+        (Explorer,
+         Parent        => null,
+         Sibling       => null,
+         Text          => Null_Array + "list of files",
+         Spacing       => 5,
+         Pixmap_Closed => Explorer.Folder_Pixmap,
+         Mask_Closed   => Explorer.Folder_Mask,
+         Pixmap_Opened => Explorer.Folder_Open_Pixmap,
+         Mask_Opened   => Explorer.Folder_Open_Mask,
+         Is_Leaf       => False,
+         Expanded      => False);
+
+      Thaw (Explorer);
+   end Clear_Explorer;
 
    -------------
    -- Get_Pos --
@@ -714,13 +744,13 @@ package body Odd.Explorer is
    ---------------------------
 
    procedure On_Executable_Changed
-     (Explorer : access Gtk_Widget_Record'Class)
+     (Explorer : access Explorer_Record'Class)
    is
-      Exp  : Explorer_Access := Explorer_Access (Explorer);
-      Tab  : Debugger_Process_Tab := Convert (Exp);
+      Tab  : Debugger_Process_Tab := Convert (Explorer);
       List : Odd.Types.String_Array := Source_Files_List (Tab.Debugger);
    begin
-      Add_List_Of_Files (Exp, List);
+      Clear_Explorer (Explorer);
+      Add_List_Of_Files (Explorer, List);
       Odd.Types.Free (List);
    end On_Executable_Changed;
 
@@ -832,7 +862,7 @@ package body Odd.Explorer is
       end if;
 
       Clear (Explorer);
-      On_Executable_Changed (Explorer);
+      Odd.Explorer.On_Executable_Changed (Explorer);
 
       if Current /= null then
          Set_Current_File (Explorer, Current.all);

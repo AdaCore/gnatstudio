@@ -99,7 +99,7 @@ package Odd.Explorer is
    --  or "" if the current file is not known.
 
    procedure On_Executable_Changed
-     (Explorer : access Gtk.Widget.Gtk_Widget_Record'Class);
+     (Explorer : access Explorer_Record'Class);
    --  Called when the executable associated with the explorer has changed.
 
 
