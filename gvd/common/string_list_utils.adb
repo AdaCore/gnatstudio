@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2002                      --
+--                      Copyright (C) 2001-2003                      --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
@@ -151,13 +151,13 @@ package body String_List_Utils is
          N := Next (N);
       end loop;
 
-      if P = Null_Node then
-         Prepend (L, S);
+      if N /= Null_Node
+        and then Data (N) = S
+      then
+         return;
       else
-         if N /= Null_Node
-           and then Data (N) = S
-         then
-            return;
+         if P = Null_Node then
+            Prepend (L, S);
          else
             Append (L, P, S);
          end if;
