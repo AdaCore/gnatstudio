@@ -7048,8 +7048,8 @@ Assert failure
 	  <class>GtkOptionMenu</class>
 	  <name>launch_menu</name>
 	  <can_focus>True</can_focus>
-	  <items>in the current debugger
-in a new debugger
+	  <items>in the current debugger session
+in a new debugger session
 </items>
 	  <initial_choice>0</initial_choice>
 	  <child>

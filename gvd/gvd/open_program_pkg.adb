@@ -216,9 +216,9 @@ begin
      Fill, 0,
      0, 0);
    Menu.Gtk_New (Launch_Menu_Menu);
-   Menu_Item.Gtk_New (The_Menu_Item, -"in the current debugger");
+   Menu_Item.Gtk_New (The_Menu_Item, -"in the current debugger session");
    Menu.Append (Launch_Menu_Menu, The_Menu_Item);
-   Menu_Item.Gtk_New (The_Menu_Item, -"in a new debugger");
+   Menu_Item.Gtk_New (The_Menu_Item, -"in a new debugger session");
    Menu.Append (Launch_Menu_Menu, The_Menu_Item);
    Option_Menu.Set_Menu
      (Gtk_Option_Menu (Open_Program.Launch_Menu),
