@@ -458,9 +458,10 @@ package body Src_Editor_Buffer is
             Create (Command,
                     Insertion,
                     Source_Buffer (Buffer),
-                    True,
+                    False,
                     Natural (Get_Line (Pos)),
                     Natural (Get_Line_Offset (Pos)));
+            Enqueue (Buffer.Queue, Command);
             Add_Text (Command, Text);
             Buffer.Current_Command := Command_Access (Command);
          end if;
@@ -475,12 +476,12 @@ package body Src_Editor_Buffer is
                Create (Command,
                        Insertion,
                        Source_Buffer (Buffer),
-                       True,
+                       False,
                        Natural (Get_Line (Pos)),
                        Natural (Get_Line_Offset (Pos)));
+               Enqueue (Buffer.Queue, Command);
                Add_Text (Command, Text);
                Buffer.Current_Command := Command_Access (Command);
-
             else
                Add_Text (Command, Text);
                Buffer.Current_Command := Command_Access (Command);
@@ -491,9 +492,10 @@ package body Src_Editor_Buffer is
             Create (Command,
                     Insertion,
                     Source_Buffer (Buffer),
-                    True,
+                    False,
                     Natural (Get_Line (Pos)),
                     Natural (Get_Line_Offset (Pos)));
+            Enqueue (Buffer.Queue, Command);
             Add_Text (Command, Text);
             Buffer.Current_Command := Command_Access (Command);
          end if;
@@ -583,6 +585,7 @@ package body Src_Editor_Buffer is
                     True,
                     Natural (Get_Line (Start_Iter)),
                     Natural (Get_Line_Offset (Start_Iter)));
+            Enqueue (Buffer.Queue, Command);
          end if;
 
          Add_Text (Command,
@@ -806,7 +809,7 @@ package body Src_Editor_Buffer is
      (Buffer : access Source_Buffer_Record'Class;
       Lang   : Language.Language_Access := null)
    is
-      Tags : Gtk_Text_Tag_Table;
+      Tags      : Gtk_Text_Tag_Table;
    begin
       Gtk.Text_Buffer.Initialize (Buffer);
       Glib.Object.Initialize_Class_Record
@@ -1551,7 +1554,6 @@ package body Src_Editor_Buffer is
         := Editor_Command (Buffer.Current_Command);
    begin
       if not Is_Null_Command (Command) then
-         Enqueue (Buffer.Queue, Command);
          Buffer.Current_Command := null;
       end if;
    end End_Action;
@@ -1579,5 +1581,16 @@ package body Src_Editor_Buffer is
 
       Undo (Buffer.Queue);
    end Undo;
+
+   ---------------
+   -- Get_Queue --
+   ---------------
+
+   function Get_Queue
+     (Buffer : access Source_Buffer_Record)
+     return Command_Queue is
+   begin
+      return Buffer.Queue;
+   end Get_Queue;
 
 end Src_Editor_Buffer;
