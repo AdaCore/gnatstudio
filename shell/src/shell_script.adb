@@ -810,16 +810,29 @@ package body Shell_Script is
       procedure Insert (S : String; Separator : Character := ASCII.LF);
       --  Appends S & Separator to Result.
       --  Result must not be set to Null when calling this subprogram.
+      --  If the Separator is ASCII.NUL, nothing is added
 
       ------------
       -- Insert --
       ------------
 
       procedure Insert (S : String; Separator : Character := ASCII.LF) is
-         R : constant String := Result.all & S & Separator;
       begin
-         Free (Result);
-         Result := new String'(R);
+         if Separator = ASCII.NUL then
+            declare
+               R : constant String := Result.all & S;
+            begin
+               Free (Result);
+               Result := new String'(R);
+            end;
+         else
+            declare
+               R : constant String := Result.all & S & Separator;
+            begin
+               Free (Result);
+               Result := new String'(R);
+            end;
+         end if;
       end Insert;
 
    begin
@@ -893,7 +906,11 @@ package body Shell_Script is
 
       elsif Command = "echo" then
          for A in 1 .. Number_Of_Arguments (Data) loop
-            Insert (Nth_Arg (Data, A), ' ');
+            if A = Number_Of_Arguments (Data) then
+               Insert (Nth_Arg (Data, A), ASCII.NUL);
+            else
+               Insert (Nth_Arg (Data, A), ' ');
+            end if;
          end loop;
 
          Set_Return_Value (Data, Result.all);
@@ -1401,6 +1418,7 @@ package body Shell_Script is
 
                Trace (Me, "Executing command "
                       & Command (First .. Last - 1));
+
                declare
                   R : constant String := Execute_GPS_Shell_Command
                     (Kernel,
