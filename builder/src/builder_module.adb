@@ -170,16 +170,17 @@ package body Builder_Module is
      (Menu         : in out Gtk_Menu;
       Project      : Project_Type;
       Kernel       : access Kernel_Handle_Record'Class;
-      Set_Shortcut : Boolean);
-   --  Remove all entries in Menu, and add new entries for all the main
-   --  subprograms of Project.
+      Set_Shortcut : Boolean;
+      Mains        : Argument_List);
+   --  Add new entries for all the main subprograms of Project.
    --  If Menu is null, a new one is created if there are any entries
    --  If Set_Shortcut is true, the F4 shortcut is set for the first entry.
 
    procedure Add_Run_Menu
      (Menu         : in out Gtk_Menu;
       Project      : Project_Type;
-      Kernel       : access Kernel_Handle_Record'Class);
+      Kernel       : access Kernel_Handle_Record'Class;
+      Mains        : Argument_List);
    --  Same as Add_Build_Menu, but for the Run menu
 
    procedure Builder_Contextual
@@ -1491,10 +1492,9 @@ package body Builder_Module is
      (Menu         : in out Gtk_Menu;
       Project      : Project_Type;
       Kernel       : access Kernel_Handle_Record'Class;
-      Set_Shortcut : Boolean)
+      Set_Shortcut : Boolean;
+      Mains        : Argument_List)
    is
-      Mains : Argument_List := Get_Attribute_Value
-        (Project, Attribute => Main_Attribute);
       Mitem        : Gtk_Menu_Item;
       Builder_Module : constant Builder_Module_ID_Access :=
         Builder_Module_ID_Access (Builder_Module_ID);
@@ -1591,8 +1591,6 @@ package body Builder_Module is
          User_Data => File_Project_Record'
            (Project => Get_Project (Kernel),
             File    => VFS.No_File));
-
-      Free (Mains);
    end Add_Build_Menu;
 
    ------------------
@@ -1602,13 +1600,11 @@ package body Builder_Module is
    procedure Add_Run_Menu
      (Menu         : in out Gtk_Menu;
       Project      : Project_Type;
-      Kernel       : access Kernel_Handle_Record'Class)
+      Kernel       : access Kernel_Handle_Record'Class;
+      Mains        : Argument_List)
    is
-      Mains : constant Argument_List := Get_Attribute_Value
-        (Project, Attribute => Main_Attribute);
       Mitem : Gtk_Menu_Item;
       Group : constant Gtk_Accel_Group := Get_Default_Accelerators (Kernel);
-
    begin
       if Menu = null then
          if Mains'Length = 0 then
@@ -1731,16 +1727,31 @@ package body Builder_Module is
          end if;
 
          while P /= No_Project loop
-            Add_Build_Menu
-              (Menu         => Builder_Module.Make_Menu,
-               Project      => P,
-               Kernel       => Kernel,
-               Set_Shortcut => True);
-            Add_Run_Menu
-              (Menu         => Builder_Module.Run_Menu,
-               Project      => P,
-               Kernel       => Kernel);
-            P := Parent_Project (P);
+            declare
+               Mains : Argument_List := Get_Attribute_Value
+                 (P, Attribute => Main_Attribute);
+            begin
+               if Mains'Length /= 0 then
+                  --  Use the main units of the extending project, but we
+                  --  should still compile in the context of the root project
+                  Add_Build_Menu
+                    (Menu         => Builder_Module.Make_Menu,
+                     Project      => Get_Project (Kernel),
+                     Kernel       => Kernel,
+                     Set_Shortcut => True,
+                     Mains        => Mains);
+                  Add_Run_Menu
+                    (Menu         => Builder_Module.Run_Menu,
+                     Project      => Get_Project (Kernel),
+                     Kernel       => Kernel,
+                     Mains        => Mains);
+                  Free (Mains);
+                  exit;
+               end if;
+
+               P := Parent_Project (P);
+               Free (Mains);
+            end;
          end loop;
       end;
 
@@ -1819,23 +1830,35 @@ package body Builder_Module is
            and then not Has_Directory_Information (File_Context)
            and then not Has_File_Information (File_Context)
          then
-            Add_Build_Menu
-              (Menu         => Submenu,
-               Project      => Project_Information (File_Context),
-               Kernel       => Get_Kernel (Context),
-               Set_Shortcut => False);
+            declare
+               Mains : Argument_List := Get_Attribute_Value
+                 (Project_Information (File_Context),
+                  Attribute => Main_Attribute);
+            begin
+               if Mains'Length /= 0 then
+                  Add_Build_Menu
+                    (Menu         => Submenu,
+                     Project      => Project_Information (File_Context),
+                     Kernel       => Get_Kernel (Context),
+                     Set_Shortcut => False,
+                     Mains        => Mains);
 
-            if Submenu /= null then
-               Gtk_New (Item, -"Build");
-               Set_Submenu (Item, Submenu);
-               Append (Menu, Item);
-            end if;
+                  if Submenu /= null then
+                     Gtk_New (Item, -"Build");
+                     Set_Submenu (Item, Submenu);
+                     Append (Menu, Item);
+                  end if;
 
-            Submenu := null;
-            Add_Run_Menu
-              (Menu         => Submenu,
-               Project      => Project_Information (File_Context),
-               Kernel       => Get_Kernel (Context));
+                  Submenu := null;
+                  Add_Run_Menu
+                    (Menu         => Submenu,
+                     Project      => Project_Information (File_Context),
+                     Kernel       => Get_Kernel (Context),
+                     Mains        => Mains);
+               end if;
+
+               Free (Mains);
+            end;
 
             if Submenu /= null then
                Gtk_New (Item, -"Run");
