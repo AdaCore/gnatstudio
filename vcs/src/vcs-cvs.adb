@@ -848,14 +848,13 @@ package body VCS.CVS is
             File     : constant String := Data (Filenames_Temp);
             Head     : List;
             Log_File : constant String := Get_Tmp_Dir
-            & GNAT.OS_Lib.Directory_Separator
-            & "cvs_log_" & Base_Name (File);
-            Ft : File_Type;
+              & "cvs_log_" & Base_Name (File);
+            Ft       : File_Type;
+
          begin
             Append (Arguments, "-Q");
             Append (Arguments, "commit");
             Append (Arguments, "-F");
-
             Append (Arguments, Log_File);
 
             Create (Ft, Out_File, Log_File);
