@@ -163,6 +163,7 @@ package VCS is
    --  Filenames can simply be a list of directories, in which case
    --  the function will return information about all files in those
    --  directories.
+   --  The user must free Filenames.
 
    procedure Open
      (Rep       : access VCS_Record;
@@ -172,6 +173,7 @@ package VCS is
    --  This is a necessary step for some systems but not all of them.
    --  If User_Name is not empty, then add it to the list of users
    --  editing the file, whenever possible.
+   --  The user must free Filenames.
 
    procedure Commit
      (Rep       : access VCS_Record;
@@ -181,11 +183,13 @@ package VCS is
    --  Log is used as the revision history.
    --  The elements in Logs must exactly correspond to the elements in
    --  Filenames.
+   --  The user must free Filenames and Logs.
 
    procedure Update
      (Rep       : access VCS_Record;
       Filenames : String_List.List) is abstract;
    --  Synchronize the local files or directories.
+   --  The user must free Filenames.
 
    procedure Merge
      (Rep       : access VCS_Record;
@@ -193,21 +197,25 @@ package VCS is
    --  Merge the files from the specified repository with the local files.
    --  The merge is done locally, a commit is required to pass the
    --  resulting changes to the repository.
+   --  The user must free Filenames.
 
    procedure Add
      (Rep       : access VCS_Record;
       Filenames : String_List.List) is abstract;
    --  Add files to the specified VCS repository
+   --  The user must free Filenames.
 
    procedure Remove
      (Rep       : access VCS_Record;
       Filenames : String_List.List) is abstract;
    --  Remove a given file/directory name from the specified VCS repository
+   --  The user must free Filenames.
 
    procedure Revert
      (Rep       : access VCS_Record;
       Filenames : String_List.List) is abstract;
    --  Obtain the files in Filenames from their respective checked-in versions.
+   --  The user must free Filenames.
 
    procedure Diff
      (Rep       : access VCS_Record;
