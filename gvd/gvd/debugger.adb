@@ -55,6 +55,8 @@ package body Debugger is
       Mode             : Command_Type := Hidden);
    --  Internal procedure used by Send. This takes care of processing the
    --  output of the debugger, but it doesn't read it.
+   --  This should be called only if we are currently waiting for the next
+   --  prompt, ie processing the output
 
    ----------
    -- Free --
@@ -273,16 +275,13 @@ package body Debugger is
       use type Gtk.Window.Gtk_Window;
       Data : History_Data;
    begin
-      if Mode = Internal then
-         Push_Internal_Command_Status (Get_Process (Debugger), True);
-      end if;
+      Set_Command_Mode (Get_Process (Debugger), Mode);
 
       --  Display the command in the output window if necessary
 
       if Mode = User and then Debugger.Window /= null then
          Text_Output_Handler
-           (Convert (Debugger.Window, Debugger),
-            Cmd & ASCII.LF, True);
+           (Convert (Debugger.Window, Debugger), Cmd & ASCII.LF, True);
       end if;
 
       --  Append the command to the history if necessary
@@ -292,13 +291,12 @@ package body Debugger is
         and then Mode /= Internal
       then
          Data.Mode := Mode;
-         Data.Debugger_Num := Integer (Get_Num
-                                       (Convert (Debugger.Window, Debugger)));
+         Data.Debugger_Num :=
+           Integer (Get_Num (Convert (Debugger.Window, Debugger)));
          Data.Command := new String'
-           (Cmd (Index_Non_Blank (Cmd)
-                 .. Index_Non_Blank (Cmd, Backward)));
-         Append (Convert (Debugger.Window, Debugger).Window.Command_History,
-                 Data);
+           (Cmd (Index_Non_Blank (Cmd) .. Index_Non_Blank (Cmd, Backward)));
+         Append
+           (Convert (Debugger.Window, Debugger).Window.Command_History, Data);
       end if;
 
       --  Send the command to the debugger
@@ -317,31 +315,24 @@ package body Debugger is
       Wait_For_Prompt  : Boolean;
       Mode             : Command_Type := Hidden) is
    begin
-      if Wait_For_Prompt then
-         --  Not in text mode (for testing purposes...)
+      --  Not in text mode (for testing purposes...)
+      if Debugger.Window /= null then
 
-         if Debugger.Window /= null then
+         --  Postprocessing (e.g handling of auto-update).
 
-            --  Postprocessing (e.g handling of auto-update).
-
-            if Is_Context_Command (Debugger, Cmd) then
-               Context_Changed (Convert (Debugger.Window, Debugger));
-            elsif Is_Execution_Command (Debugger, Cmd) then
-               Process_Stopped (Convert (Debugger.Window, Debugger));
-            end if;
-
-            --  Should we update the list of breakpoints => No if we are in
-            --  an internal command, since that would be too costly
-            if Mode /= Internal then
-               Update_Breakpoints
-                 (Convert (Debugger.Window, Debugger),
-                  Force => Is_Break_Command (Debugger, Cmd));
-            end if;
+         if Is_Context_Command (Debugger, Cmd) then
+            Context_Changed (Convert (Debugger.Window, Debugger));
+         elsif Is_Execution_Command (Debugger, Cmd) then
+            Process_Stopped (Convert (Debugger.Window, Debugger));
          end if;
-      end if;
 
-      if Mode = Internal then
-         Pop_Internal_Command_Status (Get_Process (Debugger));
+         --  Should we update the list of breakpoints => No if we are in
+         --  an internal command, since that would be too costly
+         if Mode /= Internal then
+            Update_Breakpoints
+              (Convert (Debugger.Window, Debugger),
+               Force => Is_Break_Command (Debugger, Cmd));
+         end if;
       end if;
    end Send_Internal_Post;
 
@@ -360,8 +351,8 @@ package body Debugger is
       Send_Internal_Pre (Debugger, Cmd, Empty_Buffer, Mode);
       if Wait_For_Prompt then
          Wait_Prompt (Debugger);
+         Send_Internal_Post (Debugger, Cmd, Wait_For_Prompt, Mode);
       end if;
-      Send_Internal_Post (Debugger, Cmd, Wait_For_Prompt, Mode);
    end Send;
 
    ---------------
@@ -385,10 +376,8 @@ package body Debugger is
             Send_Internal_Post (Debugger, Cmd, Wait_For_Prompt, Mode);
             return S;
          end;
-      else
-         Send_Internal_Post (Debugger, Cmd, Wait_For_Prompt, Mode);
-         return "";
       end if;
+      return "";
    end Send_Full;
 
    --------------------
