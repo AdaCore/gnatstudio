@@ -25,7 +25,7 @@ private package Src_Info.LI_Utils is
 
    procedure Insert_Declaration
      (File                  : in out LI_File_Ptr;
-      List                  : in out LI_File_List;
+      List                  : LI_File_List;
       DB_Dir                : String;
       Symbol_Name           : String;
       Location              : SN.Point;
@@ -54,7 +54,7 @@ private package Src_Info.LI_Utils is
      (Handler              : access Src_Info.CPP.CPP_LI_Handler_Record'Class;
       DB_Dir               : String;
       File                 : in out LI_File_Ptr;
-      List                 : in out LI_File_List;
+      List                 : LI_File_List;
       Project              : Projects.Project_Type;
       Referred_Filename    : String);
    --  Create a new dependency, from the files described in File to the source
@@ -64,7 +64,7 @@ private package Src_Info.LI_Utils is
      (Handler               : access Src_Info.CPP.CPP_LI_Handler_Record'Class;
       DB_Dir                : String;
       File                  : in out LI_File_Ptr;
-      List                  : in out LI_File_List;
+      List                  : LI_File_List;
       Symbol_Name           : String;
       Referred_Filename     : String;
       Location              : SN.Point;
@@ -87,7 +87,7 @@ private package Src_Info.LI_Utils is
      (Declaration_Info : in out E_Declaration_Info_List;
       Handler          : Src_Info.CPP.CPP_LI_Handler;
       DB_Dir           : String;
-      List             : in out LI_File_List;
+      List             : LI_File_List;
       Project          : Projects.Project_Type;
       Parent_Filename  : String;
       Parent_Location  : SN.Point);
@@ -150,7 +150,7 @@ private package Src_Info.LI_Utils is
      (LI            : out LI_File_Ptr;
       Handler       : access Src_Info.CPP.CPP_LI_Handler_Record'Class;
       DB_Dir        : String;
-      List          : in out LI_File_List;
+      List          : LI_File_List;
       Project       : Projects.Project_Type;
       Full_Filename : String);
    --  Create a stub LI file for Full_Filename, if there is no matching LI file
@@ -160,7 +160,7 @@ private package Src_Info.LI_Utils is
 
    procedure Create_LI_File
      (File        : out LI_File_Ptr;
-      List        : in out LI_File_List;
+      List        : LI_File_List;
       LI_Filename : String;
       Handler     : LI_Handler);
    --  Creates an empty LI_File structure.

@@ -34,7 +34,7 @@ package body Src_Info.LI_Utils is
    procedure Insert_Declaration_Internal
      (D_Ptr                   : in out E_Declaration_Info_List;
       File                    : LI_File_Ptr;
-      List                    : in out LI_File_List;
+      List                    : LI_File_List;
       DB_Dir                  : String;
       Symbol_Name             : String;
       Location                : Point;
@@ -72,7 +72,7 @@ package body Src_Info.LI_Utils is
 
    procedure Insert_Declaration
      (File                    : in out LI_File_Ptr;
-      List                    : in out LI_File_List;
+      List                    : LI_File_List;
       DB_Dir                  : String;
       Symbol_Name             : String;
       Location                : Point;
@@ -163,7 +163,7 @@ package body Src_Info.LI_Utils is
      (Handler              : access Src_Info.CPP.CPP_LI_Handler_Record'Class;
       DB_Dir               : String;
       File                 : in out LI_File_Ptr;
-      List                 : in out LI_File_List;
+      List                 : LI_File_List;
       Project              : Project_Type;
       Referred_Filename    : String)
    is
@@ -233,7 +233,7 @@ package body Src_Info.LI_Utils is
      (Handler               : access Src_Info.CPP.CPP_LI_Handler_Record'Class;
       DB_Dir                : String;
       File                  : in out LI_File_Ptr;
-      List                  : in out LI_File_List;
+      List                  : LI_File_List;
       Symbol_Name           : String;
       Referred_Filename     : String;
       Location              : Point;
@@ -385,7 +385,7 @@ package body Src_Info.LI_Utils is
      (Declaration_Info : in out E_Declaration_Info_List;
       Handler          : CPP_LI_Handler;
       DB_Dir           : String;
-      List             : in out LI_File_List;
+      List             : LI_File_List;
       Project          : Project_Type;
       Parent_Filename  : String;
       Parent_Location  : Point)
@@ -597,7 +597,7 @@ package body Src_Info.LI_Utils is
      (LI            : out LI_File_Ptr;
       Handler       : access Src_Info.CPP.CPP_LI_Handler_Record'Class;
       DB_Dir        : String;
-      List          : in out LI_File_List;
+      List          : LI_File_List;
       Project       : Project_Type;
       Full_Filename : String)
    is
@@ -642,7 +642,7 @@ package body Src_Info.LI_Utils is
    procedure Insert_Declaration_Internal
      (D_Ptr                   : in out E_Declaration_Info_List;
       File                    : LI_File_Ptr;
-      List                    : in out LI_File_List;
+      List                    : LI_File_List;
       DB_Dir                  : String;
       Symbol_Name             : String;
       Location                : Point;
@@ -808,7 +808,7 @@ package body Src_Info.LI_Utils is
 
    procedure Create_LI_File
      (File        : out LI_File_Ptr;
-      List        : in out LI_File_List;
+      List        : LI_File_List;
       LI_Filename : String;
       Handler     : LI_Handler) is
    begin
@@ -820,7 +820,7 @@ package body Src_Info.LI_Utils is
                  Spec_Info     => null,
                  Separate_Info => null,
                  LI_Timestamp  => 0));
-      Add (List.Table, File);
+      Add (List.Table.all, File);
    end Create_LI_File;
 
    ----------------------
