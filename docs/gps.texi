@@ -1380,7 +1380,16 @@ this is a built-in file selector described in @ref{The File Selector}.
 Open a dialog where you can easily and rapidly select a source file from your
 project.
 
-@c ??? add screen shot
+@iftex
+@cindex screen shot
+@image{open-from-project}
+@end iftex
+
+@ifhtml
+@cindex screen shot
+@image{open-from-project}
+@end ifhtml
+
 
 The first text area allows you to type a file name. You can start the beginning
 of a file name, and use the @key{Tab} key to complete the file name. If there
@@ -2314,6 +2323,7 @@ When you want to quit the debugger without quitting GPS, go to the menu
 * The Breakpoint Editor::
 * The Memory Window::
 * Using the Source Editor when Debugging::
+* The Assembly Window::
 * The Debugger Console::
 @end menu
 
@@ -2354,8 +2364,15 @@ history, comparison between various revisions, and so on.
 
 The VCS Explorer provides an overview of source files and their status.
 
-@c ??? incomplete
-@c add screen shot
+@iftex
+@cindex screen shot
+@image{vcs-explorer, 12.7cm}
+@end iftex
+
+@ifhtml
+@cindex screen shot
+@image{vcs-explorer}
+@end ifhtml
 
 The easiest way to bring up the VCS Explorer is through the menu
 @file{VCS->Explorer}. The Explorer can also be brought up using the
@@ -2674,6 +2691,7 @@ server is temporarily unavailable).
 
 @node The Preferences Dialog
 @section The Preferences Dialog
+@anchor{preferences dialog}
 @cindex preferences
 @noindent
 This dialog, available through the menu @code{Edit->Preferences}, allows you to
