@@ -70,6 +70,11 @@ package Vdiff2_Module.Utils.Shell_Command is
       Link   : Diff_Chunk_Access);
    pragma Inline (Goto_Difference);
 
+   procedure Delete_Mark
+     (Kernel : Kernel_Handle;
+      Link   : String);
+   pragma Inline (Delete_Mark);
+
    procedure Highlight_Line
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
       File   : Virtual_File;

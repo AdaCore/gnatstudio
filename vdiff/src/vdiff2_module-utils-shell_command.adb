@@ -54,6 +54,18 @@ package body Vdiff2_Module.Utils.Shell_Command is
       return Res;
    end Add_Line;
 
+   -----------------
+   -- Delete_Mark --
+   -----------------
+
+   procedure Delete_Mark
+     (Kernel : Kernel_Handle;
+      Link   : String) is
+      pragma Unreferenced (Kernel, Link);
+   begin
+      null; -- ??? corrected when nico add delete_mark command
+   end Delete_Mark;
+
    ----------
    -- Edit --
    ----------
