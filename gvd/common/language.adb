@@ -21,6 +21,19 @@
 with Unchecked_Deallocation;
 
 package body Language is
+
+   ---------------------
+   -- Break_Exception --
+   ---------------------
+
+   function Break_Exception
+     (Debugger  : access Language_Root;
+      Name      : String  := "";
+      Unhandled : Boolean := False) return String is
+   begin
+      return "";
+   end Break_Exception;
+
    ----------
    -- Free --
    ----------

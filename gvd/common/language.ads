@@ -58,8 +58,41 @@ package Language is
    --  Next_Char should be set to the index of the first character after the
    --  entity.
 
+   function Dereference_Name
+     (Lang : access Language_Root;
+      Name : String) return String is abstract;
+   --  Return the name to use to dereference Name (ie in Ada "Name.all", in
+   --  C "*Name", ...). Note that Name can be a composite name (Name.Field),
+   --  and thus might have to be protected with parentheses.
+
+   function Array_Item_Name
+     (Lang  : access Language_Root;
+      Name  : String;
+      Index : String) return String is abstract;
+   --  Return the name to use to access a specific element of an array.
+   --  Index is a comma-separated list of the indexes for all the dimensions,
+   --  as in "1,2".
+
+   function Record_Field_Name
+     (Lang  : access Language_Root;
+      Name  : String;
+      Field : String) return String is abstract;
+   --  Return the name to use for a specific field of a record.
+
+   ------------------------
+   -- Exception Handling --
+   ------------------------
+
+   function Break_Exception
+     (Debugger  : access Language_Root;
+      Name      : String  := "";
+      Unhandled : Boolean := False) return String;
+   --  Return the command used in the current debugger/language to break
+   --  on exception. If name is null, break should occur on all exceptions.
+   --  The default implementation returns a null String.
+
    ----------------------------
-   -- Generic Thread support --
+   -- Generic Thread Support --
    ----------------------------
 
    --  The types provided below enable the display debugger to get information
@@ -98,27 +131,6 @@ package Language is
      (Lang   : access Language_Root;
       Output : String) return Thread_Information_Array is abstract;
    --  Parse the result of a thread list command.
-
-   function Dereference_Name
-     (Lang : access Language_Root;
-      Name : String) return String is abstract;
-   --  Return the name to use to dereference Name (ie in Ada "Name.all", in
-   --  C "*Name", ...). Note that Name can be a composite name (Name.Field),
-   --  and thus might have to be protected with parentheses.
-
-   function Array_Item_Name
-     (Lang  : access Language_Root;
-      Name  : String;
-      Index : String) return String is abstract;
-   --  Return the name to use to access a specific element of an array.
-   --  Index is a comma-separated list of the indexes for all the dimensions,
-   --  as in "1,2".
-
-   function Record_Field_Name
-     (Lang  : access Language_Root;
-      Name  : String;
-      Field : String) return String is abstract;
-   --  Return the name to use for a specific field of a record.
 
 private
    type Language_Root is abstract tagged null record;
