@@ -9,7 +9,6 @@ project Common is
    package Compiler is
       for Default_Switches ("Ada") use ("-gnata", "-g", "-O2", "-gnaty", "-gnatwue");
       for Switches ("test_htables.adb") use ("-g", "-O2", "-gnatwue");
-      for Switches ("sdefault.adb") use ("-g", "-O2");
    end Compiler;
 
 end Common;
