@@ -114,22 +114,6 @@ package body Source_Analyzer is
    --  Return the next char in buffer. P is the current character.
    pragma Inline (Next_Char);
 
-   procedure Next_Word
-     (Buffer          : String;
-      New_Buffer      : in out Extended_Line_Buffer;
-      P               : in out Natural;
-      Num_Parens      : in out Integer;
-      Line_Count      : in out Natural;
-      Tokens          : Token_Stack.Simple_Stack;
-      Indents         : in out Indent_Stack.Simple_Stack;
-      Num_Spaces      : Integer;
-      Indent_Continue : Natural;
-      Indent_Done     : in out Boolean;
-      Prev_Token      : in out Token_Type);
-   --  Starting at Buffer (P), find the location of the next word
-   --  and set P accordingly.
-   --  Formatting of operators is performed by this procedure.
-
    function Prev_Char (P : Natural) return Natural;
    --  Return the previous char in buffer. P is the current character.
    pragma Inline (Prev_Char);
@@ -477,369 +461,6 @@ package body Source_Analyzer is
    end Next_Line;
 
    ---------------
-   -- Next_Word --
-   ---------------
-
-   procedure Next_Word
-     (Buffer          : String;
-      New_Buffer      : in out Extended_Line_Buffer;
-      P               : in out Natural;
-      Num_Parens      : in out Integer;
-      Line_Count      : in out Natural;
-      Tokens          : Token_Stack.Simple_Stack;
-      Indents         : in out Indent_Stack.Simple_Stack;
-      Num_Spaces      : Integer;
-      Indent_Continue : Natural;
-      Indent_Done     : in out Boolean;
-      Prev_Token      : in out Token_Type)
-   is
-      Comma         : String := ", ";
-      Spaces        : String := "    ";
-      End_Of_Line   : Natural;
-      Start_Of_Line : Natural;
-      Long          : Natural;
-      First         : Natural;
-      Last          : Natural;
-      Offs          : Natural;
-      Insert_Spaces : Boolean;
-      Char          : Character;
-      Padding       : Integer;
-
-      procedure Handle_Two_Chars (Second_Char : Character);
-      --  Handle a two char operator, whose second char is Second_Char.
-
-      procedure Handle_Two_Chars (Second_Char : Character) is
-      begin
-         Last := P + 2;
-
-         if Buffer (Prev_Char (P)) = ' ' then
-            Offs := 2;
-            Long := 2;
-
-         else
-            Long := 3;
-         end if;
-
-         P := Next_Char (P);
-
-         if Buffer (Next_Char (P)) /= ' ' then
-            Long := Long + 1;
-         end if;
-
-         Spaces (3) := Second_Char;
-      end Handle_Two_Chars;
-
-   begin
-      if Buffer (P) = ASCII.LF then
-         Line_Count := Line_Count + 1;
-      end if;
-
-      Start_Of_Line := Line_Start (Buffer, P);
-      End_Of_Line   := Line_End (Buffer, Start_Of_Line);
-
-      if New_Buffer.Current.Line'First = Start_Of_Line then
-         Padding := New_Buffer.Current.Line'Length - New_Buffer.Current.Len;
-      else
-         Padding := 0;
-         Indent_Done := False;
-      end if;
-
-      loop
-         if P > End_Of_Line then
-            Start_Of_Line := Line_Start (Buffer, P);
-            End_Of_Line   := Line_End (Buffer, Start_Of_Line);
-            Line_Count    := Line_Count + 1;
-            Padding       := 0;
-            Indent_Done := False;
-         end if;
-
-         --  Skip comments
-
-         while Buffer (P) = '-'
-           and then Buffer (Next_Char (P)) = '-'
-         loop
-            P             := Next_Line (Buffer, P);
-            Start_Of_Line := P;
-            End_Of_Line   := Line_End (Buffer, P);
-            Line_Count    := Line_Count + 1;
-            Padding       := 0;
-            Indent_Done := False;
-         end loop;
-
-         exit when P = Buffer'Last or else Is_Word_Char (Buffer (P));
-
-         case Buffer (P) is
-            when '(' =>
-               Prev_Token := Tok_Left_Paren;
-               Char := Buffer (Prev_Char (P));
-
-               if Indent_Done then
-                  if Char /= ' ' and then Char /= '(' then
-                     Spaces (2) := Buffer (P);
-                     Replace_Text (New_Buffer, P, P + 1, Spaces (1 .. 2));
-                     Padding :=
-                       New_Buffer.Current.Line'Length - New_Buffer.Current.Len;
-                  end if;
-
-               else
-                  --  Indent with 2 extra spaces if the '(' is the first
-                  --  non blank character on the line
-
-                  Do_Indent
-                    (Buffer, New_Buffer, P, Indents,
-                     Num_Spaces + Indent_Continue, Indent_Done);
-                  Padding :=
-                    New_Buffer.Current.Line'Length - New_Buffer.Current.Len;
-               end if;
-
-               Push (Indents, P - Start_Of_Line + Padding + 1);
-               Num_Parens := Num_Parens + 1;
-
-            when ')' =>
-               Prev_Token := Tok_Right_Paren;
-
-               if Indents = null then
-                  --  Syntax error
-                  null;
-               else
-                  Pop (Indents);
-                  Num_Parens := Num_Parens - 1;
-               end if;
-
-
-            when '"' =>
-               declare
-                  First : Natural := P;
-                  Len   : Natural;
-                  Val   : Token_Stack.Generic_Type_Access;
-
-               begin
-                  P := Next_Char (P);
-
-                  while P <= End_Of_Line
-                    and then Buffer (P) /= '"'
-                  loop
-                     P := Next_Char (P);
-                  end loop;
-
-                  Val := Top (Tokens);
-
-                  if Val.Token in Token_Class_Declk
-                    and then Val.Ident_Len = 0
-                  then
-                     --  This is an operator symbol, e.g function ">=" (...);
-
-                     Prev_Token := Tok_Operator_Symbol;
-                     Len := P - First + 1;
-                     Val.Identifier (1 .. Len) := Buffer (First .. P);
-                     Val.Ident_Len := Len;
-
-                  else
-                     Prev_Token := Tok_String_Literal;
-                  end if;
-               end;
-
-            when '&' | '+' | '-' | '*' | '/' | ':' | '<' | '>' | '=' |
-                 '|' | '.'
-            =>
-               Spaces (2) := Buffer (P);
-               Spaces (3) := ' ';
-               First := P;
-               Last  := P + 1;
-               Offs  := 1;
-
-               case Buffer (P) is
-                  when '+' | '-' =>
-                     if Buffer (P) = '+' then
-                        Prev_Token := Tok_Minus;
-                     else
-                        Prev_Token := Tok_Plus;
-                     end if;
-
-                     if
-                       To_Upper (Buffer (Prev_Char (P))) /= 'E'
-                         or else Buffer (Prev_Char (Prev_Char (P)))
-                           not in '0' .. '9'
-                     then
-                        Prev_Token    := Tok_Integer_Literal;
-                        Insert_Spaces := True;
-                     else
-                        Insert_Spaces := False;
-                     end if;
-
-                  when '&' | '|' =>
-                     if Buffer (P) = '&' then
-                        Prev_Token := Tok_Ampersand;
-                     else
-                        Prev_Token := Tok_Vertical_Bar;
-                     end if;
-
-                     Insert_Spaces := True;
-
-                  when '/' | ':' =>
-                     Insert_Spaces := True;
-
-                     if Buffer (Next_Char (P)) = '=' then
-                        Handle_Two_Chars ('=');
-
-                        if Buffer (P) = '/' then
-                           Prev_Token := Tok_Not_Equal;
-                        else
-                           Prev_Token := Tok_Colon_Equal;
-                        end if;
-
-                     elsif Buffer (P) = '/' then
-                        Prev_Token := Tok_Slash;
-                     else
-                        Prev_Token := Tok_Colon;
-                     end if;
-
-                  when '*' =>
-                     Insert_Spaces := Buffer (Prev_Char (P)) /= '*';
-
-                     if Buffer (Next_Char (P)) = '*' then
-                        Handle_Two_Chars ('*');
-                        Prev_Token := Tok_Double_Asterisk;
-                     else
-                        Prev_Token := Tok_Asterisk;
-                     end if;
-
-                  when '.' =>
-                     Insert_Spaces := Buffer (Next_Char (P)) = '.';
-
-                     if Insert_Spaces then
-                        Handle_Two_Chars ('.');
-                        Prev_Token := Tok_Dot_Dot;
-                     else
-                        Prev_Token := Tok_Dot;
-                     end if;
-
-                  when '<' =>
-                     case Buffer (Next_Char (P)) is
-                        when '=' =>
-                           Insert_Spaces := True;
-                           Prev_Token    := Tok_Less_Equal;
-                           Handle_Two_Chars ('=');
-
-                        when '<' =>
-                           Prev_Token    := Tok_Less_Less;
-                           Insert_Spaces := False;
-                           Handle_Two_Chars ('<');
-
-                        when '>' =>
-                           Prev_Token    := Tok_Box;
-                           Insert_Spaces := False;
-                           Handle_Two_Chars ('>');
-
-                        when others =>
-                           Prev_Token    := Tok_Less;
-                           Insert_Spaces := True;
-                     end case;
-
-                  when '>' =>
-                     case Buffer (Next_Char (P)) is
-                        when '=' =>
-                           Insert_Spaces := True;
-                           Prev_Token    := Tok_Greater_Equal;
-                           Handle_Two_Chars ('=');
-
-                        when '>' =>
-                           Prev_Token    := Tok_Greater_Greater;
-                           Insert_Spaces := False;
-                           Handle_Two_Chars ('>');
-
-                        when others =>
-                           Prev_Token    := Tok_Greater;
-                           Insert_Spaces := True;
-                     end case;
-
-                  when '=' =>
-                     Insert_Spaces := True;
-
-                     if Buffer (Next_Char (P)) = '>' then
-                        Prev_Token := Tok_Arrow;
-                        Handle_Two_Chars ('>');
-                     else
-                        Prev_Token := Tok_Equal;
-                     end if;
-
-                  when others =>
-                     null;
-               end case;
-
-               if Buffer (Prev_Char (P)) = ' ' then
-                  First := First - 1;
-               end if;
-
-               if Spaces (3) = ' ' then
-                  if Buffer (Next_Char (P)) = ' '
-                    or else Last - 1 = End_Of_Line
-                  then
-                     Long := 2;
-                  else
-                     Long := 3;
-                  end if;
-               end if;
-
-               if Insert_Spaces and then
-                 (Buffer (Prev_Char (P)) /= ' '
-                   or else Long /= Last - P + 1)
-               then
-                  Replace_Text
-                    (New_Buffer, First, Last,
-                     Spaces (Offs .. Offs + Long - 1));
-               end if;
-
-            when ',' | ';' =>
-               if Buffer (P) = ';' then
-                  Prev_Token := Tok_Semicolon;
-               else
-                  Prev_Token := Tok_Comma;
-               end if;
-
-               Char := Buffer (Next_Char (P));
-
-               if Char /= ' ' and then P /= End_Of_Line then
-                  Comma (1) := Buffer (P);
-                  Replace_Text (New_Buffer, P, P + 1, Comma (1 .. 2));
-               end if;
-
-            when ''' =>
-               --  Apostrophe. This can either be the start of a character
-               --  literal, an isolated apostrophe used in a qualified
-               --  expression or an attribute. We treat it as a character
-               --  literal if it does not follow a right parenthesis,
-               --  identifier, the keyword ALL or a literal. This means that we
-               --  correctly treat constructs like:
-               --    A := Character'('A');
-
-               if Prev_Token = Tok_Identifier
-                  or else Prev_Token = Tok_Right_Paren
-                  or else Prev_Token = Tok_All
-                  or else Prev_Token in Token_Class_Literal
-               then
-                  Prev_Token := Tok_Apostrophe;
-               else
-                  P := Next_Char (Next_Char (P));
-
-                  while P <= End_Of_Line
-                    and then Buffer (P) /= '''
-                  loop
-                     P := Next_Char (P);
-                  end loop;
-
-                  Prev_Token := Tok_Char_Literal;
-               end if;
-
-            when others =>
-               null;
-         end case;
-
-         P := Next_Char (P);
-      end loop;
-   end Next_Word;
-
-   ---------------
    -- Prev_Char --
    ---------------
 
@@ -900,7 +521,7 @@ package body Source_Analyzer is
       Str                 : String (1 .. 1024);
       Str_Len             : Natural           := 0;
       Current             : Natural;
-      Prec, Prec_Last     : Natural           := 1;
+      Prec                : Natural           := 1;
       Num_Spaces          : Integer           := 0;
       Indent_Done         : Boolean           := False;
       Num_Parens          : Integer           := 0;
@@ -911,7 +532,6 @@ package body Source_Analyzer is
       Subprogram_Decl     : Boolean           := False;
       Syntax_Error        : Boolean           := False;
       Started             : Boolean           := False;
-      Prev_Reserved       : Token_Type        := No_Token;
       Token               : Token_Type;
       Prev_Token          : Token_Type := No_Token;
       Tokens              : Token_Stack.Simple_Stack;
@@ -924,6 +544,29 @@ package body Source_Analyzer is
       procedure Handle_Reserved_Word (Reserved : Token_Type);
       --  Handle reserved words.
 
+      procedure Next_Word (P : in out Natural);
+      --  Starting at Buffer (P), find the location of the next word
+      --  and set P accordingly.
+      --  Formatting of operators is performed by this procedure.
+      --  The following variables are accessed read-only:
+      --    Buffer, Tokens, Num_Spaces, Indent_Continue
+      --  The following variables are read and modified:
+      --    New_Buffer, Num_Parens, Line_Count, Indents, Indent_Done,
+      --    Prev_Token.
+
+      procedure New_Line (Count : in out Natural);
+      pragma Inline (New_Line);
+      --  Increment Count and poll if needed (e.g for graphic events).
+
+      --------------
+      -- New_Line --
+      --------------
+
+      procedure New_Line (Count : in out Natural) is
+      begin
+         Count := Count + 1;
+      end New_Line;
+
       --------------------------
       -- Handle_Reserved_Word --
       --------------------------
@@ -933,12 +576,17 @@ package body Source_Analyzer is
       begin
          Temp.Token := Reserved;
 
-         --  Note: the order of the following conditions is important
-
          if Reserved = Tok_Body then
             Subprogram_Decl := False;
+
          elsif Prev_Token /= Tok_End and then Reserved = Tok_If then
             Push (Tokens, Temp);
+
+         elsif Prev_Token /= Tok_End and then Reserved = Tok_Case then
+            Do_Indent
+              (Buffer, New_Buffer, Prec, Indents, Num_Spaces, Indent_Done);
+            Push (Tokens, Temp);
+            Num_Spaces := Num_Spaces + Indent_Level;
 
          elsif Reserved = Tok_Renames then
             Val := Top (Tokens);
@@ -948,6 +596,9 @@ package body Source_Analyzer is
                 or else Val.Token = Tok_Procedure
                 or else Val.Token = Tok_Package)
             then
+               --  Terminate current subprogram declaration, e.g:
+               --  procedure ... renames ...;
+
                Subprogram_Decl := False;
                Pop (Tokens);
             end if;
@@ -1143,21 +794,16 @@ package body Source_Analyzer is
             end if;
 
             if Reserved = Tok_Is then
-               --  ??? should use the stack instead
-
-               if Prev_Reserved = Tok_Case then
-                  Temp.Token := Tok_Case;
-                  Push (Tokens, Temp);
-                  Num_Spaces := Num_Spaces + Indent_Level;
-
-               elsif Type_Decl then
+               if Type_Decl then
                   Was_Type_Decl := True;
                   Type_Decl     := False;
-
                else
                   Val := Top (Tokens);
-                  Val.Declaration := True;
                   Subprogram_Decl := False;
+
+                  if Val.Token /= Tok_Case then
+                     Val.Declaration := True;
+                  end if;
                end if;
             end if;
 
@@ -1194,13 +840,359 @@ package body Source_Analyzer is
             end if;
          end if;
 
-         Prev_Reserved := Reserved;
-
       exception
          when Token_Stack.Stack_Empty =>
             Syntax_Error := True;
-            Prev_Reserved := Reserved;
       end Handle_Reserved_Word;
+
+      ---------------
+      -- Next_Word --
+      ---------------
+
+      procedure Next_Word (P : in out Natural) is
+         Comma         : String := ", ";
+         Spaces        : String := "    ";
+         End_Of_Line   : Natural;
+         Start_Of_Line : Natural;
+         Long          : Natural;
+         First         : Natural;
+         Last          : Natural;
+         Offs          : Natural;
+         Insert_Spaces : Boolean;
+         Char          : Character;
+         Padding       : Integer;
+
+         procedure Handle_Two_Chars (Second_Char : Character);
+         --  Handle a two char operator, whose second char is Second_Char.
+
+         procedure Handle_Two_Chars (Second_Char : Character) is
+         begin
+            Last := P + 2;
+
+            if Buffer (Prev_Char (P)) = ' ' then
+               Offs := 2;
+               Long := 2;
+
+            else
+               Long := 3;
+            end if;
+
+            P := Next_Char (P);
+
+            if Buffer (Next_Char (P)) /= ' ' then
+               Long := Long + 1;
+            end if;
+
+            Spaces (3) := Second_Char;
+         end Handle_Two_Chars;
+
+      begin
+         if Buffer (P) = ASCII.LF then
+            New_Line (Line_Count);
+         end if;
+
+         Start_Of_Line := Line_Start (Buffer, P);
+         End_Of_Line   := Line_End (Buffer, Start_Of_Line);
+
+         if New_Buffer.Current.Line'First = Start_Of_Line then
+            Padding := New_Buffer.Current.Line'Length - New_Buffer.Current.Len;
+         else
+            Padding := 0;
+            Indent_Done := False;
+         end if;
+
+         loop
+            if P > End_Of_Line then
+               Start_Of_Line := Line_Start (Buffer, P);
+               End_Of_Line   := Line_End (Buffer, Start_Of_Line);
+               New_Line (Line_Count);
+               Padding       := 0;
+               Indent_Done := False;
+            end if;
+
+            --  Skip comments
+
+            while Buffer (P) = '-'
+              and then Buffer (Next_Char (P)) = '-'
+            loop
+               P             := Next_Line (Buffer, P);
+               Start_Of_Line := P;
+               End_Of_Line   := Line_End (Buffer, P);
+               New_Line (Line_Count);
+               Padding       := 0;
+               Indent_Done := False;
+            end loop;
+
+            exit when P = Buffer'Last or else Is_Word_Char (Buffer (P));
+
+            case Buffer (P) is
+               when '(' =>
+                  Prev_Token := Tok_Left_Paren;
+                  Char := Buffer (Prev_Char (P));
+
+                  if Indent_Done then
+                     if Char /= ' ' and then Char /= '(' then
+                        Spaces (2) := Buffer (P);
+                        Replace_Text (New_Buffer, P, P + 1, Spaces (1 .. 2));
+                        Padding := New_Buffer.Current.Line'Length
+                          - New_Buffer.Current.Len;
+                     end if;
+
+                  else
+                     --  Indent with 2 extra spaces if the '(' is the first
+                     --  non blank character on the line
+
+                     Do_Indent
+                       (Buffer, New_Buffer, P, Indents,
+                        Num_Spaces + Indent_Continue, Indent_Done);
+                     Padding :=
+                       New_Buffer.Current.Line'Length - New_Buffer.Current.Len;
+                  end if;
+
+                  Push (Indents, P - Start_Of_Line + Padding + 1);
+                  Num_Parens := Num_Parens + 1;
+
+               when ')' =>
+                  Prev_Token := Tok_Right_Paren;
+
+                  if Indents = null then
+                     --  Syntax error
+                     null;
+                  else
+                     Pop (Indents);
+                     Num_Parens := Num_Parens - 1;
+                  end if;
+
+               when '"' =>
+                  declare
+                     First : constant Natural := P;
+                     Len   : Natural;
+                     Val   : Token_Stack.Generic_Type_Access;
+
+                  begin
+                     P := Next_Char (P);
+
+                     while P <= End_Of_Line
+                       and then Buffer (P) /= '"'
+                     loop
+                        P := Next_Char (P);
+                     end loop;
+
+                     Val := Top (Tokens);
+
+                     if Val.Token in Token_Class_Declk
+                       and then Val.Ident_Len = 0
+                     then
+                        --  This is an operator symbol, e.g function ">=" (...)
+
+                        Prev_Token := Tok_Operator_Symbol;
+                        Len := P - First + 1;
+                        Val.Identifier (1 .. Len) := Buffer (First .. P);
+                        Val.Ident_Len := Len;
+
+                     else
+                        Prev_Token := Tok_String_Literal;
+                     end if;
+                  end;
+
+               when '&' | '+' | '-' | '*' | '/' | ':' | '<' | '>' | '=' |
+                    '|' | '.'
+               =>
+                  Spaces (2) := Buffer (P);
+                  Spaces (3) := ' ';
+                  First := P;
+                  Last  := P + 1;
+                  Offs  := 1;
+
+                  case Buffer (P) is
+                     when '+' | '-' =>
+                        if Buffer (P) = '+' then
+                           Prev_Token := Tok_Minus;
+                        else
+                           Prev_Token := Tok_Plus;
+                        end if;
+
+                        if To_Upper (Buffer (Prev_Char (P))) /= 'E'
+                          or else Buffer (Prev_Char (Prev_Char (P)))
+                            not in '0' .. '9'
+                        then
+                           Prev_Token    := Tok_Integer_Literal;
+                           Insert_Spaces := True;
+                        else
+                           Insert_Spaces := False;
+                        end if;
+
+                     when '&' | '|' =>
+                        if Buffer (P) = '&' then
+                           Prev_Token := Tok_Ampersand;
+                        else
+                           Prev_Token := Tok_Vertical_Bar;
+                        end if;
+
+                        Insert_Spaces := True;
+
+                     when '/' | ':' =>
+                        Insert_Spaces := True;
+
+                        if Buffer (Next_Char (P)) = '=' then
+                           Handle_Two_Chars ('=');
+
+                           if Buffer (P) = '/' then
+                              Prev_Token := Tok_Not_Equal;
+                           else
+                              Prev_Token := Tok_Colon_Equal;
+                           end if;
+
+                        elsif Buffer (P) = '/' then
+                           Prev_Token := Tok_Slash;
+                        else
+                           Prev_Token := Tok_Colon;
+                        end if;
+
+                     when '*' =>
+                        Insert_Spaces := Buffer (Prev_Char (P)) /= '*';
+
+                        if Buffer (Next_Char (P)) = '*' then
+                           Handle_Two_Chars ('*');
+                           Prev_Token := Tok_Double_Asterisk;
+                        else
+                           Prev_Token := Tok_Asterisk;
+                        end if;
+
+                     when '.' =>
+                        Insert_Spaces := Buffer (Next_Char (P)) = '.';
+
+                        if Insert_Spaces then
+                           Handle_Two_Chars ('.');
+                           Prev_Token := Tok_Dot_Dot;
+                        else
+                           Prev_Token := Tok_Dot;
+                        end if;
+
+                     when '<' =>
+                        case Buffer (Next_Char (P)) is
+                           when '=' =>
+                              Insert_Spaces := True;
+                              Prev_Token    := Tok_Less_Equal;
+                              Handle_Two_Chars ('=');
+
+                           when '<' =>
+                              Prev_Token    := Tok_Less_Less;
+                              Insert_Spaces := False;
+                              Handle_Two_Chars ('<');
+
+                           when '>' =>
+                              Prev_Token    := Tok_Box;
+                              Insert_Spaces := False;
+                              Handle_Two_Chars ('>');
+
+                           when others =>
+                              Prev_Token    := Tok_Less;
+                              Insert_Spaces := True;
+                        end case;
+
+                     when '>' =>
+                        case Buffer (Next_Char (P)) is
+                           when '=' =>
+                              Insert_Spaces := True;
+                              Prev_Token    := Tok_Greater_Equal;
+                              Handle_Two_Chars ('=');
+
+                           when '>' =>
+                              Prev_Token    := Tok_Greater_Greater;
+                              Insert_Spaces := False;
+                              Handle_Two_Chars ('>');
+
+                           when others =>
+                              Prev_Token    := Tok_Greater;
+                              Insert_Spaces := True;
+                        end case;
+
+                     when '=' =>
+                        Insert_Spaces := True;
+
+                        if Buffer (Next_Char (P)) = '>' then
+                           Prev_Token := Tok_Arrow;
+                           Handle_Two_Chars ('>');
+                        else
+                           Prev_Token := Tok_Equal;
+                        end if;
+
+                     when others =>
+                        null;
+                  end case;
+
+                  if Buffer (Prev_Char (P)) = ' ' then
+                     First := First - 1;
+                  end if;
+
+                  if Spaces (3) = ' ' then
+                     if Buffer (Next_Char (P)) = ' '
+                       or else Last - 1 = End_Of_Line
+                     then
+                        Long := 2;
+                     else
+                        Long := 3;
+                     end if;
+                  end if;
+
+                  if Insert_Spaces and then
+                    (Buffer (Prev_Char (P)) /= ' '
+                      or else Long /= Last - P + 1)
+                  then
+                     Replace_Text
+                       (New_Buffer, First, Last,
+                        Spaces (Offs .. Offs + Long - 1));
+                  end if;
+
+               when ',' | ';' =>
+                  if Buffer (P) = ';' then
+                     Prev_Token := Tok_Semicolon;
+                  else
+                     Prev_Token := Tok_Comma;
+                  end if;
+
+                  Char := Buffer (Next_Char (P));
+
+                  if Char /= ' ' and then P /= End_Of_Line then
+                     Comma (1) := Buffer (P);
+                     Replace_Text (New_Buffer, P, P + 1, Comma (1 .. 2));
+                  end if;
+
+               when ''' =>
+                  --  Apostrophe. This can either be the start of a character
+                  --  literal, an isolated apostrophe used in a qualified
+                  --  expression or an attribute. We treat it as a character
+                  --  literal if it does not follow a right parenthesis,
+                  --  identifier, the keyword ALL or a literal. This means that
+                  --  we correctly treat constructs like:
+                  --    A := Character'('A');
+
+                  if Prev_Token = Tok_Identifier
+                     or else Prev_Token = Tok_Right_Paren
+                     or else Prev_Token = Tok_All
+                     or else Prev_Token in Token_Class_Literal
+                  then
+                     Prev_Token := Tok_Apostrophe;
+                  else
+                     P := Next_Char (Next_Char (P));
+
+                     while P <= End_Of_Line
+                       and then Buffer (P) /= '''
+                     loop
+                        P := Next_Char (P);
+                     end loop;
+
+                     Prev_Token := Tok_Char_Literal;
+                  end if;
+
+               when others =>
+                  null;
+            end case;
+
+            P := Next_Char (P);
+         end loop;
+      end Next_Word;
 
    begin  --  Format_Ada
       New_Buffer := To_Line_Buffer (Buffer);
@@ -1211,10 +1203,7 @@ package body Source_Analyzer is
       --  Push a dummy indentation so that stack will never be empty.
       Push (Indents, None);
 
-      Next_Word
-        (Buffer, New_Buffer, Prec, Num_Parens, Line_Count,
-         Tokens, Indents, Indent_Continue, Num_Spaces,
-         Indent_Done, Prev_Token);
+      Next_Word (Prec);
       Current := End_Of_Word (Buffer, Prec);
 
       while Current < Buffer'Last loop
@@ -1303,14 +1292,10 @@ package body Source_Analyzer is
             Started := True;
          end if;
 
-         Prec_Last       := Prec;
          Prev_Num_Parens := Num_Parens;
          Prec            := Current + 1;
          Prev_Token      := Token;
-         Next_Word
-           (Buffer, New_Buffer, Prec, Num_Parens, Line_Count,
-            Tokens, Indents, Indent_Continue, Num_Spaces,
-            Indent_Done, Prev_Token);
+         Next_Word (Prec);
 
          Syntax_Error :=
            Syntax_Error or else (Prec = Buffer'Last and then Num_Spaces > 0);
@@ -1322,14 +1307,6 @@ package body Source_Analyzer is
          end if;
 
          Current := End_Of_Word (Buffer, Prec);
-
-         --  A new line, reset flags.
-
-         if Line_Start (Buffer, Prec) /= Line_Start (Buffer, Prec_Last) then
-            null;
-            --  Indent_Done := False;
-            --  ??? Handle events, update progress bar, ...
-         end if;
       end loop;
 
       Print (New_Buffer);
