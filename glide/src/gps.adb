@@ -51,6 +51,7 @@ with Ada.Text_IO;               use Ada.Text_IO;
 with Prj;                       use Prj;
 with Prj_API;
 with Traces;                    use Traces;
+with Ada.Exceptions;            use Ada.Exceptions;
 
 --  Modules registered by GPS.
 with Ada_Module;
@@ -96,6 +97,7 @@ procedure GPS is
    File_Opened    : Boolean := False;
    Splash         : Gtk_Window;
    Timeout_Id     : Timeout_Handler_Id;
+   Result         : Boolean;
 
    procedure Init_Settings;
    --  Set up environment for GPS.
@@ -428,6 +430,13 @@ procedure GPS is
               (GPS.Prefix_Directory.all &
                "/doc/gps/html/gps-welcome.html"));
          Maximize_Children (Get_MDI (GPS.Kernel));
+
+         Console.Insert
+           (GPS.Kernel,
+            -"Welcome to GPS " & GVD.Version & " (" & GVD.Source_Date &
+            (-") hosted on ") & GVD.Target & ASCII.LF &
+            (-"the GNAT Programming System") & ASCII.LF &
+            "(c) 2001-2002 ACT-Europe");
       end if;
 
       Show_All (GPS);
@@ -453,7 +462,7 @@ begin
 
    Gtk_New
      (GPS, "<gps>", Glide_Menu.Glide_Menu_Items.all, Dir.all, Prefix.all);
-   Set_Title (GPS, "GPS - Next Generation");
+   Set_Title (GPS, "GPS - the GNAT Programming System");
    Maximize (GPS);
 
    loop
@@ -513,7 +522,21 @@ begin
          (GPS.Kernel, null, null, null));
    end if;
 
-   Gtk.Main.Main;
+   begin
+      Gtk.Main.Main;
+   exception
+      when E : others =>
+         Button := Message_Dialog
+           ((-"Unexpected fatal error, GPS is in an inconsistent state") &
+            ASCII.LF & (-"Please report with contents of ") &
+            Format_Pathname (GPS.Home_Dir.all & "/log") & ASCII.LF & ASCII.LF &
+            (-"You will be asked to save modified files before GPS exits"),
+            Error, Button_OK,
+            Title => -"Fatal Error",
+            Justification => Justify_Left);
+         Result := Save_All_MDI_Children (GPS.Kernel, Force => False);
+         Trace (Me, "Unhandled exception: " & Exception_Information (E));
+   end;
 
    Trace (Me, "Saving preferences in "
           & String_Utils.Name_As_Directory (Dir.all) & "preferences");
