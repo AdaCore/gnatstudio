@@ -135,6 +135,12 @@ package Breakpoints_Pkg is
    --  Note that this is your responsibility to free the memory associated with
    --  Descriptor, using Free below.
 
+   procedure Set_Process
+     (Editor  : access Breakpoints_Record;
+      Process : access Odd.Process.Debugger_Process_Tab_Record'Class);
+   --  Change the process on which the dialogs applies.
+   --  The list of breakpoints is automatically updated for the new process.
+
 private
 
    procedure Gtk_New (Breakpoints : out Breakpoints_Access);

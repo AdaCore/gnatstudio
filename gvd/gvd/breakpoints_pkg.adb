@@ -580,21 +580,31 @@ begin
    end if;
 
    Set_Page (Editor.Notebook1, 0);
-
-   Editor.Process := Odd.Process.Debugger_Process_Tab (Process);
-   Update_Breakpoint_List (Editor);
-
-   --  Initialize the contents of the combo boxes
-
-   Set_Text
-     (Get_Entry (Editor.File_Combo),
-      Base_File_Name (Get_Current_File (Process.Editor_Text)));
-
-   --  List of exceptions (parsed only when the appropriate page is selected)
-
-   Editor.Has_Exception_List := False;
+   Set_Process (Editor, Process);
 
    Show_All (Editor);
 end Breakpoint_Editor;
+
+   -----------------
+   -- Set_Process --
+   -----------------
+
+   procedure Set_Process
+     (Editor  : access Breakpoints_Record;
+      Process : access Odd.Process.Debugger_Process_Tab_Record'Class)
+   is
+   begin
+      Editor.Process := Odd.Process.Debugger_Process_Tab (Process);
+      Update_Breakpoint_List (Editor);
+
+      --  Reinitialize the contents of the file combo boxes
+      Set_Text
+        (Get_Entry (Editor.File_Combo),
+         Base_File_Name (Get_Current_File (Process.Editor_Text)));
+
+      --  List of exceptions (parsed only when the appropriate page is
+      --  selected)
+      Editor.Has_Exception_List := False;
+   end Set_Process;
 
 end Breakpoints_Pkg;
