@@ -42,6 +42,7 @@ with Src_Editor_Buffer;           use Src_Editor_Buffer;
 with String_Utils;                use String_Utils;
 
 with Basic_Types;                 use Basic_Types;
+with Commands;                    use Commands;
 with Glide_Kernel.Modules;        use Glide_Kernel.Modules;
 
 with Unchecked_Deallocation;
@@ -495,7 +496,6 @@ package body Src_Editor_View is
          After     => False);
 
       View.Line_Info := new Line_Info_Display_Array (1 .. 0);
-      View.Queue := New_Queue;
       --  ??? when is this freed ?
    end Initialize;
 
@@ -659,6 +659,7 @@ package body Src_Editor_View is
             Button_X, Button_Y         : Gint;
             X, Y                       : Gint;
             Node                       : List_Node;
+            Dummy_Boolean              : Boolean;
 
          begin
             --  Get the coordinates of the click.
@@ -697,7 +698,7 @@ package body Src_Editor_View is
                  and then Data (Node).Line = Line
                  and then Data (Node).Associated_Command /= null
                then
-                  Enqueue (View.Queue, Data (Node).Associated_Command);
+                  Dummy_Boolean := Execute (Data (Node).Associated_Command);
                end if;
             end if;
          end;
