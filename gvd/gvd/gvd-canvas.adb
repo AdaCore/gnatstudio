@@ -545,7 +545,7 @@ package body GVD.Canvas is
 
       --  Display "Close" option.
 
-      Gtk_New (Mitem, Label => -"Close " & Component_Name);
+      Gtk_New (Mitem, Label => -"Close" & " " & Component_Name);
       Item_Handler.Connect
         (Mitem, "activate",
          Item_Handler.To_Marshaller (Undisplay_Item'Access),
@@ -608,7 +608,7 @@ package body GVD.Canvas is
       Append (Canvas.Item_Contextual_Menu, Mitem);
 
       if Is_A_Variable (Item) then
-         Gtk_New (Mitem, Label => -"Set Value of " & " " & Component_Name);
+         Gtk_New (Mitem, Label => -"Set Value of " & Component_Name);
       else
          Gtk_New (Mitem, Label => -"Set Value");
       end if;
