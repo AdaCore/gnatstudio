@@ -37,6 +37,7 @@ pragma Warnings (Off);
 with Project_Viewers;
 with Project_Explorers;
 with Aunit_Module;
+with Browsers.Module;
 pragma Warnings (On);
 
 procedure Glide2 is
