@@ -337,7 +337,7 @@ package body Glide_Kernel.Console is
       Enable_Prompt_Display (Console, False);
 
       Child := Put
-        (Kernel, Console, Iconify_Button or Maximize_Button,
+        (Kernel, Console,
          Default_Width  => 400,
          Default_Height => 120,
          Focus_Widget   => Gtk_Widget (Get_View (Console)),

@@ -1012,7 +1012,7 @@ package body GVD.Process is
         (Process.Window.Process_Mdi, Process.Data_Scrolledwindow,
          Default_Width  => Default_Widget_Width,
          Default_Height => 100,
-         Flags => Iconify_Button or Maximize_Button);
+         Flags => All_Buttons);
       Set_Focus_Child (Child);
 
       if Process.Debugger_Num = 1 then
@@ -1084,7 +1084,7 @@ package body GVD.Process is
         (Process.Window.Process_Mdi, Process.Debugger_Text,
          Default_Width  => Default_Widget_Width,
          Default_Height => Default_Widget_Height,
-         Flags => Iconify_Button or Maximize_Button,
+         Flags => All_Buttons,
          Focus_Widget => Gtk_Widget (Get_View (Process.Debugger_Text)));
       Set_Focus_Child (Child);
 
@@ -1272,7 +1272,6 @@ package body GVD.Process is
          Child := Put (Window.Process_Mdi, Process.Editor_Text);
          Set_Focus_Child (Child);
          Set_Title (Child, -"Editor");
-         Maximize_Children (Window.Process_Mdi);
       end if;
 
       --  Initialize the pixmaps and colors for the canvas
@@ -1394,7 +1393,7 @@ package body GVD.Process is
 
          Child := Put
            (Window.Process_Mdi, Process.Debuggee_Console,
-            Flags => Iconify_Button or Maximize_Button,
+            Flags => All_Buttons,
             Default_Width  => Default_Widget_Width,
             Default_Height => Default_Widget_Height,
             Focus_Widget => Gtk_Widget (Get_View (Process.Debuggee_Console)));

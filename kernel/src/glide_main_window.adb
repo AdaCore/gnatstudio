@@ -80,19 +80,14 @@ package body Glide_Main_Window is
    Child_Cst      : aliased constant String := "child";
    Side_Cst       : aliased constant String := "side";
    Dock_Cst       : aliased constant String := "dock";
-   Iconify_Cst    : aliased constant String := "iconify";
    Float_Cst      : aliased constant String := "float";
    Reuse_Cst      : aliased constant String := "reuse";
    Visible_Only_Cst : aliased constant String := "visible_only";
-   Tile_Cmd_Parameters : constant Cst_Argument_List :=
-     (1 => Vertically_Cst'Access);
    Get_Cmd_Parameters : constant Cst_Argument_List := (1 => Name_Cst'Access);
    Get_By_Child_Cmd_Parameters : constant Cst_Argument_List :=
      (1 => Child_Cst'Access);
    Dock_Cmd_Parameters : constant Cst_Argument_List :=
      (1 => Dock_Cst'Access, 2 => Side_Cst'Access);
-   Iconify_Cmd_Parameters : constant Cst_Argument_List :=
-     (1 => Iconify_Cst'Access);
    Float_Cmd_Parameters : constant Cst_Argument_List :=
      (1 => Float_Cst'Access);
    Split_Cmd_Parameters : constant Cst_Argument_List :=
@@ -151,9 +146,7 @@ package body Glide_Main_Window is
    --  Check whether Event should activate the selection dialog for MDI
    --  children.
 
-   type Window_Mode is
-     (Split_H, Split_V, Tile_H, Tile_V, Cascade, Maximize, Unmaximize, Single,
-      Clone);
+   type Window_Mode is (Split_H, Split_V, Clone);
    type MDI_Window_Actions_Command is new Interactive_Command with record
       Kernel : Kernel_Handle;
       Mode   : Window_Mode;
@@ -201,18 +194,6 @@ package body Glide_Main_Window is
          when Split_V =>
             Split (Get_MDI (Command.Kernel), Orientation_Vertical,
                    After => True);
-         when Tile_H =>
-            Tile_Horizontally (Get_MDI (Command.Kernel));
-         when Tile_V =>
-            Tile_Vertically (Get_MDI (Command.Kernel));
-         when Cascade =>
-            Cascade_Children (Get_MDI (Command.Kernel));
-         when Maximize =>
-            Maximize_Children (Get_MDI (Command.Kernel), True);
-         when Unmaximize =>
-            Maximize_Children (Get_MDI (Command.Kernel), False);
-         when Single =>
-            Single_Window (Get_MDI (Command.Kernel));
          when Clone =>
             declare
                Focus : constant MDI_Child :=
@@ -413,7 +394,6 @@ package body Glide_Main_Window is
       Configure
         (Get_MDI (Kernel),
          Opaque_Resize     => Get_Pref (Kernel, MDI_Opaque),
-         Opaque_Move       => Get_Pref (Kernel, MDI_Opaque),
          Close_Floating_Is_Unfloat =>
            not Get_Pref (Kernel, MDI_Destroy_Floats),
          Title_Font        => Get_Pref (Kernel, Default_Font),
@@ -616,54 +596,6 @@ package body Glide_Main_Window is
 
       Command2        := new MDI_Window_Actions_Command;
       Command2.Kernel := Main_Window.Kernel;
-      Command2.Mode   := Tile_H;
-      Register_Action
-        (Main_Window.Kernel,
-         Name        => "Tile horizontally",
-         Command     => Command2,
-         Description =>
-           -("Tile the windows in the central area horizontally"));
-
-      Command2        := new MDI_Window_Actions_Command;
-      Command2.Kernel := Main_Window.Kernel;
-      Command2.Mode   := Tile_V;
-      Register_Action
-        (Main_Window.Kernel,
-         Name        => "Tile vertically",
-         Command     => Command2,
-         Description =>
-           -("Tile the windows in the central area vertically"));
-
-      Command2        := new MDI_Window_Actions_Command;
-      Command2.Kernel := Main_Window.Kernel;
-      Command2.Mode   := Maximize;
-      Register_Action
-        (Main_Window.Kernel,
-         Name        => "Maximize windows",
-         Command     => Command2,
-         Description => -("Maximize all windows in the central area"));
-
-      Command2        := new MDI_Window_Actions_Command;
-      Command2.Kernel := Main_Window.Kernel;
-      Command2.Mode   := Unmaximize;
-      Register_Action
-        (Main_Window.Kernel,
-         Name        => "Unmaximize windows",
-         Command     => Command2,
-         Description => -("Unmaximize all windows in the central area"));
-
-      Command2        := new MDI_Window_Actions_Command;
-      Command2.Kernel := Main_Window.Kernel;
-      Command2.Mode   := Single;
-      Register_Action
-        (Main_Window.Kernel,
-         Name        => "Single window",
-         Command     => Command2,
-         Description => -("Unsplit the central area of GPS, so that only one"
-                          & " window is visible"));
-
-      Command2        := new MDI_Window_Actions_Command;
-      Command2.Kernel := Main_Window.Kernel;
       Command2.Mode   := Clone;
       Register_Action
         (Main_Window.Kernel,
@@ -717,11 +649,6 @@ package body Glide_Main_Window is
          Maximum_Args  => 2,
          Handler       => Default_Window_Command_Handler'Access);
       Register_Command
-        (Main_Window.Kernel, "iconify",
-         Maximum_Args  => 1,
-         Class         => MDI_Window_Class,
-         Handler       => Default_Window_Command_Handler'Access);
-      Register_Command
         (Main_Window.Kernel, "float",
          Maximum_Args  => 1,
          Class         => MDI_Window_Class,
@@ -730,10 +657,6 @@ package body Glide_Main_Window is
         (Main_Window.Kernel, "dock",
          Class         => MDI_Window_Class,
          Maximum_Args  => 2,
-         Handler       => Default_Window_Command_Handler'Access);
-      Register_Command
-        (Main_Window.Kernel, "single",
-         Class         => MDI_Window_Class,
          Handler       => Default_Window_Command_Handler'Access);
       Register_Command
         (Main_Window.Kernel, "raise_window",
@@ -753,27 +676,6 @@ package body Glide_Main_Window is
          Class          => MDI_Window_Class,
          Handler        => Default_Window_Command_Handler'Access);
 
-      Register_Command
-        (Main_Window.Kernel, "tile",
-         Class         => MDI_Class,
-         Maximum_Args  => 1,
-         Static_Method => True,
-         Handler => Default_Command_Handler'Access);
-      Register_Command
-        (Main_Window.Kernel, "maximize",
-         Class         => MDI_Class,
-         Static_Method => True,
-         Handler => Default_Command_Handler'Access);
-      Register_Command
-        (Main_Window.Kernel, "unmaximize",
-         Class         => MDI_Class,
-         Static_Method => True,
-         Handler => Default_Command_Handler'Access);
-      Register_Command
-        (Main_Window.Kernel, "cascade",
-         Class         => MDI_Class,
-         Static_Method => True,
-         Handler => Default_Command_Handler'Access);
       Register_Command
         (Main_Window.Kernel, "get",
          Class         => MDI_Class,
@@ -834,10 +736,6 @@ package body Glide_Main_Window is
             end if;
          end if;
 
-      elsif Command = "iconify" then
-         Name_Parameters (Data, Iconify_Cmd_Parameters);
-         Minimize_Child (Child, Nth_Arg (Data, 2, True));
-
       elsif Command = "float" then
          Name_Parameters (Data, Float_Cmd_Parameters);
          Float_Child (Child, Nth_Arg (Data, 2, True));
@@ -846,12 +744,6 @@ package body Glide_Main_Window is
          Name_Parameters (Data, Dock_Cmd_Parameters);
          Set_Dock_Side (Child, Dock_Side'Value (Nth_Arg (Data, 3, "bottom")));
          Dock_Child (Child, Nth_Arg (Data, 2, True));
-
-      elsif Command = "single" then
-         if Get_State (Child) = Normal then
-            Set_Focus_Child (Child);
-            Single_Window (Get_MDI (Kernel));
-         end if;
 
       elsif Command = "raise_window" then
          Raise_Child (Child, Give_Focus => True);
@@ -934,23 +826,6 @@ package body Glide_Main_Window is
          then
             Set_Error_Msg (Data, -"Cancelled by user");
          end if;
-
-      elsif Command = "tile" then
-         Name_Parameters (Data, Tile_Cmd_Parameters);
-         if Nth_Arg (Data, 1, True) then
-            Tile_Vertically (Get_MDI (Kernel));
-         else
-            Tile_Horizontally (Get_MDI (Kernel));
-         end if;
-
-      elsif Command = "maximize" then
-         Maximize_Children (Get_MDI (Kernel), True);
-
-      elsif Command = "unmaximize" then
-         Maximize_Children (Get_MDI (Kernel), False);
-
-      elsif Command = "cascade" then
-         Cascade_Children (Get_MDI (Kernel));
 
       elsif Command = "get"
         or else Command = "get_by_child"
