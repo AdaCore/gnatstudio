@@ -87,6 +87,7 @@ package Codefix.File_Io is
    --  Save the file.
 
    function Line_Max (This : File_Interface) return Natural;
+   --  Return the last position of line in File_Interface.
 
    type Errors_File is new Errors_Interface with private;
    --  This type is an interface to the list of compilation errors that the

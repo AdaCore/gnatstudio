@@ -21,7 +21,7 @@
 with Ada.Text_IO; use Ada.Text_IO;
 with Ada.Unchecked_Deallocation;
 
-with OS_Utils; use OS_Utils;
+with OS_Utils;    use OS_Utils;
 
 package body Codefix.File_Io is
 
@@ -59,7 +59,7 @@ package body Codefix.File_Io is
       Element : Dynamic_String;
    begin
       Element := Data (Get_Line_Node (This, Cursor.Line));
-      return Element.all (Cursor.Col .. Element.all'Length);
+      return Element.all (Cursor.Col .. Element.all'Last);
    end Get_Line;
 
    -------------
@@ -79,7 +79,7 @@ package body Codefix.File_Io is
        (Get_Line_Node (This, Cursor.Line),
         new String '(Element.all (1 .. Cursor.Col - 1) &
                      New_Value &
-                     Element.all (Cursor.Col + Len .. Element.all'Length)));
+                     Element.all (Cursor.Col + Len .. Element.all'Last)));
    end Replace;
 
    --------------
@@ -165,7 +165,7 @@ package body Codefix.File_Io is
 
    function Read_File (This : File_Interface) return Dynamic_String is
    begin
-      return Dynamic_String (Read_File (Get_File_Name (This)));
+      return new String'(Read_File (Get_File_Name (This)).all);
    end Read_File;
 
    ------------

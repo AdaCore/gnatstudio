@@ -20,10 +20,10 @@
 
 with Ada.Unchecked_Deallocation;
 
-with GNAT.Regpat; use GNAT.Regpat;
+with GNAT.Regpat;           use GNAT.Regpat;
 with Generic_List;
 
-with Codefix.Text_Manager; use Codefix.Text_Manager;
+with Codefix.Text_Manager;  use Codefix.Text_Manager;
 with Codefix.Formal_Errors; use Codefix.Formal_Errors;
 
 use Codefix.Formal_Errors.Extract_List;
@@ -581,7 +581,7 @@ package Codefix.Errors_Parser is
       Matches      : Match_Array);
    --  Fix problems like 'sth is not referenced'.
 
-   type Pkg_Not_Referenced is new Error_Parser (Unit_Not_Referenced, 1)
+   type Pkg_Not_Referenced is new Error_Parser (Unit_Not_Referenced, 2)
      with null record;
 
    procedure Initialize (This : in out Pkg_Not_Referenced);
