@@ -21,13 +21,11 @@
 with Glib;
 with Gdk.Event;
 with Gdk.GC;
-with Gdk.Pixbuf;
 with Gdk.Window;
 with Gtk.Main;
 with Gtk.Menu;
 with Gtkada.Canvas;
 with Glide_Kernel;
-with Pango.Layout;
 with Browsers.Canvas;
 with Src_Info.Queries;
 
@@ -45,8 +43,8 @@ package Browsers.Call_Graph is
    -- Entity items --
    ------------------
 
-   type Entity_Item_Record is new Browsers.Canvas.Glide_Browser_Item_Record
-     with private;
+   type Entity_Item_Record is new
+     Browsers.Canvas.Glide_Browser_Text_Item_Record with private;
    type Entity_Item is access all Entity_Item_Record'Class;
 
    procedure Gtk_New
@@ -65,24 +63,9 @@ package Browsers.Call_Graph is
       May_Have_To_Dependencies : Boolean);
    --  Internal initialization function
 
-   procedure Refresh
-     (Browser : access Browsers.Canvas.Glide_Browser_Record'Class;
-      Item    : access Entity_Item_Record);
-   --  Redraw the item to its double buffer
-
-   procedure Reset
-     (Browser : access Browsers.Canvas.Glide_Browser_Record'Class;
-      Item    : access Entity_Item_Record);
-   --  Reset the internal state of the item
-
    procedure Destroy (Item : in out Entity_Item_Record);
    --  Free the memory occupied by the item. This is called automatically when
    --  the item is removed from the canvas.
-
-   procedure On_Button_Click
-     (Item  : access Entity_Item_Record;
-      Event : Gdk.Event.Gdk_Event_Button);
-   --  Handle button clicks on the item
 
    function Contextual_Factory
      (Item  : access Entity_Item_Record;
@@ -90,6 +73,12 @@ package Browsers.Call_Graph is
       Event : Gdk.Event.Gdk_Event;
       Menu  : Gtk.Menu.Gtk_Menu) return Glide_Kernel.Selection_Context_Access;
    --  Return the context to use for this item
+
+   procedure Button_Click_On_Left (Item : access Entity_Item_Record);
+   --  Handles button clicks on the left arrow.
+
+   procedure Button_Click_On_Right (Item : access Entity_Item_Record);
+   --  Handles button clicks on the right arrow.
 
    --------------------
    -- Renaming links --
@@ -113,22 +102,15 @@ package Browsers.Call_Graph is
    --  Override the default drawing procedure for links
 
 private
-   type Entity_Item_Record is new Browsers.Canvas.Glide_Browser_Item_Record
+   type Entity_Item_Record is new
+     Browsers.Canvas.Glide_Browser_Text_Item_Record
    with record
-      Browser     : Browsers.Canvas.Glide_Browser;
       Entity      : Src_Info.Queries.Entity_Information;
-      Layout      : Pango.Layout.Pango_Layout;
-
-      From_Parsed, To_Parsed : Boolean := False;
-      --  These two booleans are set to True when the parents of the item have
-      --  been fully parsed (ie all the subprograms that call Entity), or when
-      --  all the children have been parsed.
    end record;
 
    type Call_Graph_Browser_Record is new Browsers.Canvas.Glide_Browser_Record
      with record
         Idle_Id                 : Gtk.Main.Idle_Handler_Id;
-        Left_Arrow, Right_Arrow : Gdk.Pixbuf.Gdk_Pixbuf;
      end record;
 
    type Renaming_Link_Record is new Browsers.Canvas.Glide_Browser_Link_Record

@@ -21,20 +21,15 @@
 with Glib;             use Glib;
 with Glib.Xml_Int;     use Glib.Xml_Int;
 with Glib.Object;      use Glib.Object;
-with Gdk.Drawable;     use Gdk.Drawable;
 with Gdk.GC;           use Gdk.GC;
-with Gdk.Pixbuf;       use Gdk.Pixbuf;
 with Gdk.Event;        use Gdk.Event;
-with Gtk.Enums;        use Gtk.Enums;
 with Gtk.Main;         use Gtk.Main;
 with Gtk.Menu;         use Gtk.Menu;
 with Gtk.Menu_Item;    use Gtk.Menu_Item;
-with Gtk.Stock;        use Gtk.Stock;
 with Gtk.Widget;       use Gtk.Widget;
 with Gtkada.Canvas;    use Gtkada.Canvas;
 with Gtkada.Handlers;  use Gtkada.Handlers;
 with Gtkada.MDI;       use Gtkada.MDI;
-with Pango.Layout;     use Pango.Layout;
 
 with Src_Info;                 use Src_Info;
 with Src_Info.Queries;         use Src_Info.Queries;
@@ -61,8 +56,6 @@ package body Browsers.Call_Graph is
 
    Call_Graph_Module_Id : Module_ID;
    Call_Graph_Module_Name : constant String := "Call_Graph";
-
-   Margin : constant := 2;
 
    Automatically_Check_To_Dependencies : constant Boolean := True;
    --  If True, then every time an item is added to the call graph we check,
@@ -256,38 +249,22 @@ package body Browsers.Call_Graph is
      (Item    : access Entity_Item_Record'Class;
       Browser : access Browsers.Canvas.Glide_Browser_Record'Class;
       Entity  : Src_Info.Queries.Entity_Information;
-      May_Have_To_Dependencies : Boolean)
-   is
-      B : constant Call_Graph_Browser := Call_Graph_Browser (Browser);
-      Width, Height : Gint;
+      May_Have_To_Dependencies : Boolean) is
    begin
       Item.Entity   := Copy (Entity);
-      Item.Browser  := Glide_Browser (Browser);
-
-      Item.Layout   := Create_Pango_Layout (Browser);
-      Set_Font_Description
-        (Item.Layout, Get_Pref (Get_Kernel (Browser), Browsers_Link_Font));
 
       if Get_Declaration_File_Of (Entity) /= "" then
-         Set_Text
-           (Item.Layout, Get_Name (Entity) & ASCII.LF
+         Browsers.Canvas.Initialize
+           (Item, Browser, Get_Name (Entity) & ASCII.LF
             & Get_Declaration_File_Of (Entity)
             & ':' & Image (Get_Declaration_Line_Of (Entity)));
-
       else
-         Set_Text
-           (Item.Layout, Get_Name (Entity) & ASCII.LF & (-"<Unresolved>"));
+         Browsers.Canvas.Initialize
+           (Item, Browser, Get_Name (Entity) & ASCII.LF & (-"<Unresolved>"));
       end if;
 
-      Item.From_Parsed := False;
-      Item.To_Parsed   := not May_Have_To_Dependencies;
-
-      Get_Pixel_Size (Item.Layout, Width, Height);
-      Width := Width + 2 * Margin
-        + Get_Width (B.Left_Arrow) + Get_Width (B.Right_Arrow);
-
-      Set_Screen_Size_And_Pixmap
-        (Item, Get_Window (Browser), Width, Height + 2 * Margin);
+      Set_Left_Arrow (Item, True);
+      Set_Right_Arrow (Item, May_Have_To_Dependencies);
    end Initialize;
 
    -------------
@@ -296,58 +273,9 @@ package body Browsers.Call_Graph is
 
    procedure Destroy (Item : in out Entity_Item_Record) is
    begin
+      Destroy (Glide_Browser_Text_Item_Record (Item));
       Destroy (Item.Entity);
-      Unref (Item.Layout);
    end Destroy;
-
-   -------------
-   -- Refresh --
-   -------------
-
-   procedure Refresh
-     (Browser : access Browsers.Canvas.Glide_Browser_Record'Class;
-      Item    : access Entity_Item_Record)
-   is
-      B : constant Call_Graph_Browser := Call_Graph_Browser (Browser);
-   begin
-      Draw_Item_Background (Browser, Item);
-
-      Draw_Layout
-        (Drawable => Pixmap (Item),
-         GC       => Get_Text_GC (Browser),
-         X        => Margin + Get_Width (B.Left_Arrow),
-         Y        => Margin,
-         Layout   => Item.Layout);
-
-      if not Item.From_Parsed then
-         Render_To_Drawable_Alpha
-           (Pixbuf          => B.Left_Arrow,
-            Drawable        => Pixmap (Item),
-            Src_X           => 0,
-            Src_Y           => 0,
-            Dest_X          => Margin,
-            Dest_Y          => Margin,
-            Width           => -1,
-            Height          => -1,
-            Alpha           => Alpha_Full,
-            Alpha_Threshold => 128);
-      end if;
-
-      if not Item.To_Parsed then
-         Render_To_Drawable_Alpha
-           (Pixbuf          => B.Right_Arrow,
-            Drawable        => Pixmap (Item),
-            Src_X           => 0,
-            Src_Y           => 0,
-            Dest_X          => Gint (Get_Coord (Item).Width)
-              - Margin - Get_Width (B.Right_Arrow),
-            Dest_Y          => Margin,
-            Width           => -1,
-            Height          => -1,
-            Alpha           => Alpha_Full,
-            Alpha_Threshold => 128);
-      end if;
-   end Refresh;
 
    ----------------
    -- On_Destroy --
@@ -380,19 +308,10 @@ package body Browsers.Call_Graph is
          Object          => Browser,
          ID              => Call_Graph_Module_Id,
          Context_Func    => Default_Browser_Context_Factory'Access);
-      Browser.Left_Arrow := Render_Icon
-        (Browser, Stock_Go_Back, Icon_Size_Menu);
-      Browser.Right_Arrow := Render_Icon
-        (Browser, Stock_Go_Forward, Icon_Size_Menu);
 
       Widget_Callback.Connect
         (Browser, "destroy",
          Widget_Callback.To_Marshaller (On_Destroy'Access));
-
-      Set_Size_Request
-        (Browser,
-         Get_Pref (Kernel, Default_Widget_Width),
-         Get_Pref (Kernel, Default_Widget_Height));
       return Browser;
    end Create_Call_Graph_Browser;
 
@@ -667,8 +586,8 @@ package body Browsers.Call_Graph is
 
       Item := Add_Entity_If_Not_Present (Browser, Node);
 
-      if not Item.To_Parsed then
-         Item.To_Parsed := True;
+      if Get_Right_Arrow (Item) then
+         Set_Right_Arrow (Item, False);
          Refresh (Browser, Item);
 
          --  If we have a renaming, add the entry for the renamed entity
@@ -857,7 +776,7 @@ package body Browsers.Call_Graph is
 
       --  Look for an existing item corresponding to entity
       Item := Add_Entity_If_Not_Present (Browser, Entity);
-      Item.From_Parsed := True;
+      Set_Left_Arrow (Item, False);
       Refresh (Browser, Item);
 
       --  For efficiency, do not recompute the layout for each item
@@ -1301,40 +1220,25 @@ package body Browsers.Call_Graph is
          Pop_State (Get_Kernel (Entity));
    end Find_All_Local_References_From_Contextual;
 
-   ---------------------
-   -- On_Button_Click --
-   ---------------------
+   --------------------------
+   -- Button_Click_On_Left --
+   --------------------------
 
-   procedure On_Button_Click
-     (Item  : access Entity_Item_Record;
-      Event : Gdk.Event.Gdk_Event_Button) is
+   procedure Button_Click_On_Left (Item : access Entity_Item_Record) is
    begin
-      if Get_Button (Event) = 1
-        and then Get_Event_Type (Event) = Gdk_2button_Press
-      then
-         --  Should we display the ancestors ?
-         if Gint (Get_X (Event)) < Get_Coord (Item).Width / 2 then
-            Examine_Ancestors_Call_Graph
-              (Get_Kernel (Item.Browser), Item.Entity);
-            Item.From_Parsed := True;
+      Examine_Ancestors_Call_Graph
+        (Get_Kernel (Get_Browser (Item)), Item.Entity);
+   end Button_Click_On_Left;
 
-         --  Or the subprograms we are calling ?
-         else
-            Examine_Entity_Call_Graph (Get_Kernel (Item.Browser), Item.Entity);
-            Item.To_Parsed := True;
-         end if;
+   ---------------------------
+   -- Button_Click_On_Right --
+   ---------------------------
 
-         --  Make sure that the item we clicked on is still visible
-         Show_Item (Get_Canvas (Item.Browser), Item);
-
-      elsif Get_Event_Type (Event) = Button_Press then
-         Select_Item (Item.Browser, Item, True);
-      end if;
-
-   exception
-      when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
-   end On_Button_Click;
+   procedure Button_Click_On_Right (Item : access Entity_Item_Record) is
+   begin
+      Examine_Entity_Call_Graph
+        (Get_Kernel (Get_Browser (Item)), Item.Entity);
+   end Button_Click_On_Right;
 
    --------------------------------
    -- Call_Graph_Contextual_Menu --
@@ -1468,7 +1372,7 @@ package body Browsers.Call_Graph is
             Context_Callback.To_Marshaller
               (Edit_Entity_Call_Graph_From_Contextual'Access),
             Context);
-         Set_Sensitive (Mitem, not Item.To_Parsed);
+         Set_Sensitive (Mitem, Get_Left_Arrow (Item));
 
          Gtk_New (Mitem, Get_Name (Item.Entity) & (-" is called by..."));
          Append (Menu, Mitem);
@@ -1477,7 +1381,7 @@ package body Browsers.Call_Graph is
             Context_Callback.To_Marshaller
               (Edit_Ancestors_Call_Graph_From_Contextual'Access),
             Context);
-         Set_Sensitive (Mitem, not Item.From_Parsed);
+         Set_Sensitive (Mitem, Get_Right_Arrow (Item));
 
          Gtk_New (Mitem, -"Go to spec");
          Append (Menu, Mitem);
@@ -1610,19 +1514,6 @@ package body Browsers.Call_Graph is
 
       return null;
    end Save_Desktop;
-
-   -----------
-   -- Reset --
-   -----------
-
-   procedure Reset (Browser : access Glide_Browser_Record'Class;
-                    Item : access Entity_Item_Record)
-   is
-      pragma Unreferenced (Browser);
-   begin
-      Item.To_Parsed := False;
-      Item.From_Parsed := False;
-   end Reset;
 
    ---------------
    -- Draw_Link --

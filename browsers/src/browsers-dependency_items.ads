@@ -19,11 +19,8 @@
 -----------------------------------------------------------------------
 
 with Gdk.Event;
-with Gdk.Pixbuf;
-with Gdk.Window;
 with Gtk.Main;
 with Gtk.Menu;
-with Pango.Layout;
 
 with Src_Info;
 with Glide_Kernel;
@@ -45,20 +42,18 @@ package Browsers.Dependency_Items is
    ----------------
    --  These items represent source files from the application.
 
-   type File_Item_Record is new Browsers.Canvas.Glide_Browser_Item_Record
+   type File_Item_Record is new Browsers.Canvas.Glide_Browser_Text_Item_Record
      with private;
    type File_Item is access all File_Item_Record'Class;
 
    procedure Gtk_New
      (Item    : out File_Item;
-      Win     : Gdk.Window.Gdk_Window;
       Browser : access Browsers.Canvas.Glide_Browser_Record'Class;
       File    : Src_Info.Internal_File);
    --  Create a new dependency item that represents Dep.
 
    procedure Gtk_New
      (Item            : out File_Item;
-      Win             : Gdk.Window.Gdk_Window;
       Browser         : access Browsers.Canvas.Glide_Browser_Record'Class;
       Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
       Source_Filename : String);
@@ -66,15 +61,15 @@ package Browsers.Dependency_Items is
 
    procedure Initialize
      (Item    : access File_Item_Record'Class;
-      Win     : Gdk.Window.Gdk_Window;
       Browser : access Browsers.Canvas.Glide_Browser_Record'Class;
       File    : Src_Info.Internal_File);
    --  Internal initialization function
 
-   procedure On_Button_Click
-     (Item  : access File_Item_Record;
-      Event : Gdk.Event.Gdk_Event_Button);
-   --  Called when the item is clicked on.
+   procedure Button_Click_On_Left (Item : access File_Item_Record);
+   --  Handles button clicks on the left arrow.
+
+   procedure Button_Click_On_Right (Item : access File_Item_Record);
+   --  Handles button clicks on the right arrow.
 
    function Get_Source (Item : access File_Item_Record)
       return Src_Info.Internal_File;
@@ -89,16 +84,6 @@ package Browsers.Dependency_Items is
       Event : Gdk.Event.Gdk_Event;
       Menu  : Gtk.Menu.Gtk_Menu) return Glide_Kernel.Selection_Context_Access;
    --  Return the context to use for this item
-
-   procedure Refresh
-     (Browser : access Browsers.Canvas.Glide_Browser_Record'Class;
-      Item    : access File_Item_Record);
-   --  Redraw the item to its double buffer
-
-   procedure Reset
-     (Browser : access Browsers.Canvas.Glide_Browser_Record'Class;
-      Item : access File_Item_Record);
-   --  Reset the internal state of the item
 
    ----------------------
    -- Dependency links --
@@ -116,22 +101,16 @@ package Browsers.Dependency_Items is
 
 private
    type File_Item_Record is new
-     Browsers.Canvas.Glide_Browser_Item_Record with
+     Browsers.Canvas.Glide_Browser_Text_Item_Record with
    record
       Source : Src_Info.Internal_File;
       Project_Name : Types.Name_Id := Types.No_Name;
       --  Project that the file belongs to. This is only computed on demand
 
-      Browser : Browsers.Canvas.Glide_Browser := null;
-      --  Pointer to the parent browser. Note that this is initialized lazily
-      --  the first time we need to access this browser.
-
       From_Parsed, To_Parsed : Boolean := False;
       --  These two booleans are set to True when the parents of the item have
       --  been fully parsed (ie all the subprograms that call Entity), or when
       --  all the children have been parsed.
-
-      Layout : Pango.Layout.Pango_Layout;
    end record;
 
    type Dependency_Link_Record is new Browsers.Canvas.Glide_Browser_Link_Record
@@ -142,8 +121,7 @@ private
    type Dependency_Browser_Record is new
      Browsers.Canvas.Glide_Browser_Record with
    record
-      Idle_Id                 : Gtk.Main.Idle_Handler_Id;
-      Left_Arrow, Right_Arrow : Gdk.Pixbuf.Gdk_Pixbuf;
+      Idle_Id : Gtk.Main.Idle_Handler_Id;
    end record;
 
    pragma Inline (Get_Source);

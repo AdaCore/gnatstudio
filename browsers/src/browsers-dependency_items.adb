@@ -23,22 +23,16 @@ with Ada.Exceptions;       use Ada.Exceptions;
 with Glib;                 use Glib;
 with Glib.Object;          use Glib.Object;
 with Glib.Xml_Int;         use Glib.Xml_Int;
-with Gdk.Drawable;         use Gdk.Drawable;
 with Gdk.Event;            use Gdk.Event;
-with Gdk.Pixbuf;           use Gdk.Pixbuf;
-with Gdk.Window;           use Gdk.Window;
 with Gtk.Check_Menu_Item;  use Gtk.Check_Menu_Item;
-with Gtk.Enums;            use Gtk.Enums;
 with Gtk.Main;             use Gtk.Main;
 with Gtk.Menu;             use Gtk.Menu;
 with Gtk.Menu_Item;        use Gtk.Menu_Item;
-with Gtk.Stock;            use Gtk.Stock;
 with Gtk.Widget;           use Gtk.Widget;
 with Gtkada.Canvas;        use Gtkada.Canvas;
 with Gtkada.File_Selector; use Gtkada.File_Selector;
 with Gtkada.Handlers;      use Gtkada.Handlers;
 with Gtkada.MDI;           use Gtkada.MDI;
-with Pango.Layout;         use Pango.Layout;
 
 with Browsers.Canvas;           use Browsers.Canvas;
 with Browsers.Dependency_Items; use Browsers.Dependency_Items;
@@ -67,8 +61,6 @@ package body Browsers.Dependency_Items is
    Me : constant Debug_Handle := Create ("Browsers.Dependency");
 
    Dependency_Browser_Module_ID : Module_ID;
-
-   Margin : constant := 2;
 
    type Examine_Dependencies_Idle_Data is record
       Iter    : Dependency_Iterator_Access;
@@ -271,19 +263,10 @@ package body Browsers.Dependency_Items is
          Object          => Browser,
          ID              => Dependency_Browser_Module_ID,
          Context_Func    => Browser_Context_Factory'Access);
-      Browser.Left_Arrow := Render_Icon
-        (Browser, Stock_Go_Back, Icon_Size_Menu);
-      Browser.Right_Arrow := Render_Icon
-        (Browser, Stock_Go_Forward, Icon_Size_Menu);
 
       Widget_Callback.Connect
         (Browser, "destroy",
          Widget_Callback.To_Marshaller (On_Destroy'Access));
-
-      Set_Size_Request
-        (Browser,
-         Get_Pref (Kernel, Default_Widget_Width),
-         Get_Pref (Kernel, Default_Widget_Height));
       return Browser;
    end Create_Dependency_Browser;
 
@@ -366,13 +349,13 @@ package body Browsers.Dependency_Items is
 
       Initial := File_Item (Find_File (Browser, F));
       if Initial = null then
-         Gtk_New (Initial, Get_Window (Browser), Browser, Kernel, F);
+         Gtk_New (Initial, Browser, Kernel, F);
          Put (Get_Canvas (Browser), Initial);
          Refresh (Browser, Initial);
       end if;
 
-      if not Initial.To_Parsed then
-         Initial.To_Parsed := True;
+      if Get_Right_Arrow (Initial) then
+         Set_Right_Arrow (Initial, False);
          Refresh (Browser, Initial);
 
          Find_Dependencies (Lib_Info, F, List, Status);
@@ -389,7 +372,7 @@ package body Browsers.Dependency_Items is
                   Must_Add_Link := True;
 
                   if New_Item then
-                     Gtk_New (Item, Get_Window (Browser), Browser, Intern);
+                     Gtk_New (Item, Browser, Intern);
 
                   else
                      --  If the item already existed, chances are that the link
@@ -503,7 +486,7 @@ package body Browsers.Dependency_Items is
             begin
                Child := File_Item (Find_File (Data.Browser, File));
                if Child = null then
-                  Gtk_New (Child, Get_Window (Data.Browser), Data.Browser,
+                  Gtk_New (Child, Data.Browser,
                            Get_Kernel (Data.Browser), File);
                   Put (Get_Canvas (Data.Browser), Child);
                end if;
@@ -557,12 +540,12 @@ package body Browsers.Dependency_Items is
       --  Look for an existing item corresponding to entity
       Item := File_Item (Find_File (Browser, File));
       if Item = null then
-         Gtk_New (Item, Get_Window (Browser), Browser,  Kernel, File);
+         Gtk_New (Item, Browser,  Kernel, File);
          Put (Get_Canvas (Browser), Item);
          Refresh (Browser, Item);
       end if;
 
-      Item.From_Parsed := True;
+      Set_Left_Arrow (Item, False);
       Refresh (Browser, Item);
 
       --  For efficiency, do not recompute the layout for each item.
@@ -870,10 +853,9 @@ package body Browsers.Dependency_Items is
          Item   : access Canvas_Item_Record'Class) return Boolean
       is
          pragma Unreferenced (Canvas);
+         It : constant File_Item := File_Item (Item);
       begin
-         if not File_Item (Item).To_Parsed
-           or else not File_Item (Item).From_Parsed
-         then
+         if Get_Left_Arrow (It) or else Get_Right_Arrow (It) then
             Found := Canvas_Item (Item);
             return False;
          end if;
@@ -978,12 +960,11 @@ package body Browsers.Dependency_Items is
 
    procedure Gtk_New
      (Item    : out File_Item;
-      Win     : Gdk_Window;
       Browser : access Glide_Browser_Record'Class;
       File    : Internal_File) is
    begin
       Item := new File_Item_Record;
-      Initialize (Item, Win, Browser, Copy (File));
+      Initialize (Item, Browser, Copy (File));
    end Gtk_New;
 
    -------------
@@ -992,7 +973,6 @@ package body Browsers.Dependency_Items is
 
    procedure Gtk_New
      (Item            : out File_Item;
-      Win             : Gdk_Window;
       Browser         : access Glide_Browser_Record'Class;
       Kernel          : access Kernel_Handle_Record'Class;
       Source_Filename : String)
@@ -1002,7 +982,7 @@ package body Browsers.Dependency_Items is
    begin
       Item := new File_Item_Record;
       Initialize
-        (Item, Win, Browser,
+        (Item, Browser,
          Make_Source_File (Source_Filename,
                            Handler,
                            Get_Project_View (Kernel),
@@ -1015,102 +995,32 @@ package body Browsers.Dependency_Items is
 
    procedure Initialize
      (Item : access File_Item_Record'Class;
-      Win  : Gdk_Window;
       Browser : access Glide_Browser_Record'Class;
-      File  : Internal_File)
-   is
-      use type Gdk_Window;
-      B : constant Dependency_Browser := Dependency_Browser (Browser);
-      Width, Height : Gint;
-
+      File  : Internal_File) is
    begin
-      pragma Assert (Win /= null);
+      Browsers.Canvas.Initialize (Item, Browser, Get_Source_Filename (File));
       Item.Source := File;
-      Item.Browser := Glide_Browser (Browser);
-      Item.Layout := Create_Pango_Layout
-        (Browser, Get_Source_Filename (Item.Source));
-      Set_Font_Description
-        (Item.Layout, Get_Pref (Get_Kernel (Browser), Browsers_Link_Font));
-
-      Get_Pixel_Size (Item.Layout, Width, Height);
-      Width := Width + 2 * Margin
-        + Get_Width (B.Left_Arrow) + Get_Width (B.Right_Arrow);
-      Set_Screen_Size_And_Pixmap
-        (Item, Get_Window (Item.Browser), Width, Height + 2 * Margin);
    end Initialize;
 
-   -------------
-   -- Refresh --
-   -------------
+   --------------------------
+   -- Button_Click_On_Left --
+   --------------------------
 
-   procedure Refresh (Browser : access Glide_Browser_Record'Class;
-                      Item    : access File_Item_Record)
-   is
-      use type Gdk.Gdk_GC;
-      B : constant Dependency_Browser := Dependency_Browser (Browser);
+   procedure Button_Click_On_Left (Item : access File_Item_Record) is
    begin
-      Draw_Item_Background (Browser, Item);
-      Draw_Layout
-        (Drawable => Pixmap (Item),
-         GC       => Get_Text_GC (Browser),
-         X        => Margin + Get_Width (B.Left_Arrow),
-         Y        => Margin,
-         Layout   => Item.Layout);
+      Examine_From_Dependencies
+        (Get_Kernel (Get_Browser (Item)), Get_Source_Filename (Item.Source));
+   end Button_Click_On_Left;
 
-      if not Item.From_Parsed then
-         Render_To_Drawable_Alpha
-           (Pixbuf          => B.Left_Arrow,
-            Drawable        => Pixmap (Item),
-            Src_X           => 0,
-            Src_Y           => 0,
-            Dest_X          => Margin,
-            Dest_Y          => Margin,
-            Width           => -1,
-            Height          => -1,
-            Alpha           => Alpha_Full,
-            Alpha_Threshold => 128);
-      end if;
+   ---------------------------
+   -- Button_Click_On_Right --
+   ---------------------------
 
-      if not Item.To_Parsed then
-         Render_To_Drawable_Alpha
-           (Pixbuf          => B.Right_Arrow,
-            Drawable        => Pixmap (Item),
-            Src_X           => 0,
-            Src_Y           => 0,
-            Dest_X          => Gint (Get_Coord (Item).Width)
-              - Margin - Get_Width (B.Right_Arrow),
-            Dest_Y          => Margin,
-            Width           => -1,
-            Height          => -1,
-            Alpha           => Alpha_Full,
-            Alpha_Threshold => 128);
-      end if;
-   end Refresh;
-
-   ---------------------
-   -- On_Button_Click --
-   ---------------------
-
-   procedure On_Button_Click
-     (Item  : access File_Item_Record;
-      Event : Gdk.Event.Gdk_Event_Button) is
+   procedure Button_Click_On_Right (Item : access File_Item_Record) is
    begin
-      if Get_Button (Event) = 1
-        and then Get_Event_Type (Event) = Gdk_2button_Press
-      then
-         --  Should we display the ancestors ?
-         if Gint (Get_X (Event)) < Get_Coord (Item).Width / 2 then
-            Examine_From_Dependencies
-              (Get_Kernel (Item.Browser), Get_Source_Filename (Item.Source));
-         else
-            Examine_Dependencies
-              (Get_Kernel (Item.Browser), Get_Source_Filename (Item.Source));
-         end if;
-
-      elsif Get_Event_Type (Event) = Button_Press then
-         Select_Item (Item.Browser, Item, True);
-      end if;
-   end On_Button_Click;
+      Examine_Dependencies
+        (Get_Kernel (Get_Browser (Item)), Get_Source_Filename (Item.Source));
+   end Button_Click_On_Right;
 
    ----------------
    -- Get_Source --
@@ -1140,8 +1050,8 @@ package body Browsers.Dependency_Items is
 
    procedure Destroy (Item : in out File_Item_Record) is
    begin
+      Destroy (Glide_Browser_Text_Item_Record (Item));
       Destroy (Item.Source);
-      Unref (Item.Layout);
    end Destroy;
 
    ----------------
@@ -1200,8 +1110,7 @@ package body Browsers.Dependency_Items is
          if Item = null then
             Set_Auto_Layout (Get_Canvas (B), False);
 
-            Gtk_New (Item, Get_Window (B), B,  Get_Kernel (Context),
-                     Other_File);
+            Gtk_New (Item, B,  Get_Kernel (Context), Other_File);
             Put (Get_Canvas (B), Item);
             Refresh (B, Item);
 
@@ -1261,7 +1170,7 @@ package body Browsers.Dependency_Items is
             Context_Callback.To_Marshaller
               (Edit_Dependencies_From_Contextual'Access),
             Context);
-         Set_Sensitive (Mitem, not Item.To_Parsed);
+         Set_Sensitive (Mitem, Get_Left_Arrow (Item));
 
          Gtk_New
            (Mitem, Label => (-"Examining files depending on ") & Filename);
@@ -1271,7 +1180,7 @@ package body Browsers.Dependency_Items is
             Context_Callback.To_Marshaller
               (Edit_Ancestor_Dependencies_From_Contextual'Access),
             Context);
-         Set_Sensitive (Mitem, not Item.From_Parsed);
+         Set_Sensitive (Mitem, Get_Right_Arrow (Item));
       end if;
 
       return Context;
@@ -1309,18 +1218,5 @@ package body Browsers.Dependency_Items is
 
       return null;
    end Save_Desktop;
-
-   -----------
-   -- Reset --
-   -----------
-
-   procedure Reset (Browser : access Glide_Browser_Record'Class;
-                    Item : access File_Item_Record)
-   is
-      pragma Unreferenced (Browser);
-   begin
-      Item.To_Parsed := False;
-      Item.From_Parsed := False;
-   end Reset;
 
 end Browsers.Dependency_Items;
