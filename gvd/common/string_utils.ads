@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2003                      --
+--                      Copyright (C) 2000-2004                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -273,10 +273,14 @@ package String_Utils is
    --      Str := "%a"   results in   "cd"  if Recursive is True
    --                    results in   "c%b" otherwise
 
-   type Substitute_Callback is access function (Param : String)  return String;
+   type Substitute_Callback is access function
+       (Param  : String;
+        Quoted : Boolean)  return String;
    --  A callback for Substitute below. It is called once for each '%...'
    --  parameter found in the string. Param doesn't include the leading '%'
    --  sign.
+   --  Quoted indicate whether the parameter was quoted, ie the '%...' was
+   --  surrounded by quotes.
    --  Should raise Invalid_Substitution if Param cannot be substituted
 
    function Substitute
