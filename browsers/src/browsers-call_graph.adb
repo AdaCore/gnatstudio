@@ -191,7 +191,7 @@ package body Browsers.Call_Graph is
    procedure Print_Ref
      (Kernel   : access Kernel_Handle_Record'Class;
       File     : String;
-      Line     : Natural;
+      Line     : Positive;
       Column   : Natural;
       Name     : String;
       Category : String);
@@ -1001,13 +1001,21 @@ package body Browsers.Call_Graph is
    procedure Print_Ref
      (Kernel   : access Kernel_Handle_Record'Class;
       File     : String;
-      Line     : Natural;
+      Line     : Positive;
       Column   : Natural;
       Name     : String;
-      Category : String) is
+      Category : String)
+   is
+      Col : Positive;
    begin
+      if Column > 0 then
+         Col := Positive (Column);
+      else
+         Col := 1;
+      end if;
+
       Console.Insert_Result
-        (Kernel, Category, File, Name, Line, Column, Name'Length);
+        (Kernel, Category, File, Name, Line, Col, Name'Length);
    end Print_Ref;
 
    -------------------------
