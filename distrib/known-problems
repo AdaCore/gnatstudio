@@ -1,5 +1,14 @@
 Known Problems fixed in GPS 1.0.1
 
+- Deleting scenario variables sometimes generates an incorrect project
+  Problem:    When clicking on the trash button next to a scenario variable
+              (at the top of the project explorer), this will sometimes
+              report an internal error.
+  Workaround: Try setting other values for the variable before removing it.
+              Last chance is to edit the project by hand, or keep the variable
+              around, but always modify all the possible values in the project
+              properties editor.
+
 Known Problems fixed in GPS 1.0.0
 
 - Tooltip displayed outside the source editor
