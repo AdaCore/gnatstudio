@@ -215,9 +215,9 @@ package body Src_Info.ALI is
    --  Save the information associated to all the units withed from this Unit.
 
    procedure Chain_Declaration_For_Separate
-     (New_LI_File : LI_File_Ptr;
-      Unit_Name   : String_Access;
-      Decl_Info   : E_Declaration_Info);
+     (New_LI_File     : LI_File_Ptr;
+      Source_Filename : String;
+      Decl_Info       : E_Declaration_Info);
    --  Inserts Decl_Info at the head of the list of declarations of the
    --  separate unit of New_LI_File whose name is Unit_Name.
    --  Raise ALI_Internal_Error if the separate unit is not found.
@@ -742,9 +742,9 @@ package body Src_Info.ALI is
 
    begin
       File :=
-        (LI        => Get (List.Table, ALI_Filename),
-         Part      => Part,
-         Unit_Name => null);
+        (LI              => Get (List.Table, ALI_Filename),
+         Part            => Part,
+         Source_Filename => null);
 
       --  If there is not LI_File_Ptr yet for the given ALI_Filename then
       --  create a stub
@@ -926,9 +926,9 @@ package body Src_Info.ALI is
 
    begin
       File :=
-         (LI        => Get (List.Table, ALI_Filename),
-          Part      => Unit_Separate,
-          Unit_Name => new String'(Get_Name_String (Subunit_Name)));
+         (LI              => Get (List.Table, ALI_Filename),
+          Part            => Unit_Separate,
+          Source_Filename => new String' (Sname));
 
       --  If there is no LI_File_Ptr yet for the given ALI_Filename then
       --  create a stub
@@ -955,7 +955,7 @@ package body Src_Info.ALI is
       Sep := File.LI.LI.Separate_Info;
 
       while Sep /= null loop
-         exit when Sep.Value.Source_Filename.all = File.Unit_Name.all;
+         exit when Sep.Value.Source_Filename.all = Sname;
          Sep := Sep.Next;
       end loop;
 
@@ -963,13 +963,14 @@ package body Src_Info.ALI is
          File.LI.LI.Separate_Info :=
            new File_Info_Ptr_Node'
              (Value => new File_Info'
-               (Unit_Name         => new String'(File.Unit_Name.all),
-                Source_Filename   => new String'(Sname),
-                Directory_Name    => null,
-                File_Timestamp    => 0,
-                Original_Filename => null,
-                Original_Line     => 1,
-                Declarations      => null),
+                (Unit_Name         => new String'
+                   (Get_Name_String (Subunit_Name)),
+                 Source_Filename   => new String' (Sname),
+                 Directory_Name    => null,
+                 File_Timestamp    => 0,
+                 Original_Filename => null,
+                 Original_Line     => 1,
+                 Declarations      => null),
               Next => File.LI.LI.Separate_Info);
       end if;
 
@@ -1170,7 +1171,8 @@ package body Src_Info.ALI is
 
       --  Save the Source_File associated to this Sdep for later use.
 
-      Sfiles (Id) := (LI => New_LI_File, Unit_Name => null, Part => Part);
+      Sfiles (Id) :=
+        (LI => New_LI_File, Source_Filename => null, Part => Part);
    end Process_Sdep_As_Self;
 
    ------------------------------
@@ -1351,14 +1353,14 @@ package body Src_Info.ALI is
    ------------------------------------
 
    procedure Chain_Declaration_For_Separate
-     (New_LI_File : LI_File_Ptr;
-      Unit_Name   : String_Access;
-      Decl_Info   : E_Declaration_Info)
+     (New_LI_File     : LI_File_Ptr;
+      Source_Filename : String;
+      Decl_Info       : E_Declaration_Info)
    is
       Sep : File_Info_Ptr_List := New_LI_File.LI.Separate_Info;
    begin
       while Sep /= null loop
-         exit when Sep.Value.Unit_Name.all = Unit_Name.all;
+         exit when Sep.Value.Unit_Name.all = Source_Filename;
          Sep := Sep.Next;
       end loop;
 
@@ -1507,7 +1509,7 @@ package body Src_Info.ALI is
 
             when Unit_Separate =>
                Chain_Declaration_For_Separate
-                 (New_LI_File, Sfile.Unit_Name, Decl_Info);
+                 (New_LI_File, Sfile.Source_Filename.all, Decl_Info);
          end case;
 
       else
