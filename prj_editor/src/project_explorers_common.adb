@@ -727,7 +727,10 @@ package body Project_Explorers_Common is
          L := Integer (Get_Int (Model, Iter, Line_Column));
       end if;
 
-      if Node_Type = Project_Node then
+      if Node_Type = Project_Node
+        or else Node_Type = Extends_Project_Node
+        or else Node_Type = Modified_Project_Node
+      then
          Set_File_Information
            (Context      => File_Selection_Context_Access (Context),
             Project      => Get_Project_From_Node (Model, Kernel, Iter, False),
