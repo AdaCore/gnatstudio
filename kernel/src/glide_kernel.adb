@@ -438,7 +438,7 @@ package body Glide_Kernel is
    is
       File : LI_File_Ptr;
       Project : constant Project_Type := Get_Project_From_File
-        (Handle.Registry.all, Base_Name (Source_Filename));
+        (Handle.Registry.all, Source_Filename);
       Handler : constant LI_Handler := Get_LI_Handler_From_File
         (Glide_Language_Handler (Handle.Lang_Handler),
          Source_Filename);

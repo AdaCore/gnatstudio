@@ -649,7 +649,7 @@ package body VCS_View_API is
                         Dir_Name (Original),
                         Base_Name (Original),
                         Get_Project_From_File
-                          (Get_Registry (Kernel), Base_Name (Original)));
+                          (Get_Registry (Kernel), Original));
 
                      Gtk_New (Item, Label => -"Commit file "
                               & Locale_To_UTF8 (Base_Name (Original)));

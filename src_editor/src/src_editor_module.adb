@@ -2858,14 +2858,14 @@ package body Src_Editor_Module is
                return Project_Name
                  (Get_Project_From_File
                   (Get_Registry (Get_Kernel (Data)),
-                   Base_Name (Get_Filename (Box)),
+                   Get_Filename (Box),
                    Root_If_Not_Found => True));
 
             when 'P' =>
                return Project_Path
                  (Get_Project_From_File
                   (Get_Registry (Get_Kernel (Data)),
-                   Base_Name (Get_Filename (Box)),
+                   Get_Filename (Box),
                    Root_If_Not_Found => True));
 
             when others =>
