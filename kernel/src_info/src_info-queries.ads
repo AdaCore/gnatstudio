@@ -45,23 +45,23 @@ package Src_Info.Queries is
    --  The status returned by the Find_Declaration_Or_Body routine.
 
    procedure Find_Declaration_Or_Body
-     (Lib_Info        : LI_File_Ptr;
-      File_Name       : String;
-      Entity_Name     : String;
-      Line            : Positive;
-      Column          : Positive;
-      File_Name_Found : out String_Access;
-      Start_Line      : out Positive;
-      Start_Column    : out Positive;
-      End_Line        : out Positive;
-      End_Column      : out Positive;
-      Status          : out Find_Decl_Or_Body_Query_Status);
-   --  Implement the Goto Declaration<->Body algorithm using the given
-   --  Filename, Entity_Name, and Line/Column position.
-   --  If not reference to the entity could be found, then File_Name_Found is
-   --  set to null, and the other values are undefined.
+     (Lib_Info           : LI_File_Ptr;
+      File_Name          : String;
+      Entity_Name        : String;
+      Line               : Positive;
+      Column             : Positive;
+      Entity_Declaration : out E_Declaration_Info;
+      Location           : out File_Location;
+      Status             : out Find_Decl_Or_Body_Query_Status);
+   --  Find the location of the declaration for the entity referenced in file
+   --  File_Name, at the given location.
+   --  On exit, Entity_Declaration is set to the declaration of the entity.
+   --  Location is set to the location where the cursor should be moved (the
+   --  next body reference, or the declaration, for instance).
+   --  declaration.
    --
-   --  The memory allocated for File_Name_Found must be deallocated after use.
+   --  If no entity could be found, Status is set to a value other than
+   --  Success. In that case, Entity_Declaration and Location are irrelevant.
 
    ---------------------------
    -- Dependencies requests --
@@ -139,7 +139,8 @@ package Src_Info.Queries is
    function Find_Entity_Declaration
      (Tree : Scope_Tree; Name : String; Line, Column : Integer)
       return Scope_Tree_Node;
-   --  Return the declaration node for the entity Name at position Line, Column
+   --  Return the declaration node for the entity Name that is referenced
+   --  at position Line, Column.
 
    function Is_Subprogram (Node : Scope_Tree_Node) return Boolean;
    --  Return True if Node is associated with a subprogram
@@ -156,7 +157,7 @@ package Src_Info.Queries is
 
    function Get_Entity (Node : Scope_Tree_Node) return Entity_Information;
    --  Return the information for the entity defined in Node.
-   --  You must to call Destroy on the returned information.
+   --  You must call Destroy on the returned information.
 
    procedure Destroy (Entity : in out Entity_Information);
    --  Free the memory associated with the entity;

@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with Unchecked_Deallocation;
+with System.Assertions; use System.Assertions;
 with Traces; use Traces;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 
@@ -47,16 +48,12 @@ package body Src_Info.Queries is
    --  Return True if the given File_Location is pointing to the same
    --  Line, Column, and Filename. The filename comparison is done after
    --  comparing the position for better performance.
+   --  ??? This could be adapted to do approximate matches, for when the LI
+   --  ??? file wasn't up-to-date.
 
-   procedure Find_Next_Body_Ref
-     (Decl            : E_Declaration_Info;
-      Ref             : E_Reference_List := null;
-      File_Name_Found : out String_Access;
-      Start_Line      : out Positive;
-      Start_Column    : out Positive;
-      End_Line        : out Positive;
-      End_Column      : out Positive;
-      Status          : out Find_Decl_Or_Body_Query_Status);
+   function Find_Next_Body_Ref
+     (Decl : E_Declaration_Info;
+      Ref  : E_Reference_List := null) return E_Reference_List;
    --  Search for the body reference to the given declaration immediately
    --  following the given reference. If there is none then return the
    --  location of the declaration.
@@ -71,13 +68,10 @@ package body Src_Info.Queries is
       Entity_Name     : String;
       Line            : Positive;
       Column          : Positive;
-      File_Name_Found : out String_Access;
-      Start_Line      : out Positive;
-      Start_Column    : out Positive;
-      End_Line        : out Positive;
-      End_Column      : out Positive;
+      Entity_Decl     : out E_Declaration_Info;
+      Ref             : out E_Reference_List;
       Status          : out Find_Decl_Or_Body_Query_Status);
-   --  ??? Document...
+   --  Same as Find_Declaration_Or_Body, but for a specific declaration list.
 
    procedure Destroy (Dep : in out Dependency);
    --  Deallocates the memory associated with the given Dependency record.
@@ -85,6 +79,9 @@ package body Src_Info.Queries is
    procedure Trace_Dump
      (Handler : Debug_Handle; Scope : Scope_List; Prefix : String);
    --  Dump Scope to Handler, printing Prefix at the beginning of each line
+
+   function Dump (L : Scope_List) return String;
+   --  Return a string representation of L
 
    procedure Free (Scope : in out Scope_List);
    --  Free the memory occupied by Scope.
@@ -142,19 +139,11 @@ package body Src_Info.Queries is
    -- Find_Next_Body_Ref --
    ------------------------
 
-   procedure Find_Next_Body_Ref
-     (Decl            : E_Declaration_Info;
-      Ref             : E_Reference_List := null;
-      File_Name_Found : out String_Access;
-      Start_Line      : out Positive;
-      Start_Column    : out Positive;
-      End_Line        : out Positive;
-      End_Column      : out Positive;
-      Status          : out Find_Decl_Or_Body_Query_Status)
+   function Find_Next_Body_Ref
+     (Decl : E_Declaration_Info;
+      Ref  : E_Reference_List := null) return E_Reference_List
    is
-      Last_Body_Ref : E_Reference_List;
       Current_Ref   : E_Reference_List;
-      Entity_Name   : String renames Decl.Declaration.Name.all;
    begin
       --  Search the body reference immediately placed after the given
       --  Ref. Note that the references are stored in _reverse_ order...
@@ -164,39 +153,12 @@ package body Src_Info.Queries is
          --  just in case we are given a ref which is not part of the reference
          --  list of Decl...
          if Current_Ref.Value.Kind = Body_Entity then
-            Last_Body_Ref := Current_Ref;
+            return Current_Ref;
          end if;
          Current_Ref := Current_Ref.Next;
       end loop;
 
-      if Last_Body_Ref = null and then Ref /= null then
-         --  Case where we are on one of the body entities references and did
-         --  not find a next body entity reference, so return the location
-         --  of the declaration...
-         File_Name_Found := new String'
-           (Get_Source_Filename (Decl.Declaration.Location.File));
-         Start_Line := Decl.Declaration.Location.Line;
-         Start_Column := Decl.Declaration.Location.Column;
-         End_Line := Start_Line;
-         End_Column := Start_Column + Entity_Name'Length;
-         Status := Success;
-
-      elsif Last_Body_Ref /= null then
-         --  Case where we found a body entity reference. Return its location.
-         File_Name_Found := new String'
-           (Get_Source_Filename (Last_Body_Ref.Value.Location.File));
-         Start_Line   := Last_Body_Ref.Value.Location.Line;
-         Start_Column := Last_Body_Ref.Value.Location.Column;
-         End_Line     := Start_Line;
-         End_Column   := Start_Column + Entity_Name'Length;
-         Status := Success;
-
-      else
-         --  Case where we are located at the declaration itself, and could
-         --  not find any body reference. Return no location.
-         File_Name_Found := null;
-         Status := No_Body_Entity_Found;
-      end if;
+      return null;
    end Find_Next_Body_Ref;
 
    -----------------------
@@ -209,23 +171,17 @@ package body Src_Info.Queries is
       Entity_Name     : String;
       Line            : Positive;
       Column          : Positive;
-      File_Name_Found : out String_Access;
-      Start_Line      : out Positive;
-      Start_Column    : out Positive;
-      End_Line        : out Positive;
-      End_Column      : out Positive;
+      Entity_Decl     : out E_Declaration_Info;
+      Ref             : out E_Reference_List;
       Status          : out Find_Decl_Or_Body_Query_Status)
    is
       Current_Decl : E_Declaration_Info_List := Decl;
       Current_Ref  : E_Reference_List;
    begin
       --  Initialize the value of the returned parameters
-      File_Name_Found := null;
-      Start_Line := 1;
-      Start_Column := 1;
-      End_Line := 1;
-      End_Column := 1;
-      Status := Entity_Not_Found;
+      Entity_Decl := No_Declaration_Info;
+      Ref         := null;
+      Status      := Entity_Not_Found;
 
       --  Search the entity in the list of declarations
       Decl_Loop :
@@ -241,10 +197,10 @@ package body Src_Info.Queries is
               (Current_Decl.Value.Declaration.Location,
                File_Name, Line, Column)
             then
-               Find_Next_Body_Ref
-                 (Current_Decl.Value, null, File_Name_Found,
-                  Start_Line, Start_Column, End_Line, End_Column, Status);
-               exit Decl_Loop;
+               Entity_Decl := Current_Decl.Value;
+               Ref         := null;
+               Status      := Success;
+               return;
             end if;
 
             --  Search in the list of references.
@@ -253,30 +209,12 @@ package body Src_Info.Queries is
             while Current_Ref /= null loop
 
                if Location_Matches
-                    (Current_Ref.Value.Location, File_Name, Line, Column)
+                 (Current_Ref.Value.Location, File_Name, Line, Column)
                then
-                  --  If this is a body reference, then we try to navigate
-                  --  to the next body reference.
-                  if Current_Ref.Value.Kind = Body_Entity then
-                     Find_Next_Body_Ref
-                       (Current_Decl.Value, Current_Ref, File_Name_Found,
-                        Start_Line, Start_Column, End_Line, End_Column,
-                        Status);
-                  else
-                     --  This is a non-body entity reference, so jump to the
-                     --  declaration
-                     File_Name_Found := new String'
-                       (Get_Source_Filename
-                         (Current_Decl.Value.Declaration.Location.File));
-                     Start_Line :=
-                       Current_Decl.Value.Declaration.Location.Line;
-                     Start_Column :=
-                       Current_Decl.Value.Declaration.Location.Column;
-                     End_Line := Start_Line;
-                     End_Column := Start_Column + Entity_Name'Length;
-                     Status := Success;
-                  end if;
-                  exit Decl_Loop;
+                  Entity_Decl := Current_Decl.Value;
+                  Ref         := Current_Ref;
+                  Status      := Success;
+                  return;
                end if;
 
                Current_Ref := Current_Ref.Next;
@@ -284,7 +222,6 @@ package body Src_Info.Queries is
          end if;
          Current_Decl := Current_Decl.Next;
       end loop Decl_Loop;
-
    end Find_Spec_Or_Body;
 
    ------------------------------
@@ -292,21 +229,23 @@ package body Src_Info.Queries is
    ------------------------------
 
    procedure Find_Declaration_Or_Body
-     (Lib_Info        : LI_File_Ptr;
-      File_Name       : String;
-      Entity_Name     : String;
-      Line            : Positive;
-      Column          : Positive;
-      File_Name_Found : out String_Access;
-      Start_Line      : out Positive;
-      Start_Column    : out Positive;
-      End_Line        : out Positive;
-      End_Column      : out Positive;
-      Status          : out Find_Decl_Or_Body_Query_Status)
+     (Lib_Info           : LI_File_Ptr;
+      File_Name          : String;
+      Entity_Name        : String;
+      Line               : Positive;
+      Column             : Positive;
+      Entity_Declaration : out E_Declaration_Info;
+      Location           : out File_Location;
+      Status             : out Find_Decl_Or_Body_Query_Status)
    is
       Current_Sep : File_Info_Ptr_List;
       Current_Dep : Dependency_File_Info_List;
+      Ref         : E_Reference_List;
    begin
+      Entity_Declaration := No_Declaration_Info;
+      Ref                := null;
+      Status             := Entity_Not_Found;
+
       --  Assumption: if the Lib_Info structure is up-to-date, then the casing
       --  of the entity we are searching (here Entity_Name) is identical
       --  to the casing inside the Lib_Info, in which case we do not need
@@ -321,82 +260,89 @@ package body Src_Info.Queries is
          Find_Spec_Or_Body
            (Lib_Info.LI.Spec_Info.Declarations,
             File_Name, Entity_Name, Line, Column,
-            File_Name_Found, Start_Line, Start_Column, End_Line, End_Column,
-            Status);
-
-         if Search_Is_Completed (Status) then
-            return;
-         end if;
+            Entity_Declaration, Ref, Status);
       end if;
 
       --  Search in the Body
-      if Lib_Info.LI.Body_Info /= null
+      if not Search_Is_Completed (Status)
+        and then Lib_Info.LI.Body_Info /= null
         and then Lib_Info.LI.Body_Info.Declarations /= null
       then
          Find_Spec_Or_Body
            (Lib_Info.LI.Body_Info.Declarations,
             File_Name, Entity_Name, Line, Column,
-            File_Name_Found, Start_Line, Start_Column, End_Line, End_Column,
-            Status);
-         if Search_Is_Completed (Status) then
-            return;
-         end if;
+            Entity_Declaration, Ref, Status);
       end if;
 
       --  Search in the separates
-      Current_Sep := Lib_Info.LI.Separate_Info;
-      while Current_Sep /= null loop
-         if Current_Sep.Value.Declarations /= null then
-            Find_Spec_Or_Body
-              (Current_Sep.Value.Declarations,
-               File_Name, Entity_Name, Line, Column,
-               File_Name_Found, Start_Line, Start_Column,
-               End_Line, End_Column, Status);
+      if not Search_Is_Completed (Status) then
+         Current_Sep := Lib_Info.LI.Separate_Info;
+         while Current_Sep /= null loop
+            if Current_Sep.Value.Declarations /= null then
+               Find_Spec_Or_Body
+                 (Current_Sep.Value.Declarations,
+                  File_Name, Entity_Name, Line, Column,
+                  Entity_Declaration, Ref, Status);
 
-            if Search_Is_Completed (Status) then
-               return;
+               if Status = Success then
+                  exit;
+               end if;
             end if;
-         end if;
 
-         Current_Sep := Current_Sep.Next;
-      end loop;
+            Current_Sep := Current_Sep.Next;
+         end loop;
+      end if;
 
       --  Search in the list of dependencies, if any
-      Current_Dep := Lib_Info.LI.Dependencies_Info;
-      while Current_Dep /= null loop
-         if Current_Dep.Value.Declarations /= null then
-            Find_Spec_Or_Body
-              (Current_Dep.Value.Declarations,
-               File_Name, Entity_Name, Line, Column,
-               File_Name_Found, Start_Line, Start_Column,
-               End_Line, End_Column, Status);
-
-            if Search_Is_Completed (Status) then
-               return;
+      if not Search_Is_Completed (Status) then
+         Current_Dep := Lib_Info.LI.Dependencies_Info;
+         while Current_Dep /= null loop
+            if Current_Dep.Value.Declarations /= null then
+               Find_Spec_Or_Body
+                 (Current_Dep.Value.Declarations,
+                  File_Name, Entity_Name, Line, Column,
+                  Entity_Declaration, Ref, Status);
+               if Status = Success then
+                  exit;
+               end if;
             end if;
+
+            Current_Dep := Current_Dep.Next;
+         end loop;
+      end if;
+
+      --  We have now found a reference. Now we must decide whether we want to
+      --  get the reference to the declaration, one of the bodies,...
+      --  Check if the location corresponds to the declaration,
+      --  in which case we need to jump to the first body.
+      --  Otherwise, if this is a body reference, then we try to navigate
+      --  to the next body reference.
+
+      if Status = Success then
+         if Ref = null or else Ref.Value.Kind = Body_Entity then
+            Ref := Find_Next_Body_Ref (Entity_Declaration, Ref);
+         else
+            Ref := null;
          end if;
 
-         Current_Dep := Current_Dep.Next;
-      end loop;
+         if Ref /= null then
+            Location := Ref.Value.Location;
+         else
+            Location := Entity_Declaration.Declaration.Location;
+         end if;
+      else
+         Trace (Me, "Couldn't find a valid xref for " & Entity_Name
+                & " line=" & Line'Img & " Column=" & Column'Img
+                & " file=" & File_Name);
+      end if;
 
-      --  If we reach this point, that means we did not find the entity in
-      --  our list of declarations.
-      File_Name_Found := null;
-      Start_Line := 1;
-      Start_Column := 1;
-      End_Line := 1;
-      End_Column := 1;
-      Status := Entity_Not_Found;
    exception
       when others =>
          --  Trap all exceptions for better robustness, and report an
          --  internal error
-         File_Name_Found := null;
-         Start_Line := 1;
-         Start_Column := 1;
-         End_Line := 1;
-         End_Column := 1;
-         Status := Internal_Error;
+         Entity_Declaration := No_Declaration_Info;
+         Ref                := null;
+         Status             := Internal_Error;
    end Find_Declaration_Or_Body;
 
    -------------
@@ -497,6 +443,28 @@ package body Src_Info.Queries is
       return Dep.Dep;
    end Dependency_Information;
 
+   ----------
+   -- Dump --
+   ----------
+
+   function Dump (L : Scope_List) return String is
+   begin
+      case L.Typ is
+         when Declaration =>
+            if L.Decl.End_Of_Scope /= No_Reference then
+               return "Decl:""" & L.Decl.Name.all
+                 & L.Start_Of_Scope.Line'Img
+                 & L.Decl.End_Of_Scope.Location.Line'Img & """";
+            else
+               return "Decl:""" & L.Decl.Name.all
+                 & L.Start_Of_Scope.Line'Img & """";
+            end if;
+         when Reference =>
+            return "Ref:""" & L.Decl.Name.all
+              & L.Ref.Location.Line'Img & """";
+      end case;
+   end Dump;
+
    ----------------
    -- Trace_Dump --
    ----------------
@@ -508,25 +476,16 @@ package body Src_Info.Queries is
    begin
       while L /= null loop
          if L.Decl.Kind = Generic_Function_Or_Operator
-            --  or else L.Decl.Kind = Generic_Package
+           or else L.Decl.Kind = Generic_Package
            or else L.Decl.Kind = Generic_Procedure
            or else L.Decl.Kind = Non_Generic_Function_Or_Operator
-            --  or else L.Decl.Kind = Non_Generic_Package
+           or else L.Decl.Kind = Non_Generic_Package
            or else L.Decl.Kind = Non_Generic_Procedure
          then
-            case L.Typ is
-               when Declaration =>
-                  Trace (Handler, Prefix & "Decl: " & L.Decl.Name.all
-                         & " range=" & L.Start_Of_Scope.Line'Img
-                         & L.Decl.End_Of_Scope.Location.Line'Img
-                         & "," & L.Decl.End_Of_Scope.Location.Column'Img);
-                  Trace_Dump (Handler, L.Contents, Prefix & "  ");
-
-               when Reference =>
-                  Trace (Handler, Prefix & "Ref: " & L.Decl.Name.all
-                         & " line=" & L.Ref.Location.Line'Img
-                         & " col=" & L.Ref.Location.Column'Img);
-            end case;
+            Trace (Me, Prefix & Dump (L));
+            if L.Typ = Declaration then
+               Trace_Dump (Handler, L.Contents, Prefix & "  ");
+            end if;
          end if;
          L := L.Sibling;
       end loop;
@@ -609,9 +568,13 @@ package body Src_Info.Queries is
       --  Add all the references to the entity declared in Decl.
       --  Decl_Start is the starting location of the scope for the entity.
 
+      function "<" (L1, L2 : File_Location) return Boolean;
+      --  True if L1 is before L2 (line and column)
+
       function In_Range (Decl : Scope_List; Loc : Scope_List) return Integer;
       --  True if Loc is in the range of Decl.
-      --  -1 is returned if Decl is before Loc, 0 if within, 1 if after.
+      --  -1 is returned if Decl is before Loc, 0 if within, 1 if after, or
+      --  2 if Loc is contained in the scope of Decl.
       --  It returns -2 if the positions could not be compared (invalid file,
       --  Decl is not a range,...)
 
@@ -645,6 +608,16 @@ package body Src_Info.Queries is
          end loop;
       end Compute_Scope;
 
+      -------
+      -- < --
+      -------
+
+      function "<" (L1, L2 : File_Location) return Boolean is
+      begin
+         return L1.Line < L2.Line
+           or else (L1.Line = L2.Line and then L1.Column < L2.Column);
+      end "<";
+
       --------------
       -- In_Range --
       --------------
@@ -655,44 +628,95 @@ package body Src_Info.Queries is
          L : File_Location;
       begin
          case Loc.Typ is
-            when Declaration => L := Loc.Decl.Location;
+            when Declaration => L := Loc.Start_Of_Scope; --  Decl.Location;
             when Reference   => L := Loc.Ref.Location;
          end case;
 
-         if L.File.LI /= Lib_Info
-           or else (Loc.Typ = Reference and then L.File.Part /= Unit_Body)
-         then
-            return -2;
+         case Decl.Typ is
+            when Declaration =>
+               if Decl.Start_Of_Scope.File.LI /= Lib_Info
+                 or else Decl.Start_Of_Scope.File.Part /= Unit_Body
+               then
+                  return -2;
+               end if;
 
-         elsif Decl.Typ = Declaration then
-            if Decl.Start_Of_Scope.Line > L.Line
-              or else (L.Line = Decl.Start_Of_Scope.Line
-                       and then Decl.Start_Of_Scope.Column > L.Column)
-            then
-               return 1;
+               case Loc.Typ is
+                  when Declaration =>
+                     if Decl.Decl.End_Of_Scope /= No_Reference then
+                        if Decl.Decl.End_Of_Scope.Location < L then
+                           return -1;
+                        elsif Decl.Start_Of_Scope < L then
+                           --  Entities are necessarily comprised within one
+                           --  another
+                           return 2;
+                        elsif Loc.Decl.End_Of_Scope /= No_Reference
+                          and then Decl.Start_Of_Scope <
+                            Loc.Decl.End_Of_Scope.Location
+                        then
+                           return 0;
+                        else
+                           return 1;
+                        end if;
+                     elsif Loc.Decl.End_Of_Scope /= No_Reference then
+                        if Decl.Start_Of_Scope < L then
+                           return -1;
+                        elsif Decl.Start_Of_Scope <
+                          Loc.Decl.End_Of_Scope.Location
+                        then
+                           return 0;
+                        else
+                           return 1;
+                        end if;
+                     elsif Decl.Start_Of_Scope < L then
+                        return -1;
+                     else
+                        return 1;
+                     end if;
 
-            elsif Decl.Decl.End_Of_Scope = No_Reference then
-               return -1;
+                  when Reference =>
+                     if Decl.Decl.End_Of_Scope /= No_Reference then
+                        if Decl.Decl.End_Of_Scope.Location < L then
+                           return -1;
+                        elsif Decl.Start_Of_Scope < L then
+                           return 2;
+                        else
+                           return 1;
+                        end if;
+                     elsif Decl.Start_Of_Scope < L then
+                        return -1;
+                     else
+                        return 1;
+                     end if;
+               end case;
 
-            elsif Decl.Decl.End_Of_Scope.Location.Line < L.Line
-              or else
-              (L.Line = Decl.Decl.End_Of_Scope.Location.Line
-               and then Decl.Decl.End_Of_Scope.Location.Column < L.Column)
-            then
-               return -1;
+            when Reference =>
+               if Decl.Ref.Location.File.LI /= Lib_Info
+                 or else Decl.Ref.Location.File.Part /= Unit_Body
+               then
+                  return -2;
+               end if;
 
-            else
-               return 0;
-            end if;
+               case Loc.Typ is
+                  when Declaration =>
+                     if Decl.Ref.Location < L then
+                        return -1;
+                     elsif Loc.Decl.End_Of_Scope /= No_Reference
+                       and then Decl.Ref.Location <
+                         Loc.Decl.End_Of_Scope.Location
+                     then
+                        return 0;
+                     else
+                        return 1;
+                     end if;
 
-         elsif Decl.Ref.Location.Line < L.Line
-           or else (Decl.Ref.Location.Line = L.Line
-                    and then Decl.Ref.Location.Column < L.Column)
-         then
-            return -1;
-         else
-            return 1;
-         end if;
+                  when Reference =>
+                     if Decl.Ref.Location < L then
+                        return -1;
+                     else
+                        return 1;
+                     end if;
+               end case;
+         end case;
       end In_Range;
 
       -----------------
@@ -702,18 +726,16 @@ package body Src_Info.Queries is
       procedure Add_In_List
         (L        : in out Scope_List;
          Previous : in out Scope_List;
-         New_Item : Scope_List)
-      is
-         T : Scope_List;
+         New_Item : Scope_List) is
       begin
+         Assert (Me, New_Item.Sibling = null,
+                 "Inserting item with existing sibling");
          if Previous = null then
-            T := L;
+            New_Item.Sibling := L;
             L := New_Item;
-            L.Sibling := T;
          else
-            T := Previous.Sibling;
+            New_Item.Sibling := Previous.Sibling;
             Previous.Sibling := New_Item;
-            Previous.Sibling.Sibling := T;
          end if;
       end Add_In_List;
 
@@ -730,44 +752,45 @@ package body Src_Info.Queries is
          Save : Scope_List;
       begin
          while List /= null loop
-            case List.Typ is
-               when Declaration =>
-                  Pos := In_Range (List, Decl);
-                  if Pos = 0 then
-                     Add_Single_Entity (Decl, List.Contents);
-                     return;
+            Pos := In_Range (Decl, List);
+            --  if Is_Subprogram (Scope_Tree_Node (Decl))
+            --    and then Is_Subprogram (Scope_Tree_Node (List))
+            --  then
+            --     Trace
+            --      (Me, Dump (Decl) & " / " & Dump (List) & " => " & Pos'Img);
+            --  end if;
 
-                  elsif Pos = -2 then
-                     Free (Decl);
-                     return;
+            case In_Range (Decl, List) is
+               when -2 =>
+                  Free (Decl);
+                  return;
 
-                  elsif Pos = -1 then
-                     null;
+               when -1 =>
+                  Add_In_List (L, Previous, Decl);
+                  return;
 
-                  else
-                     Add_In_List (L, Previous, Decl);
+               when 0 =>
+                  Add_Single_Entity (Decl, List.Contents);
+                  return;
 
-                     --  If in fact the new declaration englobs Loc.
-                     if Decl.Typ = Declaration then
-                        while List /= null
-                          and then In_Range (Decl, List) = 0
-                        loop
-                           Save := List.Sibling;
-                           Add_Single_Entity (List, Decl.Contents);
-                           Decl.Sibling := Save;
-                           List := Save;
-                        end loop;
-                     end if;
+               when 1 =>
+                  null;
 
-                     return;
-                  end if;
+               when 2 =>
+                  Add_In_List (L, Previous, Decl);
+                  loop
+                     Save := List.Sibling;
+                     List.Sibling := null;
+                     Add_Single_Entity (List, Decl.Contents);
+                     Decl.Sibling := Save;
+                     List := Save;
 
-               when Reference =>
-                  if In_Range (List, Decl) = 1 then
-                     Add_In_List (L, Previous, Decl);
-                     return;
-                  end if;
+                     exit when List = null or else In_Range (Decl, List) /= 2;
+                  end loop;
+                  return;
 
+               when others =>
+                  null;
             end case;
             Previous := List;
             List := List.Sibling;
@@ -846,9 +869,6 @@ package body Src_Info.Queries is
       Assert
         (Me, Lib_Info.LI.Parsed, "Create_Tree: LI file hasn't been parsed");
 
-      --  ??? Should make sure that Lib_Info is parsed.
-      --  ??? Parse Lib_Info.Dependencies_Info (Dependency_File_Info_List)
-
       if Lib_Info.LI.Spec_Info /= null then
          Add_Declarations (Lib_Info.LI.Spec_Info.Declarations, L);
       end if;
@@ -874,6 +894,10 @@ package body Src_Info.Queries is
             Time_Stamp  => 0,
             Body_Tree   => L);
       return T;
+
+   exception
+      when Assert_Failure =>
+         return Null_Scope_Tree;
    end Create_Tree;
 
    -----------------------------
