@@ -886,11 +886,10 @@ package body Glide_Kernel.Scripts is
      (Data : Callback_Data; N : Positive; Default : String)
       return String is
    begin
-      if N > Number_Of_Arguments (Callback_Data'Class (Data)) then
+      return Nth_Arg (Callback_Data'Class (Data), N);
+   exception
+      when No_Such_Parameter =>
          return Default;
-      else
-         return Nth_Arg (Callback_Data'Class (Data), N);
-      end if;
    end Nth_Arg;
 
    -------------
@@ -901,11 +900,10 @@ package body Glide_Kernel.Scripts is
      (Data : Callback_Data; N : Positive; Default : Integer)
       return Integer is
    begin
-      if N > Number_Of_Arguments (Callback_Data'Class (Data)) then
+      return Nth_Arg (Callback_Data'Class (Data), N);
+   exception
+      when No_Such_Parameter =>
          return Default;
-      else
-         return Nth_Arg (Callback_Data'Class (Data), N);
-      end if;
    end Nth_Arg;
 
    -------------
@@ -916,11 +914,10 @@ package body Glide_Kernel.Scripts is
      (Data : Callback_Data; N : Positive; Default : Boolean)
       return Boolean is
    begin
-      if N > Number_Of_Arguments (Callback_Data'Class (Data)) then
+      return Nth_Arg (Callback_Data'Class (Data), N);
+   exception
+      when No_Such_Parameter =>
          return Default;
-      else
-         return Nth_Arg (Callback_Data'Class (Data), N);
-      end if;
    end Nth_Arg;
 
    -------------
@@ -933,11 +930,10 @@ package body Glide_Kernel.Scripts is
       Default : System.Address)
       return System.Address is
    begin
-      if N > Number_Of_Arguments (Callback_Data'Class (Data)) then
+      return Nth_Arg (Callback_Data'Class (Data), N);
+   exception
+      when No_Such_Parameter =>
          return Default;
-      else
-         return Nth_Arg (Callback_Data'Class (Data), N);
-      end if;
    end Nth_Arg;
 
    -------------
@@ -951,11 +947,10 @@ package body Glide_Kernel.Scripts is
       Default : Class_Instance)
       return Class_Instance is
    begin
-      if N > Number_Of_Arguments (Callback_Data'Class (Data)) then
+      return Nth_Arg (Callback_Data'Class (Data), N, Class);
+   exception
+      when No_Such_Parameter =>
          return Default;
-      else
-         return Nth_Arg (Callback_Data'Class (Data), N, Class);
-      end if;
    end Nth_Arg;
 
    ------------------------------

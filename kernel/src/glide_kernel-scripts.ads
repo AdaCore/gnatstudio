@@ -74,6 +74,7 @@ package Glide_Kernel.Scripts is
    -------------------
 
    Invalid_Parameter : exception;
+   No_Such_Parameter : exception;
 
    type Callback_Data is abstract tagged private;
    --  Data used to communicate with the scripting language engine, to marshall
@@ -129,7 +130,7 @@ package Glide_Kernel.Scripts is
      (Data : Callback_Data; N : Positive; Class : Class_Type)
       return Class_Instance is abstract;
    --  Get the nth argument to the function, starting from 1.
-   --  If there is not enough parameters, Invalid_Parameter is raised
+   --  If there is not enough parameters, No_Such_Parameter is raised
    --  If the parameters doesn't have the right type, Invalid_Parameter is
    --  raised.
    --  In the last case, the class_instance must belong to Class or its
@@ -476,7 +477,9 @@ package Glide_Kernel.Scripts is
    function Create_File
      (Script : access Scripting_Language_Record'Class;
       File   : String) return Class_Instance;
-   --  Return a new file
+   --  Return a new file.
+   --  ??? How do we handle files with similar names in extended projects ? We
+   --  probably need to pass the project in argument as well.
 
    -------------------
    -- Project_Class --
