@@ -642,7 +642,6 @@ package body GVD.Menu.Standalone is
                   On_Display_Expression'Access),
          Gtk_New (-"/_Data/sep3", Item_Type => Separator),
          Gtk_New (-"/_Data/Refresh", "<control>L", On_Refresh'Access),
-         Gtk_New (-"/_Data/Show", "", On_Show'Access),
 
          Gtk_New (-"/_Window"),
 
