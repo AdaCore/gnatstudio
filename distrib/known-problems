@@ -1,5 +1,10 @@
 Known Problems fixed in GPS 1.4.1
 
+- CC11-011 Key bindings not working when num-lock or caps-lock is turned on.
+  Problem:    When using user-configured key shortcuts, the shortcuts do not
+              work when caps-lock or num-lock is enabled on the keyboard.
+  Workaround: Switch off caps-lock and num-lock when using GPS.
+
 - CC02-007 Duplicate of attribute declarations in generated project files
   Problem:    GPS will insert duplicate declarations for the attributes if
               you edit the switches through the Project Properties editor.
