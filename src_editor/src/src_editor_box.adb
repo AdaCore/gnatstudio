@@ -1297,6 +1297,8 @@ package body Src_Editor_Box is
    is
       Editor : constant Source_Editor_Box := Source_Editor_Box (Box);
    begin
+      Editor.Explicit_Writable_Set := True;
+
       Editor.Writable := not Editor.Writable;
       Set_Editable (Editor.Source_View, Editor.Writable);
 
@@ -1940,6 +1942,10 @@ package body Src_Editor_Box is
 
    procedure Check_Writable (Editor : access Source_Editor_Box_Record) is
    begin
+      if Editor.Explicit_Writable_Set then
+         return;
+      end if;
+
       Editor.Writable := Is_Writable (Get_Filename (Editor.Source_Buffer));
 
       if Editor.Writable then
