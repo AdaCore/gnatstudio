@@ -19,6 +19,9 @@
 -----------------------------------------------------------------------
 
 with GVD.Types;            use GVD.Types;
+with Glide_Kernel.Console; use Glide_Kernel.Console;
+with Glide_Intl;           use Glide_Intl;
+with Process_Proxies;      use Process_Proxies;
 
 package body Commands.Debugger is
 
@@ -50,6 +53,17 @@ package body Commands.Debugger is
 
    function Execute (Command : access Set_Breakpoint_Command) return Boolean is
    begin
+      if Command_In_Process (Get_Process (Command.Debugger)) then
+         Insert (Command.Kernel,
+                 -"The debugger is busy processing a command.",
+                 Highlight_Sloc => False,
+                 Add_LF         => True,
+                 Mode           => Error);
+
+         Command_Finished (Command, False);
+         return False;
+      end if;
+
       case Command.BMode is
          when Set =>
             Command.BP := Break_Source
