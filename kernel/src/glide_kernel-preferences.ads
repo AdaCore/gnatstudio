@@ -191,10 +191,10 @@ package Glide_Kernel.Preferences is
    Patch_Cmd           : Param_Spec_String;
 
    -- Source Editor --
+   Default_Style             : Param_Spec_Style;
    Keywords_Style            : Param_Spec_Style;
    Comments_Style            : Param_Spec_Style;
    Strings_Style             : Param_Spec_Style;
-   Source_Editor_Font        : Param_Spec_Font;
 
    Delimiter_Color           : Param_Spec_Color;
    Block_Folding             : Param_Spec_Boolean;
