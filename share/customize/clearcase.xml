@@ -38,13 +38,13 @@
    <!----------------------->
 
    <action name="clearcase_checkin" show-command="true" output="none">
-      <shell output="">echo "Checking in files $2-"</shell>
+      <shell output="">echo "Checking in file(s) $2-"</shell>
       <shell>dump "$1" TRUE</shell>
       <external>cleartool ci -cfile "%1" "$2-"</external>
       <on-failure>
          <shell output="">echo "Clearcase error:"</shell>
          <shell output="">echo "%2"</shell>
-         <shell>MDI.dialog "Clearcase: could not check-in files."</shell>
+         <shell>MDI.dialog "Clearcase: could not check-in file(s)."</shell>
       </on-failure>
       <shell>delete "%2"</shell>
    </action>
@@ -83,7 +83,7 @@
       <on-failure>
          <shell output="">echo "Clearcase error:"</shell>
          <shell output="">echo "%2"</shell>
-         <shell>MDI.dialog "Clearcase: could not update files."</shell>
+         <shell>MDI.dialog "Clearcase: could not update file(s)."</shell>
       </on-failure>
       <shell>Hook "file_changed_on_disk"</shell>
       <shell>Hook.run %1 null</shell>
@@ -126,12 +126,12 @@
    <!------------------------>
 
    <action name="clearcase_checkout" show-command="true" output="none">
-      <shell>MDI.input_dialog "Checking out files" "Comment:=GPS check-out"</shell>
+      <shell>MDI.input_dialog "Checking out file(s)" "Comment:=GPS check-out"</shell>
       <external>cleartool co -c "%1" "$*"</external>
       <on-failure>
          <shell output="">echo "Clearcase error:"</shell>
          <shell output="">echo "%2"</shell>
-         <shell>MDI.dialog "Clearcase: could not checkout files."</shell>
+         <shell>MDI.dialog "Clearcase: could not checkout file(s)."</shell>
       </on-failure>
       <shell>Hook "file_changed_on_disk"</shell>
       <shell>Hook.run %1 null</shell>
@@ -146,7 +146,7 @@
       <on-failure>
          <shell output="">echo "Clearcase error:"</shell>
          <shell output="">echo "%2"</shell>
-         <shell>MDI.dialog "Clearcase: could not uncheckout files."</shell>
+         <shell>MDI.dialog "Clearcase: could not uncheckout file(s)."</shell>
       </on-failure>
       <shell>Hook "file_changed_on_disk"</shell>
       <shell>Hook.run %1 null</shell>
