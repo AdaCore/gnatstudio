@@ -720,252 +720,263 @@ package body Src_Editor_View is
         Get_Window_Type (View, Window);
       X, Y, Width, Height, Depth : Gint;
 
-   begin
-      --  If the event applies to the left border window, then redraw
-      --  the side window information.
+      procedure Redraw_Side_Info;
+      --  Redraw the side window information
 
-      if Window_Type = Text_Window_Left then
-         declare
-            Top_In_Buffer              : Gint;
-            Bottom_In_Buffer           : Gint;
-            Dummy_Gint                 : Gint;
-            Iter                       : Gtk_Text_Iter;
-            Top_Line                   : Buffer_Line_Type;
-            Bottom_Line                : Buffer_Line_Type;
+      ----------------------
+      -- Redraw_Side_Info --
+      ----------------------
 
-         begin
-            Get_Geometry (Window, X, Y, Width, Height, Depth);
+      procedure Redraw_Side_Info is
+         Top_In_Buffer    : Gint;
+         Bottom_In_Buffer : Gint;
+         Dummy_Gint       : Gint;
+         Iter             : Gtk_Text_Iter;
+         Top_Line         : Buffer_Line_Type;
+         Bottom_Line      : Buffer_Line_Type;
 
-            Window_To_Buffer_Coords
-              (View, Text_Window_Left,
-               Window_X => 0, Window_Y => Y,
-               Buffer_X => Dummy_Gint, Buffer_Y => Top_In_Buffer);
-            Window_To_Buffer_Coords
-              (View, Text_Window_Left,
-               Window_X => 0, Window_Y => Y + Height,
-               Buffer_X => Dummy_Gint, Buffer_Y => Bottom_In_Buffer);
-            Get_Line_At_Y (View, Iter, Top_In_Buffer, Dummy_Gint);
-            Top_Line := Buffer_Line_Type (Get_Line (Iter) + 1);
+      begin
+         Get_Geometry (Window, X, Y, Width, Height, Depth);
 
-            Get_Line_At_Y (View, Iter, Bottom_In_Buffer, Dummy_Gint);
-            Bottom_Line := Buffer_Line_Type (Get_Line (Iter) + 1);
+         Window_To_Buffer_Coords
+           (View, Text_Window_Left,
+            Window_X => 0, Window_Y => Y,
+            Buffer_X => Dummy_Gint, Buffer_Y => Top_In_Buffer);
+         Window_To_Buffer_Coords
+           (View, Text_Window_Left,
+            Window_X => 0, Window_Y => Y + Height,
+            Buffer_X => Dummy_Gint, Buffer_Y => Bottom_In_Buffer);
+         Get_Line_At_Y (View, Iter, Top_In_Buffer, Dummy_Gint);
+         Top_Line := Buffer_Line_Type (Get_Line (Iter) + 1);
 
-            --  If one of the values hadn't been initialized, display the
-            --  whole range of lines.
-            View.Top_Line    := Top_Line;
-            View.Bottom_Line := Bottom_Line;
+         Get_Line_At_Y (View, Iter, Bottom_In_Buffer, Dummy_Gint);
+         Bottom_Line := Buffer_Line_Type (Get_Line (Iter) + 1);
 
-            --  Compute the smallest connected area that needs refresh.
+         --  If one of the values hadn't been initialized, display the
+         --  whole range of lines.
+         View.Top_Line    := Top_Line;
+         View.Bottom_Line := Bottom_Line;
 
-            if View.Side_Columns_Up_To_Date then
-               Find_Top_Line :
-               while Top_Line <= Bottom_Line loop
-                  exit Find_Top_Line when
-                    Line_Needs_Refresh (Buffer, Top_Line);
+         --  Compute the smallest connected area that needs refresh.
 
-                  Top_Line := Top_Line + 1;
-               end loop Find_Top_Line;
+         if View.Side_Columns_Up_To_Date then
+            Find_Top_Line :
+            while Top_Line <= Bottom_Line loop
+               exit Find_Top_Line when
+                 Line_Needs_Refresh (Buffer, Top_Line);
 
-               Find_Bottom_Line :
-               while Bottom_Line >= Top_Line loop
-                  exit Find_Bottom_Line when
-                    Line_Needs_Refresh (Buffer, Bottom_Line);
+               Top_Line := Top_Line + 1;
+            end loop Find_Top_Line;
 
-                  Bottom_Line := Bottom_Line - 1;
-               end loop Find_Bottom_Line;
-            else
-               View.Side_Columns_Up_To_Date := True;
-            end if;
-            --  If necessary, emit the Source_Lines_Revealed signal.
+            Find_Bottom_Line :
+            while Bottom_Line >= Top_Line loop
+               exit Find_Bottom_Line when
+                 Line_Needs_Refresh (Buffer, Bottom_Line);
 
-            if Bottom_Line >= Top_Line then
-               Source_Lines_Revealed (Buffer, Top_Line, Bottom_Line);
-            end if;
-         end;
+               Bottom_Line := Bottom_Line - 1;
+            end loop Find_Bottom_Line;
+         else
+            View.Side_Columns_Up_To_Date := True;
+         end if;
+         --  If necessary, emit the Source_Lines_Revealed signal.
+
+         if Bottom_Line >= Top_Line then
+            Source_Lines_Revealed (Buffer, Top_Line, Bottom_Line);
+         end if;
 
          Redraw_Columns (View);
+      end Redraw_Side_Info;
 
-      elsif Window_Type = Text_Window_Text then
-         declare
-            Column        : constant Gint :=
-              Get_Pref (View.Kernel, Highlight_Column);
-            Rect          : Gdk_Rectangle;
-            Line_Y        : Gint;
-            Line_Height   : Gint;
-            Cursor_Iter   : Gtk_Text_Iter;
-            Dummy         : Gint := 0;
-            Buffer_Line_Y : Gint;
+      procedure Highlight_Text;
+      --  Highlight the current text, in particular the current line and
+      --  current block, if needed.
 
-            Dummy_Gint                 : Gint;
-            Success : Boolean;
-            Iter                       : Gtk_Text_Iter;
-            Top_Line                   : Buffer_Line_Type;
-            Bottom_Line                : Buffer_Line_Type;
-            Top_In_Buffer    : Gint;
-            Bottom_In_Buffer : Gint;
-            GC               : Gdk.GC.Gdk_GC;
-            Buffer           : constant Source_Buffer :=
-              Source_Buffer (Get_Buffer (View));
+      procedure Highlight_Text is
+         Column           : constant Gint :=
+           Get_Pref (View.Kernel, Highlight_Column);
+         Rect             : Gdk_Rectangle;
+         Line_Y           : Gint;
+         Line_Height      : Gint;
+         Cursor_Iter      : Gtk_Text_Iter;
+         Dummy            : Gint := 0;
+         Buffer_Line_Y    : Gint;
 
-            procedure Draw_Block (B : in out Block_Record);
-            --  Draw block B at line L.
+         Dummy_Gint       : Gint;
+         Success          : Boolean;
+         Iter             : Gtk_Text_Iter;
+         Top_Line         : Buffer_Line_Type;
+         Bottom_Line      : Buffer_Line_Type;
+         Top_In_Buffer    : Gint;
+         Bottom_In_Buffer : Gint;
+         GC               : Gdk.GC.Gdk_GC;
+         Buffer           : constant Source_Buffer :=
+           Source_Buffer (Get_Buffer (View));
 
-            ----------------
-            -- Draw_Block --
-            ----------------
+         procedure Draw_Block (B : in out Block_Record);
+         --  Draw block B at line L.
 
-            procedure Draw_Block (B : in out Block_Record) is
-               Block_Begin_Y : Gint;
-               Block_End_Y   : Gint;
-               Y             : Gint;
-               Height        : Gint;
-               X             : Gint;
+         ----------------
+         -- Draw_Block --
+         ----------------
 
-               Bracket_Length : constant := 15;
-               --  The length of upper and lower parts of the bracket.
+         procedure Draw_Block (B : in out Block_Record) is
+            Bracket_Length : constant := 15;
+            --  The length of upper and lower parts of the bracket.
 
-               Bracket_Offset : constant := 2;
-               --  The distance between brackets and text.
+            Bracket_Offset : constant := 2;
+            --  The distance between brackets and text.
 
-               First         : constant Gint :=
-                 Gint (Get_Buffer_Line (Buffer, B.First_Line) - 1);
-               Last          : Gint :=
-                 Gint (Get_Buffer_Line (Buffer, B.Last_Line) - 1);
+            Block_Begin_Y  : Gint;
+            Block_End_Y    : Gint;
+            Y              : Gint;
+            Height         : Gint;
+            X              : Gint;
 
-               Offset        : Integer;
-            begin
-               Calculate_Screen_Offset (Buffer, B);
-               Offset := B.Stored_Offset;
-
-               --  Do not draw blocks that are on the first column.
-
-               if Offset <= 1 then
-                  return;
-               end if;
-
-               if Last < First then
-                  Last := First;
-               end if;
-
-               Get_Iter_At_Line_Offset (Buffer, Iter, First, 0);
-               Get_Line_Yrange  (View, Iter, Block_Begin_Y, Dummy);
-
-               Get_Iter_At_Line_Offset (Buffer, Iter, Last, 0);
-               Get_Line_Yrange (View, Iter, Dummy, Height);
-
-               Height := Dummy + Height - Block_Begin_Y;
-
-               Buffer_To_Window_Coords
-                 (View,
-                  Text_Window_Text, Dummy, Block_Begin_Y, Dummy, Y);
-
-               X := Gint (Offset - 1) * View.Char_Width
-                 - Bracket_Offset - Rect.X + Margin;
-
-               if Y > 0 then
-                  Block_Begin_Y := Y;
-               else
-                  Block_Begin_Y := 0;
-               end if;
-
-               Block_End_Y := Y + Height;
-
-               Draw_Line
-                 (Window, View.Current_Block_GC,
-                  X, Block_Begin_Y, X, Block_End_Y);
-
-               if Block_Begin_Y /= 0 then
-                  Draw_Line
-                    (Window, View.Current_Block_GC,
-                     X, Block_Begin_Y, X + Bracket_Length, Block_Begin_Y);
-               end if;
-
-               Draw_Line
-                 (Window,
-                  View.Current_Block_GC,
-                  X, Block_End_Y, X + Bracket_Length, Block_End_Y);
-            end Draw_Block;
+            First          : constant Gint :=
+              Gint (Get_Buffer_Line (Buffer, B.First_Line) - 1);
+            Last           : Gint :=
+              Gint (Get_Buffer_Line (Buffer, B.Last_Line) - 1);
+            Offset         : Integer;
 
          begin
-            Get_Visible_Rect (View, Rect);
+            Calculate_Screen_Offset (Buffer, B);
+            Offset := B.Stored_Offset;
+
+            --  Do not draw blocks that are on the first column.
+
+            if Offset <= 1 then
+               return;
+            end if;
+
+            if Last < First then
+               Last := First;
+            end if;
+
+            Get_Iter_At_Line_Offset (Buffer, Iter, First, 0);
+            Get_Line_Yrange  (View, Iter, Block_Begin_Y, Dummy);
+
+            Get_Iter_At_Line_Offset (Buffer, Iter, Last, 0);
+            Get_Line_Yrange (View, Iter, Dummy, Height);
+
+            Height := Dummy + Height - Block_Begin_Y;
 
             Buffer_To_Window_Coords
-              (View, Text_Window_Text, Rect.X, Rect.Y, X, Y);
+              (View,
+               Text_Window_Text, Dummy, Block_Begin_Y, Dummy, Y);
 
-            --  Get the window coordinates.
+            X := Gint (Offset - 1) * View.Char_Width -
+              Bracket_Offset - Rect.X + Margin;
 
-            Get_Geometry (Window, X, Y, Width, Height, Depth);
+            if Y > 0 then
+               Block_Begin_Y := Y;
+            else
+               Block_Begin_Y := 0;
+            end if;
 
-            Window_To_Buffer_Coords
-              (View, Text_Window_Text,
-               Window_X => 0, Window_Y => Y,
-               Buffer_X => Dummy_Gint, Buffer_Y => Top_In_Buffer);
-            Window_To_Buffer_Coords
-              (View, Text_Window_Text,
-               Window_X => 0, Window_Y => Y + Height,
-               Buffer_X => Dummy_Gint, Buffer_Y => Bottom_In_Buffer);
+            Block_End_Y := Y + Height;
 
-            Get_Line_At_Y (View, Iter, Bottom_In_Buffer, Dummy_Gint);
-            Bottom_Line := Buffer_Line_Type (Get_Line (Iter) + 1);
+            Draw_Line
+              (Window, View.Current_Block_GC,
+               X, Block_Begin_Y, X, Block_End_Y);
 
-            Get_Line_At_Y (View, Iter, Top_In_Buffer, Dummy_Gint);
-            Top_Line := Buffer_Line_Type (Get_Line (Iter) + 1);
+            if Block_Begin_Y /= 0 then
+               Draw_Line
+                 (Window, View.Current_Block_GC,
+                  X, Block_Begin_Y, X + Bracket_Length, Block_Begin_Y);
+            end if;
 
-            for Line in Top_Line .. Bottom_Line loop
-               GC := Get_Highlight_GC (Buffer, Line);
+            Draw_Line
+              (Window,
+               View.Current_Block_GC,
+               X, Block_End_Y, X + Bracket_Length, Block_End_Y);
+         end Draw_Block;
 
-               if GC /= null then
-                  Get_Line_Yrange (View, Iter, Line_Y, Line_Height);
-                  Buffer_To_Window_Coords
-                    (View, Text_Window_Text,
-                     Dummy, Line_Y, Dummy, Buffer_Line_Y);
+      begin
+         Get_Visible_Rect (View, Rect);
 
-                  Draw_Rectangle
-                    (Window,
-                     GC,
-                     True,
-                     Margin, Buffer_Line_Y,
-                     Rect.Width, Line_Height);
-               end if;
+         Buffer_To_Window_Coords
+           (View, Text_Window_Text, Rect.X, Rect.Y, X, Y);
 
-               Forward_Line (Iter, Success);
-            end loop;
+         --  Get the window coordinates.
 
-            Get_Iter_At_Mark
-              (Get_Buffer (View), Cursor_Iter, View.Saved_Cursor_Mark);
+         Get_Geometry (Window, X, Y, Width, Height, Depth);
 
-            Get_Line_Yrange (View, Cursor_Iter, Line_Y, Line_Height);
+         Window_To_Buffer_Coords
+           (View, Text_Window_Text,
+            Window_X => 0, Window_Y => Y,
+            Buffer_X => Dummy_Gint, Buffer_Y => Top_In_Buffer);
+         Window_To_Buffer_Coords
+           (View, Text_Window_Text,
+            Window_X => 0, Window_Y => Y + Height,
+            Buffer_X => Dummy_Gint, Buffer_Y => Bottom_In_Buffer);
 
-            --  Highlight the line that contains the cursor.
+         Get_Line_At_Y (View, Iter, Bottom_In_Buffer, Dummy_Gint);
+         Bottom_Line := Buffer_Line_Type (Get_Line (Iter) + 1);
 
-            if View.Highlight_Current then
+         Get_Line_At_Y (View, Iter, Top_In_Buffer, Dummy_Gint);
+         Top_Line := Buffer_Line_Type (Get_Line (Iter) + 1);
+
+         for Line in Top_Line .. Bottom_Line loop
+            GC := Get_Highlight_GC (Buffer, Line);
+
+            if GC /= null then
+               Get_Line_Yrange (View, Iter, Line_Y, Line_Height);
                Buffer_To_Window_Coords
-                 (View, Text_Window_Text, Dummy, Line_Y, Dummy, Buffer_Line_Y);
-
-               Line_Height := Get_Line_Height (View, Cursor_Iter);
+                 (View, Text_Window_Text,
+                  Dummy, Line_Y, Dummy, Buffer_Line_Y);
 
                Draw_Rectangle
-                 (Window, View.Current_Line_GC, True, Margin, Buffer_Line_Y,
+                 (Window,
+                  GC,
+                  True,
+                  Margin, Buffer_Line_Y,
                   Rect.Width, Line_Height);
             end if;
 
-            --  Highlight the current block.
+            Forward_Line (Iter, Success);
+         end loop;
 
-            if View.Highlight_Blocks then
-               View.Current_Block := Get_Block
-                 (Buffer,
-                  Buffer_Line_Type (Get_Line (Cursor_Iter)) + 1,
-                  False);
-               Draw_Block (View.Current_Block);
-            end if;
+         Get_Iter_At_Mark
+           (Get_Buffer (View), Cursor_Iter, View.Saved_Cursor_Mark);
 
-            --  Redraw the line showing the nth column if needed
+         Get_Line_Yrange (View, Cursor_Iter, Line_Y, Line_Height);
 
-            if Column > 0 then
-               X := Column * View.Char_Width - Rect.X + Margin;
-               Draw_Line (Window, View.Default_GC, X, Y, X, Y + Rect.Height);
-            end if;
-         end;
+         --  Highlight the line that contains the cursor.
+
+         if View.Highlight_Current then
+            Buffer_To_Window_Coords
+              (View, Text_Window_Text, Dummy, Line_Y, Dummy, Buffer_Line_Y);
+
+            Line_Height := Get_Line_Height (View, Cursor_Iter);
+
+            Draw_Rectangle
+              (Window, View.Current_Line_GC, True, Margin, Buffer_Line_Y,
+               Rect.Width, Line_Height);
+         end if;
+
+         --  Highlight the current block.
+
+         if View.Highlight_Blocks then
+            View.Current_Block := Get_Block
+              (Buffer,
+               Buffer_Line_Type (Get_Line (Cursor_Iter)) + 1,
+               False);
+            Draw_Block (View.Current_Block);
+         end if;
+
+         --  Redraw the line showing the nth column if needed
+
+         if Column > 0 then
+            X := Column * View.Char_Width - Rect.X + Margin;
+            Draw_Line (Window, View.Default_GC, X, Y, X, Y + Rect.Height);
+         end if;
+      end Highlight_Text;
+
+   begin  -- Expose_Event_Cb
+      if Window_Type = Text_Window_Left then
+         Redraw_Side_Info;
+      elsif Window_Type = Text_Window_Text then
+         Highlight_Text;
       end if;
 
       --  Return false, so that the signal is not blocked, and other
