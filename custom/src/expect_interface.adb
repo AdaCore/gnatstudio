@@ -449,7 +449,8 @@ package body Expect_Interface is
                Command   => Custom_Action.Command
                  (Custom_Action.Command'First).all,
                Arguments => Custom_Action.Command
-                 (Custom_Action.Command'First .. Custom_Action.Command'Last),
+                 (Custom_Action.Command'First + 1
+                  .. Custom_Action.Command'Last),
 
                Console   => null,
                --  ??? Should we add an optional parameter allowing users to
