@@ -44,11 +44,14 @@ package body Language.Debugger.C is
 
    Subprogram_RE : aliased Pattern_Matcher :=
      Compile
-       ("^\w+\s+"           --  type specs; there can be no
-        & "([\w_*]+\s+)?"   --  more than 3 tokens, right?
+       ("^\w+\s+"             --  type specs; there can be no
+        & "([\w_*]+\s+)?"     --  more than 3 tokens, right?
         & "([\w_*]+\s+)?"
-        & "([*&]+\s*)?"     --  pointer
-        & "([\w_*]+)\s*\(", --  Name
+        & "([*&]+\s*)?"       --  pointer
+        & "([\w_*]+)\s*"
+        & "(\s[\w_]+\s*\()?" --  handling of macros, as in
+                              --  "void pa_exit PARAMS ((int))"
+        & "\([^(]",           --  Name
         Multiple_Lines);
 
    C_Explorer_Categories : constant Explorer_Categories (1 .. 1) :=
