@@ -7619,6 +7619,7 @@ This @code{<pref>} tag is mostly intended for use through the themes
 @node Creating themes
 @subsection Creating themes
 @cindex themes creation
+@cindex <theme>
 @c ----------------------------------------------------------------
 
 @noindent
@@ -7664,6 +7665,15 @@ customization files themselves: first the predefined themes of GPS, then the
 ones defined in customization files found through the @code{GPS_CUSTOM_PATH}
 directories, and finally the ones defined in files found in the user's
 own GPS directory.
+
+@smallexample
+<?xml version="1.0" ?>
+<customize>
+   <theme name="my theme" description="Create a new menu">
+       <menu action="my action"><title>/Edit/My Theme Menu</title></menu>
+   </theme>
+</customize>
+@end smallexample
 
 @c ----------------------------------------------------------------
 @node Defining new search patterns
