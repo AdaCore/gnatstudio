@@ -459,7 +459,6 @@ package Glide_Kernel is
    --  Return the current event data. This returns No_Event_Data unless
    --  we are processing the event in the context of the key handler
 
-
    type Key_Context_Record is abstract tagged null record;
    type Key_Context is access all Key_Context_Record'Class;
 
@@ -472,8 +471,6 @@ package Glide_Kernel is
      (Context : access Key_Context_Record;
       Event   : Event_Data) return Boolean is abstract;
    --  Whether the current widget in Event matches the context
-
-
 
    type Key_Handler_Record is abstract tagged private;
    type Key_Handler_Access is access all Key_Handler_Record'Class;
