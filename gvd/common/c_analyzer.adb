@@ -171,6 +171,15 @@ package body C_Analyzer is
 
    subtype Storage_Token is Token_Type range Tok_Auto .. Tok_Volatile;
 
+   type Token_Set is array (Token_Type) of Boolean;
+   pragma Pack (Token_Set);
+
+   Indent_Separate_Line : constant Token_Set :=
+     (Tok_Struct | Tok_Class | Tok_Union | Tok_Namespace => False,
+      others                                             => True);
+   --  True when a token construct uses extra indentation level when '{'
+   --  is on a separate line.
+
    type Extended_Token is record
       Token          : Token_Type := No_Token;
       --  Enclosing token
@@ -521,6 +530,7 @@ package body C_Analyzer is
       Num_Ifdef         : Natural;
       Last_Replace_Line : Natural := 0;
       Top_Token         : Token_Stack.Generic_Type_Access;
+      Enclosing         : Token_Stack.Generic_Type_Access;
       Tok_Ident         : Extended_Token;
       Tokens            : Token_Stack.Simple_Stack;
       Indents           : Indent_Stack.Stack.Simple_Stack;
@@ -1139,12 +1149,29 @@ package body C_Analyzer is
             when Tok_Identifier =>
                if Curly_Level = 0 then
                   --  Only record identifier outside function body, we only
-                  --  record them to be able to retrieve routine name.
+                  --  record them to be able to retrieve subprogram name.
 
                   Push (Tokens, Temp);
                end if;
 
                Do_Indent (Index, Indent);
+
+            when Tok_Public | Tok_Protected | Tok_Private =>
+               --  Need to unindent temporarily:
+               --  class t
+               --  {
+               --    int foo;
+               --  protected:  <--
+               --    int bar;
+               --  }
+
+               if Curly_Level = 1 then
+                  Indent := Indent - Indent_Level;
+                  Do_Indent (Index, Indent);
+                  Indent := Indent + Indent_Level;
+               else
+                  Do_Indent (Index, Indent);
+               end if;
 
             when others =>
                Do_Indent (Index, Indent);
@@ -1176,6 +1203,17 @@ package body C_Analyzer is
          case Buffer (Index) is
             when '{' =>
                Token := Tok_Left_Bracket;
+
+               Enclosing := Top (Tokens);
+
+               if Enclosing.Token = Tok_Identifier then
+                  Enclosing := Tokens.Next.Val'Access;
+               end if;
+
+               if not Indent_Separate_Line (Enclosing.Token) then
+                  Indent := Indent - Indent_Level;
+               end if;
+
                Do_Indent (Index, Indent);
                Pop_To_Construct (Tokens, Top_Token);
 
@@ -1193,7 +1231,7 @@ package body C_Analyzer is
 
                         Val.Token := Tok_Assign;
                      else
-                        --  An simple block, e.g: { foo (); }
+                        --  A simple block, e.g: { foo (); }
 
                         Val.Token := Tok_Void;
                      end if;
@@ -1221,6 +1259,9 @@ package body C_Analyzer is
                      Indent := Indent + Indent_Level;
                      Push (Tokens, Val);
                   end;
+
+               elsif not Indent_Separate_Line (Enclosing.Token) then
+                  Indent := Indent + Indent_Level;
 
                elsif Top_Token.Sloc.Line /= Line then
                   Top_Token.Start_New_Line := True;
