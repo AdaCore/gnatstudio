@@ -316,6 +316,9 @@ package body GVD.Main_Window is
            (Breakpoint_Editor_Access (Window.Breakpoints_Editor), Process);
       end if;
 
+      --  ??? Replace by a signal "debugger_switch" on the main window
+      Executable_Changed (Process, "");
+
       --  Update the sensitivity of the Data/Protection Domains menu
       --  item
 
