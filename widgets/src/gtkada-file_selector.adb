@@ -404,7 +404,6 @@ package body Gtkada.File_Selector is
    function Read_File (Win : File_Selector_Window_Access) return Boolean is
       Buffer : String (1 .. 4096);
       Last   : Natural;
-      Id     : Idle_Handler_Id;
       Prev   : String_List.List_Node;
       Node   : String_List.List_Node;
 
@@ -434,7 +433,8 @@ package body Gtkada.File_Selector is
          --  Register the function that will fill the list in the background.
 
          Win.Remaining_Files := First (Win.Files);
-         Id := Add (Display_File'Access, File_Selector_Window_Access (Win));
+         Win.Idle_Handler
+           := Add (Display_File'Access, File_Selector_Window_Access (Win));
 
          return False;
 
@@ -503,7 +503,6 @@ package body Gtkada.File_Selector is
    procedure Refresh_Files (Win : access File_Selector_Window_Record'Class) is
       Dir     : String := Win.Current_Directory.all;
       Filter  : File_Filter := null;
-      Id      : Idle_Handler_Id;
       Strings : Chars_Ptr_Array (1 .. 3);
 
    begin
@@ -558,7 +557,8 @@ package body Gtkada.File_Selector is
 
          GNAT.Directory_Operations.Open (Win.Current_Directory_Id.all, Dir);
          Win.Current_Directory_Is_Open := True;
-         Id := Add (Read_File'Access, File_Selector_Window_Access (Win));
+         Win.Idle_Handler
+           := Add (Read_File'Access, File_Selector_Window_Access (Win));
 
       exception
          when Directory_Error =>
@@ -914,6 +914,7 @@ package body Gtkada.File_Selector is
          Set_Text (Win.Selection_Entry, "");
       end if;
 
+      Idle_Remove (Win.Idle_Handler);
       Main_Quit;
       Win.Own_Main_Loop := False;
 
@@ -936,6 +937,8 @@ package body Gtkada.File_Selector is
       Free (Win.Current_Directory_Id);
       Free (Win.Files);
       Free (Win.Filters);
+
+      Idle_Remove (Win.Idle_Handler);
 
       if Win.Own_Main_Loop then
          Main_Quit;
