@@ -38,7 +38,6 @@ with Gtkada.Handlers;       use Gtkada.Handlers;
 
 with GNAT.Regpat;           use GNAT.Regpat;
 with GNAT.OS_Lib;           use GNAT.OS_Lib;
-with GNAT.IO;               use GNAT.IO;
 
 with Language;              use Language;
 with Debugger;              use Debugger;
@@ -62,6 +61,16 @@ package body GVD.Explorer is
       Is_File_Node : Boolean := False;
       Computed     : Boolean := False;
       Dummy_Node   : Gtk_Ctree_Node := null;
+
+      Pos  : Position_Type;
+      --  Position (number of characters) from the beginning of the file
+
+      Line : Natural;
+      --  Line number
+
+      Col  : Natural;
+      --  Column (number of characters, tab characters are counted as one) on
+      --  the line.
    end record;
    type Node_Data_Access is access Node_Data;
    package Row_Data_Pkg is new Row_Data (Node_Data_Access);
@@ -75,8 +84,6 @@ package body GVD.Explorer is
      array (Category_Index range <>) of Internal_Category;
 
    package Tree_Cb is new Gtk.Handlers.Callback (Explorer_Record);
-
-   package Row_Data_Explorer is new Gtk.Ctree.Row_Data (Position_Type);
 
    procedure First_Handler (Explorer : access Explorer_Record'Class);
    --  Callback handler for Ctree signals.
@@ -152,7 +159,7 @@ package body GVD.Explorer is
    procedure Add_Dummy_Node
      (Explorer : access Explorer_Record'Class;
       To_Node  : Gtk_Ctree_Node;
-      Data     : in out Node_Data_Access);
+      Data     : Node_Data_Access);
    --  Add a dummy node as a child of To_Node. This node is only used so that
    --  To_Node is associated with a [+] symbol on its left, that indicates that
    --  the user can expand its contents. The contents (entities,...) is
@@ -275,50 +282,6 @@ package body GVD.Explorer is
       Lang      : Language_Access;
       Line      : Natural := 1;
 
-      procedure Print_File_Location
-        (File     : String;
-         Buffer   : GVD.Types.String_Access;
-         Line     : Natural;
-         Position : Natural);
-      --  Print on standard output the location of a given file, following
-      --  the same syntax than gdb.
-      --  ??? This is gdb specific but gives a much better integration, so
-      --  it is worth it.
-
-      procedure Print_File_Location
-        (File     : String;
-         Buffer   : GVD.Types.String_Access;
-         Line     : Natural;
-         Position : Natural)
-      is
-         Pos_Img  : constant String := Natural'Image (Position);
-         My_Line  : Natural := 1;
-      begin
-         if Line = 0 and then Buffer /= null then
-            for Text_Pos in Buffer'First .. Buffer'First + Position loop
-               if Buffer (Text_Pos) = ASCII.LF then
-                  My_Line := My_Line + 1;
-               end if;
-            end loop;
-
-            declare
-               Line_Img : constant String := Natural'Image (My_Line);
-            begin
-               Put_Line (ASCII.SUB & ASCII.SUB & File & ":" &
-                 Line_Img (2 .. Line_Img'Last) & ":" &
-                 Pos_Img (2 .. Pos_Img'Last) & ":beg:0x0");
-            end;
-         else
-            declare
-               Line_Img : constant String := Natural'Image (Line);
-            begin
-               Put_Line (ASCII.SUB & ASCII.SUB & File & ":" &
-                 Line_Img (2 .. Line_Img'Last) & ":" &
-                 Pos_Img (2 .. Pos_Img'Last) & ":beg:0x0");
-            end;
-         end if;
-      end Print_File_Location;
-
    begin
       --  ???  Should set Data.Line to the current line for the current
       --  selection, so that when the user selects the same file again, we
@@ -344,9 +307,10 @@ package body GVD.Explorer is
                       Explorer.Current_Line, Set_Current => True);
          end if;
 
+         Data := Row_Data_Pkg.Node_Get_Row_Data (Explorer, Node);
          Highlight_Word
            (Get_Source (Code_Editor (Explorer.Code_Editor)),
-            Row_Data_Explorer.Node_Get_Row_Data (Explorer, Node));
+            Data.Line, Data.Col, Data.Pos);
 
       --  Else if a file was selected
 
@@ -395,14 +359,16 @@ package body GVD.Explorer is
       Lang      : Language.Language_Access;
       File_Name : String)
    is
-      Matches            : Match_Array (0 .. 10);
-
-      Categories         : constant Explorer_Categories :=
+      Matches      : Match_Array (0 .. 10);
+      Categories   : constant Explorer_Categories :=
         Explorer_Regexps (Lang);
-      Internal_Cat       : Internal_Categories (Categories'Range);
-
-      First              : Natural;
-      Node               : Gtk_Ctree_Node;
+      Internal_Cat : Internal_Categories (Categories'Range);
+      First        : Natural;
+      Line         : Natural;
+      Line_Pos     : Natural;
+      Pos          : Natural;
+      Node         : Gtk_Ctree_Node;
+      Data         : Node_Data_Access;
 
    begin
       Freeze (Tree);
@@ -422,8 +388,9 @@ package body GVD.Explorer is
 
       for C in Categories'Range loop
          if Categories (C).Make_Entry /= null then
-            Node := null;
+            Node  := null;
             First := Buffer'First;
+            Line  := 1;
 
             loop
                Match (Categories (C).Regexp.all,
@@ -434,7 +401,7 @@ package body GVD.Explorer is
 
                declare
                   Cat : aliased Category_Index := C;
-                  S   : String := Categories (C).Make_Entry
+                  S   : constant String := Categories (C).Make_Entry
                     (Buffer, Matches, Cat'Access);
 
                begin
@@ -458,9 +425,25 @@ package body GVD.Explorer is
                      True, False);
                end;
 
-               Row_Data_Explorer.Node_Set_Row_Data
-                 (Tree, Node, Position_Type
-                  (Matches (Categories (C).Position_Index).First));
+               Pos := Matches (Categories (C).Position_Index).First;
+
+               for J in First .. Pos loop
+                  if Buffer (J) = ASCII.LF then
+                     Line     := Line + 1;
+                     Line_Pos := J;
+                  end if;
+               end loop;
+
+               Data := new Node_Data'
+                 (Length       => 0,
+                  Extension    => "",
+                  Is_File_Node => False,
+                  Computed     => False,
+                  Dummy_Node   => null,
+                  Pos          => Position_Type (Pos),
+                  Line         => Line,
+                  Col          => Pos - Line_Pos);
+               Row_Data_Pkg.Node_Set_Row_Data (Tree, Node, Data);
                First := Matches (0).Last;
             end loop;
          end if;
@@ -580,7 +563,7 @@ package body GVD.Explorer is
    procedure Add_Dummy_Node
      (Explorer : access Explorer_Record'Class;
       To_Node  : Gtk_Ctree_Node;
-      Data     : in out Node_Data_Access) is
+      Data     : Node_Data_Access) is
    begin
       Data.Dummy_Node := Insert_Node
         (Explorer,
@@ -670,11 +653,15 @@ package body GVD.Explorer is
                Expanded      => False);
          end if;
 
-         Data := new Node_Data'(Length       => Extension'Length,
-                                Extension    => Extension,
-                                Is_File_Node => False,
-                                Computed     => False,
-                                Dummy_Node   => null);
+         Data := new Node_Data'
+           (Length       => Extension'Length,
+            Extension    => Extension,
+            Is_File_Node => False,
+            Computed     => False,
+            Dummy_Node   => null,
+            Pos          => 0,
+            Line         => 0,
+            Col          => 0);
          Row_Data_Pkg.Node_Set_Row_Data (Tree, Extension_Node, Data);
       end if;
 
@@ -693,12 +680,15 @@ package body GVD.Explorer is
          Mask_Opened   => Tree.Folder_Open_Mask,
          Is_Leaf       => False,
          Expanded      => False);
-      Data := new Node_Data'(Length       => File_Name'Length,
-                             Extension    => File_Name,
-                             Is_File_Node => True,
-                             Computed     => False,
-                             Dummy_Node   => null);
-
+      Data := new Node_Data'
+        (Length       => File_Name'Length,
+         Extension    => File_Name,
+         Is_File_Node => True,
+         Computed     => False,
+         Dummy_Node   => null,
+         Pos          => 0,
+         Line         => 0,
+         Col          => 0);
       Add_Dummy_Node (Tree, Node, Data);
    end Add_File_Node;
 
@@ -1153,12 +1143,13 @@ package body GVD.Explorer is
 
       while Extension_Node /= null loop
          File_Node := Row_Get_Children (Node_Get_Row (Extension_Node));
+
          while File_Node /= null loop
-
             Data := Row_Data_Pkg.Node_Get_Row_Data (Explorer, File_Node);
-            if Data.Is_File_Node and then Data.Computed then
 
+            if Data.Is_File_Node and then Data.Computed then
                Child_Node := Row_Get_Children (Node_Get_Row (File_Node));
+
                while Child_Node /= null loop
                   Next_Child := Row_Get_Sibling (Node_Get_Row (Child_Node));
                   Remove_Node (Explorer, Child_Node);
