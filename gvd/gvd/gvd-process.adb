@@ -185,12 +185,6 @@ package body GVD.Process is
       Cmd     : String);
    --  Parse and process a "graph print" or "graph display" command
 
-   procedure Process_View_Cmd
-     (Process : access Visual_Debugger_Record'Class;
-      Cmd     : String);
-   --  Parse and process a "view".
-   --  Syntax recognized: view (source|asm|source_asm)
-
    function On_Data_Delete_Event
      (Object : access Glib.Object.GObject_Record'Class;
       Params : Gtk.Arguments.Gtk_Args) return Boolean;
@@ -693,7 +687,7 @@ package body GVD.Process is
       if Line /= 0
         and then Mode /= Internal
       then
-         Set_Line (Process.Editor_Text, Line, Process => GObject (Process));
+         Set_Line (Process.Editor_Text, Line, GObject (Process));
       end if;
 
       --  Change the current assembly source displayed, before updating
@@ -1153,7 +1147,7 @@ package body GVD.Process is
          Process.Debugger_Num := Debugger_Num;
          Window.First_Debugger := new Debugger_List_Node'
            (Next     => null,
-            Debugger => GObject (Process));
+            Debugger => Window.Current_Debugger);
 
       else
          Debugger_Num := Debugger_Num + 1;
@@ -1167,7 +1161,7 @@ package body GVD.Process is
          Process.Debugger_Num := Debugger_Num;
          Debugger_List.Next := new Debugger_List_Node'
            (Next     => null,
-            Debugger => GObject (Process));
+            Debugger => Window.Current_Debugger);
       end if;
    end Initialize;
 
@@ -1614,35 +1608,6 @@ package body GVD.Process is
             (-" Invalid command: ") & Cmd);
    end Process_Graph_Cmd;
 
-   ----------------------
-   -- Process_View_Cmd --
-   ----------------------
-
-   procedure Process_View_Cmd
-     (Process : access Visual_Debugger_Record'Class;
-      Cmd     : String)
-   is
-      Mode : View_Mode;
-   begin
-      Mode := View_Mode'Value (Cmd (Cmd'First + 5 .. Cmd'Last));
-
-      if Mode /= Source
-        and then Command_In_Process (Get_Process (Process.Debugger))
-      then
-         return;
-      end if;
-
-      if Get_Mode (Process.Editor_Text) /= Mode then
-         Apply_Mode (Get_Source (Process.Editor_Text), Mode);
-      end if;
-
-   exception
-      when Constraint_Error =>
-         Output_Error
-           (GPS_Window (Process.Window).Kernel,
-            (-" Invalid command: ") & Cmd);
-   end Process_View_Cmd;
-
    --------------------
    -- Close_Debugger --
    --------------------
@@ -1759,12 +1724,6 @@ package body GVD.Process is
       if Looking_At (Lowered_Command, First, "graph") then
          Pre_User_Command;
          Process_Graph_Cmd (Debugger, Command);
-         Display_Prompt (Debugger.Debugger);
-         Set_Busy (Debugger, False);
-
-      elsif Looking_At (Lowered_Command, First, "view") then
-         Pre_User_Command;
-         Process_View_Cmd (Debugger, Command);
          Display_Prompt (Debugger.Debugger);
          Set_Busy (Debugger, False);
 
