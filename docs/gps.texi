@@ -6058,11 +6058,6 @@ Color used to highlight lines causing compilation errors/warnings in the
 source editors. When this color is set to white, the errors/warnings are
 not highlighted. (@ref{Compilation/Build})
 
-@item Show build progress
-@cindex build
-@cindex build progress
-Whether the progress bar should show progress during builds.
-
 @item File pattern
 @cindex file pattern
 @cindex location
@@ -7009,19 +7004,14 @@ to implement the following functions in the directory
 @file{<prefix>/share/gps/doc/examples/language} of your GPS installation.
 @file{language_custom.ads} is the Ada spec file; @file{language_custom.h} is
 the C spec file; @file{gpr_custom.ad?} are example files showing a possible Ada
-implementation of the functions @code{Comment_Line} and @code{Uncomment_Line}
+implementation of the function @code{Comment_Line}
 for the GPS project files (@file{.gpr} files), or any other Ada-like language;
 @file{gprcustom.c} is the C version of gpr_custom.adb.
 
 @item Comment_Line
 Name of a symbol in the specified shared library corresponding to a
-function that will comment a line (used to implement the menu
-@code{Edit->Comment Lines}).
-
-@item Uncomment_Line
-Name of a symbol in the specified shared library corresponding to a
-function that will uncomment a line (used to implement the menu
-@code{Edit->Uncomment Lines}).
+function that will comment or uncomment a line (used to implement the menu
+@code{Edit->Un/Comment Lines}).
 
 @item Parse_Constructs
 Name of a symbol in the specified shared library corresponding to a
@@ -7189,7 +7179,6 @@ Here is an example of a language definition for the GPS project files:
 
     <Engine>gpr</Engine>
     <Comment_Line>gpr_comment_line</Comment_Line>
-    <Uncomment_Line>gpr_uncomment_line</Uncomment_Line>
   </Language>
 </Custom>
 @end smallexample
