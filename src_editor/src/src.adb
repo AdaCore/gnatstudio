@@ -9,12 +9,6 @@ with Language.Ada;         use Language.Ada;
 with Language.C;           use Language.C;
 with Language.Cpp;         use Language.Cpp;
 
-with Csets;
-with Namet;
-with Prj;
-with Prj.Tree;
-with Snames;
-
 procedure Src is
    My_Box      : Source_Editor_Box;
    Main_Window : Gtk_Window;
@@ -29,13 +23,6 @@ begin
    Gtk.Main.Set_Locale;
    Gtk.Main.Init;
 
-   --  Initialize the Project parser code before loading a project.
-   --  This is because we need a project to create a Src_Editor_Box.
-   Namet.Initialize;
-   Csets.Initialize;
-   Snames.Initialize;
-   Prj.Initialize;
-   Prj.Tree.Initialize;
    Glide_Kernel.Gtk_New (Kernel, null);
    Load_Project (Kernel, "../src_editor.gpr");
 
