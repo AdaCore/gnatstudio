@@ -35,6 +35,7 @@ with GVD.Dialogs;         use GVD.Dialogs;
 with GVD.Process;         use GVD.Process;
 with GVD.Preferences;     use GVD.Preferences;
 with GVD.Code_Editors;    use GVD.Code_Editors;
+with GVD.Trace;           use GVD.Trace;
 with Odd_Intl;            use Odd_Intl;
 
 with Ada.Strings;         use Ada.Strings;
@@ -120,6 +121,14 @@ package body GVD.Window_Settings is
       Set_Default_Size (Top.Task_Dialog,
                         Get_Setting (Task_Dialog_Width),
                         Get_Setting (Task_Dialog_Height));
+
+   --  If we couldn't parse the file (maybe it was empty).
+   --  However, we don't delete the file, so that manual recovery can still be
+   --  done if needed.
+   exception
+      when others =>
+         Output_Line (Top, "Couldn't load window_settings file");
+         Current_Window_Settings := null;
    end Load_Window_Settings;
 
    --------------------------
