@@ -51,7 +51,6 @@ with Items.Arrays;      use Items.Arrays;
 with Items.Records;     use Items.Records;
 with Items.Classes;     use Items.Classes;
 
-with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 
 package body Debugger.Gdb is
@@ -209,9 +208,6 @@ package body Debugger.Gdb is
    procedure Restore_Language
      (Debugger : access Gdb_Debugger);
    --  Restore the language that was active before Switch_Language was called.
-
-   function To_Main_Debug_Window is new
-     Standard.Ada.Unchecked_Conversion (System.Address, GVD_Main_Window);
 
    ---------------------
    -- Language_Filter --

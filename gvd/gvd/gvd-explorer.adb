@@ -130,15 +130,6 @@ package body GVD.Explorer is
    --  Return the Node that contains the file File_Name, or null if there is
    --  no such node.
 
-   type Explorer_Handler is access
-     procedure
-       (Widget   : access Explorer_Record'Class;
-        Position : Position_Type);
-   --  Handler called when an item is selected in the tree.
-   --  Index is the position in the buffer where the selected entity
-   --  starts.
-   --  Widget is the Window parameter given to Explore below.
-
    procedure Explore
      (Tree      : access Explorer_Record'Class;
       Root      : Gtk.Ctree.Gtk_Ctree_Node;
@@ -149,7 +140,6 @@ package body GVD.Explorer is
    --  Parse the entities present in buffer.
    --  The items for the explorer are added to Tree, as children of the
    --  Root Node
-   --  See Explorer_Handler above for a description of Handler.
 
    procedure Show_System_Files (Explorer : access Explorer_Record'Class);
    --  Toggle the display of system files
