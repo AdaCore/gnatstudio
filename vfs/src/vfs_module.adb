@@ -42,13 +42,13 @@ package body VFS_Module is
    Me              : constant Debug_Handle := Create (VFS_Module_Name);
    VFS_Module_Id   : Module_ID;
 
-   Dir_Cst  : aliased constant String := "dir";
-   Name_Cst : aliased constant String := "name";
-   Pattern_Cst  : aliased constant String := "pattern";
-   Cd_Cmd_Parameters : constant Cst_Argument_List :=     (1 => Dir_Cst'Access);
+   Dir_Cst               : aliased constant String := "dir";
+   Name_Cst              : aliased constant String := "name";
+   Pattern_Cst           : aliased constant String := "pattern";
+   Cd_Cmd_Parameters     : constant Cst_Argument_List := (1 => Dir_Cst'Access);
    Delete_Cmd_Parameters : constant Cst_Argument_List :=
      (1 => Name_Cst'Access);
-   Dir_Cmd_Parameters : constant Cst_Argument_List :=
+   Dir_Cmd_Parameters    : constant Cst_Argument_List :=
      (1 => Pattern_Cst'Access);
 
    -----------------
