@@ -174,16 +174,12 @@ package Src_Info is
    -- Entities --
    --------------
 
-   type E_Declaration_Info is private;
-   No_Declaration_Info : constant E_Declaration_Info;
-
    type E_Reference is private;
    No_Reference : constant E_Reference;
 
    type File_Location is private;
    Null_File_Location : constant File_Location;
 
-   function Get_Location (Decl : E_Declaration_Info) return File_Location;
    function Get_Location (Ref  : E_Reference) return File_Location;
    --  Return the location for a declaration or a reference.
 
@@ -191,11 +187,6 @@ package Src_Info is
    function Get_Line   (Location : File_Location) return Positive;
    function Get_Column (Location : File_Location) return Positive;
    --  Return the fields of a location
-
-   function Get_Entity_Name (Decl : E_Declaration_Info) return String;
-   --  Return the name of the entity.
-   --  Note that this name will always be lower-case for case-insensitive
-   --  languages
 
 private
 

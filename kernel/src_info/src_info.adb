@@ -820,15 +820,6 @@ package body Src_Info is
    -- Get_Location --
    ------------------
 
-   function Get_Location (Decl : E_Declaration_Info) return File_Location is
-   begin
-      return Decl.Declaration.Location;
-   end Get_Location;
-
-   ------------------
-   -- Get_Location --
-   ------------------
-
    function Get_Location (Ref  : E_Reference) return File_Location is
    begin
       return Ref.Location;
@@ -860,14 +851,5 @@ package body Src_Info is
    begin
       return Location.Column;
    end Get_Column;
-
-   ---------------------
-   -- Get_Entity_Name --
-   ---------------------
-
-   function Get_Entity_Name (Decl : E_Declaration_Info) return String is
-   begin
-      return Decl.Declaration.Name.all;
-   end Get_Entity_Name;
 
 end Src_Info;

@@ -69,10 +69,6 @@ package Src_Info.Queries is
    function Copy (Entity : Entity_Information) return Entity_Information;
    --  Return a copy of Entity. The result must be explicitely destroyed.
 
-   function Get_Entity (Decl : E_Declaration_Info) return Entity_Information;
-   --  Return the information for the entity defined in Node.
-   --  You must cal Destroy on the returned Entity.
-
    --------------------------------------
    -- Goto Declaration<->Body requests --
    --------------------------------------
@@ -212,7 +208,7 @@ package Src_Info.Queries is
 
    procedure Find_Ancestor_Dependencies
      (Root_Project    : Prj.Tree.Project_Node_Id;
-      Lang_Handler : Language_Handlers.Language_Handler;
+      Lang_Handler    : Language_Handlers.Language_Handler;
       Source_Filename : String;
       List            : in out LI_File_List;
       Iterator        : out Dependency_Iterator;

@@ -113,6 +113,10 @@ package body Src_Info.Queries is
    --  True if Entity1 and Entity2 represent the same entity. You can not use a
    --  direct equality test
 
+   function Get_Entity (Decl : E_Declaration_Info) return Entity_Information;
+   --  Return the information for the entity defined in Node.
+   --  You must cal Destroy on the returned Entity.
+
    -------------------------
    -- Search_Is_Completed --
    -------------------------
