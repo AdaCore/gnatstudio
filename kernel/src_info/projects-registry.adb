@@ -1496,7 +1496,7 @@ package body Projects.Registry is
       Project         : Project_Type := No_Project)
    is
       Locale   : constant String := Locale_From_UTF8 (Filename);
-      Project2 : Project_Type;
+      Project2, Real_Project : Project_Type;
       Path     : GNAT.OS_Lib.String_Access;
       Iterator : Imported_Project_Iterator;
       Info     : Source_File_Data;
@@ -1563,11 +1563,13 @@ package body Projects.Registry is
          --  ??? Seems Prj.Nmsc is already computing and storing the path
          --  somewhere, unfortunately it requires a Unit_Name.
 
+         Real_Project :=
+           Get_Project_From_File (Registry, Base_Name => Filename);
+
          if Project /= No_Project then
             Project2 := Project;
          else
-            Project2 :=
-              Get_Project_From_File (Registry, Base_Name => Filename);
+            Project2 := Real_Project;
          end if;
 
          if Project2 /= No_Project then
@@ -1615,17 +1617,26 @@ package body Projects.Registry is
                --  directory. This significantly speeds up the explorer. If
                --  this is not a source file, not need to cache it, it is a
                --  one-time request most probably.
+               --  We do not cache anything if the project was forced, however
+               --  since this wouldn't work with extended projects were sources
+               --  can be duplicated.
 
-               if Info /= No_Source_File_Data then
+               if Project2 = Real_Project
+                 and then Info /= No_Source_File_Data
+               then
                   Info.Directory := Name_Find;
                   Set (Registry.Data.Sources, Filename, Info);
                end if;
             end;
-         else
+
+         elsif Project2 = Real_Project then
             --  Still update the cache, to avoid further system calls to
-            --  Locate_Regular_File
+            --  Locate_Regular_File. However, we shouldn't update the cache
+            --  if the project was forced, since it might store incorrect
+            --  information when we are using extended projects (with duplicate
+            --  source files)
             if Use_Source_Path then
-               Info := (Project   => No_Project,
+               Info := (Project   => Project2,
                         Lang      => No_Name,
                         Directory => Name_A);
                Set (Registry.Data.Sources, Filename, Info);
