@@ -364,6 +364,7 @@ package body Project_Trees is
    begin
       if T.Contextual_Menu /= null then
          Destroy (T.Contextual_Menu);
+         T.Contextual_Menu := null;
       end if;
 
       Get_Selection_Info
