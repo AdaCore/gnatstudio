@@ -32,8 +32,13 @@ Here is a first list of required data:
     instance if we get a "database" widget one day. At the interface level,
     this means that the icon for the widget will go in a notebook page with
     the given name
+  - "file"
+    header/spec file in which the widget is described. We need to specify
+    this for each supported language.
   - "icon"
     icon (file name) to use in the gui builder (tree + widget selection)
+  - "new"
+    Function (and parameters) to use to create a new instance of the widget.
   - "min_children"
     minimal number of children (0 for non-container widgets)
   - "max_children"
@@ -53,6 +58,9 @@ Here is a first list of required data:
     button, ... A documentation string should be allowed. A default value should
     be provided whenever appropriate so that the GUI builder can display as
     much information about the widget as possible.
+    Each property is associated with a list of subprograms used to modify it
+    or get its value. Different subprogram names can be given for every
+    language.
   - "children_add"
     Function to use to add children. Gtk+'s containers typically have several
     such function (pack_start, pack_end, add, append_widget, ...).
@@ -96,4 +104,279 @@ Given all the requirements above, XML seems a very appropriate format.
 It allows for optional fields, fields with default values, attributes to
 fields, any order, ... And its syntax can be described in XML itself.
 
+See Annex A for technical description of the database, and Annex B for
+an example of its use.
 
+??? Remaining issues: Should provide a possibility to have a general
+    algorithm to convert subprogram names from one language to another, even
+    if it is possible to explicitly give them in the database file.
+
+
+Interface between the database and the GUI builder
+==================================================
+
+A certain number of functions need to be callable from the GUI builder, for
+instance to create a new instance of a widget or to get/set its properties.
+
+This "glue code" can be automatically generated from the database file, in
+a format suitable for use by the GUI builder. Note that, since the GUI
+builder is written in Ada, we only need to generate Ada code for the
+interface.
+
+This means that it is very easy to interface to any C widget library (through
+pragma Import), but is not possible for other-languages libraries (though
+they most probably provide a C interface as well).
+
+The following information at least is needed:
+
+  - Creating a new instance
+    That/these functions should take no argument and return the newly created
+    widget. Any argument needed by the actual underlying call (for
+    gtk_button_new_with_label for instance) is extracted from the required
+    fields, as indicated in the database file.
+
+  - Setting properties
+    Probably the best way is to have a single function, that takes three
+    arguments: the widget, the field name as a string, and a reference to
+    the "widget inspector" in the GUI builder. Let that function extract the
+    value itself.
+
+  - Destroying an instance and freeing the memory
+
+
+Interface between the database and the code generators
+======================================================
+
+The GUI builder doesn't generate any external code itself. Instead, it
+delegates to external code generators.
+
+Each of them will of course read the actual interface from the saved
+XML file. However, there is a number of information that they can extract
+from the database file, like the list of header files to include when a
+widget is used, the function to call to instanciate the widget, ...
+This will hopefully make the code generators easier to write.
+
+
+Annex A: XML Schema description of the format
+=============================================
+
+The format below is described in XMLSchema.
+
+??? Unfinished. A number of elements and attributes are not defined yet.
+
+??? Scenario: We create a Gtk_Button (with a default child which is the
+    label). If the user modifies the label, it is updated dynamically
+    (referencing the child automatically???(1)). If the user sets an icon,
+    the child becomes a box with both the child and the icon.
+    The problem is to describe this in this database file...
+
+
+<schema xmlns="http://www.w3.org/2000/08/XMLSchema">
+
+ <xsd:annotation>
+   <xsd:documentation>Widget database schema</xsd:documentation>
+ </xsd:annotation>
+
+ <!--  The language attribute is used for elements that can have language-
+       specific values -->
+
+ <attribute name="lang">
+    <simpleType><restriction base="string">
+       <enumeration value="C" />
+       <enumeration value="Ada" />
+    </restriction></simpleType>
+ </attribute>
+
+ <!--  Type used to describe the arguments to signal handlers or of
+       properties. -->
+
+ <complexType name="argument_type">
+
+ </complexType
+
+ <!--  Top level element -->
+
+ <element name="library">
+    <complexType><sequence>
+       <element ref="requires"    minOccurs="0" maxOccurs="unbounded" />
+       <element ref="widget-type" minOccurs="1" maxOccurs="unbounded" />
+    </sequence></complexType>
+ </element>
+
+ <!--  First element: list of required modules -->
+
+ <element name="requires">
+    <complexType><sequence>
+       <element name="name"    type="string" />
+       <element name="version" type="string" />
+    </sequence></complexType>
+ </element>
+
+ <!--  Header defines the name(s) of files to #include, with,...
+       This is basically a string, with an optional lang attribute for the
+       language. -->
+
+ <element name="header">
+    <complexType><simpleContent>
+        <extension base="string">
+            <attribute ref="lang" use="default" value="C">
+        </extension>
+    </simpleContent></complexType>
+ </element>
+
+ <!--  An interface that the widget implements -->
+
+ <element name="interface" type="IDREF" />
+
+ <!--  The name of a widget. This depends on the language -->
+
+ <element name="name">
+    <complexType><simpleContent>
+        <extension base="string">
+            <attribute ref="lang" use="default" value="C" />
+        </extension>
+    </simpleContent></complexType>
+ </element>
+
+<!--  Definition of parameters for subprograms -->
+<element name="extra_arg">
+    <complexType>
+        <extension base="argument_type">
+            <!--  Name of the field from which to extract the value -->
+            <attribute name="field" type="string" use="optional" />
+        </extension>
+    </complexType>
+</element>
+
+ <!--  A signal defined by the widget
+      You do not need to specify the first argument, since this is always
+      the widget. Only the extra arguments need to be defined. -->
+
+ <element name="signal>
+    <complexType>
+        <sequence>
+            <element name="documentation" type="string"
+                minOccurs="0" maxOccurs="1" />
+            <element name="return"        type="argument_type"
+                minOccurs="0" maxOccurs="1" default="void" />
+            <element ref="extra_arg"      minOccurs="0" maxOccurs="unbounded"/>
+        </sequence>
+        <attribute name="name" type=string" />
+    </complexType>
+ </element>
+
+ <!--  Global element: definition of a widget -->
+
+ <element name="widget_type">
+    <complexType>
+       <all>
+          <element ref="header"      minOccurs="0" maxOccurs="unbounded" />
+          <element ref="interface"   minOccurs="0" maxOccurs="unbounded" />
+          <element ref="name"        minOccurs="0" maxOccurs="unbounded" />
+          <element ref="signal"      minOccurs="0" maxOccurs="unbounded" />
+          <element name="child_type" type="IDREF" />
+          <element ref="add_child"   minOccurs="0" maxOccurs="unbounded" />
+          <element ref="property"    minOccurs="0" maxOccurs="unbounded" />
+          <element ref="style"                                           />
+          <element ref="flag"        minOccurs="0" maxOccurs="unbounded" />
+          <element ref="new"         minOccurs="0" maxOccurs="unbounded" />
+       </all>
+       <attribute name="id"           type="ID" />
+       <attribute name="page"         type="string" />
+       <attribute name="min_children" use="default" value="0" />
+       <attribute name="max_children" use="default" value="0" />
+       <attribute name="parent"       type="IDREF" />
+       <attribute name="icon"         type="string" />
+       </attribute>
+    </complexType>
+ </element>
+
+</schema>
+
+
+Annex B: Example of database file
+==================================
+
+Here is an example for a gtk+ database
+
+<?xml version="1.0"?>
+<library>
+
+   <!--  List of required libraries for this module -->
+   <requires>  <name>gtk+</name>  <version>1.2.8</version>  </requires>
+
+   <!--  First widget defined: Gtk_Button -->
+
+   <widget_type id="gtkbutton"
+                page="container"
+                min_children="0"
+                max_children="1"
+                parent="gtkbin"
+                icon="button.xpm">
+
+      <!--  Header files -->
+      <header lang="C">   gtkbutton.h </header>
+      <header lang="Ada"> Gtk.Button  </header>
+
+      <!--  Interfaces implemented: none -->
+      <!--   <interface name="..." />    -->
+
+      <!--  Type names for all the languages -->
+      <name lang="C">   GtkButton  </name>
+      <name lang="Ada"> Gtk_Button </name>
+
+      <!--  Creating a new instance of the widget.
+            First parameter or return type is always the new widget, and
+            this is not specified. Only other parameters need to be. -->
+      <new>
+          <subprogram lang="C">   gtk_button_new </subprogram>
+          <subprogram lang="Ada"> Gtk_New        </subprogram>
+      </new>
+      <new default="yes">
+          <subprogram lang="C">   gtk_button_new_with_label  </subprogram>
+          <subprogram lang="Ada"> Gtk_New                    </subprogram>
+          <extra_arg field="label">string</extra_arg>
+      </new>
+
+      <!--  List of new signals defined in this class -->
+      <signal name="pressed">
+         <documentation>Called everytime the button is pressed</documentation>
+         <return>void</return>
+      </signal>
+      <signal name="released">
+         <documentation>Called everytime the button is released</documentation>
+      </signal>
+
+      <!--  Function used to add children -->
+      <add_child>
+         <subprogram lang="C">   gtk_container_add</subprogram>
+         <subprogram lang="Ada"> Add              </subprogram>
+      </add_child>
+
+      <!--  Possible type of children -->
+      <child_type>gtkwidget</child_type>
+
+      <!--  Public properties for that widget -->
+      <property name="in_button" read-only="true" type="boolean">
+         <documentation>True if the cursor is inside the button</documentation>
+         <get lang="C"> $->in_button </get>
+         <get lang="Ada"> Get_In_Button($1) </get>
+      </property>
+
+      <!-- ??? Needs much more work: the C macro is still unclear. It also
+           needs to remove the previous child, in case we go from text to
+           icon for instance... -->
+      <property name="label" type="string">
+         <documentation>The text displayed in the button</documentation>
+         <set lang="C"> gtk_label_set_text (GTK_BIN ($1)->child, $2) </set>
+         <get lang="C"> gtk_label_get (GTK_BIN ($1)->child, &$2) </get>
+      </property>
+
+      <!--  Meaningfull style fields -->
+      <style> foreground background </style>
+
+      <!--  Flags -->
+      <flag name="eventmask">0x0000000000</flag>
+   </widget_type>
+
+</library>
