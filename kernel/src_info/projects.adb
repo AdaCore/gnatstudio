@@ -2363,7 +2363,8 @@ package body Projects is
    function Build (Package_Name, Attribute_Name : String)
       return Attribute_Pkg is
    begin
-      return Attribute_Pkg (Package_Name & '#' & Attribute_Name);
+      return Attribute_Pkg
+        (To_Lower (Package_Name) & '#' & To_Lower (Attribute_Name));
    end Build;
 
    -------------------------
