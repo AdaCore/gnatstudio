@@ -171,7 +171,7 @@ package body GVD.Preferences is
          Nick      => -"Show lines with code",
          Blurb     => -("True if dots should be shown in the editor for lines"
                         & " that contain code"),
-         Default   => True));
+         Default   => False));
       Register_Property
         (Prefs, Param_Spec (Editor_Show_Line_With_Code), Source);
 
