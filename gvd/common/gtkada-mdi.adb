@@ -1799,7 +1799,11 @@ package body Gtkada.MDI is
       Return_Callback.Connect
         (Child, "motion_notify_event",
          Return_Callback.To_Marshaller (Button_Motion'Access));
-      Widget_Callback.Connect (Child, "draw", Draw_Child'Access);
+      if Gtk.Major_Version = 1
+         and then Gtk.Minor_Version <= 2
+      then 
+         Widget_Callback.Connect (Child, "draw", Draw_Child'Access);
+      end if;
       Widget_Callback.Connect
         (Child, "destroy",
          Widget_Callback.To_Marshaller (Destroy_Child'Access));
