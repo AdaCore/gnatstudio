@@ -509,7 +509,7 @@ package body GVD.Source_Editors is
          return N;
       end Line_Number_String;
 
-      Index               : Positive := 1;
+      Index               : Positive := Buffer'First;
       Line                : Positive := 1;
       Line_Start          : Positive := 1;
       Entity              : Language_Entity;
@@ -1413,6 +1413,7 @@ package body GVD.Source_Editors is
       Text_Pos_End : Natural;
       Line         : constant Natural := Get_Line (Editor);
       Tab_Size     : Integer renames Current_Preferences.Tab_Size;
+      Show_Line_Nums : constant Boolean := Editor.Show_Line_Nums;
 
    begin
       if Current_Preferences.Editor_Highlight_Current_Line
@@ -1447,9 +1448,15 @@ package body GVD.Source_Editors is
          Index := Index + Line * Natural (Invisible_Column_Width (Editor));
          Text_Pos_End := Text_Pos;
          Skip_To_Char (Buffer.all, Text_Pos_End, ASCII.LF);
+
+         --  Change the highlighted range. Since this will redraw the line
+         --  currently highlighted, and that it already has the line
+         --  numbers, we temporarily disable that.
+         Editor.Show_Line_Nums := False;
          Highlight_Range
-           (Editor, Gint (Text_Pos), Gint (Text_Pos_End), Gint (Index), Line,
+           (Editor, Gint (Text_Pos), Gint (Text_Pos_End), Gint (Index),
             Back => Editor.Highlight_Color);
+         Editor.Show_Line_Nums := Show_Line_Nums;
       end if;
    end Highlight_Current_Line;
 
