@@ -2297,16 +2297,6 @@ package body GVD_Module is
       Debuggable_Suffix : GNAT.OS_Lib.String_Access := Get_Debuggable_Suffix;
 
    begin
-      --  Change the project to match the executable. When On_View_Changed
-      --  is called as a result of the Recompute_View in
-      --  Load_Project_From_Executable, nothing will be done since the
-      --  executable hasn't changed.
-
-      if Get_Current_Process (Get_Main_Window (Kernel)) /= null then
-         Load_Project_From_Executable
-           (Kernel, Get_Current_Process (Get_Main_Window (Kernel)));
-      end if;
-
       --  Remove all existing menus
       Remove_All_Children (Menu);
 
