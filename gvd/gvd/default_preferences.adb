@@ -39,6 +39,7 @@ with Gtk.List;                 use Gtk.List;
 with Gtk.List_Item;            use Gtk.List_Item;
 with Gtk.Notebook;             use Gtk.Notebook;
 with Gtk.Spin_Button;          use Gtk.Spin_Button;
+with Gtk.Stock;                use Gtk.Stock;
 with Gtk.Table;                use Gtk.Table;
 with Gtk.Toggle_Button;        use Gtk.Toggle_Button;
 with Gtk.Widget;               use Gtk.Widget;
@@ -686,8 +687,8 @@ package body Default_Preferences is
       Result := Set_Font_Name (F, Get_Text (E));
       Pack_Start (Get_Vbox (Dialog), F, Expand => True, Fill => True);
 
-      Tmp := Add_Button (Dialog, -"OK",     Gtk_Response_OK);
-      Tmp := Add_Button (Dialog, -"Cancel", Gtk_Response_Cancel);
+      Tmp := Add_Button (Dialog, Stock_Ok,     Gtk_Response_OK);
+      Tmp := Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel);
 
       Show_All (Dialog);
 
@@ -1001,9 +1002,9 @@ package body Default_Preferences is
          Prefs := Prefs.Next;
       end loop;
 
-      Tmp := Add_Button (Dialog, -"OK", Gtk_Response_OK);
-      Tmp := Add_Button (Dialog, -"Apply", Gtk_Response_Apply);
-      Tmp := Add_Button (Dialog, -"Cancel", Gtk_Response_Cancel);
+      Tmp := Add_Button (Dialog, Stock_Ok, Gtk_Response_OK);
+      Tmp := Add_Button (Dialog, Stock_Apply, Gtk_Response_Apply);
+      Tmp := Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel);
 
       Show_All (Dialog);
 

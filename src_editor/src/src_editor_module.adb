@@ -855,8 +855,8 @@ package body Src_Editor_Module is
       Grab_Focus (Ent);
       Set_Activates_Default (Ent, True);
 
-      Button := Add_Button (Dialog, -"OK", Gtk_Response_OK);
-      Button := Add_Button (Dialog, -"Cancel", Gtk_Response_Cancel);
+      Button := Add_Button (Dialog, Stock_Ok, Gtk_Response_OK);
+      Button := Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel);
       Set_Default_Response (Dialog, Gtk_Response_OK);
 
       Show_All (Dialog);

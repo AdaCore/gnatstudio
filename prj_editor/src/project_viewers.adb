@@ -35,6 +35,7 @@ with Gtk.Label;                    use Gtk.Label;
 with Gtk.Menu;                     use Gtk.Menu;
 with Gtk.Menu_Item;                use Gtk.Menu_Item;
 with Gtk.Scrolled_Window;          use Gtk.Scrolled_Window;
+with Gtk.Stock;                    use Gtk.Stock;
 with Gtk.Style;                    use Gtk.Style;
 with Gtk.Widget;                   use Gtk.Widget;
 with Gtk.Window;                   use Gtk.Window;
@@ -905,7 +906,7 @@ package body Project_Viewers is
                Title  => -"Select name for project",
                Parent => Get_Main_Window (Kernel),
                Flags  => Modal or Destroy_With_Parent);
-      Widget := Add_Button (Dialog, -"OK", Gtk_Response_OK);
+      Widget := Add_Button (Dialog, Stock_Ok, Gtk_Response_OK);
 
       Gtk_New (Label, -"Enter name of project:");
       Pack_Start (Get_Vbox (Dialog), Label);
