@@ -313,7 +313,7 @@ package body GVD.Session_Dialog is
                      Program.Remote_Host.all,
                      Program.Remote_Target.all,
                      Program.Protocol.all,
-		     Program.Debugger_Name.all);
+                     Program.Debugger_Name.all);
                else
                   Processes (J) := null;
                end if;
