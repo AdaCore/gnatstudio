@@ -117,7 +117,7 @@ procedure GPS is
    Docgen_Trace  : constant Debug_Handle := Create ("MODULE.Docgen", Off);
    Vdiff2_Trace  : constant Debug_Handle := Create ("MODULE.Vdiff2", Off);
    Metrics_Trace : constant Debug_Handle := Create ("MODULE.Metrics", On);
-   --  If any of these debug handles is active, the correponsing module
+   --  If any of these debug handles is active, the correponding module
    --  is loaded.
 
    subtype String_Access is GNAT.OS_Lib.String_Access;
