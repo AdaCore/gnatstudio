@@ -398,7 +398,7 @@ package body Glide_Kernel.Project is
    begin
       --  A multi-language project ? If yes, we need to generate the Makefile
 
-      if Langs'Length > 1 then
+      if Langs'Length = 1 then
          To_Lower (Langs (Langs'First).all);
       end if;
 
