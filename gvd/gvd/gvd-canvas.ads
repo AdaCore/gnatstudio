@@ -28,6 +28,7 @@ with Gtk.Window;
 with Gtk.Accel_Group;
 with Display_Items;
 with Items;
+with Histories;
 
 package GVD.Canvas is
 
@@ -39,8 +40,11 @@ package GVD.Canvas is
      with private;
    type GVD_Canvas is access all GVD_Canvas_Record'Class;
 
-   procedure Gtk_New (Canvas : out GVD_Canvas);
+   procedure Gtk_New
+     (Canvas : out GVD_Canvas; History : Histories.History := null);
    --  Create a new canvas.
+   --  History is used for the combo boxes in the dialogs.
+   --  This can be null if the histories are not kept.
 
    procedure Init_Graphics (Canvas : access GVD_Canvas_Record'Class);
    --  Initializes all the internal graphic contexts needed for the canvas.
@@ -140,6 +144,7 @@ private
 
       Contextual_Background_Menu : Gtk.Menu.Gtk_Menu;
       Item_Contextual_Menu : Gtk.Menu.Gtk_Menu;
+      History         : Histories.History;
    end record;
 
 end GVD.Canvas;

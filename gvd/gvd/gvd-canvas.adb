@@ -285,9 +285,11 @@ package body GVD.Canvas is
    -- Gtk_New --
    -------------
 
-   procedure Gtk_New (Canvas : out GVD_Canvas) is
+   procedure Gtk_New
+     (Canvas : out GVD_Canvas; History : Histories.History := null) is
    begin
       Canvas := new GVD_Canvas_Record;
+      Canvas.History := History;
       Canvas.Detect_Aliases := Get_Pref
         (GVD_Prefs, Default_Detect_Aliases);
       Initialize (Canvas);
@@ -895,6 +897,7 @@ package body GVD.Canvas is
          Title    => -"Setting value of " & Item.Component_Name,
          Message  => -"Setting value of " & Item.Component_Name & ':',
          Position => Win_Pos_Mouse,
+         History  => Item.Canvas.History,
          Key      => "gvd_set_value_dialog");
 
    begin
