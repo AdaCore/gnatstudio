@@ -30,7 +30,8 @@ package body Entities.Debug is
    Dump_Full_File_Names : constant Boolean := False;
    Show_Timestamps      : Boolean := True;
 
-   use Entities_Tries;
+   use Entities_Hash;
+   use Shared_Entities_Hash;
    use Files_HTable;
    use LI_HTable;
    use Source_File_Arrays;
@@ -50,7 +51,11 @@ package body Entities.Debug is
       Full          : Boolean);
    procedure Dump (LIs       : in out LI_HTable.HTable);
    procedure Dump
-     (Entities : access Entities_Tries.Trie_Tree;
+     (Entities : Entities_Hash.HTable;
+      Full     : Boolean;
+      Name     : String);
+   procedure Dump
+     (Entities : Shared_Entities_Hash.HTable;
       Full     : Boolean;
       Name     : String);
    procedure Dump (LI        : LI_File);
@@ -67,7 +72,9 @@ package body Entities.Debug is
    procedure Dump (Kind : E_Kind);
    procedure Dump (Ref  : E_Reference; Full : Boolean);
    procedure Dump (File : Virtual_File; Full : Boolean := False);
-   procedure Dump_Entities_From_Files (Files : Source_File_Array);
+   procedure Dump_Entities_From_Files
+     (Files         : Source_File_Array;
+      Entities_Only : Boolean := False);
    --  Dump various parts of the system
 
    function Image (Col : Column_Type) return String;
@@ -172,7 +179,7 @@ package body Entities.Debug is
          for E in Entity_Information_Arrays.First .. Last (Entities) loop
             Dump (Entities.Table (E), Full => Full, Name => "");
 
-            if not Full then
+            if not Full and then Entities.Table (E) /= null then
                Output (" ");
             end if;
          end loop;
@@ -341,10 +348,10 @@ package body Entities.Debug is
       Dump (File.Depended_On, "depended_on");
 
       if Show_Entities then
-         Dump (File.Entities'Access, Full => False, Name => "entities");
+         Dump (File.Entities, Full => False, Name => "entities");
       end if;
 
-      Dump (File.All_Entities'Access, Full => False, Name => "all_entities");
+      Dump (File.All_Entities, Full => False, Name => "all_entities");
    end Dump;
 
    ----------
@@ -389,7 +396,7 @@ package body Entities.Debug is
             Dump (Entity.Primitive_Op_Of, False, "primitive_of");
             Dump (Entity.Primitive_Subprograms, False, "primitives");
             Dump (Entity.Child_Types, False, "child_types");
-            Dump (Entity.Called_Entities'Access, False, "calls");
+            Dump (Entity.Called_Entities, False, "calls");
             Dump (Entity.References, "references", Full => True);
          elsif Name /= "" then
             Output_Line ("");
@@ -476,29 +483,136 @@ package body Entities.Debug is
    ----------
 
    procedure Dump
-     (Entities : access Entities_Tries.Trie_Tree;
+     (Entities : Entities_Hash.HTable;
       Full     : Boolean;
       Name     : String)
    is
-      Iter : Entities_Tries.Iterator := Start (Entities, "");
-      E    : Entity_Information_List_Access;
-      Is_Empty : constant Boolean := Get (Iter) = null;
+      Iter : Entities_Hash.Iterator;
+      Is_Empty : Boolean;
+      Count : Natural := 0;
    begin
+      Get_First (Entities, Iter);
+      Is_Empty := Get_Element (Iter) = null;
+
+      while Get_Element (Iter) /= null loop
+         Count := Count + 1;
+         Get_Next (Entities, Iter);
+      end loop;
+
       if Full then
          Output_Line ("====== Entities =====");
       elsif not Is_Empty then
          Output ("   " & Name & "= ");
       end if;
 
-      loop
-         E := Get (Iter);
-         exit when E = null;
-         Dump (E.all, Full => Full, Name => "");
-         Next (Iter);
-      end loop;
-      Free (Iter);
+      declare
+         Sorted : array (1 .. Count) of Unshared_Entity_Informations;
+         procedure Xchg (Op1, Op2 : Natural);
+         function Lt    (Op1, Op2 : Natural) return Boolean;
 
-      if not Full and then not Is_Empty then
+         procedure Xchg (Op1, Op2 : Natural) is
+            T : constant Unshared_Entity_Informations := Sorted (Op1);
+         begin
+            Sorted (Op1) := Sorted (Op2);
+            Sorted (Op2) := T;
+         end Xchg;
+
+         function Lt (Op1, Op2 : Natural) return Boolean is
+         begin
+            if Sorted (Op1) = null then
+               return True;
+            elsif Sorted (Op2) = null then
+               return False;
+            else
+               return Get_Name (Sorted (Op1)).all <
+                 Get_Name (Sorted (Op2)).all;
+            end if;
+         end Lt;
+      begin
+         Get_First (Entities, Iter);
+         Count := Sorted'First;
+         while Get_Element (Iter) /= null loop
+            Sorted (Count) := Get_Element (Iter);
+            Count := Count + 1;
+            Get_Next (Entities, Iter);
+         end loop;
+
+         Sort (Sorted'Last, Xchg'Unrestricted_Access, Lt'Unrestricted_Access);
+         for S in Sorted'Range loop
+            Dump (Sorted (S).List.all, Full => Full, Name => "");
+         end loop;
+      end;
+
+      if not Full and then not Is_Empty and then Name /= "" then
+         Output_Line ("");
+      end if;
+   end Dump;
+
+   ----------
+   -- Dump --
+   ----------
+
+   procedure Dump
+     (Entities : Shared_Entities_Hash.HTable;
+      Full     : Boolean;
+      Name     : String)
+   is
+      Iter : Shared_Entities_Hash.Iterator;
+      Is_Empty : Boolean;
+      Count    : Natural := 0;
+   begin
+      Get_First (Entities, Iter);
+      Is_Empty := Get_Element (Iter) = No_Entity_Informations;
+
+      if Full then
+         Output_Line ("====== Entities =====");
+      elsif not Is_Empty and then Name /= "" then
+         Output ("   " & Name & "= ");
+      end if;
+
+      while Get_Element (Iter) /= null loop
+         Count := Count + 1;
+         Get_Next (Entities, Iter);
+      end loop;
+
+      declare
+         Sorted : array (1 .. Count) of Entity_Informations;
+         procedure Xchg (Op1, Op2 : Natural);
+         function Lt    (Op1, Op2 : Natural) return Boolean;
+
+         procedure Xchg (Op1, Op2 : Natural) is
+            T : constant Entity_Informations := Sorted (Op1);
+         begin
+            Sorted (Op1) := Sorted (Op2);
+            Sorted (Op2) := T;
+         end Xchg;
+
+         function Lt (Op1, Op2 : Natural) return Boolean is
+         begin
+            if Sorted (Op1) = null then
+               return True;
+            elsif Sorted (Op2) = null then
+               return False;
+            else
+               return Sorted (Op1).Name.all < Sorted (Op2).Name.all;
+            end if;
+         end Lt;
+      begin
+         Get_First (Entities, Iter);
+         Count := Sorted'First;
+         while Get_Element (Iter) /= null loop
+            Sorted (Count) := Get_Element (Iter);
+            Count := Count + 1;
+            Get_Next (Entities, Iter);
+         end loop;
+
+         Sort (Sorted'Last, Xchg'Unrestricted_Access, Lt'Unrestricted_Access);
+         for S in Sorted'Range loop
+            Dump (Sorted (S).List.all, Full => Full, Name => "");
+         end loop;
+      end;
+
+      if not Full and then not Is_Empty and then Name /= "" then
          Output_Line ("");
       end if;
    end Dump;
@@ -507,28 +621,40 @@ package body Entities.Debug is
    -- Dump_Entities_From_Files --
    ------------------------------
 
-   procedure Dump_Entities_From_Files (Files : Source_File_Array) is
+   procedure Dump_Entities_From_Files
+     (Files         : Source_File_Array;
+      Entities_Only : Boolean := False) is
    begin
-      Output_Line ("====== Entities from files =====");
-      for F in Files'Range loop
-         Dump (Files (F).Entities'Access, Full => True, Name => "");
-      end loop;
+      if not Entities_Only then
+         Output_Line ("====== Entities from files =====");
+         for F in Files'Range loop
+            Dump (Files (F).Entities, Full => True, Name => "");
+         end loop;
+      else
+         for F in Files'Range loop
+            Dump (Files (F).Entities, Full => False, Name => "");
+         end loop;
+      end if;
    end Dump_Entities_From_Files;
 
    ----------
    -- Dump --
    ----------
 
-   procedure Dump (Db : Entities_Database; Full : Boolean := False) is
+   procedure Dump (Db            : Entities_Database;
+                   Full          : Boolean := False;
+                   Entities_Only : Boolean := False) is
    begin
       if Db /= null then
          declare
             Files : constant Source_File_Array := Get_Sorted_List_Of_Files
               (Db.Files'Unrestricted_Access);
          begin
-            Dump (Db.LIs);
-            Dump (Files, Show_Entities => False, Full => Full);
-            Dump_Entities_From_Files (Files);
+            if not Entities_Only then
+               Dump (Db.LIs);
+               Dump (Files, Show_Entities => False, Full => Full);
+            end if;
+            Dump_Entities_From_Files (Files, Entities_Only);
          end;
       end if;
    end Dump;

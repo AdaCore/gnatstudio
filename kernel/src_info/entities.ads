@@ -21,7 +21,6 @@
 with Ada.Calendar;
 with GNAT.OS_Lib;
 with HTables;
-with Tries;
 with VFS;
 with Dynamic_Arrays;
 with Projects.Registry;
@@ -566,6 +565,18 @@ package Entities is
    --  Add a new reference to the entity. No Check is done whether this
    --  reference already exists.
 
+   procedure Add_Called
+     (Entity   : Entity_Information;
+      Called   : Entity_Information);
+   --  Add a new called entity, that is an entity which has a reference in the
+   --  scope of Entity or its body
+
+   procedure Set_Caller_At_Declaration
+     (Entity   : Entity_Information;
+      Caller   : Entity_Information);
+   --  Set the name of the entity which contains, in its scope, the declaration
+   --  of Entity
+
    procedure Set_Type_Of
      (Entity     : Entity_Information;
       Is_Of_Type : Entity_Information;
@@ -761,34 +772,14 @@ private
    end record;
    No_Entity_Reference : constant Entity_Reference := (null, 0);
 
-   type Entity_Information_List_Access is access Entity_Information_List;
-
-   function Get_Name
-     (D : Entity_Information_List_Access) return GNAT.OS_Lib.String_Access;
-   --  Return the name of the first entity in the list
-
-   procedure Destroy (D : in out Entity_Information_List_Access);
-
-   package Entities_Tries is new Tries
-     (Data_Type => Entity_Information_List_Access,
-      No_Data   => null,
-      Get_Index => Get_Name,
-      Free      => Destroy);
-   --  Each node in the tree contains all the entities with the same name.
-
    ------------------------
    -- Entity_Information --
    ------------------------
 
    type Entity_Information_Record is tagged record
-      Name                  : GNAT.OS_Lib.String_Access;
-      Kind                  : E_Kind;
-      Attributes            : Entity_Attributes;
-      Is_Valid              : Boolean := True;
-      --  Whether the entity still exists in its source file. This is set to
-      --  False when some other entity references this one, but we have
-      --  reparsed the source file since then and the entity is no longer
-      --  valid.
+      Shared_Name           : GNAT.OS_Lib.String_Access;
+      --  Name of the entity, this is a pointer to the name in the
+      --  matching Entity_Information_List_Access;
 
       Declaration           : File_Location;
       Caller_At_Declaration : Entity_Information;
@@ -829,23 +820,99 @@ private
       References            : Entity_Reference_List;
       --  All the references to this entity in the parsed files
 
-      Called_Entities       : aliased Entities_Tries.Trie_Tree;
+      Called_Entities       : Entity_Information_List;
       --  List of entities that have a reference between the body and the
       --  end-of-scope of the entity.
 
       Ref_Count             : Natural := 1;
       --  The reference count for this entity. When it reaches 0, the entity
       --  is released from memory.
+
+      Kind                  : E_Kind;
+      Attributes            : Entity_Attributes;
+      Is_Valid              : Boolean := True;
+      --  Whether the entity still exists in its source file. This is set to
+      --  False when some other entity references this one, but we have
+      --  reparsed the source file since then and the entity is no longer
+      --  valid.
    end record;
 
-   --------------------
-   -- Entities_Table --
-   --------------------
+   ---------------------
+   --  Entities_Tries --
+   ---------------------
 
-   procedure Add (Entities         : in out Entities_Tries.Trie_Tree;
-                  Entity           : Entity_Information;
-                  Check_Duplicates : Boolean);
-   --  Add a new entity, if not already there, to D
+   type Entity_Information_List_Access is access Entity_Information_List;
+   type Entity_Informations_Record;
+   type Entity_Informations is access Entity_Informations_Record;
+   type Entity_Informations_Record is record
+      Name : GNAT.OS_Lib.String_Access;
+      --  Shared name for all the entities in the list. This is freed when
+      --  there are no more entities
+
+      List : Entity_Information_List_Access;
+      --  List of all entities with the same name
+
+      Next : Entity_Informations;
+      --  Use by the hash table
+   end record;
+   No_Entity_Informations : constant Entity_Informations := null;
+
+   type Header_Num is range 0 .. 336;
+   procedure Set_Next (E, Next : Entity_Informations);
+   function Next (E : Entity_Informations) return Entity_Informations;
+   function Get_Name
+     (D : Entity_Informations) return GNAT.OS_Lib.String_Access;
+   function Hash (S : GNAT.OS_Lib.String_Access) return Header_Num;
+   function Equal (S1, S2 : GNAT.OS_Lib.String_Access) return Boolean;
+   procedure Destroy (D : in out Entity_Informations);
+   pragma Inline (Set_Next, Next, Get_Name, Hash, Equal, Destroy);
+   --  Required for the instantiation of the hash table
+
+   package Shared_Entities_Hash is new HTables.Static_HTable
+     (Header_Num    => Header_Num,
+      Elmt_Ptr      => Entity_Informations,
+      Null_Ptr      => null,
+      Set_Next      => Set_Next,
+      Next          => Next,
+      Key           => GNAT.OS_Lib.String_Access,
+      Get_Key       => Get_Name,
+      Hash          => Hash,
+      Equal         => Equal,
+      Free_Elmt_Ptr => Destroy);
+   --  Each node in the tree contains all the entities with the same name. The
+   --  name of the entities is shared, that is they do not allocate their own
+   --  string, but point to the name in the Entity_Informations record
+
+   type Unshared_Entity_Informations_Record;
+   type Unshared_Entity_Informations is
+     access Unshared_Entity_Informations_Record;
+   type Unshared_Entity_Informations_Record is record
+      List : Entity_Information_List_Access;
+      Next : Unshared_Entity_Informations;
+   end record;
+
+   procedure Set_Next (E, Next : Unshared_Entity_Informations);
+   function Next (E : Unshared_Entity_Informations)
+                  return Unshared_Entity_Informations;
+   function Get_Name
+     (D : Unshared_Entity_Informations) return GNAT.OS_Lib.String_Access;
+   procedure Destroy (D : in out Unshared_Entity_Informations);
+   --  Required for the instantiation of the trie
+
+   package Entities_Hash is new HTables.Static_HTable
+     (Header_Num    => Header_Num,
+      Elmt_Ptr      => Unshared_Entity_Informations,
+      Null_Ptr      => null,
+      Set_Next      => Set_Next,
+      Next          => Next,
+      Key           => GNAT.OS_Lib.String_Access,
+      Get_Key       => Get_Name,
+      Hash          => Hash,
+      Equal         => Equal,
+      Free_Elmt_Ptr => Destroy);
+   --  Same as above, but each entity is responsible for its own name (in fact,
+   --  they point to an Entity_Informations in the Trie in which they are
+   --  declared).
 
    ----------------------
    -- Source_File_List --
@@ -885,7 +952,7 @@ private
 
       Name        : VFS.Virtual_File;
 
-      Entities    : aliased Entities_Tries.Trie_Tree;
+      Entities    : Shared_Entities_Hash.HTable;
       --  All the entities defined in the source file
 
       Unit_Name   : GNAT.OS_Lib.String_Access;
@@ -903,7 +970,7 @@ private
       --  The LI file used to parse the file. This might be left to null if
       --  the file was created appart from parsing a LI file.
 
-      All_Entities : aliased Entities_Tries.Trie_Tree;
+      All_Entities : Entities_Hash.HTable;
       --  The list of all entities referenced by entities in the file, and that
       --  are defined in other files.
       --  This list is no longer used for reference counting, and really only

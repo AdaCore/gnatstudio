@@ -35,15 +35,9 @@ with GNAT.Calendar.Time_IO;   use GNAT.Calendar.Time_IO;
 with Language;                use Language;
 with String_Utils;            use String_Utils;
 with Entities.Queries;        use Entities.Queries;
-with Entities.Debug;          use Entities.Debug;
 
 package body Entities is
    Assert_Me : constant Debug_Handle := Create ("Entities.Assert", Off);
-
-   Dump_Me : constant Debug_Handle := Create ("ENTITIES.Dump", Off);
-   --  If active, will generate a lot of dumps of the database while doing a
-   --  reset of a Source_File. This should really only be used on very small
-   --  files
 
    Ref_Me  : constant Debug_Handle := Create ("Entities.Ref", Off);
    --  If active, will trace all calls to Ref/Unref for Entity_Information.
@@ -61,7 +55,8 @@ package body Entities is
    --  provided as a backdoor.
    --  ??? Comment above is obsolete and should be updated
 
-   use Entities_Tries;
+   use Entities_Hash;
+   use Shared_Entities_Hash;
    use Files_HTable;
    use LI_HTable;
    use Entity_Information_Arrays;
@@ -83,10 +78,18 @@ package body Entities is
    --  This is the case if it is invalid, and all its references where in
    --  Dependencies_On.
 
+   function Hash is new HTables.Hash (Header_Num);
+
    function Find
      (E : Dependency_List; File : Source_File)
       return Dependency_Arrays.Index_Type;
    --  Find a specific file in the list of dependencies
+
+   procedure Ref (Entity : Entity_Information; Reason : String);
+   procedure Unref (Entity : in out Entity_Information; Reason : String);
+   --  Internal version of Unref and Ref, which outputs some debug traces in
+   --  addition.
+   pragma Inline (Ref, Unref);
 
    procedure Isolate
      (Entity           : in out Entity_Information;
@@ -96,13 +99,22 @@ package body Entities is
    --  user has kept a handle on it, to avoid memory leaks.
    --  The references are cleared only if Clear_References is True.
 
-   procedure Remove  (D : in out Entities_Tries.Trie_Tree;
-                      E : Entity_Information);
+   procedure Remove
+     (D : in out Entities_Hash.HTable;
+      E : Entity_Information);
+   pragma Unreferenced (Remove);
+   procedure Remove
+     (D : in out Shared_Entities_Hash.HTable;
+      E : Entity_Information);
    --  Remove the information for a specific entity from the table.
    --  This doesn't Unref the entity, you need to do it explicitly
 
-   procedure Unref_All_Entities_In_List
-     (Trie : access Entities_Tries.Trie_Tree; Reason : String);
+   procedure Add (Entities         : in out Entities_Hash.HTable;
+                  Entity           : Entity_Information;
+                  Check_Duplicates : Boolean);
+   --  Add a new entity, if not already there, to D.
+   --  Entity shouldn't have a Shared_Name yet if Name is "".
+
    procedure Unref_All_Entities_In_List
      (List : in out Entity_Information_List; Reason : String);
    --  Unref all the entities in the trie
@@ -120,14 +132,16 @@ package body Entities is
    --  we can still do cross-references from these.
 
    procedure Mark_Dependencies_As_Invalid
-     (Tree : access Entities_Tries.Trie_Tree; Dependencies_On : Source_File);
+     (File            : Source_File;
+      Dependencies_On : Source_File);
    --  All entities in Tree that are referenced elsewhere are marked as invalid
 
    procedure Remove_Marked_Entities (File : Source_File);
    --  Unref all entities declared in File that are marked as valid.
 
    procedure Remove_Marked_Entities_In_List
-     (Tree : access Entities_Tries.Trie_Tree; File : Source_File);
+     (In_File : Source_File;
+      File     : Source_File);
    --  Remove from Tree all the entities declared in File and that are marked
    --  as valid. These entities are about to be removed from memory anyway
 
@@ -193,6 +207,31 @@ package body Entities is
      (Reference    => True,
       Modification => True,
       others       => False);
+
+   ---------
+   -- Ref --
+   ---------
+
+   procedure Ref (Entity : Entity_Information; Reason : String) is
+   begin
+      if Entity /= null and then Active (Ref_Me) then
+         Trace (Ref_Me, "Ref " & Entity.Shared_Name.all & " (" & Reason & ")");
+      end if;
+      Ref (Entity);
+   end Ref;
+
+   -----------
+   -- Unref --
+   -----------
+
+   procedure Unref (Entity : in out Entity_Information; Reason : String) is
+   begin
+      if Entity /= null and then Active (Ref_Me) then
+         Trace
+           (Ref_Me, "Unref " & Entity.Shared_Name.all & " (" & Reason & ")");
+      end if;
+      Unref (Entity);
+   end Unref;
 
    ------------------------
    -- Show_In_Call_Graph --
@@ -266,7 +305,7 @@ package body Entities is
       if Entity = null then
          return null;
       else
-         return Entity.Name;
+         return Entity.Shared_Name;
       end if;
    end Get_Name;
 
@@ -275,24 +314,80 @@ package body Entities is
    --------------
 
    function Get_Name
-     (D : Entity_Information_List_Access) return String_Access is
+     (D : Entity_Informations) return String_Access is
    begin
-      if D = null
-        or else Length (D.all) = 0
-      then
+      return D.Name;
+   end Get_Name;
+
+   --------------
+   -- Set_Next --
+   --------------
+
+   procedure Set_Next (E, Next : Entity_Informations) is
+   begin
+      E.Next := Next;
+   end Set_Next;
+
+   ----------
+   -- Next --
+   ----------
+
+   function Next (E : Entity_Informations) return Entity_Informations is
+   begin
+      return E.Next;
+   end Next;
+
+   ----------
+   -- Hash --
+   ----------
+
+   function Hash (S : GNAT.OS_Lib.String_Access) return Header_Num is
+   begin
+      return Hash (S.all);
+   end Hash;
+
+   -----------
+   -- Equal --
+   -----------
+
+   function Equal (S1, S2 : GNAT.OS_Lib.String_Access) return Boolean is
+   begin
+      return S1.all = S2.all;
+   end Equal;
+
+   --------------
+   -- Get_Name --
+   --------------
+
+   function Get_Name
+     (D : Unshared_Entity_Informations) return GNAT.OS_Lib.String_Access is
+   begin
+      if D = null then
          return null;
       else
          if Active (Assert_Me) then
             Assert
               (Assert_Me,
-               D.Table (Entity_Information_Arrays.First).Ref_Count /= 0,
-               "Entity has been freed: " &
-               D.Table (Entity_Information_Arrays.First).Name.all);
+               D.List.Table (Entity_Information_Arrays.First).Ref_Count /= 0,
+               "Entity has been freed: "
+               & D.List.Table
+                 (Entity_Information_Arrays.First).Shared_Name.all);
          end if;
 
-         return D.Table (Entity_Information_Arrays.First).Name;
+         return D.List.Table
+           (Entity_Information_Arrays.First).Shared_Name;
       end if;
    end Get_Name;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (D : in out Unshared_Entity_Informations) is
+      pragma Unreferenced (D);
+   begin
+      null;
+   end Destroy;
 
    ---------
    -- Ref --
@@ -341,14 +436,7 @@ package body Entities is
    is
    begin
       if Entity.Declaration.File /= File then
-         --  ??? This might be costly, but we need to ensure there is a proper
-         --  reference between the two files, for proper clean up
-
-         --  ??? MANU If this call still needed, now that All_Entities only
-         --  contain entities with actual references... It seems this call will
-         --  already be done from Add_Reference anyway
          Add_Depends_On (File, Entity.Declaration.File);
-
          Add (File.All_Entities, Entity, Check_Duplicates => True);
       end if;
    end Add_All_Entities;
@@ -401,13 +489,19 @@ package body Entities is
    -------------------------------
 
    procedure Mark_And_Isolate_Entities (File : Source_File) is
-      Iter   : Entities_Tries.Iterator := Start (File.Entities'Access, "");
+      Iter   : Shared_Entities_Hash.Iterator;
+      Iter2  : Entities_Hash.Iterator;
+      EIS    : Entity_Informations;
+      UEI    : Unshared_Entity_Informations;
       EL     : Entity_Information_List_Access;
-      Entity, Entity2 : Entity_Information;
+      Entity : Entity_Information;
    begin
+      Get_First (File.Entities, Iter);
       loop
-         EL := Get (Iter);
-         exit when EL = null;
+         EIS := Get_Element (Iter);
+         exit when EIS = No_Entity_Informations;
+
+         EL := EIS.List;
 
          for E in reverse Entity_Information_Arrays.First .. Last (EL.all) loop
             Entity := EL.Table (E);
@@ -423,16 +517,8 @@ package body Entities is
                if Entity.References.Table (R).Location.File /= File then
                   Entity.Is_Valid := False;
                else
-                  if Entity.References.Table (R).Caller /= null then
-                     if Active (Ref_Me) then
-                        Trace (Ref_Me, "Unref "
-                               & Entity.References.Table (R).Caller.Name.all
-                               & " from reference.caller");
-                     end if;
-
-                     Unref (Entity.References.Table (R).Caller);
-                  end if;
-
+                  Unref (Entity.References.Table (R).Caller,
+                         "reference.caller");
                   Remove (Entity.References, R);
                end if;
             end loop;
@@ -440,9 +526,8 @@ package body Entities is
             Isolate (Entity, Clear_References => False);
          end loop;
 
-         Next (Iter);
+         Get_Next (File.Entities, Iter);
       end loop;
-      Free (Iter);
 
       --  Do not remove the references in File for all the valid entities in
       --  All_Entities: we want to keep those references, so that the xref in
@@ -451,62 +536,29 @@ package body Entities is
       --  its original source file no longer knows it, so we can remove its
       --  references
 
-      Iter := Start (File.All_Entities'Access, "");
+      Get_First (File.All_Entities, Iter2);
       loop
-         EL := Get (Iter);
-         exit when EL = null;
+         UEI := Get_Element (Iter2);
+         exit when UEI = null;
+
+         EL := UEI.List;
+
          for E in reverse Entity_Information_Arrays.First .. Last (EL.all) loop
             Entity := EL.Table (E);
 
-            if not Entity.Is_Valid then
-               for R in reverse
-                 Entity_Reference_Arrays.First .. Last (Entity.References)
-               loop
-                  --  Do not touch references in other files, if there is any.
-                  if Entity.References.Table (R).Location.File = File then
-                     if Entity.References.Table (R).Caller /= null then
-                        if Active (Ref_Me) then
-                           Trace (Ref_Me, "Unref "
-                                  & Entity.References.Table (R).Caller.Name.all
-                                  & " from reference.caller");
-                        end if;
-
-                        Unref (Entity.References.Table (R).Caller);
-                     end if;
-
-                     Remove (Entity.References, R);
-                  end if;
-               end loop;
-
-               Entity2 := Entity;  --  In case we need two unref below
-               Remove (File.All_Entities, Entity);
-
-               if Active (Assert_Me) then
-                  Trace (Assert_Me, "Unref " & Entity.Name.all
-                         & " from all_entities in "
-                         & Base_Name (File.Name));
+            for R in reverse
+              Entity_Reference_Arrays.First .. Last (Entity.References)
+            loop
+               --  Do not touch references in other files, if there is any.
+               if Entity.References.Table (R).Location.File = File then
+                  Unref (Entity.References.Table (R).Caller,
+                         "reference.caller");
+                  Remove (Entity.References, R);
                end if;
-
-               Unref (Entity);
-               --  Entity.Ref_Count is at least 1 at this point
-
-               if Length (Entity2.References) = 0 then
-                  --  The entity still existed in memory because it was
-                  --  referenced from one or more external files, and we just
-                  --  removed it from the last such file => free it
-
-                  if Active (Assert_Me) then
-                     Trace (Assert_Me, "Unref " & Entity2.Name.all
-                            & " since it has no more references");
-                  end if;
-
-                  Unref (Entity2);
-               end if;
-            end if;
+            end loop;
          end loop;
-         Next (Iter);
+         Get_Next (File.All_Entities, Iter2);
       end loop;
-      Free (Iter);
    end Mark_And_Isolate_Entities;
 
    ----------------------------------
@@ -514,39 +566,33 @@ package body Entities is
    ----------------------------------
 
    procedure Mark_Dependencies_As_Invalid
-     (Tree : access Entities_Tries.Trie_Tree; Dependencies_On : Source_File)
+     (File            : Source_File;
+      Dependencies_On : Source_File)
    is
-      Iter : Entities_Tries.Iterator := Start (Tree, "");
+      Iter : Shared_Entities_Hash.Iterator;
+      EIS  : Entity_Informations;
       EL   : Entity_Information_List_Access;
       Can_Remove : Boolean;
       Entity : Entity_Information;
    begin
+      Get_First (File.Entities, Iter);
+
       loop
-         EL := Get (Iter);
-         exit when EL = null;
+         EIS := Get_Element (Iter);
+         exit when EIS = No_Entity_Informations;
+
+         EL := EIS.List;
 
          for E in reverse Entity_Information_Arrays.First .. Last (EL.all) loop
             Entity := EL.Table (E);
             Mark_Dependencies_As_Invalid (Entity, Dependencies_On, Can_Remove);
             if Can_Remove then
-               if Entity_Information_Arrays.Length (EL.all) = 1 then
-                  Remove (Tree.all, Entity.Name.all);
-               else
-                  Remove (EL.all, E);
-               end if;
-
-               if Active (Ref_Me) then
-                  Trace (Ref_Me, "Unref " & Entity.Name.all
-                         & " from Mark_Dependencies_As_Invalid");
-               end if;
-
-               Unref (Entity);
+               Unref (Entity, "Mark_Dependencies_As_Invalid");
             end if;
          end loop;
 
-         Next (Iter);
+         Get_Next (File.Entities, Iter);
       end loop;
-      Free (Iter);
    end Mark_Dependencies_As_Invalid;
 
    ----------------------------
@@ -554,42 +600,30 @@ package body Entities is
    ----------------------------
 
    procedure Remove_Marked_Entities (File : Source_File) is
-      Iter   : Entities_Tries.Iterator := Start (File.Entities'Access, "");
+      Iter   : Shared_Entities_Hash.Iterator;
+      EIS    : Entity_Informations;
       EL     : Entity_Information_List_Access;
-      Entity : Entity_Information;
    begin
+      Get_First (File.Entities, Iter);
       loop
-         EL := Get (Iter);
-         exit when EL = null;
+         EIS := Get_Element (Iter);
+         exit when EIS = No_Entity_Informations;
+         EL := EIS.List;
 
          for E in reverse Entity_Information_Arrays.First .. Last (EL.all) loop
-            Entity := EL.Table (E);
-
-            if Entity.Is_Valid
-              or else Entity.Ref_Count = 1
+            if EL.Table (E).Is_Valid
+              or else EL.Table (E).Ref_Count = 1
             then
-               if Entity_Information_Arrays.Length (EL.all) = 1 then
-                  Remove (File.Entities, Entity.Name.all);
-               else
-                  Remove (EL.all, E);
-               end if;
-
-               if Active (Ref_Me) then
-                  Trace (Ref_Me, "Unref " & Entity.Name.all
-                         & " from Remove_Marked_Entities");
-               end if;
-
-               Unref (Entity);
+               Unref (EL.Table (E), "Remove_Marked_Entities");
             end if;
 
             --  Entities that are now marked as invalid still have a ref_count
             --  owned by their source file. The next time we parse that file,
-            --  we will clear them if their ref_count is now done to 1.
+            --  we will clear them if their ref_count is now down to 1.
          end loop;
 
-         Next (Iter);
+         Get_Next (File.Entities, Iter);
       end loop;
-      Free (Iter);
    end Remove_Marked_Entities;
 
    ------------------------------------
@@ -597,15 +631,20 @@ package body Entities is
    ------------------------------------
 
    procedure Remove_Marked_Entities_In_List
-     (Tree : access Entities_Tries.Trie_Tree; File : Source_File)
+     (In_File : Source_File;
+      File    : Source_File)
    is
-      Iter   : Entities_Tries.Iterator := Start (Tree, "");
+      Iter   : Entities_Hash.Iterator;
       EL     : Entity_Information_List_Access;
+      UEI    : Unshared_Entity_Informations;
       Entity : Entity_Information;
    begin
+      Get_First (In_File.All_Entities, Iter);
+
       loop
-         EL := Get (Iter);
-         exit when EL = null;
+         UEI := Get_Element (Iter);
+         exit when UEI = null;
+         EL := UEI.List;
 
          for E in reverse Entity_Information_Arrays.First .. Last (EL.all) loop
             Entity := EL.Table (E);
@@ -613,24 +652,19 @@ package body Entities is
             if Entity.Declaration.File = File
               and then Entity.Is_Valid
             then
-               if Entity_Information_Arrays.Length (EL.all) = 1 then
-                  Remove (Tree.all, Entity.Name.all);
-               else
-                  Remove (EL.all, E);
-               end if;
+               --  ??? MANU Isn't this already handled by Remove ?
+--                 if Entity_Information_Arrays.Length (EL.all) = 1 then
+               Remove (In_File.All_Entities, Entity.Shared_Name);
+--                 else
+--                    Remove (EL.all, E);
+--               end if;
 
-               if Active (Ref_Me) then
-                  Trace (Ref_Me, "Unref " & Entity.Name.all
-                         & " from Remove_Marked_Entities_In_List");
-               end if;
-
-               Unref (Entity);
+               Unref (Entity, "Remove_Marked_Entities_In_List");
             end if;
          end loop;
 
-         Next (Iter);
+         Get_Next (In_File.All_Entities, Iter);
       end loop;
-      Free (Iter);
    end Remove_Marked_Entities_In_List;
 
    -----------
@@ -646,19 +680,7 @@ package body Entities is
       --  Mark all entities as valid temporarily
       --  We also clean them up, so that they don't reference anything else
 
-      Entities.Debug.Set_Default_Output;
-
-      if Active (Dump_Me) then
-         Trace (Dump_Me, "Before Reset");
-         Entities.Debug.Dump (Get_Database (File));
-      end if;
-
       Mark_And_Isolate_Entities (File);
-
-      if Active (Dump_Me) then
-         Trace (Dump_Me, "After Mark_And_Isolate_Entities");
-         Entities.Debug.Dump (Get_Database (File));
-      end if;
 
       --  Mark as invalid all entities that are pointed to by other files.
       --  At the same time, references in File are removed, since they are no
@@ -666,42 +688,27 @@ package body Entities is
 
       for F in Dependency_Arrays.First .. Last (File.Depended_On) loop
          Mark_Dependencies_As_Invalid
-           (File.Depended_On.Table (F).File.Entities'Access,
+           (File.Depended_On.Table (F).File,
             Dependencies_On => File);
       end loop;
-
-      if Active (Dump_Me) then
-         Trace (Dump_Me, "After Mark_Dependencies_As_Invalid");
-         Entities.Debug.Dump (Get_Database (File));
-      end if;
 
       --  Other files can no longer reference entities in File that are no
       --  longer valid
 
       for F in Dependency_Arrays.First .. Last (File.Depends_On) loop
          Remove_Marked_Entities_In_List
-           (File.Depends_On.Table (F).File.All_Entities'Access, File);
+           (File.Depends_On.Table (F).File, File);
       end loop;
 
       for F in Dependency_Arrays.First .. Last (File.Depended_On) loop
          Remove_Marked_Entities_In_List
-           (File.Depended_On.Table (F).File.All_Entities'Access, File);
+           (File.Depended_On.Table (F).File, File);
       end loop;
-
-      if Active (Dump_Me) then
-         Trace (Dump_Me, "After Remove_Marked_Entities_In_List");
-         Entities.Debug.Dump (Get_Database (File));
-      end if;
 
       --  Remove all entities that are still marked as valid (ie that are not
       --  referenced)
 
       Remove_Marked_Entities (File);
-
-      if Active (Dump_Me) then
-         Trace (Dump_Me, "After Remove_Marked_Entities");
-         Entities.Debug.Dump (Get_Database (File));
-      end if;
 
       --  We can't reset the Depended_On field, since these other files still
       --  referenced File (we haven't broken up the links between entities).
@@ -717,10 +724,28 @@ package body Entities is
          Free (File.Depends_On);
       end if;
 
-      if Active (Dump_Me) then
-         Trace (Dump_Me, "After Removing dependencies");
-         Entities.Debug.Dump (Get_Database (File));
-      end if;
+      --  Reset the All_Entities list, since this file is no longer referencing
+      --  any of the entity
+      declare
+         Iter   : Entities_Hash.Iterator;
+         EL     : Entity_Information_List_Access;
+         UEI    : Unshared_Entity_Informations;
+      begin
+         Get_First (File.All_Entities, Iter);
+         loop
+            UEI := Get_Element (Iter);
+            exit when UEI = null;
+            EL := UEI.List;
+            for E in reverse Entity_Information_Arrays.First ..
+              Last (EL.all)
+            loop
+               Unref (EL.Table (E), "all_entities");
+            end loop;
+
+            Get_Next (File.All_Entities, Iter);
+         end loop;
+         Reset (File.All_Entities);
+      end;
 
       --  Clean up various other fields
 
@@ -740,53 +765,13 @@ package body Entities is
    --------------------------------
 
    procedure Unref_All_Entities_In_List
-     (Trie : access Entities_Tries.Trie_Tree; Reason : String)
-   is
-      Iter   : Entities_Tries.Iterator := Entities_Tries.Start (Trie, "");
-      EL     : Entity_Information_List_Access;
-      Entity : Entity_Information;
-   begin
-      loop
-         EL := Get (Iter);
-         exit when EL = null;
-
-         for E in reverse Entity_Information_Arrays.First .. Last (EL.all) loop
-            Entity := EL.Table (E);
-
-            if Active (Ref_Me) then
-               Trace (Ref_Me, "Unref " & Entity.Name.all
-                      & " from Unref_All_Entities_In_List ("
-                      & Reason & ")");
-            end if;
-
-            Unref (Entity);
-         end loop;
-
-         Entities_Tries.Next (Iter);
-      end loop;
-
-      Free (Iter);
-      Clear (Trie.all);
-   end Unref_All_Entities_In_List;
-
-   --------------------------------
-   -- Unref_All_Entities_In_List --
-   --------------------------------
-
-   procedure Unref_All_Entities_In_List
      (List : in out Entity_Information_List; Reason : String) is
    begin
       if Entity_Information_Arrays.Length (List) /= 0 then
          for J in reverse
            Entity_Information_Arrays.First .. Last (List)
          loop
-            if Active (Ref_Me) then
-               Trace (Ref_Me, "Unref " & List.Table (J).Name.all
-                      & " from Unref_All_Entities_In_List ("
-                      & Reason & ")");
-            end if;
-
-            Unref (List.Table (J));
+            Unref (List.Table (J), Reason);
          end loop;
          Free (List);
       end if;
@@ -802,58 +787,16 @@ package body Entities is
       Entity2 : Entity_Information;
    begin
       if Active (Ref_Me) then
-         Trace (Ref_Me, "Isolate " & Entity.Name.all);
+         Trace (Ref_Me, "Isolate " & Entity.Shared_Name.all);
       end if;
 
-      if Entity.Caller_At_Declaration /= null then
-         if Active (Ref_Me) then
-            Trace (Ref_Me, "Unref " & Entity.Caller_At_Declaration.Name.all
-                   & " from caller_at_decl");
-         end if;
-
-         Unref (Entity.Caller_At_Declaration);
-      end if;
-
+      Unref (Entity.Caller_At_Declaration, "caller_at_decl");
       Entity.End_Of_Scope    := No_E_Reference;
-
-      if Entity.Pointed_Type /= null then
-         if Active (Ref_Me) then
-            Trace (Ref_Me, "Unref " & Entity.Pointed_Type.Name.all
-                   & " from pointed_type");
-         end if;
-
-         Unref (Entity.Pointed_Type);
-      end if;
-
-      if Entity.Returned_Type /= null then
-         if Active (Ref_Me) then
-            Trace (Ref_Me, "Unref " & Entity.Returned_Type.Name.all
-                     & " from returned_type");
-         end if;
-
-         Unref (Entity.Returned_Type);
-      end if;
-
-      if Entity.Primitive_Op_Of /= null then
-         if Active (Ref_Me) then
-            Trace (Ref_Me, "Unref " & Entity.Primitive_Op_Of.Name.all
-                     & " from primitive_op");
-         end if;
-
-         Unref (Entity.Primitive_Op_Of);
-      end if;
-
-      if Entity.Rename /= null then
-         if Active (Ref_Me) then
-            Trace (Ref_Me, "Unref " & Entity.Rename.Name.all
-                     & " from rename");
-         end if;
-
-         Unref (Entity.Rename);
-      end if;
-
-      Unref_All_Entities_In_List (Entity.Called_Entities'Access,
-                                  "called_entities");
+      Unref (Entity.Pointed_Type, "pointed_type");
+      Unref (Entity.Returned_Type, "returned_type");
+      Unref (Entity.Primitive_Op_Of, "primitive_op");
+      Unref (Entity.Rename, "rename");
+      Unref_All_Entities_In_List (Entity.Called_Entities, "called_entities");
 
       if Entity_Information_Arrays.Length (Entity.Parent_Types) /= 0 then
          for J in reverse
@@ -866,21 +809,14 @@ package body Entities is
             --  entity appears multiple times in the list of child_types (that
             --  should never happen in practice)
 
-            for P in Entity_Information_Arrays.First ..
+            for P in reverse Entity_Information_Arrays.First ..
               Last (Entity.Parent_Types.Table (J).Child_Types)
             loop
-               if Entity.Parent_Types.Table (J).Child_Types.Table (P) =
-                 Entity
-               then
-                  Entity2 := Entity; --  Since Unref puts it back to null
-                  Remove (Entity2.Parent_Types.Table (J).Child_Types, P);
-
-                  if Active (Assert_Me) then
-                     Trace (Assert_Me, "Unref " & Entity2.Name.all
-                            & " From Isol.Parent_Types.Child_Types");
-                  end if;
-
-                  Unref (Entity2);  --  will never actually free Entity
+               Entity2 := Entity.Parent_Types.Table (J).Child_Types.Table (P);
+               if Entity2 = Entity then
+                  Remove (Entity.Parent_Types.Table (J).Child_Types, P);
+                  Unref (Entity2, "Iso.Parent_Types.Child_Types");
+                  --  will never actually free Entity
                end if;
             end loop;
          end loop;
@@ -896,15 +832,7 @@ package body Entities is
          for R in reverse
            Entity_Reference_Arrays.First .. Last (Entity.References)
          loop
-            if Entity.References.Table (R).Caller /= null then
-               if Active (Ref_Me) then
-                  Trace (Ref_Me, "Unref "
-                         & Entity.References.Table (R).Caller.Name.all
-                         & " since reference.caller");
-               end if;
-
-               Unref (Entity.References.Table (R).Caller);
-            end if;
+            Unref (Entity.References.Table (R).Caller, "reference.caller");
          end loop;
 
          Free (Entity.References);
@@ -924,7 +852,6 @@ package body Entities is
       procedure Check_And_Remove (E : in out Entity_Information_List);
       procedure Check_And_Remove (E : in out Entity_Reference_List);
       procedure Check_And_Remove (E : in out E_Reference);
-      procedure Check_And_Remove (E : access Entities_Tries.Trie_Tree);
       --  Remove all references to File in E
 
       ----------------------
@@ -948,9 +875,9 @@ package body Entities is
             if Active (Debug_Me) then
                if E.Table (J).Ref_Count = 0 then
                   Trace (Debug_Me, "Entity should no longer be referenced "
-                         & E.Table (J).Name.all
+                         & E.Table (J).Shared_Name.all
                          & "But is still referenced from "
-                         & Entity.Name.all & ":"
+                         & Entity.Shared_Name.all & ":"
                          & Base_Name (Get_Filename (Entity.Declaration.File)));
                end if;
             end if;
@@ -966,30 +893,10 @@ package body Entities is
            and then Entity_Information_Arrays.Length (E) = 0;
       end Check_And_Remove;
 
-      procedure Check_And_Remove (E : access Entities_Tries.Trie_Tree) is
-         Iter : Entities_Tries.Iterator := Start (E, "");
-         EL   : Entity_Information_List_Access;
-      begin
-         loop
-            EL := Get (Iter);
-            exit when EL = null;
-
-            Check_And_Remove (EL.all);
-            Next (Iter);
-         end loop;
-      end Check_And_Remove;
-
       procedure Check_And_Remove (E : in out E_Reference) is
       begin
          if E.Location.File = Dependencies_On then
-            if E.Caller /= null then
-               if Active (Ref_Me) then
-                  Trace (Ref_Me, "Unref " & E.Caller.Name.all
-                         & " from reference.caller");
-               end if;
-
-               Unref (E.Caller);
-            end if;
+            Unref (E.Caller, "reference.caller");
             E := No_E_Reference;
          end if;
          Can_Remove := Can_Remove and then E = No_E_Reference;
@@ -1021,7 +928,7 @@ package body Entities is
       Check_And_Remove (Entity.Pointed_Type);
       Check_And_Remove (Entity.Returned_Type);
       Check_And_Remove (Entity.Primitive_Op_Of);
-      Check_And_Remove (Entity.Called_Entities'Access);
+      Check_And_Remove (Entity.Called_Entities);
       Check_And_Remove (Entity.Rename);
       Check_And_Remove (Entity.Primitive_Subprograms);
       Check_And_Remove (Entity.Child_Types);
@@ -1033,22 +940,51 @@ package body Entities is
    ------------
 
    procedure Remove
-     (D : in out Entities_Tries.Trie_Tree;
+     (D : in out Shared_Entities_Hash.HTable;
       E : Entity_Information)
    is
-      Pointer : Cell_Pointer;
+      EIS     : Entity_Informations;
       EL      : Entity_Information_List_Access;
    begin
-      Find_Cell_Child (D, E.Name.all, Pointer);
-      EL := Get (Pointer);
-
-      if EL /= null then
+      EIS := Get (D, E.Shared_Name);
+      if EIS /= No_Entity_Informations then
+         EL := EIS.List;
          if Length (EL.all) = 1 then
             if EL.Table (Entity_Information_Arrays.First) = E then
-               Remove (D, Pointer);
+               Remove (D, E.Shared_Name);
+
+               if Active (Ref_Me) then
+                  Trace (Ref_Me, "Freeing shared name " & EIS.Name.all);
+               end if;
+               if not Active (Debug_Me) then
+                  E.Shared_Name := null;
+                  Free (EIS.Name);
+               end if;
             end if;
          else
             Remove (EL.all, E);
+         end if;
+      end if;
+   end Remove;
+
+   ------------
+   -- Remove --
+   ------------
+
+   procedure Remove
+     (D : in out Entities_Hash.HTable;
+      E : Entity_Information)
+   is
+      UEI : Unshared_Entity_Informations;
+   begin
+      UEI := Get (D, E.Shared_Name);
+      if UEI /= null then
+         if Length (UEI.List.all) = 1 then
+            if UEI.List.Table (Entity_Information_Arrays.First) = E then
+               Remove (D, E.Shared_Name);
+            end if;
+         else
+            Remove (UEI.List.all, E);
          end if;
       end if;
    end Remove;
@@ -1123,34 +1059,42 @@ package body Entities is
    -----------
 
    procedure Unref (Entity : in out Entity_Information) is
-      Tmp : String_Access;
    begin
       if Entity /= null then
          if Active (Assert_Me) then
             Assert (Assert_Me, Entity.Ref_Count > 0,
-                    "too many calls to unref for " & Entity.Name.all);
+                    "too many calls to unref for " & Entity.Shared_Name.all);
          end if;
 
          Entity.Ref_Count := Entity.Ref_Count - 1;
-         if Entity.Ref_Count = 0 then
-            --  Temporarily fool the system, otherwise we cannot remove the
-            --  entity from the trie because of a call to Get_Name
-            Entity.Ref_Count := 1;
-            Remove (Entity.Declaration.File.Entities, Entity);
-            Entity.Ref_Count := 0;
+         if Entity.Ref_Count = 0
+           or else (not Entity.Is_Valid and then Entity.Ref_Count = 1)
+         then
+            if Active (Ref_Me) then
+               Trace (Ref_Me, "Freeing " & Entity.Shared_Name.all
+                      & ":"
+                      & Base_Name (Get_Filename (Entity.Declaration.File))
+                      & Entity.Declaration.Line'Img
+                      & " ref_count=" & Entity.Ref_Count'Img);
+            end if;
             Isolate (Entity, Clear_References => True);
 
             --  If we are debugging, we do not free the memory, to keep a
             --  debuggable structure.
             if Active (Debug_Me) then
-               Tmp := Entity.Name;
-               Entity.Name := new String'
-                 (Entity.Name.all
+               Entity.Shared_Name := new String'
+                 (Entity.Shared_Name.all
                   & ':' & Base_Name (Entity.Declaration.File.Name));
-               Free (Tmp);
-               --  Trace (Debug_Me, "Freeing entity " & Entity.Name.all);
-            else
-               Free (Entity.Name);
+            end if;
+
+            --  Temporarily fool the system, otherwise we cannot remove the
+            --  entity from the trie because of a call to Get_Name.
+            --  This might free Entity.Shared_Name!
+            Entity.Ref_Count := 1;
+            Remove (Entity.Declaration.File.Entities, Entity);
+            Entity.Ref_Count := 0;
+
+            if not Active (Debug_Me) then
                Unchecked_Free (Entity);
             end if;
          end if;
@@ -1230,6 +1174,25 @@ package body Entities is
          return String_Hash (To_Lower (Key.all));
       end if;
    end Hash;
+
+   --------------
+   -- Set_Next --
+   --------------
+
+   procedure Set_Next (E, Next : Unshared_Entity_Informations) is
+   begin
+      E.Next := Next;
+   end Set_Next;
+
+   ----------
+   -- Next --
+   ----------
+
+   function Next (E : Unshared_Entity_Informations)
+                  return Unshared_Entity_Informations is
+   begin
+      return E.Next;
+   end Next;
 
    --------------
    -- Set_Next --
@@ -1347,17 +1310,21 @@ package body Entities is
       ----------------
 
       procedure Fast_Reset (File : Source_File) is
-         Iter   : Entities_Tries.Iterator := Start (File.Entities'Access, "");
+         Iter   : Shared_Entities_Hash.Iterator;
+         EIS    : Entity_Informations;
          EL     : Entity_Information_List_Access;
       begin
+         Get_First (File.Entities, Iter);
+
          if Active (Assert_Me) then
             Trace (Assert_Me, "Fast_Reset All_Entities for "
                    & Full_Name (Get_Filename (File)).all);
          end if;
 
          loop
-            EL := Get (Iter);
-            exit when EL = null;
+            EIS := Get_Element (Iter);
+            exit when EIS = No_Entity_Informations;
+            EL := EIS.List;
 
             for E in Entity_Information_Arrays.First .. Last (EL.all) loop
                if EL.Table (E) /= null then
@@ -1365,10 +1332,9 @@ package body Entities is
                   Free  (EL.Table (E).Primitive_Subprograms);
                   Free  (EL.Table (E).Child_Types);
                   Free  (EL.Table (E).References);
-                  Clear (EL.Table (E).Called_Entities);
+                  Free (EL.Table (E).Called_Entities);
 
                   if not Active (Debug_Me) then
-                     Free (EL.Table (E).Name);
                      Unchecked_Free (EL.Table (E));
                   else
                      EL.Table (E) := null;
@@ -1376,13 +1342,12 @@ package body Entities is
                end if;
             end loop;
 
-            Next (Iter);
+            Get_Next (File.Entities, Iter);
          end loop;
-         Free (Iter);
 
          if not Active (Debug_Me) then
-            Clear (File.All_Entities);
-            Clear (File.Entities);
+            Reset (File.All_Entities);
+            Reset (File.Entities);
             Free (File.Unit_Name);
             Free (File.Depends_On);
             Free (File.Depended_On);
@@ -1438,32 +1403,20 @@ package body Entities is
          null;
 
       elsif S = null then
+         F := new Source_File_Record;
+         F.Db           := Db;
+         F.Timestamp    := Timestamp;
+         F.Unit_Name    := null;
+         F.Depends_On   := Null_Dependency_List;
+         F.Depended_On  := Null_Dependency_List;
+         F.Scope_Tree_Computed := False;
+         F.LI           := LI;
+         F.Ref_Count    := 1;
+
          if File = VFS.No_File then
-            F := new Source_File_Record'
-              (Db             => Db,
-               Timestamp      => Timestamp,
-               Unit_Name      => null,
-               Name           => Create (Full_Filename => Full_Filename.all),
-               Entities       => Empty_Trie_Tree,
-               Depends_On     => Null_Dependency_List,
-               Depended_On    => Null_Dependency_List,
-               All_Entities   => Empty_Trie_Tree,
-               Scope_Tree_Computed => False,
-               LI             => LI,
-               Ref_Count      => 1);
+            F.Name         := Create (Full_Filename => Full_Filename.all);
          else
-            F := new Source_File_Record'
-              (Db             => Db,
-               Timestamp      => Timestamp,
-               Unit_Name      => null,
-               Name           => File,
-               Entities       => Empty_Trie_Tree,
-               Depends_On     => Null_Dependency_List,
-               Depended_On    => Null_Dependency_List,
-               All_Entities   => Empty_Trie_Tree,
-               Scope_Tree_Computed => False,
-               LI             => LI,
-               Ref_Count      => 1);
+            F.Name         := File;
          end if;
 
          S := new Source_File_Item_Record'(File => F, Next => null);
@@ -1604,38 +1557,29 @@ package body Entities is
    ---------
 
    procedure Add
-     (Entities         : in out Entities_Tries.Trie_Tree;
+     (Entities         : in out Entities_Hash.HTable;
       Entity           : Entity_Information;
       Check_Duplicates : Boolean)
    is
-      Pointer : Cell_Pointer;
-      EL      : Entity_Information_List_Access;
+      UEI     : Unshared_Entity_Informations;
    begin
-      Find_Cell_Child (Entities, Entity.Name.all, Pointer);
-      EL := Get (Pointer);
+      UEI := Get (Entities, Entity.Shared_Name);
+      if UEI = null then
+         UEI := new Unshared_Entity_Informations_Record'
+           (List => new Entity_Information_List'
+              (Null_Entity_Information_List),
+            Next => null);
 
-      if EL = null then
-         EL := new Entity_Information_List'(Null_Entity_Information_List);
-         Append (EL.all, Entity);
-
-         Insert (Entity.Name.all, Pointer, EL);
-
-         if Active (Ref_Me) then
-            Trace (Ref_Me, "Ref " & Entity.Name.all & " from Add");
+         Append (UEI.List.all, Entity);
+         Set (Entities, UEI);
+         Ref (Entity, "Add");
+      else
+         if not Check_Duplicates
+           or else Find (UEI.List.all, Entity.Declaration) = null
+         then
+            Append (UEI.List.all, Entity);
+            Ref (Entity, "Add");
          end if;
-
-         Ref (Entity);
-
-      elsif not Check_Duplicates
-        or else Find (EL.all, Entity.Declaration) = null
-      then
-         Append (EL.all, Entity);
-
-         if Active (Ref_Me) then
-            Trace (Ref_Me, "Ref " & Entity.Name.all & " from Add");
-         end if;
-
-         Ref (Entity);
       end if;
    end Add;
 
@@ -1682,19 +1626,10 @@ package body Entities is
    -- Destroy --
    -------------
 
-   procedure Destroy (D : in out Entity_Information_List_Access) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Entity_Information_List, Entity_Information_List_Access);
+   procedure Destroy (D : in out Entity_Informations) is
+      pragma Unreferenced (D);
    begin
-      if D /= null then
-         Free (D.all);
-
-         if not Active (Debug_Me) then
-            Unchecked_Free (D);
-         else
-            D := null;
-         end if;
-      end if;
+      null;
    end Destroy;
 
    --------------
@@ -1773,15 +1708,40 @@ package body Entities is
      (Entity : Entity_Information; Renaming_Of : Entity_Information) is
    begin
       Assert (Assert_Me, Renaming_Of /= null, "Invalid renamed entity");
+      Unref (Entity.Rename, "replacing renaming_of");
       Entity.Rename := Renaming_Of;
-
-      if Active (Ref_Me) then
-         Trace (Ref_Me, "Ref " & Renaming_Of.Name.all
-                & " from Set_Is_Renaming_Of");
-      end if;
-
-      Ref (Renaming_Of);
+      Ref (Renaming_Of, "Set_Is_Renaming_Of");
    end Set_Is_Renaming_Of;
+
+   ----------------
+   -- Add_Called --
+   ----------------
+
+   procedure Add_Called
+     (Entity   : Entity_Information;
+      Called   : Entity_Information) is
+   begin
+      --  Check whether it already exists
+      if Find (Entity.Called_Entities, Called) <
+        Entity_Information_Arrays.First
+      then
+         Ref (Called, "Add_Called");
+         Append (Entity.Called_Entities, Called);
+      end if;
+   end Add_Called;
+
+   -------------------------------
+   -- Set_Caller_At_Declaration --
+   -------------------------------
+
+   procedure Set_Caller_At_Declaration
+     (Entity   : Entity_Information;
+      Caller   : Entity_Information) is
+   begin
+      Unref (Entity.Caller_At_Declaration, "replacing caller_at_decl");
+      Entity.Caller_At_Declaration := Caller;
+      Ref (Caller, "caller_at_declaration");
+   end Set_Caller_At_Declaration;
 
    -------------------
    -- Add_Reference --
@@ -1793,13 +1753,6 @@ package body Entities is
       Kind     : Reference_Kind) is
    begin
       Assert (Assert_Me, Location.File /= null, "Invalid file in reference");
-
-      if Active (Ref_Me) then
-         Trace (Ref_Me, "Adding reference for " & Entity.Name.all
-                & " in " & Full_Name (Get_Filename (Location.File)).all
-                & Location.Line'Img & Location.Column'Img);
-      end if;
-
       if Active (Add_Reference_Force_Unique) then
          for R in
            Entity_Reference_Arrays.First .. Last (Entity.References)
@@ -1827,22 +1780,11 @@ package body Entities is
    begin
       Assert (Assert_Me, Is_Of_Type /= null, "Invalid type for entity");
       Append (Entity.Parent_Types, Is_Of_Type);
-
-      if Active (Ref_Me) then
-         Trace (Ref_Me, "Ref " & Is_Of_Type.Name.all & " from Is_Of_Type");
-      end if;
-
-      Ref (Is_Of_Type);
+      Ref (Is_Of_Type, "Is_Of_Type");
 
       if Entity.Kind.Is_Type then
          Append (Is_Of_Type.Child_Types, Entity);
-
-         if Active (Ref_Me) then
-            Trace (Ref_Me, "Ref " & Entity.Name.all
-                   & " from Set_Type_Of.Child_Types");
-         end if;
-
-         Ref (Entity);
+         Ref (Entity, "Set_Type_Of.Child_Types");
       end if;
    end Set_Type_Of;
 
@@ -1868,15 +1810,17 @@ package body Entities is
      (Entity : Entity_Information; Primitive : Entity_Information) is
    begin
       Assert (Assert_Me, Primitive /= null, "Invalid primitive subprogram");
-      Append (Entity.Primitive_Subprograms, Primitive);
-      Primitive.Primitive_Op_Of := Entity;
 
-      if Active (Ref_Me) then
-         Trace (Ref_Me, "Ref " & Primitive.Name.all
-                & " from Add_Primitive_Subprogram");
+      if Find (Entity.Primitive_Subprograms, Primitive) <
+        Entity_Information_Arrays.First
+      then
+         Append (Entity.Primitive_Subprograms, Primitive);
+         Unref (Primitive.Primitive_Op_Of, "replacing parent of primitive");
+
+         Primitive.Primitive_Op_Of := Entity;
+         Ref (Entity, "parent of primitive");
+         Ref (Primitive, "Add_Primitive_Subprogram");
       end if;
-
-      Ref (Primitive);
    end Add_Primitive_Subprogram;
 
    ----------------------
@@ -1887,14 +1831,9 @@ package body Entities is
      (Entity : Entity_Information; Points_To : Entity_Information) is
    begin
       Assert (Assert_Me, Points_To /= null, "Invalid pointed type");
+      Unref (Entity.Pointed_Type, "replacing pointed_type");
       Entity.Pointed_Type := Points_To;
-
-      if Active (Ref_Me) then
-         Trace (Ref_Me, "Ref " & Points_To.Name.all
-                & " from Set_Pointed_Type");
-      end if;
-
-      Ref (Points_To);
+      Ref (Points_To, "Set_Pointed_Type");
    end Set_Pointed_Type;
 
    -----------------------
@@ -1905,14 +1844,9 @@ package body Entities is
      (Entity : Entity_Information; Returns : Entity_Information) is
    begin
       Assert (Assert_Me, Returns /= null, "Invalid returned type");
+      Unref (Entity.Returned_Type, "replacing returned_type");
       Entity.Returned_Type := Returns;
-
-      if Active (Ref_Me) then
-         Trace (Ref_Me, "Ref " & Returns.Name.all
-                & " from Set_Returned_Type");
-      end if;
-
-      Ref (Returns);
+      Ref (Returns, "Set_Returned_Type");
    end Set_Returned_Type;
 
    -----------------------
@@ -1936,27 +1870,29 @@ package body Entities is
       Column       : Natural;
       Allow_Create : Boolean := True) return Entity_Information
    is
-      EL      : Entity_Information_List_Access;
-      E       : Entity_Information;
-      Pointer : Cell_Pointer;
+      EIS : Entity_Informations;
+      E   : Entity_Information;
    begin
       Assert (Assert_Me, Name /= "", "No name specified for Get_Or_Create");
 
-      Find_Cell_Child (File.Entities, Name, Pointer);
-      EL := Get (Pointer);
+      EIS := Get (File.Entities, Name'Unrestricted_Access);
 
-      if EL = null then
+      if EIS = No_Entity_Informations then
          if Allow_Create then
-            EL := new Entity_Information_List'(Null_Entity_Information_List);
-            Insert (Name, Pointer, EL);
+            EIS := new Entity_Informations_Record'
+              (Name => new String'(Name),
+               List => new Entity_Information_List'
+                 (Null_Entity_Information_List),
+               Next => null);
+            Set (File.Entities, EIS);
          end if;
       else
-         E := Find (EL.all, (File, Line, Column_Type (Column)));
+         E := Find (EIS.List.all, (File, Line, Column_Type (Column)));
       end if;
 
       if E = null and then Allow_Create then
          E := new Entity_Information_Record'
-           (Name                  => new String'(Name),
+           (Shared_Name           => EIS.Name,
             Kind                  => Unresolved_Entity_Kind,
             Attributes            => (others => False),
             Declaration           => (File, Line, Column_Type (Column)),
@@ -1967,14 +1903,14 @@ package body Entities is
             Returned_Type         => null,
             Primitive_Op_Of       => null,
             Rename                => null,
-            Called_Entities       => Empty_Trie_Tree,
+            Called_Entities       => Null_Entity_Information_List,
             Primitive_Subprograms => Null_Entity_Information_List,
             Child_Types           => Null_Entity_Information_List,
             References            => Null_Entity_Reference_List,
             Is_Valid              => True,
             Ref_Count             => 1);
 
-         Append (EL.all, E);
+         Append (EIS.List.all, E);
 
       elsif E /= null then
          E.Is_Valid := True;
@@ -2528,7 +2464,7 @@ package body Entities is
 
    function "<" (Entity1, Entity2 : Entity_Information) return Boolean is
    begin
-      return Entity1.Name.all < Entity2.Name.all;
+      return Entity1.Shared_Name.all < Entity2.Shared_Name.all;
    end "<";
 
    ------------------------------

@@ -10,10 +10,14 @@ package Entities.Debug is
    procedure Set_Default_Output;
    --  Restore the default output procs
 
-   procedure Dump (Db : Entities_Database; Full : Boolean := False);
+   procedure Dump (Db            : Entities_Database;
+                   Full          : Boolean := False;
+                   Entities_Only : Boolean := False);
    --  Dump the contents of the Db database to standard_output.
    --  Full indicate whether full path names should be used when dumping the
-   --  list of known source files
+   --  list of known source files.
+   --  If Entities_Only is true, then only the declaration of all entities will
+   --  be displayed
 
    procedure Dump (Entity : Entity_Information; Full : Boolean; Name : String);
    procedure Dump

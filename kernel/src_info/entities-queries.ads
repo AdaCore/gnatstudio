@@ -89,9 +89,9 @@ package Entities.Queries is
      (Iter                  : out Entity_Iterator;
       File                  : Source_File;
       File_Has_No_LI_Report : File_Error_Reporter := null;
-      Prefix                : String := "");
-   --  Return all the entities referenced in File which have a name starting
-   --  with Prefix (or all entities if Prefix is the empty string).
+      Name                  : String := "");
+   --  Return all the entities referenced in File which have a name equal to
+   --  Name (or all entities if Name is the empty string).
    --  Each entity returned is unique. You can get the list of references for
    --  them by using Find_All_References below
 
@@ -432,8 +432,9 @@ private
    end record;
 
    type Entity_Iterator is record
-      Prefix : GNAT.OS_Lib.String_Access;
-      Iter   : Entities_Tries.Iterator;
+      Name   : GNAT.OS_Lib.String_Access;
+      SIter  : Shared_Entities_Hash.Iterator;
+      Iter   : Entities_Hash.Iterator;
       File   : Source_File;
       EL     : Entity_Information_List_Access;
       Index_In_EL : Entity_Information_Arrays.Index_Type;
@@ -504,9 +505,8 @@ private
 
    type Calls_Iterator is record
       Entity  : Entity_Information;
-      Iter    : Entities_Tries.Iterator;
-      EL      : Entity_Information_List_Access;
       Index   : Entity_Information_Arrays.Index_Type;
+      --  Index in Entity.Called_Entities
    end record;
 
 end Entities.Queries;
