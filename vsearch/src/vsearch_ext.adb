@@ -61,6 +61,7 @@ with GUI_Utils;             use GUI_Utils;
 with Generic_List;
 with Histories;             use Histories;
 
+with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Exceptions;        use Ada.Exceptions;
 with Ada.Unchecked_Deallocation;
 
@@ -204,6 +205,12 @@ package body Vsearch_Ext is
 
    procedure Resize_If_Needed (Vsearch : access Vsearch_Extended_Record'Class);
    --  Resize the vsearch window if needed.
+
+   procedure Customize
+     (Kernel : access Kernel_Handle_Record'Class;
+      Node   : Node_Ptr;
+      Level  : Customization_Level);
+   --  Called when a new customization in parsed
 
    ---------------
    -- Callbacks --
@@ -1492,6 +1499,42 @@ package body Vsearch_Ext is
       return Vsearch_Module_Id.Search_Regexps (Num).Regexp.all;
    end Get_Nth_Search_Regexp;
 
+   ---------------
+   -- Customize --
+   ---------------
+
+   procedure Customize
+     (Kernel : access Kernel_Handle_Record'Class;
+      Node   : Node_Ptr;
+      Level  : Customization_Level)
+   is
+      pragma Unreferenced (Level);
+      N : Node_Ptr := Node;
+      Patt, Name : Node_Ptr;
+   begin
+      while N /= null loop
+         if N.Tag.all = "vsearch-pattern" then
+            Name := Find_Tag (N.Child, "name");
+            Patt := Find_Tag (N.Child, "regexp");
+            if Patt = null then
+               Patt := Find_Tag (N.Child, "string");
+            end if;
+
+            if Patt /= null and then Name /= null then
+               Register_Search_Pattern
+                 (Kernel         => Kernel,
+                  Name           => Name.Value.all,
+                  Regexp         => Patt.Value.all,
+                  Case_Sensitive =>
+                    To_Lower (Get_Attribute (Patt, "case-sensitive")) = "true",
+                  Is_Regexp      => Patt.Tag.all = "regexp");
+            end if;
+         end if;
+
+         N := N.Next;
+      end loop;
+   end Customize;
+
    ---------------------
    -- Register_Module --
    ---------------------
@@ -1508,7 +1551,8 @@ package body Vsearch_Ext is
         (Module      => Module_ID (Vsearch_Module_Id),
          Kernel      => Kernel,
          Module_Name => Search_Module_Name,
-         Priority    => Default_Priority);
+         Priority    => Default_Priority,
+         Customization_Handler => Customize'Access);
       Glide_Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
 
