@@ -56,10 +56,9 @@ package DB_API is
    --  operation.
    type Pair_Ptr is access all Pair;
 
-   procedure Open  (DB : out DB_File; File_Names : String_List_Access);
+   function Open (File_Names : String_List_Access) return DB_File;
    --  Opens specified file as database file. Upon successful
-   --  completion DB is initialized. Otherwise DB_Open_Error
-   --  exception is thrown.
+   --  completion DB is initialized, on error null is returned
    --  Sets cursor to the first key/data pair in database (see
    --  Set_Cursor).
 
@@ -74,8 +73,7 @@ package DB_API is
 
    procedure Close (DB : in out DB_File);
    --  Closes specified DB file and frees underlying resources.
-   --  Ignores uninitialized DB.
-   --  Throws DB_Close_Error if failed.
+   --  Ignores uninitialized DB and errors
 
    procedure Set_Cursor
      (DB          : DB_File;
@@ -143,7 +141,6 @@ package DB_API is
    --  Return summary length of all fields
 
    DB_Error             : exception;
-   DB_Open_Error        : exception;
    DB_Close_Error       : exception;
    Index_Out_Of_Range   : exception;
 

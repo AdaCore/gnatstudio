@@ -590,7 +590,7 @@ package body Src_Info.CPP is
       Xref_File_Name   : String_Access;
    begin
       --  Do nothing if we couldn't create the database directory
-      if DB_Dir = "" then
+      if DB_Dir = Name_As_Directory (SN.Browse.DB_Dir_Name) then
          return;
       end if;
 
@@ -613,11 +613,9 @@ package body Src_Info.CPP is
 
       if Current_Source_File (Iterator) /= "" then
          Create_DB_Directory (DB_Dir);
+         --  Create the list of files that need to be analyzed.
+         Create (Tmp_File, Out_File, Name => Iterator.List_Filename.all);
       end if;
-
-      --  Create the list of files that need to be analyzed.
-
-      Create (Tmp_File, Out_File, Name => Iterator.List_Filename.all);
 
       loop
          declare
@@ -661,9 +659,8 @@ package body Src_Info.CPP is
          Next_Source_File (Iterator);
       end loop;
 
-      Close (Tmp_File);
-
       if Num_Source_Files > 0 then
+         Close (Tmp_File);
          Iterator.State := Analyze_Files;
          Close_DB_Files (Iterator.Handler.SN_Table);
          SN.Browse.Browse
@@ -978,14 +975,10 @@ package body Src_Info.CPP is
             end loop;
 
             if Ext /= "" then
-               DB_API.Open (SN_Table (Table), Files);
+               SN_Table (Table) := DB_API.Open (Files);
             end if;
 
-            GNAT.OS_Lib.Free (Files);
-         exception
-            when DB_Open_Error =>
-               --  Could not open table, ignore this error
-               Free (Files);
+            Free (Files);
          end;
       end loop;
    end Open_DB_Files;

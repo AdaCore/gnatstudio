@@ -29,7 +29,6 @@ with Interfaces.C.Strings;
 package body DB_API is
 
    --  Exception messages.
-   E_Mem_Failed  : constant String := "Memory allocation failed";
    E_Init_Failed : constant String := "DB is not initialized";
 
    package C renames Interfaces.C;
@@ -71,7 +70,7 @@ package body DB_API is
    -- Open --
    ----------
 
-   procedure Open (DB : out DB_File; File_Names : String_List_Access) is
+   function Open (File_Names : String_List_Access) return DB_File is
       function Internal_Open
         (Num_Of_Files : Integer;
          File_Names   : System.Address) return DB_File;
@@ -88,6 +87,7 @@ package body DB_API is
 
       C_File_Names : String_List (File_Names'Range);
       C_P_P_Char   : array (File_Names'Range) of System.Address; -- char **
+      DB           : DB_File;
    begin
       for I in File_Names'Range loop
          C_File_Names (I) := new String'(File_Names (I).all & ASCII.NUL);
@@ -98,20 +98,12 @@ package body DB_API is
 
       Free (C_File_Names);
 
-      if DB = null then
-         Raise_Exception (DB_Open_Error'Identity,
-           E_Mem_Failed);
+      if DB /= null and then Last_ErrNo (DB) /= 0 then
+         Internal_Free (DB);
+         DB := null;
       end if;
 
-      if Last_ErrNo (DB) /= 0 then
-         declare
-            Err_Msg : constant String := Error_Message (DB);
-         begin
-            Internal_Free (DB);
-            Raise_Exception (DB_Open_Error'Identity, Err_Msg);
-         end;
-      end if;
-
+      return DB;
    end Open;
 
    ---------
@@ -149,10 +141,6 @@ package body DB_API is
    begin
       if DB /= null then -- ignore uninitialized DB
          Internal_Close (DB);
-         if Last_ErrNo (DB) /= 0 then
-            Raise_Exception (DB_Close_Error'Identity,
-              Error_Message (DB));
-         end if;
          Internal_Free (DB);
          DB := null;
       end if;
