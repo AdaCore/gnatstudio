@@ -84,14 +84,20 @@ package body Commands is
       Action.Queue := Queue;
 
       if High_Priority then
-         Prepend (Queue.The_Queue, Queue.Queue_Node, Command_Access (Action));
-         Queue.Queue_Node := Prev (Queue.The_Queue, Queue.Queue_Node);
-
+         if Queue.Queue_Node = Null_Node then
+            Append
+              (Queue.The_Queue, Queue.Queue_Node, Command_Access (Action));
+            Queue.Queue_Node := Last (Queue.The_Queue);
+         else
+            Prepend
+              (Queue.The_Queue, Queue.Queue_Node, Command_Access (Action));
+            Queue.Queue_Node := Prev (Queue.The_Queue, Queue.Queue_Node);
+         end if;
       else
          Append (Queue.The_Queue, Command_Access (Action));
 
          if Queue.Queue_Node = Null_Node then
-            Queue.Queue_Node := First (Queue.The_Queue);
+            Queue.Queue_Node := Last (Queue.The_Queue);
          end if;
       end if;
 
@@ -140,21 +146,28 @@ package body Commands is
      (Action  : access Root_Command;
       Success : Boolean)
    is
-      Queue : Command_Queue renames Action.Queue;
-      Node  : List_Node;
+      Queue             : Command_Queue renames Action.Queue;
+      Next_Command_Temp : List_Node;
+
    begin
       Queue.Command_In_Progress := False;
 
       if Success then
-         Node := Prev (Queue.The_Queue, Queue.Queue_Node);
-         Insert (Queue.The_Queue, Node, Action.Next_Commands);
-         Queue.Queue_Node := Next (Node);
+         Next_Command_Temp := First (Action.Next_Commands);
 
+         while Next_Command_Temp /= Null_Node loop
+            Enqueue (Queue, Data (Next_Command_Temp), True);
+            Next_Command_Temp := Next (Next_Command_Temp);
+         end loop;
+
+         --  ??? There is a memory leak here.
+         --  Pointers allocated to Action.Next_Commands are dangling.
+         Action.Next_Commands := Null_List;
       else
          Free (Action.Next_Commands);
       end if;
 
-      Execute_Next_Action (Queue);
+      Execute_Next_Action (Action.Queue);
    end Command_Finished;
 
    -------------
@@ -175,7 +188,7 @@ package body Commands is
      (Item   : Command_Access;
       Action : Command_Access) is
    begin
-      Append (Item.Next_Commands, Action);
+      Prepend (Item.Next_Commands, Action);
    end Add_Consequence_Action;
 
 end Commands;
