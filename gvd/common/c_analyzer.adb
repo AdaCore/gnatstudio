@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2003                       --
+--                     Copyright (C) 2001-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -206,11 +206,12 @@ package body C_Analyzer is
    -- Local procedures --
    ----------------------
 
-   procedure Top
+   procedure Top  --  ??? change name to e.g. Pop_To_Construct
      (Stack : in out Token_Stack.Simple_Stack;
       Item  : out Token_Stack.Generic_Type_Access);
-   --  Returns first token from Stack that is not an identifier nor a
+   --  Return first token from Stack that is not an identifier nor a
    --  type or storage token kind. This Item is not removed from the stack.
+   --  Items before the item found are removed from the stack.
 
    function Get_Token (S : String) return Token_Type;
    --  Return a Token_Type given a string.
@@ -653,6 +654,8 @@ package body C_Analyzer is
                return;
             end if;
 
+            --  ??? Would be nice to use Pop_To_Construct instead
+
             Token_Stack.Pop (Stack, Value);
             exit when Value.Token /= Tok_Identifier
               and then Value.Token not in Type_Token
@@ -697,8 +700,10 @@ package body C_Analyzer is
                   --  Tok_Void is used for blocks: {}
 
                   if Value.Curly_Level = 0 then
-                     Constructs.Current.Category := Cat_Function;
+                     --  ??? Would be nice to be able to find the parameters
+                     --  of this function
 
+                     Constructs.Current.Category := Cat_Function;
                      Constructs.Current.Name := new String'
                        (Buffer (Value.Name_Start .. Value.Name_End));
 
@@ -1048,11 +1053,10 @@ package body C_Analyzer is
       function Identifier_Keyword return Boolean is
          Prev      : Natural := Index;
          Temp      : Extended_Token;
-         Top_Token : Token_Stack.Generic_Type_Access; -- := Top (Tokens);
+         Top_Token : Token_Stack.Generic_Type_Access;
 
       begin
          Top (Tokens, Top_Token);
-
          First := Index;
          Start_Char := Char_In_Line;
 
@@ -1133,10 +1137,13 @@ package body C_Analyzer is
                   Push (Tokens, Temp);
                end if;
 
+               --  ??? Why aren't we calling Do_Indent here
+
             when Tok_Identifier =>
                if Curly_Level = 0 then
                   --  Only record identifier outside function body, we only
-                  --  record them to be able to retreive routine name.
+                  --  record them to be able to retrieve routine name.
+
                   Push (Tokens, Temp);
                end if;
 
@@ -1289,8 +1296,10 @@ package body C_Analyzer is
             when '(' =>
                Token := Tok_Left_Paren;
 
-               --  Get identifier just before the parent, this is the name
-               --  of the function (if this is a function definition).
+               --  Get identifier just before the parenthesis, this is usually
+               --  the name of the function (if this is a function definition)
+               --  ??? This will not handle macros such as:
+               --  int foo PARAMS ((void*)) {}
 
                if Paren_Level = 0 then
                   Tok_Ident := Token_Stack.Top (Tokens).all;
