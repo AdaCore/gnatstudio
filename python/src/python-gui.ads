@@ -118,6 +118,10 @@ private
       In_Process : Boolean := False;
       --  True while we are processing a command. This is used to control the
       --  behavior of control-c: either interrupt, or copy
+
+      Hide_Output : Boolean := False;
+      --  True if the output of the interpreter shouldn't be displayed in the
+      --  console. This is used to execute commands internally.
    end record;
 
 end Python.GUI;

@@ -20,6 +20,7 @@
 
 with Ada.Calendar;      use Ada.Calendar;
 with Ada.Exceptions;    use Ada.Exceptions;
+with Glib.Object;       use Glib.Object;
 with Gtk.Text_Buffer;   use Gtk.Text_Buffer;
 with Gtk.Text_Iter;     use Gtk.Text_Iter;
 with Gtk.Text_Mark;     use Gtk.Text_Mark;
@@ -43,8 +44,10 @@ with GNAT.OS_Lib;     use GNAT.OS_Lib;
 with System;
 with Python.Ada;      use Python.Ada;
 with Interfaces.C.Strings; use Interfaces.C.Strings;
+with String_List_Utils;    use String_List_Utils;
 with Ada.Unchecked_Conversion;
 with Traces;          use Traces;
+with GUI_Utils;       use GUI_Utils;
 
 package body Python.GUI is
 
@@ -110,6 +113,11 @@ package body Python.GUI is
      (Interpreter : access Python_Interpreter_Record'Class);
    --  Move the prompt_end mark to the end of the console.
 
+   function Run_Command_Get_Result
+     (Interpreter : access Python_Interpreter_Record'Class;
+      Command     : String) return PyObject;
+   --  Run a command and return its result. Nothing is printed in the console.
+
    ------------------------
    -- Process_Gtk_Events --
    ------------------------
@@ -151,6 +159,7 @@ package body Python.GUI is
    begin
       if Interpreter.Console /= null
         and then not Gtk.Object.Destroyed_Is_Set (Interpreter.Console)
+        and then not Interpreter.Hide_Output
       then
          Buffer := Get_Buffer (Interpreter.Console);
 
@@ -442,6 +451,38 @@ package body Python.GUI is
       return 0;
    end Trace;
 
+   ----------------------------
+   -- Run_Command_Get_Result --
+   ----------------------------
+
+   function Run_Command_Get_Result
+     (Interpreter : access Python_Interpreter_Record'Class;
+      Command     : String) return PyObject
+   is
+      Code         : PyCodeObject;
+      Obj, Builtin : PyObject;
+   begin
+      Trace (Me, "Running command: " & Command);
+      Interpreter.In_Process := True;
+      Interpreter.Hide_Output := True;
+
+      Code := Py_CompileString (Command, "<stdin>", Py_Single_Input);
+      if Code /= null then
+         Builtin := PyImport_ImportModule ("__builtin__");
+         Obj := PyEval_EvalCode
+           (Code, Interpreter.Globals, Interpreter.Globals);
+
+         Py_DECREF (PyObject (Code));
+
+         if Obj /= null then
+            Py_DECREF (Obj);
+            return PyObject_GetAttrString (Builtin, "_");
+         end if;
+      end if;
+
+      return null;
+   end Run_Command_Get_Result;
+
    -----------------
    -- Run_Command --
    -----------------
@@ -461,6 +502,8 @@ package body Python.GUI is
       Grab_Widget : Gtk_Widget;
       use type Gdk_Window;
    begin
+      Interpreter.Hide_Output := Hide_Output;
+
       if Cmd = "" & ASCII.LF then
          if not Hide_Output then
             Display_Prompt (Interpreter);
@@ -567,12 +610,14 @@ package body Python.GUI is
       end if;
 
       Interpreter.In_Process := False;
+      Interpreter.Hide_Output := False;
 
    exception
       when E : others =>
          Trace (Me, "Unexpected exception "
                 & Exception_Information (E));
          Interpreter.In_Process := False;
+         Interpreter.Hide_Output := False;
    end Run_Command;
 
    --------------------
@@ -638,6 +683,66 @@ package body Python.GUI is
       Event       : Gdk_Event;
       Interpreter : Python_Interpreter) return Boolean
    is
+      function Completion
+        (Input     : String;
+         User_Data : Glib.Object.GObject)
+         return String_List_Utils.String_List.List;
+      --  Handles completion for the commands
+
+      function Completion
+        (Input     : String;
+         User_Data : Glib.Object.GObject)
+         return String_List_Utils.String_List.List
+      is
+         use String_List_Utils.String_List;
+         pragma Unreferenced (User_Data);
+         List        : String_List_Utils.String_List.List;
+         Start       : Natural := Input'First - 1;
+         Last        : Natural := Input'Last + 1;
+         Obj, Item   : PyObject;
+      begin
+         for N in reverse Input'Range loop
+            if Input (N) = ' ' or else Input (N) = ASCII.HT then
+               Start := N;
+               exit;
+            elsif Input (N) = '.' and then Last > Input'Last then
+               Last := N;
+            end if;
+         end loop;
+
+         if Start >= Input'Last then
+            return Null_List;
+         else
+            Obj := Run_Command_Get_Result
+              (Interpreter,
+               "__builtins__.dir(" & Input (Start + 1 .. Last - 1) & ")");
+
+            if Obj = null then
+               return Null_List;
+            else
+               for Index in 0 .. PyList_Size (Obj) - 1 loop
+                  Item := PyList_GetItem (Obj, Index);
+
+                  declare
+                     S : constant String := PyString_AsString (Item);
+                  begin
+                     if Last >= Input'Last
+                       or else Input (Last + 1 .. Input'Last)
+                         = S (S'First .. S'First + Input'Last - Last - 1)
+                     then
+                        Prepend
+                          (List, Input (Input'First .. Last - 1) & '.' & S);
+                     end if;
+                  end;
+               end loop;
+
+               Py_DECREF (Obj);
+               return List;
+            end if;
+         end if;
+      end Completion;
+
+
       pragma Unreferenced (Object);
       Buffer    : constant Gtk_Text_Buffer := Get_Buffer (Interpreter.Console);
       Key       : constant Gdk_Key_Type    := Get_Key_Val (Event);
@@ -679,6 +784,13 @@ package body Python.GUI is
 
                   Get_End_Iter (Buffer, Iter);
                   Place_Cursor (Buffer, Iter);
+                  Success := Scroll_To_Iter
+                    (Interpreter.Console,
+                     Iter          => Iter,
+                     Within_Margin => 0.0,
+                     Use_Align     => False,
+                     Xalign        => 0.0,
+                     Yalign        => 0.0);
                end;
             end if;
 
@@ -692,6 +804,15 @@ package body Python.GUI is
                Get_Iter_At_Mark (Buffer, Iter, Get_Insert (Buffer));
                return Compare (Prompt_End, Iter) > -1;
             end if;
+
+         when GDK_Tab | GDK_KP_Tab =>
+            Do_Completion
+              (View            => Interpreter.Console,
+               Completion      => Completion'Unrestricted_Access,
+               Prompt_End_Mark => Interpreter.Prompt_End_Mark,
+               Uneditable_Tag  => Interpreter.Uneditable,
+               User_Data       => null);
+            return True;
 
          when GDK_Return | GDK_KP_Enter =>
             if Interpreter.Waiting_For_Input then
