@@ -1,5 +1,6 @@
-Here is the complete procedures to build Gtk+ 2.0.5 from scratch
-(systems tested are Redhat 7.1, Solaris 2.8, Tru64 5.1a, HP-UX 11.00).
+Here are the complete procedures to build Gtk+ 2.0.5 from scratch
+(systems tested are Redhat 7.1, Solaris 2.5.1, Solaris 2.8, Tru64 5.1a,
+ HP-UX 11.00).
 
 Note that these instructions are provided as is, and do not represent a
 100% guaranteed method. This is merely an empirical list of steps that
@@ -43,8 +44,8 @@ export C_INCLUDE_PATH
 ############
 # libiconv #
 ############
-# This step isn't needed on Linux nor Solaris
-# It is needed under HP-UX and Tru64 5.1
+# This step isn't needed on Linux nor Solaris 8
+# It is needed under Solaris 2.5.1, HP-UX and Tru64 5.1
 
 tar xzvf libiconv-1.7.tar.gz
 cd libiconv-1.7
@@ -132,7 +133,7 @@ cd glib-2.0.4
 # Under HP-UX, apply the patch libtool-hpux.diff:
 # patch -p0 < .../libtool-hpux.diff
 
-# on Linux, Solaris and Tru64:
+# on Linux, Solaris 8 and Tru64:
 ./configure --prefix=$prefix --enable-debug=minimum
 # on other systems:
 ./configure --prefix=$prefix --enable-debug=minimum --with-libiconv
@@ -175,7 +176,6 @@ cd pango-1.0.3
 # patch -p0 < .../pango-1.0.2.diff
 
 ./configure --prefix=$prefix --with-included-modules=basic-x
-
 make
 make install
 cd ..
@@ -193,6 +193,13 @@ cd gtk+-2.0.5
 
 # Under HP-UX and Tru64, apply the patch gtk+-2.0.3.diff:
 # patch -p0 < .../gtk+-2.0.3.diff
+
+# Under Solaris 2.5.1, plain Gtk+ will not compile because it uses X11R6
+# specific features. The following patch tries to disable this feature, but
+# may cause unknown problems:
+# patch -p0 < .../gtk+-2.0.5-solaris2.5.1.diff
+#
+# Also add --disable-xim to the call to configure below
 
 ./configure --disable-modules --without-libtiff \
   --with-included-loaders=xpm,png,gif,jpeg --prefix=$prefix \
