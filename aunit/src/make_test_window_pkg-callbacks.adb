@@ -29,6 +29,7 @@ with String_Utils;            use String_Utils;
 with Case_Handling;           use Case_Handling;
 
 with Gtkada.Dialogs;          use Gtkada.Dialogs;
+with Gtkada.File_Selector;    use Gtkada.File_Selector;
 with GNAT.OS_Lib;             use GNAT.OS_Lib;
 
 package body Make_Test_Window_Pkg.Callbacks is
@@ -76,6 +77,20 @@ package body Make_Test_Window_Pkg.Callbacks is
       Grab_Focus (Window.Ok);
    end On_Description_Entry_Activate;
 
+   ---------------------------------
+   -- On_Browse_Directory_Clicked --
+   ---------------------------------
+
+   procedure On_Browse_Directory_Clicked
+     (Object : access Gtk_Button_Record'Class)
+   is
+      --  Open explorer window to select suite
+      Test_Window : constant Make_Test_Window_Access :=
+        Make_Test_Window_Access (Get_Toplevel (Object));
+   begin
+      Browse_Location (Test_Window.Directory_Entry);
+   end On_Browse_Directory_Clicked;
+
    -------------------
    -- On_Ok_Clicked --
    -------------------
@@ -83,14 +98,20 @@ package body Make_Test_Window_Pkg.Callbacks is
    procedure On_Ok_Clicked (Object : access Gtk_Button_Record'Class) is
       --  Generate "Test_Case" source files.  Exit program if successful
 
-      Window      : constant Make_Test_Window_Access :=
+      Window         : constant Make_Test_Window_Access :=
         Make_Test_Window_Access (Get_Toplevel (Object));
-      File        : File_Type;
-      Name        : String := Get_Text (Window.Name_Entry);
+      Directory_Name : constant String := Get_Text (Window.Directory_Entry);
+      File           : File_Type;
+      Name           : String := Get_Text (Window.Name_Entry);
+      Filename       : constant String := Name_As_Directory
+        (Directory_Name) & To_File_Name (Name);
       Description : constant String := Get_Text (Window.Description_Entry);
 
    begin
-      if Name /= "" then
+      if Directory_Name /= ""
+        and then Is_Directory (Directory_Name)
+        and then Name /= ""
+      then
          if To_Lower (Name) = "test_case" then
             if Message_Dialog
               ("The name of the test cannot be ""Test_Case""."
@@ -105,9 +126,9 @@ package body Make_Test_Window_Pkg.Callbacks is
             end if;
          end if;
 
-         if Is_Regular_File (To_File_Name (Name) & ".ads") then
+         if Is_Regular_File (Filename & ".ads") then
             if Message_Dialog
-              ("File " & To_File_Name (Name) & ".ads" & " exists. Overwrite?",
+              ("File " & Filename & ".ads" & " exists. Overwrite?",
                Warning,
                Button_Yes or Button_No,
                Button_No,
@@ -124,7 +145,7 @@ package body Make_Test_Window_Pkg.Callbacks is
 
          --  Create the file.
 
-         Create (File, Out_File, To_File_Name (Name) & ".ads");
+         Create (File, Out_File, Filename & ".ads");
          Put_Line
            (File,
             "with Ada.Strings.Unbounded;" & ASCII.LF &
@@ -138,38 +159,38 @@ package body Make_Test_Window_Pkg.Callbacks is
             "   type Test_Case is new " &
             "AUnit.Test_Cases.Test_Case with null record;" & ASCII.LF &
             ASCII.LF &
-            "   --  Register routines to be run:" & ASCII.LF &
             "   procedure Register_Tests (T : in out Test_Case);"
             & ASCII.LF &
+            "   --  Register routines to be run" & ASCII.LF &
             ASCII.LF &
-            "   --  Provide name identifying the test case:"
-            & ASCII.LF &
-            "   function Name (T : Test_Case) return String_Access;");
+            "   function Name (T : Test_Case) return String_Access;" &
+            ASCII.LF &
+            "   --  Returns name identifying the test case");
 
          if Get_Active (Window.Override_Set_Up) then
             Put_Line
               (File,
                ASCII.LF &
-               "   --  Preparation performed before each routine:"
-               & ASCII.LF &
-               "   procedure Set_Up (T : in out Test_Case);");
+               "   procedure Set_Up (T : in out Test_Case);" &
+               ASCII.LF &
+               "   --  Preparation performed before each routine");
          end if;
 
          if Get_Active (Window.Override_Tear_Down) then
             Put_Line
               (File,
                ASCII.LF &
-               "   --  Cleanup performed after each routine:"
-               & ASCII.LF &
-               "   procedure Tear_Down (T :  in out Test_Case);");
+               "   procedure Tear_Down (T :  in out Test_Case);" &
+               ASCII.LF &
+               "   --  Cleanup performed after each routine");
          end if;
 
-         Put_Line (File, ASCII.LF & "end " & Name & ";" & ASCII.LF);
+         Put_Line (File, ASCII.LF & "end " & Name & ";");
          Close (File);
 
-         if Is_Regular_File (To_File_Name (Name) & ".adb") then
+         if Is_Regular_File (Filename & ".adb") then
             if Message_Dialog
-              ("File " & To_File_Name (Name) & ".adb" & " exists. Overwrite?",
+              ("File " & Filename & ".adb" & " exists. Overwrite?",
                Warning,
                Button_Yes or Button_No,
                Button_No,
@@ -180,7 +201,7 @@ package body Make_Test_Window_Pkg.Callbacks is
             end if;
          end if;
 
-         Create (File, Out_File, To_File_Name (Name) & ".adb");
+         Create (File, Out_File, Filename & ".adb");
          Put_Line
            (File,
             "with AUnit.Test_Cases.Registration;" & ASCII.LF &
@@ -189,6 +210,34 @@ package body Make_Test_Window_Pkg.Callbacks is
             "with AUnit.Assertions; use AUnit.Assertions;" & ASCII.LF &
             ASCII.LF &
             "package body " & Name & " is");
+
+         Put_Line
+           (File,
+            ASCII.LF &
+            "   ----------" & ASCII.LF &
+            "   -- Name --" & ASCII.LF &
+            "   ----------" & ASCII.LF &
+            ASCII.LF &
+            "   function Name (T : Test_Case) return String_Access is"
+            & ASCII.LF &
+            "   begin" & ASCII.LF &
+            "      return new String'(" & '"' & Strip_Quotes (Description)
+            & '"' & ");"
+            & ASCII.LF &
+            "   end Name;");
+
+         Put_Line
+           (File,
+            ASCII.LF &
+            "   --------------------" & ASCII.LF &
+            "   -- Register_Tests --" & ASCII.LF &
+            "   --------------------" & ASCII.LF &
+            ASCII.LF &
+            "   procedure Register_Tests (T : in out Test_Case) is"
+            &  ASCII.LF &
+            "   begin" & ASCII.LF &
+            "      null;" & ASCII.LF &
+            "   end Register_Tests;");
 
          if Get_Active (Window.Override_Set_Up) then
             Put_Line
@@ -223,28 +272,10 @@ package body Make_Test_Window_Pkg.Callbacks is
          Put_Line
            (File,
             ASCII.LF &
-            "   -------------------" & ASCII.LF &
-            "   -- Test Routines --" & ASCII.LF &
-            "   -------------------" & ASCII.LF &
-            ASCII.LF &
-            "   procedure Register_Tests (T : in out Test_Case) is"
-            &  ASCII.LF &
-            "   begin" & ASCII.LF &
-            "      null;" & ASCII.LF &
-            "   end Register_Tests;" & ASCII.LF &
-            ASCII.LF &
-            "   --  Identifier of test case:" & ASCII.LF &
-            "   function Name (T : Test_Case) return String_Access is"
-            & ASCII.LF &
-            "   begin" & ASCII.LF &
-            "      return new String'(" & '"' & Strip_Quotes (Description)
-            & '"' & ");"
-            & ASCII.LF &
-            "   end Name;" & ASCII.LF &
-            ASCII.LF &
             "end " & Name & ";");
+
          Close (File);
-         Window.Name := new String'(To_File_Name (Name));
+         Window.Name := new String'(Filename);
       end if;
 
       Hide (Window);
