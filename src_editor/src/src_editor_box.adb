@@ -312,6 +312,7 @@ package body Src_Editor_Box is
 
       Buffer : constant String := Get_Slice (Source, 1, 1);
       Index  : Integer := Buffer'First;
+      Was_Partial : Boolean;
 
    begin
       Set_Context
@@ -323,12 +324,13 @@ package body Src_Editor_Box is
                       Regexp         => False));
 
       Scan_Buffer_No_Scope
-        (Context    => Context'Access,
-         Buffer     => Buffer,
-         Callback   => Callback'Unrestricted_Access,
-         Ref_Index  => Index,
-         Ref_Line   => L,
-         Ref_Column => C);
+        (Context     => Context'Access,
+         Buffer      => Buffer,
+         Callback    => Callback'Unrestricted_Access,
+         Ref_Index   => Index,
+         Ref_Line    => L,
+         Ref_Column  => C,
+         Was_Partial => Was_Partial);
 
       Line   := Best_Line;
       Column := Best_Column;
