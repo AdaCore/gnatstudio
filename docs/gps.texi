@@ -1325,6 +1325,7 @@ The file selector is a dialog used to select a file. Under Windows, the
 default is to use the standard file selection widget. Under other platforms,
 the file selector is a built-in dialog. @c providing the following capabilities.
 
+@i{This section is incomplete}
 @c ??? add screen shot
 @c ??? incomplete
 
@@ -1926,15 +1927,20 @@ global queries will be faster.
 
 @item Find all local references to @i{entity}
 @cindex find all local references
-@c ??? incomplete
+Find all references to @i{entity} in the current file (or in the current
+top level unit for Ada sources).
+See @ref{Find All References} for more details.
 
 @item Find all writes to @i{entity}
 @cindex find all writes
-@c ??? incomplete
+Find all writes to an entity. This is a search global to the project.
+See @ref{Find All References} for more details.
 
 @item Find all reads of @i{entity}
 @cindex find all reads
-@c ??? incomplete
+Find all non write accesses to an entity. This is a search global to the
+project.
+See @ref{Find All References} for more details.
 
 @end table
 
@@ -2108,6 +2114,7 @@ started next time.
 @cindex build
 @c --------------------------------------------------------------------
 
+@i{This chapter is incomplete}
 @c ??? incomplete
 
 @menu
@@ -2236,6 +2243,7 @@ endif
 @cindex source browsing
 @c --------------------------------------------------------------------
 
+@i{This chapter is incomplete}
 @c ??? incomplete
 
 @menu
@@ -2418,10 +2426,6 @@ Control Contextual Menu}.
 @cindex version control
 @cindex menu
 @noindent
-@c ??? incomplete
-@c explain that the menus apply to the current context/selection, ...
-@c mention that it is usually simpler to use contextual menus.
-@c @xref{The Version Control Contextual Menu}.
 
 Basic VCS operations can be accessed through the VCS menu. Most of
 these functions act on the current selection, i.e. on the selected items
@@ -2635,6 +2639,7 @@ server is temporarily unavailable).
 @cindex cross environment
 @c --------------------------------------------------------------------
 
+@i{This chapter is incomplete}
 @c ??? incomplete
 
 @menu

@@ -240,7 +240,7 @@ Configuration Variable}. This opens the following dialog:
 
 @iftex
 @cindex screen shot
-@image{scenarios}
+@image{scenarios, 10cm}
 @end iftex
 
 @ifhtml
@@ -348,6 +348,7 @@ the value it had when it was deleted.
 
 @c ??? incomplete
 @noindent
+@i{This section is incomplete}
 
 @c -------------------------------------------------------------------
 @node The project properties editor
@@ -357,4 +358,5 @@ the value it had when it was deleted.
 
 @c ??? incomplete
 @noindent
+@i{This section is incomplete}
 
