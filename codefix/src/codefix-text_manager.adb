@@ -770,7 +770,7 @@ package body Codefix.Text_Manager is
       Cursor                 : Text_Cursor'Class;
       Position               : Relative_Position := Specified;
       Category_1, Category_2 : Language_Category := Cat_Unknown)
-     return Construct_Information
+      return Construct_Information
    is
 
       function Nearer return Boolean;
@@ -793,12 +793,14 @@ package body Codefix.Text_Manager is
                then
                   return False;
                end if;
+
             when After =>
                if D_Current_Line < 0
                  or else (D_Current_Line = 0 and then D_Current_Col < 0)
                then
                   return False;
                end if;
+
             when others =>
                return False;
          end case;
@@ -810,9 +812,9 @@ package body Codefix.Text_Manager is
          D_Old_Line := Info_Saved.Sloc_Start.Line - Cursor.Line;
          D_Old_Col := Info_Saved.Sloc_Start.Column - Cursor.Col;
 
-         return (abs D_Old_Line) > (abs D_Current_Line) or else
+         return abs (D_Old_Line) > abs (D_Current_Line) or else
            (D_Old_Line = D_Current_Line and then
-              (abs D_Old_Col) > (abs D_Current_Col));
+              abs (D_Old_Col) > abs (D_Current_Col));
 
       end Nearer;
 
@@ -822,7 +824,6 @@ package body Codefix.Text_Manager is
       Current_Info := Get_Structure (Current_Text).First;
 
       while Current_Info /= null loop
-
          if Category_1 = Cat_Unknown
            or else Current_Info.Category = Category_1
            or else Current_Info.Category = Category_2
