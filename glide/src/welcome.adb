@@ -68,7 +68,8 @@ package body Welcome is
    procedure On_Browse_Default (Screen : access Gtk_Widget_Record'Class);
    --  Browse a new directory for the default project
 
-   procedure On_Load_Project (Screen : access Gtk_Widget_Record'Class);
+   function On_Load_Project (Screen : access Gtk_Widget_Record'Class)
+      return Boolean;
    --  Load an existing project
 
    procedure On_Browse_Load (Screen : access Gtk_Widget_Record'Class);
@@ -241,40 +242,47 @@ package body Welcome is
       if Get_Pref (Screen.Kernel, Display_Welcome) then
          Show_All (Screen);
 
-         --  Prevent deleting of the dialog through the title bar's X button
-         --  (which is shown on some window managers)
-         loop
-            Response := Run (Screen);
+         --  While the user hasn't selected a valid project...
 
-            exit when Response = Gtk_Response_Close
-              or else (Response = Gtk_Response_OK
-                       and then (not Get_Active (Screen.Create_Project)
-                                 or else On_New_Project (Screen)));
+         loop
+            --  Prevent deleting of the dialog through the title bar's X button
+            --  (which is shown on some window managers)
+            loop
+               Response := Run (Screen);
+
+               exit when Response = Gtk_Response_Close
+                 or else (Response = Gtk_Response_OK
+                          and then (not Get_Active (Screen.Create_Project)
+                                    or else On_New_Project (Screen)));
+            end loop;
+
+            if not Get_Active (Screen.Always_Show) then
+               Set_Pref (Screen.Kernel, Display_Welcome, False);
+            end if;
+
+            if Response = Gtk_Response_OK then
+               if Get_Active (Screen.Default_Project) then
+                  On_Default_Project (Screen);
+                  return Project_Loaded;
+
+               elsif Get_Active (Screen.Open_Project_Button) then
+                  if On_Load_Project (Screen) then
+                     return Project_Loaded;
+                  end if;
+
+               else
+                  --  A new project was loaded.
+                  return Project_Loaded;
+               end if;
+            else
+               return Quit_GPS;
+            end if;
          end loop;
 
-         if not Get_Active (Screen.Always_Show) then
-            Set_Pref (Screen.Kernel, Display_Welcome, False);
-         end if;
-
-         if Response = Gtk_Response_OK then
-            if Get_Active (Screen.Default_Project) then
-               On_Default_Project (Screen);
-               return Project_Loaded;
-
-            elsif Get_Active (Screen.Open_Project_Button) then
-               On_Load_Project (Screen);
-               return Project_Loaded;
-
-            else
-               --  A new project was loaded.
-               return Project_Loaded;
-            end if;
-         end if;
-
-         return Quit_GPS;
-
       elsif Get_Text (Get_Entry (Screen.Open_Project)) /= "" then
-         On_Load_Project (Screen);
+         if not On_Load_Project (Screen) then
+            On_Default_Project (Screen);
+         end if;
 
       else
          On_Default_Project (Screen);
@@ -334,38 +342,48 @@ package body Welcome is
    -- On_Load_Project --
    ---------------------
 
-   procedure On_Load_Project (Screen : access Gtk_Widget_Record'Class) is
+   function On_Load_Project (Screen : access Gtk_Widget_Record'Class)
+      return Boolean
+   is
       S            : constant Welcome_Screen := Welcome_Screen (Screen);
       Project_Name : constant String := Normalize_Pathname
         (Get_Text (Get_Entry (S.Open_Project)), Resolve_Links => False);
-      Directory    : constant String := Dir_Name (Project_Name);
       Button       : Message_Dialog_Buttons;
       pragma Unreferenced (Button);
 
    begin
       Response (S, Gtk_Response_OK);
 
-      if not Is_Directory (Directory) then
-         Button := Message_Dialog
-           ((-"Invalid directory: ") & Directory & ASCII.LF &
-            (-"Loading default project instead"),
-            Error, Button_OK, Parent => Gtk_Window (S));
-         Load_Default_Project (S.Kernel, Get_Text (S.Default_Dir));
-         return;
+      if File_Extension (Project_Name) = Project_File_Extension then
+         if not Is_Regular_File (Project_Name) then
+            Button := Message_Dialog
+              ((-"Project file ") & Project_Name & (-" doesn't exist"),
+               Error, Button_OK, Parent => Gtk_Window (S));
+            return False;
+         end if;
+
+         Load_Project (S.Kernel, Project_Name);
+      else
+         if not Is_Regular_File (Project_Name & Project_File_Extension) then
+            Button := Message_Dialog
+              ((-"Project file ") & Project_Name & (-" doesn't exist"),
+               Error, Button_OK, Parent => Gtk_Window (S));
+            return False;
+         end if;
+
+         Load_Project (S.Kernel, Project_Name & Project_File_Extension);
       end if;
 
       Change_Dir (Dir_Name (Project_Name));
-
-      if File_Extension (Project_Name) = Project_File_Extension then
-         Load_Project (S.Kernel, Project_Name);
-      else
-         Load_Project (S.Kernel, Project_Name & Project_File_Extension);
-      end if;
+      return True;
 
    exception
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
-         Load_Default_Project (S.Kernel, Get_Text (S.Default_Dir));
+         Button := Message_Dialog
+           ((-"Project file ") & Project_Name & (-" couldn't be loaded"),
+            Error, Button_OK, Parent => Gtk_Window (S));
+         return False;
    end On_Load_Project;
 
    -----------------------
