@@ -545,15 +545,10 @@ package body Glide_Interactive_Consoles is
 
       Offset : Gint;
    begin
-      if Console.Input_Blocked then
-         return;
-      end if;
-
       Get_End_Iter (Console.Buffer, First_Iter);
       Offset := Get_Offset (First_Iter);
 
       Insert (Console.Buffer, First_Iter, Console.Prompt.all);
-      --  ??? Must add flexibility to the prompt.
 
       Get_End_Iter (Console.Buffer, Prompt_Iter);
       Get_Iter_At_Offset (Console.Buffer, First_Iter, Offset);
