@@ -29,7 +29,7 @@ package Log_Utils is
    function Get_Log_From_File
      (Kernel    : access Kernel_Handle_Record'Class;
       File_Name : String;
-      Create    : Boolean := True) return String;
+      Create    : Boolean) return String;
    --  Return the absolute name for the log file corresponding to
    --  File_Name.
    --  If the log file doesn't exist and Create is True, then
