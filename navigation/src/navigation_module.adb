@@ -104,6 +104,14 @@ package body Navigation_Module is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Callback for Navigate->Previous Result menu.
 
+   procedure On_Start_Statement
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Callback for Navigate->Start Statement menu.
+
+   procedure On_End_Statement
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Callback for Navigate->End Statement menu.
+
    procedure On_Next_Subprogram
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Callback for Navigate->Next Subprogram menu.
@@ -181,9 +189,9 @@ package body Navigation_Module is
    is
       Args : Argument_List :=
         (1 => new String'(Full_Name (File).all),
-         2 => new String'(Positive'Image (Line)));
+         2 => new String'(Natural'Image (Line)));
       S_Line : constant String :=
-        Execute_GPS_Shell_Command (Kernel, "cursor_set_line", Args);
+        Execute_GPS_Shell_Command (Kernel, "cursor_set_position", Args);
       pragma Unreferenced (S_Line);
    begin
       Free (Args);
@@ -367,6 +375,106 @@ package body Navigation_Module is
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Forward;
+
+   ------------------------
+   -- On_Start_Statement --
+   ------------------------
+
+   procedure On_Start_Statement
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+
+      Context : constant Selection_Context_Access :=
+        Get_Current_Context (Kernel);
+
+      File_Context : File_Selection_Context_Access;
+
+      File : Virtual_File;
+
+      Line      : Natural;           -- Current line being processed.
+      B_Start   : Natural;           -- Block's first line.
+      B_Type    : Language_Category; -- Block's category
+
+   begin
+      if Context /= null
+        and then Context.all in File_Selection_Context'Class
+        and then Has_File_Information
+          (File_Selection_Context_Access (Context))
+        and then Has_Directory_Information
+          (File_Selection_Context_Access (Context))
+      then
+         File_Context := File_Selection_Context_Access (Context);
+         File := File_Information (File_Context);
+
+         Line   := Get_Current_Line (Kernel, File);
+         B_Type := Get_Block_Type (Kernel, File, Line);
+
+         if B_Type in Construct_Category then
+            --  We are in a statement, go to the start.
+
+            B_Start := Get_Block_Start (Kernel, File, Line);
+
+            if B_Start /= 0 then
+               Set_Current_Line (Kernel, File, B_Start);
+            end if;
+         end if;
+      end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+   end On_Start_Statement;
+
+   ------------------------
+   -- On_End_Statement --
+   ------------------------
+
+   procedure On_End_Statement
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+
+      Context : constant Selection_Context_Access :=
+        Get_Current_Context (Kernel);
+
+      File_Context : File_Selection_Context_Access;
+
+      File : Virtual_File;
+
+      Line   : Natural;           -- Current line being processed.
+      B_End  : Natural;           -- Block's first line.
+      B_Type : Language_Category; -- Block's category
+
+   begin
+      if Context /= null
+        and then Context.all in File_Selection_Context'Class
+        and then Has_File_Information
+          (File_Selection_Context_Access (Context))
+        and then Has_Directory_Information
+          (File_Selection_Context_Access (Context))
+      then
+         File_Context := File_Selection_Context_Access (Context);
+         File := File_Information (File_Context);
+
+         Line   := Get_Current_Line (Kernel, File);
+         B_Type := Get_Block_Type (Kernel, File, Line);
+
+         if B_Type in Construct_Category then
+            --  We are in a statement, go to the end.
+
+            B_End := Get_Block_End (Kernel, File, Line);
+
+            if B_End /= 0 then
+               Set_Current_Line (Kernel, File, B_End);
+            end if;
+         end if;
+      end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+   end On_End_Statement;
 
    ------------------------
    -- On_Next_Subprogram --
@@ -653,9 +761,11 @@ package body Navigation_Module is
       Gtk_New (Menu_Item);
       Register_Menu (Kernel, Navigate, Menu_Item);
       Register_Menu (Kernel, Navigate, -"_Start Of Statement",
-                     Stock_Go_Up, null);
+                     Stock_Go_Up, On_Start_Statement'Access,
+                     null, GDK_Up, Mod1_Mask);
       Register_Menu (Kernel, Navigate, -"_End Of Statement",
-                     Stock_Go_Down, null);
+                     Stock_Go_Down, On_End_Statement'Access,
+                     null, GDK_Down, Mod1_Mask);
       Register_Menu (Kernel, Navigate, -"Next Subprogram", "",
                      On_Next_Subprogram'Access, null, GDK_Down, Control_Mask);
       Register_Menu (Kernel, Navigate, -"Previous Subprogram", "",
