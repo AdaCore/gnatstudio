@@ -168,36 +168,16 @@ package body Browsers.Projects is
      (Browser      : access Project_Browser_Record'Class;
       Project_Name : Name_Id) return Browser_Project_Vertex_Access
    is
-      Found : Canvas_Item := null;
-
-      function Check_Item
-        (Canvas : access Interactive_Canvas_Record'Class;
-         Item   : access Canvas_Item_Record'Class) return Boolean;
-      --  Check whether Item contains File
-
-      ----------------
-      -- Check_Item --
-      ----------------
-
-      function Check_Item
-        (Canvas : access Interactive_Canvas_Record'Class;
-         Item   : access Canvas_Item_Record'Class) return Boolean
-      is
-         pragma Unreferenced (Canvas);
-      begin
-         if Item.all in Browser_Project_Vertex'Class
-           and then Browser_Project_Vertex_Access (Item).Name = Project_Name
-         then
-            Found := Canvas_Item (Item);
-            return False;
-         end if;
-
-         return True;
-      end Check_Item;
-
+      Iter : Item_Iterator := Start (Get_Canvas (Browser));
+      Item : Canvas_Item;
    begin
-      For_Each_Item (Get_Canvas (Browser), Check_Item'Unrestricted_Access);
-      return Browser_Project_Vertex_Access (Found);
+      loop
+         Item := Get (Iter);
+         exit when Item = null
+           or else Browser_Project_Vertex_Access (Item).Name = Project_Name;
+         Next (Iter);
+      end loop;
+      return Browser_Project_Vertex_Access (Item);
    end Find_Project;
 
    --------------------------------
@@ -213,7 +193,7 @@ package body Browsers.Projects is
    begin
       if V = null then
          V := new Browser_Project_Vertex;
-         Browsers.Canvas.Initialize
+         Initialize
            (V, Browser, Get_String (Name) & Prj.Project_File_Extension);
          V.Name    := Name;
 
@@ -250,7 +230,7 @@ package body Browsers.Projects is
         (Local : Project_Node_Id; Src : Browser_Project_Vertex_Access)
       is
          With_Clause : Project_Node_Id := First_With_Clause_Of (Local);
-         L           : Glide_Browser_Link;
+         L           : Browser_Link;
          Dest        : Browser_Project_Vertex_Access;
       begin
          Set_Right_Arrow (Src, False);
@@ -267,7 +247,7 @@ package body Browsers.Projects is
               (Browser, Project_Node_Of (With_Clause));
 
             if not Has_Link (Get_Canvas (Browser), Src, Dest) then
-               L := new Glide_Browser_Link_Record;
+               L := new Browser_Link_Record;
                Add_Link (Get_Canvas (Browser), L, Src, Dest);
             end if;
 
@@ -335,7 +315,7 @@ package body Browsers.Projects is
       Kernel      : constant Kernel_Handle := Get_Kernel (Browser);
       With_Clause : Project_Node_Id;
       Src, Dest   : Browser_Project_Vertex_Access;
-      L           : Glide_Browser_Link;
+      L           : Browser_Link;
       Iter        : Imported_Project_Iterator := Start
         (Root_Project => Root_Project, Recursive => True);
    begin
@@ -354,7 +334,7 @@ package body Browsers.Projects is
                Src := Add_Project_If_Not_Present (Browser, Current (Iter));
 
                if not Has_Link (Get_Canvas (Browser), Src, Dest) then
-                  L := new Glide_Browser_Link_Record;
+                  L := new Browser_Link_Record;
                   Add_Link (Get_Canvas (Browser), L, Src, Dest);
                end if;
             end if;
@@ -441,7 +421,7 @@ package body Browsers.Projects is
 
    function Contextual_Factory
      (Item    : access Browser_Project_Vertex;
-      Browser : access Glide_Browser_Record'Class;
+      Browser : access General_Browser_Record'Class;
       Event   : Gdk.Event.Gdk_Event;
       Menu    : Gtk.Menu.Gtk_Menu) return Selection_Context_Access
    is
@@ -622,7 +602,7 @@ package body Browsers.Projects is
       end if;
 
       return Contextual_Factory
-        (Item    => Glide_Browser_Item (Selected_Item (Browser)),
+        (Item    => Browser_Item (Selected_Item (Browser)),
          Browser => Browser,
          Event   => null,
          Menu    => null);
@@ -659,43 +639,8 @@ package body Browsers.Projects is
       Saw_Selected : Boolean;
       Child        : constant MDI_Child := Open_Project_Browser (Kernel);
       Browser      : Project_Browser;
-
-      function Check_Item
-        (Canvas : access Interactive_Canvas_Record'Class;
-         Item   : access Canvas_Item_Record'Class) return Boolean;
-      --  Check if Item matches the context
-
-      ----------------
-      -- Check_Item --
-      ----------------
-
-      function Check_Item
-        (Canvas : access Interactive_Canvas_Record'Class;
-         Item   : access Canvas_Item_Record'Class) return Boolean
-      is
-         pragma Unreferenced (Canvas);
-         It : constant Browser_Project_Vertex_Access :=
-           Browser_Project_Vertex_Access (Item);
-      begin
-         --  No need to test if we have already found one, but haven't
-         --  encountered the current selection.
-
-         if First_Match = null or else Saw_Selected then
-            if Match (Context, Get_String (It.Name)) /= -1 then
-               First_Match := Canvas_Item (Item);
-
-               if Saw_Selected then
-                  return False;
-               end if;
-            end if;
-         end if;
-
-         if Selected_Item (Browser) = Canvas_Item (Item) then
-            Saw_Selected := True;
-         end if;
-
-         return True;
-      end Check_Item;
+      Iter         : Item_Iterator;
+      It           :  Browser_Project_Vertex_Access;
 
    begin
       if Child = null then
@@ -710,7 +655,28 @@ package body Browsers.Projects is
       --  have no more item after the current one, we memorize the first
       --  matching item right away
 
-      For_Each_Item (Get_Canvas (Browser), Check_Item'Unrestricted_Access);
+      Iter := Start (Get_Canvas (Browser));
+      loop
+         It := Browser_Project_Vertex_Access (Get (Iter));
+         exit when It = null;
+
+         --  No need to test if we have already found one, but haven't
+         --  encountered the current selection.
+
+         if First_Match = null or else Saw_Selected then
+            if Match (Context, Get_String (It.Name)) /= -1 then
+               First_Match := Canvas_Item (It);
+
+               exit when Saw_Selected;
+            end if;
+         end if;
+
+         if Selected_Item (Browser) = Canvas_Item (It) then
+            Saw_Selected := True;
+         end if;
+
+         Next (Iter);
+      end loop;
 
       if First_Match /= null then
          Select_Item (Browser, First_Match, Refresh_Items => True);
