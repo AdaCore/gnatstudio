@@ -178,7 +178,7 @@ package VCS_View_API is
    --  Convenience function to get the current VCS system.
    --  If the creator of the current context is the VCS module, then
    --  the Ref will be obtained from the VCS Explorer, otherwise it
-   --  will be obtained from the ???
+   --  will be obtained from the project.
 
    procedure Query_Status_For_Project
      (Widget : access GObject_Record'Class;
