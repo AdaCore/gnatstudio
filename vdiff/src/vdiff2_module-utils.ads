@@ -83,15 +83,6 @@ package Vdiff2_Module.Utils is
    --  If Revert is True, create Orig_File from New_File and Diff_File.
    --  Display the result in the editor
 
-   procedure Move_Block
-     (Kernel       : Kernel_Handle;
-      Source_File  : Virtual_File;
-      Dest_File    : Virtual_File;
-      Source_Range : in out Diff_Range;
-      Dest_Range   : in out Diff_Range);
-   --  Copy the text in the range Source_Range to Dest_Range in Dest_File
-
-
    function Is_In_Diff_List
      (Selected_File : VFS.Virtual_File;
       List          : Diff_Head_List.List)
