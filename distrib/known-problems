@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 1.4.1
 
+- CB19-011 Keywords always case sensitive in custom languages
+  Problem:    When defining a custom language in an xml file, the keywords
+              regexp will always be case sensitive.
+  Workaround: Modify the regexp so that more than one casing is taken into
+              account.
+
 - CB18-005 Bad saving of the desktop when quitting from the welcome dialog
   Problem:    When quitting from the welcome dialog directly, the desktop
               file (.gps/desktop) is saved with incorrect values, leading
