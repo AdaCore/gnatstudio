@@ -71,7 +71,8 @@ package Glide_Main_Window is
    procedure Display_Default_Image (Kernel : Glide_Kernel.Kernel_Handle);
    --  Display the default image in the top right corner of the main window.
 
-   procedure Quit (Main_Window : access Glide_Window_Record'Class);
-   --  Ask the user whether the MDI childs should be saved, then exit GPS.
+   procedure Confirm_And_Quit (Main_Window : access Glide_Window_Record'Class);
+   --  Ask confirmation before quitting, and then exists GPS.
+   --  It will ask the user whether the MDI children should be saved.
 
 end Glide_Main_Window;

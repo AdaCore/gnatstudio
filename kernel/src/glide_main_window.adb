@@ -24,9 +24,13 @@ with Glib.Object;               use Glib.Object;
 with Glide_Kernel;              use Glide_Kernel;
 with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
 with Gtk.Box;                   use Gtk.Box;
+with Gtk.Check_Button;          use Gtk.Check_Button;
+with Gtk.Dialog;                use Gtk.Dialog;
 with Gtk.Enums;                 use Gtk.Enums;
+with Gtk.Frame;                 use Gtk.Frame;
 with Gtk.Image;                 use Gtk.Image;
 with Gtk.Main;                  use Gtk.Main;
+with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Window;                use Gtk.Window;
 with Gtk.Widget;                use Gtk.Widget;
 with Gtkada.Dialogs;            use Gtkada.Dialogs;
@@ -91,6 +95,54 @@ package body Glide_Main_Window is
         (Main_Window, Key, Menu_Items, Home_Dir, Prefix_Directory);
    end Gtk_New;
 
+   ----------------------
+   -- Confirm_And_Quit --
+   ----------------------
+
+   procedure Confirm_And_Quit
+     (Main_Window : access Glide_Window_Record'Class)
+   is
+      Dialog : constant Gtk_Dialog := Create_Gtk_Dialog
+        (Msg            => -"Are you sure you want to quit ?",
+         Dialog_Type    => Confirmation,
+         Title          => -"Exit GPS",
+         Parent         => Gtk_Window (Main_Window));
+      Button : Gtk_Widget;
+      Check  : Gtk_Check_Button;
+      Frame  : Gtk_Frame;
+   begin
+      Gtk_New (Frame, -"Actions before exiting");
+
+      Gtk_New (Check, -"Save current desktop and show next time");
+      Add (Frame, Check);
+      Pack_Start (Get_Vbox (Dialog), Frame);
+
+      Set_Active (Check, Get_Pref (Main_Window.Kernel, Save_Desktop_On_Exit));
+
+      Button := Add_Button (Dialog, Stock_Yes, Gtk_Response_Yes);
+      Button := Add_Button (Dialog, Stock_No,  Gtk_Response_No);
+      Grab_Default (Button);
+
+      Show_All (Dialog);
+
+      if Run (Dialog) = Gtk_Response_Yes
+        and then Save_All_MDI_Children (Main_Window.Kernel)
+      then
+         --  Save the status for the next time GPS is run
+         Set_Pref
+           (Main_Window.Kernel, Save_Desktop_On_Exit, Get_Active (Check));
+
+         if Get_Active (Check) then
+            Save_Desktop (Main_Window.Kernel);
+         end if;
+
+         Main_Quit;
+      else
+         Destroy (Dialog);
+      end if;
+   end Confirm_And_Quit;
+
+
    ---------------------
    -- Delete_Callback --
    ---------------------
@@ -100,33 +152,10 @@ package body Glide_Main_Window is
       Params : Glib.Values.GValues) return Boolean
    is
       pragma Unreferenced (Params);
-
-      Win    : constant Glide_Window := Glide_Window (Widget);
-      Button : constant Message_Dialog_Buttons :=
-        Message_Dialog
-          (Msg            => -"Are you sure you want to quit ?",
-           Dialog_Type    => Confirmation,
-           Buttons        => Button_Yes or Button_No,
-           Default_Button => Button_No,
-           Parent         => Gtk_Window (Win));
    begin
-      if Button = Button_Yes then
-         Quit (Win);
-      end if;
-
+      Confirm_And_Quit (Glide_Window (Widget));
       return True;
    end Delete_Callback;
-
-   ----------
-   -- Quit --
-   ----------
-
-   procedure Quit (Main_Window : access Glide_Window_Record'Class) is
-   begin
-      if Save_All_MDI_Children (Main_Window.Kernel) then
-         Main_Quit;
-      end if;
-   end Quit;
 
    -------------------------
    -- Preferences_Changed --
