@@ -45,7 +45,6 @@ with Src_Highlighting;          use Src_Highlighting;
 
 with Interfaces.C.Strings;      use Interfaces.C.Strings;
 with System;
-with File_Utils;                use File_Utils;
 with Src_Info;                  use Src_Info;
 with Glide_Intl;                use Glide_Intl;
 
@@ -2090,7 +2089,7 @@ package body Src_Editor_Buffer is
       Buffer.Inserting := False;
       Buffer.Modified_Auto := False;
 
-      Buffer.Timestamp := To_Timestamp (File_Time_Stamp (Filename));
+      Buffer.Timestamp := File_Time_Stamp (Filename);
 
       Empty_Queue (Buffer.Queue);
       Buffer.Current_Command := null;
@@ -2120,40 +2119,33 @@ package body Src_Editor_Buffer is
       Internal : Boolean;
       Success  : out Boolean)
    is
-      FD              : File_Descriptor := Invalid_FD;
+      FD              : Writable_File;
       Terminator      : Line_Terminator_Style := Buffer.Line_Terminator;
       Buffer_Line     : Buffer_Line_Type;
-      Locale_Filename : constant String := Locale_Full_Name (Filename);
       Force_Write     : Boolean := False;
       --  Whether the file mode has been forced to writable.
 
-      procedure New_Line (FD : File_Descriptor);
+      procedure New_Line (FD : in out Writable_File);
       --  Write a new line on FD.
 
-      procedure New_Line (FD : File_Descriptor) is
+      procedure New_Line (FD : in out Writable_File) is
          NL            : aliased constant String := ASCII.CR & ASCII.LF;
-         Bytes_Written : Integer;
-         pragma Unreferenced (Bytes_Written);
-
       begin
          case Terminator is
-            when CR_LF =>
-               Bytes_Written := Write (FD, NL (1)'Address, 2);
-            when CR =>
-               Bytes_Written := Write (FD, NL (1)'Address, 1);
-            when Unknown | LF =>
-               Bytes_Written := Write (FD, NL (2)'Address, 1);
+            when CR_LF        => Write (FD, NL (1 .. 2));
+            when CR           => Write (FD, NL (1 .. 1));
+            when Unknown | LF => Write (FD, NL (2 .. 2));
          end case;
       end New_Line;
 
    begin
       Success := True;
 
-      FD := Create_File (Locale_Filename, Fmode => Binary);
+      FD := Write_File (Filename);
 
       --  The file could not be opened, check whether it is read-only.
 
-      if FD = Invalid_FD
+      if FD = Invalid_File
         and then Is_Regular_File (Filename)
         and then not Is_Writable (Filename)
       then
@@ -2174,12 +2166,12 @@ package body Src_Editor_Buffer is
             if Buttons = Button_Yes then
                Force_Write := True;
                Set_Writable (Filename, True);
-               FD := Create_File (Locale_Filename, Fmode => Binary);
+               FD := Write_File (Filename);
             end if;
          end;
       end if;
 
-      if FD = Invalid_FD then
+      if FD = Invalid_File then
          Insert
            (Buffer.Kernel,
             -"Could not open file for writing: " & Full_Name (Filename).all,
@@ -2238,13 +2230,10 @@ package body Src_Editor_Buffer is
                            Index := UTF8_Find_Prev_Char (Contents, Index);
                         end loop;
 
-                        Bytes_Written := Write
-                          (FD, Contents (Contents'First)'Address, Index);
+                        Write (FD, Contents (Contents'First .. Index));
 
                      else
-                        Bytes_Written := Write
-                          (FD, Contents (Contents'First)'Address,
-                           Contents'Length);
+                        Write (FD, Contents);
                      end if;
                   end;
 
@@ -2306,7 +2295,7 @@ package body Src_Editor_Buffer is
          --  To avoid consuming up all File Descriptors, we catch all
          --  exceptions here, and close the current file descriptor.
 
-         if FD /= Invalid_FD then
+         if FD /= Invalid_File then
             Close (FD);
          end if;
    end Internal_Save_To_File;
@@ -2345,8 +2334,7 @@ package body Src_Editor_Buffer is
          return;
       end if;
 
-      Buffer.Timestamp := To_Timestamp
-        (File_Time_Stamp (Get_Filename (Buffer)));
+      Buffer.Timestamp := File_Time_Stamp (Get_Filename (Buffer));
 
       if Buffer.Filename /= VFS.No_File then
          Delete (Create (Full_Filename =>
@@ -3379,7 +3367,7 @@ package body Src_Editor_Buffer is
       Ask_User : Boolean := False;
       Force    : Boolean := False) return Boolean
    is
-      New_Timestamp : Timestamp;
+      New_Timestamp : Ada.Calendar.Time;
       Dialog : Gtk_Dialog;
       Button : Gtk_Widget;
       pragma Unreferenced (Button);
@@ -3391,7 +3379,7 @@ package body Src_Editor_Buffer is
       if Buffer.Filename /= VFS.No_File
         and then Is_Regular_File (Buffer.Filename)
       then
-         New_Timestamp := To_Timestamp (File_Time_Stamp (Buffer.Filename));
+         New_Timestamp := File_Time_Stamp (Buffer.Filename);
 
          if New_Timestamp > Buffer.Timestamp then
             if Force then
