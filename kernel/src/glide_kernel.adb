@@ -1133,7 +1133,7 @@ package body Glide_Kernel is
             Status             => Status);
 
          --  And search for the body of that one
-         if Status = Success then
+         if Status = Success or else Status = Fuzzy_Match then
             Find_Next_Body
               (Kernel      => Kernel,
                Lib_Info    => Lib_Info,
@@ -1313,6 +1313,11 @@ package body Glide_Kernel is
    begin
       Find_Declaration
         (Lib_Info, File_Name, Entity_Name, Line, Column, Entity, Status);
+
+      --  ??? Should have the preference for the handling of fuzzy matches:
+      --   - consider it as a no match: set Status to Entity_Not_Found;
+      --   - consider it as overloaded entitty: same as below;
+      --   - use the closest match: nothing to do.
 
       if Status = Overloaded_Entity_Found then
          Select_Entity_Declaration
