@@ -24,7 +24,7 @@ with Glide_Kernel.Modules;  use Glide_Kernel.Modules;
 with Glide_Intl;            use Glide_Intl;
 with Refactoring.Rename;    use Refactoring.Rename;
 with Src_Info.Queries;      use Src_Info.Queries;
-
+with String_Utils;          use String_Utils;
 with Glib.Object;           use Glib.Object;
 with Gtk.Menu;              use Gtk.Menu;
 with Gtk.Menu_Item;         use Gtk.Menu_Item;
@@ -54,13 +54,17 @@ package body Refactoring_Module is
       if Context.all in Entity_Selection_Context'Class then
          Entity := Get_Entity (Entity_Selection_Context_Access (Context));
 
-         Gtk_New (Item, -"Refactor");
+         if Entity = No_Entity_Information then
+            return;
+         end if;
+
+         Gtk_New (Item, -"Refactoring");
          Append (Menu, Item);
 
          Gtk_New (Submenu);
          Set_Submenu (Item, Submenu);
 
-         Gtk_New (Item, -"Rename " & Get_Name (Entity));
+         Gtk_New (Item, -"Rename " & Krunch (Get_Name (Entity)));
          Append (Submenu, Item);
          Context_Callback.Connect
            (Item, "activate",
