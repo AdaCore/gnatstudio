@@ -178,6 +178,11 @@ Optionally you can also pass the full contents of an XML file, starting from the
   <shell_doc name="GPS.pwd">
      <return>A string</return>
      <description>Print name of current/working directory</description>
+     <example lang="python">
+        This command will have the same return value as the standard Python
+        command os.getcwd(). The current directory can also be changed through
+        a call to os.chdir("dir").
+     </example>
   </shell_doc>
 
   <shell_doc name="GPS.cd">
@@ -799,11 +804,20 @@ If the attribute value is stored as a simple string, a list with a single elemen
   <shell_doc name="GPS.scenario_variables"
              real_name="GPS.Project.scenario_variables">
      <return>hash table associating variable names and values</return>
-     <description>Return the list of scenario variables for the current project hierarchy, and their current value. These variables are visible at the top of the Project View in the GPS window</description>
+     <description>Return the list of scenario variables for the current project hierarchy, and their current value. These variables are visible at the top of the Project View in the GPS window. The initial value for these variables is set from the environment variables' value when GPS is started. However, changing the value of the environment variable later on doesn't change the value of the scenario variable.</description>
      <example lang="python">
         GPS.scenario_variables["foo"]
         returns the current value for the variable foo
      </example>
+     <see_also name="GPS.Project.set_scenario_variable()" />
+  </shell_doc>
+
+  <shell_doc name="GPS.set_scenario_variable"
+             real_name="GPS.Project.set_scenario_variable">
+      <param name="name">A string</param>
+      <param name="value">A string</param>
+      <description>Change the value of a scenario variable. You need to call GPS.Project.recompute() to activate this change (so that multiple changes to the project can be grouped</description>
+      <see_also name="GPS.Project.scenario_variables()" />
   </shell_doc>
 
   <shell_doc name="GPS.scenario_variables_cmd_line"
