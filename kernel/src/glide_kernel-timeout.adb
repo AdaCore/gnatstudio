@@ -232,6 +232,9 @@ package body Glide_Kernel.Timeout is
       begin
          if Exec = null then
             Success := False;
+            Glide_Kernel.Console.Insert
+              (Kernel, -"Executable not found on PATH: " & Command,
+               Mode => Error);
             return;
          end if;
 
