@@ -934,8 +934,10 @@ package body CPP_Parser is
                      exit when Entity /= null;
 
                   when IU | COM | COV | SN_IN | SU | UD =>
-                     Trace (Me, "Do not know how to lookup entities in "
-                            & Table_Type'Img & " table");
+                     if Active (Me) then
+                        Trace (Me, "Do not know how to lookup entities in "
+                               & Table_Type'Img & " table");
+                     end if;
                end case;
             end if;
          end loop;
@@ -1285,6 +1287,9 @@ package body CPP_Parser is
       Entity, Class : Entity_Information;
       Var      : MD_Table;
       Success  : Boolean;
+      M        : MI_Table;
+      P        : Pair;
+      S        : Source_File;
    begin
       Find (DB        => Handler.SN_Table (MD),
             Class     => Sym.Key (Sym.Class.First .. Sym.Class.Last),
@@ -1314,6 +1319,44 @@ package body CPP_Parser is
                          Line   => Var.End_Position.Line,
                          Column => Column_Type (Var.End_Position.Column)),
             Kind     => End_Of_Spec);
+
+         Set_Attributes
+           (Entity, (Global => (Var.Attributes and SN_STATIC) = 0,
+                     others => False));
+
+         --  Search the location of the body, so that the contextual menu
+         --  "Go to body" is also activated.
+
+         Set_Cursor_At
+           (Handler.SN_Table (MI), Name => Get_Name (Entity).all);
+         loop
+            Get_Pair (Handler.SN_Table (MI), Next_By_Key, Result => P);
+            exit when P = No_Pair;
+
+            Parse_Pair (P, M);
+
+            exit when M.Data (M.Arg_Types.First .. M.Arg_Types.Last) =
+                Var.Data (Var.Arg_Types.First .. Var.Arg_Types.Last);
+         end loop;
+
+         Release_Cursor (Handler.SN_Table (MI));
+
+         if P /= No_Pair then
+            S := Get_Or_Create
+              (Handler.Db, M.Key (M.File_Name.First .. M.File_Name.Last));
+            Add_Reference
+              (Entity   => Entity,
+               Location => (File   => S,
+                            Line   => M.Start_Position.Line,
+                            Column => Column_Type (M.Start_Position.Column)),
+               Kind     => Body_Entity);
+            Set_End_Of_Scope
+              (Entity   => Entity,
+               Location => (File   => S,
+                            Line   => M.End_Position.Line,
+                            Column => Column_Type (M.End_Position.Column)),
+               Kind     => End_Of_Body);
+         end if;
       end if;
    end Parse_MD_Table;
 
