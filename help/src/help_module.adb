@@ -54,6 +54,7 @@ with Ada.Exceptions;               use Ada.Exceptions;
 with Find_Utils;                   use Find_Utils;
 with File_Utils;                   use File_Utils;
 with String_Utils;                 use String_Utils;
+with Basic_Types;                  use Basic_Types;
 with Gtk.Clipboard;                use Gtk.Clipboard;
 with Generic_List;
 with Ada.Unchecked_Deallocation;
@@ -81,8 +82,9 @@ package body Help_Module is
    Anchor_Cst : aliased constant String := "anchor";
    Dir_Cst    : aliased constant String := "directory";
    Name_Cst   : aliased constant String := "name";
-   Help_Cmd_Parameters : constant Cst_Argument_List :=
-     (1 => Url_Cst'Access, 2 => Anchor_Cst'Access);
+   Navigation_Cst : aliased constant String := "navigation";
+   Browse_Cmd_Parameters : constant Cst_Argument_List :=
+     (1 => Url_Cst'Access, 2 => Anchor_Cst'Access, 3 => Navigation_Cst'Access);
    Add_Doc_Cmd_Parameters : constant Cst_Argument_List :=
      (1 => Dir_Cst'Access);
    Getdoc_Parameters : constant Cst_Argument_List :=
@@ -306,6 +308,12 @@ package body Help_Module is
    pragma Convention (C, On_Destroy_Html_Class);
    --  Called when an instance of the HTML class is destroyed
 
+   procedure Save_Location
+     (Kernel : access Kernel_Handle_Record'Class;
+      File   : VFS.Virtual_File;
+      Anchor : String := "");
+   --  Save the location in the list of back/forward locations
+
    -----------------
    -- Create_Html --
    -----------------
@@ -528,11 +536,22 @@ package body Help_Module is
          Free (Inst);
 
       elsif Command = "browse" then
-         Name_Parameters (Data, Help_Cmd_Parameters);
-         Open_HTML_File
-           (Get_Kernel (Data),
-            File   => Create_Html (Nth_Arg (Data, 1), Get_Kernel (Data)),
-            Anchor => Nth_Arg (Data, 2, Default => ""));
+         Name_Parameters (Data, Browse_Cmd_Parameters);
+         declare
+            File : constant Virtual_File :=
+              Create_Html (Nth_Arg (Data, 1), Get_Kernel (Data));
+            Anchor : constant String := Nth_Arg (Data, 2, Default => "");
+            Navigation : constant Boolean :=
+              Nth_Arg (Data, 3, Default => True);
+         begin
+            if Navigation then
+               Save_Location (Get_Kernel (Data), File, Anchor);
+            end if;
+            Open_HTML_File
+              (Get_Kernel (Data),
+               File   => File,
+               Anchor => Anchor);
+         end;
 
       elsif Command = "add_doc_directory" then
          declare
@@ -641,9 +660,10 @@ package body Help_Module is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
       Item : constant String_Menu_Item := String_Menu_Item (Widget);
+      HTML_File : VFS.Virtual_File := VFS.No_File;
    begin
       if Item.File /= VFS.No_File then
-         Open_Html (Kernel, Create_Html (Full_Name (Item.File).all, Kernel));
+         HTML_File := Create_Html (Full_Name (Item.File).all, Kernel);
       elsif Item.Shell /= null then
          declare
             Errors : aliased Boolean := False;
@@ -662,9 +682,13 @@ package body Help_Module is
                   & Item.Shell.all,
                   Mode => Error);
             else
-               Open_Html (Kernel, Create_Html (File, Kernel));
+               HTML_File := Create_Html (File, Kernel);
             end if;
          end;
+      end if;
+
+      if HTML_File /= VFS.No_File then
+         Open_Html (Kernel, HTML_File);
       end if;
 
    exception
@@ -1280,6 +1304,7 @@ package body Help_Module is
       Vadj   : Gtk_Adjustment;
       pragma Unreferenced (Result);
    begin
+      Trace (Me, "Open_HTML_File " & Full_Name (File).all & " #" & Anchor);
       Html := Display_Help (Kernel, File);
 
       if Html /= null then
@@ -1290,8 +1315,29 @@ package body Help_Module is
             Set_Value (Vadj, Get_Lower (Vadj));
             Set_Vadjustment (Html, Vadj);
          end if;
+      else
+         Trace (Me, "Couldn't display help");
       end if;
    end Open_HTML_File;
+
+   -------------------
+   -- Save_Location --
+   -------------------
+
+   procedure Save_Location
+     (Kernel : access Kernel_Handle_Record'Class;
+      File   : VFS.Virtual_File;
+      Anchor : String := "")
+   is
+      Args : Argument_List :=
+        (1 => new String'("HTML.browse"),
+         2 => new String'(Full_Name (File).all),
+         3 => new String'(Anchor),
+         4 => new String'("False"));
+   begin
+      Execute_GPS_Shell_Command (Kernel, "add_location_command", Args);
+      Free (Args);
+   end Save_Location;
 
    --------------------
    -- Open_Help_Hook --
@@ -1302,7 +1348,6 @@ package body Help_Module is
       Data      : Hooks_Data'Class) return Boolean
    is
       D    : constant Html_Hooks_Args := Html_Hooks_Args (Data);
-      Args : Argument_List (1 .. 3);
       Html : Virtual_File := Create_Html (Full_Name (D.File).all, Kernel);
    begin
       if Html = VFS.No_File then
@@ -1312,15 +1357,7 @@ package body Help_Module is
       end if;
 
       if D.Enable_Navigation then
-         Args (1) := new String'("HTML.browse");
-         Args (2) := new String'(Full_Name (D.File).all);
-         Args (3) := new String'(D.Anchor);
-
-         Execute_GPS_Shell_Command (Kernel, "add_location_command", Args);
-
-         for J in Args'Range loop
-            Free (Args (J));
-         end loop;
+         Save_Location (Kernel, D.File, D.Anchor);
       end if;
 
       return True;
@@ -1710,7 +1747,7 @@ package body Help_Module is
         (Kernel,
          Command      => "browse",
          Minimum_Args => 1,
-         Maximum_Args => 2,
+         Maximum_Args => 3,
          Class        => Help_Module_ID.Html_Class,
          Static_Method => True,
          Handler      => Command_Handler'Access);
