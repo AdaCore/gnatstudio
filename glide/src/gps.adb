@@ -316,7 +316,6 @@ begin
       File     : constant String := '/' & (-"File") & '/';
       Edit     : constant String := '/' & (-"Edit") & '/';
       Navigate : constant String := '/' & (-"Navigate") & '/';
-      Project  : constant String := '/' & (-"Project") & '/';
       Tools    : constant String := '/' & (-"Tools") & '/';
 
    begin
@@ -339,13 +338,13 @@ begin
         (GPS.Kernel, Navigate & (-"Previous Procedure")), False);
 
       Set_Sensitive (Find_Menu_Item
-        (GPS.Kernel, Project & (-"Generate API doc")), False);
-      Set_Sensitive (Find_Menu_Item
         (GPS.Kernel, Tools & (-"Code Fixing")), False);
       Set_Sensitive (Find_Menu_Item
         (GPS.Kernel, Tools & (-"Profile")), False);
       Set_Sensitive (Find_Menu_Item
         (GPS.Kernel, Tools & (-"Memory Analyzer")), False);
+      Set_Sensitive (Find_Menu_Item
+        (GPS.Kernel, Tools & (-"Generate API doc")), False);
    end;
 
    loop
