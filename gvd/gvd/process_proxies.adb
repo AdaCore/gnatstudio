@@ -22,11 +22,9 @@ pragma Warnings (Off);
 with GNAT.Expect;           use GNAT.Expect;
 pragma Warnings (On);
 
-with Gdk.Event; use Gdk.Event;
-
+with Gdk.Main;              use Gdk.Main;
 with GNAT.Regpat;           use GNAT.Regpat;
 with GNAT.IO;               use GNAT.IO;
-with Gtk.Main;              use Gtk.Main;
 with System;                use System;
 with Unchecked_Conversion;
 with Unchecked_Deallocation;
@@ -209,12 +207,7 @@ package body Process_Proxies is
       Matched : out GNAT.Regpat.Match_Array;
       Timeout : Integer := 20)
    is
-      Event      : Gdk_Event;
       Num        : Integer := 1;
-      Num_Events : Positive;
-      Max_Events : constant := 30;
-      --  Limit the number of events to process in one iteration
-
    begin
       --  Reset the interrupted flag before processing.
 
@@ -263,16 +256,7 @@ package body Process_Proxies is
                --  We limit the number of events processed so as to preserve
                --  efficiency.
 
-               Num_Events := 1;
-               while Gtk.Main.Events_Pending
-                 and then Num_Events <= Max_Events
-               loop
-                  Get (Event);
-                  if Event /= null then
-                     Do_Event (Event);
-                  end if;
-                  Num_Events := Num_Events + 1;
-               end loop;
+               Gdk.Main.Flush;
 
                exit when Timeout = 0 or else Num = Timeout;
                Num := Num + 1;
