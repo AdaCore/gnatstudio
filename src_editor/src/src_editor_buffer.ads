@@ -321,6 +321,14 @@ package Src_Editor_Buffer is
    procedure Redo (Buffer : access Source_Buffer_Record);
    --  Redo last undone command.
 
+   function Do_Indentation
+     (Buffer   : Source_Buffer;
+      Lang     : Language.Language_Access;
+      New_Line : Boolean := True) return Boolean;
+   --  If supported by the language and if the preferences are activated,
+   --  automatically indent at the current cursor position.
+   --  If New_Line is True, insert a new line and insert spaces on the new line
+
    procedure Enqueue
      (Buffer  : access Source_Buffer_Record;
       Command : Command_Access);
@@ -381,12 +389,6 @@ package Src_Editor_Buffer is
      (Buffer : access Source_Buffer_Record)
       return Integer;
    --  Return the total number of times the buffer was referenced.
-
-   procedure Do_Completion (Buffer : access Source_Buffer_Record);
-   --  Complete the current insertion, or continue the current completion.
-
-   procedure Jump_To_Delimiter (Buffer : access Source_Buffer_Record);
-   --  Jump to the other delimiter, if applicable.
 
    procedure Add_Controls (Buffer : access Source_Buffer_Record);
    --  Connect the Undo/Redo buttons to the queue containing the buffer
@@ -597,6 +599,44 @@ package Src_Editor_Buffer is
    function Has_Block_Information
      (Editor : access Source_Buffer_Record) return Boolean;
    --  Returh whether the buffer has relevant block information.
+
+   --------------
+   -- Commands --
+   --------------
+
+   type Jump_To_Delimiter_Command is new Commands.Root_Command
+      with record
+         Kernel : Glide_Kernel.Kernel_Handle;
+      end record;
+   function Execute (Command : access Jump_To_Delimiter_Command)
+      return Command_Return_Type;
+   --  This commands jmps to the next delimiter for the one currently
+   --  under the cursor.
+
+   type Completion_Command is new Commands.Root_Command with record
+      Kernel : Glide_Kernel.Kernel_Handle;
+   end record;
+   function Execute (Command : access Completion_Command)
+      return Command_Return_Type;
+   --  This command completes the word under the cursor based on the
+   --  contents of the buffer.
+
+   type Indentation_Command is new Commands.Root_Command with record
+      Kernel : Glide_Kernel.Kernel_Handle;
+   end record;
+   function Execute (Command : access Indentation_Command)
+      return Command_Return_Type;
+   --  This command reindents the current line
+
+   type Src_Editor_Key_Context is new Glide_Kernel.Key_Context_Record
+      with null record;
+   function Get_Description
+     (Context : access Src_Editor_Key_Context) return String;
+   function Context_Matches
+     (Context : access Src_Editor_Key_Context;
+      Event   : Glide_Kernel.Event_Data) return Boolean;
+   --  A key context that matches if the current widget is a source editor
+
 
    --------------
    --  Signals --

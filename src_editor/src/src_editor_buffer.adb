@@ -61,6 +61,7 @@ with Glide_Kernel.Project;      use Glide_Kernel.Project;
 with Ada.Exceptions;            use Ada.Exceptions;
 with String_Utils;              use String_Utils;
 with Traces;                    use Traces;
+with Src_Editor_View;           use Src_Editor_View;
 
 with Pango.Font;                use Pango.Font;
 with Pango.Layout;              use Pango.Layout;
@@ -905,32 +906,6 @@ package body Src_Editor_Buffer is
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Delete_Range_Before_Handler;
-
-   -----------------------
-   -- Jump_To_Delimiter --
-   -----------------------
-
-   procedure Jump_To_Delimiter (Buffer : access Source_Buffer_Record) is
-      On_Cursor_Iter       : Gtk_Text_Iter;
-      First_Highlight_Iter : Gtk_Text_Iter;
-      Last_Highlight_Iter  : Gtk_Text_Iter;
-   begin
-      if not Buffer.Has_Delimiters_Highlight then
-         return;
-      end if;
-
-      Get_Iter_At_Mark
-        (Buffer, First_Highlight_Iter, Buffer.Start_Delimiters_Highlight);
-      Get_Iter_At_Mark
-        (Buffer, Last_Highlight_Iter, Buffer.End_Delimiters_Highlight);
-      Get_Iter_At_Mark (Buffer, On_Cursor_Iter, Buffer.Insert_Mark);
-
-      if Equal (First_Highlight_Iter, On_Cursor_Iter) then
-         Place_Cursor (Buffer, Last_Highlight_Iter);
-      else
-         Place_Cursor (Buffer, First_Highlight_Iter);
-      end if;
-   end Jump_To_Delimiter;
 
    -----------------------------
    -- Line_Highlights_Changed --
@@ -2978,275 +2953,6 @@ package body Src_Editor_Buffer is
       return Buffer.References;
    end Get_Ref_Count;
 
-   -------------------
-   -- Do_Completion --
-   -------------------
-
-   procedure Do_Completion (Buffer : access Source_Buffer_Record) is
-
-      use String_List_Utils.String_List;
-
-      procedure Extend_Completions_List;
-      --  Add an item to the buffer's completion, or mark it as
-      --  complete. Place the completion node to the newly added
-      --  item, or to Null if the completion was finished.
-
-      -----------------------------
-      -- Extend_Completions_List --
-      -----------------------------
-
-      procedure Extend_Completions_List is
-         Data       : Completion_Data renames Buffer.Completion;
-         Word_Begin : Gtk_Text_Iter;
-         Word_End   : Gtk_Text_Iter;
-         Iter_Back  : Gtk_Text_Iter;
-         Iter_Forward : Gtk_Text_Iter;
-
-         Aux        : Gtk_Text_Iter;
-         Success    : Boolean := True;
-         Found      : Boolean := False;
-         Word_Found : Boolean := False;
-
-         Count      : Gint := 1;
-      begin
-         if Data.Complete then
-            if Data.Node = Null_Node then
-               Data.Node := First (Data.List);
-            else
-               Data.Node := Next (Data.Node);
-            end if;
-
-            return;
-         end if;
-
-         --  Loop until a new word with the right prefix is found.
-
-         Get_Iter_At_Mark (Buffer, Iter_Back, Data.Previous_Mark);
-         Get_Iter_At_Mark (Buffer, Iter_Forward, Data.Next_Mark);
-
-         while not Found loop
-            --  If a boundary is reached, force the search in the other
-            --  direction, otherwise extend search in the opposite direction
-
-            if Data.Top_Reached then
-               Data.Backwards := False;
-            elsif Data.Bottom_Reached then
-               Data.Backwards := True;
-            else
-               Data.Backwards := not Data.Backwards;
-            end if;
-
-            --  Find a word and examine it.
-
-            Count := 0;
-
-            while not Word_Found loop
-               if Data.Backwards then
-                  --  Find the previous real word, if it exists.
-
-                  Backward_Word_Start (Iter_Back, Success);
-                  Count := Count + 1;
-
-                  if Success then
-                     Copy (Iter_Back, Aux);
-                     Backward_Char (Aux, Success);
-
-                     if not Success or else Get_Char (Aux) /= '_' then
-                        Copy (Iter_Back, Word_Begin);
-                        Copy (Iter_Back, Word_End);
-                        Forward_Word_Ends (Word_End, Count, Success);
-
-                        Word_Found := True;
-                     end if;
-                  else
-                     exit;
-                  end if;
-
-               else
-                  --  Find the next real word.
-
-                  Forward_Word_End (Iter_Forward, Success);
-                  Count := Count + 1;
-
-                  if Success then
-                     if Get_Char (Iter_Forward) /= '_' then
-                        Copy (Iter_Forward, Word_End);
-                        Copy (Iter_Forward, Word_Begin);
-                        Backward_Word_Starts (Word_Begin, Count, Success);
-
-                        Word_Found := True;
-                     end if;
-                  else
-                     exit;
-                  end if;
-               end if;
-            end loop;
-
-            if Word_Found then
-               --  We have a valid word between Word_Begin and Word_End.
-
-               declare
-                  S : constant String := Get_Slice (Word_Begin, Word_End);
-               begin
-                  --  If the word has the right prefix, and is not already
-                  --  in the list, then add it to the list and point to it,
-                  --  otherwise continue extending the search.
-                  --
-                  --  The string comparison below is correct, since both
-                  --  strings are UTF-8.
-
-                  if S'Length > Data.Prefix'Length
-                    and then S
-                      (S'First .. S'First - 1 + Data.Prefix'Length)
-                      = Data.Prefix.all
-                    and then not Is_In_List
-                      (Data.List,
-                       S (S'First + Data.Prefix'Length .. S'Last))
-                  then
-                     Found := True;
-
-                     if Data.Backwards then
-                        Move_Mark (Buffer, Data.Previous_Mark, Word_Begin);
-                     else
-                        Move_Mark (Buffer, Data.Next_Mark, Word_End);
-                     end if;
-
-                     Append
-                       (Data.List,
-                        S (S'First + Data.Prefix'Length .. S'Last));
-
-                     Data.Node := Last (Data.List);
-                  end if;
-
-                  Word_Found := False;
-               end;
-            else
-               if Data.Backwards then
-                  Data.Top_Reached := True;
-               else
-                  Data.Bottom_Reached := True;
-               end if;
-
-               if Data.Top_Reached and then Data.Bottom_Reached then
-                  Data.Complete := True;
-
-                  if Data.Node /= Null_Node then
-                     Data.Node := Next (Data.Node);
-                  end if;
-
-                  return;
-               else
-                  null;
-               end if;
-            end if;
-         end loop;
-      end Extend_Completions_List;
-
-      Command : Editor_Replace_Slice;
-      Delete  : Editor_Command;
-
-      Iter    : Gtk_Text_Iter;
-      Prev    : Gtk_Text_Iter;
-      Success : Boolean;
-
-      Text    : GNAT.OS_Lib.String_Access;
-
-   begin
-      if Is_Empty (Buffer.Completion) then
-         Get_Iter_At_Mark (Buffer, Iter, Buffer.Insert_Mark);
-
-         --  If the completions list is empty, that means we have to
-         --  initiate the mark data and launch the first search.
-
-         End_Action (Buffer);
-
-         --  At this point the completion data is reset.
-         --  Get the completion suffix.
-
-         Copy (Iter, Prev);
-         Backward_Char (Prev, Success);
-
-         if not Success then
-            return;
-         end if;
-
-         while Is_Entity_Letter (Get_Char (Prev)) loop
-            Backward_Char (Prev, Success);
-
-            exit when not Success;
-         end loop;
-
-         if Success then
-            Forward_Char (Prev, Success);
-         end if;
-
-         declare
-            P : constant String := Get_Slice (Prev, Iter);
-         begin
-            if P /= "" then
-               Buffer.Completion.Prefix := new String'(P);
-
-               Move_Mark (Buffer, Buffer.Completion.Mark, Iter);
-               Move_Mark (Buffer, Buffer.Completion.Previous_Mark, Iter);
-               Move_Mark (Buffer, Buffer.Completion.Next_Mark, Iter);
-
-               Extend_Completions_List;
-            else
-               Clear (Buffer.Completion);
-               return;
-
-            end if;
-         end;
-      else
-         Extend_Completions_List;
-      end if;
-
-      if Buffer.Completion.Node /= Null_Node then
-         Text := new String'(Data (Buffer.Completion.Node));
-      else
-         Text := new String'("");
-      end if;
-
-      Get_Iter_At_Mark (Buffer, Prev, Buffer.Completion.Mark);
-      Get_Iter_At_Mark (Buffer, Iter, Buffer.Insert_Mark);
-      Buffer.Inserting := True;
-
-      if Text.all = ""
-        and then
-          (Get_Line (Prev) /= Get_Line (Iter)
-           or else Get_Line_Offset (Prev) /= Get_Line_Offset (Iter))
-      then
-         Create (Delete,
-                 Deletion,
-                 Source_Buffer (Buffer),
-                 False,
-                 Integer (Get_Line (Prev)),
-                 Integer (Get_Line_Offset (Prev)),
-                 Forward);
-
-         Set_Text (Delete, Get_Slice (Prev, Iter));
-         Enqueue (Buffer, Command_Access (Delete));
-
-      else
-         Create
-           (Command,
-            Source_Buffer (Buffer),
-            Natural (Get_Line (Prev)),
-            Natural (Get_Line_Offset (Prev)),
-            Natural (Get_Line (Iter)),
-            Natural (Get_Line_Offset (Iter)),
-            Text.all,
-            True);
-         Enqueue (Buffer, Command_Access (Command));
-      end if;
-
-      Buffer.Current_Command := null;
-
-      GNAT.OS_Lib.Free (Text);
-
-      Buffer.Inserting := False;
-   end Do_Completion;
-
    -----------
    -- Clear --
    -----------
@@ -4022,5 +3728,679 @@ package body Src_Editor_Buffer is
    begin
       return Editor.Parse_Blocks;
    end Has_Block_Information;
+
+   --------------------
+   -- Do_Indentation --
+   --------------------
+
+   function Do_Indentation
+     (Buffer   : Source_Buffer;
+      Lang     : Language_Access;
+      New_Line : Boolean := True) return Boolean
+   is
+      Indent_Style  : Indentation_Kind;
+
+      Start         : Gtk_Text_Iter;
+      Pos           : Gtk_Text_Iter;
+      Iter          : Gtk_Text_Iter;
+      Indent        : Natural;
+      Next_Indent   : Natural;
+      Ignore        : Natural;
+      Line, Col     : Gint;
+      Current_Line  : Gint;
+      Offset        : Integer;
+      Global_Offset : Integer := 0;
+
+      Blanks        : Natural;
+      C_Str         : Gtkada.Types.Chars_Ptr := Gtkada.Types.Null_Ptr;
+      Line_Ends     : Boolean := True;
+      Line_Start    : Natural;
+      Line_End      : Natural;
+      Result        : Boolean;
+      Slice_Length  : Natural;
+      Slice         : Unchecked_String_Access;
+      pragma Suppress (Access_Check, Slice);
+      Index         : Integer;
+      Replace_Cmd   : Editor_Replace_Slice;
+      Tabs_Used     : Boolean := False;
+      Char          : Character;
+      Indent_Params : Indent_Parameters;
+      Use_Tabs      : Boolean := False;
+
+      Cursor_Line   : Gint;
+      Cursor_Column : Gint;
+
+      function Blank_Slice (Count : Natural; Use_Tabs : Boolean) return String;
+      --  Return a string representing count blanks.
+      --  If Use_Tabs is True, use ASCII.HT characters as much as possible,
+      --  otherwise use only spaces.
+
+      procedure Find_Non_Blank (Last : Natural);
+      --  Set Index to the first non blank character in Slice (Index .. Last)
+      --  Also set Tabs_Used to True if any tab character is found.
+
+      procedure Local_Next_Indentation
+        (Lang          : Language_Access;
+         Buffer        : String;
+         Indent        : out Natural;
+         Next_Indent   : out Natural;
+         Indent_Params : Indent_Parameters);
+      --  Wrapper around Next_Indentation to take into account Indent_Style.
+
+      -----------------
+      -- Blank_Slice --
+      -----------------
+
+      function Blank_Slice
+        (Count : Natural; Use_Tabs : Boolean) return String is
+      begin
+         if Use_Tabs then
+            return (1 .. Count / Indent_Params.Tab_Width => ASCII.HT) &
+              (1 .. Count mod Indent_Params.Tab_Width => ' ');
+         else
+            return (1 .. Count => ' ');
+         end if;
+      end Blank_Slice;
+
+      ---------------------
+      -- First_Non_Blank --
+      ---------------------
+
+      procedure Find_Non_Blank (Last : Natural) is
+      begin
+         while Index <= Last
+           and then (Slice (Index) = ' '
+                     or else Slice (Index) = ASCII.HT)
+         loop
+            if Slice (Index) = ASCII.HT then
+               Tabs_Used := True;
+            end if;
+
+            Index := Index + 1;
+         end loop;
+      end Find_Non_Blank;
+
+      ----------------------------
+      -- Local_Next_Indentation --
+      ----------------------------
+
+      procedure Local_Next_Indentation
+        (Lang          : Language_Access;
+         Buffer        : String;
+         Indent        : out Natural;
+         Next_Indent   : out Natural;
+         Indent_Params : Indent_Parameters) is
+      begin
+         if Indent_Style = Simple then
+            Next_Indentation
+              (Language_Root (Lang.all)'Access,
+               Buffer, Indent, Next_Indent, Indent_Params);
+
+         else
+            Next_Indentation
+              (Lang, Buffer, Indent, Next_Indent, Indent_Params);
+         end if;
+      end Local_Next_Indentation;
+
+   begin  --  Do_Indentation
+      if Lang = null
+        or else not Get_Language_Context (Lang).Can_Indent
+      then
+         return False;
+      end if;
+
+      Get_Indentation_Parameters
+        (Lang         => Lang,
+         Use_Tabs     => Use_Tabs,
+         Params       => Indent_Params,
+         Indent_Style => Indent_Style);
+
+      if Indent_Style = None then
+         return False;
+      end if;
+
+      if Use_Tabs then
+         Get_Screen_Position (Buffer, Cursor_Line, Cursor_Column);
+      else
+         Get_Cursor_Position (Buffer, Cursor_Line, Cursor_Column);
+      end if;
+
+      Get_Selection_Bounds (Buffer, Start, Pos, Result);
+
+      if Result then
+         --  Do not consider a line selected if only the first character
+         --  is selected.
+
+         if Get_Line_Offset (Pos) = 0 then
+            Backward_Char (Pos, Result);
+         end if;
+
+         --  Do not consider a line selected if only the last character is
+         --  selected.
+
+         if Ends_Line (Start) then
+            Forward_Char (Start, Result);
+         end if;
+      end if;
+
+      Copy (Pos, Iter);
+
+      --  Go to last char of the line pointed by Iter
+
+      if not Ends_Line (Iter) then
+         Forward_To_Line_End (Iter, Result);
+         Line_Ends := False;
+      end if;
+
+      Line := Get_Line (Iter);
+      Col  := Get_Line_Offset (Iter);
+
+      --  We're spending most of our time getting this string.
+      --  Consider saving the current line, indentation level and
+      --  the stacks used by Next_Indentation to avoid parsing
+      --  the buffer from scratch each time.
+
+      C_Str        := Get_Slice (Buffer, 0, 0, Line, Col);
+      Slice        := To_Unchecked_String (C_Str);
+      Slice_Length := Natural (Strlen (C_Str));
+
+      if New_Line then
+         Offset := Natural (Col - Get_Line_Offset (Pos));
+         Blanks := Slice_Length - Offset + 1;
+
+         if Line_Ends then
+            Slice_Length := Slice_Length + 1;
+            Slice (Slice_Length) := ASCII.LF;
+         end if;
+
+         while Blanks <= Slice_Length
+           and then (Slice (Blanks) = ' ' or else Slice (Blanks) = ASCII.HT)
+         loop
+            Blanks := Blanks + 1;
+         end loop;
+
+         if Line_Ends then
+            Local_Next_Indentation
+              (Lang, Slice (1 .. Slice_Length), Indent, Next_Indent,
+               Indent_Params);
+         else
+            Index := Integer (Get_Offset (Pos)) + 1;
+            Char  := Slice (Index);
+            Slice (Index) := ASCII.LF;
+            Local_Next_Indentation
+              (Lang, Slice (1 .. Index), Indent, Ignore, Indent_Params);
+            Slice (Index) := Char;
+
+            --  ??? Would be nice to call Local_Next_Indentation once, which
+            --  would be possible with e.g a Prev_Indent parameter
+
+            Local_Next_Indentation
+              (Lang,
+               Slice (1 .. Index - 1) & ASCII.LF &
+                 Slice (Index .. Slice_Length),
+               Next_Indent, Ignore, Indent_Params);
+         end if;
+
+         Set_Line_Offset (Iter, 0);
+         Line_Start := Natural (Get_Offset (Iter)) + 1;
+         Index      := Line_Start;
+
+         Find_Non_Blank (Slice_Length);
+
+         --  Replace everything at once, important for efficiency
+         --  and also because otherwise, undo/redo won't work properly.
+
+         if Line_Ends then
+            Slice_Length := Slice_Length - 1;
+         end if;
+
+         Create
+           (Replace_Cmd,
+            Buffer,
+            Integer (Line), 0,
+            Integer (Line), Integer (Col),
+            Blank_Slice (Indent, Use_Tabs) &
+            Slice (Index .. Slice_Length - Offset) & ASCII.LF &
+            Blank_Slice (Next_Indent, Use_Tabs) &
+            Slice (Blanks .. Slice_Length));
+         Enqueue (Buffer, Command_Access (Replace_Cmd));
+
+         --  Need to recompute iter, since the slice replacement that
+         --  we just did has invalidated iter.
+
+         if Is_Valid_Position (Buffer, Line + 1, Gint (Next_Indent)) then
+            Get_Iter_At_Line_Offset
+              (Buffer, Pos, Line + 1, Gint (Next_Indent));
+            Place_Cursor (Buffer, Pos);
+         end if;
+
+      else
+         Current_Line := Get_Line (Start);
+         Set_Line_Offset (Start, 0);
+         Col := Get_Line_Offset (Pos);
+
+         --  In the loop below, Global_Offset contains the offset between
+         --  the modified buffer, and the original buffer, caused by the
+         --  buffer replacements.
+
+         loop
+            Line_Start := Natural (Get_Offset (Start)) + 1 - Global_Offset;
+            Index      := Line_Start;
+
+            if not Ends_Line (Start) then
+               Forward_To_Line_End (Start, Result);
+            end if;
+
+            Line_End := Natural (Get_Offset (Start)) + 1 - Global_Offset;
+            Local_Next_Indentation
+              (Lang, Slice (1 .. Line_End),
+               Indent, Next_Indent, Indent_Params);
+
+            Find_Non_Blank (Line_End);
+            Offset := Index - Line_Start;
+
+            if Tabs_Used or else Offset /= Indent then
+               --  Only indent if the current indentation is wrong
+               --  ??? Would be nice to indent the whole selection at once,
+               --  this would make the undo/redo behavior more intuitive.
+
+               if Current_Line = Cursor_Line then
+                  Cursor_Column := Cursor_Column - Gint (Offset - Indent);
+
+                  if Cursor_Column < 0 then
+                     Cursor_Column := 0;
+                  end if;
+               end if;
+
+               Create
+                 (Replace_Cmd,
+                  Buffer,
+                  Integer (Current_Line), 0,
+                  Integer (Current_Line), Offset,
+                  Blank_Slice (Indent, Use_Tabs));
+               Enqueue (Buffer, Command_Access (Replace_Cmd));
+               Global_Offset := Global_Offset - Offset + Indent;
+            end if;
+
+            exit when Current_Line >= Line;
+
+            Current_Line := Current_Line + 1;
+            Get_Iter_At_Line_Offset (Buffer, Start, Current_Line);
+         end loop;
+
+         --  Replace the cursor.
+
+         if Use_Tabs then
+            Set_Screen_Position (Buffer, Cursor_Line, Cursor_Column);
+         else
+            Set_Cursor_Position (Buffer, Cursor_Line, Cursor_Column);
+         end if;
+      end if;
+
+      g_free (C_Str);
+      return True;
+
+   exception
+      when others =>
+         --  Stop propagation of exception, since doing nothing
+         --  in this callback is harmless.
+
+         if C_Str /= Gtkada.Types.Null_Ptr then
+            g_free (C_Str);
+         end if;
+
+         return False;
+   end Do_Indentation;
+
+   -------------
+   -- Execute --
+   -------------
+
+   function Execute (Command : access Jump_To_Delimiter_Command)
+      return Command_Return_Type
+   is
+      Data   : constant Event_Data := Get_Current_Event_Data (Command.Kernel);
+      View   : constant Source_View   := Source_View (Get_Widget (Data));
+      Buffer : constant Source_Buffer := Source_Buffer (Get_Buffer (View));
+      On_Cursor_Iter       : Gtk_Text_Iter;
+      First_Highlight_Iter : Gtk_Text_Iter;
+      Last_Highlight_Iter  : Gtk_Text_Iter;
+   begin
+      if not Buffer.Has_Delimiters_Highlight then
+         return Commands.Failure;
+      end if;
+
+      Get_Iter_At_Mark
+        (Buffer, First_Highlight_Iter, Buffer.Start_Delimiters_Highlight);
+      Get_Iter_At_Mark
+        (Buffer, Last_Highlight_Iter, Buffer.End_Delimiters_Highlight);
+      Get_Iter_At_Mark (Buffer, On_Cursor_Iter, Buffer.Insert_Mark);
+
+      if Equal (First_Highlight_Iter, On_Cursor_Iter) then
+         Place_Cursor (Buffer, Last_Highlight_Iter);
+      else
+         Place_Cursor (Buffer, First_Highlight_Iter);
+      end if;
+      return Commands.Success;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   function Execute (Command : access Completion_Command)
+      return Command_Return_Type
+   is
+      use String_List_Utils.String_List;
+
+      Event  : constant Event_Data := Get_Current_Event_Data (Command.Kernel);
+      View   : constant Source_View   := Source_View (Get_Widget (Event));
+      Buffer : constant Source_Buffer := Source_Buffer (Get_Buffer (View));
+
+      procedure Extend_Completions_List;
+      --  Add an item to the buffer's completion, or mark it as
+      --  complete. Place the completion node to the newly added
+      --  item, or to Null if the completion was finished.
+
+      -----------------------------
+      -- Extend_Completions_List --
+      -----------------------------
+
+      procedure Extend_Completions_List is
+         Data       : Completion_Data renames Buffer.Completion;
+         Word_Begin : Gtk_Text_Iter;
+         Word_End   : Gtk_Text_Iter;
+         Iter_Back  : Gtk_Text_Iter;
+         Iter_Forward : Gtk_Text_Iter;
+
+         Aux        : Gtk_Text_Iter;
+         Success    : Boolean := True;
+         Found      : Boolean := False;
+         Word_Found : Boolean := False;
+
+         Count      : Gint := 1;
+      begin
+         if Data.Complete then
+            if Data.Node = Null_Node then
+               Data.Node := First (Data.List);
+            else
+               Data.Node := Next (Data.Node);
+            end if;
+
+            return;
+         end if;
+
+         --  Loop until a new word with the right prefix is found.
+
+         Get_Iter_At_Mark (Buffer, Iter_Back, Data.Previous_Mark);
+         Get_Iter_At_Mark (Buffer, Iter_Forward, Data.Next_Mark);
+
+         while not Found loop
+            --  If a boundary is reached, force the search in the other
+            --  direction, otherwise extend search in the opposite direction
+
+            if Data.Top_Reached then
+               Data.Backwards := False;
+            elsif Data.Bottom_Reached then
+               Data.Backwards := True;
+            else
+               Data.Backwards := not Data.Backwards;
+            end if;
+
+            --  Find a word and examine it.
+
+            Count := 0;
+
+            while not Word_Found loop
+               if Data.Backwards then
+                  --  Find the previous real word, if it exists.
+
+                  Backward_Word_Start (Iter_Back, Success);
+                  Count := Count + 1;
+
+                  if Success then
+                     Copy (Iter_Back, Aux);
+                     Backward_Char (Aux, Success);
+
+                     if not Success or else Get_Char (Aux) /= '_' then
+                        Copy (Iter_Back, Word_Begin);
+                        Copy (Iter_Back, Word_End);
+                        Forward_Word_Ends (Word_End, Count, Success);
+
+                        Word_Found := True;
+                     end if;
+                  else
+                     exit;
+                  end if;
+
+               else
+                  --  Find the next real word.
+
+                  Forward_Word_End (Iter_Forward, Success);
+                  Count := Count + 1;
+
+                  if Success then
+                     if Get_Char (Iter_Forward) /= '_' then
+                        Copy (Iter_Forward, Word_End);
+                        Copy (Iter_Forward, Word_Begin);
+                        Backward_Word_Starts (Word_Begin, Count, Success);
+
+                        Word_Found := True;
+                     end if;
+                  else
+                     exit;
+                  end if;
+               end if;
+            end loop;
+
+            if Word_Found then
+               --  We have a valid word between Word_Begin and Word_End.
+
+               declare
+                  S : constant String := Get_Slice (Word_Begin, Word_End);
+               begin
+                  --  If the word has the right prefix, and is not already
+                  --  in the list, then add it to the list and point to it,
+                  --  otherwise continue extending the search.
+                  --
+                  --  The string comparison below is correct, since both
+                  --  strings are UTF-8.
+
+                  if S'Length > Data.Prefix'Length
+                    and then S
+                      (S'First .. S'First - 1 + Data.Prefix'Length)
+                      = Data.Prefix.all
+                    and then not Is_In_List
+                      (Data.List,
+                       S (S'First + Data.Prefix'Length .. S'Last))
+                  then
+                     Found := True;
+
+                     if Data.Backwards then
+                        Move_Mark (Buffer, Data.Previous_Mark, Word_Begin);
+                     else
+                        Move_Mark (Buffer, Data.Next_Mark, Word_End);
+                     end if;
+
+                     Append
+                       (Data.List,
+                        S (S'First + Data.Prefix'Length .. S'Last));
+
+                     Data.Node := Last (Data.List);
+                  end if;
+
+                  Word_Found := False;
+               end;
+            else
+               if Data.Backwards then
+                  Data.Top_Reached := True;
+               else
+                  Data.Bottom_Reached := True;
+               end if;
+
+               if Data.Top_Reached and then Data.Bottom_Reached then
+                  Data.Complete := True;
+
+                  if Data.Node /= Null_Node then
+                     Data.Node := Next (Data.Node);
+                  end if;
+
+                  return;
+               else
+                  null;
+               end if;
+            end if;
+         end loop;
+      end Extend_Completions_List;
+
+      Shell_Command : Editor_Replace_Slice;
+      Delete  : Editor_Command;
+
+      Iter    : Gtk_Text_Iter;
+      Prev    : Gtk_Text_Iter;
+      Success : Boolean;
+
+      Text    : GNAT.OS_Lib.String_Access;
+
+   begin
+      if Is_Empty (Buffer.Completion) then
+         Get_Iter_At_Mark (Buffer, Iter, Buffer.Insert_Mark);
+
+         --  If the completions list is empty, that means we have to
+         --  initiate the mark data and launch the first search.
+
+         End_Action (Buffer);
+
+         --  At this point the completion data is reset.
+         --  Get the completion suffix.
+
+         Copy (Iter, Prev);
+         Backward_Char (Prev, Success);
+
+         if not Success then
+            return Commands.Failure;
+         end if;
+
+         while Is_Entity_Letter (Get_Char (Prev)) loop
+            Backward_Char (Prev, Success);
+
+            exit when not Success;
+         end loop;
+
+         if Success then
+            Forward_Char (Prev, Success);
+         end if;
+
+         declare
+            P : constant String := Get_Slice (Prev, Iter);
+         begin
+            if P /= "" then
+               Buffer.Completion.Prefix := new String'(P);
+
+               Move_Mark (Buffer, Buffer.Completion.Mark, Iter);
+               Move_Mark (Buffer, Buffer.Completion.Previous_Mark, Iter);
+               Move_Mark (Buffer, Buffer.Completion.Next_Mark, Iter);
+
+               Extend_Completions_List;
+            else
+               Clear (Buffer.Completion);
+               return Commands.Success;
+
+            end if;
+         end;
+      else
+         Extend_Completions_List;
+      end if;
+
+      if Buffer.Completion.Node /= Null_Node then
+         Text := new String'(Data (Buffer.Completion.Node));
+      else
+         Text := new String'("");
+      end if;
+
+      Get_Iter_At_Mark (Buffer, Prev, Buffer.Completion.Mark);
+      Get_Iter_At_Mark (Buffer, Iter, Buffer.Insert_Mark);
+      Buffer.Inserting := True;
+
+      if Text.all = ""
+        and then
+          (Get_Line (Prev) /= Get_Line (Iter)
+           or else Get_Line_Offset (Prev) /= Get_Line_Offset (Iter))
+      then
+         Create (Delete,
+                 Deletion,
+                 Buffer,
+                 False,
+                 Integer (Get_Line (Prev)),
+                 Integer (Get_Line_Offset (Prev)),
+                 Forward);
+
+         Set_Text (Delete, Get_Slice (Prev, Iter));
+         Enqueue (Buffer, Command_Access (Delete));
+
+      else
+         Create
+           (Shell_Command,
+            Buffer,
+            Natural (Get_Line (Prev)),
+            Natural (Get_Line_Offset (Prev)),
+            Natural (Get_Line (Iter)),
+            Natural (Get_Line_Offset (Iter)),
+            Text.all,
+            True);
+         Enqueue (Buffer, Command_Access (Shell_Command));
+      end if;
+
+      Buffer.Current_Command := null;
+
+      GNAT.OS_Lib.Free (Text);
+
+      Buffer.Inserting := False;
+      return Commands.Success;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   function Execute (Command : access Indentation_Command)
+      return Command_Return_Type
+   is
+      Data   : constant Event_Data := Get_Current_Event_Data (Command.Kernel);
+      View   : constant Source_View   := Source_View (Get_Widget (Data));
+      Buffer : constant Source_Buffer := Source_Buffer (Get_Buffer (View));
+   begin
+      if Do_Indentation (Buffer, Get_Language (Buffer), False) then
+         return Success;
+      else
+         return Failure;
+      end if;
+   end Execute;
+
+   ---------------------
+   -- Get_Description --
+   ---------------------
+
+   function Get_Description
+     (Context : access Src_Editor_Key_Context) return String
+   is
+      pragma Unreferenced (Context);
+   begin
+      return -"Source editor";
+   end Get_Description;
+
+   ---------------------
+   -- Context_Matches --
+   ---------------------
+
+   function Context_Matches
+     (Context : access Src_Editor_Key_Context;
+      Event   : Glide_Kernel.Event_Data) return Boolean
+   is
+      pragma Unreferenced (Context);
+   begin
+      return Get_Widget (Event).all in Source_View_Record'Class;
+   end Context_Matches;
+
 
 end Src_Editor_Buffer;
