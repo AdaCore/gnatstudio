@@ -42,10 +42,7 @@ with Gtkada.File_Selector;         use Gtkada.File_Selector;
 with Gtkada.File_Selector.Filters; use Gtkada.File_Selector.Filters;
 with Gtkada.Types;                 use Gtkada.Types;
 
-with Ada.Calendar;
 with Ada.Exceptions;            use Ada.Exceptions;
-with GNAT.Calendar.Time_IO;     use GNAT.Calendar.Time_IO;
-with GNAT.Calendar;             use GNAT.Calendar;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Interfaces.C.Strings;      use Interfaces.C.Strings;
@@ -125,7 +122,6 @@ package body Project_Viewers is
       --  The callbacks to call when a column is clicked. If null, no callback
       --  is called.
    end record;
-   type View_Description_Access is access constant View_Description;
 
    procedure Name_Display
      (Viewer : access Project_Viewer_Record'Class;
@@ -135,24 +131,6 @@ package body Project_Viewers is
       Line      : out Interfaces.C.Strings.chars_ptr;
       Style     : out Gtk_Style);
    --  Return the name of the file
-
-   procedure Size_Display
-     (Viewer : access Project_Viewer_Record'Class;
-      File_Name : String;
-      Directory : String;
-      Fd        : File_Descriptor;
-      Line      : out Interfaces.C.Strings.chars_ptr;
-      Style     : out Gtk_Style);
-   --  Return the size of the file
-
-   procedure Timestamp_Display
-     (Viewer : access Project_Viewer_Record'Class;
-      File_Name : String;
-      Directory : String;
-      Fd        : File_Descriptor;
-      Line      : out Interfaces.C.Strings.chars_ptr;
-      Style     : out Gtk_Style);
-   --  Return the timestamp for the file
 
    procedure Compiler_Switches_Display
      (Viewer : access Project_Viewer_Record'Class;
@@ -255,8 +233,6 @@ package body Project_Viewers is
       Kernel : Kernel_Handle);
    --  Callback for the Project->Edit Switches menu
 
-   procedure On_Edit_Naming_Scheme
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    procedure On_Edit_Naming_Scheme
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
@@ -365,78 +341,6 @@ package body Project_Viewers is
       Style := null;
       Line  := New_String (File_Name);
    end Name_Display;
-
-   ------------------
-   -- Size_Display --
-   ------------------
-
-   procedure Size_Display
-     (Viewer    : access Project_Viewer_Record'Class;
-      File_Name : String;
-      Directory : String;
-      Fd        : File_Descriptor;
-      Line      : out Interfaces.C.Strings.chars_ptr;
-      Style     : out Gtk_Style)
-   is
-      pragma Unreferenced (Viewer, Directory, File_Name);
-   begin
-      Style := null;
-      Line := New_String (Long_Integer'Image (File_Length (Fd)));
-   end Size_Display;
-
-   -----------------------
-   -- Timestamp_Display --
-   -----------------------
-
-   procedure Timestamp_Display
-     (Viewer    : access Project_Viewer_Record'Class;
-      File_Name : String;
-      Directory : String;
-      Fd        : File_Descriptor;
-      Line      : out Interfaces.C.Strings.chars_ptr;
-      Style     : out Gtk_Style)
-   is
-      pragma Unreferenced (Directory, File_Name);
-
-      type Char_Pointer is access Character;
-
-      type tm is record
-         tm_sec    : Integer;
-         tm_min    : Integer;
-         tm_hour   : Integer;
-         tm_mday   : Integer;
-         tm_mon    : Integer;
-         tm_year   : Integer;
-         tm_wday   : Integer;
-         tm_yday   : Integer;
-         tm_isdst  : Integer;
-         tm_gmtoff : Long_Integer;
-         tm_zone   : Char_Pointer;
-      end record;
-
-      procedure localtime_r
-        (C : in out OS_Time; res : out tm);
-      pragma Import (C, localtime_r, "__gnat_localtime_r");
-
-      T      : tm;
-      A_Time : Ada.Calendar.Time;
-      O_Time : OS_Time;
-
-   begin
-      O_Time := File_Time_Stamp (Fd);
-      localtime_r (O_Time, T);
-
-      --  Make sure the values returned by localtime are in the
-      --  appropriate range
-
-      T.tm_mon := T.tm_mon + 1;
-      A_Time := Time_Of (1900 + T.tm_year, T.tm_mon, T.tm_mday,
-                         T.tm_hour, T.tm_min, T.tm_sec);
-      Line := New_String
-        (Image (A_Time,
-                Picture_String (Get_Pref (Viewer.Kernel, Timestamp_Picture))));
-      Style := null;
-   end Timestamp_Display;
 
    ----------------------------
    -- Edit_Switches_Callback --
@@ -927,18 +831,6 @@ package body Project_Viewers is
         (Get_Project_From_View
          (Project_Information (File_Selection_Context_Access (Context))));
    end Save_Specific_Project;
-
-   ---------------------------
-   -- On_Edit_Naming_Scheme --
-   ---------------------------
-
-   procedure On_Edit_Naming_Scheme
-     (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle) is
-   begin
-      On_Edit_Naming_Scheme
-        (Gtk_Widget (Widget), Get_Current_Explorer_Context (Kernel));
-   end On_Edit_Naming_Scheme;
 
    ---------------------------
    -- On_Edit_Naming_Scheme --

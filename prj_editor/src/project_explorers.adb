@@ -259,12 +259,6 @@ package body Project_Explorers is
    --  full directory name, relative to the project.
    --  The return strings always ends with a directory separator.
 
-   function Get_Directory_From_Node
-     (Explorer : access Project_Explorer_Record'Class; Node : Gtk_Ctree_Node)
-      return String_Id;
-   --  Same as Get_Directory_From_Node above, but only return the relative name
-   --  as stored in the project file
-
    function Category_Name (Category : Language_Category) return String;
    --  Return the name of the node for Category
 
@@ -1204,31 +1198,6 @@ package body Project_Explorers is
 
    function Get_Directory_From_Node
      (Explorer : access Project_Explorer_Record'Class; Node : Gtk_Ctree_Node)
-      return String_Id
-   is
-      N : Gtk_Ctree_Node := Node;
-   begin
-      while N /= null loop
-         declare
-            User : constant User_Data := Node_Get_Row_Data (Explorer.Tree, N);
-         begin
-            if User.Node_Type = Directory_Node then
-               return User.Directory;
-            end if;
-         end;
-
-         N := Row_Get_Parent (Node_Get_Row (N));
-      end loop;
-
-      return No_String;
-   end Get_Directory_From_Node;
-
-   -----------------------------
-   -- Get_Directory_From_Node --
-   -----------------------------
-
-   function Get_Directory_From_Node
-     (Explorer : access Project_Explorer_Record'Class; Node : Gtk_Ctree_Node)
       return String
    is
       N : Gtk_Ctree_Node := Node;
@@ -1929,6 +1898,7 @@ package body Project_Explorers is
    begin
       --  If a desktop was loaded, we do not want to force an explorer if none
       --  was saved. However, in the default case we want to open an explorer.
+
       if not Desktop_Was_Loaded (Get_MDI (Kernel)) then
          On_Open_Explorer (Kernel, Kernel_Handle (Kernel));
       end if;
