@@ -519,6 +519,10 @@ package body Python.GUI is
             end if;
          end if;
 
+         if Hide_Output then
+            Ignored := PyRun_SimpleString ("__gps_restore_output()");
+         end if;
+
          return Result;
    end Run_Command;
 
