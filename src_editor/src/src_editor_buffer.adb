@@ -30,7 +30,6 @@ with Gtk.Dialog;                use Gtk.Dialog;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Handlers;              use Gtk.Handlers;
 with Gtk.Main;                  use Gtk.Main;
-with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Text_Iter;             use Gtk.Text_Iter;
 with Gtk.Text_Mark;             use Gtk.Text_Mark;
 with Gtk.Text_Tag;              use Gtk.Text_Tag;
@@ -3304,20 +3303,20 @@ package body Src_Editor_Buffer is
 
                Dialog := Create_Gtk_Dialog
                  (Msg         => Base_Name (Buffer.Filename).all
-                  & (-" changed on disk. Really edit ?")
+                  & (-" changed on disk.")
                   & ASCII.LF & ASCII.LF
-                  & (-"Clicking on Yes will ignore the file on disk and " &
-                      "continue editing the file in memory.")
+                  & (-"Click on Ignore to keep this editing session.")
                   & ASCII.LF
-                  & (-"Clicking on No will reload the file from disk and " &
-                      "lose the current file in memory."),
+                  & (-"Click on Reload to reload the file from disk")
+                  & ASCII.LF
+                  & (-"and discard your current changes."),
                   Dialog_Type   => Confirmation,
                   Title         => -"File changed on disk",
                   Justification => Justify_Left,
                   Parent        => Get_Main_Window (Buffer.Kernel));
 
-               Button := Add_Button (Dialog, Stock_Yes, Gtk_Response_Yes);
-               Button := Add_Button (Dialog, Stock_No, Gtk_Response_No);
+               Button := Add_Button (Dialog, -"Ignore", Gtk_Response_Yes);
+               Button := Add_Button (Dialog, -"Reload", Gtk_Response_No);
 
                Show_All (Dialog);
                Response := Run (Dialog);
