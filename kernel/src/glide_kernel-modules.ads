@@ -334,6 +334,8 @@ package Glide_Kernel.Modules is
    --  This subprogram should call Show_All on the returned widget. This allows
    --  it to hide some of the components when necessary. The caller should not
    --  force a Show_All on the widget.
+   --
+   --  Refresh is always called just after Widget_Factory.
 
    function Project_Editor
      (Page          : access Project_Editor_Page_Record;
@@ -343,11 +345,15 @@ package Glide_Kernel.Modules is
       Widget        : access Gtk.Widget.Gtk_Widget_Record'Class;
       Scenario_Variables : Prj_API.Project_Node_Array;
       Ref_Project   : Prj.Tree.Project_Node_Id)
-      return Boolean is abstract;
+      return Prj_API.Project_Node_Array is abstract;
    --  Modifies Project given the data in Widget. Widget is the same that was
    --  created through a Project_Editor_Page_Factor.
-   --  Should return True if the project was actually modified, false
-   --  otherwise. This subprogram should not recompute the project view itself,
+   --
+   --  Should return the list of modified projects, if any, or an empty array
+   --  if no project was modified. The returned value will be different from
+   --  Project only if the modified package is a renaming of another package.
+   --
+   --  This subprogram should not recompute the project view itself,
    --  since this is already done once after all the modifications have been
    --  done.
    --  This function should expect Project_View to be No_Project in some cases.
