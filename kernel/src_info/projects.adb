@@ -162,7 +162,7 @@ package body Projects is
             Trace (Me, "Save_Project: Creating new file " & Filename);
             Create (File, Mode => Out_File, Name => Filename);
             Pretty_Print
-              (Project => Project.Node,
+              (Project => Project,
                Eliminate_Empty_Case_Constructions => True,
                W_Char => Internal_Write_Char'Unrestricted_Access,
                W_Eol  => Internal_Write_Eol'Unrestricted_Access,
@@ -515,7 +515,7 @@ package body Projects is
       Arr := Check_Full_File (F, Prj.Projects.Table (Project).Naming.Bodies);
 
       if Arr = No_Array_Element then
-         Arr := Check_Full_File (F, Naming.Specifications);
+         Arr := Check_Full_File (F, Naming.Specs);
 
          if Arr /= No_Array_Element then
             Part      := Unit_Spec;
@@ -555,7 +555,7 @@ package body Projects is
 
       --  Check standard extensions. The index in this table is the language
 
-      Arr := Naming.Specification_Suffix;
+      Arr := Naming.Spec_Suffix;
       Check_Suffix_List (F, Arr, Len);
       if Arr /= No_Array_Element then
          Part      := Unit_Spec;
@@ -564,7 +564,7 @@ package body Projects is
          return;
       end if;
 
-      Arr := Naming.Implementation_Suffix;
+      Arr := Naming.Body_Suffix;
       Check_Suffix_List (F, Arr, Len);
       if Arr /= No_Array_Element then
          Part      := Unit_Body;
@@ -703,7 +703,7 @@ package body Projects is
             when Unit_Spec =>
                Value := Value_Of
                  (Index => Unit,
-                  In_Array => Prj.Projects.Table (View).Naming.Specifications);
+                  In_Array => Prj.Projects.Table (View).Naming.Specs);
          end case;
 
          if Value /= Nil_Variable_Value then
@@ -714,7 +714,7 @@ package body Projects is
 
          case Part is
             when Unit_Body =>
-               Arr := Prj.Projects.Table (View).Naming.Implementation_Suffix;
+               Arr := Prj.Projects.Table (View).Naming.Body_Suffix;
 
             when Unit_Separate =>
                declare
@@ -730,7 +730,7 @@ package body Projects is
                return "";
 
             when Unit_Spec =>
-               Arr := Prj.Projects.Table (View).Naming.Specification_Suffix;
+               Arr := Prj.Projects.Table (View).Naming.Spec_Suffix;
          end case;
 
          declare
@@ -772,13 +772,13 @@ package body Projects is
       Arr  : Array_Element_Id;
       Len  : Natural;
    begin
-      Arr := Prj.Projects.Table (View).Naming.Specification_Suffix;
+      Arr := Prj.Projects.Table (View).Naming.Spec_Suffix;
       Check_Suffix_List (Filename, Arr, Len);
       if Arr /= No_Array_Element then
          return Filename'Last - Len;
       end if;
 
-      Arr := Prj.Projects.Table (View).Naming.Implementation_Suffix;
+      Arr := Prj.Projects.Table (View).Naming.Body_Suffix;
       Check_Suffix_List (Filename, Arr, Len);
       if Arr /= No_Array_Element then
          return Filename'Last - Len;
@@ -818,7 +818,7 @@ package body Projects is
 
       case Unit is
          when Unit_Spec     => Arr := Naming.Bodies;
-         when Unit_Body     => Arr := Naming.Specifications;
+         when Unit_Body     => Arr := Naming.Specs;
          when Unit_Separate => return Source_Filename;
       end case;
 
@@ -842,10 +842,10 @@ package body Projects is
 
       case Unit is
          when Unit_Spec =>
-            Arr := Prj.Projects.Table (View).Naming.Implementation_Suffix;
+            Arr := Prj.Projects.Table (View).Naming.Body_Suffix;
 
          when Unit_Body =>
-            Arr := Prj.Projects.Table (View).Naming.Specification_Suffix;
+            Arr := Prj.Projects.Table (View).Naming.Spec_Suffix;
 
          when Unit_Separate =>
             null;
@@ -960,7 +960,7 @@ package body Projects is
          Value := Value_Of
            (Index    => Name_Find,
             In_Array => Prj.Projects.Table
-              (Get_View (Project)).Naming.Specification_Suffix);
+              (Get_View (Project)).Naming.Spec_Suffix);
 
       elsif Attribute_Name = Impl_Suffix_Attribute then
          Name_Len := Index'Length;
@@ -968,7 +968,7 @@ package body Projects is
          Value := Value_Of
            (Index    => Name_Find,
             In_Array => Prj.Projects.Table
-              (Get_View (Project)).Naming.Implementation_Suffix);
+              (Get_View (Project)).Naming.Body_Suffix);
 
       else
          Value := Get_Attribute_Value
