@@ -2483,9 +2483,28 @@ package body Debugger.Gdb is
                         Field    => J,
                         Contains => Type_Str (Index .. Int - 1));
 
-                     Internal_Parse_Value
-                       (Lang, Type_Str, Index, V, Repeat_Num,
-                        Parent => Result);
+                     --  Variant part not found. This happens for instance when
+                     --  gdb doesn't report the "when others" part of a variant
+                     --  record in the type if it has a no field, as in
+                     --       type Essai (Discr : Integer := 1) is record
+                     --         case Discr is
+                     --             when 1 => Field1 : Integer;
+                     --             when others => null;
+                     --         end case;
+                     --       end record;
+                     --  ptype reports
+                     --    type = record
+                     --       discr : integer;
+                     --       case discr is
+                     --           when 1 => field1 : integer;
+                     --       end case;
+                     --    end record;
+
+                     if V /= null then
+                        Internal_Parse_Value
+                          (Lang, Type_Str, Index, V, Repeat_Num,
+                           Parent => Result);
+                     end if;
                   end;
                end if;
             end loop;
@@ -2514,6 +2533,7 @@ package body Debugger.Gdb is
                  (Lang, Type_Str, Index, R, Repeat_Num, Parent => Result);
             end loop;
             R := Get_Child (Class_Type (Result.all));
+
             if Num_Fields (Record_Type (R.all)) /= 0 then
                Internal_Parse_Value
                  (Lang, Type_Str, Index, R, Repeat_Num, Parent => Result);
