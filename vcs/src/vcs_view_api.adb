@@ -20,11 +20,9 @@
 
 with Gtk.Widget;                use Gtk.Widget;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
-with Gtk.Arguments;             use Gtk.Arguments;
 with Gtk.Enums;
 
 with Gtkada.Dialogs;            use Gtkada.Dialogs;
-with Gtkada.Handlers;           use Gtkada.Handlers;
 with Gtkada.MDI;                use Gtkada.MDI;
 
 with VCS;                       use VCS;
@@ -103,11 +101,6 @@ package body VCS_View_API is
    --  Fill the explorer with files that correspond to Context.
    --  Context might be null, in which case the contents of the root project is
    --  shown.
-
-   procedure On_Context_Changed
-     (Object  : access Gtk_Widget_Record'Class;
-      Args    : Gtk_Args);
-   --  Called when the current context has changed.
 
    function Check_Handler
      (Kernel : Kernel_Handle;
@@ -992,28 +985,6 @@ package body VCS_View_API is
       end if;
    end Change_Context;
 
-   ------------------------
-   -- On_Context_Changed --
-   ------------------------
-
-   procedure On_Context_Changed
-     (Object : access Gtk_Widget_Record'Class;
-      Args   : Gtk_Args)
-   is
-      pragma Unreferenced (Object);
-      Context  : constant Selection_Context_Access :=
-        To_Selection_Context_Access (To_Address (Args, 1));
-      Explorer : constant VCS_View_Access :=
-        Get_Explorer (Get_Kernel (Context), False);
-
-   begin
-      Change_Context (Explorer, Context);
-
-   exception
-      when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
-   end On_Context_Changed;
-
    -------------------
    -- Open_Explorer --
    -------------------
@@ -1039,13 +1010,6 @@ package body VCS_View_API is
          Child := Put (MDI, Explorer);
          Set_Focus_Child (Child);
          Set_Title (Child, -"VCS Explorer");
-
-         Widget_Callback.Object_Connect
-           (Kernel,
-            Context_Changed_Signal,
-            On_Context_Changed'Access,
-            Explorer);
-
          Change_Context (Explorer, Context);
       end if;
    end Open_Explorer;
