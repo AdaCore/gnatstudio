@@ -62,8 +62,9 @@ package body Cpp_Module is
       if Object_Path (Get_Project_View (Kernel), False) = "" then
          Insert (Kernel,
                  -("The root project must have an object directory set, or"
-                   & " C and C++ browsing is disabled"), Mode => Error);
+                   & " C/C++ browsing is disabled"), Mode => Error);
       end if;
+
       Reset
         (CPP_LI_Handler
          (Get_LI_Handler_By_Name (Handler, CPP_LI_Handler_Name)),
