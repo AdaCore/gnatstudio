@@ -344,6 +344,7 @@ package body GVD.Preferences is
       Set (String (Assembly_Range_Size), "100");
 
       Set (Separate_Data, False);
+      Set (Show_Stack, False);
       Set (String (Xref_Color), "#0000FF");
       Set (String (Title_Color), "#BEBEBE");
       Set (String (Change_Color), "#FF0000");
@@ -460,6 +461,9 @@ package body GVD.Preferences is
 
       --  Separate Data
       Set_Active (Dialog.Separate_Data_Check, Get_Pref (Separate_Data));
+
+      --  Show Stack
+      Set_Active (Dialog.Show_Stack_Check, Get_Pref (Show_Stack));
 
       --  Look 3d
       Set_Active (Dialog.Look_3d_Check, Get_Pref (Look_3d));
@@ -580,6 +584,7 @@ package body GVD.Preferences is
       Set (Keywords_Color, Get_Color (Dialog.Keyword_Color_Combo), True);
       Set (Asm_Highlight_Color, Get_Color (Dialog.Asm_Highlight_Combo), True);
       Set (Separate_Data, Get_Active (Dialog.Separate_Data_Check), True);
+      Set (Show_Stack, Get_Active (Dialog.Show_Stack_Check), True);
       Set (Xref_Color, Get_Color (Dialog.Xref_Color_Combo), True);
       Set (Title_Color, Get_Color (Dialog.Title_Color_Combo), True);
       Set (Change_Color, Get_Color (Dialog.Change_Color_Combo), True);

@@ -195,6 +195,9 @@ package GVD.Preferences is
    Separate_Data : constant String_Boolean := "Separate_Data";
    --  Whether the Data window should be a separate window (False).
 
+   Show_Stack : constant String_Boolean := "Show_Stack";
+   --  Whether the Call Stack window should be visible (False);
+
    Xref_Color : constant String_Color := "Xref_Color";
    --  Color to use for the items that are clickable (blue).
 
