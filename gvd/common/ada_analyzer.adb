@@ -1611,14 +1611,30 @@ package body Ada_Analyzer is
          then
             if Reserved = Tok_Package then
                Temp.Package_Declaration := True;
-            else
+
+            elsif (Top_Token.Token = Tok_Type
+                   and then (Prev_Token /= Tok_Access
+                             or else Prev_Prev_Token = Tok_Is))
+              or else Prev_Token /= Tok_Access
+            then
+               --  take into account the following:
+               --  type P is access procedure;
+               --
+               --  and ignore the following cases:
+               --  type P is array () of access procedure;
+               --  procedure P (X : access procedure);
+
                Subprogram_Decl := True;
                Num_Parens      := 0;
             end if;
 
-            if Top_Token.Token = Tok_Type
-              or else Prev_Token = Tok_Access
-            then
+            if Prev_Token = Tok_Access then
+               --  Ada 2005 anonymous access subprogram parameter:
+               --  procedure P (F : access procedure);
+
+               null;
+
+            elsif Top_Token.Token = Tok_Type then
                null;
 
             elsif not In_Generic then
@@ -1718,6 +1734,9 @@ package body Ada_Analyzer is
                   Push (Tokens, Temp);
 
                elsif Top_Token.Token = Tok_Type then
+                  --  ??? is this correct for Ada 05 constructs:
+                  --  task type foo is new A with entry A; end task;
+
                   Top_Token.Tagged_Type := True;
                end if;
             end if;
