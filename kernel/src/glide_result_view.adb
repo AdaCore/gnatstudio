@@ -54,6 +54,7 @@ with Pixmaps_IDE;              use Pixmaps_IDE;
 with Glide_Intl;               use Glide_Intl;
 
 with Commands;                 use Commands;
+with System;
 
 with Ada.Text_IO;              use Ada.Text_IO;
 with Ada.Exceptions;           use Ada.Exceptions;
@@ -912,6 +913,7 @@ package body Glide_Result_View is
       Line_Iter     : Gtk_Tree_Iter;
 
       Value         : GValue;
+      Old_Action    : Action_Item;
 
       pragma Unreferenced (Identifier);
    begin
@@ -931,15 +933,33 @@ package body Glide_Result_View is
               and then Get_String
                 (View.Model, Line_Iter, Column_Column) = Image (Column)
             then
-               Set (View.Model, Line_Iter,
-                    Button_Column, C_Proxy (Action.Image));
-               Init (Value, GType_Pointer);
-               Set_Address (Value, To_Address (Action));
-               Set_Value (View.Model, Line_Iter,
-                    Action_Column, Value);
-               Unset (Value);
-            end if;
+               if Action = null then
+                  Set (View.Model, Line_Iter,
+                       Button_Column, C_Proxy (Null_Pixbuf));
 
+                  Init (Value, GType_Pointer);
+                  Get_Value (View.Model, Line_Iter, Action_Column, Value);
+                  Old_Action := To_Action_Item (Get_Address (Value));
+
+                  if Old_Action /= null then
+                     Free (Old_Action);
+                  end if;
+
+                  Set_Address (Value, System.Null_Address);
+                  Set_Value (View.Model, Line_Iter,
+                             Action_Column, Value);
+                  Unset (Value);
+
+               else
+                  Set (View.Model, Line_Iter,
+                       Button_Column, C_Proxy (Action.Image));
+                  Init (Value, GType_Pointer);
+                  Set_Address (Value, To_Address (Action));
+                  Set_Value (View.Model, Line_Iter,
+                             Action_Column, Value);
+                  Unset (Value);
+               end if;
+            end if;
             Next (View.Model, Line_Iter);
          end loop;
       end if;
