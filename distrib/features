@@ -1,5 +1,8 @@
 New features in GPS 1.2.0
 
+- C219-004 Major speend improvements when loading and editing big projects,
+  especially when using file-specific naming schemes.
+
 - More flexible handling of custom files
 
 - Under Windows when GPS is already running, double clicking on a source file
