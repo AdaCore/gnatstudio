@@ -639,8 +639,8 @@ package body Debugger is
          begin
             Send_Internal_Post (Debugger, Cmd, Mode);
 
-            if Need_To_Strip_Control_M then
-               return Strip_Control_M (S);
+            if Need_To_Strip_CR then
+               return Strip_CR (S);
             else
                return S;
             end if;

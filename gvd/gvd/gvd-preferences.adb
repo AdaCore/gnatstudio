@@ -429,6 +429,7 @@ package body GVD.Preferences is
          Current_Preferences := new Node;
          Current_Preferences.Tag := new String' ("GVD_Preferences");
       end if;
+
       Set (Hide_Delay, Guint' (5000));
       Set (String (Remote_Protocol), "rsh");
       Set (String (Remote_Copy), "rcp");
@@ -446,6 +447,8 @@ package body GVD.Preferences is
       Set (String (Editor_Highlight_Color), "#00CC00");
       Set (Tab_Size, Gint' (8));
       Set (Tooltips_In_Source, Simple);
+      Set (Should_Strip_CR, Need_To_Strip_CR);
+
       Set (String (Asm_Highlight_Color), "#FF0000");
       Set (String (Assembly_Range_Size), "100");
       Set (String (Xref_Color), "#0000FF");

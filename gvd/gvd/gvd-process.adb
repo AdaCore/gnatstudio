@@ -437,8 +437,8 @@ package body GVD.Process is
       Str        : String;
       Window     : System.Address) is
    begin
-      if Need_To_Strip_Control_M then
-         Text_Output_Filter (Descriptor, Strip_Control_M (Str), Window);
+      if Need_To_Strip_CR then
+         Text_Output_Filter (Descriptor, Strip_CR (Str), Window);
       else
          Text_Output_Filter (Descriptor, Str, Window);
       end if;

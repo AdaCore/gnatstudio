@@ -162,9 +162,12 @@ package GVD.Preferences is
    --  Please note : the implemented tab behaviour is to jump at the next
    --  column with a number equal to a multiple of Tab_Size.
 
-   Tooltips_In_Source : constant String_Tooltips_In_Source
-     := "Tooltips_In_Source";
+   Tooltips_In_Source : constant String_Tooltips_In_Source :=
+     "Tooltips_In_Source";
    --  What kind of tooltips we want in the source window
+
+   Should_Strip_CR : constant String_Boolean := "Strip_CR";
+   --  If True, always strip CR characters when reading a file.
 
    ---------------------
    -- Assembly Window --

@@ -440,11 +440,11 @@ package body GVD.Strings is
       return Result (Result'First .. Len - 1);
    end Reduce;
 
-   ---------------------
-   -- Strip_Control_M --
-   ---------------------
+   --------------
+   -- Strip_CR --
+   --------------
 
-   function Strip_Control_M (Text : String) return String is
+   function Strip_CR (Text : String) return String is
       To       : String (1 .. Text'Length);
       Index_To : Positive := 1;
 
@@ -457,7 +457,7 @@ package body GVD.Strings is
       end loop;
 
       return To (1 .. Index_To - 1);
-   end Strip_Control_M;
+   end Strip_CR;
 
    --------------------
    -- File_Extension --

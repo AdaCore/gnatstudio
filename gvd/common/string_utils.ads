@@ -124,9 +124,10 @@ package GVD.Strings is
    --  and replace multiple spaces with a single one.
    --  Return the resulting string.
 
-   function Strip_Control_M (Text : String) return String;
-   --  Return a version of Text after stripping all the ^M from the string.
-   --  This function is used on Windows.
+   function Strip_CR (Text : String) return String;
+   --  Return a version of Text after stripping all the CR from the string.
+   --  This function is used on Windows or when the Strip_CR preference is
+   --  enabled (for systems that share dos files).
 
    function To_Unix_Pathname (Path : String) return String;
    --  Convert all occurences of Directory_Separator to '/'.

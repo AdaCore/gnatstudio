@@ -216,7 +216,7 @@ procedure GVD_Main is
          end if;
       end loop;
 
-      return Strip_Control_M (S);
+      return Strip_CR (S);
    end Format;
 
    procedure Bug_Dialog (E : Exception_Occurrence) is

@@ -157,8 +157,8 @@ package body GVD.Files is
          begin
             Length := Read (F, S'Address, Length);
 
-            if Need_To_Strip_Control_M then
-               Contents := new String' (Strip_Control_M (S));
+            if Get_Pref (Should_Strip_CR) then
+               Contents := new String' (Strip_CR (S));
             else
                Contents := new String' (S);
             end if;
