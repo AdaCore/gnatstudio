@@ -36,7 +36,7 @@ with DB_API; use DB_API;
 
 package SN.DB_Structures is
 
-   Buffer_String_Size : constant := 4_096;
+   Buffer_String_Size : constant := 2_048;
    --  Maximum size for the buffer string
 
    type Buffer_String is array (1 .. Buffer_String_Size) of Character;
