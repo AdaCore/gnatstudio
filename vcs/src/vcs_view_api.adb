@@ -471,7 +471,7 @@ package body VCS_View_API is
          Console.Insert
            (Kernel, -"No file selected, cannot commit", Mode => Error);
       else
-         On_Menu_Edit_Log (Widget, Context);
+         On_Menu_Commit (Widget, Context);
       end if;
    end Commit;
 
@@ -1393,19 +1393,47 @@ package body VCS_View_API is
       Context : Selection_Context_Access)
    is
       pragma Unreferenced (Widget);
+      use String_List;
 
       Kernel         : constant Kernel_Handle := Get_Kernel (Context);
       Files          : String_List.List;
+      Real_Files     : String_List.List;
       Files_Temp     : String_List.List_Node;
       All_Logs_Exist : Boolean := True;
 
       use type String_List.List_Node;
    begin
-      Files := Get_Selected_Files (Context);
+      Real_Files := Get_Selected_Files (Context);
 
-      if String_List.Is_Empty (Files) then
+      if String_List.Is_Empty (Real_Files) then
          return;
       end if;
+
+      Files_Temp := String_List.First (Real_Files);
+
+      while Files_Temp /= Null_Node loop
+         declare
+            S : constant String := Data (Files_Temp);
+         begin
+            if S'Length > 4
+              and then S (S'Last - 3 .. S'Last) = "$log"
+            then
+               declare
+                  L : constant String := Get_File_From_Log (Kernel, S);
+               begin
+                  if L /= "" then
+                     Append (Files, L);
+                  end if;
+               end;
+            else
+               Append (Files, S);
+            end if;
+         end;
+
+         Files_Temp := Next (Files_Temp);
+      end loop;
+
+      Free (Real_Files);
 
       Files_Temp := String_List.First (Files);
 
