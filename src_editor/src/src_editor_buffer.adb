@@ -1601,6 +1601,47 @@ package body Src_Editor_Buffer is
    end Set_Cursor_Position;
 
    -------------------------
+   -- Set_Screen_Position --
+   -------------------------
+
+   procedure Set_Screen_Position
+     (Buffer  : access Source_Buffer_Record;
+      Line    : Gint;
+      Column  : Gint)
+   is
+      Start   : Gtk_Text_Iter;
+      Result  : Boolean := True;
+      Current : Gint := 0;
+      Tab_Len : constant Gint := Get_Pref (Buffer.Kernel, Tab_Width);
+   begin
+      Assert (Me, Is_Valid_Position (Buffer, Line, 0),
+              "Invalid position for Set_Screen_Position "
+                & Get_Filename (Buffer) & Line'Img);
+
+      Get_Iter_At_Line_Offset (Buffer, Start, Line, 0);
+
+      --  We have to test Result, in case Iter was pointing after the end of
+      --  the buffer.
+
+      while Result and then Current < Column loop
+         if Get_Char (Start) = ASCII.HT then
+            Current := Current + Tab_Len - (Current mod Tab_Len);
+         else
+            Current := Current + 1;
+         end if;
+
+         Forward_Char (Start, Result);
+      end loop;
+
+      if Result then
+         Place_Cursor (Buffer, Start);
+      else
+         Get_Iter_At_Line_Offset (Buffer, Start, Line, 0);
+         Place_Cursor (Buffer, Start);
+      end if;
+   end Set_Screen_Position;
+
+   -------------------------
    -- Get_Screen_Position --
    -------------------------
 
