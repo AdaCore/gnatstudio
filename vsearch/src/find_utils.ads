@@ -30,18 +30,27 @@
 --
 --  This package implements a line-oriented searching for a word or a pattern
 --  in given source code files.
---  Scope may be limited to comments and/or strings and/or statements. Syntax
---  detection is done on filename patterns (eg *.c, *.ads, ...). If file type
---  is unknown (probably with *.txt), whole file is scanned, whatever asked
---  scope is.
+
+--  Scope may be limited to: only comments, only strings, comments and strings,
+--  everything but comments or no limitation (i.e. whole file is scanned).
+--  String and comment delimiters are found from Language_Context (see file
+--  language.ads). If no context is detected for a file, no scope limitation
+--  occurs for this file.
 --  Files may be given as a list or with a pattern and a directory.
 --  Classic options included: match case, whole word.
 
 --  NOTES:
---  * Strings are assumed to end only with the string delimiter (i.e. continue
+--  * Strings are assumed to end only with the string delimiter (they continue
 --    across ASCII.LF).
---  * There is only 1 syntax level (e.g. strings aren't found in comments).
+--  * There is only 1 syntax level (e.g. strings aren't found within comments).
 --  * Searching in empty files matches nothing.
+--  * This package does NOT register any extension (see language.ads).
+--  * ^ in a regexp means "start of the comment/string" when on the first line
+--    of the comment/string; otherwise "start of the line".
+--  * $ in a regexp means "end of the comment/string" when on the last line of
+--    the comment/string; otherwise "end of the line".
+--  * Don't use ^ or $ in a regexp when the scope is All_But_Comm, they have an
+--    undefined behavior.
 
 with GNAT.Regpat; use GNAT.Regpat;
 with GNAT.Regexp; use GNAT.Regexp;
@@ -60,6 +69,7 @@ package Find_Utils is
 
    type Search_Scope is (Whole, Comm_Only, Comm_Str, Str_Only, All_But_Comm);
    --  Scope wanted for the search. Comm is comments, str is strings.
+   --  Whole scope means never use any context (i.e. files are whole scanned).
 
    Search_Error : exception;
    --  This exception is raised when trying to initialize a search with bad
