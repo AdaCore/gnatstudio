@@ -143,6 +143,8 @@ make install
 # in stdbool.h. So before doing a make, update stdbool.h.in around line
 # 34, and replace all instances of _Bool by BOOL .
 
+cd ..
+
 ########
 # glib #
 ########
@@ -187,10 +189,14 @@ tar xzvf pango-1.2.0.tar.gz
 cd pango-1.2.0
 
 # Note: to get all modules included, we could use --with-included-modules=yes
-# but basic-x should be all we need. Other modules are:
+# but basic-x should be all we need. In the future, we may want to also
+# include basic-xft, which requires additional librairies. Other modules are:
 # arabic-x,arabic-xft,hebrew-x,basic-x,basic-ft2,basic-xft,basic-win32,
 # hangul-x,tamil-x,tamil-xft,thai-x,gurmukhi-x,bengali-x,gujarati-x,
 # devanagari-x,myanmar-x
+
+# Under HP-UX, replace /bin/sh by /bin/bash in the first line of configure,
+# to work around a sh bug.
 
 ./configure --prefix=$prefix --with-included-modules=basic-x
 make
