@@ -24,6 +24,8 @@
 package GVD is
    pragma Pure;
 
+   pragma Style_Checks (Off);
+
    type Host_Type is (Windows, Unix, VMS, Unknown);
    --  Possible kind of host where GPS is built.
 
