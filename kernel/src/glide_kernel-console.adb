@@ -85,7 +85,11 @@ package body Glide_Kernel.Console is
 
    procedure On_Next_Result
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Callback for File->Messages->Next_Result menu.
+   --  Callback for File->Messages->Next Result menu.
+
+   procedure On_Previous_Result
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Callback for File->Messages->Previous Result menu.
 
    procedure On_Clear_Console
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
@@ -370,6 +374,25 @@ package body Glide_Kernel.Console is
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Next_Result;
 
+   ------------------------
+   -- On_Previous_Result --
+   ------------------------
+
+   procedure On_Previous_Result
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+
+      Results : constant Result_View
+        := Get_Or_Create_Result_View (Kernel, False);
+   begin
+      Next_Item (Results, Backwards => True);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+   end On_Previous_Result;
+
    ----------------------
    -- On_Clear_Console --
    ----------------------
@@ -490,6 +513,8 @@ package body Glide_Kernel.Console is
         (Kernel, Console, -"_Save As...", "", On_Save_Console_As'Access);
       Register_Menu
         (Kernel, Console, -"_Load Contents...", "", On_Load_To_Console'Access);
+      Register_Menu
+        (Kernel, Console, -"_Previous Result", "", On_Previous_Result'Access);
       Register_Menu
         (Kernel, Console, -"_Next Result", "", On_Next_Result'Access);
       Gtk_New (Mitem);
