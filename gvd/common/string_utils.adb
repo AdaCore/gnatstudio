@@ -243,7 +243,7 @@ package body String_Utils is
       In_String : Boolean;
       Last      : Natural := Str'Last;
 
-   begin
+   begin  --  Parse_Cst_String
       if Str'Length = 0 then
          Last := Natural'Last;
       end if;
@@ -306,6 +306,7 @@ package body String_Utils is
                      Str (S_Index) := Type_Str (Index + 1);
                      S_Index := S_Index + 1;
                   end if;
+
                   Index := Index + 2;
 
                else
@@ -326,6 +327,7 @@ package body String_Utils is
                --  followed by a constant string or character (repeats).
                --  Otherwise, ',' simply denotes the end of a struct field,
                --  as in "field3 = "ab", field4 = 1"
+
                elsif Type_Str (Index) = ','
                  and then
                  (Index >= Type_Str'Last - 1
