@@ -55,6 +55,10 @@ Boston, MA 02111-1307, USA.
 #endif /* HAVE_PTYS and no O_NDELAY */
 #endif /* BSD_SYSTEM || STRIDE */
 
+#ifdef HPUX
+#include <sys/ptyio.h>
+#endif
+
 #ifdef WIN32
 #include <windows.h>
 #endif
@@ -732,6 +736,10 @@ static void
 setup_pty (fd)
      int fd;
 {
+  /* We might need to set flags on via ioctl calls, which requires the
+     address of a non-null variable.  */
+  int on = 1;
+
   /* I'm told that TOICREMOTE does not mean control chars
      "can't be sent" but rather that they don't have
      input-editing or signaling effects.
@@ -757,10 +765,7 @@ setup_pty (fd)
      lose that way.  -- cph */
 #ifdef FIONBIO
 #if defined(SYSV_PTYS) || defined(UNIX98_PTYS)
-  {
-    int on = 1;
-    ioctl (fd, FIONBIO, &on);
-  }
+  ioctl (fd, FIONBIO, &on);
 #endif
 #endif
 #ifdef IBMRTAIX
@@ -770,6 +775,13 @@ setup_pty (fd)
   /* tty goes away.  I've complained to the AIX developers, and they may    */
   /* change this behavior, but I'm not going to hold my breath.             */
   signal (SIGHUP, SIG_IGN);
+#endif
+
+  /* Beeing able to trap exceptional conditions like a "close" on the
+     slave side is useful and requires an explicit ioctl call to be enabled on
+     HPUX.  */
+#ifdef HPUX 
+  ioctl (fd, TIOCTRAP, &on);
 #endif
 }
 #endif /* HAVE_PTYS */
