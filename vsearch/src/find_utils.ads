@@ -90,19 +90,20 @@ package Find_Utils is
    --    regular expression.
 
    type Search_Options_Mask is mod 256;
-   Scope_Mask      : constant Search_Options_Mask := 2 ** 0;
-   Case_Sensitive  : constant Search_Options_Mask := 2 ** 1;
-   Whole_Word      : constant Search_Options_Mask := 2 ** 2;
-   Regexp          : constant Search_Options_Mask := 2 ** 3;
-   All_Occurences  : constant Search_Options_Mask := 2 ** 4;
-   Search_Backward : constant Search_Options_Mask := 2 ** 5;
-   All_Options     : constant Search_Options_Mask := 255;
+   Scope_Mask       : constant Search_Options_Mask := 2 ** 0;
+   Case_Sensitive   : constant Search_Options_Mask := 2 ** 1;
+   Whole_Word       : constant Search_Options_Mask := 2 ** 2;
+   Regexp           : constant Search_Options_Mask := 2 ** 3;
+   All_Occurences   : constant Search_Options_Mask := 2 ** 4;
+   Search_Backward  : constant Search_Options_Mask := 2 ** 5;
+   Supports_Replace : constant Search_Options_Mask := 2 ** 6;
+   All_Options      : constant Search_Options_Mask := 255;
 
    --------------
    -- Contexts --
    --------------
 
-   type Search_Context is tagged limited private;
+   type Search_Context is abstract tagged limited private;
    type Search_Context_Access is access all Search_Context'Class;
    --  Defines what the user is looking for.
    --  Although the user always specifies a string, it should sometimes be
@@ -138,6 +139,28 @@ package Find_Utils is
    --  Invalid_Context is raised if the user is in fact looking for a regular
    --  expression.
 
+   function Search
+     (Context         : access Search_Context;
+      Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Search_Backward : Boolean) return Boolean is abstract;
+   --  This subprogram should search for the next occurence of Context.
+   --  It should return False if there is no other search to be performed, True
+   --  if a call to this function might lead to another occurence of the search
+   --  string.
+
+   function Replace
+     (Context         : access Search_Context;
+      Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Replace_String  : String;
+      Search_Backward : Boolean) return Boolean;
+   --  This subprogram should search for the next occurence of Context. If
+   --  Is_First_Search, the search should start from the beginning
+   --  It should set Context to null when there is nothing more to replace.
+   --  It should return False if there is no other search to be performed, True
+   --  if a call to this function might lead to another occurence of the search
+   --  string.
+   --  The default implementation does nothing.
+
    procedure Free (Context : in out Search_Context);
    --  Free the memory allocated for Context.all. It doesn't free Context
    --  itself.
@@ -167,6 +190,12 @@ package Find_Utils is
    procedure Free (Context : in out Files_Context);
    --  Free the memory allocated for the context
 
+   function Search
+     (Context         : access Files_Context;
+      Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Search_Backward : Boolean) return Boolean;
+   --  Search function for "Files..."
+
    ---------------------------------
    --  Files From Project context --
    ---------------------------------
@@ -183,6 +212,12 @@ package Find_Utils is
    procedure Free (Context : in out Files_Project_Context);
    --  Free the memory allocated for the context
 
+   function Search
+     (Context         : access Files_Project_Context;
+      Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Search_Backward : Boolean) return Boolean;
+   --  Search function for "Files From Project"
+
    ---------------
    -- Searching --
    ---------------
@@ -195,28 +230,6 @@ package Find_Utils is
    --  It should return null if it couldn't create the context, and thus if the
    --  search/replace won't be performed.
    --  The memory will be freed automatically by Glide2
-
-   type Module_Search_Function is access function
-     (Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Context         : access Search_Context'Class;
-      Search_Backward : Boolean) return Boolean;
-   --  This subprogram should search for the next occurence of Context.
-   --  It should return False if there is no other search to be performed, True
-   --  if a call to this function might lead to another occurence of the search
-   --  string.
-
-   type Module_Replace_Function is access function
-     (Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Context         : access Search_Context'Class;
-      Replace_String  : String;
-      Is_First_Search : Boolean;
-      Search_Backward : Boolean) return Boolean;
-   --  This subprogram should search for the next occurence of Context. If
-   --  Is_First_Search, the search should start from the beginning
-   --  It should set Context to null when there is nothing more to replace.
-   --  It should return False if there is no other search to be performed, True
-   --  if a call to this function might lead to another occurence of the search
-   --  string.
 
    ------------------------------
    --  Standard search support --
@@ -240,24 +253,6 @@ package Find_Utils is
       return Search_Context_Access;
    --  Factory for "Files..."
 
-   function Search_Current_File
-     (Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Context         : access Search_Context'Class;
-      Search_Backward : Boolean) return Boolean;
-   --  Search function for "Current File"
-
-   function Search_Files_From_Project
-     (Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Context         : access Search_Context'Class;
-      Search_Backward : Boolean) return Boolean;
-   --  Search function for "Files From Project"
-
-   function Search_Files
-     (Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Context         : access Search_Context'Class;
-      Search_Backward : Boolean) return Boolean;
-   --  Search function for "Files..."
-
 private
 
    type Pattern_Matcher_Access is access GNAT.Regpat.Pattern_Matcher;
@@ -277,7 +272,7 @@ private
    type Match_Result_Array is array (Positive range <>) of Match_Result_Access;
    type Match_Result_Array_Access is access all Match_Result_Array;
 
-   type Search_Context is tagged limited record
+   type Search_Context is abstract tagged limited record
       Options        : Search_Options;
       Look_For       : GNAT.OS_Lib.String_Access := null;
 

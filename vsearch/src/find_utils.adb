@@ -831,160 +831,145 @@ package body Find_Utils is
          return null;
    end Files_Factory;
 
-   -------------------------
-   -- Search_Current_File --
-   -------------------------
+   ------------
+   -- Search --
+   ------------
 
-   function Search_Current_File
-     (Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Context         : access Search_Context'Class;
-      Search_Backward : Boolean) return Boolean
-   is
-   begin
-      return False;
-   end Search_Current_File;
-
-   -------------------------------
-   -- Search_Files_From_Project --
-   -------------------------------
-
-   function Search_Files_From_Project
-     (Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Context         : access Search_Context'Class;
-      Search_Backward : Boolean) return Boolean
-   is
-      C : Files_Project_Context_Access := Files_Project_Context_Access
-        (Context);
-
+   function Search
+     (Context         : access Files_Project_Context;
+      Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Search_Backward : Boolean) return Boolean is
    begin
       --  IF there are still some matches in the current file that we haven't
       --  returned , do it now.
-      if C.Next_Matches_In_File /= null then
-         C.Last_Match_Returned := C.Last_Match_Returned + 1;
-         if C.Last_Match_Returned <= C.Next_Matches_In_File'Last
-           and then C.Next_Matches_In_File (C.Last_Match_Returned) /= null
+      if Context.Next_Matches_In_File /= null then
+         Context.Last_Match_Returned := Context.Last_Match_Returned + 1;
+         if Context.Last_Match_Returned <= Context.Next_Matches_In_File'Last
+           and then Context.Next_Matches_In_File (Context.Last_Match_Returned)
+             /= null
          then
             Highlight_Result
-              (Kernel, C.Files (C.Current_File - 1).all,
-               C.Next_Matches_In_File (C.Last_Match_Returned).all);
+              (Kernel, Context.Files (Context.Current_File - 1).all,
+               Context.Next_Matches_In_File (Context.Last_Match_Returned).all);
             return True;
          else
-            Free (C.Next_Matches_In_File);
+            Free (Context.Next_Matches_In_File);
          end if;
       end if;
 
-      if C.Files = null then
+      if Context.Files = null then
          return False;
       end if;
 
       --  Loop until at least one match
       loop
-         if C.Current_File > C.Files'Last then
+         if Context.Current_File > Context.Files'Last then
             return False;
          end if;
 
-         C.Next_Matches_In_File := Scan_File_And_Store
-           (C, Kernel, C.Files (C.Current_File).all);
-         C.Current_File := C.Current_File + 1;
-         exit when C.Next_Matches_In_File /= null;
+         Context.Next_Matches_In_File := Scan_File_And_Store
+           (Context, Kernel, Context.Files (Context.Current_File).all);
+         Context.Current_File := Context.Current_File + 1;
+         exit when Context.Next_Matches_In_File /= null;
       end loop;
 
-      C.Last_Match_Returned := C.Next_Matches_In_File'First;
-      Highlight_Result (Kernel, C.Files (C.Current_File - 1).all,
-                        C.Next_Matches_In_File (C.Last_Match_Returned).all);
+      Context.Last_Match_Returned := Context.Next_Matches_In_File'First;
+      Highlight_Result
+        (Kernel, Context.Files (Context.Current_File - 1).all,
+         Context.Next_Matches_In_File (Context.Last_Match_Returned).all);
       return True;
-   end Search_Files_From_Project;
+   end Search;
 
-   ------------------
-   -- Search_Files --
-   ------------------
+   ------------
+   -- Search --
+   ------------
 
-   function Search_Files
-     (Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Context         : access Search_Context'Class;
+   function Search
+     (Context         : access Files_Context;
+      Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
       Search_Backward : Boolean) return Boolean
    is
       use Directory_List;
-
-      C : Files_Context_Access := Files_Context_Access (Context);
       File_Name : String (1 .. Max_Path_Len);
       Last      : Natural;
 
    begin
       --  IF there are still some matches in the current file that we haven't
       --  returned , do it now.
-      if C.Next_Matches_In_File /= null then
-         C.Last_Match_Returned := C.Last_Match_Returned + 1;
-         if C.Last_Match_Returned <= C.Next_Matches_In_File'Last
-           and then C.Next_Matches_In_File (C.Last_Match_Returned) /= null
+      if Context.Next_Matches_In_File /= null then
+         Context.Last_Match_Returned := Context.Last_Match_Returned + 1;
+         if Context.Last_Match_Returned <= Context.Next_Matches_In_File'Last
+           and then Context.Next_Matches_In_File (Context.Last_Match_Returned)
+           /= null
          then
             Highlight_Result
-              (Kernel, C.Current_File.all,
-               C.Next_Matches_In_File (C.Last_Match_Returned).all);
+              (Kernel, Context.Current_File.all,
+               Context.Next_Matches_In_File (Context.Last_Match_Returned).all);
             return True;
          else
-            Free (C.Next_Matches_In_File);
+            Free (Context.Next_Matches_In_File);
          end if;
       end if;
 
-      if C.Directory = null then
+      if Context.Directory = null then
          return False;
       end if;
 
-      if C.Dirs = Null_List then
-         Prepend (C.Dirs, new Dir_Data);
-         Head (C.Dirs).Name := new String' (C.Directory.all);
-         Open (Head (C.Dirs).Dir, C.Directory.all);
+      if Context.Dirs = Null_List then
+         Prepend (Context.Dirs, new Dir_Data);
+         Head (Context.Dirs).Name := new String' (Context.Directory.all);
+         Open (Head (Context.Dirs).Dir, Context.Directory.all);
       end if;
 
-      while C.Next_Matches_In_File = null loop
-         Read (Head (C.Dirs).Dir, File_Name, Last);
+      while Context.Next_Matches_In_File = null loop
+         Read (Head (Context.Dirs).Dir, File_Name, Last);
 
          if Last = 0 then
-            Tail (C.Dirs);
-            if C.Dirs = Null_List then
+            Tail (Context.Dirs);
+            if Context.Dirs = Null_List then
                return False;
             end if;
 
          else
             declare
                Full_Name : constant String :=
-                 Head (C.Dirs).Name.all & File_Name (1 .. Last);
+                 Head (Context.Dirs).Name.all & File_Name (1 .. Last);
             begin
                if Is_Directory (Full_Name) then
-                  if C.Recurse
+                  if Context.Recurse
                     and then File_Name (1 .. Last) /= "."
                     and then File_Name (1 .. Last) /= ".."
                   then
-                     Prepend (C.Dirs, new Dir_Data);
-                     Head (C.Dirs).Name := new String'
+                     Prepend (Context.Dirs, new Dir_Data);
+                     Head (Context.Dirs).Name := new String'
                        (Name_As_Directory (Full_Name));
-                     Open (Head (C.Dirs).Dir, Full_Name);
+                     Open (Head (Context.Dirs).Dir, Full_Name);
                   end if;
 
                --  ??? Should check that we have a text file
-               elsif Match (File_Name (1 .. Last), C.Files_Pattern) then
-                  C.Next_Matches_In_File :=
-                    Scan_File_And_Store (C, Kernel, Full_Name);
+               elsif Match (File_Name (1 .. Last), Context.Files_Pattern) then
+                  Context.Next_Matches_In_File :=
+                    Scan_File_And_Store (Context, Kernel, Full_Name);
 
-                  if C.Next_Matches_In_File /= null then
-                     Free (C.Current_File);
-                     C.Current_File := new String' (Full_Name);
+                  if Context.Next_Matches_In_File /= null then
+                     Free (Context.Current_File);
+                     Context.Current_File := new String' (Full_Name);
                   end if;
                end if;
             end;
          end if;
       end loop;
 
-      C.Last_Match_Returned := C.Next_Matches_In_File'First;
-      Highlight_Result (Kernel, C.Current_File.all,
-                        C.Next_Matches_In_File (C.Last_Match_Returned).all);
+      Context.Last_Match_Returned := Context.Next_Matches_In_File'First;
+      Highlight_Result
+        (Kernel, Context.Current_File.all,
+         Context.Next_Matches_In_File (Context.Last_Match_Returned).all);
       return True;
 
    exception
       when Directory_Error =>
          return False;
-   end Search_Files;
+   end Search;
 
    ----------
    -- Free --
@@ -998,5 +983,18 @@ package body Find_Utils is
       Free (D.Name);
       Unchecked_Free (D);
    end Free;
+
+   -------------
+   -- Replace --
+   -------------
+
+   function Replace
+     (Context         : access Search_Context;
+      Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Replace_String  : String;
+      Search_Backward : Boolean) return Boolean is
+   begin
+      return False;
+   end Replace;
 
 end Find_Utils;
