@@ -128,6 +128,10 @@ package body Browsers.Canvas is
      (Event : Gdk.Event.Gdk_Event; User  : access Browser_Item_Record'Class);
    --  Close an item when the user presses on the title bar button.
 
+   procedure Dump
+     (Me : Debug_Handle; Tree : Active_Area_Tree; Indent : Natural := 0);
+   --  For debugging purposes, dump the tree to Me.
+
    ----------------
    -- Initialize --
    ----------------
@@ -1343,20 +1347,35 @@ package body Browsers.Canvas is
 
       procedure Join_Areas (Area : in out Active_Area_Tree) is
          Tmp_R : Gdk_Rectangle;
+         Tmp_Children : Active_Area_Tree_Array_Access;
       begin
          Tmp_R.X := Gint'Min (Rectangle.X, Area.Rectangle.X);
          Tmp_R.Y := Gint'Min (Rectangle.Y, Area.Rectangle.Y);
          Tmp_R.Width :=
            Gint'Max (Rectangle.X + Rectangle.Width,
-                     Area.Rectangle.X + Area.Rectangle.Width) - Tmp_R.X;
+                        Area.Rectangle.X + Area.Rectangle.Width) - Tmp_R.X;
          Tmp_R.Height :=
            Gint'Max (Rectangle.Y + Rectangle.Height,
                      Area.Rectangle.Y + Area.Rectangle.Height) - Tmp_R.Y;
 
-         Area := new Active_Area_Tree_Record'
-           (Rectangle => Tmp_R,
-            Callback  => null,
-            Children  => new Active_Area_Tree_Array'(1 => Area, 2 => Tmp));
+         --  Slight optimization: expand an existing rectangle instead of
+         --  creating a new one. This avoids creating a tree too deep
+         if Area.Callback = null then
+            Area.Rectangle := Tmp_R;
+
+            Tmp_Children := Area.Children;
+            Area.Children := new Active_Area_Tree_Array'
+              (Tmp_Children.all & Tmp);
+            Unchecked_Free (Tmp_Children);
+
+         --  We can't optimize here, since the area is associated with a
+         --  callback and was specified by the user
+         else
+            Area := new Active_Area_Tree_Record'
+              (Rectangle => Tmp_R,
+               Callback  => null,
+               Children  => new Active_Area_Tree_Array'(1 => Area, 2 => Tmp));
+         end if;
       end Join_Areas;
 
       ------------------
@@ -1460,6 +1479,25 @@ package body Browsers.Canvas is
       Tmp := Check_Area (Item.Active_Areas);
    end Activate;
 
+   ----------
+   -- Dump --
+   ----------
+
+   procedure Dump
+     (Me : Debug_Handle; Tree : Active_Area_Tree; Indent : Natural := 0)
+   is
+      Id : constant String := (1 .. Indent => ' ');
+   begin
+      Trace (Me, Id & Tree.Rectangle.X'Img
+             & Tree.Rectangle.Y'Img & Tree.Rectangle.Width'Img
+             & Tree.Rectangle.Height'Img);
+      if Tree.Children /= null then
+         for C in Tree.Children'Range loop
+            Dump (Me, Tree.Children (C), Indent + 2);
+         end loop;
+      end if;
+   end Dump;
+
    ------------------------
    -- Reset_Active_Areas --
    ------------------------
@@ -1488,7 +1526,9 @@ package body Browsers.Canvas is
       end Free;
 
    begin
-      Free (Item.Active_Areas);
+      if Item.Active_Areas /= null then
+         Free (Item.Active_Areas);
+      end if;
    end Reset_Active_Areas;
 
    -------------
