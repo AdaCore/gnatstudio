@@ -488,21 +488,19 @@ package body Codefix.Text_Manager is
    -------------------
 
    function Search_String
-     (This          : Text_Navigator_Abstr'Class;
-      Cursor        : File_Cursor'Class;
-      Searched      : String;
-      Step          : Step_Way := Normal_Step;
-      Skip_Strings  : Boolean := True;
-      Skip_Comments : Boolean := True)
+     (This           : Text_Navigator_Abstr'Class;
+      Cursor         : File_Cursor'Class;
+      Searched       : String;
+      Escape_Manager : Escape_Str_Manager'Class;
+      Step           : Step_Way := Normal_Step)
      return File_Cursor'Class is
    begin
       return Search_String
         (Get_File (This, Cursor.File_Name.all).all,
          File_Cursor (Cursor),
          Searched,
-         Step,
-         Skip_Strings,
-         Skip_Comments);
+         Escape_Manager,
+         Step);
    end Search_String;
 
    function Search_Unit
@@ -972,12 +970,11 @@ package body Codefix.Text_Manager is
    -------------------
 
    function Search_String
-     (This          : Text_Interface'Class;
-      Cursor        : Text_Cursor'Class;
-      Searched      : String;
-      Step          : Step_Way := Normal_Step;
-      Skip_Strings  : Boolean := True;
-      Skip_Comments : Boolean := True)
+     (This           : Text_Interface'Class;
+      Cursor         : Text_Cursor'Class;
+      Searched       : String;
+      Escape_Manager : Escape_Str_Manager'Class;
+      Step           : Step_Way := Normal_Step)
      return File_Cursor'Class is
 
       Last, Increment    : Integer;
@@ -1011,9 +1008,8 @@ package body Codefix.Text_Manager is
                                   (Ext_Red,
                                    New_Cursor,
                                    Searched,
-                                   Step,
-                                   Skip_Strings,
-                                   Skip_Comments));
+                                   Escape_Manager,
+                                   Step));
 
          if Result /= Null_File_Cursor then
             Result := Clone (Result);
@@ -1513,7 +1509,8 @@ package body Codefix.Text_Manager is
       Cursor : File_Cursor := This.Cursor;
 
       procedure Commit_Modified_Line;
-      --  ???
+      --  Commit separately each part of a modified line, in order to conserv
+      --  marks.
 
       --------------------------
       -- Commit_Modified_Line --
@@ -1559,7 +1556,6 @@ package body Codefix.Text_Manager is
 
    begin
 
-      --  ??? Maybe manage this offset in a lower level
       Cursor.Line := This.Cursor.Line + Offset_Line;
 
       case This.Context is
@@ -1644,18 +1640,14 @@ package body Codefix.Text_Manager is
    -------------------
 
    function Search_String
-     (This          : Extract_Line;
-      Cursor        : File_Cursor'Class;
-      Searched      : String;
-      Step          : Step_Way := Normal_Step;
-      Skip_Strings  : Boolean := True;
-      Skip_Comments : Boolean := True) return File_Cursor'Class
+     (This           : Extract_Line;
+      Cursor         : File_Cursor'Class;
+      Searched       : String;
+      Escape_Manager : Escape_Str_Manager'Class;
+      Step           : Step_Way := Normal_Step) return File_Cursor'Class
    is
-      pragma Unreferenced (Skip_Strings);
-
       Result  : File_Cursor := File_Cursor (Cursor);
       Content : constant String := To_String (This.Content);
-
    begin
       if Result.Col = 0 then
          Result.Col := To_String (This.Content)'Last;
@@ -1665,8 +1657,7 @@ package body Codefix.Text_Manager is
          when Normal_Step =>
             for J in Result.Col .. Content'Last - Searched'Last + 1 loop
                if Content (J .. J + Searched'Last - 1) = Searched
-                 and then (not Skip_Comments
-                           or else not Is_In_Comment (Content, J))
+                 and then not Is_In_Escape_Part (Escape_Manager, Content, J)
                then
                   Result.Col := J;
                   return Result;
@@ -1678,8 +1669,7 @@ package body Codefix.Text_Manager is
               Result.Col - Searched'Last + 1
             loop
                if Content (J .. J + Searched'Last - 1) = Searched
-                 and then (not Skip_Comments
-                           or else not Is_In_Comment (Content, J))
+                 and then not Is_In_Escape_Part (Escape_Manager, Content, J)
                then
                   Result.Col := J;
                   return Result;
@@ -2805,11 +2795,11 @@ package body Codefix.Text_Manager is
    -------------------
 
    function Search_String
-     (This         : Extract;
-      Searched     : String;
-      Cursor       : File_Cursor'Class := Null_File_Cursor;
-      Step         : Step_Way := Normal_Step;
-      Jump_String  : Boolean := True)
+     (This           : Extract;
+      Searched       : String;
+      Escape_Manager : Escape_Str_Manager'Class;
+      Cursor         : File_Cursor'Class := Null_File_Cursor;
+      Step           : Step_Way := Normal_Step)
      return File_Cursor'Class is
 
       Current                 : Ptr_Extract_Line;
@@ -2838,8 +2828,8 @@ package body Codefix.Text_Manager is
                                   (Current.all,
                                    Current_Cursor,
                                    Searched,
-                                   Step,
-                                   Jump_String));
+                                   Escape_Manager,
+                                   Step));
 
          if Result /= Null_File_Cursor then
             Result.Line := Get_Cursor (Current.all).Line;
