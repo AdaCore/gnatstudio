@@ -145,13 +145,6 @@ package Src_Editor_Buffer is
    --  Note that Get_Line_Count (inherited from Gtk_Text_Buffer) is also
    --  available when only the Line number needs to be checked.
 
-   function Is_In_Comment
-     (Buffer : Source_Buffer;
-      Iter   : Gtk.Text_Iter.Gtk_Text_Iter)
-      return Boolean;
-   --  Retruns true if Iter is in a comment. This is only supported for non
-   --  case sensitive languages that have one-line comment construct only.
-
    procedure Set_Cursor_Position
      (Buffer : access Source_Buffer_Record;
       Line   : Editable_Line_Type;
@@ -174,18 +167,6 @@ package Src_Editor_Buffer is
       Column : out Positive);
    --  Return the current editable cursor position
 
-   procedure Get_Cursor_Position
-     (Buffer : access Source_Buffer_Record;
-      Iter   : out Gtk.Text_Iter.Gtk_Text_Iter);
-   --  Return the current editable cursor position
-
-   procedure Get_Cursor_Position
-     (Buffer : Source_Buffer;
-      Iter   : Gtk.Text_Iter.Gtk_Text_Iter;
-      Line   : out Editable_Line_Type;
-      Column : out Positive);
-   --  Return the current editable cursor position for Iter
-
    procedure Get_Screen_Position
      (Buffer : access Source_Buffer_Record;
       Iter   : Gtk.Text_Iter.Gtk_Text_Iter;
@@ -199,14 +180,6 @@ package Src_Editor_Buffer is
       Line   : out Gint;
       Column : out Gint);
    --  Same as above, for the cursor position
-
-   procedure Get_Iter_At_Screen_Position
-     (Buffer : access Source_Buffer_Record;
-      Iter   : out Gtk.Text_Iter.Gtk_Text_Iter;
-      Line   : Editable_Line_Type;
-      Column : Positive);
-   --  Return the iter at position (Line, Column), tab expansion included.
-   --  If Line is not in the text, return the Iter at beginning of text.
 
    procedure Get_Selection_Bounds
      (Buffer       : access Source_Buffer_Record;
@@ -708,6 +681,18 @@ package Src_Editor_Buffer is
 
 private
 
+   procedure Get_Cursor_Position
+     (Buffer : access Source_Buffer_Record;
+      Iter   : out Gtk.Text_Iter.Gtk_Text_Iter);
+   --  Return the current editable cursor position
+
+   procedure Get_Cursor_Position
+     (Buffer : Source_Buffer;
+      Iter   : Gtk.Text_Iter.Gtk_Text_Iter;
+      Line   : out Editable_Line_Type;
+      Column : out Positive);
+   --  Return the current editable cursor position for Iter
+
    procedure Set_Cursor_Position
      (Buffer : access Source_Buffer_Record;
       Line   : Gint;
@@ -718,6 +703,21 @@ private
    --  this procedure. An incorrect position will cause an Assertion_Failure
    --  when compiled with assertion checks, or an undefined behavior otherwise.
    --  This is obsolete, Set_Cursor_Position above should be called.
+
+   procedure Get_Iter_At_Screen_Position
+     (Buffer : access Source_Buffer_Record;
+      Iter   : out Gtk.Text_Iter.Gtk_Text_Iter;
+      Line   : Editable_Line_Type;
+      Column : Positive);
+   --  Return the iter at position (Line, Column), tab expansion included.
+   --  If Line is not in the text, return the Iter at beginning of text.
+
+   function Is_In_Comment
+     (Buffer : Source_Buffer;
+      Iter   : Gtk.Text_Iter.Gtk_Text_Iter)
+      return Boolean;
+   --  Retruns true if Iter is in a comment. This is only supported for non
+   --  case sensitive languages that have one-line comment construct only.
 
    procedure Highlight_Slice
      (Buffer     : access Source_Buffer_Record'Class;
