@@ -426,4 +426,23 @@ package body Python is
       Internal (Obj, Attr_Name & ASCII.NUL, Value);
    end PyObject_SetAttrString;
 
+   -----------------
+   -- PyDict_Next --
+   -----------------
+
+   procedure PyDict_Next
+     (Dict  : PyObject;
+      Pos   : in out Integer;
+      Key   : out PyObject;
+      Value : out PyObject)
+   is
+      function Internal
+        (Dict : PyObject; Pos, Key, Value : System.Address) return Integer;
+      pragma Import (C, Internal, "PyDict_Next");
+   begin
+      if Internal (Dict, Pos'Address, Key'Address, Value'Address) = 0 then
+         Pos := -1;
+      end if;
+   end PyDict_Next;
+
 end Python;

@@ -308,6 +308,18 @@ package Python is
      (Dict : PyDictObject; Key  : String) return PyObject;
    --  Same as above
 
+   procedure PyDict_Next
+     (Dict  : PyObject;
+      Pos   : in out Integer;
+      Key   : out PyObject;
+      Value : out PyObject);
+   --  Starting with Pos = 0, this traverses all items in Dict.
+   --  When there are no more items, Pos is set to -1.
+   --  It isn't safe to use this in a loop that modifies Dict.
+
+   function PyDict_Size (Dict : PyObject) return Integer;
+   --  Return the number of elements in Dict
+
    ----------------
    -- Exceptions --
    ----------------
@@ -524,4 +536,5 @@ private
    pragma Import (C, PyErr_Restore, "PyErr_Restore");
    pragma Import (C, Py_False, "ada_py_false");
    pragma Import (C, Py_True, "ada_py_true");
+   pragma Import (C, PyDict_Size, "PyDict_Size");
 end Python;
