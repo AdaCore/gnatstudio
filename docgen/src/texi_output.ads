@@ -20,7 +20,7 @@
 
 with Ada.Text_IO;           use Ada.Text_IO;
 with Doc_Types;             use Doc_Types;
-with Language;              use Language;
+with GNAT.OS_Lib;           use GNAT.OS_Lib;
 
 package Texi_Output is
 
@@ -82,16 +82,13 @@ private
       Info   : Doc_Info);
    --  add a type description to the documentation
 
-   procedure Format_TEXI_Entity_Header
-     (File              : in Ada.Text_IO.File_Type;
-      New_Entity_List   : Type_Entity_List.List;
-      Here_Process_Body : Boolean;
-      Nr_Lines          : Natural;
-      Header            : String;
+   function Format_TEXI
+     (Entity_List       : Type_Entity_List.List;
+      Text              : String;
       File_Name         : String;
-      Def_Line          : Natural;
-      Is_Private        : Boolean);
-   --  passes the headers of entities from the specs to the parser
+      Entity_Name       : String;
+      Is_Body           : Boolean) return GNAT.OS_Lib.String_Access;
+   --  returns the formatted Text as TEXI code
 
    procedure Doc_TEXI_Header
      (File   : in Ada.Text_IO.File_Type;
@@ -103,29 +100,10 @@ private
       Info   : Doc_Info);
    --  add the footer to the documentation file of the package
 
-   procedure Doc_TEXI_Body_Line
+   procedure Doc_TEXI_Body
    (File   : in Ada.Text_IO.File_Type;
     Info   : in out Doc_Info);
    --  write one line of the body file, after formatting it, in the doc file
-
-   function TEXI_Body_Callback
-     (Entity         : Language_Entity;
-      Sloc_Start     : Source_Location;
-      Sloc_End       : Source_Location;
-      Partial_Entity : Boolean) return Boolean;
-   --  the callback function for the parser used to format one (!)
-   --  line from the body file
-
-   function TEXI_Spec_Callback
-     (Entity         : Language_Entity;
-      Sloc_Start     : Source_Location;
-      Sloc_End       : Source_Location;
-      Partial_Entity : Boolean) return Boolean;
-   --  the callback function for the parser  used to format entity definitions
-
-   function Replace_TEXI_Tags
-     (Input_Line : String) return String;
-   --  replaces all "<" in the line by "&lt;" which are NOT in a comment
 
    function Chars_Before
      (Line    : String;

@@ -24,32 +24,13 @@ with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Language;                  use Language;
 with Language.Ada;              use Language.Ada;
-with Language;                  use Language;
+with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with Language.Ada;              use Language.Ada;
 
 package body Texi_Output is
 
    package TEL renames Type_Entity_List;
    package ASU renames Ada.Strings.Unbounded;
-
-   --  All 9 are used for the callback function in Doc_TEXI_Body_Line.
-   --  They must be global, because it is not possible to
-   --  give further parameters to the callback function
-   Old_Line, New_Line   : Unbounded_String;
-   --  used to save the lines processed by the callback function
-   Already_Added_Chars  : Integer;
-   --  how many chars have been already added in this line
-   New_Added_Chars      : Integer;
-   --  how many chars are being added for this entity
-   Entity_List          : TEL.List;
-   --  to garantee access to the entity list
-   Chars_Nr_Before      : Integer;
-   --  how many chars in all the lines before in this header
-   Source_File          : Unbounded_String;
-   --  name of the file
-   Process_Body         : Boolean;
-   --  will also the body file be processed
-   Line_Number          : Natural;
-   --  the line of the spec being processed
 
    procedure Doc_TEXI_Create
      (File   : in Ada.Text_IO.File_Type;
@@ -275,7 +256,7 @@ package body Texi_Output is
       --                             Info.Package_Entity.Line,
       --                             Info.Package_Entity.Is_Private);
 
-      Ada.Text_IO.Put_Line (File, Info.Package_Entity.Header.all);
+      --  Ada.Text_IO.Put_Line (File, Info.Package_Entity.Header.all);
       Ada.Text_IO.Put_Line (File, "---" & Info.Package_Description.all);
       Ada.Text_IO.New_Line (File);
    end Doc_TEXI_Package;
@@ -296,7 +277,7 @@ package body Texi_Output is
       --                           false);
 
 
-      Ada.Text_IO.Put_Line (File, Info.With_Lines.all);
+      Ada.Text_IO.Put_Line (File, Info.With_Header.all);
       Ada.Text_IO.New_Line (File);
    end Doc_TEXI_With;
 
@@ -316,7 +297,7 @@ package body Texi_Output is
       --                           Info.Var_Entity.Line,
       --                           Info.Var_Entity.Is_Private);
 
-      Ada.Text_IO.Put_Line (File, Info.Var_Entity.Header.all);
+      --  Ada.Text_IO.Put_Line (File, Info.Var_Entity.Header.all);
       Ada.Text_IO.Put_Line (File, "---" & Info.Var_Description.all);
       Ada.Text_IO.New_Line (File);
    end Doc_TEXI_Var;
@@ -337,7 +318,7 @@ package body Texi_Output is
       --                           Info.Exception_Entity.Line,
       --                           Info.Exception_Entity.Is_Private);
 
-      Ada.Text_IO.Put_Line (File, Info.Exception_Entity.Header.all);
+      --  Ada.Text_IO.Put_Line (File, Info.Exception_Entity.Header.all);
       Ada.Text_IO.Put_Line (File, "---" & Info.Exception_Description.all);
       Ada.Text_IO.New_Line (File);
    end Doc_TEXI_Exception;
@@ -357,7 +338,7 @@ package body Texi_Output is
       --                           Info.Type_Entity.Line,
       --                           Info.Type_Entity.Is_Private);
 
-      Ada.Text_IO.Put_Line (File, Info.Type_Entity.Header.all);
+      --  Ada.Text_IO.Put_Line (File, Info.Type_Entity.Header.all);
       Ada.Text_IO.Put_Line (File, "---" & Info.Type_Description.all);
       Ada.Text_IO.New_Line (File);
    end Doc_TEXI_Type;
@@ -381,68 +362,301 @@ package body Texi_Output is
       --                           Info.Subprogram_Entity.Line,
       --                           Info.Subprogram_Entity.Is_Private);
 
-      Ada.Text_IO.Put_Line (File, Info.Subprogram_Entity.Header.all);
+      --  Ada.Text_IO.Put_Line (File, Info.Subprogram_Entity.Header.all);
       Ada.Text_IO.Put_Line (File, "---" & Info.Subprogram_Description.all);
       Ada.Text_IO.New_Line (File);
    end Doc_TEXI_Subprogram;
 
-   -------------------------------
-   -- Format_TEXI_Entity_Header --
-   -------------------------------
+   ------------------
+   --  Format_TEXI --
+   ------------------
 
-   procedure Format_TEXI_Entity_Header
-     (File              : in Ada.Text_IO.File_Type;
-      New_Entity_List   : Type_Entity_List.List;
-      Here_Process_Body : Boolean;
-      Nr_Lines          : Natural;
-      Header            : String;
+   function Format_TEXI
+     (Entity_List       : Type_Entity_List.List;
+      Text              : String;
       File_Name         : String;
-      Def_Line          : Natural;
-      Is_Private        : Boolean) is
+      Entity_Name       : String;
+      Is_Body           : Boolean) return GNAT.OS_Lib.String_Access is
 
-      Chars_In_Old_Lines : Natural;
-      Chars_In_New_Lines : Natural;
-   begin
-      Ada.Text_IO.Put_Line (File, "<TABLE  bgcolor=""#DDDDDD"" " &
-                               "width=""100%""><TR><TD> <PRE>");
-      if Is_Private then
-         Ada.Text_IO.Put_Line (File, "<i> private: </i>");
-         Ada.Text_IO.New_Line (File);
-      end if;
+      --  used to save the lines processed by the callback function
+      Old_Line, Result_Line : GNAT.OS_Lib.String_Access;
+      --  how many chars have been already added in this line
+      Already_Added_Chars  : Integer;
+      --  how many chars added while replacing HTML tags
+      Replacing_Tags_Chars  : Integer;
 
-      --  for each line in the header
-      for J in 1 .. Nr_Lines loop
-         --  find out the number of chars in all the lines before this line
-         Chars_In_Old_Lines
-           := Chars_Before (Header, J);
-         if J = Nr_Lines then
-            Chars_In_New_Lines := Header'Length - (J - 1);
-         else
-            Chars_In_New_Lines := Chars_Before (Header, J + 1);
+      function Replace_HTML_Tags
+        (Input_Text : String) return String;
+      --  replaces all "<"  which are by "&lt;" and all ">" by "&gt;"
+
+      function HTML_Callback
+        (Entity         : Language_Entity;
+         Sloc_Start     : Source_Location;
+         Sloc_End       : Source_Location;
+         Partial_Entity : Boolean) return Boolean;
+
+      -----------------------
+      -- Replace_HTML_Tags --
+      -----------------------
+
+      function Replace_HTML_Tags
+        (Input_Text : String) return String is
+
+         Old_Text, Result_Text : GNAT.OS_Lib.String_Access;
+      begin
+         Result_Text := new String'(Input_Text);
+
+         Put_Line (Entity_Name);
+
+         for J in 1 .. Input_Text'Last - 1 loop
+            if Input_Text (J) = '<' then
+               Old_Text := Result_Text;
+               Result_Text :=
+                 new String'(Result_Text (Input_Text'First
+                                           .. J - 1
+                                             + Replacing_Tags_Chars) &
+                             "&lt;" &
+                             Result_Text (J + 1 + Replacing_Tags_Chars
+                                           .. Input_Text'Last
+                                             + Replacing_Tags_Chars));
+               Free (Old_Text);
+               Replacing_Tags_Chars := Replacing_Tags_Chars + 3;
+               --  1 char replaced by 4 new chars
+            elsif Input_Text (J) = '>' then
+               Old_Text := Result_Text;
+               Result_Text :=
+                 new String'(Result_Text (Input_Text'First
+                                           .. J - 1
+                                             + Replacing_Tags_Chars) &
+                             "&gt;" &
+                             Result_Text (J + 1 + Replacing_Tags_Chars
+                                           .. Input_Text'Last
+                                             + Replacing_Tags_Chars));
+               Free (Old_Text);
+               Replacing_Tags_Chars := Replacing_Tags_Chars + 3;
+               --  1 char replaced by 4 new chars
+            end if;
+         end loop;
+         return Result_Text.all;
+      end Replace_HTML_Tags;
+
+      -------------------
+      -- HTML_Callback --
+      -------------------
+
+      function HTML_Callback
+        (Entity         : Language_Entity;
+         Sloc_Start     : Source_Location;
+         Sloc_End       : Source_Location;
+         Partial_Entity : Boolean) return Boolean is
+
+         Entity_Node       : TEL.List_Node;
+
+         function Is_Variable return Boolean;
+         --  checks if the position of the entity in the
+         --  string is followed by a ":" => then variable
+
+         function Is_Variable return Boolean is
+         begin
+            return False;
+         end Is_Variable;
+
+      begin  -- HTML_Spec_Callback
+
+         --  DON'T FORGET: when you change the HTML code to
+         --  added, change also the Already_Added_Chars
+         --  AND add the tag beginning in Replace_HTML_Tags !!!
+
+         if Partial_Entity then  --  just to avoid the warning
+            null;
          end if;
 
-         --  the global variables for the callback function of the parser
-         New_Line            := ASU.To_Unbounded_String
-           (Header (Chars_In_Old_Lines + (J - 1) ..
-                      Chars_In_New_Lines + (J - 2)));
-         Old_Line            := New_Line;
-         Already_Added_Chars := 0;
-         Chars_Nr_Before     := 0;
-         --  how many chars in the lines before the current line
-         Entity_List         := New_Entity_List;
-         Process_Body        := Here_Process_Body;
-         Line_Number         := Def_Line;
-         Source_File         := ASU.To_Unbounded_String (File_Name);
+         --  to free the access string later
+         Old_Line := Result_Line;
+         Replacing_Tags_Chars := 0;
 
-         --  parse the entities in this line
-         Parse_Entities (Ada_Lang,
-                            Header (Chars_In_Old_Lines .. Chars_In_New_Lines),
-                            TEXI_Spec_Callback'Access);
+         case Entity is
+            when Comment_Text => Result_Line := new String'
+                 (Result_Line.all
+                    (Result_Line'First .. Sloc_Start.Index
+                       + Already_Added_Chars - 1) &
+                  "<FONT color=""green"">" &
+                  Result_Line.all
+                    (Sloc_Start.Index + Already_Added_Chars ..
+                       Sloc_End.Index + Already_Added_Chars) &
+                  "</FONT>" &
+                  Result_Line.all
+                    (Sloc_End.Index + Already_Added_Chars + 1 ..
+                       Result_Line'Last));
+               Already_Added_Chars := Already_Added_Chars + 27;
+               --  27 is the number of chars added here
+               Free (Old_Line);
+            when Keyword_Text =>
+               Result_Line := new String'
+                 (Result_Line.all
+                    (Result_Line'First .. Sloc_Start.Index
+                       + Already_Added_Chars - 1) &
+                  "<B>" &
+                  Result_Line.all
+                    (Sloc_Start.Index + Already_Added_Chars ..
+                       Sloc_End.Index + Already_Added_Chars) &
+                  "</B>" &
+                  Result_Line.all
+                    (Sloc_End.Index + Already_Added_Chars + 1 ..
+                       Result_Line'Last));
+               Already_Added_Chars := Already_Added_Chars + 7;
+               --  7 is the number of chars in "<B></B>"
+               Free (Old_Line);
+            when String_Text => Result_Line := new String'
+                 (Result_Line.all
+                    (Result_Line'First ..
+                       Sloc_Start.Index + Already_Added_Chars - 1) &
+                  "<FONT color=""red"">" &
+                  Replace_HTML_Tags (Result_Line.all
+                    (Sloc_Start.Index + Already_Added_Chars ..
+                       Sloc_End.Index + Already_Added_Chars)) &
+                  "</FONT>" &
+                  Result_Line.all
+                    (Sloc_End.Index + Already_Added_Chars + 1
+                    .. Result_Line'Last));
+               Already_Added_Chars := Already_Added_Chars + 25 +
+                 Replacing_Tags_Chars;
+               Free (Old_Line);
+            when Character_Text => Result_Line := new String'
+                 (Result_Line.all
+                    (Result_Line'First .. Sloc_Start.Index
+                       + Already_Added_Chars - 1) &
+                  "<FONT color=""red"">" &
+                  Result_Line.all
+                    (Sloc_Start.Index + Already_Added_Chars ..
+                       Sloc_End.Index + Already_Added_Chars) &
+                  "</FONT>" &
+                  Result_Line.all
+                    (Sloc_End.Index + Already_Added_Chars + 1 ..
+                       Result_Line'Last));
+               Already_Added_Chars := Already_Added_Chars + 25;
+               Free (Old_Line);
+            when Identifier_Text =>
 
-         Ada.Text_IO.Put_Line (File, To_String (New_Line));
-      end loop;
-      Ada.Text_IO.Put_Line (File, "</PRE></TD></TR></TABLE>");
-   end Format_TEXI_Entity_Header;
+               --  look in the list, if the identifier is there
+               --  if found => make a link; if not found => ignore!
+               if not TEL.Is_Empty (Entity_List) then
+                  Entity_Node := TEL.First (Entity_List);
+               end if;
+
+               for J in 1 .. TEL.Length (Entity_List) loop
+                  --  check if the entity name is also the identiefier name
+                  if TEL.Data (Entity_Node).Short_Name.all
+                    = To_Lower (Text (Sloc_Start.Index ..
+                                                 Sloc_End.Index))
+                  --  and the kind of the entity is not Other_Entity
+                  --  ONLY possible: subprograms, exceptions, variables,
+                  --  types and packages
+                    and TEL.Data (Entity_Node).Kind /= Other_Entity
+                  --  and this line is not the declararion of the entity
+                  --  (allowed for subprograms)
+                    and (not (TEL.Data (Entity_Node).Line
+                                = Sloc_Start.Line and
+                             TEL.Data (Entity_Node).File_Name.all
+                             = File_Name) or
+                        TEL.Data (Entity_Node).Kind = Procedure_Entity or
+                        TEL.Data (Entity_Node).Kind = Function_Entity)
+                  then
+                     --  if entity a subprogram and a link should and can be
+                     --  set => creat link to body
+                     if not Is_Body and TEL.Data (Entity_Node).File_Found and
+                       (TEL.Data (Entity_Node).Kind = Procedure_Entity or
+                          TEL.Data (Entity_Node).Kind = Function_Entity) then
+                        declare
+                           Number : constant String :=
+                             TEL.Data (Entity_Node).Line_In_Body'Img;
+                           Spec_File : GNAT.OS_Lib.String_Access;
+                           Body_File : GNAT.OS_Lib.String_Access;
+                           Node      : GNAT.OS_Lib.String_Access;
+                        begin
+                           Put_Line ("in: *" &
+                                     TEL.Data (Entity_Node).Name.all);
+
+                           Node := TEL.Data (Entity_Node).File_Name;
+                           Spec_File := new String'
+                             (GNAT.Directory_Operations.File_Name
+                                (Node.all));
+                           Body_File := new String'(Spec_File
+                             (1 .. Get_String_Index (Spec_File.all,
+                                                     1,
+                                                     ".") - 1) &
+                           "_adb.htm");
+                           Result_Line := new String'
+                             (Result_Line.all
+                                (Result_Line'First .. Sloc_Start.Index +
+                                   Already_Added_Chars - 1) &
+                              "<A href=""" &
+                              Body_File.all & "#" &
+                              Number (2 .. Number'Last) & """>" &
+                              Result_Line.all
+                                (Sloc_Start.Index + Already_Added_Chars ..
+                                   Sloc_End.Index + Already_Added_Chars) &
+                              "</A>" &
+                              Result_Line.all
+                                (Sloc_End.Index + Already_Added_Chars + 1 ..
+                                   Result_Line'Last));
+                           Already_Added_Chars := Already_Added_Chars + 16 +
+                             Body_File'Length + Number'Length - 1;
+                           Free (Old_Line);
+                        end;
+                     elsif not Is_Variable and
+                     not (TEL.Data (Entity_Node).Kind = Procedure_Entity or
+                         TEL.Data (Entity_Node).Kind = Function_Entity)
+                     then
+                        --  for the rest: create the link for the entity
+                        declare
+                           Number    : constant String
+                             := TEL.Data (Entity_Node).Line'Img;
+                           HTML_File : constant String
+                             := Get_TEXI_File_Name
+                               (TEL.Data (Entity_Node).File_Name.all);
+                        begin
+                           Result_Line := new String'
+                             (Result_Line.all
+                                (Result_Line'First .. Sloc_Start.Index +
+                                   Already_Added_Chars - 1) &
+                              "<A href=""" &
+                              HTML_File & "#" &
+                              Number (2 .. Number'Last) & """>" &
+                              Result_Line.all
+                                (Sloc_Start.Index + Already_Added_Chars ..
+                                   Sloc_End.Index + Already_Added_Chars) &
+                              "</A>" &
+                              Result_Line.all
+                                (Sloc_End.Index + Already_Added_Chars + 1 ..
+                                   Result_Line'Last));
+                           Already_Added_Chars := Already_Added_Chars +
+                             16 + HTML_File'Length + Number'Length - 1;
+                           Free (Old_Line);
+                        end;
+                     end if;
+                     return False;
+                  end if;
+                  Entity_Node := TEL.Next (Entity_Node);
+               end loop;
+            when others => null;
+         end case;
+         return False;  --  later: use false or not?
+      end HTML_Callback;
+
+   begin  --  Format_HTML
+
+      Put_Line (File_Name);
+
+      Already_Added_Chars := 0;
+      Result_Line := new String'(Text);
+
+      --  parse the entities in this line
+      Parse_Entities (Ada_Lang,
+                      Text,
+                      HTML_Callback'Unrestricted_Access);
+      return Result_Line;
+   end Format_TEXI;
 
    ---------------------
    -- Doc_TEXI_Header --
@@ -474,218 +688,10 @@ package body Texi_Output is
      (File   : in Ada.Text_IO.File_Type;
       Info   : Doc_Info) is
    begin
-      if false then      --  just to avoid the warning
+      if False then      --  just to avoid the warning
          Ada.Text_IO.Put_Line (File, Info.Footer_Title.all);
       end if;
    end Doc_TEXI_Footer;
-
-   -----------------------
-   -- Replace_TEXI_Tags --
-   -----------------------
-
-   function Replace_TEXI_Tags
-     (Input_Line : String) return String is
-      --  replaces all "<"  which are NOT in a commentin by "&lt;"
-      Line : ASU.Unbounded_String := ASU.To_Unbounded_String (Input_Line);
-   begin
-      while ASU.Index (Line, "<") > 0 loop
-         if ASU.Index (Line, "--") = 0
-           or (ASU.Index (Line, "--") > ASU.Index (Line, "<")) then
-            Line := ASU.Replace_Slice (Line,
-                                       ASU.Index (Line, "<"),
-                                       ASU.Index (Line, "<"),
-                                       "&lt;");
-            New_Added_Chars := New_Added_Chars + 3;
-         else
-            return ASU.To_String (Line);
-         end if;
-      end loop;
-      return ASU.To_String (Line);
-   end Replace_TEXI_Tags;
-
-   ------------------------
-   -- TEXI_Body_Callback --
-   ------------------------
-
-   function TEXI_Body_Callback
-     (Entity         : Language_Entity;
-      Sloc_Start     : Source_Location;
-      Sloc_End       : Source_Location;
-      Partial_Entity : Boolean) return Boolean is
-      --  here for each entity found in the line, the New_Line
-      --  string will be formatted
-      Entity_Node    : TEL.List_Node;
-
-      function Is_Declaration (Line      : String;
-                               Start_Col : Integer;
-                               End_Col   : Integer) return Boolean;
-      --  checks if the last Entity found in this line is declared here
-      --  => check if the entity name is followed by a ":"
-
-
-      function Is_Declaration (Line      : String;
-                               Start_Col : Integer;
-                               End_Col   : Integer) return Boolean is
-         Col  : Integer;
-      begin
-         Col := End_Col + 1;
-
-         if Partial_Entity and False then      --  just to avoid the warning
-            Put_Line (Start_Col'Img);
-         end if;
-
-         --  find the first character after the entity
-         while Line (Col) = ' ' loop
-            Col := Col + 1;
-         end loop;
-
-         if Line (Col) = ';' then
-            return False;
-         end if;
-
-         if Col + 6 < Line'Last then
-            if Line (Col .. Col + 6) = "renames" then
-               return True;
-            end if;
-         end if;
-
-         if Line (Col) = ':' then
-            if Col + 1 < Line'Last then
-               if Line (Col + 1) = '=' then
-                  return False;
-               else
-                  return True;
-               end if;
-            else
-               return True;
-            end if;
-         end if;
-
-         if  Line (Col) = ',' then
-            while Col < Line'Last loop
-               Col := Col + 1;
-               if Line (Col) = ';' then
-                  return False;
-               end if;
-               if Line (Col) = ':' and Line (Col + 1) /= '=' then
-                  return True;
-               end if;
-            end loop;
-            return False;
-         end if;
-
-         return False;
-      end Is_Declaration;
-
-   begin  -- TEXI_Body_Callback
-
-
-      --  DON'T FORGET: when you change the TEXI code to added,
-      --  change also the Already_Added_Chars!!!
-
-      New_Added_Chars := 0;
-
-      case Entity is
-         when Comment_Text => New_Line := ASU.Replace_Slice
-              (New_Line, Sloc_Start.Column + Already_Added_Chars,
-               Sloc_End.Column   + Already_Added_Chars,
-               "<FONT color=""green"">"
-                 & To_String (Old_Line) (Sloc_Start.Column .. Sloc_End.Column)
-               & "</FONT>");
-            Already_Added_Chars := Already_Added_Chars + 27;
-            --  27 is the number of chars in "<FONT c.."
-         when Keyword_Text => New_Line := ASU.Replace_Slice
-              (New_Line, Sloc_Start.Column + Already_Added_Chars,
-               Sloc_End.Column   + Already_Added_Chars,
-               "<B>"
-                 & To_String (Old_Line) (Sloc_Start.Column .. Sloc_End.Column)
-               & "</B>");
-            Already_Added_Chars := Already_Added_Chars + 7;
-            --  7 is the number of chars in "<B></B>"
-         when String_Text => New_Line := ASU.Replace_Slice
-              (New_Line, Sloc_Start.Column + Already_Added_Chars,
-               Sloc_End.Column   + Already_Added_Chars,
-               "<FONT color=""red"">"
-               --  To_String(Old_Line)(Sloc_Start.Column..Sloc_End.Column)
-                 & Replace_TEXI_Tags
-                   (To_String
-                        (Old_Line)(Sloc_Start.Column .. Sloc_End.Column))
-               & "</FONT>");
-            Already_Added_Chars := Already_Added_Chars +
-              25 + New_Added_Chars;
-         when Character_Text => New_Line := ASU.Replace_Slice
-              (New_Line, Sloc_Start.Column + Already_Added_Chars,
-               Sloc_End.Column   + Already_Added_Chars,
-               "<FONT color=""#666666"">"
-                 & To_String (Old_Line) (Sloc_Start.Column .. Sloc_End.Column)
-               & "</FONT>");
-            Already_Added_Chars := Already_Added_Chars + 29;
-         when Identifier_Text =>
-
-            --  look in the list, if the identifier is there
-            --  if found => make a link; if not found => ignore!
-            --  put_line ("elements in list: " & Entity_List_Length'Img);
-
-            if not TEL.Is_Empty (Entity_List) then
-               Entity_Node := TEL.First (Entity_List);
-            end if;
-            for J in 1 .. TEL.Length (Entity_List) loop
-
-               --  check if the entity name is also the identiefier name
-               if TEL.Data (Entity_Node).Short_Name.all
-                 = To_Lower (To_String
-                               (Old_Line) (Sloc_Start.Column ..
-                                             Sloc_End.Column))
-               then
-                  --  and if this line is the declaration of the entity.
-                  --  if so => ignore!
-                  if not Is_Declaration (ASU.To_String (Old_Line),
-                                         Sloc_Start.Column,
-                                         Sloc_End.Column)
-                    and
-                  --  ignore also all variables NOT defined in this source file
-                    (TEL.Data (Entity_Node).Kind /= Other_Entity or
-                       TEL.Data (Entity_Node).File_Name.all =
-                       To_String (Source_File))
-                  then
-                     --  create make the link
-                     declare
-                        Number    : constant String
-                          := TEL.Data (Entity_Node).Line'Img;
-                        TEXI_File : constant String
-                          := Get_TEXI_File_Name
-                          (TEL.Data (Entity_Node).File_Name.all);
-                     begin
-                        New_Line := ASU.Replace_Slice
-                          (New_Line, Sloc_Start.Column + Already_Added_Chars,
-                           Sloc_End.Column   + Already_Added_Chars,
-                           "<A href="""
-                             & TEXI_File
-                           & "#"
-                             & Number (2 .. Number'Last)
-                           & """>"
-                             & To_String (Old_Line) (Sloc_Start.Column
-                                                     .. Sloc_End.Column)
-                           & "</A>");
-                        Already_Added_Chars := Already_Added_Chars +
-                          16 + TEXI_File'Length + Number'Length - 1;
-                     end;
-                     return False;
-                  end if;
-               end if;
-               Entity_Node := TEL.Next (Entity_Node);
-            end loop;
-
-         when others => New_Line :=
-              ASU.To_Unbounded_String (Replace_TEXI_Tags
-                                         (To_String (Old_Line)
-                                            (Sloc_Start.Column
-                                               .. Sloc_End.Column)));
-            Already_Added_Chars := Already_Added_Chars
-              + New_Added_Chars;
-      end case;
-      return False;  --  later: use false or not?
-   end TEXI_Body_Callback;
 
    ------------------
    -- Chars_Before --
@@ -711,202 +717,26 @@ package body Texi_Output is
       return Chars_Counter - Line_Nr + 1;
    end Chars_Before;
 
-   ------------------------
-   -- TEXI_Spec_Callback --
-   ------------------------
+   -------------------
+   -- Doc_TEXI_Body --
+   -------------------
 
-   function TEXI_Spec_Callback
-     (Entity         : Language_Entity;
-      Sloc_Start     : Source_Location;
-      Sloc_End       : Source_Location;
-      Partial_Entity : Boolean) return Boolean is
-      --  here for each entity found in the line, the New_Line
-      --  string will be formatted
-      Entity_Node       : TEL.List_Node;
-
-      function Is_Variable return Boolean;
-      --  checks if the position of the entity in the string is
-      --  followed by a ":" => then variable
-
-      function Is_Variable return Boolean is
-         --  checks if the position of the entity in the string is
-         --  followed by a ":" => then variable
-      begin
-         if Sloc_Start.Column < Get_String_Index
-           (To_String (Old_Line), 1, ":") then
-            return True;
-         else
-            return False;
-         end if;
-      end Is_Variable;
-
-   begin  --  TEXI_Spec_Callback
-
-      --  DON'T FORGET: when you change the TEXI code to added,
-      --  change also the Already_Added_Chars!!!
-
-      if Partial_Entity and False then      --  just to avoid the warning
-         null;
-      end if;
-
-      New_Added_Chars := 0;
-
-      case Entity is
-         when Comment_Text => null;
-         when Keyword_Text => New_Line := ASU.Replace_Slice
-              (New_Line, Sloc_Start.Column + Already_Added_Chars,
-               Sloc_End.Column   + Already_Added_Chars,
-               "<B>"
-                 & To_String (Old_Line) (Sloc_Start.Column .. Sloc_End.Column)
-               & "</B>");
-            Already_Added_Chars := Already_Added_Chars + 7;
-            --  7 is the number of chars in "<B></B>"
-         when String_Text => New_Line := ASU.Replace_Slice
-              (New_Line, Sloc_Start.Column + Already_Added_Chars,
-               Sloc_End.Column   + Already_Added_Chars,
-               "<FONT color=""red"">"
-               --  To_String(Old_Line)(Sloc_Start.Column..Sloc_End.Column)
-                 & Replace_TEXI_Tags
-                   (To_String (Old_Line)
-                      (Sloc_Start.Column .. Sloc_End.Column))
-               & "</FONT>");
-            Already_Added_Chars := Already_Added_Chars + 25 + New_Added_Chars;
-         when Character_Text => New_Line := ASU.Replace_Slice
-              (New_Line, Sloc_Start.Column + Already_Added_Chars,
-               Sloc_End.Column   + Already_Added_Chars,
-               "<FONT color=""#666666"">"
-                 & To_String (Old_Line) (Sloc_Start.Column .. Sloc_End.Column)
-               & "</FONT>");
-            Already_Added_Chars := Already_Added_Chars + 29;
-         when Identifier_Text =>
-
-            --  look in the list, if the identifier is there
-            --  if found => make a link; if not found => ignore!
-            if not TEL.Is_Empty (Entity_List) then
-               Entity_Node := TEL.First (Entity_List);
-            end if;
-            for J in 1 .. TEL.Length (Entity_List) loop
-
-               --  check if the entity name is also the identiefier name
-               if TEL.Data (Entity_Node).Short_Name.all
-                 = To_Lower (To_String (Old_Line)
-                               (Sloc_Start.Column .. Sloc_End.Column))
-               --  and the kind of the entity is not Other_Entity
-               --  ONLY possible: subprograms, exceptions, types and packages
-                 and TEL.Data (Entity_Node).Kind /= Other_Entity
-               --  and this line is not the declararion of the
-               --  entity (allowed for subprograms)
-                 and (not (TEL.Data (Entity_Node).Line = Line_Number and
-                             TEL.Data (Entity_Node).File_Name.all =
-                             ASU.To_String (Source_File)) or
-                        TEL.Data (Entity_Node).Kind = Procedure_Entity or
-                        TEL.Data (Entity_Node).Kind = Function_Entity)
-               then
-                  --  if entity a subprogram and a link should and can be set
-                  --  => creat link to body
-                  if Process_Body and TEL.Data (Entity_Node).File_Found and
-                    (TEL.Data (Entity_Node).Kind = Procedure_Entity or
-                       TEL.Data (Entity_Node).Kind = Function_Entity) then
-                     declare
-                        Number    : constant String :=
-                                    TEL.Data (Entity_Node).Line_In_Body'Img;
-                        Spec_File, Body_File : ASU.Unbounded_String;
-                     begin
-                        Spec_File := ASU.To_Unbounded_String
-                          (File_Name (TEL.Data (Entity_Node).File_Name.all));
-                        Body_File :=
-                          ASU.Replace_Slice (Spec_File,
-                                             ASU.Index (Spec_File, "."),
-                                             ASU.Index (Spec_File, ".") + 3,
-                                             "_adb.htm");
-
-                        New_Line := ASU.Replace_Slice
-                          (New_Line, Sloc_Start.Column + Already_Added_Chars,
-                           Sloc_End.Column   + Already_Added_Chars,
-                           "<A href="""
-                             & ASU.To_String (Body_File)
-                           & "#"
-                             & Number (2 .. Number'Last)
-                           & """>"
-                             & To_String (Old_Line)(Sloc_Start.Column ..
-                                                      Sloc_End.Column)
-                           & "</A>");
-                        Already_Added_Chars := Already_Added_Chars + 16 +
-                          ASU.Length (Body_File) +
-                          Number'Length - 1;
-                     end;
-                  elsif not Is_Variable then
-                     --  for the rest: create the link for the entity
-                     declare
-                        Number    : constant String
-                          := TEL.Data (Entity_Node).Line'Img;
-                        TEXI_File : constant String :=
-                          Get_TEXI_File_Name (TEL.Data
-                                                (Entity_Node).File_Name.all);
-                     begin
-                        New_Line := ASU.Replace_Slice
-                          (New_Line, Sloc_Start.Column + Already_Added_Chars,
-                           Sloc_End.Column   + Already_Added_Chars,
-                           "<A href="""
-                             & TEXI_File
-                           & "#"
-                             & Number (2 .. Number'Last)
-                           & """>"
-                             & To_String (Old_Line)
-                             (Sloc_Start.Column .. Sloc_End.Column)
-                           & "</A>");
-                        Already_Added_Chars := Already_Added_Chars + 16
-                          + TEXI_File'Length + Number'Length - 1;
-                     end;
-                  end if;
-                  return False;
-               end if;
-               Entity_Node := TEL.Next (Entity_Node);
-            end loop;
-
-         when others => New_Line :=
-              ASU.To_Unbounded_String (Replace_TEXI_Tags
-                                         (To_String (Old_Line)
-                                            (Sloc_Start.Column
-                                               .. Sloc_End.Column)));
-            Already_Added_Chars := Already_Added_Chars + New_Added_Chars;
-      end case;
-      return False;  --  later: use false or not?
-   end TEXI_Spec_Callback;
-
-   ------------------------
-   -- Doc_TEXI_Body_Line --
-   ------------------------
-
-   procedure Doc_TEXI_Body_Line
+   procedure Doc_TEXI_Body
      (File   : in Ada.Text_IO.File_Type;
       Info   : in out Doc_Info) is
+
+      New_Text : GNAT.OS_Lib.String_Access;
    begin
+      New_Text :=  Format_TEXI (Info.Body_Entity_List,
+                                Info.Body_Text.all,
+                                Info.Body_File.all,
+                                "",
+                                True);
 
-      --  the global variables for the callback function of the parser
-      New_Line            := ASU.To_Unbounded_String (Info.Body_Text.all);
-      Old_Line            := New_Line;
-      Already_Added_Chars := 0;
-      Chars_Nr_Before     := 0;
-      --  how many chars in the lines before the current line
-      Source_File         := ASU.To_Unbounded_String (Info.Body_Text.all);
-      Entity_List         := Info.Body_List;
-
-      --  parse the entities in this line
-      Parse_Entities (Ada_Lang, Info.Body_Text.all, TEXI_Body_Callback'Access);
-
-      --  each line will get a mark with its number as name
-      --  Add_Mark_For_Entity :
-      --  declare
-      --   Number : constant String := Info.Body_Line_Nr'Img;
-      --  begin
-      --   New_Line := "<A name=""" & Number (2 .. Number'Last) &
-      --   """> " & New_Line & " </A>";
-      --  end Add_Mark_For_Entity;
-
-      --  write the line to the htm-file
-      Ada.Text_IO.Put_Line (File, To_String (New_Line));
-   end Doc_TEXI_Body_Line;
+      --  write the changed body to the html file
+      Ada.Text_IO.Put_Line (File, New_Text.all);
+      Free (New_Text);
+   end Doc_TEXI_Body;
 
    ------------------------
    -- Get_TEXI_File_Name --
