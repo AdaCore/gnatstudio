@@ -201,7 +201,7 @@ case "${host}" in
 	EXEC_COMMAND="cmd /c start"
 	DEFAULT_PS="winps"
 	DEFAULT_FONT="tahoma 8"
-	HTML_BROWSER="explore"
+	HTML_BROWSER="explorer"
 	PRINT_CMD=""
 	DIFF_CMD="windiff"
 	PATCH_CMD="winpatch"
