@@ -34,8 +34,8 @@ with Gtkada.MDI;                use Gtkada.MDI;
 with Src_Editor_Box;
 
 with Glide_Kernel;      use Glide_Kernel;
-with Basic_Types;       use Basic_Types;
 with String_List_Utils; use String_List_Utils;
+with VFS;
 
 with Ada.Unchecked_Deallocation;
 with Generic_List;
@@ -82,7 +82,7 @@ package Src_Editor_Module is
 
    function Find_Editor
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
-      File   : String) return Gtkada.MDI.MDI_Child;
+      File   : VFS.Virtual_File) return Gtkada.MDI.MDI_Child;
    --  Return the first child that contains an editor that edits file.
    --  null is returned if there are no such editor
    --  File can either be a file name or a buffer identifier.
@@ -119,7 +119,7 @@ private
    type Mark_Identifier_Record is record
       Id     : Natural;
       Child  : MDI_Child;
-      File   : Basic_Types.String_Access;
+      File   : VFS.Virtual_File;
       Line   : Natural;
       Column : Natural;
       Mark   : Gtk_Text_Mark;

@@ -29,6 +29,7 @@ with Glide_Intl;           use Glide_Intl;
 with Basic_Types;          use Basic_Types;
 with Projects;             use Projects;
 with String_Utils;         use String_Utils;
+with VFS;                  use VFS;
 
 with Ada.Exceptions;       use Ada.Exceptions;
 with Ada.Text_IO;          use Ada.Text_IO;
@@ -124,7 +125,6 @@ package body Commands.Custom is
       function Substitution (Param : String) return String is
          File : File_Selection_Context_Access;
          Project  : Project_Type := No_Project;
-         List     : String_Array_Access;
       begin
          if Param = "f" or else Param = "F" then
             if Context /= null
@@ -135,10 +135,9 @@ package body Commands.Custom is
                File := File_Selection_Context_Access (Context);
 
                if Param = "f" then
-                  return File_Information (File);
+                  return Base_Name (File_Information (File));
                else
-                  return Directory_Information (File)
-                    & File_Information (File);
+                  return Full_Name (File_Information (File));
                end if;
 
             else
@@ -187,35 +186,42 @@ package body Commands.Custom is
                   Index := Param'First + 1;
                end if;
 
-               if Param (Index) = 's' then
-                  List := Get_Source_Files (Project, Recurse);
-
-               elsif Param (Index) = 'd' then
-                  List := Source_Dirs (Project, Recurse);
-               end if;
-
-               if List = null then
-                  Insert (Command.Kernel,
-                          -"Command not executed: it requires a project",
-                          Mode => Error);
-                  Success := False;
-                  raise Invalid_Substitution;
-               end if;
-
                if Index < Param'Last
                  and then Param (Index + 1) = 'f'
                then
                   --  Append the list to a file.
                   declare
                      File : File_Type;
+                     Files_List : File_Array_Access;
+                     List : String_Array_Access;
                   begin
                      Create (File);
 
-                     for K in List'Range loop
-                        Put_Line (File, List (K).all);
-                     end loop;
+                     if Param (Index) = 's' then
+                        Files_List := Get_Source_Files (Project, Recurse);
+                        if Files_List /= null then
+                           for K in Files_List'Range loop
+                              Put_Line (File, Full_Name (Files_List (K)));
+                           end loop;
+                           Unchecked_Free (Files_List);
+                        end if;
 
-                     Free (List);
+                     elsif Param (Index) = 'd' then
+                        List := Source_Dirs (Project, Recurse);
+                        if List /= null then
+                           for K in List'Range loop
+                              Put_Line (File, List (K).all);
+                           end loop;
+                           Free (List);
+                        end if;
+
+                     else
+                        Insert (Command.Kernel,
+                                -"Command not executed: it requires a project",
+                                Mode => Error);
+                        Success := False;
+                        raise Invalid_Substitution;
+                     end if;
 
                      declare
                         N : constant String := Name (File);
@@ -247,7 +253,7 @@ package body Commands.Custom is
                declare
                   Project : constant Project_Type := Project_From_Param
                     (Args (J) (Args (J)'First + 1 .. Args (J)'Last));
-                  List    : String_Array_Access;
+                  List    : File_Array_Access;
                begin
                   if Project = No_Project then
                      return Failure;
@@ -263,11 +269,12 @@ package body Commands.Custom is
                        New_Args (New_Args'First .. Last - 1);
 
                      for K in List'Range loop
-                        New_New_Args (Last) := new String'(List (K).all);
+                        New_New_Args (Last) :=
+                          new String'(Base_Name (List (K)));
                         Last := Last + 1;
                      end loop;
 
-                     Free (List);
+                     Unchecked_Free (List);
                      Unchecked_Free (New_Args);
                      New_Args := New_New_Args;
                   end;

@@ -30,6 +30,7 @@ with Src_Info.Prj_Utils;        use Src_Info.Prj_Utils;
 with Src_Info.LI_Utils;         use Src_Info.LI_Utils;
 with Types;                     use Types;
 with Traces;                    use Traces;
+with VFS;                       use VFS;
 
 package body Src_Info.ALI is
 
@@ -155,9 +156,13 @@ package body Src_Info.ALI is
    --  Translate the given character into the associated Reference_Kind value.
    --  Raise ALI_Internal_Error if C does not represent any Reference_Kind.
 
-   function Get_ALI_Filename (File_Name : String) return String;
+   function Get_ALI_Filename
+     (File_Name : Virtual_File; Project : Project_Type := No_Project)
+      return Virtual_File;
    --  Converts the given source filename File_Name into the corresponding
    --  ALI filename.
+   --  If Project is not No_Project, then the full path of the ALI file is
+   --  searched
 
    function Strip_Unit_Part (Unit_Name : String) return String;
    --  Strip a trailing '%s' or '%b' if present.
@@ -187,7 +192,7 @@ package body Src_Info.ALI is
    procedure Get_Unit_Source_File
      (Handler          : ALI_Handler;
       List             : LI_File_List;
-      Source_Filename  : String;
+      Source_Filename  : Virtual_File;
       Project          : Project_Type;
       File             : out Source_File);
    --  Perform the job of Get_Source_File in the case where Subunit_Name is not
@@ -196,8 +201,9 @@ package body Src_Info.ALI is
    procedure Get_Unit_Source_File
      (Handler          : ALI_Handler;
       List             : LI_File_List;
-      Source_Filename  : String;
-      Sig_Filename     : String;
+      Source_Filename  : Virtual_File;
+      Sig_Filename     : Virtual_File;
+      Project          : Project_Type;
       Part             : Unit_Part;
       File             : out Source_File);
    --  Perform the job of Get_Unit_Source_File knowing that the Source Filename
@@ -206,14 +212,15 @@ package body Src_Info.ALI is
    procedure Get_Subunit_Source_File
      (Handler          : ALI_Handler;
       List             : LI_File_List;
-      Source_Filename  : String;
-      Sig_Filename     : String;
+      Source_Filename  : Virtual_File;
+      Sig_Filename     : Virtual_File;
+      Project          : Project_Type;
       Subunit_Name     : Name_Id;
       File             : out Source_File);
    --  Perform the job of Get_Subunit_Source_File knowing the name of the
    --  Source Filename from which the ALI filename is derived.
 
-   function Load_And_Scan_ALI (ALI_Filename : String) return ALI_Id;
+   function Load_And_Scan_ALI (ALI_Filename : Virtual_File) return ALI_Id;
    --  Load the given ALI file into a buffer and then scan it, filling in the
    --  information in the tables maintained in ali.ads. The new ID associated
    --  to the ALI file is returned. No_ALI_Id is returned if we failed to
@@ -330,14 +337,14 @@ package body Src_Info.ALI is
       New_LI_File       : out LI_File_Ptr;
       New_ALI           : ALIs_Record;
       Project           : Project_Type;
-      Full_ALI_Filename : String;
+      Full_ALI_Filename : Virtual_File;
       List              : LI_File_List);
    --  Create a new LI_File_Ptr from the given ALIs_Record. This LI_File_Ptr
    --  is left unconnected to the LI_File_List.
 
    procedure Parse_ALI_File
      (Handler                : ALI_Handler;
-      Full_ALI_Filename      : String;
+      Full_ALI_Filename      : Virtual_File;
       Project                : Project_Type;
       List                   : LI_File_List;
       Unit                   : out LI_File_Ptr;
@@ -349,7 +356,7 @@ package body Src_Info.ALI is
    procedure Create_Or_Complete_LI
      (Handler                : access ALI_Handler_Record'Class;
       File                   : in out LI_File_Ptr;
-      Full_Ali_File          : String;
+      Full_Ali_File          : Virtual_File;
       List                   : LI_File_List;
       Project                : Project_Type);
    --  Internal version of Create_Or_Complete_LI
@@ -413,27 +420,47 @@ package body Src_Info.ALI is
    -- Get_ALI_Filename --
    ----------------------
 
-   function Get_ALI_Filename (File_Name : String) return String is
+   function Get_ALI_Filename
+     (File_Name : Virtual_File; Project : Project_Type := No_Project)
+      return Virtual_File
+   is
       Last_Dot : Natural;
+      File     : constant String := Base_Name (File_Name);
       ALI_Ext  : constant String := ".ali";
 
    begin
       --  Search the last dot in the filename
 
-      Last_Dot := File_Name'Last;
+      Last_Dot := File'Last;
 
-      while Last_Dot >= File_Name'First  loop
-         exit when File_Name (Last_Dot) = '.';
+      while Last_Dot >= File'First  loop
+         exit when File (Last_Dot) = '.';
          Last_Dot := Last_Dot - 1;
       end loop;
 
-      if Last_Dot < File_Name'First then
+      if Last_Dot < File'First then
          --  No dot found in Sig_Filename, just append the ALI extension
 
-         Last_Dot := File_Name'Last + 1;
+         Last_Dot := File'Last + 1;
       end if;
 
-      return File_Name (File_Name'First .. Last_Dot - 1) & ALI_Ext;
+      if Project = No_Project then
+         return Create
+           (Full_Filename => File (File'First .. Last_Dot - 1) & ALI_Ext);
+      else
+         declare
+            LI : constant String := Locate_ALI
+              (File (File'First .. Last_Dot - 1) & ALI_Ext, Project);
+         begin
+            if LI /= "" then
+               return Create (Full_Filename => LI);
+            else
+               return Create
+                 (Full_Filename =>
+                    File (File'First .. Last_Dot - 1) & ALI_Ext);
+            end if;
+         end;
+      end if;
    end Get_ALI_Filename;
 
    ---------------------
@@ -473,6 +500,13 @@ package body Src_Info.ALI is
 
    begin
       Assert (Me, Flen /= 0, "Null filename in Krunch");
+
+      for R in Result'Range loop
+         if Result (R) = '.' then
+            Result (R) := '-';
+         end if;
+      end loop;
+
       if Fext = Sext then
          Rlen := Flen - Sext'Length;
          Krunch (Result, Rlen, Max_Len, False);
@@ -503,7 +537,8 @@ package body Src_Info.ALI is
       Project          : Project_Type;
       File             : out Source_File)
    is
-      Source : constant String := Get_String (Source_Filename);
+      Source : constant Virtual_File := Create_From_Base
+        (Get_String (Source_Filename));
       Prj : Project_Type;
    begin
       --  Search algorithm:
@@ -564,7 +599,8 @@ package body Src_Info.ALI is
          Get_Unit_Source_File (Handler, List, Source, Prj, File);
       else
          Get_Subunit_Source_File
-           (Handler, List, Source, Get_String (New_ALI.Sfile),
+           (Handler, List, Source,
+            Create_From_Base (Get_String (New_ALI.Sfile)), Project,
             Subunit_Name, File);
       end if;
    end Get_Source_File;
@@ -576,7 +612,7 @@ package body Src_Info.ALI is
    procedure Get_Unit_Source_File
      (Handler          : ALI_Handler;
       List             : LI_File_List;
-      Source_Filename  : String;
+      Source_Filename  : Virtual_File;
       Project          : Project_Type;
       File             : out Source_File) is
    begin
@@ -584,18 +620,15 @@ package body Src_Info.ALI is
          when Unit_Body =>
             Get_Unit_Source_File
               (Handler, List, Source_Filename,
-               Source_Filename, Unit_Body, File);
+               Source_Filename, Project, Unit_Body, File);
 
          when Unit_Spec =>
             Get_Unit_Source_File
               (Handler, List, Source_Filename,
                Other_File_Name (Project, Source_Filename),
-               Unit_Spec, File);
+               Project, Unit_Spec, File);
 
          when Unit_Separate =>
-            Trace (Me, "Get_Unit_Source_File: reached the end unexpectedly "
-                   & Source_Filename
-                   & " in project " & Project_Name (Project));
             raise ALI_Internal_Error;
       end case;
    end Get_Unit_Source_File;
@@ -607,17 +640,19 @@ package body Src_Info.ALI is
    procedure Get_Unit_Source_File
      (Handler          : ALI_Handler;
       List             : LI_File_List;
-      Source_Filename  : String;
-      Sig_Filename     : String;
+      Source_Filename  : Virtual_File;
+      Sig_Filename     : Virtual_File;
+      Project          : Project_Type;
       Part             : Unit_Part;
       File             : out Source_File)
    is
-      ALI_Filename : constant String := Get_ALI_Filename (Sig_Filename);
+      ALI_Filename : constant Virtual_File := Get_ALI_Filename
+        (Sig_Filename, Project);
       --   ??? Could we use Sname instead
 
    begin
       File :=
-        (LI              => Get (List.Table.all, ALI_Filename),
+        (LI              => Get (List.Table.all, Base_Name (ALI_Filename)),
          Part            => Part,
          Source_Filename => null);
 
@@ -628,6 +663,7 @@ package body Src_Info.ALI is
          Create_LI_File
            (File        => File.LI,
             List        => List,
+            Project     => Project,
             LI_Filename => ALI_Filename,
             Handler     => LI_Handler (Handler));
          if File.LI = null then
@@ -661,20 +697,23 @@ package body Src_Info.ALI is
    procedure Get_Subunit_Source_File
      (Handler          : ALI_Handler;
       List             : LI_File_List;
-      Source_Filename  : String;
-      Sig_Filename     : String;
+      Source_Filename  : Virtual_File;
+      Sig_Filename     : Virtual_File;
+      Project          : Project_Type;
       Subunit_Name     : Name_Id;
       File             : out Source_File)
    is
-      ALI_Filename : constant String := Get_ALI_Filename (Sig_Filename);
+      Base : constant String := Base_Name (Source_Filename);
+      ALI_Filename : constant Virtual_File := Get_ALI_Filename
+        (Sig_Filename, Project);
       --   ??? Could we use Sname
       Sep          : File_Info_Ptr_List;
 
    begin
       File :=
-         (LI              => Get (List.Table.all, ALI_Filename),
+         (LI              => Get (List.Table.all, Base_Name (ALI_Filename)),
           Part            => Unit_Separate,
-          Source_Filename => new String'(Source_Filename));
+          Source_Filename => new String'(Base));
 
       --  If there is no LI_File_Ptr yet for the given ALI_Filename then
       --  create a stub
@@ -683,10 +722,13 @@ package body Src_Info.ALI is
          Create_LI_File
            (File        => File.LI,
             List        => List,
+            Project     => Project,
             LI_Filename => ALI_Filename,
             Handler     => LI_Handler (Handler));
 
          if File.LI = null then
+            Destroy (File);
+            File := No_Source_File;
             raise ALI_Internal_Error;
          end if;
       end if;
@@ -696,7 +738,7 @@ package body Src_Info.ALI is
       Sep := File.LI.LI.Separate_Info;
 
       while Sep /= null loop
-         exit when Sep.Value.Source_Filename.all = Source_Filename;
+         exit when Sep.Value.Source_Filename.all = Base;
          Sep := Sep.Next;
       end loop;
 
@@ -711,6 +753,7 @@ package body Src_Info.ALI is
    exception
       when others =>
          Destroy (File);
+         File := No_Source_File;
          raise;
    end Get_Subunit_Source_File;
 
@@ -718,17 +761,18 @@ package body Src_Info.ALI is
    -- Load_And_Scan_ALI --
    -----------------------
 
-   function Load_And_Scan_ALI (ALI_Filename : String) return ALI_Id is
+   function Load_And_Scan_ALI (ALI_Filename : Virtual_File) return ALI_Id is
+      Full        : constant String := Full_Name (ALI_Filename);
       File_Length : Text_Ptr;
       FD          : File_Descriptor;
       Chars_Read  : Integer;
       Filename_Id : File_Name_Type;
 
    begin
-      FD := Open_Read (ALI_Filename & ASCII.NUL, Fmode => Binary);
+      FD := Open_Read (Full & ASCII.NUL, Fmode => Binary);
 
       if FD = Invalid_FD then
-         Trace (Me, "Couldn't open " & ALI_Filename);
+         Trace (Me, "Couldn't open " & Full);
          return No_ALI_Id;
       end if;
 
@@ -741,7 +785,7 @@ package body Src_Info.ALI is
             --  so this is not a big deal for now not to support such
             --  monstruous files. Just close the FD and return a failure.
             Close (FD);
-            Trace (Me, "CE while reading length of " & ALI_Filename);
+            Trace (Me, "CE while reading length of " & Full);
             return No_ALI_Id;
       end;
 
@@ -759,7 +803,7 @@ package body Src_Info.ALI is
 
          --  check that we read the entire file, or else report a failure
          if Text_Ptr (Chars_Read) /= File_Length then
-            Trace (Me, "Couldn't read the whole file for " & ALI_Filename);
+            Trace (Me, "Couldn't read the whole file for " & Full);
             return No_ALI_Id;
          end if;
 
@@ -768,8 +812,8 @@ package body Src_Info.ALI is
          Buffer (Buffer'Last) := EOF;
 
          --  Get the ID of the ALI_Filename in the Namet table
-         Namet.Name_Buffer (1 .. ALI_Filename'Length) := ALI_Filename;
-         Namet.Name_Len := ALI_Filename'Length;
+         Namet.Name_Buffer (1 .. Full'Length) := Full;
+         Namet.Name_Len := Full'Length;
          Filename_Id := Namet.Name_Find;
 
          --  Free the memory occupied by previous runs
@@ -797,7 +841,8 @@ package body Src_Info.ALI is
    begin
       Create_File_Info
         (Fi_Ptr         => New_File_Info,
-         Full_Filename  => Get_String (Current_Unit.Sfile),
+         Full_Filename  =>
+           Create (Full_Filename => Get_String (Current_Unit.Sfile)),
          Unit_Name  => Strip_Unit_Part (Get_String (Current_Unit.Uname)),
          Set_Time_Stamp => False);
 
@@ -929,9 +974,9 @@ package body Src_Info.ALI is
         (Handler, List, New_ALI, Dep.Sfile, Dep.Subunit_Name,
          Project, Sfile);
       Assert
-        (Me, Get_Source_Filename (Sfile) = Get_String (Dep.Sfile),
+        (Me, Base_Name (Get_Source_Filename (Sfile)) = Get_String (Dep.Sfile),
          "Process_Sdep_As_External, invalid source file " &
-         Get_Source_Filename (Sfile) & ' '
+         Base_Name (Get_Source_Filename (Sfile)) & ' '
          & Get_String (Dep.Sfile));
       New_Dep :=
         (File              => Copy (Sfile),
@@ -950,10 +995,14 @@ package body Src_Info.ALI is
       Sfiles (Id) := Sfile;
 
    exception
-      when ALI_Internal_Error =>
+      when E : ALI_Internal_Error =>
          --  Temporary: Do nothing in this case, this is probably a dependency
          --  on a file other than an ALI file (preprocessing from gnatmake,...)
+         Trace (Me, "ALI_Internal_Error raised " & Exception_Information (E));
          null;
+
+      when E : others =>
+         Trace (Me, "Unexpected exception " & Exception_Information (E));
    end Process_Sdep_As_External;
 
    -------------------
@@ -991,90 +1040,106 @@ package body Src_Info.ALI is
       --  recompile, not the file we actually depend on. However, it would be
       --  much faster (no need to parse the naming scheme), and would handle
       --  krunch names correctly.
-
-      Withed_File_Name : constant String :=
-        Get_Source_Filename (W.Uname, Project);
-      Krunch_Name      : constant String := Krunch (Withed_File_Name);
+      Source          : Virtual_File := Get_Source_Filename (W.Uname, Project);
       Current_Sep      : File_Info_Ptr_List;
       Current_Dep      : Dependency_File_Info_List;
       Finfo            : File_Info_Ptr;
-
    begin
-      --  Check that we did not with ourselves nor our separates in which
-      --  case the with line does not contain any information we need.
-      --  The test is done based on unit names, so that we don't have to
-      --  compute the source filename, which could be expensive with different
-      --  naming schems
-
-      if New_LI_File.LI.Spec_Info /= null
-        and then
-          (New_LI_File.LI.Spec_Info.Source_Filename.all = Withed_File_Name
-           or else New_LI_File.LI.Spec_Info.Source_Filename.all = Krunch_Name)
-      then
-         return;
+      if Source = VFS.No_File then
+         declare
+            N : constant String := Get_String (W.Uname);
+            --  Need to do a copy, since Name_Buffer is modified afterward
+         begin
+            Source := Get_Source_Filename
+              (Krunch (N (N'First .. N'Last - 2)) & N (N'Last - 1 .. N'Last),
+               Project);
+         end;
       end if;
 
-      if New_LI_File.LI.Body_Info /= null
-        and then
-          (New_LI_File.LI.Body_Info.Source_Filename.all = Withed_File_Name
-           or else New_LI_File.LI.Body_Info.Source_Filename.all = Krunch_Name)
-      then
-         return;
-      end if;
+      declare
+         Withed_File_Name : constant String := Base_Name (Source);
+         Krunch_Name      : constant String := Krunch (Withed_File_Name);
+      begin
+         --  Check that we did not with ourselves nor our separates in which
+         --  case the with line does not contain any information we need.
+         --  The test is done based on unit names, so that we don't have to
+         --  compute the source filename, which could be expensive with
+         --  different naming schems
 
-      Current_Sep := New_LI_File.LI.Separate_Info;
-
-      while Current_Sep /= null loop
-         if Current_Sep.Value.Source_Filename.all = Withed_File_Name then
+         if New_LI_File.LI.Spec_Info /= null
+           and then
+             (New_LI_File.LI.Spec_Info.Source_Filename.all = Withed_File_Name
+              or else
+                New_LI_File.LI.Spec_Info.Source_Filename.all = Krunch_Name)
+         then
             return;
          end if;
 
-         Current_Sep := Current_Sep.Next;
-      end loop;
-
-      --  At this point, we know that we have a real dependency...
-      --  Try to find the Dependency_File_Info associated with this unit and
-      --  update the missing information.
-
-      Current_Dep := New_LI_File.LI.Dependencies_Info;
-
-      while Current_Dep /= null loop
-         Finfo := Get_File_Info (Current_Dep.Value.File);
-
-         if Finfo.Source_Filename.all = Withed_File_Name
-           or else Finfo.Source_Filename.all = Krunch_Name
+         if New_LI_File.LI.Body_Info /= null
+           and then
+             (New_LI_File.LI.Body_Info.Source_Filename.all = Withed_File_Name
+              or else
+                New_LI_File.LI.Body_Info.Source_Filename.all = Krunch_Name)
          then
-            --  Update the unit name if not present
+            return;
+         end if;
 
-            if Finfo.Unit_Name = null then
-               Finfo.Unit_Name :=
-                 new String'(Strip_Unit_Part (Get_String (W.Uname)));
+         Current_Sep := New_LI_File.LI.Separate_Info;
+
+         while Current_Sep /= null loop
+            if Current_Sep.Value.Source_Filename.all = Withed_File_Name then
+               return;
             end if;
 
-            --  Update the Depends_From_Spec/Body flags
+            Current_Sep := Current_Sep.Next;
+         end loop;
 
-            case U.Utype is
-               when Is_Spec | Is_Spec_Only =>
-                  Current_Dep.Value.Dep_Info.Depends_From_Spec := True;
-               when Is_Body | Is_Body_Only =>
-                  Current_Dep.Value.Dep_Info.Depends_From_Body := True;
-            end case;
+         --  At this point, we know that we have a real dependency...
+         --  Try to find the Dependency_File_Info associated with this unit and
+         --  update the missing information.
 
-            return;
-         end if;
+         Current_Dep := New_LI_File.LI.Dependencies_Info;
 
-         Current_Dep := Current_Dep.Next;
-      end loop;
+         while Current_Dep /= null loop
+            Finfo := Get_File_Info (Current_Dep.Value.File);
 
-      --  We should never reach this point unless we have a bug in the code.
-      --  raise the ALI_Internal_Error exception to signal the error.
+            if Finfo.Source_Filename.all = Withed_File_Name
+            --         or else Finfo.Source_Filename.all = Krunch_Name
+            then
+               --  Update the unit name if not present
 
-      Trace (Me, "Process_With: file " & Withed_File_Name
-             & " " & Krunch_Name
-             & " from project "
-             & Project_Name (Project)
-             & " not found in " & Get_LI_Filename (New_LI_File));
-      raise ALI_Internal_Error;
+               if Finfo.Unit_Name = null then
+                  Finfo.Unit_Name :=
+                    new String'(Strip_Unit_Part (Get_String (W.Uname)));
+               end if;
+
+               --  Update the Depends_From_Spec/Body flags
+
+               case U.Utype is
+                  when Is_Spec | Is_Spec_Only =>
+                     Current_Dep.Value.Dep_Info.Depends_From_Spec := True;
+                  when Is_Body | Is_Body_Only =>
+                     Current_Dep.Value.Dep_Info.Depends_From_Body := True;
+               end case;
+
+               return;
+            end if;
+
+            Current_Dep := Current_Dep.Next;
+         end loop;
+
+         --  We should never reach this point unless we have a bug in the code.
+         --  raise the ALI_Internal_Error exception to signal the error.
+
+         Trace (Me, "Process_With: file " & Withed_File_Name
+                & ' ' & Get_String (W.Uname)
+                & " " & Krunch_Name
+                & " from project "
+                & Project_Name (Project)
+                & " not found in "
+                & Full_Name (Get_LI_Filename (New_LI_File)));
+         raise ALI_Internal_Error;
+      end;
    end Process_With;
 
    -------------------
@@ -1220,7 +1285,7 @@ package body Src_Info.ALI is
             when Constraint_Error =>
                Assert (Me, False,
                        "Invalid Tref file_num in "
-                       & Get_File (Decl.Location)
+                       & Base_Name (Get_File (Decl.Location))
                        & Get_Line (Decl.Location)'Img
                        & Get_Column (Decl.Location)'Img);
          end;
@@ -1441,7 +1506,7 @@ package body Src_Info.ALI is
       New_LI_File       : out LI_File_Ptr;
       New_ALI           : ALIs_Record;
       Project           : Project_Type;
-      Full_ALI_Filename : String;
+      Full_ALI_Filename : Virtual_File;
       List              : LI_File_List)
    is
       Sfiles         : Sdep_To_Sfile_Table
@@ -1456,7 +1521,8 @@ package body Src_Info.ALI is
          Create_LI_File
            (File        => New_LI_File,
             List        => List,
-            LI_Filename => Base_Name (Full_ALI_Filename),
+            Project     => Project,
+            LI_Filename => Full_ALI_Filename,
             Handler     => LI_Handler (Handler));
          if New_LI_File = null then
             raise ALI_Internal_Error;
@@ -1478,13 +1544,15 @@ package body Src_Info.ALI is
          New_LI_File.LI :=
            (Handler                  => LI_Handler (Handler),
             Parsed                   => True,
-            LI_Filename              => new String'
+            LI_Filename_Key          => new String'
               (Base_Name (Full_ALI_Filename)),
+            LI_Filename              => Full_ALI_Filename,
+            Project                  => Project,
             Spec_Info                => null,
             Body_Info                => null,
             Separate_Info            => null,
             LI_Timestamp             => To_Timestamp
-              (File_Time_Stamp (Full_ALI_Filename)),
+              (File_Time_Stamp (Full_Name (Full_ALI_Filename))),
             Compilation_Errors_Found => New_ALI.Compile_Errors,
             Dependencies_Info        => null);
       end if;
@@ -1520,7 +1588,9 @@ package body Src_Info.ALI is
             New_LI_File.LI :=
               (Handler       => LI_Handler (Handler),
                Parsed        => False,
+               Project       => Project,
                LI_Filename   => New_LI_File.LI.LI_Filename,
+               LI_Filename_Key => New_LI_File.LI.LI_Filename_Key,
                LI_Timestamp  => New_LI_File.LI.LI_Timestamp,
                Spec_Info     => null,
                Body_Info     => null,
@@ -1544,6 +1614,8 @@ package body Src_Info.ALI is
       Current_Dir_Name   : constant Character := '.';
       Dir                : String_Access;
       P : Project_Type := Project;
+      Predefined_Object_Path : constant String :=
+        Get_Predefined_Object_Path (Project_Registry (Get_Registry (P)));
 
    begin
       --  Start searching in the extending projects, in case the file was
@@ -1561,13 +1633,13 @@ package body Src_Info.ALI is
             Last      : Integer := Short_ALI_Filename'Last - Extension'Length;
             Dot_Replacement : constant String := Get_Attribute_Value
               (P, Dot_Replacement_Attribute, Default => "-");
-            Predefined_Object_Path : constant String :=
-              Get_Predefined_Object_Path (Project_Registry (Get_Registry (P)));
          begin
             while Last >= Short_ALI_Filename'First loop
                declare
                   Path : constant String := Object_Path (P, False);
                begin
+                  --  ??? Not really efficient to always search
+                  --  Predefined_Object_Path and Current_Dir_Name.
                   if Path /= "" then
                      Dir := Locate_Regular_File
                        (Short_ALI_Filename (Short_ALI_Filename'First .. Last)
@@ -1631,7 +1703,7 @@ package body Src_Info.ALI is
 
    procedure Parse_ALI_File
      (Handler                : ALI_Handler;
-      Full_ALI_Filename      : String;
+      Full_ALI_Filename      : Virtual_File;
       Project                : Project_Type;
       List                   : LI_File_List;
       Unit                   : out LI_File_Ptr;
@@ -1640,7 +1712,7 @@ package body Src_Info.ALI is
       New_ALI_Id    : ALI_Id := No_ALI_Id;
 
    begin
-      if Full_ALI_Filename /= "" then
+      if Full_ALI_Filename /= VFS.No_File then
          New_ALI_Id := Load_And_Scan_ALI (Full_ALI_Filename);
       end if;
 
@@ -1678,20 +1750,20 @@ package body Src_Info.ALI is
 
    function LI_Filename_From_Source
      (Handler                : access ALI_Handler_Record;
-      Source_Filename        : String;
-      Project                : Project_Type) return String
+      Source_Filename        : Virtual_File;
+      Project                : Project_Type) return Virtual_File
    is
       pragma Unreferenced (Handler);
    begin
       case Get_Unit_Part_From_Filename (Project, Source_Filename) is
          when Unit_Body | Unit_Separate =>
-            return Get_ALI_Filename (Source_Filename);
+            return Get_ALI_Filename (Source_Filename, Project);
 
          when Unit_Spec =>
             --  Use the ALI for the body, if there is a body, otherwise the one
             --  for the spec will do.
             return Get_ALI_Filename
-              (Other_File_Name (Project, Source_Filename));
+              (Other_File_Name (Project, Source_Filename), Project);
       end case;
    end LI_Filename_From_Source;
 
@@ -1702,44 +1774,38 @@ package body Src_Info.ALI is
    procedure Create_Or_Complete_LI
      (Handler                : access ALI_Handler_Record;
       File                   : in out LI_File_Ptr;
-      Source_Filename        : String;
+      Source_Filename        : Virtual_File;
       List                   : LI_File_List;
       Project                : Project_Type)
    is
       F : File_Info_Ptr_List;
-      Base : constant String := Base_Name (Source_Filename);
    begin
       --  If the file has already been parsed, we just check that it is still
       --  up-to-date
-      File := Locate_From_Source (List, Base);
+      File := Locate_From_Source (List, Source_Filename);
 
       if File /= No_LI_File then
          Create_Or_Complete_LI
            (Handler                => Handler,
             File                   => File,
-            Full_Ali_File          => Get_Full_Path_From_File
-              (Registry        => Project_Registry (Get_Registry (Project)),
-               Filename        => File.LI.LI_Filename.all,
-               Use_Source_Path => False,
-               Use_Object_Path => True),
+            Full_Ali_File          => File.LI.LI_Filename,
             List                   => List,
             Project                => Project);
 
       else
          declare
-            LI_Name : constant String := LI_Filename_From_Source
-              (Handler, Base, Project);
-            Full_LI_Name : constant String := Locate_ALI (LI_Name, Project);
-
+            LI_Name : constant Virtual_File := LI_Filename_From_Source
+              (Handler, Source_Filename, Project);
+            Base : constant String := Base_Name (Source_Filename);
          begin
             --  Else we might already have an incomplete version of the LI
             --  file.
-            File := Locate (List, Base_Name (Full_LI_Name));
+            File := Locate (List, LI_Name);
 
             Create_Or_Complete_LI
               (Handler                => Handler,
                File                   => File,
-               Full_Ali_File          => Full_LI_Name,
+               Full_Ali_File          => LI_Name,
                List                   => List,
                Project                => Project);
 
@@ -1770,7 +1836,7 @@ package body Src_Info.ALI is
 
                Trace
                  (Me, "Parsed LI file didn't contain the info for "
-                  & Base & " " & Full_LI_Name);
+                  & Base & " " & Full_Name (LI_Name));
                File := No_LI_File;
             end if;
          end;
@@ -1784,20 +1850,20 @@ package body Src_Info.ALI is
    procedure Create_Or_Complete_LI
      (Handler                : access ALI_Handler_Record'Class;
       File                   : in out LI_File_Ptr;
-      Full_Ali_File          : String;
+      Full_Ali_File          : Virtual_File;
       List                   : LI_File_List;
       Project                : Project_Type)
    is
       Success : Boolean := True;
    begin
-      if Full_Ali_File /= "" then
+      if Full_Ali_File /= VFS.No_File then
          if File = No_LI_File
            or else Is_Incomplete (File)
-           or else To_Timestamp (File_Time_Stamp (Full_Ali_File)) >
+           or else To_Timestamp (File_Time_Stamp (Full_Name (Full_Ali_File))) >
              File.LI.LI_Timestamp
          then
-            Trace (Me, "Creating/Updating LI file: " & Full_Ali_File
-                   & To_Timestamp (File_Time_Stamp (Full_Ali_File))'Img);
+            Trace (Me, "Creating/Updating LI file: "
+                   & Full_Name (Full_Ali_File));
 
             Parse_ALI_File
               (ALI_Handler (Handler), Full_Ali_File, Project,
@@ -1842,6 +1908,7 @@ package body Src_Info.ALI is
       File : String (1 .. 1024);
       Last : Natural;
       LI : LI_File_Ptr;
+      LI_File : Virtual_File;
    begin
       Open (Dir, In_Directory);
 
@@ -1850,15 +1917,13 @@ package body Src_Info.ALI is
          exit when Last = 0;
 
          if File_Extension (File (File'First .. Last)) = ".ali" then
-            LI := Locate (List, File (File'First .. Last));
+            LI_File := Create
+              (Full_Filename => In_Directory & File (File'First .. Last));
+            LI := Locate (List, LI_File);
             Create_Or_Complete_LI
               (Handler                => Handler,
                File                   => LI,
-               Full_Ali_File          => Get_Full_Path_From_File
-                 (Registry        => Project_Registry (Get_Registry (Project)),
-                  Filename        => File (File'First .. Last),
-                  Use_Source_Path => False,
-                  Use_Object_Path => True),
+               Full_Ali_File          => LI_File,
                List                   => List,
                Project                => Project);
          end if;
@@ -1879,7 +1944,7 @@ package body Src_Info.ALI is
      (Handler       : access ALI_Handler_Record;
       Root_Project  : Project_Type;
       File_Project  : Project_Type;
-      Full_Filename : String) return LI_Handler_Iterator'Class
+      Full_Filename : VFS.Virtual_File) return LI_Handler_Iterator'Class
    is
       pragma Unreferenced (Handler, Root_Project, File_Project, Full_Filename);
       Iterator : ALI_Handler_Iterator;

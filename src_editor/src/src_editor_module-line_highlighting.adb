@@ -22,11 +22,10 @@ with Gdk.Color;         use Gdk.Color;
 with Gtk.Widget;        use Gtk.Widget;
 with Gtk.Window;        use Gtk.Window;
 with Glide_Kernel;      use Glide_Kernel;
-with Glide_Kernel.Project;      use Glide_Kernel.Project;
-with Projects.Registry; use Projects.Registry;
 with Glide_Kernel.Scripts;      use Glide_Kernel.Scripts;
 with Glide_Intl;        use Glide_Intl;
 with Traces;            use Traces;
+with VFS;               use VFS;
 
 with Src_Editor_Box;    use Src_Editor_Box;
 with Src_Editor_Buffer; use Src_Editor_Buffer;
@@ -51,18 +50,14 @@ package body Src_Editor_Module.Line_Highlighting is
    begin
       if Command = "highlight" or else Command = "unhighlight" then
          declare
-            File     : constant String  := Nth_Arg (Data, 1);
+            File     : constant Virtual_File  :=
+              Create (Nth_Arg (Data, 1), Kernel);
             Category : constant String  := Nth_Arg (Data, 2);
             Line     : constant Integer := Nth_Arg (Data, 3, Default => 0);
             Box   : Source_Box;
             Child : MDI_Child;
-            Filename  : constant String := Get_Full_Path_From_File
-              (Registry        => Get_Registry (Kernel),
-               Filename        => File,
-               Use_Source_Path => True,
-               Use_Object_Path => False);
          begin
-            Child := Find_Editor (Kernel, Filename);
+            Child := Find_Editor (Kernel, File);
 
             if Child /= null then
                Box := Source_Box (Get_Widget (Child));
@@ -75,7 +70,8 @@ package body Src_Editor_Module.Line_Highlighting is
                end if;
             else
                Set_Error_Msg
-                 (Data, -"File editor not found for file " & File);
+                 (Data, -"File editor not found for file "
+                  & Full_Name (File));
             end if;
          end;
 

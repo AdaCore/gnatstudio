@@ -20,6 +20,7 @@
 
 with String_Utils;            use String_Utils;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
+with Ada.Exceptions;          use Ada.Exceptions;
 with GNAT.IO;                 use GNAT.IO;
 with Ada.Unchecked_Deallocation;
 
@@ -2267,7 +2268,8 @@ package body Ada_Analyzer is
       Clear (Indents);
 
    exception
-      when others =>
+      when E : others =>
+         Put_Line ("Unexpected exception " & Exception_Information (E));
          Prev_Indent    := 0;
          Current_Indent := 0;
          Clear (Tokens);

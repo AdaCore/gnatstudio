@@ -20,6 +20,7 @@
 
 with GNAT.Regpat;
 with Basic_Types;
+with VFS;
 
 package Language is
 
@@ -428,7 +429,7 @@ package Language is
 
    procedure Parse_File_Constructs
      (Lang      : access Language_Root'Class;
-      File_Name : String;
+      File_Name : VFS.Virtual_File;
       Result    : out Construct_List);
    --  Same as Parse_Constructs, but works on a given file.
    --  Since Parse_File_Constructs calls Parse_Constructs, this function does
@@ -460,6 +461,8 @@ package Language is
    --  Parse entities (as defined by Language_Entity) contained in buffer.
    --  For each match, call Callback. Stops at the end of Buffer or when
    --  callback returns True.
+
+   --  ??? Should accept a UTF8-encoded string in Buffer.
 
    --  These functions are provided as a support for the source code explorer.
 

@@ -19,7 +19,6 @@
 -----------------------------------------------------------------------
 
 with Glib;             use Glib;
-with Glib.Convert;     use Glib.Convert;
 with Glib.Xml_Int;     use Glib.Xml_Int;
 with Glib.Object;      use Glib.Object;
 with Gdk.GC;           use Gdk.GC;
@@ -46,15 +45,14 @@ with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
 with Glide_Kernel.Project;     use Glide_Kernel.Project;
 with String_Utils;             use String_Utils;
 with Browsers.Canvas;          use Browsers.Canvas;
-with Projects.Registry;        use Projects.Registry;
 with Glide_Kernel.Scripts;     use Glide_Kernel.Scripts;
+with VFS;                      use VFS;
 
 with Glide_Intl;       use Glide_Intl;
 with Browsers.Canvas;  use Browsers.Canvas;
 
 with Ada.Exceptions;   use Ada.Exceptions;
 with GNAT.OS_Lib;      use GNAT.OS_Lib;
-with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Traces;           use Traces;
 
 package body Browsers.Call_Graph is
@@ -343,7 +341,7 @@ package body Browsers.Call_Graph is
 
    procedure Print_Ref
      (Kernel   : access Kernel_Handle_Record'Class;
-      File     : String;
+      File     : Virtual_File;
       Line     : Positive;
       Column   : Natural;
       Name     : String;
@@ -924,15 +922,13 @@ package body Browsers.Call_Graph is
            (Get_Kernel (Context),
             File_Information (C),
             Line   => Line_Information (C),
-            Column => Entity_Column_Information (C),
-            From_Path => True);
+            Column => Entity_Column_Information (C));
       else
          Open_File_Editor
            (Get_Kernel (Context),
             Filename => Get_File (Location),
             Line     => Get_Line (Location),
-            Column   => Get_Column (Location),
-            From_Path => True);
+            Column   => Get_Column (Location));
       end if;
 
    exception
@@ -965,8 +961,7 @@ package body Browsers.Call_Graph is
            (Get_Kernel (Context),
             Get_Declaration_File_Of (Entity),
             Line   => Get_Declaration_Line_Of (Entity),
-            Column => Get_Declaration_Column_Of (Entity),
-            From_Path => True);
+            Column => Get_Declaration_Column_Of (Entity));
       end if;
 
    exception
@@ -1038,7 +1033,7 @@ package body Browsers.Call_Graph is
       else
          Insert (Get_Kernel (Entity),
                  -"No information found for the file "
-                   & File_Information (Entity),
+                   & Full_Name (File_Information (Entity)),
                  Mode => Error);
       end if;
 
@@ -1072,7 +1067,7 @@ package body Browsers.Call_Graph is
 
    procedure Print_Ref
      (Kernel   : access Kernel_Handle_Record'Class;
-      File     : String;
+      File     : Virtual_File;
       Line     : Positive;
       Column   : Natural;
       Name     : String;
@@ -1087,7 +1082,7 @@ package body Browsers.Call_Graph is
       end if;
 
       Console.Insert_Result
-        (Kernel, Category, File, Name, Line, Col, Name'Length);
+        (Kernel, Category, Base_Name (File), Name, Line, Col, Name'Length);
    end Print_Ref;
 
    -------------------------
@@ -1356,35 +1351,29 @@ package body Browsers.Call_Graph is
             --  declaration. In both cases, we wouldn't be able to draw the
             --  callgraph anyway.
 
-            if Is_Subprogram (Get_Entity (Entity_Context)) then
-               Gtk_New (Item, Label =>
-                          Locale_To_UTF8
-                            (Krunch (Entity_Name_Information (Entity_Context)))
-                        & (-" calls"));
-               Append (Submenu, Item);
-               Context_Callback.Connect
-                 (Item, "activate",
-                  Context_Callback.To_Marshaller
-                  (Edit_Entity_Call_Graph_From_Contextual'Access),
-                  Selection_Context_Access (Context));
-
-               Gtk_New (Item, Label =>
-                         Locale_To_UTF8
-                            (Krunch (Entity_Name_Information (Entity_Context)))
-                        & (-" is called by"));
-               Append (Submenu, Item);
-               Context_Callback.Connect
-                 (Item, "activate",
-                  Context_Callback.To_Marshaller
-                  (Edit_Ancestors_Call_Graph_From_Contextual'Access),
-                  Selection_Context_Access (Context));
-            end if;
-
             declare
                Name : constant String :=
-                 Locale_To_UTF8
-                   (Krunch (Entity_Name_Information (Entity_Context)));
+                 Krunch (Entity_Name_Information (Entity_Context));
             begin
+
+               if Is_Subprogram (Get_Entity (Entity_Context)) then
+                  Gtk_New (Item, Label => Name & (-" calls"));
+                  Append (Submenu, Item);
+                  Context_Callback.Connect
+                    (Item, "activate",
+                     Context_Callback.To_Marshaller
+                       (Edit_Entity_Call_Graph_From_Contextual'Access),
+                     Selection_Context_Access (Context));
+
+                  Gtk_New (Item, Label => Name & (-" is called by"));
+                  Append (Submenu, Item);
+                  Context_Callback.Connect
+                    (Item, "activate",
+                     Context_Callback.To_Marshaller
+                       (Edit_Ancestors_Call_Graph_From_Contextual'Access),
+                     Selection_Context_Access (Context));
+               end if;
+
                Gtk_New (Item, Label => (-"Find all references to ") & Name);
                Append (Submenu, Item);
                Context_Callback.Connect
@@ -1436,26 +1425,17 @@ package body Browsers.Call_Graph is
       Event : Gdk.Event.Gdk_Event;
       Menu  : Gtk.Menu.Gtk_Menu) return Glide_Kernel.Selection_Context_Access
    is
-      pragma Unreferenced (Event);
+      pragma Unreferenced (Event, Browser);
       Context : constant Selection_Context_Access :=
         new Entity_Selection_Context;
       Mitem : Gtk_Image_Menu_Item;
       Pix   : Gtk_Image;
    begin
-      if Get_Declaration_File_Of (Item.Entity) /= ":" then
-         declare
-            Filename : constant String := Get_Full_Path_From_File
-              (Registry        => Get_Registry (Get_Kernel (Browser)),
-               Filename        => Get_Declaration_File_Of (Item.Entity),
-               Use_Source_Path => True,
-               Use_Object_Path => False);
-         begin
-            Set_File_Information
-              (File_Selection_Context_Access (Context),
-               Directory    => Dir_Name (Filename),
-               File_Name    => Base_Name (Filename),
-               Line         => Get_Declaration_Line_Of (Item.Entity));
-         end;
+      if not Is_Predefined_Entity (Item.Entity) then
+         Set_File_Information
+           (File_Selection_Context_Access (Context),
+            File         => Get_Declaration_File_Of (Item.Entity),
+            Line         => Get_Declaration_Line_Of (Item.Entity));
       end if;
 
       Set_Entity_Information
@@ -1465,7 +1445,7 @@ package body Browsers.Call_Graph is
 
       if Menu /= null then
          declare
-            Name : constant String := Locale_To_UTF8 (Get_Name (Item.Entity));
+            Name : constant String := Get_Name (Item.Entity);
          begin
             Gtk_New (Mitem, Name & (-" calls..."));
             Gtk_New (Pix, Get_Children_Arrow (Get_Browser (Item)));
@@ -1835,9 +1815,9 @@ package body Browsers.Call_Graph is
    is
       W, H : Gint;
    begin
-      if Get_Declaration_File_Of (Item.Entity) /= "" then
+      if not Is_Predefined_Entity (Item.Entity) then
          Set_Text (Layout,
-                   Get_Declaration_File_Of (Item.Entity)
+                   Base_Name (Get_Declaration_File_Of (Item.Entity))
                    & ':' & Image (Get_Declaration_Line_Of (Item.Entity)));
       else
          Set_Text (Layout, -"<Unresolved>");

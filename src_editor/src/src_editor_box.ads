@@ -48,6 +48,7 @@ with Glide_Kernel;
 with Glide_Kernel.Modules;
 with Src_Editor_Buffer;
 with Src_Editor_View;
+with VFS;
 
 with Ada.Unchecked_Deallocation;
 
@@ -113,22 +114,24 @@ package Src_Editor_Box is
 
    procedure Set_Filename
      (Editor   : access Source_Editor_Box_Record;
-      Filename : String);
+      Filename : VFS.Virtual_File);
    --  Change the filename of the given editor to be Filename.
+   --  This doesn't change the file itself, just the name under which it is
+   --  referenced.
 
    function Get_Filename
-     (Editor : access Source_Editor_Box_Record) return String;
+     (Editor : access Source_Editor_Box_Record) return VFS.Virtual_File;
    --  Return the filename associated the given Editor. Return the empty
    --  string if Editor does not have any filename.
 
    procedure Set_File_Identifier
      (Editor   : access Source_Editor_Box_Record;
-      Filename : String);
+      Filename : VFS.Virtual_File);
    --  Change the file identifier of the given editor to be Filename.
 
    procedure Load_File
      (Editor          : access Source_Editor_Box_Record;
-      Filename        : String;
+      Filename        : VFS.Virtual_File;
       Lang_Autodetect : Boolean := True;
       Force_Focus     : Boolean := True;
       Success         : out Boolean);
@@ -144,7 +147,7 @@ package Src_Editor_Box is
 
    procedure Load_Empty_File
      (Editor          : access Source_Editor_Box_Record;
-      Filename        : String;
+      Filename        : VFS.Virtual_File;
       Lang_Handler    : Language_Handlers.Language_Handler;
       Lang_Autodetect : Boolean := True);
    --  Similar to Load_File, but assume that Filename is a new file that
@@ -152,7 +155,7 @@ package Src_Editor_Box is
 
    procedure Save_To_File
      (Editor   : access Source_Editor_Box_Record;
-      Filename : String := "";
+      Filename : VFS.Virtual_File := VFS.No_File;
       Success  : out Boolean);
    --  Save the buffer to the given file.
    --  Success is set to false if the buffer could not be saved.

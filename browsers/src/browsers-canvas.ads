@@ -143,7 +143,8 @@ package Browsers.Canvas is
      (Item : access Browser_Item_Record'Class;  Title : String := "");
    --  Set a title for the item. This is displayed in a special title bar, with
    --  a different background color.
-   --  If Title is the empty string, no title bar is shown
+   --  If Title is the empty string, no title bar is shown.
+   --  Title must be UTF8-encoded.
 
    function Contextual_Factory
      (Item  : access Browser_Item_Record;
@@ -318,7 +319,7 @@ package Browsers.Canvas is
       Callback : Active_Area_Cb := null);
    --  Add a new line that will be displayed in a layout.
    --  Str can contain one substring delimited by @...@. When the user
-   --  clicks on that zone, Callback will be called.
+   --  clicks on that zone, Callback will be called. It must be UTF8-encoded.
    --  Length1 is the number of characters in the first column. The first
    --  character in the second column will always be aligned. Set to
    --  Natural'Last if there is only one column.

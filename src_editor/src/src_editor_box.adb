@@ -21,7 +21,6 @@
 with Ada.Characters.Handling;    use Ada.Characters.Handling;
 with Ada.Exceptions;             use Ada.Exceptions;
 with Glib;                       use Glib;
-with Glib.Convert;
 with Glib.Object;                use Glib.Object;
 with Glib.Values;                use Glib.Values;
 with Glide_Kernel;               use Glide_Kernel;
@@ -62,7 +61,6 @@ with Gtkada.File_Selector;       use Gtkada.File_Selector;
 with Gtkada.MDI;                 use Gtkada.MDI;
 with GUI_Utils;                  use GUI_Utils;
 with Glide_Intl;                 use Glide_Intl;
-with GNAT.Directory_Operations;  use GNAT.Directory_Operations;
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
 
 with Basic_Types;
@@ -79,7 +77,7 @@ with Src_Info;                   use Src_Info;
 with Src_Info.Prj_Utils;         use Src_Info.Prj_Utils;
 with Src_Info.Queries;           use Src_Info.Queries;
 with Traces;                     use Traces;
-with Projects.Registry;          use Projects.Registry;
+with VFS;                        use VFS;
 with GVD.Dialogs;                use GVD.Dialogs;
 --  ??? Used for Simple_Entry_Dialog. Should move this procedure in GUI_Utils
 
@@ -373,10 +371,10 @@ package body Src_Editor_Box is
       L, C            : Natural;
       Length          : Natural;
       File_Up_To_Date : Boolean;
-      Filename        : String_Access;
+      Filename        : Virtual_File;
 
    begin
-      if Get_Filename (Editor) = "" then
+      if Get_Filename (Editor) = VFS.No_File then
          Console.Insert
            (Kernel, -"Cross-references not possible on unamed files",
             Mode           => Error);
@@ -397,7 +395,7 @@ package body Src_Editor_Box is
          Console.Insert
            (Kernel,
             -"No cross-reference information found for "
-            & Get_Filename (Editor) & ASCII.LF
+            & Full_Name (Get_Filename (Editor)) & ASCII.LF
             & (-("Recompile your file or select Build->Recompute Xref"
                  & " Information, depending on the language")),
             Mode           => Error);
@@ -409,7 +407,7 @@ package body Src_Editor_Box is
          Find_Next_Body
            (Kernel             => Kernel,
             Lib_Info           => Source_Info,
-            File_Name          => Base_Name (Get_Filename (Editor)),
+            File_Name          => Get_Filename (Editor),
             Entity_Name        => Entity_Name_Information (Context),
             Line               => Modules.Line_Information (Context),
             Column             => Entity_Column_Information (Context),
@@ -420,7 +418,7 @@ package body Src_Editor_Box is
          Find_Declaration_Or_Overloaded
            (Kernel             => Kernel,
             Lib_Info           => Source_Info,
-            File_Name          => Base_Name (Get_Filename (Editor)),
+            File_Name          => Get_Filename (Editor),
             Entity_Name        => Entity_Name_Information (Context),
             Line               => Modules.Line_Information (Context),
             Column             => Entity_Column_Information (Context),
@@ -480,16 +478,11 @@ package body Src_Editor_Box is
          C := Get_Column (Location);
 
          Trace (Me, "Goto_Declaration_Or_Body: Opening file "
-                & Get_File (Location));
-         Filename := new String'
-           (Get_Full_Path_From_File
-            (Registry        => Get_Registry (Kernel),
-             Filename        => Get_File (Location),
-             Use_Source_Path => True,
-             Use_Object_Path => False));
-         if Filename.all = "" then
+                & Full_Name (Get_File (Location)));
+         Filename := Get_File (Location);
+         if Dir_Name (Filename) = "" then
             Insert (Kernel, -"File not found: "
-                    & Get_File (Location), Mode => Error);
+                    & Base_Name (Filename), Mode => Error);
          end if;
 
       else
@@ -498,26 +491,19 @@ package body Src_Editor_Box is
 
          L := Get_Declaration_Line_Of (Entity);
          C := Get_Declaration_Column_Of (Entity);
-         Filename := new String'
-           (Get_Full_Path_From_File
-            (Registry        => Get_Registry (Kernel),
-             Filename        => Get_Declaration_File_Of (Entity),
-             Use_Source_Path => True,
-             Use_Object_Path => False));
+         Filename := Get_Declaration_File_Of (Entity);
 
-         if Filename.all = "" then
+         if Dir_Name (Filename) = "" then
             Insert (Kernel, -"File not found: "
-                    & Get_Declaration_File_Of (Entity), Mode => Error);
+                    & Base_Name (Filename), Mode => Error);
          end if;
       end if;
 
-      if Filename.all /= "" then
+      if Dir_Name (Filename) /= "" then
          Open_File_Editor
-           (Kernel, Filename.all, L, C, C + Length,
-            Enable_Navigation => True,
-            From_Path => False);
+           (Kernel, Filename, L, C, C + Length,
+            Enable_Navigation => True);
       else
-         Free (Filename);
          Destroy (Entity);
          Pop_State (Kernel_Handle (Kernel));
          return;
@@ -558,20 +544,16 @@ package body Src_Editor_Box is
             Find_Closest_Match
               (Source, L, C, Entity_Name_Information (Context));
             Open_File_Editor
-              (Kernel,
-               Filename.all,
-               L, C, C + Length, False, From_Path => False);
+              (Kernel, Filename, L, C, C + Length, False);
          end if;
       end if;
 
-      Free (Filename);
       Destroy (Entity);
       Pop_State (Kernel_Handle (Kernel));
 
    exception
       when E : others =>
          Pop_State (Kernel_Handle (Kernel));
-         Free (Filename);
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Goto_Declaration_Or_Body;
 
@@ -586,10 +568,10 @@ package body Src_Editor_Box is
    is
       Source_Info    : LI_File_Ptr;
       Status         : Src_Info.Queries.Find_Decl_Or_Body_Query_Status;
-      Filename       : constant String := Get_Filename (Editor);
+      Filename       : constant Virtual_File := Get_Filename (Editor);
 
    begin
-      if Filename = "" then
+      if Filename = VFS.No_File then
          Entity := No_Entity_Information;
          return;
       end if;
@@ -604,7 +586,7 @@ package body Src_Editor_Box is
          --  ask the user interactively for the tooltips.
          Find_Declaration
            (Lib_Info           => Source_Info,
-            File_Name          => Base_Name (Filename),
+            File_Name          => Filename,
             Entity_Name        => Entity_Name_Information (Context),
             Line               => Modules.Line_Information (Context),
             Column             => Entity_Column_Information (Context),
@@ -656,7 +638,7 @@ package body Src_Editor_Box is
       Win              : Gdk.Gdk_Window;
       Context          : aliased Entity_Selection_Context;
       Location         : Gdk_Rectangle;
-      Filename         : constant String := Get_Filename (Data.Box);
+      Filename         : constant Virtual_File := Get_Filename (Data.Box);
       Out_Of_Bounds    : Boolean;
       Window           : Gdk.Gdk_Window;
       Window_Width     : Gint;
@@ -723,10 +705,7 @@ package body Src_Editor_Box is
       Area.Height := Win_Y - Mouse_Y - Area.Y + Location.Height;
 
       declare
-         Entity_Name : constant String :=
-           Glib.Convert.Convert
-             (Get_Text (Start_Iter, End_Iter),
-              Get_Pref (Data.Box.Kernel, Default_Charset), "UTF-8");
+         Entity_Name : constant String := Get_Text (Start_Iter, End_Iter);
          Entity : Entity_Information;
 
       begin
@@ -739,8 +718,7 @@ package body Src_Editor_Box is
            (Context'Unchecked_Access, Data.Box.Kernel, Src_Editor_Module_Id);
          Set_File_Information
            (Context      => Context'Unchecked_Access,
-            Directory    => Dir_Name (Filename),
-            File_Name    => Base_Name (Filename),
+            File         => Filename,
             Line         => To_Box_Line (Line),
             Column       => To_Box_Column (Cursor_Col));
          Set_Entity_Information
@@ -776,7 +754,8 @@ package body Src_Editor_Box is
                    (Data.Box.Kernel, Get_Declaration_File_Of (Entity)),
                  ".")
               & ASCII.LF
-              & (-"declared at ") & Get_Declaration_File_Of (Entity) & ':'
+              & (-"declared at ")
+              & Base_Name (Get_Declaration_File_Of (Entity)) & ':'
               & Image (Get_Declaration_Line_Of (Entity));
 
          begin
@@ -1389,7 +1368,8 @@ package body Src_Editor_Box is
       Start_Iter : Gtk_Text_Iter;
       End_Iter   : Gtk_Text_Iter;
       Context    : Entity_Selection_Context_Access;
-      Filename   : constant String := Get_Filename (Editor.Source_Buffer);
+      Filename   : constant VFS.Virtual_File :=
+        Get_Filename (Editor.Source_Buffer);
       Result     : Boolean;
       Out_Of_Bounds : Boolean := False;
 
@@ -1484,8 +1464,7 @@ package body Src_Editor_Box is
                      Creator => Src_Editor_Module_Id);
                   Set_File_Information
                     (Area,
-                     Directory => Dir_Name (Filename),
-                     File_Name => Base_Name (Filename));
+                     File => Filename);
 
                   Start_Line := To_Box_Line (Get_Line (Start_Iter));
                   End_Line   := To_Box_Line (Get_Line (End_Iter));
@@ -1527,9 +1506,7 @@ package body Src_Editor_Box is
 
             Set_Entity_Information
               (Context,
-               Glib.Convert.Convert
-                 (Get_Text (Start_Iter, End_Iter),
-                  Get_Pref (Editor.Kernel, Default_Charset), "UTF-8"),
+               Get_Text (Start_Iter, End_Iter),
                To_Box_Column (Entity_Column));
          end if;
 
@@ -1543,8 +1520,7 @@ package body Src_Editor_Box is
             if Has_Entity_Name_Information (Context) then
                declare
                   Name : constant String :=
-                    Glib.Convert.Locale_To_UTF8
-                      (Krunch (Entity_Name_Information (Context)));
+                    Krunch (Entity_Name_Information (Context));
                begin
                   Gtk_New (Item, -"Goto declaration of " & Name);
                   Add (Menu, Item);
@@ -1585,8 +1561,7 @@ package body Src_Editor_Box is
 
       Set_File_Information
         (Context,
-         Directory => Dir_Name (Filename),
-         File_Name => Base_Name (Filename),
+         File      => Filename,
          Line      => Integer (To_Box_Line (Line)),
          Column    => Integer (To_Box_Column (Column)));
 
@@ -1611,12 +1586,11 @@ package body Src_Editor_Box is
 
       if Has_File_Information (C) then
          declare
-            Other_File : constant String := Other_File_Name
+            Other_File : constant Virtual_File := Other_File_Name
               (Kernel, File_Information (C));
          begin
-            if Other_File /= "" then
-               Open_File_Editor (Kernel, Other_File, Line => 0,
-                                 From_Path => True);
+            if Other_File /= VFS.No_File then
+               Open_File_Editor (Kernel, Other_File, Line => 0);
             end if;
          end;
       end if;
@@ -1862,7 +1836,7 @@ package body Src_Editor_Box is
 
    procedure Set_Filename
      (Editor   : access Source_Editor_Box_Record;
-      Filename : String) is
+      Filename : VFS.Virtual_File) is
    begin
       Set_Filename (Editor.Source_Buffer, Filename);
    end Set_Filename;
@@ -1873,7 +1847,7 @@ package body Src_Editor_Box is
 
    procedure Set_File_Identifier
      (Editor   : access Source_Editor_Box_Record;
-      Filename : String) is
+      Filename : VFS.Virtual_File) is
    begin
       Set_File_Identifier (Editor.Source_Buffer, Filename);
    end Set_File_Identifier;
@@ -1883,7 +1857,7 @@ package body Src_Editor_Box is
    ------------------
 
    function Get_Filename
-     (Editor : access Source_Editor_Box_Record) return String is
+     (Editor : access Source_Editor_Box_Record) return Virtual_File is
    begin
       return Get_Filename (Editor.Source_Buffer);
    end Get_Filename;
@@ -1894,7 +1868,7 @@ package body Src_Editor_Box is
 
    procedure Load_File
      (Editor          : access Source_Editor_Box_Record;
-      Filename        : String;
+      Filename        : VFS.Virtual_File;
       Lang_Autodetect : Boolean := True;
       Force_Focus     : Boolean := True;
       Success         : out Boolean) is
@@ -1906,7 +1880,7 @@ package body Src_Editor_Box is
          Set_Filename (Editor.Source_Buffer, Filename);
          Set_Text (Editor.Modified_Label, -"Unmodified");
 
-         Editor.Writable := Is_Writable_File (Filename);
+         Editor.Writable := Is_Writable_File (Locale_Full_Name (Filename));
 
          if Editor.Writable then
             Set_Text (Editor.Read_Only_Label, -"Writable");
@@ -1923,7 +1897,7 @@ package body Src_Editor_Box is
 
    procedure Load_Empty_File
      (Editor          : access Source_Editor_Box_Record;
-      Filename        : String;
+      Filename        : VFS.Virtual_File;
       Lang_Handler    : Language_Handlers.Language_Handler;
       Lang_Autodetect : Boolean := True) is
    begin
@@ -1947,13 +1921,14 @@ package body Src_Editor_Box is
 
    procedure Save_To_File
      (Editor   : access Source_Editor_Box_Record;
-      Filename : String := "";
+      Filename : VFS.Virtual_File := VFS.No_File;
       Success  : out Boolean)
    is
-      File       : constant String := Get_Filename (Editor.Source_Buffer);
+      File       : constant VFS.Virtual_File :=
+        Get_Filename (Editor.Source_Buffer);
       Constructs : Construct_List;
       Info       : Construct_Access;
-      New_Name   : String_Access;
+      New_Name   : Virtual_File;
 
       use type Basic_Types.String_Access;
    begin
@@ -1964,10 +1939,8 @@ package body Src_Editor_Box is
 
       Success := True;
 
-      if Filename = "" then
-         if File = ""
-           or else Base_Name (File) = File
-         then
+      if Filename = VFS.No_File then
+         if File = VFS.No_File then
             --  ??? This is Ada specific
             --  Figure out what the name of the file should be, based on the
             --  unit <-> file name mapping
@@ -1984,22 +1957,20 @@ package body Src_Editor_Box is
               or else Info.Name = null
             then
                --  No unit name found
-               New_Name := new String'("");
+               New_Name := VFS.No_File;
             else
                --  Info.Name is a valid Ada unit name
 
                if Info.Is_Declaration then
-                  New_Name := new String'
-                    (Get_Source_Filename
-                       (To_Lower (Info.Name.all) & "%s",
-                        Get_Project (Editor.Kernel),
-                        File_Must_Exist => False));
+                  New_Name := Get_Source_Filename
+                    (To_Lower (Info.Name.all) & "%s",
+                     Get_Project (Editor.Kernel),
+                     File_Must_Exist => False);
                else
-                  New_Name := new String'
-                    (Get_Source_Filename
-                       (To_Lower (Info.Name.all) & "%b",
-                        Get_Project (Editor.Kernel),
-                        File_Must_Exist => False));
+                  New_Name := Get_Source_Filename
+                    (To_Lower (Info.Name.all) & "%b",
+                     Get_Project (Editor.Kernel),
+                     File_Must_Exist => False);
                end if;
             end if;
 
@@ -2010,23 +1981,24 @@ package body Src_Editor_Box is
                  Select_File
                    (Title             => -"Save File As",
                     Parent            => Get_Main_Window (Editor.Kernel),
-                    Default_Name      => New_Name.all,
+                    Default_Name      => Base_Name (New_Name),
                     Use_Native_Dialog =>
                       Get_Pref (Editor.Kernel, Use_Native_Dialogs),
                     Kind              => Save_File,
                     History           => Get_History (Editor.Kernel));
+               New_File : Virtual_File;
 
             begin
-               Free (New_Name);
-
                if Name = "" then
                   Success := False;
                   return;
                end if;
 
-               if Is_Regular_File (Name) then
+               New_File := Create (Full_Filename => Name);
+
+               if Is_Regular_File (New_File) then
                   if Message_Dialog
-                    (Msg => Base_Name (Name)
+                    (Msg => Base_Name (New_File)
                        & (-" already exists. Do you want to overwrite ?"),
                      Dialog_Type => Confirmation,
                      Buttons => Button_OK or Button_Cancel,
@@ -2038,10 +2010,8 @@ package body Src_Editor_Box is
                end if;
 
                if Success then
-                  Save_To_File (Editor.Source_Buffer, Name, Success);
+                  Save_To_File (Editor.Source_Buffer, New_File, Success);
                end if;
-
-               Success := True;
             end;
          else
             if not Check_Timestamp (Editor.Source_Buffer, Ask_User => False)

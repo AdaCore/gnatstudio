@@ -149,7 +149,7 @@ package body GUI_Utils is
 
       --  Add the new item in the list
 
-      Gtk_New (Item, Locale_To_UTF8 (Text));
+      Gtk_New (Item, Text);
       Show (Item);
 
       if Prepend then

@@ -19,7 +19,6 @@
 -----------------------------------------------------------------------
 
 with Glib;                use Glib;
-with Glib.Convert;        use Glib.Convert;
 with Glib.Error;          use Glib.Error;
 with Glib.Graphs;         use Glib.Graphs;
 with Glib.Object;         use Glib.Object;
@@ -882,13 +881,12 @@ package body Browsers.Canvas is
          end if;
       else
          if Item.Title_Layout = null then
-            Item.Title_Layout := Create_Pango_Layout
-              (Item.Browser, Locale_To_UTF8 (Title));
+            Item.Title_Layout := Create_Pango_Layout (Item.Browser, Title);
             Set_Font_Description
               (Item.Title_Layout,
                Get_Pref (Get_Kernel (Get_Browser (Item)), Default_Font));
          else
-            Set_Text (Item.Title_Layout, Locale_To_UTF8 (Title));
+            Set_Text (Item.Title_Layout, Title);
          end if;
       end if;
    end Set_Title;
@@ -1726,14 +1724,14 @@ package body Browsers.Canvas is
                   Str   : String (1 .. Last);
                   Index : Natural := Str'First;
                begin
+                  --  ??? Should use UTF8-functions to traverse the string
                   for S in Line'First .. Line'First + Last - 1 loop
                      if Line (S) /= '@' then
                         Str (Index) := Line (S);
                         Index := Index + 1;
                      end if;
                   end loop;
-                  Set_Text (Layout,
-                            Locale_To_UTF8 (Str (Str'First .. Index - 1)));
+                  Set_Text (Layout, Str (Str'First .. Index - 1));
                   Get_Pixel_Size (Layout, W, H2);
                   H := H + H2;
                   Longest1 := Gint'Max (Longest1, W);
@@ -1752,8 +1750,7 @@ package body Browsers.Canvas is
                         end if;
                      end loop;
 
-                     Set_Text (Layout,
-                               Locale_To_UTF8 (Str (Str'First .. Index - 1)));
+                     Set_Text (Layout, Str (Str'First .. Index - 1));
                      Get_Pixel_Size (Layout, W, H2);
                      Longest2 := Gint'Max (Longest2, W);
                   end;
@@ -1794,8 +1791,7 @@ package body Browsers.Canvas is
       procedure Display (L : Natural) is
       begin
          if First <= Last - 1 then
-            Set_Text (Layout,
-                      Locale_To_UTF8 (List.Lines (L)(First .. Last - 1)));
+            Set_Text (Layout, List.Lines (L)(First .. Last - 1));
 
             if In_Xref then
                GC := Browser.Text_GC;

@@ -28,7 +28,7 @@ package Src_Info.ALI is
    procedure Create_Or_Complete_LI
      (Handler                : access ALI_Handler_Record;
       File                   : in out LI_File_Ptr;
-      Source_Filename        : String;
+      Source_Filename        : VFS.Virtual_File;
       List                   : LI_File_List;
       Project                : Projects.Project_Type);
 
@@ -44,9 +44,9 @@ package Src_Info.ALI is
 
    function LI_Filename_From_Source
      (Handler                : access ALI_Handler_Record;
-      Source_Filename        : String;
+      Source_Filename        : VFS.Virtual_File;
       Project                : Projects.Project_Type)
-      return String;
+      return VFS.Virtual_File;
    --  Converts the given Source Filename into the corresponding ALI filename
    --  using the Project and Predefined Source Path information. Return the
    --  empty string when the given Source_Filename can not be found in the
@@ -79,7 +79,7 @@ package Src_Info.ALI is
      (Handler       : access ALI_Handler_Record;
       Root_Project  : Projects.Project_Type;
       File_Project  : Projects.Project_Type;
-      Full_Filename : String) return LI_Handler_Iterator'Class;
+      Full_Filename : VFS.Virtual_File) return LI_Handler_Iterator'Class;
 
    function Generate_LI_For_Project
      (Handler       : access ALI_Handler_Record;

@@ -21,7 +21,6 @@
 with Ada.Exceptions;       use Ada.Exceptions;
 
 with Glib;                 use Glib;
-with Glib.Convert;         use Glib.Convert;
 with Glib.Object;          use Glib.Object;
 with Glib.Xml_Int;         use Glib.Xml_Int;
 with Gdk.Event;            use Gdk.Event;
@@ -56,9 +55,9 @@ with Namet;                     use Namet;
 with Language_Handlers.Glide;   use Language_Handlers.Glide;
 with Histories;                 use Histories;
 with Glide_Kernel.Scripts;      use Glide_Kernel.Scripts;
+with VFS;                       use VFS;
 
 with Ada.Exceptions;            use Ada.Exceptions;
-with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 
 with String_Utils;              use String_Utils;
 
@@ -103,7 +102,7 @@ package body Browsers.Dependency_Items is
      (Item            : out File_Item;
       Browser         : access Browsers.Canvas.General_Browser_Record'Class;
       Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Source_Filename : String);
+      Source_Filename : Virtual_File);
    --  Create a new dependency item directly from a source filename
 
    procedure Initialize
@@ -166,7 +165,7 @@ package body Browsers.Dependency_Items is
 
    procedure Examine_Dependencies
      (Kernel     : access Glide_Kernel.Kernel_Handle_Record'Class;
-      File       : String;
+      File       : Virtual_File;
       Recompute_Layout : Boolean := True);
    --  Examine the dependencies for File in In_Browser.
    --  The browser is not cleared first.
@@ -174,7 +173,7 @@ package body Browsers.Dependency_Items is
 
    procedure Examine_From_Dependencies
      (Kernel      : access Glide_Kernel.Kernel_Handle_Record'Class;
-      File        : String;
+      File        : Virtual_File;
       Interactive : Boolean := True;
       Recompute_Layout : Boolean := True);
    --  Display the list of files that depend directly on File.
@@ -188,8 +187,8 @@ package body Browsers.Dependency_Items is
    --  Open the file described in Context for analysis in the browser.
 
    function Find_File
-     (In_Browser : access General_Browser_Record'Class; Filename : String)
-      return Canvas_Item;
+     (In_Browser : access General_Browser_Record'Class;
+      Filename : Virtual_File) return Canvas_Item;
    --  Return the child that shows Filename in the browser, or null if Filename
    --  is not already displayed in the canvas.
 
@@ -323,7 +322,7 @@ package body Browsers.Dependency_Items is
       is
          Dep : Dependency_List := List;
          Target : constant File_Item := File_Item (Get_Dest (Link));
-         Target_File : constant String :=
+         Target_File : constant Virtual_File :=
            Get_Source_Filename (Get_Source (Target));
       begin
          while Dep /= null loop
@@ -342,7 +341,8 @@ package body Browsers.Dependency_Items is
       end Check_Dep;
 
       Status    : Dependencies_Query_Status;
-      File      : constant String := Get_Source_Filename (Get_Source (Item));
+      File      : constant Virtual_File :=
+        Get_Source_Filename (Get_Source (Item));
       Lib_Info  : constant LI_File_Ptr := Locate_From_Source_And_Complete
         (Get_Kernel (Browser), File);
 
@@ -516,12 +516,11 @@ package body Browsers.Dependency_Items is
 
    procedure Examine_Dependencies
      (Kernel       : access Kernel_Handle_Record'Class;
-      File         : String;
+      File         : Virtual_File;
       Recompute_Layout : Boolean := True)
    is
       Browser       : Dependency_Browser;
       Child_Browser : MDI_Child;
-      F             : constant String := Base_Name (File);
       Item, Initial : File_Item;
       Link          : Dependency_Link;
       Dep, List     : Dependency_List;
@@ -538,21 +537,23 @@ package body Browsers.Dependency_Items is
       Child_Browser := Open_Dependency_Browser (Kernel);
       Browser := Dependency_Browser (Get_Widget (Child_Browser));
 
-      Lib_Info := Locate_From_Source_And_Complete (Kernel, F);
+      Lib_Info := Locate_From_Source_And_Complete (Kernel, File);
 
       if Lib_Info = No_LI_File then
          Trace (Me,
-                "Examine_Dependencies: Couldn't find LI file for " & File);
-         Insert (Kernel, -"Couldn't find dependency information for " & File,
+                "Examine_Dependencies: Couldn't find LI file for "
+                & Base_Name (File));
+         Insert (Kernel, -"Couldn't find dependency information for "
+                 & Full_Name (File),
                  Mode => Glide_Kernel.Console.Error);
          Pop_State (Kernel_Handle (Kernel));
          return;
       end if;
 
-      Initial := File_Item (Find_File (Browser, F));
+      Initial := File_Item (Find_File (Browser, File));
 
       if Initial = null then
-         Gtk_New (Initial, Browser, Kernel, F);
+         Gtk_New (Initial, Browser, Kernel, File);
          Put (Get_Canvas (Browser), Initial);
          Refresh (Initial);
       end if;
@@ -561,7 +562,7 @@ package body Browsers.Dependency_Items is
          Set_Children_Shown (Initial, True);
          Redraw_Title_Bar (Initial);
 
-         Find_Dependencies (Lib_Info, F, List, Status);
+         Find_Dependencies (Lib_Info, File, List, Status);
 
          if Status = Success then
             Dep := List;
@@ -672,7 +673,7 @@ package body Browsers.Dependency_Items is
          Dep := Get (Data.Iter.all);
          if Filter (Get_Kernel (Data.Browser), Dep) then
             declare
-               File : constant String :=
+               File : constant Virtual_File :=
                  Get_Source_Filename (File_Information (Dep));
             begin
                Child := File_Item (Find_File (Data.Browser, File));
@@ -695,7 +696,6 @@ package body Browsers.Dependency_Items is
             end;
          end if;
 
-         Destroy (Dep);
          Next (Get_Language_Handler (Kernel), Data.Iter.all,
                Get_LI_File_List (Kernel));
          return True;
@@ -713,7 +713,7 @@ package body Browsers.Dependency_Items is
 
    procedure Examine_From_Dependencies
      (Kernel      : access Glide_Kernel.Kernel_Handle_Record'Class;
-      File        : String;
+      File        : Virtual_File;
       Interactive : Boolean := True;
       Recompute_Layout : Boolean := True)
    is
@@ -783,7 +783,8 @@ package body Browsers.Dependency_Items is
    --------------------
 
    function Is_System_File (Source : Internal_File) return Boolean is
-      Name : constant String := Get_Source_Filename (Source);
+      Name : constant String :=
+        Full_Name (Get_Source_Filename (Source));
    begin
       Name_Len := Name'Length;
       Name_Buffer (1 .. Name_Len) := Name;
@@ -827,7 +828,8 @@ package body Browsers.Dependency_Items is
    ---------------
 
    function Find_File
-     (In_Browser : access General_Browser_Record'Class; Filename : String)
+     (In_Browser : access General_Browser_Record'Class;
+      Filename : Virtual_File)
       return Canvas_Item
    is
       Iter : Item_Iterator := Start (Get_Canvas (In_Browser));
@@ -928,7 +930,7 @@ package body Browsers.Dependency_Items is
      (Browser  : access GObject_Record'Class;
       Context : Selection_Context_Access)
    is
-      File : constant String :=
+      File : constant UTF8_String :=
         Select_File
           (Title             => -"Select File",
            Parent            =>
@@ -941,7 +943,8 @@ package body Browsers.Dependency_Items is
 
    begin
       if File /= "" then
-         Examine_Dependencies (Get_Kernel (Context), File);
+         Examine_Dependencies
+           (Get_Kernel (Context), Create (Full_Filename => File));
       end if;
    end Open_File;
 
@@ -965,7 +968,7 @@ package body Browsers.Dependency_Items is
          if Has_File_Information (File_Context) then
             declare
                Name : constant String :=
-                 Locale_To_UTF8 (Krunch (File_Information (File_Context)));
+                 Krunch (Base_Name (File_Information (File_Context)));
             begin
                Gtk_New
                  (Item, Label => (-"Show dependencies for ") & Name);
@@ -1029,9 +1032,9 @@ package body Browsers.Dependency_Items is
       File       : constant File_Info := Get_Data (Instance);
    begin
       if Command = "uses" then
-         Examine_Dependencies (Kernel, File => Get_Name (File));
+         Examine_Dependencies (Kernel, File => Get_File (File));
       elsif Command = "used_by" then
-         Examine_From_Dependencies (Kernel, File => Get_Name (File));
+         Examine_From_Dependencies (Kernel, File => Get_File (File));
       end if;
    end Depends_On_Command_Handler;
 
@@ -1089,7 +1092,7 @@ package body Browsers.Dependency_Items is
       File    : Internal_File) is
    begin
       Item := new File_Item_Record;
-      Initialize (Item, Browser, Copy (File));
+      Initialize (Item, Browser, File);
    end Gtk_New;
 
    -------------
@@ -1100,7 +1103,7 @@ package body Browsers.Dependency_Items is
      (Item            : out File_Item;
       Browser         : access General_Browser_Record'Class;
       Kernel          : access Kernel_Handle_Record'Class;
-      Source_Filename : String)
+      Source_Filename : Virtual_File)
    is
       Handler : constant Glide_Language_Handler := Glide_Language_Handler
         (Get_Language_Handler (Kernel));
@@ -1122,7 +1125,7 @@ package body Browsers.Dependency_Items is
       Browser : access General_Browser_Record'Class;
       File  : Internal_File) is
    begin
-      Initialize (Item, Browser, Get_Source_Filename (File),
+      Initialize (Item, Browser, Base_Name (Get_Source_Filename (File)),
                   Examine_From_Dependencies'Access,
                   Examine_Dependencies'Access);
       Item.Source := File;
@@ -1181,7 +1184,6 @@ package body Browsers.Dependency_Items is
    procedure Destroy (Item : in out File_Item_Record) is
    begin
       Destroy (Arrow_Item_Record (Item));
-      Destroy (Item.Source);
    end Destroy;
 
    ----------------
@@ -1191,14 +1193,16 @@ package body Browsers.Dependency_Items is
    function Project_Of
      (Item : access File_Item_Record'Class) return Project_Type
    is
-      File_Name : constant String := Get_Source_Filename (Get_Source (Item));
+      File_Name : constant Virtual_File :=
+        Get_Source_Filename (Get_Source (Item));
       P : Project_Type;
    begin
       P := Get_Project_From_File
         (Get_Registry (Get_Kernel (Get_Browser (Item))), File_Name);
 
       if P = No_Project then
-         Trace (Me, "Project_Of return No_Project for " & File_Name);
+         Trace (Me, "Project_Of return No_Project for "
+                & Full_Name (File_Name));
       end if;
 
       return P;
@@ -1216,10 +1220,10 @@ package body Browsers.Dependency_Items is
       C : constant File_Selection_Context_Access :=
         File_Selection_Context_Access (Context);
       Item : File_Item;
-      Other_File : constant String := Other_File_Name
-        (Get_Kernel (Context), File_Information (C), False);
+      Other_File : constant Virtual_File := Other_File_Name
+        (Get_Kernel (Context), File_Information (C));
    begin
-      if Other_File /= "" then
+      if Other_File /= VFS.No_File then
          Item := File_Item (Find_File (B, Other_File));
          if Item = null then
             Gtk_New (Item, B,  Get_Kernel (Context), Other_File);
@@ -1252,20 +1256,14 @@ package body Browsers.Dependency_Items is
       Context : constant Selection_Context_Access :=
          new File_Selection_Context;
       Src     : constant Src_Info.Internal_File := Get_Source (Item);
-      Filename : constant String := Get_Source_Filename (Src);
-      Full_Name : constant String := Get_Full_Path_From_File
-        (Registry        => Get_Registry (Get_Kernel (Browser)),
-         Filename        => Filename,
-         Use_Source_Path => True,
-         Use_Object_Path => False);
-      Utf8_File : constant String := Locale_To_UTF8 (Krunch (Filename));
+      Filename : constant Virtual_File := Get_Source_Filename (Src);
+      Base  : constant String := Krunch (Base_Name (Filename));
       Mitem : Gtk_Image_Menu_Item;
       Pix   : Gtk_Image;
    begin
       Set_File_Information
         (File_Selection_Context_Access (Context),
-         Directory    => Dir_Name (Full_Name),
-         File_Name    => Base_Name (Full_Name),
+         File         => Filename,
          Project      => Project_Of (Item));
 
       if Menu /= null then
@@ -1277,7 +1275,7 @@ package body Browsers.Dependency_Items is
             User_Data   => Context,
             Slot_Object => Browser);
 
-         Gtk_New (Mitem, Label => (-"Show dependencies for ") & Utf8_File);
+         Gtk_New (Mitem, Label => (-"Show dependencies for ") & Base);
          Gtk_New (Pix, Get_Children_Arrow (Get_Browser (Item)));
          Set_Image (Mitem, Pix);
          Append (Menu, Mitem);
@@ -1289,7 +1287,7 @@ package body Browsers.Dependency_Items is
          Set_Sensitive (Mitem, not Children_Shown (Item));
 
          Gtk_New
-           (Mitem, Label => (-"Show files depending on ") & Utf8_File);
+           (Mitem, Label => (-"Show files depending on ") & Base);
          Gtk_New (Pix, Get_Parents_Arrow (Get_Browser (Item)));
          Set_Image (Mitem, Pix);
          Append (Menu, Mitem);

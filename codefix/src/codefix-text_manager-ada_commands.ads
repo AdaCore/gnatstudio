@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2002                         --
+--                        Copyright (C) 2002-2003                    --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -20,6 +20,7 @@
 
 with Codefix.Text_Manager.Ada_Extracts; use Codefix.Text_Manager.Ada_Extracts;
 with GNAT.OS_Lib;                       use GNAT.OS_Lib;
+with VFS;
 
 package Codefix.Text_Manager.Ada_Commands is
 
@@ -98,7 +99,7 @@ package Codefix.Text_Manager.Ada_Commands is
      (This         : in out Remove_Pkg_Clauses_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
       Word         : Word_Cursor;
-      Destination  : String := "";
+      Destination  : VFS.Virtual_File := VFS.No_File;
       Category     : Language_Category := Cat_With);
    --  Set all the marks that will be needed to remove package clauses.
    --  If Destination is different from "", then the procedure Execute will add

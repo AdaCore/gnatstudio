@@ -103,8 +103,7 @@ package Commands.Editor is
    --  If Force_End then the cursor will always be placed at the end of the
    --  newly inserted text, otherwise it is placed at the end when executing
    --  the command, and at the beginning when undoing it.
-   --  Text is a string in the current charset, and will be converted in
-   --  UTF-8 format.
+   --  Text is must be a UTF-8 encoded string.
 
    function Execute
      (Command : access Editor_Replace_Slice_Type) return Command_Return_Type;

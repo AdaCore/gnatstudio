@@ -40,6 +40,7 @@ with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
 with Glide_Kernel.Project;      use Glide_Kernel.Project;
 with Glide_Kernel.Timeout;      use Glide_Kernel.Timeout;
 with Glide_Kernel.Task_Manager; use Glide_Kernel.Task_Manager;
+with VFS;                       use VFS;
 
 with Language_Handlers;         use Language_Handlers;
 with Language_Handlers.Glide;   use Language_Handlers.Glide;
@@ -86,9 +87,6 @@ package body Builder_Module is
 
    Me : constant Debug_Handle := Create (Builder_Module_Name);
 
-   All_Files : constant String := "<all>";
-   --  String id used to represent all files.
-
    type LI_Handler_Iterator_Access_Access is access LI_Handler_Iterator_Access;
 
    type Compute_Xref_Data is record
@@ -125,10 +123,12 @@ package body Builder_Module is
      (Kernel  : Kernel_Handle;
       Syntax  : Command_Syntax;
       Project : String;
-      File    : String) return Argument_List_Access;
+      File    : Virtual_File) return Argument_List_Access;
    --  Compute the make arguments following the right Syntax
    --  (gnatmake / make), given a Project and File name.
    --  It is the responsibility of the caller to free the returned object.
+   --
+   --  If File is No_File, then all files of the project will be recompiled.
 
    procedure Add_Build_Menu
      (Menu         : in out Gtk_Menu;
@@ -195,7 +195,7 @@ package body Builder_Module is
 
    procedure On_Build
      (Kernel      : Kernel_Handle;
-      File        : String;
+      File        : Virtual_File;
       Project     : Project_Type;
       Synchronous : Boolean := False);
    --  Same as On_Build.
@@ -230,7 +230,7 @@ package body Builder_Module is
 
    procedure Compile_File
      (Kernel      : Kernel_Handle;
-      File        : String;
+      File        : Virtual_File;
       Synchronous : Boolean := False);
    --  Launch a compilation command for File.
    --  If Synchronous is true, then this procedure will not return until the
@@ -260,7 +260,7 @@ package body Builder_Module is
      (Kernel  : Kernel_Handle;
       Syntax  : Command_Syntax;
       Project : String;
-      File    : String) return Argument_List_Access
+      File    : Virtual_File) return Argument_List_Access
    is
       Result         : Argument_List_Access;
       Vars           : Argument_List_Access :=
@@ -287,9 +287,9 @@ package body Builder_Module is
                K := K + 1;
                R_Tmp (K) := new String'("-P" & Project);
 
-               if File /= All_Files then
+               if File /= VFS.No_File then
                   K := K + 1;
-                  R_Tmp (K) := new String'(File);
+                  R_Tmp (K) := new String'(Full_Name (File));
                end if;
 
                Result := new Argument_List'(R_Tmp (1 .. K) & Vars.all);
@@ -316,7 +316,7 @@ package body Builder_Module is
                   --  ??? Should set these values also if Ada is part of the
                   --  supported languages.
 
-                  if File = All_Files then
+                  if File = VFS.No_File then
                      File_Arg := new String'("");
                   else
                      File_Arg :=
@@ -452,7 +452,7 @@ package body Builder_Module is
 
    procedure On_Build
      (Kernel      : Kernel_Handle;
-      File        : String;
+      File        : Virtual_File;
       Project     : Project_Type;
       Synchronous : Boolean := False)
    is
@@ -499,7 +499,7 @@ package body Builder_Module is
 
       --  If no file was specified in data, simply compile the current file.
 
-      if File'Length = 0 then
+      if File = VFS.No_File then
          Context := Get_Current_Context (Kernel);
 
          if Context /= null
@@ -510,23 +510,24 @@ package body Builder_Module is
             declare
                File_Context : constant File_Selection_Context_Access :=
                  File_Selection_Context_Access (Context);
-               File : constant String := File_Information (File_Context);
+               F : constant Virtual_File := File_Information (File_Context);
 
             begin
                if Has_Directory_Information (File_Context) then
                   Change_Dir (Directory_Information (File_Context));
                end if;
 
-               Prj := Get_Project_From_File (Get_Registry (Kernel), File);
+               Prj := Get_Project_From_File (Get_Registry (Kernel), F);
 
                if Prj = No_Project
                  or else Is_Default (Get_Project (Kernel))
                then
                   Args := new Argument_List'
-                    (Clone (Default_Builder_Switches) & new String'(File));
+                    (Clone (Default_Builder_Switches)
+                     & new String'(Full_Name (F)));
                else
                   Args := Compute_Arguments
-                    (Kernel, Syntax, Project_Path (Prj), File);
+                    (Kernel, Syntax, Project_Path (Prj), F);
                end if;
             end;
 
@@ -544,7 +545,7 @@ package body Builder_Module is
          if Is_Default (Get_Project (Kernel)) then
             case Syntax is
                when GNAT_Syntax =>
-                  if File = All_Files then
+                  if File = VFS.No_File then
                      Console.Insert
                        (Kernel, -"Default project has no main unit",
                         Mode => Error);
@@ -552,7 +553,7 @@ package body Builder_Module is
                   else
                      Args := new Argument_List'
                        (Clone (Default_Builder_Switches)
-                        & new String'(File));
+                        & new String'(Full_Name (File)));
                   end if;
 
                when Make_Syntax =>
@@ -667,22 +668,20 @@ package body Builder_Module is
            Glide_Window (Get_Main_Window (Kernel));
          File_Context : constant File_Selection_Context_Access :=
            File_Selection_Context_Access (Context);
-         File : constant String := Directory_Information (File_Context) &
-           File_Information (File_Context);
+         File : VFS.Virtual_File := File_Information (File_Context);
          Cmd  : constant String :=
            Get_Attribute_Value
              (Get_Project (Kernel), Compiler_Command_Attribute,
               Default => "gnatmake", Index => "ada")
-           & " -q -u -gnats " & File;
+           & " -q -u -gnats " & Full_Name (File);
          Fd   : Process_Descriptor_Access;
          Args : Argument_List_Access;
-
          Lang : String := Get_Language_From_File
            (Get_Language_Handler (Kernel), File);
          C    : Build_Command_Access;
 
       begin
-         if File = "" then
+         if File = VFS.No_File then
             Console.Insert
               (Kernel, -"No file name, cannot check syntax",
                Mode => Error);
@@ -745,7 +744,7 @@ package body Builder_Module is
 
    procedure Compile_File
      (Kernel : Kernel_Handle;
-      File   : String;
+      File   : Virtual_File;
       Synchronous : Boolean := False)
    is
       Arg1         : aliased String := "-u";
@@ -755,14 +754,13 @@ package body Builder_Module is
         Get_Project_From_File (Get_Registry (Kernel), File);
       Cmd          : String_Access;
       Fd           : Process_Descriptor_Access;
-      Local_File   : aliased String := File;
-
+      Local_File   : aliased String := Locale_Full_Name (File);
       Lang         : String := Get_Language_From_File
         (Get_Language_Handler (Kernel), File);
       C            : Build_Command_Access;
 
    begin
-      if File = "" then
+      if File = VFS.No_File then
          Console.Insert
            (Kernel, -"No file name, cannot compile",
             Mode => Error);
@@ -785,7 +783,8 @@ package body Builder_Module is
 
       if Prj = No_Project then
          Console.Insert
-           (Kernel, -"Could not determine the project for file: " & File,
+           (Kernel, -"Could not determine the project for file: "
+            & Full_Name (File),
             Mode => Error);
          return;
 
@@ -872,7 +871,7 @@ package body Builder_Module is
       if Command = "compile" then
          Instance := Nth_Arg (Data, 1, Get_File_Class (Kernel));
          Info := Get_Data (Instance);
-         Compile_File (Get_Kernel (Data), Get_Name (Info),
+         Compile_File (Get_Kernel (Data), Get_File (Info),
                        Synchronous => True);
 
       elsif Command = "make" then
@@ -880,7 +879,7 @@ package body Builder_Module is
          Info := Get_Data (Instance);
 
          declare
-            Main    : constant String := Get_Name (Info);
+            Main    : constant Virtual_File := Get_File (Info);
             Project : constant Project_Type := Get_Project_From_File
               (Registry => Project_Registry (Get_Registry (Get_Kernel (Data))),
                Source_Filename   => Main,
@@ -1166,7 +1165,7 @@ package body Builder_Module is
       end Launch;
 
    begin
-      if Data.Length = 0 then
+      if Data.File = VFS.No_File then
          declare
             Command : constant String := Display_Entry_Dialog
               (Parent        => Get_Main_Window (K),
@@ -1219,17 +1218,17 @@ package body Builder_Module is
                if Active then
                   Args := Argument_String_To_List
                     (Get_Pref (K, GVD.Preferences.Execute_Command) & ' ' &
-                     Executables_Directory (Data.Project) & Data.File & ' ' &
-                     Arguments);
+                     Full_Name (Data.File) & ' ' & Arguments);
                   Launch
                     (Args (Args'First).all, Args (Args'First + 1 .. Args'Last),
-                     -"Run: " & Data.File & ' ' & Arguments);
+                     -"Run: " & Full_Name (Data.File) & ' ' & Arguments);
 
                else
                   Args := Argument_String_To_List (Arguments);
                   Launch
-                    (Executables_Directory (Data.Project) & Data.File,
-                     Args.all, -"Run: " & Data.File & ' ' & Arguments);
+                    (Full_Name (Data.File),
+                     Args.all, -"Run: " & Full_Name (Data.File)
+                     & ' ' & Arguments);
                end if;
 
                Free (Args);
@@ -1300,9 +1299,9 @@ package body Builder_Module is
             File_Project_Cb.To_Marshaller (On_Build'Access),
             Slot_Object => Kernel,
             User_Data => File_Project_Record'
-            (Length  => Mains (M)'Length,
-             Project => Project,
-             File    => Mains (M).all));
+              (Project => Project,
+               File    => Create
+                 (Executables_Directory (Project) & Mains (M).all)));
 
          --  The first item in the make menu should have a key binding
          if Set_Shortcut
@@ -1359,9 +1358,9 @@ package body Builder_Module is
                File_Project_Cb.To_Marshaller (On_Run'Access),
                Slot_Object => Kernel,
                User_Data => File_Project_Record'
-               (Length  => Exec'Length,
-                Project => Project,
-                File    => Exec));
+                 (Project => Project,
+                  File    => Create
+                    (Executables_Directory (Project) & Exec)));
          end;
       end loop;
    end Add_Run_Menu;
@@ -1426,9 +1425,8 @@ package body Builder_Module is
          File_Project_Cb.To_Marshaller (On_Build'Access),
          Slot_Object => Kernel,
          User_Data => File_Project_Record'
-           (Length  => 0,
-            Project => No_Project,
-            File    => ""));
+           (Project => No_Project,
+            File    => VFS.No_File));
 
       if Builder_Module.Build_Item = null then
          Add_Accelerator
@@ -1445,9 +1443,8 @@ package body Builder_Module is
          File_Project_Cb.To_Marshaller (On_Build'Access),
          Slot_Object => Kernel,
          User_Data => File_Project_Record'
-           (Length  => All_Files'Length,
-            Project => Get_Project (Kernel),
-            File    => All_Files));
+           (Project => Get_Project (Kernel),
+            File    => VFS.No_File));
 
       Gtk_New (Mitem, -"Custom...");
       Append (Menu1, Mitem);
@@ -1471,7 +1468,7 @@ package body Builder_Module is
          File_Project_Cb.To_Marshaller (On_Run'Access),
          Slot_Object => Kernel,
          User_Data   => File_Project_Record'
-           (Length => 0, Project => Get_Project (Kernel), File => ""));
+           (Project => Get_Project (Kernel), File => VFS.No_File));
       Show_All (Menu1);
       Show_All (Menu2);
 

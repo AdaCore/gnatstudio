@@ -27,6 +27,7 @@ with String_Utils; use String_Utils;
 
 with Codefix.Text_Manager.Ada_Extracts; use Codefix.Text_Manager.Ada_Extracts;
 with Codefix.Ada_Tools;                 use Codefix.Ada_Tools;
+with VFS;                               use VFS;
 
 package body Codefix.Text_Manager.Ada_Commands is
 
@@ -278,7 +279,7 @@ package body Codefix.Text_Manager.Ada_Commands is
      (This         : in out Remove_Pkg_Clauses_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
       Word         : Word_Cursor;
-      Destination  : String := "";
+      Destination  : VFS.Virtual_File := VFS.No_File;
       Category     : Language_Category := Cat_With)
    is
       use Codefix.Ada_Tools.Words_Lists;
@@ -318,7 +319,7 @@ package body Codefix.Text_Manager.Ada_Commands is
             Current_Text,
             Word_Used);
 
-         if Destination /= "" then
+         if Destination /= VFS.No_File then
             Append
               (This.Obj_List,
                new String'("with " & Pkg_Info.Name.all & ";"));
@@ -336,7 +337,7 @@ package body Codefix.Text_Manager.Ada_Commands is
 
          Clause_Node := First (Clauses_List);
 
-         if Destination /= "" then
+         if Destination /= VFS.No_File then
             while Clause_Node /= Words_Lists.Null_Node loop
                Add_To_Remove
                  (This.Clauses_Pkg, Current_Text, Data (Clause_Node));
@@ -357,9 +358,9 @@ package body Codefix.Text_Manager.Ada_Commands is
          Free (Clauses_List);
       end if;
 
-      if Destination /= "" then
+      if Destination /= VFS.No_File then
          Last_With := File_Cursor
-           (Get_Next_With_Position (Current_Text, Destination));
+           (Get_Next_With_Position (Current_Text, Full_Name (Destination)));
 
          This.Last_With := new Mark_Abstr'Class'
            (Get_New_Mark (Current_Text, Last_With));

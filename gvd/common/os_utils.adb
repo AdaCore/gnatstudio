@@ -26,8 +26,12 @@ pragma Warnings (On);
 with Interfaces.C.Strings; use Interfaces.C.Strings;
 with String_Utils;         use String_Utils;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+with Glib.Convert;         use Glib.Convert;
+with Traces;               use Traces;
 
 package body OS_Utils is
+
+   Me : constant Debug_Handle := Create ("OS_Utils");
 
    OpenVMS_Host : Boolean := False;
 
@@ -180,9 +184,10 @@ package body OS_Utils is
       Length : Integer;
 
    begin
-      FD := Open_Read (File, Fmode => Binary);
+      FD := Open_Read (Locale_From_UTF8 (File), Fmode => Binary);
 
       if FD = Invalid_FD then
+         Trace (Me, "Couldn't open " & Locale_From_UTF8 (File));
          return null;
       end if;
 

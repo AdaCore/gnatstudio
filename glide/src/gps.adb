@@ -739,7 +739,7 @@ procedure GPS is
                      Load_Default_Desktop => True);
                end if;
 
-               Open_File_Editor (GPS.Kernel, S, 1, 1, From_Path => True);
+               Open_File_Editor (GPS.Kernel, Create (S, GPS.Kernel), 1, 1);
                File_Opened := True;
             end;
          end loop;
@@ -1008,7 +1008,7 @@ procedure GPS is
       if not File_Opened
         and then not Has_User_Desktop (GPS.Kernel)
       then
-         Open_Html (GPS.Kernel, "gps-welcome.html");
+         Open_Html (GPS.Kernel, Create_Html ("gps-welcome.html", GPS.Kernel));
          Maximize_Children (Get_MDI (GPS.Kernel));
       end if;
 

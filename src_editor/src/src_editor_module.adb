@@ -31,7 +31,6 @@ with Gdk.GC;                    use Gdk.GC;
 with Gdk.Types;                 use Gdk.Types;
 with Gdk.Types.Keysyms;         use Gdk.Types.Keysyms;
 with Glib;                      use Glib;
-with Glib.Convert;              use Glib.Convert;
 with Glib.Object;               use Glib.Object;
 with Glib.Values;               use Glib.Values;
 with Glide_Intl;                use Glide_Intl;
@@ -72,15 +71,14 @@ with Src_Editor_View;           use Src_Editor_View;
 with Src_Editor_View.Commands;  use Src_Editor_View.Commands;
 with String_List_Utils;         use String_List_Utils;
 with String_Utils;              use String_Utils;
-with File_Utils;                use File_Utils;
 with Traces;                    use Traces;
 with Projects.Registry;         use Projects, Projects.Registry;
 with Src_Contexts;              use Src_Contexts;
 with Find_Utils;                use Find_Utils;
 with Histories;                 use Histories;
-with OS_Utils;                  use OS_Utils;
 with Aliases_Module;            use Aliases_Module;
 with Commands.Interactive;      use Commands, Commands.Interactive;
+with VFS;                       use VFS;
 
 with Gtkada.Types;              use Gtkada.Types;
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
@@ -169,14 +167,14 @@ package body Src_Editor_Module is
 
    procedure Save_To_File
      (Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Name    : String := "";
+      Name    : VFS.Virtual_File := VFS.No_File;
       Success : out Boolean);
    --  Save the current editor to Name, or its associated filename if Name is
    --  null.
 
    function Open_File
      (Kernel     : access Kernel_Handle_Record'Class;
-      File       : String := "";
+      File       : VFS.Virtual_File := VFS.No_File;
       Create_New : Boolean := True;
       Focus      : Boolean := True) return Source_Box;
    --  Open a file and return the handle associated with it.
@@ -186,7 +184,7 @@ package body Src_Editor_Module is
 
    function Create_File_Editor
      (Kernel     : access Kernel_Handle_Record'Class;
-      File       : String;
+      File       : VFS.Virtual_File;
       Create_New : Boolean := True) return Source_Editor_Box;
    --  Create a new text editor that edits File.
    --  If File is the empty string, or the file doesn't exist and Create_New is
@@ -394,23 +392,22 @@ package body Src_Editor_Module is
      (Data    : in out Callback_Data'Class; Command : String);
    procedure Common_Search_Command_Handler
      (Data    : in out Callback_Data'Class;
-      Files   : String_Array_Access);
+      Files   : VFS.File_Array_Access);
    --  Interactive command handler for the source editor module (Search part)
 
    procedure Add_To_Recent_Menu
-     (Kernel : access Kernel_Handle_Record'Class;
-      File   : String);
+     (Kernel : access Kernel_Handle_Record'Class; File : String);
    --  Add an entry for File to the Recent menu, if needed.
 
    function Find_Mark (Identifier : String) return Mark_Identifier_Record;
    --  Find the mark corresponding to Identifier, or return an empty
    --  record.
 
-   procedure Fill_Marks (Kernel : Kernel_Handle; File : String);
+   procedure Fill_Marks (Kernel : Kernel_Handle; File : VFS.Virtual_File);
    --  Create the marks on the buffer corresponding to File, if File has just
    --  been open.
 
-   function Get_Filename (Child : MDI_Child) return String;
+   function Get_Filename (Child : MDI_Child) return VFS.Virtual_File;
    --  If Child is a file editor, return the corresponding filename,
    --  otherwise return an empty string.
 
@@ -471,14 +468,14 @@ package body Src_Editor_Module is
    -- Get_Filename --
    ------------------
 
-   function Get_Filename (Child : MDI_Child) return String is
+   function Get_Filename (Child : MDI_Child) return VFS.Virtual_File is
    begin
       if Child /= null
         and then Get_Widget (Child).all in Source_Box_Record'Class
       then
          return Get_Filename (Source_Box (Get_Widget (Child)).Editor);
       else
-         return "";
+         return VFS.No_File;
       end if;
    end Get_Filename;
 
@@ -487,8 +484,9 @@ package body Src_Editor_Module is
    ----------
 
    procedure Free (X : in out Mark_Identifier_Record) is
+      pragma Unreferenced (X);
    begin
-      Free (X.File);
+      null;
    end Free;
 
    ---------------
@@ -518,7 +516,7 @@ package body Src_Editor_Module is
       return Mark_Identifier_Record'
         (Id     => 0,
          Child  => null,
-         File   => null,
+         File   => VFS.No_File,
          Mark   => null,
          Line   => 0,
          Column => 0,
@@ -531,7 +529,7 @@ package body Src_Editor_Module is
 
    procedure Common_Search_Command_Handler
      (Data    : in out Callback_Data'Class;
-      Files   : String_Array_Access)
+      Files   : File_Array_Access)
    is
       Kernel    : constant Kernel_Handle := Get_Kernel (Data);
       Context   : Files_Project_Context_Access;
@@ -608,7 +606,7 @@ package body Src_Editor_Module is
    begin
       Name_Parameters (Data, File_Search_Parameters);
       Common_Search_Command_Handler
-        (Data, new String_Array'(1 => new String'(Get_Name (Info))));
+        (Data, new File_Array'(1 => Get_File (Info)));
    end File_Search_Command_Handler;
 
    ------------------------------------
@@ -644,117 +642,85 @@ package body Src_Editor_Module is
       Length   : Natural := 0;
       Line     : Natural := 1;
       Column   : Natural := 1;
-      Filename : GNAT.OS_Lib.String_Access;
 
    begin
       if Command = "edit" or else Command = "create_mark" then
          Name_Parameters (Data, Edit_Cmd_Parameters);
          declare
-            File     : constant String := Nth_Arg (Data, 1);
+            File : constant Virtual_File :=
+              Create (Nth_Arg (Data, 1), Kernel, Use_Source_Path => True);
          begin
             Line   := Nth_Arg (Data, 2, Default => 0);
             Column := Nth_Arg (Data, 3, Default => 0);
             Length := Nth_Arg (Data, 4, Default => 0);
 
-            if Is_Absolute_Path (File) then
-               Filename := new String'(Normalize_Pathname (File));
-            else
-               declare
-                  F : constant String := Get_Full_Path_From_File
-                    (Registry        => Get_Registry (Kernel),
-                     Filename        => File,
-                     Use_Source_Path => True,
-                     Use_Object_Path => False);
-               begin
-                  if Is_Absolute_Path (F) then
-                     Filename := new String'(F);
+            if File /= VFS.No_File then
+               if Command = "edit" then
+                  if Length = 0 then
+                     Open_File_Editor
+                       (Kernel,
+                        File,
+                        Line,
+                        Column,
+                        Enable_Navigation => False);
                   else
-                     Filename := new String'(File);
+                     Open_File_Editor
+                       (Kernel,
+                        File,
+                        Line,
+                        Column,
+                        Column + Length,
+                        Enable_Navigation => False);
                   end if;
-               end;
+
+               elsif Command = "create_mark" then
+                  declare
+                     Box         : Source_Box;
+                     Child       : MDI_Child;
+                     Mark_Record : Mark_Identifier_Record;
+                  begin
+                     Child := Find_Editor (Kernel, File);
+
+                     --  Create a new mark record and insert it in the list.
+
+                     Mark_Record.File := File;
+                     Mark_Record.Id   := Id.Next_Mark_Id;
+
+                     Id.Next_Mark_Id := Id.Next_Mark_Id + 1;
+
+                     Mark_Record.Length := Length;
+
+                     if Child /= null then
+                        Mark_Record.Child := Child;
+                        Box := Source_Box (Get_Widget (Child));
+                        Mark_Record.Mark :=
+                          Create_Mark
+                            (Box.Editor,
+                             Editable_Line_Type (Line),
+                             Column);
+                     else
+                        Mark_Record.Line := Line;
+                        Mark_Record.Column := Column;
+                        Add_Unique_Sorted
+                          (Id.Unopened_Files, Full_Name (File));
+                     end if;
+
+                     Mark_Identifier_List.Append
+                       (Id.Stored_Marks, Mark_Record);
+
+                     Set_Return_Value (Data, Image (Mark_Record.Id));
+                  end;
+               end if;
             end if;
          end;
-
-         if Filename /= null then
-            if Command = "edit" then
-               if Length = 0 then
-                  Open_File_Editor
-                    (Kernel,
-                     Filename.all,
-                     Line,
-                     Column,
-                     Enable_Navigation => False,
-                     From_Path => True);
-               else
-                  Open_File_Editor
-                    (Kernel,
-                     Filename.all,
-                     Line,
-                     Column,
-                     Column + Length,
-                     Enable_Navigation => False,
-                     From_Path => True);
-               end if;
-
-            elsif Command = "create_mark" then
-               declare
-                  Box         : Source_Box;
-                  Child       : MDI_Child;
-                  Mark_Record : Mark_Identifier_Record;
-                  File        : constant String := Get_Full_Path_From_File
-                    (Registry        => Get_Registry (Kernel),
-                     Filename        => Filename.all,
-                     Use_Source_Path => True,
-                     Use_Object_Path => False);
-
-               begin
-                  if File /= "" then
-                     Free (Filename);
-                     Filename := new String'(File);
-                  end if;
-
-                  Child := Find_Editor (Kernel, Filename.all);
-
-                  --  Create a new mark record and insert it in the list.
-
-                  Mark_Record.File := new String'(Filename.all);
-                  Mark_Record.Id := Id.Next_Mark_Id;
-
-                  Id.Next_Mark_Id := Id.Next_Mark_Id + 1;
-
-                  Mark_Record.Length := Length;
-
-                  if Child /= null then
-                     Mark_Record.Child := Child;
-                     Mark_Record.Line := Line;
-                     Box := Source_Box (Get_Widget (Child));
-                     Mark_Record.Mark :=
-                       Create_Mark
-                         (Box.Editor,
-                          Editable_Line_Type (Line),
-                          Column);
-                  else
-                     Mark_Record.Line := Line;
-                     Mark_Record.Column := Column;
-                     Add_Unique_Sorted (Id.Unopened_Files, Filename.all);
-                  end if;
-
-                  Mark_Identifier_List.Append (Id.Stored_Marks, Mark_Record);
-
-                  Free (Filename);
-                  Set_Return_Value (Data, Image (Mark_Record.Id));
-               end;
-            end if;
-
-            Free (Filename);
-         end if;
 
       elsif Command = "close"
         or else Command = "undo"
         or else Command = "redo"
       then
          declare
-            Filename : constant String := Nth_Arg (Data, 1);
+            Filename : constant Virtual_File :=
+              Create (Full_Filename => Nth_Arg (Data, 1));
          begin
             if Command = "close" then
                Close_File_Editors (Kernel, Filename);
@@ -800,16 +766,15 @@ package body Src_Editor_Module is
                   Mark_Record.Length);
 
             else
-               if Mark_Record.File /= null
+               if Mark_Record.File /= VFS.No_File
                  and then Is_In_List
-                 (Id.Unopened_Files, Mark_Record.File.all)
+                 (Id.Unopened_Files, Full_Name (Mark_Record.File))
                then
                   Open_File_Editor (Kernel,
-                                    Mark_Record.File.all,
+                                    Mark_Record.File,
                                     Mark_Record.Line,
                                     Mark_Record.Column,
-                                    Mark_Record.Column + Mark_Record.Length,
-                                    From_Path => True);
+                                    Mark_Record.Column + Mark_Record.Length);
 
                   --  At this point, Open_File_Editor should have caused the
                   --  propagation of the File_Edited signal, which provokes a
@@ -827,7 +792,8 @@ package body Src_Editor_Module is
             Column : constant Integer := Nth_Arg (Data, 3);
             Before : constant Integer := Nth_Arg (Data, 4, Default => -1);
             After  : constant Integer := Nth_Arg (Data, 5, Default => -1);
-            Child  : constant MDI_Child := Find_Editor (Kernel, File);
+            Child  : constant MDI_Child :=
+              Find_Editor (Kernel, Create (File, Kernel));
          begin
             Set_Return_Value
               (Data,
@@ -844,7 +810,8 @@ package body Src_Editor_Module is
             Text   : constant String  := Nth_Arg (Data, 4);
             Before : constant Integer := Nth_Arg (Data, 5, Default => -1);
             After  : constant Integer := Nth_Arg (Data, 6, Default => -1);
-            Child  : constant MDI_Child := Find_Editor (Kernel, File);
+            Child  : constant MDI_Child :=
+              Find_Editor (Kernel, Create (File, Kernel));
          begin
             Replace_Slice_At_Position
               (Source_Box (Get_Widget (Child)).Editor,
@@ -862,7 +829,7 @@ package body Src_Editor_Module is
             Mark_Record : constant Mark_Identifier_Record :=
               Find_Mark (Identifier);
          begin
-            if Mark_Record.File = null then
+            if Mark_Record.File = VFS.No_File then
                Set_Error_Msg (Data, -"mark not found");
             else
                if Command = "get_line" then
@@ -886,18 +853,15 @@ package body Src_Editor_Module is
                      Set_Return_Value (Data, Mark_Record.Column);
                   end if;
                else
-                  if Mark_Record.File = null then
-                     Set_Return_Value (Data, "");
-                  else
-                     Set_Return_Value (Data, Mark_Record.File.all);
-                  end if;
+                  Set_Return_Value (Data, Full_Name (Mark_Record.File));
                end if;
             end if;
          end;
 
       elsif Command = "get_last_line" then
          declare
-            File  : constant String := Nth_Arg (Data, 1);
+            File  : constant Virtual_File :=
+              Create (Nth_Arg (Data, 1), Kernel);
             Child : constant MDI_Child := Find_Editor (Kernel, File);
          begin
             if Child = null then
@@ -932,7 +896,8 @@ package body Src_Editor_Module is
 
       elsif Command = "get_buffer" then
          declare
-            File  : constant String := Nth_Arg (Data, 1);
+            File  : constant Virtual_File :=
+              Create (Nth_Arg (Data, 1), Kernel);
             Child : constant MDI_Child := Find_Editor (Kernel, File);
             A     : GNAT.OS_Lib.String_Access;
 
@@ -977,7 +942,8 @@ package body Src_Editor_Module is
          end;
       elsif Command = "add_blank_lines" then
          declare
-            Filename    : constant String  := Nth_Arg (Data, 1);
+            Filename    : constant Virtual_File :=
+              Create (Nth_Arg (Data, 1), Kernel);
             Line        : constant Integer := Nth_Arg (Data, 2);
             Number      : constant Integer := Nth_Arg (Data, 3);
             Child       : MDI_Child;
@@ -1003,7 +969,7 @@ package body Src_Editor_Module is
                   --  Create a new mark record and insert it in the list.
                   Mark_Record.Child := Child;
                   Mark_Record.Line := 0;
-                  Mark_Record.File := new String'(Filename);
+                  Mark_Record.File := Filename;
                   Mark_Record.Id := Id.Next_Mark_Id;
 
                   Id.Next_Mark_Id := Id.Next_Mark_Id + 1;
@@ -1029,7 +995,7 @@ package body Src_Editor_Module is
             Number      : Integer := 0;
             Box         : Source_Box;
          begin
-            Child := Find_Editor (Kernel, Mark_Record.File.all);
+            Child := Find_Editor (Kernel, Mark_Record.File);
 
             if Number_Of_Arguments (Data) >= 3 then
                Number := Nth_Arg (Data, 2);
@@ -1053,7 +1019,7 @@ package body Src_Editor_Module is
 
    procedure Fill_Marks
      (Kernel : Kernel_Handle;
-      File   : String)
+      File   : VFS.Virtual_File)
    is
       Id    : constant Source_Editor_Module :=
         Source_Editor_Module (Src_Editor_Module_Id);
@@ -1065,7 +1031,7 @@ package body Src_Editor_Module is
       Node        : List_Node;
       Mark_Record : Mark_Identifier_Record;
    begin
-      if Is_In_List (Id.Unopened_Files, File) then
+      if Is_In_List (Id.Unopened_Files, Full_Name (File)) then
          Child := Find_Editor (Kernel, File);
 
          if Child = null then
@@ -1073,22 +1039,20 @@ package body Src_Editor_Module is
          end if;
 
          Box := Source_Box (Get_Widget (Child));
-         Remove_From_List (Id.Unopened_Files, File);
+         Remove_From_List (Id.Unopened_Files, Full_Name (File));
 
          Node := First (Id.Stored_Marks);
 
          while Node /= Null_Node loop
             Mark_Record := Data (Node);
 
-            if Mark_Record.File /= null
-              and then Mark_Record.File.all = File
-            then
+            if Mark_Record.File = File then
                Set_Data
                  (Node,
                   Mark_Identifier_Record'
                     (Id => Mark_Record.Id,
                      Child => Child,
-                     File => new String'(File),
+                     File => File,
                      Line => Mark_Record.Line,
                      Mark =>
                        Create_Mark
@@ -1118,7 +1082,8 @@ package body Src_Editor_Module is
       Id    : constant Source_Editor_Module :=
         Source_Editor_Module (Src_Editor_Module_Id);
       Infos : Line_Information_Data;
-      File  : constant String := Get_String (Nth (Args, 1));
+      File  : constant Virtual_File :=
+        Create (Get_String (Nth (Args, 1)), Kernel);
    begin
       if Id.Display_Line_Numbers then
          Create_Line_Information_Column
@@ -1126,8 +1091,7 @@ package body Src_Editor_Module is
             File,
             Src_Editor_Module_Name,
             Stick_To_Data => False,
-            Every_Line    => True,
-            Normalize     => False);
+            Every_Line    => True);
 
          Infos := new Line_Information_Array (1 .. 1);
          Infos (1).Text := new String'("   1");
@@ -1157,12 +1121,13 @@ package body Src_Editor_Module is
       Kernel  : Kernel_Handle)
    is
       pragma Unreferenced (Widget);
-      File  : constant String := Get_String (Nth (Args, 1));
+      File  : constant Virtual_File :=
+        Create (Get_String (Nth (Args, 1)), Kernel);
       Iter  : Child_Iterator := First_Child (Get_MDI (Kernel));
       Child : MDI_Child;
       Box   : Source_Box;
    begin
-      if File = "" then
+      if File = VFS.No_File then
          return;
       end if;
 
@@ -1171,7 +1136,7 @@ package body Src_Editor_Module is
 
          exit when Child = null;
 
-         if File_Equal (File, Get_Filename (Child)) then
+         if File = Get_Filename (Child) then
             Box := Source_Box (Get_Widget (Child));
             Check_Timestamp (Box.Editor);
          end if;
@@ -1189,13 +1154,14 @@ package body Src_Editor_Module is
       Args    : GValues;
       Kernel  : Kernel_Handle)
    is
-      pragma Unreferenced (Widget, Kernel);
+      pragma Unreferenced (Widget);
 
       use Mark_Identifier_List;
 
       Id    : constant Source_Editor_Module :=
         Source_Editor_Module (Src_Editor_Module_Id);
-      File  : constant String := Get_String (Nth (Args, 1));
+      File  : constant Virtual_File :=
+        Create (Get_String (Nth (Args, 1)), Kernel);
 
       Node        : List_Node;
       Mark_Record : Mark_Identifier_Record;
@@ -1208,9 +1174,7 @@ package body Src_Editor_Module is
       Node := First (Id.Stored_Marks);
 
       while Node /= Null_Node loop
-         if Data (Node).File /= null
-           and then Data (Node).File.all = File
-         then
+         if Data (Node).File = File then
             Mark_Record := Data (Node);
 
             if Mark_Record.Child /= null
@@ -1227,14 +1191,14 @@ package body Src_Editor_Module is
                          Mark_Identifier_Record'
                            (Id => Mark_Record.Id,
                             Child => null,
-                            File => new String'(File),
+                            File => File,
                             Line => Mark_Record.Line,
                             Mark => null,
                             Column => Mark_Record.Column,
                             Length => Mark_Record.Length));
 
                if not Added then
-                  Add_Unique_Sorted (Id.Unopened_Files, File);
+                  Add_Unique_Sorted (Id.Unopened_Files, Full_Name (File));
                   Added := True;
                end if;
             end if;
@@ -1333,6 +1297,7 @@ package body Src_Editor_Module is
    is
       Src    : Source_Box := null;
       File   : Glib.String_Ptr;
+      F      : Virtual_File;
       Str    : Glib.String_Ptr;
       Id     : Idle_Handler_Id;
       Line   : Positive := 1;
@@ -1359,11 +1324,12 @@ package body Src_Editor_Module is
                Column := Positive'Value (Str.all);
             end if;
 
-            if not Is_Open (User, File.all) then
-               Src := Open_File (User, File.all, False);
-               Child := Find_Editor (User, File.all);
+            F := Create (Full_Filename => File.all);
+            if not Is_Open (User, F) then
+               Src := Open_File (User, F, False);
+               Child := Find_Editor (User, F);
             else
-               Child := Find_Editor (User, File.all);
+               Child := Find_Editor (User, F);
                declare
                   Edit  : constant Source_Editor_Box :=
                     Get_Source_Box_From_MDI (Child);
@@ -1380,7 +1346,7 @@ package body Src_Editor_Module is
                declare
                   Args : Argument_List :=
                     (new String'("edit"),
-                     new String'(File.all),
+                     new String'(Full_Name (F)),
                      new String'(Image (Line)),
                      new String'(Image (Column)));
                begin
@@ -1432,7 +1398,6 @@ package body Src_Editor_Module is
          if Has_File_Information (Area_Context) then
             Add_Line_Information
               (Kernel,
-               Directory_Information (Area_Context) &
                File_Information (Area_Context),
                Src_Editor_Module_Name,
                Infos,
@@ -1463,7 +1428,7 @@ package body Src_Editor_Module is
 
          Child := new Node;
          Child.Tag := new String'("File");
-         Child.Value := new String'(Get_Filename (Editor));
+         Child.Value := new String'(Full_Name (Get_Filename (Editor)));
          Add_Child (N, Child);
 
          Get_Cursor_Location (Editor, Line, Column);
@@ -1555,7 +1520,7 @@ package body Src_Editor_Module is
       end if;
 
       declare
-         Title : constant String := Get_Filename (Current);
+         Title : constant Virtual_File := Get_Filename (Current);
       begin
          Create_New_View (Editor, Kernel, Current);
          Gtk_New (Box, Editor);
@@ -1576,7 +1541,7 @@ package body Src_Editor_Module is
          begin
             Set_Title
               (Child,
-               Title & " <" & Im & ">",
+               Full_Name (Title) & " <" & Im & ">",
                Base_Name (Title) & " <" & Im & ">");
          end;
 
@@ -1627,7 +1592,8 @@ package body Src_Editor_Module is
       elsif Needs_To_Be_Saved (Box) then
          Button := Message_Dialog
            (Msg            =>
-              (-"Do you want to save file ") & Get_Filename (Box) & " ?",
+              (-"Do you want to save file ")
+              & Full_Name (Get_Filename (Box)) & " ?",
             Dialog_Type    => Confirmation,
             Buttons        =>
               Button_Yes or Button_All or Button_No or Button_Cancel,
@@ -1661,39 +1627,33 @@ package body Src_Editor_Module is
 
    function Create_File_Editor
      (Kernel     : access Kernel_Handle_Record'Class;
-      File       : String;
+      File       : VFS.Virtual_File;
       Create_New : Boolean := True) return Source_Editor_Box
    is
       Success     : Boolean;
       Editor      : Source_Editor_Box;
-      File_Exists : Boolean := False;
+      File_Exists : constant Boolean := Is_Regular_File (File);
 
    begin
-      if File /= "" then
-         File_Exists := Is_Regular_File (File);
-      end if;
-
       --  Create a new editor only if the file exists or we are asked to
       --  create a new empty one anyway.
 
       if File_Exists or else Create_New then
          Gtk_New (Editor, Kernel_Handle (Kernel));
-      else
-         return null;
-      end if;
 
-      if File_Exists then
-         Load_File (Editor, File,
-                    Force_Focus => True,
-                    Success     => Success);
+         if File_Exists then
+            Load_File (Editor, File,
+                       Force_Focus => True,
+                       Success     => Success);
 
-         if not Success then
-            Destroy (Editor);
-            Editor := null;
+            if not Success then
+               Destroy (Editor);
+               Editor := null;
+            end if;
+
+         else
+            Load_Empty_File (Editor, File, Get_Language_Handler (Kernel));
          end if;
-
-      else
-         Load_Empty_File (Editor, File, Get_Language_Handler (Kernel));
       end if;
 
       return Editor;
@@ -1715,7 +1675,7 @@ package body Src_Editor_Module is
 
    function Open_File
      (Kernel     : access Kernel_Handle_Record'Class;
-      File       : String := "";
+      File       : VFS.Virtual_File := VFS.No_File;
       Create_New : Boolean := True;
       Focus      : Boolean := True) return Source_Box
    is
@@ -1725,7 +1685,7 @@ package body Src_Editor_Module is
       Child      : MDI_Child;
 
    begin
-      if File /= "" then
+      if File /= VFS.No_File then
          Child := Find_Editor (Kernel, File);
 
          if Child /= null then
@@ -1761,8 +1721,8 @@ package body Src_Editor_Module is
 
          Raise_Child (Child);
 
-         if File /= "" then
-            Set_Title (Child, File, Base_Name (File));
+         if File /= VFS.No_File then
+            Set_Title (Child, Full_Name (File), Base_Name (File));
             File_Edited (Kernel, File);
          else
             --  Determine the number of "Untitled" files open.
@@ -1779,7 +1739,7 @@ package body Src_Editor_Module is
                   if The_Child /= Child
                     and then Get_Widget (The_Child).all in
                     Source_Box_Record'Class
-                    and then Get_Filename (The_Child) = ""
+                    and then Get_Filename (The_Child) = VFS.No_File
                   then
                      Nb_Untitled := Nb_Untitled + 1;
                   end if;
@@ -1790,19 +1750,21 @@ package body Src_Editor_Module is
 
                if Nb_Untitled = 0 then
                   Set_Title (Child, No_Name);
-                  Set_File_Identifier (Editor, No_Name);
+                  Set_File_Identifier
+                    (Editor, Create (Full_Filename => No_Name));
                else
                   declare
                      Identifier : constant String :=
                        No_Name & " (" & Image (Nb_Untitled + 1) & ")";
                   begin
                      Set_Title (Child, Identifier);
-                     Set_File_Identifier (Editor, Identifier);
+                     Set_File_Identifier
+                       (Editor, Create (Full_Filename => Identifier));
                   end;
                end if;
 
                Set_Filename (Editor, Get_Filename (Child));
-               File_Edited (Kernel, Get_Title (Child));
+               File_Edited (Kernel, Get_Filename (Child));
             end;
          end if;
 
@@ -1813,13 +1775,13 @@ package body Src_Editor_Module is
             Gtk_Widget (Box),
             After => False);
 
-         if File /= "" then
-            Add_To_Recent_Menu (Kernel, File);
+         if File /= VFS.No_File then
+            Add_To_Recent_Menu (Kernel, Full_Name (File));
          end if;
 
       else
          Console.Insert
-           (Kernel, (-"Cannot open file ") & "'" & File & "'",
+           (Kernel, (-"Cannot open file ") & "'" & Full_Name (File) & "'",
             Add_LF => True,
             Mode   => Error);
       end if;
@@ -1859,7 +1821,7 @@ package body Src_Editor_Module is
 
    procedure Save_To_File
      (Kernel  : access Kernel_Handle_Record'Class;
-      Name    : String := "";
+      Name    : VFS.Virtual_File := VFS.No_File;
       Success : out Boolean)
    is
       Child  : constant MDI_Child := Find_Current_Editor (Kernel);
@@ -1873,17 +1835,17 @@ package body Src_Editor_Module is
       Source := Source_Box (Get_Widget (Child)).Editor;
 
       declare
-         Old_Name : constant String := Get_Filename (Source);
+         Old_Name : constant Virtual_File := Get_Filename (Source);
       begin
          Save_To_File (Source, Name, Success);
 
          declare
-            New_Name : constant String := Get_Filename (Source);
+            New_Name : constant Virtual_File := Get_Filename (Source);
          begin
             --  Update the title, in case "save as..." was used.
 
             if Old_Name /= New_Name then
-               Set_Title (Child, New_Name, Base_Name (New_Name));
+               Set_Title (Child, Full_Name (New_Name), Base_Name (New_Name));
                Change_Project_Dir (Kernel, Dir_Name (New_Name));
                Recompute_View (Kernel);
             end if;
@@ -1914,7 +1876,7 @@ package body Src_Editor_Module is
             return;
          end if;
 
-         Open_File_Editor (Kernel, Filename, From_Path => False);
+         Open_File_Editor (Kernel, Create (Full_Filename => Filename));
          Change_Project_Dir (Kernel, Dir_Name (Filename));
       end;
 
@@ -1964,15 +1926,25 @@ package body Src_Editor_Module is
       Show_All (Open_File_Dialog);
 
       declare
-         List1 : String_Array_Access := Get_Source_Files
+         List1 : File_Array_Access := Get_Source_Files
            (Project   => Get_Project (Kernel),
             Recursive => True,
             Full_Path => False);
-         List2 : String_Array_Access :=
+         List2 : File_Array_Access :=
            Get_Predefined_Source_Files (Get_Registry (Kernel));
+         Completions : String_Array_Access :=
+           new String_Array (List1'First .. List1'Last + List2'Length);
       begin
-         Set_Completions
-           (Open_File_Entry, new String_Array'(List1.all & List2.all));
+         for L in List1'Range loop
+            Completions (L) := new String'(Base_Name (List1 (L)));
+         end loop;
+
+         for L in List2'Range loop
+            Completions (List1'Last + L - List2'First + 1) :=
+              new String'(Base_Name (List2 (L)));
+         end loop;
+
+         Set_Completions (Open_File_Entry, Completions);
          Unchecked_Free (List1);
          Unchecked_Free (List2);
       end;
@@ -1985,21 +1957,18 @@ package body Src_Editor_Module is
          declare
             Text : constant String :=
               Get_Text (Get_Entry (Open_File_Entry));
-            Full : constant String :=
-              Get_Full_Path_From_File
-                (Get_Registry (Kernel), Text,
-                 Use_Source_Path => True,
-                 Use_Object_Path => False);
+            Full : constant Virtual_File :=
+              Create (Text, Kernel, Use_Object_Path => False);
          begin
-            if Full /= "" and then Is_Regular_File (Full) then
+            if Is_Regular_File (Full) then
                Add_To_History
-                 (Get_History (Kernel).all, Open_From_Path_History,  Text);
+                 (Get_History (Kernel).all, Open_From_Path_History,
+                  Full_Name (Full));
 
                Open_File_Editor
                  (Kernel, Full,
                   Enable_Navigation => True,
-                  New_File          => False,
-                  From_Path         => False);
+                  New_File          => False);
 
             else
                Insert
@@ -2024,7 +1993,7 @@ package body Src_Editor_Module is
 
    procedure Activate (Callback : access On_Recent; Item : String) is
    begin
-      Open_File_Editor (Callback.Kernel, Item, From_Path => False);
+      Open_File_Editor (Callback.Kernel, Create (Full_Filename => Item));
 
    exception
       when E : others =>
@@ -2041,7 +2010,7 @@ package body Src_Editor_Module is
       Editor : Source_Box;
       pragma Unreferenced (Widget, Editor);
    begin
-      Editor := Open_File (Kernel, File => "");
+      Editor := Open_File (Kernel, File => VFS.No_File);
 
    exception
       when E : others =>
@@ -2081,7 +2050,7 @@ package body Src_Editor_Module is
    begin
       if Source /= null then
          declare
-            Old_Name : constant String := Get_Filename (Source);
+            Old_Name : constant Virtual_File := Get_Filename (Source);
             New_Name : constant String :=
               Select_File
                 (Title             => -"Save File As",
@@ -2096,7 +2065,8 @@ package body Src_Editor_Module is
             if New_Name = "" then
                return;
             else
-               Save_To_File (Kernel, New_Name, Success);
+               Save_To_File
+                 (Kernel, Create (Full_Filename => New_Name), Success);
             end if;
          end;
       end if;
@@ -2144,7 +2114,7 @@ package body Src_Editor_Module is
             declare
                Cmd : Argument_List_Access := Argument_String_To_List
                  (Get_Pref (Kernel, Print_Command) & " " &
-                  Get_Filename (Source));
+                  Full_Name (Get_Filename (Source)));
             begin
                Launch_Process
                  (Kernel, Cmd (Cmd'First).all, Cmd (Cmd'First + 1 .. Cmd'Last),
@@ -2312,13 +2282,13 @@ package body Src_Editor_Module is
    ----------------------
 
    procedure Generate_Body_Cb (Data : Process_Data; Status : Integer) is
-      Body_Name : constant String := Other_File_Name
-        (Data.Kernel, Data.Name.all, Full_Name => True);
+      Body_Name : constant Virtual_File := Other_File_Name
+        (Data.Kernel, Create (Full_Filename => Data.Name.all));
    begin
       if Status = 0
         and then Is_Regular_File (Body_Name)
       then
-         Open_File_Editor (Data.Kernel, Body_Name, From_Path => False);
+         Open_File_Editor (Data.Kernel, Body_Name);
       end if;
    end Generate_Body_Cb;
 
@@ -2346,16 +2316,14 @@ package body Src_Editor_Module is
       declare
          File_Context : constant File_Selection_Context_Access :=
            File_Selection_Context_Access (Context);
-         Filename     : constant String := File_Information (File_Context);
-         File         : constant String :=
-           Directory_Information (File_Context) & Filename;
-         Success      : Boolean;
-         Args         : Argument_List (1 .. 4);
-         Lang         : String := Get_Language_From_File
+         File       : constant Virtual_File := File_Information (File_Context);
+         Success    : Boolean;
+         Args       : Argument_List (1 .. 4);
+         Lang       : String := Get_Language_From_File
            (Get_Language_Handler (Kernel), File);
 
       begin
-         if File = "" then
+         if File = VFS.No_File then
             Console.Insert
               (Kernel, -"No file name, cannot generate body", Mode => Error);
             return;
@@ -2380,7 +2348,7 @@ package body Src_Editor_Module is
          Args (2) := new String'
            ("-P" & Project_Path
             (Get_Project_From_File (Get_Registry (Kernel), File)));
-         Args (3) := new String'(File);
+         Args (3) := new String'(Full_Name (File));
          Args (4) := new String'(Dir_Name (File));
 
          declare
@@ -2390,7 +2358,7 @@ package body Src_Editor_Module is
             Launch_Process
               (Kernel, "gnat", Args (1 .. 2) & Scenar.all & Args (3 .. 4),
                "", null,
-               Generate_Body_Cb'Access, File, Success);
+               Generate_Body_Cb'Access, Full_Name (File), Success);
             Free (Args);
             Free (Scenar);
          end;
@@ -2415,18 +2383,11 @@ package body Src_Editor_Module is
    ---------------------
 
    procedure Pretty_Print_Cb (Data : Process_Data; Status : Integer) is
-      function Pretty_Name (Name : String) return String;
-      --  Return the name of the pretty printed file.
-
-      function Pretty_Name (Name : String) return String is
-      begin
-         return Name & ".pp";
-      end Pretty_Name;
-
    begin
       if Status = 0 then
-         Open_File_Editor (Data.Kernel, Pretty_Name (Data.Name.all),
-                           From_Path => True);
+         Open_File_Editor
+           (Data.Kernel,
+            Create (Full_Filename => Data.Name.all & ".pp"));
       end if;
    end Pretty_Print_Cb;
 
@@ -2458,13 +2419,10 @@ package body Src_Editor_Module is
          File_Context := File_Selection_Context_Access (Context);
 
          declare
-            Lang       : Language_Access;
-            File       : constant String :=
-              Directory_Information (File_Context)
-              & File_Information (File_Context);
-
-            Lines      : List;
-            Length     : Integer := 0;
+            Lang   : Language_Access;
+            File   : constant Virtual_File := File_Information (File_Context);
+            Lines  : List;
+            Length : Integer := 0;
 
          begin
             if Context.all in File_Area_Context'Class then
@@ -2492,7 +2450,7 @@ package body Src_Editor_Module is
             for J in Start_Line .. End_Line loop
                declare
                   Args : Argument_List :=
-                    (1 => new String'(File),
+                    (1 => new String'(Full_Name (File)),
                      2 => new String'(Image (J)),
                      3 => new String'("1"));
                   Line : constant String :=
@@ -2537,7 +2495,7 @@ package body Src_Editor_Module is
                      N := Next (N);
                   end loop;
 
-                  Args := (1 => new String'(File),
+                  Args := (1 => new String'(Full_Name (File)),
                            2 => new String'(Image (Start_Line)),
                            3 => new String'("1"), --  column
                            4 => new String'(S),
@@ -2649,18 +2607,16 @@ package body Src_Editor_Module is
       declare
          File_Context : constant File_Selection_Context_Access :=
            File_Selection_Context_Access (Context);
-         Filename     : constant String := File_Information (File_Context);
-         File         : constant String :=
-           Directory_Information (File_Context) & Filename;
-         Project      : constant String := Project_Name
-           (Get_Project_From_File (Get_Registry (Kernel), Filename));
-         Success      : Boolean;
-         Args, Vars   : Argument_List_Access;
-         Lang         : String := Get_Language_From_File
+         File       : constant Virtual_File := File_Information (File_Context);
+         Project    : constant String := Project_Name
+           (Get_Project_From_File (Get_Registry (Kernel), File));
+         Success    : Boolean;
+         Args, Vars : Argument_List_Access;
+         Lang       : String := Get_Language_From_File
            (Get_Language_Handler (Kernel), File);
 
       begin
-         if File = "" then
+         if File = VFS.No_File then
             Console.Insert
               (Kernel, -"No file name, cannot pretty print",
                Mode => Error);
@@ -2684,7 +2640,7 @@ package body Src_Editor_Module is
 
          if Project = "" then
             Args := new Argument_List'
-              (new String'("pretty"), new String'(File));
+              (new String'("pretty"), new String'(Full_Name (File)));
 
          else
             Vars := Argument_String_To_List
@@ -2692,13 +2648,13 @@ package body Src_Editor_Module is
             Args := new Argument_List'
               ((1 => new String'("pretty"),
                 2 => new String'("-P" & Project),
-                3 => new String'(File)) & Vars.all);
+                3 => new String'(Full_Name (File))) & Vars.all);
             Unchecked_Free (Vars);
          end if;
 
          Launch_Process
            (Kernel, "gnat", Args.all, "", null,
-            Pretty_Print_Cb'Access, File, Success);
+            Pretty_Print_Cb'Access, Full_Name (File), Success);
          Free (Args);
 
          if Success then
@@ -2735,7 +2691,8 @@ package body Src_Editor_Module is
    begin
       if Mime_Type = Mime_Source_File then
          declare
-            File        : constant String  := Get_String (Data (Data'First));
+            File        : constant Virtual_File :=
+              Create (Full_Filename => Get_String (Data (Data'First)));
             Line        : constant Gint    := Get_Int (Data (Data'First + 1));
             Column      : constant Gint    := Get_Int (Data (Data'First + 2));
             Column_End  : constant Gint    := Get_Int (Data (Data'First + 3));
@@ -2755,7 +2712,7 @@ package body Src_Editor_Module is
                   exit when Child = null;
 
                   if Get_Widget (Child).all in Source_Box_Record'Class
-                    and then File_Equal (Get_Filename (Child), File)
+                    and then Get_Filename (Child) = File
                   then
                      Destroy (Source_Box (Get_Widget (Child)));
                   end if;
@@ -2798,7 +2755,8 @@ package body Src_Editor_Module is
 
       elsif Mime_Type = Mime_File_Line_Info then
          declare
-            File  : constant String  := Get_String (Data (Data'First));
+            File  : constant Virtual_File :=
+              Create (Full_Filename => Get_String (Data (Data'First)));
             Id    : constant String  := Get_String (Data (Data'First + 1));
             Info  : constant Line_Information_Data :=
               To_Line_Information (Get_Address (Data (Data'First + 2)));
@@ -2869,7 +2827,7 @@ package body Src_Editor_Module is
       Line     : Natural;
 
    begin
-      Trace (Me, "On_Edit_File: " & File_Information (File));
+      Trace (Me, "On_Edit_File: " & Full_Name (File_Information (File)));
 
       if File.all in Message_Context'Class then
          Location := Message_Context_Access (File);
@@ -2882,16 +2840,12 @@ package body Src_Editor_Module is
 
          Open_File_Editor
            (Get_Kernel (Context),
-            Directory_Information (File) & File_Information (File),
+            Filename  => File_Information (File),
             Line      => Line,
-            Column    => Column_Information (Location),
-            From_Path => False);
+            Column    => Column_Information (Location));
 
       else
-         Open_File_Editor
-           (Get_Kernel (Context),
-            Directory_Information (File) & File_Information (File),
-            From_Path => False);
+         Open_File_Editor (Get_Kernel (Context), File_Information (File));
       end if;
 
    exception
@@ -2920,7 +2874,7 @@ package body Src_Editor_Module is
            and then Has_File_Information (File)
          then
             Gtk_New (Mitem, -"Edit " &
-                     Locale_To_UTF8 (Base_Name (File_Information (File))));
+                     Base_Name (File_Information (File)));
             Append (Menu, Mitem);
             Context_Callback.Connect
               (Mitem, "activate",
@@ -3729,11 +3683,10 @@ package body Src_Editor_Module is
                while Node /= Null_Node loop
                   Create_Line_Information_Column
                     (Kernel,
-                     Data (Node),
+                     Create (Full_Filename => Data (Node)),
                      Src_Editor_Module_Name,
                      Stick_To_Data => False,
-                     Every_Line    => True,
-                     Normalize     => False);
+                     Every_Line    => True);
                   Node := Next (Node);
                end loop;
 
@@ -3746,7 +3699,8 @@ package body Src_Editor_Module is
            (Kernel, Id.Source_Lines_Revealed_Id);
          Id.Source_Lines_Revealed_Id := No_Handler;
 
-         Remove_Line_Information_Column (Kernel, "", Src_Editor_Module_Name);
+         Remove_Line_Information_Column
+           (Kernel, VFS.No_File, Src_Editor_Module_Name);
       end if;
    end Preferences_Changed;
 
@@ -3774,41 +3728,26 @@ package body Src_Editor_Module is
 
    function Find_Editor
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
-      File   : String) return Gtkada.MDI.MDI_Child
+      File   : VFS.Virtual_File) return Gtkada.MDI.MDI_Child
    is
       Iter  : Child_Iterator := First_Child (Get_MDI (Kernel));
       Child : MDI_Child;
 
    begin
-      if File = "" then
+      if File = VFS.No_File then
          return null;
       end if;
 
-      if File /= Base_Name (File) then
-         loop
-            Child := Get (Iter);
+      loop
+         Child := Get (Iter);
 
-            exit when Child = null
-              or else File_Equal (Get_Filename (Child), File);
+         exit when Child = null
+           or else Get_Filename (Child) = File;
 
-            Next (Iter);
-         end loop;
+         Next (Iter);
+      end loop;
 
-         return Child;
-
-      else
-         loop
-            Child := Get (Iter);
-
-            exit when Child = null
-              or else File_Equal (Base_Name (Get_Filename (Child)), File)
-              or else File = Get_Title (Child);
-
-            Next (Iter);
-         end loop;
-
-         return Child;
-      end if;
+      return Child;
    end Find_Editor;
 
    -----------------------

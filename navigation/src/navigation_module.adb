@@ -39,6 +39,7 @@ with Commands;                  use Commands;
 with Commands.Locations;        use Commands.Locations;
 with Traces;                    use Traces;
 with Basic_Types;               use Basic_Types;
+with VFS;                       use VFS;
 
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Ada.Exceptions;            use Ada.Exceptions;
@@ -263,15 +264,14 @@ package body Navigation_Module is
       then
          File := File_Selection_Context_Access (Context);
          declare
-            Other_File : constant String := Other_File_Name
+            Other_File : constant Virtual_File := Other_File_Name
               (Kernel, File_Information (File));
          begin
-            if Other_File /= "" then
-               Open_File_Editor (Kernel, Other_File, Line => 0,
-                                 From_Path => True);
+            if Dir_Name (Other_File) /= "" then
+               Open_File_Editor (Kernel, Other_File, Line => 0);
             else
                Trace (Me, "Other file not found for "
-                      & File_Information (File));
+                      & Full_Name (File_Information (File)));
             end if;
          end;
       else

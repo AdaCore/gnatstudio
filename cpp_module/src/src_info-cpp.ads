@@ -57,7 +57,7 @@ package Src_Info.CPP is
    procedure Create_Or_Complete_LI
      (Handler                : access CPP_LI_Handler_Record;
       File                   : in out LI_File_Ptr;
-      Source_Filename        : String;
+      Source_Filename        : VFS.Virtual_File;
       List                   : LI_File_List;
       Project                : Projects.Project_Type);
    --  See comment in src_info.ads
@@ -76,8 +76,8 @@ package Src_Info.CPP is
 
    function LI_Filename_From_Source
      (Handler                : access CPP_LI_Handler_Record;
-      Source_Filename        : String;
-      Project                : Projects.Project_Type) return String;
+      Source_Filename        : VFS.Virtual_File;
+      Project                : Projects.Project_Type) return VFS.Virtual_File;
    --  See comment in src_info.ads.
    --  For C/C++, this function returns the name of the xref filename to
    --  generate.
@@ -86,7 +86,7 @@ package Src_Info.CPP is
      (Handler       : access CPP_LI_Handler_Record;
       Root_Project  : Projects.Project_Type;
       File_Project  : Projects.Project_Type;
-      Full_Filename : String) return LI_Handler_Iterator'Class;
+      Full_Filename : VFS.Virtual_File) return LI_Handler_Iterator'Class;
    --  Generate the LI information for a specific file
 
    function Generate_LI_For_Project
@@ -149,17 +149,17 @@ package Src_Info.CPP is
    --  the old one is released from memory and replaced by the new one.
 
    function Xref_Filename_For
-     (Filename   : String;
+     (Filename   : VFS.Virtual_File;
       DB_Dir     : String;
-      Prj_HTable : SN_Prj_HTable) return GNAT.OS_Lib.String_Access;
+      Prj_HTable : SN_Prj_HTable) return VFS.Virtual_File;
    --  Returns unique xref file name associated with specified source file
    --  name.
 
    procedure Xref_Filename_For
-     (Filename      : String;
+     (Filename      : VFS.Virtual_File;
       DB_Dir        : String;
       Prj_HTable    : SN_Prj_HTable;
-      Xref_Filename : out GNAT.OS_Lib.String_Access;
+      Xref_Filename : out VFS.Virtual_File;
       Pool          : out Xref_Pool);
    --  Returns unique xref file name associated with specified source file
    --  name. Also returns xref pool, where this name resides.
@@ -183,7 +183,7 @@ package Src_Info.CPP is
      (Handler      : access CPP_LI_Handler_Record;
       Root_Project : Projects.Project_Type;
       Languages    : access Language_Handlers.Language_Handler_Record'Class;
-      File_Name    : String;
+      File_Name    : VFS.Virtual_File;
       Result       : out Language.Construct_List);
    --  Build a Construct_List using the SN databases
 

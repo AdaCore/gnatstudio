@@ -39,7 +39,7 @@ package body Src_Info.Dummy is
    procedure Create_Or_Complete_LI
      (Handler         : access Dummy_LI_Handler_Record;
       File            : in out LI_File_Ptr;
-      Source_Filename : String;
+      Source_Filename : VFS.Virtual_File;
       List            : LI_File_List;
       Project         : Projects.Project_Type)
    is
@@ -73,7 +73,7 @@ package body Src_Info.Dummy is
      (Handler       : access Dummy_LI_Handler_Record;
       Root_Project  : Projects.Project_Type;
       File_Project  : Projects.Project_Type;
-      Full_Filename : String)
+      Full_Filename : VFS.Virtual_File)
       return LI_Handler_Iterator'Class
    is
    begin
@@ -88,12 +88,12 @@ package body Src_Info.Dummy is
 
    function LI_Filename_From_Source
      (Handler         : access Dummy_LI_Handler_Record;
-      Source_Filename : String;
-      Project         : Projects.Project_Type) return String
+      Source_Filename : VFS.Virtual_File;
+      Project         : Projects.Project_Type) return VFS.Virtual_File
    is
       pragma Unreferenced (Handler, Source_Filename, Project);
    begin
-      return "";
+      return VFS.No_File;
    end LI_Filename_From_Source;
 
    ------------------------------

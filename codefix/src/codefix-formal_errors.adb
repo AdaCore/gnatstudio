@@ -28,6 +28,7 @@ with Language;                          use Language;
 
 with Codefix.Text_Manager.Ada_Commands; use Codefix.Text_Manager.Ada_Commands;
 with Codefix.Ada_Tools;                 use Codefix.Ada_Tools;
+with VFS;                               use VFS;
 
 package body Codefix.Formal_Errors is
 
@@ -778,11 +779,11 @@ package body Codefix.Formal_Errors is
       Result      : Solution_List;
       New_Command : Remove_Pkg_Clauses_Cmd;
       With_Cursor : Word_Cursor;
-      Body_Name   : String_Access;
+      Body_Name   : Virtual_File;
 
    begin
-      Assign (Body_Name,
-              Get_Body_Or_Spec (Current_Text, Cursor.File_Name.all));
+      Body_Name := Get_Body_Or_Spec
+        (Current_Text, Create (Full_Filename => Cursor.File_Name.all));
       With_Cursor :=
         (Clone (File_Cursor (Cursor)) with
          String_Match => null,
@@ -791,14 +792,13 @@ package body Codefix.Formal_Errors is
         (New_Command,
          Current_Text,
          With_Cursor,
-         Body_Name.all);
+         Body_Name);
       Set_Caption
         (New_Command,
          "Move with clause from """ & Base_Name (Cursor.File_Name.all) &
-         """ to """ & Base_Name (Body_Name.all) & """");
+         """ to """ & Base_Name (Body_Name) & """");
       Append (Result, New_Command);
       Free (With_Cursor);
-      Free (Body_Name);
 
       return Result;
    end Move_With_To_Body;
@@ -849,8 +849,7 @@ package body Codefix.Formal_Errors is
         (New_Command,
          Current_Text,
          (File_Cursor (Cursor) with null, Text_Ascii),
-         "",
-         Cat_Use);
+         Category => Cat_Use);
       Set_Caption (New_Command, "Remove use clause");
       Append (Result, New_Command);
 

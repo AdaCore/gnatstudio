@@ -21,7 +21,6 @@
 with Browsers.Canvas;          use Browsers.Canvas;
 with Gdk.Event;                use Gdk.Event;
 with Glib;                     use Glib;
-with Glib.Convert;             use Glib.Convert;
 with Glib.Object;              use Glib.Object;
 with Glib.Xml_Int;             use Glib.Xml_Int;
 with Glide_Kernel;             use Glide_Kernel;
@@ -562,8 +561,7 @@ package body Browsers.Projects is
       pragma Unreferenced (Browser, Event);
       Context : constant Selection_Context_Access :=
         new File_Selection_Context;
-      Name : constant String := Locale_To_UTF8
-        (Krunch (Get_String (Item.Name)));
+      Name : constant String := Krunch (Get_String (Item.Name));
       Mitem : Gtk_Image_Menu_Item;
       Pix   : Gtk_Image;
    begin
@@ -680,8 +678,8 @@ package body Browsers.Projects is
            and then not Has_File_Information (File_Context)
          then
             Gtk_New (Item, Label =>
-                     -"Show projects imported by " & Locale_To_UTF8
-                       (Project_Name (Project_Information (File_Context))));
+                     -"Show projects imported by " &
+                       Project_Name (Project_Information (File_Context)));
             Append (Menu, Item);
             Context_Callback.Connect
               (Item, "activate",

@@ -55,6 +55,7 @@ package OS_Utils is
    --  Return the contents of an entire file.
    --  If the file cannot be found, return null.
    --  The caller is responsible for freeing the returned memory.
+   --  File is a UTF8-encoded string
 
    type Ctrl_C_Handler is access procedure;
    --  Any parameterless library level procedure can be used as a handler.

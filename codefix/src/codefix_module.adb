@@ -22,7 +22,6 @@
 
 with Ada.Exceptions;         use Ada.Exceptions;
 with GNAT.OS_Lib;            use GNAT.OS_Lib;
-with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 
 with Gtk.Menu;               use Gtk.Menu;
 with Gtk.Menu_Item;          use Gtk.Menu_Item;
@@ -49,6 +48,7 @@ with Codefix.Errors_Manager; use Codefix.Errors_Manager;
 with Codefix.Errors_Parser;  use Codefix.Errors_Parser;
 with Codefix.Formal_Errors;  use Codefix.Formal_Errors;
 use Codefix.Formal_Errors.Command_List;
+with VFS;                    use VFS;
 
 with Commands.Codefix;       use Commands.Codefix;
 
@@ -89,7 +89,7 @@ package body Codefix_Module is
    end record;
 
    function Get_Body_Or_Spec
-     (Text : GPS_Navigator; File_Name : String) return String;
+     (Text : GPS_Navigator; File_Name : Virtual_File) return Virtual_File;
    --  See inherited documentation
 
    function New_Text_Interface (This : GPS_Navigator) return Ptr_Text;
@@ -105,17 +105,12 @@ package body Codefix_Module is
    ----------------------
 
    function Get_Body_Or_Spec
-     (Text : GPS_Navigator; File_Name : String) return String
+     (Text : GPS_Navigator; File_Name : Virtual_File) return Virtual_File
    is
-      F       : constant String := Base_Name (File_Name);
-      Project : constant Project_Type :=
-        Get_Project_From_File (Get_Registry (Text.Kernel), F);
+      Project : constant Project_Type := Get_Project_From_File
+        (Get_Registry (Text.Kernel), File_Name);
    begin
-      return Get_Full_Path_From_File
-        (Registry        => Get_Registry (Text.Kernel),
-         Filename        => Other_File_Name (Project, F),
-         Use_Source_Path => True,
-         Use_Object_Path => False);
+      return Other_File_Name (Project, File_Name);
    end Get_Body_Or_Spec;
 
    ------------
@@ -139,7 +134,9 @@ package body Codefix_Module is
         (Kernel        => Codefix_Module_ID.Kernel,
          Identifier    => Location_Button_Name,
          Category      => Compilation_Category,
-         File          => Get_Error_Message (Mitem.Error).File_Name.all,
+         File          => Create
+           (Get_Error_Message (Mitem.Error).File_Name.all,
+            Codefix_Module_ID.Kernel),
          Line          => Get_Error_Message (Mitem.Error).Line,
          Column        => Get_Error_Message (Mitem.Error).Col,
          Message       =>
@@ -268,7 +265,7 @@ package body Codefix_Module is
            and then Has_File_Information (Location)
          then
             Assign (Error_Caption,
-                    File_Information (Location) &
+                    Base_Name (File_Information (Location)) &
                     ":" & Message_Information (Location));
          else
             return;
@@ -302,7 +299,9 @@ package body Codefix_Module is
         (Kernel        => Codefix_Module_ID.Kernel,
          Identifier    => Location_Button_Name,
          Category      => Compilation_Category,
-         File          => Get_Error_Message (Error).File_Name.all,
+         File          => Create
+           (Get_Error_Message (Error).File_Name.all,
+            Codefix_Module_ID.Kernel),
          Line          => Get_Error_Message (Error).Line,
          Column        => Get_Error_Message (Error).Col,
          Message       =>
@@ -339,7 +338,9 @@ package body Codefix_Module is
         (Kernel        => Codefix_Module_ID.Kernel,
          Identifier    => Location_Button_Name,
          Category      => "Builder Results",
-         File          => Get_Error_Message (Error).File_Name.all,
+         File          => Create
+           (Get_Error_Message (Error).File_Name.all,
+            Codefix_Module_ID.Kernel),
          Line          => Get_Error_Message (Error).Line,
          Column        => Get_Error_Message (Error).Col,
          Message       =>

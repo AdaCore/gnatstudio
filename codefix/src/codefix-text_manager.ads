@@ -24,6 +24,7 @@ with GNAT.OS_Lib;
 with Ada_Analyzer; use Ada_Analyzer;
 with Language;     use Language;
 with Basic_Types;  use Basic_Types;
+with VFS;
 
 with Generic_List;
 
@@ -271,11 +272,10 @@ package Codefix.Text_Manager is
    procedure Free (This : in out Ptr_Text_Navigator);
 
    function Get_Body_Or_Spec
-     (Text : Text_Navigator_Abstr; File_Name : String) return String
-      is abstract;
+     (Text : Text_Navigator_Abstr; File_Name : VFS.Virtual_File)
+      return VFS.Virtual_File is abstract;
    --  When File_Name is a spec file, this function returns the body
    --  corresponding, otherwise it returns the spec.
-   --  This function must return the absolute path name
 
    function New_Text_Interface (This : Text_Navigator_Abstr)
      return Ptr_Text is abstract;

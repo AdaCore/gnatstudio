@@ -18,11 +18,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib;                     use Glib;
-with Glib.Convert;             use Glib.Convert;
 with Traces;                   use Traces;
 with String_Utils;             use String_Utils;
-with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
 with Src_Editor_Box;           use Src_Editor_Box;
 with Src_Editor_Module;        use Src_Editor_Module;
 with Src_Editor_Buffer.Line_Information;
@@ -493,10 +490,7 @@ package body Commands.Editor is
       Item.Text_Before := new String'
         (Get_Text (Buffer, Start_Line, Start_Column, End_Line, End_Column));
 
-      Item.Text_After := new String'
-        (Glib.Convert.Convert
-           (Text, "UTF-8",
-            Get_Pref (Get_Kernel (Buffer), Default_Charset)));
+      Item.Text_After := new String'(Text);
    end Create;
 
    -------------

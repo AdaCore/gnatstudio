@@ -63,9 +63,11 @@ package body Src_Editor_Buffer.Blocks is
 
       Free (Buffer.Blocks);
 
-      for Line in Buffer.Line_Data'Range loop
-         Buffer.Line_Data (Line).Block := null;
-      end loop;
+      if Buffer.Line_Data /= null then
+         for Line in Buffer.Line_Data'Range loop
+            Buffer.Line_Data (Line).Block := null;
+         end loop;
+      end if;
 
       if Buffer.Block_Folding then
          Remove_Block_Folding_Commands (Buffer, False);

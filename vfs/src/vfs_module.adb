@@ -35,6 +35,7 @@ with Gtk.Widget;                use Gtk.Widget;
 with Traces;                    use Traces;
 with String_Utils;              use String_Utils;
 with Glide_Kernel.Scripts;      use Glide_Kernel.Scripts;
+with VFS;                       use VFS;
 
 package body VFS_Module is
 
@@ -218,15 +219,13 @@ package body VFS_Module is
       File    : constant File_Selection_Context_Access :=
         File_Selection_Context_Access (Context);
       Dir     : constant String := Directory_Information (File);
-      Success : Boolean;
 
    begin
       Push_State (Get_Kernel (File), Busy);
-      Trace (Me, "deleting " & Directory_Information (File) &
-             File_Information (File));
+      Trace (Me, "deleting " & Full_Name (File_Information (File)));
 
       if Has_File_Information (File) then
-         Delete_File (Dir & File_Information (File), Success);
+         Delete (File_Information (File));
       else
          begin
             Remove_Dir (Dir, True);

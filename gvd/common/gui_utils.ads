@@ -60,7 +60,7 @@ package GUI_Utils is
       Text    : String;
       Prepend : Boolean := False);
    --  Add Text to List if it is not already there. Nothing is done if Text
-   --  is already visible in the list
+   --  is already visible in the list. Text must be UTF8-encoded.
 
    procedure Add_Unique_Combo_Entry
      (Combo       : access Gtk.Combo.Gtk_Combo_Record'Class;
@@ -72,6 +72,7 @@ package GUI_Utils is
    --  If the Text is already in the combo box, nothing is done.
    --  If Use_Item_String is True, then Item_String will be inserted in the
    --  combo box instead of text.
+   --  Text must be UTF8-encoded.
 
    function Add_Unique_Combo_Entry
      (Combo       : access Gtk.Combo.Gtk_Combo_Record'Class;

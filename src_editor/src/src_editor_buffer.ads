@@ -44,6 +44,7 @@ with Glide_Kernel;
 with Glide_Kernel.Modules; use Glide_Kernel.Modules;
 with Generic_List;
 with Src_Info;
+with VFS;
 
 with String_List_Utils;
 with Gdk.GC; use Gdk.GC;
@@ -90,7 +91,7 @@ package Src_Editor_Buffer is
 
    procedure Load_File
      (Buffer          : access Source_Buffer_Record;
-      Filename        : String;
+      Filename        : VFS.Virtual_File;
       Lang_Autodetect : Boolean := True;
       Success         : out Boolean);
    --  Load the file into the buffer. If Lang_Autodetect is set to True, then
@@ -104,7 +105,7 @@ package Src_Editor_Buffer is
 
    procedure Save_To_File
      (Buffer   : access Source_Buffer_Record;
-      Filename : String;
+      Filename : VFS.Virtual_File;
       Success  : out Boolean);
    --  Save the current buffer into a file. Success is set to False if this
    --  operation failed and the buffer could not be saved.
@@ -241,8 +242,7 @@ package Src_Editor_Buffer is
    --  (End_Line, End_Column). The first line is 0, the first column is 0
    --  If End_Line = -1, contents are taken until the end of the buffer.
    --
-   --  The text returned is converted to the charset defined in the preferences
-   --  (ISO-8859-1 by default).
+   --  The text returned is UTF8-encoded.
    --
    --  The validity of both start and end positions must be verified before
    --  invoking this function. An incorrect position will cause an
@@ -257,6 +257,7 @@ package Src_Editor_Buffer is
       End_Column   : Gint := -1) return Gtkada.Types.Chars_Ptr;
    --  Same as above but return the C pointer directly for efficiency.
    --  The caller is responsible for freeing the memory (with g_free).
+   --  The returned string is UTF8-encoded.
 
    function Get_Text
      (Buffer       : access Source_Buffer_Record;
@@ -456,22 +457,27 @@ package Src_Editor_Buffer is
      (Buffer : access Source_Buffer_Record) return Glide_Kernel.Kernel_Handle;
    --  Return the kernel associated to Buffer.
 
-   function Get_Filename (Buffer : access Source_Buffer_Record) return String;
+   function Get_Filename (Buffer : access Source_Buffer_Record)
+                          return VFS.Virtual_File;
    --  Return the name of the file associated with Buffer.
 
    procedure Set_Filename
      (Buffer : access Source_Buffer_Record;
-      Name   : String);
+      Name   : VFS.Virtual_File);
    --  Set the name of the file associated with Buffer to Name.
 
    function Get_File_Identifier
-     (Buffer : access Source_Buffer_Record) return String;
+     (Buffer : access Source_Buffer_Record) return VFS.Virtual_File;
    --  Return the identifier of the file associated with Buffer.
 
    procedure Set_File_Identifier
      (Buffer : access Source_Buffer_Record;
-      Name   : String);
-   --  Set the file identifier for Buffer.
+      Name   : VFS.Virtual_File);
+   --  Set the file identifier for Buffer. This identifier is used for
+   --  unnamed files, so that they can be uniquely identified.
+   --
+   --  ??? This is not really a file name, although we use it as such in
+   --  various contexts
 
    procedure Source_Lines_Revealed
      (Buffer     : access Source_Buffer_Record;
@@ -937,8 +943,8 @@ private
    type Source_Buffer_Record is new Gtk.Text_Buffer.Gtk_Text_Buffer_Record with
    record
       Kernel        : Glide_Kernel.Kernel_Handle;
-      Filename      : String_Access;
-      File_Identifier : String_Access;
+      Filename      : VFS.Virtual_File;
+      File_Identifier : VFS.Virtual_File;
       --  This identifier is used to identify buffers for untitled files.
 
       Lang          : Language.Language_Access;

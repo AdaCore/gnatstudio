@@ -53,6 +53,7 @@ with Ada.Exceptions;              use Ada.Exceptions;
 with Traces;                      use Traces;
 with Glide_Kernel;                use Glide_Kernel;
 with Glide_Kernel.Preferences;    use Glide_Kernel.Preferences;
+with VFS;                         use VFS;
 
 package body Src_Editor_View is
 
@@ -1109,7 +1110,8 @@ package body Src_Editor_View is
    is
       pragma Unreferenced (Kernel);
       View : constant Source_View := Source_View (Widget);
-      File : constant String := Get_String (Nth (Args, 1));
+      File : constant Virtual_File :=
+        Create (Full_Filename => Get_String (Nth (Args, 1)));
 
    begin
       if Get_Filename (Source_Buffer (Get_Buffer (View))) = File then

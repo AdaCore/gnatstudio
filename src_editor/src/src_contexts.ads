@@ -18,7 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Basic_Types;
 with Generic_List;
 with GNAT.Directory_Operations;
 with GNAT.OS_Lib;
@@ -31,6 +30,7 @@ with Gtk.Frame;
 with Find_Utils;   use Find_Utils;
 with Files_Extra_Info_Pkg;
 with Language_Handlers;
+with VFS;
 
 package Src_Contexts is
 
@@ -114,9 +114,10 @@ package Src_Contexts is
    --  is null)
 
    function Current_File
-     (Context : access Abstract_Files_Context) return String is abstract;
+     (Context : access Abstract_Files_Context)
+      return VFS.Virtual_File is abstract;
    --  Return the current file.
-   --  Return the empty string if there are no more files to examine
+   --  Return No_File if there are no more files to examine
 
    procedure Move_To_Next_File
      (Context : access Abstract_Files_Context) is abstract;
@@ -176,7 +177,7 @@ package Src_Contexts is
 
    procedure Set_File_List
      (Context : access Files_Project_Context;
-      Files   : Basic_Types.String_Array_Access);
+      Files   : VFS.File_Array_Access);
    --  Set the list of files to search.
    --  No copy of Files is made, the memory will be freed automatically.
 
@@ -277,7 +278,7 @@ private
       Files_Pattern : GNAT.Regexp.Regexp;
       Recurse       : Boolean                   := False;
       Dirs          : Directory_List.List;
-      Current_File  : GNAT.OS_Lib.String_Access;
+      Current_File  : VFS.Virtual_File;
 
       Directory     : GNAT.OS_Lib.String_Access := null;
       --  Set to null at the end of the search
@@ -287,17 +288,18 @@ private
    end record;
 
    type Files_Project_Context is new Abstract_Files_Context with record
-      Files         : Basic_Types.String_Array_Access := null;
+      Files         : VFS.File_Array_Access := null;
       Current_File  : Natural;
    end record;
 
    function Current_File
-     (Context : access Files_Project_Context) return String;
+     (Context : access Files_Project_Context) return VFS.Virtual_File;
    procedure Move_To_Next_File (Context : access Files_Project_Context);
    procedure Move_To_First_File (Context : access Files_Project_Context);
    procedure Free (Context : in out Files_Project_Context);
 
-   function Current_File (Context : access Files_Context) return String;
+   function Current_File (Context : access Files_Context)
+     return VFS.Virtual_File;
    procedure Move_To_Next_File (Context : access Files_Context);
    procedure Move_To_First_File (Context : access Files_Context);
    procedure Free (Context : in out Files_Context);

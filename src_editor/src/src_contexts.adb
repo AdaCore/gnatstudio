@@ -36,7 +36,6 @@ with Gtkada.Dialogs;            use Gtkada.Dialogs;
 with Files_Extra_Info_Pkg;      use Files_Extra_Info_Pkg;
 with Osint;                     use Osint;
 with Projects;                  use Projects;
-with Basic_Types;               use Basic_Types;
 with Glide_Kernel;              use Glide_Kernel;
 with Glide_Kernel.Project;      use Glide_Kernel.Project;
 with Glide_Kernel.Console;      use Glide_Kernel.Console;
@@ -53,6 +52,7 @@ with OS_Utils;                  use OS_Utils;
 with Find_Utils;                use Find_Utils;
 with Glide_Intl;                use Glide_Intl;
 with GUI_Utils;                 use GUI_Utils;
+with VFS;                       use VFS;
 
 with Src_Editor_Box;            use Src_Editor_Box;
 with Src_Editor_Buffer;         use Src_Editor_Buffer;
@@ -92,7 +92,7 @@ package body Src_Contexts is
      (Context       : access Search_Context'Class;
       Handler       : access Language_Handlers.Language_Handler_Record'Class;
       Kernel        : Kernel_Handle := null;
-      Name          : String;
+      Name          : VFS.Virtual_File;
       Callback      : Scan_Callback;
       Scope         : Search_Scope;
       Lexical_State : in out Recognized_Lexical_States;
@@ -116,14 +116,15 @@ package body Src_Contexts is
      (Context  : access Search_Context'Class;
       Handler  : access Language_Handler_Record'Class;
       Kernel   : Kernel_Handle;
-      Str      : String;
-      Is_File  : Boolean;
+      Str      : String := "";
+      File     : Virtual_File := VFS.No_File;
       Scope    : Search_Scope;
       Lang     : Language_Access := null) return Match_Result_Array_Access;
    --  Same as above, but behaves as if there was a default callback that
    --  stores the results in an array
-   --  Str can be either a file name or a file contents, depending whether
-   --  Is_File is resp. True or False.
+   --  If Str is not the empty string, it is considered as a buffer to parse.
+   --  If it is empty and File is not No_File, then that file is parsed
+   --  instead.
    --  It returns the list of matches that were found in the buffer, or null if
    --  no match was found. It is the responsability of the caller to free the
    --  returned array.
@@ -154,7 +155,7 @@ package body Src_Contexts is
      (Context       : access Search_Context'Class;
       Handler       : access Language_Handlers.Language_Handler_Record'Class;
       Kernel        : Kernel_Handle;
-      Name          : String;
+      Name          : VFS.Virtual_File;
       Scope         : Search_Scope;
       Lexical_State : in out Recognized_Lexical_States;
       Start_Line    : Natural := 1;
@@ -170,7 +171,7 @@ package body Src_Contexts is
 
    procedure Highlight_Result
      (Kernel      : access Kernel_Handle_Record'Class;
-      File_Name   : String;
+      File_Name   : VFS.Virtual_File;
       Match       : Match_Result;
       Interactive : Boolean);
    --  Print the result of the search in the glide console
@@ -433,7 +434,7 @@ package body Src_Contexts is
      (Context       : access Search_Context'Class;
       Handler       : access Language_Handlers.Language_Handler_Record'Class;
       Kernel        : Glide_Kernel.Kernel_Handle := null;
-      Name          : String;
+      Name          : VFS.Virtual_File;
       Callback      : Scan_Callback;
       Scope         : Search_Scope;
       Lexical_State : in out Recognized_Lexical_States;
@@ -516,7 +517,7 @@ package body Src_Contexts is
 
    procedure Highlight_Result
      (Kernel      : access Kernel_Handle_Record'Class;
-      File_Name   : String;
+      File_Name   : Virtual_File;
       Match       : Match_Result;
       Interactive : Boolean)
    is
@@ -538,13 +539,12 @@ package body Src_Contexts is
            (Kernel,
             File_Name,
             To_Positive (Match.Line), To_Positive (Match.Column),
-            To_Positive (Match.End_Column),
-            From_Path => True);
+            To_Positive (Match.End_Column));
       else
          Insert_Result
            (Kernel,
             -"Search Results",
-            File_Name,
+            Full_Name (File_Name),
             Match.Text,
             To_Positive (Match.Line), To_Positive (Match.Column),
             Match.End_Column - Match.Column);
@@ -683,8 +683,8 @@ package body Src_Contexts is
      (Context  : access Search_Context'Class;
       Handler  : access Language_Handler_Record'Class;
       Kernel   : Kernel_Handle;
-      Str      : String;
-      Is_File  : Boolean;
+      Str      : String := "";
+      File     : Virtual_File := VFS.No_File;
       Scope    : Search_Scope;
       Lang     : Language_Access := null) return Match_Result_Array_Access
    is
@@ -715,18 +715,18 @@ package body Src_Contexts is
       State : Recognized_Lexical_States := Statements;
       Was_Partial : Boolean;
    begin
-      if Is_File then
-         Scan_File (Context,
-                    Handler, Kernel,
-                    Str, Callback'Unrestricted_Access, Scope,
-                    Lexical_State => State, Force_Read => Kernel = null,
-                    Was_Partial => Was_Partial);
-      else
+      if Str /= "" then
          Scan_Buffer (Str, Str'First, Context,
                       Callback'Unrestricted_Access, Scope,
                       Lexical_State => State,
                       Lang          => Lang,
                       Was_Partial   => Was_Partial);
+      elsif File /= VFS.No_File then
+         Scan_File (Context,
+                    Handler, Kernel,
+                    File, Callback'Unrestricted_Access, Scope,
+                    Lexical_State => State, Force_Read => Kernel = null,
+                    Was_Partial => Was_Partial);
       end if;
 
       return Result;
@@ -740,7 +740,7 @@ package body Src_Contexts is
      (Context       : access Search_Context'Class;
       Handler       : access Language_Handlers.Language_Handler_Record'Class;
       Kernel        : Kernel_Handle;
-      Name          : String;
+      Name          : VFS.Virtual_File;
       Scope         : Search_Scope;
       Lexical_State : in out Recognized_Lexical_States;
       Start_Line    : Natural := 1;
@@ -784,13 +784,12 @@ package body Src_Contexts is
    begin
       Directory_List.Free (Context.Dirs);
       Free (Context.Directory);
-      Free (Context.Current_File);
       Free (Search_Context (Context));
    end Free;
 
    procedure Free (Context : in out Files_Project_Context) is
    begin
-      Free (Context.Files);
+      Unchecked_Free (Context.Files);
       Free (Search_Context (Context));
    end Free;
 
@@ -800,9 +799,9 @@ package body Src_Contexts is
 
    procedure Set_File_List
      (Context : access Files_Project_Context;
-      Files   : Basic_Types.String_Array_Access) is
+      Files   : File_Array_Access) is
    begin
-      Free (Context.Files);
+      Unchecked_Free (Context.Files);
       Context.Files := Files;
       Context.Current_File := Context.Files'First - 1;
    end Set_File_List;
@@ -902,8 +901,7 @@ package body Src_Contexts is
          Context2.Scope := Search_Scope'Val (Get_Index_In_List (Scope.Combo));
          Context2.All_Occurrences := True;
          Set_File_List
-           (Context2, new String_Array'
-              (1 => new String'(Get_Filename (Editor))));
+           (Context2, new File_Array'(1 => Get_Filename (Editor)));
          return Search_Context_Access (Context2);
       else
          Context := new Current_File_Context;
@@ -1225,7 +1223,7 @@ package body Src_Contexts is
          loop
             --  Move to next file
             Move_To_Next_File (C);
-            if Current_File (C) = "" then
+            if Current_File (C) = VFS.No_File then
                Button := Message_Dialog
                  (Msg     => (-"No more occurrences of '")
                   & Context_As_String (C) &
@@ -1269,7 +1267,7 @@ package body Src_Contexts is
       --  Non interactive mode
       else
          Move_To_Next_File (C);
-         if Current_File (C) = "" then
+         if Current_File (C) = VFS.No_File then
             return False;
 
          else
@@ -1390,7 +1388,7 @@ package body Src_Contexts is
       --  Non interactive case
       else
          Move_To_Next_File (C);
-         if Current_File (C) = "" then
+         if Current_File (C) = VFS.No_File then
             return False;
          end if;
 
@@ -1398,8 +1396,7 @@ package body Src_Contexts is
            (Context => Context,
             Handler => Get_Language_Handler (Kernel),
             Kernel  => Kernel_Handle (Kernel),
-            Str     => Current_File (C),
-            Is_File => True,
+            File    => Current_File (C),
             Scope   => Context.Scope,
             Lang    => Get_Language_From_File
             (Get_Language_Handler (Kernel), Current_File (C)));
@@ -1441,7 +1438,9 @@ package body Src_Contexts is
                   Buffer := Read_File (Current_File (C));
 
                   if Buffer /= null then
-                     FD := Create_File (Current_File (C), Binary);
+                     --  ???  Should use VFS.Write_File
+                     FD := Create_File
+                       (Locale_Full_Name (Current_File (C)), Binary);
                      Len := Write (FD, Buffer (1)'Address,
                                    Matches (Matches'First).Index - 1);
                      Len := Write (FD, Replace_String'Address,
@@ -1480,15 +1479,15 @@ package body Src_Contexts is
    ------------------
 
    function Current_File
-     (Context : access Files_Project_Context) return String
+     (Context : access Files_Project_Context) return VFS.Virtual_File
    is
    begin
       if Context.Files /= null
         and then Context.Current_File in Context.Files'Range
       then
-         return Context.Files (Context.Current_File).all;
+         return Context.Files (Context.Current_File);
       else
-         return "";
+         return VFS.No_File;
       end if;
    end Current_File;
 
@@ -1516,13 +1515,10 @@ package body Src_Contexts is
    -- Current_File --
    ------------------
 
-   function Current_File (Context : access Files_Context) return String is
+   function Current_File
+     (Context : access Files_Context) return Virtual_File is
    begin
-      if Context.Current_File /= null then
-         return Context.Current_File.all;
-      else
-         return "";
-      end if;
+      return Context.Current_File;
    end Current_File;
 
    ------------------------
@@ -1547,8 +1543,7 @@ package body Src_Contexts is
       Last      : Natural;
 
    begin
-      Free (Context.Current_File);
-
+      Context.Current_File := VFS.No_File;
       Context.Current_Lexical := Statements;
 
       --  If not at the end
@@ -1562,7 +1557,7 @@ package body Src_Contexts is
          Open (Head (Context.Dirs).Dir, Context.Directory.all);
       end if;
 
-      while Context.Current_File = null loop
+      while Context.Current_File = VFS.No_File loop
          Read (Head (Context.Dirs).Dir, File_Name, Last);
 
          if Last = 0 then
@@ -1597,7 +1592,7 @@ package body Src_Contexts is
 
                --  ??? Should check that we have a text file
                elsif Match (File_Name (1 .. Last), Context.Files_Pattern) then
-                  Context.Current_File := new String'(Full_Name);
+                  Context.Current_File := Create (Full_Filename => Full_Name);
                   return;
                end if;
             end;
@@ -1607,7 +1602,7 @@ package body Src_Contexts is
    exception
       when Directory_Error =>
          Trace (Me, "Move_To_Next_File: Directory error");
-         null;
+         Context.Current_File := VFS.No_File;
    end Move_To_Next_File;
 
    ----------

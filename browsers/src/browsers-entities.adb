@@ -33,7 +33,6 @@ with Glide_Intl;           use Glide_Intl;
 with Glide_Kernel.Scripts; use Glide_Kernel.Scripts;
 
 with Glib;          use Glib;
-with Glib.Convert;  use Glib.Convert;
 with Glib.Object;   use Glib.Object;
 with Glib.Xml_Int;  use Glib.Xml_Int;
 with Gdk.GC;        use Gdk.GC;
@@ -634,8 +633,7 @@ package body Browsers.Entities is
          if Has_Entity_Name_Information (Entity_Context) then
             Gtk_New
               (Item, Label => (-"Examine entity ")
-               & Locale_To_UTF8
-                 (Krunch (Entity_Name_Information (Entity_Context))));
+               & Krunch (Entity_Name_Information (Entity_Context)));
             Append (Menu, Item);
             Context_Callback.Connect
               (Item, "activate",
@@ -1695,8 +1693,7 @@ package body Browsers.Entities is
          Line       => Get_Declaration_Line_Of (It.Entity),
          Column     => Get_Declaration_Column_Of (It.Entity),
          Column_End => Get_Declaration_Column_Of (It.Entity)
-           + Get_Name (It.Entity)'Length,
-         From_Path => True);
+           + Get_Name (It.Entity)'Length);
    end On_Show_Source;
 
    ------------------------
@@ -1720,7 +1717,7 @@ package body Browsers.Entities is
          Entity_Column => Get_Declaration_Column_Of (Item.Entity));
       Set_File_Information
         (Context     => Context,
-         File_Name   => Get_Declaration_File_Of (Item.Entity),
+         File        => Get_Declaration_File_Of (Item.Entity),
          Line        => Get_Declaration_Line_Of (Item.Entity),
          Column      => Get_Declaration_Column_Of (Item.Entity));
       --  We need to set the file information, even though it will also display

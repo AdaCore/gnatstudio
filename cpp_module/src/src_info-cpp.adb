@@ -43,6 +43,7 @@ with String_Utils; use String_Utils;
 with Snames; use Snames;
 with Ada.Strings.Fixed;
 with Ada.Unchecked_Deallocation;
+with VFS; use VFS;
 
 package body Src_Info.CPP is
 
@@ -71,7 +72,7 @@ package body Src_Info.CPP is
      (Handler              : access Src_Info.CPP.CPP_LI_Handler_Record'Class;
       File                 : in out LI_File_Ptr;
       List                 : LI_File_List;
-      Referred_Filename    : String);
+      Referred_Filename    : VFS.Virtual_File);
    --  Create a new dependency, from the files described in File to the source
    --  file Referred_Filename.
 
@@ -80,9 +81,9 @@ package body Src_Info.CPP is
       File                  : in out LI_File_Ptr;
       List                  : LI_File_List;
       Symbol_Name           : String;
-      Referred_Filename     : String;
+      Referred_Filename     : VFS.Virtual_File;
       Location              : SN.Point;
-      Parent_Filename       : String := "";
+      Parent_Filename       : VFS.Virtual_File := VFS.No_File;
       Parent_Location       : SN.Point := SN.Invalid_Point;
       Kind                  : E_Kind;
       Scope                 : E_Scope;
@@ -101,7 +102,7 @@ package body Src_Info.CPP is
       List                  : LI_File_List;
       Symbol_Name           : String;
       Location              : SN.Point;
-      Parent_Filename       : String := "";
+      Parent_Filename       : VFS.Virtual_File := VFS.No_File;
       Parent_Location       : SN.Point := SN.Invalid_Point;
       Kind                  : E_Kind;
       Scope                 : E_Scope;
@@ -127,7 +128,7 @@ package body Src_Info.CPP is
       List                    : LI_File_List;
       Symbol_Name             : String;
       Location                : SN.Point;
-      Parent_Filename         : String := "";
+      Parent_Filename         : VFS.Virtual_File := VFS.No_File;
       Parent_Location         : SN.Point := SN.Invalid_Point;
       Kind                    : E_Kind;
       Scope                   : E_Scope;
@@ -139,7 +140,7 @@ package body Src_Info.CPP is
      (Declaration_Info : in out E_Declaration_Info_List;
       Handler          : Src_Info.CPP.CPP_LI_Handler;
       List             : LI_File_List;
-      Parent_Filename  : String;
+      Parent_Filename  : VFS.Virtual_File;
       Parent_Location  : SN.Point);
    --  Add a new parent entity to the list of parents for
    --  Declaration_Info. This is mostly used for multiple-inheritance.
@@ -148,7 +149,7 @@ package body Src_Info.CPP is
      (LI            : out LI_File_Ptr;
       Handler       : access Src_Info.CPP.CPP_LI_Handler_Record'Class;
       List          : LI_File_List;
-      Full_Filename : String);
+      Full_Filename : VFS.Virtual_File);
    --  Create a stub LI file for Full_Filename, if there is no matching LI file
    --  in List.
    --  If Parsed is True, the LI file will be considered as already parsed,
@@ -158,7 +159,7 @@ package body Src_Info.CPP is
      (Handler              : access Src_Info.CPP.CPP_LI_Handler_Record'Class;
       File                 : in out LI_File_Ptr;
       List                 : LI_File_List;
-      Referred_Filename    : String;
+      Referred_Filename    : VFS.Virtual_File;
       Referred_LI          : out LI_File_Ptr;
       Dep_Ptr              : out Dependency_File_Info_List);
    --  Same as the procedure with the same name, but also returns the newly
@@ -172,7 +173,7 @@ package body Src_Info.CPP is
      (Handler              : access Src_Info.CPP.CPP_LI_Handler_Record'Class;
       File                 : in out LI_File_Ptr;
       List                 : LI_File_List;
-      Referred_Filename    : String)
+      Referred_Filename    : VFS.Virtual_File)
    is
       Dep_Ptr : Dependency_File_Info_List;
       Referred_LI : LI_File_Ptr;
@@ -189,7 +190,7 @@ package body Src_Info.CPP is
      (Handler              : access Src_Info.CPP.CPP_LI_Handler_Record'Class;
       File                 : in out LI_File_Ptr;
       List                 : LI_File_List;
-      Referred_Filename    : String;
+      Referred_Filename    : VFS.Virtual_File;
       Referred_LI          : out LI_File_Ptr;
       Dep_Ptr              : out Dependency_File_Info_List)
    is
@@ -208,9 +209,9 @@ package body Src_Info.CPP is
       Assert (Fail_Stream, File.LI.Body_Info.Source_Filename.all /=
               Base_Name (Referred_Filename),
               "Can't insert dependency, LI file "
-              & Referred_LI.LI.LI_Filename.all
+              & Base_Name (Referred_LI.LI.LI_Filename)
               & " is already for file "
-              & Referred_Filename);
+              & Full_Name (Referred_Filename));
 
       --  Is this a first dependencies info in this file?
 
@@ -225,7 +226,7 @@ package body Src_Info.CPP is
          Dep_Ptr := File.LI.Dependencies_Info;
 
          while Get_Source_Filename (Dep_Ptr.Value.File) /=
-           Base_Name (Referred_Filename)
+           Referred_Filename
          loop
             if Dep_Ptr.Next = null then
                --  Unable to find suitable Dependency_File_Info.
@@ -263,9 +264,9 @@ package body Src_Info.CPP is
       File                  : in out LI_File_Ptr;
       List                  : LI_File_List;
       Symbol_Name           : String;
-      Referred_Filename     : String;
+      Referred_Filename     : VFS.Virtual_File;
       Location              : Point;
-      Parent_Filename       : String := "";
+      Parent_Filename       : VFS.Virtual_File := VFS.No_File;
       Parent_Location       : Point := Invalid_Point;
       Kind                  : E_Kind;
       Scope                 : E_Scope;
@@ -345,7 +346,7 @@ package body Src_Info.CPP is
       List                    : LI_File_List;
       Symbol_Name             : String;
       Location                : Point;
-      Parent_Filename         : String := "";
+      Parent_Filename         : VFS.Virtual_File := VFS.No_File;
       Parent_Location         : Point := Invalid_Point;
       Kind                    : E_Kind;
       Scope                   : E_Scope;
@@ -401,7 +402,7 @@ package body Src_Info.CPP is
       List                    : LI_File_List;
       Symbol_Name             : String;
       Location                : Point;
-      Parent_Filename         : String := "";
+      Parent_Filename         : VFS.Virtual_File := VFS.No_File;
       Parent_Location         : Point := Invalid_Point;
       Kind                    : E_Kind;
       Scope                   : E_Scope;
@@ -506,7 +507,7 @@ package body Src_Info.CPP is
      (Declaration_Info : in out E_Declaration_Info_List;
       Handler          : CPP_LI_Handler;
       List             : LI_File_List;
-      Parent_Filename  : String;
+      Parent_Filename  : VFS.Virtual_File;
       Parent_Location  : Point)
    is
       FL_Ptr          : File_Location_List;
@@ -565,24 +566,25 @@ package body Src_Info.CPP is
      (LI            : out LI_File_Ptr;
       Handler       : access Src_Info.CPP.CPP_LI_Handler_Record'Class;
       List          : LI_File_List;
-      Full_Filename : String)
+      Full_Filename : VFS.Virtual_File)
    is
       Project   : constant Project_Type := Get_Project_From_File
         (Registry => Project_Registry (Get_Registry (Handler.Root_Project)),
          Source_Filename   => Full_Filename,
          Root_If_Not_Found => True);
-      Xref_Name : constant String_Access := Xref_Filename_For
+      Xref_Name : constant Virtual_File := Xref_Filename_For
         (Full_Filename,
          Get_DB_Dir (Project),
          Get_Prj_HTable (Handler));
    begin
-      LI := Locate (List, Xref_Name.all);
+      LI := Locate (List, Xref_Name);
 
       if LI = null then
          Create_LI_File
            (File        => LI,
+            Project     => Project,
             List        => List,
-            LI_Filename => Xref_Name.all,
+            LI_Filename => Xref_Name,
             Handler     => LI_Handler (Handler));
       end if;
 
@@ -882,7 +884,7 @@ package body Src_Info.CPP is
    procedure Find_Or_Create_Class
      (Handler         : access CPP_LI_Handler_Record'Class;
       CL_Tab          : CL_Table;
-      Source_Filename : String;
+      Source_Filename : VFS.Virtual_File;
       Decl_Info       : out E_Declaration_Info_List;
       File            : in out LI_File_Ptr;
       List            : LI_File_List;
@@ -893,7 +895,7 @@ package body Src_Info.CPP is
    --  on error
 
    procedure Process_File
-     (Full_Filename : String;
+     (Full_Filename : VFS.Virtual_File;
       Handler       : access CPP_LI_Handler_Record'Class;
       File          : in out LI_File_Ptr;
       List_Of_Files : LI_File_List);
@@ -916,7 +918,7 @@ package body Src_Info.CPP is
 
    procedure Process_Local_Variable
      (Var_Name           : String;
-      Var_File_Name      : String;
+      Var_File_Name      : VFS.Virtual_File;
       Var_Start_Position : Point;
       FU_Tab             : FU_Table;
       Symbol             : Symbol_Type;
@@ -993,7 +995,7 @@ package body Src_Info.CPP is
    procedure Create_Overload_List
      (Name             : String;
       Class_Name       : String;
-      Filename         : String;
+      Filename         : VFS.Virtual_File;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : out LI_File_Ptr;
       List             : LI_File_List;
@@ -1003,7 +1005,7 @@ package body Src_Info.CPP is
 
    procedure Create_Overload_List
      (Name             : String;
-      Filename         : String;
+      Filename         : VFS.Virtual_File;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : out LI_File_Ptr;
       List             : LI_File_List);
@@ -1035,7 +1037,7 @@ package body Src_Info.CPP is
      (Buffer       : in String_Access;
       Class_Name   : in Segment;
       Name         : in Segment;
-      Filename     : in String;
+      Filename     : in VFS.Virtual_File;
       Return_Type  : in Segment;
       Arg_Types    : in Segment;
       Handler      : access CPP_LI_Handler_Record'Class;
@@ -1052,7 +1054,7 @@ package body Src_Info.CPP is
    procedure Find_First_Forward_Declaration
      (Buffer       : in String_Access;
       Name         : in Segment;
-      Filename     : in String;
+      Filename     : in VFS.Virtual_File;
       Return_Type  : in Segment;
       Arg_Types    : in Segment;
       Handler      : access CPP_LI_Handler_Record'Class;
@@ -1097,7 +1099,7 @@ package body Src_Info.CPP is
      (Handler       : access CPP_LI_Handler_Record;
       Root_Project  : Project_Type;
       File_Project  : Project_Type;
-      Full_Filename : String) return LI_Handler_Iterator'Class
+      Full_Filename : VFS.Virtual_File) return LI_Handler_Iterator'Class
    is
       pragma Unreferenced (Root_Project);
 
@@ -1105,7 +1107,7 @@ package body Src_Info.CPP is
       Tmp_File       : File_Type;
       Success        : Boolean;
       Process_Alive  : Boolean := False;
-      Xref_File_Name : String_Access;
+      Xref_File_Name : Virtual_File;
       DB_Dir         : constant String := Get_DB_Dir (File_Project);
       Pool           : Xref_Pool;
 
@@ -1131,23 +1133,23 @@ package body Src_Info.CPP is
       --  is newer than its Xref
 
       if not Is_Xref_Valid (Full_Filename, Pool)
-        or else To_Timestamp (File_Time_Stamp (Full_Filename)) >
-                To_Timestamp (File_Time_Stamp (Xref_File_Name.all))
+        or else To_Timestamp (File_Time_Stamp (Full_Name (Full_Filename))) >
+                To_Timestamp (File_Time_Stamp (Full_Name (Xref_File_Name)))
       then
          Set_Valid (Full_Filename, True, Pool);
 
          --  Remove the current xref file if it exists, since
          --  cbrowser opens it in append mode.
 
-         if Is_Regular_File (Xref_File_Name.all) then
-            Delete_File (Xref_File_Name.all, Success);
+         if Is_Regular_File (Xref_File_Name) then
+            Delete (Xref_File_Name);
          end if;
 
          --  Create the list of files that need to be analyzed.
 
          Create (Tmp_File, Out_File, Name => HI.List_Filename.all);
-         Put_Line (Tmp_File, "@" & Xref_File_Name.all);
-         Put_Line (Tmp_File, Full_Filename);
+         Put_Line (Tmp_File, "@" & Full_Name (Xref_File_Name));
+         Put_Line (Tmp_File, Full_Name (Full_Filename));
          Close (Tmp_File);
 
          Close_DB_Files (Handler.SN_Table);
@@ -1171,7 +1173,8 @@ package body Src_Info.CPP is
          Delete_File (HI.List_Filename.all, Success);
          Free (HI.List_Filename);
 
-         Save (Pool, DB_Dir & Browse.Xref_Pool_Filename);
+         Save (Pool,
+               Create (Full_Filename => DB_Dir & Browse.Xref_Pool_Filename));
       end if;
 
       return HI;
@@ -1189,7 +1192,7 @@ package body Src_Info.CPP is
       Num_Source_Files : Natural := 0;
       Tmp_File         : File_Type;
       Success          : Boolean;
-      Xref_File_Name   : String_Access;
+      Xref_File_Name   : Virtual_File;
       TO_File_Name     : constant String :=
         DB_Dir & SN.Browse.DB_File_Name & ".to";
       Recompute_TO     : Boolean := False;
@@ -1215,7 +1218,7 @@ package body Src_Info.CPP is
       --  If there is at least one source file, make sure the database
       --  directory exists.
 
-      if Current_Source_File (Iterator) /= "" then
+      if Current_Source_File (Iterator) /= VFS.No_File then
          Create_DB_Directory (DB_Dir);
 
          --  Create the list of files that need to be analyzed.
@@ -1229,13 +1232,12 @@ package body Src_Info.CPP is
 
       loop
          declare
-            File : constant String := Current_Source_File (Iterator);
+            File : constant Virtual_File := Current_Source_File (Iterator);
             Pool : constant Xref_Pool := Get_Xref_Pool
-              (Iterator.Handler.Prj_HTable,
-               DB_Dir);
+              (Iterator.Handler.Prj_HTable, DB_Dir);
 
          begin
-            exit when File = "";
+            exit when File = VFS.No_File;
 
             --  Start processing next file
             --  File needs to be processed if:
@@ -1245,8 +1247,8 @@ package body Src_Info.CPP is
             Xref_File_Name := Xref_Filename_For (File, DB_Dir, Pool);
 
             if not Is_Xref_Valid (File, Pool)
-              or else To_Timestamp (File_Time_Stamp (File)) >
-                To_Timestamp (File_Time_Stamp (Xref_File_Name.all))
+              or else To_Timestamp (File_Time_Stamp (Full_Name (File))) >
+                To_Timestamp (File_Time_Stamp (Full_Name (Xref_File_Name)))
             then
                Num_Source_Files := Num_Source_Files + 1;
 
@@ -1255,14 +1257,14 @@ package body Src_Info.CPP is
                --  Remove the current xref file if it exists, since
                --  cbrowser opens it in append mode.
 
-               if Is_Regular_File (Xref_File_Name.all) then
-                  Delete_File (Xref_File_Name.all, Success);
+               if Is_Regular_File (Xref_File_Name) then
+                  Delete (Xref_File_Name);
                end if;
 
-               Put_Line (Tmp_File, "@" & Xref_File_Name.all);
-               Put_Line (Tmp_File, File);
+               Put_Line (Tmp_File, "@" & Full_Name (Xref_File_Name));
+               Put_Line (Tmp_File, Full_Name (File));
 
-            elsif To_Timestamp (File_Time_Stamp (Xref_File_Name.all)) >
+            elsif To_Timestamp (File_Time_Stamp (Full_Name (Xref_File_Name))) >
               To_Timestamp (File_Time_Stamp (TO_File_Name))
             then
                Recompute_TO := True;
@@ -1463,7 +1465,10 @@ package body Src_Info.CPP is
                           (Iterator.Handler.Prj_HTable, DB_Dir);
                      begin
                         if Pool /= Empty_Xref_Pool then
-                           Save (Pool, DB_Dir & Browse.Xref_Pool_Filename);
+                           Save (Pool,
+                                 Create
+                                   (Full_Filename =>
+                                      DB_Dir & Browse.Xref_Pool_Filename));
                         end if;
                      end;
                   end if;
@@ -1628,7 +1633,7 @@ package body Src_Info.CPP is
    ------------------
 
    procedure Process_File
-     (Full_Filename : String;
+     (Full_Filename : VFS.Virtual_File;
       Handler       : access CPP_LI_Handler_Record'Class;
       File          : in out LI_File_Ptr;
       List_Of_Files : LI_File_List)
@@ -1648,7 +1653,7 @@ package body Src_Info.CPP is
       Init (Module_Typedefs);
       Set_Cursor (Handler.SN_Table (FIL),
                   Position    => By_Key,
-                  Key         => Full_Filename & Field_Sep,
+                  Key         => Full_Name (Full_Filename) & Field_Sep,
                   Exact_Match => False);
 
       loop -- iterate thru all symbols for specified file
@@ -1761,7 +1766,9 @@ package body Src_Info.CPP is
                Pool   : Xref_Pool;
                DB_Dir : constant String_Access := Handler.DB_Dirs (J);
             begin
-               Load (Pool, DB_Dir.all & Browse.Xref_Pool_Filename);
+               Load (Pool, Create
+                       (Full_Filename =>
+                          DB_Dir.all & Browse.Xref_Pool_Filename));
                Set_Xref_Pool (Handler.Prj_HTable, DB_Dir, Pool);
             end;
          end loop;
@@ -1778,15 +1785,10 @@ package body Src_Info.CPP is
    procedure Create_Or_Complete_LI
      (Handler                : access CPP_LI_Handler_Record;
       File                   : in out LI_File_Ptr;
-      Source_Filename        : String;
+      Source_Filename        : VFS.Virtual_File;
       List                   : LI_File_List;
       Project                : Project_Type)
    is
-      Full_Filename : constant String := Get_Full_Path_From_File
-        (Registry        => Project_Registry (Get_Registry (Project)),
-         Filename        => Source_Filename,
-         Use_Source_Path => True,
-         Use_Object_Path => False);
       DB_Dir : constant String := Get_DB_Dir (Project);
    begin
       --  Do nothing if we couldn't create the database directory
@@ -1794,8 +1796,8 @@ package body Src_Info.CPP is
          return;
       end if;
 
-      if Full_Filename = "" then
-         Warn ("File not found: " & Source_Filename);
+      if Dir_Name (Source_Filename) = "./" then
+         Warn ("File not found: " & Base_Name (Source_Filename));
          return;
       end if;
 
@@ -1808,13 +1810,14 @@ package body Src_Info.CPP is
         (LI            => File,
          Handler       => Handler,
          List          => List,
-         Full_Filename => Full_Filename);
+         Full_Filename => Source_Filename);
 
       --  check timestamps for the parsed file
       if File /= No_LI_File and then File.LI.Parsed then
          if not Is_Incomplete (File)
-           and then To_Timestamp (File_Time_Stamp (File.LI.LI_Filename.all)) <=
-            File.LI.LI_Timestamp
+           and then To_Timestamp
+             (File_Time_Stamp (Full_Name (File.LI.LI_Filename))) <=
+             File.LI.LI_Timestamp
          then
             return;
          end if;
@@ -1827,16 +1830,17 @@ package body Src_Info.CPP is
          File.LI.Dependencies_Info := null;
       end if;
 
-      Trace (Info_Stream, "Create_Or_Complete_LI " & Full_Filename);
+      Trace (Info_Stream, "Create_Or_Complete_LI "
+             & Full_Name (Source_Filename));
 
       Convert_To_Parsed
-        (File, File.LI.LI_Filename.all, Update_Timestamp => True);
+        (File, File.LI.LI_Filename, Update_Timestamp => True);
 
-      Process_File (Full_Filename, Handler, File, List);
+      Process_File (Source_Filename, Handler, File, List);
 
       Save
         (Get_Xref_Pool (Handler.Prj_HTable, DB_Dir),
-         DB_Dir & Browse.Xref_Pool_Filename);
+         Create (Full_Filename => DB_Dir & Browse.Xref_Pool_Filename));
    exception
       when E : others =>
          Trace (Warn_Stream, "Unexpected exception: "
@@ -1869,7 +1873,7 @@ package body Src_Info.CPP is
      (Handler      : access CPP_LI_Handler_Record;
       Root_Project : Projects.Project_Type;
       Languages    : access Language_Handlers.Language_Handler_Record'Class;
-      File_Name    : String;
+      File_Name    : VFS.Virtual_File;
       Result       : out Language.Construct_List)
    is
       pragma Unreferenced (Languages);
@@ -1918,7 +1922,7 @@ package body Src_Info.CPP is
       Set_Cursor
         (Handler.SN_Table (FIL),
          Position    => By_Key,
-         Key         => File_Name & Field_Sep,
+         Key         => Full_Name (File_Name) & Field_Sep,
          Exact_Match => False);
 
       loop
@@ -2082,35 +2086,30 @@ package body Src_Info.CPP is
 
    function LI_Filename_From_Source
      (Handler                : access CPP_LI_Handler_Record;
-      Source_Filename        : String;
-      Project                : Project_Type) return String
+      Source_Filename        : VFS.Virtual_File;
+      Project                : Project_Type) return VFS.Virtual_File
    is
-      Full_Filename : constant String := Get_Full_Path_From_File
-        (Registry        => Project_Registry (Get_Registry (Project)),
-         Filename        => Source_Filename,
-         Use_Source_Path => True,
-         Use_Object_Path => False);
       DB_Dir : constant String := Get_DB_Dir (Project);
-      Xref_Pool_Filename : constant String :=
-        DB_Dir & Browse.Xref_Pool_Filename;
+      Xref_Pool_Filename : constant Virtual_File :=
+        Create (Full_Filename => DB_Dir & Browse.Xref_Pool_Filename);
 
    begin
-      if Full_Filename = "" then
-         return "";
+      if Dir_Name (Source_Filename) = "" then
+         return VFS.No_File;
       end if;
 
       declare
          Pool          : Xref_Pool;
-         Xref_Filename : GNAT.OS_Lib.String_Access;
+         Xref_Filename : VFS.Virtual_File;
       begin
          Xref_Filename_For
-           (Full_Filename,
+           (Source_Filename,
             DB_Dir,
             Handler.Prj_HTable,
             Xref_Filename => Xref_Filename,
             Pool          => Pool);
          Save (Pool, Xref_Pool_Filename);
-         return Xref_Filename.all;
+         return Xref_Filename;
       end;
    end LI_Filename_From_Source;
 
@@ -2194,7 +2193,7 @@ package body Src_Info.CPP is
    procedure Find_Or_Create_Class
      (Handler         : access CPP_LI_Handler_Record'Class;
       CL_Tab          : CL_Table;
-      Source_Filename : String;
+      Source_Filename : VFS.Virtual_File;
       Decl_Info       : out E_Declaration_Info_List;
       File            : in out LI_File_Ptr;
       List            : LI_File_List;
@@ -2203,8 +2202,8 @@ package body Src_Info.CPP is
       Sym        : FIL_Table;
       Class_Kind : E_Kind := Non_Generic_Class;
    begin
-      if Source_Filename
-         = CL_Tab.Buffer (CL_Tab.File_Name.First .. CL_Tab.File_Name.Last)
+      if Full_Name (Source_Filename) =
+        CL_Tab.Buffer (CL_Tab.File_Name.First .. CL_Tab.File_Name.Last)
       then -- this class should be declared in the current file
          Decl_Info := Find_Declaration
            (File         => File,
@@ -2244,8 +2243,10 @@ package body Src_Info.CPP is
                List               => List,
                Symbol_Name        => CL_Tab.Buffer
                  (CL_Tab.Name.First .. CL_Tab.Name.Last),
-               Referred_Filename  => CL_Tab.Buffer
-                 (CL_Tab.File_Name.First .. CL_Tab.File_Name.Last),
+                     --  ??? Do we really have a full name here ?
+                  Referred_Filename  => Create
+                    (Full_Filename => CL_Tab.Buffer
+                       (CL_Tab.File_Name.First .. CL_Tab.File_Name.Last)),
                Location           => CL_Tab.Start_Position,
                Kind               => Class_Kind,
                Scope              => Global_Scope,
@@ -2333,7 +2334,7 @@ package body Src_Info.CPP is
      (Buffer           : in String_Access;
       Class_Name       : in Segment;
       Name             : in Segment;
-      Filename         : in String;
+      Filename         : in VFS.Virtual_File;
       Return_Type      : in Segment;
       Arg_Types        : in Segment;
       Handler          : access CPP_LI_Handler_Record'Class;
@@ -2432,8 +2433,10 @@ package body Src_Info.CPP is
       Close (MD_File, Success);
 
       Assert (Fail_Stream, First_MD_Pos /= Invalid_Point, "DB inconsistency");
-      if Filename
-         = MD_Tab.Buffer  (MD_Tab.File_Name.First .. MD_Tab.File_Name.Last)
+
+      --  ??? Do we want to compare the full or base name
+      if Full_Name (Filename) =
+        MD_Tab.Buffer  (MD_Tab.File_Name.First .. MD_Tab.File_Name.Last)
       then -- work with declarations in the same file
          Decl_Info := Find_Declaration
            (File            => File,
@@ -2451,8 +2454,11 @@ package body Src_Info.CPP is
            (File        => File,
             Symbol_Name => Buffer (Name.First .. Name.Last),
             Class_Name  => Buffer (Class_Name.First .. Class_Name.Last),
-            Filename    => MD_Tab.Buffer
-               (MD_Tab.File_Name.First .. MD_Tab.File_Name.Last),
+
+            --  ??? Do we really have a full name here ?
+            Filename    => Create
+              (MD_Tab.Buffer
+                 (MD_Tab.File_Name.First .. MD_Tab.File_Name.Last)),
             Location    => First_MD_Pos);
 
          if Decl_Info = null then
@@ -2479,8 +2485,11 @@ package body Src_Info.CPP is
                File               => File,
                List               => List,
                Symbol_Name        => Buffer (Name.First .. Name.Last),
-               Referred_Filename  => MD_Tab.Buffer
-                  (MD_Tab.File_Name.First .. MD_Tab.File_Name.Last),
+
+               --  ??? Do we really have a full or base name
+               Referred_Filename  => Create
+                 (MD_Tab.Buffer
+                    (MD_Tab.File_Name.First .. MD_Tab.File_Name.Last)),
                Location           => First_MD_Pos,
                Kind               => Get_Method_Kind
                  (Handler,
@@ -2504,7 +2513,7 @@ package body Src_Info.CPP is
    procedure Find_First_Forward_Declaration
      (Buffer       : in String_Access;
       Name         : in Segment;
-      Filename     : in String;
+      Filename     : in Virtual_File;
       Return_Type  : in Segment;
       Arg_Types    : in Segment;
       Handler      : access CPP_LI_Handler_Record'Class;
@@ -2608,8 +2617,9 @@ package body Src_Info.CPP is
 
       Assert (Fail_Stream, First_FD_Pos /= Invalid_Point, "DB inconsistency");
 
-      if Filename
-         = FD_Tab.Buffer  (FD_Tab.File_Name.First .. FD_Tab.File_Name.Last)
+      --  ??? Do we need to compare full or base names ?
+      if Full_Name (Filename) =
+        FD_Tab.Buffer  (FD_Tab.File_Name.First .. FD_Tab.File_Name.Last)
       then -- work with declarations in the same file
          Decl_Info := Find_Declaration
            (File            => File,
@@ -2625,8 +2635,11 @@ package body Src_Info.CPP is
          Decl_Info := Find_Dependency_Declaration
            (File        => File,
             Symbol_Name => Buffer (Name.First .. Name.Last),
-            Filename    => FD_Tab.Buffer
-               (FD_Tab.File_Name.First .. FD_Tab.File_Name.Last),
+
+            --  ??? Do we really have a full name here ?
+            Filename    => Create
+              (FD_Tab.Buffer
+                 (FD_Tab.File_Name.First .. FD_Tab.File_Name.Last)),
             Location    => First_FD_Pos);
 
          if Decl_Info = null then
@@ -2639,8 +2652,11 @@ package body Src_Info.CPP is
                File               => File,
                List               => List,
                Symbol_Name        => Buffer (Name.First .. Name.Last),
-               Referred_Filename  => FD_Tab.Buffer
-                  (FD_Tab.File_Name.First .. FD_Tab.File_Name.Last),
+
+               --  ??? Do we really have a full name here
+               Referred_Filename  => Create
+                 (FD_Tab.Buffer
+                    (FD_Tab.File_Name.First .. FD_Tab.File_Name.Last)),
                Location           => First_FD_Pos,
                Kind               => Target_Kind,
                Scope              => Global_Scope,
@@ -2712,8 +2728,11 @@ package body Src_Info.CPP is
               (Class_Def.Name.First .. Class_Def.Name.Last),
             Kind        => Class_Kind,
             Location    => Class_Def.Start_Position,
-            Filename    => Class_Def.Buffer
-              (Class_Def.File_Name.First .. Class_Def.File_Name.Last));
+
+            --  ??? Do we really have a full name here ?
+            Filename    => Create
+              (Class_Def.Buffer
+                 (Class_Def.File_Name.First .. Class_Def.File_Name.Last)));
 
          if Decl_Info = null then
             Insert_Dependency_Declaration
@@ -2722,8 +2741,11 @@ package body Src_Info.CPP is
                List               => List,
                Symbol_Name        => Class_Def.Buffer
                  (Class_Def.Name.First .. Class_Def.Name.Last),
-               Referred_Filename  => Class_Def.Buffer
-                 (Class_Def.File_Name.First .. Class_Def.File_Name.Last),
+
+               --  ??? Do we really have a full name here
+               Referred_Filename  => Create
+                 (Class_Def.Buffer
+                    (Class_Def.File_Name.First .. Class_Def.File_Name.Last)),
                Location           => Class_Def.Start_Position,
                Kind               => Class_Kind,
                Scope              => Global_Scope,
@@ -2794,9 +2816,9 @@ package body Src_Info.CPP is
       --  Find declaration
 
       if Xref_Filename_For
-         (Var.Buffer (Var.File_Name.First .. Var.File_Name.Last),
+         (Create (Var.Buffer (Var.File_Name.First .. Var.File_Name.Last)),
           Get_DB_Dir (Handler.DB_Dirs, Var.DBI),
-          Handler.Prj_HTable).all = Get_LI_Filename (File)
+          Handler.Prj_HTable) = Get_LI_Filename (File)
       then
          Decl_Info := Find_Declaration
            (File                    => File,
@@ -2834,7 +2856,7 @@ package body Src_Info.CPP is
               Ref.Buffer (Ref.Referred_Symbol_Name.First ..
                             Ref.Referred_Symbol_Name.Last),
             Filename                =>
-              Var.Buffer (Var.File_Name.First .. Var.File_Name.Last),
+              Create (Var.Buffer (Var.File_Name.First .. Var.File_Name.Last)),
             Location                => Var.Start_Position);
 
          if Decl_Info = null then
@@ -2865,8 +2887,8 @@ package body Src_Info.CPP is
                   Location          => Var.Start_Position,
                   Kind              => Type_To_Object (Desc.Kind),
                   Scope             => Scope,
-                  Referred_Filename =>
-                    Var.Buffer (Var.File_Name.First .. Var.File_Name.Last),
+                  Referred_Filename => Create
+                    (Var.Buffer (Var.File_Name.First .. Var.File_Name.Last)),
                   Declaration_Info  => Decl_Info);
             else
                Insert_Dependency_Declaration
@@ -2878,10 +2900,10 @@ package body Src_Info.CPP is
                   Location          => Var.Start_Position,
                   Kind              => Type_To_Object (Desc.Kind),
                   Scope             => Scope,
-                  Referred_Filename =>
-                    Var.Buffer (Var.File_Name.First .. Var.File_Name.Last),
+                  Referred_Filename => Create
+                    (Var.Buffer (Var.File_Name.First .. Var.File_Name.Last)),
                   Parent_Location   => Desc.Parent_Point,
-                  Parent_Filename   => Desc.Parent_Filename.all,
+                  Parent_Filename   => Create (Desc.Parent_Filename.all),
                   Declaration_Info  => Decl_Info);
             end if;
 
@@ -2953,8 +2975,9 @@ package body Src_Info.CPP is
               (Enum_Def.Name.First .. Enum_Def.Name.Last),
             Kind        => Enumeration_Kind_Entity,
             Location    => Enum_Def.Start_Position,
-            Filename    => Enum_Def.Buffer
-              (Enum_Def.File_Name.First .. Enum_Def.File_Name.Last));
+            Filename    => Create
+              (Enum_Def.Buffer
+                 (Enum_Def.File_Name.First .. Enum_Def.File_Name.Last)));
 
          if Decl_Info = null then
             Insert_Dependency_Declaration
@@ -2963,8 +2986,9 @@ package body Src_Info.CPP is
                List               => List,
                Symbol_Name        => Enum_Def.Buffer
                  (Enum_Def.Name.First .. Enum_Def.Name.Last),
-               Referred_Filename  => Enum_Def.Buffer
-                 (Enum_Def.File_Name.First .. Enum_Def.File_Name.Last),
+               Referred_Filename  => Create
+                 (Enum_Def.Buffer
+                    (Enum_Def.File_Name.First .. Enum_Def.File_Name.Last)),
                Location           => Enum_Def.Start_Position,
                Kind               => Enumeration_Kind_Entity,
                Scope              => Global_Scope,
@@ -3025,10 +3049,11 @@ package body Src_Info.CPP is
 
       --  Find declaration
       if Xref_Filename_For
-         (Enum_Const.Buffer
-            (Enum_Const.File_Name.First .. Enum_Const.File_Name.Last),
+        (Create
+           (Enum_Const.Buffer
+              (Enum_Const.File_Name.First .. Enum_Const.File_Name.Last)),
           Get_DB_Dir (Handler.DB_Dirs, Enum_Const.DBI),
-          Handler.Prj_HTable).all = Get_LI_Filename (File)
+          Handler.Prj_HTable) = Get_LI_Filename (File)
       then
          Decl_Info := Find_Declaration
            (File                    => File,
@@ -3050,8 +3075,9 @@ package body Src_Info.CPP is
          Decl_Info := Find_Dependency_Declaration
            (File                    => File,
             Symbol_Name             => Ref_Id,
-            Filename                => Enum_Const.Buffer
-              (Enum_Const.File_Name.First .. Enum_Const.File_Name.Last),
+            Filename                => Create
+              (Enum_Const.Buffer
+                 (Enum_Const.File_Name.First .. Enum_Const.File_Name.Last)),
             Location                => Enum_Const.Start_Position);
 
          if Decl_Info = null then
@@ -3063,8 +3089,9 @@ package body Src_Info.CPP is
                Location          => Enum_Const.Start_Position,
                Kind              => (Enumeration_Literal, False, False, False),
                Scope             => Global_Scope,
-               Referred_Filename => Enum_Const.Buffer
-                 (Enum_Const.File_Name.First .. Enum_Const.File_Name.Last),
+               Referred_Filename => Create
+                 (Enum_Const.Buffer
+                    (Enum_Const.File_Name.First .. Enum_Const.File_Name.Last)),
                Declaration_Info  => Decl_Info);
          end if;
       end if;
@@ -3088,7 +3115,7 @@ package body Src_Info.CPP is
    procedure Create_Overload_List
      (Name             : String;
       Class_Name       : String;
-      Filename         : String;
+      Filename         : Virtual_File;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : out LI_File_Ptr;
       List             : LI_File_List;
@@ -3112,8 +3139,10 @@ package body Src_Info.CPP is
             exit when P = null;
             Parse_Pair (P.all, MDecl);
             Free (P);
-            if MDecl.Buffer (MDecl.File_Name.First .. MDecl.File_Name.Last)
-               /= Filename
+
+            --  ??? Should we compare base or full name here ?
+            if MDecl.Buffer (MDecl.File_Name.First .. MDecl.File_Name.Last) /=
+              Full_Name (Filename)
             then
                --  this will find/create dependency declaration
                Find_First_Forward_Declaration
@@ -3151,8 +3180,9 @@ package body Src_Info.CPP is
             Parse_Pair (P.all, MBody);
             Free (P);
 
-            if MBody.Buffer (MBody.File_Name.First .. MBody.File_Name.Last)
-               /= Filename
+            --  ??? Should we compare full or base name
+            if MBody.Buffer (MBody.File_Name.First .. MBody.File_Name.Last) /=
+              Full_Name (Filename)
             then
                --  this will find/create dependency declaration
                Find_First_Forward_Declaration
@@ -3176,16 +3206,17 @@ package body Src_Info.CPP is
                then
                   MI_File := Locate_From_Source
                     (List,
-                     MBody.Buffer
-                       (MBody.File_Name.First .. MBody.File_Name.Last));
+                     Create (MBody.Buffer
+                       (MBody.File_Name.First .. MBody.File_Name.Last)));
 
                   if MI_File = No_LI_File then
                      Create_Stub_For_File
                        (LI            => MI_File,
                         Handler       => Handler,
                         List          => List,
-                        Full_Filename => MBody.Buffer
-                           (MBody.File_Name.First .. MBody.File_Name.Last));
+                        Full_Filename => Create
+                          (MBody.Buffer
+                             (MBody.File_Name.First .. MBody.File_Name.Last)));
                   end if;
 
                   Insert_Reference
@@ -3210,7 +3241,7 @@ package body Src_Info.CPP is
 
    procedure Create_Overload_List
      (Name     : String;
-      Filename : String;
+      Filename : Virtual_File;
       Handler  : access CPP_LI_Handler_Record'Class;
       File     : out LI_File_Ptr;
       List     : LI_File_List)
@@ -3234,8 +3265,9 @@ package body Src_Info.CPP is
             Parse_Pair (P.all, FDecl);
             Free (P);
 
-            if FDecl.Buffer (FDecl.File_Name.First .. FDecl.File_Name.Last)
-               /= Filename
+            --  ??? Should we compare full or base name
+            if FDecl.Buffer (FDecl.File_Name.First .. FDecl.File_Name.Last) /=
+               Full_Name (Filename)
             then
                --  this will find/create dependency declaration
                Find_First_Forward_Declaration
@@ -3267,8 +3299,9 @@ package body Src_Info.CPP is
             Parse_Pair (P.all, Fn);
             Free (P);
 
-            if Fn.Buffer (Fn.File_Name.First .. Fn.File_Name.Last)
-               /= Filename
+            --  ??? Should we compare full or base name
+            if Fn.Buffer (Fn.File_Name.First .. Fn.File_Name.Last) /=
+               Full_Name (Filename)
             then
                --  this will find/create dependency declaration
                Find_First_Forward_Declaration
@@ -3292,8 +3325,9 @@ package body Src_Info.CPP is
                      File               => File,
                      List               => List,
                      Symbol_Name        => Name,
-                     Referred_Filename  => Fn.Buffer
-                        (Fn.File_Name.First .. Fn.File_Name.Last),
+                     Referred_Filename  => Create
+                       (Fn.Buffer
+                          (Fn.File_Name.First .. Fn.File_Name.Last)),
                      Location           => Fn.Start_Position,
                      Kind               => Target_Kind,
                      Scope              => Global_Scope,
@@ -3303,15 +3337,17 @@ package body Src_Info.CPP is
                else -- add end of scope and body entity references
                   Fn_File := Locate_From_Source
                     (List,
-                     Fn.Buffer (Fn.File_Name.First .. Fn.File_Name.Last));
+                     Create
+                       (Fn.Buffer (Fn.File_Name.First .. Fn.File_Name.Last)));
 
                   if Fn_File = No_LI_File then
                      Create_Stub_For_File
                        (LI            => Fn_File,
                         Handler       => Handler,
                         List          => List,
-                        Full_Filename => Fn.Buffer
-                           (Fn.File_Name.First .. Fn.File_Name.Last));
+                        Full_Filename => Create
+                          (Fn.Buffer
+                             (Fn.File_Name.First .. Fn.File_Name.Last)));
                   end if;
 
                   Insert_Reference
@@ -3477,7 +3513,8 @@ package body Src_Info.CPP is
             Find_First_Forward_Declaration
               (FDecl.Buffer,
                FDecl.Name,
-               Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last),
+               Create
+                 (Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last)),
                FDecl.Return_Type,
                FDecl.Arg_Types,
                Handler,
@@ -3515,7 +3552,7 @@ package body Src_Info.CPP is
 
          Create_Overload_List
            (Ref_Id,
-            Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last),
+            Create (Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last)),
             Handler,
             File,
             List);
@@ -3589,9 +3626,9 @@ package body Src_Info.CPP is
 
       --  Find declaration
       if Xref_Filename_For
-         (Var.Buffer (Var.File_Name.First .. Var.File_Name.Last),
+         (Create (Var.Buffer (Var.File_Name.First .. Var.File_Name.Last)),
           Get_DB_Dir (Handler.DB_Dirs, Var.DBI),
-          Handler.Prj_HTable).all = Get_LI_Filename (File)
+          Handler.Prj_HTable) = Get_LI_Filename (File)
       then
          Decl_Info := Find_Declaration
            (File                    => File,
@@ -3619,8 +3656,8 @@ package body Src_Info.CPP is
          Decl_Info := Find_Dependency_Declaration
            (File                    => File,
             Symbol_Name             => Ref_Id,
-            Filename                =>
-              Var.Buffer (Var.File_Name.First .. Var.File_Name.Last),
+            Filename                => Create
+              (Var.Buffer (Var.File_Name.First .. Var.File_Name.Last)),
             Location                => Var.Start_Position);
 
          if Decl_Info = null then
@@ -3652,8 +3689,8 @@ package body Src_Info.CPP is
                   Location          => Var.Start_Position,
                   Kind              => Type_To_Object (Desc.Kind),
                   Scope             => Scope,
-                  Referred_Filename =>
-                    Var.Buffer (Var.File_Name.First .. Var.File_Name.Last),
+                  Referred_Filename => Create
+                    (Var.Buffer (Var.File_Name.First .. Var.File_Name.Last)),
                   Declaration_Info  => Decl_Info);
             else
                Insert_Dependency_Declaration
@@ -3665,10 +3702,10 @@ package body Src_Info.CPP is
                   Location          => Var.Start_Position,
                   Kind              => Type_To_Object (Desc.Kind),
                   Scope             => Scope,
-                  Referred_Filename =>
-                    Var.Buffer (Var.File_Name.First .. Var.File_Name.Last),
+                  Referred_Filename => Create
+                    (Var.Buffer (Var.File_Name.First .. Var.File_Name.Last)),
                   Parent_Location   => Desc.Parent_Point,
-                  Parent_Filename   => Desc.Parent_Filename.all,
+                  Parent_Filename   => Create (Desc.Parent_Filename.all),
                   Declaration_Info  => Decl_Info);
             end if;
             Free (Desc);
@@ -3727,9 +3764,9 @@ package body Src_Info.CPP is
 
       --  Find declaration
       if Xref_Filename_For
-         (Var.Buffer (Var.File_Name.First .. Var.File_Name.Last),
+         (Create (Var.Buffer (Var.File_Name.First .. Var.File_Name.Last)),
           Get_DB_Dir (Handler.DB_Dirs, Var.DBI),
-          Handler.Prj_HTable).all = Get_LI_Filename (File)
+          Handler.Prj_HTable) = Get_LI_Filename (File)
       then
          Decl_Info := Find_Declaration
            (File                    => File,
@@ -3760,8 +3797,8 @@ package body Src_Info.CPP is
            (File                    => File,
             Class_Name              => Ref_Class,
             Symbol_Name             => Ref_Id,
-            Filename                =>
-              Var.Buffer (Var.File_Name.First .. Var.File_Name.Last),
+            Filename                => Create
+              (Var.Buffer (Var.File_Name.First .. Var.File_Name.Last)),
             Location                => Var.Start_Position);
 
          if Decl_Info = null then
@@ -3828,8 +3865,8 @@ package body Src_Info.CPP is
                   Location          => Var.Start_Position,
                   Kind              => Type_To_Object (Desc.Kind),
                   Scope             => Local_Scope,
-                  Referred_Filename =>
-                    Var.Buffer (Var.File_Name.First .. Var.File_Name.Last),
+                  Referred_Filename => Create
+                    (Var.Buffer (Var.File_Name.First .. Var.File_Name.Last)),
                   Declaration_Info  => Decl_Info);
             else
                Insert_Dependency_Declaration
@@ -3840,10 +3877,10 @@ package body Src_Info.CPP is
                   Location          => Var.Start_Position,
                   Kind              => Type_To_Object (Desc.Kind),
                   Scope             => Local_Scope,
-                  Referred_Filename =>
-                    Var.Buffer (Var.File_Name.First .. Var.File_Name.Last),
+                  Referred_Filename => Create
+                    (Var.Buffer (Var.File_Name.First .. Var.File_Name.Last)),
                   Parent_Location   => Desc.Parent_Point,
-                  Parent_Filename   => Desc.Parent_Filename.all,
+                  Parent_Filename   => Create (Desc.Parent_Filename.all),
                   Declaration_Info  => Decl_Info);
             end if;
             Free (Desc);
@@ -3894,9 +3931,10 @@ package body Src_Info.CPP is
       Find (Handler.SN_Table (MA), Ref_Id, Tab => Macro);
 
       if Xref_Filename_For
-         (Macro.Buffer (Macro.File_Name.First .. Macro.File_Name.Last),
+        (Create
+           (Macro.Buffer (Macro.File_Name.First .. Macro.File_Name.Last)),
           Get_DB_Dir (Handler.DB_Dirs, Macro.DBI),
-          Handler.Prj_HTable).all = Get_LI_Filename (File)
+          Handler.Prj_HTable) = Get_LI_Filename (File)
       then
          --  look for declaration in current file
          Decl_Info := Find_Declaration
@@ -3920,8 +3958,9 @@ package body Src_Info.CPP is
          Decl_Info := Find_Dependency_Declaration
            (File                 => File,
             Symbol_Name          => Ref_Id,
-            Filename             => Macro.Buffer
-              (Macro.File_Name.First .. Macro.File_Name.Last),
+            Filename             => Create
+              (Macro.Buffer
+                 (Macro.File_Name.First .. Macro.File_Name.Last)),
             Location             => Macro.Start_Position);
 
          if Decl_Info = null then
@@ -3933,8 +3972,9 @@ package body Src_Info.CPP is
                Location          => Macro.Start_Position,
                Kind              => Unresolved_Entity_Kind,
                Scope             => Global_Scope,
-               Referred_Filename => Macro.Buffer
-                 (Macro.File_Name.First .. Macro.File_Name.Last),
+               Referred_Filename => Create
+                 (Macro.Buffer
+                    (Macro.File_Name.First .. Macro.File_Name.Last)),
                Declaration_Info  => Decl_Info);
          end if;
       end if;
@@ -4071,7 +4111,7 @@ package body Src_Info.CPP is
            (MDecl.Buffer,
             MDecl.Class,
             MDecl.Name,
-            Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last),
+            Create (Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last)),
             MDecl.Return_Type,
             MDecl.Arg_Types,
             Handler,
@@ -4099,7 +4139,7 @@ package body Src_Info.CPP is
          Create_Overload_List
            (Ref_Id,
             Ref_Class,
-            Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last),
+            Create (Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last)),
             Handler,
             File,
             List,
@@ -4187,9 +4227,10 @@ package body Src_Info.CPP is
       Find (Handler.SN_Table (T), Ref_Id, Tab => Typedef);
 
       if Xref_Filename_For
-         (Typedef.Buffer (Typedef.File_Name.First .. Typedef.File_Name.Last),
+        (Create
+          (Typedef.Buffer (Typedef.File_Name.First .. Typedef.File_Name.Last)),
           Get_DB_Dir (Handler.DB_Dirs, Typedef.DBI),
-          Handler.Prj_HTable).all = Get_LI_Filename (File)
+          Handler.Prj_HTable) = Get_LI_Filename (File)
       then
          --  look for declaration in current file
          Decl_Info := Find_Declaration
@@ -4241,7 +4282,7 @@ package body Src_Info.CPP is
                   Symbol_Name       => Ref_Id,
                   Location          => Typedef.Start_Position,
                   Parent_Location   => Desc.Ancestor_Point,
-                  Parent_Filename   => Desc.Ancestor_Filename.all,
+                  Parent_Filename   => Create (Desc.Ancestor_Filename.all),
                   Kind              => Desc.Kind,
                   Scope             => Global_Scope,
                   Declaration_Info  => Decl_Info);
@@ -4253,8 +4294,9 @@ package body Src_Info.CPP is
          Decl_Info := Find_Dependency_Declaration
            (File                 => File,
             Symbol_Name          => Ref_Id,
-            Filename             => Typedef.Buffer
-              (Typedef.File_Name.First .. Typedef.File_Name.Last),
+            Filename             => Create
+              (Typedef.Buffer
+                 (Typedef.File_Name.First .. Typedef.File_Name.Last)),
             Location             => Typedef.Start_Position);
 
          if Decl_Info = null then
@@ -4282,8 +4324,9 @@ package body Src_Info.CPP is
                   Location          => Typedef.Start_Position,
                   Kind              => Desc.Kind,
                   Scope             => Global_Scope,
-                  Referred_Filename => Typedef.Buffer
-                    (Typedef.File_Name.First .. Typedef.File_Name.Last),
+                  Referred_Filename => Create
+                    (Typedef.Buffer
+                       (Typedef.File_Name.First .. Typedef.File_Name.Last)),
                   Declaration_Info  => Decl_Info);
             elsif Desc.Ancestor_Point = Predefined_Point then
                --  typedef for builtin type
@@ -4296,8 +4339,9 @@ package body Src_Info.CPP is
                   Parent_Location   => Predefined_Point,
                   Kind              => Desc.Kind,
                   Scope             => Global_Scope,
-                  Referred_Filename => Typedef.Buffer
-                    (Typedef.File_Name.First .. Typedef.File_Name.Last),
+                  Referred_Filename => Create
+                    (Typedef.Buffer
+                       (Typedef.File_Name.First .. Typedef.File_Name.Last)),
                   Declaration_Info  => Decl_Info);
             else
                --  parent type found
@@ -4308,11 +4352,12 @@ package body Src_Info.CPP is
                   Symbol_Name       => Ref_Id,
                   Location          => Typedef.Start_Position,
                   Parent_Location   => Desc.Ancestor_Point,
-                  Parent_Filename   => Desc.Ancestor_Filename.all,
+                  Parent_Filename   => Create (Desc.Ancestor_Filename.all),
                   Kind              => Desc.Kind,
                   Scope             => Global_Scope,
-                  Referred_Filename => Typedef.Buffer
-                    (Typedef.File_Name.First .. Typedef.File_Name.Last),
+                  Referred_Filename => Create
+                    (Typedef.Buffer
+                       (Typedef.File_Name.First .. Typedef.File_Name.Last)),
                   Declaration_Info  => Decl_Info);
             end if;
          end if;
@@ -4376,8 +4421,9 @@ package body Src_Info.CPP is
               (Union_Def.Name.First .. Union_Def.Name.Last),
             Kind        => Non_Generic_Class,
             Location    => Union_Def.Start_Position,
-            Filename    => Union_Def.Buffer
-              (Union_Def.File_Name.First .. Union_Def.File_Name.Last));
+            Filename    => Create
+              (Union_Def.Buffer
+                 (Union_Def.File_Name.First .. Union_Def.File_Name.Last)));
 
          if Decl_Info = null then
             Insert_Dependency_Declaration
@@ -4386,8 +4432,9 @@ package body Src_Info.CPP is
                List               => List,
                Symbol_Name        => Union_Def.Buffer
                  (Union_Def.Name.First .. Union_Def.Name.Last),
-               Referred_Filename  => Union_Def.Buffer
-                 (Union_Def.File_Name.First .. Union_Def.File_Name.Last),
+               Referred_Filename  => Create
+                 (Union_Def.Buffer
+                    (Union_Def.File_Name.First .. Union_Def.File_Name.Last)),
                Location           => Union_Def.Start_Position,
                Kind               => Non_Generic_Class,
                Scope              => Global_Scope,
@@ -4539,8 +4586,10 @@ package body Src_Info.CPP is
                     (Decl_Info,
                      Handler => CPP_LI_Handler (Handler),
                      List => List,
-                     Parent_Filename => Super_Def.Buffer
-                       (Super_Def.File_Name.First .. Super_Def.File_Name.Last),
+                     Parent_Filename => Create
+                       (Super_Def.Buffer
+                          (Super_Def.File_Name.First ..
+                             Super_Def.File_Name.Last)),
                      Parent_Location => Super_Def.Start_Position);
                   Free (Super_Desc);
                   Free (Super_Def);
@@ -4633,7 +4682,7 @@ package body Src_Info.CPP is
             Kind              => Type_To_Object (Desc.Kind),
             Scope             => Scope,
             Parent_Location   => Desc.Parent_Point,
-            Parent_Filename   => Desc.Parent_Filename.all,
+            Parent_Filename   => Create (Desc.Parent_Filename.all),
             Declaration_Info  => Decl_Info);
 
             --  add reference to the type of this variable
@@ -4770,7 +4819,7 @@ package body Src_Info.CPP is
             Location          => Sym.Start_Position,
             Kind              => (Enumeration_Literal, False, False, False),
             Parent_Location   => Desc.Parent_Point,
-            Parent_Filename   => Desc.Parent_Filename.all,
+            Parent_Filename   => Create (Desc.Parent_Filename.all),
             Scope             => Global_Scope,
             Declaration_Info  => Decl_Info);
       else
@@ -4945,16 +4994,18 @@ package body Src_Info.CPP is
          then
             FU_File := Locate_From_Source
                (List,
-                FU_Tab.Buffer
-                   (FU_Tab.File_Name.First .. FU_Tab.File_Name.Last));
+               Create
+                 (FU_Tab.Buffer
+                    (FU_Tab.File_Name.First .. FU_Tab.File_Name.Last)));
 
             if FU_File = No_LI_File then
                Create_Stub_For_File
                  (LI            => FU_File,
                   Handler       => Handler,
                   List          => List,
-                  Full_Filename => FU_Tab.Buffer
-                     (FU_Tab.File_Name.First .. FU_Tab.File_Name.Last));
+                  Full_Filename => Create
+                    (FU_Tab.Buffer
+                       (FU_Tab.File_Name.First .. FU_Tab.File_Name.Last)));
             end if;
 
             Insert_Reference
@@ -5032,7 +5083,8 @@ package body Src_Info.CPP is
                Find_Or_Create_Class
                   (Handler,
                    Class_Def,
-                   Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
+                  Create
+                    (Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last)),
                    Class_Decl_Info,
                    File,
                    List,
@@ -5097,7 +5149,7 @@ package body Src_Info.CPP is
            (FU_Tab.Buffer,
             FU_Tab.Class,
             FU_Tab.Name,
-            Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
+            Create (Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last)),
             FU_Tab.Return_Type,
             FU_Tab.Arg_Types,
             Handler,
@@ -5115,7 +5167,7 @@ package body Src_Info.CPP is
          Find_First_Forward_Declaration
            (FU_Tab.Buffer,
             FU_Tab.Name,
-            Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
+            Create (Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last)),
             FU_Tab.Return_Type,
             FU_Tab.Arg_Types,
             Handler,
@@ -5314,7 +5366,7 @@ package body Src_Info.CPP is
             Kind              => Type_To_Object (Desc.Kind),
             Scope             => Scope,
             Parent_Location   => Desc.Parent_Point,
-            Parent_Filename   => Desc.Parent_Filename.all,
+            Parent_Filename   => Create (Desc.Parent_Filename.all),
             Declaration_Info  => Decl_Info);
 
          --  add reference to the type of this variable
@@ -5384,13 +5436,13 @@ package body Src_Info.CPP is
            (Handler           => Handler,
             File              => File,
             List              => List,
-            Referred_Filename => Filename);
+            Referred_Filename => Create (Filename));
       else
          Insert_Dependency
            (Handler           => Handler,
             File              => File,
             List              => List,
-            Referred_Filename => Full_Included);
+            Referred_Filename => Create (Full_Included));
       end if;
    end Sym_IU_Handler;
 
@@ -5523,7 +5575,7 @@ package body Src_Info.CPP is
             Kind              => Type_To_Object (Desc.Kind),
             Scope             => Local_Scope,
             Parent_Location   => Desc.Parent_Point,
-            Parent_Filename   => Desc.Parent_Filename.all,
+            Parent_Filename   => Create (Desc.Parent_Filename.all),
             Declaration_Info  => Decl_Info);
 
             --  add reference to the type of this field
@@ -5666,7 +5718,7 @@ package body Src_Info.CPP is
          Find_Or_Create_Class
            (Handler,
             Class_Def,
-            Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
+            Create (Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last)),
             Class_Decl_Info, File, List, Module_Type_Defs);
 
          if Class_Decl_Info /= null then
@@ -5753,16 +5805,18 @@ package body Src_Info.CPP is
          then
             MI_File := Locate_From_Source
               (List,
-               MI_Tab.Buffer
-                 (MI_Tab.File_Name.First .. MI_Tab.File_Name.Last));
+               Create
+                 (MI_Tab.Buffer
+                    (MI_Tab.File_Name.First .. MI_Tab.File_Name.Last)));
 
             if MI_File = No_LI_File then
                Create_Stub_For_File
                  (LI            => MI_File,
                   Handler       => Handler,
                   List          => List,
-                  Full_Filename => MI_Tab.Buffer
-                     (MI_Tab.File_Name.First .. MI_Tab.File_Name.Last));
+                  Full_Filename => Create
+                    (MI_Tab.Buffer
+                       (MI_Tab.File_Name.First .. MI_Tab.File_Name.Last)));
             end if;
 
             if MI_File /= File
@@ -5861,7 +5915,7 @@ package body Src_Info.CPP is
                List              => List,
                Symbol_Name       => Identifier,
                Location          => Sym.Start_Position,
-               Parent_Filename   => Desc.Ancestor_Filename.all,
+               Parent_Filename   => Create (Desc.Ancestor_Filename.all),
                Parent_Location   => Desc.Ancestor_Point,
                Kind              => Desc.Kind,
                Scope             => Global_Scope,
@@ -6090,7 +6144,7 @@ package body Src_Info.CPP is
                      Kind              => Type_To_Object (Desc.Kind),
                      Scope             => Scope,
                      Parent_Location   => Desc.Parent_Point,
-                     Parent_Filename   => Desc.Parent_Filename.all,
+                     Parent_Filename   => Create (Desc.Parent_Filename.all),
                      Declaration_Info  => Decl_Info);
 
                   --  add reference to the type of this variable
@@ -6129,8 +6183,8 @@ package body Src_Info.CPP is
             Process_Local_Variable
               (Var_Name           =>
                   Var.Buffer (Var.Name.First .. Var.Name.Last),
-               Var_File_Name      =>
-                  Var.Buffer (Var.File_Name.First .. Var.File_Name.Last),
+               Var_File_Name      => Create
+                 (Var.Buffer (Var.File_Name.First .. Var.File_Name.Last)),
                Var_Start_Position => Var.Start_Position,
                FU_Tab             => FU_Tab,
                Symbol             => Symbol,
@@ -6151,7 +6205,7 @@ package body Src_Info.CPP is
 
    procedure Process_Local_Variable
      (Var_Name           : String;
-      Var_File_Name      : String;
+      Var_File_Name      : Virtual_File;
       Var_Start_Position : Point;
       FU_Tab             : FU_Table;
       Symbol             : Symbol_Type;
@@ -6199,8 +6253,9 @@ package body Src_Info.CPP is
          --  Check if we found the right lv usage: comapre file name
          --  and argument types
 
-         if Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last)
-           = Var_File_Name
+         --  ??? Should we compare full or base names
+         if Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last) =
+           Full_Name (Var_File_Name)
            and then Cmp_Arg_Types
              (FU_Tab.Buffer,
               Ref.Buffer,
@@ -6404,7 +6459,7 @@ package body Src_Info.CPP is
                      Kind             => Type_To_Object (Desc.Kind),
                      Scope            => Local_Scope,
                      Parent_Location  => Desc.Parent_Point,
-                     Parent_Filename  => Desc.Parent_Filename.all,
+                     Parent_Filename  => Create (Desc.Parent_Filename.all),
                      Declaration_Info => Decl_Info);
                end if;
 
@@ -6424,8 +6479,8 @@ package body Src_Info.CPP is
             then
                Process_Local_Variable
                  (Arg.Buffer (Arg.Name.First .. Arg.Name.Last),
-                  FU_Tab.Buffer (FU_Tab.File_Name.First ..
-                     FU_Tab.File_Name.Last),
+                  Create (FU_Tab.Buffer
+                            (FU_Tab.File_Name.First .. FU_Tab.File_Name.Last)),
                   Arg.Start_Position,
                   FU_Tab,
                   Symbol,
@@ -6464,8 +6519,10 @@ package body Src_Info.CPP is
 
                         Process_Local_Variable
                           (Arg.Buffer (Arg.Name.First .. Arg.Name.Last),
-                           MI_Tab.Buffer (MI_Tab.File_Name.First ..
-                              MI_Tab.File_Name.Last),
+                           Create
+                             (MI_Tab.Buffer
+                                (MI_Tab.File_Name.First ..
+                                   MI_Tab.File_Name.Last)),
                            Arg.Start_Position,
                            MI_Tab,
                            MI,
@@ -6571,9 +6628,9 @@ package body Src_Info.CPP is
    -----------------------
 
    function Xref_Filename_For
-     (Filename   : String;
+     (Filename   : VFS.Virtual_File;
       DB_Dir     : String;
-      Prj_HTable : SN_Prj_HTable) return GNAT.OS_Lib.String_Access
+      Prj_HTable : SN_Prj_HTable) return VFS.Virtual_File
    is
       Pool : Xref_Pool;
    begin
@@ -6581,7 +6638,7 @@ package body Src_Info.CPP is
 
       if Pool = Empty_Xref_Pool then
          Fail ("Xref_Filename_For: empty pool for " & DB_Dir);
-         return null;
+         return VFS.No_File;
       end if;
 
       return Xref_Filename_For
@@ -6595,25 +6652,23 @@ package body Src_Info.CPP is
    -----------------------
 
    procedure Xref_Filename_For
-     (Filename       : String;
+     (Filename       : VFS.Virtual_File;
       DB_Dir         : String;
       Prj_HTable     : SN_Prj_HTable;
-      Xref_Filename  : out GNAT.OS_Lib.String_Access;
-      Pool           : out Xref_Pool)
-   is
+      Xref_Filename  : out VFS.Virtual_File;
+      Pool           : out Xref_Pool) is
    begin
       Pool := SN_Prj_HTables.Get (Prj_HTable.all, DB_Dir).Pool;
 
       if Pool = Empty_Xref_Pool then
          Fail ("Xref_Filename_For: empty pool for " & DB_Dir);
-         Xref_Filename := null;
-         return;
+         Xref_Filename := VFS.No_File;
+      else
+         Xref_Filename := Xref_Filename_For
+           (Source_Filename => Filename,
+            Directory       => DB_Dir,
+            Pool            => Pool);
       end if;
-
-      Xref_Filename := Xref_Filename_For
-        (Source_Filename => Filename,
-         Directory       => DB_Dir,
-         Pool            => Pool);
    end Xref_Filename_For;
 
    --------------------

@@ -46,8 +46,6 @@ with Src_Highlighting;          use Src_Highlighting;
 
 with Interfaces.C.Strings;      use Interfaces.C.Strings;
 with System;
-with GNAT.Directory_Operations; use GNAT.Directory_Operations;
-with OS_Utils;                  use OS_Utils;
 with File_Utils;                use File_Utils;
 with Src_Info;                  use Src_Info;
 with Glide_Intl;                use Glide_Intl;
@@ -71,6 +69,7 @@ with Pango.Font;                use Pango.Font;
 
 with String_List_Utils;         use String_List_Utils;
 with Ada.Unchecked_Deallocation;
+with VFS;                       use VFS;
 
 with Src_Editor_Module.Line_Highlighting;
 use Src_Editor_Module.Line_Highlighting;
@@ -242,7 +241,7 @@ package body Src_Editor_Buffer is
 
    procedure Internal_Save_To_File
      (Buffer   : Source_Buffer;
-      Filename : String;
+      Filename : VFS.Virtual_File;
       Internal : Boolean;
       Success  : out Boolean);
    --  Low level save function. Only writes the buffer contents on disk,
@@ -333,7 +332,8 @@ package body Src_Editor_Buffer is
    --  Return the string at line Line, without the line terminator.
    --  Return null if the Line is not a valid line or there is no contents
    --  associated with the line.
-   --  The caller is responsible for freeing the returned value.
+   --  The caller is responsible for freeing the returned value..
+   --  The returned string is UTF8-encoded
 
    function Get_First_Lines
      (Buffer : Source_Buffer;
@@ -390,7 +390,6 @@ package body Src_Editor_Buffer is
                UTF8     : constant Gtkada.Types.Chars_Ptr :=
                  Get_Text (Buffer, Start_Iter, End_Iter, True);
                Length   : constant Natural := Integer (Strlen (UTF8));
-
             begin
                Result.Contents := new String (1 .. Length);
                Glib.Convert.Convert
@@ -547,7 +546,9 @@ package body Src_Editor_Buffer is
      (Buffer : access Source_Buffer_Record'Class;
       Line   : Buffer_Line_Type) return Editable_Line_Type is
    begin
-      if Line in Buffer.Line_Data'Range then
+      if Buffer.Line_Data /= null
+        and then Line in Buffer.Line_Data'Range
+      then
          return Buffer.Line_Data (Line).Editable_Line;
       end if;
 
@@ -608,14 +609,15 @@ package body Src_Editor_Buffer is
    function Automatic_Save (Buffer : Source_Buffer) return Boolean is
       Success : Boolean;
    begin
-      if not Buffer.Modified_Auto or else Buffer.Filename = null then
+      if not Buffer.Modified_Auto or else Buffer.Filename = VFS.No_File then
          return True;
       end if;
 
       Internal_Save_To_File
         (Buffer,
-         Dir_Name (Buffer.Filename.all) & ".#" &
-         Base_Name (Buffer.Filename.all),
+         Create
+           (Full_Filename =>
+              Dir_Name (Buffer.Filename) & ".#" & Base_Name (Buffer.Filename)),
          True,
          Success);
       Buffer.Modified_Auto := False;
@@ -682,8 +684,8 @@ package body Src_Editor_Buffer is
       --  We do not free memory associated to Buffer.Current_Command, since
       --  this command is already freed when freeing Buffer.Queue.
 
-      if Buffer.Filename /= null then
-         File_Closed (Buffer.Kernel, Buffer.Filename.all);
+      if Buffer.Filename /= VFS.No_File then
+         File_Closed (Buffer.Kernel, Buffer.Filename);
       end if;
 
       Destroy_Hook (Buffer);
@@ -692,10 +694,10 @@ package body Src_Editor_Buffer is
          Timeout_Remove (Buffer.Timeout_Id);
          Buffer.Timeout_Id := 0;
 
-         if Buffer.Filename /= null then
+         if Buffer.Filename /= VFS.No_File then
             Delete_File
-              (Dir_Name (Buffer.Filename.all) & ".#" &
-               Base_Name (Buffer.Filename.all), Result);
+              (Dir_Name (Buffer.Filename) & ".#" &
+               Base_Name (Buffer.Filename), Result);
          end if;
       end if;
 
@@ -704,8 +706,6 @@ package body Src_Editor_Buffer is
       end if;
 
       Free_Queue (Buffer.Queue);
-      Free (Buffer.Filename);
-      Free (Buffer.File_Identifier);
 
       if Buffer.Buffer_Line_Info_Columns.all /= null then
          for J in Buffer.Buffer_Line_Info_Columns.all'Range loop
@@ -1561,6 +1561,8 @@ package body Src_Editor_Buffer is
          Sloc_End       : Source_Location;
          Partial_Entity : Boolean) return Boolean is
       begin
+         --  ??? Currently fails since Sloc_Start.Index is an index in bytes,
+         --  not in characters.
          Get_Iter_At_Offset
            (Buffer, Entity_Start,
             Gint (Sloc_Start.Index) + Slice_Offset - 1);
@@ -1585,19 +1587,12 @@ package body Src_Editor_Buffer is
       procedure Local_Highlight is
          UTF8   : constant Interfaces.C.Strings.chars_ptr :=
            Get_Slice (Entity_Start, Entity_End);
-         Ignore : aliased Natural;
-         Length : aliased Natural;
-         C_Str  : constant Interfaces.C.Strings.chars_ptr :=
-           Glib.Convert.Convert
-             (UTF8, Integer (Strlen (UTF8)),
-              Get_Pref (Buffer.Kernel, Default_Charset), "UTF-8",
-              Ignore'Unchecked_Access, Length'Unchecked_Access);
          Slice : constant Unchecked_String_Access :=
-           To_Unchecked_String (C_Str);
+           To_Unchecked_String (UTF8);
+         Length : constant Integer := Integer (Strlen (UTF8));
          pragma Suppress (Access_Check, Slice);
 
       begin
-         g_free (UTF8);
          Highlight_Complete := True;
          Slice_Offset := Get_Offset (Entity_Start);
 
@@ -1611,7 +1606,7 @@ package body Src_Editor_Buffer is
            (Buffer.Lang,
             Slice (1 .. Length),
             Highlight_Cb'Unrestricted_Access);
-         g_free (C_Str);
+         g_free (UTF8);
       end Local_Highlight;
 
    begin
@@ -1893,7 +1888,7 @@ package body Src_Editor_Buffer is
 
    procedure Load_File
      (Buffer          : access Source_Buffer_Record;
-      Filename        : String;
+      Filename        : VFS.Virtual_File;
       Lang_Autodetect : Boolean := True;
       Success         : out Boolean)
    is
@@ -1909,6 +1904,8 @@ package body Src_Editor_Buffer is
       Contents := Read_File (Filename);
 
       if Contents = null then
+         Trace (Me, "Load_File: Couldn't read contents of "
+                & Full_Name (Filename));
          Success := False;
          return;
       end if;
@@ -1955,13 +1952,15 @@ package body Src_Editor_Buffer is
       Buffer.Inserting := False;
       Buffer.Modified_Auto := False;
 
-      Buffer.Timestamp := To_Timestamp (File_Time_Stamp (Filename));
+      Buffer.Timestamp := To_Timestamp
+        (File_Time_Stamp (Full_Name (Filename)));
 
       Empty_Queue (Buffer.Queue);
       Buffer.Current_Command := null;
 
    exception
       when E : others =>
+         Success := False;
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Load_File;
 
@@ -1971,13 +1970,14 @@ package body Src_Editor_Buffer is
 
    procedure Internal_Save_To_File
      (Buffer   : Source_Buffer;
-      Filename : String;
+      Filename : VFS.Virtual_File;
       Internal : Boolean;
       Success  : out Boolean)
    is
       FD         : File_Descriptor := Invalid_FD;
       Terminator : Line_Terminator_Style := Buffer.Line_Terminator;
       Buffer_Line : Buffer_Line_Type;
+      Locale_Filename : constant String := Locale_Full_Name (Filename);
 
       Force_Write : Boolean := False;
       --  Whether the file mode has been forced to writable.
@@ -2004,19 +2004,20 @@ package body Src_Editor_Buffer is
    begin
       Success := True;
 
-      FD := Create_File (Filename, Fmode => Binary);
+      FD := Create_File (Locale_Filename, Fmode => Binary);
 
       --  The file could not be opened, check whether it is read-only.
 
       if FD = Invalid_FD
         and then Is_Regular_File (Filename)
-        and then not Is_Writable_File (Filename)
+        and then not Is_Writable_File (Locale_Filename)
       then
          declare
             Buttons : Message_Dialog_Buttons;
          begin
             Buttons := Message_Dialog
-              (Msg            => -"The file " & Filename & ASCII.LF
+              (Msg            => -"The file "
+                 & Base_Name (Filename) & ASCII.LF
                  & (-"is read-only. Do you want to overwrite it ?"),
                Dialog_Type    => Confirmation,
                Buttons        => Button_Yes or Button_No,
@@ -2028,7 +2029,7 @@ package body Src_Editor_Buffer is
             if Buttons = Button_Yes then
                Force_Write := True;
                Set_Writable (Filename, True);
-               FD := Create_File (Filename, Fmode => Binary);
+               FD := Create_File (Locale_Filename, Fmode => Binary);
             end if;
          end;
       end if;
@@ -2036,7 +2037,7 @@ package body Src_Editor_Buffer is
       if FD = Invalid_FD then
          Insert
            (Buffer.Kernel,
-            -"Could not open file for writing: " & Filename,
+            -"Could not open file for writing: " & Full_Name (Filename),
             Mode => Error);
          Success := False;
          return;
@@ -2106,8 +2107,7 @@ package body Src_Editor_Buffer is
       --  automatic saves.
 
       if Success
-        and then Buffer.Filename /= null
-        and then Filename = Buffer.Filename.all
+        and then Filename = Buffer.Filename
       then
          File_Saved (Buffer.Kernel, Filename);
 
@@ -2126,12 +2126,11 @@ package body Src_Editor_Buffer is
          Status_Changed (Buffer);
 
       elsif Success
-        and then (Buffer.Filename = null
-                  or else Buffer.Filename.all /= Filename)
+        and then Filename /= Buffer.Filename
         and then not Internal
       then
-         if Buffer.Filename /= null then
-            File_Closed (Buffer.Kernel, Buffer.Filename.all);
+         if Buffer.Filename /= VFS.No_File then
+            File_Closed (Buffer.Kernel, Buffer.Filename);
          end if;
 
          File_Edited (Buffer.Kernel, Filename);
@@ -2161,18 +2160,13 @@ package body Src_Editor_Buffer is
 
    procedure Save_To_File
      (Buffer   : access Source_Buffer_Record;
-      Filename : String;
+      Filename : VFS.Virtual_File;
       Success  : out Boolean)
    is
-      Name_Changed : Boolean;
-      Result       : Boolean;
+      Name_Changed : constant Boolean := Buffer.Filename /= Filename;
    begin
-      Name_Changed := Buffer.Filename = null
-        or else Buffer.Filename.all /= Filename;
-
       if Name_Changed then
-         Free (Buffer.Filename);
-         Buffer.Filename := new String'(Filename);
+         Buffer.Filename := Filename;
       end if;
 
       if Name_Changed then
@@ -2180,7 +2174,7 @@ package body Src_Editor_Buffer is
            (Buffer,
             Get_Language_From_File
               (Glide_Language_Handler (Get_Language_Handler (Buffer.Kernel)),
-               Buffer.Filename.all));
+               Buffer.Filename));
 
          --  ??? The following is expensive, it would be nice to have a
          --  simpler way to report a possible change in the list of sources
@@ -2188,19 +2182,19 @@ package body Src_Editor_Buffer is
          Recompute_View (Buffer.Kernel);
       end if;
 
-      Internal_Save_To_File (Buffer.all'Access, Filename, False, Success);
+      Internal_Save_To_File (Source_Buffer (Buffer), Filename, False, Success);
 
       if not Success then
          return;
       end if;
 
       Buffer.Timestamp := To_Timestamp
-        (File_Time_Stamp (Get_Filename (Buffer)));
+        (File_Time_Stamp (Full_Name (Get_Filename (Buffer))));
 
-      if Buffer.Filename /= null then
-         Delete_File
-           (Dir_Name (Buffer.Filename.all) & ".#" &
-            Base_Name (Buffer.Filename.all), Result);
+      if Buffer.Filename /= VFS.No_File then
+         Delete (Create (Full_Filename =>
+                           Dir_Name (Buffer.Filename)
+                           & ".#" & Base_Name (Buffer.Filename)));
       end if;
 
       Set_Modified (Buffer, False);
@@ -2345,7 +2339,7 @@ package body Src_Editor_Buffer is
    begin
       Assert (Me, Is_Valid_Position (Buffer, Line, Column),
               "Invalid position for Set_Cursor_Position "
-              & Get_Filename (Buffer) & Line'Img & Column'Img);
+              & Full_Name (Get_Filename (Buffer)) & Line'Img & Column'Img);
 
       if not Buffer.Inserting then
          --  At this point, we know that the (Line, Column) position is
@@ -2389,7 +2383,7 @@ package body Src_Editor_Buffer is
    begin
       Assert (Me, Is_Valid_Position (Buffer, Line, 0),
               "Invalid position for Set_Screen_Position "
-                & Get_Filename (Buffer) & Line'Img);
+              & Full_Name (Get_Filename (Buffer)) & Line'Img);
 
       Get_Iter_At_Line_Offset (Buffer, Iter, Line, 0);
 
@@ -2579,10 +2573,6 @@ package body Src_Editor_Buffer is
    is
       Start_Iter : Gtk_Text_Iter;
       End_Iter   : Gtk_Text_Iter;
-      UTF8       : Interfaces.C.Strings.chars_ptr;
-      Ignore     : aliased Natural;
-      Length     : aliased Natural;
-      Contents   : Interfaces.C.Strings.chars_ptr;
 
    begin
       pragma Assert (Is_Valid_Position (Buffer, Start_Line, Start_Column));
@@ -2595,14 +2585,7 @@ package body Src_Editor_Buffer is
          Get_Iter_At_Line_Offset (Buffer, End_Iter, End_Line, End_Column);
       end if;
 
-      UTF8     := Get_Text (Buffer, Start_Iter, End_Iter, True);
-      Length   := Natural (Strlen (UTF8));
-      Contents := Glib.Convert.Convert
-        (UTF8, Length, Get_Pref (Buffer.Kernel, Default_Charset), "UTF-8",
-         Ignore'Unchecked_Access, Length'Unchecked_Access);
-      g_free (UTF8);
-
-      return Contents;
+      return Get_Text (Buffer, Start_Iter, End_Iter, True);
    end Get_Slice;
 
    function Get_Slice
@@ -3079,15 +3062,9 @@ package body Src_Editor_Buffer is
    ------------------
 
    function Get_Filename
-     (Buffer : access Source_Buffer_Record)
-     return String
-   is
+     (Buffer : access Source_Buffer_Record) return VFS.Virtual_File is
    begin
-      if Buffer.Filename = null then
-         return "";
-      else
-         return Buffer.Filename.all;
-      end if;
+      return Buffer.Filename;
    end Get_Filename;
 
    ------------------
@@ -3095,12 +3072,9 @@ package body Src_Editor_Buffer is
    ------------------
 
    procedure Set_Filename
-     (Buffer : access Source_Buffer_Record;
-      Name   : String)
-   is
+     (Buffer : access Source_Buffer_Record; Name : VFS.Virtual_File) is
    begin
-      Free (Buffer.Filename);
-      Buffer.Filename := new String'(Name);
+      Buffer.Filename := Name;
    end Set_Filename;
 
    -------------------------
@@ -3108,15 +3082,9 @@ package body Src_Editor_Buffer is
    -------------------------
 
    function Get_File_Identifier
-     (Buffer : access Source_Buffer_Record)
-     return String
-   is
+     (Buffer : access Source_Buffer_Record) return VFS.Virtual_File is
    begin
-      if Buffer.File_Identifier = null then
-         return "";
-      else
-         return Buffer.File_Identifier.all;
-      end if;
+      return Buffer.File_Identifier;
    end Get_File_Identifier;
 
    -------------------------
@@ -3124,12 +3092,9 @@ package body Src_Editor_Buffer is
    -------------------------
 
    procedure Set_File_Identifier
-     (Buffer : access Source_Buffer_Record;
-      Name   : String)
-   is
+     (Buffer : access Source_Buffer_Record; Name : VFS.Virtual_File) is
    begin
-      Free (Buffer.File_Identifier);
-      Buffer.File_Identifier := new String'(Name);
+      Buffer.File_Identifier := Name;
    end Set_File_Identifier;
 
    ---------------------------
@@ -3150,22 +3115,11 @@ package body Src_Editor_Buffer is
          Buffer.Kernel,
          Src_Editor_Module_Id);
 
-      if Buffer.Filename /= null
-        and then Buffer.Filename.all /= ""
-      then
-         if Base_Name (Buffer.Filename.all) = Buffer.Filename.all then
-            Set_File_Information
-              (Context, "", Base_Name (Buffer.Filename.all));
+      if Buffer.Filename /= VFS.No_File then
+         Set_File_Information (Context, Buffer.Filename);
 
-         else
-            Set_File_Information
-              (Context,
-               Dir_Name (Buffer.Filename.all),
-               Base_Name (Buffer.Filename.all));
-         end if;
-
-      elsif Buffer.File_Identifier /= null then
-         Set_File_Information (Context, "", Buffer.File_Identifier.all);
+      elsif Buffer.File_Identifier /= VFS.No_File then
+         Set_File_Information (Context, Buffer.File_Identifier);
       end if;
 
       --  Find the editable boundaries.
@@ -3211,11 +3165,11 @@ package body Src_Editor_Buffer is
       Success : Boolean;
       Line, Column : Gint;
    begin
-      if Buffer.Filename /= null
-        and then Buffer.Filename.all /= ""
-        and then Is_Regular_File (Buffer.Filename.all)
+      if Buffer.Filename /= VFS.No_File
+        and then Is_Regular_File (Buffer.Filename)
       then
-         New_Timestamp := To_Timestamp (File_Time_Stamp (Buffer.Filename.all));
+         New_Timestamp := To_Timestamp
+           (File_Time_Stamp (Full_Name (Buffer.Filename)));
 
          if New_Timestamp > Buffer.Timestamp then
             if Force then
@@ -3226,7 +3180,7 @@ package body Src_Editor_Buffer is
                end if;
 
                Dialog := Create_Gtk_Dialog
-                 (Msg         => Base_Name (Buffer.Filename.all)
+                 (Msg         => Base_Name (Buffer.Filename)
                   & (-" changed on disk. Really edit ?")
                   & ASCII.LF & ASCII.LF
                   & (-"Clicking on Revert will reload the file from disk.")
@@ -3254,7 +3208,7 @@ package body Src_Editor_Buffer is
                   Get_Cursor_Position (Buffer, Line, Column);
                   Load_File
                     (Buffer,
-                     Filename        => Buffer.Filename.all,
+                     Filename        => Buffer.Filename,
                      Lang_Autodetect => True,
                      Success         => Success);
 

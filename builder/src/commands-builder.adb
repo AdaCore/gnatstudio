@@ -44,6 +44,7 @@ with GNAT.OS_Lib;               use GNAT.OS_Lib;
 
 with Traces;                    use Traces;
 with Ada.Exceptions;            use Ada.Exceptions;
+with VFS;                       use VFS;
 
 with Builder_Module; use Builder_Module;
 
@@ -214,7 +215,7 @@ package body Commands.Builder is
          Set_Sensitive_Menus (Kernel, True);
          Free (Fd);
 
-         Compilation_Finished (Kernel, "");
+         Compilation_Finished (Kernel, VFS.No_File);
          return Success;
 
       when E : others =>

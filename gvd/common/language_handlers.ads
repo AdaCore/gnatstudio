@@ -27,6 +27,7 @@
 
 with Language;
 with GNAT.OS_Lib;
+with VFS;
 
 package Language_Handlers is
 
@@ -35,13 +36,14 @@ package Language_Handlers is
 
    function Get_Language_From_File
      (Handler         : access Language_Handler_Record;
-      Source_Filename : String) return Language.Language_Access is abstract;
+      Source_Filename : VFS.Virtual_File) return Language.Language_Access
+   is abstract;
    --  Return the name of the language used for Source_Filename.
    --  null is returned if the language wasn't recognized.
 
    function Get_Language_From_File
      (Handler         : access Language_Handler_Record;
-      Source_Filename : String) return String is abstract;
+      Source_Filename : VFS.Virtual_File) return String is abstract;
    --  Same as above, but return the language name in a canonical form.
    --  The empty string is returned if the language wasn't recognized.
 
