@@ -666,6 +666,8 @@ procedure GPS is
       --  We do not document the --log-level flag, since it will be replaced
       --  by the regular Traces mechanism.
 
+      --  ??? Document =source1 feature
+
       if GVD.Can_Output then
          Put_Line (GPS_Name (GPS) & " " & GVD.Version &
                    " (" & GVD.Source_Date & ")" &
@@ -673,6 +675,9 @@ procedure GPS is
          Put_Line (-"Usage:");
          Put_Line
            (-"   gps [options] [-Pproject-file] [source1] [source2] ...");
+         Put_Line ("source1, source2,...");
+         Put_Line ("    Name of files to load. Start with '=' to load from");
+         Put_Line ("    project");
          Put_Line (-"Options:");
          Put_Line (-"   --help              Show this help message and exit");
          Put_Line (-"   --version           Show the GPS version and exit");
@@ -694,8 +699,11 @@ procedure GPS is
            (GPS_Name (GPS) & " " & GVD.Version & " (" & GVD.Source_Date & ")" &
             (-", the GNAT Programming System.") & LF &
             (-"Usage:") & LF &
-            (-"   gps [options] [-Pproject-file] [source1] [source2] ...") &
-            LF & (-"Options:") & LF &
+            (-"   gps [options] [-Pproject-file] [source1] [source2] ...")
+            & LF & "source1, source2,..."
+            & LF & "    Name of files to load. Start with '=' to load from"
+            & LF & "    project"
+            & LF & (-"Options:") & LF &
             (-"   --help              Show this help message and exit.") & LF &
             (-"   --version           Show the GPS version and exit.") & LF &
             (-"   --load=lang:file    Execute an external file written")
@@ -893,6 +901,8 @@ procedure GPS is
       Shell_Script.Register_Module (GPS.Kernel);
       Python_Module.Register_Module (GPS.Kernel);
       Register_Default_Script_Commands (GPS.Kernel);
+
+      Glide_Kernel.Console.Register_Commands (GPS.Kernel);
 
       --  We then must register the keymanager, so that other modules can
       --  register their keys
