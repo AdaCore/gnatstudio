@@ -52,6 +52,7 @@
 --  hierarchy (imported projects, modified projects,...) can not change when
 --  the view changes.
 
+with Basic_Types;
 with Prj;
 with Prj.Tree;
 
@@ -112,7 +113,8 @@ package Glide_Kernel.Project is
    --  editor, or simply select the existing one.
 
    function Get_Source_Files
-     (Handle : access Kernel_Handle_Record) return GNAT.OS_Lib.Argument_List;
+     (Handle : access Kernel_Handle_Record)
+      return Basic_Types.String_Array_Access;
    --  Return the list of source files belonging to the project described in
    --  Handle. Only the direct sources of the project are currently returned,
    --  i.e. not those found in subprojects.
