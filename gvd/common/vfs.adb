@@ -166,7 +166,6 @@ package body VFS is
    procedure Delete (File : Virtual_File) is
       Success : Boolean;
    begin
-      Trace (Me, "MANU Delete " & Full_Name (File));
       Delete_File (Locale_Full_Name (File), Success);
    end Delete;
 
