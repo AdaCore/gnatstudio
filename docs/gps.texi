@@ -703,6 +703,10 @@ To navigate through the next and previous location (also called @code{Tag}),
 you can use the menu items @code{Navigate->Previous Tag} and
 @code{Navigate->Next Tag}, or the corresponding key bindings.
 
+In some cases, a wrench icon will be associated on the left of a compilation
+message. See @ref{Code Fixing} for more information on how to make advantage
+of this icon.
+
 @c --------------------------------------------------------------------
 @node The Execution Window
 @section The Execution Window
@@ -4615,6 +4619,7 @@ lines that are present only in the reference file.
 @node Code Fixing
 @section Code Fixing
 @cindex code fixing
+@cindex wrench icon
 @noindent
 
 GPS provides an interactive way to fix or improve your source code, based on
