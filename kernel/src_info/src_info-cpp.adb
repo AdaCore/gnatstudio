@@ -793,6 +793,8 @@ package body Src_Info.CPP is
 
       Process_File (Full_Filename, Handler, File, Project, List);
 
+      Save (Handler.Xrefs,
+            Handler.DB_Dir.all & Browse.Xref_Pool_Filename);
    exception
       when E : others =>
          Trace (Warn_Stream, "Unexpected exception: "
