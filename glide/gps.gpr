@@ -62,10 +62,9 @@ project GPS is
 
    package Linker is
       case OS is
-         when Windows_NT =>
+         when "Windows_NT" =>
             for Default_Switches ("Ada") use ("-luser32");
-         when unix =>
-            null;
+         when "unix" =>
       end case;
    end Linker;
 
