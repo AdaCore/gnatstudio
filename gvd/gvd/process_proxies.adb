@@ -34,6 +34,9 @@ with GVD.Types;             use GVD.Types;
 
 package body Process_Proxies is
 
+   Expect_Timeout : constant := 50;
+   --  Timeout in milliseconds for the low level calls to expect
+
    procedure Free (Post_Processes : in out Post_Process_Access);
    --  Free the list of post_processes pointed to by
    --  Post_Processes.
@@ -239,7 +242,8 @@ package body Process_Proxies is
          end if;
 
          Expect
-           (Proxy.Descriptor.all, Result, Pattern, Matched, Timeout => 10);
+           (Proxy.Descriptor.all, Result, Pattern, Matched,
+            Timeout => Integer'Min (Expect_Timeout, Timeout));
 
          case Result is
             when Expect_Full_Buffer =>
