@@ -60,6 +60,9 @@ package Prj_API is
    --  Special value for all the subprograms that take an Attribute_Index
    --  parameter. When this is used, no matching is done on the indexes.
 
+   procedure Finalize;
+   --  Free all the internal tables used by the project parser.
+
    function Get_String (Str : Types.String_Id) return String;
    --  This functional form returns the value of Str as a string without
    --  affecting the contents of either Name_Buffer or Name_Len.

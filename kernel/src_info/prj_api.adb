@@ -1079,6 +1079,8 @@ package body Prj_API is
       procedure Source_Belongs_To_Project
         (Project : Project_Id; With_State : in out Project_Id) is
       begin
+         --  ??? Should first test the directories, it might be more
+         --  efficient.
          if With_State = No_Project
            and then Is_Direct_Source (Source_Filename, Project)
          then
@@ -4082,6 +4084,19 @@ package body Prj_API is
       Name_Buffer (1 .. Name_Len) := Cpp_String;
       Name_C_Plus_Plus := Name_Find;
    end Initialize;
+
+   --------------
+   -- Finalize --
+   --------------
+
+   procedure Finalize is
+   begin
+      Prj.Reset;
+      Prj.Tree.Tree_Private_Part.Project_Nodes.Free;
+      Prj.Tree.Tree_Private_Part.Projects_Htable.Reset;
+      Namet.Finalize;
+      Stringt.Initialize;
+   end Finalize;
 
 begin
    Initialize;
