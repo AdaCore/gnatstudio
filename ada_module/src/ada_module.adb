@@ -42,7 +42,7 @@ package body Ada_Module is
    Ada_Indentation_Level     : Param_Spec_Int;
    Ada_Continuation_Level    : Param_Spec_Int;
    Ada_Declaration_Level     : Param_Spec_Int;
-   Ada_Indent_Case_Extra     : Param_Spec_Boolean;
+   Ada_Indent_Case_Extra     : Param_Spec_Enum;
    Ada_Reserved_Casing       : Param_Spec_Enum;
    Ada_Ident_Casing          : Param_Spec_Enum;
    Ada_Format_Operators      : Param_Spec_Boolean;
@@ -52,6 +52,10 @@ package body Ada_Module is
    package Casing_Properties is new
      Glib.Generic_Properties.Generic_Enumeration_Property
      ("Casing_Type", Casing_Type);
+
+   package Indent_Properties is new
+     Glib.Generic_Properties.Generic_Enumeration_Property
+     ("Indent_Style", Indent_Style);
 
    procedure On_Preferences_Changed
      (Kernel : access Kernel_Handle_Record'Class);
@@ -96,7 +100,8 @@ package body Ada_Module is
             Indent_Decl       =>
               Integer (Get_Pref (Kernel, Ada_Declaration_Level)),
             Tab_Width         => Integer (Get_Pref (Kernel, Tab_Width)),
-            Indent_Case_Extra => Get_Pref (Kernel, Ada_Indent_Case_Extra),
+            Indent_Case_Extra => Indent_Style'Val
+              (Get_Pref (Kernel, Ada_Indent_Case_Extra)),
             Reserved_Casing   => Casing_Type'Val
               (Get_Pref (Kernel, Ada_Reserved_Casing)),
             Ident_Casing      => Casing_Type'Val
@@ -184,12 +189,12 @@ package body Ada_Module is
       Register_Property
         (Kernel, Param_Spec (Ada_Declaration_Level), -"Editor:Ada");
 
-      Ada_Indent_Case_Extra := Param_Spec_Boolean
-        (Gnew_Boolean
-          (Name    => "Ada-Indent-Case-Extra",
-           Default => True,
-           Blurb   => -"Indent case statements with an extra level",
-           Nick    => -"RM style case indentation"));
+      Ada_Indent_Case_Extra := Param_Spec_Enum
+        (Indent_Properties.Gnew_Enum
+          (Name    => "Ada-Indent-Case-Style",
+           Default => Automatic,
+           Blurb   => -"Whether to indent case statements with an extra level",
+           Nick    => -"Case indentation"));
       Register_Property
         (Kernel, Param_Spec (Ada_Indent_Case_Extra), -"Editor:Ada");
 
