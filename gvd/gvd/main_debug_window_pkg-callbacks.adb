@@ -77,9 +77,21 @@ package body Main_Debug_Window_Pkg.Callbacks is
          exit when Page = null;
 
          Tab := Process_User_Data.Get (Page);
-         Close (Tab.Debugger);
+         Tab.Exiting := True;
+
+         begin
+            Close (Tab.Debugger);
+         exception
+            when others =>
+               --  ??? Would be nice to handle more specific errors, but
+               --  since we are exiting, ignore any exception instead of
+               --  generating unfriendly bug boxes
+               null;
+         end;
+
          Remove_Page (Top.Process_Notebook, 0);
       end loop;
+
       Free (Top.Command_History);
    end Cleanup_Debuggers;
 
