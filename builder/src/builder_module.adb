@@ -757,7 +757,6 @@ package body Builder_Module is
         Glide_Window (Get_Main_Window (Kernel));
       Prj : constant Project_Type :=
         Get_Project_From_File (Get_Registry (Kernel), File);
-      Project      : constant String := Project_Name (Prj);
       Cmd          : String_Access;
       Fd           : Process_Descriptor_Access;
       Local_File   : aliased String := File;
@@ -809,7 +808,7 @@ package body Builder_Module is
       Top.Interrupted := False;
       Fd := new TTY_Process_Descriptor;
 
-      if Project = "" then
+      if Is_Default (Prj) then
          Insert_And_Launch
            (Kernel,
             Remote_Protocol => Get_Pref (GVD_Prefs, Remote_Protocol),
