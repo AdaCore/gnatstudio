@@ -96,6 +96,7 @@ package Items is
       GC             : Gdk.GC.Gdk_GC;
       Xref_GC        : Gdk.GC.Gdk_GC;
       Modified_GC    : Gdk.GC.Gdk_GC;
+      Selection_GC   : Gdk.GC.Gdk_GC;
 
       Font           : Gdk.Font.Gdk_Font;
       Type_Font      : Gdk.Font.Gdk_Font;
