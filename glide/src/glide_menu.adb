@@ -337,7 +337,6 @@ package body Glide_Menu is
 
          Gtk_New (Debug & Data_Sub & (-"Call Stack"), "", null, Check_Item),
 
-         Gtk_New (Tools & (-"Call Graph"), "", null),
          Gtk_New (Tools & (-"Code Fixing"), "", null),
          Gtk_New (Tools & (-"Profile"), "", null),
          Gtk_New (Tools & (-"Memory Analyzer"), "", null),
