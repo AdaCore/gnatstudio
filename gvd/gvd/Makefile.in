@@ -10,7 +10,8 @@ EXEC = odd
 all: $(EXEC)
 
 $(EXEC): force
-	gnatmake -m $(ALL_CFLAGS) $(MAIN) -o $(EXEC) -largs $(LINK_FLAGS)
+	gnatmake -m $(ALL_CFLAGS) $(MAIN) -o $(EXEC) -bargs -E \
+	  -largs $(LINK_FLAGS)
 
 clean:
 	rm -f *.o *.ali *~ b~*
