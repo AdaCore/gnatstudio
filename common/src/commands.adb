@@ -24,6 +24,13 @@ package body Commands is
 
    use Command_Queues;
 
+   -----------------------
+   -- Local subprograms --
+   -----------------------
+
+   procedure Execute_Next_Action (Queue : Command_Queue);
+   --  Execute the next action in the queue, or do nothing if there is none.
+
    ---------------
    -- New_Queue --
    ---------------
@@ -121,9 +128,22 @@ package body Commands is
    -- Command_Finished --
    ----------------------
 
-   procedure Command_Finished (Queue : Command_Queue) is
+   procedure Command_Finished (Queue   : Command_Queue;
+                               Action  : access Root_Command;
+                               Success : Boolean) is
    begin
       Queue.Command_In_Progress := False;
+
+      if Success then
+         while not Is_Empty (Action.Next_Commands) loop
+            Enqueue (Action.Queue, Head (Action.Next_Commands), True);
+            Action.Next_Commands := Next (Action.Next_Commands);
+         end loop;
+
+      else
+         Free (Action.Next_Commands);
+      end if;
+
       Execute_Next_Action (Queue);
    end Command_Finished;
 
@@ -136,5 +156,17 @@ package body Commands is
    begin
       Success := Execute (Command_Access (Command));
    end Execute;
+
+   ----------------------------
+   -- Add_Consequence_Action --
+   ----------------------------
+
+   procedure Add_Consequence_Action
+     (Item   : Command_Access;
+      Action : Command_Access)
+   is
+   begin
+      Append (Item.Next_Commands, Action);
+   end Add_Consequence_Action;
 
 end Commands;
