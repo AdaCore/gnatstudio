@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -298,7 +298,6 @@ package Docgen is
             when Body_Line_Info =>
                Body_File                     : GNAT.OS_Lib.String_Access;
                Body_Text                     : GNAT.OS_Lib.String_Access;
-            when others => null;  --  exception later
          end case;
       end record;
    --  The data structure used to pass the information
