@@ -64,21 +64,18 @@ package body Browsers.Projects is
    --  Add entries to the appropriate contextual menus
 
    function Create_Project_Browser
-     (Kernel : access Kernel_Handle_Record'Class)
-      return Project_Browser;
+     (Kernel : access Kernel_Handle_Record'Class) return Project_Browser;
    --  Create a new project browser
 
    function Open_Project_Browser
-     (Kernel       : access Glide_Kernel.Kernel_Handle_Record'Class)
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
       return Gtkada.MDI.MDI_Child;
    --  Find, or create, a project browser
 
    function Load_Desktop
-     (Node : Gint_Xml.Node_Ptr; User : Kernel_Handle)
-      return Gtk_Widget;
+     (Node : Gint_Xml.Node_Ptr; User : Kernel_Handle) return Gtk_Widget;
    function Save_Desktop
-     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class)
-      return Node_Ptr;
+     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class) return Node_Ptr;
    --  Support functions for the MDI
 
    ---------------------
@@ -100,8 +97,9 @@ package body Browsers.Projects is
    -- Refresh --
    -------------
 
-   procedure Refresh (Browser : access Glide_Browser_Record'Class;
-                      Item    : access Browser_Project_Vertex) is
+   procedure Refresh
+     (Browser : access Glide_Browser_Record'Class;
+      Item    : access Browser_Project_Vertex) is
    begin
       Draw_Item_Background (Browser, Item);
       Draw_Text
@@ -168,6 +166,7 @@ package body Browsers.Projects is
       end Vertex_Factory;
 
       G : Graph;
+
    begin
       G := Dependency_Graph
         (Project,
@@ -208,10 +207,10 @@ package body Browsers.Projects is
    ------------------------
 
    function Contextual_Factory
-     (Item  : access Browser_Project_Vertex;
+     (Item    : access Browser_Project_Vertex;
       Browser : access Glide_Browser_Record'Class;
-      Event : Gdk.Event.Gdk_Event;
-      Menu  : Gtk.Menu.Gtk_Menu) return Selection_Context_Access
+      Event   : Gdk.Event.Gdk_Event;
+      Menu    : Gtk.Menu.Gtk_Menu) return Selection_Context_Access
    is
       Context : Selection_Context_Access := new File_Selection_Context;
    begin
@@ -226,8 +225,7 @@ package body Browsers.Projects is
    ----------------------------
 
    function Create_Project_Browser
-     (Kernel : access Kernel_Handle_Record'Class)
-      return Project_Browser
+     (Kernel : access Kernel_Handle_Record'Class) return Project_Browser
    is
       Browser : Project_Browser;
    begin
@@ -249,10 +247,9 @@ package body Browsers.Projects is
    --------------------------
 
    function Open_Project_Browser
-     (Kernel       : access Kernel_Handle_Record'Class)
-      return Gtkada.MDI.MDI_Child
+     (Kernel : access Kernel_Handle_Record'Class) return Gtkada.MDI.MDI_Child
    is
-      Child   : MDI_Child;
+      Child : MDI_Child;
    begin
       Child := Find_MDI_Child_By_Tag
         (Get_MDI (Kernel), Project_Browser_Record'Tag);
@@ -301,8 +298,7 @@ package body Browsers.Projects is
    ------------------
 
    function Load_Desktop
-     (Node : Gint_Xml.Node_Ptr; User : Kernel_Handle)
-      return Gtk_Widget is
+     (Node : Gint_Xml.Node_Ptr; User : Kernel_Handle) return Gtk_Widget is
    begin
       if Node.Tag.all = "Project_Browser" then
          return Gtk_Widget (Create_Project_Browser (User));
@@ -316,8 +312,7 @@ package body Browsers.Projects is
    ------------------
 
    function Save_Desktop
-     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class)
-     return Node_Ptr
+     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class) return Node_Ptr
    is
       N : Node_Ptr;
    begin
