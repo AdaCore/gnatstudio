@@ -506,6 +506,11 @@ accordingly.
 @end table
 
 @subsection Data
+Note that most items in this menu need to access to the underlying debugger
+when the process is stopped, not when it is running, which means that you first
+need to stop the process on a breakpoint, or interrupt it before using
+the following items. Failing to do so will result in blank windows.
+
 @table @b
    @item Call Stack
       Display/Hide the Call Stack window inside the Data window.
@@ -514,6 +519,8 @@ accordingly.
       @ref{Show Call Stack}.
 
    @item Threads...
+      The process being debugged needs to be stopped before using this window,
+      otherwise a blank list will be displayed.
       Open a new window containing the list of threads currently present in
       the executable as reported by the underlying debugger. For each thread,
       it will give information such as internal identifier, name and status.
@@ -525,6 +532,8 @@ accordingly.
       allowing you to inspect the new thread's stack.
 
    @item Tasks...
+      As for the thread window, the process being debugged needs to be stopped
+      before using this window.
       For GDB only, this will open a new window containing the list of Ada
       tasks currently present in the executable. Similarly to the thread
       window, you can switch to the task context by clicking on it, if
