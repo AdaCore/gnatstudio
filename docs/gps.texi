@@ -328,6 +328,8 @@ is reused every time:
    (setq gnuserv-frame (car (frame-list)))
 @end smallexample
 
+See @url{http://www.hpl.hp.co.uk/people/ange/gnuserv/} for more information.
+
 
 @item emacsclient
 This is a program that is always available if you have installed
@@ -354,6 +356,9 @@ Note that one limitation of this editor is that if GPS needs to open
 the same file a second time, it will open a new editor, instead of
 reusing the existing one.
 
+Note that this requires that xterm is found in the PATH, and thus is
+not currently supported on Windows systems.
+
 
 @item vi
 This editor works exactly like vim, but uses the standard @file{vi}
@@ -364,6 +369,12 @@ command instead of @file{vim}.
 No external editor is used, and the contextual menus simply won't
 appear.
 @end table
+
+
+In the cases that require an Emacs server, GPS will try several
+solutions if no already running server was found. It will first try to
+spawn the glide environment distributed with GNAT. If not found in the
+PATH, it will then start a standard Emacs.
 
 
 In the preferences, there are two settings that allow you to select
@@ -434,7 +445,7 @@ menu to open the external editor.
 
 GPS can be configured through the usual gtk+ mechanisms of @file{rc
 files}. The trick is to create a text file called @file{gtkrc} in the
-glide home directory (@file{~/.glide} on Unix systems). This file
+gps home directory (@file{~/.gps} on Unix systems). This file
 contains the usual configuration description.
 
 For instance, the following will set the default font for all widgets
@@ -445,7 +456,7 @@ GPS's own preferences, most notably in the source editor.
 style "default" @{
    font_name="Helvetica 9"
 @}
-class "*GtkWidget*" style "default"
+class "*" style "default"
 @end smallexample
 
 Special effects can be achieved easily. For instance, the following
@@ -498,7 +509,7 @@ class "*GtkTextView*" binding : highest "custombind"
 
 @smallexample
 Usage:
-   glide2 [options...] [source files] [project file]
+   gps [options...] [source files] [project file]
 @end smallexample
 
 @noindent
@@ -513,17 +524,23 @@ The following environment variables can be set to override some default
 settings in GPS:
 
 @table @samp
-   @item GLIDE_ROOT.
+   @item GPS_ROOT
 Override the default root directory specified when GPS
 is built (during the @i{configure} process, see the file @code{INSTALL} in
 the GPS sources for more details) to access information such as the location
 of the translation files.
 
-   @item GLIDE_HOME.
+   @item GPS_HOME
 Override the variable HOME if present. All the configuration files and
-directories used by GPS are either relative to $HOME/.glide (%HOME%\.glide
-under Windows) if GLIDE_HOME is not set, or to $GLIDE_HOME/.glide (respectively
-%GLIDE_HOME%\.glide) if set.
+directories used by GPS are either relative to $HOME/.gps (%HOME%\.gps
+under Windows) if GPS_HOME is not set, or to $GPS_HOME/.gps (respectively
+%GPS_HOME%\.gps) if set.
+
+   @item GDK_USE_XFT
+If this variable is set to 1, then the fonts used in most parts of gps will be
+anti-aliased fonts, provided your Xserver supports the Xft extension, and you
+have installed anti-aliased fonts on your system, like the truetype fonts
+available at @url{http://keithp.com/~keithp/truetype.tar.gz}
 
 @end table
 
@@ -535,26 +552,31 @@ under Windows) if GLIDE_HOME is not set, or to $GLIDE_HOME/.glide (respectively
 @noindent
 
 @table @file
-   @item $HOME/.glide
+   @item $HOME/.gps
 GVD state directory
-   @item $HOME/.glide/log
+   @item $HOME/.gps/log
 @anchor{log file}
 Log file created automatically by GPS
 
-   @item $HOME/.glide/preferences
+   @item $HOME/.gps/preferences
 Contains all the preferences in XML format, as specified in the
 preferences menu.
 
-   @item $HOME/.glide/window_settings
+   @item $HOME/.gps/window_settings
 Contains all the settings of the windows (window sizes, pane
 offset) in XML format. These settings are saved automatically when quitting
 GPS, and loaded automatically at start up. To reset the settings, simply
 remove this file.
 
-   @item $HOME/.glide/sessions
+   @item $HOME/.gps/sessions
 Directory containing the debugging sessions.
 
-   @item $HOME/.glide/sessions/@i{session}
+   @item $HOME/.gps/gtkrc
+The theme use by the gtk+ library on which gps is based. It allows you
+to configure the colors and fonts used in your
+application. @xref{Changing Colors Fonts and Pixmaps}.
+
+   @item $HOME/.gps/sessions/@i{session}
 Each file in the @code{sessions} directory represents a particular session
 saved by the user.
 
@@ -569,7 +591,7 @@ saved by the user.
 If you encounter a bug in GPS, you can report it to
 @uref{mailto:report@@gnat.com} if you are a supported user (to become a
 supported user, contact @uref{mailto:sales@@gnat.com}), or to the
-public glide development list (@uref{mailto:glide-devel@@lists.act-europe.fr}).
+public gps development list (@uref{mailto:gps-devel@@lists.act-europe.fr}).
 
 Please try to include a detailed description of the problem, including
 sources to reproduce it if possible, and/or a scenario describing the
