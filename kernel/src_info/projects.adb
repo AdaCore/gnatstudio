@@ -405,7 +405,6 @@ package body Projects is
       Sources : String_Array_Access;
       Index   : Natural := 1;
       View    : Project_Id;
-      S       : GNAT.OS_Lib.String_Access;
       Iter    : Imported_Project_Iterator;
       P       : Project_Type;
 
@@ -417,51 +416,42 @@ package body Projects is
          P := Current (Iter);
          exit when P = No_Project;
 
-         declare
-            Path : constant String := Include_Path (P, False);
-         begin
-            View := Get_View (P);
-            Src  := Prj.Projects.Table (View).Sources;
+         View := Get_View (P);
+         Src  := Prj.Projects.Table (View).Sources;
 
-            while Src /= Nil_String loop
-               String_To_Name_Buffer (String_Elements.Table (Src).Value);
-               if Language_Matches
-                 (Project.Data.Registry.all,
-                  Name_Buffer (1 .. Name_Len),
-                  Matching_Languages)
-               then
-                  if Full_Path then
-                     --  ??? Directories should be cached for files
-                     --  If we do this, we should update Project_Explorers to
-                     --  use directly this function instead of the
-                     --  semi-optimized version there
-                     S := Locate_Regular_File
-                       (Name_Buffer (1 .. Name_Len), Path);
-                     if S /= null then
-                        if Normalized then
-                           Sources (Index) := new String'
-                             (Normalize_Pathname
-                              (S.all, Resolve_Links => False));
-                           Free (S);
-                           Index := Index + 1;
-                        else
-                           Sources (Index) := Basic_Types.String_Access (S);
-                           Index := Index + 1;
-                        end if;
-                     else
-                        Trace (Me, "File not found "
-                               & Name_Buffer (1 .. Name_Len) & " " & Path);
-                     end if;
-                  else
-                     Sources (Index) :=
-                       new String'(Name_Buffer (1 .. Name_Len));
-                     Index := Index + 1;
+         while Src /= Nil_String loop
+            String_To_Name_Buffer (String_Elements.Table (Src).Value);
+            if Language_Matches
+              (Project.Data.Registry.all,
+               Name_Buffer (1 .. Name_Len),
+               Matching_Languages)
+            then
+               if Full_Path then
+                  declare
+                     File : constant String := Name_Buffer (1 .. Name_Len);
+                  begin
+                     Get_Full_Path_From_File
+                       (Project.Data.Registry.all, File,
+                        Use_Source_Path => True, Use_Object_Path => False);
+                  end;
+
+                  if Normalized then
+                     declare
+                        Full : constant String := Normalize_Pathname
+                          (Name_Buffer (1 .. Name_Len), Resolve_Links => True);
+                     begin
+                        Name_Len := Full'Length;
+                        Name_Buffer (1 .. Name_Len) := Full;
+                     end;
                   end if;
                end if;
 
-               Src := String_Elements.Table (Src).Next;
-            end loop;
-         end;
+               Sources (Index) := new String'(Name_Buffer (1 .. Name_Len));
+               Index := Index + 1;
+            end if;
+
+            Src := String_Elements.Table (Src).Next;
+         end loop;
 
          Next (Iter);
       end loop;

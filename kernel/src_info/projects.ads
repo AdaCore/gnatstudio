@@ -168,8 +168,9 @@ package Projects is
    --  It is the caller's responsability to free the list.
    --  If Full_Path is true, then the file names will also include the
    --  directory. The directory names are the ones found in the project,
-   --  although they are absolute directories. Links or ".." haven't been
-   --  resolved unless Normalized is True.
+   --  although they are absolute directories. Directories are always
+   --  normalized (".." is removed), but links are not resolved unless
+   --  Normalized is true.
    --
    --  If Matching_Language is not No_Name, then only the source files matching
    --  the specific language are returned.
