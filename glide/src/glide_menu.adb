@@ -309,9 +309,9 @@ package body Glide_Menu is
       Window      : constant String := "/_" & (-"Window");
    begin
       return new Gtk_Item_Factory_Entry_Array'
-        (Gtk_New (File & (-"Sa_ve...") & '/' & (-"Desktop"), "",
+        (Gtk_New (File & (-"Sa_ve More") & '/' & (-"Desktop"), "",
                   On_Save_Desktop'Access),
-         Gtk_New (File & (-"Sa_ve...") & '/' & (-"Default Desktop"), "",
+         Gtk_New (File & (-"Sa_ve More") & '/' & (-"Default Desktop"), "",
                   On_Save_Default_Desktop'Access),
          Gtk_New (File & "sep1", Item_Type => Separator),
          Gtk_New (File & (-"Change _Directory..."), "", "",
