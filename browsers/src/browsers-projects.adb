@@ -38,16 +38,6 @@ package body Browsers.Projects is
    Project_Extension : constant String := ".gpr";
    --  ??? Should be read from GNAT's sources
 
-   type Browser_Project_Vertex is new Project_Vertex with record
-      Browser : Glide_Browser;
-   end record;
-   type Browser_Project_Vertex_Access is access all Browser_Project_Vertex;
-
-   procedure On_Button_Click
-     (Item   : access Browser_Project_Vertex;
-      Event  : Gdk.Event.Gdk_Event_Button);
-   --  Callback for when the item is clicked
-
    procedure Update_Display
      (Browser : access Glide_Browser_Record'Class;
       Item    : access Gtkada.Canvas.Buffered_Item_Record'Class);
@@ -83,7 +73,7 @@ package body Browsers.Projects is
          Get_Text_GC (Browser),
          Margin,
          Get_Ascent (Get_Text_Font (Browser)) + Margin,
-         Project_Name (Browser_Project_Vertex_Access (Item))
+         Get_Name_String (Project_Name (Browser_Project_Vertex_Access (Item)))
          & Project_Extension);
    end Update_Display;
 

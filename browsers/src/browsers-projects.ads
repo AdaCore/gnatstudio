@@ -23,13 +23,30 @@
 with Browsers.Canvas;
 with Glide_Kernel;
 with Prj.Tree;
+with Gdk.Event;
+with Project_Browsers;
 
 package Browsers.Projects is
+
+   type Browser_Project_Vertex is new Project_Browsers.Project_Vertex
+     with private;
+   type Browser_Project_Vertex_Access is access all Browser_Project_Vertex;
 
    procedure Examine_Project_Hierarchy
      (Kernel     : access Glide_Kernel.Kernel_Handle_Record'Class;
       In_Browser : access Browsers.Canvas.Glide_Browser_Record'Class;
       Project    : Prj.Tree.Project_Node_Id);
    --  Display the project hierarchy for Project in the canvas.
+
+private
+   type Browser_Project_Vertex is new Project_Browsers.Project_Vertex
+   with record
+        Browser : Browsers.Canvas.Glide_Browser;
+   end record;
+
+   procedure On_Button_Click
+     (Item   : access Browser_Project_Vertex;
+      Event  : Gdk.Event.Gdk_Event_Button);
+   --  Callback for when the item is clicked
 
 end Browsers.Projects;
