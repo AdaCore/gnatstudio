@@ -153,8 +153,12 @@ delegates to external code generators.
 Each of them will of course read the actual interface from the saved
 XML file. However, there is a number of information that they can extract
 from the database file, like the list of header files to include when a
-widget is used, the function to call to instanciate the widget, ...
+widget is used, the function to call to instantiate the widget, ...
 This will hopefully make the code generators easier to write.
+
+Note: another possible approach would be to have the code generator also
+generic and have all the necessary information in the description file to
+generate the code directly.
 
 
 Annex A: XML Schema description of the format
@@ -372,7 +376,7 @@ Here is an example for a gtk+ database
          <get lang="C"> gtk_label_get (GTK_BIN ($1)->child, &$2) </get>
       </property>
 
-      <!--  Meaningfull style fields -->
+      <!--  Meaningful style fields -->
       <style> foreground background </style>
 
       <!--  Flags -->
