@@ -113,10 +113,6 @@ package body Src_Info.Queries is
    --  True if Entity1 and Entity2 represent the same entity. You can not use a
    --  direct equality test
 
-   function Get_Entity (Decl : E_Declaration_Info) return Entity_Information;
-   --  Return the information for the entity defined in Node.
-   --  You must cal Destroy on the returned Entity.
-
    -------------------------
    -- Search_Is_Completed --
    -------------------------
@@ -357,7 +353,7 @@ package body Src_Info.Queries is
             Location := Decl.Declaration.Location;
          end if;
 
-         Entity := Get_Entity (Decl);
+         Entity := Get_Entity (Decl.Declaration);
       else
          Entity := No_Entity_Information;
          Trace (Me, "Couldn't find a valid xref for " & E_Name
@@ -1099,11 +1095,14 @@ package body Src_Info.Queries is
       while L /= null loop
          case L.Typ is
             when Declaration =>
+               if Is_Renaming_Of (Entity, Scope_Tree_Node (L)) then
+                  Callback (Scope_Tree_Node (L), Is_Renaming => True);
+               end if;
                Find_Entity_References (L.Contents, Entity, Callback);
 
             when Reference =>
                if Is_Same_Entity (L.Decl.all, Entity) then
-                  Callback (Scope_Tree_Node (L));
+                  Callback (Scope_Tree_Node (L), Is_Renaming => False);
                end if;
          end case;
          L := L.Sibling;
@@ -1179,26 +1178,21 @@ package body Src_Info.Queries is
 
    function Get_Entity (Node : Scope_Tree_Node) return Entity_Information is
    begin
-      return Entity_Information'
-        (Name        => new String' (Node.Decl.Name.all),
-         Decl_Line   => Node.Decl.Location.Line,
-         Decl_Column => Node.Decl.Location.Column,
-         Decl_File   => new String'
-           (Get_Source_Filename (Node.Decl.Location.File)));
+      return Get_Entity (Node.Decl.all);
    end Get_Entity;
 
    ----------------
    -- Get_Entity --
    ----------------
 
-   function Get_Entity (Decl : E_Declaration_Info) return Entity_Information is
+   function Get_Entity (Decl : E_Declaration) return Entity_Information is
    begin
       return Entity_Information'
-        (Name        => new String' (Decl.Declaration.Name.all),
-         Decl_Line   => Decl.Declaration.Location.Line,
-         Decl_Column => Decl.Declaration.Location.Column,
+        (Name        => new String' (Decl.Name.all),
+         Decl_Line   => Decl.Location.Line,
+         Decl_Column => Decl.Location.Column,
          Decl_File   => new String'
-           (Get_Source_Filename (Decl.Declaration.Location.File)));
+           (Get_Source_Filename (Decl.Location.File)));
    end Get_Entity;
 
    ----------
@@ -1832,5 +1826,127 @@ package body Src_Info.Queries is
       end case;
       return "";
    end Get_Other_File_Of;
+
+   --------------------
+   -- Is_Renaming_Of --
+   --------------------
+
+   function Is_Renaming_Of
+     (Entity : Entity_Information; Node : Scope_Tree_Node) return Boolean is
+   begin
+      return Node.Decl.Rename /= Null_File_Location
+        and then Location_Matches
+        (Node.Decl.Rename, Entity.Decl_File.all,
+         Entity.Decl_Line, Entity.Decl_Column);
+   end Is_Renaming_Of;
+
+   ---------------------
+   -- Get_Declaration --
+   ---------------------
+
+   function Get_Declaration
+     (List : E_Declaration_Info_List;
+      Decl_Line, Decl_Column : Natural; Entity_Name : String := "")
+      return E_Declaration_Info_List
+   is
+      Decl : E_Declaration_Info_List := List;
+   begin
+      while Decl /= null loop
+
+         if Decl.Value.Declaration.Location.Line = Decl_Line
+           and then Decl.Value.Declaration.Location.Column = Decl_Column
+           and then (Entity_Name = ""
+                     or else Decl.Value.Declaration.Name.all = Entity_Name)
+         then
+            return Decl;
+         end if;
+
+         Decl := Decl.Next;
+      end loop;
+      return null;
+   end Get_Declaration;
+
+   ---------------------
+   -- Get_Declaration --
+   ---------------------
+
+   function Get_Declaration
+     (List : LI_File_List; Entity : Entity_Information) return E_Declaration is
+   begin
+      return Get_Declaration
+        (Get_Declaration_Location (List, Entity), Get_Name (Entity));
+   end Get_Declaration;
+
+   ---------------------
+   -- Get_Declaration --
+   ---------------------
+
+   function Get_Declaration
+     (Location : File_Location; Entity_Name : String := "")
+      return E_Declaration
+   is
+      File : File_Info_Ptr := Get_File_Info (Location.File);
+      Decl : E_Declaration_Info_List;
+   begin
+      Decl := Get_Declaration
+        (File.Declarations, Location.Line, Location.Column, Entity_Name);
+      if Decl /= null then
+         return Decl.Value.Declaration;
+      else
+         return No_Declaration;
+      end if;
+   end Get_Declaration;
+
+   ------------------------------
+   -- Get_Declaration_Location --
+   ------------------------------
+
+   function Get_Declaration_Location
+     (List : LI_File_List; Entity : Entity_Information) return File_Location is
+   begin
+      return File_Location' (File   => Get_Source_File (List, Entity),
+                             Line   => Get_Declaration_Line_Of (Entity),
+                             Column => Get_Declaration_Column_Of (Entity));
+   end Get_Declaration_Location;
+
+   ---------------------
+   -- Get_Source_File --
+   ---------------------
+
+   function Get_Source_File
+     (List : LI_File_List; Entity : Entity_Information) return Source_File
+   is
+      LI   : LI_File_Ptr;
+      Part : Unit_Part;
+   begin
+      LI   := Locate_From_Source (List, Get_Declaration_File_Of (Entity));
+      Part := Get_Unit_Part (LI, Get_Declaration_File_Of (Entity));
+
+      if Part /= Unit_Separate then
+         return Source_File' (LI => LI, Part => Part, Source_Filename => null);
+      else
+         return Source_File'
+           (LI => LI, Part => Part,
+            Source_Filename => new String' (Get_Declaration_File_Of (Entity)));
+      end if;
+   end Get_Source_File;
+
+   -----------------
+   -- Renaming_Of --
+   -----------------
+
+   function Renaming_Of
+     (List : LI_File_List; Entity : Entity_Information)
+      return Entity_Information
+   is
+      Decl : constant E_Declaration := Get_Declaration (List, Entity);
+      Renamed_Location : constant File_Location := Decl.Rename;
+   begin
+      if Renamed_Location /= Null_File_Location then
+         return Get_Entity (Get_Declaration (Renamed_Location));
+      else
+         return No_Entity_Information;
+      end if;
+   end Renaming_Of;
 
 end Src_Info.Queries;

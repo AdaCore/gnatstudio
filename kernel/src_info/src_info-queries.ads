@@ -69,6 +69,13 @@ package Src_Info.Queries is
    function Copy (Entity : Entity_Information) return Entity_Information;
    --  Return a copy of Entity. The result must be explicitely destroyed.
 
+   function Renaming_Of
+     (List : LI_File_List; Entity : Entity_Information)
+      return Entity_Information;
+   --  Return the entity that Entity is renaming, or No_Entity_Information if
+   --  it isn't a renaming.
+   --  You must call destroy on the returned entity.
+
    --------------------------------------
    -- Goto Declaration<->Body requests --
    --------------------------------------
@@ -300,8 +307,15 @@ package Src_Info.Queries is
    --  Return the declaration node for the entity Name that is referenced
    --  at position Line, Column.
 
-   type Node_Callback is access procedure (Node : Scope_Tree_Node);
+   type Node_Callback is access procedure
+     (Node : Scope_Tree_Node; Is_Renaming : Boolean);
    --  Called for each node matching a given criteria.
+   --  Is_Renaming is set to true if Node is not a direct reference to the
+   --  entity, but the declaration of an entity that is a renaming of the
+   --  entity.
+   --  Node is a reference to the entity that was search, except when
+   --  Is_Renaming is True, in which case this is a reference to the renaming
+   --  entity.
 
    procedure Find_Entity_References
      (Tree : Scope_Tree;
@@ -321,6 +335,10 @@ package Src_Info.Queries is
    --  Return the information for the entity defined in Node.
    --  You must call Destroy on the returned information.
 
+   function Is_Renaming_Of
+     (Entity : Entity_Information; Node : Scope_Tree_Node) return Boolean;
+   --  Return True if Node points to an entity that is a renaming of Entity.
+
    --------------------------
    -- Scope tree iterators --
    --------------------------
@@ -337,6 +355,38 @@ package Src_Info.Queries is
    --  Return the node pointed to by Iter, or null if Iter is invalid.
 
 private
+
+   function Get_Declaration
+     (List : LI_File_List; Entity : Entity_Information) return E_Declaration;
+   --  Return the declaration matching Entity, from the LI file and source file
+   --  that contains that declaration
+
+   function Get_Declaration
+     (Location : File_Location; Entity_Name : String := "")
+      return E_Declaration;
+   --  Return the declaration of the entity declaration at Location.
+   --  If Entity_Name is not the empty string, then this declaration must match
+   --  Entity_Name, or No_Declaration is returned.
+
+   function Get_Source_File
+     (List : LI_File_List; Entity : Entity_Information) return Source_File;
+   --  Return the source file for the declaration of Entity.
+
+   function Get_Declaration_Location
+     (List : LI_File_List; Entity : Entity_Information) return File_Location;
+   --  Retunr the location of the declaration of Entity
+
+   function Get_Declaration
+     (List : E_Declaration_Info_List;
+      Decl_Line, Decl_Column : Natural; Entity_Name : String := "")
+      return E_Declaration_Info_List;
+   --  Return the declaration in List that matches entity.
+   --  If Entity_Name is not the empty string, then the declaration must match
+   --  Entity_Name, or null is returned.
+
+   function Get_Entity (Decl : E_Declaration) return Entity_Information;
+   --  Return the entity declared at Decl.
+   --  You must call Entity_Information on the returned entity
 
    type Dependency is record
       File  : Src_Info.Internal_File;
