@@ -143,7 +143,7 @@ procedure GPS is
    VCS_Trace     : constant Debug_Handle := Create ("MODULE.VCS", On);
    Custom_Trace  : constant Debug_Handle := Create ("MODULE.Custom", On);
    Action_Editor_Trace : constant Debug_Handle :=
-     Create ("MODULE.Action_Editor", On);
+     Create ("MODULE.Action_Editor", Off);
    Codefix_Trace : constant Debug_Handle := Create ("MODULE.Codefix", On);
    GVD_Trace     : constant Debug_Handle := Create ("MODULE.GVD", On);
    Aunit_Trace   : constant Debug_Handle := Create ("MODULE.Aunit", On);
