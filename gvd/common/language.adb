@@ -30,6 +30,7 @@ package body Language is
    function Break_Exception
      (Debugger  : access Language_Root;
       Name      : String  := "";
+      Temporary : Boolean := False;
       Unhandled : Boolean := False) return String is
    begin
       return "";

@@ -148,6 +148,7 @@ package Language is
    function Break_Exception
      (Debugger  : access Language_Root;
       Name      : String  := "";
+      Temporary : Boolean := False;
       Unhandled : Boolean := False) return String;
    --  Return the command used in the current debugger/language to break
    --  on exception. If name is null, break should occur on all exceptions.
