@@ -10,6 +10,7 @@ with "../browsers/browsers";
 with "../vcs/vcs";
 with "../metrics/metrics";
 with "../builder/builder";
+with "../navigation/navigation";
 
 project Glide is
 
