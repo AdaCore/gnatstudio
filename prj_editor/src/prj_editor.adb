@@ -93,19 +93,12 @@ begin
    Gtk_New (Tree, Columns => 1);
    Add (Box, Tree);
 
-   Gtk_New (Button, "Refresh");
-   Pack_Start (Box, Button, Fill => False, Expand => False);
-
    Widget_Callback.Connect
      (Tree, "tree_select_row",
       Widget_Callback.To_Marshaller (Selection_Changed'Unrestricted_Access));
    Widget_Callback.Connect
      (Tree, "tree_unselect_row",
       Widget_Callback.To_Marshaller (Selection_Changed'Unrestricted_Access));
-
-   Widget_Callback.Object_Connect
-     (Button, "clicked",
-      Widget_Callback.To_Marshaller (Refresh_Tree'Unrestricted_Access), Tree);
 
    Prj.Part.Parse (Project, "root.gpr", Always_Errout_Finalize => False);
    pragma Assert (Project /= Empty_Node);
