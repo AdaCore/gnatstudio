@@ -21,8 +21,12 @@
 with Glib.Values;     use Glib.Values;
 with Gtk.Widget;      use Gtk.Widget;
 with Gtk.Handlers;    use Gtk.Handlers;
+with Traces;          use Traces;
+with Ada.Exceptions;  use Ada.Exceptions;
 
 package body Commands.Controls is
+
+   Me : constant Debug_Handle := Create ("Commands.Controls");
 
    type Queue_Change_Command is new Root_Command with record
       The_Queue                 : Command_Queue;
@@ -71,6 +75,10 @@ package body Commands.Controls is
       pragma Unreferenced (Params);
    begin
       Undo (Command.The_Queue);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Undo;
 
    -------------
@@ -86,6 +94,10 @@ package body Commands.Controls is
       pragma Unreferenced (Params);
    begin
       Redo (Command.The_Queue);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Redo;
 
    -------------
@@ -101,18 +113,18 @@ package body Commands.Controls is
       end if;
 
       if Command.Redo_Button /= null then
-         Set_Sensitive (Command.Redo_Button,
-                        not Redo_Queue_Empty (Command.The_Queue));
+         Set_Sensitive
+           (Command.Redo_Button, not Redo_Queue_Empty (Command.The_Queue));
       end if;
 
       if Command.Undo_Menu_Item /= null then
-         Set_Sensitive (Command.Undo_Menu_Item,
-                        not Undo_Queue_Empty (Command.The_Queue));
+         Set_Sensitive
+           (Command.Undo_Menu_Item, not Undo_Queue_Empty (Command.The_Queue));
       end if;
 
       if Command.Redo_Menu_Item /= null then
-         Set_Sensitive (Command.Redo_Menu_Item,
-                        not Redo_Queue_Empty (Command.The_Queue));
+         Set_Sensitive
+           (Command.Redo_Menu_Item, not Redo_Queue_Empty (Command.The_Queue));
       end if;
 
       return True;
@@ -171,14 +183,14 @@ package body Commands.Controls is
 
       if The_Command.all in Queue_Change_Command'Class then
          Command := Queue_Change_Access (The_Command);
-         Disconnect (Command.Undo_Button,
-                     Command.Undo_Button_Handler_ID);
-         Disconnect (Command.Redo_Button,
-                     Command.Redo_Button_Handler_ID);
-         Disconnect (Command.Undo_Menu_Item,
-                     Command.Undo_Menu_Item_Handler_ID);
-         Disconnect (Command.Redo_Menu_Item,
-                     Command.Redo_Menu_Item_Handler_ID);
+         Disconnect
+           (Command.Undo_Button, Command.Undo_Button_Handler_ID);
+         Disconnect
+           (Command.Redo_Button, Command.Redo_Button_Handler_ID);
+         Disconnect
+           (Command.Undo_Menu_Item, Command.Undo_Menu_Item_Handler_ID);
+         Disconnect
+           (Command.Redo_Menu_Item, Command.Redo_Menu_Item_Handler_ID);
 
          if Command.Undo_Button /= null then
             Set_Sensitive (Command.Undo_Button, False);
