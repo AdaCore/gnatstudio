@@ -90,6 +90,10 @@ package VCS_View_API is
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
 
+   procedure On_Menu_View_Log_Rev
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access);
+
    procedure On_Menu_Update
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
