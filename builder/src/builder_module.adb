@@ -898,27 +898,23 @@ package body Builder_Module is
    is
       use String_List_Utils.String_List;
       Node : List_Node;
-      Instance : Class_Instance;
       Info     : File_Info;
       Kernel   : constant Kernel_Handle := Get_Kernel (Data);
       C        : Xref_Commands.Generic_Asynchronous_Command_Access;
    begin
       if Command = "compile" then
-         Instance := Nth_Arg (Data, 1, Get_File_Class (Kernel));
-         Info := Get_Data (Instance);
+         Info := Get_Data (Nth_Arg (Data, 1, Get_File_Class (Kernel)));
          Compile_File (Get_Kernel (Data), Get_File (Info),
                        Synchronous => True);
 
       elsif Command = "check_syntax" then
-         Instance := Nth_Arg (Data, 1, Get_File_Class (Kernel));
-         Info := Get_Data (Instance);
+         Info := Get_Data (Nth_Arg (Data, 1, Get_File_Class (Kernel)));
          Compile_File (Get_Kernel (Data), Get_File (Info),
                        Synchronous => True,
                        Syntax_Only => True);
 
       elsif Command = "make" then
-         Instance := Nth_Arg (Data, 1, Get_File_Class (Kernel));
-         Info := Get_Data (Instance);
+         Info := Get_Data (Nth_Arg (Data, 1, Get_File_Class (Kernel)));
 
          declare
             Main    : constant Virtual_File := Get_File (Info);
