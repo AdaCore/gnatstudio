@@ -27,11 +27,11 @@ package body Debugger.Gdb.C is
 
    use Language;
 
-   Record_Start : Character := '{';
-   Record_End   : Character := '}';
-   Array_Start  : Character := '{';
-   Array_End    : Character := '}';
-   Record_Field : String    := "=";
+   Record_Start : constant Character := '{';
+   Record_End   : constant Character := '}';
+   Array_Start  : constant Character := '{';
+   Array_End    : constant Character := '}';
+   Record_Field : constant String    := "=";
    --  how are record field names separated from their values
 
    ---------------------
@@ -520,9 +520,8 @@ package body Debugger.Gdb.C is
    -- Get_Language_Context --
    --------------------------
 
-   function Get_Language_Context (Lang : access Gdb_C_Language)
-                                 return Language_Context
-   is
+   function Get_Language_Context
+     (Lang : access Gdb_C_Language) return Language_Context is
    begin
       return (Record_Field_Length => Record_Field'Length,
               Record_Start        => Record_Start,
