@@ -94,8 +94,9 @@ package body VFS is
          Ensure_Normalized (File1);
          Ensure_Normalized (File2);
 
-         return File2.Value.Normalized_Full.all =
-           File1.Value.Normalized_Full.all;
+         return File_Equal
+           (File2.Value.Normalized_Full.all,
+            File1.Value.Normalized_Full.all;
       end if;
    end "=";
 
