@@ -30,6 +30,16 @@ with Glib.Unicode;                use Glib, Glib.Unicode;
 
 package body Language is
 
+   procedure Looking_At
+     (Lang      : access Language_Root;
+      Buffer    : String;
+      Entity    : out Language_Entity;
+      Next_Char : out Positive;
+      Line      : out Natural;
+      Column    : out Natural);
+   --  Internal version of Looking_At, which also returns the Line and Column,
+   --  considering that Buffer'First is at line 1 column 1.
+
    ---------------------------
    -- Can_Tooltip_On_Entity --
    ---------------------------
@@ -114,6 +124,23 @@ package body Language is
       Entity    : out Language_Entity;
       Next_Char : out Positive)
    is
+      Line, Column : Natural;
+   begin
+      Looking_At (Lang, Buffer, Entity, Next_Char, Line, Column);
+   end Looking_At;
+
+   ----------------
+   -- Looking_At --
+   ----------------
+
+   procedure Looking_At
+     (Lang      : access Language_Root;
+      Buffer    : String;
+      Entity    : out Language_Entity;
+      Next_Char : out Positive;
+      Line      : out Natural;
+      Column    : out Natural)
+   is
       Matched : Match_Array (0 .. 1);
       Context : constant Language_Context :=
         Get_Language_Context (Language_Access (Lang));
@@ -122,6 +149,17 @@ package body Language is
       C : Gunichar;
 
    begin
+      Line := 1;
+      Column := 1;
+
+      if Buffer (Buffer'First) = ASCII.LF then
+         Next_Char := Buffer'First + 1;
+         Line := Line + 1;
+         Column := 1;
+         Entity := Normal_Text;
+         return;
+      end if;
+
       --  Do we have a comment ?
 
       if Context.Comment_Start_Length /= 0
@@ -132,6 +170,7 @@ package body Language is
       then
          Entity := Comment_Text;
          Next_Char := Buffer'First + Context.Comment_Start_Length;
+         Column := Column + Context.Comment_Start_Length;
 
          while Next_Char + Context.Comment_End_Length - 1 <= Buffer'Last
            and then Buffer
@@ -139,9 +178,16 @@ package body Language is
            /= Context.Comment_End
          loop
             Next_Char := UTF8_Find_Next_Char (Buffer, Next_Char);
+            Column := Column + 1;
+
+            if Buffer (Next_Char) = ASCII.LF then
+               Column := 1;
+               Line := Line + 1;
+            end if;
          end loop;
 
          Next_Char := Next_Char + Context.Comment_End_Length;
+         Column := Column + Context.Comment_End_Length;
          return;
       end if;
 
@@ -156,11 +202,13 @@ package body Language is
       then
          Entity := Comment_Text;
          Next_Char := Buffer'First + Context.New_Line_Comment_Start_Length;
+         Column := Column + Context.New_Line_Comment_Start_Length;
 
          while Next_Char <= Buffer'Last
            and then Buffer (Next_Char) /= ASCII.LF
          loop
             Next_Char := UTF8_Find_Next_Char (Buffer, Next_Char);
+            Column := Column + 1;
          end loop;
 
          return;
@@ -175,6 +223,8 @@ package body Language is
 
          loop
             Next_Char := Next_Char + 1;
+            Column := Column + 1;
+
             exit when Next_Char >= Buffer'Last
               or else Buffer (Next_Char) = ASCII.LF
               or else
@@ -185,7 +235,13 @@ package body Language is
                           Buffer (Next_Char - 1) /= Context.Quote_Character));
          end loop;
 
-         Next_Char := UTF8_Find_Next_Char (Buffer, Next_Char);
+         --  if Buffer (Next_Char) = ASCII.LF then
+         --     Line := Line + 1;
+         --     Column := 0;
+         --  end if;
+
+         --  Next_Char := UTF8_Find_Next_Char (Buffer, Next_Char);
+         --  Column    := Column + 1;
          return;
       end if;
 
@@ -200,6 +256,7 @@ package body Language is
       then
          Entity := Character_Text;
          Next_Char := Buffer'First + 4;
+         Column := Column + 4;
          return;
       end if;
 
@@ -211,6 +268,7 @@ package body Language is
       then
          Entity := Character_Text;
          Next_Char := Buffer'First + 3;
+         Column := Column + 3;
          return;
       end if;
 
@@ -220,6 +278,7 @@ package body Language is
 
       if Matched (0) /= No_Match then
          Next_Char := UTF8_Find_Next_Char (Buffer, Matched (0).Last);
+         Column := Column + Matched (0).Last - Matched (0).First + 1;
          Entity := Keyword_Text;
          return;
       end if;
@@ -232,6 +291,7 @@ package body Language is
       if not Is_Entity_Letter (UTF8_Get_Char (Buffer)) then
          Entity := Normal_Text;
          Next_Char := UTF8_Find_Next_Char (Buffer, Buffer'First);
+         Column := Column + 1;
 
          Comm1 := ASCII.LF;
          Comm2 := ASCII.LF;
@@ -257,6 +317,7 @@ package body Language is
               or else Is_Alpha (C);
 
             Next_Char := UTF8_Find_Next_Char (Buffer, Next_Char);
+            Column := Column + 1;
          end loop;
 
          return;
@@ -266,7 +327,12 @@ package body Language is
       --  starting with a letter
 
       Next_Char := UTF8_Find_Next_Char (Buffer, Buffer'First);
+      Column := Column + 1;
       Entity := Normal_Text;
+
+      if Buffer (Next_Char) = ASCII.LF then
+         return;
+      end if;
 
       --  Skip the current word
 
@@ -275,6 +341,7 @@ package body Language is
           (UTF8_Get_Char (Buffer (Next_Char .. Buffer'Last)))
       loop
          Next_Char := UTF8_Find_Next_Char (Buffer, Next_Char);
+         Column := Column + 1;
       end loop;
    end Looking_At;
 
@@ -466,12 +533,17 @@ package body Language is
       Next_Char : Natural;
       End_Char  : Natural;
       Entity    : Language_Entity;
+      Line, Line_Inc : Natural;
+      Column, Column_Inc : Natural;
 
    begin
-      loop
-         exit when Index >= Buffer'Last;
+      Line := 1;
+      Column := 1;
 
-         Looking_At (Lang, Buffer (Index .. Buffer'Last), Entity, Next_Char);
+      while Index < Buffer'Last loop
+         Looking_At
+           (Lang, Buffer (Index .. Buffer'Last), Entity, Next_Char,
+            Line_Inc, Column_Inc);
 
          if Next_Char = Buffer'Last then
             End_Char := Buffer'Last;
@@ -479,11 +551,21 @@ package body Language is
             End_Char := Next_Char - 1;
          end if;
 
+         --  If we are still on the same line, Column_Inc is an increment
+         --  compared to what we have initially, otherwise it is an absolute
+         --  column.
+         if Line_Inc = 1 then
+            Column_Inc := Column + Column_Inc - 1;
+         end if;
+
          exit when Callback
            (Entity,
-            (0, 0, Index),
-            (0, 0, End_Char),
+            (Line, Column, Index),
+            (Line + Line_Inc - 1, Column_Inc, End_Char),
             Entity = Comment_Text and then Next_Char > Buffer'Last);
+
+         Line := Line + Line_Inc - 1;
+         Column := Column_Inc;
 
          Index := Next_Char;
       end loop;
