@@ -8,7 +8,6 @@ with Vdiff_Pkg; use Vdiff_Pkg;
 with Vdiff_Utils; use Vdiff_Utils;
 
 procedure Vdiff is
-
    Vdiff  : Vdiff_Access;
    Result : Diff_Occurrence_Link;
 
