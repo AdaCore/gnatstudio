@@ -216,12 +216,6 @@ package body Src_Editor_Box is
      (Box : access GObject_Record'Class) return Boolean;
    --  Toggle read-only/writable state of a given box.
 
-   procedure Box_Scrolled
-     (Adj : access Glib.Object.GObject_Record'Class;
-      Box : Source_Editor_Box);
-   --  Called when the source editor has been scrolled with the scrollbar. It
-   --  makes sure that the cursor stays in the visible area.
-
    function Check_Timestamp_Idle (Box : GObject) return Boolean;
    --  Idle callback to check that the timestamp of a file hasn't changed.
 
@@ -1173,14 +1167,6 @@ package body Src_Editor_Box is
          On_Box_Destroy'Access,
          User_Data => Source_Editor_Box (Box));
 
-      --  ??? See the body of Box_Scrolled for an explanation of why this is
-      --  commented out.
-
-      --  Box_Callback.Connect
-      --    (Get_Vadjustment (Scrolling_Area), "value_changed",
-      --     Box_Callback.To_Marshaller (Box_Scrolled'Access),
-      --     Source_Editor_Box (Box));
-
       Show_Cursor_Position (Source_Editor_Box (Box), Line => 0, Column => 0);
 
       Add_Events (Box.Source_View, Focus_Change_Mask);
@@ -1202,26 +1188,6 @@ package body Src_Editor_Box is
          ID              => Src_Editor_Module_Id,
          Context_Func    => Get_Contextual_Menu'Access);
    end Initialize_Box;
-
-   ------------------
-   -- Box_Scrolled --
-   ------------------
-
-   --  ??? Right now, this callback is not connected, since it causes
-   --  the editor to crash when dragging the selection causes the widget to
-   --  scroll.
-
-   pragma Unreferenced (Box_Scrolled);
-
-   procedure Box_Scrolled
-     (Adj : access Glib.Object.GObject_Record'Class;
-      Box : Source_Editor_Box)
-   is
-      Tmp : Boolean;
-      pragma Unreferenced (Adj, Tmp);
-   begin
-      Tmp := Place_Cursor_Onscreen (Box.Source_View);
-   end Box_Scrolled;
 
    ---------------
    -- Key_Press --
