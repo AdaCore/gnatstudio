@@ -17,6 +17,13 @@
 
   * [Yeti] Add predefined patterns
     e.g.: "when \w+( : \w+) =>", "pragma \w+;", ...
+    See ../regexps.txt.
+
+  * [Yeti] Stop searching when closing the hypergrep window.
+
+  * [Yeti] Set case sensitivity of Pattern_Combo accordingly with Case_Check ?
+
+  * [Yeti] Replace scope check boxes by a combo with Set_Value_In_List.
 
 ------------------
 -- Improvements --
@@ -44,6 +51,14 @@
 
   * [Yeti] Get match position with Boyer-Moore too
 
+  * [Yeti] Specify the full view limited.
+
+  * [Yeti] Document the lifecycle: Init [Do] Free {Free}.
+    Maximum 1 Do_Search, at least 1 Free, more does nothing.
+
+  * [Yeti] Handle Free called by the callback
+    Only say it is a bad idea, or better protect against it ?
+
 -----------
 -- Speed --
 -----------
@@ -51,6 +66,7 @@
 7 * [Yeti] Merge Scan_File_With_Context and Scan_Line_With_Context
     Avoids calls to SLWC and re-elaboration of declared items, but add
     indentation levels.
+    Other possibility, scan whole file and periodically call Handle_ASCII_LF.
 
 8 * [Yeti] Caching Language_Context
 
