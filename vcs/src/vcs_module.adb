@@ -83,8 +83,8 @@ package body VCS_Module is
    --  Free the memory occupied by Module.
 
    type VCS_Selector_Record is new Gtk_Box_Record with record
-      Selected : Gtk_Radio_Button;
-      Log_Checker : Gtk.GEntry.Gtk_Entry;
+      Selected     : Gtk_Radio_Button;
+      Log_Checker  : Gtk.GEntry.Gtk_Entry;
       File_Checker : Gtk.GEntry.Gtk_Entry;
    end record;
    type VCS_Selector is access all VCS_Selector_Record'Class;
@@ -132,12 +132,12 @@ package body VCS_Module is
       Kernel       : access Kernel_Handle_Record'Class)
       return Gtk_Widget;
    function Project_Editor
-     (Page         : access VCS_Editor_Record;
-      Project      : Project_Type;
-      Kernel       : access Kernel_Handle_Record'Class;
-      Widget       : access Gtk_Widget_Record'Class;
+     (Page               : access VCS_Editor_Record;
+      Project            : Project_Type;
+      Kernel             : access Kernel_Handle_Record'Class;
+      Widget             : access Gtk_Widget_Record'Class;
       Scenario_Variables : Scenario_Variable_Array;
-      Ref_Project  : Project_Type)
+      Ref_Project        : Project_Type)
       return Boolean;
 
    procedure Status_Parse_Handler
@@ -278,8 +278,7 @@ package body VCS_Module is
       Old : Argument_List_Access;
    begin
       if M.VCS_List = null then
-         M.VCS_List := new Argument_List'
-           (1 => new String'(VCS_Identifier));
+         M.VCS_List := new Argument_List'(1 => new String'(VCS_Identifier));
       else
          Old := M.VCS_List;
          M.VCS_List := new Argument_List (1 .. M.VCS_List'Length + 1);
