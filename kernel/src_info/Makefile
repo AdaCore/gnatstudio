@@ -28,6 +28,7 @@ distrib:
 	$(CP) ../../gvd/common/basic_types.ad? gvd
 	$(CP) ../../gvd/common/os_utils.ad? gvd
 	$(CP) ../../gvd/common/vfs.ad? gvd
+	$(CP) ../../gvd/common/remote_connections.ad? gvd
 	$(CP) ../../gvd/common/string_utils.ad? gvd
 	$(CP) ../../gvd/common/language_handlers.ad? gvd
 	$(CP) ../../gvd/common/language-unknown.ad? gvd
