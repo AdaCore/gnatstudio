@@ -1208,14 +1208,6 @@ change, in the directory etc/gps in the GPS installation. This file
 contains the usual configuration description, following the gtk resource
 files syntax.
 
-For instance, the key shortcuts associated with the menus can be changed
-dynamically if you want this behavior. It can be activated explicitely by
-setting the following in the configuration file:
-
-@smallexample
-gtk-can-change-accels = 1
-@end smallexample
-
 Special effects can be achieved easily. For instance, the following
 code will change the background color of any button, when it is
 pressed. It will also set a background pixmap when it is not pressed.
@@ -1231,7 +1223,7 @@ style "button" = "default" @{
 class "*GtkButton*" style "button"
 @end smallexample
 
-Finally, you can configure the key bindings to suit your habits. In
+Similarly, you can configure the key bindings to suit your habits. In
 the editor, you can for instance set @key{Ctrl-V} to scroll forward
 one page, as usual under the Emacs editor. The following code takes
 care of that. Configuring keys is trickier than the above, since you
