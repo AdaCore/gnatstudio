@@ -39,6 +39,10 @@ with Ada.Exceptions;           use Ada.Exceptions;
 with Glide_Kernel.Scripts;     use Glide_Kernel.Scripts;
 with System;                   use System;
 with Traces;                   use Traces;
+with String_Utils;             use String_Utils;
+with Projects;                 use Projects;
+with Src_Info.Queries;         use Src_Info.Queries;
+with HTables;
 
 package body Python_Module is
 
@@ -51,6 +55,9 @@ package body Python_Module is
    --  Internal name of the attributes reserved for GPS
 
    Python_Language_Name : constant String := "Python";
+
+   type Hash_Index is range 0 .. 100000;
+   function Hash is new HTables.Hash (Hash_Index);
 
    ----------------------
    -- Python_scripting --
@@ -77,9 +84,9 @@ package body Python_Module is
    procedure Register_Command
      (Script       : access Python_Scripting_Record;
       Command      : String;
-      Params       : String;
-      Return_Value : String;
-      Description  : String;
+      Params       : String := "";
+      Return_Value : String := "";
+      Description  : String := "";
       Minimum_Args : Natural := 0;
       Maximum_Args : Natural := 0;
       Handler      : Module_Command_Function;
@@ -119,6 +126,7 @@ package body Python_Module is
       Script           : Python_Scripting;
       Args, Kw         : PyObject;
       Return_Value     : PyObject;
+      Return_Dict      : PyObject;
       Has_Return_Value : Boolean := False;
       Return_As_List   : Boolean := False;
       Kw_Params        : PyObject_Array_Access;
@@ -152,7 +160,25 @@ package body Python_Module is
      (Data   : in out Python_Callback_Data; Value : System.Address);
    procedure Set_Return_Value
      (Data   : in out Python_Callback_Data; Value : Class_Instance);
+   procedure Set_Return_Value_Key
+     (Data   : in out Python_Callback_Data;
+      Key    : String;
+      Append : Boolean := False);
+   procedure Set_Return_Value_Key
+     (Data   : in out Python_Callback_Data;
+      Key    : Integer;
+      Append : Boolean := False);
+   procedure Set_Return_Value_Key
+     (Data   : in out Python_Callback_Data;
+      Key    : Class_Instance;
+      Append : Boolean := False);
    --  See doc from inherited subprogram
+
+   procedure Prepare_Value_Key
+     (Data   : in out Python_Callback_Data'Class;
+      Key    : PyObject;
+      Append : Boolean);
+   --  Internal version of Set_Return_Value_Key
 
    function Get_Param (Data : Python_Callback_Data'Class; N : Positive)
       return PyObject;
@@ -271,6 +297,14 @@ package body Python_Module is
       Node : Node_Ptr;
       User : Kernel_Handle) return MDI_Child;
    --  Support functions for saving the desktop
+
+   procedure Python_File_Command_Handler
+     (Data : in out Callback_Data'Class; Command : String);
+   procedure Python_Project_Command_Handler
+     (Data : in out Callback_Data'Class; Command : String);
+   procedure Python_Entity_Command_Handler
+     (Data : in out Callback_Data'Class; Command : String);
+   --  Handler for the commands related to the various classes
 
    ----------------
    -- Trace_Dump --
@@ -430,7 +464,253 @@ package body Python_Module is
          Parent_Path => "/" & (-"Tools"),
          Text        => -"Python Console",
          Callback    => Open_Python_Console'Access);
+
+      --  Change the screen representation of the various classes. This way,
+      --  commands can return classes, but still displayed user-readable
+      --  strings.
+      --  Also make sure these can be used as keys in dictionaries.
+
+      Register_Command
+        (Python_Module_Id.Script,
+         Command      => "__str__",
+         Return_Value => "string",
+         Handler      => Python_File_Command_Handler'Access,
+         Class        => Get_File_Class (Kernel));
+      Register_Command
+        (Python_Module_Id.Script,
+         Command      => "__repr__",
+         Return_Value => "string",
+         Handler      => Python_File_Command_Handler'Access,
+         Class        => Get_File_Class (Kernel));
+      Register_Command
+        (Python_Module_Id.Script,
+         Command      => "__hash__",
+         Return_Value => "integer",
+         Handler      => Python_Entity_Command_Handler'Access,
+         Class        => Get_File_Class (Kernel));
+      Register_Command
+        (Python_Module_Id.Script,
+         Command      => "__cmp__",
+         Return_Value => "integer",
+         Minimum_Args => 1,
+         Maximum_Args => 1,
+         Handler      => Python_Entity_Command_Handler'Access,
+         Class        => Get_File_Class (Kernel));
+
+      Register_Command
+        (Python_Module_Id.Script,
+         Command      => "__str__",
+         Return_Value => "string",
+         Handler      => Python_Project_Command_Handler'Access,
+         Class        => Get_Project_Class (Kernel));
+      Register_Command
+        (Python_Module_Id.Script,
+         Command      => "__repr__",
+         Return_Value => "string",
+         Handler      => Python_Project_Command_Handler'Access,
+         Class        => Get_Project_Class (Kernel));
+      Register_Command
+        (Python_Module_Id.Script,
+         Command      => "__hash__",
+         Return_Value => "integer",
+         Handler      => Python_Entity_Command_Handler'Access,
+         Class        => Get_Project_Class (Kernel));
+      Register_Command
+        (Python_Module_Id.Script,
+         Command      => "__cmp__",
+         Return_Value => "integer",
+         Minimum_Args => 1,
+         Maximum_Args => 1,
+         Handler      => Python_Entity_Command_Handler'Access,
+         Class        => Get_Project_Class (Kernel));
+
+      Register_Command
+        (Python_Module_Id.Script,
+         Command      => "__str__",
+         Return_Value => "string",
+         Handler      => Python_Entity_Command_Handler'Access,
+         Class        => Get_Entity_Class (Kernel));
+      Register_Command
+        (Python_Module_Id.Script,
+         Command      => "__repr__",
+         Return_Value => "string",
+         Handler      => Python_Entity_Command_Handler'Access,
+         Class        => Get_Entity_Class (Kernel));
+      Register_Command
+        (Python_Module_Id.Script,
+         Command      => "__hash__",
+         Return_Value => "integer",
+         Handler      => Python_Entity_Command_Handler'Access,
+         Class        => Get_Entity_Class (Kernel));
+      Register_Command
+        (Python_Module_Id.Script,
+         Command      => "__cmp__",
+         Return_Value => "integer",
+         Minimum_Args => 1,
+         Maximum_Args => 1,
+         Handler      => Python_Entity_Command_Handler'Access,
+         Class        => Get_Entity_Class (Kernel));
    end Register_Module;
+
+   ---------------------------------
+   -- Python_File_Command_Handler --
+   ---------------------------------
+
+   procedure Python_File_Command_Handler
+     (Data : in out Callback_Data'Class; Command : String)
+   is
+      Kernel   : constant Kernel_Handle  := Get_Kernel (Data);
+      Instance : constant Class_Instance :=
+        Nth_Arg (Data, 1, Get_File_Class (Kernel));
+      Info     : constant File_Info := Get_Data (Instance);
+   begin
+      if Command = "__str__" or else Command = "__repr__" then
+         Set_Return_Value (Data, Get_Name (Info));
+
+      elsif Command = "__cmp__" then
+         declare
+            Inst2 : constant Class_Instance := Nth_Arg
+              (Data, 2, Get_File_Class (Kernel));
+            Info2 : constant File_Info := Get_Data (Inst2);
+            Name  : constant String := Get_Name (Info);
+            Name2 : constant String := Get_Name (Info2);
+         begin
+            if Name < Name2 then
+               Set_Return_Value (Data, -1);
+            elsif Name = Name2 then
+               Set_Return_Value (Data, 0);
+            else
+               Set_Return_Value (Data, 1);
+            end if;
+         end;
+
+      elsif Command = "__hash__" then
+         Set_Return_Value (Data, Integer (Hash (Get_Name (Info))));
+      end if;
+   end Python_File_Command_Handler;
+
+   ------------------------------------
+   -- Python_Project_Command_Handler --
+   ------------------------------------
+
+   procedure Python_Project_Command_Handler
+     (Data : in out Callback_Data'Class; Command : String)
+   is
+      Kernel   : constant Kernel_Handle  := Get_Kernel (Data);
+      Instance : constant Class_Instance :=
+        Nth_Arg (Data, 1, Get_Project_Class (Kernel));
+      Project  : constant Project_Type := Get_Data (Instance);
+   begin
+      if Command = "__str__" then
+         Set_Return_Value (Data, Project_Name (Project));
+
+      elsif Command = "__repr__" then
+         Set_Return_Value (Data, Project_Path (Project));
+
+      elsif Command = "__cmp__" then
+         declare
+            Inst2 : constant Class_Instance := Nth_Arg
+              (Data, 2, Get_Project_Class (Kernel));
+            Project2 : constant Project_Type := Get_Data (Inst2);
+            Name  : constant String := Project_Path (Project);
+            Name2 : constant String := Project_Path (Project2);
+         begin
+            if Name < Name2 then
+               Set_Return_Value (Data, -1);
+            elsif Name = Name2 then
+               Set_Return_Value (Data, 0);
+            else
+               Set_Return_Value (Data, 1);
+            end if;
+         end;
+
+      elsif Command = "__hash__" then
+         Set_Return_Value (Data, Integer (Hash (Project_Path (Project))));
+      end if;
+   end Python_Project_Command_Handler;
+
+   -----------------------------------
+   -- Python_Entity_Command_Handler --
+   -----------------------------------
+
+   procedure Python_Entity_Command_Handler
+     (Data : in out Callback_Data'Class; Command : String)
+   is
+      Kernel   : constant Kernel_Handle  := Get_Kernel (Data);
+      Instance : constant Class_Instance :=
+        Nth_Arg (Data, 1, Get_Entity_Class (Kernel));
+      Entity   : constant Entity_Information := Get_Data (Instance);
+   begin
+      if Command = "__str__"
+        or else Command = "__repr__"
+      then
+         Set_Return_Value (Data,
+                           Get_Name (Entity) & ':'
+                           & Get_Declaration_File_Of (Entity) & ':'
+                           & Image (Get_Declaration_Line_Of (Entity)) & ':'
+                           & Image (Get_Declaration_Column_Of (Entity)));
+
+      elsif Command = "__hash__" then
+         Set_Return_Value
+           (Data, Integer
+            (Hash (Get_Name (Entity) & ':'
+                   & Get_Declaration_File_Of (Entity) & ':'
+                   & Image (Get_Declaration_Line_Of (Entity)) & ':'
+                   & Image (Get_Declaration_Column_Of (Entity)))));
+
+      elsif Command = "__cmp__" then
+         declare
+            Inst2 : constant Class_Instance :=
+              Nth_Arg (Data, 2, Get_Entity_Class (Kernel));
+            Entity2 : constant Entity_Information := Get_Data (Inst2);
+            Line1, Line2 : Integer;
+         begin
+            if Is_Equal (Entity, Entity2) then
+               Set_Return_Value (Data, 0);
+            else
+               declare
+                  Name1 : constant String := Get_Name (Entity);
+                  Name2 : constant String := Get_Name (Entity2);
+               begin
+                  if Name1 < Name2 then
+                     Set_Return_Value (Data, -1);
+                  elsif Name1 = Name2 then
+                     declare
+                        File1 : constant String :=
+                          Get_Declaration_File_Of (Entity);
+                        File2 : constant String :=
+                          Get_Declaration_File_Of (Entity2);
+                     begin
+                        if File1 < File2 then
+                           Set_Return_Value (Data, -1);
+                        elsif File1 = File2 then
+                           Line1 := Get_Declaration_Line_Of (Entity);
+                           Line2 := Get_Declaration_Line_Of (Entity2);
+                           if Line1 < Line2 then
+                              Set_Return_Value (Data, -1);
+                           elsif Line1 = Line2 then
+                              Line1 := Get_Declaration_Column_Of (Entity);
+                              Line2 := Get_Declaration_Column_Of (Entity2);
+                              if Line1 < Line2 then
+                                 Set_Return_Value (Data, -1);
+                              else
+                                 Set_Return_Value (Data, 1);
+                              end if;
+                           else
+                              Set_Return_Value (Data, 1);
+                           end if;
+                        else
+                           Set_Return_Value (Data, 1);
+                        end if;
+                     end;
+                  else
+                     Set_Return_Value (Data, 1);
+                  end if;
+               end;
+            end if;
+         end;
+      end if;
+   end Python_Entity_Command_Handler;
 
    -------------------------
    -- Open_Python_Console --
@@ -503,17 +783,20 @@ package body Python_Module is
       Callback.Return_Value := Py_None;
       Callback.Script       := Handler.Script;
       Callback.Is_Method    := Handler.Is_Method;
-      Py_INCREF (Py_None);
+      Py_INCREF (Callback.Return_Value);
 
       Handler.Handler.all (Callback, Handler.Command);
 
       Free (Callback);
 
-      if Callback.Has_Return_Value then
-         return Callback.Return_Value;
+      if Callback.Return_Dict /= null then
+         if Callback.Return_Value /= null then
+            Py_DECREF (Callback.Return_Value);
+         end if;
+         return Callback.Return_Dict;
+
       else
-         Py_INCREF (Py_None);
-         return Py_None;
+         return Callback.Return_Value;
       end if;
 
    exception
@@ -551,9 +834,9 @@ package body Python_Module is
    procedure Register_Command
      (Script       : access Python_Scripting_Record;
       Command      : String;
-      Params       : String;
-      Return_Value : String;
-      Description  : String;
+      Params       : String := "";
+      Return_Value : String := "";
+      Description  : String := "";
       Minimum_Args : Natural := 0;
       Maximum_Args : Natural := 0;
       Handler      : Module_Command_Function;
@@ -989,6 +1272,91 @@ package body Python_Module is
       Setup_Return_Value (Data);
       PyErr_SetString (Data.Script.GPS_Exception, Msg);
    end Set_Error_Msg;
+
+   -----------------------
+   -- Prepare_Value_Key --
+   -----------------------
+
+   procedure Prepare_Value_Key
+     (Data   : in out Python_Callback_Data'Class;
+      Key    : PyObject;
+      Append : Boolean)
+   is
+      Obj, List : PyObject;
+      Tmp : Integer;
+      pragma Unreferenced (Tmp);
+   begin
+      if Data.Return_Dict = null then
+         Data.Return_Dict := PyDict_New;
+      end if;
+
+      if Append then
+         Obj := PyDict_GetItem (Data.Return_Dict, Key);
+         if Obj /= null then
+            if PyList_Check (Obj) then
+               List := Obj;
+            else
+               List := PyList_New;
+               Tmp := PyList_Append (List, Obj);
+            end if;
+            Tmp := PyList_Append (List, Data.Return_Value);
+         else
+            List := Data.Return_Value;
+         end if;
+      else
+         List := Data.Return_Value;
+      end if;
+
+      Tmp := PyDict_SetItem (Data.Return_Dict, Key, List);
+
+      Py_DECREF (Data.Return_Value);
+
+      Data.Return_Value := Py_None;
+      Py_INCREF (Data.Return_Value);
+      Data.Return_As_List := False;
+   end Prepare_Value_Key;
+
+   --------------------------
+   -- Set_Return_Value_Key --
+   --------------------------
+
+   procedure Set_Return_Value_Key
+     (Data   : in out Python_Callback_Data;
+      Key    : Integer;
+      Append : Boolean := False)
+   is
+      K : constant PyObject := PyInt_FromLong (long (Key));
+   begin
+      Prepare_Value_Key (Data, K, Append);
+      Py_DECREF (K);
+   end Set_Return_Value_Key;
+
+   --------------------------
+   -- Set_Return_Value_Key --
+   --------------------------
+
+   procedure Set_Return_Value_Key
+     (Data   : in out Python_Callback_Data;
+      Key    : String;
+      Append : Boolean := False)
+   is
+      K : constant PyObject := PyString_FromString (Key);
+   begin
+      Prepare_Value_Key (Data, K, Append);
+      Py_DECREF (K);
+   end Set_Return_Value_Key;
+
+   --------------------------
+   -- Set_Return_Value_Key --
+   --------------------------
+
+   procedure Set_Return_Value_Key
+     (Data   : in out Python_Callback_Data;
+      Key    : Class_Instance;
+      Append : Boolean := False) is
+   begin
+      Prepare_Value_Key (Data, Python_Class_Instance (Key).Data, Append);
+   end Set_Return_Value_Key;
 
    ------------------------------
    -- Set_Return_Value_As_List --
