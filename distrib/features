@@ -3,6 +3,9 @@ details, please see the documentation.
 
 New features in GPS 1.4.0
 
+- Help directories can now be specified programmatically (add_doc_directory)
+  so that each module can have its own documentation
+
 - Project files can now have duplicate file names under certain conditions
 
 - C908-005 Menu Build->Make->Project now compiles all files from project
