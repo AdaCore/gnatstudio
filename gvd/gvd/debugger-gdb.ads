@@ -103,31 +103,31 @@ package Debugger.Gdb is
 
    procedure Run
      (Debugger : access Gdb_Debugger;
-      Display  : Boolean := False);
+      Mode     : Command_Type := Hidden);
 
    procedure Start
      (Debugger : access Gdb_Debugger;
-      Display  : Boolean := False);
+      Mode     : Command_Type := Hidden);
 
    procedure Step_Into
      (Debugger : access Gdb_Debugger;
-      Display  : Boolean := False);
+      Mode     : Command_Type := Hidden);
 
    procedure Step_Over
      (Debugger : access Gdb_Debugger;
-      Display  : Boolean := False);
+      Mode     : Command_Type := Hidden);
 
    procedure Step_Into_Instruction
      (Debugger : access Gdb_Debugger;
-      Display  : Boolean := False);
+      Mode     : Command_Type := Hidden);
 
    procedure Step_Over_Instruction
      (Debugger : access Gdb_Debugger;
-      Display  : Boolean := False);
+      Mode     : Command_Type := Hidden);
 
    procedure Continue
      (Debugger : access Gdb_Debugger;
-      Display  : Boolean := False);
+      Mode     : Command_Type := Hidden);
 
    procedure Interrupt (Debugger : access Gdb_Debugger);
 
@@ -145,63 +145,63 @@ package Debugger.Gdb is
 
    procedure Stack_Down
      (Debugger : access Gdb_Debugger;
-      Display  : Boolean := False);
+      Mode     : Command_Type := Hidden);
 
    procedure Stack_Up
      (Debugger : access Gdb_Debugger;
-      Display  : Boolean := False);
+      Mode     : Command_Type := Hidden);
 
    procedure Stack_Frame
      (Debugger : access Gdb_Debugger;
       Frame    : Positive;
-      Display  : Boolean := False);
+      Mode     : Command_Type := Hidden);
 
    procedure Break_Subprogram
      (Debugger  : access Gdb_Debugger;
       Name      : String;
       Temporary : Boolean := False;
-      Display   : Boolean := False);
+      Mode      : Command_Type := Hidden);
 
    procedure Break_Source
      (Debugger  : access Gdb_Debugger;
       File      : String;
       Line      : Positive;
       Temporary : Boolean := False;
-      Display   : Boolean := False);
+      Mode      : Command_Type := Hidden);
 
    procedure Break_Exception
      (Debugger  : access Gdb_Debugger;
       Name      : String  := "";
       Temporary : Boolean := False;
       Unhandled : Boolean := False;
-      Display   : Boolean := False);
+      Mode      : Command_Type := Hidden);
 
    procedure Break_Address
      (Debugger   : access Gdb_Debugger;
       Address    : String;
       Temporary  : Boolean := False;
-      Display    : Boolean := False);
+      Mode       : Command_Type := Hidden);
 
    procedure Break_Regexp
      (Debugger   : access Gdb_Debugger;
       Regexp     : String;
       Temporary  : Boolean := False;
-      Display    : Boolean := False);
+      Mode       : Command_Type := Hidden);
 
    procedure Enable_Breakpoint
      (Debugger : access Gdb_Debugger;
       Num      : Integer;
       Enable   : Boolean := True;
-      Display  : Boolean := False);
+      Mode     : Command_Type := Hidden);
 
    procedure Remove_Breakpoint
      (Debugger : access Gdb_Debugger;
       Num      : Integer;
-      Display  : Boolean := False);
+      Mode     : Command_Type := Hidden);
 
    procedure Finish
      (Debugger : access Gdb_Debugger;
-      Display  : Boolean := False);
+      Mode     : Command_Type := Hidden);
 
    procedure Backtrace
      (Debugger : access Gdb_Debugger;
@@ -253,7 +253,6 @@ private
    function Send
      (Debugger        : access Gdb_Debugger;
       Cmd             : String;
-      Display         : Boolean := False;
       Empty_Buffer    : Boolean := True;
       Wait_For_Prompt : Boolean := True;
       Mode            : Command_Type := Hidden)

@@ -1157,7 +1157,7 @@ package body Odd.Process is
                Enable_Breakpoint
                  (Process.Debugger, Breakpoint_Num,
                   Process.Breakpoints (J).Enabled,
-                  Display => True);
+                  Mode => User);
                return Process.Breakpoints (J).Enabled;
             end if;
          end loop;

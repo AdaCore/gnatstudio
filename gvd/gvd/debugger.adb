@@ -224,10 +224,10 @@ package body Debugger is
    procedure Thread_Switch
      (Debugger : access Debugger_Root'Class;
       Thread   : Natural;
-      Display  : Boolean := False) is
+      Mode     : Command_Type := Hidden) is
    begin
       Send (Debugger, Thread_Switch (Get_Language (Debugger), Thread),
-            Display => Display);
+            Mode => Mode);
    end Thread_Switch;
 
    -----------------------
@@ -249,7 +249,6 @@ package body Debugger is
    procedure Send
      (Debugger         : access Debugger_Root'Class;
       Cmd              : String;
-      Display          : Boolean := False;
       Empty_Buffer     : Boolean := True;
       Wait_For_Prompt  : Boolean := True;
       Mode             : Command_Type := Hidden)
@@ -264,7 +263,7 @@ package body Debugger is
          Push_Internal_Command_Status (Get_Process (Debugger), True);
       end if;
 
-      if Display and then Debugger.Window /= null then
+      if Mode = User and then Debugger.Window /= null then
          Text_Output_Handler
            (Convert (Debugger.Window, Debugger),
             Cmd & ASCII.LF, True);
@@ -406,7 +405,7 @@ package body Debugger is
                       Var_Name, Value);
    begin
       if S /= "" then
-         Send (Debugger, S, Display => True);
+         Send (Debugger, S, Mode => User);
       end if;
    end Set_Variable;
 

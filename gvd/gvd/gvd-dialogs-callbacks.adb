@@ -60,7 +60,7 @@ package body Odd.Dialogs.Callbacks is
           (Notebook, Get_Current_Page (Notebook)));
 
    begin
-      Stack_Frame (Process.Debugger, Positive (Frame), True);
+      Stack_Frame (Process.Debugger, Positive (Frame), User);
    end On_Backtrace_List_Select_Row;
 
    ----------------------------------
@@ -184,7 +184,7 @@ package body Odd.Dialogs.Callbacks is
 
       Send (Dialog.Debugger,
             To_String (S),
-            Display => True,
+            Mode => User,
             Empty_Buffer => False,
             Wait_For_Prompt => False);
 

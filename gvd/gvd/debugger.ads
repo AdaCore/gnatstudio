@@ -110,12 +110,10 @@ package Debugger is
    procedure Send
      (Debugger        : access Debugger_Root'Class;
       Cmd             : String;
-      Display         : Boolean := False;
       Empty_Buffer    : Boolean := True;
       Wait_For_Prompt : Boolean := True;
       Mode            : Command_Type := Hidden);
    --  Send a command to the underlying process associated with Debugger.
-   --  If Display is True, display the command in the debugger window.
    --  If Empty_Buffer is True, any input waiting from the process (or in the
    --  buffer) is first discarded before the command is sent.
    --  Send_Completed is called right after the command is sent to the
@@ -126,7 +124,6 @@ package Debugger is
    function Send
      (Debugger        : access Debugger_Root;
       Cmd             : String;
-      Display         : Boolean := False;
       Empty_Buffer    : Boolean := True;
       Wait_For_Prompt : Boolean := True;
       Mode            : Command_Type := Hidden) return String is abstract;
@@ -316,7 +313,7 @@ package Debugger is
 
    procedure Run
      (Debugger : access Debugger_Root;
-      Display  : Boolean := False) is abstract;
+      Mode     : Command_Type := Hidden) is abstract;
    --  Start the execution of the executable.
    --  The arguments must have been set by a call to Set_Arguments.
    --  Note that this command does not wait for the prompt, and returns
@@ -326,7 +323,7 @@ package Debugger is
 
    procedure Start
      (Debugger : access Debugger_Root;
-      Display  : Boolean := False) is abstract;
+      Mode     : Command_Type := Hidden) is abstract;
    --  Start the execution of the executable and stop at the first user line.
    --  The arguments must have been set by a call to Set_Arguments.
    --  See above for details on Display.
@@ -334,35 +331,35 @@ package Debugger is
 
    procedure Step_Into
      (Debugger : access Debugger_Root;
-      Display  : Boolean := False) is abstract;
+      Mode     : Command_Type := Hidden) is abstract;
    --  Step program until it reaches a different source line.
    --  See above for details on Display.
    --  GDB_COMMAND: "step"
 
    procedure Step_Over
      (Debugger : access Debugger_Root;
-      Display  : Boolean := False) is abstract;
+      Mode     : Command_Type := Hidden) is abstract;
    --  Step program, proceeding over subroutines.
    --  See above for details on Display.
    --  GDB_COMMAND: "next"
 
    procedure Step_Into_Instruction
      (Debugger : access Debugger_Root;
-      Display  : Boolean := False) is abstract;
+      Mode     : Command_Type := Hidden) is abstract;
    --  Step program until it reaches a different assembly line
    --  See above for details on Display.
    --  GDB_COMMAND: "stepu"
 
    procedure Step_Over_Instruction
      (Debugger : access Debugger_Root;
-      Display  : Boolean := False) is abstract;
+      Mode     : Command_Type := Hidden) is abstract;
    --  Step program one assembly instruction, proceeding over subroutines.
    --  See above for details on Display.
    --  GDB_COMMAND: "nexti"
 
    procedure Continue
      (Debugger : access Debugger_Root;
-      Display  : Boolean := False) is abstract;
+      Mode     : Command_Type := Hidden) is abstract;
    --  Continue program after signal or breakpoint.
    --  See above for details on Display.
    --  GDB_COMMAND: "cont"
@@ -405,14 +402,14 @@ package Debugger is
 
    procedure Stack_Down
      (Debugger : access Debugger_Root;
-      Display  : Boolean := False) is abstract;
+      Mode     : Command_Type := Hidden) is abstract;
    --  Select and print stack frame called by the current one.
    --  See above for details on Display.
    --  GDB_COMMAND: "down"
 
    procedure Stack_Up
      (Debugger : access Debugger_Root;
-      Display  : Boolean := False) is abstract;
+      Mode     : Command_Type := Hidden) is abstract;
    --  Select and print stack frame that called the current one.
    --  See above for details on Display.
    --  GDB_COMMAND: "up"
@@ -420,7 +417,7 @@ package Debugger is
    procedure Stack_Frame
      (Debugger : access Debugger_Root;
       Frame    : Positive;
-      Display  : Boolean := False) is abstract;
+      Mode     : Command_Type := Hidden) is abstract;
    --  Select and print the selected stack frame.
    --  The first frame is 1. It is up to the real debugger to convert to the
    --  appropriate Id when needed.
@@ -429,7 +426,7 @@ package Debugger is
 
    procedure Finish
      (Debugger : access Debugger_Root;
-      Display  : Boolean := False) is abstract;
+      Mode     : Command_Type := Hidden) is abstract;
    --  Finish executing the current frame.
    --  See above for details on Display.
    --  GDB_COMMAND: "finish"
@@ -469,7 +466,7 @@ package Debugger is
      (Debugger  : access Debugger_Root;
       Name      : String;
       Temporary : Boolean := False;
-      Display   : Boolean := False) is abstract;
+      Mode      : Command_Type := Hidden) is abstract;
    --  Break at the beginning of a specific subprogram.
    --  If Temporary is True, then the breakpoint should be deleted
    --  automatically the first time it is hit.
@@ -480,7 +477,7 @@ package Debugger is
       File      : String;
       Line      : Positive;
       Temporary : Boolean := False;
-      Display   : Boolean := False) is abstract;
+      Mode      : Command_Type := Hidden) is abstract;
    --  Break at a specific source location.
    --  If Temporary is True, then the breakpoint should be deleted
    --  automatically the first time it is hit.
@@ -491,7 +488,7 @@ package Debugger is
       Name      : String  := "";
       Temporary : Boolean := False;
       Unhandled : Boolean := False;
-      Display   : Boolean := False) is abstract;
+      Mode      : Command_Type := Hidden) is abstract;
    --  Break on an exception, if the debugger and the language recognize that
    --  feature.
    --  The breakpoint is set on a specific exception Name (or all exceptions
@@ -506,14 +503,14 @@ package Debugger is
      (Debugger   : access Debugger_Root;
       Address    : String;
       Temporary  : Boolean := False;
-      Display    : Boolean := False) is abstract;
+      Mode       : Command_Type := Hidden) is abstract;
    --  Set a breakpoint at a specific address.
 
    procedure Break_Regexp
      (Debugger   : access Debugger_Root;
       Regexp     : String;
       Temporary  : Boolean := False;
-      Display    : Boolean := False) is abstract;
+      Mode       : Command_Type := Hidden) is abstract;
    --  Set a breakpoint on all subprograms matching Regexp.
    --  This function is emulated when the debugger does not support it
    --  directly.
@@ -522,7 +519,7 @@ package Debugger is
      (Debugger : access Debugger_Root;
       Num      : Integer;
       Enable   : Boolean := True;
-      Display  : Boolean := False) is abstract;
+      Mode     : Command_Type := Hidden) is abstract;
    --  Enable or disable the breakpoint number Num.
    --  Num is always the number returned in the Num field of the
    --  Breakpoint_Data record by List_Breakpoints.
@@ -530,7 +527,7 @@ package Debugger is
    procedure Remove_Breakpoint
      (Debugger : access Debugger_Root;
       Num      : Integer;
-      Display  : Boolean := False) is abstract;
+      Mode     : Command_Type := Hidden) is abstract;
    --  Delete a breakpoint.
    --  Num is always the number returned in the Num field of the
    --  Breakpoint_Data record.
@@ -558,7 +555,7 @@ package Debugger is
    procedure Thread_Switch
      (Debugger : access Debugger_Root'Class;
       Thread   : Natural;
-      Display  : Boolean := False);
+      Mode     : Command_Type := Hidden);
    --  Switch to a specified thread.
    --  GDB_COMMAND: "thread" or "task"
 

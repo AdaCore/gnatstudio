@@ -217,8 +217,7 @@ package body Debugger.Jdb is
       Mode       : Command_Type := Internal)is
    begin
       Set_Is_Started (Debugger, False);
-      Send (Debugger, "load " & Executable,
-            Display => Mode /= Internal, Mode => Mode);
+      Send (Debugger, "load " & Executable, Mode => Mode);
       Executable_Changed (Convert (Debugger.Window, Debugger), Executable);
    end Set_Executable;
 
@@ -261,12 +260,12 @@ package body Debugger.Jdb is
    ---------
 
    procedure Run (Debugger : access Jdb_Debugger;
-                  Display  : Boolean := False) is
+                  Mode     : Command_Type := Hidden) is
    begin
       if Debugger.Main_Class /= null then
-         Send (Debugger, "run " & Debugger.Main_Class.all, Display => Display);
+         Send (Debugger, "run " & Debugger.Main_Class.all, Mode => Mode);
       else
-         Send (Debugger, "run", Display => Display);
+         Send (Debugger, "run", Mode => Mode);
       end if;
 
       Set_Is_Started (Debugger, True);
@@ -277,11 +276,11 @@ package body Debugger.Jdb is
    -----------
 
    procedure Start (Debugger : access Jdb_Debugger;
-                    Display  : Boolean := False) is
+                    Mode     : Command_Type := Hidden) is
    begin
       Send (Debugger, "stop in " & Debugger.Main_Class.all & '.' &
-         Debugger.Main_Class.all, Display => Display);
-      Run (Debugger, Display);
+         Debugger.Main_Class.all, Mode => Mode);
+      Run (Debugger, Mode);
    end Start;
 
    ---------------
@@ -289,9 +288,9 @@ package body Debugger.Jdb is
    ---------------
 
    procedure Step_Into (Debugger : access Jdb_Debugger;
-                        Display  : Boolean := False) is
+                        Mode     : Command_Type := Hidden) is
    begin
-      Send (Debugger, "step", Display => Display);
+      Send (Debugger, "step", Mode => Mode);
    end Step_Into;
 
    ---------------
@@ -299,9 +298,9 @@ package body Debugger.Jdb is
    ---------------
 
    procedure Step_Over (Debugger : access Jdb_Debugger;
-                        Display  : Boolean := False) is
+                        Mode     : Command_Type := Hidden) is
    begin
-      Send (Debugger, "next", Display => Display);
+      Send (Debugger, "next", Mode => Mode);
    end Step_Over;
 
    ---------------------------
@@ -310,9 +309,9 @@ package body Debugger.Jdb is
 
    procedure Step_Into_Instruction
      (Debugger : access Jdb_Debugger;
-      Display  : Boolean := False) is
+      Mode     : Command_Type := Hidden) is
    begin
-      Send (Debugger, "stepi", Display => Display);
+      Send (Debugger, "stepi", Mode => Mode);
    end Step_Into_Instruction;
 
    ---------------------------
@@ -321,9 +320,9 @@ package body Debugger.Jdb is
 
    procedure Step_Over_Instruction
      (Debugger : access Jdb_Debugger;
-      Display  : Boolean := False) is
+      Mode     : Command_Type := Hidden) is
    begin
-      Send (Debugger, "stepi", Display => Display);
+      Send (Debugger, "stepi", Mode => Mode);
    end Step_Over_Instruction;
 
    --------------
@@ -331,9 +330,9 @@ package body Debugger.Jdb is
    --------------
 
    procedure Continue (Debugger : access Jdb_Debugger;
-                       Display  : Boolean := False) is
+                       Mode     : Command_Type := Hidden) is
    begin
-      Send (Debugger, "cont", Display => Display);
+      Send (Debugger, "cont", Mode => Mode);
    end Continue;
 
    ---------------
@@ -393,9 +392,9 @@ package body Debugger.Jdb is
    ----------------
 
    procedure Stack_Down (Debugger : access Jdb_Debugger;
-                         Display  : Boolean := False) is
+                         Mode     : Command_Type := Hidden) is
    begin
-      Send (Debugger, "down", Display => Display);
+      Send (Debugger, "down", Mode => Mode);
    end Stack_Down;
 
    --------------
@@ -403,9 +402,9 @@ package body Debugger.Jdb is
    --------------
 
    procedure Stack_Up (Debugger : access Jdb_Debugger;
-                       Display  : Boolean := False) is
+                       Mode     : Command_Type := Hidden) is
    begin
-      Send (Debugger, "up", Display => Display);
+      Send (Debugger, "up", Mode => Mode);
    end Stack_Up;
 
    -----------------
@@ -415,16 +414,16 @@ package body Debugger.Jdb is
    procedure Stack_Frame
      (Debugger : access Jdb_Debugger;
       Frame    : Positive;
-      Display  : Boolean := False)
+      Mode     : Command_Type := Hidden)
    is
       Relative_Frame : Integer := Frame - Debugger.Frame;
    begin
       if Relative_Frame > 0 then
          Send (Debugger, "up" & Positive'Image (Relative_Frame),
-               Display => Display);
+               Mode => Mode);
       else
          Send (Debugger, "down" & Positive'Image (-Relative_Frame),
-               Display => Display);
+               Mode => Mode);
       end if;
    end Stack_Frame;
 
@@ -482,10 +481,10 @@ package body Debugger.Jdb is
      (Debugger  : access Jdb_Debugger;
       Name      : String;
       Temporary : Boolean := False;
-      Display   : Boolean := False)
+      Mode      : Command_Type := Hidden)
    is
    begin
-      Send (Debugger, "stop in " & Name, Display => Display);
+      Send (Debugger, "stop in " & Name, Mode => Mode);
    end Break_Subprogram;
 
    ------------------
@@ -497,7 +496,7 @@ package body Debugger.Jdb is
       File      : String;
       Line      : Positive;
       Temporary : Boolean := False;
-      Display   : Boolean := False)
+      Mode      : Command_Type := Hidden)
    is
       Str : constant String := Positive'Image (Line);
       Pos : Positive;
@@ -521,7 +520,7 @@ package body Debugger.Jdb is
       Send (Debugger,
             "stop at " & File (File'First .. Pos) & ':' &
             Str (Str'First + 1 .. Str'Last),
-            Display => Display);
+            Mode => Mode);
    end Break_Source;
 
    ---------------------
@@ -533,12 +532,12 @@ package body Debugger.Jdb is
       Name      : String  := "";
       Temporary : Boolean := False;
       Unhandled : Boolean := False;
-      Display   : Boolean := False) is
+      Mode      : Command_Type := Hidden) is
    begin
       if Unhandled then
          raise Unknown_Command;
       else
-         Send (Debugger, "catch " & Name, Display => Display);
+         Send (Debugger, "catch " & Name, Mode => Mode);
       end if;
    end Break_Exception;
 
@@ -550,7 +549,7 @@ package body Debugger.Jdb is
      (Debugger   : access Jdb_Debugger;
       Address    : String;
       Temporary  : Boolean := False;
-      Display    : Boolean := False)
+      Mode       : Command_Type := Hidden)
    is
    begin
       raise Unknown_Command;
@@ -565,7 +564,7 @@ package body Debugger.Jdb is
      (Debugger   : access Jdb_Debugger;
       Regexp     : String;
       Temporary  : Boolean := False;
-      Display    : Boolean := False)
+      Mode       : Command_Type := Hidden)
    is
    begin
       raise Unknown_Command;
@@ -577,9 +576,9 @@ package body Debugger.Jdb is
    ------------
 
    procedure Finish (Debugger : access Jdb_Debugger;
-                     Display  : Boolean := False) is
+                     Mode     : Command_Type := Hidden) is
    begin
-      Send (Debugger, "step up", Display => Display);
+      Send (Debugger, "step up", Mode => Mode);
    end Finish;
 
    ------------------
@@ -735,7 +734,7 @@ package body Debugger.Jdb is
      (Debugger : access Jdb_Debugger;
       Num      : Integer;
       Enable   : Boolean := True;
-      Display  : Boolean := False) is
+      Mode     : Command_Type := Hidden) is
    begin
       null;
       --  ??? Enabling/disabling breakpoints will have to be emulated in jdb
@@ -748,7 +747,7 @@ package body Debugger.Jdb is
    procedure Remove_Breakpoint
      (Debugger : access Jdb_Debugger;
       Num      : Integer;
-      Display  : Boolean := False) is
+      Mode     : Command_Type := Hidden) is
    begin
       null;
    end Remove_Breakpoint;
@@ -760,13 +759,12 @@ package body Debugger.Jdb is
    function Send
      (Debugger        : access Jdb_Debugger;
       Cmd             : String;
-      Display         : Boolean := False;
       Empty_Buffer    : Boolean := True;
       Wait_For_Prompt : Boolean := True;
       Mode            : Command_Type := Hidden) return String is
    begin
-      Send (Debugger, Cmd, Display, Empty_Buffer, Wait_For_Prompt,
-            Mode => Internal);
+      Send (Debugger, Cmd, Empty_Buffer, Wait_For_Prompt,
+            Mode => Mode);
 
       if Wait_For_Prompt then
          declare

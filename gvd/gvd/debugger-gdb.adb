@@ -265,13 +265,12 @@ package body Debugger.Gdb is
    function Send
      (Debugger        : access Gdb_Debugger;
       Cmd             : String;
-      Display         : Boolean := False;
       Empty_Buffer    : Boolean := True;
       Wait_For_Prompt : Boolean := True;
       Mode            : Command_Type := Hidden) return String is
    begin
       Send
-        (Debugger, Cmd, Display, Empty_Buffer, Wait_For_Prompt, Mode => Mode);
+        (Debugger, Cmd, Empty_Buffer, Wait_For_Prompt, Mode => Mode);
 
       if Wait_For_Prompt then
          declare
@@ -586,11 +585,9 @@ package body Debugger.Gdb is
       Set_Is_Started (Debugger, False);
 
       if Debugger.Remote_Target then
-         Send (Debugger, "load " & Executable,
-               Display => Mode /= Internal, Mode => Mode);
+         Send (Debugger, "load " & Executable, Mode => Mode);
       else
-         Send (Debugger, "file " & Executable,
-               Display => Mode /= Internal, Mode => Mode);
+         Send (Debugger, "file " & Executable, Mode => Mode);
       end if;
 
       --  Report a change in the executable. This has to be done before we
@@ -626,9 +623,9 @@ package body Debugger.Gdb is
 
    procedure Run
      (Debugger : access Gdb_Debugger;
-      Display  : Boolean := False) is
+      Mode     : Command_Type := Hidden) is
    begin
-      Send (Debugger, "run", Display => Display);
+      Send (Debugger, "run", Mode => Mode);
       Set_Is_Started (Debugger, True);
    end Run;
 
@@ -638,7 +635,7 @@ package body Debugger.Gdb is
 
    procedure Start
      (Debugger : access Gdb_Debugger;
-      Display  : Boolean := False)
+      Mode     : Command_Type := Hidden)
    is
       Cmd   : constant String := Start (Get_Language (Debugger));
       First : Positive;
@@ -654,7 +651,7 @@ package body Debugger.Gdb is
                Last := Last + 1;
             end loop;
 
-            Send (Debugger, Cmd (First .. Last - 1), Display => Display);
+            Send (Debugger, Cmd (First .. Last - 1), Mode => Mode);
             Last := Last + 1;
          end loop;
       end if;
@@ -668,9 +665,9 @@ package body Debugger.Gdb is
 
    procedure Step_Into
      (Debugger : access Gdb_Debugger;
-      Display  : Boolean := False) is
+      Mode     : Command_Type := Hidden) is
    begin
-      Send (Debugger, "step", Display => Display);
+      Send (Debugger, "step", Mode => Mode);
    end Step_Into;
 
    ---------------
@@ -679,9 +676,9 @@ package body Debugger.Gdb is
 
    procedure Step_Over
      (Debugger : access Gdb_Debugger;
-      Display  : Boolean := False) is
+      Mode     : Command_Type := Hidden) is
    begin
-      Send (Debugger, "next", Display => Display);
+      Send (Debugger, "next", Mode => Mode);
    end Step_Over;
 
    ---------------------------
@@ -690,9 +687,9 @@ package body Debugger.Gdb is
 
    procedure Step_Into_Instruction
      (Debugger : access Gdb_Debugger;
-      Display  : Boolean := False) is
+      Mode     : Command_Type := Hidden) is
    begin
-      Send (Debugger, "stepi", Display => Display);
+      Send (Debugger, "stepi", Mode => Mode);
    end Step_Into_Instruction;
 
    ---------------------------
@@ -701,9 +698,9 @@ package body Debugger.Gdb is
 
    procedure Step_Over_Instruction
      (Debugger : access Gdb_Debugger;
-      Display  : Boolean := False) is
+      Mode     : Command_Type := Hidden) is
    begin
-      Send (Debugger, "nexti", Display => Display);
+      Send (Debugger, "nexti", Mode => Mode);
    end Step_Over_Instruction;
 
    --------------
@@ -712,9 +709,9 @@ package body Debugger.Gdb is
 
    procedure Continue
      (Debugger : access Gdb_Debugger;
-      Display  : Boolean := False) is
+      Mode     : Command_Type := Hidden) is
    begin
-      Send (Debugger, "cont", Display => Display);
+      Send (Debugger, "cont", Mode => Mode);
    end Continue;
 
    ---------------
@@ -787,9 +784,9 @@ package body Debugger.Gdb is
 
    procedure Stack_Down
      (Debugger : access Gdb_Debugger;
-      Display  : Boolean := False) is
+      Mode     : Command_Type := Hidden) is
    begin
-      Send (Debugger, "down", Display => Display);
+      Send (Debugger, "down", Mode => Mode);
    end Stack_Down;
 
    --------------
@@ -798,9 +795,9 @@ package body Debugger.Gdb is
 
    procedure Stack_Up
      (Debugger : access Gdb_Debugger;
-      Display  : Boolean := False) is
+      Mode     : Command_Type := Hidden) is
    begin
-      Send (Debugger, "up", Display => Display);
+      Send (Debugger, "up", Mode => Mode);
    end Stack_Up;
 
    -----------------
@@ -810,11 +807,11 @@ package body Debugger.Gdb is
    procedure Stack_Frame
      (Debugger : access Gdb_Debugger;
       Frame    : Positive;
-      Display  : Boolean := False)
+      Mode     : Command_Type := Hidden)
    is
       Str : constant String := "frame" & Natural'Image (Frame - 1);
    begin
-      Send (Debugger, Str, Display => Display);
+      Send (Debugger, Str, Mode => Mode);
    end Stack_Frame;
 
    --------------------------
@@ -884,12 +881,12 @@ package body Debugger.Gdb is
      (Debugger  : access Gdb_Debugger;
       Name      : String;
       Temporary : Boolean := False;
-      Display   : Boolean := False) is
+      Mode      : Command_Type := Hidden) is
    begin
       if Temporary then
-         Send (Debugger, "tbreak " & Name, Display => Display);
+         Send (Debugger, "tbreak " & Name, Mode => Mode);
       else
-         Send (Debugger, "break " & Name, Display => Display);
+         Send (Debugger, "break " & Name, Mode => Mode);
       end if;
    end Break_Subprogram;
 
@@ -902,7 +899,7 @@ package body Debugger.Gdb is
       File      : String;
       Line      : Positive;
       Temporary : Boolean := False;
-      Display   : Boolean := False)
+      Mode      : Command_Type := Hidden)
    is
       Str : constant String := Positive'Image (Line);
    begin
@@ -910,12 +907,12 @@ package body Debugger.Gdb is
          Send (Debugger,
                "tbreak " & Base_File_Name (File)
                & ":" & Str (Str'First + 1 .. Str'Last),
-               Display => Display);
+               Mode => Mode);
       else
          Send (Debugger,
                "break " & Base_File_Name (File)
                & ':' & Str (Str'First + 1 .. Str'Last),
-               Display => Display);
+               Mode => Mode);
       end if;
    end Break_Source;
 
@@ -928,12 +925,13 @@ package body Debugger.Gdb is
       Name      : String  := "";
       Temporary : Boolean := False;
       Unhandled : Boolean := False;
-      Display   : Boolean := False) is
+      Mode      : Command_Type := Hidden) is
    begin
-      Send
-        (Debugger,
-         Break_Exception (Get_Language (Debugger), Name, Temporary, Unhandled),
-         Display => Display);
+         Send
+           (Debugger,
+            Break_Exception
+            (Get_Language (Debugger), Name, Temporary, Unhandled),
+            Mode => Mode);
    end Break_Exception;
 
    -------------------
@@ -944,12 +942,12 @@ package body Debugger.Gdb is
      (Debugger   : access Gdb_Debugger;
       Address    : String;
       Temporary  : Boolean := False;
-      Display    : Boolean := False) is
+      Mode : Command_Type := Hidden) is
    begin
       if Temporary then
-         Send (Debugger, "tbreak *" & Address);
+         Send (Debugger, "tbreak *" & Address, Mode => Mode);
       else
-         Send (Debugger, "break *" & Address);
+         Send (Debugger, "break *" & Address, Mode => Mode);
       end if;
    end Break_Address;
 
@@ -961,13 +959,13 @@ package body Debugger.Gdb is
      (Debugger   : access Gdb_Debugger;
       Regexp     : String;
       Temporary  : Boolean := False;
-      Display    : Boolean := False) is
+      Mode       : Command_Type := Hidden) is
    begin
       if Temporary then
          raise Unknown_Command;
          --  Error ("Temporary regexp breakpoints not supported");
       else
-         Send (Debugger, "rbreak " & Regexp, Display => Display);
+         Send (Debugger, "rbreak " & Regexp, Mode => Mode);
       end if;
    end Break_Regexp;
 
@@ -976,9 +974,9 @@ package body Debugger.Gdb is
    ------------
 
    procedure Finish (Debugger : access Gdb_Debugger;
-                     Display  : Boolean := False) is
+                     Mode     : Command_Type := Hidden) is
    begin
-      Send (Debugger, "finish", Display => Display);
+         Send (Debugger, "finish", Mode => Mode);
    end Finish;
 
    ------------------
@@ -1585,12 +1583,12 @@ package body Debugger.Gdb is
      (Debugger : access Gdb_Debugger;
       Num      : Integer;
       Enable   : Boolean := True;
-      Display  : Boolean := False) is
+      Mode     : Command_Type := Hidden) is
    begin
       if Enable then
-         Send (Debugger, "enable" & Integer'Image (Num), Display => Display);
+         Send (Debugger, "enable" & Integer'Image (Num), Mode => Mode);
       else
-         Send (Debugger, "disable" & Integer'Image (Num), Display => Display);
+         Send (Debugger, "disable" & Integer'Image (Num), Mode => Mode);
       end if;
    end Enable_Breakpoint;
 
@@ -1601,9 +1599,9 @@ package body Debugger.Gdb is
    procedure Remove_Breakpoint
      (Debugger : access Gdb_Debugger;
       Num      : Integer;
-      Display  : Boolean := False) is
+      Mode     : Command_Type := Hidden) is
    begin
-      Send (Debugger, "delete" & Integer'Image (Num), Display => Display);
+      Send (Debugger, "delete" & Integer'Image (Num), Mode => Mode);
    end Remove_Breakpoint;
 
    ------------------------------

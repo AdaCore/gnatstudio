@@ -293,22 +293,16 @@ package body Main_Debug_Window_Pkg.Callbacks is
 
             Set_Busy_Cursor (Tab, True);
 
-            Push_Internal_Command_Status
-              (Get_Process (Tab.Debugger), True);
-
             if Mode = Hidden then
 
                Send (Tab.Debugger,
                      Buffer (1 .. Last),
-                     Display => False,
                      Wait_For_Prompt => True,
                      Mode => Hidden);
 
             elsif Mode = User then
                Process_User_Command (Tab, Buffer (1 .. Last));
             end if;
-
-            Pop_Internal_Command_Status (Get_Process (Tab.Debugger));
 
             Set_Busy_Cursor (Tab, False);
          end loop;
@@ -757,7 +751,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
       end if;
 
       Set_Busy_Cursor (Tab, True);
-      Run (Tab.Debugger, True);
+      Run (Tab.Debugger, Mode => User);
       Set_Busy_Cursor (Tab, False);
    end On_Run1_Activate;
 
@@ -786,7 +780,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
       end if;
 
       Set_Busy_Cursor (Tab, True);
-      Start (Tab.Debugger, True);
+      Start (Tab.Debugger, Mode => User);
       Set_Busy_Cursor (Tab, False);
    end On_Start1_Activate;
 
@@ -811,7 +805,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
       Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
       Set_Busy_Cursor (Tab, True);
-      Step_Into (Tab.Debugger, True);
+      Step_Into (Tab.Debugger, Mode => User);
       Set_Busy_Cursor (Tab, False);
    end On_Step1_Activate;
 
@@ -825,7 +819,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
       Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
       Set_Busy_Cursor (Tab, True);
-      Step_Into_Instruction (Tab.Debugger, True);
+      Step_Into_Instruction (Tab.Debugger, Mode => User);
       Set_Busy_Cursor (Tab, False);
    end On_Step_Instruction1_Activate;
 
@@ -839,7 +833,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
       Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
       Set_Busy_Cursor (Tab, True);
-      Step_Over (Tab.Debugger, True);
+      Step_Over (Tab.Debugger, Mode => User);
       Set_Busy_Cursor (Tab, False);
    end On_Next1_Activate;
 
@@ -853,7 +847,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
       Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
       Set_Busy_Cursor (Tab, True);
-      Step_Over_Instruction (Tab.Debugger, True);
+      Step_Over_Instruction (Tab.Debugger, Mode => User);
       Set_Busy_Cursor (Tab, False);
    end On_Next_Instruction1_Activate;
 
@@ -881,7 +875,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
       Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
       Set_Busy_Cursor (Tab, True);
-      Finish (Tab.Debugger, True);
+      Finish (Tab.Debugger, Mode => User);
       Set_Busy_Cursor (Tab, False);
    end On_Finish1_Activate;
 
@@ -895,7 +889,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
       Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
       Set_Busy_Cursor (Tab, True);
-      Continue (Tab.Debugger, True);
+      Continue (Tab.Debugger, Mode => User);
       Set_Busy_Cursor (Tab, False);
    end On_Continue1_Activate;
 
@@ -1458,7 +1452,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
       Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
       Set_Busy_Cursor (Tab, True);
-      Stack_Up (Tab.Debugger, True);
+      Stack_Up (Tab.Debugger, Mode => User);
       Set_Busy_Cursor (Tab, False);
    end On_Up1_Activate;
 
@@ -1473,7 +1467,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
       Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
       Set_Busy_Cursor (Tab, True);
-      Stack_Down (Tab.Debugger, True);
+      Stack_Down (Tab.Debugger, Mode => User);
       Set_Busy_Cursor (Tab, False);
    end On_Down1_Activate;
 

@@ -267,10 +267,10 @@ package body Odd.Source_Editors is
          Is_Breakpoint (Editor, Line, Result, Num);
 
          if Result then
-            Remove_Breakpoint (Process.Debugger, Num, Display => True);
+            Remove_Breakpoint (Process.Debugger, Num, Mode => User);
          else
             Break_Source (Process.Debugger, Editor.Current_File.all,
-                          Line, Display => True);
+                          Line, Mode => User);
          end if;
       end if;
       return True;
@@ -899,7 +899,7 @@ package body Odd.Source_Editors is
      (Widget : access Gtk_Widget_Record'Class;
       Br     : Breakpoint_Record) is
    begin
-      Break_Source (Br.Process.Debugger, Br.File, Br.Line, Display => True);
+      Break_Source (Br.Process.Debugger, Br.File, Br.Line, Mode => User);
    end Set_Breakpoint;
 
    ---------------------
@@ -911,7 +911,7 @@ package body Odd.Source_Editors is
       Br     : Breakpoint_Record) is
    begin
       Break_Source (Br.Process.Debugger, Br.File, Br.Line, Temporary => True);
-      Continue (Br.Process.Debugger, Display => True);
+      Continue (Br.Process.Debugger, Mode => User);
    end Till_Breakpoint;
 
    --------------------
