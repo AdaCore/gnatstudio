@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2002                            --
---                            ACT-Europe                             --
+--                      Copyright (C) 2002-2005                      --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -142,17 +142,17 @@ private
    end record;
 
    type Project_Iterator (Num_Projects : Natural) is record
-      Project   : Projects.Project_Type_Array (1 .. Num_Projects);
       Current   : Natural;
+      Project   : Projects.Project_Type_Array (1 .. Num_Projects);
    end record;
 
    type Iter_Array is array (Natural range <>) of Gtk.Tree_Model.Gtk_Tree_Iter;
 
    type Scenario_Iterator (Num_Vars : Natural) is record
       Selector   : Scenario_Selector;
+      At_End     : Boolean;
       Current    : Iter_Array (1 .. Num_Vars);
       Variables  : Iter_Array (1 .. Num_Vars);
-      At_End     : Boolean;
    end record;
 
 end Scenario_Selectors;
