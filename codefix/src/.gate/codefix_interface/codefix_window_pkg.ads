@@ -24,6 +24,10 @@ package Codefix_Window_Pkg is
       Alignment1 : Gtk_Alignment;
       Skip_Correction : Gtk_Button;
       Accept_Correction : Gtk_Button;
+      Skip_All_Corrections : Gtk_Button;
+      Accept_All_Corrections : Gtk_Button;
+      Undo : Gtk_Button;
+      Refresh : Gtk_Button;
       Vbuttonbox2 : Gtk_Vbutton_Box;
       Cancel_Changes : Gtk_Button;
       Apply_Changes : Gtk_Button;
