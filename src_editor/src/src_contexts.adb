@@ -463,14 +463,28 @@ package body Src_Contexts is
    procedure Highlight_Result
      (Kernel    : access Kernel_Handle_Record'Class;
       File_Name : String;
-      Match     : Match_Result) is
+      Match     : Match_Result)
+   is
+      Lin, Col : Positive;
    begin
+      if Match.Line = 0 then
+         Lin := 1;
+      else
+         Lin := Positive (Match.Line);
+      end if;
+
+      if Match.Column = 0 then
+         Col := 1;
+      else
+         Col := Positive (Match.Column);
+      end if;
+
       Insert_Result
         (Kernel,
          -"Search Results",
          File_Name,
          Match.Text,
-         Match.Line, Match.Column,
+         Lin, Col,
          Match.End_Column - Match.Column);
    end Highlight_Result;
 
