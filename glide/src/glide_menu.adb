@@ -67,6 +67,14 @@ package body Glide_Menu is
 
    Me : Debug_Handle := Create ("Menu");
 
+   type Help_Context is
+     (GVD_Help,
+      GNAT_UG_Help,
+      GNAT_RM_Help,
+      ARM95_Help,
+      GDB_Help,
+      GCC_Help);
+
    --------------------
    -- Menu Callbacks --
    --------------------
@@ -1022,9 +1030,31 @@ package body Glide_Menu is
    is
       Top : constant Glide_Window := Glide_Window (Object);
    begin
-      --  ??? Should use Top.Prefix
-      Display_Help
-        (Top.Kernel, "/opt/gtk-1.3/doc/GtkAda/gtkada_rm/gtkada_rm_toc.html");
+      case Help_Context'Val (Action) is
+         when GVD_Help =>
+            Display_Help (Top.Kernel,
+              Top.Prefix_Directory.all & "/doc/html/gvd.html");
+
+         when GNAT_UG_Help =>
+            Display_Help (Top.Kernel,
+              Top.Prefix_Directory.all & "/doc/html/gnat_ug.html");
+
+         when GNAT_RM_Help =>
+            Display_Help (Top.Kernel,
+              Top.Prefix_Directory.all & "/doc/html/gnat_rm.html");
+
+         when ARM95_Help =>
+            Display_Help (Top.Kernel,
+              Top.Prefix_Directory.all & "/doc/html/arm95.html");
+
+         when GDB_Help =>
+            Display_Help (Top.Kernel,
+              Top.Prefix_Directory.all & "/doc/html/gdb.html");
+
+         when GCC_Help =>
+            Display_Help (Top.Kernel,
+              Top.Prefix_Directory.all & "/doc/html/gcc.html");
+      end case;
 
    exception
       when E : others =>
@@ -1189,12 +1219,23 @@ package body Glide_Menu is
          Gtk_New (Window),
 
          Gtk_New (Help & (-"Using the GNU Visual Debugger"), "",
-                  On_Manual'Access),
-         Gtk_New (Help & (-"GNAT User's Guide"), "", null),
-         Gtk_New (Help & (-"GNAT Reference Manual"), "", null),
-         Gtk_New (Help & (-"Ada 95 Reference Manual"), "", null),
-         Gtk_New (Help & (-"Using the GNU Debugger"), "", null),
-         Gtk_New (Help & (-"Using GCC"), "", null),
+                  Callback => On_Manual'Access,
+                  Callback_Action => Help_Context'Pos (GVD_Help)),
+         Gtk_New (Help & (-"GNAT User's Guide"), "",
+                  Callback => On_Manual'Access,
+                  Callback_Action => Help_Context'Pos (GNAT_UG_Help)),
+         Gtk_New (Help & (-"GNAT Reference Manual"), "",
+                  Callback => On_Manual'Access,
+                  Callback_Action => Help_Context'Pos (GNAT_RM_Help)),
+         Gtk_New (Help & (-"Ada 95 Reference Manual"), "",
+                  Callback => On_Manual'Access,
+                  Callback_Action => Help_Context'Pos (ARM95_Help)),
+         Gtk_New (Help & (-"Using the GNU Debugger"), "",
+                  Callback => On_Manual'Access,
+                  Callback_Action => Help_Context'Pos (GDB_Help)),
+         Gtk_New (Help & (-"Using GCC"), "",
+                  Callback => On_Manual'Access,
+                  Callback_Action => Help_Context'Pos (GCC_Help)),
          Gtk_New (Help & (-"About Glide"), "", On_About_Glide'Access));
    end Glide_Menu_Items;
 
