@@ -39,7 +39,7 @@ package body Python.Ada is
      (MethodDef : MethodDef_Access;
       Self      : PyObject;
       Module    : PyObject := null) return PyObject;
-   pragma Import (C, PyCFunction_New, "PyCFunction_NewEx");
+   pragma Import (C, PyCFunction_New, "ada_pycfunction_newex");
    --  Create a new callable object, which, when called from python, will call
    --  the Ada subprogram.
    --  This should be used only for standard functions, not for object methods

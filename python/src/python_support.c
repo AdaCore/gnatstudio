@@ -30,6 +30,12 @@ PyObject * ada_Py_InitModule4
   return Py_InitModule4 (name, methods, doc, self, apiver);
 }
 
+PyObject * ada_pycfunction_newex (PyMethodDef *ml, PyObject* self, PyObject* module) {
+  PyObject* method = PyCFunction_New (ml, self);
+  ((PyCFunctionObject*)method)->m_module = module;
+  Py_XINCREF (module);
+}
+
 void ada_py_print_refcount (PyObject* obj, char* msg) {
 #ifdef DEBUG
   if (obj) {
