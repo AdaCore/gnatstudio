@@ -640,6 +640,10 @@ package body Diff_Utils2 is
       pragma Unreferenced (N);
 
    begin
+      if Line1 = "" or else Line2 = "" then
+         return Diff1;
+      end if;
+
       Create_Temp_File (FD1, Fich1);
       Create_Temp_File (FD2, Fich2);
 
