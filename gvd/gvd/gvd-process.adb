@@ -523,9 +523,11 @@ package body Odd.Process is
       Remote_Protocol : String := "";
       Debugger_Name   : String := "") return Debugger_Process_Tab
    is
-      Process : Debugger_Process_Tab;
+      Process       : Debugger_Process_Tab;
       --  Id      : Gint;
-      Label   : Gtk_Label;
+      Label         : Gtk_Label;
+      Debugger_List : Debugger_List_Link;
+      Debugger_Num  : Natural := 1;
    begin
 
       Process := new Debugger_Process_Tab_Record;
@@ -657,6 +659,25 @@ package body Odd.Process is
       --  Initialize the debugger, and possibly get the name of the initial
       --  file.
       Initialize (Process.Debugger);
+
+      if Window.First_Debugger = null then
+         Process.Debugger_Num := Debugger_Num;
+         Window.First_Debugger := new Debugger_List_Node'
+           (Next     => null,
+            Debugger => Gtk_Widget (Process));
+      else
+         Debugger_Num := Debugger_Num + 1;
+         Debugger_List := Window.First_Debugger;
+         while Debugger_List.Next /= null loop
+            Debugger_Num := Debugger_Num + 1;
+            Debugger_List := Debugger_List.Next;
+         end loop;
+
+         Process.Debugger_Num := Debugger_Num;
+         Debugger_List.Next := new Debugger_List_Node'
+           (Next     => null,
+            Debugger => Gtk_Widget (Process));
+      end if;
 
       return Process;
    end Create_Debugger;
@@ -955,34 +976,15 @@ package body Odd.Process is
    procedure Close_Debugger
      (Debugger : Debugger_Process_Tab)
    is
-      Page_Num : Gint := Get_Num (Debugger);
       Top      : Main_Debug_Window_Access := Debugger.Window;
       Notebook : constant Gtk_Notebook := Debugger.Window.Process_Notebook;
-      Data     : History_Data;
-      Current  : Gint;
       use String_History;
    begin
 
-      --  Remove entries in command history.
-
-      Wind (Debugger.Window.Command_History, Backward);
-      for J in 1 .. Length (Top.Command_History) loop
-         Current := Gint (Get_Current (Top.Command_History).Debugger_Num);
-         if Current = Page_Num then
-            Remove_Current (Debugger.Window.Command_History);
-         elsif Current > Page_Num then
-            Data := Get_Current
-              (Top.Command_History);
-            Data.Debugger_Num := Natural (Current) - 1;
-            Set_Current (Top.Command_History, Data);
-         end if;
-         Move_To_Next (Top.Command_History);
-      end loop;
-
-      --  Close the debugger and remove the notebook page.
+      --  Remove the notebook page.
 
       Close (Debugger.Debugger);
-      Remove_Page (Notebook, Page_Num);
+      Remove_Page (Notebook, Page_Num (Notebook, Debugger.Process_Paned));
 
       --  If the last notebook page was destroyed, disable "Open Program"
       --  in the menu.
@@ -1219,7 +1221,7 @@ package body Odd.Process is
 
    function Get_Num (Tab : Debugger_Process_Tab) return Gint is
    begin
-      return Page_Num (Tab.Window.Process_Notebook, Tab.Process_Paned);
+      return Gint (Tab.Debugger_Num);
    end Get_Num;
 
 end Odd.Process;

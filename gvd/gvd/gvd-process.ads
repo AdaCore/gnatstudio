@@ -103,6 +103,9 @@ package Odd.Process is
    type Debugger_Process_Tab_Record is new
      Process_Tab_Pkg.Process_Tab_Record with
    record
+      Debugger_Num : Natural;
+      --  The number identifying the debugger.
+
       Debugger : Debugger_Access;
       --  The underlying debugger process.
 
