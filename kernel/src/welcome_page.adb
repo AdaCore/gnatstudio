@@ -18,6 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Glib;        use Glib;
 with Glib.Object; use Glib.Object;
 with Gdk.Color;   use Gdk.Color;
 with Gtk.Button;  use Gtk.Button;
@@ -132,6 +133,7 @@ package body Welcome_Page is
       Pics_Dir : constant String := Get_System_Dir (Kernel)
         & "doc" & Directory_Separator & "gps" & Directory_Separator
         & "html" & Directory_Separator;
+      Requisition : Gtk_Requisition;
    begin
       Main_Box := new Welcome_Page_Record;
       Initialize_Vbox (Main_Box);
@@ -145,13 +147,15 @@ package body Welcome_Page is
       Gtk_New (Label,
         -("GPS is a complete integrated development environment that gives"
           & " access to a wide range of tools and integrates them smoothly.")
-        & ASCII.LF &
+        & ASCII.LF & ASCII.LF &
         (-("For more information, click on one of the buttons below, which"
           & " will launch an HTML browser. To configure the HTML browser"
            & " under unix systems, you can go to the menu Help->Preferences"
            & " and select the 'External Commands' section.")));
       Set_Line_Wrap (Label, True);
       Pack_Start (Hbox, Label);
+      Requisition := Get_Child_Requisition (Image);
+      Set_Size_Request (Label, Requisition.Width, -1);
 
       Gtk_New_Hbox (Hbox, Homogeneous => True, Spacing => 3);
       Pack_Start (Main_Box, Hbox);
