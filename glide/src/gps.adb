@@ -75,7 +75,7 @@ with Project_Explorers;
 with Project_Explorers_Files;
 with Project_Viewers;
 with Shell;  --  ??? No longer needed in fact
---   with Shell_Script;
+with Shell_Script;
 with Src_Editor_Module;
 with VCS_Module;
 with VCS.CVS;
@@ -449,7 +449,7 @@ procedure GPS is
 
       --  Register all modules (scripting languages must be registered first)
 
-      --  Shell_Script.Register_Module (GPS.Kernel);
+      Shell_Script.Register_Module (GPS.Kernel);
       Shell.Register_Module (GPS.Kernel); --  ??? No longer needed
       Python_Module.Register_Module (GPS.Kernel);
       Register_Default_Script_Commands (GPS.Kernel);
