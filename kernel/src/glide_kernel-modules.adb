@@ -1511,7 +1511,7 @@ package body Glide_Kernel.Modules is
      (Kernel   : access Kernel_Handle_Record'Class;
       Filename : Virtual_File)
    is
-      Value : GValue_Array (1 .. 6);
+      Value : GValue_Array (1 .. 7);
    begin
       Set_File (Value (1), Filename);
 
@@ -1529,6 +1529,9 @@ package body Glide_Kernel.Modules is
 
       Init (Value (6), Glib.GType_Boolean);
       Set_Boolean (Value (6), False);
+
+      Init (Value (7), Glib.GType_Boolean);
+      Set_Boolean (Value (7), False);
 
       if not Mime_Action (Kernel, Mime_Source_File, Value) then
          Trace (Me, "No file editor was registered");
