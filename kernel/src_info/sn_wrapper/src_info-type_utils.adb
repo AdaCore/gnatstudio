@@ -674,19 +674,21 @@ package body Src_Info.Type_Utils is
    begin
       --  ellipsis requires special handling unless Strict is specified
       if not Strict
-         and then Tail (Buffer_A (Args_A.First .. Args_A.Last), 3) = "..."
+         and then Tail (Buffer_A (Args_A.First .. Args_A.Last), 4) = ",..."
       then
-         return Buffer_A (Args_A.First .. Args_A.Last - 3)
-            = Buffer_B (Args_B.First .. Args_B.First
-               + Args_A.Last - 3 - Args_A.First);
+         return Buffer_A (Args_A.First .. Args_A.Last - 4)
+            = Head
+              (Buffer_B (Args_B.First .. Args_B.Last),
+               Args_A.Last - Args_A.First - 3);
       end if;
 
       if not Strict
-         and then Tail (Buffer_B (Args_B.First .. Args_B.Last), 3) = "..."
+         and then Tail (Buffer_B (Args_B.First .. Args_B.Last), 4) = ",..."
       then
-         return Buffer_B (Args_B.First .. Args_B.Last - 3)
-            = Buffer_A (Args_A.First .. Args_A.First
-               + Args_B.Last - 3 - Args_B.First);
+         return Buffer_B (Args_B.First .. Args_B.Last - 4)
+            = Head
+              (Buffer_A (Args_A.First .. Args_A.Last),
+               Args_B.Last - Args_B.First - 3);
       end if;
 
       return Buffer_A (Args_A.First .. Args_A.Last)
