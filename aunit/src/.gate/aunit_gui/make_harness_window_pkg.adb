@@ -25,7 +25,7 @@ begin
    Set_Position (Make_Harness_Window, Win_Pos_None);
    Set_Modal (Make_Harness_Window, False);
    Return_Callback.Connect
-     (Make_Harness_Window, "delete_event", On_Make_Harness_Window_Delete_Event'Access);
+     (Make_Harness_Window, "destroy_event", On_Make_Harness_Window_Delete_Event'Access);
 
    Gtk_New_Vbox (Make_Harness_Window.Vbox3, False, 0);
    Add (Make_Harness_Window, Make_Harness_Window.Vbox3);
@@ -86,6 +86,7 @@ begin
    Pack_Start (Make_Harness_Window.Hbox3, Make_Harness_Window.Vbox10, False, False, 3);
 
    Gtk_New (Make_Harness_Window.Browse, -"Browse");
+   Set_Relief (Make_Harness_Window.Browse, Relief_Normal);
    Pack_Start (Make_Harness_Window.Vbox10, Make_Harness_Window.Browse, False, False, 0);
    Button_Callback.Connect
      (Make_Harness_Window.Browse, "clicked",
@@ -99,6 +100,7 @@ begin
    Pack_Start (Make_Harness_Window.Vbox3, Make_Harness_Window.Hbuttonbox1, False, True, 0);
 
    Gtk_New (Make_Harness_Window.Ok, -"OK");
+   Set_Relief (Make_Harness_Window.Ok, Relief_Normal);
    Set_Flags (Make_Harness_Window.Ok, Can_Default);
    Button_Callback.Connect
      (Make_Harness_Window.Ok, "clicked",
@@ -106,6 +108,7 @@ begin
    Add (Make_Harness_Window.Hbuttonbox1, Make_Harness_Window.Ok);
 
    Gtk_New (Make_Harness_Window.Cancel, -"Cancel");
+   Set_Relief (Make_Harness_Window.Cancel, Relief_Normal);
    Set_Flags (Make_Harness_Window.Cancel, Can_Default);
    Button_Callback.Connect
      (Make_Harness_Window.Cancel, "clicked",
@@ -113,6 +116,7 @@ begin
    Add (Make_Harness_Window.Hbuttonbox1, Make_Harness_Window.Cancel);
 
    Gtk_New (Make_Harness_Window.Help, -"Help");
+   Set_Relief (Make_Harness_Window.Help, Relief_Normal);
    Set_Flags (Make_Harness_Window.Help, Can_Default);
    Button_Callback.Connect
      (Make_Harness_Window.Help, "clicked",

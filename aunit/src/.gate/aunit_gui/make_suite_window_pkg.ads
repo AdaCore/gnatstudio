@@ -17,6 +17,7 @@ package Make_Suite_Window_Pkg is
       Label7 : Gtk_Label;
       Vbox13 : Gtk_Vbox;
       Entry1 : Gtk_Entry;
+      Hbox8 : Gtk_Hbox;
       Vbox14 : Gtk_Vbox;
       Label8 : Gtk_Label;
       Hbox6 : Gtk_Hbox;

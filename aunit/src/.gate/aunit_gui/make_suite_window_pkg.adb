@@ -53,8 +53,11 @@ begin
    Set_Visibility (Make_Suite_Window.Entry1, True);
    Pack_Start (Make_Suite_Window.Vbox13, Make_Suite_Window.Entry1, False, False, 1);
 
+   Gtk_New_Hbox (Make_Suite_Window.Hbox8, False, 0);
+   Pack_Start (Make_Suite_Window.Vbox11, Make_Suite_Window.Hbox8, True, True, 1);
+
    Gtk_New_Vbox (Make_Suite_Window.Vbox14, False, 0);
-   Pack_Start (Make_Suite_Window.Vbox11, Make_Suite_Window.Vbox14, True, True, 0);
+   Pack_Start (Make_Suite_Window.Hbox8, Make_Suite_Window.Vbox14, True, True, 3);
 
    Gtk_New (Make_Suite_Window.Label8, -("The following tests will be added to the new suite :"));
    Set_Alignment (Make_Suite_Window.Label8, 0.0, 0.5);
@@ -108,6 +111,7 @@ begin
    Pack_Start (Make_Suite_Window.Hbox6, Make_Suite_Window.Vbuttonbox1, False, True, 0);
 
    Gtk_New (Make_Suite_Window.Add, -"Add");
+   Set_Relief (Make_Suite_Window.Add, Relief_Normal);
    Set_Flags (Make_Suite_Window.Add, Can_Default);
    Button_Callback.Connect
      (Make_Suite_Window.Add, "clicked",
@@ -115,6 +119,7 @@ begin
    Add (Make_Suite_Window.Vbuttonbox1, Make_Suite_Window.Add);
 
    Gtk_New (Make_Suite_Window.Remove, -"Remove");
+   Set_Relief (Make_Suite_Window.Remove, Relief_Normal);
    Set_Flags (Make_Suite_Window.Remove, Can_Default);
    Button_Callback.Connect
      (Make_Suite_Window.Remove, "clicked",
@@ -129,6 +134,7 @@ begin
    Pack_Start (Make_Suite_Window.Vbox11, Make_Suite_Window.Hbuttonbox3, False, False, 0);
 
    Gtk_New (Make_Suite_Window.Ok, -"OK");
+   Set_Relief (Make_Suite_Window.Ok, Relief_Normal);
    Set_Flags (Make_Suite_Window.Ok, Can_Default);
    Button_Callback.Connect
      (Make_Suite_Window.Ok, "clicked",
@@ -136,6 +142,7 @@ begin
    Add (Make_Suite_Window.Hbuttonbox3, Make_Suite_Window.Ok);
 
    Gtk_New (Make_Suite_Window.Cancel, -"Cancel");
+   Set_Relief (Make_Suite_Window.Cancel, Relief_Normal);
    Set_Flags (Make_Suite_Window.Cancel, Can_Default);
    Button_Callback.Connect
      (Make_Suite_Window.Cancel, "clicked",
@@ -143,6 +150,7 @@ begin
    Add (Make_Suite_Window.Hbuttonbox3, Make_Suite_Window.Cancel);
 
    Gtk_New (Make_Suite_Window.Help, -"Help");
+   Set_Relief (Make_Suite_Window.Help, Relief_Normal);
    Set_Flags (Make_Suite_Window.Help, Can_Default);
    Button_Callback.Connect
      (Make_Suite_Window.Help, "clicked",
