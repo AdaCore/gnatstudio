@@ -26,6 +26,7 @@ with Traces; use Traces;
 package body Tries is
 
    pragma Suppress (All_Checks);
+   --  For efficiency
 
    Me : constant Debug_Handle := Create ("Tries");
 
