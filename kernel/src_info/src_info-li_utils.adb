@@ -23,7 +23,6 @@ with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 with Traces; use Traces;
 with SN; use SN;
---  with SN.Xref_Pools; use SN.Xref_Pools;
 with Src_Info.CPP;  use Src_Info.CPP;
 
 package body Src_Info.LI_Utils is
@@ -599,7 +598,7 @@ package body Src_Info.LI_Utils is
       if D_Ptr = null then
          return;
       end if;
-      D_Ptr.Value.Declaration.Name := new String' (Symbol_Name);
+      D_Ptr.Value.Declaration.Name := new String'(Symbol_Name);
       D_Ptr.Value.Declaration.Location :=
         (File   => (LI              => File,
                     Part            => Unit_Body,
@@ -767,11 +766,11 @@ package body Src_Info.LI_Utils is
       if Directory_Name /= ""
         and then Directory_Name /= "./"
       then
-         Dir := new String' (Directory_Name);
+         Dir := new String'(Directory_Name);
       end if;
 
       if Unit_Name /= "" then
-         Unit := new String' (Unit_Name);
+         Unit := new String'(Unit_Name);
       end if;
 
       if Set_Time_Stamp then
@@ -780,7 +779,7 @@ package body Src_Info.LI_Utils is
 
       FI_Ptr := new File_Info'
         (Unit_Name         => Unit,
-         Source_Filename   => new String' (Base_Name (Full_Filename)),
+         Source_Filename   => new String'(Base_Name (Full_Filename)),
          Directory_Name    => Dir,
          File_Timestamp    => Time,
          Original_Filename => null,

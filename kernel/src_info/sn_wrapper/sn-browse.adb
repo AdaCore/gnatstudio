@@ -76,12 +76,12 @@ package body SN.Browse is
       Args : Argument_List (1 .. 6);
    begin
       --  Execute browser
-      Args := (1 => new String' ("-n"),
-               2 => new String' (DB_Directory & DB_File_Name),
-               3 => new String' ("-p"),
-               4 => new String' (DBIMP_Path),
-               5 => new String' ("-y"),
-               6 => new String' (File_Name));
+      Args := (1 => new String'("-n"),
+               2 => new String'(DB_Directory & DB_File_Name),
+               3 => new String'("-p"),
+               4 => new String'(DBIMP_Path),
+               5 => new String'("-y"),
+               6 => new String'(File_Name));
 
       GNAT.Expect.Non_Blocking_Spawn
         (PD, Cbrowser_Path, Args, Err_To_Out => True);
@@ -140,6 +140,7 @@ package body SN.Browse is
 
       --  enumerate all .xref files in the target directory
       --  and copy them into the temp file
+
       Open (Dir, DB_Directories (1).all);
 
       if not Is_Open (Dir) then
@@ -147,33 +148,38 @@ package body SN.Browse is
       end if;
 
       Read (Dir, Dir_Entry, Last); -- read first directory entry
+
       while Last /= 0 loop
          if Tail (Dir_Entry (1 .. Last), Xref_Suffix'Length) = Xref_Suffix then
             Content := OS_Utils.Read_File
                (Name_As_Directory (DB_Directories (1).all)
-               & Dir_Entry (1 .. Last));
-            if null /= Content then
-               if Content'Length
-                  /= Write (Temp_File, Content.all'Address, Content'Length)
+                 & Dir_Entry (1 .. Last));
+
+            if Content /= null then
+               if Content'Length /=
+                 Write (Temp_File, Content.all'Address, Content'Length)
                then
                   raise Temp_File_Failure;
                end if;
+
                Free (Content);
             end if;
          end if;
+
          Read (Dir, Dir_Entry, Last); -- read next directory entry
       end loop;
+
       Close (Dir);
       Close (Temp_File);
 
       Args := new Argument_List (1 .. DB_Directories'Length + 3);
-      Args (1) := new String' ("-f");
-      Args (2) := new String' (Temp_Name);
-      Args (3) := new String' ("-l");
+      Args (1) := new String'("-f");
+      Args (2) := new String'(Temp_Name);
+      Args (3) := new String'("-l");
 
       for J in DB_Directories.all'Range loop
-         Args (4 + J - DB_Directories.all'First)
-            := new String' (DB_Directories (J).all & DB_File_Name);
+         Args (4 + J - DB_Directories.all'First) :=
+           new String'(DB_Directories (J).all & DB_File_Name);
       end loop;
 
       GNAT.Expect.Non_Blocking_Spawn
