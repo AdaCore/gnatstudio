@@ -796,7 +796,7 @@ package body Odd.Source_Editors is
       end if;
 
       --  Read the size of the file
-      F := Open_Read (Name'Address, Text);
+      F := Open_Read (Name'Address, Binary);
 
       if F = Invalid_FD then
          File_Not_Found (Editor, File_Name);

@@ -437,7 +437,7 @@ package body Odd.Explorer is
             Full_Name : String := Find_File (Tab.Debugger, Data.Extension);
             Name      : aliased String := Full_Name & ASCII.NUL;
          begin
-            F := Open_Read (Name'Address, Text);
+            F := Open_Read (Name'Address, Binary);
 
             if F /= Invalid_FD then
                Length := Positive (File_Length (F));
