@@ -134,6 +134,17 @@ Known Problems fixed in GPS 3.0.0
               properly the long HTML files after a certain point.
   Workaround: Use an external HTML browser to view thise files.
 
+- D831-004 Wrong indentation in multiple line function call
+  Problem:    In some cases of nested parenthesized expressions, the
+              indentation is incorrect, e.g:
+              H : String :=
+                    Foo
+                      (Foo
+                               (Foo ("bar")));
+  Workaround: Indent the line manually, or put the first 'Foo' on the previous
+              line.
+
+
 - D713-012 Improper substitution in XML files
   Problem:    When chaining multiple shell commands in an XML action, the
               second command can refer to the output of the first by using %1.
