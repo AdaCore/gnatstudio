@@ -333,7 +333,7 @@ package body Src_Editor_Module is
 
                if Node = Null_Node then
                   Free (Filename);
-                  return "edit: option -c requires a value.";
+                  return -"edit: option -c requires a value";
                end if;
 
                declare
@@ -342,7 +342,7 @@ package body Src_Editor_Module is
                exception
                   when others =>
                      Free (Filename);
-                     return "edit: option -c requires a numerical value";
+                     return -"edit: option -c requires a numerical value";
                end;
 
             elsif Data (Node) = "-l" then
@@ -350,7 +350,7 @@ package body Src_Editor_Module is
 
                if Node = Null_Node then
                   Free (Filename);
-                  return "edit: option -l requires a value.";
+                  return -"edit: option -l requires a value";
                end if;
 
                declare
@@ -359,14 +359,14 @@ package body Src_Editor_Module is
                exception
                   when others =>
                      Free (Filename);
-                     return "edit: option -l requires a numerical value";
+                     return -"edit: option -l requires a numerical value";
                end;
 
             elsif Filename = null then
                Filename := new String'(Data (Node));
             else
                Free (Filename);
-               return "edit: too many parameters.";
+               return -"edit: too many parameters";
             end if;
 
             Node := Next (Node);
@@ -383,7 +383,7 @@ package body Src_Editor_Module is
 
             return "";
          else
-            return "edit: missing parameter file_name.";
+            return -"edit: missing parameter file_name";
          end if;
 
       elsif Command = "close" then
@@ -394,7 +394,7 @@ package body Src_Editor_Module is
                Filename := new String'(Data (Node));
             else
                Free (Filename);
-               return "close: too many parameters.";
+               return -"close: too many parameters";
             end if;
 
             Node := Next (Node);
@@ -406,11 +406,11 @@ package body Src_Editor_Module is
 
             return "";
          else
-            return "close: missing parameter file_name.";
+            return -"close: missing parameter file_name";
          end if;
 
       else
-         return -"Command not recognized: " & Command;
+         return -"command not recognized: " & Command;
       end if;
    end Edit_Command_Handler;
 
