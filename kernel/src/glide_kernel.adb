@@ -696,8 +696,9 @@ package body Glide_Kernel is
    -----------------------
 
    function Get_Other_File_Of
-     (Kernel       : access Kernel_Handle_Record;
-      Source_Filename : String) return String
+     (Kernel          : access Kernel_Handle_Record;
+      Source_Filename : String;
+      Full_Name       : Boolean := True) return String
    is
       Lib_Info : LI_File_Ptr;
    begin
@@ -708,16 +709,21 @@ package body Glide_Kernel is
               (Lib_Info, Source_Filename);
          begin
             if Other_File /= "" then
-               declare
-                  Full_Name : constant String :=
-                    Find_Source_File (Kernel, Other_File, True);
-               begin
-                  if Full_Name /= "" then
-                     return Full_Name;
-                  else
-                     Insert (Kernel, "Path for " & Other_File & " not found");
-                  end if;
-               end;
+               if Full_Name then
+                  declare
+                     Full_Name : constant String :=
+                       Find_Source_File (Kernel, Other_File, True);
+                  begin
+                     if Full_Name /= "" then
+                        return Full_Name;
+                     else
+                        Insert
+                          (Kernel, "Path for " & Other_File & " not found");
+                     end if;
+                  end;
+               else
+                  return Other_File;
+               end if;
             else
                Insert (Kernel, "No other file found", Mode => Error);
             end if;
