@@ -399,6 +399,25 @@ package body Default_Preferences is
       Manager.Current_Index := Manager.Current_Index + 1;
    end Register_Property;
 
+   ---------
+   -- Get --
+   ---------
+
+   function Get
+     (Manager : access Preferences_Manager_Record;
+      Name    : String)
+      return Param_Spec
+   is
+      Info : constant Pref_Description_Access :=
+               Get (Manager.Preferences, Name);
+   begin
+      if Info = null then
+         return null;
+      else
+         return Info.Param;
+      end if;
+   end Get;
+
    ----------------------
    -- Generic_Get_Pref --
    ----------------------
@@ -1299,8 +1318,8 @@ package body Default_Preferences is
       if Typ = GType_Int then
          declare
             Prop : constant Param_Spec_Int := Param_Spec_Int (Param);
-            Spin   : Gtk_Spin_Button;
-            Adj    : Gtk_Adjustment;
+            Spin : Gtk_Spin_Button;
+            Adj  : Gtk_Adjustment;
          begin
             Gtk_New (Adj,
                      Value => Gdouble (Get_Pref (Manager, Prop)),
@@ -1326,7 +1345,7 @@ package body Default_Preferences is
 
       elsif Typ = GType_Boolean then
          declare
-            Prop : constant Param_Spec_Boolean := Param_Spec_Boolean (Param);
+            Prop   : constant Param_Spec_Boolean := Param_Spec_Boolean (Param);
             Toggle : Gtk_Check_Button;
          begin
             Gtk_New (Toggle, -"Enabled");
@@ -1351,10 +1370,10 @@ package body Default_Preferences is
 
       elsif Typ = Gdk.Keyval.Get_Type then
          declare
-            Prop : constant Param_Spec_Key := Param_Spec_Key (Param);
-            Ent  : Gtk_Entry;
-            Modif : Gdk_Modifier_Type;
-            Key   : Gdk_Key_Type;
+            Prop   : constant Param_Spec_Key := Param_Spec_Key (Param);
+            Ent    : Gtk_Entry;
+            Modif  : Gdk_Modifier_Type;
+            Key    : Gdk_Key_Type;
             Button : Gtk_Button;
             Box    : Gtk_Box;
          begin
@@ -1494,8 +1513,8 @@ package body Default_Preferences is
 
       elsif Fundamental (Typ) = GType_Enum then
          declare
-            Prop : constant Param_Spec_Enum := Param_Spec_Enum (Param);
-            V : constant Gint := Get_Pref (Manager, Prop);
+            Prop    : constant Param_Spec_Enum := Param_Spec_Enum (Param);
+            V       : constant Gint := Get_Pref (Manager, Prop);
             Combo   : Gtk_Combo;
             E_Klass : constant Enum_Class := Enumeration (Prop);
             Val     : Enum_Value;
