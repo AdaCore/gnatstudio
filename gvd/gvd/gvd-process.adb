@@ -151,7 +151,8 @@ package body GVD.Process is
      ("graph\s+undisplay\s+(.*)", Case_Insensitive);
    --  Third possible set of commands
 
-   Regexp_Any : constant Pattern_Matcher := Compile (".+", Multiple_Lines);
+   Regexp_Any : constant Pattern_Matcher :=
+     Compile (".+", Single_Line or Multiple_Lines);
    --  Any non empty string, as long as possible.
 
    -----------------------
@@ -305,6 +306,7 @@ package body GVD.Process is
             Close_Pseudo_Descriptor (Data.Debuggee_Descriptor);
             Pseudo_Descriptor (Data.Debuggee_Descriptor, Data.Debuggee_TTY, 0);
             Set_TTY (Data.Debugger, TTY_Name (Data.Debuggee_TTY));
+            Flush (Data.Debuggee_Descriptor);
          end if;
 
          return True;
@@ -879,6 +881,7 @@ package body GVD.Process is
          Pseudo_Descriptor
            (Process.Debuggee_Descriptor, Process.Debuggee_TTY, 0);
          Set_TTY (Process.Debugger, TTY_Name (Process.Debuggee_TTY));
+         Flush (Process.Debuggee_Descriptor);
       end if;
 
       Process.Post_Processing := False;
@@ -1507,6 +1510,7 @@ package body GVD.Process is
          Set_TTY (Process.Debugger, TTY_Name (Process.Debuggee_TTY));
          Pseudo_Descriptor
            (Process.Debuggee_Descriptor, Process.Debuggee_TTY, 0);
+         Flush (Process.Debuggee_Descriptor);
 
          Process.Debuggee_Id :=
            TTY_Timeout.Add (Timeout, TTY_Cb'Access, Process.all'Access);
