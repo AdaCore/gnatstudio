@@ -345,7 +345,6 @@ procedure GPS is
 
       Vsearch_Ext.Register_Module (GPS.Kernel);
       Help_Module.Register_Module (GPS.Kernel);
-      Custom_Module.Register_Module (GPS.Kernel);
 
       Navigation_Module.Register_Module (GPS.Kernel);
       Metrics_Module.Register_Module (GPS.Kernel);
@@ -366,6 +365,8 @@ procedure GPS is
       Aunit_Module.Register_Module (GPS.Kernel);
       VFS_Module.Register_Module (GPS.Kernel);
       Codefix_Module.Register_Module (GPS.Kernel);
+
+      Custom_Module.Register_Module (GPS.Kernel);
 
       --  Register the supported languages and their associated LI handlers.
 
