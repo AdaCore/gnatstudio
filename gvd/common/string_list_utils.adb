@@ -18,6 +18,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Characters.Handling;
+
 package body String_List_Utils is
 
    use String_List;
@@ -40,6 +42,17 @@ package body String_List_Utils is
 
       return Result;
    end Copy_String_List;
+
+   --------------------------------
+   -- Less_Than_Case_Insensitive --
+   --------------------------------
+
+   function Less_Than_Case_Insensitive (Item1, Item2 : String)
+      return Boolean is
+   begin
+      return Ada.Characters.Handling.To_Lower (Item1)
+        < Ada.Characters.Handling.To_Lower (Item2);
+   end Less_Than_Case_Insensitive;
 
    -----------------
    -- String_Free --

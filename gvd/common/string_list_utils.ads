@@ -35,6 +35,12 @@ package String_List_Utils is
    procedure Sort is new List_Utils.Sort (String_List);
    --  Sort L alphabetically.
 
+   function Less_Than_Case_Insensitive (Item1, Item2 : String) return Boolean;
+   --  Compare two strings case insensitive
+
+   procedure Sort_Case_Insensitive is new List_Utils.Sort
+     (String_List, Less_Than_Case_Insensitive);
+
    procedure Remove_From_List
      (L               : in out String_List.List;
       S               : String;
