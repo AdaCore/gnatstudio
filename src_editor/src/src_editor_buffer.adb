@@ -3184,9 +3184,7 @@ package body Src_Editor_Buffer is
    begin
       Get_Iter_At_Mark (Buffer, Iter, Buffer.Insert_Mark);
 
-      if Ends_Word (Iter)
-        or else not (Inside_Word (Iter) or else Get_Char (Iter) = '_')
-      then
+      if not (Inside_Word (Iter) or else Get_Char (Iter) = '_') then
          return;
       end if;
 
