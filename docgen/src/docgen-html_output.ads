@@ -37,6 +37,7 @@ with Ada.Text_IO;
 with Glide_Kernel;
 with Docgen_Backend_HTML;       use Docgen_Backend_HTML;
 with VFS;                       use VFS;
+with Basic_Types;
 
 package Docgen.Html_Output is
 
@@ -53,7 +54,21 @@ package Docgen.Html_Output is
    --  What happens with the given information (which of the procedures
    --  below will be called) depends on the contents and the kind of the
    --  Doc_Info type.
-   --  ??? Need to document parameters, in particular List_Reg_In_File and Info
+   --  The record Info contains informations about the entity for which we
+   --  have called this subprogram.
+   --  List_Ref_In_File is a list which contains all the reference of the
+   --  current file. Used when we want to make links.
+
+   procedure Print_Ref_List_HTML
+     (Kernel : access Kernel_Handle_Record'Class;
+      File   : in Ada.Text_IO.File_Type;
+      Name_Entity : Basic_Types.String_Access;
+      Local_List  : Type_Reference_List.List;
+      Called_Subp : Boolean);
+   --  For the current entity which is a subprogram, it prints the list
+   --  of called subprograms (if Called_Sub = True) or the list of
+   --  subprograms which call it (if Called_Sub = False).
+   --  Name_Entity has a value only if this entity belongs to an inner package
 
    procedure Callback_Output
      (B           : access Backend_HTML;
