@@ -18,44 +18,44 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
---  This package groups a tree (that shows projects, directories, files, and
---  entities in the files), and the display of the scenario variables that the
---  user can modify.
---  This widget also knows how to save its state to an Ada stream, and re-read
---  a previously saved configuration.
+--  This package contains the files view for the explorer,
 
 with Glide_Kernel;
-with Scenario_Views;
-with Gtk.Ctree;
-with Gtk.Handlers;
-with Gdk.Pixmap;
-with Gdk.Bitmap;
-with Gtk.Box;
+with Gdk.Pixbuf;
+with Gtk.Main;
+with Gtk.Scrolled_Window;
+with Gtk.Tree_View;
+with Gtk.Tree_Store;
 
+with Generic_List;
+with Language;
 
-package Project_Explorers is
+package Project_Explorers_Files is
 
-   type Project_Explorer_Record is new Gtk.Box.Gtk_Box_Record with private;
-   type Project_Explorer is access all Project_Explorer_Record'Class;
+   type Project_Explorer_Files_Record is new
+     Gtk.Scrolled_Window.Gtk_Scrolled_Window_Record with private;
+   type Project_Explorer_Files
+      is access all Project_Explorer_Files_Record'Class;
 
    procedure Gtk_New
-     (Explorer : out Project_Explorer;
+     (Explorer : out Project_Explorer_Files;
       Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class);
    --  Create a new explorer.
-   --  On each update, and since the list of withed projects can not changed,
-   --  the open/close status of all the project nodes is kept.
 
    procedure Initialize
-     (Explorer : access Project_Explorer_Record'Class;
+     (Explorer : access Project_Explorer_Files_Record'Class;
       Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class);
    --  Internal initialization procedure.
 
-   Explorer_Module_ID   : Glide_Kernel.Module_ID := null;
-   --  Id for the explorer module
+   function Filter_Category
+     (Category : Language.Language_Category) return Language.Language_Category;
+   --  Return the category to use when an entity is Category.
+   --  This is used to group subprograms (procedures and functions together),
+   --  or remove unwanted categories (in which case Cat_Unknown is returned).
 
-   procedure Register_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
-   --  Register the module into the list
+   function Category_Name
+     (Category : Language.Language_Category) return String;
+   --  Return the name of the node for Category
 
    -------------
    -- Signals --
@@ -67,6 +67,7 @@ package Project_Explorers is
    --  </signals>
 
 private
+
    type Node_Types is
      (Project_Node,
       Extends_Project_Node,
@@ -77,30 +78,38 @@ private
       Entity_Node,
       Modified_Project_Node);
    --  The kind of nodes one might find in the tree
+   --  ??? Should be shared with Project_Explorers
 
    subtype Real_Node_Types is Node_Types range Project_Node .. Entity_Node;
 
-   type Pixmap_Array is array (Node_Types) of Gdk.Pixmap.Gdk_Pixmap;
-   type Mask_Array   is array (Node_Types) of Gdk.Bitmap.Gdk_Bitmap;
 
-   type Project_Explorer_Record is new Gtk.Box.Gtk_Box_Record with record
-      Scenario      : Scenario_Views.Scenario_View;
-      Tree          : Gtk.Ctree.Gtk_Ctree;
+   type Append_Directory_Idle_Data;
+   type Append_Directory_Idle_Data_Access is access Append_Directory_Idle_Data;
+   --  Custom data for the asynchronous fill function.
 
-      Kernel        : Glide_Kernel.Kernel_Handle;
-      Open_Pixmaps  : Pixmap_Array;
-      Close_Pixmaps : Pixmap_Array;
+   package File_Append_Directory_Timeout is
+      new Gtk.Main.Timeout (Append_Directory_Idle_Data_Access);
 
-      Open_Masks    : Mask_Array;
-      Close_Masks   : Mask_Array;
+   procedure Free (D : in out Gtk.Main.Timeout_Handler_Id);
 
-      Expand_Id     : Gtk.Handlers.Handler_Id;
-      --  The signal for the expansion of nodes in the project view
+   package Timeout_Id_List is new Generic_List (Gtk.Main.Timeout_Handler_Id);
 
-      Old_Selection : Gtk.Ctree.Gtk_Ctree_Node;
-      --  Memorizes the node that was selected at the beginning of a
-      --  refresh. It is used to restore the selection at the end of the
-      --  refresh. It needs to be stored in this record, so that if this node
-      --  is removed then we simply do not try to restore the selection
+   type Pixbuf_Array is array (Node_Types) of Gdk.Pixbuf.Gdk_Pixbuf;
+
+   type Project_Explorer_Files_Record is new
+     Gtk.Scrolled_Window.Gtk_Scrolled_Window_Record with
+   record
+      Kernel     : Glide_Kernel.Kernel_Handle;
+      File_Tree  : Gtk.Tree_View.Gtk_Tree_View;
+      File_Model : Gtk.Tree_Store.Gtk_Tree_Store;
+      Expanding  : Boolean := False;
+
+      Open_Pixbufs  : Pixbuf_Array;
+      Close_Pixbufs : Pixbuf_Array;
+
+      Fill_Timeout_Ids : Timeout_Id_List.List;
+      --  ??? This is implemented as a list of handlers instead of just one
+      --  handler, in case the fill function should call itself recursively :
+      --  to be investigated.
    end record;
-end Project_Explorers;
+end Project_Explorers_Files;
