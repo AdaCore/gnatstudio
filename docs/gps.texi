@@ -1784,6 +1784,12 @@ Save the desktop to a file. The desktop includes information about
 files, graphs, @dots{} and their window size and position in GPS. The desktop
 is saved per top level project.
 
+@item Default Desktop
+@cindex save default desktop
+Save the current desktop as the default desktop. The next time you
+start GPS, and if there is no saved desktop matching the project, then
+this desktop will be loaded.
+
 @end table
 
 @item Change Directory...
