@@ -10,13 +10,13 @@ RUNTIME_INC=${RUNTIME_HEAD:%=-aI%}
 GNAT_INC=${RUNTIME_INC} -aI${GNAT_SRC}
 
 CFLAGS=-g
-GNATMAKE_FLAGS=-gnaty -gnatwu ${CFLAGS}
+GNATMAKE_FLAGS=-gnaty -gnatwu -m ${CFLAGS} `gtkada-config`
 
 
 .PHONY: all check_gnat force
 
 all: check_gnat
-	cd ../obj; gnatmake -aI../src ${GNAT_INC} wizard.adb ${GNATMAKE_FLAGS}
+	cd ../obj; gnatmake -aI../src ${GNAT_INC} lib_make.adb ${GNATMAKE_FLAGS}
 
 check_gnat: force
 	@[ -f ${GNAT_SRC}/prj.ads ] || \
