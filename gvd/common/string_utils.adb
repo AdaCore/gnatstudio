@@ -1011,7 +1011,6 @@ package body String_Utils is
          end if;
       end loop;
 
-      Put_Line ("Result=" & To_String (Result) & "--");
       return To_String (Result);
    exception
       when Invalid_Substitution =>
