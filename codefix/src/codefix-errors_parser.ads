@@ -138,7 +138,7 @@ package Codefix.Errors_Parser is
      (others => Enabled);
 
    procedure Initialize_Parsers;
-   --  ???
+   --  Initialize all Parsers, must be called before the first call of Fix.
 
    type Agregate_Misspelling is new Error_Parser (Misspelling, 1)
      with null record;
@@ -580,6 +580,19 @@ package Codefix.Errors_Parser is
       Solutions    : out Solution_List;
       Matches      : Match_Array);
    --  Fix problems like 'sth is not referenced'.
+
+   type Pkg_Not_Referenced is new Error_Parser (Unit_Not_Referenced, 1)
+     with null record;
+
+   procedure Initialize (This : in out Pkg_Not_Referenced);
+
+   procedure Fix
+     (This         : Pkg_Not_Referenced;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message      : Error_Message;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array);
+   --  Fix problems like 'no entities of sth are referenced'.
 
    type Pragma_Missplaced is new Error_Parser (Pragma_Should_Begin, 1)
       with null record;
