@@ -57,9 +57,6 @@ with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 
 package body Browsers.Dependency_Items is
 
-   Display_Unit_Name : constant Boolean := False;
-   --  <preference> True if the unit name should be displayed
-
    Margin : constant := 2;
 
    Dependency_Browser_Module_ID : Module_ID;
@@ -318,8 +315,7 @@ package body Browsers.Dependency_Items is
                Must_Add_Link := True;
 
                if New_Item then
-                  Gtk_New (Item, Get_Window (In_Browser), In_Browser,
-                           Kernel, Intern);
+                  Gtk_New (Item, Get_Window (In_Browser), In_Browser, Intern);
 
                else
                   --  If the item already existed, chances are that the link
@@ -570,11 +566,10 @@ package body Browsers.Dependency_Items is
      (Item    : out File_Item;
       Win     : Gdk_Window;
       Browser : access Glide_Browser_Record'Class;
-      Kernel  : access Kernel_Handle_Record'Class;
       File    : Internal_File) is
    begin
       Item := new File_Item_Record;
-      Initialize (Item, Win, Browser, Kernel, Copy (File));
+      Initialize (Item, Win, Browser, Copy (File));
    end Gtk_New;
 
    -------------
@@ -590,7 +585,7 @@ package body Browsers.Dependency_Items is
    begin
       Item := new File_Item_Record;
       Initialize
-        (Item, Win, Browser, Kernel,
+        (Item, Win, Browser,
          Make_Source_File (Source_Filename,
                            Get_Project_View (Kernel),
                            Get_Predefined_Source_Path (Kernel)));
@@ -604,12 +599,10 @@ package body Browsers.Dependency_Items is
      (Item : access File_Item_Record'Class;
       Win  : Gdk_Window;
       Browser : access Glide_Browser_Record'Class;
-      Kernel : access Kernel_Handle_Record'Class;
       File  : Internal_File)
    is
       use type Gdk_Window;
       Str : constant String := Get_Source_Filename (File);
-      Str2 : GNAT.OS_Lib.String_Access;
       Font : Gdk_Font;
       Width, Height : Gint;
 
@@ -620,26 +613,9 @@ package body Browsers.Dependency_Items is
 
       Font := Get_Text_Font (Item.Browser);
 
-      if Display_Unit_Name then
-         Get_Unit_Name (Kernel, Item.Source, Str2);
-      end if;
-
-      Width  := String_Width (Font, Str);
+      Width  := String_Width (Font, Str) + 4 * Margin;
       Height := (Get_Ascent (Font) + Get_Descent (Font)) + 2 * Margin;
 
-      if Display_Unit_Name then
-         if Str2 /= null then
-            Width := Gint'Max (Width, String_Width (Font, Str2.all));
-         else
-            Width := Gint'Max
-              (Width, String_Width (Font, String' (-"<unknown unit name>")));
-         end if;
-
-         Height := Height + (Get_Ascent (Font) + Get_Descent (Font))
-           + 2 * Margin;
-      end if;
-
-      Width := Width + 4 * Margin;
       Set_Screen_Size_And_Pixmap
         (Item, Get_Window (Item.Browser), Width, Height);
 
@@ -655,7 +631,6 @@ package body Browsers.Dependency_Items is
    is
       use type Gdk.Gdk_GC;
       Font : Gdk_Font := Get_Text_Font (Browser);
-      Str2 : GNAT.OS_Lib.String_Access;
    begin
       Draw_Item_Background (Browser, Item);
       Draw_Text
@@ -665,27 +640,6 @@ package body Browsers.Dependency_Items is
          X     => Margin,
          Y     => Margin + Get_Ascent (Font),
          Text  => Get_Source_Filename (Item.Source));
-
-      if Display_Unit_Name then
-         Get_Unit_Name (Get_Kernel (Browser), Item.Source, Str2);
-         if Str2 /= null then
-            Draw_Text
-              (Pixmap (Item),
-               Font  => Font,
-               GC    => Get_Text_GC (Browser),
-               X     => Margin,
-               Y     => Margin + Get_Ascent (Font) * 2 + Get_Descent (Font),
-               Text  => Str2.all);
-         else
-            Draw_Text
-              (Pixmap (Item),
-               Font  => Font,
-               GC    => Get_Text_GC (Browser),
-               X     => Margin,
-               Y     => Margin + Get_Ascent (Font) * 2 + Get_Descent (Font),
-               Text  => -"<unknown unit name>");
-         end if;
-      end if;
    end Refresh;
 
    ---------------------

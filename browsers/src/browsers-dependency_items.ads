@@ -49,7 +49,6 @@ package Browsers.Dependency_Items is
      (Item    : out File_Item;
       Win     : Gdk.Window.Gdk_Window;
       Browser : access Browsers.Canvas.Glide_Browser_Record'Class;
-      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
       File    : Src_Info.Internal_File);
    --  Create a new dependency item that represents Dep.
 
@@ -65,7 +64,6 @@ package Browsers.Dependency_Items is
      (Item    : access File_Item_Record'Class;
       Win     : Gdk.Window.Gdk_Window;
       Browser : access Browsers.Canvas.Glide_Browser_Record'Class;
-      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
       File    : Src_Info.Internal_File);
    --  Internal initialization function
 
