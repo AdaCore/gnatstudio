@@ -12809,8 +12809,8 @@ Directory containing files with system-wide customizations
 Animated image displayed in the top right corner of GPS to indicate that
 actions (e.g compilation) are on going.
 
-   @item @i{prefix}/share/gps/gps-splash.jpg
-@cindex jpeg
+   @item @i{prefix}/share/gps/gps-splash.png
+@cindex png
 Splash screen displayed by default when GPS is started.
 
    @item @i{prefix}/share/locale
