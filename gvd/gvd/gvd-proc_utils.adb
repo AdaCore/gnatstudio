@@ -23,10 +23,12 @@ pragma Warnings (Off);
 with GNAT.Expect.TTY; use GNAT.Expect.TTY;
 pragma Warnings (On);
 
-with GNAT.OS_Lib;     use GNAT.OS_Lib;
-with GVD.Preferences; use GVD.Preferences;
-with String_Utils;    use String_Utils;
-with Config;          use Config;
+with GNAT.OS_Lib;            use GNAT.OS_Lib;
+with Default_Preferences;    use Default_Preferences;
+with GVD.Preferences;        use GVD.Preferences;
+with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
+with String_Utils;           use String_Utils;
+with Config;                 use Config;
 with Ada.Unchecked_Deallocation;
 
 package body GVD.Proc_Utils is

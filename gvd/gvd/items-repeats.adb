@@ -23,6 +23,7 @@ with Glib;            use Glib;
 with Gdk.Drawable;    use Gdk.Drawable;
 with Pango.Layout;    use Pango.Layout;
 with Language;        use Language;
+with Default_Preferences; use Default_Preferences;
 with GVD.Preferences; use GVD.Preferences;
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 

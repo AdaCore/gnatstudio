@@ -40,17 +40,18 @@ with Pango.Font;        use Pango.Font;
 
 with Debugger;          use Debugger;
 
-with GVD.Process;       use GVD.Process;
-with GVD.Code_Editors;  use GVD.Code_Editors;
-with GVD.Preferences;   use GVD.Preferences;
-with String_Utils;      use String_Utils;
-with GVD.Types;         use GVD.Types;
-with Basic_Types;       use Basic_Types;
-with GPS.Intl;        use GPS.Intl;
+with GVD.Process;         use GVD.Process;
+with GVD.Code_Editors;    use GVD.Code_Editors;
+with Default_Preferences; use Default_Preferences;
+with GVD.Preferences;     use GVD.Preferences;
+with String_Utils;        use String_Utils;
+with GVD.Types;           use GVD.Types;
+with Basic_Types;         use Basic_Types;
+with GPS.Intl;            use GPS.Intl;
 
-with GNAT.Regpat;       use GNAT.Regpat;
-with Ada.Exceptions;    use Ada.Exceptions;
-with Traces;            use Traces;
+with GNAT.Regpat;         use GNAT.Regpat;
+with Ada.Exceptions;      use Ada.Exceptions;
+with Traces;              use Traces;
 
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 

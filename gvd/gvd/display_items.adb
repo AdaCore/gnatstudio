@@ -36,18 +36,19 @@ with Language;          use Language;
 with Items;             use Items;
 with Items.Simples;     use Items.Simples;
 
-with GPS.Intl;        use GPS.Intl;
-with GVD.Canvas;        use GVD.Canvas;
-with GVD.Preferences;   use GVD.Preferences;
-with GVD.Process;       use GVD.Process;
+with GPS.Intl;            use GPS.Intl;
+with GVD.Canvas;          use GVD.Canvas;
+with Default_Preferences; use Default_Preferences;
+with GVD.Preferences;     use GVD.Preferences;
+with GVD.Process;         use GVD.Process;
 with GVD.Types;
-with Basic_Types;       use Basic_Types;
-with GVD.Trace;         use GVD.Trace;
-with Process_Proxies;   use Process_Proxies;
-with Ada.Exceptions;    use Ada.Exceptions;
-with Traces;            use Traces;
-with GPS.Kernel;      use GPS.Kernel;
-with GPS.Main_Window; use GPS.Main_Window;
+with Basic_Types;         use Basic_Types;
+with GVD.Trace;           use GVD.Trace;
+with Process_Proxies;     use Process_Proxies;
+with Ada.Exceptions;      use Ada.Exceptions;
+with Traces;              use Traces;
+with GPS.Kernel;          use GPS.Kernel;
+with GPS.Main_Window;     use GPS.Main_Window;
 
 package body Display_Items is
 

@@ -28,6 +28,7 @@ with Pango.Layout;    use Pango.Layout;
 
 with Basic_Types;     use Basic_Types;
 with String_Utils;    use String_Utils;
+with Default_Preferences; use Default_Preferences;
 with GVD.Preferences; use GVD.Preferences;
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 

@@ -35,22 +35,24 @@ with Gtk.Main;          use Gtk.Main;
 with Gtk.Window;        use Gtk.Window;
 with Gtkada.Types;      use Gtkada.Types;
 
-with GPS.Intl;          use GPS.Intl;
-with Items;             use Items;
-with Process_Proxies;   use Process_Proxies;
-with Language;          use Language;
-with Language.Debugger; use Language.Debugger;
-with GVD;               use GVD;
-with GVD.Preferences;   use GVD.Preferences;
-with GVD.Process;       use GVD.Process;
-with String_Utils;      use String_Utils;
-with GVD.Types;         use GVD.Types;
-with Basic_Types;       use Basic_Types;
+with GPS.Intl;               use GPS.Intl;
+with Items;                  use Items;
+with Process_Proxies;        use Process_Proxies;
+with Language;               use Language;
+with Language.Debugger;      use Language.Debugger;
+with GVD;                    use GVD;
+with Default_Preferences;    use Default_Preferences;
+with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
+with GVD.Preferences;        use GVD.Preferences;
+with GVD.Process;            use GVD.Process;
+with String_Utils;           use String_Utils;
+with GVD.Types;              use GVD.Types;
+with Basic_Types;            use Basic_Types;
 
-with Gtkada.Dialogs;    use Gtkada.Dialogs;
+with Gtkada.Dialogs;         use Gtkada.Dialogs;
 with GVD.Text_Box.Source_Editor; use GVD.Text_Box.Source_Editor;
-with GVD.Code_Editors;  use GVD.Code_Editors;
-with Config;            use Config;
+with GVD.Code_Editors;       use GVD.Code_Editors;
+with Config;                 use Config;
 
 package body Debugger is
 

@@ -41,11 +41,12 @@ with Gtkada.Canvas;    use Gtkada.Canvas;
 with Debugger;         use Debugger;
 with Memory_View_Pkg;  use Memory_View_Pkg;
 
-with GPS.Intl;       use GPS.Intl;
-with String_Utils;     use String_Utils;
-with GUI_Utils;        use GUI_Utils;
-with GVD.Process;      use GVD.Process;
-with GVD.Preferences;  use GVD.Preferences;
+with GPS.Intl;               use GPS.Intl;
+with String_Utils;           use String_Utils;
+with GUI_Utils;              use GUI_Utils;
+with GVD.Process;            use GVD.Process;
+with Default_Preferences;    use Default_Preferences;
+with GVD.Preferences;        use GVD.Preferences;
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 
 package body GVD.Memory_View is

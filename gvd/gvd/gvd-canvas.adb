@@ -37,25 +37,27 @@ with Gtk.Radio_Menu_Item; use Gtk.Radio_Menu_Item;
 with Gtk.Check_Menu_Item; use Gtk.Check_Menu_Item;
 with Gtk.Window;          use Gtk.Window;
 
-with Gtkada.Canvas;    use Gtkada.Canvas;
-with Gtkada.Handlers;  use Gtkada.Handlers;
+with Gtkada.Canvas;          use Gtkada.Canvas;
+with Gtkada.Handlers;        use Gtkada.Handlers;
 
-with Debugger;         use Debugger;
-with Display_Items;    use Display_Items;
-with Items;            use Items;
-with Pixmaps_IDE;      use Pixmaps_IDE;
+with Debugger;               use Debugger;
+with Display_Items;          use Display_Items;
+with Items;                  use Items;
+with Pixmaps_IDE;            use Pixmaps_IDE;
 
-with GPS.Intl;         use GPS.Intl;
-with GPS.Main_Window;  use GPS.Main_Window;
-with GVD.Menu;         use GVD.Menu;
-with GVD.Memory_View;  use GVD.Memory_View;
-with GVD.Preferences;  use GVD.Preferences;
-with GVD.Process;      use GVD.Process;
-with Std_Dialogs;      use Std_Dialogs;
+with GPS.Intl;               use GPS.Intl;
+with GPS.Main_Window;        use GPS.Main_Window;
+with GVD.Menu;               use GVD.Menu;
+with GVD.Memory_View;        use GVD.Memory_View;
+with Default_Preferences;    use Default_Preferences;
+with GVD.Preferences;        use GVD.Preferences;
+with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
+with GVD.Process;            use GVD.Process;
+with Std_Dialogs;            use Std_Dialogs;
 
-with String_Utils;     use String_Utils;
-with Traces;           use Traces;
-with Ada.Exceptions;   use Ada.Exceptions;
+with String_Utils;           use String_Utils;
+with Traces;                 use Traces;
+with Ada.Exceptions;         use Ada.Exceptions;
 
 package body GVD.Canvas is
 
@@ -291,8 +293,7 @@ package body GVD.Canvas is
    begin
       Canvas := new GVD_Canvas_Record;
       Canvas.History := History;
-      Canvas.Detect_Aliases := Get_Pref
-        (GVD_Prefs, Default_Detect_Aliases);
+      Canvas.Detect_Aliases := Get_Pref (GVD_Prefs, Default_Detect_Aliases);
       Initialize (Canvas);
       Align_On_Grid (Canvas, True);
 

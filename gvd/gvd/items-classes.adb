@@ -25,8 +25,9 @@ with Gdk.Drawable; use Gdk.Drawable;
 with Gdk.GC;       use Gdk.GC;
 with Language;     use Language;
 
-with Items.Records;  use Items.Records;
-with GVD.Preferences; use GVD.Preferences;
+with Items.Records;       use Items.Records;
+with Default_Preferences; use Default_Preferences;
+with GVD.Preferences;     use GVD.Preferences;
 
 package body Items.Classes is
 

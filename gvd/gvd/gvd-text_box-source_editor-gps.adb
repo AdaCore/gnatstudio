@@ -43,6 +43,7 @@ with Commands.Debugger;         use Commands.Debugger;
 with Ada.Unchecked_Deallocation;
 with GNAT.OS_Lib;
 
+with Default_Preferences;       use Default_Preferences;
 with GVD.Preferences;           use GVD.Preferences;
 
 package body GVD.Text_Box.Source_Editor.GPS is

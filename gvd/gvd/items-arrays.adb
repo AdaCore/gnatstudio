@@ -26,8 +26,9 @@ with Gdk.Drawable; use Gdk.Drawable;
 with Language;     use Language;
 with Pango.Layout; use Pango.Layout;
 
-with Basic_Types;     use Basic_Types;
-with GVD.Preferences; use GVD.Preferences;
+with Basic_Types;         use Basic_Types;
+with Default_Preferences; use Default_Preferences;
+with GVD.Preferences;     use GVD.Preferences;
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 
 with Items.Repeats; use Items.Repeats;

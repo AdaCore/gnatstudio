@@ -77,6 +77,7 @@ with GVD.Code_Editors;           use GVD.Code_Editors;
 with GVD.Dialogs;                use GVD.Dialogs;
 with GPS.Main_Window;            use GPS.Main_Window;
 with GPS.Main_Window.Debug;      use GPS.Main_Window.Debug;
+with Default_Preferences;        use Default_Preferences;
 with GVD.Preferences;            use GVD.Preferences;
 with GVD.Text_Box.Source_Editor; use GVD.Text_Box.Source_Editor;
 with GVD.Trace;                  use GVD.Trace;

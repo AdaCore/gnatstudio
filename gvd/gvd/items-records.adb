@@ -26,9 +26,10 @@ with Pango.Enums;  use Pango.Enums;
 with Pango.Font;   use Pango.Font;
 with Pango.Layout; use Pango.Layout;
 
-with Language;        use Language;
-with Basic_Types;     use Basic_Types;
-with GVD.Preferences; use GVD.Preferences;
+with Language;               use Language;
+with Basic_Types;            use Basic_Types;
+with Default_Preferences;    use Default_Preferences;
+with GVD.Preferences;        use GVD.Preferences;
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 
 package body Items.Records is

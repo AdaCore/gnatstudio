@@ -63,6 +63,7 @@ with Std_Dialogs;               use Std_Dialogs;
 with GPS.Main_Window;           use GPS.Main_Window;
 with GPS.Main_Window.Debug;     use GPS.Main_Window.Debug;
 with GVD.Memory_View;           use GVD.Memory_View;
+with Default_Preferences;       use Default_Preferences;
 with GVD.Preferences;           use GVD.Preferences;
 with GVD.Text_Box.Asm_Editor;   use GVD.Text_Box.Asm_Editor;
 with GVD.Types;                 use GVD.Types;
@@ -3265,6 +3266,9 @@ package body GVD_Module is
          Module_Name             => GVD_Module_Name,
          Priority                => Default_Priority + 20,
          Tooltip_Handler         => Tooltip_Handler'Access);
+
+      GVD.Preferences.GVD_Prefs := Get_Preferences (Kernel);
+      GVD.Preferences.Register_Default_Preferences (GVD.Preferences.GVD_Prefs);
 
       Debugger_Filter := new Debugger_Active_Filter;
       Register_Filter (Kernel, Debugger_Filter, "Debugger active");
