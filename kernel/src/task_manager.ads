@@ -46,9 +46,11 @@ package Task_Manager is
      (Manager  : Task_Manager_Access;
       Command  : Command_Access;
       Active   : Boolean;
+      Show_Bar : Boolean;
       Queue_Id : String := "");
    --  Add a command to be handled by the task manager.
    --  The command will be executed at once.
+   --  The progress bar will be shown for this command if Show_Bar is True.
 
    procedure Set_Progress_Area
      (Manager : Task_Manager_Access;
@@ -99,6 +101,8 @@ private
       Current_Priority : Integer := 0;
 
       Need_Refresh : Boolean := False;
+
+      Show_Bar     : Boolean := False;
 
       Bar          : Gtk.Progress_Bar.Gtk_Progress_Bar := null;
    end record;
