@@ -49,6 +49,7 @@ procedure Odd_Main is
    Button            : Message_Dialog_Buttons;
    Root              : String_Access;
    Home              : String_Access;
+   Dir               : String_Access;
    Remote_Host       : String_Access;
    Skip_Argument     : Boolean := False;
    Program           : Program_Descriptor;
@@ -79,20 +80,20 @@ procedure Odd_Main is
       end if;
 
       if Home /= null then
-         declare
-            Dir : constant String := Home.all & Directory_Separator & ".gvd";
+         Dir := new String' (Home.all & Directory_Separator & ".gvd");
+
          begin
-            if not Is_Directory (Dir) then
-               Make_Dir (Home.all & Directory_Separator & ".gvd");
+            if not Is_Directory (Dir.all) then
+               Make_Dir (Dir.all);
                Button := Message_Dialog
-                 ((-"Created config directory ") & Dir,
+                 ((-"Created config directory ") & Dir.all,
                   Information, Button_OK,
                   Justification => Justify_Left);
             end if;
          exception
             when Directory_Error =>
                Button := Message_Dialog
-                 ((-"Cannot create config directory ") & Dir & ASCII.LF &
+                 ((-"Cannot create config directory ") & Dir.all & ASCII.LF &
                     (-"Exiting..."),
                   Error, Button_OK,
                   Justification => Justify_Left);
@@ -140,14 +141,20 @@ procedure Odd_Main is
    procedure Bug_Dialog (E : Exception_Occurrence) is
    begin
       Button := Message_Dialog
-        ((-"Please report with the following information:") & ASCII.LF &
+        ("Please report with the contents of the file " &
+         Dir.all & Directory_Separator & "log" & ASCII.LF &
+         "and the following information:" & ASCII.LF &
+         "Version: " & Odd.Version & ASCII.LF &
          Format (Exception_Information (E), Columns => 80),
          Error, Button_OK,
-         Title => -"Bug detected in odd",
+         Title => -"Bug detected in GVD",
          Justification => Justify_Left);
-      Put_Line (Standard_Error, -"Bug detected in odd");
+      Put_Line (Standard_Error, -"Bug detected in GVD");
       Put_Line (Standard_Error,
-        -"Please report with the following information:");
+        "Please report with the contents of the file " &
+        Dir.all & Directory_Separator & "log");
+      Put_Line (Standard_Error, "and the following information:");
+      Put_Line (Standard_Error, "Version: " & Odd.Version);
       Put_Line (Standard_Error, Exception_Information (E));
    end Bug_Dialog;
 
@@ -177,8 +184,7 @@ begin
 
    declare
       Log : aliased constant String :=
-        Home.all & Directory_Separator & ".gvd" & Directory_Separator & "log" &
-        ASCII.NUL;
+        Dir.all & Directory_Separator & "log" & ASCII.NUL;
    begin
       Main_Debug_Window.Debug_Mode := True;
       Main_Debug_Window.Log_File := Create_File (Log'Address, Fmode => Text);
