@@ -51,12 +51,13 @@ with Language_Handlers.Glide;     use Language_Handlers.Glide;
 with Basic_Types;                 use Basic_Types;
 with Gtk.Scrolled_Window;         use Gtk.Scrolled_Window;
 with Project_Explorers_Common;    use Project_Explorers_Common;
---  with Traces;                      use Traces;
+with Traces;                      use Traces;
 with Default_Preferences;         use Default_Preferences;
+with Entities;                    use Entities;
 
 package body Outline_View is
 
---   Me : constant Debug_Handle := Create ("Outline_View");
+   Me : constant Debug_Handle := Create ("Outline_View");
 
    Outline_View_Module : Module_ID;
 
@@ -66,7 +67,7 @@ package body Outline_View is
 
    procedure On_Context_Changed
      (Kernel : access Kernel_Handle_Record'Class;
-      Data   : Hooks_Data'Class);
+      Data   : access Hooks_Data'Class);
    --  Called when the context has changed
 
    function Open_Outline
@@ -131,9 +132,62 @@ package body Outline_View is
       Menu         : Gtk_Menu) return Selection_Context_Access;
    --  Context factory when creating contextual menus
 
-   procedure Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class);
+   procedure Preferences_Changed (Kernel : access Kernel_Handle_Record'Class);
    --  Called when the preferences have changed.
+
+   procedure Location_Changed
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class);
+   --  Called when the current editor reaches a new location
+
+   ----------------------
+   -- Location_Changed --
+   ----------------------
+
+   procedure Location_Changed
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class)
+   is
+      Child : constant MDI_Child := Find_MDI_Child_By_Tag
+        (Get_MDI (Kernel), Outline_View_Record'Tag);
+      Outline : Outline_View_Access;
+      Iter    : Gtk_Tree_Iter;
+      Model   : Gtk_Tree_Store;
+      Path    : Gtk_Tree_Path;
+   begin
+      if Child /= null then
+         Trace (Me, "Location_Changed");
+         declare
+            Subprogram : constant Entity_Information := Compute_Parent_Entity
+              (File_Location_Hooks_Args_Access (Data));
+            Subprogram_Name : constant String := Get_Name (Subprogram).all;
+         begin
+            Trace (Me, "Subprogram name is " & Subprogram_Name);
+            Outline := Outline_View_Access (Get_Widget (Child));
+            Model   := Gtk_Tree_Store (Get_Model (Outline.Tree));
+            Unselect_All (Get_Selection (Outline.Tree));
+
+            Iter := Children (Model, Get_Iter_First (Model));
+            while Iter /= Null_Iter loop
+               if Get_String (Model, Iter, 1) = Subprogram_Name then
+                  Path := Get_Path (Model, Iter);
+                  Set_Cursor (Outline.Tree, Path, null, False);
+                  Select_Iter (Get_Selection (Outline.Tree), Iter);
+--                    Scroll_To_Cell (Outline.Tree,
+--                                    Path => Path,
+--                                    Column => 0,
+--                                    Use_Align => False,
+--                                    Row_Align => 0.0,
+--                                    Col_Align => 0.0);
+                  Path_Free (Path);
+                  exit;
+               end if;
+
+               Next (Model, Iter);
+            end loop;
+         end;
+      end if;
+   end Location_Changed;
 
    -------------------------
    -- Preferences_Changed --
@@ -363,7 +417,7 @@ package body Outline_View is
          Column_Names       => (1 => null, 2 => null),
          Show_Column_Titles => False,
          Initial_Sort_On    => Initial_Sort,
-         Selection_Mode     => Gtk.Enums.Selection_None);
+         Selection_Mode     => Gtk.Enums.Selection_Single);
       Add (Scrolled, Outline.Tree);
 
       Outline.Icon := Gdk_New_From_Xpm_Data (var_xpm);
@@ -396,7 +450,7 @@ package body Outline_View is
    is
       Model      : constant Gtk_Tree_Store :=
         Gtk_Tree_Store (Get_Model (Outline.Tree));
-      Iter, Root : Gtk_Tree_Iter;
+      Iter, Root : Gtk_Tree_Iter := Null_Iter;
       Lang       : Language_Access;
       Handler    : LI_Handler;
       Languages  : constant Glide_Language_Handler :=
@@ -411,15 +465,17 @@ package body Outline_View is
 
       Outline.File := File;
 
-      Handler := Get_LI_Handler_From_File (Languages, File);
-      Lang := Get_Language_From_File (Languages, File);
+      if Outline.File /= VFS.No_File then
+         Handler := Get_LI_Handler_From_File (Languages, File);
+         Lang := Get_Language_From_File (Languages, File);
+         Append (Model, Root, Null_Iter);
+         Set (Model, Root, 0, C_Proxy (Outline.File_Icon));
+         Set (Model, Root, 1, "File: " & Base_Name (File));
+         Set (Model, Root, 2, -1);
+      end if;
 
-      Append (Model, Root, Null_Iter);
-      Set (Model, Root, 0, C_Proxy (Outline.File_Icon));
-      Set (Model, Root, 1, "File: " & Base_Name (File));
-      Set (Model, Root, 2, -1);
 
-      if Handler = null or Lang = null then
+      if Handler = null or else Lang = null then
          Append (Model, Iter, Root);
          Set (Model, Iter, 0, C_Proxy (Outline.Icon));
          Set (Model, Iter, 1, "No outline available");
@@ -485,15 +541,12 @@ package body Outline_View is
    is
       Child   : MDI_Child;
       Outline : Outline_View_Access;
-      Data    : Context_Hooks_Args;
+      Data    : aliased Context_Hooks_Args;
    begin
       Child := Find_MDI_Child_By_Tag
         (Get_MDI (Kernel), Outline_View_Record'Tag);
 
       if Child = null then
-         Data := Context_Hooks_Args'
-           (Hooks_Data with Context => Get_Current_Context (Kernel));
-
          Gtk_New (Outline, Kernel);
          Child := Put
            (Kernel, Outline,
@@ -504,7 +557,10 @@ package body Outline_View is
          Set_Dock_Side (Child, Left);
          Dock_Child (Child);
 
-         On_Context_Changed (Kernel, Data);
+         Data := Context_Hooks_Args'
+           (Kernel  => Kernel_Handle (Kernel),
+            Context => Get_Current_Context (Kernel));
+         On_Context_Changed (Kernel, Data'Unchecked_Access);
       end if;
 
       return Child;
@@ -516,9 +572,9 @@ package body Outline_View is
 
    procedure On_Context_Changed
      (Kernel : access Kernel_Handle_Record'Class;
-      Data   : Hooks_Data'Class)
+      Data   : access Hooks_Data'Class)
    is
-      D       : constant Context_Hooks_Args := Context_Hooks_Args (Data);
+      D       : constant Context_Hooks_Args := Context_Hooks_Args (Data.all);
       Outline : Outline_View_Access;
       File    : Virtual_File;
       Child   : MDI_Child;
@@ -526,16 +582,20 @@ package body Outline_View is
       Child := Find_MDI_Child_By_Tag
         (Get_MDI (Kernel), Outline_View_Record'Tag);
 
-      if Child /= null
-        and then D.Context.all in File_Selection_Context'Class
-        and then Has_File_Information
-          (File_Selection_Context_Access (D.Context))
-      then
+      if Child /= null then
          Outline := Outline_View_Access (Get_Widget (Child));
-         File := File_Information
-           (File_Selection_Context_Access (D.Context));
-         if File /= Outline.File then
-            Refresh (Outline, File);
+
+         if D.Context.all in File_Selection_Context'Class
+           and then Has_File_Information
+             (File_Selection_Context_Access (D.Context))
+         then
+            File := File_Information
+              (File_Selection_Context_Access (D.Context));
+            if File /= Outline.File then
+               Refresh (Outline, File);
+            end if;
+         else
+            Refresh (Outline, VFS.No_File);
          end if;
       end if;
    end On_Context_Changed;
@@ -603,6 +663,7 @@ package body Outline_View is
         (Kernel, Param_Spec (Outline_View_Sort_Alphabetically), -"Outline");
 
       Add_Hook (Kernel, Preferences_Changed_Hook, Preferences_Changed'Access);
+      Add_Hook (Kernel, Location_Changed_Hook, Location_Changed'Access);
    end Register_Module;
 
 end Outline_View;
