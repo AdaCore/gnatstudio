@@ -2355,7 +2355,9 @@ package body Src_Editor_Module is
             Filename : constant String :=
               Full_Name (Get_Filename (Editor)).all;
          begin
-            if Filename = "" then
+            if Filename = ""
+              or else not Is_Regular_File (Get_Filename (Editor))
+            then
                return null;
             end if;
 
