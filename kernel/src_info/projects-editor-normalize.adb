@@ -413,6 +413,8 @@ package body Projects.Editor.Normalize is
    begin
       while Current (Iter) /= Projects.No_Project loop
          if not Is_Normalized (Current (Iter)) then
+            Trace (Me, "Normalize: " & Project_Name (Root_Project)
+                   & ' ' & Recurse'Img);
             Project := Current (Iter).Node;
 
             --  ??? Why this hard-coded limit ?
