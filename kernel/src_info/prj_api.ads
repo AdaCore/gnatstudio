@@ -592,6 +592,8 @@ package Prj_API is
    --  Same as above, but for an attribute that contains a single value.
 
    Ide_Package                : constant String := "ide";
+   Builder_Package            : constant String := "builder";
+   Compiler_Package           : constant String := "compiler";
    Gnatlist_Attribute         : constant String := "gnatlist";
    Compiler_Command_Attribute : constant String := "compiler_command";
    Debugger_Command_Attribute : constant String := "debugger_command";
@@ -602,6 +604,10 @@ package Prj_API is
    Exec_Dir_Attribute         : constant String := "exec_dir";
    Vcs_File_Check             : constant String := "vcs_file_check";
    Vcs_Log_Check              : constant String := "vcs_log_check";
+   Global_Pragmas_Attribute   : constant String :=
+     "global_configuration_pragmas";
+   Local_Pragmas_Attribute   : constant String :=
+     "local_configuration_pragmas";
 
    --  The following attributes should be read through specialized subprograms
    --  (Get_Languages, Get_Vcs_Kind)
