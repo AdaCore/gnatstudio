@@ -49,4 +49,25 @@ package Commands.Interactive is
    --  This is similar to Commands.Lauch_Synchronous, except it also propagates
    --  the Event parameter.
 
+   type Interactive_Command_Proxy is new Root_Command with record
+      Command : Interactive_Command_Access;
+      Event   : Gdk.Event.Gdk_Event;
+   end record;
+   type Interactive_Command_Proxy_Access
+      is access Interactive_Command_Proxy'Class;
+   --  This acts as a proxy for Interactive_Command, so that they can be called
+   --  with an event. This should be used when one need to execute a procedure
+   --  that expects a Root_Action.
+   --  The command is freed when the proxy is freed
+
+   function Create_Proxy
+     (Command : access Interactive_Command'Class;
+      Event   : Gdk.Event.Gdk_Event) return Command_Access;
+   --  Create a new proxy
+
+   function Execute (Command : access Interactive_Command_Proxy)
+      return Command_Return_Type;
+   procedure Free (X : in out Interactive_Command_Proxy);
+   --  See doc for inherited subprogram
+
 end Commands.Interactive;

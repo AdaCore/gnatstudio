@@ -58,4 +58,39 @@ package body Commands.Interactive is
       Internal (Command_Access (Command), Wait);
    end Launch_Synchronous_Interactive;
 
+   ------------------
+   -- Create_Proxy --
+   ------------------
+
+   function Create_Proxy
+     (Command : access Interactive_Command'Class;
+      Event   : Gdk.Event.Gdk_Event) return Command_Access
+   is
+      C : Interactive_Command_Proxy_Access := new Interactive_Command_Proxy;
+   begin
+      C.Command := Interactive_Command_Access (Command);
+      C.Event   := Event;
+      return Command_Access (C);
+   end Create_Proxy;
+
+   -------------
+   -- Execute --
+   -------------
+
+   function Execute
+     (Command : access Interactive_Command_Proxy) return Command_Return_Type
+   is
+   begin
+      return Execute (Command.Command, Command.Event);
+   end Execute;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (X : in out Interactive_Command_Proxy) is
+   begin
+      Destroy (Command_Access (X.Command));
+   end Free;
+
 end Commands.Interactive;
