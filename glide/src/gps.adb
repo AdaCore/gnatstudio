@@ -59,7 +59,6 @@ with Welcome;                   use Welcome;
 --  Modules registered by GPS.
 with Ada_Module;
 with Aunit_Module;
-with Codefix_Module;
 with Browsers.Dependency_Items;
 with Browsers.Projects;
 with Browsers.Call_Graph;
@@ -73,7 +72,6 @@ with Src_Editor_Module;
 with VCS_Module;
 with VCS.CVS;
 with VCS.ClearCase;
-with VCS.Unknown_VCS;
 with Vdiff_Module;
 with Builder_Module;
 with Glide_Kernel.Console;
@@ -297,16 +295,16 @@ procedure GPS is
    function Finish_Setup (Data : Process_Data) return Boolean is
       pragma Unreferenced (Data);
 
-      System_Rc : constant String :=
+      System_Rc         : constant String :=
         Format_Pathname (Prefix.all & "/etc/gps/gtkrc");
-      Rc        : constant String :=
+      Rc                : constant String :=
         String_Utils.Name_As_Directory (Dir.all) & "gtkrc";
-      Log       : constant String :=
+      Log               : constant String :=
         String_Utils.Name_As_Directory (GPS.Home_Dir.all) & "debugger.log";
-      Key       : constant String :=
+      Key               : constant String :=
         String_Utils.Name_As_Directory (Dir.all) & "custom_key";
-
-      Screen : Welcome_Screen;
+      Auto_Load_Project : Boolean := True;
+      Screen            : Welcome_Screen;
 
    begin
       --  Parse the system's RC file
@@ -334,7 +332,6 @@ procedure GPS is
       GPS.Log_File   := Create_File (Log, Fmode => Text);
 
       Glide_Page.Gtk_New (Page, GPS);
-
       --  Register this module first, in case someone needs to print a message
       --  in the console right away
 
@@ -358,11 +355,9 @@ procedure GPS is
       Builder_Module.Register_Module (GPS.Kernel);
       Vdiff_Module.Register_Module (GPS.Kernel);
       VCS_Module.Register_Module (GPS.Kernel);
-      VCS.Unknown_VCS.Register_Module (GPS.Kernel);
       VCS.CVS.Register_Module (GPS.Kernel);
       VCS.ClearCase.Register_Module (GPS.Kernel);
       Aunit_Module.Register_Module (GPS.Kernel);
-      Codefix_Module.Register_Module (GPS.Kernel);
 
       --  Register the supported languages and their associated LI handlers.
 
@@ -419,6 +414,7 @@ procedure GPS is
       --  the first one in the current directory (if any).
 
       if Project_Name = null then
+         Auto_Load_Project := False;
          Open (Directory, Get_Current_Dir);
 
          loop
@@ -427,40 +423,51 @@ procedure GPS is
             exit when Last = 0;
 
             if File_Extension (Str (1 .. Last)) = Project_File_Extension then
-               Project_Name := new String'(Str (1 .. Last));
-               exit;
+               if Project_Name = null then
+                  Auto_Load_Project := True;
+                  Project_Name := new String'(Str (1 .. Last));
+               else
+                  Auto_Load_Project := False;
+                  exit;
+               end if;
             end if;
          end loop;
 
          Close (Directory);
 
-         --  Load the project selected by the user
+         --  If only one project file was found in the current directory,
+         --  do not open the welcome dialog.
 
-         if Project_Name = null then
-            Gtk_New (Screen, GPS.Kernel, "");
-         else
-            Gtk_New (Screen, GPS.Kernel, Project_Name.all);
-         end if;
+         if not Auto_Load_Project then
+            --  Load the project selected by the user
 
-         --  Remove the splash screen, since it conflicts with the welcome
-         --  dialog.
+            if Project_Name = null then
+               Gtk_New (Screen, GPS.Kernel, "");
+            else
+               Gtk_New (Screen, GPS.Kernel, Project_Name.all);
+            end if;
 
-         if Splash /= null then
-            Destroy (Splash);
-            Splash := null;
-         end if;
+            --  Remove the splash screen, since it conflicts with the welcome
+            --  dialog.
 
-         --  If the user wants to quit immediately, so be it.
+            if Splash /= null then
+               Destroy (Splash);
+               Splash := null;
+            end if;
 
-         if not Run (Screen) then
+            --  If the user wants to quit immediately, so be it.
+
+            if not Run (Screen) then
+               Destroy (Screen);
+               Gtk.Main.Main_Quit;
+               return False;
+            end if;
+
             Destroy (Screen);
-            Gtk.Main.Main_Quit;
-            return False;
          end if;
+      end if;
 
-         Destroy (Screen);
-
-      else
+      if Auto_Load_Project then
          if not Is_Regular_File (Project_Name.all)
            and then Is_Regular_File (Project_Name.all & Project_File_Extension)
          then
