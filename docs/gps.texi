@@ -2142,8 +2142,9 @@ is reused every time:
    (setq gnuserv-frame (car (frame-list)))
 @end smallexample
 
-@cindex url
-See @url{http://www.hpl.hp.co.uk/people/ange/gnuserv/} for more information.
+@cindex gnuserv url
+See @url{http://www.hpl.hp.com/people/ange/gnuserv/home.html} for more
+information.
 
 @item emacsclient
 @cindex emacsclient
