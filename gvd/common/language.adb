@@ -23,6 +23,8 @@ with Basic_Types; use Basic_Types;
 with GNAT.Regpat; use GNAT.Regpat;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Strings.Fixed;
+with GNAT.IO; use GNAT.IO;
+with String_Utils; use String_Utils;
 
 package body Language is
 
@@ -200,6 +202,7 @@ package body Language is
          exit when Info = null;
 
          Free (Info.Name);
+         Free (Info.Profile);
          Tmp := Info;
          Info := Info.Next;
          Free (Tmp);
@@ -418,5 +421,67 @@ package body Language is
          end loop;
       end if;
    end Reset_File_Extensions;
+
+   --------------
+   -- Get_Name --
+   --------------
+
+   function Get_Name
+     (Lang  : access Language_Root;
+      Token    : Generic_Token_Type;
+      Category : access Language_Category) return String is
+   begin
+      Category.all := Cat_Unknown;
+      return Image (Integer (Token));
+   end Get_Name;
+
+   -------------------
+   -- Format_Source --
+   -------------------
+
+   procedure Format_Source
+     (Lang             : access Language_Root;
+      Buffer           : String;
+      Indent_Params    : Indent_Parameters := Default_Indent_Parameters;
+      Reserved_Casing  : Casing_Type       := Lower;
+      Ident_Casing     : Casing_Type       := Mixed;
+      Format_Operators : Boolean           := True) is
+   begin
+      Put (Buffer);
+   end Format_Source;
+
+   ----------------------
+   -- Parse_Constructs --
+   ----------------------
+
+   procedure Parse_Constructs
+     (Lang          : access Language_Root;
+      Buffer        : Interfaces.C.Strings.chars_ptr;
+      Buffer_Length : Natural;
+      Result        : out Construct_List;
+      Indent        : out Natural;
+      Next_Indent   : out Natural;
+      Indent_Params : Indent_Parameters := Default_Indent_Parameters) is
+   begin
+      Indent := 0;
+      Next_Indent := 0;
+      Result := (null, null, null);
+   end Parse_Constructs;
+
+   ----------------------
+   -- Next_Indentation --
+   ----------------------
+
+   procedure Next_Indentation
+     (Lang          : access Language_Root;
+      Buffer        : Interfaces.C.Strings.chars_ptr;
+      Buffer_Length : Natural;
+      Indent        : out Natural;
+      Next_Indent   : out Natural;
+      Indent_Params : Indent_Parameters := Default_Indent_Parameters) is
+   begin
+      Indent      := 0;
+      Next_Indent := 0;
+   end Next_Indentation;
 
 end Language;
