@@ -32,6 +32,11 @@ with Types;       use Types;
 with Output;      use Output;
 with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 with GNAT.Expect;               use GNAT.Expect;
+
+pragma Warnings (Off);
+with GNAT.Expect.TTY;           use GNAT.Expect.TTY;
+pragma Warnings (On);
+
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.Case_Util;            use GNAT.Case_Util;
@@ -189,7 +194,7 @@ package body Glide_Kernel.Project is
          Free (Tmp);
       end Add_Directory;
 
-      Fd     : Process_Descriptor;
+      Fd     : TTY_Process_Descriptor;
       Result : Expect_Match;
       Args   : Argument_List (1 .. 1);
       Gnatls : constant String := Get_Attribute_Value
