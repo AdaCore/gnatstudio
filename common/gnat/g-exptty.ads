@@ -101,4 +101,5 @@ private
    type TTY_Process_Descriptor is new Process_Descriptor with record
       Process : System.Address;  --  Underlying structure used in C.
    end record;
+
 end GNAT.Expect.TTY;
