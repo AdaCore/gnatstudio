@@ -40,7 +40,7 @@ with Ada.Unchecked_Deallocation;
 package Task_Manager is
 
    type Task_Manager_Record is private;
-   type Task_Manager_Access is access Task_Manager_Record;
+   type Task_Manager_Access is access all Task_Manager_Record;
 
    procedure Add_Command
      (Manager  : Task_Manager_Access;
@@ -109,6 +109,10 @@ private
 
       GUI                  : Gtk_Widget := null;
       Progress_Area        : Gtk.Box.Gtk_Hbox   := null;
+      Referenced_Command   : Integer := -1;
+      --  The command currently referenced by the contextual menu.
+      --  This is an index in Queues, set to <0 when the command is not valid
+      --  or the menu not created.
    end record;
 
 end Task_Manager;
