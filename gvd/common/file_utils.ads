@@ -116,10 +116,17 @@ package File_Utils is
    --  Return the current directory. The name might be empty if the Path
    --  contains something like "::" on Unix systems.
 
+   procedure Ensure_Valid_Output;
+   --  Ensure that the standard output/error file descriptors can be safely
+   --  used. In particular, when using -mwindows under Windows, this procedure
+   --  will allocate a console window if needed.
+
 private
 
    type Path_Iterator is record
       First, Last : Natural;
    end record;
+
+   pragma Import (C, Ensure_Valid_Output, "__gnat_ensure_valid_output");
 
 end File_Utils;
