@@ -1324,7 +1324,7 @@ package body Src_Editor_Module is
    function File_Edit_Callback (D : Location_Idle_Data) return Boolean is
    begin
       if Is_Valid_Location (D.Edit, D.Line) then
-         Set_Screen_Location (D.Edit, D.Line, D.Column);
+         Set_Screen_Location (D.Edit, D.Line, D.Column, Force_Focus => False);
 
          if D.Column_End /= 0
            and then Is_Valid_Location (D.Edit, D.Line, D.Column_End)
