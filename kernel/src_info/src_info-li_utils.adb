@@ -23,7 +23,7 @@ package body Src_Info.LI_Utils is
    --  Finds declaration with given attributes in
    --  specified E_Declaration_Info_List
 
-   function eq (str1 : String; str2 : String) return Boolean;
+   --  function eq (str1 : String; str2 : String) return Boolean;
    --  Checks two strings for equality
 
    -------------------------------------------------------------------------

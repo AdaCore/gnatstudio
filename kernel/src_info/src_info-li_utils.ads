@@ -78,6 +78,9 @@ private package Src_Info.LI_Utils is
       Location                : in Point) return E_Declaration_Info_List;
    --  Finds declaration in LI tree by it's Name and Location
 
+   function eq (str1 : String; str2 : String) return Boolean;
+   --  compares to strings
+
    Declaration_Not_Found : exception;
    --  Thrown by Find_Declaration functions if declaration is not found
 

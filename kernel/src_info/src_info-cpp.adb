@@ -32,6 +32,8 @@ with SN.DB_Structures;  use SN.DB_Structures;
 with SN.Find_Fns;       use SN.Find_Fns;
 with SN.Browse;
 
+with File_Buffer;
+
 package body Src_Info.CPP is
 
    type SN_Table_Array is array (Table_Type) of DB_File;
@@ -83,6 +85,19 @@ package body Src_Info.CPP is
       MA     => Sym_MA_Handler'Access,
       CON    => Sym_CON_Handler'Access,
       others => Sym_Default_Handler'Access);
+
+   ------------------
+   --  To_Handler  --
+   ------------------
+
+   type To_Handler is access procedure (Ref : TO_Table);
+
+   -------------------
+   --  To_Handlers  --
+   -------------------
+
+   Fu_To_Handlers : array (Symbol_Type) of To_Handler :=
+     (others => null);
 
    function Ext (S : String) return String;
    --  Used to fill Table_Type_To_Ext array
@@ -215,6 +230,7 @@ package body Src_Info.CPP is
    is
       P : Pair_Ptr;
    begin
+      File_Buffer.Init (Source_Filename);
       Set_Cursor (SN_Table (FIL),
                   Position => By_Key,
                   Key => Source_Filename & Field_Sep,
@@ -234,6 +250,7 @@ package body Src_Info.CPP is
 
          Free (P);
       end loop;
+      File_Buffer.Done;
    end Process_File;
 
    ---------------------------
