@@ -70,19 +70,19 @@ package Src_Highlighting is
       return Font_Attributes;
    --  Convenience function to create a Font_Attributes structure.
 
-   function Create_Syntax_Tags
-     (Keyword_Color       : Gdk.Color.Gdk_Color;
+   procedure Create_Syntax_Tags
+     (Result              : in out Highlighting_Tags;
+      Keyword_Color       : Gdk.Color.Gdk_Color;
       Keyword_Font_Attr   : Font_Attributes := To_Font_Attributes;
       Comment_Color       : Gdk.Color.Gdk_Color;
       Comment_Font_Attr   : Font_Attributes := To_Font_Attributes;
       Character_Color     : Gdk.Color.Gdk_Color;
       Character_Font_Attr : Font_Attributes := To_Font_Attributes;
       String_Color        : Gdk.Color.Gdk_Color;
-      String_Font_Attr    : Font_Attributes := To_Font_Attributes)
-      return Highlighting_Tags;
-   --  Create a Highlighting_Tags object using the given color names.
-   --  If some colors name can not be parsed, then no special color will
-   --  be used to highlight the associated source parts.
+      String_Font_Attr    : Font_Attributes := To_Font_Attributes);
+   --  Create or update a Highlighting_Tags object using the given color names.
+   --  If some colors name can not be parsed, then no special color will be
+   --  used to highlight the associated source parts.
 
    procedure Create_Highlight_Line_Tag
      (Tag   : out Gtk.Text_Tag.Gtk_Text_Tag;

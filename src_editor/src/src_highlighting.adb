@@ -31,57 +31,44 @@ package body Src_Highlighting is
    -- Forward_Declarations --
    --------------------------
 
-   function New_Tag
-     (Tag_Name  : String;
-      Color     : Gdk_Color;
-      Font_Attr : Font_Attributes) return Gtk_Text_Tag;
-   --  Create a new Gtk_Text_Tag with the given name. If Color is null,
-   --  then the Foreground_Gdk_Property is set with the given color.
-
    procedure New_Tag
      (Tag      : out Gtk.Text_Tag.Gtk_Text_Tag;
-      Tag_Name : String;
-      Color    : Gdk_Color);
-   --  Create a new Gtk_Text_Tag with the given Tag_Name. Color is used
-   --  to set the Background_Gdk_Property.
+      Tag_Name   : String;
+      Fore_Color : Gdk_Color := Null_Color;
+      Back_Color : Gdk_Color := Null_Color;
+      Font_Attr  : Font_Attributes := To_Font_Attributes);
+   --  Create a new Gtk_Text_Tag with the given name.
+   --  If the tag already exists, its properties are changed accordingly.
 
    -------------
    -- New_Tag --
    -------------
 
-   function New_Tag
-     (Tag_Name  : String;
-      Color     : Gdk_Color;
-      Font_Attr : Font_Attributes) return Gtk_Text_Tag
-   is
-      Result : Gtk_Text_Tag;
+   procedure New_Tag
+     (Tag      : out Gtk.Text_Tag.Gtk_Text_Tag;
+      Tag_Name   : String;
+      Fore_Color : Gdk_Color := Null_Color;
+      Back_Color : Gdk_Color := Null_Color;
+      Font_Attr  : Font_Attributes := To_Font_Attributes) is
    begin
-      Gtk_New (Result, Tag_Name);
+      if Tag = null then
+         Gtk_New (Tag, Tag_Name);
+      end if;
 
       if Font_Attr.Style /= Pango_Style_Normal then
-         Set_Property (Result, Text_Tag.Style_Property, Font_Attr.Style);
+         Set_Property (Tag, Text_Tag.Style_Property, Font_Attr.Style);
       end if;
 
       if Font_Attr.Weight /= Pango_Weight_Normal then
-         Set_Property (Result, Text_Tag.Weight_Property, Font_Attr.Weight);
+         Set_Property (Tag, Text_Tag.Weight_Property, Font_Attr.Weight);
       end if;
 
-      if Color /= Null_Color then
-         Set_Property (Result, Foreground_Gdk_Property, Color);
+      if Fore_Color /= Null_Color then
+         Set_Property (Tag, Foreground_Gdk_Property, Fore_Color);
       end if;
 
-      return Result;
-   end New_Tag;
-
-   procedure New_Tag
-     (Tag      : out Gtk.Text_Tag.Gtk_Text_Tag;
-      Tag_Name : String;
-      Color    : Gdk_Color) is
-   begin
-      Gtk_New (Tag, Tag_Name);
-
-      if Color /= Null_Color then
-         Set_Property (Tag, Background_Gdk_Property, Color);
+      if Back_Color /= Null_Color then
+         Set_Property (Tag, Background_Gdk_Property, Back_Color);
       end if;
    end New_Tag;
 
@@ -101,29 +88,34 @@ package body Src_Highlighting is
    -- Create_Tags --
    -----------------
 
-   function Create_Syntax_Tags
-     (Keyword_Color       : Gdk_Color;
+   procedure Create_Syntax_Tags
+     (Result              : in out Highlighting_Tags;
+      Keyword_Color       : Gdk_Color;
       Keyword_Font_Attr   : Font_Attributes := To_Font_Attributes;
       Comment_Color       : Gdk_Color;
       Comment_Font_Attr   : Font_Attributes := To_Font_Attributes;
       Character_Color     : Gdk_Color;
       Character_Font_Attr : Font_Attributes := To_Font_Attributes;
       String_Color        : Gdk_Color;
-      String_Font_Attr    : Font_Attributes := To_Font_Attributes)
-      return Highlighting_Tags
-   is
-      Result : Highlighting_Tags;
+      String_Font_Attr    : Font_Attributes := To_Font_Attributes) is
    begin
-      Result (Keyword_Text) := New_Tag
-        (Keyword_Color_Tag_Name, Keyword_Color, Keyword_Font_Attr);
-      Result (Comment_Text) := New_Tag
-        (Comment_Color_Tag_Name, Comment_Color, Comment_Font_Attr);
-      Result (String_Text) := New_Tag
-        (String_Color_Tag_Name, String_Color, String_Font_Attr);
-      Result (Character_Text) := New_Tag
-        (Character_Color_Tag_Name, Character_Color, Character_Font_Attr);
+      New_Tag (Result (Keyword_Text),
+               Keyword_Color_Tag_Name,
+               Fore_Color => Keyword_Color,
+               Font_Attr  => Keyword_Font_Attr);
+      New_Tag (Result (Comment_Text),
+               Comment_Color_Tag_Name,
+               Fore_Color => Comment_Color,
+               Font_Attr  => Comment_Font_Attr);
+      New_Tag (Result (String_Text),
+               String_Color_Tag_Name,
+               Fore_Color => String_Color,
+               Font_Attr  => String_Font_Attr);
+      New_Tag (Result (Character_Text),
+               Character_Color_Tag_Name,
+               Fore_Color => Character_Color,
+               Font_Attr  => Character_Font_Attr);
       --  ??? Set the tags priority...
-      return Result;
    end Create_Syntax_Tags;
 
    -------------------------------
@@ -134,7 +126,7 @@ package body Src_Highlighting is
      (Tag   : out Gtk.Text_Tag.Gtk_Text_Tag;
       Color : Gdk_Color) is
    begin
-      New_Tag (Tag, Highlight_Line_Tag_Name, Color);
+      New_Tag (Tag, Highlight_Line_Tag_Name, Back_Color => Color);
       --  ??? Set the tag priority...
    end Create_Highlight_Line_Tag;
 
@@ -146,7 +138,7 @@ package body Src_Highlighting is
      (Tag   : out Gtk.Text_Tag.Gtk_Text_Tag;
       Color : Gdk_Color) is
    begin
-      New_Tag (Tag, Highlight_Region_Tag_Name, Color);
+      New_Tag (Tag, Highlight_Region_Tag_Name, Back_Color => Color);
       --  ??? Add the priority
    end Create_Highlight_Region_Tag;
 
