@@ -80,7 +80,7 @@ package body External_Editor_Module is
       --     %c = column to display
       --     %f = file to display
       --     %e = extended lisp command
-      --     %p = project file name
+      --     %p = top level project file name
       --     %% = percent sign ('%')
 
       Lisp_Command_Name : Constant_String_Access;
