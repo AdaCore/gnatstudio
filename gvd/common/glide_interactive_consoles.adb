@@ -476,6 +476,10 @@ package body Glide_Interactive_Consoles is
             return True;
 
          when GDK_Return =>
+            if Console.Input_Blocked then
+               return True;
+            end if;
+
             Get_End_Iter (Console.Buffer, Last_Iter);
             Insert (Console.Buffer, Last_Iter, ASCII.LF & "");
 
