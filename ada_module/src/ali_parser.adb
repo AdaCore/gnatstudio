@@ -771,7 +771,7 @@ package body ALI_Parser is
 
          Location := (File   => Sfiles (Current_Sfile).File,
                       Line   => Integer (Xref.Table (Current_Ref).Line),
-                      Column => Integer (Xref.Table (Current_Ref).Col));
+                      Column => Column_Type (Xref.Table (Current_Ref).Col));
 
          if Is_End_Reference (Kind) then
             --  The info for the body is always seen second, and will override
