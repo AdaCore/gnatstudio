@@ -1194,6 +1194,8 @@ package body Shell_Script is
          return -"Shell module not initialized";
       end if;
 
+      Trace (Me, "Executing command " & Command);
+
       Data := Get (Shell_Module_Id.Commands_List, Command);
 
       if Data /= null then
