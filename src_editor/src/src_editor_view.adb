@@ -1035,6 +1035,8 @@ package body Src_Editor_View is
 
    begin
       View.Has_Focus := False;
+      View.As_Is_Mode := False;
+
       Save_Cursor_Position (View);
       External_End_Action (Buffer);
 
@@ -1380,7 +1382,7 @@ package body Src_Editor_View is
    -------------
 
    procedure Execute
-     (Hook : Preferences_Hook_Record;
+     (Hook   : Preferences_Hook_Record;
       Kernel : access Kernel_Handle_Record'Class)
    is
       Source  : constant Source_View := Source_View (Hook.View);
