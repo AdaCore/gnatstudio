@@ -705,20 +705,17 @@ package body Src_Editor_Box is
          declare
             --  ??? Missing full name of enclosing scope
             Str : constant String :=
-              "Entity: " & ASCII.HT
-              & Get_Full_Name
-              (Entity,
-               Locate_From_Source_And_Complete
-               (Data.Box.Kernel, Get_Declaration_File_Of (Entity)),
-               ".")
+              Scope_To_String (Get_Scope (Entity)) & ' ' &
+              Kind_To_String (Get_Kind (Entity)) & ' ' &
+              Get_Full_Name
+                (Entity,
+                 Locate_From_Source_And_Complete
+                   (Data.Box.Kernel, Get_Declaration_File_Of (Entity)),
+                 ".")
               & ASCII.LF
-              & "Decl.: " & ASCII.HT
-              & Get_Declaration_File_Of (Entity) & ':'
-              & Image (Get_Declaration_Line_Of (Entity)) & ASCII.LF
-              & "Kind: " & ASCII.HT
-              & Kind_To_String (Get_Kind (Entity)) & ASCII.LF
-              & "Scope: " & ASCII.HT
-              & Scope_To_String (Get_Scope (Entity));
+              & "declared at " & Get_Declaration_File_Of (Entity) & ':'
+              & Image (Get_Declaration_Line_Of (Entity));
+
          begin
             Create_Pixmap_From_Text
               (Text     => Str,
