@@ -1,0 +1,28 @@
+LANGS = fr
+MKDIR = mkdir -p
+INSTALL = @INSTALL@
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
+INSTALL_DATA = @INSTALL_DATA@
+prefix        = @prefix@
+localedir     = $(prefix)/share/locale
+
+all:
+static:
+
+$(LANGS):
+	-msgfmt -o $@.gmo $@.po
+	$(MKDIR) $(localedir)/$@/LC_MESSAGES
+	-$(INSTALL_DATA) $@.gmo $(localedir)/$@/LC_MESSAGES/glide2.mo
+
+install: $(LANGS)
+
+clean:
+	-$(RM) *.gmo 
+	-$(RM) skeleton.po.new
+	
+mostlyclean: clean
+
+distclean: mostlyclean
+	-$(RM) Makefile
+
+maintainer-clean: distclean

@@ -1,0 +1,2253 @@
+msgid  "       [--dargs [debugger options]] [--pargs [program options]]"
+msgstr "       [--dargs [debugger options]] [--pargs [program options]]"
+
+msgid  "    Error : "
+msgstr "    Error : "
+
+msgid  "   --debugger DEBUG    use DEBUG as the underlying debugger."
+msgstr "   --debugger DEBUG    use DEBUG as the underlying debugger."
+
+msgid  "   --editor-window=xid Use xid as the editor X window."
+msgstr "   --editor-window=xid Use xid as the editor X window."
+
+msgid  "   --host HOST         Run inferior debugger on HOST."
+msgstr "   --host HOST         Run inferior debugger on HOST."
+
+msgid  "   --jdb               assume a java debugger."
+msgstr "   --jdb               assume a java debugger."
+
+msgid  "   --log-level [0-4]   Set level of logging (Default is 3)."
+msgstr "   --log-level [0-4]   Set level of logging (Default is 3)."
+
+msgid  "   --target=TARG:PRO   "
+msgstr "   --target=TARG:PRO   "
+
+msgid  "   --tty               Use controlling tty as additional "
+msgstr "   --tty               Use controlling tty as additional "
+
+msgid  "   --version           Show the GVD version and exit."
+msgstr "   --version           Show the GVD version and exit."
+
+msgid  "   gvd [options...] executable-file"
+msgstr "   gvd [options...] executable-file"
+
+msgid  "  debugger: "
+msgstr "  debugger: "
+
+msgid  "  machine: "
+msgstr "  machine: "
+
+msgid  "  using protocol: "
+msgstr "  using protocol: "
+
+msgid  " <reference>"
+msgstr " <reference>"
+
+msgid  " Could not find core file: "
+msgstr " Could not find core file: "
+
+msgid  " Could not find file: "
+msgstr " Could not find file: "
+
+msgid  " Invalid command: "
+msgstr " Invalid command: "
+
+msgid  " [--dargs [debugger options]] [--pargs [program options]]"
+msgstr " [--dargs [debugger options]] [--pargs [program options]]"
+
+msgid  " doesn't have a submenu, can't create item in"
+msgstr " doesn't have a submenu, can't create item in"
+
+msgid  " hosted on "
+msgstr " hosted on "
+
+msgid  " in path."
+msgstr " in path."
+
+msgid  " not allowed in normalized"
+msgstr " not allowed in normalized"
+
+msgid  "#0e79bd"
+msgstr "#0e79bd"
+
+msgid  "(c) 2001 ACT-Europe"
+msgstr "(c) 2001 ACT-Europe"
+
+msgid  "(no description)"
+msgstr "(no description)"
+
+msgid  "-"
+msgstr "-"
+
+msgid  "--"
+msgstr "--"
+
+msgid  "... done."
+msgstr "... done."
+
+msgid  "..."
+msgstr "..."
+
+msgid  "...done."
+msgstr "...done."
+
+msgid  ".1.ada"
+msgstr ".1.ada"
+
+msgid  ".2.ada"
+msgstr ".2.ada"
+
+msgid  ".ada"
+msgstr ".ada"
+
+msgid  ".adb"
+msgstr ".adb"
+
+msgid  ".ads"
+msgstr ".ads"
+
+msgid  "/Data/Call Stack"
+msgstr "/Data/Call Stack"
+
+msgid  "/Debug/Data/Call Stack"
+msgstr "/Debug/Data/Call Stack"
+
+msgid  "/File/Open Program..."
+msgstr "/File/Open Program..."
+
+msgid  "/Window"
+msgstr "/Window"
+
+msgid  "/_Command"
+msgstr "/_Command"
+
+msgid  "/_Data"
+msgstr "/_Data"
+
+msgid  "/_Data/sep1"
+msgstr "/_Data/sep1"
+
+msgid  "/_Data/sep2"
+msgstr "/_Data/sep2"
+
+msgid  "/_Data/sep3"
+msgstr "/_Data/sep3"
+
+msgid  "/_Edit"
+msgstr "/_Edit"
+
+msgid  "/_Edit/sep1"
+msgstr "/_Edit/sep1"
+
+msgid  "/_Edit/sep2"
+msgstr "/_Edit/sep2"
+
+msgid  "/_File"
+msgstr "/_File"
+
+msgid  "/_File/sep1"
+msgstr "/_File/sep1"
+
+msgid  "/_File/sep2"
+msgstr "/_File/sep2"
+
+msgid  "/_File/sep3"
+msgstr "/_File/sep3"
+
+msgid  "/_File/sep4"
+msgstr "/_File/sep4"
+
+msgid  "/_File/sep5"
+msgstr "/_File/sep5"
+
+msgid  "/_Help"
+msgstr "/_Help"
+
+msgid  "/_Program"
+msgstr "/_Program"
+
+msgid  "/_Program/sep1"
+msgstr "/_Program/sep1"
+
+msgid  "/_Program/sep2"
+msgstr "/_Program/sep2"
+
+msgid  "/_Program/sep3"
+msgstr "/_Program/sep3"
+
+msgid  "/_Window"
+msgstr "/_Window"
+
+msgid  "3D Look"
+msgstr "3D Look"
+
+msgid  ": File not found"
+msgstr ": File not found"
+
+msgid  "<Enter value name>"
+msgstr "<Enter value name>"
+
+msgid  "<alt>L"
+msgstr "<alt>L"
+
+msgid  "<alt>U"
+msgstr "<alt>U"
+
+msgid  "<control>A"
+msgstr "<control>A"
+
+msgid  "<control>E"
+msgstr "<control>E"
+
+msgid  "<control>INS"
+msgstr "<control>INS"
+
+msgid  "<control>L"
+msgstr "<control>L"
+
+msgid  "<control>N"
+msgstr "<control>N"
+
+msgid  "<control>Q"
+msgstr "<control>Q"
+
+msgid  "<control>S"
+msgstr "<control>S"
+
+msgid  "<custom>"
+msgstr "<custom>"
+
+msgid  "<shift>DEL"
+msgstr "<shift>DEL"
+
+msgid  "<shift>F5"
+msgstr "<shift>F5"
+
+msgid  "<shift>F6"
+msgstr "<shift>F6"
+
+msgid  "<shift>INS"
+msgstr "<shift>INS"
+
+msgid  "<unknown unit name>"
+msgstr "<unknown unit name>"
+
+msgid  "A different project with the same name"
+msgstr "A different project with the same name"
+
+msgid  "ASCII"
+msgstr "ASCII"
+
+msgid  "About..."
+msgstr "About..."
+
+msgid  "Action"
+msgstr "Action"
+
+msgid  "Ada 83 mode"
+msgstr "Ada 83 mode"
+
+msgid  "Ada files"
+msgstr "Ada files"
+
+msgid  "Ada"
+msgstr "Ada"
+
+msgid  "Add Symbols..."
+msgstr "Add Symbols..."
+
+msgid  "Add Variable"
+msgstr "Add Variable"
+
+msgid  "Add dependency"
+msgstr "Add dependency"
+
+msgid  "Add directory recursive"
+msgstr "Add directory recursive"
+
+msgid  "Add directory"
+msgstr "Add directory"
+
+msgid  "Add to repository"
+msgstr "Add to repository"
+
+msgid  "Add"
+msgstr "Add"
+
+msgid  "Add..."
+msgstr "Add..."
+
+msgid  "Adding files:"
+msgstr "Adding files:"
+
+msgid  "Additional"
+msgstr "Additional"
+
+msgid  "Address"
+msgstr "Address"
+
+msgid  "Advanced Breakpoint Settings"
+msgstr "Advanced Breakpoint Settings"
+
+msgid  "Advanced..."
+msgstr "Advanced..."
+
+msgid  "Align On Grid"
+msgstr "Align On Grid"
+
+msgid  "Alignment"
+msgstr "Alignment"
+
+msgid  "All assertions"
+msgstr "All assertions"
+
+msgid  "All but Comments"
+msgstr "All but Comments"
+
+msgid  "All exceptions"
+msgstr "All exceptions"
+
+msgid  "All files"
+msgstr "All files"
+
+msgid  "All warnings"
+msgstr "All warnings"
+
+msgid  "Annotate"
+msgstr "Annotate"
+
+msgid  "Annotating "
+msgstr "Annotating "
+
+msgid  "Annotating files:"
+msgstr "Annotating files:"
+
+msgid  "Are you sure you want to quit ?"
+msgstr "Are you sure you want to quit ?"
+
+msgid  "Are you sure you want to remove the variable "
+msgstr "Are you sure you want to remove the variable "
+
+msgid  "Arguments Selection"
+msgstr "Arguments Selection"
+
+msgid  "Asm Code"
+msgstr "Asm Code"
+
+msgid  "Asm and Source"
+msgstr "Asm and Source"
+
+msgid  "Assembly"
+msgstr "Assembly"
+
+msgid  "Attach..."
+msgstr "Attach..."
+
+msgid  "Auto-Align Displays on Nearest Grid Point"
+msgstr "Auto-Align Displays on Nearest Grid Point"
+
+msgid  "Auto-Refreshed"
+msgstr "Auto-Refreshed"
+
+msgid  "Automatic Display of Variables"
+msgstr "Automatic Display of Variables"
+
+msgid  "Automatically load the project"
+msgstr "Automatically load the project"
+
+msgid  "Big Item Height"
+msgstr "Big Item Height"
+
+msgid  "Binder"
+msgstr "Binder"
+
+msgid  "Body extensions:"
+msgstr "Body extensions:"
+
+msgid  "Body filename"
+msgstr "Body filename"
+
+msgid  "Break On Exceptions"
+msgstr "Break On Exceptions"
+
+msgid  "Break on exception:"
+msgstr "Break on exception:"
+
+msgid  "Break only when following condition is true:"
+msgstr "Break only when following condition is true:"
+
+msgid  "Break when the variable:"
+msgstr "Break when the variable:"
+
+msgid  "Breakpoints"
+msgstr "Breakpoints"
+
+msgid  "Browse"
+msgstr "Browse"
+
+msgid  "Browse..."
+msgstr "Browse..."
+
+msgid  "Build directory"
+msgstr "Build directory"
+
+msgid  "Build"
+msgstr "Build"
+
+msgid  "Byte"
+msgstr "Byte"
+
+msgid  "C"
+msgstr "C"
+
+msgid  "C++"
+msgstr "C++"
+
+msgid  "Call Stack"
+msgstr "Call Stack"
+
+msgid  "Cancel"
+msgstr "Cancel"
+
+msgid  "Cannot add dependency to self"
+msgstr "Cannot add dependency to self"
+
+msgid  "Cannot attach to a task/process while the"
+msgstr "Cannot attach to a task/process while the"
+
+msgid  "Cannot create config directory "
+msgstr "Cannot create config directory "
+
+msgid  "Cannot detach the process while the"
+msgstr "Cannot detach the process while the"
+
+msgid  "Cannot detach the task/process while the"
+msgstr "Cannot detach the task/process while the"
+
+msgid  "Cannot display tasks list while the debugger is busy."
+msgstr "Cannot display tasks list while the debugger is busy."
+
+msgid  "Cannot display threads list while the debugger is busy."
+msgstr "Cannot display threads list while the debugger is busy."
+
+msgid  "Cannot edit breakpoints while the debugger is busy."
+msgstr "Cannot edit breakpoints while the debugger is busy."
+
+msgid  "Cannot find sessions directory "
+msgstr "Cannot find sessions directory "
+
+msgid  "Cannot rerun while the underlying debugger is busy."
+msgstr "Cannot rerun while the underlying debugger is busy."
+
+msgid  "Cannot show call stack while the debugger is busy."
+msgstr "Cannot show call stack while the debugger is busy."
+
+msgid  "Case Sensitive"
+msgstr "Case Sensitive"
+
+msgid  "Case constructions referencing non-external"
+msgstr "Case constructions referencing non-external"
+
+msgid  "Case items must have a single choice in"
+msgstr "Case items must have a single choice in"
+
+msgid  "Change Object Directory for "
+msgstr "Change Object Directory for "
+
+msgid  "Changed Data"
+msgstr "Changed Data"
+
+msgid  "Check Syntax"
+msgstr "Check Syntax"
+
+msgid  "Choice"
+msgstr "Choice"
+
+msgid  "Circular dependency detected in the project hierarchy"
+msgstr "Circular dependency detected in the project hierarchy"
+
+msgid  "Click in the 'Enb' column to change the status"
+msgstr "Click in the 'Enb' column to change the status"
+
+msgid  "Click on the OK button to close this window."
+msgstr "Click on the OK button to close this window."
+
+msgid  "Clickable Item"
+msgstr "Clickable Item"
+
+msgid  "Clone"
+msgstr "Clone"
+
+msgid  "Close All"
+msgstr "Close All"
+
+msgid  "Close"
+msgstr "Close"
+
+msgid  "Code Complexity"
+msgstr "Code Complexity"
+
+msgid  "Code Fixing"
+msgstr "Code Fixing"
+
+msgid  "Code coverage"
+msgstr "Code coverage"
+
+msgid  "Code generation"
+msgstr "Code generation"
+
+msgid  "Col:"
+msgstr "Col:"
+
+msgid  "Color Highlighting"
+msgstr "Color Highlighting"
+
+msgid  "Command History"
+msgstr "Command History"
+
+msgid  "Command"
+msgstr "Command"
+
+msgid  "Commands"
+msgstr "Commands"
+
+msgid  "Comments + Strings"
+msgstr "Comments + Strings"
+
+msgid  "Comments Only"
+msgstr "Comments Only"
+
+msgid  "Comments"
+msgstr "Comments"
+
+msgid  "Commit"
+msgstr "Commit"
+
+msgid  "Committing files:"
+msgstr "Committing files:"
+
+msgid  "Compare"
+msgstr "Compare"
+
+msgid  "Compilation"
+msgstr "Compilation"
+
+msgid  "Compile File"
+msgstr "Compile File"
+
+msgid  "Compiler"
+msgstr "Compiler"
+
+msgid  "Condition"
+msgstr "Condition"
+
+msgid  "Connect to Board..."
+msgstr "Connect to Board..."
+
+msgid  "Conserve space"
+msgstr "Conserve space"
+
+msgid  "Consider all files"
+msgstr "Consider all files"
+
+msgid  "Containers"
+msgstr "Containers"
+
+msgid  "Continue Until Line"
+msgstr "Continue Until Line"
+
+msgid  "Continue program being debugged, after signal or breakpoint"
+msgstr "Continue program being debugged, after signal or breakpoint"
+
+msgid  "Continue until line"
+msgstr "Continue until line"
+
+msgid  "Continue"
+msgstr "Continue"
+
+msgid  "Copy to Clipboard"
+msgstr "Copy to Clipboard"
+
+msgid  "Copy"
+msgstr "Copy"
+
+msgid  "Could not find executable "
+msgstr "Could not find executable "
+
+msgid  "Could not get the type of "
+msgstr "Could not get the type of "
+
+msgid  "Could not get the value of "
+msgstr "Could not get the value of "
+
+msgid  "Could not parse the value for "
+msgstr "Could not parse the value for "
+
+msgid  "Could not parse type for "
+msgstr "Could not parse type for "
+
+msgid  "Could not spawn the remote process: "
+msgstr "Could not spawn the remote process: "
+
+msgid  "Couldn't find ALI file for "
+msgstr "Couldn't find ALI file for "
+
+msgid  "Couldn't get assembly code"
+msgstr "Couldn't get assembly code"
+
+msgid  "Create a New File"
+msgstr "Create a New File"
+
+msgid  "Created config directory "
+msgstr "Created config directory "
+
+msgid  "Creating a new project"
+msgstr "Creating a new project"
+
+msgid  "Creating a new variable"
+msgstr "Creating a new variable"
+
+msgid  "Creating a variable"
+msgstr "Creating a variable"
+
+msgid  "Current File"
+msgstr "Current File"
+
+msgid  "Current Line"
+msgstr "Current Line"
+
+msgid  "Cut to Clipboard"
+msgstr "Cut to Clipboard"
+
+msgid  "Cut"
+msgstr "Cut"
+
+msgid  "Cyclomatic Complexity"
+msgstr "Cyclomatic Complexity"
+
+msgid  "DBX"
+msgstr "DBX"
+
+msgid  "Data"
+msgstr "Data"
+
+msgid  "Debug Core File..."
+msgstr "Debug Core File..."
+
+msgid  "Debug Information"
+msgstr "Debug Information"
+
+msgid  "Debug expanded code"
+msgstr "Debug expanded code"
+
+msgid  "Debug information"
+msgstr "Debug information"
+
+msgid  "Debug"
+msgstr "Debug"
+
+msgid  "Debugger Host"
+msgstr "Debugger Host"
+
+msgid  "Debugger Name"
+msgstr "Debugger Name"
+
+msgid  "Debugger"
+msgstr "Debugger"
+
+msgid  "Debugging"
+msgstr "Debugging"
+
+msgid  "Decimal"
+msgstr "Decimal"
+
+msgid  "Default Color"
+msgstr "Default Color"
+
+msgid  "Default"
+msgstr "Default"
+
+msgid  "Delete Files Not Found"
+msgstr "Delete Files Not Found"
+
+msgid  "Delete variable"
+msgstr "Delete variable"
+
+msgid  "Delete"
+msgstr "Delete"
+
+msgid  "Deleting a variable"
+msgstr "Deleting a variable"
+
+msgid  "Dependencies"
+msgstr "Dependencies"
+
+msgid  "Dependency Browser"
+msgstr "Dependency Browser"
+
+msgid  "Description: "
+msgstr "Description: "
+
+msgid  "Detach"
+msgstr "Detach"
+
+msgid  "Details"
+msgstr "Details"
+
+msgid  "Detect Aliases (shared data structures)"
+msgstr "Detect Aliases (shared data structures)"
+
+msgid  "Detect Aliases"
+msgstr "Detect Aliases"
+
+msgid  "Dialogs"
+msgstr "Dialogs"
+
+msgid  "Diff for current revision of "
+msgstr "Diff for current revision of "
+
+msgid  "Directory Selection"
+msgstr "Directory Selection"
+
+msgid  "Directory to scan"
+msgstr "Directory to scan"
+
+msgid  "Directory:"
+msgstr "Directory:"
+
+msgid  "Disp"
+msgstr "Disp"
+
+msgid  "Display "
+msgstr "Display "
+
+msgid  "Display Any Expression..."
+msgstr "Display Any Expression..."
+
+msgid  "Display Arguments"
+msgstr "Display Arguments"
+
+msgid  "Display Explorer Tree"
+msgstr "Display Explorer Tree"
+
+msgid  "Display Expression..."
+msgstr "Display Expression..."
+
+msgid  "Display Grid Points"
+msgstr "Display Grid Points"
+
+msgid  "Display Line Numbers"
+msgstr "Display Line Numbers"
+
+msgid  "Display Local Variables"
+msgstr "Display Local Variables"
+
+msgid  "Display Registers"
+msgstr "Display Registers"
+
+msgid  "Dot replacement:"
+msgstr "Dot replacement:"
+
+msgid  "Duplicate variables in case constructions"
+msgstr "Duplicate variables in case constructions"
+
+msgid  "Dynamic elaboration"
+msgstr "Dynamic elaboration"
+
+msgid  "ESC"
+msgstr "ESC"
+
+msgid  "Edit "
+msgstr "Edit "
+
+msgid  "Edit Breakpoints"
+msgstr "Edit Breakpoints"
+
+msgid  "Edit Default Switches for "
+msgstr "Edit Default Switches for "
+
+msgid  "Edit Log"
+msgstr "Edit Log"
+
+msgid  "Edit Sources"
+msgstr "Edit Sources"
+
+msgid  "Edit Switches for "
+msgstr "Edit Switches for "
+
+msgid  "Edit Switches"
+msgstr "Edit Switches"
+
+msgid  "Edit default switches"
+msgstr "Edit default switches"
+
+msgid  "Edit log for file:"
+msgstr "Edit log for file:"
+
+msgid  "Edit log for files:"
+msgstr "Edit log for files:"
+
+msgid  "Edit log"
+msgstr "Edit log"
+
+msgid  "Edit multiple Log"
+msgstr "Edit multiple Log"
+
+msgid  "Edit naming scheme for "
+msgstr "Edit naming scheme for "
+
+msgid  "Edit naming scheme for project "
+msgstr "Edit naming scheme for project "
+
+msgid  "Edit source Directories for "
+msgstr "Edit source Directories for "
+
+msgid  "Edit switches for "
+msgstr "Edit switches for "
+
+msgid  "Edit variable properties"
+msgstr "Edit variable properties"
+
+msgid  "Edit"
+msgstr "Edit"
+
+msgid  "Editing a variable"
+msgstr "Editing a variable"
+
+msgid  "Elab warning"
+msgstr "Elab warning"
+
+msgid  "Elide constructor"
+msgstr "Elide constructor"
+
+msgid  "Enable assertions"
+msgstr "Enable assertions"
+
+msgid  "Enb"
+msgstr "Enb"
+
+msgid  "End Of Statement"
+msgstr "End Of Statement"
+
+msgid  "Enter an expression to display:"
+msgstr "Enter an expression to display:"
+
+msgid  "Enter commands to execute when program stops:"
+msgstr "Enter commands to execute when program stops:"
+
+msgid  "Enter the arguments to your application:"
+msgstr "Enter the arguments to your application:"
+
+msgid  "Enter the directory where to copy the file to:"
+msgstr "Enter the directory where to copy the file to:"
+
+msgid  "Enter the name of the project to create:"
+msgstr "Enter the name of the project to create:"
+
+msgid  "Enter the number of times to skip before stopping:"
+msgstr "Enter the number of times to skip before stopping:"
+
+msgid  "Examine Memory"
+msgstr "Examine Memory"
+
+msgid  "Examine dependencies for "
+msgstr "Examine dependencies for "
+
+msgid  "Examine project hierarchy for "
+msgstr "Examine project hierarchy for "
+
+msgid  "Exception"
+msgstr "Exception"
+
+msgid  "Exceptions support"
+msgstr "Exceptions support"
+
+msgid  "Exceptions"
+msgstr "Exceptions"
+
+msgid  "Execute until selected stack frame returns"
+msgstr "Execute until selected stack frame returns"
+
+msgid  "Execute..."
+msgstr "Execute..."
+
+msgid  "Exiting..."
+msgstr "Exiting..."
+
+msgid  "Explorer"
+msgstr "Explorer"
+
+msgid  "Exploring :"
+msgstr "Exploring :"
+
+msgid  "Expression Selection"
+msgstr "Expression Selection"
+
+msgid  "Expression is a subprogram call"
+msgstr "Expression is a subprogram call"
+
+msgid  "F1"
+msgstr "F1"
+
+msgid  "F2"
+msgstr "F2"
+
+msgid  "F3"
+msgstr "F3"
+
+msgid  "F5"
+msgstr "F5"
+
+msgid  "F6"
+msgstr "F6"
+
+msgid  "F7"
+msgstr "F7"
+
+msgid  "F8"
+msgstr "F8"
+
+msgid  "File Extensions"
+msgstr "File Extensions"
+
+msgid  "File Location"
+msgstr "File Location"
+
+msgid  "File Name Background"
+msgstr "File Name Background"
+
+msgid  "File not found: "
+msgstr "File not found: "
+
+msgid  "File"
+msgstr "File"
+
+msgid  "File(s) to scan"
+msgstr "File(s) to scan"
+
+msgid  "File/Variable"
+msgstr "File/Variable"
+
+msgid  "File1:"
+msgstr "File1:"
+
+msgid  "File2:"
+msgstr "File2:"
+
+msgid  "File:"
+msgstr "File:"
+
+msgid  "Filename casing:"
+msgstr "Filename casing:"
+
+msgid  "Files From Project"
+msgstr "Files From Project"
+
+msgid  "Files"
+msgstr "Files"
+
+msgid  "Files..."
+msgstr "Files..."
+
+msgid  "Files:"
+msgstr "Files:"
+
+msgid  "Find"
+msgstr "Find"
+
+msgid  "Finish"
+msgstr "Finish"
+
+msgid  "Fixed Positions"
+msgstr "Fixed Positions"
+
+msgid  "Font"
+msgstr "Font"
+
+msgid  "Format: "
+msgstr "Format: "
+
+msgid  "Frame Number"
+msgstr "Frame Number"
+
+msgid  "Frame"
+msgstr "Frame"
+
+msgid  "From file..."
+msgstr "From file..."
+
+msgid  "From wizard..."
+msgstr "From wizard..."
+
+msgid  "Frozen"
+msgstr "Frozen"
+
+msgid  "Full + Automatic inlining"
+msgstr "Full + Automatic inlining"
+
+msgid  "Full errors"
+msgstr "Full errors"
+
+msgid  "Full optimization"
+msgstr "Full optimization"
+
+msgid  "GDB"
+msgstr "GDB"
+
+msgid  "GNAT default"
+msgstr "GNAT default"
+
+msgid  "General"
+msgstr "General"
+
+msgid  "Generate API doc"
+msgstr "Generate API doc"
+
+msgid  "Get status"
+msgstr "Get status"
+
+msgid  "Glide project files"
+msgstr "Glide project files"
+
+msgid  "Gnome"
+msgstr "Gnome"
+
+msgid  "Go to body"
+msgstr "Go to body"
+
+msgid  "Go to declaration/body of "
+msgstr "Go to declaration/body of "
+
+msgid  "Go to file spec/body"
+msgstr "Go to file spec/body"
+
+msgid  "Go to line..."
+msgstr "Go to line..."
+
+msgid  "Go to parent unit"
+msgstr "Go to parent unit"
+
+msgid  "Go to previous reference"
+msgstr "Go to previous reference"
+
+msgid  "Goto Body"
+msgstr "Goto Body"
+
+msgid  "Goto Declaration<->Body"
+msgstr "Goto Declaration<->Body"
+
+msgid  "Goto File Spec<->Body"
+msgstr "Goto File Spec<->Body"
+
+msgid  "Goto Line..."
+msgstr "Goto Line..."
+
+msgid  "Goto Parent Unit"
+msgstr "Goto Parent Unit"
+
+msgid  "Goto Previous Reference"
+msgstr "Goto Previous Reference"
+
+msgid  "HTML Browser"
+msgstr "HTML Browser"
+
+msgid  "Halfword"
+msgstr "Halfword"
+
+msgid  "Handler"
+msgstr "Handler"
+
+msgid  "Harness"
+msgstr "Harness"
+
+msgid  "Help"
+msgstr "Help"
+
+msgid  "Help: "
+msgstr "Help: "
+
+msgid  "Helpers"
+msgstr "Helpers"
+
+msgid  "Hex"
+msgstr "Hex"
+
+msgid  "Hide Big Items"
+msgstr "Hide Big Items"
+
+msgid  "Hide System Files"
+msgstr "Hide System Files"
+
+msgid  "Hide all "
+msgstr "Hide all "
+
+msgid  "Hide implicit dependencies"
+msgstr "Hide implicit dependencies"
+
+msgid  "Hide links"
+msgstr "Hide links"
+
+msgid  "Hide system files"
+msgstr "Hide system files"
+
+msgid  "Horizontal Box"
+msgstr "Horizontal Box"
+
+msgid  "Horizontal Button Box"
+msgstr "Horizontal Button Box"
+
+msgid  "Horizontal Pane"
+msgstr "Horizontal Pane"
+
+msgid  "Ignore"
+msgstr "Ignore"
+
+msgid  "Info"
+msgstr "Info"
+
+msgid  "Initialize"
+msgstr "Initialize"
+
+msgid  "Instrument arcs"
+msgstr "Instrument arcs"
+
+msgid  "Interrupt debugged program"
+msgstr "Interrupt debugged program"
+
+msgid  "Interrupt the debugger or wait for its availability."
+msgstr "Interrupt the debugger or wait for its availability."
+
+msgid  "Interrupt"
+msgstr "Interrupt"
+
+msgid  "Interrupting build..."
+msgstr "Interrupting build..."
+
+msgid  "Interunit inlining"
+msgstr "Interunit inlining"
+
+msgid  "Item Name"
+msgstr "Item Name"
+
+msgid  "Item Type"
+msgstr "Item Type"
+
+msgid  "Item Value"
+msgstr "Item Value"
+
+msgid  "JDB"
+msgstr "JDB"
+
+msgid  "Keep going"
+msgstr "Keep going"
+
+msgid  "Keywords"
+msgstr "Keywords"
+
+msgid  "Kill"
+msgstr "Kill"
+
+msgid  "Language currently not supported by GVD: "
+msgstr "Language currently not supported by GVD: "
+
+msgid  "Language extensions"
+msgstr "Language extensions"
+
+msgid  "Layou"
+msgstr "Layou"
+
+msgid  "Line"
+msgstr "Line"
+
+msgid  "Line:"
+msgstr "Line:"
+
+msgid  "Lines"
+msgstr "Lines"
+
+msgid  "Linker"
+msgstr "Linker"
+
+msgid  "List Processes"
+msgstr "List Processes"
+
+msgid  "List References"
+msgstr "List References"
+
+msgid  "List open files in project"
+msgstr "List open files in project"
+
+msgid  "List possible restrictions"
+msgstr "List possible restrictions"
+
+msgid  "List references"
+msgstr "List references"
+
+msgid  "Load File..."
+msgstr "Load File..."
+
+msgid  "Load List"
+msgstr "Load List"
+
+msgid  "Load program on machine TARG using protocol PRO."
+msgstr "Load program on machine TARG using protocol PRO."
+
+msgid  "Local file name"
+msgstr "Local file name"
+
+msgid  "Local revision"
+msgstr "Local revision"
+
+msgid  "Location"
+msgstr "Location"
+
+msgid  "Log Editor"
+msgstr "Log Editor"
+
+msgid  "Log editor for "
+msgstr "Log editor for "
+
+msgid  "Log"
+msgstr "Log"
+
+msgid  "Look in:"
+msgstr "Look in:"
+
+msgid  "Make new harness"
+msgstr "Make new harness"
+
+msgid  "Make new suite"
+msgstr "Make new suite"
+
+msgid  "Make"
+msgstr "Make"
+
+msgid  "Maximum nesting level"
+msgstr "Maximum nesting level"
+
+msgid  "Memory Analyzer"
+msgstr "Memory Analyzer"
+
+msgid  "Memory View"
+msgstr "Memory View"
+
+msgid  "Memory"
+msgstr "Memory"
+
+msgid  "Messages"
+msgstr "Messages"
+
+msgid  "Metrics"
+msgstr "Metrics"
+
+msgid  "Minimal recompilation"
+msgstr "Minimal recompilation"
+
+msgid  "Mix of case construction and items in a case item"
+msgstr "Mix of case construction and items in a case item"
+
+msgid  "Modified"
+msgstr "Modified"
+
+msgid  "Multiple log editor"
+msgstr "Multiple log editor"
+
+msgid  "Multiprocessing"
+msgstr "Multiprocessing"
+
+msgid  "Name and Location"
+msgstr "Name and Location"
+
+msgid  "Name"
+msgstr "Name"
+
+msgid  "Name:"
+msgstr "Name:"
+
+msgid  "Naming scheme"
+msgstr "Naming scheme"
+
+msgid  "Naming scheme:"
+msgstr "Naming scheme:"
+
+msgid  "Naming the project"
+msgstr "Naming the project"
+
+msgid  "Navigate"
+msgstr "Navigate"
+
+msgid  "New test unit"
+msgstr "New test unit"
+
+msgid  "New"
+msgstr "New"
+
+msgid  "New_Suite"
+msgstr "New_Suite"
+
+msgid  "New_Test"
+msgstr "New_Test"
+
+msgid  "Next Instruction"
+msgstr "Next Instruction"
+
+msgid  "Next Procedure"
+msgstr "Next Procedure"
+
+msgid  "Next"
+msgstr "Next"
+
+msgid  "No extension files"
+msgstr "No extension files"
+
+msgid  "No file editor was registered"
+msgstr "No file editor was registered"
+
+msgid  "No file to edit"
+msgstr "No file to edit"
+
+msgid  "No files are selected."
+msgstr "No files are selected."
+
+msgid  "No html viewer was registered"
+msgstr "No html viewer was registered"
+
+msgid  "No inlining"
+msgstr "No inlining"
+
+msgid  "No optimization"
+msgstr "No optimization"
+
+msgid  "No warning"
+msgstr "No warning"
+
+msgid  "No"
+msgstr "No"
+
+msgid  "Num"
+msgstr "Num"
+
+msgid  "Number of blank lines"
+msgstr "Number of blank lines"
+
+msgid  "Number of body lines"
+msgstr "Number of body lines"
+
+msgid  "Number of code lines"
+msgstr "Number of code lines"
+
+msgid  "Number of comment lines"
+msgstr "Number of comment lines"
+
+msgid  "Number of lines"
+msgstr "Number of lines"
+
+msgid  "Number of mixed code and comment lines"
+msgstr "Number of mixed code and comment lines"
+
+msgid  "Number of routines"
+msgstr "Number of routines"
+
+msgid  "Number of specification lines"
+msgstr "Number of specification lines"
+
+msgid  "Number of statements"
+msgstr "Number of statements"
+
+msgid  "Number of types"
+msgstr "Number of types"
+
+msgid  "OK"
+msgstr "OK"
+
+msgid  "Octal"
+msgstr "Octal"
+
+msgid  "Open "
+msgstr "Open "
+
+msgid  "Open File"
+msgstr "Open File"
+
+msgid  "Open Program in a New Debugger"
+msgstr "Open Program in a New Debugger"
+
+msgid  "Open Project"
+msgstr "Open Project"
+
+msgid  "Open Session"
+msgstr "Open Session"
+
+msgid  "Open a File"
+msgstr "Open a File"
+
+msgid  "Open file..."
+msgstr "Open file..."
+
+msgid  "Open"
+msgstr "Open"
+
+msgid  "Open..."
+msgstr "Open..."
+
+msgid  "Opening files:"
+msgstr "Opening files:"
+
+msgid  "Options"
+msgstr "Options"
+
+msgid  "Options:"
+msgstr "Options:"
+
+msgid  "Options>>"
+msgstr "Options>>"
+
+msgid  "Overflow checking"
+msgstr "Overflow checking"
+
+msgid  "Overloaded virtual"
+msgstr "Overloaded virtual"
+
+msgid  "Override Set_up"
+msgstr "Override Set_up"
+
+msgid  "Override Tear_Down"
+msgstr "Override Tear_Down"
+
+msgid  "PC"
+msgstr "PC"
+
+msgid  "PYDB"
+msgstr "PYDB"
+
+msgid  "Packages"
+msgstr "Packages"
+
+msgid  "Packer"
+msgstr "Packer"
+
+msgid  "Parameters"
+msgstr "Parameters"
+
+msgid  "Paste from Clipboard"
+msgstr "Paste from Clipboard"
+
+msgid  "Paste"
+msgstr "Paste"
+
+msgid  "Perl"
+msgstr "Perl"
+
+msgid  "Please select the build directory for this project"
+msgstr "Please select the build directory for this project"
+
+msgid  "Please select the naming scheme to use"
+msgstr "Please select the naming scheme to use"
+
+msgid  "Please select the source directories for this project"
+msgstr "Please select the source directories for this project"
+
+msgid  "Please select the switches to build the project"
+msgstr "Please select the switches to build the project"
+
+msgid  "Position independent code"
+msgstr "Position independent code"
+
+msgid  "Possible values:"
+msgstr "Possible values:"
+
+msgid  "Preferences"
+msgstr "Preferences"
+
+msgid  "Previous Procedure"
+msgstr "Previous Procedure"
+
+msgid  "Previous"
+msgstr "Previous"
+
+msgid  "Print "
+msgstr "Print "
+
+msgid  "Print"
+msgstr "Print"
+
+msgid  "Procedure name:"
+msgstr "Procedure name:"
+
+msgid  "Process Selection"
+msgstr "Process Selection"
+
+msgid  "Profile"
+msgstr "Profile"
+
+msgid  "Profiling"
+msgstr "Profiling"
+
+msgid  "Program Counter"
+msgstr "Program Counter"
+
+msgid  "Program File"
+msgstr "Program File"
+
+msgid  "Program Host"
+msgstr "Program Host"
+
+msgid  "Programming Languages"
+msgstr "Programming Languages"
+
+msgid  "Project Browser"
+msgstr "Project Browser"
+
+msgid  "Project Explorer"
+msgstr "Project Explorer"
+
+msgid  "Project"
+msgstr "Project"
+
+msgid  "Properties"
+msgstr "Properties"
+
+msgid  "Protocol"
+msgstr "Protocol"
+
+msgid  "Query status for current directory"
+msgstr "Query status for current directory"
+
+msgid  "Querying status for files in directory "
+msgstr "Querying status for files in directory "
+
+msgid  "Querying status for files:"
+msgstr "Querying status for files:"
+
+msgid  "Quit"
+msgstr "Quit"
+
+msgid  "RADical"
+msgstr "RADical"
+
+msgid  "Read Only"
+msgstr "Read Only"
+
+msgid  "Recent messages (most recent first):"
+msgstr "Recent messages (most recent first):"
+
+msgid  "Recompile if switches changed"
+msgstr "Recompile if switches changed"
+
+msgid  "Record"
+msgstr "Record"
+
+msgid  "Recursive Search"
+msgstr "Recursive Search"
+
+msgid  "Redo Previous Action"
+msgstr "Redo Previous Action"
+
+msgid  "Redo"
+msgstr "Redo"
+
+msgid  "Refresh"
+msgstr "Refresh"
+
+msgid  "Regular expression"
+msgstr "Regular expression"
+
+msgid  "Reload Files"
+msgstr "Reload Files"
+
+msgid  "Remote Copy"
+msgstr "Remote Copy"
+
+msgid  "Remote Shell"
+msgstr "Remote Shell"
+
+msgid  "Remove dependency "
+msgstr "Remove dependency "
+
+msgid  "Remove directory recursive"
+msgstr "Remove directory recursive"
+
+msgid  "Remove directory"
+msgstr "Remove directory"
+
+msgid  "Remove from repository"
+msgstr "Remove from repository"
+
+msgid  "Remove"
+msgstr "Remove"
+
+msgid  "Removing files:"
+msgstr "Removing files:"
+
+msgid  "Rename"
+msgstr "Rename"
+
+msgid  "Reopen"
+msgstr "Reopen"
+
+msgid  "Replace Current Debugger"
+msgstr "Replace Current Debugger"
+
+msgid  "Replace by:"
+msgstr "Replace by:"
+
+msgid  "Replace next/all occurrence(s)"
+msgstr "Replace next/all occurrence(s)"
+
+msgid  "Replace"
+msgstr "Replace"
+
+msgid  "Replay selection"
+msgstr "Replay selection"
+
+msgid  "Repository revision"
+msgstr "Repository revision"
+
+msgid  "Restrict the scope of the search"
+msgstr "Restrict the scope of the search"
+
+msgid  "Revert"
+msgstr "Revert"
+
+msgid  "Run arguments:"
+msgstr "Run arguments:"
+
+msgid  "Run time checks"
+msgstr "Run time checks"
+
+msgid  "Run/Start"
+msgstr "Run/Start"
+
+msgid  "Save As..."
+msgstr "Save As..."
+
+msgid  "Save Current File"
+msgstr "Save Current File"
+
+msgid  "Save File As"
+msgstr "Save File As"
+
+msgid  "Save the project "
+msgstr "Save the project "
+
+msgid  "Save"
+msgstr "Save"
+
+msgid  "Saved"
+msgstr "Saved"
+
+msgid  "Scenario variable declared in package"
+msgstr "Scenario variable declared in package"
+
+msgid  "Scope:"
+msgstr "Scope:"
+
+msgid  "Scrolled Window"
+msgstr "Scrolled Window"
+
+msgid  "Search All Occurrences"
+msgstr "Search All Occurrences"
+
+msgid  "Search for:"
+msgstr "Search for:"
+
+msgid  "Search next/all occurrence(s)"
+msgstr "Search next/all occurrence(s)"
+
+msgid  "Search previous occurrence"
+msgstr "Search previous occurrence"
+
+msgid  "Search"
+msgstr "Search"
+
+msgid  "Select All"
+msgstr "Select All"
+
+msgid  "Select Core File"
+msgstr "Select Core File"
+
+msgid  "Select First File"
+msgstr "Select First File"
+
+msgid  "Select Module"
+msgstr "Select Module"
+
+msgid  "Select Second File"
+msgstr "Select Second File"
+
+msgid  "Select a directory"
+msgstr "Select a directory"
+
+msgid  "Select and print stack frame called by this one"
+msgstr "Select and print stack frame called by this one"
+
+msgid  "Select and print stack frame that called this one"
+msgstr "Select and print stack frame that called this one"
+
+msgid  "Select object directory"
+msgstr "Select object directory"
+
+msgid  "Select project file location"
+msgstr "Select project file location"
+
+msgid  "Select project"
+msgstr "Select project"
+
+msgid  "Select source directories"
+msgstr "Select source directories"
+
+msgid  "Selecting sources"
+msgstr "Selecting sources"
+
+msgid  "Selection"
+msgstr "Selection"
+
+msgid  "Separate Window"
+msgstr "Separate Window"
+
+msgid  "Separate extensions:"
+msgstr "Separate extensions:"
+
+msgid  "Session List"
+msgstr "Session List"
+
+msgid  "Session"
+msgstr "Session"
+
+msgid  "Session:"
+msgstr "Session:"
+
+msgid  "Set Breakpoint on "
+msgstr "Set Breakpoint on "
+
+msgid  "Set Breakpoint on Line"
+msgstr "Set Breakpoint on Line"
+
+msgid  "Set Value of "
+msgstr "Set Value of "
+
+msgid  "Set Value"
+msgstr "Set Value"
+
+msgid  "Set breakpoint on "
+msgstr "Set breakpoint on "
+
+msgid  "Set breakpoint on line"
+msgstr "Set breakpoint on line"
+
+msgid  "Setting value of "
+msgstr "Setting value of "
+
+msgid  "Settings"
+msgstr "Settings"
+
+msgid  "Shared GNAT runtime"
+msgstr "Shared GNAT runtime"
+
+msgid  "Show ASCII"
+msgstr "Show ASCII"
+
+msgid  "Show Call Stack"
+msgstr "Show Call Stack"
+
+msgid  "Show Current File"
+msgstr "Show Current File"
+
+msgid  "Show Current Location"
+msgstr "Show Current Location"
+
+msgid  "Show Line Numbers"
+msgstr "Show Line Numbers"
+
+msgid  "Show Lines with Code"
+msgstr "Show Lines with Code"
+
+msgid  "Show Next Page"
+msgstr "Show Next Page"
+
+msgid  "Show Previous Page"
+msgstr "Show Previous Page"
+
+msgid  "Show Type"
+msgstr "Show Type"
+
+msgid  "Show Value + Type"
+msgstr "Show Value + Type"
+
+msgid  "Show Value"
+msgstr "Show Value"
+
+msgid  "Show all "
+msgstr "Show all "
+
+msgid  "Show links"
+msgstr "Show links"
+
+msgid  "Show"
+msgstr "Show"
+
+msgid  "Show..."
+msgstr "Show..."
+
+msgid  "Signal"
+msgstr "Signal"
+
+msgid  "Signals"
+msgstr "Signals"
+
+msgid  "Some optimization"
+msgstr "Some optimization"
+
+msgid  "Source Code"
+msgstr "Source Code"
+
+msgid  "Source location"
+msgstr "Source location"
+
+msgid  "Source name"
+msgstr "Source name"
+
+msgid  "Source"
+msgstr "Source"
+
+msgid  "Spec extensions:"
+msgstr "Spec extensions:"
+
+msgid  "Spec filename"
+msgstr "Spec filename"
+
+msgid  "Stack checking"
+msgstr "Stack checking"
+
+msgid  "Standard"
+msgstr "Standard"
+
+msgid  "Start Of Statement"
+msgstr "Start Of Statement"
+
+msgid  "Start the debugged program"
+msgstr "Start the debugged program"
+
+msgid  "Start the debugged program, "
+msgstr "Start the debugged program, "
+
+msgid  "Start"
+msgstr "Start"
+
+msgid  "Start/Continue the debugged program"
+msgstr "Start/Continue the debugged program"
+
+msgid  "Static GNAT runtime"
+msgstr "Static GNAT runtime"
+
+msgid  "Status Bar Time Out"
+msgstr "Status Bar Time Out"
+
+msgid  "Step Instruction"
+msgstr "Step Instruction"
+
+msgid  "Step one instruction exactly"
+msgstr "Step one instruction exactly"
+
+msgid  "Step one instruction, but proceed through subroutine calls"
+msgstr "Step one instruction, but proceed through subroutine calls"
+
+msgid  "Step program until it reaches a different source line"
+msgstr "Step program until it reaches a different source line"
+
+msgid  "Step program, proceeding through subroutine calls"
+msgstr "Step program, proceeding through subroutine calls"
+
+msgid  "Step"
+msgstr "Step"
+
+msgid  "Stop Build"
+msgstr "Stop Build"
+
+msgid  "Stop always"
+msgstr "Stop always"
+
+msgid  "Stop at beginning of main subprogram"
+msgstr "Stop at beginning of main subprogram"
+
+msgid  "Stop current search"
+msgstr "Stop current search"
+
+msgid  "Stop if not handled"
+msgstr "Stop if not handled"
+
+msgid  "Stop recording"
+msgstr "Stop recording"
+
+msgid  "Stop"
+msgstr "Stop"
+
+msgid  "Store call stack in exceptions"
+msgstr "Store call stack in exceptions"
+
+msgid  "Strict ANSI"
+msgstr "Strict ANSI"
+
+msgid  "Strings Only"
+msgstr "Strings Only"
+
+msgid  "Strings"
+msgstr "Strings"
+
+msgid  "Strip Carriage Return"
+msgstr "Strip Carriage Return"
+
+msgid  "Strip Symbols"
+msgstr "Strip Symbols"
+
+msgid  "Style checks"
+msgstr "Style checks"
+
+msgid  "Submit changes"
+msgstr "Submit changes"
+
+msgid  "Subprogram Name"
+msgstr "Subprogram Name"
+
+msgid  "Subprogram"
+msgstr "Subprogram"
+
+msgid  "Suite and test files"
+msgstr "Suite and test files"
+
+msgid  "Suite file:"
+msgstr "Suite file:"
+
+msgid  "Suite files"
+msgstr "Suite files"
+
+msgid  "Suite name:"
+msgstr "Suite name:"
+
+msgid  "Suppress all checks"
+msgstr "Suppress all checks"
+
+msgid  "Switches"
+msgstr "Switches"
+
+msgid  "Syntax Highlighting"
+msgstr "Syntax Highlighting"
+
+msgid  "Syntax"
+msgstr "Syntax"
+
+msgid  "Table"
+msgstr "Table"
+
+msgid  "Task Status"
+msgstr "Task Status"
+
+msgid  "Tasks"
+msgstr "Tasks"
+
+msgid  "Temporary breakpoint"
+msgstr "Temporary breakpoint"
+
+msgid  "Terminate"
+msgstr "Terminate"
+
+msgid  "Test"
+msgstr "Test"
+
+msgid  "The GNU Visual Debugger"
+msgstr "The GNU Visual Debugger"
+
+msgid  "The context of the search"
+msgstr "The context of the search"
+
+msgid  "The following tests will be added to the new suite:"
+msgstr "The following tests will be added to the new suite:"
+
+msgid  "The searched word or pattern"
+msgstr "The searched word or pattern"
+
+msgid  "The text that will replace each match"
+msgstr "The text that will replace each match"
+
+msgid  "The underlying debugger died unexpectedly. Closing it"
+msgstr "The underlying debugger died unexpectedly. Closing it"
+
+msgid  "There is already a project by this name in the project tree."
+msgstr "There is already a project by this name in the project tree."
+
+msgid  "There is already a variable with this name"
+msgstr "There is already a variable with this name"
+
+msgid  "This dependency already exists"
+msgstr "This dependency already exists"
+
+msgid  "This is the About information box."
+msgstr "This is the About information box."
+
+msgid  "Thread Status"
+msgstr "Thread Status"
+
+msgid  "Threads"
+msgstr "Threads"
+
+msgid  "Title Background"
+msgstr "Title Background"
+
+msgid  "Tools"
+msgstr "Tools"
+
+msgid  "Two case constructions at the same level"
+msgstr "Two case constructions at the same level"
+
+msgid  "Type"
+msgstr "Type"
+
+msgid  "Undo Previous Action"
+msgstr "Undo Previous Action"
+
+msgid  "Undo changes"
+msgstr "Undo changes"
+
+msgid  "Undo"
+msgstr "Undo"
+
+msgid  "Unit Testing"
+msgstr "Unit Testing"
+
+msgid  "Unit name"
+msgstr "Unit name"
+
+msgid  "Unit name: "
+msgstr "Unit name: "
+
+msgid  "Unit size: "
+msgstr "Unit size: "
+
+msgid  "Unknown Language"
+msgstr "Unknown Language"
+
+msgid  "Unmodified"
+msgstr "Unmodified"
+
+msgid  "Unroll loops"
+msgstr "Unroll loops"
+
+msgid  "Unselect All"
+msgstr "Unselect All"
+
+msgid  "Unused vars warning"
+msgstr "Unused vars warning"
+
+msgid  "Update Value"
+msgstr "Update Value"
+
+msgid  "Update all files in project"
+msgstr "Update all files in project"
+
+msgid  "Update current directory"
+msgstr "Update current directory"
+
+msgid  "Update"
+msgstr "Update"
+
+msgid  "Updating files:"
+msgstr "Updating files:"
+
+msgid  "Usage:"
+msgstr "Usage:"
+
+msgid  "Use mapping file"
+msgstr "Use mapping file"
+
+msgid  "VCS Explorer"
+msgstr "VCS Explorer"
+
+msgid  "VCS"
+msgstr "VCS"
+
+msgid  "Value"
+msgstr "Value"
+
+msgid  "Variable"
+msgstr "Variable"
+
+msgid  "Version"
+msgstr "Version"
+
+msgid  "Vertical Box"
+msgstr "Vertical Box"
+
+msgid  "Vertical Button Box"
+msgstr "Vertical Button Box"
+
+msgid  "Vertical Pane"
+msgstr "Vertical Pane"
+
+msgid  "View Changelog"
+msgstr "View Changelog"
+
+msgid  "View Diff"
+msgstr "View Diff"
+
+msgid  "View Log"
+msgstr "View Log"
+
+msgid  "View Memory at &"
+msgstr "View Memory at &"
+
+msgid  "View memory at &"
+msgstr "View memory at &"
+
+msgid  "View"
+msgstr "View"
+
+msgid  "Viewing diffs for files:"
+msgstr "Viewing diffs for files:"
+
+msgid  "Viewing logs of files:"
+msgstr "Viewing logs of files:"
+
+msgid  "Viewport"
+msgstr "Viewport"
+
+msgid  "Visual Comparison"
+msgstr "Visual Comparison"
+
+msgid  "Warning=Error"
+msgstr "Warning=Error"
+
+msgid  "Welcome"
+msgstr "Welcome"
+
+msgid  "Whole Text"
+msgstr "Whole Text"
+
+msgid  "Whole Word Only"
+msgstr "Whole Word Only"
+
+msgid  "Window"
+msgstr "Window"
+
+msgid  "Word"
+msgstr "Word"
+
+msgid  "Writable"
+msgstr "Writable"
+
+msgid  "XDB"
+msgstr "XDB"
+
+msgid  "Yes"
+msgstr "Yes"
+
+msgid  "You must provide a log before committing file "
+msgstr "You must provide a log before committing file "
+
+msgid  "You must select at least one of the choices"
+msgstr "You must select at least one of the choices"
+
+msgid  "You must specify a name for the variable"
+msgstr "You must specify a name for the variable"
+
+msgid  "You must specify some possible values"
+msgstr "You must specify some possible values"
+
+msgid  "Zoom in"
+msgstr "Zoom in"
+
+msgid  "Zoom out"
+msgstr "Zoom out"
+
+msgid  "Zoom"
+msgstr "Zoom"
+
+msgid  "_.ada"
+msgstr "_.ada"
+
+msgid  "break"
+msgstr "break"
+
+msgid  "by Emmanuel Briot, Arnaud Charlet & Nicolas Setton"
+msgstr "by Emmanuel Briot, Arnaud Charlet & Nicolas Setton"
+
+msgid  "delete"
+msgstr "delete"
+
+msgid  "disable"
+msgstr "disable"
+
+msgid  "is"
+msgstr "is"
+
+msgid  "keep"
+msgstr "keep"
+
+msgid  "label15"
+msgstr "label15"
+
+msgid  "label16"
+msgstr "label16"
+
+msgid  "label3"
+msgstr "label3"
+
+msgid  "label4"
+msgstr "label4"
+
+msgid  "label61"
+msgstr "label61"
+
+msgid  "label7"
+msgstr "label7"
+
+msgid  "label8"
+msgstr "label8"
+
+msgid  "list of files"
+msgstr "list of files"
+
+msgid  "ms"
+msgstr "ms"
+
+msgid  "n/a"
+msgstr "n/a"
+
+msgid  "process terminated."
+msgstr "process terminated."
+
+msgid  "read or written"
+msgstr "read or written"
+
+msgid  "read"
+msgstr "read"
+
+msgid  "remote"
+msgstr "remote"
+
+msgid  "stopping at the beginning of the main procedure"
+msgstr "stopping at the beginning of the main procedure"
+
+msgid  "subprogram"
+msgstr "subprogram"
+
+msgid  "underlying debugger is busy."
+msgstr "underlying debugger is busy."
+
+msgid  "unit.separate.1.ada"
+msgstr "unit.separate.1.ada"
+
+msgid  "unit__separate_.ada"
+msgstr "unit__separate_.ada"
+
+msgid  "vxworks"
+msgstr "vxworks"
+
+msgid  "watch"
+msgstr "watch"
+
+msgid  "written"
+msgstr "written"
+
+msgid  "wtx"
+msgstr "wtx"
+
