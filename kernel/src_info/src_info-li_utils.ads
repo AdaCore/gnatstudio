@@ -105,16 +105,11 @@ private package Src_Info.LI_Utils is
    --  Inserts new reference to declaration. Declaration here is specified
    --  by pointer to appropriate E_Declaration_Info_Node object
 
-   No_Kind : E_Kind := Task_Type;
-   --  This constant is used to represent the absence of Kind.
-   --  Task_Type is used here because it can never occur in C/CPP program.
-   --  ??? Could it be replaced with Unresolved_Entity ?
-
    function Find_Declaration
      (File                    : LI_File_Ptr;
       Symbol_Name             : String := "";
       Class_Name              : String := "";
-      Kind                    : E_Kind := No_Kind;
+      Kind                    : E_Kind := Unresolved_Entity_Kind;
       Location                : SN.Point := SN.Invalid_Point;
       Negate_Kind             : Boolean := False)
       return E_Declaration_Info_List;
@@ -130,7 +125,7 @@ private package Src_Info.LI_Utils is
       Symbol_Name             : String := "";
       Class_Name              : String := "";
       Filename                : String := "";
-      Kind                    : E_Kind := No_Kind;
+      Kind                    : E_Kind := Unresolved_Entity_Kind;
       Location                : SN.Point := SN.Invalid_Point)
       return E_Declaration_Info_List;
    --  Finds declaration in File by it's Name and Location.

@@ -50,7 +50,7 @@ package body Src_Info.LI_Utils is
      (Declaration_Info_Ptr    : E_Declaration_Info_List;
       Symbol_Name             : String := "";
       Class_Name              : String := "";
-      Kind                    : E_Kind := No_Kind;
+      Kind                    : E_Kind := Unresolved_Entity_Kind;
       Location                : Point := Invalid_Point;
       Negate_Kind             : Boolean := False)
       return E_Declaration_Info_List;
@@ -501,7 +501,7 @@ package body Src_Info.LI_Utils is
      (File                    : LI_File_Ptr;
       Symbol_Name             : String := "";
       Class_Name              : String := "";
-      Kind                    : E_Kind := No_Kind;
+      Kind                    : E_Kind := Unresolved_Entity_Kind;
       Location                : Point := Invalid_Point;
       Negate_Kind             : Boolean := False)
       return E_Declaration_Info_List is
@@ -531,7 +531,7 @@ package body Src_Info.LI_Utils is
       Symbol_Name             : String := "";
       Class_Name              : String := "";
       Filename                : String := "";
-      Kind                    : E_Kind := No_Kind;
+      Kind                    : E_Kind := Unresolved_Entity_Kind;
       Location                : Point := Invalid_Point)
       return E_Declaration_Info_List
    is
@@ -700,6 +700,7 @@ package body Src_Info.LI_Utils is
       end if;
 
       D_Ptr.Value.Declaration.Scope := Scope;
+
       if End_Of_Scope_Location = Invalid_Point then
          D_Ptr.Value.Declaration.End_Of_Scope := No_Reference;
       else
@@ -735,7 +736,7 @@ package body Src_Info.LI_Utils is
      (Declaration_Info_Ptr : E_Declaration_Info_List;
       Symbol_Name          : String := "";
       Class_Name           : String := "";
-      Kind                 : E_Kind := No_Kind;
+      Kind                 : E_Kind := Unresolved_Entity_Kind;
       Location             : Point := Invalid_Point;
       Negate_Kind          : Boolean := False)
       return E_Declaration_Info_List
@@ -745,38 +746,41 @@ package body Src_Info.LI_Utils is
       loop
          exit when D_Ptr = null;
 
-         if ((Symbol_Name'Length > 0
-                and then (D_Ptr.Value.Declaration.Name.all = Symbol_Name))
-            or else Symbol_Name'Length = 0)
-           and then (
-             (Location /= Invalid_Point
-                and then D_Ptr.Value.Declaration.Location.Line
-                                                   = Location.Line
-                and then D_Ptr.Value.Declaration.Location.Column
-                                                   = Location.Column)
-             or else (Location = Invalid_Point)
-           ) and then (
-             (Class_Name /= ""
-                and then Belongs_To_Class
-                          (Declaration_Info_Ptr => Declaration_Info_Ptr,
-                           Class_Name           => Class_Name,
-                           Position             => Location))
-             or else (Class_Name = "")
-           ) and then (
-             (Kind /= No_Kind
-                and then (
-                   (Negate_Kind and then D_Ptr.Value.Declaration.Kind /= Kind)
-                    or else
-                       (not Negate_Kind
-                          and then D_Ptr.Value.Declaration.Kind = Kind)))
-             or else Kind = No_Kind
-           )
+         --  Does the name match ?
+         if Symbol_Name'Length = 0
+           or else D_Ptr.Value.Declaration.Name.all = Symbol_Name
          then
-            return D_Ptr;
+
+            --  Does the declaration location match ?
+            if Location = Invalid_Point
+              or else (D_Ptr.Value.Declaration.Location.Line = Location.Line
+                       and then D_Ptr.Value.Declaration.Location.Column =
+                       Location.Column)
+            then
+
+               --  Does the class name match ?
+               if Class_Name = ""
+                 or else Belongs_To_Class
+                   (Declaration_Info_Ptr => Declaration_Info_Ptr,
+                    Class_Name           => Class_Name,
+                    Position             => Location)
+               then
+
+                  --  Does the kind match
+                  if Kind = Unresolved_Entity_Kind
+                    or else (Negate_Kind
+                             and then D_Ptr.Value.Declaration.Kind /= Kind)
+                    or else (not Negate_Kind
+                             and then D_Ptr.Value.Declaration.Kind = Kind)
+                  then
+                     return D_Ptr;
+                  end if;
+               end if;
+            end if;
          end if;
+
          D_Ptr := D_Ptr.Next;
       end loop;
-
       return null;
    end Find_Declaration_Internal;
 
@@ -856,8 +860,7 @@ package body Src_Info.LI_Utils is
       loop
          exit when D_Ptr = null;
 
-         if (D_Ptr.Value.Declaration.Kind = Record_Type or
-             D_Ptr.Value.Declaration.Kind = Generic_Class)
+         if D_Ptr.Value.Declaration.Kind.Kind = Class
            and then D_Ptr.Value.Declaration.Name.all = Class_Name
            and then (
              D_Ptr.Value.Declaration.Location.Line < Position.Line
