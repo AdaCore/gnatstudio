@@ -49,8 +49,6 @@ with Traces;            use Traces;
 with Glide_Intl;        use Glide_Intl;
 with Glide_Kernel.Project; use Glide_Kernel.Project;
 
-with GNAT.Directory_Operations; use GNAT.Directory_Operations;
-
 package body Glide_Kernel.Modules is
 
    Me : Debug_Handle := Create ("Glide_Kernel.Modules");
@@ -949,9 +947,20 @@ package body Glide_Kernel.Modules is
       if Is_Absolute_Path (Filename) then
          Set_String (Value (1), Normalize_Pathname (Filename));
       else
-         Set_String
-           (Value (1),
-            Find_Source_File (Kernel, Base_Name (Filename), True));
+         declare
+            F : constant String := Find_Source_File
+              (Kernel, Filename, True);
+         begin
+            --  If the file was found in one of the projects
+            if Is_Absolute_Path (F) then
+               Set_String (Value (1), F);
+
+            --  Else just open the relative paths. This is mostly intended
+            --  for files opened from the command line.
+            else
+               Set_String (Value (1), Normalize_Pathname (Filename));
+            end if;
+         end;
       end if;
 
       Init (Value (2), Glib.GType_Int);
