@@ -134,6 +134,14 @@ package String_Utils is
    --  This function is used on Windows or when the Strip_CR preference is
    --  enabled (for systems that share dos files).
 
+   procedure Strip_CR
+     (Text     : in out String;
+      Last     : out Integer;
+      CR_Found : out Boolean);
+   --  Same as above, but works on Text, and more efficient
+   --  Text (Text'First .. Last) contains the new result.
+   --  CR_Found is set to True if a CR was found in Text.
+
    function Do_Tab_Expansion
      (Text : String; Tab_Size : Integer) return String;
    --  Return a version of Text after all tabs have been correctly expanded

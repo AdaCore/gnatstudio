@@ -494,6 +494,27 @@ package body String_Utils is
       return To (1 .. Index_To - 1);
    end Strip_CR;
 
+   --------------
+   -- Strip_CR --
+   --------------
+
+   procedure Strip_CR
+     (Text     : in out String;
+      Last     : out Integer;
+      CR_Found : out Boolean) is
+   begin
+      CR_Found := False;
+      Last := Text'Last;
+
+      for J in Text'Range loop
+         if Text (J) = ASCII.CR then
+            CR_Found := True;
+            Last := Last - 1;
+            Text (J .. Last) := Text (J + 1 .. Last + 1);
+         end if;
+      end loop;
+   end Strip_CR;
+
    ----------------------
    -- To_Host_Pathname --
    ----------------------
