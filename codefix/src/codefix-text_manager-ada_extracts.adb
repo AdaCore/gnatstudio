@@ -647,7 +647,7 @@ package body Codefix.Text_Manager.Ada_Extracts is
 
    begin
       loop
-         if Compare_Pkg (Data (Current_Node).Content.all, Name) then
+         if Compare_Last (Data (Current_Node).Content.all, Name) then
             return Current_Num;
          end if;
 
