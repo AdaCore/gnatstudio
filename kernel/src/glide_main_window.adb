@@ -28,6 +28,8 @@ with Glide_Kernel.Hooks;        use Glide_Kernel.Hooks;
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
 with Glide_Kernel.Scripts;      use Glide_Kernel.Scripts;
+with Glide_Kernel.Standard_Hooks;
+use Glide_Kernel.Standard_Hooks;
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Dnd;                   use Gtk.Dnd;
 with Gtk.Enums;                 use Gtk.Enums;
@@ -220,7 +222,7 @@ package body Glide_Main_Window is
       Force       : Boolean := False) is
    begin
       if Force or else Save_MDI_Children (Main_Window.Kernel) then
-         Main_Quit;
+         Exit_GPS (Main_Window.Kernel);
       end if;
    end Quit;
 
