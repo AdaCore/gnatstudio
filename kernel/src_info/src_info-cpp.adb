@@ -5612,6 +5612,43 @@ package body Src_Info.CPP is
                   Handler,
                   File,
                   Decl_Info);
+            else
+               declare
+                  P        : Pair_Ptr;
+                  MI_Tab   : FU_Table;
+                  MI_File  : DB_File;
+               begin
+                  if Is_Open (Handler.SN_Table (MI)) then
+                     MI_File := Dup (Handler.SN_Table (MI));
+                     Set_Cursor
+                       (MI_File,
+                        By_Key,
+                        CL_Tab.Buffer (CL_Tab.Name.First .. CL_Tab.Name.Last)
+                           & Field_Sep,
+                        False);
+
+                     loop -- iterate thru all methods of the class
+                        P := Get_Pair (MI_File, Next_By_Key);
+                        exit when P = null;
+                        MI_Tab := Parse_Pair (P.all);
+
+                        Process_Local_Variable
+                          (Arg.Buffer (Arg.Name.First .. Arg.Name.Last),
+                           MI_Tab.Buffer (MI_Tab.File_Name.First ..
+                              MI_Tab.File_Name.Last),
+                           Arg.Start_Position,
+                           MI_Tab,
+                           MI,
+                           TA,
+                           Handler,
+                           File,
+                           Decl_Info);
+                        Free (MI_Tab);
+                     end loop;
+                  end if;
+                  Release_Cursor (MI_File);
+                  Close (MI_File, Success);
+               end;
             end if;
          end if;
 
