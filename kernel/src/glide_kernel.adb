@@ -35,6 +35,7 @@ with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
 with Glide_Kernel.Project;      use Glide_Kernel.Project;
 with Glide_Page;                use Glide_Page;
 with GVD.Process;               use GVD.Process;
+with GVD.Main_Window;           use GVD.Main_Window;
 with Interfaces.C.Strings;      use Interfaces.C.Strings;
 with Interfaces.C;              use Interfaces.C;
 with OS_Utils;                  use OS_Utils;
@@ -186,6 +187,18 @@ package body Glide_Kernel is
       Add_File_Extensions (C_Lang,   Get_Pref (Handle, C_Extensions));
       Add_File_Extensions (Cpp_Lang, Get_Pref (Handle, Cpp_Extensions));
    end Gtk_New;
+
+   ------------------------------
+   -- Get_Default_Accelerators --
+   ------------------------------
+
+   function Get_Default_Accelerators
+     (Handle : access Kernel_Handle_Record)
+     return Gtk.Accel_Group.Gtk_Accel_Group
+   is
+   begin
+      return GVD_Main_Window (Handle.Main_Window).Main_Accel_Group;
+   end Get_Default_Accelerators;
 
    ----------------------------
    -- Initialize_All_Modules --

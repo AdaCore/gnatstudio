@@ -26,6 +26,7 @@ with Generic_List;
 with Gint_Xml;
 with Glib.Object;
 with Gtk.Handlers;
+with Gtk.Accel_Group;
 with Gtk.Menu;
 with Gtk.Window;
 with Gtkada.MDI;
@@ -49,6 +50,11 @@ package Glide_Kernel is
       Main_Window : Gtk.Window.Gtk_Window);
    --  Create a new Glide kernel.
    --  By default, it isn't associated with any project, nor any source editor.
+
+   function Get_Default_Accelerators
+     (Handle : access Kernel_Handle_Record)
+     return Gtk.Accel_Group.Gtk_Accel_Group;
+   --  Returns the defauls accelerators group for the main window.
 
    procedure Initialize_All_Modules (Handle : access Kernel_Handle_Record);
    --  Initialize all the modules that are registered. This should be called
