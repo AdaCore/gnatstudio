@@ -1188,6 +1188,8 @@ package body String_Utils is
       Triple_Quoted : Boolean;
       Has_Triple    : Boolean;
       Start_Idx     : Integer;
+      Start_With_Triple : Boolean;
+      End_With_Triple   : Boolean;
 
    begin
       Idx := Arg_String'First;
@@ -1199,6 +1201,8 @@ package body String_Utils is
          Quoted        := False;
          Triple_Quoted := False;
          Start_Idx     := Idx;
+         Start_With_Triple := False;
+         End_With_Triple   := False;
 
          while Idx <= Arg_String'Last
            and then (Backslashed
@@ -1206,9 +1210,12 @@ package body String_Utils is
                      or else Triple_Quoted
                      or else Arg_String (Idx) /= ' ')
          loop
+            End_With_Triple := False;
+
             if Backslashed then
                Backslashed := False;
             else
+
                case Arg_String (Idx) is
                   when '\' =>
                      Backslashed := True;
@@ -1223,6 +1230,10 @@ package body String_Utils is
                           and then Arg_String (Idx + 2) = '"';
                         if Has_Triple then
                            Triple_Quoted := not Triple_Quoted;
+                           if Idx = Start_Idx then
+                              Start_With_Triple := Triple_Quoted;
+                           end if;
+                           End_With_Triple := True;
                            Idx := Idx + 2;
                         else
                            Quoted := True;
@@ -1236,8 +1247,6 @@ package body String_Utils is
 
             Idx := Idx + 1;
          end loop;
-
-         --  Found an argument
 
          New_Argc := New_Argc + 1;
 
@@ -1254,9 +1263,9 @@ package body String_Utils is
             Max_Args := Max_Args * 2;
          end if;
 
-         if Triple_Quoted then
+         if Start_With_Triple and End_With_Triple then
             New_Argv (New_Argc) :=
-              new String'(Arg_String (Start_Idx .. Idx - 4));
+              new String'(Arg_String (Start_Idx + 3 .. Idx - 4));
          else
             New_Argv (New_Argc) :=
               new String'(Arg_String (Start_Idx .. Idx - 1));
