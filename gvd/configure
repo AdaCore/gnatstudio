@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# From configure.in Revision: 1.35 
+# From configure.in Revision: 1.36 
 #############################################################
 #
 #  Checking for Gnat
@@ -574,7 +574,6 @@ TARGET_LFLAGS=""
 COLOR_SELECTION="#000000"
 EXEC_COMMAND="sh -c"
 BUILTIN_PS="stub"
-LN="ln -f -s"
 HTML_BROWSER="netscape"
 
 ac_aux_dir=
@@ -624,7 +623,7 @@ else { echo "configure: error: can not run $ac_config_sub" 1>&2; exit 1; }
 fi
 
 echo $ac_n "checking host system type""... $ac_c" 1>&6
-echo "configure:628: checking host system type" >&5
+echo "configure:627: checking host system type" >&5
 
 host_alias=$host
 case "$host_alias" in
@@ -645,7 +644,7 @@ host_os=`echo $host | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\3/'`
 echo "$ac_t""$host" 1>&6
 
 echo $ac_n "checking target system type""... $ac_c" 1>&6
-echo "configure:649: checking target system type" >&5
+echo "configure:648: checking target system type" >&5
 
 target_alias=$target
 case "$target_alias" in
@@ -663,7 +662,7 @@ target_os=`echo $target | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\3/'`
 echo "$ac_t""$target" 1>&6
 
 echo $ac_n "checking build system type""... $ac_c" 1>&6
-echo "configure:667: checking build system type" >&5
+echo "configure:666: checking build system type" >&5
 
 build_alias=$build
 case "$build_alias" in
@@ -706,7 +705,7 @@ fi
 # Extract the first word of "gcc", so it can be a program name with args.
 set dummy gcc; ac_word=$2
 echo $ac_n "checking for $ac_word""... $ac_c" 1>&6
-echo "configure:710: checking for $ac_word" >&5
+echo "configure:709: checking for $ac_word" >&5
 if eval "test \"`echo '$''{'ac_cv_prog_CC'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
@@ -735,7 +734,7 @@ if test -z "$CC"; then
   # Extract the first word of "cc", so it can be a program name with args.
 set dummy cc; ac_word=$2
 echo $ac_n "checking for $ac_word""... $ac_c" 1>&6
-echo "configure:739: checking for $ac_word" >&5
+echo "configure:738: checking for $ac_word" >&5
 if eval "test \"`echo '$''{'ac_cv_prog_CC'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
@@ -783,7 +782,7 @@ fi
 fi
 
 echo $ac_n "checking whether the C compiler ($CC $CFLAGS $LDFLAGS) works""... $ac_c" 1>&6
-echo "configure:787: checking whether the C compiler ($CC $CFLAGS $LDFLAGS) works" >&5
+echo "configure:786: checking whether the C compiler ($CC $CFLAGS $LDFLAGS) works" >&5
 
 ac_ext=c
 # CFLAGS is not in ac_cpp because -g, -O, etc. are not valid cpp options.
@@ -793,11 +792,11 @@ ac_link='${CC-cc} -o conftest $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS 
 cross_compiling=$ac_cv_prog_cc_cross
 
 cat > conftest.$ac_ext <<EOF
-#line 797 "configure"
+#line 796 "configure"
 #include "confdefs.h"
 main(){return(0);}
 EOF
-if { (eval echo configure:801: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest; then
+if { (eval echo configure:800: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest; then
   ac_cv_prog_cc_works=yes
   # If we can't run a trivial program, we are probably using a cross compiler.
   if (./conftest; exit) 2>/dev/null; then
@@ -817,12 +816,12 @@ if test $ac_cv_prog_cc_works = no; then
   { echo "configure: error: installation or configuration problem: C compiler cannot create executables." 1>&2; exit 1; }
 fi
 echo $ac_n "checking whether the C compiler ($CC $CFLAGS $LDFLAGS) is a cross-compiler""... $ac_c" 1>&6
-echo "configure:821: checking whether the C compiler ($CC $CFLAGS $LDFLAGS) is a cross-compiler" >&5
+echo "configure:820: checking whether the C compiler ($CC $CFLAGS $LDFLAGS) is a cross-compiler" >&5
 echo "$ac_t""$ac_cv_prog_cc_cross" 1>&6
 cross_compiling=$ac_cv_prog_cc_cross
 
 echo $ac_n "checking whether we are using GNU C""... $ac_c" 1>&6
-echo "configure:826: checking whether we are using GNU C" >&5
+echo "configure:825: checking whether we are using GNU C" >&5
 if eval "test \"`echo '$''{'ac_cv_prog_gcc'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
@@ -831,7 +830,7 @@ else
   yes;
 #endif
 EOF
-if { ac_try='${CC-cc} -E conftest.c'; { (eval echo configure:835: \"$ac_try\") 1>&5; (eval $ac_try) 2>&5; }; } | egrep yes >/dev/null 2>&1; then
+if { ac_try='${CC-cc} -E conftest.c'; { (eval echo configure:834: \"$ac_try\") 1>&5; (eval $ac_try) 2>&5; }; } | egrep yes >/dev/null 2>&1; then
   ac_cv_prog_gcc=yes
 else
   ac_cv_prog_gcc=no
@@ -846,7 +845,7 @@ if test $ac_cv_prog_gcc = yes; then
   ac_save_CFLAGS="$CFLAGS"
   CFLAGS=
   echo $ac_n "checking whether ${CC-cc} accepts -g""... $ac_c" 1>&6
-echo "configure:850: checking whether ${CC-cc} accepts -g" >&5
+echo "configure:849: checking whether ${CC-cc} accepts -g" >&5
 if eval "test \"`echo '$''{'ac_cv_prog_cc_g'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
@@ -877,7 +876,7 @@ fi
    # Extract the first word of "gnatmake", so it can be a program name with args.
 set dummy gnatmake; ac_word=$2
 echo $ac_n "checking for $ac_word""... $ac_c" 1>&6
-echo "configure:881: checking for $ac_word" >&5
+echo "configure:880: checking for $ac_word" >&5
 if eval "test \"`echo '$''{'ac_cv_path_GNATMAKE'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
@@ -912,7 +911,7 @@ fi
    fi
 
    echo $ac_n "checking that your gnat compiler works with a simple example""... $ac_c" 1>&6
-echo "configure:916: checking that your gnat compiler works with a simple example" >&5
+echo "configure:915: checking that your gnat compiler works with a simple example" >&5
 
    rm -f conftest.adb
    cat << EOF > conftest.adb
@@ -944,7 +943,7 @@ EOF
    echo "$ac_t""yes" 1>&6
 
 echo $ac_n "checking whether ${MAKE-make} sets \${MAKE}""... $ac_c" 1>&6
-echo "configure:948: checking whether ${MAKE-make} sets \${MAKE}" >&5
+echo "configure:947: checking whether ${MAKE-make} sets \${MAKE}" >&5
 set dummy ${MAKE-make}; ac_make=`echo "$2" | sed 'y%./+-%__p_%'`
 if eval "test \"`echo '$''{'ac_cv_prog_make_${ac_make}_set'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
@@ -981,7 +980,7 @@ fi
 # SVR4 /usr/ucb/install, which tries to use the nonexistent group "staff"
 # ./install, which can be erroneously created by make from ./install.sh.
 echo $ac_n "checking for a BSD compatible install""... $ac_c" 1>&6
-echo "configure:985: checking for a BSD compatible install" >&5
+echo "configure:984: checking for a BSD compatible install" >&5
 if test -z "$INSTALL"; then
 if eval "test \"`echo '$''{'ac_cv_path_install'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
@@ -1033,7 +1032,7 @@ test -z "$INSTALL_DATA" && INSTALL_DATA='${INSTALL} -m 644'
 # Extract the first word of "ranlib", so it can be a program name with args.
 set dummy ranlib; ac_word=$2
 echo $ac_n "checking for $ac_word""... $ac_c" 1>&6
-echo "configure:1037: checking for $ac_word" >&5
+echo "configure:1036: checking for $ac_word" >&5
 if eval "test \"`echo '$''{'ac_cv_prog_RANLIB'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
@@ -1062,7 +1061,7 @@ fi
 
 ######## Support for ptys ###
 echo $ac_n "checking how to run the C preprocessor""... $ac_c" 1>&6
-echo "configure:1066: checking how to run the C preprocessor" >&5
+echo "configure:1065: checking how to run the C preprocessor" >&5
 # On Suns, sometimes $CPP names a directory.
 if test -n "$CPP" && test -d "$CPP"; then
   CPP=
@@ -1077,13 +1076,13 @@ else
   # On the NeXT, cc -E runs the code through the compiler's parser,
   # not just through cpp.
   cat > conftest.$ac_ext <<EOF
-#line 1081 "configure"
+#line 1080 "configure"
 #include "confdefs.h"
 #include <assert.h>
 Syntax Error
 EOF
 ac_try="$ac_cpp conftest.$ac_ext >/dev/null 2>conftest.out"
-{ (eval echo configure:1087: \"$ac_try\") 1>&5; (eval $ac_try) 2>&5; }
+{ (eval echo configure:1086: \"$ac_try\") 1>&5; (eval $ac_try) 2>&5; }
 ac_err=`grep -v '^ *+' conftest.out`
 if test -z "$ac_err"; then
   :
@@ -1094,13 +1093,13 @@ else
   rm -rf conftest*
   CPP="${CC-cc} -E -traditional-cpp"
   cat > conftest.$ac_ext <<EOF
-#line 1098 "configure"
+#line 1097 "configure"
 #include "confdefs.h"
 #include <assert.h>
 Syntax Error
 EOF
 ac_try="$ac_cpp conftest.$ac_ext >/dev/null 2>conftest.out"
-{ (eval echo configure:1104: \"$ac_try\") 1>&5; (eval $ac_try) 2>&5; }
+{ (eval echo configure:1103: \"$ac_try\") 1>&5; (eval $ac_try) 2>&5; }
 ac_err=`grep -v '^ *+' conftest.out`
 if test -z "$ac_err"; then
   :
@@ -1126,17 +1125,17 @@ for ac_hdr in sys/stropts.h
 do
 ac_safe=`echo "$ac_hdr" | sed 'y%./+-%__p_%'`
 echo $ac_n "checking for $ac_hdr""... $ac_c" 1>&6
-echo "configure:1130: checking for $ac_hdr" >&5
+echo "configure:1129: checking for $ac_hdr" >&5
 if eval "test \"`echo '$''{'ac_cv_header_$ac_safe'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
   cat > conftest.$ac_ext <<EOF
-#line 1135 "configure"
+#line 1134 "configure"
 #include "confdefs.h"
 #include <$ac_hdr>
 EOF
 ac_try="$ac_cpp conftest.$ac_ext >/dev/null 2>conftest.out"
-{ (eval echo configure:1140: \"$ac_try\") 1>&5; (eval $ac_try) 2>&5; }
+{ (eval echo configure:1139: \"$ac_try\") 1>&5; (eval $ac_try) 2>&5; }
 ac_err=`grep -v '^ *+' conftest.out`
 if test -z "$ac_err"; then
   rm -rf conftest*
@@ -1165,12 +1164,12 @@ done
 for ac_func in getpt
 do
 echo $ac_n "checking for $ac_func""... $ac_c" 1>&6
-echo "configure:1169: checking for $ac_func" >&5
+echo "configure:1168: checking for $ac_func" >&5
 if eval "test \"`echo '$''{'ac_cv_func_$ac_func'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
   cat > conftest.$ac_ext <<EOF
-#line 1174 "configure"
+#line 1173 "configure"
 #include "confdefs.h"
 /* System header to define __stub macros and hopefully few prototypes,
     which can conflict with char $ac_func(); below.  */
@@ -1193,7 +1192,7 @@ $ac_func();
 
 ; return 0; }
 EOF
-if { (eval echo configure:1197: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest; then
+if { (eval echo configure:1196: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest; then
   rm -rf conftest*
   eval "ac_cv_func_$ac_func=yes"
 else
@@ -1220,12 +1219,12 @@ done
 for ac_func in grandpt
 do
 echo $ac_n "checking for $ac_func""... $ac_c" 1>&6
-echo "configure:1224: checking for $ac_func" >&5
+echo "configure:1223: checking for $ac_func" >&5
 if eval "test \"`echo '$''{'ac_cv_func_$ac_func'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
   cat > conftest.$ac_ext <<EOF
-#line 1229 "configure"
+#line 1228 "configure"
 #include "confdefs.h"
 /* System header to define __stub macros and hopefully few prototypes,
     which can conflict with char $ac_func(); below.  */
@@ -1248,7 +1247,7 @@ $ac_func();
 
 ; return 0; }
 EOF
-if { (eval echo configure:1252: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest; then
+if { (eval echo configure:1251: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest; then
   rm -rf conftest*
   eval "ac_cv_func_$ac_func=yes"
 else
@@ -1275,12 +1274,12 @@ done
 for ac_func in setpgid
 do
 echo $ac_n "checking for $ac_func""... $ac_c" 1>&6
-echo "configure:1279: checking for $ac_func" >&5
+echo "configure:1278: checking for $ac_func" >&5
 if eval "test \"`echo '$''{'ac_cv_func_$ac_func'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
   cat > conftest.$ac_ext <<EOF
-#line 1284 "configure"
+#line 1283 "configure"
 #include "confdefs.h"
 /* System header to define __stub macros and hopefully few prototypes,
     which can conflict with char $ac_func(); below.  */
@@ -1303,7 +1302,7 @@ $ac_func();
 
 ; return 0; }
 EOF
-if { (eval echo configure:1307: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest; then
+if { (eval echo configure:1306: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest; then
   rm -rf conftest*
   eval "ac_cv_func_$ac_func=yes"
 else
@@ -1330,12 +1329,12 @@ done
 for ac_func in setsid
 do
 echo $ac_n "checking for $ac_func""... $ac_c" 1>&6
-echo "configure:1334: checking for $ac_func" >&5
+echo "configure:1333: checking for $ac_func" >&5
 if eval "test \"`echo '$''{'ac_cv_func_$ac_func'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
   cat > conftest.$ac_ext <<EOF
-#line 1339 "configure"
+#line 1338 "configure"
 #include "confdefs.h"
 /* System header to define __stub macros and hopefully few prototypes,
     which can conflict with char $ac_func(); below.  */
@@ -1358,7 +1357,7 @@ $ac_func();
 
 ; return 0; }
 EOF
-if { (eval echo configure:1362: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest; then
+if { (eval echo configure:1361: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest; then
   rm -rf conftest*
   eval "ac_cv_func_$ac_func=yes"
 else
@@ -1494,7 +1493,6 @@ case "${host}" in
 	COLOR_SELECTION="#BEBEBE"
 	EXEC_COMMAND="cmd /c"
 	BUILTIN_PS="winnt"
-	LN="cp -p"
 	HTML_BROWSER="c:\progra~1\intern~1\iexplore"
 	;;
       ## Otherwise, we'll fall through to the generic opsys code at the bottom.
@@ -1514,7 +1512,7 @@ opsysfile="'\"system/${opsys}.h\"'"
   # Extract the first word of "gtkada-config", so it can be a program name with args.
 set dummy gtkada-config; ac_word=$2
 echo $ac_n "checking for $ac_word""... $ac_c" 1>&6
-echo "configure:1518: checking for $ac_word" >&5
+echo "configure:1516: checking for $ac_word" >&5
 if eval "test \"`echo '$''{'ac_cv_path_GTK_CONFIG'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
@@ -1545,7 +1543,7 @@ fi
 
   min_gtk_version=1.2.11
   echo $ac_n "checking for GtkAda - version >= $min_gtk_version""... $ac_c" 1>&6
-echo "configure:1549: checking for GtkAda - version >= $min_gtk_version" >&5
+echo "configure:1547: checking for GtkAda - version >= $min_gtk_version" >&5
   no_gtk=""
   if test "$GTK_CONFIG" = "no" ; then
     no_gtk=yes
@@ -1564,7 +1562,7 @@ echo "configure:1549: checking for GtkAda - version >= $min_gtk_version" >&5
   echo $ac_n "cross compiling; assumed OK... $ac_c"
 else
   cat > conftest.$ac_ext <<EOF
-#line 1568 "configure"
+#line 1566 "configure"
 #include "confdefs.h"
 
 #include <stdio.h>
@@ -1608,7 +1606,7 @@ main ()
 }
 
 EOF
-if { (eval echo configure:1612: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest && (./conftest; exit) 2>/dev/null
+if { (eval echo configure:1610: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest && (./conftest; exit) 2>/dev/null
 then
   :
 else
@@ -1651,7 +1649,6 @@ fi
 
 
 # Set the version number of GVD
-
 
 
 
@@ -1854,7 +1851,6 @@ s%@TARGET_LFLAGS@%$TARGET_LFLAGS%g
 s%@TARGET@%$TARGET%g
 s%@EXEC_COMMAND@%$EXEC_COMMAND%g
 s%@BUILTIN_PS@%$BUILTIN_PS%g
-s%@LN@%$LN%g
 s%@HTML_BROWSER@%$HTML_BROWSER%g
 s%@EXEC_PREFIX@%$EXEC_PREFIX%g
 
