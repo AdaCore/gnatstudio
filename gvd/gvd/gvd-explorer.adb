@@ -213,6 +213,11 @@ package body Odd.Explorer is
       Gdk.Pixmap.Unref (Folder_Pixmap);
       Gdk.Bitmap.Unref (Folder_Mask);
 
+      --  This is a workaround for a horizontal scrollbar problem: When the
+      --  ctree is put in a scrolled window, and if this is not called, the
+      --  scrollbar does not allow us to scroll as far right as possible...
+      Set_Column_Auto_Resize (Tree, 0, True);
+
       Thaw (Tree);
       return Tree;
    end Explore;
