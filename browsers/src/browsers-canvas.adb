@@ -22,6 +22,7 @@ with Glib;                use Glib;
 with Glib.Error;          use Glib.Error;
 with Glib.Graphs;         use Glib.Graphs;
 with Glib.Object;         use Glib.Object;
+with Pango.Enums;         use Pango.Enums;
 with Gdk.Color;           use Gdk.Color;
 with Gdk.GC;              use Gdk.GC;
 with Gtkada.Canvas;       use Gtkada.Canvas;
@@ -55,7 +56,7 @@ with GNAT.Strings;        use GNAT.Strings;
 
 with Glide_Kernel;              use Glide_Kernel;
 with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
-with GVD.Preferences;           use GVD.Preferences;
+with GVD.Preferences;
 with Glide_Intl;                use Glide_Intl;
 with Layouts;                   use Layouts;
 with Traces;                    use Traces;
@@ -345,10 +346,12 @@ package body Browsers.Canvas is
    procedure On_Preferences_Changed
      (Browser : access Gtk_Widget_Record'Class)
    is
-      B : constant General_Browser := General_Browser (Browser);
-      Kernel : constant Kernel_Handle := Get_Kernel (B);
-      Error  : GError;
-      Iter   : Item_Iterator;
+      B               : constant General_Browser := General_Browser (Browser);
+      Kernel          : constant Kernel_Handle := Get_Kernel (B);
+      Error           : GError;
+      Iter            : Item_Iterator;
+      Annotation_Font : Pango_Font_Description;
+
    begin
       if Realized_Is_Set (B) then
          B.Selected_Link_Color := Get_Pref (Kernel, Selected_Link_Color);
@@ -371,9 +374,12 @@ package body Browsers.Canvas is
                          Get_Pref (B.Kernel, Browsers_Bg_Color));
       end if;
 
-      Configure
-        (B.Canvas,
-         Annotation_Font => Get_Pref (GVD_Prefs, Annotation_Font));
+      Annotation_Font := Copy (Get_Pref (Kernel, Default_Font));
+      Set_Size
+        (Annotation_Font,
+         Gint'Max (Pango_Scale, Get_Size (Annotation_Font) - 2 * Pango_Scale));
+      Configure (B.Canvas, Annotation_Font => Annotation_Font);
+      Free (Annotation_Font);
 
       Image_Canvas (B.Canvas).Draw_Grid :=
         Get_Pref (Kernel, Browsers_Draw_Grid);
@@ -397,7 +403,7 @@ package body Browsers.Canvas is
       while Get (Iter) /= null loop
          Set_Font_Description
            (Browser_Item (Get (Iter)).Title_Layout,
-            Get_Pref (Kernel, Browsers_Link_Font));
+            Get_Pref (Kernel, Default_Font));
 
          Refresh (Browser_Item (Get (Iter)));
          Next (Iter);
@@ -881,7 +887,7 @@ package body Browsers.Canvas is
             Item.Title_Layout := Create_Pango_Layout (Item.Browser, Title);
             Set_Font_Description
               (Item.Title_Layout,
-               Get_Pref (Get_Kernel (Get_Browser (Item)), Browsers_Link_Font));
+               Get_Pref (Get_Kernel (Get_Browser (Item)), Default_Font));
          else
             Set_Text (Item.Title_Layout, Title);
          end if;
@@ -1567,7 +1573,7 @@ package body Browsers.Canvas is
       Layout := Create_Pango_Layout (Get_Browser (Item), "");
       Set_Font_Description
         (Layout,
-         Get_Pref (Get_Kernel (Get_Browser (Item)), Browsers_Link_Font));
+         Get_Pref (Get_Kernel (Get_Browser (Item)), Default_Font));
 
       Resize_And_Draw (Item, 0, 0, 0, 0, Xoffset, Yoffset, Layout);
       Redraw_Title_Bar (Item);
@@ -1697,7 +1703,7 @@ package body Browsers.Canvas is
       Layout    : access Pango_Layout_Record'Class)
    is
       Descr : constant Pango_Font_Description :=
-        Get_Pref (Get_Kernel (Browser), Browsers_Link_Font);
+        Get_Pref (Get_Kernel (Browser), Default_Font);
       Font  : Pango_Font;
       Metrics : Pango_Font_Metrics;
       Longest1, Longest2 : Gint := 0;
