@@ -23,6 +23,7 @@ with Glib.Object;               use Glib.Object;
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
 with Gtk.Handlers;              use Gtk.Handlers;
 with Gtk.Main;                  use Gtk.Main;
+with Gtk.Widget;                use Gtk.Widget;
 with Gtk.Tooltips;              use Gtk.Tooltips;
 with Gtkada.MDI;                use Gtkada.MDI;
 with System;                    use System;
@@ -583,5 +584,26 @@ package body Glide_Kernel is
          end if;
       end if;
    end Pop_State;
+
+   -----------------------
+   -- Set_Search_Module --
+   -----------------------
+
+   procedure Set_Search_Module
+     (Handle : access Kernel_Handle_Record;
+      Search : access Gtk_Widget_Record'Class) is
+   begin
+      Handle.Search := Gtk_Widget (Search);
+   end Set_Search_Module;
+
+   -----------------------
+   -- Get_Search_Module --
+   -----------------------
+
+   function Get_Search_Module
+     (Handle : access Kernel_Handle_Record) return Gtk_Widget is
+   begin
+      return Handle.Search;
+   end Get_Search_Module;
 
 end Glide_Kernel;

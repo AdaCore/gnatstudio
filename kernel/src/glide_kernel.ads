@@ -30,6 +30,7 @@ with Gtk.Accel_Group;
 with Gtk.Menu;
 with Gtk.Toolbar;
 with Gtk.Tooltips;
+with Gtk.Widget;
 with Gtk.Window;
 with Gtkada.MDI;
 with Prj.Tree;
@@ -158,6 +159,16 @@ package Glide_Kernel is
 
    procedure Pop_State (Handle : Kernel_Handle);
    --  Undo previous state.
+
+   procedure Set_Search_Module
+     (Handle : access Kernel_Handle_Record;
+      Search : access Gtk.Widget.Gtk_Widget_Record'Class);
+   --  Register a new search module
+
+   function Get_Search_Module
+     (Handle : access Kernel_Handle_Record)
+      return Gtk.Widget.Gtk_Widget;
+   --  Return the search module.
 
    --------------
    -- Contexts --
@@ -405,6 +416,9 @@ private
 
       Home_Dir : GNAT.OS_Lib.String_Access;
       --  The home directory (e.g ~/.glide).
+
+      Search : Gtk.Widget.Gtk_Widget;
+      --  The search module
    end record;
 
 end Glide_Kernel;
