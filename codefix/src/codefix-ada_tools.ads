@@ -18,6 +18,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+--  Purpose of this package ???
+
 with Generic_List;
 
 with Codefix.Text_Manager; use Codefix.Text_Manager;
@@ -31,11 +33,10 @@ package Codefix.Ada_Tools is
      (Clause_Name  : String;
       File_Name    : String;
       Current_Text : Text_Navigator_Abstr'Class;
-      Exclusive    : Boolean := False)
-   return Words_Lists.List;
-   --  Returns all the use causes that are related to a with or an
-   --  instantiation name. If Exclusive is  true, then only uses clauses
-   --  that are not linked to any other with will be returned.
+      Exclusive    : Boolean := False) return Words_Lists.List;
+   --  Return all the use clauses that are related to a with or an
+   --  instantiation name. If Exclusive is true, then only use clauses
+   --  that are not linked to any other will be returned.
 
 private
 
@@ -70,22 +71,28 @@ private
    use Use_Lists;
 
    function Get_Parts_Number (Str : String) return Positive;
+   --  ???
+
    function Get_Arr_Str (Str : String) return Arr_Str;
+   --  ???
+
    procedure Try_Link_Clauses
      (With_Clause : Ptr_With; Use_Clause  : Ptr_Use);
+   --  ???
 
    function List_All_With
      (Current_Text : Text_Navigator_Abstr'Class;
-      File_Name    : String)
-     return With_Lists.List;
+      File_Name    : String) return With_Lists.List;
+   --  ???
 
    function List_All_Use
      (Current_Text : Text_Navigator_Abstr'Class;
-      File_Name    : String)
-     return Use_Lists.List;
+      File_Name    : String) return Use_Lists.List;
+   --  ???
 
    procedure Link_All_Clauses
      (List_Of_With : in out With_Lists.List;
       List_Of_Use  : in out Use_Lists.List);
+   --  ???
 
 end Codefix.Ada_Tools;
