@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2003                         --
+--                     Copyright (C) 2003-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -601,8 +601,6 @@ private
       --  declaration of the entity
    end record;
    No_Entity_Reference : constant Entity_Reference := (null, 0);
-
-
 
    type Entity_Information_List_Access is access Entity_Information_List;
 
