@@ -346,9 +346,8 @@ package body Directory_Tree is
 
    procedure Show_Directory (Tree : access Dir_Tree_Record; Dir : String) is
       N : Gtk_Ctree_Node := Find_In_Tree (Tree, Dir);
+      N2 : Gtk_Ctree_Node := N;
    begin
-      Gtk_Select (Tree, N);
-
       if not Is_Viewable (Tree, N) then
          loop
             N := Row_Get_Parent (Node_Get_Row (N));
@@ -356,6 +355,14 @@ package body Directory_Tree is
             Expand (Tree, N);
          end loop;
       end if;
+
+      Gtk_Select (Tree, N2);
+
+      --  Scroll to make the directory visible
+      Moveto (Tree, 30, 0, 0.5, 0.0);
+--        if Node_Is_Visible (Tree, N2) /= Visibility_Full then
+--           Node_Moveto (Tree, N2, 0, 0.5, 0.0);
+--        end if;
    end Show_Directory;
 
    -------------------
