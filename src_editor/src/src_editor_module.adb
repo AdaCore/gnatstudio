@@ -334,6 +334,10 @@ package body Src_Editor_Module is
          Infos);
 
       Unchecked_Free (Infos);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end File_Edited_Cb;
 
    ---------------------
