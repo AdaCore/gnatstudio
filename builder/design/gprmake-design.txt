@@ -601,11 +601,8 @@ Input needed from gprmake:
 
   same as -cargs, for Binder'Driver (<lang>), if any.
 
-  -largs is replaced with:
-
-  -largs:<lang> opts
-
-  same as -cargs, for Linker'Driver (<lang>), if relevant.
+  Options following -largs applies to the linker whatever the language of
+  the main.
 
   -gargs is kept as is.
 
