@@ -435,16 +435,16 @@ package body Prj_Normalize is
                   end if;
 
                when others =>
-                  --  if Debug_Mode then
-                  --     Trace (Me, "Before For_Each_Matching_Case_Item");
-                  --     Pretty_Print (Decl_Item);
-                  --     for J in Values'First .. Last_Values loop
-                  --        Trace (Me, J'Img
-                  --            & " " & Get_String (Values (J).Variable_Name)
-                  --            & " " & Get_String (Values (J).Variable_Value)
-                  --            & " " & Values (J).Negated'Img);
-                  --     end loop;
-                  --  end if;
+                  if Debug_Mode then
+                     Trace (Me, "Before For_Each_Matching_Case_Item");
+                     --  Pretty_Print (Decl_Item);
+                     for J in Values'First .. Last_Values loop
+                        Trace (Me, J'Img
+                            & " " & Get_String (Values (J).Variable_Name)
+                            & " " & Get_String (Values (J).Variable_Value)
+                            & " " & Values (J).Negated'Img);
+                     end loop;
+                  end if;
 
                   For_Each_Matching_Case_Item
                     (Project_Norm, Current_Pkg,
@@ -713,9 +713,14 @@ package body Prj_Normalize is
                      --  item to the nested case construction, so that we only
                      --  have declarative items in the most-nested case
                      --  constructions.
-                     Add_To_Case_Items
-                       (New_Case, First_Declarative_Item_Of (Current_Item));
-                     Set_First_Declarative_Item_Of (Current_Item, Empty_Node);
+                     if First_Declarative_Item_Of (Current_Item) /=
+                       Empty_Node
+                     then
+                        Add_To_Case_Items
+                          (New_Case, First_Declarative_Item_Of (Current_Item));
+                        Set_First_Declarative_Item_Of
+                          (Current_Item, Empty_Node);
+                     end if;
 
                      Add_At_End (Current_Item, New_Case);
                      Process_Case_Recursive (New_Case);
