@@ -343,10 +343,13 @@ package body KeyManager_Module is
    --  Find the parent node for Context.
    --  Returns null if there is no such node
 
+   pragma Warnings (Off);
+   --  These two UCs are safe aliasing-wise, so kill warning
    function Convert is new Ada.Unchecked_Conversion
      (Kernel_Handle, System.Address);
    function Convert is new Ada.Unchecked_Conversion
      (System.Address, Kernel_Handle);
+   pragma Warnings (On);
 
    procedure General_Event_Handler
      (Event : Gdk_Event; Kernel : System.Address);
