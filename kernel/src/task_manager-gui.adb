@@ -21,19 +21,25 @@
 with Glib;                     use Glib;
 with Glib.Object;              use Glib.Object;
 with Glib.Values;              use Glib.Values;
+with Gdk.Event;                use Gdk.Event;
 with Gdk.Pixbuf;               use Gdk.Pixbuf;
 with Gtk.Progress_Bar;         use Gtk.Progress_Bar;
 with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
 with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Pixbuf; use Gtk.Cell_Renderer_Pixbuf;
+with Gtk.Handlers;
+with Gtk.Menu;                 use Gtk.Menu;
+with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
 with Gtk.Tree_Store;           use Gtk.Tree_Store;
+with Gtk.Tree_Selection;       use Gtk.Tree_Selection;
 with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
 with Gtk.Enums;
 
 with Gtkada.Handlers;          use Gtkada.Handlers;
 with Glide_Intl;               use Glide_Intl;
 
+with GUI_Utils;                use GUI_Utils;
 with String_Utils;             use String_Utils;
 with Commands;                 use Commands;
 with Ada.Characters.Handling;  use Ada.Characters.Handling;
@@ -59,9 +65,24 @@ package body Task_Manager.GUI is
    Command_Status_Column   : constant := 2;
    Command_Progress_Column : constant := 3;
 
+   -----------------
+   -- Local types --
+   -----------------
+
+   type Manager_Index_Record is record
+      Manager : Task_Manager_Access;
+      Index   : Integer;
+   end record;
+
    -----------------------
    -- Local subprograms --
    -----------------------
+
+   package Manager_Contextual_Menus is new User_Contextual_Menus
+     (Manager_Index_Record);
+
+   package Task_Manager_Handler is new Gtk.Handlers.User_Callback
+     (GObject_Record, Manager_Index_Record);
 
    procedure Set_Column_Types
      (View : access Task_Manager_Interface_Record'Class);
@@ -72,11 +93,183 @@ package body Task_Manager.GUI is
       Params : GValues);
    --  Callback for a "destroy" signal.
 
+   procedure On_View_Selection_Changed
+     (Object : access GObject_Record'Class;
+      Params : GValues);
+   --  Callback for a "changed" signal.
+
+   function On_Progress_Bar_Button_Pressed
+     (Object  : access Gtk_Widget_Record'Class;
+      Params  : GValues;
+      Manager : Manager_Contextual_Menus.Callback_User_Data) return Boolean;
+   --  Callback for a "button_press_event" on a progress bar.
+
    procedure Refresh_Command
      (Manager : Task_Manager_Access;
       Index   : Integer);
    --  Refresh only one command line.
    --  Index corresponds to the index of the command in View.Manager.Queues
+
+   procedure Pause_Command
+     (Manager : Task_Manager_Access;
+      Index   : Integer);
+   --  Pause command referenced by Index.
+
+   procedure Resume_Command
+     (Manager : Task_Manager_Access;
+      Index   : Integer);
+   --  Resume command referenced by Index.
+
+   function Menu_Create
+     (View   : Manager_Index_Record;
+      Event  : Gdk.Event.Gdk_Event) return Gtk.Menu.Gtk_Menu;
+   --  Create the task manager contextual menu.
+
+   procedure Menu_Destroy
+     (Manager : Manager_Index_Record;
+      Menu    : Gtk.Menu.Gtk_Menu);
+   --  Destroy the task manager contextual menu.
+
+   procedure On_Pause_Command
+     (Object  : access GObject_Record'Class;
+      Params  : GValues;
+      Manager : Manager_Index_Record);
+   --  Pause the referenced command in the task manager.
+
+   procedure On_Resume_Command
+     (Object  : access GObject_Record'Class;
+      Params  : GValues;
+      Manager : Manager_Index_Record);
+   --  Resume the referenced command in the task manager.
+
+   ------------------------------------
+   -- On_Progress_Bar_Button_Pressed --
+   ------------------------------------
+
+   function On_Progress_Bar_Button_Pressed
+     (Object  : access Gtk_Widget_Record'Class;
+      Params  : GValues;
+      Manager : Manager_Contextual_Menus.Callback_User_Data) return Boolean
+   is
+      pragma Unreferenced (Object, Params);
+   begin
+      Manager.User.Manager.Referenced_Command := Manager.User.Index;
+
+      return False;
+   end On_Progress_Bar_Button_Pressed;
+
+   ----------------------
+   -- On_Pause_Command --
+   ----------------------
+
+   procedure On_Pause_Command
+     (Object  : access GObject_Record'Class;
+      Params  : GValues;
+      Manager : Manager_Index_Record)
+   is
+      pragma Unreferenced (Object, Params);
+   begin
+      if Manager.Manager.Referenced_Command = Manager.Index then
+         Pause_Command (Manager.Manager, Manager.Index);
+      end if;
+   end On_Pause_Command;
+
+   -----------------------
+   -- On_Resume_Command --
+   -----------------------
+
+   procedure On_Resume_Command
+     (Object  : access GObject_Record'Class;
+      Params  : GValues;
+      Manager : Manager_Index_Record)
+   is
+      pragma Unreferenced (Object, Params);
+   begin
+      if Manager.Manager.Referenced_Command = Manager.Index then
+         Resume_Command (Manager.Manager, Manager.Index);
+      end if;
+   end On_Resume_Command;
+
+   -----------------
+   -- Menu_Create --
+   -----------------
+
+   function Menu_Create
+     (View   : Manager_Index_Record;
+      Event  : Gdk.Event.Gdk_Event) return Gtk.Menu.Gtk_Menu
+   is
+      pragma Unreferenced (Event);
+      Menu : Gtk_Menu;
+      Item : Gtk_Menu_Item;
+   begin
+      Gtk_New (Menu);
+
+      Gtk_New (Item, -"Pause");
+      Task_Manager_Handler.Connect
+        (Item, "activate", On_Pause_Command'Access,
+          (View.Manager, View.Manager.Referenced_Command));
+      Append (Menu, Item);
+
+      Gtk_New (Item, -"Resume");
+      Task_Manager_Handler.Connect
+        (Item, "activate", On_Resume_Command'Access,
+         (View.Manager, View.Manager.Referenced_Command));
+      Append (Menu, Item);
+
+      Gtk_New (Item);
+      Append (Menu, Item);
+
+      Gtk_New (Item, -"Interrupt");
+      Set_Sensitive (Item, False);
+      Append (Menu, Item);
+
+      return Menu;
+   end Menu_Create;
+
+   ------------------
+   -- Menu_Destroy --
+   ------------------
+
+   procedure Menu_Destroy
+     (Manager : Manager_Index_Record;
+      Menu    : Gtk.Menu.Gtk_Menu)
+   is
+      pragma Unreferenced (Menu);
+   begin
+      Manager.Manager.Referenced_Command := -1;
+   end Menu_Destroy;
+
+   -------------------
+   -- Pause_Command --
+   -------------------
+
+   procedure Pause_Command
+     (Manager : Task_Manager_Access;
+      Index   : Integer)
+   is
+   begin
+      if Index in Manager.Queues'Range then
+         Manager.Queues (Index).Status := Paused;
+         Manager.Queues (Index).Need_Refresh := True;
+         Refresh_Command (Manager, Index);
+      end if;
+   end Pause_Command;
+
+   --------------------
+   -- Resume_Command --
+   --------------------
+
+   procedure Resume_Command
+     (Manager : Task_Manager_Access;
+      Index   : Integer)
+   is
+   begin
+      if Index in Manager.Queues'Range then
+         Manager.Queues (Index).Status := Running;
+         Manager.Queues (Index).Need_Refresh := True;
+         Refresh_Command (Manager, Index);
+      end if;
+   end Resume_Command;
 
    ---------------------
    -- On_View_Destroy --
@@ -90,6 +283,38 @@ package body Task_Manager.GUI is
    begin
       Task_Manager_Interface (Object).Manager.GUI := null;
    end On_View_Destroy;
+
+   -------------------------------
+   -- On_View_Selection_Changed --
+   -------------------------------
+
+   procedure On_View_Selection_Changed
+     (Object : access GObject_Record'Class;
+      Params : GValues)
+   is
+      pragma Unreferenced (Params);
+      Interface : constant Task_Manager_Interface :=
+        Task_Manager_Interface (Object);
+      Iter  : Gtk_Tree_Iter;
+      Model : Gtk_Tree_Model;
+      Path  : Gtk_Tree_Path;
+   begin
+      Get_Selected (Get_Selection (Interface.Tree), Model, Iter);
+
+      if Iter = Null_Iter then
+         Interface.Manager.Referenced_Command := -1;
+      else
+         Path := Get_Path (Model, Iter);
+
+         declare
+            A : constant Gint_Array := Get_Indices (Path);
+         begin
+            Interface.Manager.Referenced_Command := Integer (A (A'First)) + 1;
+         end;
+
+         Path_Free (Path);
+      end if;
+   end On_View_Selection_Changed;
 
    -------------
    -- Refresh --
@@ -157,6 +382,17 @@ package body Task_Manager.GUI is
                Expand => False,
                Fill   => True,
                Padding => 0);
+
+            Manager_Contextual_Menus.Contextual_Callback.Connect
+              (Manager.Queues (J).Bar,
+               "button_press_event",
+               On_Progress_Bar_Button_Pressed'Access,
+               (null, null, (Manager, J)));
+
+            Manager_Contextual_Menus.Register_Contextual_Menu
+              (Manager.Queues (J).Bar,
+               (Manager, J), Menu_Create'Access, Menu_Destroy'Access);
+
             Show_All (Manager. Queues (J).Bar);
          end if;
 
@@ -214,9 +450,23 @@ package body Task_Manager.GUI is
             Set
               (View.Tree.Model, View.Lines (Index), Command_Name_Column,
                Name_String.all);
-            Set
-              (View.Tree.Model, View.Lines (Index), Command_Status_Column,
-                 -(To_Lower (Progress.Activity'Img)));
+
+            case Manager.Queues (Index).Status is
+               when Running =>
+                  Set
+                    (View.Tree.Model,
+                     View.Lines (Index),
+                     Command_Status_Column,
+                       -(To_Lower (Progress.Activity'Img)));
+
+               when Not_Started | Paused | Completed =>
+                  Set
+                    (View.Tree.Model,
+                     View.Lines (Index),
+                     Command_Status_Column,
+                       -(To_Lower (Manager.Queues (Index).Status'Img)));
+            end case;
+
             Set
               (View.Tree.Model, View.Lines (Index), Command_Progress_Column,
                Progress_String.all);
@@ -353,6 +603,17 @@ package body Task_Manager.GUI is
          On_View_Destroy'Access,
          GObject (View),
          After => False);
+
+      Object_Callback.Object_Connect
+        (Get_Selection (View.Tree),
+         "changed",
+         On_View_Selection_Changed'Access,
+         GObject (View),
+         After => True);
+
+      Manager_Contextual_Menus.Register_Contextual_Menu
+        (View.Tree, (View.Manager, -1),
+         Menu_Create'Access, Menu_Destroy'Access);
    end Initialize;
 
 end Task_Manager.GUI;
