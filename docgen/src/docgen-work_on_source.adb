@@ -31,8 +31,12 @@ with Src_Info.Queries;          use Src_Info.Queries;
 with VFS;                       use VFS;
 with Glide_Kernel.Project;      use Glide_Kernel, Glide_Kernel.Project;
 with Projects.Registry;         use Projects.Registry;
+with Traces;                   use Traces;
+with Ada.Exceptions;           use Ada.Exceptions;
 
 package body Docgen.Work_On_Source is
+
+   Me : constant Debug_Handle := Create ("Docgen--work_on_source");
 
    package TSFL renames Type_Source_File_List;
    package TEL renames Type_Entity_List;
@@ -64,7 +68,7 @@ package body Docgen.Work_On_Source is
       Converter        : Docgen.Doc_Subprogram_Type;
       Doc_Directory    : String;
       Doc_Suffix       : String);
-   --  is always the first subprogram to be called, as it creates the
+   --  Is always the first subprogram to be called, as it creates the
    --  very beginning of the documentation by calling the output
    --  subprogram
 
@@ -76,7 +80,7 @@ package body Docgen.Work_On_Source is
       Converter     : Docgen.Doc_Subprogram_Type;
       Doc_Directory : String;
       Doc_Suffix    : String);
-   --  is always the last subprogram to be called, as it creates the
+   --  Is always the last subprogram to be called, as it creates the
    --  very end of the documentation by calling the output subprogram
 
    procedure Process_Package_Description
@@ -88,7 +92,7 @@ package body Docgen.Work_On_Source is
       Converter     : Doc_Subprogram_Type;
       Doc_Directory : String;
       Doc_Suffix    : String);
-   --  extracts all the comment lines of the source file which are at the
+   --  Extracts all the comment lines of the source file which are at the
    --  beginning of it. Empty lines are ignored, the procedure stops when
    --  first command is found. This information will be passed to the
    --  output subprogram
@@ -106,7 +110,7 @@ package body Docgen.Work_On_Source is
       Converter        : Doc_Subprogram_Type;
       Doc_Directory    : String;
       Doc_Suffix       : String);
-   --  will process the lines at the beginning of the source file
+   --  Will process the lines at the beginning of the source file
    --  starting with "with" and pass them to the output subprogram
 
    procedure Process_Packages
@@ -123,7 +127,7 @@ package body Docgen.Work_On_Source is
       Converter        : Doc_Subprogram_Type;
       Doc_Directory    : String;
       Doc_Suffix       : String);
-   --  will process renamed and instantiated packages and pass
+   --  Will process renamed and instantiated packages and pass
    --  them to the output subprogram
 
    procedure Process_Vars
@@ -140,7 +144,7 @@ package body Docgen.Work_On_Source is
       Converter        : Doc_Subprogram_Type;
       Doc_Directory    : String;
       Doc_Suffix       : String);
-   --  called by Process_Source to work on the constants
+   --  Called by Process_Source to work on the constants
    --  and named numbers and pass each of them to the output subprogram
 
    procedure Process_Exceptions
@@ -157,7 +161,7 @@ package body Docgen.Work_On_Source is
       Converter        : Doc_Subprogram_Type;
       Doc_Directory    : String;
       Doc_Suffix       : String);
-   --  called by Process_Source to work on the exceptions and
+   --  Called by Process_Source to work on the exceptions and
    --  pass each of them to the output subprogram
 
    procedure Process_Entries
@@ -175,7 +179,7 @@ package body Docgen.Work_On_Source is
       Converter          : Doc_Subprogram_Type;
       Doc_Directory      : String;
       Doc_Suffix         : String);
-   --  called by Process_Source to work on the entires and entry
+   --  Called by Process_Source to work on the entires and entry
    --  families and pass each of them to the output subprogram
 
    procedure Process_Subprograms
@@ -193,7 +197,7 @@ package body Docgen.Work_On_Source is
       Converter          : Doc_Subprogram_Type;
       Doc_Directory      : String;
       Doc_Suffix         : String);
-   --  called by Process_Source to work on the subprograms and
+   --  Called by Process_Source to work on the subprograms and
    --  pass each of them to the output subprogram
 
    procedure Process_Types
@@ -210,7 +214,7 @@ package body Docgen.Work_On_Source is
       Converter        : Doc_Subprogram_Type;
       Doc_Directory    : String;
       Doc_Suffix       : String);
-   --  called by Process_Source to work on the types and
+   --  Called by Process_Source to work on the types and
    --  pass each of them to the output subprogram
 
    procedure Process_Header
@@ -223,7 +227,7 @@ package body Docgen.Work_On_Source is
       Converter         : Doc_Subprogram_Type;
       Doc_Directory     : String;
       Doc_Suffix        : String);
-   --  will call the output subprogram to create the header of
+   --  Will call the output subprogram to create the header of
    --  the package. This is NOT the same as Process_Open_File,
    --  if TexInfo doc is created, the file is opened only once,
    --  but the Header has to be set in front of each package.
@@ -236,7 +240,7 @@ package body Docgen.Work_On_Source is
       Converter     : Doc_Subprogram_Type;
       Doc_Directory : String;
       Doc_Suffix    : String);
-   --  will call the output subprogram to create the footer of
+   --  Will call the output subprogram to create the footer of
    --  the package. This is NOT the same as Process_Close_File,
    --  if TexInfo doc is created, the file is closed only once,
    --  but the Footer has to be set behind each package.
@@ -247,7 +251,7 @@ package body Docgen.Work_On_Source is
       Header_Lines        : Natural;
       Package_Description : Boolean;
       Options             : All_Options) return GNAT.OS_Lib.String_Access;
-   --  get the doc comments from the source file. The File_Text gives the
+   --  Get the doc comments from the source file. The File_Text gives the
    --  String where to search, Line is the line number of the entity and
    --  Header_Lines says how many lines takes the header of the entity.
    --  Within Options it can be chosen, if the comments are placed
@@ -464,6 +468,10 @@ package body Docgen.Work_On_Source is
         (Kernel, Doc_File, Source_Filename, Options,
          Converter, Doc_Directory, Doc_Suffix);
       Free (File_Text);
+
+      exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Process_Source;
 
    -----------------------
