@@ -172,6 +172,15 @@ package Codefix.Text_Manager is
 
    type Text_Navigator_Abstr is abstract tagged private;
 
+   function New_Text_Interface (This : Text_Navigator_Abstr)
+     return Ptr_Text is abstract;
+   --  Create and initialise a new Text_Interface used by the text navigator.
+
+   function Get_Body_Or_Spec (This : Text_Navigator_Abstr; File_Name : String)
+     return String is abstract;
+   --  When File_Name is a spec file, this function returns the body
+   --  corresponding, otherwise it retun the spec.
+
    procedure Free (This : in out Text_Navigator_Abstr);
 
    function Get_Unit
@@ -236,10 +245,6 @@ package Codefix.Text_Manager is
 
    procedure Commit (This : Text_Navigator_Abstr);
    --  Update the changes previously made in the real text.
-
-   function New_Text_Interface (This : Text_Navigator_Abstr)
-     return Ptr_Text is abstract;
-   --  Create and initialise a new Text_Interface used by the text navigator.
 
    function Search_String
      (This          : Text_Navigator_Abstr'Class;
