@@ -24,27 +24,53 @@
 
 with Glib;                       use Glib;
 with Glib.Convert;               use Glib.Convert;
+with Glib.Values;                use Glib.Values;
 with GNAT.Directory_Operations;  use GNAT.Directory_Operations;
 with Ada.Unchecked_Deallocation;
+with Ada.Calendar;               use Ada.Calendar;
+with GNAT.Calendar;              use GNAT.Calendar;
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
 with File_Utils;                 use File_Utils;
 with OS_Utils;                   use OS_Utils;
 with GNAT.Case_Util;             use GNAT.Case_Util;
 with GNAT.Heap_Sort;             use GNAT.Heap_Sort;
 with Interfaces.C.Strings;       use Interfaces.C.Strings;
+with Remote_Connections;         use Remote_Connections;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 with System;
 
 package body VFS is
+   Temporary_Dir : constant String := "/tmp";
+   --  Name of the temporary directory
+   --  ??? Must be configurable, but we need access either to the kernel
+   --  (and use GPS_HOME), or the project (and use the object directory)
+
    Empty_String : constant Cst_UTF8_String_Access := new String'("");
+
+   Virtual_File_Type : Glib.GType := Glib.GType_None;
+   --  Initialized only the first time this is needed, since we need glib
+   --  initialized for this.
+   --  ??? Could this be made a local variable
 
    procedure Ensure_Normalized (File : Virtual_File);
    --  Ensure that the information for the normalized file have been correctly
    --  computed.
 
+   procedure Finalize (Value : in out Contents_Access);
+   --  Internal version of Finalize
+
+   function Virtual_File_Boxed_Copy
+     (Boxed : System.Address) return System.Address;
+   pragma Convention (C, Virtual_File_Boxed_Copy);
+   procedure Virtual_File_Boxed_Free (Boxed : System.Address);
+   pragma Convention (C, Virtual_File_Boxed_Free);
+   --  Subprograms required for the support of GValue
+
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Contents_Record, Contents_Access);
+   function To_Contents_Access is new Ada.Unchecked_Conversion
+     (System.Address, Contents_Access);
 
    ---------
    -- "=" --
@@ -72,13 +98,51 @@ package body VFS is
    ------------
 
    function Create (Full_Filename : UTF8_String) return Virtual_File is
+      Protocol, User, Host, Path : String_Access;
+      Connection : Remote_Connection;
    begin
-      return (Ada.Finalization.Controlled with
-              Value => new Contents_Record'
-                (Ref_Count       => 1,
-                 Full_Name       => new String'(Full_Filename),
-                 Normalized_Full => null,
-                 Dir_Name        => null));
+      Parse_URL (Full_Filename, Protocol, User, Host, Path);
+      if Protocol /= null then
+         Connection := Get_Connection (Protocol.all, User.all, Host.all);
+         Free (Protocol);
+         Free (User);
+         Free (Host);
+
+         if Connection /= null then
+            if Path = null then
+               raise Program_Error;
+            end if;
+
+            return (Ada.Finalization.Controlled with
+                    Value => new Contents_Record'
+                      (Connection      => Connection,
+                       Ref_Count       => 1,
+                       Full_Name       => Path,
+                       Normalized_Full => null,
+                       Dir_Name        => null));
+         else
+            Free (Path);
+
+            --  Behave as if we have a local file, although nobody will be
+            --  able to open it
+            return (Ada.Finalization.Controlled with
+                    Value => new Contents_Record'
+                      (Connection      => null,
+                       Ref_Count       => 1,
+                       Full_Name       => new String'(Full_Filename),
+                       Normalized_Full => null,
+                       Dir_Name        => null));
+         end if;
+
+      else
+         return (Ada.Finalization.Controlled with
+                 Value => new Contents_Record'
+                   (Connection      => null,
+                    Ref_Count       => 1,
+                    Full_Name       => new String'(Full_Filename),
+                    Normalized_Full => null,
+                    Dir_Name        => null));
+      end if;
    end Create;
 
    ----------------------
@@ -89,7 +153,8 @@ package body VFS is
    begin
       return (Ada.Finalization.Controlled with
                 Value => new Contents_Record'
-                (Ref_Count       => 1,
+                (Connection      => null,
+                 Ref_Count       => 1,
                  Full_Name       => new String'(Base_Name),
                  Normalized_Full => null,
                  Dir_Name        => null));
@@ -107,6 +172,12 @@ package body VFS is
          if not Is_Absolute_Path (File.Value.Full_Name.all) then
             File.Value.Normalized_Full :=
               new UTF8_String'(File.Value.Full_Name.all);
+
+         elsif File.Value.Connection /= null then
+            --  Can't normalize files on remote hosts
+            File.Value.Normalized_Full :=
+              new UTF8_String'(File.Value.Full_Name.all);
+
          else
             File.Value.Normalized_Full := new UTF8_String'
               (Locale_To_UTF8
@@ -183,9 +254,10 @@ package body VFS is
    begin
       if File.Value = null then
          return null;
-      else
-         --  ??? Should be enhanced for remote access
+      elsif File.Value.Connection = null then
          return Read_File (Full_Name (File).all);
+      else
+         return Read_File (File.Value.Connection, File.Value.Full_Name.all);
       end if;
    end Read_File;
 
@@ -196,7 +268,11 @@ package body VFS is
    procedure Delete (File : Virtual_File) is
       Success : Boolean;
    begin
-      Delete_File (Locale_Full_Name (File), Success);
+      if File.Value.Connection = null then
+         Delete_File (Locale_Full_Name (File), Success);
+      else
+         Delete (File.Value.Connection, File.Value.Full_Name.all);
+      end if;
    end Delete;
 
    ----------------------
@@ -229,8 +305,14 @@ package body VFS is
 
    function Is_Regular_File (File : Virtual_File) return Boolean is
    begin
-      return File.Value /= null
-        and then Is_Regular_File (Locale_Full_Name (File));
+      if File.Value = null then
+         return False;
+      elsif File.Value.Connection = null then
+         return Is_Regular_File (Locale_Full_Name (File));
+      else
+         return Is_Regular_File
+           (File.Value.Connection, File.Value.Full_Name.all);
+      end if;
    end Is_Regular_File;
 
    --------------------
@@ -250,7 +332,13 @@ package body VFS is
 
    function Is_Writable (File : Virtual_File) return Boolean is
    begin
-      return Is_Writable_File (Locale_Full_Name (File));
+      if File.Value = null then
+         return False;
+      elsif File.Value.Connection /= null then
+         return Is_Writable (File.Value.Connection, File.Value.Full_Name.all);
+      else
+         return Is_Writable_File (Locale_Full_Name (File));
+      end if;
    end Is_Writable;
 
    ------------------
@@ -259,7 +347,13 @@ package body VFS is
 
    function Is_Directory (File : Virtual_File) return Boolean is
    begin
-      return Is_Directory (Locale_Full_Name (File));
+      if File.Value = null then
+         return False;
+      elsif File.Value.Connection /= null then
+         return Is_Directory (File.Value.Connection, File.Value.Full_Name.all);
+      else
+         return Is_Directory (Locale_Full_Name (File));
+      end if;
    end Is_Directory;
 
    ----------------------
@@ -285,10 +379,30 @@ package body VFS is
    ----------------
 
    function Write_File (File : Virtual_File) return Writable_File is
+      Tmp : GNAT.OS_Lib.String_Access;
+      Fd  : File_Descriptor;
    begin
-      --  ??? Should we first delete the file ?
-      return (File => File,
-              FD   => Create_File (Locale_Full_Name (File), Binary));
+      if File.Value.Connection /= null then
+         declare
+            Current_Dir : constant String := Get_Current_Dir;
+            Base        : String_Access;
+         begin
+            Change_Dir (Temporary_Dir);
+            Create_Temp_File (Fd, Base);
+            Tmp := new String'(Name_As_Directory (Temporary_Dir) & Base.all);
+            Free (Base);
+            Change_Dir (Current_Dir);
+         end;
+      else
+         Fd := Create_File (Locale_Full_Name (File), Binary);
+      end if;
+
+      if Fd = Invalid_FD then
+         Free (Tmp);
+         return Invalid_File;
+      else
+         return (File => File, FD => Fd, Filename => Tmp);
+      end if;
    end Write_File;
 
    -----------
@@ -325,18 +439,115 @@ package body VFS is
    -----------
 
    procedure Close (File : in out Writable_File) is
+      Tmp     : String_Access;
+      Success : Boolean;
    begin
-      Close (File.FD);
+      if File.File.Value.Connection /= null then
+         Tmp := Read_File (File.Filename.all);
+         Write (File.File.Value.Connection,
+                File.File.Value.Full_Name.all, Tmp.all);
+         Free (Tmp);
+
+         Close (File.FD);
+         Delete_File (File.Filename.all, Success);
+      else
+         Close (File.FD);
+      end if;
+
+
+      Free (File.Filename);
    end Close;
+
+   ------------------
+   -- Set_Writable --
+   ------------------
+
+   procedure Set_Writable (File : VFS.Virtual_File; Writable : Boolean) is
+      procedure Internal (File : String; Set : Integer);
+      pragma Import (C, Internal, "__gps_set_writable");
+
+   begin
+      if File.Value.Connection = null then
+         Internal
+           (Locale_Full_Name (File) & ASCII.NUL, Boolean'Pos (Writable));
+      else
+         Set_Writable
+           (File.Value.Connection, File.Value.Full_Name.all, Writable);
+      end if;
+   end Set_Writable;
+
+   ------------------
+   -- Set_Readable --
+   ------------------
+
+   procedure Set_Readable (File : VFS.Virtual_File; Readable : Boolean) is
+      procedure Internal (File : String; Set : Integer);
+      pragma Import (C, Internal, "__gps_set_readable");
+
+   begin
+      if File.Value.Connection = null then
+         Internal
+           (Locale_Full_Name (File) & ASCII.NUL, Boolean'Pos (Readable));
+      else
+         Set_Readable
+           (File.Value.Connection, File.Value.Full_Name.all, Readable);
+      end if;
+   end Set_Readable;
 
    ---------------------
    -- File_Time_Stamp --
    ---------------------
 
-   function File_Time_Stamp (File : Virtual_File) return GNAT.OS_Lib.OS_Time is
+   function File_Time_Stamp
+     (File : Virtual_File) return Ada.Calendar.Time is
    begin
-      return File_Time_Stamp (Locale_Full_Name (File));
+      if File.Value.Connection = null then
+         declare
+            T      : constant OS_Time :=
+              File_Time_Stamp (Locale_Full_Name (File));
+            Year   : Year_Type;
+            Month  : Month_Type;
+            Day    : Day_Type;
+            Hour   : Hour_Type;
+            Minute : Minute_Type;
+            Second : Second_Type;
+         begin
+            GM_Split (T, Year, Month, Day, Hour, Minute, Second);
+            return GNAT.Calendar.Time_Of
+              (Year   => Year,
+               Month  => Month,
+               Day    => Day,
+               Hour   => Hour,
+               Minute => Minute,
+               Second => Second);
+         end;
+      else
+         return File_Time_Stamp
+           (File.Value.Connection, File.Value.Full_Name.all);
+      end if;
    end File_Time_Stamp;
+
+   --------------
+   -- Finalize --
+   --------------
+
+   procedure Finalize (Value : in out Contents_Access) is
+   begin
+      if Value /= null then
+         Value.Ref_Count := Value.Ref_Count - 1;
+
+         if Value.Ref_Count = 0 then
+            if Value.Connection /= null then
+               Close (Value.Connection, GPS_Termination => False);
+            end if;
+
+            Free (Value.Full_Name);
+            Free (Value.Dir_Name);
+            Free (Value.Normalized_Full);
+            Unchecked_Free (Value);
+         end if;
+      end if;
+   end Finalize;
 
    --------------
    -- Finalize --
@@ -344,16 +555,7 @@ package body VFS is
 
    procedure Finalize (File : in out Virtual_File) is
    begin
-      if File.Value /= null then
-         File.Value.Ref_Count := File.Value.Ref_Count - 1;
-
-         if File.Value.Ref_Count = 0 then
-            Free (File.Value.Full_Name);
-            Free (File.Value.Dir_Name);
-            Free (File.Value.Normalized_Full);
-            Unchecked_Free (File.Value);
-         end if;
-      end if;
+      Finalize (File.Value);
    end Finalize;
 
    ------------
@@ -430,5 +632,67 @@ package body VFS is
    begin
       Sort (Files'Length, Xchg'Unrestricted_Access, Lt'Unrestricted_Access);
    end Sort;
+
+   -----------------------------
+   -- Virtual_File_Boxed_Copy --
+   -----------------------------
+
+   function Virtual_File_Boxed_Copy
+     (Boxed : System.Address) return System.Address
+   is
+      Value : constant Contents_Access := To_Contents_Access (Boxed);
+   begin
+      if Value /= null then
+         Value.Ref_Count := Value.Ref_Count + 1;
+      end if;
+      return Boxed;
+   end Virtual_File_Boxed_Copy;
+
+   -----------------------------
+   -- Virtual_File_Boxed_Free --
+   -----------------------------
+
+   procedure Virtual_File_Boxed_Free (Boxed : System.Address) is
+      Value : Contents_Access := To_Contents_Access (Boxed);
+   begin
+      Finalize (Value);
+   end Virtual_File_Boxed_Free;
+
+   --------------
+   -- Set_File --
+   --------------
+
+   procedure Set_File
+     (Value : in out Glib.Values.GValue; File : Virtual_File) is
+   begin
+      Init (Value, Get_Virtual_File_Type);
+      Set_Boxed (Value, File.Value.all'Address);
+   end Set_File;
+
+   --------------
+   -- Get_File --
+   --------------
+
+   function Get_File (Value : Glib.Values.GValue) return Virtual_File is
+      File : Virtual_File;
+   begin
+      File.Value := To_Contents_Access (Get_Boxed (Value));
+      File.Value.Ref_Count := File.Value.Ref_Count + 1;
+      return File;
+   end Get_File;
+
+   ---------------------------
+   -- Get_Virtual_File_Type --
+   ---------------------------
+
+   function Get_Virtual_File_Type return Glib.GType is
+   begin
+      if Virtual_File_Type = GType_None then
+         Virtual_File_Type := Boxed_Type_Register_Static
+           ("Virtual_File", Virtual_File_Boxed_Copy'Access,
+            Virtual_File_Boxed_Free'Access);
+      end if;
+      return Virtual_File_Type;
+   end Get_Virtual_File_Type;
 
 end VFS;

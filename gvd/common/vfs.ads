@@ -23,8 +23,11 @@
 --  features (case sensitivity),...
 
 with Glib;          use Glib;
+with Glib.Values;
 with GNAT.OS_Lib;
 with Ada.Finalization;
+with Remote_Connections;
+with Ada.Calendar;
 
 package VFS is
 
@@ -105,8 +108,17 @@ package VFS is
    --  Return True if File contains an absolute path name, False if it only
    --  contains the base name or a relative name.
 
-   function File_Time_Stamp (File : Virtual_File) return GNAT.OS_Lib.OS_Time;
-   --  Return the timestamp for this file
+   procedure Set_Writable (File : VFS.Virtual_File; Writable : Boolean);
+   --  If Writable is True, make File writable, otherwise make File unwritable.
+
+   procedure Set_Readable (File : VFS.Virtual_File; Readable : Boolean);
+   --  If Readable is True, make File readable, otherwise make File unreadable.
+
+   function File_Time_Stamp
+     (File : Virtual_File) return Ada.Calendar.Time;
+   --  Return the timestamp for this file.
+   --  Note: we do not return GNAT.OS_Lib.OS_Time, since the latter cannot be
+   --  created by anyone, and is just a private type.
 
 --   procedure Define_Translation
 --     (Host_Dir : String; Remote_Dir : String);
@@ -128,10 +140,14 @@ package VFS is
 
    type Writable_File is private;
 
+   Invalid_File : constant Writable_File;
+   --  Used when a file couldn't be open.
+
    function Write_File (File : Virtual_File) return Writable_File;
-   --  Open File for writting. The returned handler can be used for writting.
+   --  Open File for writing. The returned handler can be used for writting.
    --  You must close it, otherwise the file will not actually be written in
    --  some cases
+   --  Return Invalid_File is the file couldn't be open for writing
 
    procedure Write
      (File : in out Writable_File;
@@ -156,6 +172,21 @@ package VFS is
    function Locale_Base_Name (File : Virtual_File) return String;
    --  Same as Base_Name
 
+   -------------
+   -- Gvalues --
+   -------------
+   --  The following subprograms are provided to encapsulate a virtual file
+   --  in a GValue.
+
+   procedure Set_File (Value : in out Glib.Values.GValue; File : Virtual_File);
+   --  Store File into Value
+
+   function Get_File (Value : Glib.Values.GValue) return Virtual_File;
+   --  Retrieve the file stored in Value
+
+   function Get_Virtual_File_Type return Glib.GType;
+   --  Return the gtype to use for virtual files
+
 private
    --  This type is implemented as a controlled type, to ease the memory
    --  management (so that we can have gtk+ callbacks that take a Virtual
@@ -165,6 +196,7 @@ private
    --  itself, although they do compute some information lazily).
 
    type Contents_Record is record
+      Connection       : Remote_Connections.Remote_Connection;
       Ref_Count        : Natural := 1;
       Full_Name        : GNAT.OS_Lib.String_Access;
       Normalized_Full  : GNAT.OS_Lib.String_Access;
@@ -182,8 +214,14 @@ private
    type Writable_File is record
       File : Virtual_File;
       FD   : GNAT.OS_Lib.File_Descriptor := GNAT.OS_Lib.Invalid_FD;
+      Filename : GNAT.OS_Lib.String_Access;
    end record;
 
    No_File : constant Virtual_File :=
      (Ada.Finalization.Controlled with Value => null);
+
+   Invalid_File : constant Writable_File :=
+     (Virtual_File'(Ada.Finalization.Controlled with Value => null),
+       GNAT.OS_Lib.Invalid_FD, null);
+
 end VFS;
