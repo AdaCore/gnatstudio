@@ -1067,9 +1067,12 @@ package body Main_Debug_Window_Pkg.Callbacks is
    procedure On_Show1_Activate
      (Object : access Gtk_Widget_Record'Class)
    is
+      Process : Debugger_Process_Tab;
    begin
       if Get_Pref (Separate_Data) then
-         Show (Get_Current_Process (Object));
+         Process := Get_Current_Process (Object);
+         Show (Process);
+         Gdk_Raise (Get_Window (Process));
       end if;
    end On_Show1_Activate;
 
