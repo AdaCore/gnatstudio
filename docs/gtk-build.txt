@@ -12,8 +12,8 @@ prefix=/opt/gtk-2.0
 ##############
 # pkg-config #
 ##############
-tar xzvf pkgconfig-0.8.0.tar.gz
-cd pkgconfig-0.8.0
+tar xzvf pkgconfig-0.12.0.tar.gz
+cd pkgconfig-0.12.0
 ./configure --prefix=$prefix
 make
 make install
@@ -39,7 +39,7 @@ export C_INCLUDE_PATH
 ########
 # zlib #
 ########
-tar xzvf zlib-1.1.3.tar.gz
+tar xzvf zlib-1.1.4.tar.gz
 ln -s zlib-* zlib
 cd zlib
 ./configure --prefix=$prefix
