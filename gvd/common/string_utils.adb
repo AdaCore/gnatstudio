@@ -1106,21 +1106,25 @@ package body String_Utils is
 
          First := Last + 1;
          while First <= Str'Last
-           and then Is_Letter (Str (First))
+           and then Is_Alphanumeric (Str (First))
          loop
             First := First + 1;
          end loop;
 
-         declare
-            Sub : constant String := Callback (Str (Last + 1 .. First - 1));
-         begin
-            if Recursive then
-               Result := Result & Substitute
-                 (Sub, Substitution_Char, Callback, Recursive);
-            else
-               Result := Result & Sub;
-            end if;
-         end;
+         if Last + 1 <= First - 1 then
+            declare
+               Sub : constant String := Callback (Str (Last + 1 .. First - 1));
+            begin
+               if Recursive then
+                  Result := Result & Substitute
+                    (Sub, Substitution_Char, Callback, Recursive);
+               else
+                  Result := Result & Sub;
+               end if;
+            end;
+         else
+            Result := Result & Str (Last .. First - 1);
+         end if;
       end loop;
 
       return To_String (Result);
