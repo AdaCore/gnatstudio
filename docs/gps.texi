@@ -5673,8 +5673,8 @@ Whether tool tips should be displayed automatically.
 
 @item Highlight delimiters
 @cindex highlight delimiter
-Determine whether matching delimiters should be highlighted. The list of
-delimiters includes: @code{@{@}[]()}
+Determine whether the delimiter matching the character following the
+cursor should be highlighted. The list of delimiters includes: @code{@{@}[]()}
 
 @item Autosave delay
 @cindex autosave delay
@@ -5714,7 +5714,8 @@ The Speed Column is never displayed.
 
 @item Automatic
 The Speed Column is shown whenever lines are highlighted in the editor, for
-example to indicate compilation errors, current debugger location, and so on.
+example to show the current execution point, or lines
+containing compilation errors, @dots{}
 It disappears when no lines are highlighted.
 
 @item Always
