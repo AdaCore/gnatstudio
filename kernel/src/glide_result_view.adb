@@ -180,11 +180,14 @@ package body Glide_Result_View is
       Length             : Natural;
       Highlight          : Boolean;
       Message            : String;
-      Highlight_Category : String);
+      Highlight_Category : String;
+      Quiet              : Boolean);
    --  Add a file locaton in Category.
    --  File is an absolute file name. If File is not currently open, do not
    --  create marks for File, but add it to the list of unresolved files
    --  instead.
+   --  If Quiet is True, do not raise the locations window and do not jump
+   --  on the first item.
 
    function Button_Press
      (View     : access Gtk_Widget_Record'Class;
@@ -713,7 +716,8 @@ package body Glide_Result_View is
       Length             : Natural;
       Highlight          : Boolean;
       Message            : String;
-      Highlight_Category : String)
+      Highlight_Category : String;
+      Quiet              : Boolean)
    is
       Category_Iter    : Gtk_Tree_Iter;
       File_Iter        : Gtk_Tree_Iter;
@@ -779,7 +783,9 @@ package body Glide_Result_View is
               Find_MDI_Child_By_Tag (MDI, Result_View_Record'Tag);
          begin
             if Child /= null then
-               Raise_Child (Child);
+               if not Quiet then
+                  Raise_Child (Child, Give_Focus => False);
+               end if;
             end if;
          end;
 
@@ -791,7 +797,9 @@ package body Glide_Result_View is
          Select_Path (Get_Selection (View.Tree), Path);
          Scroll_To_Cell (View.Tree, Path, null, True, 0.1, 0.1);
 
-         if Get_Pref (View.Kernel, Auto_Jump_To_First) then
+         if not Quiet
+           and then Get_Pref (View.Kernel, Auto_Jump_To_First)
+         then
             Goto_Location (View);
          end if;
 
@@ -1090,7 +1098,8 @@ package body Glide_Result_View is
       Message            : String;
       Length             : Natural;
       Highlight          : Boolean := False;
-      Highlight_Category : String := "") is
+      Highlight_Category : String := "";
+      Quiet              : Boolean := False) is
    begin
       --  Transform Source_File in an absolute file name if needed.
 
@@ -1098,7 +1107,7 @@ package body Glide_Result_View is
          Add_Location
            (View, Identifier, Source_File,
             Source_Line, Source_Column, Length, Highlight, Message,
-            Highlight_Category);
+            Highlight_Category, Quiet => Quiet);
       end if;
    end Insert;
 
@@ -1115,14 +1124,16 @@ package body Glide_Result_View is
       Column             : Positive;
       Length             : Natural := 0;
       Highlight          : Boolean := False;
-      Highlight_Category : String := "")
+      Highlight_Category : String := "";
+      Quiet              : Boolean := False)
    is
       View : constant Result_View := Get_Or_Create_Result_View (Kernel);
    begin
       if View /= null then
          Insert
            (View, Category, File, Line, Column, Text, Length,
-            Highlight, Highlight_Category);
+            Highlight, Highlight_Category,
+            Quiet => Quiet);
          Highlight_Child (Find_MDI_Child (Get_MDI (Kernel), View));
       end if;
    end Insert_Result;
@@ -1363,6 +1374,7 @@ package body Glide_Result_View is
       Child : MDI_Child;
    begin
       Child := Get_Or_Create_Result_View_MDI (Kernel, Allow_Creation);
+
       if Child = null then
          return null;
       else
@@ -1572,7 +1584,8 @@ package body Glide_Result_View is
       Col_Index_In_Regexp     : Integer := -1;
       Msg_Index_In_Regexp     : Integer := -1;
       Style_Index_In_Regexp   : Integer := -1;
-      Warning_Index_In_Regexp : Integer := -1)
+      Warning_Index_In_Regexp : Integer := -1;
+      Quiet                   : Boolean := False)
    is
       function Get_File_Location return Pattern_Matcher;
       --  Return the pattern matcher for the file location
@@ -1632,6 +1645,7 @@ package body Glide_Result_View is
       Real_Last  : Natural;
       Line       : Natural := 1;
       Column     : Natural := 1;
+      Length     : Natural := 0;
       C          : String_Access;
 
       function Get_Message (Last : Natural) return String is
@@ -1645,6 +1659,10 @@ package body Glide_Result_View is
       end Get_Message;
 
    begin
+      if Quiet then
+         Length := 1;
+      end if;
+
       while Start <= Text'Last loop
          --  Parse Text line by line and look for file locations
 
@@ -1706,9 +1724,10 @@ package body Glide_Result_View is
                           (File_Index).First .. Matched (File_Index).Last),
                   Kernel),
                Get_Message (Last),
-               Positive (Line), Positive (Column), 0,
+               Positive (Line), Positive (Column), Length,
                Highlight,
-               C.all);
+               C.all,
+               Quiet => Quiet);
          end if;
 
          Start := Real_Last + 1;
