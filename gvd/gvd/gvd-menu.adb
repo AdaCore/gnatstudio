@@ -261,6 +261,10 @@ package body GVD.Menu is
            To_Unix_Pathname (File_Selection_Dialog (-"Select Module"));
 
       begin
+         if S = "" then
+            return;
+         end if;
+
          if Tab.Descriptor.Remote_Host /= null
            or else Is_Regular_File (S)
          then
