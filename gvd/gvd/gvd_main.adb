@@ -33,8 +33,6 @@ with Gtkada.Intl;               use Gtkada.Intl;
 with Gtkada.Dialogs;            use Gtkada.Dialogs;
 with Gtkada.Toolbar;            use Gtkada.Toolbar;
 
-with GUI_Utils;                 use GUI_Utils;
-
 with GVD.Main_Window;           use GVD.Main_Window;
 with GVD.Menu.Standalone;       use GVD.Menu.Standalone;
 with Debugger;
