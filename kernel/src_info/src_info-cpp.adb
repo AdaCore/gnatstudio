@@ -425,9 +425,6 @@ package body Src_Info.CPP is
       File_Buffer.Done;
       Free (Module_Typedefs);
    exception
-      when DB_Error => -- critical DB error
-         --  we can not continue if DB layer gives us this error ...
-         raise;
       when others   => -- unexpected exception
          Free (P);
          File_Buffer.Done;
