@@ -29,7 +29,7 @@ with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Button;                use Gtk.Button;
 with Gtk.Check_Button;          use Gtk.Check_Button;
-with Gtkada.File_Selection;     use Gtkada.File_Selection;
+with Gtkada.File_Selector;      use Gtkada.File_Selector;
 with Gtkada.Handlers;           use Gtkada.Handlers;
 with Gtk.Dialog;                use Gtk.Dialog;
 with Gtk.Enums;                 use Gtk.Enums;
@@ -280,10 +280,9 @@ package body Project_Properties is
 
    procedure Browse_Location (Editor : access Gtk_Widget_Record'Class) is
       Ed : Properties_Editor := Properties_Editor (Editor);
-      Name : constant String := File_Selection_Dialog
+      Name : constant String := Select_Directory
         (-"Select project file location",
-         Default_Dir => Name_As_Directory (Get_Text (Ed.Path)),
-         Dir_Only => True);
+         Base_Directory => Name_As_Directory (Get_Text (Ed.Path)));
    begin
       if Name /= "" then
          Set_Text (Ed.Path, Name);
