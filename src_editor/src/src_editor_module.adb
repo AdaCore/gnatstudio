@@ -21,7 +21,6 @@
 with Ada.Exceptions;            use Ada.Exceptions;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
-with GNAT.Case_Util;            use GNAT.Case_Util;
 with Glib.Xml_Int;              use Glib.Xml_Int;
 with Gdk;                       use Gdk;
 with Gdk.Color;                 use Gdk.Color;
@@ -42,9 +41,7 @@ with Glide_Kernel.Scripts;      use Glide_Kernel.Scripts;
 with Glide_Kernel.Timeout;      use Glide_Kernel.Timeout;
 with Language;                  use Language;
 with Language_Handlers;         use Language_Handlers;
-with Glide_Main_Window;         use Glide_Main_Window;
 with Basic_Types;               use Basic_Types;
-with GVD.Status_Bar;            use GVD.Status_Bar;
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Button;                use Gtk.Button;
 with Gtk.Dialog;                use Gtk.Dialog;
@@ -124,8 +121,15 @@ package body Src_Editor_Module is
    Regexp_Cst    : aliased constant String := "regexp";
    Recursive_Cst : aliased constant String := "recursive";
    Scope_Cst     : aliased constant String := "scope";
+   Force_Cst     : aliased constant String := "force";
 
    Edit_Cmd_Parameters : constant Cst_Argument_List :=
+     (1 => Filename_Cst'Access,
+      2 => Line_Cst'Access,
+      3 => Col_Cst'Access,
+      4 => Length_Cst'Access,
+      5 => Force_Cst'Access);
+   Create_Mark_Parameters : constant Cst_Argument_List :=
      (1 => Filename_Cst'Access,
       2 => Line_Cst'Access,
       3 => Col_Cst'Access,
@@ -155,12 +159,6 @@ package body Src_Editor_Module is
       return Command_Return_Type;
    --  Perform the various actions associated with the clipboard
 
-   procedure Generate_Body_Cb (Data : Process_Data; Status : Integer);
-   --  Callback called when gnatstub has completed.
-
-   procedure Pretty_Print_Cb (Data : Process_Data; Status : Integer);
-   --  Callback called when gnatpp has completed.
-
    procedure Gtk_New
      (Box : out Source_Box; Editor : Source_Editor_Box);
    --  Create a new source box.
@@ -187,11 +185,14 @@ package body Src_Editor_Module is
      (Kernel     : access Kernel_Handle_Record'Class;
       File       : VFS.Virtual_File := VFS.No_File;
       Create_New : Boolean := True;
-      Focus      : Boolean := True) return Source_Box;
+      Focus      : Boolean := True;
+      Force      : Boolean := False) return Source_Box;
    --  Open a file and return the handle associated with it.
    --  If Add_To_MDI is set to True, the box will be added to the MDI window.
    --  If Focus is True, the box will be raised if it is in the MDI.
    --  See Create_File_Exitor.
+   --  If Force is true, then the file is reloaded without asking confirmation
+   --  from the user
 
    function Create_File_Editor
      (Kernel     : access Kernel_Handle_Record'Class;
@@ -282,14 +283,6 @@ package body Src_Editor_Module is
    --  Navigate->Goto Body menu
    --  Goto the next body of the entity under the cursor in the current
    --  editor.
-
-   procedure On_Generate_Body
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Edit->Generate Body menu
-
-   procedure On_Pretty_Print
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Edit->Pretty Print menu
 
    procedure On_Comment_Lines
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
@@ -668,10 +661,16 @@ package body Src_Editor_Module is
       Length   : Natural := 0;
       Line     : Natural := 1;
       Column   : Natural := 1;
+      Force    : Boolean;
 
    begin
       if Command = "edit" or else Command = "create_mark" then
-         Name_Parameters (Data, Edit_Cmd_Parameters);
+         if Command = "edit" then
+            Name_Parameters (Data, Edit_Cmd_Parameters);
+         else
+            Name_Parameters (Data, Create_Mark_Parameters);
+         end if;
+
          declare
             File : constant Virtual_File :=
               Create (Nth_Arg (Data, 1), Kernel, Use_Source_Path => True);
@@ -682,13 +681,15 @@ package body Src_Editor_Module is
 
             if File /= VFS.No_File then
                if Command = "edit" then
+                  Force := Nth_Arg (Data, 5, Default => False);
                   if Length = 0 then
                      Open_File_Editor
                        (Kernel,
                         File,
                         Line,
                         Column,
-                        Enable_Navigation => False);
+                        Enable_Navigation => False,
+                        Force_Reload => Force);
                   else
                      Open_File_Editor
                        (Kernel,
@@ -696,7 +697,8 @@ package body Src_Editor_Module is
                         Line,
                         Column,
                         Column + Length,
-                        Enable_Navigation => False);
+                        Enable_Navigation => False,
+                        Force_Reload => Force);
                   end if;
 
                elsif Command = "create_mark" then
@@ -1940,7 +1942,8 @@ package body Src_Editor_Module is
      (Kernel     : access Kernel_Handle_Record'Class;
       File       : VFS.Virtual_File := VFS.No_File;
       Create_New : Boolean := True;
-      Focus      : Boolean := True) return Source_Box
+      Focus      : Boolean := True;
+      Force      : Boolean := False) return Source_Box
    is
       MDI        : constant MDI_Window := Get_MDI (Kernel);
       Editor     : Source_Editor_Box;
@@ -1952,6 +1955,9 @@ package body Src_Editor_Module is
          Child := Find_Editor (Kernel, File);
 
          if Child /= null then
+            Check_Timestamp (Source_Box (Get_Widget (Child)).Editor,
+                             Force => Force);
+
             Raise_Child (Child);
 
             if Focus then
@@ -2558,132 +2564,6 @@ package body Src_Editor_Module is
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Goto_Body;
 
-   ----------------------
-   -- Generate_Body_Cb --
-   ----------------------
-
-   procedure Generate_Body_Cb (Data : Process_Data; Status : Integer) is
-      Body_Name : constant Virtual_File := Other_File_Name
-        (Data.Kernel, Create (Full_Filename => "???")); --  Data.Name.all));
-   begin
-      if Status = 0
-        and then Is_Regular_File (Body_Name)
-      then
-         Open_File_Editor (Data.Kernel, Body_Name);
-      end if;
-   end Generate_Body_Cb;
-
-   ----------------------
-   -- On_Generate_Body --
-   ----------------------
-
-   procedure On_Generate_Body
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
-   is
-      pragma Unreferenced (Widget);
-
-      Context : constant Selection_Context_Access :=
-        Get_Current_Context (Kernel);
-
-   begin
-      if Context = null
-        or else not (Context.all in File_Selection_Context'Class)
-      then
-         Console.Insert
-           (Kernel, -"No file selected, cannot generate body", Mode => Error);
-         return;
-      end if;
-
-      declare
-         File_Context : constant File_Selection_Context_Access :=
-           File_Selection_Context_Access (Context);
-         File         : constant Virtual_File :=
-           File_Information (File_Context);
-         Success      : Boolean;
-         Args         : Argument_List (1 .. 4);
-         Lang         : String := Get_Language_From_File
-           (Get_Language_Handler (Kernel), File);
-
-      begin
-         if File = VFS.No_File then
-            Console.Insert
-              (Kernel, -"No file name, cannot generate body", Mode => Error);
-            return;
-         end if;
-
-         To_Lower (Lang);
-
-         if Lang /= "ada" then
-            Console.Insert
-              (Kernel, -"Body generation of non Ada file not yet supported",
-               Mode => Error);
-            return;
-         end if;
-
-         if not Save_MDI_Children
-           (Kernel, Force => Get_Pref (Kernel, Auto_Save))
-         then
-            return;
-         end if;
-
-         Args (1) := new String'("stub");
-         Args (2) := new String'
-           ("-P" & Project_Path
-            (Get_Project_From_File (Get_Registry (Kernel), File)));
-         Args (3) := new String'(Full_Name (File).all);
-         Args (4) := new String'(Dir_Name (File).all);
-
-         declare
-            Scenar : Argument_List_Access := Argument_String_To_List
-              (Scenario_Variables_Cmd_Line (Kernel, GNAT_Syntax));
-         begin
-            Launch_Process
-              (Kernel,
-               Command   => "gnat",
-               Arguments => Args (1 .. 2) & Scenar.all & Args (3 .. 4),
-               Exit_Cb   => Generate_Body_Cb'Access,
-               Console   => Get_Console (Kernel),
-               Success   => Success);
-            Free (Args);
-            Free (Scenar);
-         end;
-
-         --  ??? Should remove the message when gnatstub has finished
-         --  executing, and automatically load the file
-
-         if Success then
-            Print_Message
-              (Glide_Window (Get_Main_Window (Kernel)).Statusbar,
-               Help, -"Generating body...");
-         end if;
-      end;
-
-   exception
-      when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
-   end On_Generate_Body;
-
-   ---------------------
-   -- Pretty_Print_Cb --
-   ---------------------
-
-   procedure Pretty_Print_Cb (Data : Process_Data; Status : Integer) is
-      pragma Unreferenced (Data);
-   begin
-      if Status = 0 then
-         null;
-
-         --  ??? Temporarily deactivated, will be done through XML files
-         --  Note that we also want to actually pretty print the current
-         --  buffer by calling gnatpp -rf and reloading automatically
-         --  the file, so this capability needs to be provided from XML.
-
---           Open_File_Editor
---             (Data.Kernel,
---              Create (Full_Filename => Data.Name.all & ".pp"));
-      end if;
-   end Pretty_Print_Cb;
-
    -----------------------
    -- Comment_Uncomment --
    -----------------------
@@ -2875,100 +2755,6 @@ package body Src_Editor_Module is
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Uncomment_Lines;
 
-   ---------------------
-   -- On_Pretty_Print --
-   ---------------------
-
-   procedure On_Pretty_Print
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
-   is
-      pragma Unreferenced (Widget);
-
-      Context : constant Selection_Context_Access :=
-        Get_Current_Context (Kernel);
-
-   begin
-      if Context = null
-        or else not (Context.all in File_Selection_Context'Class)
-      then
-         Console.Insert
-           (Kernel, -"No file selected, cannot pretty print",
-            Mode => Error);
-         return;
-      end if;
-
-      declare
-         File_Context : constant File_Selection_Context_Access :=
-           File_Selection_Context_Access (Context);
-         File         : constant Virtual_File :=
-           File_Information (File_Context);
-         Project      : constant String := Project_Path
-           (Get_Project_From_File (Get_Registry (Kernel), File));
-         Success      : Boolean;
-         Args, Vars   : Argument_List_Access;
-         Lang         : String := Get_Language_From_File
-           (Get_Language_Handler (Kernel), File);
-
-      begin
-         if File = VFS.No_File then
-            Console.Insert
-              (Kernel, -"No file name, cannot pretty print",
-               Mode => Error);
-            return;
-         end if;
-
-         To_Lower (Lang);
-
-         if Lang /= "ada" then
-            Console.Insert
-              (Kernel, -"Pretty printing of non Ada file not yet supported",
-               Mode => Error);
-            return;
-         end if;
-
-         if not Save_MDI_Children
-           (Kernel, Force => Get_Pref (Kernel, Auto_Save))
-         then
-            return;
-         end if;
-
-         if Project = "" then
-            Args := new Argument_List'
-              (new String'("pretty"), new String'(Full_Name (File).all));
-
-         else
-            Vars := Argument_String_To_List
-              (Scenario_Variables_Cmd_Line (Kernel, GNAT_Syntax));
-            Args := new Argument_List'
-              ((1 => new String'("pretty"),
-                2 => new String'("-P" & Project),
-                3 => new String'(Full_Name (File).all)) & Vars.all);
-            Unchecked_Free (Vars);
-         end if;
-
-         Launch_Process
-           (Kernel,
-            Command   => "gnat",
-            Arguments => Args.all,
-            Exit_Cb   => Pretty_Print_Cb'Access,
-            Console   => Get_Console (Kernel),
---            Name      => Full_Name (File).all,
-            Success   => Success);
-         Free (Args);
-
-         if Success then
-            Print_Message
-              (Glide_Window (Get_Main_Window (Kernel)).Statusbar,
-               Help, -"Pretty printing...");
-         end if;
-      end;
-
-   exception
-      when E : others =>
-         Pop_State (Kernel);
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
-   end On_Pretty_Print;
-
    -----------------
    -- Mime_Action --
    -----------------
@@ -2997,6 +2783,8 @@ package body Src_Editor_Module is
             Column_End  : constant Gint    := Get_Int (Data (Data'First + 3));
             New_File    : constant Boolean :=
               Get_Boolean (Data (Data'First + 5));
+            Force       : constant Boolean :=
+              Get_Boolean (Data (Data'First + 6));
             Iter        : Child_Iterator := First_Child (MDI);
             Child       : MDI_Child;
             No_Location : Boolean := False;
@@ -3029,7 +2817,8 @@ package body Src_Editor_Module is
                Source := Open_File
                  (Kernel, File,
                   Create_New => New_File,
-                  Focus      => not No_Location);
+                  Focus      => not No_Location,
+                  Force      => Force);
 
                if Source /= null then
                   Edit := Source.Editor;
@@ -3299,7 +3088,7 @@ package body Src_Editor_Module is
       Register_Action
         (Kernel, "Format selection",
          Command, -"Format the current line or selection",
-         Src_Action_Context);
+         Create (Context => Src_Action_Context));
       Bind_Default_Key
         (Kernel      => Kernel,
          Action      => "Format selection",
@@ -3310,7 +3099,7 @@ package body Src_Editor_Module is
       Register_Action
         (Kernel, "Complete identifier", Command,
          -("Complete current identifier based on the contents of the editor"),
-         Src_Action_Context);
+         Create (Context => Src_Action_Context));
       Bind_Default_Key
         (Kernel      => Kernel,
          Action      => "Complete identifier",
@@ -3322,7 +3111,7 @@ package body Src_Editor_Module is
       Register_Action
         (Kernel, "Jump to matching delimiter", Command,
          -"Jump to the matching delimiter ()[]{}",
-         Src_Action_Context);
+         Create (Context => Src_Action_Context));
       Bind_Default_Key
         (Kernel      => Kernel,
          Action      => "Jump to matching delimiter",
@@ -3335,7 +3124,7 @@ package body Src_Editor_Module is
       Register_Action
         (Kernel, "Move to next word", Command,
            -"Move to the next word in the current source editor",
-         Src_Action_Context);
+         Create (Context => Src_Action_Context));
 
       Command := new Move_Command;
       Move_Command (Command.all).Kernel := Kernel_Handle (Kernel);
@@ -3344,7 +3133,7 @@ package body Src_Editor_Module is
       Register_Action
         (Kernel, "Move to previous word", Command,
            -"Move to the previous word in the current source editor",
-         Src_Action_Context);
+         Create (Context => Src_Action_Context));
 
       Command := new Move_Command;
       Move_Command (Command.all).Kernel := Kernel_Handle (Kernel);
@@ -3353,7 +3142,7 @@ package body Src_Editor_Module is
       Register_Action
         (Kernel, "Move to previous sentence", Command,
            -"Move to the previous sentence in the current source editor",
-         Src_Action_Context);
+         Create (Context => Src_Action_Context));
 
       Command := new Move_Command;
       Move_Command (Command.all).Kernel := Kernel_Handle (Kernel);
@@ -3362,14 +3151,14 @@ package body Src_Editor_Module is
       Register_Action
         (Kernel, "Move to next sentence", Command,
            -"Move to the next sentence in the current source editor",
-         Src_Action_Context);
+         Create (Context => Src_Action_Context));
 
       Command := new Scroll_Command;
       Scroll_Command (Command.all).Kernel := Kernel_Handle (Kernel);
       Register_Action
         (Kernel, "Center cursor on screen", Command,
            -"Scroll the current source editor so that the cursor is centered",
-         Src_Action_Context);
+         Create (Context => Src_Action_Context));
 
       Command := new Delete_Command;
       Delete_Command (Command.all).Kernel := Kernel_Handle (Kernel);
@@ -3378,7 +3167,7 @@ package body Src_Editor_Module is
       Register_Action
         (Kernel, "Delete word forward", Command,
            -"Delete the word following the current cursor position",
-         Src_Action_Context);
+         Create (Context => Src_Action_Context));
 
       Command := new Delete_Command;
       Delete_Command (Command.all).Kernel := Kernel_Handle (Kernel);
@@ -3387,7 +3176,7 @@ package body Src_Editor_Module is
       Register_Action
         (Kernel, "Delete word backward", Command,
            -"Delete the word preceding the current cursor position",
-         Src_Action_Context);
+         Create (Context => Src_Action_Context));
 
       Register_Module
         (Module                  => Src_Editor_Module_Id,
@@ -3474,7 +3263,7 @@ package body Src_Editor_Module is
       Register_Action
         (Kernel, -"Cut to Clipboard", Command,
          -"Cut the current selection to the clipboard",
-         Src_Action_Context);
+         Create (Context => Src_Action_Context));
       Register_Menu (Kernel, Edit, -"_Cut",  Stock_Cut,
                      null, Command_Access (Command),
                      GDK_Delete, Shift_Mask,
@@ -3488,7 +3277,7 @@ package body Src_Editor_Module is
       Register_Action
         (Kernel, -"Copy to Clipboard", Command,
          -"Copy the current selection to the clipboard",
-         Src_Action_Context);
+         Create (Context => Src_Action_Context));
       Register_Menu (Kernel, Edit, -"C_opy",  Stock_Copy,
                      null, Command_Access (Command),
                      GDK_Insert, Control_Mask,
@@ -3502,7 +3291,7 @@ package body Src_Editor_Module is
       Register_Action
         (Kernel, -"Paste From Clipboard", Command,
          -"Paste the contents of the clipboard into the current editor",
-         Src_Action_Context);
+         Create (Context => Src_Action_Context));
       Register_Menu (Kernel, Edit, -"P_aste",  Stock_Paste,
                      null, Command_Access (Command),
                      GDK_Insert, Shift_Mask,
@@ -3538,11 +3327,6 @@ package body Src_Editor_Module is
 
       Gtk_New (Mitem);
       Register_Menu (Kernel, Edit, Mitem, Ref_Item => -"Preferences");
-
-      Register_Menu (Kernel, Edit, -"_Generate Body", "",
-                     On_Generate_Body'Access, Ref_Item => -"Preferences");
-      Register_Menu (Kernel, Edit, -"P_retty Print", "",
-                     On_Pretty_Print'Access, Ref_Item => -"Preferences");
 
       Register_Menu (Kernel, Navigate, -"Goto _Line...", Stock_Jump_To,
                      On_Goto_Line_Current_Editor'Access, null,
@@ -3615,20 +3399,21 @@ package body Src_Editor_Module is
       Register_Command
         (Kernel,
          Command      => "edit",
-         Params       => Parameter_Names_To_Usage (Edit_Cmd_Parameters, 3),
+         Params       => Parameter_Names_To_Usage (Edit_Cmd_Parameters, 4),
          Description  => -"Open a file editor for file_name." & ASCII.LF
            & (-"Length is the number of characters to select after the"
               & " cursor. If line and column are set to 0 (the default),"
               & " then the location of the cursor is not changed if the file"
-              & " is already opened in an editor."),
+              & " is already opened in an editor. If force is set to true,"
+              & " a reload is forced in case the file is already open."),
          Minimum_Args => 1,
-         Maximum_Args => 4,
+         Maximum_Args => 5,
          Handler      => Edit_Command_Handler'Access);
 
       Register_Command
         (Kernel,
          Command      => "create_mark",
-         Params       => Parameter_Names_To_Usage (Edit_Cmd_Parameters, 3),
+         Params       => Parameter_Names_To_Usage (Create_Mark_Parameters, 3),
          Return_Value => "identifier",
          Description  =>
            -("Create a mark for file_name, at position given by line and"
