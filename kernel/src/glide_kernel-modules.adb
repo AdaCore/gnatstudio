@@ -1144,14 +1144,15 @@ package body Glide_Kernel.Modules is
             Trace (Me, "Couldn't find LI file for "
                    & File_Information (Context));
          else
-            Find_Declaration
-              (Lib_Info           => Lib_Info,
-               File_Name          => File_Information (Context),
-               Entity_Name        => Entity_Name_Information (Context),
-               Line               => Line_Information (Context),
-               Column             => Column_Information (Context),
-               Entity             => Context.Entity,
-               Status             => Status);
+            Find_Declaration_Or_Overloaded
+              (Kernel      => Get_Kernel (Context),
+               Lib_Info    => Lib_Info,
+               File_Name   => File_Information (Context),
+               Entity_Name => Entity_Name_Information (Context),
+               Line        => Line_Information (Context),
+               Column      => Column_Information (Context),
+               Entity      => Context.Entity,
+               Status      => Status);
 
             if Status /= Success then
                Destroy (Context.Entity);
