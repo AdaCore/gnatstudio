@@ -1371,6 +1371,10 @@ package body Src_Editor_View is
       Layout                     : Pango_Layout;
 
    begin
+      if Left_Window = null then
+         return;
+      end if;
+
       Layout := Create_Pango_Layout (View);
       Set_Font_Description (Layout, View.Pango_Font);
 
