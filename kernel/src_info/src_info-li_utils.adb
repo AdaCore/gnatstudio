@@ -21,6 +21,7 @@ package body Src_Info.LI_Utils is
      (Declaration_Info_Ptr    : in E_Declaration_Info_List;
       Symbol_Name             : in String := "";
       Class_Name              : in String := "";
+      Kind                    : in E_Kind := No_Kind;
       Location                : in Point := Invalid_Point)
    return E_Declaration_Info_List;
    --  Finds declaration with given attributes in
@@ -103,7 +104,8 @@ package body Src_Info.LI_Utils is
          D_Ptr := File.LI.Body_Info.Declarations;
          loop
             if D_Ptr.Value.Declaration.Location.Line = Location.Line
-              and then D_Ptr.Value.Declaration.Location.Line = Location.Line
+              and then D_Ptr.Value.Declaration.Location.Column =
+                                                      Location.Column
             then
                D_Ptr.Value.Declaration := No_Declaration;
                exit;
@@ -524,6 +526,7 @@ package body Src_Info.LI_Utils is
      (File                    : in LI_File_Ptr;
       Symbol_Name             : in String := "";
       Class_Name              : in String := "";
+      Kind                    : in E_Kind := No_Kind;
       Location                : in Point := Invalid_Point)
    return E_Declaration_Info_List is
    begin
@@ -536,6 +539,7 @@ package body Src_Info.LI_Utils is
                (Declaration_Info_Ptr => File.LI.Body_Info.Declarations,
                 Symbol_Name          => Symbol_Name,
                 Class_Name           => Class_Name,
+                Kind                 => Kind,
                 Location             => Location);
    end Find_Declaration;
 
@@ -676,6 +680,7 @@ package body Src_Info.LI_Utils is
      (Declaration_Info_Ptr    : in E_Declaration_Info_List;
       Symbol_Name             : in String := "";
       Class_Name              : in String := "";
+      Kind                    : in E_Kind := No_Kind;
       Location                : in Point := Invalid_Point)
    return E_Declaration_Info_List is
       D_Ptr : E_Declaration_Info_List;
@@ -700,6 +705,10 @@ package body Src_Info.LI_Utils is
                            Class_Name  => Class_Name,
                            Position    => Location))
              or else (Class_Name = "")
+           ) and then (
+             (Kind /= No_Kind
+                and then D_Ptr.Value.Declaration.Kind = Kind)
+             or else Kind = No_Kind
            )
          then
             return D_Ptr;

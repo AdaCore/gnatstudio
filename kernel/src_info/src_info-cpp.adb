@@ -997,7 +997,9 @@ package body Src_Info.CPP is
       Type_Decl_Info     : E_Declaration_Info_List;
    begin
       Type_Decl_Info := Find_Declaration
-        (Global_LI_File, Type_Name, "", Type_Decl);
+        (File         => Global_LI_File,
+         Symbol_Name  => Type_Name,
+         Location     => Type_Decl);
 
       Insert_Reference
         (Declaration_Info     => Type_Decl_Info,

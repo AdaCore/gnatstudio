@@ -90,13 +90,18 @@ private package Src_Info.LI_Utils is
    --  Inserts new reference to declaration. Declaration here is specified
    --  by pointer to appropriate E_Declaration_Info_Node object
 
+   No_Kind : E_Kind := Task_Type;
+   --  This constant is used to represent the absence of Kind.
+   --  Task_Type is used here because it can never occur in C/CPP program.
+
    function Find_Declaration
      (File                    : in LI_File_Ptr;
       Symbol_Name             : in String := "";
       Class_Name              : in String := "";
+      Kind                    : in E_Kind := No_Kind;
       Location                : in Point := Invalid_Point)
    return E_Declaration_Info_List;
-   --  Finds declaration in LI tree by it's Name and Location
+   --  Finds declaration in LI tree by it's Name, Location or (and) Kind
    --  If value for some attribute is not given then this attribute doesn't
    --  affect on searching.
 
