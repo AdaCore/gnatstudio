@@ -41,7 +41,6 @@ with Gtk.Handlers;              use Gtk.Handlers;
 with Gtk.Label;                 use Gtk.Label;
 with Gtk.Notebook;              use Gtk.Notebook;
 with Gtk.Object;                use Gtk.Object;
-with Gtk.Paned;                 use Gtk.Paned;
 with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Table;                 use Gtk.Table;
 with Gtk.Widget;                use Gtk.Widget;
@@ -369,13 +368,13 @@ package body Project_Properties is
       Project_View : Prj.Project_Id;
       Kernel       : access Kernel_Handle_Record'Class)
    is
-      Label     : Gtk_Label;
-      Main_Note : Gtk_Notebook;
-      Button    : Gtk_Widget;
-      Page      : Project_Editor_Page;
-      Box       : Gtk_Box;
-      Paned     : Gtk_Paned;
-      Selector  : Scenario_Selector;
+      Label        : Gtk_Label;
+      Main_Note    : Gtk_Notebook;
+      Button       : Gtk_Widget;
+      Page         : Project_Editor_Page;
+      Box          : Gtk_Box;
+      Main_Box     : Gtk_Box;
+      Selector     : Scenario_Selector;
       Prj_Selector : Project_Selector;
 
    begin
@@ -385,10 +384,11 @@ package body Project_Properties is
            & Project_Name (Project_View),
          Parent => Get_Main_Window (Kernel),
          Flags  => Modal or Destroy_With_Parent);
-      Set_Policy (Editor,
-                  Allow_Shrink => True,
-                  Allow_Grow   => True,
-                  Auto_Shrink  => True);
+      Set_Policy
+        (Editor,
+         Allow_Shrink => False,
+         Allow_Grow   => True,
+         Auto_Shrink  => True);
       Set_Default_Size (Editor, -1, 470);
       Realize (Editor);
 
@@ -396,12 +396,12 @@ package body Project_Properties is
         (Editor, "destroy",
          Widget_Callback.To_Marshaller (Destroyed'Access));
 
-      Gtk_New_Hpaned (Paned);
-      Pack_Start (Get_Vbox (Editor), Paned, Expand => True, Fill => True);
+      Gtk_New_Hbox (Main_Box);
+      Pack_Start (Get_Vbox (Editor), Main_Box, Expand => True, Fill => True);
 
       Gtk_New (Main_Note);
       Set_Tab_Pos (Main_Note, Pos_Left);
-      Pack1 (Paned, Main_Note, Resize => True);
+      Pack_Start (Main_Box, Main_Note, Expand => True, Fill => True);
 
       Gtk_New (Label, -"General");
       Append_Page
@@ -416,8 +416,8 @@ package body Project_Properties is
          Editor);
 
       Editor.Project_View := Project_View;
-      Editor.Kernel := Kernel_Handle (Kernel);
-      Editor.Pages := new Widget_Array
+      Editor.Kernel       := Kernel_Handle (Kernel);
+      Editor.Pages        := new Widget_Array
         (1 .. Project_Editor_Pages_Count (Kernel));
 
       for E in Editor.Pages'Range loop
@@ -432,11 +432,11 @@ package body Project_Properties is
       end loop;
 
       Gtk_New_Vbox (Box, Homogeneous => False);
-      Pack2 (Paned, Box, Resize => True);
+      Pack_Start (Main_Box, Box, Expand => True, Fill => True);
 
       Gtk_New (Label, -"Apply changes to:");
       Set_Alignment (Label, 0.0, 0.0);
-      Pack_Start (Box, Label, Expand => False, Fill => True);
+      Pack_Start (Box, Label, Expand => False);
 
       Gtk_New (Prj_Selector, Kernel, Get_Project_From_View (Project_View));
       Pack_Start (Box, Prj_Selector, Expand => True, Fill => True);
