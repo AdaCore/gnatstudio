@@ -55,6 +55,7 @@ with Dock_Paned;              use Dock_Paned;
 with Items;                   use Items;
 with GVD.Canvas;              use GVD.Canvas;
 with GVD.Code_Editors;        use GVD.Code_Editors;
+with GVD.Dialogs;             use GVD.Dialogs;
 with GVD.Main_Window;         use GVD.Main_Window;
 with GVD.Memory_View;         use GVD.Memory_View;
 with GVD.Menu;                use GVD.Menu;
