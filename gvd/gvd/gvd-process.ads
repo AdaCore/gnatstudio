@@ -103,6 +103,12 @@ package GVD.Process is
    --    changed (via for instance the menu Files->Open Program).
    --    This is also called initially when the executable is given on the
    --    command line.
+   --
+   --  - "debugger_closed"
+   --    procedure Handler (Widget : access Debugger_Process_Tab_Record'Class);
+   --
+   --    Emitted whenever the underlying debugger is closed.
+
 
    type Regexp_Filter_List is private;
 
@@ -345,6 +351,7 @@ package GVD.Process is
      (Debugger : Debugger_Process_Tab);
    --  Close the debugger, remove the notebook page and modify the commmands
    --  history accordingly.
+   --  Emit the "debugger_closed" signal.
 
    procedure Process_User_Command
      (Debugger       : Debugger_Process_Tab;
