@@ -207,7 +207,8 @@ package body Codefix.Errors_Manager is
 
    begin
       Success := False;
-      Check_Ambiguities (This.Valid_Corrections, Callback, No_More_Problems);
+      Check_Ambiguities
+        (This.Valid_Corrections, Callback, Current_Text, No_More_Problems);
 
       if not No_More_Problems then
          return;
@@ -243,6 +244,7 @@ package body Codefix.Errors_Manager is
    procedure Check_Ambiguities
      (Solutions        : in out Solution_List;
       Callback         : Ambiguous_Callback;
+      Current_Text     : Text_Navigator_Abstr'Class;
       No_More_Problems : out Boolean)
    is
       function Delete_And_Next
@@ -257,6 +259,10 @@ package body Codefix.Errors_Manager is
       Delete_I, Delete_J : Boolean;
       Choice             : Alternative_Choice;
 
+      ---------------------
+      -- Delete_And_Next --
+      ---------------------
+
       function Delete_And_Next
         (Node : Extract_List.List_Node) return Extract_List.List_Node
       is
@@ -267,6 +273,10 @@ package body Codefix.Errors_Manager is
          Remove_Nodes (Solutions, Prev (Solutions, Garbage), Garbage);
          return Next_Node;
       end Delete_And_Next;
+
+      -------------
+      -- Conflit --
+      -------------
 
       function Conflict (Extract_1, Extract_2 : Extract) return Boolean is
          Num_1, Num_2   : Natural;
@@ -282,7 +292,10 @@ package body Codefix.Errors_Manager is
             for I_2 in 1 .. Num_2 loop
                Line_2 := Get_Record (Extract_2, I_2).all;
 
-               if Get_Cursor (Line_1).Line = Get_Cursor (Line_2).Line then
+               if Get_Cursor (Line_1).Line = Get_Cursor (Line_2).Line
+                 and then Get_Context (Line_1) = Line_Modified
+                 and then Get_Context (Line_2) = Line_Modified
+               then
                   return True;
                end if;
             end loop;
@@ -307,7 +320,8 @@ package body Codefix.Errors_Manager is
                   No_More_Problems := False;
                   return;
                else
-                  Callback (Data (Node_I), Data (Node_J), Choice);
+                  Callback
+                    (Data (Node_I), Data (Node_J), Current_Text, Choice);
 
                   case Choice is
                      when 0 =>

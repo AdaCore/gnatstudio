@@ -466,13 +466,15 @@ package body Codefix.Formal_Errors is
          Word_Chosen := new String'(Correct_Word);
       else
          Word_Chosen := new String'
-           (To_Correct_Case (Line.all (Matches (1).First .. Matches (1).Last)));
+           (To_Correct_Case (Line.all
+                               (Matches (1).First .. Matches (1).Last)));
       end if;
 
       Replace_Word
            (New_Extract,
             Cursor,
-            Word_Chosen.all (Word_Chosen.all'Last - Size + 1 .. Word_Chosen.all'Last));
+            Word_Chosen.all
+              (Word_Chosen.all'Last - Size + 1 .. Word_Chosen.all'Last));
 
       Set_Caption
         (New_Extract,
@@ -815,7 +817,7 @@ package body Codefix.Formal_Errors is
             New_Extract := Delete_Entity;
             Set_Caption
               (New_Extract,
-               "Delete subprogram """ & Name & """");
+              "Delete subprogram """ & Name & """");
             Append (New_Solutions, New_Extract);
 
             New_Extract := Add_Pragma;
@@ -829,13 +831,13 @@ package body Codefix.Formal_Errors is
             New_Extract := Delete_Entity;
             Set_Caption
               (New_Extract,
-               "Delete subprogram """ & Name & """");
+               "Delete type """ & Name & """");
             Append (New_Solutions, New_Extract);
 
             New_Extract := Add_Pragma;
             Set_Caption
               (New_Extract,
-               "Add pragma Unreferenced to subprogram """ & Name & """");
+               "Add pragma Unreferenced to type """ & Name & """");
             Append (New_Solutions, New_Extract);
 
          when Cat_Local_Variable =>
