@@ -23,7 +23,6 @@ project Codefix is
       for Default_Switches ("Ada") use Shared.Compiler'Default_Switches ("Ada");
       for Switches ("codefix_window_pkg.adb") use ("-g", "-O2");
       for Switches ("final_window_pkg.adb") use ("-g", "-O2");
-      for Switches ("codefix-errors_parser.adb") use ("-g", "-O1");
    end Compiler;
 
    package Builder is
