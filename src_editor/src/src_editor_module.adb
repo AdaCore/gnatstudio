@@ -4364,13 +4364,8 @@ package body Src_Editor_Module is
         (Kernel, -"Directory of current file", 'd',
          Expand_Aliases_Entities'Access);
 
-      --  Register the casing feature
-
-      Casing_Initialize (Kernel);
-
-      --  Register the editor hooks
-
       Register_Editor_Hooks (Kernel);
+      Casing_Exceptions.Register_Module (Kernel);
 
       --  Create the module-wide GCs.
       --  We need to do that in a callback to "map"
@@ -4487,7 +4482,6 @@ package body Src_Editor_Module is
 
    procedure Destroy (Id : in out Source_Editor_Module_Record) is
    begin
-      Casing_Finalize (Id.Kernel);
       String_List_Utils.String_List.Free (Id.Unopened_Files);
       Mark_Identifier_List.Free (Id.Stored_Marks);
 
