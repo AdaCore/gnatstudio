@@ -620,7 +620,7 @@ package body Src_Editor_Buffer.Line_Information is
 
       if Columns_Config.all (Column).Stick_To_Data then
          for K in Info'Range loop
-            Buffer_Line := Get_Buffer_Line (Buffer, File_Line_Type (K));
+            Buffer_Line := Get_Buffer_Line (Buffer, Editable_Line_Type (K));
 
             if Buffer_Line /= 0 then
                Buffer_Lines (Buffer_Line).Side_Info_Data (Column).Info :=
