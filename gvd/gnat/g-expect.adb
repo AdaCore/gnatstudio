@@ -145,8 +145,8 @@ package body GNAT.Expect is
       else
          Descriptor.Filters :=
            new Filter_List_Elem'
-           (Filter => Filter, Filter_On => Filter_On,
-            User_Data => User_Data, Next => Descriptor.Filters);
+             (Filter => Filter, Filter_On => Filter_On,
+              User_Data => User_Data, Next => Descriptor.Filters);
       end if;
    end Add_Filter;
 
