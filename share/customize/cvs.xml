@@ -179,7 +179,7 @@
    <!---------------->
 
    <action name="generic_cvs_revert" show-command="true" output="none">
-      <external output="">cvs update -C $*</external>
+      <external output="">cvs update -C "$*"</external>
       <shell>Hook "file_changed_on_disk"</shell>
       <shell>Hook.run %1 null</shell>
    </action>
