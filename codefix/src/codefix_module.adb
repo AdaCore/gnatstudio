@@ -23,6 +23,7 @@
 with Ada.Exceptions;         use Ada.Exceptions;
 with Ada.Unchecked_Deallocation;
 with GNAT.OS_Lib;            use GNAT.OS_Lib;
+with GNAT.Regpat;            use GNAT.Regpat;
 
 with Gtk.Menu;               use Gtk.Menu;
 with Gtk.Menu_Item;          use Gtk.Menu_Item;
@@ -31,13 +32,14 @@ with Gtkada.MDI;             use Gtkada.MDI;
 with Gtkada.Handlers;        use Gtkada.Handlers;
 with Gdk.Pixbuf;             use Gdk.Pixbuf;
 
-with Glib.Object;            use Glib.Object;
-with Glib.Values;            use Glib.Values;
-with Glide_Kernel;           use Glide_Kernel;
-with Glide_Kernel.Modules;   use Glide_Kernel.Modules;
-with Glide_Kernel.Console;   use Glide_Kernel.Console;
-with Glide_Kernel.Scripts;   use Glide_Kernel.Scripts;
-with Glide_Intl;             use Glide_Intl;
+with Glib.Object;              use Glib.Object;
+with Glib.Values;              use Glib.Values;
+with Glide_Kernel;             use Glide_Kernel;
+with Glide_Kernel.Modules;     use Glide_Kernel.Modules;
+with Glide_Kernel.Console;     use Glide_Kernel.Console;
+with Glide_Kernel.Scripts;     use Glide_Kernel.Scripts;
+with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
+with Glide_Intl;               use Glide_Intl;
 
 with Traces;                 use Traces;
 with Basic_Types;            use Basic_Types;
@@ -64,10 +66,23 @@ package body Codefix_Module is
 
    Me : constant Debug_Handle := Create ("Codefix_Module");
 
+   Location_Button_Name : constant String := "Codefix";
+
    Output_Cst : aliased String := "output";
    Category_Cst : aliased String := "category";
+   Regexp_Cst        : aliased constant String := "regexp";
+   File_Index_Cst    : aliased constant String := "file_index";
+   Line_Index_Cst    : aliased constant String := "line_index";
+   Col_Index_Cst     : aliased constant String := "column_index";
+   Msg_Index_Cst     : aliased constant String := "msg_index";
    Parse_Cmd_Parameters : constant Cst_Argument_List :=
-     (1 => Output_Cst'Access, 2 => Category_Cst'Access);
+     (1 => Output_Cst'Access,
+      2 => Category_Cst'Access,
+      3 => Regexp_Cst'Access,
+      4 => File_Index_Cst'Access,
+      5 => Line_Index_Cst'Access,
+      6 => Col_Index_Cst'Access,
+      7 => Msg_Index_Cst'Access);
 
    type Codefix_Sessions_Array is array (Natural range <>) of Codefix_Session;
    type Codefix_Sessions is access Codefix_Sessions_Array;
@@ -143,10 +158,18 @@ package body Codefix_Module is
    --  Set the value of the Text_Interface's kernel
 
    procedure Activate_Codefix
-     (Kernel   : Kernel_Handle;
-      Output   : String;
-      Category : String);
-   --  Activate postfix for a given compilation output
+     (Kernel               : Kernel_Handle;
+      Output               : String;
+      Category             : String;
+      File_Location_Regexp : String := "";
+      File_Index           : Integer := -1;
+      Line_Index           : Integer := -1;
+      Col_Index            : Integer := -1;
+      Msg_Index            : Integer := -1);
+   --  Activate postfix for a given compilation output.
+   --  The regular expression and the indexes are used to extract relevant
+   --  information from the error messages. The default is to use the GPS's
+   --  predefined regexps that matches GNAT and gcc error messages.
 
    procedure Default_Command_Handler
      (Data : in out Callback_Data'Class; Command : String);
@@ -197,7 +220,7 @@ package body Codefix_Module is
          File          => Get_File (Error),
          Line          => Get_Line (Error),
          Column        => Get_Column (Error),
-         Message       => Cut_Message (Get_Message (Error)));
+         Message       => Get_Message (Error));
 
    exception
       when E : others =>
@@ -209,13 +232,19 @@ package body Codefix_Module is
    ----------------------
 
    procedure Activate_Codefix
-     (Kernel   : Kernel_Handle;
-      Output   : String;
-      Category : String)
+     (Kernel               : Kernel_Handle;
+      Output               : String;
+      Category             : String;
+      File_Location_Regexp : String := "";
+      File_Index           : Integer := -1;
+      Line_Index           : Integer := -1;
+      Col_Index            : Integer := -1;
+      Msg_Index            : Integer := -1)
    is
       Current_Error : Error_Id;
-      Errors_Found : Ptr_Errors_Interface   := new Compilation_Output;
+      Errors_Found : Compilation_Output;
       Session      : Codefix_Session;
+      Fi, Li, Ci, Mi : Integer;
    begin
       if Codefix_Module_ID.Sessions /= null then
          for S in Codefix_Module_ID.Sessions'Range loop
@@ -251,13 +280,54 @@ package body Codefix_Module is
       Session.Corrector    := new Correction_Manager;
       Session.Current_Text := new GPS_Navigator;
 
-      Set_Kernel   (Session.Current_Text.all, Kernel);
-      Set_Error_Cb (Session.Corrector.all, Execute_Corrupted_Cb'Access);
-      Set_Last_Output
-        (Compilation_Output (Errors_Found.all), Kernel, Output);
+      if File_Index = -1 then
+         Fi := Integer (Get_Pref (Kernel, File_Pattern_Index));
+      else
+         Fi := File_Index;
+      end if;
+
+      if Line_Index = -1 then
+         Li := Integer (Get_Pref (Kernel, Line_Pattern_Index));
+      else
+         Li := Line_Index;
+      end if;
+
+      if Col_Index = -1 then
+         Ci := Integer (Get_Pref (Kernel, Column_Pattern_Index));
+      else
+         Ci := Col_Index;
+      end if;
+
+      if Msg_Index = -1 then
+         Mi := Integer (Get_Pref (Kernel, Message_Pattern_Index));
+      else
+         Mi := Msg_Index;
+      end if;
+
+      if File_Location_Regexp = "" then
+         Set_Regexp
+           (Errors_Found,
+            File_Location_Regexp => Compile (Get_Pref (Kernel, File_Pattern)),
+            File_Index_In_Regexp => Fi,
+            Line_Index_In_Regexp => Li,
+            Col_Index_In_Regexp  => Ci,
+            Msg_Index_In_Regexp  => Mi);
+      else
+         Set_Regexp
+           (Errors_Found,
+            File_Location_Regexp => Compile (File_Location_Regexp),
+            File_Index_In_Regexp => Fi,
+            Line_Index_In_Regexp => Li,
+            Col_Index_In_Regexp  => Ci,
+            Msg_Index_In_Regexp  => Mi);
+      end if;
+
+      Set_Kernel      (Session.Current_Text.all, Kernel);
+      Set_Error_Cb    (Session.Corrector.all, Execute_Corrupted_Cb'Access);
+      Set_Last_Output (Errors_Found, Kernel, Output);
       Analyze
         (Session.Corrector.all, Session.Current_Text.all,
-         Errors_Found.all, null);
+         Errors_Found, null);
 
       --  Update the location window to show which errors can be fixed
 
@@ -430,7 +500,7 @@ package body Codefix_Module is
          File       => Get_File (Err),
          Line       => Get_Line (Err),
          Column     => Get_Column (Err),
-         Message    => Cut_Message (Get_Message (Err)));
+         Message    => Get_Message (Err));
    end Remove_Pixmap;
 
    --------------------------------
@@ -468,7 +538,7 @@ package body Codefix_Module is
          File          => Get_File (Err),
          Line          => Get_Line (Err),
          Column        => Get_Column (Err),
-         Message       => Cut_Message (Get_Message (Err)),
+         Message       => Get_Message (Err),
          Action        => New_Action);
    end Create_Pixmap_And_Category;
 
@@ -494,7 +564,7 @@ package body Codefix_Module is
          Parent_Path => "/" & (-"Tools"),
          Text        => -"_Code Fixing",
          Callback    => Codefix_Handler'Access,
-         Sensitive   => True);
+         Sensitive   => False);
 
       Kernel_Callback.Connect
         (Kernel,
@@ -505,14 +575,20 @@ package body Codefix_Module is
       Register_Command
         (Kernel,
          Command      => "codefix_parse",
-         Params       => Parameter_Names_To_Usage (Parse_Cmd_Parameters),
+         Params       => Parameter_Names_To_Usage (Parse_Cmd_Parameters, 5),
          Description  =>
            -("Parse the output of a tool, and suggests auto-fix possibilities"
              & " whenever possible. This adds small icons in the location"
              & " window, so that the user can click on it to fix compilation"
              & " errors. You should call locations_parse with the same output"
-             & " prior to calling this command."),
-         Minimum_Args => Parse_Cmd_Parameters'Length,
+             & " prior to calling this command."
+             & ASCII.LF
+             & "The regular expression specifies how locations are recognized."
+             & " By default, it matches file:line:column. The various indexes"
+             & " indicate the index of the opening parenthesis that contains"
+             & " the relevant information in the regular expression. Set it"
+             & " to 0 if that information is not available."),
+         Minimum_Args => 2,
          Maximum_Args => Parse_Cmd_Parameters'Length,
          Handler      => Default_Command_Handler'Access);
 
@@ -530,8 +606,15 @@ package body Codefix_Module is
    begin
       if Command = "codefix_parse" then
          Name_Parameters (Data, Parse_Cmd_Parameters);
-         Activate_Codefix (Get_Kernel (Data), Nth_Arg (Data, 1),
-                           Category => Nth_Arg (Data, 2));
+         Activate_Codefix
+           (Get_Kernel (Data),
+            Output               => Nth_Arg (Data, 1),
+            Category             => Nth_Arg (Data, 2),
+            File_Location_Regexp => Nth_Arg (Data, 3, ""),
+            File_Index           => Nth_Arg (Data, 4, -1),
+            Line_Index           => Nth_Arg (Data, 5, -1),
+            Col_Index            => Nth_Arg (Data, 6, -1),
+            Msg_Index            => Nth_Arg (Data, 7, -1));
       end if;
    end Default_Command_Handler;
 
