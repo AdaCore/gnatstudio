@@ -324,7 +324,10 @@ package body Codefix.Text_Manager is
         (Get_File (Current_Text, Mark.File_Name.all).all, Mark));
 
       if Mark.Is_First_Line then
-         Cursor.Line := 0; -- ???
+         Cursor.Line := 0;
+         --  ??? Not logical,
+         --  ??? It is not possible to have a line has zero.
+         --  ??? It's more dangerous when inserting in the begining of the file
       end if;
 
       return Cursor;
