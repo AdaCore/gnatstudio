@@ -207,10 +207,6 @@ package Glide_Kernel.Preferences is
    -- Project Editor --
    --------------------
 
-   Timestamp_Picture : constant Glib.Properties.Property_String :=
-     Register_Property ("Prj_Editor:Timestamp_Picture", "%Y/%m/%d %H:%M:%S");
-   --  Format used to display timestamps in the project editor
-
    Default_Switches_Color : constant Property_Color :=
      Register_Property ("Prj_Editor:Default_Switches_Color", "#777777");
    --  Color to use when displaying switches that are not file specific, but
