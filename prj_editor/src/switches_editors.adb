@@ -2038,13 +2038,26 @@ package body Switches_Editors is
          Value      : Prj.Variable_Value;
          Is_Default : Boolean;
       begin
-         if Files'Length = 0 then
-            Get_Switches (Project, Pkg_Name, "",
-                          Language, Value, Is_Default);
+         if Project = No_Project then
+            if Pkg_Name = "builder" then
+               return Clone (Default_Builder_Switches);
+            elsif Pkg_Name = "compiler" then
+               return Clone (Default_Compiler_Switches);
+            elsif Pkg_Name = "linker" then
+               return Clone (Default_Linker_Switches);
+            else
+               return (1 .. 0 => null);
+            end if;
+
          else
-            --  ??? Should we merge all the switches ?
-            Get_Switches (Project, Pkg_Name, Files (Files'First).all,
-                          Language, Value, Is_Default);
+            if Files'Length = 0 then
+               Get_Switches (Project, Pkg_Name, "",
+                             Language, Value, Is_Default);
+            else
+               --  ??? Should we merge all the switches ?
+               Get_Switches (Project, Pkg_Name, Files (Files'First).all,
+                             Language, Value, Is_Default);
+            end if;
          end if;
          return To_Argument_List (Value);
       end Get_Switches;
@@ -2052,28 +2065,33 @@ package body Switches_Editors is
    begin
       Switches.Project := Project;
 
-      if Files'Length = 0 then
-         declare
-            Langs : Argument_List := Get_Languages (Project);
-         begin
-            Set_Visible_Pages (Switches, Langs);
-            Free (Langs);
-         end;
+      --  Project might be null when we are in the project wizard. In this
+      --  case, we fall back on switches for the default project.
 
-      else
-         for F in Files'Range loop
+      if Project /= No_Project then
+         if Files'Length = 0 then
             declare
-               Lang : aliased String := Get_Language_From_File
-                 (Get_Language_Handler (Switches.Kernel), Files (F).all);
+               Langs : Argument_List := Get_Languages (Project);
             begin
-               To_Lower (Lang);
-
-               Set_Visible_Pages
-                 (Editor    => Switches,
-                  Languages => (1 => Lang'Unchecked_Access),
-                  Show_Only => F /= Files'First);
+               Set_Visible_Pages (Switches, Langs);
+               Free (Langs);
             end;
-         end loop;
+
+         else
+            for F in Files'Range loop
+               declare
+                  Lang : aliased String := Get_Language_From_File
+                    (Get_Language_Handler (Switches.Kernel), Files (F).all);
+               begin
+                  To_Lower (Lang);
+
+                  Set_Visible_Pages
+                    (Editor    => Switches,
+                     Languages => (1 => Lang'Unchecked_Access),
+                  Show_Only => F /= Files'First);
+               end;
+            end loop;
+         end if;
       end if;
 
       --  Set the switches for all the pages
