@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2003                      --
+--                      Copyright (C) 2000-2004                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -233,15 +233,25 @@ package body Language.C is
    -------------------
 
    procedure Format_Buffer
-     (Lang          : access C_Language;
-      Buffer        : String;
-      Replace       : Replace_Text_Callback;
-      From, To      : Natural := 0;
-      Indent_Params : Indent_Parameters := Default_Indent_Parameters)
+     (Lang            : access C_Language;
+      Buffer          : String;
+      Replace         : Replace_Text_Callback;
+      From, To        : Natural := 0;
+      Indent_Params   : Indent_Parameters := Default_Indent_Parameters;
+      Indent_Offset   : Natural := 0;
+      Case_Exceptions : Case_Handling.Casing_Exceptions :=
+        Case_Handling.No_Casing_Exception)
    is
-      pragma Unreferenced (Lang);
+      pragma Unreferenced (Lang, Case_Exceptions);
    begin
-      Analyze_C_Source (Buffer, Indent_Params, True, From, To, Replace);
+      Analyze_C_Source
+        (Buffer,
+         Indent_Params,
+         True,
+         From,
+         To,
+         Replace,
+         Indent_Offset => Indent_Offset);
    end Format_Buffer;
 
    ------------------
