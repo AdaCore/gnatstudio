@@ -64,10 +64,12 @@ package body Vdiff2_Utils is
       Ref     : T_Loc;
       Loc     : T_Loc);
    --  Hightlight the Current Chunk Curr_Chunk where action is Append
+   --  ??? there is no Curr_Chunk parameter, what is Curr_Chunk ?
 
    procedure Show_Diff_Chunk
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Item   : Diff_Head; Curr_Chunk : Diff_Chunk_Access);
+     (Kernel     : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Item       : Diff_Head;
+      Curr_Chunk : Diff_Chunk_Access);
    --  Hightlight the Current Chunk Curr_Chunk
 
    function Add_Line
