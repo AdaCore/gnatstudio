@@ -566,10 +566,14 @@ package Glide_Kernel.Modules is
    Mime_Source_File : constant String := "gps/source";
    --  There are multiple data associated with this type:
    --     first  : full name of the source file to open (use Get_String)
-   --     second : line to display initially (use Get_Int). Ignored if 0
+   --     second : line to display initially (use Get_Int). Ignored if 0 (in
+   --              this case, any existing editor should be left at its current
+   --              line; if there is no existing editor, open the file on line
+   --              1).
    --              if set to -1, close all file editors that correspond
    --              to this file.
-   --     third  : column to display initially (use Get_Int). Ignored if 0
+   --     third  : column to display initially (use Get_Int). Ignored if line
+   --              is 0
    --     fourth : If non 0, the area between third and fourth arguments should
    --              be selected. (use Get_Int).
    --     fifth  : True if the line should be highlighted (use Get_Boolean)
