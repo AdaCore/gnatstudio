@@ -37,10 +37,11 @@ with GVD.Tooltips;
 with String_List_Utils;        use String_List_Utils;
 
 with VCS;                      use VCS;
-with VFS;
+with VFS;                      use VFS;
 
 with Generic_List;
 with Ada.Unchecked_Deallocation;
+with HTables;
 
 package VCS_View_Pkg is
 
@@ -70,7 +71,8 @@ package VCS_View_Pkg is
       VCS_Identifier : VCS_Access;
       Override_Cache : Boolean;
       Force_Display  : Boolean := False;
-      Clear_Logs     : Boolean := False);
+      Clear_Logs     : Boolean := False;
+      Display        : Boolean := True);
    --  Display Status in the explorer.
    --  Status must be freed by the user after calling this function.
    --  If Override_Cache is set to True, then the cache will be updated
@@ -86,13 +88,6 @@ package VCS_View_Pkg is
    function Get_Selected_Files
      (Explorer : VCS_View_Access) return String_List.List;
    --  Return the list of files that are selected.
-
-   procedure Display_String_List
-     (Kernel   : Kernel_Handle;
-      List     : String_List.List;
-      M_Type   : Message_Type := Verbose);
-   --  Convenience procedure to output a String_List.List.
-   --  One of Explorer or Kernel can be Null.
 
    procedure Push_Message
      (Kernel   : Kernel_Handle;
@@ -162,8 +157,35 @@ private
    end record;
    --  The information stored in one line of the VCS explorer.
 
+   No_Data : constant Line_Record :=
+               ((VFS.No_File, Unknown, others => String_List.Null_List),
+                False);
+
    procedure Free (X : in out Line_Record);
    --  Free memory associated with X.
+
+   ----------------------
+   -- Cache Hash-table --
+   ----------------------
+
+   --  This implements a quick way to retrieve an editor which corresponds to
+   --  a given file.
+
+   type Header_Num is range 1 .. 5_000;
+
+   type Element is record
+      Line : Line_Record;
+   end record;
+
+   procedure Free (X : in out Element);
+
+   No_Element : constant Element := (Line => No_Data);
+
+   function Hash (F : Virtual_File) return Header_Num;
+   function Equal (F1, F2 : Virtual_File) return Boolean;
+
+   package Status_Hash is new HTables.Simple_HTable
+     (Header_Num, Element, Free, No_Element, Virtual_File, Hash, Equal);
 
    package Line_Record_List is new Generic_List (Line_Record);
    use Line_Record_List;
@@ -209,7 +231,7 @@ private
       Model  : Gtk_Tree_Store;
 
       Stored_Status   : List;
-      Cached_Status   : List;
+      Cached_Status   : Status_Hash.HTable;
 
       Shown : Boolean := False;
 
