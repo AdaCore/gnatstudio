@@ -43,8 +43,12 @@ with GUI_Utils;                use GUI_Utils;
 with String_Utils;             use String_Utils;
 with Commands;                 use Commands;
 with Ada.Characters.Handling;  use Ada.Characters.Handling;
+with Ada.Exceptions;           use Ada.Exceptions;
+with Traces;                   use Traces;
 
 package body Task_Manager.GUI is
+
+   Me : constant Debug_Handle := Create ("Task_Manager");
 
    ---------------------
    -- Local constants --
@@ -156,6 +160,11 @@ package body Task_Manager.GUI is
       Manager.User.Manager.Referenced_Command := Manager.User.Index;
 
       return False;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         return False;
    end On_Progress_Bar_Button_Pressed;
 
    ----------------------
@@ -172,6 +181,10 @@ package body Task_Manager.GUI is
       if Manager.Manager.Referenced_Command = Manager.Index then
          Pause_Command (Manager.Manager, Manager.Index);
       end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Pause_Command;
 
    -----------------------
@@ -188,6 +201,10 @@ package body Task_Manager.GUI is
       if Manager.Manager.Referenced_Command = Manager.Index then
          Resume_Command (Manager.Manager, Manager.Index);
       end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Resume_Command;
 
    -----------------
@@ -269,9 +286,12 @@ package body Task_Manager.GUI is
 
    procedure Pause_Command
      (Manager : Task_Manager_Access;
-      Index   : Integer)
-   is
+      Index   : Integer) is
    begin
+      if Manager.Queues = null then
+         return;
+      end if;
+
       if Index in Manager.Queues'Range then
          Manager.Queues (Index).Status := Paused;
          Manager.Queues (Index).Need_Refresh := True;
@@ -285,9 +305,12 @@ package body Task_Manager.GUI is
 
    procedure Resume_Command
      (Manager : Task_Manager_Access;
-      Index   : Integer)
-   is
+      Index   : Integer) is
    begin
+      if Manager.Queues = null then
+         return;
+      end if;
+
       if Index in Manager.Queues'Range then
          Manager.Queues (Index).Status := Running;
          Manager.Queues (Index).Need_Refresh := True;
@@ -306,6 +329,10 @@ package body Task_Manager.GUI is
       pragma Unreferenced (Params);
    begin
       Task_Manager_Interface (Object).Manager.GUI := null;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_View_Destroy;
 
    -------------------------------
@@ -322,6 +349,7 @@ package body Task_Manager.GUI is
       Iter  : Gtk_Tree_Iter;
       Model : Gtk_Tree_Model;
       Path  : Gtk_Tree_Path;
+
    begin
       Get_Selected (Get_Selection (Interface.Tree), Model, Iter);
 
@@ -338,6 +366,10 @@ package body Task_Manager.GUI is
 
          Path_Free (Path);
       end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_View_Selection_Changed;
 
    -------------
@@ -363,11 +395,14 @@ package body Task_Manager.GUI is
          Unchecked_Free (View.Lines);
       end if;
 
+      if Manager.Queues = null then
+         return;
+      end if;
+
       --  Clear the progress bars
 
       if Manager.Need_Global_Refresh
         and then Manager.Progress_Area /= null
-        and then Manager.Queues /= null
       then
          for J in Manager.Queues'Range loop
             if Manager.Queues (J).Bar /= null then
@@ -378,14 +413,8 @@ package body Task_Manager.GUI is
          end loop;
       end if;
 
-      if Manager.Queues = null then
-         return;
-      else
-         if View /= null
-           and then View.Lines = null
-         then
-            View.Lines := new Iter_Array (View.Manager.Queues'Range);
-         end if;
+      if View /= null and then View.Lines = null then
+         View.Lines := new Iter_Array (View.Manager.Queues'Range);
       end if;
 
       for J in Manager.Queues'Range loop
@@ -442,6 +471,10 @@ package body Task_Manager.GUI is
       Name_String     : String_Access;
       Fraction        : Gdouble;
    begin
+      if Manager.Queues = null then
+         return;
+      end if;
+
       if not (Index in Manager.Queues'Range)
         or else not Manager.Queues (Index).Need_Refresh
       then
