@@ -76,7 +76,8 @@
 
         <check label="All warnings" switch="-Wall" line="2"
                tip="This enables all the warnings about constructions that some users consider questionable, and that are easy to avoid" />
-        <check label="Overloaded virtual" switch="-Woverloaded-virtual" />
+        <check label="Overloaded virtual" switch="-Woverloaded-virtual"
+               line="2" />
       </switches>
    </tool>
 
@@ -140,4 +141,4 @@
      <regexp>\b(\w+)\s*-&gt;\s*\w+\s*\(</regexp>
    </vsearch-pattern>
 
-</Root> 
+</Root>
