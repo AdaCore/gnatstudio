@@ -65,9 +65,13 @@ package Src_Editor_View is
    --  Internal initialization procedure.
    --  See the section "Creating your own widgets" in the documentation.
 
-   procedure Scroll_To_Cursor_Location (View : access Source_View_Record);
+   procedure Scroll_To_Cursor_Location
+     (View   : access Source_View_Record;
+      Center : Boolean := False);
    --  Scroll the Source View if the position of the insert cursor is not
    --  within the part of the text currently visible.
+   --  If Center is True, the view will scroll so that the cursor line is
+   --  in the middle, otherwise only a minimal scrolling is performed.
 
    procedure Window_To_Buffer_Coords
      (View          : access Source_View_Record;

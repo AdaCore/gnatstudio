@@ -725,7 +725,10 @@ package body Src_Editor_View is
    -- Scroll_To_Cursor_Location --
    -------------------------------
 
-   procedure Scroll_To_Cursor_Location (View : access Source_View_Record) is
+   procedure Scroll_To_Cursor_Location
+     (View   : access Source_View_Record;
+      Center : Boolean := False)
+   is
       Insert_Mark : constant Gtk_Text_Mark := Get_Insert (Get_Buffer (View));
    begin
       --  We want to use the alignments, so that the line appears in the middle
@@ -733,7 +736,7 @@ package body Src_Editor_View is
       --  behavior.
 
       Scroll_To_Mark
-        (View, Insert_Mark, Use_Align => False,
+        (View, Insert_Mark, Use_Align => Center,
          Within_Margin => 0.0, Xalign => 0.5, Yalign => 0.5);
    end Scroll_To_Cursor_Location;
 
