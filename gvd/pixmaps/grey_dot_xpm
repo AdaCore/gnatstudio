@@ -1,0 +1,19 @@
+/* XPM */
+char *grey_dot_xpm[] = {
+/* width height num_colors chars_per_pixel */
+"     9     8      4       1",
+/* colors */
+". c #777777",
+"# c #aaaaaa",
+"a c #ffffff",
+"  c none g none m none s Background",
+/* pixels */
+"         ",
+"         ",
+"         ",
+"         ",
+"   a.    ",
+"  a##.   ",
+"  .##.   ",
+"   ..    "
+};
