@@ -2248,7 +2248,9 @@ package body Project_Properties is
 
          declare
             Current : constant String := Get_Current_Value
-              (Project => Project, Attr => Description, Index   => "");
+              (Project => Project,
+               Attr    => Description,
+               Index   => Attribute_Index);
          begin
             if Attr.Typ = Attribute_As_String then
                Set_Text (Editor.Ent, Current);
@@ -2559,7 +2561,13 @@ package body Project_Properties is
       Iter : Gtk_Tree_Iter := Get_Iter_First (Editor.Model);
    begin
       while Iter /= Null_Iter loop
-         if Get_String (Editor.Model, Iter, 0) = Attribute_Index then
+         if (Editor.Attribute.Case_Sensitive_Index
+             and then Get_String (Editor.Model, Iter, 0) = Attribute_Index)
+           or else
+             (not Editor.Attribute.Case_Sensitive_Index
+              and then Case_Insensitive_Equal
+                (Get_String (Editor.Model, Iter, 0), Attribute_Index))
+         then
             return Get_String (Editor.Model, Iter, 1);
          end if;
          Next (Editor.Model, Iter);
@@ -2660,14 +2668,18 @@ package body Project_Properties is
         Empty_String'Unchecked_Access;
       Typ : constant Attribute_Type := Get_Attribute_Type_From_Description
         (Attr, Index);
-
+      Lower_Attribute_Index : String := Index;
    begin
+      if not Attr.Case_Sensitive_Index then
+         To_Lower (Lower_Attribute_Index);
+      end if;
+
       --  First choice: if the editor is being edited, use that value
       if not Default_Only
         and then not Ignore_Editor
         and then Attr.Editor /= null
       then
-         return Get_Value_As_String (Attr.Editor, Index);
+         return Get_Value_As_String (Attr.Editor, Lower_Attribute_Index);
       end if;
 
       --  Otherwise, we'll have to look in the project, or use the default
@@ -2702,7 +2714,7 @@ package body Project_Properties is
             Attribute => Build (Package_Name   => Attr.Pkg.all,
                                 Attribute_Name => Attr.Name.all),
             Default   => Default_Value.all,
-            Index     => Index);
+            Index     => Lower_Attribute_Index);
       end if;
    end Get_Current_Value;
 
@@ -2763,13 +2775,18 @@ package body Project_Properties is
       end Save_Value;
 
       Attr_Type : Attribute_Type;
+      Lower_Attribute_Index : String := Index;
    begin
+      if not Attr.Case_Sensitive_Index then
+         To_Lower (Lower_Attribute_Index);
+      end if;
+
       --  First choice: if the attribute is being edited, use that value
       if not Ignore_Editor
         and then not Default_Only
         and then Attr.Editor /= null
       then
-         return Get_Value_As_List (Attr.Editor, Index);
+         return Get_Value_As_List (Attr.Editor, Lower_Attribute_Index);
       end if;
 
       --  Else lookup in the project or in the default values
@@ -2785,7 +2802,7 @@ package body Project_Properties is
                  (Project   => Project,
                   Attribute => Build (Package_Name   => Attr.Pkg.all,
                                       Attribute_Name => Attr.Name.all),
-                  Index     => Index);
+                  Index     => Lower_Attribute_Index);
             begin
                if Current'Length /= 0 then
                   return Current;
@@ -2797,7 +2814,8 @@ package body Project_Properties is
 
       --  Else get the default value
 
-      Attr_Type := Get_Attribute_Type_From_Description (Attr, Index);
+      Attr_Type := Get_Attribute_Type_From_Description
+        (Attr, Lower_Attribute_Index);
 
       case Attr_Type.Typ is
          when Attribute_As_String
