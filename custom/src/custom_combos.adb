@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2004                         --
---                            ACT-Europe                             --
+--                     Copyright (C) 2004-2005                       --
+--                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -375,7 +375,7 @@ package body Custom_Combos is
    procedure Custom_Toolbar_Handler
      (Data : in out Callback_Data'Class; Command : String)
    is
-      Kernel : constant Kernel_Handle := Custom_Module_ID.Kernel;
+      Kernel : constant Kernel_Handle := Get_Kernel (Custom_Module_ID.all);
       Widget : Gtk_Widget;
       Inst   : Class_Instance;
    begin
@@ -430,7 +430,7 @@ package body Custom_Combos is
    procedure Custom_Entry_Handler
      (Data : in out Callback_Data'Class; Command : String)
    is
-      Kernel : constant Kernel_Handle  := Custom_Module_ID.Kernel;
+      Kernel : constant Kernel_Handle  := Get_Kernel (Custom_Module_ID.all);
       Class  : constant Class_Type     := New_Class (Kernel, "Combo");
       Inst   : constant Class_Instance := Nth_Arg (Data, 1, Class);
       Combo  : Custom_Combo;
@@ -487,7 +487,7 @@ package body Custom_Combos is
    procedure Button_Handler
      (Data : in out Callback_Data'Class; Command : String)
    is
-      Kernel : constant Kernel_Handle  := Custom_Module_ID.Kernel;
+      Kernel : constant Kernel_Handle  := Get_Kernel (Custom_Module_ID.all);
       Class  : constant Class_Type     := New_Class (Kernel, "Button");
       Inst   : constant Class_Instance := Nth_Arg (Data, 1, Class);
       Button : Gtk_Button;
