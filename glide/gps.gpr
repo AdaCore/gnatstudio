@@ -21,7 +21,7 @@ project Glide is
    Build : Build_Type := External ("Build", "Debug");
 
    package Builder is
-      for Default_Switches ("Ada") use ("-m");
+      for Default_Switches ("Ada") use ("-m", "-a");
    end Builder;
 
    package Compiler is
