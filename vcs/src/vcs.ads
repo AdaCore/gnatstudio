@@ -20,7 +20,7 @@
 
 with Generic_List;
 with String_List;
-with Glib.Object;
+with Glide_Kernel;
 
 package VCS is
 
@@ -211,29 +211,10 @@ package VCS is
    --  Return annotations for the corresponding file.
    --  The result String_List.List with one element for each line.
 
-   --  ??? The following two functions make this package thread-unsafe.
-
-   type Idle_Function is access procedure;
-
-   procedure Register_Idle_Function
-     (Func    : Idle_Function;
-      Timeout : Integer := 200);
-   --  ???
-
-   type Error_Function is access
-     procedure (Error_Message : String;
-                Caller_Widget : Glib.Object.GObject);
-
-   procedure Register_Error_Function
-     (Func : Error_Function;
-      Data : Glib.Object.GObject);
-   --  ???
-
    procedure Set_Error
      (Rep     : access VCS_Record;
       Message : String);
-   --  Register a function that will be called every time that
-   --  an error occurs.
+   --  Display message in the glide console.
 
    --  ??? missing:
    --  init
@@ -241,12 +222,8 @@ package VCS is
    --  other version
 
 private
-
-   The_Error_Function : Error_Function := null;
-   The_Idle_Function  : Idle_Function := null;
-   Caller_Widget      : Glib.Object.GObject;
-   Timeout            : Integer := 200;
-
-   type VCS_Record is abstract tagged limited null record;
+   type VCS_Record is abstract tagged limited record
+      Kernel : Glide_Kernel.Kernel_Handle;
+   end record;
 
 end VCS;
