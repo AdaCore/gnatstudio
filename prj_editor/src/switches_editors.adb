@@ -79,10 +79,12 @@ package body Switches_Editors is
    -- Check buttons --
    -------------------
 
-   type Switch_Check_Widget is new Switch_Basic_Widget_Record with record
-      Check : Gtk.Check_Button.Gtk_Check_Button;
-   end record;
+   type Switch_Check_Widget;
    type Switch_Check_Widget_Access is access all Switch_Check_Widget'Class;
+   type Switch_Check_Widget is new Switch_Basic_Widget_Record with record
+      Check         : Gtk.Check_Button.Gtk_Check_Button;
+      Next_In_Group : Switch_Check_Widget_Access;
+   end record;
 
    function Get_Switch (Switch : Switch_Check_Widget) return String;
    procedure Filter_Switch
@@ -384,18 +386,46 @@ package body Switches_Editors is
    procedure Set_And_Filter_Switch
      (Switch : Switch_Check_Widget; List : in out Argument_List)
    is
+      use Widget_SList;
       Active : Boolean := False;
+      Group  : Widget_SList.GSlist;
+      Tmp    : Switch_Check_Widget_Access;
    begin
-      for L in List'Range loop
-         if List (L) /= null
-           and then List (L).all = Switch.Switch
-         then
-            Active := True;
-            Free (List (L));
-         end if;
-      end loop;
+      if Switch.Check.all in Gtk_Radio_Button_Record'Class then
+         Group := Get_Group (Gtk_Radio_Button (Switch.Check));
 
-      Set_Active (Switch.Check, Active);
+         --  First one in the group => Select it by default, so that if we
+         --  have an item with switch="", this is properly handled:
+         --   <radio label="...">
+         --     <radio-entry label="..." switch="-switch" />
+         --     <radio-entry label="..." switch="" />
+         --   </radio>
+         --  Since each radio button is prepended to the list in group, we need
+         --  to initialize when we see the last in the group, since group is in
+         --  the reverse order of calls to Set_And_Filter_Switch
+         if Get_Data (Last (Group)) = Gtk_Widget (Switch.Check) then
+            Tmp := Switch'Unrestricted_Access;
+            while Tmp /= null loop
+               if Tmp.Switch = "" then
+                  Set_Active (Tmp.Check, True);
+               end if;
+               Tmp := Tmp.Next_In_Group;
+            end loop;
+         end if;
+      end if;
+
+      if Switch.Switch /= "" then
+         for L in List'Range loop
+            if List (L) /= null
+              and then List (L).all = Switch.Switch
+            then
+               Active := True;
+               Free (List (L));
+            end if;
+         end loop;
+
+         Set_Active (Switch.Check, Active);
+      end if;
    end Set_And_Filter_Switch;
 
    ----------------
@@ -1181,11 +1211,16 @@ package body Switches_Editors is
       Box     : access Gtk.Box.Gtk_Box_Record'Class;
       Buttons : Radio_Switch_Array)
    is
-      S    : Switch_Check_Widget_Access;
+      S, Previous    : Switch_Check_Widget_Access;
       Last : Gtk_Radio_Button;
    begin
       for B in Buttons'Range loop
          S := new Switch_Check_Widget (Buttons (B).Switch'Length);
+
+         if Previous /= null then
+            Previous.Next_In_Group := S;
+         end if;
+         Previous := S;
 
          Gtk_New (Last, Group => Last, Label => -Buttons (B).Label.all);
          S.Check     := Gtk_Check_Button (Last);
