@@ -1,5 +1,5 @@
 -----------------------------------------------------------------------
---                 GVD - The Other Display Debugger                  --
+--                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
 --                         Copyright (C) 2000                        --
 --                 Emmanuel Briot and Arnaud Charlet                 --
@@ -86,8 +86,6 @@ package body Odd.Process is
    package Canvas_Event_Handler is new Gtk.Handlers.Return_Callback
      (Debugger_Process_Tab_Record, Boolean);
 
-   package My_Input is new Gdk.Input.Input_Add (Debugger_Process_Tab_Record);
-
    function To_Main_Debug_Window is new
      Unchecked_Conversion (System.Address, Main_Debug_Window_Access);
 
@@ -166,16 +164,6 @@ package body Odd.Process is
    -----------------------
    -- Local Subprograms --
    -----------------------
-
-   function To_Gint is new Unchecked_Conversion (File_Descriptor, Gint);
-
-   procedure Output_Available
-     (Debugger  : My_Input.Data_Access;
-      Source    : Gint;
-      Condition : Gdk.Types.Gdk_Input_Condition);
-   --  Called whenever some output becomes available from the debugger.
-   --  All it does is read all the available data and call the filters
-   --  that were set for the debugger.
 
    procedure Text_Output_Handler
      (Descriptor : GNAT.Expect.Process_Descriptor'Class;
@@ -438,7 +426,7 @@ package body Odd.Process is
 
       --  Do we have a file name or line number indication: if yes, do not
       --  process them immediatly, but wait for the current command to be
-      --  full processed (since Text_Output_Handler is called while a
+      --  fully processed (since Text_Output_Handler is called while a
       --  call to Wait or Wait_Prompt is being processed).
       --  The memory allocated for Load_File_Data is freed in
       --  process_proxies.adb:Process_Post_Processes. ??? Check this comment
@@ -476,33 +464,9 @@ package body Odd.Process is
                 (Process   => Process,
                  File_Name => null,
                  Line      => 1,
-                 Addr    => new String'(Str (Addr_First .. Addr_Last)))));
+                 Addr      => new String' (Str (Addr_First .. Addr_Last)))));
       end if;
    end Text_Output_Handler;
-
-   ----------------------
-   -- Output_Available --
-   ----------------------
-
-   procedure Output_Available
-     (Debugger  : My_Input.Data_Access;
-      Source    : Gint;
-      Condition : Gdk.Types.Gdk_Input_Condition) is
-   begin
-      --  Get everything that is available (and transparently call the
-      --  output filters set for Pid).
-      --  Nothing should be done if we are already processing a command
-      --  (ie somewhere we are blocked on a Wait call for this Debugger),
-      --  since otherwise that Wait won't see the output and will lose some
-      --  output. We don't have to do that anyway, since the other Wait will
-      --  indirectly call the output filter.
-
-      if not Command_In_Process (Get_Process (Debugger.Debugger)) then
-         Empty_Buffer
-           (Get_Process (Debugger.Debugger),
-            At_Least_One => True);
-      end if;
-   end Output_Available;
 
    ---------------------------
    -- Debugger_Button_Press --
@@ -1058,8 +1022,6 @@ package body Odd.Process is
            (Debugger, Command & ASCII.LF, Is_Command => True);
       end if;
 
-      Set_Busy_Cursor (Debugger, True);
-
       --  ??? Should forbid commands that modify the configuration of the
       --  debugger, like "set annotate" for gdb, otherwise we can't be sure
       --  what to expect from the debugger.
@@ -1093,11 +1055,6 @@ package body Odd.Process is
               not Command_In_Process (Get_Process (Debugger.Debugger)),
             Mode => Mode);
       end if;
-
-      --  Put back the standard cursor
-
-      Set_Busy_Cursor (Debugger, False);
-      Unregister_Dialog (Debugger);
    end Process_User_Command;
 
    ---------------------
@@ -1129,8 +1086,7 @@ package body Odd.Process is
                Natural (Get_Num (Tab)),
                Backward);
             Process_User_Command
-              (Tab, Get_Current
-               (Tab.Window.Command_History).Command.all,
+              (Tab, Get_Current (Tab.Window.Command_History).Command.all,
                Output_Command => True,
                Mode => User);
 
