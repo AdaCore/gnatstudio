@@ -401,36 +401,8 @@ $(DUMPEXTS): $(WINDIR)/winDumpExts.c
 
 endif
 
-
-ifeq ($(OBJEXT),o)
-
-$(TCLDLL): $(TCLOBJS) tclres.$(OBJEXT) $(TMPDIR)/tclcyg.def
-	$(CC) -s $(DLL_LDFLAGS) -Wl,--base-file,tcl.base -o $(TCLDLL) $(TCLOBJS) tclres.$(OBJEXT) $(DLL_LDLIBS) -mwindows -Wl,-e,_DllMain@12 -Wl,--image-base,0x66000000
-	$(DLLTOOL) --as=$(AS) --dllname $(TCLDLL) --def $(TMPDIR)/tclcyg.def --base-file tcl.base --output-exp tcl.exp
-	$(CC) -s $(DLL_LDFLAGS) -Wl,--base-file,tcl.base,tcl.exp -o $(TCLDLL) $(TCLOBJS) tclres.$(OBJEXT) $(DLL_LDLIBS) -mwindows -Wl,-e,_DllMain@12 -Wl,--image-base,0x66000000
-	$(DLLTOOL) --as=$(AS) --dllname $(TCLDLL) --def $(TMPDIR)/tclcyg.def --base-file tcl.base --output-exp tcl.exp
-	$(CC) $(DLL_LDFLAGS) -Wl,tcl.exp -o $(TCLDLL) $(TCLOBJS) tclres.$(OBJEXT) $(DLL_LDLIBS) -mwindows -Wl,-e,_DllMain@12 -Wl,--image-base,0x66000000
-
-else
-
-$(TCLDLL): $(TCLOBJS) $(TMPDIR)/tclcyg.def tclres.$(OBJEXT)
-	link.exe -DEBUG $(dlllflags) -dll -def:$(TMPDIR)/tclcyg.def -NODEFAULTLIB \
-		-out:$(TCLDLL) tclres.$(OBJEXT) $(guilibsdll) $(TCLOBJS) \
-		-entry:_DllMainCRTStartup@12
-	mv $(TCLIMPORTLIB) $(TCLLIB)
-endif
-
-
-ifeq ($(OBJEXT),o)
-
-$(TCLLIB): $(TMPDIR)/tclcyg.def 
-	$(DLLTOOL) --as=$(AS) --dllname $(TCLDLL) --def $(TMPDIR)/tclcyg.def --output-lib $(TCLLIB)
-
-else
-
-$(TCLLIB): $(TCLDLL)
-
-endif
+$(TCLLIB): $(TCLOBJS)
+	ar rc $(TCLLIB) $(TCLOBJS)
 
 $(TCLPLUGINLIB): $(TMPDIR)/plugin.def
 	$(DLLTOOL) --as=$(AS) --dllname $(TCLPLUGINDLL) --def $(TMPDIR)/plugin.def --output-lib $(TCLPLUGINLIB)
