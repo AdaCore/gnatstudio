@@ -18,7 +18,7 @@ SRC_DIRS = $(ROOT)/gvd/gnat $(ROOT)/gvd/pixmaps \
 	   $(ROOT)/prj_editor/src \
 	   $(ROOT)/prj_editor/pixmaps \
            $(ROOT)/gbuilder/pixmaps $(ROOT)/gbuilder/src \
-           $(ROOT)/vcs/src \
+           $(ROOT)/vcs/pixmaps\
            $(GTK_PREFIX)/include/gtk-2.0 \
            $(GTK_PREFIX)/lib/gtk-2.0/include \
            $(GTK_PREFIX)/include/glib-2.0 \
@@ -26,6 +26,7 @@ SRC_DIRS = $(ROOT)/gvd/gnat $(ROOT)/gvd/pixmaps \
            $(GTK_PREFIX)/include/pango-1.0 \
            $(GTK_PREFIX)/include/atk-1.0
 
-C_SRCS   = gexpect.c gexpect_tty.c pixmaps.c env.c prj_pixmaps.c gui_pixmaps.c
+C_SRCS   = gexpect.c gexpect_tty.c pixmaps.c env.c prj_pixmaps.c gui_pixmaps.c \
+           pixmaps_vcs.c
 # utils.c does not compile, otherwise, we would not need to set C_SRCS
 
