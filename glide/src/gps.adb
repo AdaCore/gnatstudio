@@ -65,6 +65,7 @@ with DDE;
 with GUI_Utils;                 use GUI_Utils;
 with Remote_Connections;
 with System;
+with VFS;
 
 --  Modules registered by GPS.
 with Ada_Module;
@@ -1114,7 +1115,7 @@ procedure GPS is
       if not File_Opened
         and then not Has_User_Desktop (GPS.Kernel)
       then
-         Open_Html (GPS.Kernel, Create_Html ("gps-welcome.html", GPS.Kernel));
+         Open_Html (GPS.Kernel, VFS.Create_From_Base ("gps-welcome.html"));
          Maximize_Children (Get_MDI (GPS.Kernel));
       end if;
 
