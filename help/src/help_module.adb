@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with Glib;                         use Glib;
+with Glib.Convert;                 use Glib.Convert;
 with Glib.Object;                  use Glib.Object;
 with Glib.Xml_Int;                 use Glib.Xml_Int;
 with Glib.Values;                  use Glib.Values;
@@ -52,6 +53,7 @@ with File_Utils;                   use File_Utils;
 with Gtk.Clipboard;                use Gtk.Clipboard;
 with Generic_List;
 with Ada.Unchecked_Deallocation;
+with Ada.Strings.Fixed;            use Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;        use Ada.Strings.Unbounded;
 with Histories;                    use Histories;
 with Glide_Kernel.Scripts;         use Glide_Kernel.Scripts;
@@ -71,8 +73,11 @@ package body Help_Module is
 
    Url_Cst    : aliased constant String := "URL";
    Anchor_Cst : aliased constant String := "anchor";
+   Dir_Cst    : aliased constant String := "directory";
    Help_Cmd_Parameters : constant Cst_Argument_List :=
      (1 => Url_Cst'Access, 2 => Anchor_Cst'Access);
+   Add_Doc_Cmd_Parameters : constant Cst_Argument_List :=
+     (1 => Dir_Cst'Access);
 
    type Help_File_Record is record
       File  : VFS.Virtual_File;
@@ -105,6 +110,8 @@ package body Help_Module is
    type Help_Module_ID_Record is new Glide_Kernel.Module_ID_Record with record
       Categories : Help_Category_List.List;
       --  The registered help files
+
+      Doc_Path : GNAT.OS_Lib.String_Access;
    end record;
    type Help_Module_ID_Access is access all Help_Module_ID_Record'Class;
 
@@ -244,6 +251,55 @@ package body Help_Module is
    end record;
    procedure Activate (Callback : access On_Recent; Item : String);
 
+   function Create_Html
+     (Name   : Glib.UTF8_String;
+      Kernel : access Kernel_Handle_Record'Class) return VFS.Virtual_File;
+   --  Filename can be a full name or a base name, and can include ancors (e.g
+   --  "foo.html#anchor").
+
+   -----------------
+   -- Create_Html --
+   -----------------
+
+   function Create_Html
+     (Name   : Glib.UTF8_String;
+      Kernel : access Kernel_Handle_Record'Class) return VFS.Virtual_File
+   is
+      --  We still pass Kernel as a parameter so that we can easily one day
+      --  query the module from the kernel instead of keeping a global
+      --  variable to store it.
+      pragma Unreferenced (Kernel);
+      Full : GNAT.OS_Lib.String_Access;
+      Anchor : Natural := Index (Name, "#");
+   begin
+      if Is_Absolute_Path_Or_URL (Name) then
+         return Create (Full_Filename => Name);
+      end if;
+
+      if Anchor = 0 then
+         Anchor := Name'Last + 1;
+      end if;
+
+      Full := Locate_Regular_File
+        (Locale_From_UTF8 (Name (Name'First .. Anchor - 1)),
+         Help_Module_ID.Doc_Path.all);
+
+      if Full = null then
+         return VFS.No_File;
+      else
+         declare
+            F : constant String := Locale_To_UTF8 (Full.all);
+         begin
+            Free (Full);
+            if Anchor <= Name'Last then
+               return Create (Full_Filename => F & Name (Anchor .. Name'Last));
+            else
+               return Create (Full_Filename => F);
+            end if;
+         end;
+      end if;
+   end Create_Html;
+
    -------------
    -- Destroy --
    -------------
@@ -251,6 +307,7 @@ package body Help_Module is
    procedure Destroy (Module : in out Help_Module_ID_Record) is
    begin
       Free (Module.Categories);
+      Free (Module.Doc_Path);
    end Destroy;
 
    ---------------------
@@ -258,15 +315,25 @@ package body Help_Module is
    ---------------------
 
    procedure Command_Handler
-     (Data    : in out Callback_Data'Class; Command : String)
-   is
-      pragma Unreferenced (Command);
+     (Data    : in out Callback_Data'Class; Command : String) is
    begin
-      Name_Parameters (Data, Help_Cmd_Parameters);
-      Open_HTML_File
-        (Get_Kernel (Data),
-         File   => Create_Html (Nth_Arg (Data, 1), Get_Kernel (Data)),
-         Anchor => Nth_Arg (Data, 2, Default => ""));
+      if Command = "html_browse" then
+         Name_Parameters (Data, Help_Cmd_Parameters);
+         Open_HTML_File
+           (Get_Kernel (Data),
+            File   => Create_Html (Nth_Arg (Data, 1), Get_Kernel (Data)),
+            Anchor => Nth_Arg (Data, 2, Default => ""));
+
+      elsif Command = "add_doc_directory" then
+         declare
+            Old : GNAT.OS_Lib.String_Access := Help_Module_ID.Doc_Path;
+         begin
+            Help_Module_ID.Doc_Path := new String'
+              (Nth_Arg (Data, 1) & Path_Separator & Old.all);
+            Free (Old);
+         end;
+
+      end if;
    end Command_Handler;
 
    --------------
@@ -1144,21 +1211,14 @@ package body Help_Module is
    -----------------------
 
    procedure Parse_Index_Files (Kernel : access Kernel_Handle_Record'Class) is
-      Top  : constant Glide_Window := Glide_Window
-        (Get_Main_Window (Kernel));
-      Path : GNAT.OS_Lib.String_Access := Getenv ("GPS_DOC_PATH");
       Iter : Path_Iterator;
       Node, Tmp, Field : Node_Ptr;
    begin
-      if Path = null or else Path.all = "" then
-         Free (Path);
-         Path := new String'(Top.Prefix_Directory.all & "/doc/gps/html/");
-      end if;
-
-      Iter := Start (Path.all);
-      while not At_End (Path.all, Iter) loop
+      Iter := Start (Help_Module_ID.Doc_Path.all);
+      while not At_End (Help_Module_ID.Doc_Path.all, Iter) loop
          declare
-            Dir : constant String := Current (Path.all, Iter);
+            Dir : constant String :=
+              Current (Help_Module_ID.Doc_Path.all, Iter);
             Full : constant String := Name_As_Directory (Dir) & Index_File;
             Name, Descr, Menu, Cat : String_Ptr;
             Empty : aliased String := "";
@@ -1217,10 +1277,8 @@ package body Help_Module is
             end if;
          end;
 
-         Iter := Next (Path.all, Iter);
+         Iter := Next (Help_Module_ID.Doc_Path.all, Iter);
       end loop;
-
-      Free (Path);
    end Parse_Index_Files;
 
    ---------------------
@@ -1247,6 +1305,15 @@ package body Help_Module is
          Mime_Handler            => Mime_Action'Access);
       Glide_Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
+
+      Help_Module_ID.Doc_Path := Getenv ("GPS_DOC_PATH");
+      if Help_Module_ID.Doc_Path = null
+        or else Help_Module_ID.Doc_Path.all = ""
+      then
+         Free (Help_Module_ID.Doc_Path);
+         Help_Module_ID.Doc_Path :=
+           new String'(Get_System_Dir (Kernel) & "/doc/gps/html/");
+      end if;
 
       Register_Search_Function
         (Kernel => Kernel,
@@ -1289,6 +1356,14 @@ package body Help_Module is
          Description  => -"Launch a HTML viewer for URL at specified anchor.",
          Minimum_Args => 1,
          Maximum_Args => 2,
+         Handler      => Command_Handler'Access);
+      Register_Command
+        (Kernel,
+         Command      => "add_doc_directory",
+         Params       => Parameter_Names_To_Usage (Add_Doc_Cmd_Parameters),
+         Description  => -"Launch a HTML viewer for URL at specified anchor.",
+         Minimum_Args => Add_Doc_Cmd_Parameters'Length,
+         Maximum_Args => Add_Doc_Cmd_Parameters'Length,
          Handler      => Command_Handler'Access);
 
       declare
