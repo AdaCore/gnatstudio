@@ -1528,6 +1528,7 @@ package body Src_Editor_Buffer.Line_Information is
       Iter       : Gtk_Text_Iter;
 
       Command    : Unhide_Editable_Lines_Command;
+      Number_Of_Lines_Folded : Natural := 0;
    begin
       Get_Iter_At_Mark (Buffer, Iter, Mark);
 
@@ -1600,17 +1601,19 @@ package body Src_Editor_Buffer.Line_Information is
             Delete (Buffer, Start_Iter, End_Iter);
             Buffer.Inserting := False;
             Buffer.Modifying_Editable_Lines := True;
+
+            Number_Of_Lines_Folded := Number_Of_Lines_Folded + 1;
          end if;
       end loop;
 
-      Buffer.Hidden_Lines := Buffer.Hidden_Lines + Natural (Number) + 1;
+      Buffer.Hidden_Lines := Buffer.Hidden_Lines + Number_Of_Lines_Folded;
 
       --  Shift up editable lines.
 
       for J in Line_End + 1 .. Editable_Lines'Last loop
          if Editable_Lines (J).Where = In_Buffer then
             Editable_Lines (J).Buffer_Line := Editable_Lines (J).Buffer_Line
-              - Buffer_Line_Type (Number) - 1;
+              - Buffer_Line_Type (Number_Of_Lines_Folded);
          end if;
       end loop;
 
