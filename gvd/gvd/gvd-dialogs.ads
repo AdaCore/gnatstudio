@@ -25,7 +25,6 @@ with Gtk.Clist; use Gtk.Clist;
 with Gtk.Hbutton_Box; use Gtk.Hbutton_Box;
 with Gtk.Button; use Gtk.Button;
 with Gtk.List; use Gtk.List;
-with Gtk.Viewport; use Gtk.Viewport;
 with Gtk.Window; use Gtk.Window;
 with Gtk.Enums;
 with Debugger; use Debugger;
@@ -180,7 +179,6 @@ private
    type History_Dialog_Record is new Gtk_Dialog_Record with record
       Vbox19 : Gtk_Vbox;
       Scrolledwindow11 : Gtk_Scrolled_Window;
-      Viewport2 : Gtk_Viewport;
       List : Gtk_List;
       Hbuttonbox11 : Gtk_Hbutton_Box;
       Replay_Selection : Gtk_Button;

@@ -479,13 +479,9 @@ package body Odd.Dialogs is
       Set_Policy
         (History_Dialog.Scrolledwindow11, Policy_Automatic, Policy_Automatic);
 
-      Gtk_New (History_Dialog.Viewport2);
-      Add (History_Dialog.Scrolledwindow11, History_Dialog.Viewport2);
-      Set_Shadow_Type (History_Dialog.Viewport2, Shadow_In);
-
       Gtk_New (History_Dialog.List);
-      Add (History_Dialog.Viewport2, History_Dialog.List);
-      Set_Selection_Mode (History_Dialog.List, Selection_Multiple);
+      Add_With_Viewport (History_Dialog.Scrolledwindow11, History_Dialog.List);
+      Set_Selection_Mode (History_Dialog.List, Selection_Extended);
 
       Gtk_New (History_Dialog.Hbuttonbox11);
       Pack_Start
