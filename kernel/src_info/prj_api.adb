@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                          G L I D E  I I                           --
 --                                                                   --
---                        Copyright (C) 2001                         --
+--                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GLIDE is free software; you can redistribute it and/or modify  it --
@@ -771,13 +771,13 @@ package body Prj_API is
       --  Do we have some file-specific switches ?
       if Pkg /= No_Package and then File /= "" then
          The_Array := Value_Of
-             (Name      => Name_Switches,
-              In_Arrays => Packages.Table (Pkg).Decl.Arrays);
+           (Name      => Name_Switches,
+            In_Arrays => Packages.Table (Pkg).Decl.Arrays);
          Name_Len := File'Length;
          Name_Buffer (1 .. Name_Len) := File;
          Var_Value := Value_Of
-             (Index    => Name_Find,
-              In_Array => The_Array);
+           (Index    => Name_Find,
+            In_Array => The_Array);
 
          if Var_Value /= Nil_Variable_Value then
             Value := Var_Value;
@@ -794,11 +794,11 @@ package body Prj_API is
          --  Indexed by the language ?
 
          The_Array := Value_Of
-             (Name      => Name_Default_Switches,
-              In_Arrays => Packages.Table (Pkg).Decl.Arrays);
+           (Name      => Name_Default_Switches,
+            In_Arrays => Packages.Table (Pkg).Decl.Arrays);
          Var_Value := Value_Of
-             (Index    => Language,
-              In_Array => The_Array);
+           (Index    => Language,
+            In_Array => The_Array);
 
          if Var_Value /= Nil_Variable_Value then
             Value := Var_Value;
@@ -816,7 +816,7 @@ package body Prj_API is
    ------------
 
    function Length (Value : Variable_Value) return Integer is
-      V : String_List_Id;
+      V   : String_List_Id;
       Num : Natural := 0;
    begin
       case Value.Kind is
@@ -828,10 +828,12 @@ package body Prj_API is
 
          when List =>
             V := Value.Values;
+
             while V /= Nil_String loop
                Num := Num + 1;
                V := String_Elements.Table (V).Next;
             end loop;
+
             return Num;
       end case;
    end Length;
