@@ -42,14 +42,8 @@ package Task_Manager.GUI is
       Manager : Task_Manager_Access);
    --  Internal initialization procedure.
 
-   procedure Refresh (View : access Task_Manager_Interface_Record'Class);
+   procedure Refresh (Manager : Task_Manager_Access);
    --  Refresh the information in View from the Task_Manager.
-
-   procedure Refresh_Command
-     (View  : access Task_Manager_Interface_Record'Class;
-      Index : Integer);
-   --  Refresh only one command line.
-   --  Index corresponds to the index of the command in View.Manager.Queues
 
 private
 
