@@ -22,13 +22,9 @@ with Glib.Object;
 with Gtk.Handlers;
 with Gtk.Cell_Renderer_Toggle; use Gtk.Cell_Renderer_Toggle;
 with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
-with Gtk.Tree_Model;
 with Gtk.Tree_Store;
 
 package Gui_Support is
-
-   function Boolean_Get is new Gtk.Tree_Model.Model_Data_Get (Boolean);
-   --  ??? Should be shared with vcs_view_pkg.adb
 
    package Tree_Model_Callback is new Gtk.Handlers.User_Callback
      (Glib.Object.GObject_Record, Glib.Gint);
