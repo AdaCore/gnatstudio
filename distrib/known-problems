@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 2.0.2
 
+- D803-006 No cross-reference to bodies for separate Ada entities
+  Problem:    If the body of a subprogram is defined through a separate entity,
+              GPS doesn't go to the actual body of the entity, but only to the
+              stub that contains the "is separate".
+  Workaround: Compile explicitely the file that contains the separate body,
+              with shift-F4
+
 - D722-009 Window unmaximized unexpectedly under Windows
   Problem:    Under windows only, when using a floating and maximized window
               (e.g. Shell window or source editor), some actions will cause
