@@ -1040,7 +1040,7 @@ package body Debugger.Gdb is
       end if;
 
       if Get_Pref (GVD_Prefs, Break_On_Exception) then
-         Break_Exception (Debugger);
+         Break_Exception (Debugger, Mode => Visible);
       end if;
 
       Set_Parse_File_Name (Get_Process (Debugger), False);
