@@ -150,9 +150,15 @@ package body Codefix.Formal_Errors is
 
       if Str_Red = "" then
          Replace_Word (New_Extract, Message, Str_Expected);
+         Set_Caption
+           (New_Extract,
+            "Replace missplelled word by """ & Str_Expected & """");
       else
          Replace_Word
            (New_Extract, Message, Str_Expected, "^(" & Str_Red & ")");
+         Set_Caption
+           (New_Extract,
+            "Replace """ & Str_Red & """ by """ & Str_Expected & """");
       end if;
 
       return New_Extract;
@@ -205,6 +211,10 @@ package body Codefix.Formal_Errors is
          First_String,
          "^(" & Second_String & ")");
 
+      Set_Caption
+        (New_Extract,
+         "Invert """ & First_String & """ and """ & Second_String & """");
+
       return New_Extract;
    end Wrong_Order;
 
@@ -251,6 +261,11 @@ package body Codefix.Formal_Errors is
       end if;
 
       Add_Word (New_Extract, Message, New_Str.all);
+
+      Set_Caption
+        (New_Extract,
+         "Add expected word """ & New_Str.all & """");
+
       Free (New_Str);
 
       return New_Extract;
@@ -296,6 +311,11 @@ package body Codefix.Formal_Errors is
         (New_Extract,
          New_Str (1 .. Message.Col - 1) &
            New_Str (Message.Col + String_Unexpected'Length .. New_Str'Length));
+
+      Set_Caption
+        (New_Extract,
+         "Remove unexpected word """ & String_Unexpected & """");
+
       Free (New_Str);
 
       return New_Extract;
@@ -331,10 +351,11 @@ package body Codefix.Formal_Errors is
          end case;
       end Closest;
 
-      New_Extract  : Extract;
-      Str_Red      : Dynamic_String;
-      White_String : constant String (1 .. 256) := (others => ' ');
-      Line_Cursor  : File_Cursor := File_Cursor (Message);
+      New_Extract   : Extract;
+      Str_Red       : Dynamic_String;
+      White_String  : constant String (1 .. 256) := (others => ' ');
+      Line_Cursor   : File_Cursor := File_Cursor (Message);
+      Column_Chosen : Natural;
 
    begin
       Line_Cursor.Col := 1;
@@ -342,17 +363,20 @@ package body Codefix.Formal_Errors is
       Str_Red := new String'(Get_String (New_Extract));
 
       if Column_Expected = 0 then
-         Set_String
-           (New_Extract,
-            White_String (1 .. Closest (Message.Col) - 1) &
-              Str_Red (Message.Col .. Str_Red'Length));
-
+         Column_Chosen := Closest (Message.Col);
       else
-         Set_String
-           (New_Extract,
-            White_String (1 .. Column_Expected - 1) &
-              Str_Red (Message.Col .. Str_Red'Length));
+         Column_Chosen := Column_Expected;
       end if;
+
+      Set_String
+        (New_Extract,
+         White_String (1 .. Column_Chosen - 1) &
+           Str_Red (Message.Col .. Str_Red'Length));
+
+      Set_Caption
+        (New_Extract,
+         "Move begin of instruction to column " &
+           Integer'Image (Column_Chosen));
 
       Free (Str_Red);
       return New_Extract;
@@ -374,6 +398,12 @@ package body Codefix.Formal_Errors is
         (New_Extract,
          New_Cursor,
          "with " & Missing_Clause & "; use " & Missing_Clause & ";");
+
+      Set_Caption
+        (New_Extract,
+         "Add with and use clause for package """ & Missing_Clause &
+           """at the begining of the file");
+
       return New_Extract;
    end With_Clause_Missing;
 
@@ -389,6 +419,10 @@ package body Codefix.Formal_Errors is
    is
       function To_Correct_Case (Str : String) return String;
       --  Return the string after having re-cased it (with Word_Case).
+
+      ---------------------
+      -- To_Correct_Case --
+      ---------------------
 
       function To_Correct_Case (Str : String) return String is
          New_String : String (Str'Range);
@@ -418,6 +452,7 @@ package body Codefix.Formal_Errors is
       Matches     : Match_Array (0 .. 1);
       Size        : Integer;
       Line        : Dynamic_String;
+      Word_Chosen : Dynamic_String;
 
    begin
       Cursor_Line.Col := 1;
@@ -428,17 +463,22 @@ package body Codefix.Formal_Errors is
       Size := Matches (1).Last - Matches (1).First + 1;
 
       if Correct_Word /= "" then
-         Replace_Word
-           (New_Extract,
-            Cursor,
-            Correct_Word (Correct_Word'Last - Size + 1 .. Correct_Word'Last));
+         Word_Chosen := new String'(Correct_Word);
       else
-         Replace_Word
+         Word_Chosen := new String'
+           (To_Correct_Case (Line.all (Matches (1).First .. Matches (1).Last)));
+      end if;
+
+      Replace_Word
            (New_Extract,
             Cursor,
-            To_Correct_Case (Line.all
-                             (Matches (1).First .. Matches (1).Last)));
-      end if;
+            Word_Chosen.all (Word_Chosen.all'Last - Size + 1 .. Word_Chosen.all'Last));
+
+      Set_Caption
+        (New_Extract,
+         "Replace bad-cased word by """ & Word_Chosen.all & """");
+
+      Free (Word_Chosen);
 
       return New_Extract;
    end Bad_Casing;
@@ -756,21 +796,66 @@ package body Codefix.Formal_Errors is
 
       --  begin of Not_Referenced
 
+      New_Extract   : Extract;
       New_Solutions : Solution_List;
 
 
    begin
       case Category is
          when Cat_Variable =>
-            Append (New_Solutions, Delete_Var);
-         when Cat_Function | Cat_Procedure | Cat_Type =>
-            Append (New_Solutions, Delete_Entity);
-            Append (New_Solutions, Add_Pragma);
+
+            New_Extract := Delete_Var;
+            Set_Caption
+              (New_Extract,
+               "Delete variable """ & Name & """");
+            Append (New_Solutions, New_Extract);
+
+         when Cat_Function | Cat_Procedure =>
+
+            New_Extract := Delete_Entity;
+            Set_Caption
+              (New_Extract,
+               "Delete subprogram """ & Name & """");
+            Append (New_Solutions, New_Extract);
+
+            New_Extract := Add_Pragma;
+            Set_Caption
+              (New_Extract,
+               "Add pragma Unreferenced to subprogram """ & Name & """");
+            Append (New_Solutions, New_Extract);
+
+         when Cat_Type =>
+
+            New_Extract := Delete_Entity;
+            Set_Caption
+              (New_Extract,
+               "Delete subprogram """ & Name & """");
+            Append (New_Solutions, New_Extract);
+
+            New_Extract := Add_Pragma;
+            Set_Caption
+              (New_Extract,
+               "Add pragma Unreferenced to subprogram """ & Name & """");
+            Append (New_Solutions, New_Extract);
+
          when Cat_Local_Variable =>
-            Append (New_Solutions, Add_Parameter_Pragma);
+
+            New_Extract := Add_Parameter_Pragma;
+            Set_Caption
+              (New_Extract,
+               "Add pragma Unreferenced to formal parameter """ & Name & """");
+            Append (New_Solutions, New_Extract);
+
          when Cat_With =>
-            Append (New_Solutions, Delete_With);
+
+            New_Extract := Delete_With;
+            Set_Caption
+              (New_Extract,
+               "Delete with and use clause for unit """ & Name & """");
+            Append (New_Solutions, New_Extract);
+
          when others =>
+
             Raise_Exception
               (Codefix_Panic'Identity,
                "Wrong category given : " & Language_Category'Image (Category));
