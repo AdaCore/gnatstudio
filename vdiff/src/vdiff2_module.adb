@@ -29,7 +29,7 @@ with Gtk.Window;                use Gtk.Window;
 with Gdk.Pixmap;                use Gdk.Pixmap;
 with Gdk.Bitmap;                use Gdk.Bitmap;
 
-with Pixmaps_IDE;               use Pixmaps_IDE;
+with Pixmaps_Vdiff2;            use Pixmaps_Vdiff2;
 with Glide_Kernel;              use Glide_Kernel;
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
@@ -38,18 +38,18 @@ with Basic_Types;               use Basic_Types;
 with Diff_Utils;                use Diff_Utils;
 
 with Vdiff2_Utils;              use Vdiff2_Utils;
-with Vdiff2_Command;              use Vdiff2_Command;
+with Vdiff2_Command;            use Vdiff2_Command;
 with OS_Utils;                  use OS_Utils;
 
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Ada.Exceptions;            use Ada.Exceptions;
 with Traces;                    use Traces;
 
-with GNAT.OS_Lib; use GNAT.OS_Lib;
-with Gdk.Bitmap; use Gdk.Bitmap;
-with Gtk.Image; use Gtk.Image;
-with Gdk.Color; use Gdk.Color;
-with Commands; use Commands;
+with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with Gdk.Bitmap;                use Gdk.Bitmap;
+with Gtk.Image;                 use Gtk.Image;
+with Gdk.Color;                 use Gdk.Color;
+with Commands;                  use Commands;
 
 
 package body Vdiff2_Module is
@@ -88,6 +88,9 @@ package body Vdiff2_Module is
       Command_Next  : Diff_Command_Access;
       Command_First : Diff_Command_Access;
       Command_Last  : Diff_Command_Access;
+      Command_Close : Diff_Command_Access;
+      Command_Reload      : Diff_Command_Access;
+      Command_Unhighlight : Diff_Command_Access;
    end record;
    type VDiff2_Module is access all VDiff2_Module_Record'Class;
 
@@ -149,7 +152,7 @@ package body Vdiff2_Module is
                return;
             end if;
 
-            Result := Diff (Kernel, File1, File2, File3);
+            Result := Diff3 (Kernel, File1, File2, File3);
 
             if Result = null then
                Button := Message_Dialog
@@ -523,22 +526,42 @@ package body Vdiff2_Module is
       VDiff2_Module (Vdiff_Module_ID).Kernel := Kernel_Handle (Kernel);
       VDiff2_Module (Vdiff_Module_ID).List_Diff :=
         new Diff_Occurrence_List.List;
+
       Create (VDiff2_Module (Vdiff_Module_ID).Command_Last,
               VDiff2_Module (Vdiff_Module_ID).Kernel,
               VDiff2_Module (Vdiff_Module_ID).List_Diff,
               Last_Difference'Access);
+
       Create (VDiff2_Module (Vdiff_Module_ID).Command_First,
               VDiff2_Module (Vdiff_Module_ID).Kernel,
               VDiff2_Module (Vdiff_Module_ID).List_Diff,
               First_Difference'Access);
+
       Create (VDiff2_Module (Vdiff_Module_ID).Command_Next,
               VDiff2_Module (Vdiff_Module_ID).Kernel,
               VDiff2_Module (Vdiff_Module_ID).List_Diff,
               Next_Difference'Access);
+
       Create (VDiff2_Module (Vdiff_Module_ID).Command_Prev,
               VDiff2_Module (Vdiff_Module_ID).Kernel,
               VDiff2_Module (Vdiff_Module_ID).List_Diff,
               Prev_Difference'Access);
+
+      Create (VDiff2_Module (Vdiff_Module_ID).Command_Close,
+              VDiff2_Module (Vdiff_Module_ID).Kernel,
+              VDiff2_Module (Vdiff_Module_ID).List_Diff,
+              Close_Difference'Access);
+
+      Create (VDiff2_Module (Vdiff_Module_ID).Command_Reload,
+              VDiff2_Module (Vdiff_Module_ID).Kernel,
+              VDiff2_Module (Vdiff_Module_ID).List_Diff,
+              Reload_Difference'Access);
+
+      Create (VDiff2_Module (Vdiff_Module_ID).Command_Unhighlight,
+              VDiff2_Module (Vdiff_Module_ID).Kernel,
+              VDiff2_Module (Vdiff_Module_ID).List_Diff,
+              Unhighlight_Difference'Access);
+
       Register_Module
         (Module       => Vdiff_Module_ID,
          Kernel       => Kernel,
@@ -576,19 +599,41 @@ package body Vdiff2_Module is
                        Image);
 
       Create_From_Xpm_D
-        (PixMap, Get_Window (Window), Mask, Null_Color, trash_xpm);
+        (PixMap, Get_Window (Window), Mask, Null_Color, last_xpm);
       Gtk_New (Image, PixMap, Mask);
       Register_Button (Kernel, -"Go to the last difference",
                        Command_Access
                          (VDiff2_Module (Vdiff_Module_ID).Command_Last),
                        Image);
-
       Create_From_Xpm_D
-        (PixMap, Get_Window (Window), Mask, Null_Color, paint_xpm);
+        (PixMap, Get_Window (Window), Mask, Null_Color, first_xpm);
       Gtk_New (Image, PixMap, Mask);
       Register_Button (Kernel, -"Go to the First difference",
                        Command_Access
                          (VDiff2_Module (Vdiff_Module_ID).Command_First),
+                       Image);
+
+      Create_From_Xpm_D
+        (PixMap, Get_Window (Window), Mask, Null_Color, reload_xpm);
+      Gtk_New (Image, PixMap, Mask);
+      Register_Button (Kernel, -"Recalculate Differences",
+                       Command_Access
+                         (VDiff2_Module (Vdiff_Module_ID).Command_Reload),
+                       Image);
+      Create_From_Xpm_D
+        (PixMap, Get_Window (Window), Mask, Null_Color, close_xpm);
+      Gtk_New (Image, PixMap, Mask);
+      Register_Button (Kernel, -"Go to the First difference",
+                       Command_Access
+                         (VDiff2_Module (Vdiff_Module_ID).Command_Close),
+                       Image);
+
+      Create_From_Xpm_D
+        (PixMap, Get_Window (Window), Mask, Null_Color, unhighlight_xpm);
+      Gtk_New (Image, PixMap, Mask);
+      Register_Button (Kernel, -"remove highlighting",
+                       Command_Access
+                         (VDiff2_Module (Vdiff_Module_ID).Command_Unhighlight),
                        Image);
    end Register_Module;
 
