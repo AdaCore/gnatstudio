@@ -23,9 +23,11 @@ with Gtk.Paned; use Gtk.Paned;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 with Gtk.Viewport; use Gtk.Viewport;
 with Gtk.Notebook; use Gtk.Notebook;
-with Gtk.Text; use Gtk.Text;
+with Gtk.Clist; use Gtk.Clist;
 with Gtk.Label; use Gtk.Label;
+with Gtk.Text; use Gtk.Text;
 with Gtk.Button; use Gtk.Button;
+with Gtk.Object; use Gtk.Object;
 with Gtkada.Canvas; use Gtkada.Canvas;
 with Odd.Process;
 with Glib;
@@ -46,9 +48,10 @@ package Process_Tab_Pkg is
       Vpaned6 : Gtk_Vpaned;
       Scrolledwindow9 : Gtk_Scrolled_Window;
       Data_Canvas : Interactive_Canvas;
-      Notebook3 : Gtk_Notebook;
+      Thread_Notebook : Gtk_Notebook;
       Scrolledwindow8 : Gtk_Scrolled_Window;
-      Editor_Text : Gtk_Text;
+      Editor_Text : Gtk_Clist;
+      Label54 : Gtk_Label;
       Label52 : Gtk_Label;
       Scrolledwindow7 : Gtk_Scrolled_Window;
       Debugger_Text : Gtk_Text;
@@ -59,5 +62,7 @@ package Process_Tab_Pkg is
    procedure Initialize (Process_Tab : access Process_Tab_Record'Class);
 
    Process_Tab : Process_Tab_Access;
+
+   package Process_User_Data is new User_Data (Process_Tab_Access);
 
 end Process_Tab_Pkg;
