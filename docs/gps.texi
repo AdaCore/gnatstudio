@@ -6815,6 +6815,13 @@ Unix systems), you can use an external terminal command, e.g:
 xterm -geo 80x50 -exe vi +%l %f
 @end smallexample
 
+On Windows, it may be necessary to use cmd.exe to invoke the external
+editor.  For example, to invoke Windows Notepad as a custom editor, use:
+
+@smallexample
+cmd /c notepad.exe %f
+@end smallexample
+
 The following substitutions are provided:
 @table @code
 @item %l
