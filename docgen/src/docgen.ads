@@ -30,7 +30,6 @@ with List_Utils;                use List_Utils;
 with Src_Info;                  use Src_Info;
 with Src_Info.Queries;          use Src_Info.Queries;
 with Glide_Kernel;              use Glide_Kernel;
-with Basic_Types;
 with VFS;
 with Generic_List;
 with Projects;
@@ -134,17 +133,27 @@ package Docgen is
    --  A simplified list of possible entity types
 
    type Entity_List_Information is record
-      Kind              : Entity_Type;
-      Name              : GNAT.OS_Lib.String_Access;
-      Entity            : Src_Info.Queries.Entity_Information;
-      Is_Private        : Boolean;
+      Kind                : Entity_Type;
+      Name                : GNAT.OS_Lib.String_Access;
+      Entity              : Src_Info.Queries.Entity_Information;
+      Is_Private          : Boolean;
       --  The following items won't be used in the index lists
-      Line_In_Body      : Src_Info.File_Location;
-      --  Calls_List, Called_List: only used for subprograms
-      Calls_List        : Type_Reference_List.List;
-      Called_List       : Type_Reference_List.List;
+      Line_In_Body        : Src_Info.File_Location;
+      Calls_List          : Type_Reference_List.List;
+      Called_List         : Type_Reference_List.List;
+      Public_Declaration  : Src_Info.Queries.Entity_Information
+        := No_Entity_Information;
    end record;
    --  Description of an entity
+   --  Calls_List, Called_List: only used for subprograms
+   --  Public_Declaration: when a public type has at least one private field,
+   --  we need 2 Entity_List_Information: one for the public type itself and
+   --  one in order to generate doc for the private part. This last element
+   --  need to have a "pointer" on the public declaration. For all other
+   --  entities (subprograms, exceptions, types without private fields ...),
+   --  the field Public_Declaration has the value No_Entity_Information.
+   --  Line_In_Body: for types with private fields, it refers to the public
+   --  declaration.
 
    type Entity_List_Information_Handle is access Entity_List_Information;
 
@@ -180,7 +189,6 @@ package Docgen is
      new Sort (Type_Entity_List, "<" => Compare_Elements_Name);
    --  Sort the entities in alphabetical order by name,
    --  BUT all public entites stand in front of the private
-
 
    procedure Free (X : in out Entity_Handle);
 
@@ -240,7 +248,9 @@ package Docgen is
      (Open_Info, Close_Info, Subtitle_Info, Exception_Info, Type_Info,
       Subprogram_Info, Header_Info, Header_Private_Info, Footer_Info,
       With_Info, Package_Desc_Info, Body_Line_Info, Var_Info,
-      Package_Info, Entry_Info,
+      Package_Info, Package_Info_Open_Close, Entry_Info, Description_Info,
+      References_Info,
+      Tagged_Type_Info,
       Unit_Index_Info,
       Type_Index_Info,
       Tagged_Type_Index_Info,
@@ -261,7 +271,7 @@ package Docgen is
       --  Used to print a tagged type in the specific index file
       Index_Item_Info
       --  Used to print a type/unit/subprogram in the specific index file
-      );
+     );
    --  The structure used in the type Doc_Info.
 
    type Type_Api_Doc is (HTML, TEXI);
@@ -358,7 +368,11 @@ package Docgen is
                Package_Entity                : Entity_List_Information;
                Package_Header                : GNAT.OS_Lib.String_Access;
                Package_Header_Line           : Natural;
-               Package_Description           : GNAT.OS_Lib.String_Access;
+
+            when Package_Info_Open_Close =>
+               Package_Open_Close_Entity      : Entity_List_Information;
+               Package_Open_Close_Header      : GNAT.OS_Lib.String_Access;
+               Package_Open_Close_Header_Line : Natural;
 
                --  Used to add the package description
             when Package_Desc_Info =>
@@ -369,28 +383,24 @@ package Docgen is
                Var_Entity                    : Entity_List_Information;
                Var_Header                    : GNAT.OS_Lib.String_Access;
                Var_Header_Line               : Natural;
-               Var_Description               : GNAT.OS_Lib.String_Access;
 
                --  Used to add an exception info to the information file
             when Exception_Info =>
                Exception_Entity              : Entity_List_Information;
                Exception_Header              : GNAT.OS_Lib.String_Access;
                Exception_Header_Line              : Natural;
-               Exception_Description         : GNAT.OS_Lib.String_Access;
 
                --  Used to add a type info to the information file
             when Type_Info =>
                Type_Entity                   : Entity_List_Information;
                Type_Header                   : GNAT.OS_Lib.String_Access;
                Type_Header_Line              : Natural;
-               Type_Description              : GNAT.OS_Lib.String_Access;
 
                --  Used to add an entry info to the information file
             when Entry_Info =>
                Entry_Entity                  : Entity_List_Information;
                Entry_Header                  : GNAT.OS_Lib.String_Access;
                Entry_Header_Line             : Natural;
-               Entry_Description             : GNAT.OS_Lib.String_Access;
                Entry_Link                    : Boolean;
 
                --  Used to add a subprogram info to the information file
@@ -398,9 +408,20 @@ package Docgen is
                Subprogram_Entity             : Entity_List_Information;
                Subprogram_Header             : GNAT.OS_Lib.String_Access;
                Subprogram_Header_Line        : Natural;
-               Subprogram_Description        : GNAT.OS_Lib.String_Access;
                Subprogram_Link               : Boolean;
                Subprogram_List               : Type_Entity_List.List;
+
+            when References_Info =>
+               References_Entity            : Entity_List_Information;
+               References_Source_File_List  : Type_Source_File_List.List;
+               References_Directory         : GNAT.OS_Lib.String_Access;
+               References_Suffix            : GNAT.OS_Lib.String_Access;
+
+            when Tagged_Type_Info =>
+               Tagged_Entity                 : Tagged_Element;
+               Tagged_Source_File_List       : Type_Source_File_List.List;
+               Tagged_Directory              : GNAT.OS_Lib.String_Access;
+               Tagged_Suffix                 : GNAT.OS_Lib.String_Access;
 
                --  Used to start the package index file
             when Unit_Index_Info =>
@@ -455,6 +476,11 @@ package Docgen is
             when Body_Line_Info =>
                Body_File                     : VFS.Virtual_File;
                Body_Text                     : GNAT.OS_Lib.String_Access;
+
+               --  Used to pass the comments written after or before of the
+               --  source code
+            when Description_Info =>
+               Description                   : GNAT.OS_Lib.String_Access;
          end case;
       end record;
    --  The data structure used to pass the information to the procedure which
@@ -464,7 +490,6 @@ package Docgen is
    package Docgen_Backend is
 
       type Backend is abstract tagged private;
-
       type Backend_Handle is access all Backend'Class;
 
       procedure Initialize (B : access Backend; Text : String) is abstract;
@@ -475,11 +500,11 @@ package Docgen is
         (B                : Backend_Handle;
          Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
          File             : in Ada.Text_IO.File_Type;
-         Entity_List      : in out Type_Entity_List.List;
          List_Ref_In_File : in out List_Reference_In_File.List;
          Info             : in out Docgen.Doc_Info;
          Doc_Directory    : String;
-         Doc_Suffix       : String);
+         Doc_Suffix       : String;
+         Level            : Natural);
       --  This method is transmited by a pointer whose type is
       --  Doc_Subprogram_Type. In its body, it calls Doc_Create.
 
@@ -492,11 +517,11 @@ package Docgen is
         (B                : access Backend;
          Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
          File             : in Ada.Text_IO.File_Type;
-         Entity_List      : in out Type_Entity_List.List;
          List_Ref_In_File : in out List_Reference_In_File.List;
          Info             : in out Docgen.Doc_Info;
          Doc_Directory    : String;
-         Doc_Suffix       : String) is abstract;
+         Doc_Suffix       : String;
+         Level            : Natural) is abstract;
       --  Doc_Create starts the process which make the documentation
       --  for one file.
 
@@ -546,7 +571,6 @@ package Docgen is
 
       procedure Format_Identifier
         (B                   : access Backend;
-         Entity_List         : in out Type_Entity_List.List;
          List_Ref_In_File    : in out List_Reference_In_File.List;
          Start_Index         : Natural;
          Start_Line          : Natural;
@@ -563,16 +587,13 @@ package Docgen is
          Source_File_List    : Type_Source_File_List.List;
          Link_All            : Boolean;
          Is_Body             : Boolean;
-         Process_Body        : Boolean;
-         Info                : Doc_Info;
-         Call_Graph_Entities : in out Type_Entity_List.List) is abstract;
+         Process_Body        : Boolean) is abstract;
       --  Format text as an identifier
 
       procedure Format_File
         (B                : access Backend'Class;
          Kernel           : access Kernel_Handle_Record'Class;
          File             : Ada.Text_IO.File_Type;
-         Entity_List      : in out Type_Entity_List.List;
          List_Ref_In_File : in out List_Reference_In_File.List;
          LI_Unit          : LI_File_Ptr;
          Text             : String;
@@ -594,34 +615,6 @@ package Docgen is
       --  Line_In_Body is used only for subprograms to create not regular
       --  links (in this case it is not the line number of the declaration
       --  which is needed, but the line of the definition in the body.
-
-      procedure Print_Ref_List
-        (B           : access Backend;
-         Kernel      : access Kernel_Handle_Record'Class;
-         File        : in Ada.Text_IO.File_Type;
-         Name_Entity : Basic_Types.String_Access;
-         Local_List  : Type_Reference_List.List;
-         Called_Subp : Boolean) is abstract;
-      --  Processes the Ref_List to the output file.
-      --  If Called_Subp is True, the list of the subprograms
-      --  calling the current subprogram will be printed,
-      --  if False, the list of the subprograms called within it.
-
-      procedure  Call_Graph_Packages_Header
-        (B      : access Backend;
-         Kernel : access Kernel_Handle_Record'Class;
-         File   : in Ada.Text_IO.File_Type;
-         Info   : Doc_Info) is abstract;
-      --  Used to add some informations (if necessary) before all the call
-      --  graphs of subprograms contained in inner packages
-
-      procedure  Call_Graph_Packages_Footer
-        (B      : access Backend;
-         Kernel : access Kernel_Handle_Record'Class;
-         File   : in Ada.Text_IO.File_Type;
-         Info   : Doc_Info) is abstract;
-      --  Used to add some informations (if necessary) after all the call
-      --  graphs of subprograms contained in inner packages
 
       procedure Format_Link
         (B                : access Backend;
@@ -670,15 +663,20 @@ package Docgen is
 
       function Get_Last_Index (B : Backend'Class) return Natural;
       function Get_Last_Line (B : Backend'Class) return Natural;
+      function Get_Indent (B : Backend'Class) return Natural;
       procedure Set_Last_Index (B : in out Backend'Class; Value : Natural);
       procedure Set_Last_Line (B : in out Backend'Class; Value : Natural);
-      --  Getters ans setters of the 2 private fields.
+      --  Getters ans setters of the private fields.
       --  Having private fields is a way to get rid of global variable.
       --  Fields used for formatting the text. There are moving bounds
       --  in a string.
    private
 
       type Backend is abstract tagged record
+         Indent     : Natural := 3;
+         --  Number of space which correspond to one step of indentation
+         --  ??? Perhaps there's a global variable that can be used to set the
+         --  value (instead of fixing 3)
          Last_Index : Natural;
          Last_Line  : Natural;
       end record;
@@ -690,16 +688,15 @@ package Docgen is
      (B                : Backend_Handle;
       Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
       File             : in Ada.Text_IO.File_Type;
-      Entity_List      : in out Type_Entity_List.List;
       List_Ref_In_File : in out List_Reference_In_File.List;
       Info             : in out Doc_Info;
       Doc_Directory    : String;
-      Doc_Suffix       : String);
+      Doc_Suffix       : String;
+      Level            : Natural);
    --  The procedure to define for each new output format
 
    procedure Format_All_Link
      (B                   : access Backend'Class;
-      Entity_List         : in out Type_Entity_List.List;
       List_Ref_In_File    : in out List_Reference_In_File.List;
       Start_Index         : Natural;
       Start_Line          : Natural;
@@ -715,9 +712,7 @@ package Docgen is
       Source_File_List    : Type_Source_File_List.List;
       Link_All            : Boolean;
       Is_Body             : Boolean;
-      Process_Body        : Boolean;
-      Info                : Doc_Info;
-      Call_Graph_Entities : in out Type_Entity_List.List);
+      Process_Body        : Boolean);
    --  This procedure is used by formats of documentation like html to
    --  create links for each entity of the file File_Name on their
    --  own declaration. It's called by the method Format_Identifier of
@@ -725,8 +720,6 @@ package Docgen is
    --  This process is done in Docgen because for each entity we must search
    --  for its declaration in all concerned files: this work is
    --  independant of the choosen format of documentation.
-   --  Call_Graph_Entities is used to store the declarations of subprograms
-   --  when the current entity is an inner packages.
 
    function Count_Lines (Line : String) return Natural;
    --  Return the number of lines in the String
