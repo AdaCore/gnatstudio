@@ -70,7 +70,6 @@ package General_Preferences_Pkg is
       Table3 : Gtk_Table;
       Label83 : Gtk_Label;
       Detect_Aliases_Check : Gtk_Check_Button;
-      Align_Grid_Check : Gtk_Check_Button;
       Label84 : Gtk_Label;
       Label85 : Gtk_Label;
       Label86 : Gtk_Label;
@@ -81,7 +80,6 @@ package General_Preferences_Pkg is
       Hide_Big_Items_Check : Gtk_Check_Button;
       Label91 : Gtk_Label;
       Big_Item_Spin : Gtk_Spin_Button;
-      Display_Grid_Check : Gtk_Check_Button;
       Title_Font_Combo : Gtk_Toolbar;
       Value_Font_Combo : Gtk_Toolbar;
       Type_Font_Combo : Gtk_Toolbar;
@@ -95,9 +93,6 @@ package General_Preferences_Pkg is
       Combo_Entry14 : Gtk_Entry;
       Freeze_Bg_Color_Combo : Gtk_Combo;
       Combo_Entry17 : Gtk_Entry;
-      Show_Stack_Check : Gtk_Check_Button;
-      Look_3d_Check : Gtk_Check_Button;
-      Separate_Data_Check : Gtk_Check_Button;
       Label_Data : Gtk_Label;
       Frame13 : Gtk_Frame;
       Table8 : Gtk_Table;
