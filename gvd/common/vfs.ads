@@ -42,6 +42,8 @@ package VFS is
    type Virtual_File is private;
    No_File : constant Virtual_File;
 
+   type Virtual_File_Access is access all Virtual_File;
+
    type File_Array is array (Natural range <>) of Virtual_File;
    type File_Array_Access is access File_Array;
    procedure Unchecked_Free (Arr : in out File_Array_Access);
