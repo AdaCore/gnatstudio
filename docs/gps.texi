@@ -2835,8 +2835,7 @@ Clicking on the left title bar (untitled) will select or unselect all
 the projects.
 
 This selector has two different possible presentations, chosen by the
-@code{show project hierarchy} preferences (see the menu
-@code{Edit->Preferences}). You can either get a sorted list of all the
+toggle button on top: you can either get a sorted list of all the
 projects, each one appearing only once. Or you can have the same
 project hierarchy as displayed in the project explorer.
 
@@ -4651,11 +4650,6 @@ Index of the column number in the file pattern.
 @item Relative paths
 @cindex relative path
 Whether paths should be absolute or relative when the projects are modified.
-
-@item Show project hierarchy
-@cindex project hierarchy
-Whether the list of projects to modify through the project properties dialog
-should be displayed as a hierarchy of projects, or a simple sorted list.
 
 @end table
 
