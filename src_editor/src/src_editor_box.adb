@@ -1819,12 +1819,35 @@ package body Src_Editor_Box is
    procedure Add_File_Information
      (Editor        : access Source_Editor_Box_Record;
       Identifier    : String;
-      Info          : Glide_Kernel.Modules.Line_Information_Data;
-      Stick_To_Data : Boolean := True)
-   is
+      Info          : Glide_Kernel.Modules.Line_Information_Data) is
    begin
-      Add_File_Information
-        (Editor.Source_View, Identifier, Info, Stick_To_Data);
+      Add_File_Information (Editor.Source_View, Identifier, Info);
    end Add_File_Information;
+
+   ------------------------------------
+   -- Create_Line_Information_Column --
+   ------------------------------------
+
+   procedure Create_Line_Information_Column
+     (Editor         : access Source_Editor_Box_Record;
+      Identifier     : String;
+      Stick_To_Data  : Boolean;
+      Every_Line     : Boolean) is
+   begin
+      Create_Line_Information_Column
+        (Editor.Source_View, Identifier, Stick_To_Data, Every_Line);
+   end Create_Line_Information_Column;
+
+   ------------------------------------
+   -- Remove_Line_Information_Column --
+   ------------------------------------
+
+   procedure Remove_Line_Information_Column
+     (Editor         : access Source_Editor_Box_Record;
+      Identifier     : String) is
+   begin
+      Remove_Line_Information_Column
+        (Editor.Source_View, Identifier);
+   end Remove_Line_Information_Column;
 
 end Src_Editor_Box;
