@@ -63,7 +63,9 @@ package body Memory_View_Pkg.Callbacks is
       View : constant GVD_Memory_View :=
         GVD_Memory_View (Get_Toplevel (Object));
    begin
-      Update_Display (View);
+      if Realized_Is_Set (View) then
+         Update_Display (View);
+      end if;
    end On_Memory_View_Size_Allocate;
 
    -------------------------------
