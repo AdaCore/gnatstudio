@@ -20,6 +20,7 @@
 
 with Glide_Kernel.Project;  use Glide_Kernel.Project;
 with Glide_Kernel.Scripts;  use Glide_Kernel.Scripts;
+with Glide_Kernel.Console;  use Glide_Kernel.Console;
 with GNAT.OS_Lib;           use GNAT.OS_Lib;
 with String_List_Utils;
 with String_Utils;          use String_Utils;
@@ -201,8 +202,13 @@ package body Codefix.GPS_Io is
                4 => new String'(New_Value),
                5 => new String'("0"),           --  before
                6 => new String'(Image (Len)));  --  after
+            S : constant String :=
+              Execute_GPS_Shell_Command (This.Kernel, "replace_text", Args);
          begin
-            Execute_GPS_Shell_Command (This.Kernel, "replace_text", Args);
+            if S /= "" then
+               Insert (This.Kernel, S, True, Error);
+            end if;
+
             Free (Args);
          end;
 
@@ -220,8 +226,13 @@ package body Codefix.GPS_Io is
                4 => new String'(New_Value),
                5 => new String'("0"),  --  before
                6 => new String'("0")); --  after
+            S : constant String :=
+              Execute_GPS_Shell_Command (This.Kernel, "replace_text", Args);
          begin
-            Execute_GPS_Shell_Command (This.Kernel, "replace_text", Args);
+            if S /= "" then
+               Insert (This.Kernel, S, True, Error);
+            end if;
+
             Free (Args);
          end;
       end if;
@@ -272,10 +283,16 @@ package body Codefix.GPS_Io is
          2 => new String'(Image (Cursor.Line)),
          3 => new String'(Image (Cursor.Col)),
          4 => new String'(""));  --  replacement text
+      S : constant String :=
+        Execute_GPS_Shell_Command (This.Kernel, "replace_text", Args);
    begin
       This.File_Modified.all := True;
       Text_Has_Changed (This);
-      Execute_GPS_Shell_Command (This.Kernel, "replace_text", Args);
+
+      if S /= "" then
+         Insert (This.Kernel, S, True, Error);
+      end if;
+
       Free (Args);
    end Delete_Line;
 
