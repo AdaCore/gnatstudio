@@ -55,9 +55,6 @@ package body Python_Module is
    GPS_Module_Name : constant String := "GPS";
    --  Name of the GPS module in the python interpreter.
 
-   GPS_Data_Attr : constant String := "__gps_data__";
-   --  Internal name of the attributes reserved for GPS
-
    Python_Language_Name : constant String := "Python";
 
    type Hash_Index is range 0 .. 100000;
@@ -386,6 +383,48 @@ package body Python_Module is
    procedure Python_Location_Command_Handler
      (Data : in out Callback_Data'Class; Command : String);
    --  Handler for the commands related to the various classes
+
+   function GPS_Data_Attr (Class : Class_Type) return String;
+   --  Return the name of the attribute used to store user data in class
+   --  instances
+
+   -------------------
+   -- GPS_Data_Attr --
+   -------------------
+
+   function GPS_Data_Attr (Class : Class_Type) return String is
+      Klass, Bases, Module : PyObject;
+   begin
+      if Python_Module_Id = null then
+         return "__gps_data__";
+      end if;
+
+      --  Go up to the top-level GPS class. We can stop as soon as we get a
+      --  class not from GPS, since this is necessarily implemented by the
+      --  user. The goal here is double:
+      --    - Single inheritance: if we a EntityContext class, methods that
+      --      deal with FileContext should find their data (which is thus
+      --      always stored as __gps_data__Context, the toplevel class)
+      --    - Multiple inheritance: if a user class derives from two GPS
+      --      classes, each of the parent class must be able to find its own
+      --      data   (class Foo (GPS.Console, GPS.Process) will have two datas
+      --      stored, in __gps_data__GUI and __gps_data__Process.
+      Klass := Lookup_Class_Object
+        (Python_Module_Id.Script.GPS_Module, Get_Name (Class));
+
+      loop
+         Bases := PyObject_GetAttrString (Klass, "__bases__");
+         exit when Bases = Py_None
+           or else PyTuple_Size (Bases) /= 1;
+
+         Klass := PyTuple_GetItem (Bases, 0);
+         Module := PyObject_GetAttrString (Klass, "__module__");
+         exit when PyString_AsString (Module) /= "GPS";
+      end loop;
+
+      Module := PyObject_GetAttrString (Klass, "__name__");
+      return "__gps_data__" & PyString_AsString (Module);
+   end GPS_Data_Attr;
 
    ----------------
    -- Trace_Dump --
@@ -2087,7 +2126,7 @@ package body Python_Module is
       Class    : Class_Type) return Integer
    is
       Item : constant PyObject := PyObject_GetAttrString
-        (Instance.Data, GPS_Data_Attr & Get_Name (Class));
+        (Instance.Data, GPS_Data_Attr (Class));
    begin
       if Item = null or else not PyInt_Check (Item) then
          raise Invalid_Data;
@@ -2104,7 +2143,7 @@ package body Python_Module is
       Class    : Class_Type) return String
    is
       Item : constant PyObject := PyObject_GetAttrString
-        (Instance.Data, GPS_Data_Attr & Get_Name (Class));
+        (Instance.Data, GPS_Data_Attr (Class));
    begin
       if Item = null or else not PyString_Check (Item) then
          raise Invalid_Data;
@@ -2121,7 +2160,7 @@ package body Python_Module is
       Class    : Class_Type) return System.Address
    is
       Item : constant PyObject := PyObject_GetAttrString
-        (Instance.Data, GPS_Data_Attr & Get_Name (Class));
+        (Instance.Data, GPS_Data_Attr (Class));
       Result : System.Address;
    begin
       if Item = null or else not PyCObject_Check (Item) then
@@ -2129,6 +2168,7 @@ package body Python_Module is
       end if;
       Result := PyCObject_AsVoidPtr (Item);
       Py_DECREF (Item);
+
       return Result;
    end Get_Data;
 
@@ -2142,7 +2182,7 @@ package body Python_Module is
       Value    : Integer) is
    begin
       PyObject_SetAttrString
-        (Instance.Data, GPS_Data_Attr & Get_Name (Class),
+        (Instance.Data, GPS_Data_Attr (Class),
          PyInt_FromLong (long (Value)));
    end Set_Data;
 
@@ -2156,7 +2196,7 @@ package body Python_Module is
       Value    : String) is
    begin
       PyObject_SetAttrString
-        (Instance.Data, GPS_Data_Attr & Get_Name (Class),
+        (Instance.Data, GPS_Data_Attr (Class),
          PyString_FromString (Value));
    end Set_Data;
 
@@ -2174,7 +2214,7 @@ package body Python_Module is
         (Value, PyCObject_Destructor (On_Destroy));
    begin
       PyObject_SetAttrString
-        (Instance.Data, GPS_Data_Attr & Get_Name (Class), Data);
+        (Instance.Data, GPS_Data_Attr (Class), Data);
       Py_DECREF (Data);
    end Set_Data;
 
