@@ -342,9 +342,7 @@ package body Custom_Combos is
      (Data : in out Callback_Data'Class; Command : String)
    is
       Kernel    : constant Kernel_Handle := Custom_Module_ID.Kernel;
-      Class     : constant Class_Type := New_Class (Kernel, "Toolbar");
       EntClass  : constant Class_Type := New_Class (Kernel, "ToolbarEntry");
-      Inst      : constant Class_Instance := Nth_Arg (Data, 1, Class);
       EntInst   : Class_Instance;
       Combo     : Custom_Combo;
    begin
@@ -383,8 +381,6 @@ package body Custom_Combos is
             Show_All (Combo);
          end;
       end if;
-
-      Free (Inst);
    end Custom_Toolbar_Handler;
 
    --------------------------
@@ -429,6 +425,8 @@ package body Custom_Combos is
          Name_Parameters (Data, Set_Text_Args);
          Set_Combo_Text (Convert (Get_Data (Inst)), Nth_Arg (Data, 2));
       end if;
+
+      Free (Inst);
    end Custom_Entry_Handler;
 
    -----------------------
