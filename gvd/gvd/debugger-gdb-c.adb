@@ -31,6 +31,13 @@ package body Debugger.Gdb.C is
 
    use Language;
 
+   Record_Start : Character := '{';
+   Record_End   : Character := '}';
+   Array_Start  : Character := '{';
+   Array_End    : Character := '}';
+   Record_Field : String    := "=";
+   --  how are record field names separated from their values
+
    procedure Parse_Array_Type
      (Lang      : access Gdb_C_Language;
       Type_Str  : String;
@@ -86,63 +93,19 @@ package body Debugger.Gdb.C is
       Index    : in out Natural;
       Result   : out Generic_Type_Access)
    is
-      Tmp,
-      Save: Natural;
+      Tmp  : Natural := Index;
+      Save : Natural;
    begin
-      case Type_Str (Index) is
-         when '<' =>
 
-            --  Simple types, like <4-byte integer> and <4-byte float>
+      --  First: Skip the type itself, to check whether we have in fact an
+      --  array or access type.
 
-            Skip_To_Char (Type_Str, Index, '>');
-            Index := Index + 1;
-            Result := New_Simple_Type;
-            return;
-
-         when 'e' =>
-
-            --  Enumeration type
-
-            if Looking_At (Type_Str, Index, "enum ") then
-               Skip_To_Char (Type_Str, Index, '}');
-               Index := Index + 1;
-               Result := New_Enum_Type;
-               return;
-            end if;
-            --  Else falls through
-
-         when 's' =>
-
-            --  Structures.
-            --  There are two possible cases here:
-            --      "struct My_Record { ... }"
-            --   or "struct My_Record a"
-            --  The second case needs a further ptype to get the real
-            --  definition.
-
-            if Looking_At (Type_Str, Index, "struct ") then
-               Tmp := Index;
-               Index := Index + 7;           --  skips "struct "
-               Skip_Word (Type_Str, Index);  --  skips struct name
-               Skip_Blanks (Type_Str, Index);
-               if Type_Str (Index) = '{' then
-                  Index := Index + 1;
-                  Parse_Record_Type
-                    (Lang, Type_Str, Entity, Index, Result);
-               else
-                  Result := Parse_Type
-                    (Get_Debugger (Lang), Type_Str (Tmp .. Index - 1));
-               end if;
-               return;
-            end if;
-            --  Else falls through
-
-         when others =>
-            null;
-      end case;
-
-      Tmp := Index;
-      Skip_Word (Type_Str, Index);
+      if Looking_At (Type_Str, Index, "struct ") then
+         Skip_To_Char (Type_Str, Index, Record_End);
+         Index := Index + 1;
+      else
+         Skip_Word (Type_Str, Index);
+      end if;
       Skip_Blanks (Type_Str, Index);
 
       --  Skip to the right-most access or array definition
@@ -183,17 +146,63 @@ package body Debugger.Gdb.C is
          return;
       end if;
 
+      --  Else a simple type
+
+      Index := Tmp;
+
+      case Type_Str (Index) is
+         when 'e' =>
+
+            --  Enumeration type
+
+            if Looking_At (Type_Str, Index, "enum ") then
+               Skip_To_Char (Type_Str, Index, '}');
+               Index := Index + 1;
+               Result := New_Enum_Type;
+               return;
+            end if;
+            --  Else falls through
+
+         when 's' =>
+
+            --  Structures.
+            --  There are two possible cases here:
+            --      "struct My_Record { ... }"
+            --   or "struct My_Record a"
+            --  The second case needs a further ptype to get the real
+            --  definition.
+
+            if Looking_At (Type_Str, Index, "struct ") then
+               Tmp := Index;
+               Index := Index + 7;           --  skips "struct "
+               Skip_Word (Type_Str, Index);  --  skips struct name
+               Skip_Blanks (Type_Str, Index);
+               if Index <= Type_Str'Last
+                 and then Type_Str (Index) = Record_Start
+               then
+                  Index := Index + 1;
+                  Parse_Record_Type
+                    (Lang, Type_Str, Entity, Index, Result);
+               else
+                  Result := Parse_Type
+                    (Get_Debugger (Lang), Type_Str (Tmp .. Index - 1));
+               end if;
+               return;
+            end if;
+            --  Else falls through
+
+         when others =>
+            null;
+      end case;
+
       --  Do we have a simple type ?
-      --  This has to be tested after we searched for an array or an access
-      --  type...
 
       if Is_Simple_Type (Lang, Type_Str (Tmp .. Type_Str'Last)) then
          Result := New_Simple_Type;
          return;
       end if;
 
-
-      Index := Tmp;
+--      Index := Tmp;
       raise Unexpected_Type;
    end Parse_Type;
 
@@ -226,7 +235,7 @@ package body Debugger.Gdb.C is
             begin
                Skip_Simple_Value (Type_Str, Index,
                                   Array_Item_Separator => ',',
-                                  End_Of_Array         => '}',
+                                  End_Of_Array         => Array_End,
                                   Repeat_Item_Start    => '<');
                Set_Value (Simple_Type (Result.all),
                           Type_Str (Int .. Index - 1));
@@ -310,8 +319,7 @@ package body Debugger.Gdb.C is
          --  For such cases, we change the type once and for all, since we will
          --  never need to go back to an array type.
 
-         if Type_Str (Index) /= '{' then   --   ??? Start of array
-            Put_Line ("CHANGING TO ACCESS TYPE");
+         if Type_Str (Index) /= Array_Start then
             Free (Result);
             Result := New_Access_Type;
             Parse_Value (Lang, Type_Str, Index, Result, Repeat_Num);
@@ -330,9 +338,12 @@ package body Debugger.Gdb.C is
             Int : Natural;
          begin
 
-            --  Skip initial '(' if we are still looking at it (we might not
-            --  if we are parsing a variant part)
-            if Index <= Type_Str'Last and then Type_Str (Index) = '(' then
+            --  Skip initial Record_Start if we are still looking at it (we
+            --  might not if we are parsing a variant part)
+
+            if Index <= Type_Str'Last
+              and then Type_Str (Index) = Record_Start
+            then
                Index := Index + 1;
             end if;
 
@@ -345,14 +356,15 @@ package body Debugger.Gdb.C is
                      V          : Generic_Type_Access := Get_Value (R.all, J);
                      Repeat_Num : Positive;
                   begin
-                     --  Skips '=>'
+                     --  Skips '='
                      --  This also skips the address part in some "in out"
                      --  parameters, like:
                      --    (<ref> gnat.expect.process_descriptor) @0x818a990: (
                      --     pid => 2012, ...
 
-                     Skip_To_Char (Type_Str, Index, '=');
-                     Index := Index + 3;
+                     Skip_To_Char
+                       (Type_Str, Index, Record_Field (Record_Field'First));
+                     Index := Index + 1 + Record_Field'Length;
                      Parse_Value (Lang, Type_Str, Index, V, Repeat_Num);
                   end;
 
@@ -388,8 +400,10 @@ package body Debugger.Gdb.C is
 
          Skip_Blanks (Type_Str, Index);
 
-         --  Skip closing ')', if seen
-         if Index <= Type_Str'Last and then Type_Str (Index) = ')' then
+         --  Skip closing Record_End, if seen
+         if Index <= Type_Str'Last
+           and then Type_Str (Index) = Record_End
+         then
             Index := Index + 1;
          end if;
 
@@ -487,6 +501,7 @@ package body Debugger.Gdb.C is
       Field      : Natural := 1;
       Initial    : constant Natural := Index;
       R          : Record_Type_Access;
+      Field_Value : Generic_Type_Access;
       Tmp,
       Save       : Natural;
    begin
@@ -520,11 +535,17 @@ package body Debugger.Gdb.C is
          Skip_Word (Type_Str, Index, Step => -1);
          Set_Field_Name (R.all, Field, Type_Str (Index + 1 .. Save - 1),
                          Variant_Parts => 0);
-         Set_Value (R.all,
-                    Parse_Type (Get_Debugger (Lang),
-                                Entity & "."
-                                & Type_Str (Index + 1 .. Save - 1)),
-                    Field => Field);
+         Parse_Type
+           (Lang, Type_Str (Tmp .. Index),
+            Record_Field_Name (Lang, Entity, Type_Str (Index + 1 .. Save - 1)),
+            Tmp,
+            Field_Value);
+         Set_Value (R.all, Field_Value, Field);
+--           Set_Value (R.all,
+--                      Parse_Type (Get_Debugger (Lang),
+--                                  Entity & "."
+--                                  & Type_Str (Index + 1 .. Save - 1)),
+--                      Field => Field);
          Index := Save + 1;
          Field := Field + 1;
       end loop;
