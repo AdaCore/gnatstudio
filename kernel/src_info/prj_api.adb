@@ -3406,22 +3406,22 @@ package body Prj_API is
    ----------------------
 
    function Get_Source_Files
-     (Project : Prj.Tree.Project_Node_Id;
+     (Project_View : Prj.Project_Id;
       Recursive : Boolean;
       Full_Path : Boolean := True)
-      return String_Array_Access
+      return Basic_Types.String_Array_Access
    is
       Src     : String_List_Id;
       Count   : Natural := 0;
       Sources : String_Array_Access;
       Index   : Natural := 1;
-      Iter    : Imported_Project_Iterator := Start (Project, Recursive);
+      Iter    : Imported_Project_Iterator := Start
+        (Get_Project_From_View (Project_View), Recursive);
       View    : Project_Id;
 
    begin
       while Current (Iter) /= Empty_Node loop
-         View := Get_Project_View_From_Name
-           (Prj.Tree.Name_Of (Current (Iter)));
+         View := Current (Iter);
          Src := Projects.Table (View).Sources;
 
          while Src /= Nil_String loop
@@ -3436,8 +3436,7 @@ package body Prj_API is
       Sources := new String_Array (1 .. Count);
 
       while Current (Iter) /= Empty_Node loop
-         View := Get_Project_View_From_Name
-           (Prj.Tree.Name_Of (Current (Iter)));
+         View := Current (Iter);
          declare
             Path : constant String := Include_Path (View, False);
          begin

@@ -144,7 +144,7 @@ package Prj_API is
    --  includes the object path for all imported projects.
 
    function Get_Source_Files
-     (Project : Prj.Tree.Project_Node_Id;
+     (Project_View : Prj.Project_Id;
       Recursive : Boolean;
       Full_Path : Boolean := True)
       return Basic_Types.String_Array_Access;
