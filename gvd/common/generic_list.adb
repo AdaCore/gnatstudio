@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -491,6 +491,20 @@ package body Generic_List is
          return Node.Element.all;
       end if;
    end Data;
+
+   --------------
+   -- Data_Ref --
+   --------------
+
+   function Data_Ref (Node : List_Node) return Data_Access is
+   begin
+      if Node = null or else Node.Element = null then
+         raise List_Empty;
+      else
+         return Node.Element;
+      end if;
+   end Data_Ref;
+
 
    --------------
    -- Set_Data --

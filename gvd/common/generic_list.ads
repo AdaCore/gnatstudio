@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -37,6 +37,8 @@ package Generic_List is
    Null_Node : constant List_Node;
 
    List_Empty : exception;
+
+   type Data_Access is access Data_Type;
 
    procedure Prepend
      (L    : in out List;
@@ -129,6 +131,12 @@ package Generic_List is
    --  Return the data associated with L.
    --  Raise List_Empty if L is null.
 
+   function Data_Ref (Node : List_Node) return Data_Access;
+   --  Return a pointer to the data associated with L.
+   --  The returned pointer should not be freed and its contents should not
+   --  be modified.
+   --  Raise List_Empty if L is null.
+
    procedure Set_Data
      (Node : List_Node;
       D    : Data_Type);
@@ -147,8 +155,6 @@ private
    end record;
 
    Null_List : constant List := List'(null, null);
-
-   type Data_Access is access Data_Type;
 
    type List_Node_Record is record
       Element : Data_Access;
