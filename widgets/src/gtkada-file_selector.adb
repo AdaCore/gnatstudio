@@ -1133,6 +1133,8 @@ package body Gtkada.File_Selector is
                Matcher (File (File'First .. Last));
             end loop;
 
+            Close (D);
+
             if First_Match /= -1 then
                --  The best match is a file.
                if Suffix_Length > 0 then
