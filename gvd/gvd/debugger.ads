@@ -31,6 +31,12 @@ package Debugger is
 
    type Debugger_Access is access all Debugger_Root'Class;
 
+   procedure Initialize (Debugger : access Debugger_Root) is abstract;
+   --  Spawn the external process, and initializes the debugger.
+
+   procedure Close (Debugger : in out Debugger_Root) is abstract;
+   --  Terminates the external process.
+
    function Get_Process
      (Debugger : Debugger_Root) return GNAT.Expect.Pipes_Id_Access;
    --  Return the process descriptor associated with Debugger.
@@ -44,9 +50,9 @@ package Debugger is
      (Debugger : Debugger_Root) return Language.Language_Access;
    --  Return the current language associated with a debugger.
 
-   function Parse_Type (Debugger : Debugger_Root;
-                        Entity   : String)
-                       return Generic_Values.Generic_Type_Access
+   function Parse_Type
+     (Debugger : Debugger_Root;
+      Entity   : String) return Generic_Values.Generic_Type_Access
       is abstract;
    --  Parse the type definition for Entity, and return a
    --  tree as explained in Generic_Values.
@@ -95,10 +101,23 @@ package Debugger is
 
    procedure Run (Debugger : Debugger_Root) is abstract;
    --  Start the execution of the executable.
-   --  The arguments must have been set by a call to Set_Arguments
+   --  The arguments must have been set by a call to Set_Arguments.
    --  Note that this command does not wait for the prompt, and returns
    --  immediately.
    --  GDB_COMMAND: "run"
+
+   procedure Start (Debugger : Debugger_Root) is abstract;
+   --  Start the execution of the executable and stop at the first user line.
+   --  The arguments must have been set by a call to Set_Arguments.
+   --  GDB_COMMAND: "begin"
+
+   procedure Step_Into (Debugger : Debugger_Root) is abstract;
+   --  Step program until it reaches a different source line.
+   --  GDB_COMMAND: "step"
+
+   procedure Step_Over (Debugger : Debugger_Root) is abstract;
+   --  Step program, proceeding over subroutines.
+   --  GDB_COMMAND: "next"
 
    procedure Break_Exception (Debugger  : Debugger_Root;
                               Name      : String  := "";
