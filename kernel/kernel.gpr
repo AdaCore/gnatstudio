@@ -6,7 +6,7 @@ with "../gvd/gvd";
 
 project Kernel is
 
-   for Source_Dirs use ("src", "src_info");
+   for Source_Dirs use ("src", "src_info", "src_info/sn_wrapper");
 
    for Object_Dir use "obj";
 
