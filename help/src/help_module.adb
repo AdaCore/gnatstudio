@@ -22,6 +22,7 @@ with Glib;                         use Glib;
 with Glib.Convert;                 use Glib.Convert;
 with Glib.Object;                  use Glib.Object;
 with Glib.Xml_Int;                 use Glib.Xml_Int;
+with XML_Parsers;
 with Glib.Values;                  use Glib.Values;
 with GVD;
 with Csc_HTML_Widget;              use Csc_HTML_Widget;
@@ -1210,6 +1211,7 @@ package body Help_Module is
    procedure Parse_Index_Files (Kernel : access Kernel_Handle_Record'Class) is
       Iter : Path_Iterator;
       Node, Tmp, Field : Node_Ptr;
+      Err : GNAT.OS_Lib.String_Access;
    begin
       Iter := Start (Help_Module_ID.Doc_Path.all);
       while not At_End (Help_Module_ID.Doc_Path.all, Iter) loop
@@ -1224,53 +1226,59 @@ package body Help_Module is
 
             if Is_Regular_File (Full) then
                Trace (Me, "Parsing index " & Full);
-               Node := Parse (Full);
 
-               Tmp := Node.Child;
-               while Tmp /= null loop
-                  if Tmp.Tag.all = "file" then
-                     Name  := Empty'Unrestricted_Access;
-                     Descr := Empty'Unrestricted_Access;
-                     Menu  := Empty'Unrestricted_Access;
-                     Cat   := Empty'Unrestricted_Access;
+               XML_Parsers.Parse (Full, Node, Err);
 
-                     Field := Tmp.Child;
-                     while Field /= null loop
-                        if Field.Tag.all = "name" then
-                           Name := Field.Value;
+               if Node = null then
+                  Insert (Kernel, Err.all, Mode => Error);
+                  Free (Err);
+               else
+                  Tmp := Node.Child;
+                  while Tmp /= null loop
+                     if Tmp.Tag.all = "file" then
+                        Name  := Empty'Unrestricted_Access;
+                        Descr := Empty'Unrestricted_Access;
+                        Menu  := Empty'Unrestricted_Access;
+                        Cat   := Empty'Unrestricted_Access;
 
-                        elsif Field.Tag.all = "descr" then
-                           Descr := Field.Value;
+                        Field := Tmp.Child;
+                        while Field /= null loop
+                           if Field.Tag.all = "name" then
+                              Name := Field.Value;
 
-                        elsif Field.Tag.all = "menu" then
-                           Menu := Field.Value;
+                           elsif Field.Tag.all = "descr" then
+                              Descr := Field.Value;
 
-                        elsif Field.Tag.all = "category" then
-                           Cat := Field.Value;
+                           elsif Field.Tag.all = "menu" then
+                              Menu := Field.Value;
 
-                        else
-                           Insert
-                             (Kernel,
-                              -"Invalid field in documentation index file "
-                              & Full);
-                        end if;
+                           elsif Field.Tag.all = "category" then
+                              Cat := Field.Value;
 
-                        Field := Field.Next;
-                     end loop;
+                           else
+                              Insert
+                                (Kernel,
+                                 -"Invalid field in documentation index file "
+                                 & Full);
+                           end if;
 
-                     Trace (Me, "Adding " & Name.all & ' ' & Menu.all);
-                     Register_Help
-                       (Kernel,
-                        HTML_File => Create_Html (Name.all, Kernel),
-                        Descr     => Descr.all,
-                        Category  => Cat.all,
-                        Menu_Path => Menu.all);
-                  end if;
+                           Field := Field.Next;
+                        end loop;
 
-                  Tmp := Tmp.Next;
-               end loop;
+                        Trace (Me, "Adding " & Name.all & ' ' & Menu.all);
+                        Register_Help
+                          (Kernel,
+                           HTML_File => Create_Html (Name.all, Kernel),
+                           Descr     => Descr.all,
+                           Category  => Cat.all,
+                           Menu_Path => Menu.all);
+                     end if;
 
-               Free (Node);
+                     Tmp := Tmp.Next;
+                  end loop;
+
+                  Free (Node);
+               end if;
             end if;
          end;
 

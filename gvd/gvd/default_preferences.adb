@@ -28,6 +28,7 @@ with Glib.Object;              use Glib.Object;
 with Glib.Properties;          use Glib.Properties;
 with Glib.Properties.Creation; use Glib.Properties.Creation;
 with Glib.Xml_Int;             use Glib.Xml_Int;
+with XML_Parsers;
 with Gdk.Color;                use Gdk.Color;
 with Gdk.Font;                 use Gdk.Font;
 with Gdk.Keyval;               use Gdk.Keyval;
@@ -776,9 +777,10 @@ package body Default_Preferences is
      (Manager : access  Preferences_Manager_Record; File_Name : String)
    is
       File, Node : Node_Ptr;
+      Err : String_Access;
    begin
       if Is_Regular_File (File_Name) then
-         File := Parse (File_Name);
+         XML_Parsers.Parse (File_Name, File, Err);
          if File /= null then
             Node := File.Child;
             if File.Tag.all = "Preferences" then
@@ -807,6 +809,10 @@ package body Default_Preferences is
                   Node := Node.Next;
                end loop;
             end if;
+
+         else
+            Trace (Me, "Error while parsing preferences file " & Err.all);
+            Free (Err);
          end if;
 
          Free (File);

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2003                      --
+--                      Copyright (C) 2000-2004                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with Glib.Xml_Int;        use Glib.Xml_Int;
+with XML_Parsers;
 
 with Gtk.Widget;          use Gtk.Widget;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
@@ -38,6 +39,7 @@ with String_Utils;        use String_Utils;
 
 with Ada.Strings;         use Ada.Strings;
 with Ada.Strings.Fixed;   use Ada.Strings.Fixed;
+with GNAT.OS_Lib;         use GNAT.OS_Lib;
 
 with Interactive_Consoles; use Interactive_Consoles;
 
@@ -99,12 +101,18 @@ package body GVD.Window_Settings is
       Main_Debug_Window : Gtk_Widget)
    is
       Top : constant GVD_Main_Window := GVD_Main_Window (Main_Debug_Window);
+      Err : GNAT.OS_Lib.String_Access;
    begin
       if Current_Window_Settings /= null then
          Free (Current_Window_Settings);
       end if;
 
-      Current_Window_Settings := Parse (File_Name);
+      XML_Parsers.Parse (File_Name, Current_Window_Settings, Err);
+
+      if Current_Window_Settings = null then
+         Output_Line (Top, Err.all);
+         Free (Err);
+      end if;
 
       Set_Default_Size (Top,
                         Get_Setting (Main_Debug_Window_Width),
@@ -121,14 +129,6 @@ package body GVD.Window_Settings is
       Set_Default_Size (Top.Task_Dialog,
                         Get_Setting (Task_Dialog_Width),
                         Get_Setting (Task_Dialog_Height));
-
-   --  If we couldn't parse the file (maybe it was empty).
-   --  However, we don't delete the file, so that manual recovery can still be
-   --  done if needed.
-   exception
-      when others =>
-         Output_Line (Top, "Couldn't load window_settings file");
-         Current_Window_Settings := null;
    end Load_Window_Settings;
 
    --------------------------

@@ -30,6 +30,7 @@ with Gdk.Color;                use Gdk.Color;
 with Gdk.Event;                use Gdk.Event;
 with Glib.Values;              use Glib.Values;
 with Glib.Xml_Int;             use Glib.Xml_Int;
+with XML_Parsers;
 with Glib;                     use Glib;
 with Glib.Unicode;             use Glib.Unicode;
 with Glide_Kernel.Console;     use Glide_Kernel.Console;
@@ -574,12 +575,18 @@ package body Aliases_Module is
       Read_Only : Boolean)
    is
       File : Node_Ptr;
+      Err : String_Access;
    begin
       if Is_Regular_File (Filename) then
          Trace (Me, "Loading " & Filename);
-         File  := Parse (Filename);
-         Customize (Kernel, File.Child, User_Specific, Read_Only);
-         Free (File);
+         XML_Parsers.Parse (Filename, File, Err);
+         if File /= null then
+            Customize (Kernel, File.Child, User_Specific, Read_Only);
+            Free (File);
+         else
+            Insert (Kernel, Err.all, Mode => Error);
+            Free (Err);
+         end if;
       else
          Trace (Me, "No such file: " & Filename);
       end if;
