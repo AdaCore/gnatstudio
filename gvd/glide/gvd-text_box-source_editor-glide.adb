@@ -243,7 +243,7 @@ package body GVD.Text_Box.Source_Editor.Glide is
          2 => new String'
            (To_String (Get_Pref (Kernel, Editor_Highlight_Color))));
    begin
-      Execute_GPS_Shell_Command (Kernel, "register_highlighting", Args);
+      Execute_GPS_Shell_Command (Kernel, "Editor.register_highlighting", Args);
 
       for A in Args'Range loop
          GNAT.OS_Lib.Free (Args (A));
