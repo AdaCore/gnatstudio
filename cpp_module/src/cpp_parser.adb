@@ -934,8 +934,10 @@ package body CPP_Parser is
                      exit when Entity /= null;
 
                   when IU | COM | COV | SN_IN | SU | UD =>
-                     Trace (Me, "Do not know how to lookup entities in "
-                            & Table_Type'Img & " table");
+                     if Active (Me) then
+                        Trace (Me, "Do not know how to lookup entities in "
+                               & Table_Type'Img & " table");
+                     end if;
                end case;
             end if;
          end loop;
