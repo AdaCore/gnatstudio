@@ -281,8 +281,11 @@ package body VCS.Unknown_VCS is
    procedure Register_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class) is
    begin
+      --  ??? Where should this be unregistered. Memory leak otherwise.
       Register_VCS_Identifier (Identify_VCS'Access);
       Register_VCS (Kernel, Unknown_VCS_Name);
+
+      --  ??? Where is this freed. Memory leak
       Unknown_VCS_Reference := new Unknown_VCS_Record;
       Unknown_VCS_Reference.Kernel := Kernel_Handle (Kernel);
    end Register_Module;

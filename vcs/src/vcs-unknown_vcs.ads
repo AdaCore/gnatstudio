@@ -30,6 +30,7 @@ package VCS.Unknown_VCS is
    type Unknown_VCS_Access is access all Unknown_VCS_Record'Class;
 
    Unknown_VCS_Reference : VCS_Access;
+   --  ??? Could this global variable be in some module specific information.
 
    function Name (Ref : access Unknown_VCS_Record) return String;
 
