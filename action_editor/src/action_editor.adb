@@ -237,6 +237,7 @@ package body Action_Editor is
                   if Ed.Editors (Integer (Index)) = null then
                      Ed.Editors (Integer (Index)) :=
                        Component_Editor (Ed.Kernel, Comp);
+                     Ref (Ed.Editors (Integer (Index)));
                   end if;
 
                   Pack_Start
