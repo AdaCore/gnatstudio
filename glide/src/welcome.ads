@@ -18,6 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Gtk.Button;
 with Gtk.Check_Button;
 with Gtk.Radio_Button;
 with Gtk.Combo;
@@ -48,12 +49,14 @@ package Welcome is
 
 private
    type Welcome_Screen_Record is new Logo_Boxes.Logo_Box_Record with record
-      Default_Dir         : Gtk.GEntry.Gtk_Entry;
-      Open_Project        : Gtk.Combo.Gtk_Combo;
-      Always_Show         : Gtk.Check_Button.Gtk_Check_Button;
       Default_Project     : Gtk.Radio_Button.Gtk_Radio_Button;
+      Default_Dir         : Gtk.GEntry.Gtk_Entry;
+      Default_Browse      : Gtk.Button.Gtk_Button;
       Create_Project      : Gtk.Radio_Button.Gtk_Radio_Button;
+      Open_Project        : Gtk.Combo.Gtk_Combo;
       Open_Project_Button : Gtk.Radio_Button.Gtk_Radio_Button;
+      Open_Browse         : Gtk.Button.Gtk_Button;
+      Always_Show         : Gtk.Check_Button.Gtk_Check_Button;
       Kernel              : Glide_Kernel.Kernel_Handle;
    end record;
 
