@@ -57,6 +57,14 @@ package body GNAT.Expect.TTY is
       end if;
 
       Close (Descriptor.Output_Fd);
+
+      --  Send a Ctrl-C to the process first. This way, if the
+      --  launched process is a "sh" or "cmd", the child processes
+      --  will get terminated as well. Otherwise, terminating the
+      --  main process brutally will leave the children running.
+      Interrupt (Descriptor);
+      delay (0.05);
+
       Terminate_Process (Descriptor.Process);
       GNAT.OS_Lib.Free (Descriptor.Buffer);
       Descriptor.Buffer_Size := 0;
