@@ -270,7 +270,8 @@ package body Items.Classes is
 
          Size_Request (Item.Child.all, Context, Hide_Big_Items);
 
-         Total_Width := Gint'Max (Total_Width, Get_Width (Item.Child.all)) + Left_Border;
+         Total_Width :=
+           Gint'Max (Total_Width, Get_Width (Item.Child.all)) + Left_Border;
          Propagate_Width (Item.Child.all, Total_Width);
 
          --  Dont print an extra border around, since each ancestors and child
