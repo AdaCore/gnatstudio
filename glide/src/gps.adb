@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                          G L I D E  I I                           --
+--                               G P S                               --
 --                                                                   --
 --                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
--- GLIDE is free software; you can redistribute it and/or modify  it --
+-- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -39,7 +39,7 @@ with Gtkada.MDI;                use Gtkada.MDI;
 with Gtkada.Dialogs;            use Gtkada.Dialogs;
 with GVD.Types;
 with OS_Utils;                  use OS_Utils;
-with Ada.Command_Line;          use Ada.Command_Line;
+with GNAT.Command_Line;         use GNAT.Command_Line;
 with Ada.Text_IO;               use Ada.Text_IO;
 with Language_Handlers.Glide;   use Language_Handlers.Glide;
 with Language.Ada;              use Language.Ada;
@@ -93,6 +93,9 @@ procedure GPS is
 
    procedure Init_Settings;
    --  Set up environment for Glide.
+
+   procedure Help;
+   --  Display help on the standard output.
 
    ----------
    -- Init --
@@ -180,6 +183,37 @@ procedure GPS is
             OS_Exit (1);
       end;
    end Init_Settings;
+
+   ----------
+   -- Help --
+   ----------
+
+   procedure Help is
+      use ASCII;
+   begin
+      if GVD.Can_Output then
+         Put_Line ("GPS " & GVD.Version &
+                   (-", A complete application development system."));
+         Put_Line (-"Usage:");
+         Put_Line (-"   gps [project-file] [source1] [source2] ...");
+         Put_Line (-"Options:");
+         Put_Line (-"   --help              Show this help message and exit.");
+         Put_Line (-"   --version           Show the GPS version and exit.");
+
+      else
+         Button := Message_Dialog
+           ("GPS " & GVD.Version &
+            (-", A complete application development system.") & LF &
+            (-"Usage:") & LF &
+            (-"   gps [project-file] [source1] [source2] ...") & LF &
+            (-"Options:") & LF &
+            (-"   --help              Show this help message and exit.") & LF &
+            (-"   --version           Show the GPS version and exit."),
+            Information, Button_OK,
+            Title => -"Help",
+            Justification => Justify_Left);
+      end if;
+   end Help;
 
 begin
    --  Initialize GtkAda
@@ -292,8 +326,6 @@ begin
 
       Set_Sensitive (Find_Menu_Item
         (GPS.Kernel, Edit & (-"Preferences")), False);
-      Set_Sensitive (Find_Menu_Item (GPS.Kernel, Edit & (-"Undo")), False);
-      Set_Sensitive (Find_Menu_Item (GPS.Kernel, Edit & (-"Redo")), False);
 
       Set_Sensitive (Find_Menu_Item
         (GPS.Kernel, Navigate & (-"Goto Parent Unit")), False);
@@ -316,14 +348,60 @@ begin
         (GPS.Kernel, Tools & (-"Memory Analyzer")), False);
    end;
 
-   for J in 1 .. Argument_Count loop
-      if File_Extension (Argument (J)) = Project_File_Extension then
-         Load_Project (GPS.Kernel, Normalize_Pathname (Argument (J)));
-         Project_Loaded := True;
-      else
-         Open_File_Editor (GPS.Kernel, Argument (J));
-         File_Opened := True;
-      end if;
+   loop
+      case Getopt ("-version -help") is
+         -- long option names --
+         when '-' =>
+            case Full_Switch (Full_Switch'First + 1) is
+               -- --version --
+               when 'v' =>
+                  if GVD.Can_Output then
+                     Put_Line ("GPS version " & GVD.Version &
+                       " hosted on " & GVD.Target);
+                  else
+                     Button := Message_Dialog
+                       ("GPS version " & GVD.Version &
+                        " hosted on " & GVD.Target,
+                        Information, Button_OK,
+                        Title => -"Version",
+                        Justification => Justify_Left);
+                  end if;
+
+                  OS_Exit (0);
+
+               when 'h' =>
+                  -- --help --
+                  if Full_Switch = "-help" then
+                     Help;
+                     OS_Exit (0);
+                  end if;
+
+               when others =>
+                  null;
+            end case;
+
+         when ASCII.NUL =>
+            exit;
+
+         when others =>
+            null;
+      end case;
+   end loop;
+
+   loop
+      declare
+         S : constant String := Get_Argument (Do_Expansion => True);
+      begin
+         exit when S = "";
+
+         if File_Extension (S) = Project_File_Extension then
+            Load_Project (GPS.Kernel, Normalize_Pathname (S));
+            Project_Loaded := True;
+         else
+            Open_File_Editor (GPS.Kernel, S);
+            File_Opened := True;
+         end if;
+      end;
    end loop;
 
    --  If no project has been specified on the command line, try to open
@@ -369,4 +447,12 @@ begin
    Free (Home);
    Free (Dir);
    Free (Prefix);
+
+exception
+   when Invalid_Switch | Invalid_Parameter =>
+      if GVD.Can_Output then
+         Put_Line ("Invalid command line");
+      end if;
+
+      Help;
 end GPS;
