@@ -46,9 +46,9 @@ with Gtkada.Toolbar; use Gtkada.Toolbar;
 package Main_Debug_Window_Pkg is
 
    type Main_Debug_Window_Record is new Gtk_Window_Record with record
-      -------------------------
-      --  Additional fields  --
-      -------------------------
+      -----------------------
+      -- Additional fields --
+      -----------------------
 
       Odd_Preferences     : Odd_Preferences_Access;
       Open_Program        : Open_Program_Access;
@@ -56,6 +56,8 @@ package Main_Debug_Window_Pkg is
       Task_Dialog         : Task_Dialog_Access;
       Backtrace_Dialog    : Backtrace_Dialog_Access;
       Print_Dialog        : Print_Dialog_Access;
+      TTY_Mode            : Boolean := False;
+      Debug_Mode          : Boolean := False;
 
       -------------------------
 
