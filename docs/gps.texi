@@ -1225,6 +1225,11 @@ You can also jump to a corresponding delimiter by using the @key{Ctrl-'} key,
 that can be configured in the preferences. Typing twice on this key will move
 the cursor back to its original position.
 
+@item Current line highlighting.
+@cindex current
+You can configure the editor to highlight the current line with a certain
+color. @xref{The Preferences Dialog}.
+
 @end table
 
 @cindex emacs
