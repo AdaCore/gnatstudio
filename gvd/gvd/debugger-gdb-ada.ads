@@ -48,6 +48,10 @@ package Debugger.Gdb.Ada is
 
    function Thread_List (Lang : access Gdb_Ada_Language) return String;
 
+   function Thread_Switch
+     (Lang   : access Gdb_Ada_Language;
+      Thread : Natural) return String;
+
    function Parse_Thread_List
      (Lang   : access Gdb_Ada_Language;
       Output : String) return Language.Thread_Information_Array;

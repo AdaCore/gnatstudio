@@ -59,7 +59,18 @@ package body Debugger.Jdb.Java is
    begin
       return "threads";
    end Thread_List;
-   
+
+   -------------------
+   -- Thread_Switch --
+   -------------------
+
+   function Thread_Switch
+     (Lang   : access Jdb_Java_Language;
+      Thread : Natural) return String is
+   begin
+      return "thread" & Natural'Image (Thread);
+   end Thread_Switch;
+
    -----------------------
    -- Parse_Thread_List --
    -----------------------

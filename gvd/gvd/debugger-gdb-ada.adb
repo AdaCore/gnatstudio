@@ -789,6 +789,17 @@ package body Debugger.Gdb.Ada is
       return "info tasks";
    end Thread_List;
 
+   -------------------
+   -- Thread_Switch --
+   -------------------
+
+   function Thread_Switch
+     (Lang   : access Gdb_Ada_Language;
+      Thread : Natural) return String is
+   begin
+      return "task" & Natural'Image (Thread);
+   end Thread_Switch;
+
    -----------------------
    -- Parse_Thread_List --
    -----------------------

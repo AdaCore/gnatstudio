@@ -22,6 +22,7 @@ with GNAT.Expect;       use GNAT.Expect;
 with GNAT.OS_Lib;       use GNAT.OS_Lib;
 with Generic_Values;    use Generic_Values;
 with Process_Proxies;   use Process_Proxies;
+with Language;          use Language;
 with Language.Debugger; use Language.Debugger;
 
 package body Debugger is
@@ -183,5 +184,19 @@ package body Debugger is
    begin
       return Entity;
    end Get_Uniq_Id;
+
+   -------------------
+   -- Thread_Switch --
+   -------------------
+
+   procedure Thread_Switch
+     (Debugger : access Debugger_Root'Class;
+      Thread   : Natural) is
+   begin
+      Send
+        (Get_Process (Debugger),
+         Thread_Switch (Get_Language (Debugger), Thread));
+      Wait_Prompt (Debugger);
+   end Thread_Switch;
 
 end Debugger;

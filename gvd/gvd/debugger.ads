@@ -265,6 +265,12 @@ package Debugger is
    --  Return the current backtrace.
    --  GDB_COMMAND: "bt"
 
+   procedure Thread_Switch
+     (Debugger : access Debugger_Root'Class;
+      Thread   : Natural);
+   --  Switch to a specified thread.
+   --  GDB_COMMAND: "thread" or "task"
+
    function Info_Threads
      (Debugger  : access Debugger_Root)
       return Language.Thread_Information_Array is abstract;

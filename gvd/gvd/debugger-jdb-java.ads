@@ -48,6 +48,10 @@ package Debugger.Jdb.Java is
 
    function Thread_List (Lang : access Jdb_Java_Language) return String;
 
+   function Thread_Switch
+     (Lang   : access Jdb_Java_Language;
+      Thread : Natural) return String;
+
    function Parse_Thread_List
      (Lang   : access Jdb_Java_Language;
       Output : String) return Language.Thread_Information_Array;
