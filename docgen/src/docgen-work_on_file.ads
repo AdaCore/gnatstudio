@@ -23,8 +23,22 @@
 --  list passed by the procedure Docgen.
 
 with Glide_Kernel;
+with String_Hash;
 
 package Docgen.Work_On_File is
+
+   procedure Free_All_Tree (X : in out Scope_Tree);
+   --  Subprogram called in order to free the memory catched by each element
+   --  of the following hash table.
+
+   package Tree_Htable is new String_Hash
+     (Data_Type => Scope_Tree,
+      Free_Data => Free_All_Tree,
+      Null_Ptr  => Null_Scope_Tree);
+   use Tree_Htable.String_Hash_Table;
+   --  For each ali file, its scope tree is created one time and then it's
+   --  stored in the hash table for all the process. In fact, a scope tree
+   --  can be used by several files.
 
    procedure Process_Files
      (B                : Backend_Handle;
