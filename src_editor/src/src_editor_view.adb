@@ -751,6 +751,7 @@ package body Src_Editor_View is
          end loop;
 
          View.Real_Lines (Max + 1 .. Max * 2) := (others => 0);
+         View.Original_Lines_Number := Max;
 
          Redraw_Columns (View);
       end if;
@@ -1717,24 +1718,20 @@ package body Src_Editor_View is
          end loop;
 
          View.Original_Text_Inserted := True;
-      end if;
 
-      --  ??? Loop needs comment, and might be implemented more efficiently
-      --  through the use of aggregates (to be checked).
+      else
+         --  Shift down the existing lines.
 
-      for J in reverse Start + 1 .. View.Real_Lines.all'Last loop
-         if J <= View.Real_Lines.all'First - 1 + Number then
-            View.Real_Lines (J) := 0;
-         else
+         for J in reverse Start + 1 .. View.Real_Lines'Last loop
             View.Real_Lines (J) := View.Real_Lines (J - Number);
-         end if;
-      end loop;
+         end loop;
 
-      --  Reset the last lines
+         --  Reset the newly inserted lines.
 
-      View.Real_Lines
-        (Start + 1 .. Integer'Min (Start + Number, View.Real_Lines'Last)) :=
-        (others => 0);
+         View.Real_Lines
+           (Integer'Max (Start - Number + 1, View.Real_Lines'First) .. Start)
+           := (others => 0);
+      end if;
    end Add_Lines;
 
    ------------------
