@@ -156,7 +156,6 @@ package body Commands.External is
         (GNAT.OS_Lib.Argument_List, GNAT.OS_Lib.Argument_List_Access);
 
       Exec_Command_Args : GNAT.OS_Lib.Argument_List_Access;
-      Command_String : String_Access;
       Temp_Args : List_Node := First (Command.Args);
 
       Old_Dir   : constant Dir_Name_Str := Get_Current_Dir;
@@ -175,15 +174,15 @@ package body Commands.External is
          Temp_Args := Next (Temp_Args);
       end loop;
 
-      Command_String := new String'
-        (Command.Command.all & " " & Argument_List_To_String (Args));
-
       if Command.Dir'Length > 0 then
-         Trace (Me,
-                "spawn from " & Command.Dir.all & ": " & Command_String.all);
+         Trace
+           (Me,
+            "spawn from " & Command.Dir.all & ": " &
+            Command.Command.all & " " & Argument_List_To_String (Args));
 
       else
-         Trace (Me, "spawn: " & Command_String.all);
+         Trace (Me, "spawn: " &
+                Command.Command.all & " " & Argument_List_To_String (Args));
       end if;
 
       --  If we are under Windows, spawn the command using "cmd /c".
@@ -229,8 +228,6 @@ package body Commands.External is
             Err_To_Out => True,
             Buffer_Size => 0);
       end if;
-
-      Free (Command_String);
 
       for J in Args'Range loop
          GNAT.OS_Lib.Free (Args (J));
