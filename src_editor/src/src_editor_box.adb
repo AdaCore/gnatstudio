@@ -675,6 +675,13 @@ package body Src_Editor_Box is
       Window_To_Buffer_Coords
         (Widget, Mouse_X, Mouse_Y, Line, Col, Out_Of_Bounds);
 
+      if Out_Of_Bounds then
+         --  Do not display a tooltip in an invalid location,
+         --  for example after the end of a line.
+
+         return;
+      end if;
+
       Get_Iter_At_Line_Offset
         (Data.Box.Source_Buffer, Start_Iter, Line, Col);
       Search_Entity_Bounds
