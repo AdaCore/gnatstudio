@@ -191,6 +191,7 @@ package body Debugger.Gdb is
                            To_Window (Window),
                            Convert (To_Main_Debug_Window (Window),
                                     Descriptor).Debugger,
+                           True,
                            Choices (1 .. Num - 1));
                   Show_All (Dialog);
                end;
