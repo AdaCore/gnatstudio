@@ -489,7 +489,7 @@ package body VCS_View_API is
                      Context_Callback.Connect
                        (Item, "activate",
                         Context_Callback.To_Marshaller
-                        (On_Menu_Commit'Access),
+                          (On_Menu_Commit'Access),
                         Selection_Context_Access (File_Name));
                   end if;
                end;
@@ -499,7 +499,7 @@ package body VCS_View_API is
                Context_Callback.Connect
                  (Item, "activate",
                   Context_Callback.To_Marshaller
-                  (On_Menu_Get_Status'Access),
+                    (On_Menu_Get_Status'Access),
                   Selection_Context_Access (Context));
 
                Gtk_New (Item, Label => -"Update");
@@ -507,7 +507,7 @@ package body VCS_View_API is
                Context_Callback.Connect
                  (Item, "activate",
                   Context_Callback.To_Marshaller
-                  (On_Menu_Update'Access),
+                    (On_Menu_Update'Access),
                   Selection_Context_Access (Context));
 
                Gtk_New (Item, Label => -"Start editing");
@@ -515,7 +515,7 @@ package body VCS_View_API is
                Context_Callback.Connect
                  (Item, "activate",
                   Context_Callback.To_Marshaller
-                  (On_Menu_Open'Access),
+                    (On_Menu_Open'Access),
                   Selection_Context_Access (Context));
 
                Gtk_New (Item, Label => -"View revision history");
@@ -523,7 +523,7 @@ package body VCS_View_API is
                Context_Callback.Connect
                  (Item, "activate",
                   Context_Callback.To_Marshaller
-                  (On_Menu_View_Log'Access),
+                    (On_Menu_View_Log'Access),
                   Selection_Context_Access (Context));
 
                Gtk_New (Item, Label => -"Compare against head revision");
@@ -531,7 +531,7 @@ package body VCS_View_API is
                Context_Callback.Connect
                  (Item, "activate",
                   Context_Callback.To_Marshaller
-                  (On_Menu_Diff'Access),
+                    (On_Menu_Diff'Access),
                   Selection_Context_Access (Context));
 
                Gtk_New (Item, Label => -"Compare against working revision");
@@ -539,7 +539,7 @@ package body VCS_View_API is
                Context_Callback.Connect
                  (Item, "activate",
                   Context_Callback.To_Marshaller
-                  (On_Menu_Diff_Local'Access),
+                    (On_Menu_Diff_Local'Access),
                   Selection_Context_Access (Context));
 
                Gtk_New (Item, Label => -"Annotate");
@@ -547,7 +547,7 @@ package body VCS_View_API is
                Context_Callback.Connect
                  (Item, "activate",
                   Context_Callback.To_Marshaller
-                  (On_Menu_Annotate'Access),
+                    (On_Menu_Annotate'Access),
                   Selection_Context_Access (Context));
 
                Gtk_New (Item, Label => -"Remove annotations");
@@ -555,7 +555,7 @@ package body VCS_View_API is
                Context_Callback.Connect
                  (Item, "activate",
                   Context_Callback.To_Marshaller
-                  (On_Menu_Remove_Annotate'Access),
+                    (On_Menu_Remove_Annotate'Access),
                   Selection_Context_Access (Context));
 
                Gtk_New (Item, Label => -"Edit changelog");
@@ -563,7 +563,7 @@ package body VCS_View_API is
                Context_Callback.Connect
                  (Item, "activate",
                   Context_Callback.To_Marshaller
-                  (On_Menu_Edit_Log'Access),
+                    (On_Menu_Edit_Log'Access),
                   Selection_Context_Access (Context));
 
                Gtk_New (Item, Label => -"Commit");
@@ -571,7 +571,7 @@ package body VCS_View_API is
                Context_Callback.Connect
                  (Item, "activate",
                   Context_Callback.To_Marshaller
-                  (On_Menu_Commit'Access),
+                    (On_Menu_Commit'Access),
                   Selection_Context_Access (Context));
 
                Gtk_New (Item);
@@ -582,7 +582,7 @@ package body VCS_View_API is
                Context_Callback.Connect
                  (Item, "activate",
                   Context_Callback.To_Marshaller
-                  (On_Menu_Remove_Log'Access),
+                    (On_Menu_Remove_Log'Access),
                   Selection_Context_Access (Context));
 
                Gtk_New (Item);
@@ -593,7 +593,7 @@ package body VCS_View_API is
                Context_Callback.Connect
                  (Item, "activate",
                   Context_Callback.To_Marshaller
-                  (On_Menu_Add'Access),
+                    (On_Menu_Add'Access),
                   Selection_Context_Access (Context));
 
                Gtk_New (Item, Label => -"Remove from repository");
@@ -601,7 +601,7 @@ package body VCS_View_API is
                Context_Callback.Connect
                  (Item, "activate",
                   Context_Callback.To_Marshaller
-                  (On_Menu_Remove'Access),
+                    (On_Menu_Remove'Access),
                   Selection_Context_Access (Context));
             end if;
          end;
