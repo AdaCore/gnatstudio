@@ -29,21 +29,27 @@
 with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
 with Gtk.Handlers;              use Gtk.Handlers;
-with Interfaces.C;              use Interfaces.C;
-with Interfaces.C.Strings;      use Interfaces.C.Strings;
+with Gtkada.MDI;                use Gtkada.MDI;
+
+with Ada.Text_IO;               use Ada.Text_IO;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
-
-with Prj.Tree;                  use Prj.Tree;
-with Namet;                     use Namet;
-with Stringt;                   use Stringt;
-with Snames;                    use Snames;
-with Types;                     use Types;
-
-with Glide_Kernel.Project;      use Glide_Kernel.Project;
+with Gint_Xml;                  use Gint_Xml;
 with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
+with Glide_Kernel.Project;      use Glide_Kernel.Project;
+with Glide_Main_Window;         use Glide_Main_Window;
+with Glide_Page;                use Glide_Page;
+with GVD.Process;               use GVD.Process;
+with Interfaces.C.Strings;      use Interfaces.C.Strings;
+with Interfaces.C;              use Interfaces.C;
+with OS_Utils;                  use OS_Utils;
 with Src_Info.ALI;
-with OS_Utils; use OS_Utils;
+
+with Namet;                     use Namet;
+with Prj.Tree;                  use Prj.Tree;
+with Snames;                    use Snames;
+with Stringt;                   use Stringt;
+with Types;                     use Types;
 
 package body Glide_Kernel is
 
@@ -335,5 +341,52 @@ package body Glide_Kernel is
    begin
       Object_Callback.Emit_By_Name (Handle, Project_View_Changed_Signal);
    end Project_View_Changed;
+
+   ------------------
+   -- Save_Session --
+   ------------------
+
+   procedure Save_Session
+     (Handle : access Kernel_Handle_Record)
+   is
+      MDI : constant MDI_Window := Glide_Page.Glide_Page
+        (Get_Current_Process (Handle.Main_Window)).Process_Mdi;
+      File : File_Type;
+   begin
+      Create
+        (File,
+         Mode => Out_File,
+         Name => Get_Home_Directory & Directory_Separator & "save.config");
+      Set_Output (File);
+
+      Print (Glide_Kernel.Kernel_Sessions.Save_Session (MDI));
+
+      Set_Output (Standard_Output);
+      Close (File);
+   end Save_Session;
+
+   ------------------
+   -- Load_Session --
+   ------------------
+
+   function Load_Session
+     (Handle : access Kernel_Handle_Record) return Boolean
+   is
+      MDI : constant MDI_Window := Glide_Page.Glide_Page
+        (Get_Current_Process (Handle.Main_Window)).Process_Mdi;
+      Node : Node_Ptr;
+      File : constant String :=
+        Get_Home_Directory & Directory_Separator & "save.config";
+   begin
+      if Is_Regular_File (File) then
+         Node := Parse (File);
+         pragma Assert (Node.Tag.all = "MDI");
+
+         Kernel_Sessions.Restore_Session (MDI, Node, Kernel_Handle (Handle));
+         return True;
+      else
+         return False;
+      end if;
+   end Load_Session;
 
 end Glide_Kernel;
