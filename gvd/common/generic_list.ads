@@ -45,7 +45,7 @@ package Generic_List is
    procedure Append
      (L    : in out List;
       Item : Data_Type);
-   --  Add an item at the end of a list. The cost is O(n) !
+   --  Add an item at the end of a list. The cost is O(1).
 
    function Is_Empty (L : List) return Boolean;
    --  True if L does not contain any element.
@@ -66,7 +66,7 @@ package Generic_List is
    procedure Concat
      (L1 : in out List;
       L2 : List);
-   --  Append L2 at the end of L1.
+   --  Append L2 at the end of L1. Cors is O(1).
 
    procedure Free (L : in out List);
    --  Free memory associated to L.
@@ -97,20 +97,25 @@ package Generic_List is
 private
 
    type List_Node;
-   type List is access List_Node;
+   type List_Access is access List_Node;
 
-   Null_List : constant List := null;
+   type List is record
+      First : List_Access;
+      Last  : List_Access;
+   end record;
+
+   Null_List : constant List := List' (null, null);
 
    type Data_Access is access Data_Type;
 
    type List_Node is record
       Element : Data_Access;
-      Next    : List;
+      Next    : List_Access;
    end record;
 
    procedure Free_Element is new
      Unchecked_Deallocation (Data_Type, Data_Access);
-   procedure Free_Node is new Unchecked_Deallocation (List_Node, List);
+   procedure Free_Node is new Unchecked_Deallocation (List_Node, List_Access);
 
    pragma Inline (Prepend);
    pragma Inline (Head);
