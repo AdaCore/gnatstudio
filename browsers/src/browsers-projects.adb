@@ -41,6 +41,7 @@ with Project_Browsers;         use Project_Browsers;
 with Types;                    use Types;
 with Ada.Exceptions;           use Ada.Exceptions;
 with Traces;                   use Traces;
+with Find_Utils;               use Find_Utils;
 
 package body Browsers.Projects is
 
@@ -49,6 +50,9 @@ package body Browsers.Projects is
    Me : constant Debug_Handle := Create ("Browsers.Projects");
 
    Project_Browser_Module_ID : Module_ID;
+
+   type Browser_Search_Context is new Search_Context with null record;
+   type Browser_Search_Context_Access is access all Browser_Search_Context;
 
    procedure On_Examine_Prj_Hierarchy
      (Widget  : access GObject_Record'Class;
@@ -80,6 +84,19 @@ package body Browsers.Projects is
      (Kernel : access Kernel_Handle_Record'Class;
       Child  : Gtk.Widget.Gtk_Widget) return Selection_Context_Access;
    --  Create a current kernel context, based on the currently selected item
+
+   function Browser_Search_Factory
+     (Kernel            : access Glide_Kernel.Kernel_Handle_Record'Class;
+      All_Occurences    : Boolean;
+      Extra_Information : Gtk.Widget.Gtk_Widget)
+      return Search_Context_Access;
+   --  Create a new search context for the explorer
+
+   function Search
+     (Context         : access Browser_Search_Context;
+      Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Search_Backward : Boolean) return Boolean;
+   --  Search the next occurrence in the explorer
 
    ---------------------
    -- On_Button_Click --
@@ -374,12 +391,107 @@ package body Browsers.Projects is
          Menu    => null);
    end Default_Factory;
 
+   ----------------------------
+   -- Browser_Search_Factory --
+   ----------------------------
+
+   function Browser_Search_Factory
+     (Kernel            : access Glide_Kernel.Kernel_Handle_Record'Class;
+      All_Occurences    : Boolean;
+      Extra_Information : Gtk.Widget.Gtk_Widget)
+      return Search_Context_Access
+   is
+      pragma Unreferenced (Kernel, All_Occurences, Extra_Information);
+      Context : Browser_Search_Context_Access;
+   begin
+      Context := new Browser_Search_Context;
+      return Search_Context_Access (Context);
+   end Browser_Search_Factory;
+
+   ------------
+   -- Search --
+   ------------
+
+   function Search
+     (Context         : access Browser_Search_Context;
+      Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Search_Backward : Boolean) return Boolean
+   is
+      pragma Unreferenced (Search_Backward);
+      First_Match  : Canvas_Item;
+      Saw_Selected : Boolean;
+      Child        : constant MDI_Child := Open_Project_Browser (Kernel);
+      Browser      : Project_Browser;
+
+      function Check_Item
+        (Canvas : access Interactive_Canvas_Record'Class;
+         Item   : access Canvas_Item_Record'Class) return Boolean;
+      --  Check if Item matches the context
+
+      ----------------
+      -- Check_Item --
+      ----------------
+
+      function Check_Item
+        (Canvas : access Interactive_Canvas_Record'Class;
+         Item   : access Canvas_Item_Record'Class) return Boolean
+      is
+         pragma Unreferenced (Canvas);
+         It : constant Browser_Project_Vertex_Access :=
+           Browser_Project_Vertex_Access (Item);
+      begin
+         --  No need to test if we have already found one, but haven't
+         --  encountered the current selection.
+
+         if First_Match = null or else Saw_Selected then
+            if Match (Context, Get_String (It.Name)) /= -1 then
+               First_Match := Canvas_Item (Item);
+
+               if Saw_Selected then
+                  return False;
+               end if;
+            end if;
+         end if;
+
+         if Selected_Item (Browser) = Canvas_Item (Item) then
+            Saw_Selected := True;
+         end if;
+
+         return True;
+      end Check_Item;
+
+   begin
+      if Child = null then
+         return False;
+      end if;
+
+      Browser := Project_Browser (Get_Widget (Child));
+
+      Saw_Selected := Selected_Item (Browser) = null;
+
+      --  We have to start from the beginning, but to save some time in case we
+      --  have no more item after the current one, we memorize the first
+      --  matching item right away
+
+      For_Each_Item (Get_Canvas (Browser), Check_Item'Unrestricted_Access);
+
+      if First_Match /= null then
+         Select_Item (Browser, First_Match, Refresh_Items => True);
+         Show_Item (Get_Canvas (Browser), First_Match);
+         return True;
+      else
+         return False;
+      end if;
+   end Search;
+
    ---------------------
    -- Register_Module --
    ---------------------
 
    procedure Register_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class) is
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+   is
+      Name : constant String := "Project Browser";
    begin
       Register_Module
         (Module                  => Project_Browser_Module_ID,
@@ -391,6 +503,16 @@ package body Browsers.Projects is
          Default_Context_Factory => Default_Factory'Access);
       Glide_Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
+
+      Find_Utils.Register_Search_Function
+        (Kernel => Kernel,
+         Data   => (Length            => Name'Length,
+                    Label             => Name,
+                    Factory           => Browser_Search_Factory'Access,
+                    Extra_Information => null,
+                    Id                => Project_Browser_Module_ID,
+                    Mask              => All_Options and not Supports_Replace
+                      and not Search_Backward and not All_Occurrences));
    end Register_Module;
 
 end Browsers.Projects;
