@@ -1878,7 +1878,7 @@ package body Src_Info.CPP is
    is
       P              : Pair_Ptr;
       MDecl          : MD_Table;
-      MBody          : MI_Table;
+      MBody          : FU_Table;
       Decl_Info      : E_Declaration_Info_List;
       MI_File        : LI_File_Ptr;
    begin
@@ -2547,7 +2547,7 @@ package body Src_Info.CPP is
       Module_Type_Defs : Module_Typedefs_List)
    is
       P             : Pair_Ptr;
-      Fn            : MI_Table;
+      Fn            : FU_Table;
       MDecl         : MD_Table;
       MDecl_Tmp     : MD_Table;
       Decl_Info     : E_Declaration_Info_List;
@@ -3521,7 +3521,6 @@ package body Src_Info.CPP is
 
       P              : Pair_Ptr;
       FU_Tab         : FU_Table;
-      MI_Tab         : MI_Table;
       Start_Position : constant Point := Sym.Start_Position;
       Body_Position  : Point := Invalid_Point;
       End_Position   : Point;
@@ -3544,7 +3543,7 @@ package body Src_Info.CPP is
             Class_Decl_Info : E_Declaration_Info_List;
             Ref             : E_Reference_List;
          begin
-            MI_Tab := Find (Handler.SN_Table (MI),
+            FU_Tab := Find (Handler.SN_Table (MI),
                 Sym.Buffer (Sym.Class.First .. Sym.Class.Last),
                 Fu_Id,
                 Sym.Start_Position,
@@ -3596,8 +3595,8 @@ package body Src_Info.CPP is
                when DB_Error | Not_Found =>
                   null;
             end;
-            if MI_Tab.Buffer (MI_Tab.Return_Type.First ..
-                              MI_Tab.Return_Type.Last) = "void" then
+            if FU_Tab.Buffer (FU_Tab.Return_Type.First ..
+                              FU_Tab.Return_Type.Last) = "void" then
                if Is_Template then
                   Target_Kind := Generic_Procedure;
                else
@@ -3610,7 +3609,7 @@ package body Src_Info.CPP is
                   Target_Kind := Non_Generic_Function_Or_Operator;
                end if;
             end if;
-            End_Position := MI_Tab.End_Position;
+            End_Position := FU_Tab.End_Position;
          exception
             when DB_Error | Not_Found =>
                Fail ("unable to find method "
@@ -3649,12 +3648,12 @@ package body Src_Info.CPP is
       --  FD processing and not create new declaration.
       if Sym.Symbol = MI then
          Find_First_Forward_Declaration
-           (MI_Tab.Buffer,
-            MI_Tab.Class,
-            MI_Tab.Name,
+           (FU_Tab.Buffer,
+            FU_Tab.Class,
+            FU_Tab.Name,
             Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
-            MI_Tab.Return_Type,
-            MI_Tab.Arg_Types,
+            FU_Tab.Return_Type,
+            FU_Tab.Arg_Types,
             Handler,
             File,
             List,
@@ -3722,27 +3721,20 @@ package body Src_Info.CPP is
 
          begin
             Ref := Parse_Pair (P.all);
-            if Sym.Symbol = MI then
-               Our_Ref := Cmp_Arg_Types
-                 (Ref.Buffer,
-                  MI_Tab.Buffer,
-                  Ref.Caller_Argument_Types,
-                  MI_Tab.Arg_Types);
-            else
+            if Fu_To_Handlers (Ref.Referred_Symbol) /= null then
                Our_Ref := Cmp_Arg_Types
                  (Ref.Buffer,
                   FU_Tab.Buffer,
                   Ref.Caller_Argument_Types,
                   FU_Tab.Arg_Types);
-            end if;
 
-            if Our_Ref
-               and then Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last)
-                  = Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last)
-               and then Fu_To_Handlers (Ref.Referred_Symbol) /= null
-            then
-               Fu_To_Handlers (Ref.Referred_Symbol)
-                 (Ref, Handler, File, List, Project_View, Module_Type_Defs);
+               if Our_Ref and then
+                  Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last) =
+                  Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last)
+               then
+                  Fu_To_Handlers (Ref.Referred_Symbol)
+                    (Ref, Handler, File, List, Project_View, Module_Type_Defs);
+               end if;
             end if;
             Free (Ref);
 
@@ -3760,11 +3752,7 @@ package body Src_Info.CPP is
       end loop;
       Release_Cursor (Handler.SN_Table (TO));
 
-      if Sym.Symbol = MI then
-         Free (MI_Tab);
-      else
-         Free (FU_Tab);
-      end if;
+      Free (FU_Tab);
 
    exception
       when DB_Error => null; -- non-existent table .to, ignore it
@@ -4063,7 +4051,7 @@ package body Src_Info.CPP is
       P            : Pair_Ptr;
       First_MD_Pos : Point := Invalid_Point;
       MD_Tab       : MD_Table;
-      MI_Tab       : MI_Table;
+      MI_Tab       : FU_Table;
       MD_Tab_Tmp   : MD_Table;
       Is_Template  : Boolean := False;
       Found        : Boolean;
