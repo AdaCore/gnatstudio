@@ -521,6 +521,9 @@ package Glide_Kernel is
    procedure Search_Regexps_Changed (Handle : access Kernel_Handle_Record);
    --  Emits the "search_regexps_changed" signal
 
+   procedure Search_Reset (Handle : access Kernel_Handle_Record);
+   --  Emits the "search_reset" signal
+
    -------------
    -- Signals --
    -------------
@@ -583,6 +586,13 @@ package Glide_Kernel is
    --    Emitted when a new regexp has been added to the list of predefined
    --    search patterns.
    --
+   --  - "search_reset"
+   --    procedure Handler (Handle : access Kernel_Handle_Record'Class);
+   --
+   --    Emitted when the current search pattern has been reset or changed by
+   --    the user, or when the current search is no longer possible because the
+   --    setup of GPS has changed.
+   --
    --  </signals>
 
    Project_Changed_Signal        : constant String := "project_changed";
@@ -593,6 +603,7 @@ package Glide_Kernel is
    File_Edited_Signal            : constant String := "file_edited";
    Preferences_Changed_Signal    : constant String := "preferences_changed";
    Search_Regexps_Changed_Signal : constant String := "search_regexps_changed";
+   Search_Reset_Signal           : constant String := "search_reset";
 
 private
 

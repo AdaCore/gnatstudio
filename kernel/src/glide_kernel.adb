@@ -89,7 +89,8 @@ package body Glide_Kernel is
       5 => New_String (Source_Lines_Revealed_Signal),
       6 => New_String (File_Edited_Signal),
       7 => New_String (Preferences_Changed_Signal),
-      8 => New_String (Search_Regexps_Changed_Signal));
+      8 => New_String (Search_Regexps_Changed_Signal),
+      9 => New_String (Search_Reset_Signal));
    --  The list of signals defined for this object
 
    Kernel_Class : GObject_Class := Uninitialized_Class;
@@ -147,9 +148,9 @@ package body Glide_Kernel is
       Home_Dir    : String)
    is
       Signal_Parameters : constant Signal_Parameter_Types :=
-        (1 .. 2 | 4 | 7 | 8 => (1 => GType_None),
-         3      | 5         => (1 => GType_Pointer),
-         6                  => (1 => GType_String));
+        (1 .. 2 | 4 | 7 .. 9 => (1 => GType_None),
+         3      | 5          => (1 => GType_Pointer),
+         6                   => (1 => GType_String));
       Handler : Glide_Language_Handler;
    begin
       Handle := new Kernel_Handle_Record;
@@ -520,6 +521,15 @@ package body Glide_Kernel is
    begin
       Object_Callback.Emit_By_Name (Handle, Search_Regexps_Changed_Signal);
    end Search_Regexps_Changed;
+
+   ------------------
+   -- Search_Reset --
+   ------------------
+
+   procedure Search_Reset (Handle : access Kernel_Handle_Record) is
+   begin
+      Object_Callback.Emit_By_Name (Handle, Search_Reset_Signal);
+   end Search_Reset;
 
    ----------------------
    -- Variable_Changed --
