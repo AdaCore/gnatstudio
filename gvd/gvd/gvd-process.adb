@@ -494,6 +494,17 @@ package body Odd.Process is
    end Create_Debugger;
 
    ---------------------
+   -- Context_Changed --
+   ---------------------
+
+   procedure Context_Changed
+     (Debugger : access Debugger_Process_Tab_Record'Class) is
+   begin
+      Widget_Callback.Emit_By_Name (Gtk_Widget (Debugger), "context_changed");
+      Widget_Callback.Emit_By_Name (Gtk_Widget (Debugger), "process_stopped");
+   end Context_Changed;
+
+   ---------------------
    -- Process_Stopped --
    ---------------------
 
