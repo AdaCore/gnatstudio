@@ -1819,6 +1819,10 @@ package body Src_Editor_Buffer.Line_Information is
    begin
       --  ??? This should be optimized (Column should be cached).
 
+      if BL.all = null then
+         return;
+      end if;
+
       for Col in BL.all'Range loop
          if BL.all (Col).Identifier.all = Block_Info_Column then
 
