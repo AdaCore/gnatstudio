@@ -74,6 +74,13 @@ package Src_Editor_Buffer is
    --  the language from the filename, then Lang will be unset, and syntax
    --  highlighting will be deactivated.
 
+   procedure Save_To_File
+     (Buffer   : access Source_Buffer_Record;
+      Filename : String;
+      Success  : out Boolean);
+   --  Save the current buffer into a file. Success is set to False if this
+   --  operation failed and the buffer could not be saved.
+
    procedure Clear (Buffer : access Source_Buffer_Record);
    --  Delete all characters from the given buffer, leaving an empty buffer.
 

@@ -94,6 +94,13 @@ package Src_Editor_Box is
    --  the language from the filename, then Lang will be unset, and syntax
    --  highlighting will be deactivated.
 
+   procedure Save_To_File
+     (Editor   : access Source_Editor_Box_Record;
+      Filename : String;
+      Success  : out Boolean);
+   --  Save the buffer to the given file. Success is set to false if the
+   --  buffer could not be saved.
+
    procedure Set_Language
      (Editor : access Source_Editor_Box_Record;
       Lang   : Language.Language_Access := null);
