@@ -295,16 +295,20 @@ package body Src_Info.CPP is
      (Handler       : access CPP_LI_Handler_Record;
       Root_Project  : Prj.Project_Id;
       Project       : Prj.Project_Id;
+      Language      : Types.Name_Id;
       Recursive     : Boolean := False)
       return LI_Handler_Iterator'Class
    is
       pragma Unreferenced (Handler);
       HI : CPP_LI_Handler_Iterator;
    begin
+      --  ??? Note: this is currently incorrect, since C and C++ files will be
+      --  ??? processed in two separate passes.
+
       HI.SN_Dir := new String' (Get_SN_Dir (Root_Project));
 
       --  Prepare the list of files
-      Compute_Sources (HI, Project, Recursive, Language => Name_C_Plus_Plus);
+      Compute_Sources (HI, Project, Recursive, Language => Language);
 
       if not Is_Directory (HI.SN_Dir.all) then
          GNAT.Directory_Operations.Make_Dir (HI.SN_Dir.all);

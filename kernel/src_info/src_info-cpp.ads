@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                          G L I D E  I I                           --
+--                              G P S                                --
 --                                                                   --
 --                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
--- GLIDE is free software; you can redistribute it and/or modify  it --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -25,6 +25,7 @@ with SN;             use SN;
 with SN.Xref_Pools;  use SN.Xref_Pools;
 
 with Prj;
+with Types;
 
 package Src_Info.CPP is
 
@@ -77,19 +78,8 @@ package Src_Info.CPP is
       Process_Xrefs, -- processing xrefs for all files
       Done);         -- updating done
 
-   type CPP_LI_Handler_Iterator is new LI_Handler_Iterator with record
-      State           : Iterator_State_Type := Start;
-      Root_Project    : Prj.Project_Id;
-      Project         : Prj.Project_Id;
-      SN_Dir          : SN.String_Access;
-      Xrefs           : Xref_Pool;
-      Tmp_Filename    : GNAT.OS_Lib.Temp_File_Name;
-      PD              : GNAT.Expect.Process_Descriptor;
-   end record;
+   type CPP_LI_Handler_Iterator is new LI_Handler_Iterator with private;
    --  An iterator to generate the LI database for a set of source files.
-   --  State is an internal state of iterator, it can be inconsistant with
-   --  the real iterator state, because real iterator state depends also on
-   --  internal process. State is recomputing during call to Continue.
 
    function Generate_LI_For_Source
      (Handler       : access CPP_LI_Handler_Record;
@@ -103,6 +93,7 @@ package Src_Info.CPP is
      (Handler       : access CPP_LI_Handler_Record;
       Root_Project  : Prj.Project_Id;
       Project       : Prj.Project_Id;
+      Language      : Types.Name_Id;
       Recursive     : Boolean := False)
       return LI_Handler_Iterator'Class;
    --  Generate the LI information for all the source files in Project (and all
@@ -134,5 +125,19 @@ package Src_Info.CPP is
       LIFP    : LI_File_Ptr;
       Success : out Boolean);
    --  Just wrapper for internal Add to support extended testing
+
+private
+   type CPP_LI_Handler_Iterator is new LI_Handler_Iterator with record
+      State           : Iterator_State_Type := Start;
+      Root_Project    : Prj.Project_Id;
+      Project         : Prj.Project_Id;
+      SN_Dir          : SN.String_Access;
+      Xrefs           : Xref_Pool;
+      Tmp_Filename    : GNAT.OS_Lib.Temp_File_Name;
+      PD              : GNAT.Expect.Process_Descriptor;
+   end record;
+   --  State is an internal state of iterator, it can be inconsistant with
+   --  the real iterator state, because real iterator state depends also on
+   --  internal process. State is recomputed during call to Continue.
 
 end Src_Info.CPP;
