@@ -44,12 +44,6 @@ package body Entities is
 
    function String_Hash is new HTables.Hash (HTable_Header);
 
-   procedure Add_Depended_On
-     (File : Source_File; Depended_On  : Source_File);
-   --  Add a new file that depends on File. We check first that Depended_On
-   --  is not in the list. This doesn't check whether the dependency has
-   --  already been registered.
-
    procedure Reset (Entity : Entity_Information; File : Source_File);
    --  Remove all references to File in Entity.
 
@@ -211,8 +205,8 @@ package body Entities is
       end Clean_All_Entities_In_File;
 
    begin
-      for F in Source_File_Arrays.First .. Last (File.Depended_On) loop
-         Clean_All_Entities_In_File (File.Depended_On.Table (F));
+      for F in Dependency_Arrays.First .. Last (File.Depended_On) loop
+         Clean_All_Entities_In_File (File.Depended_On.Table (F).File);
       end loop;
 
       for F in Dependency_Arrays.First .. Last (File.Depends_On) loop
@@ -347,8 +341,8 @@ package body Entities is
 
       Free_All_Entities (File);
 
-      for F in Source_File_Arrays.First .. Last (File.Depended_On) loop
-         Remove (File.Depended_On.Table (F).Depends_On, File);
+      for F in Dependency_Arrays.First .. Last (File.Depended_On) loop
+         Remove (File.Depended_On.Table (F).File.Depends_On, File);
       end loop;
 
       for F in Dependency_Arrays.First .. Last (File.Depends_On) loop
@@ -662,7 +656,7 @@ package body Entities is
             Name           => File,
             Entities       => Empty_Trie_Tree,
             Depends_On     => Null_Dependency_List,
-            Depended_On    => Null_Source_File_List,
+            Depended_On    => Null_Dependency_List,
             All_Entities   => Empty_Trie_Tree,
             Scope          => null,
             LI             => LI,
@@ -721,18 +715,9 @@ package body Entities is
 
       if Find (File.Depends_On, Depends_On) < Dependency_Arrays.First then
          Append (File.Depends_On, (Depends_On, Explicit_Dependency));
-         Add_Depended_On (Depends_On, File);
+         Append (Depends_On.Depended_On, (File, Explicit_Dependency));
       end if;
    end Add_Depends_On;
-
-   ---------------------
-   -- Add_Depended_On --
-   ---------------------
-
-   procedure Add_Depended_On (File : Source_File; Depended_On : Source_File) is
-   begin
-      Append (File.Depended_On, Depended_On);
-   end Add_Depended_On;
 
    ---------
    -- Add --
@@ -1101,14 +1086,18 @@ package body Entities is
    -- Update_Xref --
    -----------------
 
-   procedure Update_Xref (File : Source_File) is
+   procedure Update_Xref
+     (File                  : Source_File;
+      File_Has_No_LI_Report : File_Error_Reporter := null)
+   is
       F : Source_File;
       pragma Unreferenced (F);
    begin
       if File /= null then
          F := Get_Source_Info
            (Get_LI_Handler (File.Db, Get_Filename (File)),
-            Get_Filename (File));
+            Get_Filename (File),
+            File_Has_No_LI_Report);
       end if;
    end Update_Xref;
 
@@ -1157,5 +1146,21 @@ package body Entities is
    begin
       return Entity.Name.all;
    end Get_Name;
+
+   -------------------------
+   -- Check_LI_And_Source --
+   -------------------------
+
+   function Check_LI_And_Source
+     (LI : LI_File; Source : Virtual_File) return Boolean is
+   begin
+      for F in Source_File_Arrays.First .. Last (LI.Files) loop
+         if Get_Filename (LI.Files.Table (F)) = Source then
+            return True;
+         end if;
+      end loop;
+
+      return False;
+   end Check_LI_And_Source;
 
 end Entities;

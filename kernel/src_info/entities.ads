@@ -43,6 +43,13 @@ package Entities is
    --  cross-references, and the various queries for the browsers).
    --  Derived types should be created for all the languages supported.
 
+   type File_Error_Reporter_Record is abstract tagged null record;
+   type File_Error_Reporter is access all File_Error_Reporter_Record'Class;
+   procedure Error
+     (Report : in out File_Error_Reporter_Record; File : VFS.Virtual_File)
+     is abstract;
+   --  Used to report errors while parsing files
+
    -----------------------
    -- Entities_Database --
    -----------------------
@@ -241,6 +248,10 @@ package Entities is
    pragma Inline (Get_Timestamp);
    --  Return the timestamp last set through Update_Timestamp
 
+   function Check_LI_And_Source
+     (LI : LI_File; Source : VFS.Virtual_File) return Boolean;
+   --  Return True if LI contains the xref information for Source
+
    -----------------
    -- Source_File --
    -----------------
@@ -279,7 +290,9 @@ package Entities is
    --  Update_Xref if needed.
    --  The file is automatically added to the list of files for that LI.
 
-   procedure Update_Xref (File : Source_File);
+   procedure Update_Xref
+     (File                  : Source_File;
+      File_Has_No_LI_Report : File_Error_Reporter := null);
    --  Update the cross-reference information for File, if the information on
    --  the disk is more up-to-date
 
@@ -418,11 +431,15 @@ package Entities is
    --  Free the memory occupied by Handler. By default, this does nothing
 
    function Get_Source_Info
-     (Handler         : access LI_Handler_Record;
-      Source_Filename : VFS.Virtual_File) return Source_File is abstract;
+     (Handler               : access LI_Handler_Record;
+      Source_Filename       : VFS.Virtual_File;
+      File_Has_No_LI_Report : File_Error_Reporter := null)
+      return Source_File is abstract;
    --  Return a handle to the source file structure corresponding to
    --  Source_Filename. If necessary, the LI file is parsed from the disk to
    --  update the internal structure.
+   --  If no cross-reference information was found, File_Has_No_LI_Report is
+   --  called with the file in parameter
 
    function Case_Insensitive_Identifiers
      (Handler         : access LI_Handler_Record) return Boolean is abstract;
@@ -629,7 +646,7 @@ private
       --  All the entities defined in the source file
 
       Depends_On  : Dependency_List;
-      Depended_On : Source_File_List;
+      Depended_On : Dependency_List;
       --  The list of dependencies on or from this file
 
       Scope       : Scope_Tree;
