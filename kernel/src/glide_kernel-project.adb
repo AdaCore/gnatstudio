@@ -40,6 +40,7 @@ with Basic_Types;
 with Glide_Intl;               use Glide_Intl;
 with Glide_Kernel.Console;     use Glide_Kernel.Console;
 with Glide_Kernel.Timeout;     use Glide_Kernel.Timeout;
+with Glide_Main_Window;        use Glide_Main_Window;
 
 package body Glide_Kernel.Project is
 
@@ -263,6 +264,8 @@ package body Glide_Kernel.Project is
          Close_All_Children (Kernel);
          Had_Project_Desktop := Load_Desktop (Kernel);
       end if;
+
+      Reset_Title (Glide_Window (Kernel.Main_Window));
    end Load_Default_Project;
 
    ------------------
@@ -304,6 +307,8 @@ package body Glide_Kernel.Project is
       --  Reload the desktop, in case there is a project-specific setup already
       Close_All_Children (Kernel);
       Had_Project_Desktop := Load_Desktop (Kernel);
+
+      Reset_Title (Glide_Window (Kernel.Main_Window));
    end Load_Project;
 
    -----------------
