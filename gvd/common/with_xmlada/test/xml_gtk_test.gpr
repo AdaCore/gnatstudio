@@ -1,0 +1,6 @@
+with "xmlada_sax";
+
+project XML_Gtk_Test is
+   for Source_Dirs use (".", "..");
+   for Main use ("testxmlgtk");
+end XML_Gtk_Test;
