@@ -4336,13 +4336,13 @@ package body Prj_API is
          return False;
       end if;
 
-      if not (Name (Name'First) in 'a' .. 'z') then
+      if Name (Name'First) not in 'a' .. 'z' then
          return False;
       end if;
 
       for N in Name'First + 1 .. Name'Last loop
-         if not (Name (N) in 'a' .. 'z')
-           and then not (Name (N) in '0' .. '9')
+         if Name (N) not in 'a' .. 'z'
+           and then Name (N) not in '0' .. '9'
            and then Name (N) /= '_'
          then
             return False;
