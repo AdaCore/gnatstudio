@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
---                   GVD - The GNU Visual Debugger                   --
+--                          G L I D E  I I                           --
 --                                                                   --
---                      Copyright (C) 2000-2001                      --
---                             ACT-Europe                            --
+--                        Copyright (C) 2001                         --
+--                            ACT-Europe                             --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -64,6 +64,9 @@ with Factory_Data;            use Factory_Data;
 with Make_Harness_Window_Pkg; use Make_Harness_Window_Pkg;
 with Make_Test_Window_Pkg;    use Make_Test_Window_Pkg;
 with Make_Suite_Window_Pkg;   use Make_Suite_Window_Pkg;
+
+with Ada.Exceptions;          use Ada.Exceptions;
+with GNAT.IO;                 use GNAT.IO;
 
 package body Glide_Menu is
 
@@ -300,6 +303,19 @@ package body Glide_Menu is
    procedure Refresh;
    --  Handle pending graphical events.
 
+   procedure Log_Exception (E : Exception_Occurrence);
+   --  Log unexpected exception.
+
+   -------------------
+   -- Log_Exception --
+   -------------------
+
+   procedure Log_Exception (E : Exception_Occurrence) is
+   begin
+      Put_Line ("unexpected exception in Glide II:");
+      Put (Exception_Information (E));
+   end Log_Exception;
+
    -------------
    -- Refresh --
    -------------
@@ -330,6 +346,10 @@ package body Glide_Menu is
       end if;
 
       Open_Or_Create (Glide_Window (Object).Kernel, Filename);
+
+   exception
+      when E : others =>
+         Log_Exception (E);
    end On_Open_File;
 
    ---------------------
@@ -348,6 +368,10 @@ package body Glide_Menu is
       if Filename /= "" then
          Load_Project (Glide_Window (Object).Kernel, Filename);
       end if;
+
+   exception
+      when E : others =>
+         Log_Exception (E);
    end On_Open_Project;
 
    --------------------
@@ -365,6 +389,10 @@ package body Glide_Menu is
       Set_Current_Page (Wiz, 1);
       Show_All (Wiz);
       Main;
+
+   exception
+      when E : others =>
+         Log_Exception (E);
    end On_New_Project;
 
    -----------------
@@ -377,6 +405,10 @@ package body Glide_Menu is
       Widget : Limited_Widget) is
    begin
       New_Editor (Glide_Window (Object).Kernel);
+
+   exception
+      when E : others =>
+         Log_Exception (E);
    end On_New_File;
 
    -------------
@@ -391,6 +423,10 @@ package body Glide_Menu is
       Success : Boolean;
    begin
       Save_To_File (Glide_Window (Object).Kernel, Success => Success);
+
+   exception
+      when E : others =>
+         Log_Exception (E);
    end On_Save;
 
    ----------------
@@ -411,6 +447,10 @@ package body Glide_Menu is
       begin
          Save_To_File (Glide_Window (Object).Kernel, Name, Success);
       end;
+
+   exception
+      when E : others =>
+         Log_Exception (E);
    end On_Save_As;
 
    --------------
@@ -423,6 +463,10 @@ package body Glide_Menu is
       Widget : Limited_Widget) is
    begin
       null;
+
+   exception
+      when E : others =>
+         Log_Exception (E);
    end On_Close;
 
    -------------
@@ -444,6 +488,10 @@ package body Glide_Menu is
       if Button = Button_Yes then
          Main_Quit;
       end if;
+
+   exception
+      when E : others =>
+         Log_Exception (E);
    end On_Exit;
 
    ---------------------
@@ -458,6 +506,10 @@ package body Glide_Menu is
       Top  : constant Glide_Window := Glide_Window (Object);
    begin
       Save_Desktop (Top.Kernel);
+
+   exception
+      when E : others =>
+         Log_Exception (E);
    end On_Save_Desktop;
 
    -------------
@@ -470,6 +522,10 @@ package body Glide_Menu is
       Widget : Limited_Widget) is
    begin
       null;
+
+   exception
+      when E : others =>
+         Log_Exception (E);
    end On_Undo;
 
    -------------
@@ -482,6 +538,10 @@ package body Glide_Menu is
       Widget : Limited_Widget) is
    begin
       null;
+
+   exception
+      when E : others =>
+         Log_Exception (E);
    end On_Redo;
 
    ------------
@@ -494,6 +554,10 @@ package body Glide_Menu is
       Widget : Limited_Widget) is
    begin
       Cut_Clipboard (Glide_Window (Object).Kernel);
+
+   exception
+      when E : others =>
+         Log_Exception (E);
    end On_Cut;
 
    -------------
@@ -506,6 +570,10 @@ package body Glide_Menu is
       Widget : Limited_Widget) is
    begin
       Copy_Clipboard (Glide_Window (Object).Kernel);
+
+   exception
+      when E : others =>
+         Log_Exception (E);
    end On_Copy;
 
    --------------
@@ -518,6 +586,10 @@ package body Glide_Menu is
       Widget : Limited_Widget) is
    begin
       Paste_Clipboard (Glide_Window (Object).Kernel);
+
+   exception
+      when E : others =>
+         Log_Exception (E);
    end On_Paste;
 
    -------------------
@@ -530,6 +602,10 @@ package body Glide_Menu is
       Widget : Limited_Widget) is
    begin
       Select_All (Glide_Window (Object).Kernel);
+
+   exception
+      when E : others =>
+         Log_Exception (E);
    end On_Select_All;
 
    -----------------
@@ -544,6 +620,10 @@ package body Glide_Menu is
       Top : constant Glide_Window := Glide_Window (Object);
    begin
       New_View (Top.Kernel);
+
+   exception
+      when E : others =>
+         Log_Exception (E);
    end On_New_View;
 
    --------------------
@@ -556,6 +636,10 @@ package body Glide_Menu is
       Widget : Limited_Widget) is
    begin
       null;
+
+   exception
+      when E : others =>
+         Log_Exception (E);
    end On_Preferences;
 
    ---------------------
@@ -577,6 +661,10 @@ package body Glide_Menu is
       Main;
       --  Id := Push (Top.Statusbar, 1, "end of search.");
       Print_Message (Top.Statusbar, Help, "end of search.");
+
+   exception
+      when E : others =>
+         Log_Exception (E);
    end On_Search_Files;
 
    ---------------------------------
@@ -595,6 +683,10 @@ package body Glide_Menu is
          return;
       end if;
       Goto_Declaration_Or_Body (Top.Kernel);
+
+   exception
+      when E : others =>
+         Log_Exception (E);
    end On_Goto_Declaration_Or_Body;
 
    --------------
@@ -669,6 +761,10 @@ package body Glide_Menu is
          Console.Insert (Top.Kernel, Expect_Out (Fd), Add_LF => False);
          Print_Message (Top.Statusbar, Help, -"completed.");
          Close (Fd);
+
+      when E : others =>
+         Close (Fd);
+         Log_Exception (E);
    end On_Build;
 
    ------------
@@ -692,6 +788,10 @@ package body Glide_Menu is
       then
          null;
       end if;
+
+   exception
+      when E : others =>
+         Log_Exception (E);
    end On_Run;
 
    -------------------------
@@ -704,6 +804,10 @@ package body Glide_Menu is
       Widget : Limited_Widget) is
    begin
       Open_Project_Editor (Glide_Window (Object).Kernel);
+
+   exception
+      when E : others =>
+         Log_Exception (E);
    end On_Edit_Project;
 
    -------------------------
@@ -726,6 +830,10 @@ package body Glide_Menu is
       end if;
 
       GVD.Menu.On_Open_Program (Object, Action, Widget);
+
+   exception
+      when E : others =>
+         Log_Exception (E);
    end On_Debug_Executable;
 
    -------------
@@ -748,6 +856,10 @@ package body Glide_Menu is
       end if;
 
       GVD.Menu.On_Step (Object, Action, Widget);
+
+   exception
+      when E : others =>
+         Log_Exception (E);
    end On_Step;
 
    -------------------------
@@ -770,6 +882,10 @@ package body Glide_Menu is
       end if;
 
       GVD.Menu.On_Step_Instruction (Object, Action, Widget);
+
+   exception
+      when E : others =>
+         Log_Exception (E);
    end On_Step_Instruction;
 
    -------------
@@ -792,6 +908,10 @@ package body Glide_Menu is
       end if;
 
       GVD.Menu.On_Next (Object, Action, Widget);
+
+   exception
+      when E : others =>
+         Log_Exception (E);
    end On_Next;
 
    -------------------------
@@ -814,6 +934,10 @@ package body Glide_Menu is
       end if;
 
       GVD.Menu.On_Next_Instruction (Object, Action, Widget);
+
+   exception
+      when E : others =>
+         Log_Exception (E);
    end On_Next_Instruction;
 
    ---------------
@@ -836,6 +960,10 @@ package body Glide_Menu is
       end if;
 
       GVD.Menu.On_Finish (Object, Action, Widget);
+
+   exception
+      when E : others =>
+         Log_Exception (E);
    end On_Finish;
 
    -----------------
@@ -858,6 +986,10 @@ package body Glide_Menu is
       end if;
 
       GVD.Menu.On_Continue (Object, Action, Widget);
+
+   exception
+      when E : others =>
+         Log_Exception (E);
    end On_Continue;
 
    ----------------------
@@ -912,6 +1044,10 @@ package body Glide_Menu is
             end if;
          end;
       end if;
+
+   exception
+      when E : others =>
+         Log_Exception (E);
    end On_Generate_Body;
 
    ----------------------
@@ -942,6 +1078,10 @@ package body Glide_Menu is
 
       Free (Make_Test_Window.Name);
       Destroy (Make_Test_Window);
+
+   exception
+      when E : others =>
+         Log_Exception (E);
    end On_New_Test_Case;
 
    -----------------------
@@ -971,6 +1111,10 @@ package body Glide_Menu is
 
       Free (Make_Suite_Window.Name);
       Destroy (Make_Suite_Window);
+
+   exception
+      when E : others =>
+         Log_Exception (E);
    end On_New_Test_Suite;
 
    -------------------------
@@ -1000,6 +1144,10 @@ package body Glide_Menu is
 
       Free (Make_Harness_Window.Procedure_Name);
       Destroy (Make_Harness_Window);
+
+   exception
+      when E : others =>
+         Log_Exception (E);
    end On_New_Test_Harness;
 
    --------------------------
@@ -1037,6 +1185,10 @@ package body Glide_Menu is
          Show_All (Vdiff);
          --  ??? Free (Result);
       end;
+
+   exception
+      when E : others =>
+         Log_Exception (E);
    end On_Compare_Two_Files;
 
    ---------------------------
@@ -1051,6 +1203,10 @@ package body Glide_Menu is
       Child : MDI_Child;
    begin
       Child := Open_Browser (Glide_Window (Object).Kernel, Dependency_Browser);
+
+   exception
+      when E : others =>
+         Log_Exception (E);
    end On_Dependency_Browser;
 
    ---------------
@@ -1063,6 +1219,10 @@ package body Glide_Menu is
       Widget : Limited_Widget) is
    begin
       null;
+
+   exception
+      when E : others =>
+         Log_Exception (E);
    end On_Manual;
 
    --------------------
@@ -1082,6 +1242,10 @@ package body Glide_Menu is
            (-"This is the About information box.") & ASCII.LF & ASCII.LF &
            (-"Click on the OK button to close this window."),
          Title => -"About...");
+
+   exception
+      when E : others =>
+         Log_Exception (E);
    end On_About_Glide;
 
    ----------------------
