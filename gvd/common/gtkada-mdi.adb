@@ -68,6 +68,7 @@ with Interfaces.C.Strings; use Interfaces.C.Strings;
 
 with GNAT.OS_Lib;      use GNAT.OS_Lib;
 with System;           use System;
+with GUI_Utils;        use GUI_Utils;
 
 package body Gtkada.MDI is
 
@@ -733,6 +734,7 @@ package body Gtkada.MDI is
             First, Handle_Size - 1, Last, Handle_Size - 1);
       end if;
 
+      --  Propagate_Expose_Event (M, Event);
       return False;
    end Expose_MDI;
 
@@ -1231,6 +1233,7 @@ package body Gtkada.MDI is
    procedure Draw_Child
      (Child : access MDI_Child_Record'Class; Area : Gdk_Rectangle)
    is
+      use Widget_List;
       F  : Gdk.Font.Gdk_Font :=
         Get_Gdkfont (Title_Font_Name, Title_Font_Height);
       GC : Gdk.Gdk_GC := Child.MDI.Non_Focus_GC;
@@ -1290,7 +1293,8 @@ package body Gtkada.MDI is
       return Boolean is
    begin
       Draw_Child (MDI_Child (Child), Get_Area (Event));
-      return True;
+      Propagate_Expose_Event (MDI_Child (Child), Event);
+      return False;
    end Draw_Child;
 
    ------------------------
