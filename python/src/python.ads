@@ -68,6 +68,7 @@ package Python is
    --  Compute the string representation of Obj.  Returns the string
    --  representation on success, NULL on failure.  This is the equivalent of
    --  the Python expression "str(obj)".
+   --  Returned value must be Py_DECREF
 
    function PyObject_Repr (Obj : PyObject) return PyObject;
    --  Similar to PyObject_Str.
