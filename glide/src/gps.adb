@@ -39,6 +39,7 @@ with Gtkada.Dialogs;            use Gtkada.Dialogs;
 with GVD.Types;
 with OS_Utils;                  use OS_Utils;
 with Ada.Command_Line;          use Ada.Command_Line;
+with Ada.Text_IO;               use Ada.Text_IO;
 with Language_Handlers.Glide;   use Language_Handlers.Glide;
 with Language.Ada;              use Language.Ada;
 with Language.C;                use Language.C;
@@ -98,6 +99,7 @@ procedure Glide2 is
 
    procedure Init_Settings is
       Dir_Created : Boolean := False;
+      File : File_Type;
    begin
       Home := Getenv ("GPS_HOME");
 
@@ -136,6 +138,23 @@ procedure Glide2 is
               ((-"Created config directory ") & Dir.all,
                Information, Button_OK, Justification => Justify_Left);
             Dir_Created := True;
+
+            --  Create a default configuration file for the traces.
+            --  This should be left while GPS is considered as not fully
+            --  stable.
+            Create
+              (File,
+               Name => String_Utils.Name_As_Directory (Dir.all)
+                 & "traces_conf");
+            Put_Line (File, ">log");
+            Put_Line (File, "+");
+            Put_Line (File, "DEBUG.COLORS=no");
+            Put_Line (File, "DEBUG.ABSOLUTE_TIME=yes");
+            Put_Line (File, "DEBUG.ELAPSED_TIME=no");
+            Put_Line (File, "DEBUG.STACK_TRACE=no");
+            Put_Line (File, "DEBUG.LOCATION=no");
+            Put_Line (File, "DEBUG.ENCLOSING_ENTITY=no");
+            Close (File);
          end if;
 
          if not
@@ -168,6 +187,11 @@ begin
    Gtk.Main.Init;
 
    Init_Settings;
+
+   --  Initialize the traces
+   Traces.Parse_Config_File
+     (Default => String_Utils.Name_As_Directory (Dir.all) & "traces_conf");
+
    Gtk_New
      (GPS, "<gps>", Glide_Menu.Glide_Menu_Items.all, Dir.all, Prefix.all);
    Set_Title (GPS, "GPS - Next Generation");
