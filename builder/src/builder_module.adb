@@ -958,13 +958,9 @@ package body Builder_Module is
 
             if not Is_Regular_File (Temp_File) then
                --  Write the temporary buffer file
-               Writable := Write_File (Temp_File);
-               Write
-                 (Writable,
-                  Execute_GPS_Shell_Command
-                    (Kernel, "get_buffer " & Full_Name (File).all),
-                  True);
-               Close (Writable);
+               Execute_GPS_Shell_Command
+                 (Kernel, "save_buffer " & Full_Name (File).all & " " &
+                  Full_Name (Temp_File).all);
             end if;
 
             Local_File := new String'(Locale_Full_Name (Temp_File));
