@@ -701,10 +701,9 @@ package body Debugger.Jdb is
 
    procedure Display_Prompt
      (Debugger        : access Jdb_Debugger;
-      Wait_For_Prompt : Boolean := True)
-   is
+      Wait_For_Prompt : Boolean := True) is
    begin
-      Text_Output_Handler
+      Output_Text
         (Convert (Debugger.Window, Debugger),
          Send_Full (Debugger, "  ", Wait_For_Prompt => Wait_For_Prompt),
          Is_Command => True,

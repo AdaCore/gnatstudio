@@ -89,7 +89,7 @@ package body Debugger.Gdb is
    --  Matches a file name/line indication in gdb's output.
 
    File_Name_Pattern2 : constant Pattern_Matcher :=
-     Compile ("^([^:]+):(\d+): No such file or directory", Multiple_Lines);
+     Compile ("^([^:]+):(\d+): No such file or directory.", Multiple_Lines);
    --  Second regexp used to detect when the current frame can not be displayed
    --  ??? Note that this pattern won't work for locales other than english.
 
@@ -120,10 +120,11 @@ package body Debugger.Gdb is
      ("in (\S+)");
    --  How to detect subprogram names in the info given by "info breakpoint"
 
-   Question_Filter_Pattern1 : constant Pattern_Matcher := Compile
-     ("^\[0\] ", Multiple_Lines);
-   Question_Filter_Pattern2 : constant Pattern_Matcher := Compile
-     ("^(.*\?) \(y or n\)", Multiple_Lines);
+   Question_Filter_Pattern1 : constant Pattern_Matcher :=
+     Compile ("^\[0\] ", Multiple_Lines);
+
+   Question_Filter_Pattern2 : constant Pattern_Matcher :=
+     Compile ("^(.*\?) \(y or n\) ", Multiple_Lines);
    --  How to detect a question in gdb's output
 
    Address_Range_Pattern : constant Pattern_Matcher := Compile
@@ -1185,7 +1186,7 @@ package body Debugger.Gdb is
      (Debugger : access Gdb_Debugger;
       Wait_For_Prompt : Boolean := True) is
    begin
-      Text_Output_Handler
+      Output_Text
         (Convert (Debugger.Window, Debugger),
          Send_Full (Debugger, "  ", Wait_For_Prompt => Wait_For_Prompt,
                     Mode => Internal),
@@ -1223,18 +1224,18 @@ package body Debugger.Gdb is
       Matched : Match_Array (0 .. 3);
       Matched2 : Match_Array (0 .. 3);
    begin
-
       --  Search for the last file reference in the output. There might be
       --  several of them, for instance when we hit a breakpoint with an
       --  associated 'up' command.
+
       Matched (0) := No_Match;
+
       loop
          Match (File_Name_Pattern, Str (Start .. Str'Last), Matched2);
          exit when Matched2 (0) = No_Match;
          Matched := Matched2;
          Start := Matched (0).Last + 1;
       end loop;
-
 
       First := Matched (0).First;
       Last  := Matched (0).Last;
@@ -1282,9 +1283,9 @@ package body Debugger.Gdb is
       First, Last : out Natural)
    is
       Matched : Match_Array (0 .. 1);
-
    begin
       Match (Frame_Pattern, Str, Matched);
+
       if Matched (1) /= No_Match then
          First := Matched (1).First;
          Last  := Matched (1).Last;
@@ -2073,8 +2074,10 @@ package body Debugger.Gdb is
          S : constant String := Send
            (Debugger, "info line" & Natural'Image (Line), Mode => Internal);
          Matched : Match_Array (0 .. 2);
+
       begin
          Match (Address_Range_Pattern, S, Matched);
+
          if Matched (0) /= No_Match then
             Range_Start_Len := Matched (1).Last - Matched (1).First + 1;
             Range_Start (1 .. Range_Start_Len) :=
@@ -2083,6 +2086,7 @@ package body Debugger.Gdb is
             Range_End_Len := Matched (2).Last - Matched (2).First + 1;
             Range_End (1 .. Range_End_Len) :=
               S (Matched (2).First .. Matched (2).Last);
+
          else
             Range_Start (1 .. 1) := " ";
             Range_End (1 .. 1) := " ";
@@ -2090,6 +2094,7 @@ package body Debugger.Gdb is
             Range_End_Len := 0;
          end if;
       end;
+
       Set_Parse_File_Name (Get_Process (Debugger), True);
    end Get_Line_Address;
 
