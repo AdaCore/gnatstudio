@@ -73,8 +73,13 @@ package body Items.Arrays is
               (Index mod Length + Item.Dimensions (Dim_Num).First);
          begin
             if Dim_Num /= 1 then
-               return Index_String (Item, Index / Length, Dim_Num - 1)
-                 & "," & Dim (Dim'First + 1 .. Dim'Last);
+               if Dim (Dim'First) = '-' then
+                  return Index_String (Item, Index / Length, Dim_Num - 1)
+                    & "," & Dim (Dim'First .. Dim'Last);
+               else
+                  return Index_String (Item, Index / Length, Dim_Num - 1)
+                    & "," & Dim (Dim'First + 1 .. Dim'Last);
+               end if;
             else
                if Dim (Dim'First) = '-' then
                   return Dim (Dim'First .. Dim'Last);
