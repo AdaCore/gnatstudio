@@ -2417,10 +2417,7 @@ package body Src_Info.Queries is
             end if;
 
             while Iterator.Current_Dep /= null loop
-               if Get_Source_Filename (Iterator.Current_Dep.Value.File) =
-                   Iterator.File
-                 and then Iterator.Current_Dep.Value.Declarations /= null
-               then
+               if Iterator.Current_Dep.Value.Declarations /= null then
                   Iterator.Current_Decl :=
                     Iterator.Current_Dep.Value.Declarations;
                   return;
@@ -2463,8 +2460,10 @@ package body Src_Info.Queries is
       begin
          loop
             exit when E = null
-              or else Get_File (Get_Location (E.Value)) = Iterator.File;
-            E := Next_Real_Reference (E.Next);
+              or else
+                (Is_Real_Reference (E.Value.Kind)
+                 and then Get_File (Get_Location (E.Value)) = Iterator.File);
+            E := E.Next;
          end loop;
 
          if E = null then
@@ -2475,7 +2474,7 @@ package body Src_Info.Queries is
       end Next_Reference;
 
    begin
-      --  No more entities to display in the current ilfe ?
+      --  No more entities to display in the current file ?
 
       if Iterator.Current_Decl = null then
          Next_File;
@@ -2499,10 +2498,6 @@ package body Src_Info.Queries is
          --  Move to first reference
          Iterator.Reference :=
            Next_Reference (Iterator.Current_Decl.Value.References);
-
-         if Iterator.Reference = null then
-            Next_Decl;
-         end if;
       end if;
    end Next;
 
