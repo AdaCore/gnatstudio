@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -170,6 +170,9 @@ begin
    Set_Active (Vsearch.Regexp_Check, False);
    Pack_Start (Vsearch.Options_Vbox, Vsearch.Regexp_Check, False, False, 0);
 
+   Gtk_New (Vsearch.Auto_Hide_Check, -"Close dialog on search");
+   Set_Active (Vsearch.Auto_Hide_Check, False);
+   Pack_Start (Vsearch.Options_Vbox, Vsearch.Auto_Hide_Check, False, False, 0);
 end Initialize;
 
 end Vsearch_Pkg;
