@@ -1,0 +1,103 @@
+prefix = @prefix@
+docdir = $(prefix)/doc/glide2
+
+DVIPS= @DVIPS@
+MAKEINFO= @MAKEINFO@
+TEXI2HTML= @TEXI2HTML@
+TEX= @TEX@
+MKDIR = mkdir -p
+INSTALL = @INSTALL@
+INSTALL_DATA = @INSTALL_DATA@
+IMAGES = launch.gif
+
+all: doc clean-temp-files
+non-ps: common clean-temp-files
+static:
+
+doc: glide2.txt glide2.html glide2.info glide2.ps
+
+glide2.html: glide2.texi
+ifneq (${TEXI2HTML},)
+	perl ${TEXI2HTML} -menu -monolithic glide2.texi
+else
+	@echo "----------------------------------------------------"
+	@echo "texi2html not found, cannot build HTML documentation"
+	@echo "----------------------------------------------------"
+endif
+
+glide2.info: glide2.texi
+ifneq (${MAKEINFO},)
+	${MAKEINFO} --force -o glide2.info glide2.texi
+else
+	@echo "----------------------------------------------------"
+	@echo "makeinfo not found, cannot build INFO documentation"
+	@echo "----------------------------------------------------"
+endif
+
+glide2.txt: glide2.texi
+ifneq (${MAKEINFO},)
+	${MAKEINFO} --force --no-headers --no-split -o glide2.txt glide2.texi
+else
+	@echo "----------------------------------------------------"
+	@echo "makeinfo not found, cannot build TXT documentation"
+	@echo "----------------------------------------------------"
+endif
+
+glide2.ps: glide2.texi
+ifneq (${TEX},)
+	echo x | ${TEX} glide2.texi
+	texindex glide2.cp
+	${TEX} glide2.texi
+	${TEX} glide2.texi
+ifneq (${DVIPS},)
+	${DVIPS} glide2.dvi -o glide2.ps
+else
+	@echo "------------------------------------------------------"
+	@echo "dvips not found, cannot build POSTSCRIPT documentation"
+	@echo "------------------------------------------------------"
+endif
+else
+	@echo "----------------------------------------------------"
+	@echo "tex not found, cannot build DVI or PS documentation"
+	@echo "----------------------------------------------------"
+endif
+
+install:
+	$(MKDIR) $(docdir)
+	$(MKDIR) $(docdir)/html
+	$(MKDIR) $(docdir)/info
+	$(MKDIR) $(docdir)/ps
+	$(MKDIR) $(docdir)/txt
+	-$(INSTALL_DATA) glide-welcome.html $(docdir)/html
+	-$(INSTALL_DATA) glide2.html $(docdir)/html
+	-$(INSTALL_DATA) glide2.info $(docdir)/info
+	-$(INSTALL_DATA) glide2.ps  $(docdir)/ps
+	-$(INSTALL_DATA) glide2.txt  $(docdir)/txt
+	for img in $(IMAGES); do \
+	  $(INSTALL_DATA) $$img $(docdir)/html; \
+	done
+
+clean-temp-files:
+	-$(RM) *.aux
+	-$(RM) *.cp
+	-$(RM) *.cps
+	-$(RM) *.dvi
+	-$(RM) *.fn
+	-$(RM) *.ky
+	-$(RM) *.log
+	-$(RM) *.pg
+	-$(RM) *.toc
+	-$(RM) *.tp
+	-$(RM) *.vr
+
+clean: clean-temp-files
+	-$(RM) glide2.info*
+	-$(RM) glide2.html glide2.ps glide2.txt
+
+mostlyclean: clean
+
+distclean: mostlyclean
+	-$(RM) Makefile
+
+maintainer-clean: distclean
+
