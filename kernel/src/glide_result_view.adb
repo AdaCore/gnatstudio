@@ -478,8 +478,8 @@ package body Glide_Result_View is
          Path_Free (Path);
 
          declare
-            MDI   : MDI_Window := Get_MDI (View.Kernel);
-            Child : MDI_Child :=
+            MDI   : constant MDI_Window := Get_MDI (View.Kernel);
+            Child : constant MDI_Child :=
               Find_MDI_Child_By_Tag (MDI, Result_View_Record'Tag);
          begin
             if Child /= null then
