@@ -347,7 +347,7 @@ menu to open the external editor.
 @section A note on the Clipboard
 @c --------------------------------------------------------------------------
 
-This section concern X-window users who are used to cutting and
+This section concerns X-Window users who are used to cutting and
 pasting with the middle mouse button. In the GPS text editor, as in
 many recent X applications, the @i{GPS clipboard} is set by explicit
 cut/copy/paste actions, either through menu items or keyboard
@@ -726,21 +726,14 @@ recursively.
 @noindent
 
 GPS can be configured through the usual gtk+ mechanisms of @file{rc
-files}. The trick is to create a text file called @file{gtkrc} in the
+files}. You can create a text file called @file{gtkrc} in the
 gps home directory (@file{~/.gps} on Unix systems), or as a global
 change, in the directory etc/gps in the GPS installation. This file
-contains the usual configuration description.
+contains the usual configuration description, following the gtk resource
+files syntax.
 
-For instance, the following will set the default font for all widgets
-in the interface. Note that this font is sometimes overridden by
-GPS's own preferences, most notably in the source editor.
-
-@smallexample
-gtk-font-name = "Helvetica 9"
-@end smallexample
-
-The key shortcuts associated with the menus can be changed dynamically
-if you want this behavior. It should be activated explicitely by
+For instance, the key shortcuts associated with the menus can be changed
+dynamically if you want this behavior. It can be activated explicitely by
 setting the following in the configuration file:
 
 @smallexample
@@ -781,12 +774,7 @@ class "*GtkTextView*" binding : highest "custombind"
 @end smallexample
 
 Enabling key bindings similar to the popular Emacs editor is even
-easier, since you only have to add the following line to the
-configuration file:
-
-@smallexample
-gtk-key-theme-name = "Emacs"
-@end smallexample
+easier, since you can specify it directly in the preferences dialog.
 
 @c --------------------------------------------------------------------
 @node Environment
