@@ -29,18 +29,16 @@ with Gtk.List;                 use Gtk.List;
 with Gtk.Size_Group;           use Gtk.Size_Group;
 with Gtkada.Types;             use Gtkada.Types;
 with Casing;                   use Casing;
-with Prj.Tree;                 use Prj.Tree;
-with Prj.Util;                 use Prj.Util;
-with Prj_API;                  use Prj_API;
-with Prj;                      use Prj;
+with Prj;
 with Types;                    use Types;
 with Snames;                   use Snames;
 with Naming_Scheme_Editor_Pkg; use Naming_Scheme_Editor_Pkg;
 with GUI_Utils;                use GUI_Utils;
 with Glide_Intl;               use Glide_Intl;
-with Prj_API;                  use Prj_API;
+with Projects;                 use Projects;
 with GNAT.OS_Lib;              use GNAT.OS_Lib;
 with Basic_Types;              use Basic_Types;
+with Projects.Editor;          use Projects, Projects.Editor;
 
 with Interfaces.C.Strings;     use Interfaces.C.Strings;
 
@@ -102,7 +100,7 @@ package body Ada_Naming_Editors is
 
       for Casing in Casing_Type loop
          if Casing /= Unknown then
-            Gtk.Enums.String_List.Append (Casing_Items, -Image (Casing));
+            Gtk.Enums.String_List.Append (Casing_Items, -Prj.Image (Casing));
          end if;
       end loop;
 
@@ -157,7 +155,7 @@ package body Ada_Naming_Editors is
       case Scheme_Num is
          when Gnat_Naming_Scheme =>
             --  GNAT Default
-            Set_Text (Get_Entry (Editor.Casing), -Image (All_Lower_Case));
+            Set_Text (Get_Entry (Editor.Casing), -Prj.Image (All_Lower_Case));
             Set_Text (Editor.Dot_Replacement, Default_Gnat_Dot_Replacement);
             Set_Text (Get_Entry (Editor.Spec_Extension),
                       Default_Gnat_Spec_Suffix);
@@ -168,7 +166,7 @@ package body Ada_Naming_Editors is
 
          when Apex_Naming_Scheme =>
             --  APEX Default
-            Set_Text (Get_Entry (Editor.Casing), -Image (All_Lower_Case));
+            Set_Text (Get_Entry (Editor.Casing), -Prj.Image (All_Lower_Case));
             Set_Text (Editor.Dot_Replacement, ".");
             Set_Text (Get_Entry (Editor.Spec_Extension), ".1.ada");
             Set_Text (Get_Entry (Editor.Body_Extension), ".2.ada");
@@ -176,7 +174,7 @@ package body Ada_Naming_Editors is
 
          when Dec_Naming_Scheme =>
             --  DEC Ada Default
-            Set_Text (Get_Entry (Editor.Casing), -Image (All_Lower_Case));
+            Set_Text (Get_Entry (Editor.Casing), -Prj.Image (All_Lower_Case));
             Set_Text (Editor.Dot_Replacement, "__");
             Set_Text (Get_Entry (Editor.Spec_Extension), "_.ada");
             Set_Text (Get_Entry (Editor.Body_Extension), ".ada");
@@ -193,9 +191,8 @@ package body Ada_Naming_Editors is
 
    function Create_Project_Entry
      (Editor  : access Ada_Naming_Editor_Record;
-      Project : Prj.Tree.Project_Node_Id;
-      Project_View : Prj.Project_Id;
-      Scenario_Variables : Prj_API.Project_Node_Array) return Boolean
+      Project : Projects.Project_Type;
+      Scenario_Variables : Projects.Scenario_Variable_Array) return Boolean
    is
       Num_Rows : constant Gint := Get_Rows (Editor.Exception_List);
       Naming   : constant String := Get_String (Name_Naming);
@@ -207,7 +204,7 @@ package body Ada_Naming_Editors is
         (Name : Name_Id; Value : String; Index : String);
       --  Update the attribute if necessary
 
-      function List_Changed (List : Array_Element_Id; Column : Gint)
+      function List_Changed (List : Associative_Array; Column : Gint)
          return Boolean;
       --  True if the list of elements in List is different from the elements
       --  in column Column of the exceptions list.
@@ -221,13 +218,13 @@ package body Ada_Naming_Editors is
       is
          Modified : Boolean := False;
       begin
-         if Project_View = No_Project then
+         if Project = No_Project then
             Modified := True;
 
          else
             declare
                Old : constant String := Get_Attribute_Value
-                 (Project_View   => Project_View,
+                 (Project        => Project,
                   Attribute_Name => Get_String (Name),
                   Package_Name   => Naming,
                   Index          => Index);
@@ -262,77 +259,63 @@ package body Ada_Naming_Editors is
       -- List_Changed --
       ------------------
 
-      function List_Changed (List : Array_Element_Id; Column : Gint)
+      function List_Changed (List : Associative_Array; Column : Gint)
          return Boolean
       is
-         Length : Natural := 0;
-         Elem   : Array_Element_Id := List;
+         Length : constant Natural := List'Length;
+         Old_Names  : Argument_List (1 .. Length);
+         Old_Values : Argument_List (1 .. Length);
+         Current : Natural := 1;
       begin
-         --  Count the number of elements in the array
-         while Elem /= No_Array_Element loop
-            Length := Length + 1;
-            Elem := Prj.Array_Elements.Table (Elem).Next;
+         for Elem in List'Range loop
+            Old_Names (Current) := new String'(Get_String (List (Elem).Index));
+            Old_Values (Current) := new String'(To_String (List (Elem).Value));
+            Current := Current + 1;
          end loop;
 
-         declare
-            Old_Names  : Argument_List (1 .. Length);
-            Old_Values : Argument_List (1 .. Length);
-            Current : Natural := 1;
-         begin
-            Elem := List;
-            while Elem /= No_Array_Element loop
-               Old_Names (Current) := new String'
-                 (Get_String (Prj.Array_Elements.Table (Elem).Index));
-               Old_Values (Current) := new String'
-                 (Get_String (Prj.Array_Elements.Table (Elem).Value.Value));
-               Current := Current + 1;
-               Elem := Prj.Array_Elements.Table (Elem).Next;
-            end loop;
-
-            for J in 0 .. Num_Rows - 1 loop
-               declare
-                  U : constant String :=
-                    Get_Text (Editor.Exception_List, J, 0);
-                  Value : constant String :=
-                    Get_Text (Editor.Exception_List, J, Column);
-                  Found : Boolean := False;
-               begin
-                  if Value /= "" then
-                     for Index in Old_Names'Range loop
-                        if Old_Names (Index) /= null
-                          and then Old_Names (Index).all = U
-                        then
-                           if Old_Values (Index).all /= Value then
-                              Free (Old_Names);
-                              Free (Old_Values);
-                              return True;
-                           end if;
-
-                           Free (Old_Names (Index));
-                           Free (Old_Values (Index));
-                           Found := True;
+         for J in 0 .. Num_Rows - 1 loop
+            declare
+               U : constant String :=
+                 Get_Text (Editor.Exception_List, J, 0);
+               Value : constant String :=
+                 Get_Text (Editor.Exception_List, J, Column);
+               Found : Boolean := False;
+            begin
+               if Value /= "" then
+                  for Index in Old_Names'Range loop
+                     if Old_Names (Index) /= null
+                       and then Old_Names (Index).all = U
+                     then
+                        if Old_Values (Index).all /= Value then
+                           Free (Old_Names);
+                           Free (Old_Values);
+                           return True;
                         end if;
-                     end loop;
 
-                     if not Found then
-                        Free (Old_Names);
-                        Free (Old_Values);
-                        return True;
+                        Free (Old_Names (Index));
+                        Free (Old_Values (Index));
+                           Found := True;
                      end if;
-                  end if;
-               end;
-            end loop;
+                  end loop;
 
-            --  If there remains at least one value in the old values, then the
-            --  lists are different
-            for Index in Old_Names'Range loop
-               if Old_Names (Index) /= null then
-                  Free (Old_Names);
-                  Free (Old_Values);
-                  return True;
+                  if not Found then
+                     Free (Old_Names);
+                     Free (Old_Values);
+                     return True;
+                  end if;
                end if;
-            end loop;
-         end;
+            end;
+         end loop;
+
+         --  If there remains at least one value in the old values, then the
+         --  lists are different
+         for Index in Old_Names'Range loop
+            if Old_Names (Index) /= null then
+               Free (Old_Names);
+               Free (Old_Values);
+               return True;
+            end if;
+         end loop;
 
          return False;
       end List_Changed;
@@ -349,7 +332,7 @@ package body Ada_Naming_Editors is
          Get_Text (Get_Entry (Editor.Separate_Extension)), "");
       Update_If_Required
         (Name_Casing,
-         Image (Casing_Type'Val (Get_Index_In_List (Editor.Casing))), "");
+         Prj.Image (Casing_Type'Val (Get_Index_In_List (Editor.Casing))), "");
       Update_If_Required
         (Name_Dot_Replacement, Get_Text (Editor.Dot_Replacement), "");
 
@@ -367,11 +350,13 @@ package body Ada_Naming_Editors is
          Attribute_Index    => Any_Attribute);
 
       Changed := Changed
-        or else Project_View = No_Project
+        or else Project = No_Project
         or else List_Changed
-          (Prj.Projects.Table (Project_View).Naming.Specifications, 1)
+           (Get_Attribute_Value
+            (Project, Specification_Attribute, Naming_Package), 1)
         or else List_Changed
-          (Prj.Projects.Table (Project_View).Naming.Bodies, 2);
+           (Get_Attribute_Value
+            (Project, Implementation_Attribute, Naming_Package), 2);
 
       if Changed then
          for J in 0 .. Num_Rows - 1 loop
@@ -413,100 +398,74 @@ package body Ada_Naming_Editors is
 
    procedure Show_Project_Settings
      (Editor             : access Ada_Naming_Editor_Record;
-      Project_View       : Prj.Project_Id;
+      Project            : Projects.Project_Type;
       Display_Exceptions : Boolean := True)
    is
-      Data  : constant Naming_Data := Prj.Projects.Table (Project_View).Naming;
-      Value : Variable_Value;
-      Elem  : Array_Element_Id;
       Row   : Gint;
+      Dot_Replacement : constant String := Get_Attribute_Value
+        (Project, Dot_Replacement_Attribute, Naming_Package,
+         Default => Default_Gnat_Dot_Replacement);
+      Casing : constant String := Get_Attribute_Value
+        (Project, Casing_Attribute, Naming_Package,
+         Default => -Prj.Image (All_Lower_Case));
+      Separate_Suffix : constant String := Get_Attribute_Value
+        (Project, Separate_Suffix_Attribute, Naming_Package,
+         Default => Default_Gnat_Separate_Suffix);
+      Body_Suffix : constant String := Get_Attribute_Value
+        (Project, Impl_Suffix_Attribute, Naming_Package,
+         Index => Ada_String, Default => Default_Gnat_Body_Suffix);
+      Spec_Suffix : constant String := Get_Attribute_Value
+        (Project, Spec_Suffix_Attribute, Naming_Package,
+         Index => Ada_String, Default => Default_Gnat_Spec_Suffix);
    begin
-      if Data.Dot_Replacement /= No_Name then
-         Set_Text (Editor.Dot_Replacement,
-                   Get_String (Data.Dot_Replacement));
-      else
-         Set_Text (Editor.Dot_Replacement, Default_Gnat_Dot_Replacement);
-      end if;
-
-      Set_Text (Get_Entry (Editor.Casing), -Image (Data.Casing));
-
-      Value := Value_Of
-        (Index => Name_Ada, In_Array => Data.Specification_Suffix);
-
-      if Value.Kind = Single and then Value.Value /= No_String then
-         Set_Text
-           (Get_Entry (Editor.Spec_Extension), Get_String (Value.Value));
-      else
-         Set_Text
-           (Get_Entry (Editor.Spec_Extension),  Default_Gnat_Spec_Suffix);
-      end if;
-
-      Value := Value_Of
-        (Index => Name_Ada, In_Array => Data.Implementation_Suffix);
-
-      if Value.Kind = Single and then Value.Value /= No_String then
-         Set_Text
-           (Get_Entry (Editor.Body_Extension), Get_String (Value.Value));
-      else
-         Set_Text
-           (Get_Entry (Editor.Body_Extension),  Default_Gnat_Body_Suffix);
-      end if;
-
-      if Data.Separate_Suffix /= No_Name then
-         Set_Text
-           (Get_Entry (Editor.Separate_Extension),
-            Get_String (Data.Separate_Suffix));
-      else
-         Set_Text
-           (Get_Entry (Editor.Separate_Extension),
-            Default_Gnat_Separate_Suffix);
-      end if;
+      Set_Text (Editor.Dot_Replacement,                Dot_Replacement);
+      Set_Text (Get_Entry (Editor.Casing),            -Casing);
+      Set_Text (Get_Entry (Editor.Spec_Extension),     Spec_Suffix);
+      Set_Text (Get_Entry (Editor.Body_Extension),     Body_Suffix);
+      Set_Text (Get_Entry (Editor.Separate_Extension), Separate_Suffix);
 
       Freeze (Editor.Exception_List);
       Clear (Editor.Exception_List);
 
       if Display_Exceptions then
-         Elem := Data.Specifications;
-         while Elem /= No_Array_Element loop
-            Value := Prj.Array_Elements.Table (Elem).Value;
-            Row := Prepend
-              (Editor.Exception_List,
-               Get_String (Prj.Array_Elements.Table (Elem).Index)
-                 + Get_String (Value.Value) + "");
-            --  ??? There is a memory leak above
-
-            Elem := Prj.Array_Elements.Table (Elem).Next;
-         end loop;
-
-         Elem := Data.Bodies;
-         while Elem /= No_Array_Element loop
-            Value := Prj.Array_Elements.Table (Elem).Value;
-            Row := Find_First_Row_Matching
-              (Editor.Exception_List,
-               0,
-               Get_String (Prj.Array_Elements.Table (Elem).Index));
-
-            if Row = -1 then
+         declare
+            Specs  : constant Associative_Array := Get_Attribute_Value
+              (Project, Specification_Attribute, Naming_Package);
+            Bodies : constant Associative_Array := Get_Attribute_Value
+              (Project, Implementation_Attribute, Naming_Package);
+         begin
+            for S in Specs'Range loop
                Row := Prepend
                  (Editor.Exception_List,
-                  Get_String (Prj.Array_Elements.Table (Elem).Index)
-                  + "" + Get_String (Value.Value));
-               --  ??? There is a memory leak here
-            else
-               Set_Text (Editor.Exception_List, Row, 2,
-                         Get_String (Value.Value));
-            end if;
-            Elem := Prj.Array_Elements.Table (Elem).Next;
-         end loop;
+                  Get_String (Specs (S).Index)
+                  + To_String (Specs (S).Value) + "");
+            end loop;
 
-         Sort (Editor.Exception_List);
+            for B in Bodies'Range loop
+               Row := Find_First_Row_Matching
+                 (Editor.Exception_List, 0, Get_String (Bodies (B).Index));
+
+               if Row = -1 then
+                  Row := Prepend
+                    (Editor.Exception_List,
+                     Get_String (Bodies (B).Index)
+                     + "" + To_String (Bodies (B).Value));
+               else
+                  Set_Text (Editor.Exception_List, Row, 2,
+                            To_String (Bodies (B).Value));
+               end if;
+            end loop;
+
+            Sort (Editor.Exception_List);
+         end;
       end if;
 
       Thaw (Editor.Exception_List);
 
       --  GNAT naming scheme ?
       if Get_Rows (Editor.Exception_List) /= 0
-        or else Get_Text (Get_Entry (Editor.Casing)) /= -Image (All_Lower_Case)
+        or else Get_Text (Get_Entry (Editor.Casing)) /=
+          -Prj.Image (All_Lower_Case)
       then
          Select_Item (Get_List (Editor.Standard_Scheme), Custom_Naming_Scheme);
 

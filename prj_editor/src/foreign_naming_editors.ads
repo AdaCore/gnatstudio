@@ -20,9 +20,8 @@
 
 with Gtk.Widget;
 with Foreign_Naming_Scheme_Editor_Pkg; use Foreign_Naming_Scheme_Editor_Pkg;
-with Prj.Tree;
 with Types;
-with Prj_API;
+with Projects;
 with Glide_Kernel;
 
 package Foreign_Naming_Editors is
@@ -46,9 +45,8 @@ package Foreign_Naming_Editors is
 
    function Create_Project_Entry
      (Editor  : access Foreign_Naming_Editor_Record;
-      Project : Prj.Tree.Project_Node_Id;
-      Project_View : Prj.Project_Id;
-      Scenario_Variables : Prj_API.Project_Node_Array) return Boolean;
+      Project : Projects.Project_Type;
+      Scenario_Variables : Projects.Scenario_Variable_Array) return Boolean;
    --  Create a new entry in the project file Project for the naming scheme
    --  defined in the editor.
    --  Project_View can be No_Project.
@@ -57,7 +55,7 @@ package Foreign_Naming_Editors is
    procedure Show_Project_Settings
      (Editor             : access Foreign_Naming_Editor_Record;
       Kernel             : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Project_View       : Prj.Project_Id;
+      Project            : Projects.Project_Type;
       Display_Exceptions : Boolean := True);
    --  Show the settings used for Project_View, and the language Language.
    --  If Display_Exceptions is False, then the files in the exception list

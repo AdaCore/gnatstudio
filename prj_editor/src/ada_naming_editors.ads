@@ -21,8 +21,7 @@
 with Gtk.Widget;
 with Gtk.GEntry;
 with Naming_Scheme_Editor_Pkg; use Naming_Scheme_Editor_Pkg;
-with Prj.Tree;
-with Prj_API;
+with Projects;
 
 package Ada_Naming_Editors is
 
@@ -49,15 +48,14 @@ package Ada_Naming_Editors is
 
    function Create_Project_Entry
      (Editor  : access Ada_Naming_Editor_Record;
-      Project : Prj.Tree.Project_Node_Id;
-      Project_View : Prj.Project_Id;
-      Scenario_Variables : Prj_API.Project_Node_Array) return Boolean;
+      Project : Projects.Project_Type;
+      Scenario_Variables : Projects.Scenario_Variable_Array) return Boolean;
    --  Create a new entry in the project file Project for the naming scheme
    --  defined in the editor.
 
    procedure Show_Project_Settings
      (Editor             : access Ada_Naming_Editor_Record;
-      Project_View       : Prj.Project_Id;
+      Project            : Projects.Project_Type;
       Display_Exceptions : Boolean := True);
    --  Show the settings used for Project_View
    --  If Display_Exceptions is False, then the files in the exception list

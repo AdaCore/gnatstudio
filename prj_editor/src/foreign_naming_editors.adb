@@ -31,10 +31,7 @@ with Gtk.GEntry;                       use Gtk.GEntry;
 with Gtk.Widget;                       use Gtk.Widget;
 with Gtkada.Types;                     use Gtkada.Types;
 with Interfaces.C.Strings;             use Interfaces.C.Strings;
-with Prj;                              use Prj;
-with Prj.Util;                         use Prj.Util;
-with Prj.Tree;                         use Prj.Tree;
-with Prj_API;                          use Prj_API;
+with Projects.Editor;                  use Projects, Projects.Editor;
 with Snames;                           use Snames;
 with Types;                            use Types;
 
@@ -79,9 +76,8 @@ package body Foreign_Naming_Editors is
 
    function Create_Project_Entry
      (Editor  : access Foreign_Naming_Editor_Record;
-      Project : Prj.Tree.Project_Node_Id;
-      Project_View : Prj.Project_Id;
-      Scenario_Variables : Prj_API.Project_Node_Array) return Boolean
+      Project : Projects.Project_Type;
+      Scenario_Variables : Scenario_Variable_Array) return Boolean
    is
       Naming   : constant String := Get_String (Name_Naming);
       Lang     : constant String := Get_String (Editor.Language);
@@ -95,14 +91,13 @@ package body Foreign_Naming_Editors is
            (Get_Text (Editor.Exception_List, J, 0));
       end loop;
 
-      if Project_View = No_Project then
+      if Project = No_Project then
          Changed := True;
       else
          declare
             Old_Exceptions : Argument_List := Get_Attribute_Value
-              (Project_View   => Project_View,
-               Attribute_Name =>
-                 Get_String (Name_Implementation_Exceptions),
+              (Project        => Project,
+               Attribute_Name => Impl_Exception_Attribute,
                Package_Name   => Naming,
                Index          => Lang);
          begin
@@ -117,8 +112,7 @@ package body Foreign_Naming_Editors is
               (Project           => Project,
                Pkg_Name          => Naming,
                Scenario_Variables => Scenario_Variables,
-               Attribute_Name    =>
-                 Get_String (Name_Implementation_Exceptions),
+               Attribute_Name    => Impl_Exception_Attribute,
                Values            => Bodies,
                Attribute_Index   => Lang);
          else
@@ -126,17 +120,16 @@ package body Foreign_Naming_Editors is
               (Project            => Project,
                Pkg_Name           => Naming,
                Scenario_Variables => Scenario_Variables,
-               Attribute_Name     =>
-                 Get_String (Name_Implementation_Exceptions),
+               Attribute_Name     => Impl_Exception_Attribute,
                Attribute_Index    => Lang);
          end if;
          Changed := True;
       end if;
 
-      if Project_View = No_Project
+      if Project = No_Project
         or else Get_Attribute_Value
-        (Project_View   => Project_View,
-         Attribute_Name => Get_String (Name_Specification_Suffix),
+        (Project        => Project,
+         Attribute_Name => Spec_Suffix_Attribute,
          Package_Name   => Naming,
          Index          => Lang) /=
         Get_Text (Get_Entry (Editor.Header_File_Extension))
@@ -145,16 +138,16 @@ package body Foreign_Naming_Editors is
            (Project            => Project,
             Pkg_Name           => Naming,
             Scenario_Variables => Scenario_Variables,
-            Attribute_Name     => Get_String (Name_Specification_Suffix),
+            Attribute_Name     => Spec_Suffix_Attribute,
             Value  => Get_Text (Get_Entry (Editor.Header_File_Extension)),
             Attribute_Index    => Lang);
          Changed := True;
       end if;
 
-      if Project_View = No_Project
+      if Project = No_Project
         or else Get_Attribute_Value
-        (Project_View   => Project_View,
-         Attribute_Name => Get_String (Name_Implementation_Suffix),
+        (Project        => Project,
+         Attribute_Name => Impl_Suffix_Attribute,
          Package_Name   => Naming,
          Index          => Lang) /=
         Get_Text (Get_Entry (Editor.Implementation_Extension))
@@ -163,7 +156,7 @@ package body Foreign_Naming_Editors is
            (Project            => Project,
             Pkg_Name           => Naming,
             Scenario_Variables => Scenario_Variables,
-            Attribute_Name     => Get_String (Name_Implementation_Suffix),
+            Attribute_Name     => Impl_Suffix_Attribute,
             Value    => Get_Text (Get_Entry (Editor.Implementation_Extension)),
             Attribute_Index    => Lang);
          Changed := True;
@@ -181,7 +174,7 @@ package body Foreign_Naming_Editors is
    procedure Show_Project_Settings
      (Editor             : access Foreign_Naming_Editor_Record;
       Kernel             : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Project_View       : Prj.Project_Id;
+      Project            : Projects.Project_Type;
       Display_Exceptions : Boolean := True)
    is
       Naming : constant String := Get_String (Name_Naming);
@@ -190,48 +183,34 @@ package body Foreign_Naming_Editors is
       pragma Unreferenced (Row);
 
       Text   : Gtkada.Types.Chars_Ptr_Array (0 .. 0);
-      Ext    : Name_Id;
-      View   : Project_Id := Project_View;
+      P      : Project_Type := Project;
 
    begin
-      --  If the view is null, we get the default values from the current
+      --  If the project is null, we get the default values from the current
       --  top-level project. It will automatically have the default extensions
       --  set when a project was registered, unless overriden by the user
 
-      if Project_View = No_Project then
-         View := Get_Project_View (Kernel);
+      if Project = No_Project then
+         P := Get_Project (Kernel);
       end if;
 
-      --  We directly access the tables in Prj, instead of using
-      --  Get_Attribute_Value, so that we also get access to the default
-      --  extensions.
+      --  ??? Do we get access to the default extensions correctly ?
 
-      Ext := Value_Of
-        (Index => Editor.Language,
-         In_Array => Projects.Table (View).Naming.Specification_Suffix);
-      if Ext /= No_Name then
-         Set_Text
-           (Get_Entry (Editor.Header_File_Extension), Get_String (Ext));
-      else
-         Set_Text (Get_Entry (Editor.Header_File_Extension), "");
-      end if;
+      Set_Text
+        (Get_Entry (Editor.Header_File_Extension),
+         Get_Attribute_Value
+            (P, Spec_Suffix_Attribute, Naming_Package,
+             Index => Get_String (Editor.Language)));
+      Set_Text
+        (Get_Entry (Editor.Implementation_Extension),
+         Get_Attribute_Value
+            (P, Impl_Suffix_Attribute, Naming_Package,
+             Index => Get_String (Editor.Language)));
 
-      Ext := Value_Of
-        (Index => Editor.Language,
-         In_Array => Projects.Table (View).Naming.Implementation_Suffix);
-
-      if Ext /= No_Name then
-         Set_Text
-           (Get_Entry (Editor.Implementation_Extension),
-            Get_String (Ext));
-      else
-         Set_Text (Get_Entry (Editor.Implementation_Extension), "");
-      end if;
-
-      if Project_View /= No_Project and then Display_Exceptions then
+      if Project /= No_Project and then Display_Exceptions then
          declare
             Bodies : Argument_List := Get_Attribute_Value
-              (Project_View,
+              (Project,
                Attribute_Name => Get_String (Name_Implementation_Exceptions),
                Package_Name   => Naming,
                Index          => Lang);
