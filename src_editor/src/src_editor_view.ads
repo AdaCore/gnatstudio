@@ -91,14 +91,22 @@ package Src_Editor_View is
    --  a line), then Line and Column are set to the closest matching position,
    --  and Out_Of_Bounds is set to True.
 
+   procedure Create_Line_Information_Column
+     (View           : access Source_View_Record;
+      Identifier     : String;
+      Stick_To_Data  : Boolean;
+      Every_Line     : Boolean);
+
+   procedure Remove_Line_Information_Column
+     (View           : access Source_View_Record;
+      Identifier     : String);
+
    procedure Add_File_Information
      (View          : access Source_View_Record;
       Identifier    : String;
-      Info          : Glide_Kernel.Modules.Line_Information_Data;
-      Stick_To_Data : Boolean := True);
+      Info          : Glide_Kernel.Modules.Line_Information_Data);
    --  Add the line information to the view.
-   --
-   --  ??? Who frees Info (the caller or Add_File_Information) ?
+   --  User must not free Info.
 
 private
 
@@ -135,6 +143,10 @@ private
       --  stick to the lines they are associated with.
       --  If Stick_To_Data is False, then the information "sticks" to
       --  the line numbers.
+
+      Every_Line : Boolean;
+      --  If Every_Line is True, then there must be data at every line in
+      --  this column.
    end record;
    type Line_Info_Display_Access is access Line_Info_Display_Record;
 
