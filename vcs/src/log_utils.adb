@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2002-2003                    --
+--                        Copyright (C) 2002-2004                    --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -173,6 +173,7 @@ package body Log_Utils is
       --  Makes sure that the ChangeLog buffer is saved before continuing
       --  otherwise part of the ChangeLog file could be lost.
 
+      --  ??? This won't work if ChangeLog contains spaces
       Execute_GPS_Shell_Command (Kernel, "Editor.save_buffer " & ChangeLog);
       Execute_GPS_Shell_Command (Kernel, "Editor.close " & ChangeLog);
 
