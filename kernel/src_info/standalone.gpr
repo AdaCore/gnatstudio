@@ -21,4 +21,8 @@ project Standalone is
         ("-lgccprefix", Project'Object_Dir & "file-utils.o");
    end Linker;
 
+   package Naming is
+      for Implementation ("mlib.tgt") use "5lml-tgt.adb";
+   end Naming;
+
 end Standalone;
