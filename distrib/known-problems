@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 1.2.1
 
+- C425-020 Selection in greyed out fields in the project properties editor
+  Problem:    If Ada is not a supported language for your project, the combo
+              boxes for the compiler and gnatls can still be selected by
+              clicking on the arrow
+  Workaround: Avoid clicking on the arrow, although no arm will result if you
+              do. The new setting is simply ignored when the project is saved
+                                                                                
 - Extra dialog displayed during search
   Problem:    When starting a search from the beginning of a file, GPS will ask
               to restart from the beginning once the search reaches the end of
