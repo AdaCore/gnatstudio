@@ -18,8 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
---  Those functions implements the main merge function, and all merge tools
---  used with strings.
+--  Implement the main merge functions, and all merge tools used with strings.
 
 with Ada.Unchecked_Deallocation;
 
@@ -99,9 +98,7 @@ package Codefix.Merge_Utils is
       --  If Chronologic_Changes is true, Object_2 should have been created
       --  after Object_1. This information can help the function to solve
       --  some ambiguities.
-
       );
-
 
    type Mergable_String is private;
 
