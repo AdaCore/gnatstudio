@@ -21,7 +21,6 @@
 with Glib;
 with Gtk.Accel_Group;  use Gtk.Accel_Group;
 with Gtk.Box;          use Gtk.Box;
-with Gtk.Dialog;       use Gtk.Dialog;
 with Gtk.Menu_Bar;     use Gtk.Menu_Bar;
 with Gtk.Window;       use Gtk.Window;
 with Gdk.Pixbuf;       use Gdk.Pixbuf;
@@ -60,15 +59,6 @@ package GPS.Main_Window is
       Busy_Level       : Integer := 0;
       Desktop_Loaded   : Boolean := False;
       Public_Version   : Boolean := True;
-
-      --  ??? The following fields should be moved to the gvd module
-
-      Memory_View        : Gtk.Window.Gtk_Window;
-      History_Dialog     : Gtk.Dialog.Gtk_Dialog;
-      Thread_Dialog      : Gtk.Dialog.Gtk_Dialog;
-      Task_Dialog        : Gtk.Dialog.Gtk_Dialog;
-      PD_Dialog          : Gtk.Dialog.Gtk_Dialog;
-      Breakpoints_Editor : Gtk.Window.Gtk_Window;
    end record;
    type GPS_Window is access all GPS_Window_Record'Class;
 

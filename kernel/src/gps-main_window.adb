@@ -1052,26 +1052,6 @@ package body GPS.Main_Window is
 
       use Glib;
    begin
-      if Win.Task_Dialog /= null then
-         Destroy (Win.Task_Dialog);
-      end if;
-
-      if Win.Thread_Dialog /= null then
-         Destroy (Win.Thread_Dialog);
-      end if;
-
-      if Win.PD_Dialog /= null then
-         Destroy (Win.PD_Dialog);
-      end if;
-
-      if Win.History_Dialog /= null then
-         Destroy (Win.History_Dialog);
-      end if;
-
-      if Win.Memory_View /= null then
-         Destroy (Win.Memory_View);
-      end if;
-
       if Win.Animation /= null then
          Unref (Win.Animation);
       end if;
