@@ -18,7 +18,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glide_Intl; use Glide_Intl;
+with String_List_Utils; use String_List_Utils;
+with Glide_Intl;        use Glide_Intl;
 with Unchecked_Deallocation;
 
 package body Commands is
@@ -55,7 +56,8 @@ package body Commands is
          Free (Q.Redo_Queue);
 
          Free (Q.The_Queue);
-         Free (Q.Queue_Change_Hook);
+         Free (Q.Queue_Change_Hook, Free_Data => False);
+         String_List.Free (Q.Hook_Identifiers);
          Free_Queue_Access (Q);
       end if;
    end Free_Queue;
@@ -256,11 +258,29 @@ package body Commands is
    ---------------------------
 
    procedure Add_Queue_Change_Hook
-     (Queue   : Command_Queue;
-      Command : Command_Access)
+     (Queue      : Command_Queue;
+      Command    : Command_Access;
+      Identifier : String)
    is
+      Id        : String_List.List_Node;
+      Hook_Node : List_Node;
+
    begin
+      Hook_Node := First (Queue.Queue_Change_Hook);
+      Id := String_List.First (Queue.Hook_Identifiers);
+
+      while Hook_Node /= Null_Node loop
+         if String_List.Data (Id) = Identifier then
+            Set_Data (Hook_Node, Command);
+            return;
+         end if;
+
+         Hook_Node := Next (Hook_Node);
+         Id := String_List.Next (Id);
+      end loop;
+
       Append (Queue.Queue_Change_Hook, Command);
+      String_List.Append (Queue.Hook_Identifiers, Identifier);
    end Add_Queue_Change_Hook;
 
    -------------

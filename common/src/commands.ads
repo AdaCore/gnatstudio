@@ -39,6 +39,7 @@
 --  the action is not finished.
 
 with Generic_List;
+with String_List_Utils;
 
 package Commands is
 
@@ -126,10 +127,16 @@ package Commands is
      new Generic_List (Command_Access, Free => Destroy);
 
    procedure Add_Queue_Change_Hook
-     (Queue   : Command_Queue;
-      Command : Command_Access);
+     (Queue      : Command_Queue;
+      Command    : Command_Access;
+      Identifier : String);
    --  Set a command that will be executed every time that the state of the
    --  queue changes.
+   --  Command queue change hooks are associated to an identifier.
+   --  If a command associated to Identifier already exists, it is freed
+   --  and replaced by Command.
+   --  The caller is responsible for freeing Command when it is no longer
+   --  used.
 
 private
 
@@ -176,6 +183,9 @@ private
       Queue_Change_Hook   : Command_Queues.List;
       --  These are the actions that will be executed every time the state
       --  of the queue changes.
+
+      Hook_Identifiers    : String_List_Utils.String_List.List;
+      --  A list of identifiers corresponding to elements in Queue_Change_Hook.
 
       Position            : Integer := 0;
       --  The position in the queue.
