@@ -52,6 +52,31 @@ package body Src_Info is
       Reset (LIFL.Table);
    end Reset;
 
+   ---------
+   -- "=" --
+   ---------
+
+   function "=" (Left, Right : Source_File) return Boolean is
+   begin
+      if Left.LI = Right.LI and then Left.Part = Right.Part then
+         if Left.Unit_Name = null then
+            return Right.Unit_Name = null;
+         else
+            return Right.Unit_Name /= null
+              and then Left.Unit_Name.all = Right.Unit_Name.all;
+         end if;
+      else
+         return False;
+      end if;
+   end "=";
+
+   function "=" (Left, Right : File_Location) return Boolean is
+   begin
+      return Left.Line = Right.Line
+        and then Left.Column = Right.Column
+        and then Left.File = Right.File;
+   end "=";
+
    --------------
    -- Set_Next --
    --------------
@@ -196,7 +221,7 @@ package body Src_Info is
 
    function Is_File_Location (Location : in File_Location) return Boolean is
    begin
-      return Location.File.LI.LI_Filename /= null;
+      return Location.File.LI /= null;
    end Is_File_Location;
 
    -------------------------
@@ -363,5 +388,18 @@ package body Src_Info is
          Current_Node := Next_Node;
       end loop;
    end Destroy;
+
+   ----------
+   -- Copy --
+   ----------
+
+   function Copy (SF : Source_File) return Source_File is
+      Result : Source_File := SF;
+   begin
+      if SF.Unit_Name /= null then
+         Result.Unit_Name := new String'(SF.Unit_Name.all);
+      end if;
+      return Result;
+   end Copy;
 
 end Src_Info;
