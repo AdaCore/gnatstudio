@@ -66,11 +66,6 @@ package Project_Viewers is
    --
    --  Project_View mustn't be No_Project.
 
-   procedure Add_To_Reopen
-     (Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Filename : String);
-   --  Add Filename to the Project->Reopen menu
-
 private
    type Project_Viewer_Record is new Gtk.Box.Gtk_Hbox_Record with record
       Tree  : Gtk.Tree_View.Gtk_Tree_View;

@@ -255,6 +255,10 @@ package body Project_Viewers is
    --  Set the contents of the line Iter in the model. It is assumed the file
    --  name has already been set on that line
 
+   procedure On_Project_Changed
+     (Object : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Called when the project has just changed
+
    --------------------------
    -- Project editor pages --
    --------------------------
@@ -445,19 +449,6 @@ package body Project_Viewers is
          Show_All (Reopen_Menu);
       end if;
    end Refresh_Reopen_Menu;
-
-   -------------------
-   -- Add_To_Reopen --
-   -------------------
-
-   procedure Add_To_Reopen
-     (Kernel : access Kernel_Handle_Record'Class;
-      Filename : String) is
-   begin
-      Add_To_History (Kernel, Project_History_Key,
-                      Normalize_Pathname (Filename, Resolve_Links => False));
-      Refresh_Reopen_Menu (Kernel);
-   end Add_To_Reopen;
 
    -------------------------
    -- Project_Viewers_Set --
@@ -848,7 +839,6 @@ package body Project_Viewers is
            and then Get_Active (Load_Project)
          then
             Glide_Kernel.Project.Load_Project (Kernel, Name);
-            Add_To_Reopen (Kernel, Name);
          end if;
       end;
 
@@ -1107,7 +1097,6 @@ package body Project_Viewers is
                  (Get_Kernel (File),
                   Project_Information (File),
                   Name);
-               Add_To_Reopen (Get_Kernel (File), Name);
             end if;
          end;
 
@@ -2267,6 +2256,23 @@ package body Project_Viewers is
       return "";
    end Project_Command_Handler;
 
+   ------------------------
+   -- On_Project_Changed --
+   ------------------------
+
+   procedure On_Project_Changed
+     (Object : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Object);
+      Filename : constant String := Normalize_Pathname
+        (Project_Path (Get_Project (Kernel)), Resolve_Links => False);
+   begin
+      if Filename /= "" then
+         Add_To_History (Kernel, Project_History_Key, Filename);
+         Refresh_Reopen_Menu (Kernel);
+      end if;
+   end On_Project_Changed;
+
    ---------------------
    -- Register_Module --
    ---------------------
@@ -2295,6 +2301,11 @@ package body Project_Viewers is
         (Kernel, Project, -"_Recent", "",
          null, Ref_Item => -"Open...", Add_Before => False);
       Refresh_Reopen_Menu (Kernel);
+
+      Kernel_Callback.Connect
+        (Kernel, Project_Changed_Signal,
+         Kernel_Callback.To_Marshaller (On_Project_Changed'Access),
+         Kernel_Handle (Kernel));
 
       Register_Menu
         (Kernel, Project, -"Edit _Switches", "",
