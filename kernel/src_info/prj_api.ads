@@ -86,6 +86,9 @@ package Prj_API is
    --  Store the value of Str in Buffer without
    --  affecting the contents of either Name_Buffer or Name_Len.
 
+   function Get_String (Str : String) return Types.Name_Id;
+   --  Convert Str to a name_id
+
    function Get_String (Str : Types.String_Id) return String;
    --  This functional form returns the value of Str as a string without
    --  affecting the contents of either Name_Buffer or Name_Len.
@@ -709,6 +712,28 @@ package Prj_API is
      (Project : Project_Id; Source_Filename : String) return Types.Name_Id;
    --  Return the name of the language used for Source_Filename.
    --  This is based on the naming scheme given in Project.
+
+   function Other_File_Name
+     (Project : Prj.Project_Id; Source_Filename : String) return String;
+   --  Return the name of the spec or body for Source_Filename, depending on
+   --  what Source_Filename is. Source_Filename is returned if there is no
+   --  other file.
+   --  See also Src_Info.Queries.Get_Other_File_Of
+   --
+   --  Source_Filename must be the base name.
+   --  The returned name is the base name
+
+   function Find_On_Path
+     (Project   : Project_Node_Id;
+      View      : Project_Id;
+      Filename  : String;
+      Recursive : Boolean := False) return String;
+   --  Return the absolute path name for Filename. It is searched in the
+   --  source path for Project (and its children if Recursive is True).
+   --  A special case is done if Filename is a project file name, which is
+   --  then also searched outside the source path, among the already loaded
+   --  projects.
+   --  Filename is returned if the file wasn't found.
 
    -----------------
    -- Expressions --

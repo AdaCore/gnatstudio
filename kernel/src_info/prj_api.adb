@@ -185,6 +185,14 @@ package body Prj_API is
    --  reset first).
    --  Callback is called for each of them.
 
+   procedure Get_Unit_Part_And_Name_From_Filename
+     (Filename  : String;
+      Project   : Prj.Project_Id;
+      Part      : out Unit_Part;
+      Unit_Name : out Name_Id;
+      Lang      : out Name_Id);
+   --  Return the unit name, unit part and language for Filename.
+
    ----------------
    -- Get_String --
    ----------------
@@ -224,6 +232,13 @@ package body Prj_API is
       end loop;
 
       return R;
+   end Get_String;
+
+   function Get_String (Str : String) return Name_Id is
+   begin
+      Name_Len := Str'Length;
+      Name_Buffer (1 .. Name_Len) := Str;
+      return Name_Find;
    end Get_String;
 
    function Get_String (Id : Types.Name_Id) return String is
@@ -294,9 +309,7 @@ package body Prj_API is
       Node : constant Project_Node_Id :=
         Default_Project_Node (N_Variable_Declaration, Kind);
    begin
-      Name_Len := Name'Length;
-      Name_Buffer (1 .. Name_Len) := Name;
-      Set_Name_Of (Node, Name_Find);
+      Set_Name_Of (Node, Get_String (Name));
 
       Add_At_End (Prj_Or_Pkg, Node);
 
@@ -319,9 +332,7 @@ package body Prj_API is
       Node : constant Project_Node_Id :=
         Default_Project_Node (N_Attribute_Declaration, Kind);
    begin
-      Name_Len := Name'Length;
-      Name_Buffer (1 .. Name_Len) := Name;
-      Set_Name_Of (Node, Name_Find);
+      Set_Name_Of (Node, Get_String (Name));
 
       if Index_Name /= "" then
          Start_String;
@@ -347,9 +358,7 @@ package body Prj_API is
       Node : constant Project_Node_Id :=
         Default_Project_Node (N_Typed_Variable_Declaration, Prj.Single);
    begin
-      Name_Len := Name'Length;
-      Name_Buffer (1 .. Name_Len) := Name;
-      Set_Name_Of (Node, Name_Find);
+      Set_Name_Of (Node, Get_String (Name));
       Set_String_Type_Of (Node, Typ);
 
       Add_At_End (Prj_Or_Pkg, Node, Add_Before_First_Case_Or_Pkg);
@@ -371,9 +380,7 @@ package body Prj_API is
       Node : Project_Node_Id;
    begin
       Node := Default_Project_Node (N_String_Type_Declaration);
-      Name_Len := Name'Length;
-      Name_Buffer (1 .. Name_Len) := Name;
-      Set_Name_Of (Node, Name_Find);
+      Set_Name_Of (Node, Get_String (Name));
       Add_At_End (Prj_Or_Pkg, Node, True);
 
       return Node;
@@ -452,9 +459,7 @@ package body Prj_API is
       Pack : Project_Node_Id;
       N    : Name_Id;
    begin
-      Name_Len := Pkg'Length;
-      Name_Buffer (1 .. Name_Len) := Pkg;
-      N := Name_Find;
+      N := Get_String (Pkg);
 
       --  Check if the package already exists
 
@@ -1480,9 +1485,7 @@ package body Prj_API is
       Output.Set_Special_Output (Report_Errors);
       Prj.Com.Fail := Fail'Unrestricted_Access;
 
-      Name_Len := Basename'Length;
-      Name_Buffer (1 .. Name_Len) := Basename;
-      Dep_ID := Name_Find;
+      Dep_ID := Get_String (Basename);
 
       Dep_Name := Tree_Private_Part.Projects_Htable.Get (Dep_ID);
 
@@ -1592,14 +1595,8 @@ package body Prj_API is
 
       --  Cleanup the name
 
-      declare
-         Clean_Name : constant String := Base_Name
-           (Imported_Project, Project_File_Extension);
-      begin
-         Name_Len := Clean_Name'Length;
-         Name_Buffer (1 .. Name_Len) := Clean_Name;
-         Name := Name_Find;
-      end;
+      Name := Get_String
+        (Base_Name  (Imported_Project, Project_File_Extension));
 
       if With_Clause /= Empty_Node
         and then Prj.Tree.Name_Of (With_Clause) = Name
@@ -1997,9 +1994,7 @@ package body Prj_API is
       end Add_Or_Replace;
 
    begin
-      Name_Len := Attribute_Name'Length;
-      Name_Buffer (1 .. Name_Len) := Attribute_Name;
-      Attribute_N := Name_Find;
+      Attribute_N := Get_String (Attribute_Name);
 
       if Pkg_Name /= "" then
          Pkg := Get_Or_Create_Package (Project, Pkg_Name);
@@ -2167,9 +2162,7 @@ package body Prj_API is
       end Add_Or_Replace;
 
    begin
-      Name_Len := Attribute_Name'Length;
-      Name_Buffer (1 .. Name_Len) := Attribute_Name;
-      Attribute_N := Name_Find;
+      Attribute_N := Get_String (Attribute_Name);
 
       if Pkg_Name /= "" then
          Pkg := Get_Or_Create_Package (Project, Pkg_Name);
@@ -2229,14 +2222,10 @@ package body Prj_API is
       end Delete_Attr;
 
    begin
-      Name_Len := Attribute_Name'Length;
-      Name_Buffer (1 .. Name_Len) := Attribute_Name;
-      Attribute_N := Name_Find;
+      Attribute_N := Get_String (Attribute_Name);
 
       if Pkg_Name /= "" then
-         Name_Len := Pkg_Name'Length;
-         Name_Buffer (1 .. Name_Len) := Pkg_Name;
-         Pkg := Find_Package_Declaration (Project, Name_Find);
+         Pkg := Find_Package_Declaration (Project, Get_String (Pkg_Name));
 
          --  If the package doesn't exist, no need to do anything
          if Pkg = Empty_Node then
@@ -2253,6 +2242,139 @@ package body Prj_API is
         (Project, Pkg, Scenario_Variables, Delete_Attr'Unrestricted_Access);
    end Delete_Attribute;
 
+   ------------------------------------------
+   -- Get_Unit_Part_And_Name_From_Filename --
+   ------------------------------------------
+
+   procedure Get_Unit_Part_And_Name_From_Filename
+     (Filename  : String;
+      Project   : Prj.Project_Id;
+      Part      : out Unit_Part;
+      Unit_Name : out Name_Id;
+      Lang      : out Name_Id)
+   is
+      Naming : constant Naming_Data := Projects.Table (Project).Naming;
+      F    : String := Filename;
+      Arr  : Array_Element_Id;
+      Name : String (1 .. 4096);
+      Len  : Natural;
+
+   begin
+      Canonical_Case_File_Name (F);
+
+      --  Check Ada exceptions
+
+      Arr := Check_Full_File (F, Projects.Table (Project).Naming.Bodies);
+
+      if Arr = No_Array_Element then
+         Arr := Check_Full_File (F, Naming.Specifications);
+
+         if Arr /= No_Array_Element then
+            Part := Unit_Spec;
+            Unit_Name := Array_Elements.Table (Arr).Index;
+            Lang := Name_Ada;
+            return;
+         end if;
+
+      else
+         Part := Unit_Body;
+         Unit_Name := Array_Elements.Table (Arr).Index;
+         Lang := Name_Ada;
+         return;
+      end if;
+
+      --  Check exceptions for other languages.
+      --  No notion of unit here, so no other file name
+
+      Arr := Check_Full_File (F, Naming.Implementation_Exceptions);
+
+      if Arr = No_Array_Element then
+         Arr := Check_Full_File (F, Naming.Specification_Exceptions);
+
+         if Arr /= No_Array_Element then
+            Part := Unit_Spec;
+            Lang := Array_Elements.Table (Arr).Index;
+            Unit_Name := Get_String (Filename);
+            return;
+         end if;
+
+      else
+         Part := Unit_Body;
+         Lang := Array_Elements.Table (Arr).Index;
+         Unit_Name := Get_String (Filename);
+         return;
+      end if;
+
+      --  Check standard extensions. The index in this table is the language
+
+      Arr := Naming.Specification_Suffix;
+
+      while Arr /= No_Array_Element loop
+         pragma Assert (Array_Elements.Table (Arr).Value.Kind = Prj.Single);
+         Get_String (Array_Elements.Table (Arr).Value.Value, Name, Len);
+
+         if Suffix_Matches (F, Name (1 .. Len)) then
+            Part      := Unit_Spec;
+            Unit_Name := Get_String (F (F'First .. F'Last - Len));
+            Lang      := Array_Elements.Table (Arr).Index;
+            return;
+         end if;
+
+         Arr := Array_Elements.Table (Arr).Next;
+      end loop;
+
+      --  Check standard body extensions. The index in this table is the
+      --  language
+
+      Arr := Naming.Implementation_Suffix;
+
+      while Arr /= No_Array_Element loop
+         pragma Assert (Array_Elements.Table (Arr).Value.Kind = Prj.Single);
+         Get_String (Array_Elements.Table (Arr).Value.Value, Name, Len);
+
+         if Suffix_Matches (F, Name (1 .. Len)) then
+            Part      := Unit_Body;
+            Unit_Name := Get_String (F (F'First .. F'Last - Len));
+            Lang      := Array_Elements.Table (Arr).Index;
+            return;
+         end if;
+
+         Arr := Array_Elements.Table (Arr).Next;
+      end loop;
+
+      --  Test the separate suffix (for Ada files)
+
+      declare
+         Suffix : constant String := Get_String (Naming.Separate_Suffix);
+      begin
+         if Suffix_Matches (F, Suffix) then
+            Lang := Name_Ada;
+            Part := Unit_Separate;
+            Unit_Name := Get_String (F (F'First .. F'Last - Suffix'Length));
+            return;
+         end if;
+      end;
+
+      --  Special case for the default GNAT extensions, since whatever the user
+      --  naming scheme, the runtime always has the same naming scheme
+
+      if GNAT.Directory_Operations.File_Extension (F) = ".ads" then
+         Part      := Unit_Spec;
+         Unit_Name := Get_String (Base_Name (Filename, ".ads"));
+         return;
+      elsif GNAT.Directory_Operations.File_Extension (F) = ".adb" then
+         Part      := Unit_Spec;
+         Unit_Name := Get_String (Base_Name (Filename, ".ads"));
+         return;
+      end if;
+
+      --  Whatever. This should be unreachable code anyway
+
+      Part := Unit_Separate;
+      Lang := No_Name;
+      Unit_Name := Get_String (Filename);
+   end Get_Unit_Part_And_Name_From_Filename;
+
    ---------------------------------
    -- Get_Unit_Part_From_Filename --
    ---------------------------------
@@ -2261,49 +2383,84 @@ package body Prj_API is
      (Filename : String;
       Project  : Prj.Project_Id) return Unit_Part
    is
+      Unit : Unit_Part;
+      Name, Lang : Name_Id;
+   begin
+      Get_Unit_Part_And_Name_From_Filename
+        (Filename, Project, Unit, Name, Lang);
+      return Unit;
+   end Get_Unit_Part_From_Filename;
+
+   ---------------------
+   -- Other_File_Name --
+   ---------------------
+
+   function Other_File_Name
+     (Project : Project_Id; Source_Filename : String) return String
+   is
+      Naming : constant Naming_Data := Projects.Table (Project).Naming;
+      F : String := Source_Filename;
+      Unit : Unit_Part;
+      Name, Lang : Name_Id;
       Arr  : Array_Element_Id;
-      Name : String (1 .. 4096);
-      Len  : Natural;
 
    begin
-      Arr := Projects.Table (Project).Naming.Specification_Suffix;
+      Canonical_Case_File_Name (F);
+
+      Get_Unit_Part_And_Name_From_Filename
+        (F, Project, Unit, Name, Lang);
+
+      Trace (Me, "Other_File_Name: source=" & Source_Filename
+             & " unit_name=" & Get_String (Name)
+             & " part=" & Unit'Img
+             & " lang=" & Get_String (Lang));
+
+      --  Check Ada exceptions
+
+      case Unit is
+         when Unit_Spec =>
+            Arr := Naming.Bodies;
+
+         when Unit_Body =>
+            Arr := Naming.Specifications;
+
+         when Unit_Separate =>
+            return Source_Filename;
+      end case;
 
       while Arr /= No_Array_Element loop
-         pragma Assert (Array_Elements.Table (Arr).Value.Kind = Prj.Single);
-         Get_String (Array_Elements.Table (Arr).Value.Value, Name, Len);
-
-         if Suffix_Matches (Filename, Name (1 .. Len)) then
-            return Unit_Spec;
+         if Array_Elements.Table (Arr).Index = Name then
+            Trace (Me, "Other_File_Name: exception found "
+                   & Get_String (Array_Elements.Table (Arr).Value.Value));
+            return Get_String (Array_Elements.Table (Arr).Value.Value);
          end if;
 
          Arr := Array_Elements.Table (Arr).Next;
       end loop;
 
-      Arr := Projects.Table (Project).Naming.Implementation_Suffix;
+      --  No need to check for exceptions in foreign languages, since there is
+      --  no notion of unit name
 
-      while Arr /= No_Array_Element loop
-         pragma Assert (Array_Elements.Table (Arr).Value.Kind = Prj.Single);
-         Get_String (Array_Elements.Table (Arr).Value.Value, Name, Len);
+      --  Check standard naming schemes
 
-         if Suffix_Matches (Filename, Name (1 .. Len)) then
-            return Unit_Body;
-         end if;
+      case Unit is
+         when Unit_Spec =>
+            Arr := Projects.Table (Project).Naming.Implementation_Suffix;
 
-         Arr := Array_Elements.Table (Arr).Next;
-      end loop;
+         when Unit_Body =>
+            Arr := Projects.Table (Project).Naming.Specification_Suffix;
 
-      --  ??? Should we check the default naming scheme as well ? Otherwise, it
-      --  might happen that a project has its own naming scheme, but still
-      --  references files in the runtime with the default naming scheme.
+         when Unit_Separate =>
+            null;
+      end case;
 
-      if GNAT.Directory_Operations.File_Extension (Filename) = ".ads" then
-         return Unit_Spec;
-      elsif GNAT.Directory_Operations.File_Extension (Filename) = ".adb" then
-         return Unit_Body;
-      end if;
+      Trace (Me, "Other_File_Name: "
+             & Get_String (Name)
+             & Get_String (Value_Of (Index => Lang, In_Array => Arr)));
 
-      return Unit_Separate;
-   end Get_Unit_Part_From_Filename;
+      return Get_String (Name)
+        & Get_String (Value_Of (Index => Lang, In_Array => Arr));
+   end Other_File_Name;
 
    ------------------------
    -- Delete_File_Suffix --
@@ -2719,9 +2876,7 @@ package body Prj_API is
 
    begin
       Old_Name := Prj.Tree.Name_Of (Project);
-      Name_Len := New_Name'Length;
-      Name_Buffer (1 .. Name_Len) := New_Name;
-      Name := Name_Find;
+      Name := Get_String (New_Name);
 
       Old := Find_Project_In_Hierarchy (Root_Project, Name);
 
@@ -3071,9 +3226,7 @@ package body Prj_API is
 
       --  Create the new variable, to avoid errors when computing the view of
       --  the project.
-      Name_Len := Old_Name'Length;
-      Name_Buffer (1 .. Name_Len) := Old_Name;
-      N := Name_Find;
+      N := Get_String (Old_Name);
 
       if Value_Of (N) /= No_String then
          Add (Get_String (New_Name), Get_String (Value_Of (N)));
@@ -3292,9 +3445,7 @@ package body Prj_API is
         (Root_Project, Ext_Variable_Name, Old_Value_Name,
          Callback'Unrestricted_Access);
 
-      Name_Len := Ext_Variable_Name'Length;
-      Name_Buffer (1 .. Name_Len) := Ext_Variable_Name;
-      N := Name_Find;
+      N := Get_String (Ext_Variable_Name);
 
       if Value_Of (N) /= No_String
         and then Is_Equal (Value_Of (N), Old_Value_Name)
@@ -3415,10 +3566,8 @@ package body Prj_API is
          Callback'Unrestricted_Access);
 
       --  Reset the value of the external variable if needed
-      Name_Len := Ext_Variable_Name'Length;
-      Name_Buffer (1 .. Name_Len) := Ext_Variable_Name;
 
-      if Is_Equal (Value_Of (Name_Find), Value_Name) then
+      if Is_Equal (Value_Of (Get_String (Ext_Variable_Name)), Value_Name) then
          if Type_Decl /= Empty_Node then
             Add (Ext_Variable_Name,
                  Get_String (String_Value_Of
@@ -4373,54 +4522,12 @@ package body Prj_API is
    function Get_Language_Of
      (Project : Project_Id; Source_Filename : String) return Name_Id
    is
-      Naming : constant Naming_Data := Projects.Table (Project).Naming;
-      Elem   : Array_Element_Id;
+      Part : Unit_Part;
+      Name, Lang : Name_Id;
    begin
-      --  Check if it matches one of the naming schemes
-      Elem := Check_Suffix_List
-        (Source_Filename, Naming.Implementation_Suffix);
-
-      if Elem = No_Array_Element then
-         Elem := Check_Suffix_List
-           (Source_Filename, Naming.Specification_Suffix);
-      end if;
-
-      if Elem /= No_Array_Element then
-         return Array_Elements.Table (Elem).Index;
-      end if;
-
-      --  Test the separate suffix (for Ada files)
-      if Suffix_Matches
-        (Source_Filename, Get_String (Naming.Separate_Suffix))
-      then
-         return Name_Ada;
-      end if;
-
-      --  Check if it matches one of the exception lists for Ada
-      Elem := Check_Full_File (Source_Filename, Naming.Bodies);
-
-      if Elem = No_Array_Element then
-         Elem := Check_Full_File (Source_Filename, Naming.Specifications);
-      end if;
-
-      if Elem /= No_Array_Element then
-         return Name_Ada;
-      end if;
-
-      --  Check if it matches one of the exception lists for foreign languages
-      Elem := Check_Full_File
-        (Source_Filename, Naming.Implementation_Exceptions);
-
-      if Elem = No_Array_Element then
-         Elem := Check_Full_File
-           (Source_Filename, Naming.Specification_Exceptions);
-      end if;
-
-      if Elem = No_Array_Element then
-         return No_Name;
-      else
-         return Array_Elements.Table (Elem).Index;
-      end if;
+      Get_Unit_Part_And_Name_From_Filename
+        (Source_Filename, Project, Part, Name, Lang);
+      return Lang;
    end Get_Language_Of;
 
    -------------------------
@@ -4438,12 +4545,11 @@ package body Prj_API is
       Var : Variable_Id;
       Arr : Array_Id;
       Elem : Array_Element_Id;
+      N    : Name_Id;
    begin
       if Package_Name /= "" then
-         Name_Len := Package_Name'Length;
-         Name_Buffer (1 .. Name_Len) := Package_Name;
          Pkg := Value_Of
-           (Name_Find,
+           (Get_String (Package_Name),
             In_Packages => Projects.Table (Project_View).Decl.Packages);
          if Pkg = No_Package then
             return Nil_Variable_Value;
@@ -4455,18 +4561,15 @@ package body Prj_API is
          Arr := Projects.Table (Project_View).Decl.Arrays;
       end if;
 
-      Name_Len := Attribute_Name'Length;
-      Name_Buffer (1 .. Name_Len) := Attribute_Name;
+      N := Get_String (Attribute_Name);
 
       if Index /= "" then
-         Elem := Value_Of (Name_Find, In_Arrays => Arr);
+         Elem := Value_Of (N, In_Arrays => Arr);
          if Elem /= No_Array_Element then
-            Name_Len := Index'Length;
-            Name_Buffer (1 .. Name_Len) := Index;
-            Value := Value_Of (Index => Name_Find, In_Array => Elem);
+            Value := Value_Of (Index => Get_String (Index), In_Array => Elem);
          end if;
       else
-         Value := Value_Of (Name_Find, Var);
+         Value := Value_Of (N, Var);
       end if;
 
       return Value;
@@ -4651,9 +4754,7 @@ package body Prj_API is
    is
       Pkg : Project_Node_Id;
    begin
-      Name_Len := Pkg_Name'Length;
-      Name_Buffer (1 .. Name_Len) := Pkg_Name;
-      Pkg := Find_Package_Declaration (Project, Name_Find);
+      Pkg := Find_Package_Declaration (Project, Get_String (Pkg_Name));
 
       if Pkg = Empty_Node
         or else Project_Of_Renamed_Package_Of (Pkg) = Empty_Node
@@ -4729,6 +4830,75 @@ package body Prj_API is
       return False;
    end Is_Main_File;
 
+   ------------------
+   -- Find_On_Path --
+   ------------------
+
+   function Find_On_Path
+     (Project   : Project_Node_Id;
+      View      : Project_Id;
+      Filename  : String;
+      Recursive : Boolean := False) return String is
+   begin
+      if Is_Absolute_Path (Filename) then
+         return Normalize_Pathname (Filename);
+      else
+         --  If we are editing a project file, check in the loaded tree first
+         --  (in case an old copy is kept somewhere in the source or object
+         --  path)
+
+         if GNAT.Directory_Operations.File_Extension (Filename) =
+           Prj.Project_File_Extension
+         then
+            declare
+               Iterator : Imported_Project_Iterator := Start (Project);
+            begin
+               while Current (Iterator) /= No_Project loop
+                  if Project_Name (Current (Iterator)) & Project_File_Extension
+                    = Filename
+                  then
+                     return Project_Path (Project_Id'(Current (Iterator)));
+                  end if;
+
+                  Next (Iterator);
+               end loop;
+            end;
+         end if;
+
+         declare
+            F : GNAT.OS_Lib.String_Access := Locate_Regular_File
+              (Filename, Include_Path (View, Recursive => Recursive));
+         begin
+            if F /= null then
+               declare
+                  S : constant String := Normalize_Pathname (F.all);
+               begin
+                  Free (F);
+                  return S;
+               end;
+            end if;
+         end;
+
+         --  Check the object directory too, for instance for the
+         --  compiler-generated files (binder files, ...)
+         declare
+            F : GNAT.OS_Lib.String_Access := Locate_Regular_File
+              (Filename, Object_Path (View, Recursive => Recursive));
+         begin
+            if F /= null then
+               declare
+                  S : constant String := Normalize_Pathname (F.all);
+               begin
+                  Free (F);
+                  return S;
+               end;
+            end if;
+         end;
+      end if;
+
+      return Filename;
+   end Find_On_Path;
+
    ----------------
    -- Initialize --
    ----------------
@@ -4741,9 +4911,7 @@ package body Prj_API is
       Prj.Initialize;
       Prj.Tree.Initialize;
 
-      Name_Len := Cpp_String'Length;
-      Name_Buffer (1 .. Name_Len) := Cpp_String;
-      Name_C_Plus_Plus := Name_Find;
+      Name_C_Plus_Plus := Get_String (Cpp_String);
    end Initialize;
 
    --------------
