@@ -755,7 +755,6 @@ package body Items.Arrays is
 
       if X < Field_Name_Start
         or else Item.Values = null
-        or else Item.Values'Length = 1
       then
          return Name;
       end if;
