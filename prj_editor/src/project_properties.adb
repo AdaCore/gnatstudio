@@ -783,7 +783,8 @@ package body Project_Properties is
 
          if Project_View = No_Project
            or else Get_Text (Editor.Gnatls) /= Get_Attribute_Value
-           (Project_View, Gnatlist_Attribute, Ide_Package)
+           (Project_View, Gnatlist_Attribute, Ide_Package,
+            Default => "gnatls")
          then
             Update_Attribute_Value_In_Scenario
               (Project            => Project,
@@ -797,7 +798,8 @@ package body Project_Properties is
 
          if Project_View = No_Project
            or else Get_Text (Editor.Debugger) /= Get_Attribute_Value
-           (Project_View, Debugger_Command_Attribute, Ide_Package)
+           (Project_View, Debugger_Command_Attribute, Ide_Package,
+            Default => "gdb")
          then
             Update_Attribute_Value_In_Scenario
               (Project            => Project,
@@ -817,27 +819,38 @@ package body Project_Properties is
                declare
                   Project_Languages : Argument_List :=
                     Get_Languages (Project_View);
+                  Different : Boolean;
                begin
                   for J in Editor.Languages'Range loop
                      Check := Gtk_Check_Button (Editor.Languages (J));
                      Ent   := Gtk_GEntry (Editor.Compilers (J));
 
-                     if Get_Active (Check)
-                       and then Get_Attribute_Value
-                       (Project_View, Compiler_Command_Attribute,
-                        Ide_Package, Default => "",
-                        Index => Languages (J).all) /= Get_Text (Ent)
-                     then
-                        Update_Attribute_Value_In_Scenario
-                          (Project  => Project,
-                           Pkg_Name => Ide_Package,
-                           Scenario_Variables => Scenario_Variables,
-                           Attribute_Name => Compiler_Command_Attribute,
-                           Value => Get_Text (Ent),
-                           Attribute_Index => Languages (J).all);
-                        Changed := True;
-                        Trace (Me, "Compiler changed for "
-                               & Languages (J).all);
+                     if Get_Active (Check) then
+                        Different := False;
+                        if To_Lower (Languages (J).all) = "ada" then
+                           Different := Get_Attribute_Value
+                             (Project_View, Compiler_Command_Attribute,
+                              Ide_Package, Default => "gnatmake",
+                              Index => Languages (J).all) /= Get_Text (Ent);
+                        else
+                           Different := Get_Attribute_Value
+                             (Project_View, Compiler_Command_Attribute,
+                              Ide_Package, Default => "gcc",
+                              Index => Languages (J).all) /= Get_Text (Ent);
+                        end if;
+
+                        if Different then
+                           Update_Attribute_Value_In_Scenario
+                             (Project  => Project,
+                              Pkg_Name => Ide_Package,
+                              Scenario_Variables => Scenario_Variables,
+                              Attribute_Name => Compiler_Command_Attribute,
+                              Value => Get_Text (Ent),
+                              Attribute_Index => Languages (J).all);
+                           Changed := True;
+                           Trace (Me, "Compiler changed for "
+                                  & Languages (J).all);
+                        end if;
                      end if;
                   end loop;
 
@@ -1055,6 +1068,9 @@ package body Project_Properties is
                  or Convert_Paths (Project                => Project,
                                    Use_Relative_Paths     => Relative,
                                    Update_With_Statements => True);
+               if Changed then
+                  Trace (Me, "Paths have changed relative/absolute");
+               end if;
             end if;
 
             if New_Name /= Project_Name (Project_View)
@@ -1137,6 +1153,7 @@ package body Project_Properties is
                      if Process_General_Page
                        (Editor, Current (Prj_Iter), View, Vars)
                      then
+                        Trace (Me, "General page modified the project");
                         Changed := True;
                         Set_Project_Modified
                           (Kernel, Current (Prj_Iter), True);
@@ -1161,6 +1178,8 @@ package body Project_Properties is
                                  Ref_Project => Project);
                            begin
                               for R in Result'Range loop
+                                 Trace (Me, "Project modified on page "
+                                        & P'Img);
                                  Changed := True;
                                  Set_Project_Modified
                                    (Kernel, Result (R), True);
