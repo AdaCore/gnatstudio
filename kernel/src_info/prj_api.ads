@@ -120,6 +120,22 @@ package Prj_API is
    --  Var_Or_Attribute. No_String is returned in case there is no such
    --  variable.
 
+   procedure Get_Switches
+     (Project          : Project_Id;
+      In_Pkg           : String;
+      File             : Types.Name_Id;
+      Value            : out Variable_Value;
+      Is_Default_Value : out Boolean);
+   --  Return the switches to use for a file in a given package (gnatmake,
+   --  compiler, ...).
+   --  Value is the list of switches to use for that variable.
+   --  Is_Default_Value is set to true if file-specific switches were not
+   --  specified, and Value is in fact the list of default switches defined
+   --  at the package level.
+
+   function Length (Value : Variable_Value) return Integer;
+   --  Return the number of elements in Value (1 if Value is of kind Single)
+
    -----------------
    -- Expressions --
    -----------------
@@ -174,6 +190,21 @@ package Prj_API is
    --  expression in the list.
    --  If the variable is defined as an external reference, this return a
    --  pointer to the default value.
+
+   ---------------
+   -- Variables --
+   ---------------
+
+   type Variable_Decl_Array is array (Positive range <>) of Project_Node_Id;
+
+   function Find_Scenario_Variables (Project : Project_Node_Id)
+      return Variable_Decl_Array;
+   --  Create and return an array that contains the declarations of all the
+   --  scenario variables in Project and its packages.
+
+   function Is_External_Variable (Var : Project_Node_Id) return Boolean;
+   --  Return True if Var is a reference to an external variable
+
 
    Invalid_Value : exception;
 

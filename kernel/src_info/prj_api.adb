@@ -30,6 +30,7 @@
 with Prj;       use Prj;
 pragma Elaborate_All (Prj);
 with Prj.Tree;  use Prj.Tree;
+with Prj.Util;  use Prj.Util;
 with Snames;    use Snames;
 pragma Elaborate_All (Snames);
 with Namet;     use Namet;
@@ -578,20 +579,19 @@ package body Prj_API is
       case Kind_Of (V) is
          when N_Expression =>
             Expr := First_Term (V);
-            pragma Assert
-              (Expr /= Empty_Node and then Kind_Of (Expr) = N_Term);
+            pragma Assert (Kind_Of (Expr) = N_Term);
             Expr := Current_Term (Expr);
 
-            if Expr /= Empty_Node
-              and then Kind_Of (Expr) = N_Literal_String_List
-            then
-               return (Current => First_Expression_In_List (Expr));
-            else
-               return (Current => V);
-            end if;
+            case Kind_Of (Expr) is
+               when N_Literal_String_List =>
+                  return (Current => First_Expression_In_List (Expr));
 
-         when N_External_Value =>
-            return (Current => External_Default_Of (V));
+               when N_External_Value =>
+                  return (Current => External_Default_Of (Expr));
+
+               when others =>
+                  return (Current => V);
+            end case;
 
          when others =>
             Put_Line ("Value_Of: " & Kind_Of (V)'Img);
@@ -689,6 +689,167 @@ package body Prj_API is
       end if;
    end Concatenate_List;
 
+   ------------------
+   -- Get_Switches --
+   ------------------
+
+   procedure Get_Switches
+     (Project          : Project_Id;
+      In_Pkg           : String;
+      File             : Name_Id;
+      Value            : out Variable_Value;
+      Is_Default_Value : out Boolean)
+   is
+      Pkg : Package_Id := Projects.Table (Project).Decl.Packages;
+      Pkg_Name : Name_Id;
+      Switches : Name_Id;
+      Var_Value : Variable_Value := Nil_Variable_Value;
+      The_Array : Array_Element_Id;
+
+   begin
+      Name_Len := In_Pkg'Length;
+      Name_Buffer (1 .. Name_Len) := In_Pkg;
+      Pkg_Name := Name_Find;
+
+      Name_Len := 8;
+      Name_Buffer (1 .. Name_Len) := "switches";
+      Switches := Name_Find;
+
+      Pkg  := Prj.Util.Value_Of
+        (Name        => Pkg_Name,
+         In_Packages => Projects.Table (Project).Decl.Packages);
+
+      --  Do we have some file-specific switches ?
+      if Pkg /= No_Package then
+         The_Array := Value_Of
+             (Name      => Switches,
+              In_Arrays => Packages.Table (Pkg).Decl.Arrays);
+         Var_Value := Value_Of
+             (Index    => File,
+              In_Array => The_Array);
+
+         if Var_Value /= Nil_Variable_Value then
+            Value := Var_Value;
+            Is_Default_Value := False;
+            return;
+         end if;
+      end if;
+
+      --  Else use the default switches
+
+      if Pkg /= No_Package
+        and then Packages.Table (Pkg).Decl.Attributes /= No_Variable
+      then
+         Var_Value := Prj.Util.Value_Of
+           (Variable_Name => Switches,
+            In_Variables  => Packages.Table (Pkg).Decl.Attributes);
+
+         if Var_Value /= Nil_Variable_Value then
+            Value := Var_Value;
+            Is_Default_Value := True;
+            return;
+         end if;
+      end if;
+
+      Is_Default_Value := True;
+      Value := Nil_Variable_Value;
+   end Get_Switches;
+
+   ------------
+   -- Length --
+   ------------
+
+   function Length (Value : Variable_Value) return Integer is
+      V : String_List_Id;
+      Num : Natural := 0;
+   begin
+      case Value.Kind is
+         when Undefined =>
+            return 0;
+
+         when Single =>
+            return 1;
+
+         when List =>
+            V := Value.Values;
+            while V /= Nil_String loop
+               Num := Num + 1;
+               V := String_Elements.Table (V).Next;
+            end loop;
+            return Num;
+      end case;
+   end Length;
+
+   --------------------------
+   -- Is_External_Variable --
+   --------------------------
+
+   function Is_External_Variable (Var : Project_Node_Id) return Boolean is
+   begin
+      return Kind_Of (Current_Term (First_Term (Expression_Of (Var))))
+        = N_External_Value;
+   end Is_External_Variable;
+
+   -----------------------------
+   -- Find_Scenario_Variables --
+   -----------------------------
+
+   function Find_Scenario_Variables (Project : Project_Node_Id)
+      return Variable_Decl_Array
+   is
+      Var : Project_Node_Id;
+      Pkg : Project_Node_Id := Project;
+      Count : Natural := 0;
+   begin
+      pragma Assert (Kind_Of (Project) = N_Project);
+
+      while Pkg /= Empty_Node loop
+         Var := First_Variable_Of (Pkg);
+         while Var /= Empty_Node loop
+            if Kind_Of (Var) = N_Typed_Variable_Declaration
+              and then Is_External_Variable (Var)
+            then
+               Count := Count + 1;
+            end if;
+
+            Var := Next_Variable (Var);
+         end loop;
+
+         if Pkg = Project then
+            Pkg := First_Package_Of (Project);
+         else
+            Pkg := Next_Package_In_Project (Pkg);
+         end if;
+      end loop;
+
+      declare
+         List : Variable_Decl_Array (1 .. Count);
+         Current : Positive := 1;
+      begin
+         Pkg := Project;
+         while Pkg /= Empty_Node loop
+            Var := First_Variable_Of (Pkg);
+            while Var /= Empty_Node loop
+               if Kind_Of (Var) = N_Typed_Variable_Declaration
+                 and then Is_External_Variable (Var)
+               then
+                  List (Current) := Var;
+                  Current := Current + 1;
+               end if;
+
+               Var := Next_Variable (Var);
+            end loop;
+
+            if Pkg = Project then
+               Pkg := First_Package_Of (Project);
+            else
+               Pkg := Next_Package_In_Project (Pkg);
+            end if;
+         end loop;
+
+         return List;
+      end;
+   end Find_Scenario_Variables;
 
 begin
    Namet.Initialize;
