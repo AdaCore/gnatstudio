@@ -91,7 +91,7 @@ package Interactive_Consoles is
    --  Internal initialization function.
 
    procedure Insert
-     (Console   : access Interactive_Console_Record;
+     (Console        : access Interactive_Console_Record;
       Text           : String;
       Add_LF         : Boolean := True;
       Highlight      : Boolean := False;
@@ -108,6 +108,10 @@ package Interactive_Consoles is
       Enable  : Boolean);
    --  When Enable is False, the Prompt is not redisplayed automatically
    --  and the console is uneditable by the user.
+
+   function Is_Editable
+     (Console : access Interactive_Console_Record) return Boolean;
+   --  Return whether the console is user editable, or read-only.
 
    procedure Display_Prompt
      (Console : access Interactive_Console_Record'Class);
