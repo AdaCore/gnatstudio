@@ -1,5 +1,10 @@
 Known Problems fixed in GVD 2.0.0
 
+- Displaying Ada strings containing backslashes
+  Problem:    when a string contains a backslash (Ada mode), the latter is
+              not shown in the display.
+  Workaround: Look at the value in the tooltip
+
 - Parsing arrays of null access types
   Problem:    when parsing an Ada array of null access types, gvd sometimes
               enters an infinite loop
