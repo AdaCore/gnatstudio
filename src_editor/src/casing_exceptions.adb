@@ -29,6 +29,7 @@ with String_Utils;            use String_Utils;
 with Case_Handling;           use Case_Handling;
 with VFS;                     use VFS;
 with Commands.Interactive;    use Commands, Commands.Interactive;
+with Src_Editor_Module;       use Src_Editor_Module;
 
 package body Casing_Exceptions is
 
@@ -346,6 +347,7 @@ package body Casing_Exceptions is
       Command : Interactive_Command_Access;
       Label   : Contextual_Label;
       Substring_Filter, Full_String_Filter : Action_Filter;
+      Filter  : Action_Filter;
    begin
       Casing_Module_Id := new Casing_Module_Record;
       Casing_Module_Id.Kernel := Kernel_Handle (Kernel);
@@ -359,6 +361,10 @@ package body Casing_Exceptions is
          Filename,
          Read_Only => False);
 
+      Filter := Action_Filter
+        (Create (Module => Src_Editor_Module_Name)
+         and Lookup_Filter (Kernel, "Entity"));
+
       Command := new Change_Case_Command;
       Label   := new Contextual_Label_Record;
       Label.Casing := Lower;
@@ -366,6 +372,7 @@ package body Casing_Exceptions is
       Register_Contextual_Menu
         (Kernel, "Lower case entity",
          Label  => Label,
+         Filter => Filter,
          Action => Command);
 
       Command := new Change_Case_Command;
@@ -375,6 +382,7 @@ package body Casing_Exceptions is
       Register_Contextual_Menu
         (Kernel, "Upper case entity",
          Label  => Label,
+         Filter => Filter,
          Action => Command);
 
       Command := new Change_Case_Command;
@@ -384,6 +392,7 @@ package body Casing_Exceptions is
       Register_Contextual_Menu
         (Kernel, "Mixed case entity",
          Label  => Label,
+         Filter => Filter,
          Action => Command);
 
       Command := new Change_Case_Command;
@@ -393,12 +402,13 @@ package body Casing_Exceptions is
       Register_Contextual_Menu
         (Kernel, "Smart mixed case entity",
          Label  => Label,
+         Filter => Filter,
          Action => Command);
 
-      Register_Contextual_Menu
-        (Kernel, "",
-         Label => "Casing/",
-         Filter => Lookup_Filter (Kernel, "Entity"));
+--        Register_Contextual_Menu
+--          (Kernel, "",
+--           Label => "Casing/",
+--           Filter => Lookup_Filter (Kernel, "Entity"));
 
       Substring_Filter   := new Substring_Filter_Record;
       Full_String_Filter := Action_Filter (not Substring_Filter);
@@ -409,7 +419,7 @@ package body Casing_Exceptions is
         (Kernel, "Add substring casing exception",
          Label  => -"Casing/Add substring exception for %e",
          Action => Command,
-         Filter => Substring_Filter);
+         Filter => Action_Filter (Filter and Substring_Filter));
 
       Command := new Add_Exception_Command;
       Add_Exception_Command (Command.all).Substring := True;
@@ -418,7 +428,7 @@ package body Casing_Exceptions is
         (Kernel, "Remove substring casing exception",
          Label  => -"Casing/Remove substring exception for %e",
          Action => Command,
-         Filter => Substring_Filter);
+         Filter => Action_Filter (Filter and Substring_Filter));
 
       Command := new Add_Exception_Command;
       Add_Exception_Command (Command.all).Substring := False;
@@ -426,7 +436,7 @@ package body Casing_Exceptions is
         (Kernel, "Add casing exception",
          Label  => -"Casing/Add exception for %e",
          Action => Command,
-         Filter => Full_String_Filter);
+         Filter => Action_Filter (Filter and Full_String_Filter));
 
       Command := new Add_Exception_Command;
       Add_Exception_Command (Command.all).Substring := False;
@@ -435,7 +445,7 @@ package body Casing_Exceptions is
         (Kernel, "Remove casing exception",
          Label  => -"Casing/Remove exception for %e",
          Action => Command,
-         Filter => Full_String_Filter);
+         Filter => Action_Filter (Filter and Full_String_Filter));
    end Register_Module;
 
    -------------
