@@ -649,6 +649,7 @@ package body Debugger.Gdb.Ada is
       R          : Record_Type_Access;
       Num_Parts  : Natural := 0;
       G          : Generic_Type_Access;
+      Part       : Generic_Type_Access;
 
    begin
       Skip_Blanks (Type_Str, Index);
@@ -656,7 +657,9 @@ package body Debugger.Gdb.Ada is
 
       --  Count the number of fields
 
-      while not Looking_At (Type_Str, Tmp_Index, End_On) loop
+      while Tmp_Index <= Type_Str'Last
+        and then not Looking_At (Type_Str, Tmp_Index, End_On)
+      loop
 
          --  A null field ? Do no increment the count
          if Looking_At (Type_Str, Tmp_Index, "null;") then
@@ -738,28 +741,26 @@ package body Debugger.Gdb.Ada is
 
             Num_Parts := 0;
 
-            while not Looking_At (Type_Str, Index, "end ") loop
+            while Num_Parts < Get_Variant_Parts (R.all, Fields)
+              and then not Looking_At (Type_Str, Index, "end ")
+            loop
                Skip_To_String (Type_Str, Index, "=>");
 
                Index := Index + 2;
                Num_Parts := Num_Parts + 1;
 
-               declare
-                  Part : Generic_Type_Access;
-               begin
-                  if Num_Parts = Get_Variant_Parts (R.all, Fields) then
-                     Parse_Record_Type (Lang, Type_Str, Entity,
-                                        Index, Is_Union => False,
-                                        Result => Part, End_On => "end case");
-                  else
-                     Parse_Record_Type (Lang, Type_Str, Entity,
-                                        Index, Is_Union => False,
-                                        Result => Part, End_On => "when ");
-                  end if;
+               if Num_Parts = Get_Variant_Parts (R.all, Fields) then
+                  Parse_Record_Type (Lang, Type_Str, Entity,
+                                     Index, Is_Union => False,
+                                     Result => Part, End_On => "end case");
+               else
+                  Parse_Record_Type (Lang, Type_Str, Entity,
+                                     Index, Is_Union => False,
+                                     Result => Part, End_On => "when ");
+               end if;
 
-                  Set_Variant_Field (R.all, Fields, Num_Parts,
-                                     Record_Type_Access (Part));
-               end;
+               Set_Variant_Field (R.all, Fields, Num_Parts,
+                                  Record_Type_Access (Part));
 
                Skip_Blanks (Type_Str, Index);
             end loop;
@@ -813,10 +814,28 @@ package body Debugger.Gdb.Ada is
                   & ASCII.LF & Type_Str (Tmp_Index .. Index - 1));
 
             else
-               Set_Value (R.all,
-                          Parse_Type (Get_Debugger (Lang),
-                                      Type_Str (Tmp_Index .. Index - 1)),
-                          Field => Fields);
+               if (Tmp_Index + 5 <= Index - 1
+                     and then Type_Str (Tmp_Index .. Tmp_Index + 5) = "range ")
+                 or else
+                 (Tmp_Index + 3 <= Index - 1
+                    and then Type_Str (Tmp_Index .. Tmp_Index + 3) = "mod ")
+               then
+                  declare
+                     Result : Generic_Type_Access;
+                     J      : Natural := Tmp_Index;
+                  begin
+                     Parse_Type
+                       (Lang,
+                        Type_Str (Tmp_Index .. Index - 1),
+                        Type_Str (Tmp_Index .. Index - 1), J, Result);
+                     Set_Value (R.all, Result, Field => Fields);
+                  end;
+               else
+                  Set_Value (R.all,
+                             Parse_Type (Get_Debugger (Lang),
+                                         Type_Str (Tmp_Index .. Index - 1)),
+                             Field => Fields);
+               end if;
             end if;
 
             Index := Index + 1;
