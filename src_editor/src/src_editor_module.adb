@@ -2616,7 +2616,7 @@ package body Src_Editor_Module is
                if Edit /= null
                  and then not No_Location
                then
-                  Trace (Me, "Setup editor for going to line,col="
+                  Trace (Me, "Setup editor to go to line,col="
                          & Line'Img & Column'Img);
                   --  For some reason, we can not directly call
                   --  Set_Cursor_Location, since the source editor won't be
