@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2004                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2001-2005                       --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -38,7 +38,6 @@ with String_List_Utils;        use String_List_Utils;
 with VCS;                      use VCS;
 with VFS;                      use VFS;
 
-with Generic_List;
 with Ada.Unchecked_Deallocation;
 with HTables;
 
@@ -172,9 +171,6 @@ private
    package Status_Hash is new HTables.Simple_HTable
      (Header_Num, Element, Free, No_Element, Virtual_File, Hash, Equal);
 
-   package Line_Record_List is new Generic_List (Line_Record);
-   use Line_Record_List;
-
    type VCS_Page_Record;
    type VCS_Page_Access is access all VCS_Page_Record;
 
@@ -215,7 +211,7 @@ private
       Tree   : Gtk_Tree_View;
       Model  : Gtk_Tree_Store;
 
-      Stored_Status   : List;
+      Stored_Status   : Status_Hash.HTable;
       Cached_Status   : Status_Hash.HTable;
 
       Shown : Boolean := False;
