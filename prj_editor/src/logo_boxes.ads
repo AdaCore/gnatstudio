@@ -36,6 +36,7 @@
 with Gtk.Box;
 with Gtk.Dialog;
 with Gtk.Label;
+with Gtk.Style;
 with Gtk.Window;
 with Pango.Font;
 
@@ -72,16 +73,20 @@ package Logo_Boxes is
    --  Return the box that contains the actual contents of the window. It is
    --  empty initially
 
-   procedure Display_Error
-     (Win : access Logo_Box_Record; Error_Msg : String);
-   --  Display an error message (or hide it if Error_Msg is the empty string)
+   procedure Display_Message
+     (Win      : access Logo_Box_Record;
+      Msg      : String;
+      As_Error : Boolean := False);
+   --  Display a message (or hide it if Msg is the empty string).
+   --  If As_Error is True, the message is displayed with a special style
 
 private
    type Logo_Box_Record is new Gtk.Dialog.Gtk_Dialog_Record with record
-      Side_Box : Gtk.Box.Gtk_Box;
-      Title    : Gtk.Label.Gtk_Label;
-      Content  : Gtk.Box.Gtk_Box;
-      Error    : Gtk.Label.Gtk_Label;
+      Side_Box    : Gtk.Box.Gtk_Box;
+      Title       : Gtk.Label.Gtk_Label;
+      Content     : Gtk.Box.Gtk_Box;
+      Error_Style : Gtk.Style.Gtk_Style;
+      Message     : Gtk.Label.Gtk_Label;
    end record;
 
 end Logo_Boxes;

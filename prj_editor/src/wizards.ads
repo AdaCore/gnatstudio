@@ -120,8 +120,11 @@ package Wizards is
    --  is incorrect. However, it is your responsability to change the
    --  sensitivity of the Next button once the content of the page is valid.
    --  By default, this returns True.
-   --  Error messages should be displayed through the Display_Error subprogram
-   --  below.
+   --  Error messages should be displayed through the Display_Message
+   --  subprogram below. If a field is empty, but should be set, you should do
+   --  a Grab_Focus on it, and display a message for the user. If the value in
+   --  a field is incorrect, you should Grab_Focus on it, and display an error
+   --  message.
    --  Be aware that this function might be called even before calling
    --  Create_Content if Lazy_Creation was set to True when it was added.
 
@@ -161,11 +164,14 @@ package Wizards is
    --  the fact that this page might not have been created at all if the user
    --  pressed Finished
 
-   procedure Display_Error
-     (Wiz : access Wizard_Record; Error_Msg : String);
-   --  Display an error message in the wizard. It should be called by the
+   procedure Display_Message
+     (Wiz      : access Wizard_Record;
+      Msg      : String;
+      As_Error : Boolean := False);
+   --  Display a message in the wizard. It should be called by the
    --  Is_Complete procedure above.
-   --  An empty error message should be displayed if there is no error.
+   --  If As_Error is true, the message is displayed as an error message.
+   --  An empty message should be displayed to hide the message area.
 
    function Can_Complete (Wiz : access Wizard_Record) return Boolean;
    --  Return whether the Finish button should be activated.

@@ -226,7 +226,7 @@ package body Wizards is
       Page.Title := new String'(Description);
 
       Page.Was_Complete := Is_Complete (Page, Wiz);
-      Display_Error (Wiz, "");
+      Display_Message (Wiz, "", As_Error => False);
 
       if not Lazy_Creation then
          begin
@@ -327,7 +327,7 @@ package body Wizards is
    is
       W : constant Wizard := Wizard (Wiz);
    begin
-      Display_Error (W, "");
+      Display_Message (W, "", As_Error => False);
       W.Pages (W.Current_Page).Was_Complete :=
         Is_Complete (W.Pages (W.Current_Page), W);
       Set_Sensitive (W.Next, W.Pages (W.Current_Page).Was_Complete
@@ -372,7 +372,7 @@ package body Wizards is
       pragma Assert (Wiz.Pages /= null);
       pragma Assert (Num <= Wiz.Pages'Last);
 
-      Display_Error (Wiz, "");
+      Display_Message (Wiz, "", As_Error => False);
 
       --  Unhighlight the current page
 
@@ -416,15 +416,17 @@ package body Wizards is
                 & Exception_Information (E));
    end Set_Current_Page;
 
-   -------------------
-   -- Display_Error --
-   -------------------
+   ---------------------
+   -- Display_Message --
+   ---------------------
 
-   procedure Display_Error
-     (Wiz : access Wizard_Record; Error_Msg : String) is
+   procedure Display_Message
+     (Wiz      : access Wizard_Record;
+      Msg      : String;
+      As_Error : Boolean := False) is
    begin
-      Display_Error (Logo_Box_Record (Wiz.all)'Access, Error_Msg);
-   end Display_Error;
+      Display_Message (Logo_Box_Record (Wiz.all)'Access, Msg, As_Error);
+   end Display_Message;
 
    ---------------
    -- Next_Page --

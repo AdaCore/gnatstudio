@@ -85,13 +85,13 @@ package body Creation_Wizard.Adp is
       Wiz  : access Wizards.Wizard_Record'Class) return Boolean is
    begin
       if Page.Adp_File_Name /= null
-        and then Get_Text (Page.Adp_File_Name) /= ""
+        and then Get_Text (Page.Adp_File_Name) = ""
       then
-         return True;
-      else
-         Display_Error (Wiz, -"You must specify a .adp file");
+         Display_Message (Wiz, -"Specify a .adp project to convert");
+         Grab_Focus (Page.Adp_File_Name);
          return False;
       end if;
+      return True;
    end Is_Complete;
 
    ----------------------

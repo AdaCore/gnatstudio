@@ -69,7 +69,6 @@ package body Logo_Boxes is
       Pix         : Gdk_Pixmap;
       Mask        : Gdk_Bitmap;
       Gpix        : Gtk_Pixmap;
-      Error_Style : Gtk_Style;
    begin
       Gtk.Dialog.Initialize
         (Dialog  => Win,
@@ -79,8 +78,8 @@ package body Logo_Boxes is
 
       Color := Parse ("#FF0000");
       Alloc (Get_Default_Colormap, Color);
-      Error_Style := Copy (Get_Style (Win));
-      Set_Foreground (Error_Style, State_Normal, Color);
+      Win.Error_Style := Copy (Get_Style (Win));
+      Set_Foreground (Win.Error_Style, State_Normal, Color);
 
       Color := Parse (Bg_Color);
       Alloc (Get_Default_Colormap, Color);
@@ -130,14 +129,21 @@ package body Logo_Boxes is
 
       --  Error box
 
-      Gtk_New (Win.Error, Title);
-      Pack_Start (Vbox, Win.Error, False);
-      Set_Alignment (Win.Error, 0.0, 0.5);
-      Set_Justify (Win.Error, Justify_Left);
-      Set_Line_Wrap (Win.Error, False);
-      Set_Style (Win.Error, Error_Style);
-      Hide_All (Win.Error);
-      Set_Child_Visible (Win.Error, False);
+      Style := Copy (Get_Style (Win));
+      Set_Background (Style, State_Normal, White (Get_Default_Colormap));
+
+      Gtk_New (Event);
+      Set_Style (Event, Style);
+      Pack_Start (Vbox, Event, False);
+
+      Gtk_New (Win.Message, Title);
+      Add (Event, Win.Message);
+      Set_Alignment (Win.Message, 0.0, 0.5);
+      Set_Justify (Win.Message, Justify_Left);
+      Set_Line_Wrap (Win.Message, False);
+      Set_Style (Win.Message, Win.Error_Style);
+      Hide_All (Event);
+      Set_Child_Visible (Event, False);
 
       --  Main content
 
@@ -145,22 +151,30 @@ package body Logo_Boxes is
       Pack_Start (Vbox, Win.Content, True, True, 0);
    end Initialize;
 
-   -------------------
-   -- Display_Error --
-   -------------------
+   ---------------------
+   -- Display_Message --
+   ---------------------
 
-   procedure Display_Error
-     (Win : access Logo_Box_Record; Error_Msg : String) is
+   procedure Display_Message
+     (Win      : access Logo_Box_Record;
+      Msg      : String;
+      As_Error : Boolean := False) is
    begin
-      if Error_Msg = "" then
-         Hide_All (Win.Error);
-         Set_Child_Visible (Win.Error, False);
+      if Msg = "" then
+         Hide_All (Get_Parent (Win.Message));
+         Set_Child_Visible (Get_Parent (Win.Message), False);
       else
-         Set_Text (Win.Error, Error_Msg);
-         Set_Child_Visible (Win.Error, True);
-         Show_All (Win.Error);
+         Set_Text (Win.Message, Msg);
+         Set_Child_Visible (Get_Parent (Win.Message), True);
+         Show_All (Get_Parent (Win.Message));
+
+         if As_Error then
+            Set_Style (Win.Message, Win.Error_Style);
+         else
+            Set_Style (Win.Message, Get_Style (Win));
+         end if;
       end if;
-   end Display_Error;
+   end Display_Message;
 
    ------------------
    -- Get_Side_Box --

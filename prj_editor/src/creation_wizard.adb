@@ -132,25 +132,31 @@ package body Creation_Wizard is
          Project  : constant String := Get_Text (Page.Project_Name);
       begin
          if Project = "" then
-            Display_Error (Wiz, -"You must specify a project name");
+            Display_Message (Wiz, -"Specify a project name",
+                             As_Error => False);
+            Grab_Focus (Page.Project_Name);
             return False;
          end if;
 
          if not Is_Valid_Project_Name (Project) then
-            Display_Error (Wiz,
-                           -("Invalid name for the project "
-                             & "(only letters, digits and underscores)"));
+            Display_Message (Wiz,
+                             -("Invalid name for the project "
+                               & "(only letters, digits and underscores)"),
+                             As_Error => True);
+            Grab_Focus (Page.Project_Name);
             return False;
          end if;
 
          for J in reverse Project'First .. Project'Last - 4 loop
             if Project (J) = '.' then
-               Display_Error
+               Display_Message
                  (Wiz,
                   -("Child projects must import or extend their parent"
                     & " project. This is not done automatically by GPS,"
                     & " and you will have to edit the project by hand to"
-                    & " make it valid."));
+                    & " make it valid."),
+                 As_Error => True);
+               Grab_Focus (Page.Project_Name);
                exit;
             elsif Project (J) = '/'
               or else Project (J) = Directory_Separator
@@ -159,6 +165,13 @@ package body Creation_Wizard is
             end if;
          end loop;
       end;
+
+      if Get_Text (Page.Project_Location) = "" then
+         Display_Message (Wiz, -"Specify a directory to store the project in",
+                          As_Error => False);
+         Grab_Focus (Page.Project_Location);
+         return False;
+      end if;
 
       return True;
    end Is_Complete;
@@ -212,6 +225,10 @@ package body Creation_Wizard is
       Set_Text (Page.Project_Location, Get_Current_Dir);
       Attach (Table, Page.Project_Location, 0, 1, 3, 4);
       Set_Activates_Default (Page.Project_Location, True);
+      Widget_Callback.Object_Connect
+        (Page.Project_Location, "changed",
+         Widget_Callback.To_Marshaller (Update_Buttons_Sensitivity'Access),
+         Wiz);
 
       Gtk_New (Button, -"Browse");
       Attach (Table, Button, 1, 2, 3, 4, Xoptions => 0);
