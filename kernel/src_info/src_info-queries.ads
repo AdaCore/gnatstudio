@@ -69,12 +69,19 @@ package Src_Info.Queries is
    function Copy (Entity : Entity_Information) return Entity_Information;
    --  Return a copy of Entity. The result must be explicitely destroyed.
 
-   function Renaming_Of
-     (List : LI_File_List; Entity : Entity_Information)
-      return Entity_Information;
-   --  Return the entity that Entity is renaming, or No_Entity_Information if
-   --  it isn't a renaming.
-   --  You must call destroy on the returned entity.
+   procedure Renaming_Of
+     (List           : LI_File_List;
+      Entity         : Entity_Information;
+      Is_Renaming    : out Boolean;
+      Renamed_Entity : out Entity_Information);
+   --  If Entity is a renaming of another entity (or a typedef for another
+   --  type), then Is_Renaming is set to True, and Renamed_Entity points to the
+   --  entity that is renamed.
+   --  It might happen if some ALI files were not found that Is_Renaming is
+   --  True but Renamed_Entity is No_Entity_Information. This should be
+   --  reported as an error to the user.
+   --
+   --  You must call destroy on the Renamed_Entity.
 
    --------------------------------------
    -- Goto Declaration<->Body requests --

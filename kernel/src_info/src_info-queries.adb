@@ -1365,6 +1365,8 @@ package body Src_Info.Queries is
             if Is_Same_Entity
               (D.Value.Declaration, Iterator.Entity)
             then
+               Trace (Me, "Check_Declarations: "
+                      & D.Value.Declaration.Name.all);
                return Next_Reference (D.Value.References);
             end if;
 
@@ -1935,17 +1937,28 @@ package body Src_Info.Queries is
    -- Renaming_Of --
    -----------------
 
-   function Renaming_Of
-     (List : LI_File_List; Entity : Entity_Information)
-      return Entity_Information
+   procedure Renaming_Of
+     (List           : LI_File_List;
+      Entity         : Entity_Information;
+      Is_Renaming    : out Boolean;
+      Renamed_Entity : out Entity_Information)
    is
-      Decl : constant E_Declaration := Get_Declaration (List, Entity);
+      Decl : E_Declaration := Get_Declaration (List, Entity);
       Renamed_Location : constant File_Location := Decl.Rename;
    begin
-      if Renamed_Location /= Null_File_Location then
-         return Get_Entity (Get_Declaration (Renamed_Location));
+      Is_Renaming := Renamed_Location /= Null_File_Location;
+
+      if Is_Renaming then
+         Decl := Get_Declaration (Renamed_Location);
+         if Decl /= No_Declaration then
+            Renamed_Entity := Get_Entity (Decl);
+         else
+            Trace (Me, Get_Name (Entity) & " is a renaming, but couldn't"
+                     & " find LI file for renamed entity");
+            Renamed_Entity := No_Entity_Information;
+         end if;
       else
-         return No_Entity_Information;
+         Renamed_Entity := No_Entity_Information;
       end if;
    end Renaming_Of;
 
