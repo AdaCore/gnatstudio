@@ -253,6 +253,17 @@ package body GVD.Code_Editors is
       return Editor.Asm;
    end Get_Asm;
 
+   ------------------
+   -- Show_Message --
+   ------------------
+
+   procedure Show_Message
+     (Editor      : access Code_Editor_Record;
+      Message     : String) is
+   begin
+      Show_Message (Editor.Source, Message);
+   end Show_Message;
+
    ---------------
    -- Load_File --
    ---------------

@@ -67,6 +67,12 @@ package GVD.Text_Box.Source_Editor is
      (Editor : access Source_Editor_Record) return String;
    --  See GVD.Code_Editors for more information
 
+   procedure Show_Message
+     (Editor      : access Source_Editor_Record;
+      Message     : String) is abstract;
+   --  Display a message in the editor.
+   --  This deletes the currently displayed file.
+
    procedure Load_File
      (Editor      : access Source_Editor_Record;
       File_Name   : String;

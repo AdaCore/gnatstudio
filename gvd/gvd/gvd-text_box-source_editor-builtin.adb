@@ -961,6 +961,34 @@ package body GVD.Text_Box.Source_Editor.Builtin is
       return Editor.Show_Lines_With_Code;
    end Get_Show_Lines_With_Code;
 
+   ------------------
+   -- Show_Message --
+   ------------------
+
+   procedure Show_Message
+     (Editor      : access Builtin_Record;
+      Message     : String)
+   is
+      Edit : constant Builtin_Text_Box := Builtin_Text_Box (Editor.Widget);
+
+      use Gtk.Widget.Widget_List;
+   begin
+      Free (Editor.Current_File);
+      Editor.Current_File := new String' ("");
+
+      --  Clear the old file
+      Delete_Text (Get_Child (Edit));
+      Hide_Current_Line_Button (Edit);
+      Forall (Get_Buttons (Edit), Gtk.Widget.Destroy_Cb'Access);
+      Free (Editor.Breakpoint_Buttons);
+      Editor.Breakpoint_Buttons := Null_List;
+
+      --  Print a warning message
+
+
+      Insert (Edit, Chars => Message);
+   end Show_Message;
+
    ---------------
    -- Load_File --
    ---------------
@@ -1039,20 +1067,10 @@ package body GVD.Text_Box.Source_Editor.Builtin is
      (Editor    : access Builtin_Record;
       File_Name : String)
    is
-      Edit : constant Builtin_Text_Box := Builtin_Text_Box (Editor.Widget);
-
       use Gtk.Widget.Widget_List;
    begin
-      --  Clear the old file
-      Delete_Text (Get_Child (Edit));
-      Hide_Current_Line_Button (Edit);
-      Forall (Get_Buttons (Edit), Gtk.Widget.Destroy_Cb'Access);
-      Free (Editor.Breakpoint_Buttons);
-      Editor.Breakpoint_Buttons := Null_List;
-
-      --  Print a warning message
       if File_Name /= "" then
-         Insert (Edit, Chars => File_Name & (-": File not found"));
+         Show_Message (Editor, File_Name & (-": File not found"));
       end if;
    end File_Not_Found;
 

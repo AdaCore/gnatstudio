@@ -74,6 +74,11 @@ package GVD.Code_Editors is
      (Editor : access Code_Editor_Record; Mode : View_Mode);
    --  Apply mode changes to the editor.
 
+   procedure Show_Message
+     (Editor      : access Code_Editor_Record;
+      Message     : String);
+   --  Display a message in the editor window.
+
    procedure Load_File
      (Editor      : access Code_Editor_Record;
       File_Name   : String;

@@ -65,6 +65,12 @@ package GVD.Text_Box.Source_Editor.Socket is
       Br     : GVD.Types.Breakpoint_Array);
    --  See GVD.Text_Box.Source_Editor for more information.
 
+   procedure Show_Message
+     (Editor      : access Socket_Record;
+      Message     : String);
+   --  Display a message in the editor.
+   --  This deletes the currently displayed file.
+
    procedure Load_File
      (Editor      : access Socket_Record;
       File_Name   : String;

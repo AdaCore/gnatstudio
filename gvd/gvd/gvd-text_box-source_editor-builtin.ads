@@ -114,6 +114,12 @@ package GVD.Text_Box.Source_Editor.Builtin is
    --  Indicate whether lines where a user can set a breakpoint have a small
    --  dot displayed on the side.
 
+   procedure Show_Message
+     (Editor      : access Builtin_Record;
+      Message     : String);
+   --  Display a message in the editor.
+   --  This deletes the currently displayed file.
+
    procedure Load_File
      (Editor      : access Builtin_Record;
       File_Name   : String;

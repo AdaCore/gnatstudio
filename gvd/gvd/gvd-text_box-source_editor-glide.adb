@@ -96,6 +96,20 @@ package body GVD.Text_Box.Source_Editor.Glide is
       Editor.Window := GVD.Main_Window.GVD_Main_Window (Window);
    end Initialize;
 
+   ------------------
+   -- Show_Message --
+   ------------------
+
+   procedure Show_Message
+     (Editor      : access GEdit_Record;
+      Message     : String)
+   is
+   begin
+      Free (Editor.Current_File);
+      Editor.Current_File := new String' ("");
+      --  ??? Should we pass the message to the status bar instead ?
+   end Show_Message;
+
    ---------------
    -- Load_File --
    ---------------

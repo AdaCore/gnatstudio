@@ -139,6 +139,18 @@ package body GVD.Text_Box.Source_Editor.Socket is
       Editor.Socket_XID := Socket_XID;
    end Initialize;
 
+   ------------------
+   -- Show_Message --
+   ------------------
+
+   procedure Show_Message
+     (Editor      : access Socket_Record;
+      Message     : String) is
+   begin
+      --   ??? Must implement and document this procedure.
+      null;
+   end Show_Message;
+
    ---------------
    -- Load_File --
    ---------------
