@@ -148,14 +148,15 @@ package body Socket_Module is
    ------------------------------
 
    function Timeout_Process_Commands return Boolean is
-      Data    : Socket_Module := Socket_Module (Socket_Module_ID);
-      Success : Boolean;
+      Data   : constant Socket_Module := Socket_Module (Socket_Module_ID);
+      Result : Command_Return_Type;
+      pragma Unreferenced (Result);
    begin
       if Data.Commands_Present then
          if Is_Empty (Data.Commands_List) then
             Data.Commands_Present := False;
          else
-            Success := Execute (Head (Data.Commands_List));
+            Result := Execute (Head (Data.Commands_List));
             Next (Data.Commands_List);
          end if;
       end if;
@@ -209,7 +210,8 @@ package body Socket_Module is
                         Command     : Socket_Command_Access;
                         Module_Data : constant Socket_Module :=
                           Socket_Module (Socket_Module_ID);
-                        Success     : Boolean;
+                        Result      : Command_Return_Type;
+                        pragma Unreferenced (Result);
 
                      begin
                         if Data.Buffer (1 .. Data.Index - 1) = "exit" then
@@ -222,7 +224,7 @@ package body Socket_Module is
                            Data.Buffer (1 .. Data.Index - 1),
                            Data.Channel);
 
-                        Success := Execute (Command);
+                        Result := Execute (Command);
                      end;
                   end if;
 
@@ -265,6 +267,8 @@ package body Socket_Module is
          declare
             Data : Read_Data_Access;
             T    : Timeout_Handler_Id;
+            pragma Unreferenced (T);
+
          begin
             Data := new Read_Data_Record;
 
@@ -307,6 +311,7 @@ package body Socket_Module is
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
       T : Timeout_Handler_Id;
+      pragma Unreferenced (T);
    begin
       Socket_Module_ID := new Socket_Module_Record;
       Socket_Module (Socket_Module_ID).Kernel := Kernel_Handle (Kernel);

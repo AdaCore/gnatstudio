@@ -18,7 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glide_Kernel.Modules; use Glide_Kernel.Modules;
+with Glide_Kernel.Scripts; use Glide_Kernel.Scripts;
 
 package body Commands.Socket is
 
@@ -51,16 +51,18 @@ package body Commands.Socket is
    -- Execute --
    -------------
 
-   function Execute (Command : access Socket_Command) return Boolean is
+   function Execute
+     (Command : access Socket_Command) return Command_Return_Type
+   is
    begin
       if Command.Command /= null then
          String'Write
            (Command.Stream,
-            Interpret_Command (Command.Kernel, Command.Command.all) &
+            Execute_GPS_Shell_Command (Command.Kernel, Command.Command.all) &
               ASCII.LF);
       end if;
 
-      return True;
+      return Success;
    end Execute;
 
 end Commands.Socket;

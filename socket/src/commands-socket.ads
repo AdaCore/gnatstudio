@@ -37,8 +37,9 @@ package Commands.Socket is
    procedure Free (X : in out Socket_Command);
    --  Free memory associated to X.
 
-   function Execute (Command : access Socket_Command) return Boolean;
-   --  Execute Command, and return True if the command could be launched
+   function Execute
+     (Command : access Socket_Command) return Command_Return_Type;
+   --  Execute Command, and return Success if the command could be launched
    --  successfully.
 
 private
