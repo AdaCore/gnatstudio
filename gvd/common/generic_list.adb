@@ -159,18 +159,18 @@ package body Generic_List is
       Current   : List_Node;
       Next_End  : List_Node := Null_Node;
    begin
+      if End_Node /= Null_Node then
+         Next_End := Next (End_Node);
+      end if;
+
       if Start_Node = Null_Node then
-         while First (L1) /= End_Node
-           and then not Is_Empty (L1)
-         loop
+         while not Is_Empty (L1) loop
+            Current := First (L1);
+            exit when Current = Next_End;
             Next (L1);
          end loop;
 
          return;
-      end if;
-
-      if End_Node /= Null_Node then
-         Next_End := Next (End_Node);
       end if;
 
       Next_Node := Next (Start_Node);
@@ -181,7 +181,10 @@ package body Generic_List is
          Current := Next_Node;
          Next_Node := Next (Next_Node);
 
-         Free_Element (Current.Element);
+         if Current.Element /= null then
+            Free (Current.Element.all);
+            Free_Element (Current.Element);
+         end if;
          Free_Node (Current);
       end loop;
 
