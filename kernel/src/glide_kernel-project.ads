@@ -57,8 +57,7 @@ package Glide_Kernel.Project is
      (Kernel : access Kernel_Handle_Record'Class; Project : String);
    --  Load project Project as the current project.
    --  This emits the "project_changed" and "project_view_changed" signals.
-   --
-   --  ??? What do we do if the project couldn't be loaded.
+   --  If the project isn't found, the default project is loaded.
 
    procedure Load_Default_Project
      (Kernel               : access Kernel_Handle_Record'Class;
