@@ -2,30 +2,30 @@ with Gtkada.Types; use Gtkada.Types;
 
 package Odd.Pixmaps is
 
-   breakat_xpm   : Chars_Ptr_Array;
-   cont_xpm      : Chars_Ptr_Array;
-   display_xpm   : Chars_Ptr_Array;
-   down_xpm      : Chars_Ptr_Array;
-   findfwd_xpm   : Chars_Ptr_Array;
-   finish_xpm    : Chars_Ptr_Array;
-   interrupt_xpm : Chars_Ptr_Array;
-   kill_xpm      : Chars_Ptr_Array;
-   lookup_xpm    : Chars_Ptr_Array;
-   next_xpm      : Chars_Ptr_Array;
-   nexti_xpm     : Chars_Ptr_Array;
-   plot_xpm      : Chars_Ptr_Array;
-   print_xpm     : Chars_Ptr_Array;
-   rotate_xpm    : Chars_Ptr_Array;
-   run_xpm       : Chars_Ptr_Array;
-   set_xpm       : Chars_Ptr_Array;
-   show_xpm      : Chars_Ptr_Array;
-   start_xpm     : Chars_Ptr_Array;
-   step_xpm      : Chars_Ptr_Array;
-   stepi_xpm     : Chars_Ptr_Array;
-   undisplay_xpm : Chars_Ptr_Array;
-   until_xpm     : Chars_Ptr_Array;
-   up_xpm        : Chars_Ptr_Array;
-   watch_xpm     : Chars_Ptr_Array;
+   breakat_xpm   : Chars_Ptr_Array (0 .. 0);
+   cont_xpm      : Chars_Ptr_Array (0 .. 0);
+   display_xpm   : Chars_Ptr_Array (0 .. 0);
+   down_xpm      : Chars_Ptr_Array (0 .. 0);
+   findfwd_xpm   : Chars_Ptr_Array (0 .. 0);
+   finish_xpm    : Chars_Ptr_Array (0 .. 0);
+   interrupt_xpm : Chars_Ptr_Array (0 .. 0);
+   kill_xpm      : Chars_Ptr_Array (0 .. 0);
+   lookup_xpm    : Chars_Ptr_Array (0 .. 0);
+   next_xpm      : Chars_Ptr_Array (0 .. 0);
+   nexti_xpm     : Chars_Ptr_Array (0 .. 0);
+   plot_xpm      : Chars_Ptr_Array (0 .. 0);
+   print_xpm     : Chars_Ptr_Array (0 .. 0);
+   rotate_xpm    : Chars_Ptr_Array (0 .. 0);
+   run_xpm       : Chars_Ptr_Array (0 .. 0);
+   set_xpm       : Chars_Ptr_Array (0 .. 0);
+   show_xpm      : Chars_Ptr_Array (0 .. 0);
+   start_xpm     : Chars_Ptr_Array (0 .. 0);
+   step_xpm      : Chars_Ptr_Array (0 .. 0);
+   stepi_xpm     : Chars_Ptr_Array (0 .. 0);
+   undisplay_xpm : Chars_Ptr_Array (0 .. 0);
+   until_xpm     : Chars_Ptr_Array (0 .. 0);
+   up_xpm        : Chars_Ptr_Array (0 .. 0);
+   watch_xpm     : Chars_Ptr_Array (0 .. 0);
 
 private
    pragma Import (C, breakat_xpm, "breakat_xpm");
