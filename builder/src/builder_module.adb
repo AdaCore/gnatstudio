@@ -32,6 +32,7 @@ with Glide_Kernel;            use Glide_Kernel;
 with Glide_Kernel.Console;    use Glide_Kernel.Console;
 with Glide_Kernel.Modules;    use Glide_Kernel.Modules;
 with Glide_Kernel.Project;    use Glide_Kernel.Project;
+with Glide_Kernel.Timeout;    use Glide_Kernel.Timeout;
 
 with Glide_Main_Window;       use Glide_Main_Window;
 
@@ -56,18 +57,11 @@ package body Builder_Module is
 
    Me : constant Debug_Handle := Create (Builder_Module_Name);
 
-   type Builder_Data is record
-      Kernel     : Kernel_Handle;
-      Descriptor : Process_Descriptor_Access;
-   end record;
-
-   package Builder_Idle is new Gtk.Main.Timeout (Builder_Data);
-
    procedure Initialize_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
    --  Initialize Builder module.
 
-   function Idle_Build (Data : Builder_Data) return Boolean;
+   function Idle_Build (Data : Process_Data) return Boolean;
    --  Called by the Gtk main loop when idle.
    --  Handle on going build.
 
@@ -199,7 +193,8 @@ package body Builder_Module is
         (Fd.all, Args (Args'First).all, Args (Args'First + 1 .. Args'Last),
          Err_To_Out  => True);
       Free (Args);
-      Id := Builder_Idle.Add (Timeout, Idle_Build'Access, (Kernel, Fd));
+      Id := Process_Timeout.Add
+        (Timeout, Idle_Build'Access, (Kernel, Fd, null));
 
    exception
       when E : others =>
@@ -236,25 +231,23 @@ package body Builder_Module is
    -- Idle_Build --
    ----------------
 
-   function Idle_Build (Data : Builder_Data) return Boolean is
+   function Idle_Build (Data : Process_Data) return Boolean is
       Kernel  : Kernel_Handle renames Data.Kernel;
       Fd      : Process_Descriptor_Access := Data.Descriptor;
 
-      Top     : constant Glide_Window :=
+      Top          : constant Glide_Window :=
         Glide_Window (Get_Main_Window (Kernel));
-      Matched : Match_Array (0 .. 3);
-      Result  : Expect_Match;
-      Matcher : constant Pattern_Matcher := Compile
+      Matched      : Match_Array (0 .. 3);
+      Result       : Expect_Match;
+      Matcher      : constant Pattern_Matcher := Compile
         ("completed ([0-9]+) out of ([0-9]+) \((.*)%\)\.\.\.$",
          Multiple_Lines);
-      Timeout : Integer := 1;
+      Timeout      : Integer := 1;
       Line_Matcher : constant Pattern_Matcher := Compile (".+");
-      Buffer : String_Access := new String (1 .. 1000);
-      Buffer_Pos : Natural := Buffer'First;
-      Tmp : String_Access;
-
-      procedure Free is new Ada.Unchecked_Deallocation
-        (Process_Descriptor'Class, Process_Descriptor_Access);
+      Buffer       : String_Access := new String (1 .. 1024);
+      Buffer_Pos   : Natural := Buffer'First;
+      Tmp          : String_Access;
+      Status       : Integer;
 
    begin
       if Top.Interrupted then
@@ -279,14 +272,17 @@ package body Builder_Module is
             if Matched (0) = No_Match then
                --  Coalesce all the output into one single chunck, which is
                --  much faster to display in the console.
+
                if Buffer_Pos + S'Length > Buffer'Last then
                   Tmp := new String (1 .. Buffer'Length * 2);
                   Tmp (1 .. Buffer'Length) := Buffer.all;
                   Free (Buffer);
                   Buffer := Tmp;
                end if;
+
                Buffer (Buffer_Pos .. Buffer_Pos + S'Length - 1) := S;
                Buffer_Pos := Buffer_Pos + S'Length;
+
             else
                Set_Fraction
                  (Top.Statusbar,
@@ -299,9 +295,10 @@ package body Builder_Module is
       end loop;
 
       if Buffer_Pos /= Buffer'First then
-         Console.Insert (Kernel, Buffer (Buffer'First .. Buffer_Pos),
-                         Add_LF => False);
+         Console.Insert
+           (Kernel, Buffer (Buffer'First .. Buffer_Pos - 1), Add_LF => False);
       end if;
+
       Free (Buffer);
 
       return True;
@@ -309,17 +306,28 @@ package body Builder_Module is
    exception
       when Process_Died =>
          if Buffer_Pos /= Buffer'First then
-            Console.Insert (Kernel, Buffer (Buffer'First .. Buffer_Pos),
-                            Add_LF => False);
+            Console.Insert
+              (Kernel,
+               Buffer (Buffer'First .. Buffer_Pos - 1) & Expect_Out (Fd.all),
+               Add_LF => False);
          end if;
-         Free (Buffer);
 
+         Free (Buffer);
+         Set_Fraction (Top.Statusbar, 0.0);
+         Set_Progress_Text (Top.Statusbar, "");
          Console.Insert (Kernel, Expect_Out (Fd.all), Add_LF => True);
-         --  ??? Check returned status.
+
+         Close (Fd.all);
          Console.Insert (Kernel, -"process terminated.");
+
+         --  ??? As soon as GNAT.Expect is modified, change the lines above by
+         --  the following:
+         --  Close (Fd.all, Status);
+         --  Console.Insert
+         --    (Kernel, -"process exited with status" & Status'Img);
+
          Pop_State (Kernel);
          Set_Sensitive_Menus (Kernel, True);
-         Close (Fd.all);
          Free (Fd);
 
          return False;
@@ -330,6 +338,8 @@ package body Builder_Module is
          Set_Sensitive_Menus (Kernel, True);
          Close (Fd.all);
          Free (Fd);
+         Set_Fraction (Top.Statusbar, 0.0);
+         Set_Progress_Text (Top.Statusbar, "");
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
 
          return False;
