@@ -35,7 +35,6 @@ package Glide_Result_View is
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
    --  Register this module in GPS.
 
-
    type Result_View_Record is new Gtk_Hbox_Record with private;
    type Result_View is access all Result_View_Record'Class;
 

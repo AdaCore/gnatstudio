@@ -326,7 +326,7 @@ package body Glide_Kernel is
    ---------------------------
 
    function Get_Module_From_Child
-     (Child  : Gtkada.MDI.MDI_Child) return Module_ID is
+     (Child : Gtkada.MDI.MDI_Child) return Module_ID is
    begin
       if Child.all in GPS_MDI_Child_Record'Class then
          return GPS_MDI_Child (Child).Module;
