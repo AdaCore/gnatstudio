@@ -1381,16 +1381,6 @@ package body Browsers.Call_Graph is
          Remove_Result_Category
            (Kernel, -"References for: " & Get_Name (Info));
 
-         if Get_Filename (Get_File (Get_Declaration_Of (Info))) =
-           File_Information (Entity)
-         then
-            Print_Ref
-              (Kernel,
-               Get_Declaration_Of (Info),
-               Get_Name (Info),
-               -"References for: " & Get_Name (Info));
-         end if;
-
          Find_All_References
            (Iter    => Iter,
             Entity  => Info,
