@@ -1492,6 +1492,19 @@ package body Src_Editor_Module is
                end if;
             end if;
          end;
+
+      elsif Command = "add_case_exception"
+        or else Command = "remove_case_exception"
+      then
+         declare
+            Name : constant String := Nth_Arg (Data, 1);
+         begin
+            if Command = "add_case_exception" then
+               Add_Exception (Name);
+            else
+               Remove_Exception (Name);
+            end if;
+         end;
       end if;
    end Edit_Command_Handler;
 
@@ -4255,6 +4268,30 @@ package body Src_Editor_Module is
            -"Synchronize the scrolling between multiple editors",
          Minimum_Args  => 2,
          Maximum_Args  => 3,
+         Class         => Editor_Class,
+         Static_Method => True,
+         Handler       => Edit_Command_Handler'Access);
+
+      Register_Command
+        (Kernel,
+         Command       => "add_case_exception",
+         Params        => "(name)",
+         Description   =>
+           -"Add name into the case exception dictionary",
+         Minimum_Args  => 1,
+         Maximum_Args  => 1,
+         Class         => Editor_Class,
+         Static_Method => True,
+         Handler       => Edit_Command_Handler'Access);
+
+      Register_Command
+        (Kernel,
+         Command       => "remove_case_exception",
+         Params        => "(name)",
+         Description   =>
+           -"Remove name from the case exception dictionary",
+         Minimum_Args  => 1,
+         Maximum_Args  => 1,
          Class         => Editor_Class,
          Static_Method => True,
          Handler       => Edit_Command_Handler'Access);
