@@ -612,7 +612,7 @@ package body Src_Editor_View is
 
       Get_Iter_At_Mark (Buffer, Insert_Iter, Get_Insert (Buffer));
 
-      Set_Font (View, Get_Pref (Kernel, Default_Source_Editor_Font));
+      Preferences_Changed (View, Kernel_Handle (Kernel));
 
       Widget_Callback.Connect
         (View, "realize",
