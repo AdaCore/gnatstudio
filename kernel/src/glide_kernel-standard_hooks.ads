@@ -252,7 +252,8 @@ package Glide_Kernel.Standard_Hooks is
    --  ??? Explain when Info is freed
    --  If Normalize is True, the file name will be normalized.
    --  See File_Line_Action_Hook
-   --  Infos must be freed by caller.
+   --  Infos must be freed by caller using Unchecked_Free. The actual contents
+   --  will be freed by the editor.
 
    procedure Add_Editor_Label
      (Kernel     : access Glide_Kernel.Kernel_Handle_Record'Class;
