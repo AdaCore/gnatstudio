@@ -40,7 +40,6 @@ with GVD.Process;      use GVD.Process;
 with GVD.Memory_View;  use GVD.Memory_View;
 with Gtk.Extra.PsFont; use Gtk.Extra.PsFont;
 with Display_Items;    use Display_Items;
-with Process_Proxies;  use Process_Proxies;
 with Odd_Intl;         use Odd_Intl;
 with Gtk.Menu;         use Gtk.Menu;
 with Gtk.Menu_Item;    use Gtk.Menu_Item;
@@ -68,11 +67,8 @@ package body GVD.Canvas is
       Zoom           : Guint;
    end record;
 
-   package Item_Register is new Register_Generic
-     (Item_Record, Gtk_Widget_Record);
-
-   Zoom_Levels : constant array (Positive range <>) of Guint
-     := (15, 25, 50, 75, 100, 150, 200, 300, 400);
+   Zoom_Levels : constant array (Positive range <>) of Guint :=
+     (15, 25, 50, 75, 100, 150, 200, 300, 400);
    --  All the possible zoom levels. We have to use such an array, instead
    --  of doing the computation directly, so as to avoid rounding errors that
    --  would appear in the computation and make zoom_in not the reverse of
@@ -531,15 +527,10 @@ package body GVD.Canvas is
      (Widget  : access Gtk_Widget_Record'Class;
       Item    : Item_Record) is
    begin
-      if not Item_Register.Register_Post_Cmd_If_Needed
-        (Get_Process (Get_Debugger (Item.Item).Debugger),
-         Widget, Change_Display_Mode'Access, Item)
+      if Get_Active (Gtk_Radio_Menu_Item (Widget))
+        and then Get_Display_Mode (Item.Item) /= Item.Mode
       then
-         if Get_Active (Gtk_Radio_Menu_Item (Widget))
-           and then Get_Display_Mode (Item.Item) /= Item.Mode
-         then
-            Set_Display_Mode (Item.Item, Item.Mode);
-         end if;
+         Set_Display_Mode (Item.Item, Item.Mode);
       end if;
    end Change_Display_Mode;
 
@@ -551,21 +542,16 @@ package body GVD.Canvas is
      (Widget  : access Gtk_Widget_Record'Class;
       Item    : Item_Record) is
    begin
-      if not Item_Register.Register_Post_Cmd_If_Needed
-        (Get_Process (Get_Debugger (Item.Item).Debugger),
-         Widget, Clone_Component'Access, Item)
-      then
-         if Is_A_Variable (Item.Item) then
-            Process_User_Command
-              (Get_Debugger (Item.Item),
-               "graph display " & Item.Component_Name,
-               Output_Command => True);
-         else
-            Process_User_Command
-              (Get_Debugger (Item.Item),
-               "graph display `" & Get_Name (Item.Item) & "`",
-               Output_Command => True);
-         end if;
+      if Is_A_Variable (Item.Item) then
+         Process_User_Command
+           (Get_Debugger (Item.Item),
+            "graph display " & Item.Component_Name,
+            Output_Command => True);
+      else
+         Process_User_Command
+           (Get_Debugger (Item.Item),
+            "graph display `" & Get_Name (Item.Item) & "`",
+            Output_Command => True);
       end if;
    end Clone_Component;
 
@@ -934,15 +920,10 @@ package body GVD.Canvas is
          Key      => "gvd_set_value_dialog");
 
    begin
-      if not Item_Register.Register_Post_Cmd_If_Needed
-        (Get_Process (Get_Debugger (Item.Item).Debugger),
-         Widget, Set_Value'Access, Item)
-      then
-         if S /= "" and then S (S'First) /= ASCII.NUL then
-            Set_Variable
-              (Get_Debugger (Item.Item).Debugger, Item.Component_Name, S);
-            Update_Variable (Widget, Item);
-         end if;
+      if S /= "" and then S (S'First) /= ASCII.NUL then
+         Set_Variable
+           (Get_Debugger (Item.Item).Debugger, Item.Component_Name, S);
+         Update_Variable (Widget, Item);
       end if;
    end Set_Value;
 
@@ -988,13 +969,8 @@ package body GVD.Canvas is
      (Widget : access Gtk_Widget_Record'Class;
       Item   : Item_Record) is
    begin
-      if not Item_Register.Register_Post_Cmd_If_Needed
-        (Get_Process (Get_Debugger (Item.Item).Debugger),
-         Widget, Update_Variable'Access, Item)
-      then
-         Display_Items.Update
-           (Item.Canvas, Item.Item, Redisplay_Canvas => True);
-      end if;
+      Display_Items.Update
+        (Item.Canvas, Item.Item, Redisplay_Canvas => True);
    end Update_Variable;
 
    --------------------

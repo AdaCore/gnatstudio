@@ -46,7 +46,6 @@ with GVD.Strings;      use GVD.Strings;
 with GVD.Types;        use GVD.Types;
 with GVD.Process;      use GVD.Process;
 with GVD.Preferences;  use GVD.Preferences;
-with Process_Proxies;  use Process_Proxies;
 
 package body GVD.Memory_View is
 
@@ -56,9 +55,6 @@ package body GVD.Memory_View is
 
    package Long_Int_IO is new Ada.Text_IO.Integer_IO (Long_Long_Integer);
    use Long_Int_IO;
-
-   package Memory_View_Register is new Register_Generic
-     (Long_Long_Integer, GVD_Memory_View_Record);
 
    ---------------------
    -- Local constants --
@@ -585,31 +581,19 @@ package body GVD.Memory_View is
    is
       Process : constant Debugger_Process_Tab :=
         Get_Current_Process (View.Window);
+      Values : String (1 .. 2 * View.Number_Of_Bytes);
+
    begin
-      if Memory_View_Register.Register_Post_Cmd_If_Needed
-           (Get_Process (Process.Debugger),
-            View,
-            Display_Memory'Access,
-            Address)
-      then
-         return;
-      end if;
-
-      declare
-         Values : String (1 .. 2 * View.Number_Of_Bytes);
-      begin
-         Values := Get_Memory
-           (Process.Debugger,
-            View.Number_Of_Bytes,
-            "0x" & To_Standard_Base (Address, 16));
-         View.Starting_Address := Address;
-         Free (View.Values);
-         Free (View.Flags);
-         View.Values := new String' (Values);
-         View.Flags  := new String' (Values);
-         View.Data   := Byte;
-      end;
-
+      Values := Get_Memory
+        (Process.Debugger,
+         View.Number_Of_Bytes,
+         "0x" & To_Standard_Base (Address, 16));
+      View.Starting_Address := Address;
+      Free (View.Values);
+      Free (View.Flags);
+      View.Values := new String' (Values);
+      View.Flags  := new String' (Values);
+      View.Data   := Byte;
       Update_Display (View);
    end Display_Memory;
 

@@ -40,9 +40,7 @@ with GVD.Text_Box.Source_Editor.Builtin;
 with GVD.Text_Box.Source_Editor.Socket;
 with Odd_Intl;            use Odd_Intl;
 
-with Process_Proxies;     use Process_Proxies;
 with GVD.Process;         use GVD.Process;
-with Debugger;            use Debugger;
 
 package body GVD.Code_Editors is
 
@@ -63,9 +61,6 @@ package body GVD.Code_Editors is
       Editor : Code_Editor;
       Mode   : View_Mode;
    end record;
-
-   package Editor_Register is new Register_Generic
-     (Editor_Mode_Data, Gtk_Radio_Menu_Item_Record);
 
    package Editor_Mode_Cb is new Gtk.Handlers.User_Callback
      (Gtk_Radio_Menu_Item_Record, Editor_Mode_Data);
@@ -511,16 +506,6 @@ package body GVD.Code_Editors is
       Data : Editor_Mode_Data) is
    begin
       if Get_Active (Item) and then Data.Editor.Mode /= Data.Mode then
-         --  If we are currently processing a command, wait till the current
-         --  one is finished, and then change the mode
-
-         if Editor_Register.Register_Post_Cmd_If_Needed
-           (Get_Process (Debugger_Process_Tab (Data.Editor.Process).Debugger),
-            Item, Change_Mode'Access, Data)
-         then
-            return;
-         end if;
-
          Apply_Mode (Data.Editor, Data.Mode);
       end if;
    end Change_Mode;
