@@ -31,22 +31,25 @@ package Vcs_View_Pkg is
       --  This boolean indicates whether the model is currently
       --  being synchronized with the view.
 
+      All_Selected : Boolean := False;
+      --  Indicates whether all the files in the view are selected.
 
       VCS_Ref : VCS_Access := null;
 
-      Edit_Log_Button   : Gtk_Widget;
-      View_Log_Button   : Gtk_Widget;
-      View_Diff_Button  : Gtk_Widget;
-      Annotate_Button   : Gtk_Widget;
-      Get_Status_Button : Gtk_Widget;
-      Update_Button     : Gtk_Widget;
-      Open_Button       : Gtk_Widget;
-      Commit_Button     : Gtk_Widget;
-      Revert_Button     : Gtk_Widget;
-      Add_Button        : Gtk_Widget;
-      Remove_Button     : Gtk_Widget;
+      Edit_Log_Button            : Gtk_Widget;
+      Edit_Multiple_Log_Button   : Gtk_Widget;
+      View_Log_Button            : Gtk_Widget;
+      View_Diff_Button           : Gtk_Widget;
+      Annotate_Button            : Gtk_Widget;
+      Get_Status_Button          : Gtk_Widget;
+      Update_Button              : Gtk_Widget;
+      Open_Button                : Gtk_Widget;
+      Commit_Button              : Gtk_Widget;
+      Revert_Button              : Gtk_Widget;
+      Add_Button                 : Gtk_Widget;
+      Remove_Button              : Gtk_Widget;
 
-      Message_Text      : Gtk_Text;
+      Message_Text               : Gtk_Text;
    end record;
 
    procedure Gtk_New (Vcs_View : out Vcs_View_Access);
@@ -55,6 +58,5 @@ package Vcs_View_Pkg is
    procedure Show_Files (Explorer  : Vcs_View_Access;
                          Directory : String);
    --
-
 
 end Vcs_View_Pkg;
