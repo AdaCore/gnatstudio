@@ -422,7 +422,6 @@ package body GVD.Memory_View is
         = Little_Endian
         and then Old_Size /= View.Data
       then
-         Put_Line ("swwapp");
          --  Swap back to original.
          Swap_Blocks (View, Old_Size);
 
