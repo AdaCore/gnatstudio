@@ -664,6 +664,10 @@ package body Projects.Editor is
       N    : Name_Id;
       Project_View : constant Project_Id := Get_View (Project);
    begin
+      if Project_View = Prj.No_Project then
+         return Nil_Variable_Value;
+      end if;
+
       if Package_Name /= "" then
          Pkg := Value_Of
            (Get_String (Package_Name),
