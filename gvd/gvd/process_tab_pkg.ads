@@ -26,7 +26,7 @@ with Gtk.Frame; use Gtk.Frame;
 with Gtk.Label; use Gtk.Label;
 with Gtk.Text; use Gtk.Text;
 with Gtk.Handlers;
-with Gtkada.Canvas; use Gtkada.Canvas;
+with Odd.Canvas;    use Odd.Canvas;
 with Odd.Code_Editors; use Odd.Code_Editors;
 
 package Process_Tab_Pkg is
@@ -36,7 +36,7 @@ package Process_Tab_Pkg is
       Process_Paned : Gtk_Vpaned;
       Vpaned6 : Gtk_Vpaned;
       Scrolledwindow9 : Gtk_Scrolled_Window;
-      Data_Canvas : Interactive_Canvas;
+      Data_Canvas : Odd_Canvas;
       Thread_Notebook : Gtk_Notebook;
       Frame10 : Gtk_Frame;
       Editor_Text : Code_Editor;
