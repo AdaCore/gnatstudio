@@ -123,14 +123,14 @@ package body Codefix.File_Io is
    -------------------
 
    function Get_Line_Node
-     (This : File_Interface;
-      Line : Positive) return List_Str.List_Node
+     (This     : File_Interface;
+      Position : Positive) return List_Str.List_Node
    is
       Current_Node : List_Str.List_Node;
    begin
       Current_Node := First (This.Content);
 
-      for J in 1 .. Line - 1 loop
+      for J in 1 .. Position - 1 loop
          Current_Node := Next (Current_Node);
       end loop;
 
