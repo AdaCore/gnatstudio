@@ -3824,7 +3824,6 @@ package body Prj_API is
       Value : Variable_Value := Get_Attribute_Value
         (Project_View, Attribute_Name, Package_Name, Index);
       Val : String_List_Id;
-      Num : Natural := 0;
    begin
       case Value.Kind is
          when Undefined =>
@@ -3835,13 +3834,8 @@ package body Prj_API is
             return No_Value;
 
          when List =>
-            Val := Value.Values;
-            while Val /= Nil_String loop
-               Num := Num + 1;
-               Val := String_Elements.Table (Val).Next;
-            end loop;
-
             declare
+               Num    : Natural := Length (Value);
                Result : Argument_List (1 .. Num);
             begin
                Val := Value.Values;
