@@ -62,7 +62,7 @@ is
 begin
    if Shell_Open (File) then
       Insert
-        (Kernel, -"Launching default browser to view " & File, Mode => Info);
+        (Kernel, -"Using default browser to view " & File, Mode => Info);
    else
       Insert
         (Kernel, -"Could not display help file " & File, Mode => Error);
