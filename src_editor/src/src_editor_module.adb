@@ -192,7 +192,7 @@ package body Src_Editor_Module is
    type Location_Idle_Data is record
       Edit  : Source_Editor_Box;
       Line, Column, Column_End : Natural;
-      Child : MDI_Child;
+      Kernel : Kernel_Handle;
    end record;
 
    package Location_Idle is new Gtk.Main.Idle (Location_Idle_Data);
@@ -1396,7 +1396,7 @@ package body Src_Editor_Module is
                Data.Edit := Src.Editor;
                Id := Location_Idle.Add
                  (File_Edit_Callback'Access,
-                  (Src.Editor, Line, Column, 0, null));
+                  (Src.Editor, Line, Column, 0, User));
 
                return Put (MDI, Src,
                            Focus_Widget => Gtk_Widget (Get_View (Src.Editor)));
@@ -1587,6 +1587,7 @@ package body Src_Editor_Module is
          if Add then
             Child := Put (MDI, Box,
                           Focus_Widget => Gtk_Widget (Get_View (Editor)));
+            Set_Focus_Child (Child);
 
             declare
                Im : constant String := Image (Get_Ref_Count (Editor));
@@ -1701,7 +1702,9 @@ package body Src_Editor_Module is
       end if;
 
       if File_Exists then
-         Load_File (Editor, File, Success => Success);
+         Load_File (Editor, File,
+                    Force_Focus => not Console_Has_Focus (Kernel),
+                    Success     => Success);
 
          if not Success then
             Destroy (Editor);
@@ -1747,8 +1750,9 @@ package body Src_Editor_Module is
          Child := Find_Editor (Kernel, File);
 
          if Child /= null then
+            Raise_Child (Child);
+
             if Focus then
-               Raise_Child (Child);
                Set_Focus_Child (Child);
             end if;
 
@@ -1772,6 +1776,12 @@ package body Src_Editor_Module is
          if Add_To_MDI then
             Child := Put
               (MDI, Box, Focus_Widget => Gtk_Widget (Get_View (Editor)));
+
+            if Focus then
+               Set_Focus_Child (Child);
+            end if;
+
+            Raise_Child (Child);
 
             if File /= "" then
                Set_Title (Child, File, Base_Name (File));
@@ -1841,7 +1851,9 @@ package body Src_Editor_Module is
    function Location_Callback (D : Location_Idle_Data) return Boolean is
    begin
       if D.Line /= 0 and then Is_Valid_Location (D.Edit, D.Line) then
-         Set_Screen_Location (D.Edit, D.Line, D.Column, D.Child = null);
+         Set_Screen_Location
+           (D.Edit, D.Line, D.Column,
+            not (Console_Has_Focus (D.Kernel)));
 
          if D.Column_End /= 0
            and then Is_Valid_Location (D.Edit, D.Line, D.Column_End)
@@ -2799,7 +2811,7 @@ package body Src_Editor_Module is
                       Natural (Line),
                       Natural (Column),
                       Natural (Column_End),
-                      Child),
+                      Kernel_Handle (Kernel)),
                      Destroy => Location_Destroy'Access);
 
                   if Highlight then
