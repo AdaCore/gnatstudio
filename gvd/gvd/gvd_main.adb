@@ -252,8 +252,9 @@ procedure GVD_Main is
       if GVD.Can_Output then
          Put_Line ("GVD " & GVD.Version & ", the GNU Visual Debugger.");
          Put_Line (-"Usage:");
-         Put_Line (-"   gvd [options...] executable-file " &
-           "[--dargs [debugger options]] [--pargs [program options]]");
+         Put_Line (-"   gvd [options...] executable-file");
+         Put_Line (-"       [--dargs [debugger options]] " &
+                           "[--pargs [program options]]");
          Put_Line (-"Options:");
          Put_Line
            (-"   --debugger DEBUG  use DEBUG as the underlying debugger.");
