@@ -24,7 +24,6 @@ with GNAT.Regpat; use GNAT.Regpat;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Strings.Fixed;
 with GNAT.IO; use GNAT.IO;
-with String_Utils; use String_Utils;
 
 package body Language is
 
@@ -202,7 +201,6 @@ package body Language is
          exit when Info = null;
 
          Free (Info.Name);
-         Free (Info.Profile);
          Tmp := Info;
          Info := Info.Next;
          Free (Tmp);
@@ -421,20 +419,6 @@ package body Language is
          end loop;
       end if;
    end Reset_File_Extensions;
-
-   --------------
-   -- Get_Name --
-   --------------
-
-   function Get_Name
-     (Lang           : access Language_Root;
-      Token          : Generic_Token_Type;
-      Is_Declaration : Boolean;
-      Category       : access Language_Category) return String is
-   begin
-      Category.all := Cat_Unknown;
-      return Image (Integer (Token));
-   end Get_Name;
 
    -------------------
    -- Format_Source --
