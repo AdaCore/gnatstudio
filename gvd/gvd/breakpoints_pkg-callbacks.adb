@@ -356,7 +356,8 @@ package body Breakpoints_Pkg.Callbacks is
                        Editor.Process.Breakpoints (Selection).File.all));
          Set_Line
            (Editor.Process.Editor_Text,
-            Editor.Process.Breakpoints (Selection).Line);
+            Editor.Process.Breakpoints (Selection).Line,
+            Process => Gtk_Widget (Editor.Process));
       end if;
    end On_View_Clicked;
 
