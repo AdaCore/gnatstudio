@@ -19,7 +19,6 @@
 -----------------------------------------------------------------------
 
 with Ada.Exceptions;            use Ada.Exceptions;
-with Basic_Types;               use Basic_Types;
 with File_Utils;                use File_Utils;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
@@ -34,7 +33,6 @@ with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Widget;                use Gtk.Widget;
 with Traces;                    use Traces;
-with String_List_Utils;         use String_List_Utils;
 with String_Utils;              use String_Utils;
 
 package body VFS_Module is
@@ -56,7 +54,7 @@ package body VFS_Module is
    function VFS_Command_Handler
      (Kernel  : access Kernel_Handle_Record'Class;
       Command : String;
-      Args    : String_List_Utils.String_List.List) return String;
+      Args    : GNAT.OS_Lib.Argument_List) return String;
    --  Interactive command handler for the vfs module.
 
    procedure On_Delete
@@ -71,14 +69,10 @@ package body VFS_Module is
    function VFS_Command_Handler
      (Kernel  : access Kernel_Handle_Record'Class;
       Command : String;
-      Args    : String_List_Utils.String_List.List) return String
+      Args    : GNAT.OS_Lib.Argument_List) return String
    is
       pragma Unreferenced (Kernel);
 
-      use String_List_Utils.String_List;
-
-      Node     : List_Node;
-      Filename : Basic_Types.String_Access;
       Success  : Boolean;
       Result   : GNAT.OS_Lib.String_Access;
 
@@ -169,80 +163,55 @@ package body VFS_Module is
          return Get_Current_Dir;
 
       elsif Command = "cd" or else Command = "delete" then
-         Node := First (Args);
+         declare
+            File : constant String := Args (Args'First).all;
+         begin
+            if Command = "cd" then
+               begin
+                  Change_Dir (File);
+               exception
+                  when Directory_Error =>
+                     return Command & ": " &
+                       (-"cannot change current directory");
+               end;
 
-         while Node /= Null_Node loop
-            if Filename = null then
-               Filename := new String'(Data (Node));
-            else
-               Free (Filename);
-               return Command & ": " & (-"too many parameters");
-            end if;
-
-            Node := Next (Node);
-         end loop;
-
-         if Filename /= null then
-            declare
-               File : constant String := Filename.all;
-            begin
-               Free (Filename);
-
-               if Command = "cd" then
+            elsif Command = "delete" then
+               if Is_Directory (File) then
                   begin
-                     Change_Dir (File);
+                     Remove_Dir (File, True);
                   exception
                      when Directory_Error =>
-                        return Command & ": " &
-                          (-"cannot change current directory");
+                        return Command & ": " & "cannot delete directory";
                   end;
 
-               elsif Command = "delete" then
-                  if Is_Directory (File) then
-                     begin
-                        Remove_Dir (File, True);
-                     exception
-                        when Directory_Error =>
-                           return Command & ": " & "cannot delete directory";
-                     end;
+               else
+                  Delete_File (File, Success);
 
-                  else
-                     Delete_File (File, Success);
-
-                     if not Success then
-                        return Command & ": " & (-"cannot delete file");
-                     end if;
+                  if not Success then
+                     return Command & ": " & (-"cannot delete file");
                   end if;
                end if;
+            end if;
 
-               return "";
-            end;
-
-         else
-            return Command & ": " & (-"missing name parameter");
-         end if;
+            return "";
+         end;
 
       elsif Command = "dir" or else Command = "ls" then
          Result := new String'("");
-         Node := First (Args);
 
-         begin
-            if Node = Null_Node then
-               List_Files ("*");
-            else
-               while Node /= Null_Node loop
-                  List_Files (Data (Node));
-                  Node := Next (Node);
-
-                  exit when Node = Null_Node;
-               end loop;
-            end if;
-
-         exception
-            when Error_In_Regexp =>
-               Free (Result);
-               return (-"error in regexp: ") & Data (Node);
-         end;
+         if Args'Length = 0 then
+            List_Files ("*");
+         else
+            for Index in Args'Range loop
+               begin
+                  List_Files (Args (Index).all);
+               exception
+                  when Error_In_Regexp =>
+                     Free (Result);
+                     return -"error in regexp: " & Args (Index).all;
+               end;
+            end loop;
+         end if;
 
          declare
             R : constant String := Result.all;
@@ -365,37 +334,46 @@ package body VFS_Module is
 
       Register_Command
         (Kernel,
-         Command => "pwd",
-         Help    => -"Print name of current/working directory.",
-         Handler => VFS_Command_Handler'Access);
+         Command      => "pwd",
+         Usage        => "pwd",
+         Description  => -"Print name of current/working directory.",
+         Minimum_Args => 0,
+         Maximum_Args => 0,
+         Handler      => VFS_Command_Handler'Access);
       Register_Command
         (Kernel,
-         Command => "cd",
-         Help    => -"Usage:" & ASCII.LF
-         & "  cd dir" & ASCII.LF
-         & (-"Change the current directory to dir."),
-         Handler => VFS_Command_Handler'Access);
+         Command      => "cd",
+         Usage        => "cd dir",
+         Description  => -"Change the current directory to dir.",
+         Minimum_Args => 1,
+         Maximum_Args => 1,
+         Handler      => VFS_Command_Handler'Access);
       Register_Command
         (Kernel,
-         Command => "delete",
-         Help    => -"Usage:" & ASCII.LF
-         & "  delete name" & ASCII.LF
-         & (-"Delete file/directory name from the file system."),
-         Handler => VFS_Command_Handler'Access);
+         Command      => "delete",
+         Usage        => "delete name",
+         Description  => -"Delete file/directory name from the file system.",
+         Minimum_Args => 1,
+         Maximum_Args => 1,
+         Handler      => VFS_Command_Handler'Access);
       Register_Command
         (Kernel,
-         Command => "dir",
-         Help    => -"Usage:" & ASCII.LF
-         & "  dir [pattern]" & ASCII.LF
-         & (-"list files following pattern (all files by default)."),
-         Handler => VFS_Command_Handler'Access);
+         Command      => "dir",
+         Usage        => "dir [pattern]",
+         Description  =>
+           -"list files following pattern (all files by default).",
+         Minimum_Args => 0,
+         Maximum_Args => 1,
+         Handler      => VFS_Command_Handler'Access);
       Register_Command
         (Kernel,
-         Command => "ls",
-         Help    => -"Usage:" & ASCII.LF
-         & "  ls [pattern]" & ASCII.LF
-         & (-"list files following pattern (all files by default)."),
-         Handler => VFS_Command_Handler'Access);
+         Command      => "ls",
+         Usage        => "ls [pattern]",
+         Description  =>
+           -"list files following pattern (all files by default).",
+         Minimum_Args => 0,
+         Maximum_Args => 1,
+         Handler      => VFS_Command_Handler'Access);
    end Register_Module;
 
 end VFS_Module;
