@@ -19,7 +19,7 @@
   
 --- glide/gps.gpr	19 Apr 2003 07:29:18 -0000	1.55
 +++ glide/gps.gpr	15 Jul 2003 12:17:11 -0000
-@@ -36,18 +36,16 @@
+@@ -36,10 +36,8 @@
        case Shared.Build is
           when "Debug" =>
             for Default_Switches ("Ada") use ("-m", "-a", "-g");
@@ -30,12 +30,3 @@
 -           for Global_Configuration_Pragmas use "gnat.adc";
        end case;
     end Builder;
- 
-    package Compiler renames Shared.Compiler;
- 
-    package Binder is
--      for Default_Switches ("Ada") use ("-E");
-+      for Default_Switches ("Ada") use ("-E", "-t");
-    end Binder;
- 
-    package Linker is
