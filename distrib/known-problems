@@ -1,5 +1,13 @@
 Known Problems fixed in GPS 2.0.2
 
+- D804-012 Infinite loop when displaying call graph with Ada separates
+  Problem:    It might happen that GPS enters an infinite loop when displaying
+              the call graph for an entity that has its body in a separate unit.
+  Workaround: Either use "Find All References" instead, or removing the .ali
+              files that might have been generated for all the separate units.
+              Such .ali files are only created if you manually compiled the
+              separate unit, for instance through Build->Compile File
+
 - D803-006 No cross-reference to bodies for separate Ada entities
   Problem:    If the body of a subprogram is defined through a separate entity,
               GPS doesn't go to the actual body of the entity, but only to the
