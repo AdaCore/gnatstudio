@@ -28,6 +28,4 @@ package Variable_Editor_Pkg is
    procedure Gtk_New (Variable_Editor : out Variable_Editor_Access);
    procedure Initialize (Variable_Editor : access Variable_Editor_Record'Class);
 
-   Variable_Editor : Variable_Editor_Access;
-
 end Variable_Editor_Pkg;
