@@ -23,8 +23,6 @@ with Glib.Xml_Int;        use Glib.Xml_Int;
 with Gtk.Clist;           use Gtk.Clist;
 with Gtk.Widget;          use Gtk.Widget;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
-with Gtk.Check_Menu_Item; use Gtk.Check_Menu_Item;
-with Gtk.Item_Factory;    use Gtk.Item_Factory;
 
 with Gtkada.Canvas;       use Gtkada.Canvas;
 
@@ -36,7 +34,6 @@ with GVD.Process;         use GVD.Process;
 with GVD.Preferences;     use GVD.Preferences;
 with GVD.Code_Editors;    use GVD.Code_Editors;
 with GVD.Trace;           use GVD.Trace;
-with Odd_Intl;            use Odd_Intl;
 with String_Utils;        use String_Utils;
 
 with Ada.Strings;         use Ada.Strings;
@@ -147,7 +144,6 @@ package body GVD.Window_Settings is
       Top           : constant GVD_Main_Window :=
         GVD_Main_Window (Main_Debug_Window);
       Process       : Visual_Debugger;
-      Widget        : Gtk_Widget;
       A             : Gint;
       Debugger_List : Debugger_List_Link := Top.First_Debugger;
       Debugger_Num  : Integer := 0;
@@ -225,15 +221,7 @@ package body GVD.Window_Settings is
                   end if;
                end if;
 
-               Widget := Get_Widget (Top.Factory, -"/Data/Call Stack");
-
-               if Widget = null then
-                  --  This means that GVD is part of Glide
-                  Widget :=
-                    Get_Widget (Top.Factory, -"/Debug/Data/Call Stack");
-               end if;
-
-               if Get_Active (Gtk_Check_Menu_Item (Widget)) then
+               if Process.Stack_Scrolledwindow /= null then
                   Set (String_Gint ("Stack_Width" & Img),
                        Gint (Get_Allocation_Width
                              (Process.Stack_Scrolledwindow)),
