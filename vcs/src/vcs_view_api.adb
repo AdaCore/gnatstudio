@@ -584,12 +584,15 @@ package body VCS_View_API is
 
    begin
       if Explorer = null then
+         --  Must get the current directory (that depends on what module
+         --  currently has the focus) before we insert a new child in the MDI.
+         String_List.Append (Dirs, Get_Current_Dir (Kernel));
+
          Gtk_New (Explorer, Kernel);
          Set_Size_Request (Explorer, 400, 400);
          Child := Put (MDI, Explorer);
          Set_Title (Child, -"VCS Explorer");
 
-         String_List.Append (Dirs, Get_Current_Dir (Kernel));
          Status :=  Local_Get_Status (Ref, Dirs);
          String_List.Free (Dirs);
 
