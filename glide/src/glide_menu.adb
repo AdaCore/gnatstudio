@@ -29,33 +29,19 @@ with Gtkada.MDI;                   use Gtkada.MDI;
 with Glide_Intl;                   use Glide_Intl;
 
 with Glide_Kernel;                 use Glide_Kernel;
-with Glide_Kernel.Modules;         use Glide_Kernel.Modules;
 with Glide_Kernel.Preferences;     use Glide_Kernel.Preferences;
 with Glide_Kernel.Project;         use Glide_Kernel.Project;
-
 with Glide_Main_Window;            use Glide_Main_Window;
-with GVD;
 
 with GNAT.Directory_Operations;    use GNAT.Directory_Operations;
-
+with GNAT.OS_Lib;                  use GNAT.OS_Lib;
 with Factory_Data;                 use Factory_Data;
-
 with Ada.Exceptions;               use Ada.Exceptions;
 with Traces;                       use Traces;
 
 package body Glide_Menu is
 
    Me : constant Debug_Handle := Create ("Menu");
-
-   type Help_Context is
-     (Welcome_Help,
-      GVD_Help,
-      GNAT_UG_Help,
-      GNAT_RM_Help,
-      ARM95_Help,
-      GDB_Help,
-      GPS_Help,
-      GCC_Help);
 
    --------------------
    -- Menu Callbacks --
@@ -91,18 +77,6 @@ package body Glide_Menu is
       Widget : Limited_Widget);
    --  Project->Open menu
 
-   procedure On_Manual
-     (Object : Data_Type_Access;
-      Action : Guint;
-      Widget : Limited_Widget);
-   --  Help->Manual menu
-
-   procedure On_About_GPS
-     (Object : Data_Type_Access;
-      Action : Guint;
-      Widget : Limited_Widget);
-   --  Help->About menu
-
    ---------------------
    -- On_Open_Project --
    ---------------------
@@ -116,7 +90,9 @@ package body Glide_Menu is
 
       File_Selector : File_Selector_Window_Access;
    begin
-      Gtk_New (File_Selector, "/", Get_Current_Dir, -"Open Project");
+      Gtk_New
+        (File_Selector, (1 => Directory_Separator),
+         Get_Current_Dir, -"Open Project");
       Register_Filter (File_Selector, Prj_File_Filter);
 
       declare
@@ -225,92 +201,6 @@ package body Glide_Menu is
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Preferences;
 
-   ---------------
-   -- On_Manual --
-   ---------------
-
-   procedure On_Manual
-     (Object : Data_Type_Access;
-      Action : Guint;
-      Widget : Limited_Widget)
-   is
-      pragma Unreferenced (Widget);
-
-      Top : constant Glide_Window := Glide_Window (Object);
-   begin
-      case Help_Context'Val (Action) is
-         when Welcome_Help =>
-            Open_Html (Top.Kernel,
-              Format_Pathname
-                (Top.Prefix_Directory.all & "/doc/gps/html/gps-welcome.html"));
-
-         when GVD_Help =>
-            Open_Html (Top.Kernel,
-              Format_Pathname
-                (Top.Prefix_Directory.all & "/doc/gps/html/gvd.html"));
-
-         when GPS_Help =>
-            Open_Html (Top.Kernel,
-              Format_Pathname
-                (Top.Prefix_Directory.all & "/doc/gps/html/gps.html"));
-
-         when GNAT_UG_Help =>
-            Open_Html (Top.Kernel,
-              Format_Pathname
-                (Top.Prefix_Directory.all & "/doc/gps/html/gnat_ug.html"));
-
-         when GNAT_RM_Help =>
-            Open_Html (Top.Kernel,
-              Format_Pathname
-                (Top.Prefix_Directory.all & "/doc/gps/html/gnat_rm.html"));
-
-         when ARM95_Help =>
-            Open_Html (Top.Kernel,
-              Format_Pathname
-                (Top.Prefix_Directory.all & "/doc/gps/html/arm95.html"));
-
-         when GDB_Help =>
-            Open_Html (Top.Kernel,
-              Format_Pathname
-                (Top.Prefix_Directory.all & "/doc/gps/html/gdb.html"));
-
-         when GCC_Help =>
-            Open_Html (Top.Kernel,
-              Format_Pathname
-                (Top.Prefix_Directory.all & "/doc/gps/html/gcc.html"));
-      end case;
-
-   exception
-      when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
-   end On_Manual;
-
-   ------------------
-   -- On_About_GPS --
-   ------------------
-
-   procedure On_About_GPS
-     (Object : Data_Type_Access;
-      Action : Guint;
-      Widget : Limited_Widget)
-   is
-      pragma Unreferenced (Object, Action, Widget);
-
-      Button : Message_Dialog_Buttons;
-   begin
-      Button := Message_Dialog
-        ("GPS " & GVD.Version & " (" & GVD.Source_Date &
-         (-") hosted on ") & GVD.Target & ASCII.LF & ASCII.LF &
-         (-"The GNAT Programming System") & ASCII.LF & ASCII.LF &
-         "(c) 2001-2002 ACT-Europe",
-         Buttons => Button_OK,
-         Title   => -"About...");
-
-   exception
-      when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
-   end On_About_GPS;
-
    ----------------------
    -- Glide_Menu_Items --
    ----------------------
@@ -323,7 +213,6 @@ package body Glide_Menu is
       Debug       : constant String := "/_" & (-"Debug")    & '/';
       Data_Sub    : constant String := (-"Data")            & '/';
       Window      : constant String := "/_" & (-"Window");
-      Help        : constant String := "/_" & (-"Help")     & '/';
 
    begin
       return new Gtk_Item_Factory_Entry_Array'
@@ -345,39 +234,14 @@ package body Glide_Menu is
          Gtk_New (Project & "sep1", Item_Type => Separator),
 
          Gtk_New (Debug & Data_Sub & (-"Call Stack"), "", null, Check_Item),
+         Gtk_New (Debug & Data_Sub & (-"Protection Domains"), "", null),
 
          Gtk_New (Tools & (-"Code Fixing"), "", null),
          Gtk_New (Tools & (-"Profile"), "", null),
          Gtk_New (Tools & (-"Memory Analyzer"), "", null),
          Gtk_New (Tools & (-"Generate API doc"), "", null),
 
-         Gtk_New (Window),
-
-         Gtk_New (Help & (-"Welcome"),
-                  Callback => On_Manual'Access,
-                  Callback_Action => Help_Context'Pos (Welcome_Help)),
-         Gtk_New (Help & (-"Using the GPS Development Environment"), "",
-                  Callback => On_Manual'Access,
-                  Callback_Action => Help_Context'Pos (GPS_Help)),
-         Gtk_New (Help & (-"Using the GNU Visual Debugger"), "",
-                  Callback => On_Manual'Access,
-                  Callback_Action => Help_Context'Pos (GVD_Help)),
-         Gtk_New (Help & (-"GNAT User's Guide"), "",
-                  Callback => On_Manual'Access,
-                  Callback_Action => Help_Context'Pos (GNAT_UG_Help)),
-         Gtk_New (Help & (-"GNAT Reference Manual"), "",
-                  Callback => On_Manual'Access,
-                  Callback_Action => Help_Context'Pos (GNAT_RM_Help)),
-         Gtk_New (Help & (-"Ada 95 Reference Manual"), "",
-                  Callback => On_Manual'Access,
-                  Callback_Action => Help_Context'Pos (ARM95_Help)),
-         Gtk_New (Help & (-"Using the GNU Debugger"), "",
-                  Callback => On_Manual'Access,
-                  Callback_Action => Help_Context'Pos (GDB_Help)),
-         Gtk_New (Help & (-"Using GCC"), "",
-                  Callback => On_Manual'Access,
-                  Callback_Action => Help_Context'Pos (GCC_Help)),
-         Gtk_New (Help & (-"About GPS"), "", On_About_GPS'Access));
+         Gtk_New (Window));
    end Glide_Menu_Items;
 
 end Glide_Menu;
