@@ -27,6 +27,8 @@ GNAT_SOURCES= \
   fmap.adb \
   fname.ads \
   fname.adb \
+  g-heasor.ads \
+  g-heasor.adb \
   g-regpat.ads \
   g-regpat.adb \
   g-comlin.ads \
@@ -102,6 +104,8 @@ GNAT_SOURCES= \
   prj.adb \
   rident.ads \
   s-rident.ads \
+  s-casuti.ads \
+  s-casuti.adb \
   scans.ads \
   scans.adb \
   scn.ads \
