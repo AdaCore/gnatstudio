@@ -66,11 +66,11 @@ with Gtk.Tooltips;             use Gtk.Tooltips;
 with Gtk.Widget;               use Gtk.Widget;
 with Gtk.Window;               use Gtk.Window;
 with Gtkada.Handlers;          use Gtkada.Handlers;
-with GVD.Color_Combo;          use GVD.Color_Combo;
+with Gtkada.Color_Combo;       use Gtkada.Color_Combo;
 with Pango.Font;               use Pango.Font;
 with GNAT.OS_Lib;              use GNAT.OS_Lib;
 with GUI_Utils;                use GUI_Utils;
-with GPS.Intl;               use GPS.Intl;
+with GPS.Intl;                 use GPS.Intl;
 with Pango.Layout;             use Pango.Layout;
 with String_Hash;
 with Traces;                   use Traces;
@@ -1070,7 +1070,7 @@ package body Default_Preferences is
      (Combo : access GObject_Record'Class;
       Data  : Pref_Description_Access)
    is
-      C : constant Gvd_Color_Combo := Gvd_Color_Combo (Combo);
+      C : constant Gtk_Color_Combo := Gtk_Color_Combo (Combo);
    begin
       Free (Data.Value);
       Data.Value := new String'(Get_Color (C));
@@ -1089,7 +1089,7 @@ package body Default_Preferences is
       if Data.Value /= null then
          Color := Parse (Style_Token (Data.Value.all, 2));
          Alloc (Gtk.Widget.Get_Default_Colormap, Color);
-         Set_Color (Gvd_Color_Combo (Combo), Color);
+         Set_Color (Gtk_Color_Combo (Combo), Color);
       end if;
    end Update_Fg;
 
@@ -1106,7 +1106,7 @@ package body Default_Preferences is
       if Data.Value /= null then
          Color := Parse (Style_Token (Data.Value.all, 3));
          Alloc (Gtk.Widget.Get_Default_Colormap, Color);
-         Set_Color (Gvd_Color_Combo (Combo), Color);
+         Set_Color (Gtk_Color_Combo (Combo), Color);
       end if;
    end Update_Bg;
 
@@ -1136,7 +1136,7 @@ package body Default_Preferences is
       if Data.Value /= null then
          Color := Parse (Data.Value.all);
          Alloc (Gtk.Widget.Get_Default_Colormap, Color);
-         Set_Color (Gvd_Color_Combo (Combo), Color);
+         Set_Color (Gtk_Color_Combo (Combo), Color);
       end if;
    end Update_Color;
 
@@ -1148,7 +1148,7 @@ package body Default_Preferences is
      (Combo : access GObject_Record'Class;
       Data  : Pref_Description_Access)
    is
-      C : constant Gvd_Color_Combo := Gvd_Color_Combo (Combo);
+      C : constant Gtk_Color_Combo := Gtk_Color_Combo (Combo);
    begin
       if Data.Value = null then
          declare
@@ -1181,7 +1181,7 @@ package body Default_Preferences is
      (Combo : access GObject_Record'Class;
       Data  : Pref_Description_Access)
    is
-      C : constant Gvd_Color_Combo := Gvd_Color_Combo (Combo);
+      C : constant Gtk_Color_Combo := Gtk_Color_Combo (Combo);
    begin
       if Data.Value = null then
          declare
@@ -1473,7 +1473,7 @@ package body Default_Preferences is
             Box   : Gtk_Box;
             F     : constant Gtk_Box := Create_Box_For_Font
               (Manager, N, Get_Pref_Font (Manager, Prop), "...");
-            Combo : Gvd_Color_Combo;
+            Combo : Gtk_Color_Combo;
 
          begin
             Gtk_New (Event);
@@ -1519,7 +1519,7 @@ package body Default_Preferences is
       elsif Typ = Gdk.Color.Gdk_Color_Type then
          declare
             Prop  : constant Param_Spec_Color := Param_Spec_Color (Param);
-            Combo : Gvd_Color_Combo;
+            Combo : Gtk_Color_Combo;
          begin
             Gtk_New (Combo);
             Set_Color (Combo, Get_Pref (Manager, Prop));
