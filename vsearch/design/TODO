@@ -57,6 +57,8 @@
     Avoids calls to SLWC and re-elaboration of declared items, but add
     indentation levels.
 
+  * [Yeti] Caching Language_Context
+
 ----------
 -- Bugs --
 ----------
