@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2002                         --
+--                      Copyright (C) 2002-2003                      --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -120,7 +120,6 @@ private
 
    package STable is new HTables.Static_HTable
      (Header_Num  => Hash_Range,
-      Element     => Xref_Elmt_Record,
       Elmt_Ptr    => Xref_Elmt_Ptr,
       Null_Ptr    => Null_Xref_Elmt,
       Set_Next    => Set_Next,

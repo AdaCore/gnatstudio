@@ -1038,7 +1038,6 @@ private
    package LI_File_HTable is
      new HTables.Static_HTable
        (Header_Num => LI_File_HTable_Index,
-        Element => LI_File_Node,
         Elmt_Ptr => LI_File_Node_Ptr,
         Null_Ptr => null,
         Set_Next => Set_Next,
