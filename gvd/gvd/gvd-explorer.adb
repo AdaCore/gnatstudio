@@ -817,6 +817,10 @@ package body GVD.Explorer is
       Node_Set_Row_Style
         (Tree, Tree.Current_File_Node, Tree.Current_File_Style);
 
+      --  Select the new node (so that selected node in the explorer is the
+      --  file currently displayed in the source)
+      Gtk_Select (Tree, Tree.Current_File_Node);
+
       --  Expand all the parents to make the node visible
       if not Is_Viewable (Tree, Tree.Current_File_Node) then
          Expand (Tree, Row_Get_Parent (Node_Get_Row (Tree.Current_File_Node)));
