@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2003                         --
+--                     Copyright (C) 2003 - 2004                     --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -37,10 +37,9 @@ package Src_Editor_Module.Line_Highlighting is
 
    procedure Add_Category
      (Id    : String;
-      GC    : Gdk_GC;
       Color : Gdk_Color);
    --  Add a new category to the category cache.
-   --  Update the GC and Color of the category if it already exists.
+   --  Update the Color of the category if it already exists.
 
    function Lookup_Category (Id : String) return Natural;
    --  Return the index corresponding to Id.
