@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -376,7 +376,6 @@ package body Welcome is
          Load_Project (S.Kernel, Project_Name & Project_File_Extension);
       end if;
 
-      Change_Dir (Dir_Name (Project_Name));
       return True;
 
    exception
