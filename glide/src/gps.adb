@@ -610,10 +610,6 @@ begin
       end;
    end if;
 
-   if Get_Pref (GPS.Kernel, Start_Maximized) then
-      Maximize (GPS);
-   end if;
-
    loop
       case Getopt ("-version -help P: -log-level:") is
          -- long option names --
