@@ -1,5 +1,10 @@
 
+with Gtk.Clist;
+with Gtk.GEntry;
+with Gtk.Menu;
+
 with Wizards;
+with Directory_Tree;
 
 package Creation_Wizard is
 
@@ -14,7 +19,15 @@ package Creation_Wizard is
 
 private
    type Prj_Wizard_Record is new Wizards.Wizard_Record with record
-      null;
+      Project_Name      : Gtk.GEntry.Gtk_Entry;
+      Project_Location  : Gtk.GEntry.Gtk_Entry;
+      Src_Dir_Selection : Directory_Tree.Dir_Tree;
+      Src_Dir_List      : Gtk.Clist.Gtk_Clist;
+
+      Obj_Dir_Selection : Directory_Tree.Dir_Tree;
+
+      Dir_Contextual_Menu : Gtk.Menu.Gtk_Menu;
+      Src_Dir_Contextual_Menu : Gtk.Menu.Gtk_Menu;
    end record;
 
 end Creation_Wizard;
