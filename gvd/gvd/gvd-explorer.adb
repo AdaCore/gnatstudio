@@ -341,7 +341,8 @@ package body GVD.Explorer is
 
          if File_Node = Explorer.Current_File_Node then
             Set_Line (Code_Editor (Explorer.Code_Editor),
-                      Explorer.Current_Line, Set_Current => True);
+                      Explorer.Current_Line, Set_Current => True,
+                      Process => Gtk_Widget (Tab));
          end if;
 
          Data := Row_Data_Pkg.Node_Get_Row_Data (Explorer, Node);
@@ -370,10 +371,12 @@ package body GVD.Explorer is
 
             if Line /= 1 then
                Set_Line (Code_Editor (Explorer.Code_Editor), Line,
-                         Set_Current => True);
+                         Set_Current => True,
+                         Process => Gtk_Widget (Tab));
             else
                Set_Line (Code_Editor (Explorer.Code_Editor), Line,
-                         Set_Current => False);
+                         Set_Current => False,
+                         Process => Gtk_Widget (Tab));
             end if;
          end if;
       end if;
