@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003                            --
+--                        Copyright (C) 2003                         --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -1645,8 +1645,8 @@ package body Aliases_Module is
       Register_Property (Kernel, Param_Spec (Alias_Key), -"General");
 
       Register_Menu
-        (Kernel, Edit, -"Aliases...",
-         Ref_Item => -"Unit Testing",
+        (Kernel, Edit, -"_Aliases",
+         Ref_Item => -"Preferences",
          Callback => On_Edit_Aliases'Access);
 
       Load_Aliases
@@ -1660,7 +1660,7 @@ package body Aliases_Module is
       On_Preferences_Changed (Kernel, Kernel_Handle (Kernel));
 
       Register_Key_Handlers
-        (Kernel, Key_Handler'Unrestricted_Access);
+        (Kernel, Key_Handler'Access);
    end Register_Module;
 
 end Aliases_Module;
