@@ -45,7 +45,8 @@ package Codefix.Formal_Errors is
       Kernel     : access Glide_Kernel.Kernel_Handle_Record'Class;
       Error_Line : String;
       Regexp     : GNAT.Regpat.Pattern_Matcher;
-      File_Index, Line_Index, Col_Index, Msg_Index : Integer);
+      File_Index, Line_Index, Col_Index, Msg_Index : Integer;
+      Style_Index, Warning_Index : Integer);
    --  Parses an error message from the tool based on the regular expression
 
    procedure Initialize
@@ -66,6 +67,12 @@ package Codefix.Formal_Errors is
 
    subtype Solution_List is Command_List.List;
    --  This is a list of solutions proposed to solve an error.
+
+   function Is_Style_Or_Warning (Error : Error_Message) return Boolean;
+   --  Return true if the error message is either a style error or a warning.
+   --  Such errors have a lesser priority, and will not be auto-fixed if there
+   --  are standard errors on the same line.
+   --  This is false for Invalid_Error_Message.
 
    function Get_Command
      (This     : Solution_List;
@@ -196,6 +203,7 @@ private
 
    type Error_Message is new File_Cursor with record
       Message : GNAT.OS_Lib.String_Access;
+      Is_Style, Is_Warning : Boolean := False;
    end record;
 
    function Clone (This : Error_Message) return Error_Message;
@@ -203,6 +211,6 @@ private
    --  object referenced in.
 
    Invalid_Error_Message : constant Error_Message :=
-     (Null_File_Cursor with null);
+     (Null_File_Cursor with null, False, False);
 
 end Codefix.Formal_Errors;

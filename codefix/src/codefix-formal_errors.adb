@@ -41,13 +41,16 @@ package body Codefix.Formal_Errors is
       Kernel     : access Kernel_Handle_Record'Class;
       Error_Line : String;
       Regexp     : GNAT.Regpat.Pattern_Matcher;
-      File_Index, Line_Index, Col_Index, Msg_Index : Integer)
+      File_Index, Line_Index, Col_Index, Msg_Index : Integer;
+      Style_Index, Warning_Index : Integer)
    is
       Max_Index : Integer := File_Index;
    begin
       Max_Index := Integer'Max (Max_Index, Line_Index);
       Max_Index := Integer'Max (Max_Index, Col_Index);
       Max_Index := Integer'Max (Max_Index, Msg_Index);
+      Max_Index := Integer'Max (Max_Index, Style_Index);
+      Max_Index := Integer'Max (Max_Index, Warning_Index);
 
       declare
          Matches : Match_Array (0 .. Max_Index);
@@ -82,6 +85,9 @@ package body Codefix.Formal_Errors is
          else
             Col := 1;
          end if;
+
+         This.Is_Style   := Matches (Style_Index) /= No_Match;
+         This.Is_Warning := Matches (Warning_Index) /= No_Match;
 
          Set_Location (This, Line => Line, Column => Col);
 
@@ -146,7 +152,9 @@ package body Codefix.Formal_Errors is
       New_Message : Error_Message;
    begin
       New_Message := (Clone (File_Cursor (This)) with
-                        new String'(This.Message.all));
+                      Message    => new String'(This.Message.all),
+                      Is_Style   => This.Is_Style,
+                      Is_Warning => This.Is_Warning);
       return New_Message;
    end Clone;
 
@@ -948,5 +956,14 @@ package body Codefix.Formal_Errors is
 
       return Result;
    end Resolve_Unvisible_Declaration;
+
+   -------------------------
+   -- Is_Style_Or_Warning --
+   -------------------------
+
+   function Is_Style_Or_Warning (Error : Error_Message) return Boolean is
+   begin
+      return Error.Is_Style or Error.Is_Warning;
+   end Is_Style_Or_Warning;
 
 end Codefix.Formal_Errors;
