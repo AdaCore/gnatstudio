@@ -110,8 +110,8 @@ package Codefix.Text_Manager.Ada_Commands is
       Current_Text : Text_Navigator_Abstr'Class;
       Word         : Word_Cursor;
       Destination  : String := "");
-   --  Set all the marks that will be needed to remove package clauses.If
-   --  Destination is different from "", then the procedure Execute will add
+   --  Set all the marks that will be needed to remove package clauses.
+   --  If Destination is different from "", then the procedure Execute will add
    --  the removed Pkg clauses at the beginning of the destination file.
 
    procedure Execute
