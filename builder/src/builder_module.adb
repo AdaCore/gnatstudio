@@ -201,6 +201,10 @@ package body Builder_Module is
    --  Same as On_Build.
    --  If Synchronous is True, this subprogram will block GPS until the
    --  compilation is finished executing.
+   --  If Project is No_Project and File is VFS.No_File, the current file is
+   --  build.
+   --  If Project is not No_Project and File is VFS.No_File, the main units
+   --  of Project are build.
 
    procedure On_Custom
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
@@ -499,7 +503,7 @@ package body Builder_Module is
 
       --  If no file was specified in data, simply compile the current file.
 
-      if File = VFS.No_File then
+      if File = VFS.No_File and then Project = No_Project then
          Context := Get_Current_Context (Kernel);
 
          if Context /= null
@@ -530,11 +534,6 @@ package body Builder_Module is
                     (Kernel, Syntax, Project_Path (Prj), F);
                end if;
             end;
-
-         --  There is no context: compile the main units of the root project
-         elsif Context = null then
-            Args := Compute_Arguments
-              (Kernel, Syntax, Project_Path (Project), VFS.No_File);
 
          --  There is no current file, so we can't compile anything
 
