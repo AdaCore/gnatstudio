@@ -42,7 +42,7 @@ package Glide_Kernel is
 
    procedure Gtk_New
      (Handle      : out Kernel_Handle;
-      Main_Window : access Gtk.Window.Gtk_Window_Record'Class);
+      Main_Window : Gtk.Window.Gtk_Window);
    --  Create a new Glide kernel.
    --  By default, it isn't associated with any project, nor any source editor.
 
