@@ -2184,6 +2184,17 @@ package body Src_Editor_Box is
          Set_Cursor_Position (Editor.Source_Buffer, Editable_Line, Column);
          Scroll_To_Cursor_Location (Editor.Source_View, True);
 
+      elsif Is_Valid_Position (Editor.Source_Buffer, Editable_Line, 1) then
+         Console.Insert
+           (Editor.Kernel, -"Invalid column number: " & Column'Img,
+            Mode => Error);
+         if Force_Focus then
+            Grab_Focus (Editor.Source_View);
+         end if;
+
+         Set_Cursor_Position (Editor.Source_Buffer, Editable_Line, 1);
+         Scroll_To_Cursor_Location (Editor.Source_View, True);
+
       else
          if Column = 1 then
             Console.Insert
