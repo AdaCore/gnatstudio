@@ -490,12 +490,8 @@ package body Src_Info.CPP is
                if Is_Regular_File
                  (Handler.DB_Dir.all & Xref_File_Name.all)
                then
-                  declare
-                     Xref : constant String :=
-                       Handler.DB_Dir.all & Xref_File_Name.all & ASCII.NUL;
-                  begin
-                     Delete_File (Xref'Address, Success);
-                  end;
+                  Delete_File
+                    (Handler.DB_Dir.all & Xref_File_Name.all, Success);
                end if;
 
                Put_Line
@@ -573,13 +569,8 @@ package body Src_Info.CPP is
          Finished := True;
          Save (Iterator.Handler.Xrefs,
                Iterator.Handler.DB_Dir.all & Browse.Xref_Pool_Filename);
-         Delete_File (Iterator.Tmp_Filename'Address, Success);
-
-         declare
-            Tmp : constant String := Iterator.List_Filename.all & ASCII.NUL;
-         begin
-            Delete_File (Tmp'Address, Success);
-         end;
+         Delete_File (Iterator.Tmp_Filename, Success);
+         Delete_File (Iterator.List_Filename.all, Success);
          Free (Iterator.List_Filename);
       end if;
    end Continue;
