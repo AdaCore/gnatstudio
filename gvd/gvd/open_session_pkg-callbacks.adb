@@ -22,9 +22,11 @@ with Gtk.Main; use Gtk.Main;
 with Gtk.Label; use Gtk.Label;
 with Gtk; use Gtk;
 with Gtk.List; use Gtk.List;
+with Gtk.Check_Button; use Gtk.Check_Button;
 with Open_Session_Pkg; use Open_Session_Pkg;
 with Gtk.Container; use Gtk.Container;
 with Gtk.Widget; use Gtk.Widget;
+with GVD.Session_Dialog; use GVD.Session_Dialog;
 
 package body Open_Session_Pkg.Callbacks is
 
@@ -38,8 +40,8 @@ package body Open_Session_Pkg.Callbacks is
      (Object : access Gtk_List_Record'Class;
       Params : Gtk.Arguments.Gtk_Args)
    is
-      Open : constant Open_Session_Access :=
-        Open_Session_Access (Get_Toplevel (Object));
+      Open : constant GVD_Session_Dialog :=
+        GVD_Session_Dialog (Get_Toplevel (Object));
       Arg1 : Gtk_Widget := Gtk_Widget (To_Object (Params, 1));
       use Widget_List;
 
@@ -62,8 +64,8 @@ package body Open_Session_Pkg.Callbacks is
    procedure On_Select_All_Clicked
      (Object : access Gtk_Button_Record'Class)
    is
-      Open : constant Open_Session_Access :=
-        Open_Session_Access (Get_Toplevel (Object));
+      Open : constant GVD_Session_Dialog :=
+        GVD_Session_Dialog (Get_Toplevel (Object));
       Button : Button_Link := Open.First_Button;
    begin
       while Button /= null loop
@@ -79,8 +81,8 @@ package body Open_Session_Pkg.Callbacks is
    procedure On_Unselect_All_Clicked
      (Object : access Gtk_Button_Record'Class)
    is
-      Open : constant Open_Session_Access :=
-        Open_Session_Access (Get_Toplevel (Object));
+      Open : constant GVD_Session_Dialog :=
+        GVD_Session_Dialog (Get_Toplevel (Object));
       Button : Button_Link := Open.First_Button;
 
    begin

@@ -28,23 +28,10 @@ with Gtk.GEntry; use Gtk.GEntry;
 with Gtk.Separator; use Gtk.Separator;
 with Gtk.Hbutton_Box; use Gtk.Hbutton_Box;
 with Gtk.Button; use Gtk.Button;
-with Gtk.Widget; use Gtk.Widget;
-with Gtk.Check_Button; use Gtk.Check_Button;
-with Basic_Types; use Basic_Types;
 
 package Open_Session_Pkg is
 
-   type Button_Node is private;
-   type Button_Link is access Button_Node;
-
    type Open_Session_Record is new Gtk_Window_Record with record
-
-      Sessions_Dir : String_Access;
-      First_Button : Button_Link := null;
-      Lock_Buttons : Boolean := False;
-
-      ------------
-
       Vbox17 : Gtk_Vbox;
       Hbox7 : Gtk_Hbox;
       Vbox18 : Gtk_Vbox;
@@ -72,62 +59,5 @@ package Open_Session_Pkg is
 
    procedure Gtk_New (Open_Session : out Open_Session_Access);
    procedure Initialize (Open_Session : access Open_Session_Record'Class);
-
-   procedure Create_Buttons
-     (Open      : access Open_Session_Record'Class;
-      File_Name : in String);
-   --  Add all the check_buttons corresponding to the session information.
-
-   procedure Remove_All_Buttons (Open : access Open_Session_Record'Class);
-   --  Clear all the check_buttons.
-
-   ----------------------
-   -- Session Handling --
-   ----------------------
-               
-   --  The format for session files is as follows:
-   --
-   --  [Session_File Header]
-   --  <number_of_processes>
-   --  ---------------------
-   --      <program_file_name_1>
-   --      <debugger_type_1>
-   --      <remote_host_1>
-   --      <remote_target_1>
-   --      <protocol_1>
-   --      <debugger_name_1>
-   --  ---------------------
-   --      <program_file_name_2>
-   --      <debugger_type_2>
-   --      <remote_host_2>
-   --      <remote_target_2>
-   --      <protocol_2>
-   --      <debugger_name_2>
-   --  (etc)
-   --  [History]
-   --    <debugger_number> < H | V | U > <command>
-   --    <debugger_number> < H | V | U > <command>
-   --  (etc)
-   --  ---------------------
-
-   procedure Open_Session
-     (Window : access Gtk_Widget_Record'Class;
-      Open   : in out Open_Session_Access;
-      Dir    : in String);
-   --  Load a session into Gvd. Window is the main debug window.
-
-   procedure Save_Session
-     (Window : access Gtk_Widget_Record'Class;
-      Open   : in out Open_Session_Access;
-      Dir    : in String);
-   --  Save a session. Window is the main debug window.
-
-private
-
-   type Button_Node is record
-      Next   : Button_Link;
-      Button : Gtk_Check_Button;
-      Label  : String_Access;
-   end record;
 
 end Open_Session_Pkg;
