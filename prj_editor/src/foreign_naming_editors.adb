@@ -84,12 +84,13 @@ package body Foreign_Naming_Editors is
       Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
       Project : Prj.Tree.Project_Node_Id) return Boolean
    is
-      Naming : constant String := Get_Name_String (Name_Naming);
-      Scenar : Project_Node_Array := Scenario_Variables (Kernel);
-      Lang   : constant String := Get_Name_String (Editor.Language);
+      Naming   : constant String := Get_Name_String (Name_Naming);
+      Scenar   : constant Project_Node_Array := Scenario_Variables (Kernel);
+      Lang     : constant String := Get_Name_String (Editor.Language);
       Num_Rows : constant Gint := Get_Rows (Editor.Exception_List);
-      Bodies : Argument_List (1 .. Integer (Num_Rows));
-      Changed : Boolean := True;
+      Bodies   : Argument_List (1 .. Integer (Num_Rows));
+      Changed  : Boolean := False;
+
    begin
       Update_Attribute_Value_In_Scenario
         (Project            => Project,
@@ -120,6 +121,7 @@ package body Foreign_Naming_Editors is
          Attribute_Index   => Lang);
 
       --  ??? Should return True only if the naming scheme actually changed.
+      Changed := True;
       return Changed;
    end Create_Project_Entry;
 
