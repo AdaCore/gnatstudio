@@ -27,7 +27,6 @@ with Gtkada.Handlers; use Gtkada.Handlers;
 with Callbacks_Odd; use Callbacks_Odd;
 with Odd_Intl; use Odd_Intl;
 with Process_Tab_Pkg.Callbacks; use Process_Tab_Pkg.Callbacks;
-with Gtkada.Code_Editors; use Gtkada.Code_Editors;
 
 package body Process_Tab_Pkg is
 
@@ -42,7 +41,6 @@ begin
 end Gtk_New;
 
 procedure Initialize (Process_Tab : access Process_Tab_Record'Class) is
-   Editor_Text : Code_Editor;
 begin
    --  Gtk.Window.Initialize (Process_Tab, Window_Toplevel);
    --  Set_Title (Process_Tab, -"window1");
@@ -71,8 +69,10 @@ begin
    Set_Shadow_Type (Process_Tab.Data_Canvas, Shadow_In);
 
    Gtk_New (Process_Tab.Thread_Notebook);
-   Notebook_Callback.Connect
-     (Process_Tab.Thread_Notebook, "switch_page", On_Thread_Notebook_Switch_Page'Access);
+   Process_Tab.Notebook_Handler_Id :=
+     Notebook_Callback.Connect
+       (Process_Tab.Thread_Notebook, "switch_page",
+        On_Thread_Notebook_Switch_Page'Access);
    Add (Process_Tab.Vpaned6, Process_Tab.Thread_Notebook);
    Set_Scrollable (Process_Tab.Thread_Notebook, True);
    Set_Show_Border (Process_Tab.Thread_Notebook, True);
@@ -85,8 +85,8 @@ begin
    Add (Process_Tab.Thread_Notebook, Process_Tab.Frame10);
    Set_Shadow_Type (Process_Tab.Frame10, Shadow_Etched_In);
 
-   Gtk_New_Hbox (Editor_Text, False, 0);
-   Add (Process_Tab.Frame10, Editor_Text);
+   Gtk_New_Hbox (Process_Tab.Editor_Text, False, 0);
+   Add (Process_Tab.Frame10, Process_Tab.Editor_Text);
 
    Gtk_New (Process_Tab.Label52, -("Current Thread"));
    Set_Alignment (Process_Tab.Label52, 0.5, 0.5);
