@@ -196,7 +196,7 @@ package body Vdiff_Utils is
       Color           : Gdk_Color;
       Context_Changed : Boolean;
       Desc            : constant Pango_Font_Description :=
-        Get_Pref (Kernel, Default_Source_Editor_Font);
+        Get_Pref (Kernel, Source_Editor_Font);
 
       Info_1          : Vdiff_Info_Access;
       Info_2          : Vdiff_Info_Access;
