@@ -39,6 +39,7 @@ with Types;       use Types;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 
 with Project_Viewers;   use Project_Viewers;
+with Project_Explorers; use Project_Explorers;
 with Glide_Main_Window; use Glide_Main_Window;
 with Gtkada.MDI;        use Gtkada.MDI;
 with Glide_Page;        use Glide_Page;
@@ -299,19 +300,25 @@ package body Glide_Kernel.Project is
       MDI        : constant MDI_Window := Page.Process_Mdi;
       Child      : MDI_Child;
       Viewer     : Project_Viewer;
+      Iter       : Child_Iterator := First_Child (MDI);
    begin
       if Get_Project (Handle) = Empty_Node then
          return;
       end if;
 
-      Child := Find_MDI_Child (MDI, Project_Editor_Window_Name);
+      loop
+         Child := Get (Iter);
+         exit when Child = null
+           or else Get_Title (Child) = Project_Editor_Window_Name;
+         Next (Iter);
+      end loop;
 
       if Child /= null then
          Raise_Child (Child);
          return;
       end if;
 
-      Gtk_New (Viewer, Handle, Page.Explorer);
+      Gtk_New (Viewer, Handle, Get_Tree (Page.Explorer));
       Set_Size_Request (Viewer, Default_Project_Width, Default_Project_Height);
       Child := Put (MDI, Viewer);
       Set_Title (Child, Project_Editor_Window_Name);

@@ -244,6 +244,7 @@ package body Glide_Kernel.Editor is
       Box         : Source_Box;
       Child       : MDI_Child;
       File_Exists : Boolean;
+      Iter        : Child_Iterator := First_Child (MDI);
 
    begin
       if File = "" then
@@ -251,7 +252,12 @@ package body Glide_Kernel.Editor is
       end if;
 
       --  ??? Should do a search on the full filename instead
-      Child := Find_MDI_Child (MDI, Short_File);
+      loop
+         Child := Get (Iter);
+         exit when Child = null
+           or else Get_Title (Child) = Short_File;
+         Next (Iter);
+      end loop;
 
       if Child /= null then
          Raise_Child (Child);
