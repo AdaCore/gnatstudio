@@ -326,7 +326,7 @@ package Glide_Kernel.Scripts is
    -- Commands and methods --
    --------------------------
 
-   GPS_Shell_Name : constant String := "GPSShell";
+   GPS_Shell_Name : constant String := "Shell";
    Constructor_Method : constant String;
 
    procedure Initialize
