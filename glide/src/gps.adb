@@ -28,13 +28,14 @@ with Glide_Main_Window;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;          use GNAT.OS_Lib;
 with Glide_Kernel;         use Glide_Kernel;
-with Glide_Kernel.Project; use Glide_Kernel.Project;
 with Glide_Kernel.Editor;  use Glide_Kernel.Editor;
+with Glide_Kernel.Project; use Glide_Kernel.Project;
+with Glide_Toolbar;        use Glide_Toolbar;
 with Gtkada.Intl;          use Gtkada.Intl;
 with Gtkada.Dialogs;       use Gtkada.Dialogs;
 with GVD.Types;
 with OS_Utils;             use OS_Utils;
-with Ada.Command_Line; use Ada.Command_Line;
+with Ada.Command_Line;     use Ada.Command_Line;
 with Prj;                  use Prj;
 
 --  Just force the loading of the modules
@@ -46,6 +47,7 @@ with Project_Explorers;
 with Aunit_Module;
 with Browsers.Module;
 with VCS_Module;
+with GVD_Module;
 pragma Warnings (On);
 
 procedure Glide2 is
@@ -186,6 +188,7 @@ begin
    end;
 
    Glide_Page.Gtk_New (Page, Glide);
+   Register_Default_Toolbar (Glide.Kernel);
    Initialize_All_Modules (Glide.Kernel);
 
    for J in 1 .. Argument_Count loop
