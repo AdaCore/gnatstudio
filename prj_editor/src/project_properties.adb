@@ -1151,7 +1151,6 @@ package body Project_Properties is
                                  Changed := True;
                                  Set_Project_Modified
                                    (Kernel, Result (R), True);
-                                 Trace (Me, "Change in page " & P'Img);
                               end loop;
                            end;
                         end if;
