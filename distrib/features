@@ -1,5 +1,8 @@
 New features in GPS 1.0.2
 
+- More window parameters saved in the desktop
+  Such as the coordinates and the maximized state of the main window
+
 - Confirmation dialog on exit removed
   Instead, it is possible to specify in the preferences whether the desktop
   should be saved on exit. The Ctrl-Q shortcut has also been suppressed to
