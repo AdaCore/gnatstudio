@@ -70,6 +70,9 @@ package body Projects is
       Registry   : Project_Registry_Access;
       --  Needed so that we can return other projects like imported projects
 
+      View_Is_Complete : Boolean := False;
+      --  True if the view for the project was correctly computed
+
       Is_Default : Boolean := False;
       --  True if the current project is the default project (ie is not
       --  associated with a file on the disk)
@@ -2068,5 +2071,24 @@ package body Projects is
            (Project.Data.Registry.all, Prj.Tree.Name_Of (Extend));
       end if;
    end Extending_Project;
+
+   --------------------------
+   -- Set_View_Is_Complete --
+   --------------------------
+
+   procedure Set_View_Is_Complete (Project : Project_Type; Complete : Boolean)
+   is
+   begin
+      Project.Data.View_Is_Complete := Complete;
+   end Set_View_Is_Complete;
+
+   ----------------------
+   -- View_Is_Complete --
+   ----------------------
+
+   function View_Is_Complete (Project : Project_Type) return Boolean is
+   begin
+      return Project.Data.View_Is_Complete;
+   end View_Is_Complete;
 
 end Projects;

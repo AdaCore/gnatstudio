@@ -467,6 +467,12 @@ package Projects is
    --  Return true if the project is a default project, ie not associated with
    --  a physical file on the disk
 
+   function View_Is_Complete (Project : Project_Type) return Boolean;
+   --  Return True if the view was correctly computed for this project.
+   --  Return False if the view couldn't be computed correctly because the
+   --  project contained invalid references. Such a project can only partially
+   --  be used, and it isn't safe to edit it
+
 private
    type Project_Type_Data;
    type Project_Type_Data_Access is access Project_Type_Data;
@@ -511,6 +517,9 @@ private
 
    procedure Set_Is_Default (Project : Project_Type; Default : Boolean);
    --  Indicate whether the project is a default project
+
+   procedure Set_View_Is_Complete (Project : Project_Type; Complete : Boolean);
+   --  Indicate whether the view for the project was correctly computed.
 
    procedure Set_Project_Modified (Project : Project_Type; Modified : Boolean);
    --  Set the modified flag for Project.
