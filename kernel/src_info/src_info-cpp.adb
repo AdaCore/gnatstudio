@@ -35,6 +35,7 @@ with SN.Browse;
 with SN.Xref_Pools;     use SN.Xref_Pools;
 
 with Traces;  use Traces;
+with String_Utils; use String_Utils;
 with Prj_API;
 
 package body Src_Info.CPP is
@@ -326,8 +327,8 @@ package body Src_Info.CPP is
          Finished := True;
          Save
            (Iterator.Xrefs,
-            Iterator.SN_Dir.all
-              & Directory_Separator & Browse.Xref_Pool_Filename);
+            Name_As_Directory (Iterator.SN_Dir.all)
+              & Browse.Xref_Pool_Filename);
          Free (Iterator.Xrefs);
          Delete_File (Iterator.Tmp_Filename'Address, Success);
          Free_String (Iterator.SN_Dir);
@@ -341,7 +342,8 @@ package body Src_Info.CPP is
 
    function Get_SN_Dir (Project : Prj.Project_Id) return String is
    begin
-      return Prj_API.Object_Path (Project, Recursive => False)
+      return Name_As_Directory
+        (Prj_API.Object_Path (Project, Recursive => False))
         & Browse.DB_Dir_Name;
    end Get_SN_Dir;
 
@@ -499,11 +501,11 @@ package body Src_Info.CPP is
 
       if Xrefs = Empty_Xref_Pool then
          Load (Xrefs,
-           SN_Dir & Directory_Separator & Browse.Xref_Pool_Filename);
+           Name_As_Directory (SN_Dir) & Browse.Xref_Pool_Filename);
       end if;
 
       Open_DB_Files
-        (SN_Dir & Directory_Separator & Browse.DB_File_Name,
+        (Name_As_Directory (SN_Dir) & Browse.DB_File_Name,
          Env.SN_Table);
 
       Env.Xrefs := Xrefs;
@@ -577,12 +579,11 @@ package body Src_Info.CPP is
    is
       pragma Unreferenced (Handler);
       pragma Unreferenced (Predefined_Source_Path);
-      DB_Dir             : constant String :=
-         Prj_API.Object_Path (Project, False) & Browse.DB_Dir_Name;
+      DB_Dir             : constant String := Get_SN_Dir (Project);
       Full_Filename : SN.String_Access :=
         Get_Full_Filename_In_Project (Project, Source_Filename);
       Xref_Pool_Filename : constant String :=
-        DB_Dir & Directory_Separator & Browse.Xref_Pool_Filename;
+        Name_As_Directory (DB_Dir) & Browse.Xref_Pool_Filename;
    begin
 
       if Full_Filename = null then
@@ -946,7 +947,7 @@ package body Src_Info.CPP is
                Insert_Dependency_Declaration
                  (Handler            => LI_Handler (Global_CPP_Handler),
                   File               => Env.File,
-                  Xref_Filename      => Env.DB_Dir.all & Directory_Separator &
+                  Xref_Filename      => Name_As_Directory (Env.DB_Dir.all) &
                     Xref_Filename_For (Class_Def.Buffer
                        (Class_Def.File_Name.First .. Class_Def.File_Name.Last),
                      Env.DB_Dir.all,
@@ -977,7 +978,7 @@ package body Src_Info.CPP is
                Insert_Declaration
                  (Handler            => LI_Handler (Global_CPP_Handler),
                   File               => Env.File,
-                  Xref_Filename      => Env.DB_Dir.all & Directory_Separator &
+                  Xref_Filename      => Name_As_Directory (Env.DB_Dir.all) &
                      Xref_Filename_For
                        (Ref.Buffer (Ref.File_Name.First ..
                                      Ref.File_Name.Last),
@@ -1100,7 +1101,7 @@ package body Src_Info.CPP is
                   Insert_Dependency_Declaration
                     (Handler           => LI_Handler (Global_CPP_Handler),
                      File              => Env.File,
-                     Xref_Filename     => Env.DB_Dir.all & Directory_Separator
+                     Xref_Filename     => Name_As_Directory (Env.DB_Dir.all)
                         & Xref_Filename_For (Var.Buffer
                            (Var.File_Name.First .. Var.File_Name.Last),
                         Env.DB_Dir.all,
@@ -1120,7 +1121,7 @@ package body Src_Info.CPP is
                   Insert_Dependency_Declaration
                     (Handler           => LI_Handler (Global_CPP_Handler),
                      File              => Env.File,
-                     Xref_Filename     => Env.DB_Dir.all & Directory_Separator
+                     Xref_Filename     => Name_As_Directory (Env.DB_Dir.all)
                         & Xref_Filename_For
                           (Var.Buffer
                              (Var.File_Name.First .. Var.File_Name.Last),
@@ -1218,7 +1219,7 @@ package body Src_Info.CPP is
                Insert_Dependency_Declaration
                  (Handler            => LI_Handler (Global_CPP_Handler),
                   File               => Env.File,
-                  Xref_Filename      => Env.DB_Dir.all & Directory_Separator &
+                  Xref_Filename      => Name_As_Directory (Env.DB_Dir.all) &
                      Xref_Filename_For (Enum_Def.Buffer
                        (Enum_Def.File_Name.First .. Enum_Def.File_Name.Last),
                      Env.DB_Dir.all,
@@ -1249,7 +1250,7 @@ package body Src_Info.CPP is
                Insert_Declaration
                  (Handler            => LI_Handler (Global_CPP_Handler),
                   File               => Env.File,
-                  Xref_Filename      => Env.DB_Dir.all & Directory_Separator &
+                  Xref_Filename      => Name_As_Directory (Env.DB_Dir.all) &
                      Xref_Filename_For (Ref.Buffer
                        (Ref.File_Name.First .. Ref.File_Name.Last),
                      Env.DB_Dir.all,
@@ -1310,7 +1311,7 @@ package body Src_Info.CPP is
                Insert_Declaration
                  (Handler           => LI_Handler (Global_CPP_Handler),
                   File              => Env.File,
-                  Xref_Filename     => Env.DB_Dir.all & Directory_Separator &
+                  Xref_Filename     => Name_As_Directory (Env.DB_Dir.all) &
                      Xref_Filename_For (Ref.Buffer
                        (Ref.File_Name.First .. Ref.File_Name.Last),
                      Env.DB_Dir.all,
@@ -1338,7 +1339,7 @@ package body Src_Info.CPP is
                Insert_Dependency_Declaration
                  (Handler           => LI_Handler (Global_CPP_Handler),
                   File              => Env.File,
-                  Xref_Filename     => Env.DB_Dir.all & Directory_Separator &
+                  Xref_Filename     => Name_As_Directory (Env.DB_Dir.all) &
                      Xref_Filename_For (Enum_Const.Buffer
                        (Enum_Const.File_Name.First ..
                         Enum_Const.File_Name.Last),
@@ -1531,7 +1532,7 @@ package body Src_Info.CPP is
                   Insert_Declaration
                     (Handler            => LI_Handler (Global_CPP_Handler),
                      File               => Env.File,
-                     Xref_Filename      => Env.DB_Dir.all & Directory_Separator
+                     Xref_Filename      => Name_As_Directory (Env.DB_Dir.all)
                         & Xref_Filename_For
                           (Ref.Buffer
                              (Ref.File_Name.First .. Ref.File_Name.Last),
@@ -1560,8 +1561,7 @@ package body Src_Info.CPP is
                   Insert_Dependency_Declaration
                     (Handler            => LI_Handler (Global_CPP_Handler),
                      File               => Env.File,
-                     Xref_Filename      => Env.DB_Dir.all &
-                        Directory_Separator &
+                     Xref_Filename      => Name_As_Directory (Env.DB_Dir.all) &
                         Xref_Filename_For
                           (Buffer (Filename.First .. Filename.Last),
                            Env.DB_Dir.all,
@@ -1707,7 +1707,7 @@ package body Src_Info.CPP is
                   Insert_Dependency_Declaration
                     (Handler           => LI_Handler (Global_CPP_Handler),
                      File              => Env.File,
-                     Xref_Filename     => Env.DB_Dir.all & Directory_Separator
+                     Xref_Filename     => Name_As_Directory (Env.DB_Dir.all)
                         & Xref_Filename_For
                           (Var.Buffer
                               (Var.File_Name.First .. Var.File_Name.Last),
@@ -1728,7 +1728,7 @@ package body Src_Info.CPP is
                   Insert_Dependency_Declaration
                     (Handler           => LI_Handler (Global_CPP_Handler),
                      File              => Env.File,
-                     Xref_Filename     => Env.DB_Dir.all & Directory_Separator
+                     Xref_Filename     => Name_As_Directory (Env.DB_Dir.all)
                         & Xref_Filename_For
                           (Var.Buffer
                              (Var.File_Name.First .. Var.File_Name.Last),
@@ -1813,7 +1813,7 @@ package body Src_Info.CPP is
                Insert_Declaration
                  (Handler            => LI_Handler (Global_CPP_Handler),
                   File               => Env.File,
-                  Xref_Filename      => Env.DB_Dir.all & Directory_Separator
+                  Xref_Filename      => Name_As_Directory (Env.DB_Dir.all)
                      & Xref_Filename_For
                        (Ref.Buffer
                           (Ref.File_Name.First .. Ref.File_Name.Last),
@@ -1842,7 +1842,7 @@ package body Src_Info.CPP is
                Insert_Dependency_Declaration
                  (Handler           => LI_Handler (Global_CPP_Handler),
                   File              => Env.File,
-                  Xref_Filename     => Env.DB_Dir.all & Directory_Separator
+                  Xref_Filename     => Name_As_Directory (Env.DB_Dir.all)
                      & Xref_Filename_For
                        (Macro.Buffer
                           (Macro.File_Name.First .. Macro.File_Name.Last),
@@ -2076,8 +2076,8 @@ package body Src_Info.CPP is
                   Insert_Declaration
                     (Handler            => LI_Handler (Global_CPP_Handler),
                      File               => Env.File,
-                     Xref_Filename      => Env.DB_Dir.all
-                        & Directory_Separator & Xref_Filename_For
+                     Xref_Filename      => Name_As_Directory (Env.DB_Dir.all)
+                        & Xref_Filename_For
                            (Ref.Buffer
                               (Ref.File_Name.First .. Ref.File_Name.Last),
                             Env.DB_Dir.all,
@@ -2106,8 +2106,8 @@ package body Src_Info.CPP is
                   Insert_Dependency_Declaration
                     (Handler            => LI_Handler (Global_CPP_Handler),
                      File               => Env.File,
-                     Xref_Filename      => Env.DB_Dir.all &
-                        Directory_Separator & Xref_Filename_For
+                     Xref_Filename      => Name_As_Directory (Env.DB_Dir.all) &
+                       Xref_Filename_For
                           (Filename_Buf (Filename.First .. Filename.Last),
                            Env.DB_Dir.all,
                            Env.Xrefs).all,
@@ -2240,7 +2240,7 @@ package body Src_Info.CPP is
                   Insert_Declaration
                     (Handler           => LI_Handler (Global_CPP_Handler),
                      File              => Env.File,
-                     Xref_Filename     => Env.DB_Dir.all & Directory_Separator
+                     Xref_Filename     => Name_As_Directory (Env.DB_Dir.all)
                         & Xref_Filename_For
                           (Ref.Buffer
                              (Ref.File_Name.First .. Ref.File_Name.Last),
@@ -2259,7 +2259,7 @@ package body Src_Info.CPP is
                   Insert_Declaration
                     (Handler           => LI_Handler (Global_CPP_Handler),
                      File              => Env.File,
-                     Xref_Filename     => Env.DB_Dir.all & Directory_Separator
+                     Xref_Filename     => Name_As_Directory (Env.DB_Dir.all)
                         & Xref_Filename_For
                           (Ref.Buffer
                              (Ref.File_Name.First .. Ref.File_Name.Last),
@@ -2279,7 +2279,7 @@ package body Src_Info.CPP is
                   Insert_Declaration
                     (Handler           => LI_Handler (Global_CPP_Handler),
                      File              => Env.File,
-                     Xref_Filename     => Env.DB_Dir.all & Directory_Separator
+                     Xref_Filename     => Name_As_Directory (Env.DB_Dir.all)
                         & Xref_Filename_For
                           (Ref.Buffer
                              (Ref.File_Name.First .. Ref.File_Name.Last),
@@ -2332,7 +2332,7 @@ package body Src_Info.CPP is
                   Insert_Dependency_Declaration
                     (Handler           => LI_Handler (Global_CPP_Handler),
                      File              => Env.File,
-                     Xref_Filename     => Env.DB_Dir.all & Directory_Separator
+                     Xref_Filename     => Name_As_Directory (Env.DB_Dir.all)
                         & Xref_Filename_For
                           (Typedef.Buffer
                              (Typedef.File_Name.First ..
@@ -2354,7 +2354,7 @@ package body Src_Info.CPP is
                   Insert_Dependency_Declaration
                     (Handler           => LI_Handler (Global_CPP_Handler),
                      File              => Env.File,
-                     Xref_Filename     => Env.DB_Dir.all & Directory_Separator
+                     Xref_Filename     => Name_As_Directory (Env.DB_Dir.all)
                         & Xref_Filename_For
                           (Typedef.Buffer
                              (Typedef.File_Name.First ..
@@ -2377,7 +2377,7 @@ package body Src_Info.CPP is
                   Insert_Dependency_Declaration
                     (Handler           => LI_Handler (Global_CPP_Handler),
                      File              => Env.File,
-                     Xref_Filename     => Env.DB_Dir.all & Directory_Separator
+                     Xref_Filename     => Name_As_Directory (Env.DB_Dir.all)
                         & Xref_Filename_For
                           (Typedef.Buffer
                              (Typedef.File_Name.First ..
@@ -2469,7 +2469,7 @@ package body Src_Info.CPP is
                Insert_Dependency_Declaration
                  (Handler            => LI_Handler (Global_CPP_Handler),
                   File               => Env.File,
-                  Xref_Filename      => Env.DB_Dir.all & Directory_Separator
+                  Xref_Filename      => Name_As_Directory (Env.DB_Dir.all)
                      & Xref_Filename_For
                        (Union_Def.Buffer
                           (Union_Def.File_Name.First ..
@@ -2502,7 +2502,7 @@ package body Src_Info.CPP is
                Insert_Declaration
                  (Handler            => LI_Handler (Global_CPP_Handler),
                   File               => Env.File,
-                  Xref_Filename      => Env.DB_Dir.all & Directory_Separator
+                  Xref_Filename      => Name_As_Directory (Env.DB_Dir.all)
                      & Xref_Filename_For
                        (Ref.Buffer
                           (Ref.File_Name.First .. Ref.File_Name.Last),
@@ -2569,7 +2569,7 @@ package body Src_Info.CPP is
       Insert_Declaration
         (Handler               => LI_Handler (Global_CPP_Handler),
          File                  => Env.File,
-         Xref_Filename         => Env.DB_Dir.all & Directory_Separator
+         Xref_Filename         => Name_As_Directory (Env.DB_Dir.all)
             & Xref_Filename_For
               (Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
                Env.DB_Dir.all,
@@ -2686,7 +2686,7 @@ package body Src_Info.CPP is
          Insert_Declaration
            (Handler           => LI_Handler (Global_CPP_Handler),
             File              => Env.File,
-            Xref_Filename     => Env.DB_Dir.all & Directory_Separator
+            Xref_Filename     => Name_As_Directory (Env.DB_Dir.all)
                & Xref_Filename_For
                  (Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
                   Env.DB_Dir.all,
@@ -2704,7 +2704,7 @@ package body Src_Info.CPP is
          Insert_Declaration
            (Handler           => LI_Handler (Global_CPP_Handler),
             File              => Env.File,
-            Xref_Filename     => Env.DB_Dir.all & Directory_Separator
+            Xref_Filename     => Name_As_Directory (Env.DB_Dir.all)
                & Xref_Filename_For
                  (Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
                   Env.DB_Dir.all,
@@ -2789,7 +2789,7 @@ package body Src_Info.CPP is
       Insert_Declaration
         (Handler           => LI_Handler (Global_CPP_Handler),
          File              => Env.File,
-         Xref_Filename     => Env.DB_Dir.all & Directory_Separator
+         Xref_Filename     => Name_As_Directory (Env.DB_Dir.all)
             & Xref_Filename_For
               (Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
                Env.DB_Dir.all,
@@ -2846,7 +2846,7 @@ package body Src_Info.CPP is
          Insert_Declaration
            (Handler           => LI_Handler (Global_CPP_Handler),
             File              => Env.File,
-            Xref_Filename     => Env.DB_Dir.all & Directory_Separator
+            Xref_Filename     => Name_As_Directory (Env.DB_Dir.all)
                & Xref_Filename_For
                  (Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
                   Env.DB_Dir.all,
@@ -2966,7 +2966,7 @@ package body Src_Info.CPP is
       Insert_Declaration
         (Handler           => LI_Handler (Global_CPP_Handler),
          File              => Env.File,
-         Xref_Filename     => Env.DB_Dir.all & Directory_Separator
+         Xref_Filename     => Name_As_Directory (Env.DB_Dir.all)
             & Xref_Filename_For
               (Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
                Env.DB_Dir.all,
@@ -3271,7 +3271,7 @@ package body Src_Info.CPP is
          Insert_Declaration
            (Handler           => LI_Handler (Global_CPP_Handler),
             File              => Env.File,
-            Xref_Filename     => Env.DB_Dir.all & Directory_Separator
+            Xref_Filename     => Name_As_Directory (Env.DB_Dir.all)
                & Xref_Filename_For
                  (Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
                   Env.DB_Dir.all,
@@ -3289,7 +3289,7 @@ package body Src_Info.CPP is
          Insert_Declaration
            (Handler           => LI_Handler (Global_CPP_Handler),
             File              => Env.File,
-            Xref_Filename     => Env.DB_Dir.all & Directory_Separator
+            Xref_Filename     => Name_As_Directory (Env.DB_Dir.all)
                & Xref_Filename_For
                  (Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
                   Env.DB_Dir.all,
@@ -3419,7 +3419,7 @@ package body Src_Info.CPP is
          Insert_Declaration
            (Handler           => LI_Handler (Global_CPP_Handler),
             File              => Env.File,
-            Xref_Filename     => Env.DB_Dir.all & Directory_Separator
+            Xref_Filename     => Name_As_Directory (Env.DB_Dir.all)
                & Xref_Filename_For
                  (Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
                   Env.DB_Dir.all,
@@ -3603,7 +3603,7 @@ package body Src_Info.CPP is
       Insert_Declaration
         (Handler           => LI_Handler (Global_CPP_Handler),
          File              => Env.File,
-         Xref_Filename     => Env.DB_Dir.all & Directory_Separator
+         Xref_Filename     => Name_As_Directory (Env.DB_Dir.all)
             & Xref_Filename_For
               (Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
                Env.DB_Dir.all,
@@ -3692,7 +3692,7 @@ package body Src_Info.CPP is
             Insert_Declaration
               (Handler           => LI_Handler (Global_CPP_Handler),
                File              => Env.File,
-               Xref_Filename         => Env.DB_Dir.all & Directory_Separator
+               Xref_Filename         => Name_As_Directory (Env.DB_Dir.all)
                   & Xref_Filename_For
                     (Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
                      Env.DB_Dir.all,

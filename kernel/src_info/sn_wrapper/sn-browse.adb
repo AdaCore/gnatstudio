@@ -7,6 +7,8 @@ with GNAT.Directory_Operations,
      Ada.Unchecked_Deallocation,
      Ada.Exceptions;
 
+with String_Utils; use String_Utils;
+
 use  GNAT.Directory_Operations,
      GNAT.IO_Aux,
      Ada.Strings.Fixed,
@@ -81,11 +83,11 @@ package body SN.Browse is
       Xref_File_Name := Xref_Filename_For (File_Name, DB_Directory, Xrefs);
 
       --  unlink cross reference file, if any
-      if File_Exists (DB_Directory & Directory_Separator
+      if File_Exists (Name_As_Directory (DB_Directory)
                       & Xref_File_Name.all) then
          declare
             Xref_File_Name_Nul  : String
-               := DB_Directory & Directory_Separator
+               := Name_As_Directory (DB_Directory)
                   & Xref_File_Name.all & ASCII.NUL;
          begin
             Delete_File (Xref_File_Name_Nul'Address, Success);
@@ -102,9 +104,9 @@ package body SN.Browse is
       end if;
       --  Execute browser
       Args := Argument_String_To_List (
-          "-n " & DB_Directory & Directory_Separator & DB_File_Name
+          "-n " & Name_As_Directory (DB_Directory) & DB_File_Name
           & " -p " & DBIMP_Path.all
-          & " -x " & DB_Directory & Directory_Separator & Xref_File_Name.all
+          & " -x " & Name_As_Directory (DB_Directory) & Xref_File_Name.all
           & " " & File_Name);
 
       DBUtil_Path := Locate_Exec_On_Path (Browser_Name);
@@ -130,9 +132,9 @@ package body SN.Browse is
       Temp_Name    : out GNAT.OS_Lib.Temp_File_Name;
       PD           : out GNAT.Expect.Process_Descriptor)
    is
-      BY_File_Name : String := DB_Directory & Directory_Separator
+      BY_File_Name : String := Name_As_Directory (DB_Directory)
                       & DB_File_Name & ".by" & ASCII.Nul;
-      TO_File_Name : String := DB_Directory & Directory_Separator
+      TO_File_Name : String := Name_As_Directory (DB_Directory)
                       & DB_File_Name & ".to" & ASCII.Nul;
       Dir          : Dir_Type;
       Last         : Natural;
@@ -176,8 +178,8 @@ package body SN.Browse is
       Read (Dir, Dir_Entry, Last); -- read first directory entry
       while Last /= 0 loop
          if Tail (Dir_Entry (1 .. Last), Xref_Suffix'Length) = Xref_Suffix then
-            Content := OS_Utils.Read_File (DB_Directory
-               & Directory_Separator & Dir_Entry (1 .. Last));
+            Content := OS_Utils.Read_File (Name_As_Directory (DB_Directory)
+               & Dir_Entry (1 .. Last));
             if null /= Content then
                if Content'Length
                   /= Write (Temp_File, Content.all'Address, Content'Length)
@@ -191,8 +193,8 @@ package body SN.Browse is
       end loop;
       Close (Dir);
 
-      Args := Argument_String_To_List (
-          DB_Directory & Directory_Separator & DB_File_Name
+      Args := Argument_String_To_List
+        (Name_As_Directory (DB_Directory) & DB_File_Name
           & " -f " & Temp_Name
       );
 
@@ -252,8 +254,8 @@ package body SN.Browse is
       Read (Dir, Dir_Entry, Last); -- read first directory entry
       while Last /= 0 loop --  delete all files in directory
          declare
-            F : String := DB_Directory
-              & Directory_Separator & Dir_Entry (1 .. Last) & ASCII.NUL;
+            F : String := Name_As_Directory (DB_Directory)
+              & Dir_Entry (1 .. Last) & ASCII.NUL;
             Success : Boolean;
          begin
             Delete_File (F'Address, Success);

@@ -3,6 +3,7 @@ with Ada.Text_IO; use Ada.Text_IO;
 with Ada.Exceptions; use Ada.Exceptions;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+with String_Utils; use String_Utils;
 
 package body SN.Xref_Pools is
 
@@ -243,7 +244,7 @@ package body SN.Xref_Pools is
       loop
          declare
             Name        : String := Generate_Filename (Source_Filename, N);
-            Full_Name   : String := Directory & Directory_Separator & Name;
+            Full_Name   : String := Name_As_Directory (Directory) & Name;
             FD          : File_Descriptor;
          begin
             if not Is_Regular_File (Full_Name) then
@@ -289,7 +290,7 @@ package body SN.Xref_Pools is
       end if;
       declare
          Result : Boolean;
-         Full_Name  : String := Directory & Directory_Separator &
+         Full_Name  : String := Name_As_Directory (Directory) &
             Xref_Elmt.Xref_Filename.all;
       begin
          --  remove file (ignoring errors)
