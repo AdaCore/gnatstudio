@@ -1071,8 +1071,6 @@ package body Builder_Module is
             then
                return;
             else
-               Console.Raise_Console (K);
-
                if Active then
                   Args := Argument_String_To_List
                     (Get_Pref (K, Execute_Command) & ' ' & Command);
@@ -1082,7 +1080,8 @@ package body Builder_Module is
 
                Exec := Locate_Exec_On_Path (Args (1).all);
                Launch_Process
-                 (K, Exec.all, Args (2 .. Args'Last), null, null, "", Success);
+                 (K, Exec.all, Args (2 .. Args'Last), -"Run: " & Command,
+                  null, null, "", Success);
                Free (Exec);
                Free (Args);
             end if;
@@ -1102,8 +1101,6 @@ package body Builder_Module is
             if Arguments = ""
               or else Arguments (Arguments'First) /= ASCII.NUL
             then
-               Console.Raise_Console (K);
-
                if Active then
                   Args := Argument_String_To_List
                     (Get_Pref (K, Execute_Command) & ' ' &
@@ -1111,13 +1108,15 @@ package body Builder_Module is
                      Arguments);
                   Launch_Process
                     (K, Args (1).all, Args (2 .. Args'Last),
+                     -"Run: " & Data.File & ' ' & Arguments,
                      null, null, "", Success);
 
                else
                   Args := Argument_String_To_List (Arguments);
                   Launch_Process
                     (K, Executables_Directory (Data.Project) & Data.File,
-                     Args.all, null, null, "", Success);
+                     Args.all, -"Run: " & Data.File & ' ' & Arguments,
+                     null, null, "", Success);
                end if;
 
                Free (Args);
