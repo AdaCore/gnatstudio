@@ -24,10 +24,10 @@ kbody \
 common \
 syntax \
 vdiff \
-hypergrep \
 aunit \
 prj_editor \
 src_editor \
+hypergrep \
 glide
 
 all: do_links ${EXTERNAL_DEPENDENCIES} ${DEPENDENCIES}
