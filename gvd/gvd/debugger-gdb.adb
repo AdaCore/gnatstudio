@@ -1921,20 +1921,29 @@ package body Debugger.Gdb is
       Line_String : constant String := Positive'Image (Line);
       --  Use a temporary variable to remove the leading space.
 
-      S : constant String :=
-        Send (Debugger, "info line "
-              & Base_File_Name (File)
-              & ':' &
-              Line_String (Line_String'First + 1 .. Line_String'Last),
-              Mode => Internal);
    begin
-      if Index (S, "starts at address") /= 0 then
-         return Have_Code;
-      elsif Index (S, "out of range") /= 0 then
-         return No_More_Code;
-      else
-         return No_Code;
-      end if;
+      Set_Parse_File_Name (Get_Process (Debugger), False);
+
+      declare
+         S : constant String :=
+           Send (Debugger, "info line "
+                   & Base_File_Name (File)
+                   & ':' &
+                   Line_String (Line_String'First + 1 .. Line_String'Last),
+                 Mode => Internal);
+      begin
+
+         Set_Parse_File_Name (Get_Process (Debugger), True);
+
+         if Index (S, "starts at address") /= 0 then
+            return Have_Code;
+         elsif Index (S, "out of range") /= 0 then
+            return No_More_Code;
+         else
+            return No_Code;
+         end if;
+      end;
+
    end Line_Contains_Code;
 
    --------------------------
