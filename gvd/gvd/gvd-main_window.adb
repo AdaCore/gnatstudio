@@ -159,12 +159,6 @@ package body GVD.Main_Window is
         (Gtk_Menu_Item (Get_Widget (Main_Window.Factory, '/' & (-"Window"))),
          Create_Menu (Main_Window.Process_Mdi));
 
-      Gtk_New (Main_Window.Task_Dialog, Gtk_Window (Main_Window));
-      Gtk_New (Main_Window.Thread_Dialog, Gtk_Window (Main_Window));
-      Gtk_New (Main_Window.PD_Dialog, Gtk_Window (Main_Window));
-      Gtk_New (Main_Window.History_Dialog, Gtk_Window (Main_Window));
-      Gtk_New (Main_Window.Memory_View, Gtk_Widget (Main_Window));
-
       Widget_Callback.Connect
         (Main_Window, "destroy",
          Widget_Callback.To_Marshaller (On_Destroy'Access));
@@ -178,11 +172,26 @@ package body GVD.Main_Window is
       Win : constant GVD_Main_Window := GVD_Main_Window (Window);
    begin
       Unref (Win.Factory);
-      Destroy (Win.Task_Dialog);
-      Destroy (Win.Thread_Dialog);
-      Destroy (Win.PD_Dialog);
-      Destroy (Win.History_Dialog);
-      Destroy (Win.Memory_View);
+
+      if Win.Task_Dialog /= null then
+         Destroy (Win.Task_Dialog);
+      end if;
+
+      if Win.Thread_Dialog /= null then
+         Destroy (Win.Thread_Dialog);
+      end if;
+
+      if Win.PD_Dialog /= null then
+         Destroy (Win.PD_Dialog);
+      end if;
+
+      if Win.History_Dialog /= null then
+         Destroy (Win.History_Dialog);
+      end if;
+
+      if Win.Memory_View /= null then
+         Destroy (Win.Memory_View);
+      end if;
    end On_Destroy;
 
    -----------------
@@ -222,10 +231,21 @@ package body GVD.Main_Window is
         and then Tab.Debugger /= null
         and then not Command_In_Process (Get_Process (Tab.Debugger))
       then
-         Update (Window.Thread_Dialog, Tab);
-         Update (Window.Task_Dialog, Tab);
-         Update (Window.History_Dialog, Tab);
-         Update (Window.PD_Dialog, Tab);
+         if Window.Thread_Dialog /= null then
+            Update (Window.Thread_Dialog, Tab);
+         end if;
+
+         if Window.Task_Dialog /= null then
+            Update (Window.Task_Dialog, Tab);
+         end if;
+
+         if Window.History_Dialog /= null then
+            Update (Window.History_Dialog, Tab);
+         end if;
+
+         if Window.PD_Dialog /= null then
+            Update (Window.PD_Dialog, Tab);
+         end if;
       end if;
    end Update_External_Dialogs;
 

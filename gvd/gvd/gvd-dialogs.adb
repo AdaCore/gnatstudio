@@ -358,7 +358,9 @@ package body GVD.Dialogs is
    is
       Tab : constant Visual_Debugger := Visual_Debugger (Widget);
    begin
-      Update (Tab.Window.Task_Dialog, Tab);
+      if Tab.Window.Task_Dialog /= null then
+         Update (Tab.Window.Task_Dialog, Tab);
+      end if;
    end On_Task_Process_Stopped;
 
    -------------------------------
@@ -370,7 +372,9 @@ package body GVD.Dialogs is
    is
       Tab : constant Visual_Debugger := Visual_Debugger (Widget);
    begin
-      Update (Tab.Window.Thread_Dialog, Tab);
+      if Tab.Window.Thread_Dialog /= null then
+         Update (Tab.Window.Thread_Dialog, Tab);
+      end if;
    end On_Thread_Process_Stopped;
 
    ----------------------------
@@ -382,7 +386,9 @@ package body GVD.Dialogs is
    is
       Tab : constant Visual_Debugger := Visual_Debugger (Widget);
    begin
-      Update (Tab.Window.PD_Dialog, Tab);
+      if Tab.Window.PD_Dialog /= null then
+         Update (Tab.Window.PD_Dialog, Tab);
+      end if;
    end On_PD_Process_Stopped;
 
    ------------------------------

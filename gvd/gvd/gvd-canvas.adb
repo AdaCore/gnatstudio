@@ -1062,9 +1062,14 @@ package body GVD.Canvas is
 
       Top  : constant GVD_Main_Window :=
         GVD_Main_Window (Visual_Debugger (Item.Canvas.Process).Window);
-      View : constant GVD_Memory_View := Top.Memory_View;
+      View : GVD_Memory_View := Top.Memory_View;
 
    begin
+      if View = null then
+         Gtk_New (Top.Memory_View, Gtk_Widget (Top));
+         View := Top.Memory_View;
+      end if;
+
       if not Visible_Is_Set (View) then
          Show_All (View);
       end if;

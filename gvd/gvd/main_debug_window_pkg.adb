@@ -49,7 +49,7 @@ begin
    Add (Main_Debug_Window, Main_Debug_Window.Vbox);
 
    Gtk_New_Vbox (Main_Debug_Window.Toolbar_Box, False, 0);
-   Pack_Start (Main_Debug_Window.Vbox, Main_Debug_Window.Toolbar_Box, False, False, 0);
+--   Pack_Start (Main_Debug_Window.Vbox, Main_Debug_Window.Toolbar_Box, False, False, 0);
 
    Gtk_New (Main_Debug_Window.Statusbar);
    Pack_End (Main_Debug_Window.Vbox, Main_Debug_Window.Statusbar, False, False, 0);

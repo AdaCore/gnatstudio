@@ -69,18 +69,24 @@ package body GVD.Dialogs.Callbacks is
          Hide (Top);
       end if;
 
-      if Top = GVD_Dialog (Main_Window.Thread_Dialog) then
+      if Main_Window.Thread_Dialog /= null
+        and then Top = GVD_Dialog (Main_Window.Thread_Dialog)
+      then
          Match ("[0-9]+", Str, Matched);
          Thread_Switch
            (Process.Debugger,
             Natural'Value (Str (Matched (0).First .. Matched (0).Last)),
             Mode => GVD.Types.Visible);
 
-      elsif Top = GVD_Dialog (Main_Window.Task_Dialog) then
+      elsif Main_Window.Task_Dialog /= null
+        and then Top = GVD_Dialog (Main_Window.Task_Dialog)
+      then
          Task_Switch
            (Process.Debugger, Natural (Index) + 1, Mode => GVD.Types.Visible);
 
-      elsif Top = GVD_Dialog (Main_Window.PD_Dialog) then
+      elsif Main_Window.PD_Dialog /= null
+        and then Top = GVD_Dialog (Main_Window.PD_Dialog)
+      then
          Match ("(0x)?[0-9a-fA-F]+", Str, Matched);
 
          --  ??? The Command_Type was changed from Visible to Hidden
@@ -99,6 +105,7 @@ package body GVD.Dialogs.Callbacks is
 
          Info_PD (Process.Debugger, Info, Len);
          Freeze (Gtk_Clist (Object));
+
          Update_PD (Main_Window.PD_Dialog, Info (1 .. Len));
          Handler_Block (Object, Main_Window.PD_Dialog.Select_Row_Id);
          Select_Row (Gtk_Clist (Object), Index, 0);

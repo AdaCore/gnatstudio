@@ -672,6 +672,8 @@ package body GVD.Process is
          declare
             File_Name : constant Virtual_File := Create
               (Full_Filename =>
+               --  ??? Normalize_Pathname only needed when to get absolute
+               --  file name
                  Normalize_Pathname
                    (Process.Current_Output (File_First .. File_Last),
                     Resolve_Links => False));

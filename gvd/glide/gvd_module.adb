@@ -2165,6 +2165,10 @@ package body GVD_Module is
       Entity := Entity_Selection_Context_Access (Context);
 
       if Has_Entity_Name_Information (Entity) then
+         if Top.Memory_View = null then
+            Gtk_New (Top.Memory_View, Gtk_Widget (Top));
+         end if;
+
          Show_All (Top.Memory_View);
          Display_Memory
            (Top.Memory_View,

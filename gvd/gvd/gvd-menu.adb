@@ -24,6 +24,7 @@ with Gtk.Window;          use Gtk.Window;
 with Gtkada.Dialogs;      use Gtkada.Dialogs;
 with Gtkada.Canvas;       use Gtkada.Canvas;
 with Gtkada.MDI;          use Gtkada.MDI;
+with Gtk.Widget;          use Gtk.Widget;
 
 with Odd_Intl;            use Odd_Intl;
 with GVD;                 use GVD;
@@ -522,6 +523,10 @@ package body GVD.Menu is
             return;
          end if;
 
+         if Top.Thread_Dialog = null then
+            Gtk_New (Top.Thread_Dialog, Gtk_Window (Top));
+         end if;
+
          Show_All (Top.Thread_Dialog);
          Gdk_Raise (Get_Window (Top.Thread_Dialog));
          Update (Top.Thread_Dialog, Tab);
@@ -552,6 +557,10 @@ package body GVD.Menu is
               Dialog_Type => Warning,
               Buttons => Button_OK);
             return;
+         end if;
+
+         if Top.Task_Dialog = null then
+            Gtk_New (Top.Task_Dialog, Gtk_Window (Top));
          end if;
 
          Show_All (Top.Task_Dialog);
@@ -585,6 +594,10 @@ package body GVD.Menu is
               Dialog_Type => Warning,
               Buttons => Button_OK);
             return;
+         end if;
+
+         if Top.PD_Dialog = null then
+            Gtk_New (Top.PD_Dialog, Gtk_Window (Top));
          end if;
 
          Show_All (Top.PD_Dialog);
@@ -637,6 +650,10 @@ package body GVD.Menu is
 
       Top : constant GVD_Main_Window := GVD_Main_Window (Object);
    begin
+      if Top.Memory_View = null then
+         Gtk_New (Top.Memory_View, Gtk_Widget (Top));
+      end if;
+
       Show_All (Top.Memory_View);
       Gdk_Raise (Get_Window (Top.Memory_View));
    end On_Examine_Memory;
