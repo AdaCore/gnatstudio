@@ -6192,10 +6192,14 @@ The possible values of the parameters listed above are:
 @cindex example
 @smallexample
 Usage:
-   gps [-Pproject-file] [source1] [source2] ...
+   gps [options] [-Pproject-file] [source1] [source2] ...
 Options:
-   --help              Show this help message and exit.
-   --version           Show the GPS version and exit.
+   --help              Show this help message and exit
+   --version           Show the GPS version and exit
+   --debug [program]   Start a debug session and load the given program with
+                       the given arguments
+   --debugger debugger Specify the debugger's command line
+   --target=TARG:PRO   Load program on machine TARG using protocol PRO
 
 Source files are searched everywhere on the project's source path
 @end smallexample
@@ -6267,9 +6271,12 @@ Log file created automatically by GPS
 @cindex aliases
 File containing the user-defined aliases (@pxref{Defining Text Aliases}).
 
-   @item $HOME/.gps/custom
-You can edit this file to add your own menu and tool-bar entries in GPS.
-@xref{Customizing the Menu Bar and the Tool Bar}.
+@c    @item $HOME/.gps/customize
+@c Directory containing files with user-defined customizations.
+@c You can create/edit these files to add your own menu/tool-bar entries in GPS,
+@c or define support for new languages.
+@c @pxref{Customizing the Menu Bar and the Tool Bar} and
+@c @pxref{???}.
 
    @item $HOME/.gps/custom_key
 Contains all the key bindings defined in GPS. This file is
@@ -6356,7 +6363,9 @@ See @url{gps-tutorial.html}.
 Directory containing files with system-wide aliases
 (@pxref{Defining Text Aliases}).
 
-   @item @i{prefix}/share/gps/customize
+@c    @item @i{prefix}/share/gps/customize
+@c Directory containing files with system-wide customizations
+@c (@pxref{???}).
 
    @item @i{prefix}/share/gps/gps-animation.gif
 @cindex gif
