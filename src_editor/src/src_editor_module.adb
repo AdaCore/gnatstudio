@@ -147,6 +147,7 @@ package body Src_Editor_Module is
    Start_Column_Cst      : aliased constant String := "start_column";
    Last_Line_Cst         : aliased constant String := "last_line";
    End_Column_Cst        : aliased constant String := "end_column";
+   Writable_Cst          : aliased constant String := "writable";
 
    Edit_Cmd_Parameters : constant Cst_Argument_List :=
      (1 => Filename_Cst'Access,
@@ -177,6 +178,9 @@ package body Src_Editor_Module is
       5 => After_Cst'Access);
    Case_Exception_Cmd_Parameters : constant Cst_Argument_List :=
      (1 => Name_Cst'Access);
+   Set_Writable_Cmd_Parameters : constant Cst_Argument_List :=
+     (1 => Name_Cst'Access,
+      2 => Writable_Cst'Access);
    Select_Text_Cmd_Parameters : constant Cst_Argument_List :=
      (1 => First_Line_Cst'Access,
       2 => Last_Line_Cst'Access,
@@ -1741,6 +1745,22 @@ package body Src_Editor_Module is
                Add_Exception (Name);
             else
                Remove_Exception (Name);
+            end if;
+         end;
+
+      elsif Command = "set_writable" then
+         Name_Parameters (Data, Set_Writable_Cmd_Parameters);
+
+         declare
+            Filename : constant Virtual_File :=
+              Create (Nth_Arg (Data, 1), Kernel);
+            Write    : constant Boolean := Nth_Arg (Data, 2);
+            Child    : MDI_Child;
+         begin
+            Child := Find_Editor (Kernel, Filename);
+
+            if Child /= null then
+               Set_Writable (Source_Box (Get_Widget (Child)).Editor, Write);
             end if;
          end;
       end if;
@@ -4366,6 +4386,14 @@ package body Src_Editor_Module is
         (Kernel, "remove_case_exception",
          Minimum_Args  => 1,
          Maximum_Args  => 1,
+         Class         => Editor_Class,
+         Static_Method => True,
+         Handler       => Edit_Command_Handler'Access);
+
+      Register_Command
+        (Kernel, "set_writable",
+         Minimum_Args  => 2,
+         Maximum_Args  => 2,
          Class         => Editor_Class,
          Static_Method => True,
          Handler       => Edit_Command_Handler'Access);
