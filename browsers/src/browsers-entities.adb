@@ -624,8 +624,9 @@ package body Browsers.Entities is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
       return Gtkada.MDI.MDI_Child
    is
-      Child : MDI_Child;
+      Child   : MDI_Child;
       Browser : Type_Browser;
+      Title   : constant String := -"Entity Browser";
    begin
       Child := Find_MDI_Child_By_Tag
         (Get_MDI (Kernel), Type_Browser_Record'Tag);
@@ -641,8 +642,10 @@ package body Browsers.Entities is
             Default_Height => Get_Pref (Kernel, Default_Widget_Height),
             Module => Entity_Browser_Module);
          Set_Focus_Child (Child);
-         Set_Title (Child, -"Entity Browser");
+         Set_Title (Child, Title);
       end if;
+
+      Add_Navigation_Location (Kernel, Title);
 
       return Child;
    end Open_Type_Browser_Child;
