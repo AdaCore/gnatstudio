@@ -46,7 +46,6 @@ with GVD.Strings;       use GVD.Strings;
 with GVD.Dialogs;       use GVD.Dialogs;
 with GVD.Types;         use GVD.Types;
 with GVD.Trace;         use GVD.Trace;
-with GVD.Status_Bar;    use GVD.Status_Bar;
 with Items;             use Items;
 with Items.Simples;     use Items.Simples;
 with Items.Arrays;      use Items.Arrays;
@@ -194,9 +193,9 @@ package body Debugger.Gdb is
          elsif Lang = "c++" then
             Language := new Gdb_Cpp_Language;
          else
-            Print_Message
-              (Process.Window.Statusbar1,
-               Error, (-"Language currently not supported by GVD: ") & Lang);
+            Output_Error
+              (Process.Window,
+               (-"Language currently not supported by GVD: ") & Lang);
             Language := new Gdb_C_Language;
          end if;
 
@@ -318,13 +317,11 @@ package body Debugger.Gdb is
    function Send
      (Debugger        : access Gdb_Debugger;
       Cmd             : String;
-      Empty_Buffer    : Boolean := True;
-      Wait_For_Prompt : Boolean := True;
       Mode            : Invisible_Command := Hidden) return String
    is
-      S : constant String :=
-        Send_Full (Debugger, Cmd, Empty_Buffer, Wait_For_Prompt, Mode);
+      S   : constant String := Send_Full (Debugger, Cmd, Mode);
       Pos : Integer := S'Last - Prompt_Length;
+
    begin
       if S'Length <= Prompt_Length then
          return "";
@@ -765,7 +762,6 @@ package body Debugger.Gdb is
 
    begin
       Send (Debugger, "attach " & Process, Mode => Mode);
-      Wait_User_Command (Debugger);
       Set_Is_Started (Debugger, True);
 
       --  Find the first frame containing source information to be as user
@@ -925,16 +921,10 @@ package body Debugger.Gdb is
    -- Interrupt --
    ---------------
 
-   procedure Interrupt
-     (Debugger        : access Gdb_Debugger;
-      Wait_For_Prompt : Boolean := False) is
+   procedure Interrupt (Debugger : access Gdb_Debugger) is
    begin
       Interrupt (Get_Descriptor (Get_Process (Debugger)).all);
       Set_Interrupted (Get_Process (Debugger));
-
-      if Wait_For_Prompt then
-         Wait_Prompt (Debugger);
-      end if;
    end Interrupt;
 
    ------------------------
@@ -1276,10 +1266,30 @@ package body Debugger.Gdb is
       Info     : out Thread_Information_Array;
       Len      : out Natural)
    is
+      EOL         : Positive;
+      Output      : constant String :=
+        Send (Debugger, "info threads", Mode => Internal);
+      Index       : Positive := Output'First;
+
    begin
-      Info (Info'First) := (Num_Fields => 1, Information => (1 => Null_Ptr));
-      Len := 0;
-      --  Not implemented ???
+      Len := Info'First;
+      Info (Len) :=
+        (Num_Fields => 1,
+         Information => (1 => New_String ("Thread")));
+
+      while Index < Output'Last loop
+         Len := Len + 1;
+         EOL := Index;
+
+         while EOL <= Output'Last and then Output (EOL) /= ASCII.LF loop
+            EOL := EOL + 1;
+         end loop;
+
+         Info (Len) :=
+           (Num_Fields => 1,
+            Information => (1 => New_String (Output (Index .. EOL - 1))));
+         Index := EOL + 1;
+      end loop;
    end Info_Threads;
 
    ------------------------
@@ -1324,14 +1334,11 @@ package body Debugger.Gdb is
    -- Display_Prompt --
    --------------------
 
-   procedure Display_Prompt
-     (Debugger        : access Gdb_Debugger;
-      Wait_For_Prompt : Boolean := True) is
+   procedure Display_Prompt (Debugger : access Gdb_Debugger) is
    begin
       Output_Text
         (Convert (Debugger.Window, Debugger),
-         Send_Full (Debugger, "  ", Wait_For_Prompt => Wait_For_Prompt,
-                    Mode => Internal),
+         Send_Full (Debugger, "  ", Mode => Internal),
          Is_Command => True,
          Set_Position => True);
    end Display_Prompt;
@@ -1362,9 +1369,10 @@ package body Debugger.Gdb is
       Addr_First  : out Natural;
       Addr_Last   : out Natural)
    is
-      Start : Natural := Str'First;
-      Matched : Match_Array (0 .. 3);
+      Start    : Natural := Str'First;
+      Matched  : Match_Array (0 .. 3);
       Matched2 : Match_Array (0 .. 3);
+
    begin
       --  Search for the last file reference in the output. There might be
       --  several of them, for instance when we hit a breakpoint with an
@@ -1450,7 +1458,7 @@ package body Debugger.Gdb is
 
    begin
       --  ??? Will fail on
-      --  "home/briot/Ada/glide/glide_window_pkg-callbacks: \
+      --  "/home/briot/Ada/glide/glide_window_pkg-callbacks: \
       --     No such file or directory."
       --  which can be emitted as the result of "info sources"
 
