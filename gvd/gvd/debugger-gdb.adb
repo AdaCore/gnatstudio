@@ -728,7 +728,9 @@ package body Debugger.Gdb is
       Send (Debugger, "set height 0", Mode => Internal);
       Send (Debugger, "set annotate 1", Mode => Internal);
 
-      if Get_Pref (GVD_Prefs, Execution_Window) then
+      if Get_Pref (GVD_Prefs, Execution_Window)
+        and then Debugger.Remote_Host = null
+      then
          if Host = Windows then
             Send (Debugger, "set new-console", Mode => Internal);
          end if;
