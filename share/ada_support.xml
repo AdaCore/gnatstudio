@@ -1,0 +1,300 @@
+<?xml version="1.0" ?>
+<Root>
+   <tool name="Make" package="Builder" index="Ada" language="Ada">
+      <switches columns="2">
+         <title column="1" line="1" >Dependencies</title>
+         <title column="2" line="1" >Compilation</title>
+         <check label="Consider all files" switch="-a"
+                tip="Consider all files, even locked files. Locked files are file whose ALI file is write-protected" />
+         <check label="Recompile if switches changed" switch="-s"
+                tip="ecompile if compiler switches have changed since last ast compilation" />
+         <check label="Minimal recompilation" switch="-m"
+                tip="Specifies that the minimum necessary amount of recompilation be performed. In this mode, gnatmake ignores time stamp differences when the only modification to a source file consist in adding or removing comments, empty lines, spaces or tabs" />
+        
+         <spin label="Multiprocessing" switch="-j" min="1" max="100" default="1"
+               column="2"
+               tip="Use N processes to carry out the compilations. On a multiprocessor machine compilations will occur in parallel" />
+         <check label="Keep going" switch="-k" column="2"
+                tip="Continue as much as possible after a compilation error" />
+         <check label="Debug information" switch="-g" column="2"
+                tip="Add debugging information. This forces the corresponding switch for the compiler, binder and linker" />
+         <check label="Use mapping file" switch="-C" column="2"
+                tip="Use a mapping file. A mapping file is a way to communicate to the compiler two mappings: from unit name to file names, and from file names to path names. This will generally improve the compilation time" />
+      </switches>
+   </tool>
+
+   <tool name="Ada" package="Compiler" index="Ada" language="Ada">
+      <switches lines="3" columns="2">
+         <title line="1" column="1" >Code generation</title>
+         <title line="1" column="2" >Run-time checks</title>
+         <title line="2" column="1" line-span="2" >Messages</title>
+         <title line="3" column="1" line-span="0" />
+         <title line="2" column="2" >Debugging</title>
+         <title line="3" column="2" >Syntax</title>
+
+         <combo switch="-O" nodigit="1" noswitch="0"
+                tip="Controls the optimization level">
+            <combo-entry label="No optimization" value="0" />
+            <combo-entry label="Some optimization" value="1" />
+            <combo-entry label="Full optimization" value="2" />
+            <combo-entry label="Full + Automatic inline" value="3" />
+         </combo>
+         <check label="front-end inlining" switch="-gnatN"
+                tip="The front end inlining activated by this switch is generally more extensive and quite often more effective than the -gnatn inlining" />
+         <check label="Unroll loops" switch="-funroll-loops"
+                tip="Perform the optimization of loop unrolling. This is only done for loops whose number of iterations can be determined at compile time or run time" />
+         <check label="Position independent code" switch="-fPIC"
+                tip="If supported for the target machine, emit position-independent code, suitable for dynamic linking and avoiding any limit of the size of the global offset table" />
+         <check label="Code coverage" switch="-ftest-coverage"
+                tip="Create data files for the gcov code-coverage utility" />
+         <check label="Instrument arcs" switch="-fprofile-arcs"
+                tip="Instrument arcs during compilation. For each function of your program, gcc creates a program flow graph, then finds a spanning tree for the graph. Only arcs that are not on the spanning tree have to be instrumented: the compiler adds code to count the number of times that these arcs are executed" />
+         <dependency master-page="Ada" slave-page="Ada"
+                     master-switch="-ftest-coverage"
+                     slave-switch="-fprofile-arcs"
+                     master-status="off" slave-status="off" />
+
+         <check label="Full errors" switch="-gnatf" line="2" column="1" 
+                tip="Full Errors. Multiple errors per line, all undefined references" />
+         <popup label="Warnings" line="2" column="1">
+            <check label="Biased rounding" switch="-gnatwb"
+                   tip="This warning message alerts you to instances where compile-time rounding and run-time rounding are not equivalent" />
+            <check label="Constant conditional" switch="-gnatwc"
+                   tip="Activates warnings for conditional expression used in tests that are known to be True or False at compile time" />
+            <check label="Implicit dereference" switch="-gnatwd"
+                   tip="If set, the use of a prefix of an access type in an indexed component, slice or selected component without an explicit .all will generate a warning. With this warning enabled, access checks occur only at points where an explicit .all appears" />
+            <check label="Warnings=Errors" switch="-gnatwe"
+                   tip="Causes warning messages to be treated as errors" />
+            <check label="Unreferenced format" switch="-gnatwf"
+                   tip="Causes warnings to be generated if a formal parameter is not referenced in the body" />
+            <check label="Hiding variable" switch="-gnatwh"
+                   tip="This switch activates warnings on hiding declarations. A declaration is considered hiding if it is for a non-overloadable entity, and if it declares an entity with the same name as some other entity that is directly or use-visible" />
+            <check label="Implementation unit" switch="-gnatwi"
+                   tip="This switch activates warnings for a with of an internal GNAT implementation unit" />
+            <check label="Obsolescent feature" switch="-gnatwj" />
+            <check label="Constant variable" switch="-gnatwk" />
+            <check label="Missing elaboration pragma" switch="-gnatwl"
+                   tip="This switch activates warnings on missing pragma Elaborate_All statements" />
+            <check label="Variable assigned but not read" switch="-gnatwm" />
+            <check label="Address clause overlay" switch="-gnatwo"
+                   tip="This switch activates warnings for possible unintended initialization effects of defining address clauses that cause one variable to overlap another" />
+            <check label="Ineffective pragma inline" switch="-gnatwp"
+                   tip="This switch activates warnings for a failure of front end inlining to inline a particular call" />
+            <check label="Redundant construct" switch="-gnatwr"
+                   tip="This switch activates warnings for redundant constructs:
+ - Assignment of an item to itself
+ - Type conversion that converts an expression to its own type
+ - ..." />
+           <check label="Unused entity" switch="-gnatwu"
+                  tip="This switch activates warnings to be generated for entities that are defined but not referenced" />
+           <check label="Unassigned variable" switch="-gnatwv" />
+           <check label="Size/align warnings for unchecked conversion"
+                  switch="-gnatwz" />
+         </popup>
+
+         <popup label="Validity checking mode" line="2" column="1" >
+            <check label="Checking for copies" switch="-gnatVc"
+                   tip="The right hand side of assignments, and the initializing values of object declarations are validity checked" />
+            <check label="Default Reference Manual Checking" switch="-gnatVd" />
+            <check label="Checking for floating-point" switch="-gnatVf" />
+            <check label="Checking for 'in' parameters" switch="-gnatVi" 
+                   tip="Arguments for parameters of mode in are validity checked in function and procedure calls at the point of call" />
+            <check label="Checking for 'in out' parameters" switch="-gnatVm"
+                   tip="Arguments for parameters of mode in out are validity checked in procedure calls at the point of call" />
+            <check label="Checking for operators and attributes" switch="-gnatVo"
+                   tip="Arguments for predefined operations and attributes are validity checked" />
+            <check label="Checking for returns" switch="-gnatVr"
+                   tip="The expression in return statements in functions is validity checked" />
+            <check label="Checking for subscripts" switch="-gnatVs"
+                   tip="All subscripts expressions are checked for validty" />
+            <check label="Checking for tests" switch="-gnatVt"
+                   tip="Expressions used as conditions in if, while or exit statements are checked, as well as guard expressions in entry calls" />
+            <expansion switch="-gnatV" >
+               <entry switch="-gnatVc" />
+               <entry switch="-gnatVd" />
+               <entry switch="-gnatVf" />
+               <entry switch="-gnatVi" />
+               <entry switch="-gnatVm" />
+               <entry switch="-gnatVo" />
+               <entry switch="-gnatVr" />
+               <entry switch="-gnatVs" />
+               <entry switch="-gnatVt" />
+            </expansion>
+         </popup>
+
+         <popup label="Style checks" line="2" column="1">
+            <spin label="indentation" switch="-gnaty" min="1" max="9" 
+                  default="3" />
+            <check label="Check casing" switch="-gnatya" />
+            <check label="Check end of line blanks" switch="-gnatyb" />
+            <check label="Check comment format" switch="-gnatyc" />
+            <check label="Check end/exit labels" switch="-gnatye" />
+            <check label="Check no form feeds" switch="-gnatyf" />
+            <check label="Check no horizontal tabs" switch="-gnatyh" />
+            <check label="Check if-then layout" switch="-gnatyi" />
+            <check label="Check casing rules" switch="-gnatyk" />
+            <check label="Check reference manual layout" switch="-gnatyl" />
+            <check label="Check line length <= 79 characters" switch="-gnatym" />
+            <check label="Check casing of Standard identifiers" switch="-gnatyn"/>
+            <check label="Check subprogram bodies in alphabetical order"
+                   switch="-gnatyo" />
+            <check label="Check pragma casing" switch="-gnatyp" />
+            <check label="Check RM column layout" switch="-gnatyr" />
+            <check label="Check separate specs present" switch="-gnatys" />
+            <check label="Check token separation rules" switch="-gnatyt" />
+            <spin label="Line length" switch="-gnatyM" 
+                  min="0" max="255" default="79" />
+            <expansion switch="-gnaty" alias="-gnatyabcefhiklmnprst" >
+               <entry switch="-gnaty3" />
+               <entry switch="-gnatya" />
+               <entry switch="-gnatyb" />
+               <entry switch="-gnatyc" />
+               <entry switch="-gnatye" />
+               <entry switch="-gnatyf" />
+               <entry switch="-gnatyh" />
+               <entry switch="-gnatyi" />
+               <entry switch="-gnatyk" />
+               <entry switch="-gnatyl" />
+               <entry switch="-gnatym" />
+               <entry switch="-gnatyn" />
+               <entry switch="-gnatyp" />
+               <entry switch="-gnatyr" />
+               <entry switch="-gnatys" />
+               <entry switch="-gnatyt" />
+            </expansion>
+         </popup>
+
+         <check label="Overflow checking" switch="-gnato" column="2"
+                tip="Enable numerics overflow checking" />
+         <check label="Suppress all checks" switch="-gnatp" column="2"
+                tip="Suppress all checks" />
+         <check label="Stack checking" switch="-fstack-check" column="2"
+                tip="Generate code to verify that you do not go beyond the boundary of the stack. You should specify this flag if you are running in an environment with multiple threads, but only rarely need to specify it in a single-threaded environment" />
+         <check label="Dynamic elaboration" switch="-gnatE" column="2"
+                tip="Full dynamic elaboration checks" />
+
+          <check label="Debug Information" switch="-g" line="2" column="2"
+                 tip="Debug Information" />
+          <dependency master-page="Make" slave-page="Ada"
+                      master-switch="-g" slave-switch="-g"
+                      master-status="on" slave-status="on" />
+          <check label="Enable assertions" switch="-gnata" line="2" column="2"
+                 tip="Assertions enabled. Pragma Assert and pragma Debug are activated" />
+          <check label="Debug expanded code" switch="-gnatD" line="2" column="2"
+                 tip="Output expanded source files for source level debugging" />
+
+          <check label="Language extensions" switch="-gnatX" line="3" column="2"
+                 tip="Activates various GNAT-specific extensions to the language"
+                 />
+          <check label="Ada 83 mode" switch="-gnat83" line="3" column="2"
+                 tip="Enforces Ada 83 restrictions" />
+      </switches>
+   </tool>
+
+   <tool name="Pretty Printer" package="Pretty_Printer" index="Ada"
+         language="Ada">
+      <switches lines="5">
+         <title line="1" >Spacing</title>
+         <title line="2" >Casing</title>
+         <title line="3" >Layout</title>
+         <title line="4" >Alignment</title>
+         <title line="5" >General</title>
+
+         <spin label="Indentation" switch="-i" min="1" max="100" default="3" />
+         <spin label="Maximum line length" switch="-M" min="20" max="100"
+               default="79" />
+         
+         <combo label="Keyword" switch="-k" line="2" noswitch="L" nodigit="L" >
+            <combo-entry label="Lower case" value="L" />
+            <combo-entry label="Upper case" value="U" />
+         </combo>
+         <combo label="Name" switch="-n" line="2" noswitch="D" nodigit="D" >
+            <combo-entry label="As declared" value="D" />
+            <combo-entry label="Mixed case" value="M" />
+            <combo-entry label="Lower case" value="L" />
+            <combo-entry label="Upper case" value="U" />
+         </combo>
+         <combo label="Attribute" switch="-a" line="2" noswitch="M" nodigit="M" >
+            <combo-entry label="Upper case" value="U" />
+            <combo-entry label="Lower case" value="L" />
+            <combo-entry label="Upper case" value="U" />
+         </combo>
+         <combo label="Pragma" switch="-p" line="2" noswitch="M" nodigit="M" >
+            <combo-entry label="Upper case" value="U" />
+            <combo-entry label="Lower case" value="L" />
+            <combo-entry label="Upper case" value="U" />
+         </combo>
+
+         <combo label="Construct" switch="-l" line="3" noswitch="1" nodigit="1" >
+            <combo-entry label="GNAT style" value="1" />
+            <combo-entry label="Compact" value="2" />
+            <combo-entry label="Uncompact" value="3" />
+         </combo>
+         <combo label="Comment" switch="-c" line="3" noswitch="1" nodigit="1" >
+            <combo-entry label="GNAT style line indentation" value="1" />
+            <combo-entry label="Standard line indentation" value="2" />
+         </combo>
+         <check label="GNAT style beginning" switch="-c3" line="3" />
+         <check label="Reformat blocks" switch="-c4" line="3" />
+
+         <check label="Colons in declarations" switch="-A1" line="4" />
+         <check label="Assignments in declarations" switch="-A2" line="4" />
+         <check label="Assignments in statements" switch="-A3" line="4" />
+         <check label="Arrow delimiters in associations" switch="-A4" line="4" />
+
+         <check label="Set missing end/exit labels" switch="-e" line="5" />
+      </switches>
+   </tool>
+
+   <tool name="Binder" package="Binder" index="Ada" language="Ada">
+      <switches lines="1">
+         <check label="Store call stack in exceptions" switch="-E"
+                tip="Store tracebacks in exception occurrences when the target supports it" />
+         <check label="List possible restrictions" switch="-r" />
+         <radio>
+             <radio-entry label="Static GNAT run time" switch="-static" />
+             <radio-entry label="Shared GNAT run time" switch="-shared" />
+         </radio>
+      </switches>
+   </tool>
+
+   <tool name="Linker" package="Linker" index="Ada" language="Ada">
+      <switches lines="1">
+         <check label="Strip symbols" switch="-s" />
+         <check label="Debug information" switch="-g" />
+         <dependency master-page="Make" slave-page="Linker"
+                     master-switch="-g" slave-switch="-g"
+                     master-status="on" slave-status="on" />
+      </switches>
+   </tool>
+
+   <vsearch-pattern>
+     <name>Ada: type NAME is array (...)</name>
+     <regexp>\btype\s+(\w+)\s+is\s+array\s+\((.*?)\)\s+of\s+\w+\s*;</regexp>
+   </vsearch-pattern>
+
+   <vsearch-pattern>
+     <name>Ada: when CHOICE =></name>
+     <regexp>\bwhen\s+((\w+)\s+:\s+)?[\w\s|]+\s*=></regexp>
+   </vsearch-pattern>
+
+   <vsearch-pattern>
+     <name>Ada: (sub)type NAME is</name>
+     <regexp>\b((sub)?type\s+(\w+)|type\s+(\w+)\s+(\(.*?\))?)\s+is\b</regexp>
+   </vsearch-pattern>
+
+   <vsearch-pattern>
+     <name>Ada: type NAME (...) is</name>
+     <regexp>\btype\s+(\w+)\s+\((.*?)\)\s+is\b</regexp>
+   </vsearch-pattern>
+
+   <vsearch-pattern>
+     <name>Ada: for VAR in ... loop</name>
+     <regexp>\bfor\s+(\w+)\s+in\s+(reverse\s+)?(.+?)(\s+range\s+(.*?))?\s+loop\b</regexp>
+   </vsearch-pattern>
+
+   <vsearch-pattern>
+     <name>Ada: assignment</name>
+     <regexp>\b(\w+)\s*:=</regexp>
+   </vsearch-pattern>
+</Root> 
