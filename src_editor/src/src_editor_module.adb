@@ -2515,7 +2515,10 @@ package body Src_Editor_Module is
    procedure Destroy (Id : in out Source_Editor_Module_Record) is
    begin
       String_List_Utils.String_List.Free (Id.List);
-      Destroy (Id.Open_File_Dialog);
+
+      if Id.Open_File_Dialog /= null then
+         Destroy (Id.Open_File_Dialog);
+      end if;
    end Destroy;
 
 end Src_Editor_Module;
