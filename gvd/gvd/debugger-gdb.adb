@@ -1240,6 +1240,19 @@ package body Debugger.Gdb is
             then
                Skip_To_Char (Type_Str, Index, '>');
                Index := Index + 1;
+
+            --  Also keep string indications (for char* in C)
+            elsif Index < Type_Str'Last - 2
+              and then (Type_Str (Index + 1) = '"'
+                        or else Type_Str (Index + 1) = ''')
+            then
+               declare
+                  Str    : String (1 .. 0);
+               begin
+                  Index := Index + 1;
+                  Parse_Cst_String (Type_Str, Index, Str);
+                  Index := Index - 1;
+               end;
             end if;
 
             Set_Value (Simple_Type (Result.all), Type_Str (Int .. Index - 1));
