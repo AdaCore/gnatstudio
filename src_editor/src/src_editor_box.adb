@@ -1957,11 +1957,6 @@ package body Src_Editor_Box is
 
       use type Basic_Types.String_Access;
    begin
-      if not Editor.Writable then
-         Success := False;
-         return;
-      end if;
-
       Success := True;
 
       if Filename = VFS.No_File then
