@@ -852,13 +852,14 @@ package body Project_Explorers is
          if Data.Node_Type = Entity_Node then
             Set_File_Information
               (Context   => File_Selection_Context_Access (Context),
-               Directory    => Get_Directory_From_Node (T, Node),
+               Directory    => Normalize_Pathname
+                 (Get_Directory_From_Node (T, Node)),
                File_Name    => Get_File_From_Node (T, Node));
             Set_Entity_Information
               (Context     => Entity_Selection_Context_Access (Context),
                Entity_Name => Data.Entity_Name,
                Category    => Node_Get_Row_Data
-               (T.Tree, Parent).Category,
+                 (T.Tree, Parent).Category,
                Line        => Data.Sloc_Entity.Line,
                Column      => Data.Sloc_Entity.Column);
 
@@ -869,7 +870,8 @@ package body Project_Explorers is
 
             Set_File_Information
               (Context   => File_Selection_Context_Access (Context),
-               Directory    => Get_Directory_From_Node (T, Node),
+               Directory    =>
+                 Normalize_Pathname (Get_Directory_From_Node (T, Node)),
                File_Name    => Get_File_From_Node (T, Node),
                Project_View => Get_Project_From_Node (T, Node),
                Importing_Project => Importing_Project);
@@ -912,7 +914,8 @@ package body Project_Explorers is
       Set_Context_Information (Context, T.Kernel, Explorer_Module_ID);
       Set_File_Information
         (Context,
-         Directory    => Get_Directory_From_Node (T, Node),
+         Directory    =>
+           Normalize_Pathname (Get_Directory_From_Node (T, Node)),
          File_Name    => Get_File_From_Node (T, Node),
          Project_View => Get_Project_From_Node (T, Node));
       Context_Changed (T.Kernel, Selection_Context_Access (Context));
@@ -1089,7 +1092,6 @@ package body Project_Explorers is
       Node_Type : Node_Types := Directory_Node;
       Text      : Tree_Chars_Ptr_Array;
       Node_Text : String_Access;
-
    begin
       pragma Assert (Object_Directory or else Directory_String /= No_String);
 
@@ -1569,9 +1571,10 @@ package body Project_Explorers is
       if N = null then
          return "";
       elsif Full_Path then
-         return Get_Directory_From_Node
-           (Explorer, Row_Get_Parent (Node_Get_Row (N)))
-           & Node_Get_Text (Explorer.Tree, N, 0);
+         return Normalize_Pathname
+           (Get_Directory_From_Node
+              (Explorer, Row_Get_Parent (Node_Get_Row (N)))
+              & Node_Get_Text (Explorer.Tree, N, 0));
       else
          return Node_Get_Text (Explorer.Tree, N, 0);
       end if;
