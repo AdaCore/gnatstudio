@@ -105,14 +105,16 @@ package Items is
    --  Whether we should display the type of the item
 
    type Drawing_Context is record
-      GC          : Gdk.GC.Gdk_GC;
-      Xref_GC     : Gdk.GC.Gdk_GC;
-      Modified_GC : Gdk.GC.Gdk_GC;
-      Font        : Gdk.Font.Gdk_Font;
-      Type_Font   : Gdk.Font.Gdk_Font;
-      Pixmap      : Gdk.Pixmap.Gdk_Pixmap;
-      Mode        : Display_Mode;
-      Lang        : Language.Language_Access;
+      GC           : Gdk.GC.Gdk_GC;
+      Xref_GC      : Gdk.GC.Gdk_GC;
+      Thaw_Bg_Gc   : Gdk.GC.Gdk_GC;
+      Freeze_Bg_Gc : Gdk.GC.Gdk_GC;
+      Modified_GC  : Gdk.GC.Gdk_GC;
+      Font         : Gdk.Font.Gdk_Font;
+      Type_Font    : Gdk.Font.Gdk_Font;
+      Pixmap       : Gdk.Pixmap.Gdk_Pixmap;
+      Mode         : Display_Mode;
+      Lang         : Language.Language_Access;
    end record;
    --  This structure contains all the information needed to draw items on
    --  the canvas.
