@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -2410,13 +2410,9 @@ package body Src_Editor_Module is
                      Append (Lines, "");
                   else
                      if Comment then
-                        Append (Lines,
-                                Comment_Line
-                                  (Lang, Line (Line'First .. Line'Last - 1)));
+                        Append (Lines, Comment_Line (Lang, Line));
                      else
-                        Append (Lines,
-                                Uncomment_Line
-                                  (Lang, Line (Line'First .. Line'Last - 1)));
+                        Append (Lines, Uncomment_Line (Lang, Line));
                      end if;
                   end if;
                end;
@@ -2429,7 +2425,7 @@ package body Src_Editor_Module is
                N : List_Node := First (Lines);
             begin
                while N /= Null_Node loop
-                  L := L + Data (N)'Length + 1;
+                  L := L + Data (N)'Length;
                   N := Next (N);
                end loop;
 
@@ -2441,8 +2437,8 @@ package body Src_Editor_Module is
                   L := 1;
 
                   while N /= Null_Node loop
-                     S (L .. L + Data (N)'Length) := Data (N) & ASCII.LF;
-                     L := L + Data (N)'Length + 1;
+                     S (L .. L + Data (N)'Length - 1) := Data (N);
+                     L := L + Data (N)'Length;
                      N := Next (N);
                   end loop;
 
