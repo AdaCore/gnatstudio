@@ -29,13 +29,10 @@
 --  This file extends and replaces the GLADE-generated unit
 --  Switches_Editor_Pkg.
 
-with Gtk.Handlers;
 with Gtk.Widget;
 with GNAT.OS_Lib;
 with Glide_Kernel;
 with Switches_Editor_Pkg; use Switches_Editor_Pkg;
-with Prj;
-with Types;
 
 package Switches_Editors is
 
@@ -128,40 +125,28 @@ package Switches_Editors is
    --  switches. They provide a higher-level framework over the standard
    --  switches editor.
 
-   type Contextual_User_Data is record
-      Kernel    : Glide_Kernel.Kernel_Handle;
-      Project   : Prj.Project_Id;
-      File_Name : Types.String_Id;
-      Directory : Types.String_Id;
-   end record;
-
-   package Contextual_Callback is new Gtk.Handlers.User_Callback
-     (Gtk.Widget.Gtk_Widget_Record, Contextual_User_Data);
-
-   procedure Edit_Switches_From_Contextual
+   procedure Edit_Switches
      (Item : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Data : Contextual_User_Data);
-   --  Callback suitable for a contextual menu item.  If Data.File_Name is
-   --  No_String, then the default switches for the project are edited,
+      Context : Glide_Kernel.Selection_Context_Access);
+   --  Callback suitable for a contextual menu item.  If the file name is the
+   --  empty string, then the default switches for the project are edited,
    --  otherwise the switches for the specific file are edited.
 
-   procedure Edit_Switches
-     (Kernel       : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Project_View : Prj.Project_Id;
-      File_Name    : Types.String_Id := Types.No_String;
-      Directory    : Types.String_Id := Types.No_String);
-   --  Edit the switches for a specific file.
-   --
-   --  If File_Name is specified:
-   --  This file belongs to project Project_View, and is found in the directory
-   --  specified.
-   --  This opens an external dialog, and the switches are automatically
-   --  updated when the dialog is closed
-   --
-   --  Otherwise, this edits the default switches for Project_View.
+   procedure Edit_Default_Switches
+     (Item : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Context : Glide_Kernel.Selection_Context_Access);
+   --  Same as Edit_Switches, but always edit the default switches for the
+   --  project, even if there is a file information in Context.
+
+   procedure Edit_Switches_For_Context
+     (Context       : Glide_Kernel.Selection_Context_Access;
+      Force_Default : Boolean := False);
+   --  Same as Edit_Switches, but if Force_Default is True it always edit the
+   --  default switches, even if there is a file information in Context.
 
 private
    type Switches_Edit_Record is new Switches_Editor_Record with record
+      Kernel : Glide_Kernel.Kernel_Handle;
       Pages : Page_Filter := All_Pages;
 
       Block_Refresh : Boolean := False;
