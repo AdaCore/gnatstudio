@@ -789,6 +789,44 @@ package body Src_Editor_Module is
             end if;
          end;
 
+      elsif Command = "delete_mark" then
+         declare
+            Identifier  : constant String := Nth_Arg (Data, 1);
+            Mark_Record : constant Mark_Identifier_Record :=
+              Find_Mark (Identifier);
+            Node        : Mark_Identifier_List.List_Node;
+            Prev        : Mark_Identifier_List.List_Node;
+
+            use Mark_Identifier_List;
+         begin
+            if Mark_Record.Child /= null then
+               Delete_Mark
+                 (Get_Buffer
+                    (Source_Box (Get_Widget (Mark_Record.Child)).Editor),
+                  Mark_Record.Mark);
+
+               Node := First (Id.Stored_Marks);
+
+               if Mark_Identifier_List.Data (Node).Id = Mark_Record.Id then
+                  Next (Id.Stored_Marks);
+               else
+                  Prev := Node;
+                  Node := Next (Node);
+
+                  while Node /= Null_Node loop
+                     if Mark_Identifier_List.Data (Node).Id
+                       = Mark_Record.Id
+                     then
+                        Remove_Nodes (Id.Stored_Marks, Prev, Node);
+                        exit;
+                     end if;
+
+                     Node := Next (Node);
+                  end loop;
+               end if;
+            end if;
+         end;
+
       elsif Command = "get_chars" then
          declare
             File   : constant String  := Nth_Arg (Data, 1);
@@ -3492,6 +3530,16 @@ package body Src_Editor_Module is
          Params       => "(identifier)",
          Description  =>
            -"Jump to the location of the mark corresponding to identifier.",
+         Minimum_Args => 1,
+         Maximum_Args => 1,
+         Handler      => Edit_Command_Handler'Access);
+
+      Register_Command
+        (Kernel,
+         Command      => "delete_mark",
+         Params       => "(identifier)",
+         Description  =>
+           -"Delete the mark corresponding to identifier.",
          Minimum_Args => 1,
          Maximum_Args => 1,
          Handler      => Edit_Command_Handler'Access);
