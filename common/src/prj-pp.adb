@@ -40,6 +40,7 @@ package body Prj.PP is
    procedure Pretty_Print
      (Project : Project_Node_Id;
       Increment : Positive := 3;
+      Eliminate_Null_Statements : Boolean := False;
       W_Char : Write_Char_Ap := null;
       W_Str  : Write_Str_Ap := null)
    is
@@ -396,43 +397,38 @@ package body Prj.PP is
                   --  Write_Empty_Line.all;
 
                when N_Case_Item =>
-                  --  Write_Empty_Line.all;
-                  Start_Line (Indent);
-                  Write_Str ("when ");
-
-                  if First_Choice_Of (Node) = Empty_Node then
-                     Write_Str ("others");
-
-                  else
-                     declare
-                        Label : Project_Node_Id := First_Choice_Of (Node);
-
-                     begin
-                        while Label /= Empty_Node loop
-                           Print (Label, Indent);
-                           Label := Next_Literal_String (Label);
-
-                           if Label /= Empty_Node then
-                              Write_Str (" | ");
-                           end if;
-                        end loop;
-                     end;
-                  end if;
-
-                  Write_Line (" =>");
-                  if First_Declarative_Item_Of (Node) = Empty_Node then
-                     Write_Line ("NULL;");
-
-                  elsif Kind_Of (First_Declarative_Item_Of (Node)) /=
-                    N_Declarative_Item
+                  if First_Declarative_Item_Of (Node) /= Empty_Node
+                    or else not Eliminate_Null_Statements
                   then
-                     Write_Line ("EXPECTING N_DECLARATIVE_ITEM");
-                     Write_Line
-                       ("Got " &
-                        Kind_Of (First_Declarative_Item_Of (Node))'Img);
-                     Output.Write_Eol;
+                     Start_Line (Indent);
+                     Write_Str ("when ");
+
+                     if First_Choice_Of (Node) = Empty_Node then
+                        Write_Str ("others");
+
+                     else
+                        declare
+                           Label : Project_Node_Id := First_Choice_Of (Node);
+
+                        begin
+                           while Label /= Empty_Node loop
+                              Print (Label, Indent);
+                              Label := Next_Literal_String (Label);
+
+                              if Label /= Empty_Node then
+                                 Write_Str (" | ");
+                              end if;
+                           end loop;
+                        end;
+                     end if;
+
+                     Write_Line (" =>");
+                     if First_Declarative_Item_Of (Node) = Empty_Node then
+                        Write_Line ("null;");
+                     end if;
+                     Print
+                       (First_Declarative_Item_Of (Node), Indent + Increment);
                   end if;
-                  Print (First_Declarative_Item_Of (Node), Indent + Increment);
             end case;
          end if;
       end Print;

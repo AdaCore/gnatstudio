@@ -38,6 +38,7 @@ package Prj.PP is
    procedure Pretty_Print
      (Project   : Prj.Tree.Project_Node_Id;
       Increment : Positive := 3;
+      Eliminate_Null_Statements : Boolean := False;
       W_Char : Write_Char_Ap := null;
       W_Str  : Write_Str_Ap  := null);
    --  Output a project file, using either the default output
@@ -46,5 +47,9 @@ package Prj.PP is
    --
    --  W_Char and W_Str can be used to change the default output
    --  procedures. The default values force the output to Standard_Output.
+   --
+   --  If Eliminate_Null_Statements is True, then declarative item lists that
+   --  do not have any item will not be output. Otherwise, "null;" is output,
+   --  which isn't a valid project syntax.
 
 end Prj.PP;
