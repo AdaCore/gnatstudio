@@ -18,6 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Strings.Fixed;   use Ada.Strings.Fixed;
 with Glib;                use Glib;
 with Glib.Convert;
 with Glib.Values;         use Glib.Values;
@@ -27,6 +28,7 @@ with Glib.Properties;     use Glib.Properties;
 with Gdk.Types;           use Gdk.Types;
 with Gdk.Types.Keysyms;   use Gdk.Types.Keysyms;
 with Gdk.Event;           use Gdk.Event;
+with Gdk.Property;
 with Gtk.Enums;           use Gtk.Enums;
 with Gtk.Main;            use Gtk.Main;
 with Gtk.Text_Buffer;     use Gtk.Text_Buffer;
@@ -37,12 +39,16 @@ with Gtk.Text_Tag;        use Gtk.Text_Tag;
 with Gtk.Text_Tag_Table;  use Gtk.Text_Tag_Table;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 with Gtk.Widget;          use Gtk.Widget;
+with Gtk.Selection;       use Gtk.Selection;
+with Gtk.Arguments;       use Gtk.Arguments;
+with Gtk.Handlers;
 with Gtkada.Handlers;     use Gtkada.Handlers;
 with Pango.Font;          use Pango.Font;
 with Pango.Enums;         use Pango.Enums;
 
 with System;               use System;
 with Histories;            use Histories;
+with String_Utils;         use String_Utils;
 
 with Traces;               use Traces;
 with Ada.Exceptions;       use Ada.Exceptions;
@@ -64,7 +70,7 @@ package body Interactive_Consoles is
 
    function Button_Press_Handler
      (Object : access Gtk_Widget_Record'Class;
-      Params : Glib.Values.GValues) return Boolean;
+      Event  : Gdk_Event) return Boolean;
    --  Handler for the "button_press_event" signal.
 
    function Button_Release_Handler
@@ -76,6 +82,16 @@ package body Interactive_Consoles is
      (Object : access Gtk_Widget_Record'Class;
       Event  : Gdk_Event) return Boolean;
    --  Handler for the "key_press_event" signal.
+
+   procedure Paste_Clipboard_Handler
+     (Object : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Params : Glib.Values.GValues);
+   --  Handler for the "paste_clipboard" signal.
+
+   procedure Selection_Received_Handler
+     (Widget : access Gtk_Widget_Record'Class;
+      Params : Glib.Values.GValues);
+   --  Handler for the "selection_received" signal.
 
    function Delete_Event_Handler
      (Object : access Gtk_Widget_Record'Class;
@@ -94,6 +110,18 @@ package body Interactive_Consoles is
 
    procedure On_Destroy (Console : access Gtk_Widget_Record'Class);
    --  Called when the console is destroyed.
+
+   procedure Insert_And_Execute
+     (Object : access Gtk_Widget_Record'Class;
+      Text   : String);
+   --  Interpret "Text", an ASCII.LF separated list of commands that are
+   --  sequentially displayed, executed and stored in the console's history
+
+   procedure Execute_Command
+     (Console : Interactive_Console;
+      Command : String);
+   --  Execute Command, store it in the history, and display its result
+   --  in the console
 
    ------------------
    -- Destroy_Idle --
@@ -218,13 +246,25 @@ package body Interactive_Consoles is
 
    function Button_Press_Handler
      (Object : access Gtk_Widget_Record'Class;
-      Params : Glib.Values.GValues) return Boolean
+      Event  : Gdk_Event) return Boolean
    is
-      pragma Unreferenced (Params);
-
       Console : constant Interactive_Console := Interactive_Console (Object);
+      Success : Boolean;
    begin
       Console.Button_Press := True;
+
+      if Get_Button (Event) = 2 then
+         --  Paste mouse selection
+         Success := Gtk.Selection.Convert
+           (Console.View,
+            Selection => Selection_Primary,
+            Target    => Gdk.Property.Atom_Intern ("STRING", True));
+
+         if Success then
+            return True;
+         end if;
+      end if;
+
       return False;
 
    exception
@@ -256,6 +296,57 @@ package body Interactive_Consoles is
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
          return False;
    end Button_Release_Handler;
+
+   -----------------------------
+   -- Paste_Clipboard_Handler --
+   -----------------------------
+
+   procedure Paste_Clipboard_Handler
+     (Object : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Params : Glib.Values.GValues)
+   is
+      pragma Unreferenced (Params);
+      Console : constant Interactive_Console := Interactive_Console (Object);
+      Success : Boolean;
+
+   begin
+      --  Retrieve the clipboard's content and stop the signal
+
+      Success := Gtk.Selection.Convert
+        (Console.View,
+         Selection => Gdk.Property.Atom_Intern ("CLIPBOARD"),
+         Target    => Gdk.Property.Atom_Intern ("STRING", True));
+
+      if Success then
+         Gtk.Handlers.Emit_Stop_By_Name (Console.View, "paste_clipboard");
+      else
+         Trace (Me, "Cannot retrieve the clipboard's content");
+      end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+   end Paste_Clipboard_Handler;
+
+   --------------------------------
+   -- Selection_Received_Handler --
+   --------------------------------
+
+   procedure Selection_Received_Handler
+     (Widget : access Gtk_Widget_Record'Class;
+      Params : Glib.Values.GValues)
+   is
+      Args : constant Gtk_Args := Gtk_Args (Params);
+      Data : constant Selection_Data := Selection_Data (To_C_Proxy (Args, 1));
+   begin
+      if Get_Length (Data) > 0 then
+         Insert_And_Execute (Widget, Strip_CR (Get_Data_As_String (Data)));
+      end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+   end Selection_Received_Handler;
 
    --------------------------
    -- Delete_Event_Handler --
@@ -292,8 +383,8 @@ package body Interactive_Consoles is
      (Object : access Gtk_Widget_Record'Class;
       Event  : Gdk_Event) return Boolean
    is
-      Console : constant Interactive_Console := Interactive_Console (Object);
-
+      Console     : constant Interactive_Console :=
+        Interactive_Console (Object);
       Key         : constant Gdk_Key_Type  := Get_Key_Val (Event);
       Prompt_Iter : Gtk_Text_Iter;
       Last_Iter   : Gtk_Text_Iter;
@@ -476,8 +567,6 @@ package body Interactive_Consoles is
             declare
                Command : GNAT.OS_Lib.String_Access := new String'
                  (Get_Slice (Console.Buffer, Prompt_Iter, Last_Iter));
-
-               Output  : GNAT.OS_Lib.String_Access;
             begin
                if Command.all = ""
                  and then Console.Empty_Equals_Repeat
@@ -500,32 +589,8 @@ package body Interactive_Consoles is
                   Insert (Console.Buffer, Last_Iter, Command.all);
                end if;
 
-               Output := new String'
-                 (Console.Handler (Command.all, Console.User_Data));
-
-               Get_End_Iter (Console.Buffer, Last_Iter);
-
-               Insert (Console.Buffer, Last_Iter, Output.all);
-
-               if Command.all /= "" and then Console.History /= null then
-                  Add_To_History
-                    (Console.History.all,
-                     History_Key (Console.Key.all), Command.all);
-                  Console.Current_Position := -1;
-               end if;
-
-               Get_Iter_At_Mark
-                 (Console.Buffer, Prompt_Iter, Console.Prompt_Mark);
-               Get_End_Iter (Console.Buffer, Last_Iter);
-
-               Apply_Tag
-                 (Console.Buffer,
-                  Console.Uneditable_Tag, Prompt_Iter, Last_Iter);
-
-               Display_Prompt (Console);
-
+               Execute_Command (Console, Command.all);
                Free (Command);
-               Free (Output);
             end;
 
             return True;
@@ -788,6 +853,12 @@ package body Interactive_Consoles is
          Cb => Mark_Set_Handler'Access,
          Slot_Object => Console);
 
+      Gtkada.Handlers.Widget_Callback.Object_Connect
+        (Console.View, "paste_clipboard",
+         Paste_Clipboard_Handler'Access,
+         Gtk_Widget (Console),
+         After => False);
+
       Gtkada.Handlers.Return_Callback.Object_Connect
         (Console.View, "button_release_event",
          Button_Release_Handler'Access,
@@ -796,7 +867,14 @@ package body Interactive_Consoles is
 
       Gtkada.Handlers.Return_Callback.Object_Connect
         (Console.View, "button_press_event",
-         Button_Press_Handler'Access,
+         Gtkada.Handlers.Return_Callback.To_Marshaller
+           (Button_Press_Handler'Access),
+         Gtk_Widget (Console),
+         After => False);
+
+      Gtkada.Handlers.Widget_Callback.Object_Connect
+        (Console.View, "selection_received",
+         Selection_Received_Handler'Access,
          Gtk_Widget (Console),
          After => False);
 
@@ -886,5 +964,127 @@ package body Interactive_Consoles is
            (Console.History.all, History_Key (Console.Key.all));
       end if;
    end Get_History;
+
+   ------------------------
+   -- Insert_And_Execute --
+   ------------------------
+
+   procedure Insert_And_Execute
+     (Object : access Gtk_Widget_Record'Class;
+      Text   : String)
+   is
+      procedure Get_Next_Command
+        (Text     : String;
+         Start_At : in out Natural;
+         Command  : in out GNAT.OS_Lib.String_Access);
+      --  Look into Text, starting at Start_At, for the next command
+      --  Commands are separated by ASCII.LF and trimmed
+
+      Console   : constant Interactive_Console := Interactive_Console (Object);
+      Last_Iter : Gtk_Text_Iter;
+      Command   : GNAT.OS_Lib.String_Access;
+      Start_At  : Natural := Text'First;
+
+      ----------------------
+      -- Get_Next_Command --
+      ----------------------
+
+      procedure Get_Next_Command
+        (Text     : String;
+         Start_At : in out Natural;
+         Command  : in out GNAT.OS_Lib.String_Access)
+      is
+         End_At : Natural := Start_At - 1;
+      begin
+         --  Look for end-of-line
+
+         for J in Start_At .. Text'Last loop
+            if Text (J) = ASCII.LF then
+               End_At := J;
+               exit;
+            end if;
+         end loop;
+
+         if End_At < Start_At then
+            End_At := Text'Last;
+         end if;
+
+         Command := new String'
+           (Trim (Text (Start_At .. End_At), Ada.Strings.Both));
+
+         Start_At := End_At + 1;
+      end Get_Next_Command;
+
+   begin
+      if Console.Input_Blocked then
+         return;
+      end if;
+
+      while Start_At <= Text'Last loop
+         Get_Next_Command (Text, Start_At, Command);
+
+         --  Ignore empty lines
+         if Command /= null
+           and then Command.all /= ""
+           and then Command (Command'First) /= ASCII.LF
+         then
+            Get_End_Iter (Console.Buffer, Last_Iter);
+            Insert (Console.Buffer, Last_Iter, Command.all);
+
+            --  Execute only if Command ends with a Line Feed
+
+            if Console.Handler /= null
+              and then Command (Command'Last) = ASCII.LF
+            then
+               Execute_Command
+                 (Console,
+                  Command (Command'First .. Command'Last - 1));
+            end if;
+         end if;
+
+         Free (Command);
+      end loop;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+   end Insert_And_Execute;
+
+   ---------------------
+   -- Execute_Command --
+   ---------------------
+
+   procedure Execute_Command
+     (Console : Interactive_Console;
+      Command : String)
+   is
+      Output      : GNAT.OS_Lib.String_Access;
+      Prompt_Iter : Gtk_Text_Iter;
+      Last_Iter   : Gtk_Text_Iter;
+
+   begin
+      Output := new String'
+        (Console.Handler (Command, Console.User_Data));
+
+      Get_End_Iter (Console.Buffer, Last_Iter);
+      Insert (Console.Buffer, Last_Iter, Output.all);
+
+      if Command /= "" and then Console.History /= null then
+         Add_To_History
+           (Console.History.all,
+            History_Key (Console.Key.all), Command);
+         Console.Current_Position := -1;
+      end if;
+
+      Get_Iter_At_Mark (Console.Buffer, Prompt_Iter, Console.Prompt_Mark);
+      Get_End_Iter (Console.Buffer, Last_Iter);
+
+      Apply_Tag
+        (Console.Buffer,
+         Console.Uneditable_Tag, Prompt_Iter, Last_Iter);
+
+      Display_Prompt (Console);
+      Free (Output);
+   end Execute_Command;
 
 end Interactive_Consoles;
