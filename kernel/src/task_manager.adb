@@ -190,16 +190,41 @@ package body Task_Manager is
                --  ??? add the command to the list of done or failed commands.
 
                if Result = Success then
-                  Command_Queues.Concat
-                    (Manager.Queues (Current).Queue,
-                     Get_Consequence_Actions (Command));
+                  declare
+                     New_Queue : constant Command_Queues.List :=
+                       Get_Consequence_Actions (Command);
+                  begin
+                     Manager.Queues (Current).Total :=
+                       Manager.Queues (Current).Total
+                       + Command_Queues.Length (New_Queue);
+                     Command_Queues.Concat
+                       (Manager.Queues (Current).Queue,
+                        New_Queue);
+                  end;
+
+                  Free_Alternate_Actions (Command, True);
+                  Free_Consequence_Actions (Command, False);
                else
-                  Command_Queues.Concat
-                    (Manager.Queues (Current).Queue,
-                     Get_Alternate_Actions (Command));
+                  declare
+                     New_Queue : constant Command_Queues.List :=
+                       Get_Alternate_Actions (Command);
+                  begin
+                     Manager.Queues (Current).Total :=
+                       Manager.Queues (Current).Total
+                       + Command_Queues.Length (New_Queue);
+                     Command_Queues.Concat
+                       (Manager.Queues (Current).Queue,
+                        New_Queue);
+                  end;
+
+                  Free_Consequence_Actions (Command, True);
+                  Free_Alternate_Actions (Command, False);
                end if;
 
                Command_Queues.Next (Manager.Queues (Current).Queue);
+
+               Manager.Queues (Current).Done :=
+                 Manager.Queues (Current).Done + 1;
 
                --  If it was the last command in the queue, free the queue.
 
@@ -377,6 +402,10 @@ package body Task_Manager is
         Get_Or_Create_Task_Queue (Manager, Queue_Id, Active);
    begin
       Command_Queues.Append (Manager.Queues (Task_Queue).Queue, Command);
+
+      Manager.Queues (Task_Queue).Total :=
+        Manager.Queues (Task_Queue).Total + 1;
+
       Run (Manager, Active);
    end Add_Command;
 
