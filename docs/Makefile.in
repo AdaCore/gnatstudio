@@ -12,18 +12,24 @@ CP = cp -p
 IMAGES = gps_title.jpg *.gif
 
 TEXI2HTML_FLAGS=-split_chapter -menu
-TEXI=gps.texi projects.texi ../gvd/docs/gvd_contents.texi
+TEXI=gps.texi ../gvd/docs/gvd_contents.texi
 
-all: cp_gvd doc tutorial clean-temp-files
+all: cp_gvd stamp-eps doc tutorial clean-temp-files
 non-ps: common clean-temp-files
 static:
 
 cp_gvd:
-	@-for img in main-window breakpoints memory-view \
+	@-for img in main-window breakpoints memory-view call-stack \
 	     assembly canvas process colors tasks explorer tooltips; do \
 	  $(CP) ../gvd/docs/$${img}.gif .; \
-	  $(CP) ../gvd/docs/$${img}.eps .; \
 	done
+
+stamp-eps: $(IMAGES)
+	$(MAKE) clean
+	@-for img in [^g]*.gif; do \
+	  convert -compress rle $${img} `basename $${img} .gif`.eps; \
+	done
+	touch stamp-eps
 
 tutorial: gps-tutorial.html
 
@@ -109,7 +115,7 @@ clean-temp-files:
 
 clean: clean-temp-files
 	-$(RM) gps.info*
-	-$(RM) gps-tutorial*.html gps.html gps_*.html gps.ps gps.txt
+	-$(RM) gps-tutorial*.html gps.html gps_*.html gps.ps gps.txt stamp-*
 
 mostlyclean: clean
 
