@@ -23,8 +23,6 @@ with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Strings.Fixed;       use Ada.Strings.Fixed;
 with GNAT.OS_Lib;             use GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
-with System;                    use System;
-with Unchecked_Conversion;
 
 package body String_Utils is
 
