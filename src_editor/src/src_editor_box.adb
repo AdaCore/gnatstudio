@@ -959,18 +959,23 @@ package body Src_Editor_Box is
       --  done by using the block information.
 
       function Get_Enclosing_Subprogram return String is
-         L : Buffer_Line_Type := Buffer_Line_Type (Line);
+         L     : Buffer_Line_Type := Buffer_Line_Type (Line);
+         Block : Block_Record;
       begin
+         Block := Get_Block (Box.Source_Buffer, L);
+
+         if Block.Block_Type = Cat_Unknown
+           and then Block.Indentation_Level = 0
+         then
+            return "";
+         end if;
+
          while L > 1 loop
-            declare
-               Block : constant Block_Record :=
-                 Get_Block (Box.Source_Buffer, L);
-            begin
-               if Block.Block_Type in Enclosing_Entity_Category then
-                  return Block.Name.all;
-               end if;
-               L := L - 1;
-            end;
+            if Block.Block_Type in Enclosing_Entity_Category then
+               return Block.Name.all;
+            end if;
+            L := L - 1;
+            Block := Get_Block (Box.Source_Buffer, L);
          end loop;
 
          return "";
