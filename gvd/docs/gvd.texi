@@ -729,6 +729,10 @@ Show all subcomponents of the selected item.
      @item Clone @i{component}.
 Clone the selected component into a new, independant item.
 
+     @item View memory at &@i{component}.
+Bring up the memory view dialog and explore memory at the address of the 
+component.
+
      @item Set value of @i{component}.
 Set the value of a selected component. This will open an entry box
 where you can enter the new value of a variable/component.
@@ -927,6 +931,10 @@ state changes (e.g after a step or a next command). To freeze the display
 in the canvas, you can either click on the corresponding icon in the data
 window, or use the contextual menu for the specific item (see
 @ref{The Data Window} for more information).
+
+     @item View memory at &@i{selection}
+Bring up the memory view dialog and explore memory at the address of the 
+selection.
 
      @item Set Breakpoint on Line @i{xx}.
 Set a breakpoint on the line pointed by the cursor, in the current file.

@@ -19,6 +19,8 @@ New features in GVD 1.1.0
 - New command line option --editor-window that gives a much better integration
   with external editors such as Glide/Emacs.
 - A graphical list of processes is now displayed when attaching to a process.
+- New item in data and source editor contextual menus: view memory at the address
+  of a given variable.
 
 New features in GVD 1.0.2
 
