@@ -61,7 +61,7 @@ with Glide_Kernel.Contexts;     use Glide_Kernel.Contexts;
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
 with Glide_Kernel.Project;      use Glide_Kernel.Project;
---  with Glide_Kernel.Console;      use Glide_Kernel.Console;
+with Glide_Kernel.Console;      use Glide_Kernel.Console;
 with Glide_Kernel.Scripts;      use Glide_Kernel.Scripts;
 with GVD.Preferences;           use GVD.Preferences;
 with GVD.Main_Window;           use GVD.Main_Window;
@@ -1908,9 +1908,9 @@ package body Glide_Kernel is
       end if;
 
       if Lib_Info = No_LI_File then
---           Insert (Kernel,
---                   -"LI file not found for "
---                 & Full_Name (Get_Declaration_File_Of (Entity)).all);
+         Insert (Kernel,
+                 -"LI file not found for "
+               & Full_Name (Get_Declaration_File_Of (Entity)).all);
          Tree := Null_Scope_Tree;
          Node := Null_Scope_Tree_Node;
          return;
@@ -1928,8 +1928,8 @@ package body Glide_Kernel is
       Node := Find_Entity_Scope (Tree, Entity);
 
       if Node = Null_Scope_Tree_Node then
---           Insert (Kernel,
---                   -"Couldn't find the scope tree for " & Get_Name (Entity));
+         Insert (Kernel,
+                 -"Couldn't find the scope tree for " & Get_Name (Entity));
          Trace (Me, "Couldn't find entity "
                 & Get_Name (Entity) & " in "
                 & Base_Name (Get_LI_Filename (Lib_Info))
