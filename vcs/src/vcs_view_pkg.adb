@@ -824,6 +824,7 @@ package body VCS_View_Pkg is
       E : constant VCS_View_Access := VCS_View_Access (Explorer);
    begin
       E.Hide_Up_To_Date := not E.Hide_Up_To_Date;
+      Set_Pref (E.Kernel, Hide_Up_To_Date, E.Hide_Up_To_Date);
       Refresh (E);
    end Change_Hide_Up_To_Date;
 
@@ -837,6 +838,7 @@ package body VCS_View_Pkg is
       E : constant VCS_View_Access := VCS_View_Access (Explorer);
    begin
       E.Hide_Not_Registered := not E.Hide_Not_Registered;
+      Set_Pref (E.Kernel, Hide_Not_Registered, E.Hide_Not_Registered);
       Refresh (E);
    end Change_Hide_Not_Registered;
 
