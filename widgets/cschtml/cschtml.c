@@ -1145,7 +1145,7 @@ init (CscHTML* html)
 	html->allow_font_switch = TRUE;
 
 	html->pointer_url = NULL;
-	html->default_font_face = g_strdup("lucida");
+	csc_html_set_default_font_face (html, "sans");
 	html->hand_cursor = gdk_cursor_new (GDK_HAND2);
 	html->ibeam_cursor = gdk_cursor_new (GDK_XTERM);
 	html->hadj_connection = 0;
