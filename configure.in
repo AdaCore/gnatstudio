@@ -15,6 +15,7 @@ DEFAULT_PS="ps x 2> /dev/null || ps -u \$USER 2> /dev/null || ps"
 HTML_BROWSER="netscape"
 OPAQUE_MDI=False
 HOST_TYPE=Unix
+PYTHON_LIBS=""
 
 ROOT=`pwd`
 TARGET=$host
@@ -159,7 +160,14 @@ case "${host}" in
       *-esix5* )                opsys=esix5r4 ;;
       *-esix* )                 opsys=esix ;;
       *-xenix* )                opsys=xenix ;;
-      *-linux-gnu* )            opsys=gnu-linux ;;
+      *-linux-gnu* )
+	opsys=gnu-linux
+
+	# If we do not link with -Wl,-export-dynamic, commands like
+	# "import time" will raise errors in the interpreter
+	PYTHON_LIBS="-Wl,-export-dynamic -ldl -lutil -lm"
+	;;
+
       *-sco3.2v4* )             opsys=sco4  ;;
       *-sco3.2v5* )             opsys=sco5 ;;
       *-sysv4.2uw* | *-sysv5uw* ) opsys=unixware ;;
@@ -220,6 +228,7 @@ AC_SUBST(PYTHON_BASE)
 AC_SUBST(PYTHON_VERSION)
 AC_SUBST(PYTHON_ADA_SOURCE)
 AC_SUBST(PYTHON_DIR)
+AC_SUBST(PYTHON_LIBS)
 
 AC_CONFIG_SUBDIRS(kernel/src_info/sn)
 AC_CONFIG_SUBDIRS(kernel/src_info/sn/snsrc)
