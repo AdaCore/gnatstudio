@@ -66,7 +66,10 @@ package Glide_Main_Window is
    --  Internal initialization function.
 
    function Anim_Cb (Kernel : Glide_Kernel.Kernel_Handle) return Boolean;
-   --  Function called when the glide animation needs to be updated.
+   --  Function called when the GPS animation needs to be updated.
+
+   procedure Display_Default_Image (Kernel : Glide_Kernel.Kernel_Handle);
+   --  Display the default image in the top right corner of the main window.
 
    procedure Quit (Main_Window : access Glide_Window_Record'Class);
    --  Ask the user whether the MDI childs should be saved, then exit GPS.

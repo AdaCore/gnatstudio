@@ -54,6 +54,17 @@ package body Glide_Main_Window is
       return True;
    end Anim_Cb;
 
+   ---------------------------
+   -- Display_Default_Image --
+   ---------------------------
+
+   procedure Display_Default_Image (Kernel : Glide_Kernel.Kernel_Handle) is
+      Window : constant Glide_Window :=
+        Glide_Window (Get_Main_Window (Kernel));
+   begin
+      Set (Window.Animation_Image, Get_Static_Image (Window.Animation));
+   end Display_Default_Image;
+
    -------------
    -- Gtk_New --
    -------------
