@@ -47,9 +47,8 @@ with Glide_Kernel;              use Glide_Kernel;
 with Src_Info.Queries;          use Src_Info.Queries;
 with Src_Info;                  use Src_Info;
 with Traces;                    use Traces;
-with Prj_API;                   use Prj_API;
-with Prj;                       use Prj;
-with Types;                     use Types;
+with Projects;                  use Projects;
+with Projects.Registry;         use Projects.Registry;
 with Fname;                     use Fname;
 with Namet;                     use Namet;
 with Language_Handlers.Glide;   use Language_Handlers.Glide;
@@ -170,11 +169,8 @@ package body Browsers.Dependency_Items is
    --  Idle loop for Examine_From_Dependencies
 
    function Project_Of
-     (Kernel : access Kernel_Handle_Record'Class;
-      Item : access File_Item_Record'Class) return Project_Id;
+     (Item : access File_Item_Record'Class) return Project_Type;
    --  Return the name of the project that contains Item.
-   --  This is cached for efficiency.
-   --  ??? Needs to be reset when the project or its view changes
 
    function Load_Desktop
      (Node : Node_Ptr; User : Kernel_Handle) return Gtk_Widget;
@@ -937,7 +933,7 @@ package body Browsers.Dependency_Items is
         (Item, Browser,
          Make_Source_File (Source_Filename,
                            Handler,
-                           Get_Project_View (Kernel),
+                           Get_Project (Kernel),
                            Get_Predefined_Source_Path (Kernel)));
    end Gtk_New;
 
@@ -1017,35 +1013,19 @@ package body Browsers.Dependency_Items is
    ----------------
 
    function Project_Of
-     (Kernel : access Kernel_Handle_Record'Class;
-      Item : access File_Item_Record'Class) return Project_Id
+     (Item : access File_Item_Record'Class) return Project_Type
    is
       File_Name : constant String := Get_Source_Filename (Get_Source (Item));
-      P : Project_Id;
+      P : Project_Type;
    begin
-      if Item.Project_Name = No_Name then
-         P := Get_Project_From_File (Get_Project_View (Kernel), File_Name);
+      P := Get_Project_From_File
+        (Get_Registry (Get_Kernel (Get_Browser (Item))), File_Name);
 
-         if P /= No_Project then
-            declare
-               P_Name : constant String := Project_Name (P);
-            begin
-               Name_Len := P_Name'Length;
-               Name_Buffer (1 .. Name_Len) := P_Name;
-               Item.Project_Name := Name_Find;
-            end;
-         else
-            --  ??? Eventually useless when we have a real project file for the
-            --  runtime
-            Item.Project_Name := No_Name;
-         end if;
+      if P = No_Project then
+         Trace (Me, "Project_Of return No_Project for " & File_Name);
       end if;
 
-      if Item.Project_Name = No_Name then
-         return No_Project;
-      else
-         return Get_Project_View_From_Name (Item.Project_Name);
-      end if;
+      return P;
    end Project_Of;
 
    ---------------------------
@@ -1105,7 +1085,7 @@ package body Browsers.Dependency_Items is
         (File_Selection_Context_Access (Context),
          Directory    => Dir_Name (Full_Name),
          File_Name    => Base_Name (Full_Name),
-         Project_View => Project_Of (Get_Kernel (Browser), Item));
+         Project      => Project_Of (Item));
 
       if Menu /= null then
          Gtk_New (Mitem, -"Analyze other file (spec or body)");

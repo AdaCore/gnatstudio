@@ -27,7 +27,6 @@ with Pango.Layout;
 with Src_Info;
 with Glide_Kernel;
 with Browsers.Canvas;
-with Types;
 
 package Browsers.Dependency_Items is
 
@@ -108,8 +107,6 @@ private
    type File_Item_Record is new Browsers.Canvas.Arrow_Item_Record with
    record
       Source : Src_Info.Internal_File;
-      Project_Name : Types.Name_Id := Types.No_Name;
-      --  Project that the file belongs to. This is only computed on demand
    end record;
 
    type Dependency_Link_Record is new Browsers.Canvas.Browser_Link_Record
