@@ -37,6 +37,8 @@ doc:      gps.txt gps.html gps.info gps.ps
 gps_pg:   gps_pg.ps gps_pg.html
 
 gps-tutorial.html:                tutorial.texi
+	perl ./texi2html -out_file $@ $< -menu
+
 gps_pg.html gps_pg.ps:            gps_pg.texi
 gps.html gps.ps gps.info gps.txt: ${TEXI}
 
@@ -102,6 +104,8 @@ install:
 	done
 	-$(INSTALL_DATA) gps-animation.gif $(sharedir)
 	-$(INSTALL_DATA) gps-splash.jpg $(sharedir)
+	-${INSTALL_DATA} gps_index.xml ${docdir}/html
+	-${INSTALL_DATA} help_index.html ${docdir}/html
 
 clean-temp-files:
 	-$(RM) *.aux
