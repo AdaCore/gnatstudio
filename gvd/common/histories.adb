@@ -187,18 +187,18 @@ package body Histories is
    ----------
 
    procedure Load (Hist : in out History_Record; File_Name : String) is
-      N : Node_Ptr;
-      File : Node_Ptr;
-      Key  : Node_Ptr;
-      Num  : Natural;
+      N     : Node_Ptr;
+      File  : Node_Ptr;
+      Key   : Node_Ptr;
+      Num   : Natural;
       Value : History_Key_Access;
+
    begin
-      if Is_Regular_File (File_Name) then
-         File := Parse (File_Name);
-      else
+      if not Is_Regular_File (File_Name) then
          return;
       end if;
 
+      File := Parse (File_Name);
       Key := File.Child;
 
       while Key /= null loop
