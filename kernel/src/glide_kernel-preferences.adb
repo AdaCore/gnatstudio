@@ -130,6 +130,15 @@ package body Glide_Kernel.Preferences is
       Register_Property
         (Kernel.Preferences, Param_Spec (Start_Maximized), -"General");
 
+      Display_Welcome := Param_Spec_Boolean (Gnew_Boolean
+        (Name    => "General-Display-Welcome",
+         Nick    => -"Display Welcome Window",
+         Blurb   => -("True if GPS window should display the welcome window"
+                      & " for the selection of the project"),
+         Default => True));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (Display_Welcome), -"General");
+
       Toolbar_Show_Text := Param_Spec_Boolean (Gnew_Boolean
         (Name    => "General-Toolbar-Text",
          Nick    => -"Show text in tool bar",

@@ -105,6 +105,7 @@ package Glide_Kernel.Preferences is
    Tmp_Dir               : Param_Spec_String;
    Toolbar_Show_Text     : Param_Spec_Boolean;
    Save_Desktop_On_Exit  : Param_Spec_Boolean;
+   Display_Welcome       : Param_Spec_Boolean;
 
    -- Messages --
    Message_Highlight    : Param_Spec_Color;
