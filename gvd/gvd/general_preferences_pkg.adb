@@ -44,13 +44,17 @@ package body General_Preferences_Pkg is
      (Combo : access Gvd_Color_Combo_Record'Class;
       Args  : Gtk.Arguments.Gtk_Args);
 
-procedure Gtk_New (General_Preferences : out General_Preferences_Access) is
+procedure Gtk_New
+  (General_Preferences : out General_Preferences_Access;
+   Main_Window         : access Gtk.Window.Gtk_Window_Record'Class) is
 begin
    General_Preferences := new General_Preferences_Record;
-   General_Preferences_Pkg.Initialize (General_Preferences);
+   General_Preferences_Pkg.Initialize (General_Preferences, Main_Window);
 end Gtk_New;
 
-procedure Initialize (General_Preferences : access General_Preferences_Record'Class) is
+procedure Initialize
+  (General_Preferences : access General_Preferences_Record'Class;
+   Main_Window         : access Gtk.Window.Gtk_Window_Record'Class) is
    pragma Suppress (All_Checks);
    Big_Item_Spin_Adj : Gtk_Adjustment;
 
@@ -634,9 +638,9 @@ begin
 
    Gtk_New (General_Preferences.Ok_Button, -"OK");
    Set_Flags (General_Preferences.Ok_Button, Can_Default);
-   Button_Callback.Connect
+   Widget_Callback.Object_Connect
      (General_Preferences.Ok_Button, "clicked",
-      Button_Callback.To_Marshaller (On_Ok_Button_Clicked'Access));
+      Widget_Callback.To_Marshaller (On_Ok_Button_Clicked'Access), General_Preferences);
    Add (General_Preferences.Hbuttonbox6, General_Preferences.Ok_Button);
 
    Gtk_New (General_Preferences.Reset_Button, -"Reset");
@@ -652,6 +656,8 @@ begin
      (General_Preferences.Help_Button, "clicked",
       Button_Callback.To_Marshaller (On_Help_Button_Clicked'Access));
    Add (General_Preferences.Hbuttonbox6, General_Preferences.Help_Button);
+
+   General_Preferences.Main_Window := Gtk_Window (Main_Window);
 end Initialize;
 
    -------------------

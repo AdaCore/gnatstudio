@@ -124,11 +124,18 @@ package General_Preferences_Pkg is
       Ok_Button : Gtk_Button;
       Reset_Button : Gtk_Button;
       Help_Button : Gtk_Button;
+
+      Main_Window : Gtk.Window.Gtk_Window;
+      --  The main window to which theis preferences dialog belongs
    end record;
    type General_Preferences_Access is access all General_Preferences_Record'Class;
 
-   procedure Gtk_New (General_Preferences : out General_Preferences_Access);
-   procedure Initialize (General_Preferences : access General_Preferences_Record'Class);
+   procedure Gtk_New
+     (General_Preferences : out General_Preferences_Access;
+      Main_Window         : access Gtk.Window.Gtk_Window_Record'Class);
+   procedure Initialize
+     (General_Preferences : access General_Preferences_Record'Class;
+      Main_Window         : access Gtk.Window.Gtk_Window_Record'Class);
 
    General_Preferences : General_Preferences_Access;
 
