@@ -23,14 +23,15 @@ with Glib.Xml_Int;     use Glib.Xml_Int;
 with Glib.Object;      use Glib.Object;
 with Gdk.GC;           use Gdk.GC;
 with Gdk.Event;        use Gdk.Event;
-with Gtk.Enums;            use Gtk.Enums;
+with Gdk.Drawable;     use Gdk.Drawable;
 with Gtk.Image;            use Gtk.Image;
 with Gtk.Image_Menu_Item;  use Gtk.Image_Menu_Item;
 with Gtk.Main;         use Gtk.Main;
 with Gtk.Menu;         use Gtk.Menu;
 with Gtk.Menu_Item;    use Gtk.Menu_Item;
-with Gtk.Stock;            use Gtk.Stock;
+with Gtk.Style;        use Gtk.Style;
 with Gtk.Widget;       use Gtk.Widget;
+with Pango.Layout;     use Pango.Layout;
 with Gtkada.Canvas;    use Gtkada.Canvas;
 with Gtkada.Handlers;  use Gtkada.Handlers;
 with Gtkada.MDI;       use Gtkada.MDI;
@@ -235,6 +236,12 @@ package body Browsers.Call_Graph is
       Args    : String_List_Utils.String_List.List) return String;
    --  Handle shell commands
 
+   procedure Examine_Ancestors_Call_Graph
+     (Item : access Arrow_Item_Record'Class);
+   procedure Examine_Entity_Call_Graph
+     (Item : access Arrow_Item_Record'Class);
+   --  Callbacks for the title bar buttons
+
    -------------
    -- Gtk_New --
    -------------
@@ -260,19 +267,10 @@ package body Browsers.Call_Graph is
       May_Have_To_Dependencies : Boolean) is
    begin
       Item.Entity   := Copy (Entity);
-
-      if Get_Declaration_File_Of (Entity) /= "" then
-         Initialize
-           (Item, Browser, Get_Name (Entity) & ASCII.LF
-            & Get_Declaration_File_Of (Entity)
-            & ':' & Image (Get_Declaration_Line_Of (Entity)));
-      else
-         Initialize
-           (Item, Browser, Get_Name (Entity) & ASCII.LF & (-"<Unresolved>"));
-      end if;
-
-      Set_Left_Arrow (Item, True);
-      Set_Right_Arrow (Item, May_Have_To_Dependencies);
+      Initialize (Item, Browser, Get_Name (Entity),
+                  Examine_Ancestors_Call_Graph'Access,
+                  Examine_Entity_Call_Graph'Access);
+      Set_Children_Shown (Item, not May_Have_To_Dependencies);
    end Initialize;
 
    -------------
@@ -281,7 +279,7 @@ package body Browsers.Call_Graph is
 
    procedure Destroy (Item : in out Entity_Item_Record) is
    begin
-      Destroy (Text_Item_Record (Item));
+      Destroy (Arrow_Item_Record (Item));
       Destroy (Item.Entity);
    end Destroy;
 
@@ -493,8 +491,8 @@ package body Browsers.Call_Graph is
 
       Item := Add_Entity_If_Not_Present (Browser, Node);
 
-      if Get_Right_Arrow (Item) then
-         Set_Right_Arrow (Item, False);
+      if not Children_Shown (Item) then
+         Set_Children_Shown (Item, True);
 
          --  If we have a renaming, add the entry for the renamed entity
          Renaming_Of (Kernel, Entity, Is_Renaming, Rename);
@@ -518,6 +516,7 @@ package body Browsers.Call_Graph is
             Process_Item (Node);
          end if;
 
+         Redraw_Title_Bar (Item);
          Layout (Browser, Force => False);
          Refresh_Canvas (Get_Canvas (Browser));
       end if;
@@ -632,7 +631,6 @@ package body Browsers.Call_Graph is
                Free (Tree);
             end if;
 
-
             Next (Get_Kernel (Data.Browser), Data.Iter.all);
             return True;
 
@@ -671,7 +669,8 @@ package body Browsers.Call_Graph is
 
       --  Look for an existing item corresponding to entity
       Item := Add_Entity_If_Not_Present (Browser, Entity);
-      Set_Left_Arrow (Item, False);
+      Set_Parents_Shown (Item, True);
+      Redraw_Title_Bar (Item);
 
       --  If we have a renaming, add the entry for the renamed entity
       Renaming_Of (Kernel, Entity, Is_Renaming, Rename);
@@ -1112,25 +1111,27 @@ package body Browsers.Call_Graph is
          Pop_State (Get_Kernel (Entity));
    end Find_All_Local_References_From_Contextual;
 
-   --------------------------
-   -- Button_Click_On_Left --
-   --------------------------
+   ----------------------------------
+   -- Examine_Ancestors_Call_Graph --
+   ----------------------------------
 
-   procedure Button_Click_On_Left (Item : access Entity_Item_Record) is
+   procedure Examine_Ancestors_Call_Graph
+     (Item : access Arrow_Item_Record'Class) is
    begin
       Examine_Ancestors_Call_Graph
-        (Get_Kernel (Get_Browser (Item)), Item.Entity);
-   end Button_Click_On_Left;
+        (Get_Kernel (Get_Browser (Item)), Entity_Item (Item).Entity);
+   end Examine_Ancestors_Call_Graph;
 
-   ---------------------------
-   -- Button_Click_On_Right --
-   ---------------------------
+   -------------------------------
+   -- Examine_Entity_Call_Graph --
+   -------------------------------
 
-   procedure Button_Click_On_Right (Item : access Entity_Item_Record) is
+   procedure Examine_Entity_Call_Graph
+     (Item : access Arrow_Item_Record'Class) is
    begin
       Examine_Entity_Call_Graph
-        (Get_Kernel (Get_Browser (Item)), Item.Entity);
-   end Button_Click_On_Right;
+        (Get_Kernel (Get_Browser (Item)), Entity_Item (Item).Entity);
+   end Examine_Entity_Call_Graph;
 
    --------------------------------
    -- Call_Graph_Contextual_Menu --
@@ -1259,7 +1260,7 @@ package body Browsers.Call_Graph is
 
       if Menu /= null then
          Gtk_New (Mitem, Get_Name (Item.Entity) & (-" calls..."));
-         Gtk_New (Pix, Stock_Go_Forward, Icon_Size_Menu);
+         Gtk_New (Pix, Get_Children_Arrow (Get_Browser (Item)));
          Set_Image (Mitem, Pix);
          Append (Menu, Mitem);
          Context_Callback.Connect
@@ -1267,10 +1268,10 @@ package body Browsers.Call_Graph is
             Context_Callback.To_Marshaller
               (Edit_Entity_Call_Graph_From_Contextual'Access),
             Context);
-         Set_Sensitive (Mitem, Get_Right_Arrow (Item));
+         Set_Sensitive (Mitem, not Children_Shown (Item));
 
          Gtk_New (Mitem, Get_Name (Item.Entity) & (-" is called by..."));
-         Gtk_New (Pix, Stock_Go_Back, Icon_Size_Menu);
+         Gtk_New (Pix, Get_Parents_Arrow (Get_Browser (Item)));
          Set_Image (Mitem, Pix);
          Append (Menu, Mitem);
          Context_Callback.Connect
@@ -1278,7 +1279,7 @@ package body Browsers.Call_Graph is
             Context_Callback.To_Marshaller
               (Edit_Ancestors_Call_Graph_From_Contextual'Access),
             Context);
-         Set_Sensitive (Mitem, Get_Left_Arrow (Item));
+         Set_Sensitive (Mitem, not Parents_Shown (Item));
 
          Gtk_New (Mitem, -"Go to spec");
          Append (Menu, Mitem);
@@ -1515,5 +1516,42 @@ package body Browsers.Call_Graph is
          Cap_Style  => Cap_Butt,
          Join_Style => Join_Miter);
    end Draw_Link;
+
+   ---------------------
+   -- Resize_And_Draw --
+   ---------------------
+
+   procedure Resize_And_Draw
+     (Item                        : access Entity_Item_Record;
+      Width, Height               : Glib.Gint;
+      Width_Offset, Height_Offset : Glib.Gint;
+      Xoffset, Yoffset            : in out Glib.Gint;
+      Layout                  : access Pango.Layout.Pango_Layout_Record'Class)
+   is
+      W, H : Gint;
+   begin
+      if Get_Declaration_File_Of (Item.Entity) /= "" then
+         Set_Text (Layout,
+                   Get_Declaration_File_Of (Item.Entity)
+                   & ':' & Image (Get_Declaration_Line_Of (Item.Entity)));
+      else
+         Set_Text (Layout, -"<Unresolved>");
+      end if;
+
+      Get_Pixel_Size (Layout, W, H);
+
+      Resize_And_Draw
+        (Arrow_Item_Record (Item.all)'Access,
+         Gint'Max (Width, W + 2 * Margin),
+         Height + H,
+         Width_Offset, Height_Offset, Xoffset, Yoffset, Layout);
+
+      Draw_Layout
+        (Drawable => Pixmap (Item),
+         GC       => Get_Black_GC (Get_Style (Get_Browser (Item))),
+         X        => Xoffset + Margin,
+         Y        => Yoffset + 1,
+         Layout   => Pango_Layout (Layout));
+   end Resize_And_Draw;
 
 end Browsers.Call_Graph;

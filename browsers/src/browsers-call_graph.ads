@@ -24,6 +24,7 @@ with Gdk.GC;
 with Gdk.Window;
 with Gtk.Main;
 with Gtk.Menu;
+with Pango.Layout;
 with Gtkada.Canvas;
 with Glide_Kernel;
 with Browsers.Canvas;
@@ -43,8 +44,8 @@ package Browsers.Call_Graph is
    -- Entity items --
    ------------------
 
-   type Entity_Item_Record is new
-     Browsers.Canvas.Text_Item_With_Arrows_Record with private;
+   type Entity_Item_Record is new Browsers.Canvas.Arrow_Item_Record
+     with private;
    type Entity_Item is access all Entity_Item_Record'Class;
 
    procedure Gtk_New
@@ -74,12 +75,6 @@ package Browsers.Call_Graph is
       Menu  : Gtk.Menu.Gtk_Menu) return Glide_Kernel.Selection_Context_Access;
    --  Return the context to use for this item
 
-   procedure Button_Click_On_Left (Item : access Entity_Item_Record);
-   --  Handles button clicks on the left arrow.
-
-   procedure Button_Click_On_Right (Item : access Entity_Item_Record);
-   --  Handles button clicks on the right arrow.
-
    --------------------
    -- Renaming links --
    --------------------
@@ -102,8 +97,15 @@ package Browsers.Call_Graph is
    --  Override the default drawing procedure for links
 
 private
-   type Entity_Item_Record is new
-     Browsers.Canvas.Text_Item_With_Arrows_Record
+   procedure Resize_And_Draw
+     (Item                        : access Entity_Item_Record;
+      Width, Height               : Glib.Gint;
+      Width_Offset, Height_Offset : Glib.Gint;
+      Xoffset, Yoffset            : in out Glib.Gint;
+      Layout                  : access Pango.Layout.Pango_Layout_Record'Class);
+   --  See doc for inherited subprogram
+
+   type Entity_Item_Record is new Browsers.Canvas.Arrow_Item_Record
    with record
       Entity : Src_Info.Queries.Entity_Information;
    end record;
