@@ -872,6 +872,7 @@ package body Glide_Result_View is
 
          return True;
       else
+         Grab_Focus (Explorer.Tree);
 
          --  If there is no selection, select the item under the cursor.
          Get_Path_At_Event;
