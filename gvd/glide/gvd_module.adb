@@ -18,7 +18,11 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Glib;                    use Glib;
 with Glib.Object;             use Glib.Object;
+with Gdk.Drawable;            use Gdk.Drawable;
+with Gdk.Font;                use Gdk.Font;
+with Gdk.Pixmap;              use Gdk.Pixmap;
 with Gdk.Types;               use Gdk.Types;
 with Gdk.Types.Keysyms;       use Gdk.Types.Keysyms;
 with Gtk.Bin;                 use Gtk.Bin;
@@ -36,6 +40,9 @@ with Gtkada.Handlers;         use Gtkada.Handlers;
 with Gtkada.MDI;              use Gtkada.MDI;
 with Factory_Data;            use Factory_Data;
 
+with Display_Items;           use Display_Items;
+with Items;                   use Items;
+with GVD.Canvas;              use GVD.Canvas;
 with GVD.Dialogs;             use GVD.Dialogs;
 with GVD.Menu;                use GVD.Menu;
 with GVD.Types;               use GVD.Types;
@@ -43,6 +50,8 @@ with GVD.Toolbar;             use GVD.Toolbar;
 with GVD.Process;             use GVD.Process;
 with Debugger;                use Debugger;
 with Language;                use Language;
+with Language_Handlers;       use Language_Handlers;
+with Basic_Types;             use Basic_Types;
 
 with Glide_Page;              use Glide_Page;
 with Glide_Main_Window;       use Glide_Main_Window;
@@ -58,12 +67,23 @@ package body GVD_Module is
 
    Me : Debug_Handle := Create ("Debugger");
 
+   Max_Tooltip_Width : constant := 400;
+   Max_Tooltip_Height : constant := 300;
+   --  Maximum size to use for the tooltip windows
+
    procedure GVD_Contextual
      (Object  : access GObject_Record'Class;
       Context : access Selection_Context'Class;
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
    --  Generate the contextual menu entries for contextual menus in other
    --  modules than the debugger.
+
+   procedure Tooltip_Handler
+     (Sel_Context : access Selection_Context'Class;
+      Pixmap      : out Gdk.Gdk_Pixmap;
+      Width       : out Gint;
+      Height      : out Gint);
+   --  Create a pixmap suitable for a tooltip, if debugger has been initialized
 
    procedure Set_Sensitive
      (Kernel    : Kernel_Handle;
@@ -366,9 +386,9 @@ package body GVD_Module is
            (Get_Main_Window (Get_Kernel (Context))).Debugger;
 
          if Debugger /= null then
-            Lang := Get_Language (Debugger);
-            --  ??? Should query the project module instead of the debugger
-            --  Lang := Get_Language (File_Information (Entity));
+            Lang := Get_Language_From_File
+              (Get_Language_Handler (Get_Kernel (Context)),
+               File_Information (Entity));
 
             Gtk_New (Mitem, Label => -"Debug");
             Gtk_New (Submenu);
@@ -460,6 +480,154 @@ package body GVD_Module is
          end if;
       end if;
    end GVD_Contextual;
+
+   ---------------------
+   -- Tooltip_Handler --
+   ---------------------
+
+   procedure Tooltip_Handler
+     (Sel_Context : access Selection_Context'Class;
+      Pixmap      : out Gdk.Gdk_Pixmap;
+      Width       : out Gint;
+      Height      : out Gint)
+   is
+      Selection      : Entity_Selection_Context_Access;
+      Debugger       : Debugger_Process_Tab;
+      Lang           : Language_Access;
+      Kernel         : Kernel_Handle;
+
+      Value          : Basic_Types.String_Access;
+      Context        : Items.Drawing_Context;
+      Chars_Per_Line : Gint;
+      Index          : Natural;
+      Line           : Gint;
+      Max            : Natural;
+      W              : Gint;
+
+   begin
+      Pixmap := null;
+      Width  := 0;
+      Height := 0;
+
+      if Sel_Context.all not in Entity_Selection_Context'Class then
+         return;
+      end if;
+
+      Kernel    := Get_Kernel (Sel_Context);
+      Selection := Entity_Selection_Context_Access (Sel_Context);
+      Debugger  := Get_Current_Process (Get_Main_Window (Kernel));
+
+      if Debugger.Debugger = null
+        or else not Has_Entity_Name_Information (Selection)
+      then
+         return;
+      end if;
+
+      Push_State (Kernel, Busy);
+      Lang := Get_Language_From_File
+        (Get_Language_Handler (Kernel), File_Information (Selection));
+
+      declare
+         Variable_Name : constant String :=
+           Entity_Name_Information (Selection);
+      begin
+         if Variable_Name /= ""
+           and then Can_Tooltip_On_Entity (Lang, Variable_Name)
+         then
+            Value := new String' (Value_Of (Debugger.Debugger, Variable_Name));
+
+            if Value.all = "" then
+               Free (Value);
+               Pop_State (Kernel);
+               return;
+            end if;
+
+         else
+            Pop_State (Kernel);
+            return;
+         end if;
+
+         Context := Create_Tooltip_Drawing_Context
+           (Debugger.Data_Canvas, Null_Pixmap);
+         Chars_Per_Line :=
+           Max_Tooltip_Width / Char_Width (Context.Font, Character' ('m'));
+
+         Height := Get_Ascent (Context.Font) + Get_Descent (Context.Font);
+
+         if Value'Length > Chars_Per_Line then
+            Width := Gint'Min
+              (Max_Tooltip_Width,
+               Chars_Per_Line * Char_Width (Context.Font, Character' ('m'))
+               + 4);
+            Height := Gint'Min
+              (Max_Tooltip_Height,
+               (1 + Value'Length / Chars_Per_Line) * Height + 2);
+         else
+            Width := Gint'Min
+              (Max_Tooltip_Width, String_Width (Context.Font, Value.all) + 4);
+         end if;
+      end;
+
+      if Width /= 0 and then Height /= 0 then
+         Gdk.Pixmap.Gdk_New
+           (Pixmap, Get_Window (Gtk_Window (Debugger.Window)), Width, Height);
+         Context := Create_Tooltip_Drawing_Context
+           (Debugger.Data_Canvas, Pixmap);
+
+         Draw_Rectangle
+           (Pixmap,
+            Get_Box_Context (GVD_Canvas (Debugger.Data_Canvas)).Thaw_Bg_GC,
+            Filled => True,
+            X      => 0,
+            Y      => 0,
+            Width  => Width - 1,
+            Height => Height - 1);
+
+         Index := Value'First;
+         Line  := 0;
+         W     := 0;
+
+         while Index <= Value'Last loop
+            Max := Index + Natural (Chars_Per_Line) - 1;
+
+            if Max > Value'Last then
+               Max := Value'Last;
+            end if;
+
+            Draw_Text
+              (Pixmap, Context.Font, Context.GC,
+               2, Line *
+               (Get_Ascent (Context.Font) + Get_Descent (Context.Font))
+               + Get_Ascent (Context.Font),
+               Value (Index .. Max));
+            W := Gint'Max
+              (W, String_Width (Context.Font, Value (Index .. Max)));
+            Index := Max + 1;
+            Line := Line + 1;
+         end loop;
+
+         Width := W + 4;
+
+         Draw_Rectangle
+           (Pixmap,
+            Context.GC,
+            Filled => False,
+            X      => 0,
+            Y      => 0,
+            Width  => Width - 1,
+            Height => Height - 1);
+      end if;
+
+      Free (Value);
+      Pop_State (Kernel);
+
+   exception
+      when Language.Unexpected_Type | Constraint_Error =>
+         Pop_State (Kernel);
+      when E : others =>
+         Pop_State (Kernel);
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+   end Tooltip_Handler;
 
    -------------------
    -- Set_Sensitive --
@@ -831,8 +999,9 @@ package body GVD_Module is
       GVD_Module_ID := Register_Module
         (Kernel                  => Kernel,
          Module_Name             => GVD_Module_Name,
-         Priority                => Default_Priority,
-         Contextual_Menu_Handler => GVD_Contextual'Access);
+         Priority                => Default_Priority + 20,
+         Contextual_Menu_Handler => GVD_Contextual'Access,
+         Tooltip_Handler         => Tooltip_Handler'Access);
 
       --  Add debugger menus
 
