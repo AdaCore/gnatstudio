@@ -110,7 +110,7 @@ package GVD is
    Default_Diff_Cmd : constant String := "@DIFF_CMD@";
    --  Command used to generate a diff between two files.
 
-   Default_Patch_Cmd : constant String := "@PATCH_CMD@";
+   Default_Patch_Cmd : constant String := "patch";
    --  Command used to apply a patch file.
 
 end GVD;
