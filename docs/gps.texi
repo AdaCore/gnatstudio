@@ -6203,12 +6203,13 @@ External program used to print files.
 This program is required under Unix systems in order to print, and is set to
 @code{a2ps} by default.
 If @code{a2ps} is not installed on your system, you can download it
-from @url{www.inf.enst.fr/~demaille/a2ps}
+from @url{ftp://ftp.enst.fr/pub/unix/a2ps/}, although other printing programs
+such as @code{lp} can be specified instead.
 
 Under Windows systems, this program is optional and is empty by default, since
 a built-in printing is provided. An external tool will be used if specified,
 such as the PrintFile freeware utility available from
-@url{www.lerup.com/printfile/descr.html}
+@url{http://www.lerup.com/printfile/descr.html}
 
 @end table
 
