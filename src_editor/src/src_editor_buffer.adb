@@ -48,9 +48,9 @@ package body Src_Editor_Buffer is
 
    use type System.Address;
 
-   Default_Keyword_Color : constant String := "blue";
-   Default_Comment_Color : constant String := "red";
-   Default_String_Color  : constant String := "brown";
+   Default_Keyword_Color : constant String := "black";
+   Default_Comment_Color : constant String := "blue";
+   Default_String_Color  : constant String := "red";
    --  ??? As soon as we have defined a uniform GLIDE handling of
    --  ??? defaults/preferences, these constants should move there.
 
@@ -967,7 +967,7 @@ package body Src_Editor_Buffer is
 
       Found := False;
       Match_Start_Line   := 0;
-      Match_Start_column := 0;
+      Match_Start_Column := 0;
       Match_End_Line     := 0;
       Match_End_Column   := 0;
       --  ??? This function is not implemented yet. Always return false
