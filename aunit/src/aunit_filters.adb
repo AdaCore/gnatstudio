@@ -66,8 +66,7 @@ package body Aunit_Filters is
       Close (F);
 
       Analyze_Ada_Source
-        (To_Unchecked_String (File_Buffer.all'Address),
-         Length,
+        (File_Buffer (1 .. Length),
          New_Buffer,
          Default_Indent_Parameters,
          Reserved_Casing  => Unchanged,
