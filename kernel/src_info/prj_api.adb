@@ -3814,7 +3814,7 @@ package body Prj_API is
             return Default;
 
          when Single =>
-            return Get_String (Value.Value);
+            return Value_Of (Value, Default);
 
          when List =>
             Trace (Me, "Attribute " & Attribute_Name
