@@ -76,6 +76,7 @@ package SN is
          Last : Integer;
       end record;
    Invalid_Segment : constant Segment := (-1, -1);
+   Empty_Segment   : constant Segment := (1, 0);
 
    function Length (s : Segment) return Integer;
 
