@@ -40,6 +40,7 @@ with Gtk.Main;                  use Gtk.Main;
 with Gtk.Menu_Bar;              use Gtk.Menu_Bar;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Object;                use Gtk.Object;
+with Gtk.Progress_Bar;          use Gtk.Progress_Bar;
 with Gtk.Rc;                    use Gtk.Rc;
 with Gtk.Window;                use Gtk.Window;
 with Gtk.Widget;                use Gtk.Widget;
@@ -423,9 +424,11 @@ package body GPS.Main_Window is
       Home_Dir         : String;
       Prefix_Directory : String)
    is
-      Vbox : Gtk_Vbox;
-      Menu : Gtk_Widget;
-      Box1 : Gtk_Hbox;
+      Vbox     : Gtk_Vbox;
+      Menu     : Gtk_Widget;
+      Box1     : Gtk_Hbox;
+      Progress : Gtk.Progress_Bar.Gtk_Progress_Bar;
+
    begin
       Gtk_New (Main_Window.Kernel, Gtk_Window (Main_Window), Home_Dir);
 
@@ -483,13 +486,34 @@ package body GPS.Main_Window is
       Gtk_New_Vbox (Main_Window.Toolbar_Box, False, 0);
       Pack_Start (Vbox, Main_Window.Toolbar_Box, False, False, 0);
 
-      Gtk_New (Main_Window.Statusbar);
+      Gtk_New_Hbox
+        (Main_Window.Statusbar, Homogeneous => False, Spacing => 4);
+      Set_Size_Request (Main_Window.Statusbar, 0, -1);
+
+      --  Avoid resizing the main window whenever a label is changed.
+      Set_Resize_Mode (Main_Window.Statusbar, Resize_Queue);
+
+      Gtk_New (Progress);
+      Set_Text (Progress, " ");
+      --  ??? This is a tweak : it seems that the gtk progress bar doesn't
+      --  have a size that is the same when it has text than when it does not,
+      --  but we do want to insert and remove text from this bar, without
+      --  the annoying change in size, so we make sure there is always some
+      --  text displayed.
+
+      Pack_Start (Main_Window.Statusbar, Progress, False, False, 0);
+
+      --  ??? We set the default width to 0 so that the progress bar appears
+      --  only as a vertical separator.
+      --  This should be removed when another way to keep the size of the
+      --  status bar acceptable is found.
+      Set_Size_Request (Progress, 0, -1);
       Pack_End (Vbox, Main_Window.Statusbar, False, False, 0);
 
       Gtk_New (Main_Window.Main_Accel_Group);
       Add_Accel_Group (Main_Window, Main_Window.Main_Accel_Group);
-      Gtk_New (Main_Window.Process_Mdi, Main_Window.Main_Accel_Group);
-      Add (Vbox, Main_Window.Process_Mdi);
+      Gtk_New (Main_Window.MDI, Main_Window.Main_Accel_Group);
+      Add (Vbox, Main_Window.MDI);
       Gtk_New
         (Main_Window.Factory, Gtk.Menu_Bar.Get_Type,
          Key, Main_Window.Main_Accel_Group);
@@ -503,9 +527,9 @@ package body GPS.Main_Window is
       Reorder_Child (Vbox, Main_Window.Menu_Box, 0);
       Set_Submenu
         (Gtk_Menu_Item (Get_Widget (Main_Window.Factory, '/' & (-"Window"))),
-         Create_Menu (Main_Window.Process_Mdi));
+         Create_Menu (Main_Window.MDI));
 
-      Setup_Toplevel_Window (Main_Window.Process_Mdi, Main_Window);
+      Setup_Toplevel_Window (Main_Window.MDI, Main_Window);
       Main_Window.Home_Dir := new String'(Home_Dir);
       Main_Window.Prefix_Directory := new String'(Prefix_Directory);
 

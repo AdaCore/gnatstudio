@@ -33,7 +33,6 @@ with Gtk.Item_Factory; use Gtk.Item_Factory;
 with Gtk.Toolbar;      use Gtk.Toolbar;
 with Gtk.Main;
 
-with GVD.Status_Bar;   use GVD.Status_Bar;
 with Gtkada.MDI;       use Gtkada.MDI;
 with GNAT.OS_Lib;      use GNAT.OS_Lib;
 with Ada.Unchecked_Deallocation;
@@ -59,7 +58,10 @@ package GPS.Main_Window is
 
    type GPS_Window_Record is new Gtk_Window_Record with record
       Kernel           : GPS.Kernel.Kernel_Handle;
-      Process_Mdi      : Gtkada.MDI.MDI_Window;
+      MDI              : Gtkada.MDI.MDI_Window;
+      Main_Accel_Group : Gtk_Accel_Group;
+      --  The default accelerators for the window.
+
       Toolbar          : Gtk_Toolbar;
       Animation_Frame  : Gtk_Frame;
       Static_Image     : Gdk_Pixbuf;
@@ -77,16 +79,9 @@ package GPS.Main_Window is
 
       --  Fields previousely in GVD_Main_Window_Record
 
-      Program_Args        : String_Access;
-      --  If non null, name of program to be debugged, and additional
-      --  arguments if needed, e.g. "/path/to/hello -h"
-
-      Main_Accel_Group    : Gtk_Accel_Group;
-      --  The default accelerators for the window.
-
       Factory             : Gtk_Item_Factory;
       Toolbar_Box         : Gtk_Vbox;
-      Statusbar           : GVD_Status_Bar;
+      Statusbar           : Gtk.Box.Gtk_Hbox;
       Menu_Box            : Gtk.Box.Gtk_Hbox;
       Menu_Bar            : Gtk.Menu_Bar.Gtk_Menu_Bar;
 
