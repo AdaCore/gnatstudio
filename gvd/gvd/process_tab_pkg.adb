@@ -31,7 +31,8 @@ with Gtk.Object; use Gtk.Object;
 
 package body Process_Tab_Pkg is
 
-   Signals : Chars_Ptr_Array := (1 => New_String ("executable_changed"));
+   Signals      : constant Chars_Ptr_Array :=
+     (1 => New_String ("executable_changed"));
    Class_Record : System.Address := System.Null_Address;
 
 pragma Suppress (All_Checks);

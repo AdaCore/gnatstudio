@@ -131,8 +131,7 @@ package body Odd.Menus is
 
    procedure Change_Detect_Aliases
      (Item   : access Gtk_Check_Menu_Item_Record'Class;
-      Canvas : Odd_Canvas)
-   is
+      Canvas : Odd_Canvas) is
    begin
       Set_Detect_Aliases (Canvas, not Get_Detect_Aliases (Canvas));
 
@@ -161,8 +160,7 @@ package body Odd.Menus is
 
    procedure Show_All
      (Widget  : access Gtk_Widget_Record'Class;
-      Item    : Item_Record)
-   is
+      Item    : Item_Record) is
    begin
       Set_Visibility (Item.Component, True, Recursive => True);
       Update_Resize_Display (Item.Item, True);
@@ -174,8 +172,7 @@ package body Odd.Menus is
 
    procedure Hide_All
      (Widget  : access Gtk_Widget_Record'Class;
-      Item    : Item_Record)
-   is
+      Item    : Item_Record) is
    begin
       Set_Visibility (Item.Component, False, Recursive => True);
       Update_Resize_Display (Item.Item, True);
@@ -211,6 +208,7 @@ package body Odd.Menus is
            (Get_Debugger (Item.Item),
             "graph display " & Item.Component_Name,
             Output_Command => True);
+
       else
          Process_User_Command
            (Get_Debugger (Item.Item),
@@ -224,19 +222,20 @@ package body Odd.Menus is
    --------------------------------
 
    function Contextual_Background_Menu
-     (Canvas : access Odd_Canvas_Record'Class)
-     return Gtk.Menu.Gtk_Menu
+     (Canvas : access Odd_Canvas_Record'Class) return Gtk.Menu.Gtk_Menu
    is
       Check : Gtk_Check_Menu_Item;
       Menu  : Gtk_Menu;
+
    begin
       Menu := Menu_User_Data.Get (Canvas, Contextual_Background_Menu_Name);
       return Menu;
 
    exception
       when Gtkada.Types.Data_Error =>
-         Gtk_New (Menu);
+         --  The menu has not been created yet.
 
+         Gtk_New (Menu);
          Gtk_New (Check, Label => -"Align On Grid");
          Set_Always_Show_Toggle (Check, True);
          Set_Active (Check, Get_Align_On_Grid (Canvas));
@@ -268,16 +267,15 @@ package body Odd.Menus is
      (Canvas         : access Odd_Canvas_Record'Class;
       Item           : access Display_Items.Display_Item_Record'Class;
       Component      : Items.Generic_Type_Access;
-      Component_Name : String)
-     return Gtk.Menu.Gtk_Menu
+      Component_Name : String) return Gtk.Menu.Gtk_Menu
    is
       Menu  : Gtk_Menu;
       Mitem : Gtk_Menu_Item;
       Radio : Gtk_Radio_Menu_Item;
 
    begin
-
       --  Delete the previous contextual menu if needed.
+
       begin
          Menu := Menu_User_Data.Get (Canvas, Item_Contextual_Menu_Name);
          Destroy (Menu);
@@ -321,6 +319,7 @@ package body Odd.Menus is
       else
          Gtk_New (Mitem, Label => -"Clone");
       end if;
+
       Item_Handler.Connect
         (Mitem, "activate",
          Item_Handler.To_Marshaller (Clone_Component'Access),
@@ -412,8 +411,9 @@ package body Odd.Menus is
 
    exception
       when Gtkada.Types.Data_Error =>
-         Gtk_New (Menu);
+         --  The menu has not been created yet
 
+         Gtk_New (Menu);
          Gtk_New (Mitem, Label => -"Info");
          Set_State (Mitem, State_Insensitive);
          Append (Menu, Mitem);

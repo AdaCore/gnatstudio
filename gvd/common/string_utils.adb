@@ -27,10 +27,10 @@ package body Odd.Strings is
    -- Skip_Blanks --
    -----------------
 
-   procedure Skip_Blanks (Type_Str : String;
-                          Index    : in out Natural;
-                          Step     : Integer := 1)
-   is
+   procedure Skip_Blanks
+     (Type_Str : String;
+      Index    : in out Natural;
+      Step     : Integer := 1) is
    begin
       while (Index <= Type_Str'Last and then Index >= Type_Str'First)
         and then (Type_Str (Index) = ' '
@@ -48,8 +48,7 @@ package body Odd.Strings is
 
    procedure Skip_To_Blank
      (Type_Str : String;
-      Index    : in out Natural)
-   is
+      Index    : in out Natural) is
    begin
       while Index <= Type_Str'Last
         and then Type_Str (Index) /= ' '
@@ -65,9 +64,9 @@ package body Odd.Strings is
    -- Skip_Hexa_Digit --
    ---------------------
 
-   procedure Skip_Hexa_Digit (Type_Str : String;
-                              Index    : in out Natural)
-   is
+   procedure Skip_Hexa_Digit
+     (Type_Str : String;
+      Index    : in out Natural) is
    begin
       --  skips initial 0x if present
       if Index + 1 <= Type_Str'Last
@@ -88,11 +87,11 @@ package body Odd.Strings is
    -- Skip_To_Char --
    ------------------
 
-   procedure Skip_To_Char (Type_Str : String;
-                           Index    : in out Natural;
-                           Char     : Character;
-                           Step     : Integer := 1)
-   is
+   procedure Skip_To_Char
+     (Type_Str : String;
+      Index    : in out Natural;
+      Char     : Character;
+      Step     : Integer := 1) is
    begin
       while Index <= Type_Str'Last
         and then Index >= Type_Str'First
@@ -106,9 +105,10 @@ package body Odd.Strings is
    -- Skip_To_String --
    --------------------
 
-   procedure Skip_To_String (Type_Str  : String;
-                             Index     : in out Natural;
-                             Substring : String)
+   procedure Skip_To_String
+     (Type_Str  : String;
+      Index     : in out Natural;
+      Substring : String)
    is
       L : constant Natural := Substring'Length - 1;
    begin
@@ -123,9 +123,10 @@ package body Odd.Strings is
    -- Parse_Num --
    ---------------
 
-   procedure Parse_Num (Type_Str : String;
-                        Index    : in out Natural;
-                        Result   : out Long_Integer)
+   procedure Parse_Num
+     (Type_Str : String;
+      Index    : in out Natural;
+      Result   : out Long_Integer)
    is
       Tmp_Index : constant Natural := Index;
    begin
@@ -155,11 +156,10 @@ package body Odd.Strings is
    -- Looking_At --
    ----------------
 
-   function Looking_At (Type_Str  : String;
-                        Index     : Natural;
-                        Substring : String)
-                       return Boolean
-   is
+   function Looking_At
+     (Type_Str  : String;
+      Index     : Natural;
+      Substring : String) return Boolean is
    begin
       return Index + Substring'Length - 1 <= Type_Str'Last
         and then Type_Str (Index .. Index + Substring'Length - 1) = Substring;
@@ -174,20 +174,21 @@ package body Odd.Strings is
       Index    : in out Natural;
       Str      : out String)
    is
-      procedure Parse_Next_Char (Index : in out Natural;
-                                 Char  : out Character);
+      procedure Parse_Next_Char
+        (Index : in out Natural;
+         Char  : out Character);
       --  Parse the character pointed to by Index, including special characters
 
       ---------------------
       -- Parse_Next_Char --
       ---------------------
 
-      procedure Parse_Next_Char (Index : in out Natural;
-                                 Char  : out Character)
+      procedure Parse_Next_Char
+        (Index : in out Natural;
+         Char  : out Character)
       is
-         Int     : Natural;
+         Int : Natural;
       begin
-
          --  Special characters are represented as ["00"] or ["""]
          --  Note that we can have '[" ' that represents the character
          --  '[' followed by the end of the string
@@ -204,7 +205,6 @@ package body Odd.Strings is
                Char := '"';
 
             else
-
                if Type_Str (Index + 2) in 'a' .. 'f' then
                   Int := 16 * (Character'Pos (Type_Str (Index + 2))
                                - Character'Pos ('a') + 10);
@@ -234,11 +234,12 @@ package body Odd.Strings is
       end Parse_Next_Char;
 
 
-      S_Index : Natural := Str'First;
-      Char    : Character;
-      Num     : Long_Integer;
+      S_Index   : Natural := Str'First;
+      Char      : Character;
+      Num       : Long_Integer;
       In_String : Boolean;
-      Last    : Natural := Str'Last;
+      Last      : Natural := Str'Last;
+
    begin
       if Str'Length = 0 then
          Last := Natural'Last;
@@ -256,9 +257,7 @@ package body Odd.Strings is
         and then Index <= Type_Str'Last
         and then Type_Str (Index) /= ASCII.LF
       loop
-
          case Type_Str (Index) is
-
             when '"' =>
                In_String := not In_String;
                Index := Index + 1;
@@ -268,24 +267,31 @@ package body Odd.Strings is
                   if Str'Length /= 0 then
                      Str (S_Index) := ''';
                   end if;
+
                   S_Index := S_Index + 1;
                   Index := Index + 1;
                else
                   Index := Index + 1;  --  skips initial '''
                   Parse_Next_Char (Index, Char);
+
                   if Str'Length /= 0 then
                      Str (S_Index) := Char;
                   end if;
+
                   Index := Index + 2;     --  skips "' " at the end
+
                   if Looking_At (Type_Str, Index, "<repeats ") then
                      Index := Index + 9;
                      Parse_Num (Type_Str, Index, Num);
+
                      if Str'Length /= 0 then
                         Str (S_Index .. S_Index + Integer (Num) - 1) :=
                           (others => Char);
                      end if;
+
                      S_Index := S_Index + Integer (Num);
                      Index := Index + 7; --  skips " times>"
+
                   else
                      S_Index := S_Index + 1;
                   end if;
@@ -295,6 +301,7 @@ package body Odd.Strings is
                if Str'Length /= 0 then
                   Str (S_Index) := Type_Str (Index + 1);
                end if;
+
                Index := Index + 2;
 
             when ' ' | ',' =>
@@ -302,18 +309,23 @@ package body Odd.Strings is
                   if Str'Length /= 0 then
                      Str (S_Index) := ' ';
                   end if;
+
                   S_Index := S_Index + 1;
                end if;
+
                Index := Index + 1;
 
             when others =>
                Parse_Next_Char (Index, Char);
+
                if Str'Length /= 0 then
                   Str (S_Index) := Char;
                end if;
+
                S_Index := S_Index + 1;
          end case;
       end loop;
+
       Index := Index + 1;
    end Parse_Cst_String;
 
@@ -326,8 +338,7 @@ package body Odd.Strings is
       Index                : in out Natural;
       Array_Item_Separator : in Character := ',';
       End_Of_Array         : in Character := ')';
-      Repeat_Item_Start    : in Character := '<')
-   is
+      Repeat_Item_Start    : in Character := '<') is
    begin
       while Index <= Type_Str'Last
         and then Type_Str (Index) /= Array_Item_Separator
@@ -344,17 +355,20 @@ package body Odd.Strings is
    --------------------
 
    function Base_File_Name (File_Name : String) return String is
-      Last        : Natural := File_Name'Last;
+      Last : Natural := File_Name'Last;
    begin
       --  Maybe we should also ignore drive letters
+
       while Last >= File_Name'First loop
          if File_Name (Last) = GNAT.OS_Lib.Directory_Separator
            or else File_Name (Last) = '/'
          then
             exit;
          end if;
+
          Last := Last - 1;
       end loop;
+
       return File_Name (Last + 1 .. File_Name'Last);
    end Base_File_Name;
 
@@ -362,11 +376,12 @@ package body Odd.Strings is
    -- Skip_Word --
    ---------------
 
-   procedure Skip_Word (Type_Str : String;
-                        Index    : in out Natural;
-                        Step     : Integer := 1)
+   procedure Skip_Word
+     (Type_Str : String;
+      Index    : in out Natural;
+      Step     : Integer := 1)
    is
-      Initial : constant Natural := Index;
+      Initial  : constant Natural := Index;
    begin
       while Index <= Type_Str'Last
         and then Index >= Type_Str'First
@@ -400,6 +415,7 @@ package body Odd.Strings is
                Len := Len + 1;
                Blank := True;
             end if;
+
          else
             Blank := False;
             Result (Len) := S (J);
@@ -415,8 +431,9 @@ package body Odd.Strings is
    ---------------------
 
    function Strip_Control_M (Text : String) return String is
-      To    : String (1 .. Text'Length);
+      To       : String (1 .. Text'Length);
       Index_To : Positive := 1;
+
    begin
       for Index in Text'Range loop
          if Text (Index) /= ASCII.CR then
@@ -424,6 +441,7 @@ package body Odd.Strings is
             Index_To := Index_To + 1;
          end if;
       end loop;
+
       return To (1 .. Index_To - 1);
    end Strip_Control_M;
 
@@ -438,6 +456,7 @@ package body Odd.Strings is
             return File_Name (J + 1 .. File_Name'Last);
          end if;
       end loop;
+
       return "";
    end File_Extension;
 

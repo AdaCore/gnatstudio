@@ -74,6 +74,7 @@ package body Odd.Trace is
       Page   : constant String :=
         Gint'Image (Get_Current_Page (Window.Process_Notebook) + 1);
       Prefix : aliased constant String := '[' & Page (2 .. Page'Last) & "] ";
+
    begin
       N := Write (Window.Log_File, Prefix'Address, Prefix'Length);
       N := Write (Window.Log_File, Input_String'Address, Input_String'Length);
@@ -95,6 +96,7 @@ package body Odd.Trace is
       Page   : constant String :=
         Gint'Image (Get_Current_Page (Window.Process_Notebook) + 1);
       Prefix : aliased constant String := '[' & Page (2 .. Page'Last) & "] ";
+
    begin
       N := Write (Window.Log_File, Prefix'Address, Prefix'Length);
       N := Write

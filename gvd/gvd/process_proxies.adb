@@ -191,11 +191,12 @@ package body Process_Proxies is
       Tmp   : Boolean;
       Num   : Integer := 1;
       Num_Events : Positive;
-   begin
 
+   begin
       --  ??? We should always avoid concurrent calls to Wait, or the exact
       --  behavior of the application will depend on specific timing, which is
       --  not reliable.
+
       if Proxy.Command_In_Process.all then
          Put_Line ("!!! already running a Wait command!!");
       end if;
@@ -258,10 +259,11 @@ package body Process_Proxies is
    -- Wait --
    ----------
 
-   procedure Wait (Proxy   : access Gui_Process_Proxy;
-                   Result  : out GNAT.Expect.Expect_Match;
-                   Pattern : GNAT.Regpat.Pattern_Matcher;
-                   Timeout : Integer := 20)
+   procedure Wait
+     (Proxy   : access Gui_Process_Proxy;
+      Result  : out GNAT.Expect.Expect_Match;
+      Pattern : GNAT.Regpat.Pattern_Matcher;
+      Timeout : Integer := 20)
    is
       Matched : Match_Array (0 .. 0);
    begin
@@ -305,12 +307,12 @@ package body Process_Proxies is
 
    procedure Push_Internal_Command_Status
      (Proxy       : access Process_Proxy;
-      Is_Internal : Boolean)
-   is
+      Is_Internal : Boolean) is
    begin
       if Proxy.Internal_Command = Internal_Status_Stack_Size then
          raise Internal_Command_Status_Stack_Overfull;
       end if;
+
       Proxy.Internal_Command := Proxy.Internal_Command + 1;
       Proxy.Internal_Command_Stack (Proxy.Internal_Command) := Is_Internal;
    end Push_Internal_Command_Status;
@@ -359,10 +361,12 @@ package body Process_Proxies is
            (Cmd  => Cmd,
             Data => User_Data,
             Next => null);
+
       else
          while Tmp.Next /= null loop
             Tmp := Tmp.Next;
          end loop;
+
          Tmp.Next := new Post_Process_Record'
            (Cmd  => Cmd,
             Data => User_Data,
@@ -374,11 +378,12 @@ package body Process_Proxies is
    -- Free --
    ----------
 
-   procedure Free (Post_Processes : in out Post_Process_Access)
-   is
+   procedure Free (Post_Processes : in out Post_Process_Access) is
       procedure Free_Internal is new Unchecked_Deallocation
         (Post_Process_Record, Post_Process_Access);
+
       Tmp : Post_Process_Access;
+
    begin
       while Post_Processes /= null loop
          Tmp := Post_Processes.Next;
@@ -393,7 +398,8 @@ package body Process_Proxies is
 
    procedure Process_Post_Processes (Proxy : access Process_Proxy'Class) is
       Initial : Post_Process_Access := Proxy.Post_Processes;
-      Tmp : Post_Process_Access := Proxy.Post_Processes;
+      Tmp     : Post_Process_Access := Proxy.Post_Processes;
+
    begin
       --  We must reinitialize the list list of post_processes for the proxy
       --  before calling each of the command, otherwise if the command calls
@@ -406,6 +412,7 @@ package body Process_Proxies is
          Tmp.Cmd (Tmp.Data);
          Tmp := Tmp.Next;
       end loop;
+
       Free (Initial);
    end Process_Post_Processes;
 

@@ -46,7 +46,7 @@ package body Odd.Code_Editors is
    --  True if we should associate an explorer tree to each editor.
 
    Explorer_Width : constant := 200;
-   --  Width for the area reserved for the explorer.
+   --  Width of the area reserved for the explorer.
 
    --------------------
    -- Local packages --
@@ -71,8 +71,7 @@ package body Odd.Code_Editors is
 
    procedure Gtk_New_Hbox
      (Editor      : out Code_Editor;
-      Process     : access Gtk.Widget.Gtk_Widget_Record'Class)
-   is
+      Process     : access Gtk.Widget.Gtk_Widget_Record'Class) is
    begin
       Editor := new Code_Editor_Record;
       Initialize (Editor, Process);
@@ -122,12 +121,12 @@ package body Odd.Code_Editors is
    procedure Set_Line
      (Editor      : access Code_Editor_Record;
       Line        : Natural;
-      Set_Current : Boolean := True)
-   is
+      Set_Current : Boolean := True) is
    begin
       Editor.Source_Line := Line;
 
       Set_Line (Editor.Source, Line, Set_Current);
+
       if Set_Current then
          Set_Current_Line (Editor.Explorer, Line);
 
@@ -163,9 +162,9 @@ package body Odd.Code_Editors is
    -- Get_Source --
    ----------------
 
-   function Get_Source (Editor : access Code_Editor_Record'Class)
-                       return Odd.Source_Editors.Source_Editor
-   is
+   function Get_Source
+     (Editor : access Code_Editor_Record'Class)
+      return Odd.Source_Editors.Source_Editor is
    begin
       return Editor.Source;
    end Get_Source;
@@ -177,8 +176,7 @@ package body Odd.Code_Editors is
    procedure Load_File
      (Editor      : access Code_Editor_Record;
       File_Name   : String;
-      Set_Current : Boolean := True)
-   is
+      Set_Current : Boolean := True) is
    begin
       Load_File (Editor.Source, File_Name, Set_Current);
 
@@ -198,8 +196,7 @@ package body Odd.Code_Editors is
 
    procedure Update_Breakpoints
      (Editor    : access Code_Editor_Record;
-      Br        : Odd.Types.Breakpoint_Array)
-   is
+      Br        : Odd.Types.Breakpoint_Array) is
    begin
       Update_Breakpoints (Editor.Source, Br);
       Update_Breakpoints (Editor.Asm, Br);
@@ -218,8 +215,7 @@ package body Odd.Code_Editors is
       Stop_Icon         : Gtkada.Types.Chars_Ptr_Array;
       Comments_Color    : String;
       Strings_Color     : String;
-      Keywords_Color    : String)
-   is
+      Keywords_Color    : String) is
    begin
       Configure (Editor.Source, Ps_Font_Name, Font_Size, Default_Icon,
                  Current_Line_Icon, Stop_Icon, Comments_Color, Strings_Color,
@@ -232,9 +228,8 @@ package body Odd.Code_Editors is
    -- Get_Current_File --
    ----------------------
 
-   function Get_Current_File (Editor : access Code_Editor_Record)
-                             return String
-   is
+   function Get_Current_File
+     (Editor : access Code_Editor_Record) return String is
    begin
       return Get_Current_File (Editor.Source);
    end Get_Current_File;
@@ -245,8 +240,7 @@ package body Odd.Code_Editors is
 
    procedure Set_Current_Language
      (Editor : access Code_Editor_Record;
-      Lang   : Language.Language_Access)
-   is
+      Lang   : Language.Language_Access) is
    begin
       Set_Current_Language (Editor.Source, Lang);
    end Set_Current_Language;
@@ -302,8 +296,7 @@ package body Odd.Code_Editors is
 
    procedure Change_Mode
      (Item : access Gtk_Radio_Menu_Item_Record'Class;
-      Data : Editor_Mode_Data)
-   is
+      Data : Editor_Mode_Data) is
    begin
       if Get_Active (Item)
         and then Data.Editor.Mode /= Data.Mode
@@ -356,8 +349,7 @@ package body Odd.Code_Editors is
 
    procedure Set_Address
      (Editor : access Code_Editor_Record;
-      Pc     : String)
-   is
+      Pc     : String) is
    begin
       Free (Editor.Asm_Address);
       Editor.Asm_Address := new String'(Pc);

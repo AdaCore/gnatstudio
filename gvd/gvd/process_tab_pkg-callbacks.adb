@@ -38,11 +38,12 @@ package body Process_Tab_Pkg.Callbacks is
    use Gtk.Arguments;
    use String_History;
 
-   procedure Move_Until_Match (History : in out History_List;
-                               S : in String;
-                               D : in Direction;
-                               Index : out Integer;
-                               Found : out Boolean);
+   procedure Move_Until_Match
+     (History : in out History_List;
+      S : in String;
+      D : in Direction;
+      Index : out Integer;
+      Found : out Boolean);
    --  Scan the history to find an entry which begins like S.
    --  Index indicates the number of characters found beyond that pattern.
 
@@ -117,11 +118,9 @@ package body Process_Tab_Pkg.Callbacks is
       use Odd.Process;
 
    begin
-
       Wind (Top.Command_History, Forward);
 
       if To_Guint_Ptr (Position).all < Top.Edit_Pos then
-
          --  Move the cursor back to the end of the window, so that the text
          --  is correctly inserted. This is more user friendly that simply
          --  forbidding any key.
@@ -135,6 +134,7 @@ package body Process_Tab_Pkg.Callbacks is
          end if;
 
          Emit_Stop_By_Name (Top.Debugger_Text, "insert_text");
+
       else
          if Arg1 (Arg1'First) = ASCII.LF then
             declare
@@ -187,7 +187,8 @@ package body Process_Tab_Pkg.Callbacks is
    is
       Arg1 : Gint := To_Gint (Params, 1);
       Arg2 : Gint := To_Gint (Params, 2);
-      Top  : Debugger_Process_Tab := Debugger_Process_Tab (Object);
+      Top  : constant Debugger_Process_Tab := Debugger_Process_Tab (Object);
+
    begin
       if Arg2 <= Gint (Top.Edit_Pos) then
          Emit_Stop_By_Name (Top.Debugger_Text, "delete_text");
@@ -200,14 +201,17 @@ package body Process_Tab_Pkg.Callbacks is
    -- Move_Until_Match --
    ----------------------
 
-   procedure Move_Until_Match (History : in out History_List;
-                               S : in String;
-                               D : in Direction;
-                               Index : out Integer;
-                               Found : out Boolean) is
+   procedure Move_Until_Match
+     (History : in out History_List;
+      S : in String;
+      D : in Direction;
+      Index : out Integer;
+      Found : out Boolean)
+   is
       Counter : Integer := 0;
    begin
       Found := False;
+
       loop
          if D = Forward then
             Move_To_Next (History);
@@ -266,6 +270,7 @@ package body Process_Tab_Pkg.Callbacks is
          else
             D := Forward;
          end if;
+
          if Get_Has_Selection (Top.Debugger_Text) then
             Move_Until_Match
               (Top.Command_History,
@@ -274,6 +279,7 @@ package body Process_Tab_Pkg.Callbacks is
                 Gint (Top.Edit_Pos),
                 Gint (Get_Selection_Start_Pos (Top.Debugger_Text))),
                D, Index, Found);
+
          else
             Move_Until_Match
               (Top.Command_History,
@@ -282,6 +288,7 @@ package body Process_Tab_Pkg.Callbacks is
                           Get_Position (Top.Debugger_Text)),
                D, Index, Found);
          end if;
+
          if Found then
             Delete_Text
               (Top.Debugger_Text,
@@ -294,15 +301,19 @@ package body Process_Tab_Pkg.Callbacks is
             Select_Region
               (Top.Debugger_Text,
                Gint (Get_Length (Top.Debugger_Text) - Guint (Index)));
+
          else
             Delete_Text
               (Top.Debugger_Text,
                Gint (Get_Selection_Start_Pos (Top.Debugger_Text)),
                Gint (Get_Selection_End_Pos (Top.Debugger_Text)));
          end if;
+
          Emit_Stop_By_Name (Top.Debugger_Text, "key_press_event");
       end if;
+
       return True;
+
    exception
       when No_Such_Item => return False;
    end On_Debugger_Text_Key_Press_Event;

@@ -68,6 +68,7 @@ package body Items.Simples is
          end if;
          Free (Item.Value);
       end if;
+
       Item.Value := new String'(Value);
       Item.Valid := True;
    end Set_Value;
@@ -89,9 +90,8 @@ package body Items.Simples is
    -- Free --
    ----------
 
-   procedure Free (Item : access Simple_Type;
-                   Only_Value : Boolean := False)
-   is
+   procedure Free
+     (Item : access Simple_Type; Only_Value : Boolean := False) is
    begin
       Free (Item.Value);
       Free (Generic_Type (Item.all)'Access, Only_Value);
@@ -103,8 +103,7 @@ package body Items.Simples is
 
    procedure Clone_Dispatching
      (Item  : Simple_Type;
-      Clone : out Generic_Type_Access)
-   is
+      Clone : out Generic_Type_Access) is
    begin
       Clone_Dispatching (Generic_Type (Item), Clone);
 
@@ -117,9 +116,10 @@ package body Items.Simples is
    -- Paint --
    -----------
 
-   procedure Paint (Item    : in out Simple_Type;
-                    Context : Drawing_Context;
-                    X, Y    : Gint := 0)
+   procedure Paint
+     (Item    : in out Simple_Type;
+      Context : Drawing_Context;
+      X, Y    : Gint := 0)
    is
       Text_GC : Gdk_GC := Context.GC;
       Y2      : Gint := Y;
@@ -128,19 +128,21 @@ package body Items.Simples is
       Item.Y := Y2;
 
       if not Item.Valid or else Item.Value = null then
-         Display_Pixmap (Context.Pixmap, Context.GC, Unknown_Pixmap,
-                         Unknown_Mask, X + Border_Spacing, Y2);
+         Display_Pixmap
+           (Context.Pixmap, Context.GC, Unknown_Pixmap,
+            Unknown_Mask, X + Border_Spacing, Y2);
          return;
       end if;
 
       if Item.Selected then
-         Draw_Rectangle (Context.Pixmap,
-                         Context.GC,
-                         Filled => True,
-                         X      => X,
-                         Y      => Y2,
-                         Width  => Item.Width,
-                         Height => Item.Height);
+         Draw_Rectangle
+           (Context.Pixmap,
+            Context.GC,
+            Filled => True,
+            X      => X,
+            Y      => Y2,
+            Width  => Item.Width,
+            Height => Item.Height);
          Set_Function (Context.GC, Copy_Invert);
       end if;
 
@@ -151,23 +153,25 @@ package body Items.Simples is
       if Show_Type (Context.Mode)
         and then Item.Type_Name /= null
       then
-         Draw_Text (Context.Pixmap,
-                    Font => Context.Type_Font,
-                    GC   => Text_GC,
-                    X    => X,
-                    Y    => Y2 + Get_Ascent (Context.Type_Font),
-                    Text => Item.Type_Name.all);
-         Y2 := Y2 + Get_Ascent (Context.Type_Font)
-           + Get_Descent (Context.Type_Font);
+         Draw_Text
+           (Context.Pixmap,
+            Font => Context.Type_Font,
+            GC   => Text_GC,
+            X    => X,
+            Y    => Y2 + Get_Ascent (Context.Type_Font),
+            Text => Item.Type_Name.all);
+         Y2 := Y2 + Get_Ascent (Context.Type_Font) +
+           Get_Descent (Context.Type_Font);
       end if;
 
       if Show_Value (Context.Mode) then
-         Draw_Text (Context.Pixmap,
-                    Font => Context.Font,
-                    GC   => Text_GC,
-                    X    => X,
-                    Y    => Y2 + Get_Ascent (Context.Font),
-                    Text => Item.Value.all);
+         Draw_Text
+           (Context.Pixmap,
+            Font => Context.Font,
+            GC   => Text_GC,
+            X    => X,
+            Y    => Y2 + Get_Ascent (Context.Font),
+            Text => Item.Value.all);
       end if;
 
       if Item.Selected then
@@ -193,7 +197,7 @@ package body Items.Simples is
       then
          Item.Width  := Text_Width (Context.Font, Item.Value.all);
          Item.Height :=
-              Get_Ascent (Context.Font) + Get_Descent (Context.Font);
+           Get_Ascent (Context.Font) + Get_Descent (Context.Font);
       end if;
 
       if Item.Valid
@@ -264,6 +268,7 @@ package body Items.Simples is
    procedure Print (Value : Enum_Type; Indent : Natural := 0) is
    begin
       Put ("{Enumeration = ");
+
       if Value.Value = null then
          Put ("<Unknown>}");
       else
@@ -315,9 +320,11 @@ package body Items.Simples is
    procedure Print (Value : Range_Type; Indent : Natural := 0) is
    begin
       Put ("{Range" & Value.Min'Img & " .." & Value.Max'Img & " = ");
+
       if Value.Value /= null then
          Put (Value.Value.all);
       end if;
+
       Put ("}");
    end Print;
 
@@ -328,9 +335,11 @@ package body Items.Simples is
    procedure Print (Value : Mod_Type; Indent : Natural := 0) is
    begin
       Put ("{Modulo " & Value.Modulo'Img & " = ");
+
       if Value.Value /= null then
          Put (Value.Value.all);
       end if;
+
       Put ("}");
    end Print;
 
@@ -341,6 +350,7 @@ package body Items.Simples is
    procedure Print (Value : Access_Type; Indent : Natural := 0) is
    begin
       Put ("{Access ");
+
       if Value.Value = null then
          Put ("<null>)");
       else
@@ -352,19 +362,22 @@ package body Items.Simples is
    -- Paint --
    -----------
 
-   procedure Paint (Item    : in out Access_Type;
-                    Context : Drawing_Context;
-                    X, Y    : Glib.Gint := 0)
+   procedure Paint
+     (Item    : in out Access_Type;
+      Context : Drawing_Context;
+      X, Y    : Glib.Gint := 0)
    is
       Text_GC : Gdk_GC := Context.Xref_GC;
       Y2      : Gint := Y;
+
    begin
       Item.X := X;
       Item.Y := Y2;
 
       if not Item.Valid then
-         Display_Pixmap (Context.Pixmap, Context.GC, Unknown_Pixmap,
-                         Unknown_Mask, X + Border_Spacing, Y2);
+         Display_Pixmap
+           (Context.Pixmap, Context.GC, Unknown_Pixmap,
+            Unknown_Mask, X + Border_Spacing, Y2);
          return;
       end if;
 
@@ -387,25 +400,27 @@ package body Items.Simples is
       if Item.Type_Name /= null
         and then Show_Type (Context.Mode)
       then
-         Draw_Text (Context.Pixmap,
-                    Font => Context.Type_Font,
-                    GC   => Text_GC,
-                    X    => X,
-                    Y    => Y2 + Get_Ascent (Context.Type_Font),
-                    Text => Item.Type_Name.all);
-         Y2 := Y2 + Get_Ascent (Context.Type_Font)
-           + Get_Descent (Context.Type_Font);
+         Draw_Text
+           (Context.Pixmap,
+            Font => Context.Type_Font,
+            GC   => Text_GC,
+            X    => X,
+            Y    => Y2 + Get_Ascent (Context.Type_Font),
+            Text => Item.Type_Name.all);
+         Y2 := Y2 + Get_Ascent (Context.Type_Font) +
+           Get_Descent (Context.Type_Font);
       end if;
 
       if Item.Value /= null
         and then Show_Value (Context.Mode)
       then
-         Draw_Text (Context.Pixmap,
-                    Font => Context.Font,
-                    GC   => Text_GC,
-                    X    => X,
-                    Y    => Y2 + Get_Ascent (Context.Font),
-                    Text => Item.Value.all);
+         Draw_Text
+           (Context.Pixmap,
+            Font => Context.Font,
+            GC   => Text_GC,
+            X    => X,
+            Y    => Y2 + Get_Ascent (Context.Font),
+            Text => Item.Value.all);
       end if;
 
       if Item.Selected then
@@ -453,8 +468,7 @@ package body Items.Simples is
 
    procedure Clone_Dispatching
      (Item  : Debugger_Output_Type;
-      Clone : out Generic_Type_Access)
-   is
+      Clone : out Generic_Type_Access) is
    begin
       Clone_Dispatching (Simple_Type (Item), Clone);
       Debugger_Output_Type_Access (Clone).Refresh_Cmd :=
@@ -467,12 +481,12 @@ package body Items.Simples is
 
    procedure Free
      (Item       : access Debugger_Output_Type;
-      Only_Value : Boolean := False)
-   is
+      Only_Value : Boolean := False) is
    begin
       if not Only_Value then
          Free (Item.Refresh_Cmd);
       end if;
+
       Free (Simple_Type (Item.all)'Access, Only_Value);
    end Free;
 
@@ -509,8 +523,9 @@ package body Items.Simples is
             Text_Width (Context.Font,
                         Item.Value (Line_Start + 1 .. Item.Value'Last)));
          Item.Height :=
-           (Get_Ascent (Context.Font) + Get_Descent (Context.Font))
-           * Num_Lines;
+           (Get_Ascent (Context.Font) + Get_Descent (Context.Font)) *
+           Num_Lines;
+
       else
          Item.Width := Unknown_Width;
          Item.Height := Unknown_Height;
@@ -521,35 +536,40 @@ package body Items.Simples is
    -- Paint --
    -----------
 
-   procedure Paint (Item    : in out Debugger_Output_Type;
-                    Context : Drawing_Context;
-                    X, Y    : Gint := 0)
+   procedure Paint
+     (Item    : in out Debugger_Output_Type;
+      Context : Drawing_Context;
+      X, Y    : Gint := 0)
    is
-      Text_GC : Gdk_GC;
-      Line    : Gint := Y;
+      Text_GC    : Gdk_GC;
+      Line       : Gint := Y;
       Line_Start : Positive;
+
    begin
       Item.X := X;
       Item.Y := Y;
 
       if not Item.Valid or else Item.Value = null then
-         Display_Pixmap (Context.Pixmap, Context.GC, Unknown_Pixmap,
-                         Unknown_Mask, X + Border_Spacing, Y);
+         Display_Pixmap
+           (Context.Pixmap, Context.GC, Unknown_Pixmap,
+            Unknown_Mask, X + Border_Spacing, Y);
          return;
       end if;
 
       if Item.Selected then
-         Draw_Rectangle (Context.Pixmap,
-                         Context.GC,
-                         Filled => True,
-                         X      => X,
-                         Y      => Y,
-                         Width  => Item.Width,
-                         Height => Item.Height);
+         Draw_Rectangle
+           (Context.Pixmap,
+            Context.GC,
+            Filled => True,
+            X      => X,
+            Y      => Y,
+            Width  => Item.Width,
+            Height => Item.Height);
          Set_Function (Context.GC, Copy_Invert);
       end if;
 
       Line_Start := Item.Value'First;
+
       for J in Item.Value'Range loop
          if Item.Value (J) = ASCII.LF then
             if Item.Value (Line_Start) = Line_Highlighted then
@@ -596,19 +616,20 @@ package body Items.Simples is
    ---------------
 
    procedure Set_Value (Item : in out Debugger_Output_Type; Value : String) is
-      S : String := Strip_Control_M (Value);
-      V : String_Access := Item.Value;
+      S              : String := Strip_Control_M (Value);
+      V              : String_Access := Item.Value;
 
-      Index_New : Positive := S'First;
+      Index_New      : Positive := S'First;
       Line_Start_New : Positive;
-      Index_Old : Positive;
+      Index_Old      : Positive;
       Line_Start_Old : Positive;
-      Index_Item : Positive := 1;
+      Index_Item     : Positive := 1;
 
-      Num_Lines : Natural := 1;
+      Num_Lines      : Natural := 1;
+
    begin
-
       --  Count the number of lines
+
       for J in S'Range loop
          if S (J) = ASCII.LF then
             Num_Lines := Num_Lines + 1;
@@ -616,23 +637,25 @@ package body Items.Simples is
       end loop;
 
       --  Allocate memory for the value
+
       Item.Value := new String (1 .. S'Length + Num_Lines);
 
       --  Compare the lines
 
       --  Find the current line in the old value
+
       if V /= null then
          Index_Old := V'First;
       end if;
 
       while Index_New <= S'Last loop
-
          if V /= null then
             Line_Start_Old := Index_Old;
             Skip_To_Char (V.all, Index_Old, ASCII.LF);
          end if;
 
          --  Find the current line in the new value
+
          Line_Start_New := Index_New;
          Skip_To_Char (S, Index_New, ASCII.LF);
 

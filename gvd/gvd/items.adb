@@ -34,9 +34,9 @@ package body Items is
    -- Set_Hidden_Pixmap --
    -----------------------
 
-   procedure Set_Hidden_Pixmap (Pixmap : Gdk.Pixmap.Gdk_Pixmap;
-                                Mask   : Gdk.Bitmap.Gdk_Bitmap)
-   is
+   procedure Set_Hidden_Pixmap
+     (Pixmap : Gdk.Pixmap.Gdk_Pixmap;
+      Mask   : Gdk.Bitmap.Gdk_Bitmap) is
    begin
       Hidden_Pixmap := Pixmap;
       Hidden_Mask   := Mask;
@@ -47,9 +47,9 @@ package body Items is
    -- Set_Unknown_Pixmap --
    ------------------------
 
-   procedure Set_Unknown_Pixmap (Pixmap : Gdk.Pixmap.Gdk_Pixmap;
-                                 Mask   : Gdk.Bitmap.Gdk_Bitmap)
-   is
+   procedure Set_Unknown_Pixmap
+     (Pixmap : Gdk.Pixmap.Gdk_Pixmap;
+      Mask   : Gdk.Bitmap.Gdk_Bitmap) is
    begin
       Unknown_Pixmap := Pixmap;
       Unknown_Mask   := Mask;
@@ -96,9 +96,8 @@ package body Items is
    -- Set_Valid --
    ---------------
 
-   procedure Set_Valid (Item  : access Generic_Type;
-                        Valid : Boolean := True)
-   is
+   procedure Set_Valid
+     (Item  : access Generic_Type; Valid : Boolean := True) is
    begin
       Item.Valid := Valid;
    end Set_Valid;
@@ -171,12 +170,12 @@ package body Items is
    -- Display_Pixmap --
    --------------------
 
-   procedure Display_Pixmap (On_Pixmap : Gdk_Pixmap;
-                             GC        : Gdk_GC;
-                             Pixmap    : Gdk_Pixmap;
-                             Mask      : Gdk_Bitmap;
-                             X, Y      : Gint)
-   is
+   procedure Display_Pixmap
+     (On_Pixmap : Gdk_Pixmap;
+      GC        : Gdk_GC;
+      Pixmap    : Gdk_Pixmap;
+      Mask      : Gdk_Bitmap;
+      X, Y      : Gint) is
    begin
       Set_Clip_Mask (GC, Mask);
       Set_Clip_Origin (GC, X, Y);
@@ -189,9 +188,9 @@ package body Items is
    -- Propagate_Width --
    ---------------------
 
-   procedure Propagate_Width (Item  : in out Generic_Type;
-                              Width : Glib.Gint)
-   is
+   procedure Propagate_Width
+     (Item  : in out Generic_Type;
+      Width : Glib.Gint) is
    begin
       Item.Width := Width;
    end Propagate_Width;
@@ -200,9 +199,9 @@ package body Items is
    -- Set_Selected --
    ------------------
 
-   procedure Set_Selected (Item     : access Generic_Type;
-                           Selected : Boolean := True)
-   is
+   procedure Set_Selected
+     (Item     : access Generic_Type;
+      Selected : Boolean := True) is
    begin
       Item.Selected := Selected;
    end Set_Selected;
@@ -222,8 +221,7 @@ package body Items is
 
    procedure Set_Type_Name
      (Item : access Generic_Type;
-      Name : String)
-   is
+      Name : String) is
    begin
       Free (Item.Type_Name);
       Item.Type_Name := new String'(Name);
@@ -266,8 +264,7 @@ package body Items is
 
    procedure Clone_Dispatching
      (Item : Generic_Type;
-      Clone : out Generic_Type_Access)
-   is
+      Clone : out Generic_Type_Access) is
    begin
       if Item.Type_Name /= null then
          Clone.Type_Name := new String'(Item.Type_Name.all);
@@ -289,14 +286,15 @@ package body Items is
    -- Free --
    ----------
 
-   procedure Free (Item : access Generic_Type;
-                   Only_Value : Boolean := False)
+   procedure Free
+     (Item : access Generic_Type;
+      Only_Value : Boolean := False)
    is
-      I : Generic_Type_Access := Generic_Type_Access (Item);
+      J : Generic_Type_Access := Generic_Type_Access (Item);
    begin
       if not Only_Value then
          Free (Item.Type_Name);
-         Free_Internal (I);
+         Free_Internal (J);
       end if;
    end Free;
 
@@ -344,12 +342,15 @@ package body Items is
    procedure Reset_Recursive (Item : access Generic_Type) is
       Iter : Generic_Iterator'Class := Start (Generic_Type_Access (Item));
       It   : Generic_Type_Access;
+
    begin
       while not At_End (Iter) loop
          It := Data (Iter);
+
          if It /= null then
             Reset_Recursive (It);
          end if;
+
          Next (Iter);
       end loop;
    end Reset_Recursive;

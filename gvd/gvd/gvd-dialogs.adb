@@ -42,7 +42,7 @@ package body Odd.Dialogs is
 
    Backtrace_Titles : constant Chars_Ptr_Array :=
      "PC" + "Subprogram" + "Source";
-   --  ???  Should be translate through odd.Intl
+   --  ???  Should be translated through odd.Intl
 
    procedure Initialize
      (Dialog      : access Odd_Dialog_Record'Class;
@@ -77,8 +77,7 @@ package body Odd.Dialogs is
       Main_Window                : Gtk_Window;
       Debugger                   : Debugger_Access;
       Multiple_Selection_Allowed : Boolean;
-      Questions                  : Question_Array)
-   is
+      Questions                  : Question_Array) is
    begin
       Question_Dialog := new Question_Dialog_Record;
       Initialize (Question_Dialog, Main_Window, Debugger,
@@ -197,8 +196,7 @@ package body Odd.Dialogs is
    procedure Initialize
      (Dialog      : access Odd_Dialog_Record'Class;
       Title       : String;
-      Main_Window : Gtk_Window)
-   is
+      Main_Window : Gtk_Window) is
    begin
       Gtk.Dialog.Initialize (Dialog);
       Dialog.Main_Window := Main_Window;

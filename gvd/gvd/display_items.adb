@@ -487,25 +487,28 @@ package body Display_Items is
 
       Size_Request
         (Item.Entity.all,
-         Drawing_Context'(Pixmap      => Pixmap (Item),
-                          GC          => Black_GC,
-                          Xref_GC     => Xref_GC,
-                          Modified_GC => Change_GC,
-                          Font        => Font,
-                          Type_Font   => Type_Font,
-                          Mode        => Item.Mode),
+         Drawing_Context'
+           (Pixmap      => Pixmap (Item),
+            GC          => Black_GC,
+            Xref_GC     => Xref_GC,
+            Modified_GC => Change_GC,
+            Font        => Font,
+            Type_Font   => Type_Font,
+            Mode        => Item.Mode),
          Hide_Big_Items => Hide_Big_Items);
+
       if not Get_Visibility (Item.Entity.all) then
          Set_Visibility (Item.Entity, True);
          Size_Request
            (Item.Entity.all,
-            Drawing_Context'(Pixmap      => Pixmap (Item),
-                             GC          => Black_GC,
-                             Xref_GC     => Xref_GC,
-                             Modified_GC => Change_GC,
-                             Font        => Font,
-                             Type_Font   => Type_Font,
-                             Mode        => Item.Mode));
+            Drawing_Context'
+              (Pixmap      => Pixmap (Item),
+               GC          => Black_GC,
+               Xref_GC     => Xref_GC,
+               Modified_GC => Change_GC,
+               Font        => Font,
+               Type_Font   => Type_Font,
+               Mode        => Item.Mode));
       end if;
 
       Update_Display (Item);
@@ -518,15 +521,13 @@ package body Display_Items is
 
    function Find_Item
      (Canvas : access Odd.Canvas.Odd_Canvas_Record'Class;
-      Num    : Integer)
-     return Display_Item
+      Num    : Integer) return Display_Item
    is
       Found : Display_Item := null;
 
       function Search_By_Num
         (Canvas : access Interactive_Canvas_Record'Class;
-         Item   : access Canvas_Item_Record'Class)
-        return Boolean;
+         Item   : access Canvas_Item_Record'Class) return Boolean;
       --  Search for the item whose number is Num.
 
       -------------------
@@ -535,14 +536,13 @@ package body Display_Items is
 
       function Search_By_Num
         (Canvas : access Interactive_Canvas_Record'Class;
-         Item   : access Canvas_Item_Record'Class)
-        return Boolean
-      is
+         Item   : access Canvas_Item_Record'Class) return Boolean is
       begin
          if Display_Item (Item).Num = Num then
             Found := Display_Item (Item);
             return False;
          end if;
+
          return True;
       end Search_By_Num;
 
@@ -560,10 +560,11 @@ package body Display_Items is
       Alloc_Height : Gint;
       Title_Height, Title_Width : Gint;
       Num_Width    : Gint;
+
    begin
       --  Compute the required size for the value itself.
 
-      Alloc_Width := Get_Width (Item.Entity.all) + 2 * Border_Spacing;
+      Alloc_Width  := Get_Width  (Item.Entity.all) + 2 * Border_Spacing;
       Alloc_Height := Get_Height (Item.Entity.all) + 2 * Border_Spacing;
 
       --  Compute the width and height of the title bar
@@ -581,6 +582,7 @@ package body Display_Items is
 
       Alloc_Width := Gint'Max (Alloc_Width, Title_Width);
       Alloc_Height := Title_Height + Alloc_Height;
+
       if Alloc_Width < 40 then
          Alloc_Width := 40;
       end if;
@@ -588,6 +590,7 @@ package body Display_Items is
       Propagate_Width (Item.Entity.all, Alloc_Width - 2 * Border_Spacing);
 
       --  3D Look ? If yes, keep some space for the shadow.
+
       if Look_3d then
          Gtkada.Canvas.Initialize
            (Item,
@@ -608,6 +611,7 @@ package body Display_Items is
             Y      => Title_Height,
             Width  => Alloc_Width - 1,
             Height => Alloc_Height - Title_Height - 1);
+
       else
          Draw_Rectangle
            (Pixmap (Item),
@@ -702,13 +706,14 @@ package body Display_Items is
       if Item.Entity /= null then
          Paint
            (Item.Entity.all,
-            Drawing_Context'(Pixmap      => Pixmap (Item),
-                             GC          => Black_GC,
-                             Xref_GC     => Xref_GC,
-                             Modified_GC => Change_GC,
-                             Font        => Font,
-                             Type_Font   => Type_Font,
-                             Mode        => Item.Mode),
+            Drawing_Context'
+              (Pixmap      => Pixmap (Item),
+               GC          => Black_GC,
+               Xref_GC     => Xref_GC,
+               Modified_GC => Change_GC,
+               Font        => Font,
+               Type_Font   => Type_Font,
+               Mode        => Item.Mode),
             X => Border_Spacing,
             Y => Title_Height + Border_Spacing);
       end if;
@@ -732,6 +737,7 @@ package body Display_Items is
                Y      => Get_Y (Component.all),
                Width  => Get_Width (Component.all),
                Height => Get_Height (Component.all));
+
          else
             Draw_Rectangle
               (Pixmap (Item),
@@ -746,13 +752,14 @@ package body Display_Items is
 
       Paint
         (Component.all,
-         Drawing_Context'(Pixmap      => Pixmap (Item),
-                          GC          => Black_GC,
-                          Xref_GC     => Xref_GC,
-                          Modified_GC => Change_GC,
-                          Font        => Font,
-                          Type_Font   => Type_Font,
-                          Mode        => Item.Mode),
+         Drawing_Context'
+           (Pixmap      => Pixmap (Item),
+            GC          => Black_GC,
+            Xref_GC     => Xref_GC,
+            Modified_GC => Change_GC,
+            Font        => Font,
+            Type_Font   => Type_Font,
+            Mode        => Item.Mode),
          X => Get_X (Component.all),
          Y => Get_Y (Component.all));
    end Update_Component;
@@ -787,6 +794,7 @@ package body Display_Items is
       begin
          --  Do not detect aliases with what are already aliases, so as to
          --  avoid chains of aliases.
+
          if Display_Item (Item).Id /= null
            and then Display_Item (Item).Auto_Refresh
            and then Display_Item (Item).Id.all = Id
@@ -800,6 +808,7 @@ package body Display_Items is
             else
                Alias_Item := Display_Item (Item);
             end if;
+
             return False;
          end if;
 
@@ -812,6 +821,7 @@ package body Display_Items is
       if Name = "" or else Get_Detect_Aliases (Canvas) then
          For_Each_Item (Canvas, Alias_Found'Unrestricted_Access);
       end if;
+
       return Alias_Item;
    end Search_Item;
 
@@ -821,11 +831,11 @@ package body Display_Items is
 
    function Update_On_Auto_Refresh
      (Canvas : access Interactive_Canvas_Record'Class;
-      Item   : access Canvas_Item_Record'Class) return Boolean
-   is
+      Item   : access Canvas_Item_Record'Class) return Boolean is
    begin
       --  Only update when the item is not an alias of something else (and thus
       --  is hidden).
+
       if Display_Item (Item).Auto_Refresh
         and then Display_Item (Item).Is_Alias_Of = null
       then
@@ -845,6 +855,7 @@ package body Display_Items is
    is
       Value_Found : Boolean;
       Was_Visible : Boolean := Get_Visibility (Item.Entity.all);
+
    begin
       --  Parse the value
 
@@ -882,8 +893,7 @@ package body Display_Items is
      (Item             : access Display_Item_Record'Class;
       Was_Visible      : Boolean := False;
       Hide_Big         : Boolean := False;
-      Redisplay_Canvas : Boolean := True)
-   is
+      Redisplay_Canvas : Boolean := True) is
    begin
       --  Update graphically.
       --  Note that we should not change the visibility status of item
@@ -891,13 +901,14 @@ package body Display_Items is
 
       Size_Request
         (Item.Entity.all,
-         Drawing_Context'(Pixmap      => Pixmap (Item),
-                          GC          => Black_GC,
-                          Xref_GC     => Xref_GC,
-                          Modified_GC => Change_GC,
-                          Font        => Font,
-                          Type_Font   => Type_Font,
-                          Mode        => Item.Mode),
+         Drawing_Context'
+           (Pixmap      => Pixmap (Item),
+            GC          => Black_GC,
+            Xref_GC     => Xref_GC,
+            Modified_GC => Change_GC,
+            Font        => Font,
+            Type_Font   => Type_Font,
+            Mode        => Item.Mode),
          Hide_Big_Items => Hide_Big);
 
       --  Make sure we don't hide the item, unless it was already hidden.
@@ -909,16 +920,18 @@ package body Display_Items is
          Set_Visibility (Item.Entity, True);
          Size_Request
            (Item.Entity.all,
-            Drawing_Context'(Pixmap      => Pixmap (Item),
-                             GC          => Black_GC,
-                             Xref_GC     => Xref_GC,
-                             Modified_GC => Change_GC,
-                             Font        => Font,
-                             Type_Font   => Type_Font,
-                             Mode        => Item.Mode));
+            Drawing_Context'
+              (Pixmap      => Pixmap (Item),
+               GC          => Black_GC,
+               Xref_GC     => Xref_GC,
+               Modified_GC => Change_GC,
+               Font        => Font,
+               Type_Font   => Type_Font,
+               Mode        => Item.Mode));
       end if;
 
       Update_Display (Item);
+
       if Redisplay_Canvas then
          Item_Resized (Item.Debugger.Data_Canvas, Item);
       end if;
@@ -955,21 +968,24 @@ package body Display_Items is
    ----------------------
 
    procedure Compute_Link_Pos (Link : access Odd_Link_Record'Class) is
-      X : constant Gint := Get_X (Link.Source_Component.all)
-        + Get_Width (Link.Source_Component.all) / 2;
-      Y : constant Gint := Get_Y (Link.Source_Component.all)
-        + Get_Height (Link.Source_Component.all) / 2;
+      X : constant Gint := Get_X (Link.Source_Component.all) +
+        Get_Width (Link.Source_Component.all) / 2;
+      Y : constant Gint := Get_Y (Link.Source_Component.all) +
+        Get_Height (Link.Source_Component.all) / 2;
       Xpos, Ypos : Gfloat;
       F : Boolean;
       Visible : Boolean;
+
    begin
       Component_Is_Visible
         (Display_Item (Get_Src (Link)).Entity, Link.Source_Component,
          Visible, F);
+
       if Visible and F then
          Xpos := Gfloat (X) / Gfloat (Get_Coord (Get_Src (Link)).Width);
          Ypos := Gfloat (Y) / Gfloat (Get_Coord (Get_Src (Link)).Height);
          Set_Src_Pos (Link, Xpos, Ypos);
+
       else
          Set_Src_Pos (Link, 0.5, 0.5);
       end if;
@@ -1000,8 +1016,7 @@ package body Display_Items is
 
       function Set_Link_Pos
         (Canvas : access Interactive_Canvas_Record'Class;
-         Link   : access Canvas_Link_Record'Class)
-        return Boolean;
+         Link   : access Canvas_Link_Record'Class) return Boolean;
       --  Set the attachment position of the newly created link.
       --  The link is attached to the middle of the component that was
       --  dereferenced.
@@ -1012,8 +1027,7 @@ package body Display_Items is
 
       function Set_Link_Pos
         (Canvas : access Interactive_Canvas_Record'Class;
-         Link   : access Canvas_Link_Record'Class)
-        return Boolean is
+         Link   : access Canvas_Link_Record'Class) return Boolean is
       begin
          Odd_Link (Link).Source_Component := Deref_Component;
          Compute_Link_Pos (Odd_Link (Link));
@@ -1024,6 +1038,7 @@ package body Display_Items is
    begin
       --  The newly created item should have the same auto-refresh state as
       --  the one we are dereferencing
+
       if Item.Auto_Refresh then
          Process_User_Command
            (Item.Debugger,
@@ -1037,6 +1052,7 @@ package body Display_Items is
             & Integer'Image (Item.Num) & " link_name " & Link_Name,
             Output_Command => True);
       end if;
+
       if Attach_Links_To_Components then
          For_Each_Link
            (Item.Debugger.Data_Canvas, Set_Link_Pos'Unrestricted_Access);
@@ -1057,8 +1073,10 @@ package body Display_Items is
         and then Item.Debugger.Selected_Component /= Component
       then
          Set_Selected (Item.Debugger.Selected_Component, False);
-         Update_Component (Display_Item (Item.Debugger.Selected_Item),
-                           Item.Debugger.Selected_Component);
+         Update_Component
+           (Display_Item (Item.Debugger.Selected_Item),
+            Item.Debugger.Selected_Component);
+
          if Item.Debugger.Selected_Item /= Canvas_Item (Item)
            or else Component = null
          then
@@ -1073,6 +1091,7 @@ package body Display_Items is
          Set_Selected (Component, not Get_Selected (Component));
          Update_Component (Item, Component);
          Item_Updated (Item.Debugger.Data_Canvas, Item);
+
          if Get_Selected (Component) then
             Item.Debugger.Selected_Item := Canvas_Item (Item);
             Item.Debugger.Selected_Component := Component;
@@ -1123,6 +1142,7 @@ package body Display_Items is
                           (Item.Debugger,
                            "graph disable display" & Integer'Image (Item.Num),
                            Output_Command => True);
+
                      else
                         Process_User_Command
                           (Item.Debugger,
@@ -1137,10 +1157,13 @@ package body Display_Items is
                         Output_Command => True);
 
                end case;
+
                return;
             end if;
+
             Buttons_Start := Buttons_Start + Buttons_Size + Spacing;
          end loop;
+
          return;
       end if;
 
@@ -1155,18 +1178,19 @@ package body Display_Items is
       if Get_Button (Event) = 3
         and then Get_Event_Type (Event) = Button_Press
       then
-         Popup (Item_Contextual_Menu
-                (Item.Debugger.Data_Canvas,
-                 Item,
-                 Component,
-                 Get_Component_Name
-                 (Item.Entity,
-                  Get_Language (Item.Debugger.Debugger),
-                  Item.Name.all,
-                  Gint (Get_X (Event)),
-                  Gint (Get_Y (Event)) - Item.Title_Height - Border_Spacing)),
-                Button            => Get_Button (Event),
-                Activate_Time     => Get_Time (Event));
+         Popup
+           (Item_Contextual_Menu
+             (Item.Debugger.Data_Canvas,
+              Item,
+              Component,
+              Get_Component_Name
+                (Item.Entity,
+                 Get_Language (Item.Debugger.Debugger),
+                 Item.Name.all,
+                 Gint (Get_X (Event)),
+                 Gint (Get_Y (Event)) - Item.Title_Height - Border_Spacing)),
+            Button            => Get_Button (Event),
+            Activate_Time     => Get_Time (Event));
 
       --  Dereferencing access types.
 
@@ -1209,8 +1233,7 @@ package body Display_Items is
    is
       function Reattach_All_Links
         (Canvas : access Interactive_Canvas_Record'Class;
-         Link   : access Canvas_Link_Record'Class)
-        return Boolean;
+         Link   : access Canvas_Link_Record'Class) return Boolean;
       --  Recompute the position of all the links attached to Item.
 
       ------------------------
@@ -1219,14 +1242,14 @@ package body Display_Items is
 
       function Reattach_All_Links
         (Canvas : access Interactive_Canvas_Record'Class;
-         Link   : access Canvas_Link_Record'Class)
-        return Boolean is
+         Link   : access Canvas_Link_Record'Class) return Boolean is
       begin
          if Get_Src (Link) = Canvas_Item (Item)
            and then Odd_Link (Link).Source_Component /= null
          then
             Compute_Link_Pos (Odd_Link (Link));
          end if;
+
          return True;
       end Reattach_All_Links;
 
@@ -1241,9 +1264,9 @@ package body Display_Items is
 
       --  If needed, recompute the position of the links
       if Attach_Links_To_Components then
-         For_Each_Link (Item.Debugger.Data_Canvas,
-                        Reattach_All_Links'Unrestricted_Access);
-
+         For_Each_Link
+           (Item.Debugger.Data_Canvas,
+            Reattach_All_Links'Unrestricted_Access);
       end if;
 
       --  Redraw the canvas
@@ -1306,6 +1329,7 @@ package body Display_Items is
       if Update_Value then
          --  If we moved back to the auto-refresh state, force an
          --  update of the value.
+
          if Item.Auto_Refresh then
             Update (Item.Debugger.Data_Canvas, Item);
          else
@@ -1322,8 +1346,7 @@ package body Display_Items is
    -- Free --
    ----------
 
-   procedure Free (Item : access Display_Item_Record)
-   is
+   procedure Free (Item : access Display_Item_Record) is
 
       function Free_Alias
         (Canvas : access Interactive_Canvas_Record'Class;
@@ -1339,8 +1362,7 @@ package body Display_Items is
 
       function Free_Alias
         (Canvas : access Interactive_Canvas_Record'Class;
-         It     : access Canvas_Item_Record'Class) return Boolean
-      is
+         It     : access Canvas_Item_Record'Class) return Boolean is
       begin
          if Display_Item (It).Is_Alias_Of = Display_Item (Item)
            and then Display_Item (It).Is_Dereference
@@ -1353,10 +1375,12 @@ package body Display_Items is
          then
             Free (Display_Item (It));
          end if;
+
          return True;
       end Free_Alias;
 
       Canvas : Odd_Canvas := Item.Debugger.Data_Canvas;
+
    begin
       if Item.Debugger.Selected_Item = Canvas_Item (Item) then
          Item.Debugger.Selected_Item := null;
@@ -1406,7 +1430,6 @@ package body Display_Items is
    begin
       if Get_Button (Event) = 1 then
          For_Each_Item (Canvas, Unselect'Unrestricted_Access);
-
       elsif Get_Button (Event) = 3
         and then Get_Event_Type (Event) = Button_Press
       then
@@ -1447,12 +1470,12 @@ package body Display_Items is
 
       function Clean_Alias_Chain
         (Canvas : access Interactive_Canvas_Record'Class;
-         Item   : access Canvas_Item_Record'Class) return Boolean
-      is
+         Item   : access Canvas_Item_Record'Class) return Boolean is
       begin
          if Display_Item (Item).Is_Alias_Of = It then
             Display_Item (Item).Is_Alias_Of := It.Is_Alias_Of;
          end if;
+
          return True;
       end Clean_Alias_Chain;
 
@@ -1468,11 +1491,13 @@ package body Display_Items is
       begin
          --  Stop iterating when we saw It, since we only want to check the
          --  items before it.
+
          if It2 = It then
             return False;
          end if;
 
          --  Frozen items can not be part of an alias detection
+
          if not It2.Auto_Refresh then
             return False;
          end if;
@@ -1480,6 +1505,7 @@ package body Display_Items is
          --  Do we have an alias ?
          --  Do not detect aliases with items that are aliases themselves,
          --  so as to avoid chains of aliases
+
          if It2.Id /= null
            and then It2.Is_Alias_Of = null
            and then It.Id /= null
@@ -1519,6 +1545,7 @@ package body Display_Items is
 
             --  They both were explicitly displayed by the user. Print a
             --  special link to reflect that fact.
+
             else
                Create_Link
                  (Canvas, It, It2, "<=>", Both_Arrow, Alias_Link => True);
@@ -1547,7 +1574,7 @@ package body Display_Items is
          Id : String := Get_Uniq_Id (It.Debugger.Debugger, It.Name.all);
       begin
          if Id /= "" then
-            It.Id := new String'(Id);
+            It.Id := new String' (Id);
          end if;
       end;
 
@@ -1568,8 +1595,7 @@ package body Display_Items is
    is
       function Duplicate
         (Canvas : access Interactive_Canvas_Record'Class;
-         Link   : access Canvas_Link_Record'Class)
-        return Boolean;
+         Link   : access Canvas_Link_Record'Class) return Boolean;
       --  Duplicate Link if it is bound to Item and is not a temporary link
 
       ---------------
@@ -1578,11 +1604,11 @@ package body Display_Items is
 
       function Duplicate
         (Canvas : access Interactive_Canvas_Record'Class;
-         Link   : access Canvas_Link_Record'Class)
-        return Boolean
+         Link   : access Canvas_Link_Record'Class) return Boolean
       is
          Src, Dest : Canvas_Item;
-         Replace : Boolean;
+         Replace   : Boolean;
+
       begin
          if not Odd_Link (Link).Alias_Link then
             Src := Get_Src (Link);
@@ -1604,6 +1630,7 @@ package body Display_Items is
                  (Canvas, Src, Dest, Get_Descr (Link), Alias_Link => True);
             end if;
          end if;
+
          return True;
       end Duplicate;
 
@@ -1671,13 +1698,13 @@ package body Display_Items is
 
       function Remove_Temporary
         (Canvas : access Interactive_Canvas_Record'Class;
-         Link   : access Canvas_Link_Record'Class) return Boolean
-      is
+         Link   : access Canvas_Link_Record'Class) return Boolean is
       begin
          if Odd_Link (Link).Alias_Link then
             Remove_Link (Canvas, Link);
             Destroy (Link);
          end if;
+
          return True;
       end Remove_Temporary;
 
@@ -1737,9 +1764,8 @@ package body Display_Items is
    -- Is_Alias_Of --
    -----------------
 
-   function Is_Alias_Of (Item : access Display_Item_Record)
-                        return Display_Item
-   is
+   function Is_Alias_Of
+     (Item : access Display_Item_Record) return Display_Item is
    begin
       return Item.Is_Alias_Of;
    end Is_Alias_Of;
@@ -1753,6 +1779,7 @@ package body Display_Items is
       if Item.Name = null then
          return "";
       end if;
+
       return Item.Name.all;
    end Get_Name;
 
@@ -1761,9 +1788,7 @@ package body Display_Items is
    ------------------
 
    function Get_Debugger
-     (Item : access Display_Item_Record'Class)
-     return Debugger_Process_Tab
-   is
+     (Item : access Display_Item_Record'Class) return Debugger_Process_Tab is
    begin
       return Item.Debugger;
    end Get_Debugger;
@@ -1773,9 +1798,7 @@ package body Display_Items is
    -------------------
 
    function Is_A_Variable
-     (Item : access Display_Item_Record'Class)
-     return Boolean
-   is
+     (Item : access Display_Item_Record'Class) return Boolean is
    begin
       return Item.Is_A_Variable;
    end Is_A_Variable;
@@ -1786,8 +1809,7 @@ package body Display_Items is
 
    procedure Set_Display_Mode
      (Item : access Display_Item_Record'Class;
-      Mode : Items.Display_Mode)
-   is
+      Mode : Items.Display_Mode) is
    begin
       Item.Mode := Mode;
       Update_Resize_Display
@@ -1798,9 +1820,8 @@ package body Display_Items is
    -- Get_Display_Mode --
    ----------------------
 
-   function Get_Display_Mode (Item : access Display_Item_Record)
-                             return Items.Display_Mode
-   is
+   function Get_Display_Mode
+     (Item : access Display_Item_Record) return Items.Display_Mode is
    begin
       return Item.Mode;
    end Get_Display_Mode;

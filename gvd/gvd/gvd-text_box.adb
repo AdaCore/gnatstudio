@@ -44,7 +44,6 @@ package body Odd.Text_Boxes is
    Layout_Width : constant := 20;
    --  Width for the area reserved for the buttons.
 
-
    package Box_Cb is new Callback (Odd_Text_Box_Record);
    package Box_Event_Cb is new Return_Callback (Odd_Text_Box_Record, Boolean);
 
@@ -75,8 +74,7 @@ package body Odd.Text_Boxes is
    -- Gtk_New --
    -------------
 
-   procedure Gtk_New (Box : out Odd_Text_Box)
-   is
+   procedure Gtk_New (Box : out Odd_Text_Box) is
    begin
       Box := new Odd_Text_Box_Record;
       Initialize (Box);
@@ -127,7 +125,6 @@ package body Odd.Text_Boxes is
          Box_Event_Cb.To_Marshaller (Button_Press_Cb'Access),
          Slot_Object => Box);
 
-
       Pack_Start (Box, Box.Buttons, Expand => False, Fill => False);
       Pack_Start (Box, Box.Child, Expand => True, Fill => True);
       Pack_Start (Box, Scrollbar, Expand => False, Fill => False);
@@ -145,6 +142,7 @@ package body Odd.Text_Boxes is
    is
       Current_Line_Pixmap : Gdk.Pixmap.Gdk_Pixmap;
       Current_Line_Mask   : Gdk.Bitmap.Gdk_Bitmap;
+
    begin
       Box.Font := Get_Gdkfont (Ps_Font_Name, Font_Size);
 
@@ -156,12 +154,14 @@ package body Odd.Text_Boxes is
          Current_Line_Mask,
          White (Get_System),
          Current_Line_Icon);
+
       --  Create the current line icon, and make sure it is never destroyed.
+
       Gtk_New
         (Box.Current_Line_Button, Current_Line_Pixmap, Current_Line_Mask);
       Ref (Box.Current_Line_Button);
 
-      --  ???Unfortunately, it is not possible currently to specify the
+      --  ??? Unfortunately, it is not possible currently to specify the
       --  step_increment for the adjustments, since this is overridden in
       --  several places in the text widget.
       --    Set_Step_Increment
@@ -174,6 +174,7 @@ package body Odd.Text_Boxes is
    -------------------
    -- Scroll_Layout --
    -------------------
+
    --  We can not make both the Gtk_Text and the Gtk_Layout use the same
    --  Gtk_Adjustment, since they both try to modify it when they are resized,
    --  resulting in an infinite loop and a Storage_Error. Instead, they both
@@ -242,10 +243,8 @@ package body Odd.Text_Boxes is
       Line        : Natural;
       Set_Current : Boolean := True)
    is
-      Y : Gint;
+      Y : Gint := Gint (Line - 1) * Box.Line_Height + 3;
    begin
-      Y := Gint (Line - 1) * Box.Line_Height + 3;
-
       --  Display the current line icon
       --  Note that we start by hiding everything, and then show everything
       --  at the end, so that the layout is correctly refreshed. This is not
@@ -271,9 +270,10 @@ package body Odd.Text_Boxes is
 
       --  Scroll the code editor to make sure the line is visible on screen.
 
-      Clamp_Page (Get_Vadj (Box.Child),
-                  Lower => Gfloat (Y - Box.Line_Height),
-                  Upper => Gfloat (Y + 4 * Box.Line_Height));
+      Clamp_Page
+        (Get_Vadj (Box.Child),
+         Lower => Gfloat (Y - Box.Line_Height),
+         Upper => Gfloat (Y + 4 * Box.Line_Height));
 
       if Set_Current then
          Box.Current_Line := Line;
@@ -297,9 +297,8 @@ package body Odd.Text_Boxes is
    -- Get_Child --
    ---------------
 
-   function Get_Child (Box : access Odd_Text_Box_Record)
-                      return Gtk.Text.Gtk_Text
-   is
+   function Get_Child
+     (Box : access Odd_Text_Box_Record) return Gtk.Text.Gtk_Text is
    begin
       return Box.Child;
    end Get_Child;
@@ -308,9 +307,8 @@ package body Odd.Text_Boxes is
    -- Get_Buttons --
    -----------------
 
-   function Get_Buttons (Box : access Odd_Text_Box_Record)
-                        return Gtk.Layout.Gtk_Layout
-   is
+   function Get_Buttons
+     (Box : access Odd_Text_Box_Record) return Gtk.Layout.Gtk_Layout is
    begin
       return Box.Buttons;
    end Get_Buttons;
@@ -323,8 +321,7 @@ package body Odd.Text_Boxes is
      (Box    : access Odd_Text_Box_Record;
       Fore   : in Gdk.Color.Gdk_Color := Gdk.Color.Null_Color;
       Back   : in Gdk.Color.Gdk_Color := Gdk.Color.Null_Color;
-      Chars  : in String := "")
-   is
+      Chars  : in String := "") is
    begin
       Insert (Box.Child, Box.Font, Fore, Back, Chars);
    end Insert;
@@ -348,8 +345,7 @@ package body Odd.Text_Boxes is
 
    function Pixels_From_Line
      (Box  : access Odd_Text_Box_Record;
-      Line : Natural)
-     return Gint is
+      Line : Natural) return Gint is
    begin
       return Gint (Line - 1) * Box.Line_Height + 3;
    end Pixels_From_Line;
@@ -360,8 +356,7 @@ package body Odd.Text_Boxes is
 
    function Line_From_Pixels
      (Box  : access Odd_Text_Box_Record;
-      Y    : Gint)
-     return Natural is
+      Y    : Gint) return Natural is
    begin
       return Natural (Y / Box.Line_Height + 1);
    end Line_From_Pixels;
@@ -422,6 +417,7 @@ package body Odd.Text_Boxes is
                                      Get_Selection_End_Pos (Box.Child)));
       Max : Gint := Gint (Guint'Max (Get_Selection_Start_Pos (Box.Child),
                                      Get_Selection_End_Pos (Box.Child)));
+
    begin
       case Get_Button (Event) is
          when 3 =>
@@ -449,6 +445,7 @@ package body Odd.Text_Boxes is
                         if Box.Buffer (Index) = ASCII.LF then
                            Current_Line := Current_Line + 1;
                         end if;
+
                         Index := Index + 1;
                      end loop;
                      Index := Index + Integer (X) - Box.Buffer'First;
@@ -559,12 +556,12 @@ package body Odd.Text_Boxes is
    procedure Set_Buffer
      (Box            : access Odd_Text_Box_Record;
       Buffer         : Odd.Types.String_Access := null;
-      Clear_Previous : Boolean := True)
-   is
+      Clear_Previous : Boolean := True) is
    begin
       if Clear_Previous then
          Free (Box.Buffer);
       end if;
+
       Box.Buffer := Buffer;
       Delete_Text (Box.Child);
    end Set_Buffer;
@@ -583,6 +580,7 @@ package body Odd.Text_Boxes is
             end if;
          end loop;
       end if;
+
       return Lines;
    end Lines_Count;
 
@@ -617,8 +615,7 @@ package body Odd.Text_Boxes is
 
    procedure Insert_Buffer
      (Box    : access Odd_Text_Box_Record;
-      Buffer : String)
-   is
+      Buffer : String) is
    begin
       Insert (Box, Chars => Buffer);
    end Insert_Buffer;
@@ -630,8 +627,7 @@ package body Odd.Text_Boxes is
    function On_Pixmap_Clicked
      (Box    : access Odd_Text_Box_Record;
       Button : Natural;
-      Line   : Natural)
-     return Boolean
+      Line   : Natural) return Boolean
    is
       pragma Warnings (Off, Box);
       pragma Warnings (Off, Button);
@@ -644,9 +640,8 @@ package body Odd.Text_Boxes is
    -- Invisible_Column_Width --
    ----------------------------
 
-   function Invisible_Column_Width (Box : access Odd_Text_Box_Record)
-                                   return Glib.Gint
-   is
+   function Invisible_Column_Width
+     (Box : access Odd_Text_Box_Record) return Glib.Gint is
    begin
       return 0;
    end Invisible_Column_Width;
@@ -671,9 +666,8 @@ package body Odd.Text_Boxes is
    -- Get_Buffer --
    ----------------
 
-   function Get_Buffer (Box : access Odd_Text_Box_Record)
-                       return Odd.Types.String_Access
-   is
+   function Get_Buffer
+     (Box : access Odd_Text_Box_Record) return Odd.Types.String_Access is
    begin
       return Box.Buffer;
    end Get_Buffer;

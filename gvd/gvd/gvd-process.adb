@@ -70,7 +70,7 @@ pragma Warnings (Off, Debugger.Jdb);
 
 package body Odd.Process is
 
-   Enable_Block_Search : constant Boolean := True;
+   Enable_Block_Search    : constant Boolean := False;
    --  Whether we should try to find the block of a variable when printing
    --  it, and memorize it with the item.
 
@@ -78,7 +78,7 @@ package body Odd.Process is
    --  User data string.
    --  ??? Should use some quarks, which would be just a little bit faster.
 
-   Display_Grid        : constant Boolean := True;
+   Display_Grid           : constant Boolean := True;
    --  Whether the grid should be displayed in the canvas.
 
    package Canvas_Event_Handler is new Gtk.Handlers.Return_Callback
@@ -99,7 +99,7 @@ package body Odd.Process is
      "process_stopped" + "context_changed";
 
 
-   Graph_Cmd_Format : Pattern_Matcher := Compile
+   Graph_Cmd_Format : constant Pattern_Matcher := Compile
      ("graph\s+(print|display)\s+(`([^`]+)`|""([^""]+)"")?(.*)",
       Case_Insensitive);
    --  Format of the graph print commands, and how to parse them
@@ -111,19 +111,19 @@ package body Odd.Process is
    --  Indexes of the parentheses pairs in Graph_Cmd_Format for each of the
    --  relevant fields.
 
-   Graph_Cmd_Dependent_Format : Pattern_Matcher := Compile
+   Graph_Cmd_Dependent_Format : constant Pattern_Matcher := Compile
      ("dependent\s+on\s+(\d+)\s*", Case_Insensitive);
    --  Partial analyses of the last part of a graph command
 
-   Graph_Cmd_Link_Format : Pattern_Matcher := Compile
+   Graph_Cmd_Link_Format : constant Pattern_Matcher := Compile
      ("link_name\s+(.+)", Case_Insensitive);
    --  Partial analyses of the last part of a graph command
 
-   Graph_Cmd_Format2 : Pattern_Matcher := Compile
+   Graph_Cmd_Format2 : constant Pattern_Matcher := Compile
      ("graph\s+(enable|disable)\s+display\s+(.*)", Case_Insensitive);
    --  Second possible set of commands.
 
-   Graph_Cmd_Format3 : Pattern_Matcher := Compile
+   Graph_Cmd_Format3 : constant Pattern_Matcher := Compile
      ("graph\s+undisplay\s+(.*)", Case_Insensitive);
    --  Third possible set of commands
 
@@ -202,10 +202,11 @@ package body Odd.Process is
       Descriptor : GNAT.Expect.Process_Descriptor) return Debugger_Process_Tab
    is
       Page      : Gtk_Widget;
-      Num_Pages : Gint :=
+      Num_Pages : constant Gint :=
         Gint (Page_List.Length
           (Get_Children (Main_Debug_Window.Process_Notebook)));
       Process   : Debugger_Process_Tab;
+
    begin
       --  For all the process tabs in the application, check whether
       --  this is the one associated with Pid.
@@ -235,8 +236,7 @@ package body Odd.Process is
 
    function Convert
      (Text : access Odd.Code_Editors.Code_Editor_Record'Class)
-     return Debugger_Process_Tab
-   is
+      return Debugger_Process_Tab is
    begin
       return Process_User_Data.Get (Text, Process_User_Data_Name);
    end Convert;
@@ -247,9 +247,7 @@ package body Odd.Process is
 
    function Convert
      (Main_Debug_Window : access Gtk.Window.Gtk_Window_Record'Class;
-      Debugger : access Debugger_Root'Class)
-     return Debugger_Process_Tab
-   is
+      Debugger : access Debugger_Root'Class) return Debugger_Process_Tab is
    begin
       return Convert (Main_Debug_Window_Access (Main_Debug_Window),
                       Get_Descriptor (Get_Process (Debugger)).all);
@@ -288,6 +286,7 @@ package body Odd.Process is
             Match (Highlighting_Pattern (Process.Debugger),
                    Str2 (Start .. Str2'Last),
                    Matched);
+
             if Matched (0) /= No_Match then
                if Matched (0).First - 1 >= Start then
                   Insert (Process.Debugger_Text,
@@ -303,6 +302,7 @@ package body Odd.Process is
                        Null_Color,
                        Str2 (Matched (0).First .. Matched (0).Last));
                Start := Matched (0).Last + 1;
+
             else
                Insert (Process.Debugger_Text,
                        Process.Debugger_Text_Font,
@@ -331,6 +331,7 @@ package body Odd.Process is
       --  Override the language currently defined in the editor.
       --  Since the text file has been given by the debugger, the language
       --  to use is the one currently defined by the debugger.
+
       Set_Current_Language
         (Data.Process.Editor_Text, Get_Language (Data.Process.Debugger));
 
@@ -402,6 +403,7 @@ package body Odd.Process is
             Text_Output_Handler (Process, Str (Str'First .. First - 1));
             Text_Output_Handler (Process, Str (Last + 1 .. Str'Last));
          end if;
+
          Process.Edit_Pos := Get_Length (Process.Debugger_Text);
          Set_Point (Process.Debugger_Text, Process.Edit_Pos);
          Set_Position (Process.Debugger_Text, Gint (Process.Edit_Pos));
@@ -457,8 +459,7 @@ package body Odd.Process is
    procedure Output_Available
      (Debugger  : My_Input.Data_Access;
       Source    : Gint;
-      Condition : Gdk.Types.Gdk_Input_Condition)
-   is
+      Condition : Gdk.Types.Gdk_Input_Condition) is
    begin
       --  Get everything that is available (and transparently call the
       --  output filters set for Pid).
@@ -490,6 +491,7 @@ package body Odd.Process is
          Emit_Stop_By_Name (Process.Debugger_Text, "button_press_event");
          return True;
       end if;
+
       return False;
    end Debugger_Button_Press;
 
@@ -518,7 +520,6 @@ package body Odd.Process is
       Initialize (Process);
       Initialize_Class_Record (Process, Signals, Class_Record);
       Process.Window := Window.all'Access;
-
 
       Widget_Callback.Object_Connect
         (Process,
@@ -616,6 +617,7 @@ package body Odd.Process is
                  Keywords_Color    => Keywords_Color);
 
       --  Initialize the canvas
+
       if not Display_Grid then
          Configure (Process.Data_Canvas, Grid_Size => 0);
       end if;
@@ -669,8 +671,7 @@ package body Odd.Process is
    ------------------------
 
    procedure Executable_Changed
-     (Debugger : access Debugger_Process_Tab_Record'Class)
-   is
+     (Debugger : access Debugger_Process_Tab_Record'Class) is
    begin
       Widget_Callback.Emit_By_Name
         (Gtk_Widget (Debugger), "executable_changed");
@@ -705,8 +706,8 @@ package body Odd.Process is
       Link_Name_First    : Natural := Natural'Last;
       Link_Name : Odd.Types.String_Access;
       Link_From : Display_Item;
-   begin
 
+   begin
       --  graph (print|display) expression [dependent on display_num]
       --        [link_name name]
       --  graph (print|display) `command`
@@ -714,17 +715,19 @@ package body Odd.Process is
       --  graph disable display display_num [display_num ...]
 
       Match (Graph_Cmd_Format, Cmd, Matched);
+
       if Matched (0) /= No_Match then
          Enable := Cmd (Matched (Graph_Cmd_Type_Paren).First) = 'd'
            or else Cmd (Matched (Graph_Cmd_Type_Paren).First) = 'D';
 
-
          --  Do we have any 'dependent on' expression ?
+
          if Matched (Graph_Cmd_Rest_Paren).First >= Cmd'First then
             Match (Graph_Cmd_Dependent_Format,
                    Cmd (Matched (Graph_Cmd_Rest_Paren).First
                         .. Matched (Graph_Cmd_Rest_Paren).Last),
                    Matched2);
+
             if Matched2 (1) /= No_Match then
                Dependent_On_First := Matched2 (0).First;
                Link_From := Find_Item
@@ -735,11 +738,13 @@ package body Odd.Process is
          end if;
 
          --  Do we have any 'link name' expression ?
+
          if Matched (Graph_Cmd_Rest_Paren).First >= Cmd'First then
             Match (Graph_Cmd_Link_Format,
                    Cmd (Matched (Graph_Cmd_Rest_Paren).First
                         .. Matched (Graph_Cmd_Rest_Paren).Last),
                    Matched2);
+
             if Matched2 (0) /= No_Match then
                Link_Name_First := Matched2 (0).First;
                Link_Name := new String'
@@ -747,14 +752,14 @@ package body Odd.Process is
             end if;
          end if;
 
-         --  A general expression  (graph print `cmd`)
+         --  A general expression (graph print `cmd`)
          if Matched (Graph_Cmd_Expression_Paren) /= No_Match then
-
             declare
-               Expr : String := Cmd
-                 (Matched (Graph_Cmd_Expression_Paren).First
-                  .. Matched (Graph_Cmd_Expression_Paren).Last);
+               Expr : constant String := Cmd
+                 (Matched (Graph_Cmd_Expression_Paren).First ..
+                  Matched (Graph_Cmd_Expression_Paren).Last);
                Entity : Items.Generic_Type_Access := New_Debugger_Type (Expr);
+
             begin
                Set_Value
                  (Debugger_Output_Type (Entity.all),
@@ -763,6 +768,7 @@ package body Odd.Process is
                         Is_Internal => True));
 
                --  No link ?
+
                if Dependent_On_First = Natural'Last then
                   Gtk_New
                     (Item, Get_Window (Process.Data_Canvas),
@@ -771,6 +777,7 @@ package body Odd.Process is
                      Auto_Refresh   => Enable,
                      Default_Entity => Entity);
                   Put (Process.Data_Canvas, Item);
+
                else
                   Gtk_New_And_Put
                     (Item, Get_Window (Process.Data_Canvas),
@@ -784,14 +791,16 @@ package body Odd.Process is
             end;
 
          --  A quoted name or standard name
-         else
 
+         else
             --  Quoted
+
             if Matched (Graph_Cmd_Quoted_Paren) /= No_Match then
                First := Matched (Graph_Cmd_Quoted_Paren).First;
                Last  := Matched (Graph_Cmd_Quoted_Paren).Last;
 
             --  Standard
+
             else
                First := Matched (Graph_Cmd_Rest_Paren).First;
                Last  := Natural'Min (Link_Name_First, Dependent_On_First);
@@ -803,8 +812,8 @@ package body Odd.Process is
             end if;
 
             --  If we don't want any link:
-            if Dependent_On_First = Natural'Last then
 
+            if Dependent_On_First = Natural'Last then
                if Enable_Block_Search then
                   Gtk_New
                     (Item, Get_Window (Process.Data_Canvas),
@@ -835,9 +844,10 @@ package body Odd.Process is
                end if;
 
             --  Else if we have a link
+
             else
                if Link_Name = null then
-                  Link_Name := new String'(Cmd (First .. Last));
+                  Link_Name := new String' (Cmd (First .. Last));
                end if;
 
                if Enable_Block_Search then
@@ -860,7 +870,6 @@ package body Odd.Process is
                      Link_From     => Link_From,
                      Link_Name     => Link_Name.all);
                end if;
-
             end if;
          end if;
 
@@ -868,7 +877,9 @@ package body Odd.Process is
 
       else
          --  Is this an enable/disable command ?
+
          Match (Graph_Cmd_Format2, Cmd, Matched);
+
          if Matched (2) /= No_Match then
             Index := Matched (2).First;
             Enable := Cmd (Matched (Graph_Cmd_Type_Paren).First) = 'e'
@@ -888,6 +899,7 @@ package body Odd.Process is
             end loop;
 
          --  Third possible set of commands
+
          else
             Match (Graph_Cmd_Format3, Cmd, Matched);
             if Matched (1) /= No_Match then
@@ -915,8 +927,9 @@ package body Odd.Process is
       Command        : String;
       Output_Command : Boolean := False)
    is
-      Command2 : String := To_Lower (Command);
+      Command2 : constant String := To_Lower (Command);
       First    : Natural := Command2'First;
+
    begin
       Append (Debugger.Command_History, Command);
 
@@ -958,7 +971,6 @@ package body Odd.Process is
       Set_Busy_Cursor (Debugger, False);
 
       Unregister_Dialog (Debugger);
-
    end Process_User_Command;
 
    ---------------------
@@ -987,12 +999,12 @@ package body Odd.Process is
 
    procedure Register_Dialog
      (Process : access Debugger_Process_Tab_Record;
-      Dialog  : access Gtk.Dialog.Gtk_Dialog_Record'Class)
-   is
+      Dialog  : access Gtk.Dialog.Gtk_Dialog_Record'Class) is
    begin
       if Process.Registered_Dialog /= null then
          raise Program_Error;
       end if;
+
       Process.Registered_Dialog := Gtk_Dialog (Dialog);
    end Register_Dialog;
 
@@ -1001,8 +1013,7 @@ package body Odd.Process is
    -----------------------
 
    procedure Unregister_Dialog
-     (Process : access Debugger_Process_Tab_Record)
-   is
+     (Process : access Debugger_Process_Tab_Record) is
    begin
       if Process.Registered_Dialog /= null then
          Destroy (Process.Registered_Dialog);
@@ -1017,7 +1028,7 @@ package body Odd.Process is
    procedure Update_Breakpoints
      (Object : access Gtk.Widget.Gtk_Widget_Record'Class)
    is
-      Process : Debugger_Process_Tab := Debugger_Process_Tab (Object);
+      Process : constant Debugger_Process_Tab := Debugger_Process_Tab (Object);
    begin
       Free (Process.Breakpoints);
       Process.Breakpoints := new Breakpoint_Array'
@@ -1041,12 +1052,11 @@ package body Odd.Process is
 
    function Toggle_Breakpoint_State
      (Process        : access Debugger_Process_Tab_Record;
-      Breakpoint_Num : Integer)
-     return Boolean
-   is
+      Breakpoint_Num : Integer) return Boolean is
    begin
       --  ??? Maybe we should also update the icons in the code_editor to have
       --  an icon of a different color ?
+
       if Process.Breakpoints /= null then
          for J in Process.Breakpoints'Range loop
             if Process.Breakpoints (J).Num = Breakpoint_Num then
@@ -1060,6 +1070,7 @@ package body Odd.Process is
             end if;
          end loop;
       end if;
+
       return False;
    end Toggle_Breakpoint_State;
 
@@ -1069,8 +1080,7 @@ package body Odd.Process is
 
    function Get_Current_Process
      (Main_Window : access Gtk.Widget.Gtk_Widget_Record'Class)
-     return Debugger_Process_Tab
-   is
+      return Debugger_Process_Tab is
    begin
       return Process_User_Data.Get
         (Get_Child (Get_Cur_Page
@@ -1092,6 +1102,7 @@ package body Odd.Process is
       else
          Gdk_New (Cursor, Gdk.Types.Left_Ptr);
       end if;
+
       Set_Cursor (Get_Window (Debugger.Window), Cursor);
       Destroy (Cursor);
    end Set_Busy_Cursor;

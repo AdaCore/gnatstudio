@@ -49,22 +49,19 @@ package body Odd.Asm_Editors is
 
    function Line_From_Address
      (Editor  : access Asm_Editor_Record'Class;
-      Address : String)
-     return Natural;
+      Address : String) return Natural;
    --  Return the line, in the text widget, that matches a given Address.
    --  0 is returned if the address was not found.
 
    function Address_From_Line
      (Editor  : access Asm_Editor_Record'Class;
-      Line    : Natural)
-     return String;
+      Line    : Natural) return String;
    --  Return the address associated with a given line in the text widget.
    --  "" is returned if no address was found.
 
    function Pos_From_Address
      (Editor  : access Asm_Editor_Record'Class;
-      Address : String)
-     return Natural;
+      Address : String) return Natural;
    --  Return the offset in the text widget, that matches a given Address.
    --  0 is returned if the address was not found.
 
@@ -84,14 +81,12 @@ package body Odd.Asm_Editors is
 
    function In_Range
      (Pc     : String;
-      R      : Cache_Data_Access)
-     return Boolean;
+      R      : Cache_Data_Access) return Boolean;
    --  Return True if PC is in the range of address described by R.
 
    function Find_In_Cache
      (Editor : access Asm_Editor_Record'Class;
-      Pc     : String)
-     return Cache_Data_Access;
+      Pc     : String) return Cache_Data_Access;
    --  Return the cached data that contains PC.
    --  null is returned if none is found.
 
@@ -105,8 +100,7 @@ package body Odd.Asm_Editors is
 
    procedure Gtk_New
      (Editor  : out Asm_Editor;
-      Process : access Gtk.Widget.Gtk_Widget_Record'Class)
-   is
+      Process : access Gtk.Widget.Gtk_Widget_Record'Class) is
    begin
       Editor := new Asm_Editor_Record;
       Initialize (Editor, Process);
@@ -118,8 +112,7 @@ package body Odd.Asm_Editors is
 
    procedure Initialize
      (Editor  : access Asm_Editor_Record'Class;
-      Process : access Gtk.Widget.Gtk_Widget_Record'Class)
-   is
+      Process : access Gtk.Widget.Gtk_Widget_Record'Class) is
    begin
       Odd.Text_Boxes.Initialize (Editor);
       Editor.Process := Gtk_Widget (Process);
@@ -137,8 +130,7 @@ package body Odd.Asm_Editors is
       Current_Line_Icon : Gtkada.Types.Chars_Ptr_Array;
       Stop_Icon         : Gtkada.Types.Chars_Ptr_Array;
       Strings_Color     : String;
-      Keyword_Color     : String)
-   is
+      Keyword_Color     : String) is
    begin
       Configure (Editor, Ps_Font_Name, Font_Size, Current_Line_Icon);
 
@@ -173,6 +165,7 @@ package body Odd.Asm_Editors is
       Last    : Address_Type;
       Start_End, Last_End : Natural;
       Low_Range, High_Range : String_Access;
+
    begin
       Editor.Current_Range := Find_In_Cache (Editor, Pc);
 
@@ -186,10 +179,11 @@ package body Odd.Asm_Editors is
             Code            => S);
 
          if Start_End /= 0 then
-            Low_Range := new String'(Start (1 .. Start_End));
+            Low_Range := new String' (Start (1 .. Start_End));
          end if;
+
          if Last_End /= 0 then
-            High_Range := new String'(Last (1 .. Last_End));
+            High_Range := new String' (Last (1 .. Last_End));
          end if;
 
          Editor.Cache := new Cache_Data'
@@ -220,8 +214,9 @@ package body Odd.Asm_Editors is
       if Button = 1 then
          declare
             Addr : constant String := Address_From_Line (Editor, Line);
-            Process : Debugger_Process_Tab :=
+            Process : constant Debugger_Process_Tab :=
               Debugger_Process_Tab (Editor.Process);
+
          begin
             Is_Breakpoint_Address (Editor, Addr, Result, Num);
 
@@ -234,6 +229,7 @@ package body Odd.Asm_Editors is
             end if;
          end;
       end if;
+
       return True;
    end On_Pixmap_Clicked;
 
@@ -284,6 +280,7 @@ package body Odd.Asm_Editors is
       --  Find the right line ?
 
       Line := Line_From_Address (Editor, Pc);
+
       if Line /= 0 then
          Set_Line (Editor, Line, Set_Current => True);
       end if;
@@ -303,6 +300,7 @@ package body Odd.Asm_Editors is
       Range_End_Len   : Natural;
       Pos_Start,
       Pos_End         : Natural;
+
    begin
       if Editor.Highlight_Start /= 0 then
          Delete_Text
@@ -324,6 +322,7 @@ package body Odd.Asm_Editors is
 
       Pos_Start := Pos_From_Address
         (Editor, Range_Start (1 .. Range_Start_Len));
+
       if Pos_Start /= 0 then
          Pos_End := Pos_From_Address
            (Editor, Range_End (1 .. Range_End_Len));
@@ -352,22 +351,23 @@ package body Odd.Asm_Editors is
 
    function Line_From_Address
      (Editor  : access Asm_Editor_Record'Class;
-      Address : String)
-     return Natural
+      Address : String) return Natural
    is
       Max_Lines : Natural;
       Buffer    : String_Access;
       Index     : Natural;
+
    begin
       Buffer := Get_Buffer (Editor);
+
       if Buffer = null then
          return 0;
       end if;
 
       Max_Lines := Lines_Count (Editor);
       Index     := Buffer'First;
-      for Line in 1 .. Max_Lines loop
 
+      for Line in 1 .. Max_Lines loop
          if Index + Address'Length - 1 <= Buffer'Last
            and then Buffer (Index .. Index + Address'Length - 1) = Address
          then
@@ -377,6 +377,7 @@ package body Odd.Asm_Editors is
          Skip_To_Char (Buffer.all, Index, ASCII.LF);
          Index := Index + 1;
       end loop;
+
       return 0;
    end Line_From_Address;
 
@@ -386,20 +387,22 @@ package body Odd.Asm_Editors is
 
    function Pos_From_Address
      (Editor  : access Asm_Editor_Record'Class;
-      Address : String)
-     return Natural
+      Address : String) return Natural
    is
       Max_Lines : Natural;
       Buffer    : String_Access;
       Index     : Natural;
+
    begin
       Buffer := Get_Buffer (Editor);
+
       if Buffer = null then
          return 0;
       end if;
 
       Max_Lines := Lines_Count (Editor);
       Index     := Buffer'First;
+
       for Line in 1 .. Max_Lines loop
          if Index + Address'Length - 1 <= Buffer'Last
            and then Buffer (Index .. Index + Address'Length - 1) = Address
@@ -412,8 +415,10 @@ package body Odd.Asm_Editors is
          loop
             Index := Index + 1;
          end loop;
+
          Index := Index + 1;
       end loop;
+
       return 0;
    end Pos_From_Address;
 
@@ -423,19 +428,20 @@ package body Odd.Asm_Editors is
 
    function Address_From_Line
      (Editor  : access Asm_Editor_Record'Class;
-      Line    : Natural)
-     return String
+      Line    : Natural) return String
    is
       Buffer  : String_Access := Get_Buffer (Editor);
       Current : Natural := 1;
       Index   : Natural;
       Matched : Match_Array (0 .. 1);
+
    begin
       if Buffer = null then
          return "";
       end if;
 
       Index := Buffer'First;
+
       while Current < Line loop
          Skip_To_Char (Buffer.all, Index, ASCII.LF);
          Index := Index + 1;
@@ -446,10 +452,12 @@ package body Odd.Asm_Editors is
          --  ??? Regexp should depend on the debugger.
          --  It does not include any 0 right after "0x"
          Match ("^0x0*([0-9a-f]+)", Buffer (Index .. Buffer'Last), Matched);
+
          if Matched (1) /= No_Match then
             return "0x" & Buffer.all (Matched (1).First .. Matched (1).Last);
          end if;
       end if;
+
       return "";
    end Address_From_Line;
 
@@ -463,9 +471,11 @@ package body Odd.Asm_Editors is
       Result : out Boolean;
       Num    : out Integer)
    is
-      Process : Debugger_Process_Tab := Debugger_Process_Tab (Editor.Process);
-      Breakpoints_Array : Odd.Types.Breakpoint_Array_Ptr :=
+      Process : constant Debugger_Process_Tab :=
+        Debugger_Process_Tab (Editor.Process);
+      Breakpoints_Array : constant Odd.Types.Breakpoint_Array_Ptr :=
         Process.Breakpoints;
+
    begin
       for Index in Breakpoints_Array'Range loop
          if Breakpoints_Array (Index).Address.all = Addr then
@@ -474,6 +484,7 @@ package body Odd.Asm_Editors is
             return;
          end if;
       end loop;
+
       Result := False;
    end Is_Breakpoint_Address;
 
@@ -487,6 +498,7 @@ package body Odd.Asm_Editors is
    is
       Line  : Natural;
       Pix   : Gtk_Pixmap;
+
    begin
       if Get_Buffer (Editor) = null then
          return;
@@ -521,8 +533,7 @@ package body Odd.Asm_Editors is
 
    function In_Range
      (Pc     : String;
-      R      : Cache_Data_Access)
-     return Boolean is
+      R      : Cache_Data_Access) return Boolean is
    begin
       return R /= null
         and then R.Low /= null
@@ -537,8 +548,7 @@ package body Odd.Asm_Editors is
 
    function Find_In_Cache
      (Editor : access Asm_Editor_Record'Class;
-      Pc     : String)
-     return Cache_Data_Access
+      Pc     : String) return Cache_Data_Access
    is
       Tmp : Cache_Data_Access := Editor.Cache;
    begin
@@ -546,8 +556,10 @@ package body Odd.Asm_Editors is
          if In_Range (Pc, Tmp) then
             return Tmp;
          end if;
+
          Tmp := Tmp.Next;
       end loop;
+
       return null;
    end Find_In_Cache;
 
@@ -555,12 +567,11 @@ package body Odd.Asm_Editors is
    -- On_Executable_Changed --
    ---------------------------
 
-   procedure On_Executable_Changed
-     (Editor : access Asm_Editor_Record)
-   is
+   procedure On_Executable_Changed (Editor : access Asm_Editor_Record) is
       Tmp : Cache_Data_Access := Editor.Cache;
    begin
       --  Clear the cache, since it is no longer valid.
+
       while Editor.Cache /= null loop
          Tmp := Editor.Cache.Next;
          Free (Tmp.Low);
@@ -575,8 +586,7 @@ package body Odd.Asm_Editors is
    ----------------------------
 
    procedure Show_Current_Line_Menu
-     (Editor : access Asm_Editor_Record'Class)
-   is
+     (Editor : access Asm_Editor_Record'Class) is
    begin
       Set_Line (Editor, Get_Line (Editor), Set_Current => True);
    end Show_Current_Line_Menu;

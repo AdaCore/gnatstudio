@@ -38,8 +38,8 @@ package body Items.Records is
    -- New_Record_Type --
    ---------------------
 
-   function New_Record_Type (Num_Fields : Natural)
-                            return Generic_Type_Access
+   function New_Record_Type
+     (Num_Fields : Natural) return Generic_Type_Access
    is
       R : Generic_Type_Access := new Record_Type (Num_Fields);
    begin
@@ -63,11 +63,11 @@ package body Items.Records is
    -- Set_Field_Name --
    --------------------
 
-   procedure Set_Field_Name (Item          : in out Record_Type;
-                             Index         : Positive;
-                             Name          : String;
-                             Variant_Parts : Natural := 0)
-   is
+   procedure Set_Field_Name
+     (Item          : in out Record_Type;
+      Index         : Positive;
+      Name          : String;
+      Variant_Parts : Natural := 0) is
    begin
       if Item.Fields (Index).Value /= null then
          Free (Item.Fields (Index).Value, Only_Value => False);
@@ -86,6 +86,7 @@ package body Items.Records is
            (Name          => new String'(Name),
             Value        => null,
             Variant_Part => null);
+
       else
          Item.Fields (Index) := Record_Field'
            (Name         => new String'(Name),
@@ -98,10 +99,9 @@ package body Items.Records is
    -- Get_Field_Name --
    --------------------
 
-   function Get_Field_Name (Item  : in Record_Type;
-                            Index : Positive)
-                           return String_Access
-   is
+   function Get_Field_Name
+     (Item  : in Record_Type;
+      Index : Positive) return String_Access is
    begin
       return Item.Fields (Index).Name;
    end Get_Field_Name;
@@ -110,11 +110,11 @@ package body Items.Records is
    -- Set_Variant_Field --
    -----------------------
 
-   procedure Set_Variant_Field (Item          : in out Record_Type;
-                                Index         : Positive;
-                                Variant_Index : Positive;
-                                Value         : access Record_Type'Class)
-   is
+   procedure Set_Variant_Field
+     (Item          : in out Record_Type;
+      Index         : Positive;
+      Variant_Index : Positive;
+      Value         : access Record_Type'Class) is
    begin
       if Item.Fields (Index).Variant_Part /= null then
          if Item.Fields (Index).Variant_Part (Variant_Index) /= null then
@@ -134,10 +134,9 @@ package body Items.Records is
    -- Get_Variant_Parts --
    -----------------------
 
-   function Get_Variant_Parts (Item  : Record_Type;
-                               Field : Positive)
-                              return Natural
-   is
+   function Get_Variant_Parts
+     (Item  : Record_Type;
+      Field : Positive) return Natural is
    begin
       if Item.Fields (Field).Variant_Part = null then
          return 0;
@@ -150,19 +149,19 @@ package body Items.Records is
    -- Find_Variant_Part --
    -----------------------
 
-   function Find_Variant_Part (Item     : Record_Type;
-                               Field    : Positive;
-                               Contains : String)
-                              return Generic_Type_Access
-   is
+   function Find_Variant_Part
+     (Item     : Record_Type;
+      Field    : Positive;
+      Contains : String) return Generic_Type_Access is
    begin
       for J in Item.Fields (Field).Variant_Part'Range loop
-         if Item.Fields (Field).Variant_Part (J).Fields (1).Name.all
-           = Contains
+         if Item.Fields (Field).Variant_Part (J).Fields (1).Name.all =
+           Contains
          then
             return Generic_Type_Access (Item.Fields (Field).Variant_Part (J));
          end if;
       end loop;
+
       return null;
    end Find_Variant_Part;
 
@@ -170,16 +169,17 @@ package body Items.Records is
    -- Set_Value --
    ---------------
 
-   procedure Set_Value (Item  : in out Record_Type;
-                        Value : access Generic_Type'Class;
-                        Field : String)
-   is
+   procedure Set_Value
+     (Item  : in out Record_Type;
+      Value : access Generic_Type'Class;
+      Field : String) is
    begin
       for J in Item.Fields'Range loop
          if Item.Fields (J).Name.all = Field then
             if Item.Fields (J).Value /= null then
                Free (Item.Fields (J).Value, Only_Value => False);
             end if;
+
             Item.Fields (J).Value := Generic_Type_Access (Value);
             Item.Fields (J).Value.Valid := True;
          end if;
@@ -193,14 +193,15 @@ package body Items.Records is
    -- Set_Value --
    ---------------
 
-   procedure Set_Value (Item  : in out Record_Type;
-                        Value : access Generic_Type'Class;
-                        Field : Positive)
-   is
+   procedure Set_Value
+     (Item  : in out Record_Type;
+      Value : access Generic_Type'Class;
+      Field : Positive) is
    begin
       if Item.Fields (Field).Value /= null then
          Free (Item.Fields (Field).Value, Only_Value => False);
       end if;
+
       Item.Fields (Field).Value := Generic_Type_Access (Value);
       Item.Fields (Field).Value.Valid := True;
       --  If there is at least one field, the record is valid.
@@ -211,16 +212,16 @@ package body Items.Records is
    -- Get_Value --
    ---------------
 
-   function Get_Value (Item  : Record_Type;
-                       Field : String)
-                      return Generic_Type_Access
-   is
+   function Get_Value
+     (Item  : Record_Type;
+      Field : String) return Generic_Type_Access is
    begin
       for J in Item.Fields'Range loop
          if Item.Fields (J).Name.all = Field then
             return Item.Fields (J).Value;
          end if;
       end loop;
+
       return null;
    end Get_Value;
 
@@ -228,10 +229,9 @@ package body Items.Records is
    -- Get_Value --
    ---------------
 
-   function Get_Value (Item  : Record_Type;
-                       Field : Positive)
-                      return Generic_Type_Access
-   is
+   function Get_Value
+     (Item  : Record_Type;
+      Field : Positive) return Generic_Type_Access is
    begin
       return Item.Fields (Field).Value;
    end Get_Value;
@@ -240,9 +240,8 @@ package body Items.Records is
    -- New_Union_Type --
    --------------------
 
-   function New_Union_Type (Num_Fields : Positive)
-                           return Generic_Type_Access
-   is
+   function New_Union_Type
+     (Num_Fields : Positive) return Generic_Type_Access is
    begin
       return new Union_Type (Num_Fields);
    end New_Union_Type;
@@ -262,21 +261,25 @@ package body Items.Records is
          for J in Value.Fields'Range loop
             if Value.Fields (J).Variant_Part /= null then
                Put ("<variant_part> => ");
+
                for P in Value.Fields (J).Variant_Part'Range loop
                   New_Line;
                   Put (String'(1 .. Indent + 6 => ' '));
                   Print (Value.Fields (J).Variant_Part (P).all,
                          Indent + 9);
                end loop;
+
                New_Line;
                Put (String'(1 .. Indent + 3 => ' '));
 
             else
                Put (Value.Fields (J).Name.all & " => ");
+
                if Value.Fields (J).Value /= null then
                   Print (Value.Fields (J).Value.all, Indent + 6);
                end if;
             end if;
+
             if J /= Value.Fields'Last then
                Put (", ");
                New_Line;
@@ -294,17 +297,21 @@ package body Items.Records is
    procedure Print (Value : Union_Type; Indent : Natural := 0) is
    begin
       Put ("{Union: ");
+
       for J in Value.Fields'Range loop
          Put (Value.Fields (J).Name.all & " => ");
+
          if Value.Fields (J).Value /= null then
             Print (Value.Fields (J).Value.all, Indent + 6);
          end if;
+
          if J /= Value.Fields'Last then
             Put (", ");
             New_Line;
             Put (String'(1 .. Indent + 3 => ' '));
          end if;
       end loop;
+
       Put ("}");
    end Print;
 
@@ -312,24 +319,27 @@ package body Items.Records is
    -- Free --
    ----------
 
-   procedure Free (Item : access Record_Type;
-                   Only_Value : Boolean := False)
-   is
+   procedure Free
+     (Item : access Record_Type;
+      Only_Value : Boolean := False) is
    begin
       for J in Item.Fields'Range loop
          if Item.Fields (J).Value /= null then
             Free (Item.Fields (J).Value, Only_Value);
+
             if Item.Fields (J).Variant_Part /= null then
                for V in Item.Fields (J).Variant_Part'Range loop
                   Free (Item.Fields (J).Variant_Part (V), Only_Value);
                end loop;
             end if;
+
             if not Only_Value then
                Free (Item.Fields (J).Name);
                Free (Item.Fields (J).Variant_Part);
             end if;
          end if;
       end loop;
+
       Free (Generic_Type (Item.all)'Access, Only_Value);
    end Free;
 
@@ -349,6 +359,7 @@ package body Items.Records is
          R.Fields (J).Name := new String'(Item.Fields (J).Name.all);
          --  Duplicate the type structure, but not the value itself.
          R.Fields (J).Value := Items.Clone (Item.Fields (J).Value.all);
+
          if Item.Fields (J).Variant_Part /= null then
             R.Fields (J).Variant_Part :=
               new Record_Type_Array'(Item.Fields (J).Variant_Part.all);
@@ -364,9 +375,10 @@ package body Items.Records is
    -- Paint --
    -----------
 
-   procedure Paint (Item    : in out Record_Type;
-                    Context : Drawing_Context;
-                    X, Y    : Gint := 0)
+   procedure Paint
+     (Item    : in out Record_Type;
+      Context : Drawing_Context;
+      X, Y    : Gint := 0)
    is
       Current_Y : Gint := Y + Border_Spacing;
       Arrow_Pos : constant Gint :=
@@ -377,8 +389,9 @@ package body Items.Records is
       Item.Y := Y;
 
       if not Item.Valid then
-         Display_Pixmap (Context.Pixmap, Context.GC, Unknown_Pixmap,
-                         Unknown_Mask, X + Left_Border, Y);
+         Display_Pixmap
+           (Context.Pixmap, Context.GC, Unknown_Pixmap,
+            Unknown_Mask, X + Left_Border, Y);
          return;
       end if;
 
@@ -389,8 +402,9 @@ package body Items.Records is
       end if;
 
       if not Item.Visible then
-         Display_Pixmap (Context.Pixmap, Context.GC, Hidden_Pixmap,
-                         Hidden_Mask, X + Left_Border, Current_Y);
+         Display_Pixmap
+           (Context.Pixmap, Context.GC, Hidden_Pixmap,
+            Hidden_Mask, X + Left_Border, Current_Y);
          return;
       end if;
 
@@ -416,9 +430,9 @@ package body Items.Records is
             X    => X + Left_Border + Border_Spacing,
             Y    => Current_Y + Get_Ascent (Context.Type_Font),
             Text => Item.Type_Name.all);
-         Current_Y := Current_Y
-           + Get_Ascent (Context.Type_Font)
-           + Get_Descent (Context.Type_Font);
+         Current_Y := Current_Y +
+           Get_Ascent (Context.Type_Font) +
+           Get_Descent (Context.Type_Font);
       end if;
 
       for F in Item.Fields'Range loop
@@ -461,13 +475,14 @@ package body Items.Records is
       end loop;
 
       --  Draw a border
-      Draw_Rectangle (Context.Pixmap,
-                      Context.GC,
-                      Filled => False,
-                      X      => X,
-                      Y      => Y,
-                      Width  => Item.Width - 1,
-                      Height => Item.Height - 1);
+      Draw_Rectangle
+        (Context.Pixmap,
+         Context.GC,
+         Filled => False,
+         X      => X,
+         Y      => Y,
+         Width  => Item.Width - 1,
+         Height => Item.Height - 1);
 
       if Item.Selected then
          Set_Function (Context.GC, Copy);
@@ -485,6 +500,7 @@ package body Items.Records is
    is
       Total_Height, Total_Width : Gint := 0;
       Largest_Name : String_Access := null;
+
    begin
       if not Item.Valid then
          Item.Width := Unknown_Width;
@@ -504,12 +520,13 @@ package body Items.Records is
       if Show_Type (Context.Mode)
         and then Item.Type_Name /= null
       then
-         Item.Type_Height := Get_Ascent (Context.Type_Font)
-           + Get_Descent (Context.Type_Font);
+         Item.Type_Height := Get_Ascent (Context.Type_Font) +
+           Get_Descent (Context.Type_Font);
          Total_Height := Total_Height + Item.Type_Height;
          Total_Width := Gint'Max
-              (Total_Width,
-               Text_Width (Context.Type_Font, Item.Type_Name.all));
+           (Total_Width,
+            Text_Width (Context.Type_Font, Item.Type_Name.all));
+
       else
          Item.Type_Height := 0;
       end if;
@@ -542,22 +559,23 @@ package body Items.Records is
 
             if Item.Fields (F).Variant_Part /= null then
                for V in Item.Fields (F).Variant_Part'Range loop
-                  Size_Request (Item.Fields (F).Variant_Part (V).all, Context,
-                                Hide_Big_Items);
-
+                  Size_Request
+                    (Item.Fields (F).Variant_Part (V).all, Context,
+                     Hide_Big_Items);
                   Total_Width  := Gint'Max
                     (Total_Width,
                      Item.Fields (F).Variant_Part (V).Width);
-                  Total_Height := Total_Height
-                    + Item.Fields (F).Variant_Part (V).Height;
+                  Total_Height := Total_Height +
+                    Item.Fields (F).Variant_Part (V).Height;
                end loop;
+
                Total_Height := Total_Height +
                  (Item.Fields (F).Variant_Part'Length - 1) * Line_Spacing;
             end if;
          end loop;
 
-         Total_Height := Total_Height
-           + (Item.Fields'Length - 1) * Line_Spacing;
+         Total_Height := Total_Height +
+           (Item.Fields'Length - 1) * Line_Spacing;
 
          if Largest_Name = null then
             Item.Gui_Fields_Width :=
@@ -568,14 +586,13 @@ package body Items.Records is
          end if;
 
          --  Keep enough space for the border (Border_Spacing on each side)
-         Item.Width  := Total_Width + Item.Gui_Fields_Width + Left_Border
-           + 2 * Border_Spacing;
+         Item.Width  := Total_Width + Item.Gui_Fields_Width + Left_Border +
+           2 * Border_Spacing;
          Item.Height := Total_Height + 2 * Border_Spacing;
 
          if Hide_Big_Items and then Item.Height > Big_Item_Height then
             Item.Visible := False;
          end if;
-
       end if;
 
       if not Item.Visible then
@@ -589,22 +606,26 @@ package body Items.Records is
    -- Propagate_Width --
    ---------------------
 
-   procedure Propagate_Width (Item  : in out Record_Type;
-                              Width : Glib.Gint)
+   procedure Propagate_Width
+     (Item  : in out Record_Type;
+      Width : Glib.Gint)
    is
-      W : constant Gint := Width - Item.Gui_Fields_Width - 2 * Border_Spacing
-        - Left_Border;
+      W : constant Gint := Width - Item.Gui_Fields_Width - 2 * Border_Spacing -
+        Left_Border;
       Iter : Generic_Iterator'Class :=
         Start (Generic_Type_Access'(Item'Unrestricted_Access));
       It   : Generic_Type_Access;
    begin
       Item.Width := Width;
+
       if Item.Visible then
          while not At_End (Iter) loop
             It := Data (Iter);
+
             if It /= null then
                Propagate_Width (It.all, W);
             end if;
+
             Next (Iter);
          end loop;
       end if;
@@ -614,11 +635,11 @@ package body Items.Records is
    -- Get_Component_Name --
    ------------------------
 
-   function Get_Component_Name (Item : access Record_Type;
-                                Lang : access Language_Root'Class;
-                                Name : String;
-                                X, Y : Glib.Gint)
-                               return String
+   function Get_Component_Name
+     (Item : access Record_Type;
+      Lang : access Language_Root'Class;
+      Name : String;
+      X, Y : Glib.Gint) return String
    is
       Total_Height : Gint := Border_Spacing + Item.Type_Height;
       Tmp_Height   : Gint;
@@ -645,8 +666,9 @@ package body Items.Records is
 
       for F in Item.Fields'Range loop
          if Item.Fields (F).Value /= null then
-            Tmp_Height := Total_Height + Item.Fields (F).Value.Height
-              + Line_Spacing;
+            Tmp_Height := Total_Height + Item.Fields (F).Value.Height +
+              Line_Spacing;
+
             if Y <= Tmp_Height then
                declare
                   Field_Name : constant String :=
@@ -661,25 +683,28 @@ package body Items.Records is
                      X - Field_Start, Y - Total_Height);
                end;
             end if;
+
             Total_Height := Tmp_Height;
          end if;
 
          if Item.Fields (F).Variant_Part /= null then
             for V in Item.Fields (F).Variant_Part'Range loop
-               Tmp_Height := Total_Height
-                 + Item.Fields (F).Variant_Part (V).Height + Line_Spacing;
+               Tmp_Height := Total_Height +
+                 Item.Fields (F).Variant_Part (V).Height + Line_Spacing;
+
                if Y <= Tmp_Height then
                   if X < Field_Start then
                      return Name;
                   end if;
+
                   return Get_Component_Name
                     (Item.Fields (F).Variant_Part (V), Lang, Name,
                      X - Field_Start, Y - Total_Height);
                end if;
+
                Total_Height := Tmp_Height;
             end loop;
          end if;
-
       end loop;
 
       return Name;
@@ -689,9 +714,8 @@ package body Items.Records is
    -- Get_Component --
    -------------------
 
-   function Get_Component (Item : access Record_Type;
-                           X, Y : Glib.Gint)
-                          return Generic_Type_Access
+   function Get_Component
+     (Item : access Record_Type; X, Y : Glib.Gint) return Generic_Type_Access
    is
       Total_Height : Gint := Border_Spacing + Item.Type_Height;
       Tmp_Height   : Gint;
@@ -720,8 +744,10 @@ package body Items.Records is
 
       while not At_End (Iter) loop
          It := Data (Iter);
+
          if It /= null then
             Tmp_Height := Total_Height + It.Height + Line_Spacing;
+
             if Y <= Tmp_Height then
                if X < Field_Start then
                   return It;
@@ -729,11 +755,13 @@ package body Items.Records is
 
                return Get_Component (It, X - Field_Start, Y - Total_Height);
             end if;
+
             Total_Height := Tmp_Height;
          end if;
 
          Next (Iter);
       end loop;
+
       return Generic_Type_Access (Item);
    end Get_Component;
 
@@ -744,9 +772,7 @@ package body Items.Records is
    function Replace
      (Parent       : access Record_Type;
       Current      : access Generic_Type'Class;
-      Replace_With : access Generic_Type'Class)
-     return Generic_Type_Access
-   is
+      Replace_With : access Generic_Type'Class) return Generic_Type_Access is
    begin
       for F in Parent.Fields'Range loop
          if Parent.Fields (F).Value = Generic_Type_Access (Current) then
@@ -769,6 +795,7 @@ package body Items.Records is
             end loop;
          end if;
       end loop;
+
       return null;
    end Replace;
 
@@ -798,12 +825,13 @@ package body Items.Records is
             Iter.Variant := Iter.Variant + 1;
          end if;
 
-         if Iter.Variant
-           > Iter.Item.Fields (Iter.Field).Variant_Part'Last
+         if Iter.Variant >
+           Iter.Item.Fields (Iter.Field).Variant_Part'Last
          then
             Iter.Variant := Natural'Last;
             Iter.Field := Iter.Field + 1;
          end if;
+
       else
          Iter.Field := Iter.Field + 1;
       end if;

@@ -47,19 +47,19 @@ package body Odd.Dialogs.Callbacks is
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args)
    is
-      Frame       : Gint         := To_Gint (Params, 1) + 1;
+      Frame       : constant Gint         := To_Gint (Params, 1) + 1;
 
       --  Get the process notebook from the main window which is associated
       --  with the task dialog (toplevel (object)).
 
-      Main_Window : Gtk_Window   :=
+      Main_Window : constant Gtk_Window   :=
         Backtrace_Dialog_Access (Get_Toplevel (Object)).Main_Window;
-      Notebook    : Gtk_Notebook :=
+      Notebook    : constant Gtk_Notebook :=
         Main_Debug_Window_Access (Main_Window).Process_Notebook;
 
       --  Get the current page in the process notebook.
 
-      Process     : Debugger_Process_Tab :=
+      Process     : constant Debugger_Process_Tab :=
         Process_User_Data.Get (Get_Nth_Page
           (Notebook, Get_Current_Page (Notebook)));
 
@@ -77,7 +77,7 @@ package body Odd.Dialogs.Callbacks is
    is
       Bt       : Backtrace_Array (1 .. Max_Frame);
       Len      : Natural;
-      Dialog   : Backtrace_Dialog_Access :=
+      Dialog   : constant Backtrace_Dialog_Access :=
         Debugger_Process_Tab (Object).Window.Backtrace_Dialog;
       Process  : Process_Proxy_Access;
       Internal : Boolean;
@@ -103,13 +103,13 @@ package body Odd.Dialogs.Callbacks is
       Params : Gtk.Arguments.Gtk_Args)
    is
       --  Since lists start at 0, increment the value.
-      Thread        : Gint := To_Gint (Params, 1) + 1;
+      Thread        : constant Gint := To_Gint (Params, 1) + 1;
       Frame         : Gtk_Frame;
 
       --  Get the process notebook from the main window which is associated
       --  with the task dialog (toplevel (object)).
 
-      Notebook      : Gtk_Notebook :=
+      Notebook      : constant Gtk_Notebook :=
         Main_Debug_Window_Access (Task_Dialog_Access
         (Get_Toplevel (Object)).Main_Window).Process_Notebook;
 
@@ -165,7 +165,7 @@ package body Odd.Dialogs.Callbacks is
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args)
    is
-      Dialog   : Task_Dialog_Access :=
+      Dialog   : constant Task_Dialog_Access :=
         Debugger_Process_Tab (Object).Window.Task_Dialog;
       Process  : Process_Proxy_Access;
       Internal : Boolean;
@@ -207,12 +207,13 @@ package body Odd.Dialogs.Callbacks is
       Params : Gtk.Arguments.Gtk_Args)
    is
       use type Gint_List.Glist;
-      Dialog      : Question_Dialog_Access :=
+
+      Dialog      : constant Question_Dialog_Access :=
         Question_Dialog_Access (Get_Toplevel (Object));
 
-      Selection : Gint_List.Glist := Get_Selection (Dialog.List);
+      Selection : constant Gint_List.Glist := Get_Selection (Dialog.List);
       S         : Unbounded_String;
-      Tmp       : Gint_List.Glist := Gint_List. First (Selection);
+      Tmp       : Gint_List.Glist := Gint_List.First (Selection);
 
    begin
       while Tmp /= Gint_List.Null_List loop
@@ -228,6 +229,7 @@ package body Odd.Dialogs.Callbacks is
 
       --  This dialog is destroyed, not simply hidden, since it has to
       --  be recreated from scratch every time anyway.
+
       Unregister_Dialog (Convert (Dialog.Main_Window, Dialog.Debugger));
    end On_Question_OK_Clicked;
 
@@ -238,7 +240,7 @@ package body Odd.Dialogs.Callbacks is
    procedure On_Question_Close_Clicked
      (Object : access Gtk_Widget_Record'Class)
    is
-      Dialog      : Question_Dialog_Access :=
+      Dialog      : constant Question_Dialog_Access :=
         Question_Dialog_Access (Get_Toplevel (Object));
    begin
       --  Send the interrupt signal to the debugger, so that it does not keep

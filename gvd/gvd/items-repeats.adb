@@ -57,8 +57,7 @@ package body Items.Repeats is
 
    procedure Set_Repeat_Num
      (Item : in out Repeat_Type;
-      Num  : Integer)
-   is
+      Num  : Integer) is
    begin
       Item.Repeat_Num := Num;
    end Set_Repeat_Num;
@@ -78,8 +77,7 @@ package body Items.Repeats is
 
    procedure Set_Value
      (Item  : in out Repeat_Type;
-      Value : Generic_Type_Access)
-   is
+      Value : Generic_Type_Access) is
    begin
       Item.Valid := True;
       Item.Value := Value;
@@ -92,6 +90,7 @@ package body Items.Repeats is
    procedure Print (Value : Repeat_Type; Indent : Natural := 0) is
    begin
       Put ("{<" & Value.Repeat_Num'Img & " times> : ");
+
       if Value.Value /= null then
          Print (Value.Value.all, Indent + 3);
          Put ("}");
@@ -104,14 +103,13 @@ package body Items.Repeats is
    -- Free --
    ----------
 
-   procedure Free (Item : access Repeat_Type;
-                   Only_Value : Boolean := False)
-   is
+   procedure Free (Item : access Repeat_Type; Only_Value : Boolean := False) is
    begin
       if Item.Value /= null then
          --  Keep the structure of the item that is repeated, if required.
          Free (Item.Value, Only_Value);
       end if;
+
       Free (Generic_Type (Item.all)'Access, Only_Value);
    end Free;
 
@@ -121,8 +119,7 @@ package body Items.Repeats is
 
    procedure Clone_Dispatching
      (Item  : Repeat_Type;
-      Clone : out Generic_Type_Access)
-   is
+      Clone : out Generic_Type_Access) is
    begin
       Clone_Dispatching (Generic_Type (Item), Clone);
 
@@ -137,9 +134,10 @@ package body Items.Repeats is
    -- Paint --
    -----------
 
-   procedure Paint (Item    : in out Repeat_Type;
-                    Context : Drawing_Context;
-                    X, Y    : Gint := 0)
+   procedure Paint
+     (Item    : in out Repeat_Type;
+      Context : Drawing_Context;
+      X, Y    : Gint := 0)
    is
       Str : String := "<repeat " & Integer'Image (Item.Repeat_Num) & "> ";
    begin
@@ -147,8 +145,9 @@ package body Items.Repeats is
       Item.Y := Y;
 
       if not Item.Valid then
-         Display_Pixmap (Context.Pixmap, Context.GC, Unknown_Pixmap,
-                         Unknown_Mask, X + Border_Spacing, Y);
+         Display_Pixmap
+           (Context.Pixmap, Context.GC, Unknown_Pixmap,
+            Unknown_Mask, X + Border_Spacing, Y);
          return;
       end if;
 
@@ -164,24 +163,26 @@ package body Items.Repeats is
          Set_Function (Context.GC, Copy_Invert);
       end if;
 
-      Draw_Text (Context.Pixmap,
-                 Font => Context.Font,
-                 GC   => Context.GC,
-                 X    => X + Border_Spacing,
-                 Y    => Y + Border_Spacing + Get_Ascent (Context.Font),
-                 Text => Str);
+      Draw_Text
+        (Context.Pixmap,
+         Font => Context.Font,
+         GC   => Context.GC,
+         X    => X + Border_Spacing,
+         Y    => Y + Border_Spacing + Get_Ascent (Context.Font),
+         Text => Str);
 
       Paint (Item.Value.all, Context,
              X + Item.Repeat_Str_Width, Y + Border_Spacing);
 
       --  Draw a border
-      Draw_Rectangle (Context.Pixmap,
-                      Context.GC,
-                      Filled => False,
-                      X      => X,
-                      Y      => Y,
-                      Width  => Item.Width - 1,
-                      Height => Item.Height - 1);
+      Draw_Rectangle
+        (Context.Pixmap,
+         Context.GC,
+         Filled => False,
+         X      => X,
+         Y      => Y,
+         Width  => Item.Width - 1,
+         Height => Item.Height - 1);
 
       if Item.Selected then
          Set_Function (Context.GC, Copy);
@@ -209,8 +210,8 @@ package body Items.Repeats is
            Item.Value.Width + Item.Repeat_Str_Width + 2 * Border_Spacing;
          Item.Height :=
            Gint'Max (Item.Value.Height,
-                     Get_Ascent (Context.Font) + Get_Descent (Context.Font))
-           + 2 * Border_Spacing;
+                     Get_Ascent (Context.Font) + Get_Descent (Context.Font)) +
+           2 * Border_Spacing;
       end if;
    end Size_Request;
 
@@ -218,12 +219,11 @@ package body Items.Repeats is
    -- Get_Component_Name --
    ------------------------
 
-   function Get_Component_Name (Item : access Repeat_Type;
-                                Lang : access Language_Root'Class;
-                                Name : String;
-                                X, Y : Glib.Gint)
-                               return String
-   is
+   function Get_Component_Name
+     (Item : access Repeat_Type;
+      Lang : access Language_Root'Class;
+      Name : String;
+      X, Y : Glib.Gint) return String is
    begin
       if X < Item.Repeat_Str_Width then
          return Name;
@@ -237,10 +237,9 @@ package body Items.Repeats is
    -- Get_Component --
    -------------------
 
-   function Get_Component (Item : access Repeat_Type;
-                           X, Y : Glib.Gint)
-                          return Generic_Type_Access
-   is
+   function Get_Component
+     (Item : access Repeat_Type;
+      X, Y : Glib.Gint) return Generic_Type_Access is
    begin
       if X < Item.Repeat_Str_Width then
          return Generic_Type_Access (Item);
@@ -257,15 +256,14 @@ package body Items.Repeats is
    function Replace
      (Parent       : access Repeat_Type;
       Current      : access Generic_Type'Class;
-      Replace_With : access Generic_Type'Class)
-     return Generic_Type_Access
-   is
+      Replace_With : access Generic_Type'Class) return Generic_Type_Access is
    begin
       if Parent.Value = Generic_Type_Access (Current) then
          Free (Parent.Value, Only_Value => False);
          Parent.Value := Generic_Type_Access (Replace_With);
          return Generic_Type_Access (Replace_With);
       end if;
+
       return null;
    end Replace;
 

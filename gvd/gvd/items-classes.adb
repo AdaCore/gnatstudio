@@ -34,9 +34,8 @@ package body Items.Classes is
    -- New_Class_Type --
    --------------------
 
-   function New_Class_Type (Num_Ancestors : Natural)
-                           return Generic_Type_Access
-   is
+   function New_Class_Type
+     (Num_Ancestors : Natural) return Generic_Type_Access is
    begin
       return new Class_Type (Num_Ancestors);
    end New_Class_Type;
@@ -45,15 +44,17 @@ package body Items.Classes is
    -- Add_Ancestor --
    ------------------
 
-   procedure Add_Ancestor (Item     : in out Class_Type;
-                           Num      : Positive;
-                           Ancestor : Class_Type_Access)
-   is
+   procedure Add_Ancestor
+     (Item     : in out Class_Type;
+      Num      : Positive;
+      Ancestor : Class_Type_Access) is
    begin
       pragma Assert (Num <= Item.Num_Ancestors);
+
       if Item.Ancestors (Num) /= null then
          Free (Item.Ancestors (Num), Only_Value => False);
       end if;
+
       Item.Ancestors (Num) := Ancestor;
       Item.Valid := True;
       Item.Ancestors (Num).Valid := True;
@@ -63,14 +64,16 @@ package body Items.Classes is
    -- Set_Child --
    ---------------
 
-   procedure Set_Child (Item  : in out Class_Type;
-                        Child : Record_Type_Access)
-   is
+   procedure Set_Child
+     (Item  : in out Class_Type;
+      Child : Record_Type_Access) is
    begin
       pragma Assert (Item.Child = null);
+
       if Item.Child /= null then
          Free (Item.Child, Only_Value => False);
       end if;
+
       Item.Child := Child;
    end Set_Child;
 
@@ -87,10 +90,9 @@ package body Items.Classes is
    -- Get_Ancestor --
    ------------------
 
-   function Get_Ancestor (Item : Class_Type;
-                          Num  : Positive)
-                         return Generic_Type_Access
-   is
+   function Get_Ancestor
+     (Item : Class_Type;
+      Num  : Positive) return Generic_Type_Access is
    begin
       pragma Assert (Num <= Item.Num_Ancestors);
       return Generic_Type_Access (Item.Ancestors (Num));
@@ -136,13 +138,14 @@ package body Items.Classes is
    -- Free --
    ----------
 
-   procedure Free (Item : access Class_Type;
-                   Only_Value : Boolean := False)
-   is
+   procedure Free
+     (Item : access Class_Type;
+      Only_Value : Boolean := False) is
    begin
       for A in Item.Ancestors'Range loop
          Free (Item.Ancestors (A), Only_Value);
       end loop;
+
       Free (Item.Child, Only_Value);
       Free (Generic_Type (Item.all)'Access, Only_Value);
    end Free;
@@ -158,10 +161,12 @@ package body Items.Classes is
       R : Class_Type_Access := Class_Type_Access (Clone);
    begin
       Clone_Dispatching (Generic_Type (Item), Clone);
+
       for A in Item.Ancestors'Range loop
          R.Ancestors (A) :=
            Class_Type_Access (Items.Clone (Item.Ancestors (A).all));
       end loop;
+
       R.Child := Record_Type_Access (Items.Clone (Item.Child.all));
    end Clone_Dispatching;
 
@@ -169,9 +174,10 @@ package body Items.Classes is
    -- Paint --
    -----------
 
-   procedure Paint (Item    : in out Class_Type;
-                    Context : Drawing_Context;
-                    X, Y    : Glib.Gint := 0)
+   procedure Paint
+     (Item    : in out Class_Type;
+      Context : Drawing_Context;
+      X, Y    : Glib.Gint := 0)
    is
       Current_Y : Gint := Y;
    begin
@@ -179,17 +185,18 @@ package body Items.Classes is
       Item.Y := Y;
 
       if not Item.Valid
-        or else (Item.Ancestors'Length = 0
-                 and then not Item.Child.Valid)
+        or else (Item.Ancestors'Length = 0 and then not Item.Child.Valid)
       then
-         Display_Pixmap (Context.Pixmap, Context.GC, Unknown_Pixmap,
-                         Unknown_Mask, X + Left_Border, Y + Border_Spacing);
+         Display_Pixmap
+           (Context.Pixmap, Context.GC, Unknown_Pixmap,
+            Unknown_Mask, X + Left_Border, Y + Border_Spacing);
          return;
       end if;
 
       if not Item.Visible then
-         Display_Pixmap (Context.Pixmap, Context.GC, Hidden_Pixmap,
-                         Hidden_Mask, X + Left_Border, Current_Y);
+         Display_Pixmap
+           (Context.Pixmap, Context.GC, Hidden_Pixmap,
+            Hidden_Mask, X + Left_Border, Current_Y);
          return;
       end if;
 
@@ -252,9 +259,10 @@ package body Items.Classes is
 
                --  If we don't have an null record
                if Item.Ancestors (A).Height /= 0 then
-                  Total_Height := Total_Height + Item.Ancestors (A).Height
-                    + Line_Spacing;
+                  Total_Height := Total_Height + Item.Ancestors (A).Height +
+                    Line_Spacing;
                end if;
+
                Total_Width := Gint'Max (Total_Width, Item.Ancestors (A).Width);
             end if;
          end loop;
@@ -284,11 +292,11 @@ package body Items.Classes is
    -- Get_Component_Name --
    ------------------------
 
-   function Get_Component_Name (Item : access Class_Type;
-                                Lang : access Language_Root'Class;
-                                Name : String;
-                                X, Y : Glib.Gint)
-                               return String
+   function Get_Component_Name
+     (Item : access Class_Type;
+      Lang : access Language_Root'Class;
+      Name : String;
+      X, Y : Glib.Gint) return String
    is
       Total_Height : Gint := 0;
    begin
@@ -309,6 +317,7 @@ package body Items.Classes is
             return Get_Component_Name
               (Item.Ancestors (A), Lang, Name, X, Y - Total_Height);
          end if;
+
          Total_Height := Total_Height + Item.Ancestors (A).Height;
       end loop;
 
@@ -320,9 +329,9 @@ package body Items.Classes is
    -- Get_Component --
    -------------------
 
-   function Get_Component (Item : access Class_Type;
-                           X, Y : Glib.Gint)
-                          return Generic_Type_Access
+   function Get_Component
+     (Item : access Class_Type;
+      X, Y : Glib.Gint) return Generic_Type_Access
    is
       Total_Height : Gint := 0;
    begin
@@ -353,9 +362,7 @@ package body Items.Classes is
    function Replace
      (Parent       : access Class_Type;
       Current      : access Generic_Type'Class;
-      Replace_With : access Generic_Type'Class)
-     return Generic_Type_Access
-   is
+      Replace_With : access Generic_Type'Class) return Generic_Type_Access is
    begin
       for A in Parent.Ancestors'Range loop
          if Parent.Ancestors (A) = Class_Type_Access (Current) then
@@ -364,11 +371,13 @@ package body Items.Classes is
             return Generic_Type_Access (Replace_With);
          end if;
       end loop;
+
       if Parent.Child = Record_Type_Access (Current) then
          Free (Parent.Child, Only_Value => False);
          Parent.Child := Record_Type_Access (Replace_With);
          return Generic_Type_Access (Replace_With);
       end if;
+
       return null;
    end Replace;
 
@@ -376,11 +385,12 @@ package body Items.Classes is
    -- Propagate_Width --
    ---------------------
 
-   procedure Propagate_Width (Item  : in out Class_Type;
-                              Width : Glib.Gint)
-   is
+   procedure Propagate_Width
+     (Item  : in out Class_Type;
+      Width : Glib.Gint) is
    begin
       Item.Width := Width;
+
       if Item.Visible then
          for A in Item.Ancestors'Range loop
             Propagate_Width (Item.Ancestors (A).all, Width);

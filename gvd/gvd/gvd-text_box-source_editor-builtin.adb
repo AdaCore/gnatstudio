@@ -144,8 +144,7 @@ package body Odd.Source_Editors is
 
    function Check_Single_Line
      (Editor     : access Source_Editor_Record'Class;
-      Line       : Natural)
-     return Boolean;
+      Line       : Natural) return Boolean;
    --  Check whether Line contains executable code, and put an icon for it
    --  in the button toolbar if needed.
    --  Returns False if no line after Line contains code.
@@ -160,8 +159,7 @@ package body Odd.Source_Editors is
 
    procedure Gtk_New
      (Editor  : out Source_Editor;
-      Process : access Gtk.Widget.Gtk_Widget_Record'Class)
-   is
+      Process : access Gtk.Widget.Gtk_Widget_Record'Class) is
    begin
       Editor := new Source_Editor_Record;
       Initialize (Editor, Process);
@@ -173,8 +171,7 @@ package body Odd.Source_Editors is
 
    procedure Initialize
      (Editor  : access Source_Editor_Record'Class;
-      Process : access Gtk.Widget.Gtk_Widget_Record'Class)
-   is
+      Process : access Gtk.Widget.Gtk_Widget_Record'Class) is
    begin
       Odd.Text_Boxes.Initialize (Editor);
       Editor.Process := Gtk_Widget (Process);
@@ -207,6 +204,7 @@ package body Odd.Source_Editors is
             return;
          end if;
       end loop;
+
       Result := False;
    end Is_Breakpoint;
 
@@ -223,8 +221,7 @@ package body Odd.Source_Editors is
       Stop_Icon         : Gtkada.Types.Chars_Ptr_Array;
       Comments_Color    : String;
       Strings_Color     : String;
-      Keywords_Color    : String)
-   is
+      Keywords_Color    : String) is
    begin
       Configure (Editor, Ps_Font_Name, Font_Size, Current_Line_Icon);
 
@@ -261,8 +258,8 @@ package body Odd.Source_Editors is
       Line   : Natural) return Boolean
    is
       Process : Debugger_Process_Tab := Debugger_Process_Tab (Editor.Process);
-      Result : Boolean;
-      Num    : Natural;
+      Result  : Boolean;
+      Num     : Natural;
    begin
       if Button = 1 then
          Is_Breakpoint (Editor, Line, Result, Num);
@@ -281,9 +278,8 @@ package body Odd.Source_Editors is
    -- Invisible_Column_Width --
    ----------------------------
 
-   function Invisible_Column_Width (Editor : access Source_Editor_Record)
-                                   return Glib.Gint
-   is
+   function Invisible_Column_Width
+     (Editor : access Source_Editor_Record) return Glib.Gint is
    begin
       if Editor.Show_Line_Nums then
          return Gint (Line_Numbers_Width);
@@ -304,6 +300,7 @@ package body Odd.Source_Editors is
       Menu  : Gtk_Menu;
       Mitem : Gtk_Menu_Item;
       Check : Gtk_Check_Menu_Item;
+
    begin
       --  Destroy the previous menu (which we couldn't do earlier because
       --  of the call to popup. It will change every item anyway.
@@ -387,8 +384,9 @@ package body Odd.Source_Editors is
         (Mitem, "activate",
          Editor_Cb.To_Marshaller (Show_Current_Line_Menu'Access),
          Source);
-      Set_Sensitive (Mitem, Source.Debugger_Current_File /= null
-                     and then Source.Debugger_Current_File.all /= "");
+      Set_Sensitive
+        (Mitem, Source.Debugger_Current_File /= null
+         and then Source.Debugger_Current_File.all /= "");
 
       Gtk_New (Mitem);
       Append (Menu, Mitem);
@@ -448,15 +446,14 @@ package body Odd.Source_Editors is
       Line_Start  : Positive := 1;
       Entity      : Language_Entity;
       Next_Char   : Positive;
+
    begin
       if Editor.Show_Line_Nums then
          Insert (Editor, Chars => Line_Number_String (1));
       end if;
 
       while Index <= Buffer'Last loop
-
          case Buffer (Index) is
-
             when ASCII.CR =>  --  ignore, this is processed as ASCII.LF
                Index := Index + 1;
 
@@ -492,6 +489,7 @@ package body Odd.Source_Editors is
                   declare
                      J          : Positive := Index;
                      Line_Start : Positive := Index;
+
                   begin
                      while J < Next_Char loop
                         if Buffer (J) = ASCII.LF then
@@ -499,20 +497,26 @@ package body Odd.Source_Editors is
                                    Editor.Colors (Entity),
                                    Chars => Buffer (Line_Start .. J));
                            Line := Line + 1;
+
                            if Editor.Show_Line_Nums then
                               Insert (Editor,
                                       Chars => Line_Number_String (Line));
                            end if;
+
                            Line_Start := J + 1;
                         end if;
+
                         J := J + 1;
                      end loop;
+
                      Insert (Editor,
                              Editor.Colors (Entity),
                              Null_Color,
                              Buffer (Line_Start .. Next_Char - 1));
                   end;
+
                   Index := Next_Char;
+
                else
                   Index := Index + 1;
                end if;
@@ -526,12 +530,12 @@ package body Odd.Source_Editors is
 
    procedure Set_Current_Language
      (Editor : access Source_Editor_Record;
-      Lang   : Language.Language_Access)
-   is
+      Lang   : Language.Language_Access) is
    begin
       Free (Editor.Lang);
+
       if Lang /= null then
-         Editor.Lang := new Language_Root'Class'(Lang.all);
+         Editor.Lang := new Language_Root'Class' (Lang.all);
       end if;
    end Set_Current_Language;
 
@@ -544,10 +548,10 @@ package body Odd.Source_Editors is
       Position : Odd.Explorer.Position_Type)
    is
       Last   : Positive;
-      Pos    : Positive := Position.Index
-        + (Position.Line + 1) * Natural (Invisible_Column_Width (Editor)) - 1;
-      Text   : Gtk_Text := Get_Child (Editor);
-      Buffer : String := Get_Chars (Text, Gint (Pos));
+      Pos    : constant Positive := Position.Index +
+        (Position.Line + 1) * Natural (Invisible_Column_Width (Editor)) - 1;
+      Text   : constant Gtk_Text := Get_Child (Editor);
+      Buffer : constant String := Get_Chars (Text, Gint (Pos));
 
    begin
       Last := Buffer'First;
@@ -590,6 +594,7 @@ package body Odd.Source_Editors is
       use Gtk.Widget.Widget_List;
       Tmp : Glist := Editor.Breakpoint_Buttons;
       Pix : Gtk_Pixmap;
+
    begin
       if Editor.Current_File = null then
          return;
@@ -632,12 +637,15 @@ package body Odd.Source_Editors is
    -- Set_Show_Line_Nums --
    ------------------------
 
-   procedure Set_Show_Line_Nums (Editor : access Source_Editor_Record;
-                                 Show   : Boolean := False)
+   procedure Set_Show_Line_Nums
+     (Editor : access Source_Editor_Record;
+      Show   : Boolean := False)
    is
       --  Save the currently displayed line
+
       Value : constant Gfloat :=
         Get_Value (Get_Vadj (Get_Child (Editor)));
+
    begin
       if Show /= Editor.Show_Line_Nums then
          Editor.Show_Line_Nums := Show;
@@ -650,9 +658,8 @@ package body Odd.Source_Editors is
    -- Get_Show_Line_Nums --
    ------------------------
 
-   function Get_Show_Line_Nums (Editor : access Source_Editor_Record)
-                               return Boolean
-   is
+   function Get_Show_Line_Nums
+     (Editor : access Source_Editor_Record) return Boolean is
    begin
       return Editor.Show_Line_Nums;
    end Get_Show_Line_Nums;
@@ -661,9 +668,9 @@ package body Odd.Source_Editors is
    -- Set_Show_Lines_With_Code --
    ------------------------------
 
-   procedure Set_Show_Lines_With_Code (Editor : access Source_Editor_Record;
-                                       Show   : Boolean)
-   is
+   procedure Set_Show_Lines_With_Code
+     (Editor : access Source_Editor_Record;
+      Show   : Boolean) is
    begin
       if Show /= Editor.Show_Lines_With_Code then
          Editor.Show_Lines_With_Code := Show;
@@ -671,8 +678,8 @@ package body Odd.Source_Editors is
 
          if Editor.Debugger_Current_File /= null
            and then Editor.Current_File /= null
-           and then Editor.Debugger_Current_File.all
-           = Editor.Current_File.all
+           and then Editor.Debugger_Current_File.all =
+             Editor.Current_File.all
          then
             Set_Line (Editor, Get_Line (Editor), Set_Current => True);
          end if;
@@ -683,9 +690,8 @@ package body Odd.Source_Editors is
    -- Get_Show_Lines_With_Code --
    ------------------------------
 
-   function Get_Show_Lines_With_Code (Editor : access Source_Editor_Record)
-                                     return Boolean
-   is
+   function Get_Show_Lines_With_Code
+     (Editor : access Source_Editor_Record) return Boolean is
    begin
       return Editor.Show_Lines_With_Code;
    end Get_Show_Lines_With_Code;
@@ -694,9 +700,8 @@ package body Odd.Source_Editors is
    -- Get_Current_File --
    ----------------------
 
-   function Get_Current_File (Editor : access Source_Editor_Record)
-                             return String
-   is
+   function Get_Current_File
+     (Editor : access Source_Editor_Record) return String is
    begin
       if Editor.Current_File = null then
          return "";
@@ -716,7 +721,7 @@ package body Odd.Source_Editors is
    is
       F      : File_Descriptor;
       Length : Positive;
-      Name   : aliased String := File_Name & ASCII.NUL;
+      Name   : aliased constant String := File_Name & ASCII.NUL;
    begin
       --  Avoid reloading a file twice.
       --  This also solve the problem of recursive loops ("info line" in gdb,
@@ -747,7 +752,7 @@ package body Odd.Source_Editors is
             S : String (1 .. Length);
          begin
             Length := Read (F, S'Address, Length);
-            Set_Buffer (Editor, new String'(Strip_Control_M (S)));
+            Set_Buffer (Editor, new String' (Strip_Control_M (S)));
          end;
 
          Close (F);
@@ -755,6 +760,7 @@ package body Odd.Source_Editors is
 
       Update_Child (Editor);
       Update_Buttons (Editor, True);
+
       if Debugger_Process_Tab (Editor.Process).Breakpoints /= null then
          Update_Breakpoints
            (Editor, Debugger_Process_Tab (Editor.Process).Breakpoints.all);
@@ -780,8 +786,7 @@ package body Odd.Source_Editors is
 
    procedure File_Not_Found
      (Editor    : access Source_Editor_Record;
-      File_Name : String)
-   is
+      File_Name : String) is
    begin
       --  Clear the old file
       Delete_Text (Get_Child (Editor));
@@ -803,8 +808,8 @@ package body Odd.Source_Editors is
       Pix       : Gtk_Pixmap;
       Num_Lines : Natural := 0;
       Value     : Gfloat;
-      Process   : Debugger_Process_Tab
-        := Debugger_Process_Tab (Editor.Process);
+      Process   : constant Debugger_Process_Tab :=
+        Debugger_Process_Tab (Editor.Process);
    begin
       if Is_Empty (Editor) then
          return;
@@ -822,9 +827,11 @@ package body Odd.Source_Editors is
 
       Editor.Current_File_Cache := Find_In_Cache
         (Process.Window, Editor.Current_File.all);
+
       if Editor.Idle_Id /= 0 then
          Idle_Remove (Editor.Idle_Id);
       end if;
+
       if Editor.Show_Lines_With_Code then
          Editor.Idle_Id := Editor_Idle.Add
            (Idle_Compute_Lines'Access, Source_Editor (Editor));
@@ -942,8 +949,8 @@ package body Odd.Source_Editors is
      (Editor : access Source_Editor_Record'Class)
    is
       Name : constant String := Editor.Debugger_Current_File.all;
-
       Lang : Language_Access;
+
    begin
       if Name /= "" then
          Lang := Get_Language_From_File (Name);
@@ -967,8 +974,10 @@ package body Odd.Source_Editors is
       Line     : Integer;
       Line_Max : Integer;
       Found    : Boolean := False;
+
    begin
       --  If we already reached the end, cancel the Idle loop
+
       if Editor.Current_File_Cache.Line_Parsed = null then
          Editor.Idle_Id := 0;
          return False;
@@ -1018,6 +1027,7 @@ package body Odd.Source_Editors is
             exit when not Editor.Current_File_Cache.Line_Parsed
               (Editor.Current_File_Cache.Current_Line);
          end loop;
+
          Line := Editor.Current_File_Cache.Current_Line;
       end if;
 
@@ -1030,6 +1040,7 @@ package body Odd.Source_Editors is
          Editor.Idle_Id := 0;
          return False;
       end if;
+
       return True;
    end Idle_Compute_Lines;
 
@@ -1039,13 +1050,14 @@ package body Odd.Source_Editors is
 
    function Check_Single_Line
      (Editor     : access Source_Editor_Record'Class;
-      Line       : Natural)
-     return Boolean
+      Line       : Natural) return Boolean
    is
-      Kind        : Line_Kind;
-      Pix         : Gtk_Pixmap;
-      Process : Debugger_Process_Tab := Debugger_Process_Tab (Editor.Process);
-      Debug   : Debugger_Access := Process.Debugger;
+      Kind    : Line_Kind;
+      Pix     : Gtk_Pixmap;
+      Process : constant Debugger_Process_Tab :=
+        Debugger_Process_Tab (Editor.Process);
+      Debug   : constant Debugger_Access := Process.Debugger;
+
    begin
       Push_Internal_Command_Status (Get_Process (Debug), True);
       Set_Parse_File_Name (Get_Process (Debug), False);

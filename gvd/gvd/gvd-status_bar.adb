@@ -150,6 +150,7 @@ package body Odd.Status_Bar is
       use type Messages_List.GSlist;
       Num     : Natural := 1;
       Frame   : Gtk_Frame;
+
    begin
       --  If not already displayed, create it.
       if Status.Historic_Win = null then
@@ -208,6 +209,7 @@ package body Odd.Status_Bar is
             List := Messages_List.Next (List);
             Num := Num + 1;
          end loop;
+
          Thaw (Text);
          Show (Text);
 

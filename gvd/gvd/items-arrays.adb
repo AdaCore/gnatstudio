@@ -35,10 +35,10 @@ with Items.Repeats; use Items.Repeats;
 
 package body Items.Arrays is
 
-   function Index_String (Item    : Array_Type;
-                          Index   : Long_Integer;
-                          Dim_Num : Positive)
-                         return String;
+   function Index_String
+     (Item    : Array_Type;
+      Index   : Long_Integer;
+      Dim_Num : Positive) return String;
    --  Return the string indicating the coordinates in the array, for the
    --  element at Index.
 
@@ -46,18 +46,18 @@ package body Items.Arrays is
    -- Index_String --
    ------------------
 
-   function Index_String (Item    : Array_Type;
-                          Index   : Long_Integer;
-                          Dim_Num : Positive)
-                         return String
+   function Index_String
+     (Item    : Array_Type;
+      Index   : Long_Integer;
+      Dim_Num : Positive) return String
    is
-      Length : constant Long_Integer := Item.Dimensions (Dim_Num).Last
-        - Item.Dimensions (Dim_Num).First + 1;
+      Length : constant Long_Integer := Item.Dimensions (Dim_Num).Last -
+        Item.Dimensions (Dim_Num).First + 1;
    begin
       --  Do we have an array with no element ?
+
       if Length <= 0 then
          return "??";
-
       else
          declare
             Dim : constant String := Long_Integer'Image
@@ -81,9 +81,8 @@ package body Items.Arrays is
    -- New_Array_Type --
    --------------------
 
-   function New_Array_Type (Num_Dimensions : Positive)
-                           return Generic_Type_Access
-   is
+   function New_Array_Type
+     (Num_Dimensions : Positive) return Generic_Type_Access is
    begin
       return new Array_Type (Num_Dimensions => Num_Dimensions);
    end New_Array_Type;
@@ -92,10 +91,10 @@ package body Items.Arrays is
    -- Set_Dimensions --
    --------------------
 
-   procedure Set_Dimensions (Item : in out Array_Type;
-                             Dim  : Positive;
-                             Size : Dimension)
-   is
+   procedure Set_Dimensions
+     (Item : in out Array_Type;
+      Dim  : Positive;
+      Size : Dimension) is
    begin
       Item.Dimensions (Dim) := Size;
    end Set_Dimensions;
@@ -113,10 +112,9 @@ package body Items.Arrays is
    -- Get_Dimensions --
    --------------------
 
-   function Get_Dimensions (Item : Array_Type;
-                            Dim  : Positive)
-                           return Dimension
-   is
+   function Get_Dimensions
+     (Item : Array_Type;
+      Dim  : Positive) return Dimension is
    begin
       return Item.Dimensions (Dim);
    end Get_Dimensions;
@@ -127,8 +125,7 @@ package body Items.Arrays is
 
    procedure Set_Item_Type
      (Item     : in out Array_Type;
-      The_Type : access Generic_Type'Class)
-   is
+      The_Type : access Generic_Type'Class) is
    begin
       Item.Item_Type := Generic_Type_Access (The_Type);
    end Set_Item_Type;
@@ -137,9 +134,8 @@ package body Items.Arrays is
    -- Get_Item_Type --
    -------------------
 
-   function Get_Item_Type (Item : Array_Type)
-                          return Generic_Type_Access
-   is
+   function Get_Item_Type
+     (Item : Array_Type) return Generic_Type_Access is
    begin
       return Item.Item_Type;
    end Get_Item_Type;
@@ -148,14 +144,16 @@ package body Items.Arrays is
    -- Set_Value --
    ---------------
 
-   procedure Set_Value (Item  : in out Array_Type;
-                        Elem_Value : access Generic_Type'Class;
-                        Elem_Index : Long_Integer;
-                        Repeat_Num : Positive := 1)
+   procedure Set_Value
+     (Item  : in out Array_Type;
+      Elem_Value : access Generic_Type'Class;
+      Elem_Index : Long_Integer;
+      Repeat_Num : Positive := 1)
    is
       Tmp       : Array_Item_Array_Access;
       To_Insert : Generic_Type_Access;
       Index     : Positive;
+
    begin
 
       --  Create the real new value (ie including the Repeat_Num)
@@ -165,8 +163,9 @@ package body Items.Arrays is
          To_Insert.Valid := True;
       else
          To_Insert := New_Repeat_Type;
-         Set_Value (Repeat_Type (To_Insert.all),
-                    Generic_Type_Access (Elem_Value));
+         Set_Value
+           (Repeat_Type (To_Insert.all),
+            Generic_Type_Access (Elem_Value));
          Set_Repeat_Num (Repeat_Type_Access (To_Insert).all, Repeat_Num);
       end if;
 
@@ -191,6 +190,7 @@ package body Items.Arrays is
             Tmp      : Array_Item_Array (1 .. Item.Values'Last * 2);
             Save     : Array_Item_Array_Access := Item.Values;
             Index    : Positive := Tmp'First;
+
          begin
             for J in 1 .. Item.Last_Value loop
 
@@ -242,7 +242,7 @@ package body Items.Arrays is
                      end if;
                      Index := Index + 1;
 
-                  --  Old one on the "left" ofthe old one => Split it
+                  --  Old one on the "left" of the old one => Split it
                   --       |------- new ---------|
                   --    |-------- old -------|
 
@@ -333,17 +333,19 @@ package body Items.Arrays is
                     (Repeat_Type_Access (Item.Values (J).Value));
                   Range_Index     : Long_Integer := Item.Values (J).Index;
                   Tmp             : Generic_Type_Access;
-               begin
 
+               begin
                   Tmp := Get_Value (Repeat_Type (Item.Values (J).Value.all));
                   if Elem_Index - Range_Index >= 1 then
-                     Set_Repeat_Num (Repeat_Type (Item.Values (J).Value.all),
-                                     Positive (Elem_Index - Range_Index));
+                     Set_Repeat_Num
+                       (Repeat_Type (Item.Values (J).Value.all),
+                        Positive (Elem_Index - Range_Index));
                      Set_Value
                        (Item,
                         Elem_Value => Elem_Value,
                         Elem_Index => Elem_Index,
                            Repeat_Num => 1);
+
                   else
                      Set_Value (Repeat_Type (Item.Values (J).Value.all), null);
                      Free (Item.Values (J).Value, Only_Value => False);
@@ -365,11 +367,11 @@ package body Items.Arrays is
                --  Nothing else to do, this has been done recursively.
                return;
 
-
             elsif Item.Values (J).Index = Elem_Index then
                if Item.Values (J).Value /= null then
                   Free (Item.Values (J).Value, Only_Value => False);
                end if;
+
                Item.Values (J).Value := To_Insert;
                return;
             end if;
@@ -381,6 +383,7 @@ package body Items.Arrays is
       if Item.Values = null then
          Item.Values := new Array_Item_Array (1 .. 100);
          Item.Last_Value := 1;
+
       else
          Item.Last_Value := Item.Last_Value + 1;
       end if;
@@ -395,6 +398,7 @@ package body Items.Arrays is
       --  Insert the item, but make sure that the Values array is still sorted.
 
       Index := 1;
+
       while Index < Item.Last_Value
         and then Item.Values (Index).Index < Elem_Index
       loop
@@ -406,6 +410,7 @@ package body Items.Arrays is
            Item.Values (Index .. Item.Last_Value - 1);
          Item.Values (Index) :=
            Array_Item'(Index => Elem_Index, Value => To_Insert);
+
       else
          Item.Values (Item.Last_Value) :=
            Array_Item'(Index => Elem_Index, Value => To_Insert);
@@ -416,9 +421,9 @@ package body Items.Arrays is
    -- Get_Value --
    ---------------
 
-   function Get_Value (Item       : Array_Type;
-                       Elem_Index : Long_Integer)
-                      return Generic_Type_Access
+   function Get_Value
+     (Item       : Array_Type;
+      Elem_Index : Long_Integer) return Generic_Type_Access
    is
       Return_Type : Generic_Type_Access;
    begin
@@ -443,6 +448,7 @@ package body Items.Arrays is
             return Return_Type;
          end if;
       end loop;
+
       return null;
    end Get_Value;
 
@@ -499,9 +505,8 @@ package body Items.Arrays is
    -- Free --
    ----------
 
-   procedure Free (Item : access Array_Type;
-                   Only_Value : Boolean := False)
-   is
+   procedure Free
+     (Item : access Array_Type; Only_Value : Boolean := False) is
    begin
       if Item.Values /= null then
          --  Free the whole memory for the items, since the type is in fact
@@ -511,9 +516,11 @@ package body Items.Arrays is
          end loop;
          Free (Item.Values);
       end if;
+
       if not Only_Value then
          Free (Item.Item_Type, Only_Value);
       end if;
+
       Free (Generic_Type (Item.all)'Access, Only_Value);
    end Free;
 
@@ -538,9 +545,10 @@ package body Items.Arrays is
    -- Paint --
    -----------
 
-   procedure Paint (Item    : in out Array_Type;
-                    Context : Drawing_Context;
-                    X, Y    : Gint := 0)
+   procedure Paint
+     (Item    : in out Array_Type;
+      Context : Drawing_Context;
+      X, Y    : Gint := 0)
    is
       Current_Y : Gint := Y + Border_Spacing;
       Arrow_Pos : constant Gint := X + Border_Spacing + Item.Index_Width +
@@ -585,49 +593,53 @@ package body Items.Arrays is
       if Show_Type (Context.Mode)
         and then Item.Type_Name /= null
       then
-         Draw_Text (Context.Pixmap,
-                    Font => Context.Type_Font,
-                    GC   => Context.GC,
-                    X    => X + Border_Spacing,
-                    Y    => Current_Y + Get_Ascent (Context.Type_Font),
-                    Text => Item.Type_Name.all);
-         Current_Y := Current_Y
-           + Get_Ascent (Context.Type_Font) + Get_Descent (Context.Type_Font);
+         Draw_Text
+           (Context.Pixmap,
+            Font => Context.Type_Font,
+            GC   => Context.GC,
+            X    => X + Border_Spacing,
+            Y    => Current_Y + Get_Ascent (Context.Type_Font),
+            Text => Item.Type_Name.all);
+         Current_Y := Current_Y +
+           Get_Ascent (Context.Type_Font) + Get_Descent (Context.Type_Font);
       end if;
 
       if Show_Value (Context.Mode) then
          for V in Item.Values'Range loop
-
-            Draw_Text (Context.Pixmap,
-                       Font => Context.Font,
-                       GC   => Context.GC,
-                       X    => X + Left_Border + Border_Spacing,
-                       Y    => Current_Y + Get_Ascent (Context.Font),
-                       Text => Index_String (Item,
-                                             Item.Values (V).Index,
-                                             Item.Num_Dimensions));
-            Draw_Text (Context.Pixmap,
-                       Font => Context.Font,
-                       GC   => Context.GC,
-                       X    => Arrow_Pos,
-                       Y    => Current_Y + Get_Ascent (Context.Font),
-                       Text => " => ");
-            Paint (Item.Values (V).Value.all, Context,
-                   X + Left_Border + Border_Spacing + Item.Index_Width,
-                   Current_Y);
+            Draw_Text
+              (Context.Pixmap,
+               Font => Context.Font,
+               GC   => Context.GC,
+               X    => X + Left_Border + Border_Spacing,
+               Y    => Current_Y + Get_Ascent (Context.Font),
+               Text =>
+                 Index_String
+                   (Item, Item.Values (V).Index, Item.Num_Dimensions));
+            Draw_Text
+              (Context.Pixmap,
+               Font => Context.Font,
+               GC   => Context.GC,
+               X    => Arrow_Pos,
+               Y    => Current_Y + Get_Ascent (Context.Font),
+               Text => " => ");
+            Paint
+              (Item.Values (V).Value.all, Context,
+               X + Left_Border + Border_Spacing + Item.Index_Width,
+               Current_Y);
             Current_Y :=
               Current_Y + Item.Values (V).Value.Height + Line_Spacing;
          end loop;
       end if;
 
       --  Draw a border
-      Draw_Rectangle (Context.Pixmap,
-                      Context.GC,
-                      Filled => False,
-                      X      => X,
-                      Y      => Y,
-                      Width  => Item.Width - 1,
-                      Height => Item.Height - 1);
+      Draw_Rectangle
+        (Context.Pixmap,
+         Context.GC,
+         Filled => False,
+         X      => X,
+         Y      => Y,
+         Width  => Item.Width - 1,
+         Height => Item.Height - 1);
 
       if Item.Selected then
          Set_Function (Context.GC, Copy);
@@ -653,6 +665,7 @@ package body Items.Arrays is
 
       --  If we have a real empty array (ie the dimensions were not considered
       --  as dynamic
+
       if Item.Dimensions (1).First > Item.Dimensions (1).Last
         and then Item.Dimensions (1).First /= Long_Integer'Last
         and then Item.Dimensions (1).Last /= Long_Integer'First
@@ -672,12 +685,14 @@ package body Items.Arrays is
             Total_Width := Gint'Max
               (Total_Width,
                Text_Width (Context.Type_Font, Item.Type_Name.all));
+
          else
             Item.Type_Height := 0;
          end if;
 
          if Show_Value (Context.Mode) then
             Item.Index_Width := 20;  --  minimal width
+
             if Item.Values /= null then
                for V in Item.Values'Range loop
                   Size_Request
@@ -686,11 +701,15 @@ package body Items.Arrays is
                     Gint'Max (Total_Width, Item.Values (V).Value.Width);
                   Total_Height := Total_Height + Item.Values (V).Value.Height;
                   Item.Index_Width :=
-                    Gint'Max (Item.Index_Width, String_Width
-                              (Context.Font,
-                               Index_String (Item, Item.Values (V).Index,
-                                             Item.Num_Dimensions)));
+                    Gint'Max
+                      (Item.Index_Width,
+                       String_Width
+                         (Context.Font,
+                          Index_String
+                            (Item, Item.Values (V).Index,
+                             Item.Num_Dimensions)));
                end loop;
+
                Total_Height :=
                  Total_Height + (Item.Values'Length - 1) * Line_Spacing;
             end if;
@@ -701,8 +720,8 @@ package body Items.Arrays is
 
          --  Keep enough space for the border (Border_Spacing on each side)
 
-         Item.Width  := Total_Width + Item.Index_Width + Left_Border
-           + 2 * Border_Spacing;
+         Item.Width := Total_Width + Item.Index_Width + Left_Border +
+           2 * Border_Spacing;
          Item.Height := Total_Height + 2 * Border_Spacing;
 
          --  Hide big items for efficiency
@@ -722,13 +741,15 @@ package body Items.Arrays is
    -- Propagate_Width --
    ---------------------
 
-   procedure Propagate_Width (Item  : in out Array_Type;
-                              Width : Glib.Gint)
+   procedure Propagate_Width
+     (Item  : in out Array_Type; Width : Glib.Gint)
    is
-      W : constant Gint := Width - Item.Index_Width - 2 * Border_Spacing
-        - Left_Border;
+      W : constant Gint := Width - Item.Index_Width - 2 * Border_Spacing -
+        Left_Border;
+
    begin
       Item.Width := Width;
+
       if Item.Visible and then Item.Values /= null then
          for V in Item.Values'Range loop
             Propagate_Width (Item.Values (V).Value.all, W);
@@ -740,11 +761,11 @@ package body Items.Arrays is
    -- Get_Component_Name --
    ------------------------
 
-   function Get_Component_Name (Item : access Array_Type;
-                                Lang : access Language_Root'Class;
-                                Name : String;
-                                X, Y : Glib.Gint)
-                               return String
+   function Get_Component_Name
+     (Item : access Array_Type;
+      Lang : access Language_Root'Class;
+      Name : String;
+      X, Y : Glib.Gint) return String
    is
       Total_Height : Gint := Border_Spacing + Item.Type_Height;
       Tmp_Height   : Gint;
@@ -772,17 +793,17 @@ package body Items.Arrays is
       --  Else, find the relevant item
 
       for V in Item.Values'Range loop
-         Tmp_Height := Total_Height + Item.Values (V).Value.Height
-           + Line_Spacing;
-         if Y <= Tmp_Height then
+         Tmp_Height := Total_Height + Item.Values (V).Value.Height +
+           Line_Spacing;
 
+         if Y <= Tmp_Height then
             declare
                Item_Name : constant String :=
                  Array_Item_Name
                  (Lang, Name, Index_String
                   (Item.all, Item.Values (V).Index, Item.Num_Dimensions));
-            begin
 
+            begin
                --  ??? Should be able to get a range of values (ie all the
                --  values that are displayed in a single box).
 
@@ -795,6 +816,7 @@ package body Items.Arrays is
                   X - Field_Start, Y - Total_Height);
             end;
          end if;
+
          Total_Height := Tmp_Height;
       end loop;
 
@@ -805,14 +827,14 @@ package body Items.Arrays is
    -- Get_Component --
    -------------------
 
-   function Get_Component (Item : access Array_Type;
-                           X, Y : Glib.Gint)
-                          return Generic_Type_Access
+   function Get_Component
+     (Item : access Array_Type; X, Y : Glib.Gint) return Generic_Type_Access
    is
       Total_Height : Gint := Border_Spacing + Item.Type_Height;
       Tmp_Height   : Gint;
       Field_Name_Start : constant Gint := Left_Border + Border_Spacing;
       Field_Start  : constant Gint := Field_Name_Start + Item.Index_Width;
+
    begin
       if not Item.Valid or else not Item.Visible then
          return Generic_Type_Access (Item);
@@ -835,17 +857,20 @@ package body Items.Arrays is
       --  Else, find the relevant item
 
       for V in Item.Values'Range loop
-         Tmp_Height := Total_Height + Item.Values (V).Value.Height
-           + Line_Spacing;
+         Tmp_Height := Total_Height + Item.Values (V).Value.Height +
+           Line_Spacing;
+
          if Y <= Tmp_Height then
             if X < Field_Start then
                return Generic_Type_Access (Item);
             end if;
 
-            return Get_Component (Item.Values (V).Value,
-                                  X - Field_Start,
-                                  Y - Total_Height);
+            return Get_Component
+              (Item.Values (V).Value,
+               X - Field_Start,
+               Y - Total_Height);
          end if;
+
          Total_Height := Tmp_Height;
       end loop;
 
@@ -859,9 +884,7 @@ package body Items.Arrays is
    function Replace
      (Parent       : access Array_Type;
       Current      : access Generic_Type'Class;
-      Replace_With : access Generic_Type'Class)
-     return Generic_Type_Access
-   is
+      Replace_With : access Generic_Type'Class) return Generic_Type_Access is
    begin
       --  Since all values should be replaced, do nothing if there is any
       --  value defined.
@@ -889,9 +912,11 @@ package body Items.Arrays is
       Iter : Array_Iterator;
    begin
       Iter.Item := Array_Type_Access (Item);
+
       if Item.Values /= null then
          Iter.Child := Item.Values'First;
       end if;
+
       return Iter;
    end Start;
 

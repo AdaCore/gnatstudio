@@ -64,9 +64,8 @@ package body Odd.Canvas is
    -- Get_Next_Item_Num --
    -----------------------
 
-   function Get_Next_Item_Num (Canvas : access Odd_Canvas_Record'Class)
-                              return Integer
-   is
+   function Get_Next_Item_Num
+     (Canvas : access Odd_Canvas_Record'Class) return Integer is
    begin
       Canvas.Item_Num := Canvas.Item_Num + 1;
       return Canvas.Item_Num;
