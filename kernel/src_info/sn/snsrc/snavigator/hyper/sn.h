@@ -37,6 +37,8 @@ MA 02111-1307, USA.
 #define SN_H
 #include "config.h"
 
+#define MAX_DB_NUM      32
+
 #define  PAF_SYM_FILENAME  1
 #define  PAF_HIGH_FILENAME 2
 #define  PAF_HIGH    3

@@ -443,7 +443,7 @@ main(int argc, char **argv)
 	char	*sn_pid = NULL;
 	char	*omode = NULL;
 	char	lock_file[MAXPATHLEN];
-	int	set_sgns = FALSE;
+	int	set_sgns = FALSE, i;
 	LongString	buf;
 	char *macro_file[MAX_MACRO_FILES];
 	int macro_file_num = 0;
@@ -504,12 +504,14 @@ main(int argc, char **argv)
 		}
 	}
 
+   /*
 	if (optind < argc)
 	{
 		db_prefix = argv[optind];
 	}
+   */
 
-	if (!db_prefix)
+	if (optind >= argc)
 	{
 		printf("Usage: %s ?-c cache_size? ?-C cross_cache_size? ?-l? ?-f file? ?-m macrofile? db_prefix\n",
 			argv[0]);
@@ -524,7 +526,7 @@ main(int argc, char **argv)
 
 	if (sn_host && sn_pid)
 	{
-		sprintf(lock_file,"%s.lck",db_prefix);
+		sprintf(lock_file,"%s.lck",argv[optind]);
 
 		switch (create_lock_file(lock_file,sn_host,sn_pid))
 		{
@@ -569,7 +571,7 @@ main(int argc, char **argv)
 			chmod(tmp,0666);
 			fprintf(logfp,"#dbimp (pid: %lu) started database\n#prefix: <%s> cache: %s ",
 				(unsigned long)getpid(),
-				db_prefix,
+				argv[optind],
 				cache ? cache : "#");
 			fprintf(logfp,"cross_cache: %s local_vars: %d file: <%s>\n",
 				cross_cache ? cross_cache : "#",
@@ -592,7 +594,8 @@ main(int argc, char **argv)
 
 	Paf_dbimp_running = TRUE;
 
-	Paf_db_init_tables(db_prefix,cache,cross_cache);
+   for ( i = optind; i < argc; ++i )
+    	Paf_db_init_tables(argv [i],cache,cross_cache);
 
 	linenum = 0;
 	type = -999;
