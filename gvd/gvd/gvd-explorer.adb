@@ -404,9 +404,10 @@ package body GVD.Explorer is
 
       for C in Categories'Range loop
          if Categories (C).Make_Entry /= null then
-            Node  := null;
-            First := Buffer'First;
-            Line  := 1;
+            Node     := null;
+            First    := Buffer'First;
+            Line     := 1;
+            Line_Pos := 0;
 
             loop
                Match (Categories (C).Regexp.all,
