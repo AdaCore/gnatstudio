@@ -686,7 +686,7 @@ package body Codefix_Module is
            -("Parse the output of a tool, and suggests auto-fix possibilities"
              & " whenever possible. This adds small icons in the location"
              & " window, so that the user can click on it to fix compilation"
-             & " errors. You should call locations_parse with the same output"
+             & " errors. You should call Locations.parse with the same output"
              & " prior to calling this command."
              & ASCII.LF
              & "The regular expression specifies how locations are recognized."
