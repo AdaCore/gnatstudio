@@ -24,7 +24,6 @@ with Glib.Object;               use Glib.Object;
 with Gdk.Types;                 use Gdk.Types;
 with Gdk.Types.Keysyms;         use Gdk.Types.Keysyms;
 with Gtk.Button;                use Gtk.Button;
-with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Toolbar;               use Gtk.Toolbar;
@@ -89,11 +88,6 @@ package body Navigation_Module is
    procedure On_Forward
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Callbacks for the back/forward buttons.
-
-   procedure Navigation_Contextual_Menu
-     (Object  : access Glib.Object.GObject_Record'Class;
-      Context : access Selection_Context'Class;
-      Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
 
    procedure On_Other_File
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
@@ -275,6 +269,9 @@ package body Navigation_Module is
             if Other_File /= "" then
                Open_File_Editor (Kernel, Other_File, Line => 0,
                                  From_Path => True);
+            else
+               Trace (Me, "Other file not found for "
+                      & File_Information (File));
             end if;
          end;
       else
@@ -288,22 +285,6 @@ package body Navigation_Module is
          Pop_State (Kernel);
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Other_File;
-
-   --------------------------------
-   -- Navigation_Contextual_Menu --
-   --------------------------------
-
-   procedure Navigation_Contextual_Menu
-     (Object  : access Glib.Object.GObject_Record'Class;
-      Context : access Selection_Context'Class;
-      Menu    : access Gtk.Menu.Gtk_Menu_Record'Class)
-   is
-      pragma Unreferenced (Object);
-      pragma Unreferenced (Context);
-      pragma Unreferenced (Menu);
-   begin
-      null;
-   end Navigation_Contextual_Menu;
 
    ---------------------
    -- Register_Module --
@@ -323,8 +304,7 @@ package body Navigation_Module is
         (Module                  => Navigation_Module_ID,
          Kernel                  => Kernel,
          Module_Name             => Navigation_Module_Name,
-         Priority                => High_Priority,
-         Contextual_Menu_Handler => Navigation_Contextual_Menu'Access);
+         Priority                => High_Priority);
 
       Register_Menu
         (Kernel,
