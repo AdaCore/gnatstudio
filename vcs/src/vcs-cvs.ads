@@ -35,7 +35,8 @@ package VCS.CVS is
    procedure Get_Status
      (Rep         : access CVS_Record;
       Filenames   : String_List.List;
-      Clear_Logs  : Boolean := False);
+      Clear_Logs  : Boolean := False;
+      Local       : Boolean := False);
 
    function Local_Get_Status
      (Rep       : access CVS_Record;
