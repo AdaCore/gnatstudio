@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2002                            --
+--                    Copyright (C) 2002-2003                        --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -161,8 +161,26 @@ package body Projects is
       then
          declare
             Filename : constant String := Project_Path (Project);
+            Dirname  : constant String := Dir_Name (Filename);
+
          begin
             Trace (Me, "Save_Project: Creating new file " & Filename);
+
+            if not Is_Directory (Dirname) then
+               begin
+                  Make_Dir (Dirname);
+               exception
+                  when Directory_Error =>
+                     Trace (Me, "Couldn't create directory " & Dirname);
+
+                     if Report_Error /= null then
+                        Report_Error ("Couldn't create directory " & Dirname);
+                     end if;
+
+                     return;
+               end;
+            end if;
+
             Create (File, Mode => Out_File, Name => Filename);
             Pretty_Print
               (Project => Project,
@@ -178,7 +196,10 @@ package body Projects is
          exception
             when Ada.Text_IO.Name_Error =>
                Trace (Me, "Couldn't create " & Filename);
-               Report_Error ("Couldn't create file " & Filename);
+
+               if Report_Error /= null then
+                  Report_Error ("Couldn't create file " & Filename);
+               end if;
          end;
       end if;
    end Save_Project;
@@ -2076,8 +2097,8 @@ package body Projects is
    -- Set_View_Is_Complete --
    --------------------------
 
-   procedure Set_View_Is_Complete (Project : Project_Type; Complete : Boolean)
-   is
+   procedure Set_View_Is_Complete
+     (Project : Project_Type; Complete : Boolean) is
    begin
       Project.Data.View_Is_Complete := Complete;
    end Set_View_Is_Complete;
