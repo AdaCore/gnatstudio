@@ -653,7 +653,7 @@ package body Src_Editor_Box is
       if B.Filename /= null then
          New_Timestamp := To_Timestamp (File_Time_Stamp (B.Filename.all));
 
-         if New_Timestamp >  B.Timestamp then
+         if New_Timestamp > B.Timestamp then
             if Message_Dialog
               (Msg         => Base_Name (B.Filename.all)
                & (-" changed on disk. Really edit ?"),
@@ -1137,12 +1137,12 @@ package body Src_Editor_Box is
             if To_Timestamp (File_Time_Stamp (Editor.Filename.all)) >
               Editor.Timestamp
               and then Message_Dialog
-              (Msg => Base_Name (Editor.Filename.all)
-                 & (-" changed on disk. Do you want to overwrite ?"),
-               Dialog_Type => Confirmation,
-               Buttons => Button_OK or Button_Cancel,
-               Title => -"File changed on disk",
-               Parent => Get_Main_Window (Editor.Kernel)) /= Button_OK
+                (Msg => Base_Name (Editor.Filename.all)
+                        & (-" changed on disk. Do you want to overwrite ?"),
+                 Dialog_Type => Confirmation,
+                 Buttons => Button_OK or Button_Cancel,
+                 Title => -"File changed on disk",
+                 Parent => Get_Main_Window (Editor.Kernel)) /= Button_OK
             then
                Success := False;
             else
