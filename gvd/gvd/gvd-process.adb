@@ -54,7 +54,10 @@ with Gtkada.Types;        use Gtkada.Types;
 with Ada.Characters.Handling;  use Ada.Characters.Handling;
 
 pragma Warnings (Off);
+with GNAT.TTY;            use GNAT.TTY;
 with GNAT.Expect.TTY;     use GNAT.Expect.TTY;
+pragma Warnings (On);
+
 with GNAT.Regpat;         use GNAT.Regpat;
 with GNAT.OS_Lib;         use GNAT.OS_Lib;
 
@@ -69,7 +72,6 @@ with Pixmaps_IDE;                use Pixmaps_IDE;
 with String_Utils;               use String_Utils;
 with Basic_Types;                use Basic_Types;
 with GUI_Utils;                  use GUI_Utils;
-with Dock_Paned;                 use Dock_Paned;
 
 with GVD.Canvas;                 use GVD.Canvas;
 with GVD.Code_Editors;           use GVD.Code_Editors;
@@ -80,7 +82,6 @@ with GVD.Preferences;            use GVD.Preferences;
 with GVD.Text_Box.Source_Editor; use GVD.Text_Box.Source_Editor;
 with GVD.Trace;                  use GVD.Trace;
 with GVD.Types;                  use GVD.Types;
-with GVD.Window_Settings;        use GVD.Window_Settings;
 with Language_Handlers;          use Language_Handlers;
 
 with String_List_Utils;          use String_List_Utils;
@@ -91,6 +92,11 @@ package body GVD.Process is
       Process : Visual_Debugger;
       Mask    : Stack_List_Mask;
    end record;
+
+   package TTY_Timeout is new Gtk.Main.Timeout (Visual_Debugger);
+
+   function TTY_Cb (Data : Visual_Debugger) return Boolean;
+   --  Callback for communication with a tty.
 
    procedure Setup (Data : Call_Stack_Record; Id : Handler_Id);
    --  Make sure that when Data is destroyed, Id is properly removed
@@ -192,10 +198,15 @@ package body GVD.Process is
    --  Called when the preferences have changed, and the editor should be
    --  redisplayed with the new setup.
 
-   function On_Data_Paned_Delete_Event
+   function On_Data_Delete_Event
      (Object : access Glib.Object.GObject_Record'Class;
       Params : Gtk.Arguments.Gtk_Args) return Boolean;
    --  Callback for the "delete_event" signal on the Data window.
+
+   function On_Stack_Delete_Event
+     (Object : access Glib.Object.GObject_Record'Class;
+      Params : Gtk.Arguments.Gtk_Args) return Boolean;
+   --  Callback for the "delete_event" signal on the Call Stack window.
 
    function On_Editor_Text_Delete_Event
      (Object : access Glib.Object.GObject_Record'Class;
@@ -252,6 +263,36 @@ package body GVD.Process is
      (Process : access Visual_Debugger_Record'Class;
       History : Histories.History);
    --  Set up/initialize the command window associated with Process.
+
+   ------------
+   -- TTY_Cb --
+   ------------
+
+   function TTY_Cb (Data : Visual_Debugger) return Boolean is
+      Match : Expect_Match;
+   begin
+      Expect (Data.Debuggee_Descriptor, Match, ".+", Timeout => 1);
+
+      if Match /= Expect_Timeout then
+         Insert (Data.Debuggee_Console,
+                 Expect_Out (Data.Debuggee_Descriptor),
+                 Add_LF => False);
+         Highlight_Child
+           (Find_MDI_Child (Data.Window.Process_Mdi, Data.Debuggee_Console));
+      end if;
+
+      return True;
+
+   exception
+      when Process_Died =>
+         Insert (Data.Debuggee_Console,
+                 Expect_Out (Data.Debuggee_Descriptor),
+                 Add_LF => False);
+         Highlight_Child
+           (Find_MDI_Child (Data.Window.Process_Mdi, Data.Debuggee_Console));
+         GNAT.TTY.Reset_TTY (Data.Debuggee_TTY);
+         return True;
+   end TTY_Cb;
 
    -----------
    -- Setup --
@@ -313,8 +354,6 @@ package body GVD.Process is
    is
       Top : constant Visual_Debugger := Visual_Debugger (Object);
    begin
-      --  ??? Remember last command ?
-
       Process_User_Command (Top, Input, Mode => User);
       return "";
    end Interpret_Command_Handler;
@@ -328,17 +367,20 @@ package body GVD.Process is
       Object : access GObject_Record'Class) return String
    is
       Top : constant Visual_Debugger := Visual_Debugger (Object);
-      pragma Unreferenced (Input, Top);
+      N   : Integer;
+      pragma Unreferenced (N);
+
    begin
-      --  ??? Send (Top.Debuggee_Console.TTY, Input, Add_LD => False);
+      N := Write
+        (TTY_Descriptor (Top.Debuggee_TTY), Input'Address, Input'Length);
       return "";
    end Debuggee_Console_Handler;
 
-   --------------------------------
-   -- On_Data_Paned_Delete_Event --
-   --------------------------------
+   --------------------------
+   -- On_Data_Delete_Event --
+   --------------------------
 
-   function On_Data_Paned_Delete_Event
+   function On_Data_Delete_Event
      (Object : access Glib.Object.GObject_Record'Class;
       Params : Gtk.Arguments.Gtk_Args) return Boolean
    is
@@ -348,12 +390,29 @@ package body GVD.Process is
 
    begin
       if Process.Exiting then
-         Process.Data_Paned := null;
+         Process.Data_Scrolledwindow := null;
          return False;
       else
          return True;
       end if;
-   end On_Data_Paned_Delete_Event;
+   end On_Data_Delete_Event;
+
+   ---------------------------
+   -- On_Stack_Delete_Event --
+   ---------------------------
+
+   function On_Stack_Delete_Event
+     (Object : access Glib.Object.GObject_Record'Class;
+      Params : Gtk.Arguments.Gtk_Args) return Boolean
+   is
+      pragma Unreferenced (Params);
+      Process : constant Visual_Debugger :=
+        Visual_Debugger (Object);
+
+   begin
+      Process.Stack_Scrolledwindow := null;
+      return False;
+   end On_Stack_Delete_Event;
 
    ---------------------------------
    -- On_Editor_Text_Delete_Event --
@@ -442,9 +501,18 @@ package body GVD.Process is
       Process : constant Visual_Debugger :=
         Visual_Debugger (Object);
 
+      use Gtk.Main;
+
    begin
       if Process.Exiting then
          Process.Debuggee_Console := null;
+         Close_Pseudo_Descriptor (Process.Debuggee_Descriptor);
+         Close_TTY (Process.Debuggee_TTY);
+
+         if Process.Debuggee_Id /= 0 then
+            Gtk.Main.Timeout_Remove (Process.Debuggee_Id);
+         end if;
+
          return False;
       else
          return True;
@@ -669,8 +737,10 @@ package body GVD.Process is
                Start := Str'Last + 1;
             end if;
          end loop;
-
       end if;
+
+      Highlight_Child
+        (Find_MDI_Child (Process.Window.Process_Mdi, Process.Debugger_Text));
    end Output_Text;
 
    ------------------------
@@ -687,12 +757,9 @@ package body GVD.Process is
       First, Last : Natural := 0;
       Addr_First  : Natural := 0;
       Addr_Last   : Natural;
-      Widget      : Gtk_Widget;
       Pc          : Address_Type;
       Pc_Length   : Natural := 0;
       Frame_Info  : Frame_Info_Type := Location_Not_Found;
-
-      Call_Stack  : Gtk_Check_Menu_Item;
 
    begin
       if Process.Post_Processing or else Process.Current_Output = null then
@@ -754,26 +821,17 @@ package body GVD.Process is
             Pc (Pc'First .. Pc_Length));
       end if;
 
-      Widget := Get_Widget (Process.Window.Factory, -"/Data/Call Stack");
+      Found_Frame_Info
+        (Process.Debugger,
+         Process.Current_Output.all,
+         First, Last, Frame_Info);
 
-      if Widget = null then
-         --  This means that GVD is part of GPS
-         Widget :=
-           Get_Widget (Process.Window.Factory, -"/Debug/Data/Call Stack");
-      end if;
-
-      Call_Stack := Gtk_Check_Menu_Item (Widget);
-
-      Found_Frame_Info (Process.Debugger,
-                        Process.Current_Output.all,
-                        First, Last, Frame_Info);
-
-      if Get_Active (Call_Stack) then
-         if Frame_Info = Location_Found then
-            Highlight_Stack_Frame
-              (Process,
-               Integer'Value (Process.Current_Output (First .. Last)));
-         end if;
+      if Process.Stack_Scrolledwindow /= null
+        and then Frame_Info = Location_Found
+      then
+         Highlight_Stack_Frame
+           (Process,
+            Integer'Value (Process.Current_Output (First .. Last)));
       end if;
 
       if Frame_Info = No_Debug_Info then
@@ -962,26 +1020,21 @@ package body GVD.Process is
    end Gtk_New;
 
    -----------------------
-   -- Setup_Data_Window --
+   -- Create_Call_Stack --
    -----------------------
 
-   procedure Setup_Data_Window
+   procedure Create_Call_Stack
      (Process : access Visual_Debugger_Record'Class)
    is
       Label : Gtk_Label;
       Child : MDI_Child;
    begin
-      Gtk_New_Hpaned (Process.Data_Paned);
-      Set_Position (Process.Data_Paned, 200);
-      Set_Size_Request (Process.Data_Paned, 100, 100);
-      Object_Return_Callback.Object_Connect
-        (Process.Data_Paned, "delete_event",
-         On_Data_Paned_Delete_Event'Access, Process);
-
       Gtk_New (Process.Stack_Scrolledwindow);
       Set_Policy
         (Process.Stack_Scrolledwindow, Policy_Automatic, Policy_Automatic);
-      Add (Process.Data_Paned, Process.Stack_Scrolledwindow);
+      Object_Return_Callback.Object_Connect
+        (Process.Stack_Scrolledwindow, "delete_event",
+         On_Stack_Delete_Event'Access, Process);
 
       Gtk_New (Process.Stack_List, 5);
       Set_Selection_Mode (Process.Stack_List, Selection_Single);
@@ -1013,12 +1066,39 @@ package body GVD.Process is
       Gtk_New (Label, -"Location");
       Set_Column_Widget (Process.Stack_List, 4, Label);
 
+      for Column in Gint range 0 .. 4 loop
+         Set_Column_Auto_Resize (Process.Stack_List, Column, True);
+      end loop;
+
+      Show_Call_Stack_Columns (Process);
+
+      Show_All (Process.Stack_Scrolledwindow);
+
+      Child := Put (Process.Window.Process_Mdi, Process.Stack_Scrolledwindow);
+      Set_Title (Child, -"Call Stack");
+      Set_Dock_Side (Child, Right);
+      Dock_Child (Child);
+   end Create_Call_Stack;
+
+   -----------------------
+   -- Setup_Data_Window --
+   -----------------------
+
+   procedure Setup_Data_Window
+     (Process : access Visual_Debugger_Record'Class)
+   is
+      Child : MDI_Child;
+   begin
+      --  Create the data area
+
       Gtk_New (Process.Data_Scrolledwindow);
       Set_Policy
         (Process.Data_Scrolledwindow, Policy_Automatic, Policy_Automatic);
-      Add (Process.Data_Paned, Process.Data_Scrolledwindow);
+      Object_Return_Callback.Object_Connect
+        (Process.Data_Scrolledwindow, "delete_event",
+         On_Data_Delete_Event'Access, Process);
 
-      --  Create the canvas for this process tab.
+      --  Create the canvas for this visual debugger.
 
       Gtk_New (GVD_Canvas (Process.Data_Canvas), Process.History);
       Add (Process.Data_Scrolledwindow, Process.Data_Canvas);
@@ -1033,17 +1113,15 @@ package body GVD.Process is
          Process.Data_Canvas);
       Align_On_Grid (Process.Data_Canvas, True);
 
-      --  Initialize the call stack list
-
-      Show_Call_Stack_Columns (Process);
-
       --  Initialize the canvas
 
       Configure
         (Process.Data_Canvas,
          Annotation_Font => Get_Pref (GVD_Prefs, Annotation_Font));
 
-      Child := Put (Process.Window.Process_Mdi, Process.Data_Paned);
+      Child := Put
+        (Process.Window.Process_Mdi, Process.Data_Scrolledwindow,
+         Flags => Iconify_Button or Maximize_Button);
       Set_Title (Child, -"Debugger Data");
       Set_Dock_Side (Child, Top);
       Dock_Child (Child);
@@ -1098,7 +1176,9 @@ package body GVD.Process is
 
       --  Add debugger console in the MDI
 
-      Child := Put (Process.Window.Process_Mdi, Process.Debugger_Text);
+      Child := Put
+        (Process.Window.Process_Mdi, Process.Debugger_Text,
+         Flags => Iconify_Button or Maximize_Button);
       Set_Title (Child, -"Debugger Console");
       Set_Dock_Side (Child, Bottom);
       Dock_Child (Child);
@@ -1114,11 +1194,8 @@ package body GVD.Process is
       Window  : access GVD.Main_Window.GVD_Main_Window_Record'Class;
       Source  : GVD.Text_Box.Source_Editor.Source_Editor)
    is
-      Menu_Item     : Gtk_Menu_Item;
-      Label         : Gtk_Label;
       Debugger_List : Debugger_List_Link;
       Debugger_Num  : Natural := 1;
-      Length        : Guint;
       Widget        : Gtk_Widget;
 
    begin
@@ -1258,22 +1335,25 @@ package body GVD.Process is
       History         : Histories.History := null;
       Success         : out Boolean)
    is
+      Timeout       : constant Guint32 := 50;
+
       Child         : MDI_Child;
       Widget        : Gtk_Widget;
-      Call_Stack    : Gtk_Check_Menu_Item;
       Window        : constant GVD_Main_Window :=
         GVD_Main_Window (Process.Window);
-      Geometry_Info : Process_Tab_Geometry;
       Buttons       : Message_Dialog_Buttons;
+      pragma Unreferenced (Buttons);
 
       WTX_Version   : Natural := 0;
 
    begin
-      pragma Assert (Process.Data_Paned = null);
-
       Setup_Command_Window (Process, History);
       Process.History := History;
       Setup_Data_Window (Process);
+
+      if Get_Pref (GVD_Prefs, Show_Call_Stack) then
+         Create_Call_Stack (Process);
+      end if;
 
       if Window.Standalone then
          Child := Put (Window.Process_Mdi, Process.Editor_Text);
@@ -1281,53 +1361,8 @@ package body GVD.Process is
          Maximize_Children (Window.Process_Mdi);
       end if;
 
-      --  Remove the stack window if needed.
-
-      Widget := Get_Widget (Window.Factory, -"/Data/Call Stack");
-
-      if Widget = null then
-         --  This means that GVD is part of GPS
-         Widget := Get_Widget (Window.Factory, -"/Debug/Data/Call Stack");
-      end if;
-
-      Call_Stack := Gtk_Check_Menu_Item (Widget);
-
-      if not Get_Active (Call_Stack) then
-         Ref (Process.Stack_Scrolledwindow);
-         Dock_Remove (Process.Data_Paned, Process.Stack_Scrolledwindow);
-      end if;
-
-      --  Set the graphical parameters.
-
-      if Window.Standalone
-        and then Is_Regular_File
-          (Window.Home_Dir.all
-           & Directory_Separator
-           & "window_settings")
-      then
-         --  ??? Should use MDI.Save/Load_Desktop instead
-
-         Geometry_Info := Get_Process_Tab_Geometry (Process.Debugger_Num);
-
-         if Get_Active (Call_Stack) then
-            Set_Position (Process.Data_Paned, Geometry_Info.Stack_Width);
-            Process.Backtrace_Mask :=
-              Stack_List_Mask (Geometry_Info.Stack_Mask);
-            Show_Call_Stack_Columns (Process);
-            Set_Column_Width (Process.Stack_List, 0,
-                              Geometry_Info.Stack_Num_Width);
-            Set_Column_Width (Process.Stack_List, 1,
-                              Geometry_Info.Stack_PC_Width);
-            Set_Column_Width (Process.Stack_List, 2,
-                              Geometry_Info.Stack_Subprogram_Width);
-            Set_Column_Width (Process.Stack_List, 3,
-                              Geometry_Info.Stack_Parameters_Width);
-            Set_Column_Width (Process.Stack_List, 4,
-                              Geometry_Info.Stack_Location_Width);
-         end if;
-      end if;
-
       --  Initialize the pixmaps and colors for the canvas
+
       Realize (Process.Data_Canvas);
       Init_Graphics (GVD_Canvas (Process.Data_Canvas));
 
@@ -1404,7 +1439,7 @@ package body GVD.Process is
          if Widget = null then
             --  This means that GVD is part of GPS
             Widget := Get_Widget
-           (Window.Factory, -"/Debug/Data/Protection Domains");
+              (Window.Factory, -"/Debug/Data/Protection Domains");
          end if;
 
          if Widget /= null then
@@ -1412,10 +1447,9 @@ package body GVD.Process is
          end if;
       end if;
 
-      --  ??? Disabled for now
-
-      if Support_TTY (Process.Debugger)
-        and then False
+      if Get_Pref (GVD_Prefs, Execution_Window)
+        and then Support_TTY (Process.Debugger)
+        and then GNAT.TTY.TTY_Supported
       then
          Gtk_New
            (Process.Debuggee_Console,
@@ -1423,21 +1457,25 @@ package body GVD.Process is
             Debuggee_Console_Handler'Access,
             GObject (Process),
             Process.Debugger_Text_Font,
-            History_List => History,
-            Key          => "gvd_tty_console");
-         Histories.Set_Max_Length (History.all, 100, "gvd_tty_console");
-         Histories.Allow_Duplicates
-           (History.all, "gvd_tty_console", True, True);
+            History_List => null,
+            Key          => "gvd_tty_console",
+            Wrap_Mode    => Wrap_Char);
 
          Object_Return_Callback.Object_Connect
            (Process.Debuggee_Console, "delete_event",
             On_Debuggee_Console_Delete_Event'Access, Process);
 
-         --  ??? Create a new TTY
-         --  Set_TTY (Process.Debugger, TTY_Name (Debuggee_Console.TTY));
-         --  ??? Must close the TTY when deleting Debuggee_Console
+         Allocate_TTY (Process.Debuggee_TTY);
+         Set_TTY (Process.Debugger, TTY_Name (Process.Debuggee_TTY));
+         Pseudo_Descriptor
+           (Process.Debuggee_Descriptor, Process.Debuggee_TTY, 0);
 
-         Child := Put (Window.Process_Mdi, Process.Debuggee_Console);
+         Process.Debuggee_Id :=
+           TTY_Timeout.Add (Timeout, TTY_Cb'Access, Process.all'Access);
+
+         Child := Put
+           (Window.Process_Mdi, Process.Debuggee_Console,
+            Flags => Iconify_Button or Maximize_Button);
          Set_Title (Child, -"Debugger Execution");
          Set_Dock_Side (Child, Bottom);
          Dock_Child (Child);
@@ -1449,10 +1487,13 @@ package body GVD.Process is
       when Process_Died =>
          Buttons :=
            Message_Dialog
-             (-"Could not launch the debugger", Error, Button_OK, Button_OK);
+             (Expect_Out (Get_Process (Process.Debugger)) & ASCII.LF &
+              (-"Could not launch the debugger"),
+              Error, Button_OK, Button_OK);
          Process.Exiting := True;
          Close (Window.Process_Mdi, Process.Debugger_Text);
-         Close (Window.Process_Mdi, Process.Data_Paned);
+         Close (Window.Process_Mdi, Process.Data_Scrolledwindow);
+         Close (Window.Process_Mdi, Process.Stack_Scrolledwindow);
          Process.Exiting := False;
          Success := False;
 
@@ -1483,7 +1524,9 @@ package body GVD.Process is
 
    procedure Executable_Changed
      (Debugger        : access Visual_Debugger_Record'Class;
-      Executable_Name : String) is
+      Executable_Name : String)
+   is
+      pragma Unreferenced (Executable_Name);
    begin
       --  ??? Change the title of the menu items Debug->Debuggers
 
@@ -1759,7 +1802,6 @@ package body GVD.Process is
 
    procedure Close_Debugger (Debugger : Visual_Debugger) is
       Top      : constant GVD_Main_Window := Debugger.Window;
-      Length   : Guint;
       use String_History;
 
    begin
@@ -1871,15 +1913,9 @@ package body GVD.Process is
          --  Regular debugger command, send it.
          --  If a dialog is currently displayed, do not wait for the debugger
          --  prompt, since the prompt won't be displayed before the user
-         --  answers the question... Same thing when the debugger is busy,
-         --  since the command might actually be an input for the program being
-         --  debugged.
+         --  answers the question...
 
-         if (Command_In_Process (Get_Process (Debugger.Debugger))
-             or else Debugger.Registered_Dialog /= null)
-           and then
-             Get_Command_Mode (Get_Process (Debugger.Debugger)) /= Internal
-         then
+         if Debugger.Registered_Dialog /= null then
             Send
               (Debugger.Debugger, Command,
                Wait_For_Prompt => False, Mode => Mode);
