@@ -126,7 +126,8 @@ from the @code{Help} menu item.
 
 @noindent
 
-In the project explorer, open the @code{common} directory by clicking
+In the project explorer, click on the @code{common} icon, then
+open the @code{common} directory by clicking
 on the @code{[+]} box on the left of @code{common}.
 This will open the directory and display a list of source files located
 in this directory.
@@ -177,22 +178,26 @@ the current number of files compiled, and the number of remaining files.
 The build has generated a number of errors in the messages window, which
 are highlighted in red.
 
-Click on the first error message (style check failed on ???:??) to jump to
-the @file{sdc.adb} source editor, at the line and column of the error.
+Scroll to the first error message by using the scrollbar on the right of
+the messages window, and
+click on the first error message (@i{sdc.adb:28:06: (style) bad indentation})
+to jump to the @file{sdc.adb} source editor,
+at the line (28) and column (06) of the error.
 
 Fix the error by hand, by inserting a space.
 
-Now, you can fix the next line by using @key{<Ctrl>-Tab} (press first the
+Now, you can fix the next error by moving the cursor to the line 30 (press
+the @key{down} arrow twice), and by using @key{<Ctrl>-Tab} (press first the
 @key{Control} key, and then the @key{Tab} key on your keyboard): this key
 combination asks the source editor to automatically reindent the current
 line.
 
 You can then fix all the remaining errors by selecting the whole block
-and pressing @key{Ctrl-Tab}.
+(from line 28 to line 40) and pressing @key{Ctrl-Tab}.
 
-Press the @key{F4} key to build again. This should now report a successful
-build.
-
+Press the @key{F4} key to build again. You will be asked to save the file
+@file{gps.adb} before the build starts. Confirm by clicking on @code{Yes}.
+This should now report a successful build.
 
 @c --------------------------------------------------------------------
 @node Source Navigation
@@ -203,7 +208,7 @@ build.
 
 Let's now try to understand a little bit how the program is working by
 looking at the @file{gps.adb} editor: there's a loop, the main processing is
-done by the functions Process and Next (at line ??).
+done by the functions Process and Next (at line 30).
 
 Move the mouse over @code{Process} and let a tooltip appear
 (@file{tokens.ads:19}): this is the location (file and line) of the
@@ -212,8 +217,8 @@ procedure specification.
 Do the same for @code{Next} (@file{tokens.ads:15}).
 
 Display the contextual menu by clicking on the right mouse button,
-then click on @code{Goto declaration}: we're now in the package @code{Tokens},
-in file @file{tokens.ads}; but where is this file in the project?
+then click on @code{Goto declaration of Next}: we're now in the package
+@code{Tokens}, in file @file{tokens.ads}; but where is this file in the project?
 
 @c --------------------------------------------------------------------
 @node Search Area
@@ -242,7 +247,7 @@ When you click on a file in the explorer, you get
 language sensitive information about the file, such as
 for @code{Ada}: @code{packages}, @code{subprograms}, @code{tasks}, ...
 
-Open the @code{subprogram} category, click on @code{process}: this
+Open the @code{subprogram} category, click on @code{Process}: this
 will open @file{tokens.ads} and move the cursor on the first line
 corresponding to the procedure @code{Process}.
 
@@ -256,9 +261,9 @@ in the source editor.
 
 @noindent
 
-Using the contextual menu, select @code{Goto body};
+Using the contextual menu, select @code{Goto body of Next};
 scroll through the procedure @code{Next}, and move mouse on
-@code{Instructions.Read} at line 46, select @code{Goto body} again.
+@code{Instructions.Read} at line 46, select @code{Goto body of Read}.
 
 We've now navigated quite a bit through the application source code,
 which you can verify by clicking on the left arrow in the toolbar, to go
@@ -279,7 +284,8 @@ It is now time to run the application: select the menu
 Type @code{input.txt} in the text entry: this is the name of a text
 file that will be passed as argument to the @i{sdc} program.
 
-Now click on @code{OK}: an unexpected exception is raised;
+Now click on @code{OK}: the program displayed an unexpected internal error
+in the messages window.
 That's a good opportunity to use the integrated debugger.
 
 @c --------------------------------------------------------------------
@@ -290,9 +296,10 @@ That's a good opportunity to use the integrated debugger.
 @noindent
 
 Open the preferences dialog (menu @code{Edit->Preferences}), and
-click on the @code{Debugger} tab; check the button
-@code{Break on exceptions}: this will enable by default a special breakpoint
-on all exceptions raised.
+click on the @code{Debugger} tab on the left; set the button
+@code{Break on exceptions} to @i{True}: this will enable by default a special
+breakpoint on all exceptions raised. Click on @code{OK} to confirm your
+change.
 
 Now select the menu @code{Debug->Initialize->sdc}: two new windows are
 created, a data window and a debugger console.
@@ -305,14 +312,16 @@ notice that various information can be displayed or removed in the call stack.
 From this contextual, remove the @code{Parameters} info by clicking on it.
 
 Now select the menu @code{Debug->Run...}, type @code{input.txt} in the
-arguments text entry, click on @code{OK}: the debugger stops on an exception.
+arguments text entry, click on @code{OK}: the debugger stops on an exception
+(@code{Contraint_Error} in the file @file{stack.adb}, at line 49.
 
-Go up two frames by clicking on the (@code{tokens.process}) line.
+Go up two frames by clicking on the (@code{tokens.process}) line in the call
+stack. If needed, use the scrollbar on the right.
 
-If you move the mouse over the variable @code{T}, a tooltip is displayed
-showing the value of @code{T}.
+If you move the mouse over the parameter @code{T} at line 64, a tooltip is
+displayed showing the value of @code{T}.
 
-Select the contextual menu @code{Debug->Display T}: this display in the data
+Select the contextual menu @code{Debug->Display T}: this displays in the data
 window a box containing the different fields of @code{T}, each clearly
 separated.
 
@@ -347,25 +356,32 @@ Rerun (menu @code{Build->Run->sdc}): the program now completes as expected.
 @c --------------------------------------------------------------------
 
 @noindent
-Now go back to the file @file{sdc.adb}, move the mouse over the main program
-@i{sdc} at line ???, select the contextual menu @code{References->Calls...}.
-Then double click on the right arrow of code{error_msg}.
-Also double click on right arrow of @code{process}.
+Now go back to the file @file{sdc.adb}, move the mouse over the procedure
+@i{sdc} at line 8, select the contextual menu
+@code{References->Sdc calls...}: this will open a new window titled
+@i{Call graph browser}.
 
-Select @code{Orthogonal links} in contextual menu of the graph.
+Double click on the right arrow of code{process} (the first item on the
+right). Also double click on the right arrow of @code{error_msg}
+(the fourth item).
+
+Select @code{Orthogonal links} in contextual menu of the graph to change the
+way links are displayed in the graph.
 Click on the canvas, then play with the zoom (@key{=} and @key{-} keys).
 
 Hide/Show links from @code{error_msg} contextual menu.
-Double click on right arrow of @code{process} (@file{instructions.ads:12}).
+Double click on right arrow of @code{process} (@file{instructions.ads:12},
+the item at the top right of the graph).
 
 The items can also be moved: move @code{msg} item down.
 
-Double click on left arrow of @code{msg} (at the bottom right of the graph)
+Double click on left arrow of @code{msg}
 to display who is calling @code{msg}. Notice that @code{view} (on the left
 of the graph) calls @code{msg}.
 
 Double click on left arrow of @code{view}: the arrow disappears, and no
-new items are created, which means that @code{view} isn't called by anyone.
+new items are created, which means that @code{view} isn't called by anyone,
+so we're now going to remove this procedure.
 
 @c --------------------------------------------------------------------
 @node Back to Source navigation again
@@ -374,12 +390,15 @@ new items are created, which means that @code{view} isn't called by anyone.
 
 @noindent
 From @i{view}, contextual menu @code{Go to spec}; 
-then @code{Go to body}. Remove @i{View} body, then save the file.
+then from the source editor (file @file{stack.ads}), @code{Go to body of View}.
+Remove @i{View} body by e.g selecting it, and pressing the @key{Delete} key,
+then save the file (@key{Ctrl-S}).
 
 Click on @code{Goto Previous Location} (left arrow in the toolbar),
 remove @code{View} spec, Save the file.
 
-Close the @file{stack.ads} and @file{stack.adb} files.
+Close the @file{stack.ads} and @file{stack.adb} files (menu File->Close,
+or using the shortcut @key{Ctrl-W}).
 Rebuild by pressing the @key{F4} key.
 
 @c "Let's now have a look at all the changes we've done so far, by looking at
