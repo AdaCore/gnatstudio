@@ -157,6 +157,10 @@ package body Memory_View_Pkg.Callbacks is
             Move_Cursor (View, Up);
          when GDK_BackSpace | GDK_Clear | GDK_Delete =>
             Emit_Stop_By_Name (View.View, "key_press_event");
+         when GDK_Page_Up | GDK_KP_Page_Up =>
+            Page_Up (View);
+         when GDK_Page_Down | GDK_KP_Page_Down =>
+            Page_Down (View);
          when others =>
             null;
       end case;
