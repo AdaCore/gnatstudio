@@ -570,47 +570,62 @@ package body Debugger is
    is
       Process : Debugger_Process_Tab;
       Button  : Message_Dialog_Buttons;
+      Last    : Positive := Cmd'First;
+      First   : Positive;
 
    begin
-      --  ??? Should cut commands in the same string and queue them instead
-      --  of sending them as a single command.
+      loop
+         --  Each command is separated with a ASCII.LF and is handled
+         --  separately.
 
-      if Wait_For_Prompt
-        and then Command_In_Process (Get_Process (Debugger))
-      then
-         Queue_Command (Debugger, Cmd, Empty_Buffer, Mode);
-         return;
-      end if;
+         First := Last;
+         Skip_To_Char (Cmd, Last, ASCII.LF);
 
-      Send_Internal_Pre (Debugger, Cmd, Empty_Buffer, Mode);
+         if Wait_For_Prompt
+           and then Command_In_Process (Get_Process (Debugger))
+         then
+            Queue_Command
+              (Debugger, Cmd (First .. Last - 1), Empty_Buffer, Mode);
+         else
+            Send_Internal_Pre
+              (Debugger, Cmd (First .. Last - 1), Empty_Buffer, Mode);
 
-      case Mode is
-         when Invisible_Command =>
-            if Wait_For_Prompt then
-               Wait_Prompt (Debugger);
-               Send_Internal_Post (Debugger, Cmd, Mode);
-            end if;
+            case Mode is
+               when Invisible_Command =>
+                  if Wait_For_Prompt then
+                     Wait_Prompt (Debugger);
+                     Send_Internal_Post
+                       (Debugger, Cmd (First .. Last - 1), Mode);
+                  end if;
 
-         when Visible_Command =>
-            if not Async_Commands then
-               Wait_Prompt (Debugger);
-               Send_Internal_Post (Debugger, Cmd, Mode);
+               when Visible_Command =>
+                  if not Async_Commands then
+                     Wait_Prompt (Debugger);
+                     Send_Internal_Post
+                       (Debugger, Cmd (First .. Last - 1), Mode);
 
-            elsif Wait_For_Prompt then
-               Process := Convert (Debugger.Window, Debugger);
-               Process.Current_Command := new String' (Cmd);
+                  elsif Wait_For_Prompt then
+                     Process := Convert (Debugger.Window, Debugger);
+                     Process.Current_Command :=
+                       new String' (Cmd (First .. Last - 1));
 
-               pragma Assert (Process.Input_Id = 0);
+                     pragma Assert (Process.Input_Id = 0);
 
-               Process.Input_Id := My_Input.Add
-                 (To_Gint
-                  (Get_Output_Fd
-                   (Get_Descriptor (Get_Process (Debugger)).all)),
-                  Gdk.Types.Input_Read,
-                  Output_Available'Access,
-                  My_Input.Data_Access (Process));
-            end if;
-      end case;
+                     Process.Input_Id := My_Input.Add
+                       (To_Gint
+                        (Get_Output_Fd
+                         (Get_Descriptor (Get_Process (Debugger)).all)),
+                        Gdk.Types.Input_Read,
+                        Output_Available'Access,
+                        My_Input.Data_Access (Process));
+                  end if;
+            end case;
+         end if;
+
+         exit when Last > Cmd'Last;
+
+         Last := Last + 1;
+      end loop;
 
    exception
       when Process_Died =>
