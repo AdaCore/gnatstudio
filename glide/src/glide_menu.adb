@@ -303,7 +303,6 @@ package body Glide_Menu is
    function Glide_Menu_Items return Gtk_Item_Factory_Entry_Access is
       File        : constant String := "/_" & (-"File")     & '/';
       Edit        : constant String := "/_" & (-"Edit")     & '/';
-      Gotom       : constant String := "/_" & (-"Navigate") & '/';
       Project     : constant String := "/_" & (-"Project")  & '/';
       Tools       : constant String := "/_" & (-"Tools")    & '/';
       Debug       : constant String := "/_" & (-"Debug")    & '/';
@@ -324,17 +323,6 @@ package body Glide_Menu is
 
          Gtk_New (Edit & (-"Preferences"), "",
                   Stock_Preferences, On_Preferences'Access),
-
-         Gtk_New (Gotom & (-"Goto Line..."), "", Stock_Jump_To, null),
-         Gtk_New (Gotom & (-"Goto File Spec<->Body"), "", Stock_Convert, null),
-         Gtk_New (Gotom & (-"Goto Parent Unit"), "", Stock_Go_Up, null),
-         Gtk_New (Gotom & (-"Goto Previous Reference"), "", Stock_Undo, null),
-         Gtk_New (Gotom & (-"List References"), "", Stock_Index, null),
-         Gtk_New (Gotom & "sep1", Item_Type => Separator),
-         Gtk_New (Gotom & (-"Start Of Statement"), "", Stock_Go_Up, null),
-         Gtk_New (Gotom & (-"End Of Statement"), "", Stock_Go_Down, null),
-         Gtk_New (Gotom & (-"Next Procedure"), "", Stock_Go_Forward, null),
-         Gtk_New (Gotom & (-"Previous Procedure"), "", Stock_Go_Back, null),
 
          Gtk_New (Project & (-"Open..."), "", Stock_Open,
                   On_Open_Project'Access),
