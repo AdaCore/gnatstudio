@@ -37,11 +37,14 @@ with GVD.Preferences;           use GVD.Preferences;
 
 with Glide_Kernel;              use Glide_Kernel;
 with Glide_Kernel.Console;      use Glide_Kernel.Console;
+with Glide_Kernel.Contexts;     use Glide_Kernel.Contexts;
+with Glide_Kernel.Hooks;        use Glide_Kernel.Hooks;
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
 with Glide_Kernel.Project;      use Glide_Kernel.Project;
 with Glide_Kernel.Timeout;      use Glide_Kernel.Timeout;
 with Glide_Kernel.Task_Manager; use Glide_Kernel.Task_Manager;
+with Glide_Result_View;         use Glide_Result_View;
 with VFS;                       use VFS;
 with Projects;                  use Projects;
 
@@ -201,7 +204,7 @@ package body Builder_Module is
    --  are provided as a string.
 
    procedure Preferences_Changed
-     (K : access GObject_Record'Class; Kernel : Kernel_Handle);
+     (Kernel : access Kernel_Handle_Record'Class);
    --  Called when the preferences have changed.
 
    procedure Cleanup_Accel_Map (Kernel : access Kernel_Handle_Record'Class);
@@ -253,8 +256,7 @@ package body Builder_Module is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Build->Stop Build menu
 
-   procedure On_View_Changed
-     (K : access GObject_Record'Class; Kernel : Kernel_Handle);
+   procedure On_View_Changed (Kernel : access Kernel_Handle_Record'Class);
    --  Called every time the project view has changed, ie potentially the list
    --  of main units.
 
@@ -1487,11 +1489,7 @@ package body Builder_Module is
    -- On_View_Changed --
    ---------------------
 
-   procedure On_View_Changed
-     (K : access GObject_Record'Class; Kernel : Kernel_Handle)
-   is
-      pragma Unreferenced (K);
-
+   procedure On_View_Changed (Kernel : access Kernel_Handle_Record'Class) is
       Builder_Module : constant Builder_Module_ID_Access :=
         Builder_Module_ID_Access (Builder_Module_ID);
       Mitem : Gtk_Menu_Item;
@@ -1569,7 +1567,7 @@ package body Builder_Module is
       Kernel_Callback.Connect
         (Mitem, "activate",
          Kernel_Callback.To_Marshaller (On_Custom'Access),
-         User_Data => Kernel);
+         User_Data => Kernel_Handle (Kernel));
       Add_Accelerator
         (Mitem, "activate", Group, GDK_F9, 0, Gtk.Accel_Group.Accel_Visible);
 
@@ -1697,10 +1695,7 @@ package body Builder_Module is
            null, GDK_C, Control_Mask + Shift_Mask),
          False);
 
-      Kernel_Callback.Connect
-        (Kernel, "project_view_changed",
-         Kernel_Callback.To_Marshaller (On_View_Changed'Access),
-         User_Data => Kernel_Handle (Kernel));
+      Add_Hook (Kernel, Project_View_Changed_Hook, On_View_Changed'Access);
 
       Register_Command
         (Kernel,
@@ -1756,10 +1751,8 @@ package body Builder_Module is
          Maximum_Args => 0,
          Handler      => Compile_Command'Access);
 
-      Kernel_Callback.Connect
-        (Kernel, Preferences_Changed_Signal,
-         Kernel_Callback.To_Marshaller (Preferences_Changed'Access),
-         User_Data   => Kernel_Handle (Kernel));
+      Add_Hook
+        (Kernel, Preferences_Changed_Hook, Preferences_Changed'Access);
    end Register_Module;
 
    -------------------------
@@ -1767,9 +1760,8 @@ package body Builder_Module is
    -------------------------
 
    procedure Preferences_Changed
-     (K : access GObject_Record'Class; Kernel : Kernel_Handle)
+     (Kernel : access Kernel_Handle_Record'Class)
    is
-      pragma Unreferenced (K);
       Args : Argument_List (1 .. 2);
    begin
       Args :=
