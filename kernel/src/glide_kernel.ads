@@ -793,95 +793,46 @@ package Glide_Kernel is
      (Glib.Object.GObject_Record, File_Project_Record);
    --  Generic callback that can be used to connect a signal to a kernel.
 
+   -----------
+   -- Hooks --
+   -----------
+
    procedure Context_Changed
      (Handle  : access Kernel_Handle_Record;
       Context : access Selection_Context'Class);
-   --  Emits the "context_changed" signal
+   --  Runs the "context_changed" hook
 
    procedure Source_Lines_Revealed
      (Handle      : access Kernel_Handle_Record;
       Context     : access Selection_Context'Class);
-   --  Emits the "source_lines_revealed" signal.
+   --  Runs the "source_lines_revealed" hook.
 
    procedure File_Edited
      (Handle  : access Kernel_Handle_Record;
       File    : VFS.Virtual_File);
-   --  Emits the "file_edited" signal.
+   --  Runs the "file_edited" hook.
 
    procedure File_Saved
      (Handle  : access Kernel_Handle_Record;
       File    : VFS.Virtual_File);
-   --  Emits the "file_saved" signal
+   --  Runs the "file_saved" hook
 
    procedure File_Closed
      (Handle  : access Kernel_Handle_Record;
       File    : VFS.Virtual_File);
-   --  Emits the "file_closed" signal
+   --  Runs the "file_closed" hook
 
    procedure File_Changed_On_Disk
      (Handle  : access Kernel_Handle_Record;
       File    : VFS.Virtual_File);
-   --  Emits the "file_changed_on_disk" signal
+   --  Runs the "file_changed_on_disk" hook
 
    procedure Compilation_Finished
      (Handle  : access Kernel_Handle_Record;
       File    : VFS.Virtual_File);
-   --  Emits the "compilation_finished" signal
+   --  Runs the "compilation_finished" hook
 
-   -------------
-   -- Signals --
-   -------------
-
-   --  <signals>
-   --  The following new signals are defined for this widget:
-   --
-   --  - "source_lines_revealed"
-   --    procedure Handler (Handle     : access Kernel_Handle_Record'Class;
-   --                       File       : String;
-   --                       Start_Line : Natural;
-   --                       End_Line   : Natural);
-   --
-   --    Indicates that lines between Start_Line and End_Line from File
-   --    have been displayed on screen.
-   --
-   --  - "file_edited"
-   --    procedure Handler (Handle : access Kernel_Handle_Record'Class;
-   --                       File   : String);
-   --
-   --    Emitted when a file editor has been opened for a file that wasn't
-   --    already open before.
-   --
-   --  - "file_closed"
-   --    procedure Handler (Handle : access Kernel_Handle_Record'Class;
-   --                       File   : Virtual_File);
-   --
-   --    Emitted when the last editor for File has been closed.
-   --
-   --  - "file_changed_on_disk"
-   --    procedure Handler (Handle : access Kernel_Handle_Record'Class;
-   --                       File   : Virtual_File);
-   --    Emitted when an external action has changed the contents of a
-   --    file on the disk, such as VCS operations for example.
-   --    File can be the absolute name of a file, or a directory, ending
-   --    with a directory_separator. In that case, the meaning of this signal
-   --    is that any file in that directory might have been modified.
-   --
-   --  - "context_changed"
-   --    procedure Handler (Handle  : access Kernel_Handle_Record'Class;
-   --                       Context : Selection_Context_Access);
-   --
-   --    Emitted when a context has changed, like a new file/directory/project
-   --    selection.
-   --
-   --  - "compilation_finished"
-   --    procedure Handler (Handle : access Kernel_Handle_Record'Class;
-   --                       File   : Virtual_File);
-   --    Emitted when a compile operation has finished.
-   --    File indicates the file that has just been compiled, in the case
-   --    when only one file is compiled.
-   --
-   --  </signals>
-
+   --  Hooks with no arguments
    Preferences_Changed_Hook      : constant String := "preferences_changed";
    Search_Reset_Hook             : constant String := "search_reset";
    Search_Functions_Changed_Hook : constant String :=
@@ -891,13 +842,18 @@ package Glide_Kernel is
    Project_View_Changed_Hook     : constant String := "project_view_changed";
    Project_Changed_Hook          : constant String := "project_changed";
 
-   Context_Changed_Signal        : constant String := "context_changed";
-   Source_Lines_Revealed_Signal  : constant String := "source_lines_revealed";
-   File_Edited_Signal            : constant String := "file_edited";
-   File_Saved_Signal             : constant String := "file_saved";
-   File_Closed_Signal            : constant String := "file_closed";
-   File_Changed_On_Disk_Signal   : constant String := "file_changed_on_disk";
-   Compilation_Finished_Signal   : constant String := "compilation_finished";
+   --  Hooks with File_Hooks_Args argument
+   File_Edited_Hook              : constant String := "file_edited";
+   File_Saved_Hook               : constant String := "file_saved";
+   File_Closed_Hook              : constant String := "file_closed";
+   File_Changed_On_Disk_Hook     : constant String := "file_changed_on_disk";
+   Compilation_Finished_Hook     : constant String := "compilation_finished";
+
+   --  Hooks with Context_Hooks_Args argument
+   Context_Changed_Hook          : constant String := "context_changed";
+
+   --  Hooks with Context_Hooks_Args argument ( a File_Area_Context_Access)
+   Source_Lines_Revealed_Hook    : constant String := "source_lines_revealed";
 
 private
 
