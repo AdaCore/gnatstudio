@@ -15,7 +15,7 @@ g-regpat.o: g-regpat.adb g-regpat.ads
 g-exptty.o: g-exptty.adb g-exptty.ads g-expect.ads
 	gcc -c -gnatg $(CFLAGS) g-exptty.adb
 
-gexpect_tty.o: gexpect_tty.c Makefile
+gexpect_tty.o: gexpect_tty.c systty.h Makefile
 	gcc -c $(ALL_CFLAGS) $<
 
 clean:
