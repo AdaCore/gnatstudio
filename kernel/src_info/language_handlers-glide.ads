@@ -131,8 +131,8 @@ package Language_Handlers.Glide is
       Lang    : Language.Language_Access);
 
    function Known_Languages
-     (Handler : access Glide_Language_Handler_Record)
-      return GNAT.OS_Lib.Argument_List;
+     (Handler : access Glide_Language_Handler_Record;
+      Sorted  : Boolean := False) return GNAT.OS_Lib.Argument_List;
 
    procedure Set_Language_Handler
      (Handler       : access Glide_Language_Handler_Record;

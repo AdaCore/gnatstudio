@@ -30,6 +30,8 @@ with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Projects.Registry;         use Projects.Registry;
 with Traces;                    use Traces;
 with VFS;                       use VFS;
+with Case_Handling;             use Case_Handling;
+with GNAT.Bubble_Sort_G;
 
 package body Language_Handlers.Glide is
 
@@ -271,17 +273,47 @@ package body Language_Handlers.Glide is
    ---------------------
 
    function Known_Languages
-     (Handler : access Glide_Language_Handler_Record)
-      return GNAT.OS_Lib.Argument_List is
+     (Handler : access Glide_Language_Handler_Record;
+      Sorted  : Boolean := False) return GNAT.OS_Lib.Argument_List is
    begin
       if Handler.Languages /= null then
          declare
-            Result : Argument_List (Handler.Languages'Range);
+            Result : Argument_List (1 .. Handler.Languages'Last);
+
+            procedure Move (From, To : Natural);
+            function Lt (From, To : Natural) return Boolean;
+            package Sort is new GNAT.Bubble_Sort_G (Move => Move, Lt => Lt);
+
+            Tmp : GNAT.OS_Lib.String_Access;
+
+            procedure Move (From, To : Natural) is
+            begin
+               if From = 0 then
+                  Result (To) := Tmp;
+               elsif To = 0 then
+                  Tmp := Result (From);
+               else
+                  Result (To) := Result (From);
+               end if;
+            end Move;
+
+            function Lt (From, To : Natural) return Boolean is
+            begin
+               return Result (From).all < Result (To).all;
+            end Lt;
+
          begin
-            for Index in Handler.Languages'Range loop
+            for Index in Result'Range loop
                Result (Index) := new String'
-                 (Handler.Languages (Index).Language_Name.all);
+                 (Handler.Languages
+                    (Index - 1 + Handler.Languages'First).Language_Name.all);
+               Mixed_Case (Result (Index).all);
             end loop;
+
+            if Sorted then
+               Sort.Sort (Result'Last);
+            end if;
+
             return Result;
          end;
       else
