@@ -595,4 +595,19 @@ package body Src_Info.Type_Utils is
       return (The_Class.Attributes and SN_TEMPLATE) /= 0;
    end Is_Template;
 
+   ----------------------
+   -- Plain_Class_Name --
+   ----------------------
+
+   function Plain_Class_Name (Type_Name : String) return String is
+      Matches : Match_Array (0 .. 1);
+   begin
+      Match (Template_Type_Pat, Type_Name, Matches);
+      if Matches (0) = No_Match then
+         return Type_Name;
+      else
+         return Type_Name (Matches (1).First .. Matches (1).Last);
+      end if;
+   end Plain_Class_Name;
+
 end Src_Info.Type_Utils;

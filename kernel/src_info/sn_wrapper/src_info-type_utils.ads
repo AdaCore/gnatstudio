@@ -188,6 +188,11 @@ package Src_Info.Type_Utils is
    function Is_Template (The_Class : CL_Table) return Boolean;
    --  Returns True if specified class is class template, False otherwise.
 
+   function Plain_Class_Name (Type_Name : String) return String;
+   --  Returns plain class name in the templatized name. Returns the original
+   --  type name, if type is not templatized.
+
+
 private
 
    --------------------------------
