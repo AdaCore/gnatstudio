@@ -16,3 +16,16 @@
     There should be a way to add filters to the directories displayed in the
     tree. For instance, remove hidden directories (starting with '.' on Unix
     systems).
+    Note that this needs to be synchronized with the creation wizard.
+
+  * [Manu] Specifying the number of columns
+    By default, the tree has a single column. It would be nice to be able to
+    have several of them, in case the user wants to display some extra
+    information (see "Adding extra information to directories")
+
+---------------------
+-- Creation wizard --
+---------------------
+
+  * [Manu] Source_Dir selection
+    The number of currently selected directories should be displayed somewhere
