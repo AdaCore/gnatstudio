@@ -595,7 +595,7 @@ package body Odd.Source_Editors is
 
    begin
       --  Convert from raw file position to visual buffer position (i.e include
-      --  handling of extra columns and ASCII.HT characters).
+      --  handling of ASCII.HT characters).
 
       for Text_Pos in Buffer'First .. Natural (Position) loop
          if Buffer (Text_Pos) = ASCII.LF then
