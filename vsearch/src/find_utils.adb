@@ -275,6 +275,8 @@ package body Find_Utils is
       end BM_Search;
 
    begin
+      Was_Partial := False;
+
       --  ??? Would be nice to handle backward search, which is extremely hard
       --  with regular expressions
 
