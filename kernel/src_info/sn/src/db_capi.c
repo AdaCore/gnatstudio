@@ -171,7 +171,7 @@ DB_File *ada_db_open(const int num_of_files, const char **file_names)
 
     for (i = 0; i < num_of_files; i++) {
 	file->db[i] = dbopen(file_names[i], O_RDONLY, 0644, DB_BTREE, 0);
-	if (file->db == 0) {
+	if (file->db[i] == 0) {
 	    file->last_errno = errno;
 	    return 0;
 	}
