@@ -19,9 +19,10 @@ end Gtk_New;
 procedure Initialize (General_Preferences : access General_Preferences_Record'Class) is
    pragma Suppress (All_Checks);
    File_Name_Bg_Combo_Items : String_List.Glist;
-   Comment_Color_Combo_Items : String_List.Glist;
-   String_Color_Combo_Items : String_List.Glist;
    Keyword_Color_Combo_Items : String_List.Glist;
+   String_Color_Combo_Items : String_List.Glist;
+   Comment_Color_Combo_Items : String_List.Glist;
+   Table10_Group : Widget_SList.GSList;
    Asm_Highlight_Combo_Items : String_List.Glist;
    Big_Item_Spin_Adj : Gtk_Adjustment;
    Xref_Color_Combo_Items : String_List.Glist;
@@ -181,7 +182,7 @@ begin
    Set_Shadow_Type (General_Preferences.Frame17, Shadow_Etched_In);
    Pack_Start (General_Preferences.Vbox18, General_Preferences.Frame17, False, False, 0);
 
-   Gtk_New (General_Preferences.Table10, 6, 3, False);
+   Gtk_New (General_Preferences.Table10, 7, 3, False);
    Set_Row_Spacings (General_Preferences.Table10, 2);
    Set_Col_Spacings (General_Preferences.Table10, 5);
    Add (General_Preferences.Frame17, General_Preferences.Table10);
@@ -195,33 +196,12 @@ begin
      Fill, 0,
      0, 0);
 
-   Gtk_New (General_Preferences.Show_Lines_Code_Check, -"Show Lines with Code");
-   Set_Active (General_Preferences.Show_Lines_Code_Check, True);
-   Attach (General_Preferences.Table10, General_Preferences.Show_Lines_Code_Check, 1, 2, 1, 2,
-     Fill, 0,
-     0, 0);
-
-   Gtk_New (General_Preferences.Show_Line_Numbers_Check, -"Show Line Numbers");
-   Set_Active (General_Preferences.Show_Line_Numbers_Check, True);
-   Attach (General_Preferences.Table10, General_Preferences.Show_Line_Numbers_Check, 0, 1, 1, 2,
-     Fill, 0,
-     0, 0);
-
-   Gtk_New (General_Preferences.Label79, -("Comments"));
-   Set_Alignment (General_Preferences.Label79, 7.45058e-09, 0.5);
-   Set_Padding (General_Preferences.Label79, 0, 0);
-   Set_Justify (General_Preferences.Label79, Justify_Center);
-   Set_Line_Wrap (General_Preferences.Label79, False);
-   Attach (General_Preferences.Table10, General_Preferences.Label79, 0, 1, 3, 4,
-     Fill, 0,
-     0, 0);
-
-   Gtk_New (General_Preferences.Label80, -("Strings"));
-   Set_Alignment (General_Preferences.Label80, 7.45058e-09, 0.5);
-   Set_Padding (General_Preferences.Label80, 0, 0);
-   Set_Justify (General_Preferences.Label80, Justify_Center);
-   Set_Line_Wrap (General_Preferences.Label80, False);
-   Attach (General_Preferences.Table10, General_Preferences.Label80, 0, 1, 4, 5,
+   Gtk_New (General_Preferences.Editor_Font_Combo, Orientation_Horizontal, Toolbar_Both);
+   Set_Space_Size (General_Preferences.Editor_Font_Combo, 5);
+   Set_Space_Style (General_Preferences.Editor_Font_Combo, Toolbar_Space_Empty);
+   Set_Tooltips (General_Preferences.Editor_Font_Combo, True);
+   Set_Button_Relief (General_Preferences.Editor_Font_Combo, Relief_Normal);
+   Attach (General_Preferences.Table10, General_Preferences.Editor_Font_Combo, 1, 2, 0, 1,
      Fill, 0,
      0, 0);
 
@@ -230,16 +210,50 @@ begin
    Set_Padding (General_Preferences.Label81, 0, 0);
    Set_Justify (General_Preferences.Label81, Justify_Center);
    Set_Line_Wrap (General_Preferences.Label81, False);
-   Attach (General_Preferences.Table10, General_Preferences.Label81, 0, 1, 5, 6,
+   Attach (General_Preferences.Table10, General_Preferences.Label81, 0, 1, 6, 7,
      Fill, 0,
      0, 0);
 
-   Gtk_New (General_Preferences.Editor_Font_Combo, Orientation_Horizontal, Toolbar_Both);
-   Set_Space_Size (General_Preferences.Editor_Font_Combo, 5);
-   Set_Space_Style (General_Preferences.Editor_Font_Combo, Toolbar_Space_Empty);
-   Set_Tooltips (General_Preferences.Editor_Font_Combo, True);
-   Set_Button_Relief (General_Preferences.Editor_Font_Combo, Relief_Normal);
-   Attach (General_Preferences.Table10, General_Preferences.Editor_Font_Combo, 1, 2, 0, 1,
+   Gtk_New (General_Preferences.Keyword_Color_Combo);
+   Set_Case_Sensitive (General_Preferences.Keyword_Color_Combo, False);
+   Set_Use_Arrows (General_Preferences.Keyword_Color_Combo, True);
+   Set_Use_Arrows_Always (General_Preferences.Keyword_Color_Combo, False);
+   String_List.Append (Keyword_Color_Combo_Items, -"");
+   Combo.Set_Popdown_Strings (General_Preferences.Keyword_Color_Combo, Keyword_Color_Combo_Items);
+   Free_String_List (Keyword_Color_Combo_Items);
+   Attach (General_Preferences.Table10, General_Preferences.Keyword_Color_Combo, 1, 2, 6, 7,
+     0, 0,
+     0, 0);
+
+   General_Preferences.Combo_Entry11 := Get_Entry (General_Preferences.Keyword_Color_Combo);
+   Set_Editable (General_Preferences.Combo_Entry11, True);
+   Set_Max_Length (General_Preferences.Combo_Entry11, 0);
+   Set_Text (General_Preferences.Combo_Entry11, -"");
+   Set_Visibility (General_Preferences.Combo_Entry11, True);
+
+   Gtk_New (General_Preferences.String_Color_Combo);
+   Set_Case_Sensitive (General_Preferences.String_Color_Combo, False);
+   Set_Use_Arrows (General_Preferences.String_Color_Combo, True);
+   Set_Use_Arrows_Always (General_Preferences.String_Color_Combo, False);
+   String_List.Append (String_Color_Combo_Items, -"");
+   Combo.Set_Popdown_Strings (General_Preferences.String_Color_Combo, String_Color_Combo_Items);
+   Free_String_List (String_Color_Combo_Items);
+   Attach (General_Preferences.Table10, General_Preferences.String_Color_Combo, 1, 2, 5, 6,
+     0, 0,
+     0, 0);
+
+   General_Preferences.Combo_Entry9 := Get_Entry (General_Preferences.String_Color_Combo);
+   Set_Editable (General_Preferences.Combo_Entry9, True);
+   Set_Max_Length (General_Preferences.Combo_Entry9, 0);
+   Set_Text (General_Preferences.Combo_Entry9, -"");
+   Set_Visibility (General_Preferences.Combo_Entry9, True);
+
+   Gtk_New (General_Preferences.Label80, -("Strings"));
+   Set_Alignment (General_Preferences.Label80, 7.45058e-09, 0.5);
+   Set_Padding (General_Preferences.Label80, 0, 0);
+   Set_Justify (General_Preferences.Label80, Justify_Center);
+   Set_Line_Wrap (General_Preferences.Label80, False);
+   Attach (General_Preferences.Table10, General_Preferences.Label80, 0, 1, 5, 6,
      Fill, 0,
      0, 0);
 
@@ -250,7 +264,7 @@ begin
    String_List.Append (Comment_Color_Combo_Items, -"");
    Combo.Set_Popdown_Strings (General_Preferences.Comment_Color_Combo, Comment_Color_Combo_Items);
    Free_String_List (Comment_Color_Combo_Items);
-   Attach (General_Preferences.Table10, General_Preferences.Comment_Color_Combo, 1, 2, 3, 4,
+   Attach (General_Preferences.Table10, General_Preferences.Comment_Color_Combo, 1, 2, 4, 5,
      0, 0,
      0, 0);
 
@@ -260,56 +274,64 @@ begin
    Set_Text (General_Preferences.Combo_Entry10, -"");
    Set_Visibility (General_Preferences.Combo_Entry10, True);
 
-   Gtk_New (General_Preferences.String_Color_Combo);
-   Set_Case_Sensitive (General_Preferences.String_Color_Combo, False);
-   Set_Use_Arrows (General_Preferences.String_Color_Combo, True);
-   Set_Use_Arrows_Always (General_Preferences.String_Color_Combo, False);
-   String_List.Append (String_Color_Combo_Items, -"");
-   Combo.Set_Popdown_Strings (General_Preferences.String_Color_Combo, String_Color_Combo_Items);
-   Free_String_List (String_Color_Combo_Items);
-   Attach (General_Preferences.Table10, General_Preferences.String_Color_Combo, 1, 2, 4, 5,
-     0, 0,
-     0, 0);
-
-   General_Preferences.Combo_Entry9 := Get_Entry (General_Preferences.String_Color_Combo);
-   Set_Editable (General_Preferences.Combo_Entry9, True);
-   Set_Max_Length (General_Preferences.Combo_Entry9, 0);
-   Set_Text (General_Preferences.Combo_Entry9, -"");
-   Set_Visibility (General_Preferences.Combo_Entry9, True);
-
-   Gtk_New (General_Preferences.Keyword_Color_Combo);
-   Set_Case_Sensitive (General_Preferences.Keyword_Color_Combo, False);
-   Set_Use_Arrows (General_Preferences.Keyword_Color_Combo, True);
-   Set_Use_Arrows_Always (General_Preferences.Keyword_Color_Combo, False);
-   String_List.Append (Keyword_Color_Combo_Items, -"");
-   Combo.Set_Popdown_Strings (General_Preferences.Keyword_Color_Combo, Keyword_Color_Combo_Items);
-   Free_String_List (Keyword_Color_Combo_Items);
-   Attach (General_Preferences.Table10, General_Preferences.Keyword_Color_Combo, 1, 2, 5, 6,
-     0, 0,
-     0, 0);
-
-   General_Preferences.Combo_Entry11 := Get_Entry (General_Preferences.Keyword_Color_Combo);
-   Set_Editable (General_Preferences.Combo_Entry11, True);
-   Set_Max_Length (General_Preferences.Combo_Entry11, 0);
-   Set_Text (General_Preferences.Combo_Entry11, -"");
-   Set_Visibility (General_Preferences.Combo_Entry11, True);
-
-   Gtk_New (General_Preferences.Syntax_Highlight_Check, -"Syntax Highlighting");
-   Set_Active (General_Preferences.Syntax_Highlight_Check, True);
-   Attach (General_Preferences.Table10, General_Preferences.Syntax_Highlight_Check, 0, 1, 2, 3,
+   Gtk_New (General_Preferences.Label79, -("Comments"));
+   Set_Alignment (General_Preferences.Label79, 7.45058e-09, 0.5);
+   Set_Padding (General_Preferences.Label79, 0, 0);
+   Set_Justify (General_Preferences.Label79, Justify_Center);
+   Set_Line_Wrap (General_Preferences.Label79, False);
+   Attach (General_Preferences.Table10, General_Preferences.Label79, 0, 1, 4, 5,
      Fill, 0,
      0, 0);
 
    Gtk_New (General_Preferences.Strip_Cr_Check, -"Strip Carriage Return");
    Set_Active (General_Preferences.Strip_Cr_Check, True);
-   Attach (General_Preferences.Table10, General_Preferences.Strip_Cr_Check, 1, 2, 2, 3,
+   Attach (General_Preferences.Table10, General_Preferences.Strip_Cr_Check, 1, 2, 3, 4,
+     Fill, 0,
+     0, 0);
+
+   Gtk_New (General_Preferences.Syntax_Highlight_Check, -"Syntax Highlighting");
+   Set_Active (General_Preferences.Syntax_Highlight_Check, True);
+   Attach (General_Preferences.Table10, General_Preferences.Syntax_Highlight_Check, 0, 1, 3, 4,
+     Fill, 0,
+     0, 0);
+
+   Gtk_New (General_Preferences.Show_Line_Numbers_Check, -"Show Line Numbers");
+   Set_Active (General_Preferences.Show_Line_Numbers_Check, True);
+   Attach (General_Preferences.Table10, General_Preferences.Show_Line_Numbers_Check, 0, 1, 2, 3,
+     Fill, 0,
+     0, 0);
+
+   Gtk_New (General_Preferences.Show_Lines_Code_Check, -"Show Lines with Code");
+   Set_Active (General_Preferences.Show_Lines_Code_Check, True);
+   Attach (General_Preferences.Table10, General_Preferences.Show_Lines_Code_Check, 1, 2, 2, 3,
      Fill, 0,
      0, 0);
 
    Gtk_New (General_Preferences.Tooltips_Check, -"Automatic Display of Variables");
    Set_Active (General_Preferences.Tooltips_Check, True);
-   Attach (General_Preferences.Table10, General_Preferences.Tooltips_Check, 2, 3, 1, 2,
+   Attach (General_Preferences.Table10, General_Preferences.Tooltips_Check, 2, 3, 2, 3,
      0, 0,
+     0, 0);
+
+   Gtk_New (General_Preferences.Show_Asm, Table10_Group, -"Show Asm Code");
+   Table10_Group := Group (General_Preferences.Show_Asm);
+   Set_Active (General_Preferences.Show_Asm, False);
+   Attach (General_Preferences.Table10, General_Preferences.Show_Asm, 1, 2, 1, 2,
+     Fill, 0,
+     0, 0);
+
+   Gtk_New (General_Preferences.Show_Source, Table10_Group, -"Show Source Code");
+   Table10_Group := Group (General_Preferences.Show_Source);
+   Set_Active (General_Preferences.Show_Source, False);
+   Attach (General_Preferences.Table10, General_Preferences.Show_Source, 0, 1, 1, 2,
+     Fill, 0,
+     0, 0);
+
+   Gtk_New (General_Preferences.Show_Asm_Source, Table10_Group, -"Show Asm and Source");
+   Table10_Group := Group (General_Preferences.Show_Asm_Source);
+   Set_Active (General_Preferences.Show_Asm_Source, False);
+   Attach (General_Preferences.Table10, General_Preferences.Show_Asm_Source, 2, 3, 1, 2,
+     Fill, 0,
      0, 0);
 
    Gtk_New (General_Preferences.Frame18, -"Assembly");

@@ -1661,7 +1661,7 @@
 	  <widget>
 	    <class>GtkTable</class>
 	    <name>table10</name>
-	    <rows>6</rows>
+	    <rows>7</rows>
 	    <columns>3</columns>
 	    <homogeneous>False</homogeneous>
 	    <row_spacing>2</row_spacing>
@@ -1682,130 +1682,6 @@
 		<right_attach>1</right_attach>
 		<top_attach>0</top_attach>
 		<bottom_attach>1</bottom_attach>
-		<xpad>0</xpad>
-		<ypad>0</ypad>
-		<xexpand>False</xexpand>
-		<yexpand>False</yexpand>
-		<xshrink>False</xshrink>
-		<yshrink>False</yshrink>
-		<xfill>True</xfill>
-		<yfill>False</yfill>
-	      </child>
-	    </widget>
-
-	    <widget>
-	      <class>GtkCheckButton</class>
-	      <name>Show_Lines_Code_Check</name>
-	      <can_focus>True</can_focus>
-	      <label>Show Lines with Code</label>
-	      <active>True</active>
-	      <draw_indicator>True</draw_indicator>
-	      <child>
-		<left_attach>1</left_attach>
-		<right_attach>2</right_attach>
-		<top_attach>1</top_attach>
-		<bottom_attach>2</bottom_attach>
-		<xpad>0</xpad>
-		<ypad>0</ypad>
-		<xexpand>False</xexpand>
-		<yexpand>False</yexpand>
-		<xshrink>False</xshrink>
-		<yshrink>False</yshrink>
-		<xfill>True</xfill>
-		<yfill>False</yfill>
-	      </child>
-	    </widget>
-
-	    <widget>
-	      <class>GtkCheckButton</class>
-	      <name>Show_Line_Numbers_Check</name>
-	      <can_focus>True</can_focus>
-	      <label>Show Line Numbers</label>
-	      <active>True</active>
-	      <draw_indicator>True</draw_indicator>
-	      <child>
-		<left_attach>0</left_attach>
-		<right_attach>1</right_attach>
-		<top_attach>1</top_attach>
-		<bottom_attach>2</bottom_attach>
-		<xpad>0</xpad>
-		<ypad>0</ypad>
-		<xexpand>False</xexpand>
-		<yexpand>False</yexpand>
-		<xshrink>False</xshrink>
-		<yshrink>False</yshrink>
-		<xfill>True</xfill>
-		<yfill>False</yfill>
-	      </child>
-	    </widget>
-
-	    <widget>
-	      <class>GtkLabel</class>
-	      <name>label79</name>
-	      <label>Comments</label>
-	      <justify>GTK_JUSTIFY_CENTER</justify>
-	      <wrap>False</wrap>
-	      <xalign>7.45058e-09</xalign>
-	      <yalign>0.5</yalign>
-	      <xpad>0</xpad>
-	      <ypad>0</ypad>
-	      <child>
-		<left_attach>0</left_attach>
-		<right_attach>1</right_attach>
-		<top_attach>3</top_attach>
-		<bottom_attach>4</bottom_attach>
-		<xpad>0</xpad>
-		<ypad>0</ypad>
-		<xexpand>False</xexpand>
-		<yexpand>False</yexpand>
-		<xshrink>False</xshrink>
-		<yshrink>False</yshrink>
-		<xfill>True</xfill>
-		<yfill>False</yfill>
-	      </child>
-	    </widget>
-
-	    <widget>
-	      <class>GtkLabel</class>
-	      <name>label80</name>
-	      <label>Strings</label>
-	      <justify>GTK_JUSTIFY_CENTER</justify>
-	      <wrap>False</wrap>
-	      <xalign>7.45058e-09</xalign>
-	      <yalign>0.5</yalign>
-	      <xpad>0</xpad>
-	      <ypad>0</ypad>
-	      <child>
-		<left_attach>0</left_attach>
-		<right_attach>1</right_attach>
-		<top_attach>4</top_attach>
-		<bottom_attach>5</bottom_attach>
-		<xpad>0</xpad>
-		<ypad>0</ypad>
-		<xexpand>False</xexpand>
-		<yexpand>False</yexpand>
-		<xshrink>False</xshrink>
-		<yshrink>False</yshrink>
-		<xfill>True</xfill>
-		<yfill>False</yfill>
-	      </child>
-	    </widget>
-
-	    <widget>
-	      <class>GtkLabel</class>
-	      <name>label81</name>
-	      <label>Keywords</label>
-	      <justify>GTK_JUSTIFY_CENTER</justify>
-	      <wrap>False</wrap>
-	      <xalign>7.45058e-09</xalign>
-	      <yalign>0.5</yalign>
-	      <xpad>0</xpad>
-	      <ypad>0</ypad>
-	      <child>
-		<left_attach>0</left_attach>
-		<right_attach>1</right_attach>
-		<top_attach>5</top_attach>
-		<bottom_attach>6</bottom_attach>
 		<xpad>0</xpad>
 		<ypad>0</ypad>
 		<xexpand>False</xexpand>
@@ -1847,8 +1723,34 @@
 	    </widget>
 
 	    <widget>
+	      <class>GtkLabel</class>
+	      <name>label81</name>
+	      <label>Keywords</label>
+	      <justify>GTK_JUSTIFY_CENTER</justify>
+	      <wrap>False</wrap>
+	      <xalign>7.45058e-09</xalign>
+	      <yalign>0.5</yalign>
+	      <xpad>0</xpad>
+	      <ypad>0</ypad>
+	      <child>
+		<left_attach>0</left_attach>
+		<right_attach>1</right_attach>
+		<top_attach>6</top_attach>
+		<bottom_attach>7</bottom_attach>
+		<xpad>0</xpad>
+		<ypad>0</ypad>
+		<xexpand>False</xexpand>
+		<yexpand>False</yexpand>
+		<xshrink>False</xshrink>
+		<yshrink>False</yshrink>
+		<xfill>True</xfill>
+		<yfill>False</yfill>
+	      </child>
+	    </widget>
+
+	    <widget>
 	      <class>GtkCombo</class>
-	      <name>Comment_Color_Combo</name>
+	      <name>Keyword_Color_Combo</name>
 	      <value_in_list>False</value_in_list>
 	      <ok_if_empty>True</ok_if_empty>
 	      <case_sensitive>False</case_sensitive>
@@ -1858,8 +1760,8 @@
 	      <child>
 		<left_attach>1</left_attach>
 		<right_attach>2</right_attach>
-		<top_attach>3</top_attach>
-		<bottom_attach>4</bottom_attach>
+		<top_attach>6</top_attach>
+		<bottom_attach>7</bottom_attach>
 		<xpad>0</xpad>
 		<ypad>0</ypad>
 		<xexpand>False</xexpand>
@@ -1873,7 +1775,7 @@
 	      <widget>
 		<class>GtkEntry</class>
 		<child_name>GtkCombo:entry</child_name>
-		<name>combo-entry10</name>
+		<name>combo-entry11</name>
 		<can_focus>True</can_focus>
 		<editable>True</editable>
 		<text_visible>True</text_visible>
@@ -1885,42 +1787,6 @@
 	    <widget>
 	      <class>GtkCombo</class>
 	      <name>String_Color_Combo</name>
-	      <value_in_list>False</value_in_list>
-	      <ok_if_empty>True</ok_if_empty>
-	      <case_sensitive>False</case_sensitive>
-	      <use_arrows>True</use_arrows>
-	      <use_arrows_always>False</use_arrows_always>
-	      <items></items>
-	      <child>
-		<left_attach>1</left_attach>
-		<right_attach>2</right_attach>
-		<top_attach>4</top_attach>
-		<bottom_attach>5</bottom_attach>
-		<xpad>0</xpad>
-		<ypad>0</ypad>
-		<xexpand>False</xexpand>
-		<yexpand>False</yexpand>
-		<xshrink>False</xshrink>
-		<yshrink>False</yshrink>
-		<xfill>False</xfill>
-		<yfill>False</yfill>
-	      </child>
-
-	      <widget>
-		<class>GtkEntry</class>
-		<child_name>GtkCombo:entry</child_name>
-		<name>combo-entry9</name>
-		<can_focus>True</can_focus>
-		<editable>True</editable>
-		<text_visible>True</text_visible>
-		<text_max_length>0</text_max_length>
-		<text></text>
-	      </widget>
-	    </widget>
-
-	    <widget>
-	      <class>GtkCombo</class>
-	      <name>Keyword_Color_Combo</name>
 	      <value_in_list>False</value_in_list>
 	      <ok_if_empty>True</ok_if_empty>
 	      <case_sensitive>False</case_sensitive>
@@ -1945,7 +1811,7 @@
 	      <widget>
 		<class>GtkEntry</class>
 		<child_name>GtkCombo:entry</child_name>
-		<name>combo-entry11</name>
+		<name>combo-entry9</name>
 		<can_focus>True</can_focus>
 		<editable>True</editable>
 		<text_visible>True</text_visible>
@@ -1955,10 +1821,144 @@
 	    </widget>
 
 	    <widget>
+	      <class>GtkLabel</class>
+	      <name>label80</name>
+	      <label>Strings</label>
+	      <justify>GTK_JUSTIFY_CENTER</justify>
+	      <wrap>False</wrap>
+	      <xalign>7.45058e-09</xalign>
+	      <yalign>0.5</yalign>
+	      <xpad>0</xpad>
+	      <ypad>0</ypad>
+	      <child>
+		<left_attach>0</left_attach>
+		<right_attach>1</right_attach>
+		<top_attach>5</top_attach>
+		<bottom_attach>6</bottom_attach>
+		<xpad>0</xpad>
+		<ypad>0</ypad>
+		<xexpand>False</xexpand>
+		<yexpand>False</yexpand>
+		<xshrink>False</xshrink>
+		<yshrink>False</yshrink>
+		<xfill>True</xfill>
+		<yfill>False</yfill>
+	      </child>
+	    </widget>
+
+	    <widget>
+	      <class>GtkCombo</class>
+	      <name>Comment_Color_Combo</name>
+	      <value_in_list>False</value_in_list>
+	      <ok_if_empty>True</ok_if_empty>
+	      <case_sensitive>False</case_sensitive>
+	      <use_arrows>True</use_arrows>
+	      <use_arrows_always>False</use_arrows_always>
+	      <items></items>
+	      <child>
+		<left_attach>1</left_attach>
+		<right_attach>2</right_attach>
+		<top_attach>4</top_attach>
+		<bottom_attach>5</bottom_attach>
+		<xpad>0</xpad>
+		<ypad>0</ypad>
+		<xexpand>False</xexpand>
+		<yexpand>False</yexpand>
+		<xshrink>False</xshrink>
+		<yshrink>False</yshrink>
+		<xfill>False</xfill>
+		<yfill>False</yfill>
+	      </child>
+
+	      <widget>
+		<class>GtkEntry</class>
+		<child_name>GtkCombo:entry</child_name>
+		<name>combo-entry10</name>
+		<can_focus>True</can_focus>
+		<editable>True</editable>
+		<text_visible>True</text_visible>
+		<text_max_length>0</text_max_length>
+		<text></text>
+	      </widget>
+	    </widget>
+
+	    <widget>
+	      <class>GtkLabel</class>
+	      <name>label79</name>
+	      <label>Comments</label>
+	      <justify>GTK_JUSTIFY_CENTER</justify>
+	      <wrap>False</wrap>
+	      <xalign>7.45058e-09</xalign>
+	      <yalign>0.5</yalign>
+	      <xpad>0</xpad>
+	      <ypad>0</ypad>
+	      <child>
+		<left_attach>0</left_attach>
+		<right_attach>1</right_attach>
+		<top_attach>4</top_attach>
+		<bottom_attach>5</bottom_attach>
+		<xpad>0</xpad>
+		<ypad>0</ypad>
+		<xexpand>False</xexpand>
+		<yexpand>False</yexpand>
+		<xshrink>False</xshrink>
+		<yshrink>False</yshrink>
+		<xfill>True</xfill>
+		<yfill>False</yfill>
+	      </child>
+	    </widget>
+
+	    <widget>
+	      <class>GtkCheckButton</class>
+	      <name>Strip_CR_Check</name>
+	      <can_focus>True</can_focus>
+	      <label>Strip Carriage Return</label>
+	      <active>True</active>
+	      <draw_indicator>True</draw_indicator>
+	      <child>
+		<left_attach>1</left_attach>
+		<right_attach>2</right_attach>
+		<top_attach>3</top_attach>
+		<bottom_attach>4</bottom_attach>
+		<xpad>0</xpad>
+		<ypad>0</ypad>
+		<xexpand>False</xexpand>
+		<yexpand>False</yexpand>
+		<xshrink>False</xshrink>
+		<yshrink>False</yshrink>
+		<xfill>True</xfill>
+		<yfill>False</yfill>
+	      </child>
+	    </widget>
+
+	    <widget>
 	      <class>GtkCheckButton</class>
 	      <name>Syntax_Highlight_Check</name>
 	      <can_focus>True</can_focus>
 	      <label>Syntax Highlighting</label>
+	      <active>True</active>
+	      <draw_indicator>True</draw_indicator>
+	      <child>
+		<left_attach>0</left_attach>
+		<right_attach>1</right_attach>
+		<top_attach>3</top_attach>
+		<bottom_attach>4</bottom_attach>
+		<xpad>0</xpad>
+		<ypad>0</ypad>
+		<xexpand>False</xexpand>
+		<yexpand>False</yexpand>
+		<xshrink>False</xshrink>
+		<yshrink>False</yshrink>
+		<xfill>True</xfill>
+		<yfill>False</yfill>
+	      </child>
+	    </widget>
+
+	    <widget>
+	      <class>GtkCheckButton</class>
+	      <name>Show_Line_Numbers_Check</name>
+	      <can_focus>True</can_focus>
+	      <label>Show Line Numbers</label>
 	      <active>True</active>
 	      <draw_indicator>True</draw_indicator>
 	      <child>
@@ -1979,9 +1979,9 @@
 
 	    <widget>
 	      <class>GtkCheckButton</class>
-	      <name>Strip_CR_Check</name>
+	      <name>Show_Lines_Code_Check</name>
 	      <can_focus>True</can_focus>
-	      <label>Strip Carriage Return</label>
+	      <label>Show Lines with Code</label>
 	      <active>True</active>
 	      <draw_indicator>True</draw_indicator>
 	      <child>
@@ -2010,6 +2010,30 @@
 	      <child>
 		<left_attach>2</left_attach>
 		<right_attach>3</right_attach>
+		<top_attach>2</top_attach>
+		<bottom_attach>3</bottom_attach>
+		<xpad>0</xpad>
+		<ypad>0</ypad>
+		<xexpand>False</xexpand>
+		<yexpand>False</yexpand>
+		<xshrink>False</xshrink>
+		<yshrink>False</yshrink>
+		<xfill>False</xfill>
+		<yfill>False</yfill>
+	      </child>
+	    </widget>
+
+	    <widget>
+	      <class>GtkRadioButton</class>
+	      <name>show_asm</name>
+	      <can_focus>True</can_focus>
+	      <label>Show Asm Code</label>
+	      <active>False</active>
+	      <draw_indicator>True</draw_indicator>
+	      <group>editor_mode</group>
+	      <child>
+		<left_attach>1</left_attach>
+		<right_attach>2</right_attach>
 		<top_attach>1</top_attach>
 		<bottom_attach>2</bottom_attach>
 		<xpad>0</xpad>
@@ -2018,7 +2042,55 @@
 		<yexpand>False</yexpand>
 		<xshrink>False</xshrink>
 		<yshrink>False</yshrink>
-		<xfill>False</xfill>
+		<xfill>True</xfill>
+		<yfill>False</yfill>
+	      </child>
+	    </widget>
+
+	    <widget>
+	      <class>GtkRadioButton</class>
+	      <name>show_source</name>
+	      <can_focus>True</can_focus>
+	      <label>Show Source Code</label>
+	      <active>False</active>
+	      <draw_indicator>True</draw_indicator>
+	      <group>editor_mode</group>
+	      <child>
+		<left_attach>0</left_attach>
+		<right_attach>1</right_attach>
+		<top_attach>1</top_attach>
+		<bottom_attach>2</bottom_attach>
+		<xpad>0</xpad>
+		<ypad>0</ypad>
+		<xexpand>False</xexpand>
+		<yexpand>False</yexpand>
+		<xshrink>False</xshrink>
+		<yshrink>False</yshrink>
+		<xfill>True</xfill>
+		<yfill>False</yfill>
+	      </child>
+	    </widget>
+
+	    <widget>
+	      <class>GtkRadioButton</class>
+	      <name>show_asm_source</name>
+	      <can_focus>True</can_focus>
+	      <label>Show Asm and Source</label>
+	      <active>False</active>
+	      <draw_indicator>True</draw_indicator>
+	      <group>editor_mode</group>
+	      <child>
+		<left_attach>2</left_attach>
+		<right_attach>3</right_attach>
+		<top_attach>1</top_attach>
+		<bottom_attach>2</bottom_attach>
+		<xpad>0</xpad>
+		<ypad>0</ypad>
+		<xexpand>False</xexpand>
+		<yexpand>False</yexpand>
+		<xshrink>False</xshrink>
+		<yshrink>False</yshrink>
+		<xfill>True</xfill>
 		<yfill>False</yfill>
 	      </child>
 	    </widget>
