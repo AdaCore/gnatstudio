@@ -146,7 +146,7 @@ package body GVD.Text_Boxes is
       Current_Line_Mask   : Gdk.Bitmap.Gdk_Bitmap;
 
    begin
-      Box.Font := Get_Gdkfont (Ps_Font_Name, Font_Size);
+      Set_Font (Box, Ps_Font_Name, Font_Size);
 
       --  Realize (Box.Child);
       Create_From_Xpm_D
@@ -162,15 +162,6 @@ package body GVD.Text_Boxes is
       Gtk_New
         (Box.Current_Line_Button, Current_Line_Pixmap, Current_Line_Mask);
       Ref (Box.Current_Line_Button);
-
-      --  ??? Unfortunately, it is not possible currently to specify the
-      --  step_increment for the adjustments, since this is overridden in
-      --  several places in the text widget.
-      --    Set_Step_Increment
-      --     (Get_Vadj (Editor.Text),
-      --      Gfloat (Get_Ascent (Editor.Font) + Get_Descent (Editor.Font)));
-
-      Box.Line_Height := Get_Ascent (Box.Font) + Get_Descent (Box.Font);
    end Configure;
 
    -------------------
@@ -868,5 +859,30 @@ package body GVD.Text_Boxes is
    begin
       return Box.Current_Line_Button;
    end Current_Line_Button;
+
+   --------------
+   -- Set_Font --
+   --------------
+
+   procedure Set_Font
+     (Box          : access Gvd_Text_Box_Record;
+      Ps_Font_Name : String;
+      Font_Size    : Glib.Gint)
+   is
+      F : Gdk_Font;
+   begin
+      F := Get_Gdkfont (Ps_Font_Name, Font_Size);
+
+      if F /= Box.Font then
+         Box.Font := F;
+         --  ??? Unfortunately, it is not possible currently to specify the
+         --  step_increment for the adjustments, since this is overridden in
+         --  several places in the text widget.
+         --  Set_Step_Increment
+         --   (Get_Vadj (Editor.Text),
+         --    Gfloat (Get_Ascent (Editor.Font) + Get_Descent (Editor.Font)));
+         Box.Line_Height := Get_Ascent (Box.Font) + Get_Descent (Box.Font);
+      end if;
+   end Set_Font;
 
 end GVD.Text_Boxes;

@@ -61,6 +61,13 @@ package GVD.Text_Boxes is
    --  The editor will automatically free its allocated memory when it is
    --  destroyed.
 
+   procedure Set_Font
+     (Box          : access Gvd_Text_Box_Record;
+      Ps_Font_Name : String;
+      Font_Size    : Glib.Gint);
+   --  Set the font used for the box.
+   --  This is called by Configure internally.
+
    procedure Insert
      (Box   : access GVD_Text_Box_Record;
       Fore  : in Gdk.Color.Gdk_Color := Gdk.Color.Null_Color;
