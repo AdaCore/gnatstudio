@@ -834,7 +834,6 @@ package body Src_Editor_Buffer is
       Lang   : Language.Language_Access := null)
    is
       Tags    : Gtk_Text_Tag_Table;
-      Timeout : Gint;
    begin
       Gtk.Text_Buffer.Initialize (Buffer);
       Glib.Object.Initialize_Class_Record
@@ -872,17 +871,6 @@ package body Src_Editor_Buffer is
       --  Initialize the queue for editor commands
 
       Buffer.Queue := New_Queue;
-
-      --  Connect timeout, to handle automatic saving of buffer
-
-      Timeout := Get_Pref (Kernel, Periodic_Save);
-
-      if Timeout > 0 then
-         Buffer.Timeout_Id := Buffer_Timeout.Add
-           (Guint32 (Timeout) * 1000,
-            Automatic_Save'Access,
-            Buffer.all'Access);
-      end if;
 
       --  And finally, connect ourselves to the interesting signals
 
@@ -922,7 +910,8 @@ package body Src_Editor_Buffer is
    procedure Preferences_Changed
      (Buffer : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
-      B : Source_Buffer := Source_Buffer (Buffer);
+      B       : Source_Buffer := Source_Buffer (Buffer);
+      Timeout : Gint;
    begin
       --  Since we update the tags directly, gtk+ will automatically refresh
       --  the source view, we don't need to do anything for this.
@@ -937,6 +926,21 @@ package body Src_Editor_Buffer is
          String_Color        => Get_Pref (Kernel, Default_String_Color),
          String_Font_Attr    => Default_String_Font_Attr);
       --  ??? Use preferences for the font attributes...
+
+
+      --  Connect timeout, to handle automatic saving of buffer
+
+      if B.Timeout_Id /= 0 then
+         Timeout_Remove (B.Timeout_Id);
+         B.Timeout_Id := 0;
+      end if;
+
+      Timeout := Get_Pref (Kernel, Periodic_Save);
+
+      if Timeout > 0 then
+         B.Timeout_Id := Buffer_Timeout.Add
+           (Guint32 (Timeout) * 1000,  Automatic_Save'Access, B.all'Access);
+      end if;
    end Preferences_Changed;
 
    ---------------
