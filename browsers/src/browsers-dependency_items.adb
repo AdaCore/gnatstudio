@@ -55,11 +55,10 @@ with Fname;                     use Fname;
 with Namet;                     use Namet;
 with Language_Handlers.Glide;   use Language_Handlers.Glide;
 with Histories;                 use Histories;
-with Shell;                     use Shell;
+with Glide_Kernel.Scripts;      use Glide_Kernel.Scripts;
 
 with Ada.Exceptions;            use Ada.Exceptions;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
-with GNAT.OS_Lib;               use GNAT.OS_Lib;
 
 with String_Utils;              use String_Utils;
 
@@ -287,11 +286,9 @@ package body Browsers.Dependency_Items is
       Child  : Gtk.Widget.Gtk_Widget) return Selection_Context_Access;
    --  Create a current kernel context, based on the currently selected item
 
-   function Depends_On_Command_Handler
-     (Kernel  : access Kernel_Handle_Record'Class;
-      Command : String;
-      Args    : Argument_List) return String;
-   --  Handler for the command "depends_on"
+   procedure Depends_On_Command_Handler
+     (Data    : in out Callback_Data'Class; Command : String);
+   --  Handler for the command "uses" and "used_by"
 
    procedure Examine_Dependencies (Item : access Arrow_Item_Record'Class);
    procedure Examine_From_Dependencies (Item : access Arrow_Item_Record'Class);
@@ -1020,23 +1017,20 @@ package body Browsers.Dependency_Items is
    -- Depends_On_Command_Handler --
    --------------------------------
 
-   function Depends_On_Command_Handler
-     (Kernel  : access Kernel_Handle_Record'Class;
-      Command : String;
-      Args    : Argument_List) return String
+   procedure Depends_On_Command_Handler
+     (Data    : in out Callback_Data'Class;
+      Command : String)
    is
-      Index : Natural := Args'First;
+      Kernel     : constant Kernel_Handle := Get_Kernel (Data);
+      Instance   : constant Class_Instance :=
+        Nth_Arg (Data, 1, Get_File_Class (Kernel));
+      File       : constant File_Info := Get_Data (Instance);
    begin
-      while Index <= Args'Last loop
-         if Command = "file.uses" then
-            Examine_Dependencies (Kernel, File => Args (Index).all);
-         elsif Command = "file.used_by" then
-            Examine_From_Dependencies (Kernel, File => Args (Index).all);
-         end if;
-         Index := Index + 1;
-      end loop;
-
-      return "";
+      if Command = "uses" then
+         Examine_Dependencies (Kernel, File => Get_Name (File));
+      elsif Command = "used_by" then
+         Examine_From_Dependencies (Kernel, File => Get_Name (File));
+      end if;
    end Depends_On_Command_Handler;
 
    ---------------------
@@ -1064,25 +1058,25 @@ package body Browsers.Dependency_Items is
 
       Register_Command
         (Kernel,
-         Command      => "file.uses",
-         Usage        => "uses file_name [file_name...]",
+         Command      => "uses",
+         Usage        => "uses (file_name) -> None",
          Description  =>
            -("Display in the dependency browser the list of files that"
-             & " file_name depends on. This is done for each of the"
-             & " file on the command line."),
-         Minimum_Args => 1,
-         Maximum_Args => Natural'Last,
+             & " file_name depends on."),
+         Minimum_Args => 0,
+         Maximum_Args => 0,
+         Class        => Get_File_Class (Kernel),
          Handler      => Depends_On_Command_Handler'Access);
       Register_Command
         (Kernel,
-         Command      => "file.used_by",
-         Usage        => "used_by file_name [file_name...]",
+         Command      => "used_by",
+         Usage        => "used_by (file_name) -> None",
          Description  =>
            -("Display in the dependency browser the list of files that"
-             & " depends on file_name. This is done for each of the"
-             & " file on the command line."),
-         Minimum_Args => 1,
-         Maximum_Args => Natural'Last,
+             & " depends on file_name."),
+         Minimum_Args => 0,
+         Maximum_Args => 0,
+         Class        => Get_File_Class (Kernel),
          Handler      => Depends_On_Command_Handler'Access);
    end Register_Module;
 

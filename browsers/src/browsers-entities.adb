@@ -21,7 +21,6 @@
 with Ada.Exceptions;       use Ada.Exceptions;
 with GNAT.Heap_Sort_G;
 with GNAT.Strings;         use GNAT.Strings;
-with GNAT.OS_Lib;
 
 with Src_Info.Queries;     use Src_Info, Src_Info.Queries;
 with Glide_Kernel;         use Glide_Kernel;
@@ -31,7 +30,7 @@ with Glide_Kernel.Modules; use Glide_Kernel.Modules;
 with Browsers.Canvas;      use Browsers.Canvas;
 with Traces;               use Traces;
 with Glide_Intl;           use Glide_Intl;
-with Shell;                use Shell;
+with Glide_Kernel.Scripts; use Glide_Kernel.Scripts;
 
 with Glib;          use Glib;
 with Glib.Convert;  use Glib.Convert;
@@ -251,10 +250,9 @@ package body Browsers.Entities is
       Link_Name : String := "") return Active_Area_Cb;
    --  Build a new callback to display entities.
 
-   function Show_Entity_Command_Handler
-     (Kernel  : access Kernel_Handle_Record'Class;
-      Command : String;
-      Args    : GNAT.OS_Lib.Argument_List) return String;
+   procedure Show_Entity_Command_Handler
+     (Data    : in out Callback_Data'Class;
+      Command : String);
    --  Command handler for this module (in the shell window)
 
    function "<" (E1, E2 : Entity_Information) return Boolean;
@@ -443,14 +441,15 @@ package body Browsers.Entities is
          Callback    => On_Type_Browser'Access);
       Register_Command
         (Kernel,
-         Command      => "entity.show",
-         Usage        => "entity.show entity_name file_name [line] [column}",
+         Command      => "show",
+         Usage        => "show () -> None",
          Description  =>
            -("Display in the type browser the informations known about the"
              & " entity: list of fields for records, list of primitive"
              & " subprograms or methods, list of parameters, ..."),
-         Minimum_Args => 2,
-         Maximum_Args => 4,
+         Minimum_Args => 0,
+         Maximum_Args => 0,
+         Class        => Get_Entity_Class (Kernel),
          Handler      => Show_Entity_Command_Handler'Access);
    end Register_Module;
 
@@ -458,60 +457,22 @@ package body Browsers.Entities is
    -- Show_Entity_Command_Handler --
    ---------------------------------
 
-   function Show_Entity_Command_Handler
-     (Kernel  : access Kernel_Handle_Record'Class;
-      Command : String;
-      Args    : GNAT.OS_Lib.Argument_List) return String
+   procedure Show_Entity_Command_Handler
+     (Data    : in out Callback_Data'Class;
+      Command : String)
    is
-      Entity : Entity_Information;
-      Child  : MDI_Child;
-      Status : Find_Decl_Or_Body_Query_Status;
-      Name, File : String_Access;
-      L, C : Positive := 1;
-      Item  : Type_Item;
-      pragma Unreferenced (Item);
-
+      Kernel     : constant Kernel_Handle := Get_Kernel (Data);
+      Instance   : constant Class_Instance :=
+        Nth_Arg (Data, 1, Get_Entity_Class (Kernel));
+      Entity     : constant Entity_Information := Get_Data (Instance);
+      Child      : constant MDI_Child := Open_Type_Browser_Child (Kernel);
+      Item       : Type_Item;
+      pragma Unreferenced (Item, Command);
    begin
-      if Command = "entity.show" then
-         Child := Open_Type_Browser_Child (Kernel);
-
-         Name   := Args (Args'First);
-         File   := Args (Args'First + 1);
-
-         if Args'First + 2 <= Args'Last then
-            L := Positive'Value (Args (Args'First + 2).all);
-
-            if Args'First + 3 <= Args'Last then
-               C := Positive'Value (Args (Args'First + 3).all);
-            end if;
-         end if;
-
-         Find_Declaration_Or_Overloaded
-           (Kernel      => Kernel,
-            Lib_Info    => Locate_From_Source_And_Complete (Kernel, File.all),
-            File_Name   => File.all,
-            Entity_Name => Name.all,
-            Line        => L,
-            Column      => C,
-            Entity      => Entity,
-            Status      => Status);
-
-         if Status /= Success and then Status /= Fuzzy_Match then
-            return "Entity not found";
-         end if;
-
+      if Entity /= No_Entity_Information then
          Item := Add_Or_Select_Item
            (Browser => Type_Browser (Get_Widget (Child)), Entity  => Entity);
-         Destroy (Entity);
       end if;
-
-      return "";
-
-   exception
-      when E : others =>
-         Trace (Me, "Show_Entity_Command_Handler, unexpected exception "
-                & Exception_Information (E));
-         return "error";
    end Show_Entity_Command_Handler;
 
    -----------------------------
