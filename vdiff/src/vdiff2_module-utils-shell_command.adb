@@ -298,7 +298,8 @@ package body Vdiff2_Module.Utils.Shell_Command is
       Execute_GPS_Shell_Command (Kernel, "register_highlighting", Args);
       Basic_Types.Free (Args);
 
-      Enable_Fine_Diff := (Change_Fine_Color /= Change_Color);
+      VDiff2_Module (Vdiff_Module_ID).Enable_Fine_Diff
+        := (Change_Fine_Color /= Change_Color);
    end Register_Highlighting;
 
    --------------------------
