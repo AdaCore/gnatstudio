@@ -22,7 +22,6 @@ with Ada.Text_IO;               use Ada.Text_IO;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
-with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Src_Info.Queries;          use Src_Info.Queries;
 with Test_Utils;                use Test_Utils;
 with Prj;                       use Prj;
@@ -33,6 +32,7 @@ with Language_Handlers;         use Language_Handlers;
 with Test_Utils;                use Test_Utils;
 with Docgen.Work_On_Source;     use Docgen.Work_On_Source;
 with Language_Handlers.Glide;   use Language_Handlers.Glide;
+with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 
 package body Docgen.Work_On_File is
 
@@ -70,12 +70,10 @@ package body Docgen.Work_On_File is
 
       --  get the handler
       Handler := Create_Lang_Handler;
-
       --  get Project_Tree and Project_View
       Reset (Source_Info_List);
       Load_Project (TSFL.Data (Source_File_Node).Prj_File_Name.all,
-                       Handler, Project_Tree, Project_View);
-
+                    Handler, Project_Tree, Project_View);
       for J in 1 .. Type_Source_File_List.Length (Source_File_List) loop
 
          --  create the doc file from the package name for each(!) package
@@ -87,33 +85,33 @@ package body Docgen.Work_On_File is
                                        Options.Doc_Directory.all,
                                        Options.Doc_Suffix.all));
             Put_Line ("from file: " &
-                     TSFL.Data (Source_File_Node).File_Name.all);
+                      TSFL.Data (Source_File_Node).File_Name.all);
             Put_Line ("   create documentation to: " &
-                           Get_Doc_File_Name (TSFL.Data
-                                            (Source_File_Node).File_Name.all,
-                                          Options.Doc_Directory.all,
-                                          Options.Doc_Suffix.all));
+                      Get_Doc_File_Name (TSFL.Data
+                                           (Source_File_Node).File_Name.all,
+                                         Options.Doc_Directory.all,
+                                         Options.Doc_Suffix.all));
             --  create the doc file from the project file name for
             --  all(!) packages
          elsif J = 1 and Options.Doc_One_File then
             Create (Doc_File,
-                       Out_File,
+                    Out_File,
                     Get_Doc_File_Name
                       (TSFL.Data
                          (Source_File_Node).Prj_File_Name.all,
                        Options.Doc_Directory.all,
                        Options.Doc_Suffix.all));
             Put_Line ("create documentation to: " &
-                        Get_Doc_File_Name
-                          (TSFL.Data
-                               (Source_File_Node).Prj_File_Name.all,
-                           Options.Doc_Directory.all,
-                           Options.Doc_Suffix.all));
+                      Get_Doc_File_Name
+                        (TSFL.Data
+                           (Source_File_Node).Prj_File_Name.all,
+                         Options.Doc_Directory.all,
+                         Options.Doc_Suffix.all));
             Put_Line ("   from file: " &
-                     TSFL.Data (Source_File_Node).File_Name.all);
+                      TSFL.Data (Source_File_Node).File_Name.all);
          else
             Put_Line ("   from file: " &
-                     TSFL.Data (Source_File_Node).File_Name.all);
+                      TSFL.Data (Source_File_Node).File_Name.all);
          end if;
 
          --  find the next and the previous package name (used for TexInfo)
@@ -121,7 +119,7 @@ package body Docgen.Work_On_File is
             Prev_Package := new String '(" ");
          else
             Source_File_Node := TSFL.Prev (Source_File_List,
-                                              Source_File_Node);
+                                           Source_File_Node);
             Prev_Package :=
               new String '(TSFL.Data (Source_File_Node).Package_Name.all);
             Source_File_Node := TSFL.Next (Source_File_Node);
@@ -133,7 +131,7 @@ package body Docgen.Work_On_File is
             Next_Package :=
               new String '(TSFL.Data (Source_File_Node).Package_Name.all);
             Source_File_Node := TSFL.Prev (Source_File_List,
-                                              Source_File_Node);
+                                           Source_File_Node);
          end if;
 
          Process_One_File (Doc_File,
@@ -151,7 +149,7 @@ package body Docgen.Work_On_File is
                            Project_View,
                            Options,
                            Options.Process_Body_Files and
-                                TSFL.Data (Source_File_Node).Other_File_Found);
+                             TSFL.Data (Source_File_Node).Other_File_Found);
 
          Source_File_Node := TSFL.Next (Source_File_Node);
 
@@ -175,6 +173,9 @@ package body Docgen.Work_On_File is
          Process_Subprogram_Index (Subprogram_Index_List, Options);
          Process_Type_Index       (Type_Index_List, Options);
       end if;
+
+      TEL.Free (Subprogram_Index_List);
+      TEL.Free (Type_Index_List);
    end Process_Files;
 
    ----------------------
@@ -212,8 +213,7 @@ package body Docgen.Work_On_File is
          Package_Name    : String) return Boolean;
       --  returns true if the entity is defined within another entity and
       --  not dierctly within the package. The function only parses the
-      --  full entity name to find it out, but nothing more is needed
-      --  (especially with the additional Scope info it's enough).
+      --  full entity name to find a "."!
 
       function Get_Full_Entity_Filename
         (Filename         : String) return String;
@@ -222,8 +222,8 @@ package body Docgen.Work_On_File is
 
       function Search_Line_In_Body
         (Info : Entity_Information) return Natural;
-         --  tries to find out the beginning of the subprogram in the
-         --  body file. Returns the line number.
+      --  tries to find out the beginning of the subprogram in the
+      --  body file. Returns the line number.
 
       procedure Process_Subprogram
         (Source_Filename : String;
@@ -247,6 +247,14 @@ package body Docgen.Work_On_File is
       --  list. The Elements in the index lists must be a copy of the original
       --  entities, because the normal file lists will be freed while these
       --  elements should remain after all files were processed.
+
+      function Give_Copy_Of_Element
+        (Old_Element : Entity_List_Information)
+         return Entity_List_Information;
+      --  creates a copy of the Entity. This is needed, because entity
+      --  contains pointers, and as the file entity list will be freed after
+      --  each file has been processed and the index lists will remain until
+      --  the last file.
 
       -------------------------
       -- Source_File_In_List --
@@ -283,7 +291,7 @@ package body Docgen.Work_On_File is
          --  after the package name followed by "."
          if not (Get_String_Index (Entity, 1, To_Lower (Package_Name)) +
                    Package_Name'Length + 1
-           < Get_String_Index (Entity, 1, Short_Entity)) and
+                     < Get_String_Index (Entity, 1, Short_Entity)) and
          --  and that it is really the name at the end of the
          --  entity name, followed by nothing
            Entity'Last = (Get_String_Index (Entity, 1, Short_Entity)) +
@@ -294,6 +302,7 @@ package body Docgen.Work_On_File is
             return True;
          end if;
       end Is_Defined_In_Subprogram;
+
 
       ------------------------------
       -- Get_Full_Entity_Filename --
@@ -419,14 +428,15 @@ package body Docgen.Work_On_File is
          begin
             Child_Iterator := Start (Parent_Node);
             Child_Node := Get (Child_Iterator);
+
             while Child_Node /= Null_Scope_Tree_Node loop
 
-               --  Put_Line (Get_Name (Get_Entity (Child_Node))); for testing!
+               --  Put_Line (Get_Name (Get_Entity (Child_Node)));for testing!
 
                if Is_Subprogram (Child_Node) and
                  File_Extension
                    (Get_Declaration_File_Of (Get_Entity (Child_Node)))
-                    = ".ads" then
+                 = ".ads" then
                   if Options.Info_Output then
                      Put_Line ("Reference found: " &
                                Get_Name (Get_Entity (Child_Node)));
@@ -442,7 +452,7 @@ package body Docgen.Work_On_File is
                   Reference_Node.Set_Link :=
                     Source_File_In_List (Reference_Node.File_Name.all) and
                     (Get_Scope (Get_Entity (Child_Node)) = Global_Scope or
-                     Options.Show_Private);
+                       Options.Show_Private);
 
                   Type_Reference_List.Append (Local_Calls_List,
                                               Reference_Node);
@@ -470,24 +480,26 @@ package body Docgen.Work_On_File is
 
             --  get the name of the subprogram which calls the entity
             Local_Tree_Node := Get_Parent (Node);
-            while not Is_Subprogram (Local_Tree_Node) loop
-               Local_Tree_Node := Get_Parent (Local_Tree_Node);
-            end loop;
 
-            Reference_Node.File_Name  :=
-              new String'(Get_File
-                            (Get_Location (Get_Reference (Node))));
-            Reference_Node.Line       :=
-              Get_Line   (Get_Location (Get_Reference (Node)));
-            Reference_Node.Column     :=
-              Get_Column (Get_Location (Get_Reference (Node)));
-            Reference_Node.Set_Link := Decl_Found;
-            Reference_Node.Subprogram_Name :=
-              new String'(Get_Name (Get_Entity (Local_Tree_Node)));
+            if Local_Tree_Node /= Null_Scope_Tree_Node then
+               while not Is_Subprogram (Local_Tree_Node) loop
+                  Local_Tree_Node := Get_Parent (Local_Tree_Node);
+               end loop;
+               Reference_Node.File_Name  :=
+                 new String'(Get_File
+                               (Get_Location (Get_Reference (Node))));
+               Reference_Node.Line       :=
+                 Get_Line   (Get_Location (Get_Reference (Node)));
+               Reference_Node.Column     :=
+                 Get_Column (Get_Location (Get_Reference (Node)));
+               Reference_Node.Set_Link := Decl_Found;
+               Reference_Node.Subprogram_Name :=
+                 new String'(Get_Name (Get_Entity (Local_Tree_Node)));
 
-            --  add reference to the local list
-            Type_Reference_List.Append (Local_Ref_List,
-                                        Reference_Node);
+               --  add reference to the local list
+               Type_Reference_List.Append (Local_Ref_List,
+                                           Reference_Node);
+            end if;
          end Tree_Called_Callback;
 
          ---------------------------
@@ -527,10 +539,11 @@ package body Docgen.Work_On_File is
          --  the references are wished:
          if File_Name (Entity_Node.File_Name.all) =
            File_Name (Source_Filename)
-         and Options.References then
-               Entity_Node.Line_In_Body := Search_Line_In_Body (Info);
+           and Options.References then
 
-               Find_All_References (Project_Tree,
+            Entity_Node.Line_In_Body := Search_Line_In_Body (Info);
+
+            Find_All_References (Project_Tree,
                                  Handler,
                                  Info,
                                  Source_Info_List,
@@ -540,7 +553,7 @@ package body Docgen.Work_On_File is
 
             --  1. find all subprograms called in the subprogram processed
             Reference_Scope_Tree :=
-            Create_Tree (LI_Unit);
+              Create_Tree (LI_Unit);
             Entity_Tree_Node :=
               Find_Entity_Scope (Reference_Scope_Tree, Info);
             if Entity_Tree_Node /= Null_Scope_Tree_Node then
@@ -550,7 +563,6 @@ package body Docgen.Work_On_File is
 
             --  2. look for all references where this subprogram is called
             while Get (Reference_Iter) /= No_Reference loop
-
                --  set the global variable: is the file known, where the
                --  declaration of the reference can be found?
                if Source_File_In_List
@@ -559,7 +571,6 @@ package body Docgen.Work_On_File is
                else
                   Decl_Found := False;
                end if;
-
                --  for the rest use the scope tree
                Reference_Scope_Tree :=
                  Create_Tree (Get_LI (Reference_Iter));
@@ -569,7 +580,6 @@ package body Docgen.Work_On_File is
                   Tree_Called_Callback'Unrestricted_Access);
                Entity_Node.Line_In_Body := Search_Line_In_Body (Info);
                Free (Reference_Scope_Tree);
-
                Next (Handler, Reference_Iter, Source_Info_List);
             end loop;
 
@@ -583,7 +593,9 @@ package body Docgen.Work_On_File is
          --  Subprogram_Index_List
          if  File_Extension (File_Name (Source_Filename)) = ".ads"
            and Source_Filename = Entity_File then
-            Add_Entity_To_Index_List (Subprogram_Index_List, Entity_Node);
+            Add_Entity_To_Index_List
+              (Subprogram_Index_List,
+               Give_Copy_Of_Element (Entity_Node));
          end if;
 
       end Process_Subprogram;
@@ -601,155 +613,217 @@ package body Docgen.Work_On_File is
          --  if defined in a .ads file => add to the Type_Index_List
          if File_Extension (File_Name (Source_Filename)) = ".ads"
            and Source_Filename = Entity_File then
-            Add_Entity_To_Index_List (Type_Index_List, Entity_Node);
+            Add_Entity_To_Index_List
+              (Type_Index_List,
+               Give_Copy_Of_Element (Entity_Node));
          end if;
-
       end Process_Type;
+
+      --------------------------
+      -- Give_Copy_Of_Element --
+      --------------------------
+
+      function Give_Copy_Of_Element
+        (Old_Element : Entity_List_Information)
+         return Entity_List_Information is
+
+         New_Entity : Entity_List_Information;
+      begin
+         New_Entity.Kind := Old_Element.Kind;
+         New_Entity.Name := new String '(Old_Element.Name.all);
+         New_Entity.Short_Name := new String '(Old_Element.Short_Name.all);
+         New_Entity.File_Name := new String '(Old_Element.File_Name.all);
+         New_Entity.Column := Old_Element.Column;
+         New_Entity.Line := Old_Element.Line;
+         New_Entity.Is_Private := Old_Element.Is_Private;
+
+         --  the rest is not needed for the index files!
+
+         return New_Entity;
+      end Give_Copy_Of_Element;
 
       ----------------------
       -- Process_One_File --
       ----------------------
 
    begin
-      Load_LI_File
-        (Source_Info_List, Handler, Project_View,
-         File_Name (Source_Filename),
-         LI_Unit);
 
-      if Options.Info_Output then
-         Put_Line ("Find all possible declarations");
-      end if;
+      --  if body file, no need to start working on ALI, the lists of the
+      --  spec file can be used.
+      if File_Extension (Source_Filename) = ".adb" then
+         Process_Source (Doc_File,
+                                    First_File,
+                                    Last_File,
+                                    Next_Package,
+                                    Prev_Package,
+                                    Source_File_List,
+                                    Source_Filename,
+                                    Package_Name,
+                                    Def_In_Line,
+                                    Entity_List,
+                                    Process_Body_File,
+                                    Options);
+         --  now free the list
+         TEL.Free (Entity_List);
 
-      --  get all entities of the file
-      if LI_Unit /= No_LI_File then
-         Entity_Iter := Find_All_Possible_Declarations (LI_Unit, "");
+         --  but if a spec file, you have to look in the ALI files
       else
-         Put_Line ("LI file not found");  --  later Exception?
-      end if;
+         Load_LI_File
+           (Source_Info_List, Handler, Project_View,
+            File_Name (Source_Filename),
+            LI_Unit);
 
-      --  get next entity from the file
-      while not At_End (Entity_Iter) loop
-         Info := Get (Entity_Iter);
-
-         if Get_Scope (Info) = Global_Scope then
-            Entity_Node.Is_Private := False;
-         else
-            Entity_Node.Is_Private := True;
+         if Options.Info_Output then
+            Put_Line ("Find all possible declarations");
          end if;
 
-         --  check if the entity in defined within a subprogram.
-         --  if true => ignore!
-         if not Is_Defined_In_Subprogram (Get_Full_Name (Info, LI_Unit, "."),
-                                          Get_Name (Info),
-                                          Package_Name)
-         --  AND check if the declaration of the entity is in one of the files
-         --  which are in list, if false => no need for creating links
-         --  => ignore!
-           and Source_File_In_List (Get_Declaration_File_Of (Info))
-         --  AND check if it's a private entity and if they should be processed
-           and (Options.Show_Private or not Entity_Node.Is_Private)
-         then
+         --  get all entities of the file
+         if LI_Unit /= No_LI_File then
+            Entity_Iter := Find_All_Possible_Declarations (LI_Unit, "");
+         else
+            Put_Line ("LI file not found");  --  later Exception?
+         end if;
 
-            --  Info_Output is set, if further information are wished
-            if Options.Info_Output then
-               Put_Line ("-----");
-               Put_Line ("Entity found: "
-                         & Get_Full_Name (Info, LI_Unit, ".") &
-                         "  in File:  " & Source_Filename &
-                         "  defined in  file: " &
-                         Get_Full_Entity_Filename
-                           (Get_Declaration_File_Of (Info)) &
-                         ", in line: " &
-                         Get_Declaration_Line_Of (Info)'Img &
-                         ", in column: " &
-                         Get_Declaration_Column_Of (Info)'Img);
+         --  get next entity from the file
+         while not At_End (Entity_Iter) loop
+            Info := Get (Entity_Iter);
+
+            if Get_Scope (Info) = Global_Scope then
+               Entity_Node.Is_Private := False;
+            else
+               Entity_Node.Is_Private := True;
             end if;
 
-            --  get the parameters needed be all entities
-            Entity_Node.Name            :=
-              new String'(Get_Full_Name (Info, LI_Unit, "."));
-            Entity_Node.Short_Name      :=
-              new String'(Get_Name (Info));
-            Entity_Node.File_Name       :=
-              new String'(Get_Full_Entity_Filename
-                            (Get_Declaration_File_Of (Info)));
-            Entity_Node.Column          := Get_Declaration_Column_Of (Info);
-            Entity_Node.Line            := Get_Declaration_Line_Of (Info);
+            --  check if the entity in defined within a subprogram.
+            --  if true => ignore!
+            if not Is_Defined_In_Subprogram (Get_Full_Name
+                                               (Info, LI_Unit, "."),
+                                             Get_Name (Info),
+                                             Package_Name)
+            --  AND check if the declaration of the entity
+            --  is in one of the files
+            --  which are in list, if false => no need for creating links
+            --  => ignore!
+              and Source_File_In_List (Get_Declaration_File_Of (Info))
+            --  AND check if it's a private entity and if they
+            --  should be processed
+              and (Options.Show_Private or not Entity_Node.Is_Private)
+            then
 
+               --  Info_Output is set, if further information are wished
+               if Options.Info_Output then
+                  Put_Line ("-----");
+                  Put_Line ("Entity found: "
+                              & Get_Full_Name (Info, LI_Unit, ".") &
+                              "  in File:  " & Source_Filename &
+                              "  defined in  file: " &
+                              Get_Full_Entity_Filename
+                                (Get_Declaration_File_Of (Info)) &
+                              ", in line: " &
+                            Integer'Image
+                              (Get_Declaration_Line_Of (Info)) &
+                              ", in column: " &
+                            Integer'Image
+                              (Get_Declaration_Column_Of (Info)));
+               end if;
 
-            --  get the entity specific parameters
-            --  these are the last parameters to gather, after the CASE no
-            --  more changes are allowed, because the index lists are created
-            --  in the subprograms used here, so all info must be avaiable.
-            case Get_Kind (Info) is
-               when Non_Generic_Function_Or_Operator |
-                  Generic_Function_Or_Operator =>
-                  Entity_Node.Kind := Function_Entity;
-                  Process_Subprogram
-                    (Source_Filename,
-                     Get_Full_Entity_Filename
-                       (Get_Declaration_File_Of (Info)),
-                     Info);
-               when Non_Generic_Procedure |
-                  Generic_Procedure =>
-                  Entity_Node.Kind := Procedure_Entity;
-                  Process_Subprogram
-                    (Source_Filename,
-                     Get_Full_Entity_Filename
-                       (Get_Declaration_File_Of (Info)),
-                     Info);
-               when Record_Type | Enumeration_Type |
-                  Access_Type | Array_Type |
-                  Boolean_Type | String_Type | Class_Wide_Type |
-                  Decimal_Fixed_Point_Type |
-                  Floating_Point_Type | Modular_Integer_Type |
-                  Ordinary_Fixed_Point_Type |
-                  Private_Type | Protected_Type |
-                  Signed_Integer_Type | Task_Type
-                  => Process_Type
-                    (Source_Filename,
-                     Get_Full_Entity_Filename
-                       (Get_Declaration_File_Of (Info)));
-               when Exception_Entity =>
-                  Entity_Node.Kind := Exception_Entity;
-               when Array_Object | Boolean_Object | Enumeration_Object |
-                  Floating_Point_Object |
-                  Modular_Integer_Object |  Protected_Object |
-                  Record_Object | Signed_Integer_Object |
-                  String_Object | Task_Object |
-                  Access_Object | Class_Wide_Object |
-                  Ordinary_Fixed_Point_Object =>
-                  Entity_Node.Kind := Var_Entity;
-               when Generic_Package  =>
-                  Entity_Node.Kind := Package_Entity;
-               when  Non_Generic_Package =>
-                  Entity_Node.Kind := Package_Entity;
-               when others => Entity_Node.Kind := Other_Entity;
-            end case;
+               --  get the parameters needed be all entities
+               Entity_Node.Name            :=
+                 new String'(Get_Full_Name (Info, LI_Unit, "."));
+               Entity_Node.Short_Name      :=
+                 new String'(Get_Name (Info));
+               Entity_Node.File_Name       :=
+                 new String'(Get_Full_Entity_Filename
+                                    (Get_Declaration_File_Of (Info)));
+               Entity_Node.Column          := Get_Declaration_Column_Of (Info);
+               Entity_Node.Line            := Get_Declaration_Line_Of (Info);
 
-            --  add to the entity list of this file
-            Type_Entity_List.Append (Entity_List, Entity_Node);
+               --  for all entities which are not subprograms the ref lists
+               --  must be set null;
+               if Get_Kind (Info) /= Non_Generic_Function_Or_Operator and
+                 Get_Kind (Info) /= Generic_Function_Or_Operator and
+                 Get_Kind (Info) /= Non_Generic_Procedure and
+                 Get_Kind (Info) /= Generic_Procedure then
+                  Entity_Node.Called_List := TRL.Null_List;
+                  Entity_Node.Calls_List  := TRL.Null_List;
+               end if;
 
-         end if;
-         --  get next entity in this file
-         Next (Entity_Iter);
-      end loop;
+               --  get the entity specific parameters
+               --  these are the last parameters to gather, after the CASE no
+               --  more changes are allowed, because the index lists are
+               --  created in the subprograms used here, so all info must
+               --  be avaiable.
+               case Get_Kind (Info) is
+                  when Non_Generic_Function_Or_Operator |
+                       Generic_Function_Or_Operator =>
+                     Entity_Node.Kind := Function_Entity;
+                     Process_Subprogram
+                       (Source_Filename,
+                        Get_Full_Entity_Filename
+                          (Get_Declaration_File_Of (Info)),
+                        Info);
+                  when Non_Generic_Procedure |
+                       Generic_Procedure =>
+                     Entity_Node.Kind := Procedure_Entity;
+                     Process_Subprogram
+                       (Source_Filename,
+                        Get_Full_Entity_Filename
+                          (Get_Declaration_File_Of (Info)),
+                        Info);
+                  when Record_Type | Enumeration_Type |
+                       Access_Type | Array_Type |
+                       Boolean_Type | String_Type | Class_Wide_Type |
+                       Decimal_Fixed_Point_Type |
+                       Floating_Point_Type | Modular_Integer_Type |
+                       Ordinary_Fixed_Point_Type |
+                       Private_Type | Protected_Type |
+                       Signed_Integer_Type | Task_Type
+                     => Process_Type
+                       (Source_Filename,
+                        Get_Full_Entity_Filename
+                          (Get_Declaration_File_Of (Info)));
+                  when Exception_Entity =>
+                     Entity_Node.Kind := Exception_Entity;
+                  when Array_Object | Boolean_Object | Enumeration_Object |
+                       Floating_Point_Object |
+                       Modular_Integer_Object |  Protected_Object |
+                       Record_Object | Signed_Integer_Object |
+                       String_Object | Task_Object |
+                       Access_Object | Class_Wide_Object |
+                       Ordinary_Fixed_Point_Object =>
+                     Entity_Node.Kind := Var_Entity;
+                  when Generic_Package  =>
+                     Entity_Node.Kind := Package_Entity;
+                  when  Non_Generic_Package =>
+                     Entity_Node.Kind := Package_Entity;
+                  when others => Entity_Node.Kind := Other_Entity;
+               end case;
 
-      Destroy (Entity_Iter);
-      Destroy (Info);
-      --  process the documentation of this file
-      Process_Source (Doc_File,
-                      First_File,
-                      Last_File,
-                      Next_Package,
-                      Prev_Package,
-                      Source_File_List,
-                      Source_Filename,
-                      Package_Name,
-                      Def_In_Line,
-                      Entity_List,
-                      Process_Body_File,
-                      Options);
+               --  add to the entity list of this file
+               Type_Entity_List.Append (Entity_List, Entity_Node);
+
+            end if;
+            --  get next entity in this file
+            Next (Entity_Iter);
+         end loop;
+
+         Destroy (Entity_Iter);
+         Destroy (Info);
+
+         --  process the documentation of this file
+         Process_Source (Doc_File,
+                                    First_File,
+                                    Last_File,
+                                    Next_Package,
+                                    Prev_Package,
+                                    Source_File_List,
+                                    Source_Filename,
+                                    Package_Name,
+                                    Def_In_Line,
+                                    Entity_List,
+                                    Process_Body_File,
+                                    Options);
+      end if;
 
    end Process_One_File;
 
