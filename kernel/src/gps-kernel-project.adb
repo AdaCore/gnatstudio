@@ -29,12 +29,13 @@ with Basic_Types;
 with Prj;
 with Entities;
 
-with GPS.Intl;               use GPS.Intl;
-with GPS.Kernel.Console;     use GPS.Kernel.Console;
-with GPS.Location_View;        use GPS.Location_View;
-with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
+with GPS.Intl;                  use GPS.Intl;
+with GPS.Kernel.Console;        use GPS.Kernel.Console;
+with GPS.Location_View;         use GPS.Location_View;
+with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
+with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
-with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
+with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 
 package body GPS.Kernel.Project is
 
@@ -208,6 +209,10 @@ package body GPS.Kernel.Project is
            and then not Save_MDI_Children (Kernel, Force => False)
          then
             return;
+         end if;
+
+         if Get_Pref (Kernel, Save_Desktop_On_Exit) then
+            Save_Desktop (Kernel);
          end if;
 
          --  Close all children before loading the new projet, in case a new
