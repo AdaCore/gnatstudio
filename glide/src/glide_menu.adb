@@ -99,6 +99,7 @@ package body Glide_Menu is
          Filename : constant String := Select_File (File_Selector);
       begin
          if Filename /= "" then
+            Change_Dir (Dir_Name (Filename));
             Load_Project (Glide_Window (Object).Kernel, Filename);
          end if;
       end;
