@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 2.1.0
 
+- D602-016 Duplicate Build menu entries with extending projects
+  Problem:    If you are using extending projects, the Build->Make menu
+              will contain apparently duplicate entries.
+  Workaround: In fact, these entries will build the same executable, but using
+              a different project each time. Click on the first entry that
+              matches the executable you want to build
+
 Known Problems fixed in GPS 2.0.0
 
 - D415-005 Execution window is read-only after the first execution
