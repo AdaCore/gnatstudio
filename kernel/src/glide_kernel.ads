@@ -87,6 +87,7 @@ package Glide_Kernel is
 
    function Load_Desktop (Handle : access Kernel_Handle_Record) return Boolean;
    --  Reload a saved desktop.
+   --  Calls "Show_All" on Handle.Main_Window before loading the desktop.
    --  Return False if no desktop could be loaded (in which case the default
    --  desktop is loaded).
 
