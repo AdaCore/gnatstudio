@@ -354,10 +354,70 @@ package body Language.Ada is
       Is_Declaration : Boolean;
       Category       : access Language_Category) return String
    is
-      Name : String := Token_Type'Image (Token_Type'Val (Token));
+      Ada_Token : constant Token_Type := Token_Type'Val (Token);
    begin
-      Category.all := Cat_Unknown;
-      return Name;
+      case Ada_Token is
+         when Tok_Package =>
+            Category.all := Cat_Package;
+         when Tok_Procedure =>
+            Category.all := Cat_Procedure;
+         when Tok_Function =>
+            Category.all := Cat_Function;
+         when Tok_Task =>
+            Category.all := Cat_Task;
+         when Tok_Protected =>
+            Category.all := Cat_Protected;
+         when Tok_Entry =>
+            Category.all := Cat_Entry;
+
+         when Tok_Record =>
+            Category.all := Cat_Structure;
+
+         when Tok_With =>
+            Category.all := Cat_With;
+         when Tok_Use =>
+            Category.all := Cat_Use;
+
+         when Tok_Loop =>
+            Category.all := Cat_Loop;
+         when Tok_Then =>
+            Category.all := Cat_If;
+            return "If";
+
+         when Tok_Case =>
+            Category.all := Cat_Switch;
+         when Tok_Select =>
+            Category.all := Cat_Select;
+         when Tok_Do =>
+            Category.all := Cat_Accept;
+            return "Accept";
+
+         when Tok_Declare =>
+            Category.all := Cat_Declare_Block;
+         when Tok_Begin =>
+            Category.all := Cat_Simple_Block;
+         when Tok_Exception =>
+            Category.all := Cat_Exception_Handler;
+            return "Exception Block";
+
+         when others =>
+            Category.all := Cat_Unknown;
+      end case;
+
+      --  Default treatment: retrieve image from Ada_Token, use mixed casing
+      --  and strip leading "TOK_", e.g for TOK_RECORD -> Record.
+
+      declare
+         Name : String := Token_Type'Image (Ada_Token);
+      begin
+         Mixed_Case (Name (5 .. Name'Last));
+
+         if Is_Declaration then
+            return Name (5 .. Name'Last) & " (decl)";
+         else
+            return Name (5 .. Name'Last);
+         end if;
+      end;
    end Get_Name;
 
    -------------------
