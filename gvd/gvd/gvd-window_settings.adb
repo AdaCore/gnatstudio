@@ -199,21 +199,28 @@ package body GVD.Window_Settings is
             declare
                Image : constant String := Trim (Gint'Image (Page_Num), Left);
             begin
-               Set (String_Gint ("Data_Height" & Image),
-                    Gint (Get_Allocation_Height (Process.Data_Canvas)),
-                    True);
-               Set (String_Gint ("Data_Width" & Image),
-                    Gint (Get_Allocation_Width (Process.Data_Canvas)),
-                    True);
+               if Process.Data_Canvas /= null then
+                  Set (String_Gint ("Data_Height" & Image),
+                       Gint (Get_Allocation_Height (Process.Data_Canvas)),
+                       True);
+                  Set (String_Gint ("Data_Width" & Image),
+                       Gint (Get_Allocation_Width (Process.Data_Canvas)),
+                       True);
+               end if;
 
                if not Top.TTY_Mode then
-                  Set (String_Gint ("Command_Height" & Image),
-                       Gint (Get_Allocation_Height
-                             (Process.Command_Scrolledwindow)),
-                       True);
-                  Set (String_Gint ("Editor_Height" & Image),
-                       Gint (Get_Allocation_Height (Process.Editor_Text)),
-                       True);
+                  if Process.Command_Scrolledwindow /= null then
+                     Set (String_Gint ("Command_Height" & Image),
+                          Gint (Get_Allocation_Height
+                                  (Process.Command_Scrolledwindow)),
+                          True);
+                  end if;
+
+                  if Process.Editor_Text /= null then
+                     Set (String_Gint ("Editor_Height" & Image),
+                          Gint (Get_Allocation_Height (Process.Editor_Text)),
+                          True);
+                  end if;
                end if;
 
                Widget := Get_Widget (Top.Factory, -"/Data/Call Stack");
