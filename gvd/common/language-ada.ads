@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2002                      --
+--                      Copyright (C) 2000-2003                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -27,8 +27,6 @@ package Language.Ada is
 
    Ada_Lang : constant Language_Access;
    --  Class constant for the Ada language.
-
-   function Is_Case_Sensitive (Lang : access Ada_Language) return Boolean;
 
    -------------
    -- Parsing --
