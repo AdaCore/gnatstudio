@@ -439,6 +439,12 @@ package Glide_Kernel is
      (Glib.Object.GObject_Record, Boolean);
    --  Generic callback that can be used to connect a signal to a kernel.
 
+   package Object_User_Return_Callback is new Gtk.Handlers.User_Return_Callback
+     (Widget_Type => Glib.Object.GObject_Record,
+      User_Type   => Glib.Object.GObject,
+      Return_Type => Boolean);
+   --  Generic callback that can be used to connect a signal to a kernel.
+
    package Kernel_Callback is new Gtk.Handlers.User_Callback
      (Glib.Object.GObject_Record, Kernel_Handle);
    --  Generic callback that can be used to connect a signal to a kernel.
