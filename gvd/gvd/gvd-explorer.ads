@@ -76,7 +76,7 @@ package Odd.Explorer is
    procedure Add_List_Of_Files
      (Tree : access Explorer_Record;
       List : Odd.Types.String_Array);
-   --  Add several files in the explorer if there are not already there.
+   --  Add several files in the explorer.
 
    procedure Set_Current_File
      (Tree : access Explorer_Record;

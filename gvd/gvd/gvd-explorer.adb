@@ -21,6 +21,8 @@
 with Gdk.Bitmap;            use Gdk.Bitmap;
 with Gdk.Color;             use Gdk.Color;
 with Gdk.Pixmap;            use Gdk.Pixmap;
+with Gdk.Types;             use Gdk.Types;
+with Gdk.Event;             use Gdk.Event;
 with Gtk.Handlers;          use Gtk.Handlers;
 with Gtkada.Types;          use Gtkada.Types;
 with Gtkada.Handlers;       use Gtkada.Handlers;
@@ -33,6 +35,7 @@ with Gtk.Ctree;             use Gtk.Ctree;
 with Gtk.Style;             use Gtk.Style;
 with Gtk.Widget;            use Gtk.Widget;
 with Gtk.Enums;             use Gtk.Enums;
+with Gtk.Menu;              use Gtk.Menu;
 with GNAT.OS_Lib;           use GNAT.OS_Lib;
 with Odd.Code_Editors;      use Odd.Code_Editors;
 with Debugger.Gdb.Ada;      use Debugger.Gdb.Ada;
@@ -40,6 +43,10 @@ with Odd.Types;             use Odd.Types;
 with Odd.Process;           use Odd.Process;
 with Debugger;              use Debugger;
 with Odd_Intl;              use Odd_Intl;
+with Gtk.Check_Menu_Item;   use Gtk.Check_Menu_Item;
+with Gtk.Menu_Item;         use Gtk.Menu_Item;
+with Gtk.Object;            use Gtk.Object;
+with Gtk.Tooltips;          use Gtk.Tooltips;
 
 with Ada.Text_IO; use Ada.Text_IO;
 
@@ -68,8 +75,10 @@ package body Odd.Explorer is
    type Internal_Categories is array (Category_Index range <>)
      of Internal_Category;
 
-   package Tree_Cb is new
-     Gtk.Handlers.Callback (Explorer_Record);
+   package Tree_Cb is new Gtk.Handlers.Callback (Explorer_Record);
+   package Boolean_Tree_Cb is new Gtk.Handlers.Return_Callback
+     (Explorer_Record, Boolean);
+   package Menu_User_Data is new Gtk.Object.User_Data (Gtk_Menu);
 
    package Row_Data_Explorer is new Gtk.Ctree.Row_Data (Position_Type);
 
@@ -90,6 +99,27 @@ package body Odd.Explorer is
      (Explorer : access Gtk_Widget_Record'Class);
    --  Called when the executable associated with the explorer has changed.
 
+   function Button_Press_Cb
+     (Explorer : access Explorer_Record'Class;
+      Event  : Gdk.Event.Gdk_Event) return Boolean;
+   --  Handle button press events in the Explorer.
+
+   procedure Display_Shared (Explorer : access Explorer_Record'Class);
+   --  Load and display the files found in shared libraries.
+
+   function Explorer_Contextual_Menu
+     (Explorer : access Explorer_Record'Class)
+     return Gtk.Menu.Gtk_Menu;
+   --  Create (if necessary) the contextual menu for an explorer widget.
+
+   function Convert (Explorer : access Explorer_Record'Class)
+     return Debugger_Process_Tab;
+   --  Return the Process_Tab associated with an explorer.
+
+   Explorer_Contextual_Menu_Name : constant String := "odd_debugger_context";
+   --  String used to store the explorer menu in the user data of the explorer.
+
+
    -------------
    -- Gtk_New --
    -------------
@@ -102,6 +132,9 @@ package body Odd.Explorer is
    begin
       Explorer := new Explorer_Record;
       Initialize (Explorer, Columns => 1);
+
+      Add_Events (Explorer, Button_Press_Mask or Button_Release_Mask);
+
       Explorer.Code_Editor := Gtk_Widget (Code_Editor);
 
       Color := Parse (File_Name_Bg_Color);
@@ -119,6 +152,10 @@ package body Odd.Explorer is
       Tree_Cb.Connect
         (Explorer, "tree_select_row",
          Tree_Cb.To_Marshaller (First_Handler'Access));
+      Boolean_Tree_Cb.Connect
+        (Explorer, "button_press_event",
+         Boolean_Tree_Cb.To_Marshaller (Button_Press_Cb'Access));
+
 
       Widget_Callback.Object_Connect
         (Get_Process (Odd.Code_Editors.Code_Editor (Code_Editor)),
@@ -198,8 +235,7 @@ package body Odd.Explorer is
         (Node_List.First (Get_Selection (Explorer)));
       File_Node : Gtk_Ctree_Node;
       Data : Node_Data_Access;
-      Tab  : Debugger_Process_Tab := Debugger_Process_Tab
-        (Get_Process (Code_Editor (Explorer.Code_Editor)));
+      Tab  : Debugger_Process_Tab := Convert (Explorer);
    begin
       --  If an entity was referenced, load the file and display the
       --  correct line.
@@ -348,10 +384,8 @@ package body Odd.Explorer is
          declare
             F         : File_Descriptor;
             Length    : Positive;
-            Tab         : Debugger_Process_Tab := Debugger_Process_Tab
-              (Get_Process (Code_Editor (Explorer.Code_Editor)));
-            Full_Name : String := Find_File
-              (Tab.Debugger, Data.Extension);
+            Tab         : Debugger_Process_Tab := Convert (Explorer);
+            Full_Name : String := Find_File (Tab.Debugger, Data.Extension);
             Name      : aliased String := Full_Name & ASCII.NUL;
          begin
             F := Open_Read (Name'Address, Text);
@@ -595,8 +629,6 @@ package body Odd.Explorer is
       if Node_Is_Visible (Tree, Tree.Current_File_Node) /= Visibility_Full then
          Node_Moveto (Tree, Tree.Current_File_Node, 0, 0.5, 0.0);
       end if;
-
---       Gtk_Select (Tree, Tree.Current_File_Node);
    end Set_Current_File;
 
    ---------------------------
@@ -607,12 +639,109 @@ package body Odd.Explorer is
      (Explorer : access Gtk_Widget_Record'Class)
    is
       Exp         : Explorer_Access := Explorer_Access (Explorer);
-      Tab         : Debugger_Process_Tab := Debugger_Process_Tab
-        (Get_Process (Code_Editor (Exp.Code_Editor)));
+      Tab         : Debugger_Process_Tab := Convert (Exp);
       List : Odd.Types.String_Array := Source_Files_List (Tab.Debugger);
    begin
       Add_List_Of_Files (Exp, List);
       Odd.Types.Free (List);
    end On_Executable_Changed;
 
+   ---------------------
+   -- Button_Press_Cb --
+   ---------------------
+
+   function Button_Press_Cb
+     (Explorer : access Explorer_Record'Class;
+      Event  : Gdk.Event.Gdk_Event) return Boolean
+   is
+      Menu    : Gtk_Menu;
+   begin
+      if Get_Button (Event) = 3
+        and then Get_Event_Type (Event) = Button_Press
+      then
+         Menu := Explorer_Contextual_Menu (Explorer);
+         Popup (Menu,
+                Button            => Gdk.Event.Get_Button (Event),
+                Activate_Time     => Gdk.Event.Get_Time (Event));
+         Emit_Stop_By_Name (Explorer, "button_press_event");
+         return True;
+      end if;
+      return False;
+   end Button_Press_Cb;
+
+   ------------------------------
+   -- Explorer_Contextual_Menu --
+   ------------------------------
+
+   function Explorer_Contextual_Menu
+     (Explorer : access Explorer_Record'Class)
+     return Gtk.Menu.Gtk_Menu
+   is
+      Menu  : Gtk_Menu;
+      Check : Gtk_Check_Menu_Item;
+      Mitem : Gtk_Menu_Item;
+      Tips  : Gtk_Tooltips;
+      Process : Debugger_Process_Tab := Convert (Explorer);
+   begin
+      begin
+         Menu := Menu_User_Data.Get (Explorer, Explorer_Contextual_Menu_Name);
+         Destroy (Menu);
+      exception
+         when Gtkada.Types.Data_Error =>
+            null;
+      end;
+
+      Gtk_New (Menu);
+      Gtk_New (Tips);
+      Ref (Tips);
+
+      Gtk_New (Check, Label => -"Show System Files");
+      Set_Always_Show_Toggle (Check, True);
+      Set_Active (Check, False);
+      Append (Menu, Check);
+      --  Set_Tip (Tips, Check, -"Foo", "");
+
+      Gtk_New (Mitem, Label => -"Display Shared Library Files");
+      Set_Sensitive (Mitem, Is_Started (Process.Debugger));
+      Tree_Cb.Object_Connect
+        (Mitem, "activate",
+         Tree_Cb.To_Marshaller (Display_Shared'Access),
+         Explorer);
+
+      Append (Menu, Mitem);
+      --  Set_Tip (Tips, Mitem,
+      --     -"Activated only when the executable has started", "");
+
+      Show_All (Menu);
+      Menu_User_Data.Set (Explorer, Menu, Explorer_Contextual_Menu_Name);
+
+      Enable (Tips);
+      return Menu;
+   end Explorer_Contextual_Menu;
+
+   --------------------
+   -- Display_Shared --
+   --------------------
+
+   procedure Display_Shared (Explorer : access Explorer_Record'Class) is
+      Process : Debugger_Process_Tab := Convert (Explorer);
+   begin
+      Set_Busy_Cursor (Process, True);
+      Freeze (Explorer);
+      Clear (Explorer);
+      On_Executable_Changed (Explorer);
+      Thaw (Explorer);
+      Set_Busy_Cursor (Process, False);
+   end Display_Shared;
+
+   -------------
+   -- Convert --
+   -------------
+
+   function Convert (Explorer : access Explorer_Record'Class)
+      return Debugger_Process_Tab is
+   begin
+      return Debugger_Process_Tab
+        (Get_Process (Code_Editor (Explorer.Code_Editor)));
+   end Convert;
 end Odd.Explorer;
