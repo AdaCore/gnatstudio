@@ -132,15 +132,6 @@ package body Interactive_Consoles is
       end if;
    end Enable_Prompt_Display;
 
-   ----------------
-   -- Grab_Focus --
-   ----------------
-
-   procedure Grab_Focus (Console : access Interactive_Console_Record) is
-   begin
-      Grab_Focus (Console.View);
-   end Grab_Focus;
-
    ------------
    -- Insert --
    ------------
