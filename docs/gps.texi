@@ -726,37 +726,8 @@ entry in the contextual menu (right-click anywhere in the outline view).
 Alternatively, you can switch temporarily to another window and come back
 to the same editor, and the outline view will be refreshed.
 
-There are several preferences associated with the outline view:
-
-@itemize @bullet
-@item Font
-
-You can choose a specific font for the outline view. Typically, this will
-be used to use a slightly smaller font than in the editor, so that you can
-see more entities at once on the screen.
-
-@item Show Profiles
-
-For some of the languages, in particular Ada, GPS can display the profile
-(list of parameters) for the subprograms. This can be used to differentiate
-between overloaded entities (ie entities with the same name). Disabling
-this preference will only show the entity name.
-
-@item Sort alphabetically
-
-If this preference is activated, the entities will be sorted alphabetically
-in the outline view. If disabled, they will be displayed in the order they are
-found in the source file.
-
-@item Link with Editor
-
-If this option is set, the current subprogram will be selected in the outline
-view every time the cursor position changes in the current editor. This
-option requires some computation for GPS, and you might want to avoid the
-slow down by disabling it.
-
-@end itemize
-
+There are several preferences associated with the outline view,
+@xref{Outline Preferences}.
 
 @c --------------------------------------------------------------------
 @node The Messages Window
@@ -7346,6 +7317,38 @@ The restrictions are the following:
   you cannot have directories with names ending with ".ads" or ".adb"
 
 @end itemize
+
+@end table
+
+@item @b{Outline}
+@anchor{Outline Preferences}
+
+@table @i
+@item Font
+
+You can choose a specific font for the outline view. Typically, this will
+be used to use a slightly smaller font than in the editor, so that you can
+see more entities at once on the screen.
+
+@item Show Profiles
+
+For some of the languages, in particular Ada, GPS can display the profile
+(list of parameters) for the subprograms. This can be used to differentiate
+between overloaded entities (ie entities with the same name). Disabling
+this preference will only show the entity name.
+
+@item Sort alphabetically
+
+If this preference is activated, the entities will be sorted alphabetically
+in the outline view. If disabled, they will be displayed in the order they are
+found in the source file.
+
+@item Link with Editor
+
+If this option is set, the current subprogram will be selected in the outline
+view every time the cursor position changes in the current editor. This
+option requires some computation for GPS, and you might want to avoid the
+slow down by disabling it.
 
 @end table
 
