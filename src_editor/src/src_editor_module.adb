@@ -4011,7 +4011,23 @@ package body Src_Editor_Module is
       Pref_Display_Line_Numbers : constant Boolean :=
         Get_Pref (Kernel, Display_Line_Numbers);
 
+      Color   : Gdk_Color;
+      GC      : Gdk.GC.Gdk_GC;
+      Success : Boolean;
    begin
+      Gdk_New (GC, Get_Window (Gtk_Widget (Get_Main_Window (Kernel))));
+
+      Color := Get_Pref (Kernel, Search_Results_Color);
+      Alloc_Color (Get_Default_Colormap, Color, False, True, Success);
+
+      if Success then
+         Set_Foreground (GC, Color);
+      else
+         Set_Foreground (GC, White (Get_Default_Colormap));
+      end if;
+
+      Line_Highlighting.Add_Category (Search_Result_Highlighting, GC, Color);
+
       if Pref_Display_Line_Numbers = Id.Display_Line_Numbers then
          return;
       end if;
