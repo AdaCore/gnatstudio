@@ -121,11 +121,14 @@ package body Docgen_Module is
    --    tagged types we indicate his parent and his children (if they exist).
 
    procedure Array2List
-     (Kernel     : Kernel_Handle;
-      Tab        : VFS.File_Array_Access;
-      List       : in out Type_Source_File_Table.HTable;
-      Doc_Suffix : String);
-   --  Create a list of files with those contained in the array
+     (Kernel        : Kernel_Handle;
+      Tab           : VFS.File_Array_Access;
+      List          : in out Type_Source_File_Table.HTable;
+      Doc_Suffix    : String;
+      Nb_Files      : out Natural);
+   --  Create a list of files with those contained in the array.
+   --  If Remove_Bodies is true, only specs are put in the list.
+   --  The list returned contains Nb_Files.
 
    procedure On_Preferences_Changed
      (Kernel : access Kernel_Handle_Record'Class);
@@ -268,15 +271,18 @@ package body Docgen_Module is
    ----------------
 
    procedure Array2List
-     (Kernel     : Kernel_Handle;
-      Tab        : VFS.File_Array_Access;
-      List       : in out Type_Source_File_Table.HTable;
-      Doc_Suffix : String)
+     (Kernel        : Kernel_Handle;
+      Tab           : VFS.File_Array_Access;
+      List          : in out Type_Source_File_Table.HTable;
+      Doc_Suffix    : String;
+      Nb_Files      : out Natural)
    is
       File    : aliased Virtual_File;
       Source  : Source_File;
       Is_Spec : Boolean;
    begin
+      Nb_Files := 0;
+
       for J in 1 .. Tab'Length loop
          File := Tab (J);
 
@@ -285,6 +291,7 @@ package body Docgen_Module is
          if Docgen_Module (Docgen_Module_Id).Options.Process_Body_Files
            or else Is_Spec
          then
+            Nb_Files := Nb_Files + 1;
             Source := Get_Or_Create
               (Db           => Get_Database (Kernel),
                File         => File,
@@ -413,6 +420,7 @@ package body Docgen_Module is
         Get_Backend (Kernel);
       Sources          : VFS.File_Array_Access;
       Source_File_List : Type_Source_File_Table.HTable;
+      Nb_Files         : Natural;
       P                : Project_Type := Project;
       Context          : Selection_Context_Access;
 
@@ -443,8 +451,8 @@ package body Docgen_Module is
 
       Sources := Get_Source_Files (P, Recursive);
       Array2List (Kernel, Sources, Source_File_List,
-                  Docgen.Backend.Get_Extension (B));
-      Generate (Kernel, Source_File_List, Sources'Length, B);
+                  Docgen.Backend.Get_Extension (B), Nb_Files);
+      Generate (Kernel, Source_File_List, Nb_Files, B);
 
       --  ??? The following commented line should probably be moved to
       --  to the function in charge of finalizing the files processing
@@ -967,8 +975,8 @@ package body Docgen_Module is
              Default => False,
              Blurb   =>
                -"List of tagged types declared in processed files",
-             Nick    => -"List tagged types",
-             Flags   => Param_Readable));
+             Nick    => -"List tagged types"));
+--               Flags   => Param_Readable));
       Register_Property
         (Kernel,
          Param_Spec (Docgen_Module (Docgen_Module_Id).Process_Tagged_Types),
