@@ -119,6 +119,7 @@ package Directory_Tree is
    --  Return the list of all selected directories in Selector.
    --  If Selector only allowed the selection of a single directory, then an
    --  array of size 1 is returned.
+   --  The return list must be freed by the caller
 
    function Single_Directory_Selector_Dialog (Initial_Directory : String)
       return String;
@@ -129,7 +130,7 @@ package Directory_Tree is
      (Initial_Directory : String) return GNAT.OS_Lib.Argument_List;
    --  Open a dialog for the selection of multiple directories by the user.
    --  Return the list of directories selected by the user.
-   --  It is the responsability of the called to free the array.
+   --  It is the responsability of the caller to free the array.
 
 
 private
