@@ -315,9 +315,17 @@ package body Gtkada.File_Selector is
       then
          return "";
       else
-         return Normalize_Pathname
-           (Name_As_Directory (Dialog.Current_Directory.all) &
-            Locale_From_UTF8 (Get_Text (Dialog.Selection_Entry)));
+         declare
+            File : constant String :=
+              Locale_From_UTF8 (Get_Text (Dialog.Selection_Entry));
+         begin
+            if Is_Absolute_Path (File) then
+               return File;
+            else
+               return Normalize_Pathname
+                 (Name_As_Directory (Dialog.Current_Directory.all) & File);
+            end if;
+         end;
       end if;
    end Get_Selection;
 
@@ -796,6 +804,8 @@ package body Gtkada.File_Selector is
    begin
       --  If the new directory is not the one currently shown in the File_List,
       --  then update the File_List.
+
+      Set_Text (Win.Selection_Entry, "");
 
       if Dir /= ""
         and then Win.Current_Directory.all /= Normalized
@@ -1414,7 +1424,7 @@ package body Gtkada.File_Selector is
 
             --  Base may be the start of a longer name: start the match and
             --  find out whether Base is the start of a unique directory, in
-            --  which case open it, or the starat of a file.
+            --  which case open it, or the start of a file.
 
             if Win.File_Tree /= null then
                Iter := Get_Iter_First (Win.File_Model);
