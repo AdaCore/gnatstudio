@@ -30,7 +30,9 @@ with Gdk.Pixmap;
 
 with Pango.Font;
 
+with Gtk.Drawing_Area;
 with Gtk.Text_View;
+with Gtk.Scrolled_Window;
 with Gtk.Main;
 
 with Glide_Kernel;
@@ -45,7 +47,9 @@ package Src_Editor_View is
 
    procedure Gtk_New
      (View   : out Source_View;
-      Buffer : Src_Editor_Buffer.Source_Buffer := null;
+      Scroll : Gtk.Scrolled_Window.Gtk_Scrolled_Window;
+      Area   : Gtk.Drawing_Area.Gtk_Drawing_Area;
+      Buffer : Src_Editor_Buffer.Source_Buffer;
       Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
    --  Create a new Source_View from the given parameters.
    --  If no Buffer is given, then a new one will be created. For tasks such
@@ -53,11 +57,15 @@ package Src_Editor_View is
    --  as the default font used when not specified is proportional (which means
    --  that 'i's will be smaller than 'm's for instance).
    --
+   --  Scroll is the scrolled window that contains the text view, if any.
+   --
    --  If requested, the line numbers are displayed in a small area on
    --  the left of the text view.
 
    procedure Initialize
      (View   : access Source_View_Record;
+      Scroll : Gtk.Scrolled_Window.Gtk_Scrolled_Window;
+      Area   : Gtk.Drawing_Area.Gtk_Drawing_Area;
       Buffer : Src_Editor_Buffer.Source_Buffer;
       Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
    --  Internal initialization procedure.
@@ -113,8 +121,14 @@ package Src_Editor_View is
 
 private
 
-   type Source_View_Record is new Gtk.Text_View.Gtk_Text_View_Record with
-   record
+   type Source_View_Record is new Gtk.Text_View.Gtk_Text_View_Record
+   with record
+      Scroll              : Gtk.Scrolled_Window.Gtk_Scrolled_Window := null;
+      --  The Gtk_Scrolled_Window that contains the source view.
+
+      Area                : Gtk.Drawing_Area.Gtk_Drawing_Area;
+      --  The drawing area used for the speed column.
+
       Kernel              : Glide_Kernel.Kernel_Handle;
 
       Saved_Cursor_Mark   : Gtk_Text_Mark;
@@ -167,6 +181,13 @@ private
       Synchronized_Editor : Source_View := null;
       --  An editor which should have a scrolling synchronized with this
       --  editor.
+
+      Speed_Column_Buffer  : Gdk.Pixmap.Gdk_Pixmap;
+      --  Cache for avoiding to redraw the speed column too often.
+
+      Scroll_Timeout       : Gtk.Main.Timeout_Handler_Id := 0;
+      Scroll_To_Value      : Gdouble := 0.0;
+      Scroll_Requested     : Boolean := False;
    end record;
 
 end Src_Editor_View;
