@@ -680,6 +680,7 @@ package body Vdiff2_Module.Utils is
         Dest_Range.Last - Dest_Range.First;
       Offset_Source     : constant Natural :=
         Source_Range.Last - Source_Range.First;
+      Offset_Min        : Natural := Offset_Source;
       Args_Get_Chars    : Argument_List :=
         (1 => new String'(Full_Name (Source_File)),
          2 => new String'(Natural'Image (Source_Range.First)),
@@ -688,12 +689,19 @@ package body Vdiff2_Module.Utils is
         (1 => new String'(Full_Name (Dest_File)),
          2 => new String'(Natural'Image (Dest_Range.First)),
          3 => new String'(Integer'Image (1)),
-         4 => null);
+         4 => null,
+         5 => new String'(Integer'Image (-1)),
+         6 => new String'(Integer'Image (-1)));
       Current_Line      : String_Access;
 
    begin
-      if Offset_Source > 0 and Offset_Dest > 0 then
-         for J in 1 .. Offset_Source loop
+      if Offset_Source > Offset_Dest then
+         Offset_Min := Offset_Dest;
+      end if;
+
+      if Offset_Source > 0 then
+
+         for J in 1 .. Offset_Min loop
             Current_Line := new String'
               (Execute_GPS_Shell_Command
                  (Kernel, "get_chars", Args_Get_Chars));
@@ -709,7 +717,7 @@ package body Vdiff2_Module.Utils is
               (Natural'Image (Dest_Range.First + J));
          end loop;
 
-         if Offset_Source < Offset_Dest then
+         if Offset_Source = Offset_Min then
             Args_Replace_Text (4) := new String'("");
             for J in Offset_Source .. Offset_Dest loop
                Free (Args_Replace_Text (2));
@@ -718,6 +726,33 @@ package body Vdiff2_Module.Utils is
                Execute_GPS_Shell_Command
                  (Kernel, "replace_text", Args_Replace_Text);
             end loop;
+         end if;
+
+         if Offset_Dest = Offset_Min then
+            Free (Args_Replace_Text (5));
+            Free (Args_Replace_Text (6));
+            Args_Replace_Text (5) := new String'(Integer'Image (1));
+            Args_Replace_Text (6) := new String'(Integer'Image (1));
+
+            for J in Offset_Min .. Offset_Source loop
+               Current_Line := new String'
+                 (Execute_GPS_Shell_Command
+                    (Kernel, "get_chars", Args_Get_Chars));
+               Args_Replace_Text (4) := Current_Line;
+               Execute_GPS_Shell_Command
+                 (Kernel, "replace_text", Args_Replace_Text);
+               Free (Args_Get_Chars (2));
+               Free (Args_Replace_Text (2));
+               Free (Args_Replace_Text (4));
+               Args_Get_Chars (2) := new String'
+                 (Natural'Image (Source_Range.First + J));
+               Args_Replace_Text (2) := new String'
+                 (Natural'Image (Dest_Range.First + J));
+            end loop;
+            Free (Args_Replace_Text (4));
+            Args_Replace_Text (4) := new String'("" & ASCII.LF);
+            Execute_GPS_Shell_Command
+              (Kernel, "replace_text", Args_Replace_Text);
          end if;
       end if;
 
