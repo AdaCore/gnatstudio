@@ -352,10 +352,13 @@ package Glide_Kernel.Modules is
      (Kernel    : access Kernel_Handle_Record'Class;
       Mime_Type : String;
       Data      : GValue_Array;
-      Mode      : Mime_Mode := Read_Write) return Boolean;
+      Mode      : Mime_Mode := Read_Write;
+      Set_Busy  : Boolean := True) return Boolean;
    --  This function calls each of the registered module, and check whether it
    --  can handle the data.
    --  If any of the module was able to, True is returned.
+   --  Set_Busy tells whether the busy cursor should be set while processing
+   --  the query.
 
    procedure Open_File_Editor
      (Kernel            : access Kernel_Handle_Record'Class;
