@@ -88,12 +88,15 @@ package body Glide_Kernel is
       3  => New_String (Context_Changed_Signal),
       4  => New_String (Variable_Changed_Signal),
       5  => New_String (Source_Lines_Revealed_Signal),
+
       6  => New_String (File_Edited_Signal),
       7  => New_String (File_Saved_Signal),
-      8  => New_String (Preferences_Changed_Signal),
-      9  => New_String (Search_Regexps_Changed_Signal),
-      10 => New_String (Search_Reset_Signal),
-      11 => New_String (Search_Functions_Changed_Signal));
+      8  => New_String (File_Closed_Signal),
+
+      9  => New_String (Preferences_Changed_Signal),
+      10  => New_String (Search_Regexps_Changed_Signal),
+      11 => New_String (Search_Reset_Signal),
+      12 => New_String (Search_Functions_Changed_Signal));
    --  The list of signals defined for this object
 
    Kernel_Class : GObject_Class := Uninitialized_Class;
@@ -151,9 +154,9 @@ package body Glide_Kernel is
       Home_Dir    : String)
    is
       Signal_Parameters : constant Signal_Parameter_Types :=
-        (1 .. 2 | 4 | 8 .. 11 => (1 => GType_None),
+        (1 .. 2 | 4 | 9 .. 12 => (1 => GType_None),
          3      | 5           => (1 => GType_Pointer),
-         6      | 7           => (1 => GType_String));
+         6 .. 8               => (1 => GType_String));
       Handler : Glide_Language_Handler;
    begin
       Handle := new Kernel_Handle_Record;
@@ -592,6 +595,10 @@ package body Glide_Kernel is
         (Get_Object (Handle),
          File_Edited_Signal & ASCII.NUL,
          File & ASCII.NUL);
+
+      if not Is_Open (Handle, File) then
+         String_List_Utils.String_List.Append (Handle.Open_Files, File);
+      end if;
    end File_Edited;
 
    ----------------
@@ -613,6 +620,76 @@ package body Glide_Kernel is
          File_Saved_Signal & ASCII.NUL,
          File & ASCII.NUL);
    end File_Saved;
+
+   -----------------
+   -- File_Closed --
+   -----------------
+
+   procedure File_Closed
+     (Handle  : access Kernel_Handle_Record;
+      File    : String)
+   is
+      procedure Internal
+        (Handle : System.Address;
+         Signal : String;
+         File   : String);
+      pragma Import (C, Internal, "g_signal_emit_by_name");
+
+      use String_List_Utils.String_List;
+
+      Node      : List_Node;
+      Prev_Node : List_Node := Null_Node;
+   begin
+      Internal
+        (Get_Object (Handle),
+         File_Closed_Signal & ASCII.NUL,
+         File & ASCII.NUL);
+      Node := First (Handle.Open_Files);
+
+      while Node /= Null_Node loop
+         if Data (Node) = File then
+            Remove_Nodes (Handle.Open_Files, Prev_Node, Node);
+
+            if Prev_Node = Null_Node then
+               Node := First (Handle.Open_Files);
+            else
+               Node := Prev_Node;
+            end if;
+
+            if Node = Null_Node then
+               return;
+            end if;
+         end if;
+
+         Prev_Node := Node;
+         Node := Next (Node);
+      end loop;
+   end File_Closed;
+
+   -------------
+   -- Is_Open --
+   -------------
+
+   function Is_Open
+     (Kernel   : access Kernel_Handle_Record;
+      Filename : String) return Boolean
+   is
+      use String_List_Utils.String_List;
+
+      Node : List_Node;
+   begin
+      Node := First (Kernel.Open_Files);
+
+      while Node /= Null_Node loop
+         if Data (Node) = Filename then
+            return True;
+         end if;
+
+         Node := Next (Node);
+      end loop;
+
+      return False;
+   end Is_Open;
 
    ---------------------
    -- Context_Changed --
