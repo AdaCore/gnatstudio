@@ -96,15 +96,17 @@ package body GVD.Main_Window is
          Tab := Process_User_Data.Get (Page);
          Tab.Exiting := True;
 
-         begin
-            Close (Tab.Debugger);
-         exception
-            when others =>
-               --  ??? Would be nice to handle more specific errors, but
-               --  since we are exiting, ignore any exception instead of
-               --  generating unfriendly bug boxes
-               null;
-         end;
+         if Tab.Debugger /= null then
+            begin
+               Close (Tab.Debugger);
+            exception
+               when others =>
+                  --  ??? Would be nice to handle more specific errors, but
+                  --  since we are exiting, ignore any exception instead of
+                  --  generating unfriendly bug boxes
+                  null;
+            end;
+         end if;
 
          Remove_Page (Window.Process_Notebook, 0);
       end loop;
