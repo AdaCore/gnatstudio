@@ -297,9 +297,28 @@ package body File_Utils is
    --------------------
 
    function Suffix_Matches
-     (File_Name : String; Suffix : String) return Boolean is
+     (File_Name : String; Suffix : String) return Boolean
+   is
+      pragma Suppress (All_Checks);
    begin
-      return Tail (File_Name, Suffix'Length) = Suffix;
+      --  This version is slightly faster than checking
+      --     return Tail (File_Name, Suffix'Length) = Suffix;
+      --  which needs a function returning a string.
+
+      if File_Name'Length < Suffix'Length then
+         return False;
+      end if;
+
+      --  Do the loop in reverse, since it likely that Suffix starts with '.'
+      --  In the GPS case, it is also often the case that suffix starts with
+      --  '.ad' for Ada extensions
+      for J in reverse Suffix'Range loop
+         if File_Name (File_Name'Last + J - Suffix'Last) /= Suffix (J) then
+            return False;
+         end if;
+      end loop;
+
+      return True;
    end Suffix_Matches;
 
    -----------------------
