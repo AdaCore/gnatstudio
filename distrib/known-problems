@@ -1,5 +1,9 @@
 Known Problems fixed in GPS 3.0.0
 
+- Various problems with the multiple editor Views.
+  Problem:    When using multiple Views of the same file, unwanted scrolling
+              can happen on the editor which is not being currently used.
+
 - E317-016 Changing fonts using the font selector
   Problem:    In the preferences dialog, when changing a font using the font
               selector, GPS does not take into account the new preference.
