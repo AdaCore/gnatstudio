@@ -34,6 +34,7 @@ with XML_Parsers;
 with Glib;                     use Glib;
 with Glib.Unicode;             use Glib.Unicode;
 with Glide_Kernel.Console;     use Glide_Kernel.Console;
+with Glide_Kernel.Scripts;     use Glide_Kernel.Scripts;
 with Glide_Kernel.Modules;     use Glide_Kernel.Modules;
 with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
 with Glide_Kernel;             use Glide_Kernel;
@@ -82,6 +83,7 @@ with Glide_Intl;               use Glide_Intl;
 with GUI_Utils;                use GUI_Utils;
 with Histories;                use Histories;
 with Commands.Interactive;     use Commands, Commands.Interactive;
+with Basic_Types;
 
 with VFS;                      use VFS;
 
@@ -121,6 +123,9 @@ package body Aliases_Module is
       Expansion : String_Access;
       Params    : Param_Access;
       Read_Only : Boolean;
+
+      Must_Reindent : Boolean;
+      --  Whether the editor should be reindent after insertion of the macro
    end record;
 
    procedure Free (Alias : in out Alias_Record);
@@ -129,7 +134,8 @@ package body Aliases_Module is
    --  Return a deep copy of Alias
 
    No_Alias : constant Alias_Record :=
-     (Expansion => null, Params => null, Read_Only => False);
+     (Expansion => null, Params => null, Read_Only => False,
+      Must_Reindent => False);
 
    package Aliases_Hash is new String_Hash
      (Alias_Record, Free, No_Alias);
@@ -171,6 +177,7 @@ package body Aliases_Module is
       Expansion       : Gtk_Text_View;
       Alias_Col       : Gtk_Tree_View_Column;
       Show_Read_Only  : Gtk_Check_Button;
+      Must_Reindent   : Gtk_Check_Button;
 
       Current_Var     : String_Access;
       Highlight_Tag   : Gtk_Text_Tag;
@@ -210,11 +217,14 @@ package body Aliases_Module is
      (Kernel        : access Kernel_Handle_Record'Class;
       Name          : String;
       Cursor        : access Integer;
+      Must_Reindent : access Boolean;
       Offset_Column : Gint)
       return String;
    --  Return the expanded version of Name.
-   --  Cursor is the index in the returnef string for the cursor position.
+   --  Cursor is the index in the returned string for the cursor position.
    --  The empty string is returned if there is no such alias.
+   --  Must_Reindent is set to True if the editor should be reindented after
+   --  insertion.
 
    procedure Parse_File
      (Kernel    : access Kernel_Handle_Record'Class;
@@ -457,7 +467,8 @@ package body Aliases_Module is
       else
          A := (Expansion => new String'(Alias.Expansion.all),
                Params    => null,
-               Read_Only => Alias.Read_Only);
+               Read_Only => Alias.Read_Only,
+               Must_Reindent => Alias.Must_Reindent);
 
          P := Alias.Params;
          while P /= null loop
@@ -533,6 +544,10 @@ package body Aliases_Module is
             Key := new Node;
             Key.Tag := new String'("alias");
             Set_Attribute (Key, "name", Get_Key (Iter));
+
+            if Value.Must_Reindent then
+               Set_Attribute (Key, "indent", "true");
+            end if;
 
             Child := new Node;
             Child.Tag := new String'("text");
@@ -709,6 +724,7 @@ package body Aliases_Module is
      (Kernel        : access Kernel_Handle_Record'Class;
       Name          : String;
       Cursor        : access Integer;
+      Must_Reindent : access Boolean;
       Offset_Column : Gint) return String
    is
       function Find_And_Replace_Cursor (Str : String) return String;
@@ -807,6 +823,8 @@ package body Aliases_Module is
       Val    : String_Access;
 
    begin
+      Must_Reindent.all := Alias.Must_Reindent;
+
       if Alias = No_Alias then
          return "";
 
@@ -925,9 +943,11 @@ package body Aliases_Module is
 
                declare
                   Cursor  : aliased Integer;
+                  Must_Reindent : aliased Boolean;
                   Replace : constant String := Expand_Alias
                     (Command.Kernel, Text (First .. Last - 1),
-                     Cursor'Unchecked_Access, 0);
+                     Cursor'Unchecked_Access, Must_Reindent'Unchecked_Access,
+                     0);
                   F       : Gint := Gint (First - Text'First);
 
                begin
@@ -975,14 +995,21 @@ package body Aliases_Module is
 
                declare
                   Cursor  : aliased Integer;
+                  Must_Reindent : aliased Boolean;
                   Column  : constant Gint := Get_Line_Offset (First_Iter);
                   Replace : constant String := Expand_Alias
                     (Command.Kernel,
                      Get_Slice (Buffer, First_Iter, Last_Iter),
                      Cursor'Unchecked_Access,
+                     Must_Reindent'Unchecked_Access,
                      Column);
                   Result  : Boolean;
                   Event   : Gdk_Event;
+                  Args    : Argument_List (1 .. 2);
+                  Count   : Natural := 0;
+                  Index   : Natural := Replace'First;
+                  Start_Line : constant Integer :=
+                    Integer (Get_Line (First_Iter));
 
                begin
                   if Replace /= "" then
@@ -1006,6 +1033,28 @@ package body Aliases_Module is
                                      Gint (Replace'Length - Cursor),
                                      Result);
                      Place_Cursor (Buffer, First_Iter);
+
+                     --  Reindent the current editor. Since we have given the
+                     --  focus to the widget, the call to the shell command
+                     --  will have no effect unless this is really an editor.
+
+                     if Must_Reindent then
+                        while Index <= Replace'Last loop
+                           Index := Next_Line (Replace, Index) + 1;
+                           Count := Count + 1;
+                        end loop;
+                        Args (1) := new String'(Image (Start_Line + 1));
+                        Args (2) := new String'(Image (Start_Line + Count));
+
+                        Execute_GPS_Shell_Command
+                          (Command.Kernel,
+                           Command => "Editor.select_text",
+                           Args    => Args);
+                        Basic_Types.Free (Args);
+
+                        Execute_GPS_Shell_Command
+                          (Command.Kernel, Command => "Editor.indent");
+                     end if;
 
                      if not Had_Focus then
                         Allocate (Event, Leave_Notify, Get_Window (W));
@@ -1070,6 +1119,7 @@ package body Aliases_Module is
                From_Env : constant Boolean :=
                  Get_Boolean (Editor.Variables_Model, Iter, 3);
 
+
             begin
                P := new Param_Record'
                  (Name     => new String'(Name),
@@ -1087,7 +1137,8 @@ package body Aliases_Module is
          Set (Editor.Local_Aliases, Editor.Current_Var.all,
               (Expansion => new String'(Get_Text (Buffer, Start, Last)),
                Params    => P,
-               Read_Only => False));
+               Read_Only => False,
+               Must_Reindent => Get_Active (Editor.Must_Reindent)));
       end if;
    end Save_Current_Var;
 
@@ -1141,6 +1192,8 @@ package body Aliases_Module is
             P := P.Next;
          end loop;
       end if;
+
+      Set_Active (Ed.Must_Reindent, Alias.Must_Reindent);
 
       Get_Bounds (Get_Buffer (Ed.Expansion), Start, Last);
       Highlight_Expansion_Range (Ed, Start, Last);
@@ -1795,6 +1848,11 @@ package body Aliases_Module is
         (Expansion_Buffer, "delete_range", Expansion_Deleted'Access, Editor,
          After => True);
 
+      --  Filters
+
+      Gtk_New (Editor.Must_Reindent, -"Indent source editor after expansion");
+      Pack_Start (Box, Editor.Must_Reindent, Expand => False, Fill => True);
+
       --  Buttons
 
       Gtk_New_From_Stock (Button, Stock_New);
@@ -2024,9 +2082,11 @@ package body Aliases_Module is
 
             declare
                Cursor : aliased Integer;
+               Must_Reindent : aliased Boolean;
                Replace : constant String := Expand_Alias
                  (Kernel, Expansion (First .. Last - 1),
-                  Cursor'Unchecked_Access, 0);
+                  Cursor'Unchecked_Access,
+                  Must_Reindent'Unchecked_Access, 0);
             begin
                if Replace /= "" then
                   return Expansion (Expansion'First .. First - 1) & Replace;
@@ -2081,6 +2141,9 @@ package body Aliases_Module is
          if Alias.Tag.all = "alias" then
             declare
                Name : constant String := Get_Attribute (Alias, "name");
+               Must_Reindent : constant Boolean :=
+                 Get_Attribute (Alias, "indent", "false") = "true";
+
             begin
                Expand := null;
                P := null;
@@ -2127,13 +2190,15 @@ package body Aliases_Module is
                           Name,
                           (Expansion => new String'(Expand.all),
                            Params    => P,
-                           Read_Only => Read_Only));
+                           Read_Only => Read_Only,
+                           Must_Reindent => Must_Reindent));
                   else
                      Set (Aliases_Module_Id.Aliases,
                           Name,
                           (Expansion => new String'(""),
                            Params    => P,
-                           Read_Only => Read_Only));
+                           Read_Only => Read_Only,
+                           Must_Reindent => Must_Reindent));
                   end if;
                else
                   Free (P);
