@@ -412,10 +412,11 @@ package body Debugger.Jdb is
    procedure Break_Subprogram
      (Debugger  : access Jdb_Debugger;
       Name      : String;
-      Temporary : Boolean := False)
+      Temporary : Boolean := False;
+      Display   : Boolean := False)
    is
    begin
-      Send (Debugger, "stop in " & Name);
+      Send (Debugger, "stop in " & Name, Display => Display);
    end Break_Subprogram;
 
    ------------------
@@ -426,7 +427,8 @@ package body Debugger.Jdb is
      (Debugger  : access Jdb_Debugger;
       File      : String;
       Line      : Positive;
-      Temporary : Boolean := False)
+      Temporary : Boolean := False;
+      Display   : Boolean := False)
    is
       Str : constant String := Positive'Image (Line);
       Pos : Positive;
@@ -448,8 +450,9 @@ package body Debugger.Jdb is
       end if;
 
       Send (Debugger,
-        "stop at " & File (File'First .. Pos) & ':' &
-        Str (Str'First + 1 .. Str'Last));
+            "stop at " & File (File'First .. Pos) & ':' &
+            Str (Str'First + 1 .. Str'Last),
+            Display => Display);
    end Break_Source;
 
    ---------------------
@@ -459,14 +462,46 @@ package body Debugger.Jdb is
    procedure Break_Exception
      (Debugger  : access Jdb_Debugger;
       Name      : String  := "";
-      Unhandled : Boolean := False) is
+      Temporary : Boolean := False;
+      Unhandled : Boolean := False;
+      Display   : Boolean := False) is
    begin
       if Unhandled then
          raise Unknown_Command;
       else
-         Send (Debugger, "catch " & Name);
+         Send (Debugger, "catch " & Name, Display => Display);
       end if;
    end Break_Exception;
+
+   -------------------
+   -- Break_Address --
+   -------------------
+
+   procedure Break_Address
+     (Debugger   : access Jdb_Debugger;
+      Address    : String;
+      Temporary  : Boolean := False;
+      Display    : Boolean := False)
+   is
+   begin
+      raise Unknown_Command;
+      --  Error ("Break on address not supported in jdb");
+   end Break_Address;
+
+   ------------------
+   -- Break_Regexp --
+   ------------------
+
+   procedure Break_Regexp
+     (Debugger   : access Jdb_Debugger;
+      Regexp     : String;
+      Temporary  : Boolean := False;
+      Display    : Boolean := False)
+   is
+   begin
+      raise Unknown_Command;
+      --  Error ("Break on regular expression not support in jdb");
+   end Break_Regexp;
 
    ------------
    -- Finish --
@@ -539,6 +574,9 @@ package body Debugger.Jdb is
    is
       Br : Odd.Types.Breakpoint_Array (1 .. 0);
    begin
+      --  Since jdb doesn't support enabling/disabling breakpoints, we should
+      --  keep in the list all the breakpoints that have Enabled set to
+      --  false, so that we can emulated that functionnality.
       return Br;
    end List_Breakpoints;
 
@@ -553,5 +591,33 @@ package body Debugger.Jdb is
       Send_Signal (Get_Descriptor (Get_Process (Debugger)).all, 29);
       --  ??? SIGIO under linux
    end Send_Completed;
+
+   -----------------------
+   -- Enable_Breakpoint --
+   -----------------------
+
+   procedure Enable_Breakpoint
+     (Debugger : access Jdb_Debugger;
+      Num      : Integer;
+      Enable   : Boolean := True;
+      Display  : Boolean := False)
+   is
+   begin
+      null;
+      --  ??? Enabling/disabling breakpoints will have to be emulated in jdb
+   end Enable_Breakpoint;
+
+   -----------------------
+   -- Remove_Breakpoint --
+   -----------------------
+
+   procedure Remove_Breakpoint
+     (Debugger : access Jdb_Debugger;
+      Num      : Integer;
+      Display  : Boolean := False)
+   is
+   begin
+      null;
+   end Remove_Breakpoint;
 
 end Debugger.Jdb;

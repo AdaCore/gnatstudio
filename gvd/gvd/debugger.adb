@@ -261,7 +261,11 @@ package body Debugger is
             Context_Changed (Convert (Debugger.Window, Debugger));
          elsif Is_Execution_Command (Debugger, Cmd) then
             Process_Stopped (Convert (Debugger.Window, Debugger));
-         elsif Is_Break_Command (Debugger, Cmd) then
+
+         --  Should we update the list of breakpoints => No if we are in
+         --  an internal command, since that would be too costly
+         elsif Is_Break_Command (Debugger, Cmd)
+           and then not Is_Internal_Command (Get_Process (Debugger)) then
             Update_Breakpoints (Convert (Debugger.Window, Debugger));
          end if;
       end if;
@@ -290,5 +294,18 @@ package body Debugger is
    begin
       return Var;
    end Variable_Name_With_Frame;
+
+   ---------------------
+   -- List_Exceptions --
+   ---------------------
+
+   function List_Exceptions
+     (Debugger : access Debugger_Root)
+     return Odd.Types.Exception_Array
+   is
+      Arr : Exception_Array (1 .. 0);
+   begin
+      return Arr;
+   end List_Exceptions;
 
 end Debugger;

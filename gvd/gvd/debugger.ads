@@ -383,7 +383,8 @@ package Debugger is
    procedure Break_Subprogram
      (Debugger  : access Debugger_Root;
       Name      : String;
-      Temporary : Boolean := False) is abstract;
+      Temporary : Boolean := False;
+      Display   : Boolean := False) is abstract;
    --  Break at the beginning of a specific subprogram.
    --  If Temporary is True, then the breakpoint should be deleted
    --  automatically the first time it is hit.
@@ -393,7 +394,8 @@ package Debugger is
      (Debugger  : access Debugger_Root;
       File      : String;
       Line      : Positive;
-      Temporary : Boolean := False) is abstract;
+      Temporary : Boolean := False;
+      Display   : Boolean := False) is abstract;
    --  Break at a specific source location.
    --  If Temporary is True, then the breakpoint should be deleted
    --  automatically the first time it is hit.
@@ -402,7 +404,9 @@ package Debugger is
    procedure Break_Exception
      (Debugger  : access Debugger_Root;
       Name      : String  := "";
-      Unhandled : Boolean := False) is abstract;
+      Temporary : Boolean := False;
+      Unhandled : Boolean := False;
+      Display   : Boolean := False) is abstract;
    --  Break on an exception, if the debugger and the language recognize that
    --  feature.
    --  The breakpoint is set on a specific exception Name (or all exceptions
@@ -413,10 +417,54 @@ package Debugger is
    --  not break on a specific exception only when it is unhandled).
    --  GDB_COMMAND: "break exception"
 
+   procedure Break_Address
+     (Debugger   : access Debugger_Root;
+      Address    : String;
+      Temporary  : Boolean := False;
+      Display    : Boolean := False) is abstract;
+   --  Set a breakpoint at a specific address.
+
+   procedure Break_Regexp
+     (Debugger   : access Debugger_Root;
+      Regexp     : String;
+      Temporary  : Boolean := False;
+      Display    : Boolean := False) is abstract;
+   --  Set a breakpoint on all subprograms matching Regexp.
+   --  This function is emulated when the debugger does not support it
+   --  directly.
+
+   procedure Enable_Breakpoint
+     (Debugger : access Debugger_Root;
+      Num      : Integer;
+      Enable   : Boolean := True;
+      Display  : Boolean := False) is abstract;
+   --  Enable or disable the breakpoint number Num.
+   --  Num is always the number returned in the Num field of the
+   --  Breakpoint_Data record by List_Breakpoints.
+
+   procedure Remove_Breakpoint
+     (Debugger : access Debugger_Root;
+      Num      : Integer;
+      Display  : Boolean := False) is abstract;
+   --  Delete a breakpoint.
+   --  Num is always the number returned in the Num field of the
+   --  Breakpoint_Data record.
+
    function List_Breakpoints
      (Debugger  : access Debugger_Root)
      return Odd.Types.Breakpoint_Array is abstract;
    --  Return the list of breakpoints set in the current session.
+
+   ----------------
+   -- Exceptions --
+   ----------------
+
+   function List_Exceptions
+     (Debugger : access Debugger_Root)
+     return Odd.Types.Exception_Array;
+   --  Return the list of exceptions defined in the current session.
+   --  An empty array is returned no breakpoint can be set on exceptions (this
+   --  is the default behavior).
 
    --------------------
    -- Thread Support --

@@ -116,18 +116,45 @@ package Debugger.Jdb is
    procedure Break_Subprogram
      (Debugger  : access Jdb_Debugger;
       Name      : String;
-      Temporary : Boolean := False);
+      Temporary : Boolean := False;
+      Display   : Boolean := False);
 
    procedure Break_Source
      (Debugger  : access Jdb_Debugger;
       File      : String;
       Line      : Positive;
-      Temporary : Boolean := False);
+      Temporary : Boolean := False;
+      Display   : Boolean := False);
 
    procedure Break_Exception
      (Debugger  : access Jdb_Debugger;
       Name      : String  := "";
-      Unhandled : Boolean := False);
+      Temporary : Boolean := False;
+      Unhandled : Boolean := False;
+      Display   : Boolean := False);
+
+   procedure Break_Address
+     (Debugger   : access Jdb_Debugger;
+      Address    : String;
+      Temporary  : Boolean := False;
+      Display    : Boolean := False);
+
+   procedure Break_Regexp
+     (Debugger   : access Jdb_Debugger;
+      Regexp     : String;
+      Temporary  : Boolean := False;
+      Display    : Boolean := False);
+
+   procedure Enable_Breakpoint
+     (Debugger : access Jdb_Debugger;
+      Num      : Integer;
+      Enable   : Boolean := True;
+      Display  : Boolean := False);
+
+   procedure Remove_Breakpoint
+     (Debugger : access Jdb_Debugger;
+      Num      : Integer;
+      Display  : Boolean := False);
 
    procedure Finish
      (Debugger : access Jdb_Debugger;

@@ -132,18 +132,45 @@ package Debugger.Gdb is
    procedure Break_Subprogram
      (Debugger  : access Gdb_Debugger;
       Name      : String;
-      Temporary : Boolean := False);
+      Temporary : Boolean := False;
+      Display   : Boolean := False);
 
    procedure Break_Source
      (Debugger  : access Gdb_Debugger;
       File      : String;
       Line      : Positive;
-      Temporary : Boolean := False);
+      Temporary : Boolean := False;
+      Display   : Boolean := False);
 
    procedure Break_Exception
      (Debugger  : access Gdb_Debugger;
       Name      : String  := "";
-      Unhandled : Boolean := False);
+      Temporary : Boolean := False;
+      Unhandled : Boolean := False;
+      Display   : Boolean := False);
+
+   procedure Break_Address
+     (Debugger   : access Gdb_Debugger;
+      Address    : String;
+      Temporary  : Boolean := False;
+      Display    : Boolean := False);
+
+   procedure Break_Regexp
+     (Debugger   : access Gdb_Debugger;
+      Regexp     : String;
+      Temporary  : Boolean := False;
+      Display    : Boolean := False);
+
+   procedure Enable_Breakpoint
+     (Debugger : access Gdb_Debugger;
+      Num      : Integer;
+      Enable   : Boolean := True;
+      Display  : Boolean := False);
+
+   procedure Remove_Breakpoint
+     (Debugger : access Gdb_Debugger;
+      Num      : Integer;
+      Display  : Boolean := False);
 
    procedure Finish
      (Debugger : access Gdb_Debugger;
@@ -171,6 +198,10 @@ package Debugger.Gdb is
    function List_Breakpoints
      (Debugger  : access Gdb_Debugger)
      return Odd.Types.Breakpoint_Array;
+
+   function List_Exceptions
+     (Debugger : access Gdb_Debugger)
+     return Odd.Types.Exception_Array;
 
 private
 

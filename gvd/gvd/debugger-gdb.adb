@@ -89,8 +89,12 @@ package body Debugger.Gdb is
    --  Pattern to match a single line in "info breakpoint"
 
    File_Name_In_Breakpoint : constant Pattern_Matcher := Compile
-     ("at ([-\w._]+):(\d+)");
+     ("at ([-~\w._]+):(\d+)");
    --  How to find file names in the info given by "info breakpoint"
+
+   Exception_In_Breakpoint : constant Pattern_Matcher := Compile
+     ("on ([-\w_:]+)");
+   --  How to detect subprogram names in the info given by "info breakpoint"
 
    procedure Language_Filter
      (Descriptor : GNAT.Expect.Process_Descriptor;
@@ -632,10 +636,11 @@ package body Debugger.Gdb is
    begin
       return Is_Execution_Command (Debugger, Command)
         or else Looking_At (Command, Command'First, "break")
+        or else Looking_At (Command, Command'First, "tbreak")
+        or else Looking_At (Command, Command'First, "rbreak")
         or else Looking_At (Command, Command'First, "b ")
         or else Looking_At (Command, Command'First, "delete")
         or else Looking_At (Command, Command'First, "del ")
-        or else Looking_At (Command, Command'First, "tbreak")
         or else Looking_At (Command, Command'First, "disable")
         or else Looking_At (Command, Command'First, "enable");
    end Is_Break_Command;
@@ -741,12 +746,13 @@ package body Debugger.Gdb is
    procedure Break_Subprogram
      (Debugger  : access Gdb_Debugger;
       Name      : String;
-      Temporary : Boolean := False) is
+      Temporary : Boolean := False;
+      Display   : Boolean := False) is
    begin
       if Temporary then
-         Send (Debugger, "tbreak " & Name);
+         Send (Debugger, "tbreak " & Name, Display => Display);
       else
-         Send (Debugger, "break " & Name);
+         Send (Debugger, "break " & Name, Display => Display);
       end if;
    end Break_Subprogram;
 
@@ -758,18 +764,21 @@ package body Debugger.Gdb is
      (Debugger  : access Gdb_Debugger;
       File      : String;
       Line      : Positive;
-      Temporary : Boolean := False)
+      Temporary : Boolean := False;
+      Display   : Boolean := False)
    is
       Str : constant String := Positive'Image (Line);
    begin
       if Temporary then
          Send (Debugger,
                "tbreak " & Base_File_Name (File)
-               & ":" & Str (Str'First + 1 .. Str'Last));
+               & ":" & Str (Str'First + 1 .. Str'Last),
+               Display => Display);
       else
          Send (Debugger,
                "break " & Base_File_Name (File)
-               & ':' & Str (Str'First + 1 .. Str'Last));
+               & ':' & Str (Str'First + 1 .. Str'Last),
+               Display => Display);
       end if;
    end Break_Source;
 
@@ -780,11 +789,52 @@ package body Debugger.Gdb is
    procedure Break_Exception
      (Debugger  : access Gdb_Debugger;
       Name      : String  := "";
-      Unhandled : Boolean := False) is
+      Temporary : Boolean := False;
+      Unhandled : Boolean := False;
+      Display   : Boolean := False) is
    begin
-      Send (Debugger,
-            Break_Exception (Get_Language (Debugger), Name, Unhandled));
+      Send
+        (Debugger,
+         Break_Exception (Get_Language (Debugger), Name, Temporary, Unhandled),
+         Display => Display);
    end Break_Exception;
+
+   -------------------
+   -- Break_Address --
+   -------------------
+
+   procedure Break_Address
+     (Debugger   : access Gdb_Debugger;
+      Address    : String;
+      Temporary  : Boolean := False;
+      Display    : Boolean := False)
+   is
+   begin
+      if Temporary then
+         Send (Debugger, "tbreak *" & Address);
+      else
+         Send (Debugger, "break *" & Address);
+      end if;
+   end Break_Address;
+
+   ------------------
+   -- Break_Regexp --
+   ------------------
+
+   procedure Break_Regexp
+     (Debugger   : access Gdb_Debugger;
+      Regexp     : String;
+      Temporary  : Boolean := False;
+      Display    : Boolean := False)
+   is
+   begin
+      if Temporary then
+         raise Unknown_Command;
+         --  Error ("Temporary regexp breakpoints not supported");
+      else
+         Send (Debugger, "rbreak " & Regexp, Display => Display);
+      end if;
+   end Break_Regexp;
 
    ------------
    -- Finish --
@@ -1323,6 +1373,12 @@ package body Debugger.Gdb is
                        (Br (Num).Info (Matched (2).First .. Matched (2).Last));
                   end if;
 
+                  Match (Exception_In_Breakpoint, Br (Num).Info.all, Matched);
+                  if Matched (0) /= No_Match then
+                     Br (Num).Except := new String'
+                       (Br (Num).Info (Matched (1).First .. Matched (1).Last));
+                  end if;
+
                   Num := Num + 1;
 
                end if;
@@ -1332,6 +1388,37 @@ package body Debugger.Gdb is
          end;
       end;
    end List_Breakpoints;
+
+   -----------------------
+   -- Enable_Breakpoint --
+   -----------------------
+
+   procedure Enable_Breakpoint
+     (Debugger : access Gdb_Debugger;
+      Num      : Integer;
+      Enable   : Boolean := True;
+      Display  : Boolean := False)
+   is
+   begin
+      if Enable then
+         Send (Debugger, "enable " & Integer'Image (Num), Display => Display);
+      else
+         Send (Debugger, "disable " & Integer'Image (Num), Display => Display);
+      end if;
+   end Enable_Breakpoint;
+
+   -----------------------
+   -- Remove_Breakpoint --
+   -----------------------
+
+   procedure Remove_Breakpoint
+     (Debugger : access Gdb_Debugger;
+      Num      : Integer;
+      Display  : Boolean := False)
+   is
+   begin
+      Send (Debugger, "delete " & Integer'Image (Num), Display => Display);
+   end Remove_Breakpoint;
 
    ------------------------------
    -- Variable_Name_With_Frame --
@@ -1379,5 +1466,61 @@ package body Debugger.Gdb is
          return Var;
       end if;
    end Variable_Name_With_Frame;
+
+   ---------------------
+   -- List_Exceptions --
+   ---------------------
+
+   function List_Exceptions
+     (Debugger : access Gdb_Debugger)
+     return Odd.Types.Exception_Array
+   is
+   begin
+      Push_Internal_Command_Status (Get_Process (Debugger), True);
+      Send (Debugger, "info exceptions");
+      Pop_Internal_Command_Status (Get_Process (Debugger));
+
+      declare
+         S     : String := Expect_Out (Get_Process (Debugger));
+         Nums  : Natural := 0;
+      begin
+         --  Count the number of exceptions listed
+         for J in S'Range loop
+            if S (J) = ASCII.LF then
+               Nums := Nums + 1;
+            end if;
+         end loop;
+
+         --  Ignore the first line ("All defined exceptions")
+         Nums := Nums - 1;
+
+         declare
+            Arr : Exception_Array (1 .. Nums);
+            Index : Natural := S'First;
+            Num   : Natural := 1;
+            Start : Natural;
+         begin
+            if Nums <= 0 then
+               return Arr;
+            end if;
+
+            Skip_To_Char (S, Index, ASCII.LF);
+            Index := Index + 1;
+
+            while Index <= S'Last
+              and then Num <= Nums
+            loop
+               Start := Index;
+               Skip_To_Char (S, Index, ':');
+               Arr (Num).Name := new String'(S (Start .. Index - 1));
+               Skip_To_Char (S, Index, ASCII.LF);
+               Index := Index + 1;
+               Num := Num + 1;
+            end loop;
+
+            return Arr;
+         end;
+      end;
+   end List_Exceptions;
 
 end Debugger.Gdb;
