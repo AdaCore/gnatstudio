@@ -1584,6 +1584,7 @@ package body Src_Editor_Module is
                Set_Focus_Child (Child);
             end if;
 
+            Trace (Me, "Editor for " & File & " already exists");
             return Source_Box (Get_Widget (Child));
          end if;
       end if;
@@ -2589,7 +2590,7 @@ package body Src_Editor_Module is
                   Idle_Remove (The_Data.Location_Open_Id);
                end if;
 
-               if Line = 0 and then Column = 0 then
+               if Line = 0 then
                   No_Location := True;
                end if;
 
@@ -2598,7 +2599,7 @@ package body Src_Editor_Module is
                Source := Open_File
                  (Kernel, File,
                   Create_New => New_File,
-                  Focus      => Get_Focus and then not No_Location);
+                  Focus      => Get_Focus);
 
                --  Only grab again the focus on Child (in Location_Callback)
                --  if the focus was changed by Open_File, and an interactive
@@ -2615,6 +2616,8 @@ package body Src_Editor_Module is
                if Edit /= null
                  and then not No_Location
                then
+                  Trace (Me, "Setup editor for going to line,col="
+                         & Line'Img & Column'Img);
                   --  For some reason, we can not directly call
                   --  Set_Cursor_Location, since the source editor won't be
                   --  scrolled the first time the editor is displayed. Doing
