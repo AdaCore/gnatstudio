@@ -2162,6 +2162,10 @@ package body Gtkada.MDI is
       elsif Child.MDI.Menu /= null and then Title /= "" then
          Create_Menu_Entry (Child);
       end if;
+
+      if Get_Window (Child) /= Null_Window then
+         Draw_Child (Child, Full_Area);
+      end if;
    end Set_Title;
 
    --------------------
