@@ -178,8 +178,8 @@ private
    end record;
    --  Since Value can be a multiple-line string, and we want to consider each
    --  line separately as far as highlighting is concerned, we in fact insert
-   --  a special character at the beginning of each line to indicate whether the
-   --  line should be highlighted or not.
+   --  a special character at the beginning of each line to indicate whether
+   --  the line should be highlighted or not.
 
    procedure Print (Value : Debugger_Output_Type; Indent : Natural := 0);
    procedure Clone_Dispatching
