@@ -330,6 +330,15 @@ package body Glide_Kernel.Preferences is
       Register_Property
         (Kernel.Preferences, Param_Spec (Block_Folding), -"Editor");
 
+      Automatic_Syntax_Check := Param_Spec_Boolean (Gnew_Boolean
+        (Name    => "Src-Editor-Automatic-Syntax-Check",
+         Default => True,
+         Blurb   =>
+           -"Enable/Disable automatic syntax check",
+         Nick    => -"Automatic syntax check"));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (Automatic_Syntax_Check), -"Editor");
+
       Speed_Column_Policy := Param_Spec_Enum
         (Speed_Column_Policy_Properties.Gnew_Enum
            (Name    => "Src-Editor-Speed-Column-Policy",
