@@ -41,6 +41,20 @@ package body Main_Debug_Window_Pkg.Callbacks is
 
    use Gtk.Arguments;
 
+   function Idle_Exit (Window : GVD_Main_Window) return Boolean;
+   --  Idle function called to finish handling of exiting.
+
+   ---------------
+   -- Idle_Exit --
+   ---------------
+
+   function Idle_Exit (Window : GVD_Main_Window) return Boolean is
+   begin
+      Cleanup_Debuggers (Window);
+      Main_Quit;
+      return False;
+   end Idle_Exit;
+
    ---------------------------------------
    -- On_Main_Debug_Window_Delete_Event --
    ---------------------------------------
@@ -50,7 +64,10 @@ package body Main_Debug_Window_Pkg.Callbacks is
       Params : Gtk.Arguments.Gtk_Args) return Boolean
    is
       pragma Unreferenced (Params);
+
       --  Arg1 : Gdk_Event := To_Event (Params, 1);
+      Id : Idle_Handler_Id;
+
    begin
       --  Ref the object since we will destroy it in the main procedure.
 
@@ -58,8 +75,8 @@ package body Main_Debug_Window_Pkg.Callbacks is
       Save_Window_Settings
         (GVD_Main_Window (Object).Home_Dir.all &
          Directory_Separator & "window_settings", Gtk_Widget (Object));
-      Cleanup_Debuggers (GVD_Main_Window (Object));
-      Main_Quit;
+      Prepare_Cleanup_Debuggers (GVD_Main_Window (Object));
+      Id := Main_Window_Idle.Add (Idle_Exit'Access, GVD_Main_Window (Object));
 
       return False;
    end On_Main_Debug_Window_Delete_Event;
