@@ -21,6 +21,7 @@
 with Gtk; use Gtk;
 with Gtk.Enums; use Gtk.Enums;
 with Gtk.Main;
+with Gtk.Menu_Item; use Gtk.Menu_Item;
 with Gtk.Rc;
 with Glide_Page;
 with Glide_Menu;
@@ -64,6 +65,7 @@ procedure Glide2 is
    subtype String_Access is GNAT.OS_Lib.String_Access;
 
    Directory_Separator : constant Character := GNAT.OS_Lib.Directory_Separator;
+
    Glide          : Glide_Window;
    Page           : Glide_Page.Glide_Page;
    Directory      : Dir_Type;
@@ -214,6 +216,56 @@ begin
    Glide_Page.Gtk_New (Page, Glide);
    Initialize_All_Modules (Glide.Kernel);
 
+   --  Temporarily disable unimplemented menu items
+
+   declare
+      File     : constant String := '/' & (-"File") & '/';
+      Edit     : constant String := '/' & (-"Edit") & '/';
+      Navigate : constant String := '/' & (-"Navigate") & '/';
+      Project  : constant String := '/' & (-"Project") & '/';
+      Tools    : constant String := '/' & (-"Tools") & '/';
+
+   begin
+      Set_Sensitive (Find_Menu_Item (Glide.Kernel, File & (-"Print")), False);
+      Set_Sensitive (Find_Menu_Item
+        (Glide.Kernel, File & (-"Close All")), False);
+
+      Set_Sensitive (Find_Menu_Item
+        (Glide.Kernel, Edit & (-"Preferences")), False);
+      Set_Sensitive (Find_Menu_Item (Glide.Kernel, Edit & (-"Undo")), False);
+      Set_Sensitive (Find_Menu_Item (Glide.Kernel, Edit & (-"Redo")), False);
+
+      Set_Sensitive (Find_Menu_Item
+        (Glide.Kernel, Navigate & (-"Goto Line...")), False);
+      Set_Sensitive (Find_Menu_Item
+        (Glide.Kernel, Navigate & (-"Goto Body")), False);
+      Set_Sensitive (Find_Menu_Item
+        (Glide.Kernel, Navigate & (-"Goto File Spec<->Body")), False);
+      Set_Sensitive (Find_Menu_Item
+        (Glide.Kernel, Navigate & (-"Goto Previous Reference")), False);
+      Set_Sensitive (Find_Menu_Item
+        (Glide.Kernel, Navigate & (-"Goto Parent Unit")), False);
+      Set_Sensitive (Find_Menu_Item
+        (Glide.Kernel, Navigate & (-"List References")), False);
+      Set_Sensitive (Find_Menu_Item
+        (Glide.Kernel, Navigate & (-"Start Of Statement")), False);
+      Set_Sensitive (Find_Menu_Item
+        (Glide.Kernel, Navigate & (-"End Of Statement")), False);
+      Set_Sensitive (Find_Menu_Item
+        (Glide.Kernel, Navigate & (-"Next Procedure")), False);
+      Set_Sensitive (Find_Menu_Item
+        (Glide.Kernel, Navigate & (-"Previous Procedure")), False);
+
+      Set_Sensitive (Find_Menu_Item
+        (Glide.Kernel, Project & (-"Generate API doc")), False);
+      Set_Sensitive (Find_Menu_Item
+        (Glide.Kernel, Tools & (-"Code Fixing")), False);
+      Set_Sensitive (Find_Menu_Item
+        (Glide.Kernel, Tools & (-"Profile")), False);
+      Set_Sensitive (Find_Menu_Item
+        (Glide.Kernel, Tools & (-"Memory Analyzer")), False);
+   end;
+
    for J in 1 .. Argument_Count loop
       if File_Extension (Argument (J)) = Project_File_Extension then
          Load_Project (Glide.Kernel, Argument (J));
@@ -242,6 +294,11 @@ begin
       end loop;
    end if;
 
+   --  Call Show_All before displaying the help so that the help window will
+   --  have the focus.
+
+   Show_All (Glide);
+
    if not File_Opened then
       Open_Html
         (Glide.Kernel,
@@ -249,6 +306,5 @@ begin
       Maximize_Children (Get_MDI (Glide.Kernel));
    end if;
 
-   Show_All (Glide);
    Gtk.Main.Main;
 end Glide2;
