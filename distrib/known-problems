@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 2.0.1
 
+- D603-013 %pp in custom files incorrect expanded on Windows
+  Problem:    If you use %pp in custome files on Windows, the backslashes
+              are incorrectly quoted, and will be removed when the command is
+              executed, resulting in an invalid file name
+  Workaround: use  """%pp """ instead to be safe
+
 - Initial selection in File View is not always the current directory
   Problem:    The directory initialy selected in the File View is not the
               current directory. Getting to the latter might require expanding
