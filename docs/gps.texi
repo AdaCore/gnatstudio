@@ -5033,6 +5033,10 @@ Display the annotations for the file, i.e. the information for each
 line of the file showing the revision corresponding to that file, and
 additional information depending on the VCS system.
 
+When using CVS, the annotations are clickable. Left-clicking on an
+annotation line will query and display the changelog associated to the
+specific revision for this line.
+
 @item Remove annotations
 Remove the annotations from the selected file.
 
