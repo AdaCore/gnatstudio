@@ -1,6 +1,18 @@
 Known Problems fixed in GPS 1.4.0
 
-- CA27-001  Bad indentation of 'exit when' inside a case statement
+- CA27-013 Wrong gnatmake command used when building current file
+  Problem:    When using Build->Make->Current File, the command 'gnatmake'
+              is always used, even if another command has been specified
+              in the project.
+  Workaround: Add the file in the list of main sources and use the
+              corresponding Build->Make entry.
+
+- Project file not saved automatically when building
+  Problem:    When using the preference General->Auto save, the project file
+              is not saved when calling external tools (e.g. builder).
+  Workaround: Save the project file explicitely.
+
+- CA27-001 Bad indentation of 'exit when' inside a case statement
   Problem:    The source editor will wrongly indent code containing
               'exit when' construct inside a case statement.
   Workaround: Indent the line by hand.
@@ -14,7 +26,7 @@ Known Problems fixed in GPS 1.4.0
 - CA15-004 GPS crash when doing xref in Ada unit containing separate
   Problem:    A memory corruption occurs when doing cross-references on a
               unit which has separates. This can result in a GPS crash.
-  Workaround: None known
+  Workaround: Use child units instead of separates.
 
 - CA08-005 Searching file names in explorer fails for extended projects
   Problem:    If you are looking for a specific file name in the project
@@ -25,7 +37,7 @@ Known Problems fixed in GPS 1.4.0
 - CA02-013 Unexpected crashes under Windows.
   Problem:    GPS sometimes crashes unexpectedly under windows. This is most
               likely to happen after compiling files several times.
-  Workaround: None known
+  Workaround: Regularly quitting and relaunching GPS will avoid this issue.
 
 - Cross-reference fail with Ada units overriden in extending projects (C825-005)
   Problem:    If you have a unit overriden in an extending project with a
