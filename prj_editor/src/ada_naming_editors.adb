@@ -40,8 +40,6 @@ with Naming_Scheme_Editor_Pkg; use Naming_Scheme_Editor_Pkg;
 with GUI_Utils;                use GUI_Utils;
 with Glide_Intl;               use Glide_Intl;
 with Prj_API;                  use Prj_API;
-with Glide_Kernel;             use Glide_Kernel;
-with Glide_Kernel.Project;     use Glide_Kernel.Project;
 with GNAT.OS_Lib;              use GNAT.OS_Lib;
 with Basic_Types;              use Basic_Types;
 
@@ -194,14 +192,12 @@ package body Ada_Naming_Editors is
 
    function Create_Project_Entry
      (Editor  : access Ada_Naming_Editor_Record;
-      Kernel  : access Kernel_Handle_Record'Class;
       Project : Prj.Tree.Project_Node_Id;
       Project_View : Prj.Project_Id;
-      Ignore_Scenario : Boolean) return Boolean
+      Scenario_Variables : Prj_API.Project_Node_Array) return Boolean
    is
       Num_Rows : constant Gint := Get_Rows (Editor.Exception_List);
       Naming   : constant String := Get_Name_String (Name_Naming);
-      Scenar   : Project_Node_Array_Access;
       Changed  : Boolean := False;
       Ada_Scheme : constant Boolean :=
         Get_Index_In_List (Editor.Standard_Scheme) = 0;
@@ -237,14 +233,14 @@ package body Ada_Naming_Editors is
                Delete_Attribute
                  (Project            => Project,
                   Pkg_Name           => Naming,
-                  Scenario_Variables => Scenar.all,
+                  Scenario_Variables => Scenario_Variables,
                   Attribute_Name     => Get_Name_String (Name),
                   Attribute_Index    => Index);
             else
                Update_Attribute_Value_In_Scenario
                  (Project            => Project,
                   Pkg_Name           => Naming,
-                  Scenario_Variables => Scenar.all,
+                  Scenario_Variables => Scenario_Variables,
                   Attribute_Name     => Get_Name_String (Name),
                   Value              => Value,
                   Attribute_Index    => Index);
@@ -332,12 +328,6 @@ package body Ada_Naming_Editors is
       end List_Changed;
 
    begin
-      if Ignore_Scenario then
-         Scenar := new Project_Node_Array (1 .. 0);
-      else
-         Scenar := new Project_Node_Array ' (Scenario_Variables (Kernel));
-      end if;
-
       Update_If_Required
         (Name_Specification_Suffix,
          Get_Text (Get_Entry (Editor.Spec_Extension)), Ada_String);
@@ -356,13 +346,13 @@ package body Ada_Naming_Editors is
       Delete_Attribute
         (Project            => Project,
          Pkg_Name           => Naming,
-         Scenario_Variables => Scenar.all,
+         Scenario_Variables => Scenario_Variables,
          Attribute_Name     => Get_Name_String (Name_Specification),
          Attribute_Index    => Any_Attribute);
       Delete_Attribute
         (Project            => Project,
          Pkg_Name           => Naming,
-         Scenario_Variables => Scenar.all,
+         Scenario_Variables => Scenario_Variables,
          Attribute_Name     => Get_Name_String (Name_Implementation),
          Attribute_Index    => Any_Attribute);
 
@@ -386,7 +376,7 @@ package body Ada_Naming_Editors is
                   Update_Attribute_Value_In_Scenario
                     (Project            => Project,
                      Pkg_Name           => Naming,
-                     Scenario_Variables => Scenar.all,
+                     Scenario_Variables => Scenario_Variables,
                      Attribute_Name    => Get_Name_String (Name_Specification),
                      Value              => Spec,
                      Attribute_Index    => U);
@@ -395,7 +385,7 @@ package body Ada_Naming_Editors is
                   Update_Attribute_Value_In_Scenario
                     (Project            => Project,
                      Pkg_Name           => Naming,
-                     Scenario_Variables => Scenar.all,
+                     Scenario_Variables => Scenario_Variables,
                      Attribute_Name   => Get_Name_String (Name_Implementation),
                      Value              => Bod,
                      Attribute_Index    => U);
@@ -403,8 +393,6 @@ package body Ada_Naming_Editors is
             end;
          end loop;
       end if;
-
-      Free (Scenar);
 
       return Changed;
    end Create_Project_Entry;

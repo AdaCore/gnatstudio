@@ -22,7 +22,6 @@ with Ada_Naming_Editors;      use Ada_Naming_Editors;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Basic_Types;             use Basic_Types;
 with Foreign_Naming_Editors;  use Foreign_Naming_Editors;
-with Glide_Kernel;            use Glide_Kernel;
 with GNAT.OS_Lib;             use GNAT.OS_Lib;
 with Gtk.Label;               use Gtk.Label;
 with Gtk.Notebook;            use Gtk.Notebook;
@@ -202,10 +201,9 @@ package body Naming_Editors is
 
    function Create_Project_Entry
      (Editor          : access Naming_Editor_Record;
-      Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
       Project         : Prj.Tree.Project_Node_Id;
       Project_View    : Prj.Project_Id;
-      Ignore_Scenario : Boolean := False) return Boolean
+      Scenario_Variables : Prj_API.Project_Node_Array) return Boolean
    is
       Changed : Boolean := False;
    begin
@@ -219,14 +217,14 @@ package body Naming_Editors is
            and then Visible_Is_Set (Editor.Pages (P).Ada_Naming)
          then
             Changed := Changed or Create_Project_Entry
-              (Editor.Pages (P).Ada_Naming, Kernel,
-               Project, Project_View, Ignore_Scenario);
+              (Editor.Pages (P).Ada_Naming,
+               Project, Project_View, Scenario_Variables);
          elsif Editor.Pages (P).Foreign_Naming /= null
            and then Visible_Is_Set (Editor.Pages (P).Foreign_Naming)
          then
             Changed := Changed or Create_Project_Entry
-              (Editor.Pages (P).Foreign_Naming, Kernel, Project,
-               Project_View, Ignore_Scenario);
+              (Editor.Pages (P).Foreign_Naming, Project,
+               Project_View, Scenario_Variables);
          end if;
       end loop;
 

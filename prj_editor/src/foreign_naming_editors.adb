@@ -23,8 +23,6 @@ with Foreign_Naming_Scheme_Editor_Pkg; use Foreign_Naming_Scheme_Editor_Pkg;
 with GNAT.OS_Lib;                      use GNAT.OS_Lib;
 with Glib;                             use Glib;
 with Glide_Intl;                       use Glide_Intl;
-with Glide_Kernel.Project;             use Glide_Kernel.Project;
-with Glide_Kernel;                     use Glide_Kernel;
 with Gtk.Box;                          use Gtk.Box;
 with Gtk.Clist;                        use Gtk.Clist;
 with Gtk.Combo;                        use Gtk.Combo;
@@ -81,25 +79,17 @@ package body Foreign_Naming_Editors is
 
    function Create_Project_Entry
      (Editor  : access Foreign_Naming_Editor_Record;
-      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
       Project : Prj.Tree.Project_Node_Id;
       Project_View : Prj.Project_Id;
-      Ignore_Scenario : Boolean) return Boolean
+      Scenario_Variables : Prj_API.Project_Node_Array) return Boolean
    is
       Naming   : constant String := Get_Name_String (Name_Naming);
       Lang     : constant String := Get_Name_String (Editor.Language);
       Num_Rows : constant Gint := Get_Rows (Editor.Exception_List);
       Bodies   : Argument_List (1 .. Integer (Num_Rows));
       Changed  : Boolean := False;
-      Scenar   : Project_Node_Array_Access;
 
    begin
-      if Ignore_Scenario then
-         Scenar := new Project_Node_Array (1 .. 0);
-      else
-         Scenar := new Project_Node_Array ' (Scenario_Variables (Kernel));
-      end if;
-
       for J in 0 .. Num_Rows - 1 loop
          Bodies (Integer (J + 1)) := new String'
            (Get_Text (Editor.Exception_List, J, 0));
@@ -126,7 +116,7 @@ package body Foreign_Naming_Editors is
             Update_Attribute_Value_In_Scenario
               (Project           => Project,
                Pkg_Name          => Naming,
-               Scenario_Variables => Scenar.all,
+               Scenario_Variables => Scenario_Variables,
                Attribute_Name    =>
                  Get_Name_String (Name_Implementation_Exceptions),
                Values            => Bodies,
@@ -135,7 +125,7 @@ package body Foreign_Naming_Editors is
             Delete_Attribute
               (Project            => Project,
                Pkg_Name           => Naming,
-               Scenario_Variables => Scenar.all,
+               Scenario_Variables => Scenario_Variables,
                Attribute_Name     =>
                  Get_Name_String (Name_Implementation_Exceptions),
                Attribute_Index    => Lang);
@@ -154,7 +144,7 @@ package body Foreign_Naming_Editors is
          Update_Attribute_Value_In_Scenario
            (Project            => Project,
             Pkg_Name           => Naming,
-            Scenario_Variables => Scenar.all,
+            Scenario_Variables => Scenario_Variables,
             Attribute_Name     => Get_Name_String (Name_Specification_Suffix),
             Value  => Get_Text (Get_Entry (Editor.Header_File_Extension)),
             Attribute_Index    => Lang);
@@ -172,14 +162,13 @@ package body Foreign_Naming_Editors is
          Update_Attribute_Value_In_Scenario
            (Project            => Project,
             Pkg_Name           => Naming,
-            Scenario_Variables => Scenar.all,
+            Scenario_Variables => Scenario_Variables,
             Attribute_Name     => Get_Name_String (Name_Implementation_Suffix),
             Value    => Get_Text (Get_Entry (Editor.Implementation_Extension)),
             Attribute_Index    => Lang);
          Changed := True;
       end if;
 
-      Free (Scenar);
       Free (Bodies);
 
       return Changed;
