@@ -118,11 +118,6 @@ package body Src_Editor_Module is
    --  Save the current editor to Name, or its associated filename if Name is
    --  null.
 
-   function Get_Editor_Filename
-     (Kernel : access Kernel_Handle_Record'Class) return String;
-   --  Return the filename of the last editor window that had the focus,
-   --  "" if none.
-
    function Open_File
      (Kernel     : access Kernel_Handle_Record'Class;
       File       : String := "";
@@ -853,22 +848,6 @@ package body Src_Editor_Module is
       end;
    end Save_To_File;
 
-   -------------------------
-   -- Get_Editor_Filename --
-   -------------------------
-
-   function Get_Editor_Filename
-     (Kernel : access Kernel_Handle_Record'Class) return String
-   is
-      Source : constant Source_Editor_Box := Find_Current_Editor (Kernel);
-   begin
-      if Source = null then
-         return "";
-      else
-         return Get_Filename (Source);
-      end if;
-   end Get_Editor_Filename;
-
    ------------------
    -- On_Open_File --
    ------------------
@@ -1166,11 +1145,10 @@ package body Src_Editor_Module is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
       pragma Unreferenced (Widget);
-
-      Source : constant Source_Editor_Box := Find_Current_Editor (Kernel);
+      Editor : constant Source_Editor_Box := Find_Current_Editor (Kernel);
 
    begin
-      if Source = null then
+      if Editor = null then
          return;
       end if;
 
@@ -1184,7 +1162,7 @@ package body Src_Editor_Module is
             return;
          end if;
 
-         Set_Cursor_Location (Source, Positive'Value (Str));
+         Set_Cursor_Location (Editor, Positive'Value (Str));
 
       exception
          when Constraint_Error =>
@@ -1206,6 +1184,10 @@ package body Src_Editor_Module is
       pragma Unreferenced (Widget);
       Editor : constant Source_Editor_Box := Find_Current_Editor (Kernel);
    begin
+      if Editor = null then
+         return;
+      end if;
+
       Goto_Declaration_Or_Body
         (Kernel,
          To_Body => False,
@@ -1228,6 +1210,10 @@ package body Src_Editor_Module is
       pragma Unreferenced (Widget);
       Editor : constant Source_Editor_Box := Find_Current_Editor (Kernel);
    begin
+      if Editor = null then
+         return;
+      end if;
+
       Goto_Declaration_Or_Body
         (Kernel, To_Body => True,
          Editor => Editor,
@@ -1266,17 +1252,53 @@ package body Src_Editor_Module is
    is
       pragma Unreferenced (Widget);
 
-      Success : Boolean;
-      Title   : constant String := Get_Editor_Filename (Kernel);
-      Args    : Argument_List (1 .. 2);
+      Context : constant Selection_Context_Access :=
+        Get_Current_Context (Kernel);
 
    begin
-      if Title /= "" then
-         --  ??? Should check language first
-         Args (1) := new String' (Title);
-         Args (2) := new String' (Dir_Name (Title));
+      if Context = null
+        or else not (Context.all in File_Selection_Context'Class)
+      then
+         Console.Insert
+           (Kernel, -"No file selected, cannot generate body.", Mode => Error);
+         return;
+      end if;
+
+      declare
+         File_Context : constant File_Selection_Context_Access :=
+           File_Selection_Context_Access (Context);
+         Filename     : constant String := File_Information (File_Context);
+         File         : constant String :=
+           Directory_Information (File_Context) & Filename;
+         Success      : Boolean;
+         Args         : Argument_List (1 .. 2);
+         Lang         : String := Get_Language_From_File
+           (Get_Language_Handler (Kernel), File);
+
+      begin
+         if File = "" then
+            Console.Insert
+              (Kernel, -"No file name, cannot generate body.", Mode => Error);
+            return;
+         end if;
+
+         Lower_Case (Lang);
+
+         if Lang /= "ada" then
+            Console.Insert
+              (Kernel, -"Pretty printing of non Ada file not yet supported.",
+               Mode => Error);
+            return;
+         end if;
+
+         if Save_All_MDI_Children (Kernel, Force => False) = False then
+            return;
+         end if;
+
+         Args (1) := new String' (File);
+         Args (2) := new String' (Dir_Name (File));
          Launch_Process
-           (Kernel, "gnatstub", Args, Generate_Body_Cb'Access, Title, Success);
+           (Kernel, "gnatstub", Args, Generate_Body_Cb'Access, File, Success);
          Free (Args);
 
          if Success then
@@ -1284,7 +1306,7 @@ package body Src_Editor_Module is
               (Glide_Window (Get_Main_Window (Kernel)).Statusbar,
                Help, -"Generating body...");
          end if;
-      end if;
+      end;
 
    exception
       when E : others =>
@@ -1560,6 +1582,7 @@ package body Src_Editor_Module is
       Open_File_Editor
         (Get_Kernel (Context),
          Directory_Information (File) & File_Information (File));
+
    exception
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
@@ -1577,6 +1600,7 @@ package body Src_Editor_Module is
       pragma Unreferenced (Object);
       File  : File_Selection_Context_Access;
       Mitem : Gtk_Menu_Item;
+
    begin
       if Context.all in File_Selection_Context'Class then
          File := File_Selection_Context_Access (Context);
@@ -1626,19 +1650,19 @@ package body Src_Editor_Module is
    procedure Register_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
-      File        : constant String := '/' & (-"File") & '/';
-      Save        : constant String := File & (-"Save...") & '/';
-      Edit        : constant String := '/' & (-"Edit") & '/';
-      Navigate    : constant String := '/' & (-"Navigate") & '/';
-      Mitem       : Gtk_Menu_Item;
-      Button      : Gtk_Button;
-      Toolbar     : constant Gtk_Toolbar := Get_Toolbar (Kernel);
-      Undo_Redo   : Undo_Redo_Information;
-      Reopen_File_Name : constant String
-        := Format_Pathname (Get_Home_Dir (Kernel) & "/recent_files");
-      Reopen_File : File_Type;
-      Buffer      : String (1 .. 1024);
-      Last        : Integer := 1;
+      File             : constant String := '/' & (-"File") & '/';
+      Save             : constant String := File & (-"Save...") & '/';
+      Edit             : constant String := '/' & (-"Edit") & '/';
+      Navigate         : constant String := '/' & (-"Navigate") & '/';
+      Mitem            : Gtk_Menu_Item;
+      Button           : Gtk_Button;
+      Toolbar          : constant Gtk_Toolbar := Get_Toolbar (Kernel);
+      Undo_Redo        : Undo_Redo_Information;
+      Reopen_File_Name : constant String :=
+        Format_Pathname (Get_Home_Dir (Kernel) & "/recent_files");
+      Reopen_File      : File_Type;
+      Buffer           : String (1 .. 1024);
+      Last             : Integer := 1;
 
    begin
       Src_Editor_Module_Id := new Source_Editor_Module_Record;
@@ -1851,9 +1875,9 @@ package body Src_Editor_Module is
 
       elsif Id.Source_Lines_Revealed_Id /= No_Handler then
          Gtk.Handlers.Disconnect
-           (Kernel,  Id.Source_Lines_Revealed_Id);
+           (Kernel, Id.Source_Lines_Revealed_Id);
          Gtk.Handlers.Disconnect
-           (Kernel,  Id.File_Edited_Id);
+           (Kernel, Id.File_Edited_Id);
          Id.Source_Lines_Revealed_Id := No_Handler;
          Id.File_Edited_Id := No_Handler;
       end if;
