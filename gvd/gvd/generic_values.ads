@@ -23,6 +23,7 @@ with Glib;
 with Gdk.Pixmap;
 with Gdk.GC;
 with Gdk.Font;
+with Language;
 
 package Generic_Values is
 
@@ -59,10 +60,11 @@ package Generic_Values is
    --  Indent is the indentation level.
    --  This function is intended for debug purposes only.
 
-   procedure Clear_Value (Item : in out Generic_Type) is abstract;
-   --  Clear the value, and free the memory that was allocated for it.
-   --  This also clears all the children or components of Value.
-   --  However, this does not destroy the type description.
+   procedure Free (Item : access Generic_Type;
+                   Only_Value : Boolean := False) is abstract;
+   --  Free the memory occupied by Item and its components.
+   --  if Only_Value is True, then only clear the value fields, but keep alive
+   --  the structure that describes the type.
 
    function Clone (Item : Generic_Type) return Generic_Type_Access is abstract;
    --  Deep copy Item, and return a newly allocated record.
@@ -97,11 +99,52 @@ package Generic_Values is
    function Get_Height (Item : Generic_Type) return Glib.Gint;
    --  Return the height that Item needs to display itself on the screen.
 
+   procedure Set_Visibility (Item    : in out Generic_Type;
+                             Visible : Boolean);
+   --  Whether the item should be visible or not.
+   --  This function also applies to components of complex items.
+
+   function Get_Visibility (Item : Generic_Type) return Boolean;
+   --  Return the visibility state of an item.
+
    procedure Propagate_Width (Item  : in out Generic_Type;
                               Width : Glib.Gint);
    --  Set a specific width for the item.
    --  This width is propagated, with appropriate modifications, to the
    --  children of Item.
+
+   function Get_Component_Name (Item : access Generic_Type;
+                                Lang : access Language.Language_Root'Class;
+                                Name : String;
+                                X, Y : Glib.Gint)
+                               return String is abstract;
+   --  Return a string that described the fields at coordinates (X, Y).
+   --  (X, Y) must be relative to the upper-left corner of item.
+   --
+   --  For instance, clicking on a record field of an an array might return
+   --  something like (for the Ada language):  "Name (3, 2).Field"
+   --  The resulting string can be used as is by a debugger that understands
+   --  Lang.
+   --  Note also that only visible fields are returned, and that the selected
+   --  field is not necessarily the innermost one (if you click for instance
+   --  in a record box, outside of any field, then the record itself is
+   --  returned).
+   --
+   --  Name is the name of item iself, in case we need to add a suffix to it.
+
+   function Get_Component (Item : access Generic_Type;
+                           X, Y : Glib.Gint)
+                          return Generic_Type_Access is abstract;
+   --  As above, but return the component itself.
+
+   procedure Set_Selected (Item     : access Generic_Type;
+                           Selected : Boolean := True);
+   --  Set the selected status of item.
+   --  If Selected if False, then all the children are also unselected.
+   --  The item is not redrawn.
+
+   function Get_Selected (Item : access Generic_Type) return Boolean;
+   --  Return the selected status of Item.
 
    -----------------
    -- Simple_Type --
@@ -385,17 +428,22 @@ private
    type Generic_Type is abstract tagged record
       Width, Height : Glib.Gint := 0;
       --  These two fields are allocated by calls to Size_Request
-   end record;
-   procedure Free is new Unchecked_Deallocation
-     (Generic_Type'Class, Generic_Type_Access);
 
+      Visible : Boolean := True;
+      --  Whether the item's contents is shown or hidden. Note that some
+      --  types (Simple_Type'Class) can not be hidden.
+
+      Selected : Boolean := False;
+      --  Whether the item is selected.
+   end record;
 
    type Simple_Type is new Generic_Type with record
       Value : String_Access := null;
       --  The value, as displayed by the debugger
    end record;
    procedure Print (Value : Simple_Type; Indent : Natural := 0);
-   procedure Clear_Value (Value : in out Simple_Type);
+   procedure Free (Item : access Simple_Type;
+                   Only_Value : Boolean := False);
    function Clone (Value : Simple_Type) return Generic_Type_Access;
    procedure Paint (Item    : Simple_Type;
                     GC      : Gdk.GC.Gdk_GC;
@@ -405,6 +453,14 @@ private
                     X, Y    : Glib.Gint := 0);
    procedure Size_Request (Item   : in out Simple_Type;
                            Font   : Gdk.Font.Gdk_Font);
+   function Get_Component_Name (Item : access Simple_Type;
+                                Lang : access Language.Language_Root'Class;
+                                Name : String;
+                                X, Y : Glib.Gint)
+                               return String;
+   function Get_Component (Item : access Simple_Type;
+                           X, Y : Glib.Gint)
+                          return Generic_Type_Access;
 
 
    type Range_Type is new Simple_Type with record
@@ -412,7 +468,7 @@ private
    end record;
    procedure Print (Value : Range_Type; Indent : Natural := 0);
    function Clone (Value : Range_Type) return Generic_Type_Access;
-   --  Clear_Value is inherited from Simple_Type.
+   --  Free is inherited from Simple_Type.
 
 
    type Mod_Type is new Simple_Type with record
@@ -420,13 +476,13 @@ private
    end record;
    procedure Print (Value : Mod_Type; Indent : Natural := 0);
    function Clone (Value : Mod_Type) return Generic_Type_Access;
-   --  Clear_Value is inherited from Simple_Type.
+   --  Free is inherited from Simple_Type.
 
 
    type Access_Type is new Simple_Type with null record;
    procedure Print (Value : Access_Type; Indent : Natural := 0);
    function Clone (Value : Access_Type) return Generic_Type_Access;
-   --  Clear_Value is inherited from Simple_Type.
+   --  Free is inherited from Simple_Type.
    procedure Paint (Item    : Access_Type;
                     GC      : Gdk.GC.Gdk_GC;
                     Xref_Gc : Gdk.GC.Gdk_GC;
@@ -438,7 +494,7 @@ private
    type Enum_Type is new Simple_Type with null record;
    procedure Print (Value : Enum_Type; Indent : Natural := 0);
    function Clone (Value : Enum_Type) return Generic_Type_Access;
-   --  Clear_Value is inherited from Simple_Type.
+   --  Free is inherited from Simple_Type.
 
 
    --  The structure for arrays is slightly complex, since we need to be able
@@ -475,7 +531,8 @@ private
    --  array is empty.
 
    procedure Print (Value : Array_Type; Indent : Natural := 0);
-   procedure Clear_Value (Value : in out Array_Type);
+   procedure Free (Item : access Array_Type;
+                   Only_Value : Boolean := False);
    function Clone (Value : Array_Type) return Generic_Type_Access;
    procedure Paint (Item    : Array_Type;
                     GC      : Gdk.GC.Gdk_GC;
@@ -485,6 +542,16 @@ private
                     X, Y    : Glib.Gint := 0);
    procedure Size_Request (Item   : in out Array_Type;
                            Font   : Gdk.Font.Gdk_Font);
+   function Get_Component_Name (Item : access Array_Type;
+                                Lang : access Language.Language_Root'Class;
+                                Name : String;
+                                X, Y : Glib.Gint)
+                               return String;
+   function Get_Component (Item : access Array_Type;
+                           X, Y : Glib.Gint)
+                          return Generic_Type_Access;
+   procedure Set_Selected (Item     : access Array_Type;
+                           Selected : Boolean := True);
 
    ------------
    -- Repeat --
@@ -499,7 +566,8 @@ private
    type Repeat_Type_Access is access all Repeat_Type'Class;
 
    procedure Print (Value : Repeat_Type; Indent : Natural := 0);
-   procedure Clear_Value (Value : in out Repeat_Type);
+   procedure Free (Item : access Repeat_Type;
+                   Only_Value : Boolean := False);
    function Clone (Value : Repeat_Type) return Generic_Type_Access;
 
    procedure Paint (Item    : Repeat_Type;
@@ -511,6 +579,16 @@ private
 
    procedure Size_Request (Item   : in out Repeat_Type;
                            Font   : Gdk.Font.Gdk_Font);
+   function Get_Component_Name (Item : access Repeat_Type;
+                                Lang : access Language.Language_Root'Class;
+                                Name : String;
+                                X, Y : Glib.Gint)
+                               return String;
+   function Get_Component (Item : access Repeat_Type;
+                           X, Y : Glib.Gint)
+                          return Generic_Type_Access;
+   procedure Set_Selected (Item     : access Repeat_Type;
+                           Selected : Boolean := True);
 
    -----------------
    -- Record Type --
@@ -548,7 +626,8 @@ private
      (Record_Type_Array, Record_Type_Array_Access);
 
    procedure Print (Value : Record_Type; Indent : Natural := 0);
-   procedure Clear_Value (Value : in out Record_Type);
+   procedure Free (Item : access Record_Type;
+                   Only_Value : Boolean := False);
    function Clone (Value : Record_Type) return Generic_Type_Access;
    procedure Paint (Item    : Record_Type;
                     GC      : Gdk.GC.Gdk_GC;
@@ -558,12 +637,22 @@ private
                     X, Y    : Glib.Gint := 0);
    procedure Size_Request (Item   : in out Record_Type;
                            Font   : Gdk.Font.Gdk_Font);
+   function Get_Component_Name (Item : access Record_Type;
+                                Lang : access Language.Language_Root'Class;
+                                Name : String;
+                                X, Y : Glib.Gint)
+                               return String;
+   function Get_Component (Item : access Record_Type;
+                           X, Y : Glib.Gint)
+                          return Generic_Type_Access;
+   procedure Set_Selected (Item     : access Record_Type;
+                           Selected : Boolean := True);
 
    type Union_Type (Num_Fields : Natural) is new Record_Type (Num_Fields)
      with null record;
    procedure Print (Value : Union_Type; Indent : Natural := 0);
    function Clone (Value : Union_Type) return Generic_Type_Access;
-   --  Clear_Value is inherited from Record_Type.
+   --  Free is inherited from Record_Type.
 
 
 
@@ -574,7 +663,8 @@ private
       Child     : Record_Type_Access;
    end record;
    procedure Print (Value : Class_Type; Indent : Natural := 0);
-   procedure Clear_Value (Value : in out Class_Type);
+   procedure Free (Item : access Class_Type;
+                   Only_Value : Boolean := False);
    function Clone (Value : Class_Type) return Generic_Type_Access;
    procedure Paint (Item    : Class_Type;
                     GC      : Gdk.GC.Gdk_GC;
@@ -584,5 +674,14 @@ private
                     X, Y    : Glib.Gint := 0);
    procedure Size_Request (Item   : in out Class_Type;
                            Font   : Gdk.Font.Gdk_Font);
-
+   function Get_Component_Name (Item : access Class_Type;
+                                Lang : access Language.Language_Root'Class;
+                                Name : String;
+                                X, Y : Glib.Gint)
+                               return String;
+   function Get_Component (Item : access Class_Type;
+                           X, Y : Glib.Gint)
+                          return Generic_Type_Access;
+   procedure Set_Selected (Item     : access Class_Type;
+                           Selected : Boolean := True);
 end Generic_Values;

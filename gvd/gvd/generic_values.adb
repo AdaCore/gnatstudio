@@ -24,17 +24,28 @@ with Ada.Tags; use Ada.Tags;
 with Glib;         use Glib;
 with Gdk.Font;     use Gdk.Font;
 with Gdk.Drawable; use Gdk.Drawable;
+with Gdk.GC;       use Gdk.GC;
+with Gdk.Types;    use Gdk.Types;
+with Language;     use Language;
+with Unchecked_Deallocation;
 
 package body Generic_Values is
 
    Line_Spacing : constant Gint := 1;
-   --  Space between line in the display of items in a pixmap.
+   --  Space between lines in the display of items in a pixmap.
    --  This is the extra space added between two lines of an array or two
    --  fields of a record
 
    Border_Spacing : constant Gint := 2;
-   --  Space between the rectangel and the item on each side, for complex
-   --  items
+   --  Space between the rectangle and the item on each side, for complex
+   --  items.
+
+   Left_Border : constant Gint := 5;
+   --  Space of the column on the left of records and arrays, where the user
+   --  can click to select the whole array or record.
+
+   Hidden_Text : constant String := "<Hidden>";
+   --  Text displayed when an item is hidden.
 
    function Index_String (Item    : Array_Type;
                           Index   : Long_Integer;
@@ -42,6 +53,9 @@ package body Generic_Values is
                          return String;
    --  Return the string indicating the coordinates in the array, for the
    --  element at Index.
+
+   procedure Free_Internal is new Unchecked_Deallocation
+     (Generic_Type'Class, Generic_Type_Access);
 
    ------------------
    -- Index_String --
@@ -54,13 +68,23 @@ package body Generic_Values is
    is
       Length : constant Long_Integer := Item.Dimensions (Dim_Num).Last
         - Item.Dimensions (Dim_Num).First + 1;
-      Dim : constant String := Long_Integer'Image
-        (Index mod Length + Item.Dimensions (Dim_Num).First);
    begin
-      if Dim_Num /= 1 then
-         return Index_String (Item, Index / Length, Dim_Num - 1) & " x" & Dim;
+      --  Do we have an array with no element ?
+      if Length <= 0 then
+         return "??";
+
       else
-         return Dim;
+         declare
+            Dim : constant String := Long_Integer'Image
+              (Index mod Length + Item.Dimensions (Dim_Num).First);
+         begin
+            if Dim_Num /= 1 then
+               return Index_String (Item, Index / Length, Dim_Num - 1)
+                 & "," & Dim;
+            else
+               return Dim;
+            end if;
+         end;
       end if;
    end Index_String;
 
@@ -81,6 +105,26 @@ package body Generic_Values is
    begin
       return Item.Height;
    end Get_Height;
+
+   --------------------
+   -- Set_Visibility --
+   --------------------
+
+   procedure Set_Visibility (Item    : in out Generic_Type;
+                             Visible : Boolean)
+   is
+   begin
+      Item.Visible := Visible;
+   end Set_Visibility;
+
+   --------------------
+   -- Get_Visibility --
+   --------------------
+
+   function Get_Visibility (Item : Generic_Type) return Boolean is
+   begin
+      return Item.Visible;
+   end Get_Visibility;
 
    ---------------------
    -- New_Simple_Type --
@@ -120,11 +164,13 @@ package body Generic_Values is
                            return Generic_Type_Access
    is
    begin
-      return new Range_Type'(Value => null,
-                             Min   => Min,
-                             Max   => Max,
-                             Width => 0,
-                             Height => 0);
+      return new Range_Type'(Value    => null,
+                             Visible  => True,
+                             Selected => False,
+                             Min      => Min,
+                             Max      => Max,
+                             Width    => 0,
+                             Height   => 0);
    end New_Range_Type;
 
    ------------------
@@ -133,10 +179,12 @@ package body Generic_Values is
 
    function New_Mod_Type (Modulo : Long_Integer) return Generic_Type_Access is
    begin
-      return new Mod_Type'(Value  => null,
-                           Modulo => Modulo,
-                           Width  => 0,
-                           Height => 0);
+      return new Mod_Type'(Value    => null,
+                           Modulo   => Modulo,
+                           Visible  => True,
+                           Selected => True,
+                           Width    => 0,
+                           Height   => 0);
    end New_Mod_Type;
 
    ---------------------
@@ -250,7 +298,7 @@ package body Generic_Values is
       end if;
 
       if Item.Values (Item.Last_Value).Value /= null then
-         Free (Item.Values (Item.Last_Value).Value);
+         Free (Item.Values (Item.Last_Value).Value, Only_Value => False);
       end if;
       if Repeat_Num = 1 then
          Item.Values (Item.Last_Value) :=
@@ -262,6 +310,8 @@ package body Generic_Values is
                        Value => new Repeat_Type'
                          (Repeat_Num => Repeat_Num,
                           Value      => Generic_Type_Access (Elem_Value),
+                          Visible    => True,
+                          Selected   => True,
                           Width      => 0,
                           Height     => 0));
       end if;
@@ -336,7 +386,7 @@ package body Generic_Values is
    is
    begin
       if Item.Fields (Index).Value /= null then
-         Free (Item.Fields (Index).Value);
+         Free (Item.Fields (Index).Value, Only_Value => False);
       end if;
       if Item.Fields (Index).Variant_Part /= null then
          Free (Item.Fields (Index).Variant_Part);
@@ -430,7 +480,9 @@ package body Generic_Values is
    begin
       for J in Item.Fields'Range loop
          if Item.Fields (J).Name.all = Field then
-            Free (Item.Fields (J).Value);
+            if Item.Fields (J).Value /= null then
+               Free (Item.Fields (J).Value, Only_Value => False);
+            end if;
             Item.Fields (J).Value := Generic_Type_Access (Value);
          end if;
       end loop;
@@ -445,7 +497,9 @@ package body Generic_Values is
                         Field : Positive)
    is
    begin
-      Free (Item.Fields (Field).Value);
+      if Item.Fields (Field).Value /= null then
+         Free (Item.Fields (Field).Value, Only_Value => False);
+      end if;
       Item.Fields (Field).Value := Generic_Type_Access (Value);
    end Set_Value;
 
@@ -762,69 +816,105 @@ package body Generic_Values is
       Put ("}");
    end Print;
 
-   -----------------
-   -- Clear_Value --
-   -----------------
+   ----------
+   -- Free --
+   ----------
 
-   procedure Clear_Value (Value : in out Simple_Type) is
+   procedure Free (Item : access Simple_Type;
+                   Only_Value : Boolean := False)
+   is
+      I : Generic_Type_Access := Generic_Type_Access (Item);
    begin
-      Free (Value.Value);
-   end Clear_Value;
+      Free (Item.Value);
+      if not Only_Value then
+         Free_Internal (I);
+      end if;
+   end Free;
 
-   -----------------
-   -- Clear_Value --
-   -----------------
+   ----------
+   -- Free --
+   ----------
 
-   procedure Clear_Value (Value : in out Array_Type) is
+   procedure Free (Item : access Array_Type;
+                   Only_Value : Boolean := False)
+   is
+      I : Generic_Type_Access := Generic_Type_Access (Item);
    begin
-      if Value.Values /= null then
-         for J in 1 .. Value.Last_Value loop
-            Clear_Value (Value.Values (J).Value.all);
+      if Item.Values /= null then
+         for J in 1 .. Item.Last_Value loop
+            Free (Item.Values (J).Value, Only_Value);
          end loop;
-         Free (Value.Values);
+         Free (Item.Values);
       end if;
-   end Clear_Value;
-
-   -----------------
-   -- Clear_Value --
-   -----------------
-
-   procedure Clear_Value (Value : in out Repeat_Type) is
-   begin
-      if Value.Value /= null then
-         Clear_Value (Value.Value.all);
+      if not Only_Value then
+         Free (Item.Item_Type, Only_Value);
+         Free_Internal (I);
       end if;
-   end Clear_Value;
+   end Free;
 
-   -----------------
-   -- Clear_Value --
-   -----------------
+   ----------
+   -- Free --
+   ----------
 
-   procedure Clear_Value (Value : in out Record_Type) is
+   procedure Free (Item : access Repeat_Type;
+                   Only_Value : Boolean := False)
+   is
+      I : Generic_Type_Access := Generic_Type_Access (Item);
    begin
-      for J in Value.Fields'Range loop
-         if Value.Fields (J).Value /= null then
-            Clear_Value (Value.Fields (J).Value.all);
-            if Value.Fields (J).Variant_Part /= null then
-               for V in Value.Fields (J).Variant_Part'Range loop
-                  Clear_Value (Value.Fields (J).Variant_Part (V).all);
+      if Item.Value /= null then
+         Free (Item.Value, Only_Value);
+      end if;
+      if not Only_Value then
+         Free_Internal (I);
+      end if;
+   end Free;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Item : access Record_Type;
+                   Only_Value : Boolean := False)
+   is
+      I : Generic_Type_Access := Generic_Type_Access (Item);
+   begin
+      for J in Item.Fields'Range loop
+         if Item.Fields (J).Value /= null then
+            Free (Item.Fields (J).Value, Only_Value);
+            if Item.Fields (J).Variant_Part /= null then
+               for V in Item.Fields (J).Variant_Part'Range loop
+                  Free (Item.Fields (J).Variant_Part (V),
+                        Only_Value);
                end loop;
+            end if;
+            if not Only_Value then
+               Free (Item.Fields (J).Name);
+               Free (Item.Fields (J).Variant_Part);
             end if;
          end if;
       end loop;
-   end Clear_Value;
+      if not Only_Value then
+         Free_Internal (I);
+      end if;
+   end Free;
 
-   -----------------
-   -- Clear_Value --
-   -----------------
+   ----------
+   -- Free --
+   ----------
 
-   procedure Clear_Value (Value : in out Class_Type) is
+   procedure Free (Item : access Class_Type;
+                   Only_Value : Boolean := False)
+   is
+      I : Generic_Type_Access := Generic_Type_Access (Item);
    begin
-      for A in Value.Ancestors'Range loop
-         Clear_Value (Value.Ancestors (A).all);
+      for A in Item.Ancestors'Range loop
+         Free (Item.Ancestors (A), Only_Value);
       end loop;
-      Clear_Value (Value.Child.all);
-   end Clear_Value;
+      Free (Item.Child, Only_Value);
+      if not Only_Value then
+         Free_Internal (I);
+      end if;
+   end Free;
 
    -----------
    -- Clone --
@@ -986,12 +1076,27 @@ package body Generic_Values is
                     X, Y    : Gint := 0)
    is
    begin
+      if Item.Selected then
+        Draw_Rectangle (Pixmap,
+                        GC,
+                        Filled => True,
+                        X      => X,
+                        Y      => Y,
+                        Width  => Item.Width,
+                        Height => Item.Height);
+        Set_Function (GC, Copy_Invert);
+      end if;
+
       Draw_Text (Pixmap,
                  Font => Font,
                  GC   => GC,
                  X    => X,
                  Y    => Y + Get_Ascent (Font),
                  Text => Item.Value.all);
+
+      if Item.Selected then
+         Set_Function (GC, Copy);
+      end if;
    end Paint;
 
    -----------
@@ -1006,12 +1111,27 @@ package body Generic_Values is
                     X, Y    : Glib.Gint := 0)
    is
    begin
+      if Item.Selected then
+        Draw_Rectangle (Pixmap,
+                        GC,
+                        Filled => True,
+                        X      => X,
+                        Y      => Y,
+                        Width  => Item.Width,
+                        Height => Item.Height);
+        Set_Function (GC, Copy_Invert);
+      end if;
+
       Draw_Text (Pixmap,
                  Font => Font,
                  GC   => Xref_Gc,
                  X    => X,
                  Y    => Y + Get_Ascent (Font),
                  Text => Item.Value.all);
+
+      if Item.Selected then
+        Set_Function (GC, Copy);
+      end if;
    end Paint;
 
    -----------
@@ -1027,15 +1147,36 @@ package body Generic_Values is
    is
       Current_Y : Gint := Y + Border_Spacing;
       Arrow_Pos : constant Gint := X + Border_Spacing + Item.Index_Width
-        - Text_Width (Font, String'(" => "));
+        +Left_Border - Text_Width (Font, String'(" => "));
    begin
+      if not Item.Visible then
+         Draw_Text (Pixmap,
+                    Font => Font,
+                    GC   => GC,
+                    X    => X + Left_Border,
+                    Y    => Current_Y + Get_Ascent (Font),
+                    Text => Hidden_Text);
+         return;
+      end if;
+
+      if Item.Selected then
+        Draw_Rectangle (Pixmap,
+                        GC,
+                        Filled => True,
+                        X      => X,
+                        Y      => Y,
+                        Width  => Item.Width,
+                        Height => Item.Height);
+        Set_Function (GC, Copy_Invert);
+      end if;
+
       if Item.Values /= null then
          for V in Item.Values'Range loop
 
             Draw_Text (Pixmap,
                        Font => Font,
                        GC   => GC,
-                       X    => X + Border_Spacing,
+                       X    => X + Left_Border + Border_Spacing,
                        Y    => Current_Y + Get_Ascent (Font),
                        Text => Index_String (Item,
                                              Item.Values (V).Index,
@@ -1047,7 +1188,8 @@ package body Generic_Values is
                        Y    => Current_Y + Get_Ascent (Font),
                        Text => " => ");
             Paint (Item.Values (V).Value.all, GC, Xref_Gc, Font, Pixmap,
-                   X + Border_Spacing + Item.Index_Width, Current_Y);
+                   X + Left_Border + Border_Spacing + Item.Index_Width,
+                   Current_Y);
             Current_Y :=
               Current_Y + Item.Values (V).Value.Height + Line_Spacing;
          end loop;
@@ -1061,6 +1203,10 @@ package body Generic_Values is
                       Y      => Y,
                       Width  => Item.Width - 1,
                       Height => Item.Height - 1);
+
+      if Item.Selected then
+         Set_Function (GC, Copy);
+      end if;
    end Paint;
 
    -----------
@@ -1076,15 +1222,36 @@ package body Generic_Values is
    is
       Current_Y : Gint := Y + Border_Spacing;
       Arrow_Pos : constant Gint :=
-        X + Border_Spacing + Item.Gui_Fields_Width -
+        X + Left_Border + Border_Spacing + Item.Gui_Fields_Width -
         Text_Width (Font, String'(" => "));
    begin
+      if not Item.Visible then
+         Draw_Text (Pixmap,
+                    Font => Font,
+                    GC   => GC,
+                    X    => X + Left_Border,
+                    Y    => Current_Y + Get_Ascent (Font),
+                    Text => Hidden_Text);
+         return;
+      end if;
+
+      if Item.Selected then
+        Draw_Rectangle (Pixmap,
+                        GC,
+                        Filled => True,
+                        X      => X,
+                        Y      => Y,
+                        Width  => Item.Width,
+                        Height => Item.Height);
+        Set_Function (GC, Copy_Invert);
+      end if;
+
       for F in Item.Fields'Range loop
 
          Draw_Text (Pixmap,
                     Font => Font,
                     GC   => GC,
-                    X    => X + Border_Spacing,
+                    X    => X + Left_Border + Border_Spacing,
                     Y    => Current_Y + Get_Ascent (Font),
                     Text => Item.Fields (F).Name.all);
          Draw_Text (Pixmap,
@@ -1098,7 +1265,8 @@ package body Generic_Values is
 
          if Item.Fields (F).Value /= null then
             Paint (Item.Fields (F).Value.all, GC, Xref_Gc, Font, Pixmap,
-                   X + Border_Spacing + Item.Gui_Fields_Width, Current_Y);
+                   X + Left_Border + Border_Spacing + Item.Gui_Fields_Width,
+                   Current_Y);
             Current_Y :=
               Current_Y + Item.Fields (F).Value.Height + Line_Spacing;
          end if;
@@ -1108,7 +1276,8 @@ package body Generic_Values is
          if Item.Fields (F).Variant_Part /= null then
             for V in Item.Fields (F).Variant_Part'Range loop
                Paint (Item.Fields (F).Variant_Part (V).all, GC, Xref_Gc, Font,
-                      Pixmap, X + Border_Spacing + Item.Gui_Fields_Width,
+                      Pixmap,
+                      X + Left_Border + Border_Spacing + Item.Gui_Fields_Width,
                       Current_Y);
                Current_Y := Current_Y +
                  Item.Fields (F).Variant_Part (V).Height + Line_Spacing;
@@ -1124,6 +1293,10 @@ package body Generic_Values is
                       Y      => Y,
                       Width  => Item.Width - 1,
                       Height => Item.Height - 1);
+
+      if Item.Selected then
+        Set_Function (GC, Copy);
+      end if;
    end Paint;
 
    -----------
@@ -1139,6 +1312,17 @@ package body Generic_Values is
    is
       Str : String := "<repeat " & Integer'Image (Item.Repeat_Num) & "> ";
    begin
+      if Item.Selected then
+        Draw_Rectangle (Pixmap,
+                        GC,
+                        Filled => True,
+                        X      => X,
+                        Y      => Y,
+                        Width  => Item.Width,
+                        Height => Item.Height);
+        Set_Function (GC, Copy_Invert);
+      end if;
+
       Draw_Text (Pixmap,
                  Font => Font,
                  GC   => GC,
@@ -1157,6 +1341,10 @@ package body Generic_Values is
                       Y      => Y,
                       Width  => Item.Width - 1,
                       Height => Item.Height - 1);
+
+      if Item.Selected then
+        Set_Function (GC, Copy);
+      end if;
    end Paint;
 
    -----------
@@ -1170,26 +1358,44 @@ package body Generic_Values is
                     Pixmap  : Gdk.Pixmap.Gdk_Pixmap;
                     X, Y    : Glib.Gint := 0)
    is
-      Current_Y : Gint := Y + Border_Spacing;
+      Current_Y : Gint := Y;
    begin
+      if not Item.Visible then
+         Draw_Text (Pixmap,
+                    Font => Font,
+                    GC   => GC,
+                    X    => X,
+                    Y    => Current_Y + Get_Ascent (Font),
+                    Text => Hidden_Text);
+         return;
+      end if;
+
+      if Item.Selected then
+        Draw_Rectangle (Pixmap,
+                        GC,
+                        Filled => True,
+                        X      => X,
+                        Y      => Y,
+                        Width  => Item.Width,
+                        Height => Item.Height);
+        Set_Function (GC, Copy_Invert);
+      end if;
+
       for A in Item.Ancestors'Range loop
          if Item.Ancestors (A) /= null then
+            --  Do not add Left_Border to X, since each of the ancestor is
+            --  itself a Class_Type and will already draw it.
             Paint (Item.Ancestors (A).all, GC, Xref_Gc, Font, Pixmap,
-                   X + Border_Spacing, Current_Y);
+                   X, Current_Y);
             Current_Y := Current_Y + Item.Ancestors (A).Height + Line_Spacing;
          end if;
       end loop;
       Paint (Item.Child.all, GC, Xref_Gc, Font, Pixmap,
-             X + Border_Spacing, Current_Y);
+             X + Left_Border, Current_Y);
 
-      --  Draw a border
-      Draw_Rectangle (Pixmap,
-                      GC,
-                      Filled => False,
-                      X      => X,
-                      Y      => Y,
-                      Width  => Item.Width - 1,
-                      Height => Item.Height - 1);
+      if Item.Selected then
+        Set_Function (GC, Copy);
+      end if;
    end Paint;
 
    ------------------
@@ -1217,6 +1423,14 @@ package body Generic_Values is
    is
       Total_Height, Total_Width : Gint := 0;
    begin
+      if not Item.Visible then
+         Item.Width := Left_Border + 2 * Border_Spacing +
+           Text_Width (Font, Hidden_Text);
+         Item.Height := 2 * Border_Spacing
+           + Get_Ascent (Font) + Get_Descent (Font);
+         return;
+      end if;
+
       Item.Index_Width := 20;  --  minimal width
       if Item.Values /= null then
          for V in Item.Values'Range loop
@@ -1239,7 +1453,8 @@ package body Generic_Values is
 
       --  Keep enough space for the border (Border_Spacing on each side)
 
-      Item.Width  := Total_Width + Item.Index_Width + 2 * Border_Spacing;
+      Item.Width  := Total_Width + Item.Index_Width + Left_Border
+        + 2 * Border_Spacing;
       Item.Height := Total_Height + 2 * Border_Spacing;
    end Size_Request;
 
@@ -1251,9 +1466,16 @@ package body Generic_Values is
                            Font   : Gdk.Font.Gdk_Font)
    is
       Total_Height, Total_Width : Gint := 0;
-      Largest_Name : String_Access;
-
+      Largest_Name : String_Access := null;
    begin
+      if not Item.Visible then
+         Item.Width := Left_Border + 2 * Border_Spacing +
+           Text_Width (Font, Hidden_Text);
+         Item.Height := 2 * Border_Spacing
+           + Get_Ascent (Font) + Get_Descent (Font);
+         return;
+      end if;
+
       for F in Item.Fields'Range loop
          if Largest_Name = null
            or else Item.Fields (F).Name.all'Length > Largest_Name'Length
@@ -1269,7 +1491,7 @@ package body Generic_Values is
             Total_Width  :=
               Gint'Max (Total_Width, Item.Fields (F).Value.Width);
             Total_Height :=
-              Total_Height + Item.Fields (F).Value.Height + Line_Spacing;
+              Total_Height + Item.Fields (F).Value.Height;
          end if;
 
          --  a variant part ?
@@ -1278,14 +1500,14 @@ package body Generic_Values is
             for V in Item.Fields (F).Variant_Part'Range loop
                Size_Request (Item.Fields (F).Variant_Part (V).all, Font);
 
-               --  Since we will draw a border, keep some space on the right.
                Total_Width  := Gint'Max
                  (Total_Width,
-                  Item.Fields (F).Variant_Part (V).Width + 2);
+                  Item.Fields (F).Variant_Part (V).Width);
                Total_Height := Total_Height
-                 + Item.Fields (F).Variant_Part (V).Height
-                 + Line_Spacing;
+                 + Item.Fields (F).Variant_Part (V).Height;
             end loop;
+            Total_Height := Total_Height +
+              (Item.Fields (F).Variant_Part'Length - 1) * Line_Spacing;
          end if;
       end loop;
 
@@ -1296,7 +1518,8 @@ package body Generic_Values is
       end if;
 
       --  Keep enough space for the border (Border_Spacing on each side)
-      Item.Width  := Total_Width + Item.Gui_Fields_Width + 2 * Border_Spacing;
+      Item.Width  := Total_Width + Item.Gui_Fields_Width + Left_Border
+        + 2 * Border_Spacing;
       Item.Height := Total_Height + 2 * Border_Spacing;
    end Size_Request;
 
@@ -1326,21 +1549,32 @@ package body Generic_Values is
    is
       Total_Height, Total_Width : Gint := 0;
    begin
+      if not Item.Visible then
+         Item.Width := Left_Border + 2 * Border_Spacing +
+           Text_Width (Font, Hidden_Text);
+         Item.Height := 2 * Border_Spacing
+           + Get_Ascent (Font) + Get_Descent (Font);
+         return;
+      end if;
+
       for A in Item.Ancestors'Range loop
          if Item.Ancestors (A) /= null then
             Size_Request (Item.Ancestors (A).all, Font);
-            Total_Height := Total_Height + Item.Ancestors (A).Width;
-            Total_Width := Gint'Max (Total_Width, Item.Ancestors (A).Height);
+            Total_Height := Total_Height + Item.Ancestors (A).Height
+              + Line_Spacing;
+            Total_Width := Gint'Max (Total_Width, Item.Ancestors (A).Width);
          end if;
       end loop;
 
       Size_Request (Item.Child.all, Font);
 
-      Total_Width := Gint'Max (Total_Width, Item.Child.Width);
+      Total_Width := Gint'Max (Total_Width, Item.Child.Width) + Left_Border;
       Item.Child.Width := Total_Width;
 
-      Item.Width  := Total_Width + 2 * Border_Spacing;
-      Item.Height := Total_Height + Item.Child.Height + 2 * Border_Spacing;
+      --  Dont print an extra border around, since each ancestors and child are
+      --  records and already have their own borders.
+      Item.Width  := Total_Width;
+      Item.Height := Total_Height + Item.Child.Height;
    end Size_Request;
 
    ---------------------
@@ -1361,10 +1595,11 @@ package body Generic_Values is
    procedure Propagate_Width (Item  : in out Array_Type;
                               Width : Glib.Gint)
    is
-      W : constant Gint := Width - Item.Index_Width - 2 * Border_Spacing;
+      W : constant Gint := Width - Item.Index_Width - 2 * Border_Spacing
+        - Left_Border;
    begin
       Item.Width := Width;
-      if Item.Values /= null then
+      if Item.Visible and then Item.Values /= null then
          for V in Item.Values'Range loop
             Propagate_Width (Item.Values (V).Value.all, W);
          end loop;
@@ -1378,18 +1613,21 @@ package body Generic_Values is
    procedure Propagate_Width (Item  : in out Record_Type;
                               Width : Glib.Gint)
    is
-      W : constant Gint := Width - Item.Gui_Fields_Width - 2 * Border_Spacing;
+      W : constant Gint := Width - Item.Gui_Fields_Width - 2 * Border_Spacing
+        - Left_Border;
    begin
       Item.Width := Width;
-      for F in Item.Fields'Range loop
-         if Item.Fields (F).Value /= null then
-            Propagate_Width (Item.Fields (F).Value.all, W);
-         else
-            for V in Item.Fields (F).Variant_Part'Range loop
-               Propagate_Width (Item.Fields (F).Variant_Part (V).all, W);
-            end loop;
-         end if;
-      end loop;
+      if Item.Visible then
+         for F in Item.Fields'Range loop
+            if Item.Fields (F).Value /= null then
+               Propagate_Width (Item.Fields (F).Value.all, W);
+            else
+               for V in Item.Fields (F).Variant_Part'Range loop
+                  Propagate_Width (Item.Fields (F).Variant_Part (V).all, W);
+               end loop;
+            end if;
+         end loop;
+      end if;
    end Propagate_Width;
 
    ---------------------
@@ -1399,13 +1637,412 @@ package body Generic_Values is
    procedure Propagate_Width (Item  : in out Class_Type;
                               Width : Glib.Gint)
    is
-      W : constant Gint := Width - 2 * Border_Spacing;
    begin
       Item.Width := Width;
-      for A in Item.Ancestors'Range loop
-         Propagate_Width (Item.Ancestors (A).all, W);
-      end loop;
-      Propagate_Width (Item.Child.all, W);
+      if Item.Visible then
+         for A in Item.Ancestors'Range loop
+            Propagate_Width (Item.Ancestors (A).all, Width);
+         end loop;
+         Propagate_Width (Item.Child.all, Width - Left_Border);
+      end if;
    end Propagate_Width;
+
+   ------------------------
+   -- Get_Component_Name --
+   ------------------------
+
+   function Get_Component_Name (Item : access Simple_Type;
+                                Lang : access Language_Root'Class;
+                                Name : String;
+                                X, Y : Glib.Gint)
+                               return String
+   is
+   begin
+      return Name;
+   end Get_Component_Name;
+
+   -------------------
+   -- Get_Component --
+   -------------------
+
+   function Get_Component (Item : access Simple_Type;
+                           X, Y : Glib.Gint)
+                          return Generic_Type_Access
+   is
+   begin
+      return Generic_Type_Access (Item);
+   end Get_Component;
+
+   ------------------------
+   -- Get_Component_Name --
+   ------------------------
+
+   function Get_Component_Name (Item : access Array_Type;
+                                Lang : access Language_Root'Class;
+                                Name : String;
+                                X, Y : Glib.Gint)
+                               return String
+   is
+      Total_Height : Gint := Border_Spacing;
+      Tmp_Height   : Gint;
+      Field_Name_Start : constant Gint := Left_Border + Border_Spacing;
+      Field_Start  : constant Gint := Field_Name_Start + Item.Index_Width;
+   begin
+      if not Item.Visible then
+         return Name;
+      end if;
+
+      --  Click in the left column ? => Select the whole item
+
+      if X < Field_Name_Start
+        or else Item.Values = null
+        or else Item.Values'Length = 1
+      then
+         return Name;
+      end if;
+
+      --  Else, find the relevant item
+
+      for V in Item.Values'Range loop
+         Tmp_Height := Total_Height + Item.Values (V).Value.Height
+           + Line_Spacing;
+         if Y <= Tmp_Height then
+
+            declare
+               Item_Name : constant String :=
+                 Array_Item_Name
+                 (Lang, Name, Index_String
+                  (Item.all, Item.Values (V).Index, Item.Num_Dimensions));
+            begin
+
+               --  ??? Should be able to get a range of values (ie all the
+               --  values that are displayed in a single box).
+
+               if X < Field_Start then
+                  return Item_Name;
+               end if;
+
+               return Get_Component_Name
+                 (Item.Values (V).Value, Lang, Item_Name,
+                  X - Field_Start, Y - Total_Height);
+            end;
+         end if;
+         Total_Height := Tmp_Height;
+      end loop;
+
+      return Name;
+   end Get_Component_Name;
+
+   -------------------
+   -- Get_Component --
+   -------------------
+
+   function Get_Component (Item : access Array_Type;
+                           X, Y : Glib.Gint)
+                          return Generic_Type_Access
+   is
+      Total_Height : Gint := Border_Spacing;
+      Tmp_Height   : Gint;
+      Field_Name_Start : constant Gint := Left_Border + Border_Spacing;
+      Field_Start  : constant Gint := Field_Name_Start + Item.Index_Width;
+   begin
+      if not Item.Visible then
+         return Generic_Type_Access (Item);
+      end if;
+
+      --  Click in the left column ? => Select the whole item
+
+      if X < Field_Name_Start
+        or else Item.Values = null
+      then
+         return Generic_Type_Access (Item);
+      end if;
+
+      --  Else, find the relevant item
+
+      for V in Item.Values'Range loop
+         Tmp_Height := Total_Height + Item.Values (V).Value.Height
+           + Line_Spacing;
+         if Y <= Tmp_Height then
+            if X < Field_Start then
+               return Generic_Type_Access (Item);
+            end if;
+
+            return Get_Component (Item.Values (V).Value,
+                                  X - Field_Start,
+                                  Y - Total_Height);
+         end if;
+         Total_Height := Tmp_Height;
+      end loop;
+
+      return Generic_Type_Access (Item);
+   end Get_Component;
+
+   ------------------------
+   -- Get_Component_Name --
+   ------------------------
+
+   function Get_Component_Name (Item : access Record_Type;
+                                Lang : access Language_Root'Class;
+                                Name : String;
+                                X, Y : Glib.Gint)
+                               return String
+   is
+      Total_Height : Gint := Border_Spacing;
+      Tmp_Height   : Gint;
+      Field_Name_Start : constant Gint := Left_Border + Border_Spacing;
+      Field_Start  : constant Gint := Field_Name_Start + Item.Gui_Fields_Width;
+   begin
+      if not Item.Visible then
+         return Name;
+      end if;
+
+      --  Click in the left column ? => Select the whole item
+
+      if X < Field_Name_Start then
+         return Name;
+      end if;
+
+      --  Else, find the relevant item
+
+      for F in Item.Fields'Range loop
+         Tmp_Height := Total_Height + Item.Fields (F).Value.Height
+           + Line_Spacing;
+         if Y <= Tmp_Height then
+            declare
+               Field_Name : constant String :=
+                 Record_Field_Name (Lang, Name, Item.Fields (F).Name.all);
+            begin
+               if X < Field_Start then
+                  return Field_Name;
+               end if;
+
+               return Get_Component_Name
+                 (Item.Fields (F).Value, Lang, Field_Name,
+                  X - Field_Start, Y - Total_Height);
+            end;
+         end if;
+         Total_Height := Tmp_Height;
+      end loop;
+
+      return Name;
+   end Get_Component_Name;
+
+   -------------------
+   -- Get_Component --
+   -------------------
+
+   function Get_Component (Item : access Record_Type;
+                           X, Y : Glib.Gint)
+                          return Generic_Type_Access
+   is
+      Total_Height : Gint := Border_Spacing;
+      Tmp_Height   : Gint;
+      Field_Name_Start : constant Gint := Left_Border + Border_Spacing;
+      Field_Start  : constant Gint := Field_Name_Start + Item.Gui_Fields_Width;
+   begin
+      if not Item.Visible then
+         return Generic_Type_Access (Item);
+      end if;
+
+      --  Click in the left column ? => Select the whole item
+
+      if X < Field_Name_Start then
+         return Generic_Type_Access (Item);
+      end if;
+
+      --  Else, find the relevant item
+
+      for F in Item.Fields'Range loop
+         Tmp_Height := Total_Height + Item.Fields (F).Value.Height
+           + Line_Spacing;
+         if Y <= Tmp_Height then
+            if X < Field_Start then
+               return Item.Fields (F).Value;
+            end if;
+
+            return Get_Component
+              (Item.Fields (F).Value, X - Field_Start, Y - Total_Height);
+         end if;
+         Total_Height := Tmp_Height;
+      end loop;
+
+      return Generic_Type_Access (Item);
+   end Get_Component;
+
+   ------------------------
+   -- Get_Component_Name --
+   ------------------------
+
+   function Get_Component_Name (Item : access Class_Type;
+                                Lang : access Language_Root'Class;
+                                Name : String;
+                                X, Y : Glib.Gint)
+                               return String
+   is
+      Total_Height : Gint := 0;
+   begin
+      if not Item.Visible then
+         return Name;
+      end if;
+
+      --  Click in the left column ? => Select the whole item
+
+      if X <= Left_Border then
+         return Name;
+      end if;
+
+      for A in Item.Ancestors'Range loop
+         if Y <= Total_Height + Item.Ancestors (A).Height then
+            --  Do not substract Left_Border from X, since the ancestor is
+            --  a Class_Type and already has it.
+            return Get_Component_Name
+              (Item.Ancestors (A), Lang, Name, X, Y - Total_Height);
+         end if;
+         Total_Height := Total_Height + Item.Ancestors (A).Height;
+      end loop;
+
+      return Get_Component_Name
+        (Item.Child, Lang, Name, X - Left_Border, Y - Total_Height);
+   end Get_Component_Name;
+
+   -------------------
+   -- Get_Component --
+   -------------------
+
+   function Get_Component (Item : access Class_Type;
+                           X, Y : Glib.Gint)
+                          return Generic_Type_Access
+   is
+      Total_Height : Gint := 0;
+   begin
+      if not Item.Visible then
+         return Generic_Type_Access (Item);
+      end if;
+
+      --  Click in the left column ? => Select the whole item
+
+      if X < Left_Border then
+         return Generic_Type_Access (Item);
+      end if;
+
+      for A in Item.Ancestors'Range loop
+         if Y <= Total_Height + Item.Ancestors (A).Height then
+            return Get_Component (Item.Ancestors (A), X, Y - Total_Height);
+         end if;
+         Total_Height := Total_Height + Item.Ancestors (A).Height;
+      end loop;
+
+      return Get_Component (Item.Child, X - Left_Border, Y - Total_Height);
+   end Get_Component;
+
+   ------------------------
+   -- Get_Component_Name --
+   ------------------------
+
+   function Get_Component_Name (Item : access Repeat_Type;
+                                Lang : access Language_Root'Class;
+                                Name : String;
+                                X, Y : Glib.Gint)
+                               return String
+   is
+   begin
+      return Name;
+   end Get_Component_Name;
+
+   -------------------
+   -- Get_Component --
+   -------------------
+
+   function Get_Component (Item : access Repeat_Type;
+                           X, Y : Glib.Gint)
+                          return Generic_Type_Access
+   is
+   begin
+      return Generic_Type_Access (Item);
+   end Get_Component;
+
+   ------------------
+   -- Set_Selected --
+   ------------------
+
+   procedure Set_Selected (Item     : access Generic_Type;
+                           Selected : Boolean := True)
+   is
+   begin
+      Item.Selected := Selected;
+   end Set_Selected;
+
+   ------------------
+   -- Set_Selected --
+   ------------------
+
+   procedure Set_Selected (Item     : access Array_Type;
+                           Selected : Boolean := True)
+   is
+   begin
+      Item.Selected := Selected;
+      if not Selected and then Item.Values /= null then
+         for V in Item.Values'Range loop
+            Set_Selected (Item.Values (V).Value, Selected);
+         end loop;
+      end if;
+   end Set_Selected;
+
+   ------------------
+   -- Set_Selected --
+   ------------------
+
+   procedure Set_Selected (Item     : access Repeat_Type;
+                           Selected : Boolean := True)
+   is
+   begin
+      Item.Selected := Selected;
+      if not Selected then
+         Set_Selected (Item.Value, Selected);
+      end if;
+   end Set_Selected;
+
+   ------------------
+   -- Set_Selected --
+   ------------------
+
+   procedure Set_Selected (Item     : access Record_Type;
+                           Selected : Boolean := True)
+   is
+   begin
+      Item.Selected := Selected;
+      if not Selected then
+         for F in Item.Fields'Range loop
+            Set_Selected (Item.Fields (F).Value, Selected);
+         end loop;
+      end if;
+   end Set_Selected;
+
+   ------------------
+   -- Set_Selected --
+   ------------------
+
+   procedure Set_Selected (Item     : access Class_Type;
+                           Selected : Boolean := True)
+   is
+   begin
+      Item.Selected := Selected;
+      if not Selected then
+         for A in Item.Ancestors'Range loop
+            Set_Selected (Item.Ancestors (A), Selected);
+         end loop;
+         Set_Selected (Item.Child, Selected);
+      end if;
+   end Set_Selected;
+
+   ------------------
+   -- Get_Selected --
+   ------------------
+
+   function Get_Selected (Item : access Generic_Type) return Boolean is
+   begin
+      return Item.Selected;
+   end Get_Selected;
 
 end Generic_Values;
