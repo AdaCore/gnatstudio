@@ -580,7 +580,8 @@ package Glide_Kernel.Modules is
       File           : String;
       Identifier     : String;
       Stick_To_Data  : Boolean := True;
-      Every_Line     : Boolean := True);
+      Every_Line     : Boolean := True;
+      Normalize      : Boolean := True);
    --  Create a column on the side of editors for File.
    --  If Stick_To_Data is set to True, then the line information is relative
    --  to the original data in the file, otherwise it is relative to the lines
@@ -588,6 +589,7 @@ package Glide_Kernel.Modules is
    --  If Every_Line is set to True, then the editor will emit a line_revealed
    --  signal until all lines for this column are filled.
    --  If File is empty, then the column will be created for all open files.
+   --  If Normalize is True, the file name will be normalized.
 
    procedure Remove_Line_Information_Column
      (Kernel         : access Kernel_Handle_Record'Class;
@@ -600,10 +602,12 @@ package Glide_Kernel.Modules is
      (Kernel         : access Kernel_Handle_Record'Class;
       File           : String;
       Identifier     : String;
-      Info           : Line_Information_Data);
+      Info           : Line_Information_Data;
+      Normalize      : Boolean := True);
    --  Add line information to File.
    --  The range of Info must correspond to the range of line numbers
    --  that are to be modified.
+   --  If Normalize is True, the file name will be normalized.
 
    procedure Add_Location_Action
      (Kernel        : access Kernel_Handle_Record'Class;
