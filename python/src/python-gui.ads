@@ -70,7 +70,8 @@ package Python.GUI is
       Hide_Output : Boolean := False;
       Errors      : access Boolean) return Python.PyObject;
    --  Execute a command in the interpreter, and send its output to the
-   --  console. Return its return value.
+   --  console. Return its return value (which doesn't need to be Py_DECREF,
+   --  since it is a borrowed reference).
    --  If Hide_Output is True, then nothing is printed on the console. If the
    --  command is incomplete and would require extra input (a secondary prompt
    --  in interactive mode), then it is not executed.
