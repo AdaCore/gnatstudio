@@ -612,58 +612,59 @@ package body Builder_Module is
       Menu2 : Gtk_Menu renames
         Builder_Module_ID_Record (Builder_Module_ID.all).Run_Menu;
       Iter : Imported_Project_Iterator := Start (Get_Project (Kernel));
+      Has_Child : Boolean := False;
    begin
       --  Remove all existing menus
       Remove_All_Children (Menu1);
       Remove_All_Children (Menu2);
 
+      --  Add all the main units from all the imported projects.
+      while Current (Iter) /= No_Project loop
+         declare
+            Mains : Argument_List := Get_Attribute_Value
+              (Current (Iter), Attribute_Name => Main_Attribute);
+         begin
+            for M in Mains'Range loop
+               Gtk_New (Mitem, Mains (M).all);
+               Append (Menu1, Mitem);
+               File_Project_Cb.Object_Connect
+                 (Mitem, "activate",
+                  File_Project_Cb.To_Marshaller (On_Build'Access),
+                  Slot_Object => Kernel,
+                  User_Data => File_Project_Record'
+                    (Length  => Mains (M)'Length,
+                     Project => Current (Iter),
+                     File    => Mains (M).all));
+               Has_Child := True;
+
+               declare
+                  Exec : constant String := Base_Name (Mains (M).all,
+                     GNAT.Directory_Operations.File_Extension
+                       (Mains (M).all));
+               begin
+                  Gtk_New (Mitem, Exec);
+                  Append (Menu2, Mitem);
+                  File_Project_Cb.Object_Connect
+                    (Mitem, "activate",
+                     File_Project_Cb.To_Marshaller (On_Run'Access),
+                     Slot_Object => Kernel,
+                     User_Data => File_Project_Record'
+                       (Length  => Exec'Length,
+                        Project => Current (Iter),
+                        File    => Exec));
+               end;
+            end loop;
+            Free (Mains);
+         end;
+
+         Next (Iter);
+      end loop;
+
       --  No main program ?
-      if Current (Iter) = No_Project then
+      if not Has_Child then
          Gtk_New (Mitem, -"<none>");
          Append (Menu1, Mitem);
          Set_Sensitive (Mitem, False);
-
-      else
-         --  Add all the main units from all the imported projects.
-         while Current (Iter) /= No_Project loop
-            declare
-               Mains : Argument_List := Get_Attribute_Value
-                 (Current (Iter), Attribute_Name => Main_Attribute);
-            begin
-               for M in Mains'Range loop
-                  Gtk_New (Mitem, Mains (M).all);
-                  Append (Menu1, Mitem);
-                  File_Project_Cb.Object_Connect
-                    (Mitem, "activate",
-                     File_Project_Cb.To_Marshaller (On_Build'Access),
-                     Slot_Object => Kernel,
-                     User_Data => File_Project_Record'
-                       (Length  => Mains (M)'Length,
-                        Project => Current (Iter),
-                        File    => Mains (M).all));
-
-                  declare
-                     Exec : constant String := Base_Name (Mains (M).all,
-                        GNAT.Directory_Operations.File_Extension
-                           (Mains (M).all));
-                  begin
-                     Gtk_New (Mitem, Exec);
-                     Append (Menu2, Mitem);
-                     File_Project_Cb.Object_Connect
-                       (Mitem, "activate",
-                        File_Project_Cb.To_Marshaller (On_Run'Access),
-                        Slot_Object => Kernel,
-                        User_Data => File_Project_Record'
-                          (Length  => Exec'Length,
-                           Project => Current (Iter),
-                           File    => Exec));
-                  end;
-               end loop;
-               Free (Mains);
-            end;
-
-            Next (Iter);
-         end loop;
       end if;
 
       --  Should be able to run any program
@@ -705,7 +706,7 @@ package body Builder_Module is
                      On_Compile'Access, GDK_F4, Shift_Mask);
 
       --  Dynamic make menu
-      Mitem := Register_Menu (Kernel, Build, -"Make", "", null, GDK_F4);
+      Mitem := Register_Menu (Kernel, Build, -"Make", "", null);
       Gtk_New (Menu);
       Builder_Module_ID_Record (Builder_Module_ID.all).Make_Menu := Menu;
       Set_Submenu (Mitem, Menu);
