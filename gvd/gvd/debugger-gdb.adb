@@ -2495,6 +2495,17 @@ package body Debugger.Gdb is
 
       Code := new String' (Disassembled (Start_Index .. End_Index));
 
+      --  If there is nothing left, this means gdb couldn't disassemble that
+      --  part.
+      --  For instance: "No function contains specified address" is returned
+      --  when the user program wasn't compiled with -g.
+
+      if Code.all = "" then
+         Range_Start_Len := 0;
+         Range_End_Len := 0;
+         return;
+      end if;
+
       --  Always read the actual start and end address from the output of
       --  gdb, in case gdb didn't start disassembling at the exact location,
 
