@@ -638,8 +638,10 @@ package body Python.GUI is
 
       if Console /= null then
          Set_Console (Interpreter, Get_View (Console));
+         Interpreter.Save_Output := True;
       else
          Set_Console (Interpreter, null);
+         Interpreter.Save_Output := False;
       end if;
 
       Trace (Me, "Running command: " & Command);
