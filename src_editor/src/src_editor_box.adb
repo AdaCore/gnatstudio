@@ -2,7 +2,7 @@
 --                               G P S                               --
 --                                                                   --
 --                     Copyright (C) 2001-2005                       --
---                            ACT-Europe                             --
+--                            AdaCore                                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -1634,7 +1634,7 @@ package body Src_Editor_Box is
       Other_File : constant Virtual_File := Create
         (Other_File_Base_Name (Project, File), Project);
    begin
-      Trace (Me, "MANU Goto_Other_File_Command File="
+      Trace (Me, "Goto_Other_File_Command File="
              & Full_Name (File).all
              & " Project=" & Project_Name (Project)
              & " Other_File=" & Full_Name (Other_File).all);
