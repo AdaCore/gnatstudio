@@ -1968,10 +1968,6 @@ extern void f_PutConstructor( Type_t Type, int lineno, int charno, int mode )
          {
             int paf_type;
             char acType[10000];  /* old: 1000 */
-            /*
-             * so far we don't process template arguments, so just cut them off
-             */
-            if ( ptr = strchr (name, '<') ) *ptr = 0;
             if(( paf_type = Get_class_or_typedef( name, acType )) == PAF_REF_TO_CLASS )
             {
                char acName[10000];     /* old: 1000 */
@@ -1992,7 +1988,6 @@ extern void f_PutConstructor( Type_t Type, int lineno, int charno, int mode )
                                                 , NULL
                                                 , 0 )))
                   {
-                       printf ("!!!cons!!!\n");
                      Put_cross_ref( PAF_REF_TO_MBR_FUNC
                                   , scope_g[0] ? PAF_MBR_FUNC_DEF : PAF_FUNC_DEF
                                   , PAF_REF_SCOPE_GLOBAL

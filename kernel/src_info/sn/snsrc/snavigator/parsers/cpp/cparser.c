@@ -4090,6 +4090,8 @@ extern void function( Declaration_t Declaration, Declarator_t Declarator, int li
          paf = PAF_FUNC_DEF;
       }
 
+      if ( g_tp ) attr |= PAF_TEMPLATE;
+
       Put_symbol( paf
                 , scope
                 , name
@@ -4247,6 +4249,8 @@ extern void class_member( Class_t Class, Declaration_t Declaration, Declarator_t
             attr |= PAF_PUREVIRTUAL;
          }
       }
+
+      if ( g_tp ) attr |= PAF_TEMPLATE;
 
       if (paf != PAF_FUNC_DCL)   /* Zsolt Koppany, 1-may-97 */
       {                          /* If it is a friend we don't report it. */
@@ -4408,6 +4412,8 @@ extern void class_method( Class_t Class, Declaration_t Declaration, Declarator_t
       {
          attr |= PAF_CONSTRUCTOR;
       }
+
+      if ( g_tp ) attr |= PAF_TEMPLATE;
 
       paf_def = PAF_MBR_FUNC_DEF;
       paf_dcl = PAF_MBR_FUNC_DCL;

@@ -129,6 +129,7 @@ MA 02111-1307, USA.
 
 #define PAF_OVERRIDE            0x20000
 #define PAF_OVERLOADED          0x40000
+#define PAF_TEMPLATE            0x80000
 
 /* end of put_symbol attributums. */
 
