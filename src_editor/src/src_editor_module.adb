@@ -4069,7 +4069,7 @@ package body Src_Editor_Module is
       Register_Command
         (Kernel, "register_highlighting",
          Minimum_Args  => 2,
-         Maximum_Args  => 2,
+         Maximum_Args  => 3,
          Class         => Editor_Class,
          Static_Method => True,
          Handler       => Line_Highlighting.Edit_Command_Handler'Access);

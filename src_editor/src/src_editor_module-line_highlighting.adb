@@ -76,6 +76,7 @@ package body Src_Editor_Module.Line_Highlighting is
          declare
             Category : constant String := Nth_Arg (Data, 1);
             Color_Id : constant String := Nth_Arg (Data, 2);
+            Mark_In_Speedbar : constant Boolean := Nth_Arg (Data, 3, False);
             Color    : Gdk_Color;
             Success  : Boolean;
          begin
@@ -87,7 +88,8 @@ package body Src_Editor_Module.Line_Highlighting is
             end;
 
             Alloc_Color (Get_Default_Colormap, Color, False, True, Success);
-            Add_Category (Category, Color);
+            Add_Category (Category, Color,
+                          Mark_In_Speedbar => Mark_In_Speedbar);
          end;
 
       elsif Command = "highlight_range"
