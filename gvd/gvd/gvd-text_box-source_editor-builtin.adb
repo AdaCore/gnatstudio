@@ -1772,4 +1772,14 @@ package body GVD.Text_Box.Source_Editor.Builtin is
       return Get_Line (Builtin_Text_Box (Editor.Widget));
    end Get_Line;
 
+   ----------------
+   -- Apply_Mode --
+   ----------------
+
+   procedure Apply_Mode
+     (Editor : access Builtin_Record; Mode : View_Mode) is
+   begin
+      Apply_Mode (Visual_Debugger (Editor.Process).Editor_Text);
+   end Apply_Mode;
+
 end GVD.Text_Box.Source_Editor.Builtin;

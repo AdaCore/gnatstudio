@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2002                      --
+--                      Copyright (C) 2000-2003                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -149,6 +149,10 @@ package GVD.Text_Box.Source_Editor.Builtin is
    --  See GVD.Text_Boxes.Source_Editor for more information.
 
    function Get_Line (Editor : access Builtin_Record) return Natural;
+   --  See GVD.Text_Boxes.Source_Editor for more information.
+
+   procedure Apply_Mode
+     (Editor : access Builtin_Record; Mode : View_Mode);
    --  See GVD.Text_Boxes.Source_Editor for more information.
 
 private

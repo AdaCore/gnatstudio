@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2002                      --
+--                      Copyright (C) 2000-2003                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -13,7 +13,7 @@
 -- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
 -- General Public License for more details. You should have received --
--- a copy of the GNU General Public License along with this library; --
+-- a copy of the GNU General Public License along with this program; --
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
@@ -128,6 +128,13 @@ package GVD.Text_Box.Source_Editor is
    --  Return the widget associated with Editor.
    --  WARNING: do not add or remove this widget in a container.
    --  Instead, use the Attach/Detach routines provided in this package.
+
+   type View_Mode is (Source, Asm, Source_Asm);
+   --  Describe what kind of source GVD should display.
+
+   procedure Apply_Mode
+     (Editor : access Source_Editor_Record; Mode : View_Mode) is abstract;
+   --  Apply mode changes to the editor.
 
 private
    type Source_Editor_Record is abstract tagged record
