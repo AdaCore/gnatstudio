@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                          G L I D E  I I                           --
 --                                                                   --
---                        Copyright (C) 2001-2002                    --
+--                      Copyright (C) 2001-2002                      --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GLIDE is free software; you can redistribute it and/or modify  it --
@@ -37,6 +37,7 @@ with Browsers.Canvas;  use Browsers.Canvas;
 with GNAT.OS_Lib;      use GNAT.OS_Lib;
 with Language;         use Language;
 
+with Ada.Exceptions;   use Ada.Exceptions;
 with Traces;           use Traces;
 
 package body Browsers.Call_Graph is
@@ -53,7 +54,7 @@ package body Browsers.Call_Graph is
    Margin : constant := 2;
 
    Vertical_Layout : Boolean := True;
-   --  <preference> Should the layout of the graph be vertical or horizontal ?
+   --  <preferences> Should the layout of the graph be vertical or horizontal ?
 
    procedure Call_Graph_Contextual_Menu
      (Object  : access Glib.Object.GObject_Record'Class;
@@ -350,6 +351,12 @@ package body Browsers.Call_Graph is
 
       Pop_State (Kernel_Handle (Kernel));
       Free (Tree);
+
+   exception
+      when E : others =>
+         Pop_State (Kernel_Handle (Kernel));
+         Free (Tree);
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Examine_Entity_Call_Graph;
 
    --------------------------------------------
@@ -361,9 +368,11 @@ package body Browsers.Call_Graph is
       Context : Selection_Context_Access)
    is
       pragma Unreferenced (Widget);
+
       Entity   : Entity_Selection_Context_Access :=
         Entity_Selection_Context_Access (Context);
       Lib_Info : LI_File_Ptr;
+
    begin
       Push_State (Get_Kernel (Entity), Busy);
 
@@ -381,10 +390,15 @@ package body Browsers.Call_Graph is
         (Get_Kernel (Entity),
          Lib_Info,
          Entity_Name_Information (Entity),
-         79,  --  Line_Information (Entity),
-         14); --  Column_Information (Entity));
+         Line_Information (Entity),
+         Column_Information (Entity));
 
       Pop_State (Get_Kernel (Entity));
+
+   exception
+      when E : others =>
+         Pop_State (Get_Kernel (Entity));
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Edit_Entity_Call_Graph_From_Contextual;
 
    ---------------------
@@ -401,7 +415,8 @@ package body Browsers.Call_Graph is
          Examine_Entity_Call_Graph
            (Get_Kernel (Item.Browser),
             Locate_From_Source_And_Complete
-            (Get_Kernel (Item.Browser), Get_Declaration_File_Of (Item.Entity)),
+              (Get_Kernel (Item.Browser),
+               Get_Declaration_File_Of (Item.Entity)),
             Get_Name (Item.Entity),
             Get_Declaration_Line_Of (Item.Entity),
             Get_Declaration_Column_Of (Item.Entity));
@@ -409,6 +424,10 @@ package body Browsers.Call_Graph is
       elsif Get_Event_Type (Event) = Button_Press then
          Select_Item (Item.Browser, Item, True);
       end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Button_Click;
 
    --------------------------------
@@ -437,7 +456,7 @@ package body Browsers.Call_Graph is
             Context_Callback.Connect
               (Item, "activate",
                Context_Callback.To_Marshaller
-               (Edit_Entity_Call_Graph_From_Contextual'Access),
+                 (Edit_Entity_Call_Graph_From_Contextual'Access),
                Selection_Context_Access (Context));
          end if;
       end if;
