@@ -552,7 +552,7 @@ the following commands. Failing to do so will result in blank windows.
       also display or hide the call stack at the preferences level, see
       @ref{Show Call Stack}.
 
-   @item Threads...
+   @item Threads
       Opens a new window containing the list of threads currently present in
       the executable as reported by the underlying debugger. For each thread,
       it will give information such as internal identifier, name and status.
@@ -565,7 +565,7 @@ the following commands. Failing to do so will result in blank windows.
       change the context (variables, call stack, source file) displayed by GVD,
       allowing you to inspect the stack of the selected thread.
 
-   @item Tasks...
+   @item Tasks
       For GDB only, this will open a new window containing the list of Ada
       tasks currently present in the executable. Similarly to the thread
       window, you can switch to a selected task context by clicking on it, if
@@ -585,12 +585,12 @@ the following commands. Failing to do so will result in blank windows.
       different protection domain, simply click on it. A @c{*} character
       indicates the current protection domain.
 
-   @item Edit Breakpoints...
+   @item Edit Breakpoints
       Opens an advanced window to create and modify any kind of breakpoint
       (see @ref{The Breakpoint Editor}).
       For simple breakpoint creation, see the description of the source window.
 
-   @item Examine Memory...
+   @item Examine Memory
       Opens a memory viewer/editor. See @ref{The Memory Window} for more
       details.
 
@@ -957,7 +957,7 @@ again).
 
 @noindent
 The breakpoint editor can be accessed from the menu
-@i{Data->Edit Breakpoints...}. It gives access to the different kind of
+@i{Data->Edit Breakpoints}. It gives access to the different kind of
 breakpoints: on source location, subprogram, address, variables, exceptions.
 
 The top area provides an interface to easily create the different kinds of
