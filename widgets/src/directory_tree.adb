@@ -28,6 +28,7 @@
 
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with Interfaces.C.Strings;      use Interfaces.C.Strings;
 with Glib;                      use Glib;
 with Gdk.Color;                 use Gdk.Color;
 with Gdk.Event;                 use Gdk.Event;
@@ -54,6 +55,7 @@ with Pixmaps_IDE;               use Pixmaps_IDE;
 with Glide_Intl;                use Glide_Intl;
 with GUI_Utils;                 use GUI_Utils;
 with Unchecked_Deallocation;
+with Ada.Text_IO; use Ada.Text_IO;
 
 package body Directory_Tree is
 
@@ -616,10 +618,7 @@ package body Directory_Tree is
             if Is_Directory (Dir & File (File'First .. Last))
               and then Filter (Selector.Directory, File (File'First .. Last))
             then
-               Add_Directory
-                 (Selector,
-                  Dir & File (1 .. Last) & Directory_Separator,
-                  True);
+               Add_Directory (Selector, Dir & File (1 .. Last), True);
             end if;
          end loop;
 
@@ -831,12 +830,13 @@ package body Directory_Tree is
       Initial_Directory    : String;
       Root_Directory       : String := "/";
       Multiple_Directories : Boolean := False;
-      Busy_Cursor_On       : Gdk.Window.Gdk_Window := null) is
+      Busy_Cursor_On       : Gdk.Window.Gdk_Window := null;
+      Initial_Selection    : GNAT.OS_Lib.Argument_List := No_Selection) is
    begin
       Selector := new Directory_Selector_Record;
       Initialize
         (Selector, Initial_Directory, Root_Directory,
-         Multiple_Directories, Busy_Cursor_On);
+         Multiple_Directories, Busy_Cursor_On, Initial_Selection);
    end Gtk_New;
 
    ----------------
@@ -848,7 +848,8 @@ package body Directory_Tree is
       Initial_Directory    : String;
       Root_Directory       : String := "/";
       Multiple_Directories : Boolean := False;
-      Busy_Cursor_On       : Gdk.Window.Gdk_Window := null)
+      Busy_Cursor_On       : Gdk.Window.Gdk_Window := null;
+      Initial_Selection    : GNAT.OS_Lib.Argument_List := No_Selection)
    is
       Scrolled  : Gtk_Scrolled_Window;
       Bbox      : Gtk_Hbutton_Box;
@@ -904,6 +905,11 @@ package body Directory_Tree is
            (Selector.List, Directory_Selector (Selector),
             List_Contextual_Menu'Access);
 
+         for J in Initial_Selection'Range loop
+            Insert (Selector.List, -1,
+                    (1 => New_String (Initial_Selection (J).all)));
+         end loop;
+
          --  ??? This is a workaround for a horizontal scrollbar problem: When
          --  the clist is put in a scrolled window, and if this is not called,
          --  the scrollbar does not allow us to scroll as far right as
@@ -941,25 +947,21 @@ package body Directory_Tree is
 
    function Get_Multiple_Selection
      (Selector : access Directory_Selector_Record'Class)
-      return GNAT.OS_Lib.Argument_List
-   is
-      use type Gint_List.Glist;
-      List : Gint_List.Glist;
+      return GNAT.OS_Lib.Argument_List is
    begin
       --  A single directory selector ?
       if Selector.List = null then
          return (1 => new String' (Get_Selection (Selector.Directory)));
 
       else
-         List := Get_Selection (Selector.List);
          declare
-            Length : constant Integer := Integer (Gint_List.Length (List));
-            Args : Argument_List (1 .. Length);
+            Length : constant Gint := Get_Rows (Selector.List);
+            Args : Argument_List (1 .. Natural (Length));
          begin
+            Put_Line ("Num selections=" & Length'Img);
             for A in Args'Range loop
                Args (A) := new String'
-                 (Get_Text (Selector.List, Gint_List.Get_Data (List), 0));
-               List := Gint_List.Next (List);
+                 (Get_Text (Selector.List, Gint (A) - 1, 0));
             end loop;
             return Args;
          end;
@@ -1040,7 +1042,9 @@ package body Directory_Tree is
    ------------------------------------------
 
    function Multiple_Directories_Selector_Dialog
-     (Initial_Directory : String) return GNAT.OS_Lib.Argument_List
+     (Initial_Directory : String;
+      Initial_Selection : GNAT.OS_Lib.Argument_List := No_Selection)
+      return GNAT.OS_Lib.Argument_List
    is
       Dialog : Gtk_Dialog;
       Button : Gtk_Button;
@@ -1051,7 +1055,8 @@ package body Directory_Tree is
       Set_Title (Dialog, "Select multiple directories");
       Set_Default_Size (Dialog, 600, 480);
 
-      Gtk_New (Selector, Initial_Directory, Multiple_Directories => True);
+      Gtk_New (Selector, Initial_Directory, Multiple_Directories => True,
+              Initial_Selection => Initial_Selection);
       Pack_Start (Get_Vbox (Dialog), Selector, Fill => True, Expand => True);
 
       Gtk_New (Button, "OK");

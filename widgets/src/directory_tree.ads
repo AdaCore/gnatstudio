@@ -92,12 +92,15 @@ package Directory_Tree is
    type Directory_Selector_Record is new Gtk.Box.Gtk_Box_Record with private;
    type Directory_Selector is access all Directory_Selector_Record'Class;
 
+   No_Selection : GNAT.OS_Lib.Argument_List (1 .. 0) := (others => null);
+
    procedure Gtk_New
      (Selector             : out Directory_Selector;
       Initial_Directory    : String;
       Root_Directory       : String := "/";
       Multiple_Directories : Boolean := False;
-      Busy_Cursor_On       : Gdk.Window.Gdk_Window := null);
+      Busy_Cursor_On       : Gdk.Window.Gdk_Window := null;
+      Initial_Selection    : GNAT.OS_Lib.Argument_List := No_Selection);
    --  Create a directory selector.
    --  Multiple_Directories should be True if multiple directories can be
    --  selected by the user.
@@ -109,7 +112,8 @@ package Directory_Tree is
       Initial_Directory    : String;
       Root_Directory       : String := "/";
       Multiple_Directories : Boolean := False;
-      Busy_Cursor_On       : Gdk.Window.Gdk_Window := null);
+      Busy_Cursor_On       : Gdk.Window.Gdk_Window := null;
+      Initial_Selection    : GNAT.OS_Lib.Argument_List := No_Selection);
    --  Internal function for the creation of new widgets.
 
    function Get_Single_Selection
@@ -133,7 +137,9 @@ package Directory_Tree is
    --  Initial_Directory is the directory that is selected initially.
 
    function Multiple_Directories_Selector_Dialog
-     (Initial_Directory : String) return GNAT.OS_Lib.Argument_List;
+     (Initial_Directory : String;
+      Initial_Selection : GNAT.OS_Lib.Argument_List := No_Selection)
+      return GNAT.OS_Lib.Argument_List;
    --  Open a dialog for the selection of multiple directories by the user.
    --  Return the list of directories selected by the user.
    --  It is the responsability of the caller to free the array.
