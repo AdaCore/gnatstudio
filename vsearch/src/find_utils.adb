@@ -47,7 +47,7 @@ with Src_Editor_Module;       use Src_Editor_Module;
 
 package body Find_Utils is
 
-   Me : Debug_Handle := Create ("Find_Utils");
+   Me : constant Debug_Handle := Create ("Find_Utils");
 
    procedure Free_Pattern_Matcher is new Ada.Unchecked_Deallocation
      (Pattern_Matcher, Pattern_Matcher_Access);
@@ -480,7 +480,7 @@ package body Find_Utils is
       end if;
 
       declare
-         Language : Language_Context := Get_Language_Context (Lang);
+         Language : constant Language_Context := Get_Language_Context (Lang);
       begin
          --  Always find the longest possible range, so that we can benefit
          --  as much as possible from the efficient string searching
@@ -859,7 +859,7 @@ package body Find_Utils is
       pragma Unreferenced (Kernel);
 
       Context : Files_Context_Access;
-      Extra   : Files_Extra_Info_Access := Files_Extra_Info_Access
+      Extra   : constant Files_Extra_Info_Access := Files_Extra_Info_Access
         (Extra_Information);
       Re      : GNAT.Regexp.Regexp;
 

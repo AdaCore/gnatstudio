@@ -181,8 +181,9 @@ package body GVD.Session_Dialog is
             for Count in 1 ..
               Get_Current_Repeat_Num (Top.Command_History)
             loop
-               declare Data : History_Data :=
-                 Get_Current (Top.Command_History);
+               declare
+                  Data : constant History_Data :=
+                    Get_Current (Top.Command_History);
                begin
                   if Conversion_Table (Data.Debugger_Num) /= -1 then
                      Put_Line
