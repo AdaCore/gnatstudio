@@ -1103,6 +1103,7 @@ package body GVD.Process is
       Show_All (Process.Stack_Scrolledwindow);
 
       Child := Put (Process.Window.Process_Mdi, Process.Stack_Scrolledwindow);
+      Set_Focus_Child (Child);
       Set_Title (Child, -"Call Stack");
       Set_Dock_Side (Child, Right);
       Dock_Child (Child);
@@ -1155,6 +1156,7 @@ package body GVD.Process is
       Child := Put
         (Process.Window.Process_Mdi, Process.Data_Scrolledwindow,
          Flags => Iconify_Button or Maximize_Button);
+      Set_Focus_Child (Child);
       Set_Title (Child, -"Debugger Data");
       Set_Dock_Side (Child, Top);
       Dock_Child (Child);
@@ -1211,7 +1213,9 @@ package body GVD.Process is
 
       Child := Put
         (Process.Window.Process_Mdi, Process.Debugger_Text,
-         Flags => Iconify_Button or Maximize_Button);
+         Flags => Iconify_Button or Maximize_Button,
+         Focus_Widget => Gtk_Widget (Get_View (Process.Debugger_Text)));
+      Set_Focus_Child (Child);
       Set_Title (Child, -"Debugger Console");
       Set_Dock_Side (Child, Bottom);
       Dock_Child (Child);
@@ -1390,6 +1394,7 @@ package body GVD.Process is
 
       if Window.Standalone then
          Child := Put (Window.Process_Mdi, Process.Editor_Text);
+         Set_Focus_Child (Child);
          Set_Title (Child, -"Editor");
          Maximize_Children (Window.Process_Mdi);
       end if;
@@ -1508,7 +1513,8 @@ package body GVD.Process is
 
          Child := Put
            (Window.Process_Mdi, Process.Debuggee_Console,
-            Flags => Iconify_Button or Maximize_Button);
+            Flags => Iconify_Button or Maximize_Button,
+            Focus_Widget => Gtk_Widget (Get_View (Process.Debuggee_Console)));
          Set_Title (Child, -"Debugger Execution");
          Set_Dock_Side (Child, Bottom);
          Dock_Child (Child);
