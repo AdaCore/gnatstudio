@@ -281,7 +281,7 @@ begin
          Gtk_Widget (Main_Debug_Window));
    end if;
 
-   Main_Debug_Window.Gvd_Home_Dir := Dir;
+   Main_Debug_Window.Home_Dir := Dir;
    Main_Debug_Window.Prefix_Directory := Prefix;
 
    declare
