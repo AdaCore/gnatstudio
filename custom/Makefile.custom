@@ -17,6 +17,8 @@ BASE_DIR=$(CUSTOM_BASE_DIR)/../gvd
 include $(BASE_DIR)/Makefile.gvd_common
 BASE_DIR=$(CUSTOM_BASE_DIR)/../widgets
 include $(BASE_DIR)/Makefile.widgets
+BASE_DIR=$(CUSTOM_BASE_DIR)/../prj_editor
+include $(BASE_DIR)/Makefile.prj_editor
 
 CUSTOM_SRC_DIRS = $(CUSTOM_BASE_DIR)/src
 SRC_DIRS += $(CUSTOM_SRC_DIRS)

@@ -3,6 +3,7 @@ with "../gvd/gvd_common";
 with "../kernel/kernel";
 with "../widgets/widgets";
 with "../shared";
+with "../prj_editor/prj_editor";
 
 project Custom is
 
