@@ -117,64 +117,6 @@ package Language is
       Field : String) return String is abstract;
    --  Return the name to use for a specific field of a record.
 
-   ------------------
-   -- The explorer --
-   ------------------
-   --  These functions are provided as a support for the source code explorer.
-
-   type Category_Index is new Positive;
-   type Make_Entry_Func is access function
-     (Str      : String;
-      Matched  : GNAT.Regpat.Match_Array;
-      Category : access Category_Index) return String;
-   --  Function that builds the string to be inserted in the tree.
-   --  It is possible for the function to change the category used for the
-   --  item (for instance when subprograms declarations and bodies have
-   --  basically the same aspect, it is possible to use only one regular
-   --  expression and distinguish only by testing for some special substring
-   --  in this function.
-
-   type Pattern_Matcher_Access is access all GNAT.Regpat.Pattern_Matcher;
-
-   type Explorer_Category is record
-      Name           : Basic_Types.String_Access;
-      Regexp         : Pattern_Matcher_Access;
-      Position_Index : Natural;
-      Icon           : Basic_Types.Pixmap_Access;
-      Make_Entry     : Make_Entry_Func;
-   end record;
-   --  Definition for a category (ie one of the subtrees of the explorer).
-   --  Icon is the icon to use for items in this category.
-   --  Regexp is the general regular expression to use for entries in this
-   --  category, while Make_Entry is the function that will return the
-   --  actual string to be displayed in the explorer.
-   --  Position_Index is the index of the parenthesis-pair that the entity
-   --  name starts at. When the user clicks on this item in the explorer,
-   --  the cursor will be moved to that location in the editor.
-   --
-   --  If Make_Entry is null, then the regexp is never tested against the
-   --  source code. You can only add items to this category by modifying the
-   --  Category parameter of another category's Make_Entry (see
-   --  language-ada.adb).
-
-   type Explorer_Categories is
-     array (Category_Index range <>) of Explorer_Category;
-   --  A list of categories. Each category is assigned an internal number which
-   --  is the index in this table, and is passed to each Make_Entry_Func
-   --  functions.
-
-   function Explorer_Regexps
-     (Lang : access Language_Root) return Explorer_Categories;
-   --  Return the list of categories for a given language.
-   --  By default, no category is defined, and thus the explorer is empty.
-
-   function Is_System_File
-     (Lang      : access Language_Root;
-      File_Name : String) return Boolean;
-   --  Return True if File_Name is the name of a system file (standard include
-   --  files in C or run-time file in Ada). These files are displayed
-   --  separately in the explorer.
-
    ------------------------
    -- Language Detection --
    ------------------------
@@ -468,6 +410,52 @@ package Language is
    --  Parse entities (as defined by Language_Entity) contained in buffer.
    --  For each match, call Callback. Stops at the end of Buffer or when
    --  callback returns True.
+
+   --  These functions are provided as a support for the source code explorer.
+
+   type Make_Entry_Func is access function
+     (Str      : String;
+      Matched  : GNAT.Regpat.Match_Array) return String;
+   --  Function that builds the string to be inserted in the tree.
+
+   type Pattern_Matcher_Access is access all GNAT.Regpat.Pattern_Matcher;
+
+   type Explorer_Category is record
+      Category       : Language_Category;
+      Regexp         : Pattern_Matcher_Access;
+      Position_Index : Natural;
+      Icon           : Basic_Types.Pixmap_Access;
+      Make_Entry     : Make_Entry_Func;
+   end record;
+   --  Definition for a category (ie one of the subtrees of the explorer).
+   --  Icon is the icon to use for items in this category.
+   --  Regexp is the general regular expression to use for entries in this
+   --  category, while Make_Entry is the function that will return the
+   --  actual string to be displayed in the explorer.
+   --  Position_Index is the index of the parenthesis-pair that the entity
+   --  name starts at. When the user clicks on this item in the explorer,
+   --  the cursor will be moved to that location in the editor.
+   --
+   --  If Make_Entry is null, then Position_Index is used to compute the
+   --  string to display.
+
+   type Explorer_Categories is
+     array (Positive range <>) of Explorer_Category;
+   --  A list of categories. Each category is assigned an internal number which
+   --  is the index in this table, and is passed to each Make_Entry_Func
+   --  functions.
+
+   function Explorer_Regexps
+     (Lang : access Language_Root) return Explorer_Categories;
+   --  Return the list of categories for a given language.
+   --  By default, no category is defined, and thus the explorer is empty.
+
+   function Is_System_File
+     (Lang      : access Language_Root;
+      File_Name : String) return Boolean;
+   --  Return True if File_Name is the name of a system file (standard include
+   --  files in C or run-time file in Ada). These files are displayed
+   --  separately in the explorer.
 
 private
    type Language_Root is abstract tagged null record;
