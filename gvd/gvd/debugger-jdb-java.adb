@@ -18,12 +18,111 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Language.Java; use Language.Java;
 with Items;         use Items;
 with Items.Arrays;  use Items.Arrays;
 
 package body Debugger.Jdb.Java is
 
    use Language;
+
+   --------------------
+   -- Is_Simple_Type --
+   --------------------
+
+   function Is_Simple_Type
+     (Lang : access Jdb_Java_Language; Str : String) return Boolean is
+   begin
+      return Is_Simple_Type (Java_Lang, Str);
+   end Is_Simple_Type;
+
+   --------------
+   -- Keywords --
+   --------------
+
+   function Keywords
+     (Lang : access Jdb_Java_Language) return GNAT.Regpat.Pattern_Matcher is
+   begin
+      return Keywords (Java_Lang);
+   end Keywords;
+
+   --------------------------
+   -- Get_Language_Context --
+   --------------------------
+
+   function Get_Language_Context
+     (Lang : access Jdb_Java_Language) return Language.Language_Context is
+   begin
+      return Get_Language_Context (Java_Lang);
+   end Get_Language_Context;
+
+   ----------------------
+   -- Explorer_Regexps --
+   ----------------------
+
+   function Explorer_Regexps
+     (Lang : access Jdb_Java_Language) return Language.Explorer_Categories is
+   begin
+      return Explorer_Regexps (Java_Lang);
+   end Explorer_Regexps;
+
+   --------------------
+   -- Is_System_File --
+   --------------------
+
+   function Is_System_File
+     (Lang : access Jdb_Java_Language; File_Name : String) return Boolean is
+   begin
+      return Is_System_File (Java_Lang, File_Name);
+   end Is_System_File;
+
+   ----------------------
+   -- Dereference_Name --
+   ----------------------
+
+   function Dereference_Name
+     (Lang : access Jdb_Java_Language;
+      Name : String) return String is
+   begin
+      return Dereference_Name (Java_Lang, Name);
+   end Dereference_Name;
+
+   ---------------------
+   -- Array_Item_Name --
+   ---------------------
+
+   function Array_Item_Name
+     (Lang  : access Jdb_Java_Language;
+      Name  : String;
+      Index : String) return String is
+   begin
+      return Array_Item_Name (Java_Lang, Name, Index);
+   end Array_Item_Name;
+
+   -----------------------
+   -- Record_Field_Name --
+   -----------------------
+
+   function Record_Field_Name
+     (Lang  : access Jdb_Java_Language;
+      Name  : String;
+      Field : String) return String is
+   begin
+      return Record_Field_Name (Java_Lang, Name, Field);
+   end Record_Field_Name;
+
+   function Set_Variable
+     (Lang     : access Jdb_Java_Language;
+      Var_Name : String;
+      Value    : String) return String is
+   begin
+      return "set " & Var_Name & "=" & Value;
+   end Set_Variable;
+
+   function Start (Debugger : access Jdb_Java_Language) return String is
+   begin
+      return "run";
+   end Start;
 
    ----------------
    -- Parse_Type --

@@ -23,14 +23,59 @@
 --
 --  See language.ads for a complete spec.
 
-with Language.Debugger.Java;
+with Language.Debugger;
 with Items.Arrays;
 
 package Debugger.Jdb.Java is
 
    type Jdb_Java_Language is new
-     Language.Debugger.Java.Java_Language with private;
+     Language.Debugger.Language_Debugger with private;
    type Jdb_Java_Language_Access is access all Jdb_Java_Language'Class;
+
+   --------------------
+   -- Simple Parsing --
+   --------------------
+
+   function Is_Simple_Type
+     (Lang : access Jdb_Java_Language; Str : String) return Boolean;
+
+   function Keywords (Lang : access Jdb_Java_Language)
+     return GNAT.Regpat.Pattern_Matcher;
+
+   function Get_Language_Context
+     (Lang : access Jdb_Java_Language) return Language.Language_Context;
+
+   --------------
+   -- Explorer --
+   --------------
+
+   function Explorer_Regexps
+     (Lang : access Jdb_Java_Language) return Language.Explorer_Categories;
+
+   function Is_System_File
+     (Lang : access Jdb_Java_Language; File_Name : String) return Boolean;
+
+   ------------------------
+   -- Naming conventions --
+   ------------------------
+
+   function Dereference_Name
+     (Lang : access Jdb_Java_Language;
+      Name : String) return String;
+
+   function Array_Item_Name
+     (Lang  : access Jdb_Java_Language;
+      Name  : String;
+      Index : String) return String;
+
+   function Record_Field_Name
+     (Lang  : access Jdb_Java_Language;
+      Name  : String;
+      Field : String) return String;
+
+   -------------
+   -- Parsing --
+   -------------
 
    procedure Parse_Type
      (Lang     : access Jdb_Java_Language;
@@ -69,6 +114,13 @@ package Debugger.Jdb.Java is
       Index    : in out Natural;
       Result   : in out Items.Arrays.Array_Type_Access);
 
+   function Set_Variable
+     (Lang     : access Jdb_Java_Language;
+      Var_Name : String;
+      Value    : String) return String;
+
+   function Start (Debugger : access Jdb_Java_Language) return String;
+
    function Get_Language_Debugger_Context
      (Lang : access Jdb_Java_Language)
       return Language.Debugger.Language_Debugger_Context;
@@ -76,6 +128,6 @@ package Debugger.Jdb.Java is
 private
 
    type Jdb_Java_Language is new
-     Language.Debugger.Java.Java_Language with null record;
+     Language.Debugger.Language_Debugger with null record;
 
 end Debugger.Jdb.Java;
