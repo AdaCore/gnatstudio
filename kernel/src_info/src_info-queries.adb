@@ -2000,7 +2000,7 @@ package body Src_Info.Queries is
                   Column => Location.Column,
                   Name   => "???",
                   Scope  => Global_Scope,
-                  Kind   => (Procedure_Kind, False, False));
+                  Kind   => (Procedure_Kind, False, False, False));
             end if;
          end if;
          Dep := Dep.Next;

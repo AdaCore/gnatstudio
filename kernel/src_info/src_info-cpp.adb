@@ -56,6 +56,10 @@ package body Src_Info.CPP is
    Warn_Stream : constant Debug_Handle := Create ("CPP.Warn");
    Fail_Stream : constant Debug_Handle := Create ("CPP.Fail");
 
+   Enumeration_Kind_Entity : constant E_Kind :=
+     (Enumeration_Kind, True, False, False);
+   Non_Generic_Class : constant E_Kind := (Class, True, False, False);
+
    --------------------
    -- Symbol_Handler --
    --------------------
@@ -1425,8 +1429,7 @@ package body Src_Info.CPP is
       Module_Type_Defs : Module_Typedefs_List)
    is
       Sym        : FIL_Table;
-      Class_Kind : E_Kind :=
-        (Class, Is_Type => True, Is_Generic => False);
+      Class_Kind : E_Kind := Non_Generic_Class;
    begin
       if Source_Filename
          = CL_Tab.Buffer (CL_Tab.File_Name.First .. CL_Tab.File_Name.Last)
@@ -1510,7 +1513,7 @@ package body Src_Info.CPP is
          Kind := Function_Or_Operator;
       end if;
 
-      return (Kind, Is_Type => False, Is_Generic => Is_Template);
+      return (Kind, False, Is_Template, False);
    end Get_Function_Kind;
 
    ---------------------
@@ -1532,7 +1535,7 @@ package body Src_Info.CPP is
          Kind := Function_Or_Operator;
       end if;
 
-      return (Kind, Is_Type => False, Is_Generic => Is_Template);
+      return (Kind, False, Is_Template, False);
    end Get_Method_Kind;
 
    ---------------------
@@ -1917,8 +1920,7 @@ package body Src_Info.CPP is
       Class_Def  : CL_Table;
       Success    : Boolean;
       Decl_Info  : E_Declaration_Info_List;
-      Class_Kind : E_Kind :=
-        (Class, Is_Type => True, Is_Generic => False);
+      Class_Kind : E_Kind := Non_Generic_Class;
       Ref_Id     : constant String := Ref.Buffer
         (Ref.Referred_Symbol_Name.First .. Ref.Referred_Symbol_Name.Last);
 
@@ -2204,8 +2206,7 @@ package body Src_Info.CPP is
            (File        => File,
             Symbol_Name => Enum_Def.Buffer
               (Enum_Def.Name.First .. Enum_Def.Name.Last),
-            Kind        =>
-              (Enumeration_Kind, Is_Type => True, Is_Generic => False),
+            Kind        => Enumeration_Kind_Entity,
             Location    => Enum_Def.Start_Position,
             Filename    => Enum_Def.Buffer
               (Enum_Def.File_Name.First .. Enum_Def.File_Name.Last));
@@ -2222,8 +2223,7 @@ package body Src_Info.CPP is
                Referred_Filename  => Enum_Def.Buffer
                  (Enum_Def.File_Name.First .. Enum_Def.File_Name.Last),
                Location           => Enum_Def.Start_Position,
-               Kind               =>
-                 (Enumeration_Kind, Is_Type => True, Is_Generic => False),
+               Kind               => Enumeration_Kind_Entity,
                Project            => Project,
                Scope              => Global_Scope,
                Declaration_Info   => Decl_Info);
@@ -2234,8 +2234,7 @@ package body Src_Info.CPP is
            (File        => File,
             Symbol_Name => Enum_Def.Buffer
               (Enum_Def.Name.First .. Enum_Def.Name.Last),
-            Kind        =>
-              (Enumeration_Kind, Is_Type => True, Is_Generic => False),
+            Kind        => Enumeration_Kind_Entity,
            Location    => Enum_Def.Start_Position);
 
          if Decl_Info = null then
@@ -2248,8 +2247,7 @@ package body Src_Info.CPP is
                  (Enum_Def.Name.First .. Enum_Def.Name.Last),
                Location           => Enum_Def.Start_Position,
                Project            => Project,
-               Kind               =>
-                 (Enumeration_Kind, Is_Type => True, Is_Generic => False),
+               Kind               => Enumeration_Kind_Entity,
                Scope              => Global_Scope,
                Declaration_Info   => Decl_Info);
          end if;
@@ -2307,7 +2305,7 @@ package body Src_Info.CPP is
                  (Handler.DB_Dirs, Enum_Const.DBI),
                Symbol_Name       => Ref_Id,
                Location          => Enum_Const.Start_Position,
-               Kind              => (Enumeration_Literal, False, False),
+               Kind              => (Enumeration_Literal, False, False, False),
                Project           => Project,
                Scope             => Global_Scope,
                Declaration_Info  => Decl_Info);
@@ -2330,7 +2328,7 @@ package body Src_Info.CPP is
                List              => List,
                Symbol_Name       => Ref_Id,
                Location          => Enum_Const.Start_Position,
-               Kind              => (Enumeration_Literal, False, False),
+               Kind              => (Enumeration_Literal, False, False, False),
                Scope             => Global_Scope,
                Project           => Project,
                Referred_Filename => Enum_Const.Buffer
@@ -3721,7 +3719,7 @@ package body Src_Info.CPP is
            (File        => File,
             Symbol_Name => Union_Def.Buffer
               (Union_Def.Name.First .. Union_Def.Name.Last),
-            Kind        => (Class, Is_Type => True, Is_Generic => False),
+            Kind        => Non_Generic_Class,
             Location    => Union_Def.Start_Position,
             Filename    => Union_Def.Buffer
               (Union_Def.File_Name.First .. Union_Def.File_Name.Last));
@@ -3739,8 +3737,7 @@ package body Src_Info.CPP is
                  (Union_Def.File_Name.First .. Union_Def.File_Name.Last),
                Location           => Union_Def.Start_Position,
                Project            => Project,
-               Kind               =>
-                 (Class, Is_Type => True, Is_Generic => False),
+               Kind               => Non_Generic_Class,
                Scope              => Global_Scope,
                Declaration_Info   => Decl_Info);
          end if;
@@ -3750,8 +3747,7 @@ package body Src_Info.CPP is
            (File        => File,
             Symbol_Name => Union_Def.Buffer
               (Union_Def.Name.First .. Union_Def.Name.Last),
-            Kind        =>
-              (Class, Is_Type => True, Is_Generic => False),
+            Kind        => Non_Generic_Class,
             Location    => Union_Def.Start_Position);
 
          if Decl_Info = null then
@@ -3764,8 +3760,7 @@ package body Src_Info.CPP is
                  (Union_Def.Name.First .. Union_Def.Name.Last),
                Location           => Union_Def.Start_Position,
                Project            => Project,
-               Kind               =>
-               (Class, Is_Type => True, Is_Generic => False),
+               Kind               => Non_Generic_Class,
                Scope              => Global_Scope,
                Declaration_Info   => Decl_Info);
          end if;
@@ -4068,8 +4063,7 @@ package body Src_Info.CPP is
          Symbol_Name       => E_Id,
          Location          => Sym.Start_Position,
          Project           => Project,
-         Kind              =>
-           (Enumeration_Kind, Is_Type => True, Is_Generic => False),
+         Kind              => Enumeration_Kind_Entity,
          Scope             => Global_Scope,
          Declaration_Info  => Decl_Info);
    end Sym_E_Handler;
@@ -4129,7 +4123,7 @@ package body Src_Info.CPP is
               (Handler.DB_Dirs, Sym.DBI),
             Symbol_Name       => Ec_Id,
             Location          => Sym.Start_Position,
-            Kind              => (Enumeration_Literal, False, False),
+            Kind              => (Enumeration_Literal, False, False, False),
             Parent_Location   => Desc.Parent_Point,
             Parent_Filename   => Desc.Parent_Filename.all,
             Project           => Project,
@@ -4144,7 +4138,7 @@ package body Src_Info.CPP is
               (Handler.DB_Dirs, Sym.DBI),
             Symbol_Name       => Ec_Id,
             Location          => Sym.Start_Position,
-            Kind              => (Enumeration_Literal, False, False),
+            Kind              => (Enumeration_Literal, False, False, False),
             Project           => Project,
             Scope             => Global_Scope,
             Declaration_Info  => Decl_Info);
@@ -5774,7 +5768,7 @@ package body Src_Info.CPP is
                   Symbol_Name      =>
                      Arg.Buffer (Arg.Name.First .. Arg.Name.Last),
                   Location         => Arg.Start_Position,
-                  Kind             => (Private_Type, False, False),
+                  Kind             => (Private_Type, False, False, False),
                   Project          => Project,
                   Scope            => Local_Scope,
                   Declaration_Info => Decl_Info);
