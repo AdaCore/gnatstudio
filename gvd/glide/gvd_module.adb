@@ -84,6 +84,8 @@ with Traces;                    use Traces;
 with GUI_Utils;                 use GUI_Utils;
 with String_Utils;              use String_Utils;
 with VFS;                       use VFS;
+with Projects.Registry;         use Projects.Registry;
+with Projects.Editor;           use Projects.Editor;
 
 with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
@@ -168,6 +170,15 @@ package body GVD_Module is
       --  Whether the lines with code should be explicitly queried.
 
       Initialize_Menu  : Gtk_Menu;
+
+      Current_Executable_For_Project : Virtual_File :=
+        Create_From_Base ("</\unknown>");
+      --  This is the last executable that was used to compute the automatic
+      --  project. The default value is to make sure that it won't match an
+      --  actual executable name, and thus make sure we will at least
+      --  compute the project once.
+      --  It might be left to No_File in case we don't know the
+      --  executable because the module was already loaded on cross targets.
 
       Delete_Id         : Handler_Id := (Null_Signal_Id, null);
       File_Edited_Id    : Handler_Id := (Null_Signal_Id, null);
@@ -264,6 +275,170 @@ package body GVD_Module is
    --  If Context contains an entity, get the entity name.
    --  Dereference the entity if Dereference is True.
    --  Return "" if entity name could not be found in Context.
+
+   procedure Load_Project_From_Executable
+     (Kernel      : access Kernel_Handle_Record'Class;
+      Debugger    : access Visual_Debugger_Record'Class);
+   --  Create and load a default project from the executable loaded in
+   --  Debugger.
+
+   ----------------------------------
+   -- Load_Project_From_Executable --
+   ----------------------------------
+
+   procedure Load_Project_From_Executable
+     (Kernel      : access Kernel_Handle_Record'Class;
+      Debugger    : access Visual_Debugger_Record'Class)
+   is
+      Project : Project_Type;
+      No_Scenario : constant Scenario_Variable_Array (1 .. 0) :=
+        (others => No_Variable);
+      Exec : Virtual_File;
+   begin
+      --  Do nothing unless the current project was already generated from an
+      --  executable
+
+      if Status (Get_Project (Kernel)) /= From_Executable then
+         return;
+      end if;
+
+      Exec := Get_Executable (Debugger.Debugger);
+
+      if Exec = GVD_Module (GVD_Module_ID).Current_Executable_For_Project then
+         return;
+      end if;
+
+      GVD_Module (GVD_Module_ID).Current_Executable_For_Project := Exec;
+
+      --  No handling of desktop is done here, we want to leave all windows
+      --  as-is.
+
+      Unload_Project (Project_Registry (Get_Registry (Kernel)));
+
+      if Exec /= VFS.No_File then
+         Project := Create_Project
+           (Project_Registry (Get_Registry (Kernel)),
+            "debugger_" & Base_Name (Exec),
+            GNAT.Directory_Operations.Get_Current_Dir);
+      else
+         Project := Create_Project
+           (Project_Registry (Get_Registry (Kernel)),
+            "debugger_no_file",
+            GNAT.Directory_Operations.Get_Current_Dir);
+      end if;
+
+      declare
+         List : String_Array := Source_Files_List (Debugger.Debugger);
+         Bases : GNAT.OS_Lib.Argument_List (List'Range);
+         Dirs  : GNAT.OS_Lib.Argument_List (List'Range);
+         Dirs_Index : Natural := Dirs'First;
+         Main : GNAT.OS_Lib.Argument_List (1 .. 1);
+         Langs : GNAT.OS_Lib.Argument_List (List'Range);
+         Lang_Index : Natural := Langs'First;
+
+      begin
+         for L in List'Range loop
+            Bases (L) := new String'(Base_Name (List (L).all));
+         end loop;
+
+         Update_Attribute_Value_In_Scenario
+           (Project,
+            Scenario_Variables => No_Scenario,
+            Attribute          => Source_Files_Attribute,
+            Values             => Bases);
+         Free (Bases);
+
+         for L in List'Range loop
+            declare
+               Dir   : constant String := GNAT.OS_Lib.Normalize_Pathname
+                 (Dir_Name (List (L).all),
+                  Get_Current_Dir,
+                  Resolve_Links => False);
+               Found : Boolean := False;
+            begin
+               for D in Dirs'First .. Dirs_Index - 1 loop
+                  if Dirs (D).all = Dir then
+                     Found := True;
+                     exit;
+                  end if;
+               end loop;
+
+               if not Found then
+                  Dirs (Dirs_Index) := new String'(Dir);
+                  Dirs_Index := Dirs_Index + 1;
+               end if;
+            end;
+         end loop;
+
+         Update_Attribute_Value_In_Scenario
+           (Project,
+            Scenario_Variables => No_Scenario,
+            Attribute          => Source_Dirs_Attribute,
+            Values             => Dirs (Dirs'First .. Dirs_Index - 1));
+         Free (Dirs);
+
+         for L in List'Range loop
+            declare
+               Lang : constant String := Get_Language_From_File
+                 (Get_Language_Handler (Kernel),
+                  Create (Full_Filename => List (L).all));
+               Found : Boolean := False;
+            begin
+               if Lang /= "" then
+                  for La in Langs'First .. Lang_Index - 1 loop
+                     if Langs (La).all = Lang then
+                        Found := True;
+                        exit;
+                     end if;
+                  end loop;
+
+                  if not Found then
+                     Langs (Lang_Index) := new String'(Lang);
+                     Lang_Index := Lang_Index + 1;
+                  end if;
+               end if;
+            end;
+         end loop;
+
+         Update_Attribute_Value_In_Scenario
+           (Project,
+            Scenario_Variables => No_Scenario,
+            Attribute          => Languages_Attribute,
+            Values             => Langs (Langs'First .. Lang_Index - 1));
+         Free (Langs);
+
+
+         if Exec /= VFS.No_File then
+            Update_Attribute_Value_In_Scenario
+              (Project,
+               Scenario_Variables => No_Scenario,
+               Attribute          => Obj_Dir_Attribute,
+               Value              => Dir_Name (Exec));
+            Update_Attribute_Value_In_Scenario
+              (Project,
+               Scenario_Variables => No_Scenario,
+               Attribute          => Exec_Dir_Attribute,
+               Value              => Dir_Name (Exec));
+
+            Main (Main'First) := new String'(Full_Name (Exec));
+            Update_Attribute_Value_In_Scenario
+              (Project,
+               Scenario_Variables => No_Scenario,
+               Attribute          => Main_Attribute,
+               Values             => Main);
+            Free (Main);
+         end if;
+         Free (List);
+      end;
+
+      --  Is the information for this executable already cached ? If yes,
+      --  we simply reuse it to avoid the need to interact with the debugger.
+
+      Load_Custom_Project (Project_Registry (Get_Registry (Kernel)), Project);
+      Set_Status (Get_Project (Kernel), From_Executable);
+      Project_Changed (Kernel);
+      Recompute_View (Kernel);
+   end Load_Project_From_Executable;
 
    -------------
    -- Gtk_New --
@@ -1299,10 +1474,6 @@ package body GVD_Module is
       end;
 
       Set_Sensitive (K, Debug_Available);
-      Widget_Callback.Object_Connect
-        (Page, "executable_changed",
-         Widget_Callback.To_Marshaller (On_Executable_Changed'Access),
-         Top);
 
       if First_Debugger then
          --  Add columns information for not currently opened files.
@@ -1318,6 +1489,17 @@ package body GVD_Module is
          Create_Debugger_Columns (K, VFS.No_File);
          Pop_State (K);
       end if;
+
+      --  Force the creation of the project if needed
+      Load_Project_From_Executable
+        (K, Get_Current_Process (Get_Main_Window (K)));
+
+      --  Connect only once the debugger has started, to avoid recomputing the
+      --  side information twice.
+      Widget_Callback.Object_Connect
+        (Page, "executable_changed",
+         Widget_Callback.To_Marshaller (On_Executable_Changed'Access),
+         Top);
 
       Id.Initialized := True;
    exception
@@ -1794,7 +1976,13 @@ package body GVD_Module is
 
    procedure On_Executable_Changed (Object : access Gtk_Widget_Record'Class) is
       Top : constant Glide_Window := Glide_Window (Object);
+      Process  : constant Visual_Debugger :=
+        Get_Current_Process (Get_Main_Window (Top.Kernel));
    begin
+      --  Change the project to match the executable
+
+      Load_Project_From_Executable (Top.Kernel, Process);
+
       --  Re-create all debugger columns.
 
       Remove_Debugger_Columns (Top.Kernel, VFS.No_File);
@@ -2109,6 +2297,16 @@ package body GVD_Module is
       Debuggable_Suffix : GNAT.OS_Lib.String_Access := Get_Debuggable_Suffix;
 
    begin
+      --  Change the project to match the executable. When On_View_Changed
+      --  is called as a result of the Recompute_View in
+      --  Load_Project_From_Executable, nothing will be done since the
+      --  executable hasn't changed.
+
+      if Get_Current_Process (Get_Main_Window (Kernel)) /= null then
+         Load_Project_From_Executable
+           (Kernel, Get_Current_Process (Get_Main_Window (Kernel)));
+      end if;
+
       --  Remove all existing menus
       Remove_All_Children (Menu);
 
