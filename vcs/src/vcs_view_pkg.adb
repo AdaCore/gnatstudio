@@ -146,6 +146,12 @@ package body VCS_View_Pkg is
       Identifier : VCS_Access) return VCS_Page_Access;
    --  Return the page relative to Identifier. Create it if necessary.
 
+   function Copy_Context
+     (Context : Selection_Context_Access)
+     return Selection_Context_Access;
+   --  Copy the information in Context that are relevant to the explorer,
+   --  and create a new context containing them.
+
    ---------------
    -- Callbacks --
    ---------------
@@ -667,7 +673,7 @@ package body VCS_View_Pkg is
       Menu     : Gtk_Menu;
       Check    : Gtk_Check_Menu_Item;
       Mitem    : Gtk_Menu_Item;
-      Context  : constant File_Selection_Context_Access :=
+      Context  : File_Selection_Context_Access :=
         new File_Selection_Context;
 
       Files    : String_List.List;
@@ -677,6 +683,7 @@ package body VCS_View_Pkg is
 
    begin
       if Get_Button (Event) = 1 then
+         Free (Selection_Context_Access (Context));
          return False;
       end if;
 
@@ -736,7 +743,9 @@ package body VCS_View_Pkg is
               (Context,
                Directory => Dir_Name (First_File),
                File_Name => Base_Name (First_File));
-            VCS_Contextual_Menu (Explorer, Context, Menu);
+
+            Set_Current_Context (Explorer, Selection_Context_Access (Context));
+            VCS_Contextual_Menu (Explorer, Explorer.Context, Menu);
 
             Gtk_New (Mitem);
             Append (Menu, Mitem);
@@ -766,6 +775,7 @@ package body VCS_View_Pkg is
       Show_All (Menu);
       Popup (Menu);
 
+      Free (Selection_Context_Access (Context));
       return True;
    end Button_Press;
 
@@ -899,11 +909,96 @@ package body VCS_View_Pkg is
      (Explorer : access VCS_View_Record)
      return VCS_Access
    is
-      pragma Unreferenced (Explorer);
+      Page     : VCS_Page_Access;
    begin
-      return Get_VCS_From_Id ("cvs");
-      --  ??? this should be obtained from the current notebook.
+      Page := VCS_Page_Access
+        (Get_Nth_Page (Explorer.Notebook,
+                       Get_Current_Page (Explorer.Notebook)));
+
+      if Page /= null then
+         return Page.Reference;
+      else
+         return Get_VCS_From_Id ("");
+      end if;
    end Get_Current_Ref;
+
+   ------------------
+   -- Copy_Context --
+   ------------------
+
+   function Copy_Context
+     (Context : Selection_Context_Access)
+     return Selection_Context_Access
+   is
+      Result : Selection_Context_Access;
+      File   : File_Selection_Context_Access;
+
+      File_Info      : String_Access;
+      Directory_Info : String_Access;
+   begin
+      if Context.all in File_Selection_Context'Class then
+         Result := new File_Selection_Context;
+         File := File_Selection_Context_Access (Context);
+
+         Set_Context_Information
+           (Result,
+            Get_Kernel (Context),
+            Get_Creator (Context));
+
+         if Has_File_Information (File) then
+            File_Info := new String' (File_Information (File));
+         else
+            File_Info := new String' ("");
+         end if;
+
+         if Has_Directory_Information (File) then
+            Directory_Info := new String' (Directory_Information (File));
+         else
+            Directory_Info := new String' ("");
+         end if;
+
+         Set_File_Information
+           (File_Selection_Context_Access (Result),
+            Directory_Info.all,
+            File_Info.all,
+            Project_Information (File));
+
+         Free (File_Info);
+         Free (Directory_Info);
+         return Result;
+
+      else
+         return null;
+      end if;
+   end Copy_Context;
+
+   -------------------------
+   -- Get_Current_Context --
+   -------------------------
+
+   function Get_Current_Context
+     (Explorer : access VCS_View_Record)
+     return Selection_Context_Access is
+   begin
+      return Copy_Context (Explorer.Context);
+   end Get_Current_Context;
+
+   -------------------------
+   -- Set_Current_Context --
+   -------------------------
+
+   procedure Set_Current_Context
+     (Explorer : access VCS_View_Record;
+      Context  : Selection_Context_Access)
+   is
+   begin
+      if Explorer.Context /= null then
+         Free (Explorer.Context);
+         Explorer.Context := null;
+      end if;
+
+      Explorer.Context := Copy_Context (Context);
+   end Set_Current_Context;
 
    ------------------------
    -- Get_Selected_Files --
