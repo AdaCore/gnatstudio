@@ -122,11 +122,7 @@ package Main_Debug_Window_Pkg is
       Program1 : Gtk_Menu_Item;
       Program1_Menu : Gtk_Menu;
       Run1 : Gtk_Menu_Item;
-      Run_Again1 : Gtk_Menu_Item;
-      Start1 : Gtk_Menu_Item;
       Separator10 : Gtk_Menu_Item;
-      Run_In_Execution_Window1 : Gtk_Menu_Item;
-      Separator11 : Gtk_Menu_Item;
       Step1 : Gtk_Menu_Item;
       Step_Instruction1 : Gtk_Menu_Item;
       Next1 : Gtk_Menu_Item;
@@ -144,9 +140,6 @@ package Main_Debug_Window_Pkg is
       Commands1_Menu : Gtk_Menu;
       Command_History1 : Gtk_Menu_Item;
       Separator14 : Gtk_Menu_Item;
-      Find_Backward1 : Gtk_Menu_Item;
-      Find_Forward1 : Gtk_Menu_Item;
-      Separator15 : Gtk_Menu_Item;
       Clear_Line1 : Gtk_Menu_Item;
       Clear_Window1 : Gtk_Menu_Item;
       Separator16 : Gtk_Menu_Item;

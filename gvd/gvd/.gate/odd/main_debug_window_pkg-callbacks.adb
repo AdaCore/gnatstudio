@@ -289,39 +289,6 @@ package body Main_Debug_Window_Pkg.Callbacks is
       null;
    end On_Run1_Activate;
 
-   ----------------------------
-   -- On_Run_Again1_Activate --
-   ----------------------------
-
-   procedure On_Run_Again1_Activate
-     (Object : access Gtk_Widget_Record'Class)
-   is
-   begin
-      null;
-   end On_Run_Again1_Activate;
-
-   ------------------------
-   -- On_Start1_Activate --
-   ------------------------
-
-   procedure On_Start1_Activate
-     (Object : access Gtk_Widget_Record'Class)
-   is
-   begin
-      null;
-   end On_Start1_Activate;
-
-   ------------------------------------------
-   -- On_Run_In_Execution_Window1_Activate --
-   ------------------------------------------
-
-   procedure On_Run_In_Execution_Window1_Activate
-     (Object : access Gtk_Widget_Record'Class)
-   is
-   begin
-      null;
-   end On_Run_In_Execution_Window1_Activate;
-
    -----------------------
    -- On_Step1_Activate --
    -----------------------
@@ -453,28 +420,6 @@ package body Main_Debug_Window_Pkg.Callbacks is
    begin
       null;
    end On_Command_History1_Activate;
-
-   --------------------------------
-   -- On_Find_Backward1_Activate --
-   --------------------------------
-
-   procedure On_Find_Backward1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
-   is
-   begin
-      null;
-   end On_Find_Backward1_Activate;
-
-   -------------------------------
-   -- On_Find_Forward1_Activate --
-   -------------------------------
-
-   procedure On_Find_Forward1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
-   is
-   begin
-      null;
-   end On_Find_Forward1_Activate;
 
    -----------------------------
    -- On_Clear_Line1_Activate --
@@ -807,6 +752,18 @@ package body Main_Debug_Window_Pkg.Callbacks is
    begin
       null;
    end On_Display1_Activate;
+
+   ------------------------
+   -- On_Start1_Activate --
+   ------------------------
+
+   procedure On_Start1_Activate
+     (Object : access Gtk_Widget_Record'Class;
+      Params : Gtk.Arguments.Gtk_Args)
+   is
+   begin
+      null;
+   end On_Start1_Activate;
 
    ---------------------
    -- On_Up1_Activate --

@@ -329,7 +329,7 @@ begin
    Gtk_New (Main_Debug_Window.Program1_Menu);
    Set_Submenu (Main_Debug_Window.Program1, Main_Debug_Window.Program1_Menu);
 
-   Gtk_New (Main_Debug_Window.Run1, -"Run...");
+   Gtk_New (Main_Debug_Window.Run1, -"Run/Start...");
    Add_Accelerator (Main_Debug_Window.Run1, "activate",
      The_Accel_Group, GDK_F2, 0, Accel_Visible);
    Widget_Callback.Object_Connect
@@ -338,38 +338,9 @@ begin
    Add (Main_Debug_Window.Program1_Menu, Main_Debug_Window.Run1);
    Set_Right_Justify (Main_Debug_Window.Run1, False);
 
-   Gtk_New (Main_Debug_Window.Run_Again1, -"Run Again");
-   Set_Sensitive (Main_Debug_Window.Run_Again1, False);
-   Add_Accelerator (Main_Debug_Window.Run_Again1, "activate",
-     The_Accel_Group, GDK_F3, 0, Accel_Visible);
-   Widget_Callback.Object_Connect
-     (Main_Debug_Window.Run_Again1, "activate",
-      Widget_Callback.To_Marshaller (On_Run_Again1_Activate'Access), Main_Debug_Window);
-   Add (Main_Debug_Window.Program1_Menu, Main_Debug_Window.Run_Again1);
-   Set_Right_Justify (Main_Debug_Window.Run_Again1, False);
-
-   Gtk_New (Main_Debug_Window.Start1, -"Start");
-   Widget_Callback.Object_Connect
-     (Main_Debug_Window.Start1, "activate",
-      Widget_Callback.To_Marshaller (On_Start1_Activate'Access), Main_Debug_Window);
-   Add (Main_Debug_Window.Program1_Menu, Main_Debug_Window.Start1);
-   Set_Right_Justify (Main_Debug_Window.Start1, False);
-
    Gtk_New (Main_Debug_Window.Separator10);
    Add (Main_Debug_Window.Program1_Menu, Main_Debug_Window.Separator10);
    Set_Right_Justify (Main_Debug_Window.Separator10, False);
-
-   Gtk_New (Main_Debug_Window.Run_In_Execution_Window1, -"Run in Execution Window");
-   Set_Sensitive (Main_Debug_Window.Run_In_Execution_Window1, False);
-   Widget_Callback.Object_Connect
-     (Main_Debug_Window.Run_In_Execution_Window1, "activate",
-      Widget_Callback.To_Marshaller (On_Run_In_Execution_Window1_Activate'Access), Main_Debug_Window);
-   Add (Main_Debug_Window.Program1_Menu, Main_Debug_Window.Run_In_Execution_Window1);
-   Set_Right_Justify (Main_Debug_Window.Run_In_Execution_Window1, False);
-
-   Gtk_New (Main_Debug_Window.Separator11);
-   Add (Main_Debug_Window.Program1_Menu, Main_Debug_Window.Separator11);
-   Set_Right_Justify (Main_Debug_Window.Separator11, False);
 
    Gtk_New (Main_Debug_Window.Step1, -"Step");
    Add_Accelerator (Main_Debug_Window.Step1, "activate",
@@ -500,30 +471,6 @@ begin
    Gtk_New (Main_Debug_Window.Separator14);
    Add (Main_Debug_Window.Commands1_Menu, Main_Debug_Window.Separator14);
    Set_Right_Justify (Main_Debug_Window.Separator14, False);
-
-   Gtk_New (Main_Debug_Window.Find_Backward1, -"Find Backward");
-   Set_Sensitive (Main_Debug_Window.Find_Backward1, False);
-   Add_Accelerator (Main_Debug_Window.Find_Backward1, "activate",
-     The_Accel_Group, GDK_B, Gdk.Types.Control_Mask, Accel_Visible);
-   Menu_Item_Callback.Connect
-     (Main_Debug_Window.Find_Backward1, "activate",
-      Menu_Item_Callback.To_Marshaller (On_Find_Backward1_Activate'Access));
-   Add (Main_Debug_Window.Commands1_Menu, Main_Debug_Window.Find_Backward1);
-   Set_Right_Justify (Main_Debug_Window.Find_Backward1, False);
-
-   Gtk_New (Main_Debug_Window.Find_Forward1, -"Find Forward");
-   Set_Sensitive (Main_Debug_Window.Find_Forward1, False);
-   Add_Accelerator (Main_Debug_Window.Find_Forward1, "activate",
-     The_Accel_Group, GDK_S, Gdk.Types.Control_Mask, Accel_Visible);
-   Menu_Item_Callback.Connect
-     (Main_Debug_Window.Find_Forward1, "activate",
-      Menu_Item_Callback.To_Marshaller (On_Find_Forward1_Activate'Access));
-   Add (Main_Debug_Window.Commands1_Menu, Main_Debug_Window.Find_Forward1);
-   Set_Right_Justify (Main_Debug_Window.Find_Forward1, False);
-
-   Gtk_New (Main_Debug_Window.Separator15);
-   Add (Main_Debug_Window.Commands1_Menu, Main_Debug_Window.Separator15);
-   Set_Right_Justify (Main_Debug_Window.Separator15, False);
 
    Gtk_New (Main_Debug_Window.Clear_Line1, -"Clear Line");
    Set_Sensitive (Main_Debug_Window.Clear_Line1, False);
@@ -885,7 +832,7 @@ begin
       Tooltip_Text => -"Start the debugged program, stopping at the beginning of the main procedure",
       Icon => Gtk_Widget (Create_Pixmap (start_xpm, Main_Debug_Window)));
    Widget_Callback.Object_Connect
-     (Main_Debug_Window.Button50, "clicked", Widget_Callback.To_Marshaller (On_Start1_Activate'Access), Main_Debug_Window);
+     (Main_Debug_Window.Button50, "clicked", On_Start1_Activate'Access, Main_Debug_Window);
    Main_Debug_Window.Button52 := Append_Element
      (Toolbar => Main_Debug_Window.Toolbar2,
       The_Type => Toolbar_Child_Button,

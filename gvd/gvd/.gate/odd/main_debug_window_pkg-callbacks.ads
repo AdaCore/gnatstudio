@@ -78,15 +78,6 @@ package Main_Debug_Window_Pkg.Callbacks is
    procedure On_Run1_Activate
      (Object : access Gtk_Widget_Record'Class);
 
-   procedure On_Run_Again1_Activate
-     (Object : access Gtk_Widget_Record'Class);
-
-   procedure On_Start1_Activate
-     (Object : access Gtk_Widget_Record'Class);
-
-   procedure On_Run_In_Execution_Window1_Activate
-     (Object : access Gtk_Widget_Record'Class);
-
    procedure On_Step1_Activate
      (Object : access Gtk_Widget_Record'Class);
 
@@ -121,12 +112,6 @@ package Main_Debug_Window_Pkg.Callbacks is
      (Object : access Gtk_Widget_Record'Class);
 
    procedure On_Command_History1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class);
-
-   procedure On_Find_Backward1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class);
-
-   procedure On_Find_Forward1_Activate
      (Object : access Gtk_Menu_Item_Record'Class);
 
    procedure On_Clear_Line1_Activate
@@ -218,6 +203,10 @@ package Main_Debug_Window_Pkg.Callbacks is
       Params : Gtk.Arguments.Gtk_Args);
 
    procedure On_Display1_Activate
+     (Object : access Gtk_Widget_Record'Class;
+      Params : Gtk.Arguments.Gtk_Args);
+
+   procedure On_Start1_Activate
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args);
 
