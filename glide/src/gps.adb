@@ -43,6 +43,7 @@ with Src_Info;             use Src_Info;
 with Aunit_Module;
 with Browsers.Dependency_Items;
 with Browsers.Projects;
+with Browsers.Call_Graph;
 with GVD_Module;
 with Metrics_Module;
 with Project_Explorers;
@@ -162,6 +163,7 @@ begin
    Metrics_Module.Register_Module;
    Browsers.Dependency_Items.Register_Module;
    Browsers.Projects.Register_Module;
+   Browsers.Call_Graph.Register_Module;
    Project_Viewers.Register_Module;
    Project_Explorers.Register_Module;
    Src_Editor_Module.Register_Module;
