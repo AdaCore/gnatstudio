@@ -174,6 +174,7 @@ private
       Pango_Font          : Pango.Font.Pango_Font_Description;
       Font                : Gdk.Font.Gdk_Font;
       Side_Column_GC      : Gdk.GC.Gdk_GC;
+      Side_Background_GC  : Gdk.GC.Gdk_GC;
 
       Top_Line            : Natural := 1;
       Bottom_Line         : Natural := 0;
@@ -181,8 +182,8 @@ private
       Line_Info           : Line_Info_Display_Array_Access;
       --  The information that should be displayed in the left window.
 
-      Total_Column_Width  : Natural := 0;
-      --  Width of the Left Window.
+      Total_Column_Width  : Natural := 3;
+      --  Width of the Left Window, in pixels.
 
       Original_Lines_Number : Natural := 1;
       --  The number of lines in the file when it was first opened.
