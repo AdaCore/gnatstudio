@@ -1,0 +1,405 @@
+# odd fr.po
+
+# Main title
+
+msgid  "The Other Display Debugger"
+msgstr "L'Odieux Déboggueur de Données"
+
+# Main menubar
+
+msgid  "File"
+msgstr "Fichier"
+
+msgid  "Open Program..."
+msgstr "Ouvrir Programme..."
+
+msgid  "Open Recent"
+msgstr "Ouvrir Récent"
+
+msgid  "Open Core Dump..."
+msgstr "Ouvrir Fichier 'Core'..."
+
+msgid  "Open Source..."
+msgstr "Ouvrir Source..."
+
+msgid  "Open Session..."
+msgstr "Ouvrir Session..."
+
+msgid  "Save Session As..."
+msgstr "Sauver Session Sous..."
+
+msgid  "Attach To Process..."
+msgstr "S'attacher À Un Processus..."
+
+msgid  "Detach Process"
+msgstr "Détacher Processus"
+
+msgid  "Print Graph..."
+msgstr "Imprimer Graphe..."
+
+msgid  "Change Directory..."
+msgstr "Changer Répertoire..."
+
+msgid  "Make..."
+msgstr "Construire..."
+
+msgid  "Close"
+msgstr "Fermer"
+
+msgid  "Restart"
+msgstr "Redémarrer"
+
+msgid  "Exit"
+msgstr "Quitter"
+
+msgid  "Edit"
+msgstr "Edition"
+
+msgid  "Undo"
+msgstr "Annuler"
+
+msgid  "Redo"
+msgstr "Recommencer"
+
+msgid  "Cut"
+msgstr "Couper"
+
+msgid  "Copy"
+msgstr "Copier"
+
+msgid  "Paste"
+msgstr "Coller"
+
+msgid  "Clear"
+msgstr "Effacer"
+
+msgid  "Delete"
+msgstr "Supprimer"
+
+msgid  "Select All"
+msgstr "Tout Sélectionner"
+
+msgid  "Preferences..."
+msgstr "Préférences..."
+
+msgid  "GDB Settings..."
+msgstr "Paramètres GDB..."
+
+msgid  "Save Options"
+msgstr "Sauver Options"
+
+msgid  "View"
+msgstr "Voir"
+
+msgid  "Command Tool..."
+msgstr "Barre de Commandes..."
+
+msgid  "Execution Window..."
+msgstr "Fenêtre d'Exécution..."
+
+msgid  "GDB Console"
+msgstr "Console GDB"
+
+msgid  "Source Window"
+msgstr "Fenêtre Source"
+
+msgid  "Data Window"
+msgstr "Fenêtre de données"
+
+msgid  "Machine Code Window"
+msgstr "Fenêtre Code Machine"
+
+msgid  "Program"
+msgstr "Programme"
+
+msgid  "Run..."
+msgstr "Exécuter..."
+
+msgid  "Run Again"
+msgstr "Exécuter à nouveau"
+
+msgid  "Start"
+msgstr "Démarrer"
+
+msgid  "Run in Execution Window"
+msgstr "Exécuter dans une fenêtre séparée"
+
+msgid  "Step"
+msgstr "Pas à pas"
+
+msgid  "Step Instruction"
+msgstr "Pas à pas Instruction"
+
+msgid  "Next"
+msgstr "Suivante"
+
+msgid  "Next Instruction"
+msgstr "Instruction suivante"
+
+msgid  "Until"
+msgstr "Avancer"
+
+msgid  "Finish"
+msgstr "Retourner"
+
+msgid  "Continue"
+msgstr "Continuer"
+
+msgid  "Continue without Signal"
+msgstr "Continuer sans Signal"
+
+msgid  "Kill"
+msgstr "Terminer"
+
+msgid  "Interrupt"
+msgstr "Interrompre"
+
+msgid  "Abort"
+msgstr "Avorter"
+
+msgid  "Commands"
+msgstr "Commandes"
+
+#"Command History..."
+#"Previous"
+#"Next"
+#"Find Backward"
+#"Find Forward"
+#"Quit Search"
+#"Complete"
+#"Apply"
+#"Clear Line"
+#"Clear Window"
+#"Define Command..."
+#"Edit Buttons..."
+
+msgid  "Status"
+msgstr "Statut"
+
+#"Backtrace..."
+#"Registers..."
+#"Threads..."
+#"Tasks..."
+#"Processus..."
+#"Signals..."
+#"Up"
+#"Down"
+
+msgid  "Source"
+msgstr "Source"
+
+#"Edit Breakpoints"
+#"Lookup ()"
+#"Find>> ()"
+#"Find<< ()"
+#"Find Words Only"
+#"Find Case Sensitive"
+#"Display Line Numbers"
+#"Display Machine Code"
+#"Edit Source..."
+#"Reload Source"
+
+msgid  "Data"
+msgstr "Données"
+
+#"Edit Displays..."
+#"Edit Watchpoints..."
+#"Examine Memory..."
+#"Print ()"
+#"Display ()"
+#"Detect Aliases"
+#"Display Local Variables"
+#"Display Arguments"
+#"More Status Display..."
+#"Align on Grid"
+#"Rotate Graph"
+#"Layout Graph"
+#"Refresh"
+
+msgid  "Help"
+msgstr "Aide"
+
+#"Help"
+#"Overview..."
+#"On Item..."
+#"On Window..."
+#"What Now ... ?"
+#"Tip Of The Day..."
+#"ODD Reference..."
+#"ODD News..."
+#"GDB Reference..."
+#"ODD License..."
+#"ODD WWW Page..."
+#"About ODD..."
+
+# Tooltips - First toolbar
+
+#"Lookup () in the source"
+#"Set/Delete breakpoint at ()"
+#"Stop whenever () changes"
+#"Print ()"
+#"Display ()"
+#"Plot ()"
+#"Set the value of ()"
+
+# Tooltips - Second toolbar
+
+msgid  "Start the debugged program"
+msgstr "Démarrer le programme à débogguer"
+
+msgid  "Start the debugged program, stopping at the beginning"
+       " of the main procedure"
+msgstr "Démarrer le programme à débogguer, en s'arrêtant au début de la"
+       " procédure principale"
+
+msgid  "Interrupt debugged program"
+msgstr "Interrompre le programme déboggué"
+
+msgid  "Step program until it reaches a different source line"
+msgstr "Avance jusqu'à ce que le programme atteigne une ligne source"
+       " différente"
+
+msgid  "Step one instruction exactly"
+msgstr "Avance d'une instruction exactement"
+
+msgid  "Step program, proceeding through subroutine calls"
+msgstr "Avance sans rentrer dans les sous-routines"
+
+msgid  "Step one instruction, but proceed through subroutine calls"
+msgstr "Avance d'une instruction, mais sans rentrer dans les sous routines"
+
+msgid  "Execute until the program reaches a source line greater than the"
+       " current"
+msgstr "Avance jusqu'à ce que le programme atteigne une ligne source"
+       " plus grande que la ligne courante"
+
+msgid  "Execute until selected stack frame returns"
+msgstr "Avance jusqu'au retour du cadre de pile sélectionné"
+
+msgid  "Continue program being debugged, after signal or breakpoint"
+msgstr "Continue l'exécution après un signal ou un point d'arrêt"
+
+msgid  "Kill execution of program being debugged"
+msgstr "Terminer l'exécution du programme déboggué"
+
+msgid  "Select and print stack frame that called this one"
+msgstr "Selectionner et afficher le cadre de pile appelant"
+
+msgid  "Select and print stack frame called by this one"
+msgstr "Selectionner et afficher le cadre de pile appelé"
+
+# Status bar
+
+msgid  "Debugger status"
+msgstr "Etat déboggueur"
+
+# About ODD dialog
+
+msgid  "ODD: The Other Display Debugger\n\n(c) 2000 by Arnaud Charlet"
+msgstr "ODD: L'Odieux Déboggueur de Données\n\n(c) 2000 par Arnaud Charlet"
+
+msgid  "This is the About information box.\n\n"
+       "Click on the OK button to close this window."
+msgstr "Ceci est la boite d'information 'À Propos'.\n\n"
+       "Cliquez sur le bouton OK pour fermer cette fenêtre."
+
+msgid  "About..."
+msgstr "À propos..."
+
+# Remaining items
+
+#"Preferences"
+#"as Popup Tips"
+#"in the Status Line"
+#"in All Windows"
+#"in Console Only"
+#"Iconify all Windows at Once"
+#"Uniconify When Ready"
+#"Suppress X Warnings"
+#"Warn if Multiple ODD Instances are Running"
+#"Continue Automatically when Mouse Pointer is Frozen"
+#"Clear Undo Buffer"
+#"as Text Characters"
+#"Source Window"
+#"as Glyphs"
+#"Command Tool"
+#"by Base Name"
+#"by Path Name"
+#"Display Source Line Numbers"
+#"Case Sensitive"
+#"Words Only"
+#"Source Files"
+#"Machine Code"
+#"Automatic"
+#"Compact"
+#"Edge Hints"
+#"Edge Annotations"
+#"Titles of Dependent Displays"
+#"Detect Aliases (shared data structures)"
+#"Cluster Data Displays"
+#"Display Two-Dimensional Arrays as Tables"
+#"Close Data Window when Deleting last Display"
+#"Auto-Align Displays on Nearest Grid Point"
+#"Determine Automatically from Arguments"
+#"Images"
+#"Captions"
+#"Flat"
+#"Color"
+#"Bottom"
+#"ODD Splash Screen"
+#"Tip of the Day"
+#"Panner"
+#"Point to Type"
+#"Click to Type"
+#"Scrollbars"
+#"Select All"
+#"Beginning of Line"
+#"Copy"
+#"Interrupt"
+#"Stacked Windows"
+#"Separate Windows"
+#"Browse..."
+#"OK"
+#"Reset"
+#"Help"
+#"( ): "
+#"Automatic Display of Variable Values"
+#"TAB Key Completes"
+#"Automatic Display of Button Hints"
+#"Undo Buffer Size"
+#"kBytes"
+#"General"
+#"Tool buttons location"
+#"Show Position and Breakpoints"
+#"Tab Width"
+#"Source Indentation"
+#"Machine Code Indentation"
+#"Refer to Program Sources"
+#"Find"
+#"Cache"
+#"Source"
+#"Show"
+#"Layout"
+#"Grid Size"
+#"Data"
+#"Startup Windows"
+#"Data Scrolling"
+#"Keyboard Focus"
+#"Tool Bar Appearance"
+#"Ctrl+A is"
+#"Ctrl+C is"
+#"Window Layout"
+#"Debugger Type"
+#"Startup"
+#"Size"
+#"Default Font"
+#"Variable Width"
+#"Fixed Width"
+#"Fonts"
+#"Edit Sources"
+#"Get Core File"
+#"List Processes"
+#"Execution Window"
+#"Uncompress"
+#"Web Browser"
+#"Helpers"
