@@ -638,7 +638,8 @@ package body Src_Editor_View is
                  (View,
                   Text_Window_Text, Dummy, Block_Begin_Y, Dummy, Y);
 
-               X := Gint (B.Offset - 1) * View.Char_Width - Bracket_Offset;
+               X := Gint (B.Offset - 1) * View.Char_Width - Bracket_Offset -
+                 Rect.X;
 
                Draw_Line (Window, View.Current_Block_GC, X, Y, X, Y + Height);
                Draw_Line
