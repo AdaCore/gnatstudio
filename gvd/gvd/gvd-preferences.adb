@@ -381,7 +381,7 @@ package body GVD.Preferences is
       Set (String (Memory_Modified_Color), "#FF0000");
 
       Set (String (List_Processes),
-           "ps x 2> /dev/null || ps -ef 2> /dev/null || ps");
+           "ps x 2> /dev/null || ps -u $USER 2> /dev/null || ps");
       Set (String (Default_External_Editor), "glide %f -emacs +%l");
       Set (String (Remote_Protocol), "rsh");
       Set (String (Remote_Copy), "rcp");
