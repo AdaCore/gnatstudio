@@ -254,6 +254,7 @@ package body Display_Items is
       Value_Found : Boolean := False;
       Alias_Item  : Display_Item;
       Id : String_Access;
+      Is_Parsable_Entity : Boolean := True;
 
    begin
       --  We need the information on the type, so that we detect aliases only
@@ -273,8 +274,13 @@ package body Display_Items is
                Output_Error
                  (Debugger.Window,
                   (-"Could not parse type for ") & Variable_Name);
-               Set_Busy (Debugger, False);
-               return;
+
+               Entity := New_Debugger_Type
+                 (Print_Value_Cmd (Debugger.Debugger, Variable_Name));
+               Is_Parsable_Entity := False;
+
+--                 Set_Busy (Debugger, False);
+--                 return;
          end;
 
          if Entity = null then
@@ -282,8 +288,11 @@ package body Display_Items is
             Output_Error
               (Debugger.Window,
                (-"Could not get the type of ") & Variable_Name);
-            Set_Busy (Debugger, False);
-            return;
+            Entity := New_Debugger_Type
+              (Print_Value_Cmd (Debugger.Debugger, Variable_Name));
+            Is_Parsable_Entity := False;
+--              Set_Busy (Debugger, False);
+--              return;
          end if;
       end if;
 
@@ -294,77 +303,79 @@ package body Display_Items is
          Id := new String'(Get_Uniq_Id (Debugger.Debugger, Variable_Name));
       end if;
 
-      if Auto_Refresh then
-         --  Avoid creating the same item twice if it already exists in the
-         --  canvas
+      if Is_Parsable_Entity then
+         if Auto_Refresh then
+            --  Avoid creating the same item twice if it already exists in the
+            --  canvas
 
-         Alias_Item :=
-           Search_Item (Debugger.Data_Canvas, Id.all, Variable_Name);
+            Alias_Item :=
+              Search_Item (Debugger.Data_Canvas, Id.all, Variable_Name);
 
-         --  Two structures are aliased only if they have the same address and
-         --  the same structure. The latter is to handle cases like
-         --  "struct A {struct B {int field}} where A, B and field have the
-         --  same address and would be considered as aliases otherwise.
-         if Alias_Item /= null
-           and then
-           (not Typed_Aliases
-            or else Structurally_Equivalent (Alias_Item.Entity, Entity))
-         then
-            Select_Item (Alias_Item, Alias_Item.Entity);
-            Show_Item (Debugger.Data_Canvas, Alias_Item);
+            --  Two structures are aliased only if they have the same address
+            --  and the same structure. The latter is to handle cases like
+            --  "struct A {struct B {int field}} where A, B and field have the
+            --  same address and would be considered as aliases otherwise.
+            if Alias_Item /= null
+              and then
+                (not Typed_Aliases
+                 or else Structurally_Equivalent (Alias_Item.Entity, Entity))
+            then
+               Select_Item (Alias_Item, Alias_Item.Entity);
+               Show_Item (Debugger.Data_Canvas, Alias_Item);
 
-            if Default_Entity = null then
-               Free (Entity);
-            end if;
+               if Default_Entity = null then
+                  Free (Entity);
+               end if;
 
-            Free (Id);
+               Free (Id);
 
-            if Link_From /= null then
-               Create_Link
-                 (Debugger.Data_Canvas, Link_From, Alias_Item, Link_Name);
-               Refresh_Canvas (Debugger.Data_Canvas);
-            end if;
+               if Link_From /= null then
+                  Create_Link
+                    (Debugger.Data_Canvas, Link_From, Alias_Item, Link_Name);
+                  Refresh_Canvas (Debugger.Data_Canvas);
+               end if;
 
-            Set_Busy (Debugger, False);
-            return;
-         end if;
-      end if;
-
-      --  We now know there is no alias, so we can spend time parsing the value
-      --  if necessary.
-
-      if Default_Entity = null then
-         begin
-            Parse_Value
-              (Debugger.Debugger,
-               Variable_Name,
-               Entity,
-               Value_Found => Value_Found);
-
-            if not Value_Found then
-               Output_Error
-                 (Debugger.Window,
-                  (-"Could not get the value of ") & Variable_Name);
-            end if;
-
-         exception
-            when Language.Unexpected_Type | Constraint_Error =>
-               Output_Error
-                 (Debugger.Window,
-                  (-"Could not parse the value for ") & Variable_Name);
                Set_Busy (Debugger, False);
                return;
-         end;
+            end if;
+         end if;
 
-      else
-         Value_Found := True;
+         --  We now know there is no alias, so we can spend time parsing the
+         --  value if necessary.
+
+         if Default_Entity = null then
+            begin
+               Parse_Value
+                 (Debugger.Debugger,
+                  Variable_Name,
+                  Entity,
+                  Value_Found => Value_Found);
+
+               if not Value_Found then
+                  Output_Error
+                    (Debugger.Window,
+                     (-"Could not get the value of ") & Variable_Name);
+               end if;
+
+            exception
+               when Language.Unexpected_Type | Constraint_Error =>
+                  Output_Error
+                    (Debugger.Window,
+                     (-"Could not parse the value for ") & Variable_Name);
+                  Set_Busy (Debugger, False);
+                  return;
+            end;
+
+         else
+            Value_Found := True;
+         end if;
       end if;
 
       --  Create the item
 
       Item := new Display_Item_Record;
       Item.Entity := Entity;
-      Item.Is_A_Variable := (Default_Entity = null);
+      Item.Is_A_Variable := Is_Parsable_Entity and then Default_Entity = null;
       Item.Num := Get_Next_Item_Num (GVD_Canvas (Debugger.Data_Canvas));
       Item.Debugger := Visual_Debugger (Debugger);
       Set_Valid (Item.Entity, Value_Found);
