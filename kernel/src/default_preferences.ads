@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                          G L I D E  I I                           --
 --                                                                   --
---                        Copyright (C) 2001                         --
+--                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GLIDE is free software; you can redistribute it and/or modify  it --
@@ -33,6 +33,9 @@ package Default_Preferences is
    type Property_Font  is new Glib.Property;
 
    function Register_Property
+     (Name : String; Default : Glib.Gint)
+      return Glib.Properties.Property_Int;
+   function Register_Property
      (Name : String; Default : Glib.Guint)
       return Glib.Properties.Property_Uint;
    function Register_Property
@@ -51,5 +54,8 @@ package Default_Preferences is
 
    function Find_Default_Pref (Name : String) return Gint_Xml.Node_Ptr;
    --  Return the node in the default preferences that matches Name
+
+   function Get_Default_Preferences return Gint_Xml.Node_Ptr;
+   --  Return the default preferences node.
 
 end Default_Preferences;

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                          G L I D E  I I                           --
 --                                                                   --
---                        Copyright (C) 2001                         --
+--                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GLIDE is free software; you can redistribute it and/or modify  it --
@@ -33,6 +33,15 @@ package body Default_Preferences is
    --  Create a new node in the default_preferences tree for the preference
    --  Name.
    --  Default is the default value for that property
+
+   -----------------------------
+   -- Get_Default_Preferences --
+   -----------------------------
+
+   function Get_Default_Preferences return Gint_Xml.Node_Ptr is
+   begin
+      return Default_Preferences;
+   end Get_Default_Preferences;
 
    -----------------------
    -- Find_Default_Pref --
@@ -74,52 +83,47 @@ package body Default_Preferences is
    -- Register_Property --
    -----------------------
 
-   function Register_Property (Name : String; Default : Glib.Guint)
+   function Register_Property
+     (Name : String; Default : Glib.Gint)
+      return Glib.Properties.Property_Int is
+   begin
+      Create_Default_Pref (Name, Gint'Image (Default));
+      return Build (Name);
+   end Register_Property;
+
+   function Register_Property
+     (Name : String; Default : Glib.Guint)
       return Glib.Properties.Property_Uint is
    begin
       Create_Default_Pref (Name, Guint'Image (Default));
       return Build (Name);
    end Register_Property;
 
-   -----------------------
-   -- Register_Property --
-   -----------------------
-
-   function Register_Property (Name : String; Default : Boolean)
+   function Register_Property
+     (Name : String; Default : Boolean)
       return Glib.Properties.Property_Boolean is
    begin
       Create_Default_Pref (Name, Boolean'Image (Default));
       return Build (Name);
    end Register_Property;
 
-   -----------------------
-   -- Register_Property --
-   -----------------------
-
-   function Register_Property (Name : String; Default : String)
+   function Register_Property
+     (Name : String; Default : String)
       return Glib.Properties.Property_String is
    begin
       Create_Default_Pref (Name, Default);
       return Build (Name);
    end Register_Property;
 
-   -----------------------
-   -- Register_Property --
-   -----------------------
-
-   function Register_Property (Name : String; Default : String)
-      return Property_Color is
+   function Register_Property
+     (Name : String; Default : String) return Property_Color is
    begin
       Create_Default_Pref (Name, Default);
       return Build (Name);
    end Register_Property;
 
-   -----------------------
-   -- Register_Property --
-   -----------------------
-
-   function Register_Property (Name : String; Default : String)
-      return Property_Font is
+   function Register_Property
+     (Name : String; Default : String) return Property_Font is
    begin
       Create_Default_Pref (Name, Default);
       return Build (Name);
