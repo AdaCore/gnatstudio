@@ -1,29 +1,21 @@
 -----------------------------------------------------------------------
+--                          G L I D E  I I                           --
 --                                                                   --
---                     Copyright (C) 2001                            --
---                          ACT-Europe                               --
+--                        Copyright (C) 2001                         --
+--                            ACT-Europe                             --
 --                                                                   --
--- This library is free software; you can redistribute it and/or     --
--- modify it under the terms of the GNU General Public               --
--- License as published by the Free Software Foundation; either      --
--- version 2 of the License, or (at your option) any later version.  --
+-- GVD is free  software;  you can redistribute it and/or modify  it --
+-- under the terms of the GNU General Public License as published by --
+-- the Free Software Foundation; either version 2 of the License, or --
+-- (at your option) any later version.                               --
 --                                                                   --
--- This library is distributed in the hope that it will be useful,   --
--- but WITHOUT ANY WARRANTY; without even the implied warranty of    --
+-- This program is  distributed in the hope that it will be  useful, --
+-- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
--- General Public License for more details.                          --
---                                                                   --
--- You should have received a copy of the GNU General Public         --
--- License along with this library; if not, write to the             --
--- Free Software Foundation, Inc., 59 Temple Place - Suite 330,      --
--- Boston, MA 02111-1307, USA.                                       --
---                                                                   --
--- As a special exception, if other files instantiate generics from  --
--- this unit, or you link this unit with other files to produce an   --
--- executable, this  unit  does not  by itself cause  the resulting  --
--- executable to be covered by the GNU General Public License. This  --
--- exception does not however invalidate any other reasons why the   --
--- executable file  might be covered by the  GNU Public License.     --
+-- General Public License for more details. You should have received --
+-- a copy of the GNU General Public License along with this library; --
+-- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
+-- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
 with Glib;          use Glib;
@@ -43,7 +35,10 @@ package body Layouts is
    --  Minimum distance between two nodes on the same layer at the end
 
    Min_Vertical_Dist : constant Natural := 30;
-   --  Minium distance between two layers in the graph.
+   --  Minimum distance between two layers in the graph.
+
+   Min_Horizontal_Dist : constant Natural := 30;
+   --  Minimum distance between two nodes on the same layer.
 
    type Natural_Array is array (Natural range <>) of Natural;
 
@@ -63,20 +58,22 @@ package body Layouts is
    --  available on exit in Layers.
 
    procedure Sort_Layers
-     (G            : Graph;
-      Lines        : in out Node_Matrix;
-      Layers       : Natural_Array;
-      X, Y          : out Integer_Array;
-      Num_Per_Line : Natural_Array);
+     (G               : Graph;
+      Lines           : in out Node_Matrix;
+      Layers          : Natural_Array;
+      X, Y            : out Integer_Array;
+      Num_Per_Line    : Natural_Array;
+      Vertical_Layout : Boolean);
    --  Sort the nodes on each layer with the barycenter method.
    --  This provides a relative position for the nodes on each layer, such that
    --  there are only few edge crossings.
 
    procedure Position_Nodes
-     (G            : Graph;
-      Lines        : Node_Matrix;
-      X, Y         : out Integer_Array;
-      Num_Per_Line : Natural_Array);
+     (G               : Graph;
+      Lines           : Node_Matrix;
+      X               : out Integer_Array;
+      Num_Per_Line    : Natural_Array;
+      Vertical_Layout : Boolean);
    --  Positions the nodes within each layer.
    --  The nodes are already ordered, we now need to fine tune their location.
    --  Lines represents the location of all the nodes. Num_Per_Line is the
@@ -87,6 +84,7 @@ package body Layouts is
       Layer              : Integer;
       Num_Nodes_On_Layer : Natural;
       X, Y               : Integer_Array;
+      VL                 : Boolean;
       Lines              : Node_Matrix) return Natural;
    --  Return the number of intersections between the two layers
    --  Layer - 1 and Layer.
@@ -100,11 +98,15 @@ package body Layouts is
      (G : in out Graph; Layers : in out Natural_Array);
    --  Insert some dummy nodes so that the edges do not cross multiple layers.
 
-   function Width (V : Vertex_Access) return Integer;
+   function Width
+     (V : access Vertex'Class;
+      Vertical_Layout : Boolean) return Integer;
    pragma Inline (Width);
    --  Return the width of V
 
-   function Height (V : Vertex_Access) return Integer;
+   function Height
+     (V : access Vertex'Class;
+      Vertical_Layout : Boolean) return Integer;
    pragma Inline (Height);
    --  Return the height of V
 
@@ -115,18 +117,30 @@ package body Layouts is
    -- Width --
    -----------
 
-   function Width (V : Vertex_Access) return Integer is
+   function Width
+     (V : access Vertex'Class;
+      Vertical_Layout : Boolean) return Integer is
    begin
-      return Integer (Get_Coord (Canvas_Item (V)).Width);
+      if Vertical_Layout then
+         return Integer (Get_Coord (Canvas_Item (V)).Height);
+      else
+         return Integer (Get_Coord (Canvas_Item (V)).Width);
+      end if;
    end Width;
 
    ------------
    -- Height --
    ------------
 
-   function Height (V : Vertex_Access) return Integer is
+   function Height
+     (V : access Vertex'Class;
+      Vertical_Layout : Boolean) return Integer is
    begin
-      return Integer (Get_Coord (Canvas_Item (V)).Height);
+      if Vertical_Layout then
+         return Integer (Get_Coord (Canvas_Item (V)).Width);
+      else
+         return Integer (Get_Coord (Canvas_Item (V)).Height);
+      end if;
    end Height;
 
    ------------------
@@ -191,6 +205,7 @@ package body Layouts is
       Layer              : Integer;
       Num_Nodes_On_Layer : Natural;
       X, Y               : Integer_Array;
+      VL                 : Boolean;
       Lines              : Node_Matrix) return Natural
    is
       Edges_Count : Natural := 0;
@@ -215,18 +230,14 @@ package body Layouts is
             Iter := First (G, Src => Lines (Layer, J));
             while not At_End (Iter) loop
                V := Canvas_Item (Get_Src (Get (Iter)));
-               X1 (Index) := X (Get_Index (V))
-                 + Integer (Get_Coord (V).Width) / 2;
-               Y1 (Index) := Y (Get_Index (V))
-                 + Integer (Get_Coord (V).Height) / 2;
+               X1 (Index) := X (Get_Index (V)) + Width (V, VL) / 2;
+               Y1 (Index) := Y (Get_Index (V)) + Height (V, VL) / 2;
 
                V := Canvas_Item (Get_Dest (Get (Iter)));
-               X2 (Index) := X (Get_Index (V))
-                 + Integer (Get_Coord (V).Width) / 2;
-               Y2 (Index) := Y (Get_Index (V))
-                 + Integer (Get_Coord (V).Height) / 2;
+               X2 (Index) := X (Get_Index (V)) + Width (V, VL) / 2;
+               Y2 (Index) := Y (Get_Index (V)) + Height (V, VL) / 2;
 
-               Index         := Index + 1;
+               Index := Index + 1;
                Next (Iter);
             end loop;
          end loop;
@@ -241,11 +252,12 @@ package body Layouts is
    -----------------
 
    procedure Sort_Layers
-     (G            : Graph;
-      Lines        : in out Node_Matrix;
-      Layers       : Natural_Array;
-      X, Y         : out Integer_Array;
-      Num_Per_Line : Natural_Array)
+     (G               : Graph;
+      Lines           : in out Node_Matrix;
+      Layers          : Natural_Array;
+      X, Y            : out Integer_Array;
+      Num_Per_Line    : Natural_Array;
+      Vertical_Layout : Boolean)
    is
       Relative_Position : Natural_Array (0 .. Max_Index (G) - 1);
 
@@ -267,6 +279,9 @@ package body Layouts is
 
       procedure Process_Layer (Row : Natural; Top_Bottom : Boolean);
       --  Compute the positions for the nodes on a specific layer.
+
+      procedure Set_Initial_Positions;
+      --  Compute the initial position of the vertices.
 
       ---------------------
       -- Median_Weight_P --
@@ -451,6 +466,7 @@ package body Layouts is
          L        : Vertex_Access;
          Switched : Boolean;
          C1, C2   : Natural;
+         Xsave    : Integer;
       begin
          --  For each node in that layer.
          --  We try to keep the network stable, we process the vertices in
@@ -470,6 +486,8 @@ package body Layouts is
          --  To ensure stability of the network, we keep the nodes that had no
          --  ancestor in the previous layer at the same location, instead of
          --  bringing them back to the beginning.
+         --  Note also that while swapping vertices, we have to change the
+         --  coordinates, so that they don't override.
          --  ??? A simple Bubble Sort, which might not be the most efficient
 
          loop
@@ -480,9 +498,17 @@ package body Layouts is
                  Weights (Get_Index (Lines (Row, Column + 1)))
                  and then Weights (Get_Index (Lines (Row, Column + 1))) /= -1
                then
+                  Xsave := X (Get_Index (Lines (Row, Column)));
+                  X (Get_Index (Lines (Row, Column))) :=
+                    X (Get_Index (Lines (Row, Column + 1)))
+                    + Width (Lines (Row, Column + 1), Vertical_Layout)
+                    - Width (Lines (Row, Column), Vertical_Layout);
+                  X (Get_Index (Lines (Row, Column + 1))) := Xsave;
+
                   L                       := Lines (Row, Column);
                   Lines (Row, Column)     := Lines (Row, Column + 1);
                   Lines (Row, Column + 1) := L;
+
                   Switched                := True;
                end if;
             end loop;
@@ -504,6 +530,17 @@ package body Layouts is
                   C2 := C2 + 1;
                end loop;
 
+               Xsave := X (Get_Index (Lines (Row, C2 - 1)))
+                 + Width (Lines (Row, C2 - 1), Vertical_Layout)
+                 - Width (Lines (Row, C1), Vertical_Layout);
+               for C in reverse C1 + 1 .. C2 - 1 loop
+                  X (Get_Index (Lines (Row, C))) :=
+                    X (Get_Index (Lines (Row, C - 1)))
+                    + Width (Lines (Row, C - 1), Vertical_Layout)
+                    - Width (Lines (Row, C), Vertical_Layout);
+               end loop;
+               X (Get_Index (Lines (Row, C1))) := Xsave;
+
                L := Lines (Row, C1);
                for C in C1 .. C2 - 2 loop
                   Lines (Row, C) := Lines (Row, C + 1);
@@ -513,14 +550,6 @@ package body Layouts is
                C1 := C2;
             end loop;
          end if;
-
-         --  Reassign coordinates to the items, so that we can compute the
-         --  intersections.
-
-         for Column in 0 .. Num_Per_Line (Row) - 1 loop
-            X (Get_Index (Lines (Row, Column))) := Column * 60;
-            Relative_Position (Get_Index (Lines (Row, Column))) := Column;
-         end loop;
 
          --  Try and transpose all the pairs of nodes on the layer, and see if
          --  we can reduce the number of edges this way
@@ -572,6 +601,38 @@ package body Layouts is
          --  end loop;
       end Process_Layer;
 
+      ---------------------------
+      -- Set_Initial_Positions --
+      ---------------------------
+
+      procedure Set_Initial_Positions is
+         Current_X, Max_Height : Natural;
+         Current_Y             : Natural := 0;
+      begin
+         for R in Lines'Range (1) loop
+            Current_X := 0;
+            Max_Height := 0;
+
+            for C in 0 .. Num_Per_Line (R) - 1 loop
+               Relative_Position (Get_Index (Lines (R, C))) := C;
+               X (Get_Index (Lines (R, C))) := Current_X;
+               Current_X := Current_X + Min_Horizontal_Dist
+                 + Width (Lines (R, C), Vertical_Layout);
+               Max_Height := Natural'Max
+                 (Max_Height, Height (Lines (R, C), Vertical_Layout));
+            end loop;
+
+            Current_Y := Current_Y + Min_Vertical_Dist + Max_Height / 2;
+
+            for C in 0 .. Num_Per_Line (R) - 1 loop
+               Y (Get_Index (Lines (R, C))) :=
+                 Current_Y - Height (Lines (R, C), Vertical_Layout) / 2;
+            end loop;
+
+            Current_Y := Current_Y + Max_Height / 2;
+         end loop;
+      end Set_Initial_Positions;
+
 
       Intersections : Natural;
       Iteration : Natural := 0;
@@ -579,14 +640,10 @@ package body Layouts is
 
    begin
       --  Initialize the internal data, to speed up the other loops.
+      --  Note that this also positions the nodes vertically, and this won't
+      --  need to be changed afterwards.
 
-      for R in Lines'Range (1) loop
-         for C in 0 .. Num_Per_Line (R) - 1 loop
-            Relative_Position (Get_Index (Lines (R, C))) := C;
-            X (Get_Index (Lines (R, C))) := C * 100;
-            Y (Get_Index (Lines (R, C))) := R * 100;
-         end loop;
-      end loop;
+      Set_Initial_Positions;
 
       --  While the number of crossing is not satisfactory
 
@@ -615,7 +672,7 @@ package body Layouts is
 
          for J in Lines'First (1) .. Lines'Last (1) - 1 loop
             Intersections := Intersections + Num_Intersections_For_Layer
-              (G, J, Num_Per_Line (J), X, Y, Lines);
+              (G, J, Num_Per_Line (J), X, Y, Vertical_Layout, Lines);
          end loop;
 
          if Intersections <= Min_Intersections then
@@ -668,10 +725,11 @@ package body Layouts is
    --------------------
 
    procedure Position_Nodes
-     (G            : Graph;
-      Lines        : Node_Matrix;
-      X, Y         : out Integer_Array;
-      Num_Per_Line : Natural_Array)
+     (G               : Graph;
+      Lines           : Node_Matrix;
+      X               : out Integer_Array;
+      Num_Per_Line    : Natural_Array;
+      Vertical_Layout : Boolean)
    is
       Rubber    : array (0 .. Max_Index (G) - 1) of Integer;
       Iteration : Natural := 0;
@@ -712,7 +770,8 @@ package body Layouts is
                  Rubber (Get_Index (Lines (Row, C2)))
                  and then (X (Get_Index (Lines (Row, C2)))
                            - X (Get_Index (Lines (Row, C2 - 1))))
-                 = (Width (Lines (Row, C2)) + Width (Lines (Row, C2 - 1))) / 2
+                 = (Width (Lines (Row, C2), Vertical_Layout)
+                    + Width (Lines (Row, C2 - 1), Vertical_Layout)) / 2
                  + Min_Dist
                loop
                   C2 := C2 + 1;
@@ -732,21 +791,21 @@ package body Layouts is
                if Dist < 0 then
                   if C1 > 0 then
                      X1  := X (Get_Index (Lines (Row, C1)))
-                       + Width (Lines (Row, C1)) / 2;
+                       + Width (Lines (Row, C1), Vertical_Layout) / 2;
                      X2 := X (Get_Index (Lines (Row, C1 - 1)))
-                       + Width (Lines (Row, C1 - 1)) / 2;
-                     Min := (Width (Lines (Row, C1 - 1))
-                             + Width (Lines (Row, C1))) / 2;
+                       + Width (Lines (Row, C1 - 1), Vertical_Layout) / 2;
+                     Min := (Width (Lines (Row, C1 - 1), Vertical_Layout)
+                             + Width (Lines (Row, C1), Vertical_Layout)) / 2;
                      Dist := -Integer'Min (-Dist, X1 - X2 - Min - Min_Dist);
                   end if;
                else
                   if C2 < Num_Per_Line (Row) then
                      X1  := X (Get_Index (Lines (Row, C2 - 1)))
-                       + Width (Lines (Row, C2 - 1)) / 2;
+                       + Width (Lines (Row, C2 - 1), Vertical_Layout) / 2;
                      X2 := X (Get_Index (Lines (Row, C2)))
-                       + Width (Lines (Row, C2)) / 2;
-                     Min := (Width (Lines (Row, C2))
-                             + Width (Lines (Row, C2 - 1))) / 2;
+                       + Width (Lines (Row, C2), Vertical_Layout) / 2;
+                     Min := (Width (Lines (Row, C2), Vertical_Layout)
+                       + Width (Lines (Row, C2 - 1), Vertical_Layout)) / 2;
                      Dist := Integer'Min (Dist, X2 - X1 - Min - Min_Dist);
                   end if;
                end if;
@@ -764,26 +823,6 @@ package body Layouts is
          end loop;
 
          Iteration := Iteration + 1;
-      end loop;
-
-      --  Compute the vertical position for each layer
-
-      C1 := 0;
-      X1 := 0;
-      for Row in Lines'Range (1) loop
-         C2 := 0;
-         for Column in 0 .. Num_Per_Line (Row) - 1 loop
-            C2 := Natural'Max (C2, Height (Lines (Row, Column)));
-         end loop;
-
-         C1 := C1 + (C2 + X1) / 2 + Min_Vertical_Dist;
-
-         for Column in 0 .. Num_Per_Line (Row) - 1 loop
-            Y (Get_Index (Lines (Row, Column))) :=
-              C1 - Height (Lines (Row, Column)) / 2;
-         end loop;
-
-         X1 := C2;
       end loop;
    end Position_Nodes;
 
@@ -843,9 +882,10 @@ package body Layouts is
    ------------
 
    procedure Layer_Layout
-     (Canvas : access Interactive_Canvas_Record'Class;
-      Graph  : Glib.Graphs.Graph;
-      Force  : Boolean := False)
+     (Canvas          : access Interactive_Canvas_Record'Class;
+      Graph           : Glib.Graphs.Graph;
+      Force           : Boolean := False;
+      Vertical_Layout : Boolean := True)
    is
       Layers : Natural_Array (0 .. Max_Index (Graph) - 1);
       X, Y   : Integer_Array (0 .. Max_Index (Graph) - 1);
@@ -876,16 +916,24 @@ package body Layouts is
             Next (Iter);
          end loop;
 
-         Sort_Layers    (Graph, Lines, Layers, X, Y, Num_Per_Line);
-         Position_Nodes (Graph, Lines, X, Y, Num_Per_Line);
+         Sort_Layers
+           (Graph, Lines, Layers, X, Y, Num_Per_Line, Vertical_Layout);
+         Position_Nodes (Graph, Lines, X, Num_Per_Line, Vertical_Layout);
       end;
 
       Iter := First (Graph);
       while not At_End (Iter) loop
-         Move_To
-           (Canvas, Canvas_Item (Get (Iter)),
-            Gint (X (Get_Index (Get (Iter)))),
-            Gint (Y (Get_Index (Get (Iter)))));
+         if Vertical_Layout then
+            Move_To
+              (Canvas, Canvas_Item (Get (Iter)),
+               Gint (Y (Get_Index (Get (Iter)))),
+               Gint (X (Get_Index (Get (Iter)))));
+         else
+            Move_To
+              (Canvas, Canvas_Item (Get (Iter)),
+               Gint (X (Get_Index (Get (Iter)))),
+               Gint (Y (Get_Index (Get (Iter)))));
+         end if;
          Next (Iter);
       end loop;
    end Layer_Layout;
