@@ -1155,8 +1155,7 @@ package body Src_Editor_Module is
                A := Src_Editor_Buffer.Get_String
                  (Get_Buffer (Source_Box (Get_Widget (Child)).Editor));
 
-               Set_Return_Value
-                 (Data, A.all);
+               Set_Return_Value (Data, A.all);
 
                Free (A);
             else
@@ -1181,6 +1180,38 @@ package body Src_Editor_Module is
                else
                   Set_Error_Msg (Data, -"file not found");
                end if;
+            end if;
+         end;
+
+      elsif Command = "save_buffer" then
+         declare
+            File    : constant Virtual_File :=
+              Create (Nth_Arg (Data, 1), Kernel);
+            Child   : constant MDI_Child := Find_Editor (Kernel, File);
+            To_File : Virtual_File := VFS.No_File;
+            Result  : Boolean;
+         begin
+            if Number_Of_Arguments (Data) >= 2 then
+               To_File := Create (Nth_Arg (Data, 2), Kernel);
+            end if;
+
+            if Child /= null then
+               if To_File /= VFS.No_File then
+                  Save_To_File
+                    (Get_Buffer (Source_Box (Get_Widget (Child)).Editor),
+                     To_File,
+                     Result,
+                     True);
+
+               else
+                  Save_To_File
+                    (Get_Buffer (Source_Box (Get_Widget (Child)).Editor),
+                     File,
+                     Result,
+                     False);
+               end if;
+            else
+               Set_Error_Msg (Data, -"file not open");
             end if;
          end;
 
@@ -3763,6 +3794,19 @@ package body Src_Editor_Module is
            -"Returns the text contained in the current buffer for file.",
          Minimum_Args => 1,
          Maximum_Args => 1,
+         Handler      => Edit_Command_Handler'Access);
+
+      Register_Command
+        (Kernel,
+         Command      => "save_buffer",
+         Params       => "(file, [to_file])",
+         Return_Value => "string",
+         Description  =>
+           -("Saves the text contained in the current buffer for file."
+             & " If to_file is specified, the file will be saved as to_file,"
+             & " and the buffer status will not be modified"),
+         Minimum_Args => 1,
+         Maximum_Args => 2,
          Handler      => Edit_Command_Handler'Access);
 
       Register_Command
