@@ -423,7 +423,7 @@ package body Creation_Wizard is
       Dir          : constant String := Name_As_Directory
         (Get_Text (Wiz.Project_Location));
       Name         : constant String := Base_Name
-        (Get_Text (Wiz.Project_Name), Project_File_Extension);
+        (Get_Text (Wiz.Project_Name), Prj.Project_File_Extension);
 
    begin
       Project := Create_Project (Name => Name, Path => Dir);
