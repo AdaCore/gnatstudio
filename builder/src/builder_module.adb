@@ -1146,7 +1146,7 @@ package body Builder_Module is
                  (K,
                   Command   => Exec.all,
                   Arguments => Arguments,
-                  Title     => Title,
+                  Console   => Create_Interactive_Console (K, Title),
                   Success   => Success);
             end if;
 
@@ -1165,7 +1165,7 @@ package body Builder_Module is
                   Command   => New_Args (New_Args'First).all,
                   Arguments =>
                     New_Args (New_Args'First + 1 .. New_Args'Last) & Last_Arg,
-                  Title     => Title,
+                  Console   => Create_Interactive_Console (K, Title),
                   Success   => Success);
 
                Free (Last_Arg);
