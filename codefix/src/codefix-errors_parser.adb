@@ -1428,44 +1428,48 @@ package body Codefix.Errors_Parser is
    is
       Matches_Prev    : Match_Array (0 .. 2);
       Preview         : Error_Message;
-      Solution_Cursor : File_Cursor;
       Cursor_List     : Cursor_Lists.List;
    begin
-      Solution_Cursor.Col := 1;
-
       loop
+         declare
+            Solution_Cursor : File_Cursor;
+         begin
+            Solution_Cursor.Col := 1;
 
-         Get_Preview (Errors_List, Current_Text, Preview);
-         exit when Preview = Invalid_Error_Message;
+            Get_Preview (Errors_List, Current_Text, Preview);
+            exit when Preview = Invalid_Error_Message;
 
-         Match (This.Source_Matcher.all, Get_Message (Preview), Matches_Prev);
-
-         if Matches_Prev (0) = No_Match then
             Match
-              (This.Local_Matcher.all, Get_Message (Preview), Matches_Prev);
+              (This.Source_Matcher.all,
+               Get_Message (Preview),
+               Matches_Prev);
 
-            exit when Matches_Prev (0) = No_Match;
+            if Matches_Prev (0) = No_Match then
+               Match
+                 (This.Local_Matcher.all, Get_Message (Preview), Matches_Prev);
 
-            Assign
-              (Solution_Cursor.File_Name, Message.File_Name);
+               exit when Matches_Prev (0) = No_Match;
 
-            Solution_Cursor.Line := Integer'Value
-              (Get_Message (Preview)
-                 (Matches_Prev (1).First .. Matches_Prev (1).Last));
-         else
-            Assign
-              (Solution_Cursor.File_Name, Get_Message (Preview)
-                 (Matches_Prev (1).First .. Matches_Prev (1).Last));
+               Assign
+                 (Solution_Cursor.File_Name, Message.File_Name);
 
-            Solution_Cursor.Line := Integer'Value
-              (Get_Message (Preview)
-                 (Matches_Prev (2).First .. Matches_Prev (2).Last));
-         end if;
+               Solution_Cursor.Line := Integer'Value
+                 (Get_Message (Preview)
+                    (Matches_Prev (1).First .. Matches_Prev (1).Last));
+            else
+               Assign
+                 (Solution_Cursor.File_Name, Get_Message (Preview)
+                    (Matches_Prev (1).First .. Matches_Prev (1).Last));
 
-         Append (Cursor_List, Solution_Cursor);
-         Unchecked_Free (Solution_Cursor);
+               Solution_Cursor.Line := Integer'Value
+                 (Get_Message (Preview)
+                    (Matches_Prev (2).First .. Matches_Prev (2).Last));
+            end if;
 
-         Skip_Message (Errors_List);
+            Append (Cursor_List, Solution_Cursor);
+            Skip_Message (Errors_List);
+         end;
+
       end loop;
 
 
@@ -1511,11 +1515,8 @@ package body Codefix.Errors_Parser is
       Matches_Check   : Match_Array (0 .. 0);
       Matches_Loc     : Match_Array (0 .. 2);
       Preview         : Error_Message;
-      Solution_Cursor : File_Cursor;
       Cursor_List     : Cursor_Lists.List;
    begin
-      Solution_Cursor.Col := 1;
-
       Get_Preview (Errors_List, Current_Text, Preview);
 
       if Preview = Invalid_Error_Message then
@@ -1532,41 +1533,47 @@ package body Codefix.Errors_Parser is
       Free (Preview);
 
       loop
-         Get_Preview (Errors_List, Current_Text, Preview);
+         declare
+            Solution_Cursor : File_Cursor;
+         begin
+            Solution_Cursor.Col := 1;
+            Get_Preview (Errors_List, Current_Text, Preview);
 
-         exit when Preview = Invalid_Error_Message;
+            exit when Preview = Invalid_Error_Message;
 
-         Match
-           (This.Get_From_Other_File.all, Get_Message (Preview), Matches_Loc);
-
-         if Matches_Loc (0) = No_Match then
             Match
-              (This.Get_From_Current_File.all,
+              (This.Get_From_Other_File.all,
                Get_Message (Preview),
                Matches_Loc);
 
-            exit when Matches_Loc (0) = No_Match;
+            if Matches_Loc (0) = No_Match then
+               Match
+                 (This.Get_From_Current_File.all,
+                  Get_Message (Preview),
+                  Matches_Loc);
 
-            Assign
-              (Solution_Cursor.File_Name, Message.File_Name);
+               exit when Matches_Loc (0) = No_Match;
 
-            Solution_Cursor.Line := Integer'Value
-              (Get_Message (Preview)
-                 (Matches_Loc (1).First .. Matches_Loc (1).Last));
-         else
-            Assign
-              (Solution_Cursor.File_Name, Get_Message (Preview)
-                 (Matches_Loc (1).First .. Matches_Loc (1).Last));
+               Assign
+                 (Solution_Cursor.File_Name, Message.File_Name);
 
-            Solution_Cursor.Line := Integer'Value
-              (Get_Message (Preview)
-                 (Matches_Loc (2).First .. Matches_Loc (2).Last));
-         end if;
+               Solution_Cursor.Line := Integer'Value
+                 (Get_Message (Preview)
+                    (Matches_Loc (1).First .. Matches_Loc (1).Last));
+            else
+               Assign
+                 (Solution_Cursor.File_Name, Get_Message (Preview)
+                    (Matches_Loc (1).First .. Matches_Loc (1).Last));
 
-         Append (Cursor_List, Solution_Cursor);
-         Unchecked_Free (Solution_Cursor);
+               Solution_Cursor.Line := Integer'Value
+                 (Get_Message (Preview)
+                    (Matches_Loc (2).First .. Matches_Loc (2).Last));
+            end if;
 
-         Skip_Message (Errors_List);
+            Append (Cursor_List, Solution_Cursor);
+
+            Skip_Message (Errors_List);
+         end;
       end loop;
 
       Concat (Solutions, Resolve_Ambiguity
