@@ -771,8 +771,10 @@ package body GVD.Explorer is
       List : GVD.Types.String_Array := Source_Files_List (Tab.Debugger);
 
    begin
+      Set_Column_Auto_Resize (Explorer, 0, False);
       Clear_Explorer (Explorer);
       Add_List_Of_Files (Explorer, List);
+      Set_Column_Auto_Resize (Explorer, 0, True);
       GVD.Types.Free (List);
    end On_Executable_Changed;
 
@@ -892,7 +894,7 @@ package body GVD.Explorer is
       if Explorer.Current_File_Node /= null then
          Data := Row_Data_Pkg.Node_Get_Row_Data
            (Explorer, Explorer.Current_File_Node);
-         Current := new String'(Data.Extension);
+         Current := new String' (Data.Extension);
          Explorer.Current_File_Node := null;
       end if;
 
