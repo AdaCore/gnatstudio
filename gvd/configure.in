@@ -14,6 +14,7 @@ CAN_OUTPUT=True
 TARGET_CFLAGS=""
 TARGET_LFLAGS=""
 COLOR_SELECTION="#000000"
+EXEC_COMMAND="sh -c"
 
 AC_CANONICAL_SYSTEM
 
@@ -152,6 +153,7 @@ case "${host}" in
 	TARGET_LFLAGS="-luser32 -mwindows"
 	TARGET=pentium-mingw32msv
 	COLOR_SELECTION="#BEBEBE"
+	EXEC_COMMAND="cmd /c"
 	;;
       ## Otherwise, we'll fall through to the generic opsys code at the bottom.
     esac
@@ -181,6 +183,7 @@ AC_SUBST(GVD_VERSION)
 AC_SUBST(TARGET_CFLAGS)
 AC_SUBST(TARGET_LFLAGS)
 AC_SUBST(TARGET)
+AC_SUBST(EXEC_COMMAND)
 
 EXEC_PREFIX="$prefix"
 AC_SUBST(EXEC_PREFIX)
