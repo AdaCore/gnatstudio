@@ -875,12 +875,26 @@ package body Ada_Analyzer is
          then
             Push (Tokens, Temp);
 
+         elsif Reserved = Tok_Abort then
+            if Prev_Token = Tok_Then then
+               --  Temporarily unindent if we have a 'then abort' construct,
+               --  with 'abort' on its own line, e.g:
+               --  select
+               --     Foo;
+               --  then
+               --    abort
+               --     Bar;
+
+               Do_Indent
+                 (Prec, Num_Spaces - Indent_Level, Continuation => True);
+            end if;
+
          elsif Reserved = Tok_Renames then
             if Subprogram_Decl then
                --  function A (....)
                --      renames B;  <- use Indent_Continue additional spaces
 
-               Do_Indent (Prec, Num_Spaces + Indent_Continue);
+               Do_Indent (Prec, Num_Spaces, Continuation => True);
             end if;
 
             if not Top_Token.Declaration
@@ -1064,7 +1078,9 @@ package body Ada_Analyzer is
                      and then Reserved = Tok_When)
            or else (Top_Token.Declaration
                       and then Reserved = Tok_Private
-                      and then Prev_Token /= Tok_Is
+                      and then
+                        (Prev_Token /= Tok_Is
+                         or else Top_Token.Token = Tok_Package)
                       and then Prev_Token /= Tok_Limited
                       and then Prev_Token /= Tok_With)
          then
@@ -1118,52 +1134,48 @@ package body Ada_Analyzer is
                   end case;
                end if;
 
+            elsif Reserved = Tok_Begin then
+               if Top_Token.Declaration then
+                  Num_Spaces := Num_Spaces - Indent_Level;
+                  Top_Token.Declaration := False;
+               else
+                  Push (Tokens, Temp);
+               end if;
+
+            elsif Reserved = Tok_Record then
+               --  Is "record" the first keyword on the line ?
+               --  If True, we are in a case like:
+               --     type A is
+               --        record    --  from Indent_Record
+               --           null;
+               --        end record;
+
+               if not Indent_Done then
+                  Temp.Record_Start_New_Line := True;
+                  Num_Spaces := Num_Spaces + Indent_Record;
+                  Do_Indent (Prec, Num_Spaces);
+               end if;
+
+               if Top_Token.Token = Tok_Type then
+                  Top_Token.Record_Type := True;
+                  Num_Spaces := Num_Spaces + Indent_Level;
+               end if;
+
+               Push (Tokens, Temp);
+
             elsif Reserved = Tok_Else
               or else (Top_Token.Token = Tok_Select
                        and then Reserved = Tok_Then)
-              or else Reserved = Tok_Begin
-              or else Reserved = Tok_Record
               or else Reserved = Tok_When
               or else Reserved = Tok_Or
               or else Reserved = Tok_Private
             then
-               if Reserved = Tok_Begin then
-                  if Top_Token.Declaration then
-                     Num_Spaces := Num_Spaces - Indent_Level;
-                     Top_Token.Declaration := False;
-                  else
-                     Push (Tokens, Temp);
-                  end if;
+               Num_Spaces := Num_Spaces - Indent_Level;
+            end if;
 
-               elsif Reserved = Tok_Record then
-                  --  Is "record" the first keyword on the line ?
-                  --  If True, we are in a case like:
-                  --     type A is
-                  --        record    --  from Indent_Record
-                  --           null;
-                  --        end record;
-
-                  if not Indent_Done then
-                     Temp.Record_Start_New_Line := True;
-                     Num_Spaces := Num_Spaces + Indent_Record;
-                     Do_Indent (Prec, Num_Spaces);
-                  end if;
-
-                  if Top_Token.Token = Tok_Type then
-                     Top_Token.Record_Type := True;
-                     Num_Spaces := Num_Spaces + Indent_Level;
-                  end if;
-
-                  Push (Tokens, Temp);
-
-               else
-                  Num_Spaces := Num_Spaces - Indent_Level;
-               end if;
-
-               if Num_Spaces < 0 then
-                  Num_Spaces   := 0;
-                  Syntax_Error := True;
-               end if;
+            if Num_Spaces < 0 then
+               Num_Spaces   := 0;
+               Syntax_Error := True;
             end if;
 
             if Top_Token.Token /= Tok_Type
@@ -1422,7 +1434,11 @@ package body Ada_Analyzer is
                   end if;
 
                   Push (Indents, P - Start_Of_Line + Padding + 1);
-                  Continuation_Val := 0;
+
+                  if Continuation_Val > 0 then
+                     Continuation_Val := Continuation_Val - Indent_Continue;
+                  end if;
+
                   Num_Parens := Num_Parens + 1;
 
                when ')' =>
@@ -1933,6 +1949,8 @@ package body Ada_Analyzer is
             if Prev_Token = Tok_Comma then
                if Top_Token.Token = Tok_Declare
                  or else Top_Token.Token = Tok_Identifier
+                 or else Top_Token.Token = Tok_Record
+                 or else Top_Token.Token = Tok_Case
                then
                   --  Inside a declare block, indent broken lines specially
                   --  declare
@@ -1961,12 +1979,35 @@ package body Ada_Analyzer is
                   Do_Indent (Prec, Num_Spaces);
                end if;
 
-            elsif Token not in Reserved_Token_Type
-              and then Prev_Token not in Token_Class_No_Cont
-              and then (Prev_Token /= Tok_Arrow
-                        or else (Top_Token.Token /= Tok_Case
-                                 and then Top_Token.Token /= Tok_Select
-                                 and then Top_Token.Token /= Tok_Exception))
+            elsif Top_Token.Token /= No_Token
+              and then
+                ((Token not in Reserved_Token_Type
+                  and then Prev_Token not in Token_Class_No_Cont
+                  and then
+                    (Prev_Token /= Tok_Arrow
+                     or else (Top_Token.Token /= Tok_Case
+                              and then Top_Token.Token /= Tok_Select
+                              and then Top_Token.Token /= Tok_Exception)))
+                 or else ((Prev_Token = Tok_Is
+                           or else Prev_Token = Tok_Colon_Equal)
+                          and then (Token = Tok_New
+                                    or else Token = Tok_Access
+                                    or else Token = Tok_Separate
+                                    or else Top_Token.Token = Tok_Subtype))
+                 or else Token = Tok_Array
+                 or else (Prev_Token = Tok_Exit and then Token = Tok_When)
+                 or else (Prev_Token = Tok_With and then Token = Tok_Private)
+                 or else (Prev_Token = Tok_Null and then Token = Tok_Record)
+                 or else
+                   (Top_Token.Token = Tok_If
+                    and then Token /= Tok_If
+                    and then
+                      (Prev_Token = Tok_Then or else Prev_Token = Tok_Else))
+                 or else
+                   (Top_Token.Token = Tok_Type
+                    and then (Token = Tok_Null or else Token = Tok_Tagged))
+                 or else
+                   (Token = Tok_When and then Top_Token.Token = Tok_Entry))
             then
                --  This is a continuation line, add extra indentation
 
