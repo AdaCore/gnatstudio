@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 2.2.0
 
+- DB23-002 Retrieve project attribute with spaces
+  Problem:    When retrieve through a call to get_attribute_as_string() an
+              attribute that contains spaces, they are all quoted by a
+              backslash in the result string
+  Workaround: Use get_attribute_as_list and recreate a string from the
+              output, without the backslashes
+
 Known Problems fixed in GPS 2.1.0
 
 - On Windows, opening file.ADB will not provide syntax highlighting
