@@ -1317,6 +1317,8 @@ package body Src_Editor_Buffer.Line_Information is
       loop
          Buffer_Lines (J) := New_Line_Data;
       end loop;
+
+      Side_Column_Configuration_Changed (Buffer);
    end Remove_Lines;
 
    ------------------------
