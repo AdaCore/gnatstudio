@@ -789,7 +789,8 @@ package body Project_Explorers is
       Ref       : Gtk_Tree_Iter := Null_Iter;
       Is_Leaf   : constant Boolean :=
         not Has_Imported_Projects (Project)
-        and then Direct_Sources_Count (Project) = 0;
+        and then Get_Attribute_Value (Project, Obj_Dir_Attribute) = ""
+        and then Source_Dirs (Project)'Length = 0;
       Node_Type : Node_Types := Project_Node;
       Node_Text : constant String := Project_Name (Project);
 
@@ -1738,7 +1739,7 @@ package body Project_Explorers is
       if N = Null_Iter then
          declare
             Str : constant String :=
-              Get_String (Explorer.Tree.Model, Node, Base_Name_Column);
+              Get_String (Explorer.Tree.Model, Node, Absolute_Name_Column);
          begin
             if (Node_Type = Directory_Node
                 and then Directory_Contains_Files (Prj, Str))
