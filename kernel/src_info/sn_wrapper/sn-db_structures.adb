@@ -1373,9 +1373,12 @@ package body SN.DB_Structures is
    begin
       Vector_Root := null;
       n := 0;
+      if Input'Length = 0 then
+         return;
+      end if;
       pos := Input'First;
       for i in Input'First .. Input'Last loop
-         if ((Input (i) = ',') or (i = Input'Last)) and (n > 0) then
+         if (Input (i) = ',' and n > 0) or i = Input'Last then
             if i = Input'Last then
                n := n + 1;
             end if;
