@@ -541,8 +541,6 @@ package body Odd.Process is
       else
          --  Regular debugger command, send it.
          Send (Debugger.Debugger, Command);
-
-         Wait_Prompt (Debugger.Debugger);
       end if;
 
       --  Put back the standard cursor
