@@ -2399,8 +2399,12 @@ package body GVD_Module is
                   Mode := Set;
                end if;
 
-               Create (C, Kernel_Handle (Kernel), Tab, Mode, File, J);
-               A (J).Associated_Command := Command_Access (C);
+               if (not Lines_Valid)
+                 or else Lines (J)
+               then
+                  Create (C, Kernel_Handle (Kernel), Tab, Mode, File, J);
+                  A (J).Associated_Command := Command_Access (C);
+               end if;
             end loop;
 
             Add_Line_Information
