@@ -674,6 +674,8 @@ package body Projects.Registry is
    is
       S : constant Source_File_Data := Get
         (Registry.Data.Sources, Source_Filename);
+      Part : Unit_Part;
+      Unit, Lang : Name_Id;
    begin
       if S = No_Source_File_Data then
          --  This is most probably one of the runtime files.
@@ -686,8 +688,21 @@ package body Projects.Registry is
          begin
             if Ext = ".ads" or else Ext = ".adb" then
                return Name_Ada;
+
             else
-               return No_Name;
+               --  Try with the top-level project. This contains the default
+               --  registered extensions when the languages were registered.
+               --  At least, we might be able to display files that don't
+               --  directly belong to a project with the appropriate
+               --  highlighting.
+
+               Get_Unit_Part_And_Name_From_Filename
+                 (Filename  => Source_Filename,
+                  Project   => Get_View (Get_Root_Project (Registry)),
+                  Part      => Part,
+                  Unit_Name => Unit,
+                  Lang      => Lang);
+               return Lang;
             end if;
          end;
       else
