@@ -44,6 +44,7 @@ with Gtk.Menu_Item; use Gtk.Menu_Item;
 with Gtk.Style;     use Gtk.Style;
 with Gtk.Widget;    use Gtk.Widget;
 with Gtkada.Canvas; use Gtkada.Canvas;
+with Gtkada.Handlers; use Gtkada.Handlers;
 with Gtkada.MDI;    use Gtkada.MDI;
 with Pango.Context; use Pango.Context;
 with Pango.Font;    use Pango.Font;
@@ -93,6 +94,7 @@ package body Browsers.Types is
    type Show_Entity_Callback is new Active_Area_Callback with record
       Item    : Browser_Item;
       Entity  : Entity_Information;
+      Link_Name : GNAT.Strings.String_Access;
    end record;
 
    procedure Call (Callback : Show_Entity_Callback;
@@ -102,7 +104,8 @@ package body Browsers.Types is
 
    function Build
      (Item   : access Browser_Item_Record'Class;
-      Entity : Entity_Information) return Show_Entity_Callback'Class;
+      Entity : Entity_Information;
+      Link_Name : String := "") return Active_Area_Cb;
    --  Build a new callback to display entities.
 
    function Show_Entity_Command_Handler
@@ -113,62 +116,62 @@ package body Browsers.Types is
 
    function "<" (E1, E2 : Entity_Information) return Boolean;
 
-   type Entity_Information_Array_Access is access Entity_Information_Array;
+   type Active_Area_Cb_Array is array (Natural range <>) of Active_Area_Cb;
+   type Active_Area_Cb_Array_Access is access Active_Area_Cb_Array;
    type Natural_Array is array (Natural range <>) of Natural;
    type Natural_Array_Access is access Natural_Array;
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Entity_Information_Array, Entity_Information_Array_Access);
+     (Active_Area_Cb_Array, Active_Area_Cb_Array_Access);
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (GNAT.Strings.String_List, GNAT.Strings.String_List_Access);
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Natural_Array, Natural_Array_Access);
 
    type Xref_List is record
-      Lines   : GNAT.Strings.String_List_Access;
-      Xrefs   : Entity_Information_Array_Access;
-      Lengths : Natural_Array_Access;
+      Lines      : GNAT.Strings.String_List_Access;
+      Callbacks  : Active_Area_Cb_Array_Access;
+      Lengths    : Natural_Array_Access;
    end record;
 
    procedure Add_Primitive_Operations
-     (List        : in out Xref_List;
-      Lib_Info    : LI_File_Ptr;
-      Entity      : Entity_Information);
+     (List     : in out Xref_List;
+      Item     : access Type_Item_Record'Class;
+      Lib_Info : LI_File_Ptr);
    --  Add the sorted list of primitive operations for Entity at the end of
    --  Meth_Layout.
 
    procedure Add_Parameters
-     (List        : in out Xref_List;
-      Lib_Info    : LI_File_Ptr;
-      Entity      : Entity_Information);
+     (List     : in out Xref_List;
+      Item     : access Type_Item_Record'Class;
+      Lib_Info : LI_File_Ptr);
    --  Add the list of parameters for Entity (a subprogram) to the end of
    --  Attr_Layout.
 
    procedure Add_Fields
-     (Kernel      : access Kernel_Handle_Record'Class;
-      List        : in out Xref_List;
-      Lib_Info    : LI_File_Ptr;
-      Entity      : Entity_Information);
+     (Kernel   : access Kernel_Handle_Record'Class;
+      List     : in out Xref_List;
+      Item     : access Type_Item_Record'Class;
+      Lib_Info : LI_File_Ptr);
    --  Add the list of fields for a record-like entity to the end of
    --  Attr_Layout.
    --  This is also usable to get the enumeration literals for an enumeration
    --  type.
 
    procedure Add_Parent_Package
-     (List        : in out Xref_List;
-      Lib_Info    : LI_File_Ptr;
-      Entity      : Entity_Information);
+     (List     : in out Xref_List;
+      Item     : access Type_Item_Record'Class;
+      Lib_Info : LI_File_Ptr);
    --  Add the parent package for Entity at the end of Attr_Layout
 
    procedure Add_Line
      (List : in out Xref_List;
       Str : String;
-      Xref : Entity_Information;
-      Length1 : Natural := Natural'Last);
+      Length1 : Natural := Natural'Last;
+      Callback : Active_Area_Cb := null);
    --  Add a new line that will be displayed in a layout.
    --  Str can contain one substring delimited by @...@. When the user
-   --  clicks on that zone, a callback will be called to display the
-   --  information for the entity Xref.
+   --  clicks on that zone, Callback will be called.
    --  Length1 is the number of characters in the first column. The first
    --  character in the second column will always be aligned. Set to
    --  Natural'Last if there is only one column.
@@ -212,6 +215,9 @@ package body Browsers.Types is
       Child  : Gtk.Widget.Gtk_Widget) return Selection_Context_Access;
    --  Create a current kernel context, based on the currently selected item
 
+   procedure On_Show_Source (Browser : access Gtk_Widget_Record'Class);
+   --  Display a source editor to show the declaration of the entity
+
    ----------
    -- Call --
    ----------
@@ -231,10 +237,12 @@ package body Browsers.Types is
          New_Item := Add_Or_Select_Item
            (Type_Browser (Get_Browser (Callback.Item)), Callback.Entity);
 
-         if not Has_Link (Canvas, Callback.Item, New_Item) then
+         if not Has_Link
+           (Canvas, Callback.Item, New_Item, Callback.Link_Name.all)
+         then
             Link := new Browser_Link_Record;
-            Configure (Link, Descr => Get_Name (Callback.Entity));
-            Add_Link (Canvas, Link, Callback.Item, New_Item);
+            Add_Link (Canvas, Link, Callback.Item, New_Item,
+                      Descr => Callback.Link_Name.all);
          end if;
       end if;
    end Call;
@@ -246,6 +254,7 @@ package body Browsers.Types is
    procedure Destroy (Callback : in out Show_Entity_Callback) is
    begin
       Destroy (Callback.Entity);
+      Free (Callback.Link_Name);
    end Destroy;
 
    -----------
@@ -254,11 +263,13 @@ package body Browsers.Types is
 
    function Build
      (Item   : access Browser_Item_Record'Class;
-      Entity : Entity_Information) return Show_Entity_Callback'Class is
+      Entity : Entity_Information;
+      Link_Name : String := "") return Active_Area_Cb is
    begin
-      return Show_Entity_Callback'
+      return new Show_Entity_Callback'
         (Active_Area_Callback with
          Item => Browser_Item (Item),
+         Link_Name => new String'(Link_Name),
          Entity => Entity);
    end Build;
 
@@ -269,21 +280,31 @@ package body Browsers.Types is
    procedure Free (List : in out Xref_List) is
    begin
       Free (List.Lines);
-      Unchecked_Free (List.Xrefs);
+      Unchecked_Free (List.Lengths);
+
+      if List.Callbacks /= null then
+         for A in List.Callbacks'Range loop
+            --  Do not actually destroy, since these are still used in the
+            --  callbacks.
+            Unchecked_Free (List.Callbacks (A));
+         end loop;
+         Unchecked_Free (List.Callbacks);
+      end if;
    end Free;
 
    --------------
    -- Add_Line --
    --------------
 
+
    procedure Add_Line
-     (List    : in out Xref_List;
-      Str     : String;
-      Xref    : Entity_Information;
-      Length1 : Natural := Natural'Last)
+     (List : in out Xref_List;
+      Str : String;
+      Length1 : Natural := Natural'Last;
+      Callback : Active_Area_Cb := null)
    is
       Tmp : GNAT.Strings.String_List_Access := List.Lines;
-      Xrefs : Entity_Information_Array_Access := List.Xrefs;
+      Cbs : Active_Area_Cb_Array_Access := List.Callbacks;
       Tmp2 : Natural_Array_Access := List.Lengths;
    begin
       if Tmp /= null then
@@ -294,11 +315,11 @@ package body Browsers.Types is
          List.Lines := new GNAT.Strings.String_List'(1 => new String'(Str));
       end if;
 
-      if Xrefs /= null then
-         List.Xrefs := new Entity_Information_Array'(Xrefs.all & Xref);
-         Unchecked_Free (Xrefs);
+      if Cbs /= null then
+         List.Callbacks := new Active_Area_Cb_Array'(Cbs.all & Callback);
+         Unchecked_Free (Cbs);
       else
-         List.Xrefs := new Entity_Information_Array'(1 => Xref);
+         List.Callbacks := new Active_Area_Cb_Array'(1 => Callback);
       end if;
 
       if Tmp2 /= null then
@@ -409,11 +430,11 @@ package body Browsers.Types is
             if In_Xref then
                Draw_Line (Pixmap (Item), GC, X2, Y + H, X2 + W, Y + H);
 
-               if List.Xrefs (L) /= No_Entity_Information then
+               if List.Callbacks (L) /= null then
                   Add_Active_Area
                     (Item,
                      Gdk_Rectangle'(X2, Y, W, H),
-                     Build (Item, List.Xrefs (L)));
+                     List.Callbacks (L).all);
                end if;
             end if;
 
@@ -700,11 +721,11 @@ package body Browsers.Types is
 
    procedure Add_Primitive_Operations
      (List     : in out Xref_List;
-      Lib_Info : LI_File_Ptr;
-      Entity   : Entity_Information)
+      Item     : access Type_Item_Record'Class;
+      Lib_Info : LI_File_Ptr)
    is
       Prim : Primitive_Iterator := Get_Primitive_Operations
-        (Lib_Info => Lib_Info, Entity => Entity);
+        (Lib_Info => Lib_Info, Entity => Item.Entity);
       L : constant Natural := Length (Prim);
 
       Arr : Entity_Information_Array (0 .. L);
@@ -745,7 +766,7 @@ package body Browsers.Types is
            (List,
             '@' & Get_Name (Arr (E)) & "@ ( "
             & (-Kind_To_String (Get_Kind (Arr (E)))) & ')',
-            Arr (E));
+            Callback => Build (Item, Arr (E)));
          --  Do not free Arr (E), it's needed for callbacks
       end loop;
    end Add_Primitive_Operations;
@@ -756,11 +777,11 @@ package body Browsers.Types is
 
    procedure Add_Parameters
      (List     : in out Xref_List;
-      Lib_Info : LI_File_Ptr;
-      Entity   : Entity_Information)
+      Item     : access Type_Item_Record'Class;
+      Lib_Info : LI_File_Ptr)
    is
       Subs : Subprogram_Iterator := Get_Subprogram_Parameters
-        (Lib_Info   => Lib_Info, Subprogram => Entity);
+        (Lib_Info   => Lib_Info, Subprogram => Item.Entity);
       Typ, Parameter : Entity_Information;
    begin
       loop
@@ -773,9 +794,9 @@ package body Browsers.Types is
            (List,
             Get_Name (Parameter) & ": "
             & Image (Get_Type (Subs)) & " @" & Get_Name (Typ) & '@',
-            Typ,
-            Length1 => Get_Name (Parameter)'Length + 1);
-         --  Do not free Type, it is needed for callbacks
+            Length1 => Get_Name (Parameter)'Length + 1,
+            Callback => Build (Item, Typ));
+         --  Do not free Typ, it is needed for callbacks
 
          Destroy (Parameter);
          Next (Subs);
@@ -788,14 +809,15 @@ package body Browsers.Types is
 
    procedure Add_Parent_Package
      (List        : in out Xref_List;
-      Lib_Info    : LI_File_Ptr;
-      Entity      : Entity_Information)
+      Item        : access Type_Item_Record'Class;
+      Lib_Info    : LI_File_Ptr)
    is
       Parent : constant Entity_Information :=
-        Get_Parent_Package (Lib_Info, Entity);
+        Get_Parent_Package (Lib_Info, Item.Entity);
    begin
       if Parent /= No_Entity_Information then
-         Add_Line (List, "Parent: @" & Get_Name (Parent) & '@', Parent);
+         Add_Line (List, "Parent: @" & Get_Name (Parent) & '@',
+                   Callback => Build (Item, Parent));
          --  Do not destroy parent, needed for callbacks
       end if;
    end Add_Parent_Package;
@@ -807,16 +829,17 @@ package body Browsers.Types is
    procedure Add_Fields
      (Kernel      : access Kernel_Handle_Record'Class;
       List        : in out Xref_List;
-      Lib_Info    : LI_File_Ptr;
-      Entity      : Entity_Information)
+      Item        : access Type_Item_Record'Class;
+      Lib_Info    : LI_File_Ptr)
    is
       Tree : Scope_Tree;
       Node : Scope_Tree_Node;
       Iter : Scope_Tree_Node_Iterator;
       Typ, Field : Entity_Information;
-      Is_Enum : constant Boolean := Get_Kind (Entity).Kind = Enumeration_Kind;
+      Is_Enum : constant Boolean :=
+        Get_Kind (Item.Entity).Kind = Enumeration_Kind;
    begin
-      Get_Scope_Tree (Kernel, Entity, Tree, Node);
+      Get_Scope_Tree (Kernel, Item.Entity, Tree, Node);
 
       if Node /= Null_Scope_Tree_Node then
          Iter := Start (Node);
@@ -829,7 +852,7 @@ package body Browsers.Types is
                Field := Get_Entity (Node);
 
                if Is_Enum then
-                  Add_Line (List, Get_Name (Field), No_Entity_Information);
+                  Add_Line (List, Get_Name (Field));
 
                else
                   Typ   := Get_Variable_Type (Lib_Info, Field);
@@ -838,15 +861,14 @@ package body Browsers.Types is
                      Add_Line
                        (List,
                         Get_Name (Field) & ": " & Get_Name (Typ),
-                        No_Entity_Information,
                         Length1 => Get_Name (Field)'Length + 1);
                      Destroy (Typ);
                   else
                      Add_Line
                        (List,
                         Get_Name (Field) & ": @" & Get_Name (Typ) & '@',
-                        Typ,
-                        Length1 => Get_Name (Field)'Length + 1);
+                        Length1 => Get_Name (Field)'Length + 1,
+                        Callback => Build (Item, Typ, Get_Name (Field)));
                      --  Do not free Typ, needed for callbacks
                   end if;
                end if;
@@ -906,7 +928,7 @@ package body Browsers.Types is
          when Enumeration_Kind =>
             Lib_Info := Locate_From_Source_And_Complete
               (Kernel, Get_Declaration_File_Of (Item.Entity));
-            Add_Fields (Kernel, Attr_Lines, Lib_Info, Item.Entity);
+            Add_Fields (Kernel, Attr_Lines, Item, Lib_Info);
 
          when Access_Kind =>
             Lib_Info := Locate_From_Source_And_Complete
@@ -916,7 +938,8 @@ package body Browsers.Types is
             --  Could be null if the access type is really a subtyping
             if Parent /= No_Entity_Information then
                Add_Line
-                 (Attr_Lines, "access to @" & Get_Name (Parent) & '@', Parent);
+                 (Attr_Lines, "access to @" & Get_Name (Parent) & '@',
+                  Callback => Build (Item, Parent));
                --  Do not destroy Parent, needed for callbacks
             end if;
 
@@ -928,7 +951,8 @@ package body Browsers.Types is
             --  Could be null if the array type is really a subtyping
             if Parent /= No_Entity_Information then
                Add_Line
-                 (Attr_Lines, "array of @" & Get_Name (Parent) & '@', Parent);
+                 (Attr_Lines, "array of @" & Get_Name (Parent) & '@',
+                  Callback => Build (Item, Parent));
                --  Do not destroy Parent, needed for callbacks
             end if;
 
@@ -939,20 +963,20 @@ package body Browsers.Types is
            | Task_Kind =>
             Lib_Info := Locate_From_Source_And_Complete
               (Kernel, Get_Declaration_File_Of (Item.Entity));
-            Add_Primitive_Operations (Meth_Lines, Lib_Info, Item.Entity);
-            Add_Fields (Kernel, Attr_Lines, Lib_Info, Item.Entity);
+            Add_Primitive_Operations (Meth_Lines, Item, Lib_Info);
+            Add_Fields (Kernel, Attr_Lines, Item, Lib_Info);
 
          when Entry_Or_Entry_Family
            | Function_Or_Operator
            | Procedure_Kind =>
             Lib_Info := Locate_From_Source_And_Complete
               (Kernel, Get_Declaration_File_Of (Item.Entity));
-            Add_Parameters (Attr_Lines, Lib_Info, Item.Entity);
+            Add_Parameters (Attr_Lines, Item, Lib_Info);
 
          when Package_Kind =>
             Lib_Info := Locate_From_Source_And_Complete
               (Kernel, Get_Declaration_File_Of (Item.Entity));
-            Add_Parent_Package (Attr_Lines, Lib_Info, Item.Entity);
+            Add_Parent_Package (Attr_Lines, Item, Lib_Info);
       end case;
 
       Layout := Create_Pango_Layout (Get_Browser (Item), "");
@@ -1081,6 +1105,26 @@ package body Browsers.Types is
       return null;
    end Save_Desktop;
 
+   --------------------
+   -- On_Show_Source --
+   --------------------
+
+   procedure On_Show_Source
+     (Browser : access Gtk_Widget_Record'Class)
+   is
+      B : constant Type_Browser := Type_Browser (Browser);
+      Item : constant Type_Item := Type_Item (Selected_Item (B));
+   begin
+      Open_File_Editor
+        (Kernel     => Get_Kernel (B),
+         Filename   => Get_Declaration_File_Of (Item.Entity),
+         Line       => Get_Declaration_Line_Of (Item.Entity),
+         Column     => Get_Declaration_Column_Of (Item.Entity),
+         Column_End => Get_Declaration_Column_Of (Item.Entity)
+           + Get_Name (Item.Entity)'Length,
+         From_Path => True);
+   end On_Show_Source;
+
    ------------------------
    -- Contextual_Factory --
    ------------------------
@@ -1091,8 +1135,9 @@ package body Browsers.Types is
       Event : Gdk.Event.Gdk_Event;
       Menu  : Gtk.Menu.Gtk_Menu) return Selection_Context_Access
    is
-      pragma Unreferenced (Browser, Event);
+      pragma Unreferenced (Event);
       Context : Entity_Selection_Context_Access;
+      Mitem : Gtk_Menu_Item;
    begin
       Context := new Entity_Selection_Context;
       Set_Entity_Information
@@ -1104,8 +1149,12 @@ package body Browsers.Types is
       --  entity-related submenus here.
 
       if Menu /= null then
-         --  ??? Add menu to show the source file for the entity.
-         null;
+         Gtk_New (Mitem, -"Show source");
+         Add (Menu, Mitem);
+         Widget_Callback.Object_Connect
+           (Mitem, "activate",
+            Widget_Callback.To_Marshaller (On_Show_Source'Access),
+            Slot_Object => Browser);
       end if;
 
       return Selection_Context_Access (Context);
