@@ -2,7 +2,7 @@
 --                               G P S                               --
 --                                                                   --
 --                     Copyright (C) 2003 - 2005                     --
---                            ACT-Europe                             --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -382,6 +382,8 @@ package body Task_Manager.GUI is
          Manager.Queues (Index).Status := Running;
          Manager.Queues (Index).Need_Refresh := True;
          Refresh_Command (Manager, Index);
+
+         Run (Manager, Active => Index < Manager.Passive_Index);
       end if;
    end Resume_Command;
 
@@ -401,6 +403,8 @@ package body Task_Manager.GUI is
          Manager.Queues (Index).Status := Interrupted;
          Manager.Queues (Index).Need_Refresh := True;
          Refresh_Command (Manager, Index);
+
+         Run (Manager, Active => Index < Manager.Passive_Index);
       end if;
    end Interrupt_Command;
 
