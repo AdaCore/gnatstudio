@@ -37,7 +37,7 @@ with Docgen;                    use Docgen;
 with Docgen.Html_Output;        use Docgen.Html_Output;
 with Docgen.Texi_Output;        use Docgen.Texi_Output;
 
-procedure Docgen_Main is
+procedure Docgen.Main is
 
    package TSFL renames Type_Source_File_List;
 
@@ -403,4 +403,4 @@ exception
       Put_Line (Current_Error, "                  The last character is" &
                 """/"" or ""\""");
       New_Line (Current_Error);
-end Docgen_Main;
+end Docgen.Main;
