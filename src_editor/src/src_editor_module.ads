@@ -21,6 +21,7 @@
 with Glib.Object;
 with Glib;          use Glib;
 with Gdk.GC;
+with Gdk.Color;     use Gdk.Color;
 with Gdk.Pixbuf;    use Gdk.Pixbuf;
 with Gtk.Button;
 with Gtk.Box;       use Gtk.Box;
@@ -136,8 +137,9 @@ private
    -----------------------------
 
    type Highlighting_Category_Record (L : Natural) is record
-      Id : String (1 .. L);
-      GC : Gdk.GC.Gdk_GC;
+      Id    : String (1 .. L);
+      GC    : Gdk.GC.Gdk_GC;
+      Color : Gdk_Color;
    end record;
 
    type Highlighting_Category is access Highlighting_Category_Record;
