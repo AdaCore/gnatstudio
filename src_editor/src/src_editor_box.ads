@@ -39,6 +39,7 @@ with Gtk.Frame;
 with Gtk.Label;
 with Gtk.Menu;
 with Gtk.Handlers;
+with Gtk.Separator;
 with Gtk.Text_Mark;
 
 with GVD.Tooltips;
@@ -407,7 +408,12 @@ private
    --  the user. If he answers no the first time, we forbid editing until he
    --  has said yes.
 
-   type Frames_Array is array (Natural range <>) of Gtk.Frame.Gtk_Frame;
+   type Frame_Separator is record
+      Frame     : Gtk.Frame.Gtk_Frame;
+      Separator : Gtk.Separator.Gtk_Separator;
+   end record;
+
+   type Frames_Array is array (Natural range <>) of Frame_Separator;
    type Frames_Array_Access is access Frames_Array;
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
