@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 1.4.0
 
+- CA21-003 GPS unstable when displaying xrefs or tooltips after project switch.
+  Problem:    After changing projects within GPS using the Project->Open menu
+              or the Project->Recent menu, GPS might become unstable when using
+              xrefs or displaying tooltips.
+  Workaround: Quit GPS and launch a new session with the other project.
+
 - CA15-004 GPS crash when doing xref in Ada unit containing separate
   Problem:    A memory corruption occurs when doing cross-references on a
               unit which has separates. This can result in a GPS crash.
