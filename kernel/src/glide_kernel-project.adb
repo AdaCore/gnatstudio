@@ -75,7 +75,7 @@ package body Glide_Kernel.Project is
       if Path /= null then
          Compute_Predefined_Paths
            (Handle.Registry.all,
-            Gnatls_Path  => Handle.Gnatls_Cache.all,
+            Gnatls_Path  => Path.all,
             Gnatls_Args  => Gnatls_Args,
             GNAT_Version => GNAT_Version'Unchecked_Access);
          Handle.GNAT_Version := GNAT_Version;
