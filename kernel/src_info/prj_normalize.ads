@@ -103,8 +103,9 @@ with Types;
 package Prj_Normalize is
 
    function Is_Normalized (Project : Prj.Tree.Project_Node_Id)
-      return Boolean;
-   --  Return True if Project is normalized.
+      return String;
+   --  Return the empy string if Project is normalized, or an error message if
+   --  otherwise.
 
    procedure Normalize (Project : Prj.Tree.Project_Node_Id);
    --  Normalize Project.

@@ -51,7 +51,7 @@ package body Prj_Normalize is
      (Project           : Prj.Tree.Project_Node_Id;
       Node              : Prj.Tree.Project_Node_Id;
       Nested_Case_Names : External_Variable_Value_Array)
-      return Boolean;
+      return String;
    --  Internal version of Is_Normalized.
    --  Nested_Case_Names should contain the name of all the variables that are
    --  involved in the case constructions we are currently in.
@@ -83,6 +83,18 @@ package body Prj_Normalize is
    --  The declaration for the variable itself is added at the beginning of the
    --  project if no variable was found that already referenced Name.
 
+   function Values_Matches
+     (Var_Name  : String_Id;
+      Case_Item : Project_Node_Id;
+      Values    : External_Variable_Value_Array) return Boolean;
+   --  Return True if (Var_Name, Var_Value) is valid with regards to Values
+
+   procedure Add_To_Case_Items
+     (Case_Construction : Project_Node_Id;
+      Decl_List         : Project_Node_Id);
+   --  Copy all the declarative items from Decl_List into each of the case
+   --  items of Case_Construction (at the beginning of each case item)
+
    ----------------------------
    -- Internal_Is_Normalized --
    ----------------------------
@@ -91,14 +103,14 @@ package body Prj_Normalize is
      (Project           : Prj.Tree.Project_Node_Id;
       Node              : Prj.Tree.Project_Node_Id;
       Nested_Case_Names : External_Variable_Value_Array)
-      return Boolean
+      return String
    is
       Decl_List               : Project_Node_Id;
       Case_Construction_Found : Boolean := False;
       Standard_Node_Found     : Boolean := False;
       Case_Item               : Project_Node_Id;
       Var_Name                : String_Id;
-      Var_Type                : Project_Node_Id;
+      Var_Type, Current_Node  : Project_Node_Id;
 
    begin
       --  ??? This doesn't check that two references to the same external
@@ -114,13 +126,14 @@ package body Prj_Normalize is
       end if;
 
       while Decl_List /= Empty_Node loop
-         case Kind_Of (Current_Item_Node (Decl_List)) is
+         Current_Node := Current_Item_Node (Decl_List);
+         case Kind_Of (Current_Node) is
 
             when N_Case_Construction =>
 
                if Case_Construction_Found then
                   Trace (Me, "Two case constructions at the same level");
-                  return False;
+                  return "Two case constructions at the same level";
                end if;
 
                if Standard_Node_Found
@@ -128,47 +141,52 @@ package body Prj_Normalize is
                then
                   Trace (Me, "Mix of case construction and items in a"
                          & " case item");
-                  return False;
+                  return "Mix of case construction and items in a case item";
                end if;
 
                Var_Name := External_Variable_Name
-                 (Project,
-                  Case_Variable_Reference_Of (Current_Item_Node (Decl_List)));
-               Var_Type := String_Type_Of (Case_Variable_Reference_Of
-                                           (Current_Item_Node (Decl_List)));
+                 (Project, Case_Variable_Reference_Of (Current_Node));
+               Var_Type := String_Type_Of
+                 (Case_Variable_Reference_Of (Current_Node));
 
                for J in Nested_Case_Names'Range loop
                   if String_Equal
                     (Nested_Case_Names (J).Variable_Name, Var_Name)
                   then
                      Trace (Me, "Duplicate variables in case constructions");
-                     return False;
+                     return "Duplicate variables in case constructions";
                   end if;
                end loop;
 
                Case_Construction_Found := True;
 
-               Case_Item := First_Case_Item_Of (Current_Item_Node (Decl_List));
+               Case_Item := First_Case_Item_Of (Current_Node);
                while Case_Item /= Empty_Node loop
-                  if not Internal_Is_Normalized
-                    (Project, Case_Item, Nested_Case_Names
-                     & External_Variable_Value'
-                     (Var_Type, Var_Name, No_String, False))
-                  then
-                     Trace (Me, "One of the case items isn't normalized");
-                     return False;
-                  end if;
+                  declare
+                     S : constant String := Internal_Is_Normalized
+                       (Project, Case_Item, Nested_Case_Names
+                        & External_Variable_Value'
+                        (Var_Type, Var_Name, No_String, False));
+                  begin
+                     if S /= "" then
+                        Trace (Me, "One of the case items isn't normalized");
+                        return S;
+                     end if;
+                  end;
                   Case_Item := Next_Case_Item (Case_Item);
                end loop;
 
             when N_Package_Declaration =>
 
-               if not Internal_Is_Normalized
-                 (Project, Current_Item_Node (Decl_List), Nested_Case_Names)
-               then
-                  Trace (Me, "One of the packages isn't normalized");
-                  return False;
-               end if;
+               declare
+                  S : constant String := Internal_Is_Normalized
+                    (Project, Current_Node, Nested_Case_Names);
+               begin
+                  if S /= "" then
+                     Trace (Me, "One of the packages isn't normalized");
+                     return S;
+                  end if;
+               end;
 
             when others =>
 
@@ -178,14 +196,23 @@ package body Prj_Normalize is
                then
                   Trace (Me, "Mix of case construction and items in a"
                          & " case item");
-                  return False;
+                  return "Mix of case construction and items in a case item";
                end if;
+
+               if Kind_Of (Current_Node) = N_Typed_Variable_Declaration
+                 and then Is_External_Variable (Current_Node)
+                 and then Kind_Of (Node) = N_Package_Declaration
+               then
+                  Trace (Me, "Scenario variable declared in package");
+                  return "Scenario variable declared in package";
+               end if;
+
          end case;
 
          Decl_List := Next_Declarative_Item (Decl_List);
       end loop;
 
-      return True;
+      return "";
    end Internal_Is_Normalized;
 
    -------------------
@@ -193,7 +220,7 @@ package body Prj_Normalize is
    -------------------
 
    function Is_Normalized (Project : Prj.Tree.Project_Node_Id)
-      return Boolean
+      return String
    is
       No_Names : External_Variable_Value_Array (1 .. 0);
    begin
@@ -278,6 +305,7 @@ package body Prj_Normalize is
          Case_Item : Project_Node_Id;
          Index     : Natural;
          Var_Type  : Project_Node_Id;
+         Already_Have_Var, Match : Boolean;
 
          procedure Add_Decl_Item (To_Case_Item : Project_Node_Id);
          --  Add Decl_Item to To_Case_Item.
@@ -314,8 +342,8 @@ package body Prj_Normalize is
                     (Case_Variable_Reference_Of
                      (Current_Item_Node (Decl_Item)));
 
-                  --  ??? Do we already have this variable in values
-                  --  ??? If yes, this means we have something similar to:
+                  --  Do we already have this variable in values
+                  --  If yes, this means we have something similar to:
                   --    case A is
                   --       when "1" =>
                   --          case A is
@@ -323,6 +351,14 @@ package body Prj_Normalize is
                   --              when "2" => ignore;
                   --  We should only keep the item in the nested case that
                   --  matches the value of the outer item.
+
+                  Already_Have_Var := False;
+                  for J in Values'First .. Last_Values loop
+                     if String_Equal (Values (J).Variable_Name, Name) then
+                        Already_Have_Var := True;
+                        exit;
+                     end if;
+                  end loop;
 
                   Case_Item := First_Case_Item_Of
                     (Current_Item_Node (Decl_Item));
@@ -333,26 +369,38 @@ package body Prj_Normalize is
 
                      Index := Last_Values + 1;
 
-                     Choice := First_Choice_Of (Case_Item);
-                     while Choice /= Empty_Node loop
-                        Add_Value
-                          (Values, Last_Values,
-                           External_Variable_Value'
-                           (Var_Type, Name, String_Value_Of (Choice), False));
-                        Choice := Next_Literal_String (Choice);
-                     end loop;
+                     if Already_Have_Var then
+                        Match := Values_Matches
+                          (Name, Case_Item,
+                           Values (Values'First .. Last_Values));
+                     else
+                        Match := True;
+                        Choice := First_Choice_Of (Case_Item);
+                        while Choice /= Empty_Node loop
+                           Add_Value
+                             (Values, Last_Values,
+                              External_Variable_Value'
+                              (Var_Type,
+                               Name,
+                               String_Value_Of (Choice),
+                               False));
+                           Choice := Next_Literal_String (Choice);
+                        end loop;
+                     end if;
 
-                     --  Process the declarative list of items
+                     if Match then
+                        --  Process the declarative list of items
 
-                     Process_Declarative_List
-                       (First_Declarative_Item_Of (Case_Item),
-                        To, Case_Stmt);
+                        Process_Declarative_List
+                          (First_Declarative_Item_Of (Case_Item),
+                           To, Case_Stmt);
 
-                     --  Negate all the values
+                        --  Negate all the values
 
-                     for J in Index .. Last_Values loop
-                        Values (J).Negated := True;
-                     end loop;
+                        for J in Index .. Last_Values loop
+                           Values (J).Negated := True;
+                        end loop;
+                     end if;
 
                      Case_Item := Next_Case_Item (Case_Item);
                   end loop;
@@ -361,11 +409,30 @@ package body Prj_Normalize is
                   --  Note that we do not need to use String_Equal, since we
                   --  know exactly the String_Id we started with.
 
-                  while Last_Values >= Values'First
-                    and then Values (Last_Values).Variable_Name = Name
-                  loop
-                     Last_Values := Last_Values - 1;
-                  end loop;
+                  if not Already_Have_Var then
+                     while Last_Values >= Values'First
+                       and then Values (Last_Values).Variable_Name = Name
+                     loop
+                        Last_Values := Last_Values - 1;
+                     end loop;
+                  end if;
+
+               when N_Typed_Variable_Declaration =>
+                  --  Scenario variables must be defined at the project level
+                  if Current_Pkg /= Empty_Node
+                    and then Is_External_Variable
+                    (Current_Item_Node (Decl_Item))
+                  then
+                     Add_At_End
+                       (Project_Norm,
+                        Clone_Node (Decl_Item, True),
+                        Add_Before_First_Case_Or_Pkg => True);
+                  else
+                     For_Each_Matching_Case_Item
+                       (Project_Norm, Current_Pkg,
+                        Values (Values'First .. Last_Values),
+                        Add_Decl_Item'Unrestricted_Access);
+                  end if;
 
                when others =>
                   --  if Debug_Mode then
@@ -505,6 +572,43 @@ package body Prj_Normalize is
       return Empty_Node;
    end Find_Case_Statement;
 
+   --------------------
+   -- Values_Matches --
+   --------------------
+
+   function Values_Matches
+     (Var_Name  : String_Id;
+      Case_Item : Project_Node_Id;
+      Values    : External_Variable_Value_Array) return Boolean
+   is
+      --  The rule is the following: if there is any non-negated item,
+      --  then we must match at least one of them. If there are none,
+      --  then the case item matches if non of the negated item matches
+      Match  : Boolean := True;
+      Choice : Project_Node_Id := First_Choice_Of (Case_Item);
+   begin
+      Choice_Loop :
+      while Choice /= Empty_Node loop
+         for J in Values'Range loop
+            if String_Equal (Values (J).Variable_Name, Var_Name) then
+               --  Change the default value if needed
+               Match := Values (J).Negated;
+
+               if String_Equal
+                 (Values (J).Variable_Value, String_Value_Of (Choice))
+               then
+                  Match := not Values (J).Negated;
+                  exit Choice_Loop;
+               end if;
+            end if;
+         end loop;
+
+         Choice := Next_Literal_String (Choice);
+      end loop Choice_Loop;
+
+      return Match;
+   end Values_Matches;
+
    ---------------------------------
    -- For_Each_Matching_Case_Item --
    ---------------------------------
@@ -567,10 +671,8 @@ package body Prj_Normalize is
          --  ??? External_Variable_Name might not be the most efficient
          Name : constant String_Id := External_Variable_Name
            (Project, Case_Variable_Reference_Of (Case_Stmt));
-         Choice : Project_Node_Id;
          Current_Item, New_Case : Project_Node_Id;
          Handling_Done : Boolean;
-         Match : Boolean;
 
       begin
          pragma Assert (Name /= No_String);
@@ -585,32 +687,7 @@ package body Prj_Normalize is
 
          Current_Item := First_Case_Item_Of (Case_Stmt);
          while Current_Item /= Empty_Node loop
-            --  The rule is the following: if there is any non-negated item,
-            --  then we must match at least one of them. If there are none,
-            --  then the case item matches if non of the negated item matches
-            Match := True;
-            Choice := First_Choice_Of (Current_Item);
-
-            Choice_Loop :
-            while Choice /= Empty_Node loop
-               for J in Values'Range loop
-                  if String_Equal (Values (J).Variable_Name, Name) then
-                     --  Change the default value if needed
-                     Match := Values (J).Negated;
-
-                     if String_Equal
-                       (Values (J).Variable_Value, String_Value_Of (Choice))
-                     then
-                        Match := not Values (J).Negated;
-                        exit Choice_Loop;
-                     end if;
-                  end if;
-               end loop;
-
-               Choice := Next_Literal_String (Choice);
-            end loop Choice_Loop;
-
-            if Match then
+            if Values_Matches (Name, Current_Item, Values) then
                Handling_Done := False;
                New_Case := First_Declarative_Item_Of (Current_Item);
 
@@ -632,6 +709,14 @@ package body Prj_Normalize is
                   Handling_Done := New_Case /= Empty_Node;
 
                   if Handling_Done then
+                     --  Move all the declarative items currently in the case
+                     --  item to the nested case construction, so that we only
+                     --  have declarative items in the most-nested case
+                     --  constructions.
+                     Add_To_Case_Items
+                       (New_Case, First_Declarative_Item_Of (Current_Item));
+                     Set_First_Declarative_Item_Of (Current_Item, Empty_Node);
+
                      Add_At_End (Current_Item, New_Case);
                      Process_Case_Recursive (New_Case);
                   end if;
@@ -674,6 +759,23 @@ package body Prj_Normalize is
 
       Free (Var_Seen);
    end For_Each_Matching_Case_Item;
+
+   -----------------------
+   -- Add_To_Case_Items --
+   -----------------------
+
+   procedure Add_To_Case_Items
+     (Case_Construction : Project_Node_Id;
+      Decl_List         : Project_Node_Id)
+   is
+      Case_Item : Project_Node_Id;
+   begin
+      Case_Item := First_Case_Item_Of (Case_Construction);
+      while Case_Item /= Empty_Node loop
+         Add_In_Front (Case_Item, Clone_Node (Decl_List, True));
+         Case_Item := Next_Case_Item (Case_Item);
+      end loop;
+   end Add_To_Case_Items;
 
    ------------------------------
    -- Create_Case_Construction --
