@@ -1,0 +1,15 @@
+This is the README file for the binary distribution of GVD.
+This directory contains the files needed for installing and running GVD.
+
+INSTALLING
+
+The quick way to install GVD is to run the script 'doinstall' contained
+in this directory and then follow the instructions.
+
+USE
+
+Using GVD is documented in the GVD user's guide available in HTML format using
+the F1 key under GVD itself, or as text, info and postscript files in
+the directory $base/doc/gvd, where $base is the base directory chosen when
+installing GVD (using doinstall).
+
