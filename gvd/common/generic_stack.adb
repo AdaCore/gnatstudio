@@ -60,4 +60,17 @@ package body Generic_Stack is
       end if;
    end Top;
 
+   --------------
+   -- Is_Empty --
+   --------------
+
+   function Is_Empty (Stack : Simple_Stack) return Boolean is
+   begin
+      if Stack = null then
+         return True;
+      else
+         return False;
+      end if;
+   end Is_Empty;
+
 end Generic_Stack;
