@@ -329,10 +329,10 @@ package body Breakpoints_Editor is
       then
          declare
             S : constant String :=
-              Get_Chars (Get_Entry (Adv.Condition_Combo));
+              Get_Text (Get_Entry (Adv.Condition_Combo));
             C : constant Integer :=
               Integer (Get_Value_As_Int (Adv.Ignore_Count_Combo));
-            T : constant String := Get_Chars (Adv.Command_Descr);
+            T : constant String := Get_Text (Adv.Command_Descr);
          begin
             --  Send all these commands in "internal" mode, so that no
             --  "info breakpoint" is emitted each time. However, we must
@@ -372,7 +372,7 @@ package body Breakpoints_Editor is
    is
       Temporary : Boolean;
       Name      : constant String :=
-        Get_Chars (Get_Entry (Editor.Exception_Name));
+        Get_Text (Get_Entry (Editor.Exception_Name));
       Unhandled : constant Boolean :=
         Get_Active (Editor.Stop_Not_Handled_Exception);
       Br        : Breakpoint_Data;
@@ -468,7 +468,7 @@ package body Breakpoints_Editor is
       if Get_Active (Editor.Location_Selected) then
          declare
             File : constant String :=
-              Get_Chars (Get_Entry (Editor.File_Combo));
+              Get_Text (Get_Entry (Editor.File_Combo));
             Line : constant Integer :=
               Integer (Get_Value_As_Int (Editor.Line_Spin));
          begin
@@ -491,7 +491,7 @@ package body Breakpoints_Editor is
       elsif Get_Active (Editor.Subprogram_Selected) then
          declare
             Name : constant String :=
-              Get_Chars (Get_Entry (Editor.Subprogram_Combo));
+              Get_Text (Get_Entry (Editor.Subprogram_Combo));
          begin
             --  ??? Should also check Temporary
             if Current = -1
@@ -510,7 +510,7 @@ package body Breakpoints_Editor is
       elsif Get_Active (Editor.Address_Selected) then
          declare
             Addr : constant String :=
-              Get_Chars (Get_Entry (Editor.Address_Combo));
+              Get_Text (Get_Entry (Editor.Address_Combo));
          begin
             if Current = -1
               or else Br.Address = null
@@ -529,7 +529,7 @@ package body Breakpoints_Editor is
          Remove := True;
          B := Break_Regexp
            (Editor.Process.Debugger,
-            Regexp    => Get_Chars (Get_Entry (Editor.Regexp_Combo)),
+            Regexp    => Get_Text (Get_Entry (Editor.Regexp_Combo)),
             Temporary => Temporary,
             Mode      => GVD.Types.Visible);
       end if;
