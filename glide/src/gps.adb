@@ -104,7 +104,7 @@ with Codefix_Module;
 with Python_Module;
 with KeyManager_Module;
 with Theme_Manager_Module;
---  with Docgen_Module;
+--   with Docgen_Module;
 with SSH_Protocol;
 
 procedure GPS is
@@ -426,6 +426,7 @@ procedure GPS is
             Put_Line (File, "SRC_INFO.ALI=no");
             Put_Line (File, "CPP.INFO=no");
             Put_Line (File, "CPP.FAIL=no");
+            Put_Line (File, "HOOKS=no");
             Put_Line (File, "PROJECTS.DEBUG=no");
             Close (File);
          end if;
@@ -953,7 +954,7 @@ procedure GPS is
       Glide_Kernel.Task_Manager.Register_Module (GPS.Kernel);
       Custom_Module.Register_Module (GPS.Kernel);
       Glide_Result_View.Register_Module (GPS.Kernel);
---        Docgen_Module.Register_Module (GPS.Kernel);
+--      Docgen_Module.Register_Module (GPS.Kernel);
 
       --  Register the supported languages and their associated LI handlers.
 
