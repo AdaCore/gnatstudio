@@ -2925,6 +2925,7 @@ package body Project_Viewers is
       Register_Contextual_Menu
         (Kernel, "Edit project properties",
          Action => Command,
+         Label  => "Edit project/Properties...",
          Filter => Filter);
 
       Command := new Save_Project_Command;
@@ -2932,11 +2933,11 @@ package body Project_Viewers is
         (Kernel, "Save project",
          Action => Command,
          Filter => Filter,
-         Label  => "Save the project %p");
+         Label  => "Edit project/Save project %p");
 
       Command := new Edit_Project_Source_Command;
       Register_Contextual_Menu
-        (Kernel, "Edit project source file",
+        (Kernel, "Edit project/Edit project source file",
          Action => Command,
          Filter => Filter);
 
@@ -2945,20 +2946,20 @@ package body Project_Viewers is
         (Kernel, "Add dependency from wizard",
          Action => Command,
          Filter => Filter,
-         Label  => "Add dependency/From wizard...");
+         Label  => "Edit project/Add dependency/From wizard...");
 
       Command := new Add_Dep_From_File_Command;
       Register_Contextual_Menu
         (Kernel, "Add dependency from file",
          Action => Command,
          Filter => Filter,
-         Label  => "Add dependency/From project file...");
+         Label  => "Edit project/Add dependency/From project file...");
 
       Command := new Remove_Dep_Command;
       Register_Contextual_Menu
         (Kernel, "Remove dependency",
          Action => Command,
-         Label  => "Remove dependency %i -> %p",
+         Label  => "Edit project/Remove dependency %i -> %p",
          Filter => Lookup_Filter (Kernel, "Project only"));
 
       Filter := Action_Filter (Create (Module => "Explorer"));
@@ -2968,6 +2969,7 @@ package body Project_Viewers is
       Register_Contextual_Menu
         (Kernel, "Add configuration variable",
          Action => Command,
+         Label  => "Edit project/Add configuration variable",
          Filter => Filter);
 
       Filter := Lookup_Filter (Kernel, "Project and file");
