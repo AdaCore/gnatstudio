@@ -32,6 +32,7 @@ with Gtk.Table;             use Gtk.Table;
 with Gtk.Toggle_Button;     use Gtk.Toggle_Button;
 with Gtk.Tooltips;          use Gtk.Tooltips;
 with Gtk.Widget;            use Gtk.Widget;
+with Gtkada.Dialogs;        use Gtkada.Dialogs;
 with Gtkada.Handlers;       use Gtkada.Handlers;
 with Glide_Intl;            use Glide_Intl;
 with Glide_Kernel;          use Glide_Kernel;
@@ -235,16 +236,16 @@ package body Vsearch_Ext is
       Data    : Search_Module_Data;
       All_Occurences : constant Boolean := Get_Active
         (Vsearch.Search_All_Check);
-      Has_Next : Boolean;
+      Has_Next       : Boolean;
+      Button         : Message_Dialog_Buttons;
+      Pattern        : constant String := Get_Text (Vsearch.Pattern_Entry);
 
    begin
-      Push_State (Vsearch.Kernel, Processing);
       Data := Find_Module (Get_Text (Get_Entry (Vsearch.Context_Combo)));
+      Free (Vsearch.Last_Search_Context);
 
-      if Data.Factory /= null
-        and then Get_Text (Vsearch.Pattern_Entry) /= ""
-      then
-         Free (Vsearch.Last_Search_Context);
+      if Data.Factory /= null and then Pattern /= "" then
+         Push_State (Vsearch.Kernel, Processing);
          Vsearch.Last_Search_Context := Data.Factory
            (Vsearch.Kernel, Data.Extra_Information);
 
@@ -255,33 +256,41 @@ package body Vsearch_Ext is
                Case_Sensitive => Get_Active (Vsearch.Case_Check),
                Whole_Word     => Get_Active (Vsearch.Whole_Word_Check),
                Regexp         => Get_Active (Vsearch.Regexp_Check));
-            Set_Context (Vsearch.Last_Search_Context,
-                         Get_Text (Vsearch.Pattern_Entry), Options);
-
+            Set_Context (Vsearch.Last_Search_Context, Pattern, Options);
             Vsearch.Continue := True;
 
             if All_Occurences then
-               --  Set up Glide during the search. Everything is automatically
+               --  Set up the search. Everything is automatically
                --  put back when the idle loop terminates.
-               Push_State (Vsearch.Kernel, Processing);
+
                Set_Sensitive (Vsearch.Stop_Button, True);
                Set_Sensitive (Vsearch.Search_Next_Button, False);
                Vsearch.Search_Idle_Handler := Search_Idle_Pkg.Add
                  (Idle_Search'Access,
                   (Vsearch => Vsearch,
                    Search_Backward => False));
+
             else
                Has_Next := Search
                  (Vsearch.Last_Search_Context,
                   Vsearch.Kernel,
                   Search_Backward => False);
+               Pop_State (Vsearch.Kernel);
+
+               if not Has_Next then
+                  --  Give a visual feedback that the search is terminated.
+
+                  Pop_State (Vsearch.Kernel);
+                  Button := Message_Dialog
+                    (Msg     => (-"No occurrences of '") & Pattern &
+                                (-"' found."),
+                     Title   => -"Search",
+                     Buttons => Button_OK,
+                     Parent  => Get_Main_Window (Vsearch.Kernel));
+               end if;
             end if;
          end if;
-      else
-         Free (Vsearch.Last_Search_Context);
       end if;
-
-      Pop_State (Vsearch.Kernel);
 
    exception
       when E : others =>
@@ -293,10 +302,12 @@ package body Vsearch_Ext is
    --------------------
 
    procedure On_Search_Next (Object : access Gtk_Widget_Record'Class) is
-      Vsearch : constant Vsearch_Extended := Vsearch_Extended (Object);
+      Vsearch        : constant Vsearch_Extended := Vsearch_Extended (Object);
       All_Occurences : constant Boolean := Get_Active
         (Vsearch.Search_All_Check);
-      Has_Next : Boolean;
+      Has_Next       : Boolean;
+      Button         : Message_Dialog_Buttons;
+
    begin
       if Vsearch.Search_Idle_Handler /= 0 then
          Idle_Remove (Vsearch.Search_Idle_Handler);
@@ -305,25 +316,35 @@ package body Vsearch_Ext is
 
       if Vsearch.Last_Search_Context /= null then
          Vsearch.Continue := True;
+         Push_State (Vsearch.Kernel, Processing);
 
          if All_Occurences then
             --  Set up the search. Everything is automatically
             --  put back when the idle loop terminates.
 
-            Push_State (Vsearch.Kernel, Processing);
             Set_Sensitive (Vsearch.Stop_Button, True);
             Set_Sensitive (Vsearch.Search_Next_Button, False);
             Vsearch.Search_Idle_Handler := Search_Idle_Pkg.Add
               (Idle_Search'Access,
                (Vsearch => Vsearch,
                 Search_Backward => False));
+
          else
-            Push_State (Vsearch.Kernel, Processing);
             Has_Next := Search
               (Vsearch.Last_Search_Context,
                Vsearch.Kernel,
                Search_Backward => False);
             Pop_State (Vsearch.Kernel);
+
+            if not Has_Next then
+               --  Give a visual feedback that the search is terminated.
+
+               Button := Message_Dialog
+                 (Msg     => -"No further occurrences found.",
+                  Title   => -"Search",
+                  Buttons => Button_OK,
+                  Parent  => Get_Main_Window (Vsearch.Kernel));
+            end if;
          end if;
       end if;
 
@@ -623,7 +644,8 @@ package body Vsearch_Ext is
          Factory           => Help_Factory'Access,
          Extra_Information => null,
          Mask              => All_Options and not Supports_Replace
-           and not Scope_Mask and not Whole_Word and not All_Occurences);
+           and not Search_Backward and not Scope_Mask
+           and not Whole_Word and not All_Occurences);
    end Register_Default_Search;
 
 end Vsearch_Ext;
