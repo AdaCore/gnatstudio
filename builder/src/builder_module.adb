@@ -222,6 +222,10 @@ package body Builder_Module is
          if Matched (2) /= No_Match then
             Line := Integer'Value
               (Output (Matched (2).First .. Matched (2).Last));
+
+            if Line <= 0 then
+               Line := 1;
+            end if;
          end if;
 
          if Matched (3) = No_Match then
@@ -230,6 +234,10 @@ package body Builder_Module is
             Last := Matched (3).Last;
             Column := Integer'Value
               (Output (Matched (3).First .. Matched (3).Last));
+
+            if Column <= 0 then
+               Column := 1;
+            end if;
          end if;
 
          --  Strip the last ASCII.LF if needed.
@@ -246,7 +254,7 @@ package body Builder_Module is
             -"Builder Results",
             Output (Matched (1).First .. Matched (1).Last),
             Output (Last + 1 .. Real_Last),
-            Line, Column, 0);
+            Positive (Line), Positive (Column), 0);
 
          Start := Real_Last + 1;
       end loop;
