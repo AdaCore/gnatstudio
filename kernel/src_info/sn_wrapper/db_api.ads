@@ -119,23 +119,33 @@ package DB_API is
    --  Releases specified pair and key/data values.
 
    function Get_Field_Count (The_CSF : CSF) return Natural;
+   pragma Inline (Get_Field_Count);
    --  Returns number of fields in specified CSF.
 
    function Get_Field (The_CSF : CSF; Index : Positive) return String;
+   procedure Get_Field
+     (The_CSF : CSF;
+      Index   : Positive;
+      Field   : out String;
+      Len     : Natural);
+   pragma Inline (Get_Field);
    --  Returns field from CSF with specified index.
-   --  Throws Index_Out_Of_Range if incorrect index specified (
-   --  i.e. Index > Get_Field_Count (CSF);
+   --  Throws Index_Out_Of_Range if incorrect index specified (i.e.
+   --  Index > Get_Field_Count (CSF);
+   --  Len is the length of the field (found using Get_Field_Length).
 
-   function Get_Field_Length (The_CSF : CSF; Index : Positive)
-         return Integer;
+   function Get_Field_Length
+     (The_CSF : CSF; Index : Positive) return Integer;
+   pragma Inline (Get_Field_Length);
    --  Returns length of field from CSF with specified index.
 
    function Get_All_Fields
-     (The_CSF : CSF;
+     (The_CSF   : CSF;
       Separator : Character := ' ') return String;
    --  Returns all fields, separated by specified separator;
 
    function Get_Total_Length (The_CSF : CSF) return Natural;
+   pragma Inline (Get_Total_Length);
    --  Return summary length of all fields
 
    DB_Error             : exception;
@@ -149,7 +159,7 @@ private
    pragma Convention (C, DB_File);
 
    function Error_Message (DB : DB_File) return String;
-   --  return string decribing the last error for given DB
+   --  Return string describing the last error for given DB
 
    type CSF_Record is null record;
    type CSF is access CSF_Record;

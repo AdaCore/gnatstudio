@@ -24,6 +24,7 @@ with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
 with System;
 with Interfaces.C.Strings;
+with String_Utils;
 
 package body DB_API is
 
@@ -216,6 +217,7 @@ package body DB_API is
       if DB = null then
          return;
       end if;
+
       I_Release_Cursor (DB);
    end Release_Cursor;
 
@@ -329,14 +331,13 @@ package body DB_API is
       return Natural (I_Get_Field_Count (The_CSF));
    end Get_Field_Count;
 
-   ------------------------
-   --  Get_Total_Length  --
-   ------------------------
+   ----------------------
+   -- Get_Total_Length --
+   ----------------------
 
    function Get_Total_Length (The_CSF : CSF) return Natural is
       function I_Get_Total_Length (The_CSF : CSF) return C.int;
-      pragma Import (C, I_Get_Total_Length,
-                        "csf_get_total_length");
+      pragma Import (C, I_Get_Total_Length, "csf_get_total_length");
    begin
       return Natural (I_Get_Total_Length (The_CSF));
    end Get_Total_Length;
@@ -352,13 +353,35 @@ package body DB_API is
 
       R : constant CStrings.chars_ptr :=
         I_Get_Field (The_CSF, C.int (Index));
+
    begin
       if R = CStrings.Null_Ptr then
-         Raise_Exception (Index_Out_Of_Range'Identity,
-           "Index out of range: " & Positive'Image (Index) & " > "
-             & Positive'Image (Get_Field_Count (The_CSF)));
+         raise Index_Out_Of_Range;
       else
          return CStrings.Value (R);
+      end if;
+   end Get_Field;
+
+   procedure Get_Field
+     (The_CSF : CSF;
+      Index   : Positive;
+      Field   : out String;
+      Len     : Natural)
+   is
+      function I_Get_Field
+        (The_CSF : CSF; Index : C.int) return CStrings.chars_ptr;
+      pragma Import (C, I_Get_Field, "csf_get_field");
+
+      R : constant CStrings.chars_ptr :=
+        I_Get_Field (The_CSF, C.int (Index));
+
+   begin
+      if R = CStrings.Null_Ptr then
+         raise Index_Out_Of_Range;
+      else
+         pragma Assert (Len <= Field'Length);
+
+         String_Utils.Copy_String (R, Field, Len);
       end if;
    end Get_Field;
 
@@ -366,11 +389,13 @@ package body DB_API is
    --  Get_Field_Length  --
    ------------------------
 
-   function Get_Field_Length (The_CSF : CSF; Index : Positive)
-         return Integer is
-      function I_Get_Field_Length (The_CSF : CSF; Index : C.int)
-        return C.int;
+   function Get_Field_Length
+     (The_CSF : CSF; Index : Positive) return Integer
+   is
+      function I_Get_Field_Length
+        (The_CSF : CSF; Index : C.int) return C.int;
       pragma Import (C, I_Get_Field_Length, "csf_get_field_length");
+
    begin
       return Integer (I_Get_Field_Length (The_CSF, C.int (Index)));
    end Get_Field_Length;
