@@ -265,7 +265,7 @@ package body GVD.Process is
                  Expect_Out (Data.Debuggee_Descriptor),
                  Add_LF => False);
          Highlight_Child
-           (Find_MDI_Child (Data.Window.Process_Mdi, Data.Debuggee_Console));
+           (Find_MDI_Child (Data.Window.MDI, Data.Debuggee_Console));
       end if;
 
       return True;
@@ -276,7 +276,7 @@ package body GVD.Process is
                  Expect_Out (Data.Debuggee_Descriptor),
                  Add_LF => False);
          Highlight_Child
-           (Find_MDI_Child (Data.Window.Process_Mdi, Data.Debuggee_Console));
+           (Find_MDI_Child (Data.Window.MDI, Data.Debuggee_Console));
 
          if Command_In_Process (Get_Process (Data.Debugger)) then
             Data.Cleanup_TTY := True;
@@ -620,7 +620,7 @@ package body GVD.Process is
       end if;
 
       Highlight_Child
-        (Find_MDI_Child (Process.Window.Process_Mdi, Process.Debugger_Text));
+        (Find_MDI_Child (Process.Window.MDI, Process.Debugger_Text));
    end Output_Text;
 
    ------------------------
@@ -756,7 +756,7 @@ package body GVD.Process is
       if Process.Interactive_Command then
          Set_Focus_Child
            (Find_MDI_Child
-              (Process.Window.Process_Mdi, Process.Debugger_Text));
+              (Process.Window.MDI, Process.Debugger_Text));
          Process.Interactive_Command := False;
       end if;
    end Final_Post_Process;
@@ -943,9 +943,9 @@ package body GVD.Process is
       Show_All (Process.Stack);
 
       Child := Put
-        (Process.Window.Process_Mdi,
+        (Process.Window.MDI,
          Process.Stack,
-         Position       => Position_Right);
+         Position => Position_Right);
       Set_Focus_Child (Child);
 
       if Process.Debugger_Num = 1 then
@@ -998,7 +998,7 @@ package body GVD.Process is
 
       Set_Size_Request (Process.Data_Scrolledwindow, 200, 200);
       Child := Put
-        (Process.Window.Process_Mdi, Process.Data_Scrolledwindow,
+        (Process.Window.MDI, Process.Data_Scrolledwindow,
          Position => Position_Top,
          Flags => All_Buttons);
       Set_Focus_Child (Child);
@@ -1067,7 +1067,7 @@ package body GVD.Process is
       --  Add debugger console in the MDI
 
       Child := Put
-        (Process.Window.Process_Mdi, Process.Debugger_Text,
+        (Process.Window.MDI, Process.Debugger_Text,
          Flags => All_Buttons,
          Position => Position_Bottom,
          Focus_Widget => Gtk_Widget (Get_View (Process.Debugger_Text)));
@@ -1324,7 +1324,7 @@ package body GVD.Process is
            TTY_Timeout.Add (Timeout, TTY_Cb'Access, Process.all'Access);
 
          Child := Put
-           (Window.Process_Mdi, Process.Debuggee_Console,
+           (Window.MDI, Process.Debuggee_Console,
             Flags => All_Buttons,
             Position       => Position_Bottom,
             Focus_Widget => Gtk_Widget (Get_View (Process.Debuggee_Console)));
@@ -1350,11 +1350,11 @@ package body GVD.Process is
               Error, Button_OK, Button_OK);
          Process.Exiting := True;
 
-         Close (Window.Process_Mdi, Process.Debugger_Text);
-         Close (Window.Process_Mdi, Process.Data_Scrolledwindow);
+         Close (Window.MDI, Process.Debugger_Text);
+         Close (Window.MDI, Process.Data_Scrolledwindow);
 
          if Process.Stack /= null then
-            Close (Window.Process_Mdi, Process.Stack);
+            Close (Window.MDI, Process.Stack);
          end if;
 
          Process.Exiting := False;

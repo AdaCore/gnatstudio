@@ -479,7 +479,7 @@ package body GVD.Menu is
                   Update_Call_Stack (Process);
                end if;
             else
-               Child := Find_MDI_Child (Top.Process_Mdi, Process.Stack);
+               Child := Find_MDI_Child (Top.MDI, Process.Stack);
 
                if Child /= null then
                   Raise_Child (Child);
