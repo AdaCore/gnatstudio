@@ -111,6 +111,16 @@ package Prj_API is
    --  The project is also registered, so that it can be retrieved from one of
    --  its view.
 
+   procedure Rename
+     (Root_Project : Project_Node_Id;
+      Project      : Project_Node_Id;
+      New_Name     : String);
+   --  Rename Project to New_Name. All the nodes in the project tree starting
+   --  at Root_Project, that reference Project, are also updated accordingly.
+   --
+   --  If there is already a project by that name in the project hierarchy,
+   --  Renaming_Error_Name_Exists is raised
+
    function Create_Variable
      (Prj_Or_Pkg : Project_Node_Id;
       Name : String;
@@ -180,6 +190,14 @@ package Prj_API is
      (Project : Project_Node_Id; Name : Types.Name_Id)
      return Project_Node_Id;
    --  Return the package whose name is Name, or Empty_Node if there is none
+
+   function Find_Project_In_Hierarchy
+     (Root_Project : Project_Node_Id; Name : Types.Name_Id)
+      return Project_Node_Id;
+   --  Find in the project tree starting at Root_Project a subproject called
+   --  Name.
+   --  This is different from using directly Prj.Tree.Projects_Htable, since we
+   --  only look for the project in the hierarchy of Root_Project.
 
    ------------------
    -- Node cloning --
@@ -428,6 +446,10 @@ package Prj_API is
    --  ??? Can this be merged with External_Reference_Of
 
    Invalid_Value : exception;
+
+   Renaming_Error_Name_Exists : exception;
+   --  Raised when a project renaming could not be performed because the name
+   --  was already used.
 
 private
    type String_List_Iterator is record

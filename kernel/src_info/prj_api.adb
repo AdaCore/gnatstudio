@@ -51,6 +51,9 @@ package body Prj_API is
 
    Me : Debug_Handle := Create ("Prj_API");
 
+   Project_File_Extension : constant String := ".gpr";
+   --  Extension used for the project file names
+
    procedure Set_Expression
      (Var_Or_Attribute : Project_Node_Id; Expr : Project_Node_Id);
    --  Set Var as the expression to use for the value of Var. This
@@ -1042,9 +1045,13 @@ package body Prj_API is
    is
       With_Clause : Project_Node_Id := First_With_Clause_Of (Project);
    begin
-      --  Check if it is already there.
+      --  Check if it is already there. If we have the same name but not the
+      --  same path, we replace it anyway
+
       while With_Clause /= Empty_Node loop
-         if Project_Node_Of (With_Clause) = Imported_Project then
+         if Prj.Tree.Name_Of (Project_Node_Of (With_Clause)) =
+           Prj.Tree.Name_Of (Imported_Project)
+         then
             return;
          end if;
          With_Clause := Next_With_Clause_Of (With_Clause);
@@ -1060,8 +1067,6 @@ package body Prj_API is
 
       Start_String;
       Store_String_Chars (Get_Name_String (Path_Name_Of (Imported_Project)));
-      Store_String_Chars
-        (Get_Name_String (Prj.Tree.Name_Of (Imported_Project)));
       Set_String_Value_Of (With_Clause, End_String);
    end Add_Imported_Project;
 
@@ -1493,8 +1498,14 @@ package body Prj_API is
         (Parent, Attribute_Name, Attribute_Index);
 
       if Node /= Empty_Node then
+         --  First, create the nested case for the scenario
+         For_Each_Scenario_Case_Item (Project, Pkg, null);
+
+         --  Then populate it
          For_Each_Matching_Case_Item
            (Project, Pkg, All_Case_Items, Add_Item'Unrestricted_Access);
+
+         --  And remove the attribute from the common part
          Remove_Attribute_Declarations
            (Parent, Attribute_Name, Attribute_Index);
       end if;
@@ -1653,8 +1664,6 @@ package body Prj_API is
    function Clone_Node (Node : Project_Node_Id; Deep_Clone : Boolean := False)
       return Project_Node_Id
    is
-      Old      : Tree_Private_Part.Project_Node_Record renames
-        Tree_Private_Part.Project_Nodes.Table (Node);
       New_Node : Project_Node_Id;
 
    begin
@@ -1670,7 +1679,8 @@ package body Prj_API is
       --  anyway. So we save some memory and keep them as is.
       --  Only the node ids will need to be copied for deep copies.
 
-      Tree_Private_Part.Project_Nodes.Table (New_Node) := Old;
+      Tree_Private_Part.Project_Nodes.Table (New_Node) :=
+        Tree_Private_Part.Project_Nodes.Table (Node);
 
       if Deep_Clone then
          case Kind_Of (Node) is
@@ -1938,6 +1948,136 @@ package body Prj_API is
          Decl_Item := Next_Declarative_Item (Decl_Item);
       end loop;
    end Post_Process_After_Clone;
+
+   -------------------------------
+   -- Find_Project_In_Hierarchy --
+   -------------------------------
+
+   function Find_Project_In_Hierarchy
+     (Root_Project : Project_Node_Id; Name : Types.Name_Id)
+      return Project_Node_Id
+   is
+      With_Clause : Project_Node_Id;
+      Result : Project_Node_Id := Empty_Node;
+   begin
+      if Prj.Tree.Name_Of (Root_Project) = Name then
+         Result := Root_Project;
+      else
+         With_Clause := First_With_Clause_Of (Root_Project);
+         while With_Clause /= Empty_Node loop
+            Result := Find_Project_In_Hierarchy
+              (Project_Node_Of (With_Clause), Name);
+            exit when Result /= Empty_Node;
+
+            With_Clause := Next_With_Clause_Of (With_Clause);
+         end loop;
+      end if;
+
+      return Result;
+   end Find_Project_In_Hierarchy;
+
+   ------------
+   -- Rename --
+   ------------
+
+   procedure Rename
+     (Root_Project : Project_Node_Id;
+      Project      : Project_Node_Id;
+      New_Name     : String)
+   is
+      Old_Name : constant String := Get_Name_String
+        (Prj.Tree.Name_Of (Project));
+      Old : Project_Node_Id;
+      Name : Name_Id;
+
+      procedure Replace_In_Hierarchy (Prj : Project_Node_Id);
+      --  Replace all the with statements in the hierarchy that referenced
+      --  Project.
+
+      function Substitute (Str : String) return String;
+      --  Substitute the old name by the new name in Str.
+      --  Old_Name must be found at the end of Str, possibly followed by
+      --  a suffix Project_File_Extension.
+
+      ----------------
+      -- Substitute --
+      ----------------
+
+      function Substitute (Str : String) return String is
+         Suffix_End : Natural := Str'Last;
+      begin
+         if Str'Length > Project_File_Extension'Length
+           and then Str (Str'Last - Project_File_Extension'Length + 1
+                         .. Str'Last) = Project_File_Extension
+         then
+            Suffix_End := Str'Last - Project_File_Extension'Length;
+         end if;
+
+         Assert
+           (Me,
+            Str (Suffix_End - Old_Name'Length + 1 .. Suffix_End) = Old_Name,
+            Str & " doesn't end with " & Old_Name);
+         return Str (Str'First .. Suffix_End - Old_Name'Length)
+           & New_Name;
+      end Substitute;
+
+      --------------------------
+      -- Replace_In_Hierarchy --
+      --------------------------
+
+      procedure Replace_In_Hierarchy (Prj : Project_Node_Id) is
+         With_Clause : Project_Node_Id := First_With_Clause_Of (Prj);
+      begin
+         --  No child of Project will have a with clause for Project.
+         if Prj = Project then
+            return;
+         end if;
+
+         while With_Clause /= Empty_Node loop
+            if Project_Node_Of (With_Clause) = Project then
+               declare
+                  String_Value : constant String := Substitute
+                    (Get_String (String_Value_Of (With_Clause)));
+               begin
+                  Set_Name_Of (With_Clause, Name);
+                  Set_Path_Name_Of (With_Clause, Path_Name_Of (Project));
+
+                  Start_String;
+                  Store_String_Chars (String_Value);
+                  Set_String_Value_Of (With_Clause, End_String);
+               end;
+
+            else
+               Replace_In_Hierarchy (Project_Node_Of (With_Clause));
+            end if;
+
+            With_Clause := Next_With_Clause_Of (With_Clause);
+         end loop;
+      end Replace_In_Hierarchy;
+
+   begin
+      Name_Len := New_Name'Length;
+      Name_Buffer (1 .. Name_Len) := New_Name;
+      Name := Name_Find;
+
+      Old := Find_Project_In_Hierarchy (Root_Project, Name);
+      if Old /= Empty_Node then
+         raise Renaming_Error_Name_Exists;
+      end if;
+
+      declare
+         Path : constant String := Substitute
+           (Get_Name_String (Path_Name_Of (Project)));
+      begin
+         Set_Name_Of (Project, Name);
+
+         Name_Len := Path'Length;
+         Name_Buffer (1 .. Name_Len) := Path;
+         Set_Path_Name_Of (Project, Name_Find);
+      end;
+
+      Replace_In_Hierarchy (Root_Project);
+   end Rename;
 
 begin
    Namet.Initialize;
