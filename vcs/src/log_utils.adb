@@ -169,4 +169,17 @@ package body Log_Utils is
       end if;
    end Get_Log;
 
+   ------------------------------
+   -- Remove_File_From_Mapping --
+   ------------------------------
+
+   procedure Remove_File_From_Mapping
+     (Kernel    : access Kernel_Handle_Record'Class;
+      File_Name : String)
+   is
+      Mapper : File_Mapper_Access := Get_Logs_Mapper (Kernel);
+   begin
+      Remove_Entry (Mapper, File_Name);
+   end Remove_File_From_Mapping;
+
 end Log_Utils;
