@@ -247,12 +247,12 @@ package body Src_Editor_Buffer is
             --    starts from the begining of the previous region to the end of
             --    the current region.
             --  In both cases, the processing is the same...
+
             Entity_Kind := Current_Entity;
             Backward_To_Tag_Toggle (Start_Iter, Result => Ignored);
             Forward_To_Tag_Toggle (End_Iter, Result => Ignored);
             exit Entity_Kind_Search_Loop;
          end if;
-
       end loop Entity_Kind_Search_Loop;
 
       if Entity_Kind = Normal_Text then
@@ -274,10 +274,11 @@ package body Src_Editor_Buffer is
    begin
       if Buffer.Lang /= null then
          declare
-            Pos : Gtk_Text_Iter;
+            Pos    : Gtk_Text_Iter;
             Length : constant Gint := Get_Int (Nth (Params, 3));
-            Text : constant String :=
+            Text   : constant String :=
               Get_String (Nth (Params, 2), Length => Length);
+
          begin
             Get_Text_Iter (Nth (Params, 1), Pos);
             Insert_Text_Cb (Buffer, Pos, Text);
@@ -296,6 +297,7 @@ package body Src_Editor_Buffer is
       Start_Iter : Gtk_Text_Iter;
       End_Iter   : Gtk_Text_Iter;
       Ignored    : Boolean;
+
    begin
       --  Search the initial minimum area to re-highlight:
       --    - case Has_Tag:
@@ -309,6 +311,7 @@ package body Src_Editor_Buffer is
       --        We are at the end of a highlighed region. We re-highlight from
       --        the begining of this region to the end of the next region.
       --  I all three cases, the processing is the same...
+
       Copy (Source => Iter, Dest => Start_Iter);
       Copy (Source => Iter, Dest => End_Iter);
       Backward_To_Tag_Toggle (Start_Iter, Result => Ignored);
@@ -349,6 +352,7 @@ package body Src_Editor_Buffer is
          Line   : Gint;
          Column : Gint);
       pragma Import (C, Emit_By_Name, "g_signal_emit_by_name");
+
    begin
       Emit_By_Name
         (Get_Object (Buffer), "cursor_position_changed" & ASCII.NUL,
@@ -451,6 +455,7 @@ package body Src_Editor_Buffer is
                --  tag is applied at the begining of the suposed end-of-comment
                --  string). If the comment area is not closed, then
                --  re-highlight up to the end of the buffer.
+
                Copy (Source => Entity_End, Dest => An_Iter);
                Backward_Chars
                  (An_Iter, Gint (Lang_Context.Comment_End_Length), Ignored);
@@ -468,12 +473,12 @@ package body Src_Editor_Buffer is
             end if;
 
          when String_Text =>
-
             --  First, check that we don't have a constant character...
             --  We have a constant Character region if the length of the
             --  region is exactly 3 (2 delimiters + the character), and
             --  the first and last characters are equal to
             --  Lang_Context.Constant_Character.
+
             if Get_Offset (Entity_Start) - Get_Offset (Entity_End) = 3
                and then
                Get_Char (Entity_Start) = Lang_Context.Constant_Character
@@ -492,17 +497,17 @@ package body Src_Editor_Buffer is
             --  then make sure that we are indeed closing the string
             --  (as opposed to opening it) by checking whether the String_Text
             --  tag is applied at the position before the string delimiter.
+
             Copy (Source => Entity_End, Dest => An_Iter);
             Backward_Char (An_Iter, Ignored);
+
             if Get_Char (An_Iter) /= Lang_Context.String_Delimiter or else
                not Has_Tag (An_Iter, Tags (String_Text))
             then
                Forward_To_Line_End (Entity_End);
                Local_Highlight (From => Entity_Start, To => Entity_End);
             end if;
-
       end case;
-
    end Highlight_Slice;
 
    -----------------------
@@ -511,8 +516,8 @@ package body Src_Editor_Buffer is
 
    procedure Kill_Highlighting
      (Buffer : access Source_Buffer_Record'Class;
-      From : Gtk_Text_Iter;
-      To : Gtk_Text_Iter) is
+      From   : Gtk_Text_Iter;
+      To     : Gtk_Text_Iter) is
    begin
       for Entity_Kind in Standout_Language_Entity loop
          Remove_Tag (Buffer, Buffer.Highlight_Tags (Entity_Kind), From, To);
@@ -523,13 +528,10 @@ package body Src_Editor_Buffer is
    -- Forward_To_Line_End --
    -------------------------
 
-   procedure Forward_To_Line_End (Iter : in out Gtk_Text_Iter)
-   is
+   procedure Forward_To_Line_End (Iter : in out Gtk_Text_Iter) is
       Result_Ignored : Boolean;
    begin
-      while not Is_End (Iter)
-        and then not Ends_Line (Iter)
-      loop
+      while not Is_End (Iter) and then not Ends_Line (Iter) loop
          Forward_Char (Iter, Result_Ignored);
       end loop;
    end Forward_To_Line_End;
@@ -573,16 +575,20 @@ package body Src_Editor_Buffer is
 
       --  Save the newly created highlighting tags into the source buffer
       --  tag table.
+
       Tags := Get_Tag_Table (Buffer);
+
       for Entity_Kind in Standout_Language_Entity'Range loop
          Text_Tag_Table.Add (Tags, Buffer.Highlight_Tags (Entity_Kind));
       end loop;
 
       --  Save the insert mark for fast retrievals, since we will need to
       --  access it very often.
+
       Buffer.Insert_Mark := Get_Insert (Buffer);
 
       --  And finally, connect ourselves to the interestings signals
+
       Buffer_Callback.Connect
         (Buffer, "changed", Cb => Changed_Handler'Access, After => True);
       Buffer_Callback.Connect
