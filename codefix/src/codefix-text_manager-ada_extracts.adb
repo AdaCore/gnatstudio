@@ -184,11 +184,10 @@ package body Codefix.Text_Manager.Ada_Extracts is
       Destination.Stop := File_Cursor
         (Search_String (Current_Text, Destination.Start, ";", Std_Ada_Escape));
 
-      Line_Cursor.File_Name := Destination.Start.File_Name;
-      Line_Cursor.Col := 1;
+      Set_File (Line_Cursor, Get_File (Destination.Start));
 
       for J in Destination.Start.Line .. Destination.Stop.Line loop
-         Line_Cursor.Line := J;
+         Set_Location (Line_Cursor, Line => J, Column => 1);
          Get_Line (Current_Text, Line_Cursor, Destination);
       end loop;
 
@@ -613,16 +612,18 @@ package body Codefix.Text_Manager.Ada_Extracts is
 
    function Get_Element (This : Ada_List; Num : Natural) return Word_Cursor is
       Node   : Tokens_List.List_Node := First (This.Elements_List);
+      Word   : Word_Cursor;
    begin
       for J in 1 .. Num - 1 loop
          Node := Next (Node);
       end loop;
 
-      return (Col          => Data (Node).First_Col,
-              Line         => Data (Node).Line.Cursor.Line,
-              File_Name    => Clone (Data (Node).Line.Cursor.File_Name),
-              String_Match => Clone (Data (Node).Content),
-              Mode         => Text_Ascii);
+      Set_File (Word, Get_File (Data (Node).Line.Cursor));
+      Set_Location (Word,
+                    Line   => Data (Node).Line.Cursor.Line,
+                    Column => Data (Node).First_Col);
+      Set_Word (Word, Data (Node).Content.all, Text_Ascii);
+      return Word;
    end Get_Element;
 
    ---------------------

@@ -21,10 +21,10 @@
 with Ada.Exceptions;                    use Ada.Exceptions;
 
 with GNAT.Regpat;                       use GNAT.Regpat;
-with GNAT.Directory_Operations;         use GNAT.Directory_Operations;
 with GNAT.OS_Lib;                       use GNAT.OS_Lib;
 with String_Utils;                      use String_Utils;
 with Language;                          use Language;
+with Glide_Kernel;                      use Glide_Kernel;
 
 with Codefix.Text_Manager.Ada_Commands; use Codefix.Text_Manager.Ada_Commands;
 with Codefix.Ada_Tools;                 use Codefix.Ada_Tools;
@@ -36,21 +36,26 @@ package body Codefix.Formal_Errors is
    -- Initialize --
    ----------------
 
-   procedure Initialize (This : in out Error_Message; Message : String) is
+   procedure Initialize
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+      This   : in out Error_Message; Message : String) is
    begin
       Assign (This.Message, Message);
-      Parse_Head (Message, This);
+      Parse_Head (Kernel, Message, This);
    end Initialize;
 
    ----------------
    -- Initialize --
    ----------------
 
-   procedure Initialize (This : in out Error_Message; Line, Col : Positive) is
+   procedure Initialize
+     (This : in out Error_Message;
+      File : VFS.Virtual_File;
+      Line, Col : Positive) is
    begin
       Assign (This.Message, "");
-      This.Line := Line;
-      This.Col := Col;
+      Set_File (This, File);
+      Set_Location (This, Line, Col);
    end Initialize;
 
    -----------------
@@ -76,7 +81,11 @@ package body Codefix.Formal_Errors is
    -- Parse_Head --
    ----------------
 
-   procedure Parse_Head (Message : String; This : out Error_Message) is
+   procedure Parse_Head
+     (Kernel : access Kernel_Handle_Record'Class;
+      Message : String;
+      This : out Error_Message)
+   is
       Matches : Match_Array (0 .. 3);
       Matcher : constant Pattern_Matcher :=
         Compile ("^([^:]+):(\d+):(\d+)");
@@ -91,12 +100,16 @@ package body Codefix.Formal_Errors is
       end if;
 
       begin
-         Assign (This.File_Name,
-                 Message (Matches (1).First .. Matches (1).Last));
-         This.Line := Positive'Value
-           (Message (Matches (2).First .. Matches (2).Last));
-         This.Col := Positive'Value
-           (Message (Matches (3).First .. Matches (3).Last));
+         Set_File
+           (This, Create
+              (Message (Matches (1).First .. Matches (1).Last),
+               Kernel));
+         Set_Location
+           (This,
+            Line => Positive'Value
+              (Message (Matches (2).First .. Matches (2).Last)),
+            Column => Positive'Value
+              (Message (Matches (3).First .. Matches (3).Last)));
       exception
          when Constraint_Error =>
             Free (This);
@@ -160,9 +173,11 @@ package body Codefix.Formal_Errors is
       New_Command : Replace_Word_Cmd;
       Old_Word    : Word_Cursor;
    begin
+      Set_File (Old_Word, Get_File (Message));
+      Set_Location (Old_Word, Get_Line (Message), Get_Column (Message));
+
       if Str_Red /= "" then
-         Old_Word := (Clone (File_Cursor (Message))
-                      with new String'(Str_Red), Format_Red);
+         Set_Word (Old_Word, String_Match => Str_Red, Mode => Format_Red);
 
          if Caption = "" then
             if Format_Red = Text_Ascii then
@@ -177,9 +192,9 @@ package body Codefix.Formal_Errors is
          else
             Set_Caption (New_Command, Caption);
          end if;
+
       else
-         Old_Word := (Clone (File_Cursor (Message))
-                      with new String'("(^[\w]+)"), Regular_Expression);
+         Set_Word (Old_Word, "(^[\w]+)", Regular_Expression);
 
          if Caption = "" then
             Set_Caption
@@ -216,24 +231,24 @@ package body Codefix.Formal_Errors is
         Compile ("(" & Second_String & ") ", Case_Insensitive);
       Second_Cursor : File_Cursor := File_Cursor (Message);
       Result        : Solution_List;
+      Line          : Integer := Get_Line (Second_Cursor);
 
    begin
-      Second_Cursor.Col := 1;
-
       loop
          Match (Matcher, Get_Line (Current_Text, Second_Cursor), Matches);
          exit when Matches (1) /= No_Match;
-         Second_Cursor.Line := Second_Cursor.Line - 1;
+         Line := Line - 1;
       end loop;
 
-      Second_Cursor.Col := Matches (1).First;
+      Set_Location (Second_Cursor, Line, Matches (1).First);
 
-      Word1 := (Clone (File_Cursor (Message))
-                with new String'(First_String), Text_Ascii);
+      Set_File     (Word1, Get_File (Message));
+      Set_Location (Word1, Get_Line (Message), Get_Column (Message));
+      Set_Word     (Word1, First_String, Text_Ascii);
 
-
-      Word2 := (Clone (Second_Cursor)
-                with new String'(Second_String), Text_Ascii);
+      Set_File     (Word2, Get_File (Message));
+      Set_Location (Word2, Get_Line (Message), Get_Column (Message));
+      Set_Word     (Word2, Second_String, Text_Ascii);
 
       Initialize (New_Command, Current_Text, Word1, Word2);
 
@@ -265,8 +280,10 @@ package body Codefix.Formal_Errors is
       Result      : Solution_List;
 
    begin
-      Word := (Clone (File_Cursor (Message))
-               with new String'(String_Expected), Text_Ascii);
+      Set_File (Word, Get_File (Message));
+      Set_Location (Word, Get_Line (Message), Get_Column (Message));
+      Set_Word (Word, String_Expected, Text_Ascii);
+
       Initialize (New_Command, Current_Text, Word, Add_Spaces, Position);
       Set_Caption
         (New_Command,
@@ -287,13 +304,14 @@ package body Codefix.Formal_Errors is
       String_Unexpected : String;
       Mode              : String_Mode := Text_Ascii) return Solution_List
    is
-      New_Command  : Remove_Word_Cmd;
-      Word         : Word_Cursor;
-      Result       : Solution_List;
-
+      New_Command : Remove_Word_Cmd;
+      Word        : Word_Cursor;
+      Result      : Solution_List;
    begin
-      Word := (Clone (File_Cursor (Message))
-               with new String'(String_Unexpected), Mode);
+      Set_File     (Word, Get_File (Message));
+      Set_Location (Word, Get_Line (Message), Get_Column (Message));
+      Set_Word     (Word, String_Unexpected, Mode);
+
       Initialize (New_Command, Current_Text, Word);
       Set_Caption
         (New_Command,
@@ -336,23 +354,19 @@ package body Codefix.Formal_Errors is
 
       New_Command   : Replace_Word_Cmd;
       Result        : Solution_List;
-      Line_Cursor   : File_Cursor := File_Cursor (Message);
       Column_Chosen : Natural;
       Word          : Word_Cursor;
 
    begin
-      Line_Cursor.Col := 1;
-
       if Column_Expected = 0 then
-         Column_Chosen := Closest (Message.Col);
+         Column_Chosen := Closest (Get_Column (Message));
       else
          Column_Chosen := Column_Expected;
       end if;
 
-      Word :=
-        (Clone (Line_Cursor) with
-         String_Match => new String'("(^[\s]*)"),
-         Mode         => Regular_Expression);
+      Set_File (Word, Get_File (Message));
+      Set_Location (Word, Get_Line (Message), 1);
+      Set_Word (Word, "(^[\s]*)", Regular_Expression);
 
       declare
          White_String : constant String (1 .. Column_Chosen - 1) :=
@@ -387,14 +401,11 @@ package body Codefix.Formal_Errors is
       New_Command : Insert_Word_Cmd;
       Result      : Solution_List;
    begin
-      Word_With :=
-        (Line => 0,
-         Col => 1,
-         File_Name => Clone (Cursor.File_Name),
-         String_Match => new String'
-           ("with " & Missing_Clause
-            & "; use " & Missing_Clause & ";"),
-         Mode => Text_Ascii);
+      Set_File (Word_With, Get_File (Cursor));
+      Set_Location (Word_With, 0, 1);
+      Set_Word (Word_With,
+                "with " & Missing_Clause & "; use " & Missing_Clause & ";",
+                Text_Ascii);
 
       Initialize (New_Command, Current_Text, Word_With);
       Set_Caption
@@ -457,18 +468,20 @@ package body Codefix.Formal_Errors is
          New_Command  : Add_Pragma_Cmd;
          New_Position : File_Cursor;
          Declaration  : Construct_Information;
+         Col          : Natural;
       begin
          Declaration := Get_Unit (Current_Text, Cursor);
-         New_Position.Line := Declaration.Sloc_End.Line;
-         New_Position.Col  := Declaration.Sloc_End.Column;
-         Assign (New_Position.File_Name, Cursor.File_Name);
+         Col := Declaration.Sloc_End.Column;
 
          --  ??? This test is only here because the parser returns sometimes
          --  a Sloc_End.Col equal to 0.
 
-         if New_Position.Col = 0 then
-            New_Position.Col := 1;
+         if Col = 0 then
+            Col := 1;
          end if;
+
+         Set_File (New_Position, Get_File (Cursor));
+         Set_Location (New_Position, Declaration.Sloc_End.Line, Col);
 
          Initialize
            (New_Command, Current_Text, New_Position, "Unreferenced", Name);
@@ -484,15 +497,17 @@ package body Codefix.Formal_Errors is
          New_Command  : Add_Pragma_Cmd;
          New_Position : File_Cursor;
          Declaration  : Construct_Information;
+         Col : Natural;
       begin
          Declaration := Get_Unit (Current_Text, Cursor, Before, Cat_Type);
-         New_Position.Line := Declaration.Sloc_End.Line;
-         New_Position.Col  := Declaration.Sloc_End.Column;
-         Assign (New_Position.File_Name, Cursor.File_Name);
+         Col := Declaration.Sloc_End.Column;
 
-         if New_Position.Col = 0 then
-            New_Position.Col := 1;
+         if Col = 0 then
+            Col := 1;
          end if;
+
+         Set_File (New_Position, Get_File (Cursor));
+         Set_Location (New_Position, Declaration.Sloc_End.Line, Col);
 
          Initialize
            (New_Command, Current_Text, New_Position, "Unreferenced", Name);
@@ -508,13 +523,13 @@ package body Codefix.Formal_Errors is
          New_Command           : Add_Pragma_Cmd;
          New_Position, Garbage : File_Cursor;
          Declaration           : Construct_Information;
-
       begin
          Declaration := Get_Unit
            (Current_Text, Cursor, Before, Cat_Procedure, Cat_Function);
-         New_Position.Line := Declaration.Sloc_Entity.Line;
-         New_Position.Col  := Declaration.Sloc_Entity.Column;
-         Assign (New_Position.File_Name, Cursor.File_Name);
+
+         Set_File (New_Position, Get_File (Cursor));
+         Set_Location (New_Position, Declaration.Sloc_Entity.Line,
+                       Declaration.Sloc_Entity.Column);
 
          Garbage := New_Position;
          New_Position := File_Cursor
@@ -545,9 +560,13 @@ package body Codefix.Formal_Errors is
          when Cat_Variable =>
             declare
                New_Command : Remove_Elements_Cmd;
-               Var_Cursor  : Word_Cursor :=
-                 (File_Cursor (Cursor) with new String'(Name), Text_Ascii);
+               Var_Cursor  : Word_Cursor;
             begin
+               Set_File (Var_Cursor, Get_File (Cursor));
+               Set_Location
+                 (Var_Cursor, Get_Line (Cursor), Get_Column (Cursor));
+               Set_Word (Var_Cursor, Name, Text_Ascii);
+
                Add_To_Remove (New_Command, Current_Text, Var_Cursor);
                Set_Caption (New_Command, "Delete """ & Name & """");
                Append (Result, New_Command);
@@ -614,10 +633,13 @@ package body Codefix.Formal_Errors is
          when Cat_With =>
             declare
                New_Command : Remove_Pkg_Clauses_Cmd;
-               With_Cursor : Word_Cursor :=
-                 (Clone (File_Cursor (Cursor))
-                  with new String'(Name), Text_Ascii);
+               With_Cursor : Word_Cursor;
             begin
+               Set_File (With_Cursor, Get_File (Cursor));
+               Set_Location
+                 (With_Cursor, Get_Line (Cursor), Get_Column (Cursor));
+               Set_Word (With_Cursor, Name, Text_Ascii);
+
                Initialize (New_Command, Current_Text, With_Cursor);
                Set_Caption
                  (New_Command,
@@ -648,17 +670,16 @@ package body Codefix.Formal_Errors is
       Result        : Solution_List;
       Pragma_Cursor : Word_Cursor;
    begin
-      Pragma_Cursor :=
-        (Clone (File_Cursor (Cursor)) with
-         String_Match => new String'
-           ("(pragma[\b]*\([^\)*]\)[\b]*;)"),
-         Mode => Regular_Expression);
-      Begin_Cursor.Line := 0;
-      Begin_Cursor.Col := 1;
+      Set_File (Pragma_Cursor, Get_File (Cursor));
+      Set_Location (Pragma_Cursor, Get_Line (Cursor), Get_Column (Cursor));
+      Set_Word
+        (Pragma_Cursor, "(pragma[\b]*\([^\)*]\)[\b]*;)", Regular_Expression);
+
+      Set_Location (Begin_Cursor, 0, 1);
+
       Initialize (New_Command, Current_Text, Pragma_Cursor, Begin_Cursor);
       Set_Caption
-        (New_Command,
-         "Move the pragma to the beginning of the file");
+        (New_Command, "Move the pragma to the beginning of the file");
       Free (Pragma_Cursor);
 
       return Result;
@@ -724,10 +745,11 @@ package body Codefix.Formal_Errors is
                end if;
             end loop;
 
-            Word :=
-              (Clone (File_Cursor (Error_Cursor)) with
-               String_Match => new String'(Str_Array (Index_Str).all & "."),
-               Mode         => Text_Ascii);
+            Set_File (Word, Get_File (Error_Cursor));
+            Set_Location
+              (Word, Get_Line (Error_Cursor), Get_Column (Error_Cursor));
+            Set_Word (Word, Str_Array (Index_Str).all & ".", Text_Ascii);
+
             Initialize (New_Command, Current_Text, Word, False);
             Set_Caption
               (New_Command,
@@ -782,12 +804,11 @@ package body Codefix.Formal_Errors is
       Body_Name   : Virtual_File;
 
    begin
-      Body_Name := Get_Body_Or_Spec
-        (Current_Text, Create (Full_Filename => Cursor.File_Name.all));
-      With_Cursor :=
-        (Clone (File_Cursor (Cursor)) with
-         String_Match => null,
-         Mode         => Text_Ascii);
+      Body_Name := Get_Body_Or_Spec (Current_Text, Get_File (Cursor));
+      Set_File (With_Cursor, Get_File (Cursor));
+      Set_Location (With_Cursor, Get_Line (Cursor), Get_Column (Cursor));
+      Set_Word (With_Cursor, "", Text_Ascii);
+
       Initialize
         (New_Command,
          Current_Text,
@@ -795,7 +816,7 @@ package body Codefix.Formal_Errors is
          Body_Name);
       Set_Caption
         (New_Command,
-         "Move with clause from """ & Base_Name (Cursor.File_Name.all) &
+         "Move with clause from """ & Base_Name (Get_File (Cursor)) &
          """ to """ & Base_Name (Body_Name) & """");
       Append (Result, New_Command);
       Free (With_Cursor);
@@ -819,8 +840,9 @@ package body Codefix.Formal_Errors is
    begin
       Body_Info := Get_Unit (Current_Text, Body_Cursor, Before);
 
-      Internal_Body_Cursor.Col := Body_Info.Sloc_Start.Column;
-      Internal_Body_Cursor.Line := Body_Info.Sloc_Start.Line;
+      Set_Location
+        (Internal_Body_Cursor,
+         Body_Info.Sloc_Start.Line, Body_Info.Sloc_Start.Column);
 
       Initialize (Command1, Current_Text, Internal_Body_Cursor, Spec_Cursor);
       Initialize (Command2, Current_Text, Spec_Cursor, Internal_Body_Cursor);
@@ -844,14 +866,21 @@ package body Codefix.Formal_Errors is
    is
       Result      : Solution_List;
       New_Command : Remove_Pkg_Clauses_Cmd;
+      Word        : Word_Cursor;
    begin
+      Set_File (Word, Get_File (Cursor));
+      Set_Location (Word, Get_Line (Cursor), Get_Column (Cursor));
+      Set_Word (Word, "", Text_Ascii);
+
       Initialize
         (New_Command,
          Current_Text,
-         (File_Cursor (Cursor) with null, Text_Ascii),
+         Word,
          Category => Cat_Use);
       Set_Caption (New_Command, "Remove use clause");
       Append (Result, New_Command);
+
+      Free (Word);
 
       return Result;
    end Remove_Use_Clause;
@@ -874,7 +903,7 @@ package body Codefix.Formal_Errors is
         (Use_Solution,
          Current_Text,
          Pkg_Cursor,
-         Object_Cursor.File_Name.all,
+         Get_File (Object_Cursor),
          Seek_With);
       Set_Caption
         (Use_Solution, "Update with and use's clauses to show the object");

@@ -21,6 +21,7 @@
 with String_Utils;          use String_Utils;
 with Codefix.Errors_Parser; use Codefix.Errors_Parser;
 with GNAT.OS_Lib;           use GNAT.OS_Lib;
+with VFS;                   use VFS;
 
 package body Codefix.Errors_Manager is
 
@@ -70,9 +71,10 @@ package body Codefix.Errors_Manager is
       Current_Text : Text_Navigator_Abstr'Class;
       Current      : out Error_Message)
    is
-      Current_Line        : String_Access;
-      Cursor_Line         : File_Cursor;
-      File_Pos, Logic_Pos : Natural;
+      pragma Unreferenced (Current_Text);
+--        Current_Line        : String_Access;
+--        Cursor_Line         : File_Cursor;
+--        File_Pos, Logic_Pos : Natural;
 
    begin
       if This.Preview /= Invalid_Error_Message then
@@ -83,16 +85,16 @@ package body Codefix.Errors_Manager is
 
       Get_Direct_Message (This, Current);
 
-      if Current = Invalid_Error_Message then
-         return;
-      end if;
+--        if Current = Invalid_Error_Message then
+--           return;
+--        end if;
 
-      Cursor_Line := File_Cursor (Current);
-      Cursor_Line.Col := 1;
-
-      Assign (Current_Line, Get_Line (Current_Text, Cursor_Line));
-      Logic_Pos := 1;
-      File_Pos  := 1;
+--        Cursor_Line := File_Cursor (Current);
+--        Cursor_Line.Col := 1;
+--
+--        Assign (Current_Line, Get_Line (Current_Text, Cursor_Line));
+--        Logic_Pos := 1;
+--        File_Pos  := 1;
 
       --  ??? It seems the following loop is not needed, since GNAT correctly
       --  expands the ASCII.HTs when displaying an error message. I am not
@@ -100,20 +102,20 @@ package body Codefix.Errors_Manager is
       --  File_Cursor.Col should indeed be taking into accound TAB expansion.
       --  I'm simply commenting out the active of the loop below for now.
 
-      loop
-         exit when Logic_Pos = Current.Col
-           or else File_Pos > Current_Line'Last;
-
-         --  if Current_Line (File_Pos) = ASCII.HT then
-         --     Logic_Pos := Logic_Pos + ((-Logic_Pos) mod Tab_Width);
-         --  end if;
-
-         Logic_Pos := Logic_Pos + 1;
-         File_Pos := File_Pos + 1;
-      end loop;
-
-      Current.Col := File_Pos;
-      Free (Current_Line);
+--        loop
+--           exit when Logic_Pos = Current.Col
+--             or else File_Pos > Current_Line'Last;
+--
+--           --  if Current_Line (File_Pos) = ASCII.HT then
+--           --     Logic_Pos := Logic_Pos + ((-Logic_Pos) mod Tab_Width);
+--           --  end if;
+--
+--           Logic_Pos := Logic_Pos + 1;
+--           File_Pos := File_Pos + 1;
+--        end loop;
+--
+--        Current.Col := File_Pos;
+--        Free (Current_Line);
    end Get_Message;
 
    -----------------
@@ -386,63 +388,58 @@ package body Codefix.Errors_Manager is
    ------------------
 
    function Search_Error
-     (This : Correction_Manager; Message : String) return Error_Id
+     (This         : Correction_Manager;
+      File         : VFS.Virtual_File;
+      Line, Column : Integer;
+      Message      : String)
+      return Error_Id
    is
       Current_Id : Error_Id := Get_First_Error (This);
 
-      function Cmp_Messages (Str1, Str2 : String) return Boolean;
+      function Cmp_Messages (Error : Error_Message) return Boolean;
       --  Compare two message labels, without taking into account the
       --  differences of the col/line format.
 
+      ------------------
+      -- Cmp_Messages --
+      ------------------
 
-      function Cmp_Messages (Str1, Str2 : String) return Boolean is
+      function Cmp_Messages (Error : Error_Message) return Boolean is
+         Str1 : constant String := Get_Message (Error);
          Ind_Begin_1, Ind_End_1 : Natural := Str1'First;
-         Ind_Begin_2, Ind_End_2 : Natural := Str2'First;
       begin
          Skip_To_Char (Str1, Ind_End_1, ':');
-         Skip_To_Char (Str2, Ind_End_2, ':');
 
-         if Str1 (Ind_Begin_1 .. Ind_End_1) /=
-           Str2 (Ind_Begin_2 .. Ind_End_2)
-         then
+         if Str1 (Ind_Begin_1 .. Ind_End_1 - 1) /= Base_Name (File) then
             return False;
          end if;
 
+         --  ??? Shouldn't parse explicitly the error message here, since this
+         --  depends on the exact regexps
          Ind_End_1 := Ind_End_1 + 1;
-         Ind_End_2 := Ind_End_2 + 1;
          Ind_Begin_1 := Ind_End_1;
-         Ind_Begin_2 := Ind_End_2;
          Skip_To_Char (Str1, Ind_End_1, ':');
-         Skip_To_Char (Str2, Ind_End_2, ':');
 
-         if Integer'Value (Str1 (Ind_Begin_1 .. Ind_End_1 - 1)) /=
-           Integer'Value (Str2 (Ind_Begin_2 .. Ind_End_2 - 1))
-         then
+         if Integer'Value (Str1 (Ind_Begin_1 .. Ind_End_1 - 1)) /= Line then
             return False;
          end if;
 
+         --  ??? Shouldn't parse explicitly the error message here, since this
+         --  depends on the exact regexps
          Ind_End_1 := Ind_End_1 + 1;
-         Ind_End_2 := Ind_End_2 + 1;
          Ind_Begin_1 := Ind_End_1;
-         Ind_Begin_2 := Ind_End_2;
          Skip_To_Char (Str1, Ind_End_1, ':');
-         Skip_To_Char (Str2, Ind_End_2, ':');
 
-         if Integer'Value (Str1 (Ind_Begin_1 .. Ind_End_1 - 1)) /=
-           Integer'Value (Str2 (Ind_Begin_2 .. Ind_End_2 - 1))
-         then
+         if Integer'Value (Str1 (Ind_Begin_1 .. Ind_End_1 - 1)) /= Column then
             return False;
          end if;
 
-         return Str1 (Ind_End_1 .. Str1'Last) =
-           Str2 (Ind_End_2 .. Str2'Last);
-
+         return Str1 (Ind_End_1 + 2 .. Str1'Last) = Message;
       end Cmp_Messages;
 
    begin
       while Current_Id /= Null_Error_Id loop
-         exit when Cmp_Messages
-             (Get_Message (Get_Error_Message (Current_Id)), Message);
+         exit when Cmp_Messages (Get_Error_Message (Current_Id));
          Current_Id := Next (Current_Id);
       end loop;
 

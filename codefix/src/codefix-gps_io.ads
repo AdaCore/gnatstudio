@@ -27,6 +27,7 @@ with Ada.Unchecked_Deallocation;
 with Codefix.Text_Manager;   use Codefix.Text_Manager;
 with Codefix.Errors_Manager; use Codefix.Errors_Manager;
 with Codefix.Formal_Errors;  use Codefix.Formal_Errors;
+with VFS;
 
 package Codefix.GPS_Io is
 
@@ -39,7 +40,7 @@ package Codefix.GPS_Io is
 
    function Get_New_Mark
      (Current_Text : Console_Interface;
-      Cursor       : Text_Cursor'Class) return Mark_Abstr'Class;
+      Cursor       : File_Cursor'Class) return Mark_Abstr'Class;
    --  Create a new mark at the position specified by the cursor.
 
    function Get_Current_Cursor
@@ -97,7 +98,7 @@ package Codefix.GPS_Io is
 
    procedure Initialize
      (This : in out Console_Interface;
-      Path : String);
+      Path : VFS.Virtual_File);
    --  Initialize the structure of the Console_Interface. Actually do noting.
 
    function Read_File (This : Console_Interface)

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2002                         --
+--                        Copyright (C) 2002-2003                    --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -23,6 +23,7 @@
 
 with Generic_List;
 with GNAT.OS_Lib;
+with VFS;
 
 with Codefix.Text_Manager; use Codefix.Text_Manager;
 
@@ -33,7 +34,7 @@ package Codefix.Ada_Tools is
 
    function Get_Use_Clauses
      (Clause_Name  : String;
-      File_Name    : String;
+      File_Name    : VFS.Virtual_File;
       Current_Text : Text_Navigator_Abstr'Class;
       Exclusive    : Boolean := False) return Words_Lists.List;
    --  Return all the use clauses that are related to a with or an
@@ -52,11 +53,11 @@ package Codefix.Ada_Tools is
 
    function Get_Next_With_Position
      (Current_Text : Text_Navigator_Abstr'Class;
-      File_Name    : String) return File_Cursor'Class;
+      File_Name    : VFS.Virtual_File) return File_Cursor'Class;
 
    function Search_With
      (Current_Text : Text_Navigator_Abstr'Class;
-      File_Name    : String;
+      File_Name    : VFS.Virtual_File;
       Pkg_Name     : String) return File_Cursor'Class;
 
 private
@@ -105,12 +106,12 @@ private
 
    function List_All_With
      (Current_Text : Text_Navigator_Abstr'Class;
-      File_Name    : String) return With_Lists.List;
+      File_Name    : VFS.Virtual_File) return With_Lists.List;
    --  List all the with clauses existing in File_Name.
 
    function List_All_Use
      (Current_Text : Text_Navigator_Abstr'Class;
-      File_Name    : String) return Use_Lists.List;
+      File_Name    : VFS.Virtual_File) return Use_Lists.List;
    --  List all the use clauses existing in File_Name.
 
    procedure Link_All_Clauses

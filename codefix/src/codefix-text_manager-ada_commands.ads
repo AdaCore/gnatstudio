@@ -236,7 +236,7 @@ package Codefix.Text_Manager.Ada_Commands is
      (This             : out Get_Visible_Declaration_Cmd;
       Current_Text     : Text_Navigator_Abstr'Class;
       Source_Position  : File_Cursor'Class;
-      File_Destination : String;
+      File_Destination : VFS.Virtual_File;
       With_Could_Miss  : Boolean);
    --  Set all the marks that will be needed to add an use later.
 

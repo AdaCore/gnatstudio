@@ -194,8 +194,8 @@ package body Codefix.Merge_Utils is
    ------------
 
    procedure Delete
-     (This : in out Mergable_String; Start : Natural; Len : Natural := 0) is
-
+     (This : in out Mergable_String; Start : Natural; Len : Natural := 0)
+   is
       Position   : constant Natural := Get_Array_Position (This, Start);
       Offset     : Natural := 0;
       Copy_Infos : constant Merge_Array := This.Infos.all;
@@ -567,11 +567,12 @@ package body Codefix.Merge_Utils is
    -- Get_Array_Position --
    ------------------------
 
-   function Get_Array_Position (Str : Mergable_String; Position : Natural)
-     return Natural is
+   function Get_Array_Position
+     (Str : Mergable_String; Position : Natural) return Natural
+   is
       Existent_Chars : Natural := 0;
    begin
-      for J in 1 .. Str.Infos'Last loop
+      for J in Str.Infos'Range loop
          if Str.Infos (J) /= Unit_Deleted then
             Existent_Chars := Existent_Chars + 1;
          end if;

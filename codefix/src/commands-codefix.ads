@@ -21,14 +21,13 @@
 with Glide_Kernel;           use Glide_Kernel;
 
 with Codefix.Errors_Manager; use Codefix.Errors_Manager;
-with Codefix.Text_Manager;   use Codefix.Text_Manager;
+with Codefix_Module;
 
 package Commands.Codefix is
 
    type Codefix_Command is new Root_Command with record
       Error        : Error_Id;
-      Current_Text : Ptr_Text_Navigator;
-      Corrector    : Ptr_Correction_Manager;
+      Session      : Codefix_Module.Codefix_Session;
       Kernel       : Kernel_Handle;
    end record;
 

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2002                         --
+--                        Copyright (C) 2002-2003                    --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -21,6 +21,8 @@
 with Generic_List;
 with GNAT.OS_Lib;
 with Language; use Language;
+with Glide_Kernel;
+with VFS;
 
 with Codefix.Text_Manager; use Codefix.Text_Manager;
 
@@ -37,11 +39,17 @@ package Codefix.Formal_Errors is
 
    Invalid_Error_Message : constant Error_Message;
 
-   procedure Initialize (This : in out Error_Message; Message : String);
+   procedure Initialize
+     (Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
+      This    : in out Error_Message;
+      Message : String);
    --  Parse the message headed in order to get the col number and the
    --  line number.
 
-   procedure Initialize (This : in out Error_Message; Line, Col : Positive);
+   procedure Initialize
+     (This : in out Error_Message;
+      File : VFS.Virtual_File;
+      Line, Col : Positive);
    --  Sets the value of Line and Col field of an Error_Message.
 
    function Get_Message (This : Error_Message) return String;
@@ -187,7 +195,9 @@ private
       Message : GNAT.OS_Lib.String_Access;
    end record;
 
-   procedure Parse_Head (Message : String; This : out Error_Message);
+   procedure Parse_Head
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Message : String; This : out Error_Message);
    --  Initialize Col, Line and File_Name fields of This by parsing the head
    --  of the message.
 
@@ -195,6 +205,7 @@ private
    --  Duplicate all the information used in Error_Message, specially the
    --  object referenced in.
 
-   Invalid_Error_Message : constant Error_Message := (0, 0, null, null);
+   Invalid_Error_Message : constant Error_Message :=
+     (Null_File_Cursor with null);
 
 end Codefix.Formal_Errors;

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2002                         --
+--                        Copyright (C) 2002-2003                    --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -24,6 +24,7 @@ with Codefix.Text_Manager; use Codefix.Text_Manager;
 with Codefix.Formal_Errors; use Codefix.Formal_Errors;
 use Codefix.Formal_Errors.Command_List;
 with GNAT.OS_Lib;
+with VFS;
 
 with Ada.Unchecked_Deallocation;
 
@@ -148,7 +149,11 @@ package Codefix.Errors_Manager is
    function Get_First_Error (This : Correction_Manager) return Error_Id;
    --  Return the first error found in the correction manager.
 
-   function Search_Error (This : Correction_Manager; Message : String)
+   function Search_Error
+     (This         : Correction_Manager;
+      File         : VFS.Virtual_File;
+      Line, Column : Integer;
+      Message      : String)
      return Error_Id;
    --  Return the Error_Id contained in the correction manager correspondant to
    --  the message. If this error does not exist, Null_Error_Id is returned.

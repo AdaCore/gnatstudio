@@ -65,7 +65,7 @@ package body Codefix.Ada_Tools is
 
    function Get_Use_Clauses
      (Clause_Name  : String;
-      File_Name    : String;
+      File_Name    : VFS.Virtual_File;
       Current_Text : Text_Navigator_Abstr'Class;
       Exclusive    : Boolean := False) return Words_Lists.List
    is
@@ -90,14 +90,15 @@ package body Codefix.Ada_Tools is
                   declare
                      Word_Used : Word_Cursor;
                   begin
-                     Assign (Word_Used.File_Name, File_Name);
-                     Word_Used.Col := Data
-                       (Seek_Node).Clauses (J).Position.Col;
-                     Word_Used.Line := Data
-                       (Seek_Node).Clauses (J).Position.Line;
-                     Assign
-                       (Word_Used.String_Match,
-                        Data (Seek_Node).Clauses (J).Name.all);
+                     Set_File (Word_Used, File_Name);
+                     Set_Location
+                       (Word_Used,
+                        Line   =>
+                          Get_Line (Data (Seek_Node).Clauses (J).Position),
+                        Column =>
+                          Get_Column (Data (Seek_Node).Clauses (J).Position));
+                     Set_Word
+                       (Word_Used, Data (Seek_Node).Clauses (J).Name.all);
                      Append (Result, Word_Used);
                   end;
                end if;
@@ -205,7 +206,7 @@ package body Codefix.Ada_Tools is
 
    function List_All_With
      (Current_Text : Text_Navigator_Abstr'Class;
-      File_Name    : String) return With_Lists.List
+      File_Name    : VFS.Virtual_File) return With_Lists.List
    is
       Structure  : constant Construct_List_Access :=
         Get_Structure (Current_Text, File_Name);
@@ -236,7 +237,7 @@ package body Codefix.Ada_Tools is
 
    function List_All_Use
      (Current_Text : Text_Navigator_Abstr'Class;
-      File_Name    : String) return Use_Lists.List
+      File_Name    : VFS.Virtual_File) return Use_Lists.List
    is
       Structure  : constant Construct_List_Access :=
         Get_Structure (Current_Text, File_Name);
@@ -249,10 +250,11 @@ package body Codefix.Ada_Tools is
          if Iterator.Category = Cat_Use then
             New_Clause := new Use_Type;
             New_Clause.Name := new String'(Iterator.Name.all);
-            New_Clause.Position :=
-              (Col       => Iterator.Sloc_Start.Column,
+            Set_File (New_Clause.Position, File_Name);
+            Set_Location
+              (New_Clause.Position,
                Line      => Iterator.Sloc_Start.Line,
-               File_Name => new String'(File_Name));
+               Column    => Iterator.Sloc_Start.Column);
             Append (Result, New_Clause);
          end if;
 
@@ -343,15 +345,14 @@ package body Codefix.Ada_Tools is
 
    function Get_Next_With_Position
      (Current_Text : Text_Navigator_Abstr'Class;
-      File_Name    : String) return File_Cursor'Class
+      File_Name    : VFS.Virtual_File) return File_Cursor'Class
    is
       Current_Cursor : File_Cursor;
       Current_Info   : Construct_Information;
       Found_With     : Boolean := False;
    begin
-      Current_Cursor.File_Name := new String'(File_Name);
-      Current_Cursor.Line := 1;
-      Current_Cursor.Col := 1;
+      Set_File (Current_Cursor, File_Name);
+      Set_Location (Current_Cursor, 1, 1);
 
       loop
          Current_Info := Get_Unit
@@ -361,13 +362,12 @@ package body Codefix.Ada_Tools is
            and then Current_Info.Category /= Cat_Use;
 
          Found_With := True;
-         Current_Cursor.Col := Current_Info.Sloc_End.Column + 1;
-         Current_Cursor.Line := Current_Info.Sloc_End.Line;
+         Set_Location (Current_Cursor, Current_Info.Sloc_End.Line,
+                       Current_Info.Sloc_End.Column + 1);
       end loop;
 
       if not Found_With then
-         Current_Cursor.Col := 1;
-         Current_Cursor.Line := Current_Info.Sloc_Start.Line - 1;
+         Set_Location (Current_Cursor, Current_Info.Sloc_Start.Line - 1, 1);
       end if;
 
       return Current_Cursor;
@@ -379,7 +379,7 @@ package body Codefix.Ada_Tools is
 
    function Search_With
      (Current_Text : Text_Navigator_Abstr'Class;
-      File_Name    : String;
+      File_Name    : VFS.Virtual_File;
       Pkg_Name     : String) return File_Cursor'Class
    is
       Iterator   : Construct_Access :=
@@ -388,11 +388,12 @@ package body Codefix.Ada_Tools is
    begin
       while Iterator /= null loop
          if Iterator.Category = Cat_With
-           and then Iterator.Name.all = Pkg_Name then
-            Assign (Result.File_Name, File_Name);
-            Result.Col := Iterator.Sloc_Start.Column;
-            Result.Line := Iterator.Sloc_Start.Line;
-
+           and then Iterator.Name.all = Pkg_Name
+         then
+            Set_File (Result, File_Name);
+            Set_Location
+              (Result, Iterator.Sloc_Start.Line,
+               Iterator.Sloc_Start.Column);
             return Result;
          end if;
 

@@ -21,6 +21,7 @@
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 with GNAT.Regpat; use GNAT.Regpat;
 with Language;    use Language;
+with Glide_Kernel; use Glide_Kernel;
 
 package body Codefix.Errors_Parser is
 
@@ -167,9 +168,9 @@ package body Codefix.Errors_Parser is
    --  The following functions are not commented after their name, but after
    --  the first parameter.
 
-   --------------------------
-   -- Agregate_Misspelling --
-   --------------------------
+   ---------------------------
+   -- Aggregate_Misspelling --
+   ---------------------------
 
    procedure Initialize (This : in out Agregate_Misspelling) is
    begin
@@ -702,29 +703,23 @@ package body Codefix.Errors_Parser is
       pragma Unreferenced (Errors_List);
 
       Col_Matches        : Match_Array (0 .. 1);
-      Declaration_Line   : Positive;
       Line_Red           : String_Access;
       Declaration_Cursor : File_Cursor;
 
    begin
-
-      if
-        Get_Message (Message) (Matches (1).First .. Matches (1).Last) /= "line"
+      if Get_Message (Message) (Matches (1).First .. Matches (1).Last) /=
+        "line"
       then
-         Assign
-           (Declaration_Cursor.File_Name,
-            Get_Message (Message) (Matches (1).First .. Matches (1).Last));
+         --  ??? Doesn't seem really clean to use the message as a file name ?
+         Set_File
+           (Declaration_Cursor,
+            Create
+              (Get_Message (Message) (Matches (1).First .. Matches (1).Last),
+               Get_Kernel (Current_Text)));
       else
-         Assign
-           (Declaration_Cursor.File_Name, Message.File_Name);
+         Set_File (Declaration_Cursor, Get_File (Message));
       end if;
 
-      Declaration_Line :=
-        Positive'Value
-          (Get_Message (Message) (Matches (2).First .. Matches (2).Last));
-
-      Declaration_Cursor.Line := Declaration_Line;
-      Declaration_Cursor.Col := 1;
       Assign (Line_Red, Get_Line (Current_Text, Declaration_Cursor));
 
       Match (This.Col_Matcher.all, Line_Red.all, Col_Matches);
@@ -733,11 +728,15 @@ package body Codefix.Errors_Parser is
          raise Uncorrectable_Message;
       end if;
 
-      Declaration_Cursor.Col := Col_Matches (1).Last + 1;
+      Set_Location
+        (Declaration_Cursor,
+         Line   => Integer'Value
+           (Get_Message (Message) (Matches (2).First .. Matches (2).Last)),
+         Column => Integer'Value
+           (Line_Red (Col_Matches (1).First .. Col_Matches (1).Last)));
 
       Solutions := Expected (Current_Text, Declaration_Cursor, "all");
 
-      Free (Declaration_Cursor);
       Free (Line_Red);
    end Fix;
 
@@ -820,17 +819,17 @@ package body Codefix.Errors_Parser is
       Matches      : Match_Array)
    is
       pragma Unreferenced (Errors_List);
-
       Col_Matches : Match_Array (0 .. 1);
       New_Message : Error_Message := Message;
       Line_Cursor : File_Cursor := File_Cursor (Message);
 
    begin
-      Line_Cursor.Col := 1;
+      Set_Location (Line_Cursor, Get_Line (Line_Cursor), 1);
       Match (This.Matcher_Aux (This.Current_It.all).all,
              Get_Line (Current_Text, Line_Cursor),
              Col_Matches);
-      New_Message.Col := Col_Matches (1).Last + 1;
+      Set_Location
+        (New_Message, Get_Line (New_Message), Col_Matches (1).Last + 1);
 
       Solutions := Expected
         (Current_Text,
@@ -1410,8 +1409,6 @@ package body Codefix.Errors_Parser is
          declare
             Solution_Cursor : File_Cursor;
          begin
-            Solution_Cursor.Col := 1;
-
             Get_Preview (Errors_List, Current_Text, Preview);
             exit when Preview = Invalid_Error_Message;
 
@@ -1426,20 +1423,25 @@ package body Codefix.Errors_Parser is
 
                exit when Matches_Prev (0) = No_Match;
 
-               Assign
-                 (Solution_Cursor.File_Name, Message.File_Name);
-
-               Solution_Cursor.Line := Integer'Value
-                 (Get_Message (Preview)
-                    (Matches_Prev (1).First .. Matches_Prev (1).Last));
+               Set_File (Solution_Cursor, Get_File (Message));
+               Set_Location
+                 (Solution_Cursor,
+                  Line => Integer'Value
+                    (Get_Message (Preview)
+                       (Matches_Prev (1).First .. Matches_Prev (1).Last)),
+                  Column => 1);
             else
-               Assign
-                 (Solution_Cursor.File_Name, Get_Message (Preview)
-                    (Matches_Prev (1).First .. Matches_Prev (1).Last));
-
-               Solution_Cursor.Line := Integer'Value
-                 (Get_Message (Preview)
-                    (Matches_Prev (2).First .. Matches_Prev (2).Last));
+               Set_File
+                 (Solution_Cursor, Create
+                    (Get_Message (Preview)
+                       (Matches_Prev (1).First .. Matches_Prev (1).Last),
+                     Get_Kernel (Current_Text)));
+               Set_Location
+                 (Solution_Cursor,
+                  Line => Integer'Value
+                    (Get_Message (Preview)
+                       (Matches_Prev (2).First .. Matches_Prev (2).Last)),
+                  Column => 1);
             end if;
 
             Append (Cursor_List, Solution_Cursor);
@@ -1447,7 +1449,6 @@ package body Codefix.Errors_Parser is
          end;
 
       end loop;
-
 
       Solutions := Resolve_Ambiguity
         (Current_Text,
@@ -1513,7 +1514,6 @@ package body Codefix.Errors_Parser is
          declare
             Solution_Cursor : File_Cursor;
          begin
-            Solution_Cursor.Col := 1;
             Get_Preview (Errors_List, Current_Text, Preview);
 
             exit when Preview = Invalid_Error_Message;
@@ -1531,20 +1531,25 @@ package body Codefix.Errors_Parser is
 
                exit when Matches_Loc (0) = No_Match;
 
-               Assign
-                 (Solution_Cursor.File_Name, Message.File_Name);
-
-               Solution_Cursor.Line := Integer'Value
-                 (Get_Message (Preview)
-                    (Matches_Loc (1).First .. Matches_Loc (1).Last));
+               Set_File (Solution_Cursor, Get_File (Message));
+               Set_Location
+                 (Solution_Cursor,
+                  Line => Integer'Value
+                    (Get_Message (Preview)
+                       (Matches_Loc (1).First .. Matches_Loc (1).Last)),
+                  Column => 1);
             else
-               Assign
-                 (Solution_Cursor.File_Name, Get_Message (Preview)
-                    (Matches_Loc (1).First .. Matches_Loc (1).Last));
-
-               Solution_Cursor.Line := Integer'Value
-                 (Get_Message (Preview)
-                    (Matches_Loc (2).First .. Matches_Loc (2).Last));
+               Set_File
+                 (Solution_Cursor, Create
+                    (Get_Message (Preview)
+                       (Matches_Loc (1).First .. Matches_Loc (1).Last),
+                     Get_Kernel (Current_Text)));
+               Set_Location
+                 (Solution_Cursor,
+                  Line => Integer'Value
+                    (Get_Message (Preview)
+                       (Matches_Loc (2).First .. Matches_Loc (2).Last)),
+                  Column => 1);
             end if;
 
             Append (Cursor_List, Solution_Cursor);
@@ -1652,21 +1657,23 @@ package body Codefix.Errors_Parser is
 
       Spec_Cursor : File_Cursor;
    begin
-      Spec_Cursor.Col := 1;
-      Spec_Cursor.Line := Natural'Value
-        (Get_Message (Message)
-           (Matches (2).First .. Matches (2).Last));
-
+      Set_Location
+        (Spec_Cursor,
+         Line => Natural'Value
+           (Get_Message (Message)
+              (Matches (2).First .. Matches (2).Last)),
+         Column => 1);
 
       if Get_Message (Message)
         (Matches (1).First .. Matches (1).Last) = "line"
       then
-         Assign (Spec_Cursor.File_Name, Message.File_Name);
+         Set_File (Spec_Cursor, Get_File (Message));
       else
-         Assign
-           (Spec_Cursor.File_Name,
-            Get_Message (Message)
-              (Matches (1).First .. Matches (1).Last));
+         Set_File
+           (Spec_Cursor, Create
+              (Get_Message (Message)
+                 (Matches (1).First .. Matches (1).Last),
+               Get_Kernel (Current_Text)));
       end if;
 
       Solutions := Make_Conformant (Current_Text, Message, Spec_Cursor);
@@ -1723,22 +1730,24 @@ package body Codefix.Errors_Parser is
       Source_Cursor : File_Cursor;
       Seek_With     : Boolean;
    begin
-      Source_Cursor.Col := 1;
-      Source_Cursor.Line := Natural'Value
-        (Get_Message (Message)
-           (Matches (2).First .. Matches (2).Last));
-
+      Set_Location
+        (Source_Cursor,
+         Line => Natural'Value
+           (Get_Message (Message)
+              (Matches (2).First .. Matches (2).Last)),
+         Column => 1);
 
       if Get_Message (Message)
         (Matches (1).First .. Matches (1).Last) = "line"
       then
-         Assign (Source_Cursor.File_Name, Message.File_Name);
+         Set_File (Source_Cursor, Get_File (Message));
          Seek_With := False;
       else
-         Assign
-           (Source_Cursor.File_Name,
-            Get_Message (Message)
-              (Matches (1).First .. Matches (1).Last));
+         Set_File
+           (Source_Cursor, Create
+              (Get_Message (Message)
+                 (Matches (1).First .. Matches (1).Last),
+               Get_Kernel (Current_Text)));
          Seek_With := True;
       end if;
 

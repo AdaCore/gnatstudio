@@ -41,19 +41,23 @@ package body Commands.Codefix is
       end if;
 
       if Get_Number_Of_Fixes (Command.Error) > 1 then
-         Menu := Create_Submenu (Command.Error);
+         Menu := Create_Submenu
+           (Command.Kernel, Command.Session, Command.Error);
          Show_All (Menu);
          Popup (Menu);
          return Success;
       end if;
 
       Validate_And_Commit
-        (Command.Corrector.all,
-         Command.Current_Text.all,
+        (Command.Session.Corrector.all,
+         Command.Session.Current_Text.all,
          Command.Error,
          Data (First (Get_Solutions (Command.Error))));
 
-      Remove_Pixmap (Command.Error);
+      Remove_Pixmap
+        (Command.Kernel,
+         Command.Session,
+         Command.Error);
 
       return Success;
    end Execute;
@@ -64,8 +68,11 @@ package body Commands.Codefix is
 
    function Undo (Command : access Codefix_Command) return Boolean is
    begin
-      Undo (Command.Error, Command.Current_Text.all);
-      Create_Pixmap (Command.Error);
+      Undo (Command.Error, Command.Session.Current_Text.all);
+      Create_Pixmap_And_Category
+        (Command.Kernel,
+         Command.Session,
+         Command.Error);
 
       return True;
    end Undo;

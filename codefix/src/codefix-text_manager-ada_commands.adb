@@ -292,7 +292,7 @@ package body Codefix.Text_Manager.Ada_Commands is
    begin
       if Word.String_Match /= null then
          Pkg_Info := Search_Unit
-           (Current_Text, Word.File_Name.all, Cat_With, Word.String_Match.all);
+           (Current_Text, Get_File (Word), Cat_With, Word.String_Match.all);
       else
          Pkg_Info := Get_Unit
            (Current_Text, Word, Before, Category);
@@ -304,7 +304,7 @@ package body Codefix.Text_Manager.Ada_Commands is
 
       if Pkg_Info.Category = Cat_Unknown then
          Pkg_Info := Search_Unit
-           (Current_Text, Word.File_Name.all,
+           (Current_Text, Get_File (Word),
             Cat_Package,
             Word.String_Match.all);
 
@@ -331,7 +331,7 @@ package body Codefix.Text_Manager.Ada_Commands is
       if Category /= Cat_Use then
          Clauses_List := Get_Use_Clauses
            (Word_Used.String_Match.all,
-            Word_Used.File_Name.all,
+            Get_File (Word_Used),
             Current_Text,
             True);
 
@@ -360,8 +360,7 @@ package body Codefix.Text_Manager.Ada_Commands is
 
       if Destination /= VFS.No_File then
          Last_With := File_Cursor
-           (Get_Next_With_Position
-              (Current_Text, Full_Name (Destination).all));
+           (Get_Next_With_Position (Current_Text, Destination));
 
          This.Last_With := new Mark_Abstr'Class'
            (Get_New_Mark (Current_Text, Last_With));
@@ -904,7 +903,7 @@ package body Codefix.Text_Manager.Ada_Commands is
      (This             : out Get_Visible_Declaration_Cmd;
       Current_Text     : Text_Navigator_Abstr'Class;
       Source_Position  : File_Cursor'Class;
-      File_Destination : String;
+      File_Destination : VFS.Virtual_File;
       With_Could_Miss  : Boolean)
    is
       Result      : Get_Visible_Declaration_Cmd;
@@ -961,14 +960,14 @@ package body Codefix.Text_Manager.Ada_Commands is
       if With_Could_Miss then
          With_Cursor := File_Cursor
            (Search_With
-              (Current_Text, Object_Position.File_Name.all, Pkg_Name.all));
+              (Current_Text, Get_File (Object_Position), Pkg_Name.all));
 
          if With_Cursor = Null_File_Cursor then
             Initialize
               (Result.Insert_With,
                Current_Text,
                Get_Next_With_Position
-                 (Current_Text, Object_Position.File_Name.all),
+                 (Current_Text, Get_File (Object_Position)),
                "with " & Pkg_Name.all & ";");
 
             Result.Insert_With_Enabled := True;
