@@ -110,6 +110,14 @@ package VCS is
       --  ???  We need to put additional info here : date, etc.
    end record;
 
+   function Copy_String_List
+     (S : in String_List.List) return String_List.List;
+   --  Return a deep copy of S.
+
+   function Copy_File_Status
+     (F : in File_Status_Record) return File_Status_Record;
+   --  Return a deep copy of F.
+
    procedure Free (F : in out File_Status_Record);
    package File_Status_List is new Generic_List (File_Status_Record);
 
@@ -197,7 +205,7 @@ package VCS is
    --  The result is a String_List.List with one element for each line,
    --  in the standard basic diff format.
    --  If Version_1 is empty, then the local file is taken.
-   --  If Version_2 is empty, then the latest revision is taken.
+   --  If Version_2 is empty, then the HEAD revision is taken.
 
    procedure Log
      (Rep  : access VCS_Record;
