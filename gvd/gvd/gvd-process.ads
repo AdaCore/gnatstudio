@@ -161,7 +161,7 @@ package GVD.Process is
       Timeout_Id              : Gtk.Main.Timeout_Handler_Id := 0;
       --  Timeout Id used to handle async. commands.
 
-      Backtrace_Mask          : Stack_List_Mask := Subprog_Name or Params;
+      Backtrace_Mask          : Stack_List_Mask := Subprog_Name;
       --  What columns to be displayed in the stack list window
 
       Current_Command         : String_Access;
