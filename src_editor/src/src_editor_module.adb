@@ -338,6 +338,14 @@ package body Src_Editor_Module is
       return Selection_Context_Access;
    --  Same as above.
 
+   function New_View
+     (Kernel  : access Kernel_Handle_Record'Class;
+      Current : Source_Editor_Box;
+      Add     : Boolean) return Source_Box;
+   --  Create a new view for Current and add it in the MDI.
+   --  The current editor is the focus child in the MDI.
+   --  If Add is True, the Box is added to the MDI.
+
    procedure New_View
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
    --  Create a new view for the current editor and add it in the MDI.
@@ -1324,15 +1332,26 @@ package body Src_Editor_Module is
          File := Get_Field (Node, "File");
 
          if File /= null then
-            Src := Open_File (User, File.all, False, False);
 
-            if Src /= null then
-               Data.Edit := Src.Editor;
-               Id := Location_Idle.Add
-                 (File_Edit_Callback'Access,
-                  (Src.Editor, 1, 1, 0, True, null));
+            if not Is_Open (User, File.all) then
+               Src := Open_File (User, File.all, False, False);
 
-               return Gtk_Widget (Src);
+               if Src /= null then
+                  Data.Edit := Src.Editor;
+                  Id := Location_Idle.Add
+                    (File_Edit_Callback'Access,
+                     (Src.Editor, 1, 1, 0, True, null));
+
+                  return Gtk_Widget (Src);
+               end if;
+            else
+               declare
+                  Child : constant MDI_Child := Find_Editor (User, File.all);
+                  Edit  : constant Source_Editor_Box :=
+                    Get_Source_Box_From_MDI (Child);
+               begin
+                  return Gtk_Widget (New_View (User, Edit, Add => False));
+               end;
             end if;
          end if;
       end if;
@@ -1466,17 +1485,16 @@ package body Src_Editor_Module is
    -- New_View --
    --------------
 
-   procedure New_View
-     (Kernel : access Kernel_Handle_Record'Class)
+   function New_View
+     (Kernel  : access Kernel_Handle_Record'Class;
+      Current : Source_Editor_Box;
+      Add     : Boolean) return Source_Box
    is
       MDI     : constant MDI_Window := Get_MDI (Kernel);
-      Current : constant Source_Editor_Box :=
-        Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
       Title   : constant String := Get_Filename (Current);
       Editor  : Source_Editor_Box;
       Box     : Source_Box;
       Child   : MDI_Child;
-
    begin
       if Current /= null then
          Create_New_View (Editor, Kernel, Current);
@@ -1486,7 +1504,20 @@ package body Src_Editor_Module is
             Get_Pref (Kernel, Default_Widget_Width),
             Get_Pref (Kernel, Default_Widget_Height));
          Attach (Editor, Box);
-         Child := Put (MDI, Box);
+
+         if Add then
+            Child := Put (MDI, Box);
+
+            declare
+               Im : constant String :=
+                 Image (Get_Ref_Count (Editor));
+            begin
+               Set_Title
+                 (Child,
+                  Title & " <" & Im & ">",
+                  Base_Name (Title) & " <" & Im & ">");
+            end;
+         end if;
 
          Gtkada.Handlers.Return_Callback.Object_Connect
            (Box,
@@ -1495,9 +1526,20 @@ package body Src_Editor_Module is
             Gtk_Widget (Box),
             After => False);
 
-         --  ??? Should compute the right number.
-         Set_Title (Child, Title & " <2>", Base_Name (Title) & " <2>");
       end if;
+
+      return Box;
+   end New_View;
+
+   procedure New_View
+     (Kernel : access Kernel_Handle_Record'Class)
+   is
+      Current : constant Source_Editor_Box :=
+        Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
+      Box     : Source_Box;
+      pragma Unreferenced (Box);
+   begin
+      Box := New_View (Kernel, Current, Add => True);
    end New_View;
 
    -------------------
@@ -1692,13 +1734,9 @@ package body Src_Editor_Module is
                   Set_Filename (Editor, Get_Title (Child));
                end;
             end if;
-
-            --  We have created a new file editor: emit the
-            --  corresponding signal.
-            --  ??? what do we do when opening an editor with no name ?
-
-            File_Edited (Kernel, Get_Title (Child));
          end if;
+
+         File_Edited (Kernel, File);
 
          Gtkada.Handlers.Return_Callback.Object_Connect
            (Box,
