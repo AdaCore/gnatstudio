@@ -41,6 +41,8 @@ with Language.Ada; use Language.Ada;
 with Language.C;   use Language.C;
 with Language.Cpp; use Language.Cpp;
 with Language;     use Language;
+with Language_Handlers;     use Language_Handlers;
+with Language_Handlers.GVD; use Language_Handlers.GVD;
 
 with System;       use System;
 with Interfaces.C.Strings; use Interfaces.C.Strings;
@@ -135,6 +137,7 @@ package body GVD.Main_Window is
       Menu_Items  : Gtk_Item_Factory_Entry_Array)
    is
       Menu : Gtk_Widget;
+      Handler : GVD_Language_Handler;
    begin
       Main_Debug_Window_Pkg.Initialize (Main_Window);
       Initialize_Class_Record
@@ -158,10 +161,16 @@ package body GVD.Main_Window is
       Gtk_New (Main_Window.History_Dialog, Gtk_Window (Main_Window));
       Gtk_New (Main_Window.Memory_View, Gtk_Widget (Main_Window));
 
-      Reset_File_Extensions;
-      Add_File_Extensions (Ada_Lang, Get_Pref (Ada_Extensions));
-      Add_File_Extensions (C_Lang,   Get_Pref (C_Extensions));
-      Add_File_Extensions (Cpp_Lang, Get_Pref (Cpp_Extensions));
+      Gtk_New (Handler);
+      Main_Window.Lang_Handler := Language_Handler (Handler);
+      Register_Language (Handler, "ada", Ada_Lang);
+      Add_File_Extensions (Handler, "ada", Get_Pref (Ada_Extensions));
+
+      Register_Language (Handler, "c", C_Lang);
+      Add_File_Extensions (Handler, "c", Get_Pref (C_Extensions));
+
+      Register_Language (Handler, "c++", Cpp_Lang);
+      Add_File_Extensions (Handler, "c++", Get_Pref (Cpp_Extensions));
    end Initialize;
 
    -----------------
@@ -241,14 +250,17 @@ package body GVD.Main_Window is
    -------------------------
 
    procedure Preferences_Changed
-     (Window : access GVD_Main_Window_Record'Class) is
+     (Window : access GVD_Main_Window_Record'Class)
+   is
+      Handler : GVD_Language_Handler := GVD_Language_Handler
+        (Window.Lang_Handler);
    begin
       Widget_Callback.Emit_By_Name
         (Gtk_Widget (Window), "preferences_changed");
-      Reset_File_Extensions;
-      Add_File_Extensions (Ada_Lang, Get_Pref (Ada_Extensions));
-      Add_File_Extensions (C_Lang,   Get_Pref (C_Extensions));
-      Add_File_Extensions (Cpp_Lang, Get_Pref (Cpp_Extensions));
+      Reset_File_Extensions (Handler);
+      Add_File_Extensions (Handler, "ada", Get_Pref (Ada_Extensions));
+      Add_File_Extensions (Handler, "c",   Get_Pref (C_Extensions));
+      Add_File_Extensions (Handler, "c++", Get_Pref (Cpp_Extensions));
    end Preferences_Changed;
 
 end GVD.Main_Window;

@@ -45,6 +45,7 @@ with Gtkada.Handlers;       use Gtkada.Handlers;
 
 with Debugger;              use Debugger;
 with Language;              use Language;
+with Language_Handlers;     use Language_Handlers;
 with GVD.Main_Window;       use GVD.Main_Window;
 with Process_Proxies;       use Process_Proxies;
 
@@ -1334,7 +1335,8 @@ package body GVD.Text_Box.Source_Editor.Builtin is
 
    begin
       if Name /= "" then
-         Lang := Get_Language_From_File (Name);
+         Lang := Get_Language_From_File
+           (Debugger_Process_Tab (Editor.Process).Window.Lang_Handler, Name);
          Set_Current_Language (Process.Editor_Text, Lang);
 
          --  Refresh the code editor itself, so that both the source window

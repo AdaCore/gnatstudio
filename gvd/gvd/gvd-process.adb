@@ -73,7 +73,6 @@ with String_Utils;               use String_Utils;
 with Basic_Types;                use Basic_Types;
 with GUI_Utils;                  use GUI_Utils;
 with Dock_Paned;                 use Dock_Paned;
-with Language;                   use Language;
 
 with GVD.Canvas;                 use GVD.Canvas;
 with GVD.Code_Editors;           use GVD.Code_Editors;
@@ -85,6 +84,7 @@ with GVD.Text_Box.Source_Editor; use GVD.Text_Box.Source_Editor;
 with GVD.Trace;                  use GVD.Trace;
 with GVD.Types;                  use GVD.Types;
 with GVD.Window_Settings;        use GVD.Window_Settings;
+with Language_Handlers;          use Language_Handlers;
 
 package body GVD.Process is
 
@@ -927,7 +927,8 @@ package body GVD.Process is
          begin
             Set_Current_Language
               (Process.Editor_Text, Get_Language_From_File
-               ("." & File_Extension (File_Name)));
+                 (Process.Window.Lang_Handler,
+                  "." & File_Extension (File_Name)));
 
             Load_File (Process.Editor_Text, File_Name);
          end;

@@ -20,7 +20,6 @@
 
 with Gtk.Enums;       use Gtk.Enums;
 with Gtkada.Handlers; use Gtkada.Handlers;
-with Callbacks_Odd;   use Callbacks_Odd;
 
 with Process_Tab_Pkg.Callbacks; use Process_Tab_Pkg.Callbacks;
 with Interfaces.C.Strings; use Interfaces.C.Strings;

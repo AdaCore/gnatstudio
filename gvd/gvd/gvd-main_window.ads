@@ -35,6 +35,7 @@ with GVD.Histories;
 pragma Elaborate_All (GVD.Histories);
 with GVD.Memory_View;
 with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
+with Language_Handlers;
 
 package GVD.Main_Window is
 
@@ -102,6 +103,9 @@ package GVD.Main_Window is
 
       Main_Accel_Group    : Gtk_Accel_Group;
       --  The default accelerators for the GVD window.
+
+      Lang_Handler        : Language_Handlers.Language_Handler;
+      --  The type used to convert from a filename to a language
    end record;
    type GVD_Main_Window is access all GVD_Main_Window_Record'Class;
 

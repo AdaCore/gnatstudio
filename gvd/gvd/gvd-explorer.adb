@@ -41,6 +41,7 @@ with GNAT.OS_Lib;           use GNAT.OS_Lib;
 with Interfaces.C.Strings;  use Interfaces.C.Strings;
 
 with Language;              use Language;
+with Language_Handlers;     use Language_Handlers;
 with Debugger;              use Debugger;
 
 with GVD.Code_Editors;      use GVD.Code_Editors;
@@ -173,6 +174,10 @@ package body GVD.Explorer is
    function Category_Name (Category : Language_Category) return String;
    --  Return the name of the node for Category
 
+   function Lang_Handler (Explorer : access Explorer_Record'Class)
+      return Language_Handler;
+   --  Return the language_handler associated with Explorer.
+
    -------------------------------
    -- Create_Current_File_Style --
    -------------------------------
@@ -287,6 +292,17 @@ package body GVD.Explorer is
       Thaw (Explorer);
    end Clear_Explorer;
 
+   ------------------
+   -- Lang_Handler --
+   ------------------
+
+   function Lang_Handler (Explorer : access Explorer_Record'Class)
+      return Language_Handler is
+   begin
+      return Debugger_Process_Tab
+        (Get_Process (Code_Editor (Explorer.Code_Editor))).Window.Lang_Handler;
+   end Lang_Handler;
+
    -------------------
    -- First_Handler --
    -------------------
@@ -314,7 +330,8 @@ package body GVD.Explorer is
          File_Node := Row_Get_Parent
            (Node_Get_Row (Row_Get_Parent (Node_Get_Row (Node))));
          Data := Row_Data_Pkg.Node_Get_Row_Data (Explorer, File_Node);
-         Lang := Get_Language_From_File (Data.Extension);
+         Lang := Get_Language_From_File
+           (Lang_Handler (Explorer), Data.Extension);
          Set_Current_Language
            (Code_Editor (Explorer.Code_Editor), Lang);
 
@@ -338,7 +355,8 @@ package body GVD.Explorer is
          Data := Row_Data_Pkg.Node_Get_Row_Data (Explorer, Node);
 
          if Data.Is_File_Node then
-            Lang := Get_Language_From_File (Data.Extension);
+            Lang := Get_Language_From_File
+              (Lang_Handler (Explorer), Data.Extension);
             Set_Current_Language
               (Code_Editor (Explorer.Code_Editor), Lang);
 
@@ -562,7 +580,8 @@ package body GVD.Explorer is
 
             --  Need to read the file independently from the
             --  code_editor.
-            Lang := Get_Language_From_File (Full_Name);
+            Lang := Get_Language_From_File
+              (Lang_Handler (Explorer), Full_Name);
 
             if Lang /= null then
                Explore (Explorer, Node, Explorer, S.all, Lang, Full_Name);
@@ -1113,7 +1132,8 @@ package body GVD.Explorer is
                Next := Row_Get_Sibling (Node_Get_Row (Node));
                Data := Row_Data_Pkg.Node_Get_Row_Data (Explorer, Node);
 
-               Lang := Get_Language_From_File (Data.Extension);
+               Lang := Get_Language_From_File
+                 (Lang_Handler (Explorer), Data.Extension);
 
                if Lang /= null
                  and then Is_System_File (Lang, Data.Extension)
