@@ -397,9 +397,18 @@ package body Glide_Menu is
    procedure On_Exit
      (Object : Data_Type_Access;
       Action : Guint;
-      Widget : Limited_Widget) is
+      Widget : Limited_Widget)
+   is
+      Button : constant Message_Dialog_Buttons :=
+        Message_Dialog
+          (Msg            => "Are you sure you want to quit ?",
+           Dialog_Type    => Confirmation,
+           Buttons        => Button_Yes or Button_No,
+           Default_Button => Button_No);
    begin
-      Main_Quit;
+      if Button = Button_Yes then
+         Main_Quit;
+      end if;
    end On_Exit;
 
    -------------
