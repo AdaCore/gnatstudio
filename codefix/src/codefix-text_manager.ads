@@ -1025,6 +1025,28 @@ package Codefix.Text_Manager is
       New_Extract  : out Extract'Class);
    --  Set an extract with the invertion of the two word.
 
+   ------------------
+   -- Add_Line_Cmd --
+   ------------------
+
+   type Add_Line_Cmd is new Text_Command with private;
+
+   procedure Initialize
+     (This         : in out Add_Line_Cmd;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Position     : File_Cursor'Class;
+      Line         : String);
+   --  Set all the marks that will be needed to add the line later.
+
+   procedure Free (This : in out Add_Line_Cmd);
+   --  Free the memory associated to an Add_Line_Cmd.
+
+   procedure Execute
+     (This         : Add_Line_Cmd;
+      Current_Text : Text_Navigator_Abstr'Class;
+      New_Extract  : out Extract'Class);
+   --  Set an extract with the invertion add of the line.
+
 private
 
    function Compare_Last (Str_1, Str_2 : String) return Boolean;
@@ -1178,6 +1200,11 @@ private
    type Invert_Words_Cmd is new Text_Command with record
       Step_Word1 : Replace_Word_Cmd;
       Step_Word2 : Replace_Word_Cmd;
+   end record;
+
+   type Add_Line_Cmd is new Text_Command with record
+      Line     : Dynamic_String;
+      Position : Ptr_Mark;
    end record;
 
    ----------------------------------------------------------------------------
