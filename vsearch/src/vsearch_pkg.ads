@@ -26,6 +26,7 @@ with Gtk.Combo; use Gtk.Combo;
 with Gtk.GEntry; use Gtk.GEntry;
 with Gtk.Frame; use Gtk.Frame;
 with Gtk.Check_Button; use Gtk.Check_Button;
+with Glide_Kernel;
 
 package Vsearch_Pkg is
 
@@ -55,7 +56,11 @@ package Vsearch_Pkg is
    end record;
    type Vsearch_Access is access all Vsearch_Record'Class;
 
-   procedure Gtk_New (Vsearch : out Vsearch_Access);
-   procedure Initialize (Vsearch : access Vsearch_Record'Class);
+   procedure Gtk_New
+     (Vsearch : out Vsearch_Access;
+      Handle  : access Glide_Kernel.Kernel_Handle_Record'Class);
+   procedure Initialize
+     (Vsearch : access Vsearch_Record'Class;
+      Handle  : access Glide_Kernel.Kernel_Handle_Record'Class);
 
 end Vsearch_Pkg;

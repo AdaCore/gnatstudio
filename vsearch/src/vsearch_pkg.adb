@@ -22,17 +22,22 @@ with Gtk; use Gtk;
 with Gtk.Enums;       use Gtk.Enums;
 with Glide_Intl; use Glide_Intl;
 with Gtk.Tooltips; use Gtk.Tooltips;
+with Glide_Kernel; use Glide_Kernel;
 
 package body Vsearch_Pkg is
 
-procedure Gtk_New (Vsearch : out Vsearch_Access) is
+procedure Gtk_New
+  (Vsearch : out Vsearch_Access;
+   Handle  : access Glide_Kernel.Kernel_Handle_Record'Class) is
 begin
    Vsearch := new Vsearch_Record;
-   Vsearch_Pkg.Initialize (Vsearch);
+   Vsearch_Pkg.Initialize (Vsearch, Handle);
 end Gtk_New;
 
-procedure Initialize (Vsearch : access Vsearch_Record'Class) is
-   pragma Suppress (All_Checks);
+procedure Initialize
+  (Vsearch : access Vsearch_Record'Class;
+   Handle  : access Glide_Kernel.Kernel_Handle_Record'Class) is
+pragma Suppress (All_Checks);
    Replace_Combo_Items : String_List.Glist;
    Tooltips : Gtk_Tooltips;
    Context_Combo_Items : String_List.Glist;
@@ -97,7 +102,8 @@ begin
    Set_Max_Length (Vsearch.Replace_Entry, 0);
    Set_Text (Vsearch.Replace_Entry, -"");
    Set_Visibility (Vsearch.Replace_Entry, True);
-   Gtk_New (Tooltips);
+   Tooltips := Get_Tooltips (Handle);
+   --  Gtk_New (Tooltips);
    Set_Tip (Tooltips, Vsearch.Replace_Entry, -"The text that will replace each match");
 
    Gtk_New (Vsearch.Context_Combo);
