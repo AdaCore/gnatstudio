@@ -1553,7 +1553,7 @@ package body Src_Editor_Buffer is
          Partial_Entity : Boolean) return Boolean
       is
          Success     : Boolean;
-         Col         : Gint;
+         Col, Line   : Gint;
          Buffer_Line : Buffer_Line_Type;
       begin
          --  Some parsers currently leave line numbers to 0. Don't highlight in
@@ -1580,12 +1580,18 @@ package body Src_Editor_Buffer is
             return False;
          end if;
 
-         --  ??? Check validity of the position before calling this function
+         Line := Gint (Buffer_Line - 1) + Slice_Offset_Line;
 
-         Get_Iter_At_Line_Index
-           (Buffer, Entity_Start,
-            Gint (Buffer_Line - 1) + Slice_Offset_Line,
-            Col);
+         --  ??? The following check should probably be removed once we have
+         --  more confidence that the position is valid
+
+         if not Is_Valid_Position (Buffer, Line, Col) then
+            Trace (Me, "!!! INCORRECT POSITION IN BUFFER: "
+                   & Line'Img & Col'Img);
+            return False;
+         end if;
+
+         Get_Iter_At_Line_Index (Buffer, Entity_Start, Line, Col);
 
          --  If the column is 0, the entity really ended on the end of the
          --  previous line.
@@ -1598,10 +1604,15 @@ package body Src_Editor_Buffer is
          end if;
 
          if Sloc_End.Column = 0 then
-            Get_Iter_At_Line_Index
-              (Buffer, Entity_End,
-               Gint (Buffer_Line - 1) + Slice_Offset_Line + 1,
-               0);
+            Line := Gint (Buffer_Line - 1) + Slice_Offset_Line + 1;
+
+            if not Is_Valid_Position (Buffer, Line, 0) then
+               Trace (Me, "!!! INCORRECT POSITION IN BUFFER: "
+                      & Line'Img & " 0");
+               return False;
+            end if;
+
+            Get_Iter_At_Line_Index (Buffer, Entity_End, Line, 0);
             Backward_Char (Entity_End, Success);
 
          else
@@ -1611,10 +1622,15 @@ package body Src_Editor_Buffer is
                Col := Gint (Sloc_End.Column) - 1;
             end if;
 
-            Get_Iter_At_Line_Index
-              (Buffer, Entity_End,
-               Gint (Buffer_Line - 1) + Slice_Offset_Line,
-               Col);
+            Line := Gint (Buffer_Line - 1) + Slice_Offset_Line;
+
+            if not Is_Valid_Position (Buffer, Line, Col) then
+               Trace (Me, "!!! INCORRECT POSITION IN BUFFER: "
+                      & Line'Img & Col'Img);
+               return False;
+            end if;
+
+            Get_Iter_At_Line_Index (Buffer, Entity_End, Line, Col);
             Forward_Char (Entity_End, Success);
          end if;
 
