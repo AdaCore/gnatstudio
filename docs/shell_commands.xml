@@ -1,10 +1,27 @@
 <?xml version="1.0" ?>
 
 <!--  This file contains the documentation of all the shell commands that
-      are exported by GPS
+      are exported by GPS.
+      We avoid hard-coded descriptions, so that it is easier to translate the
+      GPS help, and to check the spelling in the documentation.
+      User can also add their own knowledge database
   -->
 
+<!--  Known bug:
+      - static methods are incorrectly implemented in python, and there is no
+        way to find the name of the class from the static method object. As
+        a result, the fully qualified name doesn't include the class. For
+        instance:   GPS.HTML.browse is searced as GPS.browse in fact
+
+        To account for this, the <shell_doc> tag accepts a real_name attribute
+        which should contain the fully qualified name
+-->
+
 <docs>
+  <!--#################################################################
+    ####   Top level functions
+    ###################################################################-->
+
   <shell_doc name="GPS.get_system_dir">
      <return>The install directory for GPS</return>
      <description>Return the installation directory for GPS.
@@ -51,5 +68,531 @@ be dynamically loaded</description>
      <see_also name="GPS.insmod()" />
   </shell_doc>
 
+  <shell_doc name="GPS.supported_languages">
+     <return>List of strings</return>
+     <description>Return the list of languages for which GPS has special handling. Any file can be open in GPS, but some extensions are recognized specially by GPS to provide syntax highlighting, cross-references, or other special handling. See the GPS documentation on how to add support for new languages in GPS.
+
+The returned list is sorted alphabetically, and the name of the language has been normalized (start with an upper case, and use lowercases for the rest except after an underscore character)</description>
+     <example lang="python">
+        GPS.supported_languages()[0]
+        will return the name of the first supported language
+     </example>
+  </shell_doc>
+
+  <shell_doc name="GPS.execute_action">
+     <param name="action">Name of the action to execute</param>
+     <description>Execute one of the actions defined in GPS. Such actions are
+either predefined by GPS or defined by the users through customization files.
+See the GPS documentation for more information on how to create new actions.
+Through this call, GPS will not wait for the action to terminate, therefore the
+action should not contain external commands to execute, if you expect to get
+their output.
+
+The list of existing actions can be found through the Edit->Actions menu.
+
+The action will not be executed if the current context is not appropriate for
+this action.
+</description>
+     <example lang="python">
+        GPS.execute_action (action="Split vertically")
+        will split the current window vertically 
+     </example>
+  </shell_doc>
+
+  <shell_doc name="GPS.parse_xml">
+     <param name="xml">The XML string to parse</param>
+     <description>Load an XML customization string. This string should contain one or more toplevel tags similar to what is normally found in custom files, such as &lt;key&gt;, &lt;alias&gt;, &lt;action&gt;,..
+
+Optionally you can also pass the full contents of an XML file, starting from the &lt;?xml?&gt; header.</description>
+     <example lang="python">
+        GPS.parse_xml \
+          ("""&lt;action name="A"&gt;&lt;shell&gt;my_action&lt;/shell&gt;&lt;/action&gt; \ 
+              &lt;menu action="A"&gt;&lt;title&gt;/Edit/A&lt;/title&gt;&lt;/menu&gt;""")
+        Adds a new menu in GPS, which executes the command my_action
+     </example>
+  </shell_doc>
+
+  <shell_doc name="GPS.set_busy">
+     <description>Activate the "busy" cursor in GPS</description>
+     <see_also>GPS.unset_busy()</see_also>
+  </shell_doc>
+
+  <shell_doc name="GPS.unset_busy">
+     <description>Remove the "busy" cursor</description>
+     <see_also>GPS.set_busy()</see_also>
+  </shell_doc>
+
+  <shell_doc name="GPS.current_context">
+     <return>An instance of GPS.FileContext, GPS.AreaContext,...</return>
+     <description>Returns the current context in GPS. This is the currently selected file, line, column, project,... depending on what window is currently active</description>
+     <see_also name="GPS.Editor.get_line()"/>
+     <see_also name="GPS.Editor.*: Most of these functions apply to the current editor" />
+  </shell_doc> 
+
+  <!--#################################################################
+    ####   File class
+    ###################################################################-->
+
+  <shell_doc name="GPS.File.__init__">
+      <param name="self">The instance being constructed</param>
+      <param name="name">Name of the file associated with this instance</param>
+      <description>Initializes a new instance of the class File. This doesn't need to be called explicitly, since GPS will call it automatically when you create such an instance. If name is a base file name (no directory is specified), then GPS will attempt to search for this file in the list of source directories of the project. If a directory is specified, or the base file name wasn't found in the source directories, then the file name is considered as relative to the current directory.</description>
+      <example lang="python">
+         file=GPS.File("/tmp/work")
+         print file.name()
+      </example>
+      <see_also name="GPS.File.name" />
+  </shell_doc>
+
+  <shell_doc name="GPS.File.name">
+      <param name="self">The instance whose name you want to get</param>
+      <return>A string, the name of the file</return>
+      <description>Return the name of the file associated with self. This is an absolute file name, including directories from the root of the filesystem</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.File.other_file">
+      <param name="self">The instance to which the operation applies</param>
+      <return>An instance of GPS.File</return>
+      <description>Return the name of the other file semantically associated with this one. In Ada this is the spec or body of the same package depending on the type of this file. In C, this will generally be the .c or .h file with the same base name.</description>
+      <example lang="python">
+         GPS.File ("tokens.ads").other_file().name()
+         will print "/full/path/to/tokens.adb" in the context of the project
+         file used for the GPS tutorial.
+      </example>
+  </shell_doc>
+
+  <shell_doc name="GPS.File.project">
+      <param name="self">The instance of File to which the operation applies</param>
+      <return>An instance of GPS.Project</return>
+      <description>Return the project to which file belongs. If file is not one of the souces of the project, the root project is returned.</description>
+      <example lang="python">
+         GPS.File ("tokens.ads").project().name()
+         will print "/full/path/to/sdc.gpr" in the context of the project file
+         used for the GPS tutorial
+      </example>
+  </shell_doc>
+
+  <!--#################################################################
+    ####   Entity class
+    ###################################################################-->
+
+  <shell_doc name="GPS.Entity.__init__">
+      <param name="self">The instance of GPS.Entity we are building</param>
+      <param name="name">A string, the name of the entity</param>
+      <param name="file" default="None">An instance of GPS.File, in which the entity is referenced</param>
+      <param name="line" default="1">An integer, the line at which the entity is referenced</param>
+      <param name="column" default="1">An integer, the column at which the entity is referenced</param>
+      <description>Initializes a new instance of the Entity class, from any reference to the entity. The file parameter should only be omitted for a predefined entity of the language. This will only work for languages for which a cross-reference engine has been defined</description>
+      <example lang="python">
+          GPS.Entity ("foo", GPS.File ("a.adb"), 10, 23).decl_file().name()
+          will return the full path name of the file in which the entity "foo",
+          referenced in a.adb at line 10, column 23, is defined.
+      </example>
+  </shell_doc>
+
+  <shell_doc name="GPS.Entity.name">
+      <param name="self">The instance of GPS.Entity</param>
+      <return>A string, the name of the entity</return>
+      <description>Return the name of the entity. The casing of the name has been normalized to lower-cases for case-insensitive languages</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.Entity.decl_file">
+      <param name="self">The instance of GPS.Entity</param>
+      <return>An instance of GPS.File, in which the entity is declared</return>
+      <description>Return the file in which the entity is declared. This file's name is "&lt;predefined&gt;" for predefined entities</description>
+      <example lang="python">
+          entity=GPS.Entity  ("integer")
+          if entity.decl_file().name == "&lt;predefined&gt;":
+             print "This is a predefined entity"
+      </example>
+      <see_also name="GPS.Entity.decl_line()"/>
+      <see_also name="GPS.Entity.decl_column()"/>
+  </shell_doc>
+
+  <shell_doc name="GPS.Entity.decl_line">
+      <param name="self">The instance of GPS.Entity</param>
+      <return>An integer, the line at which the entity is declared</return>
+      <description>Return the line in self.decl_file() at which the entity is declared</description>
+      <see_also name="GPS.Entity.decl_file()"/>
+      <see_also name="GPS.Entity.decl_column()"/>
+  </shell_doc>
+
+  <shell_doc name="GPS.Entity.decl_column">
+      <param name="self">The instance of GPS.Entity</param>
+      <return>An integer, the column at which the entity is declared</return>
+      <description>Return the column in self.decl_file() at which the entity is declared</description>
+      <see_also name="GPS.Entity.decl_file()"/>
+      <see_also name="GPS.Entity.decl_line()"/>
+  </shell_doc>
+
+  <shell_doc name="GPS.Entity.body">
+      <param name="self">The instance of GPS.Entity</param>
+      <return>An instance of GPS.FileLocation</return>
+      <description>Return the location at which the implementation of the entity is found. For Ada subprograms and packages, this corresponds to the body of the entity. For Ada private types, this is the location of the full declaration for the type. For entities which do not have a notion of body, this returns the location of the declaration for the entity.</description>
+      <example lang="python">
+           entity = GPS.Entity ("bar", GPS.File ("a.adb"), 10, 23)
+           body = entity.body()
+           print "The subprogram bar's implementation is found at " \
+              + body.file.name() + ':' + body.line() + ':' + body.column()
+      </example>
+  </shell_doc>
+  
+  <!--#################################################################
+    ####   FileLocation class
+    ###################################################################-->
+
+  <shell_doc name="GPS.FileLocation.__init__">
+      <param name="self">The instance we are building</param>
+      <param name="filename">An instance of GPS.File</param>
+      <param name="line">An integer</param>
+      <param name="column">An integer</param>
+      <description>Initializes a new instance of GPS.FileLocation.</description>
+      <example lang="python">
+          location = GPS.FileLocation (GPS.File ("a.adb"), 1, 2)
+      </example>
+  </shell_doc> 
+
+  <shell_doc name="GPS.FileLocation.line">
+      <param name="self">The instance of GPS.FileLocation</param>
+      <return>An integer, the line of the location</return>
+      <description>Return the line of the location</description>
+      <see_also>GPS.FileLocation.file()</see_also>
+      <see_also>GPS.FileLocation.column()</see_also>
+  </shell_doc>
+
+  <shell_doc name="GPS.FileLocation.column">
+      <param name="self">The instance of GPS.FileLocation</param>
+      <return>An integer, the column of the location</return>
+      <description>Return the column of the location</description>
+      <see_also>GPS.FileLocation.file()</see_also>
+      <see_also>GPS.FileLocation.line()</see_also>
+  </shell_doc>
+
+  <shell_doc name="GPS.FileLocation.file">
+      <param name="self">The instance of GPS.FileLocation</param>
+      <return>An instance of GPS.File, the file of the location</return>
+      <description>Return the file of the location</description>
+      <see_also>GPS.FileLocation.line()</see_also>
+      <see_also>GPS.FileLocation.column()</see_also>
+  </shell_doc>
+
+  <!--#################################################################
+    ####   Project class
+    ###################################################################-->
+
+  <shell_doc name="GPS.Project.__init__">
+      <param name="self">The instance of GPS.Project that we are building</param>
+      <param name="name">The project name</param>
+      <description>Initializes an instance of GPS.Project. The project must be currently loaded in GPS</description>
+      <see_also name="GPS.Project.name"/>
+  </shell_doc>
+
+  <shell_doc name="GPS.root"
+             real_name="GPS.Project.root">
+      <return>An instance of GPS.Project</return>
+      <description>Return the root project currently loaded in GPS</description>
+      <example lang="python">
+           print "Current project is " + \
+                 GPS.Project.root().name()
+      </example>
+  </shell_doc>
+
+  <shell_doc name="GPS.recompute"
+             real_name="GPS.Project.recompute">
+       <description>Recompute the contents of a project, including the list of source files that are automatically loaded from the source directories. The project file is not reloaded from the disk, and this should only be used if you have created new source files outside of GPS for instance</description>
+       <example lang="python">
+            GPS.Project.recompute()
+       </example>
+  </shell_doc>
+
+  <shell_doc name="GPS.load"
+             real_name="GPS.Project.load">
+       <param name="filename">A string, the full path to a project file</param>
+       <return>An instance of GPS.Project</return>
+       <description>Load a new project, which replaces the current root project, and return a handle to it. All imported projects are also loaded at the same time. If the project is not found, a default project is loaded</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.Project.name">
+       <param name="self">An instance of GPS.Project</param>
+       <return>A string, the name of the project</return>
+       <description>Return the name of the project</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.Project.file">
+       <param name="self">An instance of GPS.Project</param>
+       <return>An instance of GPS.File</return>
+       <description>Return the project file</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.Project.ancestor_deps">
+       <param name="self">An instance of GPS.Project</param>
+       <return>A list of instances of GPS.Project</return>
+       <description>Return the list of projects that might contain sources that depend on the project's sources. When doing extensive searches it isn't worth checking other projects. Project itself is included in the list.
+This is also the list of projects that import self.</description>
+       <example lang="python">
+           for p in GPS.Project("kernel").ancestor_deps(): print p.name()
+           will print the name of all the projects that import kernel.gpr
+       </example>
+  </shell_doc>
+
+  <shell_doc name="GPS.Project.get_attribute_as_string">
+       <param name="self">An instance of GPS.Project</param>
+       <param name="attribute">A string, the name of the attribute</param>
+       <param name="package" default="">A string, the name of the attribute's package</param>
+       <param name="index" default="">A string, the name of the index for the specific value of this attribute</param>
+       <return>A string, the value of this attribute</return>
+       <description>Fetch the value of the attribute in the project.
+If the package is not specified, the attribute at the toplevel of the project is queried.
+The index only needs to be specified if it applies to that attribute.
+If the attribute value is stored as a list, the result string is a concatenation of all the elements of the list. This function always returns the value of the attribute in the currently selected scenario.</description>
+       <example lang="python">
+           If the project file contains the following text:
+               project Default is
+                 for Exec_Dir use "exec/";
+                 package Compiler is
+                    for Switches ("file.adb") use ("-c", "-g");
+                 end Compiler;
+               end Default;
+
+            Then the following commands;
+                a = GPS.Project ("default").get_attribute_as_string ("exec_dir")
+                b = GPS.Project ("default").get_attribute_as_string ("switches", package="compiler", index="file.adb")  
+
+            will set the variables to
+                a = "exec/"
+                b = "-c -g" 
+       </example>
+       <see_also name="GPS.Project.scenario_variables()"/>
+       <see_also name="GPS.Project.get_attribute_as_list()"/>
+       <see_also name="GPS.Project.get_tool_switches_as_string()"/>
+  </shell_doc>
+
+  <shell_doc name="GPS.Project.get_attribute_as_list">
+       <param name="self">An instance of GPS.Project</param>
+       <param name="attribute">A string, the name of the attribute</param>
+       <param name="package" default="">A string, the name of the attribute's package</param>
+       <param name="index" default="">A string, the name of the index for the specific value of this attribute</param>
+       <return>A list of strings</return>
+       <description>Fetch the value of the attribute in the project.
+If the package is not specified, the attribute at the toplevel of the project is queried.
+The index only needs to be specified if it applies to that attribute.
+If the attribute value is stored as a simple string, a list with a single element is returned. This function always returns the value of the attribute in the currently selected scenario.</description>
+       <example lang="python">
+           If the project file contains the following text:
+               project Default is
+                 for Exec_Dir use "exec/";
+                 package Compiler is
+                    for Switches ("file.adb") use ("-c", "-g");
+                 end Compiler;
+               end Default;
+
+            Then the following commands;
+                a = GPS.Project ("default").get_attribute_as_list ("exec_dir")
+                b = GPS.Project ("default").get_attribute_as_list ("switches", package="compiler", index="file.adb")  
+
+            will set the variables to
+                a = ("exec/")
+                b = ("-c", "-g")
+       </example>
+       <see_also name="GPS.Project.scenario_variables()"/>
+       <see_also name="GPS.Project.get_attribute_as_string()"/>
+       <see_also name="GPS.Project.get_tool_switches_as_list()"/>
+  </shell_doc>
+
+  <shell_doc name="GPS.Project.get_tool_switches_as_list">
+       <param name="self">An instance of GPS.Project</param>
+       <param name="tool">The name of the tool whose switches you want to get</param>
+       <return>A list of strings</return>
+       <description>Same as get_attribute_as_list, but specialized for the switches of a specific tool. Tools are defined through XML customization files, see the GPS documentation for more information</description>
+       <example lang="python">
+           If GPS has loaded a customization file that contains the following
+           tags:
+               &lt;?xml version="1.0" ?&gt;
+               &lt;toolexample&gt;
+                  &lt;tool name="Find"&gt;
+                     &lt;switches&gt;
+                        &lt;check label="Follow links" switch="-follow" /&gt;
+                     &lt;/switches&gt;
+                  &lt;/tool&gt;
+               &lt;/toolexample&gt;
+
+           The user will as a result be able to edit the switches for Find in
+           the standard Project Properties editor.
+
+           Then the python command
+               GPS.Project ("default").get_tool_switches_as_list ("Find")
+           will return the list of switches that were set by the user in the
+           Project Properties editor.
+       </example>
+       <see_also name="GPS.Project.get_attribute_as_list()"/>
+       <see_also name="GPS.Project.get_tool_switches_as_string()"/>
+  </shell_doc>
+
+  <shell_doc name="GPS.Project.get_tool_switches_as_string">
+       <param name="self">An instance of GPS.Project</param>
+       <param name="tool">The name of the tool whose switches you want to get</param>
+       <return>A string</return>
+       <description>Same as GPS.Project.get_attribute_as_string, but specialized for a specific tool.</description>
+       <see_also name="GPS.Project.get_tool_switches_as_list()"/>
+  </shell_doc>
+
+  <shell_doc name="GPS.scenario_variables"
+             real_name="GPS.Project.scenario_variables">
+     <return>hash table associating variable names and values</return>
+     <description>Return the list of scenario variables for the current project hierarchy, and their current value. These variables are visible at the top of the Project View in the GPS window</description>
+     <example lang="python">
+        GPS.scenario_variables["foo"]
+        returns the current value for the variable foo
+     </example>
+  </shell_doc>
+
+  <shell_doc name="GPS.scenario_variables_cmd_line"
+             real_name="GPS.Project.scenario_variables_cmd_line">
+     <param name="prefix" default="">String to print before each variable in the output</param>
+     <return>a string</return>
+     <description>Return a concatenation of VARIABLE=VALUE, each preceded by the given prefix. This string will generally be used when calling external tools, for instance make or GNAT</description>
+     <example lang="python">
+        The following GPS action can be defined in an XML file, and will launch
+        the make command with the appropriate setup for the environment
+        variables:
+           &lt;action name="launch make"&gt; \
+             &lt;shell lang="python"&gt;GPS.scenario_variables_cmd_line()&lt;/shell&gt;  \
+             &lt;external&gt;make %1&lt;/external&gt; \
+           &lt;/action&gt;
+     </example>
+  </shell_doc>
+
+  <!--#################################################################
+    ####   FileContext class
+    ###################################################################-->
+
+  <shell_doc name="GPS.FileContext.__init__">
+      <param name="self">The instance we are building</param>
+      <description>Dummy function, whose goal is to prevent user-creation of a GPS.FileContext instance. Such instances can only be created internally by GPS</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.FileContext.file">
+      <param name="self">The instance of GPS.FileContext</param>
+      <return>An instance of GPS.File</return>
+      <description>Return the name of the file in the context</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.FileContext.project">
+      <param name="self">The instance of GPS.FileContext</param>
+      <return>An instance of GPS.Project</return>
+      <description>Return the project in the context, or the root project if none was specified in the context</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.FileContext.directory">
+      <param name="self">The instance of GPS.FileContext</param>
+      <return>A string</return>
+      <description>Return the current directory in the context</description>
+  </shell_doc>
+
+  <!--#################################################################
+    ####   AreaContext class
+    ###################################################################-->
+
+  <shell_doc name="GPS.AreaContext.__init__">
+      <param name="self">The instance we are building</param>
+      <description>Dummy function, whose goal is to prevent user-creation of a GPS.AreaContext instance. Such instances can only be created internally by GPS</description>
+  </shell_doc> 
+
+  <shell_doc name="GPS.AreaContext.start_line">
+      <param name="self">The instance of GPS.AreaContext</param>
+      <return>An integer</return>
+      <description>Return the first selected line in the context</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.AreaContext.end_line">
+      <param name="self">The instance of GPS.AreaContext</param>
+      <return>An integer</return>
+      <description>Return the last selected line in the context</description>
+  </shell_doc>
+
+  <!--#################################################################
+    ####   EntityContext class
+    ###################################################################-->
+
+  <shell_doc name="GPS.EntityContext.__init__">
+      <param name="self">The instance we are building</param>
+      <description>Dummy function, whose goal is to prevent user-creation of a GPS.EntityContext instance. Such instances can only be created internally by GPS</description>
+  </shell_doc> 
+
+  <shell_doc name="GPS.EntityContext.entity">
+      <param name="self">The instance of GPS.EntityContext</param>
+      <return>An instance of GPS.Entity</return>
+      <description>Return the entity stored in the context</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.EntityContext.location">
+      <param name="self">The instance of GPS.EntityContext</param>
+      <return>An instance of GPS.FileLocation</return>
+      <description>Return the file location stored in the context</description>
+  </shell_doc>
+
+
+  <!--#################################################################
+    ####   Help class
+    ###################################################################-->
+
+  <shell_doc name="GPS.Help">
+     <description>This class gives access to the external documentation for shell commands. This external documentation is stored in the file shell_commands.xml, part of the GPS installation, and is what you are currently seeing.
+You almost never need to use this class yourself, since it is used implicitly by Python when you call the help(object) command at the GPS prompt</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.Help.__init__">
+     <param name="self">The instance of Help</param>
+     <description>Initializes the instance of the Help class. This parses the XML file that contains the description of all the commands. With python, the memory occupied by this XML tree will be automatically freed. However, with the GPS shell you need to explicitly call GPS.Help.reset()</description>
+     <see_also name="GPS.Help.reset()" />
+  </shell_doc>
+
+  <shell_doc name="GPS.Help.getdoc">
+     <param name="self">The instance of Help</param>
+     <param name="name">The fully qualified name of the command</param>
+     <return>A string, containing the help for the command</return>
+     <description>Search, into the XML file shell_commands.xml, the documentation for this specific command or entity. If no documentation is found, an error is raised</description>
+     <example lang="python">
+        print GPS.Help().getdoc("GPS.Help.getdoc")
+     </example>
+     <example lang="shell">
+        Help
+        Help.getdoc %1 "GPS.Help.getdoc"
+        Help.reset %2
+     </example>
+  </shell_doc>
+
+  <shell_doc name="GPS.Help.reset">
+     <param name="self">The instance of Help</param>
+     <description>Free the memory occupied by this instance. This frees the XML tree that is kept in memory. As a result, you can no longer call GPS.Help.getdoc() afterward.</description>
+  </shell_doc>
      
+  <!--#################################################################
+    ####   HTML class
+    ###################################################################-->
+
+  <shell_doc name="GPS.HTML">
+     <description>This class gives access to the help system of GPS, as well as to the integrated browser</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.add_doc_directory"
+             real_name="GPS.HTML.add_doc_directory">
+     <param name="directory">Directory that contains the documentation</param>
+     <description>Add a new directory to the GPS_DOC_PATH environment variable. This directory is searched for documentation files. If this directory contains a gps_index.xml file, it is parsed to find the list of documentation files to
+add to the Help menu. See the GPS documentation for more information on the
+format of the gps_index.xml files</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.browse" real_name="GPS.HTML.browse" >
+     <param name="URL">Name of the file to browse</param>
+     <param name="anchor" default="">Location in the file where to jump to</param>
+     <description>Open the GPS html viewer, and load the given URL. If anchor matches a &lt;a&gt; tag in this file, GPS will jump to it. If URL isn't an absolute file name, it is searched in the path set by the environment variable GPS_DOC_PATH.</description>
+     <see_also name="GPS.HTML.add_doc_directory()"/>
+     <example lang="python">
+         GPS.HTML.browse ("gps.html")
+         will open the GPS documentation in the internal browser
+     </example>
+  </shell_doc>
+
+
 </docs>
