@@ -50,11 +50,13 @@ package body Commands.Console is
 
    function Execute (Command : access Console_Command) return Boolean is
    begin
-      Insert (Command.Kernel,
-              Command.Text.all,
-              Command.Highlight_Sloc,
-              Command.Add_LF,
-              Command.Insert_Mode);
+      if Command.Text /= null then
+         Insert (Command.Kernel,
+                 Command.Text.all,
+                 Command.Highlight_Sloc,
+                 Command.Add_LF,
+                 Command.Insert_Mode);
+      end if;
 
       Command_Finished (Command, True);
 
