@@ -290,7 +290,7 @@ package body Gtkada.File_Selector is
       end if;
 
       Free (Text);
-      Win.Remaining_Files := Tail (Win.Remaining_Files);
+      Win.Remaining_Files := Next (Win.Remaining_Files);
 
       return not Is_Empty (Win.Remaining_Files);
    end Display_File;
@@ -310,7 +310,7 @@ package body Gtkada.File_Selector is
       function Compare (Arg1, Arg2 : String) return Boolean is
       begin
          return Arg1 < Arg2;
-     end Compare;
+      end Compare;
 
    begin
       if not Win.Current_Directory_Is_Open then
@@ -406,7 +406,7 @@ package body Gtkada.File_Selector is
                Filter := Head (C);
                exit;
             else
-               C := Tail (C);
+               C := Next (C);
             end if;
          end loop;
       end;
