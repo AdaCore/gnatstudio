@@ -33,19 +33,20 @@ with Gdk.Types.Keysyms;           use Gdk.Types.Keysyms;
 with Glib;                        use Glib;
 with Glib.Object;                 use Glib.Object;
 with Glib.Values;                 use Glib.Values;
-with GPS.Intl;                  use GPS.Intl;
-with GPS.Kernel;                use GPS.Kernel;
-with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
-with GPS.Kernel.Console;        use GPS.Kernel.Console;
-with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
-with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
-with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
-with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
-with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
-with GPS.Kernel.Project;        use GPS.Kernel.Project;
-with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
-with GPS.Kernel.Timeout;        use GPS.Kernel.Timeout;
-with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
+with GPS.Intl;                    use GPS.Intl;
+with GPS.Main_Window;             use GPS.Main_Window;
+with GPS.Kernel;                  use GPS.Kernel;
+with GPS.Kernel.Actions;          use GPS.Kernel.Actions;
+with GPS.Kernel.Console;          use GPS.Kernel.Console;
+with GPS.Kernel.Contexts;         use GPS.Kernel.Contexts;
+with GPS.Kernel.Hooks;            use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;              use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;          use GPS.Kernel.Modules;
+with GPS.Kernel.Preferences;      use GPS.Kernel.Preferences;
+with GPS.Kernel.Project;          use GPS.Kernel.Project;
+with GPS.Kernel.Scripts;          use GPS.Kernel.Scripts;
+with GPS.Kernel.Timeout;          use GPS.Kernel.Timeout;
+with GPS.Kernel.Standard_Hooks;   use GPS.Kernel.Standard_Hooks;
 with Language;                    use Language;
 with Language_Handlers;           use Language_Handlers;
 with Basic_Types;                 use Basic_Types;
@@ -95,7 +96,7 @@ with Gdk.Pixbuf;                  use Gdk.Pixbuf;
 
 with Generic_List;
 with File_Utils;                  use File_Utils;
-with GVD.Preferences; use GVD.Preferences;
+with GVD.Preferences;             use GVD.Preferences;
 
 with Src_Editor_Module.Line_Highlighting;
 with Src_Editor_Buffer.Buffer_Commands; use Src_Editor_Buffer.Buffer_Commands;
@@ -325,6 +326,22 @@ package body Src_Editor_Module is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  File->Save All menu
 
+   procedure On_Save_Desktop
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  File->Save Desktop menu
+
+   procedure On_Save_Default_Desktop
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  File->Save Default Desktop menu
+
+   procedure On_Change_Dir
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  File->Change Directory... menu
+
+   procedure On_Exit
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  File->Exit menu
+
    procedure On_Print
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  File->Print menu
@@ -380,6 +397,15 @@ package body Src_Editor_Module is
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  See doc for inherited subprogram
    --  Edit a file (from a contextual menu)
+
+   type Close_Command is new Interactive_Command with record
+      Kernel    : Kernel_Handle;
+      Close_All : Boolean;
+   end record;
+   function Execute
+     (Command : access Close_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  Close the current window (or all windows if Close_All is True).
 
    function Default_Factory
      (Kernel : access Kernel_Handle_Record'Class;
@@ -3065,6 +3091,104 @@ package body Src_Editor_Module is
                 "Unexpected exception: " & Exception_Information (E));
    end On_Save_All;
 
+   -------------------
+   -- On_Change_Dir --
+   -------------------
+
+   procedure On_Change_Dir
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+
+      Dir    : constant String := Select_Directory
+        (-"Select a directory",
+         History => Get_History (Kernel),
+         Parent  => Gtk_Window (Get_Current_Window (Kernel)));
+
+   begin
+      if Dir /= "" then
+         Change_Dir (Dir);
+      end if;
+   end On_Change_Dir;
+
+   ---------------------
+   -- On_Save_Desktop --
+   ---------------------
+
+   procedure On_Save_Desktop
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+   begin
+      Save_Desktop (Kernel, As_Default_Desktop => False);
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+   end On_Save_Desktop;
+
+   -----------------------------
+   -- On_Save_Default_Desktop --
+   -----------------------------
+
+   procedure On_Save_Default_Desktop
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+   begin
+      Save_Desktop (Kernel, As_Default_Desktop => True);
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+   end On_Save_Default_Desktop;
+
+   -------------
+   -- Execute --
+   -------------
+
+   function Execute
+     (Command : access Close_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      pragma Unreferenced (Context);
+      MDI   : MDI_Window;
+      Child : MDI_Child;
+
+   begin
+      if Command.Close_All then
+         if Save_MDI_Children (Command.Kernel) then
+            Close_All_Children (Command.Kernel);
+         end if;
+      else
+         MDI := Get_MDI (Command.Kernel);
+         Child := Get_Focus_Child (MDI);
+
+         if Child /= null then
+            Close (MDI, Get_Widget (Child));
+         end if;
+      end if;
+
+      return Commands.Success;
+   end Execute;
+
+   -------------
+   -- On_Exit --
+   -------------
+
+   procedure On_Exit
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+   begin
+      GPS.Main_Window.Quit (GPS_Window (Get_Main_Window (Kernel)));
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+   end On_Exit;
+
    --------------
    -- On_Print --
    --------------
@@ -4019,40 +4143,95 @@ package body Src_Editor_Module is
 
       --  Menus
 
-      Register_Menu (Kernel, File, -"_Open...",  Stock_Open,
-                     On_Open_File'Access, null,
-                     GDK_F3, Ref_Item => -"Save More");
-      Register_Menu (Kernel, File, -"Open _From Project...",  Stock_Open,
-                     On_Open_From_Path'Access, null,
-                     GDK_F3, Shift_Mask, Ref_Item => -"Save More");
+      Register_Menu
+        (Kernel, File, -"_New", Stock_New, On_New_File'Access,
+         Ref_Item => -"Messages");
+      Register_Menu
+        (Kernel, File, -"New _View", "", On_New_View'Access,
+         Ref_Item => -"Messages");
+      Register_Menu
+        (Kernel, File, -"_Open...",  Stock_Open,
+         On_Open_File'Access, null, GDK_F3,
+         Ref_Item => -"Messages");
+      Register_Menu
+        (Kernel, File, -"Open _From Project...",  Stock_Open,
+         On_Open_From_Path'Access, null,
+         GDK_F3, Shift_Mask,
+         Ref_Item => -"Messages");
 
-      Recent_Menu_Item :=
-        Register_Menu (Kernel, File, -"_Recent", "", null,
-                       Ref_Item   => -"Open From Project...",
-                       Add_Before => False);
+      Recent_Menu_Item := Register_Menu
+        (Kernel, File, -"_Recent", "", null, Ref_Item => -"Messages");
       Associate (Get_History (Kernel).all,
                  Hist_Key,
                  Recent_Menu_Item,
                  new On_Recent'(Menu_Callback_Record with
                                 Kernel => Kernel_Handle (Kernel)));
 
-      Register_Menu (Kernel, File, -"_New", Stock_New, On_New_File'Access,
-                     Ref_Item => -"Open...");
-      Register_Menu (Kernel, File, -"New _View", "", On_New_View'Access,
-                     Ref_Item => -"Open...");
+      Register_Menu
+        (Kernel, File, -"_Save", Stock_Save,
+         On_Save'Access, null,
+         GDK_S, Control_Mask,
+         Ref_Item => -"Messages");
+      Register_Menu
+        (Kernel, File, -"Save _As...", Stock_Save_As,
+         On_Save_As'Access,
+         Ref_Item => -"Messages");
 
-      Register_Menu (Kernel, File, -"_Save", Stock_Save,
-                     On_Save'Access, null,
-                     GDK_S, Control_Mask, Ref_Item => -"Save More");
-      Register_Menu (Kernel, File, -"Save _As...", Stock_Save_As,
-                     On_Save_As'Access, Ref_Item => -"Save More");
-      Register_Menu (Kernel, Save, -"_All", "",
-                     On_Save_All'Access, Ref_Item => -"Desktop");
-
-      Register_Menu (Kernel, File, -"_Print", Stock_Print, On_Print'Access,
-                     Ref_Item => -"Exit");
+      Register_Menu
+        (Kernel, Save, -"_All", "",
+         On_Save_All'Access,
+         Ref_Item => -"Messages");
+      Register_Menu (Kernel, Save, -"Desktop", "", On_Save_Desktop'Access);
+      Register_Menu
+        (Kernel, Save, -"Default Desktop", "", On_Save_Default_Desktop'Access);
       Gtk_New (Mitem);
-      Register_Menu (Kernel, File, Mitem, Ref_Item => -"Exit");
+      Register_Menu (Kernel, File, Mitem, Ref_Item => -"Messages");
+
+      Register_Menu
+        (Kernel, File, -"Change _Directory...", "",
+         On_Change_Dir'Access, Ref_Item => -"Messages");
+
+      Register_Menu (Kernel, File, -"_Print", Stock_Print, On_Print'Access);
+      Gtk_New (Mitem);
+      Register_Menu (Kernel, File, Mitem);
+
+      Command := new Close_Command;
+      Close_Command (Command.all).Kernel := Kernel_Handle (Kernel);
+      Close_Command (Command.all).Close_All := False;
+      Register_Action
+        (Kernel, "Close current window", Command,
+           -"Close the currently selected window");
+
+      Register_Menu
+        (Kernel,
+         Parent_Path => File,
+         Text        => -"_Close",
+         Stock_Image => Stock_Close,
+         Callback    => null,
+         Command     => Commands.Command_Access (Command),
+         Accel_Key   => GDK_LC_w,
+         Accel_Mods  => Control_Mask);
+
+      Command := new Close_Command;
+      Close_Command (Command.all).Kernel := Kernel_Handle (Kernel);
+      Close_Command (Command.all).Close_All := True;
+      Register_Action
+        (Kernel, "Close all windows", Command,
+           -"Close all open windows, asking for confirmation when relevant");
+
+      Register_Menu
+        (Kernel,
+         Parent_Path => File,
+         Text        => -"Close _All",
+         Callback    => null,
+         Command     => Commands.Command_Access (Command),
+         Ref_Item    => -"Close",
+         Add_Before  => False);
+
+      Gtk_New (Mitem);
+      Register_Menu (Kernel, File, Mitem);
+
+      Register_Menu (Kernel, File, -"_Exit", "", On_Exit'Access);
 
       --  Note: callbacks for the Undo/Redo menu items will be added later
       --  by each source editor.
