@@ -60,36 +60,10 @@ package body Glide_Page is
    -- Load_Desktop --
    ------------------
 
-   procedure Load_Desktop
-     (Page   : access Glide_Page_Record'Class;
-      Window : access Glide_Window_Record'Class)
-   is
-      Child : MDI_Child;
-      Iter  : Child_Iterator;
+   procedure Load_Desktop (Window : access Glide_Window_Record'Class) is
+      Was_Loaded : Boolean;
    begin
-      if Load_Desktop (Window.Kernel) then
-         Iter := First_Child (Page.Process_Mdi);
-
-         loop
-            Child := Get (Iter);
-
-            exit when Child = null;
-
-            if Get_Widget (Child).all in Glide_Console_Record'Class then
-               Page.Console := Glide_Console (Get_Widget (Child));
-            end if;
-
-            Next (Iter);
-         end loop;
-
-      else
-         Gtk_New (Page.Console, Window.Kernel);
-         Child := Put (Page.Process_Mdi, Page.Console);
-         Set_Title (Child, "GPS Console");
-         Set_Dock_Side (Child, Bottom);
-         Dock_Child (Child);
-         Raise_Child (Child);
-      end if;
+      Was_Loaded := Load_Desktop (Window.Kernel);
    end Load_Desktop;
 
    --------------
