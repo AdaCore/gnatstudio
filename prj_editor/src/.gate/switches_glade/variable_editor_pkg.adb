@@ -82,6 +82,7 @@ begin
    Pack_Start (Variable_Editor.Vbox31, Variable_Editor.Hbuttonbox2, False, False, 0);
 
    Gtk_New (Variable_Editor.Add_Button);
+   Set_Relief (Variable_Editor.Add_Button, Relief_Normal);
    Set_Flags (Variable_Editor.Add_Button, Can_Default);
    Widget_Callback.Object_Connect
      (Variable_Editor.Add_Button, "clicked",
@@ -104,6 +105,7 @@ begin
    Pack_Start (Variable_Editor.Hbox4, Variable_Editor.Label57, True, True, 0);
 
    Gtk_New (Variable_Editor.Close_Button);
+   Set_Relief (Variable_Editor.Close_Button, Relief_Normal);
    Set_Flags (Variable_Editor.Close_Button, Can_Default);
    Widget_Callback.Object_Connect
      (Variable_Editor.Close_Button, "clicked",

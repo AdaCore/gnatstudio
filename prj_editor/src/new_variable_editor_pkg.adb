@@ -175,13 +175,13 @@ begin
       Widget_Callback.To_Marshaller (On_Typed_Variable_Toggled'Access), New_Variable_Editor);
 
    Gtk_New
-     (New_Variable_Editor.Alignment5, 1.0, 0.5, 0.9, 
+     (New_Variable_Editor.Untyped_Alignment, 1.0, 0.5, 0.9, 
       0.9);
-   Pack_Start (New_Variable_Editor.Vbox39, New_Variable_Editor.Alignment5, True, True, 0);
+   Pack_Start (New_Variable_Editor.Vbox39, New_Variable_Editor.Untyped_Alignment, True, True, 0);
 
    Gtk_New (New_Variable_Editor.List_Scrolled);
    Set_Policy (New_Variable_Editor.List_Scrolled, Policy_Never, Policy_Always);
-   Add (New_Variable_Editor.Alignment5, New_Variable_Editor.List_Scrolled);
+   Add (New_Variable_Editor.Untyped_Alignment, New_Variable_Editor.List_Scrolled);
 
    Gtk_New (New_Variable_Editor.List_Value);
    Set_Editable (New_Variable_Editor.List_Value, True);
@@ -196,13 +196,13 @@ begin
       Widget_Callback.To_Marshaller (On_Typed_Variable_Toggled'Access), New_Variable_Editor);
 
    Gtk_New
-     (New_Variable_Editor.Alignment6, 1.0, 0.5, 0.9, 
+     (New_Variable_Editor.Single_Alignment, 1.0, 0.5, 0.9, 
       0.9);
-   Pack_Start (New_Variable_Editor.Vbox39, New_Variable_Editor.Alignment6, False, False, 0);
+   Pack_Start (New_Variable_Editor.Vbox39, New_Variable_Editor.Single_Alignment, False, False, 0);
 
    Gtk_New (New_Variable_Editor.Single_Value);
    Set_Editable (New_Variable_Editor.Single_Value, True);
-   Add (New_Variable_Editor.Alignment6, New_Variable_Editor.Single_Value);
+   Add (New_Variable_Editor.Single_Alignment, New_Variable_Editor.Single_Value);
 
    Gtk_New_Hseparator (New_Variable_Editor.Hseparator4);
    Pack_Start (New_Variable_Editor.Vbox37, New_Variable_Editor.Hseparator4, False, False, 0);
@@ -215,6 +215,7 @@ begin
    Pack_Start (New_Variable_Editor.Vbox37, New_Variable_Editor.Hbuttonbox3, False, False, 0);
 
    Gtk_New (New_Variable_Editor.Add_Button, -"Add");
+   Set_Relief (New_Variable_Editor.Add_Button, Relief_Normal);
    Set_Flags (New_Variable_Editor.Add_Button, Can_Default);
    Widget_Callback.Object_Connect
      (New_Variable_Editor.Add_Button, "clicked",
@@ -222,6 +223,7 @@ begin
    Add (New_Variable_Editor.Hbuttonbox3, New_Variable_Editor.Add_Button);
 
    Gtk_New (New_Variable_Editor.Cancel_Button, -"Cancel");
+   Set_Relief (New_Variable_Editor.Cancel_Button, Relief_Normal);
    Set_Flags (New_Variable_Editor.Cancel_Button, Can_Default);
    Widget_Callback.Object_Connect
      (New_Variable_Editor.Cancel_Button, "clicked",

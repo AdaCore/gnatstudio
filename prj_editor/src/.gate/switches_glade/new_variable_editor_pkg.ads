@@ -40,11 +40,11 @@ package New_Variable_Editor_Pkg is
       Enumeration_Scrolled : Gtk_Scrolled_Window;
       Enumeration_Value : Gtk_Text;
       Untyped_List_Variable : Gtk_Radio_Button;
-      Alignment5 : Gtk_Alignment;
+      Untyped_Alignment : Gtk_Alignment;
       List_Scrolled : Gtk_Scrolled_Window;
       List_Value : Gtk_Text;
       Untyped_Single_Variable : Gtk_Radio_Button;
-      Alignment6 : Gtk_Alignment;
+      Single_Alignment : Gtk_Alignment;
       Single_Value : Gtk_Text;
       Hseparator4 : Gtk_Hseparator;
       Hbuttonbox3 : Gtk_Hbutton_Box;
