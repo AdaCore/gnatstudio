@@ -25,10 +25,15 @@ with String_Utils;          use String_Utils;
 with Basic_Types;           use Basic_Types;
 with Traces;                use Traces;
 with VFS;                   use VFS;
+with GNAT.Regpat;           use GNAT.Regpat;
+with Ada.Unchecked_Deallocation;
 
 package body Codefix.GPS_Io is
 
    Me : constant Debug_Handle := Create ("Codefix.GPS_IO");
+
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Pattern_Matcher, GNAT.Expect.Pattern_Matcher_Access);
 
    ------------
    -- Get_Id --
@@ -430,6 +435,7 @@ package body Codefix.GPS_Io is
    procedure Free (This : in out Compilation_Output) is
    begin
       Free (This.Errors_Buffer);
+      Unchecked_Free (This.File_Regexp);
    end Free;
 
    ------------------------
@@ -442,15 +448,18 @@ package body Codefix.GPS_Io is
    is
       Last_Index : constant Natural := This.Current_Index;
    begin
-      Skip_To_Char
-        (This.Errors_Buffer.all,
-         This.Current_Index,
-         ASCII.LF);
-
+      Skip_To_Char (This.Errors_Buffer.all, This.Current_Index, ASCII.LF);
       Initialize
-        (This.Kernel,
-         Current,
-         This.Errors_Buffer (Last_Index .. This.Current_Index - 1));
+        (Current,
+         Kernel     => This.Kernel,
+         Error_Line =>
+           This.Errors_Buffer (Last_Index .. This.Current_Index - 1),
+         Regexp     => This.File_Regexp.all,
+         File_Index => This.File_Index,
+         Line_Index => This.Line_Index,
+         Col_Index  => This.Col_Index,
+         Msg_Index  => This.Msg_Index);
+
       This.Current_Index := This.Current_Index + 1;
    end Get_Direct_Message;
 
@@ -479,5 +488,25 @@ package body Codefix.GPS_Io is
       Assign (This.Errors_Buffer, Output);
       This.Kernel := Kernel;
    end Set_Last_Output;
+
+   ----------------
+   -- Set_Regexp --
+   ----------------
+
+   procedure Set_Regexp
+     (This                 : in out Compilation_Output;
+      File_Location_Regexp : GNAT.Regpat.Pattern_Matcher;
+      File_Index_In_Regexp : Integer;
+      Line_Index_In_Regexp : Integer;
+      Col_Index_In_Regexp  : Integer;
+      Msg_Index_In_Regexp  : Integer) is
+   begin
+      Unchecked_Free (This.File_Regexp);
+      This.File_Regexp := new Pattern_Matcher'(File_Location_Regexp);
+      This.File_Index  := File_Index_In_Regexp;
+      This.Line_Index  := Line_Index_In_Regexp;
+      This.Col_Index   := Col_Index_In_Regexp;
+      This.Msg_Index   := Msg_Index_In_Regexp;
+   end Set_Regexp;
 
 end Codefix.GPS_Io;

@@ -20,6 +20,8 @@
 
 with Glide_Kernel;           use Glide_Kernel;
 with GNAT.OS_Lib;
+with GNAT.Regpat;
+with GNAT.Expect;
 
 with Generic_List;
 with Ada.Unchecked_Deallocation;
@@ -118,20 +120,20 @@ package Codefix.GPS_Io is
    procedure Constrain_Update (This : in out Console_Interface);
    --  Set the text to modified state.
 
+
+
    type Compilation_Output is new Errors_Interface with private;
    --  This type is an interface to the list of compilation errors that the
    --  compilator has found.
 
-   procedure Free (This : in out Compilation_Output);
-   --  Free the memory associated to an Error_File.
-
-   procedure Get_Direct_Message
-     (This    : in out Compilation_Output;
-      Current : out Error_Message);
-   --  Get a message without any modification of cols or lines numbers.
-
-   function No_More_Messages (This : Compilation_Output) return Boolean;
-   --  Is true where all the messages are got fron Get_Message.
+   procedure Set_Regexp
+     (This : in out Compilation_Output;
+      File_Location_Regexp : GNAT.Regpat.Pattern_Matcher;
+      File_Index_In_Regexp : Integer;
+      Line_Index_In_Regexp : Integer;
+      Col_Index_In_Regexp  : Integer;
+      Msg_Index_In_Regexp  : Integer);
+   --  Set the regular expression used to parse error messages
 
    procedure Set_Last_Output
      (This   : in out Compilation_Output;
@@ -170,10 +172,19 @@ private
       Id : GNAT.OS_Lib.String_Access;
    end record;
 
+   procedure Free (This : in out Compilation_Output);
+   procedure Get_Direct_Message
+     (This    : in out Compilation_Output;
+      Current : out Error_Message);
+   function No_More_Messages (This : Compilation_Output) return Boolean;
+   --  See doc for inherited subprograms
+
    type Compilation_Output is new Errors_Interface with record
       Errors_Buffer : GNAT.OS_Lib.String_Access := null;
       Current_Index : Natural := 1;
       Kernel        : Kernel_Handle;
+      File_Regexp : GNAT.Expect.Pattern_Matcher_Access;
+      File_Index, Line_Index, Col_Index, Msg_Index : Integer;
    end record;
 
 end Codefix.GPS_Io;
