@@ -699,7 +699,7 @@ package body Glide_Kernel.Preferences is
 
       MDI_Opaque := Param_Spec_Boolean (Gnew_Boolean
         (Name    => "MDI-Opaque",
-         Default => False,
+         Default => GVD.Default_Opaque_MDI,
          Blurb   => -("If True, items will be resized or moved opaquely when"
                       & " not maximized"),
          Nick    => -"Opaque"));
@@ -758,8 +758,6 @@ package body Glide_Kernel.Preferences is
 
       GVD.Preferences.Register_Default_Preferences
         (Kernel.Preferences, -"Debugger" & ':', "Debugger-");
-
-
    end Register_Global_Preferences;
 
    ----------------------
