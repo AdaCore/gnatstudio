@@ -133,7 +133,7 @@ package body Glide_Result_View is
       Mark               : String;
       Line               : String;
       Column             : String;
-      Length             : String;
+      Length             : Integer;
       Highlighting       : Boolean;
       Highlight_Category : String;
       Pixbuf             : Gdk.Pixbuf.Gdk_Pixbuf := Null_Pixbuf);
@@ -197,12 +197,15 @@ package body Glide_Result_View is
    procedure Highlight_Line
      (Kernel             : access Glide_Kernel.Kernel_Handle_Record'Class;
       Filename           : VFS.Virtual_File;
-      Line               : Natural := 1;
+      Line               : Natural;
+      Column             : Natural;
+      Length             : Natural;
       Highlight_Category : String;
       Highlight          : Boolean := True);
    --  Highlight the line with the corresponding category.
    --  If Highlight is set to False, remove the highlighting.
    --  If Line = 0, highlight / unhighlight all lines in file.
+   --  If Length = 0, highlight the whole line, otherwise use highlight_range.
 
    procedure On_Row_Expanded
      (Widget : access Gtk_Widget_Record'Class;
@@ -239,18 +242,26 @@ package body Glide_Result_View is
    procedure Highlight_Line
      (Kernel             : access Glide_Kernel.Kernel_Handle_Record'Class;
       Filename           : VFS.Virtual_File;
-      Line               : Natural := 1;
+      Line               : Natural;
+      Column             : Natural;
+      Length             : Natural;
       Highlight_Category : String;
       Highlight          : Boolean := True)
    is
-      Args    : GNAT.OS_Lib.Argument_List (1 .. 3) :=
+      Args    : GNAT.OS_Lib.Argument_List (1 .. 5) :=
         (1 => new String'(Full_Name (Filename).all),
          2 => new String'(Highlight_Category),
-         3 => new String'(Image (Line)));
+         3 => new String'(Image (Line)),
+         4 => new String'(Image (Column)),
+         5 => new String'(Image (Column + Length)));
       Command : GNAT.OS_Lib.String_Access;
    begin
       if Highlight then
-         Command := new String'("highlight");
+         if Length = 0 then
+            Command := new String'("highlight");
+         else
+            Command := new String'("highlight_range");
+         end if;
       else
          Command := new String'("unhighlight");
       end if;
@@ -258,7 +269,15 @@ package body Glide_Result_View is
       if Line = 0 then
          Execute_GPS_Shell_Command (Kernel, Command.all, Args (1 .. 2));
       else
-         Execute_GPS_Shell_Command (Kernel, Command.all, Args);
+         if Length = 0 then
+            Execute_GPS_Shell_Command (Kernel, Command.all, Args (1 .. 3));
+         else
+            if Highlight then
+               Execute_GPS_Shell_Command (Kernel, Command.all, Args);
+            else
+               Execute_GPS_Shell_Command (Kernel, Command.all, Args (1 .. 3));
+            end if;
+         end if;
       end if;
 
       Basic_Types.Free (Args);
@@ -367,17 +386,17 @@ package body Glide_Result_View is
                if Mark /= "" then
                   Execute_GPS_Shell_Command (View.Kernel, "delete_mark", Args);
                end if;
-
-               Highlight_Line
-                 (View.Kernel,
-                  Create
-                    (Full_Filename => Get_String
-                       (View.Tree.Model, File_Iter, Absolute_Name_Column)),
-                  0,
-                  Get_String
-                    (View.Tree.Model, Loc_Iter, Highlight_Category_Column),
-                  False);
             end;
+
+            Highlight_Line
+              (View.Kernel,
+               Create
+                 (Full_Filename => Get_String
+                    (View.Tree.Model, File_Iter, Absolute_Name_Column)),
+               0, 0, 0,
+               Get_String
+                 (View.Tree.Model, Loc_Iter, Highlight_Category_Column),
+               False);
 
             Next (View.Tree.Model, Loc_Iter);
          end loop;
@@ -418,7 +437,7 @@ package body Glide_Result_View is
       Mark               : String;
       Line               : String;
       Column             : String;
-      Length             : String;
+      Length             : Integer;
       Highlighting       : Boolean;
       Highlight_Category : String;
       Pixbuf             : Gdk.Pixbuf.Gdk_Pixbuf := Null_Pixbuf)
@@ -441,7 +460,7 @@ package body Glide_Result_View is
       Set (Model, Iter, Mark_Column, Mark);
       Set (Model, Iter, Line_Column, Line);
       Set (Model, Iter, Column_Column, Column);
-      Set (Model, Iter, Length_Column, Length);
+      Set (Model, Iter, Length_Column, Gint (Length));
       Set (Model, Iter, Icon_Column, C_Proxy (Pixbuf));
       Set (Model, Iter, Highlight_Column, Highlighting);
       Set (Model, Iter, Highlight_Category_Column, Highlight_Category);
@@ -589,7 +608,7 @@ package body Glide_Result_View is
          if Create then
             Append (View.Tree.Model, Category_Iter, Null_Iter);
             Fill_Iter (View, Category_Iter, Category_UTF8, VFS.No_File,
-                       "", "", "", "", "", False,
+                       "", "", "", "", 0, False,
                        H_Category, View.Category_Pixbuf);
             New_Category := True;
          else
@@ -618,7 +637,7 @@ package body Glide_Result_View is
       if Create then
          Append (View.Tree.Model, File_Iter, Category_Iter);
          Fill_Iter
-           (View, File_Iter, "", File, "", "", "", "", "",
+           (View, File_Iter, "", File, "", "", "", "", 0,
             False, H_Category, View.File_Pixbuf);
       end if;
 
@@ -677,7 +696,8 @@ package body Glide_Result_View is
       Append (View.Tree.Model, Iter, File_Iter);
 
       if Highlight then
-         Highlight_Line (View.Kernel, File, Line, Highlight_Category);
+         Highlight_Line
+           (View.Kernel, File, Line, Column, Length, Highlight_Category);
       end if;
 
       declare
@@ -688,7 +708,7 @@ package body Glide_Result_View is
            (View, Iter,
             Image (Line) & ":" & Image (Column), File,
             Message, Output,
-            Image (Line), Image (Column), Image (Length), Highlight,
+            Image (Line), Image (Column), Length, Highlight,
             Highlight_Category);
       end;
 
@@ -781,7 +801,7 @@ package body Glide_Result_View is
          Mark_Column               => GType_String,
          Line_Column               => GType_String,
          Column_Column             => GType_String,
-         Length_Column             => GType_String,
+         Length_Column             => GType_Int,
          Node_Type_Column          => GType_Int,
          Weight_Column             => GType_Int,
          Color_Column              => Gdk_Color_Type,
