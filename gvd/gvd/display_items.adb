@@ -396,35 +396,24 @@ package body Display_Items is
 
    procedure Init_Graphics (Win : Gdk.Window.Gdk_Window) is
       use type Gdk.GC.Gdk_GC;
-      Color  : Gdk_Color;
       Box_Pixmap    : Gdk_Pixmap;
       Box_Mask      : Gdk_Bitmap;
    begin
       if Thaw_Bg_Gc = null then
-         Color := Parse (Current_Preferences.Thaw_Bg_Color.all);
-         Alloc (Gtk.Widget.Get_Default_Colormap, Color);
          Gdk_New (Thaw_Bg_Gc, Win);
-         Set_Foreground (Thaw_Bg_Gc, Color);
+         Set_Foreground (Thaw_Bg_Gc, Get_Pref (Thaw_Bg_Color));
 
-         Color := Parse (Current_Preferences.Freeze_Bg_Color.all);
-         Alloc (Gtk.Widget.Get_Default_Colormap, Color);
          Gdk_New (Freeze_Bg_Gc, Win);
-         Set_Foreground (Freeze_Bg_Gc, Color);
+         Set_Foreground (Freeze_Bg_Gc, Get_Pref (Freeze_Bg_Color));
 
-         Color := Parse (Current_Preferences.Xref_Color.all);
-         Alloc (Gtk.Widget.Get_Default_Colormap, Color);
          Gdk_New (Xref_GC, Win);
-         Set_Foreground (Xref_GC, Color);
+         Set_Foreground (Xref_GC, Get_Pref (Xref_Color));
 
-         Color := Parse (Current_Preferences.Title_Color.all);
-         Alloc (Gtk.Widget.Get_Default_Colormap, Color);
          Gdk_New (Grey_GC, Win);
-         Set_Foreground (Grey_GC, Color);
+         Set_Foreground (Grey_GC, Get_Pref (Title_Color));
 
-         Color := Parse (Current_Preferences.Change_Color.all);
-         Alloc (Gtk.Widget.Get_Default_Colormap, Color);
          Gdk_New (Change_GC, Win);
-         Set_Foreground (Change_GC, Color);
+         Set_Foreground (Change_GC, Get_Pref (Change_Color));
 
          Gdk_New (Black_GC, Win);
          Set_Foreground (Black_GC, Black (Gtk.Widget.Get_Default_Colormap));
@@ -432,17 +421,14 @@ package body Display_Items is
          Gdk_New (Refresh_Button_GC, Win);
 
          Font := Get_Gdkfont
-           (Current_Preferences.Value_Font_Name.all,
-            Current_Preferences.Value_Font_Size);
+           (Get_Pref (Value_Font), Get_Pref (Value_Font_Size));
          Command_Font := Get_Gdkfont
-           (Current_Preferences.Command_Font_Name.all,
-            Current_Preferences.Value_Font_Size);
+           (Get_Pref (GVD.Preferences.Command_Font),
+            Get_Pref (Value_Font_Size));
          Type_Font := Get_Gdkfont
-           (Current_Preferences.Type_Font_Name.all,
-            Current_Preferences.Type_Font_Size);
+           (Get_Pref (GVD.Preferences.Type_Font), Get_Pref (Type_Font_Size));
          Title_Font := Get_Gdkfont
-           (Current_Preferences.Title_Font_Name.all,
-            Current_Preferences.Title_Font_Size);
+           (Get_Pref (GVD.Preferences.Title_Font), Get_Pref (Title_Font_Size));
 
          Create_From_Xpm_D
            (Close_Pixmap, Win, Close_Mask, Null_Color, cancel_xpm);
@@ -489,7 +475,7 @@ package body Display_Items is
       Size_Request
         (Item.Entity.all,
          Create_Drawing_Context (Item),
-         Hide_Big_Items => Current_Preferences.Hide_Big_Items);
+         Hide_Big_Items => Get_Pref (Hide_Big_Items));
 
       if not Get_Visibility (Item.Entity.all) then
          Set_Visibility (Item.Entity, True);
@@ -576,7 +562,7 @@ package body Display_Items is
 
       --  3D Look ? If yes, keep some space for the shadow.
 
-      if Current_Preferences.Look_3d then
+      if Get_Pref (Look_3d) then
          Gtkada.Canvas.Initialize
            (Item,
             Get_Window (Item.Debugger.Data_Canvas),
@@ -626,7 +612,7 @@ package body Display_Items is
          Width  => Alloc_Width - 1,
          Height => Alloc_Height - 1);
 
-      if Current_Preferences.Look_3d then
+      if Get_Pref (Look_3d) then
          Draw_Line
            (Pixmap (Item),
             GC   => Black_GC,
@@ -845,7 +831,7 @@ package body Display_Items is
       end if;
 
       Update_Resize_Display
-        (Item, Was_Visible, Current_Preferences.Hide_Big_Items,
+        (Item, Was_Visible, Get_Pref (Hide_Big_Items),
          Redisplay_Canvas => Redisplay_Canvas);
 
       --  If we got an exception while parsing the value, we register the new

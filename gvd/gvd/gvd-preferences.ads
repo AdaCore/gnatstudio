@@ -19,11 +19,33 @@
 -----------------------------------------------------------------------
 
 with Glib; use Glib;
-with GNAT.OS_Lib;
+with Gdk.Color;
+with General_Preferences_Pkg;
 
 package GVD.Preferences is
 
-   use GNAT.OS_Lib;
+   --  This package provides the general interface to the preference settings
+   --  in GVD. We have chosen a string-based interface (ie you request a
+   --  value by its name) mainly because of its adaptiveness. It provides an
+   --  easier interface to a text-based preferences file. It is also easier
+   --  to create signals that pass the name of variables around.
+   --  Since the values of the preferences are requested only a few times, the
+   --  efficiency is not really a crucial matter here.
+
+   procedure Fill_Dialog
+     (Dialog : General_Preferences_Pkg.General_Preferences_Access);
+   --  Fill up the preference dialog given the current settings
+
+   procedure Load_Preferences (File_Name : String);
+   --  Load the preferences file, and initialize the preferences database.
+   --  No query is allowed before loading the preferences.
+
+   procedure Save_Preferences (File_Name : String);
+   --  Save the preferences in the given file.
+
+   procedure Set_Default_Preferences;
+   --  Set the default preferences for all values. Existing values are not
+   --  overriden.
 
    type Tooltips_In_Source_Type is (None, Simple, Full);
    --  The types of tooltips that can be displayed in the source window:
@@ -32,208 +54,248 @@ package GVD.Preferences is
    --    Full: the variable is parsed and the tooltip will contain the
    --     equivalent of the canvas'items.
 
-   type Preferences_Type is record
-      -------------------------
-      -- General Preferences --
-      -------------------------
+   type String_Guint is new String;
+   type String_String is new String;
+   type String_Boolean is new String;
+   type String_Gint is new String;
+   type String_Tooltips_In_Source is new String;
+   type String_Color is new String;
+   type String_Font is new String;
+   --  String used for names of variables that have a specific type
 
-      Hide_Delay : Guint32 := 5000;
-      --  Delay (in ms) after which the current message is hidden
+   function Get_Pref (Name : String_Guint) return Guint;
+   function Get_Pref (Name : String_String) return String;
+   function Get_Pref (Name : String_Boolean) return Boolean;
+   function Get_Pref (Name : String_Gint) return Gint;
+   function Get_Pref (Name : String_Color) return Gdk.Color.Gdk_Color;
+   function Get_Pref (Name : String_Font) return String;
+   function Get_Pref (Name : String_Tooltips_In_Source)
+      return Tooltips_In_Source_Type;
+   --  Get the value of a specific preference parameter.
+   --  An assertion failure is raised if you are not getting an existing
+   --  preference value or if you are requesting the wrong type.
+   --  Colors are already allocated and can be used as is.
 
-      Remote_Protocol : String_Access := new String' ("rsh");
-      --  How to run a process on a remote machine ?
+   function Get_Tab_Size return Gint;
+   --  Special function since Tab_Size is used very often and we need fast
+   --  access to it.
 
-      Remote_Copy : String_Access := new String' ("rcp");
-      --  Program used to copy a file from a remote host.
+   -----------------------
+   -- List of constants --
+   -----------------------
+   --  Note: Below is the list of all the preference settings that can be
+   --  set. It is recommended to always access the preferences through these
+   --  constant strings, since these are subject to change.
+   --  Also, the type of the constant gives the type of the value associated
+   --  with the preference.
 
-      ---------------------
-      -- Explorer Window --
-      ---------------------
+   -------------------------
+   -- General Preferences --
+   -------------------------
 
-      Display_Explorer : Boolean := True;
-      --  True if we should associate an explorer tree to each editor.
+   Hide_Delay : constant String_Guint := "Hide_Delay";
+   --  Delay (in ms) after which the current message is hidden
 
-      File_Name_Bg_Color : String_Access := new String' ("#BEBEBE");
-      --  Color used for the background of the file name in the editor (grey).
-      --  This is also used for the background of the current frame in the
-      --  stack_list window.
+   Remote_Protocol : constant String_String := "Remote_Protocol";
+   --  How to run a process on a remote machine ?
 
+   Remote_Copy : constant String_String := "Remote_Copy";
+   --  Program used to copy a file from a remote host.
+
+   ---------------------
+   -- Explorer Window --
+   ---------------------
+
+   Display_Explorer : constant String_Boolean := "Display_Explorer";
+   --  True if we should associate an explorer tree to each editor.
+
+   File_Name_Bg_Color : constant String_Color := "File_Name_Bg_Color";
+   --  Color used for the background of the file name in the editor (grey).
+   --  This is also used for the background of the current frame in the
+   --  stack_list window.
+
+   -------------------
+   -- Source Window --
+   -------------------
+
+   Editor_Font : constant String_Font := "Editor_Font";
+   --  Font used in the editor.
+
+   Editor_Font_Size : constant String_Gint := "Editor_Font_Size";
+   --  Size of the font used in the editor.
+
+   Editor_Show_Line_Nums : constant String_Boolean := "Editor_Show_Line_Nums";
+   --  Whether line numbers should be shown in the code editor
+
+   Editor_Show_Line_With_Code : constant String_Boolean :=
+     "Editor_Show_Line_With_Code";
+   --  Whether dots should be shown in the code editor for lines that
+   --  contain code.
+
+   Do_Color_Highlighting : constant String_Boolean := "Do_Color_Highlighting";
+   --  Indicate whether the editor should provide color highlighting.
+
+   Comments_Color : constant String_Color := "Comments_Color";
+   --  Color used for comments.
+
+   Strings_Color : constant String_Color := "Strings_Color";
+   --  Color used for strings (brown).
+
+   Keywords_Color : constant String_Color := "Keywords_Color";
+   --  Color used for keywords (blue).
+
+   Editor_Highlight_Current_Line : constant String_Boolean :=
+     "Editor_Highlight_Current_Line";
+   --  If True, the current line is displayed with a background color, in
+   --  addition to the arrow that indicates the current line
+
+   Editor_Highlight_Color : constant String_Color :=
+     "Editor_Highlight_Color";
+   --  The color to use to highlight the current line in the editor
+
+   Tab_Size : constant String_Gint := "Tab_Size";
+   --  Horizontal Tab size.
+   --  Please note : the implemented tab behaviour is to jump at the next
+   --  column with a number equal to a multiple of Tab_Size.
+
+   Tooltips_In_Source : constant String_Tooltips_In_Source
+     := "Tooltips_In_Source";
+   --  What kind of tooltips we want in the source window
+
+   ---------------------
+   -- Assembly Window --
+   ---------------------
+
+   Asm_Highlight_Color : constant String_Color := "Asm_Highlight_Color";
+   --  Color to use to highlight the assembly code for the current line
+   --  (default is red).
+
+   Assembly_Range_Size : constant String_String := "Assembly_Range_Size";
+   --  Size of the range to display when initially displaying the
+   --  assembly window.
+   --  If this size is "0", then the whole function is displayed, but this
+   --  can potentially take a very long time on slow machines or big
+   --  functions.
+
+   -----------------
+   -- Data Window --
+   -----------------
+
+   Xref_Color : constant String_Color := "Xref_Color";
+   --  Color to use for the items that are clickable (blue).
+
+   Title_Color : constant String_Color := "Title_Color";
+   --  Color to use for the background of the title (grey).
+
+   Change_Color : constant String_Color := "Change_Color";
+   --  Color used to highlight fields that have changed since the last
+   --  update (default is red).
+
+   Thaw_Bg_Color : constant String_Color := "Thaw_Bg_Color";
+   --  Color used for auto-refreshed items (white)
+
+   Freeze_Bg_Color : constant String_Color := "Freeze_Bg_Color";
+   --  Color used for frozen items (light grey)
+
+   Look_3d : constant String_Boolean := "Look_3d";
+   --  Should the items have a 3d look ?
+
+   Title_Font : constant String_Font := "Title_Font";
+   --  Font used for the name of the item.
+
+   Title_Font_Size : constant String_Gint := "Title_Font_Size";
+   --  Size of the font used for the name of the item.
+
+   Value_Font : constant String_Font := "Value_Font";
+   --  Font used to display the value of the item.
+
+   Command_Font : constant String_Font := "Command_Font";
+   --  Font used to display the value for the commands
+   --    graph print `...`  or graph display `...`
+
+   Type_Font : constant String_Font := "Type_Font";
+   --  Font used to display the type of the item.
+
+   Value_Font_Size : constant String_Gint := "Value_Font_Size";
+   --  Size of the font used to display the value of the item.
+
+   Type_Font_Size : constant String_Gint := "Type_Font_Size";
+   --  Size of the font used to display the type of the item.
+
+   Annotation_Font_Size : constant String_Gint := "Annotation_Font_Size";
+   --  Size of the font used for annotation in the data canvas.
+
+   Hide_Big_Items : constant String_Boolean := "Hide_Big_Items";
+   --  If True, items higher than a given limit will start in a hidden
+   --  state.
+
+   Big_Item_Height : constant String_Gint := "Big_Item_Height";
+   --  Items taller than this value will start hidden.
+
+   Default_Detect_Aliases : constant String_Boolean :=
+     "Default_Detect_Aliases";
+   --  If True, do not create new items when a matching item is already
+   --  present in the canvas.
+
+   Display_Grid : constant String_Boolean := "Display_Grid";
+   --  Whether the grid should be displayed in the canvas.
+
+   Align_Items_On_Grid : constant String_Boolean := "Align_Items_On_Grid";
+   --  Should items be aligned on the grid.
+
+   --------------------
+   -- Command Window --
+   --------------------
+
+   Debugger_Highlight_Color : constant String_Color :=
+     "Debugger_Highlight_Color";
+   --  Color used for highlighting in the debugger window (blue).
+
+   Debugger_Font : constant String_Font := "Debugger_Font";
+   --  Font used in the debugger text window.
+
+   Debugger_Font_Size : constant String_Gint := "Debugger_Font_Size";
+   --  Size of the font used in the debugger text window.
+
+   -------------------
+   -- Memory Window --
       -------------------
-      -- Source Window --
-      -------------------
 
-      Editor_Font : String_Access := new String' ("Courier");
-      --  Font used in the editor.
+   Memory_View_Font : constant String_Font := "Memory_View_Font";
+   --  Font use in the memory view window.
 
-      Editor_Font_Size : Gint := 12;
-      --  Size of the font used in the editor.
+   Memory_View_Font_Size : constant String_Gint := "Memory_View_Font_Size";
+   --  Size of the font used in the memory view window.
 
-      Editor_Show_Line_Nums : Boolean := True;
-      --  Whether line numbers should be shown in the code editor
+   Memory_View_Color : constant String_Color := "Memory_View_Color";
+   --  Color used by default in the memory view window.
 
-      Editor_Show_Line_With_Code : Boolean := True;
-      --  Whether dots should be shown in the code editor for lines that
-      --  contain code.
+   Memory_Highlighted_Color : constant String_Color :=
+     "Memory_Highlighted_Color";
+   --  Color used for highlighted items in the memory view.
 
-      Do_Color_Highlighting : Boolean := True;
-      --  Indicate whether the editor should provide color highlighting.
+   Memory_Selected_Color : constant String_Color := "Memory_Selected_Color";
+   --  Color used for selected items in the memory view.
 
-      Comments_Color : String_Access := new String' ("#FF0000");
-      --  Color used for comments.
+   Memory_Modified_Color : constant String_Color := "Memory_Modified_Color";
+   --  Color used for modified items in the memory view.
 
-      Strings_Color : String_Access := new String' ("#A52A2A");
-      --  Color used for strings (brown).
+   -------------
+   -- Helpers --
+   -------------
 
-      Keywords_Color : String_Access := new String' ("#0000FF");
-      --  Color used for keywords (blue).
+   List_Processes : constant String_String := "List_Processes";
+   --  Command to use to list processes running on the machine
 
-      Editor_Highlight_Current_Line : Boolean := True;
-      --  If True, the current line is displayed with a background color, in
-      --  addition to the arrow that indicates the current line
+   Default_External_Editor : constant String_String :=
+     "Default_External_Editor";
+   --  External editor to use.
+   --  %f is replaced by the full path name for the file to edit.
+   --  %l is the line number to show in the editor.
+   --  This variable is superceded by the environment variable
+   --  GVD_EDITOR if it exists.
+   --  Try using "xterm -e /bin/vi %f +%l" if you prefer vi.
 
-      Editor_Highlight_Color : String_Access := new String' ("#00CC00");
-      --  The color to use to highlight the current line in the editor
-
-      Tab_Size : Natural := 8;
-      --  Horizontal Tab size.
-      --  Please note : the implemented tab behaviour is to jump at the next
-      --  column with a number equal to a multiple of Tab_Size.
-
-      Tooltips_In_Source : Tooltips_In_Source_Type := Simple;
-      --  What kind of tooltips we want in the source window
-
-      ---------------------
-      -- Assembly Window --
-      ---------------------
-
-      Asm_Highlight_Color : String_Access := new String' ("#FF0000");
-      --  Color to use to highlight the assembly code for the current line
-      --  (default is red).
-
-      Assembly_Range_Size : String_Access := new String' ("50");
-      --  Size of the range to display when initially displaying the
-      --  assembly window.
-      --  If this size is "0", then the whole function is displayed, but this
-      --  can potentially take a very long time on slow machines or big
-      --  functions.
-
-      -----------------
-      -- Data Window --
-      -----------------
-
-      Xref_Color : String_Access := new String' ("#0000FF");
-      --  Color to use for the items that are clickable (blue).
-
-      Title_Color : String_Access := new String' ("#BEBEBE");
-      --  Color to use for the background of the title (grey).
-
-      Change_Color : String_Access := new String' ("#FF0000");
-      --  Color used to highlight fields that have changed since the last
-      --  update (default is red).
-
-      Thaw_Bg_Color : String_Access := new String' ("#FFFFFF");
-      --  Color used for auto-refreshed items (white)
-
-      Freeze_Bg_Color : String_Access := new String' ("#AAAAAA");
-      --  Color used for frozen items (light grey)
-
-      Look_3d : Boolean := True;
-      --  Should the items have a 3d look ?
-
-      Title_Font_Name : String_Access := new String' ("Helvetica-Bold");
-      --  Font used for the name of the item.
-
-      Title_Font_Size : Gint := Default_Font_Size;
-      --  Size of the font used for the name of the item.
-
-      Value_Font_Name : String_Access := new String' ("Helvetica");
-      --  Font used to display the value of the item.
-
-      Command_Font_Name : String_Access := new String' ("Courier");
-      --  Font used to display the value for the commands
-      --    graph print `...`  or graph display `...`
-
-      Type_Font_Name : String_Access := new String' ("Helvetica-Oblique");
-      --  Font used to display the type of the item.
-
-      Value_Font_Size : Gint := Default_Font_Size;
-      --  Size of the font used to display the value of the item.
-
-      Type_Font_Size : Gint := Default_Font_Size;
-      --  Size of the font used to display the type of the item.
-
-      Annotation_Font_Size : Gint := Default_Link_Font_Size;
-      --  Size of the font used for annotation in the data canvas.
-
-      Hide_Big_Items : Boolean := True;
-      --  If True, items higher than a given limit will start in a hidden
-      --  state.
-
-      Big_Item_Height : Glib.Gint := 150;
-      --  Items taller than this value will start hidden.
-
-      Default_Detect_Aliases : Boolean := True;
-      --  If True, do not create new items when a matching item is already
-      --  present in the canvas.
-
-      Display_Grid : Boolean := True;
-      --  Whether the grid should be displayed in the canvas.
-
-      Align_Items_On_Grid : Boolean := True;
-      --  Should items be aligned on the grid.
-
-      --------------------
-      -- Command Window --
-      --------------------
-
-      Debugger_Highlight_Color : String_Access := new String' ("#0000FF");
-      --  Color used for highlighting in the debugger window (blue).
-
-      Debugger_Font : String_Access := new String' ("Courier");
-      --  Font used in the debugger text window.
-
-      Debugger_Font_Size : Gint := 12;
-      --  Size of the font used in the debugger text window.
-
-      -------------------
-      -- Memory Window --
-      -------------------
-
-      Memory_View_Font_Name    : String_Access := new String' ("Courier");
-      --  Font use in the memory view window.
-
-      Memory_View_Font_Size    : Gint := 12;
-      --  Size of the font used in the memory view window.
-
-      Memory_View_Color        : String_Access := new String' ("#333399");
-      --  Color used by default in the memory view window.
-
-      Memory_Highlighted_Color : String_Access := new String' ("#DDDDDD");
-      --  Color used for highlighted items in the memory view.
-
-      Memory_Selected_Color    : String_Access := new String' ("#00009c");
-      --  Color used for selected items in the memory view.
-
-      Memory_Modified_Color    : String_Access := new String' ("#FF0000");
-      --  Color used for modified items in the memory view.
-
-      -------------
-      -- Helpers --
-      -------------
-
-      List_Processes : String_Access :=
-        new String' ("ps x 2> /dev/null || ps -ef 2> /dev/null || ps");
-
-      Default_External_Editor : String_Access :=
-        new String' ("glide %f -emacs +%l");
-      --  External editor to use.
-      --  %f is replaced by the full path name for the file to edit.
-      --  %l is the line number to show in the editor.
-      --  This variable is superceded by the environment variable
-      --  GVD_EDITOR if it exists.
-      --  Try using "xterm -e /bin/vi %f +%l" if you prefer vi.
-   end record;
-
-   Current_Preferences : Preferences_Type;
-
+private
+   pragma Inline (Get_Pref);
 end GVD.Preferences;

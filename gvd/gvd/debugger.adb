@@ -232,7 +232,7 @@ package body Debugger is
 
             Non_Blocking_Spawn
               (Descriptor.all,
-               Current_Preferences.Remote_Protocol.all,
+               Get_Pref (Remote_Protocol),
                Real_Arguments,
                Buffer_Size => 0,
                Err_To_Out => True);
@@ -248,7 +248,7 @@ package body Debugger is
                      & (-"  debugger: ") & Debugger_Name & ASCII.LF
                      & (-"  machine: ") & Remote_Machine & ASCII.LF
                      & (-"  using protocol: ")
-                     & Current_Preferences.Remote_Protocol.all,
+                     & Get_Pref (Remote_Protocol),
                      Error,
                      Button_OK,
                      Button_OK);

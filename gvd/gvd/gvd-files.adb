@@ -112,7 +112,7 @@ package body GVD.Files is
 
          GNAT.Expect.Non_Blocking_Spawn
            (Descriptor,
-            Command     => Current_Preferences.Remote_Copy.all,
+            Command     => Get_Pref (Remote_Copy),
             Args        => Args,
             Buffer_Size => 0,
             Err_To_Out  => True);

@@ -185,9 +185,8 @@ package body GVD.Source_Editors is
       Process : access Gtk.Widget.Gtk_Widget_Record'Class) is
    begin
       Editor := new Source_Editor_Record;
-      Editor.Show_Line_Nums := Current_Preferences.Editor_Show_Line_Nums;
-      Editor.Show_Lines_With_Code :=
-        Current_Preferences.Editor_Show_Line_With_Code;
+      Editor.Show_Line_Nums := Get_Pref (Editor_Show_Line_Nums);
+      Editor.Show_Lines_With_Code := Get_Pref (Editor_Show_Line_With_Code);
       Initialize (Editor, Process);
    end Gtk_New;
 
@@ -211,9 +210,7 @@ package body GVD.Source_Editors is
       Data.Box  := Source_Editor (Editor);
       Editor_Tooltips.New_Tooltip (Get_Child (Editor), Data, Editor.Tooltip);
 
-      Editor.Highlight_Color :=
-        Parse (Current_Preferences.Editor_Highlight_Color.all);
-      Alloc (Get_System, Editor.Highlight_Color);
+      Editor.Highlight_Color := Get_Pref (Editor_Highlight_Color);
 
       Editor_Cb.Object_Connect
         (Get_Vadj (Get_Child (Editor)), "value_changed",
@@ -281,9 +278,9 @@ package body GVD.Source_Editors is
       Default_Icon      : Gtkada.Types.Chars_Ptr_Array;
       Current_Line_Icon : Gtkada.Types.Chars_Ptr_Array;
       Stop_Icon         : Gtkada.Types.Chars_Ptr_Array;
-      Comments_Color    : String;
-      Strings_Color     : String;
-      Keywords_Color    : String) is
+      Comments_Color    : Gdk.Color.Gdk_Color;
+      Strings_Color     : Gdk.Color.Gdk_Color;
+      Keywords_Color    : Gdk.Color.Gdk_Color) is
    begin
       Configure (Editor, Ps_Font_Name, Font_Size, Current_Line_Icon);
 
@@ -302,12 +299,9 @@ package body GVD.Source_Editors is
          White (Get_System),
          Stop_Icon);
 
-      Editor.Colors (Comment_Text) := Parse (Comments_Color);
-      Alloc (Get_System, Editor.Colors (Comment_Text));
-      Editor.Colors (String_Text)  := Parse (Strings_Color);
-      Alloc (Get_System, Editor.Colors (String_Text));
-      Editor.Colors (Keyword_Text) := Parse (Keywords_Color);
-      Alloc (Get_System, Editor.Colors (Keyword_Text));
+      Editor.Colors (Comment_Text) := Comments_Color;
+      Editor.Colors (String_Text)  := Strings_Color;
+      Editor.Colors (Keyword_Text) := Keywords_Color;
    end Configure;
 
    -----------------------
@@ -515,6 +509,8 @@ package body GVD.Source_Editors is
       Entity              : Language_Entity;
       Next_Char, J        : Positive;
       Line_Start_Position : Guint := 0;
+      Do_Highlighting     : constant Boolean :=
+        Get_Pref (Do_Color_Highlighting);
 
    begin
       if Editor.Show_Line_Nums then
@@ -527,7 +523,7 @@ package body GVD.Source_Editors is
                Index := Index + 1;
 
             when ASCII.LF =>
-               if Current_Preferences.Do_Color_Highlighting then
+               if Do_Highlighting then
                   Insert (Editor, Chars => Buffer (Index .. Index));
                else
                   Insert (Editor, Chars => Buffer (Line_Start .. Index));
@@ -543,7 +539,7 @@ package body GVD.Source_Editors is
                end if;
 
             when ASCII.HT =>
-               if not Current_Preferences.Do_Color_Highlighting then
+               if not Do_Highlighting then
                   Insert
                     (Editor,
                      Chars => Buffer (Line_Start .. Index - 1));
@@ -553,7 +549,7 @@ package body GVD.Source_Editors is
                   Offset : constant Guint :=
                     (Line_Start_Position - Get_Length (Get_Child (Editor))
                      - 1 + Guint (Invisible_Column_Width (Editor)))
-                    mod Guint (Current_Preferences.Tab_Size);
+                    mod Guint (Get_Tab_Size);
                begin
                   Insert (Editor, Chars => (1 .. Integer (Offset + 1) => ' '));
                   Index := Index + 1;
@@ -561,7 +557,7 @@ package body GVD.Source_Editors is
                end;
 
             when others =>
-               if Current_Preferences.Do_Color_Highlighting then
+               if Do_Highlighting then
                   if Editor.Lang /= null then
                      Looking_At
                        (Editor.Lang,
@@ -611,7 +607,7 @@ package body GVD.Source_Editors is
                              (Line_Start_Position -
                                 Get_Length (Get_Child (Editor)) - 1 +
                                   Guint (Invisible_Column_Width (Editor)))
-                             mod Guint (Current_Preferences.Tab_Size);
+                             mod Guint (Get_Tab_Size);
                         begin
                            Insert
                              (Editor,
@@ -666,7 +662,7 @@ package body GVD.Source_Editors is
       Col      : Natural := 1;
       Buffer   : constant GVD.Types.String_Access := Get_Buffer (Editor);
       Line     : Natural := 1;
-      Tab_Size : Integer renames Current_Preferences.Tab_Size;
+      Tab_Size : Integer := Integer (Get_Tab_Size);
 
    begin
       --  Convert from raw file position to visual buffer position (i.e include
@@ -1263,7 +1259,7 @@ package body GVD.Source_Editors is
       Width := 0;
       Height := 0;
 
-      if Current_Preferences.Tooltips_In_Source = None
+      if Get_Pref (Tooltips_In_Source) = None
         or else not Is_Started (Debugger.Debugger)
         or else Command_In_Process (Get_Process (Debugger.Debugger))
       then
@@ -1286,7 +1282,7 @@ package body GVD.Source_Editors is
             return;
          end if;
 
-         if Current_Preferences.Tooltips_In_Source = Full then
+         if Get_Pref (Tooltips_In_Source) = Full then
             Entity := Parse_Type (Debugger.Debugger, Variable_Name.all);
 
             if Entity = null then
@@ -1360,7 +1356,7 @@ package body GVD.Source_Editors is
             Width  => Width - 1,
             Height => Height - 1);
 
-         if Current_Preferences.Tooltips_In_Source = Full then
+         if Get_Pref (Tooltips_In_Source) = Full then
             Items.Paint (Entity.all, Context, X => 2, Y => 2);
          else
             Index := Value'First;
@@ -1417,11 +1413,11 @@ package body GVD.Source_Editors is
       Text_Pos     : Natural;
       Text_Pos_End : Natural;
       Line         : constant Natural := Get_Line (Editor);
-      Tab_Size     : Integer renames Current_Preferences.Tab_Size;
+      Tab_Size     : Integer := Integer (Get_Tab_Size);
       Show_Line_Nums : constant Boolean := Editor.Show_Line_Nums;
 
    begin
-      if Current_Preferences.Editor_Highlight_Current_Line
+      if Get_Pref (Editor_Highlight_Current_Line)
         and then Buffer /= null
       then
          Text_Pos := Buffer'First;

@@ -105,7 +105,7 @@ package body GVD.Code_Editors is
       Gtk_New (Editor.Explorer, Editor);
       Add (Editor.Explorer_Scroll, Editor.Explorer);
 
-      if Current_Preferences.Display_Explorer then
+      if Get_Pref (Display_Explorer) then
          Add1 (Editor, Editor.Explorer_Scroll);
       end if;
 
@@ -209,7 +209,7 @@ package body GVD.Code_Editors is
          Set_Current_File (Editor.Explorer, File_Name);
       end if;
 
-      if not Current_Preferences.Display_Explorer then
+      if not Get_Pref (Display_Explorer) then
          Hide (Editor.Explorer_Scroll);
       end if;
    end Load_File;
@@ -242,9 +242,9 @@ package body GVD.Code_Editors is
       Default_Icon      : Gtkada.Types.Chars_Ptr_Array;
       Current_Line_Icon : Gtkada.Types.Chars_Ptr_Array;
       Stop_Icon         : Gtkada.Types.Chars_Ptr_Array;
-      Comments_Color    : String;
-      Strings_Color     : String;
-      Keywords_Color    : String) is
+      Comments_Color    : Gdk.Color.Gdk_Color;
+      Strings_Color     : Gdk.Color.Gdk_Color;
+      Keywords_Color    : Gdk.Color.Gdk_Color) is
    begin
       Configure (Editor.Source, Ps_Font_Name, Font_Size, Default_Icon,
                  Current_Line_Icon, Stop_Icon, Comments_Color, Strings_Color,
@@ -426,7 +426,7 @@ package body GVD.Code_Editors is
    is
       Edit : constant Code_Editor := Code_Editor (Editor);
    begin
-      if Current_Preferences.Display_Explorer then
+      if Get_Pref (Display_Explorer) then
          GVD.Explorer.On_Executable_Changed (Edit.Explorer);
       end if;
 

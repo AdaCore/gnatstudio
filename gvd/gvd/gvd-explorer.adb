@@ -146,8 +146,7 @@ package body GVD.Explorer is
 
       Explorer.Code_Editor := Gtk_Widget (Code_Editor);
 
-      Color := Parse (Current_Preferences.File_Name_Bg_Color.all);
-      Alloc (Get_System, Color);
+      Color := Get_Pref (File_Name_Bg_Color);
       Explorer.Current_File_Style := Copy (Get_Style (Code_Editor));
       Set_Base (Explorer.Current_File_Style, State_Normal, Color);
       Set_Base (Explorer.Current_File_Style, State_Selected, Color);

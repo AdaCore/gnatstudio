@@ -640,17 +640,13 @@ package body GVD.Process is
       --  that time.
 
       Process.Debugger_Text_Highlight_Color :=
-        Parse (Current_Preferences.Debugger_Highlight_Color.all);
-
-      Alloc (Get_System, Process.Debugger_Text_Highlight_Color);
+        Get_Pref (Debugger_Highlight_Color);
 
       Process.Debugger_Text_Font :=
-        Get_Gdkfont
-          (Current_Preferences.Debugger_Font.all,
-           Current_Preferences.Debugger_Font_Size);
+        Get_Gdkfont (Get_Pref (Debugger_Font), Get_Pref (Debugger_Font_Size));
 
       Align_On_Grid
-        (Process.Data_Canvas, Current_Preferences.Align_Items_On_Grid);
+        (Process.Data_Canvas, Get_Pref (Align_Items_On_Grid));
 
       --  Add a new page to the notebook
 
@@ -717,12 +713,12 @@ package body GVD.Process is
 
       Configure
         (Process.Editor_Text,
-         Current_Preferences.Editor_Font.all,
-         Current_Preferences.Editor_Font_Size,
+         Get_Pref (Editor_Font),
+         Get_Pref (Editor_Font_Size),
          dot_xpm, arrow_xpm, stop_xpm,
-         Comments_Color => Current_Preferences.Comments_Color.all,
-         Strings_Color  => Current_Preferences.Strings_Color.all,
-         Keywords_Color => Current_Preferences.Keywords_Color.all);
+         Comments_Color => Get_Pref (Comments_Color),
+         Strings_Color  => Get_Pref (Strings_Color),
+         Keywords_Color => Get_Pref (Keywords_Color));
 
       --  Initialize the call stack list
 
@@ -730,14 +726,14 @@ package body GVD.Process is
 
       --  Initialize the canvas
 
-      if Current_Preferences.Display_Grid then
+      if Get_Pref (Display_Grid) then
          Configure
            (Process.Data_Canvas,
-            Annotation_Height => Current_Preferences.Annotation_Font_Size);
+            Annotation_Height => Get_Pref (Annotation_Font_Size));
       else
          Configure
            (Process.Data_Canvas, Grid_Size => 0,
-            Annotation_Height => Current_Preferences.Annotation_Font_Size);
+            Annotation_Height => Get_Pref (Annotation_Font_Size));
       end if;
 
       --  Set the output filter, so that we output everything in the Gtk_Text

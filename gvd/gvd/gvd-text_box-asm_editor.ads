@@ -53,8 +53,8 @@ package GVD.Asm_Editors is
       Font_Size         : Glib.Gint;
       Current_Line_Icon : Gtkada.Types.Chars_Ptr_Array;
       Stop_Icon         : Gtkada.Types.Chars_Ptr_Array;
-      Strings_Color     : String;
-      Keyword_Color     : String);
+      Strings_Color     : Gdk.Color.Gdk_Color;
+      Keyword_Color     : Gdk.Color.Gdk_Color);
    --  Set the various settings of an editor.
    --  Ps_Font_Name is the name of the postscript font that will be used to
    --  display the text. It should be a fixed-width font, which is nice for

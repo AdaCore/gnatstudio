@@ -36,6 +36,7 @@
 --  else is happening in the application.
 
 with Glib;
+with Gdk.Color;
 with Gtk.Menu;
 with Gtk.Paned;
 with Gtk.Scrolled_Window;
@@ -102,9 +103,9 @@ package GVD.Code_Editors is
       Default_Icon      : Gtkada.Types.Chars_Ptr_Array;
       Current_Line_Icon : Gtkada.Types.Chars_Ptr_Array;
       Stop_Icon         : Gtkada.Types.Chars_Ptr_Array;
-      Comments_Color    : String;
-      Strings_Color     : String;
-      Keywords_Color    : String);
+      Comments_Color    : Gdk.Color.Gdk_Color;
+      Strings_Color     : Gdk.Color.Gdk_Color;
+      Keywords_Color    : Gdk.Color.Gdk_Color);
    --  Set the various settings of an editor.
    --  Ps_Font_Name is the name of the postscript font that will be used to
    --  display the text. It should be a fixed-width font, which is nice for

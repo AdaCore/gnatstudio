@@ -45,6 +45,7 @@ with Gtkada.Types;        use Gtkada.Types;
 with GVD.Types;           use GVD.Types;
 with GVD.Strings;         use GVD.Strings;
 with GVD.Code_Editors;    use GVD.Code_Editors;
+with GVD.Preferences;     use GVD.Preferences;
 with GVD.Memory_View;     use GVD.Memory_View;
 with Unchecked_Deallocation;
 with Gtk.Paned;           use Gtk.Paned;
@@ -495,6 +496,8 @@ package body Main_Debug_Window_Pkg.Callbacks is
       if Top.GVD_Preferences = null then
          Gtk_New (Top.GVD_Preferences);
       end if;
+
+      GVD.Preferences.Fill_Dialog (Top.GVD_Preferences);
 
       Show_All (Top.GVD_Preferences);
    end On_Preferences1_Activate;

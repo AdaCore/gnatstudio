@@ -58,9 +58,9 @@ package GVD.Source_Editors is
       Default_Icon      : Gtkada.Types.Chars_Ptr_Array;
       Current_Line_Icon : Gtkada.Types.Chars_Ptr_Array;
       Stop_Icon         : Gtkada.Types.Chars_Ptr_Array;
-      Comments_Color    : String;
-      Strings_Color     : String;
-      Keywords_Color    : String);
+      Comments_Color    : Gdk.Color.Gdk_Color;
+      Strings_Color     : Gdk.Color.Gdk_Color;
+      Keywords_Color    : Gdk.Color.Gdk_Color);
    --  See GVD.Code_Editors for more information
 
    function On_Pixmap_Clicked

@@ -148,6 +148,14 @@ procedure GVD_Main is
             OS_Exit (1);
       end;
 
+      --  Load the preferences, or set the default values
+
+      if Is_Regular_File (Dir.all & Directory_Separator & "preferences") then
+         Load_Preferences (Dir.all & Directory_Separator & "preferences");
+      else
+         Set_Default_Preferences;
+      end if;
+
       --  ??? This should be moved in a future "preferences" package, so as to
       --  accomodate user's specific extensions
       --  ??? Pb with .c files, which can be both C or C++. The best would be
@@ -310,7 +318,7 @@ begin
    else
       Free (Editor);
       Main_Debug_Window.External_Editor :=
-        Current_Preferences.Default_External_Editor;
+        new String' (Get_Pref (Default_External_Editor));
    end if;
 
    loop
@@ -363,7 +371,10 @@ begin
 
                -- --no-explorer --
                when 'n' =>
-                  Current_Preferences.Display_Explorer := False;
+                  --  ??? Shouldn't modify the preferences directly...
+                  --  Get_Pref (Display_Explorer) := False;
+                  pragma Assert (False);
+                  null;
 
                when 't' =>
                   -- --tty --

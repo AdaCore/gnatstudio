@@ -241,26 +241,14 @@ package body GVD.Memory_View is
    -------------------
 
    procedure Init_Graphics (Window : Gdk_Window) is
-      Success : Boolean;
    begin
-      View_Font  :=
-        Get_Gdkfont
-          (Current_Preferences.Memory_View_Font_Name.all,
-           Current_Preferences.Memory_View_Font_Size);
-      View_Color := Parse (Current_Preferences.Memory_View_Color.all);
-
-      Alloc_Color (Get_System, View_Color, True, True, Success);
-
-      Highlighted := Parse (Current_Preferences.Memory_Highlighted_Color.all);
-      Alloc_Color (Get_System, Highlighted, True, True, Success);
-
-      White_Color := White (Get_System);
-
-      Selected := Parse (Current_Preferences.Memory_Selected_Color.all);
-      Alloc_Color (Get_System, Selected, True, True, Success);
-
-      Modified_Color := Parse (Current_Preferences.Memory_Modified_Color.all);
-      Alloc_Color (Get_System, Modified_Color, True, True, Success);
+      View_Font  := Get_Gdkfont
+        (Get_Pref (Memory_View_Font), Get_Pref (Memory_View_Font_Size));
+      View_Color := Get_Pref (Memory_View_Color);
+      Highlighted    := Get_Pref (Memory_Highlighted_Color);
+      White_Color    := White (Get_System);
+      Selected       := Get_Pref (Memory_Selected_Color);
+      Modified_Color := Get_Pref (Memory_Modified_Color);
    end Init_Graphics;
 
    ----------------------

@@ -136,8 +136,8 @@ package body GVD.Asm_Editors is
       Font_Size         : Glib.Gint;
       Current_Line_Icon : Gtkada.Types.Chars_Ptr_Array;
       Stop_Icon         : Gtkada.Types.Chars_Ptr_Array;
-      Strings_Color     : String;
-      Keyword_Color     : String) is
+      Strings_Color     : Gdk.Color.Gdk_Color;
+      Keyword_Color     : Gdk.Color.Gdk_Color) is
    begin
       Configure (Editor, Ps_Font_Name, Font_Size, Current_Line_Icon);
 
@@ -149,14 +149,9 @@ package body GVD.Asm_Editors is
          White (Get_System),
          Stop_Icon);
 
-      Editor.Strings_Color  := Parse (Strings_Color);
-      Alloc (Get_System, Editor.Strings_Color);
-      Editor.Keywords_Color := Parse (Current_Preferences.Keywords_Color.all);
-      Alloc (Get_System, Editor.Keywords_Color);
-
-      Editor.Highlight_Color :=
-        Parse (Current_Preferences.Asm_Highlight_Color.all);
-      Alloc (Get_System, Editor.Highlight_Color);
+      Editor.Strings_Color  := Strings_Color;
+      Editor.Keywords_Color := Keyword_Color;
+      Editor.Highlight_Color := Get_Pref (Asm_Highlight_Color);
    end Configure;
 
    ----------------------
@@ -230,7 +225,7 @@ package body GVD.Asm_Editors is
       else
          Editor.Current_Range := Find_In_Cache (Editor, Pc);
          if Editor.Current_Range = null then
-            if Current_Preferences.Assembly_Range_Size.all = "0" then
+            if Get_Pref (Assembly_Range_Size) = "0" then
                Get_Machine_Code
                  (Process.Debugger,
                   Range_Start     => Start,
@@ -248,7 +243,7 @@ package body GVD.Asm_Editors is
                   Code            => S,
                   Start_Address   => Pc,
                   End_Address     =>
-                    Pc & "+" & Current_Preferences.Assembly_Range_Size.all);
+                    Pc & "+" & Get_Pref (Assembly_Range_Size));
             end if;
 
             if Start_End /= 0 then

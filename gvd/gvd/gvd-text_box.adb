@@ -418,7 +418,7 @@ package body GVD.Text_Boxes is
       Columns : Integer)
    is
       J        : Integer := 1;
-      Tab_Size : Integer renames Current_Preferences.Tab_Size;
+      Tab_Size : Integer := Integer (Get_Tab_Size);
 
    begin
       --  Go to the right column, but make sure we are still on
@@ -433,7 +433,7 @@ package body GVD.Text_Boxes is
            or else Box.Buffer (Index) = ASCII.LF;
 
          if Box.Buffer (Index) = ASCII.HT
-           and then J mod Current_Preferences.Tab_Size /= 0
+           and then J mod Integer (Get_Tab_Size) /= 0
          then
             --  Go to the next column that is a multiple of Tab_Size
             J := (1 + J / Tab_Size) * Tab_Size + 1;
