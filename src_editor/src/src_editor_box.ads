@@ -2,7 +2,7 @@
 --                               G P S                               --
 --                                                                   --
 --                     Copyright (C) 2001-2005                       --
---                            ACT-Europe                             --
+--                            AdaCore                                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -30,7 +30,6 @@
 with Glib;
 with Glib.Object;
 with Gdk.Rectangle;
-with Gdk.GC;
 with Gdk.Event;
 
 with Gtk.Box;
@@ -414,7 +413,7 @@ package Src_Editor_Box is
    function Add_Blank_Lines
      (Editor : access Source_Editor_Box_Record;
       Line   : Src_Editor_Buffer.Editable_Line_Type;
-      GC     : Gdk.GC.Gdk_GC;
+      Highlight_Category : Integer;
       Text   : String;
       Number : Positive) return Gtk.Text_Mark.Gtk_Text_Mark;
    --  See Src_Editor_Buffer.Add_Blank_Lines.

@@ -2477,11 +2477,12 @@ package body Src_Editor_Box is
    function Add_Blank_Lines
      (Editor : access Source_Editor_Box_Record;
       Line   : Src_Editor_Buffer.Editable_Line_Type;
-      GC     : Gdk.GC.Gdk_GC;
+      Highlight_Category : Integer;
       Text   : String;
       Number : Positive) return Gtk.Text_Mark.Gtk_Text_Mark is
    begin
-      return Add_Blank_Lines (Editor.Source_Buffer, Line, GC, Text, Number);
+      return Add_Blank_Lines (Editor.Source_Buffer, Line,
+                              Highlight_Category, Text, Number);
    end Add_Blank_Lines;
 
    ------------------
