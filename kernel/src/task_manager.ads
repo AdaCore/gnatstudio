@@ -61,23 +61,23 @@ package Task_Manager is
    procedure Set_Progress_Area
      (Manager : Task_Manager_Access;
       Area    : Gtk.Box.Gtk_Hbox);
-   --  Indicate an area in which progress bars can be displayed.<
+   --  Indicate an area in which progress bars can be displayed
 
    procedure Set_Busy_Commands
      (Manager      : Task_Manager_Access;
       Push_Command : Command_Access;
       Pop_Command  : Command_Access);
-   --  Set the commands used to push/pop the busy state.
+   --  Set the commands used to push/pop the busy state
 
    procedure Destroy
      (Manager : Task_Manager_Access);
-   --  Free all memory associated to the task manager.
+   --  Free all memory associated to the task manager
 
    function Get_GUI (Manager : Task_Manager_Access) return Gtk_Widget;
    procedure Set_GUI
      (Manager : Task_Manager_Access;
       GUI     : Gtk_Widget);
-   --  Get and set the active graphical interface for Manager.
+   --  Get and set the active graphical interface for Manager
 
    function Has_Running_Commands
      (Manager         : Task_Manager_Access;
