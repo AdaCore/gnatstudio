@@ -1466,6 +1466,20 @@ package body Src_Editor_Buffer is
 
          if not Get_Pref (Buffer.Kernel, Strip_Blanks) then
             Current := Length + 1;
+
+            --  Check whether first line terminator is LF or CR/LF and set
+            --  CR_Found accordingly.
+
+            for J in 1 .. Length loop
+               if Contents (J) = ASCII.CR then
+                  CR_Found := True;
+                  exit;
+
+               elsif Contents (J) = ASCII.LF then
+                  exit;
+               end if;
+            end loop;
+
          else
             while Current <= Length loop
                case Contents (Current) is
