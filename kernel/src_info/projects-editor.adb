@@ -3105,8 +3105,7 @@ package body Projects.Editor is
 
    function Create_Default_Project
      (Registry : Projects.Registry.Project_Registry'Class;
-      Name, Path : String)
-      return Project_Type
+      Name, Path : String) return Project_Type
    is
       Project     : Project_Type;
       No_Scenario : constant Scenario_Variable_Array (1 .. 0) :=
@@ -3129,27 +3128,6 @@ package body Projects.Editor is
          Scenario_Variables => No_Scenario,
          Attribute          => Obj_Dir_Attribute,
          Value              => ".");
-
-      Update_Attribute_Value_In_Scenario
-        (Project,
-         Scenario_Variables => No_Scenario,
-         Attribute          => Builder_Default_Switches_Attribute,
-         Values             => Default_Builder_Switches,
-         Attribute_Index    => Ada_String);
-
-      Update_Attribute_Value_In_Scenario
-        (Project,
-         Scenario_Variables => No_Scenario,
-         Attribute          => Compiler_Default_Switches_Attribute,
-         Values             => Default_Compiler_Switches,
-         Attribute_Index    => Ada_String);
-
-      Update_Attribute_Value_In_Scenario
-        (Project,
-         Scenario_Variables => No_Scenario,
-         Attribute          => Linker_Default_Switches_Attribute,
-         Values             => Default_Linker_Switches,
-         Attribute_Index    => Ada_String);
 
       return Project;
    end Create_Default_Project;
