@@ -63,6 +63,7 @@ with Glide_Kernel.Project;     use Glide_Kernel.Project;
 with Glide_Kernel.Editor;      use Glide_Kernel.Editor;
 with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
 with Glide_Kernel.Modules;     use Glide_Kernel.Modules;
+with Glide_Intl;               use Glide_Intl;
 with Variable_Editors;         use Variable_Editors;
 
 package body Project_Explorers is
@@ -1259,7 +1260,7 @@ package body Project_Explorers is
    function Category_Name (Category : Language_Category) return String is
    begin
       if Category = Cat_Procedure then
-         return "subprogram";
+         return -"subprogram";
 
       else
          declare
@@ -1855,7 +1856,7 @@ package body Project_Explorers is
       then
          Gtk_New (Explorer, Kernel);
          Child := Put (Get_MDI (Kernel), Explorer);
-         Set_Title (Child, "Project Explorer");
+         Set_Title (Child, -"Project Explorer");
          Set_Dock_Side (Child, Left);
          Dock_Child (Child);
       end if;

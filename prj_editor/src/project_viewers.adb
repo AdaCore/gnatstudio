@@ -59,6 +59,7 @@ with Glide_Kernel;         use Glide_Kernel;
 with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
 with Glide_Kernel.Project; use Glide_Kernel.Project;
 with Glide_Kernel.Modules; use Glide_Kernel.Modules;
+with Glide_Intl;           use Glide_Intl;
 with GUI_Utils;            use GUI_Utils;
 with Switches_Editors;     use Switches_Editors;
 with Directory_Tree;       use Directory_Tree;
@@ -172,8 +173,8 @@ package body Project_Viewers is
 
    View_System : aliased constant View_Description :=
      (Num_Columns => 3,
-      Titles      => "File Name" + "Size" + "Last_Modified",
-      Tab_Title   => new String' ("System"),
+      Titles      => (-"File Name") + (-"Size") + (-"Last_Modified"),
+      Tab_Title   => new String' (-"System"),
       Display     => (Name_Display'Access,
                       Size_Display'Access,
                       Timestamp_Display'Access),
@@ -181,15 +182,15 @@ package body Project_Viewers is
 
    View_Version_Control : aliased constant View_Description :=
      (Num_Columns => 3,
-      Titles      => "File Name" + "Revision" + "Head Revision",
-      Tab_Title   => new String' ("VCS"),
+      Titles      => (-"File Name") + (-"Revision") + (-"Head Revision"),
+      Tab_Title   => new String' (-"VCS"),
       Display     => (Name_Display'Access, null, null),
       Callbacks   => (null, null, null));
 
    View_Switches : aliased constant View_Description :=
      (Num_Columns => 2,
-      Titles      => "File Name" + "Compiler",
-      Tab_Title   => new String' ("Switches"),
+      Titles      => (-"File Name") + (-"Compiler"),
+      Tab_Title   => new String' (-"Switches"),
       Display     => (Name_Display'Access,
                       Compiler_Switches_Display'Access),
       Callbacks   => (null,
@@ -794,7 +795,7 @@ package body Project_Viewers is
       end if;
 
       if V.Project_Filter /= No_Project then
-         Gtk_New (Item, "Edit default switches");
+         Gtk_New (Item, -"Edit default switches");
          Add (V.Contextual_Menu, Item);
          Contextual_Callback.Connect
            (Item, "activate",
@@ -811,7 +812,7 @@ package body Project_Viewers is
 
          if User.File_Name /= No_String then
             String_To_Name_Buffer (User.File_Name);
-            Gtk_New (Item, "Edit switches for "
+            Gtk_New (Item, -"Edit switches for "
                      & Name_Buffer (Name_Buffer'First .. Name_Len));
             Add (V.Contextual_Menu, Item);
             Contextual_Callback.Connect
@@ -964,7 +965,7 @@ package body Project_Viewers is
             Gtk_New (Item, Label => "");
             Append (Menu, Item);
 
-            Gtk_New (Item, Label => "Add Directory to "
+            Gtk_New (Item, Label => -"Add Directory to "
                      & Project_Name (Project_Information (File_Context)));
             Append (Menu, Item);
             Context_Callback.Connect
@@ -973,7 +974,7 @@ package body Project_Viewers is
                (Add_Directory_From_Contextual'Access),
                Selection_Context_Access (Context));
 
-            Gtk_New (Item, Label => "Change Object Directory for "
+            Gtk_New (Item, Label => -"Change Object Directory for "
                      & Project_Name (Project_Information (File_Context)));
             Append (Menu, Item);
             Context_Callback.Connect
@@ -982,7 +983,7 @@ package body Project_Viewers is
                (Change_Obj_Directory_From_Contextual'Access),
                Selection_Context_Access (Context));
 
-            Gtk_New (Item, Label => "Edit Default Switches for "
+            Gtk_New (Item, Label => -"Edit Default Switches for "
                      & Project_Name (Project_Information (File_Context)));
             Append (Menu, Item);
             --  Context_Callback.Connect
@@ -995,7 +996,7 @@ package body Project_Viewers is
          if Has_Directory_Information (File_Context) then
             Gtk_New (Item, Label => "");
             Append (Menu, Item);
-            Gtk_New (Item, Label => "Remove Directory "
+            Gtk_New (Item, Label => -"Remove Directory "
                      & Directory_Information (File_Context));
             Set_Sensitive (Item, False);
             Append (Menu, Item);
@@ -1003,7 +1004,7 @@ package body Project_Viewers is
 
          Gtk_New (Item, Label => "");
          Append (Menu, Item);
-         Gtk_New (Item, Label => "Add Variable");
+         Gtk_New (Item, Label => -"Add Variable");
          Append (Menu, Item);
          --  Context_Callback.Connect
          --    (Item, "activate",
@@ -1015,7 +1016,7 @@ package body Project_Viewers is
             Gtk_New (Item, Label => "");
             Append (Menu, Item);
 
-            Gtk_New (Item, Label => "Edit Switches for "
+            Gtk_New (Item, Label => -"Edit Switches for "
                      & Base_File_Name (File_Information (File_Context)));
             Append (Menu, Item);
             --  Context_Callback.Connect
@@ -1075,24 +1076,25 @@ package body Project_Viewers is
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
       Menu_Item : Gtk_Menu_Item;
+      Project : constant String := '/' & (-"Project");
    begin
-      Gtk_New (Menu_Item, "New...");
-      Register_Menu (Kernel, "/Project", Menu_Item, Ref_Item => "Open...");
+      Gtk_New (Menu_Item, -"New...");
+      Register_Menu (Kernel, Project, Menu_Item, Ref_Item => -"Open...");
       Kernel_Callback.Connect
         (Menu_Item, "activate",
          Kernel_Callback.To_Marshaller (On_New_Project'Access),
          Kernel_Handle (Kernel));
 
-      Gtk_New (Menu_Item, "Edit...");
-      Register_Menu (Kernel, "/Project", Menu_Item, Ref_Item => "Open...",
+      Gtk_New (Menu_Item, -"Edit...");
+      Register_Menu (Kernel, Project, Menu_Item, Ref_Item => -"Open...",
                      Add_Before => False);
       Kernel_Callback.Connect
         (Menu_Item, "activate",
          Kernel_Callback.To_Marshaller (On_Edit_Project'Access),
          Kernel_Handle (Kernel));
 
-      Gtk_New (Menu_Item, "Add Directory...");
-      Register_Menu (Kernel, "/Project", Menu_Item, Ref_Item => "Edit...",
+      Gtk_New (Menu_Item, -"Add Directory...");
+      Register_Menu (Kernel, Project, Menu_Item, Ref_Item => -"Edit...",
                      Add_Before => False);
    end Initialize_Module;
 
