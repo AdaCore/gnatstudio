@@ -584,7 +584,7 @@ package body Src_Editor_View is
                  (View, Text_Window_Text, Dummy, Line_Y, Dummy, Buffer_Line_Y);
 
                Draw_Rectangle
-                 (Window, View.Current_Line_GC, False, 0, Buffer_Line_Y,
+                 (Window, View.Current_Line_GC, True, 0, Buffer_Line_Y,
                   Rect.Width - 1, Line_Height - 1);
             end if;
 
