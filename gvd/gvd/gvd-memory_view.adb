@@ -597,6 +597,8 @@ package body GVD.Memory_View is
       View.Flags  := new String' (Values);
       View.Data   := Byte;
       Update_Display (View);
+      Set_Text (View.Address_Entry,
+                "0x" & To_Standard_Base (Address, 16, Address_Length));
    end Display_Memory;
 
    --------------------
@@ -640,6 +642,7 @@ package body GVD.Memory_View is
               (New_Address'First .. New_Address'First + 1) = "0x"
             then
                Display_Memory (View, New_Address);
+               Set_Text (View.Address_Entry, Address);
             else
                Display_Memory (View, 0);
             end if;
