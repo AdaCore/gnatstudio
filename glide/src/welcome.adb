@@ -99,29 +99,9 @@ package body Welcome is
       Add (Get_Contents (Screen), Box);
       Set_Border_Width (Box, 10);
 
-      --  Creating a new project
-
-      Gtk_New_Hbox (Hbox, Homogeneous => False);
-      Pack_Start (Box, Hbox, Expand => False);
-
-      Gtk_New (Label, -"Create new project with wizard");
-      Set_Alignment (Label, 0.0, 0.5);
-      Pack_Start (Hbox, Label, Expand => True, Fill => True);
-
-      Gtk_New (Button, -"Create");
-      Add_Widget (Size, Button);
-      Pack_Start (Hbox, Button, Expand => False);
-      Widget_Callback.Object_Connect
-        (Button, "clicked",
-         Widget_Callback.To_Marshaller (On_New_Project'Access),
-         Screen);
-
       --  Default project
 
-      Gtk_New_Hseparator (Sep);
-      Pack_Start (Box, Sep, Expand => False, Padding => 5);
-
-      Gtk_New (Label, "Create default project in directory:");
+      Gtk_New (Label, "Start with default project in directory:");
       Set_Alignment (Label, 0.0, 0.5);
       Pack_Start (Box, Label, Expand => False);
 
@@ -142,12 +122,32 @@ package body Welcome is
         (Button, "clicked",
          Widget_Callback.To_Marshaller (On_Browse_Default'Access), Screen);
 
-      Gtk_New (Button, -"Create");
+      Gtk_New (Button, -"Start");
       Add_Widget (Size, Button);
       Pack_Start (Vbox, Button, Expand => False);
       Widget_Callback.Object_Connect
         (Button, "clicked",
          Widget_Callback.To_Marshaller (On_Default_Project'Access),
+         Screen);
+
+      --  Creating a new project
+
+      Gtk_New_Hseparator (Sep);
+      Pack_Start (Box, Sep, Expand => False, Padding => 5);
+
+      Gtk_New_Hbox (Hbox, Homogeneous => False);
+      Pack_Start (Box, Hbox, Expand => False);
+
+      Gtk_New (Label, -"Create new project with wizard");
+      Set_Alignment (Label, 0.0, 0.5);
+      Pack_Start (Hbox, Label, Expand => True, Fill => True);
+
+      Gtk_New (Button, -"Create");
+      Add_Widget (Size, Button);
+      Pack_Start (Hbox, Button, Expand => False);
+      Widget_Callback.Object_Connect
+        (Button, "clicked",
+         Widget_Callback.To_Marshaller (On_New_Project'Access),
          Screen);
 
       --  Open project
