@@ -722,7 +722,7 @@ Enable or disable the automatic refreshing of the item upon program execution
    @end itemize
 
    Colors convey special meaning in the canvas. The default color (can be
-   changed using the menu Edit->Preferences...) are:
+   changed using the @ref{preferences menu}) are:
    @itemize @bullet
      @item Black: default color for printing values
      @item Blue:  pointers and access types, that can be dereferenced by double
@@ -878,7 +878,7 @@ the second click will remove it).
    and a text window on the right that displays with syntax highlighting the
    source files. If you leave the cursor over a variable, a tooltip will
    appear showing the value of this variable. Automatic tooltips can be
-   disabled in the @i{Edit->Preferences...} menu.
+   disabled in the @ref{preferences menu}.
 
    Contextual menu:
    @itemize @bullet
@@ -917,7 +917,7 @@ Show only the source code.
 
      @item Show Asm Code.
 Show only the assembly code around the current execution point.
-You can specify in the @i{Edit->Preferences...} menu how many instructions
+You can specify in the @ref{preferences menu} how many instructions
 are displayed by default. To go past the default number of instructions,
 you can either use the contextual menu of the assembly editor
 (@i{Show previous page}, @i{Show next page}), or click on the up and down
@@ -1307,7 +1307,13 @@ but will slow down GVD if $HOME is located on a network disk.
 
    @item $HOME/.gvd/preferences
 Contains all the preferences in XML format, as specified in the
-@i{Edit->Preferences...} menu.
+@ref{preferences menu}.
+
+   @item $HOME/.gvd/window_settings
+Contains all the settings of the windows in GVD (window sizes, pane
+offset) in XML format. These settings are saved automatically when quitting
+GVD, and loading automatically at start up. To reset the settings, simply
+remove this file.
 
    @item $HOME/.gvd/sessions
 Directory containing the GVD sessions.
