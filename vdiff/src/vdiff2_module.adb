@@ -867,9 +867,40 @@ package body Vdiff2_Module is
    procedure On_Ref_Change
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access) is
-      pragma Unreferenced (Context, Widget);
+      pragma Unreferenced (Widget);
+      Node          : Diff_Head_List.List_Node;
+      Selected_File : GNAT.OS_Lib.String_Access;
+      Cmd           : Diff_Command_Access;
+      Diff          : Diff_Head;
    begin
-      null;
+      Create
+        (Cmd,
+         VDiff2_Module (Vdiff_Module_ID).Kernel,
+         VDiff2_Module (Vdiff_Module_ID).List_Diff,
+         Change_Ref_File'Access);
+
+      Selected_File := new String'
+        (Directory_Information
+           (File_Selection_Context_Access (Context)) &
+         File_Information
+           (File_Selection_Context_Access (Context)));
+      Node := Is_In_Diff_List
+        (Selected_File,
+         VDiff2_Module (Vdiff_Module_ID).List_Diff.all);
+      Diff := Data (Node);
+
+      if Diff.File1.all = Selected_File.all then
+         Diff.Ref_File := 1;
+      elsif Diff.File2.all = Selected_File.all then
+         Diff.Ref_File := 2;
+      elsif Diff.File3.all = Selected_File.all then
+         Diff.Ref_File := 3;
+      end if;
+
+      Set_Data (Node, Diff);
+      Free (Selected_File);
+      Unchecked_Execute (Cmd, Node);
+      Free (Root_Command (Cmd.all));
    end On_Ref_Change;
 
    ----------------------
@@ -918,6 +949,8 @@ package body Vdiff2_Module is
                   Context_Callback.To_Marshaller (On_Ref_Change'Access),
                   Selection_Context_Access (Context));
             end if;
+
+            Free (Selected_File);
          end if;
       end if;
    end VDiff_Contextual;
