@@ -8319,10 +8319,10 @@ description of @code{lines} above.
 This indicates the column of the frame that should contain the switch. See the
 description of @code{columns} above.
 
-@item label
+@item label (mandatory)
 This is the label which is displayed in the graphical interface
 
-@item switch
+@item switch (mandatory)
 This is the text that should be put on the command line if that switch is
 selected. Depending on its type, a variant of the text might be put instead,
 see the description of @code{combo} and @code{spin} below.
