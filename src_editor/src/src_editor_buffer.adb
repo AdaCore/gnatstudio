@@ -394,9 +394,9 @@ package body Src_Editor_Buffer is
             --  Offset between cursor and end of line
 
             Blanks       : Natural;
-            C_Str        : Gtkada.Types.Chars_Ptr;
+            C_Str        : Gtkada.Types.Chars_Ptr := Gtkada.Types.Null_Ptr;
             Iter         : Gtk_Text_Iter;
-            Line_Ends    : Boolean;
+            Line_Ends    : Boolean := True;
             Result       : Boolean;
             Slice_Length : Natural;
             Slice        : Unchecked_String_Access;
@@ -409,9 +409,9 @@ package body Src_Editor_Buffer is
                Copy (Pos, Iter);
 
                --  Go to last char of the line pointed by Pos
-               Forward_Line (Iter, Line_Ends);
-               if Line_Ends then
-                  Backward_Char (Iter, Result);
+
+               if not Ends_Line (Iter) then
+                  Forward_To_Line_End (Iter, Line_Ends);
                end if;
 
                Line   := Get_Line (Iter);
@@ -502,6 +502,7 @@ package body Src_Editor_Buffer is
 
                Buffer.Inserting := False;
                g_free (C_Str);
+               C_Str := Gtkada.Types.Null_Ptr;
             end if;
 
          exception
@@ -509,7 +510,9 @@ package body Src_Editor_Buffer is
                --  Stop propagation of exception, since doing nothing
                --  in this callback is harmless.
 
-               g_free (C_Str);
+               if C_Str /= Gtkada.Types.Null_Ptr then
+                  g_free (C_Str);
+               end if;
          end;
       end if;
 
