@@ -190,68 +190,43 @@ package body Docgen.Html_Output is
          when Footer_Info           => Doc_HTML_Footer (File, Info, Kernel);
          when Subtitle_Info         => Doc_HTML_Subtitle (File, Info);
          when Package_Desc_Info     => Doc_HTML_Pack_Desc (File, Info);
-         when With_Info
-            => Doc_HTML_With (B,
-                              Kernel,
-                              File,
-                              Entity_List,
-                              List_Ref_In_File,
-                              Info);
-         when Package_Info
-            => Doc_HTML_Package (B,
-                                 Kernel,
-                                 File,
-                                 Entity_List,
-                                 List_Ref_In_File,
-                                 Info);
-         when Var_Info
-            => Doc_HTML_Var (B,
-                             Kernel,
-                             File,
-                             Entity_List,
-                             List_Ref_In_File,
-                             Info);
-         when Entry_Info
-            => Doc_HTML_Entry (B,
-                               Kernel,
-                               File,
-                               Entity_List,
-                               List_Ref_In_File,
-                               Info);
-         when Subprogram_Info
-            => Doc_HTML_Subprogram (B,
-                                    Kernel,
-                                    File,
-                                    Entity_List,
-                                    List_Ref_In_File,
-                                    Info);
-         when Type_Info
-            => Doc_HTML_Type (B,
-                              Kernel,
-                              File,
-                              Entity_List,
-                              List_Ref_In_File,
-                              Info);
-         when Exception_Info
-            => Doc_HTML_Exception (B,
-                                   Kernel,
-                                   File,
-                                   Entity_List,
-                                   List_Ref_In_File,
-                                   Info);
+         when With_Info             =>
+            Doc_HTML_With
+              (B, Kernel, File, Entity_List, List_Ref_In_File, Info);
+
+         when Package_Info          =>
+            Doc_HTML_Package
+              (B, Kernel, File, Entity_List, List_Ref_In_File, Info);
+
+         when Var_Info              =>
+            Doc_HTML_Var
+              (B, Kernel, File, Entity_List, List_Ref_In_File, Info);
+
+         when Entry_Info            =>
+            Doc_HTML_Entry
+              (B, Kernel, File, Entity_List, List_Ref_In_File, Info);
+
+         when Subprogram_Info       =>
+            Doc_HTML_Subprogram
+              (B, Kernel, File, Entity_List, List_Ref_In_File, Info);
+
+         when Type_Info             =>
+            Doc_HTML_Type
+              (B, Kernel, File, Entity_List, List_Ref_In_File, Info);
+
+         when Exception_Info        =>
+            Doc_HTML_Exception
+              (B, Kernel, File, Entity_List, List_Ref_In_File, Info);
+
          when Unit_Index_Info       =>
             Doc_HTML_Unit_Index_Header (File, Info, Doc_Directory, Doc_Suffix);
          when Subprogram_Index_Info => Doc_HTML_Sub_Index_Header  (File, Info);
          when Type_Index_Info       => Doc_HTML_Type_Index_Header (File, Info);
          when Index_Item_Info       => Doc_HTML_Index_Item (File, Info);
          when End_Of_Index_Info     => Doc_HTML_Index_End  (File, Info);
-         when Body_Line_Info
-            => Doc_HTML_Body (B,
-                              Kernel,
-                              File,
-                              Entity_List,
-                              List_Ref_In_File,
-                              Info);
+         when Body_Line_Info =>
+            Doc_HTML_Body
+              (B, Kernel, File, Entity_List, List_Ref_In_File, Info);
       end case;
    end Doc_HTML_Create;
 
