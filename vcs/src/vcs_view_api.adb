@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2003                       --
+--                     Copyright (C) 2001-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -1164,30 +1164,38 @@ package body VCS_View_API is
    is
       pragma Unreferenced (Widget);
 
+      List   : String_List.List;
+      Kernel : Kernel_Handle;
+
       function Get_Location
         (File, ChangeLog_File : Virtual_File) return String;
       --  Returns the line/columns where the cursor needs to be located.
       --  This function must be called only when the global ChangeLog file
       --  contains an entry for file.
 
-      List   : String_List.List;
-      Kernel : Kernel_Handle;
+      ------------------
+      -- Get_Location --
+      ------------------
 
       function Get_Location
         (File, ChangeLog_File : Virtual_File) return String
       is
          Filename           : constant String := Base_Name (File);
          --  The filename to look for in the ChangeLog file
-         ChangeLog_Filename : aliased String :=
-           Full_Name (ChangeLog_File).all;
+
+         ChangeLog_Filename : aliased String := Full_Name (ChangeLog_File).all;
          --  The global ChangeLog file
+
          L, C, Last         : Natural;
          Entry_Found        : Boolean;
+
       begin
          L := 1;
          C := 0;
 
          --  Get last line in the file
+         --  ??? This won't work when file contains blank characters
+         --  Same for Editor.get_chars below
 
          Last := Natural'Value
            (Execute_GPS_Shell_Command
@@ -1215,6 +1223,8 @@ package body VCS_View_API is
          if not Entry_Found then
             --  No entry found, this should not happen, returns the first
             --  position in the file.
+            --  ??? Why are we returning a blank character at the first
+            --  position of the string
             return " 1 1";
          end if;
 
@@ -1252,6 +1262,7 @@ package body VCS_View_API is
                         Text2 : aliased String :=
                           ASCII.HT & ASCII.LF & ASCII.LF;
                         Args  : GNAT.OS_Lib.Argument_List (1 .. 4);
+
                      begin
                         Args (1) := ChangeLog_Filename'Unchecked_Access;
                         Args (2) := Line'Unchecked_Access;
@@ -1278,6 +1289,7 @@ package body VCS_View_API is
                      --  Only spaces, put cursor at the end of the line
                      C := Line'Last;
                   end if;
+
                   exit;
                end if;
 
@@ -1285,6 +1297,7 @@ package body VCS_View_API is
             end;
          end loop;
 
+         --  ??? Should use Image (L) instead
          return Natural'Image (L) & Natural'Image (C);
       end Get_Location;
 
