@@ -47,7 +47,8 @@ package body Tries is
       Cell_Parent  : in out Cell_Child_Access;
       Last         : out Natural;
       Index_Length : out Natural;
-      Scenario     : out Natural);
+      Scenario     : out Natural;
+      First_Not_Matched : out Character);
    --  Return the closest cell for Index. The first Last characters of Index
    --  have been processed so far on exit.  Kind describes the scenario, as
    --  in the following examples.
@@ -140,7 +141,8 @@ package body Tries is
       Cell_Parent  : in out Cell_Child_Access;
       Last         : out Natural;
       Index_Length : out Natural;
-      Scenario     : out Natural)
+      Scenario     : out Natural;
+      First_Not_Matched : out Character)
    is
       Current  : Cell_Child_Access := Tree;
       Start    : Integer := Index'First;
@@ -149,36 +151,36 @@ package body Tries is
       Child    : Integer;
    begin
       --  If we are processing the root node
-      if Tree.Index_Length = 0 then
+      if Tree = null then
          Cell_Parent := null;
+         Cell     := Tree;
+         Last     := Index'First;
+         Scenario := 5;
+         return;
       end if;
 
       while Current /= null and then Current.Children /= null loop
          --  Find matching child. There is at most one of these.
 
          Child := Current.Children'First;
-         while Child <= Current.Children'Last loop
-            Ind := Get_Index (Current.Children (Child));
-            if Ind /= null then
-               Ind_First := Ind'First + Current.Index_Length;
-               exit when Ind (Ind_First) = Index (Start);
-            end if;
+         loop
+            exit when
+              Current.Children (Child).First_Char_Of_Key = Index (Start);
             Child := Child + 1;
-         end loop;
 
-         --  No child found ? Stop here
-         if Child > Current.Children'Last then
-            Last     := Start - 1;
-            Cell     := Current;
-            Scenario := 4;
-            return;
-         end if;
+            if Child > Current.Children'Last then
+               Last     := Start;
+               Cell     := Current;
+               Scenario := 4;
+               return;
+            end if;
+         end loop;
 
          Cell_Parent := Current;
          Current     := Current.Children (Child)'Unrestricted_Access;
-
-         Ind_Last := Ind'First + Current.Index_Length - 1;
---       Assert (Me, Ind_Last <= Ind'Last, "Too long Index_Length");
+         Ind         := Get_Index (Current.all);
+         Ind_First   := Ind'First + Cell_Parent.Index_Length;
+         Ind_Last    := Ind'First + Current.Index_Length - 1;
 
          if Start = Index'Last then
             Cell := Current;
@@ -187,8 +189,9 @@ package body Tries is
             if Ind_First = Ind_Last then
                Scenario     := 3;
             else
-               Scenario     := 2;
-               Index_Length := Index'Length;
+               First_Not_Matched := Ind (Ind'First + 1);
+               Scenario          := 2;
+               Index_Length      := Index'Length;
             end if;
             return;
          end if;
@@ -198,30 +201,32 @@ package body Tries is
             if Ind (J) /= Index (Start) then
                --  If at least one character matched, this is the
                --  correct cell, although it will have to be split
-               Cell         := Current;
-               Last         := Start - 1;
-               Index_Length := J - Ind'First;
-               Scenario     := 1;
+               Cell              := Current;
+               Last              := Start - 1;
+               Index_Length      := J - Ind'First;
+               First_Not_Matched := Ind (J);
+               Scenario          := 1;
                return;
-            else
-               Start := Start + 1;
+            end if;
 
-               --  Cell matches, but will have to be splitted
-               if Start > Index'Last then
-                  Cell        := Current;
-                  Last        := Start;
+            Start := Start + 1;
 
-                  --  If all the characters of the index matched,
-                  --  we have found our cell
+            --  Cell matches, but will have to be splitted
+            if Start > Index'Last then
+               Cell := Current;
+               Last := Start;
 
-                  if J = Ind_Last then
-                     Scenario     := 3;
-                  else
-                     Index_Length := J - Ind'First + 1;
-                     Scenario     := 2;
-                  end if;
-                  return;
+               --  If all the characters of the index matched,
+               --  we have found our cell
+
+               if J = Ind_Last then
+                  Scenario := 3;
+               else
+                  Index_Length      := J - Ind'First + 1;
+                  First_Not_Matched := Ind (J + 1);
+                  Scenario          := 2;
                end if;
+               return;
             end if;
          end loop;
 
@@ -229,8 +234,9 @@ package body Tries is
          --  too short, check the children
       end loop;
 
-      Cell := Current;
-      Scenario := 5;
+      Last     := Start;
+      Cell     := Current;
+      Scenario := 4;
    end Find_Cell_Child;
 
    ----------
@@ -254,6 +260,7 @@ package body Tries is
                           Ind'First + Cell.Index_Length - 1) & "'");
          end if;
 
+         --  Put (Cell.First_Char_Of_Key & ' ');
          Put (Cell.Data);
          Put (" ");
 
@@ -289,53 +296,50 @@ package body Tries is
      (Tree  : in out Trie_Tree;
       Data  : Data_Type)
    is
-      pragma Suppress (All_Checks);
-      Cell       : Cell_Child_Access;
-      Cell_Parent : Cell_Child_Access;
-      Index      : constant String_Access := Get_Index (Data);
-      Last       : Integer;
-      Scenario   : Integer;
+      Cell         : Cell_Child_Access;
+      Cell_Parent  : Cell_Child_Access;
+      Index        : constant String_Access := Get_Index (Data);
+      Last         : Integer;
+      Scenario     : Integer;
       Index_Length : Integer;
-      Tmp2       : Cell_Child_Array_Access;
+      Tmp2         : Cell_Child_Array_Access;
+      First_Not_Matched : Character;
    begin
       Find_Cell_Child
         (Tree.Child'Unrestricted_Access, Index.all, Cell, Cell_Parent, Last,
-         Index_Length, Scenario);
+         Index_Length, Scenario, First_Not_Matched);
 
       case Scenario is
          when 1 =>
             Cell.all :=
-              (Data         => No_Data,
-               Index_Length => Index_Length,
-               Children     => new Cell_Child_Array'
-                 (1 => (Data         => Cell.Data,
-                        Index_Length => Cell.Index_Length,
-                        Children     => Cell.Children),
-                  2 => (Data         => Data,
-                        Index_Length => Index'Length,
-                        Children     => null)));
---              Assert
---                (Me, Get_Index (Data)'Length >= Index'Length,
---                 "Invalid length in scenario 1");
+              (Data              => No_Data,
+               Index_Length      => Index_Length,
+               First_Char_Of_Key => Cell.First_Char_Of_Key,
+               Children          => new Cell_Child_Array'
+                 (1 => (Data              => Cell.Data,
+                        First_Char_Of_Key => First_Not_Matched,
+                        Index_Length      => Cell.Index_Length,
+                        Children          => Cell.Children),
+                  2 => (Data              => Data,
+                        First_Char_Of_Key =>
+                           Index (Index'First + Index_Length),
+                        Index_Length      => Index'Length,
+                        Children          => null)));
 
          when 2 =>
             Cell.all :=
               (Data         => Data,
                Index_Length => Index_Length,
+               First_Char_Of_Key => Cell.First_Char_Of_Key,
                Children     => new Cell_Child_Array'
-                 (1 => (Data         => Cell.Data,
-                        Index_Length => Cell.Index_Length,
-                        Children     => Cell.Children)));
---              Assert (Me, Get_Index (Data)'Length >= Index_Length,
---                      "Invalid length in scenario 2 "
---                      & Get_Index (Data)'Length'Img
---                      & Index_Length'Img);
+                 (1 => (Data              => Cell.Data,
+                        Index_Length      => Cell.Index_Length,
+                        First_Char_Of_Key => First_Not_Matched,
+                        Children          => Cell.Children)));
 
          when 3 =>
             Free (Cell.Data);
             Cell.Data := Data;
---              Assert (Me, Get_Index (Cell.Data)'Length >= Cell.Index_Length,
---                      "Invalid length in scenario 3");
 
          when 4 | 5 =>
             Tmp2 := Cell.Children;
@@ -349,11 +353,10 @@ package body Tries is
             end if;
 
             Cell.Children (Cell.Children'Last) :=
-              (Data         => Data,
-               Index_Length => Index'Length,
-               Children     => null);
---              Assert (Me, Get_Index (Data)'Length >= Index'Length,
---                      "Invalid length in scenario 4");
+              (Data              => Data,
+               First_Char_Of_Key => Index (Last),
+               Index_Length      => Index'Length,
+               Children          => null);
 
          when others =>
             null;
@@ -365,16 +368,17 @@ package body Tries is
    ------------
 
    procedure Remove (Tree : in out Trie_Tree; Index : String) is
-      Cell         : Cell_Child_Access;
-      Cell_Parent  : Cell_Child_Access;
-      Last         : Integer;
-      Scenario     : Integer;
-      Index_Length : Integer;
-      Tmp          : Cell_Child_Array_Access;
+      Cell              : Cell_Child_Access;
+      Cell_Parent       : Cell_Child_Access;
+      Last              : Integer;
+      Scenario          : Integer;
+      Index_Length      : Integer;
+      Tmp               : Cell_Child_Array_Access;
+      First_Not_Matched : Character;
    begin
       Find_Cell_Child
         (Tree.Child'Unrestricted_Access, Index, Cell, Cell_Parent, Last,
-         Index_Length, Scenario);
+         Index_Length, Scenario, First_Not_Matched);
 
       if Scenario = 2 or else Scenario = 3 then
          Free (Cell.Data);
@@ -463,10 +467,11 @@ package body Tries is
       Last         : Integer;
       Scenario     : Integer;
       Index_Length : Integer;
+      First_Not_Matched : Character;
    begin
       Find_Cell_Child
         (Tree.Child'Unrestricted_Access, Index, Cell, Cell_Parent, Last,
-         Index_Length, Scenario);
+         Index_Length, Scenario, First_Not_Matched);
 
       if Scenario = 3 then
          return Cell.Data;
@@ -485,6 +490,7 @@ package body Tries is
       Scenario     : Integer;
       Index_Length : Integer;
       Iter         : Iterator;
+      First_Not_Matched : Character;
 
       procedure Process_Recursively (Cell : Cell_Child);
       --  Add cell to the list of cells that need to be returned by the
@@ -526,7 +532,7 @@ package body Tries is
          --  Find the closest cell that matches the prefix
          Find_Cell_Child
            (Tree.Child'Unrestricted_Access, Prefix, Cell, Cell_Parent, Last,
-            Index_Length, Scenario);
+            Index_Length, Scenario, First_Not_Matched);
 
          --  From there, we need to return the cell and all of its children
          --  recursively
