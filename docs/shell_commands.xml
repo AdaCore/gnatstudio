@@ -2163,7 +2163,7 @@ The specific list depends on the hook type</param>
   <shell_doc name="GPS.get" real_name="GPS.MDI.get">
      <param name="name">A string</param>
      <return>An instance of GPS.MDIWindow</return>
-     <description>Return the window whose name is name. If there is no such window, an error is raised</description>
+     <description>Return the window whose name is name. If there is no such window, None is returned</description>
   </shell_doc>
 
   <shell_doc name="GPS.get_by_child" real_name="GPS.MDI.get_by_child">
