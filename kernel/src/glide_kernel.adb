@@ -440,7 +440,7 @@ package body Glide_Kernel is
          end if;
       end Save_Child;
 
-      pragma Unreferenced (Col_Num, Button);
+      pragma Unreferenced (Col_Num);
    begin
       if Force then
          if Children /= No_Children then
@@ -534,6 +534,7 @@ package body Glide_Kernel is
          Add_Attribute (Col, Renderer, "text", 1);
 
          Button := Add_Button (Dialog, Stock_Apply, Gtk_Response_Apply);
+         Grab_Default (Button);
          Button := Add_Button (Dialog, -"None",  Gtk_Response_No);
          Button := Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel);
 
@@ -2279,7 +2280,7 @@ package body Glide_Kernel is
       Path : GNAT.OS_Lib.String_Access := Getenv ("GPS_DOC_PATH");
       Anchor : Natural := Index (Name, "#");
    begin
-      if Is_Absolute_Path (Name) then
+      if Is_Absolute_Path_Or_URL (Name) then
          return Create (Full_Filename => Name);
       end if;
 
@@ -2322,7 +2323,7 @@ package body Glide_Kernel is
       Use_Source_Path : Boolean := True;
       Use_Object_Path : Boolean := True) return VFS.Virtual_File is
    begin
-      if Is_Absolute_Path (Name) then
+      if Is_Absolute_Path_Or_URL (Name) then
          return Create (Full_Filename => Name);
 
       else
