@@ -236,7 +236,8 @@ package body Glide_Kernel.Timeout is
 
          --  Add end of line after last argument
 
-         Glide_Kernel.Console.Insert (Kernel, "");
+         Glide_Kernel.Console.Insert
+           (Kernel, (1 => ASCII.LF), Add_LF => False);
 
          Fd := new TTY_Process_Descriptor;
          Non_Blocking_Spawn (Fd.all, Exec.all, Arguments, Err_To_Out => True);
