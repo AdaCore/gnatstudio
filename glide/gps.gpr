@@ -26,9 +26,9 @@ project GPS is
    Build : Build_Type := External ("Build", "Debug");
 
    package Builder is
-      for Default_Switches ("Ada") use ("-m", "-a", "-g");
+      for Default_Switches ("Ada") use ("-m", "-a", "-g", "-gnatQ");
 
-      for Global_Configuration_Pragmas use "../gnat.adc";
+      for Global_Configuration_Pragmas use "gnat.adc";
    end Builder;
 
    package Compiler is
