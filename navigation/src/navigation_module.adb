@@ -763,10 +763,10 @@ package body Navigation_Module is
          Accel_Mods => Control_Mask);
 
       Register_Menu
-        (Kernel, Navigate, -"Previous Location", Stock_Go_Back,
+        (Kernel, Navigate, -"Back", Stock_Go_Back,
          On_Back'Access);
       Register_Menu
-        (Kernel, Navigate, -"Forward Location", Stock_Go_Forward,
+        (Kernel, Navigate, -"Forward", Stock_Go_Forward,
          On_Forward'Access);
 
       Append_Space (Toolbar);
