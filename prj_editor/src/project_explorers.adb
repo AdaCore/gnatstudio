@@ -1159,17 +1159,6 @@ package body Project_Explorers is
                (-"in project ") &
                Get_String (Data.Tree.Model, Par, Base_Name_Column));
 
-         when Category_Node =>
-            --  Category in Filename
-            --  Get the parent node which is the filename node
-            Par := Parent (Data.Tree.Model, Iter);
-
-            Text := new String'
-              (Get_String (Data.Tree.Model, Iter, Base_Name_Column) &
-               ASCII.LF &
-               (-"in ") &
-               Get_String (Data.Tree.Model, Par, Base_Name_Column));
-
          when Entity_Node =>
             --  Entity (parameters) declared at Filename:line
             --  Get grand-parent node which is the filename node
