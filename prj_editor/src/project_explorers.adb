@@ -2361,8 +2361,7 @@ package body Project_Explorers is
             end;
 
             Iter := Find_All_Projects_Importing
-              (Root_Project => Get_Project (Kernel),
-               Project      => Project);
+              (Project      => Project);
 
             while Current (Iter) /= No_Project loop
                declare
