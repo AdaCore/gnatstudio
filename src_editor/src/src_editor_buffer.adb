@@ -1,5 +1,5 @@
 -----------------------------------------------------------------------
---                               G P S                               --
+--                              G P S                                --
 --                                                                   --
 --                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
@@ -188,6 +188,30 @@ package body Src_Editor_Buffer is
    procedure Strip_Ending_Line_Terminator
      (Buffer : access Source_Buffer_Record'Class);
    --  Delete the last character of the buffer if it is an ASCII.LF.
+
+   procedure On_Buffer_Destroy
+     (Buffer : access Source_Buffer_Record'Class;
+      Params : Glib.Values.GValues);
+   --  Callback for the "destroy" signal.
+
+   pragma Unreferenced (On_Buffer_Destroy);
+   --  ??? right now, this procedure is not used.
+   --  Must find a way to call it when the last view on this buffer is
+   --  destroyed.
+
+   -----------------------
+   -- On_Buffer_Destroy --
+   -----------------------
+
+   procedure On_Buffer_Destroy
+     (Buffer : access Source_Buffer_Record'Class;
+      Params : Glib.Values.GValues)
+   is
+      pragma Unreferenced (Params);
+   begin
+      Free_Queue (Buffer.Queue);
+      Destroy (Buffer.Current_Command);
+   end On_Buffer_Destroy;
 
    ---------------------
    -- Changed_Handler --
@@ -562,6 +586,9 @@ package body Src_Editor_Buffer is
 
       Command : Editor_Command
         := Editor_Command (Buffer.Current_Command);
+
+      Direction    : Direction_Type;
+      Line, Column : Gint;
    begin
       Get_Text_Iter (Nth (Params, 1), Start_Iter);
       Get_Text_Iter (Nth (Params, 2), End_Iter);
@@ -575,12 +602,23 @@ package body Src_Editor_Buffer is
          end if;
 
          if Is_Null_Command (Command) then
+            Get_Cursor_Position (Buffer, Line, Column);
+
+            if Line = Get_Line (Start_Iter)
+              and then Column = Get_Line_Offset (Start_Iter)
+            then
+               Direction := Backward;
+            else
+               Direction := Forward;
+            end if;
+
             Create (Command,
                     Deletion,
                     Source_Buffer (Buffer),
                     True,
                     Natural (Get_Line (Start_Iter)),
-                    Natural (Get_Line_Offset (Start_Iter)));
+                    Natural (Get_Line_Offset (Start_Iter)),
+                    Direction);
             Enqueue (Buffer.Queue, Command);
          end if;
 
@@ -589,6 +627,10 @@ package body Src_Editor_Buffer is
                    Natural (Get_Line (Start_Iter)),
                    Natural (Get_Line_Offset (Start_Iter)));
          Buffer.Current_Command := Command_Access (Command);
+
+         if Direction = Backward then
+            End_Action (Buffer);
+         end if;
       end if;
    end Delete_Range_Before_Handler;
 
