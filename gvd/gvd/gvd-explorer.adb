@@ -84,9 +84,6 @@ package body Odd.Explorer is
    procedure First_Handler (Explorer : access Explorer_Record'Class);
    --  Callback handler for Ctree signals.
 
-   function Get_Pos (Buffer : String; Index : Positive) return Position_Type;
-   --  Return the line and column corresponding to Index in Buffer.
-
    procedure Expand_Explorer_Tree
      (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
       Args   : Gtk_Args);
@@ -236,28 +233,6 @@ package body Odd.Explorer is
 
       Thaw (Explorer);
    end Clear_Explorer;
-
-   -------------
-   -- Get_Pos --
-   -------------
-
-   function Get_Pos (Buffer : String; Index : Positive) return Position_Type is
-      Result     : Position_Type;
-      Line_Start : Positive := 1;
-   begin
-      Result.Line := 0;
-      Result.Index := Index;
-
-      for J in Buffer'First .. Index loop
-         if Buffer (J) = ASCII.LF then
-            Result.Line := Result.Line + 1;
-            Line_Start := J;
-         end if;
-      end loop;
-
-      Result.Column := Index - Line_Start;
-      return Result;
-   end Get_Pos;
 
    -------------------
    -- First_Handler --
@@ -412,8 +387,8 @@ package body Odd.Explorer is
                end;
 
                Row_Data_Explorer.Node_Set_Row_Data
-                 (Tree, Node, Get_Pos (Buffer,
-                  Matches (Categories (C).Position_Index).First));
+                 (Tree, Node, Position_Type
+                  (Matches (Categories (C).Position_Index).First));
                First := Matches (0).Last;
             end loop;
          end if;
@@ -889,6 +864,8 @@ package body Odd.Explorer is
       Data    : Node_Data_Access := null;
       Current : Odd.Types.String_Access;
    begin
+      --  ??? Should be protected in case the debugger is currently busy
+
       Set_Busy_Cursor (Process, True);
       Freeze (Explorer);
 
