@@ -58,6 +58,7 @@ with Glide_Intl;        use Glide_Intl;
 with Glide_Kernel.Project; use Glide_Kernel.Project;
 with Glide_Kernel.Console; use Glide_Kernel.Console;
 with Glide_Kernel.Scripts; use Glide_Kernel.Scripts;
+with Glide_Kernel.Task_Manager; use Glide_Kernel.Task_Manager;
 with Ada.Exceptions;    use Ada.Exceptions;
 with Ada.Strings.Fixed; use Ada.Strings.Fixed;
 with VFS;               use VFS;
@@ -977,9 +978,11 @@ package body Glide_Kernel.Modules is
      (Widget  : access GObject_Record'Class;
       Command : Command_Access)
    is
-      pragma Unreferenced (Widget);
+      Kernel : constant Kernel_Handle := Kernel_Handle (Widget);
    begin
-      Launch_Synchronous (Command);
+      Launch_Background_Command
+        (Kernel, Command, Destroy_On_Exit => False,
+         Active => False, Queue_Id => "");
 
    exception
       when E : others =>
@@ -1065,10 +1068,11 @@ package body Glide_Kernel.Modules is
       end if;
 
       if Command /= null then
-         Command_Callback.Connect
+         Command_Callback.Object_Connect
            (Item, "activate",
             Command_Callback.To_Marshaller (Execute_Command'Access),
-            Command);
+            Slot_Object => Kernel_Handle (Kernel),
+            User_Data   => Command);
       end if;
 
       return Item;
