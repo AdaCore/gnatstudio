@@ -658,8 +658,11 @@ package body Main_Debug_Window_Pkg.Callbacks is
 
       Interrupt
         (Tab.Debugger,
-         Wait_For_Prompt =>
-           not Command_In_Process (Get_Process (Tab.Debugger)));
+         Wait_For_Prompt => False);
+
+      if not Command_In_Process (Get_Process (Tab.Debugger)) then
+         Display_Prompt (Tab.Debugger);
+      end if;
 
       --  We used to flush the output here, so that if the program was
       --  outputting a lot of things, we just stop there.
