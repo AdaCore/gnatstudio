@@ -95,6 +95,14 @@ procedure Odd_Main is
 
          Free (Home);
       end if;
+
+      --  ??? This should be moved in a future "preferences" package, so as to
+      --  accomodate user's specific extensions
+      Add_File_Extension (new Ada_Language, "\.adb$");
+      Add_File_Extension (new Ada_Language, "\.ads$");
+      Add_File_Extension (new C_Language, "\.c$");
+      Add_File_Extension (new C_Language, "\.h$");
+
    end Init;
 
    function Format (Str : String; Columns : Positive) return String is
@@ -145,13 +153,6 @@ begin
    Gtk.Main.Init;
    Init;
    Gtk_New (Main_Debug_Window);
-
-   --  ??? This should be moved in a future "preferences" package, so as to
-   --  accomodate user's specific extensions
-   Add_File_Extension (new Ada_Language, "\.adb$");
-   Add_File_Extension (new Ada_Language, "\.ads$");
-   Add_File_Extension (new C_Language, "\.c$");
-   Add_File_Extension (new C_Language, "\.h$");
 
    for J in 1 .. Argument_Count loop
       if Argument (J) = "--tty" then
