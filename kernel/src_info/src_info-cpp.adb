@@ -488,6 +488,10 @@ package body Src_Info.CPP is
                Class_Def := Find (SN_Table (CL), Type_Name);
             end if;
 
+            Desc.Parent_Point    := Class_Def.Start_Position;
+            Desc.Parent_Filename := new String'(Class_Def.Buffer (
+                    Class_Def.File_Name.First .. Class_Def.File_Name.Last));
+
             Free (Class_Def);
             Desc.Kind := Record_Type;
             Success := True;
@@ -507,6 +511,9 @@ package body Src_Info.CPP is
             Enum_Def := Find (SN_Table (E), Type_Name);
             Free (Enum_Def);
             Desc.Kind := Enumeration_Type;
+            Desc.Parent_Point    := Enum_Def.Start_Position;
+            Desc.Parent_Filename := new String'(Enum_Def.Buffer (
+                    Enum_Def.File_Name.First .. Enum_Def.File_Name.Last));
             Success := True;
             return;
          exception
