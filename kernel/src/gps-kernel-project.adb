@@ -33,6 +33,7 @@ with GPS.Intl;               use GPS.Intl;
 with GPS.Kernel.Console;     use GPS.Kernel.Console;
 with GPS.Location_View;        use GPS.Location_View;
 with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
+with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
 
 package body GPS.Kernel.Project is
@@ -393,8 +394,12 @@ package body GPS.Kernel.Project is
          Result := False;
       end Report_Error;
 
+      Data : aliased Project_Hooks_Args :=
+        (Hooks_Data with Project => Project);
    begin
-      Save_Project (Project, Report_Error'Unrestricted_Access);
+      if Save_Project (Project, Report_Error'Unrestricted_Access) then
+         Run_Hook (Kernel, Project_Saved_Hook, Data'Access);
+      end if;
       return Result;
    end Save_Single_Project;
 
