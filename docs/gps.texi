@@ -782,7 +782,7 @@ If available, load the GDB documentation.
 If available, load the GCC documentation.
 
 @item About
-Display a dialog giving information about the version of GPS and GNAT used.
+Display a dialog giving information about the versions of GPS and GNAT used.
 @c ??? add screen shot
 
 @end table
@@ -1526,11 +1526,75 @@ This is a useful extension compared to the default Emacs key bindings.
 @noindent
 The file selector is a dialog used to select a file. Under Windows, the
 default is to use the standard file selection widget. Under other platforms,
-the file selector is a built-in dialog. @c providing the following capabilities.
+the file selector is a built-in dialog providing that looks as follows:
 
-@i{This section is incomplete}
-@c ??? add screen shot
-@c ??? incomplete
+@iftex
+@cindex screen shot
+@image{open-file, 10.7cm}
+@end iftex
+
+@ifhtml
+@cindex screen shot
+@image{open-file}
+@end ifhtml
+
+@noindent
+This dialog provides the following areas and capabilities:
+
+@itemize @bullet
+@item A tool bar on the top composed of five buttons giving access to common
+navigation features:
+
+  @table @b
+  @item left arrow
+  go back in the list of directories visited
+
+  @item right arrow
+  go forward
+
+  @item up arrow
+  go to parent directory
+
+  @item refresh
+  refresh the contents of the directory
+
+  @item home
+  go to home directory (value of the HOME environment variable, or @code{/} if
+  not defined)
+  @end table
+
+@item A list with the current directory and the last directories explored.
+You can modify the current directory by modifying the text entry and hitting
+@key{Enter}, or by clicking on the right arrow and choose a previous directory
+in the pop down list displayed.
+
+@item A directory tree. You can open or close directories by clicking on the
+@code{+} and @code{-} icons on the left of the directories, or
+navigate using the keyboard keys: @key{up} and @key{down} to select the
+previous or the next directory, @key{+} and @key{-} to expand and collapse
+the current directory, and @key{backspace} to select the parent directory.
+
+@item A file list. This area lists the files contained in the selected
+directory. If a filter is selected in the filter area, only the relevant
+files for the given filter are displayed. Depending on the context, the
+list of files may include additional information about the files, e.g. the
+kind of a file, its size, etc@dots{}
+
+@item A filter area
+Depending on the context, one or several filters are available to select
+only a subset of files to display. The filter @i{All files} which is always
+available will display all files in the directory selected.
+
+@item A file name area
+This area will display the name of the current file selected, if any.
+You can also type a file or directory name directly, and complete the name
+automatically by using the @key{Tab} key.
+
+@item A button bar with the @code{OK} and @code{Cancel} buttons.
+When you have selected the right file, clock on @code{OK} to confirm, or
+click on @code{Cancel} at any time to cancel and close the file selection.
+
+@end itemize
 
 @c --------------------------------------------------------------------------
 @node Menu Items
@@ -4206,41 +4270,57 @@ in a cross environment.
 @node Customizing your Projects
 @section Customizing your Projects
 @cindex project
+
 @noindent
-@i{This section is incomplete}
-@c ??? incomplete
+This section describes some possible ways to customize your projects when
+working in a cross environment. For more details on the project capabilities,
+see @ref{Project Handling}.
 
-@c Project properties:
-@c @table @b
-@c @item Tools
-@c @item Cross environment
-@c @end table
+When using the project editor to modify the project's properties, two
+areas are particularly relevant to cross environments: @code{Tools} and
+@code{Cross environment}, part of the @code{General} page.
 
-@c Creating scenario variables for you configurations:
-@c @table @b
-@c @item Target
-@c    Native, Embedded
-@c @item Target
-@c    Native, PowerPC, M68K
-@c @end table
+In the @code{Tools} section, you will typically need to change the name of
+the compiler(s) and the debugger, as well as gnatls' name if you are
+using Ada.
 
-@c Change the tools names: Ada compiler, Gnatls, Debugger
+For example, assuming you have an Ada project, and using a powerpc VxWorks
+configuration. You will set the @i{Ada compiler} to
+@code{powerpc-wrs-vxworks-gnatmake}; @i{Gnatls} to
+@code{powerpc-wrs-vxworks-gnatls} and @i{Debugger} to
+@code{powerpc-wrs-vxworks-gdb}.
 
-@c Board
-@c Board1, Board2, Board3
-@c   change the program host and the protocol
+To modify your project to support configurations such as multiple targets,
+or multiple hosts, you can create scenario variables, and modify the setting
+of the Tools parameters based on the value of these variables. See
+@ref{Scenarios and Configuration Variables} for more information on these
+variables.
+
+For example, you may want to create a variable called @code{Target} to handle
+the different kind of targets handled in your project:
+
+@table @b
+@item Target
+   Native, Embedded
+@item Target
+   Native, PowerPC, M68K
+@end table
+
+Similarly, you may define a @code{Board} variable listing the different
+boards used in your environment and change the @i{Program host} and @i{Protocol}
+settings accordingly.
 
 @node Debugger Issues
 @section Debugger Issues
 @cindex debugger
 @noindent
 This section describes some debugger issues that are specific to cross
-environments. You will find more information on debugging by reading the
+environments. You will find more information on debugging by reading
 @ref{Debugging}.
 
 To connect automatically to the right remote debug agent when
 starting a debugging session (using the menu @code{Debug->Initialize}),
-be sure to specify the @code{Program host} amd @code{Protocol} project
+be sure to specify the @code{Program host} and @code{Protocol} project
 properties, as described in the previous section.
 
 For example, if you are using the @i{Tornado} environment, with a target
