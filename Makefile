@@ -1,5 +1,6 @@
 
 # Dependencies:
+#   common    :
 #   prj_editor: gnat gtkada common gvd
 #   hypergrep : gvd gtkada glide prj_editor gnat common vdiff aunit src_editor
 #   vdiff     : gtkada
@@ -16,10 +17,10 @@
 EXTERNAL_DEPENDENCIES=\
 gtkada \
 gvd \
-common \
 aunit
 
 DEPENDENCIES= \
+common \
 kernel \
 src_editor \
 vdiff \
@@ -46,7 +47,4 @@ ${DEPENDENCIES}: force
 	make -C ${@:%=%/src}
 
 force:
-
-
-
 
