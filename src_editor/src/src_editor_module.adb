@@ -109,6 +109,7 @@ package body Src_Editor_Module is
    Case_Cst      : aliased constant String := "case_sensitive";
    Regexp_Cst    : aliased constant String := "regexp";
    Recursive_Cst : aliased constant String := "recursive";
+   Scope_Cst     : aliased constant String := "scope";
 
    Edit_Cmd_Parameters : constant Cst_Argument_List :=
      (1 => Filename_Cst'Access,
@@ -118,12 +119,14 @@ package body Src_Editor_Module is
    File_Search_Parameters : constant Cst_Argument_List :=
      (1 => Pattern_Cst'Access,
       2 => Case_Cst'Access,
-      3 => Regexp_Cst'Access);
+      3 => Regexp_Cst'Access,
+      4 => Scope_Cst'Access);
    Project_Search_Parameters : constant Cst_Argument_List :=
      (1 => Pattern_Cst'Access,
       2 => Case_Cst'Access,
       3 => Regexp_Cst'Access,
-      4 => Recursive_Cst'Access);
+      4 => Recursive_Cst'Access,
+      5 => Scope_Cst'Access);
 
    procedure Generate_Body_Cb (Data : Process_Data; Status : Integer);
    --  Callback called when gnatstub has completed.
@@ -518,9 +521,23 @@ package body Src_Editor_Module is
          Pattern : constant String  := Nth_Arg (Data, 2);
          Casing  : constant Boolean := Nth_Arg (Data, 3, False);
          Regexp  : constant Boolean := Nth_Arg (Data, 4, False);
+         Scope   : constant String  := Nth_Arg (Data, 5, "whole");
+         S       : Search_Scope;
       begin
+         if Scope = "whole" then
+            S := Whole;
+         elsif Scope = "comments" then
+            S := Comments_Only;
+         elsif Scope = "strings" then
+            S := Strings_Only;
+         elsif Scope = "code" then
+            S := All_But_Comments;
+         else
+            S := Whole;
+         end if;
+
          Context := Files_From_Project_Factory
-           (Scope           => Whole,
+           (Scope           => S,
             All_Occurrences => True);
          Set_File_List
            (Context,
@@ -579,9 +596,23 @@ package body Src_Editor_Module is
          Casing    : constant Boolean := Nth_Arg (Data, 3, False);
          Regexp    : constant Boolean := Nth_Arg (Data, 4, False);
          Recursive : constant Boolean := Nth_Arg (Data, 5, True);
+         Scope     : constant String  := Nth_Arg (Data, 6, "whole");
+         S         : Search_Scope;
       begin
+         if Scope = "whole" then
+            S := Whole;
+         elsif Scope = "comments" then
+            S := Comments_Only;
+         elsif Scope = "strings" then
+            S := Strings_Only;
+         elsif Scope = "code" then
+            S := All_But_Comments;
+         else
+            S := Whole;
+         end if;
+
          Context := Files_From_Project_Factory
-           (Scope           => Whole,
+           (Scope           => S,
             All_Occurrences => True);
          Set_File_List
            (Context,
@@ -3329,11 +3360,14 @@ package body Src_Editor_Module is
         (Kernel,
          Command      => "search",
          Params       =>
-           Parameter_Names_To_Usage (File_Search_Parameters, 2),
+           Parameter_Names_To_Usage (File_Search_Parameters, 3),
          Return_Value => "list",
          Description  =>
            -("Return the list of matches for pattern in the file. Default"
-             & " values are False for case_sensitive and regexp"),
+             & " values are False for case_sensitive and regexp."
+             & " Scope is a string, and should be any of 'whole', 'comments',"
+             & " 'strings', 'code'. The latter will match only for text"
+             & " outside of comments"),
          Minimum_Args => 1,
          Maximum_Args => 3,
          Class        => Get_File_Class (Kernel),
@@ -3342,12 +3376,15 @@ package body Src_Editor_Module is
         (Kernel,
          Command      => "search",
          Params       =>
-           Parameter_Names_To_Usage (Project_Search_Parameters, 3),
+           Parameter_Names_To_Usage (Project_Search_Parameters, 4),
          Return_Value => "list",
          Description  =>
            -("Return the list of matches for pattern in all the files"
              & " belonging to the project (and its imported projects if"
-             & " recursive is true (default)."),
+             & " recursive is true (default)."
+             & " Scope is a string, and should be any of 'whole', 'comments',"
+             & " 'strings', 'code'. The latter will match only for text"
+             & " outside of comments"),
          Minimum_Args => 1,
          Maximum_Args => 4,
          Class        => Get_Project_Class (Kernel),
