@@ -397,5 +397,16 @@ package body Glide_Kernel.Project is
       return Kernel.Scenario_Variables.all;
    end Scenario_Variables;
 
+   ----------------------------------
+   -- Get_Current_Explorer_Context --
+   ----------------------------------
+
+   function Get_Current_Explorer_Context
+     (Handle : access Kernel_Handle_Record'Class)
+      return Selection_Context_Access is
+   begin
+      return Handle.Explorer_Context;
+   end Get_Current_Explorer_Context;
+
 end Glide_Kernel.Project;
 
