@@ -12,20 +12,6 @@ package body Switches_Editor_Pkg.Callbacks is
 
    use Gtk.Arguments;
 
-   --------------------------
-   -- Refresh_All_Switches --
-   --------------------------
-
-   procedure Refresh_All_Switches
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args)
-   is
-      Arg1 : Address := To_Address (Params, 1);
-      Arg2 : Guint := To_Guint (Params, 2);
-   begin
-      null;
-   end Refresh_All_Switches;
-
    ---------------------------
    -- Refresh_Make_Switches --
    ---------------------------

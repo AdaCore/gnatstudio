@@ -64,10 +64,6 @@ begin
    Set_Tab_Vborder (Switches_Editor.Notebook, 2);
    Set_Tab_Pos (Switches_Editor.Notebook, Pos_Top);
    Pack_Start (Switches_Editor.Vbox2, Switches_Editor.Notebook, True, True, 0);
-   Switches_Editor.Switch_Page_Id := Widget_Callback.Object_Connect
-     (Switches_Editor.Notebook, "switch_page", Refresh_All_Switches'Access,
-      Switches_Editor);
-   Handler_Block (Switches_Editor.Notebook, Switches_Editor.Switch_Page_Id);
 
    Gtk_New (Switches_Editor.Make_Switches, 2, 2, False);
    Set_Row_Spacings (Switches_Editor.Make_Switches, 0);
@@ -791,8 +787,6 @@ begin
    Set_Child_Size (Switches_Editor.Hbuttonbox1, 85, 27);
    Set_Child_Ipadding (Switches_Editor.Hbuttonbox1, 7, 0);
    Pack_Start (Switches_Editor.Vbox2, Switches_Editor.Hbuttonbox1, False, False, 0);
-
-   Handler_Unblock (Switches_Editor.Notebook, Switches_Editor.Switch_Page_Id);
 end Initialize;
 
 end Switches_Editor_Pkg;

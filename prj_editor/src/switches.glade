@@ -35,12 +35,6 @@
       <class>GtkNotebook</class>
       <name>notebook</name>
       <can_focus>True</can_focus>
-      <signal>
-	<name>switch_page</name>
-	<handler>refresh_all_switches</handler>
-	<object>Switches_Editor</object>
-	<last_modification_time>Fri, 11 May 2001 21:07:11 GMT</last_modification_time>
-      </signal>
       <show_tabs>True</show_tabs>
       <show_border>True</show_border>
       <tab_pos>GTK_POS_TOP</tab_pos>

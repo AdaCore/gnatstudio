@@ -43,8 +43,6 @@ begin
    Set_Tab_Vborder (Switches_Editor.Notebook, 2);
    Set_Tab_Pos (Switches_Editor.Notebook, Pos_Top);
    Pack_Start (Switches_Editor.Vbox2, Switches_Editor.Notebook, True, True, 0);
-   Widget_Callback.Object_Connect
-     (Switches_Editor.Notebook, "switch_page", Refresh_All_Switches'Access, Switches_Editor);
 
    Gtk_New (Switches_Editor.Make_Switches, 2, 2, False);
    Set_Row_Spacings (Switches_Editor.Make_Switches, 0);

@@ -31,11 +31,9 @@ with Gtk.Combo; use Gtk.Combo;
 with Gtk.GEntry; use Gtk.GEntry;
 with Gtk.Radio_Button; use Gtk.Radio_Button;
 with Gtk.Hbutton_Box; use Gtk.Hbutton_Box;
-with Gtk.Handlers;
 package Switches_Editor_Pkg is
 
    type Switches_Editor_Record is new Gtk_Window_Record with record
-      Switch_Page_Id : Gtk.Handlers.Handler_Id;
       Vbox2 : Gtk_Vbox;
       Notebook : Gtk_Notebook;
       Make_Switches : Gtk_Table;
