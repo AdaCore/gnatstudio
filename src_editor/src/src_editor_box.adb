@@ -707,15 +707,16 @@ package body Src_Editor_Box is
             Entity_Column => To_Box_Column (Col));
          Glide_Kernel.Modules.Compute_Tooltip
            (Data.Box.Kernel, Context'Unchecked_Access, Pixmap, Width, Height);
+         Unref (Entity);
 
          if Pixmap /= null then
-            Unref (Entity);
             Destroy (Context);
             return;
          end if;
 
          --  No module wants to handle this tooltip. Default to built-in
          --  tooltip, based on cross references.
+         --  The call below creates a new Entity, which we need to Ref.
 
          Get_Declaration_Info (Data.Box, Context'Unchecked_Access, Entity);
 
@@ -724,6 +725,8 @@ package body Src_Editor_Box is
          if Entity = null then
             return;
          end if;
+
+         Ref (Entity);
 
          declare
             Str : constant String :=
