@@ -62,6 +62,13 @@ package body SN.Xref_Pools is
 
    procedure Set_Next (Xref : Xref_Elmt_Ptr; Next : Xref_Elmt_Ptr) is
    begin
+      --  ??? Should we free the memory at this point ?
+      --  Note that this is never called by Reset anyway
+--        if Xref.Next /= null then
+--           Free (Xref.Next.Source_Filename);
+--           Free (Xref.Next);
+--        end if;
+
       Xref.Next := Next;
    end Set_Next;
 
