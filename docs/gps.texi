@@ -111,6 +111,7 @@ Editing Files
 * Menu Items::
 * Using an External Editor::
 * Using the Clipboard::
+* Saving Files::
 
 Source Navigation
 * Support for Cross References::
@@ -1402,6 +1403,7 @@ location, and a second view is created at the new location.
 * Menu Items::
 * Using an External Editor::
 * Using the Clipboard::
+* Saving Files::
 @end menu
 
 @c --------------------------------------------------------------------------
@@ -2105,8 +2107,6 @@ keys. @xref{The Key Manager Dialog}.
 @end table
 
 @c --------------------------------------------------------------------------
-
-@c --------------------------------------------------------------------------
 @node Using an External Editor
 @section Using an External Editor
 @cindex editor
@@ -2245,6 +2245,44 @@ override the @i{primary clipboard}.
 @cindex url
 See @url{http://www.freedesktop.org/standards/clipboards.txt} for more
 information.
+
+@c --------------------------------------------------------------------------
+@node Saving Files
+@section Saving Files
+@cindex saving
+@c --------------------------------------------------------------------------
+
+@noindent
+After you have finished modifying your files, you need to save them. The basic
+method to do that is to select the menu @code{File->Save}, which saves the
+currently selected file.
+
+You can also use the menu @code{File->Save As...} if you want to save the
+file with another name, or in another directory.
+
+GPS has an auto-save feature which is controlled by a preference
+(@code{Autosave Delay}). This ensures that you won't lose your modification
+if GPS is killed.
+
+If you have multiple files to save, another possibility is to use the menu
+@code{File->Save->All}. This will open a dialog listing all the currently
+modified editors that need saving. You can then select individually which
+one should be saved, and click on @code{OK} to do the actual
+saving. This dialog is also used automatically by GPS when you start a
+compilation, to make sure that the compiler will compile the most up-to-date
+version of the file.
+
+@c ??? Add screenshot of save all dialog
+
+You can conveniently select or unselect all the files at once by clicking on
+the title of the first column (which contains @code{Save}). This will toggle
+the selection status of the first line, and have the same status for all other
+editors.
+
+If you press @code{Cancel} instead of @code{OK}, no saving will take place,
+and the action that displayed this dialog is also cancelled. Such actions can
+be for instance starting a compilation command, a VCS operation, or even
+quitting GPS with unsaved files.
 
 @c --------------------------------------------------------------------
 @node Source Navigation
