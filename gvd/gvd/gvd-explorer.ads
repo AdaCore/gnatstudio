@@ -20,9 +20,7 @@
 
 with Gtk.Ctree;
 with Gtk.Widget;
-with Language;
 with Gtk.Style;
-with GVD.Types;
 with Gdk.Pixmap;
 with Gdk.Bitmap;
 
@@ -57,28 +55,6 @@ package GVD.Explorer is
    --  Index is the position in the buffer where the selected entity
    --  starts.
    --  Widget is the Window parameter given to Explore below.
-
-   procedure Explore
-     (Tree      : access Explorer_Record;
-      Root      : Gtk.Ctree.Gtk_Ctree_Node;
-      Window    : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Buffer    : String;
-      Lang      : Language.Language_Access;
-      File_Name : String);
-   --  Parse the entities present in buffer.
-   --  The items for the explorer are added to Tree, as children of the
-   --  Root Node
-   --  See Explorer_Handler above for a description of Handler.
-
-   procedure Add_File_Node
-     (Tree      : access Explorer_Record;
-      File_Name : String);
-   --  Insert a node for a new file.
-
-   procedure Add_List_Of_Files
-     (Tree : access Explorer_Record;
-      List : GVD.Types.String_Array);
-   --  Add several files in the explorer.
 
    procedure Set_Current_File
      (Tree : access Explorer_Record;

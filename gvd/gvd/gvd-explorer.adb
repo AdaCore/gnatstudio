@@ -121,6 +121,28 @@ package body GVD.Explorer is
    --  Return the Node that contains the file File_Name, or null if there is
    --  no such node.
 
+   procedure Explore
+     (Tree      : access Explorer_Record'Class;
+      Root      : Gtk.Ctree.Gtk_Ctree_Node;
+      Window    : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Buffer    : String;
+      Lang      : Language.Language_Access;
+      File_Name : String);
+   --  Parse the entities present in buffer.
+   --  The items for the explorer are added to Tree, as children of the
+   --  Root Node
+   --  See Explorer_Handler above for a description of Handler.
+
+   procedure Add_File_Node
+     (Tree      : access Explorer_Record'Class;
+      File_Name : String);
+   --  Insert a node for a new file.
+
+   procedure Add_List_Of_Files
+     (Tree : access Explorer_Record'Class;
+      List : GVD.Types.String_Array);
+   --  Add several files in the explorer.
+
    procedure Show_System_Files (Explorer : access Explorer_Record'Class);
    --  Toggle the display of system files
 
@@ -324,7 +346,7 @@ package body GVD.Explorer is
    -------------
 
    procedure Explore
-     (Tree      : access Explorer_Record;
+     (Tree      : access Explorer_Record'Class;
       Root      : Gtk.Ctree.Gtk_Ctree_Node;
       Window    : access Gtk_Widget_Record'Class;
       Buffer    : String;
@@ -558,7 +580,7 @@ package body GVD.Explorer is
    -------------------
 
    procedure Add_File_Node
-     (Tree      : access Explorer_Record;
+     (Tree      : access Explorer_Record'Class;
       File_Name : String)
    is
       use type Row_List.Glist;
@@ -662,7 +684,7 @@ package body GVD.Explorer is
    -----------------------
 
    procedure Add_List_Of_Files
-     (Tree : access Explorer_Record;
+     (Tree : access Explorer_Record'Class;
       List : GVD.Types.String_Array) is
    begin
       Freeze (Tree);
