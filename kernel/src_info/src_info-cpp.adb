@@ -417,6 +417,15 @@ package body Src_Info.CPP is
    --  For each template argument Insert_Declaration is called with appropriate
    --  parameters
 
+   procedure Process_Class_To_TA_Refs
+     (CL_Tab             : CL_Table;
+      Arg                : TA_Table;
+      Handler            : access CPP_LI_Handler_Record'Class;
+      File               : in out LI_File_Ptr;
+      Decl_Info          : in out E_Declaration_Info_List);
+   --  Finds references CL-to-TA for the specified argument and creates
+   --  correspondent declarations
+
    procedure Create_DB_Directory (DB_Dir : String);
    --  Create the database directory if it doesn't exist yet.
 
@@ -5461,6 +5470,52 @@ package body Src_Info.CPP is
       Release_Cursor (Handler.SN_Table (TO));
    end Process_Local_Variable;
 
+   ------------------------------
+   -- Process_Class_To_TA_Refs --
+   ------------------------------
+
+   procedure Process_Class_To_TA_Refs
+     (CL_Tab             : CL_Table;
+      Arg                : TA_Table;
+      Handler            : access CPP_LI_Handler_Record'Class;
+      File               : in out LI_File_Ptr;
+      Decl_Info          : in out E_Declaration_Info_List)
+   is
+      P        : Pair_Ptr;
+      Ref      : TO_Table;
+      Ref_Kind : Reference_Kind;
+   begin
+      Set_Cursor
+        (DB          => Handler.SN_Table (TO),
+         Position    => By_Key,
+         Key         =>
+           "#" & Field_Sep &
+           CL_Tab.Buffer (CL_Tab.Name.First .. CL_Tab.Name.Last) &
+           Field_Sep &
+           To_String (CL) &
+           Field_Sep &
+           CL_Tab.Buffer (CL_Tab.Name.First .. CL_Tab.Name.Last) &
+           Field_Sep &
+           Arg.Buffer (Arg.Name.First .. Arg.Name.Last) &
+           Field_Sep & To_String (TA) & Field_Sep,
+         Exact_Match => False);
+      loop
+         P := Get_Pair (Handler.SN_Table (TO), Next_By_Key);
+         exit when P = null;
+         Ref := Parse_Pair (P.all);
+         Free (P);
+         if Ref.Buffer (Ref.Access_Type.First .. Ref.Access_Type.Last)
+            = "w" then
+            Ref_Kind := Modification;
+         else
+            Ref_Kind := Reference;
+         end if;
+         Insert_Reference (Decl_Info, File, Ref.Position, Ref_Kind);
+         Free (Ref);
+      end loop;
+      Release_Cursor (Handler.SN_Table (TO));
+   end Process_Class_To_TA_Refs;
+
    --------------------------------
    -- Process_Template_Arguments --
    --------------------------------
@@ -5614,6 +5669,12 @@ package body Src_Info.CPP is
                   File,
                   Decl_Info);
             else
+               Process_Class_To_TA_Refs
+                 (CL_Tab,
+                  Arg,
+                  Handler,
+                  File,
+                  Decl_Info);
                declare
                   P        : Pair_Ptr;
                   MI_Tab   : FU_Table;
