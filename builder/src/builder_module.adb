@@ -529,6 +529,11 @@ package body Builder_Module is
       end if;
 
       return True;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         return False;
    end Timeout_Compute_Xref;
 
    ---------------------
