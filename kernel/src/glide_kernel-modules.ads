@@ -487,6 +487,8 @@ package Glide_Kernel.Modules is
    --  There are multiple data associated with this type:
    --     first  : full name of the source file to open (use Get_String)
    --     second : line to display initially (use Get_Int). Ignored if 0
+   --              if set to -1, close all file editors that correspond
+   --              to this file.
    --     third  : column to display initially (use Get_Int). Ignored if 0
    --     fourth : True if the line should be highlighted (use Get_Boolean)
    --     fifth  : True if the location should be stored for navigation
@@ -555,6 +557,12 @@ package Glide_Kernel.Modules is
    --
    --  If From_Path is True and the file doesn't contain any directory, then it
    --  is search on the source path for the current project.
+
+   procedure Close_File_Editors
+     (Kernel   : access Kernel_Handle_Record'Class;
+      Filename : String);
+   --  Close all file editors that edit Filename.
+   --  Filename must be an absolute file name.
 
    procedure Open_Html
      (Kernel         : access Kernel_Handle_Record'Class;
