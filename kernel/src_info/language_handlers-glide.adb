@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with Language;                  use Language;
+with Language.Unknown;          use Language.Unknown;
 with Basic_Types;               use Basic_Types;
 with Src_Info;                  use Src_Info;
 with Ada.Unchecked_Deallocation;
@@ -102,8 +103,8 @@ package body Language_Handlers.Glide is
       if Index /= 0 then
          return Handler.Languages (Index).Lang;
       end if;
-      raise Unsupported_Language;
-      return null;
+
+      return Unknown_Lang;
    end Get_Language_From_File;
 
    ----------------------------
@@ -121,7 +122,6 @@ package body Language_Handlers.Glide is
          Base_Name (Source_Filename));
    begin
       if Lang = No_Name then
-         raise Unsupported_Language;
          return "";
       else
          return Get_Name_String (Lang);
