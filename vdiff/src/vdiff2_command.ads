@@ -107,6 +107,8 @@ package Vdiff2_Command is
      (Kernel : Kernel_Handle;
       Link   : Diff_Chunk_Access);
 
+   procedure Change_Ref_File
+     (Kernel : Kernel_Handle;
+      Diff   : in out Diff_Head_Access);
+
 end Vdiff2_Command;
-
-

@@ -334,5 +334,16 @@ package body Vdiff2_Command is
       Free (Diff.List);
    end Remove_Difference;
 
+   ---------------------
+   -- Change_Ref_File --
+   ---------------------
+   procedure Change_Ref_File
+     (Kernel : Kernel_Handle;
+      Diff   : in out Diff_Head_Access) is
+   begin
+      Unhighlight_Difference (Kernel, Diff);
+      Show_Differences3 (Kernel, Diff.all);
+   end Change_Ref_File;
+
 end Vdiff2_Command;
 
