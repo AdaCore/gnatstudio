@@ -3158,13 +3158,13 @@ package body Prj_API is
          Value              => ".");
 
       Values := (1 => new String' ("-g"));
-      --  Update_Attribute_Value_In_Scenario
-      --    (Project,
-      --     Scenario_Variables => No_Scenario,
-      --     Attribute_Name     => "default_switches",
-      --     Values             => Values,
-      --     Attribute_Index    => Ada_String,
-      --     Pkg_Name           => "builder");
+      Update_Attribute_Value_In_Scenario
+        (Project,
+         Scenario_Variables => No_Scenario,
+         Attribute_Name     => "default_switches",
+         Values             => Values,
+         Attribute_Index    => Ada_String,
+         Pkg_Name           => "builder");
       Free (Values (1));
 
       return Project;
