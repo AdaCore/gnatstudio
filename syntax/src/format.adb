@@ -999,8 +999,6 @@ package body Format is
                   when others =>
                      null;
                end case;
-
-               pragma Debug (Put_Line ("end " & Val'Img));
             end if;
 
             Num_Spaces := Num_Spaces - Indent_Level;
