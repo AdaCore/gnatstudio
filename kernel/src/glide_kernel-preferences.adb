@@ -141,7 +141,8 @@ package body Glide_Kernel.Preferences is
                       & " links should be resolved. False if the explorer"
                       & " should display the name as given in the project"
                       & " file"),
-         Default => True));
+         Default => True,
+         Flags   => Param_Readable));
       Register_Property
         (Kernel.Preferences, Param_Spec (Normalized_Directories), -"Explorer");
 
