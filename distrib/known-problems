@@ -19,13 +19,6 @@ Known Problems fixed in GPS 1.3.0
               supported the next time the project properties editor is open
   Workaround: Edit such projects by hand
 
-- C425-020 Selection in greyed out fields in the project properties editor
-  Problem:    If Ada is not a supported language for your project, the combo
-              boxes for the compiler and gnatls can still be selected by
-              clicking on the arrow
-  Workaround: Avoid clicking on the arrow, although no arm will result if you
-              do. The new setting is simply ignored when the project is saved
-
 - C418-010 Messages window not saved in the desktop
   Problem:    When the desktop is saved, the location of the messages window
               is not saved.
