@@ -153,7 +153,7 @@ package body GVD.Process is
       Str        : String;
       Window     : System.Address);
    --  Standard handler to add gdb's output to the debugger window.
-   -- Simply strip CR characters if needed and then call Text_Output_Filter
+   --  Simply strip CR characters if needed and then call Text_Output_Filter
 
    procedure Text_Output_Filter
      (Descriptor : GNAT.Expect.Process_Descriptor'Class;
