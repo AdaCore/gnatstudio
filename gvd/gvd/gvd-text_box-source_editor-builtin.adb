@@ -1154,6 +1154,9 @@ package body Odd.Source_Editors is
       X, Y : Gint;
    begin
 
+      Width := 0;
+      Height := 0;
+
       if Tooltips_In_Source = None
         or else not Is_Started (Debugger.Debugger)
       then
@@ -1164,9 +1167,6 @@ package body Odd.Source_Editors is
       declare
          Variable_Name : constant String := Get_Entity (Data.Box, X, Y);
       begin
-
-         Width := 0;
-         Height := 0;
 
          if Variable_Name = "" then
             return;
