@@ -788,11 +788,18 @@ package body Codefix.Formal_Errors is
       Body_Cursor  : File_Cursor'Class;
       Spec_Cursor  : File_Cursor'Class) return Solution_List
    is
-      Result : Solution_List;
-      Command1, Command2 : Paste_Profile_Cmd;
+      Result               : Solution_List;
+      Command1, Command2   : Paste_Profile_Cmd;
+      Internal_Body_Cursor : File_Cursor := File_Cursor (Body_Cursor);
+      Body_Info            : Construct_Information;
    begin
-      Initialize (Command1, Current_Text, Body_Cursor, Spec_Cursor);
-      Initialize (Command2, Current_Text, Spec_Cursor, Body_Cursor);
+      Body_Info := Get_Unit (Current_Text, Body_Cursor, Before);
+
+      Internal_Body_Cursor.Col := Body_Info.Sloc_Start.Column;
+      Internal_Body_Cursor.Line := Body_Info.Sloc_Start.Line;
+
+      Initialize (Command1, Current_Text, Internal_Body_Cursor, Spec_Cursor);
+      Initialize (Command2, Current_Text, Spec_Cursor, Internal_Body_Cursor);
 
       Set_Caption (Command1, "Change the body to be conformant with the spec");
       Set_Caption (Command2, "Change the spec to be conformant with the body");
@@ -802,5 +809,30 @@ package body Codefix.Formal_Errors is
 
       return Result;
    end Make_Conformant;
+
+   -----------------------
+   -- Remove_Use_Clause --
+   -----------------------
+
+   function Remove_Use_Clause
+     (Current_Text : Text_Navigator_Abstr'Class;
+      Cursor       : File_Cursor'Class) return Solution_List
+   is
+      Result      : Solution_List;
+      New_Command : Remove_Pkg_Clauses_Cmd;
+   begin
+      Initialize
+        (New_Command,
+         Current_Text,
+         (File_Cursor (Cursor) with null, Text_Ascii),
+         "",
+         Cat_Use);
+
+      Set_Caption (New_Command, "Remove use clause");
+      Append (Result, New_Command);
+
+      return Result;
+   end Remove_Use_Clause;
+
 
 end Codefix.Formal_Errors;
