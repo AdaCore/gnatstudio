@@ -34,20 +34,9 @@ package body GVD.Preferences is
    is
       XML_Prefix     : constant String := "Debugger-";
       General        : constant String := -"Debugger";
-      Assembly       : constant String := -"Debugger:Assembly";
-      Data           : constant String := -"Debugger:Data";
-      Memory         : constant String := -"Debugger:Memory";
       Source_Flags   : constant Param_Flags := Param_Readable;
 
    begin
-      Debugger_Highlight_Color := Param_Spec_Color (Gnew_Color
-        (Name     => XML_Prefix & "Debugger-Highlight-Color",
-         Nick     => -"Color highlighting",
-         Blurb    => -"Color used for highlighting in the debugger console",
-         Default  => "#0000FF"));
-      Register_Property
-        (Prefs, Param_Spec (Debugger_Highlight_Color), General);
-
       Break_On_Exception := Param_Spec_Boolean (Gnew_Boolean
         (Name      => XML_Prefix & "Break-On-Exception",
          Nick      => -"Break on exceptions",
@@ -77,18 +66,18 @@ package body GVD.Preferences is
       Register_Property
         (Prefs, Param_Spec (Editor_Show_Line_With_Code), General);
 
-      Asm_Highlight_Color := Param_Spec_Color (Gnew_Color
-        (Name     => XML_Prefix & "Asm-Highlight-Color",
-         Nick     => -"Current assembly line",
-         Blurb    => -("Color used to highlight the assembly code for the"
-                       & " current source line"),
-         Default  => "#FF0000"));
-      Register_Property
-        (Prefs, Param_Spec (Asm_Highlight_Color), Assembly);
+      Default_Detect_Aliases := Param_Spec_Boolean (Gnew_Boolean
+        (Name     => XML_Prefix & "Default-Detect-Aliases",
+         Nick     => -"Detect aliases",
+         Blurb    => -("True if we shouldn't create new items in the data "
+                       & "window when an item at the same address already "
+                       & "exists"),
+         Default  => True));
+      Register_Property (Prefs, Param_Spec (Default_Detect_Aliases), General);
 
       Assembly_Range_Size := Param_Spec_Int (Gnew_Int
         (Name     => XML_Prefix & "Assembly-Range-Size",
-         Nick     => -"Range size",
+         Nick     => -"Assembly range size",
          Blurb    => -("Number of assembly lines to display in the initial"
                        & " display of the assembly window." & ASCII.LF
                        & "If this size is 0, then the whole subprogram"
@@ -97,22 +86,38 @@ package body GVD.Preferences is
          Minimum  => 0,
          Maximum  => 100000,
          Default  => 200));
-      Register_Property (Prefs, Param_Spec (Assembly_Range_Size), Assembly);
+      Register_Property (Prefs, Param_Spec (Assembly_Range_Size), General);
+
+      Asm_Highlight_Color := Param_Spec_Color (Gnew_Color
+        (Name     => XML_Prefix & "Asm-Highlight-Color",
+         Nick     => -"Current assembly line",
+         Blurb    => -("Color used to highlight the assembly code for the"
+                       & " current source line"),
+         Default  => "#FF0000"));
+      Register_Property (Prefs, Param_Spec (Asm_Highlight_Color), General);
+
+      Debugger_Highlight_Color := Param_Spec_Color (Gnew_Color
+        (Name     => XML_Prefix & "Highlight-Color",
+         Nick     => -"Color highlighting",
+         Blurb    => -"Color used for highlighting in the debugger console",
+         Default  => "#0000FF"));
+      Register_Property
+        (Prefs, Param_Spec (Debugger_Highlight_Color), General);
 
       Xref_Color := Param_Spec_Color (Gnew_Color
         (Name     => XML_Prefix & "Xref-Color",
          Nick     => -"Clickable item",
-         Blurb    => -"Color used for the items that are clickable",
+         Blurb    => -"Color used for the data items that are clickable",
          Default  => "#0000FF"));
-      Register_Property (Prefs, Param_Spec (Xref_Color), Data);
+      Register_Property (Prefs, Param_Spec (Xref_Color), General);
 
       Change_Color := Param_Spec_Color (Gnew_Color
         (Name     => XML_Prefix & "Change-Color",
          Nick     => -"Changed data",
-         Blurb    => -("Color used to highlight fields that have changed"
+         Blurb    => -("Color used to highlight data fields that have changed"
                        & " since the last update"),
          Default  => "#FF0000"));
-      Register_Property (Prefs, Param_Spec (Change_Color), Data);
+      Register_Property (Prefs, Param_Spec (Change_Color), General);
 
       Thaw_Bg_Color := Param_Spec_Color (Gnew_Color
         (Name     => XML_Prefix & "Thaw-Bg-Color",
@@ -121,7 +126,7 @@ package body GVD.Preferences is
                        & " every time the debugger stops"),
          Flags    => Source_Flags,
          Default  => "#FFFFFF"));
-      Register_Property (Prefs, Param_Spec (Thaw_Bg_Color), Data);
+      Register_Property (Prefs, Param_Spec (Thaw_Bg_Color), General);
 
       Freeze_Bg_Color := Param_Spec_Color (Gnew_Color
         (Name     => XML_Prefix & "Freeze-Bg-Color",
@@ -130,21 +135,7 @@ package body GVD.Preferences is
            -("Background color for the items that are never recomputed"),
          Flags    => Source_Flags,
          Default  => "#AAAAAA"));
-      Register_Property (Prefs, Param_Spec (Freeze_Bg_Color), Data);
-
-      Title_Font := Param_Spec_Font (Gnew_Font
-        (Name     => XML_Prefix & "Title-Font",
-         Nick     => -"Item name",
-         Blurb    => -"Font used for the name of the variables",
-         Default  => "Sans Bold 9"));
-      Register_Property (Prefs, Param_Spec (Title_Font), Data);
-
-      Type_Font := Param_Spec_Font (Gnew_Font
-        (Name     => XML_Prefix & "Type-Font",
-         Nick     => -"Item type",
-         Blurb    => -"Font used for the type of the variables",
-         Default  => "Sans Oblique 9"));
-      Register_Property (Prefs, Param_Spec (Type_Font), Data);
+      Register_Property (Prefs, Param_Spec (Freeze_Bg_Color), General);
 
       Hide_Big_Items := Param_Spec_Boolean (Gnew_Boolean
         (Name     => XML_Prefix & "Hide-Big-Items",
@@ -153,7 +144,7 @@ package body GVD.Preferences is
                        & " be folded initially"),
          Flags    => Source_Flags,
          Default  => True));
-      Register_Property (Prefs, Param_Spec (Hide_Big_Items), Data);
+      Register_Property (Prefs, Param_Spec (Hide_Big_Items), General);
 
       Big_Item_Height := Param_Spec_Int (Gnew_Int
         (Name     => XML_Prefix & "Big-Item-Height",
@@ -163,15 +154,7 @@ package body GVD.Preferences is
          Minimum  => 0,
          Maximum  => 100000,
          Default  => 150));
-      Register_Property (Prefs, Param_Spec (Big_Item_Height), Data);
-
-      Default_Detect_Aliases := Param_Spec_Boolean (Gnew_Boolean
-        (Name     => XML_Prefix & "Default-Detect-Aliases",
-         Nick     => -"Detect aliases",
-         Blurb    => -("True if we shouldn't create new items when an item at"
-                       & " the same address already exists"),
-         Default  => True));
-      Register_Property (Prefs, Param_Spec (Default_Detect_Aliases), Data);
+      Register_Property (Prefs, Param_Spec (Big_Item_Height), General);
 
       Show_Call_Stack := Param_Spec_Boolean (Gnew_Boolean
         (Name     => XML_Prefix & "Show-Call-Stack",
@@ -179,30 +162,45 @@ package body GVD.Preferences is
          Blurb    => -"True if call stack should be displayed by default",
          Flags    => Source_Flags,
          Default  => False));
-      Register_Property (Prefs, Param_Spec (Show_Call_Stack), Data);
+      Register_Property (Prefs, Param_Spec (Show_Call_Stack), General);
 
       Memory_View_Color := Param_Spec_Color (Gnew_Color
         (Name     => XML_Prefix & "Memory-View-Color",
-         Nick     => -"Default color",
+         Nick     => -"Memory color",
          Blurb    => -"Color used by default in the memory view window",
          Default  => "#333399"));
-      Register_Property (Prefs, Param_Spec (Memory_View_Color), Memory);
+      Register_Property (Prefs, Param_Spec (Memory_View_Color), General);
 
       Memory_Highlighted_Color := Param_Spec_Color (Gnew_Color
         (Name     => XML_Prefix & "Memory-Highlighted-Color",
-         Nick     => -"Color highlighting",
-         Blurb    => -"Color used for highlighted items",
+         Nick     => -"Memory highlighting",
+         Blurb    => -"Color used for highlighted items in the memory view",
          Default  => "#DDDDDD"));
       Register_Property
-        (Prefs, Param_Spec (Memory_Highlighted_Color), Memory);
+        (Prefs, Param_Spec (Memory_Highlighted_Color), General);
 
       Memory_Selected_Color := Param_Spec_Color (Gnew_Color
         (Name     => XML_Prefix & "Memory-Selected-Color",
-         Nick     => -"Selection",
-         Blurb    => -"Color used for selected items",
+         Nick     => -"Memory selection",
+         Blurb    => -"Color used for selected items in the memory view",
          Default  => "#FF0000"));
       Register_Property
-        (Prefs, Param_Spec (Memory_Selected_Color), Memory);
+        (Prefs, Param_Spec (Memory_Selected_Color), General);
+
+      Title_Font := Param_Spec_Font (Gnew_Font
+        (Name     => XML_Prefix & "Title-Font",
+         Nick     => -"Item name",
+         Blurb    => -"Font used for the name of the variables",
+         Default  => "Sans Bold 9"));
+      Register_Property (Prefs, Param_Spec (Title_Font), General);
+
+      Type_Font := Param_Spec_Font (Gnew_Font
+        (Name     => XML_Prefix & "Type-Font",
+         Nick     => -"Item type",
+         Blurb    => -"Font used for the type of the variables",
+         Default  => "Sans Oblique 9"));
+      Register_Property (Prefs, Param_Spec (Type_Font), General);
+
    end Register_Default_Preferences;
 
 end GVD.Preferences;

@@ -37,7 +37,7 @@ package GVD.Preferences is
    --  See Register_Default_Preferences for a description of what these
    --  preferences should be used for.
 
-   -- General Preferences --
+   -- General --
    Break_On_Exception            : Param_Spec_Boolean;
    Execution_Window              : Param_Spec_Boolean;
 
