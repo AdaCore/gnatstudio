@@ -165,7 +165,7 @@ package body Gtkada.File_Selector is
 
    procedure On_Idle_Destroy (Win : in out File_Selector_Window_Access) is
    begin
-      Idle_Remove (Win.Idle_Handler);
+      Win.Idle_Handler := 0;
    end On_Idle_Destroy;
 
    -------------------
@@ -952,6 +952,10 @@ package body Gtkada.File_Selector is
       Free (Win.Current_Directory_Id);
       Free (Win.Files);
       Free (Win.Filters);
+
+      if Win.Idle_Handler /= 0 then
+         Idle_Remove (Win.Idle_Handler);
+      end if;
 
       if Win.Own_Main_Loop then
          Main_Quit;
