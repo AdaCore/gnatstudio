@@ -158,7 +158,8 @@ GNAT_SOURCES= \
   widechar.ads \
   widechar.adb \
   gprmake.adb \
-  makegpr.adb
+  makegpr.adb \
+  impunit.adb
 
 list-sources:
 	@echo $(GNAT_SOURCES)
