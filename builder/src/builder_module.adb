@@ -20,6 +20,7 @@
 
 with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
+with Glib.Properties.Creation;  use Glib.Properties.Creation;
 with Gtk.Accel_Group;           use Gtk.Accel_Group;
 with Gdk.Types;                 use Gdk.Types;
 with Gdk.Types.Keysyms;         use Gdk.Types.Keysyms;
@@ -66,6 +67,7 @@ with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Case_Util;            use GNAT.Case_Util;
 
 with Traces;                    use Traces;
+with Shell;                     use Shell;
 with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Unchecked_Deallocation;
 
@@ -275,7 +277,7 @@ package body Builder_Module is
       String_List_Utils.String_List.Append
         (Builder_Module_ID_Access (Builder_Module_ID).Output,
          Output);
-      Parse_File_Locations (Kernel, Output, -"Builder Results");
+      Parse_File_Locations (Kernel, Output, -"Builder Results", True);
 
    exception
       when E : others =>
@@ -1721,6 +1723,21 @@ package body Builder_Module is
          Minimum_Args => 0,
          Maximum_Args => 0,
          Handler      => Compile_Command'Access);
+
+      --  Create the highlighting category corresponding to the module.
+
+      declare
+         Args : Argument_List (1 .. 2);
+      begin
+         Args (1) := new String'(-"Builder Results");
+         Args (2) := new String'
+           (Get_Pref (Kernel, Param_Spec_String (Message_Highlight)));
+
+         Interpret_Command
+           (Kernel_Handle (Kernel), "src.register_highlighting", Args);
+
+         Free (Args);
+      end;
    end Register_Module;
 
 end Builder_Module;
