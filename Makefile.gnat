@@ -135,6 +135,8 @@ GNAT_SOURCES= \
   switch-m.adb \
   table.ads \
   table.adb \
+  tempdir.ads \
+  tempdir.adb \
   tree_io.ads \
   tree_io.adb \
   types.ads \
@@ -148,7 +150,8 @@ GNAT_SOURCES= \
   widechar.ads \
   widechar.adb \
   Makefile.prolog \
-  Makefile.generic
+  Makefile.generic \
+  g-regpat.adb
 
 list-sources:
 	@echo $(GNAT_SOURCES)
