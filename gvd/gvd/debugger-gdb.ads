@@ -285,10 +285,6 @@ package Debugger.Gdb is
       Value    : out Backtrace_Array;
       Len      : out Natural);
 
-   function Variable_Name_With_Frame
-     (Debugger : access Gdb_Debugger;
-      Var      : String) return String;
-
    procedure Task_Switch
      (Debugger : access Gdb_Debugger;
       Task_Num : Natural;
