@@ -83,6 +83,10 @@ package Commands is
    --  that this Action will be executed before all the actions that
    --  were enqueued with High_Priority set to False.
 
+   function Get_Position (Queue : Command_Queue) return Integer;
+   --  Return the position in the queue (see comments for
+   --  Command_Queue_Record, below).
+
    procedure Undo (Queue : Command_Queue);
    --  Undo one action from the queue.
 
@@ -121,6 +125,12 @@ package Commands is
    package Command_Queues is
      new Generic_List (Command_Access, Free => Destroy);
 
+   procedure Add_Queue_Change_Hook
+     (Queue   : Command_Queue;
+      Command : Command_Access);
+   --  Set a command that will be executed every time that the state of the
+   --  queue changes.
+
 private
 
    function Get_Previous_Command (Queue : Command_Queue)
@@ -143,18 +153,9 @@ private
    --  Action is the Action that has just finished. Success indicates
    --  the success of Action.
 
-   procedure Add_Queue_Change_Hook
-     (Queue   : Command_Queue;
-      Command : Command_Access);
-   --  Set a command that will be executed every time that the state of the
-   --  queue changes.
-   --  ??? Right now there is only one such command at all times, there should
-   --  be the possibility for a set of commands.
-   --  ??? This might be moved to the public part.
-
    function Get_Queue_Change_Hook
      (Queue : Command_Queue)
-     return Command_Access;
+     return Command_Queues.List;
    --  Return the queue change hook.
 
    type Command_Queue_Record is record
@@ -172,9 +173,15 @@ private
       --  (Again, most recent additions to this queue are at its
       --  beginning.)
 
-      Queue_Change_Hook   : Command_Access;
-      --  This is the action that will be executed every time the state
+      Queue_Change_Hook   : Command_Queues.List;
+      --  These are the actions that will be executed every time the state
       --  of the queue changes.
+
+      Position            : Integer := 0;
+      --  The position in the queue.
+      --  Equal to 0 when the queue is empty, 1 is added every time a command
+      --  from this queue is executed, and 1 is substracted every time a
+      --  command from this queue is undone.
    end record;
    type Command_Queue is access Command_Queue_Record;
 
