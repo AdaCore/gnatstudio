@@ -8,4 +8,8 @@ project Standalone is
       for Default_Switches ("ada") use ("-gnatwue", "-gnatg", "-g");
    end Compiler;
 
+   package Linker is
+      for Default_Switches ("Ada") use ("-lgccprefix");
+   end Linker;
+
 end Standalone;
