@@ -18,6 +18,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Pixmaps_IDE;    use Pixmaps_IDE;
+
 package body Debugger_Pixmaps is
 
    -------------------
@@ -27,9 +29,9 @@ package body Debugger_Pixmaps is
    procedure Init_Graphics is
    begin
       if Line_Has_Code_Pixbuf = Null_Pixbuf then
-         Line_Has_Code_Pixbuf := Gdk_New_From_Xpm_Data (Line_Has_Code_Xpm);
-         Line_Has_Breakpoint_Pixbuf
-           := Gdk_New_From_Xpm_Data (Line_Has_Breakpoint_Xpm);
+         Line_Has_Code_Pixbuf := Gdk_New_From_Xpm_Data (dot_xpm);
+         Line_Has_Breakpoint_Pixbuf := Gdk_New_From_Xpm_Data (stop_xpm);
+         Current_Line_Pixbuf := Gdk_New_From_Xpm_Data (arrow_xpm);
       end if;
    end Init_Graphics;
 
