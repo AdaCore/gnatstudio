@@ -113,6 +113,7 @@ Editing Files
 * Using an External Editor::
 * Using the Clipboard::
 * Saving Files::
+* Remote Files::
 
 Source Navigation
 * Support for Cross-References::
@@ -1408,6 +1409,7 @@ location, and a second view is created at the new location.
 * Using an External Editor::
 * Using the Clipboard::
 * Saving Files::
+* Remote Files::
 @end menu
 
 @c --------------------------------------------------------------------------
@@ -2284,6 +2286,117 @@ If you press @code{Cancel} instead of @code{OK}, no saving will take place,
 and the action that displayed this dialog is also cancelled. Such actions can
 be for instance starting a compilation command, a VCS operation, or quitting
 GPS with unsaved files.
+
+@c --------------------------------------------------------------------
+@node Remote Files
+@section Remote Files
+@cindex remote files
+@cindex ftp
+@cindex ssh
+@cindex rsh
+@cindex rsync
+@cindex telnet
+@c --------------------------------------------------------------------
+
+@noindent
+GPS has a basic support for working with files on remote hosts. This includes
+a number of protocols, described below, which allow you to read a file from
+a remote host, edit it locally, and then save it transparently to the remote
+machine.
+
+For now, the support for remote files is only available through the GPS
+shell window. You start editing a remote file by typing a line similar to
+
+@smallexample
+edit protocol://user@@machine/full/path
+@end smallexample
+
+where "protocol" should be replaced by the name of the protocol you want to
+use, "user" is the login name you wish to use on the remote "machine", and
+"/full/path" is the full path on the remote machine to access the file.
+
+The user name is optional. If it is the same as on the local machine, you
+can omit the user name as well as the "@@" sign.
+
+Likewise, the machine name is optional, if you want to get a file from the
+local host. This can be used to access files belonging to another user. In this
+case, you need to specify the "@@" sign, but do not insert a machine name right
+after it.
+
+Remote files can also be used if you want to work with GPS, but the machine on
+which the files are found isn't supported by GPS.
+
+The following protocols are supported:
+
+@table @b
+@item ssh
+This protocol is based on the ssh command line tool, which must therefore be
+available in the path. It provides encrypted and secure connections to the
+remote host. Files are transfered inline, that is the connection is established
+the first time you access the remote host, and kept open for all further
+access.
+
+Although ssh can be setup not to require a password, GPS will automatically
+detect if a password is asked and open a dialog to query it.
+
+The remote system must be a Unix-like system with support for standard Unix
+commands like @code{test}, @code{echo}, @code{rm} and @code{ls}.
+
+In the sample shell command above, you would replace the word "protocol" with
+"ssh" to use this protocol.
+
+@item rsh
+This protocol behaves like ssh, except that the connections are not encpryted.
+However, this protocol is generally available on all Unix machines by default.
+
+It has the same requirements that the ssh protocol. To use it, substitute the
+word "rsh" to "protocol" in the example above.
+
+@item telnet
+This protocol is based on the standard telnet protocol. It behaves much like
+the two protocols above, with an unencrypted connection.
+
+To use it, substitute the word "telnet" to "protocol" in the example above.
+
+@item scp
+This protocol is also based on one of the tools of the ssh suite. It provides
+encrypted connections, and uses a mixture of ssh and scp connections.
+Various commands like querying the timestamp of a file are executed through a
+permanent ssh connection, whereas files are downloaded and uploaded through
+a one-time scp command.
+
+It basically has the same behavior as the ssh protocol, although it might be
+slightly slower since a new connection has to be established every time a file
+is fetched from, or written to the remote host. However, it might work better
+than ssh if the file contains 8 bit characters.
+
+To use it, substitute the word "scp" to "protocol" in the example above.
+
+@item rsync
+Just like scp is based on ssh, this protocol is based on rsh. It depends on
+the external tool rsync, and uses a mixture of a rsh connection for commands
+like querying the timestamp of a file, and one-time connections with rsync
+to transfer the files.
+
+Rsync is specially optimized to transfer only the parts of a file that are
+different from the one already on the remote host. Therefore, it will generally
+provide the best performance when writing the file back to the remote host.
+
+If you set up the environment variable RSYNC_RSH to ssh before starting gps,
+the connection will then be encrypted when transfering the files.
+
+To use this protocol, substitute the word "rsync" to "protocol" in the
+example above.
+
+@item ftp
+This protocol provides only limited capabilities, but can be used to retrieve
+or write a file back through an ftp connection, possibly even through an
+anonymous ftp connection.
+
+To use this protocol, substitute the word "ftp" to "protocol" in the example
+above.
+
+@end table
 
 @c --------------------------------------------------------------------
 @node Source Navigation
@@ -6680,6 +6793,9 @@ The system files are all the files stored in the directory
 @file{<prefix>/share/gps/aliases}, where @file{<prefix>} is the path
 in which GPS was installed. The aliases defined in these files are
 read-only, and indicated as such in the aliases editor.
+
+The system files are loaded first, and aliases defined in them can be
+overriden by the user-defined file.
 
 All the files have the same XML format, which can be seen in the
 following example. Each alias has its own @i{<alias>} tag.
