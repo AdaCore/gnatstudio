@@ -790,17 +790,6 @@ package body Main_Debug_Window_Pkg.Callbacks is
       Show_All (Top.Backtrace_Dialog);
    end On_Backtrace1_Activate;
 
-   ----------------------------
-   -- On_Registers1_Activate --
-   ----------------------------
-
-   procedure On_Registers1_Activate
-     (Object : access Gtk_Widget_Record'Class)
-   is
-   begin
-      null;
-   end On_Registers1_Activate;
-
    --------------------------
    -- On_Threads1_Activate --
    --------------------------
@@ -1068,6 +1057,25 @@ package body Main_Debug_Window_Pkg.Callbacks is
       Text_Output_Handler (Process, S & ASCII.LF, Is_Command => True);
       Process_User_Command (Process, S);
    end On_Display_Arguments1_Activate;
+
+   ------------------------------------
+   -- On_Display_Registers1_Activate --
+   ------------------------------------
+
+   procedure On_Display_Registers1_Activate
+     (Object : access Gtk_Widget_Record'Class)
+   is
+      Top     : constant Main_Debug_Window_Access :=
+        Main_Debug_Window_Access (Object);
+      Process : constant Debugger_Process_Tab :=
+        Process_User_Data.Get
+          (Get_Child (Get_Cur_Page (Top.Process_Notebook)));
+      S       : constant String :=
+        "graph display `" & Info_Registers (Process.Debugger) & '`';
+   begin
+      Text_Output_Handler (Process, S & ASCII.LF, Is_Command => True);
+      Process_User_Command (Process, S);
+   end On_Display_Registers1_Activate;
 
    --------------------------------------
    -- On_More_Status_Display1_Activate --
