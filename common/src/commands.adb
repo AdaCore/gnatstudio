@@ -222,7 +222,7 @@ package body Commands is
             Prepend (Queue.Undo_Queue, Command_Access (Action));
             --  When a normal command is finished, purge the redo
             --  queue.
-            Free (Queue.Redo_Queue);
+            Free (Queue.Redo_Queue, Free_Data => False);
 
          when Done =>
             Action.Mode := Undone;
