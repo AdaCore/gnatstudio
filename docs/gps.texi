@@ -9586,9 +9586,9 @@ file name, and displays each in the Messages window.
 <?xml version="1.0" ?>
 <query_file>
   <action name="query file and dir">
-    <shell lang="python">list=GPS.input_dialog (
-       "Please enter directory and file name", "Directory", "File");
-       print ("Dir=" + list[0], "File=" + list[1])
+    <shell lang="python">list=GPS.MDI.input_dialog \ 
+      ("Please enter directory and file name", "Directory", "File")</shell>
+    <shell lang="python">print ("Dir=" + list[0], "File=" + list[1])</shell>
     </shell>
   </action>
 </query_file>
