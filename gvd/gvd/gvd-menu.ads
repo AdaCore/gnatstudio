@@ -196,10 +196,4 @@ package GVD.Menu is
       Widget : Limited_Widget);
    --  Callback for Data->Refresh
 
-   procedure On_Show
-     (Object : Data_Type_Access;
-      Action : Guint;
-      Widget : Limited_Widget);
-   --  Callback for Data->Show
-
 end GVD.Menu;

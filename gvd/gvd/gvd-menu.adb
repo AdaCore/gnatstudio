@@ -908,6 +908,7 @@ package body GVD.Menu is
    begin
       --  ??? Should be able to remove this test at some point
       if Tab = null
+        or else Tab.Debugger = null
         or else Command_In_Process (Get_Process (Tab.Debugger))
       then
          return;
@@ -981,25 +982,5 @@ package body GVD.Menu is
          Refresh_Canvas (Tab.Data_Canvas);
       end if;
    end On_Refresh;
-
-   -------------
-   -- On_Show --
-   -------------
-
-   procedure On_Show
-     (Object : Data_Type_Access;
-      Action : Guint;
-      Widget : Limited_Widget)
-   is
-      pragma Unreferenced (Action, Widget);
-
-      Process : Debugger_Process_Tab;
-   begin
-      Process := Get_Current_Process (Object);
-
-      if Process.Data_Paned = null then
-         Setup_Data_Window (Process);
-      end if;
-   end On_Show;
 
 end GVD.Menu;
