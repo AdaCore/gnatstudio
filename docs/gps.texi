@@ -5394,7 +5394,7 @@ Whether paths should be absolute or relative when the projects are modified.
 The key manager is accessible through the menu @code{Edit->Key Shortcuts}.
 This dialog provides an easy way to associate key shortcuts with actions.
 These actions are either predefined in GPS, or defined in your own
-customization files, as documented in @ref{Customizing the Menu and Tool bar}.
+customization files, as documented in @ref{Customizing the Menu and Tool Bar}.
 
 It also provides an easy way to redefine the menu shortcuts.
 
@@ -5540,7 +5540,7 @@ project browser.
 @item <description>
 @cindex <description>
 This tag contains a description for the command, which is used in the
-graphical editor for the key manager. @xref{The Key Manager}.
+graphical editor for the key manager. @xref{The Key Manager Dialog}.
 
 @item <context>
 @cindex <context>
@@ -6721,8 +6721,8 @@ from the command line, you would pass the following command switches:
 gps --eval=shell:'Entity entity_name file_name; Entity.show %1'
 @end smallexample
 
-See the section @ref{Customizing GPS} on how to bind key shortcuts to
-shell commands.
+See the section @ref{Customizing the Menu and Tool Bar} on how to bind key
+shortcuts to shell commands.
 
 @node The GPS Shell
 @subsection The GPS Shell
@@ -7032,7 +7032,7 @@ automatically created if you have activated the dynamic key bindings feature
    @item $HOME/.gps/keys.xml
 Contains all the key bindings for the actions defined in GPS or in the
 custom files. This only contains the key bindings overriden through the
-key shortcuts editor (@xref{The Key Manager}).
+key shortcuts editor (@xref{The Key Manager Dialog}).
 
    @item $HOME/.gps/debugger.log
 @cindex log
