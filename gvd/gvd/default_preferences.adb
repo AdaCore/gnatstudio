@@ -34,6 +34,7 @@ with Gdk.Types.Keysyms;        use Gdk.Types.Keysyms;
 with Gtk.Adjustment;           use Gtk.Adjustment;
 with Gtk.Box;                  use Gtk.Box;
 with Gtk.Button;               use Gtk.Button;
+with Gtk.Check_Button;         use Gtk.Check_Button;
 with Gtk.Combo;                use Gtk.Combo;
 with Gtk.Dialog;               use Gtk.Dialog;
 with Gtk.Enums;                use Gtk.Enums;
@@ -797,6 +798,8 @@ package body Default_Preferences is
 
       --  Make sure that all the registered preferences also exist in the
       --  current preferences.
+      --  This isn't required unless we want to create a manually editable
+      --  preference file.
       while N /= null loop
          if Find_Node_By_Name (Manager.Preferences, Pspec_Name (N.Param))
            = null
@@ -811,6 +814,10 @@ package body Default_Preferences is
             elsif Value_Type (N.Param) = GType_Boolean then
                N2.Value := new String'
                  (Boolean'Image (Default (Param_Spec_Boolean (N.Param))));
+
+            elsif Fundamental (Value_Type (N.Param)) = GType_Enum then
+               N2.Value := new String'
+                 (Gint'Image (Default (Param_Spec_Enum (N.Param))));
 
             else
                N2.Value := new String'
@@ -1334,7 +1341,7 @@ package body Default_Preferences is
       elsif Typ = GType_Boolean then
          declare
             Prop : constant Param_Spec_Boolean := Param_Spec_Boolean (Param);
-            Toggle : Gtk_Toggle_Button;
+            Toggle : Gtk_Check_Button;
          begin
             Gtk_New (Toggle, -"True");
             Widget_Callback.Connect
