@@ -49,6 +49,7 @@ GNAT_SOURCES= \
   bld-io.ads   \
   bld-io.adb   \
   gnatvsn.ads \
+  gnatvsn.adb \
   hostparm.ads \
   krunch.ads \
   krunch.adb \
