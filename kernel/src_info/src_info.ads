@@ -446,12 +446,13 @@ private
    --  E_Declaration_Info_Node is a node of this list.
 
    type Internal_File is record
-      Unit_Name : String_Access;
+      Unit_Name : String_Access := null;
       File_Name : String_Access;
       LI_Name   : String_Access;
    end record;
    --  The information associated to a source file, and that remains valid even
-   --  when the LI file is parsed again
+   --  when the LI file is parsed again.
+   --  Unit_Name is null until Get_Unit_Name is called.
 
    type Timestamp is new Integer;
 
