@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2004                      --
+--                      Copyright (C) 2000-2005                      --
 --                             ACT-Europe                            --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -80,8 +80,7 @@ with Ada.Text_IO;              use Ada.Text_IO;
 with Ada.Exceptions;           use Ada.Exceptions;
 with Traces;                   use Traces;
 with GNAT.OS_Lib;              use GNAT.OS_Lib;
-
-with GVD;                      use GVD;
+with Config;                   use Config;
 
 package body GUI_Utils is
 
