@@ -402,6 +402,8 @@ package body Glide_Kernel.Console is
             Set_Title (Child, Title, Title);
             Set_Focus_Child (Child);
          else
+            Console := Interactive_Console (Get_Widget (Child));
+            Enable_Prompt_Display (Console, True);
             Highlight_Child (Child);
             Console := Interactive_Console (Get_Widget (Child));
          end if;
