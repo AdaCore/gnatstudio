@@ -1008,7 +1008,7 @@
 	<class>GtkMenuItem</class>
 	<name>help1</name>
 	<label>Help</label>
-	<right_justify>True</right_justify>
+	<right_justify>False</right_justify>
 
 	<widget>
 	  <class>GtkMenu</class>
