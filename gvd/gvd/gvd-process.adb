@@ -1854,7 +1854,7 @@ package body GVD.Process is
       Dialog  : access Gtk.Dialog.Gtk_Dialog_Record'Class) is
    begin
       if Process.Registered_Dialog /= null then
-         raise Program_Error;
+         Destroy (Process.Registered_Dialog);
       end if;
 
       Process.Registered_Dialog := Gtk_Dialog (Dialog);
