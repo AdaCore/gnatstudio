@@ -4139,6 +4139,7 @@ package body Prj_API is
    procedure Finalize is
    begin
       Prj.Reset;
+      Prj.Ext.Reset;
       Prj.Tree.Tree_Private_Part.Projects_Htable.Reset;
       Prj.Tree.Tree_Private_Part.Project_Nodes.Free;
       Namet.Finalize;
@@ -4153,8 +4154,6 @@ package body Prj_API is
       ALI.Sdep.Free;
       ALI.Xref.Free;
       Atree.Atree_Private_Part.Nodes.Free;
-
-
    end Finalize;
 
 begin
