@@ -1,5 +1,10 @@
 Known Problems fixed in GPS 2.1.0
 
+- DA05-024 In VCS XML definitions, <diff_working> node has no effect
+  Problem:    When writing or modifying XML files for supporting a new VCS,
+              the <diff_working> node has no effect.
+  Workaround: Create a contextual menu item specifically for this effect.
+
 - D920-004 The bottom of files may get corrupted when using block folding
   Problem:    When using block folding, GPS may change the order or corrupt the
               last lines in the file.
