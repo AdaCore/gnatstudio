@@ -222,10 +222,7 @@ package body Vsearch_Ext is
       if Get_Search_Module (Kernel) /= null then
          Combo := Vsearch_Extended (Get_Search_Module (Kernel)).Context_Combo;
          Add_Unique_Combo_Entry (Combo,  Label);
-
-         if Get_Text (Get_Entry (Combo)) = "" then
-            Set_Text (Get_Entry (Combo), Label);
-         end if;
+         Set_Text (Get_Entry (Combo), Label);
       end if;
    end Register_Search_Function;
 
@@ -765,6 +762,8 @@ package body Vsearch_Ext is
       while Current /= Null_Node loop
          Add_Unique_Combo_Entry
            (Vsearch.Context_Combo, Data (Current).Label.all);
+         Set_Text (Get_Entry (Vsearch.Context_Combo),
+                   Data (Current).Label.all);
          Current := Next (Current);
       end loop;
 
