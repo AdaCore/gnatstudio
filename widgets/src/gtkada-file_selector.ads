@@ -323,8 +323,8 @@ private
       Filters : Filter_List.List;
       --  A list of all registered filters.
 
-      Highlighted_Color : Gdk_Color;
-      Insensitive_Color : Gdk_Color;
+      Highlighted_Color : Gdk_Color := Null_Color;
+      Insensitive_Color : Gdk_Color := Null_Color;
 
       Moving_Through_History : Boolean := True;
       --  Set to true in case we are navigating using the back/forward buttons.
