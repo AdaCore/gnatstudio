@@ -12,6 +12,7 @@ with Gtkada.Handlers; use Gtkada.Handlers;
 with Callbacks_Glide; use Callbacks_Glide;
 with Glide_Menu;      use Glide_Menu;
 with Glide_Intl;      use Glide_Intl;
+with Factory_Data;
 
 package body Glide_Pkg is
 
