@@ -27,6 +27,7 @@ with GNAT.OS_Lib;
 with Generic_List;
 with Glib.Object;
 with Glib.Values;
+with Glib.Xml_Int;
 with Gdk;
 with Gtk.Handlers;
 with Gtk.Accel_Group;
@@ -77,7 +78,8 @@ package Glide_Kernel is
 
    function Load_Desktop (Handle : access Kernel_Handle_Record) return Boolean;
    --  Reload a saved desktop.
-   --  Return False if no desktop could be loaded.
+   --  Return False if no desktop could be loaded (in which case the default
+   --  desktop is loaded).
 
    function Get_MDI
      (Handle : access Kernel_Handle_Record) return Gtkada.MDI.MDI_Window;
@@ -678,6 +680,9 @@ private
 
       VCS_List : Basic_Types.String_Array_Access;
       --  The list of all VCS systems recognized by the kernel.
+
+      Default_Desktop : Glib.Xml_Int.Node_Ptr;
+      --  The tree describing the default desktop.
    end record;
 
 end Glide_Kernel;
