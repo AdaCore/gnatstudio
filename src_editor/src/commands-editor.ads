@@ -58,7 +58,8 @@ package Commands.Editor is
       Start_Column : Integer;
       End_Line     : Integer;
       End_Column   : Integer;
-      Text         : String);
+      Text         : String;
+      Direction    : Direction_Type := Backward);
    --  Create a new Editor_Replace_Slice command.
 
    function Execute
@@ -145,6 +146,7 @@ private
 
       Text_Before       : String_Access;
       Text_After        : String_Access;
+      Direction         : Direction_Type;
    end record;
 
 end Commands.Editor;
