@@ -88,6 +88,7 @@ with Vdiff_Module;
 --  with Vdiff2_Module;
 with Builder_Module;
 with Glide_Kernel.Console;
+with Glide_Result_View;
 with Navigation_Module;
 with Custom_Module;
 with Vsearch_Ext;
@@ -885,6 +886,7 @@ procedure GPS is
       Codefix_Module.Register_Module (GPS.Kernel);
       Glide_Kernel.Task_Manager.Register_Module (GPS.Kernel);
       Custom_Module.Register_Module (GPS.Kernel);
+      Glide_Result_View.Register_Module (GPS.Kernel);
       --  Docgen_Module.Register_Module (GPS.Kernel);
 
       --  Register the supported languages and their associated LI handlers.
