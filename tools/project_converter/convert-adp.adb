@@ -3,6 +3,7 @@ with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.HTable;               use GNAT.HTable;
 with Ada.Unchecked_Deallocation;
+with Ada.Command_Line;          use Ada.Command_Line;
 
 package body Convert.Adp is
 

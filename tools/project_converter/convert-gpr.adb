@@ -12,6 +12,7 @@ with Snames;                    use Snames;
 with Types;                     use Types;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+with Ada.Command_Line;          use Ada.Command_Line;
 
 package body Convert.Gpr is
 
