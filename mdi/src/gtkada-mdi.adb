@@ -36,7 +36,7 @@ with Gtkada.Handlers;  use Gtkada.Handlers;
 with Gtkada.Types;     use Gtkada.Types;
 
 with GNAT.OS_Lib; use GNAT.OS_Lib;
---  with Text_IO; use Text_IO;
+with Text_IO; use Text_IO;
 
 package body Gtkada.MDI is
 
@@ -202,7 +202,8 @@ package body Gtkada.MDI is
    --  Constrain the possible values of coordinates for an item in MDI.
 
    procedure Update_Dock_Menu (Child : access MDI_Child_Record'Class);
-   --  Update the state of the "Docked" menu item associated with child
+   procedure Update_Float_Menu (Child : access MDI_Child_Record'Class);
+   --  Update the state of the "Float" menu item associated with child
 
    procedure Put_In_Notebook
      (MDI : access MDI_Window_Record'Class;
@@ -299,8 +300,8 @@ package body Gtkada.MDI is
       Y := 10;
       Child.X := 11;
       Child.Y := 11;
-      if Child.Uniconified_Width = 0
-        or else Child.Uniconified_Height = 0
+      if Child.Uniconified_Width /= 0
+        and then Child.Uniconified_Height /= 0
       then
          while Child.X = 11 and then Y < H loop
             X := 10;
@@ -378,13 +379,12 @@ package body Gtkada.MDI is
             Child.Uniconified_Width := Child_Req.Width;
             Child.Uniconified_Height := Child_Req.Height;
             Layout_Child (Child, Region);
+            Union_With_Rect
+              (Region, Region,
+               (Child.X, Child.Y,
+                Guint (Child.Uniconified_Width),
+                Guint (Child.Uniconified_Height)));
          end if;
-
-         Union_With_Rect
-           (Region, Region,
-            (Child.X, Child.Y,
-             Guint (Child.Uniconified_Width),
-             Guint (Child.Uniconified_Height)));
          Tmp := Next (Tmp);
       end loop;
       Free (List);
@@ -434,7 +434,12 @@ package body Gtkada.MDI is
 
    procedure Iconify_Child (Child : access Gtk_Widget_Record'Class) is
       C : MDI_Child := MDI_Child (Child);
+      Note : Gtk_Notebook;
    begin
+      if C.State = Docked then
+         Note := Gtk_Notebook (C.Initial);
+         C := Find_MDI_Child (C.MDI, Get_Child (Get_Cur_Page (Note)));
+      end if;
       Minimize_Child (C, not (C.State = Iconified));
    end Iconify_Child;
 
@@ -488,6 +493,8 @@ package body Gtkada.MDI is
            (C.MDI, Get_Child (Get_Cur_Page (Gtk_Notebook (C.Initial))));
       end if;
 
+      Put_Line ("Close_Child: " & C.State'Img & C.Title.all);
+
       Allocate (Event, Delete, Get_Window (C.MDI));
 
       --  For a top-level window, we must rebuild the initial widget
@@ -505,6 +512,8 @@ package body Gtkada.MDI is
          Result := Return_Callback.Emit_By_Name
            (C.Initial, "delete_event", Event);
       end if;
+
+      Put_Line ("Result=" & Result'Img);
 
       if not Result then
          Destroy (C);
@@ -1173,7 +1182,7 @@ package body Gtkada.MDI is
         (Button, "clicked",
          Widget_Callback.To_Marshaller (Close_Child'Access), Child);
 
-      if not Is_Dock then
+      if not Is_Dock or else Side = None then
          Gdk.Pixmap.Create_From_Xpm_D
            (Pix, null, Get_Default_Colormap, Mask, Null_Color, Maximize_Xpm);
          Gtk_New (Pixmap, Pix, Mask);
@@ -1244,13 +1253,13 @@ package body Gtkada.MDI is
          Create_Menu_Entry (C);
       end if;
 
-      --  If MDI is not realized, then we don't need to do anything now,
-      --  this will be done automatically in Realize_MDI
-      if Realized_Is_Set (MDI) then
-         Layout_Child (C);
-      end if;
-
       if C.State /= Docked then
+         --  If MDI is not realized, then we don't need to do anything now,
+         --  this will be done automatically in Realize_MDI
+         if Realized_Is_Set (MDI) then
+            Layout_Child (C);
+         end if;
+
          Activate_Child (C);
       end if;
       return C;
@@ -1375,11 +1384,14 @@ package body Gtkada.MDI is
          end if;
 
          --  Make sure the docks always stay on top
-         for J in Child.MDI.Docks'Range loop
+         for J in Left .. Bottom loop
             if Child.MDI.Docks (J) /= null then
                Gdk_Raise (Get_Window (Child.MDI.Docks (J)));
             end if;
          end loop;
+         if Child.MDI.Docks (None) /= null then
+            Lower (Get_Window (Child.MDI.Docks (None)));
+         end if;
       end if;
    end Raise_Child;
 
@@ -1400,6 +1412,21 @@ package body Gtkada.MDI is
            (Child.MDI.Dock_Menu_Item, Child.MDI.Dock_Menu_Item_Id);
       end if;
    end Update_Dock_Menu;
+
+   -----------------------
+   -- Update_Float_Menu --
+   -----------------------
+
+   procedure Update_Float_Menu (Child : access MDI_Child_Record'Class) is
+   begin
+      if Child.MDI.Float_Menu_Item /= null then
+         Gtk.Handlers.Handler_Block
+           (Child.MDI.Float_Menu_Item, Child.MDI.Float_Menu_Item_Id);
+         Set_Active (Child.MDI.Float_Menu_Item, Child.State = Floating);
+         Gtk.Handlers.Handler_Unblock
+           (Child.MDI.Float_Menu_Item, Child.MDI.Float_Menu_Item_Id);
+      end if;
+   end Update_Float_Menu;
 
    --------------------
    -- Activate_Child --
@@ -1454,6 +1481,7 @@ package body Gtkada.MDI is
       end if;
 
       Update_Dock_Menu (C);
+      Update_Float_Menu (C);
       if Child.MDI.Float_Menu_Item /= null then
          Gtk.Handlers.Handler_Block
            (C.MDI.Float_Menu_Item, C.MDI.Float_Menu_Item_Id);
@@ -1689,6 +1717,7 @@ package body Gtkada.MDI is
 
          Show_All (Child);
       end if;
+      Update_Float_Menu (Child);
    end Float_Child;
 
    -----------------
@@ -2105,6 +2134,12 @@ package body Gtkada.MDI is
          Child.Y := Child.Uniconified_Y;
          Child.State := Normal;
          Move (MDI, Child, Child.X, Child.Y);
+
+         --  If all items are maximized, add Child to the notebook
+         if Child.MDI.Docks (None) /= null then
+            Put_In_Notebook (Child.MDI, None, Child);
+         end if;
+
          Activate_Child (Child);
       end if;
    end Minimize_Child;
