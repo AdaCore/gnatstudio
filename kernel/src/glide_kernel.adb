@@ -20,7 +20,6 @@
 
 with Glib;                      use Glib;
 with Glib.Xml_Int;              use Glib.Xml_Int;
-with Glib.Convert;              use Glib.Convert;
 with Glib.Object;               use Glib.Object;
 with Glib.Properties;           use Glib.Properties;
 with Glib.Values;               use Glib.Values;
@@ -2073,28 +2072,8 @@ package body Glide_Kernel is
       Use_Source_Path : Boolean := True;
       Use_Object_Path : Boolean := True) return VFS.Virtual_File is
    begin
-      if Is_Absolute_Path_Or_URL (Name) then
-         return Create (Full_Filename => Name);
-      else
-         declare
-            Full : constant String := Get_Full_Path_From_File
-              (Registry        => Get_Registry (Kernel),
-               Filename        => Name,
-               Use_Source_Path => Use_Source_Path,
-               Use_Object_Path => Use_Object_Path);
-
-         begin
-            if Full /= "" then
-               return Create (Full_Filename => Full);
-            end if;
-         end;
-
-         --  Else just open the relative paths. This is mostly intended
-         --  for files opened from the command line.
-         return Create
-           (Full_Filename => Locale_To_UTF8
-              (Normalize_Pathname (Locale_From_UTF8 (Name))));
-      end if;
+      return Projects.Registry.Create
+        (Name, Get_Registry (Kernel), Use_Source_Path, Use_Object_Path);
    end Create;
 
    ----------
