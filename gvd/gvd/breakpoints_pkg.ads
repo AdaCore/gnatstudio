@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
---                   GVD - The GNU Visual Debugger                   --
+--                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2000-2003                      --
---                              ACT-Europe                           --
+--                      Copyright (C) 2000-2005                      --
+--                              AdaCore                              --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,6 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Glib; use Glib;
 with Gtk.Window; use Gtk.Window;
 with Gtk.Box; use Gtk.Box;
 with Gtk.Notebook; use Gtk.Notebook;
@@ -34,9 +35,20 @@ with Gtk.Vbutton_Box; use Gtk.Vbutton_Box;
 with Gtk.Button; use Gtk.Button;
 with Gtk.GEntry; use Gtk.GEntry;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
-with Gtk.Clist; use Gtk.Clist;
+with Gtk.Tree_View; use Gtk.Tree_View;
 with Gtk.Hbutton_Box; use Gtk.Hbutton_Box;
 package Breakpoints_Pkg is
+
+   --  Breakpoint lists columns
+
+   Col_Num       : constant Gint := 0;
+   Col_Enb       : constant Gint := 1;
+   Col_Type      : constant Gint := 2;
+   Col_Disp      : constant Gint := 3;
+   Col_File      : constant Gint := 4;
+   Col_Line      : constant Gint := 5;
+   Col_Exception : constant Gint := 6;
+   Col_Subprogs  : constant Gint := 7;
 
    type Breakpoints_Record is new Gtk_Window_Record with record
       Main_Box : Gtk_Hbox;
@@ -102,7 +114,7 @@ package Breakpoints_Pkg is
       Vbox16 : Gtk_Vbox;
       Label72 : Gtk_Label;
       Scrolledwindow2 : Gtk_Scrolled_Window;
-      Breakpoint_List : Gtk_Clist;
+      Breakpoint_List : Gtk_Tree_View;
       Label15 : Gtk_Label;
       Label16 : Gtk_Label;
       Hbuttonbox8 : Gtk_Hbutton_Box;
