@@ -48,7 +48,7 @@ package Src_Info.Queries is
    --  tree itself, and thus can be kept independently in a browser.
 
    type Entity_Information is private;
-   No_Entity_Information : constant Entity_Information;
+   No_Entity_Information         : constant Entity_Information;
 
    procedure Destroy (Entity : in out Entity_Information);
    --  Free the memory associated with the entity;
@@ -65,9 +65,19 @@ package Src_Info.Queries is
    --  Return the location of the declaration for Entity. Note that this
    --  location remains valid only until the source file are changed. It is not
    --  magically updated when the source file is changed.
+   --  The declaration file might be the empty string if the exact location for
+   --  the declaration could not be resolved (case of overloaded entities).
 
    function Copy (Entity : Entity_Information) return Entity_Information;
    --  Return a copy of Entity. The result must be explicitely destroyed.
+
+   function Create
+     (File   : String;
+      Line   : Positive;
+      Column : Natural;
+      Name   : String) return Entity_Information;
+   --  Return a new entity information structure. It is the responsability of
+   --  the user to free the allocated memory.
 
    procedure Renaming_Of
      (List           : LI_File_List;
@@ -91,6 +101,7 @@ package Src_Info.Queries is
      (Entity_Not_Found,
       Internal_Error,
       No_Body_Entity_Found,
+      Overloaded_Entity_Found,
       Success);
    --  The status returned by the Find_Declaration_Or_Body routine.
 
@@ -107,6 +118,10 @@ package Src_Info.Queries is
    --
    --  If no entity could be found, Status is set to a value other than
    --  Success. In that case, Entity are irrelevant.
+   --
+   --  If the entity is an overloaded entity that the LI parser could not fully
+   --  resolve, then Status is set to Overloaded_Entity_Found and Entity is set
+   --  to No_Entity_Information.
    --
    --  The memory occupied by Entity must be freed by the caller.
 
@@ -129,7 +144,13 @@ package Src_Info.Queries is
    --  procedure returns the location of the next body.
    --
    --  If no entity could be found, Status is set to a value other than
-   --  Success. In that case, Location are irrelevant.
+   --  Success. In that case, Location is irrelevant.
+   --
+   --  If the entity is in fact an overloaded entity that the LI handler
+   --  couldn't resolve, Status is set to Overloaded_Entity_Found. In that
+   --  case, Location is irrelevant. The user should be asked what exact
+   --  definition of the entity he wants, and then you should call
+   --  Find_Next_Body again with the location of the declaration.
    --
    --  Note: Location has a short term life: it can no longer be used once you
    --  reparse Lib_Info, or update its contents.
@@ -150,6 +171,38 @@ package Src_Info.Queries is
    --  Only the short path name is returned.
    --
    --  This method is based on LI files.
+
+   ------------------
+   -- Declarations --
+   ------------------
+
+   type Entity_Declaration_Iterator is private;
+
+   function Find_All_Possible_Declarations
+     (Lib_Info : LI_File_Ptr;
+      Entity_Name : String)
+      return Entity_Declaration_Iterator;
+   --  Return the first entity declaration in Lib_Info whose name is
+   --  Entity_Name. Note that the fake declarations for unresolved overloaded
+   --  entities (with E_Kind = Overloaded_Entity) are not returned.
+   --  The entity is search in all source files associated with Lib_Info.
+
+   function Get (Iterator : Entity_Declaration_Iterator)
+      return Entity_Information;
+   --  Return the current entity, or No_Entity_Information if there is no more
+   --  matching entity.
+   --  It is the responsability of the caller to free the returned value.
+
+   procedure Next (Iterator : in out Entity_Declaration_Iterator);
+   --  Move to the next matching entity.
+   --  The iterator is automatically destroyed upon seeing the last entity.
+
+   function At_End (Iterator : Entity_Declaration_Iterator) return Boolean;
+   --  Return True if there are no more matching entities.
+
+   procedure Destroy (Iterator : in out Entity_Declaration_Iterator);
+   --  Free the memory used by the iterator.
+   --  It is safe to call this function multiple times.
 
    ----------------
    -- References --
@@ -549,6 +602,22 @@ private
       --  If the LI file we are examining is the file in which the entity was
       --  declared, we need to examine the body, spec, and separates, and part
       --  indicates which part we are examining
+   end record;
+
+   type Entity_Declaration_Iterator is record
+      LI          : LI_File_Ptr;
+      --  The LI file we are parsing
+
+      Entity_Name : String_Access;
+      --  The name of the entity we are looking for
+
+      Current     : E_Declaration_Info_List;
+      --  The current declaration.
+
+      File        : File_Info_Ptr;
+      Part        : Unit_Part;
+      Sep_Source  : File_Info_Ptr_List;
+      --  The source file we are parsing.
    end record;
 
    pragma Inline (File_Information);

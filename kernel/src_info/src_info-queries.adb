@@ -89,8 +89,12 @@ package body Src_Info.Queries is
      (Handler : Debug_Handle;
       Scope : Scope_List;
       Prefix : String;
-      Subprograms_Pkg_Only : Boolean);
-   --  Dump Scope to Handler, printing Prefix at the beginning of each line
+      Subprograms_Pkg_Only : Boolean;
+      Display_Siblings : Boolean := True);
+   --  Dump Scope to Handler, printing Prefix at the beginning of each line.
+   --  If Display_Siblings is True, then the siblings of the node will be
+   --  displayed. Otherwise, only the node itself and its children will be
+   --  displayed.
 
    function Dump (L : Scope_List) return String;
    --  Return a string representation of L
@@ -123,7 +127,13 @@ package body Src_Info.Queries is
       Decl          : out E_Declaration_Info;
       Ref           : out E_Reference_List;
       Status        : out Find_Decl_Or_Body_Query_Status);
-   --  Internal version of Find_Declaration and Find_Next_Body
+   --  Internal version of Find_Declaration and Find_Next_Body.
+   --  Decl might point to an E_Declaration whose E_Kind is Overloaded_Entity.
+   --  In that case, the caller should search in Lib_Info all the possible
+   --  declarations for an entity with the same name, and the user will be
+   --  asked to choose.
+   --  Ref points to the E_Reference in the list of Decl that corresponds to
+   --  Line, Column.
 
    -------------------------
    -- Search_Is_Completed --
@@ -146,8 +156,7 @@ package body Src_Info.Queries is
             --  ??? the value returned to False, the net effect is to ignore
             --  ??? the internal error while taking our chance by continuing
             --  ??? the search).
-         when No_Body_Entity_Found |
-              Success =>
+         when No_Body_Entity_Found | Success | Overloaded_Entity_Found =>
             return True;
             --  Obviously, we have completed our query.
       end case;
@@ -373,7 +382,12 @@ package body Src_Info.Queries is
          Status      => Status);
 
       if Status = Success then
-         Entity := Get_Entity (Decl.Declaration);
+         if Decl.Declaration.Kind /= Overloaded_Entity then
+            Entity := Get_Entity (Decl.Declaration);
+         else
+            Entity := No_Entity_Information;
+            Status := Overloaded_Entity_Found;
+         end if;
       else
          Entity := No_Entity_Information;
          Trace (Me, "Couldn't find a valid xref for " & Entity_Name
@@ -425,6 +439,15 @@ package body Src_Info.Queries is
          Decl        => Decl,
          Ref         => Ref,
          Status      => Status);
+
+      if Status = Success
+        and then Decl.Declaration.Kind = Overloaded_Entity
+      then
+         Status := Overloaded_Entity_Found;
+         Location := Null_File_Location;
+         return;
+      end if;
+
 
       if Status = Success then
 
@@ -635,7 +658,8 @@ package body Src_Info.Queries is
      (Handler : Debug_Handle;
       Scope : Scope_List;
       Prefix : String;
-      Subprograms_Pkg_Only : Boolean)
+      Subprograms_Pkg_Only : Boolean;
+      Display_Siblings : Boolean := True)
    is
       L : Scope_List := Scope;
    begin
@@ -651,7 +675,12 @@ package body Src_Info.Queries is
                  (Handler, L.Contents, Prefix & "  ", Subprograms_Pkg_Only);
             end if;
          end if;
-         L := L.Sibling;
+
+         if Display_Siblings then
+            L := L.Sibling;
+         else
+            L := null;
+         end if;
       end loop;
    end Trace_Dump;
 
@@ -680,7 +709,9 @@ package body Src_Info.Queries is
                            Subprograms_Pkg_Only);
             end loop;
          else
-            Trace_Dump (Handler, Scope_List (Node), "", Subprograms_Pkg_Only);
+            Trace_Dump
+              (Handler, Scope_List (Node), "",
+               Subprograms_Pkg_Only, Display_Siblings => False);
          end if;
       else
          Trace (Handler, "Null scope tree");
@@ -694,10 +725,15 @@ package body Src_Info.Queries is
    function Is_Subprogram (Node : Scope_Tree_Node) return Boolean is
       K : constant E_Kind := Node.Decl.Kind;
    begin
+      Trace (Me, K'Img);
       return (K = Generic_Function_Or_Operator
               or else K = Generic_Procedure
               or else K = Non_Generic_Function_Or_Operator
-              or else K = Non_Generic_Procedure)
+              or else K = Non_Generic_Procedure
+
+               --  ??? Should we check that at least one of the possible
+               --  completions is a subprogram
+              or else K = Overloaded_Entity)
         and then (Node.Typ = Declaration
                   or else not Is_End_Reference (Node.Ref.Kind));
    end Is_Subprogram;
@@ -1080,7 +1116,7 @@ package body Src_Info.Queries is
                Decl           => List.Value.Declaration'Unrestricted_Access,
                Contents       => null,
                Start_Of_Scope => Null_File_Location,
-               Parent      => null,
+               Parent         => null,
                Sibling        => null);
             Compute_Scope (New_Item, List.Value.References);
             Start_Of_Scope := New_Item.Start_Of_Scope;
@@ -1307,12 +1343,19 @@ package body Src_Info.Queries is
 
    function Get_Entity (Decl : E_Declaration) return Entity_Information is
    begin
-      return Entity_Information'
-        (Name        => new String' (Decl.Name.all),
-         Decl_Line   => Decl.Location.Line,
-         Decl_Column => Decl.Location.Column,
-         Decl_File   => new String'
-           (Get_Source_Filename (Decl.Location.File)));
+      if Decl.Location /= Null_File_Location then
+         return Create
+           (Name   => Decl.Name.all,
+            Line   => Decl.Location.Line,
+            Column => Decl.Location.Column,
+            File   => Get_Source_Filename (Decl.Location.File));
+      else
+         return Create
+           (Name   => Decl.Name.all,
+            Line   => Decl.Location.Line,
+            Column => Decl.Location.Column,
+            File   => "");
+      end if;
    end Get_Entity;
 
    ----------
@@ -1324,11 +1367,11 @@ package body Src_Info.Queries is
       if Entity = No_Entity_Information then
          return No_Entity_Information;
       else
-         return Entity_Information'
-           (Name        => new String' (Entity.Name.all),
-            Decl_Line   => Entity.Decl_Line,
-            Decl_Column => Entity.Decl_Column,
-            Decl_File   => new String' (Entity.Decl_File.all));
+         return Create
+           (Name   => Entity.Name.all,
+            Line   => Entity.Decl_Line,
+            Column => Entity.Decl_Column,
+            File   => Entity.Decl_File.all);
       end if;
    end Copy;
 
@@ -2126,5 +2169,144 @@ package body Src_Info.Queries is
          Renamed_Entity := No_Entity_Information;
       end if;
    end Renaming_Of;
+
+   ------------------------------------
+   -- Find_All_Possible_Declarations --
+   ------------------------------------
+
+   function Find_All_Possible_Declarations
+     (Lib_Info : LI_File_Ptr;
+      Entity_Name : String)
+      return Entity_Declaration_Iterator
+   is
+      Iter : Entity_Declaration_Iterator;
+   begin
+      Assert (Me, Lib_Info /= null and then Lib_Info.LI.Parsed,
+              "Unparsed LI_File_Ptr in Find_All_Possible_Declarations");
+      Iter := (LI          => Lib_Info,
+               Entity_Name => null,
+               Current     => null,
+               File        => Lib_Info.LI.Spec_Info,
+               Part        => Unit_Spec,
+               Sep_Source  => null);
+
+      if Case_Insensitive_Identifiers (Lib_Info.LI.Handler) then
+         Iter.Entity_Name := new String' (To_Lower (Entity_Name));
+      else
+         Iter.Entity_Name := new String' (Entity_Name);
+      end if;
+
+      Next (Iter);
+      return Iter;
+   end Find_All_Possible_Declarations;
+
+   ---------
+   -- Get --
+   ---------
+
+   function Get (Iterator : Entity_Declaration_Iterator)
+      return Entity_Information is
+   begin
+      if Iterator.Current = null then
+         return No_Entity_Information;
+      else
+         return Get_Entity (Iterator.Current.Value.Declaration);
+      end if;
+   end Get;
+
+   ------------
+   -- At_End --
+   ------------
+
+   function At_End (Iterator : Entity_Declaration_Iterator) return Boolean is
+   begin
+      return Iterator.Current = null;
+   end At_End;
+
+   ----------
+   -- Next --
+   ----------
+
+   procedure Next (Iterator : in out Entity_Declaration_Iterator) is
+   begin
+      if Iterator.Current /= null then
+         Iterator.Current := Iterator.Current.Next;
+      end if;
+
+      --  For each file associated with Iterator.LI
+      loop
+         --  While there remains some declarations to analyze in the current
+         --  file
+         while Iterator.Current /= null loop
+            if Iterator.Current.Value.Declaration.Kind /=
+              Overloaded_Entity
+              and then Iterator.Current.Value.Declaration.Name /= null
+              and then Iterator.Current.Value.Declaration.Name.all =
+              Iterator.Entity_Name.all
+            then
+               --  We have found a matching entity
+               return;
+            end if;
+            Iterator.Current := Iterator.Current.Next;
+         end loop;
+
+         pragma Assert (Iterator.Current = null);
+
+         --  No more matching declaration in the current file, move to the next
+         --  file
+
+         if Iterator.Part = Unit_Spec then
+            Iterator.Part := Unit_Body;
+            Iterator.File := Iterator.LI.LI.Body_Info;
+
+         else
+            if Iterator.Part = Unit_Body then
+               Iterator.Part := Unit_Separate;
+               Iterator.Sep_Source := Iterator.LI.LI.Separate_Info;
+            else
+               Iterator.Sep_Source := Iterator.Sep_Source.Next;
+            end if;
+
+            if Iterator.Sep_Source /= null then
+               Iterator.File := Iterator.Sep_Source.Value;
+            else
+               --  No more files to analyze.
+               Destroy (Iterator);
+               return;
+            end if;
+         end if;
+
+         if Iterator.File /= null then
+            Iterator.Current := Iterator.File.Declarations;
+         end if;
+      end loop;
+   end Next;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (Iterator : in out Entity_Declaration_Iterator) is
+   begin
+      Free (Iterator.Entity_Name);
+      Iterator.Current := null;
+   end Destroy;
+
+   ------------
+   -- Create --
+   ------------
+
+   function Create
+     (File   : String;
+      Line   : Positive;
+      Column : Natural;
+      Name   : String) return Entity_Information is
+   begin
+      return Entity_Information'
+        (Name        => new String' (Name),
+         Decl_Line   => Line,
+         Decl_Column => Column,
+         Decl_File   => new String' (File));
+   end Create;
 
 end Src_Info.Queries;
