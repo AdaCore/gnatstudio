@@ -22,12 +22,8 @@ with Glib;                use Glib;
 with Gdk.Window;          use Gdk.Window;
 with Gtk.Window;          use Gtk.Window;
 with Gtkada.Dialogs;      use Gtkada.Dialogs;
-with Gtkada.File_Selection; use Gtkada.File_Selection;
 with Gtkada.Canvas;       use Gtkada.Canvas;
 with Gtkada.MDI;          use Gtkada.MDI;
-
-with GNAT.OS_Lib;               use GNAT.OS_Lib;
-with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 
 with Odd_Intl;            use Odd_Intl;
 with GVD;                 use GVD;
@@ -36,7 +32,6 @@ with GVD.Proc_Utils;      use GVD.Proc_Utils;
 with GVD.Call_Stack;      use GVD.Call_Stack;
 with GVD.Canvas;          use GVD.Canvas;
 with GVD.Dialogs;         use GVD.Dialogs;
-with GVD.Trace;           use GVD.Trace;
 with GVD.Types;           use GVD.Types;
 with GVD.Main_Window;     use GVD.Main_Window;
 with GVD.Memory_View;     use GVD.Memory_View;
@@ -58,139 +53,6 @@ package body GVD.Menu is
    --  The key in the history for the arguments to the run command.
    --  WARNING: this constant is shared with builder_module.adb, since we want
    --  to have the same history for the run command in GPS.
-
-   ---------------------
-   -- On_Open_Program --
-   ---------------------
-
-   procedure On_Open_Program
-     (Object : Data_Type_Access;
-      Action : Guint;
-      Widget : Limited_Widget)
-   is
-      pragma Unreferenced (Action, Widget);
-
-      Tab : constant Visual_Debugger := Get_Current_Process (Object);
-   begin
-      --  ??? Should be able to remove this test at some point
-      if Tab = null
-        or else Command_In_Process (Get_Process (Tab.Debugger))
-      then
-         return;
-      end if;
-
-      declare
-         S    : constant String := File_Selection_Dialog;
-         Exec : GNAT.OS_Lib.String_Access;
-      begin
-         if S = "" then
-            return;
-         end if;
-
-         Exec := Locate_Exec_On_Path (S);
-
-         if Exec /= null then
-            Set_Executable (Tab.Debugger, Exec.all, Mode => Hidden);
-            Change_Dir (Dir_Name (Exec.all));
-            Free (Exec);
-
-         elsif Tab.Descriptor.Remote_Host'Length /= 0
-           or else Is_Regular_File (S)
-         then
-            Set_Executable (Tab.Debugger, S, Mode => Hidden);
-            Change_Dir (Dir_Name (S));
-
-         else
-            Output_Error
-              (GVD_Main_Window (Get_Toplevel (Object)),
-               (-" Could not find file: ") & S);
-         end if;
-
-      exception
-         when Executable_Not_Found =>
-            Output_Error
-              (GVD_Main_Window (Get_Toplevel (Object)),
-               (-" Could not find file: ") & S);
-      end;
-   end On_Open_Program;
-
-   -----------------------
-   -- On_Open_Core_Dump --
-   -----------------------
-
-   procedure On_Open_Core_Dump
-     (Object : Data_Type_Access;
-      Action : Guint;
-      Widget : Limited_Widget)
-   is
-      pragma Unreferenced (Action, Widget);
-
-      Tab : constant Visual_Debugger := Get_Current_Process (Object);
-   begin
-      --  ??? Should be able to remove this test at some point
-      if Tab = null
-        or else Command_In_Process (Get_Process (Tab.Debugger))
-      then
-         return;
-      end if;
-
-      declare
-         S : constant String := File_Selection_Dialog (-"Select Core File");
-      begin
-         if S = "" then
-            return;
-         end if;
-
-         if Tab.Descriptor.Remote_Host /= null
-           or else Is_Regular_File (S)
-         then
-            Load_Core_File (Tab.Debugger, S, Mode => GVD.Types.Visible);
-         else
-            Output_Error
-              (GVD_Main_Window (Get_Toplevel (Object)),
-               -(" Could not find core file: ") & S);
-         end if;
-      end;
-   end On_Open_Core_Dump;
-
-   --------------------
-   -- On_Add_Symbols --
-   --------------------
-
-   procedure On_Add_Symbols
-     (Object : Data_Type_Access;
-      Action : Guint;
-      Widget : Limited_Widget)
-   is
-      pragma Unreferenced (Action, Widget);
-
-      Tab : constant Visual_Debugger := Get_Current_Process (Object);
-   begin
-      --  ??? Should be able to remove this test at some point
-      if Tab = null
-        or else Command_In_Process (Get_Process (Tab.Debugger))
-      then
-         return;
-      end if;
-
-      declare
-         S : constant String := File_Selection_Dialog (-"Select Module");
-      begin
-         if S = "" then
-            return;
-         end if;
-
-         if Tab.Descriptor.Remote_Host /= null
-           or else Is_Regular_File (S)
-         then
-            Add_Symbols (Tab.Debugger, S, Mode => GVD.Types.Visible);
-         else
-            Output_Error
-              (GVD_Main_Window (Get_Toplevel (Object)),
-               -(" Could not find file: ") & S);
-         end if;
-      end;
-   end On_Add_Symbols;
 
    --------------------------
    -- On_Attach_To_Process --
@@ -277,48 +139,6 @@ package body GVD.Menu is
          end if;
       end if;
    end On_Detach_Process;
-
-   -------------------------
-   -- On_Change_Directory --
-   -------------------------
-
-   procedure On_Change_Directory
-     (Object : Data_Type_Access;
-      Action : Guint;
-      Widget : Limited_Widget)
-   is
-      Tab    : constant Visual_Debugger := Get_Current_Process (Object);
-      Button : Message_Dialog_Buttons;
-      pragma Unreferenced (Action, Widget, Button);
-
-   begin
-      if Tab = null then
-         return;
-      end if;
-
-      if Command_In_Process (Get_Process (Tab.Debugger)) then
-         Button := Message_Dialog
-           ((-"Cannot change directory while the") & ASCII.LF &
-            (-"underlying debugger is busy.") & ASCII.LF &
-            (-"Interrupt the debugger or wait for its availability."),
-           Dialog_Type => Warning,
-           Buttons => Button_OK);
-         return;
-      end if;
-
-      declare
-         Dir : constant String := File_Selection_Dialog
-           (Title       => -"Directory Selection",
-            Dir_Only    => True,
-            Must_Exist  => True);
-
-      begin
-         if Dir /= "" then
-            Change_Directory (Tab.Debugger, Dir, Mode => GVD.Types.Visible);
-            Change_Dir (Dir);
-         end if;
-      end;
-   end On_Change_Directory;
 
    ------------
    -- On_Run --
