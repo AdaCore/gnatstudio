@@ -2056,6 +2056,11 @@ package body Gtkada.MDI is
          Remove (Child.Menu_Item, Get_Child (Child.Menu_Item));
          Add (Child.Menu_Item, Label);
          Show (Label);
+
+      --  Else in case the menu entry wasn't created before because there was
+      --  no title yet, we just create it now.
+      elsif Child.MDI.Menu /= null and then Title /= "" then
+         Create_Menu_Entry (Child);
       end if;
    end Set_Title;
 
