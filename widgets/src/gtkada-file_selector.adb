@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --               GtkAda - Ada95 binding for Gtk+/Gnome               --
 --                                                                   --
---                 Copyright (C) 2001-2002 ACT-Europe                --
+--                 Copyright (C) 2001-2003 ACT-Europe                --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -32,6 +32,7 @@ with Glib.Object;               use Glib.Object;
 with Gtk;                       use Gtk;
 with Gdk;                       use Gdk;
 with Gdk.Types.Keysyms;         use Gdk.Types.Keysyms;
+with Gtk.Box;                   use Gtk.Box;
 with Gtk.Widget;                use Gtk.Widget;
 with Gtk.Arguments;             use Gtk.Arguments;
 with Gtk.Enums;                 use Gtk.Enums;
@@ -39,7 +40,6 @@ with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Main;
 with Gtk.Ctree;                 use Gtk.Ctree;
 with Gtk.Paned;                 use Gtk.Paned;
-with Gtk.Hbutton_Box;           use Gtk.Hbutton_Box;
 with Gtk.Toolbar;               use Gtk.Toolbar;
 with Gtk.Tree_Model;            use Gtk.Tree_Model;
 with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
@@ -1606,12 +1606,13 @@ package body Gtkada.File_Selector is
       Hbox6       : Gtk_Hbox;
       Hbox7       : Gtk_Hbox;
 
-      Hbuttonbox1 : Gtk_Hbutton_Box;
-
       Success     : Boolean;
 
    begin
-      Gtk.Window.Initialize (File_Selector_Window, Window_Toplevel);
+      Gtk.Dialog.Initialize (File_Selector_Window);
+
+      Set_Has_Separator (File_Selector_Window, False);
+
       File_Selector_Window.History := History;
 
       File_Selector_Window.Highlighted_Color := Parse ("#FF0000");
@@ -1645,11 +1646,8 @@ package body Gtkada.File_Selector is
       Set_Position (File_Selector_Window, Win_Pos_Mouse);
       Set_Modal (File_Selector_Window, False);
 
-      Gtk_New_Vbox (File_Selector_Window.File_Selector_Vbox, False, 0);
-      Add (File_Selector_Window, File_Selector_Window.File_Selector_Vbox);
-
       Gtk_New_Hbox (Hbox1, False, 0);
-      Pack_Start (File_Selector_Window.File_Selector_Vbox,
+      Pack_Start (Get_Vbox (File_Selector_Window),
                   Hbox1, False, False, 3);
 
       Gtk_New_Hbox (Hbox3, False, 0);
@@ -1717,7 +1715,7 @@ package body Gtkada.File_Selector is
 
       Gtk_New_Hbox (Hbox2, False, 0);
       Pack_Start
-        (File_Selector_Window.File_Selector_Vbox,
+        (Get_Vbox (File_Selector_Window),
          Hbox2, False, False, 3);
 
       Gtk_New (Label1, -("Exploring :"));
@@ -1750,7 +1748,7 @@ package body Gtkada.File_Selector is
       Return_Callback.Connect
         (File_Selector_Window.Location_Combo_Entry,
          "key_press_event", On_Location_Entry_Key_Press_Event'Access,
-          After => False);
+         After => False);
 
       Object_Callback.Object_Connect
         (Get_Tree_Selection (File_Selector_Window.Explorer_Tree),
@@ -1767,7 +1765,7 @@ package body Gtkada.File_Selector is
 
          Gtk_New_Hbox (Hbox7, False, 0);
          Pack_Start
-           (File_Selector_Window.File_Selector_Vbox,
+           (Get_Vbox (File_Selector_Window),
             Hbox7, True, True, 3);
 
          Pack_Start (Hbox7, Hpaned1, True, True, 3);
@@ -1808,13 +1806,13 @@ package body Gtkada.File_Selector is
 
       else
          Pack_Start
-           (File_Selector_Window.File_Selector_Vbox,
+           (Get_Vbox (File_Selector_Window),
             File_Selector_Window.Explorer_Tree, True, True, 3);
       end if;
 
       Gtk_New_Hbox (Hbox4, False, 0);
       Pack_Start
-        (File_Selector_Window.File_Selector_Vbox,
+        (Get_Vbox (File_Selector_Window),
          Hbox4, False, False, 3);
 
       Gtk_New (File_Selector_Window.Filter_Combo);
@@ -1837,7 +1835,7 @@ package body Gtkada.File_Selector is
 
       Gtk_New_Hbox (Hbox5, False, 0);
       Pack_Start
-        (File_Selector_Window.File_Selector_Vbox,
+        (Get_Vbox (File_Selector_Window),
          Hbox5, False, False, 3);
 
       Gtk_New (File_Selector_Window.Selection_Entry);
@@ -1858,25 +1856,26 @@ package body Gtkada.File_Selector is
 
       Gtk_New_Hbox (Hbox6, False, 0);
       Pack_Start
-        (File_Selector_Window.File_Selector_Vbox,
+        (Get_Vbox (File_Selector_Window),
          Hbox6, False, False, 3);
 
-      Gtk_New (Hbuttonbox1);
-      Set_Spacing (Hbuttonbox1, 30);
-      Set_Layout (Hbuttonbox1, Buttonbox_Spread);
-      Set_Child_Size (Hbuttonbox1, 85, 27);
-      Set_Child_Ipadding (Hbuttonbox1, 7, 0);
-      Add (Hbox6, Hbuttonbox1);
+      File_Selector_Window.Ok_Button :=
+        Gtk_Button (Add_Button (File_Selector_Window,
+                                Stock_Ok,
+                                Gtk_Response_OK));
 
-      Gtk_New_From_Stock (File_Selector_Window.Ok_Button, Stock_Ok);
       Set_Relief (File_Selector_Window.Ok_Button, Relief_Normal);
       Set_Flags (File_Selector_Window.Ok_Button, Can_Default);
-      Add (Hbuttonbox1, File_Selector_Window.Ok_Button);
 
-      Gtk_New_From_Stock (File_Selector_Window.Cancel_Button, Stock_Cancel);
+
+      File_Selector_Window.Cancel_Button :=
+        Gtk_Button (Add_Button (File_Selector_Window,
+                                Stock_Close,
+                                Gtk_Response_Cancel));
+
       Set_Relief (File_Selector_Window.Cancel_Button, Relief_Normal);
       Set_Flags (File_Selector_Window.Cancel_Button, Can_Default);
-      Add (Hbuttonbox1, File_Selector_Window.Cancel_Button);
+
 
       Realize (File_Selector_Window);
 
