@@ -46,7 +46,7 @@ export C_INCLUDE_PATH
 ############
 # libiconv #
 ############
-# This step isn't needed on Linux
+# This step isn't needed on Linux nor AiX 5.1
 # It is needed under Solaris, HP-UX and IRIX
 
 tar xzvf libiconv-1.7.tar.gz
@@ -61,6 +61,9 @@ make install
 
 # Not needed on Tru64 5.1
 # Not needed on IRIX 6.5
+
+# Although this library seems to be provided by the system, this is
+# still needed on AiX 5.1, as the headers were not installed.
 
 tar xzvf zlib-1.1.4.tar.gz
 ln -s zlib-* zlib
@@ -136,11 +139,16 @@ make install
 
 # Under HP-UX, remove -R$prefix/lib in $prefix/lib/libintl.la
 
+# On AiX 5.1, the AiX C compiler does not seem to like the _Bool
+# name for the {true, false} enum name. This causes a compilation error
+# in stdboolh. So before doing a make, update stdbool.h.in around line
+# 34, and replace all instances of _Bool by BOOL .
+
 ########
 # glib #
 ########
-tar xzvf glib-2.0.6.tar.gz
-cd glib-2.0.6
+tar xzvf glib-2.0.7.tar.gz
+cd glib-2.0.7
 
 # Under IRIX, apply the following patch:
 # patch -p0 < .../glib-2.0.6-irix-6.5.diff
@@ -151,6 +159,10 @@ cd glib-2.0.6
 # on IRIX, where we use SGI C compiler, cc does not use C_INCLUDE_PATH
 # to locate the extra C include files...
 CPPFLAGS="-I$C_INCLUDE_PATH" ./configure --prefix=$prefix --enable-debug=minimum --with-libiconv
+
+# on AiX 5.1, where we use the AiX C compiler, cc does not use C_INCLUDE_PATH
+# either to locate the extra C inclide files...
+CPPFLAGS="-I$C_INCLUDE_PATH" ./configure --prefix=$prefix --enable-debug=minimum
 
 # on other systems:
 ./configure --prefix=$prefix --enable-debug=minimum --with-libiconv
@@ -198,6 +210,14 @@ cd ..
 #######
 tar xzvf gtk+-2.0.6.tar.gz
 cd gtk+-2.0.6
+
+# Under certain platforms such as AiX or NT, a very recent version of
+# libtool may be needed. To install the most recent version of libtool,
+# do the following:
+rm -f config.cache
+libtoolize --force --copy
+aclocal -I $GNUTOOLS_DIR/share/addon -I $INSTALL_DIR/share/aclocal
+autoconf
 
 # Under HP-UX, make sure that libX11.sl, libXt.sl and libXext.sl can be found
 # under e.g /usr/lib
