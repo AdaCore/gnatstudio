@@ -35,6 +35,7 @@ with Ada.Direct_IO;
 with Generic_Values;      use Generic_Values;
 with Gtkada.Types;        use Gtkada.Types;
 with Gtk.Pixmap;          use Gtk.Pixmap;
+with Gtk.Widget;          use Gtk.Widget;
 
 with Gtk.Handlers; use Gtk.Handlers;
 
@@ -178,7 +179,13 @@ package body Gtkada.Code_Editors is
       Editor.Colors (Keyword_Text) := Parse (Keywords_Color);
       Alloc (Get_System, Editor.Colors (Keyword_Text));
 
-      Editor.Line_Height := Font_Size;
+      --  ???Unfortunately, it is not possible currently to specify the
+      --  step_increment for the adjustments, since this is overriden in
+      --  several places in the text widget.
+      --    Set_Step_Increment
+      --     (Get_Vadj (Editor.Text),
+      --      Gfloat (Get_Ascent (Editor.Font) + Get_Descent (Editor.Font)));
+
    end Configure;
 
    --------------------------
@@ -251,6 +258,20 @@ package body Gtkada.Code_Editors is
       Next_Char   : Positive;
 
    begin
+
+      --  ??? Should keep a copy of the name of the current file, and not
+      --  redisplay it if it is already displayed. Just change the current line
+      --  indicator.
+
+      --  Clear the old file and the old icons.
+      Freeze (Editor.Buttons);
+      Forall (Editor.Buttons, Gtk.Widget.Destroy_Cb'Access);
+      Thaw (Editor.Buttons);
+
+      Freeze (Editor.Text);
+      Delete_Text (Editor.Text);
+      Thaw (Editor.Text);
+
       --  Read the size of the file
       Char_Direct_IO.Open (F, Char_Direct_IO.In_File, File_Name);
       Length := Char_Direct_IO.Size (F);
@@ -329,8 +350,20 @@ package body Gtkada.Code_Editors is
       end loop;
 
       Thaw (Editor.Text);
+
+      --  For the buttons to become visible again, we have to hide the layout,
+      --  and then show it again... Don't know why !
+
+      Hide (Editor.Buttons);
+      Show_All (Editor.Buttons);
       Thaw (Editor.Buttons);
 
       Free (Buffer);
+
+   exception
+
+      --  File not found
+      when Name_Error =>
+         Put_Line (Standard_Error, "WARNING: File not found: " & File_Name);
    end Load_File;
 end Gtkada.Code_Editors;
