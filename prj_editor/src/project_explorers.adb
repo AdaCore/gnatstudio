@@ -2452,10 +2452,11 @@ package body Project_Explorers is
             Result := Start;
             Finish := True;
 
-         elsif Get (C.Matches, Name) >= Search_Match then
+         elsif Get (C.Matches, Name) /= No_Match then
             Compute_Children (Explorer, Start);
             Result := Row_Get_Children (Node_Get_Row (Start));
             Finish := False;
+
          else
             Result := Row_Get_Sibling (Node_Get_Row (Start));
             Finish := False;
@@ -2570,7 +2571,7 @@ package body Project_Explorers is
 
                   when Entity_Node =>
                      if C.Current /= Start_Node
-                       and then Get (C.Matches, User.Entity_Name)  /= No_Match
+                       and then Get (C.Matches, User.Entity_Name) /= No_Match
                      then
                         return Start_Node;
                      else
@@ -2695,14 +2696,19 @@ package body Project_Explorers is
       procedure Initialize_Parser is
          Iter : Imported_Project_Iterator := Start
            (Get_Project (Kernel), Recursive => True);
+         Project_Marked : Boolean := False;
       begin
          while Current (Iter) /= No_Project loop
 
-            if not C.Include_Entities
-              and then Match (C, Project_Name (Current (Iter))) /= -1
-            then
-               Set (C.Matches, Project_Name (Current (Iter)),
-                    Search_Match);
+            if Match (C, Project_Name (Current (Iter))) /= -1 then
+               Project_Marked := False;
+               Mark_File_And_Projects
+                 (Base           => Project_Name (Current (Iter)),
+                  Full_Name      => Project_Name (Current (Iter)),
+                  Project_Marked => Project_Marked,
+                  Project        => Current (Iter),
+                  Mark_File      => Unknown,
+                  Increment      => 1);
             end if;
 
             declare
@@ -2711,8 +2717,8 @@ package body Project_Explorers is
                   Recursive    => False,
                   Full_Path    => True,
                   Normalized   => False);
-               Project_Marked : Boolean := False;
             begin
+               Project_Marked := False;
                for S in Sources'Range loop
                   declare
                      Base : constant String := Base_Name (Sources (S).all);
