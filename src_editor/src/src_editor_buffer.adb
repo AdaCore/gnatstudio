@@ -35,14 +35,17 @@ with Gtk.Handlers;           use Gtk.Handlers;
 with Gtk.Text_Iter;          use Gtk.Text_Iter;
 with Gtk.Text_Mark;          use Gtk.Text_Mark;
 with Gtk.Text_Tag_Table;     use Gtk.Text_Tag_Table;
+with Gtkada.Types;           use Gtkada.Types;
 with Pango.Enums;
 
+with Basic_Types;            use Basic_Types;
 with Language;               use Language;
 with Src_Highlighting;       use Src_Highlighting;
 
 with GNAT.OS_Lib;            use GNAT.OS_Lib;
 with Interfaces.C.Strings;   use Interfaces.C.Strings;
 with System;
+with String_Utils;           use String_Utils;
 
 package body Src_Editor_Buffer is
 
@@ -108,7 +111,7 @@ package body Src_Editor_Buffer is
       Text            : String);
    --  This procedure recomputes the syntax-highlighting of the buffer
    --  in a semi-optimized manor, based on syntax-highlighting already
-   --  done before the insertiong and the text added.
+   --  done before the insertion and the text added.
    --
    --  This procedure assumes that the language has been set.
 
@@ -118,11 +121,17 @@ package body Src_Editor_Buffer is
    --  This procedure is just a proxy between the "insert_text" signal
    --  and the Insert_Text_Cb callback. It extracts the parameters from
    --  Params and then call Insert_Text_Cb. For efficiency reasons, the
-   --  signal is processed only  when Lang is not null.
+   --  signal is processed only when Lang is not null.
    --
    --  Note that this handler is designed to be connected "after", in which
    --  case the Insert_Iter iterator is located at the end of the inserted
    --  text.
+
+   procedure First_Insert_Text
+     (Buffer : access Source_Buffer_Record'Class;
+      Params : Glib.Values.GValues);
+   --  First handler connected to the "insert_text" signal.
+   --  This handler will handle automatic indentation of Text.
 
    procedure Delete_Range_Cb
      (Buffer : access Source_Buffer_Record'Class;
@@ -311,6 +320,105 @@ package body Src_Editor_Buffer is
          end;
       end if;
    end Insert_Text_Handler;
+
+   -----------------------
+   -- First_Insert_Text --
+   -----------------------
+
+   Spaces : constant String (1 .. 256) := (others => ' ');
+
+   procedure First_Insert_Text
+     (Buffer : access Source_Buffer_Record'Class;
+      Params : Glib.Values.GValues) is
+   begin
+      if Buffer.Inserting then
+         return;
+      end if;
+
+      if Buffer.Lang /= null then
+         declare
+            Pos         : Gtk_Text_Iter;
+            Length      : constant Gint := Get_Int (Nth (Params, 3));
+            Text        : constant String :=
+              Get_String (Nth (Params, 2), Length => Length);
+            Indent      : Natural;
+            Next_Indent : Natural;
+            Line, Col   : Gint;
+            C_Str       : Gtkada.Types.Chars_Ptr;
+
+         begin
+            Get_Text_Iter (Nth (Params, 1), Pos);
+
+            if Length = 1 and then Text (1) = ASCII.LF then
+               Get_Cursor_Position (Buffer, Line, Col);
+
+               --  We're spending most of our time getting this string.
+               --  Consider saving the current line, indentation level and
+               --  the stacks used by Next_Indentation to avoid parsing
+               --  the buffer from scratch each time.
+
+               C_Str := Get_Slice (Buffer, 0, 0, Line, Col);
+
+               declare
+                  Slice        : Unchecked_String_Access :=
+                    To_Unchecked_String (C_Str);
+                  pragma Suppress (Access_Check, Slice);
+                  Start        : Integer;
+                  Slice_Length : constant Natural :=
+                    Natural (Strlen (C_Str)) + 1;
+                  Index        : Integer := Slice_Length - 1;
+
+               begin
+                  Slice (Slice_Length) := ASCII.LF;
+                  Next_Indentation
+                    (Buffer.Lang, C_Str, Slice_Length, Indent, Next_Indent);
+
+                  --  Stop propagation of this signal, since we will completely
+                  --  replace the current line in the call to Replace_Slice
+                  --  below.
+
+                  Emit_Stop_By_Name (Buffer, "insert_text");
+
+                  Skip_To_Char (Slice.all, Index, ASCII.LF, -1);
+
+                  if Index < Slice'First then
+                     Index := Slice'First;
+                  end if;
+
+                  Start := Index;
+
+                  while Index <= Slice_Length
+                    and then (Slice (Index) = ' '
+                              or else Slice (Index) = ASCII.HT
+                              or else Slice (Index) = ASCII.LF
+                              or else Slice (Index) = ASCII.CR)
+                  loop
+                     Index := Index + 1;
+                  end loop;
+
+                  if Index > Slice_Length then
+                     Index := Slice_Length;
+                  end if;
+
+                  --  Prevent recursion
+                  Buffer.Inserting := True;
+
+                  --  Replace everything at once, important for efficiency
+                  --  and also because otherwise, some marks will no longer be
+                  --  valid.
+
+                  Replace_Slice
+                    (Buffer, Line, 0, Line, Col,
+                     Spaces (1 .. Indent) & Slice (Index .. Slice_Length) &
+                     Spaces (1 .. Next_Indent));
+
+                  Buffer.Inserting := False;
+                  g_free (C_Str);
+               end;
+            end if;
+         end;
+      end if;
+   end First_Insert_Text;
 
    ---------------------
    -- Delete_Range_Cb --
@@ -667,6 +775,9 @@ package body Src_Editor_Buffer is
         (Buffer, "mark_set", Cb => Mark_Set_Handler'Access, After => True);
       Buffer_Callback.Connect
         (Buffer, "insert_text",
+         Cb => First_Insert_Text'Access);
+      Buffer_Callback.Connect
+        (Buffer, "insert_text",
          Cb => Insert_Text_Handler'Access,
          After => True);
       Buffer_Callback.Connect
@@ -983,7 +1094,7 @@ package body Src_Editor_Buffer is
       Start_Line   : Gint;
       Start_Column : Gint;
       End_Line     : Gint;
-      End_Column   : Gint) return String
+      End_Column   : Gint) return Gtkada.Types.Chars_Ptr
    is
       Start_Iter : Gtk_Text_Iter;
       End_Iter   : Gtk_Text_Iter;
@@ -994,6 +1105,21 @@ package body Src_Editor_Buffer is
       Get_Iter_At_Line_Offset (Buffer, Start_Iter, Start_Line, Start_Column);
       Get_Iter_At_Line_Offset (Buffer, End_Iter, End_Line, End_Column);
       return Get_Text (Buffer, Start_Iter, End_Iter);
+   end Get_Slice;
+
+   function Get_Slice
+     (Buffer       : access Source_Buffer_Record;
+      Start_Line   : Gint;
+      Start_Column : Gint;
+      End_Line     : Gint;
+      End_Column   : Gint) return String
+   is
+      Str : Gtkada.Types.Chars_Ptr :=
+        Get_Slice (Buffer, Start_Line, Start_Column, End_Line, End_Column);
+      S   : constant String := Value (Str);
+   begin
+      g_free (Str);
+      return S;
    end Get_Slice;
 
    ------------
