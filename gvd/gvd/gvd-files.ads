@@ -33,13 +33,13 @@ package GVD.Files is
    --  Return the cached data for a given file.
    --  If no data was previously cached for that file, then a new File_Cache
    --  is returned.
-   
+
    procedure Load_File
      (Contents    : out Odd.Types.String_Access;
       Error_Msg   : out Odd.Types.String_Access;
       Cache       : Odd.Types.File_Cache_List;
       Remote_Host : Odd.Types.String_Access := null);
-   --  Load the contents of the file associated with Cache, and return a 
+   --  Load the contents of the file associated with Cache, and return a
    --  pointer to it in Contents.
    --  It is your responsability to free Contents and Error_Msg
    --  Control-M characters have already been stripped.
