@@ -25,6 +25,7 @@ with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Doc_Types;                 use Doc_Types;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+with OS_Utils;                  use OS_Utils;
 
 package body Work_On_Source is
 
@@ -185,42 +186,20 @@ package body Work_On_Source is
       Entity_List        : Type_Entity_List.List;
       Options            : All_Options)
    is
-      File               : File_Type;
-      Text               : String (1 .. Max_Line_Length);
-      Last, Line_Nr      : Natural;
       Data_Line          : Doc_Info (Info_Type => Body_Line_Info);
    begin
-      --  open also the source file for copy ***each line*** to the doc file
-      Open (File, In_File, Source_File);
+      --  initialise the Doc_Info data
+      Data_Line := Doc_Info'(Body_Line_Info,
+                             Body_Text      => Read_File (Source_File),
+                             Body_File      =>
+                             new String'(Source_File),
+                             Body_List      => Entity_List);
 
-      Line_Nr := 1;
+      --  call the documentation procedure
+      Options.Doc_Subprogram (Doc_File, Data_Line);
 
-      --  for each line in the source file loop:
-      while not End_Of_File (File) loop
-
-         --  get the line from the source file
-         Ada.Text_IO.Get_Line (File, Text, Last);
-
-
-         --  initialise the Doc_Info data
-         Data_Line := Doc_Info'(Body_Line_Info,
-                                Body_Line      =>
-                                new String'(Text (1 .. Last)),
-                                Body_File      =>
-                                new String'(Source_File),
-                                Body_Line_Last => Last,
-                                Body_Line_Nr   => Line_Nr,
-                                Body_List      => Entity_List);
-
-         --  call the documentation procedure
-         Options.Doc_Subprogram (Doc_File, Data_Line);
-
-         Line_Nr := Line_Nr + 1;
-      end loop;
-
-      Free (Data_Line.Body_Line);
+      Free (Data_Line.Body_Text);
       Free (Data_Line.Body_File);
-      Close (File);
    end Process_One_Body_File;
 
    ------------------------
