@@ -1605,8 +1605,6 @@ package body Src_Info.Queries is
             if Is_Same_Entity
               (D.Value.Declaration, Iterator.Entity)
             then
-               Trace (Me, "Check_Declarations: "
-                      & D.Value.Declaration.Name.all);
                return Next_Reference (D.Value.References);
             end if;
 
@@ -1805,55 +1803,60 @@ package body Src_Info.Queries is
             GNAT.OS_Lib.String_Access
             (Iterator.Source_Files (Iterator.Current_File)))
          then
-            LI := Locate_From_Source
-              (List, Iterator.Source_Files (Iterator.Current_File).all);
             Handler := Get_LI_Handler_From_File
               (Glide_Language_Handler (Lang_Handler),
                Iterator.Source_Files (Iterator.Current_File).all,
                Iterator.Importing (Iterator.Current_Project));
 
-            --  Do nothing if the file is not the same language
-            if LI = null
-              or else LI.LI.Handler = Handler
-            then
-               Create_Or_Complete_LI
-                 (Handler                => Handler,
-                  File                   => LI,
-                  Source_Filename        =>
-                    Iterator.Source_Files (Iterator.Current_File).all,
-                  List                   => List,
-                  Project                =>
-                    Iterator.Importing (Iterator.Current_Project),
-                  Predefined_Source_Path => "",
-                  Predefined_Object_Path => "");
-               Assert (Me, LI = null or else LI.LI.Parsed,
-                       "Unparsed LI returned for file "
-                       & Iterator.Source_Files (Iterator.Current_File).all);
-            end if;
+            --  For now, we do not have inter-language cross-references, so we
+            --  do nothing if the file doesn't have the same language.
+            if Handler = Iterator.Decl_LI.LI.Handler then
+               LI := Locate_From_Source
+                 (List, Iterator.Source_Files (Iterator.Current_File).all);
 
-            if LI /= null then
-               --  Memorize the list of files that have been examined, to avoid
-               --  parsing again the same LI file
-               if LI.LI.Spec_Info /= null then
-                  Set
-                    (Iterator.Examined, LI.LI.Spec_Info.Source_Filename, True);
+               --  Do nothing if the file is not the same language
+               if LI = null
+                 or else LI.LI.Handler = Handler
+               then
+                  Create_Or_Complete_LI
+                    (Handler                => Handler,
+                     File                   => LI,
+                     Source_Filename        =>
+                       Iterator.Source_Files (Iterator.Current_File).all,
+                     List                   => List,
+                     Project                =>
+                       Iterator.Importing (Iterator.Current_Project),
+                     Predefined_Source_Path => "",
+                     Predefined_Object_Path => "");
+                  Assert (Me, LI = null or else LI.LI.Parsed,
+                          "Unparsed LI returned for file "
+                          & Iterator.Source_Files (Iterator.Current_File).all);
                end if;
 
-               if LI.LI.Body_Info /= null then
-                  Set
-                    (Iterator.Examined, LI.LI.Body_Info.Source_Filename, True);
-               end if;
-
-               Sep_List := LI.LI.Separate_Info;
-               while Sep_List /= null loop
-                  if Sep_List.Value /= null then
+               if LI /= null then
+                  --  Memorize the list of files that have been examined, to
+                  --  avoid parsing again the same LI file
+                  if LI.LI.Spec_Info /= null then
                      Set (Iterator.Examined,
-                          Sep_List.Value.Source_Filename, True);
+                          LI.LI.Spec_Info.Source_Filename, True);
                   end if;
-                  Sep_List := Sep_List.Next;
-               end loop;
 
-               return Check_LI (LI);
+                  if LI.LI.Body_Info /= null then
+                     Set (Iterator.Examined,
+                          LI.LI.Body_Info.Source_Filename, True);
+                  end if;
+
+                  Sep_List := LI.LI.Separate_Info;
+                  while Sep_List /= null loop
+                     if Sep_List.Value /= null then
+                        Set (Iterator.Examined,
+                             Sep_List.Value.Source_Filename, True);
+                     end if;
+                     Sep_List := Sep_List.Next;
+                  end loop;
+
+                  return Check_LI (LI);
+               end if;
             end if;
          end if;
          Iterator.LI := null;
