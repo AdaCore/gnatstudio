@@ -32,8 +32,8 @@ package Glide_Kernel.MDI is
    --  This is a list of predefined Child_Positions used by various elements
    --  in GPS.
 
-   Graphs_Position       : constant Child_Position := 101;
-   VCS_Explorer_Position : constant Child_Position := 102;
+   Position_Graphs       : constant Child_Position := 101;
+   Position_VCS_Explorer : constant Child_Position := 102;
 
    function Get_Current_Window
      (Handle : access Kernel_Handle_Record'Class) return Gtk.Window.Gtk_Window;
