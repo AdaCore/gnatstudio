@@ -41,6 +41,14 @@ package String_Utils is
       Index    : in out Natural);
    --  Skip to the next blank character
 
+   procedure Skip_Lines
+     (Buffer : String;
+      Lines  : Integer;
+      Index  : in out Natural);
+   --  Skip Lines forward or backward. In all cases, Index is put to the
+   --  beginning of the line. If the buffer doesn't contain enough line,
+   --  Index is left on the last valid line encountered
+
    procedure Skip_Hexa_Digit
      (Type_Str : String;
       Index    : in out Natural);

@@ -94,6 +94,33 @@ package body String_Utils is
    end Is_Blank;
 
    ----------------
+   -- Skip_Lines --
+   ----------------
+
+   procedure Skip_Lines
+     (Buffer : String;
+      Lines  : Integer;
+      Index  : in out Natural) is
+   begin
+      if Lines >= 0 then
+         for Line in 1 .. Lines loop
+            Index := Next_Line (Buffer, Index);
+         end loop;
+      else
+         Index := Line_Start (Buffer, Index) - 2;
+         for Line in 1 .. -Lines loop
+            while Index >= Buffer'First
+              and then Buffer (Index) /= ASCII.LF
+              and then Buffer (Index) /= ASCII.CR
+            loop
+               Index := Index - 1;
+            end loop;
+         end loop;
+         Index := Index + 1;
+      end if;
+   end Skip_Lines;
+
+   ----------------
    -- Line_Start --
    ----------------
 
