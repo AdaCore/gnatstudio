@@ -486,7 +486,7 @@ package body VCS_View_API is
                   end if;
                end;
             else
-               Gtk_New (Item, Label => -"Query Status");
+               Gtk_New (Item, Label => -"Query status");
                Append (Menu, Item);
                Context_Callback.Connect
                  (Item, "activate",
@@ -502,7 +502,7 @@ package body VCS_View_API is
                   (On_Menu_Update'Access),
                   Selection_Context_Access (Context));
 
-               Gtk_New (Item, Label => -"Start Editing");
+               Gtk_New (Item, Label => -"Start editing");
                Append (Menu, Item);
                Context_Callback.Connect
                  (Item, "activate",
@@ -510,7 +510,7 @@ package body VCS_View_API is
                   (On_Menu_Open'Access),
                   Selection_Context_Access (Context));
 
-               Gtk_New (Item, Label => -"View changelog");
+               Gtk_New (Item, Label => -"View revision history");
                Append (Menu, Item);
                Context_Callback.Connect
                  (Item, "activate",
