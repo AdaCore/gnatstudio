@@ -19,15 +19,22 @@
 -----------------------------------------------------------------------
 
 with Gtk; use Gtk;
+with Gtk.Enums; use Gtk.Enums;
 with Gtk.Main;
+with Gtk.Rc;
 with Glide_Page;
 with Glide_Menu;
 with Glide_Main_Window;
 with String_Utils; use String_Utils;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+with GNAT.OS_Lib;          use GNAT.OS_Lib;
 with Glide_Kernel;         use Glide_Kernel;
 with Glide_Kernel.Project; use Glide_Kernel.Project;
-with Glide_Kernel.Editor; use Glide_Kernel.Editor;
+with Glide_Kernel.Editor;  use Glide_Kernel.Editor;
+with Gtkada.Intl;          use Gtkada.Intl;
+with Gtkada.Dialogs;       use Gtkada.Dialogs;
+with GVD.Types;
+with OS_Utils;             use OS_Utils;
 with Ada.Command_Line; use Ada.Command_Line;
 
 --  Just force the loading of the modules
@@ -43,12 +50,107 @@ pragma Warnings (On);
 procedure Glide2 is
    use Glide_Main_Window;
 
+   subtype String_Access is GNAT.OS_Lib.String_Access;
+
+   Directory_Separator : constant Character := GNAT.OS_Lib.Directory_Separator;
    Glide          : Glide_Window;
    Page           : Glide_Page.Glide_Page;
-   Dir            : Dir_Type;
+   Directory      : Dir_Type;
    Str            : String (1 .. 1024);
    Last           : Natural;
    Project_Loaded : Boolean := False;
+   Button         : Message_Dialog_Buttons;
+   Home           : String_Access;
+   Prefix         : String_Access;
+   Dir            : String_Access;
+
+   procedure Init_Settings;
+   --  Set up environment for Glide.
+
+   ----------
+   -- Init --
+   ----------
+
+   procedure Init_Settings is
+      Dir_Created : Boolean := False;
+   begin
+      Home := Getenv ("GLIDE_HOME");
+
+      if Home.all = "" then
+         Free (Home);
+         Home := Getenv ("HOME");
+      end if;
+
+      Prefix := Getenv ("GLIDE_ROOT");
+
+      if Prefix.all = "" then
+         Free (Prefix);
+         Prefix := new String' (Executable_Location);
+
+         if Prefix.all = "" then
+            Free (Prefix);
+            Prefix := new String' (GVD.Prefix);
+         end if;
+      end if;
+
+      Bind_Text_Domain
+        ("glide", Prefix.all & GNAT.OS_Lib.Directory_Separator & "share" &
+         Directory_Separator & "locale");
+
+      if Home.all /= "" then
+         if Is_Directory_Separator (Home (Home'Last)) then
+            Dir := new String' (Home (Home'First .. Home'Last - 1) &
+              Directory_Separator & ".glide");
+         else
+            Dir := new String' (Home.all & Directory_Separator & ".glide");
+         end if;
+
+      else
+         --  Default to /
+         Dir := new String'(Directory_Separator & ".glide");
+      end if;
+
+      begin
+         if not Is_Directory (Dir.all) then
+            Make_Dir (Dir.all);
+            Button := Message_Dialog
+              ((-"Created config directory ") & Dir.all,
+               Information, Button_OK, Justification => Justify_Left);
+            Dir_Created := True;
+         end if;
+
+         if not
+           Is_Directory (Dir.all & Directory_Separator & "sessions")
+         then
+            Make_Dir (Dir.all & Directory_Separator & "sessions");
+            if not Dir_Created then
+               Button := Message_Dialog
+                 ((-"Created config directory ")
+                  & Dir.all & Directory_Separator & "sessions",
+                  Information, Button_OK, Justification => Justify_Left);
+            end if;
+         end if;
+
+      exception
+         when Directory_Error =>
+            Button := Message_Dialog
+              ((-"Cannot create config directory ") & Dir.all & ASCII.LF &
+               (-"Exiting..."),
+               Error, Button_OK,
+               Justification => Justify_Left);
+            OS_Exit (1);
+      end;
+
+      --  ??? Load the preferences, or set the default values
+
+      --  if Is_Regular_File
+      --    (Dir.all & Directory_Separator & "preferences")
+      --  then
+      --     Load_Preferences (Dir.all & Directory_Separator & "preferences");
+      --  else
+      --     Set_Default_Preferences;
+      --  end if;
+   end Init_Settings;
 
 begin
    Gtk.Main.Set_Locale;
@@ -57,10 +159,32 @@ begin
    Gtk_New (Glide, "<glide>", Glide_Menu.Glide_Menu_Items.all);
    Set_Title (Glide, "Glide - Next Generation");
    Maximize (Glide);
-   Glide.Gvd_Home_Dir := new String' ("");
-   Glide.Prefix_Directory := new String' ("");
-   Glide_Page.Gtk_New (Page, Glide);
 
+   Init_Settings;
+   Glide.Home_Dir := Dir;
+   Glide.Prefix_Directory := Prefix;
+
+   declare
+      Rc : constant String := Prefix.all & Directory_Separator & "bin" &
+        Directory_Separator & "gtkrc";
+   begin
+      if Is_Regular_File (Rc) then
+         Gtk.Rc.Parse (Rc);
+      end if;
+   end;
+
+   --  ??? Should have a cleaner way of initializing Log_File
+
+   declare
+      Log : aliased constant String :=
+        Dir.all & Directory_Separator & "log" & ASCII.NUL;
+   begin
+      Glide.Debug_Mode := True;
+      Glide.Log_Level  := GVD.Types.Hidden;
+      Glide.Log_File   := Create_File (Log'Address, Fmode => Text);
+   end;
+
+   Glide_Page.Gtk_New (Page, Glide);
    Initialize_All_Modules (Glide.Kernel);
 
    for J in 1 .. Argument_Count loop
@@ -76,10 +200,10 @@ begin
    --  the first one in the current directory (if any).
 
    if not Project_Loaded then
-      Open (Dir, Get_Current_Dir);
+      Open (Directory, Get_Current_Dir);
 
       loop
-         Read (Dir, Str, Last);
+         Read (Directory, Str, Last);
 
          exit when Last = 0;
 
