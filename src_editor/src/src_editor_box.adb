@@ -1582,13 +1582,13 @@ package body Src_Editor_Box is
                To_Box_Line (Line), To_Box_Column (Column));
          end if;
 
-         --  Move the cursor at the correct location. The cursor is grabbed
-         --  automatically by the kernel when displaying the menu, and this
-         --  would result in unwanted scrolling otherwise.
-
-         Place_Cursor (Editor.Source_Buffer, Start_Iter);
-
          if Menu /= null then
+            --  Move the cursor at the correct location. The cursor is grabbed
+            --  automatically by the kernel when displaying the menu, and this
+            --  would result in unwanted scrolling otherwise.
+
+            Place_Cursor (Editor.Source_Buffer, Start_Iter);
+
             if Has_Entity_Name_Information (Context) then
                declare
                   Name : constant String := Glib.Convert.Locale_To_UTF8
