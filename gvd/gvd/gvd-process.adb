@@ -502,8 +502,13 @@ package body GVD.Process is
          Set_Current_Language
            (Process.Editor_Text, Get_Language (Process.Debugger));
 
-         --  Display the file
+         --  Display the file. We first force the current line to 1, so that
+         --  we do not try to highlight a line in the new file that is
+         --  greater than the maximum number of lines.
+         --  Note that the line will be set to a correct value just after
+         --  loading the file anyway, so it doesn't change the user interface.
 
+         Set_Line (Process.Editor_Text, 1);
          Load_File
            (Process.Editor_Text,
             Process.Current_Output (File_First .. File_Last));
