@@ -23,7 +23,7 @@ with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 with Traces; use Traces;
 with SN; use SN;
-with SN.Xref_Pools; use SN.Xref_Pools;
+--  with SN.Xref_Pools; use SN.Xref_Pools;
 with Src_Info.CPP;  use Src_Info.CPP;
 
 package body Src_Info.LI_Utils is
@@ -34,6 +34,7 @@ package body Src_Info.LI_Utils is
      (D_Ptr                   : in out E_Declaration_Info_List;
       File                    : LI_File_Ptr;
       List                    : in out LI_File_List;
+      Project                 : Prj.Project_Id;
       Symbol_Name             : String;
       Location                : Point;
       Parent_Filename         : String := "";
@@ -71,6 +72,7 @@ package body Src_Info.LI_Utils is
    procedure Insert_Declaration
      (File                    : in out LI_File_Ptr;
       List                    : in out LI_File_List;
+      Project                 : Prj.Project_Id;
       Symbol_Name             : String;
       Location                : Point;
       Parent_Filename         : String := "";
@@ -105,9 +107,18 @@ package body Src_Info.LI_Utils is
          end loop;
       end if;
       Insert_Declaration_Internal
-        (Declaration_Info, File, List, Symbol_Name,
-         Location, Parent_Filename, Parent_Location, Kind, Scope,
-         End_Of_Scope_Location, Rename_Location);
+        (Declaration_Info,
+         File,
+         List,
+         Project,
+         Symbol_Name,
+         Location,
+         Parent_Filename,
+         Parent_Location,
+         Kind,
+         Scope,
+         End_Of_Scope_Location,
+         Rename_Location);
    end Insert_Declaration;
 
    -----------------------
@@ -145,6 +156,7 @@ package body Src_Info.LI_Utils is
 
    procedure Insert_Dependency
      (Handler              : access Src_Info.CPP.CPP_LI_Handler_Record'Class;
+      Project              : Prj.Project_Id;
       File                 : in out LI_File_Ptr;
       List                 : in out LI_File_List;
       Referred_Filename    : String)
@@ -158,6 +170,7 @@ package body Src_Info.LI_Utils is
       Create_Stub_For_File
         (LI            => Tmp_LI_File_Ptr,
          Handler       => CPP_LI_Handler (Handler),
+         Project       => Project,
          List          => List,
          Full_Filename => Referred_Filename);
 
@@ -203,19 +216,20 @@ package body Src_Info.LI_Utils is
    -------------------------------------
 
    procedure Insert_Dependency_Declaration
-     (Handler                : access Src_Info.CPP.CPP_LI_Handler_Record'Class;
-      File                    : in out LI_File_Ptr;
-      List                    : in out LI_File_List;
-      Symbol_Name             : String;
-      Referred_Filename       : String;
-      Location                : Point;
-      Parent_Filename         : String := "";
-      Parent_Location         : Point := Invalid_Point;
-      Kind                    : E_Kind;
-      Scope                   : E_Scope;
-      End_Of_Scope_Location   : Point := Invalid_Point;
-      Rename_Location         : Point := Invalid_Point;
-      Declaration_Info        : out E_Declaration_Info_List)
+     (Handler               : access Src_Info.CPP.CPP_LI_Handler_Record'Class;
+      Project               : Prj.Project_Id;
+      File                  : in out LI_File_Ptr;
+      List                  : in out LI_File_List;
+      Symbol_Name           : String;
+      Referred_Filename     : String;
+      Location              : Point;
+      Parent_Filename       : String := "";
+      Parent_Location       : Point := Invalid_Point;
+      Kind                  : E_Kind;
+      Scope                 : E_Scope;
+      End_Of_Scope_Location : Point := Invalid_Point;
+      Rename_Location       : Point := Invalid_Point;
+      Declaration_Info      : out E_Declaration_Info_List)
    is
       D_Ptr, Tmp_Ptr : E_Declaration_Info_List;
       Dep_Ptr : Dependency_File_Info_List;
@@ -229,6 +243,7 @@ package body Src_Info.LI_Utils is
       Create_Stub_For_File
         (LI            => Tmp_LI_File_Ptr,
          Handler       => Handler,
+         Project       => Project,
          List          => List,
          Full_Filename => Referred_Filename);
 
@@ -241,6 +256,7 @@ package body Src_Info.LI_Utils is
          Insert_Declaration
            (File               => Tmp_LI_File_Ptr,
             List               => List,
+            Project            => Project,
             Symbol_Name        => Symbol_Name,
             Location           => Location,
             Parent_Filename    => Parent_Filename,
@@ -321,6 +337,7 @@ package body Src_Info.LI_Utils is
         (D_Ptr,
          Tmp_LI_File_Ptr,
          List,
+         Project,
          Symbol_Name,
          Location,
          Parent_Filename,
@@ -339,6 +356,7 @@ package body Src_Info.LI_Utils is
    procedure Add_Parent
      (Declaration_Info : in out E_Declaration_Info_List;
       Handler          : CPP_LI_Handler;
+      Project          : Prj.Project_Id;
       List             : in out LI_File_List;
       Parent_Filename  : String;
       Parent_Location  : Point)
@@ -373,6 +391,7 @@ package body Src_Info.LI_Utils is
       Create_Stub_For_File
         (LI            => Tmp_LI_File_Ptr,
          Handler       => Handler,
+         Project       => Project,
          List          => List,
          Full_Filename => Parent_Filename);
       FL_Ptr.all :=
@@ -533,11 +552,12 @@ package body Src_Info.LI_Utils is
    procedure Create_Stub_For_File
      (LI            : out LI_File_Ptr;
       Handler       : access Src_Info.CPP.CPP_LI_Handler_Record'Class;
+      Project       : Prj.Project_Id;
       List          : in out LI_File_List;
       Full_Filename : String)
    is
       Xref_Name : constant String_Access := Xref_Filename_For
-        (Full_Filename, Get_DB_Dir (Handler), Get_Xrefs (Handler));
+        (Full_Filename, Get_DB_Dir (Project), Get_Prj_HTable (Handler));
    begin
       LI := Locate (List, Xref_Name.all);
 
@@ -564,6 +584,7 @@ package body Src_Info.LI_Utils is
      (D_Ptr                   : in out E_Declaration_Info_List;
       File                    : LI_File_Ptr;
       List                    : in out LI_File_List;
+      Project                 : Prj.Project_Id;
       Symbol_Name             : String;
       Location                : Point;
       Parent_Filename         : String := "";
@@ -578,7 +599,7 @@ package body Src_Info.LI_Utils is
       if D_Ptr = null then
          return;
       end if;
-      D_Ptr.Value.Declaration.Name := new String'(Symbol_Name);
+      D_Ptr.Value.Declaration.Name := new String' (Symbol_Name);
       D_Ptr.Value.Declaration.Location :=
         (File   => (LI              => File,
                     Part            => Unit_Body,
@@ -610,6 +631,7 @@ package body Src_Info.LI_Utils is
             Create_Stub_For_File
               (LI            => Tmp_LI_File_Ptr,
                Handler       => CPP_LI_Handler (File.LI.Handler),
+               Project       => Project,
                List          => List,
                Full_Filename => Parent_Filename);
          end if;
@@ -711,7 +733,8 @@ package body Src_Info.LI_Utils is
      (File        : out LI_File_Ptr;
       List        : in out LI_File_List;
       LI_Filename : String;
-      Handler     : LI_Handler) is
+      Handler     : LI_Handler)
+   is
    begin
       File := new LI_File_Constrained'
         (LI =>  (Parsed        => False,
@@ -744,11 +767,11 @@ package body Src_Info.LI_Utils is
       if Directory_Name /= ""
         and then Directory_Name /= "./"
       then
-         Dir := new String'(Directory_Name);
+         Dir := new String' (Directory_Name);
       end if;
 
       if Unit_Name /= "" then
-         Unit := new String'(Unit_Name);
+         Unit := new String' (Unit_Name);
       end if;
 
       if Set_Time_Stamp then
@@ -757,7 +780,7 @@ package body Src_Info.LI_Utils is
 
       FI_Ptr := new File_Info'
         (Unit_Name         => Unit,
-         Source_Filename   => new String'(Base_Name (Full_Filename)),
+         Source_Filename   => new String' (Base_Name (Full_Filename)),
          Directory_Name    => Dir,
          File_Timestamp    => Time,
          Original_Filename => null,

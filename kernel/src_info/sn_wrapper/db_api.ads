@@ -18,6 +18,9 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Interfaces.C;
+with GNAT.OS_Lib; use GNAT.OS_Lib;
+
 package DB_API is
 
    type DB_File is private;
@@ -28,6 +31,11 @@ package DB_API is
 
    type Cursor_Movement is (Prev, Next, Next_By_Key);
    --  Cursor movements fro Get_Pair
+
+   for Cursor_Position use (First => 1, Last => 2, By_Key => 3);
+   for Cursor_Movement use (Prev  => 4, Next => 5, Next_By_Key => 6);
+   for Cursor_Position'Size use Interfaces.C.int'Size;
+   for Cursor_Movement'Size use Interfaces.C.int'Size;
 
    Field_Sep : constant Character := Character'Val (1);
    --  Standard field separator
@@ -40,14 +48,15 @@ package DB_API is
    --  ("data base thang" in terms of SN team).
 
    type Pair is record
-      Key   : CSF;
-      Data  : CSF;
+      Key    : CSF;
+      Data   : CSF;
+      DBI    : Integer;
    end record;
    --  Type for key/data pair retrieved from database by Get_Pair
    --  operation.
    type Pair_Ptr is access all Pair;
 
-   procedure Open  (DB : out DB_File; File_Name : String);
+   procedure Open  (DB : out DB_File; File_Names : String_List_Access);
    --  Opens specified file as database file. Upon successful
    --  completion DB is initialized. Otherwise DB_Open_Error
    --  exception is thrown.
@@ -59,6 +68,7 @@ package DB_API is
    --  Throws DB_Error if DB file was not opened.
 
    function Is_Open (DB : DB_File) return Boolean;
+   pragma Inline (Is_Open);
    --  Returns True if given DB ws successfully open,
    --  False otherwise.
 
@@ -90,6 +100,11 @@ package DB_API is
    --  Releases resources allocated before by Set_Cursor.
    --  Does nothing if cursor was not set.
 
+   function Get_Table_Name
+     (DB  : DB_File;
+      DBI : Integer) return String;
+   --  Returns name of DB table having DBI index
+
    function Get_Pair
      (DB       : DB_File;
       Movement : Cursor_Movement := Next) return Pair_Ptr;
@@ -119,7 +134,6 @@ package DB_API is
          return Integer;
    --  Returns length of field from CSF with specified index.
 
-
    function Get_All_Fields
      (The_CSF : CSF;
       Separator : Character := ' ') return String;
@@ -138,10 +152,6 @@ private
    type DB_File_Record is null record;
    type DB_File is access DB_File_Record;
    pragma Convention (C, DB_File);
-
-   function Is_Null (DB : DB_File) return Boolean;
-   pragma Inline (Is_Null);
-   --  checks if DB is NULL (in terms of C)
 
    function Error_Message (DB : DB_File) return String;
    --  return string decribing the last error for given DB

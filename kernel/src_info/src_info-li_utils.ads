@@ -26,6 +26,7 @@ private package Src_Info.LI_Utils is
    procedure Insert_Declaration
      (File                  : in out LI_File_Ptr;
       List                  : in out LI_File_List;
+      Project               : Prj.Project_Id;
       Symbol_Name           : String;
       Location              : SN.Point;
       Parent_Filename       : String := "";
@@ -50,6 +51,7 @@ private package Src_Info.LI_Utils is
 
    procedure Insert_Dependency
      (Handler              : access Src_Info.CPP.CPP_LI_Handler_Record'Class;
+      Project              : Prj.Project_Id;
       File                 : in out LI_File_Ptr;
       List                 : in out LI_File_List;
       Referred_Filename    : String);
@@ -57,19 +59,20 @@ private package Src_Info.LI_Utils is
    --  file Referred_Filename.
 
    procedure Insert_Dependency_Declaration
-     (Handler                : access Src_Info.CPP.CPP_LI_Handler_Record'Class;
-      File                    : in out LI_File_Ptr;
-      List                    : in out LI_File_List;
-      Symbol_Name             : String;
-      Referred_Filename       : String;
-      Location                : SN.Point;
-      Parent_Filename         : String := "";
-      Parent_Location         : SN.Point := SN.Invalid_Point;
-      Kind                    : E_Kind;
-      Scope                   : E_Scope;
-      End_Of_Scope_Location   : SN.Point := SN.Invalid_Point;
-      Rename_Location         : SN.Point := SN.Invalid_Point;
-      Declaration_Info        : out E_Declaration_Info_List);
+     (Handler               : access Src_Info.CPP.CPP_LI_Handler_Record'Class;
+      Project               : Prj.Project_Id;
+      File                  : in out LI_File_Ptr;
+      List                  : in out LI_File_List;
+      Symbol_Name           : String;
+      Referred_Filename     : String;
+      Location              : SN.Point;
+      Parent_Filename       : String := "";
+      Parent_Location       : SN.Point := SN.Invalid_Point;
+      Kind                  : E_Kind;
+      Scope                 : E_Scope;
+      End_Of_Scope_Location : SN.Point := SN.Invalid_Point;
+      Rename_Location       : SN.Point := SN.Invalid_Point;
+      Declaration_Info      : out E_Declaration_Info_List);
    --  Inserts new dependency declaration with specified parameters
    --  to given LI structure tree.
    --  Throws Parent_Not_Available exception if LI_Structure for the
@@ -80,6 +83,7 @@ private package Src_Info.LI_Utils is
    procedure Add_Parent
      (Declaration_Info : in out E_Declaration_Info_List;
       Handler          : Src_Info.CPP.CPP_LI_Handler;
+      Project          : Prj.Project_Id;
       List             : in out LI_File_List;
       Parent_Filename  : String;
       Parent_Location  : SN.Point);
@@ -146,6 +150,7 @@ private package Src_Info.LI_Utils is
    procedure Create_Stub_For_File
      (LI            : out LI_File_Ptr;
       Handler       : access Src_Info.CPP.CPP_LI_Handler_Record'Class;
+      Project       : Prj.Project_Id;
       List          : in out LI_File_List;
       Full_Filename : String);
    --  Create a stub LI file for Full_Filename, if there is no matching LI file

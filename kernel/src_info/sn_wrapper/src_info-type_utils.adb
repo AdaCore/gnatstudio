@@ -18,9 +18,10 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GNAT.Regpat; use GNAT.Regpat;
-with GNAT.OS_Lib; use GNAT.OS_Lib;
-with SN.Find_Fns; use SN.Find_Fns;
+with GNAT.Regpat;       use GNAT.Regpat;
+with GNAT.OS_Lib;       use GNAT.OS_Lib;
+with SN.Find_Fns;       use SN.Find_Fns;
+with Ada.Strings.Fixed; use Ada.Strings.Fixed;
 with Ada.Unchecked_Deallocation;
 
 package body Src_Info.Type_Utils is
@@ -666,39 +667,35 @@ package body Src_Info.Type_Utils is
 
    function Cmp_Arg_Types
      (Buffer_A, Buffer_B     : String_Access;
-      Args_A, Args_B         : DB_Structures.Segment_Vector.Node_Access;
+      Args_A, Args_B         : Segment;
       Strict                 : Boolean := False)
       return Boolean
    is
-      use DB_Structures.Segment_Vector;
-      Ptr_A : Segment_Vector.Node_Access := Args_A;
-      Ptr_B : Segment_Vector.Node_Access := Args_B;
    begin
-      if (Ptr_A = null and then Ptr_B /= null and then Ptr_B.Next = null
-         and then Buffer_B (Ptr_B.Data.First .. Ptr_B.Data.Last) = "void")
-         or else (Ptr_B = null and then Ptr_A /= null
-         and then Ptr_A.Next = null
-         and then Buffer_A (Ptr_A.Data.First .. Ptr_A.Data.Last) = "void")
+      --  ellipsis requires special handling unless Strict is specified
+      if not Strict
+         and then Tail (Buffer_A (Args_A.First .. Args_A.Last), 3) = "..."
       then
-         return True;
+         return Buffer_A (Args_A.First .. Args_A.Last - 3)
+            = Buffer_B (Args_B.First .. Args_B.First
+               + Args_A.Last - 3 - Args_A.First);
       end if;
 
-      while Ptr_A /= null and then Ptr_B /= null loop
-         if not Strict and then
-           (Buffer_A (Ptr_A.Data.First .. Ptr_A.Data.Last) = "..."
-            or else Buffer_B (Ptr_B.Data.First .. Ptr_B.Data.Last) = "...")
-         then
-            return True;
-         end if;
-         if Buffer_A (Ptr_A.Data.First .. Ptr_A.Data.Last)
-            /= Buffer_B (Ptr_B.Data.First .. Ptr_B.Data.Last) then
-            return False;
-         end if;
-         Ptr_A := Ptr_A.Next;
-         Ptr_B := Ptr_B.Next;
-      end loop;
+      if not Strict
+         and then Tail (Buffer_B (Args_B.First .. Args_B.Last), 3) = "..."
+      then
+         return Buffer_B (Args_B.First .. Args_B.Last - 3)
+            = Buffer_A (Args_A.First .. Args_A.First
+               + Args_B.Last - 3 - Args_B.First);
+      end if;
 
-      return Ptr_A = null and then Ptr_B = null;
+      return Buffer_A (Args_A.First .. Args_A.Last)
+         = Buffer_B (Args_B.First .. Args_B.Last) or else
+         --  f () and f (void) are the same
+         (Buffer_A (Args_A.First .. Args_A.Last) = "" and then
+          Buffer_B (Args_B.First .. Args_B.Last) = "void") or else
+         (Buffer_B (Args_B.First .. Args_B.Last) = "" and then
+          Buffer_A (Args_A.First .. Args_A.Last) = "void");
    end Cmp_Arg_Types;
 
    --------------------
@@ -707,7 +704,7 @@ package body Src_Info.Type_Utils is
 
    function Cmp_Prototypes
      (Buffer_A, Buffer_B     : String_Access;
-      Args_A, Args_B         : DB_Structures.Segment_Vector.Node_Access;
+      Args_A, Args_B         : Segment;
       Ret_Type_A, Ret_Type_B : Segment;
       Strict                 : Boolean := False)
       return Boolean

@@ -21,9 +21,10 @@
 with GNAT.Expect;
 with GNAT.OS_Lib;
 with SN;
-with SN.Xref_Pools;
+with SN.Xref_Pools; use SN.Xref_Pools;
 with Src_Info.Type_Utils;
 with Prj;
+with Prj_API;
 
 package Src_Info.CPP is
 
@@ -109,30 +110,81 @@ package Src_Info.CPP is
    --  Free the memory used by the list of source files and save xref
    --  pool.
 
-   procedure Add
-     (HT : in out LI_File_List; LIFP : LI_File_Ptr);
+   procedure Add (HT : in out LI_File_List; LIFP : LI_File_Ptr);
    --  Just wrapper for internal Add to support extended testing
 
-   function Get_DB_Dir (Handler : access CPP_LI_Handler_Record) return String;
+   function Get_DB_Dir (Project : Prj.Project_Id) return String;
    pragma Inline (Get_DB_Dir);
    --  Return the directory that contains the source navigator files
+   --  for specified project
 
-   function Get_Xrefs (Handler : access CPP_LI_Handler_Record)
-      return SN.Xref_Pools.Xref_Pool;
-   pragma Inline (Get_Xrefs);
-   --  Return the database for the mapping from source files to xref files.
+   type SN_Prj_HTable is private;
+   --  Instances of this type are responsible to store hashed
+   --  data specific to SN project.
+   Empty_SN_Prj_HTable : constant SN_Prj_HTable;
+
+   type SN_Prj_Data is record
+      Key    : String_Access; -- used in Free
+      Pool   : Xref_Pool    := Empty_Xref_Pool;
+   end record;
+
+   No_SN_Prj_Data : constant SN_Prj_Data :=
+     (Key => null, Pool   => Empty_Xref_Pool);
+      --  Xref pool associated with project
+
+   procedure Init (Prj_HTable : out SN_Prj_HTable);
+   --  Creates new SN project hash table.
+
+   procedure Free (Prj_HTable : in out SN_Prj_HTable);
+   --  Releases table from memory.
+
+   function Get_Xref_Pool
+     (Prj_HTable : SN_Prj_HTable;
+      DB_Dir     : String) return Xref_Pool;
+   pragma Inline (Get_Xref_Pool);
+   --  Returns xref pool for specified directory or Empty_Xref_Pool
+   --  if Prj_HTable is null or pool does not exist.
+
+   procedure Set_Xref_Pool
+     (Prj_HTable : SN_Prj_HTable;
+      DB_Dir     : String;
+      Pool       : Xref_Pool);
+   --  Sets xref pool for specified directory. If pool was already set
+   --  the old one is released from memory and replaced by the new one.
+
+   function Xref_Filename_For
+     (Filename       : String;
+      DB_Dir         : String;
+      Prj_HTable     : SN_Prj_HTable) return GNAT.OS_Lib.String_Access;
+   --  Returns unique xref file name associated with specified source file
+   --  name.
+
+   procedure Xref_Filename_For
+     (Filename       : String;
+      DB_Dir         : String;
+      Prj_HTable     : SN_Prj_HTable;
+      Xref_Filename  : out GNAT.OS_Lib.String_Access;
+      Pool           : out Xref_Pool);
+   --  Returns unique xref file name associated with specified source file
+   --  name. Also returns xref pool, where this name resides.
+
+   function Get_Prj_HTable
+     (Handler : access Src_Info.CPP.CPP_LI_Handler_Record'Class)
+     return SN_Prj_HTable;
+   pragma Inline (Get_Prj_HTable);
+   --  Returns Prj_HTable filed from CPP_LI_Handler. This function is used
+   --  outside Src_Info.CPP package to get this field.
 
 private
 
    type Iterator_State_Type is
      (Analyze_Files, -- parsing the files with cbrowser.
+      Skip_Project,  -- current project should be skipped
       Process_Xrefs, -- processing xrefs for all files
       Done);         -- updating done
 
    type CPP_LI_Handler_Record is new LI_Handler_Record with record
-      Xrefs          : SN.Xref_Pools.Xref_Pool :=
-        SN.Xref_Pools.Empty_Xref_Pool;
-      DB_Dir         : GNAT.OS_Lib.String_Access;
+      Prj_HTable     : SN_Prj_HTable := Empty_SN_Prj_HTable;
       SN_Table       : Src_Info.Type_Utils.SN_Table_Array;
       DBIMP_Path     : GNAT.OS_Lib.String_Access := null;
       --  full path to dbimp (found in PATH) or null, if DBIMP is not in PATH
@@ -142,6 +194,9 @@ private
    end record;
    --  The fields above are always initialized after calling Reset.
 
+   type Imp_Prj_Iterator_Access is
+      access all Prj_API.Imported_Project_Iterator;
+
    type CPP_LI_Handler_Iterator is new LI_Handler_Iterator with record
       State           : Iterator_State_Type := Done;
       Root_Project    : Prj.Project_Id;
@@ -150,6 +205,7 @@ private
       Tmp_Filename    : GNAT.OS_Lib.Temp_File_Name;
       List_Filename   : GNAT.OS_Lib.String_Access;
       PD              : GNAT.Expect.Process_Descriptor;
+      Prj_Iterator    : Imp_Prj_Iterator_Access;
    end record;
    --  State is an internal state of iterator, it can be inconsistant with
    --  the real iterator state, because real iterator state depends also on
@@ -157,5 +213,23 @@ private
    --
    --  List_Filename is the name of the files that contains the list of C/C++
    --  sources to process, as well as their associated xref file.
+
+   HTable_Size : constant := 4097;
+   type HTable_Range is range 1 .. HTable_Size;
+
+   function Hash (Key : String_Access) return HTable_Range;
+   function Equal (Key1, Key2 : String_Access) return Boolean;
+
+   package SN_Prj_HTables is new HTables.Simple_HTable
+     (Header_Num => HTable_Range,
+      Element    => SN_Prj_Data,
+      No_Element => No_SN_Prj_Data,
+      Key        => String_Access,
+      Hash       => Hash,
+      Equal      => Equal);
+
+   subtype SN_Prj_HTable_Record is SN_Prj_HTables.HTable;
+   type SN_Prj_HTable is access SN_Prj_HTable_Record;
+   Empty_SN_Prj_HTable : constant SN_Prj_HTable := null;
 
 end Src_Info.CPP;

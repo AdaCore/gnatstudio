@@ -34,8 +34,15 @@ package body SN.DB_Structures is
    function Parse_Hex (Hex_Str : String) return SN_Attributes;
    --  Converts C-style hexadecimal string like "0xffff" to integer number
 
-   function Remove_Brackets (String_With_Brackets : String) return String;
-   --  Removes outwards brackets from string
+   procedure Remove_Brackets
+      (Str     :        String;
+       Buffer  :        GNAT.OS_Lib.String_Access;
+       Cur_Pos : in out Integer;
+       Seg     : out    Segment);
+   pragma Inline (Remove_Brackets);
+   --  Copies content of brackets into buffer starting with Cur_Pos
+   --  Sets Seg to the beginning and end of the copied piece of data
+   --  increments Cur_Pos
 
 --  function Make_Array_From_String (input : String) return Arg_String_Array;
    --  Parses string of tokens separated by comma
@@ -45,6 +52,7 @@ package body SN.DB_Structures is
       Buffer      : GNAT.OS_Lib.String_Access;
       Buffer_Pos  : in out Integer;
       Vector_Root : out Segment_Vector.Node_Access);
+   pragma Unreferenced (Make_Vector_From_String);
    --  Parses string of tokens separated by comma and stores parsed
    --  values in vector
 
@@ -68,1142 +76,1194 @@ package body SN.DB_Structures is
    -------------------------------------------------------------------------
 
    function Parse_Pair (Key_Data_Pair : Pair) return BY_Table is
-      tab : BY_Table;
-      cur_pos : Integer;
+      Tab : BY_Table;
+      Cur_Pos : Integer;
       Len : Integer;
    begin
+      Tab.DBI := Key_Data_Pair.DBI;
       Len := Get_Total_Length (Key_Data_Pair.Key) +
          Get_Total_Length (Key_Data_Pair.Data);
-      tab.Buffer := new String (1 .. Len);
-      cur_pos := tab.Buffer'First;
+      Tab.Buffer := new String (1 .. Len);
+      Cur_Pos := Tab.Buffer'First;
       Len := Get_Field_Length (Key_Data_Pair.Key, 1);
-      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
+      Tab.Buffer (Cur_Pos .. (Cur_Pos + Len - 1)) :=
          Get_Field (Key_Data_Pair.Key, 1);
-      tab.Referred_Class.First := cur_pos;
-      tab.Referred_Class.Last := cur_pos + Len - 1;
-      cur_pos := cur_pos + Len;
+      Tab.Referred_Class.First := Cur_Pos;
+      Tab.Referred_Class.Last := Cur_Pos + Len - 1;
+      Cur_Pos := Cur_Pos + Len;
       Len := Get_Field_Length (Key_Data_Pair.Key, 2);
-      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
+      Tab.Buffer (Cur_Pos .. (Cur_Pos + Len - 1)) :=
          Get_Field (Key_Data_Pair.Key, 2);
-      tab.Referred_Symbol_Name.First := cur_pos;
-      tab.Referred_Symbol_Name.Last := cur_pos + Len - 1;
-      cur_pos := cur_pos + Len;
-      tab.Referred_Symbol :=
+      Tab.Referred_Symbol_Name.First := Cur_Pos;
+      Tab.Referred_Symbol_Name.Last := Cur_Pos + Len - 1;
+      Cur_Pos := Cur_Pos + Len;
+      Tab.Referred_Symbol :=
          Parse_Symbol (Get_Field (Key_Data_Pair.Key, 3));
       Len := Get_Field_Length (Key_Data_Pair.Key, 4);
-      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
+      Tab.Buffer (Cur_Pos .. (Cur_Pos + Len - 1)) :=
          Get_Field (Key_Data_Pair.Key, 4);
-      tab.Class.First := cur_pos;
-      tab.Class.Last := cur_pos + Len - 1;
-      cur_pos := cur_pos + Len;
+      Tab.Class.First := Cur_Pos;
+      Tab.Class.Last := Cur_Pos + Len - 1;
+      Cur_Pos := Cur_Pos + Len;
       Len := Get_Field_Length (Key_Data_Pair.Key, 5);
-      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
+      Tab.Buffer (Cur_Pos .. (Cur_Pos + Len - 1)) :=
          Get_Field (Key_Data_Pair.Key, 5);
-      tab.Symbol_Name.First := cur_pos;
-      tab.Symbol_Name.Last := cur_pos + Len - 1;
-      cur_pos := cur_pos + Len;
-      tab.Symbol :=
+      Tab.Symbol_Name.First := Cur_Pos;
+      Tab.Symbol_Name.Last := Cur_Pos + Len - 1;
+      Cur_Pos := Cur_Pos + Len;
+      Tab.Symbol :=
          Parse_Symbol (Get_Field (Key_Data_Pair.Key, 6));
       Len := Get_Field_Length (Key_Data_Pair.Key, 7);
-      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
+      Tab.Buffer (Cur_Pos .. (Cur_Pos + Len - 1)) :=
          Get_Field (Key_Data_Pair.Key, 7);
-      tab.Access_Type.First := cur_pos;
-      tab.Access_Type.Last := cur_pos + Len - 1;
-      cur_pos := cur_pos + Len;
+      Tab.Access_Type.First := Cur_Pos;
+      Tab.Access_Type.Last := Cur_Pos + Len - 1;
+      Cur_Pos := Cur_Pos + Len;
       Len := Get_Field_Length (Key_Data_Pair.Key, 9);
-      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
+      Tab.Buffer (Cur_Pos .. (Cur_Pos + Len - 1)) :=
          Get_Field (Key_Data_Pair.Key, 9);
-      tab.File_Name.First := cur_pos;
-      tab.File_Name.Last := cur_pos + Len - 1;
-      cur_pos := cur_pos + Len;
+      Tab.File_Name.First := Cur_Pos;
+      Tab.File_Name.Last := Cur_Pos + Len - 1;
+      Cur_Pos := Cur_Pos + Len;
       Parse_Position (
-         Get_Field (Key_Data_Pair.Key, 8), tab.Position);
-      Make_Vector_From_String (
-            Remove_Brackets (Get_Field (Key_Data_Pair.Data, 1)),
-            tab.Buffer, cur_pos, tab.Referred_Argument_Types);
-      Make_Vector_From_String (
-            Remove_Brackets (Get_Field (Key_Data_Pair.Data, 2)),
-            tab.Buffer, cur_pos, tab.Caller_Argument_Types);
+         Get_Field (Key_Data_Pair.Key, 8), Tab.Position);
+      Remove_Brackets
+        (Get_Field (Key_Data_Pair.Data, 1),
+         Tab.Buffer,
+         Cur_Pos,
+         Tab.Referred_Argument_Types);
+      Remove_Brackets
+        (Get_Field (Key_Data_Pair.Data, 2),
+         Tab.Buffer,
+         Cur_Pos,
+         Tab.Caller_Argument_Types);
       Number_Of_Allocated_Buffers := Number_Of_Allocated_Buffers + 1;
-      return tab;
+      return Tab;
    end Parse_Pair;
 
    function Parse_Pair (Key_Data_Pair : Pair) return CL_Table is
-      tab : CL_Table;
-      cur_pos : Integer;
+      Tab : CL_Table;
+      Cur_Pos : Integer;
       Len : Integer;
    begin
+      Tab.DBI := Key_Data_Pair.DBI;
       Len := Get_Total_Length (Key_Data_Pair.Key) +
          Get_Total_Length (Key_Data_Pair.Data);
-      tab.Buffer := new String (1 .. Len);
-      cur_pos := tab.Buffer'First;
+      Tab.Buffer := new String (1 .. Len);
+      Cur_Pos := Tab.Buffer'First;
       Len := Get_Field_Length (Key_Data_Pair.Key, 1);
-      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
+      Tab.Buffer (Cur_Pos .. (Cur_Pos + Len - 1)) :=
          Get_Field (Key_Data_Pair.Key, 1);
-      tab.Name.First := cur_pos;
-      tab.Name.Last := cur_pos + Len - 1;
-      cur_pos := cur_pos + Len;
+      Tab.Name.First := Cur_Pos;
+      Tab.Name.Last := Cur_Pos + Len - 1;
+      Cur_Pos := Cur_Pos + Len;
       Len := Get_Field_Length (Key_Data_Pair.Key, 3);
-      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
+      Tab.Buffer (Cur_Pos .. (Cur_Pos + Len - 1)) :=
          Get_Field (Key_Data_Pair.Key, 3);
-      tab.File_Name.First := cur_pos;
-      tab.File_Name.Last := cur_pos + Len - 1;
-      cur_pos := cur_pos + Len;
+      Tab.File_Name.First := Cur_Pos;
+      Tab.File_Name.Last := Cur_Pos + Len - 1;
+      Cur_Pos := Cur_Pos + Len;
       Parse_Position (
-         Get_Field (Key_Data_Pair.Key, 2), tab.Start_Position);
+         Get_Field (Key_Data_Pair.Key, 2), Tab.Start_Position);
       Parse_Position (
-         Get_Field (Key_Data_Pair.Data, 1), tab.End_Position);
-      tab.Attributes := Parse_Hex (Get_Field (Key_Data_Pair.Data, 2));
-      Len := Get_Field_Length (Key_Data_Pair.Data, 4) - 2;
-      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
-         Remove_Brackets (Get_Field (Key_Data_Pair.Data, 4));
-      tab.Template_Parameters.First := cur_pos;
-      tab.Template_Parameters.Last := cur_pos + Len - 1;
-      cur_pos := cur_pos + Len;
-      Len := Get_Field_Length (Key_Data_Pair.Data, 6) - 2;
-      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
-         Remove_Brackets (Get_Field (Key_Data_Pair.Data, 6));
-      tab.Comments.First := cur_pos;
-      tab.Comments.Last := cur_pos + Len - 1;
-      cur_pos := cur_pos + Len;
+         Get_Field (Key_Data_Pair.Data, 1), Tab.End_Position);
+      Tab.Attributes := Parse_Hex (Get_Field (Key_Data_Pair.Data, 2));
+      Remove_Brackets
+        (Get_Field (Key_Data_Pair.Data, 4),
+         Tab.Buffer,
+         Cur_Pos,
+         Tab.Template_Parameters);
+      Remove_Brackets
+        (Get_Field (Key_Data_Pair.Data, 6),
+         Tab.Buffer,
+         Cur_Pos,
+         Tab.Comments);
+      Cur_Pos := Cur_Pos + Len;
       Number_Of_Allocated_Buffers := Number_Of_Allocated_Buffers + 1;
-      return tab;
+      return Tab;
    end Parse_Pair;
 
    function Parse_Pair (Key_Data_Pair : Pair) return COM_Table is
-      tab : COM_Table;
-      cur_pos : Integer;
+      Tab : COM_Table;
+      Cur_Pos : Integer;
       Len : Integer;
    begin
+      Tab.DBI := Key_Data_Pair.DBI;
       Len := Get_Total_Length (Key_Data_Pair.Key) +
          Get_Total_Length (Key_Data_Pair.Data);
-      tab.Buffer := new String (1 .. Len);
-      cur_pos := tab.Buffer'First;
+      Tab.Buffer := new String (1 .. Len);
+      Cur_Pos := Tab.Buffer'First;
       Len := Get_Field_Length (Key_Data_Pair.Key, 1);
-      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
+      Tab.Buffer (Cur_Pos .. (Cur_Pos + Len - 1)) :=
          Get_Field (Key_Data_Pair.Key, 1);
-      tab.Name.First := cur_pos;
-      tab.Name.Last := cur_pos + Len - 1;
-      cur_pos := cur_pos + Len;
+      Tab.Name.First := Cur_Pos;
+      Tab.Name.Last := Cur_Pos + Len - 1;
+      Cur_Pos := Cur_Pos + Len;
       Len := Get_Field_Length (Key_Data_Pair.Key, 3);
-      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
+      Tab.Buffer (Cur_Pos .. (Cur_Pos + Len - 1)) :=
          Get_Field (Key_Data_Pair.Key, 3);
-      tab.File_Name.First := cur_pos;
-      tab.File_Name.Last := cur_pos + Len - 1;
-      cur_pos := cur_pos + Len;
+      Tab.File_Name.First := Cur_Pos;
+      Tab.File_Name.Last := Cur_Pos + Len - 1;
+      Cur_Pos := Cur_Pos + Len;
       Parse_Position (
-         Get_Field (Key_Data_Pair.Key, 2), tab.Start_Position);
+         Get_Field (Key_Data_Pair.Key, 2), Tab.Start_Position);
       Parse_Position (
-         Get_Field (Key_Data_Pair.Data, 1), tab.End_Position);
-      tab.Attributes := Parse_Hex (Get_Field (Key_Data_Pair.Data, 2));
-      Len := Get_Field_Length (Key_Data_Pair.Data, 6) - 2;
-      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
-         Remove_Brackets (Get_Field (Key_Data_Pair.Data, 6));
-      tab.Comments.First := cur_pos;
-      tab.Comments.Last := cur_pos + Len - 1;
-      cur_pos := cur_pos + Len;
+         Get_Field (Key_Data_Pair.Data, 1), Tab.End_Position);
+      Tab.Attributes := Parse_Hex (Get_Field (Key_Data_Pair.Data, 2));
+      Remove_Brackets
+        (Get_Field (Key_Data_Pair.Data, 6),
+         Tab.Buffer,
+         Cur_Pos,
+         Tab.Comments);
       Number_Of_Allocated_Buffers := Number_Of_Allocated_Buffers + 1;
-      return tab;
+      return Tab;
    end Parse_Pair;
 
    function Parse_Pair (Key_Data_Pair : Pair) return CON_Table is
-      tab : CON_Table;
-      cur_pos : Integer;
+      Tab : CON_Table;
+      Cur_Pos : Integer;
       Len : Integer;
    begin
+      Tab.DBI := Key_Data_Pair.DBI;
       Len := Get_Total_Length (Key_Data_Pair.Key) +
          Get_Total_Length (Key_Data_Pair.Data);
-      tab.Buffer := new String (1 .. Len);
-      cur_pos := tab.Buffer'First;
+      Tab.Buffer := new String (1 .. Len);
+      Cur_Pos := Tab.Buffer'First;
       Len := Get_Field_Length (Key_Data_Pair.Key, 1);
-      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
+      Tab.Buffer (Cur_Pos .. (Cur_Pos + Len - 1)) :=
          Get_Field (Key_Data_Pair.Key, 1);
-      tab.Name.First := cur_pos;
-      tab.Name.Last := cur_pos + Len - 1;
-      cur_pos := cur_pos + Len;
+      Tab.Name.First := Cur_Pos;
+      Tab.Name.Last := Cur_Pos + Len - 1;
+      Cur_Pos := Cur_Pos + Len;
       Len := Get_Field_Length (Key_Data_Pair.Key, 3);
-      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
+      Tab.Buffer (Cur_Pos .. (Cur_Pos + Len - 1)) :=
          Get_Field (Key_Data_Pair.Key, 3);
-      tab.File_Name.First := cur_pos;
-      tab.File_Name.Last := cur_pos + Len - 1;
-      cur_pos := cur_pos + Len;
+      Tab.File_Name.First := Cur_Pos;
+      Tab.File_Name.Last := Cur_Pos + Len - 1;
+      Cur_Pos := Cur_Pos + Len;
       Parse_Position (
-         Get_Field (Key_Data_Pair.Key, 2), tab.Start_Position);
+         Get_Field (Key_Data_Pair.Key, 2), Tab.Start_Position);
       Parse_Position (
-         Get_Field (Key_Data_Pair.Data, 1), tab.End_Position);
-      tab.Attributes := Parse_Hex (Get_Field (Key_Data_Pair.Data, 2));
-      Len := Get_Field_Length (Key_Data_Pair.Data, 3) - 2;
-      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
-         Remove_Brackets (Get_Field (Key_Data_Pair.Data, 3));
-      tab.Declared_Type.First := cur_pos;
-      tab.Declared_Type.Last := cur_pos + Len - 1;
-      cur_pos := cur_pos + Len;
-      Len := Get_Field_Length (Key_Data_Pair.Data, 6) - 2;
-      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
-         Remove_Brackets (Get_Field (Key_Data_Pair.Data, 6));
-      tab.Comments.First := cur_pos;
-      tab.Comments.Last := cur_pos + Len - 1;
-      cur_pos := cur_pos + Len;
+         Get_Field (Key_Data_Pair.Data, 1), Tab.End_Position);
+      Tab.Attributes := Parse_Hex (Get_Field (Key_Data_Pair.Data, 2));
+
+      Remove_Brackets
+        (Get_Field (Key_Data_Pair.Data, 3),
+         Tab.Buffer,
+         Cur_Pos,
+         Tab.Declared_Type);
+
+      Remove_Brackets
+        (Get_Field (Key_Data_Pair.Data, 6),
+         Tab.Buffer,
+         Cur_Pos,
+         Tab.Comments);
       Number_Of_Allocated_Buffers := Number_Of_Allocated_Buffers + 1;
-      tab.Type_Start_Position := Get_Position_From_Comment
-        (tab.Comments,
-         tab.Buffer,
+      Tab.Type_Start_Position := Get_Position_From_Comment
+        (Tab.Comments,
+         Tab.Buffer,
          "type_beg");
-      return tab;
+      return Tab;
    end Parse_Pair;
 
    function Parse_Pair (Key_Data_Pair : Pair) return COV_Table is
-      tab : COV_Table;
-      cur_pos : Integer;
+      Tab : COV_Table;
+      Cur_Pos : Integer;
       Len : Integer;
    begin
+      Tab.DBI := Key_Data_Pair.DBI;
       Len := Get_Total_Length (Key_Data_Pair.Key) +
          Get_Total_Length (Key_Data_Pair.Data);
-      tab.Buffer := new String (1 .. Len);
-      cur_pos := tab.Buffer'First;
+      Tab.Buffer := new String (1 .. Len);
+      Cur_Pos := Tab.Buffer'First;
       Len := Get_Field_Length (Key_Data_Pair.Key, 1);
-      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
+      Tab.Buffer (Cur_Pos .. (Cur_Pos + Len - 1)) :=
          Get_Field (Key_Data_Pair.Key, 1);
-      tab.Common_Block.First := cur_pos;
-      tab.Common_Block.Last := cur_pos + Len - 1;
-      cur_pos := cur_pos + Len;
+      Tab.Common_Block.First := Cur_Pos;
+      Tab.Common_Block.Last := Cur_Pos + Len - 1;
+      Cur_Pos := Cur_Pos + Len;
       Len := Get_Field_Length (Key_Data_Pair.Key, 2);
-      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
+      Tab.Buffer (Cur_Pos .. (Cur_Pos + Len - 1)) :=
          Get_Field (Key_Data_Pair.Key, 2);
-      tab.Name.First := cur_pos;
-      tab.Name.Last := cur_pos + Len - 1;
-      cur_pos := cur_pos + Len;
+      Tab.Name.First := Cur_Pos;
+      Tab.Name.Last := Cur_Pos + Len - 1;
+      Cur_Pos := Cur_Pos + Len;
       Len := Get_Field_Length (Key_Data_Pair.Key, 4);
-      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
+      Tab.Buffer (Cur_Pos .. (Cur_Pos + Len - 1)) :=
          Get_Field (Key_Data_Pair.Key, 4);
-      tab.File_Name.First := cur_pos;
-      tab.File_Name.Last := cur_pos + Len - 1;
-      cur_pos := cur_pos + Len;
+      Tab.File_Name.First := Cur_Pos;
+      Tab.File_Name.Last := Cur_Pos + Len - 1;
+      Cur_Pos := Cur_Pos + Len;
       Parse_Position (
-         Get_Field (Key_Data_Pair.Key, 3), tab.Start_Position);
+         Get_Field (Key_Data_Pair.Key, 3), Tab.Start_Position);
       Parse_Position (
-         Get_Field (Key_Data_Pair.Data, 1), tab.End_Position);
-      tab.Attributes := Parse_Hex (Get_Field (Key_Data_Pair.Data, 2));
-      Len := Get_Field_Length (Key_Data_Pair.Data, 6) - 2;
-      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
-         Remove_Brackets (Get_Field (Key_Data_Pair.Data, 6));
-      tab.Comments.First := cur_pos;
-      tab.Comments.Last := cur_pos + Len - 1;
-      cur_pos := cur_pos + Len;
+         Get_Field (Key_Data_Pair.Data, 1), Tab.End_Position);
+      Tab.Attributes := Parse_Hex (Get_Field (Key_Data_Pair.Data, 2));
+      Remove_Brackets
+        (Get_Field (Key_Data_Pair.Data, 6),
+         Tab.Buffer,
+         Cur_Pos,
+         Tab.Comments);
       Number_Of_Allocated_Buffers := Number_Of_Allocated_Buffers + 1;
-      return tab;
+      return Tab;
    end Parse_Pair;
 
    function Parse_Pair (Key_Data_Pair : Pair) return E_Table is
-      tab : E_Table;
-      cur_pos : Integer;
+      Tab : E_Table;
+      Cur_Pos : Integer;
       Len : Integer;
    begin
+      Tab.DBI := Key_Data_Pair.DBI;
       Len := Get_Total_Length (Key_Data_Pair.Key) +
          Get_Total_Length (Key_Data_Pair.Data);
-      tab.Buffer := new String (1 .. Len);
-      cur_pos := tab.Buffer'First;
+      Tab.Buffer := new String (1 .. Len);
+      Cur_Pos := Tab.Buffer'First;
       Len := Get_Field_Length (Key_Data_Pair.Key, 1);
-      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
+      Tab.Buffer (Cur_Pos .. (Cur_Pos + Len - 1)) :=
          Get_Field (Key_Data_Pair.Key, 1);
-      tab.Name.First := cur_pos;
-      tab.Name.Last := cur_pos + Len - 1;
-      cur_pos := cur_pos + Len;
+      Tab.Name.First := Cur_Pos;
+      Tab.Name.Last := Cur_Pos + Len - 1;
+      Cur_Pos := Cur_Pos + Len;
       Len := Get_Field_Length (Key_Data_Pair.Key, 3);
-      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
+      Tab.Buffer (Cur_Pos .. (Cur_Pos + Len - 1)) :=
          Get_Field (Key_Data_Pair.Key, 3);
-      tab.File_Name.First := cur_pos;
-      tab.File_Name.Last := cur_pos + Len - 1;
-      cur_pos := cur_pos + Len;
+      Tab.File_Name.First := Cur_Pos;
+      Tab.File_Name.Last := Cur_Pos + Len - 1;
+      Cur_Pos := Cur_Pos + Len;
       Parse_Position (
-         Get_Field (Key_Data_Pair.Key, 2), tab.Start_Position);
+         Get_Field (Key_Data_Pair.Key, 2), Tab.Start_Position);
       Parse_Position (
-         Get_Field (Key_Data_Pair.Data, 1), tab.End_Position);
-      tab.Attributes := Parse_Hex (Get_Field (Key_Data_Pair.Data, 2));
-      Len := Get_Field_Length (Key_Data_Pair.Data, 6) - 2;
-      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
-         Remove_Brackets (Get_Field (Key_Data_Pair.Data, 6));
-      tab.Comments.First := cur_pos;
-      tab.Comments.Last := cur_pos + Len - 1;
-      cur_pos := cur_pos + Len;
+         Get_Field (Key_Data_Pair.Data, 1), Tab.End_Position);
+      Tab.Attributes := Parse_Hex (Get_Field (Key_Data_Pair.Data, 2));
+      Remove_Brackets
+        (Get_Field (Key_Data_Pair.Data, 6),
+         Tab.Buffer,
+         Cur_Pos,
+         Tab.Comments);
       Number_Of_Allocated_Buffers := Number_Of_Allocated_Buffers + 1;
-      return tab;
+      return Tab;
    end Parse_Pair;
 
    function Parse_Pair (Key_Data_Pair : Pair) return EC_Table is
-      tab : EC_Table;
-      cur_pos : Integer;
+      Tab : EC_Table;
+      Cur_Pos : Integer;
       Len : Integer;
    begin
+      Tab.DBI := Key_Data_Pair.DBI;
       Len := Get_Total_Length (Key_Data_Pair.Key) +
          Get_Total_Length (Key_Data_Pair.Data);
-      tab.Buffer := new String (1 .. Len);
-      cur_pos := tab.Buffer'First;
+      Tab.Buffer := new String (1 .. Len);
+      Cur_Pos := Tab.Buffer'First;
       Len := Get_Field_Length (Key_Data_Pair.Key, 1);
-      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
+      Tab.Buffer (Cur_Pos .. (Cur_Pos + Len - 1)) :=
          Get_Field (Key_Data_Pair.Key, 1);
-      tab.Name.First := cur_pos;
-      tab.Name.Last := cur_pos + Len - 1;
-      cur_pos := cur_pos + Len;
+      Tab.Name.First := Cur_Pos;
+      Tab.Name.Last := Cur_Pos + Len - 1;
+      Cur_Pos := Cur_Pos + Len;
       Len := Get_Field_Length (Key_Data_Pair.Key, 3);
-      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
+      Tab.Buffer (Cur_Pos .. (Cur_Pos + Len - 1)) :=
          Get_Field (Key_Data_Pair.Key, 3);
-      tab.File_Name.First := cur_pos;
-      tab.File_Name.Last := cur_pos + Len - 1;
-      cur_pos := cur_pos + Len;
+      Tab.File_Name.First := Cur_Pos;
+      Tab.File_Name.Last := Cur_Pos + Len - 1;
+      Cur_Pos := Cur_Pos + Len;
       Parse_Position (
-         Get_Field (Key_Data_Pair.Key, 2), tab.Start_Position);
+         Get_Field (Key_Data_Pair.Key, 2), Tab.Start_Position);
       Parse_Position (
-         Get_Field (Key_Data_Pair.Data, 1), tab.End_Position);
-      tab.Attributes := Parse_Hex (Get_Field (Key_Data_Pair.Data, 2));
-      Len := Get_Field_Length (Key_Data_Pair.Data, 3) - 2;
-      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
-         Remove_Brackets (Get_Field (Key_Data_Pair.Data, 3));
-      tab.Enumeration_Name.First := cur_pos;
-      tab.Enumeration_Name.Last := cur_pos + Len - 1;
-      cur_pos := cur_pos + Len;
+         Get_Field (Key_Data_Pair.Data, 1), Tab.End_Position);
+      Tab.Attributes := Parse_Hex (Get_Field (Key_Data_Pair.Data, 2));
+
+      Remove_Brackets
+        (Get_Field (Key_Data_Pair.Data, 3),
+         Tab.Buffer,
+         Cur_Pos,
+         Tab.Enumeration_Name);
+
       Number_Of_Allocated_Buffers := Number_Of_Allocated_Buffers + 1;
-      return tab;
+      return Tab;
    end Parse_Pair;
 
    function Parse_Pair (Key_Data_Pair : Pair) return F_Table is
-      tab : F_Table;
-      cur_pos : Integer;
+      Tab : F_Table;
+      Cur_Pos : Integer;
       Len : Integer;
    begin
+      Tab.DBI := Key_Data_Pair.DBI;
       Len := Get_Total_Length (Key_Data_Pair.Key) +
          Get_Total_Length (Key_Data_Pair.Data);
-      tab.Buffer := new String (1 .. Len);
-      cur_pos := tab.Buffer'First;
+      Tab.Buffer := new String (1 .. Len);
+      Cur_Pos := Tab.Buffer'First;
       Len := Get_Field_Length (Key_Data_Pair.Key, 1);
-      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
+      Tab.Buffer (Cur_Pos .. (Cur_Pos + Len - 1)) :=
          Get_Field (Key_Data_Pair.Key, 1);
-      tab.Name.First := cur_pos;
-      tab.Name.Last := cur_pos + Len - 1;
-      cur_pos := cur_pos + Len;
+      Tab.Name.First := Cur_Pos;
+      Tab.Name.Last := Cur_Pos + Len - 1;
+      Cur_Pos := Cur_Pos + Len;
       Len := Get_Field_Length (Key_Data_Pair.Data, 1);
-      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
+      Tab.Buffer (Cur_Pos .. (Cur_Pos + Len - 1)) :=
          Get_Field (Key_Data_Pair.Data, 1);
-      tab.Group.First := cur_pos;
-      tab.Group.Last := cur_pos + Len - 1;
-      cur_pos := cur_pos + Len;
+      Tab.Group.First := Cur_Pos;
+      Tab.Group.Last := Cur_Pos + Len - 1;
+      Cur_Pos := Cur_Pos + Len;
       Len := Get_Field_Length (Key_Data_Pair.Data, 2);
-      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
+      Tab.Buffer (Cur_Pos .. (Cur_Pos + Len - 1)) :=
          Get_Field (Key_Data_Pair.Data, 2);
-      tab.Parsing_Time.First := cur_pos;
-      tab.Parsing_Time.Last := cur_pos + Len - 1;
-      cur_pos := cur_pos + Len;
+      Tab.Parsing_Time.First := Cur_Pos;
+      Tab.Parsing_Time.Last := Cur_Pos + Len - 1;
+      Cur_Pos := Cur_Pos + Len;
       Len := Get_Field_Length (Key_Data_Pair.Data, 3);
-      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
+      Tab.Buffer (Cur_Pos .. (Cur_Pos + Len - 1)) :=
          Get_Field (Key_Data_Pair.Data, 3);
-      tab.Highlight_File.First := cur_pos;
-      tab.Highlight_File.Last := cur_pos + Len - 1;
-      cur_pos := cur_pos + Len;
+      Tab.Highlight_File.First := Cur_Pos;
+      Tab.Highlight_File.Last := Cur_Pos + Len - 1;
+      Cur_Pos := Cur_Pos + Len;
       Number_Of_Allocated_Buffers := Number_Of_Allocated_Buffers + 1;
-      return tab;
+      return Tab;
    end Parse_Pair;
 
    function Parse_Pair (Key_Data_Pair : Pair) return FD_Table is
-      tab : FD_Table;
-      cur_pos : Integer;
+      Tab : FD_Table;
+      Cur_Pos : Integer;
       Len : Integer;
    begin
+      Tab.DBI := Key_Data_Pair.DBI;
       Len := Get_Total_Length (Key_Data_Pair.Key) +
          Get_Total_Length (Key_Data_Pair.Data);
-      tab.Buffer := new String (1 .. Len);
-      cur_pos := tab.Buffer'First;
+      Tab.Buffer := new String (1 .. Len);
+      Cur_Pos := Tab.Buffer'First;
       Len := Get_Field_Length (Key_Data_Pair.Key, 1);
-      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
+      Tab.Buffer (Cur_Pos .. (Cur_Pos + Len - 1)) :=
          Get_Field (Key_Data_Pair.Key, 1);
-      tab.Name.First := cur_pos;
-      tab.Name.Last := cur_pos + Len - 1;
-      cur_pos := cur_pos + Len;
+      Tab.Name.First := Cur_Pos;
+      Tab.Name.Last := Cur_Pos + Len - 1;
+      Cur_Pos := Cur_Pos + Len;
       Len := Get_Field_Length (Key_Data_Pair.Key, 3);
-      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
+      Tab.Buffer (Cur_Pos .. (Cur_Pos + Len - 1)) :=
          Get_Field (Key_Data_Pair.Key, 3);
-      tab.File_Name.First := cur_pos;
-      tab.File_Name.Last := cur_pos + Len - 1;
-      cur_pos := cur_pos + Len;
+      Tab.File_Name.First := Cur_Pos;
+      Tab.File_Name.Last := Cur_Pos + Len - 1;
+      Cur_Pos := Cur_Pos + Len;
       Parse_Position (
-         Get_Field (Key_Data_Pair.Key, 2), tab.Start_Position);
+         Get_Field (Key_Data_Pair.Key, 2), Tab.Start_Position);
       Parse_Position (
-         Get_Field (Key_Data_Pair.Data, 1), tab.End_Position);
-      tab.Attributes := Parse_Hex (Get_Field (Key_Data_Pair.Data, 2));
-      Len := Get_Field_Length (Key_Data_Pair.Data, 3) - 2;
-      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
-         Remove_Brackets (Get_Field (Key_Data_Pair.Data, 3));
-      tab.Return_Type.First := cur_pos;
-      tab.Return_Type.Last := cur_pos + Len - 1;
-      cur_pos := cur_pos + Len;
-      Make_Vector_From_String (
-            Remove_Brackets (Get_Field (Key_Data_Pair.Data, 4)),
-            tab.Buffer, cur_pos, tab.Arg_Types);
-      Make_Vector_From_String (
-            Remove_Brackets (Get_Field (Key_Data_Pair.Data, 5)),
-            tab.Buffer, cur_pos, tab.Arg_Names);
-      Len := Get_Field_Length (Key_Data_Pair.Data, 6) - 2;
-      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
-         Remove_Brackets (Get_Field (Key_Data_Pair.Data, 6));
-      tab.Comments.First := cur_pos;
-      tab.Comments.Last := cur_pos + Len - 1;
-      cur_pos := cur_pos + Len;
-      tab.Template_Parameters := Get_Segment_From_Comment
-        (tab.Comments,
-         tab.Buffer,
+         Get_Field (Key_Data_Pair.Data, 1), Tab.End_Position);
+      Tab.Attributes := Parse_Hex (Get_Field (Key_Data_Pair.Data, 2));
+
+      Remove_Brackets
+        (Get_Field (Key_Data_Pair.Data, 3),
+         Tab.Buffer,
+         Cur_Pos,
+         Tab.Return_Type);
+
+      Remove_Brackets
+        (Get_Field (Key_Data_Pair.Data, 4),
+         Tab.Buffer,
+         Cur_Pos,
+         Tab.Arg_Types);
+
+      --  Make_Vector_From_String (
+      --        Remove_Brackets (Get_Field (Key_Data_Pair.Data, 5)),
+      --        Tab.Buffer, Cur_Pos, Tab.Arg_Names);
+
+      Remove_Brackets
+        (Get_Field (Key_Data_Pair.Data, 6),
+         Tab.Buffer,
+         Cur_Pos,
+         Tab.Comments);
+
+      Tab.Template_Parameters := Get_Segment_From_Comment
+        (Tab.Comments,
+         Tab.Buffer,
          "template_args");
       Number_Of_Allocated_Buffers := Number_Of_Allocated_Buffers + 1;
-      return tab;
+      return Tab;
    end Parse_Pair;
 
    function Parse_Pair (Key_Data_Pair : Pair) return FIL_Table is
-      tab : FIL_Table;
-      cur_pos : Integer;
+      Tab : FIL_Table;
+      Cur_Pos : Integer;
       Len : Integer;
    begin
+      Tab.DBI := Key_Data_Pair.DBI;
       Len := Get_Total_Length (Key_Data_Pair.Key) +
          Get_Total_Length (Key_Data_Pair.Data);
-      tab.Buffer := new String (1 .. Len);
-      cur_pos := tab.Buffer'First;
+      Tab.Buffer := new String (1 .. Len);
+      Cur_Pos := Tab.Buffer'First;
       Len := Get_Field_Length (Key_Data_Pair.Key, 1);
-      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
+      Tab.Buffer (Cur_Pos .. (Cur_Pos + Len - 1)) :=
          Get_Field (Key_Data_Pair.Key, 1);
-      tab.File_Name.First := cur_pos;
-      tab.File_Name.Last := cur_pos + Len - 1;
-      cur_pos := cur_pos + Len;
+      Tab.File_Name.First := Cur_Pos;
+      Tab.File_Name.Last := Cur_Pos + Len - 1;
+      Cur_Pos := Cur_Pos + Len;
       Parse_Position (
-         Get_Field (Key_Data_Pair.Key, 2), tab.Start_Position);
+         Get_Field (Key_Data_Pair.Key, 2), Tab.Start_Position);
       Len := Get_Field_Length (Key_Data_Pair.Key, 3);
-      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
+      Tab.Buffer (Cur_Pos .. (Cur_Pos + Len - 1)) :=
          Get_Field (Key_Data_Pair.Key, 3);
-      tab.Class.First := cur_pos;
-      tab.Class.Last := cur_pos + Len - 1;
-      cur_pos := cur_pos + Len;
+      Tab.Class.First := Cur_Pos;
+      Tab.Class.Last := Cur_Pos + Len - 1;
+      Cur_Pos := Cur_Pos + Len;
       Len := Get_Field_Length (Key_Data_Pair.Key, 4);
-      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
+      Tab.Buffer (Cur_Pos .. (Cur_Pos + Len - 1)) :=
          Get_Field (Key_Data_Pair.Key, 4);
-      tab.Identifier.First := cur_pos;
-      tab.Identifier.Last := cur_pos + Len - 1;
-      cur_pos := cur_pos + Len;
-      tab.Symbol :=
+      Tab.Identifier.First := Cur_Pos;
+      Tab.Identifier.Last := Cur_Pos + Len - 1;
+      Cur_Pos := Cur_Pos + Len;
+      Tab.Symbol :=
          Parse_Symbol (Get_Field (Key_Data_Pair.Key, 5));
       Parse_Position (
-         Get_Field (Key_Data_Pair.Data, 1), tab.End_Position);
+         Get_Field (Key_Data_Pair.Data, 1), Tab.End_Position);
       Parse_Position (
-         Get_Field (Key_Data_Pair.Data, 2), tab.Highlight_Start_Position);
+         Get_Field (Key_Data_Pair.Data, 2), Tab.Highlight_Start_Position);
       Parse_Position (
-         Get_Field (Key_Data_Pair.Data, 3), tab.Highlight_End_Position);
-      Make_Vector_From_String (
-            Remove_Brackets (Get_Field (Key_Data_Pair.Data, 4)),
-            tab.Buffer, cur_pos, tab.Types_Of_Arguments);
+         Get_Field (Key_Data_Pair.Data, 3), Tab.Highlight_End_Position);
+      Remove_Brackets
+        (Get_Field (Key_Data_Pair.Data, 4),
+         Tab.Buffer,
+         Cur_Pos,
+         Tab.Types_Of_Arguments);
       Number_Of_Allocated_Buffers := Number_Of_Allocated_Buffers + 1;
-      return tab;
+      return Tab;
    end Parse_Pair;
 
    function Parse_Pair (Key_Data_Pair : Pair) return FR_Table is
-      tab : FR_Table;
-      cur_pos : Integer;
+      Tab : FR_Table;
+      Cur_Pos : Integer;
       Len : Integer;
    begin
+      Tab.DBI := Key_Data_Pair.DBI;
       Len := Get_Total_Length (Key_Data_Pair.Key) +
          Get_Total_Length (Key_Data_Pair.Data);
-      tab.Buffer := new String (1 .. Len);
-      cur_pos := tab.Buffer'First;
+      Tab.Buffer := new String (1 .. Len);
+      Cur_Pos := Tab.Buffer'First;
       Len := Get_Field_Length (Key_Data_Pair.Key, 1);
-      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
+      Tab.Buffer (Cur_Pos .. (Cur_Pos + Len - 1)) :=
          Get_Field (Key_Data_Pair.Key, 1);
-      tab.Name.First := cur_pos;
-      tab.Name.Last := cur_pos + Len - 1;
-      cur_pos := cur_pos + Len;
+      Tab.Name.First := Cur_Pos;
+      Tab.Name.Last := Cur_Pos + Len - 1;
+      Cur_Pos := Cur_Pos + Len;
       Len := Get_Field_Length (Key_Data_Pair.Key, 3);
-      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
+      Tab.Buffer (Cur_Pos .. (Cur_Pos + Len - 1)) :=
          Get_Field (Key_Data_Pair.Key, 3);
-      tab.File_Name.First := cur_pos;
-      tab.File_Name.Last := cur_pos + Len - 1;
-      cur_pos := cur_pos + Len;
+      Tab.File_Name.First := Cur_Pos;
+      Tab.File_Name.Last := Cur_Pos + Len - 1;
+      Cur_Pos := Cur_Pos + Len;
       Parse_Position (
-         Get_Field (Key_Data_Pair.Key, 2), tab.Start_Position);
+         Get_Field (Key_Data_Pair.Key, 2), Tab.Start_Position);
       Parse_Position (
-         Get_Field (Key_Data_Pair.Data, 1), tab.End_Position);
-      tab.Attributes := Parse_Hex (Get_Field (Key_Data_Pair.Data, 2));
-      Len := Get_Field_Length (Key_Data_Pair.Data, 3) - 2;
-      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
-         Remove_Brackets (Get_Field (Key_Data_Pair.Data, 3));
-      tab.Return_Type.First := cur_pos;
-      tab.Return_Type.Last := cur_pos + Len - 1;
-      cur_pos := cur_pos + Len;
-      Make_Vector_From_String (
-            Remove_Brackets (Get_Field (Key_Data_Pair.Data, 4)),
-            tab.Buffer, cur_pos, tab.Arg_Types);
-      Make_Vector_From_String (
-            Remove_Brackets (Get_Field (Key_Data_Pair.Data, 5)),
-            tab.Buffer, cur_pos, tab.Arg_Names);
-      Len := Get_Field_Length (Key_Data_Pair.Data, 6) - 2;
-      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
-         Remove_Brackets (Get_Field (Key_Data_Pair.Data, 6));
-      tab.Comments.First := cur_pos;
-      tab.Comments.Last := cur_pos + Len - 1;
-      cur_pos := cur_pos + Len;
+         Get_Field (Key_Data_Pair.Data, 1), Tab.End_Position);
+      Tab.Attributes := Parse_Hex (Get_Field (Key_Data_Pair.Data, 2));
+
+      Remove_Brackets
+        (Get_Field (Key_Data_Pair.Data, 3),
+         Tab.Buffer,
+         Cur_Pos,
+         Tab.Return_Type);
+
+      Remove_Brackets
+        (Get_Field (Key_Data_Pair.Data, 4),
+         Tab.Buffer,
+         Cur_Pos,
+         Tab.Arg_Types);
+
+      --  Make_Vector_From_String (
+      --        Remove_Brackets (Get_Field (Key_Data_Pair.Data, 5)),
+      --        Tab.Buffer, Cur_Pos, Tab.Arg_Names);
+
+      Remove_Brackets
+        (Get_Field (Key_Data_Pair.Data, 6),
+         Tab.Buffer,
+         Cur_Pos,
+         Tab.Comments);
+
       Number_Of_Allocated_Buffers := Number_Of_Allocated_Buffers + 1;
-      return tab;
+      return Tab;
    end Parse_Pair;
 
    function Parse_Pair (Key_Data_Pair : Pair) return FU_Table is
-      tab            : FU_Table;
-      cur_pos        : Integer;
+      Tab            : FU_Table;
+      Cur_Pos        : Integer;
       Len            : Integer;
       Num_Of_Fileds  : constant Integer := Get_Field_Count (Key_Data_Pair.Key);
       Field_Offset   : Integer := 0;
    begin
+      Tab.DBI := Key_Data_Pair.DBI;
       Len := Get_Total_Length (Key_Data_Pair.Key) +
          Get_Total_Length (Key_Data_Pair.Data);
-      tab.Buffer := new String (1 .. Len);
+      Tab.Buffer := new String (1 .. Len);
 
       case Num_Of_Fileds is
          when 3      => -- .fu table
-            tab.Buffer (1) := '#';
-            cur_pos := 2;
-            tab.Class.First := 1;
-            tab.Class.Last  := 1;
+            Tab.Buffer (1) := '#';
+            Cur_Pos := 2;
+            Tab.Class.First := 1;
+            Tab.Class.Last  := 1;
          when 4      => -- .mi table
             Len := Get_Field_Length (Key_Data_Pair.Key, 1);
-            tab.Buffer (1 .. Len) :=
+            Tab.Buffer (1 .. Len) :=
                Get_Field (Key_Data_Pair.Key, 1);
-            tab.Class.First := 1;
-            tab.Class.Last  := Len;
-            cur_pos := 1 + Len;
+            Tab.Class.First := 1;
+            Tab.Class.Last  := Len;
+            Cur_Pos := 1 + Len;
             Field_Offset := 1;
          when others =>
             raise Bad_Input;
       end case;
 
       Len := Get_Field_Length (Key_Data_Pair.Key, Field_Offset + 1);
-      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
+      Tab.Buffer (Cur_Pos .. (Cur_Pos + Len - 1)) :=
          Get_Field (Key_Data_Pair.Key, Field_Offset + 1);
-      tab.Name.First := cur_pos;
-      tab.Name.Last := cur_pos + Len - 1;
-      cur_pos := cur_pos + Len;
+      Tab.Name.First := Cur_Pos;
+      Tab.Name.Last := Cur_Pos + Len - 1;
+      Cur_Pos := Cur_Pos + Len;
 
       Len := Get_Field_Length (Key_Data_Pair.Key, Field_Offset + 3);
-      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
+      Tab.Buffer (Cur_Pos .. (Cur_Pos + Len - 1)) :=
          Get_Field (Key_Data_Pair.Key, Field_Offset + 3);
-      tab.File_Name.First := cur_pos;
-      tab.File_Name.Last := cur_pos + Len - 1;
-      cur_pos := cur_pos + Len;
+      Tab.File_Name.First := Cur_Pos;
+      Tab.File_Name.Last := Cur_Pos + Len - 1;
+      Cur_Pos := Cur_Pos + Len;
 
       Parse_Position (
-         Get_Field (Key_Data_Pair.Key, Field_Offset + 2), tab.Start_Position);
+         Get_Field (Key_Data_Pair.Key, Field_Offset + 2), Tab.Start_Position);
 
       Parse_Position (
-         Get_Field (Key_Data_Pair.Data, 1), tab.End_Position);
+         Get_Field (Key_Data_Pair.Data, 1), Tab.End_Position);
 
-      tab.Attributes := Parse_Hex (Get_Field (Key_Data_Pair.Data, 2));
+      Tab.Attributes := Parse_Hex (Get_Field (Key_Data_Pair.Data, 2));
 
-      Len := Get_Field_Length (Key_Data_Pair.Data, 3) - 2;
-      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
-         Remove_Brackets (Get_Field (Key_Data_Pair.Data, 3));
-      tab.Return_Type.First := cur_pos;
-      tab.Return_Type.Last := cur_pos + Len - 1;
-      cur_pos := cur_pos + Len;
+      Remove_Brackets
+        (Get_Field (Key_Data_Pair.Data, 3),
+         Tab.Buffer,
+         Cur_Pos,
+         Tab.Return_Type);
 
-      Make_Vector_From_String (
-            Remove_Brackets (Get_Field (Key_Data_Pair.Data, 4)),
-            tab.Buffer, cur_pos, tab.Arg_Types);
+      Remove_Brackets
+        (Get_Field (Key_Data_Pair.Data, 4),
+         Tab.Buffer,
+         Cur_Pos,
+         Tab.Arg_Types);
 
-      Make_Vector_From_String (
-            Remove_Brackets (Get_Field (Key_Data_Pair.Data, 5)),
-            tab.Buffer, cur_pos, tab.Arg_Names);
+      --  Make_Vector_From_String (
+      --        Remove_Brackets (Get_Field (Key_Data_Pair.Data, 5)),
+      --        Tab.Buffer, Cur_Pos, Tab.Arg_Names);
 
-      Len := Get_Field_Length (Key_Data_Pair.Data, 6) - 2;
-      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
-         Remove_Brackets (Get_Field (Key_Data_Pair.Data, 6));
-      tab.Comments.First := cur_pos;
-      tab.Comments.Last := cur_pos + Len - 1;
-      cur_pos := cur_pos + Len;
+      Remove_Brackets
+        (Get_Field (Key_Data_Pair.Data, 6),
+         Tab.Buffer,
+         Cur_Pos,
+         Tab.Comments);
 
-      tab.Template_Parameters := Get_Segment_From_Comment
-        (tab.Comments,
-         tab.Buffer,
+      Tab.Template_Parameters := Get_Segment_From_Comment
+        (Tab.Comments,
+         Tab.Buffer,
          "template_args");
       Number_Of_Allocated_Buffers := Number_Of_Allocated_Buffers + 1;
-      return tab;
+      return Tab;
    end Parse_Pair;
 
    function Parse_Pair (Key_Data_Pair : Pair) return GV_Table is
-      tab : GV_Table;
-      cur_pos : Integer;
+      Tab : GV_Table;
+      Cur_Pos : Integer;
       Len : Integer;
    begin
+      Tab.DBI := Key_Data_Pair.DBI;
       Len := Get_Total_Length (Key_Data_Pair.Key) +
          Get_Total_Length (Key_Data_Pair.Data);
-      tab.Buffer := new String (1 .. Len);
-      cur_pos := tab.Buffer'First;
+      Tab.Buffer := new String (1 .. Len);
+      Cur_Pos := Tab.Buffer'First;
       Len := Get_Field_Length (Key_Data_Pair.Key, 1);
-      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
+      Tab.Buffer (Cur_Pos .. (Cur_Pos + Len - 1)) :=
          Get_Field (Key_Data_Pair.Key, 1);
-      tab.Name.First := cur_pos;
-      tab.Name.Last := cur_pos + Len - 1;
-      cur_pos := cur_pos + Len;
+      Tab.Name.First := Cur_Pos;
+      Tab.Name.Last := Cur_Pos + Len - 1;
+      Cur_Pos := Cur_Pos + Len;
       Len := Get_Field_Length (Key_Data_Pair.Key, 3);
-      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
+      Tab.Buffer (Cur_Pos .. (Cur_Pos + Len - 1)) :=
          Get_Field (Key_Data_Pair.Key, 3);
-      tab.File_Name.First := cur_pos;
-      tab.File_Name.Last := cur_pos + Len - 1;
-      cur_pos := cur_pos + Len;
+      Tab.File_Name.First := Cur_Pos;
+      Tab.File_Name.Last := Cur_Pos + Len - 1;
+      Cur_Pos := Cur_Pos + Len;
       Parse_Position (
-         Get_Field (Key_Data_Pair.Key, 2), tab.Start_Position);
+         Get_Field (Key_Data_Pair.Key, 2), Tab.Start_Position);
       Parse_Position (
-         Get_Field (Key_Data_Pair.Data, 1), tab.End_Position);
-      tab.Attributes := Parse_Hex (Get_Field (Key_Data_Pair.Data, 2));
-      Len := Get_Field_Length (Key_Data_Pair.Data, 3) - 2;
-      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
-         Remove_Brackets (Get_Field (Key_Data_Pair.Data, 3));
-      tab.Value_Type.First := cur_pos;
-      tab.Value_Type.Last := cur_pos + Len - 1;
-      cur_pos := cur_pos + Len;
-      Len := Get_Field_Length (Key_Data_Pair.Data, 6) - 2;
-      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
-         Remove_Brackets (Get_Field (Key_Data_Pair.Data, 6));
-      tab.Comments.First := cur_pos;
-      tab.Comments.Last := cur_pos + Len - 1;
-      cur_pos := cur_pos + Len;
-      Number_Of_Allocated_Buffers := Number_Of_Allocated_Buffers + 1;
-      tab.Type_Start_Position := Get_Position_From_Comment
-        (tab.Comments,
-         tab.Buffer,
+         Get_Field (Key_Data_Pair.Data, 1), Tab.End_Position);
+      Tab.Attributes := Parse_Hex (Get_Field (Key_Data_Pair.Data, 2));
+
+      Remove_Brackets
+        (Get_Field (Key_Data_Pair.Data, 3),
+         Tab.Buffer,
+         Cur_Pos,
+         Tab.Value_Type);
+
+      Remove_Brackets
+        (Get_Field (Key_Data_Pair.Data, 6),
+         Tab.Buffer,
+         Cur_Pos,
+         Tab.Comments);
+
+      Tab.Type_Start_Position := Get_Position_From_Comment
+        (Tab.Comments,
+         Tab.Buffer,
          "type_beg");
-      return tab;
+
+      Number_Of_Allocated_Buffers := Number_Of_Allocated_Buffers + 1;
+      return Tab;
    end Parse_Pair;
 
    function Parse_Pair (Key_Data_Pair : Pair) return IN_Table is
-      tab : IN_Table;
-      cur_pos : Integer;
+      Tab : IN_Table;
+      Cur_Pos : Integer;
       Len : Integer;
    begin
+      Tab.DBI := Key_Data_Pair.DBI;
       Len := Get_Total_Length (Key_Data_Pair.Key) +
          Get_Total_Length (Key_Data_Pair.Data);
-      tab.Buffer := new String (1 .. Len);
-      cur_pos := tab.Buffer'First;
+      Tab.Buffer := new String (1 .. Len);
+      Cur_Pos := Tab.Buffer'First;
       Len := Get_Field_Length (Key_Data_Pair.Key, 1);
-      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
+      Tab.Buffer (Cur_Pos .. (Cur_Pos + Len - 1)) :=
          Get_Field (Key_Data_Pair.Key, 1);
-      tab.Class.First := cur_pos;
-      tab.Class.Last := cur_pos + Len - 1;
-      cur_pos := cur_pos + Len;
+      Tab.Class.First := Cur_Pos;
+      Tab.Class.Last := Cur_Pos + Len - 1;
+      Cur_Pos := Cur_Pos + Len;
       Len := Get_Field_Length (Key_Data_Pair.Key, 2);
-      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
+      Tab.Buffer (Cur_Pos .. (Cur_Pos + Len - 1)) :=
          Get_Field (Key_Data_Pair.Key, 2);
-      tab.Base_Class.First := cur_pos;
-      tab.Base_Class.Last := cur_pos + Len - 1;
-      cur_pos := cur_pos + Len;
+      Tab.Base_Class.First := Cur_Pos;
+      Tab.Base_Class.Last := Cur_Pos + Len - 1;
+      Cur_Pos := Cur_Pos + Len;
       Len := Get_Field_Length (Key_Data_Pair.Key, 4);
-      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
+      Tab.Buffer (Cur_Pos .. (Cur_Pos + Len - 1)) :=
          Get_Field (Key_Data_Pair.Key, 4);
-      tab.File_Name.First := cur_pos;
-      tab.File_Name.Last := cur_pos + Len - 1;
-      cur_pos := cur_pos + Len;
+      Tab.File_Name.First := Cur_Pos;
+      Tab.File_Name.Last := Cur_Pos + Len - 1;
+      Cur_Pos := Cur_Pos + Len;
       Parse_Position (
-         Get_Field (Key_Data_Pair.Key, 3), tab.Start_Position);
+         Get_Field (Key_Data_Pair.Key, 3), Tab.Start_Position);
       Parse_Position (
-         Get_Field (Key_Data_Pair.Data, 1), tab.End_Position);
-      tab.Attributes := Parse_Hex (Get_Field (Key_Data_Pair.Data, 2));
-      Len := Get_Field_Length (Key_Data_Pair.Data, 6) - 2;
-      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
-         Remove_Brackets (Get_Field (Key_Data_Pair.Data, 6));
-      tab.Comments.First := cur_pos;
-      tab.Comments.Last := cur_pos + Len - 1;
-      cur_pos := cur_pos + Len;
+         Get_Field (Key_Data_Pair.Data, 1), Tab.End_Position);
+      Tab.Attributes := Parse_Hex (Get_Field (Key_Data_Pair.Data, 2));
+
+      Remove_Brackets
+        (Get_Field (Key_Data_Pair.Data, 6),
+         Tab.Buffer,
+         Cur_Pos,
+         Tab.Comments);
+
       Number_Of_Allocated_Buffers := Number_Of_Allocated_Buffers + 1;
-      return tab;
+      return Tab;
    end Parse_Pair;
 
    function Parse_Pair (Key_Data_Pair : Pair) return IU_Table is
-      tab : IU_Table;
-      cur_pos : Integer;
+      Tab : IU_Table;
+      Cur_Pos : Integer;
       Len : Integer;
    begin
+      Tab.DBI := Key_Data_Pair.DBI;
       Len := Get_Total_Length (Key_Data_Pair.Key) +
          Get_Total_Length (Key_Data_Pair.Data);
-      tab.Buffer := new String (1 .. Len);
-      cur_pos := tab.Buffer'First;
+      Tab.Buffer := new String (1 .. Len);
+      Cur_Pos := Tab.Buffer'First;
       Len := Get_Field_Length (Key_Data_Pair.Key, 1);
-      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
+      Tab.Buffer (Cur_Pos .. (Cur_Pos + Len - 1)) :=
          Get_Field (Key_Data_Pair.Key, 1);
-      tab.Included_File.First := cur_pos;
-      tab.Included_File.Last := cur_pos + Len - 1;
-      cur_pos := cur_pos + Len;
+      Tab.Included_File.First := Cur_Pos;
+      Tab.Included_File.Last := Cur_Pos + Len - 1;
+      Cur_Pos := Cur_Pos + Len;
       Len := Get_Field_Length (Key_Data_Pair.Key, 3);
-      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
+      Tab.Buffer (Cur_Pos .. (Cur_Pos + Len - 1)) :=
          Get_Field (Key_Data_Pair.Key, 3);
-      tab.Included_From_File.First := cur_pos;
-      tab.Included_From_File.Last := cur_pos + Len - 1;
-      cur_pos := cur_pos + Len;
+      Tab.Included_From_File.First := Cur_Pos;
+      Tab.Included_From_File.Last := Cur_Pos + Len - 1;
+      Cur_Pos := Cur_Pos + Len;
       Parse_Position (
-         Get_Field (Key_Data_Pair.Key, 2), tab.Included_At_Position);
+         Get_Field (Key_Data_Pair.Key, 2), Tab.Included_At_Position);
       Number_Of_Allocated_Buffers := Number_Of_Allocated_Buffers + 1;
-      return tab;
+      return Tab;
    end Parse_Pair;
 
    function Parse_Pair (Key_Data_Pair : Pair) return IV_Table is
-      tab : IV_Table;
-      cur_pos : Integer;
+      Tab : IV_Table;
+      Cur_Pos : Integer;
       Len : Integer;
    begin
+      Tab.DBI := Key_Data_Pair.DBI;
       Len := Get_Total_Length (Key_Data_Pair.Key) +
          Get_Total_Length (Key_Data_Pair.Data);
-      tab.Buffer := new String (1 .. Len);
-      cur_pos := tab.Buffer'First;
+      Tab.Buffer := new String (1 .. Len);
+      Cur_Pos := Tab.Buffer'First;
       Len := Get_Field_Length (Key_Data_Pair.Key, 1);
-      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
+      Tab.Buffer (Cur_Pos .. (Cur_Pos + Len - 1)) :=
          Get_Field (Key_Data_Pair.Key, 1);
-      tab.Class.First := cur_pos;
-      tab.Class.Last := cur_pos + Len - 1;
-      cur_pos := cur_pos + Len;
+      Tab.Class.First := Cur_Pos;
+      Tab.Class.Last := Cur_Pos + Len - 1;
+      Cur_Pos := Cur_Pos + Len;
       Len := Get_Field_Length (Key_Data_Pair.Key, 2);
-      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
+      Tab.Buffer (Cur_Pos .. (Cur_Pos + Len - 1)) :=
          Get_Field (Key_Data_Pair.Key, 2);
-      tab.Name.First := cur_pos;
-      tab.Name.Last := cur_pos + Len - 1;
-      cur_pos := cur_pos + Len;
+      Tab.Name.First := Cur_Pos;
+      Tab.Name.Last := Cur_Pos + Len - 1;
+      Cur_Pos := Cur_Pos + Len;
       Len := Get_Field_Length (Key_Data_Pair.Key, 4);
-      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
+      Tab.Buffer (Cur_Pos .. (Cur_Pos + Len - 1)) :=
          Get_Field (Key_Data_Pair.Key, 4);
-      tab.File_Name.First := cur_pos;
-      tab.File_Name.Last := cur_pos + Len - 1;
-      cur_pos := cur_pos + Len;
+      Tab.File_Name.First := Cur_Pos;
+      Tab.File_Name.Last := Cur_Pos + Len - 1;
+      Cur_Pos := Cur_Pos + Len;
       Parse_Position (
-         Get_Field (Key_Data_Pair.Key, 3), tab.Start_Position);
+         Get_Field (Key_Data_Pair.Key, 3), Tab.Start_Position);
       Parse_Position (
-         Get_Field (Key_Data_Pair.Data, 1), tab.End_Position);
-      tab.Attributes := Parse_Hex (Get_Field (Key_Data_Pair.Data, 2));
-      Len := Get_Field_Length (Key_Data_Pair.Data, 3) - 2;
-      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
-         Remove_Brackets (Get_Field (Key_Data_Pair.Data, 3));
-      tab.Value_Type.First := cur_pos;
-      tab.Value_Type.Last := cur_pos + Len - 1;
-      cur_pos := cur_pos + Len;
-      Len := Get_Field_Length (Key_Data_Pair.Data, 6) - 2;
-      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
-         Remove_Brackets (Get_Field (Key_Data_Pair.Data, 6));
-      tab.Comments.First := cur_pos;
-      tab.Comments.Last := cur_pos + Len - 1;
-      cur_pos := cur_pos + Len;
+         Get_Field (Key_Data_Pair.Data, 1), Tab.End_Position);
+      Tab.Attributes := Parse_Hex (Get_Field (Key_Data_Pair.Data, 2));
+
+      Remove_Brackets
+        (Get_Field (Key_Data_Pair.Data, 3),
+         Tab.Buffer,
+         Cur_Pos,
+         Tab.Value_Type);
+
+      Remove_Brackets
+        (Get_Field (Key_Data_Pair.Data, 6),
+         Tab.Buffer,
+         Cur_Pos,
+         Tab.Comments);
+
       Number_Of_Allocated_Buffers := Number_Of_Allocated_Buffers + 1;
-      return tab;
+      return Tab;
    end Parse_Pair;
 
    function Parse_Pair (Key_Data_Pair : Pair) return LV_Table is
-      tab : LV_Table;
-      cur_pos : Integer;
+      Tab : LV_Table;
+      Cur_Pos : Integer;
       Len : Integer;
    begin
+      Tab.DBI := Key_Data_Pair.DBI;
       Len := Get_Total_Length (Key_Data_Pair.Key) +
          Get_Total_Length (Key_Data_Pair.Data);
-      tab.Buffer := new String (1 .. Len);
-      cur_pos := tab.Buffer'First;
+      Tab.Buffer := new String (1 .. Len);
+      Cur_Pos := Tab.Buffer'First;
       Len := Get_Field_Length (Key_Data_Pair.Key, 1);
-      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
+      Tab.Buffer (Cur_Pos .. (Cur_Pos + Len - 1)) :=
          Get_Field (Key_Data_Pair.Key, 1);
-      tab.Function_Name.First := cur_pos;
-      tab.Function_Name.Last := cur_pos + Len - 1;
-      cur_pos := cur_pos + Len;
+      Tab.Function_Name.First := Cur_Pos;
+      Tab.Function_Name.Last := Cur_Pos + Len - 1;
+      Cur_Pos := Cur_Pos + Len;
       Len := Get_Field_Length (Key_Data_Pair.Key, 2);
-      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
+      Tab.Buffer (Cur_Pos .. (Cur_Pos + Len - 1)) :=
          Get_Field (Key_Data_Pair.Key, 2);
-      tab.Name.First := cur_pos;
-      tab.Name.Last := cur_pos + Len - 1;
-      cur_pos := cur_pos + Len;
+      Tab.Name.First := Cur_Pos;
+      Tab.Name.Last := Cur_Pos + Len - 1;
+      Cur_Pos := Cur_Pos + Len;
       Len := Get_Field_Length (Key_Data_Pair.Key, 4);
-      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
+      Tab.Buffer (Cur_Pos .. (Cur_Pos + Len - 1)) :=
          Get_Field (Key_Data_Pair.Key, 4);
-      tab.File_Name.First := cur_pos;
-      tab.File_Name.Last := cur_pos + Len - 1;
-      cur_pos := cur_pos + Len;
+      Tab.File_Name.First := Cur_Pos;
+      Tab.File_Name.Last := Cur_Pos + Len - 1;
+      Cur_Pos := Cur_Pos + Len;
       Parse_Position (
-         Get_Field (Key_Data_Pair.Key, 3), tab.Start_Position);
+         Get_Field (Key_Data_Pair.Key, 3), Tab.Start_Position);
       Parse_Position (
-         Get_Field (Key_Data_Pair.Data, 1), tab.End_Position);
-      tab.Attributes := Parse_Hex (Get_Field (Key_Data_Pair.Data, 2));
-      Len := Get_Field_Length (Key_Data_Pair.Data, 4) - 2;
-      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
-         Remove_Brackets (Get_Field (Key_Data_Pair.Data, 4));
-      tab.Value_Type.First := cur_pos;
-      tab.Value_Type.Last := cur_pos + Len - 1;
-      cur_pos := cur_pos + Len;
-      Len := Get_Field_Length (Key_Data_Pair.Data, 3) - 2;
-      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
-         Remove_Brackets (Get_Field (Key_Data_Pair.Data, 3));
-      tab.Class.First := cur_pos;
-      tab.Class.Last := cur_pos + Len - 1;
-      cur_pos := cur_pos + Len;
-      Make_Vector_From_String (
-            Remove_Brackets (Get_Field (Key_Data_Pair.Data, 5)),
-            tab.Buffer, cur_pos, tab.Arg_Types);
-      Len := Get_Field_Length (Key_Data_Pair.Data, 6) - 2;
-      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
-         Remove_Brackets (Get_Field (Key_Data_Pair.Data, 6));
-      tab.Comments.First := cur_pos;
-      tab.Comments.Last := cur_pos + Len - 1;
-      cur_pos := cur_pos + Len;
+         Get_Field (Key_Data_Pair.Data, 1), Tab.End_Position);
+      Tab.Attributes := Parse_Hex (Get_Field (Key_Data_Pair.Data, 2));
+
+      Remove_Brackets
+        (Get_Field (Key_Data_Pair.Data, 3),
+         Tab.Buffer,
+         Cur_Pos,
+         Tab.Class);
+
+      Remove_Brackets
+        (Get_Field (Key_Data_Pair.Data, 4),
+         Tab.Buffer,
+         Cur_Pos,
+         Tab.Value_Type);
+
+      Remove_Brackets
+        (Get_Field (Key_Data_Pair.Data, 5),
+         Tab.Buffer,
+         Cur_Pos,
+         Tab.Arg_Types);
+
+      Remove_Brackets
+        (Get_Field (Key_Data_Pair.Data, 6),
+         Tab.Buffer,
+         Cur_Pos,
+         Tab.Comments);
+
       Number_Of_Allocated_Buffers := Number_Of_Allocated_Buffers + 1;
-      tab.Type_Start_Position := Get_Position_From_Comment
-        (tab.Comments,
-         tab.Buffer,
+      Tab.Type_Start_Position := Get_Position_From_Comment
+        (Tab.Comments,
+         Tab.Buffer,
          "type_beg");
-      return tab;
+      return Tab;
    end Parse_Pair;
 
    function Parse_Pair (Key_Data_Pair : Pair) return MA_Table is
-      tab : MA_Table;
-      cur_pos : Integer;
+      Tab : MA_Table;
+      Cur_Pos : Integer;
       Len : Integer;
    begin
+      Tab.DBI := Key_Data_Pair.DBI;
       Len := Get_Total_Length (Key_Data_Pair.Key) +
          Get_Total_Length (Key_Data_Pair.Data);
-      tab.Buffer := new String (1 .. Len);
-      cur_pos := tab.Buffer'First;
+      Tab.Buffer := new String (1 .. Len);
+      Cur_Pos := Tab.Buffer'First;
       Len := Get_Field_Length (Key_Data_Pair.Key, 1);
-      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
+      Tab.Buffer (Cur_Pos .. (Cur_Pos + Len - 1)) :=
          Get_Field (Key_Data_Pair.Key, 1);
-      tab.Name.First := cur_pos;
-      tab.Name.Last := cur_pos + Len - 1;
-      cur_pos := cur_pos + Len;
+      Tab.Name.First := Cur_Pos;
+      Tab.Name.Last := Cur_Pos + Len - 1;
+      Cur_Pos := Cur_Pos + Len;
       Len := Get_Field_Length (Key_Data_Pair.Key, 3);
-      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
+      Tab.Buffer (Cur_Pos .. (Cur_Pos + Len - 1)) :=
          Get_Field (Key_Data_Pair.Key, 3);
-      tab.File_Name.First := cur_pos;
-      tab.File_Name.Last := cur_pos + Len - 1;
-      cur_pos := cur_pos + Len;
+      Tab.File_Name.First := Cur_Pos;
+      Tab.File_Name.Last := Cur_Pos + Len - 1;
+      Cur_Pos := Cur_Pos + Len;
       Parse_Position (
-         Get_Field (Key_Data_Pair.Key, 2), tab.Start_Position);
+         Get_Field (Key_Data_Pair.Key, 2), Tab.Start_Position);
       Parse_Position (
-         Get_Field (Key_Data_Pair.Data, 1), tab.End_Position);
-      tab.Attributes := Parse_Hex (Get_Field (Key_Data_Pair.Data, 2));
-      Len := Get_Field_Length (Key_Data_Pair.Data, 6) - 2;
-      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
-         Remove_Brackets (Get_Field (Key_Data_Pair.Data, 6));
-      tab.Comments.First := cur_pos;
-      tab.Comments.Last := cur_pos + Len - 1;
-      cur_pos := cur_pos + Len;
+         Get_Field (Key_Data_Pair.Data, 1), Tab.End_Position);
+      Tab.Attributes := Parse_Hex (Get_Field (Key_Data_Pair.Data, 2));
+
+      Remove_Brackets
+        (Get_Field (Key_Data_Pair.Data, 6),
+         Tab.Buffer,
+         Cur_Pos,
+         Tab.Comments);
+
       Number_Of_Allocated_Buffers := Number_Of_Allocated_Buffers + 1;
-      return tab;
+      return Tab;
    end Parse_Pair;
 
    function Parse_Pair (Key_Data_Pair : Pair) return MD_Table is
-      tab : MD_Table;
-      cur_pos : Integer;
+      Tab : MD_Table;
+      Cur_Pos : Integer;
       Len : Integer;
    begin
+      Tab.DBI := Key_Data_Pair.DBI;
       Len := Get_Total_Length (Key_Data_Pair.Key) +
          Get_Total_Length (Key_Data_Pair.Data);
-      tab.Buffer := new String (1 .. Len);
-      cur_pos := tab.Buffer'First;
+      Tab.Buffer := new String (1 .. Len);
+      Cur_Pos := Tab.Buffer'First;
       Len := Get_Field_Length (Key_Data_Pair.Key, 1);
-      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
+      Tab.Buffer (Cur_Pos .. (Cur_Pos + Len - 1)) :=
          Get_Field (Key_Data_Pair.Key, 1);
-      tab.Class.First := cur_pos;
-      tab.Class.Last := cur_pos + Len - 1;
-      cur_pos := cur_pos + Len;
+      Tab.Class.First := Cur_Pos;
+      Tab.Class.Last := Cur_Pos + Len - 1;
+      Cur_Pos := Cur_Pos + Len;
       Len := Get_Field_Length (Key_Data_Pair.Key, 2);
-      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
+      Tab.Buffer (Cur_Pos .. (Cur_Pos + Len - 1)) :=
          Get_Field (Key_Data_Pair.Key, 2);
-      tab.Name.First := cur_pos;
-      tab.Name.Last := cur_pos + Len - 1;
-      cur_pos := cur_pos + Len;
+      Tab.Name.First := Cur_Pos;
+      Tab.Name.Last := Cur_Pos + Len - 1;
+      Cur_Pos := Cur_Pos + Len;
       Len := Get_Field_Length (Key_Data_Pair.Key, 4);
-      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
+      Tab.Buffer (Cur_Pos .. (Cur_Pos + Len - 1)) :=
          Get_Field (Key_Data_Pair.Key, 4);
-      tab.File_Name.First := cur_pos;
-      tab.File_Name.Last := cur_pos + Len - 1;
-      cur_pos := cur_pos + Len;
+      Tab.File_Name.First := Cur_Pos;
+      Tab.File_Name.Last := Cur_Pos + Len - 1;
+      Cur_Pos := Cur_Pos + Len;
       Parse_Position (
-         Get_Field (Key_Data_Pair.Key, 3), tab.Start_Position);
+         Get_Field (Key_Data_Pair.Key, 3), Tab.Start_Position);
       Parse_Position (
-         Get_Field (Key_Data_Pair.Data, 1), tab.End_Position);
-      tab.Attributes := Parse_Hex (Get_Field (Key_Data_Pair.Data, 2));
-      Len := Get_Field_Length (Key_Data_Pair.Data, 3) - 2;
-      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
-         Remove_Brackets (Get_Field (Key_Data_Pair.Data, 3));
-      tab.Return_Type.First := cur_pos;
-      tab.Return_Type.Last := cur_pos + Len - 1;
-      cur_pos := cur_pos + Len;
-      Make_Vector_From_String (
-            Remove_Brackets (Get_Field (Key_Data_Pair.Data, 4)),
-            tab.Buffer, cur_pos, tab.Arg_Types);
-      Make_Vector_From_String (
-            Remove_Brackets (Get_Field (Key_Data_Pair.Data, 5)),
-            tab.Buffer, cur_pos, tab.Arg_Names);
-      Len := Get_Field_Length (Key_Data_Pair.Data, 6) - 2;
-      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
-         Remove_Brackets (Get_Field (Key_Data_Pair.Data, 6));
-      tab.Comments.First := cur_pos;
-      tab.Comments.Last := cur_pos + Len - 1;
-      cur_pos := cur_pos + Len;
-      tab.Template_Parameters := Get_Segment_From_Comment
-        (tab.Comments,
-         tab.Buffer,
+         Get_Field (Key_Data_Pair.Data, 1), Tab.End_Position);
+      Tab.Attributes := Parse_Hex (Get_Field (Key_Data_Pair.Data, 2));
+
+      Remove_Brackets
+        (Get_Field (Key_Data_Pair.Data, 3),
+         Tab.Buffer,
+         Cur_Pos,
+         Tab.Return_Type);
+
+      Remove_Brackets
+        (Get_Field (Key_Data_Pair.Data, 4),
+         Tab.Buffer,
+         Cur_Pos,
+         Tab.Arg_Types);
+
+      --  Make_Vector_From_String (
+      --        Remove_Brackets (Get_Field (Key_Data_Pair.Data, 5)),
+      --        Tab.Buffer, Cur_Pos, Tab.Arg_Names);
+
+      Remove_Brackets
+        (Get_Field (Key_Data_Pair.Data, 6),
+         Tab.Buffer,
+         Cur_Pos,
+         Tab.Comments);
+
+      Tab.Template_Parameters := Get_Segment_From_Comment
+        (Tab.Comments,
+         Tab.Buffer,
          "template_args");
       Number_Of_Allocated_Buffers := Number_Of_Allocated_Buffers + 1;
-      return tab;
+      return Tab;
    end Parse_Pair;
 
    function Parse_Pair (Key_Data_Pair : Pair) return REM_Table is
-      tab : REM_Table;
-      cur_pos : Integer;
+      Tab : REM_Table;
+      Cur_Pos : Integer;
       Len : Integer;
    begin
+      Tab.DBI := Key_Data_Pair.DBI;
       Len := Get_Total_Length (Key_Data_Pair.Key) +
          Get_Total_Length (Key_Data_Pair.Data);
-      tab.Buffer := new String (1 .. Len);
-      cur_pos := tab.Buffer'First;
+      Tab.Buffer := new String (1 .. Len);
+      Cur_Pos := Tab.Buffer'First;
       Len := Get_Field_Length (Key_Data_Pair.Key, 1);
-      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
+      Tab.Buffer (Cur_Pos .. (Cur_Pos + Len - 1)) :=
          Get_Field (Key_Data_Pair.Key, 1);
-      tab.File_Name.First := cur_pos;
-      tab.File_Name.Last := cur_pos + Len - 1;
-      cur_pos := cur_pos + Len;
+      Tab.File_Name.First := Cur_Pos;
+      Tab.File_Name.Last := Cur_Pos + Len - 1;
+      Cur_Pos := Cur_Pos + Len;
       Parse_Position (
-         Get_Field (Key_Data_Pair.Key, 2), tab.Position);
+         Get_Field (Key_Data_Pair.Key, 2), Tab.Position);
       Len := Get_Field_Length (Key_Data_Pair.Key, 3);
-      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
+      Tab.Buffer (Cur_Pos .. (Cur_Pos + Len - 1)) :=
          Get_Field (Key_Data_Pair.Key, 3);
-      tab.Class.First := cur_pos;
-      tab.Class.Last := cur_pos + Len - 1;
-      cur_pos := cur_pos + Len;
+      Tab.Class.First := Cur_Pos;
+      Tab.Class.Last := Cur_Pos + Len - 1;
+      Cur_Pos := Cur_Pos + Len;
       Len := Get_Field_Length (Key_Data_Pair.Key, 4);
-      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
+      Tab.Buffer (Cur_Pos .. (Cur_Pos + Len - 1)) :=
          Get_Field (Key_Data_Pair.Key, 4);
-      tab.Method_Or_Function.First := cur_pos;
-      tab.Method_Or_Function.Last := cur_pos + Len - 1;
-      cur_pos := cur_pos + Len;
-      Len := Get_Field_Length (Key_Data_Pair.Data, 1) - 2;
-      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
-         Remove_Brackets (Get_Field (Key_Data_Pair.Data, 1));
-      tab.Comments.First := cur_pos;
-      tab.Comments.Last := cur_pos + Len - 1;
-      cur_pos := cur_pos + Len;
+      Tab.Method_Or_Function.First := Cur_Pos;
+      Tab.Method_Or_Function.Last := Cur_Pos + Len - 1;
+      Cur_Pos := Cur_Pos + Len;
+
+      Remove_Brackets
+        (Get_Field (Key_Data_Pair.Data, 1),
+         Tab.Buffer,
+         Cur_Pos,
+         Tab.Comments);
+
       Number_Of_Allocated_Buffers := Number_Of_Allocated_Buffers + 1;
-      return tab;
+      return Tab;
    end Parse_Pair;
 
    function Parse_Pair (Key_Data_Pair : Pair) return SU_Table is
-      tab : SU_Table;
-      cur_pos : Integer;
+      Tab : SU_Table;
+      Cur_Pos : Integer;
       Len : Integer;
    begin
+      Tab.DBI := Key_Data_Pair.DBI;
       Len := Get_Total_Length (Key_Data_Pair.Key) +
          Get_Total_Length (Key_Data_Pair.Data);
-      tab.Buffer := new String (1 .. Len);
-      cur_pos := tab.Buffer'First;
+      Tab.Buffer := new String (1 .. Len);
+      Cur_Pos := Tab.Buffer'First;
       Len := Get_Field_Length (Key_Data_Pair.Key, 1);
-      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
+      Tab.Buffer (Cur_Pos .. (Cur_Pos + Len - 1)) :=
          Get_Field (Key_Data_Pair.Key, 1);
-      tab.Name.First := cur_pos;
-      tab.Name.Last := cur_pos + Len - 1;
-      cur_pos := cur_pos + Len;
+      Tab.Name.First := Cur_Pos;
+      Tab.Name.Last := Cur_Pos + Len - 1;
+      Cur_Pos := Cur_Pos + Len;
       Len := Get_Field_Length (Key_Data_Pair.Key, 3);
-      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
+      Tab.Buffer (Cur_Pos .. (Cur_Pos + Len - 1)) :=
          Get_Field (Key_Data_Pair.Key, 3);
-      tab.File_Name.First := cur_pos;
-      tab.File_Name.Last := cur_pos + Len - 1;
-      cur_pos := cur_pos + Len;
+      Tab.File_Name.First := Cur_Pos;
+      Tab.File_Name.Last := Cur_Pos + Len - 1;
+      Cur_Pos := Cur_Pos + Len;
       Parse_Position (
-         Get_Field (Key_Data_Pair.Key, 2), tab.Position);
-      tab.Attributes := Parse_Hex (Get_Field (Key_Data_Pair.Data, 1));
-      Len := Get_Field_Length (Key_Data_Pair.Data, 4) - 2;
-      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
-         Remove_Brackets (Get_Field (Key_Data_Pair.Data, 4));
-      tab.Comments.First := cur_pos;
-      tab.Comments.Last := cur_pos + Len - 1;
-      cur_pos := cur_pos + Len;
+         Get_Field (Key_Data_Pair.Key, 2), Tab.Position);
+      Tab.Attributes := Parse_Hex (Get_Field (Key_Data_Pair.Data, 1));
+      Remove_Brackets
+        (Get_Field (Key_Data_Pair.Data, 4),
+         Tab.Buffer,
+         Cur_Pos,
+         Tab.Comments);
       Number_Of_Allocated_Buffers := Number_Of_Allocated_Buffers + 1;
-      return tab;
+      return Tab;
    end Parse_Pair;
 
    function Parse_Pair (Key_Data_Pair : Pair) return T_Table is
-      tab : T_Table;
-      cur_pos : Integer;
+      Tab : T_Table;
+      Cur_Pos : Integer;
       Len : Integer;
    begin
+      Tab.DBI := Key_Data_Pair.DBI;
       Len := Get_Total_Length (Key_Data_Pair.Key) +
          Get_Total_Length (Key_Data_Pair.Data);
-      tab.Buffer := new String (1 .. Len);
-      cur_pos := tab.Buffer'First;
+      Tab.Buffer := new String (1 .. Len);
+      Cur_Pos := Tab.Buffer'First;
       Len := Get_Field_Length (Key_Data_Pair.Key, 1);
-      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
+      Tab.Buffer (Cur_Pos .. (Cur_Pos + Len - 1)) :=
          Get_Field (Key_Data_Pair.Key, 1);
-      tab.Name.First := cur_pos;
-      tab.Name.Last := cur_pos + Len - 1;
-      cur_pos := cur_pos + Len;
+      Tab.Name.First := Cur_Pos;
+      Tab.Name.Last := Cur_Pos + Len - 1;
+      Cur_Pos := Cur_Pos + Len;
       Len := Get_Field_Length (Key_Data_Pair.Key, 3);
-      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
+      Tab.Buffer (Cur_Pos .. (Cur_Pos + Len - 1)) :=
          Get_Field (Key_Data_Pair.Key, 3);
-      tab.File_Name.First := cur_pos;
-      tab.File_Name.Last := cur_pos + Len - 1;
-      cur_pos := cur_pos + Len;
+      Tab.File_Name.First := Cur_Pos;
+      Tab.File_Name.Last := Cur_Pos + Len - 1;
+      Cur_Pos := Cur_Pos + Len;
       Parse_Position (
-         Get_Field (Key_Data_Pair.Key, 2), tab.Start_Position);
+         Get_Field (Key_Data_Pair.Key, 2), Tab.Start_Position);
       Parse_Position (
-         Get_Field (Key_Data_Pair.Data, 1), tab.End_Position);
-      tab.Attributes := Parse_Hex (Get_Field (Key_Data_Pair.Data, 2));
-      Len := Get_Field_Length (Key_Data_Pair.Data, 3) - 2;
-      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
-         Remove_Brackets (Get_Field (Key_Data_Pair.Data, 3));
-      tab.Original.First := cur_pos;
-      tab.Original.Last := cur_pos + Len - 1;
-      cur_pos := cur_pos + Len;
-      Len := Get_Field_Length (Key_Data_Pair.Data, 6) - 2;
-      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
-         Remove_Brackets (Get_Field (Key_Data_Pair.Data, 6));
-      tab.Comments.First := cur_pos;
-      tab.Comments.Last := cur_pos + Len - 1;
-      cur_pos := cur_pos + Len;
+         Get_Field (Key_Data_Pair.Data, 1), Tab.End_Position);
+      Tab.Attributes := Parse_Hex (Get_Field (Key_Data_Pair.Data, 2));
 
-      tab.Class_Name := Get_Segment_From_Comment
-        (tab.Comments,
-         tab.Buffer,
+      Remove_Brackets
+        (Get_Field (Key_Data_Pair.Data, 3),
+         Tab.Buffer,
+         Cur_Pos,
+         Tab.Original);
+
+      Remove_Brackets
+        (Get_Field (Key_Data_Pair.Data, 6),
+         Tab.Buffer,
+         Cur_Pos,
+         Tab.Comments);
+
+      Tab.Class_Name := Get_Segment_From_Comment
+        (Tab.Comments,
+         Tab.Buffer,
          "class");
 
       Number_Of_Allocated_Buffers := Number_Of_Allocated_Buffers + 1;
-      return tab;
+      return Tab;
    end Parse_Pair;
 
    function Parse_Pair (Key_Data_Pair : Pair) return TA_Table is
-      tab : TA_Table;
-      cur_pos : Integer;
+      Tab : TA_Table;
+      Cur_Pos : Integer;
       Len : Integer := Get_Total_Length (Key_Data_Pair.Key)
         + Get_Total_Length (Key_Data_Pair.Data);
    begin
-      tab.Buffer := new String (1 .. Len);
+      Tab.DBI := Key_Data_Pair.DBI;
+      Tab.Buffer := new String (1 .. Len);
 
       --  Scope
-      cur_pos := tab.Buffer'First;
+      Cur_Pos := Tab.Buffer'First;
       Len := Get_Field_Length (Key_Data_Pair.Key, 1);
-      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
+      Tab.Buffer (Cur_Pos .. (Cur_Pos + Len - 1)) :=
          Get_Field (Key_Data_Pair.Key, 1);
-      tab.Scope.First := cur_pos;
-      tab.Scope.Last := cur_pos + Len - 1;
-      cur_pos := cur_pos + Len;
+      Tab.Scope.First := Cur_Pos;
+      Tab.Scope.Last := Cur_Pos + Len - 1;
+      Cur_Pos := Cur_Pos + Len;
 
       --  Name
-      cur_pos := tab.Buffer'First;
+      Cur_Pos := Tab.Buffer'First;
       Len := Get_Field_Length (Key_Data_Pair.Key, 2);
-      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
+      Tab.Buffer (Cur_Pos .. (Cur_Pos + Len - 1)) :=
          Get_Field (Key_Data_Pair.Key, 2);
-      tab.Name.First := cur_pos;
-      tab.Name.Last := cur_pos + Len - 1;
-      cur_pos := cur_pos + Len;
+      Tab.Name.First := Cur_Pos;
+      Tab.Name.Last := Cur_Pos + Len - 1;
+      Cur_Pos := Cur_Pos + Len;
 
       --  File_Name
       Len := Get_Field_Length (Key_Data_Pair.Key, 4);
-      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
+      Tab.Buffer (Cur_Pos .. (Cur_Pos + Len - 1)) :=
          Get_Field (Key_Data_Pair.Key, 4);
-      tab.File_Name.First := cur_pos;
-      tab.File_Name.Last := cur_pos + Len - 1;
-      cur_pos := cur_pos + Len;
+      Tab.File_Name.First := Cur_Pos;
+      Tab.File_Name.Last := Cur_Pos + Len - 1;
+      Cur_Pos := Cur_Pos + Len;
 
       --  Start_Position
       Parse_Position (
-         Get_Field (Key_Data_Pair.Key, 3), tab.Start_Position);
+         Get_Field (Key_Data_Pair.Key, 3), Tab.Start_Position);
 
       --  Type_Position
       Parse_Position (
-         Get_Field (Key_Data_Pair.Data, 1), tab.Type_Position);
+         Get_Field (Key_Data_Pair.Data, 1), Tab.Type_Position);
 
       --  Attributes
-      tab.Attributes := Parse_Hex (Get_Field (Key_Data_Pair.Data, 2));
+      Tab.Attributes := Parse_Hex (Get_Field (Key_Data_Pair.Data, 2));
 
       --  Value_Type
-      Len := Get_Field_Length (Key_Data_Pair.Data, 3) - 2;
-      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
-         Remove_Brackets (Get_Field (Key_Data_Pair.Data, 3));
-      tab.Value_Type.First := cur_pos;
-      tab.Value_Type.Last := cur_pos + Len - 1;
-      cur_pos := cur_pos + Len;
+      Remove_Brackets
+        (Get_Field (Key_Data_Pair.Data, 3),
+         Tab.Buffer,
+         Cur_Pos,
+         Tab.Value_Type);
 
       --  Template_Args
-      Len := Get_Field_Length (Key_Data_Pair.Data, 4) - 2;
-      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
-         Remove_Brackets (Get_Field (Key_Data_Pair.Data, 4));
-      tab.Template_Parameters.First := cur_pos;
-      tab.Template_Parameters.Last := cur_pos + Len - 1;
-      cur_pos := cur_pos + Len;
+      Remove_Brackets
+        (Get_Field (Key_Data_Pair.Data, 4),
+         Tab.Buffer,
+         Cur_Pos,
+         Tab.Template_Parameters);
 
       --  Comments
-      Len := Get_Field_Length (Key_Data_Pair.Data, 6) - 2;
-      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
-         Remove_Brackets (Get_Field (Key_Data_Pair.Data, 6));
-      tab.Comments.First := cur_pos;
-      tab.Comments.Last := cur_pos + Len - 1;
-      cur_pos := cur_pos + Len;
+      Remove_Brackets
+        (Get_Field (Key_Data_Pair.Data, 6),
+         Tab.Buffer,
+         Cur_Pos,
+         Tab.Comments);
 
-      tab.Class_Name := Get_Segment_From_Comment
-        (tab.Comments,
-         tab.Buffer,
+      Tab.Class_Name := Get_Segment_From_Comment
+        (Tab.Comments,
+         Tab.Buffer,
          "class");
 
       Number_Of_Allocated_Buffers := Number_Of_Allocated_Buffers + 1;
-      return tab;
+      return Tab;
    end Parse_Pair;
 
    function Parse_Pair (Key_Data_Pair : Pair) return TO_Table is
-      tab : TO_Table;
-      cur_pos : Integer;
+      Tab : TO_Table;
+      Cur_Pos : Integer;
       Len : Integer;
    begin
+      Tab.DBI := Key_Data_Pair.DBI;
       Len := Get_Total_Length (Key_Data_Pair.Key) +
          Get_Total_Length (Key_Data_Pair.Data);
-      tab.Buffer := new String (1 .. Len);
-      cur_pos := tab.Buffer'First;
+      Tab.Buffer := new String (1 .. Len);
+      Cur_Pos := Tab.Buffer'First;
       Len := Get_Field_Length (Key_Data_Pair.Key, 1);
-      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
+      Tab.Buffer (Cur_Pos .. (Cur_Pos + Len - 1)) :=
          Get_Field (Key_Data_Pair.Key, 1);
-      tab.Class.First := cur_pos;
-      tab.Class.Last := cur_pos + Len - 1;
-      cur_pos := cur_pos + Len;
+      Tab.Class.First := Cur_Pos;
+      Tab.Class.Last := Cur_Pos + Len - 1;
+      Cur_Pos := Cur_Pos + Len;
       Len := Get_Field_Length (Key_Data_Pair.Key, 2);
-      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
+      Tab.Buffer (Cur_Pos .. (Cur_Pos + Len - 1)) :=
          Get_Field (Key_Data_Pair.Key, 2);
-      tab.Symbol_Name.First := cur_pos;
-      tab.Symbol_Name.Last := cur_pos + Len - 1;
-      cur_pos := cur_pos + Len;
-      tab.Symbol :=
+      Tab.Symbol_Name.First := Cur_Pos;
+      Tab.Symbol_Name.Last := Cur_Pos + Len - 1;
+      Cur_Pos := Cur_Pos + Len;
+      Tab.Symbol :=
          Parse_Symbol (Get_Field (Key_Data_Pair.Key, 3));
       Len := Get_Field_Length (Key_Data_Pair.Key, 4);
-      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
+      Tab.Buffer (Cur_Pos .. (Cur_Pos + Len - 1)) :=
          Get_Field (Key_Data_Pair.Key, 4);
-      tab.Referred_Class.First := cur_pos;
-      tab.Referred_Class.Last := cur_pos + Len - 1;
-      cur_pos := cur_pos + Len;
+      Tab.Referred_Class.First := Cur_Pos;
+      Tab.Referred_Class.Last := Cur_Pos + Len - 1;
+      Cur_Pos := Cur_Pos + Len;
       Len := Get_Field_Length (Key_Data_Pair.Key, 5);
-      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
+      Tab.Buffer (Cur_Pos .. (Cur_Pos + Len - 1)) :=
          Get_Field (Key_Data_Pair.Key, 5);
-      tab.Referred_Symbol_Name.First := cur_pos;
-      tab.Referred_Symbol_Name.Last := cur_pos + Len - 1;
-      cur_pos := cur_pos + Len;
-      tab.Referred_Symbol :=
+      Tab.Referred_Symbol_Name.First := Cur_Pos;
+      Tab.Referred_Symbol_Name.Last := Cur_Pos + Len - 1;
+      Cur_Pos := Cur_Pos + Len;
+      Tab.Referred_Symbol :=
          Parse_Symbol (Get_Field (Key_Data_Pair.Key, 6));
       Len := Get_Field_Length (Key_Data_Pair.Key, 7);
-      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
+      Tab.Buffer (Cur_Pos .. (Cur_Pos + Len - 1)) :=
          Get_Field (Key_Data_Pair.Key, 7);
-      tab.Access_Type.First := cur_pos;
-      tab.Access_Type.Last := cur_pos + Len - 1;
-      cur_pos := cur_pos + Len;
+      Tab.Access_Type.First := Cur_Pos;
+      Tab.Access_Type.Last := Cur_Pos + Len - 1;
+      Cur_Pos := Cur_Pos + Len;
       Len := Get_Field_Length (Key_Data_Pair.Key, 9);
-      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
+      Tab.Buffer (Cur_Pos .. (Cur_Pos + Len - 1)) :=
          Get_Field (Key_Data_Pair.Key, 9);
-      tab.File_Name.First := cur_pos;
-      tab.File_Name.Last := cur_pos + Len - 1;
-      cur_pos := cur_pos + Len;
+      Tab.File_Name.First := Cur_Pos;
+      Tab.File_Name.Last := Cur_Pos + Len - 1;
+      Cur_Pos := Cur_Pos + Len;
       Parse_Position (
-         Get_Field (Key_Data_Pair.Key, 8), tab.Position);
-      Make_Vector_From_String (
-            Remove_Brackets (Get_Field (Key_Data_Pair.Data, 1)),
-            tab.Buffer, cur_pos, tab.Caller_Argument_Types);
-      Make_Vector_From_String (
-            Remove_Brackets (Get_Field (Key_Data_Pair.Data, 2)),
-            tab.Buffer, cur_pos, tab.Referred_Argument_Types);
+         Get_Field (Key_Data_Pair.Key, 8), Tab.Position);
+      Remove_Brackets
+        (Get_Field (Key_Data_Pair.Data, 1),
+         Tab.Buffer,
+         Cur_Pos,
+         Tab.Caller_Argument_Types);
+      Remove_Brackets
+        (Get_Field (Key_Data_Pair.Data, 2),
+         Tab.Buffer,
+         Cur_Pos,
+         Tab.Referred_Argument_Types);
       Number_Of_Allocated_Buffers := Number_Of_Allocated_Buffers + 1;
-      return tab;
+      return Tab;
    end Parse_Pair;
 
    ----------
@@ -1213,8 +1273,8 @@ package body SN.DB_Structures is
    procedure Free (target : in out BY_Table) is
    begin
       Free (target.Buffer);
-      Segment_Vector.Release_Vector (target.Caller_Argument_Types);
-      Segment_Vector.Release_Vector (target.Referred_Argument_Types);
+      --  Segment_Vector.Release_Vector (target.Caller_Argument_Types);
+      --  Segment_Vector.Release_Vector (target.Referred_Argument_Types);
       Number_Of_Allocated_Buffers := Number_Of_Allocated_Buffers - 1;
    end Free;
 
@@ -1263,31 +1323,31 @@ package body SN.DB_Structures is
    procedure Free (target : in out FD_Table) is
    begin
       Free (target.Buffer);
-      Segment_Vector.Release_Vector (target.Arg_Types);
-      Segment_Vector.Release_Vector (target.Arg_Names);
+      --  Segment_Vector.Release_Vector (target.Arg_Types);
+      --  Segment_Vector.Release_Vector (target.Arg_Names);
       Number_Of_Allocated_Buffers := Number_Of_Allocated_Buffers - 1;
    end Free;
 
    procedure Free (target : in out FIL_Table) is
    begin
       Free (target.Buffer);
-      Segment_Vector.Release_Vector (target.Types_Of_Arguments);
+      --  Segment_Vector.Release_Vector (target.Types_Of_Arguments);
       Number_Of_Allocated_Buffers := Number_Of_Allocated_Buffers - 1;
    end Free;
 
    procedure Free (target : in out FR_Table) is
    begin
       Free (target.Buffer);
-      Segment_Vector.Release_Vector (target.Arg_Types);
-      Segment_Vector.Release_Vector (target.Arg_Names);
+      --  Segment_Vector.Release_Vector (target.Arg_Types);
+      --  Segment_Vector.Release_Vector (target.Arg_Names);
       Number_Of_Allocated_Buffers := Number_Of_Allocated_Buffers - 1;
    end Free;
 
    procedure Free (target : in out FU_Table) is
    begin
       Free (target.Buffer);
-      Segment_Vector.Release_Vector (target.Arg_Types);
-      Segment_Vector.Release_Vector (target.Arg_Names);
+      --  Segment_Vector.Release_Vector (target.Arg_Types);
+      --  Segment_Vector.Release_Vector (target.Arg_Names);
       Number_Of_Allocated_Buffers := Number_Of_Allocated_Buffers - 1;
    end Free;
 
@@ -1318,7 +1378,7 @@ package body SN.DB_Structures is
    procedure Free (target : in out LV_Table) is
    begin
       Free (target.Buffer);
-      Segment_Vector.Release_Vector (target.Arg_Types);
+      --  Segment_Vector.Release_Vector (target.Arg_Types);
       Number_Of_Allocated_Buffers := Number_Of_Allocated_Buffers - 1;
    end Free;
 
@@ -1331,8 +1391,8 @@ package body SN.DB_Structures is
    procedure Free (target : in out MD_Table) is
    begin
       Free (target.Buffer);
-      Segment_Vector.Release_Vector (target.Arg_Types);
-      Segment_Vector.Release_Vector (target.Arg_Names);
+      --  Segment_Vector.Release_Vector (target.Arg_Types);
+      --  Segment_Vector.Release_Vector (target.Arg_Names);
       Number_Of_Allocated_Buffers := Number_Of_Allocated_Buffers - 1;
    end Free;
 
@@ -1426,12 +1486,17 @@ package body SN.DB_Structures is
       return SN_Attributes (val);
    end Parse_Hex;
 
-   function Remove_Brackets (String_With_Brackets : String) return String is
-      result_str : String (1 .. (String_With_Brackets'Length - 2));
+   procedure Remove_Brackets
+      (Str     :        String;
+       Buffer  :        GNAT.OS_Lib.String_Access;
+       Cur_Pos : in out Integer;
+       Seg     : out    Segment)
+   is
    begin
-      result_str :=
-         String_With_Brackets (2 .. (String_With_Brackets'Length - 1));
-      return result_str;
+      Seg.First := Cur_Pos;
+      Seg.Last  := Cur_Pos + Str'Length - 3;
+      Buffer (Seg.First .. Seg.Last) := Str (Str'First + 1 .. Str'Last - 1);
+      Cur_Pos   := Seg.Last + 1;
    end Remove_Brackets;
 
    -----------------------------

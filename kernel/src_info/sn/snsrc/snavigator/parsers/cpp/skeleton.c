@@ -252,8 +252,11 @@ main(int argc, char *argv[])
             exit(2);
          }
       }
-      else
-         Paf_db_init_tables(db_prefix,cachesize,NULL);
+      else {
+         /* unused entry */
+         Paf_set_dbnum (1);
+         Paf_db_init_tables(db_prefix,cachesize,NULL, 0);
+      }
 
       if (include_files)
       {

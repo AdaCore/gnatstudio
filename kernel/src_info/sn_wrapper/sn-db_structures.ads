@@ -45,9 +45,10 @@ package SN.DB_Structures is
       Access_Type : Segment;
       File_Name : Segment;
       Position : Point;
-      Referred_Argument_Types : Segment_Vector.Node_Access;
-      Caller_Argument_Types : Segment_Vector.Node_Access;
+      Referred_Argument_Types : Segment;
+      Caller_Argument_Types : Segment;
       Buffer : GNAT.OS_Lib.String_Access;
+      DBI : Integer;
    end record;
    --  Referred-By
 
@@ -60,6 +61,7 @@ package SN.DB_Structures is
       Template_Parameters : Segment;
       Comments : Segment;
       Buffer : GNAT.OS_Lib.String_Access;
+      DBI : Integer;
    end record;
    --  Classes
 
@@ -71,6 +73,7 @@ package SN.DB_Structures is
       Attributes : SN_Attributes;
       Comments : Segment;
       Buffer : GNAT.OS_Lib.String_Access;
+      DBI : Integer;
    end record;
    --  Common blocks
 
@@ -84,6 +87,7 @@ package SN.DB_Structures is
       Type_Start_Position : Point;
       Comments : Segment;
       Buffer : GNAT.OS_Lib.String_Access;
+      DBI : Integer;
    end record;
    --  Constants
 
@@ -96,6 +100,7 @@ package SN.DB_Structures is
       Attributes : SN_Attributes;
       Comments : Segment;
       Buffer : GNAT.OS_Lib.String_Access;
+      DBI : Integer;
    end record;
    --  Common value
 
@@ -107,6 +112,7 @@ package SN.DB_Structures is
       Attributes : SN_Attributes;
       Comments : Segment;
       Buffer : GNAT.OS_Lib.String_Access;
+      DBI : Integer;
    end record;
    --  Enumerations
 
@@ -118,6 +124,7 @@ package SN.DB_Structures is
       Attributes : SN_Attributes;
       Enumeration_Name : Segment;
       Buffer : GNAT.OS_Lib.String_Access;
+      DBI : Integer;
    end record;
    --  Enumeration constants
 
@@ -127,6 +134,7 @@ package SN.DB_Structures is
       Parsing_Time : Segment;
       Highlight_File : Segment;
       Buffer : GNAT.OS_Lib.String_Access;
+      DBI : Integer;
    end record;
    --  Project File
 
@@ -137,11 +145,13 @@ package SN.DB_Structures is
       End_Position : Point;
       Attributes : SN_Attributes;
       Return_Type : Segment;
-      Arg_Types : Segment_Vector.Node_Access;
-      Arg_Names : Segment_Vector.Node_Access;
+      Arg_Types : Segment;
+      --  We don't need names
+      --  Arg_Names : Segment_Vector.Node_Access;
       Comments : Segment;
       Template_Parameters : Segment;
       Buffer : GNAT.OS_Lib.String_Access;
+      DBI : Integer;
    end record;
    --  Function declarations
 
@@ -154,8 +164,9 @@ package SN.DB_Structures is
       End_Position : Point;
       Highlight_Start_Position : Point;
       Highlight_End_Position : Point;
-      Types_Of_Arguments : Segment_Vector.Node_Access;
+      Types_Of_Arguments : Segment;
       Buffer : GNAT.OS_Lib.String_Access;
+      DBI : Integer;
    end record;
    --  Symbols of files
 
@@ -166,10 +177,12 @@ package SN.DB_Structures is
       End_Position : Point;
       Attributes : SN_Attributes;
       Return_Type : Segment;
-      Arg_Types : Segment_Vector.Node_Access;
-      Arg_Names : Segment_Vector.Node_Access;
+      Arg_Types : Segment;
+      --  We don't need names
+      --  Arg_Names : Segment_Vector.Node_Access;
       Comments : Segment;
       Buffer : GNAT.OS_Lib.String_Access;
+      DBI : Integer;
    end record;
    --  Friends
 
@@ -181,11 +194,13 @@ package SN.DB_Structures is
       End_Position : Point;
       Attributes : SN_Attributes;
       Return_Type : Segment;
-      Arg_Types : Segment_Vector.Node_Access;
-      Arg_Names : Segment_Vector.Node_Access;
+      Arg_Types : Segment;
+      --  We don't need names
+      --  Arg_Names : Segment_Vector.Node_Access;
       Comments : Segment;
       Template_Parameters : Segment;
       Buffer : GNAT.OS_Lib.String_Access;
+      DBI : Integer;
    end record;
    --  Function implementations
    --  The same structure used for method implementations (MI)
@@ -201,6 +216,7 @@ package SN.DB_Structures is
       Comments : Segment;
       Type_Start_Position : Point;
       Buffer : GNAT.OS_Lib.String_Access;
+      DBI : Integer;
    end record;
    --  Global variables
 
@@ -213,6 +229,7 @@ package SN.DB_Structures is
       Attributes : SN_Attributes;
       Comments : Segment;
       Buffer : GNAT.OS_Lib.String_Access;
+      DBI : Integer;
    end record;
    --  Inheritances
 
@@ -221,6 +238,7 @@ package SN.DB_Structures is
       Included_From_File : Segment;
       Included_At_Position : Point;
       Buffer : GNAT.OS_Lib.String_Access;
+      DBI : Integer;
    end record;
    --  Includes
 
@@ -234,6 +252,7 @@ package SN.DB_Structures is
       Value_Type : Segment;
       Comments : Segment;
       Buffer : GNAT.OS_Lib.String_Access;
+      DBI : Integer;
    end record;
    --  Instance variables
 
@@ -246,10 +265,11 @@ package SN.DB_Structures is
       Attributes : SN_Attributes;
       Class : Segment;
       Value_Type : Segment;
-      Arg_Types : Segment_Vector.Node_Access;
+      Arg_Types : Segment;
       Comments : Segment;
       Type_Start_Position : Point;
       Buffer : GNAT.OS_Lib.String_Access;
+      DBI : Integer;
    end record;
    --  Local variables
 
@@ -261,6 +281,7 @@ package SN.DB_Structures is
       Attributes : SN_Attributes;
       Comments : Segment;
       Buffer : GNAT.OS_Lib.String_Access;
+      DBI : Integer;
    end record;
    --  Macros
 
@@ -272,11 +293,13 @@ package SN.DB_Structures is
       End_Position : Point;
       Attributes : SN_Attributes;
       Return_Type : Segment;
-      Arg_Types : Segment_Vector.Node_Access;
-      Arg_Names : Segment_Vector.Node_Access;
+      Arg_Types : Segment;
+      --  We don't need names
+      --  Arg_Names : Segment_Vector.Node_Access;
       Template_Parameters : Segment;
       Comments : Segment;
       Buffer : GNAT.OS_Lib.String_Access;
+      DBI : Integer;
    end record;
    --  Method definitions
 
@@ -287,6 +310,7 @@ package SN.DB_Structures is
       Method_Or_Function : Segment;
       Comments : Segment;
       Buffer : GNAT.OS_Lib.String_Access;
+      DBI : Integer;
    end record;
    --  Remarks
 
@@ -297,6 +321,7 @@ package SN.DB_Structures is
       Attributes : SN_Attributes;
       Comments : Segment;
       Buffer : GNAT.OS_Lib.String_Access;
+      DBI : Integer;
    end record;
    --  Subroutines
 
@@ -310,6 +335,7 @@ package SN.DB_Structures is
       Comments : Segment;
       Class_Name : Segment; -- name of enclosed class
       Buffer : GNAT.OS_Lib.String_Access;
+      DBI : Integer;
    end record;
    --  Typedefs
 
@@ -325,6 +351,7 @@ package SN.DB_Structures is
       Template_Parameters  : Segment;
       Comments       : Segment;
       Buffer         : GNAT.OS_Lib.String_Access;
+      DBI : Integer;
    end record;
       --  Template arguments
 
@@ -338,9 +365,10 @@ package SN.DB_Structures is
       Access_Type : Segment;
       File_Name : Segment;
       Position : Point;
-      Caller_Argument_Types : Segment_Vector.Node_Access;
-      Referred_Argument_Types : Segment_Vector.Node_Access;
+      Caller_Argument_Types : Segment;
+      Referred_Argument_Types : Segment;
       Buffer : GNAT.OS_Lib.String_Access;
+      DBI : Integer;
    end record;
    --  References-To
 

@@ -113,11 +113,11 @@ package Src_Info.Type_Utils is
       End_Position        => Invalid_Point,
       Attributes          => 0,
       Return_Type         => Invalid_Segment,
-      Arg_Types           => null,
-      Arg_Names           => null,
+      Arg_Types           => Invalid_Segment,
       Comments            => Invalid_Segment,
       Template_Parameters => Invalid_Segment,
-      Buffer              => null
+      Buffer              => null,
+      DBI                 => 0
    );
 
    Invalid_CL_Table    : constant CL_Table := (
@@ -128,7 +128,8 @@ package Src_Info.Type_Utils is
       Attributes          => 0,
       Template_Parameters => Invalid_Segment,
       Comments            => Invalid_Segment,
-      Buffer              => null
+      Buffer              => null,
+      DBI                 => 0
    );
 
    procedure Type_Name_To_Kind
@@ -208,7 +209,7 @@ package Src_Info.Type_Utils is
 
    function Cmp_Arg_Types
      (Buffer_A, Buffer_B     : GNAT.OS_Lib.String_Access;
-      Args_A, Args_B         : DB_Structures.Segment_Vector.Node_Access;
+      Args_A, Args_B         : Segment;
       Strict                 : Boolean := False)
       return Boolean;
    --  Checks to see if argument types are the same.
@@ -222,7 +223,7 @@ package Src_Info.Type_Utils is
 
    function Cmp_Prototypes
      (Buffer_A, Buffer_B     : GNAT.OS_Lib.String_Access;
-      Args_A, Args_B         : DB_Structures.Segment_Vector.Node_Access;
+      Args_A, Args_B         : Segment;
       Ret_Type_A, Ret_Type_B : Segment;
       Strict                 : Boolean := False)
       return Boolean;

@@ -39,29 +39,16 @@ package body DB_API is
    use type CStrings.chars_ptr;
    use type System.Address;
 
-   --  Constants for Set_Cursor operation (see db_capi.c for details).
-   POS_FIRST  : constant C.int := 1;
-   POS_LAST   : constant C.int := 2;
-   POS_BY_KEY : constant C.int := 3;
+   -------------------
+   -- Internal_Free --
+   -------------------
 
-   --  Constants for Get_Pair operation
-   MOVE_PREV   : constant C.int := 4;
-   MOVE_NEXT   : constant C.int := 5;
-   MOVE_BY_KEY : constant C.int := 6;
-
-   -------------
-   -- Is_Null --
-   -------------
-
-   function Is_Null (DB : DB_File) return Boolean is
-   begin
-      return DB = null;
-   end Is_Null;
+   procedure Internal_Free (DB : DB_File);
+   pragma Import (C, Internal_Free, "free");
 
    ----------------
    -- Last_ErrNo --
    ----------------
-
    function Last_ErrNo (DB : DB_File) return C.int;
    pragma Import (C, Last_ErrNo, "ada_get_last_errno");
 
@@ -73,7 +60,7 @@ package body DB_API is
       function Internal_Err_Msg (DB : DB_File) return CStrings.chars_ptr;
       pragma Import (C, Internal_Err_Msg, "ada_get_errstr");
    begin
-      if Is_Null (DB) then
+      if DB = null then
          return E_Init_Failed;
       else
          return CStrings.Value (Internal_Err_Msg (DB));
@@ -84,19 +71,47 @@ package body DB_API is
    -- Open --
    ----------
 
-   procedure Open (DB : out DB_File; File_Name : String) is
-      function Internal_Open (File_Name : String) return DB_File;
+   procedure Open (DB : out DB_File; File_Names : String_List_Access) is
+      function Internal_Open
+        (Num_Of_Files : Integer;
+         File_Names   : System.Address) return DB_File;
       pragma Import (C, Internal_Open, "ada_db_open");
+
+      procedure Free (List : in out String_List);
+
+      procedure Free (List : in out String_List) is
+      begin
+         for I in List'Range loop
+            Free (List (I));
+         end loop;
+      end Free;
+
+      C_File_Names : String_List (File_Names'Range);
+      C_P_P_Char   : array (File_Names'Range) of System.Address; -- char **
    begin
-      DB := Internal_Open (File_Name & ASCII.NUL);
-      if Is_Null (DB) then
+      for I in File_Names'Range loop
+         C_File_Names (I) := new String' (File_Names (I).all & ASCII.NUL);
+         C_P_P_Char (I) := C_File_Names (I).all'Address;
+      end loop;
+
+      DB := Internal_Open (C_File_Names'Length, C_P_P_Char'Address);
+
+      Free (C_File_Names);
+
+      if DB = null then
          Raise_Exception (DB_Open_Error'Identity,
            E_Mem_Failed);
       end if;
+
       if Last_ErrNo (DB) /= 0 then
-         Raise_Exception (DB_Open_Error'Identity,
-           Error_Message (DB));
+         declare
+            Err_Msg : constant String := Error_Message (DB);
+         begin
+            Internal_Free (DB);
+            Raise_Exception (DB_Open_Error'Identity, Err_Msg);
+         end;
       end if;
+
    end Open;
 
    ---------
@@ -107,7 +122,7 @@ package body DB_API is
       function Internal_Dup (DB : DB_File) return DB_File;
       pragma Import (C, Internal_Dup, "ada_db_dup");
    begin
-      if Is_Null (DB) then
+      if DB = null then
          Raise_Exception (DB_Error'Identity,
            E_Init_Failed);
       else
@@ -121,7 +136,7 @@ package body DB_API is
 
    function Is_Open (DB : DB_File) return Boolean is
    begin
-      return not Is_Null (DB);
+      return DB /= null;
    end Is_Open;
 
    -----------
@@ -131,10 +146,8 @@ package body DB_API is
    procedure Close (DB : in out DB_File) is
       procedure Internal_Close (DB : DB_File);
       pragma Import (C, Internal_Close, "ada_db_close");
-      procedure Internal_Free (DB : DB_File);
-      pragma Import (C, Internal_Free, "free");
    begin
-      if not Is_Null (DB) then -- ignore uninitialized DB
+      if DB /= null then -- ignore uninitialized DB
          Internal_Close (DB);
          if Last_ErrNo (DB) /= 0 then
             Raise_Exception (DB_Close_Error'Identity,
@@ -157,32 +170,22 @@ package body DB_API is
    is
       procedure I_Set_Cursor
         (DB          : DB_File;
-         Pos         : C.int;
+         Pos         : Cursor_Position;
          Key         : System.Address;
-         Exact_Match : C.int);
+         Exact_Match : Boolean);
       pragma Import (C, I_Set_Cursor, "ada_db_set_cursor");
 
-      Pos : C.int;
-      EM  : C.int := 1;
       I_Key : constant String := Key & ASCII.NUL;
 
    begin
-      if Is_Null (DB) then
+      if DB = null then
          Raise_Exception (DB_Error'Identity,
            E_Init_Failed);
       else
-         if not Exact_Match then
-            EM := 0;
-         end if;
-         case Position is
-            when First  => Pos := POS_FIRST;
-            when Last   => Pos := POS_LAST;
-            when By_Key => Pos := POS_BY_KEY;
-         end case;
          if Position = By_Key then
-            I_Set_Cursor (DB, Pos, I_Key'Address, EM);
+            I_Set_Cursor (DB, Position, I_Key'Address, Exact_Match);
          else
-            I_Set_Cursor (DB, Pos, System.Null_Address, EM);
+            I_Set_Cursor (DB, Position, System.Null_Address, Exact_Match);
          end if;
          if Last_ErrNo (DB) /= 0 then
             Raise_Exception (DB_Error'Identity,
@@ -199,7 +202,7 @@ package body DB_API is
       procedure I_Release_Cursor (DB : DB_File);
       pragma Import (C, I_Release_Cursor, "ada_db_free_cursor");
    begin
-      if Is_Null (DB) then
+      if DB = null then
          return;
       end if;
       I_Release_Cursor (DB);
@@ -213,13 +216,13 @@ package body DB_API is
      (DB       : DB_File;
       Movement : Cursor_Movement := Next) return Pair_Ptr
    is
+
       P        : Pair_Ptr;
       I_Pair   : System.Address;
-      Move     : C.int;
 
       function I_Get_Pair
         (DB    : DB_File;
-         Move  : C.int) return System.Address;
+         Move  : Cursor_Movement) return System.Address;
       pragma Import (C, I_Get_Pair, "ada_db_get_pair");
 
       procedure I_Free (Addr : System.Address);
@@ -230,18 +233,15 @@ package body DB_API is
 
       function I_Get_Data (I_Pair : System.Address) return CSF;
       pragma Import (C, I_Get_Data, "ada_get_data");
+
+      function I_Get_DBI (I_Pair : System.Address) return Integer;
+      pragma Import (C, I_Get_DBI, "ada_get_dbi");
    begin
-      if Is_Null (DB) then
+      if DB = null then
          Raise_Exception (DB_Error'Identity,
            E_Init_Failed);
       else
-         case Movement is
-            when Prev        => Move := MOVE_PREV;
-            when Next        => Move := MOVE_NEXT;
-            when Next_By_Key => Move := MOVE_BY_KEY;
-         end case;
-
-         I_Pair := I_Get_Pair (DB, Move);
+         I_Pair := I_Get_Pair (DB, Movement);
 
          if I_Pair = System.Null_Address then
             if Last_ErrNo (DB) /= 0 then -- error occurred
@@ -251,8 +251,9 @@ package body DB_API is
             return null;
          else
             P := new Pair;
-            P.Key  := I_Get_Key (I_Pair);
+            P.Key  := I_Get_Key  (I_Pair);
             P.Data := I_Get_Data (I_Pair);
+            P.DBI  := I_Get_DBI  (I_Pair);
             I_Free (I_Pair);
             return P;
          end if;
@@ -293,9 +294,11 @@ package body DB_API is
          Append (S, Get_Field (The_CSF, F));
          Append (S, Separator);
       end loop;
-      if (N > 0) then
+
+      if N > 0 then
          Append (S, Get_Field (The_CSF, N));
       end if;
+
       return To_String (S);
    end Get_All_Fields;
 
@@ -333,9 +336,8 @@ package body DB_API is
 
       R : constant CStrings.chars_ptr :=
         I_Get_Field (The_CSF, C.int (Index));
-
    begin
-      if (R = CStrings.Null_Ptr) then
+      if R = CStrings.Null_Ptr then
          Raise_Exception (Index_Out_Of_Range'Identity,
            "Index out of range: " & Positive'Image (Index) & " > "
              & Positive'Image (Get_Field_Count (The_CSF)));
@@ -356,5 +358,22 @@ package body DB_API is
    begin
       return Integer (I_Get_Field_Length (The_CSF, C.int (Index)));
    end Get_Field_Length;
+
+   --------------------
+   -- Get_Table_Name --
+   --------------------
+
+   function Get_Table_Name
+     (DB  : DB_File;
+      DBI : Integer) return String
+   is
+      function I_Get_File_Accessed (DB : DB_File; DBI : C.int)
+        return CStrings.chars_ptr;
+      pragma Import (C, I_Get_File_Accessed, "ada_get_table_name");
+      R : constant CStrings.chars_ptr :=
+        I_Get_File_Accessed (DB, C.int (DBI));
+   begin
+      return CStrings.Value (R);
+   end Get_Table_Name;
 
 end DB_API;
