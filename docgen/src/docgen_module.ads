@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2002                            --
+--                     Copyright (C) 2003                            --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
@@ -19,11 +19,17 @@
 -----------------------------------------------------------------------
 
 with Glide_Kernel;
+with Docgen;
 
 package Docgen_Module is
+
+   Docgen_Module_ID   : Glide_Kernel.Module_ID;
 
    procedure Register_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
    --  Register the Ada parsers in GPS.
+
+   procedure Get_Options (My_Options : in out Docgen.All_Options);
+   --  Return the options set in the preference Menu
 
 end Docgen_Module;
