@@ -56,7 +56,8 @@ package body Vdiff2_Module.Utils is
    Fine_Change_Style    : constant String       := "Fine_Change_diff";
    Id_Col_Vdiff         : constant String       := "Vdiff2_Col_Merge";
 
-   Enable_Fine_Diff     : Boolean;
+   Enable_Fine_Diff     : Boolean := True;
+   --  ??? Should not use a global variable
 
    type   T_VLine_Information is array (1 .. 3) of Line_Information_Data;
 
@@ -307,7 +308,7 @@ package body Vdiff2_Module.Utils is
             Last := 2;
             First := 1;
          end if;
-         --  just for testing
+         --  ??? just for testing
 
          Args_Highlight_Range (4) :=
            new String'(Natural'Image (First));
@@ -350,7 +351,7 @@ package body Vdiff2_Module.Utils is
       Line                : Natural := Dest_Range.First;
 
    begin
-      if Enable_Fine_Diff then
+      if not Enable_Fine_Diff then
          return;
       end if;
 
@@ -911,7 +912,7 @@ package body Vdiff2_Module.Utils is
       Execute_GPS_Shell_Command (Kernel, "register_highlighting", Args);
       Basic_Types.Free (Args);
 
-      Enable_Fine_Diff := (Change_Fine_Color = Change_Color);
+      Enable_Fine_Diff := (Change_Fine_Color /= Change_Color);
    end Register_Highlighting;
 
    ----------------------
