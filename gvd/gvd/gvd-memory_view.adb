@@ -405,7 +405,10 @@ package body GVD.Memory_View is
          elsif Size = -"Word" then
             View.Data := Word;
          else
-            raise Program_Error;
+            --  May happen if e.g. Size is null, while its value is being
+            --  updated.
+
+            return;
          end if;
 
          if Data = -"Hex" then
@@ -417,7 +420,7 @@ package body GVD.Memory_View is
          elsif Data = -"ASCII" then
             View.Display := Text;
          else
-            View.Display := Hex;
+            return;
          end if;
       end;
 
