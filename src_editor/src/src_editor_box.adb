@@ -634,6 +634,10 @@ package body Src_Editor_Box is
       Col  : constant Gint := Values.Get_Int (Values.Nth (Params, 2));
    begin
       Show_Cursor_Position (Box, Line => Line, Column => Col);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Cursor_Position_Changed_Handler;
 
    --------------------
