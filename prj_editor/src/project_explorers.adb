@@ -2211,7 +2211,9 @@ package body Project_Explorers is
                        | Extends_Project_Node
                        | Modified_Project_Node =>
                      Next_Or_Child
-                       (Get_Base_Name (Explorer.Tree.Model, Start_Node),
+                       (Project_Name
+                          (Get_Project_From_Node
+                             (Explorer.Tree.Model, Kernel, Start_Node, False)),
                         Start_Node,
                         Context.Include_Projects, Tmp, Finish);
 
@@ -2404,7 +2406,17 @@ package body Project_Explorers is
                   declare
                      Base : constant String := Base_Name (Sources (S));
                   begin
-                     if C.Include_Entities then
+                     if Match (C, Base) /= -1 then
+                        Mark_File_And_Projects
+                          (File           => Sources (S),
+                           Project_Marked => Project_Marked,
+                           Project        => Current (Iter),
+                           Mark_File      => Search_Match,
+                           Increment      => 1);
+                        Project_Marked  := True;
+                     end if;
+
+                     if not Project_Marked and then C.Include_Entities then
                         Mark_File_And_Projects
                           (File           => Sources (S),
                            Project_Marked => Project_Marked,
@@ -2415,15 +2427,6 @@ package body Project_Explorers is
                         --  total count for directories and projects to be the
                         --  total number of files in them.
                         --  ??? Could be more efficient
-
-                     elsif Match (C, Base) /= -1 then
-                        Mark_File_And_Projects
-                          (File           => Sources (S),
-                           Project_Marked => Project_Marked,
-                           Project        => Current (Iter),
-                           Mark_File      => Search_Match,
-                           Increment      => 1);
-                        Project_Marked  := True;
                      end if;
                   end;
                end loop;
