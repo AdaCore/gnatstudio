@@ -617,8 +617,8 @@ package body Odd.Process is
             raise Debugger_Not_Supported;
       end case;
 
-      if Is_Regular_File (Executable)
-        or else Executable = ""
+      if Process.Descriptor.Remote_Host /= null
+        or else Is_Regular_File (Executable)
       then
          Spawn
            (Process.Debugger,

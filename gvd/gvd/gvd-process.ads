@@ -42,6 +42,7 @@ with Items;
 with Odd.Code_Editors;
 with Odd.Types;
 with Open_Program_Pkg; use Open_Program_Pkg;
+with Odd.Types;
 
 package Odd.Process is
 
@@ -137,7 +138,7 @@ package Odd.Process is
       Has_Temporary_Breakpoint : Boolean := True;
       --  Whether there exists a temporary breakpoint in Breakpoints.
 
-      Descriptor : Program_Descriptor;
+      Descriptor : Odd.Types.Program_Descriptor;
       --  This is used to store the launching method.
       --  (Added to handle sessions)
    end record;
@@ -152,7 +153,7 @@ package Odd.Process is
    function Create_Debugger
      (Window          : access
         Main_Debug_Window_Pkg.Main_Debug_Window_Record'Class;
-      Kind            : Debugger_Type;
+      Kind            : Odd.Types.Debugger_Type;
       Executable      : String;
       Params          : Argument_List;
       Remote_Host     : String := "";
