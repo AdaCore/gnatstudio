@@ -2412,8 +2412,10 @@ package body Src_Editor_Module is
                  (Print_Helper & " " & Full_Name (Get_Filename (Source)).all);
             begin
                Launch_Process
-                 (Kernel, Cmd (Cmd'First).all, Cmd (Cmd'First + 1 .. Cmd'Last),
-                  Name => "", Success => Success);
+                 (Kernel,
+                  Command   => Cmd (Cmd'First).all,
+                  Arguments => Cmd (Cmd'First + 1 .. Cmd'Last),
+                  Success   => Success);
                Free (Cmd);
             end;
          end if;
@@ -2561,7 +2563,7 @@ package body Src_Editor_Module is
 
    procedure Generate_Body_Cb (Data : Process_Data; Status : Integer) is
       Body_Name : constant Virtual_File := Other_File_Name
-        (Data.Kernel, Create (Full_Filename => Data.Name.all));
+        (Data.Kernel, Create (Full_Filename => "???")); --  Data.Name.all));
    begin
       if Status = 0
         and then Is_Regular_File (Body_Name)
@@ -2635,9 +2637,11 @@ package body Src_Editor_Module is
               (Scenario_Variables_Cmd_Line (Kernel, GNAT_Syntax));
          begin
             Launch_Process
-              (Kernel, "gnat", Args (1 .. 2) & Scenar.all & Args (3 .. 4),
-               "", null,
-               Generate_Body_Cb'Access, Full_Name (File).all, Success);
+              (Kernel,
+               Command   => "gnat",
+               Arguments => Args (1 .. 2) & Scenar.all & Args (3 .. 4),
+               Exit_Cb   => Generate_Body_Cb'Access,
+               Success   => Success);
             Free (Args);
             Free (Scenar);
          end;
@@ -2662,11 +2666,15 @@ package body Src_Editor_Module is
    ---------------------
 
    procedure Pretty_Print_Cb (Data : Process_Data; Status : Integer) is
+      pragma Unreferenced (Data);
    begin
       if Status = 0 then
-         Open_File_Editor
-           (Data.Kernel,
-            Create (Full_Filename => Data.Name.all & ".pp"));
+         null;
+
+         --  Temporarily deactivated, will be done through XML files
+--           Open_File_Editor
+--             (Data.Kernel,
+--              Create (Full_Filename => Data.Name.all & ".pp"));
       end if;
    end Pretty_Print_Cb;
 
@@ -2933,8 +2941,12 @@ package body Src_Editor_Module is
          end if;
 
          Launch_Process
-           (Kernel, "gnat", Args.all, "", null,
-            Pretty_Print_Cb'Access, Full_Name (File).all, Success);
+           (Kernel,
+            Command   => "gnat",
+            Arguments => Args.all,
+            Exit_Cb   => Pretty_Print_Cb'Access,
+--            Name      => Full_Name (File).all,
+            Success   => Success);
          Free (Args);
 
          if Success then
