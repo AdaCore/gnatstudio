@@ -3,6 +3,7 @@ with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Text_IO;             use Ada.Text_IO;
 with GNAT.OS_Lib;             use GNAT.OS_Lib;
 with Ada.Unchecked_Deallocation;
+with Generic_Stack;
 
 package body Format is
 
@@ -77,6 +78,12 @@ package body Format is
       Tok_While,
       Tok_With,
       Tok_Xor);
+
+   package Token_Stack is new Generic_Stack (Token_Type);
+   use Token_Stack;
+
+   package Indent_Stack is new Generic_Stack (Natural);
+   use Indent_Stack;
 
    subtype Word is Natural;
 
@@ -553,7 +560,7 @@ package body Format is
          case Buffer (P) is
             when '(' =>
                Num_Parens := Num_Parens + 1;
-               Char := Buffer (Prev_Char (P));
+               Char       := Buffer (Prev_Char (P));
 
                if Char /= ' ' and then Char /= ''' then
                   Spaces (2) := Buffer (P);
@@ -731,16 +738,6 @@ package body Format is
       None         : constant := -1;
       Indent_Level : constant := 3;
 
-      type Token_Stack_Record;
-      type Token_Stack is access Token_Stack_Record;
-      type Token_Stack_Record is record
-         Val  : Token_Type;
-         Next : Token_Stack;
-      end record;
-
-      procedure Free is new
-        Ada.Unchecked_Deallocation (Token_Stack_Record, Token_Stack);
-
       New_Buffer          : Extended_Line_Buffer;
       Index               : Word;
       Word_Count          : Integer           := 0;
@@ -769,7 +766,8 @@ package body Format is
       Started             : Boolean           := False;
       Prev_Reserved       : Token_Type        := Tok_Unknown;
       Token               : Token_Type;
-      Stack               : Token_Stack;
+      Tokens              : Token_Stack.Simple_Stack;
+      Indents             : Indent_Stack.Simple_Stack;
       Val                 : Token_Type;
 
       procedure Do_Indent;
@@ -777,75 +775,6 @@ package body Format is
 
       procedure Handle_Reserved_Word (Word : Token_Type);
       --  Handle reserved words.
-
-      procedure Push (Token : Token_Type);
-      --  If Token = Tok_Declare, it means that we are entering
-      --  a declaration part.
-      --  If Token = Tok_Unknown, this is the beginning of a subprogram/
-      --  begin block.
-      --  Otherwise, this is the beginning of a construct (e.g select,
-      --  case, record, ...)
-      pragma Inline (Push);
-
-      function Pop return Token_Type;
-      procedure Pop;
-      pragma Inline (Pop);
-
-      function Top return Token_Type;
-      --  Return the top of the stack without modifying it.
-      pragma Inline (Top);
-
-      ----------
-      -- Push --
-      ----------
-
-      procedure Push (Token : Token_Type) is
-      begin
-         Stack := new Token_Stack_Record' (Token, Stack);
-         pragma Debug (Put_Line ("pushed " & Token'Img));
-      end;
-
-      ---------
-      -- Pop --
-      ---------
-
-      function Pop return Token_Type is
-         P   : Token_Stack;
-         Val : Token_Type;
-
-      begin
-         if Stack = null or else Stack.Val = Tok_Unknown then
-            Syntax_Error := True;
-            return Tok_Unknown;
-         else
-            Val   := Stack.Val;
-            P     := Stack;
-            Stack := Stack.Next;
-            Free (P);
-            pragma Debug (Put_Line ("popped " & Val'Img));
-            return Val;
-         end if;
-      end;
-
-      procedure Pop is
-         Val : Token_Type;
-      begin
-         Val := Pop;
-      end Pop;
-
-      ---------
-      -- Top --
-      ---------
-
-      function Top return Token_Type is
-      begin
-         if Stack = null then
-            Syntax_Error := True;
-            return Tok_Unknown;
-         else
-            return Stack.Val;
-         end if;
-      end;
 
       ---------------
       -- Do_Indent --
@@ -876,6 +805,10 @@ package body Format is
          end if;
       end Do_Indent;
 
+      --------------------------
+      -- Handle_Reserved_Word --
+      --------------------------
+
       procedure Handle_Reserved_Word (Word : Token_Type) is
       begin
          --  Note: the order of the following conditions is important
@@ -883,7 +816,7 @@ package body Format is
          if Word = Tok_Body then
             Subprogram_Decl := False;
          elsif not End_Token and then Word = Tok_If then
-            Push (Word);
+            Push (Tokens, Word);
 
          elsif Prev_Reserved = Tok_Is and then not Was_Type_Decl
            and then
@@ -902,7 +835,7 @@ package body Format is
                Syntax_Error := True;
             end if;
 
-            Pop;
+            Pop (Tokens);
 
          elsif Word = Tok_Function
            or else Word = Tok_Procedure
@@ -920,17 +853,17 @@ package body Format is
             end if;
 
             if not In_Generic then
-               Val := Top;
+               Val := Top (Tokens);
 
                if Val = Tok_Procedure or else Val = Tok_Function then
                   --  There was a function declaration, e.g:
                   --
                   --  procedure xxx ();
                   --  procedure ...
-                  Pop;
+                  Pop (Tokens);
                end if;
 
-               Push (Word);
+               Push (Tokens, Word);
 
             elsif Prev_Reserved /= Tok_With then
                --  unindent after a generic declaration, e.g:
@@ -949,7 +882,7 @@ package body Format is
                end if;
 
                In_Generic := False;
-               Push (Word);
+               Push (Tokens, Word);
             end if;
 
          elsif Word = Tok_End or else Word = Tok_Elsif then
@@ -962,7 +895,7 @@ package body Format is
             --  end if;
 
             if Word = Tok_End then
-               Val := Pop;
+               Pop (Tokens, Val);
 
                case Val is
                   when Tok_Exception | Tok_Case =>
@@ -996,16 +929,18 @@ package body Format is
            or else (not Or_Token  and then Word = Tok_Else)
            or else (not And_Token and then Word = Tok_Then)
            or else (not End_Token and then Word = Tok_Select)
-           or else (Top = Tok_Select and then Word = Tok_Or)
+           or else (Top (Tokens) = Tok_Select and then Word = Tok_Or)
            or else (not End_Token and then Word = Tok_Loop)
            or else (not End_Token and then Prev_Reserved /= Tok_Null
                       and then Word = Tok_Record)
-           or else ((Top = Tok_Exception or else Top = Tok_Case)
+           or else ((Top (Tokens) = Tok_Exception
+                       or else Top (Tokens) = Tok_Case)
                      and then Word = Tok_When)
-           or else ((Top = Tok_Declare or else Top = Tok_Package)
-                      and then Word = Tok_Private
-                      and then Prev_Reserved /= Tok_Is
-                      and then Prev_Reserved /= Tok_With)
+           or else ((Top (Tokens) = Tok_Declare
+                       or else Top (Tokens) = Tok_Package)
+                     and then Word = Tok_Private
+                     and then Prev_Reserved /= Tok_Is
+                     and then Prev_Reserved /= Tok_With)
          then
             --  unindent for this reserved word, and then indent again, e.g:
             --
@@ -1017,11 +952,11 @@ package body Format is
             if not Type_Decl then
                if Word = Tok_Select then
                   --  Start of a select statement
-                  Push (Word);
+                  Push (Tokens, Word);
                end if;
 
                if Word = Tok_Else
-                 or else (Top = Tok_Select and then Word = Tok_Then)
+                 or else (Top (Tokens) = Tok_Select and then Word = Tok_Then)
                  or else Word = Tok_Begin
                  or else Word = Tok_Record
                  or else Word = Tok_When
@@ -1029,21 +964,21 @@ package body Format is
                  or else Word = Tok_Private
                then
                   if Word = Tok_Begin then
-                     Val := Top;
+                     Val := Top (Tokens);
 
                      if Val = Tok_Declare then
                         Num_Spaces := Num_Spaces - Indent_Level;
-                        Pop;
-                        Push (Word);
+                        Pop (Tokens);
+                        Push (Tokens, Word);
 
                      elsif Val = Tok_Package then
                         Num_Spaces := Num_Spaces - Indent_Level;
                      else
-                        Push (Word);
+                        Push (Tokens, Word);
                      end if;
 
                   elsif Word = Tok_Record then
-                     Push (Tok_Record);
+                     Push (Tokens, Tok_Record);
                   else
                      Num_Spaces := Num_Spaces - Indent_Level;
                   end if;
@@ -1062,12 +997,12 @@ package body Format is
               or else Word = Tok_Loop
               or else Word = Tok_Declare
             then
-               Push (Word);
+               Push (Tokens, Word);
             end if;
 
             if Word = Tok_Is then
                if Prev_Reserved = Tok_Case then
-                  Push (Tok_Case);
+                  Push (Tokens, Tok_Case);
                   Num_Spaces := Num_Spaces + Indent_Level;
 
                elsif Type_Decl then
@@ -1075,13 +1010,13 @@ package body Format is
                   Type_Decl     := False;
 
                else
-                  Val := Top;
+                  Val := Top (Tokens);
 
                   --  Should have a more complete case statement here ???
 
                   if Val /= Tok_Package then
-                     Pop;
-                     Push (Tok_Declare);
+                     Pop (Tokens);
+                     Push (Tokens, Tok_Declare);
                   end if;
 
                   Subprogram_Decl := False;
@@ -1109,14 +1044,14 @@ package body Format is
             Type_Decl := True;
 
          elsif Word = Tok_Exception then
-            Val := Top;
+            Val := Top (Tokens);
 
             if Val /= Tok_Declare then
                Num_Spaces := Num_Spaces - Indent_Level;
                Do_Indent;
                Num_Spaces := Num_Spaces + 2 * Indent_Level;
-               Pop;
-               Push (Tok_Exception);
+               Pop (Tokens);
+               Push (Tokens, Tok_Exception);
             end if;
          end if;
 
@@ -1130,7 +1065,7 @@ package body Format is
       New_Buffer := To_Line_Buffer (Buffer);
 
       --  Push a dummy token so that stack will never be empty.
-      Push (Tok_Unknown);
+      Push (Tokens, Tok_Unknown);
 
       Next_Word
         (Buffer, New_Buffer, Prec, Num_Parens,
@@ -1152,10 +1087,10 @@ package body Format is
             then
                End_Token := False;
             elsif Subprogram_Decl then
-               if Num_Parens = 1 and then Prev_Num_Parens = 0 then
+               if Num_Parens > 0 and then Prev_Num_Parens = 0 then
                   Param_Indent := Prec - Line_Start (Buffer, Prec);
                elsif Num_Parens = 0 then
-                  if Semicolon or else Prev_Num_Parens = 1 then
+                  if Semicolon or else Prev_Num_Parens > 0 then
                      Subprogram_Decl := False;
                      Param_Indent    := None;
 
@@ -1164,7 +1099,7 @@ package body Format is
                         --  e.g:
                         --  procedure ... ();
 
-                        Pop;
+                        Pop (Tokens);
                      end if;
                   end if;
                end if;
