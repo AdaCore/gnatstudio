@@ -980,7 +980,7 @@ Variables
 	<class>GtkTable</class>
 	<name>binder_switches</name>
 	<rows>2</rows>
-	<columns>2</columns>
+	<columns>1</columns>
 	<homogeneous>False</homogeneous>
 	<row_spacing>0</row_spacing>
 	<column_spacing>0</column_spacing>
@@ -1001,7 +1001,7 @@ Variables
 	  <text></text>
 	  <child>
 	    <left_attach>0</left_attach>
-	    <right_attach>2</right_attach>
+	    <right_attach>1</right_attach>
 	    <top_attach>1</top_attach>
 	    <bottom_attach>2</bottom_attach>
 	    <xpad>0</xpad>
@@ -1110,7 +1110,7 @@ Variables
 	<class>GtkTable</class>
 	<name>linker_switches</name>
 	<rows>2</rows>
-	<columns>2</columns>
+	<columns>1</columns>
 	<homogeneous>False</homogeneous>
 	<row_spacing>0</row_spacing>
 	<column_spacing>0</column_spacing>
@@ -1131,7 +1131,7 @@ Variables
 	  <text></text>
 	  <child>
 	    <left_attach>0</left_attach>
-	    <right_attach>2</right_attach>
+	    <right_attach>1</right_attach>
 	    <top_attach>1</top_attach>
 	    <bottom_attach>2</bottom_attach>
 	    <xpad>0</xpad>

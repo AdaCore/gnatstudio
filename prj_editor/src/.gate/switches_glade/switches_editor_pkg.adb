@@ -392,7 +392,7 @@ begin
    Set_Line_Wrap (Switches_Editor.Label18, False);
    Set_Tab (Switches_Editor.Notebook1, 1, Switches_Editor.Label18);
 
-   Gtk_New (Switches_Editor.Binder_Switches, 2, 2, False);
+   Gtk_New (Switches_Editor.Binder_Switches, 2, 1, False);
    Set_Row_Spacings (Switches_Editor.Binder_Switches, 0);
    Set_Col_Spacings (Switches_Editor.Binder_Switches, 0);
    Add (Switches_Editor.Notebook1, Switches_Editor.Binder_Switches);
@@ -402,7 +402,7 @@ begin
    Set_Max_Length (Switches_Editor.Binder_Switches_Entry, 0);
    Set_Text (Switches_Editor.Binder_Switches_Entry, -"");
    Set_Visibility (Switches_Editor.Binder_Switches_Entry, True);
-   Attach (Switches_Editor.Binder_Switches, Switches_Editor.Binder_Switches_Entry, 0, 2, 1, 2,
+   Attach (Switches_Editor.Binder_Switches, Switches_Editor.Binder_Switches_Entry, 0, 1, 1, 2,
      Expand or Fill, 0,
      0, 0);
    Widget_Callback.Object_Connect
@@ -441,7 +441,7 @@ begin
    Set_Line_Wrap (Switches_Editor.Label19, False);
    Set_Tab (Switches_Editor.Notebook1, 2, Switches_Editor.Label19);
 
-   Gtk_New (Switches_Editor.Linker_Switches, 2, 2, False);
+   Gtk_New (Switches_Editor.Linker_Switches, 2, 1, False);
    Set_Row_Spacings (Switches_Editor.Linker_Switches, 0);
    Set_Col_Spacings (Switches_Editor.Linker_Switches, 0);
    Add (Switches_Editor.Notebook1, Switches_Editor.Linker_Switches);
@@ -451,7 +451,7 @@ begin
    Set_Max_Length (Switches_Editor.Linker_Switches_Entry, 0);
    Set_Text (Switches_Editor.Linker_Switches_Entry, -"");
    Set_Visibility (Switches_Editor.Linker_Switches_Entry, True);
-   Attach (Switches_Editor.Linker_Switches, Switches_Editor.Linker_Switches_Entry, 0, 2, 1, 2,
+   Attach (Switches_Editor.Linker_Switches, Switches_Editor.Linker_Switches_Entry, 0, 1, 1, 2,
      Expand or Fill, 0,
      0, 0);
    Widget_Callback.Object_Connect
