@@ -9342,6 +9342,7 @@ Python inside GPS. This is not a general Python discussion.
 
 @itemize @bullet
 
+@c ----- FAQ 1
 @item The output of spawned processes can't be redirected to a GPS window
 
 In general, it is possible to redirect the output of any Python script to
@@ -9389,6 +9390,33 @@ rest of your script. But you can filter or modify the output as in the
 first solution.
 
 @end itemize
+
+
+@c ----- FAQ 2
+@item How do I create a contextual menu on object directories only ?
+
+The following filter can be used for actions that can only execute in the
+Project View, and only when the user clicks on an object directory. The
+contextual menu entry will not be visible in other contexts
+
+@smallexample
+<?xml version="1.0" ?>
+<root>
+   <filter name="object directory"
+           shell_cmd="import os.path; os.path.samefile (GPS.current_context().project().object_dirs()[0],GPS.current_context().directory())"
+           shell_lang="python"
+           module="Explorer" />
+
+   <action name="Test on object directory">
+      <filter id="object directory" />
+      <shell>echo "Success"</shell>
+   </action>
+
+   <contextual action="Test on object directory" >
+      <Title>Test on object directory</Title>
+   </contextual>
+</root>
+@end smallexample
 
 @end itemize
 
