@@ -533,7 +533,12 @@ begin
 
    Free_Modules (GPS.Kernel);
    Glide_Page.Destroy (Page);
-   Destroy (GPS);
+
+   --  ??? The following call sometimes causes a SEGV, e.g when destroying
+   --  the help widget. Until this is resolved, and since it is not critical
+   --  to release all the memory before exiting, this call is disabled for now.
+   --  Destroy (GPS);
+
    Destroy (GPS.Kernel);
    Prj_API.Finalize;
    Traces.Finalize;
