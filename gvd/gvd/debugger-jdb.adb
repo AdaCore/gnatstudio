@@ -31,6 +31,7 @@ with GVD.Process;       use GVD.Process;
 with GVD.Trace;         use GVD.Trace;
 with GVD.Types;         use GVD.Types;
 with GVD.Main_Window;   use GVD.Main_Window;
+with File_Utils;        use File_Utils;
 with VFS;               use VFS;
 
 package body Debugger.Jdb is
@@ -237,7 +238,7 @@ package body Debugger.Jdb is
       Set_Is_Started (Debugger, False);
       Send (Debugger, "load " & Executable, Mode => Mode);
 
-      if Is_Absolute_Path (Executable) then
+      if Is_Absolute_Path_Or_URL (Executable) then
          Debugger.Executable := Create (Full_Filename => Executable);
       else
          Debugger.Executable := Create_From_Base (Executable);

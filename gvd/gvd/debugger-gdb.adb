@@ -904,7 +904,7 @@ package body Debugger.Gdb is
       Result : Virtual_File;
    begin
       if Debugger.Executable /= null then
-         if Is_Absolute_Path (Debugger.Executable.all) then
+         if Is_Absolute_Path_Or_URL (Debugger.Executable.all) then
             Result := Create (Full_Filename => Debugger.Executable.all);
          else
             E := Locate_Exec_On_Path (Debugger.Executable.all);
