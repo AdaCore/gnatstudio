@@ -94,14 +94,11 @@ package body Project_Explorers is
             --  possible to relate nodes from the old tree and nodes from the
             --  new one.
 
-         when Directory_Node =>
+         when Directory_Node | Obj_Directory_Node =>
             Directory : String_Id;
             --  The name of the directory associated with that node
             --  ??? We String_Id might be reset if we ever decide to reset the
             --  ??? tables. We should keep a Name_Id instead.
-
-         when Obj_Directory_Node =>
-            null;
 
          when File_Node =>
             File : String_Id;
@@ -611,6 +608,7 @@ package body Project_Explorers is
       Node_Set_Row_Data
         (Explorer.Tree, N,
          (Node_Type  => Obj_Directory_Node,
+          Directory  => No_String,
           Up_To_Date => False));
    end Add_Dummy_Node;
 
@@ -729,7 +727,10 @@ package body Project_Explorers is
 
       if Object_Directory then
          Node_Set_Row_Data
-           (Explorer.Tree, N, (Obj_Directory_Node, Up_To_Date => False));
+           (Explorer.Tree, N,
+            (Obj_Directory_Node,
+             Directory => Directory_String,
+             Up_To_Date => False));
       else
          Node_Set_Row_Data
            (Explorer.Tree, N,
@@ -913,12 +914,17 @@ package body Project_Explorers is
 
          --  Object directory
 
+         Start_String;
+         Store_String_Chars
+           (Get_Name_String (Projects.Table (Project).Object_Directory));
+
          N := Add_Directory_Node
            (Explorer         => Explorer,
             Directory        =>
               Get_Name_String (Projects.Table (Project).Object_Directory),
             Parent_Node      => Node,
             Current_Dir      => Current_Dir,
+            Directory_String => End_String,
             Object_Directory => True);
       end if;
    end Expand_Project_Node;
@@ -1215,11 +1221,8 @@ package body Project_Explorers is
          declare
             User : constant User_Data := Node_Get_Row_Data (Explorer.Tree, N);
          begin
-            exit when User.Node_Type = Directory_Node;
-
-            if User.Node_Type = Obj_Directory_Node then
-               return "obj";
-            end if;
+            exit when User.Node_Type = Directory_Node
+              or else User.Node_Type = Obj_Directory_Node;
          end;
 
          N := Row_Get_Parent (Node_Get_Row (N));
@@ -1914,6 +1917,7 @@ package body Project_Explorers is
 
       Register_Menu
         (Kernel, Project, -"Explorer", "", On_Open_Explorer'Access);
+      Vsearch_Ext.Register_Default_Search (Kernel);
    end Initialize_Module;
 
    ---------------------
