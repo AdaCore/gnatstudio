@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2003                       --
+--                     Copyright (C) 2001-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -62,7 +62,8 @@ package Glide_Kernel.Timeout is
       Success       : out Boolean;
       Show_Command  : Boolean := True;
       Callback_Data : System.Address := System.Null_Address;
-      Line_By_Line  : Boolean := False);
+      Line_By_Line  : Boolean := False;
+      Directory     : String := "");
    --  Launch a given command with arguments.
    --  Set Success to True if the command could be spawned.
    --  Callback will be called asynchronousely when some new data is
@@ -78,5 +79,8 @@ package Glide_Kernel.Timeout is
    --  If Line_By_Line is True, then the output of the command is processed
    --  line by line, instead of being processed with as big chunks as possible.
    --  If it is false, there is no garantee where the chunks will be splitted.
+   --
+   --  If Directory is not empty, move to Dir before launching the command,
+   --  and change back to the current directory once the command is spawned.
 
 end Glide_Kernel.Timeout;
