@@ -39,7 +39,13 @@ package body Debugger.Gdb is
    --  Regular expressions used to recognize the prompt.
 
    Prompt_Length : constant := 6;
-   --  Length of the prompt ("(gdb) ");
+   --  Length of the prompt ("(gdb) ").
+
+   Gdb_Command   : constant String := "gdb";
+   --  Name of the command to launch gdb.
+
+   Gdb_Options   : constant String := "-nw -q -fullname";
+   --  Options always passed to gdb.
 
    -------------
    -- Type_Of --
@@ -109,8 +115,28 @@ package body Debugger.Gdb is
                     Proxy          : Process_Proxies.Process_Proxy_Access;
                     Remote_Machine : String := "")
    is
+      Num_Options     : Natural := Count (Gdb_Options, " ") + 1;
+      Local_Arguments : Argument_List (1 .. Arguments'Length + Num_Options);
+      First           : Natural := 1;
+      Last            : Natural;
+
    begin
-      General_Spawn (Debugger, Arguments, "gdb", Proxy, Remote_Machine);
+      --  Cut each blank separated word into an argument.
+      --  Note that we assume here that only one blank is put between each
+      --  option (in the computation of Num_Options).
+
+      for J in 1 .. Num_Options - 1 loop
+         Last := Index (Gdb_Options (First .. Gdb_Options'Last), " ");
+         Local_Arguments (J) := new String' (Gdb_Options (First .. Last - 1));
+         First := Index_Non_Blank (Gdb_Options (Last .. Gdb_Options'Last));
+      end loop;
+
+      Local_Arguments (Num_Options) :=
+        new String' (Gdb_Options (First .. Gdb_Options'Last));
+      Local_Arguments (Num_Options + 1 .. Local_Arguments'Last) := Arguments;
+
+      General_Spawn
+        (Debugger, Local_Arguments, Gdb_Command, Proxy, Remote_Machine);
       --  Add_Output_Filter (Debugger.Process.all, Trace_Filter'Access);
       --  Add_Input_Filter (Debugger.Process.all, Trace_Filter'Access);
    end Spawn;
