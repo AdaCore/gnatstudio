@@ -856,6 +856,8 @@ package body GVD.Text_Box.Source_Editor.Builtin is
       Br      : GVD.Types.Breakpoint_Array;
       Process : Gtk.Widget.Gtk_Widget)
    is
+      pragma Unreferenced (Process);
+
       use Gtk.Widget.Widget_List;
       Tmp  : Glist := Editor.Breakpoint_Buttons;
       Pix  : Gtk_Pixmap;
@@ -1053,9 +1055,11 @@ package body GVD.Text_Box.Source_Editor.Builtin is
 
       if Debugger_Process_Tab (Editor.Process).Breakpoints /= null then
          Update_Breakpoints
-           (Editor, Debugger_Process_Tab (Editor.Process).Breakpoints.all);
+           (Editor,
+            Debugger_Process_Tab (Editor.Process).Breakpoints.all,
+            Editor.Process);
       else
-         Update_Breakpoints (Editor, No_Breakpoint);
+         Update_Breakpoints (Editor, No_Breakpoint, Editor.Process);
       end if;
 
       if Set_Current then
