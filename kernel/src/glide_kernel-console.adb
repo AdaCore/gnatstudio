@@ -19,7 +19,7 @@
 -----------------------------------------------------------------------
 
 with Glib.Object;          use Glib.Object;
-with Glide_Interactive_Consoles; use Glide_Interactive_Consoles;
+with Interactive_Consoles; use Interactive_Consoles;
 with Glide_Intl;           use Glide_Intl;
 with Glide_Kernel.Modules; use Glide_Kernel.Modules;
 with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
@@ -39,9 +39,8 @@ with Gtkada.Handlers;      use Gtkada.Handlers;
 package body Glide_Kernel.Console is
 
    type Console_Module_Id_Record is new Module_ID_Record with record
-      Console : Glide_Interactive_Consoles.Glide_Interactive_Console;
-      Interactive_Console :
-        Glide_Interactive_Consoles.Glide_Interactive_Console;
+      Console : Interactive_Consoles.Interactive_Console;
+      Interactive_Console : Interactive_Consoles.Interactive_Console;
    end record;
 
    type Console_Module_Id_Access is access all Console_Module_Id_Record'Class;
@@ -75,7 +74,6 @@ package body Glide_Kernel.Console is
    procedure On_Load_To_Console
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Callback for File->Messages->Load Contents... menu.
-   pragma Unreferenced (On_Load_To_Console);
 
    procedure On_Clear_Console
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
@@ -103,7 +101,7 @@ package body Glide_Kernel.Console is
 
    function Get_Interactive_Console
      (Kernel : access Kernel_Handle_Record'Class)
-     return Glide_Interactive_Console
+      return Interactive_Console
    is
       pragma Unreferenced (Kernel);
    begin
@@ -146,7 +144,7 @@ package body Glide_Kernel.Console is
 
    function Get_Console
      (Kernel : access Kernel_Handle_Record'Class)
-      return Glide_Interactive_Console
+      return Interactive_Console
    is
       pragma Unreferenced (Kernel);
    begin
@@ -158,7 +156,7 @@ package body Glide_Kernel.Console is
    -----------
 
    procedure Clear (Kernel : access Kernel_Handle_Record'Class) is
-      Console : constant Glide_Interactive_Console := Get_Console (Kernel);
+      Console : constant Interactive_Console := Get_Console (Kernel);
    begin
       if Console /= null then
          Clear (Console);
@@ -175,13 +173,18 @@ package body Glide_Kernel.Console is
       Add_LF         : Boolean := True;
       Mode           : Message_Type := Info)
    is
-      Console : constant Glide_Interactive_Console := Get_Console (Kernel);
+      Console : constant Interactive_Console := Get_Console (Kernel);
    begin
       if Console = null then
          Put_Line (Text);
       elsif Text /= "" then
          Insert (Console, Text, Add_LF, Mode = Error);
-         Highlight_Child (Find_MDI_Child (Get_MDI (Kernel), Console));
+
+         if Mode = Error then
+            Raise_Console (Kernel);
+         else
+            Highlight_Child (Find_MDI_Child (Get_MDI (Kernel), Console));
+         end if;
       end if;
    end Insert;
 
@@ -282,7 +285,7 @@ package body Glide_Kernel.Console is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
       pragma Unreferenced (Widget);
-      Console : constant Glide_Interactive_Console := Get_Console (Kernel);
+      Console : constant Interactive_Console := Get_Console (Kernel);
       FD      : File_Descriptor;
       Len     : Integer;
 
@@ -320,7 +323,7 @@ package body Glide_Kernel.Console is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
       pragma Unreferenced (Widget);
-      Console  : constant Glide_Interactive_Console := Get_Console (Kernel);
+      Console  : constant Interactive_Console := Get_Console (Kernel);
       Contents : String_Access;
 
    begin
@@ -384,9 +387,9 @@ package body Glide_Kernel.Console is
    procedure Initialize_Console
      (Kernel : access Kernel_Handle_Record'Class)
    is
-      Console             : Glide_Interactive_Console;
-      Interactive_Console : Glide_Interactive_Console;
-      Child               : MDI_Child;
+      Console     : Interactive_Console;
+      Interactive : Interactive_Console;
+      Child       : MDI_Child;
 
    begin
       Gtk_New (Console,
@@ -404,21 +407,21 @@ package body Glide_Kernel.Console is
       Dock_Child (Child);
       Raise_Child (Child);
 
-      Gtk_New (Interactive_Console,
+      Gtk_New (Interactive,
                ASCII.LF & "GPS> ",
                Interpret_Command_Handler'Access,
                GObject (Kernel),
                Get_Pref (Kernel, Source_Editor_Font),
                Wrap_Char);
       Child := Put
-        (Get_MDI (Kernel), Interactive_Console,
+        (Get_MDI (Kernel), Interactive,
          Iconify_Button or Maximize_Button);
       Set_Title (Child, -"Shell");
       Set_Dock_Side (Child, Bottom);
       Dock_Child (Child);
 
       Console_Module_Id.Console := Console;
-      Console_Module_Id.Interactive_Console := Interactive_Console;
+      Console_Module_Id.Interactive_Console := Interactive;
 
       Kernel_Callback.Connect
         (Console, "destroy",
@@ -429,12 +432,12 @@ package body Glide_Kernel.Console is
          Return_Callback.To_Marshaller (Console_Delete_Event'Access));
 
       Kernel_Callback.Connect
-        (Interactive_Console, "destroy",
+        (Interactive, "destroy",
             Kernel_Callback.To_Marshaller
          (Interactive_Console_Destroyed'Access),
          Kernel_Handle (Kernel));
       Return_Callback.Connect
-        (Interactive_Console, "delete_event",
+        (Interactive, "delete_event",
          Return_Callback.To_Marshaller (Console_Delete_Event'Access));
    end Initialize_Console;
 
@@ -464,6 +467,8 @@ package body Glide_Kernel.Console is
         (Kernel, Console, -"_Clear", "", On_Clear_Console'Access);
       Register_Menu
         (Kernel, Console, -"_Save As...", "", On_Save_Console_As'Access);
+      Register_Menu
+        (Kernel, Console, -"_Load Contents...", "", On_Load_To_Console'Access);
       Gtk_New (Mitem);
       Register_Menu (Kernel, File, Mitem, Ref_Item => -"Close");
    end Register_Module;
