@@ -2291,8 +2291,7 @@ package body Src_Editor_Module is
       declare
          List1 : File_Array_Access := Get_Source_Files
            (Project   => Get_Project (Kernel),
-            Recursive => True,
-            Full_Path => False);
+            Recursive => True);
          List2 : File_Array_Access :=
            Get_Predefined_Source_Files (Get_Registry (Kernel));
          Completions : String_Array_Access :=
