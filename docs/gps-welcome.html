@@ -6,135 +6,122 @@
 
 <IMG SRC="gps_title.jpg">
 <HR>
-<H1>Welcome to the seventh internal GPS beta</H1>
-<H3>Version 0.9.2</H3>
-<H3>2002/05/17</H3>
+<H1>Welcome to the beta program of GPS</H1>
+<H3>Version 1.0.0</H3>
+<H3>2002/05/28</H3>
+<ADDRESS>Ada Core Technologies</ADDRESS>
 <ADDRESS>ACT Europe</ADDRESS>
 <P><HR>
 
-Overview of the changes since version 0.9.1:
-
-<UL>
-<LI>Shortcut provided to build the current file with the default project
-<LI>Minor debugger bug fixes
-<LI>It is now possible to copy text from the HTML window
-<LI>The main files in the program wizard are now taken into account
-<LI>Menu items File->Messages->Save As... & Load Contents... implemented
-<LI>Menu Build->Run implemented
-<LI>Automatic indentation now configurable through the preferences dialog
-<LI>The search box now contains predefined regexps for the various languages
-<LI>The buttons "Find" and "Next" have been merged in the search box
-<LI>New contextual menu "find all local references" (9905-008)
-</UL>
-
-<P><HR>
-Overview of the changes since version 0.9.0:
-
-<UL>
-<LI>Better feedback in the search interface
-<LI>Users can now add custom menus to launch their own executables (see doc)
-<LI>Key bindings can be changed dynamically (see doc)
-<LI>Selection is now taken into account when indenting lines (using Ctrl-Tab)
-<LI>Improvements and bug fixes in the indentation engine
-<LI>Default width of the line number area is now wide enough
-<LI>Line numbers can now be enabled/disabled using the preferences
-<LI>Crash related to the preferences editor fixed
-<LI>Better behavior when jumping to a new source location
-<LI>New accelerator to build the default main program easily
-<LI>Better behavior of the MDI under Windows
-<LI>Consistent use of the same file selector widget
-<LI>Switch editor supports multiple selection
-<LI>It is now possible to generate projects with relative path information
-<LI>Project Properties editor has been redesigned and now provides access
-    to all the project properties, instead of providing multiple contextual
-    menu items, which was confusing
-<LI>Project Properties now allow you to modify settings for a given set of
-    projects and/or scenarii
-<LI>Better support of VCS, in particular in the project wizard and properties
-<LI>Better handling of untitled (new) files
-<LI>Documentation updates
-<LI>Various bug fixes and small improvements
-</UL>
-
-<P><HR>
-At this stage, the following functionalities are implemented:
+GPS is a complete integrated development environment that gives access
+to a wide range of tools and integrates them smoothly, unleashing the full
+power of GNAT Professional.
+<P>
+This version is considered as beta software, meaning that you may encounter
+some missing features or instabilities. For this reason we will
+particularly welcome suggestions for possible improvements, as well as
+bug reports.
+<P>
+<HR>
+The following functionalities are implemented:
 
 <UL>
 <LI>File Open/Save/Close
 <LI>Basic source editing
-<LI>Search
+<LI>Contextual search
 <LI>Source highlighting
 <LI>Automatic indentation
 <LI>Unlimited Undo/Redo
 <LI>Cut/Copy/Paste
+<LI>Compile/Build/Run
+<LI>Check file syntax
+<LI>Jump from error message to source editor
+<LI>Comparison between files
+<LI>Automatic generation of body
+<LI>Source pretty printing
+<LI>Powerful window manipulations
+<LI>Integrated help system
 <LI>AUnit macros
-<LI>Basic integration with Emacs and vi
-<LI>Preferences
-<LI>Source Navigation, including:
+<LI>Basic integration with Emacs and Vi
+<LI>Preferences dialog
+<LI>Intelligent source navigation, including:
    <UL>
-   <LI>Goto Declaration
-   <LI>Goto Body
-   <LI>Goto Previous/Next Location (Unlimited)
+   <LI>Goto declaration
+   <LI>Goto body
+   <LI>Goto line
+   <LI>Goto file spec/body
+   <LI>Goto previous/next location (unlimited)
+   <LI>List all references to an entity in current file
    <LI>List all references to an entity in the project
+   <LI>Two-ways source dependency browser
+   <LI>Two-ways call graph
    </UL>
-<LI>All project related operations, in particular:
+
+<LI>All GNAT project related operations, in particular:
    <UL>
    <LI>Default project
    <LI>Project explorer with multiple views:
       <UL>
-      <LI>A view Project/Directory/Source/Entities
-      <LI>A view File System/Directory/Source/Entities
+      <LI>A Project/Directory/Source/Entity view
+      <LI>A File system/Directory/Source/Entity view
       </UL>
-   <LI>Project Wizard (to create projects easily)
+   <LI>Project wizard (to create projects easily)
    <LI>Project properties dialog with:
       <UL>
       <LI>Name, Languages, Tools
       <LI>VCS configuration
       <LI>Add/Remove source directories
-      <LI>Set/Change Object & Exec Directories
+      <LI>Set/Change object & exec directories
       <LI>Add/Remove main files
-      <LI>Switch Editor (per project or per file)
-      <LI>Naming Scheme
+      <LI>Switch editor (per project or per file)
+      <LI>Naming scheme
       </UL>
    <LI>Add/Remove project dependencies
    <LI>Creation/Use of configuration variables
-   <LI>Project Hierarchy Browser
+   <LI>Project hierarchy browser
    </UL>
 
-<LI>Source dependency browser.
-<LI>Call graph (what calls what, what is called by what)
+<LI>Integrated debugging, including in particular:
+   <UL>
+   <LI>Run/Step/Next/Finish/Continue
+   <LI>Breakpoints (on line, function, exception, ...)
+   <LI>Attach to running processes
+   <LI>Core file debugging
+   <LI>Enhanced display of variables and complex structures
+   <LI>Dereference of pointers by a simple mouse click
+   <LI>Detection of aliases
+   <LI>Display of registers, local variables, arguments
+   <LI>Call stack
+   <LI>Assembly view
+   <LI>Task view
+   <LI>Memory view
+   </UL>
 
-<LI>Integrated debugging, providing all the functionalities of GVD
-<LI>Basic CVS support, including:
+<LI>Version control support for ClearCase and CVS, including:
    <UL>
    <LI>Status of files
    <LI>Check in
    <LI>Check out
    <LI>Edit log
+   <LI>Annotate files (CVS only)
    <LI>Add/Remove file
-   <LI>View log
-   <LI>Visual Diff
+   <LI>Revision history
+   <LI>Comparison betwen revisions
    </UL>
-
-<LI>Compile/Build
-<LI>Check file syntax
-<LI>Jump from error message to source editor
-<LI>Visual Diff between Files
-<LI>Automatic generation of body
-<LI>Source Reformatting
-<LI>Window manipulation
-<LI>Integrated Help for GNAT tools
 </UL>
 
 <P>
 <H1>Online Documentation</H1>
+
+The GPS manual is a work in progress. This is a preliminary version where
+most of the sections are not finished.
 
 <UL>
 <LI><A HREF="gps.html">GPS User's Guide</A></LI><P/>
 </UL>
 
 <P><HR><P>
-Copyright (C) 2001-2002, ACT Europe.
+Copyright (C) 2002, ACT Europe.
 
 </BODY>
 </HTML>
