@@ -1688,10 +1688,10 @@ package body Src_Info.CPP is
 
       --  check timestamps for the parsed file
       if File /= No_LI_File and then File.LI.Parsed then
-         if not Is_Incomplete (File)
-           and then (not Check_Timestamp
-                     or else File_Time_Stamp (File.LI.LI_Filename) <=
-                       File.LI.LI_Timestamp)
+         if not Check_Timestamp
+           or else Is_Up_To_Date (File,
+                                  Compare_With_Sources => False,
+                                  Compare_With_LI_DB   => True)
          then
             return;
          end if;

@@ -31,7 +31,6 @@ with Src_Info.LI_Utils;         use Src_Info.LI_Utils;
 with Types;                     use Types;
 with Traces;                    use Traces;
 with VFS;                       use VFS;
-with Ada.Calendar;              use Ada.Calendar;
 
 package body Src_Info.ALI is
 
@@ -2002,8 +2001,9 @@ package body Src_Info.ALI is
    begin
       if Full_Ali_File /= VFS.No_File then
          if File = No_LI_File
-           or else Is_Incomplete (File)
-           or else File_Time_Stamp (Full_Ali_File) > File.LI.LI_Timestamp
+           or else not Is_Up_To_Date (File,
+                                      Compare_With_Sources => False,
+                                      Compare_With_LI_DB   => True)
          then
             Trace (Me, "Creating/Updating LI file: "
                    & Full_Name (Full_Ali_File).all);
