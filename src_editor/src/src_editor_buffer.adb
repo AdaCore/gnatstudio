@@ -97,12 +97,14 @@ package body Src_Editor_Buffer is
 
    Signals : constant Interfaces.C.Strings.chars_ptr_array :=
      (1 => New_String ("cursor_position_changed"),
-      2 => New_String ("side_column_changed"));
+      2 => New_String ("side_column_changed"),
+      3 => New_String ("status_changed"));
    --  The list of new signals supported by this GObject
 
    Signal_Parameters : constant Glib.Object.Signal_Parameter_Types :=
      (1 => (GType_Int, GType_Int),
-      2 => (GType_None, GType_None));
+      2 => (GType_None, GType_None),
+      3 => (GType_None, GType_None));
    --  The parameters associated to each new signal
 
    package Buffer_Callback is new Gtk.Handlers.Callback
@@ -606,7 +608,7 @@ package body Src_Editor_Buffer is
             Natural (Get_Line_Offset (Pos)));
 
          Buffer.Inserting := True;
-         Enqueue (Buffer.Queue, Command);
+         Enqueue (Buffer, Command_Access (Command));
          Buffer.Inserting := False;
 
          Add_Text (Command, Text);
@@ -626,7 +628,7 @@ package body Src_Editor_Buffer is
                Natural (Get_Line_Offset (Pos)));
 
             Buffer.Inserting := True;
-            Enqueue (Buffer.Queue, Command);
+            Enqueue (Buffer, Command_Access (Command));
             Buffer.Inserting := False;
          end if;
 
@@ -642,7 +644,7 @@ package body Src_Editor_Buffer is
             False,
             Natural (Get_Line (Pos)),
             Natural (Get_Line_Offset (Pos)));
-         Enqueue (Buffer.Queue, Command);
+         Enqueue (Buffer, Command_Access (Command));
          Add_Text (Command, Text);
          Buffer.Current_Command := Command_Access (Command);
       end if;
@@ -784,7 +786,7 @@ package body Src_Editor_Buffer is
             Direction);
 
          Buffer.Inserting := True;
-         Enqueue (Buffer.Queue, Command);
+         Enqueue (Buffer, Command_Access (Command));
          Buffer.Inserting := False;
 
       else
@@ -847,6 +849,43 @@ package body Src_Editor_Buffer is
    begin
       Emit_By_Name (Get_Object (Buffer), "side_column_changed" & ASCII.NUL);
    end Side_Column_Changed;
+
+   --------------------
+   -- Status_Changed --
+   --------------------
+
+   procedure Status_Changed
+     (Buffer : access Source_Buffer_Record'Class)
+   is
+      procedure Emit_By_Name
+        (Object : System.Address;
+         Name   : String);
+      pragma Import (C, Emit_By_Name, "g_signal_emit_by_name");
+   begin
+      Emit_By_Name (Get_Object (Buffer), "status_changed" & ASCII.NUL);
+   end Status_Changed;
+
+   ---------------------
+   -- Get_Last_Status --
+   ---------------------
+
+   function Get_Last_Status
+     (Buffer : access Source_Buffer_Record'Class)
+      return Status_Type is
+   begin
+      return Buffer.Current_Status;
+   end Get_Last_Status;
+
+   ---------------------
+   -- Set_Last_Status --
+   ---------------------
+
+   procedure Set_Last_Status
+     (Buffer : access Source_Buffer_Record'Class;
+      Status : Status_Type) is
+   begin
+      Buffer.Current_Status := Status;
+   end Set_Last_Status;
 
    ------------------------------
    -- Emit_New_Cursor_Position --
@@ -1337,6 +1376,7 @@ package body Src_Editor_Buffer is
       Lang   : Language.Language_Access := null)
    is
       Tags    : Gtk_Text_Tag_Table;
+      Command : Check_Modified_State;
    begin
       Gtk.Text_Buffer.Initialize (Buffer);
       Glib.Object.Initialize_Class_Record
@@ -1406,6 +1446,15 @@ package body Src_Editor_Buffer is
          User_Data   => Kernel);
 
       Initialize_Hook (Buffer);
+
+      --  Create the queue change hook that will be called every
+      --  time the state of the queue associated to the buffer changes.
+
+      Create (Command, Source_Buffer (Buffer), Buffer.Queue);
+      Add_Queue_Change_Hook
+        (Buffer.Queue,
+         Command_Access (Command),
+         "State_Check");
    end Initialize;
 
    -------------------------
@@ -1641,6 +1690,9 @@ package body Src_Editor_Buffer is
 
       if Success then
          File_Saved (Buffer.Kernel, Filename);
+         Buffer.Saved_Position := Get_Position (Buffer.Queue);
+         Buffer.Current_Status := Saved;
+         Status_Changed (Buffer);
       end if;
 
    exception
@@ -2428,15 +2480,20 @@ package body Src_Editor_Buffer is
       Undo (Buffer.Queue);
    end Undo;
 
-   ---------------
-   -- Get_Queue --
-   ---------------
+   -------------
+   -- Enqueue --
+   -------------
 
-   function Get_Queue
-     (Buffer : access Source_Buffer_Record) return Command_Queue is
+   procedure Enqueue
+     (Buffer  : access Source_Buffer_Record;
+      Command : Command_Access) is
    begin
-      return Buffer.Queue;
-   end Get_Queue;
+      if Buffer.Saved_Position > Get_Position (Buffer.Queue) then
+         Buffer.Saved_Position := -1;
+      end if;
+
+      Enqueue (Buffer.Queue, Command);
+   end Enqueue;
 
    ----------------
    -- Get_Kernel --
@@ -2518,14 +2575,16 @@ package body Src_Editor_Buffer is
    ---------------------
 
    function Check_Timestamp
-     (Buffer : access Source_Buffer_Record;
-      Ask_User : Boolean := False) return Boolean
+     (Buffer   : access Source_Buffer_Record;
+      Ask_User : Boolean := False;
+      Force    : Boolean := False) return Boolean
    is
       New_Timestamp : Timestamp;
       Dialog : Gtk_Dialog;
       Button : Gtk_Widget;
       pragma Unreferenced (Button);
 
+      Response : Gtk_Response_Type;
       Success : Boolean;
       Line, Column : Gint;
    begin
@@ -2536,29 +2595,35 @@ package body Src_Editor_Buffer is
          New_Timestamp := To_Timestamp (File_Time_Stamp (Buffer.Filename.all));
 
          if New_Timestamp > Buffer.Timestamp then
-            if not Ask_User then
-               return False;
+            if Force then
+               Response := Gtk_Response_Accept;
+            else
+               if not Ask_User then
+                  return False;
+               end if;
+
+               Dialog := Create_Gtk_Dialog
+                 (Msg         => Base_Name (Buffer.Filename.all)
+                  & (-" changed on disk. Really edit ?")
+                  & ASCII.LF & ASCII.LF
+                  & (-"Clicking on Revert will reload the file from disk.")
+                  & ASCII.LF
+                  & (-"Clicking on Yes will keep the current file in memory."),
+                  Dialog_Type   => Confirmation,
+                  Title         => -"File changed on disk",
+                  Justification => Justify_Left,
+                  Parent        => Get_Main_Window (Buffer.Kernel));
+
+               Button := Add_Button (Dialog, Stock_Yes, Gtk_Response_Yes);
+               Button := Add_Button
+                 (Dialog, Stock_Revert_To_Saved, Gtk_Response_Accept);
+
+               Show_All (Dialog);
+               Response := Run (Dialog);
+               Destroy (Dialog);
             end if;
 
-            Dialog := Create_Gtk_Dialog
-              (Msg         => Base_Name (Buffer.Filename.all)
-                 & (-" changed on disk. Really edit ?")
-                 & ASCII.LF & ASCII.LF
-                 & (-"Clicking on Revert will reload the file from disk.")
-                 & ASCII.LF
-                 & (-"Clicking on Yes will keep the current file in memory."),
-               Dialog_Type   => Confirmation,
-               Title         => -"File changed on disk",
-               Justification => Justify_Left,
-               Parent        => Get_Main_Window (Buffer.Kernel));
-
-            Button := Add_Button (Dialog, Stock_Yes, Gtk_Response_Yes);
-            Button := Add_Button
-              (Dialog, Stock_Revert_To_Saved, Gtk_Response_Accept);
-
-            Show_All (Dialog);
-
-            case Run (Dialog) is
+            case Response is
                when Gtk_Response_Yes =>
                   Buffer.Timestamp := New_Timestamp;
 
@@ -2579,8 +2644,6 @@ package body Src_Editor_Buffer is
                when others =>
                   null;
             end case;
-
-            Destroy (Dialog);
          end if;
       end if;
 
@@ -2856,7 +2919,7 @@ package body Src_Editor_Buffer is
                  Forward);
 
          Set_Text (Delete, Get_Slice (Prev, Iter));
-         Enqueue (Buffer.Queue, Delete);
+         Enqueue (Buffer, Command_Access (Delete));
 
       else
          Create
@@ -2868,7 +2931,7 @@ package body Src_Editor_Buffer is
             Natural (Get_Line_Offset (Iter)),
             Text.all,
             True);
-         Enqueue (Buffer.Queue, Command);
+         Enqueue (Buffer, Command_Access (Command));
       end if;
 
       Buffer.Current_Command := null;
@@ -3346,5 +3409,33 @@ package body Src_Editor_Buffer is
 
       Free (X.Info);
    end Free;
+
+   ----------------
+   -- Get_Status --
+   ----------------
+
+   function Get_Status
+     (Buffer : access Source_Buffer_Record)
+      return Status_Type
+   is
+      Position : Integer;
+   begin
+      if (Undo_Queue_Empty (Buffer.Queue)
+          and then Redo_Queue_Empty (Buffer.Queue))
+        or else
+          (Buffer.Saved_Position = Get_Position (Buffer.Queue)
+           and then Buffer.Saved_Position = 0)
+      then
+         return Unmodified;
+      else
+         Position := Get_Position (Buffer.Queue);
+
+         if Buffer.Saved_Position = Position then
+            return Saved;
+         else
+            return Modified;
+         end if;
+      end if;
+   end Get_Status;
 
 end Src_Editor_Buffer;
