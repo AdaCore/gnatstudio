@@ -4,7 +4,7 @@
 --                      Copyright (C) 2000-2005                      --
 --                              AdaCore                              --
 --                                                                   --
--- GVD is free  software;  you can redistribute it and/or modify  it --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -100,10 +100,6 @@ package GVD.Main_Window is
 
       Current_Debugger    : Glib.Object.GObject;
       --  The current visual debugger.
-
-      Standalone          : Boolean := True;
-      --  True if the gvd main window is used on its own (e.g, not as part
-      --  of an integrated environment).
 
       Main_Accel_Group    : Gtk_Accel_Group;
       --  The default accelerators for the GVD window.

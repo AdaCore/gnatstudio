@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                   GVD - The GNU Visual Debugger                   --
+--                                GPS                                --
 --                                                                   --
---                      Copyright (C) 2000-2003                      --
---                              ACT-Europe                           --
+--                      Copyright (C) 2000-2005                      --
+--                              AdaCore                              --
 --                                                                   --
--- GVD is free  software;  you can redistribute it and/or modify  it --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -392,10 +392,6 @@ package GVD.Process is
    --  emitted to the debugger.
    --  False is returned when there is no such breakpoint in the list (or the
    --  list of breakpoints has never been parsed before).
-
-   procedure Update_Editor_Frame
-     (Process : access Visual_Debugger_Record);
-   --  Update the editor frame with the name of the currently edited file.
 
    ---------------------
    -- Source location --

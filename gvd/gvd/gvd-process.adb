@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                   GVD - The GNU Visual Debugger                   --
+--                                GPS                                --
 --                                                                   --
 --                      Copyright (C) 2000-2005                      --
---                              ACT-Europe                           --
+--                              AdaCore                              --
 --                                                                   --
--- GVD is free  software;  you can redistribute it and/or modify  it --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -77,7 +77,6 @@ with GUI_Utils;                  use GUI_Utils;
 with GVD.Canvas;                 use GVD.Canvas;
 with GVD.Code_Editors;           use GVD.Code_Editors;
 with GVD.Dialogs;                use GVD.Dialogs;
-with GVD.Explorer;               use GVD.Explorer;
 with GVD.Main_Window;            use GVD.Main_Window;
 with GVD.Preferences;            use GVD.Preferences;
 with GVD.Text_Box.Source_Editor; use GVD.Text_Box.Source_Editor;
@@ -186,11 +185,6 @@ package body GVD.Process is
       Cmd     : String);
    --  Parse and process a "view".
    --  Syntax recognized: view (source|asm|source_asm)
-
-   procedure Preferences_Changed
-     (Editor : access Glib.Object.GObject_Record'Class);
-   --  Called when the preferences have changed, and the editor should be
-   --  redisplayed with the new setup.
 
    function On_Data_Delete_Event
      (Object : access Glib.Object.GObject_Record'Class;
@@ -984,11 +978,6 @@ package body GVD.Process is
       Widget_Callback.Connect
         (Process.Data_Canvas, "background_click",
          Widget_Callback.To_Marshaller (On_Background_Click'Access));
-      Widget_Callback.Object_Connect
-        (Process.Window, "preferences_changed",
-         Widget_Callback.To_Marshaller
-           (GVD.Canvas.Preferences_Changed'Access),
-         Process.Data_Canvas);
       Align_On_Grid (Process.Data_Canvas, True);
 
       --  Initialize the canvas
@@ -1132,36 +1121,6 @@ package body GVD.Process is
         (Process, "process_stopped",
          Object_Callback.To_Marshaller (On_Thread_Process_Stopped'Access));
 
-      --  Connect the various components so that they are refreshed when the
-      --  preferences are changed
-
-      Object_Callback.Object_Connect
-        (Process.Window, "preferences_changed",
-         Object_Callback.To_Marshaller
-           (GVD.Process.Preferences_Changed'Access),
-         Process);
-
-      if Process.Window.Standalone then
-         Widget_Callback.Object_Connect
-           (Process.Window, "preferences_changed",
-            Widget_Callback.To_Marshaller
-              (GVD.Code_Editors.Preferences_Changed'Access),
-            Process.Editor_Text);
-
-         Widget_Callback.Object_Connect
-           (Process,
-            "executable_changed",
-            Widget_Callback.To_Marshaller
-              (GVD.Code_Editors.On_Executable_Changed'Access),
-            Process.Editor_Text);
-
-         Widget_Callback.Object_Connect
-           (Process.Window, "preferences_changed",
-            Widget_Callback.To_Marshaller
-              (GVD.Explorer.Preferences_Changed'Access),
-            Get_Explorer (Process.Editor_Text));
-      end if;
-
       --  Allocate the colors for highlighting. This needs to be done before
       --  Initializing the debugger, since some file name might be output at
       --  that time.
@@ -1252,12 +1211,6 @@ package body GVD.Process is
 
       if Get_Pref (GVD_Prefs, Show_Call_Stack) then
          Create_Call_Stack (Process);
-      end if;
-
-      if Window.Standalone then
-         Child := Put (Window.Process_Mdi, Process.Editor_Text);
-         Set_Focus_Child (Child);
-         Set_Title (Child, -"Editor");
       end if;
 
       --  Initialize the pixmaps and colors for the canvas
@@ -1765,17 +1718,7 @@ package body GVD.Process is
       --  ??? need to keep a ref for sessions, except that sessions are
       --  disabled in GPS.
 
-      if Debugger.Window.Standalone then
-         if Top.Current_Debugger = null then
-            Set_Sensitive
-              (Get_Item (Top.Factory, -"/File/Open Program..."), False);
-         end if;
-
-         Set_Busy (Debugger, False);
-
-      else
-         Unref (Debugger);
-      end if;
+      Unref (Debugger);
    end Close_Debugger;
 
    --------------------------
@@ -2012,51 +1955,6 @@ package body GVD.Process is
    begin
       return Gint (Tab.Debugger_Num);
    end Get_Num;
-
-   -------------------------
-   -- Preferences_Changed --
-   -------------------------
-
-   procedure Preferences_Changed
-     (Editor : access Glib.Object.GObject_Record'Class)
-   is
-      Process : constant Visual_Debugger := Visual_Debugger (Editor);
-      F       : constant Pango_Font_Description :=
-        Get_Pref_Font (GVD_Prefs, Fixed_Style);
-      C       : constant Gdk_Color :=
-        Get_Pref (GVD_Prefs, Debugger_Highlight_Color);
-
-      use Gdk;
-   begin
-      if Process.Window.Standalone
-        and then (F /= Process.Debugger_Text_Font
-                  or else Process.Debugger_Text_Highlight_Color /= C)
-      then
-         Process.Debugger_Text_Font := F;
-         Process.Debugger_Text_Highlight_Color := C;
-
-         Set_Highlight_Color
-           (Process.Debugger_Text,
-            Process.Debugger_Text_Highlight_Color);
-
-         --  ??? Must change font/colors dynamically.
-      end if;
-   end Preferences_Changed;
-
-   -------------------------
-   -- Update_Editor_Frame --
-   -------------------------
-
-   procedure Update_Editor_Frame
-     (Process : access Visual_Debugger_Record) is
-   begin
-      if Process.Window.Standalone then
-         --  Set the label text.
-         Set_Title
-           (Find_MDI_Child (Process.Window.Process_Mdi, Process.Editor_Text),
-            Base_Name (Get_Current_File (Process.Editor_Text)));
-      end if;
-   end Update_Editor_Frame;
 
    ---------------------------------
    -- Set_Current_Source_Location --

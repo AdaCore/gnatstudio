@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                   GVD - The GNU Visual Debugger                   --
+--                                GPS                                --
 --                                                                   --
 --                      Copyright (C) 2000-2005                      --
---                              ACT-Europe                           --
+--                              AdaCore                              --
 --                                                                   --
--- GVD is free  software;  you can redistribute it and/or modify  it --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -25,13 +25,10 @@ with Gtk.Ctree;           use Gtk.Ctree;
 with Gtk.Paned;           use Gtk.Paned;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 with Gtk.Widget;          use Gtk.Widget;
-with Gtkada.MDI;          use Gtkada.MDI;
 with Gtkada.Handlers;     use Gtkada.Handlers;
 
 with Pango.Font;          use Pango.Font;
 with GVD.Explorer;        use GVD.Explorer;
-with GVD.Preferences;     use GVD.Preferences;
-with GVD.Main_Window;     use GVD.Main_Window;
 with GVD.Process;         use GVD.Process;
 with GVD.Types;           use GVD.Types;
 with Basic_Types;         use Basic_Types;
@@ -43,13 +40,6 @@ package body GVD.Code_Editors is
    use GVD;
    use GVD.Text_Box.Asm_Editor;
    use GVD.Text_Box.Source_Editor;
-
-   ---------------------
-   -- Local constants --
-   ---------------------
-
-   Explorer_Width : constant := 200;
-   --  Width of the area reserved for the explorer.
 
    --------------------
    -- Local packages --
@@ -76,40 +66,12 @@ package body GVD.Code_Editors is
 
    procedure Initialize
      (Editor  : access Code_Editor_Record'Class;
-      Process : access Glib.Object.GObject_Record'Class)
-   is
-      Tab   : constant Visual_Debugger :=
-        Visual_Debugger (Process);
-      Top   : constant GVD_Main_Window := Tab.Window;
-      Child : MDI_Child;
-
+      Process : access Glib.Object.GObject_Record'Class) is
    begin
       Initialize_Hbox (Editor);
       Editor.Process := Glib.Object.GObject (Process);
       Gtk_New (Editor.Asm, Process);
       Ref (Editor.Asm);
-
-      if Top.Standalone then
-         Gtk_New_Vpaned (Editor.Source_Asm_Pane);
-         Gtk_New (Editor.Explorer_Scroll);
-         Set_Policy
-           (Editor.Explorer_Scroll, Policy_Automatic, Policy_Automatic);
-         Set_USize (Editor.Explorer_Scroll, Explorer_Width, -1);
-         Child := Put (Top.Process_Mdi, Editor.Explorer_Scroll,
-                       Position => Position_Left);
-         Set_Focus_Child (Child);
-         Set_Title (Child, "Explorer");
-
-         Gtk_New (Editor.Explorer, Editor);
-         Add (Editor.Explorer_Scroll, Editor.Explorer);
-
-         --  Since we are sometimes unparenting these widgets, We need to
-         --  make sure they are not automatically destroyed by reference
-         --  counting.
-         Ref (Editor.Source_Asm_Pane);
-         Show_All (Editor);
-      end if;
-
       Widget_Callback.Connect
         (Editor, "destroy",
          Widget_Callback.To_Marshaller (On_Destroy'Access));
@@ -122,10 +84,6 @@ package body GVD.Code_Editors is
    procedure On_Destroy (Editor : access Gtk_Widget_Record'Class) is
       Ed : constant Code_Editor := Code_Editor (Editor);
    begin
-      if Visual_Debugger (Ed.Process).Window.Standalone then
-         Destroy (Ed.Source_Asm_Pane);
-      end if;
-
       Destroy (Ed.Asm);
    end On_Destroy;
 
@@ -137,20 +95,12 @@ package body GVD.Code_Editors is
      (Editor      : access Code_Editor_Record;
       Line        : Natural;
       Set_Current : Boolean := True;
-      Process     : Glib.Object.GObject)
-   is
-      Top : constant GVD_Main_Window :=
-        GVD_Main_Window (Visual_Debugger (Process).Window);
-
+      Process     : Glib.Object.GObject) is
    begin
       Editor.Source_Line := Line;
       Set_Line (Editor.Source, Line, Set_Current, Process);
 
       if Set_Current then
-         if Top.Standalone then
-            Set_Current_Line (Editor.Explorer, Line);
-         end if;
-
          --  Highlight the background of the current source line
          Highlight_Current_Line (Editor.Source);
 
@@ -277,27 +227,9 @@ package body GVD.Code_Editors is
      (Editor      : access Code_Editor_Record;
       File_Name   : VFS.Virtual_File;
       Set_Current : Boolean := True;
-      Force       : Boolean := False)
-   is
-      Top : constant GVD_Main_Window :=
-        GVD_Main_Window (Visual_Debugger (Editor.Process).Window);
-
+      Force       : Boolean := False) is
    begin
       Load_File (Editor.Source, File_Name, Set_Current, Force);
-
-      --  Create the explorer tree
-
-      if Top.Standalone and then Set_Current then
-         Set_Current_File (Editor.Explorer, Base_Name (File_Name));
-
-         if not Get_Pref (GVD_Prefs, Display_Explorer) then
-            Hide (Editor.Explorer_Scroll);
-         end if;
-      end if;
-
-      --  Update the name of the source file in the frame.
-
-      Update_Editor_Frame (Process => Visual_Debugger (Editor.Process));
    end Load_File;
 
    ------------------------
@@ -479,16 +411,7 @@ package body GVD.Code_Editors is
      (Editor : access Gtk.Widget.Gtk_Widget_Record'Class)
    is
       Edit : constant Code_Editor := Code_Editor (Editor);
-      Top  : constant GVD_Main_Window :=
-        GVD_Main_Window (Visual_Debugger (Edit.Process).Window);
-
    begin
-      if Top.Standalone
-        and then Get_Pref (GVD_Prefs, Display_Explorer)
-      then
-         GVD.Explorer.On_Executable_Changed (Edit.Explorer);
-      end if;
-
       --  Always clear the cache for the assembly editor, even if it is not
       --  displayed.
 

@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                   GVD - The GNU Visual Debugger                   --
+--                                GPS                                --
 --                                                                   --
---                      Copyright (C) 2000-2004                      --
---                              ACT-Europe                           --
+--                      Copyright (C) 2000-2005                      --
+--                              AdaCore                              --
 --                                                                   --
--- GVD is free  software;  you can redistribute it and/or modify  it --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -22,14 +22,12 @@ with Glib.Xml_Int;        use Glib.Xml_Int;
 with XML_Parsers;
 
 with Gtk.Widget;          use Gtk.Widget;
-with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 
 with Gtkada.Canvas;       use Gtkada.Canvas;
 
 with Debugger;
 with GVD.Main_Window;     use GVD.Main_Window;
 with GVD.Process;         use GVD.Process;
-with GVD.Preferences;     use GVD.Preferences;
 with GVD.Call_Stack;      use GVD.Call_Stack;
 with GVD.Code_Editors;    use GVD.Code_Editors;
 with GVD.Trace;           use GVD.Trace;
@@ -165,15 +163,6 @@ package body GVD.Window_Settings is
                if Process.Stack /= null then
                   Set (String_Gint ("Stack_Mask" & Img),
                        Gint (Get_List_Mask (Process.Stack)),
-                       True);
-               end if;
-
-               if Top.Standalone
-                 and then Get_Pref (GVD_Prefs, Display_Explorer)
-               then
-                  Set (String_Gint ("Explorer_Width" & Img),
-                       Gint (Get_Allocation_Width
-                             (Get_Explorer_Scroll (Process.Editor_Text))),
                        True);
                end if;
             end;
