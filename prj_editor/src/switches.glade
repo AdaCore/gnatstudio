@@ -101,48 +101,6 @@
 
 	    <widget>
 	      <class>GtkCheckButton</class>
-	      <name>make_compile_only</name>
-	      <can_focus>True</can_focus>
-	      <label>Compile only</label>
-	      <active>False</active>
-	      <draw_indicator>True</draw_indicator>
-	      <child>
-		<padding>0</padding>
-		<expand>False</expand>
-		<fill>False</fill>
-	      </child>
-	    </widget>
-
-	    <widget>
-	      <class>GtkCheckButton</class>
-	      <name>make_force_recompile</name>
-	      <can_focus>True</can_focus>
-	      <label>Force recompilation</label>
-	      <active>False</active>
-	      <draw_indicator>True</draw_indicator>
-	      <child>
-		<padding>0</padding>
-		<expand>False</expand>
-		<fill>False</fill>
-	      </child>
-	    </widget>
-
-	    <widget>
-	      <class>GtkCheckButton</class>
-	      <name>make_in_place</name>
-	      <can_focus>True</can_focus>
-	      <label>In place</label>
-	      <active>False</active>
-	      <draw_indicator>True</draw_indicator>
-	      <child>
-		<padding>0</padding>
-		<expand>False</expand>
-		<fill>False</fill>
-	      </child>
-	    </widget>
-
-	    <widget>
-	      <class>GtkCheckButton</class>
 	      <name>make_debug</name>
 	      <can_focus>True</can_focus>
 	      <label>Debug Information</label>
@@ -186,17 +144,52 @@
 	    <spacing>0</spacing>
 
 	    <widget>
-	      <class>GtkCheckButton</class>
-	      <name>make_multiprocessing</name>
-	      <can_focus>True</can_focus>
-	      <label>Multiprocessing</label>
-	      <active>False</active>
-	      <draw_indicator>True</draw_indicator>
+	      <class>GtkHBox</class>
+	      <name>hbox1</name>
+	      <homogeneous>False</homogeneous>
+	      <spacing>0</spacing>
 	      <child>
 		<padding>0</padding>
 		<expand>False</expand>
 		<fill>False</fill>
 	      </child>
+
+	      <widget>
+		<class>GtkCheckButton</class>
+		<name>make_multiprocessing</name>
+		<can_focus>True</can_focus>
+		<label>Multiprocessing</label>
+		<active>False</active>
+		<draw_indicator>True</draw_indicator>
+		<child>
+		  <padding>0</padding>
+		  <expand>False</expand>
+		  <fill>False</fill>
+		</child>
+	      </widget>
+
+	      <widget>
+		<class>GtkSpinButton</class>
+		<name>num_processes</name>
+		<can_focus>True</can_focus>
+		<climb_rate>1</climb_rate>
+		<digits>0</digits>
+		<numeric>False</numeric>
+		<update_policy>GTK_UPDATE_ALWAYS</update_policy>
+		<snap>False</snap>
+		<wrap>False</wrap>
+		<value>1</value>
+		<lower>0</lower>
+		<upper>100</upper>
+		<step>1</step>
+		<page>10</page>
+		<page_size>10</page_size>
+		<child>
+		  <padding>0</padding>
+		  <expand>True</expand>
+		  <fill>True</fill>
+		</child>
+	      </widget>
 	    </widget>
 
 	    <widget>
@@ -226,6 +219,20 @@
 		<fill>False</fill>
 	      </child>
 	    </widget>
+
+	    <widget>
+	      <class>GtkCheckButton</class>
+	      <name>recompile_switches</name>
+	      <can_focus>True</can_focus>
+	      <label>Recompile if switches changed</label>
+	      <active>False</active>
+	      <draw_indicator>True</draw_indicator>
+	      <child>
+		<padding>0</padding>
+		<expand>False</expand>
+		<fill>False</fill>
+	      </child>
+	    </widget>
 	  </widget>
 	</widget>
 
@@ -233,7 +240,7 @@
 	  <class>GtkFrame</class>
 	  <name>frame28</name>
 	  <border_width>5</border_width>
-	  <label>Search path</label>
+	  <label>Warnings</label>
 	  <label_xalign>0</label_xalign>
 	  <shadow_type>GTK_SHADOW_ETCHED_IN</shadow_type>
 	  <child>
@@ -367,17 +374,52 @@
 	    <spacing>0</spacing>
 
 	    <widget>
-	      <class>GtkCheckButton</class>
-	      <name>compile_optimize</name>
-	      <can_focus>True</can_focus>
-	      <label>Optimization</label>
-	      <active>False</active>
-	      <draw_indicator>True</draw_indicator>
+	      <class>GtkHBox</class>
+	      <name>hbox2</name>
+	      <homogeneous>False</homogeneous>
+	      <spacing>0</spacing>
 	      <child>
 		<padding>0</padding>
 		<expand>False</expand>
 		<fill>False</fill>
 	      </child>
+
+	      <widget>
+		<class>GtkCheckButton</class>
+		<name>compile_optimize</name>
+		<can_focus>True</can_focus>
+		<label>Optimization</label>
+		<active>False</active>
+		<draw_indicator>True</draw_indicator>
+		<child>
+		  <padding>0</padding>
+		  <expand>False</expand>
+		  <fill>False</fill>
+		</child>
+	      </widget>
+
+	      <widget>
+		<class>GtkSpinButton</class>
+		<name>spinbutton2</name>
+		<can_focus>True</can_focus>
+		<climb_rate>1</climb_rate>
+		<digits>0</digits>
+		<numeric>False</numeric>
+		<update_policy>GTK_UPDATE_ALWAYS</update_policy>
+		<snap>False</snap>
+		<wrap>False</wrap>
+		<value>1</value>
+		<lower>0</lower>
+		<upper>100</upper>
+		<step>1</step>
+		<page>10</page>
+		<page_size>10</page_size>
+		<child>
+		  <padding>0</padding>
+		  <expand>True</expand>
+		  <fill>True</fill>
+		</child>
+	      </widget>
 	    </widget>
 
 	    <widget>

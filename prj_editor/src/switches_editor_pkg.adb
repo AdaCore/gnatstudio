@@ -17,6 +17,9 @@ end Gtk_New;
 
 procedure Initialize (Switches_Editor : access Switches_Editor_Record'Class) is
    pragma Suppress (All_Checks);
+   Num_Processes_Adj : Gtk_Adjustment;
+   Spinbutton2_Adj : Gtk_Adjustment;
+
 begin
    Gtk.Window.Initialize (Switches_Editor, Window_Toplevel);
    Set_Title (Switches_Editor, -"Switches");
@@ -56,18 +59,6 @@ begin
    Set_Active (Switches_Editor.Make_All_Files, False);
    Pack_Start (Switches_Editor.Vbox25, Switches_Editor.Make_All_Files, False, False, 0);
 
-   Gtk_New (Switches_Editor.Make_Compile_Only, -"Compile only");
-   Set_Active (Switches_Editor.Make_Compile_Only, False);
-   Pack_Start (Switches_Editor.Vbox25, Switches_Editor.Make_Compile_Only, False, False, 0);
-
-   Gtk_New (Switches_Editor.Make_Force_Recompile, -"Force recompilation");
-   Set_Active (Switches_Editor.Make_Force_Recompile, False);
-   Pack_Start (Switches_Editor.Vbox25, Switches_Editor.Make_Force_Recompile, False, False, 0);
-
-   Gtk_New (Switches_Editor.Make_In_Place, -"In place");
-   Set_Active (Switches_Editor.Make_In_Place, False);
-   Pack_Start (Switches_Editor.Vbox25, Switches_Editor.Make_In_Place, False, False, 0);
-
    Gtk_New (Switches_Editor.Make_Debug, -"Debug Information");
    Set_Active (Switches_Editor.Make_Debug, False);
    Pack_Start (Switches_Editor.Vbox25, Switches_Editor.Make_Debug, False, False, 0);
@@ -82,9 +73,21 @@ begin
    Gtk_New_Vbox (Switches_Editor.Vbox26, False, 0);
    Add (Switches_Editor.Frame27, Switches_Editor.Vbox26);
 
+   Gtk_New_Hbox (Switches_Editor.Hbox1, False, 0);
+   Pack_Start (Switches_Editor.Vbox26, Switches_Editor.Hbox1, False, False, 0);
+
    Gtk_New (Switches_Editor.Make_Multiprocessing, -"Multiprocessing");
    Set_Active (Switches_Editor.Make_Multiprocessing, False);
-   Pack_Start (Switches_Editor.Vbox26, Switches_Editor.Make_Multiprocessing, False, False, 0);
+   Pack_Start (Switches_Editor.Hbox1, Switches_Editor.Make_Multiprocessing, False, False, 0);
+
+   Gtk_New (Num_Processes_Adj, 1.0, 0.0, 100.0, 1.0, 10.0, 10.0);
+   Gtk_New (Switches_Editor.Num_Processes, Num_Processes_Adj, 1.0, 0);
+   Set_Numeric (Switches_Editor.Num_Processes, False);
+   Set_Snap_To_Ticks (Switches_Editor.Num_Processes, False);
+   Set_Update_Policy (Switches_Editor.Num_Processes, Update_Always);
+   Set_Value (Switches_Editor.Num_Processes, 1.0);
+   Set_Wrap (Switches_Editor.Num_Processes, False);
+   Pack_Start (Switches_Editor.Hbox1, Switches_Editor.Num_Processes, True, True, 0);
 
    Gtk_New (Switches_Editor.Make_Keep_Going, -"Keep going");
    Set_Active (Switches_Editor.Make_Keep_Going, False);
@@ -94,7 +97,11 @@ begin
    Set_Active (Switches_Editor.Make_Minimal_Recompile, False);
    Pack_Start (Switches_Editor.Vbox26, Switches_Editor.Make_Minimal_Recompile, False, False, 0);
 
-   Gtk_New (Switches_Editor.Frame28, -"Search path");
+   Gtk_New (Switches_Editor.Recompile_Switches, -"Recompile if switches changed");
+   Set_Active (Switches_Editor.Recompile_Switches, False);
+   Pack_Start (Switches_Editor.Vbox26, Switches_Editor.Recompile_Switches, False, False, 0);
+
+   Gtk_New (Switches_Editor.Frame28, -"Warnings");
    Set_Border_Width (Switches_Editor.Frame28, 5);
    Set_Shadow_Type (Switches_Editor.Frame28, Shadow_Etched_In);
    Attach (Switches_Editor.Make_Switches, Switches_Editor.Frame28, 0, 1, 1, 2,
@@ -142,9 +149,21 @@ begin
    Gtk_New_Vbox (Switches_Editor.Vbox19, False, 0);
    Add (Switches_Editor.Frame21, Switches_Editor.Vbox19);
 
+   Gtk_New_Hbox (Switches_Editor.Hbox2, False, 0);
+   Pack_Start (Switches_Editor.Vbox19, Switches_Editor.Hbox2, False, False, 0);
+
    Gtk_New (Switches_Editor.Compile_Optimize, -"Optimization");
    Set_Active (Switches_Editor.Compile_Optimize, False);
-   Pack_Start (Switches_Editor.Vbox19, Switches_Editor.Compile_Optimize, False, False, 0);
+   Pack_Start (Switches_Editor.Hbox2, Switches_Editor.Compile_Optimize, False, False, 0);
+
+   Gtk_New (Spinbutton2_Adj, 1.0, 0.0, 100.0, 1.0, 10.0, 10.0);
+   Gtk_New (Switches_Editor.Spinbutton2, Spinbutton2_Adj, 1.0, 0);
+   Set_Numeric (Switches_Editor.Spinbutton2, False);
+   Set_Snap_To_Ticks (Switches_Editor.Spinbutton2, False);
+   Set_Update_Policy (Switches_Editor.Spinbutton2, Update_Always);
+   Set_Value (Switches_Editor.Spinbutton2, 1.0);
+   Set_Wrap (Switches_Editor.Spinbutton2, False);
+   Pack_Start (Switches_Editor.Hbox2, Switches_Editor.Spinbutton2, True, True, 0);
 
    Gtk_New (Switches_Editor.Compile_No_Inline, -"No Inlining");
    Set_Active (Switches_Editor.Compile_No_Inline, False);

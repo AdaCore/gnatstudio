@@ -51,9 +51,9 @@ package body Switches_Editors is
       else
          Editor.Num_Pages := Editor.Num_Pages + 1;
          SA.Set (Full.Make_All_Files, new String' ("-a"), Id);
-         SA.Set (Full.Make_Compile_Only, new String' ("-c"), Id);
-         SA.Set (Full.Make_Force_Recompile, new String' ("-f"), Id);
-         SA.Set (Full.Make_In_Place, new String' ("-i"), Id);
+--           SA.Set (Full.Make_Compile_Only, new String' ("-c"), Id);
+--           SA.Set (Full.Make_Force_Recompile, new String' ("-f"), Id);
+--           SA.Set (Full.Make_In_Place, new String' ("-i"), Id);
          SA.Set (Full.Make_No_Default, new String' ("-I-"), Id);
          SA.Set (Full.Make_Elab_Warning, new String' ("-gnatl"), Id);
          SA.Set (Full.Make_Unused_Warning, new String' ("-gnatu"), Id);
@@ -62,6 +62,7 @@ package body Switches_Editors is
          SA.Set (Full.Make_Keep_Going, new String' ("-k"), Id);
          SA.Set (Full.Make_Minimal_Recompile, new String' ("-m"), Id);
          SA.Set (Full.Make_Debug, new String' ("-g"), Id);
+         SA.Set (Full.Recompile_Switches, new String' ("-s"), Id);
       end if;
 
       if (Pages and Compiler_Page) = 0 then
