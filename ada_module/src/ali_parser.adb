@@ -315,13 +315,16 @@ package body ALI_Parser is
    --  Process a reference to the entity
 
    function LI_Filename_From_Source
-     (Source_Filename : Virtual_File;
+     (Handler         : access ALI_Handler_Record'Class;
+      Source_Filename : Virtual_File;
       Project         : Project_Type) return Virtual_File;
    --  Return the ALI file associated with Source_Filename
 
    function Locate_ALI
-     (Short_ALI_Filename : String;
-      Project            : Project_Type) return VFS.Virtual_File;
+     (Handler            : access ALI_Handler_Record'Class;
+      Short_ALI_Filename : String;
+      Source_Filename    : VFS.Virtual_File;
+      Project            : Project_Type) return Virtual_File;
    --  Search for the full name of the ALI file. We also search the parent
    --  unit's ALi file, in case the file is a separate.
 
@@ -1165,7 +1168,9 @@ package body ALI_Parser is
    ----------------
 
    function Locate_ALI
-     (Short_ALI_Filename : String;
+     (Handler            : access ALI_Handler_Record'Class;
+      Short_ALI_Filename : String;
+      Source_Filename    : VFS.Virtual_File;
       Project            : Project_Type) return Virtual_File
    is
       procedure Next_Candidate (Last : in out Integer; Dot : String);
@@ -1192,6 +1197,7 @@ package body ALI_Parser is
       Dir                : String_Access;
       P                  : Project_Type := Project;
       Extension : constant String := File_Extension (Short_ALI_Filename);
+      Is_Parent_LI : Boolean := False;
 
    begin
       --  Start searching in the extending projects, in case the file was
@@ -1222,6 +1228,7 @@ package body ALI_Parser is
                   end if;
                end;
 
+               Is_Parent_LI := True;
                Next_Candidate (Last, Dot_Replacement);
             end loop;
          end;
@@ -1257,10 +1264,31 @@ package body ALI_Parser is
          return VFS.No_File;
       else
          declare
-            F : constant Virtual_File := Create (Dir.all);
+            F  : constant Virtual_File := Create (Dir.all);
+            LI : LI_File;
          begin
             Free (Dir);
-            return F;
+
+            if Is_Parent_LI then
+               --  Check whether the ALI file contains the information for
+               --  the file itself
+
+               LI := Get_Or_Create
+                 (Db        => Handler.Db,
+                  File      => F,
+                  Project   => Project);
+               if LI = null then
+                  return VFS.No_File;
+               elsif not Update_ALI (Handler, LI, Reset_ALI => False)
+                 or else not Check_LI_And_Source (LI, Source_Filename)
+               then
+                  return VFS.No_File;
+               else
+                  return F;
+               end if;
+            else
+               return F;
+            end if;
          end;
       end if;
    end Locate_ALI;
@@ -1293,7 +1321,8 @@ package body ALI_Parser is
    -----------------------------
 
    function LI_Filename_From_Source
-     (Source_Filename : Virtual_File;
+     (Handler         : access ALI_Handler_Record'Class;
+      Source_Filename : Virtual_File;
       Project         : Project_Type) return Virtual_File
    is
       LI : Virtual_File;
@@ -1306,7 +1335,9 @@ package body ALI_Parser is
             --  for ALI file from the parent unit.
 
             LI := Locate_ALI
-              (Get_ALI_Filename (Base_Name (Source_Filename)), Project);
+              (Handler,
+               Get_ALI_Filename (Base_Name (Source_Filename)),
+               Source_Filename, Project);
             if LI /= VFS.No_File then
                return LI;
             end if;
@@ -1324,9 +1355,11 @@ package body ALI_Parser is
 
                if Last >= Unit'First then
                   return Locate_ALI
-                    (Get_ALI_Filename
+                    (Handler,
+                     Get_ALI_Filename
                        (Get_Filename_From_Unit
                           (Project, Unit (Unit'First .. Last - 1), Unit_Body)),
+                     Source_Filename,
                      Project);
                else
                   return VFS.No_File;
@@ -1338,14 +1371,18 @@ package body ALI_Parser is
             --  for the spec will do.
 
             LI :=  Locate_ALI
-              (Get_ALI_Filename
+              (Handler,
+               Get_ALI_Filename
                  (Other_File_Base_Name (Project, Source_Filename)),
+               Source_Filename,
                Project);
             if LI /= VFS.No_File then
                return LI;
             else
                return Locate_ALI
-                 (Get_ALI_Filename (Base_Name (Source_Filename)), Project);
+                 (Handler,
+                  Get_ALI_Filename (Base_Name (Source_Filename)),
+                  Source_Filename, Project);
             end if;
       end case;
    end LI_Filename_From_Source;
@@ -1402,7 +1439,7 @@ package body ALI_Parser is
 
       Project := Get_Project_From_File (Handler.Registry, Source_Filename);
 
-      LI_Name := LI_Filename_From_Source (Source_Filename, Project);
+      LI_Name := LI_Filename_From_Source (Handler, Source_Filename, Project);
 
       if LI_Name = VFS.No_File then
          Trace (Me, "No LI found for " & Full_Name (Source_Filename).all);
