@@ -85,11 +85,11 @@ package body Gtkada.Entry_Completion is
       Pack_Start (The_Entry, Frame, Expand => True, Fill => True);
 
       Gtk_New (Scrolled);
+      Set_Policy (Scrolled, Policy_Automatic, Policy_Automatic);
       Add (Frame, Scrolled);
 
       Gtk_New (The_Entry.View);
       Add (Scrolled, The_Entry.View);
-      --  Set_Headers_Visible (The_Entry.View, False);
       Set_Mode (Get_Selection (The_Entry.View), Selection_Single);
 
       Gtk_New (The_Entry.List, (0 .. 0 => GType_String));
