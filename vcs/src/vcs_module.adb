@@ -49,9 +49,11 @@ with VCS_View_Pkg;              use VCS_View_Pkg;
 with Basic_Types;               use Basic_Types;
 
 with VCS.Unknown_VCS;           use VCS.Unknown_VCS;
+with VCS.Generic_VCS;           use VCS.Generic_VCS;
 with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with GNAT.Regpat;               use GNAT.Regpat;
 with Projects;                  use Projects;
 with Projects.Editor;           use Projects.Editor;
 with Projects.Registry;         use Projects.Registry;
@@ -134,6 +136,11 @@ package body VCS_Module is
       Scenario_Variables : Scenario_Variable_Array;
       Ref_Project  : Project_Type)
       return Boolean;
+
+   procedure Status_Parse_Handler
+     (Data    : in out Glide_Kernel.Scripts.Callback_Data'Class;
+      Command : String);
+   --  Handler for the command "vcs_status_parse".
 
    -----------------------
    -- On_Open_Interface --
@@ -569,6 +576,7 @@ package body VCS_Module is
          Add_After => False);
 
       Standard.VCS.Unknown_VCS.Register_Module (Kernel);
+      Standard.VCS.Generic_VCS.Register_Module (Kernel);
 
       Kernel_Callback.Connect
         (Kernel,
@@ -655,7 +663,133 @@ package body VCS_Module is
          Minimum_Args => 1,
          Maximum_Args => 2,
          Handler      => VCS_Command_Handler'Access);
+
+      Register_Command
+        (Kernel       => Kernel,
+         Command      => "vcs_status_parse",
+         Params       => "(string, regexp, status_unknown_identifier, "
+         & "status_not_registered_identifier, status_up_to_date_identifier, "
+         & "status_added_identifier, status_removed_identifier, "
+         & "status_modified_identifier, status_needs_merge_identifier, "
+         & "status_needs_update_identifier, "
+         & "index_filename, index_status, index_working_rev, index_head_rev)",
+         Description  =>
+         -("Parses string for vcs status."
+            & " See the GPS documentation for detailed usage description."),
+         Minimum_Args => 14,
+         Maximum_Args => 14,
+         Handler      => Status_Parse_Handler'Access);
    end Register_Module;
+
+   --------------------------
+   -- Status_Parse_Handler --
+   --------------------------
+
+   procedure Status_Parse_Handler
+     (Data    : in out Glide_Kernel.Scripts.Callback_Data'Class;
+      Command : String)
+   is
+      pragma Unreferenced (Command);
+
+      Kernel : constant Kernel_Handle := Get_Kernel (Data);
+
+      S                                : constant String := Nth_Arg (Data, 1);
+
+      Regexp                           : constant String := Nth_Arg (Data, 2);
+
+      Status_Unknown_Identifier        : constant String := Nth_Arg (Data, 3);
+      Status_Not_Registered_Identifier : constant String := Nth_Arg (Data, 4);
+      Status_Up_To_Date_Identifier     : constant String := Nth_Arg (Data, 5);
+      Status_Added_Identifier          : constant String := Nth_Arg (Data, 6);
+      Status_Removed_Identifier        : constant String := Nth_Arg (Data, 7);
+      Status_Modified_Identifier       : constant String := Nth_Arg (Data, 8);
+      Status_Needs_Merge_Identifier    : constant String := Nth_Arg (Data, 9);
+      Status_Needs_Update_Identifier   : constant String := Nth_Arg (Data, 10);
+
+      Index_Filename    : constant Integer := Nth_Arg (Data, 11);
+      Index_Status      : constant Integer := Nth_Arg (Data, 12);
+      Index_Working_Rev : constant Integer := Nth_Arg (Data, 13);
+      Index_Head_Rev    : constant Integer := Nth_Arg (Data, 14);
+
+      Pattern : constant Pattern_Matcher :=
+        Compile (Regexp, Single_Line or Multiple_Lines);
+
+      Matches : Match_Array (0 .. 4);
+      Start   : Integer := S'First;
+
+      use File_Status_List;
+      Status : List;
+   begin
+      Open_Explorer (Kernel, null);
+
+      loop
+         Match (Pattern, S, Matches, Start, S'Last);
+
+         if Matches (0) /= No_Match then
+
+            declare
+               St : File_Status_Record;
+            begin
+               String_List_Utils.String_List.Append
+                 (St.File_Name,
+                  S (Matches (Index_Filename).First
+                     .. Matches (Index_Filename).Last));
+
+               Start := Integer'Max (Matches (Index_Filename).Last + 1, Start);
+
+               String_List_Utils.String_List.Append
+                 (St.Working_Revision,
+                  S (Matches (Index_Working_Rev).First
+                     .. Matches (Index_Working_Rev).Last));
+
+               Start := Integer'Max
+                 (Matches (Index_Working_Rev).Last + 1, Start);
+
+               String_List_Utils.String_List.Append
+                 (St.Repository_Revision,
+                  S (Matches (Index_Head_Rev).First
+                     .. Matches (Index_Head_Rev).Last));
+
+               Start := Integer'Max
+                 (Matches (Index_Head_Rev).Last + 1, Start);
+
+               declare
+                  Status_String : constant String :=
+                    S (Matches (Index_Status).First
+                       .. Matches (Index_Status).Last);
+               begin
+                  if Status_String = Status_Not_Registered_Identifier then
+                     St.Status := Not_Registered;
+                  elsif Status_String = Status_Up_To_Date_Identifier then
+                     St.Status := Up_To_Date;
+                  elsif Status_String = Status_Added_Identifier then
+                     St.Status := Added;
+                  elsif Status_String = Status_Removed_Identifier then
+                     St.Status := Removed;
+                  elsif Status_String = Status_Modified_Identifier then
+                     St.Status := Modified;
+                  elsif Status_String = Status_Needs_Update_Identifier then
+                     St.Status := Needs_Update;
+                  elsif Status_String = Status_Needs_Merge_Identifier then
+                     St.Status := Needs_Merge;
+                  elsif Status_String = Status_Unknown_Identifier then
+                     St.Status := Unknown;
+                  end if;
+               end;
+
+               Append (Status, St);
+            end;
+         else
+            exit;
+         end if;
+
+         --  Start
+      end loop;
+
+      Display_File_Status
+        (Kernel, Status, Get_VCS_From_Id ("Generic VCS"), True, True, False);
+      --  ??? Should we use "Generic VCS" here or a command parameter ?
+   end Status_Parse_Handler;
 
    --------------------
    -- File_Edited_Cb --
