@@ -465,10 +465,24 @@ package body Src_Editor_Module is
       declare
          Old_Name : constant String := Get_Filename (Source);
       begin
-         Save_To_File (Source, Name, Success);
+         if Old_Name = "" then
+            declare
+               New_Name : constant String := Select_File (-"Save File As");
+            begin
+               if New_Name = "" then
+                  return;
+               else
+                  Save_To_File (Source, New_Name, Success);
+               end if;
+            end;
+
+         else
+            Save_To_File (Source, Name, Success);
+         end if;
 
          if Old_Name /= Get_Filename (Source) then
             --  Update the title, in case "save as..." was used.
+
             Set_Title
               (Child, Get_Filename (Source),
                Base_Name (Get_Filename (Source)));
@@ -591,8 +605,10 @@ package body Src_Editor_Module is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
       pragma Unreferenced (Widget);
+
       Success : Boolean;
       Source : constant Source_Editor_Box := Find_Current_Editor (Kernel);
+
    begin
       if Source /= null then
          declare
