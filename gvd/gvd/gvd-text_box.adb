@@ -144,8 +144,6 @@ package body GVD.Text_Boxes is
 
    begin
       Set_Font (Box, Ps_Font_Name, Font_Size);
-
-      --  Realize (Box.Child);
       Create_From_Xpm_D
         (Current_Line_Pixmap,
          Null_Window,
@@ -265,8 +263,13 @@ package body GVD.Text_Boxes is
       --  called.
       --  The call below thus make sure that no unwanted scrolling will happen
       --  later on.
+      --  Note that Realize can't be called when the box isn't mapped.
+      --  This can happen when it is hidden from the screen, but updates
+      --  should take place.
 
-      Realize (Box.Child);
+      if Mapped_Is_Set (Box) then
+         Realize (Box.Child);
+      end if;
 
       --  Scroll the code editor to make sure the line is visible on screen.
 
