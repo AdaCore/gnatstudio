@@ -275,14 +275,11 @@ procedure GPS is
 
       System_Rc : constant String :=
         Format_Pathname (Prefix.all & "/etc/gps/gtkrc");
-
-      Rc : constant String :=
+      Rc        : constant String :=
         String_Utils.Name_As_Directory (Dir.all) & "gtkrc";
-
-      Log : constant String :=
+      Log       : constant String :=
         String_Utils.Name_As_Directory (GPS.Home_Dir.all) & "debugger.log";
-
-      Key : constant String :=
+      Key       : constant String :=
         String_Utils.Name_As_Directory (Dir.all) & "custom_key";
 
    begin
@@ -325,7 +322,6 @@ procedure GPS is
       Project_Explorers.Register_Module (GPS.Kernel);
       Src_Editor_Module.Register_Module (GPS.Kernel);
       External_Editor_Module.Register_Module (GPS.Kernel);
-      Glide_Kernel.Help.Register_Module (GPS.Kernel);
       GVD_Module.Register_Module (GPS.Kernel);
       Builder_Module.Register_Module (GPS.Kernel);
       Vdiff_Module.Register_Module (GPS.Kernel);
@@ -335,6 +331,7 @@ procedure GPS is
       VCS.Unknown_VCS.Register_Module (GPS.Kernel);
       Aunit_Module.Register_Module (GPS.Kernel);
       Glide_Kernel.Console.Register_Module (GPS.Kernel);
+      Glide_Kernel.Help.Register_Module (GPS.Kernel);
 
       --  Register the supported languages and their associated LI handlers.
 
