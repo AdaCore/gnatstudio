@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 1.4.0
 
+- A project with no source files couldn't be open in the Project View
+  Problem:    If source directories were defined for the project, but no
+              source file was found in them, the source directories couldn't
+              be accessed through the explorer.
+  Workaround: Use the Files View to access the directory
+
 Known Problems fixed in GPS 1.3.0
 
 - C611-012 Cross-references do not work with C under Solaris
