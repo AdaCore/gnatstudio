@@ -1842,13 +1842,9 @@ package body Src_Editor_Buffer is
 
          --  Resynchronize the Real_Lines array.
 
-         declare
-            Real_Lines    : Natural_Array_Access renames Buffer.Real_Lines;
-         begin
-            for J in Real_Lines'Range loop
-               Real_Lines (J) := J;
-            end loop;
-         end;
+         for J in Buffer.Real_Lines'Range loop
+            Buffer.Real_Lines (J) := J;
+         end loop;
 
          Buffer.Saved_Position := Get_Position (Buffer.Queue);
          Buffer.Current_Status := Saved;
