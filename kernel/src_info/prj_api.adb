@@ -1105,22 +1105,16 @@ package body Prj_API is
       return String_Id
    is
       N : constant Name_Id := Prj.Tree.Name_Of (Ref);
-      Project : Project_Node_Id := Current_Project;
       Pkg : Project_Node_Id;
       Variable : Variable_Node_Id;
 
    begin
       if Project_Node_Of (Ref) /= Empty_Node then
-         Project := Project_Node_Of (Ref);
+         Pkg := Project_Node_Of (Ref);
+      else
+         Pkg := Current_Project;
       end if;
 
-      Pkg := Project;
-
-      --  ??? The commented out code searches for the variable declaration in
-      --  all the packages. However, the normalization process should really
-      --  put it at the top-level of the project.
-
-      --      while Pkg /= Empty_Node loop
       Variable := First_Variable_Of (Pkg);
       while Variable /= Empty_Node loop
          if (Kind_Of (Variable) = N_Variable_Declaration
@@ -1132,13 +1126,6 @@ package body Prj_API is
 
          Variable := Next_Variable (Variable);
       end loop;
-
-      --     if Pkg = Project then
-      --        Pkg := First_Package_Of (Project);
-      --     else
-      --        Pkg := Next_Package_In_Project (Pkg);
-      --     end if;
-      --  end loop;
 
       return No_String;
    end External_Variable_Name;
@@ -1491,7 +1478,6 @@ package body Prj_API is
          if Suffix_Matches
            (Filename, Get_String (Array_Elements.Table (Arr).Value.Value))
          then
-            Trace (Me, "Unit part for " & Filename & " is Unit_Spec");
             return Unit_Spec;
          end if;
          Arr := Array_Elements.Table (Arr).Next;
@@ -1503,13 +1489,11 @@ package body Prj_API is
          if Suffix_Matches
            (Filename, Get_String (Array_Elements.Table (Arr).Value.Value))
          then
-            Trace (Me, "Unit part for " & Filename & " is Unit_Body");
             return Unit_Body;
          end if;
          Arr := Array_Elements.Table (Arr).Next;
       end loop;
 
-            Trace (Me, "Unit part for " & Filename & " is unknown");
       return Unit_Separate;
    end Get_Unit_Part_From_Filename;
 
@@ -1554,6 +1538,154 @@ package body Prj_API is
 
       return Filename'Last;
    end Delete_File_Suffix;
+
+   ----------------
+   -- Clone_Node --
+   ----------------
+
+   function Clone_Node (Node : Project_Node_Id; Deep_Clone : Boolean := False)
+      return Project_Node_Id
+   is
+      Old      : Tree_Private_Part.Project_Node_Record renames
+        Tree_Private_Part.Project_Nodes.Table (Node);
+      New_Node : Project_Node_Id;
+
+   begin
+      if Node = Empty_Node then
+         return Empty_Node;
+      end if;
+
+      Assert
+        (Me,
+         not Deep_Clone or else  Kind_Of (Node) = N_Attribute_Declaration,
+         "Don't know how to properly Clone_Node a " & Kind_Of (Node)'Img,
+         Raise_Exception => False);
+
+      Tree_Private_Part.Project_Nodes.Increment_Last;
+      New_Node := Tree_Private_Part.Project_Nodes.Last;
+
+      --  Simple copy of all the fields. There is no need to duplicate
+      --  String_Id at this point, since nobody will modify them later on
+      --  anyway. So we save some memory and keep them as is.
+      --  Only the node ids will need to be copied for deep copies.
+
+      Tree_Private_Part.Project_Nodes.Table (New_Node) := Old;
+
+      if Deep_Clone then
+         case Kind_Of (Node) is
+            when N_Project =>
+               Set_First_With_Clause_Of
+                 (New_Node, Clone_Node (First_With_Clause_Of (Node), True));
+               Set_Project_Declaration_Of
+                 (New_Node, Clone_Node (Project_Declaration_Of (Node), True));
+               Set_First_String_Type_Of (New_Node, Empty_Node);
+               --  ??? Need to set First_String_Type_Of
+               --  ??? Need to set Variables
+               --  ??? Need to set Packages
+
+            when N_With_Clause =>
+               Set_Next_With_Clause_Of
+                 (New_Node, Clone_Node (Next_With_Clause_Of (Node), True));
+
+            when N_Project_Declaration =>
+               Set_First_Declarative_Item_Of
+                 (New_Node,
+                  Clone_Node (First_Declarative_Item_Of (Node), True));
+
+            when N_Declarative_Item =>
+               Set_Current_Item_Node
+                 (New_Node, Clone_Node (Current_Item_Node (Node), True));
+               Set_Next_Declarative_Item
+                 (New_Node, Clone_Node (Next_Declarative_Item (Node), True));
+
+            when N_Package_Declaration =>
+               Set_First_Declarative_Item_Of
+                 (New_Node,
+                  Clone_Node (First_Declarative_Item_Of (Node), True));
+               Set_Next_Package_In_Project (New_Node, Empty_Node);
+               --  ??? Need to set Next_Package_In_Project
+               --  ??? Need to set Variables
+               --  ??? Do we need to set Pkg_Id
+
+            when N_String_Type_Declaration =>
+               Set_First_Literal_String
+                 (New_Node, Clone_Node (First_Literal_String (Node), True));
+               Set_Next_String_Type (New_Node, Empty_Node);
+               --  ??? Need to set Next_String_Type
+
+            when N_Literal_String =>
+               Set_Next_Literal_String
+                 (New_Node, Clone_Node (Next_Literal_String (Node), True));
+
+            when N_Attribute_Declaration =>
+               Set_Expression_Of
+                 (New_Node, Clone_Node (Expression_Of (Node), True));
+
+            when N_Typed_Variable_Declaration =>
+               Set_Expression_Of
+                 (New_Node, Clone_Node (Expression_Of (Node), True));
+               Set_String_Type_Of (New_Node, Empty_Node);
+               Set_Next_Variable (New_Node, Empty_Node);
+               --  ??? Need to set String_Type_Of
+               --  ??? Need to set Next_Variable
+
+            when N_Variable_Declaration =>
+               Set_Expression_Of
+                 (New_Node, Clone_Node (Expression_Of (Node), True));
+               Set_Next_Variable (New_Node, Empty_Node);
+               --  ??? Need to set Next_Variable
+
+            when N_Expression =>
+               Set_First_Term (New_Node, Clone_Node (First_Term (Node), True));
+               Set_Next_Expression_In_List
+                 (New_Node, Clone_Node (Next_Expression_In_List (Node), True));
+
+            when N_Term =>
+               Set_Current_Term
+                 (New_Node, Clone_Node (Current_Term (Node), True));
+               Set_Next_Term
+                 (New_Node, Clone_Node (Next_Term (Node), True));
+
+            when N_Literal_String_List =>
+               Set_First_Expression_In_List
+                 (New_Node, Clone_Node (First_Expression_In_List (Node),
+                                        True));
+
+            when N_Variable_Reference =>
+               Set_Package_Node_Of (New_Node, Empty_Node);
+               Set_String_Type_Of (New_Node, Empty_Node);
+               --  ??? Need to set Package_Node_Of
+               --  ??? Need to set String_Type_Of
+
+            when N_External_Value =>
+               Set_External_Reference_Of
+                 (New_Node, Clone_Node (External_Reference_Of (Node), True));
+               Set_External_Default_Of
+                 (New_Node, Clone_Node (External_Default_Of (Node), True));
+
+            when N_Attribute_Reference =>
+               Set_Package_Node_Of (New_Node, Empty_Node);
+               --  ??? Need to set Package_Node_Of
+
+            when N_Case_Construction =>
+               Set_Case_Variable_Reference_Of
+                 (New_Node,
+                  Clone_Node (Case_Variable_Reference_Of (Node), True));
+               Set_First_Case_Item_Of
+                 (New_Node, Clone_Node (First_Case_Item_Of (Node), True));
+
+            when N_Case_Item =>
+               Set_First_Choice_Of
+                 (New_Node, Clone_Node (First_Choice_Of (Node), True));
+               Set_First_Declarative_Item_Of
+                 (New_Node,
+                  Clone_Node (First_Declarative_Item_Of (Node), True));
+         end case;
+      end if;
+
+      return New_Node;
+   end Clone_Node;
+
 
 begin
    Namet.Initialize;

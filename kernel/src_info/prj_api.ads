@@ -157,6 +157,32 @@ package Prj_API is
       return Project_Node_Id;
    --  Enclose the Node inside a N_Expression node, and return this expression.
 
+   --  function Find_Attribute_Declaration
+   --    (Prj_Or_Pkg     : Project_Node_Id;
+   --     Attribute_Name : String;
+   --     Index_Name     : Types.String_Id := Types.No_String)
+   --     return Project_Node_Id;
+   --  Find the declaration of Attribute_Name (possibly for a specific index)
+   --  in the project or the package Prj_Or_Pkg. When looking in a project, the
+   --  packages are not searched. Also, this function will not go recursively
+   --  inside the case statements.
+
+   -------------------------------
+   -- Node creation and copying --
+   -------------------------------
+
+   function Clone_Node (Node : Project_Node_Id; Deep_Clone : Boolean := False)
+      return Project_Node_Id;
+   --  Return a copy of Node. If Deep_Clone is true, then all the children of
+   --  node are also copied.
+   --  If Deep_Clone is false, then the two nodes will share part of their
+   --  structure.
+   --
+   --  Note: The current implementation will only deeo0clone correctly
+   --  Attribute declarations. All others nodes can only be cloned at the first
+   --  level. There is currently no need for other nodes, and it requires
+   --  significantly more work due to having xref link every where in the tree.
+
    ---------------------
    -- Variable values --
    ---------------------
