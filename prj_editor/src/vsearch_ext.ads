@@ -20,7 +20,6 @@
 
 with Find_Utils;
 with Glide_Kernel;
-with Glib.Object;
 with Gtk.Button;
 with Gtk.Main;
 with Gtk.Menu_Item;
@@ -47,43 +46,9 @@ package Vsearch_Ext is
       Handle  : Glide_Kernel.Kernel_Handle);
    --  Internal initialization procedure.
 
-   --------------------------------
-   -- Registering search modules --
-   --------------------------------
-
-   procedure Register_Search_Function
-     (Kernel            : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Label             : String;
-      Factory           : Find_Utils.Module_Search_Context_Factory;
-      Extra_Information : Gtk.Widget.Gtk_Widget := null;
-      Mask              : Find_Utils.Search_Options_Mask);
-   --  Register a new search function.
-   --  This will be available under the title Label in the search combo box.
-   --
-   --  If Extra_Information is not null, then it will be displayed every time
-   --  this label is selected. It can be used for instance to ask for more
-   --  information like a list of files to search.
-   --  Whenever the data in Extra_Information changes, or for some reason the
-   --  current status of GPS no longer permits the search, you should raise the
-   --  kernel signal Search_Reset_Signal (or call Vsearch_Ext.Reset_Search).
-   --
-   --  When the user then selects "Find", the function Factory is called to
-   --  create the factory. The options and searched string or regexp will be
-   --  set automatically on return of Factory, so you do not need to handle
-   --  this.
-   --  Mask indicates what options are relevant for that module. Options that
-   --  are not set will be greyed out.
-   --  If Supports_Replace if false, then the button will be greyed out.
-
    procedure Register_Default_Search
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
    --  Register the default search function
-
-   procedure Reset_Search
-     (Object : access Glib.Object.GObject_Record'Class;
-      Kernel : Glide_Kernel.Kernel_Handle);
-   --  Raises the kernel signal Search_Reset_Signal. This is just a convenience
-   --  function. Object is ignored, and can be anything.
 
 private
    type Vsearch_Extended_Record is new Vsearch_Pkg.Vsearch_Record with record

@@ -47,14 +47,11 @@ with Gtkada.Types;          use Gtkada.Types;
 with Glide_Intl;            use Glide_Intl;
 with Glide_Kernel;          use Glide_Kernel;
 with Glide_Kernel.Modules;  use Glide_Kernel.Modules;
-with Files_Extra_Info_Pkg;  use Files_Extra_Info_Pkg;
 
 with Find_Utils;            use Find_Utils;
 with Find_Utils.Help;       use Find_Utils.Help;
 with GUI_Utils;             use GUI_Utils;
 
-with Basic_Types;           use Basic_Types;
-with Generic_List;
 with Ada.Exceptions;        use Ada.Exceptions;
 
 with Traces; use Traces;
@@ -62,19 +59,6 @@ with Traces; use Traces;
 package body Vsearch_Ext is
 
    Me : constant Debug_Handle := Create ("Vsearch_Project");
-
-   type Search_Module_Data is record
-      Label             : String_Access;
-      Mask              : Search_Options_Mask;
-      Factory           : Module_Search_Context_Factory;
-      Extra_Information : Gtk_Widget;
-   end record;
-
-   No_Search : constant Search_Module_Data :=
-     (Label             => null,
-      Mask              => 0,
-      Factory           => null,
-      Extra_Information => null);
 
    type Search_User_Data_Record is record
       Case_Sensitive : Boolean;
@@ -84,15 +68,6 @@ package body Vsearch_Ext is
    package Search_User_Data is new User_Data (Search_User_Data_Record);
 
    Search_User_Data_Quark : constant String := "gps-search_user";
-
-   procedure Free (Data : in out Search_Module_Data);
-
-   package Search_Modules_List is new Generic_List (Search_Module_Data);
-   use Search_Modules_List;
-
-   Search_Modules : Search_Modules_List.List;
-   --  Global variable that contains the list of all registered search
-   --  functions.
 
    type Idle_Search_Data is record
       Vsearch : Vsearch_Extended;
@@ -104,9 +79,6 @@ package body Vsearch_Ext is
    function Idle_Search (Data : Idle_Search_Data) return Boolean;
    --  Performs the search in an idle loop, so that the user can still interact
    --  with the rest of GPS.
-
-   function Find_Module (Name : String) return Search_Module_Data;
-   --  Find the module for name Name.
 
    procedure Set_First_Next_Mode
      (Vsearch : access Vsearch_Extended_Record'Class;
@@ -165,30 +137,9 @@ package body Vsearch_Ext is
    --  Called when the selected pattern has changed, to reflect the settings
    --  for the predefined patterns
 
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (Data : in out Search_Module_Data) is
-   begin
-      Free (Data.Label);
-      if Data.Extra_Information /= null then
-         Unref (Data.Extra_Information);
-      end if;
-   end Free;
-
-   ------------------
-   -- Reset_Search --
-   ------------------
-
-   procedure Reset_Search
-     (Object : access Glib.Object.GObject_Record'Class;
-      Kernel : Glide_Kernel.Kernel_Handle)
-   is
-      pragma Unreferenced (Object);
-   begin
-      Search_Reset (Kernel);
-   end Reset_Search;
+   procedure Search_Functions_Changed
+     (Object : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Called when the list of registered search functions has changed.
 
    ----------------
    -- On_Destroy --
@@ -196,7 +147,6 @@ package body Vsearch_Ext is
 
    procedure On_Destroy (Object : access Gtk_Widget_Record'Class) is
    begin
-      Search_Modules_List.Free (Search_Modules);
       Unref (Vsearch_Extended (Object).Next_Menu_Item);
       Unref (Vsearch_Extended (Object).Search_Next_Button);
 
@@ -204,59 +154,6 @@ package body Vsearch_Ext is
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Destroy;
-
-   ------------------------------
-   -- Register_Search_Function --
-   ------------------------------
-
-   procedure Register_Search_Function
-     (Kernel            : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Label             : String;
-      Factory           : Module_Search_Context_Factory;
-      Extra_Information : Gtk.Widget.Gtk_Widget := null;
-      Mask              : Search_Options_Mask)
-   is
-      Combo : Gtk_Combo;
-   begin
-      Prepend
-        (Search_Modules,
-         Search_Module_Data'
-           (Label             => new String'(Label),
-            Mask              => Mask,
-            Factory           => Factory,
-            Extra_Information => Extra_Information));
-
-      if Extra_Information /= null then
-         Ref (Extra_Information);
-         Sink (Extra_Information);
-      end if;
-
-      if Get_Search_Module (Kernel) /= null then
-         Combo := Vsearch_Extended (Get_Search_Module (Kernel)).Context_Combo;
-         Add_Unique_Combo_Entry (Combo,  Label);
-         Set_Text (Get_Entry (Combo), Label);
-      end if;
-   end Register_Search_Function;
-
-   -----------------
-   -- Find_Module --
-   -----------------
-
-   function Find_Module (Name : String) return Search_Module_Data is
-      use Search_Modules_List;
-
-      List : List_Node := First (Search_Modules);
-   begin
-      while List /= Null_Node loop
-         if Data (List).Label.all = Name then
-            return Data (List);
-         end if;
-
-         List := Next (List);
-      end loop;
-
-      return No_Search;
-   end Find_Module;
 
    -----------------
    -- Idle_Search --
@@ -296,7 +193,6 @@ package body Vsearch_Ext is
       use Widget_List;
       Vsearch : constant Vsearch_Extended := Vsearch_Extended (Object);
       Options : Search_Options;
-      Data    : Search_Module_Data;
       All_Occurences : constant Boolean := Get_Active
         (Vsearch.Search_All_Check);
       Has_Next       : Boolean;
@@ -310,23 +206,25 @@ package body Vsearch_Ext is
       end if;
 
       if not Vsearch.Find_Next then
-         Data := Find_Module (Get_Text (Get_Entry (Vsearch.Context_Combo)));
-         Free (Vsearch.Last_Search_Context);
+         declare
+            Data : constant Search_Module_Data := Find_Module
+              (Vsearch.Kernel, Get_Text (Get_Entry (Vsearch.Context_Combo)));
+         begin
+            Free (Vsearch.Last_Search_Context);
 
-         if Data.Factory /= null and then Pattern /= "" then
-            Vsearch.Last_Search_Context := Data.Factory
-              (Vsearch.Kernel, All_Occurences, Data.Extra_Information);
+            if Data.Factory /= null and then Pattern /= "" then
+               Vsearch.Last_Search_Context := Data.Factory
+                 (Vsearch.Kernel, All_Occurences, Data.Extra_Information);
 
-            if Vsearch.Last_Search_Context /= null then
-               Options :=
-                 (Scope          => Search_Scope'Val
-                  (Get_Index_In_List (Vsearch.Scope_Combo)),
-                  Case_Sensitive => Get_Active (Vsearch.Case_Check),
-                  Whole_Word     => Get_Active (Vsearch.Whole_Word_Check),
-                  Regexp         => Get_Active (Vsearch.Regexp_Check));
-               Set_Context (Vsearch.Last_Search_Context, Pattern, Options);
+               if Vsearch.Last_Search_Context /= null then
+                  Options :=
+                    (Case_Sensitive => Get_Active (Vsearch.Case_Check),
+                     Whole_Word     => Get_Active (Vsearch.Whole_Word_Check),
+                     Regexp         => Get_Active (Vsearch.Regexp_Check));
+                  Set_Context (Vsearch.Last_Search_Context, Pattern, Options);
+               end if;
             end if;
-         end if;
+         end;
 
          --  Update the contents of the combo boxes
          if Get_Selection (Get_List (Vsearch.Pattern_Combo)) =
@@ -493,7 +391,7 @@ package body Vsearch_Ext is
 
       Vsearch : constant Vsearch_Extended := Vsearch_Extended (Object);
       Data    : constant Search_Module_Data := Find_Module
-        (Get_Text (Get_Entry (Vsearch.Context_Combo)));
+        (Vsearch.Kernel, Get_Text (Get_Entry (Vsearch.Context_Combo)));
       Replace : Boolean;
 
    begin
@@ -502,9 +400,6 @@ package body Vsearch_Ext is
          Set_Sensitive (Vsearch.Replace_Label, Replace);
          Set_Sensitive (Vsearch.Replace_Combo, Replace);
          Set_Sensitive (Vsearch.Search_Replace_Button, Replace);
-
-         Set_Sensitive (Vsearch.Scope_Label, (Data.Mask and Scope_Mask) /= 0);
-         Set_Sensitive (Vsearch.Scope_Combo, (Data.Mask and Scope_Mask) /= 0);
 
          Set_Sensitive
            (Vsearch.Search_All_Check, (Data.Mask and All_Occurences) /= 0);
@@ -664,9 +559,7 @@ package body Vsearch_Ext is
       Is_Regexp, Case_Sensitive : Boolean;
       Data    : Search_User_Data_Record;
       Options : constant Search_Options :=
-        (Scope          => Search_Scope'Val
-            (Get_Index_In_List (Search.Scope_Combo)),
-         Case_Sensitive => Get_Active (Search.Case_Check),
+        (Case_Sensitive => Get_Active (Search.Case_Check),
          Whole_Word     => Get_Active (Search.Whole_Word_Check),
          Regexp         => Get_Active (Search.Regexp_Check));
 
@@ -690,12 +583,36 @@ package body Vsearch_Ext is
       --  Restore the options as before (they might have changed depending on
       --  the last predefined regexp we inserted)
 
-      Select_Item
-        (Get_List (Search.Scope_Combo), Search_Scope'Pos (Options.Scope));
       Set_Active (Search.Case_Check, Options.Case_Sensitive);
       Set_Active (Search.Whole_Word_Check, Options.Whole_Word);
       Set_Active (Search.Regexp_Check, Options.Regexp);
    end New_Predefined_Regexp;
+
+   ------------------------------
+   -- Search_Functions_Changed --
+   ------------------------------
+
+   procedure Search_Functions_Changed
+     (Object : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      Vsearch : constant Vsearch_Extended := Vsearch_Extended (Object);
+      Num     : Positive := 1;
+   begin
+      loop
+         declare
+            Data : constant Search_Module_Data :=
+              Get_Nth_Search_Module (Kernel, Num);
+         begin
+            exit when Data = No_Search;
+
+            Add_Unique_Combo_Entry
+              (Vsearch.Context_Combo, Data.Label);
+            Set_Text (Get_Entry (Vsearch.Context_Combo), Data.Label);
+
+            Num := Num + 1;
+         end;
+      end loop;
+   end Search_Functions_Changed;
 
    -------------
    -- Gtk_New --
@@ -718,11 +635,9 @@ package body Vsearch_Ext is
       Handle  : Glide_Kernel.Kernel_Handle)
    is
       pragma Suppress (All_Checks);
-      use Search_Modules_List;
 
       Navigate  : constant String := '/' & (-"Navigate");
       Goto_Decl : constant String := -"Goto Declaration";
-      Current   : List_Node := First (Search_Modules);
       Mitem     : Gtk_Menu_Item;
 
    begin
@@ -830,9 +745,6 @@ package body Vsearch_Ext is
         (Vsearch.Context_Entry, "changed",
          Kernel_Callback.To_Marshaller (Reset_Search'Access), Handle);
       Kernel_Callback.Connect
-        (Vsearch.Scope_Entry, "changed",
-         Kernel_Callback.To_Marshaller (Reset_Search'Access), Handle);
-      Kernel_Callback.Connect
         (Vsearch.Search_All_Check, "toggled",
          Kernel_Callback.To_Marshaller (Reset_Search'Access), Handle);
       Kernel_Callback.Connect
@@ -845,19 +757,18 @@ package body Vsearch_Ext is
         (Vsearch.Regexp_Check, "toggled",
          Kernel_Callback.To_Marshaller (Reset_Search'Access), Handle);
 
-      --  Show the registered modules
-      while Current /= Null_Node loop
-         Add_Unique_Combo_Entry
-           (Vsearch.Context_Combo, Data (Current).Label.all);
-         Set_Text (Get_Entry (Vsearch.Context_Combo),
-                   Data (Current).Label.all);
-         Current := Next (Current);
-      end loop;
+      --  Show the already registered modules
+      Search_Functions_Changed (Vsearch, Handle);
 
       Kernel_Callback.Connect
         (Handle, Search_Reset_Signal,
          Kernel_Callback.To_Marshaller (Set_First_Next_Mode_Cb'Access),
          Handle);
+      Kernel_Callback.Object_Connect
+        (Handle, Search_Functions_Changed_Signal,
+         Kernel_Callback.To_Marshaller (Search_Functions_Changed'Access),
+         Slot_Object => Vsearch,
+         User_Data => Handle);
 
       --  Include all the patterns that have been predefined so far, and make
       --  sure that new patterns will be automatically added.
@@ -913,51 +824,17 @@ package body Vsearch_Ext is
    procedure Register_Default_Search
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
-      Extra : Files_Extra_Info_Access;
+      Name : constant String := -"Help";
    begin
-      Gtk_New (Extra, Kernel);
-      Kernel_Callback.Connect
-        (Extra.Subdirs_Check, "toggled",
-         Kernel_Callback.To_Marshaller (Reset_Search'Access),
-         Kernel_Handle (Kernel));
-      Kernel_Callback.Connect
-        (Extra.Files_Entry, "changed",
-         Kernel_Callback.To_Marshaller (Reset_Search'Access),
-         Kernel_Handle (Kernel));
-      Kernel_Callback.Connect
-        (Extra.Directory_Entry, "changed",
-         Kernel_Callback.To_Marshaller (Reset_Search'Access),
-         Kernel_Handle (Kernel));
-
       Register_Search_Function
-        (Kernel            => Kernel,
-         Label             => -"Current File",
-         Factory           => Current_File_Factory'Access,
-         Extra_Information => null,
-         Mask              => All_Options
-           and not All_Occurences and not Supports_Replace);
-      Register_Search_Function
-        (Kernel            => Kernel,
-         Label             => -"Files From Project",
-         Factory           => Files_From_Project_Factory'Access,
-         Extra_Information => null,
-         Mask              => All_Options
-           and not Search_Backward and not Supports_Replace);
-      Register_Search_Function
-        (Kernel            => Kernel,
-         Label             => -"Files...",
-         Factory           => Files_Factory'Access,
-         Extra_Information => Gtk_Widget (Extra),
-         Mask              => All_Options
-           and not Search_Backward and not Supports_Replace);
-      Register_Search_Function
-        (Kernel            => Kernel,
-         Label             => -"Help",
-         Factory           => Help_Factory'Access,
-         Extra_Information => null,
-         Mask              => All_Options and not Supports_Replace
-           and not Search_Backward and not Scope_Mask
-         and not Whole_Word and not All_Occurences);
+        (Kernel => Kernel,
+         Data   => (Length => Name'Length,
+                    Label             => Name,
+                    Factory           => Help_Factory'Access,
+                    Extra_Information => null,
+                    Mask              => All_Options and not Supports_Replace
+                    and not Search_Backward
+                    and not Whole_Word and not All_Occurences));
 
       Register_Search_Pattern
         (Kernel,
