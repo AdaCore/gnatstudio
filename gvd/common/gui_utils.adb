@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2002                      --
+--                      Copyright (C) 2000-2003                      --
 --                             ACT-Europe                            --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -44,6 +44,7 @@ with Gtk.List;                 use Gtk.List;
 with Gtk.List_Item;            use Gtk.List_Item;
 with Gtk.Menu;                 use Gtk.Menu;
 with Gtk.Menu_Item;            use Gtk.Menu_Item;
+with Gtk.Text_Iter;            use Gtk.Text_Iter;
 with Gtk.Tree_Model;           use Gtk.Tree_Model;
 with Gtk.Tree_Store;           use Gtk.Tree_Store;
 with Gtk.Tree_View;            use Gtk.Tree_View;
@@ -53,6 +54,7 @@ with Gtk.Widget;               use Gtk.Widget;
 with Pango.Enums;              use Pango.Enums;
 with Pango.Font;               use Pango.Font;
 with Pango.Layout;             use Pango.Layout;
+with String_Utils;             use String_Utils;
 
 package body GUI_Utils is
 
@@ -802,5 +804,53 @@ package body GUI_Utils is
 
       return Iter;
    end Find_Iter_For_Event;
+
+   --------------------------
+   -- Search_Entity_Bounds --
+   --------------------------
+
+   procedure Search_Entity_Bounds
+     (Start_Iter   : in out Gtk.Text_Iter.Gtk_Text_Iter;
+      End_Iter     : out Gtk.Text_Iter.Gtk_Text_Iter)
+   is
+      Ignored : Boolean;
+   begin
+      --  Search forward the end of the entity...
+      Copy (Source => Start_Iter, Dest => End_Iter);
+
+      if Is_Operator_Letter (Get_Char (End_Iter)) then
+         while not Is_End (End_Iter) loop
+            exit when not Is_Operator_Letter (Get_Char (End_Iter));
+            Forward_Char (End_Iter, Ignored);
+         end loop;
+
+         --  And search backward the begining of the entity...
+         while not Is_Start (Start_Iter) loop
+            Backward_Char (Start_Iter, Ignored);
+
+            if not Is_Operator_Letter (Get_Char (Start_Iter)) then
+               Forward_Char (Start_Iter, Ignored);
+               exit;
+            end if;
+         end loop;
+
+      else
+         while not Is_End (End_Iter) loop
+            exit when not Is_Entity_Letter (Get_Char (End_Iter));
+            Forward_Char (End_Iter, Ignored);
+         end loop;
+
+         --  And search backward the begining of the entity...
+         while not Is_Start (Start_Iter) loop
+            Backward_Char (Start_Iter, Ignored);
+
+            if not Is_Entity_Letter (Get_Char (Start_Iter)) then
+               Forward_Char (Start_Iter, Ignored);
+               exit;
+            end if;
+         end loop;
+      end if;
+   end Search_Entity_Bounds;
+
 
 end GUI_Utils;

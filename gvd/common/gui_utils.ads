@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2002                      --
+--                      Copyright (C) 2000-2003                      --
 --                             ACT-Europe                            --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -37,6 +37,7 @@ with Gtk.Handlers;
 with Gtk.List;
 with Gtk.List_Item;
 with Gtk.Menu;
+with Gtk.Text_Iter;
 with Gtk.Tree_Store;
 with Gtk.Tree_Model;
 with Gtk.Tree_View;
@@ -110,6 +111,16 @@ package GUI_Utils is
    --  Remove and destroy all the children from Container.
    --  If Container is a menu, this empties the menu, thus allowing dynamic
    --  menus.
+
+   ---------------
+   -- Text_View --
+   ---------------
+
+   procedure Search_Entity_Bounds
+     (Start_Iter : in out Gtk.Text_Iter.Gtk_Text_Iter;
+      End_Iter   : out Gtk.Text_Iter.Gtk_Text_Iter);
+   --  Find the position of the begining and the end of the entity pointed to
+   --  by Start_Iter.
 
    ---------------
    -- Tree view --
