@@ -259,7 +259,6 @@ procedure GVD_Main is
            (-"   --debugger DEBUG  use DEBUG as the underlying debugger.");
          Put_Line (-"   --jdb             assume a java debugger.");
          Put_Line (-"   --host HOST       Run inferior debugger on HOST.");
-         Put_Line (-"   --no-explorer     Do not display explorer window.");
          Put_Line (-("   --target TARG:PRO " &
                      "Load program on machine TARG using protocol PRO."));
          Put_Line
@@ -281,7 +280,6 @@ procedure GVD_Main is
             "   --debugger DEBUG  use DEBUG as the underlying debugger." & LF &
             "   --jdb             assume a java debugger." & LF &
             "   --host HOST       Run inferior debugger on HOST." & LF &
-            "   --no-explorer     Do not display explorer window." & LF &
             "   --target TARG:PRO " &
             "Load program on machine TARG using protocol PRO." & LF &
             "   --log-level [0-4] Set level of logging (Default is 3)." & LF &
@@ -340,7 +338,7 @@ begin
 
    loop
       case Getopt ("-debugger: -jdb -tty fullname -version -help " &
-        "-host: -log-level: -no-explorer -target:")
+        "-host: -log-level: -target:")
       is
          -- long option names --
          when '-' =>
@@ -385,13 +383,6 @@ begin
                          (GVD.Types.Command_Type'Pos
                            (GVD.Types.Command_Type'Last) + 1 - Level);
                   end if;
-
-               -- --no-explorer --
-               when 'n' =>
-                  --  ??? Shouldn't modify the preferences directly...
-                  --  Get_Pref (Display_Explorer) := False;
-                  pragma Assert (False);
-                  null;
 
                when 't' =>
                   -- --tty --
