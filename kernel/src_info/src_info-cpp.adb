@@ -70,6 +70,8 @@ package body Src_Info.CPP is
    procedure Sym_E_Handler       (Sym : FIL_Table);
    procedure Sym_EC_Handler      (Sym : FIL_Table);
    procedure Sym_CL_Handler      (Sym : FIL_Table);
+   procedure Sym_IV_Handler      (Sym : FIL_Table);
+   procedure Sym_MA_Handler      (Sym : FIL_Table);
 
    ---------------------
    -- Symbol_Handlers --
@@ -81,6 +83,8 @@ package body Src_Info.CPP is
       E      => Sym_E_Handler'Access,
       EC     => Sym_EC_Handler'Access,
       CL     => Sym_CL_Handler'Access,
+      MA     => Sym_MA_Handler'Access,
+      IV     => Sym_IV_Handler'Access,
       others => Sym_Default_Handler'Access);
 
    ------------------
@@ -126,6 +130,7 @@ package body Src_Info.CPP is
       GV     => Ext ("gv"),
       E      => Ext ("e"),
       EC     => Ext ("ec"),
+      IV     => Ext ("iv"),
       others => Ext (""));
 
    type Type_To_Object_Array is array (E_Kind) of E_Kind;
@@ -635,6 +640,8 @@ package body Src_Info.CPP is
    procedure Sym_E_Handler       (Sym : FIL_Table) is separate;
    procedure Sym_EC_Handler      (Sym : FIL_Table) is separate;
    procedure Sym_CL_Handler      (Sym : FIL_Table) is separate;
+   procedure Sym_MA_Handler      (Sym : FIL_Table) is separate;
+   procedure Sym_IV_Handler      (Sym : FIL_Table) is separate;
 
    --  procedure Fu_To_Gv_Handler    (Ref : TO_Table) is separate;
 
