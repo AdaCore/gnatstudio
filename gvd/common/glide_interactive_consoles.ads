@@ -78,11 +78,14 @@ package Glide_Interactive_Consoles is
    --  Internal initialization function.
 
    procedure Insert
-     (Console   : access Glide_Interactive_Console_Record;
-      Text      : String;
-      Add_LF    : Boolean := True;
-      Highlight : Boolean := False);
+     (Console        : access Glide_Interactive_Console_Record;
+      Text           : String;
+      Add_LF         : Boolean := True;
+      Highlight      : Boolean := False;
+      Add_To_History : Boolean := False);
    --  Suspend the user insertion and insert Text as an information message.
+   --  If Add_To_History is True, the inserted text will be inserted in the
+   --  user command history.
 
    procedure Clear (Console : access Glide_Interactive_Console_Record);
    --  Clear all the text in the Console.
