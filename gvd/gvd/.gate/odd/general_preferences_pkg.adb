@@ -904,16 +904,16 @@ begin
 
    Gtk_New (General_Preferences.Apply_Button, -"Apply");
    Set_Flags (General_Preferences.Apply_Button, Can_Default);
-   Button_Callback.Connect
+   Widget_Callback.Object_Connect
      (General_Preferences.Apply_Button, "clicked",
-      Button_Callback.To_Marshaller (On_Reset_Button_Clicked'Access));
+      Widget_Callback.To_Marshaller (On_Apply_Button_Clicked'Access), General_Preferences);
    Add (General_Preferences.Hbuttonbox6, General_Preferences.Apply_Button);
 
    Gtk_New (General_Preferences.Cancel_Button, -"Cancel");
    Set_Flags (General_Preferences.Cancel_Button, Can_Default);
-   Button_Callback.Connect
+   Widget_Callback.Object_Connect
      (General_Preferences.Cancel_Button, "clicked",
-      Button_Callback.To_Marshaller (On_Help_Button_Clicked'Access));
+      Widget_Callback.To_Marshaller (On_Cancel_Button_Clicked'Access), General_Preferences);
    Add (General_Preferences.Hbuttonbox6, General_Preferences.Cancel_Button);
 
 end Initialize;

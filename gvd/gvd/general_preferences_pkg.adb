@@ -23,7 +23,6 @@ with Gtk.Adjustment;  use Gtk.Adjustment;
 with Gtk.Widget;      use Gtk.Widget;
 with Gtk.Enums;       use Gtk.Enums;
 with Gtkada.Handlers; use Gtkada.Handlers;
-with Callbacks_Odd; use Callbacks_Odd;
 with Odd_Intl; use Odd_Intl;
 with General_Preferences_Pkg.Callbacks; use General_Preferences_Pkg.Callbacks;
 with Gtk.Pixmap; use Gtk.Pixmap;
@@ -723,16 +722,16 @@ begin
 
    Gtk_New (General_Preferences.Apply_Button, -"Apply");
    Set_Flags (General_Preferences.Apply_Button, Can_Default);
-   Button_Callback.Connect
+   Widget_Callback.Object_Connect
      (General_Preferences.Apply_Button, "clicked",
-      Button_Callback.To_Marshaller (On_Reset_Button_Clicked'Access));
+      Widget_Callback.To_Marshaller (On_Apply_Button_Clicked'Access), General_Preferences);
    Add (General_Preferences.Hbuttonbox6, General_Preferences.Apply_Button);
 
    Gtk_New (General_Preferences.Cancel_Button, -"Cancel");
    Set_Flags (General_Preferences.Cancel_Button, Can_Default);
-   Button_Callback.Connect
+   Widget_Callback.Object_Connect
      (General_Preferences.Cancel_Button, "clicked",
-      Button_Callback.To_Marshaller (On_Help_Button_Clicked'Access));
+      Widget_Callback.To_Marshaller (On_Cancel_Button_Clicked'Access), General_Preferences);
    Add (General_Preferences.Hbuttonbox6, General_Preferences.Cancel_Button);
 
    General_Preferences.Main_Window := Gtk_Window (Main_Window);

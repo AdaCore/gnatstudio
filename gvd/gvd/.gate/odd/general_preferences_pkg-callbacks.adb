@@ -37,25 +37,25 @@ package body General_Preferences_Pkg.Callbacks is
    end On_Ok_Button_Clicked;
 
    -----------------------------
-   -- On_Reset_Button_Clicked --
+   -- On_Apply_Button_Clicked --
    -----------------------------
 
-   procedure On_Reset_Button_Clicked
-     (Object : access Gtk_Button_Record'Class)
+   procedure On_Apply_Button_Clicked
+     (Object : access Gtk_Widget_Record'Class)
    is
    begin
       null;
-   end On_Reset_Button_Clicked;
+   end On_Apply_Button_Clicked;
 
-   ----------------------------
-   -- On_Help_Button_Clicked --
-   ----------------------------
+   ------------------------------
+   -- On_Cancel_Button_Clicked --
+   ------------------------------
 
-   procedure On_Help_Button_Clicked
-     (Object : access Gtk_Button_Record'Class)
+   procedure On_Cancel_Button_Clicked
+     (Object : access Gtk_Widget_Record'Class)
    is
    begin
       null;
-   end On_Help_Button_Clicked;
+   end On_Cancel_Button_Clicked;
 
 end General_Preferences_Pkg.Callbacks;
