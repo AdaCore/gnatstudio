@@ -566,7 +566,8 @@ package body Entities.Queries is
          Filter               => Filter,
          Last_Line            => Last);
 
-      if Iter.Entity.References /= Null_Entity_Reference_List
+      if At_End (Iter.Deps)
+        and then Iter.Entity.References /= Null_Entity_Reference_List
         and then Iter.Decl_Returned
         and then
           ((In_Scope /= null
@@ -1278,7 +1279,8 @@ package body Entities.Queries is
       while T2 /= null loop
          Trace
            (Me, Prefix
-              & Get_Name (T2.Entity) & T2.Start_Line'Img & T2.End_Line'Img);
+            & Get_Name (T2.Entity).all
+            & T2.Start_Line'Img & T2.End_Line'Img);
          Dump (T2.First_Child, Prefix & "  ");
          T2 := T2.Sibling;
       end loop;
