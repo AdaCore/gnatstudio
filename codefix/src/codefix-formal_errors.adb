@@ -202,6 +202,9 @@ package body Codefix.Formal_Errors is
                Extract_Use,
                Current_Text,
                Success);
+
+            Set_Caption (New_Extract, Get_Caption (Temp_Extract));
+
             Free (Temp_Extract);
             Free (Extract_Use);
             exit when not Success;
@@ -257,9 +260,15 @@ package body Codefix.Formal_Errors is
            (New_Extract, Message, Str_Expected, Str_Red, Format_Red);
 
          if Caption = "" then
-            Set_Caption
-              (New_Extract,
-               "Replace """ & Str_Red & """ by """ & Str_Expected & """");
+            if Format_Red = Text_Ascii then
+               Set_Caption
+                 (New_Extract,
+                  "Replace """ & Str_Red & """ by """ & Str_Expected & """");
+            else
+               Set_Caption
+                 (New_Extract,
+                  "Replace misspelled word by """ & Str_Expected & """");
+            end if;
          else
             Set_Caption (New_Extract, Caption);
          end if;
@@ -843,18 +852,26 @@ package body Codefix.Formal_Errors is
       Solution_Cursor : File_Cursor'Class;
       Name            : String) return Extract
    is
-      New_Extract  : Extract;
-      Error_Line   : File_Cursor := File_Cursor (Error_Cursor);
-      Pkg_Info     : Construct_Information;
+      New_Extract : Extract;
+      Error_Line  : File_Cursor := File_Cursor (Error_Cursor);
+      New_Word    : Dynamic_String;
    begin
-      Pkg_Info := Get_Unit (Current_Text, Solution_Cursor, After);
+      Assign
+        (New_Word, Get_Extended_Unit_Name (Current_Text, Solution_Cursor));
 
       Error_Line.Col := 1;
       Get_Line (Current_Text, Error_Line, New_Extract);
-      Add_Word (New_Extract, Error_Cursor, Pkg_Info.Name.all & ".");
+
+      Add_Word
+        (New_Extract,
+         Error_Cursor,
+         New_Word.all & ".");
+
       Set_Caption
         (New_Extract,
-         "Prefix """ & Name & """ by """ & Pkg_Info.Name.all & """");
+         "Prefix """ & Name & """ by """ & New_Word.all & """");
+
+      Free (New_Word);
 
       return New_Extract;
    end Resolve_Ambiguity;
