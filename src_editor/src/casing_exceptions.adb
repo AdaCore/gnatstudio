@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2004                         --
---                            ACT-Europe                             --
+--                        Copyright (C) 2004-2005                    --
+--                            AdaCore                                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -405,10 +405,12 @@ package body Casing_Exceptions is
          Filter => Filter,
          Action => Command);
 
---        Register_Contextual_Menu
---          (Kernel, "",
---           Label => "Casing/",
---           Filter => Lookup_Filter (Kernel, "Entity"));
+      Register_Contextual_Menu
+        (Kernel,
+         Name   => "casing separator",
+         Action => null,
+         Filter => Filter,
+         Label  => -"Casing/");
 
       Substring_Filter   := new Substring_Filter_Record;
       Full_String_Filter := Action_Filter (not Substring_Filter);
