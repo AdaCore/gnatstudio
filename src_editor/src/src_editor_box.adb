@@ -36,6 +36,8 @@ with Gdk.GC;                     use Gdk.GC;
 with Gdk.Rectangle;              use Gdk.Rectangle;
 with Gdk.Types;
 with Gdk.Window;                 use Gdk.Window;
+with Pango.Layout;               use Pango.Layout;
+with Pango.Font;                 use Pango.Font;
 
 with Gtk;                        use Gtk;
 with Gtk.Box;                    use Gtk.Box;
@@ -1081,6 +1083,17 @@ package body Src_Editor_Box is
       Add (Frame, Event_Box);
       Gtk_New (Box.Cursor_Loc_Label, "1:1");
       Add (Event_Box, Box.Cursor_Loc_Label);
+
+      declare
+         Layout : constant Pango_Layout :=
+           Create_Pango_Layout (Box.Cursor_Loc_Label, "9999:99");
+         Width, Height : Gint;
+      begin
+         Get_Pixel_Size (Layout, Width, Height);
+         Set_Size_Request (Frame, Width, Height);
+         Unref (Layout);
+      end;
+
       Object_Return_Callback.Object_Connect
         (Event_Box, "button_press_event",
          Object_Return_Callback.To_Marshaller (On_Goto_Line_Func'Access),
