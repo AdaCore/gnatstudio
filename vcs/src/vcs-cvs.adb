@@ -37,7 +37,6 @@ with VCS_View_Pkg;              use VCS_View_Pkg;
 with VCS_Module;                use VCS_Module;
 
 with Commands;                  use Commands;
-with Commands.VCS;              use Commands.VCS;
 with Commands.External;         use Commands.External;
 
 package body VCS.CVS is
@@ -525,6 +524,8 @@ package body VCS.CVS is
 
       Enqueue (Rep.Queue, C);
 
+      Check_Files (Rep, Filenames);
+
       Free (Command_Head);
       Free (Args);
    end Real_Get_Status;
@@ -820,15 +821,13 @@ package body VCS.CVS is
       Filenames : String_List.List)
    is
       Arguments : String_List.List;
-      C         : Update_Files_Command_Access;
    begin
       String_List.Append (Arguments, "update");
       String_List.Append (Arguments, "-d");
       Simple_Action (Rep, Filenames, Arguments);
       String_List.Free (Arguments);
 
-      Create (C, Rep.Kernel, Filenames);
-      Enqueue (Rep.Queue, C);
+      Check_Files (Rep, Filenames);
    end Update;
 
    -----------
