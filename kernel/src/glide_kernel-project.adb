@@ -714,7 +714,7 @@ package body Glide_Kernel.Project is
                   Args (2) := new String'(Name);
                   Launch_Process
                     (Kernel_Handle (Kernel), "gpr2make",
-                     Args, null, null, "", Success);
+                     Args, "", null, null, "", Success);
                end if;
             end;
 

@@ -1737,7 +1737,7 @@ package body Src_Editor_Module is
          Args (1) := new String'(File);
          Args (2) := new String'(Dir_Name (File));
          Launch_Process
-           (Kernel, "gnatstub", Args, null,
+           (Kernel, "gnatstub", Args, "", null,
             Generate_Body_Cb'Access, File, Success);
          Free (Args);
 
@@ -1843,7 +1843,7 @@ package body Src_Editor_Module is
          end if;
 
          Launch_Process
-           (Kernel, "gnat", Args.all, null,
+           (Kernel, "gnat", Args.all, "", null,
             Pretty_Print_Cb'Access, File, Success);
          Free (Args);
 
