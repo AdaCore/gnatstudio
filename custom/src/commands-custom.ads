@@ -83,7 +83,8 @@ package Commands.Custom is
    procedure Free (X : in out Custom_Command);
    --  Free memory associated to X.
 
-   function Execute (Command : access Custom_Command) return Boolean;
+   function Execute
+     (Command : access Custom_Command) return Command_Return_Type;
    --  Execute Command, and return True if the command could be launched
    --  successfully.
    --  Context-related arguments (like "%f", "%p" and so on) are converted

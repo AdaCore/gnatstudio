@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2002                         --
+--                    Copyright (C) 2002 - 2003                      --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
@@ -47,7 +47,7 @@ package Commands.Editor is
    --  Create a new Check_Modified_State command.
 
    function Execute
-     (Command : access Check_Modified_State_Type) return Boolean;
+     (Command : access Check_Modified_State_Type) return Command_Return_Type;
    --  Compare the states of the associated box and queues,
    --  and change the label in the source editor if needed.
 
@@ -68,7 +68,7 @@ package Commands.Editor is
    --  UTF-8 format.
 
    function Execute
-     (Command : access Editor_Replace_Slice_Type) return Boolean;
+     (Command : access Editor_Replace_Slice_Type) return Command_Return_Type;
    function Undo (Command : access Editor_Replace_Slice_Type) return Boolean;
 
    type Editor_Command_Mode is (Insertion, Deletion);
@@ -113,7 +113,8 @@ package Commands.Editor is
    procedure Set_Text (Item : Editor_Command; Text : String);
    --  Set the text (in UTF-8 format) associated with Item.
 
-   function Execute (Command : access Editor_Command_Type) return Boolean;
+   function Execute
+     (Command : access Editor_Command_Type) return Command_Return_Type;
 
    function Undo (Command : access Editor_Command_Type) return Boolean;
 

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -43,7 +43,8 @@ package Commands.Debugger is
       Line           : Positive;
       Identifier     : Breakpoint_Identifier := 0);
 
-   function Execute (Command : access Set_Breakpoint_Command) return Boolean;
+   function Execute
+     (Command : access Set_Breakpoint_Command) return Command_Return_Type;
 
    procedure Free (Command : in out Set_Breakpoint_Command);
    --  Free memory associated to Command.

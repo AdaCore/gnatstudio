@@ -71,7 +71,9 @@ package body Commands.Custom is
    -- Execute --
    -------------
 
-   function Execute (Command : access Custom_Command) return Boolean is
+   function Execute
+     (Command : access Custom_Command) return Command_Return_Type
+   is
       Context  : constant Selection_Context_Access :=
         Get_Current_Context (Command.Kernel);
       Success  : Boolean := False;
@@ -284,7 +286,7 @@ package body Commands.Custom is
                   List    : String_Array_Access;
                begin
                   if Project = No_Project then
-                     return False;
+                     return Failure;
                   end if;
 
                   List := Get_Source_Files (Project, Recurse);
@@ -361,7 +363,11 @@ package body Commands.Custom is
 
       Command_Finished (Command, Success);
 
-      return Success;
+      if Success then
+         return Commands.Success;
+      else
+         return Failure;
+      end if;
 
    exception
       when E : others =>
@@ -370,7 +376,7 @@ package body Commands.Custom is
                    & " command. See the log file for more information."),
                  Mode => Error);
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
-         return False;
+         return Failure;
    end Execute;
 
 end Commands.Custom;

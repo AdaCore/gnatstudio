@@ -47,7 +47,8 @@ package Commands.External is
       Dir          : String;
       Args         : String_List.List;
       Head         : String_List.List;
-      Handler      : String_List_Handler);
+      Handler      : String_List_Handler;
+      Description  : String);
    --  Copies of Args and Head are made internally.
    --  Command is spawned as a shell command, with Args as its arguments.
    --  Head and the output of this command are then passed to Handler.
@@ -56,10 +57,15 @@ package Commands.External is
    --  If Handler is null, the output of the command is discarded, and
    --  the commands always executes successfully.
    --  If Dir is empty, the current directory will be used.
+   --  Description is a short description of the command
 
-   function Execute (Command : access External_Command) return Boolean;
+   function Execute
+     (Command : access External_Command) return Command_Return_Type;
    --  Execute Command, and launch the associated Handler.
    --  See comments for Create.
+
+   function Name (Command : access External_Command) return String;
+   --  Return Command.Description.all
 
 private
 
@@ -75,6 +81,12 @@ private
       Head    : String_List.List;
       Handler : String_List_Handler;
       Output  : String_List.List;
+
+      Running : Boolean := False;
+
+      Description : String_Access;
+
+      Handler_Success : Boolean := False;
    end record;
 
 end Commands.External;

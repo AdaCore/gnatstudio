@@ -145,7 +145,8 @@ package body Commands.Locations is
    -------------
 
    function Execute
-     (Command : access Generic_Location_Command_Type) return Boolean is
+     (Command : access Generic_Location_Command_Type)
+      return Command_Return_Type is
    begin
       if Command.Args /= null then
          if Command.Args'Length > 1 then
@@ -158,14 +159,15 @@ package body Commands.Locations is
               (Command.Kernel, Command.Args (Command.Args'First).all);
          end if;
 
-         return True;
+         return Success;
       else
-         return False;
+         return Failure;
       end if;
    end Execute;
 
    function Execute
-     (Command : access Html_Location_Command_Type) return Boolean is
+     (Command : access Html_Location_Command_Type) return Command_Return_Type
+   is
    begin
       if Command.Filename /= null then
          Open_Html (Command.Kernel, Command.Filename.all, False);
@@ -173,11 +175,11 @@ package body Commands.Locations is
 
       Command_Finished (Command, True);
 
-      return True;
+      return Success;
    end Execute;
 
    function Execute
-     (Command : access Source_Location_Command_Type) return Boolean
+     (Command : access Source_Location_Command_Type) return Command_Return_Type
    is
       Other_Command    : Command_Access;
       Location_Command : Source_Location_Command;
@@ -238,7 +240,7 @@ package body Commands.Locations is
 
       Command_Finished (Command, True);
 
-      return True;
+      return Success;
    end Execute;
 
 end Commands.Locations;

@@ -75,13 +75,15 @@ package Commands.Locations is
    --  Basic accessors.
 
    function Execute
-     (Command : access Source_Location_Command_Type) return Boolean;
+     (Command : access Source_Location_Command_Type)
+      return Command_Return_Type;
 
    function Execute
-     (Command : access Html_Location_Command_Type) return Boolean;
+     (Command : access Html_Location_Command_Type) return Command_Return_Type;
 
    function Execute
-     (Command : access Generic_Location_Command_Type) return Boolean;
+     (Command : access Generic_Location_Command_Type)
+      return Command_Return_Type;
 
    procedure Free (X : in out Generic_Location_Command_Type);
    procedure Free (X : in out Source_Location_Command_Type);

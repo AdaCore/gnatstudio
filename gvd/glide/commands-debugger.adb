@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -51,7 +51,8 @@ package body Commands.Debugger is
    -- Execute --
    -------------
 
-   function Execute (Command : access Set_Breakpoint_Command) return Boolean is
+   function Execute
+     (Command : access Set_Breakpoint_Command) return Command_Return_Type is
    begin
       if Command_In_Process (Get_Process (Command.Debugger)) then
          Insert (Command.Kernel,
@@ -59,7 +60,7 @@ package body Commands.Debugger is
                  Mode => Error);
 
          Command_Finished (Command, False);
-         return False;
+         return Failure;
       end if;
 
       Command.Do_Not_Free := True;
@@ -88,12 +89,12 @@ package body Commands.Debugger is
             Destroy (C);
          end;
 
-         return False;
+         return Failure;
       else
          Command_Finished (Command, True);
       end if;
 
-      return True;
+      return Success;
    end Execute;
 
    -------------

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2002                         --
+--                        Copyright (C) 2003                         --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
@@ -51,7 +51,7 @@ package body Commands.Editor is
    -------------
 
    function Execute
-     (Command : access Check_Modified_State_Type) return Boolean
+     (Command : access Check_Modified_State_Type) return Command_Return_Type
    is
       New_Status : constant Status_Type := Get_Status (Command.Buffer);
    begin
@@ -61,7 +61,7 @@ package body Commands.Editor is
 
       Set_Last_Status (Command.Buffer, New_Status);
 
-      return True;
+      return Success;
    end Execute;
 
    ----------
@@ -240,7 +240,9 @@ package body Commands.Editor is
    -- Execute --
    -------------
 
-   function Execute (Command : access Editor_Command_Type) return Boolean is
+   function Execute
+     (Command : access Editor_Command_Type) return Command_Return_Type
+   is
       First  : constant Natural := Command.Current_Text'First;
       Editor : Source_Editor_Box;
    begin
@@ -257,7 +259,7 @@ package body Commands.Editor is
                    Image (Command.Line) & ':' & Image (Command.Column));
             Command_Finished (Command, True);
 
-            return True;
+            return Success;
          end if;
 
          Editor := Get_Source_Box_From_MDI
@@ -311,7 +313,7 @@ package body Commands.Editor is
 
       Command_Finished (Command, True);
 
-      return True;
+      return Success;
    end Execute;
 
    ----------
@@ -343,7 +345,7 @@ package body Commands.Editor is
    -------------
 
    function Execute
-     (Command : access Editor_Replace_Slice_Type) return Boolean
+     (Command : access Editor_Replace_Slice_Type) return Command_Return_Type
    is
       Iter   : Gtk_Text_Iter;
       Result : Boolean;
@@ -372,7 +374,7 @@ package body Commands.Editor is
                 Image (Command.End_Column_Before));
          Command_Finished (Command, True);
 
-         return True;
+         return Success;
       end if;
 
       Replace_Slice
@@ -409,7 +411,7 @@ package body Commands.Editor is
 
       Command_Finished (Command, True);
 
-      return True;
+      return Success;
    end Execute;
 
    ----------
