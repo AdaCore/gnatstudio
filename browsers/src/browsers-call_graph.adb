@@ -75,12 +75,6 @@ package body Browsers.Call_Graph is
    --  and if no to dependency exists, the right arrow is not displayed.
 
 
-   Entity_Class : Class_Type;
-   --  ???
-   --  ??? Should be defined in a common location. However, this can only be
-   --  ??? created once all scripting languages have been registered.
-   --  ???
-
    ------------------------
    -- Call graph browser --
    ------------------------
@@ -322,8 +316,7 @@ package body Browsers.Call_Graph is
    --  corresponding to the same category will be printed as a group.
 
    procedure Call_Graph_Command_Handler
-     (Data    : in out Callback_Data'Class;
-      Command : String);
+     (Data : in out Callback_Data'Class; Command : String);
    --  Handle shell commands
 
    procedure Examine_Ancestors_Call_Graph
@@ -1504,59 +1497,21 @@ package body Browsers.Call_Graph is
      (Data    : in out Callback_Data'Class;
       Command : String)
    is
-      Entity     : Entity_Information;
       Kernel     : constant Kernel_Handle := Get_Kernel (Data);
-      Instance   : Class_Instance;
+      Instance   : constant Class_Instance :=
+        Nth_Arg (Data, 1, Get_Entity_Class (Kernel));
+      Entity     : constant Entity_Information := Get_Data (Instance);
    begin
-      if Command = "create_entity" then
-         declare
-            L, C   : Positive        := 1;
-            Name   : constant String := Nth_Arg (Data, 1);
-            File   : constant String := Nth_Arg (Data, 2);
-            Status : Find_Decl_Or_Body_Query_Status;
-         begin
-            if Number_Of_Arguments (Data) > 2 then
-               L := Nth_Arg (Data, 3);
-
-               if Number_Of_Arguments (Data) > 3 then
-                  C := Nth_Arg (Data, 4);
-               end if;
-            end if;
-
-            Find_Declaration_Or_Overloaded
-              (Kernel      => Kernel,
-               Lib_Info    => Locate_From_Source_And_Complete (Kernel, File),
-               File_Name   => File,
-               Entity_Name => Name,
-               Line        => L,
-               Column      => C,
-               Entity      => Entity,
-               Status      => Status);
-
-            if Status /= Success and then Status /= Fuzzy_Match then
-               Set_Error_Msg (Data, "Entity not found");
-            else
-               Instance := New_Instance (Data, Entity_Class);
-               Set_Data (Instance, Entity);
-               Set_Return_Value (Data, Instance);
-            end if;
-         end;
-
-      else
-         Instance := Nth_Arg (Data, 1, Entity_Class);
-         Entity := Get_Data (Instance);
-
-         if Command = "find_all_refs" then
-            Find_All_References_Internal
-              (Kernel, Entity,
-               Category_Title => -All_Refs_Category,
-               Include_Writes => True,
+      if Command = "find_all_refs" then
+         Find_All_References_Internal
+           (Kernel, Entity,
+            Category_Title => -All_Refs_Category,
+            Include_Writes => True,
                Include_Reads  => True);
-         elsif Command = "calls" then
-            Examine_Entity_Call_Graph (Kernel, Entity);
-         elsif Command = "called_by" then
-            Examine_Ancestors_Call_Graph (Kernel, Entity);
-         end if;
+      elsif Command = "calls" then
+         Examine_Entity_Call_Graph (Kernel, Entity);
+      elsif Command = "called_by" then
+         Examine_Ancestors_Call_Graph (Kernel, Entity);
       end if;
    end Call_Graph_Command_Handler;
 
@@ -1582,11 +1537,6 @@ package body Browsers.Call_Graph is
 
       Register_Menu (Kernel, Tools, -"Call Graph", "", On_Call_Graph'Access);
 
-      Entity_Class := New_Class
-        (Kernel,
-         "Entity", "Represents an entity from the source, based on the"
-         & " location of its declaration");
-
       --  ??? File_Name should be optional
       --  ??? Ultimately, we should display the results in the location window,
       --  but return them as a list (Python scripts for instance)
@@ -1598,7 +1548,7 @@ package body Browsers.Call_Graph is
            -"Display in the location window all the references to the entity.",
          Minimum_Args => 0,
          Maximum_Args => 0,
-         Class        => Entity_Class,
+         Class        => Get_Entity_Class (Kernel),
          Handler      => Call_Graph_Command_Handler'Access);
       Register_Command
         (Kernel,
@@ -1607,7 +1557,7 @@ package body Browsers.Call_Graph is
          Description  => -"Display the list of entities called by the entity.",
          Minimum_Args => 0,
          Maximum_Args => 0,
-         Class        => Entity_Class,
+         Class        => Get_Entity_Class (Kernel),
          Handler      => Call_Graph_Command_Handler'Access);
       Register_Command
         (Kernel,
@@ -1616,18 +1566,7 @@ package body Browsers.Call_Graph is
          Description  => -"Display the list of entities that call the entity.",
          Minimum_Args => 0,
          Maximum_Args => 0,
-         Class        => Entity_Class,
-         Handler      => Call_Graph_Command_Handler'Access);
-      Register_Command
-        (Kernel,
-         Command      => "create_entity",
-         Usage        =>
-           "create_entity (entity_name, file_name, [line], [column]) -> "
-           & "Entity",
-         Description  =>
-           -"Create a new entity, from any of its references.",
-         Minimum_Args => 2,
-         Maximum_Args => 4,
+         Class        => Get_Entity_Class (Kernel),
          Handler      => Call_Graph_Command_Handler'Access);
    end Register_Module;
 
