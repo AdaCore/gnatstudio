@@ -1,16 +1,18 @@
+New features in GPS 1.0.2
+
 New features in GPS 1.0.1
 
 - Windows port
 
 - An initial dialog is displayed by default when launching GPS, that
-  allows easy setting of the proper environment/project.
+  allows easy setting of the proper environment/project. See the documentation
+  for more details.
 
-- A separate execution window is now provided when running a program (both
-  stand alone, and under the debugger).
+- A separate execution window is now provided when running a program
 
 - New contexual menu items in the editor:
   - Locate file in the explorer
-  - VCS->Remove annotations
+  - Version Control->Remove annotations
   - Debug->Set value of
   - References->Find all writes to
   - References->Find all reads of
@@ -31,6 +33,8 @@ New features in GPS 1.0.1
   - Current file
   - Files...
   - Files From Project
+
+- A default name is suggested when saving new Ada files
 
 - Several small user interface improvements
 
@@ -59,12 +63,14 @@ New features in GPS 1.0.1
 
 - Matching parenthesis are highlighted in the editor
 
-- The call graph now automatically computes whether a subprogram calls any
+- The call graph automatically computes whether a subprogram calls any
   other subprogram.
 
 - The contents of the combo box histories is restored when GPS is started.
 
 - New menu Project->Reopen
+
+- New menu Build->Make->All
 
 - It is now possible to edit file-specific binder and linker switches when
   editing the switches for one of the project's main files.
