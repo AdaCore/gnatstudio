@@ -1,6 +1,7 @@
 <?xml version="1.0" ?>
 <Root>
-   <tool name="C" package="Builder" index="C" language="C">
+   <tool name="C" package="Builder" index="C" >
+      <language>C</language>
       <switches lines="2" columns="2">
         <title line="1" column="1" >Code generation</title>
         <title line="1" column="2" >Debugging</title>
@@ -38,7 +39,8 @@
       </switches>
    </tool>
 
-   <tool name="C++" package="Builder" index="C++" language="C++">
+   <tool name="C++" package="Builder" index="C++" >
+      <language>C++</language>
       <switches lines="2" columns="2">
         <title line="1" column="1" >Code generation</title>
         <title line="1" column="2" >Debugging</title>
