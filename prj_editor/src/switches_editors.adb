@@ -111,6 +111,15 @@ package body Switches_Editors is
    --  Revert to the default switches in the editor
    --  ??? Should this be specific to a page
 
+   function Normalize_Compiler_Switches
+     (Tool : Tool_Names; Switches : Argument_List) return Argument_List;
+   --  Return an equivalent of Switches, but where concatenated switches have
+   --  been separated (for instance, -gnatwue = -gnatwu -gnatwe).
+   --  Nothing is done if the tool doesn't need this special treatment.
+   --  The returned array should be freed. However, you no longer need to free
+   --  the memory for the array that was passed as a parameter (we either
+   --  return it directly, or reuse the strings from it for the output).
+
    -------------
    -- Gtk_New --
    -------------
@@ -204,6 +213,66 @@ package body Switches_Editors is
       return Gtk_Widget (Editor.Vbox2);
    end Get_Window;
 
+   ---------------------------------
+   -- Normalize_Compiler_Switches --
+   ---------------------------------
+
+   function Normalize_Compiler_Switches
+     (Tool : Tool_Names; Switches : Argument_List) return Argument_List
+   is
+      Output, Tmp : Argument_List_Access;
+      Out_Index : Natural;
+   begin
+      --  For Ada switches, use the functions provided by GNAT that
+      --  provide the splitting of composite switches like "-gnatwue"
+      --  into "-gnatwu -gnatwe"
+      if Tool = Ada_Compiler then
+         Output := new Argument_List (Switches'Range);
+         Out_Index := Switches'First;
+
+         for Index in Switches'Range loop
+            declare
+               Arr : constant Argument_List :=
+                 Normalize_Compiler_Switches (Switches (Index).all);
+            begin
+               Output (Out_Index) := Switches (Index);
+
+               --  If the switch was already as simple as possible, or wasn't
+               --  recognized at all.
+               if Arr'Length <= 1 then
+                  Out_Index := Out_Index + 1;
+
+               else
+                  Free (Output (Out_Index));
+
+                  Tmp := new Argument_List
+                    (Output'First .. Output'Last + Arr'Length - 1);
+
+                  Tmp (Tmp'First .. Out_Index - 1) :=
+                    Output (Output'First .. Out_Index - 1);
+                  for A in Arr'Range loop
+                     Tmp (Out_Index) := new String' (Arr (A).all);
+                     Out_Index := Out_Index + 1;
+                  end loop;
+
+                  Unchecked_Free (Output);
+                  Output := Tmp;
+               end if;
+            end;
+         end loop;
+
+         declare
+            O : constant Argument_List := Output.all;
+         begin
+            Unchecked_Free (Output);
+            return O;
+         end;
+
+      else
+         return Switches;
+      end if;
+   end Normalize_Compiler_Switches;
+
    ------------------
    -- Get_Switches --
    ------------------
@@ -214,7 +283,7 @@ package body Switches_Editors is
    is
       Cmd_Line           : Gtk_Entry;
       Null_Argument_List : Argument_List (1 .. 0);
-      List, Tmp          : Argument_List_Access;
+      List               : Argument_List_Access;
 
    begin
       case Tool is
@@ -233,38 +302,9 @@ package body Switches_Editors is
          if Str /= "" then
             List := Argument_String_To_List (Str);
 
-            --  For Ada switches, use the functions provided by GNAT that
-            --  provide the splitting of composite switches like "-gnatwue"
-            --  into "-gnatwu -gnatwe"
-
-            if Tool = Ada_Compiler then
-               for Index in List'Range loop
-                  declare
-                     Arr : constant Argument_List :=
-                       Normalize_Compiler_Switches (List (Index).all);
-                  begin
-                     if Arr'Length > 1 then
-                        Free (List (Index));
-                        List (Index) := new String' (Arr (Arr'First).all);
-
-                        Tmp := new Argument_List
-                          (1 .. List'Length + Arr'Length - 1);
-                        Tmp (1 .. List'Length) := List.all;
-
-                        for J in Arr'First + 1 .. Arr'Last loop
-                           Tmp (List'Length + J - Arr'First) :=
-                             new String' (Arr (J).all);
-                        end loop;
-
-                        Unchecked_Free (List);
-                        List := Tmp;
-                     end if;
-                  end;
-               end loop;
-            end if;
-
             declare
-               Ret : Argument_List := List.all;
+               Ret : constant Argument_List :=
+                 Normalize_Compiler_Switches (Tool, List.all);
             begin
                Unchecked_Free (List);
                return Ret;
@@ -1165,62 +1205,54 @@ package body Switches_Editors is
          Args     : Argument_List := Get_Switches (S, Tool);
          Args_Tmp : Argument_List := Args;
          Value    : Variable_Value;
-         Is_Default_Value : Boolean := False;
+         Is_Default_Value : Boolean;
       begin
-         if File_Name /= "" then
-            Get_Switches
-              (Project          => Project_Information (File),
-               In_Pkg           => Pkg_Name,
-               File             => "",
-               Language         => Language,
-               Value            => Value,
-               Is_Default_Value => Is_Default_Value);
+         Get_Switches
+           (Project          => Project_Information (File),
+            In_Pkg           => Pkg_Name,
+            File             => File_Name,
+            Language         => Language,
+            Value            => Value,
+            Is_Default_Value => Is_Default_Value);
 
-            --  Check if we in fact have the default value
+         --  Check if we in fact have the initial value
 
-            declare
-               Default_Args : Argument_List := To_Argument_List (Value);
-            begin
+         declare
+            Default_Args : Argument_List :=
+              Normalize_Compiler_Switches (Tool, To_Argument_List (Value));
+         begin
+            for K in Default_Args'Range loop
                for J in Args_Tmp'Range loop
-                  for K in Default_Args'Range loop
-                     if Default_Args (K) /= null
-                       and then Default_Args (K).all = Args_Tmp (J).all
-                     then
-                        Free (Default_Args (K));
-                        Args_Tmp (J) := null;
-                        exit;
-                     end if;
-                  end loop;
-               end loop;
-
-               Is_Default_Value := True;
-               for J in Args_Tmp'Range loop
-                  if Args_Tmp (J) /= null then
-                     Is_Default_Value := False;
+                  if Args_Tmp (J) /= null
+                    and then Default_Args (K).all = Args_Tmp (J).all
+                  then
+                     Free (Default_Args (K));
+                     Args_Tmp (J) := null;
                      exit;
                   end if;
                end loop;
+            end loop;
 
-               for K in Default_Args'Range loop
-                  if Default_Args (K) /= null then
-                     Is_Default_Value := False;
-                     exit;
-                  end if;
-               end loop;
+            Is_Default_Value := True;
+            for J in Args_Tmp'Range loop
+               if Args_Tmp (J) /= null then
+                  Is_Default_Value := False;
+                  exit;
+               end if;
+            end loop;
 
-               Free (Default_Args);
-            end;
+            for K in Default_Args'Range loop
+               if Default_Args (K) /= null then
+                  Is_Default_Value := False;
+                  exit;
+               end if;
+            end loop;
 
-            --  Editing the default switches for a specific language ?
+            Free (Default_Args);
+         end;
 
-            if Is_Default_Value then
-               Delete_Attribute
-                 (Project            => Project,
-                  Pkg_Name           => Pkg_Name,
-                  Scenario_Variables => Scenario_Variables (S.Kernel),
-                  Attribute_Name     => Get_Name_String (Name_Switches),
-                  Attribute_Index    => File_Name);
-            else
+         if not Is_Default_Value then
+            if File_Name /= "" then
                Update_Attribute_Value_In_Scenario
                  (Project            => Project,
                   Pkg_Name           => Pkg_Name,
@@ -1229,17 +1261,17 @@ package body Switches_Editors is
                   Values             => Args,
                   Attribute_Index    => File_Name,
                   Prepend            => False);
-            end if;
 
-         else
-            Update_Attribute_Value_In_Scenario
-              (Project            => Project,
-               Pkg_Name           => Pkg_Name,
-               Scenario_Variables => Scenario_Variables (S.Kernel),
-               Attribute_Name    => Get_Name_String (Name_Default_Switches),
-               Values             => Args,
-               Attribute_Index    => Get_Name_String (Language),
-               Prepend            => False);
+            else
+               Update_Attribute_Value_In_Scenario
+                 (Project            => Project,
+                  Pkg_Name           => Pkg_Name,
+                  Scenario_Variables => Scenario_Variables (S.Kernel),
+                  Attribute_Name    => Get_Name_String (Name_Default_Switches),
+                  Values             => Args,
+                  Attribute_Index    => Get_Name_String (Language),
+                  Prepend            => False);
+            end if;
          end if;
          Free (Args);
       end Change_Switches;
@@ -1376,7 +1408,8 @@ package body Switches_Editors is
          Get_Switches (Project, "compiler", File_Name,
                        Snames.Name_Ada, Value, Is_Default);
          declare
-            List : Argument_List := To_Argument_List (Value);
+            List : Argument_List := Normalize_Compiler_Switches
+              (Ada_Compiler, To_Argument_List (Value));
          begin
             Set_Switches (Switches, Ada_Compiler, List);
             Free (List);
