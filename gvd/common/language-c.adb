@@ -55,7 +55,7 @@ package body Language.Debugger.C is
    C_Explorer_Categories : constant Explorer_Categories (1 .. 1) :=
      (1 => (Name           => new String'("Functions"),
             Regexp         => Subprogram_RE'Access,
-            Position_Index => 4,
+            Position_Index => 2,
             Icon           => Subprogram_Xpm'Unrestricted_Access,
             Make_Entry     => Make_Entry_Subprogram'Access)
       );
@@ -244,7 +244,7 @@ package body Language.Debugger.C is
      return String
    is
    begin
-      return Str (Matched (4).First .. Matched (4).Last);
+      return Str (Matched (2).First .. Matched (2).Last);
    end Make_Entry_Subprogram;
 
 end Language.Debugger.C;
