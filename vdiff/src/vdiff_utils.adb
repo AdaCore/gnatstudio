@@ -37,8 +37,10 @@ with Gtk.Handlers;              use Gtk.Handlers;
 with Vdiff_Pkg;                 use Vdiff_Pkg;
 with Vdiff_Module;              use Vdiff_Module;
 with String_Utils;              use String_Utils;
+with Traces;                    use Traces;
 
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+with Ada.Exceptions;            use Ada.Exceptions;
 with Basic_Types;               use Basic_Types;
 
 with Gtk.Widget;                use Gtk.Widget;
@@ -48,6 +50,8 @@ with Gdk.Event;
 package body Vdiff_Utils is
 
    package ICS renames Interfaces.C.Strings;
+
+   Me : constant Debug_Handle := Create ("Vdiff_Utils");
 
    type Vdiff_Info is new GObject_Record with record
       Kernel : Kernel_Handle;
@@ -105,11 +109,17 @@ package body Vdiff_Utils is
       Event        : Gdk.Event.Gdk_Event;
       Menu         : Gtk.Menu.Gtk_Menu) return Selection_Context_Access
    is
-      Context : constant File_Selection_Context_Access :=
-        new File_Selection_Context;
-      Vdiff   : constant Vdiff_Info_Access := Vdiff_Info_Access (Object);
+      use Gdk.Event;
 
-      pragma Unreferenced (Event_Widget, Menu, Event);
+      Context : constant File_Location_Context_Access :=
+        new File_Location_Context;
+      Vdiff   : constant Vdiff_Info_Access := Vdiff_Info_Access (Object);
+      List    : constant Gtk_Clist := Gtk_Clist (Event_Widget);
+      Row     : Gint;
+      Column  : Gint;
+      Valid   : Boolean;
+
+      pragma Unreferenced (Menu);
 
    begin
       Set_Context_Information (Context, Kernel, Vdiff_Module_ID);
@@ -118,7 +128,31 @@ package body Vdiff_Utils is
          Dir_Name (Vdiff.File.all),
          Base_Name (Vdiff.File.all));
 
+      Get_Selection_Info
+        (List, Gint (Get_X (Event)), Gint (Get_Y (Event)), Row, Column, Valid);
+
+      if Valid then
+         declare
+            S : constant String := Get_Text (List, Row, 0);
+         begin
+            if S /= "" then
+               Set_Location_Information
+                 (Context,
+                  Line   => Integer'Value (S),
+                  Column => 1);
+            end if;
+         exception
+            when Constraint_Error =>
+               null;
+         end;
+      end if;
+
       return Selection_Context_Access (Context);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         return Selection_Context_Access (Context);
    end Context_Factory;
 
    -------------
