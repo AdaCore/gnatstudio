@@ -151,17 +151,16 @@ package body Codefix.Errors_Manager is
    --------------
 
    procedure Validate
-     (This         : in out Correction_Manager;
-      Error        : Error_Id;
-      Choice       : Natural;
-      Later_Update : Boolean := True)
+     (This   : in out Correction_Manager;
+      Error  : Error_Id;
+      Choice : Natural)
    is
-      pragma Unreferenced (Later_Update);
    begin
       if Choice /= 0 then
-         Append
-           (This.Valid_Corrections,
-            Clone (Get_Extract (Get_Solutions (Error), Choice)));
+         Validate
+           (This,
+            Error,
+            Get_Extract (Get_Solutions (Error), Choice));
       end if;
    end Validate;
 
@@ -170,22 +169,20 @@ package body Codefix.Errors_Manager is
    --------------
 
    procedure Validate
-     (This         : in out Correction_Manager;
-      Error        : Error_Id;
-      Choice       : Extract;
-      Later_Update : Boolean := True)
+     (This   : in out Correction_Manager;
+      Error  : Error_Id;
+      Choice : Extract)
    is
       pragma Unreferenced (Error);
-      pragma Unreferenced (Later_Update);
    begin
       Append (This.Valid_Corrections, Clone (Choice));
    end Validate;
 
    ------------
-   -- Update --
+   -- Commit --
    ------------
 
-   procedure Update
+   procedure Commit
      (This         : in out Correction_Manager;
       Success      : out Boolean;
       Current_Text : in out Text_Navigator_Abstr'Class;
@@ -209,14 +206,14 @@ package body Codefix.Errors_Manager is
       Current_Node := First (Modifs_List);
 
       while Current_Node /= Line_List.Null_Node loop
-         Update (Data (Current_Node), Current_Text, Offset_Line);
+         Commit (Data (Current_Node), Current_Text, Offset_Line);
          Current_Node := Next (Current_Node);
       end loop;
 
       Free (Modifs_List);
-      Update (Current_Text);
+      Commit (Current_Text);
       Success := True;
-   end Update;
+   end Commit;
 
    ----------
    -- Free --
@@ -432,5 +429,80 @@ package body Codefix.Errors_Manager is
 
       return Current_Id;
    end Search_Error;
+
+   --------------------
+   -- Update_Changes --
+   --------------------
+
+   procedure Update_Changes
+     (This         : Correction_Manager;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Object       : in out Extract'Class;
+      Success      : out Boolean) is
+
+      Current_Extract          : Extract_List.List_Node;
+      Line_Object, Line_Merged : Ptr_Extract_Line;
+      Merged_Extract           : Extract;
+
+   begin
+      Success := True;
+      Current_Extract := First (This.Valid_Corrections);
+
+      while Current_Extract /= Extract_List.Null_Node loop
+         Merge
+           (Merged_Extract,
+            Data (Current_Extract),
+            Object,
+            Current_Text,
+            Success,
+            True);
+
+         exit when not Success;
+
+         if Get_Number_Lines (Merged_Extract) > 0 then
+            Line_Object := Get_First_Line (Object);
+            Line_Merged := Get_First_Line (Merged_Extract);
+
+            while Line_Merged /= null loop
+               if Get_Cursor (Line_Merged.all) =
+                 Get_Cursor (Line_Object.all)
+               then
+                  if Get_Context (Line_Merged.all) = Line_Created then
+                     while Line_Merged /= null
+                       and then Get_Context (Line_Merged.all) = Line_Created
+                     loop
+                        Add_Line
+                          (Object,
+                           Get_Cursor (Line_Merged.all),
+                           Get_String (Line_Merged.all));
+                        --  ??? Maybe sth faster could be written with
+                        --  Add_Element ?
+                        Line_Merged := Next (Line_Merged.all);
+                        Line_Object := Next (Line_Object.all);
+                        Set_Coloration (Line_Object.all, False);
+                     end loop;
+                  else
+
+                     if Get_Context (Line_Object.all) = Original_Line then
+                        Assign (Line_Object.all, Line_Merged.all);
+                        Set_Coloration (Line_Object.all, False);
+                     else
+                        Assign (Line_Object.all, Line_Merged.all);
+                     end if;
+
+                     Line_Merged := Next (Line_Merged.all);
+                  end if;
+               else
+                  Line_Object := Next (Line_Object.all);
+               end if;
+            end loop;
+         end if;
+
+         Free (Merged_Extract);
+
+         Current_Extract := Next (Current_Extract);
+      end loop;
+
+   end Update_Changes;
 
 end Codefix.Errors_Manager;
