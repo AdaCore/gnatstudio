@@ -106,6 +106,8 @@ package body Glide_Kernel is
    History_Max_Length : constant Positive := 10;
    --  <preferences> Maximum number of entries to store in each history
 
+   Desktop_Name : constant String := "desktop.xml";
+
    use Action_Filters_Htable.String_Hash_Table;
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
@@ -1003,7 +1005,7 @@ package body Glide_Kernel is
       end Get_Project_Name;
 
       MDI          : constant MDI_Window := Get_MDI (Handle);
-      File_Name    : constant String := Handle.Home_Dir.all & "desktop";
+      File_Name    : constant String := Handle.Home_Dir.all & Desktop_Name;
       Project_Name : constant String := Get_Project_Name;
       File         : File_Type;
       N            : Node_Ptr;
@@ -1115,7 +1117,7 @@ package body Glide_Kernel is
    function Has_User_Desktop
      (Handle : access Kernel_Handle_Record) return Boolean is
    begin
-      return Is_Regular_File (Handle.Home_Dir.all & "desktop");
+      return Is_Regular_File (Handle.Home_Dir.all & Desktop_Name);
    end Has_User_Desktop;
 
    ------------------
@@ -1128,7 +1130,7 @@ package body Glide_Kernel is
       MDI                  : constant MDI_Window := Get_MDI (Handle);
       Node                 : Node_Ptr;
       File                 : constant String :=
-        Handle.Home_Dir.all & "desktop";
+        Handle.Home_Dir.all & Desktop_Name;
       Project_Name         : constant String :=
         Project_Path (Get_Project (Handle));
       Child                : Node_Ptr;
