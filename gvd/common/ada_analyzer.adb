@@ -371,7 +371,7 @@ package body Ada_Analyzer is
       Indent_Record      : Natural renames Indent_Params.Indent_Level;
       Indent_Case_Extra  : Boolean renames Indent_Params.Indent_Case_Extra;
 
-      Buffer_Length      : constant Natural := Buffer'Last;
+      Buffer_Last      : constant Natural := Buffer'Last;
 
       ---------------
       -- Variables --
@@ -444,7 +444,7 @@ package body Ada_Analyzer is
       procedure Look_For (Sloc : in out Source_Location; Char : Character);
       --  Search Char in Buffer starting from Sloc.
       --  Sloc is updated to the first occurrence of Char in Buffer, or
-      --  Buffer'Last if not found.
+      --  Buffer_Last if not found.
 
       procedure New_Line (Count : in out Natural);
       pragma Inline (New_Line);
@@ -696,28 +696,37 @@ package body Ada_Analyzer is
       -----------------
 
       function End_Of_Word (P : Natural) return Natural is
-         Tmp : Natural := P;
+         Tmp  : Natural := P;
+         Next : Natural;
       begin
+         if Tmp >= Buffer_Last then
+            return Buffer_Last;
+         end if;
+
          loop
             --  Manual unrolling for efficiency
 
-            exit when Tmp >= Buffer_Length
+            Next := Next_Char (Tmp);
+
+            exit when Tmp >= Buffer_Last
               or else not Is_Entity_Letter
-                (UTF8_Get_Char (Buffer (Next_Char (Tmp) .. Buffer'Last)));
+                (UTF8_Get_Char (Buffer (Next .. Buffer_Last)));
 
-            Tmp := Next_Char (Tmp);
+            Tmp := Next;
+            Next := Next_Char (Tmp);
 
-            exit when Tmp >= Buffer_Length
+            exit when Tmp >= Buffer_Last
               or else not Is_Entity_Letter
-                (UTF8_Get_Char (Buffer (Next_Char (Tmp) .. Buffer'Last)));
+                (UTF8_Get_Char (Buffer (Next .. Buffer_Last)));
 
-            Tmp := Next_Char (Tmp);
+            Tmp := Next;
+            Next := Next_Char (Tmp);
 
-            exit when Tmp >= Buffer_Length
+            exit when Tmp >= Buffer_Last
               or else not Is_Entity_Letter
-                (UTF8_Get_Char (Buffer (Next_Char (Tmp) .. Buffer'Last)));
+                (UTF8_Get_Char (Buffer (Next .. Buffer_Last)));
 
-            Tmp := Next_Char (Tmp);
+            Tmp := Next;
          end loop;
 
          return Tmp;
@@ -728,45 +737,63 @@ package body Ada_Analyzer is
       -----------------------
 
       function End_Of_Identifier (P : Natural) return Natural is
-         Tmp   : Natural := P;
-         Prev  : Natural := P - 1;
-         Start : Natural;
+         Tmp       : Natural := P;
+         Prev      : Natural := P - 1;
+         Start     : Natural;
+         New_Lines : Natural;
+
+         function Is_Blank (C : Character) return Boolean;
+         pragma Inline (Is_Blank);
+         --  Return True if C is a blank character: LF, HT or ' '
+
+         function Is_Blank (C : Character) return Boolean is
+         begin
+            return C = ' ' or else C = ASCII.LF or else C = ASCII.HT;
+         end Is_Blank;
 
       begin
          loop
-            while Tmp < Buffer_Length
-              and then (Buffer (Tmp) = ' ' or else Buffer (Tmp) = ASCII.HT)
-            loop
+            New_Lines := 0;
+
+            while Tmp < Buffer_Last and then Is_Blank (Buffer (Tmp)) loop
+               if Buffer (Tmp) = ASCII.LF then
+                  New_Lines := New_Lines + 1;
+               end if;
+
                Tmp := Tmp + 1;
             end loop;
 
-            if Tmp >= Buffer_Length
+            if Tmp >= Buffer_Last
               or else Buffer (Tmp) /= '.'
               or else Buffer (Tmp + 1) = '.'
             then
                return Prev;
             end if;
 
-            Tmp := Tmp + 1;
-
-            while Tmp < Buffer_Length
-              and then (Buffer (Tmp) = ' ' or else Buffer (Tmp) = ASCII.HT)
-            loop
+            while Tmp < Buffer_Last loop
                Tmp := Tmp + 1;
+
+               if Buffer (Tmp) = ASCII.LF then
+                  New_Lines := New_Lines + 1;
+               end if;
+
+               exit when not Is_Blank (Buffer (Tmp));
             end loop;
 
             if Buffer (Tmp) = '"' then
                --  Case of an operator, e.g System."="
 
-               Tmp := Tmp + 2;
-
-               while Tmp < Buffer_Length
-                 and then Buffer (Tmp) /= '"'
-                 and then Buffer (Tmp) /= ASCII.LF
-               loop
+               while Tmp < Buffer_Last loop
                   Tmp := Tmp + 1;
+
+                  exit when Buffer (Tmp) = '"' or else Buffer (Tmp) = ASCII.LF;
                end loop;
 
+               if Buffer (Tmp) = ASCII.LF then
+                  Tmp := Tmp - 1;
+               end if;
+
+               Line_Count := Line_Count + New_Lines;
                return Tmp;
 
             else
@@ -778,6 +805,7 @@ package body Ada_Analyzer is
                end if;
             end if;
 
+            Line_Count := Line_Count + New_Lines;
             Prev := Tmp;
             Tmp  := Tmp + 1;
          end loop;
@@ -806,13 +834,13 @@ package body Ada_Analyzer is
 
       function Line_End (P : Natural) return Natural is
       begin
-         for J in P .. Buffer_Length loop
+         for J in P .. Buffer_Last loop
             if Buffer (J) = ASCII.LF or else Buffer (J) = ASCII.CR then
                return J - 1;
             end if;
          end loop;
 
-         return Buffer_Length;
+         return Buffer_Last;
       end Line_End;
 
       ---------------
@@ -821,13 +849,13 @@ package body Ada_Analyzer is
 
       function Next_Line (P : Natural) return Natural is
       begin
-         for J in P .. Buffer_Length - 1 loop
+         for J in P .. Buffer_Last - 1 loop
             if Buffer (J) = ASCII.LF then
                return J + 1;
             end if;
          end loop;
 
-         return Buffer_Length;
+         return Buffer_Last;
       end Next_Line;
 
       --------------
@@ -838,7 +866,7 @@ package body Ada_Analyzer is
          C           : Character;
          In_Comments : Boolean := False;
       begin
-         for J in Sloc.Index .. Buffer_Length loop
+         for J in Sloc.Index .. Buffer_Last loop
             C := Buffer (J);
 
             if not In_Comments and then C = Char then
@@ -1542,7 +1570,7 @@ package body Ada_Analyzer is
 
             P := Next_Char (P);
 
-            if P < Buffer_Length and then Buffer (Next_Char (P)) /= ' ' then
+            if P < Buffer_Last and then Buffer (Next_Char (P)) /= ' ' then
                Long := Long + 1;
             end if;
 
@@ -1556,7 +1584,7 @@ package body Ada_Analyzer is
          procedure Skip_Blank_Lines is
          begin
             if Buffer (P) = ASCII.LF or else Buffer (P) = ASCII.CR then
-               while P < Buffer_Length and then
+               while P < Buffer_Last and then
                  (Buffer (P) = ASCII.LF or else Buffer (P) = ASCII.CR)
                loop
                   if Buffer (P) = ASCII.LF then
@@ -1585,7 +1613,7 @@ package body Ada_Analyzer is
                First := P;
                Comments_Skipped := True;
 
-               while P < Buffer_Length
+               while P < Buffer_Last
                  and then Buffer (P) = '-'
                  and then Buffer (Next_Char (P)) = '-'
                loop
@@ -1601,13 +1629,13 @@ package body Ada_Analyzer is
                   New_Line (Line_Count);
                end loop;
 
-               if P < Buffer_Length then
+               if P < Buffer_Last then
                   Last := Prev_Char (P);
                else
                   Last := P;
                end if;
 
-               if P <= Buffer_Length and then Buffer (P) = ASCII.LF then
+               if P <= Buffer_Last and then Buffer (P) = ASCII.LF then
                   P := Last;
                end if;
 
@@ -1654,9 +1682,9 @@ package body Ada_Analyzer is
                Skip_Blank_Lines;
 
                exit when not Skip_Comments
-                 or else P >= Buffer_Length
+                 or else P >= Buffer_Last
                  or else Is_Entity_Letter
-                   (UTF8_Get_Char (Buffer (P .. Buffer_Length)));
+                   (UTF8_Get_Char (Buffer (P .. Buffer_Last)));
 
                P := Next_Char (P);
             end loop;
@@ -1665,9 +1693,9 @@ package body Ada_Analyzer is
                return;
             end if;
 
-            exit when P >= Buffer_Length
+            exit when P >= Buffer_Last
               or else Is_Entity_Letter
-                (UTF8_Get_Char (Buffer (P .. Buffer_Length)));
+                (UTF8_Get_Char (Buffer (P .. Buffer_Last)));
 
             Top_Token := Top (Tokens);
             Prev_Prev_Token := Prev_Token;
@@ -2112,7 +2140,7 @@ package body Ada_Analyzer is
       Current := End_Of_Word (Prec);
 
       Main_Loop :
-      while Current < Buffer_Length loop
+      while Current < Buffer_Last loop
          Str_Len := Current - Prec + 1;
 
          for J in Prec .. Current loop
@@ -2124,6 +2152,7 @@ package body Ada_Analyzer is
          if Token = Tok_Identifier then
             --  Handle dotted names, e.g Foo.Bar.X
 
+            Prev_Line := Line_Count;
             Index_Ident := End_Of_Identifier (Current + 1);
 
             if Index_Ident /= Current then
@@ -2149,7 +2178,7 @@ package body Ada_Analyzer is
 
                Top_Token.Identifier (1 .. Str_Len) := Buffer (Prec .. Current);
                Top_Token.Ident_Len := Str_Len;
-               Top_Token.Sloc_Name.Line   := Line_Count;
+               Top_Token.Sloc_Name.Line   := Prev_Line;
                Top_Token.Sloc_Name.Column := Prec - Start_Of_Line + 1;
                Top_Token.Sloc_Name.Index  := Prec;
             end if;
@@ -2168,7 +2197,7 @@ package body Ada_Analyzer is
                   Val : Extended_Token;
                begin
                   Val.Token       := Tok_Identifier;
-                  Val.Sloc.Line   := Line_Count;
+                  Val.Sloc.Line   := Prev_Line;
                   Val.Sloc.Column := Prec - Start_Of_Line + 1;
                   Val.Sloc.Index  := Prec;
                   Val.Identifier (1 .. Str_Len) := Str (1 .. Str_Len);
@@ -2184,8 +2213,8 @@ package body Ada_Analyzer is
             if Callback /= null then
                exit Main_Loop when Callback
                  (Identifier_Text,
-                  (Line_Count, Prec - Start_Of_Line + 1, Prec),
-                  (Line_Count, Current - Start_Of_Line + 1, Current),
+                  (Prev_Line, Prec - Start_Of_Line + 1, Prec),
+                  (Line_Count, Current - Line_Start (Current) + 1, Current),
                   False);
             end if;
 
