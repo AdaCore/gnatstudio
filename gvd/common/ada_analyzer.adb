@@ -1996,7 +1996,8 @@ package body Ada_Analyzer is
                            Prev_Token := Tok_Plus;
                         end if;
 
-                        if To_Upper (Buffer (Prev_Char (P))) /= 'E'
+                        if P <= Buffer'First + 1
+                          or else To_Upper (Buffer (Prev_Char (P))) /= 'E'
                           or else Buffer (Prev_Char (Prev_Char (P)))
                             not in '0' .. '9'
                         then
@@ -2018,7 +2019,9 @@ package body Ada_Analyzer is
                      when '/' | ':' =>
                         Insert_Spaces := True;
 
-                        if Buffer (Next_Char (P)) = '=' then
+                        if P < Buffer'Last
+                          and then Buffer (Next_Char (P)) = '='
+                        then
                            Handle_Two_Chars ('=');
 
                            if Buffer (P) = '/' then
@@ -2145,7 +2148,9 @@ package body Ada_Analyzer is
                         null;
                   end case;
 
-                  if Buffer (Prev_Char (P)) = ' ' then
+                  if P > Buffer'First
+                    and then Buffer (Prev_Char (P)) = ' '
+                  then
                      First := First - 1;
                   end if;
 
