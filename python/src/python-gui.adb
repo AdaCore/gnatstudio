@@ -38,7 +38,7 @@ with Gdk.Window;        use Gdk.Window;
 with Glib;              use Glib;
 with Glib.Properties;   use Glib.Properties;
 with Histories;         use Histories;
-with Glide_Intl;        use Glide_Intl;
+with Interactive_Consoles; use Interactive_Consoles;
 
 with GNAT.OS_Lib;     use GNAT.OS_Lib;
 with System;
@@ -167,27 +167,33 @@ package body Python.GUI is
 
    procedure Insert_Text
      (Interpreter : access Python_Interpreter_Record'Class;
-      Text        : String)
+      Text        : String;
+      Console     : Interactive_Consoles.Interactive_Console := null;
+      Highlight   : Boolean := False)
    is
       Buffer : Gtk_Text_Buffer;
       Iter   : Gtk_Text_Iter;
    begin
-      if Interpreter.Console /= null
-        and then not Gtk.Object.Destroyed_Is_Set (Interpreter.Console)
-        and then not Interpreter.Hide_Output
-      then
-         Buffer := Get_Buffer (Interpreter.Console);
+      if not Interpreter.Hide_Output then
+         if Console /= null then
+            Insert (Console, Text, Add_LF => False, Highlight => Highlight);
 
-         Get_End_Iter (Buffer, Iter);
-         Insert (Buffer, Iter, Text);
+         elsif Interpreter.Console /= null
+           and then not Gtk.Object.Destroyed_Is_Set (Interpreter.Console)
+         then
+            Buffer := Get_Buffer (Interpreter.Console);
 
-         if Interpreter.Scroll_Mark = null then
-            Interpreter.Scroll_Mark := Create_Mark (Buffer, Where => Iter);
-         else
-            Move_Mark (Buffer, Interpreter.Scroll_Mark, Iter);
+            Get_End_Iter (Buffer, Iter);
+            Insert (Buffer, Iter, Text);
+
+            if Interpreter.Scroll_Mark = null then
+               Interpreter.Scroll_Mark := Create_Mark (Buffer, Where => Iter);
+            else
+               Move_Mark (Buffer, Interpreter.Scroll_Mark, Iter);
+            end if;
+
+            Scroll_To_Mark (Interpreter.Console, Interpreter.Scroll_Mark);
          end if;
-
-         Scroll_To_Mark (Interpreter.Console, Interpreter.Scroll_Mark);
       end if;
    end Insert_Text;
 
@@ -447,7 +453,8 @@ package body Python.GUI is
    procedure Set_Console
      (Interpreter : access Python_Interpreter_Record'Class;
       Console     : Gtk.Text_View.Gtk_Text_View;
-      Grab_Widget : Gtk.Widget.Gtk_Widget := null) is
+      Grab_Widget : Gtk.Widget.Gtk_Widget := null;
+      Display_Prompt : Boolean := False) is
    begin
       if Console = Interpreter.Console then
          return;
@@ -457,7 +464,6 @@ package body Python.GUI is
       if Interpreter.Console /= null
         and then not Gtk.Object.Destroyed_Is_Set (Interpreter.Console)
       then
-         Insert_Text (Interpreter, -"<disconnected>");
          Gtk.Handlers.Disconnect
            (Interpreter.Console, Interpreter.Key_Press_Id);
          Gtk.Handlers.Disconnect (Interpreter.Console, Interpreter.Destroy_Id);
@@ -491,7 +497,9 @@ package body Python.GUI is
             Interpreter_Callback2.To_Marshaller (Console_Destroyed'Access),
             Python_Interpreter (Interpreter));
 
-         Display_Prompt (Interpreter);
+         if Display_Prompt then
+            Python.GUI.Display_Prompt (Interpreter);
+         end if;
       end if;
    end Set_Console;
 
@@ -565,13 +573,14 @@ package body Python.GUI is
    function Run_Command
      (Interpreter : access Python_Interpreter_Record'Class;
       Command     : String;
+      Console     : Interactive_Console := null;
       Hide_Output : Boolean := False;
       Errors      : access Boolean) return String is
    begin
       Interpreter.Save_Output := True;
       Interpreter.Current_Output := new String'("");
 
-      Run_Command (Interpreter, Command, Hide_Output, Errors.all);
+      Run_Command (Interpreter, Command, Console, Hide_Output, Errors.all);
 
       declare
          Output : constant String := Interpreter.Current_Output.all;
@@ -589,6 +598,7 @@ package body Python.GUI is
    procedure Run_Command
      (Interpreter : access Python_Interpreter_Record'Class;
       Command     : String;
+      Console     : Interactive_Consoles.Interactive_Console := null;
       Hide_Output : Boolean := False;
       Errors      : out Boolean)
    is
@@ -604,15 +614,25 @@ package body Python.GUI is
       Grab_Widget    : Gtk_Widget;
       use type Gdk_Window;
 
+      Default_Console : constant Gtk_Text_View := Interpreter.Console;
+
    begin
       Interpreter.Hide_Output := Hide_Output;
       Errors := False;
 
       if Cmd = "" & ASCII.LF then
-         if not Hide_Output then
+         if not Hide_Output and then Console = null then
             Display_Prompt (Interpreter);
          end if;
          return;
+      end if;
+
+      if Console /= null then
+         if Default_Console /= null then
+            Ref (Default_Console);
+         end if;
+
+         Set_Console (Interpreter, Get_View (Console));
       end if;
 
       Trace (Me, "Running command: " & Command);
@@ -711,12 +731,20 @@ package body Python.GUI is
          PyErr_Clear;
       end if;
 
-      if not Hide_Output then
+      if not Hide_Output and then Console = null then
          Display_Prompt (Interpreter);
       end if;
 
       Interpreter.In_Process := False;
       Interpreter.Hide_Output := False;
+
+      if Console /= null then
+         Set_Console (Interpreter, Default_Console);
+
+         if Default_Console /= null then
+            Unref (Default_Console);
+         end if;
+      end if;
 
    exception
       when E : others =>
@@ -724,6 +752,15 @@ package body Python.GUI is
          Interpreter.In_Process := False;
          Interpreter.Hide_Output := False;
          Errors := True;
+
+         if Console /= null then
+            Set_Console (Interpreter, Default_Console);
+
+            if Default_Console /= null then
+               Unref (Default_Console);
+            end if;
+         end if;
+
    end Run_Command;
 
    --------------------
@@ -941,7 +978,7 @@ package body Python.GUI is
 
                Run_Command
                  (Interpreter, Get_Slice (Buffer, Prompt_End, Iter),
-                  False, Errors);
+                  null, False, Errors);
 
                --  Preserve the focus on the console after interactive
                --  execution

@@ -29,6 +29,7 @@ with Gtk.Widget;
 with GNAT.OS_Lib;
 with Histories;
 with Ada.Calendar;
+with Interactive_Consoles;
 
 package Python.GUI is
 
@@ -45,7 +46,8 @@ package Python.GUI is
    procedure Set_Console
      (Interpreter : access Python_Interpreter_Record'Class;
       Console     : Gtk.Text_View.Gtk_Text_View;
-      Grab_Widget : Gtk.Widget.Gtk_Widget := null);
+      Grab_Widget : Gtk.Widget.Gtk_Widget := null;
+      Display_Prompt : Boolean := False);
    --  Bind the interpreter to Console, so that all input comes from Console
    --  and all output goes to it.
    --  If Console is null, no console is visible, although the interpreter can
@@ -53,6 +55,7 @@ package Python.GUI is
    --  Grab_Widget is the widget which grabs the keyboard while commands are
    --  executing in the interpreter. This is necessary to prevent the user from
    --  using a menu that would in turn launch a command.
+   --  If Display_Prompt is True, a prompt is displayed in the new console
 
    function Get_Console
      (Interpreter : access Python_Interpreter_Record'Class)
@@ -63,6 +66,7 @@ package Python.GUI is
    procedure Run_Command
      (Interpreter : access Python_Interpreter_Record'Class;
       Command     : String;
+      Console     : Interactive_Consoles.Interactive_Console := null;
       Hide_Output : Boolean := False;
       Errors      : out Boolean);
    --  Execute a command in the interpreter, and send its output to the
@@ -76,14 +80,19 @@ package Python.GUI is
    function Run_Command
      (Interpreter : access Python_Interpreter_Record'Class;
       Command     : String;
+      Console     : Interactive_Consoles.Interactive_Console := null;
       Hide_Output : Boolean := False;
       Errors      : access Boolean) return String;
    --  Same as above, but also return the output of the command
 
    procedure Insert_Text
      (Interpreter : access Python_Interpreter_Record'Class;
-      Text        : String);
-   --  Insert some text in the interpreter console, and scroll as necessary
+      Text        : String;
+      Console     : Interactive_Consoles.Interactive_Console := null;
+      Highlight   : Boolean := False);
+   --  Insert some text in the interpreter console, and scroll as necessary.
+   --  The text is inserted into Console if not null, or in the default
+   --  Python console otherwise.
 
    procedure Destroy (Interpreter : access Python_Interpreter_Record);
    --  Free the memory occupied by the interpreter
@@ -116,7 +125,9 @@ private
 
       Uneditable : Gtk.Text_Tag.Gtk_Text_Tag;
       Prompt_End_Mark : Gtk.Text_Mark.Gtk_Text_Mark;
+
       Console : Gtk.Text_View.Gtk_Text_View;
+      --  The default python console
 
       Grab_Widget : Gtk.Widget.Gtk_Widget;
       --  The widget which should grab the keyboard focus while commands are
