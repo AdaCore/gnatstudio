@@ -990,7 +990,6 @@ procedure GPS is
       Glide_Kernel.Preferences.Register_Module (GPS.Kernel);
       Custom_Module.Register_Module (GPS.Kernel);
       Glide_Result_View.Register_Module (GPS.Kernel);
-      Action_Editor.Register_Module (GPS.Kernel);
 
       if Active (Refactor_Trace) then
          Refactoring_Module.Register_Module (GPS.Kernel);
@@ -1008,6 +1007,9 @@ procedure GPS is
       --  Load system files
 
       Load_All_Custom_Files (GPS.Kernel);
+
+      --  Do this after the custom files, since this will override other
+      Action_Editor.Register_Module (GPS.Kernel);
 
       --  Load preferences, but only after loading custom files, to make sure
       --  the themes loaded at startup are still overriden by the user's
