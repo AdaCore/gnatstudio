@@ -17,7 +17,7 @@ package Codefix is
    --  the precedent string, you have to initialize the Dynamic_String with
    --  the value null before calling these functions.
 
-   type Dynamic_String is access String;
+   type Dynamic_String is access all String;
 
    procedure Affect (This : in out Dynamic_String; Value : String);
    --  Delete the precedent string, and create a new initialized with Value.
