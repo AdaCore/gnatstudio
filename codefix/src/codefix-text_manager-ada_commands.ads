@@ -200,6 +200,29 @@ package Codefix.Text_Manager.Ada_Commands is
    procedure Free (This : in out Remove_Parenthesis_Cmd);
    --  Free the memory associated to a Remove_Parenthesis_Cmd.
 
+   -----------------------
+   -- Paste_Profile_Cmd --
+   -----------------------
+
+   type Paste_Profile_Cmd is new Text_Command with private;
+
+   procedure Initialize
+     (This         : in out Paste_Profile_Cmd;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Destination  : File_Cursor'Class;
+      Source       : File_Cursor'Class);
+   --  Set all the marks that will be needed to paste the profile later.
+
+   procedure Execute
+     (This         : Paste_Profile_Cmd;
+      Current_Text : Text_Navigator_Abstr'Class;
+      New_Extract  : out Extract'Class);
+   --  Set an extract with the profile source pasted in the profile
+   --  Destination.
+
+   procedure Free (This : in out Paste_Profile_Cmd);
+   --  Free the memory associated to a Paste_Profile_Cmd.
+
 private
 
    package Mark_List is new Generic_List (Word_Mark);
@@ -250,6 +273,11 @@ private
 
    type Remove_Parenthesis_Cmd is new Text_Command with record
       Cursor : Ptr_Mark;
+   end record;
+
+   type Paste_Profile_Cmd is new Text_Command with record
+      Destination_Begin, Destination_End : Ptr_Mark;
+      Source_Begin, Source_End           : Ptr_Mark;
    end record;
 
 end Codefix.Text_Manager.Ada_Commands;

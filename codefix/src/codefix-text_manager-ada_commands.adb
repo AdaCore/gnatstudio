@@ -703,4 +703,94 @@ package body Codefix.Text_Manager.Ada_Commands is
       Free (Text_Command (This));
    end Free;
 
+   -----------------------
+   -- Paste_Profile_Cmd --
+   -----------------------
+
+   procedure Initialize
+     (This         : in out Paste_Profile_Cmd;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Destination  : File_Cursor'Class;
+      Source       : File_Cursor'Class)
+   is
+      Destination_Begin, Destination_End : File_Cursor;
+      Source_Begin, Source_End           : File_Cursor;
+   begin
+      Destination_Begin := File_Cursor
+        (Search_String (Current_Text, Destination, "("));
+      Destination_End := File_Cursor
+        (Search_String (Current_Text, Destination_Begin, ")"));
+
+      Source_Begin := File_Cursor
+        (Search_String (Current_Text, Source, "("));
+      Source_End := File_Cursor
+        (Search_String (Current_Text, Source_Begin, ")"));
+
+      This.Destination_Begin := new Mark_Abstr'Class'
+        (Get_New_Mark (Current_Text, Destination_Begin));
+      This.Destination_End := new Mark_Abstr'Class'
+        (Get_New_Mark (Current_Text, Destination_End));
+      This.Source_Begin := new Mark_Abstr'Class'
+        (Get_New_Mark (Current_Text, Source_Begin));
+      This.Source_End := new Mark_Abstr'Class'
+        (Get_New_Mark (Current_Text, Source_End));
+
+      Free (Destination_Begin);
+      Free (Destination_End);
+      Free (Source_Begin);
+      Free (Source_End);
+   end Initialize;
+
+   procedure Execute
+     (This         : Paste_Profile_Cmd;
+      Current_Text : Text_Navigator_Abstr'Class;
+      New_Extract  : out Extract'Class)
+   is
+      Destination_Begin, Destination_End : File_Cursor;
+      Source_Begin, Source_End           : File_Cursor;
+      Line_Cursor                        : File_Cursor;
+   begin
+      Destination_Begin := File_Cursor
+        (Get_Current_Cursor (Current_Text, This.Destination_Begin.all));
+      Destination_End := File_Cursor
+        (Get_Current_Cursor (Current_Text, This.Destination_End.all));
+      Source_Begin := File_Cursor
+        (Get_Current_Cursor (Current_Text, This.Source_Begin.all));
+      Source_End := File_Cursor
+        (Get_Current_Cursor (Current_Text, This.Source_End.all));
+
+
+      Line_Cursor := Destination_Begin;
+      Line_Cursor.Col := 1;
+
+      for J in Destination_Begin.Line .. Destination_End.Line loop
+         Line_Cursor.Line := J;
+         Get_Line (Current_Text, Line_Cursor, New_Extract);
+      end loop;
+
+      Replace
+        (New_Extract,
+         Destination_Begin,
+         Destination_End,
+         Source_Begin,
+         Source_End,
+         Current_Text);
+
+      Free (Destination_Begin);
+      Free (Destination_End);
+      Free (Source_Begin);
+      Free (Source_End);
+   end Execute;
+
+
+   procedure Free (This : in out Paste_Profile_Cmd) is
+   begin
+      Free (This.Destination_Begin);
+      Free (This.Destination_End);
+      Free (This.Source_Begin);
+      Free (This.Source_End);
+      Free (Text_Command (This));
+   end Free;
+
+
 end Codefix.Text_Manager.Ada_Commands;
