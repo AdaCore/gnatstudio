@@ -12,7 +12,7 @@ package Odd.Explorer is
        (Widget   : access Gtk_Widget_Record'Class;
         Position : Position_Type);
    --  Handler called when an item is selected in the tree.
-   --  Index is the position in the buffer when the selected entity
+   --  Index is the position in the buffer where the selected entity
    --  starts.
    --  Widget is the Window parameter given to Explore below.
 
@@ -20,5 +20,8 @@ package Odd.Explorer is
      (Window  : access Gtk_Widget_Record'Class;
       Buffer  : String;
       Handler : Explorer_Handler := null) return Gtk_Ctree;
+   --  Parse the entities present in buffer.
+   --  Return a grapihcal tree representing these entities.
+   --  See Explorer_Handler above for a description of Handler.
 
 end Odd.Explorer;
