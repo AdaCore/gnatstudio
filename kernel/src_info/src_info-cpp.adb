@@ -197,13 +197,14 @@ package body Src_Info.CPP is
 
    type To_Handler is access procedure (Ref : TO_Table);
 
-   procedure Fu_To_Gv_Handler (Ref : TO_Table);
-   procedure Fu_To_Fu_Handler (Ref : TO_Table);
+   procedure Fu_To_Gv_Handler  (Ref : TO_Table);
+   procedure Fu_To_Fu_Handler  (Ref : TO_Table);
    procedure Fu_To_Con_Handler (Ref : TO_Table);
    procedure Fu_To_E_Handler   (Ref : TO_Table);
    procedure Fu_To_Ec_Handler  (Ref : TO_Table);
    procedure Fu_To_Ma_Handler  (Ref : TO_Table);
    procedure Fu_To_Mi_Handler  (Ref : TO_Table);
+   procedure Fu_To_Cl_Handler  (Ref : TO_Table);
 
    -------------------
    --  To_Handlers  --
@@ -217,6 +218,7 @@ package body Src_Info.CPP is
       EC     => Fu_To_Ec_Handler'Access,
       MA     => Fu_To_Ma_Handler'Access,
       MI     => Fu_To_Mi_Handler'Access,
+      CL     => Fu_To_Cl_Handler'Access,
       others => null);
 
    function Ext (S : String) return String;
@@ -1078,6 +1080,7 @@ package body Src_Info.CPP is
    procedure Fu_To_Ec_Handler    (Ref : TO_Table) is separate;
    procedure Fu_To_Ma_Handler    (Ref : TO_Table) is separate;
    procedure Fu_To_Mi_Handler    (Ref : TO_Table) is separate;
+   procedure Fu_To_Cl_Handler    (Ref : TO_Table) is separate;
 
 end Src_Info.CPP;
 
