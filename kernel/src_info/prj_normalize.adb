@@ -539,7 +539,7 @@ package body Prj_Normalize is
       --  ??? scenario in case some of the variables were defined in some
       --  ??? other package or projects.
       Scenario_Variables : constant Project_Node_Array :=
-        Find_Scenario_Variables (Project, Parse_Imported => False);
+        Find_Scenario_Variables (Project);
 
       Values : External_Variable_Value_Array (1 .. Scenario_Variables'Length);
       Last_Values : Natural := Values'First - 1;
