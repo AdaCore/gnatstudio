@@ -62,6 +62,7 @@ with Gtkada.File_Selector;      use Gtkada.File_Selector;
 with Src_Editor_Box;            use Src_Editor_Box;
 with String_List_Utils;         use String_List_Utils;
 with String_Utils;              use String_Utils;
+with File_Utils;                use File_Utils;
 with Traces;                    use Traces;
 with Prj_API;                   use Prj_API;
 with Src_Contexts;              use Src_Contexts;
@@ -2794,7 +2795,7 @@ package body Src_Editor_Module is
    begin
       loop
          Child := Get (Iter);
-         exit when Child = null or else Get_Title (Child) = File;
+         exit when Child = null or else File_Equal (Get_Title (Child), File);
          Next (Iter);
       end loop;
 
