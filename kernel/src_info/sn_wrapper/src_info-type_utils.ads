@@ -2,6 +2,7 @@ with DB_API; use DB_API;
 with HTables;
 
 with SN; use SN;
+with GNAT.OS_Lib;
 with SN.DB_Structures; use SN.DB_Structures;
 
 private package Src_Info.Type_Utils is
@@ -29,10 +30,10 @@ private package Src_Info.Type_Utils is
          IsConst           : Boolean := False;
          IsTemplate        : Boolean := False;
          Parent_Point      : Point   := Invalid_Point;
-         Parent_Filename   : SN.String_Access;
+         Parent_Filename   : GNAT.OS_Lib.String_Access;
          Ancestor_Point    : Point   := Invalid_Point;
-         Ancestor_Filename : SN.String_Access;
-         Builtin_Name      : SN.String_Access;
+         Ancestor_Filename : GNAT.OS_Lib.String_Access;
+         Builtin_Name      : GNAT.OS_Lib.String_Access;
          Is_Typedef        : Boolean := False;
       end record;
    --  Contains C type description. Used in these procedures:
@@ -145,13 +146,13 @@ private package Src_Info.Type_Utils is
    --  Frees memory used by access fields in given Desc structure.
 
    function Cmp_Arg_Types
-     (Buffer_A, Buffer_B     : SN.String_Access;
+     (Buffer_A, Buffer_B     : GNAT.OS_Lib.String_Access;
       Args_A, Args_B         : DB_Structures.Segment_Vector.Node_Access)
       return Boolean;
    --  Checks to see if argument types are the same.
 
    function Cmp_Prototypes
-     (Buffer_A, Buffer_B     : SN.String_Access;
+     (Buffer_A, Buffer_B     : GNAT.OS_Lib.String_Access;
       Args_A, Args_B         : DB_Structures.Segment_Vector.Node_Access;
       Ret_Type_A, Ret_Type_B : Segment)
       return Boolean;
@@ -167,25 +168,26 @@ private
 
    type String_Hash_Table_Range is range 1 .. Type_Table_Size;
 
-   function Type_Hash_Function (Key : SN.String_Access)
+   function Type_Hash_Function (Key : GNAT.OS_Lib.String_Access)
       return String_Hash_Table_Range;
    --  Hash function for keys
 
-   function Type_Equal_Function (K1, K2 : SN.String_Access) return Boolean;
+   function Type_Equal_Function
+     (K1, K2 : GNAT.OS_Lib.String_Access) return Boolean;
    --  Checks the equality of two keys
 
    type Type_Parse_State is (Incomplete, Complete, Unknown);
 
    type Typedef_Entry is
       record
-         Key   : SN.String_Access;
+         Key   : GNAT.OS_Lib.String_Access;
          State : Type_Parse_State;
       end record;
 
    package String_Hash_Table is new HTables.Simple_HTable
      (Header_Num => String_Hash_Table_Range,
       Element    => Typedef_Entry,
-      Key        => SN.String_Access,
+      Key        => GNAT.OS_Lib.String_Access,
       No_Element => (null, Unknown),
       Hash       => Type_Hash_Function,
       Equal      => Type_Equal_Function);

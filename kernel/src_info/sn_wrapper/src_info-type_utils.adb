@@ -1,4 +1,25 @@
+-----------------------------------------------------------------------
+--                               G P S                               --
+--                                                                   --
+--                     Copyright (C) 2002                            --
+--                            ACT-Europe                             --
+--                                                                   --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
+-- under the terms of the GNU General Public License as published by --
+-- the Free Software Foundation; either version 2 of the License, or --
+-- (at your option) any later version.                               --
+--                                                                   --
+-- This program is  distributed in the hope that it will be  useful, --
+-- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
+-- General Public License for more details. You should have received --
+-- a copy of the GNU General Public License along with this program; --
+-- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
+-- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
+-----------------------------------------------------------------------
+
 with GNAT.Regpat; use GNAT.Regpat;
+with GNAT.OS_Lib; use GNAT.OS_Lib;
 with SN.Find_Fns; use SN.Find_Fns;
 with Ada.Unchecked_Deallocation;
 
@@ -22,7 +43,7 @@ package body Src_Info.Type_Utils is
    -- Type_Hash_Function --
    ------------------------
 
-   function Type_Hash_Function (Key : SN.String_Access)
+   function Type_Hash_Function (Key : String_Access)
       return String_Hash_Table_Range
    is
       function String_Hash_Function is
@@ -36,7 +57,7 @@ package body Src_Info.Type_Utils is
    -- Type_Equal_Function --
    -------------------------
 
-   function Type_Equal_Function (K1, K2 : SN.String_Access)
+   function Type_Equal_Function (K1, K2 : String_Access)
       return Boolean
    is
    begin
@@ -49,7 +70,7 @@ package body Src_Info.Type_Utils is
 
    procedure Free (HT : in out HTable) is
       Elmt : Typedef_Entry;
-      Key  : SN.String_Access;
+      Key  : String_Access;
    begin
       Get_First (HT, Elmt);
       loop
@@ -68,13 +89,13 @@ package body Src_Info.Type_Utils is
    procedure Free (Desc : in out CType_Description) is
    begin
       if Desc.Parent_Point /= Invalid_Point then
-         Free_String (Desc.Parent_Filename);
+         Free (Desc.Parent_Filename);
       end if;
       if Desc.Ancestor_Point /= Invalid_Point then
-         Free_String (Desc.Ancestor_Filename);
+         Free (Desc.Ancestor_Filename);
       end if;
       if Desc.Builtin_Name /= null then
-         Free_String (Desc.Builtin_Name);
+         Free (Desc.Builtin_Name);
       end if;
    end Free;
 
@@ -267,8 +288,8 @@ package body Src_Info.Type_Utils is
    is
       Typedef   : T_Table;
       HTTypedef : Typedef_Entry;
-      Key       : SN.String_Access;
-      Seek_Key  : SN.String_Access;
+      Key       : String_Access;
+      Seek_Key  : String_Access;
 
    begin
       Success := False;
@@ -475,7 +496,7 @@ package body Src_Info.Type_Utils is
    -------------------
 
    function Cmp_Arg_Types
-     (Buffer_A, Buffer_B     : SN.String_Access;
+     (Buffer_A, Buffer_B     : String_Access;
       Args_A, Args_B         : DB_Structures.Segment_Vector.Node_Access)
       return Boolean
    is
@@ -508,7 +529,7 @@ package body Src_Info.Type_Utils is
    --------------------
 
    function Cmp_Prototypes
-     (Buffer_A, Buffer_B     : SN.String_Access;
+     (Buffer_A, Buffer_B     : String_Access;
       Args_A, Args_B         : DB_Structures.Segment_Vector.Node_Access;
       Ret_Type_A, Ret_Type_B : Segment)
       return Boolean
