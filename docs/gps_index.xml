@@ -23,9 +23,23 @@
 
    <file>
       <name>gnat_ugn.html</name>
-      <descr>GNAT User's Guide</descr>
+      <descr>Native GNAT User's Guide</descr>
       <category>GNAT</category>
-      <menu>/Help/GNAT/GNAT User's Guide</menu>
+      <menu>/Help/GNAT/Native GNAT User's Guide</menu>
+   </file>
+
+   <file>
+      <name>gnat_ugx.html</name>
+      <descr>Cross GNAT User's Guide</descr>
+      <category>GNAT</category>
+      <menu>/Help/GNAT/Cross GNAT User's Guide</menu>
+   </file>
+
+   <file>
+      <name>gnathie_ug.html</name>
+      <descr>GNAT High Integrity User's Guide</descr>
+      <category>GNAT</category>
+      <menu>/Help/GNAT/GNAT High Integrity User's Guide</menu>
    </file>
 
    <file>
