@@ -58,6 +58,26 @@ package body Task_Manager is
       Active  : Boolean);
    --  Runs the task manager, if it is not already running.
 
+   function Safe_Execute
+     (Command : Command_Access) return Command_Return_Type;
+   --  Executes command, and returns the result. If an exception occurs during
+   --  execution of the command, return Failure.
+
+   ------------------
+   -- Safe_Execute --
+   ------------------
+
+   function Safe_Execute
+     (Command : Command_Access) return Command_Return_Type is
+   begin
+      return Execute (Command);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         return Failure;
+   end Safe_Execute;
+
    ------------------------
    -- Active_Incremental --
    ------------------------
@@ -189,7 +209,7 @@ package body Task_Manager is
          if Manager.Queues (Current).Status = Interrupted then
             Result := Success;
          else
-            Result := Execute (Command);
+            Result := Safe_Execute (Command);
          end if;
 
          Manager.Queues (Current).Need_Refresh := True;
