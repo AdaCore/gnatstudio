@@ -52,9 +52,6 @@ package body Scenario_Views is
    procedure On_Edit_Scenario (View : access Gtk_Widget_Record'Class);
    --  Callback for editing the current scenario
 
-   procedure Editor_Changed (View : access Gtk_Widget_Record'Class);
-   --  Callback when the variable editor reports that a variable has changed
-
    procedure Refresh (View : access GObject_Record'Class; Data : GObject);
    --  Callback when the current view of the project has changed
 
@@ -79,22 +76,28 @@ package body Scenario_Views is
      (View    : access Scenario_View_Record'Class;
       Kernel : access Kernel_Handle_Record'Class)
    is
-      Button : Gtk_Button;
    begin
       View.Kernel := Kernel_Handle (Kernel);
       Initialize_Hbox (View, Homogeneous => False, Spacing => 10);
 
-      Gtk_New (Button, "Edit Scenario");
-      Pack_Start (View, Button, Expand => False, Fill => False);
+      Gtk_New (View.Edit_Button, "Edit Scenario");
+      --  Activated only when a project is loaded
+      Set_Sensitive (View.Edit_Button, False);
+
+      Pack_Start (View, View.Edit_Button, Expand => False, Fill => False);
       Widget_Callback.Object_Connect
-        (Button, "clicked",
+        (View.Edit_Button, "clicked",
          Widget_Callback.To_Marshaller (On_Edit_Scenario'Access), View);
 
+      --  We do not need to connect to "project_changed", since it is always
+      --  emitted at the same time as a "project_view_changed", and we do the
+      --  same thing in both cases.
       Object_User_Callback.Connect
         (Kernel, "project_view_changed",
          Object_User_Callback.To_Marshaller (Refresh'Access), GObject (View));
 
       Gtk_New (View.Field, 1024);
+      Set_Editable (View.Field, False);
       Pack_Start (View, View.Field, Expand => True, Fill => True);
    end Initialize;
 
@@ -128,6 +131,7 @@ package body Scenario_Views is
         Find_Scenario_Variables (Get_Project (V.Kernel));
       Str : String_Id;
    begin
+      Set_Sensitive (V.Edit_Button, True);
       Set_Text (V.Field, "");
 
       for Var in Vars'Range loop
@@ -157,17 +161,5 @@ package body Scenario_Views is
          end if;
       end loop;
    end Refresh;
-
-   --------------------
-   -- Editor_Changed --
-   --------------------
-
-   procedure Editor_Changed (View : access Gtk_Widget_Record'Class) is
-      --  Var : Project_Node_Id := Project_Node_Id (To_Gint (Args, 1));
-      V : constant Scenario_View := Scenario_View (View);
-
-   begin
-      Recompute_View (V.Kernel);
-   end Editor_Changed;
 
 end Scenario_Views;

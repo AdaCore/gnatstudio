@@ -35,6 +35,7 @@
 --  </description>
 
 with Gtk.Box;
+with Gtk.Button;
 with Gtk.GEntry;
 
 with Glide_Kernel;
@@ -58,7 +59,8 @@ package Scenario_Views is
 
 private
    type Scenario_View_Record is new Gtk.Box.Gtk_Box_Record with record
-      Kernel : Glide_Kernel.Kernel_Handle;
-      Field  : Gtk.GEntry.Gtk_Entry;
+      Kernel      : Glide_Kernel.Kernel_Handle;
+      Field       : Gtk.GEntry.Gtk_Entry;
+      Edit_Button : Gtk.Button.Gtk_Button;
    end record;
 end Scenario_Views;
