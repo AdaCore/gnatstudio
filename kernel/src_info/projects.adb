@@ -146,15 +146,6 @@ package body Projects is
    --  Len is set to the length of the suffix, and List to the matching item
    --  (or No_Array_Element if there is no match)
 
-   function Project_Imports
-     (Parent           : Project_Type;
-      Child            : Project_Type;
-      Include_Extended : Boolean := False) return Boolean;
-   --  Return True if Parent imports directly Child.
-   --  if Parents or Child is No_Project, True is returned.
-   --  If Include_Extended is true, then True is also returned if Child is an
-   --  extended project of Parent
-
    function Substitute_Dot
      (Unit_Name : String; Dot_Replacement : String) return String;
    --  Replace the '.' in unit_name with Dot_Replacement
@@ -1381,10 +1372,12 @@ package body Projects is
    -- Project_Imports --
    ---------------------
 
-   function Project_Imports
+   procedure Project_Imports
      (Parent           : Project_Type;
       Child            : Project_Type;
-      Include_Extended : Boolean := False) return Boolean
+      Include_Extended : Boolean := False;
+      Imports          : out Boolean;
+      Is_Limited_With  : out Boolean)
    is
       With_Clause : Project_Node_Id;
       Extended    : Project_Node_Id;
@@ -1392,13 +1385,18 @@ package body Projects is
       Assert (Me, Child /= No_Project, "Project_Imports: no child provided");
 
       if Parent = No_Project then
-         return True;
+         Imports := True;
+         Is_Limited_With := False;
+         return;
       end if;
 
       With_Clause := First_With_Clause_Of (Parent.Node);
       while With_Clause /= Empty_Node loop
          if Project_Node_Of (With_Clause) = Child.Node then
-            return True;
+            Imports         := True;
+            Is_Limited_With :=
+              Non_Limited_Project_Node_Of (With_Clause) = Empty_Node;
+            return;
          end if;
 
          With_Clause := Next_With_Clause_Of (With_Clause);
@@ -1410,11 +1408,14 @@ package body Projects is
          Extended := Extended_Project_Of
            (Project_Declaration_Of (Parent.Node));
          if Extended = Child.Node then
-            return True;
+            Imports := True;
+            Is_Limited_With := False;
+            return;
          end if;
       end if;
 
-      return False;
+      Imports := False;
+      Is_Limited_With := False;
    end Project_Imports;
 
    --------------------------------
@@ -1436,6 +1437,7 @@ package body Projects is
       Parent   : Project_Type;
       Decl, N   : Project_Node_Id;
       Importing : Name_Id_Array_Access;
+      Imports, Is_Limited_With : Boolean;
 
       procedure Merge_Project (P : Project_Type);
       --  Merge the imported projects of P with the ones for Project
@@ -1494,12 +1496,16 @@ package body Projects is
             --  Avoid processing a project twice
             --  ??? We still process twice the projects that do not
             --  import Project
-            if not Include (Index)
-              and then Project_Imports
-              (Parent, Child => Current, Include_Extended => False)
-            then
-               Compute_Importing_Projects (Root_Project, Parent);
-               Merge_Project (Parent);
+            if not Include (Index) then
+               Project_Imports
+                 (Parent, Child => Current, Include_Extended => False,
+                  Imports         => Imports,
+                  Is_Limited_With => Is_Limited_With);
+
+               if Imports then
+                  Compute_Importing_Projects (Root_Project, Parent);
+                  Merge_Project (Parent);
+               end if;
             end if;
 
             Index := Index - 1;
@@ -1638,11 +1644,38 @@ package body Projects is
       return No_Project;
    end Current;
 
+   ---------------------
+   -- Is_Limited_With --
+   ---------------------
+
+   function Is_Limited_With
+     (Iterator : Imported_Project_Iterator) return Boolean
+   is
+      Imports, Is_Limited_With : Boolean;
+   begin
+      if Iterator.Importing then
+         Project_Imports
+           (Current (Iterator), Iterator.Root,
+            Include_Extended => False,
+            Imports          => Imports,
+            Is_Limited_With  => Is_Limited_With);
+      else
+         Project_Imports
+           (Iterator.Root, Current (Iterator),
+            Include_Extended => False,
+            Imports          => Imports,
+            Is_Limited_With  => Is_Limited_With);
+      end if;
+
+      return Imports and Is_Limited_With;
+   end Is_Limited_With;
+
    ----------
    -- Next --
    ----------
 
    procedure Next (Iterator : in out Imported_Project_Iterator) is
+      Imports, Is_Limited_With : Boolean;
    begin
       Iterator.Current_Cache := No_Project;
       Iterator.Current := Iterator.Current - 1;
@@ -1651,18 +1684,22 @@ package body Projects is
          if Iterator.Importing then
             while Iterator.Current >=
               Iterator.Root.Data.Importing_Projects'First
-              and then not Project_Imports
-                 (Current (Iterator), Iterator.Root, Iterator.Include_Extended)
             loop
+               Project_Imports
+                 (Current (Iterator), Iterator.Root, Iterator.Include_Extended,
+                  Imports => Imports, Is_Limited_With => Is_Limited_With);
+               exit when Imports;
                Iterator.Current := Iterator.Current - 1;
             end loop;
 
          else
             while Iterator.Current >=
               Iterator.Root.Data.Imported_Projects'First
-              and then not Project_Imports
-                 (Iterator.Root, Current (Iterator), Iterator.Include_Extended)
             loop
+               Project_Imports
+                 (Iterator.Root, Current (Iterator), Iterator.Include_Extended,
+                  Imports => Imports, Is_Limited_With => Is_Limited_With);
+               exit when Imports;
                Iterator.Current := Iterator.Current - 1;
             end loop;
          end if;

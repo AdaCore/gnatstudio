@@ -425,6 +425,11 @@ package Projects is
    procedure Next (Iterator : in out Imported_Project_Iterator);
    --  Move to the next imported project.
 
+   function Is_Limited_With
+     (Iterator : Imported_Project_Iterator) return Boolean;
+   --  Return true if the current project is imported directly and through a
+   --  "limited with" clause. False otherwise.
+
    function Find_All_Projects_Importing
      (Project      : Project_Type;
       Include_Self : Boolean := False;
@@ -442,6 +447,19 @@ package Projects is
 
    function Has_Imported_Projects (Project : Project_Type) return Boolean;
    --  Return True if Project has at least one directly imported project.
+
+   procedure Project_Imports
+     (Parent           : Project_Type;
+      Child            : Project_Type;
+      Include_Extended : Boolean := False;
+      Imports          : out Boolean;
+      Is_Limited_With  : out Boolean);
+   --  Return True if Parent imports directly Child.
+   --  Is_Limited_With is set to true if the parent imports child through a
+   --  "limited with" clause
+   --  if Parents or Child is No_Project, True is returned.
+   --  If Include_Extended is true, then True is also returned if Child is an
+   --  extended project of Parent
 
    ---------------
    -- Scenarios --
