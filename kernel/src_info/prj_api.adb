@@ -192,6 +192,7 @@ package body Prj_API is
       Unit_Name : out Name_Id;
       Lang      : out Name_Id);
    --  Return the unit name, unit part and language for Filename.
+   --  This procedure doesn't fully handle krunched file name.
 
    ----------------
    -- Get_String --
