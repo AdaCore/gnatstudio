@@ -56,6 +56,8 @@ with Glide_Kernel;          use Glide_Kernel;
 with Glide_Kernel.Console;  use Glide_Kernel.Console;
 with Glide_Kernel.Hooks;    use Glide_Kernel.Hooks;
 with Glide_Kernel.Modules;  use Glide_Kernel.Modules;
+with Glide_Kernel.Preferences;
+use Glide_Kernel.Preferences;
 with Glide_Kernel.Task_Manager; use Glide_Kernel.Task_Manager;
 with GNAT.OS_Lib;           use GNAT.OS_Lib;
 
@@ -105,6 +107,9 @@ package body Vsearch_Ext is
 
       Search_Regexps : Search_Regexps_Array_Access;
       --  The list of predefined regexps for the search module.
+
+      Tab_Width      : Natural;
+      --  The default tab width.
    end record;
    type Vsearch_Module is access all Vsearch_Module_Record'Class;
 
@@ -277,6 +282,10 @@ package body Vsearch_Ext is
 
    procedure Float_Vsearch (Search_Child : access Gtk_Widget_Record'Class);
    --  The floating state of the search widget has changed
+
+   procedure Preferences_Changed
+     (Kernel : access Kernel_Handle_Record'Class);
+   --  Called when the preferences have changed.
 
    ------------------
    -- Load_Desktop --
@@ -1637,6 +1646,9 @@ package body Vsearch_Ext is
       Glide_Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
 
+      Vsearch_Module_Id.Tab_Width :=
+        Natural (Get_Pref (Kernel, Tab_Width));
+
       --  Register the menus
       Register_Menu
         (Kernel, Navigate, null, Ref_Item => -"Edit", Add_Before => False);
@@ -1670,6 +1682,8 @@ package body Vsearch_Ext is
       --  Register the default search functions
 
       Register_Default_Search (Kernel);
+
+      Add_Hook (Kernel, Preferences_Changed_Hook, Preferences_Changed'Access);
    end Register_Module;
 
    ----------
@@ -1681,5 +1695,25 @@ package body Vsearch_Ext is
    begin
       null;
    end Free;
+
+   -------------------
+   -- Get_Tab_Width --
+   -------------------
+
+   function Get_Tab_Width return Natural is
+   begin
+      return Vsearch_Module_Id.Tab_Width;
+   end Get_Tab_Width;
+
+   -------------------------
+   -- Preferences_Changed --
+   -------------------------
+
+   procedure Preferences_Changed
+     (Kernel : access Kernel_Handle_Record'Class) is
+   begin
+      Vsearch_Module_Id.Tab_Width :=
+        Natural (Get_Pref (Kernel, Tab_Width));
+   end Preferences_Changed;
 
 end Vsearch_Ext;
