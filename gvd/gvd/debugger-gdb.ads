@@ -66,12 +66,11 @@ package Debugger.Gdb is
       Addr_First  : out Natural;
       Addr_Last   : out Natural);
 
-   function Source_Files_List (Debugger : access Gdb_Debugger)
-                              return Odd.Types.String_Array;
+   function Source_Files_List
+     (Debugger : access Gdb_Debugger) return Odd.Types.String_Array;
 
    function Find_File
-     (Debugger : access Gdb_Debugger; File_Name : String)
-     return String;
+     (Debugger : access Gdb_Debugger; File_Name : String) return String;
 
    function Type_Of
      (Debugger : access Gdb_Debugger;

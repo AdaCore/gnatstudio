@@ -67,8 +67,8 @@ package body Debugger.Gdb.C is
       Tmp  : Natural := Index;
       Save : Natural;
       Last : Natural := Type_Str'Last;
-   begin
 
+   begin
       --  First: Skip the type itself, to check whether we have in fact an
       --  array or access type.
       --  Several cases to be considered here:
@@ -134,12 +134,15 @@ package body Debugger.Gdb.C is
          else
             Skip_Word (Type_Str, Index);
          end if;
+
          Skip_Blanks (Type_Str, Index);
       end loop;
+
       Index := Save;
 
       --  An access type ?
       --  or access to subprogram
+
       if Index <= Type_Str'Last
         and then (Type_Str (Index) = '*' or else Type_Str (Index) = '(')
       then
@@ -149,6 +152,7 @@ package body Debugger.Gdb.C is
          --  Even though doing a Get_Type_Info is more costly, we must do
          --  it, since otherwise it is hard to get the real type name directly
          --  from the general Type_Str (see  void (*field[2])(int a))
+
          Set_Type_Name
            (Result,
             Get_Type_Info (Get_Debugger (Lang), Entity,
@@ -157,6 +161,7 @@ package body Debugger.Gdb.C is
       end if;
 
       --  An array type ?
+
       if Index < Type_Str'Last and then Type_Str (Index) = '[' then
          Parse_Array_Type (Lang, Type_Str, Entity, Tmp, Index, Result);
          Index := Tmp;
@@ -169,7 +174,6 @@ package body Debugger.Gdb.C is
 
       case Type_Str (Index) is
          when 'e' =>
-
             --  Enumeration type
 
             if Looking_At (Type_Str, Index, "enum ") then
@@ -179,10 +183,10 @@ package body Debugger.Gdb.C is
                Set_Type_Name (Result, Type_Str (Type_Str'First .. Index - 1));
                return;
             end if;
+
             --  Else falls through
 
          when 's' =>
-
             --  Structures.
             --  There are several possible cases here:
             --      "struct My_Record { ... }"
@@ -192,13 +196,15 @@ package body Debugger.Gdb.C is
             --  definition.
 
             if Looking_At (Type_Str, Index, "struct ") then
-               Tmp := Index;
+               Tmp   := Index;
                Index := Index + 7;           --  skips "struct "
 
                if Type_Str (Index) /= Record_Start then
                   Skip_Word (Type_Str, Index);  --  skips struct name
                end if;
+
                Skip_Blanks (Type_Str, Index);
+
                if Index <= Type_Str'Last
                  and then Type_Str (Index) = Record_Start
                then
@@ -206,20 +212,23 @@ package body Debugger.Gdb.C is
                   Parse_Record_Type
                     (Lang, Type_Str, Entity, Index,
                      Is_Union => False, Result => Result, End_On => "}");
+
                else
                   Result := Parse_Type
                     (Get_Debugger (Lang), Type_Str (Tmp .. Index - 1));
                end if;
+
                return;
             end if;
             --  Else falls through
 
          when 'u' =>
             if Looking_At (Type_Str, Index, "union ") then
-               Tmp := Index;
+               Tmp   := Index;
                Index := Index + 6;           --  skips "union "
                Skip_Word (Type_Str, Index);  --  skips union name
                Skip_Blanks (Type_Str, Index);
+
                if Index <= Type_Str'Last
                  and then Type_Str (Index) = Record_Start
                then
@@ -227,10 +236,12 @@ package body Debugger.Gdb.C is
                   Parse_Record_Type
                     (Lang, Type_Str, Entity, Index, Is_Union => True,
                      Result => Result, End_On => "}");
+
                else
                   Result := Parse_Type
                     (Get_Debugger (Lang), Type_Str (Tmp .. Index - 1));
                end if;
+
                return;
             end if;
             --  Else falls through
@@ -253,7 +264,7 @@ package body Debugger.Gdb.C is
       Skip_Word (Type_Str, Index);
 
       declare
-         T : String :=
+         T : constant String :=
            Type_Of (Get_Debugger (Lang), Type_Str (Tmp .. Index - 1));
          J : Natural := T'First;
       begin
@@ -296,10 +307,13 @@ package body Debugger.Gdb.C is
       R         : Array_Type_Access;
       Last      : Long_Integer;
       Item_Type : Generic_Type_Access;
+
    begin
       --  Find the number of dimensions
+
       Index := Start_Of_Dim;
       Tmp_Index := Index;
+
       while Tmp_Index <= Type_Str'Last
         and then Type_Str (Tmp_Index) = '['
       loop
@@ -316,6 +330,7 @@ package body Debugger.Gdb.C is
 
       --  Then parse the dimensions.
       Num_Dim := 0;
+
       while Index <= Type_Str'Last
         and then Type_Str (Index) = '['
       loop
@@ -328,11 +343,12 @@ package body Debugger.Gdb.C is
 
       --  Finally parse the type of items
 
-      Parse_Type (Lang,
-                  Type_Str (Initial .. Start_Of_Dim - 1),
-                  Array_Item_Name (Lang, Entity, "0"),
-                  Initial,
-                  Item_Type);
+      Parse_Type
+        (Lang,
+         Type_Str (Initial .. Start_Of_Dim - 1),
+         Array_Item_Name (Lang, Entity, "0"),
+         Initial,
+         Item_Type);
       Set_Item_Type (R.all, Item_Type);
    end Parse_Array_Type;
 
@@ -357,6 +373,7 @@ package body Debugger.Gdb.C is
       Tmp,
       Save,
       End_Of_Name : Natural;
+
    begin
       --  Count the number of fields
 
@@ -376,12 +393,14 @@ package body Debugger.Gdb.C is
       else
          Result := New_Record_Type (Num_Fields);
       end if;
+
       R := Record_Type_Access (Result);
       Set_Type_Name (R, Type_Str (Type_Str'First .. Initial - 2));
 
       --  Parse the type
 
       Index := Initial;
+
       while Field <= Num_Fields loop
          Skip_Blanks (Type_Str, Index);
 
@@ -403,8 +422,8 @@ package body Debugger.Gdb.C is
             Index := Index + 1;
             End_Of_Name := Index + 2;
             Skip_Word (Type_Str, End_Of_Name);
-         else
 
+         else
             End_Of_Name := Save;
 
             --  Skip array definition as in
@@ -447,6 +466,7 @@ package body Debugger.Gdb.C is
                Tmp,
                Field_Value);
          end if;
+
          Set_Value (R.all, Field_Value, Field);
          Index := Save + 1;
          Field := Field + 1;
@@ -477,18 +497,23 @@ package body Debugger.Gdb.C is
       procedure Parse_Item is
          Tmp        : Generic_Type_Access;
          Repeat_Num : Integer;
+
       begin
          --  Parse the next item
          Tmp := Get_Value (Result.all, Current_Index);
+
          if Tmp = null then
             Tmp := Clone (Get_Item_Type (Result.all).all);
          end if;
-         Internal_Parse_Value (Lang, Type_Str, Index, Tmp, Repeat_Num,
-                               Parent => Generic_Type_Access (Result));
-         Set_Value (Item       => Result.all,
-                    Elem_Value => Tmp,
-                    Elem_Index => Current_Index,
-                    Repeat_Num => Repeat_Num);
+
+         Internal_Parse_Value
+           (Lang, Type_Str, Index, Tmp, Repeat_Num,
+            Parent => Generic_Type_Access (Result));
+         Set_Value
+           (Item       => Result.all,
+            Elem_Value => Tmp,
+            Elem_Index => Current_Index,
+            Repeat_Num => Repeat_Num);
          Current_Index := Current_Index + Long_Integer (Repeat_Num);
       end Parse_Item;
 
@@ -587,6 +612,5 @@ package body Debugger.Gdb.C is
               Array_End           => Array_End,
               Record_Field        => Record_Field);
    end Get_Language_Context;
-
 
 end Debugger.Gdb.C;

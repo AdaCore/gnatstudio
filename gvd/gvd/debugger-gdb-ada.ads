@@ -85,8 +85,9 @@ package Debugger.Gdb.Ada is
       Index    : in out Natural;
       Result   : in out Items.Arrays.Array_Type_Access);
 
-   function Get_Language_Context (Lang : access Gdb_Ada_Language)
-                                 return Language.Debugger.Language_Context;
+   function Get_Language_Context
+     (Lang : access Gdb_Ada_Language)
+      return Language.Debugger.Language_Context;
 
 private
 
