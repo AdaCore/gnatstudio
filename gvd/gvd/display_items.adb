@@ -259,6 +259,12 @@ package body Display_Items is
       Component : Generic_Type_Access);
    --  Change the visibility status of a specific component in the item
 
+   function Create_Drawing_Context
+     (Item : access Display_Item_Record'Class)
+     return Drawing_Context;
+   --  Return a graphic context that can be used to display the contents of
+   --  the item
+
    -------------
    -- Gtk_New --
    -------------
@@ -487,28 +493,12 @@ package body Display_Items is
 
       Size_Request
         (Item.Entity.all,
-         Drawing_Context'
-           (Pixmap      => Pixmap (Item),
-            GC          => Black_GC,
-            Xref_GC     => Xref_GC,
-            Modified_GC => Change_GC,
-            Font        => Font,
-            Type_Font   => Type_Font,
-            Mode        => Item.Mode),
+         Create_Drawing_Context (Item),
          Hide_Big_Items => Hide_Big_Items);
 
       if not Get_Visibility (Item.Entity.all) then
          Set_Visibility (Item.Entity, True);
-         Size_Request
-           (Item.Entity.all,
-            Drawing_Context'
-              (Pixmap      => Pixmap (Item),
-               GC          => Black_GC,
-               Xref_GC     => Xref_GC,
-               Modified_GC => Change_GC,
-               Font        => Font,
-               Type_Font   => Type_Font,
-               Mode        => Item.Mode));
+         Size_Request (Item.Entity.all, Create_Drawing_Context (Item));
       end if;
 
       Update_Display (Item);
@@ -706,14 +696,7 @@ package body Display_Items is
       if Item.Entity /= null then
          Paint
            (Item.Entity.all,
-            Drawing_Context'
-              (Pixmap      => Pixmap (Item),
-               GC          => Black_GC,
-               Xref_GC     => Xref_GC,
-               Modified_GC => Change_GC,
-               Font        => Font,
-               Type_Font   => Type_Font,
-               Mode        => Item.Mode),
+            Create_Drawing_Context (Item),
             X => Border_Spacing,
             Y => Title_Height + Border_Spacing);
       end if;
@@ -752,14 +735,7 @@ package body Display_Items is
 
       Paint
         (Component.all,
-         Drawing_Context'
-           (Pixmap      => Pixmap (Item),
-            GC          => Black_GC,
-            Xref_GC     => Xref_GC,
-            Modified_GC => Change_GC,
-            Font        => Font,
-            Type_Font   => Type_Font,
-            Mode        => Item.Mode),
+         Create_Drawing_Context (Item),
          X => Get_X (Component.all),
          Y => Get_Y (Component.all));
    end Update_Component;
@@ -903,14 +879,7 @@ package body Display_Items is
 
       Size_Request
         (Item.Entity.all,
-         Drawing_Context'
-           (Pixmap      => Pixmap (Item),
-            GC          => Black_GC,
-            Xref_GC     => Xref_GC,
-            Modified_GC => Change_GC,
-            Font        => Font,
-            Type_Font   => Type_Font,
-            Mode        => Item.Mode),
+         Create_Drawing_Context (Item),
          Hide_Big_Items => Hide_Big);
 
       --  Make sure we don't hide the item, unless it was already hidden.
@@ -920,16 +889,7 @@ package body Display_Items is
         and then Was_Visible
       then
          Set_Visibility (Item.Entity, True);
-         Size_Request
-           (Item.Entity.all,
-            Drawing_Context'
-              (Pixmap      => Pixmap (Item),
-               GC          => Black_GC,
-               Xref_GC     => Xref_GC,
-               Modified_GC => Change_GC,
-               Font        => Font,
-               Type_Font   => Type_Font,
-               Mode        => Item.Mode));
+         Size_Request (Item.Entity.all, Create_Drawing_Context (Item));
       end if;
 
       Update_Display (Item);
@@ -1829,5 +1789,25 @@ package body Display_Items is
    begin
       return Item.Mode;
    end Get_Display_Mode;
+
+   ----------------------------
+   -- Create_Drawing_Context --
+   ----------------------------
+
+   function Create_Drawing_Context
+     (Item : access Display_Item_Record'Class)
+     return Drawing_Context
+   is
+   begin
+      return Drawing_Context'
+        (Pixmap      => Pixmap (Item),
+         GC          => Black_GC,
+         Xref_GC     => Xref_GC,
+         Modified_GC => Change_GC,
+         Font        => Font,
+         Type_Font   => Type_Font,
+         Mode        => Item.Mode,
+         Lang        => Get_Language (Item.Debugger.Debugger));
+   end Create_Drawing_Context;
 
 end Display_Items;
