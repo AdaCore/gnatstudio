@@ -359,17 +359,17 @@ package body Src_Info.CPP is
 
       case Iterator.State is
 
-         when Start
-            | Analyse_Files
-            | Process_Files =>
+         when Start | Analyse_Files | Process_Files =>
             loop
                if Iterator.State /= Start then
                   Next_Source_File (Iterator);
                else
                   Iterator.State := Analyse_Files;
                end if;
+
                declare
-                  Next_File : String := Current_Source_File (Iterator);
+                  Next_File : constant String :=
+                    Current_Source_File (Iterator);
                begin
                   if Next_File = "" then
                      if Iterator.State = Process_Files then
@@ -379,13 +379,12 @@ package body Src_Info.CPP is
                           (Iterator.SN_Dir.all,
                            Iterator.Tmp_Filename,
                            Iterator.PD);
-                        return;
                      else
                         --  nothing to update
                         Iterator.State := Done;
                         Finished := True;
-                        return;
                      end if;
+                     return;
                   else
                      --  Start processing next file
                      --  File needs to be processing if:
@@ -393,7 +392,7 @@ package body Src_Info.CPP is
                      --  2. Source is newer than xref file
                      if not Is_Xref_Valid (Next_File, Iterator.Xrefs)
                        or else not Up_To_Date
-                              (Next_File, Iterator.SN_Dir.all, Iterator.Xrefs)
+                         (Next_File, Iterator.SN_Dir.all, Iterator.Xrefs)
                      then
                         Trace (Info_Stream, "Updating " & Next_File);
                         Iterator.State := Process_Files;
@@ -582,9 +581,9 @@ package body Src_Info.CPP is
       end if;
 
       --  check timestamps for the parsed file
-      if File /= No_LI_File and then
-         To_Timestamp (File_Time_Stamp (Full_Filename.all))
-            <= File.LI.LI_Timestamp
+      if File /= No_LI_File
+        and then To_Timestamp (File_Time_Stamp (Full_Filename.all)) /=
+          File.LI.LI_Timestamp
       then
          return;
       end if;
@@ -809,7 +808,6 @@ package body Src_Info.CPP is
                Insert_Dependency_Declaration
                  (Handler            => LI_Handler (Global_CPP_Handler),
                   File               => Env.File,
-                  Source_Filename    => Source_Filename,
                   Xref_Filename      => Name_As_Directory (Env.DB_Dir.all) &
                      Xref_Filename_For
                        (Source_Filename,
@@ -1115,8 +1113,6 @@ package body Src_Info.CPP is
                Insert_Dependency_Declaration
                  (Handler            => LI_Handler (Global_CPP_Handler),
                   File               => Env.File,
-                  Source_Filename    => Ref.Buffer
-                    (Ref.File_Name.First .. Ref.File_Name.Last),
                   Xref_Filename      => Name_As_Directory (Env.DB_Dir.all) &
                     Xref_Filename_For (Ref.Buffer
                        (Ref.File_Name.First .. Ref.File_Name.Last),
@@ -1283,8 +1279,6 @@ package body Src_Info.CPP is
                      List              => Env.List_Of_Files,
                      Symbol_Name       =>
                         Var.Buffer (Var.Name.First .. Var.Name.Last),
-                     Source_Filename   =>
-                        Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last),
                      Location          => Var.Start_Position,
                      Kind              => Type_To_Object (Desc.Kind),
                      Scope             => Scope,
@@ -1301,8 +1295,6 @@ package body Src_Info.CPP is
                   Insert_Dependency_Declaration
                     (Handler           => LI_Handler (Global_CPP_Handler),
                      File              => Env.File,
-                     Source_Filename   =>
-                        Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last),
                      Xref_Filename     => Name_As_Directory (Env.DB_Dir.all)
                         & Xref_Filename_For
                           (Ref.Buffer
@@ -1405,8 +1397,6 @@ package body Src_Info.CPP is
                Insert_Dependency_Declaration
                  (Handler            => LI_Handler (Global_CPP_Handler),
                   File               => Env.File,
-                  Source_Filename    => Ref.Buffer
-                    (Ref.File_Name.First .. Ref.File_Name.Last),
                   Xref_Filename      => Name_As_Directory (Env.DB_Dir.all) &
                      Xref_Filename_For (Ref.Buffer
                        (Ref.File_Name.First .. Ref.File_Name.Last),
@@ -1531,8 +1521,6 @@ package body Src_Info.CPP is
                Insert_Dependency_Declaration
                  (Handler           => LI_Handler (Global_CPP_Handler),
                   File              => Env.File,
-                  Source_Filename   =>
-                     Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last),
                   Xref_Filename     => Name_As_Directory (Env.DB_Dir.all) &
                      Xref_Filename_For (Ref.Buffer
                        (Ref.File_Name.First ..  Ref.File_Name.Last),
@@ -1759,8 +1747,6 @@ package body Src_Info.CPP is
                   Insert_Dependency_Declaration
                     (Handler            => LI_Handler (Global_CPP_Handler),
                      File               => Env.File,
-                     Source_Filename    =>
-                        Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last),
                      Xref_Filename      => Name_As_Directory (Env.DB_Dir.all) &
                         Xref_Filename_For
                           (Ref.Buffer (Ref.File_Name.First ..
@@ -1912,8 +1898,6 @@ package body Src_Info.CPP is
                   Insert_Dependency_Declaration
                     (Handler           => LI_Handler (Global_CPP_Handler),
                      File              => Env.File,
-                     Source_Filename   =>
-                        Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last),
                      Xref_Filename     => Name_As_Directory (Env.DB_Dir.all)
                         & Xref_Filename_For
                           (Ref.Buffer
@@ -1940,8 +1924,6 @@ package body Src_Info.CPP is
                   Insert_Dependency_Declaration
                     (Handler           => LI_Handler (Global_CPP_Handler),
                      File              => Env.File,
-                     Source_Filename   =>
-                        Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last),
                      Xref_Filename     => Name_As_Directory (Env.DB_Dir.all)
                         & Xref_Filename_For
                           (Ref.Buffer
@@ -2061,8 +2043,6 @@ package body Src_Info.CPP is
                Insert_Dependency_Declaration
                  (Handler           => LI_Handler (Global_CPP_Handler),
                   File              => Env.File,
-                  Source_Filename   => Ref.Buffer
-                    (Ref.File_Name.First .. Ref.File_Name.Last),
                   Xref_Filename     => Name_As_Directory (Env.DB_Dir.all)
                      & Xref_Filename_For
                        (Ref.Buffer
@@ -2339,8 +2319,6 @@ package body Src_Info.CPP is
                   Insert_Dependency_Declaration
                     (Handler            => LI_Handler (Global_CPP_Handler),
                      File               => Env.File,
-                     Source_Filename    => Ref.Buffer
-                        (Ref.File_Name.First .. Ref.File_Name.Last),
                      Xref_Filename      => Name_As_Directory (Env.DB_Dir.all) &
                           Xref_Filename_For
                           (Ref.Buffer (Ref.File_Name.First ..
@@ -2572,8 +2550,6 @@ package body Src_Info.CPP is
                   Insert_Dependency_Declaration
                     (Handler           => LI_Handler (Global_CPP_Handler),
                      File              => Env.File,
-                     Source_Filename   => Ref.Buffer
-                       (Ref.File_Name.First .. Ref.File_Name.Last),
                      Xref_Filename     => Name_As_Directory (Env.DB_Dir.all)
                         & Xref_Filename_For
                           (Ref.Buffer
@@ -2601,8 +2577,6 @@ package body Src_Info.CPP is
                   Insert_Dependency_Declaration
                     (Handler           => LI_Handler (Global_CPP_Handler),
                      File              => Env.File,
-                     Source_Filename   => Ref.Buffer
-                       (Ref.File_Name.First .. Ref.File_Name.Last),
                      Xref_Filename     => Name_As_Directory (Env.DB_Dir.all)
                         & Xref_Filename_For
                           (Ref.Buffer
@@ -2631,8 +2605,6 @@ package body Src_Info.CPP is
                   Insert_Dependency_Declaration
                     (Handler           => LI_Handler (Global_CPP_Handler),
                      File              => Env.File,
-                     Source_Filename   => Ref.Buffer
-                       (Ref.File_Name.First .. Ref.File_Name.Last),
                      Xref_Filename     => Name_As_Directory (Env.DB_Dir.all)
                         & Xref_Filename_For
                           (Ref.Buffer
@@ -2730,8 +2702,6 @@ package body Src_Info.CPP is
                Insert_Dependency_Declaration
                  (Handler            => LI_Handler (Global_CPP_Handler),
                   File               => Env.File,
-                  Source_Filename    => Ref.Buffer
-                    (Ref.File_Name.First .. Ref.File_Name.Last),
                   Xref_Filename      => Name_As_Directory (Env.DB_Dir.all)
                      & Xref_Filename_For
                        (Ref.Buffer
@@ -3655,8 +3625,6 @@ package body Src_Info.CPP is
       Insert_Dependency
         (Handler           => LI_Handler (Global_CPP_Handler),
          File              => Env.File,
-         Source_Filename   =>
-           Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
          Xref_Filename     => Xref_Filename_For
            (Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
             Env.DB_Dir.all,
@@ -3668,10 +3636,7 @@ package body Src_Info.CPP is
            (Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
             Env.DB_Dir.all,
             Env.Xrefs).all);
-
    end Sym_IU_Handler;
-
-
 
    --------------------
    -- Sym_IV_Handler --
@@ -3781,7 +3746,6 @@ package body Src_Info.CPP is
          null;           -- ignore error
    end Sym_IV_Handler;
 
-
    --------------------
    -- Sym_MA_Handler --
    --------------------
@@ -3811,9 +3775,7 @@ package body Src_Info.CPP is
          Kind              => Unresolved_Entity,
          Scope             => Global_Scope,
          Declaration_Info  => tmp_ptr);
-
    end Sym_MA_Handler;
-
 
    --------------------
    -- Sym_MD_Handler --
