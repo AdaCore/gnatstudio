@@ -198,7 +198,8 @@ package body Project_Explorers is
       Parent_Node      : Gtk_Tree_Iter := Null_Iter;
       Project          : Project_Type;
       Files_In_Project : String_Array_Access;
-      Object_Directory : Boolean := False) return Gtk_Tree_Iter;
+      Object_Directory : Boolean := False;
+      Exec_Directory   : Boolean := False) return Gtk_Tree_Iter;
    --  Add a new directory node in the tree, for Directory.
    --  Directory is expected to be an absolute path name.
    --  Directory_String should be specified for source directories only, and is
@@ -882,7 +883,8 @@ package body Project_Explorers is
       Parent_Node      : Gtk_Tree_Iter := Null_Iter;
       Project          : Project_Type;
       Files_In_Project : String_Array_Access;
-      Object_Directory : Boolean := False) return Gtk_Tree_Iter
+      Object_Directory : Boolean := False;
+      Exec_Directory   : Boolean := False) return Gtk_Tree_Iter
    is
       N         : Gtk_Tree_Iter;
       Is_Leaf   : Boolean;
@@ -890,9 +892,12 @@ package body Project_Explorers is
    begin
       if Object_Directory then
          Node_Type := Obj_Directory_Node;
+      elsif Exec_Directory then
+         Node_Type := Exec_Directory_Node;
       end if;
 
       Is_Leaf := Node_Type = Obj_Directory_Node
+        or else Node_Type = Exec_Directory_Node
         or else not Has_Entries (Project, Directory, Files_In_Project);
 
       if Object_Directory then
@@ -1046,14 +1051,17 @@ package body Project_Explorers is
                Object_Directory => True);
          end if;
 
-         if Exec /= "" and then Exec /= Obj then
+         if Exec /= ""
+           and then Normalize_Pathname
+             (Exec, Project_Directory (Project), Resolve_Links => False) /= Obj
+         then
             N := Add_Directory_Node
               (Explorer         => Explorer,
                Directory        => Exec,
                Project          => Project,
                Parent_Node      => Node,
                Files_In_Project => null,
-               Object_Directory => True);
+               Exec_Directory   => True);
          end if;
 
       end Add_Directories;
@@ -1183,7 +1191,7 @@ package body Project_Explorers is
             when Directory_Node =>
                Expand_Directory_Node (Explorer, Node);
 
-            when Obj_Directory_Node =>
+            when Obj_Directory_Node | Exec_Directory_Node =>
                null;
 
             when File_Node =>
@@ -1523,7 +1531,7 @@ package body Project_Explorers is
                   end if;
                end;
 
-            when Obj_Directory_Node =>
+            when Obj_Directory_Node | Exec_Directory_Node =>
                Remove (Explorer.Tree.Model, N);
 
             when Project_Node | Modified_Project_Node =>
@@ -2179,7 +2187,7 @@ package body Project_Explorers is
                         return Tmp;
                      end if;
 
-                  when Obj_Directory_Node =>
+                  when Obj_Directory_Node | Exec_Directory_Node =>
                      Tmp := Start_Node;
                      Next (Explorer.Tree.Model, Tmp);
 

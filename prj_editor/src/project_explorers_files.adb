@@ -820,7 +820,7 @@ package body Project_Explorers_Files is
                when Category_Node | Entity_Node =>
                   null;
 
-               when Obj_Directory_Node =>
+               when Obj_Directory_Node | Exec_Directory_Node =>
                   null;
 
                when Modified_Project_Node =>

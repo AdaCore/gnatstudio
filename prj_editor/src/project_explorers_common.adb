@@ -88,6 +88,10 @@ package body Project_Explorers_Common is
         Gdk_New_From_Xpm_Data (mini_folder_object_xpm);
       Close_Pixbufs (Obj_Directory_Node) :=
         Gdk_New_From_Xpm_Data (mini_folder_object_xpm);
+      Open_Pixbufs (Exec_Directory_Node)  :=
+        Gdk_New_From_Xpm_Data (mini_folder_exec_xpm);
+      Close_Pixbufs (Exec_Directory_Node) :=
+        Gdk_New_From_Xpm_Data (mini_folder_exec_xpm);
       Open_Pixbufs (File_Node)  :=
         Gdk_New_From_Xpm_Data (mini_page_xpm);
       Close_Pixbufs (File_Node) :=
@@ -635,6 +639,7 @@ package body Project_Explorers_Common is
       if Node_Type = File_Node
         or else Node_Type = Directory_Node
         or else Node_Type = Obj_Directory_Node
+        or else Node_Type = Exec_Directory_Node
         or else Node_Type = Entity_Node
       then
          File := new String'(Get_Absolute_Name (Model, Iter));

@@ -65,6 +65,7 @@ package Project_Explorers_Common is
       Extends_Project_Node,
       Directory_Node,
       Obj_Directory_Node,
+      Exec_Directory_Node,
       File_Node,
       Category_Node,
       Entity_Node,
