@@ -237,8 +237,10 @@ package body GVD.Tooltips is
 
       Get_Pointer (Tooltip.Parent_Window, X, Y, Mask, Window);
 
-      if X <= Tooltip.X + Tooltip.Area.X + Gint16 (Tooltip.Area.Width)
-        and then Y <= Tooltip.Y + Tooltip.Area.Y + Gint16 (Tooltip.Area.Height)
+      if X <= Tooltip.X + Tooltip.Area.X +
+           GRectangle_Coord (Tooltip.Area.Width)
+        and then Y <= Tooltip.Y + Tooltip.Area.Y +
+           GRectangle_Coord (Tooltip.Area.Height)
         and then X >= Tooltip.X + Tooltip.Area.X
         and then Y >= Tooltip.Y + Tooltip.Area.Y
       then
