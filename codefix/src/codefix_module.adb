@@ -185,6 +185,8 @@ package body Codefix_Module is
       Window          : MDI_Window;
       Child           : MDI_Child;
    begin
+      Update_All (Codefix_Module_ID.Current_Text.all);
+
       Gtk_New
         (Graphic_Codefix,
          Kernel,
