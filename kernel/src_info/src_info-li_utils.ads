@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with SN;
+with SN.Xref_Pools;
 
 private package Src_Info.LI_Utils is
 
@@ -35,8 +36,9 @@ private package Src_Info.LI_Utils is
       Kind                  : E_Kind;
       Scope                 : E_Scope;
       End_Of_Scope_Location : SN.Point := SN.Invalid_Point;
-      Rename_Filename       : String := "";
       Rename_Location       : SN.Point := SN.Invalid_Point;
+      DB_Directory          : String;
+      Xrefs                 : SN.Xref_Pools.Xref_Pool;
       Declaration_Info      : out E_Declaration_Info_List);
    --  Insert a new entity declaration in File. File is created if needed, as
    --  well as the entry for Source_Filename (Body_Part).
@@ -48,7 +50,7 @@ private package Src_Info.LI_Utils is
    --  parent entity, when available (classes, subtypes, ...), and should be
    --  left to the default value if not available.
    --
-   --  ??? Rename_Filename and Rename_Location are currently ignored.
+   --  ??? Rename_Location is currently ignored.
    --
    --  This subprogram raises Parent_Not_Available if the LI_Structure for the
    --  parent entity could not be found.
@@ -78,8 +80,9 @@ private package Src_Info.LI_Utils is
       Kind                    : E_Kind;
       Scope                   : E_Scope;
       End_Of_Scope_Location   : SN.Point := SN.Invalid_Point;
-      Rename_Filename         : String := "";
       Rename_Location         : SN.Point := SN.Invalid_Point;
+      DB_Directory            : String;
+      Xrefs                   : SN.Xref_Pools.Xref_Pool;
       Declaration_Info        : out E_Declaration_Info_List);
    --  Inserts new dependency declaration with specified parameters
    --  to given LI structure tree.
@@ -89,10 +92,13 @@ private package Src_Info.LI_Utils is
    --  for the parent entity, if available.
 
    procedure Add_Parent
-     (Declaration_Info        : in out E_Declaration_Info_List;
-      List                    : LI_File_List;
-      Parent_Filename         : String;
-      Parent_Location         : SN.Point);
+     (Declaration_Info : in out E_Declaration_Info_List;
+      Handler          : LI_Handler;
+      DB_Directory     : String;
+      Xrefs            : SN.Xref_Pools.Xref_Pool;
+      List             : in out LI_File_List;
+      Parent_Filename  : String;
+      Parent_Location  : SN.Point);
    --  Add a new parent entity to the list of parents for
    --  Declaration_Info. This is mostly used for multiple-inheritance.
 
@@ -160,8 +166,5 @@ private package Src_Info.LI_Utils is
    --  Creates an empty LI_File structure.
    --  File is set to null if it couldn't be added to the global list of LI
    --  files.
-
-   Parent_Not_Available : exception;
-   --  Thrown if information on parent for current symbol is not available
 
 end Src_Info.LI_Utils;

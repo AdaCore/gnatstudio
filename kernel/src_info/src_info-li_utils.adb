@@ -3,6 +3,7 @@ with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 with Traces; use Traces;
 with SN; use SN;
+with SN.Xref_Pools; use SN.Xref_Pools;
 
 package body Src_Info.LI_Utils is
 
@@ -10,43 +11,53 @@ package body Src_Info.LI_Utils is
 
    procedure Insert_Declaration_Internal
      (D_Ptr                   : in out E_Declaration_Info_List;
-      File                    : in LI_File_Ptr;
-      Xref_Filename           : in String;
-      List                    : in LI_File_List;
-      Symbol_Name             : in String;
-      Source_Filename         : in String;
-      Location                : in Point;
-      Parent_Filename         : in String := "";
-      Parent_Location         : in Point := Invalid_Point;
-      Kind                    : in E_Kind;
-      Scope                   : in E_Scope;
-      End_Of_Scope_Location   : in Point := Invalid_Point;
-      Rename_Filename         : in String := "";
-      Rename_Location         : in Point := Invalid_Point);
+      File                    : LI_File_Ptr;
+      Xref_Filename           : String;
+      List                    : in out LI_File_List;
+      Symbol_Name             : String;
+      Location                : Point;
+      Parent_Filename         : String := "";
+      Parent_Location         : Point := Invalid_Point;
+      Kind                    : E_Kind;
+      Scope                   : E_Scope;
+      End_Of_Scope_Location   : Point := Invalid_Point;
+      Rename_Location         : Point := Invalid_Point;
+      DB_Directory            : String;
+      Xrefs                   : SN.Xref_Pools.Xref_Pool);
    --  Inserts declaration into specified E_Declaration_Info_List
 
 
    function Find_Declaration_Internal
-     (Declaration_Info_Ptr    : in E_Declaration_Info_List;
-      Symbol_Name             : in String := "";
-      Class_Name              : in String := "";
-      Kind                    : in E_Kind := No_Kind;
-      Location                : in Point := Invalid_Point)
+     (Declaration_Info_Ptr    : E_Declaration_Info_List;
+      Symbol_Name             : String := "";
+      Class_Name              : String := "";
+      Kind                    : E_Kind := No_Kind;
+      Location                : Point := Invalid_Point)
       return E_Declaration_Info_List;
    --  Finds declaration with given attributes in
    --  specified E_Declaration_Info_List.
    --  Return null if not found.
 
    function Belongs_To_Class
-     (Declaration_Info_Ptr           : in E_Declaration_Info_List;
-      Class_Name      : in String;
-      Position        : in Point) return Boolean;
+     (Declaration_Info_Ptr : in E_Declaration_Info_List;
+      Class_Name           : String;
+      Position             : Point) return Boolean;
    --  Checks if given position belongs to class body (found in the given
    --  list of declarations)
 
    procedure Convert_To_Parsed (File : in out LI_File_Ptr);
    --  Set File as parsed, ie indicate that the actual database has been parsed
    --  and this is no longer only a stub.
+
+   procedure Create_Stub_For_File
+     (LI            : out LI_File_Ptr;
+      Handler       : LI_Handler;
+      List          : in out LI_File_List;
+      Full_Filename : String;
+      DB_Directory  : String;
+      Xrefs         : SN.Xref_Pools.Xref_Pool);
+   --  Create a stub LI file for Full_Filename. This function doesn't test
+   --  whether there is already an entry in List for Full_Filename.
 
    --------------------------
    --  Insert_declaration  --
@@ -65,8 +76,9 @@ package body Src_Info.LI_Utils is
       Kind                    : E_Kind;
       Scope                   : E_Scope;
       End_Of_Scope_Location   : Point := Invalid_Point;
-      Rename_Filename         : String := "";
       Rename_Location         : Point := Invalid_Point;
+      DB_Directory            : String;
+      Xrefs                   : SN.Xref_Pools.Xref_Pool;
       Declaration_Info        : out E_Declaration_Info_List) is
    begin
       if File = No_LI_File then
@@ -113,9 +125,9 @@ package body Src_Info.LI_Utils is
       end if;
       Insert_Declaration_Internal
         (Declaration_Info, File, LI_Full_Filename, List, Symbol_Name,
-         Source_Filename,
          Location, Parent_Filename, Parent_Location, Kind, Scope,
-         End_Of_Scope_Location, Rename_Filename, Rename_Location);
+         End_Of_Scope_Location, Rename_Location,
+         DB_Directory, Xrefs);
    end Insert_Declaration;
 
    -----------------------
@@ -244,8 +256,9 @@ package body Src_Info.LI_Utils is
       Kind                    : E_Kind;
       Scope                   : E_Scope;
       End_Of_Scope_Location   : Point := Invalid_Point;
-      Rename_Filename         : String := "";
       Rename_Location         : Point := Invalid_Point;
+      DB_Directory            : String;
+      Xrefs                   : SN.Xref_Pools.Xref_Pool;
       Declaration_Info        : out E_Declaration_Info_List)
    is
       D_Ptr, Tmp_Ptr : E_Declaration_Info_List;
@@ -289,7 +302,8 @@ package body Src_Info.LI_Utils is
             Kind                  => Kind,
             Scope                 => Scope,
             End_Of_Scope_Location => End_Of_Scope_Location,
-            Rename_Filename       => Rename_Filename,
+            DB_Directory          => DB_Directory,
+            Xrefs                 => Xrefs,
             Declaration_Info      => Tmp_Ptr);
       else
          D_Ptr := Find_Declaration
@@ -311,7 +325,8 @@ package body Src_Info.LI_Utils is
                Kind               => Kind,
                Scope              => Scope,
                End_Of_Scope_Location => End_Of_Scope_Location,
-               Rename_Filename    => Rename_Filename,
+               DB_Directory       => DB_Directory,
+               Xrefs              => Xrefs,
                Declaration_Info   => Tmp_Ptr);
          end if;
       end if;
@@ -388,15 +403,15 @@ package body Src_Info.LI_Utils is
          Referred_LI_Filename,
          List,
          Symbol_Name,
-         Referred_Filename,
          Location,
          Parent_Filename,
          Parent_Location,
          Kind,
          Scope,
          End_Of_Scope_Location,
-         Rename_Filename,
-         Rename_Location);
+         Rename_Location,
+         DB_Directory,
+         Xrefs);
       Declaration_Info := D_Ptr;
    end Insert_Dependency_Declaration;
 
@@ -406,7 +421,10 @@ package body Src_Info.LI_Utils is
 
    procedure Add_Parent
      (Declaration_Info : in out E_Declaration_Info_List;
-      List             : LI_File_List;
+      Handler          : LI_Handler;
+      DB_Directory     : String;
+      Xrefs            : Xref_Pool;
+      List             : in out LI_File_List;
       Parent_Filename  : String;
       Parent_Location  : Point)
    is
@@ -437,13 +455,21 @@ package body Src_Info.LI_Utils is
       end if;
       Tmp_LI_File_Ptr := Get (List.Table, Parent_Filename);
       if Tmp_LI_File_Ptr = No_LI_File then
-         if Parent_Filename = Get_LI_Filename
-            (Declaration_Info.Value.Declaration.Location.File.LI)
+         Tmp_LI_File_Ptr :=
+           Declaration_Info.Value.Declaration.Location.File.LI;
+
+         if Parent_Filename /=
+           Tmp_LI_File_Ptr.LI.Body_Info.Source_Filename.all
          then
-            Tmp_LI_File_Ptr :=
-              Declaration_Info.Value.Declaration.Location.File.LI;
-         else
-            raise Parent_Not_Available;
+            --  Create a stub for the parent
+            Create_Stub_For_File
+              (LI            => Tmp_LI_File_Ptr,
+               Handler       => Handler,
+               List          => List,
+               Full_Filename => Parent_Filename,
+               DB_Directory  => DB_Directory,
+               Xrefs         => Xrefs);
+            --  raise Parent_Not_Available;
          end if;
       end if;
       FL_Ptr.all :=
@@ -597,6 +623,33 @@ package body Src_Info.LI_Utils is
    end Find_Dependency_Declaration;
    --  ??? Class_Name parameter should be used properly
 
+   --------------------------
+   -- Create_Stub_For_File --
+   --------------------------
+
+   procedure Create_Stub_For_File
+     (LI            : out LI_File_Ptr;
+      Handler       : LI_Handler;
+      List          : in out LI_File_List;
+      Full_Filename : String;
+      DB_Directory  : String;
+      Xrefs         : SN.Xref_Pools.Xref_Pool)
+   is
+      Xref_Name : String_Access;
+   begin
+      Xref_Name := Xref_Filename_For (Full_Filename, DB_Directory, Xrefs);
+      Create_LI_File
+        (File             => LI,
+         List             => List,
+         LI_Full_Filename => Xref_Name.all,
+         Handler          => Handler,
+         Parsed           => False);
+      Free (Xref_Name);
+      Create_File_Info
+        (FI_Ptr           => LI.LI.Body_Info,
+         Full_Filename    => Full_Filename);
+   end Create_Stub_For_File;
+
    -----------------------------------
    --  Insert_Declaration_Internal  --
    -----------------------------------
@@ -605,22 +658,18 @@ package body Src_Info.LI_Utils is
      (D_Ptr                   : in out E_Declaration_Info_List;
       File                    : LI_File_Ptr;
       Xref_Filename           : String;
-      List                    : LI_File_List;
+      List                    : in out LI_File_List;
       Symbol_Name             : String;
-      Source_Filename         : String;
       Location                : Point;
       Parent_Filename         : String := "";
       Parent_Location         : Point := Invalid_Point;
       Kind                    : E_Kind;
       Scope                   : E_Scope;
       End_Of_Scope_Location   : Point := Invalid_Point;
-      Rename_Filename         : String := "";
-      Rename_Location         : Point := Invalid_Point)
+      Rename_Location         : Point := Invalid_Point;
+      DB_Directory            : String;
+      Xrefs                   : SN.Xref_Pools.Xref_Pool)
    is
-      pragma Unreferenced (Rename_Filename);
-      pragma Unreferenced (Source_Filename);
-      --  ??? Parameter could be removed.
-
       Tmp_LI_File_Ptr : LI_File_Ptr;
    begin
       if D_Ptr = null then
@@ -650,10 +699,18 @@ package body Src_Info.LI_Utils is
          if Base_Name (Xref_Filename) = Parent_Filename then
             Tmp_LI_File_Ptr := File;
          else
-            Tmp_LI_File_Ptr := Get (List.Table, Parent_Filename);
-            if (Tmp_LI_File_Ptr = No_LI_File) then
-               --  ??? What should we do if LI_File for parent does not exist?
-               raise Parent_Not_Available;
+            Tmp_LI_File_Ptr := Locate_From_Source (List, Parent_Filename);
+            if Tmp_LI_File_Ptr = No_LI_File then
+               --  The parent is not available, create a stub for it.
+               Trace (Me, "No parent LI available for file "
+                      & Parent_Filename);
+               Create_Stub_For_File
+                 (LI            => Tmp_LI_File_Ptr,
+                  Handler       => File.LI.Handler,
+                  List          => List,
+                  Full_Filename => Parent_Filename,
+                  DB_Directory  => DB_Directory,
+                  Xrefs         => Xrefs);
             end if;
          end if;
          D_Ptr.Value.Declaration.Parent_Location := new File_Location_Node'
@@ -663,7 +720,7 @@ package body Src_Info.LI_Utils is
                       Line   => Parent_Location.Line,
                       Column => Parent_Location.Column),
             Next  => null);
-         --  ??? How does the procedure looks like to support multiply
+         --  ??? what does the procedure looks like to support multiple
          --  inheritance?
       end if;
 
