@@ -197,7 +197,7 @@ package GVD.Text_Boxes is
    --  The text range is From .. To (related to the underlying buffer), and
    --  is inserted at Widget_From in the text widget.
 
-   function Current_Line_Button (Box : access Gvd_Text_Box_Record)
+   function Current_Line_Button (Box : access GVD_Text_Box_Record)
       return Gtk.Pixmap.Gtk_Pixmap;
    --  return the arrow used to indicate the current line
 

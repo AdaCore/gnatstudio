@@ -804,8 +804,7 @@ package body GVD.Text_Boxes is
       Widget_From : Glib.Gint;
       Line        : Natural;
       Fore        : Gdk.Color.Gdk_Color := Gdk.Color.Null_Color;
-      Back        : Gdk.Color.Gdk_Color := Gdk.Color.Null_Color)
-   is
+      Back        : Gdk.Color.Gdk_Color := Gdk.Color.Null_Color) is
    begin
       --  If this range is currently highlighted, do nothing for efficiency
 
@@ -855,9 +854,8 @@ package body GVD.Text_Boxes is
    -- Current_Line_Button --
    -------------------------
 
-   function Current_Line_Button (Box : access Gvd_Text_Box_Record)
-      return Gtk.Pixmap.Gtk_Pixmap
-   is
+   function Current_Line_Button
+     (Box : access GVD_Text_Box_Record) return Gtk.Pixmap.Gtk_Pixmap is
    begin
       return Box.Current_Line_Button;
    end Current_Line_Button;

@@ -48,7 +48,6 @@ with Items.Simples;     use Items.Simples;
 with Items.Arrays;      use Items.Arrays;
 with Items.Records;     use Items.Records;
 with Items.Classes;     use Items.Classes;
-with Gtkada.Intl;       use Gtkada.Intl;
 
 with Unchecked_Conversion;
 
