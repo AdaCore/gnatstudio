@@ -155,7 +155,7 @@ package body Commands.Custom is
             then
                Context_Is_Valid := False;
                Insert (Kernel,
-                       -"Command not executed: it requires a file",
+                       -"Command not executed: file required",
                        Mode => Error);
                raise Invalid_Substitution;
             end if;
@@ -168,7 +168,7 @@ package body Commands.Custom is
             then
                Context_Is_Valid := False;
                Insert (Kernel,
-                       -"Command not executed: it requires a directory",
+                       -"Command not executed: directory required",
                        Mode => Error);
                raise Invalid_Substitution;
             end if;
@@ -177,7 +177,7 @@ package body Commands.Custom is
             if Project_From_Param (Param, Context) = No_Project then
                Context_Is_Valid := False;
                Insert (Kernel,
-                         -"Command not executed: it requires a project",
+                       -"Command not executed: project required",
                        Mode => Error);
                raise Invalid_Substitution;
             end if;
@@ -542,9 +542,9 @@ package body Commands.Custom is
             Substitution_Char => '%',
             Callback          => Substitution'Unrestricted_Access,
             Recursive         => False);
-         Args : String_List_Access;
-         Errors : aliased Boolean;
-         Callback : Output_Callback;
+         Args           : String_List_Access;
+         Errors         : aliased Boolean;
+         Callback       : Output_Callback;
 
       begin
          --  If substitution failed
@@ -556,13 +556,15 @@ package body Commands.Custom is
 
             if Command.Save_Output (Command.Cmd_Index) then
                Command.Outputs (Command.Cmd_Index) := new String'
-                 (Execute_Command (Script, Subst_Cmd_Line,
-                                   Display_In_Console => False,
-                                   Errors => Errors'Unchecked_Access));
+                 (Execute_Command
+                    (Script, Subst_Cmd_Line,
+                     Display_In_Console => False,
+                     Errors             => Errors'Unchecked_Access));
             else
                Execute_Command
-                 (Script, Subst_Cmd_Line, Display_In_Console => False,
-                  Errors => Errors);
+                 (Script, Subst_Cmd_Line,
+                  Display_In_Console => False,
+                  Errors             => Errors);
             end if;
 
             Success := not Errors;
