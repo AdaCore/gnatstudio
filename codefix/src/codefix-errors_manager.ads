@@ -45,6 +45,13 @@ package Codefix.Errors_Manager is
    --  Returns the next message to be analyzed, with the correct modifications.
    --  (change the cols to be conformant with tabs).
 
+   procedure Get_Preview
+     (This         : in out Errors_Interface'Class;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Preview      : out Error_Message);
+   --  Return the next message, but without remove it from the message list.
+   --  The same message can still be got by Get_Message.
+
    function No_More_Messages
      (This : Errors_Interface) return Boolean is abstract;
    --  Is true where all the messages are got fron Get_Message.
@@ -132,7 +139,9 @@ package Codefix.Errors_Manager is
 
 private
 
-   type Errors_Interface is abstract tagged null record;
+   type Errors_Interface is abstract tagged record
+      Preview : Error_Message := Invalid_Error_Message;
+   end record;
 
    type Error_Id_Record is record
       Message   : Error_Message := Invalid_Error_Message;
