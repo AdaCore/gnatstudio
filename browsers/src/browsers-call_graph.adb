@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                          G L I D E  I I                           --
 --                                                                   --
---                        Copyright (C) 2001                         --
+--                        Copyright (C) 2001-2002                    --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GLIDE is free software; you can redistribute it and/or modify  it --
@@ -100,11 +100,10 @@ package body Browsers.Call_Graph is
    procedure Gtk_New
      (Item    : out Entity_Item;
       Browser : access Browsers.Canvas.Glide_Browser_Record'Class;
-      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
       Entity  : Src_Info.Queries.Entity_Information) is
    begin
       Item := new Entity_Item_Record;
-      Initialize (Item, Browser, Kernel, Entity);
+      Initialize (Item, Browser, Entity);
    end Gtk_New;
 
    ----------------
@@ -114,7 +113,6 @@ package body Browsers.Call_Graph is
    procedure Initialize
      (Item    : access Entity_Item_Record'Class;
       Browser : access Browsers.Canvas.Glide_Browser_Record'Class;
-      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
       Entity  : Src_Info.Queries.Entity_Information)
    is
       Font : Gdk_Font;
@@ -235,6 +233,7 @@ package body Browsers.Call_Graph is
         (Canvas : access Interactive_Canvas_Record'Class;
          Item   : access Canvas_Item_Record'Class) return Boolean
       is
+         pragma Unreferenced (Canvas);
          Info : Entity_Information;
       begin
          if Item.all in Entity_Item_Record'Class then
@@ -313,7 +312,7 @@ package body Browsers.Call_Graph is
       Entity := Get_Entity (Tree, Node);
       Item := Entity_Item (Find_Entity (Browser, Entity));
       if Item = null then
-         Gtk_New (Item, Browser,  Kernel, Entity => Entity);
+         Gtk_New (Item, Browser,  Entity => Entity);
          Put (Get_Canvas (Browser), Item);
       else
          Destroy (Entity);
@@ -325,7 +324,7 @@ package body Browsers.Call_Graph is
             Entity := Get_Entity (Tree, Get (Iter));
             Child := Entity_Item (Find_Entity (Browser, Entity));
             if Child = null then
-               Gtk_New (Child, Browser,  Kernel, Entity => Entity);
+               Gtk_New (Child, Browser, Entity => Entity);
                Put (Get_Canvas (Browser), Child);
             else
                Destroy (Entity);
@@ -361,6 +360,7 @@ package body Browsers.Call_Graph is
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access)
    is
+      pragma Unreferenced (Widget);
       Entity   : Entity_Selection_Context_Access :=
         Entity_Selection_Context_Access (Context);
       Lib_Info : LI_File_Ptr;
@@ -420,6 +420,7 @@ package body Browsers.Call_Graph is
       Context : access Selection_Context'Class;
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class)
    is
+      pragma Unreferenced (Object);
       Item           : Gtk_Menu_Item;
       Entity_Context : Entity_Selection_Context_Access;
    begin

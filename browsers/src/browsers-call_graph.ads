@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                          G L I D E  I I                           --
 --                                                                   --
---                        Copyright (C) 2001                         --
+--                        Copyright (C) 2001-2002                    --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GLIDE is free software; you can redistribute it and/or modify  it --
@@ -19,7 +19,6 @@
 -----------------------------------------------------------------------
 
 with Gdk.Event;
-with Glide_Kernel;
 with Browsers.Canvas;
 with Src_Info.Queries;
 
@@ -43,7 +42,6 @@ package Browsers.Call_Graph is
    procedure Gtk_New
      (Item    : out Entity_Item;
       Browser : access Browsers.Canvas.Glide_Browser_Record'Class;
-      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
       Entity  : Src_Info.Queries.Entity_Information);
    --  Create a new entity item.
    --  You shouldn't free Entity yourself, this will be taken care of by the
@@ -52,7 +50,6 @@ package Browsers.Call_Graph is
    procedure Initialize
      (Item    : access Entity_Item_Record'Class;
       Browser : access Browsers.Canvas.Glide_Browser_Record'Class;
-      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
       Entity  : Src_Info.Queries.Entity_Information);
    --  Internal initialization function
 
