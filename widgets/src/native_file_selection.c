@@ -1,3 +1,8 @@
+/*
+ * Native file selection dialogs
+ *
+ * Copyright 2002 ACT Europe */
+
 #ifdef _WIN32
 
 #include <windows.h>
@@ -33,9 +38,9 @@ FileSelectionHook
         GetWindowRect ( GetParent (hdlg), &rect);
         lpPos->x -= (rect.right - rect.left) / 2;
         lpPos->y -= (rect.bottom - rect.top) / 2;
-        SetWindowPos (GetParent (hdlg), HWND_TOP, 
-                      lpPos->x, 
-                      lpPos->y, 
+        SetWindowPos (GetParent (hdlg), HWND_TOP,
+                      lpPos->x,
+                      lpPos->y,
                       0, 0, SWP_NOSIZE);
         return 0;
 
@@ -45,7 +50,6 @@ FileSelectionHook
   return 0;
 }
 
-
 static char*
 NativeWin32FileSelection
   (const char*  title,
@@ -53,7 +57,8 @@ NativeWin32FileSelection
    const char*  filepattern,
    const char*  patternname,
    const char*  defaultname,
-   unsigned int style)
+   int          style,
+   int          kind)
 {
   static OPENFILENAME ofn;
   static char         l_Filter [512];
@@ -131,7 +136,12 @@ NativeWin32FileSelection
   ofn.nMaxFileTitle     = 0;
   ofn.lpstrInitialDir   = basedir;
   ofn.lpstrTitle        = title;
-  ofn.Flags             = OFN_CREATEPROMPT | OFN_EXPLORER | style_flag;
+
+  if (kind == 1)
+    ofn.Flags           = OFN_EXPLORER | style_flag;
+  else
+    ofn.Flags           = OFN_CREATEPROMPT | OFN_EXPLORER | style_flag;
+
   ofn.nFileOffset       = 0;
   ofn.nFileExtension    = 0;
   ofn.lpstrDefExt       = "ads";
@@ -139,7 +149,10 @@ NativeWin32FileSelection
   ofn.lpfnHook          = FileSelectionHook;
   ofn.lpTemplateName    = NULL;
 
-  GetOpenFileName (&ofn);
+  if (kind == 1)
+    GetSaveFileName (&ofn);
+  else
+    GetOpenFileName (&ofn);
 
   /* copy the result into a well sized string */
 
@@ -149,10 +162,15 @@ NativeWin32FileSelection
 }
 
 /*
- *style :
+ * style:
  *    0 : nothing
  *    1 : center
  *    2 : under mouse
+ *
+ * kind:
+ *    0 : open
+ *    1 : save
+ *    2 : unspecified
  */
 
 char*
@@ -162,10 +180,11 @@ NativeFileSelection
    const char*  filepattern,
    const char*  patternname,
    const char*  defaultname,
-   unsigned int style)
+   int          style,
+   int          kind)
 {
   return NativeWin32FileSelection
-    (title, basedir, filepattern, patternname, defaultname, style);
+    (title, basedir, filepattern, patternname, defaultname, style, kind);
 }
 
 int
@@ -183,7 +202,8 @@ NativeFileSelection
    const char*  filepattern,
    const char*  patternname,
    const char*  defaultname,
-   unsigned int style)
+   int          style,
+   int          kind)
 {
   return (char *)0;
 }
