@@ -35,12 +35,11 @@ with Gtkada.Toolbar; use Gtkada.Toolbar;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 with Odd.Types;
 with Odd.Histories;
-with Debugger;
 
 package Main_Debug_Window_Pkg is
 
    type History_Data is record
-      Mode         : Debugger.Command_Type;
+      Mode         : Odd.Types.Command_Type;
       Debugger_Num : Natural;
       Command      : String_Access;
    end record;

@@ -755,12 +755,8 @@ begin
    Gtk_New (Main_Debug_Window.Statusbar1);
    Pack_Start (Main_Debug_Window.Vbox1, Main_Debug_Window.Statusbar1, False, False, 0);
 
---     Attach (The_Accel_Group, Main_Debug_Window.File1);
---     Attach (The_Accel_Group, Main_Debug_Window.Attach_To_Process1);
---     Lock_Accelerators (Main_Debug_Window.Menubar1);
---     Lock_Accelerators (Main_Debug_Window.File1);
-   Lock_Accelerators (Main_Debug_Window);
    Lock (The_Accel_Group);
+   Lock (Gtk.Accel_Group.Get_Default);
 end Initialize;
 
    -------------------
