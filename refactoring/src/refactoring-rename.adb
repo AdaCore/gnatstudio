@@ -29,6 +29,7 @@ with Src_Info.Queries;      use Src_Info.Queries;
 with Traces;                use Traces;
 with VFS;                   use VFS;
 with Refactoring.Performers; use Refactoring.Performers;
+with Histories;             use Histories;
 
 with Glib;                  use Glib;
 with Glib.Object;           use Glib.Object;
@@ -43,6 +44,8 @@ with Gtk.Widget;            use Gtk.Widget;
 package body Refactoring.Rename is
 
    Me : constant Debug_Handle := Create ("Refactor");
+   Auto_Save_Hist         : constant History_Key := "refactor_auto_save";
+   Rename_Primitives_Hist : constant History_Key := "refactor_primitives";
 
    type Renaming_Performer_Record (New_Name_Length : Natural)
      is new Refactor_Performer_Record with record
@@ -114,12 +117,15 @@ package body Refactoring.Rename is
       Pack_Start (Box, Dialog.New_Name);
 
       Gtk_New (Dialog.Auto_Save, -"Automatically save modified files");
-      Set_Active (Dialog.Auto_Save, False);
+      Associate (Get_History (Kernel).all, Auto_Save_Hist, Dialog.Auto_Save);
       Pack_Start (Get_Vbox (Dialog), Dialog.Auto_Save, Expand => False);
 
       Gtk_New (Dialog.Rename_Primitives,
                -"Rename overriding and overridden entities (not implemented)");
       Set_Sensitive (Dialog.Rename_Primitives, False);
+      Associate (Get_History (Kernel).all,
+                 Rename_Primitives_Hist,
+                 Dialog.Rename_Primitives);
       Pack_Start (Get_Vbox (Dialog), Dialog.Rename_Primitives);
 
       Grab_Default (Add_Button (Dialog, Stock_Ok, Gtk_Response_OK));
