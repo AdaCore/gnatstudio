@@ -1053,7 +1053,8 @@ package body Browsers.Entities is
             --  Hide discriminants (already displayed) and subprograms
             --  (would happen in C++, but these are primitive operations in
             --  this case)
-            if In_Range (Get_Declaration_Of (Field), Item.Entity)
+            if not Get_Kind (Field).Is_Type   --  only variables
+              and then In_Range (Get_Declaration_Of (Field), Item.Entity)
               and then not Is_Discriminant (Field, Item.Entity)
               and then not Is_Container (Get_Kind (Field).Kind)
             then
