@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                          G L I D E  I I                           --
+--                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2002                         --
+--                      Copyright (C) 2001-2002                      --
 --                            ACT-Europe                             --
 --                                                                   --
--- GLIDE is free software; you can redistribute it and/or modify  it --
+-- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -35,5 +35,17 @@ package String_List_Utils is
    procedure Sort is new List_Utils.Sort (String_List);
    --  Sort L alphabetically.
 
-end String_List_Utils;
+   procedure Remove_From_List
+     (L               : in out String_List.List;
+      S               : String;
+      All_Occurrences : Boolean := True);
+   --  Remove S from L. If All_Occurrences is True, remove all occurrences,
+   --  otherwise remove only the first occurrence.
 
+   function Is_In_List
+     (L : String_List.List;
+      S : String)
+     return Boolean;
+   --  Return True if S is in L.
+
+end String_List_Utils;
