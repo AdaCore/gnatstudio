@@ -1,7 +1,7 @@
 /*********************************************************************
  *                               G P S                               *
  *                                                                   *
- *                      Copyright (C) 2002-2003                      *
+ *                      Copyright (C) 2002-2004                      *
  *                            ACT-Europe                             *
  *                                                                   *
  * GPS is free  software;  you can redistribute it and/or modify  it *
@@ -31,3 +31,36 @@ update_path (char *path, char *key)
 {
   return path;
 }
+
+/* Provide dummy symbols needed by gcc on some platforms */
+
+#ifdef hpux
+
+/* These symbols are expected by libgcc under HP-UX when GCC is
+   configure with --enable-threads */
+
+int
+pthread_once ()
+{
+  return -1;
+}
+
+int
+pthread_mutex_lock ()
+{
+  return 0;
+}
+
+int
+pthread_mutex_unlock ()
+{
+  return 0;
+}
+
+int
+pthread_create ()
+{
+  return 0;
+}
+
+#endif
