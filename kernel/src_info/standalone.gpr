@@ -5,8 +5,12 @@ project Standalone is
 
    package Compiler is
       for Switches ("sdefault.adb") use ("-g");
-      for Default_Switches ("ada") use ("-gnatwue", "-gnatg", "-g");
+      for Default_Switches ("ada") use ("-gnatwue", "-gnata", "-gnatg", "-g");
    end Compiler;
+
+   package Binder is
+      for Default_Switches ("Ada") use ("-E");
+   end Binder;
 
    package Linker is
       for Default_Switches ("Ada") use ("-lgccprefix");
