@@ -46,6 +46,12 @@ package body Src_Editor_Buffer is
 
    use type System.Address;
 
+   Default_Keyword_Color : constant String := "red";
+   Default_Comment_Color : constant String := "blue";
+   Default_String_Color  : constant String := "brown";
+   --  ??? As soon as we have defined a uniform GLIDE handling of
+   --  ??? defaults/preferences, these constants should move there.
+
    Class_Record : GObject_Class := Uninitialized_Class;
    --  A pointer to the 'class record'.
 
@@ -139,7 +145,6 @@ package body Src_Editor_Buffer is
    --  the re-highlighted area is automatically extended to the right.
    --  When the re-highlighted area is extended to the right, the extension
    --  is computed in a semi-intelligent fashion.
-   --  ??? Should this procedure be moved to Src_Highlighting? Probably.
 
    procedure Kill_Highlighting
      (Buffer : access Source_Buffer_Record'Class;
@@ -560,17 +565,16 @@ package body Src_Editor_Buffer is
    begin
       Gtk.Text_Buffer.Initialize (Buffer);
       Glib.Object.Initialize_Class_Record
-        (Buffer, Signals, Class_Record, "GLIDE_SourceBuffer",
+        (Buffer, Signals, Class_Record, "GlideSourceBuffer",
          Signal_Parameters);
-      --  ??? We might want to discuss a class name convention for GLIDE
 
       Buffer.Lang := Lang;
 
       Buffer.Highlight_Tags :=
         Create_Tags
-          (Keyword_Color => "red",
-           Comment_Color => "blue",
-           String_Color => "brown");
+          (Keyword_Color => Default_Keyword_Color,
+           Comment_Color => Default_Comment_Color,
+           String_Color => Default_String_Color);
       --  ??? Use preferences for the colors...
 
       --  Save the newly created highlighting tags into the source buffer
