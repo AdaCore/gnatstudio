@@ -273,6 +273,7 @@ package body Src_Editor_View is
          Remove_Line_Information_Column (View, View.Line_Info'Last);
       end loop;
 
+      Idle_Remove (View.Connect_Expose_Id);
       Free (View.Real_Lines);
    end Delete;
 
@@ -624,8 +625,6 @@ package body Src_Editor_View is
       Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
       Insert_Iter : Gtk_Text_Iter;
-      Id          : Idle_Handler_Id;
-      pragma Unreferenced (Id);
    begin
       --  Initialize the Source_View. Some of the fields can not be initialized
       --  until the widget is realize or mapped. Their initialization is thus
@@ -705,7 +704,7 @@ package body Src_Editor_View is
          Slot_Object => View,
          User_Data   => Kernel_Handle (Kernel));
 
-      Id := Source_View_Idle.Add
+      View.Connect_Expose_Id := Source_View_Idle.Add
         (Connect_Expose'Access,
          Source_View (View));
    end Initialize;
