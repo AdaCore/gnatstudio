@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                          G L I D E  I I                           --
+--                               G P S                               --
 --                                                                   --
 --                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
--- GLIDE is free software; you can redistribute it and/or modify  it --
+-- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -173,7 +173,7 @@ package body Aunit_Module is
       Register_Menu (Kernel, Edit & Unit_Testing,
                      -"New Test Case...", "", On_New_Test_Case'Access);
       Register_Menu (Kernel, Edit & Unit_Testing,
-                     -"Add Routine...", "", null);
+                     -"Add Routine...", "", null, Sensitive => False);
       Register_Menu (Kernel, Edit & Unit_Testing,
                      -"New Test Suite...", "", On_New_Test_Suite'Access);
       Register_Menu (Kernel, Edit & Unit_Testing,
