@@ -961,10 +961,10 @@ private
      (Iterator : LI_Handler_Iterator'Class) return String;
    --  Return the full path name to the next source file that needs to be
    --  analyzed by the iterator.
+   --  The empty string "" is returned if there are no more source files.
 
    procedure Next_Source_File (Iterator : in out LI_Handler_Iterator'Class);
    --  Move to the next source file.
-   --  The empty string "" is returned if there are no more source files.
 
    -----------------------------
    -- LI_File_HTable services --
