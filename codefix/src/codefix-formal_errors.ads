@@ -26,6 +26,9 @@ with Codefix.Text_Manager.Ada_Extracts; use Codefix.Text_Manager.Ada_Extracts;
 
 package Codefix.Formal_Errors is
 
+   package Cursor_Lists is new Generic_List (File_Cursor);
+   use Cursor_Lists;
+
    ----------------------------------------------------------------------------
    --  type Error_Message
    ----------------------------------------------------------------------------
@@ -140,12 +143,13 @@ package Codefix.Formal_Errors is
    --  declaration if needed.
 
    function Resolve_Ambiguity
-     (Current_Text    : Text_Navigator_Abstr'Class;
-      Error_Cursor    : File_Cursor'Class;
-      Solution_Cursor : File_Cursor'Class;
-      Name            : String) return Extract;
+     (Current_Text     : Text_Navigator_Abstr'Class;
+      Error_Cursor     : File_Cursor'Class;
+      Solution_Cursors : Cursor_Lists.List;
+      Name             : String) return Extract_List.List;
    --  Add to the object Name the prefix of the package declared at the
-   --  position Solution_Cursor.
+   --  position Solution_Cursor. If the ambiguity can't be solved by this
+   --  function, then Extract_List.List is empty.
 
    function Remove_Conversion
      (Current_Text : Text_Navigator_Abstr'Class;
