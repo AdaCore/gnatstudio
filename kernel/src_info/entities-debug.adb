@@ -1,13 +1,35 @@
+-----------------------------------------------------------------------
+--                               G P S                               --
+--                                                                   --
+--                        Copyright (C) 2003-2004                    --
+--                            ACT-Europe                             --
+--                                                                   --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
+-- under the terms of the GNU General Public License as published by --
+-- the Free Software Foundation; either version 2 of the License, or --
+-- (at your option) any later version.                               --
+--                                                                   --
+-- This program is  distributed in the hope that it will be  useful, --
+-- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
+-- General Public License for more details. You should have received --
+-- a copy of the GNU General Public License along with this program; --
+-- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
+-- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
+-----------------------------------------------------------------------
+
 with Ada.Calendar; use Ada.Calendar;
 with GNAT.Calendar; use GNAT.Calendar;
 with GNAT.IO;      use GNAT.IO;
 with String_Utils; use String_Utils;
 with VFS;          use VFS;
 with GNAT.Strings; use GNAT.Strings;
+with GNAT.Bubble_Sort; use GNAT.Bubble_Sort;
 
 package body Entities.Debug is
 
    Dump_Full_File_Names : constant Boolean := False;
+   Show_Timestamps      : Boolean := True;
 
    use Entities_Tries;
    use Files_HTable;
@@ -17,8 +39,14 @@ package body Entities.Debug is
    use Entity_Information_Arrays;
    use Dependency_Arrays;
 
+   type Source_File_Array is array (Natural range <>) of Source_File;
+
+   function Get_Sorted_List_Of_Files
+     (Files : access Files_HTable.HTable) return Source_File_Array;
+   --  Sort the Files and return a sorted array
+
+   procedure Dump (Sorted_Files : Source_File_Array);
    procedure Dump (LIs       : in out LI_HTable.HTable);
-   procedure Dump (Files     : in out Files_HTable.HTable);
    procedure Dump
      (Entities : Entities_Tries.Trie_Tree; Full : Boolean; Name : String);
    procedure Dump (LI        : LI_File);
@@ -35,7 +63,7 @@ package body Entities.Debug is
    procedure Dump (Kind : E_Kind);
    procedure Dump (Ref  : Entity_Reference);
    procedure Dump (File : Virtual_File);
-   procedure Dump_Entities_From_Files (Files : in out Files_HTable.HTable);
+   procedure Dump_Entities_From_Files (Files : Source_File_Array);
    --  Dump various parts of the system
 
    procedure Low_Level_Dump is new Entities_Tries.Dump (GNAT.IO.Put, Dump);
@@ -62,6 +90,15 @@ package body Entities.Debug is
       Parent_Package                           => 'k',
       End_Of_Spec                              => 'e',
       End_Of_Body                              => 't');
+
+   ------------------------
+   -- Set_Show_Timestamp --
+   ------------------------
+
+   procedure Set_Show_Timestamp (Show : Boolean := True) is
+   begin
+      Show_Timestamps := Show;
+   end Set_Show_Timestamp;
 
    ----------
    -- Dump --
@@ -197,6 +234,8 @@ package body Entities.Debug is
    begin
       if Timestamp = No_Time then
          Put ("@<no_time>");
+      elsif not Show_Timestamps then
+         Put ("@<hidden time>");
       else
          Split (Timestamp, Year, Month, Day, Hour, Minutes, Seconds, Sub);
          Put ("@" & Image (Integer (Year)) & ':'
@@ -338,21 +377,65 @@ package body Entities.Debug is
       end if;
    end Dump;
 
+   ------------------------------
+   -- Get_Sorted_List_Of_Files --
+   ------------------------------
+
+   function Get_Sorted_List_Of_Files
+     (Files : access Files_HTable.HTable) return Source_File_Array
+   is
+      Iter  : Files_HTable.Iterator;
+      Count : Natural := 0;
+      File  : Source_File;
+   begin
+      Get_First (Files.all, Iter);
+      loop
+         File := Get_Element (Iter);
+         exit when File = null;
+         Count := Count + 1;
+         Get_Next (Files.all, Iter);
+      end loop;
+
+      declare
+         Sorted : Source_File_Array (1 .. Count);
+
+         procedure Xchg (Op1, Op2 : Natural);
+         function Lt (Op1, Op2 : Natural) return Boolean;
+
+         procedure Xchg (Op1, Op2 : Natural) is
+            T : Source_File := Sorted (Op1);
+         begin
+            Sorted (Op1) := Sorted (Op2);
+            Sorted (Op2) := T;
+         end Xchg;
+
+         function Lt (Op1, Op2 : Natural) return Boolean is
+         begin
+            return Get_Filename (Sorted (Op1)) < Get_Filename (Sorted (Op2));
+         end Lt;
+
+      begin
+         Get_First (Files.all, Iter);
+         for F in Sorted'Range loop
+            Sorted (F) := Get_Element (Iter);
+            Get_Next (Files.all, Iter);
+         end loop;
+
+         Sort (Sorted'Last, Xchg'Unrestricted_Access, Lt'Unrestricted_Access);
+
+         return Sorted;
+      end;
+   end Get_Sorted_List_Of_Files;
+
    ----------
    -- Dump --
    ----------
 
-   procedure Dump (Files : in out Files_HTable.HTable) is
-      Iter : Files_HTable.Iterator;
-      File : Source_File;
+   procedure Dump (Sorted_Files : Source_File_Array) is
    begin
       Put_Line ("====== Source files =====");
-      Get_First (Files, Iter);
-      loop
-         File := Get_Element (Iter);
-         exit when File = null;
-         Dump (File);
-         Get_Next (Files, Iter);
+      for F in Sorted_Files'Range loop
+         Dump (Sorted_Files (F));
       end loop;
    end Dump;
 
@@ -390,20 +473,12 @@ package body Entities.Debug is
    -- Dump_Entities_From_Files --
    ------------------------------
 
-   procedure Dump_Entities_From_Files (Files : in out Files_HTable.HTable) is
-      Iter  : Files_HTable.Iterator;
-      File  : Source_File;
+   procedure Dump_Entities_From_Files (Files : Source_File_Array) is
    begin
       Put_Line ("====== Entities from files =====");
-      Get_First (Files, Iter);
-      loop
-         File := Get_Element (Iter);
-         exit when File = null;
-
-         Dump (File.Entities, Full => True, Name => "");
-         Get_Next (Files, Iter);
+      for F in Files'Range loop
+         Dump (Files (F).Entities, Full => True, Name => "");
       end loop;
-
    end Dump_Entities_From_Files;
 
    ----------
@@ -413,16 +488,21 @@ package body Entities.Debug is
    procedure Dump (Db : Entities_Database) is
    begin
       if Db /= null then
-         Dump (Db.LIs);
-         Dump (Db.Files);
+         declare
+            Files : constant Source_File_Array := Get_Sorted_List_Of_Files
+              (Db.Files'Unrestricted_Access);
+         begin
+            Dump (Db.LIs);
+            Dump (Files);
 
-         if Db.Entities = Entities_Tries.Empty_Trie_Tree then
-            Dump_Entities_From_Files (Db.Files);
-         else
-            Dump (Db.Entities, Full => True, Name => "");
-         end if;
+            if Db.Entities = Entities_Tries.Empty_Trie_Tree then
+               Dump_Entities_From_Files (Files);
+            else
+               Dump (Db.Entities, Full => True, Name => "");
+            end if;
 
-         --  Low_Level_Dump (Db.Entities);
+            --  Low_Level_Dump (Db.Entities);
+         end;
       end if;
    end Dump;
 end Entities.Debug;
