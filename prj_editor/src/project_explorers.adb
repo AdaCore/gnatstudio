@@ -1121,9 +1121,9 @@ package body Project_Explorers is
       Node     : Gtk_Tree_Iter;
       Project  : Project_Type)
    is
-      Obj : constant String := Object_Path (Project, False);
-      Exec : constant String := Get_Attribute_Value
-        (Project, Exec_Dir_Attribute);
+      Obj : constant String :=
+        Name_As_Directory (Object_Path (Project, False));
+      Exec : constant String := Executables_Directory (Project);
       N   : Gtk_Tree_Iter;
       pragma Unreferenced (N);
    begin
@@ -1137,8 +1137,7 @@ package body Project_Explorers is
       end if;
 
       if Exec /= ""
-        and then Normalize_Pathname
-          (Exec, Project_Directory (Project), Resolve_Links => False) /= Obj
+        and then Exec /= Obj
       then
          N := Add_Directory_Node
            (Explorer         => Explorer,
