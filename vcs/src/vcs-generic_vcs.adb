@@ -656,8 +656,16 @@ package body VCS.Generic_VCS is
          Node   : Node_Ptr;
          Field  : String_Ptr;
 
+         function Parse_Status_Parser
+           (N : Node_Ptr) return Status_Parser_Record;
+         --  ???
+
          function To_Natural (X : String) return Natural;
          --  Safe function to convert a string to a Natural.
+
+         ----------------
+         -- To_Natural --
+         ----------------
 
          function To_Natural (X : String) return Natural is
          begin
@@ -668,8 +676,9 @@ package body VCS.Generic_VCS is
                return 0;
          end To_Natural;
 
-         function Parse_Status_Parser
-           (N : Node_Ptr) return Status_Parser_Record;
+         -------------------------
+         -- Parse_Status_Parser --
+         -------------------------
 
          function Parse_Status_Parser
            (N : Node_Ptr) return Status_Parser_Record
