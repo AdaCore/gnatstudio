@@ -31,7 +31,7 @@ use Codefix.Formal_Errors.Extract_List;
 
 package Codefix.Errors_Parser is
 
-   type Error_Subcategorie is
+   type Errors_Subcategories is
      (Misspelling,
       Wrong_Keyword,
       Unallowed_Tabulation,
@@ -66,10 +66,11 @@ package Codefix.Errors_Parser is
    type Error_State is (Enabled, Disabled);
    --  The two states possible for an error.
 
-   procedure Set_Error_State (Error : Error_Subcategorie; State : Error_State);
+   procedure Set_Error_State
+     (Error : Errors_Subcategories; State : Error_State);
    --  Modify the current error state.
 
-   function Get_Error_State (Error : Error_Subcategorie) return Error_State;
+   function Get_Error_State (Error : Errors_Subcategories) return Error_State;
    --  Return the current error state.
 
    procedure Get_Solutions
@@ -83,7 +84,7 @@ package Codefix.Errors_Parser is
    procedure Free_Parsers;
    --  Free the memory used by the parsers
 
-   Uncorrectible_Message : exception;
+   Uncorrectable_Message : exception;
 
    type Ptr_Matcher is access Pattern_Matcher;
    type Arr_Matcher is array (Integer range <>) of Ptr_Matcher;
@@ -94,7 +95,8 @@ package Codefix.Errors_Parser is
    procedure Free is new
       Ada.Unchecked_Deallocation (Natural, Ptr_Natural);
 
-   type Error_Parser (Subcategorie : Error_Subcategorie; Nb_Parsers : Natural)
+   type Error_Parser
+     (Subcategorie : Errors_Subcategories; Nb_Parsers : Natural)
    is abstract tagged record
        Matcher    : Arr_Matcher (1 .. Nb_Parsers);
        Current_It : Ptr_Natural := new Natural;
@@ -143,7 +145,7 @@ package Codefix.Errors_Parser is
    --  Add a parser in the general parse list.
 
    General_Parse_List : Parser_List.List := Parser_List.Null_List;
-   General_Errors_Array : array (Error_Subcategorie'Range) of Error_State :=
+   General_Errors_Array : array (Errors_Subcategories'Range) of Error_State :=
      (others => Enabled);
 
    procedure Initialize_Parsers;
