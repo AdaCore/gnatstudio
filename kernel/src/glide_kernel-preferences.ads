@@ -102,7 +102,6 @@ package Glide_Kernel.Preferences is
    Animated_Image        : Param_Spec_String;
    Splash_Screen         : Param_Spec_Boolean;
    Start_Maximized       : Param_Spec_Boolean;
-   Tmp_Dir               : Param_Spec_String;
    Toolbar_Show_Text     : Param_Spec_Boolean;
    Save_Desktop_On_Exit  : Param_Spec_Boolean;
    Display_Welcome       : Param_Spec_Boolean;
