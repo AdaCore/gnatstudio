@@ -1873,15 +1873,8 @@ package body Project_Viewers is
                   --  absolute path, therefore we need to trim it first before
                   --  comparing the old and new values.
                   if Relative then
-                     if Str'Length > Prj_Dir'Length
-                       and then Str
-                       (Str'First .. Str'First + Prj_Dir'Length - 1) = Prj_Dir
-                     then
-                        Initial_Dirs (J) := new String'
-                          (Str (Str'First + Prj_Dir'Length .. Str'Last));
-                     else
-                        Initial_Dirs (J) := new String'(Str);
-                     end if;
+                     Initial_Dirs (J) := new String'
+                       (Relative_Path_Name (Str, Prj_Dir));
                   else
                      Initial_Dirs (J) := new String'(Str);
                   end if;
