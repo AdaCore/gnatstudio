@@ -1,0 +1,32 @@
+# Project dependent section
+
+PROJECT_FILE = examples.gpr
+LANGUAGES = c ada c++
+CC = gcc
+CXX = c++
+GNATMAKE = gnatmake
+
+OBJ_EXT = .o
+
+CFLAGS = -g -O2
+CXXFLAGS = -g -O2 -fexceptions
+LDFLAGS =
+OBJ_DIR = obj
+SRC_DIRS = gnat_examples
+
+C_EXT = .c
+CXX_EXT = .C
+
+EXEC = cpp_main
+
+CXX_SRCS = cpp_main.C ex7.C
+
+ADA_SOURCES = simple_cpp_interface.adb
+
+MAIN = c++
+
+# File specific flags
+
+# Generic section
+
+include Makefile.glide
