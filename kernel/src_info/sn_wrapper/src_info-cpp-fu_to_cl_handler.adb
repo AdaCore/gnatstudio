@@ -11,23 +11,20 @@ is
    Class_Def  : CL_Table;
    Success    : Boolean;
    Decl_Info  : E_Declaration_Info_List;
+   Ref_Id     : constant String := Ref.Buffer
+     (Ref.Referred_Symbol_Name.First .. Ref.Referred_Symbol_Name.Last);
 begin
 
-   Info ("Fu_To_Cl_Handler: """
-         & Ref.Buffer (Ref.Referred_Symbol_Name.First ..
-               Ref.Referred_Symbol_Name.Last)
-         & """");
+   Info ("Fu_To_Cl_Handler: " & Ref_Id);
 
    Find_Class
-     (Type_Name      => Ref.Buffer
-         (Ref.Referred_Symbol_Name.First .. Ref.Referred_Symbol_Name.Last),
+     (Type_Name      => Ref_Id,
       Desc           => Class_Desc,
       Class_Def      => Class_Def,
       Success        => Success);
 
    if not Success then
-      Warn ("Class " & Ref.Buffer (Ref.Referred_Symbol_Name.First ..
-               Ref.Referred_Symbol_Name.Last) & " is not found in SN DB");
+      Warn ("Failed to find " & Ref_Id & " class");
       return;
    end if;
 

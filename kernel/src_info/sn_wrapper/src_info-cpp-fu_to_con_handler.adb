@@ -13,10 +13,9 @@ procedure Fu_To_Con_Handler (Ref : TO_Table) is
    Scope        : E_Scope := Global_Scope;
    Attributes   : SN_Attributes;
 begin
-   Info ("Fu_To_Con_Handler: """
+   Info ("Fu_To_Con_Handler: "
          & Ref.Buffer (Ref.Referred_Symbol_Name.First ..
-               Ref.Referred_Symbol_Name.Last)
-         & """");
+               Ref.Referred_Symbol_Name.Last));
 
    --  we need declaration's location
    Var := Find (SN_Table (CON),
