@@ -25,20 +25,11 @@ with Language_Handlers.Glide;   use Language_Handlers.Glide;
 with Basic_Types;
 with Projects;                  use Projects;
 with VFS;                       use VFS;
+with GNAT.Calendar;
 
 package body Src_Info is
 
    Me : constant Debug_Handle := Create ("Src_Info");
-
-   Base_Year         : constant := 1990;
-   --  Year used as year 0 when computing timestamps. This avoids range
-   --  checking issues when converting timestamps to Src_Info.Time_Stamp;
-
-   Seconds_In_Minute : constant := 60;
-   Seconds_In_Hour   : constant := 60 * Seconds_In_Minute;
-   Seconds_In_Day    : constant := 24 * Seconds_In_Hour;
-   Seconds_In_Month  : constant := 31 * Seconds_In_Day;
-   Seconds_In_Year   : constant := 12 * Seconds_In_Month;
 
    procedure Free is new Unchecked_Deallocation (File_Info, File_Info_Ptr);
    procedure Free is new Unchecked_Deallocation
@@ -647,42 +638,18 @@ package body Src_Info is
    -- To_Timestamp --
    ------------------
 
-   function To_Timestamp (Str : Types.Time_Stamp_Type) return Timestamp is
+   function To_Timestamp
+     (Str : Types.Time_Stamp_Type) return Ada.Calendar.Time
+   is
       Year, Month, Day, Hour, Minutes, Seconds : Nat;
    begin
       Split_Time_Stamp (Str, Year, Month, Day, Hour, Minutes, Seconds);
 
       --  Save some space on the year
 
-      return Timestamp (Year - Base_Year) * Seconds_In_Year
-        + Timestamp (Month) * Seconds_In_Month
-        + Timestamp (Day) * Seconds_In_Day
-        + Timestamp (Hour) * Seconds_In_Hour
-        + Timestamp (Minutes) * Seconds_In_Minute
-        + Timestamp (Seconds);
-   end To_Timestamp;
-
-   ------------------
-   -- To_Timestamp --
-   ------------------
-
-   function To_Timestamp (Time : GNAT.OS_Lib.OS_Time) return Timestamp is
-      Year    : Year_Type;
-      Month   : Month_Type;
-      Day     : Day_Type;
-      Hour    : Hour_Type;
-      Minutes : Minute_Type;
-      Second  : Second_Type;
-
-   begin
-      GM_Split (Time, Year, Month, Day, Hour, Minutes, Second);
-
-      return Timestamp (Year - Base_Year) * Seconds_In_Year
-        + Timestamp (Month) * Seconds_In_Month
-        + Timestamp (Day) * Seconds_In_Day
-        + Timestamp (Hour) * Seconds_In_Hour
-        + Timestamp (Minutes) * Seconds_In_Minute
-        + Timestamp (Second);
+      return GNAT.Calendar.Time_Of
+        (Integer (Year), Integer (Month),
+         Integer (Day), Integer (Hour), Integer (Minutes), Integer (Seconds));
    end To_Timestamp;
 
    ------------------

@@ -25,18 +25,14 @@ with Projects;
 with Language;
 with Language_Handlers;
 with VFS;
+with Ada.Calendar;
 
 package Src_Info is
 
-   ----------------
-   -- Timestamps --
-   ----------------
-
-   type Timestamp is new Long_Integer;
-
-   function To_Timestamp (Time : GNAT.OS_Lib.OS_Time) return Timestamp;
-   --  Convert the time to an integer, that can be compared to other integers
-   --  (when OS_Time can not).
+   No_Time : constant Ada.Calendar.Time := Ada.Calendar.Time_Of
+     (Ada.Calendar.Year_Number'First,
+      Ada.Calendar.Month_Number'First,
+      Ada.Calendar.Day_Number'First);
 
    -------------------------------
    -- Library Information files --
@@ -896,7 +892,8 @@ private
    --  The information associated with a source file, and that remains valid
    --  even when the LI file is parsed again.
 
-   function To_Timestamp (Str : Types.Time_Stamp_Type) return Timestamp;
+   function To_Timestamp
+     (Str : Types.Time_Stamp_Type) return Ada.Calendar.Time;
    --  Convert the string to an internal timestamp.
 
    type File_Info is record
@@ -906,7 +903,7 @@ private
 
       Source_Filename   : String_Access;
       Cached_File       : VFS.Virtual_File;
-      File_Timestamp    : Timestamp;
+      File_Timestamp    : Ada.Calendar.Time;
       Original_Filename : String_Access;
       Original_Line     : Positive;
       Declarations      : E_Declaration_Info_List;
@@ -976,7 +973,7 @@ private
       Spec_Info       : File_Info_Ptr;
       Body_Info       : File_Info_Ptr;
       Separate_Info   : File_Info_Ptr_List;
-      LI_Timestamp    : Timestamp;
+      LI_Timestamp    : Ada.Calendar.Time;
       Project         : Projects.Project_Type;
 
       case Parsed is
