@@ -134,34 +134,35 @@ package body Commands.Custom is
             elsif Command.Args (J).all = "%f" then
                if Context /= null
                  and then Context.all in File_Selection_Context'Class
+                 and then Has_File_Information
+                   (File_Selection_Context_Access (Context))
                then
                   File := File_Selection_Context_Access (Context);
+                  New_Args (Last) := new String'(File_Information (File));
+                  Last := Last + 1;
 
-                  if Has_File_Information (File) then
-                     New_Args (Last) := new String'(File_Information (File));
-                     Last := Last + 1;
-                  else
-                     return False;
-                  end if;
                else
+                  Insert (Command.Kernel,
+                          -"Command not executed: it requires a file",
+                          Mode => Error);
                   return False;
                end if;
 
             elsif Command.Args (J).all = "%F" then
                if Context /= null
                  and then Context.all in File_Selection_Context'Class
+                 and then Has_File_Information
+                   (File_Selection_Context_Access (Context))
                then
                   File := File_Selection_Context_Access (Context);
-
-                  if Has_File_Information (File) then
-                     New_Args (Last) := new String'
-                       (Directory_Information (File)
-                        & File_Information (File));
-                     Last := Last + 1;
-                  else
-                     return False;
-                  end if;
+                  New_Args (Last) := new String'
+                    (Directory_Information (File)
+                     & File_Information (File));
+                  Last := Last + 1;
                else
+                  Insert (Command.Kernel,
+                          -"Command not executed: it requires a file",
+                          Mode => Error);
                   return False;
                end if;
 
@@ -176,6 +177,9 @@ package body Commands.Custom is
                     (Directory_Information (File));
                   Last := Last + 1;
                else
+                  Insert (Command.Kernel,
+                          -"Command not executed: it requires a directory",
+                          Mode => Error);
                   return False;
                end if;
 
@@ -201,6 +205,9 @@ package body Commands.Custom is
                end if;
 
                if Project = No_Project then
+                  Insert (Command.Kernel,
+                          -"Command not executed: it requires a project",
+                          Mode => Error);
                   return False;
                end if;
 
@@ -230,6 +237,9 @@ package body Commands.Custom is
                   end if;
 
                   if List = null then
+                     Insert (Command.Kernel,
+                             -"Command not executed: it requires a project",
+                             Mode => Error);
                      return False;
                   end if;
 
