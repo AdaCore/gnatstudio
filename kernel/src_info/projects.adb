@@ -438,8 +438,9 @@ package body Projects is
 
       elsif Recursive then
          return Prj.Env.Ada_Objects_Path (View).all;
-      elsif Prj.Projects.Table (View).Object_Directory /= No_Name then
-         return Get_String (Prj.Projects.Table (View).Object_Directory);
+      elsif Prj.Projects.Table (View).Display_Object_Dir /= No_Name then
+         return Get_String
+           (Prj.Projects.Table (View).Display_Object_Dir);
       else
          return "";
       end if;
@@ -1311,7 +1312,7 @@ package body Projects is
       else
          declare
             Exec : constant String := Get_String
-              (Prj.Projects.Table (Get_View (Project)).Exec_Directory);
+              (Prj.Projects.Table (Get_View (Project)).Display_Exec_Dir);
          begin
             if Exec /= "" then
                return Name_As_Directory (Exec);
