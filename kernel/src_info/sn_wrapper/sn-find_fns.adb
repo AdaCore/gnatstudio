@@ -38,7 +38,7 @@ package body SN.Find_Fns is
 
    procedure Set_Cursor_At
      (DB             : DB_File;
-      Name           : String := Invalid_String;
+      Name           : String;
       Start_Position : Point  := Invalid_Point;
       Filename       : String := Invalid_String)
    is
@@ -65,6 +65,17 @@ package body SN.Find_Fns is
 
       Set_Cursor
         (DB, By_Key, Key (Key'First .. Pos - 1), Exact_Match => False);
+   end Set_Cursor_At;
+
+   -------------------
+   -- Set_Cursor_At --
+   -------------------
+
+   procedure Set_Cursor_At
+     (DB             : DB_File;
+      Filename       : String) is
+   begin
+      Set_Cursor (DB, By_Key, Filename, Exact_Match => True);
    end Set_Cursor_At;
 
    -------------------

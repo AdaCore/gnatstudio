@@ -31,13 +31,19 @@ package SN.Find_Fns is
 
    procedure Set_Cursor_At
      (DB             : DB_File;
-      Name           : String := Invalid_String;
+      Name           : String;
       Start_Position : Point  := Invalid_Point;
       Filename       : String := Invalid_String);
    --  Change the cursor in DB to point to the first entry matching the
    --  parameters. If any of the parameters is left to its default value, only
    --  the preceding parameters are taken into account.
    --  The cursor must be released by the caller.
+
+   procedure Set_Cursor_At
+     (DB             : DB_File;
+      Filename       : String);
+   --  Same as above, for a table that only uses a file name as an index (F).
+   --  If Filename is Invalid_String, all entries will be returned.
 
    procedure Set_Cursor_At
      (DB             : DB_File;
