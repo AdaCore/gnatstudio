@@ -13,6 +13,7 @@
     <icon id="gps-vcs-removed"        file="../icons/gps-vcs-removed.png" />
     <icon id="gps-vcs-unknown"        file="../icons/gps-vcs-unknown.png" />
     <icon id="gps-vcs-up-to-date"     file="../icons/gps-vcs-up-to-date.png" />
+    <icon id="gps-vcs-has-conflicts"  file="../icons/gps-vcs-has-conflicts.png" />
   </stock>
 
 </icons>
