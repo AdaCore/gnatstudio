@@ -1392,12 +1392,10 @@ package body Src_Editor_Box is
    procedure Load_File
      (Editor          : access Source_Editor_Box_Record;
       Filename        : String;
-      Lang_Handler    : Language_Handlers.Language_Handler;
       Lang_Autodetect : Boolean := True;
       Success         : out Boolean) is
    begin
-      Load_File (Editor.Source_Buffer, Filename, Lang_Handler,
-                 Lang_Autodetect, Success);
+      Load_File (Editor.Source_Buffer, Filename, Lang_Autodetect, Success);
       Set_Cursor_Location (Editor, 1, 1);
 
       if Success then

@@ -123,7 +123,6 @@ package Src_Editor_Box is
    procedure Load_File
      (Editor          : access Source_Editor_Box_Record;
       Filename        : String;
-      Lang_Handler    : Language_Handlers.Language_Handler;
       Lang_Autodetect : Boolean := True;
       Success         : out Boolean);
    --  Load the file into the buffer. If Lang_Autodetect is set to True, then
