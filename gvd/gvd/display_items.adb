@@ -265,8 +265,8 @@ package body Display_Items is
                --  If we got an exception while parsing the value, we do not
                --  create the item, since otherwise the user would be able to
                --  try to update the value for instance, and the type would
-               --  have nothing to do with what the variable really is.  ???
-               --  Should display an error message somewhere.
+               --  have nothing to do with what the variable really is.
+
             exception
                when Language.Unexpected_Type | Constraint_Error =>
                   Print_Message
