@@ -195,14 +195,16 @@ package body Project_Explorers_Common is
       return N;
    end Append_Category_Node;
 
-   -------------
-   -- Name_Of --
-   -------------
+   --------------------
+   -- Entity_Name_Of --
+   --------------------
 
-   function Entity_Name_Of (Construct : Construct_Information) return String is
+   function Entity_Name_Of
+     (Construct     : Construct_Information;
+      Show_Profiles : Boolean) return String is
    begin
       if Construct.Is_Declaration then
-         if Construct.Profile /= null then
+         if Show_Profiles and then Construct.Profile /= null then
             return Locale_To_UTF8
               (Reduce (Construct.Name.all) & " (spec) " &
                Reduce (Construct.Profile.all));
@@ -210,7 +212,7 @@ package body Project_Explorers_Common is
             return Locale_To_UTF8 (Reduce (Construct.Name.all) & " (spec)");
          end if;
 
-      elsif Construct.Profile /= null then
+      elsif Show_Profiles and then Construct.Profile /= null then
          return Locale_To_UTF8
            (Reduce (Construct.Name.all & " " & Construct.Profile.all));
       else
@@ -251,7 +253,7 @@ package body Project_Explorers_Common is
       end if;
 
       Set (Model, N, Absolute_Name_Column, Locale_Full_Name (File));
-      Set (Model, N, Base_Name_Column, Entity_Name_Of (Construct));
+      Set (Model, N, Base_Name_Column, Entity_Name_Of (Construct, True));
       Set (Model, N, Entity_Base_Column,
            Locale_To_UTF8 (Reduce (Construct.Name.all)));
       Set (Model, N, Icon_Column, C_Proxy (Close_Pixbufs (Entity_Node)));

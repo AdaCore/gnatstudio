@@ -196,7 +196,9 @@ package Project_Explorers_Common is
    -- Misc --
    ----------
 
-   function Entity_Name_Of (Construct : Construct_Information) return String;
+   function Entity_Name_Of
+     (Construct     : Construct_Information;
+      Show_Profiles : Boolean) return String;
    --  Return the string to use to display the entity
 
    function Filter_Category
