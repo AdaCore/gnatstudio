@@ -113,19 +113,17 @@ package body Make_Harness_Window_Pkg.Callbacks is
    procedure On_Ok_Clicked
      (Object : access Gtk_Button_Record'Class)
    is
-      --  Generate harness body source file.  Exit program if
+      --  Generate harness body source file. Close window and main loop if
       --  successful
 
-      Top : Make_Harness_Window_Access :=
+      Top            : constant Make_Harness_Window_Access :=
         Make_Harness_Window_Access (Get_Toplevel (Object));
-      File : File_Type;
+      File           : File_Type;
       Procedure_Name : String := Get_Text (Top.Procedure_Entry);
-      File_Name : String := Get_Text (Top.File_Name_Entry);
-   begin
-      if Procedure_Name /= ""
-        and then File_Name /= ""
+      File_Name      : String := Get_Text (Top.File_Name_Entry);
 
-      then
+   begin
+      if Procedure_Name /= "" and then File_Name /= "" then
          Mixed_Case (Procedure_Name);
          Mixed_Case (File_Name);
 
@@ -147,28 +145,27 @@ package body Make_Harness_Window_Pkg.Callbacks is
             end if;
          end if;
 
-         Ada.Text_IO.Create (File,
-                             Out_File,
-                             To_File_Name (Procedure_Name) & ".adb");
-         Put_Line (File,
-                   "with AUnit.Test_Runner;" & ASCII.LF
-                   & "with " &
-                   Top.Suite_Name.all & ";"
-                   & ASCII.LF
-                   & ASCII.LF
-                   & "procedure " & Procedure_Name & " is" & ASCII.LF
-                   & ASCII.LF
-                   & "   procedure Run is new AUnit.Test_Runner ("
-                   & Top.Suite_Name.all
-                   & ");"
-                   & ASCII.LF
-                   & ASCII.LF
-                   & "begin"  & ASCII.LF
-                   & "   Run;" & ASCII.LF
-                   & "end " & Procedure_Name & ";");
-
+         Ada.Text_IO.Create
+           (File, Out_File, To_File_Name (Procedure_Name) & ".adb");
+         Put_Line
+           (File,
+            "with AUnit.Test_Runner;" & ASCII.LF
+            & "with " &
+            Top.Suite_Name.all & ";"
+            & ASCII.LF
+            & ASCII.LF
+            & "procedure " & Procedure_Name & " is" & ASCII.LF
+            & ASCII.LF
+            & "   procedure Run is new AUnit.Test_Runner ("
+            & Top.Suite_Name.all
+            & ");"
+            & ASCII.LF
+            & ASCII.LF
+            & "begin"  & ASCII.LF
+            & "   Run;" & ASCII.LF
+            & "end " & Procedure_Name & ";");
          Close (File);
-         Put (To_Lower (Procedure_Name));
+         Top.Procedure_Name := new String' (To_Lower (Procedure_Name));
       end if;
 
       Destroy (Top);

@@ -35,11 +35,13 @@ with Gtk.Vbutton_Box; use Gtk.Vbutton_Box;
 with Gtk.Button; use Gtk.Button;
 with Gtk.Hbutton_Box; use Gtk.Hbutton_Box;
 with Explorer_Pkg; use Explorer_Pkg;
+with GNAT.OS_Lib; use GNAT.OS_Lib;
 
 package Make_Suite_Window_Pkg is
 
    type Make_Suite_Window_Record is new Gtk_Window_Record with record
       Explorer : Explorer_Access;
+      Name     : String_Access;
 
       Vbox1 : Gtk_Vbox;
       Hbox1 : Gtk_Hbox;

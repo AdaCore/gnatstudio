@@ -27,8 +27,9 @@
 
 with Gtk; use Gtk;
 with Gtk.Main;
-
 with Make_Test_Window_Pkg; use Make_Test_Window_Pkg;
+with GNAT.OS_Lib; use GNAT.OS_Lib;
+with Ada.Text_IO; use Ada.Text_IO;
 
 procedure Aunit_Make_Test is
    Make_Test_Window : Make_Test_Window_Access;
@@ -39,4 +40,8 @@ begin
    Gtk_New (Make_Test_Window);
    Show_All (Make_Test_Window);
    Gtk.Main.Main;
+
+   if Make_Test_Window.Name /= null then
+      Put (Make_Test_Window.Name.all);
+   end if;
 end Aunit_Make_Test;

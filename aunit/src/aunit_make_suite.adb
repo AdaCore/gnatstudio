@@ -29,6 +29,8 @@ with Gtk; use Gtk;
 with Gtk.Main;
 with Make_Suite_Window_Pkg; use Make_Suite_Window_Pkg;
 with Explorer_Pkg; use Explorer_Pkg;
+with Ada.Text_IO; use Ada.Text_IO;
+with GNAT.OS_Lib; use GNAT.OS_Lib;
 
 procedure Aunit_Make_Suite is
    --  Main for creating an AUnit "Test_Suite" from within Glide.  Generated
@@ -41,4 +43,8 @@ begin
    Gtk_New (Make_Suite_Window);
    Show_All (Make_Suite_Window);
    Gtk.Main.Main;
+
+   if Make_Suite_Window.Name /= null then
+      Put (Make_Suite_Window.Name.all);
+   end if;
 end Aunit_Make_Suite;

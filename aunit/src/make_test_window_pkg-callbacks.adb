@@ -129,42 +129,46 @@ package body Make_Test_Window_Pkg.Callbacks is
          --  Create the file.
 
          Create (File, Out_File, To_File_Name (Name) & ".ads");
-         Put_Line (File,
-                   "with Ada.Strings.Unbounded;" & ASCII.LF &
-                   "use Ada.Strings.Unbounded;" & ASCII.LF &
-                   ASCII.LF &
-                   "with AUnit.Test_Cases;" & ASCII.LF &
-                   "use AUnit.Test_Cases;" & ASCII.LF &
-                   ASCII.LF &
-                   "package " & Name & " is" & ASCII.LF &
-                   ASCII.LF &
-                   "   type Test_Case is new " &
-                   "AUnit.Test_Cases.Test_Case with null record;" & ASCII.LF &
-                   ASCII.LF &
-                   "   --  Register routines to be run:" & ASCII.LF &
-                   "   procedure Register_Tests (T : in out Test_Case);"
-                   & ASCII.LF &
-                   ASCII.LF &
-                   "   --  Provide name identifying the test case:"
-                   & ASCII.LF &
-                   "   function Name (T : Test_Case) return String_Access;");
+         Put_Line
+           (File,
+            "with Ada.Strings.Unbounded;" & ASCII.LF &
+            "use Ada.Strings.Unbounded;" & ASCII.LF &
+            ASCII.LF &
+            "with AUnit.Test_Cases;" & ASCII.LF &
+            "use AUnit.Test_Cases;" & ASCII.LF &
+            ASCII.LF &
+            "package " & Name & " is" & ASCII.LF &
+            ASCII.LF &
+            "   type Test_Case is new " &
+            "AUnit.Test_Cases.Test_Case with null record;" & ASCII.LF &
+            ASCII.LF &
+            "   --  Register routines to be run:" & ASCII.LF &
+            "   procedure Register_Tests (T : in out Test_Case);"
+            & ASCII.LF &
+            ASCII.LF &
+            "   --  Provide name identifying the test case:"
+            & ASCII.LF &
+            "   function Name (T : Test_Case) return String_Access;");
+
          if Get_Active (Window.Override_Set_Up) then
-            Put_Line (File,
-                      ASCII.LF &
-                      "   --  Preparation performed before each routine:"
-                      & ASCII.LF &
-                      "   procedure Set_Up (T : in out Test_Case);");
+            Put_Line
+              (File,
+               ASCII.LF &
+               "   --  Preparation performed before each routine:"
+               & ASCII.LF &
+               "   procedure Set_Up (T : in out Test_Case);");
          end if;
+
          if Get_Active (Window.Override_Tear_Down) then
-            Put_Line (File,
-                      ASCII.LF &
-                      "   --  Cleanup performed after each routine:"
-                      & ASCII.LF &
-                      "   procedure Tear_Down (T :  in out Test_Case);");
+            Put_Line
+              (File,
+               ASCII.LF &
+               "   --  Cleanup performed after each routine:"
+               & ASCII.LF &
+               "   procedure Tear_Down (T :  in out Test_Case);");
          end if;
-         Put_Line (File,
-                   ASCII.LF &
-                   "end " & Name & ";" & ASCII.LF);
+
+         Put_Line (File, ASCII.LF & "end " & Name & ";" & ASCII.LF);
          Close (File);
 
          if Is_Regular_File (To_File_Name (Name) & ".adb") then
@@ -181,66 +185,70 @@ package body Make_Test_Window_Pkg.Callbacks is
          end if;
 
          Create (File, Out_File, To_File_Name (Name) & ".adb");
-         Put_Line (File,
-                   "with AUnit.Test_Cases.Registration;" & ASCII.LF &
-                   "use AUnit.Test_Cases.Registration;" & ASCII.LF &
-                   ASCII.LF &
-                   "with AUnit.Assertions; use AUnit.Assertions;" & ASCII.LF &
-                   ASCII.LF &
-                   "package body " & Name & " is" & ASCII.LF);
-         if Get_Active (Window.Override_Set_Up) then
-            Put_Line (File,
-                      ASCII.LF &
-                      "   ------------" & ASCII.LF &
-                      "   -- Set_Up --" & ASCII.LF &
-                      "   ------------" & ASCII.LF &
-                      ASCII.LF &
-                      "   procedure Set_Up (T : in out Test_Case) is"
-                      & ASCII.LF &
-                      "   begin" & ASCII.LF &
-                      "      null;" & ASCII.LF &
-                      "   end Set_Up;");
-         end if;
-         if Get_Active (Window.Override_Tear_Down) then
-            Put_Line (File,
-                      ASCII.LF &
-                      "   ---------------" & ASCII.LF &
-                      "   -- Tear_Down --" & ASCII.LF &
-                      "   ---------------" & ASCII.LF &
-                      ASCII.LF &
-                      "   procedure Tear_Down (T : in out Test_Case) is"
-                      & ASCII.LF &
-                      "   begin" & ASCII.LF &
-                      "      null;" & ASCII.LF &
-                      "   end Tear_Down;" & ASCII.LF);
-         end if;
-            Put_Line (File,
-                      ASCII.LF &
-                      "   -------------------" & ASCII.LF &
-                      "   -- Test Routines --" & ASCII.LF &
-                      "   -------------------" & ASCII.LF &
-                      ASCII.LF &
-                      ASCII.LF &
-                   "   procedure Register_Tests (T : in out Test_Case) is"
-                   &  ASCII.LF &
-                   "   begin" & ASCII.LF &
-                   "      null;" & ASCII.LF &
-                   "   end Register_Tests;" & ASCII.LF &
-                   ASCII.LF & -- ASCII.LF &
-                   "   --  Identifier of test case:" & ASCII.LF &
-                   "   function Name (T : Test_Case) return String_Access is"
-                   & ASCII.LF &
-                   "   begin" & ASCII.LF &
-                   "      return new String'(" & '"'
-                   & Strip_Quotes (Description)
-                   & '"' & ");"
-                   & ASCII.LF &
-                   "   end Name;" & ASCII.LF &
-                   ASCII.LF &
-                   "end " & Name & ";");
+         Put_Line
+           (File,
+            "with AUnit.Test_Cases.Registration;" & ASCII.LF &
+            "use AUnit.Test_Cases.Registration;" & ASCII.LF &
+            ASCII.LF &
+            "with AUnit.Assertions; use AUnit.Assertions;" & ASCII.LF &
+            ASCII.LF &
+            "package body " & Name & " is");
 
+         if Get_Active (Window.Override_Set_Up) then
+            Put_Line
+              (File,
+               ASCII.LF &
+               "   ------------" & ASCII.LF &
+               "   -- Set_Up --" & ASCII.LF &
+               "   ------------" & ASCII.LF &
+               ASCII.LF &
+               "   procedure Set_Up (T : in out Test_Case) is"
+               & ASCII.LF &
+               "   begin" & ASCII.LF &
+               "      null;" & ASCII.LF &
+               "   end Set_Up;");
+         end if;
+
+         if Get_Active (Window.Override_Tear_Down) then
+            Put_Line
+              (File,
+               ASCII.LF &
+               "   ---------------" & ASCII.LF &
+               "   -- Tear_Down --" & ASCII.LF &
+               "   ---------------" & ASCII.LF &
+               ASCII.LF &
+               "   procedure Tear_Down (T : in out Test_Case) is"
+               & ASCII.LF &
+               "   begin" & ASCII.LF &
+               "      null;" & ASCII.LF &
+               "   end Tear_Down;");
+         end if;
+
+         Put_Line
+           (File,
+            ASCII.LF &
+            "   -------------------" & ASCII.LF &
+            "   -- Test Routines --" & ASCII.LF &
+            "   -------------------" & ASCII.LF &
+            ASCII.LF &
+            "   procedure Register_Tests (T : in out Test_Case) is"
+            &  ASCII.LF &
+            "   begin" & ASCII.LF &
+            "      null;" & ASCII.LF &
+            "   end Register_Tests;" & ASCII.LF &
+            ASCII.LF &
+            "   --  Identifier of test case:" & ASCII.LF &
+            "   function Name (T : Test_Case) return String_Access is"
+            & ASCII.LF &
+            "   begin" & ASCII.LF &
+            "      return new String'(" & '"' & Strip_Quotes (Description)
+            & '"' & ");"
+            & ASCII.LF &
+            "   end Name;" & ASCII.LF &
+            ASCII.LF &
+            "end " & Name & ";");
          Close (File);
-         Put (Standard_Output, To_File_Name (Name));
+         Window.Name := new String' (To_File_Name (Name));
       end if;
 
       Destroy (Window);

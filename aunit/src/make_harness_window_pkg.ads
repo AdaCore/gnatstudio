@@ -39,8 +39,9 @@ with Explorer_Window_Pkg; use Explorer_Window_Pkg;
 package Make_Harness_Window_Pkg is
 
    type Make_Harness_Window_Record is new Gtk_Window_Record with record
-      Suite_Name : String_Access;
-      Explorer : Explorer_Window_Access;
+      Suite_Name     : String_Access;
+      Procedure_Name : String_Access;
+      Explorer       : Explorer_Window_Access;
 
       Vbox3 : Gtk_Vbox;
       Hbox2 : Gtk_Hbox;
