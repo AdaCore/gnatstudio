@@ -1825,11 +1825,7 @@ package body Glide_Result_View is
       View      : constant Result_View := Get_Or_Create_Result_View (Kernel);
       Sort_Col  : Gint;
       Model     : Gtk_Tree_Store;
-      Dummy     : Boolean;
-      Path      : Gtk_Tree_Path;
-      Cat_Iter  : Gtk_Tree_Iter;
-      File_Iter : Gtk_Tree_Iter;
-      Child     : MDI_Child;
+      Expand    : Boolean := Quiet;
 
       function Get_File_Location return Pattern_Matcher;
       --  Return the pattern matcher for the file location
@@ -1908,9 +1904,7 @@ package body Glide_Result_View is
       end if;
 
       Sort_Col := Freeze_Sort (View.Tree.Model);
-      Ref (View.Tree.Model);
       Model := View.Tree.Model;
-      Set_Model (View.Tree, null);
 
       while Start <= Text'Last loop
          --  Parse Text line by line and look for file locations
@@ -1978,37 +1972,16 @@ package body Glide_Result_View is
                Highlight,
                Get_Message (Last),
                C.all,
-               Quiet             => Quiet,
+               Quiet             => Expand,
                Remove_Duplicates => False);
+
+            Expand := False;
          end if;
 
          Start := Real_Last + 1;
       end loop;
 
       Thaw_Sort (View.Tree.Model, Sort_Col);
-      Set_Model (View.Tree, Gtk_Tree_Model (Model));
-      Unref (Model);
-
-      --  Open the first item that was added.
-
-      Get_Category_File
-        (View, View.Tree.Model, Category, "", VFS.No_File,
-         Cat_Iter, File_Iter, Dummy, False);
-
-      if Cat_Iter /= Null_Iter then
-         Child := Find_MDI_Child (Get_MDI (Kernel), View);
-         Raise_Child (Child);
-
-         Path := Get_Path (View.Tree.Model, Cat_Iter);
-         Select_Path (Get_Selection (View.Tree), Path);
-         Path_Free (Path);
-
-         if Get_Pref (View.Kernel, Auto_Jump_To_First) then
-            Goto_Location (View);
-         else
-            Highlight_Child (Child);
-         end if;
-      end if;
    end Parse_File_Locations;
 
 end Glide_Result_View;
