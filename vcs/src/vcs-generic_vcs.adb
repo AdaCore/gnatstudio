@@ -1104,7 +1104,6 @@ package body VCS.Generic_VCS is
          Register_VCS (VCS_Module_ID, Name);
 
          Ref.Kernel := Kernel_Handle (Kernel);
-         Ref.Queue  := New_Queue;
 
          VCS_Info_List.Append (VCS_Generic_Module_ID.VCS_List, Ref);
 
