@@ -26,7 +26,7 @@ package Main_Debug_Window_Pkg is
       Open_Core_Dump1 : Gtk_Menu_Item;
       Separator0 : Gtk_Menu_Item;
       Edit_Source1 : Gtk_Menu_Item;
-      Reload_Source1 : Gtk_Menu_Item;
+      Open_Source1 : Gtk_Menu_Item;
       Separator1 : Gtk_Menu_Item;
       Open_Session1 : Gtk_Menu_Item;
       Save_Session_As1 : Gtk_Menu_Item;
@@ -40,7 +40,7 @@ package Main_Debug_Window_Pkg is
       Exit1 : Gtk_Menu_Item;
       Edit2 : Gtk_Menu_Item;
       Edit2_Menu : Gtk_Menu;
-      Undo3 : Gtk_Menu_Item;
+      Undo1 : Gtk_Menu_Item;
       Redo1 : Gtk_Menu_Item;
       Separator5 : Gtk_Menu_Item;
       Cut1 : Gtk_Menu_Item;

@@ -69,16 +69,16 @@ package body Main_Debug_Window_Pkg.Callbacks is
       null;
    end On_Edit_Source1_Activate;
 
-   --------------------------------
-   -- On_Reload_Source1_Activate --
-   --------------------------------
+   ------------------------------
+   -- On_Open_Source1_Activate --
+   ------------------------------
 
-   procedure On_Reload_Source1_Activate
+   procedure On_Open_Source1_Activate
      (Object : access Gtk_Widget_Record'Class)
    is
    begin
       null;
-   end On_Reload_Source1_Activate;
+   end On_Open_Source1_Activate;
 
    -------------------------------
    -- On_Open_Session1_Activate --
@@ -158,15 +158,15 @@ package body Main_Debug_Window_Pkg.Callbacks is
    end On_Exit1_Activate;
 
    -----------------------
-   -- On_Undo3_Activate --
+   -- On_Undo1_Activate --
    -----------------------
 
-   procedure On_Undo3_Activate
+   procedure On_Undo1_Activate
      (Object : access Gtk_Widget_Record'Class)
    is
    begin
       null;
-   end On_Undo3_Activate;
+   end On_Undo1_Activate;
 
    -----------------------
    -- On_Redo1_Activate --

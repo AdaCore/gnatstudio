@@ -143,7 +143,7 @@ begin
       Button_Callback.To_Marshaller (On_Select_All_Clicked'Access));
    Add (Open_Session.Hbuttonbox10, Open_Session.Select_All);
 
-   Gtk_New (Open_Session.Unselect_All, -"Unselect all");
+   Gtk_New (Open_Session.Unselect_All, -"Unselect All");
    Set_Flags (Open_Session.Unselect_All, Can_Default);
    Button_Callback.Connect
      (Open_Session.Unselect_All, "clicked",

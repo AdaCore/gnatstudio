@@ -79,7 +79,7 @@ begin
    Add (Main_Debug_Window.File1_Menu, Main_Debug_Window.Separator0);
    Set_Right_Justify (Main_Debug_Window.Separator0, False);
 
-   Gtk_New (Main_Debug_Window.Edit_Source1, -"Edit Source...");
+   Gtk_New (Main_Debug_Window.Edit_Source1, -"Edit Current Source");
    Add_Accelerator (Main_Debug_Window.Edit_Source1, "activate",
      The_Accel_Group, GDK_e, Gdk.Types.Control_Mask, Accel_Visible);
    Widget_Callback.Object_Connect
@@ -88,13 +88,13 @@ begin
    Add (Main_Debug_Window.File1_Menu, Main_Debug_Window.Edit_Source1);
    Set_Right_Justify (Main_Debug_Window.Edit_Source1, False);
 
-   Gtk_New (Main_Debug_Window.Reload_Source1, -"Reload Source");
-   Set_Sensitive (Main_Debug_Window.Reload_Source1, False);
+   Gtk_New (Main_Debug_Window.Open_Source1, -"Open Source...");
+   Set_Sensitive (Main_Debug_Window.Open_Source1, True);
    Widget_Callback.Object_Connect
-     (Main_Debug_Window.Reload_Source1, "activate",
-      Widget_Callback.To_Marshaller (On_Reload_Source1_Activate'Access), Main_Debug_Window);
-   Add (Main_Debug_Window.File1_Menu, Main_Debug_Window.Reload_Source1);
-   Set_Right_Justify (Main_Debug_Window.Reload_Source1, False);
+     (Main_Debug_Window.Open_Source1, "activate",
+      Widget_Callback.To_Marshaller (On_Open_Source1_Activate'Access), Main_Debug_Window);
+   Add (Main_Debug_Window.File1_Menu, Main_Debug_Window.Open_Source1);
+   Set_Right_Justify (Main_Debug_Window.Open_Source1, False);
 
    Gtk_New (Main_Debug_Window.Separator1);
    Add (Main_Debug_Window.File1_Menu, Main_Debug_Window.Separator1);
@@ -174,15 +174,15 @@ begin
    Gtk_New (Main_Debug_Window.Edit2_Menu);
    Set_Submenu (Main_Debug_Window.Edit2, Main_Debug_Window.Edit2_Menu);
 
-   Gtk_New (Main_Debug_Window.Undo3, -"Undo");
-   Set_Sensitive (Main_Debug_Window.Undo3, False);
-   Add_Accelerator (Main_Debug_Window.Undo3, "activate",
+   Gtk_New (Main_Debug_Window.Undo1, -"Undo");
+   Set_Sensitive (Main_Debug_Window.Undo1, False);
+   Add_Accelerator (Main_Debug_Window.Undo1, "activate",
      The_Accel_Group, GDK_z, Gdk.Types.Control_Mask, Accel_Visible);
    Widget_Callback.Object_Connect
-     (Main_Debug_Window.Undo3, "activate",
-      Widget_Callback.To_Marshaller (On_Undo3_Activate'Access), Main_Debug_Window);
-   Add (Main_Debug_Window.Edit2_Menu, Main_Debug_Window.Undo3);
-   Set_Right_Justify (Main_Debug_Window.Undo3, False);
+     (Main_Debug_Window.Undo1, "activate",
+      Widget_Callback.To_Marshaller (On_Undo1_Activate'Access), Main_Debug_Window);
+   Add (Main_Debug_Window.Edit2_Menu, Main_Debug_Window.Undo1);
+   Set_Right_Justify (Main_Debug_Window.Undo1, False);
 
    Gtk_New (Main_Debug_Window.Redo1, -"Redo");
    Set_Sensitive (Main_Debug_Window.Redo1, False);
