@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -21,6 +21,7 @@
 with Glide_Intl;                use Glide_Intl;
 with Glide_Kernel.Console;      use Glide_Kernel.Console;
 with VCS_Module;                use VCS_Module;
+with VFS;                       use VFS;
 
 package body VCS.Unknown_VCS is
 
@@ -239,7 +240,7 @@ package body VCS.Unknown_VCS is
 
    procedure Diff
      (Rep       : access Unknown_VCS_Record;
-      File      : String;
+      File      : VFS.Virtual_File;
       Version_1 : String := "";
       Version_2 : String := "")
    is
@@ -254,11 +255,11 @@ package body VCS.Unknown_VCS is
 
    procedure Log
      (Rep  : access Unknown_VCS_Record;
-      File : String)
+      File : VFS.Virtual_File)
    is
       pragma Unreferenced (Rep);
    begin
-      Error (File);
+      Error (Full_Name (File));
    end Log;
 
    --------------
@@ -267,11 +268,11 @@ package body VCS.Unknown_VCS is
 
    procedure Annotate
      (Rep  : access Unknown_VCS_Record;
-      File : String)
+      File : VFS.Virtual_File)
    is
       pragma Unreferenced (Rep);
    begin
-      Error (File);
+      Error (Full_Name (File));
    end Annotate;
 
    ---------------------

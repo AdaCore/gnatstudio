@@ -43,7 +43,6 @@ with VCS_Module;                use VCS_Module;
 with Log_Utils;                 use Log_Utils;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;
-with OS_Utils;                  use OS_Utils;
 
 with Basic_Types;               use Basic_Types;
 
@@ -55,6 +54,7 @@ with Commands.External;         use Commands.External;
 
 with Traces;                    use Traces;
 with Ada.Exceptions;            use Ada.Exceptions;
+with VFS;                       use VFS;
 
 package body VCS_View_API is
 
@@ -362,7 +362,7 @@ package body VCS_View_API is
          L_Temp : List_Node := First (Files);
       begin
          while L_Temp /= Null_Node loop
-            Open_File_Editor (Kernel, Data (L_Temp), From_Path => False);
+            Open_File_Editor (Kernel, Create (Full_Filename => Data (L_Temp)));
             L_Temp := Next (L_Temp);
          end loop;
       end;
@@ -634,21 +634,20 @@ package body VCS_View_API is
         and then Has_File_Information (File_Name)
       then
          declare
-            File_S : constant String := Directory_Information (File_Name)
-              & File_Information (File_Name);
+            File_S : constant String :=
+              Full_Name (File_Information (File_Name));
          begin
             if File_S'Length > 4
               and then File_S (File_S'Last - 3 .. File_S'Last) = "$log"
             then
                declare
-                  Original : constant String :=
-                    Get_File_From_Log (Kernel, File_S);
+                  Original : constant Virtual_File :=
+                    Get_File_From_Log (Kernel, File_Information (File_Name));
                begin
-                  if Original /= "" then
+                  if Original /= VFS.No_File then
                      Set_File_Information
                        (File_Name,
-                        Dir_Name (Original),
-                        Base_Name (Original),
+                        Original,
                         Get_Project_From_File
                           (Get_Registry (Kernel), Original));
 
@@ -680,7 +679,9 @@ package body VCS_View_API is
                     (On_Menu_Update'Access),
                   Selection_Context_Access (Context));
 
-               if Get_Log_From_File (Kernel, File_S, False) = "" then
+               if Get_Log_From_File
+                 (Kernel, File_Information (File_Name), False) = VFS.No_File
+               then
                   Gtk_New (Item, Label => -"Commit via revision log");
                else
                   Gtk_New (Item, Label => -"Commit");
@@ -1072,8 +1073,7 @@ package body VCS_View_API is
          else
             if Has_File_Information (File) then
                String_List.Append
-                 (List,
-                  Directory_Information (File) & File_Information (File));
+                 (List, Full_Name (File_Information (File)));
             end if;
          end if;
       end if;
@@ -1099,8 +1099,10 @@ package body VCS_View_API is
 
       while not String_List.Is_Empty (List) loop
          Open_File_Editor
-           (Kernel, Get_Log_From_File (Kernel, String_List.Head (List), True),
-            From_Path => False);
+           (Kernel,
+            Get_Log_From_File
+              (Kernel,
+               Create (Full_Filename => String_List.Head (List)), True));
          String_List.Next (List);
       end loop;
 
@@ -1124,7 +1126,8 @@ package body VCS_View_API is
       Files_Temp : List_Node := First (Files);
    begin
       while Files_Temp /= Null_Node loop
-         Child := Get_File_Editor (Kernel, Head (Files));
+         Child := Get_File_Editor
+           (Kernel, Create (Full_Filename => Head (Files)));
 
          if Child /= null then
             Success := Save_Child (Kernel, Child, False) /= Cancel;
@@ -1161,6 +1164,7 @@ package body VCS_View_API is
 
       Log_Checks         : External_Command_Access;
       File_Checks        : External_Command_Access;
+      File               : Virtual_File;
 
       First_Check, Last_Check : Command_Access := null;
 
@@ -1170,15 +1174,15 @@ package body VCS_View_API is
       while Files_Temp /= Null_Node loop
          --  Save any open log editors, and then get the corresponding logs.
 
+         File := Create (Full_Filename => Head (Files));
          Child := Get_File_Editor
-           (Kernel,
-            Get_Log_From_File (Kernel, Head (Files), False));
+           (Kernel, Get_Log_From_File (Kernel, File, False));
 
          if Child /= null then
             Success := Save_Child (Kernel, Child, True) /= Cancel;
          end if;
 
-         Append (Logs, Get_Log (Kernel, Data (Files_Temp)));
+         Append (Logs, Get_Log (Kernel, File));
          Files_Temp := Next (Files_Temp);
       end loop;
 
@@ -1197,8 +1201,8 @@ package body VCS_View_API is
       Files_Temp := First (Files);
 
       while Files_Temp /= Null_Node loop
-         Project := Get_Project_From_File
-           (Get_Registry (Kernel), Data (Files_Temp));
+         File := Create (Full_Filename => Data (Files_Temp));
+         Project := Get_Project_From_File (Get_Registry (Kernel), File);
 
          if Project /= No_Project then
             declare
@@ -1206,8 +1210,8 @@ package body VCS_View_API is
                  (Project, Vcs_File_Check);
                Log_Check_Script  : constant String := Get_Attribute_Value
                  (Project, Vcs_Log_Check);
-               Log_File  : constant String :=
-                 Get_Log_From_File (Kernel, Data (Files_Temp), True);
+               Log_File  : constant Virtual_File :=
+                 Get_Log_From_File (Kernel, File, True);
                File_Args         : String_List.List;
                Log_Args          : String_List.List;
                Head_List         : String_List.List;
@@ -1245,7 +1249,8 @@ package body VCS_View_API is
                   if S = null then
                      Cancel_All := True;
                      Insert (Kernel,
-                                (-"File could not be read: ") & Log_File);
+                             (-"File could not be read: ")
+                             & Full_Name (Log_File));
 
                      Free (File_Args);
                      Free (Log_Args);
@@ -1254,7 +1259,7 @@ package body VCS_View_API is
 
                   elsif S.all = "" then
                      if Message_Dialog
-                       ((-"File: ") & Data (Files_Temp)
+                       ((-"File: ") & Full_Name (File)
                         & ASCII.LF & ASCII.LF &
                           (-"The revision log for this file is empty,")
                         & ASCII.LF &
@@ -1277,9 +1282,9 @@ package body VCS_View_API is
 
                   GNAT.OS_Lib.Free (S);
 
-                  Append (Log_Args, Log_File);
+                  Append (Log_Args, Full_Name (Log_File));
                   Append
-                    (Head_List, -"File: " & Data (Files_Temp) & ASCII.LF
+                    (Head_List, -"File: " & Full_Name (File) & ASCII.LF
                      & (-"The revision log does not pass the checks."));
 
                   Create
@@ -1386,15 +1391,13 @@ package body VCS_View_API is
 
       while Files_Temp /= Null_Node loop
          declare
-            File  : constant String := Data (Files_Temp);
-            Log   : constant String
-              := Get_Log_From_File (Kernel, File, False);
-            Dummy : Boolean;
+            File  : constant Virtual_File :=
+              Create (Full_Filename => Data (Files_Temp));
+            Log   : constant Virtual_File :=
+              Get_Log_From_File (Kernel, File, False);
          begin
-            if Log /= ""
-              and then GNAT.OS_Lib.Is_Regular_File (Log)
-            then
-               GNAT.OS_Lib.Delete_File (Log, Dummy);
+            if Is_Regular_File (Log) then
+               Delete (Log);
                Close_File_Editors (Kernel, Log);
             end if;
 
@@ -1430,6 +1433,7 @@ package body VCS_View_API is
       Real_Files     : String_List.List;
       Files_Temp     : String_List.List_Node;
       All_Logs_Exist : Boolean := True;
+      File           : Virtual_File;
 
       use type String_List.List_Node;
    begin
@@ -1451,10 +1455,11 @@ package body VCS_View_API is
               and then S (S'Last - 3 .. S'Last) = "$log"
             then
                declare
-                  L : constant String := Get_File_From_Log (Kernel, S);
+                  L : constant Virtual_File :=
+                    Get_File_From_Log (Kernel, Create (Full_Filename => S));
                begin
-                  if L /= "" then
-                     Append (Files, L);
+                  if L /= VFS.No_File then
+                     Append (Files, Full_Name (L));
                   end if;
                end;
             else
@@ -1472,14 +1477,12 @@ package body VCS_View_API is
       --  Open log editors for files that don't have a log.
 
       while Files_Temp /= String_List.Null_Node loop
-         if Get_Log_From_File
-           (Kernel, String_List.Data (Files_Temp), False) = ""
-         then
+         File := Create (Full_Filename => String_List.Data (Files_Temp));
+         if Get_Log_From_File (Kernel, File, False) = VFS.No_File then
             All_Logs_Exist := False;
             Open_File_Editor
               (Kernel,
-               Get_Log_From_File (Kernel, String_List.Data (Files_Temp), True),
-               From_Path => False);
+               Get_Log_From_File (Kernel, File, True));
          end if;
 
          Files_Temp := String_List.Next (Files_Temp);
@@ -1639,6 +1642,7 @@ package body VCS_View_API is
    is
       pragma Unreferenced (Widget);
       Files : String_List.List;
+      File  : Virtual_File;
    begin
       Files := Get_Selected_Files (Context);
 
@@ -1650,14 +1654,15 @@ package body VCS_View_API is
       end if;
 
       while not String_List.Is_Empty (Files) loop
+         File := Create (Full_Filename => String_List.Head (Files));
          Create_Line_Information_Column
            (Kernel        => Get_Kernel (Context),
-            File          => String_List.Head (Files),
+            File          => File,
             Identifier    => Annotation_Id,
             Stick_To_Data => True,
             Every_Line    => False);
 
-         Annotate (Get_Current_Ref (Context), String_List.Head (Files));
+         Annotate (Get_Current_Ref (Context), File);
          String_List.Next (Files);
       end loop;
 
@@ -1690,7 +1695,7 @@ package body VCS_View_API is
       while not String_List.Is_Empty (Files) loop
          Remove_Line_Information_Column
            (Kernel,
-            String_List.Head (Files),
+            Create (Full_Filename => String_List.Head (Files)),
             Annotation_Id);
          String_List.Next (Files);
       end loop;
@@ -2208,7 +2213,8 @@ package body VCS_View_API is
       Save_Files (Get_Kernel (Context), Files);
 
       while not String_List.Is_Empty (Files) loop
-         Diff (Get_Current_Ref (Context), String_List.Head (Files));
+         Diff (Get_Current_Ref (Context),
+               Create (Full_Filename => String_List.Head (Files)));
          String_List.Next (Files);
       end loop;
 
@@ -2239,7 +2245,8 @@ package body VCS_View_API is
       end if;
 
       while not String_List.Is_Empty (Files) loop
-         Log (Get_Current_Ref (Context), String_List.Head (Files));
+         Log (Get_Current_Ref (Context),
+              Create (Full_Filename => String_List.Head (Files)));
          String_List.Next (Files);
       end loop;
 
@@ -2281,7 +2288,8 @@ package body VCS_View_API is
       while Status_Temp /= Null_Node loop
          if not String_List.Is_Empty (Data (Status_Temp).Working_Revision) then
             Diff (Ref,
-                  String_List.Head (Data (Status_Temp).File_Name),
+                  Create (Full_Filename =>
+                            String_List.Head (Data (Status_Temp).File_Name)),
                   String_List.Head (Data (Status_Temp).Working_Revision),
                   "");
          end if;
@@ -2329,7 +2337,8 @@ package body VCS_View_API is
       while Status_Temp /= Null_Node loop
          if not String_List.Is_Empty (Data (Status_Temp).Working_Revision) then
             Diff (Ref,
-                  String_List.Head (Data (Status_Temp).File_Name),
+                  Create (Full_Filename =>
+                            String_List.Head (Data (Status_Temp).File_Name)),
                   "",
                   String_List.Head (Data (Status_Temp).Working_Revision));
          end if;
@@ -2353,15 +2362,15 @@ package body VCS_View_API is
       Recursive : Boolean := True) return String_List.List
    is
       Result  : String_List.List;
-      Files   : String_Array_Access;
+      Files   : File_Array_Access;
    begin
       Files := Get_Source_Files (Project, Recursive);
 
       for J in reverse Files.all'Range loop
-         String_List.Prepend (Result, Files (J).all);
+         String_List.Prepend (Result, Base_Name (Files (J)));
       end loop;
 
-      Free (Files);
+      Unchecked_Free (Files);
 
       return Result;
    end Get_Files_In_Project;
@@ -2614,7 +2623,7 @@ package body VCS_View_API is
 
       Add_Editor_Label
         (Kernel,
-         Head (Status.File_Name),
+         Create (Full_Filename => Head (Status.File_Name)),
          VCS_Module_Name,
          Revision_Label.all & Status_Label.all);
 
@@ -2632,7 +2641,7 @@ package body VCS_View_API is
    is
       Kernel : constant Kernel_Handle := Get_Kernel (Data);
       File   : constant String := Nth_Arg (Data, 1);
-      Full   : String_Access;
+      Full   : Virtual_File;
       Prj    : Project_Type;
       Ref    : VCS_Access;
       Files  : String_List.List;
@@ -2645,28 +2654,15 @@ package body VCS_View_API is
                  Mode => Error);
       end if;
 
-      if GNAT.OS_Lib.Is_Absolute_Path (File) then
-         Full := new String'(GNAT.OS_Lib.Normalize_Pathname (File));
-      else
-         declare
-            F : constant String := Get_Full_Path_From_File
-              (Registry        => Get_Registry (Kernel),
-               Filename        => File,
-               Use_Source_Path => True,
-               Use_Object_Path => False);
-         begin
-            if GNAT.OS_Lib.Is_Absolute_Path (F) then
-               Full := new String'(F);
-            else
-               Insert (Kernel, -"Could not find file: " & File, Mode => Error);
-               return;
-            end if;
-         end;
+      Full := Create (File, Kernel, Use_Object_Path => False);
+      if Dir_Name (Full) = "" then
+         Insert (Kernel, -"Could not find file: " & File, Mode => Error);
+         return;
       end if;
 
       --  At this point Full must not be null.
 
-      Prj := Get_Project_From_File (Get_Registry (Kernel), Full.all, True);
+      Prj := Get_Project_From_File (Get_Registry (Kernel), Full, True);
 
       if Prj = No_Project then
          Insert
@@ -2674,7 +2670,6 @@ package body VCS_View_API is
               -"Could not find project for file: " & File,
             Mode => Error);
 
-         Free (Full);
          return;
       end if;
 
@@ -2685,8 +2680,6 @@ package body VCS_View_API is
            (Kernel,
               -"Could not find VCS for project: " & Project_Name (Prj),
             Mode => Error);
-
-         Free (Full);
          return;
       end if;
 
@@ -2695,12 +2688,10 @@ package body VCS_View_API is
            (Kernel,
               -"There is no VCS associated to project: " & Project_Name (Prj),
             Mode => Error);
-
-         Free (Full);
          return;
       end if;
 
-      String_List.Append (Files, Full.all);
+      String_List.Append (Files, Full_Name (Full));
 
       --  Process the command.
 
@@ -2718,7 +2709,7 @@ package body VCS_View_API is
 
       elsif Command = "vcs.diff_head" then
          Save_Files (Kernel, Files);
-         Diff (Ref, Full.all);
+         Diff (Ref, Full);
 
       elsif Command = "vcs.diff_working" then
          declare
@@ -2729,7 +2720,9 @@ package body VCS_View_API is
 
             Diff
               (Ref,
-               String_List.Head (File_Status_List.Head (Status).File_Name),
+               Create
+                 (Full_Filename => String_List.Head
+                    (File_Status_List.Head (Status).File_Name)),
                "",
                String_List.Head (File_Status_List.Head
                                    (Status).Working_Revision));
@@ -2737,14 +2730,13 @@ package body VCS_View_API is
          end;
 
       elsif Command = "vcs.annotate" then
-         Annotate (Ref, Full.all);
+         Annotate (Ref, Full);
 
       elsif Command = "vcs.remove_annotations" then
-         Remove_Line_Information_Column (Kernel, Full.all, Annotation_Id);
+         Remove_Line_Information_Column (Kernel, Full, Annotation_Id);
 
       end if;
 
-      Free (Full);
       String_List.Free (Files);
    end VCS_Command_Handler;
 

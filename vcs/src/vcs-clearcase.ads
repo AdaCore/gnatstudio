@@ -74,17 +74,17 @@ package VCS.ClearCase is
 
    procedure Diff
      (Rep       : access ClearCase_Record;
-      File      : String;
+      File      : VFS.Virtual_File;
       Version_1 : String := "";
       Version_2 : String := "");
 
    procedure Log
      (Rep  : access ClearCase_Record;
-      File : String);
+      File : VFS.Virtual_File);
 
    procedure Annotate
      (Rep  : access ClearCase_Record;
-      File : String);
+      File : VFS.Virtual_File);
 
    procedure Register_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);

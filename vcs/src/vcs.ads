@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -22,6 +22,7 @@ with Generic_List;
 with String_List_Utils; use String_List_Utils;
 
 with Commands;
+with VFS;
 
 with Glide_Kernel; use Glide_Kernel;
 
@@ -222,7 +223,7 @@ package VCS is
 
    procedure Diff
      (Rep       : access VCS_Record;
-      File      : String;
+      File      : VFS.Virtual_File;
       Version_1 : String := "";
       Version_2 : String := "") is abstract;
    --  Return a diff between two versions of one file.
@@ -235,15 +236,13 @@ package VCS is
    --  in order to display a GPS visual diff.
 
    procedure Log
-     (Rep  : access VCS_Record;
-      File : String) is abstract;
-   --  Return a changelog for the corresponding file.
-   --  The result String_List.List with one element for each line.
+     (Rep  : access VCS_Record; File : VFS.Virtual_File) is abstract;
+   --  Display the changelog for the correspondig file.
 
    Annotation_Id : constant String := "Annotate";
    procedure Annotate
      (Rep  : access VCS_Record;
-      File : String) is abstract;
+      File : VFS.Virtual_File) is abstract;
    --  Return annotations for the corresponding file.
    --  The result String_List.List with one element for each line.
    --

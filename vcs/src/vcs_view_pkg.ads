@@ -36,6 +36,7 @@ with GVD.Tooltips;
 with String_List_Utils;        use String_List_Utils;
 
 with VCS;                      use VCS;
+with VFS;
 
 with Generic_List;
 
@@ -102,7 +103,7 @@ package VCS_View_Pkg is
    --  Convenience function to get the current directory.
 
    function Get_Current_File
-     (Context : Selection_Context_Access) return String;
+     (Context : Selection_Context_Access) return VFS.Virtual_File;
    --  Convenience function to get the current file.
 
    function Get_Selected_Files
@@ -129,7 +130,7 @@ package VCS_View_Pkg is
 
    procedure Refresh_Log
      (Explorer : access VCS_View_Record;
-      File     : String);
+      File     : VFS.Virtual_File);
    --  Refresh the "Log" column for File.
 
 

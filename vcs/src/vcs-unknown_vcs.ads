@@ -78,17 +78,17 @@ package VCS.Unknown_VCS is
 
    procedure Diff
      (Rep       : access Unknown_VCS_Record;
-      File      : String;
+      File      : VFS.Virtual_File;
       Version_1 : String := "";
       Version_2 : String := "");
 
    procedure Log
      (Rep  : access Unknown_VCS_Record;
-      File : String);
+      File : VFS.Virtual_File);
 
    procedure Annotate
      (Rep  : access Unknown_VCS_Record;
-      File : String);
+      File : VFS.Virtual_File);
 
    procedure Register_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);

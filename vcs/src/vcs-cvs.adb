@@ -44,6 +44,7 @@ with VCS_Module;                use VCS_Module;
 with Commands;                  use Commands;
 with Commands.External;         use Commands.External;
 with Traces;                    use Traces;
+with VFS;                       use VFS;
 
 package body VCS.CVS is
 
@@ -825,7 +826,8 @@ package body VCS.CVS is
       Free (Arguments);
 
       while Node /= Null_Node loop
-         Open_File_Editor (Rep.Kernel, Data (Node), From_Path => False);
+         Open_File_Editor
+           (Rep.Kernel, Create (Full_Filename => Data (Node)));
          Node := Next (Node);
       end loop;
    end Open;
@@ -1017,16 +1019,17 @@ package body VCS.CVS is
       use String_List;
 
       L_Temp  : List_Node := First (List);
-      Success : Boolean;
 
-      Current_File : constant String := String_List.Head (Head);
-      Base         : constant String := Base_Name (Current_File);
-      Patch_File   : constant String := Get_Tmp_Dir & Base & "$difs";
+      Current_File : constant Virtual_File :=
+        Create (Full_Filename => String_List.Head (Head));
+      Patch_File   : constant Virtual_File := Create
+        (Full_Filename => Get_Tmp_Dir & Base_Name (Current_File) & "$difs");
+      Full       : constant String := Full_Name (Current_File);
       Num_Lines    : Natural := 0;
       File         : File_Type;
 
    begin
-      Create (File, Name => Patch_File);
+      Create (File, Name => Full_Name (Patch_File));
 
       while L_Temp /= Null_Node loop
          Num_Lines := Num_Lines + 1;
@@ -1038,18 +1041,17 @@ package body VCS.CVS is
 
       Close (File);
       Insert (Kernel,
-              -"CVS: Got comparison for file " & Current_File,
+              -"CVS: Got comparison for file " & Full,
               Mode => Verbose);
 
       Display_Differences
         (Kernel, New_File => Current_File, Diff_File => Patch_File);
-      GNAT.OS_Lib.Delete_File (Patch_File, Success);
+      Delete (Patch_File);
 
-      if Current_File'Length > 5
-        and then Current_File
-          (Current_File'Last - 4 .. Current_File'Last) = "$orig"
+      if Full'Length > 5
+        and then Full (Full'Last - 4 .. Full'Last) = "$orig"
       then
-         GNAT.OS_Lib.Delete_File (Current_File, Success);
+         Delete (Current_File);
       end if;
 
       return True;
@@ -1089,7 +1091,7 @@ package body VCS.CVS is
 
    procedure Diff
      (Rep       : access CVS_Record;
-      File      : String;
+      File      : VFS.Virtual_File;
       Version_1 : String := "";
       Version_2 : String := "")
    is
@@ -1162,11 +1164,12 @@ package body VCS.CVS is
       Append (Args, Base_Name (File));
 
       if Is_Empty (Command_Head) then
-         Append (Command_Head, File);
+         Append (Command_Head, Full_Name (File));
       end if;
 
       Insert (Rep.Kernel,
-              -"CVS: Getting comparison for file " & File & "...",
+              -"CVS: Getting comparison for file "
+              & Full_Name (File) & "...",
               Mode => Verbose);
 
       Create (C,
@@ -1198,7 +1201,8 @@ package body VCS.CVS is
 
       L_Temp       : List_Node := First (List);
       Length       : constant Integer := String_List.Length (List) - 2;
-      Current_File : constant String := String_List.Head (Head);
+      Current_File : constant Virtual_File :=
+        Create (Full_Filename => String_List.Head (Head));
       A            : Line_Information_Array (1 .. Length);
       Index        : Natural;
 
@@ -1214,16 +1218,15 @@ package body VCS.CVS is
          Insert
            (Kernel,
             -"CVS: No annotations available for file "
-            & Current_File,
+            & Full_Name (Current_File),
             Mode => Verbose);
          return False;
       end if;
 
       if Is_Open (Kernel, Current_File) then
-         Open_File_Editor
-           (Kernel, Current_File, From_Path => False, Line => 0);
+         Open_File_Editor (Kernel, Current_File, Line => 0);
       else
-         Open_File_Editor (Kernel, Current_File, From_Path => False);
+         Open_File_Editor (Kernel, Current_File);
       end if;
 
       L_Temp := Next (Next (L_Temp));
@@ -1267,14 +1270,14 @@ package body VCS.CVS is
       use String_List;
 
       L_Temp  : List_Node := First (List);
-      Success : Boolean;
-
-      Current_File : constant String := String_List.Head (Head);
-      Text_File    : constant String := Get_Tmp_Dir & Base_Name (Current_File);
+      Current_File : constant Virtual_File :=
+        Create (Full_Filename => String_List.Head (Head));
+      Text_File    : constant Virtual_File :=
+        Create (Full_Filename => Get_Tmp_Dir & Base_Name (Current_File));
       File         : File_Type;
 
    begin
-      Create (File, Name => Text_File);
+      Create (File, Name => Full_Name (Text_File));
 
       while L_Temp /= Null_Node loop
          Put (File, Data (L_Temp));
@@ -1282,8 +1285,8 @@ package body VCS.CVS is
       end loop;
 
       Close (File);
-      Open_File_Editor (Kernel, Text_File, From_Path => False);
-      GNAT.OS_Lib.Delete_File (Text_File, Success);
+      Open_File_Editor (Kernel, Text_File);
+      Delete (Text_File);
 
       return True;
    end Text_Output_Handler;
@@ -1294,7 +1297,7 @@ package body VCS.CVS is
 
    procedure Log
      (Rep  : access CVS_Record;
-      File : String)
+      File : VFS.Virtual_File)
    is
       use String_List;
 
@@ -1330,7 +1333,7 @@ package body VCS.CVS is
 
    procedure Annotate
      (Rep  : access CVS_Record;
-      File : String)
+      File : VFS.Virtual_File)
    is
       use String_List;
 
@@ -1341,7 +1344,7 @@ package body VCS.CVS is
    begin
       Append (Args, "annotate");
       Append (Args, Base_Name (File));
-      Append (Command_Head, File);
+      Append (Command_Head, Full_Name (File));
 
       Create
         (C,

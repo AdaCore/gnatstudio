@@ -66,6 +66,7 @@ with Glide_Kernel.Console;      use Glide_Kernel.Console;
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
 with Glide_Intl;                use Glide_Intl;
+with VFS;                       use VFS;
 
 with Basic_Types;               use Basic_Types;
 with Traces;                    use Traces;
@@ -151,7 +152,7 @@ package body VCS_View_Pkg is
 
    function Get_Iter_From_Name
      (Explorer : access VCS_Page_Record'Class;
-      Name     : String) return Gtk_Tree_Iter;
+      Name     : VFS.Virtual_File) return Gtk_Tree_Iter;
    --  Return the Iter associated with the given name.
    --  Name is an absolute file name.
    --  Return Null_Iter if no such iter was found.
@@ -436,7 +437,7 @@ package body VCS_View_Pkg is
 
    procedure Refresh_Log
      (Explorer : access VCS_View_Record;
-      File     : String)
+      File     : VFS.Virtual_File)
    is
       Page          : VCS_Page_Access;
       List_Temp     : List_Node;
@@ -444,7 +445,7 @@ package body VCS_View_Pkg is
       Found         : Boolean;
       Iter          : Gtk_Tree_Iter;
    begin
-      if Get_Log_From_File (Explorer.Kernel, File, False) = "" then
+      if Get_Log_From_File (Explorer.Kernel, File, False) = VFS.No_File then
          Log := False;
       else
          Log := True;
@@ -460,7 +461,7 @@ package body VCS_View_Pkg is
          Found := False;
 
          while List_Temp /= Null_Node and then not Found loop
-            if File = String_List.Head
+            if Full_Name (File) = String_List.Head
               (Data (List_Temp).Status.File_Name)
             then
                --  The data was found in the list, override it.
@@ -480,7 +481,7 @@ package body VCS_View_Pkg is
             List_Temp := First (Page.Stored_Status);
 
             while List_Temp /= Null_Node loop
-               if File = String_List.Head
+               if Full_Name (File) = String_List.Head
                  (Data (List_Temp).Status.File_Name)
                then
                   --  The data was found in the list, override it.
@@ -536,20 +537,20 @@ package body VCS_View_Pkg is
          declare
             S      : constant File_Status_Record :=
               File_Status_List.Data (Status_Temp);
-            File   : constant String := String_List.Head (S.File_Name);
+            File   : constant Virtual_File :=
+              Create (Full_Filename => String_List.Head (S.File_Name));
          begin
             if Clear_Logs
               and then S.Status = Up_To_Date
             then
                declare
-                  Log   : constant String
-                    := Get_Log_From_File (Kernel, File, False);
-                  Dummy : Boolean;
+                  Log   : constant Virtual_File :=
+                    Get_Log_From_File (Kernel, File, False);
                begin
-                  if Log /= ""
-                    and then GNAT.OS_Lib.Is_Regular_File (Log)
+                  if Log /= VFS.No_File
+                    and then Is_Regular_File (Log)
                   then
-                     GNAT.OS_Lib.Delete_File (Log, Dummy);
+                     Delete (Log);
                      Close_File_Editors (Kernel, Log);
                   end if;
 
@@ -589,14 +590,15 @@ package body VCS_View_Pkg is
          Found      := False;
 
          declare
-            File : constant String := String_List.Head
-              (File_Status_List.Data (Status_Temp).File_Name);
+            File : constant Virtual_File := Create
+              (Full_Filename => String_List.Head
+                 (File_Status_List.Data (Status_Temp).File_Name));
          begin
             while not Found
               and then Cache_Temp /= Null_Node
             loop
-               if File
-                 = String_List.Head (Data (Cache_Temp).Status.File_Name)
+               if Full_Name (File) =
+                 String_List.Head (Data (Cache_Temp).Status.File_Name)
                then
                   --  We have found an entry in the cache with the
                   --  corresponding information.
@@ -606,12 +608,8 @@ package body VCS_View_Pkg is
                   if Override_Cache then
                      --  Enter the new file information into the cache.
 
-                     if Get_Log_From_File (Kernel, File, False) = "" then
-                        Log := False;
-                     else
-                        Log := True;
-                     end if;
-
+                     Log :=
+                       Get_Log_From_File (Kernel, File, False) /= VFS.No_File;
                      Set_Data
                        (Cache_Temp,
                           (Copy_File_Status
@@ -628,12 +626,7 @@ package body VCS_View_Pkg is
             --  add the information to the cache.
 
             if not Found then
-               if Get_Log_From_File (Kernel, File, False) = "" then
-                  Log := False;
-               else
-                  Log := True;
-               end if;
-
+               Log := Get_Log_From_File (Kernel, File, False) /= VFS.No_File;
                Prepend (Page.Cached_Status,
                           (Copy_File_Status
                              (File_Status_List.Data (Status_Temp)), Log));
@@ -665,7 +658,9 @@ package body VCS_View_Pkg is
                   Found := True;
                   Set_Data (Temp_Stored_Status, New_Status);
                   Iter := Get_Iter_From_Name
-                    (Page, String_List.Head (New_Status.Status.File_Name));
+                    (Page, Create
+                       (Full_Filename =>
+                          String_List.Head (New_Status.Status.File_Name)));
                end if;
 
                Temp_Stored_Status := Next (Temp_Stored_Status);
@@ -812,12 +807,14 @@ package body VCS_View_Pkg is
 
    function Get_Iter_From_Name
      (Explorer : access VCS_Page_Record'Class;
-      Name     : String) return Gtk_Tree_Iter
+      Name     : VFS.Virtual_File) return Gtk_Tree_Iter
    is
       Iter : Gtk_Tree_Iter := Get_Iter_First (Explorer.Model);
    begin
       while Iter /= Null_Iter loop
-         if Get_String (Explorer.Model, Iter, Name_Column) = Name then
+         if Get_String (Explorer.Model, Iter, Name_Column) =
+           Full_Name (Name)
+         then
             return Iter;
          end if;
 
@@ -1049,8 +1046,8 @@ package body VCS_View_Pkg is
             Iter := Get_Iter (Page.Model, Path);
             Open_File_Editor
               (Kernel,
-               Get_String (Page.Model, Iter, Name_Column),
-               From_Path => False);
+               Create
+                (Full_Filename => Get_String (Page.Model, Iter, Name_Column)));
          end if;
 
          Unref (Selection_Context_Access (Context));
@@ -1084,16 +1081,14 @@ package body VCS_View_Pkg is
 
       if not String_List.Is_Empty (Files) then
          declare
-            First_File : constant String := String_List.Head (Files);
+            First_File : constant Virtual_File := Create
+              (Full_Filename => String_List.Head (Files));
          begin
             Set_Context_Information
               (Context,
                Kernel,
                VCS_Module_ID);
-            Set_File_Information
-              (Context,
-               Directory => Dir_Name (First_File),
-               File_Name => Base_Name (First_File));
+            Set_File_Information (Context, File => First_File);
 
             Set_Current_Context (Explorer, Selection_Context_Access (Context));
             VCS_Contextual_Menu (Explorer, Explorer.Context, Menu);
@@ -1147,14 +1142,16 @@ package body VCS_View_Pkg is
       Kernel  : Kernel_Handle)
    is
       Explorer : constant VCS_View_Access := VCS_View_Access (Widget);
-      Log      : constant String := Get_String (Nth (Args, 1));
+      Log_Name : constant String := Get_String (Nth (Args, 1));
+      Log      : constant Virtual_File := Create (Full_Filename => Log_Name);
 
    begin
-      if Log'Length > 4
-        and then Log (Log'Last - 3 .. Log'Last) = "$log"
+      if Log_Name'Length > 4
+        and then Log_Name (Log_Name'Last - 3 .. Log_Name'Last) = "$log"
       then
          declare
-            File        : constant String := Get_File_From_Log (Kernel, Log);
+            File        : constant Virtual_File :=
+              Get_File_From_Log (Kernel, Log);
             Page        : VCS_Page_Access;
             Cache_Node  : List_Node;
             Stored_Node : List_Node;
@@ -1168,7 +1165,7 @@ package body VCS_View_Pkg is
 
                while Cache_Node /= Null_Node loop
                   if String_List.Head
-                    (Data (Cache_Node).Status.File_Name) = File
+                    (Data (Cache_Node).Status.File_Name) = Full_Name (File)
                   then
                      --  The file was found in the cache, update it.
                      Set_Data (Cache_Node,
@@ -1178,8 +1175,8 @@ package body VCS_View_Pkg is
                      Stored_Node := First (Page.Stored_Status);
 
                      while Stored_Node /= Null_Node loop
-                        if String_List.Head
-                          (Data (Stored_Node).Status.File_Name) = File
+                        if Full_Name (File) = String_List.Head
+                          (Data (Stored_Node).Status.File_Name)
                         then
                            Set_Data (Stored_Node,
                                      (Copy_File_Status
@@ -1397,9 +1394,6 @@ package body VCS_View_Pkg is
    is
       Result : Selection_Context_Access;
       File   : File_Selection_Context_Access;
-
-      File_Info      : String_Access;
-      Directory_Info : String_Access;
    begin
       if Context /= null
         and then Context.all in File_Selection_Context'Class
@@ -1412,26 +1406,11 @@ package body VCS_View_Pkg is
             Get_Kernel (Context),
             Get_Creator (Context));
 
-         if Has_File_Information (File) then
-            File_Info := new String'(File_Information (File));
-         else
-            File_Info := new String'("");
-         end if;
-
-         if Has_Directory_Information (File) then
-            Directory_Info := new String'(Directory_Information (File));
-         else
-            Directory_Info := new String'("");
-         end if;
-
          Set_File_Information
            (File_Selection_Context_Access (Result),
-            Directory_Info.all,
-            File_Info.all,
+            File_Information (File),
             Project_Information (File));
 
-         Free (File_Info);
-         Free (Directory_Info);
          return Result;
 
       else
@@ -1487,11 +1466,11 @@ package body VCS_View_Pkg is
            (VCS_View_Access (Get_Widget (Explorer_Child)));
       else
          declare
-            File : constant String :=
+            File : constant VFS.Virtual_File :=
               Get_Current_File (Get_Current_Context (Kernel));
          begin
-            if File /= "" then
-               String_List.Append (Result, File);
+            if File /= VFS.No_File then
+               String_List.Append (Result, Full_Name (File));
             end if;
          end;
       end if;
@@ -1534,7 +1513,7 @@ package body VCS_View_Pkg is
    ----------------------
 
    function Get_Current_File
-     (Context : Selection_Context_Access) return String
+     (Context : Selection_Context_Access) return Virtual_File
    is
       File : File_Selection_Context_Access;
    begin
@@ -1543,12 +1522,10 @@ package body VCS_View_Pkg is
       then
          File := File_Selection_Context_Access (Context);
 
-         if Has_File_Information (File) then
-            return Directory_Information (File) & File_Information (File);
-         end if;
+         return File_Information (File);
       end if;
 
-      return "";
+      return VFS.No_File;
    end Get_Current_File;
 
    ----------------

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with Glide_Kernel;   use Glide_Kernel;
+with VFS;
 
 package Log_Utils is
 
@@ -28,28 +29,26 @@ package Log_Utils is
 
    function Get_Log_From_File
      (Kernel    : access Kernel_Handle_Record'Class;
-      File_Name : String;
-      Create    : Boolean) return String;
-   --  Return the absolute name for the log file corresponding to
-   --  File_Name.
+      File_Name : VFS.Virtual_File;
+      Create    : Boolean) return VFS.Virtual_File;
+   --  Return the name for the log file corresponding to File_Name.
    --  If the log file doesn't exist and Create is True, then
    --  the function will create the file, return an empty string
    --  otherwise.
 
    function Get_File_From_Log
      (Kernel   : access Kernel_Handle_Record'Class;
-      Log_Name : String) return String;
-   --  Return the absolute name for the file corresponding to
-   --  Log_Name;
+      Log_Name : VFS.Virtual_File) return VFS.Virtual_File;
+   --  Return the name for the file corresponding to Log_Name;
 
    function Get_Log
      (Kernel    : access Kernel_Handle_Record'Class;
-      File_Name : String) return String;
+      File_Name : VFS.Virtual_File) return String;
    --   Return the log for the given file.
 
    procedure Remove_File_From_Mapping
      (Kernel    : access Kernel_Handle_Record'Class;
-      File_Name : String);
+      File_Name : VFS.Virtual_File);
    --  Remove the entry File_Name from the logs mapping,
    --  if such an entry exists.
 

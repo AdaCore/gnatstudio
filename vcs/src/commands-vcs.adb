@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with Glide_Intl; use Glide_Intl;
+with VFS;        use VFS;
 
 package body Commands.VCS is
 
@@ -113,7 +114,8 @@ package body Commands.VCS is
       L_Temp : List_Node := First (Command.Filenames);
    begin
       while L_Temp /= Null_Node loop
-         File_Changed_On_Disk (Command.Kernel, Data (L_Temp));
+         File_Changed_On_Disk
+           (Command.Kernel, Create (Full_Filename => Data (L_Temp)));
          L_Temp := Next (L_Temp);
       end loop;
 

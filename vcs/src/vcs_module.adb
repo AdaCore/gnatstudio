@@ -55,7 +55,7 @@ with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Projects;                  use Projects;
 with Projects.Editor;           use Projects.Editor;
 with Projects.Registry;         use Projects.Registry;
-
+with VFS;                       use VFS;
 with Project_Viewers;           use Project_Viewers;
 
 with String_List_Utils;
@@ -652,14 +652,15 @@ package body VCS_Module is
       Kernel  : Kernel_Handle)
    is
       pragma Unreferenced (Widget);
-      File   : constant String := Get_String (Nth (Args, 1));
+      File   : constant Virtual_File :=
+        Create (Full_Filename => Get_String (Nth (Args, 1)));
       use String_List_Utils.String_List;
       Files  : List;
       Status : File_Status_List.List;
       Ref    : VCS_Access;
 
    begin
-      Append (Files, File);
+      Append (Files, Full_Name (File));
       Ref    := Get_Current_Ref
         (Get_Project_From_File (Get_Registry (Kernel), File, True));
 

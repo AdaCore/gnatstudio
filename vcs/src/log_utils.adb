@@ -25,10 +25,10 @@ with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 
 with Basic_Mapper;              use Basic_Mapper;
-with OS_Utils;                  use OS_Utils;
 with String_Utils;              use String_Utils;
 with Glide_Intl;                use Glide_Intl;
 with Gtkada.Dialogs;            use Gtkada.Dialogs;
+with VFS;                       use VFS;
 
 package body Log_Utils is
 
@@ -51,11 +51,10 @@ package body Log_Utils is
 
    procedure Initialize (Kernel : access Kernel_Handle_Record'Class) is
       Logs_Dir : constant String := Get_Home_Dir (Kernel) & "log_files";
-      Mapping  : constant String :=
-        Normalize_Pathname (Logs_Dir & "/mapping");
+      Mapping  : constant Virtual_File :=
+        Create (Full_Filename => Logs_Dir & "/mapping");
       Mapper   : File_Mapper_Access;
       Button   : Message_Dialog_Buttons;
-      Dummy    : Boolean;
       pragma Unreferenced (Button);
 
       --  Create the mappings file and read it.
@@ -69,32 +68,32 @@ package body Log_Utils is
          declare
             File : File_Descriptor;
          begin
-            File := Create_New_File (Mapping, Text);
+            File := Create_New_File (Locale_Full_Name (Mapping), Text);
             Close (File);
          end;
       end if;
 
       begin
-         Load_Mapper (Mapper, Mapping);
+         Load_Mapper (Mapper, Full_Name (Mapping));
       exception
          when E : others =>
             Trace (Me, "unexpected exception: " & Exception_Information (E));
 
             Button := Message_Dialog
               (Msg     =>
-                 (-"The file") & ASCII.LF & Mapping & ASCII.LF
+                 (-"The file") & ASCII.LF & Full_Name (Mapping) & ASCII.LF
                  & (-"is corrupted, and will be deleted."),
                Dialog_Type => Warning,
                Title   => -"Corrupted file.",
                Buttons => Button_OK,
                Parent  => Get_Main_Window (Kernel));
 
-            Delete_File (Mapping, Dummy);
+            Delete (Mapping);
 
             declare
                File : File_Descriptor;
             begin
-               File := Create_New_File (Mapping, Text);
+               File := Create_New_File (Locale_Full_Name (Mapping), Text);
                Close (File);
             end;
 
@@ -110,11 +109,12 @@ package body Log_Utils is
 
    function Get_Log_From_File
      (Kernel    : access Kernel_Handle_Record'Class;
-      File_Name : String;
-      Create    : Boolean) return String
+      File_Name : VFS.Virtual_File;
+      Create    : Boolean) return VFS.Virtual_File
    is
       Mapper      : File_Mapper_Access := Get_Logs_Mapper (Kernel);
-      Real_Name   : constant String := Normalize_Pathname (File_Name);
+      Real_Name   : constant String :=
+        Full_Name (File_Name, Normalize => True);
       Return_Name : constant String := Get_Other_Text (Mapper, Real_Name);
    begin
       --  ??? Right now, we save the mapping every time that we add
@@ -127,45 +127,53 @@ package body Log_Utils is
          declare
             Logs_Dir : constant String := Get_Home_Dir (Kernel) & "log_files";
             File     : File_Descriptor;
-            S : constant String := Normalize_Pathname
-              (Logs_Dir & Directory_Separator & Base_Name (Real_Name)
-               & "$log");
+
+            --  ??? Using the base name here won't work if there are multiple
+            --  files with the same base name
+            S        : Virtual_File := VFS.Create
+              (Full_Filename =>
+                 Logs_Dir & Directory_Separator & Base_Name (Real_Name)
+                 & "$log");
          begin
-            if not Is_Regular_File
-              (Logs_Dir & Directory_Separator & Base_Name (Real_Name) & "$log")
-            then
-               File := Create_New_File (S, Text);
+            if not Is_Regular_File (S) then
+               File := Create_New_File (Locale_Full_Name (S), Text);
                Close (File);
-               Add_Entry (Mapper, Real_Name, S);
+               Add_Entry (Mapper,
+                          Real_Name,
+                          Full_Name (S, Normalize => True));
                Save_Mapper
                  (Mapper, Normalize_Pathname (Logs_Dir & "/mapping"));
                return S;
 
             else
                for J in Natural loop
-                  declare
-                     S : constant String :=
-                     Normalize_Pathname (Logs_Dir
-                                         & Directory_Separator
-                                         & Base_Name (Real_Name)
-                                         & "$" & Image (J) & "$log");
-                  begin
-                     if not Is_Regular_File (S) then
-                        File := Create_New_File (S, Text);
-                        Close (File);
-                        Add_Entry (Mapper, Real_Name, S);
-                        Save_Mapper
-                          (Mapper, Normalize_Pathname (Logs_Dir & "/mapping"));
-                        return S;
-                     end if;
-                  end;
+                  S := VFS.Create
+                    (Full_Filename =>
+                       Logs_Dir & Directory_Separator
+                       & Base_Name (Real_Name) & "$" & Image (J) & "$log");
+
+                  if not Is_Regular_File (S) then
+                     File := Create_New_File (Locale_Full_Name (S), Text);
+                     Close (File);
+                     Add_Entry
+                       (Mapper,
+                        Real_Name,
+                        Full_Name (S, Normalize => True));
+                     Save_Mapper
+                       (Mapper, Normalize_Pathname (Logs_Dir & "/mapping"));
+                     return S;
+                  end if;
                end loop;
 
-               return "";
+               return VFS.No_File;
             end if;
          end;
+
+      elsif Return_Name = "" then
+         return VFS.No_File;
+
       else
-         return Return_Name;
+         return VFS.Create (Full_Filename => Return_Name);
       end if;
    end Get_Log_From_File;
 
@@ -175,11 +183,13 @@ package body Log_Utils is
 
    function Get_File_From_Log
      (Kernel   : access Kernel_Handle_Record'Class;
-      Log_Name : String) return String
+      Log_Name : Virtual_File) return Virtual_File
    is
       Mapper : constant File_Mapper_Access := Get_Logs_Mapper (Kernel);
    begin
-      return Get_Other_Text (Mapper, Normalize_Pathname (Log_Name));
+      return Create
+        (Full_Filename =>
+           Get_Other_Text (Mapper, Full_Name (Log_Name, Normalize => True)));
    end Get_File_From_Log;
 
    -------------
@@ -188,12 +198,11 @@ package body Log_Utils is
 
    function Get_Log
      (Kernel    : access Kernel_Handle_Record'Class;
-      File_Name : String) return String
+      File_Name : VFS.Virtual_File) return String
    is
       R : String_Access;
    begin
-      R := Read_File
-        (Get_Log_From_File (Kernel, Normalize_Pathname (File_Name), False));
+      R := Read_File (Get_Log_From_File (Kernel, File_Name, False));
 
       if R = null then
          return "";
@@ -214,7 +223,7 @@ package body Log_Utils is
 
    procedure Remove_File_From_Mapping
      (Kernel    : access Kernel_Handle_Record'Class;
-      File_Name : String)
+      File_Name : Virtual_File)
    is
       --  Need to call Name_As_Directory below, to properly handle windows
       --  directories.
@@ -222,7 +231,7 @@ package body Log_Utils is
         Name_As_Directory (Get_Home_Dir (Kernel) & "log_files");
       Mapper   : File_Mapper_Access := Get_Logs_Mapper (Kernel);
    begin
-      Remove_Entry (Mapper, File_Name);
+      Remove_Entry (Mapper, Full_Name (File_Name, Normalize => True));
       Save_Mapper (Mapper, Logs_Dir & "mapping");
    end Remove_File_From_Mapping;
 
