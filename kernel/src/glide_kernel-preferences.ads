@@ -169,17 +169,12 @@ package Glide_Kernel.Preferences is
    Tab_Width                 : Param_Spec_Int;
    Highlight_Column          : Param_Spec_Int;
 
-   Indentation_Key           : Param_Spec_Key;
-   Completion_Key            : Param_Spec_Key;
-   Delimiters_Jump_Key       : Param_Spec_Key;
-
    -- MDI --
    MDI_Opaque            : Param_Spec_Boolean;
    MDI_Destroy_Floats    : Param_Spec_Boolean;
    MDI_Background_Color  : Param_Spec_Color;
    MDI_Title_Bar_Color   : Param_Spec_Color;
    MDI_Focus_Title_Color : Param_Spec_Color;
-   MDI_Switch_Child      : Param_Spec_Key;
    MDI_All_Floating      : Param_Spec_Boolean;
 
    -- Project Editor --

@@ -20,7 +20,6 @@
 
 with Gdk.Color;                use Gdk.Color;
 with Gdk.Types;                use Gdk.Types;
-with Gdk.Types.Keysyms;        use Gdk.Types.Keysyms;
 with Glib;                     use Glib;
 with Glib.Properties;          use Glib.Properties;
 with Glib.Generic_Properties;  use Glib.Generic_Properties;
@@ -228,16 +227,6 @@ package body Glide_Kernel.Preferences is
         (Kernel.Preferences, Param_Spec (MDI_Focus_Title_Color),
          -"General:Windows");
 
-      MDI_Switch_Child      := Gnew_Key
-        (Name  => "MDI-Switch-Child",
-         Nick  => -"Select window",
-         Blurb => -"Key used for interactively selecting new windows",
-         Default_Modifier => Mod1_Mask,
-         Default_Key      => GDK_Tab);
-      Register_Property
-        (Kernel.Preferences, Param_Spec (MDI_Switch_Child),
-         -"General:Windows");
-
       -- Source Editor --
 
       Strip_Blanks := Param_Spec_Boolean (Gnew_Boolean
@@ -395,35 +384,6 @@ package body Glide_Kernel.Preferences is
       Register_Property
         (Kernel.Preferences, Param_Spec (Default_HL_Region_Color),
          -"Editor:Fonts & Colors");
-
-      -- Editor:Keys --
-
-      Indentation_Key := Gnew_Key
-        (Name  => "Src-Editor-Auto-Indent-Key",
-         Nick  => -"Auto-indentation",
-         Blurb => -"Key used for auto-indenting lines or block of lines",
-         Default_Modifier => Control_Mask,
-         Default_Key      => GDK_Tab);
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Indentation_Key), -"Editor:Keys");
-
-      Completion_Key := Gnew_Key
-        (Name  => "Src-Editor-Complete-Key",
-         Nick  => -"Completion",
-         Blurb => -"Key used for automatic completion of identifiers",
-         Default_Modifier => Control_Mask,
-         Default_Key      => GDK_slash);
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Completion_Key), -"Editor:Keys");
-
-      Delimiters_Jump_Key := Gnew_Key
-        (Name  => "Src-Editor-Delimiters-Jump-Key",
-         Nick  => -"Jump to delimiter",
-         Blurb => -"Key used for jumping to the matching delimiter ()[]{}",
-         Default_Modifier => Control_Mask,
-         Default_Key      => GDK_apostrophe);
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Delimiters_Jump_Key), -"Editor:Keys");
 
       -- Debugger --
 
