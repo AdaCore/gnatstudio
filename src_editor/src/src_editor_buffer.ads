@@ -26,14 +26,12 @@
 --  </description>
 
 with Glib; use Glib;
-with Gdk.Event;
 with Gtk;
 with Gtk.Main;
 with Gtk.Text_Buffer;
 with Gtk.Text_Iter;
 with Gtk.Text_Mark;
 with Gtk.Text_Tag;
-with Gtk.Widget;       use Gtk.Widget;
 with Gtkada.Types;
 
 with Language;
@@ -41,7 +39,6 @@ with Src_Highlighting;
 
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 with Ada.Unchecked_Deallocation;
-with Commands.Interactive;    use Commands, Commands.Interactive;
 with Glide_Kernel;
 with Glide_Kernel.Modules; use Glide_Kernel.Modules;
 with Generic_List;
@@ -49,6 +46,8 @@ with Src_Info;
 
 with String_List_Utils;
 with Gdk.GC; use Gdk.GC;
+
+with Commands; use Commands;
 
 package Src_Editor_Buffer is
 
@@ -61,6 +60,10 @@ package Src_Editor_Buffer is
       Kernel : Glide_Kernel.Kernel_Handle;
       Lang   : Language.Language_Access := null);
    --  Create a new Source_Buffer with the given Language.
+
+   type Editable_Line_Type is new Natural;
+   type Buffer_Line_Type is new Natural;
+   type File_Line_Type is new Natural;
 
    procedure Initialize
      (Buffer : access Source_Buffer_Record'Class;
@@ -358,8 +361,8 @@ package Src_Editor_Buffer is
 
    procedure Source_Lines_Revealed
      (Buffer     : access Source_Buffer_Record;
-      Start_Line : Integer;
-      End_Line   : Integer);
+      Start_Line : Buffer_Line_Type;
+      End_Line   : Buffer_Line_Type);
    --  Emit the signal to the kernel saying that an area in the source
    --  has been revealed.
 
@@ -469,10 +472,14 @@ package Src_Editor_Buffer is
    type Line_Info_Width is record
       Info  : Line_Information_Access;
       Width : Integer := 0;
+      Set   : Boolean := False;
    end record;
 
-   type Line_Info_Width_Array is array (Natural range <>) of Line_Info_Width;
+   type Line_Info_Width_Array is array (Natural range <>) of
+     Line_Info_Width;
    type Line_Info_Width_Array_Access is access Line_Info_Width_Array;
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+    (Line_Info_Width_Array, Line_Info_Width_Array_Access);
 
    type Line_Info_Display_Record is record
       Identifier    : String_Access;
@@ -484,9 +491,6 @@ package Src_Editor_Buffer is
 
       Width         : Integer;
       --  The pixel width of the column.
-
-      Column_Info   : Line_Info_Width_Array_Access;
-      --  The information that should be displayed in the column.
 
       Stick_To_Data : Boolean;
       --  If Stick_To_Data is True, then the column contains information
@@ -509,49 +513,27 @@ package Src_Editor_Buffer is
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Line_Info_Display_Array, Line_Info_Display_Array_Access);
 
-   type Natural_Array is array (Natural range <>) of Natural;
-   type Natural_Array_Access is access Natural_Array;
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Natural_Array, Natural_Array_Access);
+   function Line_Needs_Refresh
+     (Buffer : access Source_Buffer_Record;
+      Line   : Buffer_Line_Type) return Boolean;
+   --  Return True if Line needs to be refreshed.
 
-   function Get_Line_Info
+   function Get_Side_Info
+     (Buffer : access Source_Buffer_Record;
+      Line   : Buffer_Line_Type) return Line_Info_Width_Array_Access;
+   --  Return the side information corresponding to Line in the
+   --  Side window.
+   --  User must call Unchecked_Free on the result.
+
+   function Get_Columns_Info
      (Buffer : access Source_Buffer_Record)
       return Line_Info_Display_Array_Access;
-   --  Return Buffer.Line_Info.
-
-   procedure Set_Line_Info
-     (Buffer    : access Source_Buffer_Record;
-      Line_Info : Line_Info_Display_Array_Access);
-   --  Set Buffer.Line_Info.
-
-   function Get_Real_Lines
-     (Buffer : access Source_Buffer_Record)
-      return Natural_Array_Access;
-   --  Return Buffer.Real_Lines;
-
-   procedure Create_Line_Information_Column
-     (Buffer        : access Source_Buffer_Record;
-      Identifier    : String;
-      Stick_To_Data : Boolean;
-      Every_Line    : Boolean);
-   --  Add a column corresponding to Identifier in Buffer.
-
-   procedure Remove_Line_Information_Column
-     (Buffer     : access Source_Buffer_Record;
-      Identifier : String);
-   --  Remove a column from the side information in Buffer.
-
-   procedure Add_File_Information
-     (Buffer     : access Source_Buffer_Record;
-      Identifier : String;
-      Box        : Gtk_Widget;
-      Info       : Glide_Kernel.Modules.Line_Information_Data);
-   --  Add the line information to the Buffer.
-   --  User must not free Info.
+   --  Return the columns configuration information.
+   --  User must call Unchecked_Free on the result.
 
    procedure Add_Line_Highlighting
      (Editor : access Source_Buffer_Record;
-      Line   : Natural;
+      Line   : Editable_Line_Type;
       Id     : String);
    --  Enable the highlighting of Line using colors defined in category
    --  corresponding to Id.
@@ -559,7 +541,7 @@ package Src_Editor_Buffer is
 
    procedure Remove_Line_Highlighting
      (Editor : access Source_Buffer_Record;
-      Line   : Natural;
+      Line   : Editable_Line_Type;
       Id     : String);
    --  Disable the highlighting of Line using colors defined in category
    --  corresponding to Id.
@@ -567,7 +549,7 @@ package Src_Editor_Buffer is
 
    function Get_Highlight_GC
      (Editor : access Source_Buffer_Record;
-      Line   : Positive) return Gdk_GC;
+      Line   : Buffer_Line_Type) return Gdk_GC;
    pragma Inline (Get_Highlight_GC);
    --  Return the current highlighting for Line, or null if no highlighting
    --  is set.
@@ -580,8 +562,8 @@ package Src_Editor_Buffer is
       --  The indentation offset, of the block (ie typically the column of the
       --  starting entity).
 
-      First_Line        : Integer := 0;
-      Last_Line         : Integer := 0;
+      First_Line        : Buffer_Line_Type := 0;
+      Last_Line         : Buffer_Line_Type := 0;
       --  Indicate the lines that bound the block.
 
       Block_Type        : Language.Language_Category := Language.Cat_Unknown;
@@ -593,7 +575,7 @@ package Src_Editor_Buffer is
 
    function Get_Block
      (Editor : access Source_Buffer_Record;
-      Line   : Positive) return Block_Record;
+      Line   : Buffer_Line_Type) return Block_Record;
    pragma Inline (Get_Block);
    --  Return the block information associated with Line.
 
@@ -601,36 +583,18 @@ package Src_Editor_Buffer is
      (Editor : access Source_Buffer_Record) return Boolean;
    --  Returh whether the buffer has relevant block information.
 
-   --------------
-   -- Commands --
-   --------------
+   procedure Add_Blank_Lines
+     (Editor : access Source_Buffer_Record;
+      Line   : Editable_Line_Type;
+      Number : Positive);
+   --  Add Number blank lines at line Line.
+   --  Blank lines cannot be edited, and are not saved on disk.
 
-   type Jump_To_Delimiter_Command is new Interactive_Command
-      with record
-         Kernel : Glide_Kernel.Kernel_Handle;
-      end record;
-   function Execute
-     (Command : access Jump_To_Delimiter_Command; Event : Gdk.Event.Gdk_Event)
-      return Command_Return_Type;
-   --  This commands jmps to the next delimiter for the one currently
-   --  under the cursor.
-
-   type Completion_Command is new Interactive_Command with record
-      Kernel : Glide_Kernel.Kernel_Handle;
-   end record;
-   function Execute
-     (Command : access Completion_Command; Event : Gdk.Event.Gdk_Event)
-      return Command_Return_Type;
-   --  This command completes the word under the cursor based on the
-   --  contents of the buffer.
-
-   type Indentation_Command is new Interactive_Command with record
-      Kernel : Glide_Kernel.Kernel_Handle;
-   end record;
-   function Execute
-     (Command : access Indentation_Command; Event : Gdk.Event.Gdk_Event)
-      return Command_Return_Type;
-   --  This command reindents the current line
+   function Create_Mark
+     (Editor : access Source_Buffer_Record;
+      Line   : Editable_Line_Type;
+      Column : Positive) return Gtk.Text_Mark.Gtk_Text_Mark;
+   --  Create mark at Line, Column.
 
    type Src_Editor_Action_Context is new Glide_Kernel.Action_Context_Record
       with null record;
@@ -641,7 +605,6 @@ package Src_Editor_Buffer is
       Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class)
      return Boolean;
    --  A key context that matches if the current widget is a source editor
-
 
    --------------
    --  Signals --
@@ -678,6 +641,11 @@ package Src_Editor_Buffer is
 
 private
 
+   procedure End_Action (Buffer : access Source_Buffer_Record'Class);
+   --  This procedure should be called every time that an internal
+   --  event should cancel the current user action: focus switching
+   --  to another window, cursor moved, etc.
+
    procedure Buffer_Information_Changed
      (Buffer : access Source_Buffer_Record'Class);
    --  Emit the "buffer_information_changed" signal.
@@ -702,7 +670,20 @@ private
    New_Block : constant Block_Record :=
      (0, 0, 0, 0, Language.Cat_Unknown, null);
 
+   procedure Create_Side_Info
+     (Buffer : access Source_Buffer_Record;
+      Line   : Buffer_Line_Type);
+   --  Create blank Side_Info_Data.
+
+   procedure Create_Side_Info
+     (Buffer : access Source_Buffer_Record;
+      Line   : Editable_Line_Type);
+   --  Create blank Side_Info_Data.
+
    type Line_Data_Record is record
+      Editable_Line      : Editable_Line_Type;
+      --  The line in the real buffer.
+
       --  The following corresponds to line highlighting.
       Current_Highlight  : Gdk_GC;
 
@@ -716,11 +697,20 @@ private
       Block              : Block_Access;
       --  Points to the corresponding block, or null if the line doesn't belong
       --  to a block.
+
+      Side_Info_Data : Line_Info_Width_Array_Access;
+      --  The array corresponding to information to be displayed in columns,
+      --  indexed on columns.
+
+      File_Line          : File_Line_Type;
+      --  The corresponding line in the file corresponding to Buffer.
+      --  0 if the line is not in the file.
    end record;
 
-   New_Line_Data : constant Line_Data_Record := (null, null, null);
+   New_Line_Data : constant Line_Data_Record := (0, null, null, null, null, 0);
 
-   type Line_Data_Array is array (Natural range <>) of Line_Data_Record;
+   type Line_Data_Array is array (Buffer_Line_Type range <>) of
+     Line_Data_Record;
    type Line_Data_Array_Access is access Line_Data_Array;
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
@@ -774,6 +764,63 @@ private
 
    type Line_Terminator_Style is (Unknown, LF, CR, CR_LF);
    --  The line terminator style of the given buffer.
+
+   procedure Free (X : in out Line_Info_Width);
+   --  Free memory associated to X.
+
+   function Get_Buffer_Line
+     (Buffer : access Source_Buffer_Record;
+      Line   : Editable_Line_Type) return Buffer_Line_Type;
+   --  Get the buffer line corresponding to Line.
+   --  Return 0 if no buffer line was found.
+   --  Note: Buffer lines are indexes in Buffer.Line_Data, ie are equal to
+   --  lines in the actual Gtk_Text_Buffer,
+
+   function Get_Editable_Line
+     (Buffer : access Source_Buffer_Record;
+      Line   : File_Line_Type) return Editable_Line_Type;
+   --  Return the editable line corresponding to Line.
+
+   function Get_Buffer_Line
+     (Buffer : access Source_Buffer_Record;
+      Line   : File_Line_Type) return Buffer_Line_Type;
+   --  Return the buffer line corresponding to file line Line.
+
+   --------------------
+   -- Editable lines --
+   --------------------
+
+   type Line_Location_Type is (In_Buffer, In_Mark);
+
+   type Editable_Line_Data (Where : Line_Location_Type := In_Buffer) is record
+      Side_Info_Data : Line_Info_Width_Array_Access;
+      --  The array corresponding to information to be displayed in columns,
+      --  indexed on columns.
+
+      case Where is
+         when In_Buffer =>
+            Buffer_Line : Buffer_Line_Type;
+
+         when In_Mark =>
+            Mark : Gtk.Text_Mark.Gtk_Text_Mark := null;
+            Text : String_Access := null;
+      end case;
+   end record;
+
+   type Editable_Line_Array is array (Editable_Line_Type range <>) of
+     Editable_Line_Data;
+   type Editable_Line_Array_Access is access Editable_Line_Array;
+
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Editable_Line_Array, Editable_Line_Array_Access);
+
+   type Columns_Config_Access is access Line_Info_Display_Array_Access;
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Line_Info_Display_Array_Access, Columns_Config_Access);
+
+   --------------------------
+   -- Source_Buffer_Record --
+   --------------------------
 
    type Source_Buffer_Record is new Gtk.Text_Buffer.Gtk_Text_Buffer_Record with
    record
@@ -851,19 +898,28 @@ private
       --  The following is related to information regarding
       --  the side column information.
 
-      Line_Info           : Line_Info_Display_Array_Access;
-      --  The information that should be displayed in the left window.
+      Buffer_Line_Info_Columns   : Columns_Config_Access;
+      --  The information concerning columns of data that should be displayed
+      --  in the left window.
+      --  Must never be null.
 
-      Real_Lines          : Natural_Array_Access;
-      --  This array associates original line numbers (ie lines that were
-      --  in the view the last time it was saved) with lines in the current
-      --  view.
+      Editable_Line_Info_Columns : Columns_Config_Access;
+      --  The information concerning columns of data that should be displayed
+      --  in the left window.
+      --  Must never be null.
+
+      Editable_Lines      : Editable_Line_Array_Access;
+      --  Reference array for editable lines.
+
+      Modifying_Editable_Lines : Boolean := True;
+      --  Whether we are currently making modifications to the
+      --  editable lines. This is True in normal operations.
 
       Line_Data           : Line_Data_Array_Access;
       --  This array contains all data that are relative to lines: current
       --  highlighting, indentation, collapsing, etc.
 
-      Original_Lines_Number : Natural := 1;
+      Original_Lines_Number : Buffer_Line_Type := 1;
       --  The number of lines in the file on disk.
 
       Total_Column_Width  : Natural := 0;
@@ -874,9 +930,9 @@ private
       Extra_Information : Extra_Information_Array_Access;
       --  Extra information concerning the buffer.
 
-      First_Removed_Line, Last_Removed_Line : Integer;
+      First_Removed_Line, Last_Removed_Line : Buffer_Line_Type;
       --  These line indicate the lines that have just been removed in the
-      --  editor. If First_Removed_Line <= 0, then no lines have been removed.
+      --  editor. If First_Removed_Line = 0, then no lines have been removed.
 
       Parse_Blocks : Boolean := False;
       --  Whether the block information should be parsed.

@@ -64,8 +64,6 @@ with Traces;                    use Traces;
 with Src_Editor_View;           use Src_Editor_View;
 
 with Pango.Font;                use Pango.Font;
-with Pango.Layout;              use Pango.Layout;
-with Gdk.Pixbuf;                use Gdk.Pixbuf;
 
 with String_List_Utils;         use String_List_Utils;
 with Ada.Unchecked_Deallocation;
@@ -73,7 +71,7 @@ with Ada.Unchecked_Deallocation;
 with Src_Editor_Module.Line_Highlighting;
 use Src_Editor_Module.Line_Highlighting;
 
-with Src_Editor_Buffer.Blocks;  use Src_Editor_Buffer.Blocks;
+with Src_Editor_Buffer.Blocks;          use Src_Editor_Buffer.Blocks;
 
 package body Src_Editor_Buffer is
 
@@ -130,10 +128,6 @@ package body Src_Editor_Buffer is
    --  This procedure is used to signal to the clients that the insert
    --  cursor position may have changed by emitting the
    --  "cursor_position_changed" signal.
-
-   procedure Side_Column_Changed
-     (Buffer : access Source_Buffer_Record'Class);
-   --  Emit the "side_column_changed" signal.
 
    procedure Line_Highlights_Changed
      (Buffer : access Source_Buffer_Record'Class);
@@ -204,12 +198,9 @@ package body Src_Editor_Buffer is
    --  these iterators have already been deleted.
 
    procedure Emit_New_Cursor_Position
-     (Buffer : access Source_Buffer_Record'Class;
-      Line   : Gint;
-      Column : Gint);
+     (Buffer : access Source_Buffer_Record'Class);
    --  Signal the new cursor position by emitting the "cursor_position_changed"
-   --  signal. Line and Column are the new line and column number of the
-   --  cursor. Note that line numbers start from 1.
+   --  signal.
 
    procedure Highlight_Slice
      (Buffer     : access Source_Buffer_Record'Class;
@@ -247,11 +238,6 @@ package body Src_Editor_Buffer is
      (Buffer : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Called when the preferences have changed.
 
-   procedure End_Action (Buffer : access Source_Buffer_Record'Class);
-   --  This procedure should be called every time that an internal
-   --  event should cancel the current user action: focus switching
-   --  to another window, cursor moved, etc.
-
    procedure Cursor_Move_Hook (Buffer : access Source_Buffer_Record'Class);
    --  Actions that must be executed whenever the cursor moves.
 
@@ -259,22 +245,22 @@ package body Src_Editor_Buffer is
    --  Actions that must be executed whenever the user inserts or deletes text.
 
    procedure Lines_Remove_Hook_Before
-     (Buffer       : access Source_Buffer_Record'Class;
-      Start_Line : Integer;
-      End_Line   : Integer);
+     (Buffer     : access Source_Buffer_Record'Class;
+      Start_Line : Buffer_Line_Type;
+      End_Line   : Buffer_Line_Type);
    --  Actions that must be executed whenever a line is removed.
    --  This is called before the lines are actually removed from the buffer.
 
    procedure Lines_Remove_Hook_After
-     (Buffer       : access Source_Buffer_Record'Class;
-      Start_Line : Integer;
-      End_Line   : Integer);
+     (Buffer     : access Source_Buffer_Record'Class;
+      Start_Line : Buffer_Line_Type;
+      End_Line   : Buffer_Line_Type);
    --  Same as above, but occurs after the lines have been removed.
 
    procedure Lines_Add_Hook
      (Buffer : access Source_Buffer_Record'Class;
-      Start  : Integer;
-      Number : Integer);
+      Start  : Buffer_Line_Type;
+      Number : Buffer_Line_Type);
    --  Actions that must be executed whenever a line is added.
    --  Start is the number of the line just before the lines were inserted,
    --  Number is the number of lines that were inserted.
@@ -298,49 +284,110 @@ package body Src_Editor_Buffer is
    procedure Clear (Buffer : access Source_Buffer_Record);
    --  Delete all characters from the given buffer, leaving an empty buffer.
 
-   procedure Get_Column_For_Identifier
-     (Buffer     : access Source_Buffer_Record;
-      Identifier : String;
-      Width      : Integer;
-      Column     : out Integer);
-   --  Return the index of the column corresponding to the identifier.
-   --  Create such a column if necessary.
-
    procedure Add_Lines
-     (Buffer   : access Source_Buffer_Record'Class;
-      Start  : Integer;
-      Number : Integer);
+     (Buffer : access Source_Buffer_Record'Class;
+      Start  : Buffer_Line_Type;
+      Number : Buffer_Line_Type);
    --  Add Number blank lines to the column info and line highlights,
    --  after Start.
 
    procedure Remove_Lines
-     (Buffer       : access Source_Buffer_Record'Class;
-      Start_Line : Integer;
-      End_Line   : Integer);
+     (Buffer     : access Source_Buffer_Record'Class;
+      Start_Line : Buffer_Line_Type;
+      End_Line   : Buffer_Line_Type);
    --  Remove lines from the column info and line highlights.
-
-   procedure Insert_At_Position
-     (Buffer  : access Source_Buffer_Record;
-      Info    : Line_Information_Record;
-      Column  : Integer;
-      Line    : Integer;
-      Width   : Integer);
-   --  Insert Info at the correct line position in L.
-
-   procedure Remove_Line_Information_Column
-     (Buffer : access Source_Buffer_Record'Class;
-      Column : Integer);
-   --  Remove the column from the side window information in Buffer.
-
-   procedure Free (X : in out Line_Info_Width);
-   --  Free memory associated to X.
 
    procedure Set_Line_Highlighting
      (Editor : access Source_Buffer_Record;
-      Line   : Positive;
+      Line   : Buffer_Line_Type;
       Id     : String;
       Set    : Boolean);
    --  Common function for [Add|Remove]_Line_Highlighting.
+
+   function Get_Editable_Line
+     (Buffer : access Source_Buffer_Record'Class;
+      Line   : Buffer_Line_Type) return Editable_Line_Type;
+   --  Return the editable line corresponding to Line.
+   --  Return 0 if no editable line was found.
+
+   ---------------------
+   -- Get_Buffer_Line --
+   ---------------------
+
+   function Get_Buffer_Line
+     (Buffer : access Source_Buffer_Record;
+      Line   : Editable_Line_Type) return Buffer_Line_Type is
+   begin
+      if Line in Buffer.Editable_Lines'Range then
+         if Buffer.Editable_Lines (Line).Where = In_Buffer then
+            return Buffer.Editable_Lines (Line).Buffer_Line;
+         end if;
+      end if;
+
+      return 0;
+   end Get_Buffer_Line;
+
+   -----------------------
+   -- Get_Editable_Line --
+   -----------------------
+
+   function Get_Editable_Line
+     (Buffer : access Source_Buffer_Record'Class;
+      Line   : Buffer_Line_Type) return Editable_Line_Type is
+   begin
+      if Line in Buffer.Line_Data'Range then
+         return Buffer.Line_Data (Line).Editable_Line;
+      end if;
+
+      return 0;
+   end Get_Editable_Line;
+
+   -----------------------
+   -- Get_Editable_Line --
+   -----------------------
+
+   function Get_Editable_Line
+     (Buffer : access Source_Buffer_Record;
+      Line   : File_Line_Type) return Editable_Line_Type is
+   begin
+      for J in Buffer.Line_Data'Range loop
+         if Buffer.Line_Data (J).File_Line = Line then
+            return Buffer.Line_Data (J).Editable_Line;
+         end if;
+
+         --  ??? This optimization assumes that the lines are ordered, is it
+         --  true ?
+         if Buffer.Line_Data (J).File_Line > Line then
+            return 0;
+         end if;
+      end loop;
+
+      return 0;
+   end Get_Editable_Line;
+
+   ---------------------
+   -- Get_Buffer_Line --
+   ---------------------
+
+   function Get_Buffer_Line
+     (Buffer : access Source_Buffer_Record;
+      Line   : File_Line_Type) return Buffer_Line_Type
+   is
+   begin
+      for J in Buffer.Line_Data'Range loop
+         if Buffer.Line_Data (J).File_Line = Line then
+            return J;
+         end if;
+
+         --  ??? This optimization assumes that the lines are ordered, is it
+         --  true ?
+         if Buffer.Line_Data (J).File_Line > Line then
+            return 0;
+         end if;
+      end loop;
+
+      return 0;
+   end Get_Buffer_Line;
 
    --------------------
    -- Automatic_Save --
@@ -408,10 +455,6 @@ package body Src_Editor_Buffer is
       Result : Boolean;
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Line_Info_Display_Array, Line_Info_Display_Array_Access);
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Line_Info_Width_Array, Line_Info_Width_Array_Access);
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Line_Info_Display_Record, Line_Info_Display_Access);
    begin
       --  We do not free memory associated to Buffer.Current_Command, since
       --  this command is already freed when freeing Buffer.Queue.
@@ -440,19 +483,37 @@ package body Src_Editor_Buffer is
       Free_Queue (Buffer.Queue);
       Free (Buffer.Filename);
       Free (Buffer.File_Identifier);
-      Unchecked_Free (Buffer.Real_Lines);
 
-      for J in Buffer.Line_Info'Range loop
-         for K in Buffer.Line_Info (J).Column_Info'Range loop
-            Free (Buffer.Line_Info (J).Column_Info (K));
+      if Buffer.Buffer_Line_Info_Columns.all /= null then
+         for J in Buffer.Buffer_Line_Info_Columns.all'Range loop
+            Free (Buffer.Buffer_Line_Info_Columns.all (J).Identifier);
          end loop;
 
-         Free (Buffer.Line_Info (J).Identifier);
-         Unchecked_Free (Buffer.Line_Info (J).Column_Info);
-         Unchecked_Free (Buffer.Line_Info (J));
-      end loop;
+         Unchecked_Free (Buffer.Buffer_Line_Info_Columns.all);
+      end if;
 
-      Unchecked_Free (Buffer.Line_Info);
+      Unchecked_Free (Buffer.Buffer_Line_Info_Columns);
+
+      if Buffer.Editable_Line_Info_Columns.all /= null then
+         for J in Buffer.Editable_Line_Info_Columns.all'Range loop
+            Free (Buffer.Editable_Line_Info_Columns.all (J).Identifier);
+         end loop;
+
+         Unchecked_Free (Buffer.Editable_Line_Info_Columns.all);
+      end if;
+
+      Unchecked_Free (Buffer.Editable_Line_Info_Columns);
+
+      if Buffer.Editable_Lines /= null then
+         for J in Buffer.Editable_Lines'Range loop
+            if Buffer.Editable_Lines (J).Where = In_Mark then
+               Free (Buffer.Editable_Lines (J).Text);
+            end if;
+         end loop;
+
+         Unchecked_Free (Buffer.Editable_Lines);
+      end if;
+
 
       for J in Buffer.Line_Data'Range loop
          if Buffer.Line_Data (J).Enabled_Highlights /= null then
@@ -461,6 +522,7 @@ package body Src_Editor_Buffer is
       end loop;
 
       Unchecked_Free (Buffer.Line_Data);
+
       Block_List.Free (Buffer.Blocks);
    end Buffer_Destroy;
 
@@ -469,11 +531,8 @@ package body Src_Editor_Buffer is
    ---------------------
 
    procedure Changed_Handler (Buffer : access Source_Buffer_Record'Class) is
-      Line : Gint;
-      Col  : Gint;
    begin
-      Get_Screen_Position (Buffer, Line => Line, Column => Col);
-      Emit_New_Cursor_Position (Buffer, Line => Line, Column => Col);
+      Emit_New_Cursor_Position (Buffer);
       Buffer.Modified_Auto := True;
 
    exception
@@ -491,8 +550,6 @@ package body Src_Editor_Buffer is
    is
       Mark : constant Gtk_Text_Mark :=
         Get_Text_Mark (Glib.Values.Nth (Params, 2));
-      Line : Gint;
-      Col  : Gint;
 
    begin
       --  Emit the new cursor position if it is the Insert_Mark that was
@@ -517,8 +574,7 @@ package body Src_Editor_Buffer is
                Buffer.Insert_Mark := Mark;
             end if;
 
-            Get_Screen_Position (Buffer, Line, Col);
-            Emit_New_Cursor_Position (Buffer, Line => Line, Column => Col);
+            Emit_New_Cursor_Position (Buffer);
 
             Cursor_Move_Hook (Buffer);
          end if;
@@ -620,9 +676,9 @@ package body Src_Editor_Buffer is
    is
       Length : constant Gint := Get_Int (Nth (Params, 3));
       Dummy  : Boolean;
-      Start  : Integer;
+      Start  : Buffer_Line_Type;
       Iter   : Gtk_Text_Iter;
-      Number : Integer;
+      Number : Buffer_Line_Type;
 
    begin
       Get_Text_Iter (Nth (Params, 1), Iter);
@@ -640,12 +696,12 @@ package body Src_Editor_Buffer is
 
       --  Call Add_Lines, to compute added lines for the side column.
 
-      Start := Integer (Get_Line (Iter));
+      Start := Buffer_Line_Type (Get_Line (Iter) + 1);
       Backward_Chars (Iter, Length, Dummy);
-      Number := Start - Integer (Get_Line (Iter));
+      Number := Start - Buffer_Line_Type (Get_Line (Iter) + 1);
 
       if Number > 0 then
-         Lines_Add_Hook (Buffer, Start, Number);
+         Lines_Add_Hook (Buffer, Start - Number, Number);
       end if;
 
    exception
@@ -847,7 +903,9 @@ package body Src_Editor_Buffer is
 
       if Line_Start /= Line_End then
          Lines_Remove_Hook_Before
-           (Buffer, Integer (Line_Start + 1), Integer (Line_End + 1));
+           (Buffer,
+            Buffer_Line_Type (Line_Start + 1),
+            Buffer_Line_Type (Line_End + 1));
       end if;
 
       if not Is_Null_Command (Command)
@@ -924,21 +982,6 @@ package body Src_Editor_Buffer is
          & ASCII.NUL);
    end Line_Highlights_Changed;
 
-   -------------------------
-   -- Side_Column_Changed --
-   -------------------------
-
-   procedure Side_Column_Changed
-     (Buffer : access Source_Buffer_Record'Class)
-   is
-      procedure Emit_By_Name
-        (Object : System.Address;
-         Name   : String);
-      pragma Import (C, Emit_By_Name, "g_signal_emit_by_name");
-   begin
-      Emit_By_Name (Get_Object (Buffer), "side_column_changed" & ASCII.NUL);
-   end Side_Column_Changed;
-
    --------------------------------
    -- Buffer_Information_Changed --
    --------------------------------
@@ -997,9 +1040,7 @@ package body Src_Editor_Buffer is
    ------------------------------
 
    procedure Emit_New_Cursor_Position
-     (Buffer : access Source_Buffer_Record'Class;
-      Line   : Gint;
-      Column : Gint)
+     (Buffer : access Source_Buffer_Record'Class)
    is
       procedure Emit_By_Name
         (Object : System.Address;
@@ -1008,10 +1049,14 @@ package body Src_Editor_Buffer is
          Column : Gint);
       pragma Import (C, Emit_By_Name, "g_signal_emit_by_name");
 
+      L, C : Gint;
    begin
+      Get_Screen_Position (Buffer, L, C);
+
       Emit_By_Name
         (Get_Object (Buffer), "cursor_position_changed" & ASCII.NUL,
-         Line => Line, Column => Column);
+         Line   => Gint (Get_Editable_Line (Buffer, Buffer_Line_Type (L + 1))),
+         Column => C + 1);
 
       --  Remove delimiters highlight.
 
@@ -1427,12 +1472,17 @@ package body Src_Editor_Buffer is
 
       --  Initialize the line info.
 
-      Buffer.Line_Info := new Line_Info_Display_Array (1 .. 0);
-      Buffer.Real_Lines := new Natural_Array (1 .. 1);
-      Buffer.Real_Lines (1) := 0;
+      Buffer.Editable_Lines := new Editable_Line_Array (1 .. 1);
+      Buffer.Editable_Lines (1) :=
+        (Where          => In_Buffer,
+         Buffer_Line    => 1,
+         Side_Info_Data => null);
+
+      --  ??? create line info (above)
 
       Buffer.Line_Data := new Line_Data_Array (1 .. 1);
       Buffer.Line_Data (1) := New_Line_Data;
+      Buffer.Line_Data (1).Editable_Line := 1;
 
       --  Compute the block information.
 
@@ -1452,6 +1502,7 @@ package body Src_Editor_Buffer is
       Command : Check_Modified_State;
    begin
       Gtk.Text_Buffer.Initialize (Buffer);
+
       Glib.Object.Initialize_Class_Record
         (Buffer, Signals, Class_Record, "GlideSourceBuffer",
          Signal_Parameters);
@@ -1528,6 +1579,13 @@ package body Src_Editor_Buffer is
         (Buffer.Queue,
          Command_Access (Command),
          "State_Check");
+
+      Buffer.First_Removed_Line := 0;
+
+      Buffer.Editable_Line_Info_Columns := new Line_Info_Display_Array_Access'
+        (null);
+      Buffer.Buffer_Line_Info_Columns   := new Line_Info_Display_Array_Access'
+        (null);
    end Initialize;
 
    -------------------------
@@ -1681,6 +1739,7 @@ package body Src_Editor_Buffer is
       Start_Iter : Gtk_Text_Iter;
       End_Iter   : Gtk_Text_Iter;
       Terminator : Line_Terminator_Style := Buffer.Line_Terminator;
+      Buffer_Line : Buffer_Line_Type;
 
       Force_Write : Boolean := False;
       --  Whether the file mode has been forced to writable.
@@ -1874,10 +1933,12 @@ package body Src_Editor_Buffer is
       then
          File_Saved (Buffer.Kernel, Filename);
 
-         --  Resynchronize the Real_Lines array.
+         for J in Buffer.Editable_Lines'Range loop
+            Buffer_Line := Get_Buffer_Line (Buffer, J);
 
-         for J in Buffer.Real_Lines'Range loop
-            Buffer.Real_Lines (J) := J;
+            if Buffer_Line /= 0 then
+               Buffer.Line_Data (Buffer_Line).File_Line := File_Line_Type (J);
+            end if;
          end loop;
 
          Buffer.Saved_Position := Get_Position (Buffer.Queue);
@@ -2449,7 +2510,9 @@ package body Src_Editor_Buffer is
 
       if Start_Line /= End_Line then
          Lines_Remove_Hook_Before
-           (Buffer, Integer (Start_Line + 1), Integer (End_Line + 1));
+           (Buffer,
+            Buffer_Line_Type (Start_Line + 1),
+            Buffer_Line_Type (End_Line + 1));
       end if;
 
       Delete (Buffer, Start_Iter, End_Iter);
@@ -2589,8 +2652,8 @@ package body Src_Editor_Buffer is
 
    procedure Lines_Add_Hook
      (Buffer : access Source_Buffer_Record'Class;
-      Start  : Integer;
-      Number : Integer) is
+      Start  : Buffer_Line_Type;
+      Number : Buffer_Line_Type) is
    begin
       --  Resynchronize the arrays that need to be synchronized with line
       --  numbers.
@@ -2605,9 +2668,9 @@ package body Src_Editor_Buffer is
    ------------------------------
 
    procedure Lines_Remove_Hook_Before
-     (Buffer       : access Source_Buffer_Record'Class;
-      Start_Line : Integer;
-      End_Line   : Integer) is
+     (Buffer     : access Source_Buffer_Record'Class;
+      Start_Line : Buffer_Line_Type;
+      End_Line   : Buffer_Line_Type) is
    begin
       --  Resynchronize the arrays that need to be synchronized with line
       --  numbers.
@@ -2627,9 +2690,9 @@ package body Src_Editor_Buffer is
    -----------------------------
 
    procedure Lines_Remove_Hook_After
-     (Buffer       : access Source_Buffer_Record'Class;
-      Start_Line : Integer;
-      End_Line   : Integer)
+     (Buffer     : access Source_Buffer_Record'Class;
+      Start_Line : Buffer_Line_Type;
+      End_Line   : Buffer_Line_Type)
    is
       pragma Unreferenced (Start_Line, End_Line);
    begin
@@ -2793,8 +2856,8 @@ package body Src_Editor_Buffer is
 
    procedure Source_Lines_Revealed
      (Buffer     : access Source_Buffer_Record;
-      Start_Line : Integer;
-      End_Line   : Integer)
+      Start_Line : Buffer_Line_Type;
+      End_Line   : Buffer_Line_Type)
    is
       Context : File_Area_Context_Access;
    begin
@@ -2822,7 +2885,7 @@ package body Src_Editor_Buffer is
          Set_File_Information (Context, "", Buffer.File_Identifier.all);
       end if;
 
-      Set_Area_Information (Context, Start_Line, End_Line);
+      Set_Area_Information (Context, Integer (Start_Line), Integer (End_Line));
       Glide_Kernel.Source_Lines_Revealed (Buffer.Kernel, Context);
       Unref (Selection_Context_Access (Context));
    end Source_Lines_Revealed;
@@ -3007,372 +3070,170 @@ package body Src_Editor_Buffer is
       Buffer.Controls_Set := False;
    end Remove_Controls;
 
-   -------------------
-   -- Get_Line_Info --
-   -------------------
+   ----------------------
+   -- Get_Columns_Info --
+   ----------------------
 
-   function Get_Line_Info
+   function Get_Columns_Info
      (Buffer : access Source_Buffer_Record)
-      return Line_Info_Display_Array_Access is
-   begin
-      return Buffer.Line_Info;
-   end Get_Line_Info;
-
-   -------------------
-   -- Set_Line_Info --
-   -------------------
-
-   procedure Set_Line_Info
-     (Buffer    : access Source_Buffer_Record;
-      Line_Info : Line_Info_Display_Array_Access) is
-   begin
-      Buffer.Line_Info := Line_Info;
-   end Set_Line_Info;
-
-   --------------------
-   -- Get_Real_Lines --
-   --------------------
-
-   function Get_Real_Lines
-     (Buffer : access Source_Buffer_Record)
-      return Natural_Array_Access is
-   begin
-      return Buffer.Real_Lines;
-   end Get_Real_Lines;
-
-   ------------------------
-   -- Insert_At_Position --
-   ------------------------
-
-   procedure Insert_At_Position
-     (Buffer : access Source_Buffer_Record;
-      Info   : Line_Information_Record;
-      Column : Integer;
-      Line   : Integer;
-      Width  : Integer)
+      return Line_Info_Display_Array_Access
    is
-      Line_Info  : Line_Info_Display_Array_Access renames Buffer.Line_Info;
-      Real_Lines : Natural_Array_Access renames Buffer.Real_Lines;
-      Highlightings : Line_Data_Array_Access renames Buffer.Line_Data;
    begin
-      if Line not in Real_Lines'Range then
-         declare
-            A : constant Natural_Array := Real_Lines.all;
-            H : constant Line_Data_Array := Highlightings.all;
-         begin
-            Unchecked_Free (Real_Lines);
-            Real_Lines := new Natural_Array (1 .. Line * 2);
-
-            Real_Lines (A'Range) := A;
-            Real_Lines (A'Last + 1 .. Real_Lines'Last) := (others => 0);
-
-            Unchecked_Free (Highlightings);
-            Highlightings := new Line_Data_Array (1 .. Line * 2);
-
-            Highlightings (H'Range) := H;
-            Highlightings (H'Last + 1 .. Highlightings'Last) :=
-              (others => New_Line_Data);
-         end;
-      end if;
-
-      --  If needed, increase the size of the target array
-
-      if (not Line_Info (Column).Stick_To_Data)
-        and then Line > Line_Info (Column).Column_Info'Last
-      then
-         declare
-            A : Line_Info_Width_Array (1 .. Line * 2);
-         begin
-            A (1 .. Line_Info (Column).Column_Info'Last) :=
-              Line_Info (Column).Column_Info.all;
-            Line_Info (Column).Column_Info :=
-              new Line_Info_Width_Array'(A);
-         end;
-      end if;
-
-      --  Insert the data in the array
-
-      if not (Line_Info (Column).Stick_To_Data
-              and then Line > Buffer.Original_Lines_Number)
-      then
-         if Line_Info (Column).Column_Info (Line).Info /= null then
-            Free (Line_Info (Column).Column_Info (Line));
+      if Buffer.Buffer_Line_Info_Columns.all = null then
+         if Buffer.Editable_Line_Info_Columns.all /= null then
+            return new Line_Info_Display_Array'
+              (Buffer.Editable_Line_Info_Columns.all.all);
          end if;
-
-         Line_Info (Column).Column_Info (Line) :=
-           Line_Info_Width'(new Line_Information_Record'(Info), Width);
-      end if;
-   end Insert_At_Position;
-
-   -------------------------------
-   -- Get_Column_For_Identifier --
-   -------------------------------
-
-   procedure Get_Column_For_Identifier
-     (Buffer     : access Source_Buffer_Record;
-      Identifier : String;
-      Width      : Integer;
-      Column     : out Integer)
-   is
-      Line_Info  : Line_Info_Display_Array_Access renames Buffer.Line_Info;
-   begin
-      --  Browse through existing columns and try to match Identifier
-
-      for J in Line_Info'Range loop
-         if Line_Info (J).Identifier.all = Identifier then
-            Column := J;
-
-            --  Set the new width of the column
-
-            if Line_Info (J).Width < Width then
-               for K in (J + 1) .. Line_Info.all'Last loop
-                  Line_Info (K).Starting_X :=
-                    Line_Info (K).Starting_X + Width
-                    - Line_Info (J).Width;
-               end loop;
-
-               Buffer.Total_Column_Width :=
-                 Buffer.Total_Column_Width + Width
-                   - Line_Info (J).Width;
-
-               Line_Info (J).Width := Width;
-            end if;
-
-            return;
-         end if;
-      end loop;
-
-      --  If we reach this point, that means no column was found that
-      --  corresponds to Identifier. Therefore we create one.
-
-      declare
-         A : Line_Info_Display_Array
-           (Line_Info.all'First .. Line_Info.all'Last + 1);
-         New_Column : Line_Info_Width_Array
-           (1 .. Buffer.Original_Lines_Number);
-      begin
-         A (Line_Info'First .. Line_Info'Last) := Line_Info.all;
-
-         A (A'Last) := new Line_Info_Display_Record'
-           (Identifier  => new String'(Identifier),
-            Starting_X  => Buffer.Total_Column_Width + 2,
-            Width       => Width,
-            Column_Info => new Line_Info_Width_Array'(New_Column),
-            Stick_To_Data => False,
-            Every_Line    => False);
-         Unchecked_Free (Line_Info);
-         Line_Info := new Line_Info_Display_Array'(A);
-
-         Column := Line_Info.all'Last;
-
-         Buffer.Total_Column_Width := Buffer.Total_Column_Width + Width + 2;
-      end;
-   end Get_Column_For_Identifier;
-
-   --------------------------
-   -- Add_File_Information --
-   --------------------------
-
-   procedure Add_File_Information
-     (Buffer     : access Source_Buffer_Record;
-      Identifier : String;
-      Box        : Gtk_Widget;
-      Info       : Glide_Kernel.Modules.Line_Information_Data)
-   is
-      Column : Integer;
-      Num    : Gint := 1;
-      Height : Gint;
-      Width  : Gint := -1;
-      Widths : array (Info'Range) of Gint;
-      Layout : Pango_Layout;
-      Found  : Boolean := False;
-
-   begin
-      --  Test if we are adding extra information, or line information.
-
-      if Info'First < 0 then
-         --  Look for an existing entry.
-
-         if Buffer.Extra_Information = null then
-            Buffer.Extra_Information := new Extra_Information_Array'
-              (1 => new Extra_Information_Record'
-                 (Identifier => new String'(Identifier),
-                  Info => new Line_Information_Record'(Info (Info'First))));
+      else
+         if Buffer.Editable_Line_Info_Columns.all /= null then
+            return new Line_Info_Display_Array'
+              (Buffer.Buffer_Line_Info_Columns.all.all
+               & Buffer.Editable_Line_Info_Columns.all.all);
          else
-            for J in Buffer.Extra_Information'Range loop
-               if Buffer.Extra_Information (J).Identifier.all = Identifier then
-                  Unchecked_Free (Buffer.Extra_Information (J).Info);
-                  Buffer.Extra_Information (J).Info :=
-                    new Line_Information_Record'(Info (Info'First));
-                  Found := True;
-                  exit;
-               end if;
-            end loop;
-
-            if not Found then
-               declare
-                  A : Extra_Information_Array
-                    (1 .. Buffer.Extra_Information'Last + 1);
-               begin
-                  A (1 .. Buffer.Extra_Information'Last) :=
-                    Buffer.Extra_Information.all;
-                  A (Buffer.Extra_Information'Last + 1) :=
-                    new Extra_Information_Record'
-                      (Info       => new Line_Information_Record'
-                           (Info (Info'First)),
-                       Identifier => new String'(Identifier));
-               end;
-            end if;
+            return new Line_Info_Display_Array'
+              (Buffer.Editable_Line_Info_Columns.all.all);
          end if;
-
-         Buffer_Information_Changed (Buffer);
-         return;
       end if;
 
-      --  If we reach this point, the info corresponds to line information.
+      return null;
+   end Get_Columns_Info;
 
-      Layout := Create_Pango_Layout (Box);
-      Set_Font_Description
-        (Layout,
-         Get_Pref (Buffer.Kernel, Source_Editor_Font));
+   ------------------------
+   -- Line_Needs_Refresh --
+   ------------------------
 
-      --  Compute the maximum width of the items to add.
-      --  We compute this width once and for all and in advance,
-      --  because is is quite expensive, and we don't want to do it
-      --  in Src_Editor_View.Redraw_Columns, since that function is
-      --  called a great number of times.
-
-      for J in Info'Range loop
-         Widths (J) := -1;
-
-         if Info (J).Text /= null then
-            Set_Text (Layout, String'(Info (J).Text.all));
-            Get_Pixel_Size (Layout, Num, Height);
-
-            if Num = 0 then
-               Num := 1;
+   function Line_Needs_Refresh
+     (Buffer : access Source_Buffer_Record;
+      Line   : Buffer_Line_Type) return Boolean
+   is
+      Editable_Line : Editable_Line_Type;
+   begin
+      if Buffer.Line_Data (Line).Side_Info_Data /= null then
+         for J in Buffer.Line_Data (Line).Side_Info_Data'Range loop
+            if not Buffer.Line_Data (Line).Side_Info_Data (J).Set then
+               return True;
             end if;
+         end loop;
+      end if;
 
-            Widths (J) := Num;
+      Editable_Line := Get_Editable_Line (Buffer, Line);
 
-            if Num > Width then
-               Width := Num;
+      if Editable_Line = 0 then
+         return False;
+      end if;
+
+      if Buffer.Editable_Lines (Editable_Line).Side_Info_Data /= null then
+         for J in Buffer.Editable_Lines
+           (Editable_Line).Side_Info_Data'Range
+         loop
+            if not Buffer.Editable_Lines
+              (Editable_Line).Side_Info_Data (J).Set
+            then
+               return True;
+            end if;
+         end loop;
+      end if;
+
+      return False;
+   end Line_Needs_Refresh;
+
+   -------------------
+   -- Get_Side_Info --
+   -------------------
+
+   function Get_Side_Info
+     (Buffer : access Source_Buffer_Record;
+      Line   : Buffer_Line_Type) return Line_Info_Width_Array_Access
+   is
+      Editable_Line : Editable_Line_Type;
+   begin
+      Editable_Line := Get_Editable_Line (Buffer, Line);
+
+      if Line in Buffer.Line_Data'Range then
+         if Buffer.Line_Data (Line).Side_Info_Data = null then
+            if Editable_Line /= 0 then
+               if Buffer.Editable_Lines
+                 (Editable_Line).Side_Info_Data /= null
+               then
+                  return new Line_Info_Width_Array'
+                    (Buffer.Editable_Lines
+                       (Editable_Line).Side_Info_Data.all);
+               end if;
+            end if;
+         else
+            if Editable_Line /= 0
+              and then Buffer.Editable_Lines
+                (Editable_Line).Side_Info_Data /= null
+            then
+               return new Line_Info_Width_Array'
+                 (Buffer.Line_Data (Line).Side_Info_Data.all
+                  & Buffer.Editable_Lines
+                    (Editable_Line).Side_Info_Data.all);
+
+            else
+               return new Line_Info_Width_Array'
+                 (Buffer.Line_Data (Line).Side_Info_Data.all);
             end if;
          end if;
+      end if;
 
-         if Info (J).Image /= Null_Pixbuf then
-            Num := Get_Width (Info (J).Image);
+      return null;
+   end Get_Side_Info;
 
-            Widths (J) := Num;
+   ----------------------
+   -- Create_Side_Info --
+   ----------------------
 
-            if Num > Width then
-               Width := Num;
-            end if;
+   procedure Create_Side_Info
+     (Buffer : access Source_Buffer_Record;
+      Line   : Buffer_Line_Type)
+   is
+      Buffer_Lines   : Line_Data_Array_Access renames Buffer.Line_Data;
+      Columns_Config : Line_Info_Display_Array_Access
+        renames Buffer.Buffer_Line_Info_Columns.all;
+   begin
+      if Columns_Config /= null then
+         if Buffer_Lines (Line).Side_Info_Data = null then
+            Buffer_Lines (Line).Side_Info_Data := new
+              Line_Info_Width_Array (Columns_Config'Range);
+
+            for K in Columns_Config'Range loop
+               Buffer_Lines (Line).Side_Info_Data (K) :=
+                 (null,
+                  Width => -1,
+                  Set   => not Columns_Config (K).Every_Line);
+            end loop;
          end if;
-      end loop;
+      end if;
+   end Create_Side_Info;
 
-      --  Get the column that corresponds to Identifier,
-      --  create it if necessary.
-      Get_Column_For_Identifier
-        (Buffer,
-         Identifier,
-         Integer (Width),
-         Column);
+   ----------------------
+   -- Create_Side_Info --
+   ----------------------
 
-      --  Update the stored data.
-      for J in Info'Range loop
-         Insert_At_Position
-           (Buffer, Info (J), Column, J, Integer (Widths (J)));
-      end loop;
-
-      Unref (Layout);
-
-      Side_Column_Changed (Buffer);
-   end Add_File_Information;
-
-   ------------------------------------
-   -- Create_Line_Information_Column --
-   ------------------------------------
-
-   procedure Create_Line_Information_Column
-     (Buffer          : access Source_Buffer_Record;
-      Identifier    : String;
-      Stick_To_Data : Boolean;
-      Every_Line    : Boolean)
+   procedure Create_Side_Info
+     (Buffer : access Source_Buffer_Record;
+      Line   : Editable_Line_Type)
    is
-      Col : Integer;
-
+      Editable_Lines   : Editable_Line_Array_Access
+        renames Buffer.Editable_Lines;
+      Columns_Config : Line_Info_Display_Array_Access
+        renames Buffer.Editable_Line_Info_Columns.all;
    begin
-      Get_Column_For_Identifier
-        (Buffer, Identifier, -1, Col);
+      if Columns_Config /= null then
+         if Editable_Lines (Line).Side_Info_Data = null then
+            Editable_Lines (Line).Side_Info_Data := new
+              Line_Info_Width_Array (Columns_Config'Range);
 
-      Buffer.Line_Info (Col).Stick_To_Data := Stick_To_Data;
-      Buffer.Line_Info (Col).Every_Line    := Every_Line;
-   end Create_Line_Information_Column;
-
-   ------------------------------------
-   -- Remove_Line_Information_Column --
-   ------------------------------------
-
-   procedure Remove_Line_Information_Column
-     (Buffer : access Source_Buffer_Record'Class;
-      Column : Integer)
-   is
-      Width : Integer;
-
-      procedure Free is new Ada.Unchecked_Deallocation
-        (Line_Info_Width_Array, Line_Info_Width_Array_Access);
-      procedure Free is new Ada.Unchecked_Deallocation
-        (Line_Info_Display_Record, Line_Info_Display_Access);
-
-      Line_Info  : Line_Info_Display_Array_Access
-        renames Buffer.Line_Info;
-   begin
-      Width := Line_Info (Column).Width;
-
-      for J in Line_Info (Column).Column_Info'Range loop
-         Free (Line_Info (Column).Column_Info (J));
-      end loop;
-
-      GNAT.OS_Lib.Free (Line_Info (Column).Identifier);
-      Free (Line_Info (Column).Column_Info);
-      Free (Line_Info (Column));
-
-      declare
-         A : Line_Info_Display_Array
-           (Line_Info.all'First .. Line_Info.all'Last - 1);
-      begin
-         A (Line_Info.all'First .. Column - 1) :=
-           Line_Info (Line_Info.all'First .. Column - 1);
-         A (Column .. Line_Info.all'Last - 1) :=
-           Line_Info (Column + 1 .. Line_Info.all'Last);
-         Unchecked_Free (Line_Info);
-         Line_Info := new Line_Info_Display_Array'(A);
-      end;
-
-      for J in Column .. Line_Info.all'Last loop
-         Line_Info (J).Starting_X :=
-           Line_Info (J).Starting_X - Width - 2;
-      end loop;
-
-      Buffer.Total_Column_Width := Buffer.Total_Column_Width - Width - 2;
-   end Remove_Line_Information_Column;
-
-   ------------------------------------
-   -- Remove_Line_Information_Column --
-   ------------------------------------
-
-   procedure Remove_Line_Information_Column
-     (Buffer     : access Source_Buffer_Record;
-      Identifier : String)
-   is
-      Col : Integer;
-   begin
-      Get_Column_For_Identifier (Buffer, Identifier, -1, Col);
-      Remove_Line_Information_Column (Buffer, Col);
-
-      Side_Column_Changed (Buffer);
-   end Remove_Line_Information_Column;
+            for K in Columns_Config'Range loop
+               Editable_Lines (Line).Side_Info_Data (K) :=
+                 (null,
+                  Width => -1,
+                  Set   => not Columns_Config (K).Every_Line);
+            end loop;
+         end if;
+      end if;
+   end Create_Side_Info;
 
    ---------------
    -- Add_Lines --
@@ -3380,31 +3241,111 @@ package body Src_Editor_Buffer is
 
    procedure Add_Lines
      (Buffer : access Source_Buffer_Record'Class;
-      Start  : Integer;
-      Number : Integer)
+      Start  : Buffer_Line_Type;
+      Number : Buffer_Line_Type)
    is
-      Real_Lines : Natural_Array_Access renames Buffer.Real_Lines;
-      Highlightings : Line_Data_Array_Access renames Buffer.Line_Data;
+      Buffer_Lines   : Line_Data_Array_Access renames Buffer.Line_Data;
+      Editable_Lines : Editable_Line_Array_Access renames
+        Buffer.Editable_Lines;
 
-      Bottom_Line : Integer;
+      Bottom_Line : Buffer_Line_Type;
 
-      procedure Expand_Lines (N : Integer);
-      --  Expand the line-indexed array to contail N lines in size.
+      Ref_Editable_Line : Editable_Line_Type;
 
-      procedure Expand_Lines (N : Integer) is
-         A : constant Natural_Array := Real_Lines.all;
+      Inserted_In_Place : Boolean := False;
 
-         H : constant Line_Data_Array := Highlightings.all;
+      procedure Expand_Lines
+        (N : Buffer_Line_Type);
+      --  Expand the line-indexed arrays to contain N lines in size.
+
+      procedure Expand_Lines (N : Buffer_Line_Type) is
+         H : constant Line_Data_Array := Buffer_Lines.all;
+         K : constant Editable_Line_Array := Buffer.Editable_Lines.all;
+         R : Buffer_Line_Type;
       begin
-         Real_Lines := new Natural_Array (1 .. N * 2);
-         Real_Lines (A'Range) := A;
-         Real_Lines (A'Last + 1 .. Real_Lines'Last) := (others => 0);
+         Unchecked_Free (Buffer_Lines);
+         Buffer_Lines := new Line_Data_Array (1 .. N * 2);
 
-         Highlightings := new Line_Data_Array (1 .. N * 2);
-         Highlightings (H'Range) := H;
-         Highlightings (H'Last + 1 .. Highlightings'Last) :=
-           (others => New_Line_Data);
+         if Start > H'Last then
+            Buffer_Lines (H'Range) := H;
 
+            for J in H'Last + 1 .. Buffer_Lines'Last loop
+               Buffer_Lines (J) := New_Line_Data;
+               Create_Side_Info (Buffer, J);
+            end loop;
+         else
+            Buffer_Lines (H'First .. Start) := H (H'First .. Start);
+
+            for J in Start + 1 .. Start + Number loop
+               Buffer_Lines (J) := New_Line_Data;
+               Create_Side_Info (Buffer, J);
+            end loop;
+
+            Buffer_Lines (Start + Number + 1
+                            .. H'Last + Number) := H (Start + 1 .. H'Last);
+
+            for J in H'Last + Number + 1 .. Buffer_Lines'Last loop
+               Buffer_Lines (J) := New_Line_Data;
+               Create_Side_Info (Buffer, J);
+            end loop;
+         end if;
+
+
+         Unchecked_Free (Buffer.Editable_Lines);
+         Buffer.Editable_Lines := new Editable_Line_Array
+           (1 .. Editable_Line_Type (N * 2));
+
+         --  ??? Should we save R somewhere as last editable buffer line ?
+         R := 0;
+
+         for J in reverse K'Range loop
+            if K (J).Where = In_Buffer then
+               R := K (J).Buffer_Line;
+               exit;
+            end if;
+         end loop;
+
+         if Ref_Editable_Line > K'Last then
+            Buffer.Editable_Lines (K'Range) := K;
+
+
+            for J in K'Last + 1 .. Buffer.Editable_Lines'Last loop
+               Buffer.Editable_Lines (J) :=
+                 (Where       => In_Buffer,
+                  Buffer_Line => R + Buffer_Line_Type (J - K'Last),
+                  Side_Info_Data => null);
+               Create_Side_Info (Buffer, J);
+            end loop;
+
+         else
+            Editable_Lines (K'First .. Ref_Editable_Line)
+              := K (K'First .. Ref_Editable_Line);
+
+            for J in Ref_Editable_Line + 1 .. Ref_Editable_Line
+               + Editable_Line_Type (Number) loop
+               Editable_Lines (J) :=
+                 (Where       => In_Buffer,
+                  Buffer_Line => Start
+                    + Buffer_Line_Type (J - Ref_Editable_Line),
+                  Side_Info_Data => null);
+               Create_Side_Info (Buffer, J);
+            end loop;
+
+            Editable_Lines
+              (Ref_Editable_Line +  Editable_Line_Type (Number) + 1 .. K'Last
+                 +  Editable_Line_Type (Number))
+              := K (Ref_Editable_Line + 1 .. K'Last);
+
+            for J in K'Last +  Editable_Line_Type (Number) + 1
+              .. Buffer.Editable_Lines'Last
+            loop
+               Buffer.Editable_Lines (J) :=
+                 (Where       => In_Buffer,
+                  Buffer_Line => R + Buffer_Line_Type (J - K'Last),
+                  Side_Info_Data => null);
+               Create_Side_Info (Buffer, J);
+            end loop;
+         end if;
       end Expand_Lines;
 
    begin
@@ -3412,44 +3353,82 @@ package body Src_Editor_Buffer is
          return;
       end if;
 
+      --  ??? What if inserting in non editable area ?
+      Ref_Editable_Line := Buffer_Lines (Start).Editable_Line;
+
       if not Buffer.Original_Text_Inserted then
          Buffer.Original_Lines_Number := Number;
 
-         if Buffer.Original_Lines_Number > Real_Lines'Last then
+         if Buffer.Original_Lines_Number >= Buffer_Lines'Last then
             Expand_Lines (Number);
          end if;
 
-         for J in 1 .. Number loop
-            Real_Lines (J) := J;
+         for J in 0 .. Number loop
+            Buffer_Lines (Start + J) := New_Line_Data;
+            Buffer_Lines (Start + J).Editable_Line := Editable_Line_Type
+              (Start + J);
+            Buffer_Lines (Start + J).File_Line := File_Line_Type (Start + J);
 
-            Highlightings (J) := New_Line_Data;
+            Create_Side_Info (Buffer, Start + J);
+
+            if Buffer.Modifying_Editable_Lines then
+               Buffer.Editable_Lines (Ref_Editable_Line
+                                        + Editable_Line_Type (J)) :=
+                 (Where        => In_Buffer,
+                  Buffer_Line  => Start + J,
+                  Side_Info_Data => null);
+               Create_Side_Info
+                 (Buffer, Ref_Editable_Line + Editable_Line_Type (J));
+            end if;
          end loop;
 
          Buffer.Original_Text_Inserted := True;
 
       else
-         --  Shift down the existing lines.
+         Bottom_Line := Buffer_Line_Type (Get_Line_Count (Buffer));
 
-         for J in reverse Start + 1 .. Real_Lines'Last loop
-            Real_Lines (J) := Real_Lines (J - Number);
-            Highlightings (J) := Highlightings (J - Number);
-         end loop;
-
-         Bottom_Line := Integer (Get_Line_Count (Buffer));
-
-         if Real_Lines'Last < Bottom_Line then
+         if Buffer_Lines'Last < Bottom_Line then
             Expand_Lines (Bottom_Line);
+            Inserted_In_Place := True;
          end if;
 
-         --  Reset the newly inserted lines.
+         --  Shift down the existing lines.
 
-         Real_Lines
-           (Integer'Max (Start - Number + 1, Real_Lines'First) .. Start)
-           := (others => 0);
+         if Inserted_In_Place then
 
-         Highlightings
-           (Integer'Max (Start - Number + 1, Real_Lines'First) .. Start)
-           := (others => New_Line_Data);
+            --  Reset the newly inserted lines.
+
+            for J in 1 .. Number loop
+               Buffer_Lines (Start + J) := New_Line_Data;
+               Buffer_Lines (Start + J).Editable_Line := Ref_Editable_Line
+                 + Editable_Line_Type (J);
+
+               Create_Side_Info (Buffer, Start + J);
+            end loop;
+
+         else
+
+            for J in reverse Start + Number + 1 .. Buffer_Lines'Last loop
+               Buffer_Lines (J) := Buffer_Lines (J - Number);
+
+               if Buffer_Lines (J).Editable_Line /= 0 then
+                  Buffer_Lines (J).Editable_Line
+                    := Buffer_Lines (J).Editable_Line
+                    + Editable_Line_Type (Number);
+               end if;
+            end loop;
+
+            --  Reset the newly inserted lines.
+
+            for J in 1 .. Number loop
+               Buffer_Lines (Start + J) := New_Line_Data;
+               Buffer_Lines (Start + J).Editable_Line := Ref_Editable_Line
+                 + Editable_Line_Type (J);
+
+               Create_Side_Info (Buffer, Start + J);
+            end loop;
+         end if;
+
       end if;
    end Add_Lines;
 
@@ -3459,47 +3438,30 @@ package body Src_Editor_Buffer is
 
    procedure Remove_Lines
      (Buffer     : access Source_Buffer_Record'Class;
-      Start_Line : Integer;
-      End_Line   : Integer)
+      Start_Line : Buffer_Line_Type;
+      End_Line   : Buffer_Line_Type)
    is
-      Real_Lines    : Natural_Array_Access renames Buffer.Real_Lines;
-      Highlightings : Line_Data_Array_Access renames Buffer.Line_Data;
+      Buffer_Lines   : Line_Data_Array_Access renames Buffer.Line_Data;
+
    begin
       if End_Line <= Start_Line then
          return;
       end if;
 
-      Real_Lines
-        (Start_Line + 1 .. Real_Lines'Last + Start_Line - End_Line) :=
-        Real_Lines (End_Line + 1 .. Real_Lines'Last);
+      for J in 1 .. Buffer_Lines'Last - End_Line loop
+         Buffer_Lines (Start_Line + J) := Buffer_Lines (End_Line + J);
 
-      Highlightings
-        (Start_Line + 1 .. Highlightings'Last + Start_Line - End_Line) :=
-        Highlightings (End_Line + 1 .. Highlightings'Last);
+         if Buffer_Lines (Start_Line + J).Editable_Line /= 0 then
+            Buffer_Lines (Start_Line + J).Editable_Line :=
+              Buffer_Lines (Start_Line + J).Editable_Line
+              - Editable_Line_Type (End_Line - Start_Line);
+         end if;
+      end loop;
 
-      Real_Lines
-        (Real_Lines'Last + Start_Line - End_Line + 1
-           .. Real_Lines'Last) := (others => 0);
-
-      Highlightings
-        (Highlightings'Last + Start_Line - End_Line + 1
-           .. Highlightings'Last) := (others => New_Line_Data);
+      Buffer_Lines
+        (Buffer_Lines'Last + Start_Line - End_Line + 1
+           .. Buffer_Lines'Last) := (others => New_Line_Data);
    end Remove_Lines;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (X : in out Line_Info_Width) is
-      procedure Free is new Ada.Unchecked_Deallocation
-        (Line_Information_Record, Line_Information_Access);
-   begin
-      if X.Info /= null then
-         Free (X.Info.all);
-      end if;
-
-      Free (X.Info);
-   end Free;
 
    -----------------------
    -- Needs_To_Be_Saved --
@@ -3564,7 +3526,7 @@ package body Src_Editor_Buffer is
 
    procedure Set_Line_Highlighting
      (Editor : access Source_Buffer_Record;
-      Line   : Positive;
+      Line   : Buffer_Line_Type;
       Id     : String;
       Set    : Boolean)
    is
@@ -3578,10 +3540,15 @@ package body Src_Editor_Buffer is
          return;
       end if;
 
+      if Line = 0 then
+         return;
+      end if;
+
       if Line < Editor.Line_Data'First
         or else Line > Editor.Line_Data'Last
       then
-         Trace (Me, -"Wrong line number: " & Image (Line));
+         Trace (Me, -"Wrong line number: "
+                & Line'Img & (-" Real line:") & Line'Img);
          return;
       end if;
 
@@ -3647,15 +3614,21 @@ package body Src_Editor_Buffer is
 
    procedure Add_Line_Highlighting
      (Editor : access Source_Buffer_Record;
-      Line   : Natural;
-      Id     : String) is
+      Line   : Editable_Line_Type;
+      Id     : String)
+   is
+      The_Line : Buffer_Line_Type;
    begin
       if Line = 0 then
          for J in Editor.Line_Data'Range loop
             Set_Line_Highlighting (Editor, J, Id, True);
          end loop;
       else
-         Set_Line_Highlighting (Editor, Line, Id, True);
+         The_Line := Get_Buffer_Line (Editor, Line);
+
+         if The_Line /= 0 then
+            Set_Line_Highlighting (Editor, The_Line, Id, True);
+         end if;
       end if;
 
       Line_Highlights_Changed (Editor);
@@ -3667,15 +3640,21 @@ package body Src_Editor_Buffer is
 
    procedure Remove_Line_Highlighting
      (Editor : access Source_Buffer_Record;
-      Line   : Natural;
-      Id     : String) is
+      Line   : Editable_Line_Type;
+      Id     : String)
+   is
+      The_Line : Buffer_Line_Type;
    begin
       if Line = 0 then
          for J in Editor.Line_Data'Range loop
             Set_Line_Highlighting (Editor, J, Id, False);
          end loop;
       else
-         Set_Line_Highlighting (Editor, Line, Id, False);
+         The_Line := Get_Buffer_Line (Editor, Line);
+
+         if The_Line /= 0 then
+            Set_Line_Highlighting (Editor, The_Line, Id, False);
+         end if;
       end if;
 
       Line_Highlights_Changed (Editor);
@@ -3687,8 +3666,12 @@ package body Src_Editor_Buffer is
 
    function Get_Highlight_GC
      (Editor : access Source_Buffer_Record;
-      Line   : Positive) return Gdk_GC is
+      Line   : Buffer_Line_Type) return Gdk_GC is
    begin
+      if Line = 0 then
+         return null;
+      end if;
+
       if Editor.Line_Data /= null
         and then Line <= Editor.Line_Data'Last
       then
@@ -3704,8 +3687,12 @@ package body Src_Editor_Buffer is
 
    function Get_Block
      (Editor : access Source_Buffer_Record;
-      Line   : Positive) return Block_Record is
+      Line   : Buffer_Line_Type) return Block_Record is
    begin
+      if Line = 0 then
+         return New_Block;
+      end if;
+
       if Editor.Line_Data /= null
         and then Line <= Editor.Line_Data'Last
       then
@@ -4052,335 +4039,88 @@ package body Src_Editor_Buffer is
          return False;
    end Do_Indentation;
 
-   -------------
-   -- Execute --
-   -------------
+   ---------------------
+   -- Add_Blank_Lines --
+   ---------------------
 
-   function Execute
-     (Command : access Jump_To_Delimiter_Command; Event : Gdk.Event.Gdk_Event)
-      return Command_Return_Type
+   procedure Add_Blank_Lines
+     (Editor : access Source_Buffer_Record;
+      Line   : Editable_Line_Type;
+      Number : Positive)
    is
-      pragma Unreferenced (Event);
-      View   : constant Source_View   :=
-        Source_View (Get_Current_Focus_Widget (Command.Kernel));
-      Buffer : constant Source_Buffer := Source_Buffer (Get_Buffer (View));
-      On_Cursor_Iter       : Gtk_Text_Iter;
-      First_Highlight_Iter : Gtk_Text_Iter;
-      Last_Highlight_Iter  : Gtk_Text_Iter;
+      Text        : String (1 .. Natural (Number));
+      Buffer_Line : Buffer_Line_Type;
+      Iter        : Gtk_Text_Iter;
    begin
-      if not Buffer.Has_Delimiters_Highlight then
-         return Commands.Failure;
+      Buffer_Line := Get_Buffer_Line (Editor, Line);
+
+      if Buffer_Line = 0 then
+         return;
       end if;
 
-      Get_Iter_At_Mark
-        (Buffer, First_Highlight_Iter, Buffer.Start_Delimiters_Highlight);
-      Get_Iter_At_Mark
-        (Buffer, Last_Highlight_Iter, Buffer.End_Delimiters_Highlight);
-      Get_Iter_At_Mark (Buffer, On_Cursor_Iter, Buffer.Insert_Mark);
+      Text := (others => ASCII.LF);
 
-      if Equal (First_Highlight_Iter, On_Cursor_Iter) then
-         Place_Cursor (Buffer, Last_Highlight_Iter);
-      else
-         Place_Cursor (Buffer, First_Highlight_Iter);
-      end if;
-      return Commands.Success;
-   end Execute;
+      Get_Iter_At_Line (Editor, Iter, Gint (Buffer_Line - 1));
 
-   -------------
-   -- Execute --
-   -------------
+      Insert (Editor, Iter, Text);
 
-   function Execute
-     (Command : access Completion_Command; Event : Gdk.Event.Gdk_Event)
-      return Command_Return_Type
+      --  Shift down existing lines
+
+      for J in reverse Buffer_Line .. Editor.Line_Data'Last
+        - Buffer_Line_Type (Number)
+      loop
+         Editor.Line_Data (J + Buffer_Line_Type (Number)) :=
+           Editor.Line_Data (J);
+
+--           if Editor.Line_Data (J).Editable_Line /= 0 then
+--              Editor.Line_Data (J).Editable_Line :=
+--                Editor.Line_Data (J).Editable_Line - Number;
+--           end if;
+      end loop;
+
+      --  Reset information for newly inserted lines.
+
+      for J in Buffer_Line .. Buffer_Line + Buffer_Line_Type (Number) - 1 loop
+         Editor.Line_Data (J).Editable_Line := 0;
+      end loop;
+   end Add_Blank_Lines;
+
+   -----------------
+   -- Create_Mark --
+   -----------------
+
+   function Create_Mark
+     (Editor : access Source_Buffer_Record;
+      Line   : Editable_Line_Type;
+      Column : Positive) return Gtk.Text_Mark.Gtk_Text_Mark
    is
-      pragma Unreferenced (Event);
-      use String_List_Utils.String_List;
-      View   : constant Source_View   :=
-        Source_View (Get_Current_Focus_Widget (Command.Kernel));
-      Buffer : constant Source_Buffer := Source_Buffer (Get_Buffer (View));
-
-      procedure Extend_Completions_List;
-      --  Add an item to the buffer's completion, or mark it as
-      --  complete. Place the completion node to the newly added
-      --  item, or to Null if the completion was finished.
-
-      -----------------------------
-      -- Extend_Completions_List --
-      -----------------------------
-
-      procedure Extend_Completions_List is
-         Data       : Completion_Data renames Buffer.Completion;
-         Word_Begin : Gtk_Text_Iter;
-         Word_End   : Gtk_Text_Iter;
-         Iter_Back  : Gtk_Text_Iter;
-         Iter_Forward : Gtk_Text_Iter;
-
-         Aux        : Gtk_Text_Iter;
-         Success    : Boolean := True;
-         Found      : Boolean := False;
-         Word_Found : Boolean := False;
-
-         Count      : Gint := 1;
-      begin
-         if Data.Complete then
-            if Data.Node = Null_Node then
-               Data.Node := First (Data.List);
-            else
-               Data.Node := Next (Data.Node);
-            end if;
-
-            return;
-         end if;
-
-         --  Loop until a new word with the right prefix is found.
-
-         Get_Iter_At_Mark (Buffer, Iter_Back, Data.Previous_Mark);
-         Get_Iter_At_Mark (Buffer, Iter_Forward, Data.Next_Mark);
-
-         while not Found loop
-            --  If a boundary is reached, force the search in the other
-            --  direction, otherwise extend search in the opposite direction
-
-            if Data.Top_Reached then
-               Data.Backwards := False;
-            elsif Data.Bottom_Reached then
-               Data.Backwards := True;
-            else
-               Data.Backwards := not Data.Backwards;
-            end if;
-
-            --  Find a word and examine it.
-
-            Count := 0;
-
-            while not Word_Found loop
-               if Data.Backwards then
-                  --  Find the previous real word, if it exists.
-
-                  Backward_Word_Start (Iter_Back, Success);
-                  Count := Count + 1;
-
-                  if Success then
-                     Copy (Iter_Back, Aux);
-                     Backward_Char (Aux, Success);
-
-                     if not Success or else Get_Char (Aux) /= '_' then
-                        Copy (Iter_Back, Word_Begin);
-                        Copy (Iter_Back, Word_End);
-                        Forward_Word_Ends (Word_End, Count, Success);
-
-                        Word_Found := True;
-                     end if;
-                  else
-                     exit;
-                  end if;
-
-               else
-                  --  Find the next real word.
-
-                  Forward_Word_End (Iter_Forward, Success);
-                  Count := Count + 1;
-
-                  if Success then
-                     if Get_Char (Iter_Forward) /= '_' then
-                        Copy (Iter_Forward, Word_End);
-                        Copy (Iter_Forward, Word_Begin);
-                        Backward_Word_Starts (Word_Begin, Count, Success);
-
-                        Word_Found := True;
-                     end if;
-                  else
-                     exit;
-                  end if;
-               end if;
-            end loop;
-
-            if Word_Found then
-               --  We have a valid word between Word_Begin and Word_End.
-
-               declare
-                  S : constant String := Get_Slice (Word_Begin, Word_End);
-               begin
-                  --  If the word has the right prefix, and is not already
-                  --  in the list, then add it to the list and point to it,
-                  --  otherwise continue extending the search.
-                  --
-                  --  The string comparison below is correct, since both
-                  --  strings are UTF-8.
-
-                  if S'Length > Data.Prefix'Length
-                    and then S
-                      (S'First .. S'First - 1 + Data.Prefix'Length)
-                      = Data.Prefix.all
-                    and then not Is_In_List
-                      (Data.List,
-                       S (S'First + Data.Prefix'Length .. S'Last))
-                  then
-                     Found := True;
-
-                     if Data.Backwards then
-                        Move_Mark (Buffer, Data.Previous_Mark, Word_Begin);
-                     else
-                        Move_Mark (Buffer, Data.Next_Mark, Word_End);
-                     end if;
-
-                     Append
-                       (Data.List,
-                        S (S'First + Data.Prefix'Length .. S'Last));
-
-                     Data.Node := Last (Data.List);
-                  end if;
-
-                  Word_Found := False;
-               end;
-            else
-               if Data.Backwards then
-                  Data.Top_Reached := True;
-               else
-                  Data.Bottom_Reached := True;
-               end if;
-
-               if Data.Top_Reached and then Data.Bottom_Reached then
-                  Data.Complete := True;
-
-                  if Data.Node /= Null_Node then
-                     Data.Node := Next (Data.Node);
-                  end if;
-
-                  return;
-               else
-                  null;
-               end if;
-            end if;
-         end loop;
-      end Extend_Completions_List;
-
-      Shell_Command : Editor_Replace_Slice;
-      Delete  : Editor_Command;
-
-      Iter    : Gtk_Text_Iter;
-      Prev    : Gtk_Text_Iter;
-      Success : Boolean;
-
-      Text    : GNAT.OS_Lib.String_Access;
-
+      Buffer_Line : Buffer_Line_Type;
+      Iter        : Gtk_Text_Iter;
    begin
-      if Is_Empty (Buffer.Completion) then
-         Get_Iter_At_Mark (Buffer, Iter, Buffer.Insert_Mark);
+      --  ??? How do we deal with marks in non-present lines ?
 
-         --  If the completions list is empty, that means we have to
-         --  initiate the mark data and launch the first search.
+      Buffer_Line := Get_Buffer_Line (Editor, Line);
 
-         End_Action (Buffer);
-
-         --  At this point the completion data is reset.
-         --  Get the completion suffix.
-
-         Copy (Iter, Prev);
-         Backward_Char (Prev, Success);
-
-         if not Success then
-            return Commands.Failure;
-         end if;
-
-         while Is_Entity_Letter (Get_Char (Prev)) loop
-            Backward_Char (Prev, Success);
-
-            exit when not Success;
-         end loop;
-
-         if Success then
-            Forward_Char (Prev, Success);
-         end if;
-
-         declare
-            P : constant String := Get_Slice (Prev, Iter);
-         begin
-            if P /= "" then
-               Buffer.Completion.Prefix := new String'(P);
-
-               Move_Mark (Buffer, Buffer.Completion.Mark, Iter);
-               Move_Mark (Buffer, Buffer.Completion.Previous_Mark, Iter);
-               Move_Mark (Buffer, Buffer.Completion.Next_Mark, Iter);
-
-               Extend_Completions_List;
-            else
-               Clear (Buffer.Completion);
-               return Commands.Success;
-
-            end if;
-         end;
-      else
-         Extend_Completions_List;
+      if Buffer_Line = 0 then
+         Get_Iter_At_Line_Offset (Editor, Iter, 0, 0);
+         return Create_Mark (Editor, "", Iter);
       end if;
 
-      if Buffer.Completion.Node /= Null_Node then
-         Text := new String'(Data (Buffer.Completion.Node));
-      else
-         Text := new String'("");
-      end if;
-
-      Get_Iter_At_Mark (Buffer, Prev, Buffer.Completion.Mark);
-      Get_Iter_At_Mark (Buffer, Iter, Buffer.Insert_Mark);
-      Buffer.Inserting := True;
-
-      if Text.all = ""
-        and then
-          (Get_Line (Prev) /= Get_Line (Iter)
-           or else Get_Line_Offset (Prev) /= Get_Line_Offset (Iter))
+      if Is_Valid_Position
+        (Editor, Gint (Buffer_Line - 1), Gint (Column - 1))
       then
-         Create (Delete,
-                 Deletion,
-                 Buffer,
-                 False,
-                 Integer (Get_Line (Prev)),
-                 Integer (Get_Line_Offset (Prev)),
-                 Forward);
+         Get_Iter_At_Line_Offset
+           (Editor, Iter, Gint (Buffer_Line - 1), Gint (Column - 1));
+         return Create_Mark (Editor, "", Iter);
 
-         Set_Text (Delete, Get_Slice (Prev, Iter));
-         Enqueue (Buffer, Command_Access (Delete));
-
-      else
-         Create
-           (Shell_Command,
-            Buffer,
-            Natural (Get_Line (Prev)),
-            Natural (Get_Line_Offset (Prev)),
-            Natural (Get_Line (Iter)),
-            Natural (Get_Line_Offset (Iter)),
-            Text.all,
-            True);
-         Enqueue (Buffer, Command_Access (Shell_Command));
+      elsif Is_Valid_Position (Editor, Gint (Buffer_Line - 1), 1) then
+         Get_Iter_At_Line_Offset (Editor, Iter, Gint (Buffer_Line - 1), 1);
+         return Create_Mark (Editor, "", Iter);
       end if;
 
-      Buffer.Current_Command := null;
-
-      GNAT.OS_Lib.Free (Text);
-
-      Buffer.Inserting := False;
-      return Commands.Success;
-   end Execute;
-
-   -------------
-   -- Execute --
-   -------------
-
-   function Execute
-     (Command : access Indentation_Command; Event : Gdk.Event.Gdk_Event)
-      return Command_Return_Type
-   is
-      pragma Unreferenced (Event);
-      View   : constant Source_View   :=
-        Source_View (Get_Current_Focus_Widget (Command.Kernel));
-      Buffer : constant Source_Buffer := Source_Buffer (Get_Buffer (View));
-   begin
-      if Do_Indentation (Buffer, Get_Language (Buffer), False) then
-         return Success;
-      else
-         return Failure;
-      end if;
-   end Execute;
+      Get_Iter_At_Line_Offset (Editor, Iter, 0, 0);
+      return Create_Mark (Editor, "", Iter);
+   end Create_Mark;
 
    --------------
    -- Get_Name --
@@ -4408,5 +4148,16 @@ package body Src_Editor_Buffer is
       return Widget.all in Source_View_Record'Class;
    end Context_Matches;
 
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (X : in out Line_Info_Width) is
+   begin
+      if X.Info /= null then
+         Free (X.Info.all);
+         Unchecked_Free (X.Info);
+      end if;
+   end Free;
 
 end Src_Editor_Buffer;
