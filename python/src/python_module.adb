@@ -1801,9 +1801,11 @@ package body Python_Module is
    procedure Set_Error_Msg
      (Data : in out Python_Callback_Data; Msg : String) is
    begin
-      Trace (Me, "Set_Error_Msg: " & Msg);
       Setup_Return_Value (Data);
-      PyErr_SetString (Data.Script.GPS_Exception, Msg);
+      if Msg /= "" then
+         Trace (Me, "Set_Error_Msg: " & Msg);
+         PyErr_SetString (Data.Script.GPS_Exception, Msg);
+      end if;
    end Set_Error_Msg;
 
    -----------------------
