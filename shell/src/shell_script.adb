@@ -24,9 +24,10 @@
 with Ada.Characters.Handling;  use Ada.Characters.Handling;
 with Ada.Exceptions;           use Ada.Exceptions;
 with Ada.Strings.Fixed;        use Ada.Strings.Fixed;
+with Ada.Unchecked_Deallocation;
+with Generic_List;
 with GNAT.Debug_Utilities;     use GNAT.Debug_Utilities;
 with GNAT.OS_Lib;              use GNAT.OS_Lib;
-with Generic_List;
 with Glib.Xml_Int;             use Glib.Xml_Int;
 with Glib.Object;              use Glib.Object;
 with Glide_Intl;               use Glide_Intl;
@@ -40,6 +41,7 @@ with Gtkada.MDI;               use Gtkada.MDI;
 with Histories;                use Histories;
 with Interactive_Consoles;     use Interactive_Consoles;
 with String_List_Utils;        use String_List_Utils;
+with String_Hash;
 with System.Address_Image;
 with System;                   use System;
 with Traces;                   use Traces;
@@ -282,6 +284,7 @@ package body Shell_Script is
       Command_Handler : Module_Command_Function;
       Class           : Class_Type;
    end record;
+   type Command_Information_Access is access Command_Information;
    --  Description for each of the registered commands.
    --  Command is the name that must be typed by the user in the console.
    --  Short_Command is the name under which the command was registered. It is
@@ -290,14 +293,15 @@ package body Shell_Script is
    --  The command was set as a constructor if Short_Command is
    --  Constructor_Method.
 
-   procedure Free (X : in out Command_Information);
+   procedure Free (X : in out Command_Information_Access);
    --  Free memory associated with X.
 
-   package Command_List is new Generic_List (Command_Information);
-   --  ??? Would be faster to use a hash-table...
+   package Command_Hash is new String_Hash
+     (Command_Information_Access, Free, null);
+   use Command_Hash.String_Hash_Table;
 
    type Shell_Module_Id_Record is new Module_ID_Record with record
-      Commands_List : Command_List.List;
+      Commands_List : Command_Hash.String_Hash_Table.HTable;
       --  The list of all registered commands
    end record;
    type Shell_Module_Id_Access is access all Shell_Module_Id_Record;
@@ -451,15 +455,18 @@ package body Shell_Script is
    is
       pragma Unreferenced (Kernel);
       use String_List_Utils.String_List;
-      use type Command_List.List_Node;
       L       : String_List_Utils.String_List.List :=
         String_List_Utils.String_List.Null_List;
-      Current : Command_List.List_Node :=
-        Command_List.First (Shell_Module_Id.Commands_List);
+      Current : Command_Hash.String_Hash_Table.Iterator;
+      Info    : Command_Information_Access;
    begin
-      while Current /= Command_List.Null_Node loop
+      Get_First (Shell_Module_Id.Commands_List, Current);
+      loop
+         Info := Get_Element (Current);
+         exit when Info = null;
+
          declare
-            S : constant String := Command_List.Data (Current).Command.all;
+            S : constant String := Info.Command.all;
          begin
             if S'Length >= Prefix'Length
               and then S (S'First .. S'First + Prefix'Length - 1) = Prefix
@@ -467,7 +474,8 @@ package body Shell_Script is
                Prepend (L, S);
             end if;
          end;
-         Current := Command_List.Next (Current);
+
+         Get_Next (Shell_Module_Id.Commands_List, Current);
       end loop;
 
       return L;
@@ -479,7 +487,7 @@ package body Shell_Script is
 
    procedure Destroy (Module : in out Shell_Module_Id_Record) is
    begin
-      Command_List.Free (Module.Commands_List);
+      Command_Hash.String_Hash_Table.Reset (Module.Commands_List);
       Shell_Module_Id := null;
    end Destroy;
 
@@ -487,12 +495,15 @@ package body Shell_Script is
    -- Free --
    ----------
 
-   procedure Free (X : in out Command_Information) is
+   procedure Free (X : in out Command_Information_Access) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Command_Information, Command_Information_Access);
    begin
       Free (X.Command);
       Free (X.Short_Command);
       Free (X.Usage);
       Free (X.Description);
+      Unchecked_Free (X);
    end Free;
 
    -----------------
@@ -752,9 +763,7 @@ package body Shell_Script is
       Command : String)
    is
       use String_List_Utils.String_List;
-      use type Command_List.List_Node;
 
-      Command_Node : Command_List.List_Node;
       L            : String_List_Utils.String_List.List;
       L2           : String_List_Utils.String_List.List_Node;
       Result       : GNAT.OS_Lib.String_Access := new String'("");
@@ -793,20 +802,14 @@ package body Shell_Script is
          else
             declare
                Cmd  : constant String := Nth_Arg (Data, 1);
-               Info : Command_Information;
+               Info : constant Command_Information_Access := Get
+                 (Shell_Module_Id.Commands_List, Cmd);
             begin
-               Command_Node := Command_List.First
-                 (Shell_Module_Id.Commands_List);
-
-               while Command_Node /= Command_List.Null_Node loop
-                  Info := Command_List.Data (Command_Node);
-                  if Info.Command.all = Cmd then
-                     Insert (-("Usage: ") & Info.Command.all
-                             & ' ' & Info.Usage.all);
-                     Insert (Info.Description.all);
-                  end if;
-                  Command_Node := Command_List.Next (Command_Node);
-               end loop;
+               if Info /= null then
+                  Insert (-("Usage: ") & Info.Command.all
+                          & ' ' & Info.Usage.all);
+                  Insert (Info.Description.all);
+               end if;
             end;
          end if;
 
@@ -872,12 +875,10 @@ package body Shell_Script is
       end Ret_Val;
 
       pragma Unreferenced (Script);
-      use Command_List;
-      Node : Command_List.List_Node;
       Cmd, U  : GNAT.OS_Lib.String_Access;
       Min  : Natural := Minimum_Args;
       Max  : Natural := Maximum_Args;
-      Info : Command_Information;
+      Info : Command_Information_Access;
    begin
       if Command = "" or else Shell_Module_Id = null then
          return;
@@ -901,20 +902,15 @@ package body Shell_Script is
          Cmd := new String'(Command);
       end if;
 
-      Node := First (Shell_Module_Id.Commands_List);
+      Info := Get (Shell_Module_Id.Commands_List, Cmd.all);
 
       --  Check that the command is not already registered.
 
-      while Node /= Command_List.Null_Node loop
-         if Data (Node).Command.all = Cmd.all then
-            Trace
-              (Me,
-               "Interactive command " & Cmd.all & " is already registered");
-            return;
-         end if;
-
-         Node := Next (Node);
-      end loop;
+      if Info /= null then
+         Trace
+           (Me, "Interactive command " & Cmd.all & " is already registered");
+         return;
+      end if;
 
       if Class = No_Class then
          U := new String'(Params & Ret_Val);
@@ -930,16 +926,17 @@ package body Shell_Script is
          end if;
       end if;
 
-      Info := (Command         => Cmd,
-               Short_Command   => new String'(Command),
-               Usage           => U,
-               Description     => new String'(Description),
-               Minimum_Args    => Min,
-               Maximum_Args    => Max,
-               Class           => Class,
-               Command_Handler => Handler);
+      Info := new Command_Information'
+        (Command         => Cmd,
+         Short_Command   => new String'(Command),
+         Usage           => U,
+         Description     => new String'(Description),
+         Minimum_Args    => Min,
+         Maximum_Args    => Max,
+         Class           => Class,
+         Command_Handler => Handler);
 
-      Append (Shell_Module_Id.Commands_List, Info);
+      Set (Shell_Module_Id.Commands_List, Cmd.all, Info);
    end Register_Command;
 
    --------------------
@@ -1156,10 +1153,7 @@ package body Shell_Script is
       Args    : GNAT.OS_Lib.Argument_List;
       Errors  : access Boolean) return String
    is
-      use type Command_List.List_Node;
-
-      Command_Node : Command_List.List_Node;
-      Data         : Command_Information;
+      Data         : Command_Information_Access;
       Callback     : Shell_Callback_Data;
       Instance     : Class_Instance;
       Start        : Natural;
@@ -1173,110 +1167,107 @@ package body Shell_Script is
          return -"Shell module not initialized";
       end if;
 
-      Command_Node := Command_List.First (Shell_Module_Id.Commands_List);
-      while Command_Node /= Command_List.Null_Node loop
-         Data := Command_List.Data (Command_Node);
-         if Data.Command.all = Command then
-            if Data.Minimum_Args <= Args'Length
-              and then Args'Length <= Data.Maximum_Args
-            then
-               Shell := Shell_Scripting
-                 (Lookup_Scripting_Language (Kernel, GPS_Shell_Name));
-               Callback.Script := Shell;
+      Data := Get (Shell_Module_Id.Commands_List, Command);
 
-               if Data.Short_Command.all = Constructor_Method then
-                  Instance := New_Instance (Callback.Script, Data.Class);
-                  Callback.Args := new Argument_List (1 .. Args'Length + 1);
-                  Callback.Args (1) :=
-                    new String'(Name_From_Instance (Instance));
-                  Start := 2;
-               else
-                  Callback.Args := new Argument_List (1 .. Args'Length);
-                  Start := 1;
-               end if;
+      if Data /= null then
+         if Data.Minimum_Args <= Args'Length
+           and then Args'Length <= Data.Maximum_Args
+         then
+            Shell := Shell_Scripting
+              (Lookup_Scripting_Language (Kernel, GPS_Shell_Name));
+            Callback.Script := Shell;
 
-               for A in Args'Range loop
-                  if Args (A)'Length > 0
-                    and then Args (A) (Args (A)'First) = '%'
-                  then
-                     declare
-                        Num : Integer;
-                     begin
-                        Num := Integer'Value
-                          (Args (A) (Args (A)'First + 1 .. Args (A)'Last));
-                        Callback.Args (A - Args'First + Start) :=
-                          new String'(Shell.Returns
-                                      (Num + Shell.Returns'First - 1).all);
-
-                     exception
-                        when Constraint_Error =>
-                           Callback.Args (A - Args'First + Start) :=
-                             new String'(Args (A).all);
-                     end;
-
-                  else
-                     Callback.Args (A - Args'First + Start) :=
-                       new String'(Args (A).all);
-                  end if;
-               end loop;
-
-               Data.Command_Handler (Callback, Data.Short_Command.all);
-               Free (Callback.Args);
-
-               if Callback.Return_As_Error then
-                  Errors.all := True;
-                  Free (Callback.Return_Dict);
-                  declare
-                     R : constant String := Callback.Return_Value.all;
-                  begin
-                     Free (Callback.Return_Value);
-                     return R;
-                  end;
-               end if;
-
-               if Data.Short_Command.all = Constructor_Method then
-                  Set_Return_Value (Callback, Instance);
-               end if;
-
-               if Callback.Return_Dict /= null then
-                  Free (Callback.Return_Value);
-                  Callback.Return_Value := Callback.Return_Dict;
-                  Callback.Return_Dict  := null;
-               end if;
-
-               --  Save the return value for the future
-               Free (Shell.Returns (Shell.Returns'Last));
-               Shell.Returns
-                 (Shell.Returns'First + 1 .. Shell.Returns'Last) :=
-                 Shell.Returns
-                 (Shell.Returns'First .. Shell.Returns'Last - 1);
-
-               if Callback.Return_Value = null then
-                  Shell.Returns (Shell.Returns'First) := new String'("");
-               else
-                  Shell.Returns (Shell.Returns'First) :=
-                    Callback.Return_Value;
-               end if;
-
-               if Callback.Return_Value = null then
-                  return "";
-               else
-                  --  Do not free Callback.Return_Value, it is stored in the
-                  --  list of previous commands
-                  return Callback.Return_Value.all;
-               end if;
-
+            if Data.Short_Command.all = Constructor_Method then
+               Instance := New_Instance (Callback.Script, Data.Class);
+               Callback.Args := new Argument_List (1 .. Args'Length + 1);
+               Callback.Args (1) :=
+                 new String'(Name_From_Instance (Instance));
+               Start := 2;
             else
-               Trace (Me, "Incorrect number of arguments for " & Command
-                      & " Got" & Args'Length'Img
-                      & " Expecting >=" & Data.Minimum_Args'Img
-                      & " and <=" & Data.Maximum_Args'Img);
-               return -"Incorrect number of arguments." & ASCII.LF
-                 & Data.Command.all & ' ' & Data.Usage.all;
+               Callback.Args := new Argument_List (1 .. Args'Length);
+               Start := 1;
             end if;
+
+            for A in Args'Range loop
+               if Args (A)'Length > 0
+                 and then Args (A) (Args (A)'First) = '%'
+               then
+                  declare
+                     Num : Integer;
+                  begin
+                     Num := Integer'Value
+                       (Args (A) (Args (A)'First + 1 .. Args (A)'Last));
+                     Callback.Args (A - Args'First + Start) :=
+                       new String'(Shell.Returns
+                                     (Num + Shell.Returns'First - 1).all);
+
+                  exception
+                     when Constraint_Error =>
+                        Callback.Args (A - Args'First + Start) :=
+                          new String'(Args (A).all);
+                  end;
+
+               else
+                  Callback.Args (A - Args'First + Start) :=
+                    new String'(Args (A).all);
+               end if;
+            end loop;
+
+            Data.Command_Handler (Callback, Data.Short_Command.all);
+            Free (Callback.Args);
+
+            if Callback.Return_As_Error then
+               Errors.all := True;
+               Free (Callback.Return_Dict);
+               declare
+                  R : constant String := Callback.Return_Value.all;
+               begin
+                  Free (Callback.Return_Value);
+                  return R;
+               end;
+            end if;
+
+            if Data.Short_Command.all = Constructor_Method then
+               Set_Return_Value (Callback, Instance);
+            end if;
+
+            if Callback.Return_Dict /= null then
+               Free (Callback.Return_Value);
+               Callback.Return_Value := Callback.Return_Dict;
+               Callback.Return_Dict  := null;
+            end if;
+
+            --  Save the return value for the future
+            Free (Shell.Returns (Shell.Returns'Last));
+            Shell.Returns
+              (Shell.Returns'First + 1 .. Shell.Returns'Last) :=
+              Shell.Returns
+                (Shell.Returns'First .. Shell.Returns'Last - 1);
+
+            if Callback.Return_Value = null then
+               Shell.Returns (Shell.Returns'First) := new String'("");
+            else
+               Shell.Returns (Shell.Returns'First) :=
+                 Callback.Return_Value;
+            end if;
+
+            if Callback.Return_Value = null then
+               return "";
+            else
+               --  Do not free Callback.Return_Value, it is stored in the
+               --  list of previous commands
+               return Callback.Return_Value.all;
+            end if;
+
+         else
+            Trace (Me, "Incorrect number of arguments for " & Command
+                   & " Got" & Args'Length'Img
+                   & " Expecting >=" & Data.Minimum_Args'Img
+                   & " and <=" & Data.Maximum_Args'Img);
+            return -"Incorrect number of arguments." & ASCII.LF
+            & Data.Command.all & ' ' & Data.Usage.all;
          end if;
-         Command_Node := Command_List.Next (Command_Node);
-      end loop;
+      end if;
 
       return -"Command not recognized";
 
