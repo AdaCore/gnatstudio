@@ -49,7 +49,7 @@ begin
          Put (Info.Name.all & " ");
       end if;
 
-      if Info.Subprogram_Spec then
+      if Info.Is_Declaration then
          Put ("(spec) ");
       end if;
 
