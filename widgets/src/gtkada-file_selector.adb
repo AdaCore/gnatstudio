@@ -750,7 +750,8 @@ package body Gtkada.File_Selector is
               (Win.File_List,
                Gtk.Enums.Gint_List.Get_Data (Row_List), 1));
 
-         if Get_Event_Type (Event) = Gdk_2button_Press
+         if Event /= null
+           and then Get_Event_Type (Event) = Gdk_2button_Press
            and then Win.Own_Main_Loop
          then
             Main_Quit;
