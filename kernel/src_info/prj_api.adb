@@ -4173,7 +4173,7 @@ package body Prj_API is
                Free (Lang);
                return Project_Name (Project_View) &
                  Prj.Project_File_Extension
-                 & ": No source files for "
+                 & ": Warning, no source files for "
                  & Error (Error'First .. Error'Last - 2);
             end;
          end if;
@@ -4377,24 +4377,65 @@ package body Prj_API is
    -- Get_Languages --
    -------------------
 
-   function Get_Languages (Project_View : Project_Id)
+   function Get_Languages
+     (Project_View : Project_Id; Recursive : Boolean := False)
       return GNAT.OS_Lib.Argument_List
    is
-      Languages : Argument_List :=
-        Get_Attribute_Value (Project_View, Languages_Attribute);
-      Tmp : GNAT.OS_Lib.String_Access;
+      Iter : Imported_Project_Iterator := Start
+        (Get_Project_From_View (Project_View), Recursive);
+      Num_Languages : Natural := 0;
+      Val : Variable_Value;
+      Value : String_List_Id;
+      Found : Boolean := False;
    begin
-      if Languages'Length = 0 then
-         return (1 => new String'(Ada_String));
-      else
-         for L in Languages'Range loop
-            Tmp := new String'(To_Lower (Languages (L).all));
-            Free (Languages (L));
-            Languages (L) := Tmp;
+      while Current (Iter) /= No_Project loop
+         Num_Languages := Num_Languages + Length
+           (Get_Attribute_Value (Current (Iter), Languages_Attribute));
+         Next (Iter);
+      end loop;
+
+      Reset (Iter);
+
+      declare
+         Lang : Argument_List (1 .. Num_Languages);
+         Index : Natural := Lang'First;
+      begin
+         while Current (Iter) /= No_Project loop
+            Val := Get_Attribute_Value
+              (Current (Iter), Languages_Attribute);
+            Value := Val.Values;
+            Found := False;
+
+            while Value /= Nil_String loop
+               declare
+                  Str : constant String := To_Lower
+                    (Get_String (String_Elements.Table (Value).Value));
+               begin
+                  for L in Lang'First .. Index - 1 loop
+                     if Lang (L).all = Str then
+                        Found := True;
+                        exit;
+                     end if;
+                  end loop;
+
+                  if not Found then
+                     Lang (Index) := new String'(Str);
+                     Index := Index + 1;
+                  end if;
+               end;
+
+               Value := String_Elements.Table (Value).Next;
+            end loop;
+
+            Next (Iter);
          end loop;
 
-         return Languages;
-      end if;
+         if Index = Lang'First then
+            return (1 => new String'(Ada_String));
+         else
+            return Lang (Lang'First .. Index - 1);
+         end if;
+      end;
    end Get_Languages;
 
    ------------------

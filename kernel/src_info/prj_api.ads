@@ -634,11 +634,14 @@ package Prj_API is
    --  It is the responsability of the called to free the memory.
 
    function Get_Languages
-     (Project_View : Project_Id) return GNAT.OS_Lib.Argument_List;
+     (Project_View : Project_Id; Recursive : Boolean := False)
+      return GNAT.OS_Lib.Argument_List;
    --  Return the value of the Languages attribute. You should use this
    --  function instead of Get_Attribute_Value, since it will correctly default
    --  to Ada if no language was defined by the user.
    --  The returned value must be freed by the user.
+   --  If Recursive is true, then all the languages supported by Project_View
+   --  or its imported projects will be returned.
 
    function Get_Vcs_Kind (Project_View : Project_Id) return String;
    --  Return the name of the VCS system to use for the source files in
