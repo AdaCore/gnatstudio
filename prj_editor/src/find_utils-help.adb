@@ -50,9 +50,10 @@ package body Find_Utils.Help is
 
    function Help_Factory
      (Kernel            : access Glide_Kernel.Kernel_Handle_Record'Class;
+      All_Occurences    : Boolean;
       Extra_Information : Gtk.Widget.Gtk_Widget) return Search_Context_Access
    is
-      pragma Unreferenced (Kernel, Extra_Information);
+      pragma Unreferenced (Kernel, Extra_Information, All_Occurences);
 
       Context : Help_Context_Access;
    begin

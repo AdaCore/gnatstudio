@@ -39,6 +39,7 @@ package Find_Utils.Help is
 
    function Help_Factory
      (Kernel            : access Glide_Kernel.Kernel_Handle_Record'Class;
+      All_Occurences    : Boolean;
       Extra_Information : Gtk.Widget.Gtk_Widget)
       return Search_Context_Access;
    --  Search factory for "Help"
