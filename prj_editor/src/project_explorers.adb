@@ -67,6 +67,8 @@ with Language;                  use Language;
 with String_Utils;              use String_Utils;
 with Glide_Kernel;              use Glide_Kernel;
 with Glide_Kernel.Console;      use Glide_Kernel.Console;
+with Glide_Kernel.Contexts;     use Glide_Kernel.Contexts;
+with Glide_Kernel.Hooks;        use Glide_Kernel.Hooks;
 with Glide_Kernel.Project;      use Glide_Kernel.Project;
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Intl;                use Glide_Intl;
@@ -323,8 +325,20 @@ package body Project_Explorers is
    --  This procedure tries to keep as many things as possible in the current
    --  state (expanded nodes,...)
 
-   procedure Project_Changed
-     (Kernel : access GObject_Record'Class; Explorer : GObject);
+   type Refresh_Hook_Record is new Hook_No_Args_Record with record
+      Explorer : Project_Explorer;
+   end record;
+   type Refresh_Hook is access all Refresh_Hook_Record'Class;
+   procedure Execute (Hook   : Refresh_Hook_Record;
+                      Kernel : access Kernel_Handle_Record'Class);
+   --  Called when the project view has changed
+
+   type Project_Changed_Hook_Record is new Hook_No_Args_Record with record
+      Explorer : Project_Explorer;
+   end record;
+   type Project_Hook is access all Project_Changed_Hook_Record'Class;
+   procedure Execute (Hook   : Project_Changed_Hook_Record;
+                      Kernel : access Kernel_Handle_Record'Class);
    --  Called when the project as changed, as opposed to the project view.
    --  This means we need to start up with a completely new tree, no need to
    --  try to keep the current one.
@@ -511,6 +525,8 @@ package body Project_Explorers is
    is
       Scrolled : Gtk_Scrolled_Window;
       Label    : Gtk_Label;
+      H1       : Refresh_Hook;
+      H2       : Project_Hook;
 
    begin
       Initialize_Vbox (Explorer, Homogeneous => False);
@@ -566,14 +582,15 @@ package body Project_Explorers is
          Tree_Select_Row_Cb'Access, Explorer, After => True);
 
       --  Automatic update of the tree when the project changes
-      Widget_Callback.Object_Connect
-        (Kernel, "project_view_changed",
-         Widget_Callback.To_Marshaller (Refresh'Access),
-         Explorer);
-      Object_User_Callback.Connect
-        (Kernel, "project_changed",
-         Object_User_Callback.To_Marshaller (Project_Changed'Access),
-         GObject (Explorer));
+      H1 := new Refresh_Hook_Record'
+        (Hook_No_Args_Record with Explorer => Project_Explorer (Explorer));
+      Add_Hook
+        (Kernel, Project_View_Changed_Hook, H1, Watch => GObject (Explorer));
+
+      H2 := new Project_Changed_Hook_Record'
+        (Hook_No_Args_Record with Explorer => Project_Explorer (Explorer));
+      Add_Hook
+        (Kernel, Project_Changed_Hook, H2, Watch => GObject (Explorer));
 
       --  The explorer (project view) is automatically refreshed when the
       --  project view is changed.
@@ -752,22 +769,21 @@ package body Project_Explorers is
          return Context;
    end Explorer_Context_Factory;
 
-   ---------------------
-   -- Project_Changed --
-   ---------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure Project_Changed
-     (Kernel : access GObject_Record'Class; Explorer : GObject)
+   procedure Execute (Hook   : Project_Changed_Hook_Record;
+                      Kernel : access Kernel_Handle_Record'Class)
    is
       pragma Unreferenced (Kernel);
-      T : constant Project_Explorer := Project_Explorer (Explorer);
    begin
       --  Destroy all the items in the tree.
       --  The next call to refresh via the "project_view_changed" signal will
       --  completely restore the tree.
 
-      Clear (T.Tree.Model);
-   end Project_Changed;
+      Clear (Hook.Explorer.Tree.Model);
+   end Execute;
 
    ----------------------
    -- Add_Project_Node --
@@ -1809,6 +1825,18 @@ package body Project_Explorers is
       Thaw_Sort (Explorer.Tree.Model, Base_Name_Column);
       Id := Freeze_Sort (Explorer.Tree.Model);
    end Add_Or_Update_Flat_View_Root_Node;
+
+   -------------
+   -- Execute --
+   -------------
+
+   procedure Execute (Hook : Refresh_Hook_Record;
+                      Kernel : access Kernel_Handle_Record'Class)
+   is
+      pragma Unreferenced (Kernel);
+   begin
+      Refresh (Hook.Explorer);
+   end Execute;
 
    -------------
    -- Refresh --
