@@ -19,7 +19,6 @@
 -----------------------------------------------------------------------
 
 with Glib;                    use Glib;
---  with Gtk.Main; use Gtk.Main;
 with Advanced_Breakpoint_Pkg; use Advanced_Breakpoint_Pkg;
 with Odd.Types;               use Odd.Types;
 with Gtkada.Types;            use Gtkada.Types;
@@ -33,6 +32,7 @@ with Odd_Intl;                use Odd_Intl;
 with Gtk.Enums;               use Gtk.Enums;
 with Gtk.Handlers;            use Gtk.Handlers;
 with Gtk.Combo;               use Gtk.Combo;
+with Gtkada.Handlers;         use Gtkada.Handlers;
 
 package body Breakpoints_Pkg.Callbacks is
 
@@ -41,7 +41,7 @@ package body Breakpoints_Pkg.Callbacks is
    --  of the breakpoints.
 
    procedure Breakpoint_Row_Selected
-     (Editor : access Breakpoints_Record'Class;
+     (Widget : access Gtk_Widget_Record'Class;
       Args   : Gtk.Arguments.Gtk_Args);
    --  Called when a row of the breakpoint editor was selected.
 
@@ -59,6 +59,7 @@ package body Breakpoints_Pkg.Callbacks is
    begin
       --  If we selected the exceptions page, parse the list of exceptions if
       --  required.
+
       if Arg2 = 2
         and then not Editor.Has_Exception_List
       then
@@ -70,16 +71,19 @@ package body Breakpoints_Pkg.Callbacks is
             if Exception_Arr'Length > 0 then
                Set_Sensitive (Editor.Hbox4, True);
                String_List.Append (Exception_Name_Items, -"All exceptions");
+
                for J in Exception_Arr'Range loop
                   String_List.Append
                     (Exception_Name_Items, Exception_Arr (J).Name.all);
                end loop;
+
                Gtk.Combo.Set_Popdown_Strings
                  (Editor.Exception_Name, Exception_Name_Items);
                Free_String_List (Exception_Name_Items);
             else
                Set_Sensitive (Editor.Hbox4, False);
             end if;
+
             Editor.Has_Exception_List := True;
             Free (Exception_Arr);
          end;
@@ -93,7 +97,7 @@ package body Breakpoints_Pkg.Callbacks is
    procedure On_Location_Selected_Toggled
      (Object : access Gtk_Widget_Record'Class)
    is
-      Breakpoints : Breakpoints_Access := Breakpoints_Access (Object);
+      Breakpoints : constant Breakpoints_Access := Breakpoints_Access (Object);
    begin
       Set_Sensitive (Breakpoints.File_Combo, True);
       Set_Sensitive (Breakpoints.Line_Spin, True);
@@ -109,7 +113,7 @@ package body Breakpoints_Pkg.Callbacks is
    procedure On_Subprogam_Selected_Toggled
      (Object : access Gtk_Widget_Record'Class)
    is
-      Breakpoints : Breakpoints_Access := Breakpoints_Access (Object);
+      Breakpoints : constant Breakpoints_Access := Breakpoints_Access (Object);
    begin
       Set_Sensitive (Breakpoints.File_Combo, False);
       Set_Sensitive (Breakpoints.Line_Spin, False);
@@ -125,7 +129,7 @@ package body Breakpoints_Pkg.Callbacks is
    procedure On_Address_Selected_Toggled
      (Object : access Gtk_Widget_Record'Class)
    is
-      Breakpoints : Breakpoints_Access := Breakpoints_Access (Object);
+      Breakpoints : constant Breakpoints_Access := Breakpoints_Access (Object);
    begin
       Set_Sensitive (Breakpoints.File_Combo, False);
       Set_Sensitive (Breakpoints.Line_Spin, False);
@@ -141,7 +145,7 @@ package body Breakpoints_Pkg.Callbacks is
    procedure On_Regexp_Selected_Toggled
      (Object : access Gtk_Widget_Record'Class)
    is
-      Breakpoints : Breakpoints_Access := Breakpoints_Access (Object);
+      Breakpoints : constant Breakpoints_Access := Breakpoints_Access (Object);
    begin
       Set_Sensitive (Breakpoints.File_Combo, False);
       Set_Sensitive (Breakpoints.Line_Spin, False);
@@ -157,9 +161,10 @@ package body Breakpoints_Pkg.Callbacks is
    procedure On_Add_Location_Clicked
      (Object : access Gtk_Widget_Record'Class)
    is
-      Editor : Breakpoints_Access := Breakpoints_Access (Object);
+      Editor    : constant Breakpoints_Access := Breakpoints_Access (Object);
       Temporary : Boolean;
-      Label  : Gtk_List_Item;
+      Label     : Gtk_List_Item;
+
    begin
       Temporary := Get_Active (Editor.Temporary_Location);
 
@@ -252,11 +257,14 @@ package body Breakpoints_Pkg.Callbacks is
    procedure On_Add_Exception_Clicked
      (Object : access Gtk_Widget_Record'Class)
    is
-      Editor : Breakpoints_Access := Breakpoints_Access (Object);
+      Editor    : constant Breakpoints_Access := Breakpoints_Access (Object);
       Temporary : Boolean;
-      Name   : String := Get_Chars (Get_Entry (Editor.Exception_Name));
+      Name      : constant String :=
+        Get_Chars (Get_Entry (Editor.Exception_Name));
+
    begin
       Temporary := Get_Active (Editor.Temporary_Exception);
+
       if Name = -"All exceptions" then
          Break_Exception
            (Editor.Process.Debugger,
@@ -296,7 +304,7 @@ package body Breakpoints_Pkg.Callbacks is
      (Object : access Gtk_Widget_Record'Class)
    is
       use Gint_List;
-      Editor : Breakpoints_Access := Breakpoints_Access (Object);
+      Editor    : constant Breakpoints_Access := Breakpoints_Access (Object);
       Selection : Gint;
    begin
       if Get_Selection (Editor.Clist1) /= Null_List then
@@ -335,16 +343,18 @@ package body Breakpoints_Pkg.Callbacks is
    -----------------------------
 
    procedure Breakpoint_Row_Selected
-     (Editor : access Breakpoints_Record'Class;
+     (Widget : access Gtk_Widget_Record'Class;
       Args   : Gtk_Args)
    is
-      Row      : Gint := To_Gint (Args, 1);
-      Column   : Gint := To_Gint (Args, 2);
-      Br       : Breakpoint_Data;
-      Br_Num   : Natural;
-   begin
+      Editor  : constant Breakpoints_Access := Breakpoints_Access (Widget);
+      Row     : constant Gint := To_Gint (Args, 1);
+      Column  : constant Gint := To_Gint (Args, 2);
+      Br      : Breakpoint_Data;
+      Br_Num  : Natural;
 
+   begin
       --  Click in the second column => change the enable/disable state
+
       if Column = Enable_Column then
 
          --  For efficiency, no need to reparse the list of breakpoints, since
@@ -357,22 +367,27 @@ package body Breakpoints_Pkg.Callbacks is
            (Editor.Process,
             Breakpoint_Num => Integer'Value (Get_Text (Editor.Clist1, Row, 0)))
          then
-            Set_Pixmap (Editor.Clist1, Row, Enable_Column,
-                        Editor.Enabled_Pixmap, Editor.Enabled_Mask);
+            Set_Pixmap
+              (Editor.Clist1, Row, Enable_Column,
+               Editor.Enabled_Pixmap, Editor.Enabled_Mask);
          else
             Set_Text (Editor.Clist1, Row, Enable_Column, "");
          end if;
 
          --  Make sure the row is selected
+
          Emit_Stop_By_Name (Editor.Clist1, "select_row");
          Unselect_Row (Editor.Clist1, Row, -1);
 
          Thaw (Editor.Clist1);
 
-      --  Else => Display the information in the correct tab
+      --  Otherwise, display the information in the correct tab
+
       else
          --  Get the information on the breakpoint
+
          Br_Num := Integer'Value (Get_Text (Editor.Clist1, Row, 0));
+
          for B in Editor.Process.Breakpoints'Range loop
             if Editor.Process.Breakpoints (B).Num = Br_Num then
                Br := Editor.Process.Breakpoints (B);
@@ -381,9 +396,11 @@ package body Breakpoints_Pkg.Callbacks is
          end loop;
 
          --  Fill the information
+
          if Br.Except /= null then
             Set_Page (Editor.Notebook1, 2);
             Set_Active (Editor.Stop_Always_Exception, True);
+
             if Br.Except.all = "all" then
                Set_Text (Get_Entry (Editor.Exception_Name), -"All exceptions");
             elsif Br.Except.all = "unhandled" then
@@ -392,10 +409,12 @@ package body Breakpoints_Pkg.Callbacks is
             else
                Set_Text (Get_Entry (Editor.Exception_Name), Br.Except.all);
             end if;
+
             Set_Active (Editor.Temporary_Exception, Br.Disposition /= Keep);
 
          else
             Set_Page (Editor.Notebook1, 0);
+
             if Br.File /= null then
                Set_Active (Editor.Location_Selected, True);
                Set_Text (Get_Entry (Editor.File_Combo), Br.File.all);
@@ -415,7 +434,6 @@ package body Breakpoints_Pkg.Callbacks is
    procedure Update_Breakpoint_List
      (Editor : access Breakpoints_Pkg.Breakpoints_Record'Class)
    is
-      type String_Access2 is access all String;
       Row  : Gint;
       Br   : Breakpoint_Data;
       Size : Gint;
@@ -450,33 +468,33 @@ package body Breakpoints_Pkg.Callbacks is
          end if;
 
          case Br.The_Type is
-            when Breakpoint => Set_Text (Editor.Clist1, Row, 2, "break");
-            when Watchpoint => Set_Text (Editor.Clist1, Row, 2, "watch");
+            when Breakpoint => Set_Text (Editor.Clist1, Row, 2, -"break");
+            when Watchpoint => Set_Text (Editor.Clist1, Row, 2, -"watch");
          end case;
 
          case Br.Disposition is
-            when Delete  => Set_Text (Editor.Clist1, Row, 3, "delete");
-            when Disable => Set_Text (Editor.Clist1, Row, 3, "disable");
-            when Keep    => Set_Text (Editor.Clist1, Row, 3, "keep");
+            when Delete  => Set_Text (Editor.Clist1, Row, 3, -"delete");
+            when Disable => Set_Text (Editor.Clist1, Row, 3, -"disable");
+            when Keep    => Set_Text (Editor.Clist1, Row, 3, -"keep");
          end case;
 
-         if String_Access2 (Br.Expression) /= null then
+         if Br.Expression /= null then
             Set_Text
-              (Editor.Clist1, Row, 4, String_Access2 (Br.Expression).all);
+              (Editor.Clist1, Row, 4, Br.Expression.all);
          end if;
 
-         if String_Access2 (Br.File) /= null then
-            Set_Text (Editor.Clist1, Row, 4, String_Access2 (Br.File).all);
+         if Br.File /= null then
+            Set_Text (Editor.Clist1, Row, 4, Br.File.all);
             Set_Text (Editor.Clist1, Row, 5, Integer'Image (Br.Line));
          end if;
 
-         if String_Access2 (Br.Except) /= null then
-            Set_Text (Editor.Clist1, Row, 6, String_Access2 (Br.Except).all);
+         if Br.Except /= null then
+            Set_Text (Editor.Clist1, Row, 6, Br.Except.all);
          end if;
 
-         if String_Access2 (Br.Subprogram) /= null then
+         if Br.Subprogram /= null then
             Set_Text
-              (Editor.Clist1, Row, 7, String_Access2 (Br.Subprogram).all);
+              (Editor.Clist1, Row, 7, Br.Subprogram.all);
          end if;
       end loop;
 
@@ -484,11 +502,12 @@ package body Breakpoints_Pkg.Callbacks is
       Set_Column_Justification (Editor.Clist1, 1, Justify_Center);
       Size := Columns_Autosize (Editor.Clist1);
 
-      Br_Editor_Handler.Object_Connect
+      Widget_Callback.Object_Connect
         (Editor.Clist1, "select_row",
          Breakpoint_Row_Selected'Access,
          Slot_Object => Editor);
-      --  Br_Editor_Handler.Object_Connect
+      --  Why is the following code commented out ???
+      --  Widget_Callback.Object_Connect
       --    (Editor.Clist1, "unselect_row",
       --     Breakpoint_Row_Selected'Access,
       --     Slot_Object => Editor);
