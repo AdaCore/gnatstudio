@@ -21,6 +21,7 @@
 with Glib.Object;
 with Glib;          use Glib;
 with Gdk.GC;
+with Gdk.Pixbuf;    use Gdk.Pixbuf;
 with Gtk.Button;
 with Gtk.Box;       use Gtk.Box;
 with Gtk.Handlers;  use Gtk.Handlers;
@@ -55,6 +56,16 @@ package Src_Editor_Module is
    Undo_Redo_Id : constant String := "Source_Editor_Undo_Redo_Information";
 
    package Undo_Redo_Data is new Glib.Object.User_Data (Undo_Redo_Information);
+
+   ---------------------------------------
+   -- Module-specific graphical objects --
+   ---------------------------------------
+
+   Remove_Blank_Lines_Pixbuf : Gdk_Pixbuf := Null_Pixbuf;
+
+   -----------------------
+   -- Local subprograms --
+   -----------------------
 
    procedure Register_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
