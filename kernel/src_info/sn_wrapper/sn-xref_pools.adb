@@ -1,5 +1,6 @@
 with Ada.Unchecked_Deallocation;
 with Ada.Text_IO; use Ada.Text_IO;
+with Ada.Exceptions; use Ada.Exceptions;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 
@@ -157,13 +158,14 @@ package body SN.Xref_Pools is
       end loop;
       Close (FD);
    exception
-      when others =>
+      when E : others =>
          begin
             Close (FD);
          exception
             when others => null;
          end;
-         raise Xref_File_Error;
+         Raise_Exception (Xref_File_Error'Identity,
+           Exception_Name (E) & ": " & Exception_Message (E));
    end Save;
 
    ----------
@@ -249,7 +251,8 @@ package body SN.Xref_Pools is
                   --  raise an exception if unable to create new xref file
                   Free (Data.Source_Filename);
                   Free (Data.Xref_Filename);
-                  raise Xref_File_Error;
+                  Raise_Exception (Xref_File_Error'Identity,
+                    "unable to create a new file: " & Full_Name);
                end if;
                Close (FD);
                exit;

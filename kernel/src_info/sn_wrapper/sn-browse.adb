@@ -3,20 +3,27 @@ with GNAT.Directory_Operations,
      OS_Utils,
      Ada.Strings.Fixed,
      Ada.Unchecked_Deallocation,
+     Ada.Exceptions,
      SN.Xref_Pools,
---     Ada.Text_IO,
      GNAT.OS_Lib;
 
 use  GNAT.Directory_Operations,
      GNAT.IO_Aux,
      Ada.Strings.Fixed,
+     Ada.Exceptions,
      SN.Xref_Pools,
---     Ada.Text_IO,
      GNAT.OS_Lib;
 
 package body SN.Browse is
 
    Xrefs : Xref_Pool := Empty_Xref_Pool;
+   --  persistent pool (one per project) for xref ile names
+
+   DBIMP : constant String := "dbimp";
+   --  SN database engine
+
+   DBIMP_Path : String_Access := null;
+   --  full path to DBIMP (found in PATH) or null, if DBIMP is not in PATH
 
    procedure Free is new Ada.Unchecked_Deallocation
                               (String, String_Access);
@@ -66,25 +73,27 @@ package body SN.Browse is
             Delete_File (Xref_File_Name_Nul'Address, Success);
          end;
          if not Success then
-            raise Unlink_Failure;
+            Raise_Exception (Unlink_Failure'Identity,
+               Xref_File_Name.all);
          end if;
       end if;
 
-      DBUtil_Path := Locate_Exec_On_Path ("dbimp");
-      if null = DBUtil_Path then
-         raise Spawn_Failure;
+      if null = DBIMP_Path then
+         Raise_Exception (Spawn_Failure'Identity,
+           DBIMP & ": not found in PATH");
       end if;
       --  Execute browser
       Args := Argument_String_To_List (
           "-n " & DB_Directory & Directory_Separator & DB_File_Name
-          & " -p " & DBUtil_Path.all
+          & " -p " & DBIMP_Path.all
           & " -x " & DB_Directory & Directory_Separator & Xref_File_Name.all
           & " " & File_Name);
 
       DBUtil_Path := Locate_Exec_On_Path (Browser_Name);
       if null = DBUtil_Path then
          Delete (Args);
-         raise Spawn_Failure;
+         Raise_Exception (Spawn_Failure'Identity,
+           Browser_Name & ": not found in PATH");
       end if;
 
       Spawn (DBUtil_Path.all, Args.all, Success);
@@ -110,7 +119,6 @@ package body SN.Browse is
       Content      : String_Access;
       Temp_File    : File_Descriptor;
       Temp_Name    : Temp_File_Name;
-      DBUtil_Path  : String_Access;
    begin
 
       --  remove .to and .by tables
@@ -165,21 +173,23 @@ package body SN.Browse is
           & " -f " & Temp_Name
       );
 
-      DBUtil_Path := Locate_Exec_On_Path ("dbimp");
-      if null = DBUtil_Path then
+      if null = DBIMP_Path then
          Delete (Args);
          raise Spawn_Failure;
       end if;
 
-      Spawn (DBUtil_Path.all, Args.all, Success);
+      Spawn (DBIMP_Path.all, Args.all, Success);
       Delete (Args);
-      Free (DBUtil_Path);
 
       Delete_File (Temp_Name'Address, Success);
       if not Success then
          raise Unlink_Failure;
       end if;
    end Generate_Xrefs;
+
+begin
+   --  locate dbimp utility in PATH
+   DBIMP_Path := Locate_Exec_On_Path (DBIMP);
 end SN.Browse;
 
 
