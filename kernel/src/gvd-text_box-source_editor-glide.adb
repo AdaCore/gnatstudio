@@ -22,7 +22,7 @@ with Gtk.Container;        use Gtk.Container;
 with Basic_Types;          use Basic_Types;
 with Glide_Kernel;         use Glide_Kernel;
 with Glide_Kernel.Console; use Glide_Kernel.Console;
-with Glide_Kernel.Editor;  use Glide_Kernel.Editor;
+with Glide_Kernel.Modules; use Glide_Kernel.Modules;
 with Glide_Main_Window;    use Glide_Main_Window;
 
 package body GVD.Text_Box.Source_Editor.Glide is
@@ -75,13 +75,11 @@ package body GVD.Text_Box.Source_Editor.Glide is
    ----------------------------
 
    procedure Highlight_Current_Line (Editor : access GEdit_Record) is
-      Success : Boolean;
       Kernel  : constant Kernel_Handle := Glide_Window (Editor.Window).Kernel;
-
    begin
       pragma Assert (Editor.Current_File /= null);
-      Go_To (Kernel, Editor.Current_File.all,
-             Editor.Line, 1, Success => Success);
+      Open_File_Editor (Kernel, Editor.Current_File.all,
+                        Editor.Line, 1);
    end Highlight_Current_Line;
 
    --------------------
@@ -119,13 +117,12 @@ package body GVD.Text_Box.Source_Editor.Glide is
       Set_Current : Boolean := True;
       Force       : Boolean := False)
    is
-      Success : Boolean;
       Kernel  : constant Kernel_Handle := Glide_Window (Editor.Window).Kernel;
 
    begin
       Free (Editor.Current_File);
       Editor.Current_File := new String' (File_Name);
-      Open_File (Kernel, Editor.Current_File.all, Success);
+      Open_File_Editor (Kernel, Editor.Current_File.all);
    end Load_File;
 
    -------------------------
@@ -146,16 +143,13 @@ package body GVD.Text_Box.Source_Editor.Glide is
       Line        : Natural;
       Set_Current : Boolean := True)
    is
-      Success : Boolean;
       Kernel  : constant Kernel_Handle := Glide_Window (Editor.Window).Kernel;
 
    begin
       Editor.Line := Line;
 
       pragma Assert (Editor.Current_File /= null);
-
-      Go_To (Kernel, Editor.Current_File.all,
-             Editor.Line, 1, Success => Success);
+      Open_File_Editor (Kernel, Editor.Current_File.all, Editor.Line, 1);
    end Set_Line;
 
    ------------------
