@@ -19,7 +19,6 @@
 -----------------------------------------------------------------------
 
 with Ada.Exceptions;       use Ada.Exceptions;
-with Ada.Unchecked_Deallocation;
 with GNAT.Heap_Sort_G;
 with GNAT.Strings;         use GNAT.Strings;
 
@@ -38,7 +37,6 @@ with Glib.Xml_Int;  use Glib.Xml_Int;
 with Gdk.GC;        use Gdk.GC;
 with Gdk.Event;     use Gdk.Event;
 with Gdk.Drawable;  use Gdk.Drawable;
-with Gdk.Rectangle; use Gdk.Rectangle;
 with Gdk.Pixbuf;    use Gdk.Pixbuf;
 with Gtk.Enums;     use Gtk.Enums;
 with Gtk.Menu;      use Gtk.Menu;
@@ -49,8 +47,6 @@ with Gtk.Widget;    use Gtk.Widget;
 with Gtkada.Canvas; use Gtkada.Canvas;
 with Gtkada.Handlers; use Gtkada.Handlers;
 with Gtkada.MDI;    use Gtkada.MDI;
-with Pango.Context; use Pango.Context;
-with Pango.Font;    use Pango.Font;
 with Pango.Layout;  use Pango.Layout;
 
 package body Browsers.Entities is
@@ -133,24 +129,6 @@ package body Browsers.Entities is
 
    function "<" (E1, E2 : Entity_Information) return Boolean;
 
-   type Active_Area_Cb_Array is array (Natural range <>) of Active_Area_Cb;
-   type Active_Area_Cb_Array_Access is access Active_Area_Cb_Array;
-   type Natural_Array is array (Natural range <>) of Natural;
-   type Natural_Array_Access is access Natural_Array;
-
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Active_Area_Cb_Array, Active_Area_Cb_Array_Access);
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (GNAT.Strings.String_List, GNAT.Strings.String_List_Access);
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Natural_Array, Natural_Array_Access);
-
-   type Xref_List is record
-      Lines      : GNAT.Strings.String_List_Access;
-      Callbacks  : Active_Area_Cb_Array_Access;
-      Lengths    : Natural_Array_Access;
-   end record;
-
    procedure Add_Primitive_Operations
      (List     : in out Xref_List;
       Kernel   : access Kernel_Handle_Record'Class;
@@ -181,45 +159,6 @@ package body Browsers.Entities is
       Item     : access Type_Item_Record'Class;
       Lib_Info : LI_File_Ptr);
    --  Add the parent package for Entity at the end of Attr_Layout
-
-   procedure Add_Line
-     (List : in out Xref_List;
-      Str : String;
-      Length1 : Natural := Natural'Last;
-      Callback : Active_Area_Cb := null);
-   --  Add a new line that will be displayed in a layout.
-   --  Str can contain one substring delimited by @...@. When the user
-   --  clicks on that zone, Callback will be called.
-   --  Length1 is the number of characters in the first column. The first
-   --  character in the second column will always be aligned. Set to
-   --  Natural'Last if there is only one column.
-
-   procedure Display_Lines
-     (Item   : access Browser_Item_Record'Class;
-      List   : Xref_List;
-      X      : Gint;
-      Y      : in out Gint;
-      Second_Column : Gint;
-      Layout : access Pango_Layout_Record'Class);
-   --  Display the lines from List into Pixmap, starting at X, Y, and setup
-   --  appropriate callbacks.
-   --  Layout is used while drawing the strings.
-   --  Second_Column is the pixel number where the second column (if any)
-   --  should start.
-
-   procedure Free (List : in out Xref_List);
-   --  Free the data in List (but not the xrefs, since they are still used for
-   --  the callbacks).
-
-   procedure Get_Pixel_Size
-     (Browser : access General_Browser_Record'Class;
-      List : Xref_List;
-      W1, W2, H : out Gint;
-      Layout : Pango_Layout);
-   --  Compute the approximate pixels size for List.
-   --  W1, W2 are the widths of the two columns (depending on how each line was
-   --  split).
-   --  Layout is used while computing the length
 
    function Load_Desktop
      (Node : Node_Ptr; User : Kernel_Handle) return Gtk_Widget;
@@ -307,210 +246,6 @@ package body Browsers.Entities is
          Link_Name => new String'(Link_Name),
          Entity => Entity);
    end Build;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (List : in out Xref_List) is
-   begin
-      Free (List.Lines);
-      Unchecked_Free (List.Lengths);
-
-      if List.Callbacks /= null then
-         for A in List.Callbacks'Range loop
-            --  Do not actually destroy, since these are still used in the
-            --  callbacks.
-            Unchecked_Free (List.Callbacks (A));
-         end loop;
-         Unchecked_Free (List.Callbacks);
-      end if;
-   end Free;
-
-   --------------
-   -- Add_Line --
-   --------------
-
-
-   procedure Add_Line
-     (List : in out Xref_List;
-      Str : String;
-      Length1 : Natural := Natural'Last;
-      Callback : Active_Area_Cb := null)
-   is
-      Tmp : GNAT.Strings.String_List_Access := List.Lines;
-      Cbs : Active_Area_Cb_Array_Access := List.Callbacks;
-      Tmp2 : Natural_Array_Access := List.Lengths;
-   begin
-      if Tmp /= null then
-         List.Lines :=
-           new GNAT.Strings.String_List'(Tmp.all & new String'(Str));
-         Unchecked_Free (Tmp);
-      else
-         List.Lines := new GNAT.Strings.String_List'(1 => new String'(Str));
-      end if;
-
-      if Cbs /= null then
-         List.Callbacks := new Active_Area_Cb_Array'(Cbs.all & Callback);
-         Unchecked_Free (Cbs);
-      else
-         List.Callbacks := new Active_Area_Cb_Array'(1 => Callback);
-      end if;
-
-      if Tmp2 /= null then
-         List.Lengths := new Natural_Array'(Tmp2.all & Length1);
-         Unchecked_Free (Tmp2);
-      else
-         List.Lengths := new Natural_Array'(1 => Length1);
-      end if;
-   end Add_Line;
-
-   --------------------
-   -- Get_Pixel_Size --
-   --------------------
-
-   procedure Get_Pixel_Size
-     (Browser : access General_Browser_Record'Class;
-      List : Xref_List;
-      W1, W2, H : out Gint;
-      Layout : Pango_Layout)
-   is
-      Descr : constant Pango_Font_Description :=
-        Get_Pref (Get_Kernel (Browser), Browsers_Link_Font);
-      Font  : Pango_Font;
-      Metrics : Pango_Font_Metrics;
-      Longest1, Longest2 : Gint := 0;
-      H2, W    : Gint;
-      Last : Natural;
-   begin
-      H := 0;
-
-      if List.Lines = null then
-         W := 0;
-         return;
-      end if;
-
-      Font := Load_Font (Get_Pango_Context (Browser), Descr);
-      Metrics := Get_Metrics (Font);
-
-      for L in List.Lines'Range loop
-         declare
-            Line : GNAT.Strings.String_Access renames List.Lines (L);
-         begin
-            Last := Natural'Min (List.Lengths (L), Line'Length);
-
-            --  First column
-            Set_Text (Layout, Line (Line'First .. Line'First + Last - 1));
-            Get_Pixel_Size (Layout, W, H2);
-            H := H + H2;
-            Longest1 := Gint'Max (Longest1, W);
-
-            --  Second column
-            if L < Line'Length then
-               Set_Text (Layout, Line (Line'First + Last .. Line'Last));
-               Get_Pixel_Size (Layout, W, H2);
-               Longest2 := Gint'Max (Longest2, W);
-            end if;
-         end;
-      end loop;
-
-      W1 := Longest1;
-      W2 := Longest2;
-      Unref (Metrics);
-      Unref (Font);
-   end Get_Pixel_Size;
-
-   -------------------
-   -- Display_Lines --
-   -------------------
-
-   procedure Display_Lines
-     (Item   : access Browser_Item_Record'Class;
-      List   : Xref_List;
-      X      : Gint;
-      Y      : in out Gint;
-      Second_Column : Gint;
-      Layout : access Pango_Layout_Record'Class)
-   is
-      Browser : constant General_Browser := Get_Browser (Item);
-      X2     : Gint;
-      First, Last : Integer;
-      In_Xref : Boolean;
-      GC     : Gdk_GC;
-      W, H   : Gint;
-
-      procedure Display (L : Natural);
-      --  Display the slice First .. Last - 1
-
-      procedure Display (L : Natural) is
-      begin
-         if First < Last - 1 then
-            Set_Text (Layout, List.Lines (L)(First .. Last - 1));
-
-            if In_Xref then
-               GC := Get_Text_GC (Browser);
-            else
-               GC := Get_Black_GC (Get_Style (Browser));
-            end if;
-
-            Draw_Layout
-              (Drawable => Pixmap (Item),
-               GC       => GC,
-               X        => X2,
-               Y        => Y,
-               Layout   => Pango_Layout (Layout));
-
-            Get_Pixel_Size (Layout, W, H);
-
-            if In_Xref then
-               Draw_Line (Pixmap (Item), GC, X2, Y + H, X2 + W, Y + H);
-
-               if List.Callbacks (L) /= null then
-                  Add_Active_Area
-                    (Item,
-                     Gdk_Rectangle'(X2, Y, W, H),
-                     List.Callbacks (L).all);
-               end if;
-            end if;
-
-            X2 := X2 + W;
-         end if;
-      end Display;
-
-   begin
-      if List.Lines = null then
-         return;
-      end if;
-
-      for L in List.Lines'Range loop
-         First := List.Lines (L)'First;
-         Last := First;
-         X2   := X;
-         In_Xref := False;
-
-         while Last <= List.Lines (L)'Last loop
-            if Last - List.Lines (L)'First + 1 = List.Lengths (L) then
-               Display (L);
-               First   := Last;
-               X2      := X + Second_Column;
-            end if;
-
-            if List.Lines (L)(Last) = '@' then
-               Display (L);
-               First   := Last + 1;
-               In_Xref := not In_Xref;
-            end if;
-
-            Last := Last + 1;
-         end loop;
-
-         Display (L);
-
-         --  No need to query the size again, we just did
-
-         Y := Y + H;
-      end loop;
-   end Display_Lines;
 
    ---------------------
    -- Register_Module --
@@ -1006,7 +741,7 @@ package body Browsers.Entities is
          Add_Line
            (List,
             Prefix & ": " & Entity_As_Link (Typ),
-            Length1 => Prefix'Length + 1,
+            Length1 => Prefix'Length + 2,
             Callback => Build (Item, Typ, Prefix));
          --  Do not free Typ, needed for callbacks
       end if;
@@ -1031,30 +766,31 @@ package body Browsers.Entities is
       New_Item := Add_Or_Select_Item
         (Type_Browser (Get_Browser (Item)), Entity);
 
-      if Reverse_Link then
-         if not Has_Link (Canvas, Item, New_Item, Link_Name) then
-            if Parent_Link then
+      if Parent_Link then
+         if Reverse_Link then
+            if not Has_Link (Canvas, Item, New_Item, Link_Name) then
                Link := new Parent_Link_Record;
-            else
-               Link := new Canvas_Link_Record;
+               Add_Link (Canvas, Link, Item, New_Item, Descr => Link_Name,
+                         Arrow => No_Arrow);
             end if;
-
-            Add_Link (Canvas, Link, Item, New_Item, Descr => Link_Name,
-                      Arrow => No_Arrow);
-         end if;
-
-      else
-         if not Has_Link (Canvas, New_Item, Item, Link_Name) then
-            if Parent_Link then
-               Link := new Parent_Link_Record;
-            else
-               Link := new Canvas_Link_Record;
-            end if;
-
+         elsif not Has_Link (Canvas, New_Item, Item, Link_Name) then
+            Link := new Parent_Link_Record;
             Add_Link (Canvas, Link, New_Item, Item, Descr => Link_Name,
                       Arrow => No_Arrow);
          end if;
+
+      elsif Reverse_Link then
+         if not Has_Link (Canvas, New_Item, Item, Link_Name) then
+            Link := new Browser_Link_Record;
+            Add_Link (Canvas, Link, New_Item, Item, Descr => Link_Name);
+         end if;
+
+      elsif not Has_Link (Canvas, Item, New_Item, Link_Name) then
+         Link := new Browser_Link_Record;
+         Add_Link (Canvas, Link, Item, New_Item, Descr => Link_Name);
       end if;
+
+      Highlight (Browser_Item (New_Item));
    end Add_Item_And_Link;
 
    -----------------------
@@ -1089,7 +825,7 @@ package body Browsers.Entities is
          end loop;
 
          It.Parents_Computed := True;
-         Refresh (It);  --  ??? Could refresh only the title bar
+         Redraw_Title_Bar (Item);
       end if;
    end Find_Parent_Types;
 
@@ -1142,7 +878,7 @@ package body Browsers.Entities is
          Destroy (Iter);
 
          Type_Item (Item).Children_Computed := True;
-         Refresh (Item);  --  ??? Could refresh only the title bar
+         Redraw_Title_Bar (Item);
 
          Pop_State (Kernel);
       end if;
@@ -1191,7 +927,6 @@ package body Browsers.Entities is
       Lib_Info : LI_File_Ptr;
       Kernel : constant Kernel_Handle := Get_Kernel (Get_Browser (Item));
       Layout : Pango_Layout;
-      Show_Primitive_Button : Boolean := False;
    begin
       Trace (Me, "Resize_And_Draw: " & Get_Name (Item.Entity));
       Reset_Active_Areas (Item.all);
@@ -1259,7 +994,6 @@ package body Browsers.Entities is
               | Task_Kind =>
                Add_Primitive_Operations (Meth_Lines, Kernel, Item, Lib_Info);
                Add_Fields (Kernel, Attr_Lines, Item, Lib_Info);
-               Show_Primitive_Button := True;
 
             when Entry_Or_Entry_Family
               | Function_Or_Operator
@@ -1296,13 +1030,16 @@ package body Browsers.Entities is
       Get_Pixel_Size
         (Get_Browser (Item), Attr_Lines, Layout_W1, Layout_W2, Layout_H,
          Layout);
-      W := Gint'Max (Width, Layout_W1 + Layout_W2 + Left_Margin);
+      W := Gint'Max
+        (W, Layout_W1 + Layout_W2 + Left_Margin + Xoffset + 2 * Margin);
 
       Get_Pixel_Size
         (Get_Browser (Item), Meth_Lines, Meth_Layout_W1, Meth_Layout_W2,
          Meth_Layout_H, Layout);
-      W := Gint'Max (W, Meth_Layout_W1 + Meth_Layout_W2 + Left_Margin);
-      H := H + Layout_H + 4 * Margin + Meth_Layout_H;
+      W := Gint'Max
+        (W, Meth_Layout_W1 + Meth_Layout_W2
+         + 2 * Margin + Xoffset + Left_Margin);
+      H := H + Layout_H + 2 * Margin + Meth_Layout_H;
 
       Resize_And_Draw
         (Browser_Item_Record (Item.all)'Access, W, H,
@@ -1328,14 +1065,37 @@ package body Browsers.Entities is
       Display_Lines (Item, Meth_Lines, Margin + Xoffset + Left_Margin, Y,
                      Meth_Layout_W1, Layout);
 
-      if Show_Primitive_Button then
-         --  ??? Should use a different icon depending on
-         --  Item.Inherited_Primitives.
-         Draw_Title_Bar_Button
-           (Item,
-            Num    => Get_Last_Button_Number (Item),
-            Pixbuf => Type_Browser (Get_Browser (Item)).Primitive_Button,
-            Cb     => Build (Hide_Show_Inherited'Access, Item));
+      Free (Attr_Lines);
+      Free (Meth_Lines);
+   end Resize_And_Draw;
+
+   ----------------------
+   -- Redraw_Title_Bar --
+   ----------------------
+
+   procedure Redraw_Title_Bar (Item : access Type_Item_Record) is
+   begin
+      Redraw_Title_Bar (Browser_Item_Record (Item.all)'Access);
+
+      if Get_Kind (Item.Entity).Is_Type then
+         case Get_Kind (Item.Entity).Kind is
+            when Class_Wide
+              | Class
+              | Record_Kind
+              | Protected_Kind
+              | Task_Kind
+              =>
+               --  ??? Should use a different icon depending on
+               --  Item.Inherited_Primitives.
+               Draw_Title_Bar_Button
+                 (Item,
+                  Num    => Get_Last_Button_Number (Item),
+                  Pixbuf => Type_Browser (Get_Browser (Item)).Primitive_Button,
+                  Cb     => Build (Hide_Show_Inherited'Access, Item));
+
+            when others =>
+               null;
+         end case;
       end if;
 
       if not Item.Parents_Computed then
@@ -1353,10 +1113,7 @@ package body Browsers.Entities is
             Pixbuf => Type_Browser (Get_Browser (Item)).Down_Arrow,
             Cb     => Build (Find_Children_Types'Access, Item));
       end if;
-
-      Free (Attr_Lines);
-      Free (Meth_Lines);
-   end Resize_And_Draw;
+   end Redraw_Title_Bar;
 
    ------------------------
    -- Add_Or_Select_Item --
@@ -1608,21 +1365,14 @@ package body Browsers.Entities is
       end if;
    end Reset;
 
-   ---------------------------------
-   -- Highlight_Item_And_Siblings --
-   ---------------------------------
+   ---------------
+   -- Highlight --
+   ---------------
 
-   procedure Highlight_Item_And_Siblings
-     (Browser : access Type_Browser_Record;
-      Item    : access Gtkada.Canvas.Canvas_Item_Record'Class;
-      Old     : Gtkada.Canvas.Canvas_Item := null)
-   is
-      pragma Unreferenced (Browser, Item, Old);
+   procedure Highlight (Item : access Type_Item_Record) is
    begin
-      --  Do nothing, we simply do not want to redraw the items with a
-      --  different background.
-      null;
-   end Highlight_Item_And_Siblings;
+      Redraw_Title_Bar (Browser_Item (Item));
+   end Highlight;
 
    -----------------------
    -- Get_Background_GC --
@@ -1633,5 +1383,34 @@ package body Browsers.Entities is
    begin
       return Get_Default_Item_Background_GC (Get_Browser (Item));
    end Get_Background_GC;
+
+   -----------------------------
+   -- Get_Title_Background_GC --
+   -----------------------------
+
+   function Get_Title_Background_GC
+     (Item : access Type_Item_Record) return Gdk.GC.Gdk_GC
+   is
+      B : constant General_Browser := Get_Browser (Item);
+      Selected : constant Canvas_Item := Selected_Item (B);
+   begin
+      if Canvas_Item (Item) = Selected then
+         return Get_Selected_Item_GC (B);
+
+      elsif Selected /= null
+        and then Has_Link (Get_Canvas (B), From => Item, To => Selected)
+      then
+         return Get_Parent_Linked_Item_GC (B);
+
+      elsif Selected /= null
+        and then Has_Link (Get_Canvas (B), From => Selected, To => Item)
+      then
+         return Get_Child_Linked_Item_GC (B);
+
+      else
+         --  ??? Should use different color
+         return Get_Selected_Item_GC (B);
+      end if;
+   end Get_Title_Background_GC;
 
 end Browsers.Entities;
