@@ -380,12 +380,24 @@ package body Directory_Tree is
       Dir            : String;
       Busy_Cursor_On : Gdk.Window.Gdk_Window := null)
    is
-      D        : constant String := Name_As_Directory (Dir);
+      Abs_D    : constant String := Name_As_Directory
+        (Normalize_Pathname (Dir));
+
       Parent   : Gtk_Tree_Iter;
       Iter     : Gtk_Tree_Iter;
       Path     : Gtk_Tree_Path;
       Success  : Boolean;
       pragma Unreferenced (Busy_Cursor_On);
+
+      function Is_Parent (Parent : String) return Boolean;
+      --  Return True if Parent is a directory parent of D.
+
+      function Is_Parent (Parent : String) return Boolean is
+      begin
+         return Parent'Length <= Abs_D'Length
+           and then Abs_D
+             (Abs_D'First .. Abs_D'First + Parent'Length - 1) = Parent;
+      end Is_Parent;
 
    begin
       --  Find the first non-expanded iter
@@ -401,7 +413,7 @@ package body Directory_Tree is
             Curr_Dir : constant String := Get_String
               (Tree.File_Model, Iter, Absolute_Name_Column);
          begin
-            if Curr_Dir = D then
+            if Curr_Dir = Abs_D then
                Scroll_To_Cell (Tree.File_Tree, Path, null, True, 0.1, 0.1);
                Set_Cursor (Tree.File_Tree, Path, null, False);
                Path_Free (Path);
@@ -409,16 +421,7 @@ package body Directory_Tree is
                return;
             end if;
 
-            if Curr_Dir'Length = D'Length
-              and then D = Curr_Dir
-            then
-               Set_Cursor (Tree.File_Tree, Path, null, False);
-               Path_Free (Path);
-               return;
-
-            elsif Curr_Dir'Length <= D'Length
-              and then D (D'First .. D'First + Curr_Dir'Length - 1) = Curr_Dir
-            then
+            if Is_Parent (Curr_Dir) then
                if Row_Expanded (Tree.File_Tree, Path) then
                   Iter := Children (Tree.File_Model, Iter);
                else
