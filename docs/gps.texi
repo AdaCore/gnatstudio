@@ -6107,7 +6107,7 @@ Log file created automatically by GPS
 
    @item $HOME/.gps/aliases
 @cindex aliases
-Contains the list of user-defined aliases (@xref{Defining Aliase}).
+Contains the list of user-defined aliases (@pxref{Defining Aliases}).
 
    @item $HOME/.gps/custom
 You can edit this file to add your own menu and tool-bar entries in GPS.
@@ -6116,7 +6116,7 @@ You can edit this file to add your own menu and tool-bar entries in GPS.
    @item $HOME/.gps/custom_key
 Contains all the key bindings defined in GPS. This file is
 automatically created if you have activated the dynamic key bindings feature
-(@xref{Customizing the Menu Bar and the Tool Bar}.
+(@pxref{Customizing the Menu Bar and the Tool Bar}).
 
    @item $HOME/.gps/debugger.log
 @cindex log
