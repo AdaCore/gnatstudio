@@ -25,7 +25,6 @@ with Gdk.Color;                 use Gdk.Color;
 with Gdk.Types;                 use Gdk.Types;
 with Gdk.Types.Keysyms;         use Gdk.Types.Keysyms;
 with Gtk.Enums;
-with Gtk.Main;                  use Gtk.Main;
 with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Stock;                 use Gtk.Stock;
@@ -73,6 +72,8 @@ with Ada.Unchecked_Deallocation;
 with Commands;                  use Commands;
 with Commands.Builder;          use Commands.Builder;
 
+with Commands.Generic_Asynchronous;
+
 package body Builder_Module is
 
    Cst_Run_Arguments_History : constant History_Key := "gvd_run_arguments";
@@ -82,9 +83,6 @@ package body Builder_Module is
 
    Run_External_Key : constant History_Key := "run_external_terminal";
    --  The key in the history for the check button "run in external terminal"
-
-   Timeout_Xref : constant Guint32 := 50;
-   --  Timeout in milliseconds to generate the xref information
 
    Me : constant Debug_Handle := Create (Builder_Module_Name);
 
@@ -100,20 +98,26 @@ package body Builder_Module is
    end record;
    type Compute_Xref_Data_Access is access Compute_Xref_Data;
 
+   procedure Deep_Free (D : in out Compute_Xref_Data_Access);
+   --  Free memory associated to D;
+
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (LI_Handler_Iterator_Access, LI_Handler_Iterator_Access_Access);
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Compute_Xref_Data, Compute_Xref_Data_Access);
 
-   package Xref_Timeout is new Gtk.Main.Timeout (Compute_Xref_Data_Access);
+   procedure Xref_Iterate
+     (Xref_Data : in out Compute_Xref_Data_Access;
+      Command   : Command_Access;
+      Result    : out Command_Return_Type);
+   --  Query the Xref information for the next files in the project.
 
-   procedure Timeout_Xref_Destroy (D : in out Compute_Xref_Data_Access);
-   --  Destroy the memory associated with an Xref_Timeout.
-
-   function Timeout_Compute_Xref
-     (D : Compute_Xref_Data_Access) return Boolean;
-   --  Compute the cross-references for the next files in the project.
+   package Xref_Commands is new Commands.Generic_Asynchronous
+     (Data_Type   => Compute_Xref_Data_Access,
+      Description => -"Computing cross-references information",
+      Free        => Deep_Free,
+      Iterate     => Xref_Iterate);
 
    procedure Free (Ar : in out String_List);
    procedure Free (Ar : in out String_List_Access);
@@ -459,8 +463,6 @@ package body Builder_Module is
       Fd           : Process_Descriptor_Access;
       Cmd          : String_Access;
       Args         : Argument_List_Access;
-      Id           : Timeout_Handler_Id;
-      pragma Unreferenced (Id);
 
       Context      : Selection_Context_Access;
       Prj          : Project_Type;
@@ -600,7 +602,8 @@ package body Builder_Module is
       Create (C, (Kernel, Fd, null, null, null));
 
       if Synchronous then
-         Launch_Synchronous (Command_Access (C));
+         Launch_Synchronous (Command_Access (C), 0.1);
+         Destroy (Command_Access (C));
 
       else
          Launch_Background_Command
@@ -671,8 +674,6 @@ package body Builder_Module is
            & " -q -u -gnats " & File;
          Fd   : Process_Descriptor_Access;
          Args : Argument_List_Access;
-         Id   : Timeout_Handler_Id;
-         pragma Unreferenced (Id);
 
          Lang : String := Get_Language_From_File
            (Get_Language_Handler (Kernel), File);
@@ -753,8 +754,6 @@ package body Builder_Module is
       Cmd          : String_Access;
       Fd           : Process_Descriptor_Access;
       Local_File   : aliased String := File;
-      Id           : Timeout_Handler_Id;
-      pragma Unreferenced (Id);
 
       Lang         : String := Get_Language_From_File
         (Get_Language_Handler (Kernel), File);
@@ -837,7 +836,9 @@ package body Builder_Module is
       Create (C, (Kernel, Fd, null, null, null));
 
       if Synchronous then
-         Launch_Synchronous (Command_Access (C));
+         Launch_Synchronous (Command_Access (C), 0.1);
+         Destroy (Command_Access (C));
+
       else
          Launch_Background_Command
            (Kernel, Command_Access (C), Active => False, Queue_Id => "");
@@ -864,7 +865,7 @@ package body Builder_Module is
       Instance : Class_Instance;
       Info     : File_Info;
       Kernel   : constant Kernel_Handle := Get_Kernel (Data);
-      D        : Compute_Xref_Data_Access;
+      C        : Xref_Commands.Generic_Asynchronous_Command_Access;
    begin
       if Command = "compile" then
          Instance := Nth_Arg (Data, 1, Get_File_Class (Kernel));
@@ -902,13 +903,12 @@ package body Builder_Module is
          end loop;
 
       elsif Command = "compute_xref" then
-         Push_State (Kernel, Processing);
-         D := new Compute_Xref_Data'
-           (Kernel, new LI_Handler_Iterator_Access, 0);
-         while Timeout_Compute_Xref (D) loop
-            delay 0.01;
-         end loop;
-         Timeout_Xref_Destroy (D);
+         Xref_Commands.Create
+           (C,
+            new Compute_Xref_Data'(Kernel, new LI_Handler_Iterator_Access, 0));
+
+         Launch_Synchronous (Command_Access (C), 0.01);
+         Destroy (Command_Access (C));
       end if;
    end Compile_Command;
 
@@ -971,8 +971,6 @@ package body Builder_Module is
          Top     : constant Glide_Window :=
            Glide_Window (Get_Main_Window (Kernel));
          Fd      : Process_Descriptor_Access;
-         Id      : Timeout_Handler_Id;
-         pragma Unreferenced (Id);
 
       begin
          if not Save_All_MDI_Children
@@ -1015,25 +1013,16 @@ package body Builder_Module is
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Custom;
 
-   --------------------------
-   -- Timeout_Xref_Destroy --
-   --------------------------
+   ------------------
+   -- Xref_Iterate --
+   ------------------
 
-   procedure Timeout_Xref_Destroy (D : in out Compute_Xref_Data_Access) is
-   begin
-      Pop_State (D.Kernel);
-      Free (D.Iter.all);
-      Unchecked_Free (D.Iter);
-      Unchecked_Free (D);
-   end Timeout_Xref_Destroy;
-
-   --------------------------
-   -- Timeout_Compute_Xref --
-   --------------------------
-
-   function Timeout_Compute_Xref
-     (D : Compute_Xref_Data_Access) return Boolean
+   procedure Xref_Iterate
+     (Xref_Data : in out Compute_Xref_Data_Access;
+      Command   : Command_Access;
+      Result    : out Command_Return_Type)
    is
+      D            : Compute_Xref_Data_Access renames Xref_Data;
       Handler      : constant Glide_Language_Handler :=
         Glide_Language_Handler (Get_Language_Handler (D.Kernel));
       Num_Handlers : constant Natural := LI_Handlers_Count (Handler);
@@ -1053,7 +1042,9 @@ package body Builder_Module is
 
          if D.LI > Num_Handlers then
             Insert (D.Kernel, -"Finished parsing all source files");
-            return False;
+
+            Result := Success;
+            return;
          end if;
 
          Free (D.Iter.all);
@@ -1076,14 +1067,11 @@ package body Builder_Module is
                  & Get_LI_Name (Handler, D.LI));
       end if;
 
-      return True;
+      Set_Progress (Command, (Running, D.LI, Num_Handlers));
 
-   exception
-      when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
-         Insert (D.Kernel, "Finished parsing all source files");
-         return False;
-   end Timeout_Compute_Xref;
+      Result := Execute_Again;
+      return;
+   end Xref_Iterate;
 
    ---------------------
    -- On_Compute_Xref --
@@ -1093,15 +1081,14 @@ package body Builder_Module is
      (Object : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
       pragma Unreferenced (Object);
-      Id      : Timeout_Handler_Id;
-      pragma Unreferenced (Id);
 
+      C : Xref_Commands.Generic_Asynchronous_Command_Access;
    begin
-      Push_State (Kernel, Processing);
-      Id := Xref_Timeout.Add
-        (Timeout_Xref, Timeout_Compute_Xref'Access,
-         new Compute_Xref_Data'(Kernel, new LI_Handler_Iterator_Access, 0),
-         Timeout_Xref_Destroy'Access);
+      Xref_Commands.Create
+        (C, new Compute_Xref_Data'(Kernel, new LI_Handler_Iterator_Access, 0));
+
+      Launch_Background_Command
+        (Kernel, Command_Access (C), True, "");
 
    exception
       when E : others =>
@@ -1665,5 +1652,17 @@ package body Builder_Module is
       Execute_GPS_Shell_Command (Kernel, "register_highlighting", Args);
       Free (Args);
    end Preferences_Changed;
+
+   ---------------
+   -- Deep_Free --
+   ---------------
+
+   procedure Deep_Free (D : in out Compute_Xref_Data_Access) is
+   begin
+      if D /= null then
+         Unchecked_Free (D.Iter);
+         Unchecked_Free (D);
+      end if;
+   end Deep_Free;
 
 end Builder_Module;
