@@ -1763,36 +1763,40 @@ package body VCS_View_Pkg is
    is
       N, M : Node_Ptr := Node.Child;
       Page : VCS_Page_Access;
+      Ref  : VCS_Access;
    begin
       while N /= null loop
          if N.Tag.all = "page" then
             M := N.Child;
 
-            Page := Get_Page_For_Identifier
-              (Explorer, Get_VCS_From_Id (Get_Attribute (N, "vcs")));
+            Ref := Get_VCS_From_Id (Get_Attribute (N, "vcs"));
 
-            if Page /= null then
-               while M /= null loop
-                  if M.Tag.all = "status" then
-                     declare
-                        Index   : constant Integer := Safe_Value
-                          (Get_Attribute (M, "index", "0"));
-                     begin
-                        if Index in Page.Status'Range then
-                           Page.Status (Index).Display := Boolean'Value
-                             (Get_Attribute (M, "display", "TRUE"));
-                        end if;
+            if Ref /= null then
+               Page := Get_Page_For_Identifier (Explorer, Ref);
 
-                     exception
-                        when E : others =>
-                           Trace
-                             (Me, "Could not parse VCS explorer desktop: "
-                              & Exception_Information (E));
-                     end;
-                  end if;
+               if Page /= null then
+                  while M /= null loop
+                     if M.Tag.all = "status" then
+                        declare
+                           Index   : constant Integer := Safe_Value
+                             (Get_Attribute (M, "index", "0"));
+                        begin
+                           if Index in Page.Status'Range then
+                              Page.Status (Index).Display := Boolean'Value
+                                (Get_Attribute (M, "display", "TRUE"));
+                           end if;
 
-                  M := M.Next;
-               end loop;
+                        exception
+                           when E : others =>
+                              Trace
+                                (Me, "Could not parse VCS explorer desktop: "
+                                 & Exception_Information (E));
+                        end;
+                     end if;
+
+                     M := M.Next;
+                  end loop;
+               end if;
             end if;
          end if;
 
