@@ -435,18 +435,29 @@ package body Theme_Manager_Module is
       W    : constant Theme_Editor_Widget := Theme_Editor_Widget (Widget);
       List : Unbounded_String := To_Unbounded_String ("@");
       Category, Iter : Gtk_Tree_Iter;
+
    begin
       Category := Get_Iter_First (W.Model);
       while Category /= Null_Iter loop
          Iter := Children (W.Model, Category);
-         while Iter /= Null_Iter loop
-            if Get_Boolean (W.Model, Iter, Active_Column) then
-               List :=
-                 List & Get_String (W.Model, Iter, Name_Column) & '@';
-            end if;
 
-            Next (W.Model, Iter);
-         end loop;
+         if Iter = Null_Iter then
+            --  We are reading a theme defined at top-level.
+
+            if Get_Boolean (W.Model, Category, Active_Column) then
+               List :=
+                 List & Get_String (W.Model, Category, Name_Column) & '@';
+            end if;
+         else
+            while Iter /= Null_Iter loop
+               if Get_Boolean (W.Model, Iter, Active_Column) then
+                  List :=
+                    List & Get_String (W.Model, Iter, Name_Column) & '@';
+               end if;
+
+               Next (W.Model, Iter);
+            end loop;
+         end if;
 
          Next (W.Model, Category);
       end loop;
