@@ -203,7 +203,7 @@ package body Glide_Kernel.Modules is
      (Creator   : access Contextual_Label_Parameters;
       Context   : access Selection_Context'Class) return String
    is
-      Invalid_Substitution : exception;
+      Has_Error : Boolean := False;
 
       function Substitution (Param : String; Quoted : Boolean) return String;
       --  Substitute %P, %f,... as appropriate
@@ -297,25 +297,29 @@ package body Glide_Kernel.Modules is
                Result : constant String := Creator.Custom (Context);
             begin
                if Result = "" then
-                  raise Invalid_Substitution;
+                  Has_Error := True;
+                  return "";
                else
                   return Result;
                end if;
             end;
          end if;
 
-         raise Invalid_Substitution;
+         Has_Error := True;
+         return "";
       end Substitution;
 
-   begin
-      return Substitute
+      Tmp : constant String := Substitute
         (Creator.Label.all,
          Substitution_Char => '%',
          Callback          => Substitution'Unrestricted_Access,
          Recursive         => False);
-   exception
-      when Invalid_Substitution =>
+   begin
+      if Has_Error then
          return "";
+      else
+         return Tmp;
+      end if;
    end Get_Label;
 
    ---------------------
