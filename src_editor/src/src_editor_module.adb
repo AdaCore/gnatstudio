@@ -1525,7 +1525,6 @@ package body Src_Editor_Module is
          Source_Lines_Revealed_Signal,
          On_Lines_Revealed'Access,
          Kernel_Handle (Kernel));
-
    end Register_Module;
 
    -------------------------
