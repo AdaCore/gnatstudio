@@ -508,15 +508,19 @@ package body Language.Ada is
    -------------------
 
    procedure Format_Buffer
-     (Lang          : access Ada_Language;
-      Buffer        : String;
-      Replace       : Replace_Text_Callback;
-      From, To      : Natural := 0;
-      Indent_Params : Indent_Parameters := Default_Indent_Parameters)
+     (Lang            : access Ada_Language;
+      Buffer          : String;
+      Replace         : Replace_Text_Callback;
+      From, To        : Natural := 0;
+      Indent_Params   : Indent_Parameters := Default_Indent_Parameters;
+      Case_Exceptions : Case_Handling.Casing_Exceptions :=
+        Case_Handling.No_Casing_Exception)
    is
       pragma Unreferenced (Lang);
    begin
-      Analyze_Ada_Source (Buffer, Indent_Params, True, From, To, Replace);
+      Analyze_Ada_Source
+        (Buffer, Indent_Params, True, From, To,
+         Replace, Case_Exceptions => Case_Exceptions);
    end Format_Buffer;
 
    ------------------------
