@@ -31,6 +31,11 @@ with Ada.Calendar;
 
 package VFS is
 
+   No_Time : constant Ada.Calendar.Time := Ada.Calendar.Time_Of
+     (Ada.Calendar.Year_Number'First,
+      Ada.Calendar.Month_Number'First,
+      Ada.Calendar.Day_Number'First);
+
    subtype UTF8_String_Access is GNAT.OS_Lib.String_Access;
    type Cst_UTF8_String_Access is access constant Glib.UTF8_String;
 
@@ -81,6 +86,10 @@ package VFS is
    --  If file names are case insensitive, the normalized name will always
    --  be all lower cases.
 
+   function URL_File_Name (File : Virtual_File) return String;
+   --  Return the file name as an URL. Local files do not use the URL
+   --  notation, and their full name is returned instead
+
    function File_Extension (File : Virtual_File) return UTF8_String;
    --  Return the extension of the file, or the empty string if there is no
    --  extension. This extension includes the last dot and all the following
@@ -119,6 +128,7 @@ package VFS is
    --  Return the timestamp for this file.
    --  Note: we do not return GNAT.OS_Lib.OS_Time, since the latter cannot be
    --  created by anyone, and is just a private type.
+   --  If the file doesn't exist, No_Time is returned.
 
 --   procedure Define_Translation
 --     (Host_Dir : String; Remote_Dir : String);

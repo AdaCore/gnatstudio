@@ -230,6 +230,24 @@ package body VFS is
       end if;
    end Full_Name;
 
+   -------------------
+   -- URL_File_Name --
+   -------------------
+
+   function URL_File_Name (File : Virtual_File) return String is
+   begin
+      if File.Value = null or else File.Value.Connection = null then
+         return Full_Name (File).all;
+      else
+         return Get_Protocol (File.Value.Connection)
+         & "://"
+         & Get_User (File.Value.Connection)
+         & '@'
+         & Get_Host (File.Value.Connection)
+         & Full_Name (File).all;
+      end if;
+   end URL_File_Name;
+
    --------------
    -- Dir_Name --
    --------------
@@ -440,21 +458,16 @@ package body VFS is
    -----------
 
    procedure Close (File : in out Writable_File) is
-      Tmp     : String_Access;
       Success : Boolean;
    begin
       if File.File.Value.Connection /= null then
-         Tmp := Read_File (File.Filename.all);
          Write (File.File.Value.Connection,
-                File.File.Value.Full_Name.all, Tmp.all);
-         Free (Tmp);
-
+                File.File.Value.Full_Name.all, File.Filename.all);
          Close (File.FD);
          Delete_File (File.Filename.all, Success);
       else
          Close (File.FD);
       end if;
-
 
       Free (File.Filename);
    end Close;
@@ -503,25 +516,29 @@ package body VFS is
      (File : Virtual_File) return Ada.Calendar.Time is
    begin
       if File.Value.Connection = null then
-         declare
-            T      : constant OS_Time :=
-              File_Time_Stamp (Locale_Full_Name (File));
-            Year   : Year_Type;
-            Month  : Month_Type;
-            Day    : Day_Type;
-            Hour   : Hour_Type;
-            Minute : Minute_Type;
-            Second : Second_Type;
-         begin
-            GM_Split (T, Year, Month, Day, Hour, Minute, Second);
-            return GNAT.Calendar.Time_Of
-              (Year   => Year,
-               Month  => Month,
-               Day    => Day,
-               Hour   => Hour,
-               Minute => Minute,
-               Second => Second);
-         end;
+         if Is_Regular_File (File) then
+            declare
+               T      : constant OS_Time :=
+                 File_Time_Stamp (Locale_Full_Name (File));
+               Year   : Year_Type;
+               Month  : Month_Type;
+               Day    : Day_Type;
+               Hour   : Hour_Type;
+               Minute : Minute_Type;
+               Second : Second_Type;
+            begin
+               GM_Split (T, Year, Month, Day, Hour, Minute, Second);
+               return GNAT.Calendar.Time_Of
+                 (Year   => Year,
+                  Month  => Month,
+                  Day    => Day,
+                  Hour   => Hour,
+                  Minute => Minute,
+                  Second => Second);
+            end;
+         else
+            return No_Time;
+         end if;
       else
          return File_Time_Stamp
            (File.Value.Connection, File.Value.Full_Name.all);
