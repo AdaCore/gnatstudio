@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2002                      --
+--                      Copyright (C) 2000-2003                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -357,9 +357,10 @@ package body Items.Records is
      (Item  : Record_Type;
       Clone : out Generic_Type_Access)
    is
-      R : Record_Type_Access := Record_Type_Access (Clone);
+      R : Record_Type_Access;
    begin
       Clone_Dispatching (Generic_Type (Item), Clone);
+      R := Record_Type_Access (Clone);
 
       for J in Item.Fields'Range loop
          R.Fields (J).Name := new String'(Item.Fields (J).Name.all);

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2002                      --
+--                      Copyright (C) 2000-2003                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -284,9 +284,12 @@ package body Items is
    -----------------------
 
    procedure Clone_Dispatching
-     (Item : Generic_Type;
+     (Item  : Generic_Type;
       Clone : out Generic_Type_Access) is
    begin
+      pragma Assert (Clone /= null);
+      pragma Warnings (Off, Clone);
+
       if Item.Type_Name /= null then
          Clone.Type_Name := new String'(Item.Type_Name.all);
       end if;
