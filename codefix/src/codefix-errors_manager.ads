@@ -22,7 +22,7 @@ with Generic_List;
 
 with Codefix.Text_Manager; use Codefix.Text_Manager;
 with Codefix.Formal_Errors; use Codefix.Formal_Errors;
-use Codefix.Formal_Errors.Extract_List;
+use Codefix.Formal_Errors.Command_List;
 
 package Codefix.Errors_Manager is
 
@@ -32,6 +32,10 @@ package Codefix.Errors_Manager is
 
    type Errors_Interface is abstract tagged private;
    --  Type used to manage error messages send by the compilator.
+
+   type Ptr_Errors_Interface is access all Errors_Interface'Class;
+
+   procedure Free (This : in out Errors_Interface) is abstract;
 
    procedure Get_Direct_Message
      (This    : in out Errors_Interface;
@@ -112,10 +116,22 @@ package Codefix.Errors_Manager is
    procedure Validate
      (This   : in out Correction_Manager;
       Error  : Error_Id;
-      Choice : Extract'Class);
+      Choice : Text_Command'Class);
    --  Specify a choice between the differents correction'possibilities
    --  of a message. Warning : each modifications on lines already validate
    --  are erased.
+
+   procedure Validate_And_Commit
+     (This         : in out Correction_Manager;
+      Current_Text : in out Text_Navigator_Abstr'Class;
+      Error        : Error_Id;
+      Choice       : Natural);
+
+   procedure Validate_And_Commit
+     (This         : in out Correction_Manager;
+      Current_Text : in out Text_Navigator_Abstr'Class;
+      Error        : Error_Id;
+      Choice       : Text_Command'Class);
 
    procedure Commit
      (This         : in out Correction_Manager;
@@ -133,12 +149,12 @@ package Codefix.Errors_Manager is
    --  Return the Error_Id contained in the correction manager correspondant to
    --  the message. If this error does not exist, Null_Error_Id is returned.
 
-   procedure Update_Changes
-     (This          : Correction_Manager;
-      Current_Text  : Text_Navigator_Abstr'Class;
-      Object        : in out Extract'Class;
-      Success       : out Boolean;
-      Already_Fixed : out Boolean);
+--   procedure Update_Changes
+--     (This          : Correction_Manager;
+--      Current_Text  : Text_Navigator_Abstr'Class;
+--      Object        : in out Extract'Class;
+--      Success       : out Boolean;
+--      Already_Fixed : out Boolean);
    --  Merge Object with all the changes made in the correction manager. If all
    --  modifications made in Object are already made in the correction manager,
    --  then Already_Fixed is True, otherwise it is False.
@@ -151,7 +167,7 @@ private
 
    type Error_Id_Record is record
       Message   : Error_Message := Invalid_Error_Message;
-      Solutions : Solution_List := Extract_List.Null_List;
+      Solutions : Solution_List := Command_List.Null_List;
    end record;
 
    procedure Free (This : in out Error_Id_Record);
@@ -166,7 +182,7 @@ private
 
    type Correction_Manager is record
       Potential_Corrections : Memorized_Corrections.List;
-      Fix_List              : Extract;
+      Fix_List              : Solution_List;
       Offset_Line           : Integer := 0;
    end record;
 
