@@ -152,12 +152,13 @@ package body Builder_Module is
    --  Make_Syntax means use the GNU make syntax (VAR=value)
 
    function Compute_Arguments
-     (Kernel       : Kernel_Handle;
-      Syntax       : Command_Syntax;
-      Project      : Project_Type;
-      Path         : String;
-      File         : Virtual_File;
-      Compile_Only : Boolean := False) return Argument_List_Access;
+     (Kernel         : Kernel_Handle;
+      Syntax         : Command_Syntax;
+      Project        : Project_Type;
+      Path           : String;
+      File           : Virtual_File;
+      Compile_Only   : Boolean := False;
+      Unique_Project : Boolean := False) return Argument_List_Access;
    --  Compute the make arguments following the right Syntax
    --  (gnatmake / make), given a Project and File name.
    --  It is the responsibility of the caller to free the returned object.
@@ -325,12 +326,13 @@ package body Builder_Module is
    -----------------------
 
    function Compute_Arguments
-     (Kernel       : Kernel_Handle;
-      Syntax       : Command_Syntax;
-      Project      : Project_Type;
-      Path         : String;
-      File         : Virtual_File;
-      Compile_Only : Boolean := False) return Argument_List_Access
+     (Kernel         : Kernel_Handle;
+      Syntax         : Command_Syntax;
+      Project        : Project_Type;
+      Path           : String;
+      File           : Virtual_File;
+      Compile_Only   : Boolean := False;
+      Unique_Project : Boolean := False) return Argument_List_Access
    is
       Project_Str    : String_Access;
       Result         : Argument_List_Access;
@@ -361,7 +363,7 @@ package body Builder_Module is
                R_Tmp (K) := new String'("-P" & Project_Str.all);
 
                if File = VFS.No_File then
-                  if Compile_Only then
+                  if Unique_Project then
                      K := K + 1;
                      R_Tmp (K) := new String'(Unique_Compile);
                   end if;
@@ -412,7 +414,7 @@ package body Builder_Module is
                      --  supported languages.
 
                      if File = VFS.No_File then
-                        if Compile_Only then
+                        if Unique_Project then
                            Result := new Argument_List'
                              (List &
                               new String'("build") &
@@ -698,12 +700,8 @@ package body Builder_Module is
 
          else
             Args := Compute_Arguments
-              (Kernel,
-               Syntax,
-               Project,
-               "",
-               File,
-               Compile_Only => not Main_Units);
+              (Kernel, Syntax, Project, "", File,
+               Unique_Project => not Main_Units);
          end if;
 
          Change_Dir (Dir_Name (Project_Path (Project)));
