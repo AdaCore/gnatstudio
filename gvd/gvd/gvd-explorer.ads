@@ -104,7 +104,6 @@ package GVD.Explorer is
      (Explorer : access Explorer_Record'Class);
    --  Called when the executable associated with the explorer has changed.
 
-
 private
    type Explorer_Record is new Gtk.Ctree.Gtk_Ctree_Record with record
       Explorer_Root      : Gtk.Ctree.Gtk_Ctree_Node;
