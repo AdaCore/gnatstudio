@@ -60,6 +60,8 @@ package Glide_Kernel.Actions is
       Name   : String) return Action_Record_Access;
    --  Lookup a command by name. Return null if no such action has been
    --  registered.
+   --  If Name represents the absolute path to a menu (starting with /), then
+   --  an action is created dynamically as appropriate.
 
    type Action_Iterator is private;
 

@@ -391,7 +391,7 @@ package Glide_Kernel.Modules is
       Path   : String) return Gtk.Menu_Item.Gtk_Menu_Item;
    --  Given an absolute path (see Register_Menu) for a menu item, return
    --  the underlying gtk menu item. Useful in particular to check or change
-   --  the state of a menu item.
+   --  the state of a menu item. Path is case insensitive
 
    ---------------------
    -- Toolbar buttons --
