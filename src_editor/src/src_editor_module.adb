@@ -659,16 +659,10 @@ package body Src_Editor_Module is
                --  If the Length is null, we set the length to 1, otherwise
                --  the cursor is not visible.
 
-               if Mark_Record.Length = 0 then
-                  Scroll_To_Mark
-                    (Source_Box (Get_Widget (Mark_Record.Child)).Editor,
-                     Mark_Record.Mark, 1);
-               else
-                  Scroll_To_Mark
-                    (Source_Box (Get_Widget (Mark_Record.Child)).Editor,
-                     Mark_Record.Mark,
-                     Mark_Record.Length);
-               end if;
+               Scroll_To_Mark
+                 (Source_Box (Get_Widget (Mark_Record.Child)).Editor,
+                  Mark_Record.Mark,
+                  Mark_Record.Length);
 
             else
                if Mark_Record.File /= null
@@ -1032,7 +1026,8 @@ package body Src_Editor_Module is
             File,
             Src_Editor_Module_Name,
             Stick_To_Data => False,
-            Every_Line    => True);
+            Every_Line    => True,
+            Normalize     => False);
 
          Infos := new Line_Information_Array (1 .. 1);
          Infos (1).Text := new String'("   1");
@@ -1240,6 +1235,8 @@ package body Src_Editor_Module is
       Child  : MDI_Child;
       pragma Unreferenced (Id, MDI);
 
+      Dummy  : Boolean;
+      pragma Unreferenced (Dummy);
    begin
       if Node.Tag.all = "Source_Editor" then
          File := Get_Field (Node, "File");
@@ -1271,9 +1268,8 @@ package body Src_Editor_Module is
             end if;
 
             if Src /= null then
-               Id := Location_Idle.Add
-                 (File_Edit_Callback'Access,
-                  (Src.Editor, Line, Column, 0, User));
+               Dummy := File_Edit_Callback
+                 ((Src.Editor, Line, Column, 0, User));
             end if;
          end if;
       end if;
@@ -1321,13 +1317,8 @@ package body Src_Editor_Module is
                Directory_Information (Area_Context) &
                File_Information (Area_Context),
                Src_Editor_Module_Name,
-               Infos);
-         else
-            Add_Line_Information
-              (Kernel,
-               "",
-               Src_Editor_Module_Name,
-               Infos);
+               Infos,
+               Normalize => False);
          end if;
 
          Unchecked_Free (Infos);
@@ -1654,6 +1645,7 @@ package body Src_Editor_Module is
 
          if File /= "" then
             Set_Title (Child, File, Base_Name (File));
+            File_Edited (Kernel, File);
          else
             --  Determine the number of "Untitled" files open.
 
@@ -1680,16 +1672,21 @@ package body Src_Editor_Module is
 
                if Nb_Untitled = 0 then
                   Set_Title (Child, No_Name);
+                  Set_File_Identifier (Editor, No_Name);
                else
-                  Set_Title
-                    (Child, No_Name & " (" & Image (Nb_Untitled + 1) & ")");
+                  declare
+                     Identifier : constant String :=
+                       No_Name & " (" & Image (Nb_Untitled + 1) & ")";
+                  begin
+                     Set_Title (Child, Identifier);
+                     Set_File_Identifier (Editor, Identifier);
+                  end;
                end if;
 
                Set_Filename (Editor, Get_Filename (Child));
+               File_Edited (Kernel, Get_Title (Child));
             end;
          end if;
-
-         File_Edited (Kernel, File);
 
          Gtkada.Handlers.Return_Callback.Object_Connect
            (Box,
@@ -2687,7 +2684,6 @@ package body Src_Editor_Module is
             Every_Line : constant Boolean :=
               Get_Boolean (Data (Data'First + 4));
             Child : MDI_Child;
-            Iter  : Child_Iterator := First_Child (MDI);
 
             procedure Apply_Mime_On_Child (Child : MDI_Child);
             --  Apply the mime information on Child.
@@ -2707,37 +2703,21 @@ package body Src_Editor_Module is
 
                else
                   Add_File_Information
-                    (Source_Box (Get_Widget (Child)).Editor, Id, Info);
+                    (Source_Box (Get_Widget (Child)).Editor,
+                     Id, Info);
                end if;
             end Apply_Mime_On_Child;
 
          begin
             --  Look for the corresponding file editor.
 
-            if File = "" then
-               loop
-                  Child := Get (Iter);
+            Child := Find_Editor (Kernel, File);
 
-                  exit when Child = null;
-
-                  if Get_Widget (Child).all in Source_Box_Record'Class then
-                     Apply_Mime_On_Child (Child);
-                  end if;
-
-                  Next (Iter);
-               end loop;
+            if Child /= null then
+               --  The editor was found.
+               Apply_Mime_On_Child (Child);
 
                return True;
-
-            else
-               Child := Find_Editor (Kernel, File);
-
-               if Child /= null then
-                  --  The editor was found.
-                  Apply_Mime_On_Child (Child);
-
-                  return True;
-               end if;
             end if;
          end;
       end if;
@@ -3392,6 +3372,7 @@ package body Src_Editor_Module is
       Pref_Display_Line_Numbers : constant Boolean :=
         Get_Pref (Kernel, Display_Line_Numbers);
 
+      use String_List_Utils.String_List;
    begin
       if Pref_Display_Line_Numbers = Id.Display_Line_Numbers then
          return;
@@ -3408,12 +3389,26 @@ package body Src_Editor_Module is
                  Source_Lines_Revealed_Signal,
                  On_Lines_Revealed'Access,
                  Kernel);
-            Create_Line_Information_Column
-              (Kernel,
-               "",
-               Src_Editor_Module_Name,
-               Stick_To_Data => False,
-               Every_Line    => True);
+
+            declare
+               Files : List := Open_Files (Kernel);
+               Node  : List_Node;
+            begin
+               Node := First (Files);
+
+               while Node /= Null_Node loop
+                  Create_Line_Information_Column
+                    (Kernel,
+                     Data (Node),
+                     Src_Editor_Module_Name,
+                     Stick_To_Data => False,
+                     Every_Line    => True,
+                     Normalize     => False);
+                  Node := Next (Node);
+               end loop;
+
+               Free (Files);
+            end;
          end if;
 
       elsif Id.Source_Lines_Revealed_Id /= No_Handler then
@@ -3514,7 +3509,8 @@ package body Src_Editor_Module is
             Child := Get (Iter);
 
             exit when Child = null
-              or else File_Equal (Base_Name (Get_Filename (Child)), File);
+              or else File_Equal (Base_Name (Get_Filename (Child)), File)
+              or else File = Get_Title (Child);
 
             Next (Iter);
          end loop;
