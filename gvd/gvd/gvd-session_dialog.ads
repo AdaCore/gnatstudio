@@ -18,25 +18,21 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Gtk.Window; use Gtk.Window;
-with Gtk.Box; use Gtk.Box;
-with Gtk.Label; use Gtk.Label;
-with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
-with Gtk.Viewport; use Gtk.Viewport;
-with Gtk.List; use Gtk.List;
-with Gtk.GEntry; use Gtk.GEntry;
-with Gtk.Separator; use Gtk.Separator;
-with Gtk.Hbutton_Box; use Gtk.Hbutton_Box;
-with Gtk.Button; use Gtk.Button;
-with Gtk.Widget; use Gtk.Widget;
+with Gtk.Widget;       use Gtk.Widget;
 with Gtk.Check_Button; use Gtk.Check_Button;
-with Basic_Types; use Basic_Types;
+with Basic_Types;      use Basic_Types;
 with Open_Session_Pkg; use Open_Session_Pkg;
 
 package GVD.Session_Dialog is
 
-   type Button_Node is private;
+   type Button_Node;
    type Button_Link is access Button_Node;
+
+   type Button_Node is record
+      Next   : Button_Link;
+      Button : Gtk_Check_Button;
+      Label  : String_Access;
+   end record;
 
    type GVD_Session_Dialog_Record is new Open_Session_Record with record
       Sessions_Dir : String_Access;
@@ -57,7 +53,7 @@ package GVD.Session_Dialog is
    ----------------------
    -- Session Handling --
    ----------------------
-               
+
    --  The format for session files is as follows:
    --
    --  [Session_File Header]
@@ -94,13 +90,5 @@ package GVD.Session_Dialog is
       Open   : in out GVD_Session_Dialog;
       Dir    : String);
    --  Save a session. Window is the main debug window.
-
-private
-
-   type Button_Node is record
-      Next   : Button_Link;
-      Button : Gtk_Check_Button;
-      Label  : String_Access;
-   end record;
 
 end GVD.Session_Dialog;
