@@ -18,12 +18,14 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Gtk.Container; use Gtk.Container;
-with Gtk.Socket;    use Gtk.Socket;
-with Gtk.Widget;    use Gtk.Widget;
-with Gtk.Window;    use Gtk.Window;
-with GVD.Types;     use GVD.Types;
-with GNAT.IO;       use GNAT.IO;
+with Gtk.Container;     use Gtk.Container;
+with Gtk.Socket;        use Gtk.Socket;
+with Gtk.Widget;        use Gtk.Widget;
+with Gtk.Window;        use Gtk.Window;
+with GVD.Types;         use GVD.Types;
+with Ada.Strings;       use Ada.Strings;
+with Ada.Strings.Fixed; use Ada.Strings.Fixed;
+with GNAT.IO;           use GNAT.IO;
 
 package body GVD.Text_Box.Source_Editor.Socket is
 
@@ -99,7 +101,9 @@ package body GVD.Text_Box.Source_Editor.Socket is
 
    procedure Highlight_Current_Line (Editor : access Socket_Record) is
    begin
-      Print_File_Location (Editor.Current_File.all, Editor.Line, 0);
+      if Editor.TTY_Mode then
+         Print_File_Location (Editor.Current_File.all, Editor.Line, 0);
+      end if;
    end Highlight_Current_Line;
 
    --------------------
