@@ -76,6 +76,7 @@ package body Custom_Module is
       procedure Parse_Button_Node (Node : Node_Ptr);
       procedure Parse_Tool_Node (Node : Node_Ptr);
       procedure Parse_Menu_Node (Node : Node_Ptr; Parent_Path : UTF8_String);
+      function Parse_Filter_Node (Node : Node_Ptr) return Action_Filter;
       --  Parse the various nodes: <action>, <shell>, ...
 
       ---------------------
@@ -125,6 +126,65 @@ package body Custom_Module is
       end Parse_Tool_Node;
 
       -----------------------
+      -- Parse_Filter_Node --
+      -----------------------
+
+      function Parse_Filter_Node (Node : Node_Ptr) return Action_Filter is
+         Filter, Filter_Tmp : Action_Filter;
+         Child  : Node_Ptr;
+      begin
+         if Node.Tag.all = "filter" then
+            declare
+               Lang   : constant String  := Get_Attribute (Node, "language");
+               Action : constant String  := Get_Attribute (Node, "action");
+               Context : constant String := Get_Attribute (Node, "context");
+               C       : Action_Context;
+            begin
+               if Context /= "" then
+                  C := Lookup_Context (Kernel, Context);
+                  if C = null then
+                     Insert
+                       (Kernel,
+                          -"Unknown action context " & Context,
+                        Mode => Error);
+                     raise Assert_Failure;
+                  end if;
+               end if;
+
+               Filter := Create
+                 (Language => Lang,
+                  Action   => Action,
+                  Context  => C);
+            end;
+
+         else
+            Child := Node.Child;
+            while Child /= null loop
+               if Child.Tag.all = "filter"
+                 or else Child.Tag.all = "filter_and"
+                 or else Child.Tag.all = "filter_or"
+               then
+                  Filter_Tmp := Parse_Filter_Node (Child);
+
+                  if Filter = null then
+                     Filter := Filter_Tmp;
+                  elsif Node.Tag.all = "filter_and" then
+                     Filter := Filter and Filter_Tmp;
+                  elsif Node.Tag.all = "filter_or" then
+                     Filter := Filter or Filter_Tmp;
+                  end if;
+               end if;
+
+               Child := Child.Next;
+            end loop;
+
+         end if;
+
+         Set_Error_Message (Filter, Get_Attribute (Node, "error"));
+         return Filter;
+      end Parse_Filter_Node;
+
+      -----------------------
       -- Parse_Action_Node --
       -----------------------
 
@@ -133,8 +193,7 @@ package body Custom_Module is
          Child   : Node_Ptr;
          Command : Custom_Command_Access;
          Description : String_Access := new String'("");
-         Context     : String_Access;
-         Context_A   : Action_Context;
+         Filter_A    : Action_Filter;
       begin
          if Name = "" then
             Insert
@@ -153,9 +212,17 @@ package body Custom_Module is
                --  Handled directly by Commands.Custom
                null;
 
-            elsif To_Lower (Child.Tag.all) = "context" then
-               Free (Context);
-               Context := new String'(Child.Value.all);
+            elsif Child.Tag.all = "filter"
+              or else Child.Tag.all = "filter_and"
+              or else Child.Tag.all = "filter_or"
+            then
+               if Filter_A /= null then
+                  Filter_A := Filter_A
+                    or Parse_Filter_Node (Child);
+               else
+                  Filter_A := Parse_Filter_Node (Child);
+               end if;
+
             elsif To_Lower (Child.Tag.all) = "description" then
                Free (Description);
                Description := new String'(Child.Value.all);
@@ -170,17 +237,6 @@ package body Custom_Module is
             Child := Child.Next;
          end loop;
 
-         if Context /= null then
-            Context_A := Lookup_Context (Kernel, Context.all);
-            if Context_A = null then
-               Insert
-                 (Kernel,
-                  -"Unknown action context " & Context.all,
-                  Mode => Error);
-               raise Assert_Failure;
-            end if;
-         end if;
-
          Create (Command, Kernel_Handle (Kernel), Node.Child,
                  Default_Output => Get_Attribute
                    (Node, "output", Console_Output));
@@ -190,9 +246,8 @@ package body Custom_Module is
             Name        => Name,
             Command     => Command,
             Description => Description.all,
-            Context     => Context_A);
+            Filter      => Filter_A);
          Free (Description);
-         Free (Context);
       end Parse_Action_Node;
 
       -----------------------
@@ -305,7 +360,7 @@ package body Custom_Module is
                      Text        => Title.all,
                      Stock_Image => "",
                      Callback    => null,
-                     Command     => Command_Access (Command.Command),
+                     Action      => Command,
                      Ref_Item    => Before);
 
                elsif After /= "" then
@@ -315,7 +370,7 @@ package body Custom_Module is
                      Text        => Title.all,
                      Stock_Image => "",
                      Callback    => null,
-                     Command     => Command_Access (Command.Command),
+                     Action      => Command,
                      Ref_Item    => Before,
                      Add_Before  => False);
 
@@ -326,8 +381,12 @@ package body Custom_Module is
                      Text        => Title.all,
                      Stock_Image => "",
                      Callback    => null,
-                     Command     => Command_Access (Command.Command));
+                     Action      => Command);
                end if;
+            else
+               Insert
+                 (Kernel, -"Command not found for creating menu: "
+                  & Action, Mode => Error);
             end if;
          end if;
          Free (Title);
