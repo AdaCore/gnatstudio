@@ -78,6 +78,7 @@ package body Commands.Custom is
      (Kernel           : access Kernel_Handle_Record'Class;
       Command          : access Custom_Command'Class;
       Save_Output      : out Boolean_Array;
+      Is_Failure       : out Boolean_Array;
       Context          : Selection_Context_Access;
       Context_Is_Valid : out Boolean);
    --  Compute whether we should save the output of each commands. This depends
@@ -464,6 +465,7 @@ package body Commands.Custom is
      (Kernel           : access Kernel_Handle_Record'Class;
       Command          : access Custom_Command'Class;
       Save_Output      : out Boolean_Array;
+      Is_Failure       : out Boolean_Array;
       Context          : Selection_Context_Access;
       Context_Is_Valid : out Boolean)
    is
@@ -564,6 +566,7 @@ package body Commands.Custom is
 
                while M /= null and then Context_Is_Valid loop
                   Substitute_Node (M);
+                  Is_Failure (Index) := True;
                   Index := Index + 1;
                   Count := Count + 1;
                   M := M.Next;
@@ -573,6 +576,7 @@ package body Commands.Custom is
                In_Loop_Commands := Count;
             else
                Substitute_Node (N);
+               Is_Failure (Index) := False;
                In_Loop_Commands := 0;
             end if;
 
@@ -604,6 +608,7 @@ package body Commands.Custom is
          Free             (Execution.Current_Output);
          GNAT.OS_Lib.Free (Execution.Outputs);
          Unchecked_Free   (Execution.Save_Output);
+         Unchecked_Free   (Execution.Is_Failure);
          Unchecked_Free   (Execution.Progress_Matcher);
          Unref            (Execution.Context);
          Unchecked_Free (Execution);
@@ -909,6 +914,39 @@ package body Commands.Custom is
          Index   : Integer;
          Recurse, List_Dirs, List_Sources : Boolean;
 
+         function Get_Previous_Output (N : Integer) return String;
+         --  Return the output of the Nth command before the current command.
+
+         function Get_Previous_Output (N : Integer) return String is
+            Avoid_On_Failure : Boolean := False;
+            Count            : Integer := 0;
+            Current          : Integer renames Command.Execution.Cmd_Index;
+            Potential        : Integer;
+         begin
+            Avoid_On_Failure := Avoid_On_Failure
+              or else not Command.Execution.Is_Failure (Current - Count);
+
+            Potential := Current;
+
+            while Count < N loop
+               Potential := Potential - 1;
+
+               while Avoid_On_Failure
+                 and then Command.Execution.Is_Failure (Potential)
+               loop
+                  Potential := Potential - 1;
+               end loop;
+
+               Count := Count + 1;
+            end loop;
+
+            if Command.Execution.Outputs (Potential) = null then
+               return "";
+            else
+               return Command.Execution.Outputs (Potential).all;
+            end if;
+         end Get_Previous_Output;
+
       begin
          if Param = "f" or else Param = "F" then
             --  We know from Check_Save_Output that the context is valid
@@ -1041,50 +1079,43 @@ package body Commands.Custom is
             if Num <= Command.Execution.Cmd_Index - 1
               and then Num >= 1
             then
-               if Command.Execution.Outputs
-                 (Command.Execution.Cmd_Index - Num) = null
-               then
-                  return "";
-               else
-                  --  Remove surrounding quotes if any. This is needed so that
-                  --  for instance of the function get_attributes_as_string
-                  --  from Python can be used to call an external tool with
-                  --  switches propertly interpreted.
+               --  Remove surrounding quotes if any. This is needed so that
+               --  for instance of the function get_attributes_as_string
+               --  from Python can be used to call an external tool with
+               --  switches propertly interpreted.
 
-                  declare
-                     Output : String renames Command.Execution.Outputs
-                       (Command.Execution.Cmd_Index - Num).all;
-                     Last   : Integer;
-                  begin
-                     if Output = "" then
-                        return Output;
-                     end if;
+               declare
+                  Output : constant String := Get_Previous_Output (Num);
+                  Last   : Integer;
+               begin
+                  if Output = "" then
+                     return Output;
+                  end if;
 
-                     Last := Output'Last;
-                     while Last >= Output'First
-                       and then Output (Last) = ASCII.LF
-                     loop
-                        Last := Last - 1;
-                     end loop;
+                  Last := Output'Last;
+                  while Last >= Output'First
+                    and then Output (Last) = ASCII.LF
+                  loop
+                     Last := Last - 1;
+                  end loop;
 
-                     if Output (Output'First) = '''
-                       and then Output (Last) = '''
-                     then
-                        return Protect_Quoted
-                          (Output (Output'First + 1 .. Last - 1), Quoted);
+                  if Output (Output'First) = '''
+                    and then Output (Last) = '''
+                  then
+                     return Protect_Quoted
+                       (Output (Output'First + 1 .. Last - 1), Quoted);
 
-                     elsif Output (Output'First) = '"'
-                       and then Output (Output'Last) = '"'
-                     then
-                        return Protect_Quoted
-                          (Output (Output'First + 1 .. Last - 1), Quoted);
+                  elsif Output (Output'First) = '"'
+                    and then Output (Output'Last) = '"'
+                  then
+                     return Protect_Quoted
+                       (Output (Output'First + 1 .. Last - 1), Quoted);
 
-                     else
-                        return Protect_Quoted
-                          (Output (Output'First .. Last), Quoted);
-                     end if;
-                  end;
-               end if;
+                  else
+                     return Protect_Quoted
+                       (Output (Output'First .. Last), Quoted);
+                  end if;
+               end;
             end if;
          end if;
 
@@ -1398,6 +1429,7 @@ package body Commands.Custom is
             Command.Execution := new Custom_Command_Execution_Record;
             Command.Execution.Outputs     := new Argument_List (1 .. Count);
             Command.Execution.Save_Output := new Boolean_Array (1 .. Count);
+            Command.Execution.Is_Failure  := new Boolean_Array (1 .. Count);
 
             if Context.Context = null then
                Command.Execution.Context :=
@@ -1412,7 +1444,9 @@ package body Commands.Custom is
          end;
 
          Check_Save_Output
-           (Command.Kernel, Command, Command.Execution.Save_Output.all,
+           (Command.Kernel, Command,
+            Command.Execution.Save_Output.all,
+            Command.Execution.Is_Failure.all,
             Command.Execution.Context, Success);
          Clear_Consoles (Command.Kernel, Command);
 
