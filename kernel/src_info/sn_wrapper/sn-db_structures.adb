@@ -30,8 +30,8 @@ package body SN.DB_Structures is
    --  Parse file position information from strings like "00001233.11" (that
    --  could appear in the SourceNavigator DB)
 
-   function Parse_Hex (Hex_Str : String) return Integer;
-   --  Converts C-style hexadecimal string like "0xffff" to Integer number
+   function Parse_Hex (Hex_Str : String) return SN_Attributes;
+   --  Converts C-style hexadecimal string like "0xffff" to integer number
 
    function Remove_Brackets (String_With_Brackets : String) return String;
    --  Removes outwards brackets from string
@@ -1352,7 +1352,7 @@ package body SN.DB_Structures is
    end Parse_Position;
 
 
-   function Parse_Hex (Hex_Str : String) return Integer is
+   function Parse_Hex (Hex_Str : String) return SN_Attributes is
       val : Integer;
       c : Character;
    begin
@@ -1372,7 +1372,7 @@ package body SN.DB_Structures is
             raise Bad_Input;
          end if;
       end loop;
-      return val;
+      return SN_Attributes (val);
    end Parse_Hex;
 
    function Remove_Brackets (String_With_Brackets : String) return String is

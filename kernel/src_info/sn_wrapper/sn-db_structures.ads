@@ -56,7 +56,7 @@ package SN.DB_Structures is
       File_Name : Segment;
       Start_Position : Point;
       End_Position : Point;
-      Attributes : Integer;
+      Attributes : SN_Attributes;
       Template_Parameters : Segment;
       Comments : Segment;
       Buffer : GNAT.OS_Lib.String_Access;
@@ -68,7 +68,7 @@ package SN.DB_Structures is
       File_Name : Segment;
       Start_Position : Point;
       End_Position : Point;
-      Attributes : Integer;
+      Attributes : SN_Attributes;
       Comments : Segment;
       Buffer : GNAT.OS_Lib.String_Access;
    end record;
@@ -79,7 +79,7 @@ package SN.DB_Structures is
       File_Name : Segment;
       Start_Position : Point;
       End_Position : Point;
-      Attributes : Integer;
+      Attributes : SN_Attributes;
       Declared_Type : Segment;
       Comments : Segment;
       Buffer : GNAT.OS_Lib.String_Access;
@@ -92,7 +92,7 @@ package SN.DB_Structures is
       File_Name : Segment;
       Start_Position : Point;
       End_Position : Point;
-      Attributes : Integer;
+      Attributes : SN_Attributes;
       Comments : Segment;
       Buffer : GNAT.OS_Lib.String_Access;
    end record;
@@ -103,7 +103,7 @@ package SN.DB_Structures is
       File_Name : Segment;
       Start_Position : Point;
       End_Position : Point;
-      Attributes : Integer;
+      Attributes : SN_Attributes;
       Comments : Segment;
       Buffer : GNAT.OS_Lib.String_Access;
    end record;
@@ -114,7 +114,7 @@ package SN.DB_Structures is
       File_Name : Segment;
       Start_Position : Point;
       End_Position : Point;
-      Attributes : Integer;
+      Attributes : SN_Attributes;
       Enumeration_Name : Segment;
       Buffer : GNAT.OS_Lib.String_Access;
    end record;
@@ -134,7 +134,7 @@ package SN.DB_Structures is
       File_Name : Segment;
       Start_Position : Point;
       End_Position : Point;
-      Attributes : Integer;
+      Attributes : SN_Attributes;
       Return_Type : Segment;
       Arg_Types : Segment_Vector.Node_Access;
       Arg_Names : Segment_Vector.Node_Access;
@@ -162,7 +162,7 @@ package SN.DB_Structures is
       File_Name : Segment;
       Start_Position : Point;
       End_Position : Point;
-      Attributes : Integer;
+      Attributes : SN_Attributes;
       Return_Type : Segment;
       Arg_Types : Segment_Vector.Node_Access;
       Arg_Names : Segment_Vector.Node_Access;
@@ -177,7 +177,7 @@ package SN.DB_Structures is
       File_Name : Segment;
       Start_Position : Point;
       End_Position : Point;
-      Attributes : Integer;
+      Attributes : SN_Attributes;
       Return_Type : Segment;
       Arg_Types : Segment_Vector.Node_Access;
       Arg_Names : Segment_Vector.Node_Access;
@@ -193,7 +193,7 @@ package SN.DB_Structures is
       File_Name : Segment;
       Start_Position : Point;
       End_Position : Point;
-      Attributes : Integer;
+      Attributes : SN_Attributes;
       Value_Type : Segment;
       Comments : Segment;
       Buffer : GNAT.OS_Lib.String_Access;
@@ -206,7 +206,7 @@ package SN.DB_Structures is
       File_Name : Segment;
       Start_Position : Point;
       End_Position : Point;
-      Attributes : Integer;
+      Attributes : SN_Attributes;
       Comments : Segment;
       Buffer : GNAT.OS_Lib.String_Access;
    end record;
@@ -226,7 +226,7 @@ package SN.DB_Structures is
       File_Name : Segment;
       Start_Position : Point;
       End_Position : Point;
-      Attributes : Integer;
+      Attributes : SN_Attributes;
       Value_Type : Segment;
       Comments : Segment;
       Buffer : GNAT.OS_Lib.String_Access;
@@ -239,7 +239,7 @@ package SN.DB_Structures is
       File_Name : Segment;
       Start_Position : Point;
       End_Position : Point;
-      Attributes : Integer;
+      Attributes : SN_Attributes;
       Class : Segment;
       Value_Type : Segment;
       Arg_Types : Segment_Vector.Node_Access;
@@ -252,7 +252,7 @@ package SN.DB_Structures is
       File_Name : Segment;
       Start_Position : Point;
       End_Position : Point;
-      Attributes : Integer;
+      Attributes : SN_Attributes;
       Comments : Segment;
       Buffer : GNAT.OS_Lib.String_Access;
    end record;
@@ -264,7 +264,7 @@ package SN.DB_Structures is
       File_Name : Segment;
       Start_Position : Point;
       End_Position : Point;
-      Attributes : Integer;
+      Attributes : SN_Attributes;
       Return_Type : Segment;
       Arg_Types : Segment_Vector.Node_Access;
       Arg_Names : Segment_Vector.Node_Access;
@@ -287,7 +287,7 @@ package SN.DB_Structures is
       Name : Segment;
       File_Name : Segment;
       Position : Point;
-      Attributes : Integer;
+      Attributes : SN_Attributes;
       Comments : Segment;
       Buffer : GNAT.OS_Lib.String_Access;
    end record;
@@ -298,7 +298,7 @@ package SN.DB_Structures is
       File_Name : Segment;
       Start_Position : Point;
       End_Position : Point;
-      Attributes : Integer;
+      Attributes : SN_Attributes;
       Original : Segment;
       Comments : Segment;
       Buffer : GNAT.OS_Lib.String_Access;
@@ -311,7 +311,7 @@ package SN.DB_Structures is
       Start_Position : Point;
       File_Name      : Segment;
       Type_Position  : Point;
-      Attributes     : Integer;
+      Attributes     : SN_Attributes;
       Buffer   : GNAT.OS_Lib.String_Access;
    end record;
       --  Template arguments
@@ -337,7 +337,7 @@ package SN.DB_Structures is
       File_Name : Segment;
       Start_Position : Point;
       End_Position : Point;
-      Attributes : Integer;
+      Attributes : SN_Attributes;
       Comments : Segment;
       Buffer : GNAT.OS_Lib.String_Access;
    end record;
