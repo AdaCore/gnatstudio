@@ -139,6 +139,12 @@ package body Builder_Module is
    procedure Free (Ar : in out String_List_Access);
    --  Free the memory associate with Ar.
 
+   type Command_Syntax is (GNAT_Syntax, Make_Syntax);
+   --  Type used in Scenario_Variables_Cmd_Line to determine the command line
+   --  syntax used when setting variables.
+   --  GNAT_Syntax means use the GNAT project file syntax (-XVAR=value)
+   --  Make_Syntax means use the GNU make syntax (VAR=value)
+
    function Compute_Arguments
      (Kernel       : Kernel_Handle;
       Syntax       : Command_Syntax;
@@ -298,9 +304,7 @@ package body Builder_Module is
    is
       Project_Str    : constant String := Project_Path (Project);
       Result         : Argument_List_Access;
-      Vars           : Argument_List_Access :=
-        Argument_String_To_List
-          (Scenario_Variables_Cmd_Line (Kernel, Syntax));
+      Vars           : Argument_List_Access;
       Build_Progress : constant Boolean :=
         Get_Pref (Kernel, Show_Build_Progress);
       File_Arg       : String_Access;
@@ -309,6 +313,9 @@ package body Builder_Module is
       case Syntax is
          when GNAT_Syntax =>
             --  gnatmake -d -Pproject main -XVAR1=value1 ...
+
+            Vars := Argument_String_To_List
+              (Scenario_Variables_Cmd_Line (Kernel, "-X"));
 
             declare
                R_Tmp : Argument_List (1 .. 3);
@@ -332,6 +339,9 @@ package body Builder_Module is
 
          when Make_Syntax =>
             --  make -s -C dir -f Makefile.project build VAR1=value1 ...
+
+            Vars := Argument_String_To_List
+              (Scenario_Variables_Cmd_Line (Kernel, "-X"));
 
             declare
                Lang : String := Get_Language_From_File
