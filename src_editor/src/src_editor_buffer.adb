@@ -2583,7 +2583,8 @@ package body Src_Editor_Buffer is
          end loop;
       end Extend_Completions_List;
 
-      Command : Editor_Command;
+      Command : Editor_Replace_Slice;
+      Delete  : Editor_Command;
 
       Iter    : Gtk_Text_Iter;
       Prev    : Gtk_Text_Iter;
@@ -2647,51 +2648,41 @@ package body Src_Editor_Buffer is
          Text := new String'("");
       end if;
 
-      Get_Iter_At_Mark (Buffer, Iter, Buffer.Completion.Mark);
+      Get_Iter_At_Mark (Buffer, Prev, Buffer.Completion.Mark);
+      Get_Iter_At_Mark (Buffer, Iter, Buffer.Insert_Mark);
       Buffer.Inserting := True;
-      Command := Editor_Command (Buffer.Current_Command);
 
-      if Command = null then
-         Create
-           (Command,
-            Insertion,
-            Source_Buffer (Buffer),
-            False,
-            Natural (Get_Line (Iter)),
-            Natural (Get_Line_Offset (Iter)));
+      if Text.all = ""
+        and then
+          (Get_Line (Prev) /= Get_Line (Iter)
+           or else Get_Line_Offset (Prev) /= Get_Line_Offset (Iter))
+      then
+         Create (Delete,
+                 Deletion,
+                 Source_Buffer (Buffer),
+                 False,
+                 Integer (Get_Line (Prev)),
+                 Integer (Get_Line_Offset (Prev)),
+                 Forward);
 
-         Enqueue (Buffer.Queue, Command);
-         Add_Text (Command, Text.all);
-         Insert (Buffer,
-                 Get_Line (Iter),
-                 Get_Line_Offset (Iter),
-                 Text.all, False);
-         Buffer.Current_Command := Command_Access (Command);
+         Set_Text (Delete, Get_Slice (Prev, Iter));
+         Enqueue (Buffer.Queue, Delete);
 
       else
-         Get_Iter_At_Mark (Buffer, Iter, Buffer.Completion.Mark);
-         Copy (Iter, Prev);
-         Forward_Chars (Prev, Get_Text (Command)'Length, Success);
-
-         if Success then
-            Replace_Slice
-              (Buffer,
-               Get_Line (Iter),
-               Get_Line_Offset (Iter),
-               Get_Line (Prev),
-               Get_Line_Offset (Prev),
-               Text.all, False);
-         else
-            Insert
-              (Buffer,
-               Get_Line (Iter),
-               Get_Line_Offset (Iter),
-               Text.all, False);
-         end if;
-
-         Set_Text (Command, Text.all);
-         Buffer.Current_Command := Command_Access (Command);
+         Create
+           (Command,
+            Source_Buffer (Buffer),
+            Natural (Get_Line (Prev)),
+            Natural (Get_Line_Offset (Prev)),
+            Natural (Get_Line (Iter)),
+            Natural (Get_Line_Offset (Iter)),
+            Text.all,
+            Forward);
+         Enqueue (Buffer.Queue, Command);
       end if;
+
+
+      Buffer.Current_Command := null;
 
       GNAT.OS_Lib.Free (Text);
 
