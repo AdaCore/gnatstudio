@@ -1167,6 +1167,11 @@ package body Glide_Result_View is
 
       pragma Unreferenced (Identifier);
    begin
+      Trace (Me, "Add_Action_Item: "
+             & Full_Name (File).all
+             & ' ' & Category & Line'Img & Column'Img
+             & ' ' & Message);
+
       Get_Category_File
         (View, Category, H_Category,
          File, Category_Iter, File_Iter, Created, False);
@@ -1218,11 +1223,15 @@ package body Glide_Result_View is
                              Action_Column, Value);
                   Unset (Value);
                end if;
+
+               return;
             end if;
 
             Next (View.Tree.Model, Line_Iter);
          end loop;
       end if;
+
+      Trace (Me, "Add_Action_Item: entry not found");
    end Add_Action_Item;
 
    ---------------------
