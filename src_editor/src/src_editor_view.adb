@@ -690,19 +690,28 @@ package body Src_Editor_View is
    procedure Preferences_Changed
      (View : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
-      Context : constant Pango_Context :=
-        Get_Pango_Context (Source_View (View));
-      Font    : constant Pango_Font := Load_Font
-        (Context, Get_Pref
-           (Get_Kernel (Source_Buffer (Get_Buffer (Source_View (View)))),
-            Source_Editor_Font));
-      Metrics : constant Pango_Font_Metrics := Get_Metrics (Font);
+      Source  : constant Source_View := Source_View (View);
+      Context : Pango_Context;
+      Descr   : Pango_Font_Description;
+      Font    : Pango_Font;
+      Metrics : Pango_Font_Metrics;
+
    begin
-      Set_Font (Source_View (View), Get_Pref (Kernel, Source_Editor_Font));
-      Source_View (View).Char_Width
-        := Get_Approximate_Char_Width (Metrics) / Pango_Scale - 1;
+      Context := Get_Pango_Context (Source);
+      Descr   := Get_Pref (Kernel, Source_Editor_Font);
+      Font    := Load_Font (Context, Descr);
+      Metrics := Get_Metrics (Font);
+      Set_Font (Source, Descr);
+
+      --  ??? Apparently Get_Approximate_Char_Width does a poor job, even
+      --  on fixed size fonts. Consider using another method to compute
+      --  Char_Width.
+
+      Source.Char_Width :=
+        Get_Approximate_Char_Width (Metrics) / Pango_Scale - 1;
       Unref (Font);
       Unref (Metrics);
+
    exception
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
