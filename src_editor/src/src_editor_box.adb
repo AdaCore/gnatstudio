@@ -964,12 +964,19 @@ package body Src_Editor_Box is
       Line : constant Gint :=
         Gint (Values.Get_Int (Values.Nth (Params, 1)));
 
-      Pref_Display_Subprogram_Names : constant Boolean :=
+      --  ??? Would be good to avoid querying the preference each time the
+      --  cursor moves, and cache it somewhere
+
+      Display_Subprogram : constant Boolean :=
         Get_Pref (Box.Kernel, Display_Subprogram_Names);
 
       function Get_Enclosing_Subprogram return String;
-      --  Returns the name of the enclosing subprogram or package. This is
+      --  Return the name of the enclosing subprogram or package. This is
       --  done by using the block information.
+
+      ------------------------------
+      -- Get_Enclosing_Subprogram --
+      ------------------------------
 
       function Get_Enclosing_Subprogram return String is
          L     : Buffer_Line_Type := Buffer_Line_Type (Line);
@@ -1019,7 +1026,7 @@ package body Src_Editor_Box is
             Line   => Line,
             Column => Values.Get_Int (Values.Nth (Params, 2)));
 
-         if Pref_Display_Subprogram_Names then
+         if Display_Subprogram then
             Show_Which_Function (Box, Name => Get_Enclosing_Subprogram);
          end if;
       end if;
@@ -1223,32 +1230,20 @@ package body Src_Editor_Box is
       Gtk_New (Frame);
       Set_Shadow_Type (Frame, Shadow_None);
       Pack_End (Box.Label_Box, Frame, Expand => False, Fill => True);
-      Gtk_New (Event_Box);
-      Add (Frame, Event_Box);
       Gtk_New (Box.Overwrite_Label, -"Insert");
-      Add (Event_Box, Box.Overwrite_Label);
-
+      Add (Frame, Box.Overwrite_Label);
       Box_Callback.Connect
         (Box.Source_View,
          "toggle_overwrite",
          On_Toggle_Overwrite'Access,
          User_Data => Source_Editor_Box (Box));
 
-      --  Filename area...
-      --  Gtk_New (Frame);
-      --  Set_Shadow_Type (Frame, Shadow_None);
-      --  Pack_Start (Box.Label_Box, Frame, Expand => True, Fill => True);
-      --  Gtk_New (Box.Filename_Label);
-      --  ??? Commented out as not used for the moment.
-
       --  Function location area
       Gtk_New (Frame);
       Set_Shadow_Type (Frame, Shadow_None);
       Pack_Start (Box.Label_Box, Frame, Expand => False, Fill => True);
-      Gtk_New (Event_Box);
-      Add (Frame, Event_Box);
       Gtk_New (Box.Function_Label);
-      Add (Event_Box, Box.Function_Label);
+      Add (Frame, Box.Function_Label);
 
       --  Connect to source buffer signals.
 
@@ -1448,22 +1443,21 @@ package body Src_Editor_Box is
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
       Object : access Glib.Object.GObject_Record'Class;
       Event  : Gdk.Event.Gdk_Event;
-      Menu   : Gtk.Menu.Gtk_Menu)
-      return Glide_Kernel.Selection_Context_Access
+      Menu   : Gtk.Menu.Gtk_Menu) return Glide_Kernel.Selection_Context_Access
    is
-      Editor     : constant Source_Editor_Box := Source_Editor_Box (Object);
-      V          : constant Source_View := Editor.Source_View;
-      Line       : Gint := 0;
-      Column     : Gint := 0;
+      Editor        : constant Source_Editor_Box := Source_Editor_Box (Object);
+      V             : constant Source_View := Editor.Source_View;
+      Line          : Gint := 0;
+      Column        : Gint := 0;
       Entity_Column : Gint;
-      X, Y       : Gint;
-      Item       : Gtk_Menu_Item;
-      Start_Iter : Gtk_Text_Iter;
-      End_Iter   : Gtk_Text_Iter;
-      Context    : Entity_Selection_Context_Access;
-      Filename   : constant VFS.Virtual_File :=
+      X, Y          : Gint;
+      Item          : Gtk_Menu_Item;
+      Start_Iter    : Gtk_Text_Iter;
+      End_Iter      : Gtk_Text_Iter;
+      Context       : Entity_Selection_Context_Access;
+      Filename      : constant VFS.Virtual_File :=
         Get_Filename (Editor.Source_Buffer);
-      Result     : Boolean;
+      Result        : Boolean;
       Out_Of_Bounds : Boolean := False;
 
    begin
@@ -2537,6 +2531,7 @@ package body Src_Editor_Box is
         Get_Buffer_Line (Editor.Source_Buffer, Line);
       Block : constant Block_Record :=
         Get_Block (Editor.Source_Buffer, B_Line);
+
    begin
       if Block.Name = null then
          return "";
@@ -2557,6 +2552,7 @@ package body Src_Editor_Box is
         Get_Buffer_Line (Editor.Source_Buffer, Line);
       Block : constant Block_Record :=
         Get_Block (Editor.Source_Buffer, B_Line);
+
    begin
       return Language_Category'Image (Block.Block_Type);
    end Get_Block_Type;
