@@ -1701,6 +1701,56 @@ package body Codefix.Errors_Parser is
       Solutions := Remove_Use_Clause (Current_Text, Message);
    end Fix;
 
+   -----------------------------
+   -- Non_Visible_Declaration --
+   -----------------------------
+
+   procedure Initialize (This : in out Non_Visible_Declaration) is
+   begin
+      This.Matcher :=
+        (new Pattern_Matcher'
+           (Compile ("non-visible declaration at ([^\:]+):([\d]+)")),
+         new Pattern_Matcher'
+           (Compile ("non-visible declaration at (line) ([\d]+)")));
+   end Initialize;
+
+   procedure Fix
+     (This         : Non_Visible_Declaration;
+      Errors_List  : in out Errors_Interface'Class;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message      : Error_Message;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array)
+   is
+      pragma Unreferenced (This, Errors_List);
+
+      Source_Cursor : File_Cursor;
+      Seek_With     : Boolean;
+   begin
+      Source_Cursor.Col := 1;
+      Source_Cursor.Line := Natural'Value
+        (Get_Message (Message)
+           (Matches (2).First .. Matches (2).Last));
+
+
+      if Get_Message (Message)
+        (Matches (1).First .. Matches (1).Last) = "line"
+      then
+         Assign (Source_Cursor.File_Name, Message.File_Name);
+         Seek_With := False;
+      else
+         Assign
+           (Source_Cursor.File_Name,
+            Get_Message (Message)
+              (Matches (1).First .. Matches (1).Last));
+         Seek_With := True;
+      end if;
+
+      Solutions := Resolve_Unvisible_Declaration
+        (Current_Text, Message, Source_Cursor, Seek_With);
+
+      Free (Source_Cursor);
+   end Fix;
 
 begin
    Add_Parser (new Agregate_Misspelling);
@@ -1747,6 +1797,7 @@ begin
    Add_Parser (new Missplaced_With);
    Add_Parser (new Not_Fully_Conformant);
    Add_Parser (new Generic_Use_Unallowed);
+   Add_Parser (new Non_Visible_Declaration);
 
    Initialize_Parsers;
 end Codefix.Errors_Parser;
