@@ -345,8 +345,6 @@ package body Src_Editor_Buffer is
    -- First_Insert_Text --
    -----------------------
 
-   Spaces : constant String (1 .. 512) := (others => ' ');
-
    procedure First_Insert_Text
      (Buffer : access Source_Buffer_Record'Class;
       Params : Glib.Values.GValues)
@@ -461,9 +459,9 @@ package body Src_Editor_Buffer is
                   Source_Buffer (Buffer),
                   Integer (Line), 0,
                   Integer (Line), Integer (Col),
-                  Spaces (1 .. Indent) &
+                  (1 .. Indent => ' ') &
                   Slice (Index .. Slice_Length - Offset) & ASCII.LF &
-                  Spaces (1 .. Next_Indent) &
+                  (1 .. Next_Indent => ' ') &
                   Slice (Slice_Length - Offset + 1 .. Slice_Length));
 
                Enqueue (Buffer.Queue, Command);
