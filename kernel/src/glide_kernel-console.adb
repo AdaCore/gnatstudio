@@ -26,15 +26,23 @@ with Glide_Intl;           use Glide_Intl;
 with Glide_Kernel.Modules; use Glide_Kernel.Modules;
 with GVD.Process;          use GVD.Process;
 with GNAT.IO;              use GNAT.IO;
+with GNAT.OS_Lib;          use GNAT.OS_Lib;
 with Gtk.Menu_Item;        use Gtk.Menu_Item;
 with Gtk.Widget;           use Gtk.Widget;
+with Gtkada.File_Selector; use Gtkada.File_Selector;
 with Gtkada.Handlers;      use Gtkada.Handlers;
 with Gtkada.MDI;           use Gtkada.MDI;
+with OS_Utils;             use OS_Utils;
+with String_Utils;         use String_Utils;
+with Traces;               use Traces;
+with Ada.Exceptions;       use Ada.Exceptions;
 
 package body Glide_Kernel.Console is
 
    Console_Module_Id   : Glide_Kernel.Module_ID;
    Console_Module_Name : constant String := "Glide_Kernel.Console";
+
+   Me : constant Debug_Handle := Create (Console_Module_Name);
 
    function Get_Console
      (Kernel : access Kernel_Handle_Record'Class) return Glide_Console;
@@ -48,6 +56,14 @@ package body Glide_Kernel.Console is
    function Console_Delete_Event
      (Console : access Gtk.Widget.Gtk_Widget_Record'Class) return Boolean;
    --  Prevent the destrution of the console in the MDI
+
+   procedure On_Save_Console_As
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Callback for File->Console->Save As... menu.
+
+   procedure On_Load_To_Console
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Callback for File->Console->Load Contents... menu.
 
    procedure On_Clear_Console
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
@@ -134,6 +150,73 @@ package body Glide_Kernel.Console is
       return True;
    end Console_Delete_Event;
 
+   ------------------------
+   -- On_Save_Console_As --
+   ------------------------
+
+   procedure On_Save_Console_As
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+      Console : constant Glide_Console := Get_Console (Kernel);
+      FD      : File_Descriptor;
+      Len     : Integer;
+
+   begin
+      declare
+         File : constant String :=
+           Select_File (Title => -"Save messages window as");
+      begin
+         if File = "" then
+            return;
+         end if;
+
+         declare
+            Contents : constant String := Get_Chars (Console);
+         begin
+            FD := Create_File (File, Binary);
+            Len := Write (FD, Contents'Address, Contents'Length);
+            Close (FD);
+         end;
+      end;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+   end On_Save_Console_As;
+
+   ----------------------
+   -- On_Load_To_Console --
+   ----------------------
+
+   procedure On_Load_To_Console
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+      Console  : constant Glide_Console := Get_Console (Kernel);
+      Contents : String_Access;
+
+   begin
+      declare
+         File : constant String :=
+           Select_File
+             (Title => -"Select file to load in the messages window");
+
+      begin
+         if File = "" then
+            return;
+         end if;
+
+         Contents := Read_File (File);
+         Insert (Console, Strip_CR (Contents.all));
+         Free (Contents);
+      end;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+   end On_Load_To_Console;
+
    ----------------------
    -- On_Clear_Console --
    ----------------------
@@ -144,6 +227,10 @@ package body Glide_Kernel.Console is
       pragma Unreferenced (Widget);
    begin
       Clear (Kernel);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Clear_Console;
 
    ------------------------
@@ -153,16 +240,18 @@ package body Glide_Kernel.Console is
    procedure Initialize_Console
      (Kernel         : access Kernel_Handle_Record'Class)
    is
-      Top : constant Glide_Window := Glide_Window (Get_Main_Window (Kernel));
+      Top     : constant Glide_Window :=
+        Glide_Window (Get_Main_Window (Kernel));
       Console : Glide_Console;
-      Child : MDI_Child;
+      Child   : MDI_Child;
+
    begin
       if Top /= null
         and then Get_Current_Process (Top) /= null
       then
          Gtk_New (Console, Kernel);
          Child := Put (Get_MDI (Kernel), Console);
-         Set_Title (Child, "GPS Console");
+         Set_Title (Child, -"Messages");
          Set_Dock_Side (Child, Bottom);
          Dock_Child (Child);
          Raise_Child (Child);
@@ -187,7 +276,7 @@ package body Glide_Kernel.Console is
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
       File    : constant String := '/' & (-"File");
-      Console : constant String := File & '/' & (-"Console");
+      Console : constant String := File & '/' & (-"Messages");
       Mitem   : Gtk_Menu_Item;
 
    begin
@@ -197,16 +286,13 @@ package body Glide_Kernel.Console is
          Module_Name  => Console_Module_Name,
          Priority     => Default_Priority);
 
-      Register_Menu
-        (Kernel, Console, Ref_Item => -"Close");
+      Register_Menu (Kernel, Console, Ref_Item => -"Close");
       Register_Menu
         (Kernel, Console, -"Clear", "", On_Clear_Console'Access);
       Register_Menu
-        (Kernel, Console, -"Save As...", "", null, Sensitive => False);
-      --             On_Save_Console_As'Access);
+        (Kernel, Console, -"Save As...", "", On_Save_Console_As'Access);
       Register_Menu
-        (Kernel, Console, -"Load Contents...", "", null, Sensitive => False);
-      --             On_Load_To_Console'Access);
+        (Kernel, Console, -"Load Contents...", "", On_Load_To_Console'Access);
       Gtk_New (Mitem);
       Register_Menu (Kernel, File, Mitem, Ref_Item => -"Close");
    end Register_Module;
