@@ -516,7 +516,7 @@ package body Entities.Queries is
             Find_Next_Body (In_Scope, Loc, Location => Loc,
                             No_Location_If_First => True);
             if Loc = No_File_Location then
-               F := Entity.Declaration.File;
+               F := In_Scope.Declaration.File;
                Start := Get_Start_Of_Scope_In_File
                  (In_Scope, F, Force_Spec => True).Line;
                Last  := Get_End_Of_Scope_In_File
