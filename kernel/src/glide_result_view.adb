@@ -1176,6 +1176,15 @@ package body Glide_Result_View is
         (View, Category, H_Category,
          File, Category_Iter, File_Iter, Created, False);
 
+      if Category_Iter = Null_Iter then
+         Trace (Me, "Add_Action_Item: Category " & H_Category & " not found");
+      end if;
+
+      if File_Iter = Null_Iter then
+         Trace (Me, "Add_Action_Item: File " & Full_Name (File).all
+                & " not found");
+      end if;
+
       if Category_Iter /= Null_Iter
         and then File_Iter /= Null_Iter
       then
