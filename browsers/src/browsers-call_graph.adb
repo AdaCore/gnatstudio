@@ -912,7 +912,6 @@ package body Browsers.Call_Graph is
                  Mode => Error);
       end if;
 
-      Destroy (Info);
       Pop_State (Get_Kernel (Entity));
 
    exception
@@ -922,7 +921,6 @@ package body Browsers.Call_Graph is
                  & Entity_Name_Information (Entity),
                  Mode => Error);
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
-         Destroy (Info);
          Pop_State (Get_Kernel (Entity));
    end Edit_Ancestors_Call_Graph_From_Contextual;
 
