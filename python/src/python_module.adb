@@ -34,6 +34,7 @@ with Python.Ada;               use Python.Ada;
 with Glide_Intl;               use Glide_Intl;
 with Gtk.Enums;                use Gtk.Enums;
 with Interfaces.C.Strings;     use Interfaces.C, Interfaces.C.Strings;
+with Interactive_Consoles;     use Interactive_Consoles;
 with GNAT.OS_Lib;              use GNAT.OS_Lib;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
@@ -592,6 +593,11 @@ package body Python_Module is
       Python_Module_Id.Script.Interpreter := new Python_Interpreter_Record;
       Initialize (Python_Module_Id.Script.Interpreter, Get_History (Kernel));
 
+      Set_Default_Console
+        (Python_Module_Id.Script.Interpreter,
+         Get_View (Get_Console (Kernel)),
+         Display_Prompt => False);
+
       N     := new Node;
       N.Tag := new String'("Python_Console");
       Add_Default_Desktop_Item
@@ -641,7 +647,6 @@ package body Python_Module is
               & "a console to create. If no argument is specified the Python"
               & ASCII.LF
               & "console will be used")));
-
 
       Register_Menu
         (Kernel,
@@ -797,7 +802,20 @@ package body Python_Module is
                Execute_Command
                  (Python_Module_Id.Script,
                   "import " & Base_Name (File (1 .. Last), ".py"),
+                  Hide_Output => True,
                   Errors => Errors);
+
+               --  The python console is not created yet, so we only want to
+               --  redirect error message to the Messages window.
+               if Errors then
+                  Execute_Command
+                    (Python_Module_Id.Script,
+                     "import " & Base_Name (File (1 .. Last), ".py")
+                     & "; reload (" & Base_Name (File (1 .. Last), ".py")
+                     & ")",
+                     Hide_Output => False,
+                     Errors => Errors);
+               end if;
             end if;
          end loop;
 
