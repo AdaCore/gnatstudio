@@ -1706,7 +1706,12 @@ package body Vsearch_Ext is
 
    function Get_Tab_Width return Natural is
    begin
-      return Vsearch_Module_Id.Tab_Width;
+      --  This is needed in the context of the automatic testsuite
+      if Vsearch_Module_Id = null then
+         return 8;
+      else
+         return Vsearch_Module_Id.Tab_Width;
+      end if;
    end Get_Tab_Width;
 
    -------------------------
