@@ -127,7 +127,8 @@ package body Glide_Kernel.Console is
             return null;
          end if;
 
-         Gtk_New (Results, Kernel_Handle (Kernel));
+         Gtk_New (Results, Kernel_Handle (Kernel),
+                  Module_ID (Console_Module_Id));
          Child := Put (Get_MDI (Kernel), Results);
          Set_Title (Child, -"Locations");
          Set_Dock_Side (Child, Bottom);
