@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                          G L I D E  I I                           --
+--                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2001                         --
+--                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
--- GLIDE is free software; you can redistribute it and/or modify  it --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -13,7 +13,7 @@
 -- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
 -- General Public License for more details. You should have received --
--- a copy of the GNU General Public License along with this library; --
+-- a copy of the GNU General Public License along with this program; --
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
@@ -21,7 +21,6 @@
 with Gdk.Color;    use Gdk.Color;
 with Gtk;          use Gtk;
 with Gtk.Text_Tag; use Gtk.Text_Tag;
-with Gtk.Widget;   use Gtk.Widget;
 with Pango.Enums;  use Pango.Enums;
 
 with Language;     use Language;
@@ -32,90 +31,30 @@ package body Src_Highlighting is
    -- Forward_Declarations --
    --------------------------
 
-   procedure Create_Color
-     (Color      : out Gdk_Color;
-      Color_Name : String;
-      Success    : out Boolean);
-   --  Try to create a Gdk_Color by parsing the given Color_Name. The
-   --  returned color is also already allocated. Sucess is set to False if
-   --  the Color_Name could not be parsed or the new color could not be
-   --  allocated.
-
-   procedure Set_Foreground_Color
-     (Tag        : access Gtk_Text_Tag_Record'Class;
-      Color_Name : String);
-   --  Set the Foreground_Gdk property of the given tag with the parsed
-   --  Color_Name (the color is also allocated).
-   --
-   --  Error_Handling:
-   --  If Color_Name can not be parsed or if the resulting color could not be
-   --  allocated, the foreground property is not set. The default font color
-   --  (probably black) will then be in effect.
-
    function New_Tag
-     (Tag_Name   : String;
-      Color_Name : String;
-      Font_Attr  : Font_Attributes) return Gtk_Text_Tag;
-   --  Create a new Gtk_Text_Tag with the given name. If Color_Name is not the
-   --  empty string and can be parsed, then the Foreground_Gdk_Property is set
-   --  with the given color.
+     (Tag_Name  : String;
+      Color     : Gdk_Color;
+      Font_Attr : Font_Attributes) return Gtk_Text_Tag;
+   --  Create a new Gtk_Text_Tag with the given name. If Color is null,
+   --  then the Foreground_Gdk_Property is set with the given color.
 
    procedure New_Tag
-     (Tag        : out Gtk.Text_Tag.Gtk_Text_Tag;
-      Tag_Name   : String;
-      Color_Name : String);
-   --  Create a new Gtk_Text_Tag with the given Tag_Name. Color_Name is used
+     (Tag      : out Gtk.Text_Tag.Gtk_Text_Tag;
+      Tag_Name : String;
+      Color    : Gdk_Color);
+   --  Create a new Gtk_Text_Tag with the given Tag_Name. Color is used
    --  to set the Background_Gdk_Property.
-
-   ------------------
-   -- Create_Color --
-   ------------------
-
-   procedure Create_Color
-     (Color      : out Gdk_Color;
-      Color_Name : String;
-      Success    : out Boolean)
-   is
-   begin
-      Color := Parse (Color_Name);
-      Alloc_Color (Get_Default_Colormap, Color, Success => Success);
-
-   exception
-      when Wrong_Color =>
-         --  The given color could not be parsed. Return a Failure. Also
-         --  return a Null_Color to avoid returning an un-initialized value.
-         Color := Null_Color;
-         Success := False;
-   end Create_Color;
-
-   --------------------------
-   -- Set_Foreground_Color --
-   --------------------------
-
-   procedure Set_Foreground_Color
-     (Tag        : access Gtk_Text_Tag_Record'Class;
-      Color_Name : String)
-   is
-      New_Color : Gdk_Color;
-      Success   : Boolean;
-   begin
-      Create_Color (New_Color, Color_Name, Success);
-      if Success then
-         Set_Property (Tag, Foreground_Gdk_Property, New_Color);
-      end if;
-   end Set_Foreground_Color;
-
 
    -------------
    -- New_Tag --
    -------------
 
    function New_Tag
-     (Tag_Name   : String;
-      Color_Name : String;
-      Font_Attr  : Font_Attributes) return Gtk_Text_Tag
+     (Tag_Name  : String;
+      Color     : Gdk_Color;
+      Font_Attr : Font_Attributes) return Gtk_Text_Tag
    is
-      Result    : Gtk_Text_Tag;
+      Result : Gtk_Text_Tag;
    begin
       Gtk_New (Result, Tag_Name);
 
@@ -127,25 +66,22 @@ package body Src_Highlighting is
          Set_Property (Result, Text_Tag.Weight_Property, Font_Attr.Weight);
       end if;
 
-      if Color_Name /= "" then
-         Set_Foreground_Color (Result, Color_Name);
+      if Color /= Null_Color then
+         Set_Property (Result, Foreground_Gdk_Property, Color);
       end if;
 
       return Result;
    end New_Tag;
 
    procedure New_Tag
-     (Tag        : out Gtk.Text_Tag.Gtk_Text_Tag;
-      Tag_Name   : String;
-      Color_Name : String)
-   is
-      New_Color : Gdk_Color;
-      Success : Boolean;
+     (Tag      : out Gtk.Text_Tag.Gtk_Text_Tag;
+      Tag_Name : String;
+      Color    : Gdk_Color) is
    begin
       Gtk_New (Tag, Tag_Name);
-      Create_Color (New_Color, Color_Name, Success);
-      if Success then
-         Set_Property (Tag, Background_Gdk_Property, New_Color);
+
+      if Color /= Null_Color then
+         Set_Property (Tag, Background_Gdk_Property, Color);
       end if;
    end New_Tag;
 
@@ -156,8 +92,7 @@ package body Src_Highlighting is
    function To_Font_Attributes
      (Style  : Pango.Enums.Style  := Pango.Enums.Pango_Style_Normal;
       Weight : Pango.Enums.Weight := Pango.Enums.Pango_Weight_Normal)
-     return Font_Attributes
-   is
+      return Font_Attributes is
    begin
       return (Style => Style, Weight => Weight);
    end To_Font_Attributes;
@@ -167,13 +102,13 @@ package body Src_Highlighting is
    -----------------
 
    function Create_Syntax_Tags
-     (Keyword_Color       : String;
+     (Keyword_Color       : Gdk_Color;
       Keyword_Font_Attr   : Font_Attributes := To_Font_Attributes;
-      Comment_Color       : String;
+      Comment_Color       : Gdk_Color;
       Comment_Font_Attr   : Font_Attributes := To_Font_Attributes;
-      Character_Color     : String;
+      Character_Color     : Gdk_Color;
       Character_Font_Attr : Font_Attributes := To_Font_Attributes;
-      String_Color        : String;
+      String_Color        : Gdk_Color;
       String_Font_Attr    : Font_Attributes := To_Font_Attributes)
       return Highlighting_Tags
    is
@@ -196,10 +131,10 @@ package body Src_Highlighting is
    -------------------------------
 
    procedure Create_Highlight_Line_Tag
-     (Tag        : out Gtk.Text_Tag.Gtk_Text_Tag;
-      Color_Name : String) is
+     (Tag   : out Gtk.Text_Tag.Gtk_Text_Tag;
+      Color : Gdk_Color) is
    begin
-      New_Tag (Tag, Highlight_Line_Tag_Name, Color_Name);
+      New_Tag (Tag, Highlight_Line_Tag_Name, Color);
       --  ??? Set the tag priority...
    end Create_Highlight_Line_Tag;
 
@@ -208,10 +143,10 @@ package body Src_Highlighting is
    ---------------------------------
 
    procedure Create_Highlight_Region_Tag
-     (Tag        : out Gtk.Text_Tag.Gtk_Text_Tag;
-      Color_Name : String) is
+     (Tag   : out Gtk.Text_Tag.Gtk_Text_Tag;
+      Color : Gdk_Color) is
    begin
-      New_Tag (Tag, Highlight_Region_Tag_Name, Color_Name);
+      New_Tag (Tag, Highlight_Region_Tag_Name, Color);
       --  ??? Add the priority
    end Create_Highlight_Region_Tag;
 
