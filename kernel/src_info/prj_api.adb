@@ -1036,6 +1036,16 @@ package body Prj_API is
       return No_Project;
    end Get_Project_View_From_Name;
 
+   -----------------------------------
+   -- Get_Project_View_From_Project --
+   -----------------------------------
+
+   function Get_Project_View_From_Project (Project : Project_Node_Id)
+      return Project_Id is
+   begin
+      return Get_Project_View_From_Name (Prj.Tree.Name_Of (Project));
+   end Get_Project_View_From_Project;
+
    ---------------------------
    -- Get_Project_From_View --
    ---------------------------
