@@ -1580,7 +1580,8 @@ package body Src_Editor_Module is
                   Mark_Record.Length := 0;
                   Mark_Record.Mark :=
                     Add_Blank_Lines
-                      (Box.Editor, Editable_Line_Type (Line),
+                      (Get_Buffer (Box.Editor),
+                       Editable_Line_Type (Line),
                        Highlight_Category, "", Number);
                   Mark_Identifier_List.Append (Id.Stored_Marks, Mark_Record);
                   Set_Return_Value (Data, Image (Mark_Record.Id));
