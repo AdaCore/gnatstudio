@@ -10,7 +10,7 @@ project GNAT is
              for Default_Switches ("Ada") use ("-g", "-gnata", "-gnatpg", "-O");
           when "Production" =>
              for Default_Switches ("Ada") 
-                use ("-g", "-gnatN", "-gnatpg", "-O2");
+                use ("-gnatN", "-gnatpg", "-O2");
       end case;
    end Compiler;
 
