@@ -90,7 +90,6 @@ package body Vsearch_Ext is
    procedure Destroy (Module : in out Vsearch_Module_Record);
    --  Called when the module is destroyed
 
-
    Vsearch_Module_Id : Vsearch_Module;
    --  ??? Register in the kernel, shouldn't be a global variable
 
@@ -966,13 +965,15 @@ package body Vsearch_Ext is
          end if;
 
          --  Temporarily remove the options frame, to avoid immediate resizing
-         --  of the floating window, whose size_request would include it,
+         --  of the floating window, whose size_request would include it
+
          Ref (Vsearch_Module_Id.Search.Options_Frame);
          Remove (Vsearch_Module_Id.Search,
                  Vsearch_Module_Id.Search.Options_Frame);
 
          Child := Put (Get_MDI (Kernel), Vsearch_Module_Id.Search,
                        All_Buttons or Float_As_Transient);
+
          Set_Title (Child, -"Search");
          Set_Dock_Side (Child, Left);
 
@@ -1017,6 +1018,7 @@ package body Vsearch_Ext is
       --  We must create the search dialog only after we have found the current
       --  context, otherwise it would return the context of the search widget
       --  itself
+
       Vsearch := Get_Or_Create_Vsearch (Kernel, Raise_Widget => True);
       Set_Text (Vsearch_Module_Id.Search.Pattern_Entry, "");
       Set_Text (Vsearch_Module_Id.Search.Replace_Entry, "");
