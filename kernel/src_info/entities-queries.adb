@@ -1752,7 +1752,7 @@ package body Entities.Queries is
            (Db        => Entity.Declaration.File.Db,
             File_Name => Get_Filename (Get_File (Ref.Location)),
             Line      => Get_Line (Ref.Location),
-            COlumn    => Get_Column (Ref.Location),
+            Column    => Get_Column (Ref.Location),
             Entity    => Result,
             Status    => Status);
 
