@@ -205,6 +205,12 @@ private
 
       Text_Color           : Gdk.Color.Gdk_Color := Gdk.Color.Null_Color;
       --  The editor text color.
+
+      Button_Pressed       : Boolean := False;
+      --  Whether the button 1 is pressed.
+
+      Button_Event         : Gdk.Event.Gdk_Event;
+      --  Stores a copy of the last button press event for button 1.
    end record;
 
 end Src_Editor_View;
