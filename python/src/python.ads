@@ -216,6 +216,16 @@ package Python is
    function PyString_FromString (Str : String) return PyObject;
    --  Return a python object representing Str
 
+   --------------
+   -- Booleans --
+   --------------
+
+   function Py_False return PyObject;
+   function Py_True  return PyObject;
+   --  These two functions return one of the only two booleans in existence in
+   --  the interpreter.
+   --  You need to Py_INCREF them before returning them from your functions.
+
    -------------
    -- Modules --
    -------------
@@ -509,4 +519,6 @@ private
    pragma Import (C, PyObject_Dir, "PyObject_Dir");
    pragma Import (C, PyObject_Repr, "PyObject_Repr");
    pragma Import (C, PyErr_Restore, "PyErr_Restore");
+   pragma Import (C, Py_False, "ada_py_false");
+   pragma Import (C, Py_True, "ada_py_true");
 end Python;

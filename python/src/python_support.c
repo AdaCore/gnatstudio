@@ -47,3 +47,11 @@ int ada_python_api_version () {
 PyObject* ada_py_none () {
   return Py_None;
 }
+
+PyObject* ada_py_false() {
+  return Py_False;
+}
+
+PyObject* ada_py_true() {
+  return Py_True;
+}
