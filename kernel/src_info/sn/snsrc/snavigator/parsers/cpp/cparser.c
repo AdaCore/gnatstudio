@@ -1812,6 +1812,7 @@ extern int f_class( Declaration_t Declaration, Class_t Class )
 
          if ( g_tp ) attr |= PAF_TEMPLATE;
 
+         /* Class declaration */
          Put_symbol( paf
                    , get_scope( Class->name.buf )
                    , get_name( Class->name.buf )
@@ -4155,6 +4156,7 @@ extern void function( Declaration_t Declaration, Declarator_t Declarator, int li
           sprintf (data, "template_args=%s", template_args);
       }
 
+      /* function declaration */
       Put_symbol( paf
                 , scope
                 , name
@@ -4193,6 +4195,11 @@ extern void function( Declaration_t Declaration, Declarator_t Declarator, int li
                 , Declaration->charno_beg
                 );
 
+           if ( scope ) {
+                sprintf (data, "class=%s", scope);
+           } else {
+               *data = 0;
+           }
            for ( tp = g_tp; tp; tp = tp->next ) {
                  Put_symbol( PAF_TEMPLATE_ARG_DEF
                            , name
@@ -4206,7 +4213,7 @@ extern void function( Declaration_t Declaration, Declarator_t Declarator, int li
                            , tp->type.buf
                            , template_args
                            , (char *) 0
-                           , 0
+                           , data /* comment */
                            , tp->name_lineno
                            , tp->name_charno
                            , tp->name_lineno
@@ -4263,6 +4270,11 @@ extern void class_member( Class_t Class, Declaration_t Declaration, Declarator_t
       int paf;
       char *scope = Class->name.buf;
       char *name  = get_name( Declarator->name.buf );
+      char data [1024], template_args [1024];
+      template_param* tp;
+
+      *data = 0;
+
 
       if( Declaration->storage_class == SN_FRIEND )
       {
@@ -4287,7 +4299,7 @@ extern void class_member( Class_t Class, Declaration_t Declaration, Declarator_t
                    , type.buf
                    , Declarator->types.buf
                    , Declarator->names.buf
-                   , get_comment( Declarator->lineno_end )
+                   , data
                    , Declarator->lineno_beg
                    , Declarator->charno_beg
                    , Declarator->lineno_end
@@ -4313,11 +4325,20 @@ extern void class_member( Class_t Class, Declaration_t Declaration, Declarator_t
          }
       }
 
-      if ( g_tp ) attr |= PAF_TEMPLATE;
+      if ( g_tp ) {
+          attr |= PAF_TEMPLATE;
+          sprintf (template_args, "<");
+          for ( tp = g_tp; tp != 0; tp = tp->next ) {
+              strcat (template_args, tp->type.buf);
+              strcat (template_args, tp->next ? ", " : ">");
+          }
+
+          sprintf (data, "template_args=%s", template_args);
+      }
 
       if (paf != PAF_FUNC_DCL)   /* Zsolt Koppany, 1-may-97 */
       {                          /* If it is a friend we don't report it. */
-          template_param* tp;
+          /* class method declaration */
           Put_symbol( paf
                 , scope
                 , name
@@ -4330,13 +4351,14 @@ extern void class_member( Class_t Class, Declaration_t Declaration, Declarator_t
                 , type.buf
                 , Declarator->types.buf
                 , Declarator->names.buf
-                , get_comment( Declarator->lineno_end )
+                , data
                 , Declarator->lineno_beg
                 , Declarator->charno_beg
                 , Declarator->lineno_end
                 , Declarator->charno_end
                 );
 
+           sprintf (data, "class=%s", scope);
            for ( tp = g_tp; tp; tp = tp->next ) {
                  Put_symbol( PAF_TEMPLATE_ARG_DEF
                            , name
@@ -4350,7 +4372,7 @@ extern void class_member( Class_t Class, Declaration_t Declaration, Declarator_t
                            , tp->type.buf
                            , Declaration->name.buf /* template args */
                            , (char *) 0
-                           , 0
+                           , data /* comment */
                            , tp->name_lineno
                            , tp->name_charno
                            , tp->name_lineno
@@ -4522,6 +4544,7 @@ extern void class_method( Class_t Class, Declaration_t Declaration, Declarator_t
                    );
       }
 
+      /* class method declaration */
       Put_symbol( paf_def
                 , scope
                 , name
@@ -4579,6 +4602,7 @@ extern void class_method( Class_t Class, Declaration_t Declaration, Declarator_t
                 , Declarator->charno_end
                 );
 
+       sprintf (data, "class=%s", scope);
        for ( tp = g_tp; tp; tp = tp->next ) {
          Put_symbol( PAF_TEMPLATE_ARG_DEF
                    , name
@@ -4592,7 +4616,7 @@ extern void class_method( Class_t Class, Declaration_t Declaration, Declarator_t
                    , tp->type.buf
                    , template_args
                    , (char *) 0
-                   , 0
+                   , data /* comment */
                    , tp->name_lineno
                    , tp->name_charno
                    , tp->name_lineno
