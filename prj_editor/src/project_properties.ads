@@ -24,13 +24,13 @@
 --  executables,...
 --  </description>
 
-with Glib.Object;
 with Gtk.Box;
 with Gtk.GEntry;
 with Glide_Kernel;
 with Gtk.Box;
 with Projects;
 with GNAT.OS_Lib;
+with Commands.Interactive;
 
 package Project_Properties is
 
@@ -39,12 +39,15 @@ package Project_Properties is
       Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class);
    --  Edit the properties for Project_View.
 
-   procedure Edit_Project_Properties
-     (Widget  : access Glib.Object.GObject_Record'Class;
-      Context : Glide_Kernel.Selection_Context_Access);
+   type Project_Properties_Editor_Command
+     is new Commands.Interactive.Interactive_Command with null record;
+   function Execute
+     (Command : access Project_Properties_Editor_Command;
+      Context : Commands.Interactive.Interactive_Command_Context)
+      return Commands.Command_Return_Type;
    --  Edit the properties of the project in Context. This is meant to be used
    --  as a callback for a contextual menu.
-   --  Context.all must be of type File_Selection_Context
+   --  Context.Context must be of type File_Selection_Context
 
    procedure Register_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);

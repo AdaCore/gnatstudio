@@ -74,7 +74,6 @@ with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with Scenario_Selectors;        use Scenario_Selectors;
 with Traces;                    use Traces;
-with Ada.Exceptions;            use Ada.Exceptions;
 with Project_Viewers;           use Project_Viewers;
 with Gtk.Event_Box;             use Gtk.Event_Box;
 with VFS;                       use VFS;
@@ -3899,24 +3898,21 @@ package body Project_Properties is
       Free (Languages);
    end Edit_Properties;
 
-   -----------------------------
-   -- Edit_Project_Properties --
-   -----------------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure Edit_Project_Properties
-     (Widget  : access Glib.Object.GObject_Record'Class;
-      Context : Glide_Kernel.Selection_Context_Access)
+   function Execute
+     (Command : access Project_Properties_Editor_Command;
+      Context : Commands.Interactive.Interactive_Command_Context)
+      return Commands.Command_Return_Type
    is
-      pragma Unreferenced (Widget);
+      pragma Unreferenced (Command);
       C : constant File_Selection_Context_Access :=
-        File_Selection_Context_Access (Context);
+        File_Selection_Context_Access (Context.Context);
    begin
-      Edit_Properties (Project_Information (C), Get_Kernel (Context));
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
-   end Edit_Project_Properties;
+      Edit_Properties (Project_Information (C), Get_Kernel (C));
+      return Commands.Success;
+   end Execute;
 
 end Project_Properties;
