@@ -33,106 +33,127 @@ package GVD.Menu is
      (Object : Data_Type_Access;
       Action : Guint;
       Widget : Limited_Widget);
+   --  Callback for File->Open Program
 
    procedure On_Open_Debugger
      (Object : Data_Type_Access;
       Action : Guint;
       Widget : Limited_Widget);
+   --  Callback for File->New Debugger
 
    procedure On_Open_Core_Dump
      (Object : Data_Type_Access;
       Action : Guint;
       Widget : Limited_Widget);
+   --  Callback for File->Open Core File
 
    procedure On_Add_Symbols
      (Object : Data_Type_Access;
       Action : Guint;
       Widget : Limited_Widget);
+   --  Callback for File->Add Symbols
 
    procedure On_Edit_Source
      (Object : Data_Type_Access;
       Action : Guint;
       Widget : Limited_Widget);
+   --  Callback for File->Edit Source
 
    procedure On_Open_Source
      (Object : Data_Type_Access;
       Action : Guint;
       Widget : Limited_Widget);
+   --  Callback for File->Open Source
 
    procedure On_Reload_Sources
      (Object : Data_Type_Access;
       Action : Guint;
       Widget : Limited_Widget);
+   --  Callback for File->Reload Sources
 
    procedure On_Open_Session
      (Object : Data_Type_Access;
       Action : Guint;
       Widget : Limited_Widget);
+   --  Callback for File->Open Session
 
    procedure On_Save_Session_As
      (Object : Data_Type_Access;
       Action : Guint;
       Widget : Limited_Widget);
+   --  Callback for File->Save Session As
 
    procedure On_Attach_To_Process
      (Object : Data_Type_Access;
       Action : Guint;
       Widget : Limited_Widget);
+   --  Callback for File->Attach
 
    procedure On_Detach_Process
      (Object : Data_Type_Access;
       Action : Guint;
       Widget : Limited_Widget);
+   --  Callback for File->Detach
 
    procedure On_Change_Directory
      (Object : Data_Type_Access;
       Action : Guint;
       Widget : Limited_Widget);
+   --  Callback for File->Change Directory
 
    procedure On_Close
      (Object : Data_Type_Access;
       Action : Guint;
       Widget : Limited_Widget);
+   --  Callback for File->Close
 
    procedure On_Exit
      (Object : Data_Type_Access;
       Action : Guint;
       Widget : Limited_Widget);
+   --  Callback for File->Exit
 
    procedure On_Undo
      (Object : Data_Type_Access;
       Action : Guint;
       Widget : Limited_Widget);
+   --  Callback for Edit->Undo
 
    procedure On_Redo
      (Object : Data_Type_Access;
       Action : Guint;
       Widget : Limited_Widget);
+   --  Callback for Edit->Redo
 
    procedure On_Cut
      (Object : Data_Type_Access;
       Action : Guint;
       Widget : Limited_Widget);
+   --  Callback for Edit->Cut
 
    procedure On_Copy
      (Object : Data_Type_Access;
       Action : Guint;
       Widget : Limited_Widget);
+   --  Callback for Edit->Copy
 
    procedure On_Paste
      (Object : Data_Type_Access;
       Action : Guint;
       Widget : Limited_Widget);
+   --  Callback for Edit->Paste
 
    procedure On_Select_All
      (Object : Data_Type_Access;
       Action : Guint;
       Widget : Limited_Widget);
+   --  Callback for Edit->Select All
 
    procedure On_Preferences
      (Object : Data_Type_Access;
       Action : Guint;
       Widget : Limited_Widget);
+   --  Callback for Edit->Preferences
 
    procedure On_Run
      (Object : Data_Type_Access;
