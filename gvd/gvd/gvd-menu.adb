@@ -43,7 +43,6 @@ with GVD.Canvas;          use GVD.Canvas;
 with GVD.Dialogs;         use GVD.Dialogs;
 with GVD.Trace;           use GVD.Trace;
 with GVD.Types;           use GVD.Types;
-with String_Utils;        use String_Utils;
 with GVD.Main_Window;     use GVD.Main_Window;
 with GVD.Memory_View;     use GVD.Memory_View;
 with Basic_Types;         use Basic_Types;
@@ -79,7 +78,7 @@ package body GVD.Menu is
       end if;
 
       declare
-         S : constant String := To_Unix_Pathname (File_Selection_Dialog);
+         S : constant String := File_Selection_Dialog;
       begin
          if S = "" then
             return;
@@ -126,12 +125,12 @@ package body GVD.Menu is
       end if;
 
       declare
-         S : constant String :=
-           To_Unix_Pathname (File_Selection_Dialog (-"Select Core File"));
-         --  ??? To_Unix_Pathname should only be called for debuggers that
-         --  expect unix pathname like gdb.
-
+         S : constant String := File_Selection_Dialog (-"Select Core File");
       begin
+         if S = "" then
+            return;
+         end if;
+
          if Tab.Descriptor.Remote_Host /= null
            or else Is_Regular_File (S)
          then
@@ -165,9 +164,7 @@ package body GVD.Menu is
       end if;
 
       declare
-         S : constant String :=
-           To_Unix_Pathname (File_Selection_Dialog (-"Select Module"));
-
+         S : constant String := File_Selection_Dialog (-"Select Module");
       begin
          if S = "" then
             return;
@@ -301,10 +298,10 @@ package body GVD.Menu is
       end if;
 
       declare
-         Dir : constant String := To_Unix_Pathname (File_Selection_Dialog
+         Dir : constant String := File_Selection_Dialog
            (Title       => -"Directory Selection",
             Dir_Only    => True,
-            Must_Exist  => True));
+            Must_Exist  => True);
 
       begin
          if Dir /= "" then
@@ -482,9 +479,13 @@ package body GVD.Menu is
       Action : Guint;
       Widget : Limited_Widget)
    is
-      pragma Unreferenced (Object, Action, Widget);
+      pragma Unreferenced (Action, Widget);
+
+      Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
-      null;
+      if Tab /= null then
+         Kill_Process (Tab.Debugger, Mode => GVD.Types.Visible);
+      end if;
    end On_Kill;
 
    ------------------
