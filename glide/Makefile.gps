@@ -105,7 +105,7 @@ ifeq ($(GLIDE_ROOT),True)
 	  $(LN) ../gnat_src/$(f) ../gnat > /dev/null 2>&1 ;)
 
    gvd: force
-	gnatmake -u -c -P../gvd/gvd $(ADAFLAGS)
+	gnatmake -u -c -P../gvd/gvd $(ADAFLAGS) gvd-main_window.adb
 
    gpslink: force
 	cd $(GLIDE_OBJ_DIR); gnatmake -q -a ../src/gpslink
