@@ -6,13 +6,9 @@ AM_INIT_AUTOMAKE(db, 1.85)
 
 dnl AM_PROG_INSTALL
 AC_PROG_INSTALL
-AC_PREFIX_DEFAULT(`pwd | sed -e "s/\/snsrc\/db$//"`)
 dnl AM_MAINTAINER_MODE
 AC_PROG_MAKE_SET
 AC_ARG_PROGRAM
-
-prefix=${ac_default_prefix}
-exec_prefix=${ac_default_prefix}
 
 # This is a hack to work around an automake deficiency.  Sigh.
 HACK=
