@@ -9,30 +9,38 @@ In particular:
 - gnatclean: verify that gnatclean handles multi-language objects/projects.
   See D612-002.
 
-- gnatname: add support for non Ada languages in gnatname.
+- gnatname: add support for non Ada languages in gnatname
+  by taking the Languages attribute and the Naming package into account.
 
-- gnatls: ditto.
+- gnatls: should probably support non Ada objects/dependency files, and
+  give info about the status of the corresponding sources.
 
 Requirements:
 - Be extensible to new programming languages without having to modify
   gprmake itself
+- Avoid as much as possible hard coding of languages and/or behavior.
+  Provide useful defaults to ease set up and use with GNU compilers so
+  that gprmake can either be very simple to use in the default cases (by
+  not having to change dozens of settings), and also be configured for many
+  different languages and toolchains.
 - Handle source dependencies automatically
 - Handle different compilers for different languages
-  - including Ada
+  - including Ada: Ada should be a first class citizen of course, but not a
+    special case as it is now.
   - not restricted to GCC
-
-- Provide language-specific compilation/link options
-- Provide file-specific compilation options
-- Provide conditional sections based on configurable variables
-- Handle building and use of libraries
+- Support all GNAT project file feature on all languages when this makes
+  sense. In particular, but not exclusively:
+  - Provide language-specific compilation/link options
+  - Provide file-specific compilation options
+  - Provide conditional sections based on configurable variables
+  - Handle building and use of libraries
 - Use a process as similar as possible for each language
 - Should be independent of the compiler version (in particular of the
   gnat version) as much as possible.
 - Be as compatible as possible with gpr2make
-- Provide useful defaults to ease set up and use with GNU compilers so
-  that gprmake can either be very simple to use in the default cases (by
-  not having to change dozens of settings), and also be configured for many
-  different languages and toolchains.
+  This is not a hard requirement since gpr2make has always be presented as
+  a 'beta' tool, but is still desirable to ease the transition of our
+  current users.
 
 Note: a prototype implementation of gprmake exists, which mimic closely the
 implementation of gpr2make+Makefile.generic. In the document below, we will,
@@ -46,11 +54,7 @@ this document is a good opportunity to fix these.
 Although the behavior of the tool will be similar, the design and
 implementation is expected to be different.
 
-Related tools:
-- gnatmake
-- gcc
-- make
-- ant
+Related tools: gnatmake, gcc, make, ant
 
 Process:
 
@@ -59,9 +63,9 @@ Process:
   link process.
 
 - sources files are recompiled when
-  - no dependency info is available for this file
+  - no dependency info is available for this file (case of a new source file)
   - one of the dependencies has a timestamp more recent than the corresponding
-    object file
+    object file (as done by the 'make' utility).
 
 - We do not want to get too deep in the handling of extra build processes (e.g.
   build of documentation, automatic code generation tools, extra preprocessing,
@@ -84,23 +88,20 @@ Process:
   such as 'make', only in a more limited way.
   In addition, the main idea behind project files is to describe some
   project properties to external tools that will perform dedicated processing
-  based on this information, whereas Makefile and similar files are a general
+  based on this information, whereas makefiles and similar files are a general
   way to describe a set of dependencies and actions to perform when these
   dependencies are outdated (this includes compiling sources, but is also
   used for pretty much anything, such as running a test case, launching
   a debugger, etc...); Keeping these two very distinct goals in the gprmake
-  design is desirable, and introducing some (even simple) notions of
+  design is desirable, and introducing some notions of
   'post-processing' or 'pre-processing' would inevitably bring the added
   complexity associated with the 'make'-like tools that we want to avoid.
-
-TBC
-[...]
 
 Output created by gprmake:
 
 - For the convenience of tools launched, gprmake will set an environment
-  variable to the full path of the top level project file so that this info
-  is shared easily among tools.
+  variable to the full path of the current project file being handled, so that
+  this info is shared easily among tools.
 
   This environment variable could be called GNAT_PROJECT
 
