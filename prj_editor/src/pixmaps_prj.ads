@@ -50,6 +50,6 @@ private
    pragma Import (C, project_xpm);
    pragma Import (C, project_imported_xpm);
    pragma Import (C, project_modified_xpm);
-   pragma Import (C, mini_folder_object_xpm, "mini-folder_object_xpm");
+   pragma Import (C, mini_folder_object_xpm, "mini_folder_object_xpm");
 
 end Pixmaps_Prj;
