@@ -59,7 +59,7 @@ package body Docgen.Work_On_File is
    end record;
 
    procedure Free (D : in out Process_One_File_Data);
-   --  Free memory associated with D.
+   --  Free memory associated with D
 
    procedure Process_One_File_Iterate
      (Data    : in out Process_One_File_Data;
@@ -70,7 +70,7 @@ package body Docgen.Work_On_File is
    package Process_One_File_Commands is new Commands.Generic_Asynchronous
      (Data_Type => Process_One_File_Data,
       Free      => Free);
-   --  Handle the one-file processing commands.
+   --  Handle the one-file processing commands
 
    procedure Find_Next_Package
      (Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
@@ -90,7 +90,7 @@ package body Docgen.Work_On_File is
    --  Return True is Name is an operator
 
    function Is_Tagged_Type (Info : Entity_Information) return Boolean;
-   --  Whether Info is tagged type or a C++ class.
+   --  Whether Info is tagged type or a C++ class
 
    procedure Get_All_References_In_File
      (File                          : Source_File;
@@ -139,7 +139,7 @@ package body Docgen.Work_On_File is
       Options                   : All_Options;
       Tagged_Types_List         : out List_Entity_Information.List;
       Private_Tagged_Types_List : out List_Entity_Information.List);
-   --  Process tagged types in the current file.
+   --  Process tagged types in the current file
 
    procedure Process_New_Entity
      (Info                          : Entity_Information;
@@ -154,7 +154,7 @@ package body Docgen.Work_On_File is
       Subprogram_Index_List         : in out Type_Entity_List.List;
       Tagged_Types_List             : out List_Entity_Information.List;
       Private_Tagged_Types_List     : out List_Entity_Information.List);
-   --  Handle an entity referenced for the first time.
+   --  Handle an entity referenced for the first time
 
    procedure Process_One_File
      (B                             : access Docgen.Backend.Backend'Class;
