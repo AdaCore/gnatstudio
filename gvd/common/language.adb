@@ -307,9 +307,9 @@ package body Language is
         and then Buffer (Buffer'First + 1) = Context.Quote_Character
         and then Buffer (Buffer'First + 3) = Context.Constant_Character
       then
-        Entity := String_Text;
-        Next_Char := Buffer'First + 4;
-        return;
+         Entity := String_Text;
+         Next_Char := Buffer'First + 4;
+         return;
       end if;
 
       --  A constant character
