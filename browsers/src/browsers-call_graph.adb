@@ -418,6 +418,7 @@ package body Browsers.Call_Graph is
       Push_State (Kernel_Handle (Kernel), Busy);
 
       Tree := Create_Tree (Lib_Info);
+
       if Tree = Null_Scope_Tree then
          Trace (Me, "Couldn't create scope tree for "
                 & Get_LI_Filename (Lib_Info));
@@ -429,8 +430,7 @@ package body Browsers.Call_Graph is
 
       if Node = Null_Scope_Tree_Node then
          Insert (Kernel,
-                 -"Couldn't find the call graph for "
-                 & Get_Name (Entity));
+                 -"Couldn't find the call graph for " & Get_Name (Entity));
          Trace (Me, "Couldn't find entity "
                 & Get_Name (Entity) & " in "
                 & Get_LI_Filename (Lib_Info)
