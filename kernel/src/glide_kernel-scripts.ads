@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003                            --
+--                     Copyright (C) 2003-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -56,10 +56,10 @@ package Glide_Kernel.Scripts is
    --  The instance of a class, which embeds some Ada data.
 
    function New_Class
-     (Kernel        : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Name          : String;
-      Description   : String := "";
-      Base          : Class_Type := No_Class) return Class_Type;
+     (Kernel      : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Name        : String;
+      Description : String     := "";
+      Base        : Class_Type := No_Class) return Class_Type;
    --  For some languages, this notion is not supported, and the class will not
    --  be visible by the user in the shell. Methods create for the class will
    --  then simply be made available directly in the shell.
