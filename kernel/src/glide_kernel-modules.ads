@@ -646,7 +646,7 @@ package Glide_Kernel.Modules is
       Highlight_Line    : Boolean := False;
       Enable_Navigation : Boolean := True;
       New_File          : Boolean := True;
-      From_Path         : Boolean := False);
+      From_Path         : Boolean := True);
    --  Open, or create, an editor that edits Filename (Mime_Source_File type)
    --  If Enable_Navigation is True, then the location visited will be
    --  stored in the history for Back/Forward navigation.

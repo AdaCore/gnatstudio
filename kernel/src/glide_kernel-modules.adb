@@ -1462,7 +1462,7 @@ package body Glide_Kernel.Modules is
       Highlight_Line    : Boolean := False;
       Enable_Navigation : Boolean := True;
       New_File          : Boolean := True;
-      From_Path         : Boolean := False)
+      From_Path         : Boolean := True)
    is
       Value      : GValue_Array (1 .. 7);
       File_Found : Boolean := False;
