@@ -16,7 +16,6 @@ with Glib.Object;        use Glib.Object;
 with Gtk.Pixmap;         use Gtk.Pixmap;
 with Interfaces.C.Strings; use Interfaces.C.Strings;
 with Pango.Font;         use Pango.Font;
-with Pango.Enums;        use Pango.Enums;
 
 package body Wizards is
 
@@ -24,7 +23,10 @@ package body Wizards is
    --  Minimal width, in pixels, for the TOC area, when it is displayed.
 
    Highlight_Color : constant String := "yellow";
-   --  Color to use to highlight strings in the TOC.
+   --  <preference> Color to use to highlight strings in the TOC.
+
+   Wizard_Title_Font : constant String := "helvetica bold oblique 14";
+   --  <preference> Font to use for the title of the pages in the wizard
 
    procedure Free is new Unchecked_Deallocation
      (Widget_Array, Widget_Array_Access);
@@ -119,11 +121,7 @@ package body Wizards is
       Set_Style (Wiz.Eventbox1, Style);
       Set_Style (Wiz.Title_Box, Style);
 
-      Desc := To_Font_Description
-        (Family_Name => "helvetica",
-         Weight      => Pango_Weight_Bold,
-          Style       => Pango_Style_Oblique,
-          Size        => 14);
+      Desc := From_String (Wizard_Title_Font);
       Set_Font_Description (Style, Desc);
       Set_Style (Wiz.Title, Style);
 
