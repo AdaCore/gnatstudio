@@ -122,6 +122,7 @@ package body Vsearch_Ext is
          Sub_Matches : Match_Array := (0 => No_Match)) return Boolean
       is
          Dummy : Boolean;
+         Count : Natural := 0;
       begin
          if Match_Found then
             Console.Insert
@@ -129,8 +130,12 @@ package body Vsearch_Ext is
                Line_Text);
          end if;
 
-         while Gtk.Main.Events_Pending loop
+         while Gtk.Main.Events_Pending
+           and then Vsearch.Continue
+           and then Count < 30
+         loop
             Dummy := Gtk.Main.Main_Iteration;
+            Count := Count + 1;
          end loop;
 
          if Vsearch.Continue then
@@ -150,6 +155,7 @@ package body Vsearch_Ext is
       end Reset_Search;
 
    begin
+      Set_Busy (Vsearch.Kernel, True);
       Highlight := Parse (Highlight_File);
       Alloc (Get_Default_Colormap, Highlight);
 
@@ -217,6 +223,7 @@ package body Vsearch_Ext is
                   Case_Sensitive => Get_Active (Vsearch.Case_Check),
                   Forward        => True,
                   Regular        => Get_Active (Vsearch.Regexp_Check));
+               Set_Busy (Vsearch.Kernel, False);
                return;
 
             when others =>
@@ -224,11 +231,15 @@ package body Vsearch_Ext is
          end case;
       end if;
 
+      Set_Busy (Vsearch.Kernel, False);
+
    exception
       when Error_In_Regexp =>
+         Set_Busy (Vsearch.Kernel, False);
          Trace (Me, "Bad regexp: " & Get_Text (Vsearch.Files_Entry));
 
       when E : others =>
+         Set_Busy (Vsearch.Kernel, False);
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Search_Next;
 
@@ -250,6 +261,8 @@ package body Vsearch_Ext is
       Found   : Boolean;
 
    begin
+      Set_Busy (Vsearch.Kernel, True);
+
       case Vsearch.Context is
          when Context_Help =>
             Found := Help.Search_Next (Vsearch.Kernel);
@@ -258,6 +271,8 @@ package body Vsearch_Ext is
          when others =>
             null;
       end case;
+
+      Set_Busy (Vsearch.Kernel, True);
    end On_Search_Previous;
 
    --------------------
