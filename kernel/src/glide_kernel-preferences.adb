@@ -233,6 +233,15 @@ package body Glide_Kernel.Preferences is
       Register_Property
         (Kernel.Preferences, Param_Spec (Strip_Blanks), -"Editor");
 
+      Display_Line_Numbers := Param_Spec_Boolean (Gnew_Boolean
+        (Name    => "Src-Editor-Strip-Blanks",
+         Default => True,
+         Blurb   => -("Whether the line numbers should be displayed in"
+                       & " file editors"),
+         Nick    => -"Display line numbers"));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (Display_Line_Numbers), -"Editor");
+
       Default_Source_Editor_Font := Param_Spec_Font (Gnew_Font
         (Name    => "Src-Editor-Default-Font",
          Default => "Courier 10",
