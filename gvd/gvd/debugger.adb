@@ -402,6 +402,7 @@ package body Debugger is
       --  indirectly call the output filter.
 
       if Wait_Prompt (Debugger, Timeout => 1) then
+         Process.Continuation_Line := False;
          Timeout_Remove (Process.Timeout_Id);
          Process.Timeout_Id := 0;
          Mode := Get_Command_Mode (Get_Process (Debugger));
@@ -631,11 +632,13 @@ package body Debugger is
          else
             Send_Internal_Pre
               (Debugger, Cmd (First .. Last - 1), Empty_Buffer, Mode);
+            Process := Convert (Debugger.Window, Debugger);
 
             case Mode is
                when Invisible_Command =>
                   if Last > Cmd'Last and then Wait_For_Prompt then
                      Wait_Prompt (Debugger);
+                     Process.Continuation_Line := False;
                      Send_Internal_Post
                        (Debugger, Cmd (First .. Last - 1), Mode);
                   end if;
@@ -646,6 +649,7 @@ package body Debugger is
                         --  Synchronous handling of commands, simple case
 
                         Wait_Prompt (Debugger);
+                        Process.Continuation_Line := False;
                         Send_Internal_Post
                           (Debugger, Cmd (First .. Last - 1), Mode);
 
@@ -653,7 +657,6 @@ package body Debugger is
                         --  Asynchronous handling of commands, install a
                         --  callback on the debugger's output file descriptor.
 
-                        Process := Convert (Debugger.Window, Debugger);
                         Process.Current_Command :=
                           new String'(Cmd (First .. Last - 1));
 
@@ -707,16 +710,18 @@ package body Debugger is
    ---------------
 
    function Send_Full
-     (Debugger     : access Debugger_Root'Class;
-      Cmd          : String;
-      Mode         : Invisible_Command := Hidden) return String
+     (Debugger : access Debugger_Root'Class;
+      Cmd      : String;
+      Mode     : Invisible_Command := Hidden) return String
    is
-      Process : Visual_Debugger;
+      Process : constant Visual_Debugger :=
+        Convert (Debugger.Window, Debugger);
    begin
       pragma Assert (not Command_In_Process (Get_Process (Debugger)));
 
       Send_Internal_Pre (Debugger, Cmd, Mode => Mode);
       Wait_Prompt (Debugger);
+      Process.Continuation_Line := False;
 
       declare
          S : constant String := Expect_Out (Get_Process (Debugger));
@@ -732,7 +737,6 @@ package body Debugger is
 
    exception
       when Process_Died =>
-         Process := Convert (Debugger.Window, Debugger);
          Set_Command_In_Process (Get_Process (Debugger), False);
          Set_Busy (Process, False);
          Unregister_Dialog (Process);
