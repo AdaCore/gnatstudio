@@ -3563,14 +3563,18 @@ package body Project_Explorers is
          Widget := Gtk_Widget (Extra);
       end if;
 
-      Register_Search_Function
-        (Kernel            => Kernel,
-         Label             => -"Project explorer",
-         Factory           => Explorer_Search_Factory'Access,
-         Extra_Information => Widget,
-         Mask              => All_Options and not Supports_Replace
-           and not Search_Backward and not Scope_Mask
-           and not All_Occurences);
+      declare
+         Name : constant String := -"Project explorer";
+      begin
+         Register_Search_Function
+           (Kernel            => Kernel,
+            Data => (Length           => Name'Length,
+                     Label            => Name,
+                     Factory           => Explorer_Search_Factory'Access,
+                     Extra_Information => Widget,
+                     Mask              => All_Options and not Supports_Replace
+                     and not Search_Backward and not All_Occurences));
+      end;
    end Register_Module;
 
    ----------------
