@@ -620,14 +620,9 @@ package body Glide_Menu is
    procedure On_Edit_Project
      (Object : Data_Type_Access;
       Action : Guint;
-      Widget : Limited_Widget)
-   is
-      Top  : constant Glide_Window := Glide_Window (Object);
-      Win  : Project_Editor;
-
+      Widget : Limited_Widget) is
    begin
-      Gtk_New (Win, Top.Kernel);
-      Show_All (Win);
+      Open_Project_Editor (Glide_Window (Object).Kernel);
    end On_Edit_Project;
 
    -------------------------
