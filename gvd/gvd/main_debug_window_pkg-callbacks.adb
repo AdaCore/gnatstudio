@@ -35,6 +35,7 @@ with GVD.Window_Settings; use GVD.Window_Settings;
 with GVD.Main_Window;     use GVD.Main_Window;
 with Odd_Intl;            use Odd_Intl;
 with Breakpoints_Editor;  use Breakpoints_Editor;
+with Debugger;            use Debugger;
 
 package body Main_Debug_Window_Pkg.Callbacks is
 
@@ -103,6 +104,9 @@ package body Main_Debug_Window_Pkg.Callbacks is
       Process   : Debugger_Process_Tab;
       Menu_Item : Gtk_Menu_Item;
 
+      Widget      : Gtk_Widget;
+      WTX_Version : Natural;
+
    begin
       Process :=
         Debugger_Process_Tab (Process_User_Data.Get (Page));
@@ -114,6 +118,26 @@ package body Main_Debug_Window_Pkg.Callbacks is
       if Main.Breakpoints_Editor /= null then
          Set_Process
            (Breakpoint_Editor_Access (Main.Breakpoints_Editor), Process);
+      end if;
+
+      --  Update the sensitivity of the Data/Protection Domains menu
+      --  item
+      Widget := Get_Widget (Main.Factory, -"/Data/Protection Domains");
+
+      if Widget = null then
+         --  This means that GVD is part of GPS
+         Widget := Get_Widget
+           (Main.Factory, -"/Debug/Data/Protection Domains");
+      end if;
+
+      if Widget /= null then
+         Info_WTX (Process.Debugger, WTX_Version);
+
+         if WTX_Version /= 3 then
+            Set_Sensitive (Widget, False);
+         else
+            Set_Sensitive (Widget, True);
+         end if;
       end if;
 
    exception
