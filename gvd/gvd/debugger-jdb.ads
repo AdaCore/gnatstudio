@@ -74,18 +74,25 @@ package Debugger.Jdb is
 
    procedure Continue (Debugger : access Jdb_Debugger);
 
+   procedure Interrupt (Debugger : access Jdb_Debugger);
+
    procedure Stack_Down (Debugger : access Jdb_Debugger);
 
    procedure Stack_Up (Debugger : access Jdb_Debugger);
+
+   procedure Break_Subprogram
+     (Debugger : access Jdb_Debugger;
+      Name     : String);
+
+   procedure Break_Source
+     (Debugger : access Jdb_Debugger;
+      File     : String;
+      Line     : Positive);
 
    procedure Break_Exception
      (Debugger  : access Jdb_Debugger;
       Name      : String  := "";
       Unhandled : Boolean := False);
-
-   procedure Break_Subprogram
-     (Debugger : access Jdb_Debugger;
-      Name     : String);
 
    procedure Finish (Debugger : access Jdb_Debugger);
 
