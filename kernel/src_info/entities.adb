@@ -24,6 +24,7 @@ with VFS;          use VFS;
 with GNAT.OS_Lib;  use GNAT.OS_Lib;
 with Projects;     use Projects;
 with Traces;       use Traces;
+with Entities.Queries; use Entities.Queries;
 
 package body Entities is
    Assert_Me : constant Debug_Handle := Create ("Entities.Assert", Off);
@@ -73,6 +74,10 @@ package body Entities is
    --  Free all entities declared in File, and remove them from internal
    --  tables. This ensures that the entities that are still referenced
    --  externally will still be usable.
+
+   procedure Free_If_Partial (Entity : in out Entity_Information);
+   --  Free the memory occupied by Entity if it is a partial entity.
+
 
    Is_Subprogram_Entity : constant array (E_Kinds) of Boolean :=
      (Procedure_Kind        => True,
@@ -547,6 +552,18 @@ package body Entities is
       end if;
    end Ref;
 
+   ---------------------
+   -- Free_If_Partial --
+   ---------------------
+
+   procedure Free_If_Partial (Entity : in out Entity_Information) is
+   begin
+      if Entity /= null and then Is_Partial_Entity (Entity) then
+         Unref (Entity);
+         Entity := null;
+      end if;
+   end Free_If_Partial;
+
    -----------
    -- Unref --
    -----------
@@ -564,6 +581,10 @@ package body Entities is
             Free (Entity.Primitive_Subprograms);
             Free (Entity.Child_Types);
             Free (Entity.References);
+            Free_If_Partial (Entity.Pointed_Type);
+            Free_If_Partial (Entity.Returned_Type);
+            Free_If_Partial (Entity.Primitive_Op_Of);
+            Free_If_Partial (Entity.Rename);
 
             --  If we are debugging, we do not free the memory, to keep a
             --  debuggable structure.
@@ -631,7 +652,11 @@ package body Entities is
    procedure Register_Language_Handler
      (Db : Entities_Database; Handler : LI_Handler) is
    begin
-      Db.Handlers := Handler;
+      if Db.ALI_Handlers = null then
+         Db.ALI_Handlers := Handler;
+      else
+         Db.CPP_Handlers := Handler;
+      end if;
    end Register_Language_Handler;
 
    ----------
@@ -953,32 +978,53 @@ package body Entities is
       Add_All_Entities (Returns.Declaration.File, Entity);
    end Set_Returned_Type;
 
+   -----------------------
+   -- Get_Returned_Type --
+   -----------------------
+
+   function Get_Returned_Type
+     (Entity : Entity_Information) return Entity_Information is
+   begin
+      return Entity.Returned_Type;
+   end Get_Returned_Type;
+
    -------------------
    -- Get_Or_Create --
    -------------------
 
    function Get_Or_Create
-     (Db     : Entities_Database;
-      Name   : String;
-      File   : Source_File;
-      Line   : Natural;
-      Column : Natural) return Entity_Information
+     (Db           : Entities_Database;
+      Name         : String := "";
+      File         : Source_File;
+      Line         : Natural;
+      Column       : Natural;
+      Allow_Create : Boolean := True) return Entity_Information
    is
       --  Speed up the search by checking in the file itself. However, we'll
       --  have to add the new entity to the global entities table as well.
-      EL  : Entity_Information_List_Access := Get (File.Entities, Name);
+      EL  : Entity_Information_List_Access;
       EL2 : Entity_Information_List_Access;
       E   : Entity_Information;
-      Is_Null : Boolean := (EL = null);
+      Is_Null : Boolean;
+      Is_Partial_Entity : constant Boolean := Name'Length = 0;
    begin
-      if Is_Null then
-         EL := new Entity_Information_List'(Null_Entity_Information_List);
+      if Is_Partial_Entity then
+         E := null;
       else
-         E := Find (EL.all, (File, Line, Column));
+         EL := Get (File.Entities, Name);
+         Is_Null := EL = null;
+
+         if Is_Null then
+            if Allow_Create then
+               EL := new Entity_Information_List'
+                 (Null_Entity_Information_List);
+            end if;
+         else
+            E := Find (EL.all, (File, Line, Column));
+         end if;
       end if;
 
-      if E = null then
-
+      if E = null and then Allow_Create then
          E := new Entity_Information_Record'
            (Name                  => new String'(Name),
             Kind                  => Unresolved_Entity_Kind,
@@ -994,25 +1040,27 @@ package body Entities is
             References            => Null_Entity_Reference_List,
             Ref_Count             => 1);
 
-         Append (EL.all, E);
-
-         if Is_Null then
-            Insert (File.Entities, EL);
-         end if;
-
-         if Manage_Global_Entities_Table then
-            EL2     := Get (Db.Entities, Name);
-            Is_Null := (EL2 = null);
-
-            if EL2 = null then
-               EL2 := new Entity_Information_List'
-                 (Null_Entity_Information_List);
-            end if;
-
-            Append (EL2.all, E);
+         if not Is_Partial_Entity then
+            Append (EL.all, E);
 
             if Is_Null then
-               Insert (Db.Entities, EL2);
+               Insert (File.Entities, EL);
+            end if;
+
+            if Manage_Global_Entities_Table then
+               EL2     := Get (Db.Entities, Name);
+               Is_Null := (EL2 = null);
+
+               if EL2 = null then
+                  EL2 := new Entity_Information_List'
+                    (Null_Entity_Information_List);
+               end if;
+
+               Append (EL2.all, E);
+
+               if Is_Null then
+                  Insert (Db.Entities, EL2);
+               end if;
             end if;
          end if;
       end if;
@@ -1103,11 +1151,18 @@ package body Entities is
 
    function Get_LI_Handler
      (Db              : Entities_Database;
-      Source_Filename : VFS.Virtual_File) return LI_Handler
-   is
-      pragma Unreferenced (Source_Filename);
+      Source_Filename : VFS.Virtual_File) return LI_Handler is
    begin
-      return Db.Handlers;
+      --  ??? Hard coded, needs extensions in Language_Handlers.Glide
+
+      if File_Extension (Source_Filename) = ".c"
+        or else File_Extension (Source_Filename) = ".h"
+        or else File_Extension (Source_Filename) = ".cpp"
+      then
+         return Db.CPP_Handlers;
+      else
+         return Db.ALI_Handlers;
+      end if;
    end Get_LI_Handler;
 
    -------------------
@@ -1199,5 +1254,89 @@ package body Entities is
 
       return False;
    end Check_LI_And_Source;
+
+   ----------------------------
+   -- Resolve_Partial_Entity --
+   ----------------------------
+
+   procedure Resolve_Partial_Entity (Entity : in out Entity_Information) is
+      Result : Entity_Information;
+      Status : Find_Decl_Or_Body_Query_Status;
+   begin
+      if Entity /= null and then Is_Partial_Entity (Entity) then
+         Update_Xref (Entity.Declaration.File);
+
+         --  We must search in declarations as well, since for a renaming of
+         --  body in Ada we might have the following (see rename/rename.adb):
+         --     32i4 X{integer} 33m24 50m4
+         --     33i4 Y=33:24{integer} 51r4
+
+         Find_Declaration
+           (Db              => Get_Database (Get_File (Entity.Declaration)),
+            File_Name       => Get_Filename (Get_File (Entity.Declaration)),
+            Entity_Name     => "",
+            Line            => Get_Line (Entity.Declaration),
+            Column          => Get_Column (Entity.Declaration),
+            Entity          => Result,
+            Status          => Status,
+            Check_Decl_Only => False);
+
+         if Status = Success then
+            Unref (Entity);
+            Entity := Result;
+         end if;
+      end if;
+   end Resolve_Partial_Entity;
+
+   -----------------------
+   -- Is_Partial_Entity --
+   -----------------------
+
+   function Is_Partial_Entity (Entity : Entity_Information) return Boolean is
+   begin
+      return Entity.Name'Length = 0;
+   end Is_Partial_Entity;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (LI : in out LI_Handler_Iterator_Access) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (LI_Handler_Iterator'Class, LI_Handler_Iterator_Access);
+   begin
+      if LI /= null then
+         Destroy (LI.all);
+         Unchecked_Free (LI);
+      end if;
+   end Free;
+
+   -----------------------
+   -- Update_Time_Stamp --
+   -----------------------
+
+   procedure Update_Time_Stamp
+     (File : Source_File; Timestamp : Ada.Calendar.Time := VFS.No_Time) is
+   begin
+      File.Timestamp := Timestamp;
+   end Update_Time_Stamp;
+
+   --------------------
+   -- Get_Time_Stamp --
+   --------------------
+
+   function Get_Time_Stamp (File : Source_File) return Ada.Calendar.Time is
+   begin
+      return File.Timestamp;
+   end Get_Time_Stamp;
+
+   --------------
+   -- Get_Kind --
+   --------------
+
+   function Get_Kind (Entity : Entity_Information) return E_Kind is
+   begin
+      return Entity.Kind;
+   end Get_Kind;
 
 end Entities;
