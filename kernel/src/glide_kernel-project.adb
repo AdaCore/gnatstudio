@@ -324,32 +324,36 @@ package body Glide_Kernel.Project is
    -- Get_Source_Files --
    ----------------------
 
-   function Get_Source_Files (Handle : access Kernel_Handle_Record)
-      return GNAT.OS_Lib.Argument_List
+   function Get_Source_Files
+     (Handle : access Kernel_Handle_Record)
+      return Basic_Types.String_Array_Access
    is
-      Src : String_List_Id;
-      Count : Natural := 0;
+      use Basic_Types;
+
+      Src     : String_List_Id;
+      Count   : Natural := 0;
+      Sources : String_Array_Access;
+      Index   : Natural := 1;
+
    begin
       Src := Projects.Table (Handle.Project_View).Sources;
+
       while Src /= Nil_String loop
          Count := Count + 1;
          Src := String_Elements.Table (Src).Next;
       end loop;
 
-      declare
-         Sources : Argument_List (1 .. Count);
-         Index   : Natural := Sources'First;
-      begin
-         Src := Projects.Table (Handle.Project_View).Sources;
-         while Src /= Nil_String loop
-            String_To_Name_Buffer (String_Elements.Table (Src).Value);
-            Sources (Index) := new String'
-              (Name_Buffer (Name_Buffer'First .. Name_Len));
-            Src := String_Elements.Table (Src).Next;
-         end loop;
+      Sources := new String_Array (1 .. Count);
+      Src := Projects.Table (Handle.Project_View).Sources;
 
-         return Sources;
-      end;
+      while Src /= Nil_String loop
+         String_To_Name_Buffer (String_Elements.Table (Src).Value);
+         Sources (Index) := new String'
+           (Name_Buffer (Name_Buffer'First .. Name_Len));
+         Src := String_Elements.Table (Src).Next;
+      end loop;
+
+      return Sources;
    end Get_Source_Files;
 
 end Glide_Kernel.Project;
