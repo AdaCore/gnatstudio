@@ -2,13 +2,10 @@ This repository groups all the tools and components provided by
 Glide 2.
 
 Since Glide groups many tools, some of them have their own repository
-such as GtkAda and GVD.
+such as GtkAda and GVD, so you need to set up the following directories/links:
 
-Some of the tools need additional sources to compile, so you need to set up
-the following directories/links:
 - Copy/Move the top-level directory of the GVD sources in the directory that
   contains this README file.
-  Using a link will work, except when using the project files.
 
 - Put a link called "gnat_src" in the directory that contains this README file.
   The link should point to the src/ada directory in the GNAT sources.
@@ -50,15 +47,12 @@ After having configured and installed Gtkada,
 you need to execute the following commands in the directory that contains this
 README file:
     [glidiator] $ ./configure --prefix=<prefix_dir>
-    [glidiator] $ cd gvd
-    [glidiator/gvd] $ ./configure --prefix=<prefix_dir>
-    [glidiator/gvd] $ cd ..
 
 This is needed to automatically generate some of the required sources and
-Makefiles.
+Makefiles (this step will take care of configuring GVD as well).
 For best compatibility with GNAT, <prefix_dir> should be same as the
 prefix used for building GNAT.
 
-Then do a make in the top level directory:
+Then do a make:
 
     [glidiator] $ make
