@@ -294,4 +294,69 @@ package body Codefix.Ada_Tools is
 
    end Is_In_Escape_Part;
 
+   ----------------------------
+   -- Get_Next_With_Position --
+   ----------------------------
+
+   function Get_Next_With_Position
+     (Current_Text : Text_Navigator_Abstr'Class;
+      File_Name    : String) return File_Cursor'Class
+   is
+      Current_Cursor : File_Cursor;
+      Current_Info   : Construct_Information;
+      Found_With     : Boolean := False;
+   begin
+      Current_Cursor.File_Name := new String'(File_Name);
+      Current_Cursor.Line := 1;
+      Current_Cursor.Col := 1;
+
+      loop
+         Current_Info := Get_Unit
+           (Current_Text, Current_Cursor, After);
+
+         exit when Current_Info.Category /= Cat_With
+           and then Current_Info.Category /= Cat_Use;
+
+         Found_With := True;
+         Current_Cursor.Col := Current_Info.Sloc_End.Column + 1;
+         Current_Cursor.Line := Current_Info.Sloc_End.Line;
+      end loop;
+
+      if not Found_With then
+         Current_Cursor.Col := 1;
+         Current_Cursor.Line := Current_Info.Sloc_Start.Line - 1;
+      end if;
+
+      return Current_Cursor;
+   end Get_Next_With_Position;
+
+   -----------------
+   -- Search_With --
+   -----------------
+
+   function Search_With
+     (Current_Text : Text_Navigator_Abstr'Class;
+      File_Name    : String;
+      Pkg_Name     : String) return File_Cursor'Class
+   is
+      Iterator   : Construct_Access :=
+        Get_Structure (Current_Text, File_Name).First;
+      Result     : File_Cursor;
+   begin
+      while Iterator /= null loop
+         if Iterator.Category = Cat_With
+           and then Iterator.Name.all = Pkg_Name then
+            Assign (Result.File_Name, File_Name);
+            Result.Col := Iterator.Sloc_Start.Column;
+            Result.Line := Iterator.Sloc_Start.Line;
+
+            return Result;
+         end if;
+
+         Iterator := Iterator.Next;
+      end loop;
+
+      return Null_File_Cursor;
+   end Search_With;
+
 end Codefix.Ada_Tools;

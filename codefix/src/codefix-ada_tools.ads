@@ -49,6 +49,15 @@ package Codefix.Ada_Tools is
 
    Std_Ada_Escape : constant Ada_Escape_Str;
 
+   function Get_Next_With_Position
+     (Current_Text : Text_Navigator_Abstr'Class;
+      File_Name    : String) return File_Cursor'Class;
+
+   function Search_With
+     (Current_Text : Text_Navigator_Abstr'Class;
+      File_Name    : String;
+      Pkg_Name     : String) return File_Cursor'Class;
+
 private
 
    type Use_Type is record
