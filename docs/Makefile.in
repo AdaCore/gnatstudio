@@ -11,7 +11,7 @@ CONVERT = convert
 CP = cp -p
 IMAGES = gps_title.jpg *.jpg
 
-TEXI=gps.texi ../gvd/docs/gvd_contents.texi
+TEXI=gps.texi
 
 all: stamp-pdf doc tutorial gps_pg clean-temp-files
 distrib: stamp-pdf doc tutorial clean-temp-files
