@@ -660,8 +660,15 @@ html_tokenizer_write (HTMLTokenizer *t, const gchar *string, size_t size)
 			else {
 				if(entityValue) {
 	                                /* Insert plain ASCII */
-	                                *(t->dest)+= g_unichar_to_utf8
-	                                             ((gunichar) entityValue, t->dest);
+
+	                                /* Disable display of the copyright
+	                                   character. Works around a bug in
+	                                   gtk+-2.4.13 under Windows.  */
+	                                if ((gchar) entityValue == -87)
+	                                   entityValue = 'C';
+
+	                                *(t->dest)++ = (gchar) entityValue;
+
 					if (t->pre)
 						t->prePos++;
 					if (*src == ';')
