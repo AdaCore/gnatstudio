@@ -189,12 +189,14 @@ package body Project_Viewers is
                       Size_Display'Access,
                       Timestamp_Display'Access),
       Callbacks   => (null, null, null));
+
    View_Version_Control : aliased constant View_Description :=
      (Num_Columns => 3,
       Titles      => "File Name" + "Revision" + "Head Revision",
       Tab_Title   => new String' ("VCS"),
       Display     => (Name_Display'Access, null, null),
       Callbacks   => (null, null, null));
+
    View_Switches : aliased constant View_Description :=
      (Num_Columns => 2,
       Titles      => "File Name" + "Compiler",
@@ -213,15 +215,15 @@ package body Project_Viewers is
    end record;
    package Project_User_Data is new Row_Data (User_Data);
 
-   function Current_Page (Viewer : access Project_Viewer_Record'Class)
-      return View_Type;
+   function Current_Page
+     (Viewer : access Project_Viewer_Record'Class) return View_Type;
    pragma Inline (Current_Page);
    --  Return the view associated with the current page of Viewer.
 
    procedure Append_Line
-     (Viewer : access Project_Viewer_Record'Class;
-      Project_View : Project_Id;
-      File_Name : String_Id;
+     (Viewer           : access Project_Viewer_Record'Class;
+      Project_View     : Project_Id;
+      File_Name        : String_Id;
       Directory_Filter : Filter := No_Filter);
    --  Append a new line in the current page of Viewer, for File_Name.
    --  The exact contents inserted depends on the current view.
@@ -231,17 +233,19 @@ package body Project_Viewers is
    procedure Close_Switch_Editor
      (Button : access Gtk_Widget_Record'Class;
       Data   : Switch_Editor_User_Data);
+   --  See Cancel_Switch_Editor below.
+
    procedure Cancel_Switch_Editor
      (Dialog : access Gtk_Widget_Record'Class);
    --  Called when the user has closed a switch editor for a specific file.
-   --  The first version if the callback for the Close button, the second one
+   --  The first version is the callback for the Close button, the second one
    --  is for the "cancel".
 
    function Append_Line_With_Full_Name
-     (Viewer : access Project_Viewer_Record'Class;
-      Current_View : View_Type;
-      Project_View : Project_Id;
-      File_Name : String;
+     (Viewer         : access Project_Viewer_Record'Class;
+      Current_View   : View_Type;
+      Project_View   : Project_Id;
+      File_Name      : String;
       Directory_Name : String) return Gint;
    --  Same as above, except we have already found the proper location for
    --  the file.
@@ -283,8 +287,9 @@ package body Project_Viewers is
    function Find_In_Source_Dirs
      (Project_View : Project_Id; File : String) return String_Id
    is
-      Dirs : String_List_Id := Projects.Table (Project_View).Source_Dirs;
+      Dirs   : String_List_Id := Projects.Table (Project_View).Source_Dirs;
       File_A : String_Access;
+
    begin
       --  We do not use Ada_Include_Path to locate the source file,
       --  since this would include directories from imported project
@@ -294,10 +299,12 @@ package body Project_Viewers is
       while Dirs /= Nil_String loop
          String_To_Name_Buffer (String_Elements.Table (Dirs).Value);
          File_A := Locate_Regular_File (File, Name_Buffer (1 .. Name_Len));
+
          if File_A /= null then
             Free (File_A);
             return String_Elements.Table (Dirs).Value;
          end if;
+
          Dirs := String_Elements.Table (Dirs).Next;
       end loop;
 
@@ -309,10 +316,11 @@ package body Project_Viewers is
    ---------------
 
    function To_String (Value : Variable_Value) return String is
-      Buffer : String (1 .. 1024);
+      Buffer     : String (1 .. 1024);
       Current    : Prj.String_List_Id;
       The_String : String_Element;
-      Index : Natural := Buffer'First;
+      Index      : Natural := Buffer'First;
+
    begin
       case Value.Kind is
          when Prj.Undefined =>
@@ -324,6 +332,7 @@ package body Project_Viewers is
 
          when Prj.List =>
             Current := Value.Values;
+
             while Current /= Prj.Nil_String loop
                The_String := String_Elements.Table (Current);
                String_To_Name_Buffer (The_String.Value);
@@ -339,6 +348,7 @@ package body Project_Viewers is
 
                Current := The_String.Next;
             end loop;
+
             return Buffer (Buffer'First .. Index - 1);
       end case;
    end To_String;
@@ -350,6 +360,7 @@ package body Project_Viewers is
    function To_Argument_List (Value : Variable_Value) return Argument_List is
       S : Argument_List (1 .. Length (Value)) := (others => null);
       V : String_List_Id;
+
    begin
       case Value.Kind is
          when Undefined =>
@@ -361,6 +372,7 @@ package body Project_Viewers is
 
          when List =>
             V := Value.Values;
+
             for J in S'Range loop
                String_To_Name_Buffer (String_Elements.Table (V).Value);
                S (J) := new String' (Name_Buffer (1 .. Name_Len));
@@ -382,9 +394,10 @@ package body Project_Viewers is
       Line      : out Interfaces.C.Strings.chars_ptr;
       Style     : out Gtk_Style)
    is
-      File     : Name_Id;
-      Value    : Variable_Value;
+      File       : Name_Id;
+      Value      : Variable_Value;
       Is_Default : Boolean;
+
    begin
       Name_Len := File_Name'Length;
       Name_Buffer (1 .. Name_Len) := File_Name;
@@ -393,6 +406,7 @@ package body Project_Viewers is
       Get_Switches
         (Viewer.Project_Filter, "compiler", File, Value, Is_Default);
       Line := New_String (To_String (Value));
+
       if Is_Default then
          Style := Viewer.Default_Switches_Style;
       end if;
@@ -403,7 +417,7 @@ package body Project_Viewers is
    ------------------
 
    procedure Name_Display
-     (Viewer : access Project_Viewer_Record'Class;
+     (Viewer    : access Project_Viewer_Record'Class;
       File_Name : String;
       Directory : String;
       Fd        : File_Descriptor;
@@ -423,7 +437,7 @@ package body Project_Viewers is
    ------------------
 
    procedure Size_Display
-     (Viewer : access Project_Viewer_Record'Class;
+     (Viewer    : access Project_Viewer_Record'Class;
       File_Name : String;
       Directory : String;
       Fd        : File_Descriptor;
@@ -443,7 +457,7 @@ package body Project_Viewers is
    -----------------------
 
    procedure Timestamp_Display
-     (Viewer : access Project_Viewer_Record'Class;
+     (Viewer    : access Project_Viewer_Record'Class;
       File_Name : String;
       Directory : String;
       Fd        : File_Descriptor;
@@ -453,7 +467,9 @@ package body Project_Viewers is
       pragma Warnings (Off, Viewer);
       pragma Warnings (Off, Directory);
       pragma Warnings (Off, File_Name);
+
       type Char_Pointer is access Character;
+
       type tm is record
          tm_sec    : Integer;
          tm_min    : Integer;
@@ -471,15 +487,18 @@ package body Project_Viewers is
       procedure localtime_r
         (C : in out OS_Time; res : out tm);
       pragma Import (C, localtime_r, "__gnat_localtime_r");
-      T : tm;
+
+      T      : tm;
       A_Time : Ada.Calendar.Time;
       O_Time : OS_Time;
+
    begin
       O_Time := File_Time_Stamp (Fd);
       localtime_r (O_Time, T);
 
       --  Make sure the values returned by localtime are in the
       --  appropriate range
+
       T.tm_mon := T.tm_mon + 1;
       A_Time := Time_Of (1900 + T.tm_year, T.tm_mon, T.tm_mday,
                          T.tm_hour, T.tm_min, T.tm_sec);
@@ -495,12 +514,12 @@ package body Project_Viewers is
      (Button : access Gtk_Widget_Record'Class;
       Data   : Switch_Editor_User_Data)
    is
-      S : Switches_Edit := Data.Switches;
-      Project : Project_Node_Id := Get_Project_From_View
+      S             : Switches_Edit   := Data.Switches;
+      Project       : Project_Node_Id := Get_Project_From_View
         (Data.Viewer.Current_Project);
       Case_Item, Decl, List, Expr, Pkg : Project_Node_Id;
       Switches_Name : Name_Id;
-      Found : Boolean := False;
+      Found         : Boolean := False;
 
    begin
       pragma Assert (Project /= Empty_Node);
@@ -514,6 +533,7 @@ package body Project_Viewers is
       --  Create the string list for all the switches
 
       List := Default_Project_Node (N_Literal_String_List, Prj.List);
+
       declare
          Args : Argument_List := Get_Switches (S, Compiler);
       begin
@@ -541,6 +561,7 @@ package body Project_Viewers is
       Case_Item := Current_Scenario_Case_Item (Project, Pkg);
 
       Decl := First_Declarative_Item_Of (Case_Item);
+
       while Decl /= Empty_Node loop
          Expr := Current_Item_Node (Decl);
 
@@ -548,13 +569,13 @@ package body Project_Viewers is
            and then Name_Of (Expr) = Switches_Name
            and then Associative_Array_Index_Of (Expr) /= No_String
            and then String_Equal
-           (Associative_Array_Index_Of (Expr), Data.File_Name)
+             (Associative_Array_Index_Of (Expr), Data.File_Name)
          then
             Set_Current_Term (First_Term (Expression_Of (Expr)), List);
             Found := True;
          end if;
 
-            Decl := Next_Declarative_Item (Decl);
+         Decl := Next_Declarative_Item (Decl);
       end loop;
 
       --  Create the new instruction to be added to the project
@@ -589,16 +610,16 @@ package body Project_Viewers is
       File_Name : String_Id;
       Directory : String_Id)
    is
-      File : Name_Id;
-      Tool : Tool_Names;
-      Switches : Switches_Edit;
-      Dialog : Gtk_Dialog;
-      Button : Gtk_Button;
-      Label  : Gtk_Label;
-      Value : Variable_Value;
+      File       : Name_Id;
+      Tool       : Tool_Names;
+      Switches   : Switches_Edit;
+      Dialog     : Gtk_Dialog;
+      Button     : Gtk_Button;
+      Label      : Gtk_Label;
+      Value      : Variable_Value;
       Is_Default : Boolean;
-      Desc : Pango_Font_Description;
-      Style : Gtk_Style;
+      Desc       : Pango_Font_Description;
+      Style      : Gtk_Style;
 
    begin
       String_To_Name_Buffer (File_Name);
@@ -623,16 +644,16 @@ package body Project_Viewers is
       Set_Font_Description (Style, Desc);
       Set_Style (Label, Style);
 
-
       Gtk_New (Switches);
-      Pack_Start (Get_Vbox (Dialog),
-                  Get_Window (Switches), Fill => True, Expand => True);
-
+      Pack_Start
+        (Get_Vbox (Dialog),
+         Get_Window (Switches), Fill => True, Expand => True);
       Destroy_Pages (Switches, Gnatmake_Page or Binder_Page or Linker_Page);
 
       --  Set the switches for all the pages
       Get_Switches
         (Viewer.Project_Filter, "compiler", File, Value, Is_Default);
+
       declare
          List : Argument_List := To_Argument_List (Value);
       begin
@@ -666,17 +687,18 @@ package body Project_Viewers is
    --------------------------------
 
    function Append_Line_With_Full_Name
-     (Viewer : access Project_Viewer_Record'Class;
-      Current_View : View_Type;
-      Project_View : Project_Id;
-      File_Name : String;
+     (Viewer         : access Project_Viewer_Record'Class;
+      Current_View   : View_Type;
+      Project_View   : Project_Id;
+      File_Name      : String;
       Directory_Name : String) return Gint
    is
-      Line : Gtkada.Types.Chars_Ptr_Array
+      Line      : Gtkada.Types.Chars_Ptr_Array
         (1 .. Views (Current_View).Num_Columns);
-      Row : Gint;
+      Row       : Gint;
       File_Desc : File_Descriptor;
-      Style : array (1 .. Views (Current_View).Num_Columns) of Gtk_Style;
+      Style     : array (1 .. Views (Current_View).Num_Columns) of Gtk_Style;
+
    begin
       if Is_Absolute_Path (Directory_Name) then
          File_Desc := Open_Read (Directory_Name & Directory_Separator
@@ -717,14 +739,15 @@ package body Project_Viewers is
    -----------------
 
    procedure Append_Line
-     (Viewer : access Project_Viewer_Record'Class;
-      Project_View : Project_Id;
-      File_Name : String_Id;
+     (Viewer           : access Project_Viewer_Record'Class;
+      Project_View     : Project_Id;
+      File_Name        : String_Id;
       Directory_Filter : Filter := No_Filter)
    is
       Current_View : constant View_Type := Current_Page (Viewer);
-      File_N : String (1 .. Integer (String_Length (File_Name)));
-      Dir_Name : String_Id;
+      File_N       : String (1 .. Integer (String_Length (File_Name)));
+      Dir_Name     : String_Id;
+
    begin
       String_To_Name_Buffer (File_Name);
       File_N := Name_Buffer (1 .. Name_Len);
@@ -754,13 +777,15 @@ package body Project_Viewers is
      (Viewer : access Gtk_Widget_Record'Class;
       Args   : Gtk_Args)
    is
-      V : Project_Viewer := Project_Viewer (Viewer);
       use type Row_List.Glist;
-      Page_Num : constant Guint := To_Guint (Args, 2);
+
+      V            : Project_Viewer := Project_Viewer (Viewer);
+      Page_Num     : constant Guint := To_Guint (Args, 2);
       Current_View : View_Type := View_Type'Val (Page_Num);
-      Up_To_Date : View_Type;
-      List : Row_List.Glist;
-      User : User_Data;
+      Up_To_Date   : View_Type;
+      List         : Row_List.Glist;
+      User         : User_Data;
+
    begin
       --  No current page (happens only while V is not realized)
       if Get_Current_Page (V) = -1 then
@@ -775,15 +800,18 @@ package body Project_Viewers is
       --  Otherwise, we update the list of files based on the contents of
       --  one of the up-to-date pages
       Up_To_Date := View_Type'First;
+
       loop
          exit when V.Page_Is_Up_To_Date (Up_To_Date);
 
          --  We haven't found an up-to-date page. This can happen for instance
          --  when Viewer is empty and has never been associated with a
          --  directory before.
+
          if Up_To_Date = View_Type'Last then
             return;
          end if;
+
          Up_To_Date := View_Type'Succ (Up_To_Date);
       end loop;
 
@@ -791,6 +819,7 @@ package body Project_Viewers is
       Clear (V.Pages (Current_View));
 
       List := Get_Row_List (V.Pages (Up_To_Date));
+
       while List /= Row_List.Null_List loop
          User := Project_User_Data.Get
            (V.Pages (Up_To_Date), Row_List.Get_Data (List));
@@ -798,6 +827,7 @@ package body Project_Viewers is
          declare
             N : String (1 .. Integer (String_Length (User.File_Name)));
             D : String (1 .. Integer (String_Length (User.Directory)));
+
          begin
             String_To_Name_Buffer (User.File_Name);
             N := Name_Buffer (1 .. Name_Len);
@@ -826,13 +856,13 @@ package body Project_Viewers is
    procedure Select_Row
      (Viewer : access Gtk_Widget_Record'Class; Args : Gtk_Args)
    is
-      V      : Project_Viewer := Project_Viewer (Viewer);
+      V            : Project_Viewer := Project_Viewer (Viewer);
       Current_View : constant View_Type := Current_Page (V);
-      Row    : Gint := To_Gint (Args, 1);
-      Column : Gint := To_Gint (Args, 2);
-      Event  : Gdk_Event := To_Event (Args, 3);
-      User   : User_Data;
-      Callback : View_Callback;
+      Row          : Gint := To_Gint (Args, 1);
+      Column       : Gint := To_Gint (Args, 2);
+      Event        : Gdk_Event := To_Event (Args, 3);
+      User         : User_Data;
+      Callback     : View_Callback;
 
    begin
       Callback := Views (Current_View).Callbacks
@@ -855,11 +885,12 @@ package body Project_Viewers is
    procedure Explorer_Selection_Changed
      (Viewer : access Gtk_Widget_Record'Class)
    is
-      View : Project_Viewer := Project_Viewer (Viewer);
+      View         : Project_Viewer := Project_Viewer (Viewer);
       Current_View : constant View_Type := Current_Page (View);
-      Dir, File : String_Id;
-      User   : User_Data;
-      Rows : Gint;
+      Dir, File    : String_Id;
+      User         : User_Data;
+      Rows         : Gint;
+
    begin
       View.Current_Project := Get_Selected_Project (View.Explorer);
 
@@ -871,8 +902,10 @@ package body Project_Viewers is
       end if;
 
       File := Get_Selected_File (View.Explorer);
+
       if File /= No_String then
          Rows := Get_Rows (View.Pages (Current_View));
+
          for J in 0 .. Rows - 1 loop
             User := Project_User_Data.Get (View.Pages (Current_View), J);
 
@@ -889,8 +922,8 @@ package body Project_Viewers is
    -------------
 
    procedure Gtk_New
-     (Viewer  : out Project_Viewer;
-      Kernel  : access Kernel_Handle_Record'Class;
+     (Viewer   : out Project_Viewer;
+      Kernel   : access Kernel_Handle_Record'Class;
       Explorer : access Project_Trees.Project_Tree_Record'Class) is
    begin
       Viewer := new Project_Viewer_Record;
@@ -902,13 +935,14 @@ package body Project_Viewers is
    ----------------
 
    procedure Initialize
-     (Viewer : access Project_Viewer_Record'Class;
-      Kernel : access Kernel_Handle_Record'Class;
+     (Viewer   : access Project_Viewer_Record'Class;
+      Kernel   : access Kernel_Handle_Record'Class;
       Explorer : access Project_Trees.Project_Tree_Record'Class)
    is
-      Label : Gtk_Label;
-      Color : Gdk_Color;
+      Label    : Gtk_Label;
+      Color    : Gdk_Color;
       Scrolled : Gtk_Scrolled_Window;
+
    begin
       Gtk.Notebook.Initialize (Viewer);
       Register_Contextual_Menu (Viewer, Viewer_Contextual_Menu'Access);
@@ -964,8 +998,10 @@ package body Project_Viewers is
       Event  : Gdk_Event) return Gtk_Menu
    is
       pragma Warnings (Off, Event);
-      V : Project_Viewer := Project_Viewer (Viewer);
+
+      V    : Project_Viewer := Project_Viewer (Viewer);
       Item : Gtk_Menu_Item;
+
    begin
       if V.Contextual_Menu /= null then
          Destroy (V.Contextual_Menu);
@@ -983,8 +1019,8 @@ package body Project_Viewers is
    -- Current_Page --
    ------------------
 
-   function Current_Page (Viewer : access Project_Viewer_Record'Class)
-      return View_Type
+   function Current_Page
+     (Viewer : access Project_Viewer_Record'Class) return View_Type
    is
       P : Gint := Get_Current_Page (Viewer);
    begin
@@ -1000,11 +1036,11 @@ package body Project_Viewers is
    ------------------
 
    procedure Show_Project
-     (Viewer              : access Project_Viewer_Record;
-      Project_Filter      : Prj.Project_Id;
-      Directory_Filter    : Filter := No_Filter)
+     (Viewer           : access Project_Viewer_Record;
+      Project_Filter   : Prj.Project_Id;
+      Directory_Filter : Filter := No_Filter)
    is
-      Src : String_List_Id := Projects.Table (Project_Filter).Sources;
+      Src          : String_List_Id := Projects.Table (Project_Filter).Sources;
       Current_View : constant View_Type := Current_Page (Viewer);
 
    begin
