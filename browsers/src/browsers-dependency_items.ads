@@ -109,8 +109,9 @@ package Browsers.Dependency_Items is
 
 
 private
-   type File_Item_Record is new Browsers.Canvas.Glide_Browser_Item_Record
-   with record
+   type File_Item_Record is new
+     Browsers.Canvas.Glide_Browser_Item_Record with
+   record
       Source : Src_Info.Internal_File;
       Project_Name : Types.Name_Id := Types.No_Name;
       --  Project that the file belongs to. This is only computed on demand
@@ -130,11 +131,12 @@ private
       Dep : Src_Info.Dependency_Info;
    end record;
 
-   type Dependency_Browser_Record is new Browsers.Canvas.Glide_Browser_Record
-     with record
-        Idle_Id                 : Gtk.Main.Idle_Handler_Id;
-        Left_Arrow, Right_Arrow : Gdk.Pixbuf.Gdk_Pixbuf;
-     end record;
+   type Dependency_Browser_Record is new
+     Browsers.Canvas.Glide_Browser_Record with
+   record
+      Idle_Id                 : Gtk.Main.Idle_Handler_Id;
+      Left_Arrow, Right_Arrow : Gdk.Pixbuf.Gdk_Pixbuf;
+   end record;
 
    pragma Inline (Get_Source);
 end Browsers.Dependency_Items;
