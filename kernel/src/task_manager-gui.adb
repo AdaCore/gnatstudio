@@ -719,6 +719,7 @@ package body Task_Manager.GUI is
       Set_Rules_Hint (Tree, False);
 
       Gtk_New (Col);
+      Set_Resizable (Col, True);
       Set_Title (Col, -"Task");
       Gtk_New (Pixbuf_Rend);
       Gtk_New (Text_Rend);
@@ -729,6 +730,7 @@ package body Task_Manager.GUI is
       Dummy := Append_Column (Tree, Col);
 
       Gtk_New (Col);
+      Set_Resizable (Col, True);
       Set_Title (Col, -"Status");
       Gtk_New (Text_Rend);
       Pack_Start (Col, Text_Rend, True);
@@ -736,6 +738,7 @@ package body Task_Manager.GUI is
       Dummy := Append_Column (Tree, Col);
 
       Gtk_New (Col);
+      Set_Resizable (Col, True);
       Set_Title (Col, -"Progress");
       Gtk_New (Text_Rend);
       Pack_Start (Col, Text_Rend, True);
