@@ -17,6 +17,8 @@ BASE_DIR=$(KERNEL_BASE_DIR)/../widgets
 include $(BASE_DIR)/Makefile.widgets
 BASE_DIR=$(KERNEL_BASE_DIR)/../gvd
 include $(BASE_DIR)/Makefile.gvd
+BASE_DIR=$(KERNEL_BASE_DIR)/src_info/sn
+include $(BASE_DIR)/Makefile.sn
 
 KERNEL_SRC_DIRS = $(KERNEL_BASE_DIR)/src $(KERNEL_BASE_DIR)/src_info
 SRC_DIRS += $(KERNEL_SRC_DIRS)
