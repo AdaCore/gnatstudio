@@ -19,7 +19,6 @@
 -----------------------------------------------------------------------
 
 with Glib;                      use Glib;
-with Glib.Convert;              use Glib.Convert;
 with Glib.Xml_Int;              use Glib.Xml_Int;
 with Gtk.Enums;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
@@ -87,7 +86,7 @@ package body Custom_Module is
         (Node : Node_Ptr) return Custom_Command_Access;
       procedure Parse_Key_Node (Node : Node_Ptr);
       procedure Parse_Button_Node (Node : Node_Ptr);
-      procedure Parse_Menu_Node (Node : Node_Ptr; Parent_Path : String);
+      procedure Parse_Menu_Node (Node : Node_Ptr; Parent_Path : UTF8_String);
       --  Parse the various nodes: <action>, <shell>, ...
 
       procedure Parse_Custom_Dir (Directory : String);
@@ -117,6 +116,7 @@ package body Custom_Module is
             raise Assert_Failure;
          end if;
 
+         --  ??? Command is never freed
          Create (Command, Kernel_Handle (Kernel), Node.Value.all, Script);
          return Command;
       end Parse_Shell_Node;
@@ -297,7 +297,7 @@ package body Custom_Module is
             if Command.Command /= null then
                Register_Button
                  (Kernel,
-                  Locale_To_UTF8 (Title.all),
+                  Title.all,
                   Command_Access (Command.Command),
                   Image);
             end if;
@@ -314,7 +314,7 @@ package body Custom_Module is
       -- Parse_Menu_Node --
       ---------------------
 
-      procedure Parse_Menu_Node (Node : Node_Ptr; Parent_Path : String) is
+      procedure Parse_Menu_Node (Node : Node_Ptr; Parent_Path : UTF8_String) is
          Action : constant String := Get_Attribute (Node, "action");
          Child  : Node_Ptr;
          Title  : String_Access := new String'("");
@@ -343,14 +343,14 @@ package body Custom_Module is
 
          if Title.all = "" then
             Gtk_New (Item);
-            Register_Menu (Kernel, Locale_To_UTF8 (Parent_Path), Item);
+            Register_Menu (Kernel, Parent_Path, Item);
          else
             Command := Lookup_Action (Kernel, Action);
             if Command.Command /= null then
                Register_Menu
                  (Kernel,
-                  Locale_To_UTF8 (Parent_Path),
-                  Locale_To_UTF8 (Title.all),
+                  Parent_Path,
+                  Title.all,
                   "",
                   null,
                   Command_Access (Command.Command));
@@ -375,6 +375,7 @@ package body Custom_Module is
          end if;
 
          if To_Lower (Current_Node.Tag.all) = "language" then
+            --  ??? Lang is never freed
             Lang := new Language.Custom.Custom_Language;
             Initialize (Lang, Current_Node);
             Register_Language
