@@ -1,5 +1,6 @@
 New features in GPS 1.0.1
 
+- Quitting GPS will now ask whether the desktop should be saved
 - Windows can be drag-and-dropped to reorganize the main window
 - Files will be searched in the object directory as well when clicking on
   error message or selecting File->Open From Path. This allows automatically
