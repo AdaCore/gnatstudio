@@ -158,6 +158,8 @@ package body Project_Viewers is
    Imported_Cst  : aliased constant String := "imported";
    Src_Path_Cst  : aliased constant String := "sources";
    Obj_Path_Cst  : aliased constant String := "objects";
+   Name_Cst      : aliased constant String := "name";
+   Path_Cst      : aliased constant String := "path";
    Sources_Cmd_Parameters : constant Glide_Kernel.Scripts.Cst_Argument_List :=
      (1 => Recursive_Cst'Access);
    Source_Dirs_Cmd_Parameters : constant Glide_Kernel.Scripts.Cst_Argument_List
@@ -171,6 +173,8 @@ package body Project_Viewers is
      := (1 => Imported_Cst'Access);
    Add_Predefined_Parameters : constant Glide_Kernel.Scripts.Cst_Argument_List
      := (1 => Src_Path_Cst'Access, 2 => Obj_Path_Cst'Access);
+   Rename_Cmd_Parameters : constant Glide_Kernel.Scripts.Cst_Argument_List :=
+     (1 => Name_Cst'Access, 2 => Path_Cst'Access);
 
    Base_File_Name_Column     : constant := 0;
    Absolute_File_Name_Column : constant := 1;
@@ -1864,13 +1868,36 @@ package body Project_Viewers is
             Free (Args);
          end;
 
+      elsif Command = "rename" then
+         Name_Parameters (Data, Rename_Cmd_Parameters);
+         declare
+            Name : constant String := Nth_Arg (Data, 2);
+            Path : constant String :=
+              Nth_Arg (Data, 3, Project_Path (Project));
+
+            procedure Set_Error (Str : String);
+            --  Set an error
+
+            procedure Set_Error (Str : String) is
+            begin
+               Set_Error_Msg (Data, Str);
+            end Set_Error;
+         begin
+            Rename_And_Move
+              (Root_Project  => Get_Project (Kernel),
+               Project       => Project,
+               New_Name      => Name,
+               New_Path      => Name_As_Directory (Path),
+               Report_Errors => Set_Error'Unrestricted_Access);
+            Run_Hook (Kernel, Project_Changed_Hook);
+         end;
+
       elsif Command = "remove_dependency" then
          Name_Parameters (Data, Remove_Dep_Cmd_Parameters);
          declare
             Project2  : constant Project_Type := Get_Data (Data, 2);
          begin
             Remove_Imported_Project (Project, Project2);
-            Recompute_View (Kernel);
          end;
 
       elsif Command = "sources" then
@@ -3141,6 +3168,12 @@ package body Project_Viewers is
         (Kernel, "languages",
          Minimum_Args => 0,
          Maximum_Args => 1,
+         Class        => Get_Project_Class (Kernel),
+         Handler      => Project_Command_Handler'Access);
+      Register_Command
+        (Kernel, "rename",
+         Minimum_Args => 1,
+         Maximum_Args => 2,
          Class        => Get_Project_Class (Kernel),
          Handler      => Project_Command_Handler'Access);
       Register_Command
