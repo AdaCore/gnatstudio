@@ -29,35 +29,26 @@
 with Glib;            use Glib;
 with Glib.Object;     use Glib.Object;
 
-with Interfaces.C.Strings; use Interfaces.C.Strings;
 with System;               use System;
 
-with Errout;          use Errout;
 with Prj;             use Prj;
-with Prj.Com;         use Prj.Com;
 with Prj.Ext;         use Prj.Ext;
 with Prj.PP;          use Prj.PP;
-with Prj.Proc;        use Prj.Proc;
 with Prj.Tree;        use Prj.Tree;
 
 with Prj_API;         use Prj_API;
 with Prj_Normalize;   use Prj_Normalize;
+with Glide_Kernel;    use Glide_Kernel;
+with Glide_Kernel.Project; use Glide_Kernel.Project;
 
 package body Prj_Manager is
-
-   Manager_Class : GObject_Class := Uninitialized_Class;
-   --  The class structure for this object
-
-   Signals : constant chars_ptr_array :=
-     (1 => New_String ("project_view_changed"));
-   --  The list of signals defined for this object
 
    ------------------------------
    -- Change_Scenario_Variable --
    ------------------------------
 
    procedure Change_Scenario_Variable
-     (Manager  : access Project_Manager_Record;
+     (Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class;
       Variable : String;
       Value    : String) is
    begin
@@ -77,41 +68,20 @@ package body Prj_Manager is
       end if;
 
       Manager.Scenario_Variables := new Project_Node_Array'
-        (Find_Scenario_Variables (Manager.Project));
+        (Find_Scenario_Variables (Get_Project (Manager.Kernel)));
       return Manager.Scenario_Variables.all;
    end Find_Scenario_Variables;
-
-   -----------------
-   -- Get_Project --
-   -----------------
-
-   function Get_Project
-     (Manager : access Project_Manager_Record) return Prj.Tree.Project_Node_Id
-   is
-   begin
-      return Manager.Project;
-   end Get_Project;
-
-   ----------------------
-   -- Get_Project_View --
-   ----------------------
-
-   function Get_Project_View
-     (Manager : access Project_Manager_Record) return Prj.Project_Id is
-   begin
-      return Manager.Project_View;
-   end Get_Project_View;
 
    -------------
    -- Gtk_New --
    -------------
 
    procedure Gtk_New
-     (Manager : out Project_Manager; Project : Prj.Tree.Project_Node_Id) is
+     (Manager : out Project_Manager;
+      Kernel  : access Kernel_Handle_Record'Class) is
    begin
-      pragma Assert (Project /= Empty_Node);
       Manager := new Project_Manager_Record;
-      Initialize (Manager, Project);
+      Initialize (Manager, Kernel);
    end Gtk_New;
 
    ----------------
@@ -120,7 +90,7 @@ package body Prj_Manager is
 
    procedure Initialize
      (Manager : access Project_Manager_Record'Class;
-      Project : Prj.Tree.Project_Node_Id)
+      Kernel  : access Kernel_Handle_Record'Class)
    is
       --  ??? Should be moved to GtkAda
       function Internal
@@ -128,16 +98,11 @@ package body Prj_Manager is
          return System.Address;
       pragma Import (C, Internal, "gtk_object_new");
 
-      Signal_Parameters : constant Signal_Parameter_Types :=
-        (1 => (1 => GType_None));
    begin
       Set_Object (Manager, Internal (Gtk.Object.Get_Type));
       Initialize_User_Data (Manager);
 
-      Initialize_Class_Record
-        (Manager, Signals, Manager_Class, "ProjectManager", Signal_Parameters);
-
-      Manager.Project := Project;
+      Manager.Kernel := Kernel_Handle (Kernel);
    end Initialize;
 
    ---------------
@@ -155,27 +120,5 @@ package body Prj_Manager is
          Pretty_Print (Project_Filter);
       end if;
    end Normalize;
-
-   --------------------
-   -- Recompute_View --
-   --------------------
-
-   procedure Recompute_View
-     (Manager  : access Project_Manager_Record) is
-   begin
-      --  ??? Need to free as much memory as possible first.
-      --  ??? Maybe a call to Prj.Reset is enough
-      Errout.Initialize;
-      Prj.Com.Units.Set_Last (No_Unit);
-      Prj.Com.Units_Htable.Reset;
-
-      Pretty_Print (Manager.Project);
-      Process (Manager.Project_View, Manager.Project);
-
-      Errout.Finalize;
-      pragma Assert (Manager.Project_View /= No_Project);
-
-      Object_Callback.Emit_By_Name (Manager, "project_view_changed");
-   end Recompute_View;
 end Prj_Manager;
 

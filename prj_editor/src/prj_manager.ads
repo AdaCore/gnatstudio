@@ -60,11 +60,13 @@
 
 with Gtk.Handlers;
 with Gtk.Object;
+with Glib.Object;
 
 with Prj;
 with Prj.Tree;
 
 with Prj_API;
+with Glide_Kernel;
 
 package Prj_Manager is
 
@@ -74,26 +76,23 @@ package Prj_Manager is
    --  ??? Should really be a GObject_Record, but we can't connect callbacks to
    --  ??? them yet.
 
-   package Object_Callback is new Gtk.Handlers.Callback
-     (Gtk.Object.Gtk_Object_Record);
+   package Object_User_Callback is new Gtk.Handlers.User_Callback
+     (Glib.Object.GObject_Record, Glib.Object.GObject);
+   --  Generic callback that can be used to connect anything
+
+   --  package Object_Callback is new Gtk.Handlers.Callback
+   --    (Gtk.Object.Gtk_Object_Record);
    --  Package that can be used to connect calllback to a Project_Manager.
 
    procedure Gtk_New
-     (Manager : out Project_Manager; Project : Prj.Tree.Project_Node_Id);
+     (Manager : out Project_Manager;
+      Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
    --  Create a new project manager that controls Project.
 
    procedure Initialize
      (Manager : access Project_Manager_Record'Class;
-      Project : Prj.Tree.Project_Node_Id);
+      Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
    --  Internal function used when creating new project managers.
-
-   function Get_Project
-     (Manager : access Project_Manager_Record) return Prj.Tree.Project_Node_Id;
-   --  Return the current project tree. This tree can be fully manipulated.
-
-   function Get_Project_View
-     (Manager : access Project_Manager_Record) return Prj.Project_Id;
-   --  Return the current project view
 
    function Find_Scenario_Variables
      (Manager : access Project_Manager_Record)
@@ -107,7 +106,7 @@ package Prj_Manager is
    -----------------------------------------------
 
    procedure Change_Scenario_Variable
-     (Manager  : access Project_Manager_Record;
+     (Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class;
       Variable : String;
       Value    : String);
    --  Set the value of a specific scenario variable.
@@ -115,36 +114,15 @@ package Prj_Manager is
    --  possible to change several variables at the same time efficiently. You
    --  need to explicitely call Recompute_View.
 
-   procedure Recompute_View
-     (Manager  : access Project_Manager_Record);
-   --  Recompute the view of the project, based on the current value of all
-   --  scenario variables.
-   --  This emits the "project_view_changed" signal.
-
    procedure Normalize
      (Manager        : access Project_Manager_Record;
       Project_Filter : Prj.Tree.Project_Node_Id);
    --  Normalize, if needed, one of the projects in the hierarchy of Manager.
    --  This doesn't send any signal, since the view doesn't change.
 
-   -------------
-   -- Signals --
-   -------------
-
-   --  <signals>
-   --  The following new signals are defined for this widget:
-   --
-   --  - "project_view_changed"
-   --    procedure Handler (Manager : access Project_Manager_Record'Class);
-   --
-   --    Emitted when the project view has been changed
-   --
-   --  <signals>
-
 private
    type Project_Manager_Record is new Gtk.Object.Gtk_Object_Record with record
-      Project : Prj.Tree.Project_Node_Id;
-      Project_View : Prj.Project_Id;
+      Kernel  : Glide_Kernel.Kernel_Handle;
 
       Is_Normalized : Boolean := False;
       --  True when Project has been normalized. See Prj_Normalize for more
