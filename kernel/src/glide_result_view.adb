@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with Glib;                     use Glib;
+with Glib.Convert;
 with Glib.Values;              use Glib.Values;
 with Glib.Object;              use Glib.Object;
 
@@ -58,6 +59,7 @@ with Commands;                 use Commands;
 with System;
 
 with Ada.Exceptions;           use Ada.Exceptions;
+with Ada.Unchecked_Conversion;
 
 package body Glide_Result_View is
 
@@ -237,11 +239,17 @@ package body Glide_Result_View is
       Length        : String;
       Pixbuf        : Gdk.Pixbuf.Gdk_Pixbuf := Null_Pixbuf)
    is
+      function To_Proxy is new
+        Ada.Unchecked_Conversion (System.Address, C_Proxy);
+
       Model : constant Gtk_Tree_Store := View.Tree.Model;
    begin
-      Set (Model, Iter, Base_Name_Column, Base_Name);
-      Set (Model, Iter, Absolute_Name_Column, Absolute_Name);
-      Set (Model, Iter, Message_Column, Message);
+      Set (Model, Iter, Base_Name_Column,
+           Glib.Convert.Locale_To_UTF8 (Base_Name));
+      Set (Model, Iter, Absolute_Name_Column,
+           Glib.Convert.Locale_To_UTF8 (Absolute_Name));
+      Set (Model, Iter, Message_Column,
+           Glib.Convert.Locale_To_UTF8 (Message));
       Set (Model, Iter, Mark_Column, Mark);
       Set (Model, Iter, Line_Column, Line);
       Set (Model, Iter, Column_Column, Column);
@@ -254,11 +262,11 @@ package body Glide_Result_View is
          --  We can safely take the address of the colors, since they have the
          --  same lifespan as View and View.Model.
          Set (Model, Iter, Color_Column,
-              Convert (View.Non_Leaf_Color'Address));
+              To_Proxy (View.Non_Leaf_Color'Address));
       else
          Set (Model, Iter, Weight_Column, 600);
          Set (Model, Iter, Color_Column,
-              Convert (View.Leaf_Color'Address));
+              To_Proxy (View.Leaf_Color'Address));
       end if;
    end Fill_Iter;
 
@@ -367,14 +375,19 @@ package body Glide_Result_View is
       Category_Iter : out Gtk_Tree_Iter;
       File_Iter     : out Gtk_Tree_Iter;
       New_Category  : out Boolean;
-      Create        : Boolean := True) is
+      Create        : Boolean := True)
+   is
+      Category_UTF8 : constant String :=
+        Glib.Convert.Locale_To_UTF8 (Category);
+      File_UTF8     : constant String := Glib.Convert.Locale_To_UTF8 (File);
+
    begin
       Category_Iter := Get_Iter_First (View.Tree.Model);
       New_Category := False;
 
       while Category_Iter /= Null_Iter loop
          if Get_String
-           (View.Tree.Model, Category_Iter, Base_Name_Column) = Category
+           (View.Tree.Model, Category_Iter, Base_Name_Column) = Category_UTF8
          then
             exit;
          end if;
@@ -401,7 +414,7 @@ package body Glide_Result_View is
 
       while File_Iter /= Null_Iter loop
          if Get_String
-           (View.Tree.Model, File_Iter, Absolute_Name_Column) = File
+           (View.Tree.Model, File_Iter, Absolute_Name_Column) = File_UTF8
          then
             return;
          end if;
