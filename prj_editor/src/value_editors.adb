@@ -39,10 +39,21 @@ with Gtkada.Handlers; use Gtkada.Handlers;
 with System;          use System;
 with Unchecked_Conversion;
 
+with Prj.Tree;        use Prj.Tree;
+with Prj;             use Prj;
+with Stringt;         use Stringt;
+with Namet;           use Namet;
+
+with Prj_API;         use Prj_API;
+
 package body Value_Editors is
 
    Ref_Background : constant String := "#AAAAAA";
    --  <preference> Color to use for the background of variable references
+
+   Invalid_Ref_Foreground : constant String := "#AA0000";
+   --  <preference> Color to use for the foreground of invalid variable
+   --  references.
 
    procedure Realized (Widget : access Gtk_Widget_Record'Class);
    --  Called when the widget is realized.
@@ -106,7 +117,9 @@ package body Value_Editors is
       Start_Pos : Gint := To_Gint (Params, 1);
       End_Pos   : Gint := To_Gint (Params, 2);
    begin
-      Highlight_Region (Editor, Natural (Start_Pos), Natural (End_Pos));
+      if End_Pos >= Start_Pos then
+         Highlight_Region (Editor, Natural (Start_Pos), Natural (End_Pos));
+      end if;
    end Delete_Text;
 
    --------------------
@@ -143,9 +156,15 @@ package body Value_Editors is
             Index := Index + 2;
 
          elsif Buffer (Index) = '}' and then Var_Start /= 0 then
-            Insert (Editor,
-                    Back => Editor.Grey,
-                    Chars => Buffer (Var_Start .. Index));
+            if Editor.Allow_Ref then
+               Insert (Editor,
+                       Back => Editor.Var_Ref,
+                       Chars => Buffer (Var_Start .. Index));
+            else
+               Insert (Editor,
+                       Fore => Editor.Invalid_Ref,
+                       Chars => Buffer (Var_Start .. Index));
+            end if;
             Var_Start := 0;
             Index := Index + 1;
             Var_End := Index;
@@ -214,10 +233,31 @@ package body Value_Editors is
       function To_Guint_Ptr is new Unchecked_Conversion (Address, Guint_Ptr);
 
       Editor : Value_Editor := Value_Editor (Widget);
+      Str : constant String := To_String (Params, 1);
       Length : constant Gint := To_Gint (Params, 2);
       Position : Address := To_Address (Params, 3);
       Pos : constant Guint := To_Guint_Ptr (Position).all;
+      Current_Position : constant Gint := Get_Position (Editor);
    begin
+      --  Inserting a new line isn't authorized when editing single values
+      if Editor.Expr_Kind = Prj.Single then
+         for J in Str'Range loop
+            if Str (J) = ASCII.LF then
+               Handler_Block (Editor, Editor.Insert_Id);
+               Handler_Block (Editor, Editor.Delete_Id);
+               Delete_Text (Editor,
+                            Gint (Pos) - Length + Gint (J - Str'First),
+                            Gint (Pos) - Length + Gint (J - Str'First) + 1);
+               Set_Point
+                 (Editor, Pos - Guint (Length) + Guint (J - Str'First));
+               Insert (Editor, Chars => " ");
+               Handler_Unblock (Editor, Editor.Insert_Id);
+               Handler_Unblock (Editor, Editor.Delete_Id);
+               Set_Position (Editor, Current_Position);
+            end if;
+         end loop;
+      end if;
+
       --  Note that there might be several lines impacted in case of a
       --  copy-paste.
       Highlight_Region
@@ -231,8 +271,10 @@ package body Value_Editors is
    procedure Realized (Widget : access Gtk_Widget_Record'Class) is
       Editor : Value_Editor := Value_Editor (Widget);
    begin
-      Editor.Grey := Parse (Ref_Background);
-      Alloc (Get_Default_Colormap, Editor.Grey);
+      Editor.Var_Ref := Parse (Ref_Background);
+      Alloc (Get_Default_Colormap, Editor.Var_Ref);
+      Editor.Invalid_Ref := Parse (Invalid_Ref_Foreground);
+      Alloc (Get_Default_Colormap, Editor.Invalid_Ref);
    end Realized;
 
    -----------------------
@@ -261,4 +303,185 @@ package body Value_Editors is
    begin
       Insert (Editor, Chars => "${" & Var_Name & "}");
    end Add_Variable_Reference;
+
+   ----------------------
+   -- Allow_References --
+   ----------------------
+
+   procedure Allow_References
+     (Editor : access Value_Editor_Record; Allow : Boolean) is
+   begin
+      Editor.Allow_Ref := Allow;
+   end Allow_References;
+
+   --------------------
+   -- Check_Validity --
+   --------------------
+
+   function Check_Validity
+     (Editor : access Value_Editor_Record) return Validity
+   is
+      Buffer : constant String := Get_Chars (Editor);
+      Var_Start : Natural := 0;
+      Var_End : Natural := Buffer'First;
+      Index : Natural := Buffer'First;
+   begin
+      while Index <= Buffer'Last loop
+         if Index < Buffer'Last
+           and then Buffer (Index) = '$'
+           and then Buffer (Index + 1) = '{'
+         then
+            Var_Start := Index;
+            Index := Index + 2;
+
+         elsif Buffer (Index) = '}' and then Var_Start /= 0 then
+            if not Editor.Allow_Ref then
+               return Unexpected_Ref;
+            end if;
+
+            --  ??? Must check for circular dependencies
+
+            Var_Start := 0;
+            Index := Index + 1;
+            Var_End := Index;
+
+         elsif Buffer (Index) = ASCII.LF
+           and then Var_Start /= 0
+           and then Editor.Allow_Ref
+         then
+            --  ??? Should check for empty lines
+            return Unterminated_Ref;
+
+         else
+            Index := Index + 1;
+         end if;
+      end loop;
+
+      if Var_Start /= 0 and then Editor.Allow_Ref then
+         return Unterminated_Ref;
+      end if;
+
+      return Valid;
+   end Check_Validity;
+
+   ---------------
+   -- Set_Value --
+   ---------------
+
+   function Get_Value
+     (Editor : access Value_Editor_Record;
+      Project : Project_Node_Id) return Prj.Tree.Project_Node_Id
+   is
+      Buffer : constant String := Get_Chars (Editor);
+      Var_Start : Natural := 0;
+      Var_End : Natural := Buffer'First;
+      Index : Natural := Buffer'First;
+      Str : Project_Node_Id;
+
+      Is_Enumeration_Type : constant Boolean := not Editor.Allow_Ref;
+      --  True if we are processing an enumeration type.
+      --  ??? Should this be a parameter to Get_Value instead.
+
+      List_Expr : Project_Node_Id := Empty_Node;
+      --  Global expression (handles lists)
+
+      Line_Expr  : Project_Node_Id := Empty_Node;
+      --  Expression for the current line
+
+      procedure Add_String (From, To : Natural);
+      --  Add a new literal string to the current line expression.
+      --  If we are processing a type declaration, append the value to the
+      --  list of possible values.
+
+      ----------------
+      -- Add_String --
+      ----------------
+
+      procedure Add_String (From, To : Natural) is
+      begin
+         if Is_Enumeration_Type then
+            Add_Possible_Value (Line_Expr, Buffer (From .. To));
+         else
+            --  ??? Should reuse existing strings if possible
+            Project_Nodes.Append (Default_Project_Node (N_Literal_String));
+            Str := Project_Nodes.Last;
+            Start_String;
+            Store_String_Chars (Buffer (From .. To));
+            Project_Nodes.Table (Str).Value := End_String;
+            Concatenate (Line_Expr, Str);
+         end if;
+      end Add_String;
+
+   begin
+      pragma Assert (Check_Validity (Editor) = Valid);
+
+      if Is_Enumeration_Type then
+         --  ??? should reuse an existing type
+         Line_Expr := Get_Or_Create_Type (Project, "???");
+      end if;
+
+      while Index <= Buffer'Last loop
+         if Index < Buffer'Last
+           and then Buffer (Index) = '$'
+           and then Buffer (Index + 1) = '{'
+         then
+            Add_String (Var_End, Index - 1);
+            Var_Start := Index;
+            Index := Index + 2;
+
+         elsif Buffer (Index) = '}' and then Var_Start /= 0 then
+            Project_Nodes.Append (Default_Project_Node (N_Variable_Reference));
+            Str := Project_Nodes.Last;
+
+            --  ??? Should get the record for the actual variable, to
+            --  initialize the rest.
+            Name_Len := Index - Var_Start - 2;
+            Name_Buffer (1 .. Name_Len) := Buffer (Var_Start + 2 .. Index - 1);
+            Project_Nodes.Table (Str).Name := Name_Find;
+            Concatenate (Line_Expr, Str);
+
+            Var_Start := 0;
+            Index := Index + 1;
+            Var_End := Index;
+
+         elsif Buffer (Index) = ASCII.LF then
+            if Var_End <= Index - 1 then
+               Add_String (Var_End, Index - 1);
+            end if;
+            if not Is_Enumeration_Type then
+               Concatenate_List (List_Expr, Line_Expr);
+               Line_Expr := Empty_Node;
+            end if;
+            Index := Index + 1;
+            Var_End := Index;
+
+         else
+            Index := Index + 1;
+         end if;
+      end loop;
+
+      if Var_End <= Index - 1 then
+         Add_String (Var_End, Index - 1);
+         if not Is_Enumeration_Type and then Editor.Expr_Kind = List then
+            Concatenate_List (List_Expr, Line_Expr);
+         end if;
+      end if;
+
+      if List_Expr = Empty_Node then
+         return Line_Expr;
+      else
+         return List_Expr;
+      end if;
+   end Get_Value;
+
+   -----------------------
+   -- Set_Variable_Kind --
+   -----------------------
+
+   procedure Set_Variable_Kind
+     (Editor : access Value_Editor_Record; Expr_Kind : Prj.Variable_Kind) is
+   begin
+      Editor.Expr_Kind := Expr_Kind;
+   end Set_Variable_Kind;
+
 end Value_Editors;
