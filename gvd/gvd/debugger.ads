@@ -149,7 +149,6 @@ package Debugger is
    --  This is useful in particular when handling batches of command,
    --  e.g when replaying sessions or a set of user commands.
 
-
    function Highlighting_Pattern
      (Debugger : access Debugger_Root)
       return GNAT.Regpat.Pattern_Matcher is abstract;

@@ -138,7 +138,7 @@ package body GVD.Source_Editors is
    procedure Print_Variable
      (Widget : access Gtk_Widget_Record'Class;
       Br     : Contextual_Data_Record);
-   --  Callback for the "print " contextual menu item.
+   --  Callback for the "print" contextual menu item.
 
    procedure Graph_Print_Variable
      (Widget : access Gtk_Widget_Record'Class;
