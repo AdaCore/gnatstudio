@@ -173,6 +173,16 @@ package GNAT.Expect is
    --  Note that output is only generated when the program is blocked in
    --  a called to Expect.
 
+   procedure Remove_Input_Filter
+     (Descriptor : in out Process_Descriptor;
+      Filter     : Filter_Function);
+   --  Remove a filter from the list of input filters.
+
+   procedure Remove_Output_Filter
+     (Descriptor : in out Process_Descriptor;
+      Filter     : Filter_Function);
+   --  Remove a filter from the list of output filters.
+
    procedure Trace_Filter (Descriptor : Process_Descriptor; Str : String);
    --  Function that can be used a filter and that simply outputs Str on
    --  Standard_Output. This is mainly used for debugging purposes.
@@ -182,13 +192,17 @@ package GNAT.Expect is
    ------------------
 
    procedure Send
-     (Descriptor : Process_Descriptor;
-      Str        : String;
-      Add_LF     : Boolean := True);
+     (Descriptor   : in out Process_Descriptor;
+      Str          : String;
+      Add_LF       : Boolean := True;
+      Empty_Buffer : Boolean := False);
    --  Send a string to the file descriptor.
    --  The string is not formated in anyway, except if Add_LF is True, in which
    --  case an ASCII.LF is added at the end, so that Str is recognized as a
    --  command by the external process.
+   --  If Empty_Buffer is True, any input waiting from the process (or in the
+   --  buffer) is first discarded before the command is sent. The output
+   --  filters are of course called as usual.
 
    -----------------------------------------------------------
    -- Working on the output (single process, simple regexp) --

@@ -141,6 +141,30 @@ package body GNAT.Expect is
       end if;
    end Add_Input_Filter;
 
+   -------------------------
+   -- Remove_Input_Filter --
+   -------------------------
+
+   procedure Remove_Input_Filter
+     (Descriptor : in out Process_Descriptor;
+      Filter     : Filter_Function)
+   is
+      Previous : Filter_List := null;
+      Current  : Filter_List := Descriptor.In_Filters;
+   begin
+      while Current /= null loop
+         if Current.Filter = Filter then
+            if Previous = null then
+               Descriptor.In_Filters := Current.Next;
+            else
+               Previous.Next := Current.Next;
+            end if;
+         end if;
+         Previous := Current;
+         Current := Current.Next;
+      end loop;
+   end Remove_Input_Filter;
+
    -----------------------
    -- Add_Output_Filter --
    -----------------------
@@ -170,6 +194,30 @@ package body GNAT.Expect is
              (Filter => Filter, Next => Descriptor.Out_Filters);
       end if;
    end Add_Output_Filter;
+
+   --------------------------
+   -- Remove_Output_Filter --
+   --------------------------
+
+   procedure Remove_Output_Filter
+     (Descriptor : in out Process_Descriptor;
+      Filter     : Filter_Function)
+   is
+      Previous : Filter_List := null;
+      Current  : Filter_List := Descriptor.Out_Filters;
+   begin
+      while Current /= null loop
+         if Current.Filter = Filter then
+            if Previous = null then
+               Descriptor.Out_Filters := Current.Next;
+            else
+               Previous.Next := Current.Next;
+            end if;
+         end if;
+         Previous := Current;
+         Current := Current.Next;
+      end loop;
+   end Remove_Output_Filter;
 
    -----------
    -- Close --
@@ -813,15 +861,28 @@ package body GNAT.Expect is
    ----------
 
    procedure Send
-     (Descriptor : Process_Descriptor;
+     (Descriptor : in out Process_Descriptor;
       Str        : String;
-      Add_LF     : Boolean := True)
+      Add_LF     : Boolean := True;
+      Empty_Buffer : Boolean := False)
    is
       N       : Natural;
       Current : Filter_List := Descriptor.In_Filters;
       LF      : aliased Character := ASCII.LF;
+      Result  : Expect_Match;
+      Descriptors : Array_Of_Pd := (1 => Descriptor'Unrestricted_Access);
 
    begin
+      if Empty_Buffer then
+         --  Force a read on the process if there is anything waiting.
+         Expect_Internal (Descriptors, Result,
+                          Timeout => 0, Full_Buffer => False);
+         Descriptor.Last_Match_End := Descriptor.Buffer_Index;
+
+         --  Empty the buffer.
+         Reinitialize_Buffer (Descriptor);
+      end if;
+
       while Current /= null loop
          Current.Filter (Descriptor, Str);
 
