@@ -1,5 +1,10 @@
 Known Problems fixed in GPS 3.0.0
 
+- E310-003 Casing of project names not preserved in the Project View
+  Problem:    The project view doesn't show the proper casing for project names,
+              ie the one specified in the project file itself.
+  Workaround: none needed, this is just a display artifact
+
 - E228-007 Cross-references missing when a file has been recompiled
   Problem:    When a file has been modified and recompiled, GPS is losing some
               cross-references (for entities declared in other files).
