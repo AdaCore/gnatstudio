@@ -133,6 +133,10 @@ package body Glide_Page is
       end Open_File;
 
    begin
+      if Contents'Length = 0 then
+         return False;
+      end if;
+
       while Start > Contents'First
         and then Contents (Start - 1) /= ASCII.LF
       loop
