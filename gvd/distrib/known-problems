@@ -1,25 +1,31 @@
 Known Problems fixed in GVD 1.0.2
 
+- [8408-001] Attach command in the debugger window does not start gvd properly
+  Problem:    When typing the attach, load or add-symbol-file command in the
+              debugger window, some functionalities like 'Display Files in
+              Shared Libraries' were not enabled.
+  Workaround: Use the menus instead, or click on the run button.
+
 - Parsing of char* fields in C structs
   Problem:    The value of string fields in C structures was incorrectly parsed,
               and extended till the end of the line. As a result, the following
               fields were empty.
 
   Workaround: The value of the following fields is still visible, but not at
-              the correct location
+              the correct location.
 
 - Parsing of array fields in C structs
   Problem:    Fields that are arrays of simple types (int, double,...) were
               incorrectly detected.
 
   Workaround: Look at the value of the variable directly in the source window
-              through the tooltips
+              through the tooltips.
 
 - Current line highlighted with an offset
   Problem:    If the previous current line contained some tabs, then the next
               one is highlighted with an offset.
 
-  Workaround: Force a redisplay of the source window (hide line numbers)
+  Workaround: Force a redisplay of the source window (hide line numbers).
 
 - Wrong handling of double in C structs.
   Problem:    When trying to display a C structure containing a double, GVD
