@@ -68,6 +68,8 @@ package Src_Editor_View.Commands is
    --  This command reindents the current line
 
    type Control_Type is (As_Is);
+   --  As_Is: The next key will be interpreted as-is (no casing/indentation)
+
    type Control_Command is new Interactive_Command with record
       Kernel : Glide_Kernel.Kernel_Handle;
       Mode   : Control_Type;
@@ -76,5 +78,7 @@ package Src_Editor_View.Commands is
      (Command : access Control_Command;
       Context : Interactive_Command_Context)
       return Standard.Commands.Command_Return_Type;
+   --  This is used for control commands. A control command is an action whose
+   --  purpose is to modify the status of the current view.
 
 end Src_Editor_View.Commands;
