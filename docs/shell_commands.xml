@@ -1965,9 +1965,15 @@ The regular expression specifies how locations are recognized. By default, it ma
      <description>Interface to debugger related commands</description>
   </shell_doc>
 
-  <shell_doc name="GPS.send" real_name="GPS.Debugger.send">
+  <shell_doc name="GPS.Debugger.__init__">
+     <param name="self">An instance of GPS.Debugger</param>
+     <description>Initializes a new instance of the debugger class. This is associated with the current debugger, and will always reference the debugger current at the time when a method is called. Thus, if the user changes the current debugger, the command in GPS.Debugger.send() will be sent to the new current debugger</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.Debugger.send">
+     <param name="self">An instance of GPS.Debugger</param>
      <param name="command">A string</param>
-     <description>Send command to the current debugger</description>
+     <description>Send command to the debugger self</description>
   </shell_doc>
 
   <!--#################################################################
