@@ -23,9 +23,7 @@ package Placeholders is
    --  Indicate that Object is a placeholder
 
 private
-   type Placeholder_Record is new Gtk.Drawing_Area.Gtk_Drawing_Area_Record with
-      record
-         null;
-      end record;
+   type Placeholder_Record is new
+     Gtk.Drawing_Area.Gtk_Drawing_Area_Record with null record;
 
 end Placeholders;
