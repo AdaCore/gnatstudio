@@ -78,6 +78,7 @@ with GVD.Preferences;           use GVD.Preferences;
 with GVD.Window_Settings;       use GVD.Window_Settings;
 with GVD.Status_Bar;            use GVD.Status_Bar;
 with GVD.Utils;                 use GVD.Utils;
+with GVD.Trace;                 use GVD.Trace;
 
 with System;
 with Unchecked_Conversion;
@@ -837,27 +838,28 @@ package body GVD.Process is
 
          if Get_Pref (Separate_Data) then
             if Get_Active (Window.Call_Stack) then
-               Set_Default_Size (Process,
-                                 Geometry_Info.Data_Width
-                                 + Geometry_Info.Stack_Width,
-                                 Geometry_Info.Data_Height);
+               Set_Default_Size
+                 (Process,
+                  Geometry_Info.Data_Width + Geometry_Info.Stack_Width,
+                  Geometry_Info.Data_Height);
             else
-               Set_Default_Size (Process,
-                                 Geometry_Info.Data_Width,
-                                 Geometry_Info.Data_Height);
+               Set_Default_Size
+                 (Process,
+                  Geometry_Info.Data_Width,
+                  Geometry_Info.Data_Height);
             end if;
-            Set_Position (Process.Process_Paned,
-                          Geometry_Info.Editor_Height);
+
+            Set_Position (Process.Process_Paned, Geometry_Info.Editor_Height);
+
          else
-            Set_Position (Process.Process_Paned,
-                          Geometry_Info.Data_Height
-                          + Geometry_Info.Editor_Height);
+            Set_Position
+              (Process.Process_Paned,
+               Geometry_Info.Data_Height + Geometry_Info.Editor_Height);
          end if;
 
          if Get_Active (Window.Call_Stack) then
             Set_Position (Process.Data_Paned, Geometry_Info.Stack_Width);
          end if;
-
       end if;
 
       Show_All (Window.Process_Notebook);
@@ -1346,6 +1348,7 @@ package body GVD.Process is
       Skip_Blanks (Lowered_Command, First);
 
       if Looking_At (Lowered_Command, First, "graph") then
+         Output_Message (Debugger, Command, Mode);
          Data.Mode := Mode;
          Data.Debugger_Num := Integer (Get_Num (Debugger));
          Skip_Blanks (Command, First);
