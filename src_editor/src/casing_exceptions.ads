@@ -22,10 +22,8 @@
 --  to add or remove a casing exception and to initialize the casing
 --  GPS feature (create menu, read/write casing XML files).
 
-with Glib.Object;           use Glib.Object;
 with Glib.Xml_Int;          use Glib.Xml_Int;
 with Glide_Kernel;          use Glide_Kernel;
-with Gtk.Menu;              use Gtk.Menu;
 with Case_Handling;         use Case_Handling;
 
 package Casing_Exceptions is
@@ -39,25 +37,10 @@ package Casing_Exceptions is
    function Get_Case_Exceptions return Case_Handling.Casing_Exceptions;
    --  Return the current case exception table
 
-   ---------------------------
-   -- Casing Initialisation --
-   ---------------------------
-
-   procedure Casing_Contextual
-     (Object  : access Glib.Object.GObject_Record'Class;
-      Context : access Selection_Context'Class;
-      Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
-   --  Build the casing contextual memu
-
-   procedure Casing_Initialize
+   procedure Register_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
    --  Initialize the casing support, must be called before other calls, it
    --  reads the user's casing_exceptions.xml files.
-
-   procedure Casing_Finalize
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
-   --  Finalize the casing support, it saves the casing exception table
-   --  to the user's casing_exceptions.xml file.
 
    procedure Casing_Customize
      (Kernel : access Kernel_Handle_Record'Class;
