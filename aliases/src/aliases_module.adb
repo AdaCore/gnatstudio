@@ -387,13 +387,15 @@ package body Aliases_Module is
       pragma Import (C, Internal, "gtk_tree_store_set");
 
       Iter : Gtk_Tree_Iter;
+
    begin
       Append (Editor.Variables_Model, Iter, Null_Iter);
       Internal
         (Get_Object (Editor.Variables_Model), Iter'Address,
-         Name => Name & ASCII.NUL, Initial => Default & ASCII.NUL,
-         Editable => Boolean'Pos (Editable and then not From_Env),
-         From_Env => Boolean'Pos (From_Env),
+         Name      => Name & ASCII.NUL,
+         Initial   => Default & ASCII.NUL,
+         Editable  => Boolean'Pos (Editable and then not From_Env),
+         From_Env  => Boolean'Pos (From_Env),
          Activable => Boolean'Pos (Editable));
    end Set_Variable;
 
@@ -404,7 +406,9 @@ package body Aliases_Module is
    procedure Free (Param : in out Param_Substitution_Access) is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Param_Substitution, Param_Substitution_Access);
+
       Tmp : Param_Substitution_Access;
+
    begin
       while Param /= null loop
          Tmp := Param;
@@ -420,7 +424,9 @@ package body Aliases_Module is
    procedure Destroy (Module : in out Aliases_Module_Id_Record) is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Expansion_Function_Record, Expansion_Function_List);
+
       Tmp : Expansion_Function_List;
+
    begin
       Reset (Module.Aliases);
 
@@ -498,22 +504,26 @@ package body Aliases_Module is
    ------------------
 
    procedure Save_Aliases (Kernel : access Kernel_Handle_Record'Class) is
-      Filename : constant String := Get_Home_Dir (Kernel) & "aliases";
+      Filename          : constant String := Get_Home_Dir (Kernel) & "aliases";
       File, Key, Child  : Node_Ptr;
       Iter              : Iterator;
       Value             : Alias_Record;
       P                 : Param_Access;
+
    begin
       File := new Node;
       File.Tag := new String'("Aliases");
 
       Get_First (Aliases_Module_Id.Aliases, Iter);
+
       loop
          Value := Get_Element (Iter);
+
          exit when Value = No_Alias;
 
          --  We only save user-defined aliases, not the ones that are defined
          --  in the standard system files.
+
          if not Value.Read_Only then
             Key := new Node;
             Key.Tag := new String'("alias");
@@ -525,6 +535,7 @@ package body Aliases_Module is
             Add_Child (Key, Child);
 
             P := Value.Params;
+
             while P /= null loop
                Child := new Node;
                Child.Tag := new String'("param");
@@ -558,7 +569,7 @@ package body Aliases_Module is
       Filename  : String;
       Read_Only : Boolean)
    is
-      File        : Node_Ptr;
+      File : Node_Ptr;
    begin
       if Is_Regular_File (Filename) then
          Trace (Me, "Loading " & Filename);
@@ -599,6 +610,7 @@ package body Aliases_Module is
       end if;
 
       Last := Current_Pos;
+
       while Last <= Text'Last
         and then Is_Entity_Letter (UTF8_Get_Char (Text (Last .. Text'Last)))
       loop
@@ -606,6 +618,7 @@ package body Aliases_Module is
       end loop;
 
       First := Current_Pos;
+
       loop
          while First >= Text'First
            and then Is_Entity_Letter
@@ -685,8 +698,7 @@ package body Aliases_Module is
      (Kernel        : access Kernel_Handle_Record'Class;
       Name          : String;
       Cursor        : access Integer;
-      Offset_Column : Gint)
-      return String
+      Offset_Column : Gint) return String
    is
       function Find_And_Replace_Cursor (Str : String) return String;
       --  Find the position of the cursor in Str, and returns the new Str when
@@ -698,12 +710,15 @@ package body Aliases_Module is
 
       function Find_And_Replace_Cursor (Str : String) return String is
          use type Ada.Strings.Unbounded.Unbounded_String;
+
          Tmp    : Expansion_Function_List;
          Result : Ada.Strings.Unbounded.Unbounded_String;
          First  : Natural := Str'First;
          S      : Natural := Str'First;
+
       begin
-         --  Prevent recursion in aliases expansion
+         --  Prevent recursion in alias expansion
+
          if Boolean_Hash.String_Hash_Table.Get
            (Aliases_Module_Id.Expanded, Name)
          then
@@ -747,6 +762,7 @@ package body Aliases_Module is
                S := S + 2;
 
             --  Preserve the indentation as set in the expansion of aliases
+
             elsif Str (S) = ASCII.LF then
                Result := Result & Str (First .. S - 1)
                  & ASCII.LF & (1 .. Integer (Offset_Column) => ' ');
@@ -768,16 +784,17 @@ package body Aliases_Module is
          return Ada.Strings.Unbounded.To_String (Result);
       end Find_And_Replace_Cursor;
 
-      Alias : constant Alias_Record := Get
+      Alias  : constant Alias_Record := Get
         (Aliases_Module_Id.Aliases, Name);
       Values : Param_Substitution_Access;
       Dialog : Gtk_Dialog;
-      Box : Gtk_Box;
-      S : Gtk_Size_Group;
-      P : Param_Access;
-      Label : Gtk_Label;
-      W : Gtk_Widget;
-      Val : String_Access;
+      Box    : Gtk_Box;
+      S      : Gtk_Size_Group;
+      P      : Param_Access;
+      Label  : Gtk_Label;
+      W      : Gtk_Widget;
+      Val    : String_Access;
+
    begin
       if Alias = No_Alias then
          return "";
@@ -787,6 +804,7 @@ package body Aliases_Module is
 
       else
          P := Alias.Params;
+
          while P /= null loop
             Values := new Param_Substitution'
               (Param   => P,
@@ -856,6 +874,7 @@ package body Aliases_Module is
             if Dialog /= null then
                Destroy (Dialog);
             end if;
+
             Free (Values);
             return Find_And_Replace_Cursor (Val);
          end;
@@ -868,19 +887,21 @@ package body Aliases_Module is
 
    function Execute
      (Command : access Interactive_Alias_Expansion_Command;
-      Event   : Gdk_Event)
-      return Command_Return_Type
+      Event   : Gdk_Event) return Command_Return_Type
    is
       pragma Unreferenced (Event);
-      W : constant Gtk_Widget := Get_Current_Focus_Widget (Command.Kernel);
+
+      W         : constant Gtk_Widget :=
+        Get_Current_Focus_Widget (Command.Kernel);
       Had_Focus : Boolean;
+
    begin
       Boolean_Hash.String_Hash_Table.Reset (Aliases_Module_Id.Expanded);
 
       if W /= null and then W.all in Gtk_Editable_Record'Class then
          if Get_Editable (Gtk_Editable (W)) then
             declare
-               Text : constant String := Get_Chars (Gtk_Editable (W));
+               Text        : constant String := Get_Chars (Gtk_Editable (W));
                First, Last : Integer;
             begin
                Find_Current_Entity
@@ -892,11 +913,12 @@ package body Aliases_Module is
                end if;
 
                declare
-                  Cursor : aliased Integer;
+                  Cursor  : aliased Integer;
                   Replace : constant String := Expand_Alias
                     (Command.Kernel, Text (First .. Last - 1),
                      Cursor'Unchecked_Access, 0);
-                  F : Gint := Gint (First - Text'First);
+                  F       : Gint := Gint (First - Text'First);
+
                begin
                   if Replace /= "" then
                      Delete_Text
@@ -909,6 +931,7 @@ package body Aliases_Module is
                         F + Gint (Cursor - Replace'Length));
                   end if;
                end;
+
                return Commands.Success;
             end;
          end if;
@@ -916,10 +939,13 @@ package body Aliases_Module is
       elsif W /= null and then W.all in Gtk_Text_View_Record'Class then
          if Get_Editable (Gtk_Text_View (W)) then
             declare
-               Buffer : constant Gtk_Text_Buffer := Get_Buffer
+               Buffer     : constant Gtk_Text_Buffer := Get_Buffer
                  (Gtk_Text_View (W));
-               First_Iter, Last_Iter, Line_Start : Gtk_Text_Iter;
-               Success : Boolean := True;
+               First_Iter : Gtk_Text_Iter;
+               Last_Iter  : Gtk_Text_Iter;
+               Line_Start : Gtk_Text_Iter;
+               Success    : Boolean := True;
+
             begin
                Get_Iter_At_Mark (Buffer, First_Iter, Get_Insert (Buffer));
                Search_Entity_Bounds (First_Iter, Last_Iter);
@@ -937,15 +963,16 @@ package body Aliases_Module is
                end loop;
 
                declare
-                  Cursor : aliased Integer;
-                  Column : constant Gint := Get_Line_Offset (First_Iter);
+                  Cursor  : aliased Integer;
+                  Column  : constant Gint := Get_Line_Offset (First_Iter);
                   Replace : constant String := Expand_Alias
                     (Command.Kernel,
                      Get_Slice (Buffer, First_Iter, Last_Iter),
                      Cursor'Unchecked_Access,
                      Column);
-                  Result : Boolean;
-                  Event : Gdk_Event;
+                  Result  : Boolean;
+                  Event   : Gdk_Event;
+
                begin
                   if Replace /= "" then
                      Had_Focus := Has_Focus_Is_Set (W);
@@ -954,6 +981,7 @@ package body Aliases_Module is
                      --  GPS source editor, which saves and restores the
                      --  cursor position when the focus changes (for the
                      --  handling of multiple views).
+
                      if not Had_Focus then
                         Allocate (Event, Enter_Notify, Get_Window (W));
                         Result := Return_Callback.Emit_By_Name
@@ -964,8 +992,8 @@ package body Aliases_Module is
                      Delete (Buffer, First_Iter, Last_Iter);
                      Insert (Buffer, First_Iter, Replace);
                      Backward_Chars (First_Iter,
-                                        Gint (Replace'Length - Cursor),
-                                        Result);
+                                     Gint (Replace'Length - Cursor),
+                                     Result);
                      Place_Cursor (Buffer, First_Iter);
 
                      if not Had_Focus then
@@ -976,6 +1004,7 @@ package body Aliases_Module is
                      end if;
                   end if;
                end;
+
                return Commands.Success;
             end;
          end if;
@@ -1002,6 +1031,7 @@ package body Aliases_Module is
       if Alias = No_Alias then
          Alias := Get (Aliases_Module_Id.Aliases, Name);
       end if;
+
       return Alias;
    end Get_Value;
 
@@ -1014,17 +1044,20 @@ package body Aliases_Module is
       Start, Last : Gtk_Text_Iter;
       P           : Param_Access;
       Iter        : Gtk_Tree_Iter;
+
    begin
       if Editor.Current_Var /= null then
          Iter := Get_Iter_First (Editor.Variables_Model);
+
          while Iter /= Null_Iter loop
             declare
-               Name : constant String :=
+               Name     : constant String :=
                  Get_String (Editor.Variables_Model, Iter, 0);
-               Initial : constant String :=
+               Initial  : constant String :=
                  Get_String (Editor.Variables_Model, Iter, 1);
                From_Env : constant Boolean :=
                  Get_Boolean (Editor.Variables_Model, Iter, 3);
+
             begin
                P := new Param_Record'
                  (Name     => new String'(Name),
@@ -1059,6 +1092,7 @@ package body Aliases_Module is
       Alias       : Alias_Record := No_Alias;
       P           : Param_Access;
       Start, Last : Gtk_Text_Iter;
+
    begin
       Save_Current_Var (Ed);
 
@@ -1084,12 +1118,14 @@ package body Aliases_Module is
          Clear (Ed.Variables_Model);
 
          P := Alias.Params;
+
          while P /= null loop
-            Set_Variable (Ed,
-                          Name     => P.Name.all & ASCII.NUL,
-                          Default  => P.Initial.all & ASCII.NUL,
-                          From_Env => P.From_Env,
-                          Editable => not Alias.Read_Only);
+            Set_Variable
+              (Ed,
+               Name     => P.Name.all,
+               Default  => P.Initial.all,
+               From_Env => P.From_Env,
+               Editable => not Alias.Read_Only);
             P := P.Next;
          end loop;
       end if;
@@ -1114,14 +1150,15 @@ package body Aliases_Module is
       Iter    : Gtk_Tree_Iter;
       Message : Message_Dialog_Buttons;
       pragma Unreferenced (Message);
+
    begin
       if Ed.Current_Var /= null then
          Get_Selected (Get_Selection (Ed.Aliases), Model, Iter);
 
          if Iter /= Null_Iter then
             declare
-               Old : constant String := Ed.Current_Var.all;
-               Name : constant String :=
+               Old   : constant String := Ed.Current_Var.all;
+               Name  : constant String :=
                  Get_String (Ed.Aliases_Model, Iter, 0);
                Alias : constant Alias_Record := Get_Value (Ed, Old);
             begin
@@ -1171,6 +1208,7 @@ package body Aliases_Module is
       Value : Alias_Record;
       Model : Gtk_Tree_Model;
       Iter  : Gtk_Tree_Iter;
+
    begin
       if Ed.Current_Var /= null then
          Value := Get_Value (Ed, Ed.Current_Var.all);
@@ -1214,8 +1252,10 @@ package body Aliases_Module is
       Path_String : constant String := Get_String (Nth (Params, 1));
       Iter        : constant Gtk_Tree_Iter :=
         Get_Iter_From_String (Ed.Variables_Model, Path_String);
+
    begin
       --  Set the default value as no longer editable
+
       Set (Ed.Variables_Model, Iter, 2,
            Get_Boolean (Ed.Variables_Model, Iter, 3));
       Set (Ed.Variables_Model, Iter, 3,
@@ -1297,9 +1337,12 @@ package body Aliases_Module is
    -----------------
 
    procedure Update_Vars (Editor : access Alias_Editor_Record'Class) is
-      Iter  : Gtk_Tree_Iter := Get_Iter_First (Editor.Variables_Model);
-      Start, Current, Last : Gtk_Text_Iter;
-      Found : Boolean;
+      Iter    : Gtk_Tree_Iter := Get_Iter_First (Editor.Variables_Model);
+      Start   : Gtk_Text_Iter;
+      Current : Gtk_Text_Iter;
+      Last    : Gtk_Text_Iter;
+      Found   : Boolean;
+
    begin
       while Iter /= Null_Iter loop
          Set (Editor.Variables_Model, Iter, 4, False);
@@ -1308,18 +1351,22 @@ package body Aliases_Module is
 
       Get_Start_Iter (Get_Buffer (Editor.Expansion), Current);
       Get_End_Iter (Get_Buffer (Editor.Expansion), Last);
+
       loop
          Find_Next_Parameter (Editor, Start, Current, Last, False);
+
          exit when Is_End (Start);
 
          declare
             Full_Name : constant String := Get_Text
               (Get_Buffer (Editor.Expansion), Start, Current);
-            Name : constant String :=
+            Name      : constant String :=
               Full_Name (Full_Name'First + 2 .. Full_Name'Last - 1);
+
          begin
             Found := False;
             Iter := Get_Iter_First (Editor.Variables_Model);
+
             while Iter /= Null_Iter loop
                if Get_String (Editor.Variables_Model, Iter, 0) = Name then
                   Set (Editor.Variables_Model, Iter, 4, True);
@@ -1332,7 +1379,10 @@ package body Aliases_Module is
 
             if not Found then
                Set_Variable
-                 (Editor, Name => Name, Default => "", From_Env => False);
+                 (Editor,
+                  Name     => Name,
+                  Default  => "",
+                  From_Env => False);
             end if;
          end;
       end loop;
@@ -1356,9 +1406,9 @@ package body Aliases_Module is
       Params : Glib.Values.GValues)
    is
       Length   : constant Gint := Get_Int (Nth (Params, 3));
-      --   Text : constant String := Get_String (Nth (Params, 2));
       Pos, Eol : Gtk_Text_Iter;
       Result   : Boolean;
+
    begin
       Get_Text_Iter (Nth (Params, 1), Pos);
       Copy (Source => Pos, Dest => Eol);
@@ -1414,7 +1464,9 @@ package body Aliases_Module is
 
       loop
          Find_Next_Parameter (Editor, Current2, Current, Last, True);
+
          exit when Is_End (Current2);
+
          Apply_Tag (Get_Buffer (Editor.Expansion),
                     Editor.Highlight_Tag,
                     Current2, Current);
@@ -1448,6 +1500,7 @@ package body Aliases_Module is
       It     : constant String_Menu_Item := String_Menu_Item (Item);
       Buffer : constant Gtk_Text_Buffer := Get_Buffer (It.View);
       Iter   : Gtk_Text_Iter;
+
    begin
       Get_Iter_At_Mark (Buffer, Iter, Get_Insert (Buffer));
       Insert (Buffer, Iter, It.Special);
@@ -1470,6 +1523,7 @@ package body Aliases_Module is
       Menu : Gtk_Menu;
       Item : String_Menu_Item;
       Tmp  : Expansion_Function_List;
+
    begin
       Gtk_New (Menu);
 
@@ -1487,6 +1541,7 @@ package body Aliases_Module is
 
       for C in Aliases_Module_Id.Module_Funcs'Range loop
          Tmp := Aliases_Module_Id.Module_Funcs (C);
+
          while Tmp /= null loop
             Gtk_New (Item, View, Tmp.Descr, Special & C);
             Add (Menu, Item);
@@ -1553,6 +1608,7 @@ package body Aliases_Module is
       Sep              : Gtk_Separator;
       W                : Gtk_Widget;
       pragma Unreferenced (Number, W);
+
    begin
       Editor := new Alias_Editor_Record;
       Initialize (Editor,
@@ -1765,7 +1821,8 @@ package body Aliases_Module is
       pragma Import (C, Set_Alias, "gtk_tree_store_set");
 
       Alias_Iter : Gtk_Tree_Iter;
-      Path : Gtk_Tree_Path;
+      Path       : Gtk_Tree_Path;
+
    begin
       Append (Editor.Aliases_Model, Alias_Iter, Null_Iter);
 
@@ -1804,12 +1861,14 @@ package body Aliases_Module is
       Iter  : Iterator;
       Value : Alias_Record;
       It    : Gtk_Tree_Iter;
+
    begin
       Clear (Editor.Aliases_Model);
       Get_First (Aliases_Module_Id.Aliases, Iter);
 
       loop
          Value := Get_Element (Iter);
+
          exit when Value = No_Alias;
 
          if not Value.Read_Only
