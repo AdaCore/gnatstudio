@@ -18,10 +18,10 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Diff_Utils2; use Diff_Utils2;
+with Diff_Utils2;      use Diff_Utils2;
 with Ada.Command_Line; use Ada.Command_Line;
-with Ada.Text_IO; use Ada.Text_IO;
-
+with Ada.Text_IO;      use Ada.Text_IO;
+with VFS;              use VFS;
 procedure TDiff is
    use Diff_Chunk_List;
 
@@ -53,7 +53,7 @@ begin
       return;
    end if;
 
-   Result := Diff (Argument (1), Argument (2));
+   Result := Diff (Create (Argument (1)), Create (Argument (2)));
    Tmp_Node := First (Result);
    loop
       exit when Tmp_Node = Null_Node;

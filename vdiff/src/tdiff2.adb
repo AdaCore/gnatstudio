@@ -21,7 +21,7 @@
 with Diff_Utils2; use Diff_Utils2;
 with Ada.Command_Line; use Ada.Command_Line;
 with Ada.Text_IO; use Ada.Text_IO;
-
+with VFS;         use VFS;
 procedure TDiff2 is
    use Diff_Chunk_List;
 
@@ -53,8 +53,9 @@ begin
       return;
    end if;
 
-   Result := Diff_Utils2.Diff3 (Argument (1), Argument (2), Argument (3));
-   Diff_Utils2.Simplify (Result, 2);
+   Result := Diff_Utils2.Diff3
+     (Create (Argument (1)), Create (Argument (2)), Create (Argument (3)));
+   Result := Diff_Utils2.Simplify (Result, 2);
 
    Tmp_Node := First (Result);
 
