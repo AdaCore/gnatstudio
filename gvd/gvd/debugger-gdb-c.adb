@@ -607,10 +607,9 @@ package body Debugger.Gdb.C is
    begin
       --  Get the field name (last word before ;)
       --  There is a small exception here for access-to-subprograms fields,
-      --  which look like "void (*field1[2])();"
-      --  gdb seems to ignore all the parameters to the function, so
-      --  we take the simplest way and consider there is always '()' for
-      --  the parameter list.
+      --  which look like "void (*field1[2])(void);"
+      --  Whereas older versions of gdb were never specifying the parameters,
+      --  thus printing only (), more recent versions now display them.
       --  We also skip embedded unions or structs ("struct foo {..}" or
       --  "struct {...}" completly).
 
@@ -625,13 +624,19 @@ package body Debugger.Gdb.C is
       Field_End := Tmp;
       Tmp := Tmp - 1;
 
+      --  This is probably a pointer to subprogram, as in:
+      --     void (*foo) (void)
       if Type_Str (Tmp) = ')' then
-         Tmp := Tmp - 2;
          Skip_To_Char (Type_Str, Tmp, '(', Step => -1);
-         Tmp := Tmp + 1;
-         Name_End := Tmp + 2;
-         Skip_Word (Type_Str, Name_End);
-         Name_End := Name_End - 1;
+         Skip_To_Char (Type_Str, Tmp, ')', Step => -1);
+
+         --  Skip array definition if any
+         if Type_Str (Tmp - 1) = ']' then
+            Skip_To_Char (Type_Str, Tmp, '[', Step => -1);
+         end if;
+
+         Name_End := Tmp - 1;
+         Skip_To_Char (Type_Str, Tmp, '*', Step => -1);
 
       else
          Name_End := Field_End - 1;
@@ -802,6 +807,7 @@ package body Debugger.Gdb.C is
       procedure Parse_Item is
          Tmp        : Generic_Type_Access;
          Repeat_Num : Integer;
+         Start_Index : constant Natural := Index;
 
       begin
          --  Parse the next item
@@ -820,6 +826,11 @@ package body Debugger.Gdb.C is
             Elem_Index => Current_Index,
             Repeat_Num => Repeat_Num);
          Current_Index := Current_Index + Long_Integer (Repeat_Num);
+
+         --  Avoid infinite loop if we can't parse the value
+         if Index = Start_Index then
+            Index := Type_Str'Last;
+         end if;
       end Parse_Item;
 
    begin
