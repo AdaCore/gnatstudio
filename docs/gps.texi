@@ -28,7 +28,7 @@
 @page
 @vskip 0pt plus 1filll
 
-Copyright @copyright{} 2001-2003, ACT Europe.
+Copyright @copyright{} 2001-2004, ACT Europe.
 This document may be copied, in whole or in part, in any form or by any
 means, as is or with alterations, provided that (1) alterations are clearly
 marked as alterations and (2) this copyright notice is included
@@ -52,7 +52,7 @@ Version @value{GPSVersion}
 
 Date: $Date$
 
-Copyright @copyright{} 2001-2003, ACT Europe.
+Copyright @copyright{} 2001-2004, ACT Europe.
 This document may be copied, in whole or in part, in any form or by any
 means, as is or with alterations, provided that (1) alterations are clearly
 marked as alterations and (2) this copyright notice is included
@@ -1548,7 +1548,11 @@ on the left and one on the right of the window.
 @table @i
 @item The left section
 
-The first box on the left shows the current subprogram name.
+The first box on the left shows the current subprogram name for languages
+that support this capability. Currently @code{Ada}, @code{C} and @code{C++}
+have this ability.
+
+@c ??? add xref to preference that enables/disables this capability
 
 @item The right section
 
