@@ -2,7 +2,7 @@ Known Problems fixed in GPS 1.4.0
 
 - CA15-004 GPS crash when doing xref in Ada unit containing separate
   Problem:    A memory corruption occurs when doing cross-references on a
-              unit which has separates. This can result in a GPS crash later.
+              unit which has separates. This can result in a GPS crash.
   Workaround: None known
 
 - CA08-005 Searching file names in explorer fails for extended projects
@@ -14,7 +14,7 @@ Known Problems fixed in GPS 1.4.0
 - CA02-013 Unexpected crashes under Windows.
   Problem:    GPS sometimes crashes unexpectedly under windows. This is most
               likely to happen after compiling files several times.
-  Workaround: None knowm
+  Workaround: None known
 
 - Cross-reference fail with Ada units overriden in extending projects (C825-005)
   Problem:    If you have a unit overriden in an extending project with a
@@ -39,8 +39,8 @@ Known Problems fixed in GPS 1.4.0
 
 - C916-010 Internal error when generating new testsuite
   Problem:    When you use the Edit->Unit Testing menu and attempt to add
-              a new testsuite, GPS crashes
-  Workaround: None known
+              a new testsuite, GPS crashes.
+  Workaround: Create the test suite by hand.
 
 - C912-003 Removing dependency for a project other than the root project fails
   Problem:    If you remove a dependency between two projects when none of them
@@ -52,13 +52,19 @@ Known Problems fixed in GPS 1.4.0
               source code when e.g. closing an empty string.
   Workaround: None known
 
+- C901-010 Auto-save not always performed before a build
+  Problem:    When using some combinations of undo/redo before doing a build,
+              it can happen that the file is not automatically saved when
+              building.
+  Workaround: Save the file manually.
+
 - C822-014 Cross-references fail on Ada files with file-specific naming schemes
-  Problem:    If you are using Ada files with an irregular naming scheme (ie
-              you don't specificy a general way to compute the name of the
+  Problem:    If you are using Ada files with an irregular naming scheme (i.e.
+              you don't specify a general way to compute the name of the
               file, but have to specify the mapping unit<->file for each file),
               then cross-references for specs without bodies and separate units
               fail
-  Workaround: None known
+  Workaround: Use gnatchop to rename the files
 
 - C812-004 Searching doesn't take into account a selection in the File View
   Problem:    When a file is selected in the File View, using the search dialog
