@@ -20,6 +20,9 @@
 
 with Glib;                    use Glib;
 with Glib.Object;             use Glib.Object;
+with Gdk.Types;               use Gdk.Types;
+with Gdk.Types.Keysyms;       use Gdk.Types.Keysyms;
+with Gtk.Enums;
 with Gtk.Main;                use Gtk.Main;
 with Gtk.Menu_Item;           use Gtk.Menu_Item;
 with Gtk.Stock;               use Gtk.Stock;
@@ -383,10 +386,11 @@ package body Builder_Module is
       pragma Unreferenced (Widget);
 
       Cmd : constant String := Simple_Entry_Dialog
-        (Parent  => Get_Main_Window (Kernel),
-         Title   => -"Custom Build",
-         Message => -"Enter the build command to execute:",
-         Key     => "gps_build_command");
+        (Parent   => Get_Main_Window (Kernel),
+         Title    => -"Custom Execution",
+         Message  => -"Enter the command to execute:",
+         Position => Gtk.Enums.Win_Pos_Mouse,
+         Key      => "gps_custom_command");
 
    begin
       if Cmd = "" or else Cmd (Cmd'First) = ASCII.NUL then
@@ -611,9 +615,11 @@ package body Builder_Module is
       Register_Menu (Kernel, "/_" & (-"Build"), Ref_Item => -"Debug");
       Register_Menu (Kernel, Build, -"Check Syntax", "",
                      On_Check_Syntax'Access);
-      Register_Menu (Kernel, Build, -"Compile File", "", On_Compile'Access);
-      Register_Menu (Kernel, Build, -"Make", "", On_Build'Access);
-      Register_Menu (Kernel, Build, -"Custom...", "", On_Custom'Access);
+      Register_Menu (Kernel, Build, -"Compile File", "",
+                     On_Compile'Access, GDK_F4, Shift_Mask);
+      Register_Menu (Kernel, Build, -"Make", "", On_Build'Access, GDK_F4);
+      Register_Menu (Kernel, Build, -"Custom...", "",
+                     On_Custom'Access, GDK_F9);
       Gtk_New (Mitem);
       Register_Menu (Kernel, Build, Mitem);
       Set_Sensitive
