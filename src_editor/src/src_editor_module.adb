@@ -1777,13 +1777,13 @@ package body Src_Editor_Module is
                 (Kernel,
                  Source_Lines_Revealed_Signal,
                  On_Lines_Revealed'Access,
-                 Kernel_Handle (Kernel));
+                 Kernel);
             Id.File_Edited_Id :=
               Kernel_Callback.Connect
                 (Kernel,
                  File_Edited_Signal,
                  File_Edited_Cb'Access,
-                 Kernel_Handle (Kernel));
+                 Kernel);
          end if;
 
       elsif Id.Source_Lines_Revealed_Id /= No_Handler then
