@@ -17,7 +17,8 @@ aunit \
 prj_editor \
 src_editor \
 hypergrep \
-glide
+glide \
+widgets
 
 all: do_links ${EXTERNAL_DEPENDENCIES} ${DEPENDENCIES}
 
