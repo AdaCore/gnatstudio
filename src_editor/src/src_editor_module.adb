@@ -194,15 +194,13 @@ package body Src_Editor_Module is
       File       : VFS.Virtual_File := VFS.No_File;
       Create_New : Boolean := True;
       Focus      : Boolean := True;
-      Force      : Boolean := False;
-      Dock       : Dock_Side := None) return Source_Box;
+      Force      : Boolean := False) return Source_Box;
    --  Open a file and return the handle associated with it.
    --  If Add_To_MDI is set to True, the box will be added to the MDI window.
    --  If Focus is True, the box will be raised if it is in the MDI.
    --  See Create_File_Exitor.
    --  If Force is true, then the file is reloaded without asking confirmation
    --  from the user
-   --  The editor will be put in the MDI area specified by Dock.
 
    function Create_File_Editor
      (Kernel     : access Kernel_Handle_Record'Class;
@@ -1476,12 +1474,13 @@ package body Src_Editor_Module is
       Args    : GValues;
       Kernel  : Kernel_Handle)
    is
-      pragma Unreferenced (Widget);
       File  : constant Virtual_File :=
         Create (Get_String (Nth (Args, 1)), Kernel);
       Iter  : Child_Iterator := First_Child (Get_MDI (Kernel));
       Child : MDI_Child;
       Box   : Source_Box;
+      Dummy : Boolean;
+      pragma Unreferenced (Widget, Dummy);
    begin
       if File = VFS.No_File then
          return;
@@ -1494,7 +1493,10 @@ package body Src_Editor_Module is
 
          if File = Get_Filename (Child) then
             Box := Source_Box (Get_Widget (Child));
-            Check_Timestamp (Box.Editor, Force => True);
+            Dummy := Check_Timestamp_And_Reload
+              (Get_Buffer (Box.Editor),
+               Interactive   => False,
+               Always_Reload => False);
          end if;
 
          Next (Iter);
@@ -2036,21 +2038,24 @@ package body Src_Editor_Module is
       File       : VFS.Virtual_File := VFS.No_File;
       Create_New : Boolean := True;
       Focus      : Boolean := True;
-      Force      : Boolean := False;
-      Dock       : Dock_Side := None) return Source_Box
+      Force      : Boolean := False) return Source_Box
    is
       MDI        : constant MDI_Window := Get_MDI (Kernel);
       Editor     : Source_Editor_Box;
       Box        : Source_Box;
       Child      : MDI_Child;
+      Dummy      : Boolean;
+      pragma Unreferenced (Dummy);
 
    begin
       if File /= VFS.No_File then
          Child := Find_Editor (Kernel, File);
 
          if Child /= null then
-            Check_Timestamp (Source_Box (Get_Widget (Child)).Editor,
-                             Force => Force);
+            Dummy := Check_Timestamp_And_Reload
+              (Get_Buffer (Source_Box (Get_Widget (Child)).Editor),
+               Interactive   => False,
+               Always_Reload => Force);
 
             Raise_Child (Child);
 
@@ -2079,8 +2084,6 @@ package body Src_Editor_Module is
             Default_Width  => Get_Pref (Kernel, Default_Widget_Width),
             Default_Height => Get_Pref (Kernel, Default_Widget_Height),
             Module         => Src_Editor_Module_Id);
-         Set_Dock_Side (Child, Dock);
-         Dock_Child (Child);
          Set_Icon (Child, Gdk_New_From_Xpm_Data (editor_xpm));
 
          if Focus then
@@ -2887,8 +2890,6 @@ package body Src_Editor_Module is
               Get_Boolean (Data (Data'First + 5));
             Force       : constant Boolean :=
               Get_Boolean (Data (Data'First + 6));
-            Dock        : constant Gtkada.MDI.Dock_Side :=
-              Dock_Side'Val (Get_Int (Data (Data'First + 7)));
             Iter        : Child_Iterator := First_Child (MDI);
             Child       : MDI_Child;
             No_Location : Boolean := False;
@@ -2922,8 +2923,7 @@ package body Src_Editor_Module is
                  (Kernel, File,
                   Create_New => New_File,
                   Focus      => not No_Location,
-                  Force      => Force,
-                  Dock       => Dock);
+                  Force      => Force);
 
                if Source /= null then
                   Edit := Source.Editor;
