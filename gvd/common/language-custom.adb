@@ -216,8 +216,8 @@ package body Language.Custom is
          end if;
 
          Lang.Project_Fields (Lang.Project_Fields'Last) :=
-           (Attribute_Name  => new String'(Get_Attribute (Node, "name")),
-            Attribute_Index => new String'(Get_Attribute (Node, "index")),
+           (Attribute_Name  => new String'(Get_Attribute (Node, "Name")),
+            Attribute_Index => new String'(Get_Attribute (Node, "Index")),
             Description     => new String'(Node.Value.all),
             Values          => null,   --  ??? Not supported in XML yet
             Editable        => True); --  ??? Not supported in XML yet
