@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -30,6 +30,7 @@ with GNAT.Traceback;            use GNAT.Traceback;
 with System.Address_Image;
 with System.Assertions;         use System.Assertions;
 with GNAT.Task_Lock;            use GNAT.Task_Lock;
+with String_Utils;              use String_Utils;
 with Unchecked_Conversion;
 with Unchecked_Deallocation;
 
@@ -75,7 +76,7 @@ package body Traces is
       Next   : Debug_Handle;
       Count  : Natural;
    end record;
-   --  ??? Should Be protected So That Streams Are Correctly Closed On exit
+   --  ??? Should be protected so that streams are correctly closed on exit
 
    procedure Unchecked_Free is new Unchecked_Deallocation
      (Debug_Handle_Record, Debug_Handle);
@@ -124,6 +125,10 @@ package body Traces is
    function Config_File (Default : String) return String;
    --  Return the name of the config file to use.
    --  The empty string is returned if no such file was found.
+
+   function Get_Process_Id return Integer;
+   --  Return the process ID of the current process.
+   pragma Import (C, Get_Process_Id, "getpid");
 
    -----------------
    -- Find_Handle --
@@ -515,9 +520,10 @@ package body Traces is
       ------------------
 
       function Parse_Stream return File_Type_Access is
-         File : File_Type_Access;
+         File  : File_Type_Access;
          First : Natural;
-         Last : Natural;
+         Last  : Natural;
+
       begin
          Index := Index + 1;
          Skip_Spaces;
@@ -539,9 +545,19 @@ package body Traces is
             Skip_To_Newline (Stop_At_First_Blank => True);
             File := new File_Type;
 
-            Create (File.all, Out_File,
-                    Normalize_Pathname (Buffer (First .. Last),
-                                        Dir_Name (File_Name)));
+            if Buffer (Last - 1 .. Last) = "$$" then
+               Create
+                 (File.all, Out_File,
+                  Normalize_Pathname
+                    (Buffer (First .. Last - 2) & Image (Get_Process_Id),
+                     Dir_Name (File_Name)));
+            else
+               Create
+                 (File.all, Out_File,
+                  Normalize_Pathname
+                    (Buffer (First .. Last), Dir_Name (File_Name)));
+            end if;
+
             return File;
          end if;
       end Parse_Stream;
