@@ -40,7 +40,6 @@ procedure Odd_Main is
    Id                : Glib.Gint;
    Index             : Natural := 0;
    Debug_Type        : Debugger.Debugger_Type := Debugger.Gdb_Type;
-   Button            : Message_Dialog_Buttons;
 
    function Format (Str : String; Columns : Positive) return String;
    --  Cut Str in lines of no more than Columns columns by replacing spaces
@@ -74,6 +73,24 @@ procedure Odd_Main is
 
       return S;
    end Format;
+
+   procedure Bug_Dialog (E : Exception_Occurrence);
+   --  Display a bug box on the screen with as much information as possible.
+
+   procedure Bug_Dialog (E : Exception_Occurrence) is
+      Button : Message_Dialog_Buttons;
+   begin
+      Button := Message_Dialog
+        ("Please report with the following information:" & ASCII.LF &
+         Format (Exception_Information (E), Columns => 80),
+         Error, Button_OK,
+         Title => "Bug detected in odd",
+         Justification => Justify_Left);
+      Put_Line (Standard_Error, "Bug detected in odd");
+      Put_Line (Standard_Error,
+        "Please report with the following information:");
+      Put_Line (Standard_Error, Exception_Information (E));
+   end Bug_Dialog;
 
 begin
    Bind_Text_Domain ("GtkAda", "/usr/local/share/locale");
@@ -111,16 +128,7 @@ begin
          exit;
       exception
          when E : others =>
-            Button := Message_Dialog
-              ("Please report with the following information:" & ASCII.LF &
-               Format (Exception_Information (E), Columns => 80),
-               Error, Button_OK,
-               Title => "Bug detected in odd",
-               Justification => Justify_Left);
-            Put_Line (Standard_Error, "Bug detected in odd.");
-            Put_Line (Standard_Error,
-              "Please report with the following information:");
-            Put_Line (Standard_Error, Exception_Information (E));
+            Bug_Dialog (E);
       end;
    end loop;
 
@@ -128,14 +136,6 @@ begin
 
 exception
    when E : others =>
-      Button := Message_Dialog
-        ("Please report with the following information:" & ASCII.LF &
-         Format (Exception_Information (E), Columns => 80),
-         Error, Button_OK,
-         Title => "Bug detected in odd",
-         Justification => Justify_Left);
-      Put_Line (Standard_Error, "Bug detected in odd");
-      Put_Line (Standard_Error,
-        "Please report with the following information:");
-      Put_Line (Standard_Error, Exception_Information (E));
+      Bug_Dialog (E);
+      Destroy (Main_Debug_Window);
 end Odd_Main;
