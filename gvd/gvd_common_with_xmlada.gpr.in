@@ -1,7 +1,7 @@
 with "../gtkada/gtkada";
 with "../shared";
 with "../gnat";
-with "xmlada";
+with "xmlada_gtk";
 
 project GVD_Common is
 
