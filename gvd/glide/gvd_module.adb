@@ -69,7 +69,7 @@ with Ada.Exceptions;          use Ada.Exceptions;
 with Generic_List;
 
 with Commands;                use Commands;
-with Commands.Console;        use Commands.Console;
+with Commands.Debugger;       use Commands.Debugger;
 
 package body GVD_Module is
 
@@ -1030,7 +1030,7 @@ package body GVD_Module is
    is
       Kind         : Line_Kind;
       A            : Line_Information_Array (1 .. 1);
-      C            : Console_Command_Access;
+      C            : Set_Breakpoint_Command_Access;
       File_Line    : File_Line_Record;
       Debugger     : constant Debugger_Access :=
         Get_Current_Process (Get_Main_Window (D.Kernel)).Debugger;
@@ -1051,7 +1051,13 @@ package body GVD_Module is
 
       case Kind is
          when Have_Code =>
-            Create (C, D.Kernel, "set bp on line " & File_Line.Line'Img);
+            Create (C,
+                    D.Kernel,
+                    Debugger,
+                    Set,
+                    File_Line.File.all,
+                    File_Line.Line);
+
             A (1).Line := File_Line.Line;
             A (1).Text := new String' ("< >");
             A (1).Associated_Command := Command_Access (C);
@@ -1073,6 +1079,10 @@ package body GVD_Module is
       end case;
 
       File_Line_List.Next (D.Unexplored_Lines);
+
+      if File_Line_List.Is_Empty (D.Unexplored_Lines) then
+         return False;
+      end if;
 
       return True;
    end Idle_Reveal_Lines;
@@ -1115,7 +1125,7 @@ package body GVD_Module is
 
             if File_Line_List.Is_Empty (Data.Unexplored_Lines) then
                Timeout_Id := GVD_Module_Timeout.Add
-                 (20, Idle_Reveal_Lines'Access, Data);
+                 (1, Idle_Reveal_Lines'Access, Data);
             end if;
 
             for J in Line1 .. Line2 loop
