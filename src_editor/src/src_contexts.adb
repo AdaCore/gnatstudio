@@ -1882,8 +1882,7 @@ package body Src_Contexts is
                -"Restrict the scope of the search");
 
       Kernel_Callback.Connect
-        (Get_Entry (Combo), "changed",
-         Kernel_Callback.To_Marshaller (Reset_Search'Access),
+        (Get_Entry (Combo), "changed", Reset_Search'Access,
          Kernel_Handle (Kernel));
    end Initialize_Scope_Combo;
 
@@ -1931,16 +1930,13 @@ package body Src_Contexts is
       Attach (Extra.Files_Table, Extra.Combo, 1, 3, 2, 3, Fill, 0);
 
       Kernel_Callback.Connect
-        (Extra.Subdirs_Check, "toggled",
-         Kernel_Callback.To_Marshaller (Reset_Search'Access),
+        (Extra.Subdirs_Check, "toggled", Reset_Search'Access,
          Kernel_Handle (Kernel));
       Kernel_Callback.Connect
-        (Extra.Files_Entry, "changed",
-         Kernel_Callback.To_Marshaller (Reset_Search'Access),
+        (Extra.Files_Entry, "changed", Reset_Search'Access,
          Kernel_Handle (Kernel));
       Kernel_Callback.Connect
-        (Extra.Directory_Entry, "changed",
-         Kernel_Callback.To_Marshaller (Reset_Search'Access),
+        (Extra.Directory_Entry, "changed", Reset_Search'Access,
          Kernel_Handle (Kernel));
    end Gtk_New;
 
