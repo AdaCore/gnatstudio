@@ -239,12 +239,13 @@ package body Switches_Editors is
 
             when Binder =>
                Check_Toggle (Editor.Binder_Tracebacks, "-E", Arr, Index);
-               Check_Toggle (Editor.Binder_Rm_Elaboration, "-f", Arr, Index);
+
                if Get_Active (Editor.Binder_Static_Gnat) then
                   Arr (Index) := new String' ("-static");
                else
                   Arr (Index) := new String' ("-shared");
                end if;
+
                Index := Index + 1;
 
             when Linker =>
@@ -390,7 +391,6 @@ package body Switches_Editors is
 
          when Binder =>
             Set_Active (Editor.Binder_Tracebacks, Is_Set ("-E"));
-            Set_Active (Editor.Binder_Rm_Elaboration, Is_Set ("-f"));
             Set_Active (Editor.Binder_Static_Gnat, Is_Set ("-static"));
             Set_Active (Editor.Binder_Shared_Gnat, Is_Set ("-shared"));
 
@@ -465,7 +465,6 @@ package body Switches_Editors is
                if Switches (J) /= null
                  and then
                  (Switches (J).all = "-E"
-                  or else Switches (J).all = "-f"
                   or else Switches (J).all = "-static"
                   or else Switches (J).all = "-shared")
                then

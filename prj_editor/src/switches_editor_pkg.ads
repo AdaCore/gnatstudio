@@ -72,7 +72,6 @@ package Switches_Editor_Pkg is
       Binder_Switches_Entry : Gtk_Entry;
       Vbox27 : Gtk_Vbox;
       Binder_Tracebacks : Gtk_Check_Button;
-      Binder_Rm_Elaboration : Gtk_Check_Button;
       Binder_Static_Gnat : Gtk_Radio_Button;
       Binder_Shared_Gnat : Gtk_Radio_Button;
       Label19 : Gtk_Label;

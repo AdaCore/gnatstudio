@@ -425,13 +425,6 @@ begin
      (Switches_Editor.Binder_Tracebacks, "toggled",
       Widget_Callback.To_Marshaller (Refresh_Bind_Switches'Access), Switches_Editor);
 
-   Gtk_New (Switches_Editor.Binder_Rm_Elaboration, -"Force RM elaboration ordering");
-   Set_Active (Switches_Editor.Binder_Rm_Elaboration, False);
-   Pack_Start (Switches_Editor.Vbox27, Switches_Editor.Binder_Rm_Elaboration, False, False, 0);
-   Widget_Callback.Object_Connect
-     (Switches_Editor.Binder_Rm_Elaboration, "toggled",
-      Widget_Callback.To_Marshaller (Refresh_Bind_Switches'Access), Switches_Editor);
-
    Gtk_New (Switches_Editor.Binder_Static_Gnat, Vbox27_Group, -"Static GNAT runtime");
    Vbox27_Group := Group (Switches_Editor.Binder_Static_Gnat);
    Set_Active (Switches_Editor.Binder_Static_Gnat, False);
