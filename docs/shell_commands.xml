@@ -89,6 +89,9 @@ Through this call, GPS will not wait for the action to terminate, therefore the
 action should not contain external commands to execute, if you expect to get
 their output.
 
+The action's name can start with a '/', and be a full menu path. As a result,
+the menu itself will be executed, just as if the user had pressed it.
+
 The extra arguments must be strings, and are passed to the action, which can
 use them through $1, $2,...
 
