@@ -353,10 +353,30 @@ procedure GPS is
             begin
                exit when S = "";
 
+               --  If no project has been loaded yet, load a default project
+               --  and desktop before open source editors.
+
+               if not Auto_Load_Project and then not File_Opened then
+                  Load_Default_Project
+                    (GPS.Kernel, Get_Current_Dir,
+                     Load_Default_Desktop => True);
+               end if;
+
                Open_File_Editor (GPS.Kernel, S, 1, 1, From_Path => True);
                File_Opened := True;
             end;
          end loop;
+
+         --  Load a default project, in case the wizard needs to be
+         --  launched. Do not load the desktop immediately, since this
+         --  would display the GPS window at the same time as the welcome
+         --  dialog.
+
+         if not Auto_Load_Project and then not File_Opened then
+            Load_Default_Project
+              (GPS.Kernel, Get_Current_Dir,
+               Load_Default_Desktop => False);
+         end if;
       end Load_Sources;
 
    begin
@@ -488,12 +508,6 @@ procedure GPS is
          --  not open the welcome dialog.
 
          if not Auto_Load_Project then
-            --  Load a default project, in case the wizard needs to be
-            --  launched. Do not load the desktop immediately, since this would
-            --  display the GPS window at the same time as the welcome dialog.
-
-            Load_Default_Project
-              (GPS.Kernel, Get_Current_Dir, Load_Default_Desktop => False);
             Load_Sources;
 
             if not File_Opened then
@@ -547,9 +561,6 @@ procedure GPS is
               (Project_Name.all, Resolve_Links => False));
          Load_Sources;
       end if;
-
-      --  Call Show_All before displaying the help so that the help window will
-      --  have the focus.
 
       if not File_Opened
         and then not Has_User_Desktop (GPS.Kernel)
