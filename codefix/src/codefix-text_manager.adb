@@ -2055,9 +2055,15 @@ package body Codefix.Text_Manager is
       Current_Text : in out Text_Navigator_Abstr'Class)
    is
       Current_Extract : Ptr_Extract_Line := This.First;
+      Last_File_Name  : Dynamic_String := Current_Extract.Cursor.File_Name;
       Offset_Line     : Integer := 0;
    begin
       while Current_Extract /= null loop
+         if Current_Extract.Cursor.File_Name.all /= Last_File_Name.all then
+            Last_File_Name := Current_Extract.Cursor.File_Name;
+            Offset_Line := 0;
+         end if;
+
          Commit (Current_Extract.all, Current_Text, Offset_Line);
          Current_Extract := Current_Extract.Next;
       end loop;
@@ -2354,20 +2360,19 @@ package body Codefix.Text_Manager is
    procedure Add_Line
      (This   : in out Extract;
       Cursor : File_Cursor'Class;
-      Text   : String) is
-
+      Text   : String)
+   is
       Line_Cursor : File_Cursor := File_Cursor (Clone (Cursor));
-
    begin
       Line_Cursor.Col := 1;
       Add_Element
         (This, new Extract_Line'
-           (Context         => Unit_Created,
-            Cursor          => Line_Cursor,
-            Original_Length => 0,
-            Content         => To_Mergable_String (Text),
-            Next            => null,
-            Coloration      => True));
+         (Context         => Unit_Created,
+          Cursor          => Line_Cursor,
+          Original_Length => 0,
+          Content         => To_Mergable_String (Text),
+          Next            => null,
+          Coloration      => True));
    end Add_Line;
 
    -----------------------
@@ -2431,6 +2436,7 @@ package body Codefix.Text_Manager is
    -- Add_Element --
    -----------------
 
+
    --  Assertion : This and Previous are not null together
    procedure Add_Element
      (This, Previous, Element : Ptr_Extract_Line;
@@ -2441,6 +2447,7 @@ package body Codefix.Text_Manager is
       else
          if This.Cursor > Element.Cursor then
             Element.Next := This;
+
             if Previous /= null then
                Previous.Next := Element;
             else
@@ -2753,7 +2760,9 @@ package body Codefix.Text_Manager is
    -- Get_Files_Names --
    ---------------------
 
-   function Get_Files_Names (This : Extract) return String is
+   function Get_Files_Names (This : Extract; Size_Max : Natural := 0)
+     return String
+   is
       Previous     : Dynamic_String;
       Current_Line : Ptr_Extract_Line := Get_First_Line (This);
       Result       : Dynamic_String;
@@ -2778,7 +2787,13 @@ package body Codefix.Text_Manager is
          Result_Stack : constant String := Result.all;
       begin
          Free (Result);
-         return Result_Stack;
+         if Size_Max > 0 and then Result_Stack'Length > Size_Max then
+            return Result_Stack
+              (Result_Stack'First .. Result_Stack'First + Size_Max)
+               & "...";
+         else
+            return Result_Stack;
+         end if;
       end;
    end Get_Files_Names;
 
@@ -2807,6 +2822,22 @@ package body Codefix.Text_Manager is
 
       return Total;
    end Get_Nb_Files;
+
+   ------------------------
+   -- Delete_Empty_Lines --
+   ------------------------
+
+   procedure Delete_Empty_Lines (This : in out Extract) is
+      Node : Ptr_Extract_Line := Get_First_Line (This);
+   begin
+      while Node /= null loop
+         if Is_Blank (Get_String (Node.all)) then
+            Node.Context := Unit_Deleted;
+         end if;
+
+         Node := Next (Node);
+      end loop;
+   end Delete_Empty_Lines;
 
    ----------------------------------------------------------------------------
    --  type Text_Command
