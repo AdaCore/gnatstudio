@@ -1,5 +1,5 @@
-The purpose of this component is to build automatically a multi-language
-application.
+The purpose of this component is to generate automatically a multi-language
+Makefile.
 
 Requirements:
 - Be easily extensible to new programming languages
@@ -13,11 +13,8 @@ Requirements:
 
 Process:
 
-- The builder will take a GNAT multi-language project file as its input,
-  and generate a Makefile for each project file.
-
-- A project file is considered multi-language if the "Language" attribute
-  is different from ("ada"), e.g ("c"), ("ada", "c"), ("c", "c++")
+- The tool will take a GNAT project file as its input,
+  and generate a Makefile for each project file
 
 - The Ada dependencies and compilations are handled by gnatmake
 
@@ -273,6 +270,8 @@ Here is a detail of these variables:
 
    AR_EXT = .a
 
+   For now, we can assume .a, since this is always the extension used by 'ar'
+
    - OBJ_EXT is the extension of object files, .o by default (in which case,
      it is not necessary to specify it):
 
@@ -305,11 +304,11 @@ Here is a detail of these variables:
 
 - project dependencies (with clauses) are handled by the following translation:
 
-   with "../project1"
+   with "../src1/project1"
 
    is translated as:
 
-   BASE_DIR=$(<PROJECT>_BASE_DIR)/../project1
+   BASE_DIR=$(<PROJECT>_BASE_DIR)/../src1
    include $(BASE_DIR)/Makefile.project1
 
    or, if the with clause contains an absolute path:
@@ -369,8 +368,14 @@ Same for CXX_SRCS (C++ sources) if needed (if Language attribute contains "c++")
   $(foreach name,$(<PROJECT>_SRC_DIRS),$(notdir $(wildcard $(name)/*$(C_EXT))))\
   $(foreach name,$(<PROJECT>_SRC_DIRS),$(notdir $(wildcard $(name)/*$(CXX_EXT))))
 
-Each "foreach" line will be generated only if the project supports the
-corresponding language.
+  Each "foreach" line will be generated only if the project supports the
+  corresponding language.
+
+  To determine statically, there are two criteria:
+  - if the Language include only Ada, there are no C/C++ sources, hence no
+    library and no need to define <PROJECT>_SRCS
+  - if the list of foreign sources is explicitely set, in which case, there is
+    always a library, and there is also no need to define <PROJECT>_SRCS
 
 - The attribute Object_Dir is translated as variables <PROJECT>_OBJ_DIR and
   OBJ_DIR:
@@ -463,7 +468,7 @@ endif
 
 - The Attribute Main_Sources is translated as a variable ADA_SOURCES:
 
-  for Main_Sources use ("main1.adb, "main2.adb");
+  for Main use ("main1.adb, "main2.adb");
 
   ->
 
@@ -493,7 +498,7 @@ endif
   update the list of dependencies (if project is used as a sub project):
 
 ifeq ($(<PROJECT>_ROOT,True)
-   include path/to/Makefile.glide
+   include $(GNAT_ROOT)/share/Makefile.generic
 else
    DEPS_PROJECTS += $(<PROJECT>_BASE_DIR/<project>
 endif
