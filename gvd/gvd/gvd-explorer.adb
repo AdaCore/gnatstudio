@@ -45,6 +45,7 @@ with Odd_Intl;              use Odd_Intl;
 with Gtk.Menu_Item;         use Gtk.Menu_Item;
 with Gtk.Tooltips;          use Gtk.Tooltips;
 with Odd.Menus;             use Odd.Menus;
+with Odd.Source_Editors;    use Odd.Source_Editors;
 
 with Ada.Text_IO; use Ada.Text_IO;
 
@@ -249,11 +250,16 @@ package body Odd.Explorer is
            (Node_Get_Row (Row_Get_Parent (Node_Get_Row (Node))));
          Data := Row_Data_Pkg.Node_Get_Row_Data (Explorer, File_Node);
          Lang := Get_Language_From_File (Data.Extension);
-         Set_Current_Language (Code_Editor (Explorer.Code_Editor), Lang);
+         Set_Current_Language
+           (Code_Editor (Explorer.Code_Editor), Lang);
          Load_File (Code_Editor (Explorer.Code_Editor),
                     Find_File (Tab.Debugger, Data.Extension),
                     Set_Current => False);
-         Highlight_Word (Code_Editor (Explorer.Code_Editor),
+         if File_Node = Explorer.Current_File_Node then
+            Set_Line (Code_Editor (Explorer.Code_Editor),
+                      Explorer.Current_Line, Set_Current => True);
+         end if;
+         Highlight_Word (Get_Source (Code_Editor (Explorer.Code_Editor)),
                          Row_Data_Explorer.Node_Get_Row_Data (Explorer, Node));
 
       --  Else if a file was selected
@@ -262,7 +268,8 @@ package body Odd.Explorer is
          Data := Row_Data_Pkg.Node_Get_Row_Data (Explorer, Node);
          if Data.Is_File_Node then
             Lang := Get_Language_From_File (Data.Extension);
-            Set_Current_Language (Code_Editor (Explorer.Code_Editor), Lang);
+            Set_Current_Language
+              (Code_Editor (Explorer.Code_Editor), Lang);
             if Node = Explorer.Current_File_Node then
                Line := Explorer.Current_Line;
             end if;
