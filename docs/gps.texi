@@ -191,6 +191,7 @@ Customizing the Menu and Tool Bar
 Adding support for new tools
 * Defining supported languages::
 * Defining tool switches::
+* Executing external tools::
 * Full tool example::
 
 Environment
@@ -7100,6 +7101,7 @@ This tag accepts the following children, described in separate sections:
 @menu
 * Defining supported languages::
 * Defining tool switches::
+* Executing external tools::
 * Full tool example::
 @end menu
 
@@ -7344,6 +7346,140 @@ for "'gnaty3", one for "-gnatya",@dots{}.
 @end table
 
 @c --------------------------------------------------------------------------
+@node Executing external tools
+@subsection Executing external tools
+@c --------------------------------------------------------------------------
+
+@noindent
+The user has now specified the default switches he wants to use for the
+external tool. Spawning the external tool can be done in two ways:
+
+@itemize @bullet
+@item From a menu
+@item As a result of a key press
+@end itemize
+
+Both cases are described in an XML customization file, as described previously,
+and both are setup to execute what GPS calls an action, ie a set of commands
+defined by the @code{<action>} tag.
+
+This action tag, as described previously, executes one or more commands, which
+can either be internal GPS commands (written in any of the scripting language
+supported by GPS), or external commands provided by executables found on the
+PATH.
+
+The command line for each of these commands can either be hard-coded in the
+customization file, or be the result of previous commands executed as part of
+the same action. As GPS executes each command from the action in turn, it
+saves its output on a stack as needed. If a command line contains a special
+construct @code{%1}, @code{%2},@dots{} then these constructs will be replaced
+by the result of resp. the last command executed, the previous from last
+command, and so on.
+
+@subsubsection Querying switches from the project
+@cindex get_tool_switches_as_string
+@cindex get_tool_switches_as_list
+@cindex get_attribute_as_string
+@cindex get_attribute_as_list
+
+Some GPS shell commands can be used to query the default switches set by the
+user in the project file. These are @code{get_tool_switches_as_string},
+@code{get_tool_switches_as_list}, or, more generally,
+@code{get_attribute_as_string} and @code{get_attribute_as_list}. The first
+two require a unique parameter which is the name of the tool as specified in
+the @code{<tool>} tag. This name is case-sensitive. The last two commands are
+more general and can be used to query the status of any attribute from the
+project. See their description by typing the following in the GPS shell
+console window:
+
+@smallexample
+help Project.get_attribute_as_string
+help Project.get_attribute_as_list
+@end smallexample
+
+The following is a short example on how to query the switches for the tool
+"Find" from the project, @xref{Full tool example}. It first creates an object
+representing the current project, then passes this object as the first
+argument of the @code{get_tool_switches_as_string} command. The last external
+command is a simple output of these switches
+
+@smallexample
+<action name="Get switches for Find">
+  <shell>Project %p</shell>
+  <shell>Project.get_tool_switches_as_string %1 Find </shell>
+  <external>echo %1</external>
+</action>
+@end smallexample
+
+@ifset python
+The following example shows how something similar can be done from Python, in
+a simpler manner. For a change, this function queries the Ada compiler
+switches for the current project, and prints them out in the messages
+window. The
+
+@smallexample
+<action name="Query compiler switches">
+  <shell lang="python">GPS.Project("%p").get_attribute_as_list
+    (package="compiler", attribute="default_switches", index="ada")</shell>
+  <external> echo compiler switches= %1</external>
+</action>
+@end smallexample
+@end ifset
+
+
+@subsubsection Querying switches interactively
+@cindex input_dialog
+@cindex yes_no_dialog
+
+Another solution to query the arguments for the tool is to ask the user
+interactively.
+The scripting languages provides a number of solutions for these.
+
+They generally have their own native way to read input, possibly by creating
+a dialog.
+
+However, the simplest solution is to use the predefined GPS commands for this.
+These include two main functions/
+
+@table @code
+@item yes_no_dialog
+This function takes a single argument, which is a question to display. Two
+buttons are then available to the user, "Yes" and "No". The result of this
+function is the button the user has selected, as a boolean value.
+
+@item input_dialog
+This function is more general. It takes a minimum of two arguments, with no
+upper limit. The first argument is a message describing what input is expected
+from the user. The second, third and following arguments each correspond to
+an entry line in the dialog, to query one specific value (as a string). The
+result of this function is a list of strings, each corresponding to these
+arguments.
+
+From the GPS shell, it is only convenient to query one value at a time, since
+it doesn't have support for lists, and would return a concatenation of the
+values. However, this function is especially useful with other scripting
+languages.
+@end table
+
+
+
+@ifset python
+The following is a short example that queries the name of a directory and a
+file name, and displays each in the Messages window.
+
+@smallexample
+<action name="query file and dir">
+  <shell lang="python">list=GPS.input_dialog (
+     "Please enter directory and file name", "Directory", "File");
+     print ("Dir=" + list[0], "File=" + list[1])
+  </shell>
+</action>
+@end smallexample
+
+@end ifset
+
+
+@c --------------------------------------------------------------------------
 @node Full tool example
 @subsection Full tool example
 @c --------------------------------------------------------------------------
@@ -7353,7 +7489,12 @@ This section provides an example that defines a new tool. This is only a short
 example, since Ada, C and C++ support themselves are provided through such
 a file, available in the GPS installation.
 
-This example adds support for the "find" Unix utility, with a few switches.
+This example adds support for the "find" Unix utility, with a few switches. All
+these switches are editable through the project properties editor.
+
+It also add a new action and menu. The action associated with this menu gets
+the default switches from the currently selected project, and then ask the
+user interactively for the name of the file to search.
 
 @smallexample
 <tool name="Find" >
@@ -7368,6 +7509,20 @@ This example adds support for the "find" Unix utility, with a few switches.
     <check label="Print matching files" switch="-print" column="2" />
   </switches>
 </tool>
+
+<action name="action find">
+  <shell>Project %p</shell>
+  <shell>Project.get_tool_switches_as_string %1 Find </shell>
+  <shell>input_dialog "Name of file to search" Filename</shell>
+  <external>find . -name %1 %2</external>
+</action>
+
+<Submenu>
+  <Title>External</Title>
+  <menu action="action find">
+     <Title>Launch find</Title>
+  </menu>
+</Submenu>
 @end smallexample
 
 
@@ -8374,8 +8529,8 @@ See @url{gps-tutorial.html}.
 
    @item @i{prefix}/share/gps/customize
 Directory containing files with system-wide customizations
-(see @xref{Adding Support for New Languages} and
- @xref{Defining Text Aliases}).
+(see @pxref{Adding Support for New Languages} and
+ @pxref{Defining Text Aliases}).
 
    @item @i{prefix}/share/gps/gps-animation.gif
 @cindex gif
