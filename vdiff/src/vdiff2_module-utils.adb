@@ -39,7 +39,6 @@ with Gtkada.Dialogs;           use Gtkada.Dialogs;
 with Traces;                   use Traces;
 with Ada.Exceptions;           use Ada.Exceptions;
 with Ada.Unchecked_Deallocation;
-with Ada.Text_IO;              use Ada.Text_IO;
 with Commands;                 use Commands;
 
 
@@ -363,10 +362,6 @@ package body Vdiff2_Module.Utils is
             Current_Line_Source := new String'
               (Execute_GPS_Shell_Command
                  (Kernel, "get_chars", Args_Get_Chars_Dest));
-
-            Put_Line ("source : " & Current_Line_Source.all);
-            Put_Line ("dest   : " & Current_Line_Dest.all);
-
             Fine_Highlight_Line (Kernel,
                                  Current_Line_Source.all,
                                  Current_Line_Dest.all,
@@ -1080,6 +1075,7 @@ package body Vdiff2_Module.Utils is
       Move_Mark (Res, Item.List);
       Free_List (Res);
       Free (Res);
+      Trace (Me, "End Show_Differences3");
    exception
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
