@@ -173,9 +173,10 @@ begin
             --  calling corresponding handler for EVERY
             --  occurrence of that symbol in that line.
             Ref      : TO_Table := Parse_Pair (P.all);
-            Src_Line : String := File_Buffer.Get_Line (Ref.Position.Line);
+            Buffer   : SN.String_Access;
+            Slice    : Segment;
             PRef     : TO_Table;  -- Ref with exact position
-            P        : Natural := Src_Line'First; -- index to start from
+            P        : Integer;
             S        : String  :=
                   Ref.Buffer (Ref.Referred_Symbol_Name.First
                                     .. Ref.Referred_Symbol_Name.Last);
@@ -198,13 +199,15 @@ begin
             end if;
 
             if Our_Ref then
+               File_Buffer.Get_Line (Ref.Position.Line, Buffer, Slice);
+               P := Slice.First;
                loop
-                  Match (Pat, Src_Line (P .. Src_Line'Last), Matches);
+                  Match (Pat, Buffer.all (P .. Slice.Last), Matches);
                   exit when Matches (0) = No_Match or Ref.Symbol = Undef;
                   P := Matches (0).Last + 1;
                   PRef := Ref;
                   --  conversion to column
-                  PRef.Position.Column := Matches (0).First - Src_Line'First;
+                  PRef.Position.Column := Matches (0).First - Slice.First;
                   if (Fu_To_Handlers (Ref.Referred_Symbol) /= null) then
                      Fu_To_Handlers (Ref.Referred_Symbol)(PRef);
                   end if;

@@ -1,9 +1,8 @@
 with Ada.Text_IO; use Ada.Text_IO;
-with SN; use SN;
+with GNAT.OS_Lib; use GNAT.OS_Lib;
 
 package body File_Buffer is
 
-   MAX_FILE_SIZE        : constant Integer := 1000000;
    MAX_NUMBER_OF_LINES  : constant Integer := 100000;
    MAX_LINE_LENGTH      : constant Integer := Max_Src_Line_Length;
 
@@ -12,10 +11,11 @@ package body File_Buffer is
 
    F : File_Type;
 
-   File_Buffer_Arr : String (1 .. MAX_FILE_SIZE);
-   File_Buffer_Pos : Integer := 1;
-   Line_Positions : array (1 .. MAX_NUMBER_OF_LINES) of Integer;
-   Number_Of_Lines : Integer := 0;
+   File_Buffer        : SN.String_Access;
+   File_Buffer_Length : Integer := 0;
+   File_Buffer_Pos    : Integer := 1;
+   Line_Positions     : array (1 .. MAX_NUMBER_OF_LINES) of Integer;
+   Number_Of_Lines    : Integer := 0;
 
    procedure Translate_Tabs
      (Src      : in  String;
@@ -66,11 +66,24 @@ package body File_Buffer is
       L  : Natural;
       TL : Natural;
    begin
+      declare
+         FD : File_Descriptor := Invalid_FD;
+      begin
+         FD := Open_Read (File_Name, Fmode => Binary);
+         if FD /= Invalid_FD then
+            File_Buffer_Length := Integer (File_Length (FD));
+            --  reserve extra (50%) space
+            --  File_Buffer_Length :=
+            --  File_Buffer_Length + File_Buffer_Length / 2;
+            File_Buffer := new String (1 .. File_Buffer_Length);
+         end if;
+      end;
 
       File_Buffer_Pos := 1;
       Number_Of_Lines := 0;
 
       Open (F, In_File, File_Name);
+      --  exception is raised here if any IO error
 
       loop
          exit when End_Of_File (F);
@@ -78,7 +91,23 @@ package body File_Buffer is
          Translate_Tabs (S, L, TS, TL);
 
          Number_Of_Lines := Number_Of_Lines + 1;
-         File_Buffer_Arr (File_Buffer_Pos .. File_Buffer_Pos + TL - 1)
+
+         if File_Buffer_Pos + TL - 1 > File_Buffer_Length then
+            --  Buffer exeeded, allocate the new one
+            declare
+               New_Buf : SN.String_Access;
+               Old_Len : Integer := File_Buffer_Length;
+            begin
+               File_Buffer_Length := File_Buffer_Length * 2;
+               New_Buf := new String (1 .. File_Buffer_Length);
+               New_Buf.all (1 .. Old_Len) :=
+                  File_Buffer.all (1 .. Old_Len);
+               Free (File_Buffer);
+               File_Buffer := New_Buf;
+            end;
+         end if;
+
+         File_Buffer.all (File_Buffer_Pos .. File_Buffer_Pos + TL - 1)
            := TS (1 .. TL);
          Line_Positions (Number_Of_Lines) := File_Buffer_Pos;
          File_Buffer_Pos := File_Buffer_Pos + TL;
@@ -94,13 +123,18 @@ package body File_Buffer is
    -- Get_Line --
    --------------
 
-   function Get_Line (Line : Integer) return String is
+   procedure Get_Line
+     (Line   : in Integer;
+      Buffer : out SN.String_Access;
+      Slice  : out Segment) is
    begin
+      Buffer := File_Buffer;
       if (Line < 1) or (Line > Number_Of_Lines) then
-         return "";
+         Slice.First := 2;
+         Slice.Last  := 1;
       else
-         return File_Buffer_Arr
-            (Line_Positions (Line) .. (Line_Positions (Line + 1) - 1));
+         Slice.First := Line_Positions (Line);
+         Slice.Last  := Line_Positions (Line + 1) - 1;
       end if;
    end Get_Line;
 
@@ -110,6 +144,7 @@ package body File_Buffer is
 
    procedure Done is
    begin
+      Free (File_Buffer);
       File_Buffer_Pos := 1;
    end Done;
 
