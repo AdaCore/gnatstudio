@@ -1929,11 +1929,10 @@ package body Project_Viewers is
    --------------------
 
    function Widget_Factory
-     (Page : access Source_Editor_Record;
+     (Page         : access Source_Editor_Record;
       Project_View : Project_Id;
       Full_Project : String;
-      Kernel : access Kernel_Handle_Record'Class)
-      return Gtk_Widget
+      Kernel       : access Kernel_Handle_Record'Class) return Gtk_Widget
    is
       pragma Unreferenced (Page);
       Src_Dir_Selection : Directory_Tree.Directory_Selector;
@@ -1960,11 +1959,12 @@ package body Project_Viewers is
       else
          declare
             Initial_Dirs : Argument_List (1 .. 1);
+            Dir          : constant String := Dir_Name (Full_Project);
          begin
-            Initial_Dirs (1) := new String'(Dir_Name (Full_Project));
+            Initial_Dirs (1) := new String'(Dir);
             Gtk_New
               (Src_Dir_Selection,
-               Initial_Directory    => Get_Current_Dir,
+               Initial_Directory    => Dir,
                Multiple_Directories => True,
                Busy_Cursor_On       => Get_Window (Get_Main_Window (Kernel)),
                Initial_Selection    => Initial_Dirs);
@@ -1981,14 +1981,13 @@ package body Project_Viewers is
    --------------------
 
    function Project_Editor
-     (Page         : access Source_Editor_Record;
-      Project      : Project_Node_Id;
-      Project_View : Prj.Project_Id;
-      Kernel       : access Kernel_Handle_Record'Class;
-      Widget       : access Gtk_Widget_Record'Class;
+     (Page               : access Source_Editor_Record;
+      Project            : Project_Node_Id;
+      Project_View       : Prj.Project_Id;
+      Kernel             : access Kernel_Handle_Record'Class;
+      Widget             : access Gtk_Widget_Record'Class;
       Scenario_Variables : Prj_API.Project_Node_Array;
-      Ref_Project  : Project_Node_Id)
-      return Project_Node_Array
+      Ref_Project        : Project_Node_Id) return Project_Node_Array
    is
       pragma Unreferenced (Page);
       Dirs     : Argument_List := Get_Multiple_Selection
@@ -1998,6 +1997,7 @@ package body Project_Viewers is
       Tmp      : GNAT.OS_Lib.String_Access;
       Relative : constant Boolean :=
         Project_Uses_Relative_Paths (Kernel, Project);
+
    begin
       Assert (Me, Project = Ref_Project,
               "Invalid project when modifying main files");
@@ -2023,6 +2023,7 @@ package body Project_Viewers is
                   --  Initial_Dirs will always contained an unnormalized,
                   --  absolute path, therefore we need to trim it first before
                   --  comparing the old and new values.
+
                   if Relative then
                      Initial_Dirs (J) := new String'
                        (Relative_Path_Name (Str, Prj_Dir));
