@@ -219,9 +219,8 @@ package body Src_Editor_Buffer is
    --  event should cancel the current user action: focus switching
    --  to another window, cursor moved, etc.
 
-   procedure User_Edit_Hook (Buffer : access Source_Buffer_Record'Class);
-   --  Actions that must be executed whenever the user edits the buffer
-   --  manually, ie inserts or deletes a character.
+   procedure Cursor_Move_Hook (Buffer : access Source_Buffer_Record'Class);
+   --  Actions that must be executed whenever the cursor moves.
 
    procedure End_Action_Hook (Buffer : access Source_Buffer_Record'Class);
    --  Actions that must be executed whenever an action is ended.
@@ -262,16 +261,16 @@ package body Src_Editor_Buffer is
       return True;
    end Automatic_Save;
 
-   --------------------
-   -- User_Edit_Hook --
-   --------------------
+   ----------------------
+   -- Cursor_Move_Hook --
+   ----------------------
 
-   procedure User_Edit_Hook (Buffer : access Source_Buffer_Record'Class) is
+   procedure Cursor_Move_Hook (Buffer : access Source_Buffer_Record'Class) is
    begin
       --  Clear the completion data.
 
       Clear (Buffer.Completion);
-   end User_Edit_Hook;
+   end Cursor_Move_Hook;
 
    ------------------
    -- Destroy_Hook --
@@ -356,23 +355,25 @@ package body Src_Editor_Buffer is
 
       Buffer.Setting_Mark := True;
 
-      if Get_Object (Mark) /= Get_Object (Buffer.Insert_Mark) then
-         --  If the mark corresponds to a cursor position, set the stored
-         --  Insert_Mark accordingly.
+      declare
+         Mark_Name : constant String := Get_Name (Mark);
+      begin
+         if Mark_Name = "insert"
+           or else Mark_Name = "gtk_drag_target"
+         then
+            if Get_Object (Mark) /= Get_Object (Buffer.Insert_Mark) then
+               --  If the mark corresponds to a cursor position, set the stored
+               --  Insert_Mark accordingly.
 
-         declare
-            Mark_Name : constant String := Get_Name (Mark);
-         begin
-            if Mark_Name = "insert"
-              or else Mark_Name = "gtk_drag_target"
-            then
                Buffer.Insert_Mark := Mark;
             end if;
-         end;
 
-         Get_Screen_Position (Buffer, Line, Col);
-         Emit_New_Cursor_Position (Buffer, Line => Line, Column => Col);
-      end if;
+            Get_Screen_Position (Buffer, Line, Col);
+            Emit_New_Cursor_Position (Buffer, Line => Line, Column => Col);
+
+            Cursor_Move_Hook (Buffer);
+         end if;
+      end;
 
       Buffer.Setting_Mark := False;
 
@@ -503,8 +504,6 @@ package body Src_Editor_Buffer is
       if Buffer.Inserting then
          return;
       end if;
-
-      User_Edit_Hook (Buffer);
 
       Get_Text_Iter (Nth (Params, 1), Pos);
 
@@ -642,8 +641,6 @@ package body Src_Editor_Buffer is
 
       Get_Text_Iter (Nth (Params, 1), Start_Iter);
       Get_Text_Iter (Nth (Params, 2), End_Iter);
-
-      User_Edit_Hook (Buffer);
 
       if not Is_Null_Command (Command)
         and then Get_Mode (Command) /= Deletion
