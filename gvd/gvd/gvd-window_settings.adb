@@ -35,6 +35,9 @@ with GVD.Process;         use GVD.Process;
 with GVD.Preferences;     use GVD.Preferences;
 with GVD.Code_Editors;    use GVD.Code_Editors;
 
+with Ada.Strings;         use Ada.Strings;
+with Ada.Strings.Fixed;   use Ada.Strings.Fixed;
+
 package body GVD.Window_Settings is
 
    -----------------
@@ -181,47 +184,34 @@ package body GVD.Window_Settings is
             Process := Process_User_Data.Get (Page);
 
             declare
-               Image : String := Gint'Image (Page_Num);
+               Image : constant String := Trim (Gint'Image (Page_Num), Left);
             begin
-               Set (String_Gint
-                    ("Data_Height"
-                     & Image (Image'First + 1 .. Image'Last)),
+               Set (String_Gint ("Data_Height" & Image),
                     Gint (Get_Allocation_Height (Process.Data_Canvas)),
                     True);
-               Set (String_Gint
-                    ("Data_Width"
-                     & Image (Image'First + 1 .. Image'Last)),
+               Set (String_Gint ("Data_Width" & Image),
                     Gint (Get_Allocation_Width (Process.Data_Canvas)),
                     True);
 
                if not Top.TTY_Mode then
-                  Set (String_Gint
-                       ("Command_Height"
-                        & Image (Image'First + 1 .. Image'Last)),
+                  Set (String_Gint ("Command_Height" & Image),
                        Gint (Get_Allocation_Height
                              (Process.Command_Scrolledwindow)),
                        True);
-
-                  Set (String_Gint
-                       ("Editor_Height"
-                        & Image (Image'First + 1 .. Image'Last)),
+                  Set (String_Gint ("Editor_Height" & Image),
                        Gint (Get_Allocation_Height (Process.Editor_Vbox)),
                        True);
                end if;
 
                if Get_Active (Top.Call_Stack) then
-                  Set (String_Gint
-                       ("Stack_Width"
-                        & Image (Image'First + 1 .. Image'Last)),
+                  Set (String_Gint ("Stack_Width" & Image),
                        Gint (Get_Allocation_Width
                              (Process.Stack_Scrolledwindow)),
                        True);
                end if;
 
                if Get_Pref (Display_Explorer) then
-                  Set (String_Gint
-                       ("Explorer_Width"
-                        & Image (Image'First + 1 .. Image'Last)),
+                  Set (String_Gint ("Explorer_Width" & Image),
                        Gint (Get_Allocation_Width
                              (Get_Explorer_Scroll (Process.Editor_Text))),
                        True);
@@ -276,7 +266,7 @@ package body GVD.Window_Settings is
    procedure Set
      (Var : String_Gint; Value : Gint; Override : Boolean := False) is
    begin
-      Set (String (Var), Gint'Image (Value), Override);
+      Set (String (Var), Trim (Gint'Image (Value), Left), Override);
    end Set;
 
    ------------------------------
@@ -284,37 +274,21 @@ package body GVD.Window_Settings is
    ------------------------------
 
    function Get_Process_Tab_Geometry
-     (Page : in Gint) return Process_Tab_Geometry
+     (Page : Gint) return Process_Tab_Geometry
    is
       Result : Process_Tab_Geometry;
+      Image  : constant String := Trim (Gint'Image (Page), Left);
+
    begin
-      declare
-         Image : String := Gint'Image (Page);
-      begin
-         Result.Data_Height := Get_Setting
-           (String_Gint
-            ("Data_Height" & Image (Image'First + 1 .. Image'Last)));
-
-         Result.Data_Width := Get_Setting
-           (String_Gint
-            ("Data_Width" & Image (Image'First + 1 .. Image'Last)));
-
-         Result.Command_Height := Get_Setting
-           (String_Gint
-            ("Command_Height" & Image (Image'First + 1 .. Image'Last)));
-
-         Result.Editor_Height := Get_Setting
-           (String_Gint
-            ("Editor_Height" & Image (Image'First + 1 .. Image'Last)));
-
-         Result.Stack_Width := Get_Setting
-           (String_Gint
-            ("Stack_Width" & Image (Image'First + 1 .. Image'Last)));
-
-         Result.Explorer_Width := Get_Setting
-           (String_Gint
-            ("Explorer_Width" & Image (Image'First + 1 .. Image'Last)));
-      end;
+      Result.Data_Height := Get_Setting (String_Gint ("Data_Height" & Image));
+      Result.Data_Width := Get_Setting (String_Gint ("Data_Width" & Image));
+      Result.Command_Height := Get_Setting
+        (String_Gint ("Command_Height" & Image));
+      Result.Editor_Height := Get_Setting
+        (String_Gint ("Editor_Height" & Image));
+      Result.Stack_Width := Get_Setting (String_Gint ("Stack_Width" & Image));
+      Result.Explorer_Width := Get_Setting
+        (String_Gint ("Explorer_Width" & Image));
 
       --  Use default values if needed.
 
