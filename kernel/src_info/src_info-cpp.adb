@@ -853,14 +853,19 @@ package body Src_Info.CPP is
             while Current (I) /= Prj.No_Project loop
                declare
                   DB_Dir : constant String := Get_DB_Dir (Current (I));
-                  Pool   : constant Xref_Pool := Get_Xref_Pool
-                    (Iterator.Handler.Prj_HTable, DB_Dir);
                begin
-                  if Pool /= Empty_Xref_Pool then
-                     Save (Pool, DB_Dir & Browse.Xref_Pool_Filename);
+                  if DB_Dir /= "" then
+                     declare
+                        Pool   : constant Xref_Pool := Get_Xref_Pool
+                          (Iterator.Handler.Prj_HTable, DB_Dir);
+                     begin
+                        if Pool /= Empty_Xref_Pool then
+                           Save (Pool, DB_Dir & Browse.Xref_Pool_Filename);
+                        end if;
+                     end;
                   end if;
-                  Next (I);
                end;
+               Next (I);
             end loop;
          end;
       end if;
