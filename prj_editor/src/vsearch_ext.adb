@@ -163,7 +163,7 @@ package body Vsearch_Ext is
    function Find_Module (Name : String) return Search_Module_Data is
       List : Search_Modules_List.List := Search_Modules;
    begin
-      while List /= Null_List loop
+      while not Is_Empty (List) loop
          if Head (List).Label.all = Name then
             return Head (List);
          end if;
@@ -524,7 +524,7 @@ package body Vsearch_Ext is
          Widget_Callback.To_Marshaller (On_Options_Toggled'Access), Vsearch);
 
       --  Show the registered modules
-      while Current /= Null_List loop
+      while not Is_Empty (Current) loop
          Add_Unique_Combo_Entry
            (Vsearch.Context_Combo, Head (Current).Label.all);
          Current := Next (Current);
