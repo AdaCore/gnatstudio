@@ -310,13 +310,8 @@ package body Glide_Main_Window is
 
    function Execute
      (Command : access MDI_Child_Selection_Command;
-      Event   : Gdk_Event)
-      return Command_Return_Type is
+      Event   : Gdk_Event) return Command_Return_Type is
    begin
-      if Event = null then
-         Trace (Me, "MANU: Execute has no current event");
-      end if;
-
       Check_Interactive_Selection_Dialog
         (Get_MDI (Command.Kernel), Event,
          Move_To_Next => Command.Move_To_Next);
