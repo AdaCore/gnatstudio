@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2002                      --
+--                      Copyright (C) 2000-2003                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -895,6 +895,7 @@ package body Debugger.Gdb.Ada is
 
          --  In case the bounds were dynamic and we weren't able before to
          --  get the number of items correctly...
+
          if Bounds.Last < Bounds.First + Lengths (Dim) - 1 then
             Bounds.Last := Bounds.First + Lengths (Dim) - 1;
             Set_Dimensions (Result.all, Dim, Bounds);
@@ -954,10 +955,12 @@ package body Debugger.Gdb.Ada is
             when others =>
                Parse_Item;
          end case;
+
          exit when Dim = 0;
       end loop;
 
       --  Shrink the table of values.
+
       Shrink_Values (Result.all);
    end Parse_Array_Value;
 
