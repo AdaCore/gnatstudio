@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                       Copyright (C) 2003                          --
+--                     Copyright (C) 2003-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
@@ -39,6 +39,7 @@ package body Src_Editor_View.Commands is
      (Iter : in out Gtk_Text_Iter; Kind : Movement_Type; Step : Integer)
    is
       Ignored : Boolean;
+      Offset  : Gint;
    begin
       case Kind is
          when Word =>
@@ -53,6 +54,28 @@ package body Src_Editor_View.Commands is
                Forward_Sentence_Ends (Iter, Gint (Step), Ignored);
             else
                Backward_Sentence_Starts (Iter, -Gint (Step), Ignored);
+            end if;
+
+         when Char =>
+            if Step > 0 then
+               Forward_Cursor_Positions (Iter, Gint (Step), Ignored);
+            else
+               Backward_Cursor_Positions (Iter, -Gint (Step), Ignored);
+            end if;
+
+         when Line =>
+            if Step > 0 then
+               Offset := Get_Line_Offset (Iter);
+               Forward_Lines (Iter, Gint (Step), Ignored);
+               Forward_Cursor_Positions
+                 (Iter, Gint'Min
+                    (Offset, Get_Chars_In_Line (Iter) - 1), Ignored);
+            else
+               Offset := Get_Line_Offset (Iter);
+               Backward_Lines (Iter, -Gint (Step), Ignored);
+               Forward_Cursor_Positions
+                 (Iter, Gint'Min
+                    (Offset, Get_Chars_In_Line (Iter) - 1), Ignored);
             end if;
       end case;
    end Move_Iter;
