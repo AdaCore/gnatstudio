@@ -24,6 +24,7 @@ with String_List_Utils; use String_List_Utils;
 with Commands;
 with VFS;
 
+with Basic_Types;  use Basic_Types;
 with Glide_Kernel; use Glide_Kernel;
 
 package VCS is
@@ -45,6 +46,11 @@ package VCS is
    --  A value used to reference a VCS repository.
 
    type VCS_Access is access all VCS_Record'Class;
+
+   type VCS_Action is
+     (Status, Open, Update, Commit, History, Annotate, Add, Remove, Revert);
+
+   type Action_Array is array (VCS_Action) of String_Access;
 
    function Get_VCS_From_Id (Id : String) return VCS_Access;
    --  Browse through all VCS identifiers that are registered and return
@@ -102,6 +108,8 @@ package VCS is
       Needs_Update
       --  The file has been modified in the repository but not locally.
      );
+
+   type Status_Array is array (File_Status) of String_Access;
 
    type File_Status_Record is record
       --  Contains all the repository information concerning one file.
@@ -277,6 +285,11 @@ package VCS is
    --  other version
 
    function Get_Queue (VCS : access VCS_Record) return Commands.Command_Queue;
+
+   function Parse_Status
+     (Rep  : access VCS_Record;
+      Text : String) return File_Status_List.List;
+   --  Parse Text and return the list of status obtained.
 
 private
    type VCS_Record is abstract tagged limited record
