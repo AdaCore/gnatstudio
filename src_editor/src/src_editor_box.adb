@@ -332,7 +332,8 @@ package body Src_Editor_Box is
         (Context'Access,
          Look_For => Entity,
          Options  => (Case_Sensitive =>
-                        Is_Case_Sensitive (Get_Language (Source)),
+                        Get_Language_Context
+                          (Get_Language (Source)).Case_Sensitive,
                       Whole_Word     => True,
                       Regexp         => False));
 
