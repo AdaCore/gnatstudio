@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                   GVD - The GNU Visual Debugger                   --
+--                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2000-2003                      --
---                              ACT-Europe                           --
+--                      Copyright (C) 2000-2005                      --
+--                              AdaCore                              --
 --                                                                   --
--- GVD is free  software;  you can redistribute it and/or modify  it --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -29,6 +29,7 @@ with Pango.Layout;    use Pango.Layout;
 with Basic_Types;     use Basic_Types;
 with String_Utils;    use String_Utils;
 with GVD.Preferences; use GVD.Preferences;
+with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 
 package body Items.Simples is
 
@@ -488,7 +489,7 @@ package body Items.Simples is
       if Item.Valid and then Item.Value /= null then
          Set_Text (Context.Layout, Item.Value.all);
          Set_Font_Description
-           (Context.Layout, Get_Pref_Font (GVD_Prefs, Fixed_Style));
+           (Context.Layout, Get_Pref_Font (GVD_Prefs, Default_Style));
          Get_Pixel_Size (Context.Layout, Item.Width, Item.Height);
       else
          Get_Size (Context.Unknown_Pixmap, Item.Width, Item.Height);
@@ -536,7 +537,7 @@ package body Items.Simples is
       Line_Start := Item.Value'First;
 
       Set_Font_Description
-        (Context.Layout, Get_Pref_Font (GVD_Prefs, Fixed_Style));
+        (Context.Layout, Get_Pref_Font (GVD_Prefs, Default_Style));
 
       for J in Item.Value'Range loop
          if Item.Value (J) = ASCII.LF then
@@ -580,8 +581,7 @@ package body Items.Simples is
    ---------------
 
    procedure Set_Value (Item : in out Debugger_Output_Type; Value : String) is
-      S              : constant String :=
-        Do_Tab_Expansion (Value, Integer (Get_Tab_Size (GVD_Prefs)));
+      S              : constant String := Do_Tab_Expansion (Value, 8);
       V              : String_Access := Item.Value;
 
       Index_New      : Positive := S'First;
