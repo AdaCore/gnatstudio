@@ -86,8 +86,6 @@ GNAT_SOURCES= \
   scn.adb \
   scng.ads \
   scng.adb \
-  scn-nlit.adb \
-  scn-slit.adb \
   sdefault.ads \
   sinfo-cn.ads \
   sinfo-cn.adb \
