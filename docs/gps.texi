@@ -115,11 +115,11 @@ Editing Files
 * Editing Sources::
 * The File Selector::
 * Menu Items::
+* Contextual Menus for Editing Files::
 * Using an External Editor::
 * Using the Clipboard::
 * Saving Files::
 * Remote Files::
-* Contextual Menus for Editing Files::
 
 Source Navigation
 * Support for Cross-References::
@@ -1492,11 +1492,11 @@ location, and a second view is created at the new location.
 * Editing Sources::
 * The File Selector::
 * Menu Items::
+* Contextual Menus for Editing Files::
 * Using an External Editor::
 * Using the Clipboard::
 * Saving Files::
 * Remote Files::
-* Contextual Menus for Editing Files::
 @end menu
 
 @c --------------------------------------------------------------------------
@@ -2155,6 +2155,84 @@ keys. @xref{The Key Manager Dialog}.
 
 @end table
 
+@c --------------------------------------------------------------------
+@node Contextual Menus for Editing Files
+@section Contextual Menus for Editing Files
+@cindex case exceptions
+@c --------------------------------------------------------------------
+
+Whenever you ask for a contextual menu (using e.g. the third button
+on your mouse) on a source file, you will get access to a number of
+entries, displayed or not depending on the current context.
+
+Menu entries include the following categories:
+
+@table @b
+
+@item Source Navigation
+@xref{Contextual Menus for Source Navigation}.
+
+@item Edit with external editor
+@xref{Using an External Editor}.
+
+@item Dependencies
+@xref{Dependency Browser}.
+
+@item Entity browsing
+@xref{Entity Browser}.
+
+@item Project explorer
+@xref{The Project Explorer}.
+
+@item Version control
+@xref{The Version Control Contextual Menu}.
+
+@item Debugger
+@xref{Using the Source Editor when Debugging}.
+
+@item Case exceptions
+@xref{Handling of case exceptions}.
+
+@end table
+
+@subsection Handling of case exceptions
+@anchor{Handling of case exceptions}
+
+GPS keeps a set of case exceptions that is used by all
+case insensitive languages. When editing or reformatting a buffer for
+such a language the case exception dictionary will be checked
+first. If an exception is found for this word, it will be used;
+otherwise the specified casing for keywords or identifiers is used.
+
+Note that this feature is not activated for entities (keywords or
+identifiers) for which the casing is set to @code{Unchanged}. See
+@pxref{The Preferences Dialog}.
+
+A contextual menu named @b{Casing} has the following entries:
+
+@table @b
+@item Lower @i{entity}
+Set the selected entity in lower case.
+
+@item Upper @i{entity}
+Set the selected entity in upper case.
+
+@item Mixed @i{entity}
+Set the selected entity in mixed case (set the first letter and
+letters before an underscore in upper case, all other letters are set
+to lower case).
+
+@item Smart Mixed @i{entity}
+Set the selected entity in smart mixed case. Idem as above except that
+upper case letters are kept unchanged.
+
+@item Add exception for @i{entity}
+Add the current entity into the case exception dictionary.
+
+@item Remove exception for @i{entity}
+Remove the current entity from the case exception dictionary.
+@end table
+
 @c --------------------------------------------------------------------------
 @node Using an External Editor
 @section Using an External Editor
@@ -2448,56 +2526,6 @@ anonymous ftp connection.
 To use this protocol, substitute the word "ftp" to "protocol" in the example
 above.
 
-@end table
-
-@c --------------------------------------------------------------------
-@node Contextual Menus for Editing Files
-@section Contextual Menus for Editing Files
-@cindex case exceptions
-@c --------------------------------------------------------------------
-
-@c ??? Seems strange to have a section entitled '... for Editing Files'
-@c and only talk about casing.  Add more menus/xref here:
-@c @xref{Contextual Menus for Source Navigation}
-@c Edit with external editor
-@c Dependency Browser
-@c Entity Browser
-@c The Project Explorer
-@c The Version Control Contextual Menu
-
-GPS keeps a set of case exceptions that is used by all
-case insensitive languages. When editing or reformatting a buffer for
-such a language the case exception dictionary will be checked
-first. If an exception is found for this word, it will be used;
-otherwise the specified casing for keywords or identifiers is used.
-
-Note that this feature is not activated for entities (keywords or
-identifiers) for which the casing is set to @code{Unchanged}. See
-@pxref{The Preferences Dialog}.
-
-A contextual menu named @b{Casing} has the following entries:
-
-@table @b
-@item Lower ...
-Set the selected entity in lower case.
-
-@item Upper ...
-Set the selected entity in upper case.
-
-@item Mixed ...
-Set the selected entity in mixed case (set the first letter and
-letters before an underscore in upper case, all other letters are set
-to lower case).
-
-@item Smart Mixed ...
-Set the selected entity in smart mixed case. Idem as above except that
-upper case letters are kept unchanged.
-
-@item Add exception for ...
-Add the current entity into the case exception dictionary.
-
-@item Remove exception for ...
-Remove the current entity from the case exception dictionary.
 @end table
 
 @c --------------------------------------------------------------------
