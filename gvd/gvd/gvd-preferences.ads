@@ -76,7 +76,7 @@ package Odd.Preferences is
    --    Full: the variable is parsed and the tooltip will contain the
    --     equivalent of the canvas'items.
 
-   Tooltips_In_Source : constant Tooltips_In_Source_Type := Full;
+   Tooltips_In_Source : constant Tooltips_In_Source_Type := Simple;
    --  What kind of tooltips we want in the source window
 
    ---------------------
