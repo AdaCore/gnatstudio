@@ -134,18 +134,12 @@ package body GVD.Files is
             Buffer_Size => 0,
             Err_To_Out  => True);
 
+         --  Loop until the process has finished executing: cases are we didn't
+         --  find scp/rcp, or the process correctly finished.
          begin
-            Expect (Descriptor.all, Result, ".+", Timeout => -1);
-
-            if Result /= Expect_Timeout then
-               --  File was not found
-               Error_Msg := new String' (Expect_Out (Descriptor.all));
-               Delete_File (Tmp_File'Address, Should_Delete);
-               Close (Descriptor.all);
-               Free (Descriptor);
-               return;
-            end if;
-
+            loop
+               Expect (Descriptor.all, Result, "@@@@@@", Timeout => -1);
+            end loop;
          exception
             when Process_Died =>
                null;
