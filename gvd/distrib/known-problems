@@ -1,5 +1,12 @@
 Known Problems fixed in GVD 1.0.3
 
+- [8511-011] Parsing of Ada variant records with null part.
+  Problem:    Variant records that have at least one alternative with a null
+              part were incorrectly parsed (parsing error, nothing displayed in
+              the canvas).
+  Workaround: Use the tooltips in the source window to look at the value of
+              the variable
+
 Known Problems fixed in GVD 1.0.2
 
 - [8325-005] Interrupt button does not work under Windows
