@@ -142,19 +142,14 @@ package body VCS_View_API is
      (S : String_Id_Array) return String_List.List;
    --  Convenience function to make a string_list out of a String_Id_Array.
 
-   function Get_Current_Ref
-     (Kernel : Kernel_Handle)
-     return VCS_Access;
+   function Get_Current_Ref (Kernel : Kernel_Handle) return VCS_Access;
    --  Return the VCS reference corresponding to the current context in Kernel.
 
-   function Get_Current_Ref
-     (Project : Project_Id)
-     return VCS_Access;
+   function Get_Current_Ref (Project : Project_Id) return VCS_Access;
    --  Return the VCS reference registered in Project.
 
    function Get_Selected_Files
-     (Context : Selection_Context_Access)
-     return String_List.List;
+     (Context : Selection_Context_Access) return String_List.List;
    --  Return the list of files that are selected, according to Context.
 
    procedure Process_Dirs
@@ -268,9 +263,7 @@ package body VCS_View_API is
    -- Get_Current_Ref --
    ---------------------
 
-   function Get_Current_Ref
-     (Project : Project_Id)
-     return VCS_Access is
+   function Get_Current_Ref (Project : Project_Id) return VCS_Access is
    begin
       --  ??? maybe we could cache this information.
       return Get_VCS_From_Id (Get_Vcs_Kind (Project));
@@ -280,12 +273,8 @@ package body VCS_View_API is
    -- Get_Current_Ref --
    ---------------------
 
-   function Get_Current_Ref
-     (Kernel : Kernel_Handle)
-      return VCS_Access
-   is
-      C : constant Selection_Context_Access :=
-        Get_Current_Context (Kernel);
+   function Get_Current_Ref (Kernel : Kernel_Handle) return VCS_Access is
+      C : constant Selection_Context_Access := Get_Current_Context (Kernel);
    begin
       if C = null then
          return Get_Current_Ref (Get_Project_View (Kernel));
@@ -1223,8 +1212,7 @@ package body VCS_View_API is
    ---------------------
 
    function Get_Current_Ref
-     (Context : Selection_Context_Access)
-     return VCS_Access
+     (Context : Selection_Context_Access) return VCS_Access
    is
       File     : File_Selection_Context_Access;
       Explorer : VCS_View_Access;

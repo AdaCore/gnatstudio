@@ -112,8 +112,7 @@ package VCS_View_API is
    --  If the VCS Explorer is not displayed, display it.
 
    function Get_Current_Ref
-     (Context : Selection_Context_Access)
-     return VCS_Access;
+     (Context : Selection_Context_Access) return VCS_Access;
    --  Convenience function to get the current VCS system.
    --  If the creator of the current context is the VCS module, then
    --  the Ref will be obtained from the VCS Explorer, otherwise it
