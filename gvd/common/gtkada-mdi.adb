@@ -1744,7 +1744,6 @@ package body Gtkada.MDI is
       --  If all items are maximized, add Child to the notebook
       if MDI.Docks (None) /= null then
          Put_In_Notebook (MDI, None, C);
-         Hide (C.Maximize_Button);
       else
          Put (MDI.Layout, C, Gint16 (C.X), Gint16 (C.Y));
       end if;
@@ -2303,7 +2302,6 @@ package body Gtkada.MDI is
         (MDI.Docks (Side), Get_Nth_Page (MDI.Docks (Side), 1) /= null);
 
       Set_Page (MDI.Docks (Side), -1);
-      Show_All (MDI.Docks (Side));
 
       if Side = None then
          Child.State := Normal;
@@ -2349,11 +2347,12 @@ package body Gtkada.MDI is
    is
       MDI : MDI_Window := Child.MDI;
    begin
+      Show_All (Child);
       if Dock and then Child.Dock /= None then
          Float_Child (Child, False);
          Minimize_Child (Child, False);
          Put_In_Notebook (MDI, Child.Dock, Child);
-         Hide (Child.Maximize_Button);
+         Set_Sensitive (Child.Maximize_Button, False);
 
       elsif not Dock and then Child.State = Docked then
          if MDI.Docks (None) /= null then
@@ -2366,10 +2365,10 @@ package body Gtkada.MDI is
             Unref (Child);
          end if;
          Child.State := Normal;
-         Show (Child.Maximize_Button);
+
+         Set_Sensitive (Child.Maximize_Button, True);
       end if;
 
-      Show_All (Child);
       Activate_Child (Child);
       Update_Dock_Menu (Child);
    end Dock_Child;
