@@ -771,9 +771,8 @@ package body Docgen.Backend.Text is
          Unbounded_String'
            (Parse
               (Get_Template_File_Name (B, Kernel, Header_Kind),
-               (Assoc ("FIRST_FILE_LINE", First_File_Line),
-                Assoc ("LINE", Header_Line),
-                Assoc ("HEADER_PACKAGE", Header_Package)), Cache)));
+               T_Set,
+               Cache)));
    end Doc_Header;
 
    ------------------------
