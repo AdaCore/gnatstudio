@@ -89,11 +89,11 @@ ifeq ($(MAIN),ada)
 # Ada main
 link: $(LINKER) force
 	$(GNATMAKE) -b -l -P$(PROJECT_FILE) $(ADA_SOURCES) \
-		    -largs $(OBJ_FILES) $(LARGS) $(LDFLAGS)
+		 -largs $(OBJ_FILES) $(LARGS) $(LDFLAGS)
 
 build: $(OBJECTS) $(LINKER) force
 	$(GNATMAKE) -P$(PROJECT_FILE) $(ADA_SOURCES) \
-		    -largs $(OBJ_FILES) $(LARGS) $(LDFLAGS)
+		 -largs $(OBJ_FILES) $(LARGS) $(LDFLAGS)
 
 else
 # C/C++ main
@@ -166,13 +166,16 @@ endif
 %$(OBJ_EXT) : %$(CXX_EXT)
 	$(CXX) -c $(ALL_CXXFLAGS) $< -o $(OBJ_DIR)/$@
 
+ada :
+	$(GNATMAKE) -c -P$(PROJECT_FILE)
+
 %.adb : force
 	$(GNATMAKE) -c -P$(PROJECT_FILE) $@
 
 %.ads : force
 	$(GNATMAKE) -c -P$(PROJECT_FILE) $@
 
-.PHONY: clean all force
+.PHONY: clean all force ada
 
 clean:
 	$(RM) $(OBJ_DIR)/*$(OBJ_EXT)
