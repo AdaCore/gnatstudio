@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                          G L I D E  I I                           --
+--                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2001                         --
+--                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
--- GLIDE is free software; you can redistribute it and/or modify  it --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -13,21 +13,22 @@
 -- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
 -- General Public License for more details. You should have received --
--- a copy of the GNU General Public License along with this library; --
+-- a copy of the GNU General Public License along with this program; --
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Gtk; use Gtk;
-with Gtk.Widget;      use Gtk.Widget;
-with Gtk.Enums;       use Gtk.Enums;
-with Gtk.Box;         use Gtk.Box;
-with Gtk.Label;       use Gtk.Label;
-with Gtk.Hbutton_Box; use Gtk.Hbutton_Box;
+with Gtk;                 use Gtk;
+with Gtk.Widget;          use Gtk.Widget;
+with Gtk.Enums;           use Gtk.Enums;
+with Gtk.Box;             use Gtk.Box;
+with Gtk.Label;           use Gtk.Label;
+with Gtk.Hbutton_Box;     use Gtk.Hbutton_Box;
+with Gtk.Stock;           use Gtk.Stock;
 
-with Gtkada.Handlers; use Gtkada.Handlers;
+with Gtkada.Handlers;     use Gtkada.Handlers;
 with Callbacks_Aunit_Gui; use Callbacks_Aunit_Gui;
-with Glide_Intl; use Glide_Intl;
+with Glide_Intl;          use Glide_Intl;
 with Make_Test_Window_Pkg.Callbacks; use Make_Test_Window_Pkg.Callbacks;
 
 package body Make_Test_Window_Pkg is
@@ -56,7 +57,7 @@ package body Make_Test_Window_Pkg is
       Gtk.Window.Initialize (Make_Test_Window, Window_Toplevel);
       Set_Title (Make_Test_Window, -"New test unit");
       Set_Policy (Make_Test_Window, False, True, False);
-      Set_Position (Make_Test_Window, Win_Pos_None);
+      Set_Position (Make_Test_Window, Win_Pos_Mouse);
       Set_Modal (Make_Test_Window, False);
       Return_Callback.Connect
         (Make_Test_Window, "delete_event",
@@ -121,7 +122,7 @@ package body Make_Test_Window_Pkg is
       Set_Child_Ipadding (Hbuttonbox1, 7, 0);
       Pack_Start (Vbox0, Hbuttonbox1, True, True, 3);
 
-      Gtk_New (Make_Test_Window.Ok, -"OK");
+      Gtk_New_From_Stock (Make_Test_Window.Ok, Stock_Ok);
       Set_Relief (Make_Test_Window.Ok, Relief_Normal);
       Set_Flags (Make_Test_Window.Ok, Can_Default);
       Button_Callback.Connect
@@ -129,7 +130,7 @@ package body Make_Test_Window_Pkg is
          Button_Callback.To_Marshaller (On_Ok_Clicked'Access));
       Add (Hbuttonbox1, Make_Test_Window.Ok);
 
-      Gtk_New (Make_Test_Window.Cancel, -"Cancel");
+      Gtk_New_From_Stock (Make_Test_Window.Cancel, Stock_Cancel);
       Set_Relief (Make_Test_Window.Cancel, Relief_Normal);
       Set_Flags (Make_Test_Window.Cancel, Can_Default);
       Button_Callback.Connect

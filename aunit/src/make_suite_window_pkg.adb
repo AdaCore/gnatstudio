@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                          G L I D E  I I                           --
+--                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2001                         --
+--                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
--- GLIDE is free software; you can redistribute it and/or modify  it --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -13,7 +13,7 @@
 -- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
 -- General Public License for more details. You should have received --
--- a copy of the GNU General Public License along with this library; --
+-- a copy of the GNU General Public License along with this program; --
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
@@ -25,12 +25,13 @@ with Gtk.Clist;           use Gtk.Clist;
 with Gtk.Box;             use Gtk.Box;
 with Gtk.Label;           use Gtk.Label;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
+with Gtk.Stock;           use Gtk.Stock;
 with Gtk.Vbutton_Box;     use Gtk.Vbutton_Box;
 with Gtk.Hbutton_Box;     use Gtk.Hbutton_Box;
 
-with Gtkada.Handlers; use Gtkada.Handlers;
+with Gtkada.Handlers;     use Gtkada.Handlers;
 with Callbacks_Aunit_Gui; use Callbacks_Aunit_Gui;
-with Glide_Intl; use Glide_Intl;
+with Glide_Intl;          use Glide_Intl;
 with Make_Suite_Window_Pkg.Callbacks; use Make_Suite_Window_Pkg.Callbacks;
 
 package body Make_Suite_Window_Pkg is
@@ -66,7 +67,7 @@ package body Make_Suite_Window_Pkg is
       Gtk.Window.Initialize (Make_Suite_Window, Window_Toplevel);
       Set_Title (Make_Suite_Window, -"Make new suite");
       Set_Policy (Make_Suite_Window, False, True, False);
-      Set_Position (Make_Suite_Window, Win_Pos_None);
+      Set_Position (Make_Suite_Window, Win_Pos_Mouse);
       Set_Modal (Make_Suite_Window, False);
       Set_Default_Size (Make_Suite_Window, 500, 300);
 
@@ -138,7 +139,7 @@ package body Make_Suite_Window_Pkg is
       Set_Child_Ipadding (Vbuttonbox1, 7, 0);
       Pack_Start (Hbox2, Vbuttonbox1, False, True, 3);
 
-      Gtk_New (Make_Suite_Window.Add, -"Add...");
+      Gtk_New_From_Stock (Make_Suite_Window.Add, Stock_Add);
       Set_Relief (Make_Suite_Window.Add, Relief_Normal);
       Set_Flags (Make_Suite_Window.Add, Can_Default);
       Button_Callback.Connect
@@ -146,7 +147,7 @@ package body Make_Suite_Window_Pkg is
          Button_Callback.To_Marshaller (On_Add_Clicked'Access));
       Add (Vbuttonbox1, Make_Suite_Window.Add);
 
-      Gtk_New (Make_Suite_Window.Remove, -"Remove");
+      Gtk_New_From_Stock (Make_Suite_Window.Remove, Stock_Remove);
       Set_Relief (Make_Suite_Window.Remove, Relief_Normal);
       Set_Flags (Make_Suite_Window.Remove, Can_Default);
       Button_Callback.Connect
@@ -161,7 +162,7 @@ package body Make_Suite_Window_Pkg is
       Set_Child_Ipadding (Hbuttonbox1, 7, 0);
       Pack_Start (Vbox1, Hbuttonbox1, False, False, 3);
 
-      Gtk_New (Make_Suite_Window.Ok, -"OK");
+      Gtk_New_From_Stock (Make_Suite_Window.Ok, Stock_Ok);
       Set_Relief (Make_Suite_Window.Ok, Relief_Normal);
       Set_Flags (Make_Suite_Window.Ok, Can_Default);
       Button_Callback.Connect
@@ -169,7 +170,7 @@ package body Make_Suite_Window_Pkg is
          Button_Callback.To_Marshaller (On_Ok_Clicked'Access));
       Add (Hbuttonbox1, Make_Suite_Window.Ok);
 
-      Gtk_New (Make_Suite_Window.Cancel, -"Cancel");
+      Gtk_New_From_Stock (Make_Suite_Window.Cancel, Stock_Cancel);
       Set_Relief (Make_Suite_Window.Cancel, Relief_Normal);
       Set_Flags (Make_Suite_Window.Cancel, Can_Default);
       Button_Callback.Connect
