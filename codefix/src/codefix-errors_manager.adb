@@ -48,10 +48,6 @@ package body Codefix.Errors_Manager is
       Current      : out Error_Message)
    is
       pragma Unreferenced (Current_Text);
---        Current_Line        : String_Access;
---        Cursor_Line         : File_Cursor;
---        File_Pos, Logic_Pos : Natural;
-
    begin
       if This.Preview /= Invalid_Error_Message then
          Current := This.Preview;
@@ -60,38 +56,6 @@ package body Codefix.Errors_Manager is
       end if;
 
       Get_Direct_Message (This, Current);
-
---        if Current = Invalid_Error_Message then
---           return;
---        end if;
-
---        Cursor_Line := File_Cursor (Current);
---        Cursor_Line.Col := 1;
---
---        Assign (Current_Line, Get_Line (Current_Text, Cursor_Line));
---        Logic_Pos := 1;
---        File_Pos  := 1;
-
-      --  ??? It seems the following loop is not needed, since GNAT correctly
-      --  expands the ASCII.HTs when displaying an error message. I am not
-      --  removing the loop, however, since I'm not sure that the field
-      --  File_Cursor.Col should indeed be taking into accound TAB expansion.
-      --  I'm simply commenting out the active of the loop below for now.
-
---        loop
---           exit when Logic_Pos = Current.Col
---             or else File_Pos > Current_Line'Last;
---
---           --  if Current_Line (File_Pos) = ASCII.HT then
---           --     Logic_Pos := Logic_Pos + ((-Logic_Pos) mod Tab_Width);
---           --  end if;
---
---           Logic_Pos := Logic_Pos + 1;
---           File_Pos := File_Pos + 1;
---        end loop;
---
---        Current.Col := File_Pos;
---        Free (Current_Line);
    end Get_Message;
 
    -----------------
