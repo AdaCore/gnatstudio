@@ -1960,6 +1960,7 @@ package body GVD.Process is
       Next_Page (Notebook);
 
       Free (Debugger.Current_File);
+      Free (Debugger.Breakpoints);
 
       Close (Debugger.Debugger);
       Remove_Page (Notebook, Page_Num (Notebook, Debugger.Process_Mdi));
