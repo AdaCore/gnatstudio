@@ -449,6 +449,7 @@ package body GVD.Preferences is
                        & " GVD_EDITOR if it exists." & ASCII.LF
                        & "For vi, try using " & ASCII.LF
                        & " xterm -e /bin/vi %f +%l"),
+          Flags    => Source_Flags,
           Default => "glide %f -emacs +%l"));
       Register_Property
         (Prefs, Param_Spec (Default_External_Editor), Helpers);
@@ -473,6 +474,7 @@ package body GVD.Preferences is
         (Name     => XML_Prefix & "HTML-Browser",
          Nick     => -"HTML browser",
          Blurb    => -"Program used to browser HTML pages",
+         Flags    => Source_Flags,
          Default  => Default_HTML_Browser));
       Register_Property
         (Prefs, Param_Spec (Html_Browser), Helpers);
