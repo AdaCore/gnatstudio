@@ -64,11 +64,11 @@ with Src_Editor_Box;            use Src_Editor_Box;
 with String_List_Utils;         use String_List_Utils;
 with String_Utils;              use String_Utils;
 with Traces;                    use Traces;
-with Ada.Text_IO;               use Ada.Text_IO;
 with Prj_API;                   use Prj_API;
 with Src_Contexts;              use Src_Contexts;
 with Find_Utils;                use Find_Utils;
 with GUI_Utils;                 use GUI_Utils;
+with Histories;                 use Histories;
 
 with Generic_List;
 
@@ -77,6 +77,10 @@ package body Src_Editor_Module is
    Me : constant Debug_Handle := Create ("Src_Editor_Module");
 
    No_Handler : constant Handler_Id := (Null_Signal_Id, null);
+
+   Hist_Key : constant History_Key := "reopen_files";
+   --  Key to use in the kernel histories to store the most recently opened
+   --  files.
 
    type Mark_Identifier_Record is record
       Id     : Natural;
@@ -93,7 +97,6 @@ package body Src_Editor_Module is
 
    type Source_Editor_Module_Record is new Module_ID_Record with record
       Reopen_Menu_Item         : Gtk_Menu_Item;
-      List                     : String_List_Utils.String_List.List;
       Source_Lines_Revealed_Id : Handler_Id := No_Handler;
       File_Edited_Id           : Handler_Id := No_Handler;
       File_Closed_Id           : Handler_Id := No_Handler;
@@ -115,9 +118,6 @@ package body Src_Editor_Module is
       Editor : Source_Editor_Box;
    end record;
    type Source_Box is access all Source_Box_Record'Class;
-
-   Max_Number_Of_Reopens : constant Integer := 10;
-   --  ??? should we have a preference for that ?
 
    procedure Generate_Body_Cb (Data : Process_Data; Status : Integer);
    --  Callback called when gnatstub has completed.
@@ -220,7 +220,6 @@ package body Src_Editor_Module is
 
    procedure On_Reopen
      (Widget : access GObject_Record'Class;
-      Params : GValues;
       Kernel : Kernel_Handle);
    --  File->Reopen menu
 
@@ -1026,58 +1025,10 @@ package body Src_Editor_Module is
    ------------------------
 
    procedure Add_To_Reopen_Menu
-     (Kernel     : access Kernel_Handle_Record'Class;
-      File       : String)
-   is
-      use String_List_Utils.String_List;
-
-      Reopen_File_Name : constant String :=
-        Format_Pathname (Get_Home_Dir (Kernel) & "/recent_files");
-      Reopen_File      : File_Type;
-      Counter          : Integer := 0;
-      Node             : List_Node;
-      The_Data         : Source_Editor_Module :=
-        Source_Editor_Module (Src_Editor_Module_Id);
-
+     (Kernel : access Kernel_Handle_Record'Class; File : String) is
    begin
-      Node := First (The_Data.List);
-
-      while Node /= Null_Node loop
-         Counter := Counter + 1;
-
-         if Data (Node) = File then
-            Counter := -1;
-            exit;
-         end if;
-
-         Node := Next (Node);
-      end loop;
-
-      if Counter >= 0
-        and then Node = Null_Node
-      then
-         Prepend (The_Data.List, File);
-
-         if Counter >= Max_Number_Of_Reopens then
-            Node := Last (The_Data.List);
-            Node := Prev (The_Data.List, Node);
-            Remove_Nodes (The_Data.List, Node);
-         end if;
-
-         Open (Reopen_File, Out_File, Reopen_File_Name);
-         Node := First (The_Data.List);
-
-         while Node /= Null_Node loop
-            if Data (Node) /= "" then
-               Put_Line (Reopen_File, Data (Node));
-            end if;
-
-            Node := Next (Node);
-         end loop;
-
-         Close (Reopen_File);
-         Refresh_Reopen_Menu (Kernel);
-      end if;
+      Add_To_History (Kernel, Hist_Key, File);
+      Refresh_Reopen_Menu (Kernel);
    end Add_To_Reopen_Menu;
 
    ---------------
@@ -1386,10 +1337,8 @@ package body Src_Editor_Module is
 
    procedure On_Reopen
      (Widget : access GObject_Record'Class;
-      Params : GValues;
       Kernel : Kernel_Handle)
    is
-      pragma Unreferenced (Params);
       Item  : constant Gtk_Menu_Item := Gtk_Menu_Item (Widget);
       Label : constant Gtk_Label := Gtk_Label (Get_Child (Item));
    begin
@@ -2187,11 +2136,6 @@ package body Src_Editor_Module is
       Button           : Gtk_Button;
       Toolbar          : constant Gtk_Toolbar := Get_Toolbar (Kernel);
       Undo_Redo        : Undo_Redo_Information;
-      Reopen_File_Name : constant String :=
-        Format_Pathname (Get_Home_Dir (Kernel) & "/recent_files");
-      Reopen_File      : File_Type;
-      Buffer           : String (1 .. 1024);
-      Last             : Integer := 1;
       Selector         : Scope_Selector;
       Extra            : Files_Extra_Scope;
 
@@ -2224,28 +2168,6 @@ package body Src_Editor_Module is
                        Ref_Item   => -"Open From Project...",
                        Add_Before => False);
 
-      if not Is_Regular_File (Reopen_File_Name) then
-         declare
-            File : File_Descriptor;
-         begin
-            File := Create_New_File (Reopen_File_Name, Text);
-            Close (File);
-         end;
-      end if;
-
-      Open (Reopen_File, In_File, Reopen_File_Name);
-
-      while Last >= 0
-        and then not End_Of_File (Reopen_File)
-      loop
-         Get_Line (Reopen_File, Buffer, Last);
-
-         String_List_Utils.String_List.Append
-           (Source_Editor_Module (Src_Editor_Module_Id).List,
-            Buffer (1 .. Last));
-      end loop;
-
-      Close (Reopen_File);
       Refresh_Reopen_Menu (Kernel);
 
       Register_Menu (Kernel, File, -"_New", Stock_New, On_New_File'Access,
@@ -2529,11 +2451,10 @@ package body Src_Editor_Module is
    procedure Refresh_Reopen_Menu
      (Kernel : access Kernel_Handle_Record'Class)
    is
-      use String_List_Utils.String_List;
-
       The_Data    : constant Source_Editor_Module :=
         Source_Editor_Module (Src_Editor_Module_Id);
-      Node        : List_Node;
+      Value       : constant String_List_Access := Get_History
+        (Get_History (Kernel), Hist_Key);
       Reopen_Menu : Gtk_Menu;
       Mitem       : Gtk_Menu_Item;
    begin
@@ -2544,22 +2465,20 @@ package body Src_Editor_Module is
       Gtk_New (Reopen_Menu);
       Set_Submenu (The_Data.Reopen_Menu_Item, Gtk_Widget (Reopen_Menu));
 
-      Node := First (The_Data.List);
+      if Value /= null then
+         for V in Value'Range loop
+            Gtk_New (Mitem, Value (V).all);
+            Append (Reopen_Menu, Mitem);
 
-      while Node /= Null_Node loop
-         Gtk_New (Mitem, Data (Node));
-         Append (Reopen_Menu, Mitem);
+            Kernel_Callback.Connect
+              (Mitem,
+               "activate",
+               Kernel_Callback.To_Marshaller (On_Reopen'Access),
+               Kernel_Handle (Kernel));
+         end loop;
 
-         Kernel_Callback.Connect
-           (Mitem,
-            "activate",
-            On_Reopen'Access,
-            Kernel_Handle (Kernel));
-
-         Node := Next (Node);
-      end loop;
-
-      Show_All (Reopen_Menu);
+         Show_All (Reopen_Menu);
+      end if;
    end Refresh_Reopen_Menu;
 
    -------------
@@ -2568,8 +2487,6 @@ package body Src_Editor_Module is
 
    procedure Destroy (Id : in out Source_Editor_Module_Record) is
    begin
-      String_List_Utils.String_List.Free (Id.List);
-
       if Id.Open_File_Dialog /= null then
          Destroy (Id.Open_File_Dialog);
       end if;
