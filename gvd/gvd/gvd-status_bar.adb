@@ -88,7 +88,14 @@ package body GVD.Status_Bar is
       Pack_Start (Status, Status.Status, True, True, 0);
 
       Gtk_New (Status.Progress);
-      Pack_End (Status, Status.Progress, False, False);
+      Set_Text (Status.Progress, " ");
+      --  ??? This is a tweak : it seems that the gtk progress bar doesn't
+      --  have a size that is the same when it has text than when it does not,
+      --  but we do want to insert and remove text from this bar, without
+      --  the annoying change in size, so we make sure there is always some
+      --  text displayed.
+
+      Pack_End (Status, Status.Progress, False, False, 0);
 
       Status.Ids (Help)  := Get_Context_Id (Status.Status, "Help");
       Status.Ids (Error) := Get_Context_Id (Status.Status, "Error");
@@ -318,7 +325,13 @@ package body GVD.Status_Bar is
      (Status : access GVD_Status_Bar_Record;
       Text   : String) is
    begin
-      Set_Text (Status.Progress, Text);
+      --  ??? please see the ??? comment in Initialize.
+
+      if Text = "" then
+         Set_Text (Status.Progress, " ");
+      else
+         Set_Text (Status.Progress, Text);
+      end if;
    end Set_Progress_Text;
 
 end GVD.Status_Bar;
