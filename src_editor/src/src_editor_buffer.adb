@@ -3882,7 +3882,12 @@ package body Src_Editor_Buffer is
    begin
       if Buffer.Filename /= VFS.No_File then
          New_Timestamp := File_Time_Stamp (Buffer.Filename);
-         Result := New_Timestamp = Buffer.Timestamp;
+
+         --  If the file does not exist, we assume the editor is up-to-date.
+
+         Result := New_Timestamp = No_Time
+           or else New_Timestamp = Buffer.Timestamp;
+
          if Update then
             Buffer.Timestamp := New_Timestamp;
          end if;
