@@ -185,6 +185,13 @@ package VCS is
    --  Ideally, Get_Status should call VCS_View_Pkg.Display_File_Status
    --  in order to display the status in the explorer.
 
+   procedure Get_Status_Dirs
+     (Rep         : access VCS_Record;
+      Dirs        : String_List.List;
+      Clear_Logs  : Boolean := False;
+      Local       : Boolean := False) is abstract;
+   --  Same as above, but work on directories instead of files.
+
    function Local_Get_Status
      (Rep         : access VCS_Record;
       Filenames   : String_List.List) return File_Status_List.List is abstract;
@@ -326,6 +333,11 @@ package VCS is
    --  "up-to-date".
 
 private
+
+   Command_Line_Limit : constant Natural := 15;
+   --  The maximum number of files transmitted to a command.
+   --  This is used to avoid breaking the command-line limit on some systems.
+   --  ??? Maybe this should be a (hidden) preference.
 
    --------------------------
    -- Standard file status --
