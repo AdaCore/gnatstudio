@@ -22,6 +22,7 @@ with Gtk.Main;
 with GNAT.Expect;
 with GNAT.OS_Lib;
 with Ada.Unchecked_Deallocation;
+with Interactive_Consoles;
 
 package Glide_Kernel.Timeout is
 
@@ -52,22 +53,22 @@ package Glide_Kernel.Timeout is
    package Process_Timeout is new Gtk.Main.Timeout (Process_Data);
 
    procedure Launch_Process
-     (Kernel      : Kernel_Handle;
-      Command     : String;
-      Arguments   : GNAT.OS_Lib.Argument_List;
-      Title       : String := "";
-      Callback    : Output_Callback := null;
-      Exit_Cb     : Exit_Callback := null;
-      Success     : out Boolean;
-      Hide_Output : Boolean := False;
+     (Kernel        : Kernel_Handle;
+      Command       : String;
+      Arguments     : GNAT.OS_Lib.Argument_List;
+      Console       : Interactive_Consoles.Interactive_Console := null;
+      Callback      : Output_Callback := null;
+      Exit_Cb       : Exit_Callback := null;
+      Success       : out Boolean;
       Callback_Data : System.Address := System.Null_Address);
    --  Launch a given command with arguments.
    --  Set Success to True if the command could be spawned.
-   --  Title is a short title used for the MDI window. This window is used if
-   --  Hide_Output is set to False. If the default empty string value is used,
-   --  the output is sent to the GPS console.
    --  Callback will be called asynchronousely when some new data is
    --  available from the process.
    --  Exit_Callback will be called when the underlying process dies.
+   --
+   --  Output is sent to Console, if not null, or discarded otherwise.
+   --  Check Glide_Kernel.Console.Create_Interactive_Console and
+   --  Glide_Kernel.Console.Get_Console.
 
 end Glide_Kernel.Timeout;
