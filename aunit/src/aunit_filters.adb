@@ -296,7 +296,7 @@ package body Aunit_Filters is
         and then File (File'Last - 3 .. File'Last) = Project_File_Extension
       then
          State := Highlighted;
-         Text := new String'("PROJECT");
+         Text := new String'("Project");
       else
          State := Insensitive;
          Text := new String'("");
