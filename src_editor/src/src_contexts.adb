@@ -1182,10 +1182,34 @@ package body Src_Contexts is
       end if;
 
       --  Search for next replaceable entity.
+      --  It must be in a different location than where we are (so that for
+      --  instance we can replace the regexp "$" repeatedly
+      --  Replace_String. The following assumes the replace_string doesn't
+      --  contain any newline character
 
-      return Auxiliary_Search
-        (Context, Editor, Get_Language_Handler (Kernel),
-         Kernel, Search_Backward);
+      declare
+         BL : constant Natural := Context.Begin_Line;
+         BC : constant Natural := Context.Begin_Column + Replace_String'Length;
+         Replaced_Has_Null_Length : constant Boolean :=
+           Context.Begin_Line = Context.End_Line
+           and then Context.Begin_Column = Context.End_Column;
+         Result : Boolean;
+      begin
+         Result := Auxiliary_Search
+           (Context, Editor, Get_Language_Handler (Kernel),
+            Kernel, Search_Backward);
+
+         if Replaced_Has_Null_Length
+           and then Context.Begin_Line = BL
+           and then Context.Begin_Column = BC
+         then
+            Result := Auxiliary_Search
+              (Context, Editor, Get_Language_Handler (Kernel),
+               Kernel, Search_Backward);
+         end if;
+
+         return Result;
+      end;
 
    exception
       when E : others =>
