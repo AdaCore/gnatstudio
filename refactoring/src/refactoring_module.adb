@@ -108,5 +108,4 @@ package body Refactoring_Module is
         Contextual_Menu_Handler => Refactoring_Contextual'Access);
    end Register_Module;
 
-
 end Refactoring_Module;
