@@ -47,6 +47,7 @@ package Glib is
    -- The basic types defined by glib --
    -------------------------------------
 
+   subtype UTF8_String is String;
    type Gshort is new C.short;
    type Glong  is new C.long;
    type Gint   is new C.int;
