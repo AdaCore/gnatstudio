@@ -789,7 +789,7 @@ package body Builder_Module is
               Get_Pref (GVD_Prefs, Remote_Protocol),
             Remote_Host     =>
               Get_Attribute_Value
-                (Project_View, Remote_Host_Attribute, Ide_Package),
+              (Prj, Remote_Host_Attribute, Ide_Package),
             Command         => Cmd.all,
             Arguments       => Default_Builder_Switches &
               (Arg1'Unchecked_Access, Arg2'Unchecked_Access,
@@ -809,7 +809,7 @@ package body Builder_Module is
                  Get_Pref (GVD_Prefs, Remote_Protocol),
                Remote_Host     =>
                  Get_Attribute_Value
-                   (Project_View, Remote_Host_Attribute, Ide_Package),
+                 (Prj, Remote_Host_Attribute, Ide_Package),
                Command         => Cmd.all,
                Arguments       => Args.all &
                  (Prj_Arg'Unchecked_Access, Local_File'Unchecked_Access),
@@ -960,7 +960,7 @@ package body Builder_Module is
             Remote_Protocol  => Get_Pref (GVD_Prefs, Remote_Protocol),
             Remote_Host      =>
               Get_Attribute_Value
-                (Project, Remote_Host_Attribute, Ide_Package),
+                (Get_Project (Kernel), Remote_Host_Attribute, Ide_Package),
             Cmd_Line         => Cmd,
             Fd               => Fd);
          Id := Process_Timeout.Add
