@@ -21,6 +21,7 @@
 package body VCS.Unknown_VCS is
 
    Unknown_VCS_Reference : VCS_Access;
+   Unknown_VCS_Name      : constant String := "Unknown VCS";
 
    function Identify_VCS (S : String) return VCS_Access;
 
@@ -30,7 +31,9 @@ package body VCS.Unknown_VCS is
 
    function Identify_VCS (S : String) return VCS_Access is
    begin
-      if S = "" then
+      if S = ""
+        or else S = Unknown_VCS_Name
+      then
          return Unknown_VCS_Reference;
       else
          return null;
@@ -44,7 +47,7 @@ package body VCS.Unknown_VCS is
    function Name (Ref : access Unknown_VCS_Record) return String is
       pragma Unreferenced (Ref);
    begin
-      return "";
+      return Unknown_VCS_Name;
    end Name;
 
    ----------
@@ -238,11 +241,10 @@ package body VCS.Unknown_VCS is
    ---------------------
 
    procedure Register_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
-   is
-      pragma Unreferenced (Kernel);
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class) is
    begin
       Register_VCS_Identifier (Identify_VCS'Access);
+      Register_VCS (Kernel, Unknown_VCS_Name);
 
       Unknown_VCS_Reference := new Unknown_VCS_Record;
    end Register_Module;
