@@ -43,11 +43,6 @@ package Commands.External is
       Head         : String_List.List;
       Handler      : String_List_Handler);
 
-   procedure Add_Consequence_Action
-     (Item   : External_Command_Access;
-      Action : Command_Access);
-   --  Add an action that will be enqueued if Item executes successfully.
-
    function Execute (Command : access External_Command) return Boolean;
 
 private
@@ -65,8 +60,6 @@ private
       Handler : String_List_Handler;
 
       Output  : String_List.List;
-
-      Next_Commands : Command_Queues.List;
    end record;
 
 end Commands.External;
