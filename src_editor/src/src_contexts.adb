@@ -178,8 +178,10 @@ package body Src_Contexts is
       File_Name   : VFS.Virtual_File;
       Look_For    : String;
       Match       : Match_Result;
+      Give_Focus  : Boolean;
       Interactive : Boolean);
    --  Print the result of the search in the glide console
+   --  If Give_Focus is true, the focus will be given to the editor
 
    procedure Free (Result : in out Match_Result_Array_Access);
    --  Free Result and its components
@@ -601,6 +603,7 @@ package body Src_Contexts is
       File_Name   : Virtual_File;
       Look_For    : String;
       Match       : Match_Result;
+      Give_Focus  : Boolean;
       Interactive : Boolean)
    is
       function To_Positive (N : Natural) return Positive;
@@ -621,7 +624,8 @@ package body Src_Contexts is
            (Kernel,
             File_Name,
             To_Positive (Match.Line), To_Positive (Match.Column),
-            To_Positive (Match.End_Column));
+            To_Positive (Match.End_Column),
+            Focus => Give_Focus);
       else
          Insert_Result
            (Kernel,
@@ -1260,7 +1264,8 @@ package body Src_Contexts is
    function Search
      (Context         : access Current_File_Context;
       Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Search_Backward : Boolean) return Boolean
+      Search_Backward : Boolean;
+      Give_Focus      : Boolean) return Boolean
    is
       Child  : constant MDI_Child := Find_Current_Context_Editor (Kernel);
       Editor : Source_Editor_Box;
@@ -1271,7 +1276,9 @@ package body Src_Contexts is
       end if;
 
       Editor := Get_Source_Box_From_MDI (Child);
-      Raise_Child (Child, False);
+
+      Raise_Child (Child, Give_Focus);
+
       return Auxiliary_Search
         (Context, Editor,
          Get_Language_Handler (Kernel), Kernel, Search_Backward);
@@ -1291,7 +1298,8 @@ package body Src_Contexts is
      (Context         : access Current_File_Context;
       Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
       Replace_String  : String;
-      Search_Backward : Boolean) return Boolean
+      Search_Backward : Boolean;
+      Give_Focus      : Boolean) return Boolean
    is
       Child   : constant MDI_Child := Find_Current_Context_Editor (Kernel);
       Editor  : Source_Editor_Box;
@@ -1303,7 +1311,7 @@ package body Src_Contexts is
       end if;
 
       Editor := Get_Source_Box_From_MDI (Child);
-      Raise_Child (Child, False);
+      Raise_Child (Child, Give_Focus);
 
       --  Test whether the current context text contains the search string.
       --  Warning: we cannot use selection here, since apparently there can
@@ -1508,7 +1516,8 @@ package body Src_Contexts is
    function Search
      (Context         : access Abstract_Files_Context;
       Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Search_Backward : Boolean) return Boolean
+      Search_Backward : Boolean;
+      Give_Focus      : Boolean) return Boolean
    is
       pragma Unreferenced (Search_Backward);
       C : constant Abstract_Files_Context_Access :=
@@ -1525,6 +1534,7 @@ package body Src_Contexts is
             File_Name   => Current_File (C),
             Look_For    => Context_Look_For (C),
             Match       => Match,
+            Give_Focus  => Give_Focus,
             Interactive => not Context.All_Occurrences);
          return True;
       end Interactive_Callback;
@@ -1544,7 +1554,8 @@ package body Src_Contexts is
      (Context         : access Abstract_Files_Context;
       Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
       Replace_String  : String;
-      Search_Backward : Boolean) return Boolean
+      Search_Backward : Boolean;
+      Give_Focus      : Boolean) return Boolean
    is
       C           : constant Abstract_Files_Context_Access :=
         Abstract_Files_Context_Access (Context);
@@ -1597,7 +1608,8 @@ package body Src_Contexts is
          end if;
 
          --  Else search the next occurrence
-         return Search (C, Kernel, Search_Backward);
+         return Search (C, Kernel, Search_Backward,
+                        Give_Focus => Give_Focus);
 
       --  Non interactive case
       else

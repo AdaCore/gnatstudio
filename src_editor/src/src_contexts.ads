@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2001-2003                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2001-2005                       --
+--                            AdaCore                                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -231,14 +231,16 @@ private
    function Search
      (Context         : access Current_File_Context;
       Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Search_Backward : Boolean) return Boolean;
+      Search_Backward : Boolean;
+      Give_Focus      : Boolean) return Boolean;
    --  Search function for "Current File"
 
    function Replace
      (Context         : access Current_File_Context;
       Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
       Replace_String  : String;
-      Search_Backward : Boolean) return Boolean;
+      Search_Backward : Boolean;
+      Give_Focus      : Boolean) return Boolean;
    --  Replace function for "Current File"
 
    type Recognized_Lexical_States is
@@ -297,14 +299,16 @@ private
    function Search
      (Context         : access Abstract_Files_Context;
       Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Search_Backward : Boolean) return Boolean;
+      Search_Backward : Boolean;
+      Give_Focus      : Boolean) return Boolean;
    --  Search function for "Files From Project" and "Open_Files"
 
    function Replace
      (Context         : access Abstract_Files_Context;
       Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
       Replace_String  : String;
-      Search_Backward : Boolean) return Boolean;
+      Search_Backward : Boolean;
+      Give_Focus      : Boolean) return Boolean;
    --  Replace function for "Files From Project" and "Open_Files"
 
    type Files_Context is new Abstract_Files_Context with record
