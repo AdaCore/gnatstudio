@@ -1869,6 +1869,7 @@ package body Src_Info.Queries is
 
             --  If there is no more parent node in the tree, we still need to
             --  look for possible parent packages
+
             if Tmp2 = Null_Scope_Tree_Node then
                loop
                   T2 := Get_Parent_Package (Decl_File, T);
