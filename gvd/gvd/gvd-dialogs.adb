@@ -213,7 +213,7 @@ package body GVD.Dialogs is
       Len      : Natural;
       Process  : constant Process_Proxy_Access :=
         Get_Process (Debugger_Process_Tab (Debugger).Debugger);
-      List     : Gtk_CList;
+      List     : Gtk_Clist;
       Columns  : Gint;
 
    begin
