@@ -2,5 +2,6 @@ b~*
 *.dg
 read_ali
 read_scope_tree
+read_many_ali
 find_ref
 find_dep
