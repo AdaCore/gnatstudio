@@ -1548,7 +1548,6 @@ package body Python_Module is
       --  argument.
       if PyMethod_Check (Command) then
          if PyMethod_Self (Command) /= null then
-            Trace (Me, "MANU A bound method in Execute_Command");
             Size := PyTuple_Size (Python_Callback_Data (Args).Args);
             Args2 := PyTuple_New (Size => Size + 1);
             Py_INCREF (PyMethod_Self (Command));
@@ -1560,15 +1559,12 @@ package body Python_Module is
             end loop;
 
             Cmd := PyMethod_Function (Command);
-
          else
-            Trace (Me, "MANU An unbounded method");
             Args2 := Python_Callback_Data (Args).Args;
             Py_INCREF (Args2);
             Cmd := PyMethod_Function (Command);
          end if;
       else
-         Trace (Me, "MANU A subprogram");
          Cmd := Command;
          Args2 := Python_Callback_Data (Args).Args;
          Py_INCREF (Args2);
