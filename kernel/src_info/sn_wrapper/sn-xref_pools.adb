@@ -31,6 +31,10 @@ package body SN.Xref_Pools is
    --  1024 is the value of FILENAME_MAX in stdio.h (see
    --  GNAT.Directory_Operations)
 
+   function Generate_Filename
+     (Source_Filename : String; N : Integer) return String;
+   --  Generate xref file name based on specified source file name and counter
+
    --------------
    -- Str_Hash --
    --------------
@@ -45,10 +49,6 @@ package body SN.Xref_Pools is
 
    procedure Free is new Ada.Unchecked_Deallocation
      (String, String_Access);
-
-   ----------
-   -- Free --
-   ----------
 
    procedure Free is new Ada.Unchecked_Deallocation
      (Xref_Elmt_Record, Xref_Elmt_Ptr);
@@ -189,8 +189,10 @@ package body SN.Xref_Pools is
          --  pool was not changed, saving is not necessary
          return;
       end if;
+
       Create (FD, Out_File, Filename);
       STable.Get_First (Pool.HTable, E);
+
       while E /= Null_Xref_Elmt loop
          Put_Line (FD, E.Source_Filename.all);
          if E.Valid then
@@ -201,8 +203,10 @@ package body SN.Xref_Pools is
          Put_Line (FD, E.Xref_Filename.all);
          STable.Get_Next (Pool.HTable, E);
       end loop;
+
       Close (FD);
       Pool.Changed := False;
+
    exception
       when E : others =>
          begin
@@ -210,6 +214,7 @@ package body SN.Xref_Pools is
          exception
             when others => null;
          end;
+
          Raise_Exception (Xref_File_Error'Identity,
            Exception_Name (E) & ": " & Exception_Message (E));
    end Save;
@@ -221,10 +226,17 @@ package body SN.Xref_Pools is
    procedure Free (Pool : in out Xref_Pool) is
       procedure Internal_Free is new Ada.Unchecked_Deallocation
         (Xref_Pool_Record, Xref_Pool);
+
       E    : Xref_Elmt_Ptr;
       Next : Xref_Elmt_Ptr;
+
    begin
+      if Pool = null then
+         return;
+      end if;
+
       STable.Get_First (Pool.HTable, E);
+
       while E /= Null_Xref_Elmt loop
          STable.Get_Next (Pool.HTable, Next);
          STable.Remove (Pool.HTable, E.Source_Filename);
@@ -233,25 +245,19 @@ package body SN.Xref_Pools is
          Free (E);
          E := Next;
       end loop;
+
       Internal_Free (Pool);
    end Free;
-
-   function Generate_Filename
-     (Source_Filename : String;
-      N               : Integer) return String;
 
    -----------------------
    -- Generate_Filename --
    -----------------------
 
    function Generate_Filename
-     (Source_Filename : String;
-      N               : Integer) return String
+     (Source_Filename : String; N : Integer) return String
    is
       Name  : constant String := Base_Name (Source_Filename);
    begin
-      --  generates xref file name based on specified source file name and
-      --  counter
       if N = 0 then
          return Name & Xref_Suffix;
       else
