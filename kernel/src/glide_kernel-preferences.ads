@@ -177,6 +177,11 @@ package Glide_Kernel.Preferences is
    --  Whether tooltips should be displayed automatically in the source
    --  editor.
 
+   Periodic_Save : constant Glib.Properties.Property_Int :=
+     Register_Property ("Src_Editor:Periodic_Save", 60);
+   --  The period (in seconds) after which a source editor is automatically
+   --  saved. 0 if none.
+
    ---------------------
    -- External editor --
    ---------------------
