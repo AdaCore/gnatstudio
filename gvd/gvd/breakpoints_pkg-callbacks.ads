@@ -81,9 +81,4 @@ package Breakpoints_Pkg.Callbacks is
    procedure On_Ok_Bp_Clicked
      (Object : access Gtk_Widget_Record'Class);
 
-   procedure Update_Breakpoint_List
-     (Editor : access Breakpoints_Pkg.Breakpoints_Record'Class);
-   --  Update the list of breakpoints in the dialog.
-   --  The list is taken from the one stored in the current debugger session.
-
 end Breakpoints_Pkg.Callbacks;
