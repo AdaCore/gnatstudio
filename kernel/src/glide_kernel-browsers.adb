@@ -106,7 +106,6 @@ package body Glide_Kernel.Browsers is
         (Browser, Default_Browser_Width, Default_Browser_Height);
       Set_Title (Child, "<browser>");
 
-      --  Examine_Dependencies (Kernel, Browser, "glide_kernel.adb");
       return Child;
    end Open_Browser;
 
