@@ -2222,6 +2222,26 @@ package body Src_Info.Queries is
       end if;
    end Next;
 
+   ------------------------
+   -- Get_Total_Progress --
+   ------------------------
+
+   function Get_Total_Progress
+     (Iterator : Entity_Reference_Iterator) return Natural is
+   begin
+      return Iterator.Decl_Iter.Total_Progress;
+   end Get_Total_Progress;
+
+   --------------------------
+   -- Get_Current_Progress --
+   --------------------------
+
+   function Get_Current_Progress
+     (Iterator : Entity_Reference_Iterator) return Natural is
+   begin
+      return Iterator.Decl_Iter.Current_Progress;
+   end Get_Current_Progress;
+
    -------------------------
    -- Find_All_References --
    -------------------------
@@ -2713,6 +2733,7 @@ package body Src_Info.Queries is
          loop
             Iterator.Current_File := Iterator.Current_File + 1;
             exit when Iterator.Current_File > Iterator.Source_Files'Last;
+            Iterator.Current_Progress := Iterator.Current_Progress + 1;
             Iterator.Current_Decl := Check_File;
             if Iterator.Current_Decl /= null
               or else Iterator.LI = Iterator.Decl_LI
@@ -2764,6 +2785,7 @@ package body Src_Info.Queries is
       Decl_Project : Project_Type := Project;
       Iterator_Decl_Project : Project_Type := Project;
       Handler      : LI_Handler;
+      Tmp          : Projects.Imported_Project_Iterator;
 
    begin
       Trace (Me, "Find_Ancestor_Dependencies: "
@@ -2813,8 +2835,10 @@ package body Src_Info.Queries is
               "LI file not found for " & Base_Name (Source_Filename));
 
       if Single_Source_File then
-         Iterator.Importing := Start (Decl_Project, Recursive => False);
-         Iterator.Source_Files := new File_Array'(1 => Source_Filename);
+         Iterator.Importing      := Start (Decl_Project, Recursive => False);
+         Iterator.Source_Files   := new File_Array'(1 => Source_Filename);
+         Iterator.Total_Progress := Iterator.Source_Files'Length;
+
       else
          Iterator.Importing := Find_All_Projects_Importing
            (Root_Project, Iterator_Decl_Project,
@@ -2823,9 +2847,19 @@ package body Src_Info.Queries is
            (Current (Iterator.Importing),
             Recursive => False,
             Full_Path => True);
+
+         Iterator.Total_Progress := 0;
+         Tmp := Iterator.Importing;
+
+         while Current (Tmp) /= No_Project loop
+            Iterator.Total_Progress := Iterator.Total_Progress
+              + Direct_Sources_Count (Current (Tmp));
+            Next (Tmp);
+         end loop;
       end if;
 
       Iterator.Current_File := Iterator.Source_Files'First - 1;
+      Iterator.Current_Progress := 0;
 
       Next (Lang_Handler, Iterator, List);
 

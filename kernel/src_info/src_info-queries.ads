@@ -341,6 +341,14 @@ package Src_Info.Queries is
    procedure Destroy (Iterator : in out Entity_Reference_Iterator_Access);
    --  Free the memory occupied by the iterator.
 
+   function Get_Total_Progress
+     (Iterator : Entity_Reference_Iterator) return Natural;
+   function Get_Current_Progress
+     (Iterator : Entity_Reference_Iterator) return Natural;
+   --  The two functions above return a progress indicator, indicating the
+   --  current state of the search. This is based on the number of files, not
+   --  on the number of entities.
+
    ----------------------
    -- Local references --
    ----------------------
@@ -366,6 +374,7 @@ package Src_Info.Queries is
    --           Current_Entity := Get (Iter);
    --           exit when Current_Entity = No_Entity_Information;
    --        end if;
+   --        Next (Iter);
    --     end loop;
 
    function Get (Iterator : Local_Entities_Iterator) return Entity_Information;
@@ -921,6 +930,9 @@ private
 
       Include_Self : Boolean;
       --  Whether we should return the LI file for Decl_LI
+
+      Total_Progress   : Natural;
+      Current_Progress : Natural;
 
       LI : LI_File_Ptr;
 
