@@ -5,11 +5,10 @@ with Namet;               use Namet;
 with Prj;                 use Prj;
 with Prj.Com;
 with Src_Info.ALI_Maps;   use Src_Info.ALI_Maps;
+with Src_Info.Queries;    use Src_Info.Queries;
 with Src_Info.Prj_Utils;  use Src_Info.Prj_Utils;
 with String_Utils;        use String_Utils;
 with Types;               use Types;
-
---  with Text_IO; use Text_IO; --  ???
 
 package body Src_Info.ALI is
 
@@ -40,7 +39,7 @@ package body Src_Info.ALI is
 
    function Search_Dependency
      (ALI : ALIs_Record; Filename : File_Name_Type) return Sdep_Id;
-   --  Search all dependencies associated to the given ALI record, and
+   --  Search all dependencies associated with the given ALI record, and
    --  return the dependency which Source File is equal to Filename.
 
    function Get_ALI_Filename (Sig_Filename : File_Name_Type) return String;
@@ -1517,6 +1516,162 @@ package body Src_Info.ALI is
          --  ??? just trapping the ALI_Internal_Error ones, to avoid killing
          --  ??? the process just because we failed to read an ALI file.
    end Parse_ALI_File;
+
+   ------------------------------
+   -- ALI_Filename_From_Source --
+   ------------------------------
+
+   function ALI_Filename_From_Source
+     (Source_Filename : String;
+      Project         : Prj.Project_Id;
+      Source_Path     : String)
+      return String
+   is
+      Prj_Data       : Project_Data renames Prj.Projects.Table (Project);
+      Naming         : Naming_Data renames Prj_Data.Naming;
+
+      Source_Name_Id : File_Name_Type;
+      Body_Id        : Array_Element_Id;
+      Spec_Id        : Array_Element_Id;
+      Prj_Unit       : Prj.Com.Unit_Id;
+      Dir            : String_Access;
+      Filename       : Name_Id;
+   begin
+      --  Store the source filename in the Namet buffer and get its Name ID
+      Namet.Name_Buffer (1 .. Source_Filename'Length) := Source_Filename;
+      Namet.Name_Len := Source_Filename'Length;
+      Source_Name_Id := Namet.Name_Find;
+
+      --  First, check the body filename exception list
+      Body_Id := Search_Filename (Naming.Bodies, Source_Name_Id);
+      if Body_Id /= No_Array_Element then
+         return Get_ALI_Filename (Source_Name_Id);
+      end if;
+
+      --  Not found, check in the spec filename exception list
+      Spec_Id := Search_Filename (Naming.Specifications, Source_Name_Id);
+
+      --  If found, then we have the Unit_Name, check if we can find a
+      --  body for this unit.
+      if Spec_Id /= No_Array_Element then
+
+         --  Search the body exception list first
+         Body_Id := Search_Unit_Name (Naming.Bodies, Get_Unit_Name (Spec_Id));
+         if Body_Id /= No_Array_Element then
+            return Get_ALI_Filename (Get_Filename (Body_Id));
+         end if;
+
+         --  Not found, so search in the project units lists
+         Prj_Unit := Prj.Com.Units_Htable.Get (Get_Unit_Name (Spec_Id));
+         if Get_Body_Filename (Prj_Unit) /= No_Name then
+            return Get_ALI_Filename (Get_Body_Filename (Prj_Unit));
+         end if;
+
+         --  Still not found, seach in the source path
+         Filename := Get_Body_Filename (Get_Unit_Name (Spec_Id), Naming);
+         Dir := Locate_Regular_File (Get_Name_String (Filename), Source_Path);
+         if Dir /= null then
+            Free (Dir);
+            return Get_ALI_Filename (Filename);
+         end if;
+
+         --  Not found anywhere, so this is a spec only file
+         return Get_ALI_Filename (Get_Filename (Spec_Id));
+
+      end if; -- Spec_Id /= No_Array_Element
+
+      --  Is this a body, according to the naming scheme?
+      if Extension_Matches (Source_Name_Id, Naming.Body_Append) then
+         return Get_ALI_Filename (Source_Name_Id);
+      end if;
+
+      --  At this point, we know that we have a spec, so check the extension
+      --  to make sure that it matches the naming scheme. Otherwise, return
+      --  the empty string.
+      if not Extension_Matches
+          (Source_Name_Id, Naming.Specification_Append)
+      then
+         return "";
+      end if;
+
+      --  So at this point, we know that that we have a spec with the correct
+      --  extension. Let's see if we can find a body for this spec...
+
+      declare
+         Unit_Name : constant Name_Id :=
+           Get_Unit_Name (Source_Name_Id, Naming);
+      begin
+         if Unit_Name = No_Name then
+            --  ??? This is a bug, return the empty string for now, but
+            --  ??? we might need a better error reporting mechanism later.
+            return "";
+         end if;
+
+         --  Search the body exception list
+         Body_Id := Search_Filename (Naming.Bodies, Unit_Name);
+         if Body_Id /= No_Array_Element then
+            return Get_ALI_Filename (Get_Filename (Body_Id));
+         end if;
+
+         --  Not found, so check in the project units list
+         Prj_Unit := Prj.Com.Units_Htable.Get (Unit_Name);
+         if Get_Body_Filename (Prj_Unit) /= No_Name then
+            return Get_ALI_Filename (Get_Body_Filename (Prj_Unit));
+         end if;
+
+         --  Search the body filename in the source path
+         Filename := Get_Body_Filename (Unit_Name, Naming);
+         Dir := Locate_Regular_File (Get_Name_String (Filename), Source_Path);
+         if Dir /= null then
+            Free (Dir);
+            return Get_ALI_Filename (Filename);
+         end if;
+
+         --  The body was not found anywhere, so this is a spec only file
+         return Get_ALI_Filename (Source_Name_Id);
+      end;
+   end ALI_Filename_From_Source;
+
+   ------------------------
+   -- Locate_From_Source --
+   ------------------------
+
+   procedure Locate_From_Source
+     (List              : in out LI_File_List;
+      Source_Filename   : String;
+      Project           : Prj.Project_Id;
+      Extra_Source_Path : String;
+      Extra_Object_Path : String;
+      File              : out LI_File_Ptr)
+   is
+      Lib_Info : LI_File_Ptr;
+      Success  : Boolean;
+   begin
+      --  First, look into the existing list
+      Lib_Info := Locate_From_Source (List, Source_Filename);
+
+      --  If not found, find the ALI file and parse it.
+      if Lib_Info = No_LI_File then
+         declare
+            Ali_File : constant String := ALI_Filename_From_Source
+              (Source_Filename, Project, Extra_Source_Path);
+            Full_File : constant String := Find_Object_File
+              (Project, Ali_File, Extra_Object_Path);
+         begin
+            Parse_ALI_File (Full_File, Project,
+                            Extra_Source_Path,
+                            List,
+                            Lib_Info,
+                            Success);
+
+            if not Success then
+               Lib_Info := No_LI_File;
+            end if;
+         end;
+      end if;
+
+      File := Lib_Info;
+   end Locate_From_Source;
 
 end Src_Info.ALI;
 
