@@ -476,7 +476,7 @@ package body Debugger.Gdb is
       Free (Debugger.Target_Command);
 
       if Executable /= "" then
-         Debugger.Executable := new String' (Executable);
+         Debugger.Executable := new String' (To_Unix_Pathname (Executable));
       end if;
 
       if Remote_Target = "" then
