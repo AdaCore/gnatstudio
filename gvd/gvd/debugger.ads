@@ -397,7 +397,9 @@ package Debugger is
    --  See above for details on Display.
    --  GDB_COMMAND: "cont"
 
-   procedure Interrupt (Debugger : access Debugger_Root) is abstract;
+   procedure Interrupt
+     (Debugger : access Debugger_Root;
+      Wait_For_Prompt : Boolean := False) is abstract;
    --  Interrupt the debugger, or the debuggee if it is running.
 
    function Is_Execution_Command

@@ -145,7 +145,9 @@ package Debugger.Gdb is
      (Debugger : access Gdb_Debugger;
       Mode     : Odd.Types.Command_Type := Odd.Types.Hidden);
 
-   procedure Interrupt (Debugger : access Gdb_Debugger);
+   procedure Interrupt
+     (Debugger : access Gdb_Debugger;
+      Wait_For_Prompt : Boolean := False);
 
    function Is_Execution_Command
      (Debugger : access Gdb_Debugger;

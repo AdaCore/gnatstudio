@@ -366,9 +366,11 @@ package body Debugger.Jdb is
    -- Interrupt --
    ---------------
 
-   procedure Interrupt (Debugger : access Jdb_Debugger) is
+   procedure Interrupt
+     (Debugger : access Jdb_Debugger;
+      Wait_For_Prompt : Boolean := False) is
    begin
-      Send (Debugger, "suspend");
+      Send (Debugger, "suspend", Wait_For_Prompt => Wait_For_Prompt);
    end Interrupt;
 
    ------------------------

@@ -114,7 +114,9 @@ package Debugger.Jdb is
      (Debugger : access Jdb_Debugger;
       Mode     : Odd.Types.Command_Type := Odd.Types.Hidden);
 
-   procedure Interrupt (Debugger : access Jdb_Debugger);
+   procedure Interrupt
+     (Debugger : access Jdb_Debugger;
+      Wait_For_Prompt : Boolean := False);
 
    function Is_Execution_Command
      (Debugger : access Jdb_Debugger;
