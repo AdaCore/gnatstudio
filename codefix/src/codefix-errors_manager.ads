@@ -18,7 +18,7 @@ package Codefix.Errors_Manager is
      (This    : in out Errors_Interface;
       Current : out Error_Message)
    is abstract;
-   --  Get a message without any modification of cols or lines numbers
+   --  Get a message without any modification of cols or lines numbers.
 
    procedure Get_Message
      (This         : in out Errors_Interface'Class;
@@ -36,29 +36,34 @@ package Codefix.Errors_Manager is
    ----------------------------------------------------------------------------
 
    type Correction_Manager is private;
-   --  This object
 
    type Error_Id is private;
 
-   --  Ce serait bien de donner + petit que le correction manager
    type Error_Callback is access procedure
      (Message      : Error_Message;
       Id           : Error_Id;
       Solutions    : Solution_List;
       Current_Text : Text_Navigator_Abstr'Class;
       Corrector    : in out Correction_Manager);
+   --  Type of procedure that can be called when a correctible error message
+   --  is found.
 
    procedure Analyze
      (This        : in out Correction_Manager;
       Source_Text : Text_Navigator_Abstr'Class;
       Errors_List : in out Errors_Interface'Class;
       Callback    : Error_Callback := null);
+   --  Cover the whole list of errors, and add then into This. If Callback
+   --  is not null, then each time a correctible error is found the function
+   --  is call.
 
    procedure Validate
      (This         : in out Correction_Manager;
       Error        : Error_Id;
       Choice       : Natural;
       Later_Update : Boolean := True);
+   --  Specify a choice between the differents correction'possibilities
+   --  of a message;
 
    subtype Alternative_Choice is Natural range 0 .. 2;
 
@@ -81,8 +86,12 @@ package Codefix.Errors_Manager is
      (Solutions        : in out Solution_List;
       Callback         : Ambiguous_Callback;
       No_More_Problems : out Boolean);
+   --  Call the Callback when 2 solutions concerns the same line. If, at the
+   --  end, there are no more ambiguities then No_More_Problems is Ture.
+   --  Otherwise, it is false.
 
    procedure Free (This : in out Correction_Manager);
+   --  Free the memory associated to a Correction_Manager.
 
 private
 
