@@ -320,6 +320,13 @@ package body GNAT.Expect is
                         N := Read (Descriptors (J).Output_Fd, Buffer'Address,
                                    Buffer'Length);
 
+                        --  If N is null it means that the external process
+                        --  died.
+
+                        if N = 0 then
+                           raise Process_Died;
+                        end if;
+
                         --  If there is no limit to the buffer size
 
                         if Descriptors (J).Buffer_Size = 0 then
