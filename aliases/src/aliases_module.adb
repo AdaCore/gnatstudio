@@ -2138,7 +2138,7 @@ package body Aliases_Module is
       P      : Param_Access;
       Old    : Alias_Record;
    begin
-      if Node.Tag.all = "alias" then
+      if Node /= null and then Node.Tag.all = "alias" then
          declare
             Name : constant String := Get_Attribute (Node, "name");
             Must_Reindent : constant Boolean :=
