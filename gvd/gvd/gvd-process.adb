@@ -51,6 +51,7 @@ with Display_Items;   use Display_Items;
 with Debugger.Gdb;    use Debugger.Gdb;
 with Debugger.Jdb;    use Debugger.Jdb;
 with Odd.Strings;     use Odd.Strings;
+with Odd.Types;       use Odd.Types;
 with Process_Proxies; use Process_Proxies;
 with Odd.Code_Editors; use Odd.Code_Editors;
 with GNAT.Regpat;     use GNAT.Regpat;
@@ -294,6 +295,8 @@ package body Odd.Process is
          Load_File
            (Process.Editor_Text,
             Str (File_First .. File_Last));
+         Update_Breakpoints (Process);
+
          Pop_Internal_Command_Status (Get_Process (Process.Debugger));
       end if;
 
@@ -379,6 +382,9 @@ package body Odd.Process is
       Canvas_Handler.Connect
         (Process.Data_Canvas, "background_click",
          Canvas_Handler.To_Marshaller (On_Background_Click'Access));
+      Widget_Callback.Connect
+        (Gtk_Widget (Process), "process_stopped",
+         Widget_Callback.To_Marshaller (Update_Breakpoints'Access));
 
       --  Set up the command window for the contextual menus
 
@@ -449,7 +455,7 @@ package body Odd.Process is
       --  filter.
 
       Configure (Process.Editor_Text, Editor_Font, Editor_Font_Size,
-                 dot_xpm, arrow_xpm,
+                 dot_xpm, arrow_xpm, stop_xpm,
                  Comments_Color    => Comments_Color,
                  Strings_Color     => Strings_Color,
                  Keywords_Color    => Keywords_Color);
@@ -631,5 +637,21 @@ package body Odd.Process is
          Process.Registered_Dialog := null;
       end if;
    end Unregister_Dialog;
+
+   ------------------------
+   -- Update_Breakpoints --
+   ------------------------
+
+   procedure Update_Breakpoints
+     (Object : access Gtk.Widget.Gtk_Widget_Record'Class)
+   is
+      Process : Debugger_Process_Tab := Debugger_Process_Tab (Object);
+   begin
+      Free (Process.Breakpoints);
+      Process.Breakpoints := new Breakpoint_Array'
+        (List_Breakpoints (Process.Debugger));
+
+      Update_Breakpoints (Process.Editor_Text, Process.Breakpoints.all);
+   end Update_Breakpoints;
 
 end Odd.Process;

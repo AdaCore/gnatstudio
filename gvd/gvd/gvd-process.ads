@@ -31,6 +31,7 @@ with Gtk.Object; use Gtk.Object;
 with Gtk.Dialog;
 with Gtk.Handlers;
 with Gtk.Window;
+with Gtk.Widget;
 with Gtkada.Canvas;
 
 with Debugger; use Debugger;
@@ -39,6 +40,7 @@ with Process_Tab_Pkg;
 with Generic_Values;
 with Odd.Code_Editors;
 with Odd.Histories;
+with Odd.Types;
 
 package Odd.Process is
 
@@ -126,6 +128,9 @@ package Odd.Process is
       --  Currently displayed dialog that should be deleted on next user input.
       --  This is mostly used for question dialogs, since the user can also
       --  type its input directly in the command window.
+
+      Breakpoints : Odd.Types.Breakpoint_Array_Ptr;
+      --  The list of breakpoints and watchpoints currently defined.
 
    end record;
    type Debugger_Process_Tab is access all Debugger_Process_Tab_Record'Class;
@@ -229,5 +234,9 @@ package Odd.Process is
    procedure Unregister_Dialog (Process : access Debugger_Process_Tab_Record);
    --  Destroy any registered dialog.
    --  Nothing happens if there is no such dialog.
+
+   procedure Update_Breakpoints
+     (Object : access Gtk.Widget.Gtk_Widget_Record'Class);
+   --  Update the list of breakpoints every time the process is stopped.
 
 end Odd.Process;
