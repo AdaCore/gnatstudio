@@ -2,7 +2,7 @@
 --                               G P S                               --
 --                                                                   --
 --                        Copyright (C) 2001-2004                    --
---                            ACT-Europe                             --
+--                             ACT-Europe                            --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -319,8 +319,8 @@ package body Vdiff2_Module.Callback is
          end if;
 
          declare
-            Base     : constant String := Base_Name (D.New_File);
-            Ref_F    : constant Virtual_File :=
+            Base  : constant String := Base_Name (D.New_File);
+            Ref_F : constant Virtual_File :=
               Create (Full_Filename => Get_Tmp_Dir & "ref$" & Base);
          begin
             return Visual_Patch (Ref_F, D.New_File, D.Diff_File, True, Ref_F);
@@ -332,8 +332,8 @@ package body Vdiff2_Module.Callback is
          end if;
 
          declare
-            Base     : constant String := Base_Name (D.Orig_File);
-            Ref_F    : constant Virtual_File := Create
+            Base  : constant String := Base_Name (D.Orig_File);
+            Ref_F : constant Virtual_File := Create
               (Full_Filename => Get_Tmp_Dir & "ref$" & Base);
          begin
             return Visual_Patch
@@ -343,8 +343,6 @@ package body Vdiff2_Module.Callback is
       else
          return Visual_Patch (D.Orig_File, D.New_File, D.Diff_File);
       end if;
-
-      return False;
    end Diff_Hook;
 
    --------------------
