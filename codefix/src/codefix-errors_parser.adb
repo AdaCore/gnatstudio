@@ -1,31 +1,9 @@
 with Ada.Text_IO; use Ada.Text_IO;
 
 with GNAT.Regpat; use GNAT.Regpat;
+with Language; use Language;
 
 package body Codefix.Errors_Parser is
-
-   -----------------
-   -- Get_Extract --
-   -----------------
-
-   function Get_Extract
-     (This     : Solution_List;
-      Position : Positive)
-     return Extract is
-
-      Current_Node : Extract_List.List_Node;
-
-   begin
-
-      Current_Node := First (This);
-
-      for J in 1 .. Position - 1 loop
-         Current_Node := Next (Current_Node);
-      end loop;
-
-      return Data (Current_Node);
-
-   end Get_Extract;
 
    ---------------------
    -- Set_Error_State --
@@ -52,7 +30,7 @@ package body Codefix.Errors_Parser is
    -------------------
 
    function Get_Solutions
-     (Current_Text : Text_Interface'Class;
+     (Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message) return Solution_List is
 
       Current_Node : Parser_List.List_Node;
@@ -133,7 +111,7 @@ package body Codefix.Errors_Parser is
 
    procedure Correct
      (This         : Error_Parser'Class;
-      Current_Text : Text_Interface'Class;
+      Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Success      : out Boolean) is
@@ -185,7 +163,7 @@ package body Codefix.Errors_Parser is
 
    procedure Correct
      (This         : Agregate_Misspelling;
-      Current_Text : Text_Interface'Class;
+      Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array) is
@@ -210,7 +188,7 @@ package body Codefix.Errors_Parser is
 
    procedure Correct
      (This         : Ligth_Misspelling;
-      Current_Text : Text_Interface'Class;
+      Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array) is
@@ -235,7 +213,7 @@ package body Codefix.Errors_Parser is
 
    procedure Correct
      (This         : Double_Misspelling;
-      Current_Text : Text_Interface'Class;
+      Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array) is
@@ -266,7 +244,7 @@ package body Codefix.Errors_Parser is
 
    procedure Correct
      (This         : Goto_Misspelling;
-      Current_Text : Text_Interface'Class;
+      Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array) is
@@ -290,11 +268,11 @@ package body Codefix.Errors_Parser is
    end Initialize;
 
    procedure Correct
-    (This         : Sth_Should_Be_Sth;
-     Current_Text : Text_Interface'Class;
-     Message      : Error_Message;
-     Solutions    : out Solution_List;
-     Matches      : Match_Array) is
+     (This         : Sth_Should_Be_Sth;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message      : Error_Message;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array) is
 
    begin
       Append (Solutions,
@@ -318,7 +296,7 @@ package body Codefix.Errors_Parser is
 
    procedure Correct
      (This         : Should_Be_Semicolon;
-      Current_Text : Text_Interface'Class;
+      Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array) is
@@ -343,7 +321,7 @@ package body Codefix.Errors_Parser is
 
    procedure Correct
      (This         : And_Meant;
-      Current_Text : Text_Interface'Class;
+      Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array) is
@@ -368,7 +346,7 @@ package body Codefix.Errors_Parser is
 
    procedure Correct
      (This         : Or_Meant;
-      Current_Text : Text_Interface'Class;
+      Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array) is
@@ -393,7 +371,7 @@ package body Codefix.Errors_Parser is
 
    procedure Correct
      (This         : Unqualified_Expression;
-      Current_Text : Text_Interface'Class;
+      Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array) is
@@ -425,7 +403,7 @@ package body Codefix.Errors_Parser is
 
    procedure Correct
      (This         : Goes_Before;
-      Current_Text : Text_Interface'Class;
+      Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array) is
@@ -453,7 +431,7 @@ package body Codefix.Errors_Parser is
 
    procedure Correct
      (This         : Sth_Expected_3;
-      Current_Text : Text_Interface'Class;
+      Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array) is
@@ -487,7 +465,7 @@ package body Codefix.Errors_Parser is
 
    procedure Correct
      (This         : Sth_Expected_2;
-      Current_Text : Text_Interface'Class;
+      Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array) is
@@ -516,7 +494,7 @@ package body Codefix.Errors_Parser is
 
    procedure Correct
      (This         : Sth_Expected;
-      Current_Text : Text_Interface'Class;
+      Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array) is
@@ -541,7 +519,7 @@ package body Codefix.Errors_Parser is
 
    procedure Correct
      (This         : Missing_Kw;
-      Current_Text : Text_Interface'Class;
+      Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array) is
@@ -573,7 +551,7 @@ package body Codefix.Errors_Parser is
 
    procedure Correct
      (This         : Missing_Sep;
-      Current_Text : Text_Interface'Class;
+      Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array) is
@@ -617,7 +595,7 @@ package body Codefix.Errors_Parser is
 
    procedure Correct
      (This         : Missing_All;
-      Current_Text : Text_Interface'Class;
+      Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array) is
@@ -667,7 +645,7 @@ package body Codefix.Errors_Parser is
 
    procedure Correct
      (This         : Statement_Missing;
-      Current_Text : Text_Interface'Class;
+      Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array) is
@@ -692,7 +670,7 @@ package body Codefix.Errors_Parser is
 
    procedure Correct
      (This         : Space_Missing;
-      Current_Text : Text_Interface'Class;
+      Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array) is
@@ -731,7 +709,7 @@ package body Codefix.Errors_Parser is
 
    procedure Correct
      (This         : Name_Missing;
-      Current_Text : Text_Interface'Class;
+      Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array) is
@@ -768,7 +746,7 @@ package body Codefix.Errors_Parser is
 
    procedure Correct
      (This         : Double_Keyword;
-      Current_Text : Text_Interface'Class;
+      Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array) is
@@ -793,7 +771,7 @@ package body Codefix.Errors_Parser is
 
    procedure Correct
      (This         : Extra_Paren;
-      Current_Text : Text_Interface'Class;
+      Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array) is
@@ -818,7 +796,7 @@ package body Codefix.Errors_Parser is
 
    procedure Correct
      (This         : Redundant_Keyword;
-      Current_Text : Text_Interface'Class;
+      Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array) is
@@ -860,7 +838,7 @@ package body Codefix.Errors_Parser is
 
    procedure Correct
      (This         : Unexpected_Sep;
-      Current_Text : Text_Interface'Class;
+      Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array) is
@@ -885,7 +863,7 @@ package body Codefix.Errors_Parser is
 
    procedure Correct
      (This         : Unexpected_Word;
-      Current_Text : Text_Interface'Class;
+      Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array) is
@@ -931,7 +909,7 @@ package body Codefix.Errors_Parser is
 
    procedure Correct
      (This         : Kw_Not_Allowed;
-      Current_Text : Text_Interface'Class;
+      Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array) is
@@ -942,6 +920,60 @@ package body Codefix.Errors_Parser is
                           Message,
                           Get_Message (Message)
                              (Matches (1).First .. Matches (1).Last)));
+   end Correct;
+
+   ---------------------
+   -- Sep_Not_Allowed --
+   ---------------------
+
+
+   procedure Initialize (This : in out Sep_Not_Allowed) is
+   begin
+      This.Matcher :=
+         (new Pattern_Matcher'
+          (Compile ("(form feed) not allowed")),
+          new Pattern_Matcher'
+          (Compile ("(vertical tab) not allowed")),
+          new Pattern_Matcher'
+          (Compile ("(trailing spaces) not permitted")),
+          new Pattern_Matcher'
+          (Compile ("(space) not allowed")));
+   end Initialize;
+
+
+   procedure Correct
+     (This         : Sep_Not_Allowed;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message      : Error_Message;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array) is
+
+      Word_Read           : Dynamic_String;
+      Unallowed_Character : String (1 .. 1);
+
+
+   begin
+      Affect
+        (Word_Read,
+         Get_Message (Message) (Matches (1).First .. Matches (1).Last));
+
+      if Word_Read.all = "form feed" then
+         Unallowed_Character := (1 => ASCII.FF);
+      elsif Word_Read.all = "vertical tab" then
+         Unallowed_Character := (1 => ASCII.HT);
+      elsif Word_Read.all = "trailling spaces" then
+         Unallowed_Character := (1 => ' '); --  Essayer ASCII.EOT
+      elsif Word_Read.all = "space" then
+         Unallowed_Character := " ";
+      end if;
+
+      Append (Solutions,
+              Unexpected (Current_Text,
+                          Message,
+                          Get_Message (Message)
+                          (Matches (1).First .. Matches (1).Last)));
+
+      Free (Word_Read);
    end Correct;
 
    ------------------
@@ -956,7 +988,7 @@ package body Codefix.Errors_Parser is
 
    procedure Correct
      (This         : Should_Be_In;
-      Current_Text : Text_Interface'Class;
+      Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array) is
@@ -986,7 +1018,7 @@ package body Codefix.Errors_Parser is
 
    procedure Correct
      (This         : Bad_Column;
-      Current_Text : Text_Interface'Class;
+      Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array) is
@@ -1012,7 +1044,7 @@ package body Codefix.Errors_Parser is
 
    procedure Correct
      (This         : Main_With_Missing;
-      Current_Text : Text_Interface'Class;
+      Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array) is
@@ -1041,7 +1073,7 @@ package body Codefix.Errors_Parser is
 
    procedure Correct
      (This         : Bad_Casing_Standard;
-      Current_Text : Text_Interface'Class;
+      Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array) is
@@ -1062,7 +1094,7 @@ package body Codefix.Errors_Parser is
 
    procedure Correct
      (This         : Bad_Casing_Declared;
-      Current_Text : Text_Interface'Class;
+      Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array) is
@@ -1087,7 +1119,7 @@ package body Codefix.Errors_Parser is
 
    procedure Correct
      (This         : Bad_Casing_Keyword;
-      Current_Text : Text_Interface'Class;
+      Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array) is
@@ -1098,6 +1130,63 @@ package body Codefix.Errors_Parser is
                           Message,
                           "",
                           Lower));
+   end Correct;
+
+   -------------------------
+   -- Func_Not_Referenced --
+   -------------------------
+
+   procedure Initialize (This : in out Object_Not_Referenced) is
+   begin
+      This.Matcher :=
+        (new Pattern_Matcher'
+         (Compile ("(procedure) ""([\w]+)"" is not referenced")),
+         new Pattern_Matcher'
+         (Compile ("(function) ""([\w]+)"" is not referenced")),
+         new Pattern_Matcher'
+         (Compile ("(variable) ""([\w]+)"" is not referenced")),
+         new Pattern_Matcher'
+         (Compile ("(constant) ""([\w]+)"" is not referenced")),
+         new Pattern_Matcher'
+         (Compile ("(parameter) ""([\w]+)"" is not referenced")),
+         new Pattern_Matcher'
+         (Compile ("(type) ""([\w]+)"" is not referenced")));
+   end Initialize;
+
+   procedure Correct
+     (This         : Object_Not_Referenced;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message      : Error_Message;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array) is
+
+      First_Word : String := Get_Message (Message)
+        (Matches (1).First .. Matches (1).Last);
+      Category   : Language_Category;
+
+   begin
+
+      if First_Word = "procedure" then
+         Category := Cat_Procedure;
+      elsif First_Word = "function" then
+         Category := Cat_Function;
+      elsif First_Word = "variable" then
+         Category := Cat_Variable;
+      elsif First_Word = "constant" then
+         Category := Cat_Variable;
+      elsif First_Word = "parameter" then
+         Category := Cat_Local_Variable; --  Used instead of Cat_Parameter
+      elsif First_Word = "type" then
+         Category := Cat_Type;
+      end if;
+
+
+      Concat (Solutions,
+              Not_Referenced (Current_Text,
+                              Message,
+                              Category,
+                              Get_Message (Message)
+                                (Matches (1).First .. Matches (1).Last)));
    end Correct;
 
 begin
@@ -1126,12 +1215,14 @@ begin
    Add_Parser (new Unexpected_Sep);
    Add_Parser (new Unexpected_Word);
    Add_Parser (new Kw_Not_Allowed);
+   Add_Parser (new Sep_Not_Allowed);
    Add_Parser (new Should_Be_In);
    Add_Parser (new Bad_Column);
    Add_Parser (new Main_With_Missing);
    Add_Parser (new Bad_Casing_Standard);
    Add_Parser (new Bad_Casing_Declared);
    Add_Parser (new Bad_Casing_Keyword);
+   Add_Parser (new Object_Not_Referenced);
 
    Initialize_Parsers;
 end Codefix.Errors_Parser;
