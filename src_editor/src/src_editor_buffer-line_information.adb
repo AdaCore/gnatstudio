@@ -1434,6 +1434,9 @@ package body Src_Editor_Buffer.Line_Information is
 
       Command    : Unhide_Editable_Lines_Command;
       Number_Of_Lines_Folded : Natural := 0;
+
+      Cursor_Move    : constant Boolean := Buffer.Do_Not_Move_Cursor;
+      Blocks_Timeout : constant Boolean := Buffer.Blocks_Timeout_Registered;
    begin
       Buffer.Modifying_Real_Lines := True;
 
@@ -1442,6 +1445,10 @@ package body Src_Editor_Buffer.Line_Information is
 
       Line_Start := Get_Editable_Line (Buffer, Buffer_Line);
       Line_End := Line_Start + Number;
+
+      --  Disable emitting new cursor positions while we hide lines.
+
+      Buffer.Do_Not_Move_Cursor := True;
 
       --  Remove all blank lines in the block that is to be folded.
 
@@ -1520,7 +1527,7 @@ package body Src_Editor_Buffer.Line_Information is
             Buffer.Inserting := True;
             Buffer.Blocks_Timeout_Registered := True;
             Delete (Buffer, Start_Iter, End_Iter);
-            Buffer.Blocks_Timeout_Registered := False;
+            Buffer.Blocks_Timeout_Registered := Blocks_Timeout;
             Buffer.Inserting := False;
             Buffer.Modifying_Editable_Lines := True;
 
@@ -1554,6 +1561,11 @@ package body Src_Editor_Buffer.Line_Information is
 
       Buffer.Modifying_Real_Lines := False;
       Register_Edit_Timeout (Buffer);
+
+      --  Re-enable moving the cursor, and reemit the cursor position.
+
+      Buffer.Do_Not_Move_Cursor := Cursor_Move;
+      Emit_New_Cursor_Position (Buffer);
    end Hide_Lines;
 
    ------------------
@@ -1576,7 +1588,9 @@ package body Src_Editor_Buffer.Line_Information is
 
       Number_Of_Lines_Unfolded : Natural := 0;
 
-      Command    : Hide_Editable_Lines_Command;
+      Command        : Hide_Editable_Lines_Command;
+      Cursor_Move    : constant Boolean := Buffer.Do_Not_Move_Cursor;
+      Blocks_Timeout : constant Boolean := Buffer.Blocks_Timeout_Registered;
    begin
       Buffer.Modifying_Real_Lines := True;
       Get_Iter_At_Mark (Buffer, Iter, Mark);
@@ -1584,6 +1598,10 @@ package body Src_Editor_Buffer.Line_Information is
 
       First_Line := Get_Editable_Line (Buffer, Buffer_Line);
       Last_Line  := Get_Editable_Line (Buffer, Buffer_Line + 1);
+
+      --  Disable emitting new cursor positions while we hide lines.
+
+      Buffer.Do_Not_Move_Cursor := True;
 
       for Line in reverse First_Line .. Last_Line loop
          --  If the line is already in the buffer, skip.
@@ -1601,7 +1619,7 @@ package body Src_Editor_Buffer.Line_Information is
 
             Insert (Buffer, Iter, Editable_Lines (Line).Text.all & ASCII.LF);
 
-            Buffer.Blocks_Timeout_Registered := False;
+            Buffer.Blocks_Timeout_Registered := Blocks_Timeout;
             Buffer.Inserting := False;
             Buffer.Modifying_Editable_Lines := True;
 
@@ -1668,6 +1686,11 @@ package body Src_Editor_Buffer.Line_Information is
          Hide_Block_Pixbuf);
       Buffer.Modifying_Real_Lines := False;
       Register_Edit_Timeout (Buffer);
+
+      --  Re-enable moving the cursor, and reemit the cursor position.
+
+      Buffer.Do_Not_Move_Cursor := Cursor_Move;
+      Emit_New_Cursor_Position (Buffer);
    end Unhide_Lines;
 
    --------------
@@ -1679,10 +1702,14 @@ package body Src_Editor_Buffer.Line_Information is
       Command      : Command_Access;
       Result       : Command_Return_Type;
       pragma Unreferenced (Result);
+
+      Cursor_Move : constant Boolean := Buffer.Do_Not_Move_Cursor;
    begin
       if Buffer.Block_Highlighting_Column = -1 then
          return;
       end if;
+
+      Buffer.Do_Not_Move_Cursor := True;
 
       for Line in reverse Buffer_Lines'Range loop
          if Buffer_Lines (Line).Side_Info_Data /= null
@@ -1705,6 +1732,9 @@ package body Src_Editor_Buffer.Line_Information is
             end if;
          end if;
       end loop;
+
+      Buffer.Do_Not_Move_Cursor := Cursor_Move;
+      Emit_New_Cursor_Position (Buffer);
    end Fold_All;
 
    ----------------
@@ -1716,12 +1746,16 @@ package body Src_Editor_Buffer.Line_Information is
       Command      : Command_Access;
       Result       : Command_Return_Type;
       pragma Unreferenced (Result);
+
+      Cursor_Move : constant Boolean := Buffer.Do_Not_Move_Cursor;
    begin
       if Buffer.Block_Highlighting_Column = -1 then
          return;
       end if;
 
       if Buffer_Lines /= null then
+         Buffer.Do_Not_Move_Cursor := True;
+
          for Line in reverse Buffer_Lines'Range loop
             if Buffer_Lines (Line).Side_Info_Data /= null
               and then Buffer_Lines
@@ -1744,6 +1778,9 @@ package body Src_Editor_Buffer.Line_Information is
                end if;
             end if;
          end loop;
+
+         Buffer.Do_Not_Move_Cursor := Cursor_Move;
+         Emit_New_Cursor_Position (Buffer);
       end if;
    end Unfold_All;
 
