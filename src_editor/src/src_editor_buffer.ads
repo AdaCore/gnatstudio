@@ -384,10 +384,6 @@ package Src_Editor_Buffer is
    --  when compiled with assertion checks, or an undefined behavior otherwise.
    --  Takes Tabs into account when Expand_Tabs = True.
 
-   procedure Forward_To_Line_End (Iter : in out Gtk.Text_Iter.Gtk_Text_Iter);
-   pragma Inline (Forward_To_Line_End);
-   --  Same as Gtk_Text_Buffer.Forward_To_Line_End, but ignores the result.
-
    procedure External_End_Action (Buffer : access Source_Buffer_Record);
    --  This procedure should be called every time that an external
    --  event should cancel the current user action: focus switching
@@ -1051,6 +1047,11 @@ private
 
       Block_Highlighting : Boolean := False;
       --  Whether the editor buffer should allow block highlighting.
+
+      Block_Highlighting_Column : Integer := -1;
+      --  The column (index in Buffer_Line_Info_Columns) that contains the
+      --  block information. Set to a negative value if the column does not
+      --  exist.
    end record;
 
 end Src_Editor_Buffer;
