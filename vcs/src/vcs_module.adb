@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with Glib;                      use Glib;
+with Glib.Values;               use Glib.Values;
 with Glib.Object;               use Glib.Object;
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Enums;                 use Gtk.Enums;
@@ -34,10 +35,12 @@ with Gtk.Tooltips;              use Gtk.Tooltips;
 with Gtk.Widget;                use Gtk.Widget;
 
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
+with Glide_Kernel.Project;      use Glide_Kernel.Project;
 with Glide_Intl;                use Glide_Intl;
 
 with Traces;                    use Traces;
 
+with VCS;                       use VCS;
 with VCS_View_API;              use VCS_View_API;
 with VCS_View_Pkg;              use VCS_View_Pkg;
 with Basic_Types;               use Basic_Types;
@@ -46,13 +49,15 @@ with VCS.Unknown_VCS;           use VCS.Unknown_VCS;
 with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
-with Projects.Editor;           use Projects, Projects.Editor;
+with Projects;                  use Projects;
+with Projects.Editor;           use Projects.Editor;
+with Projects.Registry;         use Projects.Registry;
 
+with String_List_Utils;
 with Log_Utils;
 
 package body VCS_Module is
 
-   VCS_Module_Name : constant String := "VCS_Interface";
    Me : constant Debug_Handle := Create (VCS_Module_Name);
 
    Auto_Detect : constant String := "None";
@@ -90,6 +95,12 @@ package body VCS_Module is
       Selector : Glib.Object.GObject);
    --  Called when a new VCS has been selector in the project creation wizard
    --  or the project properties editor.
+
+   procedure File_Edited_Cb
+     (Widget  : access Glib.Object.GObject_Record'Class;
+      Args    : GValues;
+      Kernel  : Kernel_Handle);
+   --  Callback for the "file_edited" signal.
 
    type VCS_Editor_Record is new Project_Editor_Page_Record
      with null record;
@@ -488,6 +499,52 @@ package body VCS_Module is
          Add_After => False);
 
       Standard.VCS.Unknown_VCS.Register_Module (Kernel);
+
+      Kernel_Callback.Connect
+        (Kernel,
+         File_Edited_Signal,
+         File_Edited_Cb'Access,
+         Kernel_Handle (Kernel));
    end Register_Module;
+
+   --------------------
+   -- File_Edited_Cb --
+   --------------------
+
+   procedure File_Edited_Cb
+     (Widget  : access Glib.Object.GObject_Record'Class;
+      Args    : GValues;
+      Kernel  : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+      File   : constant String := Get_String (Nth (Args, 1));
+      use String_List_Utils.String_List;
+      Files  : List;
+      Status : File_Status_List.List;
+      Ref    : VCS_Access;
+
+   begin
+      Create_Line_Information_Column
+        (Kernel,
+         File,
+         VCS_Module_Name,
+         Stick_To_Data => False,
+         Every_Line    => False);
+
+      Append (Files, File);
+      Ref    := Get_Current_Ref
+        (Get_Project_From_File (Get_Registry (Kernel), File, True));
+
+      --  ??? We could try to retrieve the status from the VCS Explorer cache.
+
+      Status := Local_Get_Status (Ref, Files);
+      Free (Files);
+
+      if not File_Status_List.Is_Empty (Status) then
+         Display_Editor_Status (Kernel, File_Status_List.Head (Status));
+      end if;
+
+      File_Status_List.Free (Status);
+   end File_Edited_Cb;
 
 end VCS_Module;
