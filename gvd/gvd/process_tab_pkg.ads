@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2001                      --
+--                      Copyright (C) 2000-2002                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -19,35 +19,14 @@
 -----------------------------------------------------------------------
 
 with Gtk.Window; use Gtk.Window;
-with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
-with Gtk.Clist; use Gtk.Clist;
-with Gtk.Label; use Gtk.Label;
-with Gtk.Text; use Gtk.Text;
-with Gtk.Handlers;
-with Gtkada.Canvas; use Gtkada.Canvas;
 with Gtkada.MDI; use Gtkada.MDI;
 with GVD.Code_Editors; use GVD.Code_Editors;
-with Dock_Paned; use Dock_Paned;
 
 package Process_Tab_Pkg is
 
    type Process_Tab_Record is new Gtk_Window_Record with record
-      Delete_Text_Handler_Id : Gtk.Handlers.Handler_Id;
-      Stack_List_Select_Id : Gtk.Handlers.Handler_Id;
       Process_Mdi : MDI_Window;
-      Data_Paned : Dock_Hpaned;
-      Stack_Scrolledwindow : Gtk_Scrolled_Window;
-      Stack_List : Gtk_Clist;
-      Label101 : Gtk_Label;
-      Label201 : Gtk_Label;
-      Label202 : Gtk_Label;
-      Label203 : Gtk_Label;
-      Label204 : Gtk_Label;
-      Data_Scrolledwindow : Gtk_Scrolled_Window;
-      Data_Canvas : Interactive_Canvas;
       Editor_Text : Code_Editor;
-      Command_Scrolledwindow : Gtk_Scrolled_Window;
-      Debugger_Text : Gtk_Text;
    end record;
    type Process_Tab_Access is access all Process_Tab_Record'Class;
 
