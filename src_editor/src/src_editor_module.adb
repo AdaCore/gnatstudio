@@ -2890,6 +2890,13 @@ package body Src_Editor_Module is
            File_Closed_Cb'Access,
            Kernel_Handle (Kernel));
 
+      Source_Editor_Module (Src_Editor_Module_Id).File_Edited_Id :=
+        Kernel_Callback.Connect
+          (Kernel,
+           File_Edited_Signal,
+           File_Edited_Cb'Access,
+           Kernel_Handle (Kernel));
+
       Register_Command
         (Kernel,
          Command => "edit",
@@ -3085,13 +3092,6 @@ package body Src_Editor_Module is
                  Source_Lines_Revealed_Signal,
                  On_Lines_Revealed'Access,
                  Kernel);
-            Id.File_Edited_Id :=
-              Kernel_Callback.Connect
-                (Kernel,
-                 File_Edited_Signal,
-                 File_Edited_Cb'Access,
-                 Kernel);
-
             Create_Line_Information_Column
               (Kernel,
                "",
@@ -3103,10 +3103,7 @@ package body Src_Editor_Module is
       elsif Id.Source_Lines_Revealed_Id /= No_Handler then
          Gtk.Handlers.Disconnect
            (Kernel, Id.Source_Lines_Revealed_Id);
-         Gtk.Handlers.Disconnect
-           (Kernel, Id.File_Edited_Id);
          Id.Source_Lines_Revealed_Id := No_Handler;
-         Id.File_Edited_Id := No_Handler;
 
          Remove_Line_Information_Column (Kernel, "", Src_Editor_Module_Name);
       end if;
