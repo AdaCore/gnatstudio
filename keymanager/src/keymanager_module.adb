@@ -311,11 +311,11 @@ package body KeyManager_Module is
    --  Save the contents of the editor
 
    function Set
-     (Model   : Gtk_Tree_Store;
-      Parent  : Gtk_Tree_Iter;
-      Descr   : String;
-      Changed : Boolean := False;
-      Key     : String := "";
+     (Model      : Gtk_Tree_Store;
+      Parent     : Gtk_Tree_Iter;
+      Descr      : String;
+      Changed    : Boolean := False;
+      Key        : String := "";
       Accel_Path : String := "") return Gtk_Tree_Iter;
    --  Add a new line into the model
 
@@ -622,9 +622,9 @@ package body KeyManager_Module is
    ----------------------
 
    procedure Bind_Default_Key
-     (Handler        : access Key_Manager_Record;
-      Action         : String;
-      Default_Key    : String) is
+     (Handler     : access Key_Manager_Record;
+      Action      : String;
+      Default_Key : String) is
    begin
       Bind_Default_Key_Internal
         (Handler, Action, Default_Key, Changed => False);
@@ -635,11 +635,11 @@ package body KeyManager_Module is
    -------------------------------
 
    procedure Bind_Default_Key_Internal
-     (Table          : in out Key_Htable.HTable;
-      Action         : String;
-      Default_Key    : Gdk.Types.Gdk_Key_Type;
-      Default_Mod    : Gdk.Types.Gdk_Modifier_Type;
-      Changed        : Boolean := False)
+     (Table       : in out Key_Htable.HTable;
+      Action      : String;
+      Default_Key : Gdk.Types.Gdk_Key_Type;
+      Default_Mod : Gdk.Types.Gdk_Modifier_Type;
+      Changed     : Boolean := False)
    is
       Binding, Binding2 : Key_Description_List;
    begin
@@ -662,10 +662,10 @@ package body KeyManager_Module is
    -------------------------------
 
    procedure Bind_Default_Key_Internal
-     (Handler        : access Key_Manager_Record;
-      Action         : String;
-      Default_Key    : String;
-      Changed        : Boolean := False)
+     (Handler     : access Key_Manager_Record;
+      Action      : String;
+      Default_Key : String;
+      Changed     : Boolean := False)
    is
       Key   : Gdk_Key_Type;
       Modif : Gdk_Modifier_Type;
@@ -1062,20 +1062,20 @@ package body KeyManager_Module is
    ---------
 
    function Set
-     (Model   : Gtk_Tree_Store;
-      Parent  : Gtk_Tree_Iter;
-      Descr   : String;
-      Changed : Boolean := False;
-      Key     : String := "";
+     (Model      : Gtk_Tree_Store;
+      Parent     : Gtk_Tree_Iter;
+      Descr      : String;
+      Changed    : Boolean := False;
+      Key        : String := "";
       Accel_Path : String := "") return Gtk_Tree_Iter
    is
       procedure Internal
         (Tree, Iter : System.Address;
-         Col1  : Gint; Value1 : String;
-         Col2  : Gint; Value2 : String;
-         Col3  : Gint; Value3 : Gboolean;
-         Col4  : Gint; Value4 : String;
-         Final : Gint := -1);
+         Col1       : Gint; Value1 : String;
+         Col2       : Gint; Value2 : String;
+         Col3       : Gint; Value3 : Gboolean;
+         Col4       : Gint; Value4 : String;
+         Final      : Gint := -1);
       pragma Import (C, Internal, "gtk_tree_store_set");
 
       Iter : Gtk_Tree_Iter;
@@ -1576,20 +1576,20 @@ package body KeyManager_Module is
    procedure On_Edit_Keys
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
-      Editor   : Keys_Editor;
-      Scrolled : Gtk_Scrolled_Window;
-      Bbox     : Gtk_Vbutton_Box;
+      Editor    : Keys_Editor;
+      Scrolled  : Gtk_Scrolled_Window;
+      Bbox      : Gtk_Vbutton_Box;
       Box, Hbox : Gtk_Box;
-      Button   : Gtk_Button;
-      Col      : Gtk_Tree_View_Column;
-      Render   : Gtk_Cell_Renderer_Text;
-      Num      : Gint;
-      Frame    : Gtk_Frame;
-      Pane     : Gtk_Paned;
-      Sep      : Gtk_Separator;
-      Event    : Gtk_Event_Box;
-      Text     : Gtk_Text_View;
-      Action   : Gtk_Widget;
+      Button    : Gtk_Button;
+      Col       : Gtk_Tree_View_Column;
+      Render    : Gtk_Cell_Renderer_Text;
+      Num       : Gint;
+      Frame     : Gtk_Frame;
+      Pane      : Gtk_Paned;
+      Sep       : Gtk_Separator;
+      Event     : Gtk_Event_Box;
+      Text      : Gtk_Text_View;
+      Action    : Gtk_Widget;
       pragma Unreferenced (Widget, Num, Action);
 
    begin
