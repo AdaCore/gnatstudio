@@ -47,7 +47,6 @@ with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;
 
 with String_Utils;             use String_Utils;
-with String_List_Utils;        use String_List_Utils;
 with Glide_Kernel.Modules;     use Glide_Kernel.Modules;
 with Glide_Kernel.Project;     use Glide_Kernel.Project;
 with Glide_Kernel.Scripts;     use Glide_Kernel.Scripts;
@@ -69,8 +68,6 @@ package body Glide_Result_View is
 
    Non_Leaf_Color_Name : constant String := "blue";
    --  <preference> color to use for category and file names
-
-   use String_List;
 
    ---------------------
    -- Local constants --
