@@ -31,7 +31,6 @@ package Commands.Builder is
    Style_Category   : constant String := "Style errors";
    --  -"Style errors"
 
-
    type Build_Command is new Root_Command with private;
    type Build_Command_Access is access all Build_Command;
 
