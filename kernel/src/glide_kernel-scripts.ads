@@ -255,7 +255,7 @@ package Glide_Kernel.Scripts is
       N       : Positive;
       Default : Subprogram_Type) return Subprogram_Type;
    --  Same as above, except that if there are not enough parameters, Default
-   --  is returned.
+   --  is returned. Returned value must be freed
 
    procedure Set_Error_Msg
      (Data : in out Callback_Data; Msg : String) is abstract;
