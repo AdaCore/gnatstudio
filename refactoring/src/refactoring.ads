@@ -18,15 +18,15 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Entities;
 with Dynamic_Arrays;
 with Glide_Kernel;
 with Gtk.Scrolled_Window;
-with VFS;
 
 package Refactoring is
 
    type Location_Type is record
-      File   : VFS.Virtual_File;
+      File   : Entities.Source_File;
       Line   : Integer;
       Column : Integer;
    end record;
@@ -39,11 +39,11 @@ package Refactoring is
       Table_Minimum_Increment => 10,
       Table_Initial_Size      => 100);
    package File_Arrays is new Dynamic_Arrays
-     (Data                    => VFS.Virtual_File,
+     (Data                    => Entities.Source_File,
       Table_Multiplier        => 2,
       Table_Minimum_Increment => 10,
       Table_Initial_Size      => 10,
-      "="                     => VFS."=");
+      "="                     => Entities."=");
    --  Handling of dynamic arrays
 
    function Confirm_Files

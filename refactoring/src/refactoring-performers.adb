@@ -28,7 +28,6 @@ with Glide_Intl;            use Glide_Intl;
 with Entities;              use Entities;
 with Entities.Queries;      use Entities.Queries;
 with Traces;                use Traces;
-with VFS;                   use VFS;
 with Commands.Generic_Asynchronous;
 
 package body Refactoring.Performers is
@@ -42,7 +41,7 @@ package body Refactoring.Performers is
       end record;
    type Renaming_Error is access all Renaming_Error_Record'Class;
    procedure Error
-     (Report : in out Renaming_Error_Record; File : VFS.Virtual_File);
+     (Report : in out Renaming_Error_Record; File : Source_File);
 
    type Get_Locations_Data is record
       Refs                : Location_Arrays.Instance;
@@ -100,7 +99,7 @@ package body Refactoring.Performers is
    -----------
 
    procedure Error
-     (Report : in out Renaming_Error_Record; File : VFS.Virtual_File) is
+     (Report : in out Renaming_Error_Record; File : Entities.Source_File) is
    begin
       Append (Report.No_LI_List, File);
    end Error;
@@ -127,11 +126,6 @@ package body Refactoring.Performers is
 
       Push_State (Data.Kernel, Busy);
 
-      Append
-        (Data.Refs,
-         (File   => Get_Filename (Get_File (Get_Declaration_Of (Entity))),
-          Line   => Get_Line (Get_Declaration_Of (Entity)),
-          Column => Get_Column (Get_Declaration_Of (Entity))));
       Find_All_References
         (Iter                  => Data.Iter.all,
          Entity                => Entity,
@@ -165,7 +159,7 @@ package body Refactoring.Performers is
       Ref    : constant Entity_Reference := Get (Data.Iter.all);
       Source : Source_File;
    begin
-      if Ref = No_Entity_Reference then
+      if At_End (Data.Iter.all) then
          Pop_State (Data.Kernel);
 
          if Confirm_Files
@@ -184,22 +178,22 @@ package body Refactoring.Performers is
 
          Result := Success;
 
-      else
+      elsif Ref /= No_Entity_Reference then
          Source := Get_File (Get_Location (Ref));
 
          if Is_Up_To_Date (Source) then
             Append (Data.Refs,
-                    (File   => Get_Filename (Source),
+                    (File   => Source,
                      Line   => Get_Line (Get_Location (Ref)),
                      Column => Get_Column (Get_Location (Ref))));
 
          --  If we have duplicates, they will always come one after the
-            --  other. So we just have to check the previous one.
+         --  other. So we just have to check the previous one.
          elsif Length (Data.Stale_LI_List) = 0
-           or else Get_Filename (Source) /=
+           or else Source /=
              Data.Stale_LI_List.Table (Last (Data.Stale_LI_List))
          then
-            Append (Data.Stale_LI_List, Get_Filename (Source));
+            Append (Data.Stale_LI_List, Source);
          end if;
 
          Next (Data.Iter.all);
@@ -208,6 +202,10 @@ package body Refactoring.Performers is
                        (Running,
                         Get_Current_Progress (Data.Iter.all),
                         Get_Total_Progress (Data.Iter.all)));
+         Result := Execute_Again;
+
+      else
+         Next (Data.Iter.all);
          Result := Execute_Again;
       end if;
    end Find_Next_Location;

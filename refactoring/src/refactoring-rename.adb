@@ -163,7 +163,8 @@ package body Refactoring.Rename is
          declare
             Args : Argument_List_Access :=
               new Argument_List'
-                (new String'(Full_Name (Refs.Table (L).File).all),
+                (new String'
+                    (Full_Name (Get_Filename (Refs.Table (L).File)).all),
                  new String'(Integer'Image (Refs.Table (L).Line)),
                  new String'(Integer'Image (Refs.Table (L).Column)),
                  new String'(Factory.New_Name),
@@ -181,7 +182,7 @@ package body Refactoring.Rename is
          then
             Execute_GPS_Shell_Command
               (Kernel, "Editor.save_buffer """
-               & Full_Name (Refs.Table (L).File).all & '"');
+               & Full_Name (Get_Filename (Refs.Table (L).File)).all & '"');
          end if;
       end loop;
    end Execute;

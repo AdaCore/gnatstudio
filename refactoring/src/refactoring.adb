@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003                            --
+--                     Copyright (C) 2003-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -21,6 +21,7 @@
 with Glide_Kernel;           use Glide_Kernel;
 with Glide_Intl;             use Glide_Intl;
 with VFS;                    use VFS;
+with Entities;               use Entities;
 
 with Glib;                  use Glib;
 with Gtk.Box;               use Gtk.Box;
@@ -89,7 +90,7 @@ package body Refactoring is
             (-"The following files contain references to the entity, but the"
              & ASCII.LF
              & "cross-reference information is not up-to-date and replace"
-             & " will fail"));
+             & " might fail"));
          Set_Alignment (Label, 0.0, 0.0);
          Pack_Start (Get_Vbox (Dialog), Label, Expand => False);
          Pack_Start (Get_Vbox (Dialog), Create_File_List (Stale_LI_List));
@@ -150,8 +151,8 @@ package body Refactoring is
 
       for F in File_Arrays.First .. Last (List) loop
          Append (Model, Iter, Null_Iter);
-         Set (Model, Iter, 0, Base_Name (List.Table (F)));
-         Set (Model, Iter, 1, Dir_Name (List.Table (F)).all);
+         Set (Model, Iter, 0, Base_Name (Get_Filename (List.Table (F))));
+         Set (Model, Iter, 1, Dir_Name (Get_Filename (List.Table (F))).all);
       end loop;
 
       return Scrolled;
