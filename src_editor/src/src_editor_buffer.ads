@@ -85,9 +85,6 @@ package Src_Editor_Buffer is
    --  Save the current buffer into a file. Success is set to False if this
    --  operation failed and the buffer could not be saved.
 
-   procedure Clear (Buffer : access Source_Buffer_Record);
-   --  Delete all characters from the given buffer, leaving an empty buffer.
-
    procedure Set_Language
      (Buffer : access Source_Buffer_Record;
       Lang   : Language.Language_Access);
@@ -255,18 +252,6 @@ package Src_Editor_Buffer is
    --
    --  The validity of the given positions must be verified before invoking
    --  this procedure. An incorrect position will cause an Assertion_Failure
-   --  when compiled with assertion checks, or an undefined behavior otherwise.
-
-   procedure Delete_Slice
-     (Buffer       : access Source_Buffer_Record;
-      Start_Line   : Gint;
-      Start_Column : Gint;
-      End_Line     : Gint;
-      End_Column   : Gint);
-   --  Replace the text between the start and end positions by Text.
-   --
-   --  The validity of the given positions must be verified before invoking
-   --  this procedure. An incorrect position  will cause an Assertion_Failure
    --  when compiled with assertion checks, or an undefined behavior otherwise.
 
    procedure Select_All (Buffer : access Source_Buffer_Record);
