@@ -1565,7 +1565,7 @@ package body GVD.Process is
             end if;
 
             Reparent (Widget, Process);
-            Reparent (Process.Editor_Label, Process.Process_Paned);
+            Reparent (Gtk_Widget (Process.Editor_Vbox), Process.Process_Paned);
             Show_All (Process);
          else
             Hide (Process);
@@ -1580,7 +1580,7 @@ package body GVD.Process is
 
             --  Put back the Data into the paned
             Reparent (Widget, Process.Data_Editor_Paned);
-            Reparent (Process.Editor_Label, Process.Data_Editor_Paned);
+            Reparent (Gtk_Widget (Process.Editor_Vbox), Process.Data_Editor_Paned);
             Add (Process.Process_Paned, Process.Data_Editor_Paned);
             Unref (Process.Data_Editor_Paned);
             Show_All (Process.Process_Paned);
