@@ -222,17 +222,23 @@ package Find_Utils is
    function Search
      (Context         : access Search_Context;
       Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Search_Backward : Boolean) return Boolean is abstract;
+      Search_Backward : Boolean;
+      Give_Focus      : Boolean) return Boolean is abstract;
    --  This subprogram should search for the next occurrence of Context.
    --  It should return False if there is no other search to be performed, True
    --  if a call to this function might lead to another occurrence of the
    --  search string.
+   --  If Give_Focus is true, then the widget that contains the match, in case
+   --  the user was looking for a single match, should gain the focus.
+   --  Otherwise, the focus shouldn't be changed and should remain on the
+   --  search window
 
    function Replace
      (Context         : access Search_Context;
       Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
       Replace_String  : String;
-      Search_Backward : Boolean) return Boolean;
+      Search_Backward : Boolean;
+      Give_Focus      : Boolean) return Boolean;
    --  This subprogram should search for the next occurrence of Context. If
    --  Is_First_Search, the search should start from the beginning
    --  It should set Context to null when there is nothing more to replace.
