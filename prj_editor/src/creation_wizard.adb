@@ -4,7 +4,7 @@
 --                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
--- GPS is free  software; you can  redistribute it and/or modify  it --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -13,7 +13,7 @@
 -- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
 -- General Public License for more details. You should have received --
--- a copy of the GNU General Public License along with this library; --
+-- a copy of the GNU General Public License along with this program; --
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
@@ -325,7 +325,8 @@ package body Creation_Wizard is
       Gtk_New (Wiz.Switches);
 
       if not Get_Active (Wiz.Ada_Support) then
-         Destroy_Pages (Wiz.Switches, Ada_Page or Binder_Page);
+         Destroy_Pages
+           (Wiz.Switches, Ada_Page or Pretty_Printer_Page or Binder_Page);
       end if;
 
       if not Get_Active (Wiz.C_Support) then
@@ -441,11 +442,6 @@ package body Creation_Wizard is
       --  Append the switches
       Emit_Switches (Wiz, Project, Get_Name_String (Name_Builder), Gnatmake);
 
-      if Get_Active (Wiz.Ada_Support) then
-         Emit_Switches
-           (Wiz, Project, Get_Name_String (Name_Compiler), Ada_Compiler);
-      end if;
-
       if Get_Active (Wiz.C_Support) then
          Emit_Switches
            (Wiz, Project, Get_Name_String (Name_Compiler), C_Compiler);
@@ -456,7 +452,18 @@ package body Creation_Wizard is
            (Wiz, Project, Get_Name_String (Name_Compiler), Cpp_Compiler);
       end if;
 
-      Emit_Switches (Wiz, Project, Get_Name_String (Name_Binder), Binder);
+      if Get_Active (Wiz.Ada_Support) then
+         Emit_Switches
+           (Wiz, Project, Get_Name_String (Name_Compiler), Ada_Compiler);
+
+         --  ??? Activate when the project knows about the pretty printer
+
+         --  Emit_Switches
+         --    (Wiz, Project,
+         --     Get_Name_String (Name_Pretty_Printer), Pretty_Printer);
+         Emit_Switches (Wiz, Project, Get_Name_String (Name_Binder), Binder);
+      end if;
+
       Emit_Switches (Wiz, Project, Get_Name_String (Name_Linker), Linker);
 
       --  Append the naming scheme
