@@ -1614,7 +1614,7 @@ package body Src_Editor_Module is
             Dialog_Type    => Confirmation,
             Buttons        =>
               Button_Yes or Button_All or Button_No or Button_Cancel,
-            Default_Button => Button_Cancel,
+            Default_Button => Button_Yes,
             Parent         => Get_Main_Window (Kernel));
 
          case Button is
@@ -1863,7 +1863,6 @@ package body Src_Editor_Module is
 
             if Old_Name /= New_Name then
                Set_Title (Child, Full_Name (New_Name), Base_Name (New_Name));
-               Change_Project_Dir (Kernel, Dir_Name (New_Name));
                Recompute_View (Kernel);
             end if;
          end;
@@ -1891,7 +1890,6 @@ package body Src_Editor_Module is
       begin
          if Filename /= VFS.No_File then
             Open_File_Editor (Kernel, Filename);
-            Change_Project_Dir (Kernel, Dir_Name (Filename));
          end if;
       end;
 
