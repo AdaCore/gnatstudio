@@ -155,7 +155,6 @@ package body Glide_Main_Window is
       Main       : constant Glide_Window := Glide_Window (Main_Window);
       Key_Theme  : String := Key_Themes'Image
         (Key_Themes'Val (Get_Pref (Kernel, Key_Theme_Name)));
-      Title_Font : Pango_Font_Description;
 
    begin
       Mixed_Case (Key_Theme);
@@ -175,10 +174,6 @@ package body Glide_Main_Window is
          Set_Style (Main.Toolbar, Toolbar_Icons);
       end if;
 
-      Title_Font := Copy (Get_Pref (Kernel, Default_Font));
-      Set_Size
-        (Title_Font,
-         Gint'Max (Pango_Scale, Get_Size (Title_Font) - 1 * Pango_Scale));
       Configure
         (Get_MDI (Kernel),
          Opaque_Resize     => Get_Pref (Kernel, MDI_Opaque),
@@ -186,15 +181,13 @@ package body Glide_Main_Window is
          Opaque_Docks      => Get_Pref (Kernel, MDI_Opaque),
          Close_Floating_Is_Unfloat =>
            not Get_Pref (Kernel, MDI_Destroy_Floats),
-         Title_Font        => Title_Font,
+         Title_Font        => Get_Pref (Kernel, Default_Font),
          Background_Color  => Get_Pref (Kernel, MDI_Background_Color),
          Title_Bar_Color   => Get_Pref (Kernel, MDI_Title_Bar_Color),
          Focus_Title_Color => Get_Pref (Kernel, MDI_Focus_Title_Color));
 
       Set_All_Floating_Mode
         (Get_MDI (Kernel), Get_Pref (Kernel, MDI_All_Floating));
-
-      Free (Title_Font);
 
       --  ??? Approximate algorithm, maybe we should simply use a preference,
       --  but previous and next need to have the same modifier
