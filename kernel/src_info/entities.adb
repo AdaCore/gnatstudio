@@ -2315,6 +2315,7 @@ package body Entities is
          Decl_Index    => Index,
          Comment_Start => Beginning,
          Comment_End   => Current);
+
       if Beginning = 0 then
          Get_Documentation_After
            (Context       => Context.all,
@@ -2331,6 +2332,7 @@ package body Entities is
          end if;
 
          Find_Next_Body (Entity, Location => Location);
+
          if Location /= No_File_Location then
             Buffer := Read_File (Get_Filename (Location.File));
             Must_Free_Buffer := True;
