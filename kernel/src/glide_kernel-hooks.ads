@@ -19,6 +19,65 @@
 -----------------------------------------------------------------------
 
 --  This package implements a general support for hooks.
+--  See the GPS documentation on how to use hooks from the scripting languages.
+--  The following paragraphs describe how interaction between the shell and
+--  Ada is done.
+--
+--  Adding callbacks to existing hooks
+--  ----------------------------------
+--
+--  If a user adds a new callback to an existing hook through a call to
+--     GPS.add_hook ("hook_name", "python function")
+--  then we create internally a tagged object that wraps "python function"
+--  through the interface expected for Glide_Kernel.Hooks.Add_Hook.
+--  This wrapper will basically execute this function in the same scripting
+--  language that the call to GPS.add_hook was done from, and will specify the
+--  arguments from the arguments given to Glide_Kernel.Hooks.Run_Hook by the
+--  user.
+--
+--  Creating new hook types and new hooks
+--  --------------------------------------
+--
+--  Hooks have types, which describe what parameters they expect. This types
+--  are named with any string that the user provides through Create_Hook_Type.
+--  Any time the latter is called, a new shell function is created:
+--     __run_hook__<type_name>
+--  This function's implementation has to be provided by the caller of
+--  Create_Hook_Type. Its role is to convert the arguments as sent by the
+--  scripting language (a Callback_Data) into the actual Hooks_Data type that
+--  Ada uses internally), and then to call the appropriate form of Run_Hook.
+--
+--  New hooks can be created by the user through calls to Register_Hook. This
+--  immediately creates a new shell function:
+--     __run_hook__<hook_name>
+--  Internally, this is bound to the exact same code as __run_hook__<type_name>
+--
+--  As a result, any time the user executes the call
+--     GPS.run_hook ("hook_name", arg1, arg2);
+--  the following actions take place:
+--    - Calls __run_hook__<hook_name> ("hook_name", arg1, arg2)
+--    - Which is the same as __run_hook__<hook_type> ("hook_name", arg1, arg2)
+--    - Which calls at the Ada level:
+--      Glide_kernel.Hooks.Run_Hook ("hook_name", Hooks_Data'(Arg1, Arg2));
+--
+--  The reason we need the __run_hook__<hook_type> step is so that the user
+--  can also create new hooks for an existing type directly from the scripting
+--  language. This is done by calling (in python for instance):
+--      register_hook ("hook_name", "description", "hook_type")
+--  which creates __run_hook__<hook_name> with the same implementation as
+--  __run_hook__<hook_type>, except that the latter is done in Ada and can
+--  therefore create Ada structures at will.
+--
+--  The user can also create new hook types directly from the scripting
+--  language. These hooks can take any number of parameter. This is done by
+--  calling
+--     GPS.register_hook ("hook_name", "description", "general")
+--  This special hook type "general" indicates at the Ada level that the hooks
+--  will directly receive a Callback_Data argument instead of a
+--  Hooks_Data'Class argument. This is implemented through the
+--     __run_hook__general
+--  function, exported by Ada.
+
 
 with Glide_Kernel.Scripts;
 with Glib.Object;
