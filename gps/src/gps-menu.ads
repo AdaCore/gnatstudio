@@ -18,16 +18,9 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Gtk.Item_Factory; use Gtk.Item_Factory;
-with GPS.Kernel;     use GPS.Kernel;
+with GPS.Kernel; use GPS.Kernel;
 
 package GPS.Menu is
-
-   type Gtk_Item_Factory_Entry_Access is access Gtk_Item_Factory_Entry_Array;
-
-   function GPS_Menu_Items return Gtk_Item_Factory_Entry_Access;
-   --  Return a pointer to the Factory_Entry_Array needed to create the
-   --  GPS menu items.
 
    procedure Register_Common_Menus
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
