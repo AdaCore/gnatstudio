@@ -2190,7 +2190,6 @@ package body Debugger.Gdb is
       Address  : in String) return String
    is
       Error_String : constant String := "Cannot access memory at";
-
       Result       : String (1 .. Size * 2);
       Image        : constant String := Integer'Image (Size);
       S            : constant String := Send
@@ -2203,28 +2202,32 @@ package body Debugger.Gdb is
    begin
       --  Detect "Cannot access memory at ..."
       Skip_To_String (S, S_Index, Error_String);
+
       if S_Index <= S'Last - Error_String'Length then
          while Result_Index <= Result'Last loop
             Result (Result_Index) := '-';
             Result_Index := Result_Index + 1;
          end loop;
+
          return Result;
       end if;
 
       S_Index := S'First + 2;
+
       while S_Index <= S'Last loop
 
          --  Detect actual data : 0xXX right after an ASCII.HT.
          if S (S_Index) = '0' then
             if S (S_Index - 1) = ASCII.HT then
-               Result (Result_Index .. Result_Index + 1)
-                 := S (S_Index + 2 .. S_Index + 3);
+               Result (Result_Index .. Result_Index + 1) :=
+                 S (S_Index + 2 .. S_Index + 3);
                Result_Index := Result_Index + 2;
             end if;
          end if;
 
          S_Index := S_Index + 1;
       end loop;
+
       return Result;
    end Get_Memory;
 
