@@ -38,6 +38,7 @@ package body Codefix.Errors_Manager is
       Get_Direct_Message (This, Current);
 
       if Current.File_Name = null or else Current.File_Name.all = "" then
+         Free (Current);
          Current := Invalid_Error_Message;
          return;
       end if;
@@ -95,7 +96,9 @@ package body Codefix.Errors_Manager is
                   Source_Text,
                   This);
             end if;
-         end if;
+       end if;
+
+      Free (Current_Message);
       end loop;
    end Analyze;
 
@@ -112,7 +115,7 @@ package body Codefix.Errors_Manager is
       if Choice /= 0 then
          Append
            (This.Valid_Corrections,
-            Get_Extract (Data (Error.Ptr_Solutions), Choice));
+            Clone (Get_Extract (Data (Error.Ptr_Solutions), Choice)));
       end if;
 
       Remove_Nodes (This.Potential_Corrections, Error.Ptr_Solutions);
