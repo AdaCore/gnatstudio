@@ -94,6 +94,7 @@ package body Src_Info.Debug is
          Put (Positive'Image (FI.Original_Line) & ':');
          Put (FI.Original_Filename.all);
       end if;
+      New_Line;
    end Dump_D_Line;
 
    ----------------------
@@ -102,8 +103,7 @@ package body Src_Info.Debug is
 
    procedure Dump_LI_File_Ptr (LIFP : LI_File_Ptr) is
    begin
-      null;
-      --  ??? Will be implemented later...
+      Dump_LI_File (LIFP.all);
    end Dump_LI_File_Ptr;
 
    ----------------------------
@@ -211,7 +211,7 @@ package body Src_Info.Debug is
       end if;
       --  If there is an end of scope reference, print it too.
       if Is_File_Location (ED.End_Of_Scope.Location) then
-         Put (' ');
+         Put (" End=");
          Dump_Pos_And_R_Kind (ED.End_Of_Scope.Location, ED.End_Of_Scope.Kind);
       end if;
    end Dump_E_Declaration;
@@ -246,6 +246,12 @@ package body Src_Info.Debug is
 
    procedure Dump_File_Info (FI : File_Info; ALI_Format : Boolean := True) is
    begin
+      if FI.Declarations = null then
+         --  No need to generate the X line and the associated Xrefs, since
+         --  there are no Xrefs...
+         return;
+      end if;
+
       Put ("X " & FI.Source_Filename.all);
       if not ALI_Format then
          Put (' ' & FI.Unit_Name.all);
@@ -270,6 +276,12 @@ package body Src_Info.Debug is
      (DFI        : Dependency_File_Info;
       ALI_Format : Boolean := True) is
    begin
+      if DFI.Declarations = null then
+         --  No need to generate the X line and the associated Xrefs, since
+         --  there are no Xrefs...
+         return;
+      end if;
+
       Put ("X ");
       Dump_Source_File (DFI.File);
       if not ALI_Format then
@@ -410,6 +422,7 @@ package body Src_Info.Debug is
 
       --  Generate the file dependency section
       Dump_File_Dependency_Section (LIF);
+      New_Line;
 
       --  Generate the references information
       if LIF.Spec_Info /= null then
