@@ -216,7 +216,6 @@ package body Hyper_Grep_Base_Pkg.Callbacks is
 
          Location    : constant String :=
            File & ':' & Fixed.Trim (Positive'Image (Line_Nr), Left);
-         Blanks      : constant String (Location'Range) := (others => ' ');
 
       begin
          if Match_Found then
