@@ -59,7 +59,6 @@ package body Cpp_Module is
    C_Use_Tabs                : Param_Spec_Boolean;
    C_Indentation_Level       : Param_Spec_Int;
 
-
    --  The following constants are defined to avoid allocating dynamic memory
    --  in Gtk_New. This should eventually be integrated in the kernel.
    --  The comments are there so that the script to handle internationalization
