@@ -390,7 +390,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
                Free (New_Args (J));
             end loop;
          end;
-   else
+      else
          declare
             New_Args : Argument_List (1 .. 2);
          begin
@@ -905,6 +905,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
                Add (Parent, Process.Data_Paned);
                Unref (Process.Data_Paned);
                Show_All (Parent);
+               Update_Call_Stack (Process);
             else
                --  Ref the widget so that it is not destroyed.
                Ref (Process.Data_Paned);
