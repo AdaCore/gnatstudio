@@ -108,7 +108,7 @@ package RAD.Pixmaps is
 private
    pragma Import (C, accellabel_xpm, "accellabel_xpm");
    pragma Import (C, alignment_xpm, "alignment_xpm");
-   pragma Import (C, arrow_xpm, "arrow_xpm");
+   pragma Import (C, arrow_xpm, "big_arrow_xpm");
    pragma Import (C, aspectframe_xpm, "aspectframe_xpm");
    pragma Import (C, button_xpm, "button_xpm");
    pragma Import (C, calendar_xpm, "calendar_xpm");
