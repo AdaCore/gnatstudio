@@ -461,7 +461,11 @@ package body Find_Utils is
       Lexical_State : Recognized_Lexical_States := Statements;
       Old_State     : Recognized_Lexical_States;
 
-   begin
+   begin  --  Scan_Buffer
+      if Buffer'Length = 0 then
+         return;
+      end if;
+
       --  If the language is null, we simply use the more efficient algorithm
 
       if Context.Options.Whole_Word or else Lang = null then
@@ -568,7 +572,7 @@ package body Find_Utils is
               File_Name
               & ":" & Image (Match.Line)
               & ":" & Image (Match.Column)
-              & " " & Match.Text);
+              & ": " & Match.Text);
    end Highlight_Result;
 
    --------------------
