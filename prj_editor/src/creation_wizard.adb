@@ -382,6 +382,7 @@ package body Creation_Wizard is
            (Get_Nth_Project_Editor_Page (Wiz.Kernel, P),
             Project,
             Wiz.Kernel, Get_Nth_Page (Wiz, 1 + P),
+            Languages          => Languages,
             Scenario_Variables => (1 .. 0 => No_Variable),
             Ref_Project => Project);
       end loop;
