@@ -20,6 +20,7 @@
 
 with Types;
 with Prj.PP;
+with Basic_Types;
 
 package Projects.Registry is
 
@@ -41,6 +42,37 @@ package Projects.Registry is
    procedure Finalize;
    --  Free the memory used by this package (you should destroy any individuals
    --  Registry instances you may have)
+
+   ------------------------
+   -- Predefined project --
+   ------------------------
+   --  The following subprograms are used to access the predefined environment
+   --  for all the languages. This includes for instance the run time library
+   --  for Ada, or the C library (/usr/include/...) for C files.
+
+   function Get_Predefined_Source_Path
+     (Registry : Project_Registry) return String;
+   --  Return the predefined Source Path.
+   --  Return the current directory if no source path has been set yet.
+
+   function Get_Predefined_Object_Path
+     (Registry : Project_Registry) return String;
+   --  Return the predefined Object Path.
+   --  Return the current directory if no source path has been set yet.
+
+   function Get_Predefined_Source_Files
+     (Registry : Project_Registry)
+      return Basic_Types.String_Array_Access;
+   --  Return the list of sources found in the predefined project (e.g. the Ada
+   --  runtime). Returned memory must be freed by the caller
+
+   procedure Set_Predefined_Source_Path
+     (Registry : in out Project_Registry; Path : String);
+   --  Set the predefined source path
+
+   procedure Set_Predefined_Object_Path
+     (Registry : in out Project_Registry; Path : String);
+   --  Set the predefined object path
 
    ----------------------
    -- Loading projects --
@@ -126,6 +158,19 @@ package Projects.Registry is
    -------------
    -- Sources --
    -------------
+
+   function Get_Full_Path_From_File
+     (Registry        : Project_Registry;
+      Filename        : String;
+      Use_Source_Path : Boolean;
+      Use_Object_Path : Boolean) return String;
+   --  Return the directory to which Source_Filename belongs.
+   --  the returned path is normalized, and includes directory/basename.
+   --  If Use_Source_Path is true, the file is looked for on the include
+   --  path. If Use_Object_Path is true, it is also looked for on the object
+   --  path.
+   --  This function also works for project files, which are looked among the
+   --  loaded project tree.
 
    function Get_Language_From_File
      (Registry : Project_Registry; Source_Filename : String)

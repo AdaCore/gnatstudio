@@ -5,6 +5,7 @@ with Atree;
 with Basic_Types;               use Basic_Types;
 with Csets;
 with Errout;
+with File_Utils;                use File_Utils;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Glide_Intl;                use Glide_Intl;
@@ -76,6 +77,15 @@ package body Projects.Registry is
       --  Cached value of the scenario variables. This should be accessed only
       --  through the function Scenario_Variables, since it needs to be
       --  initialized first.
+
+      Predefined_Object_Path : GNAT.OS_Lib.String_Access;
+      --  Predefined object path for the runtime library
+
+      Predefined_Source_Path : GNAT.OS_Lib.String_Access;
+      --  Predefined source paths for the runtime library
+
+      Predefined_Source_Files : Basic_Types.String_Array_Access;
+      --  The list of source files in Predefined_Source_Path.
 
       --  Implicit dependency on the global htables in the Prj.* packages.
    end record;
@@ -800,6 +810,182 @@ package body Projects.Registry is
       ALI.Xref.Free;
       Atree.Atree_Private_Part.Nodes.Free;
    end Finalize;
+
+   --------------------------------
+   -- Get_Predefined_Source_Path --
+   --------------------------------
+
+   function Get_Predefined_Source_Path
+     (Registry : Project_Registry) return String is
+   begin
+      if Registry.Data.Predefined_Source_Path /= null then
+         return Registry.Data.Predefined_Source_Path.all;
+      else
+         return "";
+      end if;
+   end Get_Predefined_Source_Path;
+
+   --------------------------------
+   -- Get_Predefined_Object_Path --
+   --------------------------------
+
+   function Get_Predefined_Object_Path
+     (Registry : Project_Registry) return String is
+   begin
+      if Registry.Data.Predefined_Object_Path /= null then
+         return Registry.Data.Predefined_Object_Path.all;
+      else
+         return "";
+      end if;
+   end Get_Predefined_Object_Path;
+
+   ---------------------------------
+   -- Get_Predefined_Source_Files --
+   ---------------------------------
+
+   function Get_Predefined_Source_Files
+     (Registry : Project_Registry)
+      return Basic_Types.String_Array_Access
+   is
+      Result : String_Array_Access;
+   begin
+      --  ??? A nicer way would be to implement this with a predefined project,
+      --  and rely on the project parser to return the source
+      --  files. Unfortunately, this doesn't work with the current
+      --  implementation of this parser, since one cannot have two separate
+      --  project hierarchies at the same time.
+
+      if Registry.Data.Predefined_Source_Files = null then
+         Registry.Data.Predefined_Source_Files := Read_Files_From_Dirs
+           (Get_Predefined_Source_Path (Registry));
+      end if;
+
+      --  Make a copy of the result, so that we can keep a cache in the kernel
+
+      Result := new String_Array (Registry.Data.Predefined_Source_Files'Range);
+
+      for S in Registry.Data.Predefined_Source_Files'Range loop
+         Result (S) := new String'
+           (Registry.Data.Predefined_Source_Files (S).all);
+      end loop;
+
+      return Result;
+   end Get_Predefined_Source_Files;
+
+   --------------------------------
+   -- Set_Predefined_Source_Path --
+   --------------------------------
+
+   procedure Set_Predefined_Source_Path
+     (Registry : in out Project_Registry; Path : String) is
+   begin
+      Free (Registry.Data.Predefined_Source_Path);
+      Registry.Data.Predefined_Source_Path := new String'(Path);
+
+      Free (Registry.Data.Predefined_Source_Files);
+   end Set_Predefined_Source_Path;
+
+   --------------------------------
+   -- Set_Predefined_Object_Path --
+   --------------------------------
+
+   procedure Set_Predefined_Object_Path
+     (Registry : in out Project_Registry; Path : String) is
+   begin
+      Free (Registry.Data.Predefined_Object_Path);
+      Registry.Data.Predefined_Object_Path := new String'(Path);
+   end Set_Predefined_Object_Path;
+
+   -----------------------------
+   -- Get_Full_Path_From_File --
+   -----------------------------
+
+   function Get_Full_Path_From_File
+     (Registry        : Project_Registry;
+      Filename        : String;
+      Use_Source_Path : Boolean;
+      Use_Object_Path : Boolean) return String
+   is
+      Project : Project_Type;
+      Path : GNAT.OS_Lib.String_Access;
+      Iterator : Imported_Project_Iterator;
+
+   begin
+      if Is_Absolute_Path (Filename) then
+         return Normalize_Pathname (Filename);
+      else
+         --  If we are editing a project file, check in the loaded tree first
+         --  (in case an old copy is kept somewhere in the source or object
+         --  path)
+
+         if GNAT.Directory_Operations.File_Extension (Filename) =
+           Project_File_Extension
+         then
+            Iterator := Start (Get_Root_Project (Registry));
+            loop
+               Project := Current (Iterator);
+               exit when Project = No_Project;
+
+               if Project_Name (Project) & Project_File_Extension =
+                 Filename
+               then
+                  return Project_Path (Project);
+               end if;
+
+               Next (Iterator);
+            end loop;
+         end if;
+
+         --  Otherwise we have a source file
+         --  ??? Results could be cached for better efficiency
+
+         Project := Get_Project_From_File (Registry, Filename);
+
+         if Project /= No_Project then
+            if Use_Source_Path then
+               Path := Locate_Regular_File
+                 (Filename, Include_Path (Project, False));
+            end if;
+
+            if Path = null
+              and then Use_Object_Path
+            then
+               Path := Locate_Regular_File
+                 (Filename, Object_Path (Project, False));
+            end if;
+         end if;
+
+         if Path = null
+           and then Use_Source_Path
+         then
+            Path := Locate_Regular_File
+              (Filename,
+               Include_Path (Get_Root_Project (Registry), True)
+               & Path_Separator & Get_Predefined_Source_Path (Registry));
+         end if;
+
+         if Path = null
+           and then Use_Object_Path
+         then
+            Path := Locate_Regular_File
+              (Filename,
+               Object_Path (Get_Root_Project (Registry), True)
+               & Path_Separator & Get_Predefined_Object_Path (Registry));
+         end if;
+
+         if Path /= null then
+            declare
+               Full : constant String := Normalize_Pathname
+                 (Path.all, Resolve_Links => False);
+            begin
+               Free (Path);
+               return Full;
+            end;
+         else
+            return "";
+         end if;
+      end if;
+   end Get_Full_Path_From_File;
 
 end Projects.Registry;
 
