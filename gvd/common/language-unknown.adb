@@ -111,4 +111,23 @@ package body Language.Unknown is
               Constant_Character            => ''');
    end Get_Language_Context;
 
+   ----------------------
+   -- Next_Indentation --
+   ----------------------
+
+   procedure Next_Indentation
+     (Lang          : access Unknown_Language;
+      Buffer        : String;
+      Success       : out Boolean;
+      Indent        : out Natural;
+      Next_Indent   : out Natural;
+      Indent_Params : Indent_Parameters := Default_Indent_Parameters)
+   is
+      pragma Unreferenced (Lang, Buffer, Indent_Params);
+   begin
+      Success := False;
+      Indent := 0;
+      Next_Indent := 0;
+   end Next_Indentation;
+
 end Language.Unknown;

@@ -50,6 +50,14 @@ package Language.Unknown is
       Name  : String;
       Field : String) return String;
 
+   procedure Next_Indentation
+     (Lang          : access Unknown_Language;
+      Buffer        : String;
+      Success       : out Boolean;
+      Indent        : out Natural;
+      Next_Indent   : out Natural;
+      Indent_Params : Indent_Parameters := Default_Indent_Parameters);
+
 private
    type Unknown_Language is new Language_Root with null record;
 
