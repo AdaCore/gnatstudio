@@ -36,7 +36,7 @@ with Src_Editor_Buffer;
 
 with Basic_Types; use Basic_Types;
 
-with Unchecked_Deallocation;
+with Ada.Unchecked_Deallocation;
 
 package Src_Editor_View is
 
@@ -45,9 +45,9 @@ package Src_Editor_View is
    type Source_View is access all Source_View_Record'Class;
 
    procedure Gtk_New
-     (View              : out Source_View;
-      Buffer            : Src_Editor_Buffer.Source_Buffer := null;
-      Font              : Pango.Font.Pango_Font_Description);
+     (View   : out Source_View;
+      Buffer : Src_Editor_Buffer.Source_Buffer := null;
+      Font   : Pango.Font.Pango_Font_Description);
    --  Create a new Source_View from the given parameters.
    --  If no Buffer is given, then a new one will be created. For tasks such
    --  as source code edition, it is recommended to specify a fixed-width font,
@@ -58,9 +58,9 @@ package Src_Editor_View is
    --  the left of the text view.
 
    procedure Initialize
-     (View              : access Source_View_Record;
-      Buffer            : Src_Editor_Buffer.Source_Buffer;
-      Font              : Pango.Font.Pango_Font_Description);
+     (View   : access Source_View_Record;
+      Buffer : Src_Editor_Buffer.Source_Buffer;
+      Font   : Pango.Font.Pango_Font_Description);
    --  Internal initialization procedure.
    --  See the section "Creating your own widgets" in the documentation.
 
@@ -93,19 +93,19 @@ package Src_Editor_View is
    --  and Out_Of_Bounds is set to True.
 
    procedure Create_Line_Information_Column
-     (View           : access Source_View_Record;
-      Identifier     : String;
-      Stick_To_Data  : Boolean;
-      Every_Line     : Boolean);
-
-   procedure Remove_Line_Information_Column
-     (View           : access Source_View_Record;
-      Identifier     : String);
-
-   procedure Add_File_Information
      (View          : access Source_View_Record;
       Identifier    : String;
-      Info          : Glide_Kernel.Modules.Line_Information_Data);
+      Stick_To_Data : Boolean;
+      Every_Line    : Boolean);
+
+   procedure Remove_Line_Information_Column
+     (View       : access Source_View_Record;
+      Identifier : String);
+
+   procedure Add_File_Information
+     (View       : access Source_View_Record;
+      Identifier : String;
+      Info       : Glide_Kernel.Modules.Line_Information_Data);
    --  Add the line information to the view.
    --  User must not free Info.
 
@@ -158,7 +158,7 @@ private
      of Line_Info_Display_Access;
 
    type Line_Info_Display_Array_Access is access Line_Info_Display_Array;
-   procedure Unchecked_Free is new Unchecked_Deallocation
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Line_Info_Display_Array, Line_Info_Display_Array_Access);
 
    type Natural_Array is array (Natural range <>) of Natural;
