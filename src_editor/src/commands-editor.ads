@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                          G L I D E  I I                           --
+--                               G P S                               --
 --                                                                   --
 --                        Copyright (C) 2002                         --
 --                            ACT-Europe                             --
 --                                                                   --
--- GLIDE is free software; you can redistribute it and/or modify  it --
+-- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -32,13 +32,13 @@ package Commands.Editor is
    type Editor_Replace_Slice is access all Editor_Replace_Slice_Type;
 
    procedure Create
-     (Item          : out Editor_Replace_Slice;
-      Buffer        : Source_Buffer;
-      Start_Line    : Integer;
-      Start_Column  : Integer;
-      End_Line      : Integer;
-      End_Column    : Integer;
-      Text          : String);
+     (Item         : out Editor_Replace_Slice;
+      Buffer       : Source_Buffer;
+      Start_Line   : Integer;
+      Start_Column : Integer;
+      End_Line     : Integer;
+      End_Column   : Integer;
+      Text         : String);
    --  Create a new Editor_Replace_Slice command.
 
    function Execute
@@ -90,10 +90,10 @@ private
    end record;
 
    type Editor_Replace_Slice_Type is new Root_Command with record
-      Buffer      : Source_Buffer;
+      Buffer            : Source_Buffer;
 
-      Start_Line   : Integer;
-      Start_Column : Integer;
+      Start_Line        : Integer;
+      Start_Column      : Integer;
 
       End_Line_Before   : Integer;
       End_Column_Before : Integer;
