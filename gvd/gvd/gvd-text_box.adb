@@ -495,62 +495,67 @@ package body GVD.Text_Box is
    begin
       case Get_Button (Event) is
          when 3 =>
-            if Get_Event_Type (Event) = Button_Press
-              and then Box.Buffer /= null
-            then
+            if Get_Event_Type (Event) = Button_Press then
+               if Box.Buffer /= null then
+                  Y := Gint (Get_Y (Event)) - 1
+                    + Gint (Get_Value (Get_Vadj (Box.Child)));
+                  Line := Line_From_Pixels (Box, Y);
 
-               Y := Gint (Get_Y (Event)) - 1
-                 + Gint (Get_Value (Get_Vadj (Box.Child)));
-               Line := Line_From_Pixels (Box, Y);
+                  X := Gint (Get_X (Event))
+                    / Char_Width (Box.Font, Character' ('m')) -
+                    Invisible_Column_Width (Box) + 1;
+                  Index := Index_From_Line (Box, Line) - Box.Buffer'First;
+                  Move_N_Columns (Box, Index, Integer (X));
+                  Index :=
+                    Index + Line * Natural (Invisible_Column_Width (Box));
 
-               X := Gint (Get_X (Event))
-                 / Char_Width (Box.Font, Character' ('m')) -
-                 Invisible_Column_Width (Box) + 1;
-               Index := Index_From_Line (Box, Line) - Box.Buffer'First;
-               Move_N_Columns (Box, Index, Integer (X));
-               Index := Index + Line * Natural (Invisible_Column_Width (Box));
+                  --  Take the selection into account if it is under the
+                  --  cursor.
 
-               --  Take the selection into account if it is under the
-               --  cursor.
+                  if Get_Has_Selection (Box.Child)
+                    and then Select_Min <= Gint (Index)
+                    and then Gint (Index) <= Select_Max
+                  then
+                     --  Keep only the first line of the selection. This avoids
+                     --  having too long menus, and since the debugger can not
+                     --  handle multiple line commands anyway is not a big
+                     --  problem.
+                     --  We do not use Editor.Buffer directly, so that we don't
+                     --  have to take into account the presence of line
+                     --  numbers.
 
-               if Get_Has_Selection (Box.Child)
-                 and then Select_Min <= Gint (Index)
-                 and then Gint (Index) <= Select_Max
-               then
-                  --  Keep only the first line of the selection. This avoids
-                  --  having too long menus, and since the debugger can not
-                  --  handle multiple line commands anyway is not a big
-                  --  problem.
-                  --  We do not use Editor.Buffer directly, so that we don't
-                  --  have to take into account the presence of line numbers.
+                     declare
+                        S : constant String :=
+                          Get_Chars (Box.Child, Select_Min, Select_Max);
+                     begin
+                        for J in S'Range loop
+                           if S (J) = ASCII.LF then
+                              Select_Max := Gint (J - S'First) + Select_Min;
+                              exit;
+                           end if;
+                        end loop;
 
-                  declare
-                     S : constant String :=
-                       Get_Chars (Box.Child, Select_Min, Select_Max);
-                  begin
-                     for J in S'Range loop
-                        if S (J) = ASCII.LF then
-                           Select_Max := Gint (J - S'First) + Select_Min;
-                           exit;
-                        end if;
-                     end loop;
+                        --  Use the selection...
+                        Menu := Child_Contextual_Menu
+                          (Box, Line,
+                           Get_Chars (Box.Child, Select_Min, Select_Max));
+                     end;
 
-                     --  Use the selection...
-                     Menu := Child_Contextual_Menu
-                       (Box, Line,
-                        Get_Chars (Box.Child, Select_Min, Select_Max));
-                  end;
-
-               else
-                  Get_Entity_Area
-                    (Box, Gint (Get_X (Event)), Gint (Get_Y (Event)),
-                     Area, Entity);
-                  if Entity /= null then
-                     Menu := Child_Contextual_Menu (Box, Line, Entity.all);
-                     Free (Entity);
                   else
-                     Menu := Child_Contextual_Menu (Box, Line, "");
+                     Get_Entity_Area
+                       (Box, Gint (Get_X (Event)), Gint (Get_Y (Event)),
+                        Area, Entity);
+                     if Entity /= null then
+                        Menu := Child_Contextual_Menu (Box, Line, Entity.all);
+                        Free (Entity);
+                     else
+                        Menu := Child_Contextual_Menu (Box, Line, "");
+                     end if;
                   end if;
+
+               --  No file currently displayed
+               else
+                  Menu := Child_Contextual_Menu (Box, 0, "");
                end if;
 
                Popup (Menu,

@@ -145,6 +145,7 @@ private
    --  text window of the child.
    --  The user has clicked on the Line-th line of the buffer, and the text
    --  below the cursor was Entity.
+   --  Note that Line might be 0 in case the user clicked in an empty buffer.
 
    procedure Set_Buffer
      (Box            : access GVD_Text_Box_Record;
