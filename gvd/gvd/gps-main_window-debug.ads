@@ -18,14 +18,10 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Gtk.Widget; use Gtk.Widget;
+--  This package provides routines related to the GPS main window and
+--  the debugger module.
 
-package GPS.Main_Window.Utils is
-
-   procedure Set_Toolbar
-     (Main_Window : access GPS_Window_Record'Class;
-      Toolbar     : access Gtk_Widget_Record'Class);
-   --  Set the main window's toolbar
+package GPS.Main_Window.Debug is
 
    procedure Update_External_Dialogs
      (Window   : access GPS_Window_Record'Class;
@@ -62,4 +58,4 @@ package GPS.Main_Window.Utils is
    --  Set the current debugger associated with Window to Debugger.
    --  Update any associated dialogs (e.g. Task window) accordingly.
 
-end GPS.Main_Window.Utils;
+end GPS.Main_Window.Debug;

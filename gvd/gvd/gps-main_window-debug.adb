@@ -18,21 +18,20 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib;                  use Glib;
-with Gtk;                   use Gtk;
-with Gtk.Box;               use Gtk.Box;
-with Gtk.Widget;            use Gtk.Widget;
-with Gtkada.Handlers;       use Gtkada.Handlers;
+with Glib;               use Glib;
+with Gtk;                use Gtk;
+with Gtk.Widget;         use Gtk.Widget;
+with Gtkada.Handlers;    use Gtkada.Handlers;
 
-with Breakpoints_Editor;    use Breakpoints_Editor;
-with GVD.Dialogs;           use GVD.Dialogs;
-with GVD.Types;             use GVD.Types;
-with GVD.Process;           use GVD.Process;
-with Debugger;              use Debugger;
-with Process_Proxies;       use Process_Proxies;
-with GPS.Intl;            use GPS.Intl;
+with Breakpoints_Editor; use Breakpoints_Editor;
+with GVD.Dialogs;        use GVD.Dialogs;
+with GVD.Types;          use GVD.Types;
+with GVD.Process;        use GVD.Process;
+with Debugger;           use Debugger;
+with Process_Proxies;    use Process_Proxies;
+with GPS.Intl;           use GPS.Intl;
 
-package body GPS.Main_Window.Utils is
+package body GPS.Main_Window.Debug is
 
    -------------------------------
    -- Prepare_Cleanup_Debuggers --
@@ -43,7 +42,6 @@ package body GPS.Main_Window.Utils is
    is
       Debugger : Visual_Debugger;
       List     : Debugger_List_Link := Window.First_Debugger;
-
    begin
       while List /= null loop
          Debugger := Visual_Debugger (List.Debugger);
@@ -92,22 +90,6 @@ package body GPS.Main_Window.Utils is
       Window.Current_Debugger := null;
       Free (Window.Command_History);
    end Cleanup_Debuggers;
-
-   -----------------
-   -- Set_Toolbar --
-   -----------------
-
-   procedure Set_Toolbar
-     (Main_Window : access GPS_Window_Record'Class;
-      Toolbar     : access Gtk_Widget_Record'Class)
-   is
-      Box : Gtk_Hbox;
-   begin
-      Gtk_New_Hbox (Box, False, 0);
-      Pack_Start (Main_Window.Toolbar_Box, Box, False, False);
-      Pack_Start (Box, Toolbar, False, False);
-      Show_All (Box);
-   end Set_Toolbar;
 
    -----------------------------
    -- Update_External_Dialogs --
@@ -187,9 +169,7 @@ package body GPS.Main_Window.Utils is
    -- Preferences_Changed --
    -------------------------
 
-   procedure Preferences_Changed
-     (Window : access GPS_Window_Record'Class)
-   is
+   procedure Preferences_Changed (Window : access GPS_Window_Record'Class) is
    begin
       Widget_Callback.Emit_By_Name
         (Gtk_Widget (Window), "preferences_changed");
@@ -253,4 +233,4 @@ package body GPS.Main_Window.Utils is
       end if;
    end Switch_Debugger;
 
-end GPS.Main_Window.Utils;
+end GPS.Main_Window.Debug;

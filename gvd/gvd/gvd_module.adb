@@ -53,7 +53,7 @@ with GVD.Code_Editors;          use GVD.Code_Editors;
 with GVD.Call_Stack;            use GVD.Call_Stack;
 with Std_Dialogs;               use Std_Dialogs;
 with GPS.Main_Window;           use GPS.Main_Window;
-with GPS.Main_Window.Utils;     use GPS.Main_Window.Utils;
+with GPS.Main_Window.Debug;     use GPS.Main_Window.Debug;
 with GVD.Memory_View;           use GVD.Memory_View;
 with GVD.Menu;                  use GVD.Menu;
 with GVD.Preferences;           use GVD.Preferences;
@@ -80,7 +80,7 @@ with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;  use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
-with GPS.Intl;                use GPS.Intl;
+with GPS.Intl;                  use GPS.Intl;
 with Pixmaps_IDE;               use Pixmaps_IDE;
 with Traces;                    use Traces;
 with GUI_Utils;                 use GUI_Utils;
@@ -2336,7 +2336,7 @@ package body GVD_Module is
       Prev   : Boolean;
 
    begin
-      GPS.Main_Window.Utils.Preferences_Changed (Top);
+      GPS.Main_Window.Debug.Preferences_Changed (Top);
 
       if Id.Initialized then
          Prev   := Id.Show_Lines_With_Code;
