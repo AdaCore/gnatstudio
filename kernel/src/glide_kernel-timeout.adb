@@ -59,7 +59,6 @@ package body Glide_Kernel.Timeout is
       --  Indicates that the process has died.
 
       Id          : Timeout_Handler_Id;
-      Interactive : Boolean := False;
    end record;
    type Console_Process is access all Console_Process_Data'Class;
 
@@ -87,7 +86,6 @@ package body Glide_Kernel.Timeout is
 
    procedure Cleanup (Data : Process_Data) is
       Fd     : Process_Descriptor_Access := Data.Descriptor;
-      Name   : String_Access := Data.Name;
       Status : Integer;
    begin
       Close (Fd.all, Status);
@@ -107,7 +105,6 @@ package body Glide_Kernel.Timeout is
       end if;
 
       Free (Fd);
-      Free (Name);
 
       Pop_State (Data.Kernel);
    end Cleanup;
@@ -132,9 +129,11 @@ package body Glide_Kernel.Timeout is
          declare
             Output : constant String := Strip_CR (Expect_Out (Fd.all));
          begin
-            Insert (Data.Console, Output, Add_LF => False);
-            Highlight_Child
-              (Find_MDI_Child (Get_MDI (Data.D.Kernel), Data.Console));
+            if Data.Console /= null then
+               Insert (Data.Console, Output, Add_LF => False);
+               Highlight_Child
+                 (Find_MDI_Child (Get_MDI (Data.D.Kernel), Data.Console));
+            end if;
 
             if Data.D.Callback /= null then
                Data.D.Callback (Data.D, Output);
@@ -146,18 +145,20 @@ package body Glide_Kernel.Timeout is
 
    exception
       when Process_Died =>
-         Insert
-           (Data.Console, Strip_CR (Expect_Out (Fd.all)), Add_LF => False);
-         Highlight_Child
-           (Find_MDI_Child (Get_MDI (Data.D.Kernel), Data.Console));
+         if Data.Console /= null then
+            Insert
+              (Data.Console, Strip_CR (Expect_Out (Fd.all)), Add_LF => False);
+            Highlight_Child
+              (Find_MDI_Child (Get_MDI (Data.D.Kernel), Data.Console));
+
+            if Data.Console /= Get_Console (Data.D.Kernel) then
+               Enable_Prompt_Display (Data.Console, False);
+            end if;
+         end if;
 
          Data.Died := True;
          Cleanup (Data.D);
          Unref (Data);
-
-         if Data.Interactive then
-            Enable_Prompt_Display (Data.Console, False);
-         end if;
 
          return False;
 
@@ -198,28 +199,81 @@ package body Glide_Kernel.Timeout is
    --------------------
 
    procedure Launch_Process
-     (Kernel        : Kernel_Handle;
-      Command       : String;
-      Arguments     : GNAT.OS_Lib.Argument_List;
-      Title         : String := "";
-      Callback      : Output_Callback := null;
-      Exit_Cb       : Exit_Callback := null;
-      Name          : String;
-      Success       : out Boolean;
-      Interactive   : Boolean := False;
+     (Kernel      : Kernel_Handle;
+      Command     : String;
+      Arguments   : GNAT.OS_Lib.Argument_List;
+      Title       : String := "";
+      Callback    : Output_Callback := null;
+      Exit_Cb     : Exit_Callback := null;
+      Success     : out Boolean;
+      Hide_Output : Boolean := False;
       Callback_Data : System.Address := System.Null_Address)
    is
       Timeout : constant Guint32 := 50;
       Fd      : Process_Descriptor_Access;
       Data    : Console_Process;
-      Console : Interactive_Console;
-      Child   : MDI_Child;
 
       procedure Spawn
         (Command   : String;
          Arguments : Argument_List;
          Success   : out Boolean);
       --  Launch given command.
+
+      function Open_Output return Interactive_Console;
+      --  Return the console to which output should be sent. Child is
+      --  left to null if no output should be seen by the user.
+
+      -----------------
+      -- Open_Output --
+      -----------------
+
+      function Open_Output return Interactive_Console is
+         Console : Interactive_Console;
+         Child   : MDI_Child;
+      begin
+         if Hide_Output then
+            return null;
+
+         elsif Title /= "" then
+            Child := Find_MDI_Child_By_Name (Get_MDI (Kernel), Title);
+
+            if Child = null
+              or else Get_Widget (Child).all not in
+                 Interactive_Console_Record'Class
+            then
+               Gtk_New
+                 (Console, "", Data_Handler'Access,
+                  GObject (Data), Get_Pref (Kernel, Source_Editor_Font),
+                  History_List => Get_History (Kernel),
+                  Key          => "external_process",
+                  Wrap_Mode    => Wrap_Char);
+               Set_Max_Length
+                 (Get_History (Kernel).all, 100, "external_process");
+               Allow_Duplicates
+                 (Get_History (Kernel).all, "external_process", True, True);
+
+               Object_Return_Callback.Object_Connect
+                 (Console, "delete_event",
+                  Delete_Handler'Access,
+                  GObject (Data),
+                  After => False);
+
+               Child := Put (Get_MDI (Kernel), Gtk_Widget (Console));
+               Set_Dock_Side (Child, Bottom);
+               Dock_Child (Child);
+               Set_Title (Child, Title, Title);
+               Set_Focus_Child (Child);
+            else
+               Console := Interactive_Console (Get_Widget (Child));
+            end if;
+
+            Raise_Child (Child);
+            Clear (Console);
+            return Console;
+         else
+            return Get_Console (Kernel);
+         end if;
+      end Open_Output;
 
       -----------
       -- Spawn --
@@ -240,17 +294,20 @@ package body Glide_Kernel.Timeout is
             return;
          end if;
 
-         Glide_Kernel.Console.Insert (Kernel, Command, Add_LF => False);
+         if not Hide_Output then
+            Data.Console := Open_Output;
+            if Data.Console /= null then
+               Insert (Data.Console, Command, Add_LF => False);
+               for J in Arguments'Range loop
+                  Insert
+                    (Data.Console, ' ' & Arguments (J).all, Add_LF => False);
+               end loop;
 
-         for J in Arguments'Range loop
-            Glide_Kernel.Console.Insert
-              (Kernel, ' ' & Arguments (J).all, Add_LF => False);
-         end loop;
+               --  Add end of line after last argument
 
-         --  Add end of line after last argument
-
-         Glide_Kernel.Console.Insert
-           (Kernel, (1 => ASCII.LF), Add_LF => False);
+               Insert (Data.Console, (1 => ASCII.LF), Add_LF => False);
+            end if;
+         end if;
 
          Fd := new TTY_Process_Descriptor;
          Non_Blocking_Spawn (Fd.all, Exec.all, Arguments, Err_To_Out => True);
@@ -266,51 +323,23 @@ package body Glide_Kernel.Timeout is
 
    begin
       Push_State (Kernel, Processing);
+
+      --  Data is freed in Process_Cb
+      Data := new Console_Process_Data;
+      Initialize (Data);
+
       Spawn (Command, Arguments, Success);
 
       if Success then
-         Data := new Console_Process_Data;
-         Initialize (Data);
-
-         if Interactive then
-            Gtk_New
-              (Console, "", Data_Handler'Access,
-               GObject (Data), Get_Pref (Kernel, Source_Editor_Font),
-               History_List => Get_History (Kernel),
-               Key          => "external_process",
-               Wrap_Mode    => Wrap_Char);
-            Set_Max_Length (Get_History (Kernel).all, 100, "external_process");
-            Allow_Duplicates
-              (Get_History (Kernel).all, "external_process", True, True);
-
-            Data.D := (Kernel, Fd, new String'(Name), Callback, Exit_Cb,
-                       Callback_Data);
-
-            Object_Return_Callback.Object_Connect
-              (Console, "delete_event",
-               Delete_Handler'Access,
-               GObject (Data),
-               After => False);
-
-            Child := Put (Get_MDI (Kernel), Gtk_Widget (Console));
-            Set_Dock_Side (Child, Bottom);
-            Dock_Child (Child);
-            Set_Title (Child, Command, Title);
-            Set_Focus_Child (Child);
-
-         else
-            Console := Get_Console (Kernel);
-            Data.D := (Kernel, Fd, new String'(Name), Callback, Exit_Cb,
-                       Callback_Data);
+         if Data.Console = null then
+            Data.Console := Open_Output;
          end if;
 
-         Data.Console := Console;
-         Data.Interactive := Interactive;
-
-         Data.Id := Console_Process_Timeout.Add
-           (Timeout,
-            Process_Cb'Access,
-            Data);
+         Data.D       := (Kernel, Fd, Callback, Exit_Cb, Callback_Data);
+         Data.Id      :=
+           Console_Process_Timeout.Add (Timeout, Process_Cb'Access, Data);
+      else
+         Unref (Data);
       end if;
 
       Pop_State (Kernel);
