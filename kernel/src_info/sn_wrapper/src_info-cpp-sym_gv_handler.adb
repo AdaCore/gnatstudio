@@ -5,6 +5,7 @@ separate (Src_Info.CPP)
 --------------------
 
 procedure Sym_GV_Handler (Sym : FIL_Table)
+--  NOTE: this handler is called from fu-to-gv handler as well
 is
    Desc              : CType_Description;
    Var               : GV_Table;

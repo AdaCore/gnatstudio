@@ -1,10 +1,11 @@
 separate (Src_Info.CPP)
 
---------------------
+---------------------
 -- Sym_CON_Handler --
---------------------
+---------------------
 
 procedure Sym_CON_Handler (Sym : FIL_Table)
+--  NOTE: this handler is called from fu-to-con handler as well!!!
 is
    Desc              : CType_Description;
    Var               : GV_Table;

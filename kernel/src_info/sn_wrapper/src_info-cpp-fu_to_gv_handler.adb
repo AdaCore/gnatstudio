@@ -30,10 +30,25 @@ begin
             Location                => Var.Start_Position);
       exception
          when Declaration_Not_Found =>
-            Fail ("unable to find declaration for global variable "
-                  & Ref_Id);
-            Free (Var);
-            return;
+            declare
+               Sym : FIL_Table;
+            begin
+               Sym.Buffer         := Var.Buffer;
+               Sym.Identifier     := Var.Name;
+               Sym.Start_Position := Var.Start_Position;
+               Sym.File_Name      := Var.File_Name;
+               Sym_GV_Handler (Sym);
+               Decl_Info := Find_Declaration
+                 (File                    => Global_LI_File,
+                  Symbol_Name             => Ref_Id,
+                  Location                => Var.Start_Position);
+            exception
+               when Declaration_Not_Found =>
+                  Fail ("unable to create declaration for global variable "
+                        & Ref_Id);
+                  Free (Var);
+                  return;
+            end;
       end;
    else -- another file
       begin -- Find dependency declaration

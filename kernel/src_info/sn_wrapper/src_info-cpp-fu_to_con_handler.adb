@@ -34,11 +34,26 @@ begin
             Location                => Var.Start_Position);
       exception
          when Declaration_Not_Found =>
-            Fail ("unable to find declaration for constant "
-               & Ref.Buffer (Ref.Referred_Symbol_Name.First ..
-                             Ref.Referred_Symbol_Name.Last));
-            Free (Var);
-            return;
+            declare
+               Sym : FIL_Table;
+            begin
+               Sym.Buffer         := Var.Buffer;
+               Sym.Identifier     := Var.Name;
+               Sym.Start_Position := Var.Start_Position;
+               Sym.File_Name      := Var.File_Name;
+               Sym_CON_Handler (Sym);
+               Decl_Info := Find_Declaration
+                 (File                    => Global_LI_File,
+                  Symbol_Name             =>
+                     Ref.Buffer (Ref.Referred_Symbol_Name.First ..
+                                 Ref.Referred_Symbol_Name.Last),
+                  Location                => Var.Start_Position);
+            exception
+               when Declaration_Not_Found =>
+                  Fail ("Failed to create CON declaration");
+                  Free (Var);
+                  return;
+            end;
       end;
    else -- another file
       begin -- Find dependency declaration
