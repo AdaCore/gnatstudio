@@ -170,6 +170,7 @@ package body Prj_API is
    ----------------
 
    function Get_String (Str : Types.String_Id) return String is
+      pragma Suppress (All_Checks);
       R : String (1 .. Natural (String_Length (Str)));
    begin
       for J in R'Range loop
@@ -1037,6 +1038,26 @@ package body Prj_API is
         (Projects.Table (View).Name).Node;
    end Get_Project_From_View;
 
+   --------------
+   -- Is_Equal --
+   --------------
+
+   function Is_Equal (Str1 : String_Id; Str2 : String) return Boolean is
+      pragma Suppress (All_Checks);
+      L : constant Int := String_Length (Str1);
+      Index : Int := 1;
+   begin
+      if Integer (L) = Str2'Length then
+         for S in Str2'Range loop
+            if Get_Char_Code (Str2 (S)) /= Get_String_Char (Str1, Index) then
+               return False;
+            end if;
+            Index := Index + 1;
+         end loop;
+      end if;
+      return True;
+   end Is_Equal;
+
    ----------------------
    -- Is_Direct_Source --
    ----------------------
@@ -1047,11 +1068,9 @@ package body Prj_API is
       Sources : String_List_Id := Projects.Table (Of_Project).Sources;
    begin
       while Sources /= Nil_String loop
-         if Get_String (String_Elements.Table (Sources).Value) =
-           Source_Filename
+         if Is_Equal
+           (String_Elements.Table (Sources).Value, Source_Filename)
          then
-            --  Trace (Me, Source_Filename & " Found in project "
-            --         & Get_Name_String (Projects.Table (Of_Project).Name));
             return True;
          end if;
 
@@ -1591,8 +1610,8 @@ package body Prj_API is
           and then Associative_Array_Index_Of (Node) = No_String)
          or else (Attribute_Index /= ""
                   and then Associative_Array_Index_Of (Node) /= No_String
-                  and then Get_String (Associative_Array_Index_Of (Node)) =
-                  Attribute_Index));
+                  and then Is_Equal (Associative_Array_Index_Of (Node),
+                                     Attribute_Index)));
    end Attribute_Matches;
 
    -----------------------------------
@@ -2645,8 +2664,8 @@ package body Prj_API is
                when N_Typed_Variable_Declaration =>
 
                   if Is_External_Variable (Current)
-                    and then Get_String (External_Reference_Of (Current)) =
-                    Ext_Variable_Name
+                    and then Is_Equal
+                       (External_Reference_Of (Current), Ext_Variable_Name)
                   then
                      Add_Node_To_List
                        (Variable_Nodes, Variable_Nodes_Last, Current);
@@ -2676,8 +2695,8 @@ package body Prj_API is
 
                         if not Match then
                            while Choice /= Empty_Node loop
-                              if Get_String
-                                (String_Value_Of (Choice)) = Specific_Choice
+                              if Is_Equal
+                                (String_Value_Of (Choice), Specific_Choice)
                               then
                                  Match := True;
                                  exit;
@@ -2934,9 +2953,8 @@ package body Prj_API is
          case Kind_Of (Node) is
             when N_External_Value =>
                if External_Default_Of (Node) /= Empty_Node
-                 and then Get_String
-                 (String_Value_Of (External_Default_Of (Node))) =
-                 Old_Value_Name
+                 and then Is_Equal
+                 (String_Value_Of (External_Default_Of (Node)), Old_Value_Name)
                then
                   Set_String_Value_Of
                     (External_Default_Of (Node), New_Value_Name);
@@ -2945,7 +2963,7 @@ package body Prj_API is
             when N_String_Type_Declaration =>
                C := First_Literal_String (Node);
                while C /= Empty_Node loop
-                  if Get_String (String_Value_Of (C)) = Old_Value_Name then
+                  if Is_Equal (String_Value_Of (C), Old_Value_Name) then
                      Set_String_Value_Of (C, New_Value_Name);
                      exit;
                   end if;
@@ -2971,7 +2989,7 @@ package body Prj_API is
       N := Name_Find;
 
       if Value_Of (N) /= No_String
-        and then Get_String (Value_Of (N)) = Old_Value_Name
+        and then Is_Equal (Value_Of (N), Old_Value_Name)
       then
          Add (Ext_Variable_Name, Get_String (New_Value_Name));
       end if;
@@ -3034,7 +3052,7 @@ package body Prj_API is
                   raise Delete_Variable;
                end if;
 
-               if Get_String (String_Value_Of (C)) = Value_Name then
+               if Is_Equal (String_Value_Of (C), Value_Name) then
                   Set_First_Literal_String (Node, Next_Literal_String (C));
                   return;
                end if;
@@ -3043,7 +3061,7 @@ package body Prj_API is
                   C2 := Next_Literal_String (C);
                   exit when C2 = Empty_Node;
 
-                  if Get_String (String_Value_Of (C2)) = Value_Name then
+                  if Is_Equal (String_Value_Of (C2), Value_Name) then
                      Set_Next_Literal_String (C, Next_Literal_String (C2));
                      exit;
                   end if;
@@ -3052,9 +3070,9 @@ package body Prj_API is
 
             when N_External_Value =>
                if External_Default_Of (Node) /= Empty_Node
-                 and then Get_String
-                 (String_Value_Of (External_Default_Of (Node))) =
-                 Value_Name
+                 and then Is_Equal
+                 (String_Value_Of (External_Default_Of (Node)),
+                  Value_Name)
                then
                   Set_External_Default_Of (Node, Empty_Node);
                end if;
@@ -3091,7 +3109,7 @@ package body Prj_API is
       --  Reset the value of the external variable if needed
       Name_Len := Ext_Variable_Name'Length;
       Name_Buffer (1 .. Name_Len) := Ext_Variable_Name;
-      if Get_String (Value_Of (Name_Find)) = Value_Name then
+      if Is_Equal (Value_Of (Name_Find), Value_Name) then
          if Type_Decl /= Empty_Node then
             Add (Ext_Variable_Name,
                  Get_String (String_Value_Of
@@ -3740,7 +3758,7 @@ package body Prj_API is
             when Prj.List =>
                Str := Array_Elements.Table (Prefix).Value.Values;
                while Str /= Nil_String loop
-                  if F = Get_String (String_Elements.Table (Str).Value) then
+                  if Is_Equal (String_Elements.Table (Str).Value, F) then
                      return Prefix;
                   end if;
                   Str := String_Elements.Table (Str).Next;
@@ -3748,9 +3766,7 @@ package body Prj_API is
 
             --  Naming exceptions for Ada
             when Single =>
-               if F = Get_String
-                 (Array_Elements.Table (Prefix).Value.Value)
-               then
+               if Is_Equal (Array_Elements.Table (Prefix).Value.Value, F) then
                   return Prefix;
                end if;
          end case;
@@ -3806,8 +3822,8 @@ package body Prj_API is
       if Current_Language = Nil_String
         or else
         (String_Elements.Table (Current_Language).Next = Nil_String
-         and then Get_String (String_Elements.Table (Current_Language).Value) =
-          Ada_String)
+           and then Is_Equal
+           (String_Elements.Table (Current_Language).Value, Ada_String))
       then
          return;
       end if;

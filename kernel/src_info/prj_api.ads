@@ -67,6 +67,9 @@ package Prj_API is
    --  This functional form returns the value of Str as a string without
    --  affecting the contents of either Name_Buffer or Name_Len.
 
+   function Is_Equal (Str1 : Types.String_Id; Str2 : String) return Boolean;
+   --  Return True if the two strings are equal.
+
    procedure Free is new Unchecked_Deallocation
      (Project_Node_Array, Project_Node_Array_Access);
    procedure Free is new Unchecked_Deallocation
