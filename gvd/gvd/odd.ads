@@ -57,6 +57,9 @@ package Odd is
    --  Whether dots should be shown in the code editor for lines that
    --  contain code.
 
+   Max_Frame : constant := 500;
+   --  Maximum number of frames displayed in the backtrace window.
+
    Align_Items_On_Grid : constant Boolean := True;
    --  Should items be aligned on the grid.
 
