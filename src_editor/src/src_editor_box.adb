@@ -18,6 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Exceptions;             use Ada.Exceptions;
 with Glib;                       use Glib;
 with Glib.Object;
 with Glib.Values;
@@ -302,6 +303,11 @@ package body Src_Editor_Box is
       end if;
 
       Free (Filename);
+
+   exception
+      when E : Unsupported_Language =>
+         Insert (Kernel, Exception_Message (E),
+                 Mode => Glide_Kernel.Console.Error);
    end Goto_Declaration_Or_Body;
 
    ------------------
