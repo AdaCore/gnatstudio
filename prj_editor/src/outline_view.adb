@@ -20,6 +20,7 @@
 
 with Glib;                        use Glib;
 with Glib.Object;                 use Glib.Object;
+with Glib.Properties.Creation;    use Glib.Properties.Creation;
 with Glib.Xml_Int;                use Glib.Xml_Int;
 with Glide_Kernel;                use Glide_Kernel;
 with Glide_Kernel.Contexts;       use Glide_Kernel.Contexts;
@@ -50,13 +51,18 @@ with Language_Handlers.Glide;     use Language_Handlers.Glide;
 with Basic_Types;                 use Basic_Types;
 with Gtk.Scrolled_Window;         use Gtk.Scrolled_Window;
 with Project_Explorers_Common;    use Project_Explorers_Common;
-with Traces;                      use Traces;
+--  with Traces;                      use Traces;
+with Default_Preferences;         use Default_Preferences;
 
 package body Outline_View is
 
-   Me : constant Debug_Handle := Create ("Outline_View");
+--   Me : constant Debug_Handle := Create ("Outline_View");
 
    Outline_View_Module : Module_ID;
+
+   Outline_View_Font                : Param_Spec_Font;
+   Outline_View_Profiles            : Param_Spec_Boolean;
+   Outline_View_Sort_Alphabetically : Param_Spec_Boolean;
 
    procedure On_Context_Changed
      (Kernel : access Kernel_Handle_Record'Class;
@@ -124,6 +130,39 @@ package body Outline_View is
       Event        : Gdk.Event.Gdk_Event;
       Menu         : Gtk_Menu) return Selection_Context_Access;
    --  Context factory when creating contextual menus
+
+   procedure Preferences_Changed
+     (Kernel : access Kernel_Handle_Record'Class);
+   --  Called when the preferences have changed.
+
+   -------------------------
+   -- Preferences_Changed --
+   -------------------------
+
+   procedure Preferences_Changed
+     (Kernel : access Kernel_Handle_Record'Class)
+   is
+      Child : constant MDI_Child := Find_MDI_Child_By_Tag
+        (Get_MDI (Kernel), Outline_View_Record'Tag);
+      Outline : Outline_View_Access;
+      Sort_Column : Gint;
+      pragma Unreferenced (Sort_Column);
+   begin
+      if Child /= null then
+         Outline := Outline_View_Access (Get_Widget (Child));
+
+         Modify_Font (Outline.Tree, Get_Pref (Kernel, Outline_View_Font));
+
+         if Get_Pref (Kernel, Outline_View_Sort_Alphabetically) then
+            Thaw_Sort (Gtk_Tree_Store (Get_Model (Outline.Tree)), 1);
+         else
+            Sort_Column :=
+              Freeze_Sort (Gtk_Tree_Store (Get_Model (Outline.Tree)));
+         end if;
+
+         Refresh (Outline, Outline.File);
+      end if;
+   end Preferences_Changed;
 
    ---------------------
    -- Default_Factory --
@@ -300,10 +339,15 @@ package body Outline_View is
       Kernel  : access Kernel_Handle_Record'Class)
    is
       Scrolled : Gtk_Scrolled_Window;
+      Initial_Sort : Integer := 2;
    begin
       Outline := new Outline_View_Record;
       Outline.Kernel := Kernel_Handle (Kernel);
       Initialize_Vbox (Outline, Homogeneous => False);
+
+      if not Get_Pref (Kernel, Outline_View_Sort_Alphabetically) then
+         Initial_Sort := -1;
+      end if;
 
       Gtk_New (Scrolled);
       Pack_Start (Outline, Scrolled, Expand => True);
@@ -318,16 +362,14 @@ package body Outline_View is
                                 6 => GType_String), --  entity name
          Column_Names       => (1 => null, 2 => null),
          Show_Column_Titles => False,
-         Initial_Sort_On    => 2,
+         Initial_Sort_On    => Initial_Sort,
          Selection_Mode     => Gtk.Enums.Selection_None);
       Add (Scrolled, Outline.Tree);
 
       Outline.Icon := Gdk_New_From_Xpm_Data (var_xpm);
       Outline.File_Icon := Gdk_New_From_Xpm_Data (mini_page_xpm);
 
-      Modify_Font
-        (Outline.Tree,
-         Get_Pref_Font (Kernel, Glide_Kernel.Preferences.Default_Style));
+      Modify_Font (Outline.Tree, Get_Pref (Kernel, Outline_View_Font));
 
       Return_Callback.Object_Connect
         (Outline.Tree,
@@ -360,8 +402,10 @@ package body Outline_View is
       Languages  : constant Glide_Language_Handler :=
         Glide_Language_Handler (Get_Language_Handler (Outline.Kernel));
       Constructs : Construct_List;
+      Show_Profiles : constant Boolean :=
+        Get_Pref (Outline.Kernel, Outline_View_Profiles);
+      Sort_Column : constant Gint := Freeze_Sort (Model);
    begin
-      Trace (Me, "MANU: Refresh outline");
       Push_State (Outline.Kernel, Busy);
       Clear (Model);
 
@@ -393,7 +437,8 @@ package body Outline_View is
                   Append (Model, Iter, Root);
                   Set (Model, Iter, 0, C_Proxy (Outline.Icon));
                   Set (Model, Iter, 1,
-                       Entity_Name_Of (Constructs.Current.all));
+                       Entity_Name_Of (Constructs.Current.all,
+                                       Show_Profiles => Show_Profiles));
                   Set (Model, Iter, 2,
                        Gint (Constructs.Current.Sloc_Entity.Line));
                   Set (Model, Iter, 3,
@@ -411,6 +456,7 @@ package body Outline_View is
       Expand_All (Outline.Tree);
 
       Pop_State (Outline.Kernel);
+      Thaw_Sort (Model, Sort_Column);
    end Refresh;
 
    ---------------------
@@ -525,6 +571,38 @@ package body Outline_View is
          "Outline View", "Outline_View",
          Docked, Left,
          True, True);
+
+      Outline_View_Font := Param_Spec_Font
+        (Gnew_Font
+           (Name => "Outline-View-Font",
+            Default => Get_Pref (Kernel, Param_Spec_String (Default_Font)),
+            Blurb   => -"Font used in the outline view",
+            Nick    => -"Outline View font"));
+      Register_Property
+        (Kernel, Param_Spec (Outline_View_Font), -"Outline");
+
+      Outline_View_Profiles := Param_Spec_Boolean
+        (Gnew_Boolean
+           (Name    => "Outline-View-Profiles",
+            Default => True,
+            Blurb   => -("Whether the outline view should display the profiles"
+                         & " of the entities"),
+            Nick    => -"Show parameter profiles"));
+      Register_Property
+        (Kernel, Param_Spec (Outline_View_Profiles), -"Outline");
+
+      Outline_View_Sort_Alphabetically := Param_Spec_Boolean
+        (Gnew_Boolean
+           (Name    => "Outline-View-Sort-Alphabetical",
+            Default => True,
+            Blurb   => -("If set, the entities are sorted alphabetically,"
+                         & " otherwise they appear in the order they are"
+                         & " found in the source file"),
+            Nick    => -"Sort alphabetically"));
+      Register_Property
+        (Kernel, Param_Spec (Outline_View_Sort_Alphabetically), -"Outline");
+
+      Add_Hook (Kernel, Preferences_Changed_Hook, Preferences_Changed'Access);
    end Register_Module;
 
 end Outline_View;
