@@ -392,17 +392,14 @@ package body Debugger.Gdb is
    ----------------
 
    procedure Initialize (Debugger : access Gdb_Debugger) is
+      Num : Expect_Match;
    begin
-      --  Make sure that the prompt is what odd is expecting.
-
-      Push_Internal_Command_Status (Get_Process (Debugger), True);
-      Send (Debugger, "set prompt (gdb) ", Wait_For_Prompt => False);
-      Pop_Internal_Command_Status (Get_Process (Debugger));
-
       --  Wait for initial prompt (and display it in the window)
-      Wait_Prompt (Debugger);
+      Wait (Get_Process (Debugger), Num, "^(.+).*$", Timeout => -1);
       Push_Internal_Command_Status (Get_Process (Debugger), True);
 
+      --  Make sure that the prompt is what odd is expecting.
+      Send (Debugger, "set prompt (gdb) ");
       Send (Debugger, "set width 0");
       Send (Debugger, "set height 0");
       Send (Debugger, "set annotate 1");
