@@ -129,6 +129,9 @@ package body Gtkada.MDI is
    MDI_Layout_Class_Record : Gtk.Object.GObject_Class :=
      Gtk.Object.Uninitialized_Class;
 
+   MDI_Signals : constant chars_ptr_array :=
+     (1 => New_String ("child_selected"));
+
    Close_Xpm : constant Interfaces.C.Strings.chars_ptr_array :=
      (New_String ("13 11 3 1"),
       New_String ("      c None"),
@@ -395,6 +398,8 @@ package body Gtkada.MDI is
    ----------------
 
    procedure Initialize (MDI : access MDI_Window_Record'Class) is
+      Signal_Parameters : constant Signal_Parameter_Types :=
+        (1 => (1 => GType_Pointer));
       No_Signals : chars_ptr_array (1 .. 0) := (others => Null_Ptr);
    begin
       Gtk.Fixed.Initialize (MDI);
@@ -402,9 +407,10 @@ package body Gtkada.MDI is
 
       Gtk.Object.Initialize_Class_Record
         (MDI,
-         Signals      => No_Signals,
+         Signals      => MDI_Signals,
          Class_Record => MDI_Class_Record,
-         Type_Name    => "GtkAdaMDI");
+         Type_Name    => "GtkAdaMDI",
+         Parameters   => Signal_Parameters);
 
       Gtk_New (MDI.Layout);
       Set_Has_Window (MDI.Layout, True);
@@ -2405,6 +2411,10 @@ package body Gtkada.MDI is
    ---------------------
 
    procedure Set_Focus_Child (Child : access MDI_Child_Record'Class) is
+      procedure Emit_By_Name_Child
+        (Object : System.Address; Name : String; Child : System.Address);
+      pragma Import (C, Emit_By_Name_Child, "gtk_signal_emit_by_name");
+
       Old : MDI_Child := Child.MDI.Focus_Child;
       C   : MDI_Child := MDI_Child (Child);
       Id  : Idle_Handler_Id;
@@ -2457,6 +2467,9 @@ package body Gtkada.MDI is
 
       Set_Flags (C.Initial_Child, Can_Focus);
       Grab_Focus (C.Initial_Child);
+
+      Emit_By_Name_Child (Get_Object (C.MDI), "child_selected" & ASCII.NUL,
+                          Get_Object (C));
    end Set_Focus_Child;
 
    ----------------------

@@ -405,6 +405,12 @@ package Gtkada.MDI is
    --    to Put to insert it in the MDI window.
    --    Note that this is also the signal to use to prevent top level
    --    Gtk_Window from being destroyed.
+   --
+   --  - "child_selected"
+   --    procedure Handler
+   --       (MDI : access MDI_Window_Record'Class; Child : MDI_Child);
+   --
+   --    This signal is emitted when a new child has gained the focus.
    --  </signals>
 
 private
