@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with Glib.Error;                use Glib.Error;
+with Glib.Object;               use Glib.Object;
 with Pango.Font;                use Pango.Font;
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
 with Gtk;                       use Gtk;
@@ -132,6 +133,10 @@ procedure GPS is
    --  Return a clean version of the parameter for command line switches, ie
    --  return the same thing as GNAT.Command_Line.Parameter, but strips the
    --  leading '=' if any, so that users can say '--log-level=4' for instance.
+
+   procedure Child_Selected
+     (MDI : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Called when a new child is selected
 
    ---------------------
    -- Clean_Parameter --
@@ -580,6 +585,19 @@ procedure GPS is
       return False;
    end Finish_Setup;
 
+   --------------------
+   -- Child_Selected --
+   --------------------
+
+   procedure Child_Selected
+     (MDI : access GObject_Record'Class;
+      Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (MDI);
+   begin
+      Context_Changed (Kernel, Get_Current_Context (Kernel));
+   end Child_Selected;
+
 begin
    Home := Getenv ("CHARSET");
 
@@ -604,6 +622,11 @@ begin
    Gtk_New
      (GPS, "<gps>", Glide_Menu.Glide_Menu_Items.all, Dir.all, Prefix.all);
    Reset_Title (GPS);
+
+   Kernel_Callback.Connect
+     (Get_MDI (GPS.Kernel), "child_selected",
+      Kernel_Callback.To_Marshaller (Child_Selected'Unrestricted_Access),
+      GPS.Kernel);
 
    GPS.Debug_Mode := True;
    GPS.Log_Level  := GVD.Types.Hidden;
