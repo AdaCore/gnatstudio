@@ -483,7 +483,10 @@ package body Gtkada.File_Selector is
 
       Register_Filter (File_Selector, Filter_A);
       Set_Modal (File_Selector, True);
-      Set_Transient_For (File_Selector, Parent);
+
+      if Parent /= null then
+         Set_Transient_For (File_Selector, Parent);
+      end if;
 
       Widget_Callback.Object_Connect
         (File_Selector.Ok_Button, "clicked",
