@@ -10,8 +10,9 @@ bindir          = $(prefix)/bin
 
 CFLAGS = -g -O2
 C_OBJECTS = ../gnat/gexpect.o ../gnat/gexpect_tty.o ../pixmaps/pixmaps.o
+GTK_LIBS = @GTK_LIBS@
 ALL_CFLAGS = $(CFLAGS) -gnata -gnatwuwe @GTK_CFLAGS@ @TARGET_CFLAGS@ -I../gnat
-LINK_FLAGS = $(C_OBJECTS) @TARGET_LFLAGS@ @GTK_LIBS@
+LINK_FLAGS = $(C_OBJECTS) @TARGET_LFLAGS@ $(GTK_LIBS)
 ADALIB = $(strip $(shell gnatls -v | grep adalib))
 
 MAIN = gvd_main
@@ -44,10 +45,10 @@ libgvd:
 	  `grep '   --   ' b~$(MAIN).adb | grep '\.o$$' | sed 's/   --   //'`
 
 gvd_test: gvd_test.o libgvd
-	gcc -o gvd_test gvd_test.o @GTK_LIBS@ -L. -lgvd -L$(ADALIB) -lgnat
+	gcc -o gvd_test gvd_test.o $(GTK_LIBS) -L. -lgvd -L$(ADALIB) -lgnat
 
 gvd_test.o: gvd_test.c gvd-api.h
-	gcc -c `gtk-config --cflags` gvd_test.c
+	gcc -c $(CFLAGS) `gtk-config --cflags` gvd_test.c
 
 install: $(EXEC)
 	$(MKDIR) $(bindir)
