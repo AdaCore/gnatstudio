@@ -115,8 +115,10 @@ package body Debugger.Gdb is
      ("in (\S+)");
    --  How to detect subprogram names in the info given by "info breakpoint"
 
-   Question_Filter_Pattern : constant Pattern_Matcher := Compile
+   Question_Filter_Pattern1 : constant Pattern_Matcher := Compile
      ("^\[0\] ", Multiple_Lines);
+   Question_Filter_Pattern2 : constant Pattern_Matcher := Compile
+     ("^(.*\?) \(y or n\)", Multiple_Lines);
    --  How to detect a question in gdb's output
 
    Address_Range_Pattern : constant Pattern_Matcher := Compile
@@ -207,7 +209,7 @@ package body Debugger.Gdb is
    begin
       --  Do we have a question ?
 
-      Question_Start := Match (Question_Filter_Pattern, Str);
+      Question_Start := Match (Question_Filter_Pattern1, Str);
 
       if Question_Start >= Str'First then
 
@@ -267,6 +269,11 @@ package body Debugger.Gdb is
                      True,
                      Choices (1 .. Num - 1));
                   Show_All (Dialog);
+
+                  for J in 1 .. Num - 1 loop
+                     Free (Choices (Num).Choice);
+                     Free (Choices (Num).Description);
+                  end loop;
                end;
 
                return;
@@ -274,6 +281,36 @@ package body Debugger.Gdb is
 
             Index := Index + 1;
          end loop;
+      end if;
+
+      Question_Start := Match (Question_Filter_Pattern2, Str);
+
+      if Question_Start >= Str'First then
+         declare
+            Choices : Question_Array (1 .. 2);
+         begin
+            Choices (1).Choice := new String'("n");
+            Choices (1).Description := new String'("No");
+
+            Choices (2).Choice := new String'("y");
+            Choices (2).Description := new String'("Yes");
+
+            Gtk_New
+              (Dialog,
+               To_Window (Window),
+               Convert (To_Main_Debug_Window (Window),
+                        Descriptor).Debugger,
+               False,
+               Choices (1 .. 2),
+               Str (Question_Start .. Str'Last));
+            Show_All (Dialog);
+
+            Free (Choices (1).Choice);
+            Free (Choices (1).Description);
+            Free (Choices (2).Choice);
+            Free (Choices (2).Description);
+            return;
+         end;
       end if;
    end Question_Filter;
 
@@ -568,6 +605,18 @@ package body Debugger.Gdb is
    procedure Close (Debugger : access Gdb_Debugger) is
       Result : Expect_Match;
    begin
+      --  In case the debugger was waiting for some input, or was busy
+      --  processing a command.
+      --  ??? Problem here if we were waiting on a user question (for instance
+      --  in Start)
+      Interrupt
+        (Debugger,
+         Wait_For_Prompt => not Command_In_Process (Get_Process (Debugger)));
+
+      --  Make sure gdb will not complain if the file is being run
+      Send (Debugger, "set confirm off");
+
+      --  Now exit the debugger
       Send (Debugger, "quit", Wait_For_Prompt => False, Mode => Internal);
 
       --  Ensure that gdb is terminated before closing the pipes and trying to
@@ -810,9 +859,14 @@ package body Debugger.Gdb is
    -- Interrupt --
    ---------------
 
-   procedure Interrupt (Debugger : access Gdb_Debugger) is
+   procedure Interrupt
+     (Debugger : access Gdb_Debugger;
+      Wait_For_Prompt : Boolean := False) is
    begin
       Interrupt (Get_Descriptor (Get_Process (Debugger)).all);
+      if Wait_For_Prompt then
+         Wait_Prompt (Debugger);
+      end if;
    end Interrupt;
 
    ------------------------
@@ -1131,7 +1185,8 @@ package body Debugger.Gdb is
    begin
       Text_Output_Handler
         (Convert (Debugger.Window, Debugger),
-         Send_Full (Debugger, "  ", Wait_For_Prompt => Wait_For_Prompt),
+         Send_Full (Debugger, "  ", Wait_For_Prompt => Wait_For_Prompt,
+                    Mode => Internal),
          Is_Command => True,
          Set_Position => True);
    end Display_Prompt;
