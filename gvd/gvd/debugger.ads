@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2002                      --
+--                      Copyright (C) 2000-2003                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -13,7 +13,7 @@
 -- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
 -- General Public License for more details. You should have received --
--- a copy of the GNU General Public License along with this library; --
+-- a copy of the GNU General Public License along with this program; --
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
@@ -888,6 +888,10 @@ package Debugger is
    --  debugged to TTY (e.g "/dev/pts/2").
    --  If not supported, raise Unknown_Command.
 
+   function Continuation_Line
+     (Debugger : access Debugger_Root) return Boolean;
+   --  Whether the debugger is currently handling a multiple line command.
+
 private
 
    type Command_Record;
@@ -911,6 +915,9 @@ private
 
       Command_Queue : Command_Access := null;
       --  The list of commands to be processed after the next call to wait.
+
+      Continuation_Line : Boolean := False;
+      --  Whether the debugger is currently handling a multiple line command.
 
       Remote_Host     : GNAT.OS_Lib.String_Access;
       Remote_Target   : GNAT.OS_Lib.String_Access;
