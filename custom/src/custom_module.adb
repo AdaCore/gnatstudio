@@ -36,6 +36,7 @@ with System.Assertions;         use System.Assertions;
 with Glide_Kernel;              use Glide_Kernel;
 with Glide_Kernel.Console;      use Glide_Kernel.Console;
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
+with Glide_Kernel.Scripts;      use Glide_Kernel.Scripts;
 with Glide_Intl;                use Glide_Intl;
 
 with Language;                  use Language;
@@ -163,7 +164,7 @@ package body Custom_Module is
                        Argument_String_To_List (Current_Child.Value.all);
                      A : Argument_List_Access;
                      C : Custom_Command_Access;
-                     GPS_Command : Boolean := True;
+                     Script : Scripting_Language;
 
                      procedure Free_Array is new Ada.Unchecked_Deallocation
                        (Object => String_List, Name => String_List_Access);
@@ -173,8 +174,35 @@ package body Custom_Module is
                           (Args (Args'First + 1 .. Args'Last));
                      end if;
 
-                     if To_Lower (Current_Child.Tag.all) = "action" then
-                        GPS_Command := False;
+                     if To_Lower (Current_Child.Tag.all) = "gps_action" then
+                        declare
+                           Lang : constant String := Get_Attribute
+                             (Current_Child, "lang");
+                        begin
+                           if Lang = "" then
+                              Script := Lookup_Scripting_Language
+                                (Kernel, GPS_Shell_Name);
+                           else
+                              Script := Lookup_Scripting_Language
+                                (Kernel, Lang);
+                           end if;
+
+                           if Script = null then
+                              if Current_Title /= null then
+                                 Insert
+                                   (Kernel,
+                                    -"Language not found in custom file: "
+                                    & Lang
+                                    & (-" for the menu ") & Current_Title.all,
+                                    Mode => Error);
+                              else
+                                 Insert
+                                   (Kernel,
+                                    -"Language not found in custom file: "
+                                    & Lang, Mode => Error);
+                              end if;
+                           end if;
+                        end;
                      end if;
 
                      --  ??? This command is never freed anywhere
@@ -184,16 +212,16 @@ package body Custom_Module is
                         Kernel_Handle (Kernel),
                         Args (Args'First).all,
                         A,
-                        GPS_Command);
-
-                     Free (Args (Args'First));
-                     Free_Array (Args);
+                        Script);
 
                      if Command = null then
                         Command := Command_Access (C);
                      else
                         Add_Consequence_Action (Command, Command_Access (C));
                      end if;
+
+                     Free (Args (Args'First));
+                     Free_Array (Args);
                   end;
                end if;
 
