@@ -28,7 +28,6 @@ with Gtk.Paned;           use Gtk.Paned;
 with Gtk.Radio_Menu_Item; use Gtk.Radio_Menu_Item;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 with Gtk.Widget;          use Gtk.Widget;
-with Gtkada.Handlers;     use Gtkada.Handlers;
 with Gtkada.MDI;          use Gtkada.MDI;
 
 with GVD.Explorer;        use GVD.Explorer;
@@ -322,15 +321,18 @@ package body GVD.Code_Editors is
 
       Attach (Editor.Source, Editor);
 
-      Widget_Callback.Object_Connect
-        (Get_Widget (Editor.Source), "size_allocate",
-         Widget_Callback.To_Marshaller (Update_Editor_Frame'Access),
-         Editor, After => True);
+      --  ??? Why did we need to update the title of the frame when the size
+      --  ??? was changed ? This also generates an infinite loop in the MDI
 
-      Widget_Callback.Object_Connect
-        (Editor.Asm, "size_allocate",
-         Widget_Callback.To_Marshaller (Update_Editor_Frame'Access),
-         Editor, After => True);
+      --  Widget_Callback.Object_Connect
+      --    (Get_Widget (Editor.Source), "size_allocate",
+      --     Widget_Callback.To_Marshaller (Update_Editor_Frame'Access),
+      --     Editor, After => True);
+
+      --  Widget_Callback.Object_Connect
+      --    (Editor.Asm, "size_allocate",
+      --     Widget_Callback.To_Marshaller (Update_Editor_Frame'Access),
+      --     Editor, After => True);
    end Configure;
 
    ----------------------
