@@ -1,11 +1,20 @@
 Known Problems fixed in GVD 1.1.0
 
-- Dereferencing Ada string parameters
-  Problem:   When one tries to display the value of a string parameter in the
-             canvas, this creates a self-pointing link to the parameter, and
-             it is not possible to see the value of the string
+- Tooltips are not always shown.
+  Problem:    When starting the debugged program using the debugger console
+              window (by e.g typing "run"), the tooltips are not activated.
 
-  Workaround: Disable alias detection in the canvas.
+  Workaround: Use the "Run" or "Start" buttons instead of using the console
+              window.
+
+- Dereferencing Ada string parameters
+  Problem:    When trying to display/dereference the value of a string
+              parameter or of a string access in the canvas, this creates a
+              self-pointing link to the value, and it is not possible to see
+              the value of the string.
+
+  Workaround: Disable alias detection in the canvas, or display parameter.all
+              explicitely.
 
 - [8524-010] Refresh problem in the canvas on NT
   Problem:    When big items are moved in the canvas on NT, there appears some
