@@ -19,7 +19,6 @@
 -----------------------------------------------------------------------
 
 with Browsers.Canvas;          use Browsers.Canvas;
-with Gdk.Drawable;             use Gdk.Drawable;
 with Gdk.Event;                use Gdk.Event;
 with Glib;                     use Glib;
 with Glib.Graphs;              use Glib.Graphs;
@@ -34,7 +33,6 @@ with Gtk.Menu_Item;            use Gtk.Menu_Item;
 with Gtk.Widget;               use Gtk.Widget;
 with Gtkada.Canvas;            use Gtkada.Canvas;
 with Gtkada.MDI;               use Gtkada.MDI;
-with Pango.Layout;             use Pango.Layout;
 with Prj.Tree;                 use Prj.Tree;
 with Prj_API;                  use Prj_API;
 with Project_Browsers;         use Project_Browsers;
@@ -44,8 +42,6 @@ with Traces;                   use Traces;
 with Find_Utils;               use Find_Utils;
 
 package body Browsers.Projects is
-
-   Margin : constant := 2;
 
    Me : constant Debug_Handle := Create ("Browsers.Projects");
 
@@ -98,46 +94,25 @@ package body Browsers.Projects is
       Search_Backward : Boolean) return Boolean;
    --  Search the next occurrence in the explorer
 
-   ---------------------
-   -- On_Button_Click --
-   ---------------------
+   --------------------------
+   -- Button_Click_On_Left --
+   --------------------------
 
-   procedure On_Button_Click
-     (Item   : access Browser_Project_Vertex;
-      Event  : Gdk.Event.Gdk_Event_Button) is
+   procedure Button_Click_On_Left (Item : access Browser_Project_Vertex) is
+      pragma Unreferenced (Item);
    begin
-      if Get_Button (Event) = 1
-        and then Get_Event_Type (Event) = Button_Press
-      then
-         Select_Item (Item.Browser, Item, True);
-      end if;
-   end On_Button_Click;
+      null;
+   end Button_Click_On_Left;
 
-   -------------
-   -- Refresh --
-   -------------
+   ---------------------------
+   -- Button_Click_On_Right --
+   ---------------------------
 
-   procedure Refresh
-     (Browser : access Glide_Browser_Record'Class;
-      Item    : access Browser_Project_Vertex) is
+   procedure Button_Click_On_Right (Item : access Browser_Project_Vertex) is
+      pragma Unreferenced (Item);
    begin
-      Draw_Item_Background (Browser, Item);
-      Draw_Layout
-        (Drawable => Pixmap (Item),
-         GC       => Get_Text_GC (Browser),
-         X        => Margin,
-         Y        => Margin,
-         Layout   => Item.Layout);
-   end Refresh;
-
-   -------------
-   -- Destroy --
-   -------------
-
-   procedure Destroy (Item : in out Browser_Project_Vertex) is
-   begin
-      Unref (Item.Layout);
-   end Destroy;
+      null;
+   end Button_Click_On_Right;
 
    -------------------------------
    -- Examine_Project_Hierarchy --
@@ -178,24 +153,18 @@ package body Browsers.Projects is
       function Vertex_Factory (Project_Name : Types.Name_Id)
          return Vertex_Access
       is
-         V : Browser_Project_Vertex_Access :=
-           new Browser_Project_Vertex;
-         Width, Height : Gint;
+         V : Browser_Project_Vertex_Access := new Browser_Project_Vertex;
       begin
-         V.Layout := Create_Pango_Layout
-           (In_Browser,
+         Browsers.Canvas.Initialize
+           (V, In_Browser,
             Get_String (Project_Name) & Prj.Project_File_Extension);
-         Set_Font_Description
-           (V.Layout, Get_Pref (Get_Kernel (In_Browser), Browsers_Link_Font));
-
-         Get_Pixel_Size (V.Layout, Width, Height);
          V.Name := Project_Name;
          V.Browser := Glide_Browser (In_Browser);
 
-         Set_Screen_Size_And_Pixmap
-           (V, Get_Window (In_Browser),
-            Width + 2 * Margin, Height + 2 * Margin);
+         Set_Left_Arrow (V, False);
+         Set_Right_Arrow (V, False);
          Refresh (In_Browser, V);
+
          return Vertex_Access (V);
       end Vertex_Factory;
 

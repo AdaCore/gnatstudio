@@ -26,12 +26,11 @@ with Prj.Tree;
 with Gdk.Event;
 with Gtk.Menu;
 with Types;
-with Pango.Layout;
 
 package Browsers.Projects is
 
-   type Browser_Project_Vertex is new Browsers.Canvas.Glide_Browser_Item_Record
-     with private;
+   type Browser_Project_Vertex is new
+     Browsers.Canvas.Glide_Browser_Text_Item_Record with private;
    type Browser_Project_Vertex_Access is access all Browser_Project_Vertex;
 
    type Project_Browser_Record is new Browsers.Canvas.Glide_Browser_Record with
@@ -52,30 +51,21 @@ package Browsers.Projects is
       return Glide_Kernel.Selection_Context_Access;
    --  Return the context to use for this item
 
-   procedure Refresh
-     (Browser : access Browsers.Canvas.Glide_Browser_Record'Class;
-      Item    : access Browser_Project_Vertex);
-   --  Redraw the item to its double buffer
-
    procedure Register_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
    --  Register the module in the list
 
-   procedure Destroy (Item : in out Browser_Project_Vertex);
-   --  Free the memory occupied by the item. This is called automatically when
-   --  the item is removed from the canvas.
+   procedure Button_Click_On_Left (Item : access Browser_Project_Vertex);
+   --  Handles button clicks on the left arrow.
+
+   procedure Button_Click_On_Right (Item : access Browser_Project_Vertex);
+   --  Handles button clicks on the right arrow.
 
 private
-   type Browser_Project_Vertex is new Browsers.Canvas.Glide_Browser_Item_Record
+   type Browser_Project_Vertex is new
+     Browsers.Canvas.Glide_Browser_Text_Item_Record
    with record
       Name    : Types.Name_Id;
       Browser : Browsers.Canvas.Glide_Browser;
-      Layout  : Pango.Layout.Pango_Layout;
    end record;
-
-   procedure On_Button_Click
-     (Item   : access Browser_Project_Vertex;
-      Event  : Gdk.Event.Gdk_Event_Button);
-   --  Callback for when the item is clicked
-
 end Browsers.Projects;
