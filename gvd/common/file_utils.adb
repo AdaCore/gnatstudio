@@ -19,9 +19,12 @@
 -----------------------------------------------------------------------
 
 with System;
+with Ada.Characters.Handling;   use Ada.Characters.Handling;
+with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with String_Utils;              use String_Utils;
+with OS_Utils;                  use OS_Utils;
 with VFS;                       use VFS;
 
 package body File_Utils is
@@ -186,5 +189,250 @@ package body File_Utils is
    begin
       Internal (File & ASCII.NUL, Boolean'Pos (Readable));
    end Set_Readable;
+
+   ------------------
+   -- To_File_Name --
+   ------------------
+
+   function To_File_Name (Name : String) return String is
+      Result : String (1 .. Name'Length) := To_Lower (Name);
+   begin
+      for J in Result'First .. Result'Last loop
+         if Result (J) = '.' then
+            Result (J) := '-';
+         end if;
+      end loop;
+
+      return Result;
+   end To_File_Name;
+
+   ----------------------
+   -- To_Host_Pathname --
+   ----------------------
+
+   function To_Host_Pathname (Path : String) return String is
+      Cygdrv : constant String := "cygdrive";
+   begin
+      if GNAT.OS_Lib.Directory_Separator = '/' then
+         return Path;
+      end if;
+
+      --  Replace /cygdrive/x/ by x:\
+
+      if Path'Length > Cygdrv'Length + 3
+        and then Is_Directory_Separator (Path (Path'First))
+        and then Path (Path'First + 1 .. Path'First + Cygdrv'Length) = Cygdrv
+        and then Is_Directory_Separator (Path (Path'First + Cygdrv'Length + 1))
+        and then Is_Directory_Separator (Path (Path'First + Cygdrv'Length + 3))
+      then
+         return
+            Path (Path'First + Cygdrv'Length + 2) & ":\" &
+            Path (Path'First + Cygdrv'Length + 4 .. Path'Last);
+      else
+         return Path;
+      end if;
+   end To_Host_Pathname;
+
+   ----------------------
+   -- To_Unix_Pathname --
+   ----------------------
+
+   function To_Unix_Pathname (Path : String) return String is
+      Result : String (Path'Range);
+   begin
+      if GNAT.OS_Lib.Directory_Separator = '/' then
+         return Path;
+      end if;
+
+      for J in Result'Range loop
+         if Path (J) = GNAT.OS_Lib.Directory_Separator then
+            Result (J) := '/';
+         else
+            Result (J) := Path (J);
+         end if;
+      end loop;
+
+      return Result;
+   end To_Unix_Pathname;
+
+   -------------
+   -- Shorten --
+   -------------
+
+   function Shorten
+     (Path    : String;
+      Max_Len : Natural := 40) return String
+   is
+      Len : constant Natural := Path'Length;
+   begin
+      if Len <= Max_Len then
+         return Path;
+      else
+         declare
+            Prefix       : constant String  := "[...]";
+            Search_Start : constant Natural
+              := Path'Last - Max_Len + Prefix'Length;
+            New_Start    : Natural;
+         begin
+            if Search_Start > Path'Last then
+               --  Max_Len < Prefix'Length
+               --  Shorten anyway, but might give a strange result
+               return Path (Path'Last - Max_Len .. Path'Last);
+            end if;
+
+            New_Start := Index (Path (Search_Start .. Path'Last), "/");
+
+            if New_Start = 0 and New_Start not in Path'Range then
+               --  Shorten anyway (but it might not make sense)
+               New_Start := Search_Start;
+            end if;
+
+            return (Prefix & Path (New_Start .. Path'Last));
+         end;
+      end if;
+   end Shorten;
+
+   --------------------
+   -- Suffix_Matches --
+   --------------------
+
+   function Suffix_Matches
+     (File_Name : String; Suffix : String) return Boolean is
+   begin
+      return Tail (File_Name, Suffix'Length) = Suffix;
+   end Suffix_Matches;
+
+   -----------------------
+   -- Name_As_Directory --
+   -----------------------
+
+   function Name_As_Directory
+     (Name  : String;
+      Style : Path_Style := System_Default) return String
+   is
+      Dir : constant String := Format_Pathname (Name, Style);
+
+   begin
+      if Dir = "" then
+         return "";
+
+      elsif Style = UNIX
+        and then Dir (Dir'Last) /= '/'
+      then
+         return Dir & '/';
+
+      elsif Style = DOS
+        and then Dir (Dir'Last) /= '\'
+      then
+         return Dir & '\';
+
+      elsif Style = System_Default
+        and then Dir (Dir'Last) /= Dir_Separator
+      then
+         return Dir & Dir_Separator;
+
+      else
+         return Dir;
+      end if;
+   end Name_As_Directory;
+
+   ------------------------
+   -- Relative_Path_Name --
+   ------------------------
+
+   function Relative_Path_Name
+     (File_Name : String; Base_Name : String) return String
+   is
+      Base       : constant String := Name_As_Directory
+        (Normalize_Pathname (Base_Name, Resolve_Links => False));
+      File       : constant String :=
+        Normalize_Pathname (File_Name, Resolve_Links => False);
+      Level      : Natural := 0;
+      Base_End   : Natural := Base'Last;
+      Length     : Natural;
+      Parent_Dir : constant String := ".." & Directory_Separator;
+
+   begin
+      if File = Base or else File = Base (Base'First .. Base'Last - 1) then
+         return ".";
+      end if;
+
+      while Base_End >= Base'First loop
+         Length := Base_End - Base'First + 1;
+
+         if File'Length >= Length
+           and then File
+           (File'First .. File'First + Length - 1) = Base
+           (Base'First .. Base_End)
+         then
+            return (Level * Parent_Dir) & File
+              (File'First + Length .. File'Last);
+
+         --  Else try without the last directory separator
+         elsif File'Length = Length - 1
+           and then File = Base (Base'First .. Base_End - 1)
+         then
+            return (Level * Parent_Dir) & File
+              (File'First + Length .. File'Last);
+         end if;
+
+         --  Look for the parent directory.
+         Level := Level + 1;
+         loop
+            Base_End := Base_End - 1;
+            exit when Base_End < Base'First
+              or else Base (Base_End) = Directory_Separator;
+         end loop;
+      end loop;
+
+      return File;
+   end Relative_Path_Name;
+
+   -----------
+   -- Start --
+   -----------
+
+   function Start (Path : String) return Path_Iterator is
+   begin
+      return Next (Path, (First => 0, Last => Path'First - 1));
+   end Start;
+
+   ----------
+   -- Next --
+   ----------
+
+   function Next (Path : String; Iter : Path_Iterator) return Path_Iterator is
+      Pos : Natural := Iter.Last + 1;
+   begin
+      while Pos <= Path'Last
+        and then Path (Pos) /= Path_Separator
+      loop
+         Pos := Pos + 1;
+      end loop;
+
+      return (First => Iter.Last + 1, Last => Pos);
+   end Next;
+
+   -------------
+   -- Current --
+   -------------
+
+   function Current (Path : String; Iter : Path_Iterator) return String is
+   begin
+      if Iter.First <= Path'Last then
+         return Path (Iter.First .. Iter.Last - 1);
+      else
+         return "";
+      end if;
+   end Current;
+
+   ------------
+   -- At_End --
+   ------------
+
+   function At_End (Path : String; Iter : Path_Iterator) return Boolean is
+   begin
+      return Iter.First > Path'Last;
+   end At_End;
 
 end File_Utils;

@@ -21,6 +21,7 @@
 --  This package should eventually be merged with GNAT.OS_Lib
 
 with VFS;
+with GNAT.Directory_Operations;
 
 package File_Utils is
 
@@ -56,5 +57,69 @@ package File_Utils is
      (File     : String;
       Readable : Boolean);
    --  If Readable is True, make File readable, otherwise make File unreadable.
+
+   function Relative_Path_Name
+     (File_Name : String; Base_Name : String) return String;
+   --  Modifies File_Name so that it is relative to Base_Name.
+   --  Both names are first normalized to platform specific conventions, but
+   --  the links are not resolved.
+
+   function Name_As_Directory
+     (Name  : String;
+      Style : GNAT.Directory_Operations.Path_Style :=
+        GNAT.Directory_Operations.System_Default) return String;
+   --  Add a directory separator at the end of Name if there is none.
+   --  This also normalizes the pathname (see
+   --  GNAT.Directory_Operations.Format_Pathname).
+   --  ??? Should go into GNAT.Directory_Operations
+
+   function Suffix_Matches
+     (File_Name : String; Suffix : String) return Boolean;
+   --  Return true if File_Name has the given Suffix. This is more general
+   --  than extensions, since it doesn't need to start after a '.'.
+   --  Note that this function also return False when Filename = Extension
+   --  as this does not make sense for a source filename.
+
+   function To_Unix_Pathname (Path : String) return String;
+   --  Convert all occurences of Directory_Separator to '/'.
+
+   function To_Host_Pathname (Path : String) return String;
+   --  By default, return Path.
+   --  If Directory_Separator is different than '/', the following
+   --  substitution is operated:
+   --  /cydrive/x/ -> x:\
+   --  where x is an single character.
+
+   function To_File_Name (Name : in String) return String;
+   --  Returns a file name from an ada subprogram/package name (ie converts '.'
+   --  and '-' to the appropriate characters).
+   --  ??? Note: this should be modified to use the naming schemes, if needed.
+
+   function Shorten (Path : String; Max_Len : Natural := 40) return String;
+   --  Shorten a path to at most Max_Len characters, by replacing the first
+   --  directories with "[...]".
+   --  For example, "directory_1/directory_2/directory_3/filename"
+   --  is shortened as "[...]/directory_3/filename"
+
+   type Path_Iterator is private;
+
+   function Start (Path : String) return Path_Iterator;
+   --  Return the first directory in Path
+
+   function Next (Path : String; Iter : Path_Iterator) return Path_Iterator;
+   --  Return the next iterator in Path
+
+   function At_End (Path : String; Iter : Path_Iterator) return Boolean;
+   --  Return True if there are no more directories to return
+
+   function Current (Path : String; Iter : Path_Iterator) return String;
+   --  Return the current directory. The name might be empty if the Path
+   --  contains something like "::" on Unix systems.
+
+private
+
+   type Path_Iterator is record
+      First, Last : Natural;
+   end record;
 
 end File_Utils;
