@@ -277,7 +277,7 @@ package body GVD.Preferences is
                        & " display of the assembly window." & ASCII.LF
                        & "If this size is 0, then the whole subprogram"
                        & " is displayed, but this can take a very long time"
-                       & " on slower machines"),
+                       & " on slow machines"),
          Minimum  => 0,
          Maximum  => 100000,
          Default  => 200));
@@ -294,6 +294,7 @@ package body GVD.Preferences is
         (Name     => XML_Prefix & "Title-Color",
          Nick     => -"Title background",
          Blurb    => -"Color used for the background of the title",
+         Flags    => Source_Flags,
          Default  => "#BEBEBE"));
       Register_Property (Prefs, Param_Spec (Title_Color), Data);
 
@@ -301,7 +302,7 @@ package body GVD.Preferences is
         (Name     => XML_Prefix & "Change-Color",
          Nick     => -"Changed data",
          Blurb    => -("Color used to highlight fields that have changed"
-                       & " since the last updated"),
+                       & " since the last update"),
          Default  => "#FF0000"));
       Register_Property (Prefs, Param_Spec (Change_Color), Data);
 
@@ -309,6 +310,7 @@ package body GVD.Preferences is
         (Name     => XML_Prefix & "Selection-Color",
          Nick     => -"Selection",
          Blurb    => -"Color used for the selected items",
+         Flags    => Source_Flags,
          Default  => Color_Selection));
       Register_Property (Prefs, Param_Spec (Selection_Color), Data);
 
@@ -317,14 +319,16 @@ package body GVD.Preferences is
          Nick     => -"Auto-Refreshed",
          Blurb    => -("Background color for the items that are recomputed"
                        & " every time the debugger stops"),
+         Flags    => Source_Flags,
          Default  => "#FFFFFF"));
       Register_Property (Prefs, Param_Spec (Thaw_Bg_Color), Data);
 
       Freeze_Bg_Color := Param_Spec_Color (Gnew_Color
         (Name     => XML_Prefix & "Freeze-Bg-Color",
          Nick     => -"Frozen",
-         Blurb    => -("Background color for the items that are never"
-                       & " recomputed"),
+         Blurb    =>
+           -("Background color for the items that are never recomputed"),
+         Flags    => Source_Flags,
          Default  => "#AAAAAA"));
       Register_Property (Prefs, Param_Spec (Freeze_Bg_Color), Data);
 
@@ -368,6 +372,7 @@ package body GVD.Preferences is
          Nick     => -"Fold big items",
          Blurb    => -("True if items higher than a Big Item Height should"
                        & " be folded initially"),
+         Flags    => Source_Flags,
          Default  => True));
       Register_Property (Prefs, Param_Spec (Hide_Big_Items), Data);
 
@@ -375,6 +380,7 @@ package body GVD.Preferences is
         (Name     => XML_Prefix & "Big-Item-Height",
          Nick     => -"Big item height",
          Blurb    => -"See Fold big items",
+         Flags    => Source_Flags,
          Minimum  => 0,
          Maximum  => 100000,
          Default  => 150));
