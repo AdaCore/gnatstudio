@@ -1388,6 +1388,10 @@ package body C_Analyzer is
          if Is_Blank (Buffer (Index)) then
             if Buffer (Index) = ASCII.LF then
                New_Line;
+
+               if Index = Buffer'Last then
+                  Do_Indent (Index, Indent);
+               end if;
             end if;
          else
             Do_Indent (Index, Indent);
@@ -1397,11 +1401,6 @@ package body C_Analyzer is
          Index := Index + 1;
          Char_In_Line := Char_In_Line + 1;
       end loop;
-
-      if Buffer (Index) = ASCII.LF then
-         New_Line;
-         Do_Indent (Index, Indent);
-      end if;
 
    exception
       when others =>
