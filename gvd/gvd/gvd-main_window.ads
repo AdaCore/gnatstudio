@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with Glib;
+with Gtk.Menu_Bar; use Gtk.Menu_Bar;
 with Gtk.Window; use Gtk.Window;
 with Gtk.Widget; use Gtk.Widget;
 with Gtk.Item_Factory; use Gtk.Item_Factory;
@@ -54,6 +55,7 @@ package GVD.Main_Window is
    use String_History;
 
    type GVD_Main_Window_Record is new Main_Debug_Window_Record with record
+      Menu_Bar            : Gtk.Menu_Bar.Gtk_Menu_Bar;
       Memory_View         : GVD.Memory_View.GVD_Memory_View;
       GVD_Preferences     : GVD_Preferences_Access;
       Open_Program        : GVD_Open_Program;

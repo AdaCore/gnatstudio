@@ -125,6 +125,7 @@ package body GVD.Main_Window is
         (Main_Window.Factory, Menu_Items, Main_Window.all'Access);
       Lock (Accel_Group);
       Menu := Get_Widget (Main_Window.Factory, Key);
+      Main_Window.Menu_Bar := Gtk_Menu_Bar (Menu);
       Pack_Start (Main_Window.Vbox, Menu, False, False, 0);
       Reorder_Child (Main_Window.Vbox, Menu, 0);
 
