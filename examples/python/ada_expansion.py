@@ -104,13 +104,6 @@ GPS.parse_xml ("""
       <shell lang="python">ada_expansion.expand_syntax()</shell>
    </action>
    <key action="Conditionally expand Ada syntax">space</key>
-
-   <action name="Enter spaces for tab key" output="none">
-      <description>Makes tab key insert n spaces instead, where n is the syntax indent value</description>
-      <filter module="Source_Editor"/>
-      <shell lang="python">ada_expansion.insert_indentation_spaces()</shell>
-   </action>
-   <key action="Enter spaces for tab key">Tab</key>
 """)
 
 
@@ -123,19 +116,12 @@ def expand_syntax ():
 #end expand_syntax
 
 
-def insert_indentation_spaces ():
-   """Inserts spaces instead of a tab key, for use in indenting code.  
-   The number of spaces inserted is controlled by the Ada-Indent-Level preferrence."""
-   GPS.Editor.insert_text(' ' * syntax_indent())
-#end insert_indentation_spaces
-
-
 #private: everything below this is part of the implementation...
 
 
-
 def debug (s):
-   return #comment this out to enable debugging statements...
+   #comment-out this return statement to enable debugging statements...
+   return 
    name = sys._getframe (1).f_code.co_name
    GPS.Console("Messages").write (name + ": " + s + "\n")
 #endef
@@ -199,18 +185,6 @@ def do_expansion ():
       if word == '':  # no expansion found
          # we leave it as they typed it since it is not a word of interest
          return True # so that a space key is emitted
-      #end if
-      if word == orig_word:
-         # We found a reserved word that is already fully spelled.  Hence they
-         # entered a space key (assuming the space key is the one assigned) after
-         # this word, so we assume they really want a space instead of trying to
-         # expand it.  NB: this means that expansion will not happen if they spell
-         # out the reserved word in full, but it allows the user to enter blanks
-         # after a reserved word (eg to insert a trailing comment) without the
-         # expansion being attempted again.  That's a good thing for the sake of
-         # being non-intrusive: if they don't abbreviate then they get what they
-         # typed since they must have meant not to get an expansion.
-         return True;
       #end if
    else: # allowed to expand but abbreviation was not long enough
       word = orig_word
