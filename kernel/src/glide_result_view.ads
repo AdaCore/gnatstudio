@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -52,11 +52,14 @@ package Glide_Result_View is
       Source_Line   : Positive;
       Source_Column : Positive;
       Message       : String;
-      Length        : Natural);
+      Length        : Natural;
+      Highlight     : Boolean := False);
    --  Insert a new location item for the category corresponding to
    --  Identifier. Message is the text that will be displayed next to the
    --  file location. If necessary, the category corresponding to Identifier
    --  is created.
+   --  If Highlight is True, the corresponding line will be highlighted in
+   --  the editor with the highlighting category identified by Identifier.
 
    procedure Remove_Category
      (View          : access Result_View_Record'Class;
