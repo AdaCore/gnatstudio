@@ -1019,7 +1019,7 @@ package body Project_Viewers is
    exception
       when E : others =>
          Destroy (Wiz);
-         Trace (Me, "Unexpected exception " & Exception_Message (E));
+         Trace (Me, "Unexpected exception " & Exception_Information (E));
    end On_New_Project;
 
    ------------------------
@@ -1060,7 +1060,7 @@ package body Project_Viewers is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception " & Exception_Message (E));
+         Trace (Me, "Unexpected exception " & Exception_Information (E));
    end On_Edit_Switches;
 
    --------------------------
@@ -1105,7 +1105,7 @@ package body Project_Viewers is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception " & Exception_Message (E));
+         Trace (Me, "Unexpected exception " & Exception_Information (E));
    end On_Project_Properties;
 
    -----------------------
@@ -1581,7 +1581,7 @@ package body Project_Viewers is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception " & Exception_Message (E));
+         Trace (Me, "Unexpected exception " & Exception_Information (E));
    end Edit_Multiple_Switches;
 
    -------------------
@@ -1909,6 +1909,8 @@ package body Project_Viewers is
       Tmp      : GNAT.OS_Lib.String_Access;
       Relative : constant Boolean :=
         Get_Paths_Type (Project) = Projects.Relative;
+      Initial_Dirs_Id : constant String_Id_Array := Source_Dirs (Project);
+      Initial_Dirs : Argument_List (Initial_Dirs_Id'Range);
 
    begin
       Assert (Me, Project = Ref_Project,
@@ -1922,48 +1924,28 @@ package body Project_Viewers is
          end loop;
       end if;
 
-      if Project /= No_Project then
+      for J in Initial_Dirs_Id'Range loop
          declare
-            Initial_Dirs_Id : constant String_Id_Array := Source_Dirs
-              (Project);
-            Initial_Dirs : Argument_List (Initial_Dirs_Id'Range);
+            Str : constant String := Get_String (Initial_Dirs_Id (J));
          begin
-            for J in Initial_Dirs_Id'Range loop
-               declare
-                  Str : constant String := Get_String (Initial_Dirs_Id (J));
-               begin
-                  --  Initial_Dirs will always contained an unnormalized,
-                  --  absolute path, therefore we need to trim it first before
-                  --  comparing the old and new values.
+            --  Initial_Dirs will always contained an unnormalized,
+            --  absolute path, therefore we need to trim it first before
+            --  comparing the old and new values.
 
-                  if Relative then
-                     Initial_Dirs (J) := new String'
-                       (Relative_Path_Name (Str, Prj_Dir));
-                  else
-                     Initial_Dirs (J) := new String'(Str);
-                  end if;
-               end;
-            end loop;
-
-            Equal := Is_Equal (Dirs, Initial_Dirs);
-            Free (Initial_Dirs);
+            if Relative then
+               Initial_Dirs (J) := new String'
+                 (Relative_Path_Name (Str, Prj_Dir));
+            else
+               Initial_Dirs (J) := new String'(Str);
+            end if;
          end;
+      end loop;
 
-         if not Equal then
-            Trace (Me, "Source dirs modified");
-            Update_Attribute_Value_In_Scenario
-              (Project            => Project,
-               Pkg_Name           => "",
-               Scenario_Variables => Scenario_Variables,
-               Attribute_Name     => Get_String (Name_Source_Dirs),
-               Values             => Dirs,
-               Attribute_Index    => "",
-               Prepend            => False);
-         end if;
+      Equal := Is_Equal (Dirs, Initial_Dirs);
+      Free (Initial_Dirs);
 
-      else
-         Trace (Me, "Source dirs modified since there was no project view");
-         Equal := False;
+      if not Equal then
+         Trace (Me, "Source dirs modified");
          Update_Attribute_Value_In_Scenario
            (Project            => Project,
             Pkg_Name           => "",
@@ -2143,8 +2125,7 @@ package body Project_Viewers is
            (Normalize_Pathname (Get_Text (Obj_Dir.Exec_Dir))));
       end if;
 
-      if Project = No_Project
-        or else Get_Text (Obj_Dir.Obj_Dir) /= Name_As_Directory
+      if Get_Text (Obj_Dir.Obj_Dir) /= Name_As_Directory
         (Normalize_Pathname (Object_Path (Project, False)))
       then
          if New_Dir.all = "" then
@@ -2165,10 +2146,9 @@ package body Project_Viewers is
          Changed := True;
       end if;
 
-      if Project = No_Project
-        or else (Get_Active (Obj_Dir.Same)
-                 and then Get_Text (Obj_Dir.Obj_Dir) /= Name_As_Directory
-                 (Normalize_Pathname (Executables_Directory (Project))))
+      if (Get_Active (Obj_Dir.Same)
+          and then Get_Text (Obj_Dir.Obj_Dir) /= Name_As_Directory
+          (Normalize_Pathname (Executables_Directory (Project))))
         or else (not Get_Active (Obj_Dir.Same)
                  and then Get_Text (Obj_Dir.Exec_Dir) /= Name_As_Directory
                  (Normalize_Pathname (Executables_Directory (Project))))
