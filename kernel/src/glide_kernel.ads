@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2004                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2001-2005                       --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software; you  can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -97,12 +97,6 @@ package Glide_Kernel is
    function Get_Main_Window
      (Handle : access Kernel_Handle_Record) return Gtk.Window.Gtk_Window;
    --  Return the main window associated with the kernel.
-
-   function Get_Current_Window
-     (Handle : access Kernel_Handle_Record) return Gtk.Window.Gtk_Window;
-   --  Return the window containing the current MDI Child.
-   --  The main usage for this function should be to display the dialogs
-   --  centered with regards to this window.
 
    function Get_Tooltips
      (Handle : access Kernel_Handle_Record) return Gtk.Tooltips.Gtk_Tooltips;
@@ -600,60 +594,6 @@ package Glide_Kernel is
    --  Action need not exist when the key is bound. This is why we require
    --  a string instead of an Action_Record.
 
-   ------------
-   -- Saving --
-   ------------
-
-   type GPS_MDI_Child_Record is new Gtkada.MDI.MDI_Child_Record with private;
-   --  Base record for all MDI children that go into the MDI
-
-   function Get_MDI
-     (Handle : access Kernel_Handle_Record) return Gtkada.MDI.MDI_Window;
-   --  Return the MDI associated with Handle.
-   --  Use the Put function below instead of the one in GtkAda.MDI to
-   --  associated a widget with a GPS module
-
-   function Put
-     (Handle        : access Kernel_Handle_Record;
-      Child         : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Flags         : Gtkada.MDI.Child_Flags := Gtkada.MDI.All_Buttons;
-      Position      : Gtkada.MDI.Child_Position := Gtkada.MDI.Position_Default;
-      Focus_Widget  : Gtk.Widget.Gtk_Widget := null;
-      Default_Width, Default_Height : Glib.Gint := -1;
-      Module        : access Module_ID_Record'Class;
-      Desktop_Independent : Boolean := False) return Gtkada.MDI.MDI_Child;
-   --  Recommended version of Put to use, instead of the one in
-   --  GtkAda.MDI. This version has several new parameters:
-   --    - Module : used to associate a module with a widget. This is used to
-   --               get the current context for instance
-   --    - Desktop_Independent: if this is true, then the window will not be
-   --               closed  when a new desktop is loaded.
-
-   function Get_Module_From_Child
-     (Child : Gtkada.MDI.MDI_Child) return Module_ID;
-   --  Return the module that created Child, or null if no module was found.
-
-   function Get_File_Editor
-     (Handle : access Kernel_Handle_Record;
-      File   : VFS.Virtual_File) return Gtkada.MDI.MDI_Child;
-   --  Return the first MDI child associated to an editor for File.
-   --  Return null if no such editor was found.
-
-   function Save_MDI_Children
-     (Handle   : access Kernel_Handle_Record;
-      Children : Gtkada.MDI.MDI_Child_Array := Gtkada.MDI.No_Children;
-      Force    : Boolean := False) return Boolean;
-   --  Save all the MDI children, as well as the current project
-   --  If Force is False, ask the user first.
-   --  If Children is specified, only ask to save these specific children.
-   --  The return value is False if the user has cancelled the action, True if
-   --  the user has selected OK (whatever the number of children that were
-   --  saved).
-
-   procedure Close_All_Children (Handle : access Kernel_Handle_Record);
-   --  Close all the MDI children. No confirmation is asked, call
-   --  Save_All_MDI_Children first if needed.
-
    ---------------------
    -- Signal emission --
    ---------------------
@@ -850,12 +790,6 @@ private
    procedure Free (L : in out Hook_Description_Base_Access);
    package Hooks_Hash is new String_Hash
      (Hook_Description_Base_Access, Free, null);
-
-   type GPS_MDI_Child_Record is new Gtkada.MDI.MDI_Child_Record with record
-      Module              : Module_ID;
-      Desktop_Independent : Boolean;
-   end record;
-   type GPS_MDI_Child is access all GPS_MDI_Child_Record'Class;
 
    type Kernel_Handle_Record is new Glib.Object.GObject_Record with record
       Database : Entities.Entities_Database;
