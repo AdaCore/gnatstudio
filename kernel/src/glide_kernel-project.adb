@@ -469,7 +469,7 @@ package body Glide_Kernel.Project is
    is
       Button : Message_Dialog_Buttons;
    begin
-      if Force and not Is_Default (Get_Project (Kernel)) then
+      if Force and Status (Get_Project (Kernel)) /= From_File then
          Save_Project (Kernel, Get_Project (Kernel), Recursive => True);
 
       elsif Project_Modified (Get_Project (Kernel), Recursive => True) then
