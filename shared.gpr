@@ -21,7 +21,7 @@ project Shared is
               ("-g", "-O", "-gnata", "-gnatVa", "-gnatQ", "-gnaty",
                "-gnatwjmbeurk");
          when "Production" =>
-            for Default_Switches ("Ada") use ("-O2", "-gnatws", "-gnatn");
+            for Default_Switches ("Ada") use ("-O2", "-gnatws");
       end case;
    end Compiler;
 
