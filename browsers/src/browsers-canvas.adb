@@ -1391,7 +1391,6 @@ package body Browsers.Canvas is
                Area.Children := new Active_Area_Tree_Array'
                  (Tmp_Children.all & Tmp);
                Unchecked_Free (Tmp_Children);
-               --  Join_Areas (Area);
                Inserted := True;
             end if;
          end if;
