@@ -1751,18 +1751,63 @@ package body Src_Info.ALI is
    begin
       case Get_Unit_Part_From_Filename (Project, Source_Filename) is
          when Unit_Body | Unit_Separate =>
-            return Create
-              (Locate_ALI (Get_ALI_Filename (Base_Name (Source_Filename)),
-                           Project));
+            --  When using non-standard naming schemes, separate units are
+            --  reported as bodies, but they have no direct ALI file. Thus, in
+            --  addition to checking directly for an ALI file, we also check
+            --  for ALI file from the parent unit.
+
+            declare
+               Body_LI : constant String := Locate_ALI
+                 (Get_ALI_Filename (Base_Name (Source_Filename)), Project);
+            begin
+               if Body_LI /= "" then
+                  return Create (Body_LI);
+               end if;
+            end;
+
+            declare
+               Unit : constant String := Get_Unit_Name_From_Filename
+                 (Project, Source_Filename);
+               Last : Integer := Unit'Last;
+            begin
+               while Last >= Unit'First
+                 and then Unit (Last) /= '.'
+               loop
+                  Last := Last - 1;
+               end loop;
+
+               if Last >= Unit'First then
+                  return Create
+                    (Locate_ALI
+                       (Get_ALI_Filename
+                          (Get_Filename_From_Unit
+                             (Project,
+                              Unit (Unit'First .. Last - 1),
+                              Unit_Body)),
+                        Project));
+               else
+                  return VFS.No_File;
+               end if;
+            end;
 
          when Unit_Spec =>
             --  Use the ALI for the body, if there is a body, otherwise the one
             --  for the spec will do.
-            return Create
-              (Locate_ALI
+            declare
+               Body_LI : constant String := Locate_ALI
                  (Get_ALI_Filename
                     (Other_File_Base_Name (Project, Source_Filename)),
-                  Project));
+                  Project);
+            begin
+               if Body_LI /= "" then
+                  return Create (Body_LI);
+               else
+                  return Create
+                    (Locate_ALI
+                       (Get_ALI_Filename (Base_Name (Source_Filename)),
+                        Project));
+               end if;
+            end;
       end case;
    end LI_Filename_From_Source;
 
