@@ -41,7 +41,11 @@ package body Test_Lib is
          Put_Line ("--------------------------------------------------------");
          Put_Line ("Message: " & Get_Message (Message));
          Put_Line ("--------------- Old text: ---------------");
-         Put_Line (Get_Old_Text (Data (Current_Solution), Current_Text, 3, 3));
+         Put_Line (Get_Old_Text
+                     (Data (Current_Solution),
+                      Current_Text,
+                      Display_Lines_Before,
+                      Display_Lines_After));
       end if;
 
       Num_Sol := 0;
