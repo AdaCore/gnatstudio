@@ -995,15 +995,18 @@ package body VCS_View_Pkg is
               (Context,
                Dir_Name (First_File),
                First_File);
+            Set_File_Information
+              (Context,
+               Get_Project_From_File (Get_Project_View (Kernel), First_File));
             VCS_Contextual_Menu (Explorer, Context, Menu);
+
+            Gtk_New (Mitem);
+            Append (Menu, Mitem);
          end;
       end if;
 
       Destroy (Context.all);
       String_List.Free (Files);
-
-      Gtk_New (Mitem);
-      Append (Menu, Mitem);
 
       Gtk_New (Check, Label => -"Hide up-to-date files");
       Set_Active (Check, Explorer.Hide_Up_To_Date);
