@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2003                         --
+--                     Copyright (C) 2003 - 2004                     --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -564,6 +564,7 @@ package body Task_Manager.GUI is
       Progress_String : String_Access;
       Name_String     : String_Access;
       Fraction        : Gdouble;
+
    begin
       if Manager.Queues = null then
          return;
@@ -586,13 +587,21 @@ package body Task_Manager.GUI is
 
          Progress := Commands.Progress (Command);
 
-         if Length = 1 then
-            Progress_String := new String'
-              (Image (Progress.Current) & "/" & Image (Progress.Total));
+         if Progress.Total <= 1 then
+            Progress_String := new String'("");
          else
             Progress_String := new String'
-              (Image (Progress.Current) & "/" & Image (Progress.Total)
-               & " (" & Image (Length) & (-" queued)"));
+              (Image (Progress.Current) & "/" & Image (Progress.Total));
+         end if;
+
+         if Length > 1 then
+            declare
+               New_String : constant String := Progress_String.all
+                 & " (" & Image (Length) & (-" queued)");
+            begin
+               Free (Progress_String);
+               Progress_String := new String'(New_String);
+            end;
          end if;
 
          Name_String := new String'(Name (Command));
