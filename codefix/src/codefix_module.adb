@@ -21,9 +21,11 @@
 --  This package defines the module for code fixing.
 
 with Ada.Exceptions;         use Ada.Exceptions;
+with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 with GNAT.OS_Lib;            use GNAT.OS_Lib;
 with GNAT.Regpat;            use GNAT.Regpat;
+with System;
 
 with Gtk.Menu;               use Gtk.Menu;
 with Gtk.Menu_Item;          use Gtk.Menu_Item;
@@ -68,28 +70,39 @@ package body Codefix_Module is
 
    Location_Button_Name : constant String := "Codefix";
 
-   Output_Cst : aliased String := "output";
-   Category_Cst : aliased String := "category";
+   Output_Cst        : aliased constant String := "output";
+   Category_Cst      : aliased constant String := "category";
    Regexp_Cst        : aliased constant String := "regexp";
    File_Index_Cst    : aliased constant String := "file_index";
    Line_Index_Cst    : aliased constant String := "line_index";
    Col_Index_Cst     : aliased constant String := "column_index";
    Msg_Index_Cst     : aliased constant String := "msg_index";
+   File_Cst          : aliased constant String := "file_location";
+   Message_Cst       : aliased constant String := "message";
+   Codefix_Cst       : aliased constant String := "codefix";
    Parse_Cmd_Parameters : constant Cst_Argument_List :=
-     (1 => Output_Cst'Access,
-      2 => Category_Cst'Access,
+     (1 => Category_Cst'Access,
+      2 => Output_Cst'Access,
       3 => Regexp_Cst'Access,
       4 => File_Index_Cst'Access,
       5 => Line_Index_Cst'Access,
       6 => Col_Index_Cst'Access,
       7 => Msg_Index_Cst'Access);
+   Codefix_Cmd_Parameters : constant Cst_Argument_List :=
+     (1 => Category_Cst'Access);
+   Error_Cmd_Parameters : constant Cst_Argument_List :=
+     (1 => Codefix_Cst'Access,
+      2 => File_Cst'Access,
+      3 => Message_Cst'Access);
 
    type Codefix_Sessions_Array is array (Natural range <>) of Codefix_Session;
    type Codefix_Sessions is access Codefix_Sessions_Array;
 
    type Codefix_Module_ID_Record is new Glide_Kernel.Module_ID_Record with
       record
-         Sessions : Codefix_Sessions;
+         Sessions      : Codefix_Sessions;
+         Codefix_Class : Class_Type;
+         Codefix_Error_Class : Class_Type;
       end record;
    type Codefix_Module_ID_Access is access all Codefix_Module_ID_Record'Class;
 
@@ -174,6 +187,38 @@ package body Codefix_Module is
    procedure Default_Command_Handler
      (Data : in out Callback_Data'Class; Command : String);
    --  Handles shell commands for this module
+
+   procedure Error_Command_Handler
+     (Data : in out Callback_Data'Class; Command : String);
+   --  Handles shell commands for CodefixError class
+
+   function Get_Session_By_Name (Category : String) return Codefix_Session;
+   --  Find the codefix session associated with the given category, or null
+   --  if there is none.
+
+   procedure Set_Data
+     (Instance : access Class_Instance_Record'Class;
+      Session  : Codefix_Session);
+   function Get_Data
+     (Instance : access Class_Instance_Record'Class) return Codefix_Session;
+   --  Set or retrieve the session from an instance of Codefix
+
+   procedure Set_Data
+     (Instance : access Class_Instance_Record'Class;
+      Error    : Error_Id);
+   function Get_Data
+     (Instance : access Class_Instance_Record'Class) return Error_Id;
+   --  Set or retrieve the error from an instance of CodefixError
+
+   type Error_Id_Access is access Error_Id;
+   function Convert is new Ada.Unchecked_Conversion
+     (System.Address, Error_Id_Access);
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Error_Id, Error_Id_Access);
+
+   procedure On_Destroy_Error (Value : System.Address);
+   pragma Convention (C, On_Destroy_Error);
+   --  Destroy an Error_Id_Access
 
    -------------
    -- Destroy --
@@ -414,6 +459,22 @@ package body Codefix_Module is
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Codefix_Handler;
 
+   -------------------------
+   -- Get_Session_By_Name --
+   -------------------------
+
+   function Get_Session_By_Name (Category : String) return Codefix_Session is
+   begin
+      if Codefix_Module_ID.Sessions /= null then
+         for S in Codefix_Module_ID.Sessions'Range loop
+            if Codefix_Module_ID.Sessions (S).Category.all = Category then
+               return Codefix_Module_ID.Sessions (S);
+            end if;
+         end loop;
+      end if;
+      return null;
+   end Get_Session_By_Name;
+
    -----------------------------
    -- Codefix_Contextual_Menu --
    -----------------------------
@@ -439,16 +500,7 @@ package body Codefix_Module is
             return;
          end if;
 
-         --  Get the session given the name of the category
-
-         for S in Codefix_Module_ID.Sessions'Range loop
-            if Codefix_Module_ID.Sessions (S).Category.all =
-              Category_Information (Location)
-            then
-               Session := Codefix_Module_ID.Sessions (S);
-               exit;
-            end if;
-         end loop;
+         Session := Get_Session_By_Name (Category_Information (Location));
 
          if Session = null then
             return;
@@ -572,11 +624,16 @@ package body Codefix_Module is
          Compilation_Finished_Cb'Access,
          Kernel_Handle (Kernel));
 
+      Codefix_Module_ID.Codefix_Class := New_Class
+        (Kernel, "Codefix", "Automatically fixes errors in source files");
+      Codefix_Module_ID.Codefix_Error_Class := New_Class
+        (Kernel, "CodefixError", "A fixable error in a source file");
+
       Register_Command
         (Kernel,
-         Command      => "codefix_parse",
-         Params       => Parameter_Names_To_Usage (Parse_Cmd_Parameters, 5),
-         Description  =>
+         Command       => "parse",
+         Params        => Parameter_Names_To_Usage (Parse_Cmd_Parameters, 5),
+         Description   =>
            -("Parse the output of a tool, and suggests auto-fix possibilities"
              & " whenever possible. This adds small icons in the location"
              & " window, so that the user can click on it to fix compilation"
@@ -587,24 +644,126 @@ package body Codefix_Module is
              & " By default, it matches file:line:column. The various indexes"
              & " indicate the index of the opening parenthesis that contains"
              & " the relevant information in the regular expression. Set it"
-             & " to 0 if that information is not available."),
-         Minimum_Args => 2,
-         Maximum_Args => Parse_Cmd_Parameters'Length,
+             & " to 0 if that information is not available."
+             & ASCII.LF
+             & "Access the various suggested fixes through the methods of"
+             & " the Codefix class"),
+         Minimum_Args  => 2,
+         Maximum_Args  => Parse_Cmd_Parameters'Length,
+         Class         => Codefix_Module_ID.Codefix_Class,
+         Static_Method => True,
+         Handler       => Default_Command_Handler'Access);
+
+      Register_Command
+        (Kernel,
+         Command     => Constructor_Method,
+         Params      => Parameter_Names_To_Usage (Codefix_Cmd_Parameters),
+         Description =>
+          -"Return the instance of codefix associated with the given category",
+         Minimum_Args => Codefix_Cmd_Parameters'Length,
+         Maximum_Args => Codefix_Cmd_Parameters'Length,
+         Class        => Codefix_Module_ID.Codefix_Class,
          Handler      => Default_Command_Handler'Access);
+
+      Register_Command
+        (Kernel,
+         Command     => Constructor_Method,
+         Params      => Parameter_Names_To_Usage (Error_Cmd_Parameters, 1),
+         Description =>
+         -("Describe a new fixable error. If the message is not specified,"
+           & " the first error at that location is returned"),
+         Minimum_Args => Error_Cmd_Parameters'Length - 1,
+         Maximum_Args => Error_Cmd_Parameters'Length,
+         Class        => Codefix_Module_ID.Codefix_Error_Class,
+         Handler      => Error_Command_Handler'Access);
+
+      Register_Command
+        (Kernel,
+         Command      => "errors",
+         Return_Value => "list",
+         Description  => -"List the fixable errors in that session",
+         Class        => Codefix_Module_ID.Codefix_Class,
+         Handler      => Default_Command_Handler'Access);
+
+      Register_Command
+        (Kernel,
+         Command     => "possible_fixes",
+         Description => -"List the possible fixes for the specific error",
+         Return_Value => "list",
+         Class        => Codefix_Module_ID.Codefix_Error_Class,
+         Handler      => Error_Command_Handler'Access);
 
    exception
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Register_Module;
 
+   ---------------------------
+   -- Error_Command_Handler --
+   ---------------------------
+
+   procedure Error_Command_Handler
+     (Data : in out Callback_Data'Class; Command : String)
+   is
+      Instance : Class_Instance;
+   begin
+      if Command = Constructor_Method then
+         Name_Parameters (Data, Error_Cmd_Parameters);
+         Instance := Nth_Arg (Data, 1, Codefix_Module_ID.Codefix_Error_Class);
+
+         declare
+            Codefix : constant Class_Instance :=
+              Nth_Arg (Data, 2, Codefix_Module_ID.Codefix_Class);
+            Loc     : constant Class_Instance :=
+              Nth_Arg (Data, 3, Get_File_Location_Class (Get_Kernel (Data)));
+            Message : constant String  := Nth_Arg (Data, 4, "");
+            Session : constant Codefix_Session := Get_Data (Codefix);
+            Location : constant File_Location_Info := Get_Data (Loc);
+            File    : constant Class_Instance := Get_File (Location);
+            Error   : constant Error_Id := Search_Error
+              (Session.Corrector.all,
+               Get_File (Get_Data (File)),
+               Get_Line (Location),
+               Get_Column (Location), Message);
+         begin
+            if Error = Null_Error_Id then
+               Set_Error_Msg (Data, -"No fixable error at that location");
+            else
+               Set_Data (Instance, Error);
+            end if;
+         end;
+
+      elsif Command = "possible_fixes" then
+         Instance := Nth_Arg (Data, 1, Codefix_Module_ID.Codefix_Error_Class);
+
+         declare
+            Error : constant Error_Id := Get_Data (Instance);
+            Solution_Node : Command_List.List_Node :=
+              First (Get_Solutions (Error));
+         begin
+            Set_Return_Value_As_List (Data);
+
+            while Solution_Node /= Command_List.Null_Node loop
+               Set_Return_Value
+                 (Data, Get_Caption (Command_List.Data (Solution_Node)));
+               Solution_Node := Next (Solution_Node);
+            end loop;
+         end;
+
+      end if;
+   end Error_Command_Handler;
+
    -----------------------------
    -- Default_Command_Handler --
    -----------------------------
 
    procedure Default_Command_Handler
-     (Data : in out Callback_Data'Class; Command : String) is
+     (Data : in out Callback_Data'Class; Command : String)
+   is
+      Instance : Class_Instance;
+      Session  : Codefix_Session;
    begin
-      if Command = "codefix_parse" then
+      if Command = "parse" then
          Name_Parameters (Data, Parse_Cmd_Parameters);
          Activate_Codefix
            (Get_Kernel (Data),
@@ -615,8 +774,131 @@ package body Codefix_Module is
             Line_Index           => Nth_Arg (Data, 5, -1),
             Col_Index            => Nth_Arg (Data, 6, -1),
             Msg_Index            => Nth_Arg (Data, 7, -1));
+
+      elsif Command = Constructor_Method then
+         Name_Parameters (Data, Codefix_Cmd_Parameters);
+         Instance := Nth_Arg (Data, 1, Codefix_Module_ID.Codefix_Class);
+         Session := Get_Session_By_Name (Nth_Arg (Data, 2));
+
+         if Session = null then
+            Set_Error_Msg (Data, -"No codefix session for that category");
+         else
+            Set_Data (Instance, Session);
+         end if;
+
+      elsif Command = "errors" then
+         Instance := Nth_Arg (Data, 1, Codefix_Module_ID.Codefix_Class);
+         Session := Get_Data (Instance);
+
+         declare
+            Error : Error_Id := Get_First_Error (Session.Corrector.all);
+            Err : Class_Instance;
+         begin
+            Set_Return_Value_As_List (Data);
+            while Error /= Null_Error_Id loop
+               Err := New_Instance
+                 (Get_Script (Data), Codefix_Module_ID.Codefix_Error_Class);
+               Set_Data (Err, Error);
+               Set_Return_Value (Data, Err);
+               Error := Next (Error);
+            end loop;
+         end;
+
       end if;
    end Default_Command_Handler;
+
+   --------------
+   -- Set_Data --
+   --------------
+
+   procedure Set_Data
+     (Instance : access Class_Instance_Record'Class;
+      Session  : Codefix_Session) is
+   begin
+      if not Is_Subclass
+        (Get_Script (Instance),
+         Get_Class (Instance),
+         Codefix_Module_ID.Codefix_Class)
+      then
+         raise Invalid_Data;
+      end if;
+
+      Set_Data (Instance, Value => Session.all'Address);
+   end Set_Data;
+
+   --------------
+   -- Get_Data --
+   --------------
+
+   function Get_Data
+     (Instance : access Class_Instance_Record'Class) return Codefix_Session
+   is
+      function Convert is new Ada.Unchecked_Conversion
+        (System.Address, Codefix_Session);
+   begin
+      if not Is_Subclass
+        (Get_Script (Instance),
+         Get_Class (Instance),
+         Codefix_Module_ID.Codefix_Class)
+      then
+         raise Invalid_Data;
+      end if;
+
+      return Convert (Get_Data (Instance));
+   end Get_Data;
+
+   --------------
+   -- Set_Data --
+   --------------
+
+   procedure Set_Data
+     (Instance : access Class_Instance_Record'Class;
+      Error    : Error_Id)
+   is
+      Err : Error_Id_Access;
+   begin
+      if not Is_Subclass
+        (Get_Script (Instance),
+         Get_Class (Instance),
+         Codefix_Module_ID.Codefix_Error_Class)
+      then
+         raise Invalid_Data;
+      end if;
+
+      Err := new Error_Id'(Error);
+      Set_Data
+        (Instance,
+         Value      => Err.all'Address,
+         On_Destroy => On_Destroy_Error'Access);
+   end Set_Data;
+
+   ----------------------
+   -- On_Destroy_Error --
+   ----------------------
+
+   procedure On_Destroy_Error (Value : System.Address) is
+      Err : Error_Id_Access := Convert (Value);
+   begin
+      Unchecked_Free (Err);
+   end On_Destroy_Error;
+
+   --------------
+   -- Get_Data --
+   --------------
+
+   function Get_Data
+     (Instance : access Class_Instance_Record'Class) return Error_Id is
+   begin
+      if not Is_Subclass
+        (Get_Script (Instance),
+         Get_Class (Instance),
+         Codefix_Module_ID.Codefix_Error_Class)
+      then
+         raise Invalid_Data;
+      end if;
+
+      return Convert (Get_Data (Instance)).all;
+   end Get_Data;
 
    ------------------------
    -- New_Text_Interface --
@@ -700,10 +982,12 @@ package body Codefix_Module is
 
    procedure Destroy (Id : in out Codefix_Module_ID_Record) is
    begin
-      for S in Id.Sessions'Range loop
-         Destroy (Id.Sessions (S));
-      end loop;
-      Unchecked_Free (Id.Sessions);
+      if Id.Sessions /= null then
+         for S in Id.Sessions'Range loop
+            Destroy (Id.Sessions (S));
+         end loop;
+         Unchecked_Free (Id.Sessions);
+      end if;
 
       Free_Parsers;
       Destroy (Module_ID_Record (Id));
