@@ -669,7 +669,8 @@ package body Src_Editor_Box is
             Get_Start_Iter (Editor.Source_Buffer, End_Iter);
 
             if L /= 0 then
-               Set_Entity_Information (Context, Line => L);
+               Set_Entity_Information
+                 (Context, Line => Integer (Get_Line (Start_Iter)) + 1);
             end if;
          else
             Get_Iter_At_Line_Offset
@@ -677,7 +678,9 @@ package body Src_Editor_Box is
                To_Buffer_Line (L), To_Buffer_Column (C));
             Search_Entity_Bounds (Editor.Source_Buffer, Start_Iter, End_Iter);
             Set_Entity_Information
-              (Context, Get_Text (Start_Iter, End_Iter), L, C);
+              (Context, Get_Text (Start_Iter, End_Iter),
+               Integer (Get_Line (Start_Iter)) + 1,
+               Integer (Get_Line_Offset (Start_Iter)) + 1);
 
             --  Get the focus now. If we let the contextual menu handler in the
             --  kernel do the grab focus, then the source window will be
