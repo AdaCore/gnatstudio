@@ -253,6 +253,7 @@ private
    type Reference_Kind is
      (Reference,
       Modification,
+      Instantiation_Reference,
       Body_Entity,
       Completion_Of_Private_Or_Incomplete_Type,
       Type_Extension,
@@ -264,6 +265,8 @@ private
    --  The kind of reference to an entity. They have the following meaning:
    --    - Reference: The entity is used
    --    - Modification: The value of the entity is changed
+   --    - Instantiation_Reference: Reference to the instantiation of a
+   --      generic.
    --    - Body_Entity: Used for spec entities that are repeated in a body,
    --      including the unit name itself, and the formals in the case of
    --      a subprogram. Also used for entry-names in accept statements.
@@ -283,6 +286,38 @@ private
    --      body, accept statement.
    --    - End_Of_Body_With_Label: Identical to End_Of_Body, except that a
    --      label is attached to the construct.
+
+   type Reference_Kind_To_Boolean_Map is array (Reference_Kind) of Boolean;
+
+   Is_End_Reference : constant Reference_Kind_To_Boolean_Map :=
+     (Reference                                => False,
+      Instantiation_Reference                  => False,
+      Modification                             => False,
+      Body_Entity                              => False,
+      Completion_Of_Private_Or_Incomplete_Type => False,
+      Type_Extension                           => False,
+      Implicit                                 => False,
+      End_Of_Spec                              => True,
+      End_Of_Spec_With_Label                   => True,
+      End_Of_Body                              => True,
+      End_Of_Body_With_Label                   => True);
+   --  True if the matching entity indicates an end-of-scope (end of subprogram
+   --  declaration, end of record definition, ...)
+
+   Is_Start_Reference : constant Reference_Kind_To_Boolean_Map :=
+     (Reference                                => False,
+      Instantiation_Reference                  => False,
+      Modification                             => False,
+      Body_Entity                              => True,
+      Completion_Of_Private_Or_Incomplete_Type => True,
+      Type_Extension                           => False,
+      Implicit                                 => False,
+      End_Of_Spec                              => False,
+      End_Of_Spec_With_Label                   => False,
+      End_Of_Body                              => False,
+      End_Of_Body_With_Label                   => False);
+   --  True if the matching entity indicates an start-of-scope (start of
+   --  subprogram declaration, start of record definition, ...)
 
    type E_Scope is (Global_Scope, Local_Scope);
    --  The scope of an entity. The values have the following meaning:
@@ -334,13 +369,14 @@ private
    type File_Location is record
       File   : Source_File;
       Line   : Positive;
-      Column : Positive;
+      Column : Natural;
    end record;
    --  A location in a source file.
+   --  Column might be null for generic instantiations.
 
    Null_File_Location : constant File_Location :=
-     (File => No_Source_File,
-      Line => 1,
+     (File   => No_Source_File,
+      Line   => 1,
       Column => 1);
    --  To verify that a File_Location is not null, a quick and good enough
    --  check is to verify that File_Location.File.LI is not null.
@@ -355,6 +391,12 @@ private
       Kind     : Reference_Kind;
    end record;
    --  A reference to an entity.
+
+   No_Reference : constant E_Reference :=
+     (Location => Null_File_Location,
+      Kind     => Reference);
+
+   type E_Reference_Access is access all E_Reference;
 
    type E_Reference_Node;
    type E_Reference_List is access E_Reference_Node;
@@ -372,7 +414,9 @@ private
       Parent_Location : File_Location;
       Parent_Kind     : E_Kind;
       Scope           : E_Scope;
-      End_Of_Scope    : E_Reference;
+      End_Of_Scope    : E_Reference := No_Reference;
+      --  The position at which the body of the entity finishes. It doesn't
+      --  correspond to an actualy cross-reference for the entity.
    end record;
    --  All the information about an entity declaration.
    --  ??? Note that, in order to save a little bit of memory space,
@@ -381,6 +425,8 @@ private
    --  ??? of scope info (because this is not relevant for these entities).
    --  ??? This has not been done yet because it adds a little bit of
    --  ??? complexity to the implementation (in terms of memory management).
+
+   type E_Declaration_Access is access all E_Declaration;
 
    type E_Declaration_Info is record
       Declaration : E_Declaration;
