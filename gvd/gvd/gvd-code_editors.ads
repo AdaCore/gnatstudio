@@ -41,6 +41,7 @@ with Gtk.Menu;
 with Gtk.Paned;
 with Gtk.Scrolled_Window;
 with Gtk.Widget;
+with Gtk.Box;
 with Gtkada.Types;
 with Language;
 with GVD.Asm_Editors;
@@ -50,7 +51,7 @@ with GVD.Types;
 
 package GVD.Code_Editors is
 
-   type Code_Editor_Record is new Gtk.Paned.Gtk_Paned_Record with private;
+   type Code_Editor_Record is new Gtk.Box.Gtk_Hbox_Record with private;
    type Code_Editor is access all Code_Editor_Record'Class;
 
    procedure Gtk_New_Hbox
@@ -132,6 +133,11 @@ package GVD.Code_Editors is
       return Gtk.Scrolled_Window.Gtk_Scrolled_Window;
    --  Return the window containing the Explorer.
 
+   function Get_Explorer_Editor_Pane
+     (Editor : access Code_Editor_Record'Class)
+     return Gtk.Paned.Gtk_Paned;
+   --  Return the main Pane.
+
    function Get_Asm
      (Editor : access Code_Editor_Record'Class)
       return GVD.Asm_Editors.Asm_Editor;
@@ -175,10 +181,18 @@ private
 
    type View_Mode is (Source_Only, Asm_Only, Source_Asm);
 
-   type Code_Editor_Record is new Gtk.Paned.Gtk_Paned_Record with record
-      Source  : GVD.Source_Editors.Source_Editor;
-      Asm     : GVD.Asm_Editors.Asm_Editor;
-      Pane    : Gtk.Paned.Gtk_Paned;
+   type Code_Editor_Record is new Gtk.Box.Gtk_Hbox_Record with record
+      --  Contains either Explorer_Editor_Pane or Editor_Container.
+
+      Explorer_Editor_Pane : Gtk.Paned.Gtk_Paned;
+      --  Contains Explorer_Scroll and Editor_Container.
+
+      Editor_Container     : Gtk.Box.Gtk_Hbox;
+      --  Contains either Source, Asm or Source_Asm_Pane.
+
+      Source          : GVD.Source_Editors.Source_Editor;
+      Asm             : GVD.Asm_Editors.Asm_Editor;
+      Source_Asm_Pane : Gtk.Paned.Gtk_Paned;
 
       Mode    : View_Mode := Source_Only;
 
