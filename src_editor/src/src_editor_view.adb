@@ -509,9 +509,11 @@ package body Src_Editor_View is
       Params : Glib.Values.GValues;
       User   : Source_View)
    is
-      pragma Unreferenced (Params);
+      pragma Unreferenced (Params, Buffer);
    begin
-      User.Highlight_Blocks := Has_Block_Information (Buffer);
+      --  Invalidate the window so that the columns and line and
+      --  block highlightings are redrawn.
+      Invalidate_Window (User);
 
    exception
       when E : others =>
@@ -1070,8 +1072,7 @@ package body Src_Editor_View is
          Get_Window (View, Text_Window_Text));
       Color := Get_Pref (View.Kernel, Current_Block_Color);
       Set_Foreground (View.Current_Block_GC, Color);
-      View.Highlight_Blocks :=
-        not Equal (Color, White (Get_Default_Colormap));
+      View.Highlight_Blocks := Get_Pref (View.Kernel, Block_Highlighting);
 
       Gdk_New
         (View.Default_GC,
