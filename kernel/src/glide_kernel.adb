@@ -336,7 +336,6 @@ package body Glide_Kernel is
    procedure Variable_Changed (Handle : access Kernel_Handle_Record) is
    begin
       Free (Handle.Scenario_Variables);
-      Handle.Scenario_Variables := null;
       Object_Callback.Emit_By_Name (Handle, Variable_Changed_Signal);
    end Variable_Changed;
 
