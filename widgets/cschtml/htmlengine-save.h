@@ -67,4 +67,4 @@ gboolean  html_engine_save_plain  (const HTMLEngine         *engine,
 				   HTMLEngineSaveReceiverFn  receiver,
 				   gpointer                  user_data);
 
-#endif _HTMLENGINE_SAVE_H
+#endif /* _HTMLENGINE_SAVE_H */
