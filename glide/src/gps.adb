@@ -586,9 +586,11 @@ procedure GPS is
 
    procedure Parse_Switches is
    begin
+      Initialize_Option_Scan;
       loop
          case Getopt ("-version -help P: -log-level= " &
-                      "-debug? -debugger= -target= -load= -eval=")
+                      "-debug? -debugger= -target= -load= -eval= " &
+                      "-traceoff= -traceon= -tracefile=")
          is
             -- long option names --
             when '-' =>
@@ -667,26 +669,37 @@ procedure GPS is
 
                   -- --target --
                   when 't' =>
-                     declare
-                        Param  : constant String := Parameter;
-                        Column : constant Natural :=
-                          Ada.Strings.Fixed.Index
-                            (Param, ":", Ada.Strings.Backward);
+                     if Full_Switch = "-target" then
+                        declare
+                           Param  : constant String := Parameter;
+                           Column : constant Natural :=
+                             Ada.Strings.Fixed.Index
+                               (Param, ":", Ada.Strings.Backward);
 
-                     begin
-                        --  Param should be of the form target:protocol
+                        begin
+                           --  Param should be of the form target:protocol
 
-                        if Column = 0 then
-                           raise Invalid_Switch;
-                        end if;
+                           if Column = 0 then
+                              raise Invalid_Switch;
+                           end if;
 
-                        Free (Target);
-                        Free (Protocol);
-                        Target   :=
-                          new String '(Param (Param'First .. Column - 1));
-                        Protocol :=
-                          new String '(Param (Column + 1 .. Param'Last));
-                     end;
+                           Free (Target);
+                           Free (Protocol);
+                           Target   :=
+                             new String '(Param (Param'First .. Column - 1));
+                           Protocol :=
+                             new String '(Param (Column + 1 .. Param'Last));
+                        end;
+
+                     elsif Full_Switch = "-traceon" then
+                        Set_Active (Create (Parameter), True);
+
+                     elsif Full_Switch = "-traceoff" then
+                        Set_Active (Create (Parameter), False);
+
+                     elsif Full_Switch = "-tracefile" then
+                        Traces.Parse_Config_File (Parameter);
+                     end if;
 
                   when others =>
                      null;
