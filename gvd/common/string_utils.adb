@@ -1119,4 +1119,21 @@ package body String_Utils is
       end;
    end Argument_List_To_Quoted_String;
 
+   ----------------
+   -- Safe_Value --
+   ----------------
+
+   function Safe_Value
+     (S : String; Default : Integer := 1) return Integer is
+   begin
+      if S = "" then
+         return Default;
+      else
+         return Integer'Value (S);
+      end if;
+   exception
+      when Constraint_Error =>
+         return Default;
+   end Safe_Value;
+
 end String_Utils;

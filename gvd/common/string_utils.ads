@@ -186,6 +186,10 @@ package String_Utils is
    --  The returned string is padded with leading spaces to create a string of
    --  at least length characters.
 
+   function Safe_Value (S : String; Default : Integer := 1) return Integer;
+   --  Convert S to a Natural, making sure there is no exception raised.
+   --  If S doesn't contain a valid number, Default is returned.
+
    function Number_Of_Digits (N : Integer) return Natural;
    --  Return the number of digits for the given Integer number;
 
