@@ -590,9 +590,7 @@ package body Browsers.Call_Graph is
          ID              => Call_Graph_Module_Id,
          Context_Func    => Default_Browser_Context_Factory'Access);
 
-      Widget_Callback.Connect
-        (Browser, "destroy",
-         Widget_Callback.To_Marshaller (On_Destroy'Access));
+      Widget_Callback.Connect (Browser, "destroy", On_Destroy'Access);
 
       Child := Put
         (Kernel, Browser,
@@ -1963,16 +1961,12 @@ package body Browsers.Call_Graph is
       Gtk_New (Button, -"Select all");
       Pack_Start (Filter_Box, Button);
       Widget_Callback.Object_Connect
-        (Button, "clicked",
-         Widget_Callback.To_Marshaller (Select_All_Filters'Access),
-         Dialog);
+        (Button, "clicked", Select_All_Filters'Access, Dialog);
 
       Gtk_New (Button, -"Unselect all");
       Pack_Start (Filter_Box, Button);
       Widget_Callback.Object_Connect
-        (Button, "clicked",
-         Widget_Callback.To_Marshaller (Unselect_All_Filters'Access),
-         Dialog);
+        (Button, "clicked", Unselect_All_Filters'Access, Dialog);
 
       --  Extra info choice
 

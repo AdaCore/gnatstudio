@@ -689,25 +689,18 @@ package body Directory_Tree is
          Gtk_New (Menu);
          Gtk_New (Item, -"Add directory recursive");
          Widget_Callback.Object_Connect
-           (Item, "activate",
-            Widget_Callback.To_Marshaller (Add_Directory_Cb'Access),
-            Selector);
+           (Item, "activate", Add_Directory_Cb'Access, Selector);
          Append (Menu, Item);
 
          Gtk_New (Item, -"Add directory");
          Widget_Callback.Object_Connect
-           (Item, "activate",
-            Widget_Callback.To_Marshaller
-            (Add_Single_Directory_Cb'Access),
-            Selector);
+           (Item, "activate", Add_Single_Directory_Cb'Access, Selector);
          Append (Menu, Item);
 
          Gtk_New (Item, -"Create new subdirectory");
          Append (Menu, Item);
          Widget_Callback.Object_Connect
-           (Item, "activate",
-            Widget_Callback.To_Marshaller (Create_Directory_Cb'Access),
-            Selector);
+           (Item, "activate", Create_Directory_Cb'Access, Selector);
 
          return Menu;
       end if;
@@ -760,17 +753,12 @@ package body Directory_Tree is
          Gtk_New (Menu);
          Gtk_New (Item, -"Remove directory recursive");
          Widget_Callback.Object_Connect
-           (Item, "activate",
-            Widget_Callback.To_Marshaller (Remove_Directory_Cb'Access),
-            Selector);
+           (Item, "activate", Remove_Directory_Cb'Access, Selector);
          Append (Menu, Item);
 
          Gtk_New (Item, -"Remove directory");
          Widget_Callback.Object_Connect
-           (Item, "activate",
-            Widget_Callback.To_Marshaller
-              (Remove_Single_Directory_Cb'Access),
-            Selector);
+           (Item, "activate", Remove_Single_Directory_Cb'Access, Selector);
          Append (Menu, Item);
       end if;
 
@@ -862,9 +850,7 @@ package body Directory_Tree is
       Gtk_New (Item, -"Create new subdirectory");
       Append (Menu, Item);
       Widget_Callback.Object_Connect
-        (Item, "activate",
-         Widget_Callback.To_Marshaller (Create_Directory_Cb'Access),
-         Selector);
+        (Item, "activate", Create_Directory_Cb'Access, Selector);
 
       return Menu;
    end Single_List_Contextual_Menu;
@@ -931,18 +917,14 @@ package body Directory_Tree is
          Add (Button, Arrow);
          Pack_Start (Bbox, Button, Expand => False, Fill => False);
          Widget_Callback.Object_Connect
-           (Button, "clicked",
-            Widget_Callback.To_Marshaller (Add_Single_Directory_Cb'Access),
-            Selector);
+           (Button, "clicked", Add_Single_Directory_Cb'Access, Selector);
 
          Gtk_New (Button);
          Gtk_New (Arrow, Arrow_Up, Shadow_In);
          Add (Button, Arrow);
          Pack_Start (Bbox, Button, Expand => False, Fill => False);
          Widget_Callback.Object_Connect
-           (Button, "clicked",
-            Widget_Callback.To_Marshaller (Remove_Single_Directory_Cb'Access),
-            Selector);
+           (Button, "clicked", Remove_Single_Directory_Cb'Access, Selector);
 
          Gtk_New (Scrolled);
          Set_Policy (Scrolled, Policy_Automatic, Policy_Automatic);

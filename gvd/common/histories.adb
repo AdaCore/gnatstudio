@@ -590,9 +590,7 @@ package body Histories is
    begin
       Set_Active (Button, Val.Value);
       Value_Callback.Connect
-        (Button, "toggled",
-         Value_Callback.To_Marshaller (Update_History'Access),
-         User_Data => Val);
+        (Button, "toggled", Update_History'Access, User_Data => Val);
    end Associate;
 
    ---------------
@@ -609,9 +607,7 @@ package body Histories is
    begin
       Set_Active (Item, Val.Value);
       Value_Callback.Connect
-        (Item, "toggled",
-         Value_Callback.To_Marshaller (Update_History_Item'Access),
-         User_Data => Val);
+        (Item, "toggled", Update_History_Item'Access, User_Data => Val);
    end Associate;
 
    ---------------
@@ -635,9 +631,7 @@ package body Histories is
       Val.Notifier      := Changed_Notifier (Notifier);
 
       Notifier_Callback.Connect
-        (Menu, "destroy",
-         Notifier_Callback.To_Marshaller (On_Menu_Destroy'Access),
-         Changed_Notifier (Notifier));
+        (Menu, "destroy", On_Menu_Destroy'Access, Changed_Notifier (Notifier));
       On_Changed (Notifier, Hist, Key);
    end Associate;
 
@@ -717,8 +711,7 @@ package body Histories is
                if Notifier.Callback /= null then
                   Notifier_Callback.Connect
                     (Mitem,
-                     "activate",
-                     Notifier_Callback.To_Marshaller (On_Menu_Selected'Access),
+                     "activate", On_Menu_Selected'Access,
                      Changed_Notifier (Notifier));
                end if;
             end;

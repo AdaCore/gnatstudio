@@ -97,7 +97,7 @@ begin
    Set_Visibility (Naming_Scheme_Editor.Combo_Entry3, True);
    Widget_Callback.Object_Connect
      (Naming_Scheme_Editor.Combo_Entry3, "changed",
-      Widget_Callback.To_Marshaller (On_Standard_Scheme_Changed'Access), Naming_Scheme_Editor);
+      On_Standard_Scheme_Changed'Access, Naming_Scheme_Editor);
 
    Gtk_New (Naming_Scheme_Editor.Frame28, -"Details");
    Set_Shadow_Type (Naming_Scheme_Editor.Frame28, Shadow_Etched_In);
@@ -132,7 +132,7 @@ begin
    Set_Visibility (Naming_Scheme_Editor.Combo_Entry2, True);
    Widget_Callback.Object_Connect
      (Naming_Scheme_Editor.Combo_Entry2, "changed",
-      Widget_Callback.To_Marshaller (Customized'Access), Naming_Scheme_Editor);
+      Customized'Access, Naming_Scheme_Editor);
 
    Gtk_New_Hbox (Naming_Scheme_Editor.Hbox7, False, 0);
    Pack_Start (Naming_Scheme_Editor.Vbox53, Naming_Scheme_Editor.Hbox7, True, True, 0);
@@ -152,7 +152,7 @@ begin
    Pack_Start (Naming_Scheme_Editor.Hbox7, Naming_Scheme_Editor.Dot_Replacement, True, True, 0);
    Widget_Callback.Object_Connect
      (Naming_Scheme_Editor.Dot_Replacement, "changed",
-      Widget_Callback.To_Marshaller (Customized'Access), Naming_Scheme_Editor);
+      Customized'Access, Naming_Scheme_Editor);
 
    Gtk_New_Hbox (Naming_Scheme_Editor.Hbox6, False, 0);
    Pack_Start (Naming_Scheme_Editor.Vbox53, Naming_Scheme_Editor.Hbox6, True, True, 0);
@@ -182,7 +182,7 @@ begin
    Set_Visibility (Naming_Scheme_Editor.Combo_Entry4, True);
    Widget_Callback.Object_Connect
      (Naming_Scheme_Editor.Combo_Entry4, "changed",
-      Widget_Callback.To_Marshaller (Customized'Access), Naming_Scheme_Editor);
+      Customized'Access, Naming_Scheme_Editor);
 
    Gtk_New_Hbox (Naming_Scheme_Editor.Hbox8, False, 0);
    Pack_Start (Naming_Scheme_Editor.Vbox53, Naming_Scheme_Editor.Hbox8, True, True, 0);
@@ -212,7 +212,7 @@ begin
    Set_Visibility (Naming_Scheme_Editor.Combo_Entry5, True);
    Widget_Callback.Object_Connect
      (Naming_Scheme_Editor.Combo_Entry5, "changed",
-      Widget_Callback.To_Marshaller (Customized'Access), Naming_Scheme_Editor);
+      Customized'Access, Naming_Scheme_Editor);
 
    Gtk_New_Hbox (Naming_Scheme_Editor.Hbox9, False, 0);
    Pack_Start (Naming_Scheme_Editor.Vbox53, Naming_Scheme_Editor.Hbox9, True, True, 0);
@@ -242,7 +242,7 @@ begin
    Set_Visibility (Naming_Scheme_Editor.Combo_Entry6, True);
    Widget_Callback.Object_Connect
      (Naming_Scheme_Editor.Combo_Entry6, "changed",
-      Widget_Callback.To_Marshaller (Customized'Access), Naming_Scheme_Editor);
+      Customized'Access, Naming_Scheme_Editor);
 
    Gtk_New (Naming_Scheme_Editor.Frame30, -"Exceptions");
    Set_Shadow_Type (Naming_Scheme_Editor.Frame30, Shadow_Etched_In);
@@ -358,7 +358,7 @@ begin
    Pack_Start (Naming_Scheme_Editor.Hbox3, Naming_Scheme_Editor.Unit_Name_Entry, True, True, 0);
    Widget_Callback.Object_Connect
      (Naming_Scheme_Editor.Unit_Name_Entry, "activate",
-      Widget_Callback.To_Marshaller (On_Update_Clicked'Access), Naming_Scheme_Editor);
+      On_Update_Clicked'Access, Naming_Scheme_Editor);
    Return_Callback.Object_Connect
      (Naming_Scheme_Editor.Unit_Name_Entry, "key_press_event", On_Unit_Name_Entry_Key_Press_Event'Access, Naming_Scheme_Editor);
 
@@ -370,7 +370,7 @@ begin
    Pack_Start (Naming_Scheme_Editor.Hbox3, Naming_Scheme_Editor.Spec_Filename_Entry, True, True, 0);
    Widget_Callback.Object_Connect
      (Naming_Scheme_Editor.Spec_Filename_Entry, "activate",
-      Widget_Callback.To_Marshaller (On_Update_Clicked'Access), Naming_Scheme_Editor);
+      On_Update_Clicked'Access, Naming_Scheme_Editor);
    Return_Callback.Object_Connect
      (Naming_Scheme_Editor.Spec_Filename_Entry, "key_press_event", On_Spec_Filename_Entry_Key_Press_Event'Access, Naming_Scheme_Editor);
 
@@ -382,7 +382,7 @@ begin
    Pack_Start (Naming_Scheme_Editor.Hbox3, Naming_Scheme_Editor.Body_Filename_Entry, True, True, 0);
    Widget_Callback.Object_Connect
      (Naming_Scheme_Editor.Body_Filename_Entry, "activate",
-      Widget_Callback.To_Marshaller (On_Update_Clicked'Access), Naming_Scheme_Editor);
+      On_Update_Clicked'Access, Naming_Scheme_Editor);
    Return_Callback.Object_Connect
      (Naming_Scheme_Editor.Body_Filename_Entry, "key_press_event", On_Body_Filename_Entry_Key_Press_Event'Access, Naming_Scheme_Editor);
 
@@ -390,7 +390,7 @@ begin
    Pack_Start (Naming_Scheme_Editor.Hbox3, Naming_Scheme_Editor.Update, False, False, 0);
    Widget_Callback.Object_Connect
      (Naming_Scheme_Editor.Update, "clicked",
-      Widget_Callback.To_Marshaller (On_Update_Clicked'Access), Naming_Scheme_Editor);
+      On_Update_Clicked'Access, Naming_Scheme_Editor);
 
 end Initialize;
 

@@ -317,8 +317,7 @@ package body Custom_Combos is
          Set_Editable (Get_Entry (Combo.Combo), False);
 
          Subprogram_Callback.Object_Connect
-           (Get_Entry (Combo.Combo), "changed",
-            Subprogram_Callback.To_Marshaller (Combo_Changed'Access),
+           (Get_Entry (Combo.Combo), "changed", Combo_Changed'Access,
             Slot_Object => Combo,
             User_Data   => On_Changed,
             After       => True);
@@ -500,8 +499,7 @@ package body Custom_Combos is
          Set_Data (Inst, Gtk_Widget (Button));
          Show_All (Button);
          Subprogram_Callback.Connect
-           (Button, "clicked",
-            Subprogram_Callback.To_Marshaller (On_Button_Clicked'Access),
+           (Button, "clicked", On_Button_Clicked'Access,
             User_Data => Nth_Arg (Data, 4));
 
       elsif Command = "set_text" then

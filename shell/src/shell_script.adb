@@ -685,8 +685,7 @@ package body Shell_Script is
          Dock_Child (Child);
 
          Kernel_Callback.Connect
-           (Script.Console, "destroy",
-            Kernel_Callback.To_Marshaller (Console_Destroyed'Access),
+           (Script.Console, "destroy", Console_Destroyed'Access,
             Kernel_Handle (Kernel));
       else
          Child := Find_MDI_Child (Get_MDI (Kernel), Script.Console);

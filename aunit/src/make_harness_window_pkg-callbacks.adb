@@ -193,13 +193,12 @@ package body Make_Harness_Window_Pkg.Callbacks is
 
          Widget_Callback.Object_Connect
            (Get_Ok_Button (Harness_Window.Explorer),
-            "clicked",
-            Widget_Callback.To_Marshaller (On_Ok_Button_Clicked'Access),
+            "clicked", On_Ok_Button_Clicked'Access,
             Gtk_Widget (Harness_Window));
          Widget_Callback.Object_Connect
            (Get_Cancel_Button (Harness_Window.Explorer),
             "clicked",
-            Widget_Callback.To_Marshaller (On_Cancel_Button_Clicked'Access),
+            On_Cancel_Button_Clicked'Access,
             Gtk_Widget (Harness_Window));
       end if;
 

@@ -768,9 +768,7 @@ package body Interactive_Consoles is
 
       Modify_Font (Console.View, Font);
 
-      Widget_Callback.Connect
-        (Console, "destroy",
-         Widget_Callback.To_Marshaller (On_Destroy'Access));
+      Widget_Callback.Connect (Console, "destroy", On_Destroy'Access);
 
       Widget_Callback.Object_Connect
         (Console.Buffer, "mark_set",

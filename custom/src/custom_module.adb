@@ -883,9 +883,7 @@ package body Custom_Module is
          begin
             Gtk.Menu_Item.Initialize (Menu, Label => Base_Name (Path));
             Menu.On_Activate := Nth_Arg (Data, 2, null);
-            Widget_Callback.Connect
-              (Menu, "activate",
-               Widget_Callback.To_Marshaller (On_Activate'Access));
+            Widget_Callback.Connect (Menu, "activate", On_Activate'Access);
 
             Register_Menu
               (Kernel      => Kernel,

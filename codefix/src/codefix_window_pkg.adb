@@ -90,7 +90,7 @@ begin
    Set_Visibility (Codefix_Window.Fix_Entry, True);
    Widget_Callback.Object_Connect
      (Codefix_Window.Fix_Entry, "changed",
-      Widget_Callback.To_Marshaller (On_Fix_Entry_Changed'Access), Codefix_Window);
+      On_Fix_Entry_Changed'Access, Codefix_Window);
 
    Gtk_New (Codefix_Window.Vbuttonbox1);
    Set_Spacing (Codefix_Window.Vbuttonbox1, 10);
@@ -106,7 +106,7 @@ begin
    Set_Tip (Tooltips, Codefix_Window.Prev, -"Go to previous error");
    Widget_Callback.Object_Connect
      (Codefix_Window.Prev, "clicked",
-      Widget_Callback.To_Marshaller (On_Prev_Clicked'Access), Codefix_Window);
+      On_Prev_Clicked'Access, Codefix_Window);
    Add (Codefix_Window.Vbuttonbox1, Codefix_Window.Prev);
 
    Gtk_New_From_Stock (Codefix_Window.Next, Stock_Go_Forward);
@@ -115,7 +115,7 @@ begin
    Set_Tip (Tooltips, Codefix_Window.Next, -"Go to next error without fixing the current one");
    Widget_Callback.Object_Connect
      (Codefix_Window.Next, "clicked",
-      Widget_Callback.To_Marshaller (On_Next_Clicked'Access), Codefix_Window);
+      On_Next_Clicked'Access, Codefix_Window);
    Add (Codefix_Window.Vbuttonbox1, Codefix_Window.Next);
 
    Gtk_New_From_Stock (Codefix_Window.Accept_Correction, Stock_Apply);
@@ -124,7 +124,7 @@ begin
    Set_Tip (Tooltips, Codefix_Window.Accept_Correction, -"Fix this error and go to next one");
    Widget_Callback.Object_Connect
      (Codefix_Window.Accept_Correction, "clicked",
-      Widget_Callback.To_Marshaller (On_Apply_Clicked'Access), Codefix_Window);
+      On_Apply_Clicked'Access, Codefix_Window);
    Add (Codefix_Window.Vbuttonbox1, Codefix_Window.Accept_Correction);
 
    Gtk_New_From_Stock (Codefix_Window.Undo, Stock_Undo);
@@ -133,7 +133,7 @@ begin
    Set_Tip (Tooltips, Codefix_Window.Undo, -"Undo previous change");
    Widget_Callback.Object_Connect
      (Codefix_Window.Undo, "clicked",
-      Widget_Callback.To_Marshaller (On_Undo_Clicked'Access), Codefix_Window);
+      On_Undo_Clicked'Access, Codefix_Window);
    Add (Codefix_Window.Vbuttonbox1, Codefix_Window.Undo);
 
    Gtk_New_From_Stock (Codefix_Window.Refresh, Stock_Refresh);
@@ -142,7 +142,7 @@ begin
    Set_Tip (Tooltips, Codefix_Window.Refresh, -"Recompute fix with last user's changes");
    Widget_Callback.Object_Connect
      (Codefix_Window.Refresh, "clicked",
-      Widget_Callback.To_Marshaller (On_Refresh_Clicked'Access), Codefix_Window);
+      On_Refresh_Clicked'Access, Codefix_Window);
    Add (Codefix_Window.Vbuttonbox1, Codefix_Window.Refresh);
 
 end Initialize;

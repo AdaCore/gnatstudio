@@ -409,33 +409,26 @@ package body Browsers.Dependency_Items is
          Gtk_New (Mitem, Label => -"Open file...");
          Append (Menu, Mitem);
          Context_Callback.Object_Connect
-           (Mitem, "activate",
-            Context_Callback.To_Marshaller (Open_File'Access),
+           (Mitem, "activate", Open_File'Access,
             Slot_Object => General_Browser (Object),
             User_Data   => Context);
 
          Gtk_New (Mitem, Label => -"Refresh");
          Append (Menu, Mitem);
          Widget_Callback.Object_Connect
-           (Mitem, "activate",
-            Widget_Callback.To_Marshaller (Refresh_Browser'Access),
-            Event_Widget);
+           (Mitem, "activate", Refresh_Browser'Access, Event_Widget);
 
          Gtk_New (Check, Label => -"Show system files");
          Associate (Get_History (Kernel).all, Show_System_Files_Key, Check);
          Append (Menu, Check);
          Widget_Callback.Object_Connect
-           (Check, "toggled",
-            Widget_Callback.To_Marshaller (Refresh_Browser'Access),
-            Event_Widget);
+           (Check, "toggled", Refresh_Browser'Access, Event_Widget);
 
          Gtk_New (Check, Label => -"Show implicit dependencies");
          Associate (Get_History (Kernel).all, Show_Implicit_Key, Check);
          Append (Menu, Check);
          Widget_Callback.Object_Connect
-           (Check, "toggled",
-            Widget_Callback.To_Marshaller (Refresh_Browser'Access),
-            Event_Widget);
+           (Check, "toggled", Refresh_Browser'Access, Event_Widget);
       end if;
 
       return Context;
@@ -460,9 +453,7 @@ package body Browsers.Dependency_Items is
          ID              => Dependency_Browser_Module_ID,
          Context_Func    => Browser_Context_Factory'Access);
 
-      Widget_Callback.Connect
-        (Browser, "destroy",
-         Widget_Callback.To_Marshaller (On_Destroy'Access));
+      Widget_Callback.Connect (Browser, "destroy", On_Destroy'Access);
       return Browser;
    end Create_Dependency_Browser;
 

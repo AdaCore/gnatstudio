@@ -75,6 +75,15 @@ package body VCS_Module is
    procedure Destroy (Module : in out VCS_Module_ID_Record);
    --  Free the memory occupied by Module.
 
+
+
+   type Has_VCS_Filter is new Action_Filter_Record with null record;
+   function Filter_Matches_Primitive
+     (Filter  : access Has_VCS_Filter;
+      Context : access Selection_Context'Class) return Boolean;
+   --  True when the current context is associated with a known VCS
+
+
    procedure VCS_Contextual_Menu
      (Object  : access Glib.Object.GObject_Record'Class;
       Context : access Selection_Context'Class;
@@ -142,6 +151,21 @@ package body VCS_Module is
                 "Unexpected exception: " & Exception_Information (E));
    end On_Open_Interface;
 
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   function Filter_Matches_Primitive
+     (Filter  : access Has_VCS_Filter;
+      Context : access Selection_Context'Class) return Boolean
+   is
+      pragma Unreferenced (Filter);
+   begin
+      return Context.all in File_Selection_Context'Class
+        and then Get_Current_Ref (Selection_Context_Access (Context)) /=
+          Unknown_VCS_Reference;
+   end Filter_Matches_Primitive;
+
    -------------------------
    -- VCS_Contextual_Menu --
    -------------------------
@@ -198,24 +222,19 @@ package body VCS_Module is
    begin
       Gtk_New_With_Mnemonic (Item, -"_Explorer");
       Kernel_Callback.Connect
-        (Item, "activate",
-         Kernel_Callback.To_Marshaller (On_Open_Interface'Access),
-         Kernel_Handle (Kernel));
+        (Item, "activate", On_Open_Interface'Access, Kernel_Handle (Kernel));
       Append (Menu, Item);
 
       --  ??? Should we use a vcs-specific vocable for the next two items ?
 
       Gtk_New_With_Mnemonic (Item, -"Update all _projects");
       Kernel_Callback.Connect
-        (Item, "activate",
-         Kernel_Callback.To_Marshaller (Update_All'Access),
-         Kernel_Handle (Kernel));
+        (Item, "activate", Update_All'Access, Kernel_Handle (Kernel));
       Append (Menu, Item);
 
       Gtk_New_With_Mnemonic (Item, -"_Query status for all projects");
       Kernel_Callback.Connect
-        (Item, "activate",
-         Kernel_Callback.To_Marshaller (Query_Status_For_Project'Access),
+        (Item, "activate", Query_Status_For_Project'Access,
          Kernel_Handle (Kernel));
       Append (Menu, Item);
 
@@ -344,6 +363,7 @@ package body VCS_Module is
 
       VCS_Action_Context : constant Action_Filter :=
         Action_Filter (Create);
+      Filter : Action_Filter;
    begin
       VCS_Module_ID := new VCS_Module_ID_Record;
       Register_Module
@@ -356,6 +376,10 @@ package body VCS_Module is
 
       Glide_Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
+
+      Filter := new Has_VCS_Filter;
+      Register_Filter (Kernel, Filter, "VCS");
+
 
       Log_Utils.Initialize (Kernel);
 

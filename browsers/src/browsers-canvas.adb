@@ -304,9 +304,7 @@ package body Browsers.Canvas is
       Gtkada.Canvas.Initialize (Canvas);
       Browser.Canvas := Interactive_Canvas (Canvas);
 
-      Widget_Callback.Connect
-        (Browser.Canvas, "zoomed",
-         Widget_Callback.To_Marshaller (On_Zoom'Access));
+      Widget_Callback.Connect (Browser.Canvas, "zoomed", On_Zoom'Access);
 
       Add (Scrolled, Browser.Canvas);
       Add_Events (Browser.Canvas, Key_Press_Mask);
@@ -329,8 +327,7 @@ package body Browsers.Canvas is
         (Browser, Stock_Close, Icon_Size_Menu);
 
       Widget_Callback.Object_Connect
-        (Browser, "destroy",
-         Widget_Callback.To_Marshaller (Destroyed'Access), Browser);
+        (Browser, "destroy", Destroyed'Access, Browser);
 
       Widget_Callback.Object_Connect
         (Browser.Canvas, "realize",
@@ -491,16 +488,14 @@ package body Browsers.Canvas is
          Add (Button, Image);
          Pack_End (Browser.Toolbar, Button, Expand => False);
          Widget_Callback.Object_Connect
-           (Button, "clicked",
-            Widget_Callback.To_Marshaller (Zoom_Out'Access), Browser);
+           (Button, "clicked", Zoom_Out'Access, Browser);
 
          Gtk_New (Button);
          Gtk_New (Image, Stock_Zoom_In, Icon_Size_Small_Toolbar);
          Add (Button, Image);
          Pack_End (Browser.Toolbar, Button, Expand => False);
          Widget_Callback.Object_Connect
-           (Button, "clicked",
-            Widget_Callback.To_Marshaller (Zoom_In'Access), Browser);
+           (Button, "clicked", Zoom_In'Access, Browser);
       end if;
    end Setup_Default_Toolbar;
 
@@ -645,15 +640,13 @@ package body Browsers.Canvas is
          end if;
          Append (Menu, Mitem);
          Contextual_Cb.Connect
-           (Mitem, "activate",
-            Contextual_Cb.To_Marshaller (Toggle_Links'Access),
+           (Mitem, "activate", Toggle_Links'Access,
             (Browser => B, Item => Item, Zoom => 100));
 
          Gtk_New (Mitem, Label => -"Remove all other items");
          Append (Menu, Mitem);
          Contextual_Cb.Connect
-           (Mitem, "activate",
-            Contextual_Cb.To_Marshaller (Set_Root'Access),
+           (Mitem, "activate", Set_Root'Access,
             (Browser => B, Item => Item, Zoom => 100));
 
          Xsave := Get_X (Event);
@@ -672,8 +665,7 @@ package body Browsers.Canvas is
          Gtk_New (Mitem, Label => -"Refresh Layout");
          Append (Menu, Mitem);
          Widget_Callback.Object_Connect
-           (Mitem, "activate",
-            Widget_Callback.To_Marshaller (On_Refresh'Access), B);
+           (Mitem, "activate", On_Refresh'Access, B);
 
          if Get_Orthogonal_Links (Get_Canvas (B)) then
             Gtk_New (Mitem, Label => -"Straight links");
@@ -683,20 +675,17 @@ package body Browsers.Canvas is
 
          Append (Menu, Mitem);
          Widget_Callback.Object_Connect
-           (Mitem, "activate",
-            Widget_Callback.To_Marshaller (Toggle_Orthogonal'Access), B);
+           (Mitem, "activate", Toggle_Orthogonal'Access, B);
 
          Gtk_New (Mitem, Label => -"Export...");
          Append (Menu, Mitem);
          Widget_Callback.Object_Connect
-           (Mitem, "activate",
-            Widget_Callback.To_Marshaller (On_Export'Access), B);
+           (Mitem, "activate", On_Export'Access, B);
 
          Gtk_New (Mitem, Label => -"Zoom in");
          Append (Menu, Mitem);
          Widget_Callback.Object_Connect
-           (Mitem, "activate",
-            Widget_Callback.To_Marshaller (Zoom_In'Access), B);
+           (Mitem, "activate", Zoom_In'Access, B);
          Add_Accelerator
            (Mitem, "activate",
             Get_Default_Accelerators (Kernel), GDK_equal, 0, Accel_Visible);
@@ -704,8 +693,7 @@ package body Browsers.Canvas is
          Gtk_New (Mitem, Label => -"Zoom out");
          Append (Menu, Mitem);
          Widget_Callback.Object_Connect
-           (Mitem, "activate",
-            Widget_Callback.To_Marshaller (Zoom_Out'Access), B);
+           (Mitem, "activate", Zoom_Out'Access, B);
          Add_Accelerator
            (Mitem, "activate",
             Get_Default_Accelerators (Kernel), GDK_minus, 0, Accel_Visible);
@@ -716,8 +704,7 @@ package body Browsers.Canvas is
             Gtk_New (Mitem, Label => Guint'Image (Zoom_Levels (J)) & '%');
             Append (Zooms_Menu, Mitem);
             Contextual_Cb.Connect
-              (Mitem, "activate",
-               Contextual_Cb.To_Marshaller (Zoom_Level'Access),
+              (Mitem, "activate", Zoom_Level'Access,
                (Browser => B,
                 Item    => null,
                 Zoom    => Zoom_Levels (J)));

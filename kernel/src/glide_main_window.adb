@@ -510,9 +510,7 @@ package body Glide_Main_Window is
       Set_Shadow_Type (Main_Window.Animation_Frame, Shadow_In);
       Pack_End (Box1, Main_Window.Animation_Frame, False, False);
 
-      Widget_Callback.Connect
-        (Main_Window, "destroy",
-         Widget_Callback.To_Marshaller (On_Destroy'Access));
+      Widget_Callback.Connect (Main_Window, "destroy", On_Destroy'Access);
 
       Add_Hook (Main_Window.Kernel, Preferences_Changed_Hook,
                 Preferences_Changed'Access);

@@ -798,9 +798,7 @@ package body GVD_Module is
          Tooltip_Text => -"Start/Continue the debugged program",
          Icon         => Gtk_Widget (Image));
       Widget_Callback.Object_Connect
-        (Module.Cont_Button, "clicked",
-         Widget_Callback.To_Marshaller (On_Start_Continue'Access),
-         Window);
+        (Module.Cont_Button, "clicked", On_Start_Continue'Access, Window);
 
       Gtk_New (Image, Gdk_New_From_Xpm_Data (step_xpm));
       Module.Step_Button := Append_Element
@@ -810,8 +808,7 @@ package body GVD_Module is
          Tooltip_Text => -"Step",
          Icon         => Gtk_Widget (Image));
       Widget_Callback.Object_Connect
-        (Module.Step_Button, "clicked",
-         Widget_Callback.To_Marshaller (On_Step'Access), Window);
+        (Module.Step_Button, "clicked", On_Step'Access, Window);
 
       Gtk_New (Image, Gdk_New_From_Xpm_Data (next_xpm));
       Module.Next_Button := Append_Element
@@ -821,8 +818,7 @@ package body GVD_Module is
          Tooltip_Text => -"Next",
          Icon         => Gtk_Widget (Image));
       Widget_Callback.Object_Connect
-        (Module.Next_Button, "clicked",
-         Widget_Callback.To_Marshaller (On_Next'Access), Window);
+        (Module.Next_Button, "clicked", On_Next'Access, Window);
 
       Gtk_New (Image, Gdk_New_From_Xpm_Data (finish_xpm));
       Module.Finish_Button := Append_Element
@@ -832,8 +828,7 @@ package body GVD_Module is
          Tooltip_Text => -"Execute until selected stack frame returns",
          Icon         => Gtk_Widget (Image));
       Widget_Callback.Object_Connect
-        (Module.Finish_Button, "clicked",
-         Widget_Callback.To_Marshaller (On_Finish'Access), Window);
+        (Module.Finish_Button, "clicked", On_Finish'Access, Window);
 
       Gtk_New (Image, Gdk_New_From_Xpm_Data (up_xpm));
       Module.Up_Button := Append_Element
@@ -844,8 +839,7 @@ package body GVD_Module is
          -"Select and print stack frame that called this one",
          Icon         => Gtk_Widget (Image));
       Widget_Callback.Object_Connect
-        (Module.Up_Button, "clicked",
-         Widget_Callback.To_Marshaller (On_Up'Access), Window);
+        (Module.Up_Button, "clicked", On_Up'Access, Window);
 
       Gtk_New (Image, Gdk_New_From_Xpm_Data (down_xpm));
       Module.Down_Button := Append_Element
@@ -855,8 +849,7 @@ package body GVD_Module is
          Tooltip_Text => -"Select and print stack frame called by this one",
          Icon         => Gtk_Widget (Image));
       Widget_Callback.Object_Connect
-        (Module.Down_Button, "clicked",
-         Widget_Callback.To_Marshaller (On_Down'Access), Window);
+        (Module.Down_Button, "clicked", On_Down'Access, Window);
    end Add_Debug_Buttons;
 
    --------------------------
@@ -1654,9 +1647,7 @@ package body GVD_Module is
       First_Debugger := Top.Current_Debugger = null;
       Gtk_New (Page, Top);
       Object_Callback.Connect
-        (Page,
-         "debugger_closed",
-         Object_Callback.To_Marshaller (On_Debug_Terminate_Single'Access));
+        (Page, "debugger_closed", On_Debug_Terminate_Single'Access);
 
       Program_Args := new String'("");
 
@@ -1766,9 +1757,7 @@ package body GVD_Module is
       --  Connect only once the debugger has started, to avoid recomputing the
       --  side information twice.
       Widget_Callback.Object_Connect
-        (Page, "executable_changed",
-         Widget_Callback.To_Marshaller (On_Executable_Changed'Access),
-         Top);
+        (Page, "executable_changed", On_Executable_Changed'Access, Top);
 
       Id.Initialized := True;
 
@@ -2228,7 +2217,7 @@ package body GVD_Module is
                   Append (Menu, Mitem);
                   File_Project_Cb.Object_Connect
                     (Mitem, "activate",
-                     File_Project_Cb.To_Marshaller (On_Debug_Init'Access),
+                     On_Debug_Init'Access,
                      Slot_Object => Kernel,
                      User_Data => File_Project_Record'
                        (Project => Current (Iter),
@@ -2249,8 +2238,7 @@ package body GVD_Module is
       Gtk_New (Mitem, -"<no main file>");
       Append (Menu, Mitem);
       File_Project_Cb.Object_Connect
-        (Mitem, "activate",
-         File_Project_Cb.To_Marshaller (On_Debug_Init'Access),
+        (Mitem, "activate", On_Debug_Init'Access,
          Slot_Object => Kernel,
          User_Data => File_Project_Record'
            (Project => Get_Project (Kernel),
@@ -2485,8 +2473,7 @@ package body GVD_Module is
       Mitem := Find_Menu_Item (Kernel, Data_Sub & (-"Protection Domains"));
       Set_Sensitive (Mitem, False);
       Kernel_Callback.Connect
-        (Mitem, "activate",
-         Kernel_Callback.To_Marshaller (On_PD'Access),
+        (Mitem, "activate", On_PD'Access,
          User_Data => Kernel_Handle (Kernel));
       Register_Menu (Kernel, Data_Sub, -"A_ssembly", "", On_Assembly'Access);
       Gtk_New (Mitem);

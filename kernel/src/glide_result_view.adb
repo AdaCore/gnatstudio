@@ -1231,9 +1231,7 @@ package body Glide_Result_View is
       Set_Active (Check, Explorer.Sort_By_Category);
       Append (Menu, Check);
       Widget_Callback.Object_Connect
-         (Check, "activate",
-          Widget_Callback.To_Marshaller (Toggle_Sort'Access),
-          Explorer);
+         (Check, "activate", Toggle_Sort'Access, Explorer);
 
       Gtk_New (Mitem);
       Append (Menu, Mitem);
@@ -1248,30 +1246,21 @@ package body Glide_Result_View is
       if Get_Depth (Path) = 1 then
          Gtk_New (Mitem, -"Remove category");
          Gtkada.Handlers.Widget_Callback.Object_Connect
-           (Mitem, "activate",
-            Gtkada.Handlers.Widget_Callback.To_Marshaller
-              (Remove_Category'Access),
-            Explorer,
+           (Mitem, "activate", Remove_Category'Access, Explorer,
             After => False);
          Append (Menu, Mitem);
 
       elsif Get_Depth (Path) = 2 then
          Gtk_New (Mitem, -"Remove File");
          Gtkada.Handlers.Widget_Callback.Object_Connect
-           (Mitem, "activate",
-            Gtkada.Handlers.Widget_Callback.To_Marshaller
-              (Remove_Category'Access),
-            Explorer,
+           (Mitem, "activate", Remove_Category'Access, Explorer,
             After => False);
          Append (Menu, Mitem);
 
       elsif Get_Depth (Path) = 3 then
          Gtk_New (Mitem, -"Jump to location");
          Gtkada.Handlers.Widget_Callback.Object_Connect
-           (Mitem, "activate",
-            Gtkada.Handlers.Widget_Callback.To_Marshaller
-              (Goto_Location'Access),
-            Explorer,
+           (Mitem, "activate", Goto_Location'Access, Explorer,
             After => False);
 
          Append (Menu, Mitem);
@@ -1365,8 +1354,7 @@ package body Glide_Result_View is
 
       Add (View, Scrolled);
 
-      Widget_Callback.Connect
-        (View, "destroy", Widget_Callback.To_Marshaller (On_Destroy'Access));
+      Widget_Callback.Connect (View, "destroy", On_Destroy'Access);
 
       Gtkada.Handlers.Return_Callback.Object_Connect
         (View.Tree,

@@ -777,9 +777,7 @@ package body Navigation_Module is
         Gtk_Widget (Button);
 
       Kernel_Callback.Connect
-        (Button, "clicked",
-         Kernel_Callback.To_Marshaller (On_Back'Access),
-         Kernel_Handle (Kernel));
+        (Button, "clicked", On_Back'Access, Kernel_Handle (Kernel));
 
       Button := Insert_Stock
         (Toolbar, Stock_Go_Forward, -"Goto Next Location");
@@ -787,9 +785,7 @@ package body Navigation_Module is
         Gtk_Widget (Button);
 
       Kernel_Callback.Connect
-        (Button, "clicked",
-         Kernel_Callback.To_Marshaller (On_Forward'Access),
-         Kernel_Handle (Kernel));
+        (Button, "clicked", On_Forward'Access, Kernel_Handle (Kernel));
 
       Refresh_Location_Buttons (Kernel);
    end Register_Module;

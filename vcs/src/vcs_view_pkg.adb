@@ -1180,16 +1180,12 @@ package body VCS_View_Pkg is
       Gtk_New (Mitem, -"Show all status");
       Append (Submenu, Mitem);
       Widget_Callback.Object_Connect
-         (Mitem, "activate",
-          Widget_Callback.To_Marshaller (Show_All_Status'Access),
-          Explorer);
+         (Mitem, "activate", Show_All_Status'Access, Explorer);
 
       Gtk_New (Mitem, -"Hide all status");
       Append (Submenu, Mitem);
       Widget_Callback.Object_Connect
-         (Mitem, "activate",
-          Widget_Callback.To_Marshaller (Hide_All_Status'Access),
-          Explorer);
+         (Mitem, "activate", Hide_All_Status'Access, Explorer);
 
       Gtk_New (Mitem);
       Append (Submenu, Mitem);
@@ -1199,10 +1195,7 @@ package body VCS_View_Pkg is
          Set_Active (Check, Page.Status (J).Display);
          Append (Submenu, Check);
          Page_Status_Callback.Object_Connect
-           (Check, "activate",
-            Page_Status_Callback.To_Marshaller (Toggle_Show_Status'Access),
-            Explorer,
-            J);
+           (Check, "activate", Toggle_Show_Status'Access, Explorer, J);
          Associate
            (Get_History (Kernel).all,
             To_History_Key (Page.Status (J).Status.Label.all),
@@ -1347,17 +1340,12 @@ package body VCS_View_Pkg is
       Pack_Start (Vbox1, VCS_View.Notebook);
 
       Gtkada.Handlers.Return_Callback.Object_Connect
-        (VCS_View,
-         "delete_event",
+        (VCS_View, "delete_event",
          Gtkada.Handlers.Return_Callback.To_Marshaller (On_Delete'Access),
-         VCS_View,
-         After => False);
+         VCS_View, After => False);
 
       Gtkada.Handlers.Widget_Callback.Object_Connect
-        (VCS_View,
-         "destroy",
-         Gtkada.Handlers.Widget_Callback.To_Marshaller (On_Destroy'Access),
-         VCS_View);
+        (VCS_View, "destroy", On_Destroy'Access, VCS_View);
 
       declare
          VCS_List : constant GNAT.OS_Lib.Argument_List :=
@@ -1376,9 +1364,7 @@ package body VCS_View_Pkg is
       --  Can't do this through the Focus_Widget parameter to Gtkada.MDI.Put,
       --  since the focus child is dynamic.
       Widget_Callback.Connect
-        (VCS_View, "grab_focus",
-         Widget_Callback.To_Marshaller (On_Selected'Access),
-         After => True);
+        (VCS_View, "grab_focus", On_Selected'Access, After => True);
    end Initialize;
 
    -----------------------------

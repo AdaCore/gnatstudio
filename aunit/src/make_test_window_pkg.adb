@@ -124,7 +124,7 @@ package body Make_Test_Window_Pkg is
         (Hbox2, Make_Test_Window.Browse_Directory, False, False, 3);
       Button_Callback.Connect
         (Make_Test_Window.Browse_Directory, "clicked",
-         Button_Callback.To_Marshaller (On_Browse_Directory_Clicked'Access));
+         On_Browse_Directory_Clicked'Access);
 
       Gtk_New (Make_Test_Window.Name_Entry);
       Set_Editable (Make_Test_Window.Name_Entry, True);
@@ -134,7 +134,7 @@ package body Make_Test_Window_Pkg is
       Pack_Start (Vbox2, Make_Test_Window.Name_Entry, False, False, 3);
       Entry_Callback.Connect
         (Make_Test_Window.Name_Entry, "activate",
-         Entry_Callback.To_Marshaller (On_Name_Entry_Activate'Access));
+         On_Name_Entry_Activate'Access);
 
       Gtk_New (Make_Test_Window.Description_Entry);
       Set_Editable (Make_Test_Window.Description_Entry, True);
@@ -144,7 +144,7 @@ package body Make_Test_Window_Pkg is
       Pack_Start (Vbox2, Make_Test_Window.Description_Entry, False, False, 3);
       Entry_Callback.Connect
         (Make_Test_Window.Description_Entry, "activate",
-         Entry_Callback.To_Marshaller (On_Description_Entry_Activate'Access));
+         On_Description_Entry_Activate'Access);
 
       Gtk_New (Make_Test_Window.Override_Tear_Down, -"Override Tear_Down");
       Set_Active (Make_Test_Window.Override_Tear_Down, False);
@@ -165,16 +165,14 @@ package body Make_Test_Window_Pkg is
       Set_Relief (Make_Test_Window.Ok, Relief_Normal);
       Set_Flags (Make_Test_Window.Ok, Can_Default);
       Button_Callback.Connect
-        (Make_Test_Window.Ok, "clicked",
-         Button_Callback.To_Marshaller (On_Ok_Clicked'Access));
+        (Make_Test_Window.Ok, "clicked", On_Ok_Clicked'Access);
       Add (Hbuttonbox1, Make_Test_Window.Ok);
 
       Gtk_New_From_Stock (Make_Test_Window.Cancel, Stock_Cancel);
       Set_Relief (Make_Test_Window.Cancel, Relief_Normal);
       Set_Flags (Make_Test_Window.Cancel, Can_Default);
       Button_Callback.Connect
-        (Make_Test_Window.Cancel, "clicked",
-         Button_Callback.To_Marshaller (On_Cancel_Clicked'Access));
+        (Make_Test_Window.Cancel, "clicked", On_Cancel_Clicked'Access);
       Add (Hbuttonbox1, Make_Test_Window.Cancel);
    end Initialize;
 

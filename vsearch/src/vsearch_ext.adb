@@ -357,8 +357,7 @@ package body Vsearch_Ext is
                      Gtk_Response_Cancel));
 
       Widget_Callback.Object_Connect
-        (Close_Button, "clicked",
-         Widget_Callback.To_Marshaller (Close_Vsearch'Access), Vsearch);
+        (Close_Button, "clicked", Close_Vsearch'Access, Vsearch);
 
    exception
       when E : others =>
@@ -1128,12 +1127,10 @@ package body Vsearch_Ext is
 
       Widget_Callback.Object_Connect
         (Vsearch.Context_Entry, "changed",
-         Widget_Callback.To_Marshaller (On_Context_Entry_Changed'Access),
-         Vsearch);
+         On_Context_Entry_Changed'Access, Vsearch);
 
       Widget_Callback.Object_Connect
-        (Vsearch, "map",
-         Widget_Callback.To_Marshaller (On_Options_Toggled'Access), Vsearch);
+        (Vsearch, "map", On_Options_Toggled'Access, Vsearch);
 
       Gtk_New_From_Stock (Vsearch.Search_Next_Button, Stock_Find);
       Set_First_Next_Mode (Vsearch, Find_Next => False);
@@ -1143,8 +1140,7 @@ package body Vsearch_Ext is
         (Get_Tooltips (Handle), Vsearch.Search_Next_Button,
          -"Search next/all occurrence(s)");
       Widget_Callback.Object_Connect
-        (Vsearch.Search_Next_Button, "clicked",
-         Widget_Callback.To_Marshaller (On_Search'Access), Vsearch);
+        (Vsearch.Search_Next_Button, "clicked", On_Search'Access, Vsearch);
 
       Gtk_New (Vsearch.Search_Replace_Button, -"Replace");
       Pack_Start
@@ -1154,7 +1150,7 @@ package body Vsearch_Ext is
          -"Replace next/all occurrence(s)");
       Widget_Callback.Object_Connect
         (Vsearch.Search_Replace_Button, "clicked",
-         Widget_Callback.To_Marshaller (On_Search_Replace'Access), Vsearch);
+         On_Search_Replace'Access, Vsearch);
 
       Gtk_New_With_Mnemonic (Vsearch.Search_Previous_Button, -"_Prev.");
       Pack_Start
@@ -1165,7 +1161,7 @@ package body Vsearch_Ext is
          -"Search previous occurrence");
       Widget_Callback.Object_Connect
         (Vsearch.Search_Previous_Button, "clicked",
-         Widget_Callback.To_Marshaller (On_Search_Previous'Access), Vsearch);
+         On_Search_Previous'Access, Vsearch);
 
       Gtk_New (Vsearch.Stop_Button, -"Stop");
       Set_Sensitive (Vsearch.Stop_Button, False);
@@ -1174,7 +1170,7 @@ package body Vsearch_Ext is
         (Get_Tooltips (Handle), Vsearch.Stop_Button, -"Stop current search");
       Widget_Callback.Object_Connect
         (Vsearch.Stop_Button, "clicked",
-         Widget_Callback.To_Marshaller (On_Stop_Search'Access), Vsearch);
+         On_Stop_Search'Access, Vsearch);
 
       Gtk_New (Vsearch.Options_Toggle, -"Options>>");
       Set_Active (Vsearch.Options_Toggle, True);
@@ -1184,7 +1180,7 @@ package body Vsearch_Ext is
                -"Display extended options");
       Widget_Callback.Object_Connect
         (Vsearch.Options_Toggle, "toggled",
-         Widget_Callback.To_Marshaller (On_Options_Toggled'Access), Vsearch);
+         On_Options_Toggled'Access, Vsearch);
 
       Gtk_New (Bbox);
       Set_Layout (Bbox, Buttonbox_Spread);
@@ -1198,45 +1194,34 @@ package body Vsearch_Ext is
         (Vsearch.Replace_Entry, "key_press_event",
          Return_Callback.To_Marshaller (Key_Press_Replace'Access), Vsearch);
       Kernel_Callback.Connect
-        (Vsearch.Pattern_Entry, "changed",
-         Kernel_Callback.To_Marshaller (Reset_Search'Access), Handle);
+        (Vsearch.Pattern_Entry, "changed", Reset_Search'Access, Handle);
       Kernel_Callback.Connect
-        (Vsearch.Replace_Entry, "changed",
-         Kernel_Callback.To_Marshaller (Reset_Search'Access), Handle);
+        (Vsearch.Replace_Entry, "changed", Reset_Search'Access, Handle);
       Kernel_Callback.Connect
-        (Vsearch.Context_Entry, "changed",
-         Kernel_Callback.To_Marshaller (Reset_Search'Access), Handle);
+        (Vsearch.Context_Entry, "changed", Reset_Search'Access, Handle);
       Widget_Callback.Object_Connect
-        (Vsearch.Pattern_Entry, "changed",
-         Widget_Callback.To_Marshaller (Reset_All_Occurrences'Access),
+        (Vsearch.Pattern_Entry, "changed", Reset_All_Occurrences'Access,
          Vsearch);
       Widget_Callback.Object_Connect
-        (Vsearch.Replace_Entry, "changed",
-         Widget_Callback.To_Marshaller (Reset_All_Occurrences'Access),
+        (Vsearch.Replace_Entry, "changed", Reset_All_Occurrences'Access,
          Vsearch);
       Widget_Callback.Object_Connect
-        (Vsearch.Context_Entry, "changed",
-         Widget_Callback.To_Marshaller (Reset_All_Occurrences'Access),
+        (Vsearch.Context_Entry, "changed", Reset_All_Occurrences'Access,
          Vsearch);
       Kernel_Callback.Connect
-        (Vsearch.Search_All_Check, "toggled",
-         Kernel_Callback.To_Marshaller (Reset_Search'Access), Handle);
+        (Vsearch.Search_All_Check, "toggled", Reset_Search'Access, Handle);
       Kernel_Callback.Connect
-        (Vsearch.Case_Check, "toggled",
-         Kernel_Callback.To_Marshaller (Reset_Search'Access), Handle);
+        (Vsearch.Case_Check, "toggled", Reset_Search'Access, Handle);
       Kernel_Callback.Connect
-        (Vsearch.Whole_Word_Check, "toggled",
-         Kernel_Callback.To_Marshaller (Reset_Search'Access), Handle);
+        (Vsearch.Whole_Word_Check, "toggled", Reset_Search'Access, Handle);
       Kernel_Callback.Connect
-        (Vsearch.Regexp_Check, "toggled",
-         Kernel_Callback.To_Marshaller (Reset_Search'Access), Handle);
+        (Vsearch.Regexp_Check, "toggled", Reset_Search'Access, Handle);
 
       --  Include all the patterns that have been predefined so far, and make
       --  sure that new patterns will be automatically added.
       Widget_Callback.Object_Connect
         (Get_List (Vsearch.Pattern_Combo), "selection_changed",
-         Widget_Callback.To_Marshaller (Selection_Changed'Access),
-         Vsearch);
+         Selection_Changed'Access, Vsearch);
 
       --  Fill the replace combo first, so that the selection remains in
       --  the pattern combo
@@ -1329,8 +1314,7 @@ package body Vsearch_Ext is
             Ref (Vsearch_Module_Id.Search);
 
             Return_Callback.Connect
-              (Vsearch_Module_Id.Search, "delete_event",
-               Return_Callback.To_Marshaller (On_Delete'Access));
+              (Vsearch_Module_Id.Search, "delete_event", On_Delete'Access);
          end if;
 
          --  Automatically fill the pattern text entry with the selection, if
@@ -1358,9 +1342,7 @@ package body Vsearch_Ext is
          Set_Title (Child, -"Search");
          Set_Dock_Side (Child, Left);
 
-         Widget_Callback.Connect
-           (Child, "float_child",
-            Widget_Callback.To_Marshaller (Float_Vsearch'Access));
+         Widget_Callback.Connect (Child, "float_child", Float_Vsearch'Access);
 
          Float_Child (Child, Float_Widget);
          Set_Focus_Child (Child);

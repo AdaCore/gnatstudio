@@ -135,7 +135,7 @@ package body Make_Harness_Window_Pkg is
         (Hbox7, Make_Harness_Window.Browse_Directory, False, False, 3);
       Button_Callback.Connect
         (Make_Harness_Window.Browse_Directory, "clicked",
-         Button_Callback.To_Marshaller (On_Browse_Directory_Clicked'Access));
+         On_Browse_Directory_Clicked'Access);
 
       Gtk_New_Hbox (Hbox1, False, 0);
       Pack_Start (Vbox4, Hbox1, False, False, 3);
@@ -148,7 +148,7 @@ package body Make_Harness_Window_Pkg is
       Pack_Start (Hbox1, Make_Harness_Window.Procedure_Entry, True, True, 3);
       Entry_Callback.Connect
         (Make_Harness_Window.Procedure_Entry, "activate",
-         Entry_Callback.To_Marshaller (On_Procedure_Entry_Activate'Access));
+         On_Procedure_Entry_Activate'Access);
 
       Gtk_New_Hbox (Hbox3, False, 0);
       Pack_Start (Vbox4, Hbox3, True, True, 3);
@@ -161,7 +161,7 @@ package body Make_Harness_Window_Pkg is
       Pack_Start (Hbox3, Make_Harness_Window.File_Name_Entry, True, True, 3);
       Entry_Callback.Connect
         (Make_Harness_Window.File_Name_Entry, "activate",
-         Entry_Callback.To_Marshaller (On_Name_Entry_Activate'Access));
+         On_Name_Entry_Activate'Access);
 
       Gtk_New_Vbox (Vbox5, True, 0);
       Pack_Start (Hbox3, Vbox5, False, False, 3);
@@ -171,7 +171,7 @@ package body Make_Harness_Window_Pkg is
       Pack_Start (Vbox5, Make_Harness_Window.Browse, False, False, 3);
       Button_Callback.Connect
         (Make_Harness_Window.Browse, "clicked",
-         Button_Callback.To_Marshaller (On_Browse_Clicked'Access));
+         On_Browse_Clicked'Access);
 
       Gtk_New (Hbuttonbox1);
       Set_Spacing (Hbuttonbox1, 30);
@@ -185,7 +185,7 @@ package body Make_Harness_Window_Pkg is
       Set_Flags (Make_Harness_Window.Ok, Can_Default);
       Button_Callback.Connect
         (Make_Harness_Window.Ok, "clicked",
-         Button_Callback.To_Marshaller (On_Ok_Clicked'Access));
+         On_Ok_Clicked'Access);
       Add (Hbuttonbox1, Make_Harness_Window.Ok);
 
       Gtk_New_From_Stock (Make_Harness_Window.Cancel, Stock_Cancel);
@@ -193,7 +193,7 @@ package body Make_Harness_Window_Pkg is
       Set_Flags (Make_Harness_Window.Cancel, Can_Default);
       Button_Callback.Connect
         (Make_Harness_Window.Cancel, "clicked",
-         Button_Callback.To_Marshaller (On_Cancel_Clicked'Access));
+         On_Cancel_Clicked'Access);
       Add (Hbuttonbox1, Make_Harness_Window.Cancel);
 
       Gtk_New (Make_Harness_Window.Statusbar);

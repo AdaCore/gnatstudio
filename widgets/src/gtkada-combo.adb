@@ -70,8 +70,7 @@ package body Gtkada.Combo is
       Set_Editable (Get_Entry (Combo), False);
 
       Widget_Callback.Object_Connect
-        (Get_Popup_Window (Combo), "hide",
-         Widget_Callback.To_Marshaller (Selected'Access), Combo);
+        (Get_Popup_Window (Combo), "hide", Selected'Access, Combo);
    end Gtk_New;
 
 end Gtkada.Combo;

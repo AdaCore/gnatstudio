@@ -1659,21 +1659,16 @@ package body KeyManager_Module is
       Gtk_New_From_Stock (Button, Stock_Remove);
       Pack_Start (Bbox, Button);
       Widget_Callback.Object_Connect
-        (Button, "clicked",
-         Widget_Callback.To_Marshaller (On_Remove_Key'Access),
-         Editor);
+        (Button, "clicked", On_Remove_Key'Access, Editor);
 
       Gtk_New (Button, -"Grab");
       Pack_Start (Bbox, Button);
       Widget_Callback.Object_Connect
-        (Button, "clicked",
-         Widget_Callback.To_Marshaller (On_Grab_Key'Access),
-         Editor);
+        (Button, "clicked", On_Grab_Key'Access, Editor);
 
       Widget_Callback.Object_Connect
         (Get_Selection (Editor.View), "changed",
-         Widget_Callback.To_Marshaller (Add_Selection_Changed'Access),
-         Editor);
+         Add_Selection_Changed'Access, Editor);
 
       Gtk_New (Render);
 

@@ -1334,13 +1334,10 @@ package body Default_Preferences is
          User_Data => N);
 
       Return_Param_Handlers.Connect
-        (Ent, "focus_out_event",
-         Return_Param_Handlers.To_Marshaller (Font_Entry_Changed'Access),
-         User_Data   => N);
+        (Ent, "focus_out_event", Font_Entry_Changed'Access, User_Data => N);
       Param_Handlers.Object_Connect
         (Manager.Pref_Editor, "preferences_changed",
-         Param_Handlers.To_Marshaller (Update_Font_Entry'Access),
-         Ent, User_Data => N);
+         Update_Font_Entry'Access, Ent, User_Data => N);
 
       Set_Style (Ent, Copy (Get_Style (Ent)));
       Set_Font_Description (Get_Style (Ent), Desc);
@@ -1379,13 +1376,10 @@ package body Default_Preferences is
             Set_Editable (Spin, True);
 
             Param_Handlers.Connect
-              (Adj, "value_changed",
-               Param_Handlers.To_Marshaller (Gint_Changed'Access),
-               User_Data   => N);
+              (Adj, "value_changed", Gint_Changed'Access, User_Data   => N);
             Param_Handlers.Object_Connect
               (Manager.Pref_Editor, "preferences_changed",
-               Param_Handlers.To_Marshaller (Update_Gint'Access),
-               Adj, User_Data => N);
+               Update_Gint'Access, Adj, User_Data => N);
 
             return Gtk_Widget (Spin);
          end;
@@ -1397,19 +1391,15 @@ package body Default_Preferences is
          begin
             Gtk_New (Toggle, -"Enabled");
             Widget_Callback.Connect
-              (Toggle, "toggled",
-               Widget_Callback.To_Marshaller
-               (Toggled_Boolean'Access));
+              (Toggle, "toggled", Toggled_Boolean'Access);
             Set_Active (Toggle, True); --  Forces a toggle
             Set_Active (Toggle, Get_Pref (Manager, Prop));
 
             Param_Handlers.Connect
-              (Toggle, "toggled",
-               Param_Handlers.To_Marshaller (Boolean_Changed'Access),
-               User_Data   => N);
+              (Toggle, "toggled", Boolean_Changed'Access, User_Data   => N);
             Param_Handlers.Object_Connect
               (Manager.Pref_Editor, "preferences_changed",
-               Param_Handlers.To_Marshaller (Update_Boolean'Access),
+               Update_Boolean'Access,
                Toggle, User_Data => N);
 
             return Gtk_Widget (Toggle);
@@ -1437,17 +1427,14 @@ package body Default_Preferences is
             Append_Text (Ent, Image (Key, Modif));
 
             Widget_Callback.Object_Connect
-              (Button, "clicked",
-               Widget_Callback.To_Marshaller (Key_Grab'Access),
-               Slot_Object => Ent);
+              (Button, "clicked", Key_Grab'Access, Slot_Object => Ent);
             Param_Handlers.Connect
-              (Ent, "insert_text",
-               Param_Handlers.To_Marshaller (Entry_Changed'Access),
+              (Ent, "insert_text", Entry_Changed'Access,
                User_Data   => N,
                After       => True);
             Param_Handlers.Object_Connect
               (Manager.Pref_Editor, "preferences_changed",
-               Param_Handlers.To_Marshaller (Update_Entry'Access),
+               Update_Entry'Access,
                Ent, User_Data => N);
 
             return Gtk_Widget (Box);
@@ -1463,17 +1450,17 @@ package body Default_Preferences is
 
             Param_Handlers.Connect
               (Ent, "insert_text",
-               Param_Handlers.To_Marshaller (Entry_Changed'Access),
+               Entry_Changed'Access,
                User_Data   => N,
                After       => True);
             Param_Handlers.Connect
               (Ent, "delete_text",
-               Param_Handlers.To_Marshaller (Entry_Changed'Access),
+               Entry_Changed'Access,
                User_Data   => N,
                After       => True);
             Param_Handlers.Object_Connect
               (Manager.Pref_Editor, "preferences_changed",
-               Param_Handlers.To_Marshaller (Update_Entry'Access),
+               Update_Entry'Access,
                Ent, User_Data => N);
 
             return Gtk_Widget (Ent);
@@ -1504,11 +1491,11 @@ package body Default_Preferences is
             Set_Color (Combo, Get_Pref_Fg (Manager, Prop));
             Param_Handlers.Connect
               (Combo, "color_changed",
-               Param_Handlers.To_Marshaller (Fg_Color_Changed'Access),
+               Fg_Color_Changed'Access,
                User_Data   => N);
             Param_Handlers.Object_Connect
               (Manager.Pref_Editor, "preferences_changed",
-               Param_Handlers.To_Marshaller (Update_Fg'Access),
+               Update_Fg'Access,
                Combo, User_Data => N);
 
             Gtk_New (Event);
@@ -1519,11 +1506,11 @@ package body Default_Preferences is
             Set_Color (Combo, Get_Pref_Bg (Manager, Prop));
             Param_Handlers.Connect
               (Combo, "color_changed",
-               Param_Handlers.To_Marshaller (Bg_Color_Changed'Access),
+               Bg_Color_Changed'Access,
                User_Data   => N);
             Param_Handlers.Object_Connect
               (Manager.Pref_Editor, "preferences_changed",
-               Param_Handlers.To_Marshaller (Update_Bg'Access),
+               Update_Bg'Access,
                Combo, User_Data => N);
 
             return Gtk_Widget (Box);
@@ -1539,11 +1526,11 @@ package body Default_Preferences is
 
             Param_Handlers.Connect
               (Combo, "color_changed",
-               Param_Handlers.To_Marshaller (Color_Changed'Access),
+               Color_Changed'Access,
                User_Data   => N);
             Param_Handlers.Object_Connect
               (Manager.Pref_Editor, "preferences_changed",
-               Param_Handlers.To_Marshaller (Update_Color'Access),
+               Update_Color'Access,
                Combo, User_Data => N);
 
             return Gtk_Widget (Combo);
@@ -1591,12 +1578,12 @@ package body Default_Preferences is
 
             Param_Handlers.Object_Connect
               (Get_List (Combo), "select_child",
-               Param_Handlers.To_Marshaller (Enum_Changed'Access),
+               Enum_Changed'Access,
                Slot_Object => Combo,
                User_Data   => N);
             Param_Handlers.Object_Connect
               (Manager.Pref_Editor, "preferences_changed",
-               Param_Handlers.To_Marshaller (Update_Entry'Access),
+               Update_Entry'Access,
                Get_Entry (Combo), User_Data => N);
 
             return Gtk_Widget (Combo);
@@ -1804,7 +1791,7 @@ package body Default_Preferences is
 
       Widget_Callback.Object_Connect
         (Get_Selection (View), "changed",
-         Widget_Callback.To_Marshaller (Selection_Changed'Unrestricted_Access),
+         Selection_Changed'Unrestricted_Access,
          View);
 
       Add (Scrolled, View);

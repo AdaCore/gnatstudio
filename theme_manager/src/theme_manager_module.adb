@@ -534,7 +534,7 @@ package body Theme_Manager_Module is
 
       Widget_Callback.Object_Connect
         (Get_Selection (Pane.View), "changed",
-         Widget_Callback.To_Marshaller (Selection_Changed'Access), Pane);
+         Selection_Changed'Access, Pane);
       Widget_Callback.Object_Connect
         (Toggle_Renderer, "toggled",
          Selection_Toggled'Access, Pane);

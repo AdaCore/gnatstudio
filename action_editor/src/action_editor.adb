@@ -430,7 +430,7 @@ package body Action_Editor is
 
       Widget_Callback.Object_Connect
         (Get_Selection (Dialog.View), "changed",
-         Widget_Callback.To_Marshaller (On_Component_Changed'Access),
+         On_Component_Changed'Access,
          Slot_Object => Dialog);
 
       Gtk_New_Vbox (Dialog.Components, Homogeneous => False);
@@ -443,9 +443,7 @@ package body Action_Editor is
       Select_Iter (Get_Selection (Dialog.View), Get_Iter_First (Dialog.Model));
       Expand_All (Dialog.View);
 
-      Widget_Callback.Connect
-        (Dialog, "destroy",
-         Widget_Callback.To_Marshaller (On_Destroy'Access));
+      Widget_Callback.Connect (Dialog, "destroy", On_Destroy'Access);
 
       Set_Position (Pane, 200);
 

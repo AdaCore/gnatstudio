@@ -174,13 +174,11 @@ package body Make_Suite_Window_Pkg.Callbacks is
 
          Widget_Callback.Object_Connect
            (Get_Ok_Button (Suite_Window.Explorer),
-            "clicked",
-            Widget_Callback.To_Marshaller (On_Ok_Button_Clicked'Access),
+            "clicked", On_Ok_Button_Clicked'Access,
             Gtk_Widget (Suite_Window));
          Widget_Callback.Object_Connect
            (Get_Cancel_Button (Suite_Window.Explorer),
-            "clicked",
-            Widget_Callback.To_Marshaller (On_Cancel_Button_Clicked'Access),
+            "clicked", On_Cancel_Button_Clicked'Access,
             Gtk_Widget (Suite_Window));
       end if;
 

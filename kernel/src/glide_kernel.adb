@@ -618,9 +618,7 @@ package body Glide_Kernel is
          Pack_Start (Col, Toggle_Renderer, False);
          Add_Attribute (Col, Toggle_Renderer, "active", 0);
          Widget_Callback.Object_Connect
-           (Col, "clicked",
-            Widget_Callback.To_Marshaller (Select_All_Children'Access),
-            Slot_Object => View);
+           (Col, "clicked", Select_All_Children'Access, Slot_Object => View);
          Widget_Callback.Object_Connect
            (Toggle_Renderer, "toggled",
             Select_Child_When_Saving'Access,
@@ -1674,9 +1672,7 @@ package body Glide_Kernel is
                Add_Attribute (Col, Renderer, "text", 3);
 
                Widget_Callback.Object_Connect
-                 (View, "row_activated",
-                  Widget_Callback.To_Marshaller (Row_Activated'Access),
-                  Dialog);
+                 (View, "row_activated", Row_Activated'Access, Dialog);
 
                Button := Add_Button (Dialog, Stock_Ok, Gtk_Response_OK);
                Button := Add_Button

@@ -126,7 +126,7 @@ package body Make_Suite_Window_Pkg is
         (Hbox4, Make_Suite_Window.Browse_Directory, False, False, 3);
       Button_Callback.Connect
         (Make_Suite_Window.Browse_Directory, "clicked",
-         Button_Callback.To_Marshaller (On_Browse_Directory_Clicked'Access));
+         On_Browse_Directory_Clicked'Access);
 
       Gtk_New (Make_Suite_Window.Name_Entry);
       Set_Editable (Make_Suite_Window.Name_Entry, True);
@@ -182,7 +182,7 @@ package body Make_Suite_Window_Pkg is
       Set_Flags (Make_Suite_Window.Add, Can_Default);
       Button_Callback.Connect
         (Make_Suite_Window.Add, "clicked",
-         Button_Callback.To_Marshaller (On_Add_Clicked'Access));
+         On_Add_Clicked'Access);
       Add (Vbuttonbox1, Make_Suite_Window.Add);
 
       Gtk_New_From_Stock (Make_Suite_Window.Remove, Stock_Remove);
@@ -190,7 +190,7 @@ package body Make_Suite_Window_Pkg is
       Set_Flags (Make_Suite_Window.Remove, Can_Default);
       Button_Callback.Connect
         (Make_Suite_Window.Remove, "clicked",
-         Button_Callback.To_Marshaller (On_Remove_Clicked'Access));
+         On_Remove_Clicked'Access);
       Add (Vbuttonbox1, Make_Suite_Window.Remove);
 
       Gtk_New (Hbuttonbox1);
@@ -204,16 +204,14 @@ package body Make_Suite_Window_Pkg is
       Set_Relief (Make_Suite_Window.Ok, Relief_Normal);
       Set_Flags (Make_Suite_Window.Ok, Can_Default);
       Button_Callback.Connect
-        (Make_Suite_Window.Ok, "clicked",
-         Button_Callback.To_Marshaller (On_Ok_Clicked'Access));
+        (Make_Suite_Window.Ok, "clicked", On_Ok_Clicked'Access);
       Add (Hbuttonbox1, Make_Suite_Window.Ok);
 
       Gtk_New_From_Stock (Make_Suite_Window.Cancel, Stock_Cancel);
       Set_Relief (Make_Suite_Window.Cancel, Relief_Normal);
       Set_Flags (Make_Suite_Window.Cancel, Can_Default);
       Button_Callback.Connect
-        (Make_Suite_Window.Cancel, "clicked",
-         Button_Callback.To_Marshaller (On_Cancel_Clicked'Access));
+        (Make_Suite_Window.Cancel, "clicked", On_Cancel_Clicked'Access);
       Add (Hbuttonbox1, Make_Suite_Window.Cancel);
    end Initialize;
 

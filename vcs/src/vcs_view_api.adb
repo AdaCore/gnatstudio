@@ -488,23 +488,17 @@ package body VCS_View_API is
                   case Log_Action is
                      when Add =>
                         Context_Callback.Connect
-                          (Item, "activate",
-                           Context_Callback.To_Marshaller
-                             (On_Menu_Add'Access),
+                          (Item, "activate", On_Menu_Add'Access,
                            Selection_Context_Access (File_Name));
 
                      when Remove =>
                         Context_Callback.Connect
-                          (Item, "activate",
-                           Context_Callback.To_Marshaller
-                             (On_Menu_Remove'Access),
+                          (Item, "activate", On_Menu_Remove'Access,
                            Selection_Context_Access (File_Name));
 
                      when others =>
                         Context_Callback.Connect
-                          (Item, "activate",
-                           Context_Callback.To_Marshaller
-                             (On_Menu_Commit'Access),
+                          (Item, "activate", On_Menu_Commit'Access,
                            Selection_Context_Access (File_Name));
                   end case;
                end if;
@@ -539,19 +533,13 @@ package body VCS_View_API is
                Gtk_New (Item, Label => -"Add " & Actions (Annotate).all);
                Append (Menu, Item);
                Context_Callback.Connect
-                 (Item, "activate",
-                  Context_Callback.To_Marshaller
-                    (On_Menu_Annotate'Access),
-                  Context);
+                 (Item, "activate", On_Menu_Annotate'Access, Context);
                Set_Sensitive (Item, Section_Active);
 
                Gtk_New (Item, Label => -"Remove " & Actions (Annotate).all);
                Append (Menu, Item);
                Context_Callback.Connect
-                 (Item, "activate",
-                  Context_Callback.To_Marshaller
-                    (On_Menu_Remove_Annotate'Access),
-                  Context);
+                 (Item, "activate", On_Menu_Remove_Annotate'Access, Context);
 
                Set_Sensitive (Item, Section_Active);
             end if;
@@ -559,25 +547,19 @@ package body VCS_View_API is
             Gtk_New (Item, Label => -"Edit revision log");
             Append (Menu, Item);
             Context_Callback.Connect
-              (Item, "activate",
-               Context_Callback.To_Marshaller (On_Menu_Edit_Log'Access),
-               Context);
+              (Item, "activate", On_Menu_Edit_Log'Access, Context);
             Set_Sensitive (Item, Section_Active);
 
             Gtk_New (Item, Label => -"Edit global ChangeLog");
             Append (Menu, Item);
             Context_Callback.Connect
-              (Item, "activate",
-               Context_Callback.To_Marshaller (On_Menu_Edit_ChangeLog'Access),
-               Context);
+              (Item, "activate", On_Menu_Edit_ChangeLog'Access, Context);
             Set_Sensitive (Item, Section_Active);
 
             Gtk_New (Item, Label => -"Remove revision log");
             Append (Menu, Item);
             Context_Callback.Connect
-              (Item, "activate",
-               Context_Callback.To_Marshaller (On_Menu_Remove_Log'Access),
-               Context);
+              (Item, "activate", On_Menu_Remove_Log'Access, Context);
             Set_Sensitive (Item, Section_Active);
 
             Add_Separator;
@@ -619,9 +601,7 @@ package body VCS_View_API is
                Label => Actions (Status_Files).all & (-" for directory"));
             Append (Submenu, Item);
             Context_Callback.Connect
-              (Item, "activate",
-               Context_Callback.To_Marshaller
-                 (On_Menu_Get_Status_Dir'Access),
+              (Item, "activate", On_Menu_Get_Status_Dir'Access,
                Selection_Context_Access (File_Name));
             Set_Sensitive (Item, Section_Active);
 
@@ -633,9 +613,7 @@ package body VCS_View_API is
               (Item, Label => Actions (Update).all & (-" directory"));
             Append (Submenu, Item);
             Context_Callback.Connect
-              (Item, "activate",
-               Context_Callback.To_Marshaller
-                 (On_Menu_Update_Dir'Access),
+              (Item, "activate", On_Menu_Update_Dir'Access,
                Selection_Context_Access (File_Name));
             Set_Sensitive (Item, Section_Active);
 
@@ -648,9 +626,7 @@ package body VCS_View_API is
                & (-" for directory recursively"));
             Append (Submenu, Item);
             Context_Callback.Connect
-              (Item, "activate",
-               Context_Callback.To_Marshaller
-                 (On_Menu_Get_Status_Dir_Recursive'Access),
+              (Item, "activate", On_Menu_Get_Status_Dir_Recursive'Access,
                Selection_Context_Access (File_Name));
             Set_Sensitive (Item, Section_Active);
 
@@ -663,9 +639,7 @@ package body VCS_View_API is
                & (-" directory recursively"));
             Append (Submenu, Item);
             Context_Callback.Connect
-              (Item, "activate",
-               Context_Callback.To_Marshaller
-                 (On_Menu_Update_Dir_Recursive'Access),
+              (Item, "activate", On_Menu_Update_Dir_Recursive'Access,
                Selection_Context_Access (File_Name));
             Set_Sensitive (Item, Section_Active);
 
@@ -706,9 +680,7 @@ package body VCS_View_API is
          Gtk_New (Item, Label => -"List all files in project");
          Append (Submenu, Item);
          Context_Callback.Connect
-           (Item, "activate",
-            Context_Callback.To_Marshaller
-              (On_Menu_List_Project_Files'Access),
+           (Item, "activate", On_Menu_List_Project_Files'Access,
             Selection_Context_Access (File_Name));
 
          if Actions (Status_Files) /= null then
@@ -716,9 +688,7 @@ package body VCS_View_API is
               (Item, Label => Actions (Status_Files).all & (-" for project"));
             Append (Submenu, Item);
             Context_Callback.Connect
-              (Item, "activate",
-               Context_Callback.To_Marshaller
-                 (On_Menu_Get_Status_Project'Access),
+              (Item, "activate", On_Menu_Get_Status_Project'Access,
                Selection_Context_Access (File_Name));
             Set_Sensitive (Item, Section_Active);
          end if;
@@ -727,9 +697,7 @@ package body VCS_View_API is
             Gtk_New (Item, Label => Actions (Update).all & (-" project"));
             Append (Submenu, Item);
             Context_Callback.Connect
-              (Item, "activate",
-               Context_Callback.To_Marshaller
-                 (On_Menu_Update_Project'Access),
+              (Item, "activate", On_Menu_Update_Project'Access,
                Selection_Context_Access (File_Name));
             Set_Sensitive (Item, Section_Active);
          end if;
@@ -737,9 +705,7 @@ package body VCS_View_API is
          Gtk_New (Item, Label => -"List all files in project and subprojects");
          Append (Submenu, Item);
          Context_Callback.Connect
-           (Item, "activate",
-            Context_Callback.To_Marshaller
-              (On_Menu_List_Project_Files_Recursive'Access),
+           (Item, "activate", On_Menu_List_Project_Files_Recursive'Access,
             Selection_Context_Access (File_Name));
 
          if Actions (Status_Files) /= null then
@@ -748,9 +714,7 @@ package body VCS_View_API is
                  (-" for project and subprojects"));
             Append (Submenu, Item);
             Context_Callback.Connect
-              (Item, "activate",
-               Context_Callback.To_Marshaller
-                 (On_Menu_Get_Status_Project_Recursive'Access),
+              (Item, "activate", On_Menu_Get_Status_Project_Recursive'Access,
                Selection_Context_Access (File_Name));
             Set_Sensitive (Item, Section_Active);
          end if;
@@ -761,9 +725,7 @@ package body VCS_View_API is
                & (-" project and subprojects"));
             Append (Submenu, Item);
             Context_Callback.Connect
-              (Item, "activate",
-               Context_Callback.To_Marshaller
-                 (On_Menu_Update_Project_Recursive'Access),
+              (Item, "activate", On_Menu_Update_Project_Recursive'Access,
                Selection_Context_Access (File_Name));
             Set_Sensitive (Item, Section_Active);
          end if;

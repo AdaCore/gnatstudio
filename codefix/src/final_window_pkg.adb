@@ -66,14 +66,14 @@ begin
    Set_Flags (Final_Window.Final_Validation, Can_Default);
    Widget_Callback.Object_Connect
      (Final_Window.Final_Validation, "clicked",
-      Widget_Callback.To_Marshaller (On_Final_Validation_Clicked'Access), Final_Window);
+      On_Final_Validation_Clicked'Access, Final_Window);
    Add (Final_Window.Hbuttonbox1, Final_Window.Final_Validation);
 
    Gtk_New_From_Stock (Final_Window.Final_Cancel, Stock_No);
    Set_Flags (Final_Window.Final_Cancel, Can_Default);
    Widget_Callback.Object_Connect
      (Final_Window.Final_Cancel, "clicked",
-      Widget_Callback.To_Marshaller (On_Final_Cancel_Clicked'Access), Final_Window);
+      On_Final_Cancel_Clicked'Access, Final_Window);
    Add (Final_Window.Hbuttonbox1, Final_Window.Final_Cancel);
 
    Gtk_New (Final_Window.Label4, -("All fixable errors have been scanned. Confirm changes ?"));

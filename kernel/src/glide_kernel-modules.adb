@@ -585,8 +585,7 @@ package body Glide_Kernel.Modules is
 
                      Action_Callback.Object_Connect
                        (Item, "activate",
-                        Action_Callback.To_Marshaller
-                          (Contextual_Action'Access),
+                        Contextual_Action'Access,
                         User_Data   => C,
                         Slot_Object => User.Kernel);
                   else
@@ -921,22 +920,19 @@ package body Glide_Kernel.Modules is
       if Callback /= null then
          Kernel_Callback.Connect
            (Item, "activate",
-            Kernel_Callback.To_Marshaller (Callback),
-            Kernel_Handle (Kernel));
+            Kernel_Callback.To_Marshaller (Callback), Kernel_Handle (Kernel));
       end if;
 
       if Command /= null then
          Command_Callback.Object_Connect
-           (Item, "activate",
-            Command_Callback.To_Marshaller (Execute_Command'Access),
+           (Item, "activate", Execute_Command'Access,
             Slot_Object => Kernel_Handle (Kernel),
             User_Data   => (Command, null));
       end if;
 
       if Action /= null then
          Command_Callback.Object_Connect
-           (Item, "activate",
-            Command_Callback.To_Marshaller (Execute_Command'Access),
+           (Item, "activate", Execute_Command'Access,
             Slot_Object => Kernel_Handle (Kernel),
             User_Data   => (Command_Access (Action.Command), Action.Filter));
       end if;
@@ -1084,8 +1080,7 @@ package body Glide_Kernel.Modules is
       end if;
 
       Command_Callback.Object_Connect
-        (Button, "clicked",
-         Command_Callback.To_Marshaller (Execute_Command'Access),
+        (Button, "clicked", Execute_Command'Access,
          Slot_Object => Kernel_Handle (Kernel),
          User_Data   => (Command, null));
    end Register_Button;
@@ -1106,8 +1101,7 @@ package body Glide_Kernel.Modules is
       Button := Insert_Stock (Toolbar, Stock_Id, Tooltip);
 
       Command_Callback.Object_Connect
-        (Button, "clicked",
-         Command_Callback.To_Marshaller (Execute_Command'Access),
+        (Button, "clicked", Execute_Command'Access,
          Slot_Object => Kernel_Handle (Kernel),
          User_Data   => (Command, null));
    end Register_Button;

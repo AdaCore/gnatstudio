@@ -150,6 +150,12 @@ package body Codefix_Module is
       Error_Message : String);
    --  Handles error messages when an error can no longer be corrected.
 
+   procedure Codefix_Contextual_Menu
+     (Object  : access Glib.Object.GObject_Record'Class;
+      Context : access Selection_Context'Class;
+      Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
+   --  ??? Will be removed soon
+
    procedure On_Fix
      (Kernel  : access Kernel_Handle_Record'Class;
       Session : Codefix_Session;
@@ -161,13 +167,6 @@ package body Codefix_Module is
    procedure Codefix_Handler
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Creates and shows the Codefix window.
-
-   procedure Codefix_Contextual_Menu
-     (Object  : access Glib.Object.GObject_Record'Class;
-      Context : access Selection_Context'Class;
-      Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
-   --  Check is the current location is a fixable error, and propose the fix
-   --  if possible.
 
    procedure Compilation_Finished_Cb
      (Kernel : access Kernel_Handle_Record'Class;
@@ -550,66 +549,6 @@ package body Codefix_Module is
       return null;
    end Get_Session_By_Name;
 
-   -----------------------------
-   -- Codefix_Contextual_Menu --
-   -----------------------------
-
-   procedure Codefix_Contextual_Menu
-     (Object  : access Glib.Object.GObject_Record'Class;
-      Context : access Selection_Context'Class;
-      Menu    : access Gtk.Menu.Gtk_Menu_Record'Class)
-   is
-      pragma Unreferenced (Object);
-      Location      : Message_Context_Access;
-      Menu_Item     : Gtk_Menu_Item;
-      Session       : Codefix_Session;
-      Error         : Error_Id;
-
-   begin
-      if Context.all in Message_Context'Class then
-         Location := Message_Context_Access (Context);
-
-         if not Has_Category_Information (Location)
-           or else Codefix_Module_ID.Sessions = null
-         then
-            return;
-         end if;
-
-         Session := Get_Session_By_Name (Category_Information (Location));
-
-         if Session = null then
-            return;
-         end if;
-
-         if not Has_Message_Information (Location)
-           or else not Has_File_Information (Location)
-         then
-            return;
-         end if;
-
-         Gtk_New (Menu_Item, -"Code fixing");
-
-         Error := Search_Error
-           (Session.Corrector.all,
-            File    => File_Information (Location),
-            Line    => Line_Information (Location),
-            Column  => Column_Information (Location),
-            Message => Message_Information (Location));
-
-         if Error /= Null_Error_Id and then not Is_Fixed (Error) then
-            Set_Submenu
-              (Menu_Item,
-               Create_Submenu (Get_Kernel (Context), Session, Error));
-            Append (Menu, Menu_Item);
-         end if;
-      end if;
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
-   end Codefix_Contextual_Menu;
-
    -------------------
    -- Remove_Pixmap --
    -------------------
@@ -669,6 +608,66 @@ package body Codefix_Module is
          Message       => Get_Message (Err),
          Action        => New_Action);
    end Create_Pixmap_And_Category;
+
+   -----------------------------
+   -- Codefix_Contextual_Menu --
+   -----------------------------
+
+   procedure Codefix_Contextual_Menu
+     (Object  : access Glib.Object.GObject_Record'Class;
+      Context : access Selection_Context'Class;
+      Menu    : access Gtk.Menu.Gtk_Menu_Record'Class)
+   is
+      pragma Unreferenced (Object);
+      Location      : Message_Context_Access;
+      Menu_Item     : Gtk_Menu_Item;
+      Session       : Codefix_Session;
+      Error         : Error_Id;
+
+   begin
+      if Context.all in Message_Context'Class then
+         Location := Message_Context_Access (Context);
+
+         if not Has_Category_Information (Location)
+           or else Codefix_Module_ID.Sessions = null
+         then
+            return;
+         end if;
+
+         Session := Get_Session_By_Name (Category_Information (Location));
+
+         if Session = null then
+            return;
+         end if;
+
+         if not Has_Message_Information (Location)
+           or else not Has_File_Information (Location)
+         then
+            return;
+         end if;
+
+         Gtk_New (Menu_Item, -"Code fixing");
+
+         Error := Search_Error
+           (Session.Corrector.all,
+            File    => File_Information (Location),
+            Line    => Line_Information (Location),
+            Column  => Column_Information (Location),
+            Message => Message_Information (Location));
+
+         if Error /= Null_Error_Id and then not Is_Fixed (Error) then
+            Set_Submenu
+              (Menu_Item,
+               Create_Submenu (Get_Kernel (Context), Session, Error));
+            Append (Menu, Menu_Item);
+         end if;
+      end if;
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+   end Codefix_Contextual_Menu;
 
    ---------------------
    -- Register_Module --
@@ -1090,8 +1089,7 @@ package body Codefix_Module is
          Mitem.Error        := Error;
          Mitem.Kernel       := Kernel_Handle (Kernel);
          Mitem.Session      := Codefix_Session (Session);
-         Widget_Callback.Connect
-           (Mitem, "activate", Widget_Callback.To_Marshaller (On_Fix'Access));
+         Widget_Callback.Connect (Mitem, "activate", On_Fix'Access);
          Append (Menu, Mitem);
 
          Solution_Node := Next (Solution_Node);

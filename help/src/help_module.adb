@@ -625,8 +625,7 @@ package body Help_Module is
       Add (Menu, Mitem);
 
       Object_Callback.Object_Connect
-        (Mitem, "activate",
-         Object_Callback.To_Marshaller (On_Copy'Access),
+        (Mitem, "activate", On_Copy'Access,
          Slot_Object => Object,
          After => True);
 
@@ -752,9 +751,7 @@ package body Help_Module is
          end if;
 
          Kernel_Callback.Connect
-           (Item, "activate",
-            Kernel_Callback.To_Marshaller (On_Load_HTML'Access),
-            Kernel_Handle (Kernel));
+           (Item, "activate", On_Load_HTML'Access, Kernel_Handle (Kernel));
       end if;
 
       Node := First (Help_Module_ID.Categories);
@@ -1186,8 +1183,7 @@ package body Help_Module is
         (Html.Csc, "key_press_event",
          Return_Callback.To_Marshaller (Key_Press'Access), Html);
       Widget_Callback.Object_Connect
-        (Html.Csc, "load_done",
-         Widget_Callback.To_Marshaller (On_Load_Done'Access), Html);
+        (Html.Csc, "load_done", On_Load_Done'Access, Html);
 
       Font_Adjust := Integer (Get_Pref (Kernel, Help_Font_Adjust));
 
@@ -1802,9 +1798,7 @@ package body Help_Module is
             Parent_Path => Help,
             Item        => Gtk_Menu_Item (Item));
          Kernel_Callback.Connect
-           (Item, "activate",
-            Kernel_Callback.To_Marshaller (On_Load_HTML'Access),
-            Kernel_Handle (Kernel));
+           (Item, "activate", On_Load_HTML'Access, Kernel_Handle (Kernel));
       end;
 
       Parse_Index_Files (Kernel);

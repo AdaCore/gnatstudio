@@ -135,12 +135,10 @@ package body Gtkada.Entry_Completion is
 
       Widget_Callback.Object_Connect
         (Get_Selection (The_Entry.View), "changed",
-         Widget_Callback.To_Marshaller (Selection_Changed'Access),
+         Selection_Changed'Access,
          Slot_Object => The_Entry);
 
-      Widget_Callback.Connect
-        (The_Entry, "destroy",
-         Widget_Callback.To_Marshaller (On_Destroy'Access));
+      Widget_Callback.Connect (The_Entry, "destroy", On_Destroy'Access);
       Return_Callback.Object_Connect
         (Get_Entry (The_Entry), "key_press_event",
          Return_Callback.To_Marshaller (On_Entry_Tab'Access), The_Entry);

@@ -1632,8 +1632,7 @@ package body Browsers.Entities is
          Gtk_New (Mitem, -"Show source");
          Add (Menu, Mitem);
          Item_Cb.Object_Connect
-           (Mitem, "activate",
-            Item_Cb.To_Marshaller (On_Show_Source'Access),
+           (Mitem, "activate", On_Show_Source'Access,
             Slot_Object => Browser,
             User_Data   => Browser_Item (Item));
       end if;

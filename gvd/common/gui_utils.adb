@@ -383,7 +383,7 @@ package body GUI_Utils is
          if Menu /= null then
             Contextual_Callback.Connect
               (Menu, "unmap_event",
-               Contextual_Callback.To_Marshaller (Unmap_Menu'Access), Data);
+               Unmap_Menu'Access, Data);
 
             Grab_Focus (Widget);
             Show_All (Menu);
@@ -422,9 +422,7 @@ package body GUI_Utils is
 
          if Menu /= null then
             Contextual_Callback.Connect
-              (Menu, "unmap_event",
-               Contextual_Callback.To_Marshaller
-                 (Unmap_Menu'Access), Data);
+              (Menu, "unmap_event", Unmap_Menu'Access, Data);
 
             Grab_Focus (Widget);
             Show_All (Menu);
@@ -549,8 +547,7 @@ package body GUI_Utils is
             if Menu /= null then
                Contextual_Callback.Connect
                  (Menu, "unmap_event",
-                  Contextual_Callback.To_Marshaller
-                    (Unmap_User_Menu'Unrestricted_Access), User);
+                  Unmap_User_Menu'Unrestricted_Access, User);
 
                Grab_Focus (Widget);
                Show_All (Menu);
@@ -591,8 +588,7 @@ package body GUI_Utils is
             if Menu /= null then
                Contextual_Callback.Connect
                  (Menu, "unmap_event",
-                  Contextual_Callback.To_Marshaller
-                  (Unmap_User_Menu'Unrestricted_Access), User);
+                  Unmap_User_Menu'Unrestricted_Access, User);
 
                Grab_Focus (Widget);
                Show_All (Menu);
