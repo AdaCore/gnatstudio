@@ -36,6 +36,8 @@ package Vcs_View_Pkg is
 
       Edit_Log_Button   : Gtk_Widget;
       View_Log_Button   : Gtk_Widget;
+      View_Diff_Button  : Gtk_Widget;
+      Annotate_Button   : Gtk_Widget;
       Get_Status_Button : Gtk_Widget;
       Update_Button     : Gtk_Widget;
       Open_Button       : Gtk_Widget;

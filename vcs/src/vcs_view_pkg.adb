@@ -75,8 +75,13 @@ package body Vcs_View_Pkg is
                            Gdk.Pixbuf.Get_Type,
                            --  The status pixbuf
 
-                           GType_String
+                           GType_String,
                            --  The Log for this file
+
+                           Gtk.Widget.Get_Type
+                           --  The widget that edits the log.
+                           --  This should have a procedure which returns
+                           --  the log string given a filename.
                           );
    end Columns_Types;
 
@@ -87,6 +92,7 @@ package body Vcs_View_Pkg is
    Status_Description_Column : constant Gint := 4;
    Status_Pixbuf_Column      : constant Gint := 5;
    Log_Column                : constant Gint := 6;
+   Log_Editor_Column         : constant Gint := 7;
 
    function Number_Of_Columns return Gint;
    --  Return the number of columns in the model.
@@ -96,7 +102,6 @@ package body Vcs_View_Pkg is
       return Columns_Types'Length;
    end Number_Of_Columns;
 
-
    -----------------------
    -- Local subprograms --
    -----------------------
@@ -105,7 +110,8 @@ package body Vcs_View_Pkg is
 
    procedure Launch_Viewer
      (Explorer : access Vcs_View_Record'Class;
-      Strings  : in out List);
+      Strings  : in out List;
+      Title    : String := "");
    --  Display a String_List.
    --  Strings is freed by that procedure.
 
@@ -136,6 +142,14 @@ package body Vcs_View_Pkg is
    --  Display the relevant entries in the local directory.
 
    procedure On_Edit_Log_Button_Clicked
+     (Object : access Gtk_Widget_Record'Class;
+      Params : Gtk.Arguments.Gtk_Args);
+
+   procedure On_View_Diff_Button_Clicked
+     (Object : access Gtk_Widget_Record'Class;
+      Params : Gtk.Arguments.Gtk_Args);
+
+   procedure On_Annotate_Button_Clicked
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args);
 
@@ -211,9 +225,14 @@ package body Vcs_View_Pkg is
    --  Status_Record.
    --  Success tells whether the information has been filled or not.
 
+   -------------------
+   -- Launch_Viewer --
+   -------------------
+
    procedure Launch_Viewer
      (Explorer : access Vcs_View_Record'Class;
-      Strings  : in out List)
+      Strings  : in out List;
+      Title    : String := "")
    is
    begin
       while not Is_Empty (Strings) loop
@@ -473,9 +492,70 @@ package body Vcs_View_Pkg is
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args)
    is
+      Explorer : Vcs_View_Access := Vcs_View_Access (Get_Toplevel (Object));
+      L : VCS.String_List.List := Get_Selected_Files (Explorer);
    begin
       null;
    end On_Edit_Log_Button_Clicked;
+
+   --------------------------------
+   -- On_View_Diff_Button_Clicked --
+   --------------------------------
+
+   procedure On_View_Diff_Button_Clicked
+     (Object : access Gtk_Widget_Record'Class;
+      Params : Gtk.Arguments.Gtk_Args)
+   is
+      Explorer : Vcs_View_Access := Vcs_View_Access (Get_Toplevel (Object));
+      L : VCS.String_List.List := Get_Selected_Files (Explorer);
+      L_Temp : List := L;
+      Temp_String_List : List;
+   begin
+      Push_Message (Explorer,
+                    Verbose,
+                    "Viewing diffs for files :");
+
+      Display_String_List (Explorer, L, Verbose);
+
+      while not Is_Empty (L_Temp) loop
+         Temp_String_List := Diff (Explorer.VCS_Ref, Head (L_Temp));
+         Launch_Viewer (Explorer, Temp_String_List,
+                        "Diff for current revision of " & Head (L_Temp));
+         L_Temp := Next (L_Temp);
+      end loop;
+
+      Push_Message (Explorer, Verbose, "... done." & ASCII.LF);
+   end On_View_Diff_Button_Clicked;
+
+   --------------------------------
+   -- On_Annotate_Button_Clicked --
+   --------------------------------
+
+   procedure On_Annotate_Button_Clicked
+     (Object : access Gtk_Widget_Record'Class;
+      Params : Gtk.Arguments.Gtk_Args)
+   is
+      Explorer : Vcs_View_Access := Vcs_View_Access (Get_Toplevel (Object));
+      L : VCS.String_List.List := Get_Selected_Files (Explorer);
+      L_Temp : List := L;
+
+      Temp_String_List : List;
+   begin
+      Push_Message (Explorer,
+                    Verbose,
+                    "Annotating files :");
+
+      Display_String_List (Explorer, L, Verbose);
+
+      while not Is_Empty (L_Temp) loop
+         Temp_String_List := Annotate (Explorer.VCS_Ref, Head (L_Temp));
+         Launch_Viewer (Explorer, Temp_String_List,
+                        "Annotating of " & Head (L_Temp));
+         L_Temp := Next (L_Temp);
+      end loop;
+
+      Push_Message (Explorer, Verbose, "... done." & ASCII.LF);
+   end On_Annotate_Button_Clicked;
 
    --------------------------------
    -- On_View_Log_Button_Clicked --
@@ -491,11 +571,19 @@ package body Vcs_View_Pkg is
 
       Temp_String_List : List;
    begin
+      Push_Message (Explorer,
+                    Verbose,
+                    "Viewing logs of files :");
+
+      Display_String_List (Explorer, L, Verbose);
+
       while not Is_Empty (L_Temp) loop
          Temp_String_List := Log (Explorer.VCS_Ref, Head (L_Temp));
          Launch_Viewer (Explorer, Temp_String_List);
          L_Temp := Next (L_Temp);
       end loop;
+
+      Push_Message (Explorer, Verbose, "... done." & ASCII.LF);
    end On_View_Log_Button_Clicked;
 
    ----------------------------------
@@ -587,8 +675,32 @@ package body Vcs_View_Pkg is
                        "... done." & ASCII.LF);
          VCS.String_List.Free (L);
 
-         On_Get_Status_Button_Clicked (Object, Params);
+
+      else
+         if Explorer.Current_Directory = null then
+            Explorer.Current_Directory := new String' (Get_Current_Dir);
+         end if;
+
+         Push_Message (Explorer,
+                       Verbose,
+                       "Updating files in directory "
+                       & Explorer.Current_Directory.all
+                       & " ... ");
+
+         Set_Busy_Cursor (Get_Window (Explorer), True, True);
+
+         Append (L, Explorer.Current_Directory.all);
+         Update (Explorer.VCS_Ref, L);
+
+         Push_Message (Explorer,
+                       Verbose,
+                       "... done." & ASCII.LF);
+
+         Set_Busy_Cursor (Get_Window (Explorer), False);
       end if;
+      On_Get_Status_Button_Clicked (Object, Params);
+
+      Free (L);
    end On_Update_Button_Clicked;
 
    ----------------------------
@@ -1090,6 +1202,23 @@ package body Vcs_View_Pkg is
       Widget_Callback.Connect
         (Vcs_View.Edit_Log_Button, "clicked",
          On_Edit_Log_Button_Clicked'Access);
+
+      Vcs_View.View_Diff_Button := Append_Element
+        (Toolbar => Toolbar2,
+         The_Type => Toolbar_Child_Button,
+         Text => -"View Diff");
+      Widget_Callback.Connect
+        (Vcs_View.View_Diff_Button, "clicked",
+         On_View_Diff_Button_Clicked'Access);
+
+      Vcs_View.Annotate_Button := Append_Element
+        (Toolbar => Toolbar2,
+         The_Type => Toolbar_Child_Button,
+         Text => -"Annotate");
+      Widget_Callback.Connect
+        (Vcs_View.Annotate_Button, "clicked",
+         On_Annotate_Button_Clicked'Access);
+
       Vcs_View.View_Log_Button := Append_Element
         (Toolbar => Toolbar2,
          The_Type => Toolbar_Child_Button,
@@ -1164,3 +1293,6 @@ package body Vcs_View_Pkg is
    end Initialize;
 
 end Vcs_View_Pkg;
+
+--  ??? known problems, missing features, etc
+--  when there is nothing in the tree, clicking raises storage_error
