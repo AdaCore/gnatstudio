@@ -318,9 +318,10 @@ package body Glide_Menu is
 
    begin
       return new Gtk_Item_Factory_Entry_Array'
-        (Gtk_New (File & (-"Close"), "", Stock_Close, On_Close'Access),
+        (Gtk_New (File & (-"Save") & '/' & (-"Desktop"), "",
+                  On_Save_Desktop'Access),
+         Gtk_New (File & (-"Close"), "", Stock_Close, On_Close'Access),
          Gtk_New (File & (-"Close All"), "", null),
-         Gtk_New (File & (-"Save Desktop"), "", On_Save_Desktop'Access),
          Gtk_New (File & "sep3", Item_Type => Separator),
          Gtk_New (File & (-"Print"), "", Stock_Print, null),
          Gtk_New (File & "sep4", Item_Type => Separator),
