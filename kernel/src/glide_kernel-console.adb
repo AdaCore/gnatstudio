@@ -155,9 +155,8 @@ package body Glide_Kernel.Console is
          Set_Title (Child, -"Locations");
          Set_Dock_Side (Child, Bottom);
          Dock_Child (Child);
-      else
-         Raise_Child (Child);
       end if;
+
       return Child;
    end Get_Or_Create_Result_View_MDI;
 
