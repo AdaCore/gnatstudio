@@ -155,6 +155,7 @@ package Src_Info is
    --  Create (if File is null) or complete (otherwise) the LI declaration if
    --  File.
    --  File is associated with the given Source_Filename.
+   --  Source_Filename should contain the full path to the source file.
 
    function LI_Filename_From_Source
      (Handler                : access LI_Handler_Record;
