@@ -35,8 +35,12 @@ with Glide_Intl;            use Glide_Intl;
 
 --  with Glide_Pkg;             use Glide_Pkg;
 with GVD.Main_Window;       use GVD.Main_Window;
+with GVD.Menu;              use GVD.Menu;
 with GVD.Status_Bar;        use GVD.Status_Bar;
 with GVD.Process;           use GVD.Process;
+with GVD.Types;             use GVD.Types;
+with Debugger;              use Debugger;
+
 with Glide_Page;
 
 with Hyper_Grep;            use Hyper_Grep;
@@ -62,6 +66,21 @@ with Make_Suite_Window_Pkg; use Make_Suite_Window_Pkg;
 package body Glide_Menu is
 
    Highlight_File : constant String := "#FF0000000000";
+
+   type Source_Box_Record is new Gtk_Hbox_Record with record
+      Editor : Source_Editor_Box;
+   end record;
+   type Source_Box is access all Source_Box_Record'Class;
+
+   procedure Gtk_New
+     (Box    : out Source_Box;
+      Editor : Source_Editor_Box);
+   --  Create a new source box.
+
+   procedure Initialize
+     (Box    : access Source_Box_Record'Class;
+      Editor : Source_Editor_Box);
+   --  Internal initialization function.
 
    --------------------
    -- Menu Callbacks --
@@ -145,6 +164,12 @@ package body Glide_Menu is
       Widget : Limited_Widget);
    --  Edit->Select All menu
 
+   procedure On_New_View
+     (Object : Data_Type_Access;
+      Action : Guint;
+      Widget : Limited_Widget);
+   --  Edit->New View menu
+
    procedure On_Preferences
      (Object : Data_Type_Access;
       Action : Guint;
@@ -169,11 +194,47 @@ package body Glide_Menu is
       Widget : Limited_Widget);
    --  Run->Run menu
 
-   procedure On_Debug
+   procedure On_Debug_Executable
      (Object : Data_Type_Access;
       Action : Guint;
       Widget : Limited_Widget);
-   --  Run->Debug menu
+   --  Debug->Debug->Another Executable menu
+
+   procedure On_Step
+     (Object : Data_Type_Access;
+      Action : Guint;
+      Widget : Limited_Widget);
+   --  Debug->Step menu
+
+   procedure On_Step_Instruction
+     (Object : Data_Type_Access;
+      Action : Guint;
+      Widget : Limited_Widget);
+   --  Debug->Step Instruction menu
+
+   procedure On_Next
+     (Object : Data_Type_Access;
+      Action : Guint;
+      Widget : Limited_Widget);
+   --  Debug->Next menu
+
+   procedure On_Next_Instruction
+     (Object : Data_Type_Access;
+      Action : Guint;
+      Widget : Limited_Widget);
+   --  Debug->Next Instruction menu
+
+   procedure On_Finish
+     (Object : Data_Type_Access;
+      Action : Guint;
+      Widget : Limited_Widget);
+   --  Debug->Finish menu
+
+   procedure On_Continue
+     (Object : Data_Type_Access;
+      Action : Guint;
+      Widget : Limited_Widget);
+   --  Debug->Continue menu
 
    procedure On_New_Test_Case
      (Object : Data_Type_Access;
@@ -211,6 +272,30 @@ package body Glide_Menu is
       Widget : Limited_Widget);
    --  Help->About menu
 
+   -------------
+   -- Gtk_New --
+   -------------
+
+   procedure Gtk_New
+     (Box    : out Source_Box;
+      Editor : Source_Editor_Box) is
+   begin
+      Box := new Source_Box_Record;
+      Initialize (Box, Editor);
+   end Gtk_New;
+
+   ----------------
+   -- Initialize --
+   ----------------
+
+   procedure Initialize
+     (Box    : access Source_Box_Record'Class;
+      Editor : Source_Editor_Box) is
+   begin
+      Gtk.Box.Initialize_Hbox (Box);
+      Box.Editor := Editor;
+   end Initialize;
+
    ------------------
    -- On_Open_File --
    ------------------
@@ -225,7 +310,7 @@ package body Glide_Menu is
         File_Selection_Dialog (Title => "Open file", Must_Exist => True);
       Success : Boolean;
       Editor  : Source_Editor_Box;
-      Box     : Gtk_Box;
+      Box     : Source_Box;
       Child   : MDI_Child;
 
    begin
@@ -233,8 +318,8 @@ package body Glide_Menu is
          return;
       end if;
 
-      Gtk_New_Hbox (Box);
       Gtk_New (Editor);
+      Gtk_New (Box, Editor);
       Attach (Editor, Box);
       Child := Put
         (Glide_Page.Glide_Page (Get_Current_Process (Top)).Process_Mdi, Box);
@@ -270,12 +355,12 @@ package body Glide_Menu is
    is
       Top    : constant GVD_Main_Window := GVD_Main_Window (Object);
       Editor : Source_Editor_Box;
-      Box    : Gtk_Box;
+      Box    : Source_Box;
       Child  : MDI_Child;
 
    begin
-      Gtk_New_Hbox (Box);
       Gtk_New (Editor);
+      Gtk_New (Box, Editor);
       Attach (Editor, Box);
       Child := Put
         (Glide_Page.Glide_Page (Get_Current_Process (Top)).Process_Mdi, Box);
@@ -401,6 +486,33 @@ package body Glide_Menu is
    begin
       null;
    end On_Select_All;
+
+   -----------------
+   -- On_New_View --
+   -----------------
+
+   procedure On_New_View
+     (Object : Data_Type_Access;
+      Action : Guint;
+      Widget : Limited_Widget)
+   is
+      Top     : constant GVD_Main_Window := GVD_Main_Window (Object);
+      MDI     : constant MDI_Window :=
+        Glide_Page.Glide_Page (Get_Current_Process (Top)).Process_Mdi;
+      Editor  : Source_Editor_Box;
+      Box     : Source_Box;
+      Focus   : constant MDI_Child := Get_Focus_Child (MDI);
+      Current : Source_Box := Source_Box (Get_Widget (Focus));
+      Child   : MDI_Child;
+      Title   : constant String := Get_Title (Focus);
+
+   begin
+      Create_New_View (Editor, Current.Editor);
+      Gtk_New (Box, Editor);
+      Attach (Editor, Box);
+      Child := Put (MDI, Box);
+      Set_Title (Child, Title & " <2>");
+   end On_New_View;
 
    --------------------
    -- On_Preferences --
@@ -552,18 +664,159 @@ package body Glide_Menu is
       end if;
    end On_Run;
 
-   --------------
-   -- On_Debug --
-   --------------
+   -------------------------
+   -- On_Debug_Executable --
+   -------------------------
 
-   procedure On_Debug
+   procedure On_Debug_Executable
      (Object : Data_Type_Access;
       Action : Guint;
-      Widget : Limited_Widget) is
+      Widget : Limited_Widget)
+   is
+      Top  : constant GVD_Main_Window := GVD_Main_Window (Object);
+      Page : constant Glide_Page.Glide_Page :=
+        Glide_Page.Glide_Page (Get_Current_Process (Top));
+      use Debugger;
+
    begin
-      --  GVD.Menu.On_Run (null, Action, Widget);
-      null;
-   end On_Debug;
+      if Page.Debugger = null then
+         Configure (Page, Gdb_Type, "", (1 .. 0 => null), "");
+      end if;
+
+      GVD.Menu.On_Open_Program (Object, Action, Widget);
+   end On_Debug_Executable;
+
+   -------------
+   -- On_Step --
+   -------------
+
+   procedure On_Step
+     (Object : Data_Type_Access;
+      Action : Guint;
+      Widget : Limited_Widget)
+   is
+      Top  : constant GVD_Main_Window := GVD_Main_Window (Object);
+      Page : constant Glide_Page.Glide_Page :=
+        Glide_Page.Glide_Page (Get_Current_Process (Top));
+      use Debugger;
+
+   begin
+      if Page.Debugger = null then
+         return;
+      end if;
+
+      GVD.Menu.On_Step (Object, Action, Widget);
+   end On_Step;
+
+   -------------------------
+   -- On_Step_Instruction --
+   -------------------------
+
+   procedure On_Step_Instruction
+     (Object : Data_Type_Access;
+      Action : Guint;
+      Widget : Limited_Widget)
+   is
+      Top  : constant GVD_Main_Window := GVD_Main_Window (Object);
+      Page : constant Glide_Page.Glide_Page :=
+        Glide_Page.Glide_Page (Get_Current_Process (Top));
+      use Debugger;
+
+   begin
+      if Page.Debugger = null then
+         return;
+      end if;
+
+      GVD.Menu.On_Step_Instruction (Object, Action, Widget);
+   end On_Step_Instruction;
+
+   -------------
+   -- On_Next --
+   -------------
+
+   procedure On_Next
+     (Object : Data_Type_Access;
+      Action : Guint;
+      Widget : Limited_Widget)
+   is
+      Top  : constant GVD_Main_Window := GVD_Main_Window (Object);
+      Page : constant Glide_Page.Glide_Page :=
+        Glide_Page.Glide_Page (Get_Current_Process (Top));
+      use Debugger;
+
+   begin
+      if Page.Debugger = null then
+         return;
+      end if;
+
+      GVD.Menu.On_Next (Object, Action, Widget);
+   end On_Next;
+
+   -------------------------
+   -- On_Next_Instruction --
+   -------------------------
+
+   procedure On_Next_Instruction
+     (Object : Data_Type_Access;
+      Action : Guint;
+      Widget : Limited_Widget)
+   is
+      Top  : constant GVD_Main_Window := GVD_Main_Window (Object);
+      Page : constant Glide_Page.Glide_Page :=
+        Glide_Page.Glide_Page (Get_Current_Process (Top));
+      use Debugger;
+
+   begin
+      if Page.Debugger = null then
+         return;
+      end if;
+
+      GVD.Menu.On_Next_Instruction (Object, Action, Widget);
+   end On_Next_Instruction;
+
+   ---------------
+   -- On_Finish --
+   ---------------
+
+   procedure On_Finish
+     (Object : Data_Type_Access;
+      Action : Guint;
+      Widget : Limited_Widget)
+   is
+      Top  : constant GVD_Main_Window := GVD_Main_Window (Object);
+      Page : constant Glide_Page.Glide_Page :=
+        Glide_Page.Glide_Page (Get_Current_Process (Top));
+      use Debugger;
+
+   begin
+      if Page.Debugger = null then
+         return;
+      end if;
+
+      GVD.Menu.On_Finish (Object, Action, Widget);
+   end On_Finish;
+
+   -----------------
+   -- On_Continue --
+   -----------------
+
+   procedure On_Continue
+     (Object : Data_Type_Access;
+      Action : Guint;
+      Widget : Limited_Widget)
+   is
+      Top  : constant GVD_Main_Window := GVD_Main_Window (Object);
+      Page : constant Glide_Page.Glide_Page :=
+        Glide_Page.Glide_Page (Get_Current_Process (Top));
+      use Debugger;
+
+   begin
+      if Page.Debugger = null then
+         return;
+      end if;
+
+      GVD.Menu.On_Continue (Object, Action, Widget);
+   end On_Continue;
 
    --------------------------
    -- On_Compare_Two_Files --
@@ -575,12 +828,49 @@ package body Glide_Menu is
       Widget : Limited_Widget)
    is
       Make_Test_Window : Make_Test_Window_Access;
+      Top              : constant GVD_Main_Window :=
+        GVD_Main_Window (Object);
+      Success          : Boolean;
+      Editor           : Source_Editor_Box;
+      Box              : Source_Box;
+      Child            : MDI_Child;
+
    begin
       Gtk_New (Make_Test_Window);
       Show_All (Make_Test_Window);
       Gtk.Main.Main;
+
+      if Make_Test_Window.Name /= null then
+         declare
+            File : constant String := Make_Test_Window.Name.all;
+         begin
+            Gtk_New (Editor);
+            Gtk_New (Box, Editor);
+            Attach (Editor, Box);
+            Child := Put
+              (Glide_Page.Glide_Page (Get_Current_Process (Top)).Process_Mdi,
+               Box);
+            Set_Title (Child, File & ".ads");
+            Load_File (Editor, File & ".ads", Success => Success);
+
+            Gtk_New (Editor);
+            Gtk_New (Box, Editor);
+            Attach (Editor, Box);
+            Child := Put
+              (Glide_Page.Glide_Page (Get_Current_Process (Top)).Process_Mdi,
+               Box);
+            Set_Title (Child, File & ".adb");
+            Load_File (Editor, File & ".adb", Success => Success);
+         end;
+      end if;
+
+      Free (Make_Test_Window.Name);
       Destroy (Make_Test_Window);
    end On_New_Test_Case;
+
+   -----------------------
+   -- On_New_Test_Suite --
+   -----------------------
 
    procedure On_New_Test_Suite
      (Object : Data_Type_Access;
@@ -588,12 +878,49 @@ package body Glide_Menu is
       Widget : Limited_Widget)
    is
       Make_Suite_Window : Make_Suite_Window_Access;
+      Top               : constant GVD_Main_Window :=
+        GVD_Main_Window (Object);
+      Success           : Boolean;
+      Editor            : Source_Editor_Box;
+      Box               : Source_Box;
+      Child             : MDI_Child;
+
    begin
       Gtk_New (Make_Suite_Window);
       Show_All (Make_Suite_Window);
       Gtk.Main.Main;
+
+      if Make_Suite_Window.Name /= null then
+         declare
+            File : constant String := Make_Suite_Window.Name.all;
+         begin
+            Gtk_New (Editor);
+            Gtk_New (Box, Editor);
+            Attach (Editor, Box);
+            Child := Put
+              (Glide_Page.Glide_Page (Get_Current_Process (Top)).Process_Mdi,
+               Box);
+            Set_Title (Child, File & ".ads");
+            Load_File (Editor, File & ".ads", Success => Success);
+
+            Gtk_New (Editor);
+            Gtk_New (Box, Editor);
+            Attach (Editor, Box);
+            Child := Put
+              (Glide_Page.Glide_Page (Get_Current_Process (Top)).Process_Mdi,
+               Box);
+            Set_Title (Child, File & ".adb");
+            Load_File (Editor, File & ".adb", Success => Success);
+         end;
+      end if;
+
+      Free (Make_Suite_Window.Name);
       Destroy (Make_Suite_Window);
    end On_New_Test_Suite;
+
+   -------------------------
+   -- On_New_Test_Harness --
+   -------------------------
 
    procedure On_New_Test_Harness
      (Object : Data_Type_Access;
@@ -601,10 +928,34 @@ package body Glide_Menu is
       Widget : Limited_Widget)
    is
       Make_Harness_Window : Make_Harness_Window_Access;
+      Top                 : constant GVD_Main_Window :=
+        GVD_Main_Window (Object);
+      Success             : Boolean;
+      Editor              : Source_Editor_Box;
+      Box                 : Source_Box;
+      Child               : MDI_Child;
+
    begin
       Gtk_New (Make_Harness_Window);
       Show_All (Make_Harness_Window);
       Gtk.Main.Main;
+
+      if Make_Harness_Window.Procedure_Name /= null then
+         declare
+            File : constant String := Make_Harness_Window.Procedure_Name.all;
+         begin
+            Gtk_New (Editor);
+            Gtk_New (Box, Editor);
+            Attach (Editor, Box);
+            Child := Put
+              (Glide_Page.Glide_Page (Get_Current_Process (Top)).Process_Mdi,
+               Box);
+            Set_Title (Child, File & ".adb");
+            Load_File (Editor, File & ".adb", Success => Success);
+         end;
+      end if;
+
+      Free (Make_Harness_Window.Procedure_Name);
       Destroy (Make_Harness_Window);
    end On_New_Test_Harness;
 
@@ -697,6 +1048,7 @@ package body Glide_Menu is
          Gtk_New (-"/_Edit/Paste", "<shift>INS", On_Paste'Access),
          Gtk_New (-"/_Edit/Select All", "<control>A", On_Select_All'Access),
          Gtk_New (-"/_Edit/sep2", Item_Type => Separator),
+         Gtk_New (-"/_Edit/New View", "", On_New_View'Access),
          Gtk_New (-"/_Edit/Preferences...", "", On_Preferences'Access),
 
          Gtk_New (-"/_Search", Item_Type => Branch),
@@ -744,7 +1096,8 @@ package body Glide_Menu is
          Gtk_New (-"/_Debug", Item_Type => Branch),
          Gtk_New (-"/_Debug/Start", "", On_Run'Access),
          Gtk_New (-"/_Debug/Debug", Item_Type => Branch),
-         Gtk_New (-"/_Debug/Debug/Another Executable...", "", null),
+         Gtk_New (-"/_Debug/Debug/Another Executable...", "",
+                  On_Debug_Executable'Access),
          Gtk_New (-"/_Debug/Debug/Running Process...", "", null),
          Gtk_New (-"/_Debug/Debug/Core File...", "", null),
          Gtk_New (-"/_Debug/Session", Item_Type => Branch),
@@ -768,15 +1121,15 @@ package body Glide_Menu is
          Gtk_New (-"/_Debug/Data/Refresh", "<control>L", null),
          Gtk_New (-"/_Debug/Data/Show", "", null),
          Gtk_New (-"/_Debug/sep2", Item_Type => Separator),
-         Gtk_New (-"/_Debug/Step", "F5", null),
+         Gtk_New (-"/_Debug/Step", "F5", On_Step'Access),
          Gtk_New (-"/_Debug/Step Instruction", "<shift>F5",
-                  null),
-         Gtk_New (-"/_Debug/Next", "F6", null),
+                  On_Step_Instruction'Access),
+         Gtk_New (-"/_Debug/Next", "F6", On_Next'Access),
          Gtk_New (-"/_Debug/Next Instruction", "<shift>F6",
-                  null),
-         Gtk_New (-"/_Debug/Finish", "F7", null),
-         Gtk_New (-"/_Debug/Continue", "F8", null),
-         Gtk_New (-"/_Debug/Interrupt", "esc", null),
+                  On_Next_Instruction'Access),
+         Gtk_New (-"/_Debug/Finish", "F7", On_Finish'Access),
+         Gtk_New (-"/_Debug/Continue", "F8", On_Continue'Access),
+         Gtk_New (-"/_Debug/Interrupt", "ESC", null),
          Gtk_New (-"/_Debug/Detach Process", "", null),
          Gtk_New (-"/_Debug/sep3", Item_Type => Separator),
          Gtk_New (-"/_Debug/Profile", "", null),
