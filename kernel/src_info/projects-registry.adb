@@ -30,6 +30,7 @@ with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Glide_Intl;                use Glide_Intl;
 with Namet;                     use Namet;
+with Opt;                       use Opt;
 with Output;                    use Output;
 with Prj.Ext;                   use Prj.Ext;
 with Prj.PP;                    use Prj.PP;
@@ -53,7 +54,6 @@ package body Projects.Registry is
    --  3.15a1, False if they only need to be compatible with GNAT 3.16 >=
    --  20021024
 
-
    procedure Do_Nothing (Project : in out Project_Type);
    --  Do not free the project (in the hash tables), since it shared by several
    --  entries and several htables
@@ -63,6 +63,20 @@ package body Projects.Registry is
       Free_Data => Do_Nothing,
       Null_Ptr  => No_Project);
    use Project_Htable.String_Hash_Table;
+
+   type Directory_Dependency is (Direct, As_Parent, None);
+   --  The way a directory belongs to the project: either as a direct
+   --  dependency, or because one of its subdirs belong to the project, or
+   --  doesn't belong at all
+
+   procedure Do_Nothing (Dep : in out Directory_Dependency);
+
+   package Directory_Htable is new String_Hash
+     (Data_Type => Directory_Dependency,
+      Free_Data => Do_Nothing,
+      Null_Ptr  => None);
+   use Directory_Htable.String_Hash_Table;
+
 
    type Source_File_Data is record
       Project : Project_Type;
@@ -87,6 +101,9 @@ package body Projects.Registry is
 
       Sources  : Source_Htable.String_Hash_Table.HTable;
       --  Index on base source file names, return the managing project
+
+      Directories : Directory_Htable.String_Hash_Table.HTable;
+      --  Index on directory name
 
       Projects : Project_Htable.String_Hash_Table.HTable;
       --  Index on project names. Some project of the hierarchy might not
@@ -114,7 +131,7 @@ package body Projects.Registry is
    procedure Add_Foreign_Source_Files
      (Registry : Project_Registry;
       Project  : Project_Type;
-      Errors   : Error_Report);
+      Errors   : Put_Line_Access);
    --  Add to Project the list of source files for languages other than
    --  Ada. These sources are also cached in the registry.
 
@@ -139,7 +156,7 @@ package body Projects.Registry is
 
    procedure Parse_Source_Files
      (Registry : in out Project_Registry;
-      Errors   : Error_Report);
+      Errors   : Put_Line_Access);
    --  Find all the source files for the project, and cache them in the
    --  registry.
    --  At the same time, check that the gnatls attribute is coherent between
@@ -165,6 +182,12 @@ package body Projects.Registry is
 
    procedure Do_Nothing (Data : in out Source_File_Data) is
       pragma Unreferenced (Data);
+   begin
+      null;
+   end Do_Nothing;
+
+   procedure Do_Nothing (Dep : in out Directory_Dependency) is
+      pragma Unreferenced (Dep);
    begin
       null;
    end Do_Nothing;
@@ -204,6 +227,21 @@ package body Projects.Registry is
       Unchecked_Free (Registry.Data.Scenario_Variables);
    end Reset_Scenario_Variables_Cache;
 
+   ----------------------
+   -- Reset_Name_Table --
+   ----------------------
+
+   procedure Reset_Name_Table
+     (Registry           : Project_Registry;
+      Project            : Project_Type;
+      Old_Name, New_Name : String) is
+   begin
+      if Registry.Data /= null then
+         Set (Registry.Data.Projects, Old_Name, No_Project);
+         Set (Registry.Data.Projects, New_Name, Project);
+      end if;
+   end Reset_Name_Table;
+
    -----------
    -- Reset --
    -----------
@@ -239,6 +277,7 @@ package body Projects.Registry is
          end if;
 
          Reset (Registry.Data.Sources);
+         Reset (Registry.Data.Directories);
          Reset_Scenario_Variables_Cache (Registry);
       else
          Registry.Data := new Project_Registry_Data;
@@ -325,10 +364,15 @@ package body Projects.Registry is
 
       New_Project_Loaded := True;
 
+      --  Use the full path name so that the messages are sent to the result
+      --  view.
+      Opt.Full_Path_Name_For_Brief_Errors := True;
       Output.Set_Special_Output (Output_Proc (Errors));
       Reset (Registry, View_Only => False);
 
       Prj.Part.Parse (Project, Path, True);
+
+      Opt.Full_Path_Name_For_Brief_Errors := False;
 
       if Project = Empty_Node then
          if Errors /= null then
@@ -399,10 +443,15 @@ package body Projects.Registry is
             Set_View_Is_Complete (P, False);
          end if;
 
+         Trace (Me, "Recompute_View: error " & S);
+
          if Errors /= null then
             if Project = Prj.No_Project then
                Errors (S);
-            elsif not Is_Default (Registry.Data.Root) then
+
+            elsif not Is_Default (Registry.Data.Root)
+              or else Project_Modified (Registry.Data.Root)
+            then
                Errors (Project_Name (P) & ": " & S);
             end if;
          end if;
@@ -427,7 +476,7 @@ package body Projects.Registry is
       Prj.Proc.Process
         (View, Success, Registry.Data.Root.Node,
          Report_Error'Unrestricted_Access);
-      Parse_Source_Files (Registry, Errors);
+      Parse_Source_Files (Registry, Report_Error'Unrestricted_Access);
    end Recompute_View;
 
    ------------------------
@@ -436,13 +485,49 @@ package body Projects.Registry is
 
    procedure Parse_Source_Files
      (Registry : in out Project_Registry;
-      Errors   : Error_Report)
+      Errors   : Put_Line_Access)
    is
+      procedure Register_Directory (Directory : String);
+      --  Register Directory as belonging to Project.
+      --  The parent directories are also registered
+
+      ------------------------
+      -- Register_Directory --
+      ------------------------
+
+      procedure Register_Directory (Directory : String) is
+         Last : Integer := Directory'Last - 1;
+      begin
+         Set (Registry.Data.Directories, K => Directory, E => Direct);
+
+         loop
+            while Last >= Directory'First
+              and then Directory (Last) /= Path_Separator
+              and then Directory (Last) /= '/'
+            loop
+               Last := Last - 1;
+            end loop;
+
+            Last := Last - 1;
+
+            exit when Last <= Directory'First;
+
+            if Get (Registry.Data.Directories,
+                    Directory (Directory'First .. Last)) /= Direct
+            then
+               Set (Registry.Data.Directories,
+                    K => Directory (Directory'First .. Last),
+                    E => As_Parent);
+            end if;
+         end loop;
+      end Register_Directory;
+
       Iter : Imported_Project_Iterator := Start (Registry.Data.Root, True);
       Gnatls : constant String := Get_Attribute_Value
         (Registry.Data.Root, Gnatlist_Attribute, Ide_Package);
       Sources : String_List_Id;
       P       : Project_Type;
+
    begin
       loop
          P := Current (Iter);
@@ -454,12 +539,25 @@ package body Projects.Registry is
          begin
             if Ls /= "" and then Ls /= Gnatls and then Errors /= null then
                Errors
-                 (Project_Name (P) & ": "
-                  & (-("gnatls attribute is not the same in this project as in"
-                       & " the root project. It will be ignored in the"
-                       & " subproject.")));
+                 (-("gnatls attribute is not the same in this project as in"
+                    & " the root project. It will be ignored in the"
+                    & " subproject."), Get_View (P));
             end if;
          end;
+
+         --  Add the directories
+
+         Sources := Prj.Projects.Table (Get_View (P)).Source_Dirs;
+         while Sources /= Nil_String loop
+            Register_Directory
+              (Get_String (String_Elements.Table (Sources).Value));
+            Sources := String_Elements.Table (Sources).Next;
+         end loop;
+
+         Register_Directory
+           (Get_String (Prj.Projects.Table (Get_View (P)).Object_Directory));
+         Register_Directory
+           (Get_String (Prj.Projects.Table (Get_View (P)).Exec_Directory));
 
          --  Add the Ada sources that are already in the project. The foreign
          --  files
@@ -513,7 +611,7 @@ package body Projects.Registry is
    procedure Add_Foreign_Source_Files
      (Registry : Project_Registry;
       Project  : Project_Type;
-      Errors   : Error_Report)
+      Errors   : Put_Line_Access)
    is
       procedure Record_Source (File : String; Lang : Name_Id);
       --  Add file to the list of source files for Project
@@ -621,10 +719,9 @@ package body Projects.Registry is
             end loop;
 
             if Errors /= null then
-               Errors (Project_Name (Project) &
-                       Prj.Project_File_Extension
-                       & ": Warning, no source files for "
-                       & Error (Error'First .. Error'Last - 2));
+               Errors (-("Warning, no source files for ")
+                       & Error (Error'First .. Error'Last - 2),
+                       Get_View (Project));
             end if;
          end;
       end if;
@@ -682,6 +779,7 @@ package body Projects.Registry is
                Set (Registry.Data.Projects, Name_Buffer (1 .. Name_Len), P);
             end if;
          end if;
+
          return P;
       end if;
    end Get_Project_From_Name;
@@ -1025,5 +1123,21 @@ package body Projects.Registry is
          end if;
       end if;
    end Get_Full_Path_From_File;
+
+   ----------------------------------
+   -- Directory_Belongs_To_Project --
+   ----------------------------------
+
+   function Directory_Belongs_To_Project
+     (Registry  : Project_Registry;
+      Directory : String;
+      Direct_Only : Boolean := True) return Boolean
+   is
+      Belong : constant Directory_Dependency :=
+        Get (Registry.Data.Directories, Directory);
+   begin
+      return Belong = Direct
+        or else (not Direct_Only and then Belong = As_Parent);
+   end Directory_Belongs_To_Project;
 
 end Projects.Registry;

@@ -155,6 +155,20 @@ package Projects.Registry is
    --  Select a project by one of its source files. If no project was found and
    --  Root_If_Not_Found is true, the root project is returned instead.
 
+   procedure Reset_Name_Table
+     (Registry           : Project_Registry;
+      Project            : Project_Type;
+      Old_Name, New_Name : String);
+   --  Take into account a name change for a project.
+
+   function Directory_Belongs_To_Project
+     (Registry    : Project_Registry;
+      Directory   : String;
+      Direct_Only : Boolean := True) return Boolean;
+   --  True if Directory belongs to one of the projects in the hierarchy.
+   --  If Direct_Only is False, then True is returned if one of the
+   --  subdirectories belong to the project, even if directory itself doesn't
+
    -------------
    -- Sources --
    -------------
