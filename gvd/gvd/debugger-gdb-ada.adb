@@ -125,8 +125,7 @@ package body Debugger.Gdb.Ada is
                --  information
                Set_Type_Name
                  (Result,
-                  Get_Type_Info
-                  (Get_Debugger (Lang), Entity, Type_Str));
+                  Unknown_Type_Prefix & Entity & ASCII.LF & Type_Str);
             else
                raise Unexpected_Type;
             end if;
@@ -272,8 +271,8 @@ package body Debugger.Gdb.Ada is
             --  Get the result of "whatis" so as to get a more concise
             --  information.
             Set_Type_Name
-              (Result, Get_Type_Info (Get_Debugger (Lang),
-               Entity, Type_Str (Start .. Index)));
+              (Result, Unknown_Type_Prefix & Entity
+               & ASCII.LF & Type_Str (Start .. Index));
             Index := Index + 1;
 
          --  A type we do not expect.
@@ -345,7 +344,7 @@ package body Debugger.Gdb.Ada is
 
       Result := New_Array_Type (Num_Dimensions => Num_Dim);
       R := Array_Type_Access (Result);
-      Set_Type_Name (R, Get_Type_Info (Get_Debugger (Lang), Entity, Type_Str));
+      Set_Type_Name (R, Unknown_Type_Prefix & Entity & ASCII.LF & Type_Str);
 
       --  Then parse the dimensions.
 
@@ -448,9 +447,9 @@ package body Debugger.Gdb.Ada is
       then
          G := New_Access_Type;
          Set_Type_Name
-           (G, Get_Type_Info
-            (Get_Debugger (Lang), Array_Item_Name (Lang, Entity, "0"),
-             "array"));
+           (G, Unknown_Type_Prefix
+            & Array_Item_Name (Lang, Entity, "0")
+            & ASCII.LF & "array");
          Set_Item_Type (R.all, New_Access_Type);
 
       else
@@ -535,7 +534,7 @@ package body Debugger.Gdb.Ada is
 
       R := Record_Type_Access (Result);
 
-      Set_Type_Name (R, Get_Type_Info (Get_Debugger (Lang), Entity, Type_Str));
+      Set_Type_Name (R, Unknown_Type_Prefix & Entity & ASCII.LF & Type_Str);
 
       --  Now parse all the fields
 
@@ -638,11 +637,11 @@ package body Debugger.Gdb.Ada is
                --  concise information
 
                Set_Type_Name
-                 (G, Get_Type_Info
-                  (Get_Debugger (Lang),
-                   Record_Field_Name
-                   (Lang, Entity, Get_Field_Name (R.all, Fields).all),
-                   Type_Str (Tmp_Index .. Index - 1)));
+                 (G,
+                  Unknown_Type_Prefix
+                  & Record_Field_Name
+                    (Lang, Entity, Get_Field_Name (R.all, Fields).all)
+                  & ASCII.LF & Type_Str (Tmp_Index .. Index - 1));
 
             else
                Set_Value (R.all,

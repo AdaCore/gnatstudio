@@ -155,8 +155,8 @@ package body Debugger.Gdb.C is
 
          Set_Type_Name
            (Result,
-            Get_Type_Info (Get_Debugger (Lang), Entity,
-                           Type_Str (Type_Str'First .. Index - 1)));
+            Unknown_Type_Prefix & Entity & ASCII.LF
+            & Type_Str (Type_Str'First .. Index - 1));
          return;
       end if;
 
@@ -326,7 +326,7 @@ package body Debugger.Gdb.C is
 
       Result := New_Array_Type (Num_Dimensions => Num_Dim);
       R := Array_Type_Access (Result);
-      Set_Type_Name (R, Get_Type_Info (Get_Debugger (Lang), Entity, Type_Str));
+      Set_Type_Name (R, Unknown_Type_Prefix & Entity & ASCII.LF & Type_Str);
 
       --  Then parse the dimensions.
       Num_Dim := 0;
