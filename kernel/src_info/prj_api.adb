@@ -173,7 +173,9 @@ package body Prj_API is
       Var := Default_Project_Node (Item_Kind, Kind);
       Set_Current_Item_Node (Decl_Item, Var);
       Set_Name_Of (Var, N);
-      Set_Associative_Array_Index_Of (Var, Array_Index);
+      if Item_Kind = N_Attribute_Declaration then
+         Set_Associative_Array_Index_Of (Var, Array_Index);
+      end if;
       return Var;
    end Internal_Get_Or_Create_Attribute;
 
@@ -380,7 +382,7 @@ package body Prj_API is
       case Kind_Of (Var) is
          when N_Typed_Variable_Declaration =>
             pragma Assert (String_Type_Of (Var) /= Empty_Node);
-            Str := Expression_Of (String_Type_Of (Var));
+            Str := First_Literal_String (String_Type_Of (Var));
 
             --  Check that the value is valid, and reuse the string_id.
             while Str /= Empty_Node loop
@@ -390,7 +392,7 @@ package body Prj_API is
                     (Var, String_As_Expression (String_Value_Of (Str)));
                   return;
                end if;
-               Str := Next_Expression_In_List (Str);
+               Str := Next_Literal_String (Str);
             end loop;
 
             raise Invalid_Value;
@@ -453,7 +455,7 @@ package body Prj_API is
             when N_Expression =>
                Set_Expression_Of (Var_Or_Attribute, Expr);
             when N_External_Value =>
-               Set_First_Term (E, Expr);
+               Set_External_Default_Of (E, Expr);
             when others =>
                Put_Line ("Set_Expression: Invalid contents for variable: "
                          & Kind_Of (E)'Img);
@@ -557,7 +559,6 @@ package body Prj_API is
          Typ := String_Type_Of (Var_Or_Type);
       end if;
 
-      pragma Assert (Kind_Of (Var_Or_Type) = N_String_Type_Declaration);
       return (Current => First_Literal_String (Typ));
    end Type_Values;
 

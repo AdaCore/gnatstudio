@@ -553,13 +553,18 @@ package body Variable_Editors is
                      Name_Buffer (Name_Buffer'First .. Name_Len) := N;
                      Set_Name_Of (Editor.Var, Name_Find);
                   end if;
-                  Set_Expression_Kind_Of
-                    (Editor.Var, Expression_Kind_Of (Expr));
 
                   if Get_Active (Editor.Typed_Variable) then
                      --  Should delete previous type
+                     Get_Name_String (Name_Of (Editor.Var));
+                     Name_Buffer (Name_Len + 1 .. Name_Len + 5) := "_Type";
+                     Name_Len := Name_Len + 5;
+                     Set_Name_Of (Expr, Name_Find);
                      Set_Kind_Of (Editor.Var, N_Typed_Variable_Declaration);
                      Set_String_Type_Of (Editor.Var, Expr);
+                  else
+                     Set_Expression_Kind_Of
+                       (Editor.Var, Expression_Kind_Of (Expr));
                   end if;
                end;
             end if;

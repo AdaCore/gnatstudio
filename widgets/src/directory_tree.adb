@@ -1,13 +1,18 @@
 
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with Glib;                      use Glib;
 with Gdk.Color;                 use Gdk.Color;
 with Gdk.Pixmap;                use Gdk.Pixmap;
+with Gtk.Adjustment;            use Gtk.Adjustment;
 with Gtk.Arguments;             use Gtk.Arguments;
 with Gtk.Ctree;                 use Gtk.Ctree;
+with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Widget;                use Gtk.Widget;
 with Gtkada.Handlers;           use Gtkada.Handlers;
 with Gtkada.Types;              use Gtkada.Types;
+
+with Ada.Text_IO; use Ada.Text_IO;
 
 package body Directory_Tree is
 
@@ -29,6 +34,8 @@ package body Directory_Tree is
    --  Return the node matching Dir in the tree.
    --  Dir is the absolute path to the directory. If the node is not already
    --  in the tree, it is added if Add_If_Necessary is True.
+
+   procedure Realized (Tree : access Gtk_Widget_Record'Class);
 
    function Add_Directory_Node
      (Tree       : access Dir_Tree_Record'Class;
@@ -98,7 +105,25 @@ package body Directory_Tree is
 
       Add_Directory (Tree, Root);
       Widget_Callback.Connect (Tree, "tree_expand", Expand_Tree_Cb'Access);
+
+      --  ??? This is a workaround for a horizontal scrollbar problem: When the
+      --  ctree is put in a scrolled window, and if this is not called, the
+      --  scrollbar does not allow us to scroll as far right as possible...
+      Set_Column_Auto_Resize (Tree, 0, True);
+
+      Widget_Callback.Connect
+        (Tree, "realize", Widget_Callback.To_Marshaller (Realized'Access));
    end Initialize;
+
+   --------------
+   -- Realized --
+   --------------
+
+   procedure Realized (Tree : access Gtk_Widget_Record'Class) is
+      T : Dir_Tree := Dir_Tree (Tree);
+   begin
+      Show_Directory (T, Get_Current_Dir);
+   end Realized;
 
    ---------------
    -- Directory --
@@ -347,6 +372,7 @@ package body Directory_Tree is
    procedure Show_Directory (Tree : access Dir_Tree_Record; Dir : String) is
       N : Gtk_Ctree_Node := Find_In_Tree (Tree, Dir);
       N2 : Gtk_Ctree_Node := N;
+--        Pos : Gfloat;
    begin
       if not Is_Viewable (Tree, N) then
          loop
@@ -359,9 +385,24 @@ package body Directory_Tree is
       Gtk_Select (Tree, N2);
 
       --  Scroll to make the directory visible
-      Moveto (Tree, 30, 0, 0.5, 0.0);
+
+--        Pos := 0.0;
+--        pragma Assert (Get_Vadjustment (Tree) /= null);
+--        while Pos <= Get_Upper (Get_Vadjustment (Tree))
+--          and then Node_Is_Visible (Tree, N2) = Visibility_None
+--        loop
+--           Put_Line ("No match at"
+--                     & Get_Value (Get_Vadjustment (Tree))'Img
+--                     & "  Visible="
+--                     & Node_Is_Visible (Tree, N2)'Img);
+--           Set_Value (Get_Vadjustment (Tree), Pos);
+--           Pos := Pos + Get_Page_Size (Get_Vadjustment (Tree)) / 2.0;
+--        end loop;
+
+      --  Moveto (Tree, 30, 0, 0.0, 0.2);
+      Node_Moveto (Tree, N2, 0, 0.1, 0.2);
 --        if Node_Is_Visible (Tree, N2) /= Visibility_Full then
---           Node_Moveto (Tree, N2, 0, 0.5, 0.0);
+--           Node_Moveto (Tree, N2, 0, 0.1, 0.2);
 --        end if;
    end Show_Directory;
 
