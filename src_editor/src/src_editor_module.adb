@@ -122,11 +122,7 @@ package body Src_Editor_Module is
       3 => Regexp_Cst'Access,
       4 => Scope_Cst'Access);
    Project_Search_Parameters : constant Cst_Argument_List :=
-     (1 => Pattern_Cst'Access,
-      2 => Case_Cst'Access,
-      3 => Regexp_Cst'Access,
-      4 => Recursive_Cst'Access,
-      5 => Scope_Cst'Access);
+     File_Search_Parameters & (5 => Recursive_Cst'Access);
 
    procedure Generate_Body_Cb (Data : Process_Data; Status : Integer);
    --  Callback called when gnatstub has completed.
@@ -378,6 +374,9 @@ package body Src_Editor_Module is
      (Data    : in out Callback_Data'Class; Command : String);
    procedure Project_Search_Command_Handler
      (Data    : in out Callback_Data'Class; Command : String);
+   procedure Common_Search_Command_Handler
+     (Data    : in out Callback_Data'Class;
+      Files   : String_Array_Access);
    --  Interactive command handler for the source editor module (Search part)
 
    procedure Add_To_Recent_Menu
@@ -488,6 +487,73 @@ package body Src_Editor_Module is
          Length => 0);
    end Find_Mark;
 
+   -----------------------------------
+   -- Common_Search_Command_Handler --
+   -----------------------------------
+
+   procedure Common_Search_Command_Handler
+     (Data    : in out Callback_Data'Class;
+      Files   : String_Array_Access)
+   is
+      Kernel    : constant Kernel_Handle := Get_Kernel (Data);
+      Context   : Files_Project_Context_Access;
+      Pattern   : constant String  := Nth_Arg (Data, 2);
+      Casing    : constant Boolean := Nth_Arg (Data, 3, False);
+      Regexp    : constant Boolean := Nth_Arg (Data, 4, False);
+      Scope     : constant String  := Nth_Arg (Data, 5, "whole");
+      S         : Search_Scope;
+
+      function Callback (Match : Match_Result) return Boolean;
+      --  Store the result of the match in Data
+
+      function Callback (Match : Match_Result) return Boolean is
+      begin
+         Set_Return_Value
+           (Data,
+            Create_File_Location
+              (Get_Script (Data),
+               Create_File (Get_Script (Data), Current_File (Context)),
+               Match.Line,
+               Match.Column));
+         return True;
+      end Callback;
+
+   begin
+      if Scope = "whole" then
+         S := Whole;
+      elsif Scope = "comments" then
+         S := Comments_Only;
+      elsif Scope = "strings" then
+         S := Strings_Only;
+      elsif Scope = "code" then
+         S := All_But_Comments;
+      else
+         S := Whole;
+      end if;
+
+      Context := Files_From_Project_Factory
+        (Scope           => S,
+         All_Occurrences => True);
+      Set_File_List (Context, Files);
+      Set_Context
+        (Context,
+         Look_For => Pattern,
+         Options => (Case_Sensitive => Casing,
+                     Whole_Word     => False,
+                     Regexp         => Regexp));
+
+      Set_Return_Value_As_List (Data);
+
+      while Search
+        (Context => Context,
+         Kernel  => Kernel,
+         Callback => Callback'Unrestricted_Access)
+      loop
+         --  No need to delay, since the search is done in same process.
+         null;
+      end loop;
+   end Common_Search_Command_Handler;
+
    ---------------------------------
    -- File_Search_Command_Handler --
    ---------------------------------
@@ -500,66 +566,10 @@ package body Src_Editor_Module is
       Inst   : constant Class_Instance :=
         Nth_Arg (Data, 1, Get_File_Class (Kernel));
       Info   : constant File_Info := Get_Data (Inst);
-      Context : Files_Project_Context_Access;
-
-      function Callback (Match : Match_Result) return Boolean;
-      --  Store the result of the match in Data
-
-      function Callback (Match : Match_Result) return Boolean is
-      begin
-         Set_Return_Value
-           (Data, Current_File (Context) & ':'
-            & Image (Match.Line) & ':'
-            & Image (Match.Column));
-         return True;
-      end Callback;
-
    begin
       Name_Parameters (Data, File_Search_Parameters);
-
-      declare
-         Pattern : constant String  := Nth_Arg (Data, 2);
-         Casing  : constant Boolean := Nth_Arg (Data, 3, False);
-         Regexp  : constant Boolean := Nth_Arg (Data, 4, False);
-         Scope   : constant String  := Nth_Arg (Data, 5, "whole");
-         S       : Search_Scope;
-      begin
-         if Scope = "whole" then
-            S := Whole;
-         elsif Scope = "comments" then
-            S := Comments_Only;
-         elsif Scope = "strings" then
-            S := Strings_Only;
-         elsif Scope = "code" then
-            S := All_But_Comments;
-         else
-            S := Whole;
-         end if;
-
-         Context := Files_From_Project_Factory
-           (Scope           => S,
-            All_Occurrences => True);
-         Set_File_List
-           (Context,
-            new String_Array'(1 => new String'(Get_Name (Info))));
-         Set_Context
-           (Context,
-            Look_For => Pattern,
-            Options => (Case_Sensitive => Casing,
-                        Whole_Word     => False,
-                        Regexp         => Regexp));
-
-         Set_Return_Value_As_List (Data);
-
-         while Search
-           (Context => Context,
-            Kernel  => Kernel,
-            Callback => Callback'Unrestricted_Access)
-         loop
-            --  No need to delay, since the search is done in same process.
-            null;
-         end loop;
-      end;
+      Common_Search_Command_Handler
+        (Data, new String_Array'(1 => new String'(Get_Name (Info))));
    end File_Search_Command_Handler;
 
    ------------------------------------
@@ -570,71 +580,16 @@ package body Src_Editor_Module is
      (Data    : in out Callback_Data'Class; Command : String)
    is
       pragma Unreferenced (Command);
-      Kernel : constant Kernel_Handle := Get_Kernel (Data);
-      Inst   : constant Class_Instance :=
+      Kernel    : constant Kernel_Handle := Get_Kernel (Data);
+      Inst      : constant Class_Instance :=
         Nth_Arg (Data, 1, Get_Project_Class (Kernel));
       Project   : constant Project_Type := Get_Data (Inst);
-      Context : Files_Project_Context_Access;
-
-      function Callback (Match : Match_Result) return Boolean;
-      --  Store the result of the match in Data
-
-      function Callback (Match : Match_Result) return Boolean is
-      begin
-         Set_Return_Value
-           (Data, Current_File (Context) & ':'
-            & Image (Match.Line) & ':'
-            & Image (Match.Column));
-         return True;
-      end Callback;
-
+      Recursive : Boolean;
    begin
       Name_Parameters (Data, File_Search_Parameters);
-
-      declare
-         Pattern   : constant String  := Nth_Arg (Data, 2);
-         Casing    : constant Boolean := Nth_Arg (Data, 3, False);
-         Regexp    : constant Boolean := Nth_Arg (Data, 4, False);
-         Recursive : constant Boolean := Nth_Arg (Data, 5, True);
-         Scope     : constant String  := Nth_Arg (Data, 6, "whole");
-         S         : Search_Scope;
-      begin
-         if Scope = "whole" then
-            S := Whole;
-         elsif Scope = "comments" then
-            S := Comments_Only;
-         elsif Scope = "strings" then
-            S := Strings_Only;
-         elsif Scope = "code" then
-            S := All_But_Comments;
-         else
-            S := Whole;
-         end if;
-
-         Context := Files_From_Project_Factory
-           (Scope           => S,
-            All_Occurrences => True);
-         Set_File_List
-           (Context,
-            Get_Source_Files (Project, Recursive));
-         Set_Context
-           (Context,
-            Look_For => Pattern,
-            Options => (Case_Sensitive => Casing,
-                        Whole_Word     => False,
-                        Regexp         => Regexp));
-
-         Set_Return_Value_As_List (Data);
-
-         while Search
-           (Context => Context,
-            Kernel  => Kernel,
-            Callback => Callback'Unrestricted_Access)
-         loop
-            --  No need to delay, since the search is done in same process.
-            null;
-         end loop;
-      end;
+      Recursive := Nth_Arg (Data, 5, True);
+      Common_Search_Command_Handler
+        (Data, Get_Source_Files (Project, Recursive));
    end Project_Search_Command_Handler;
 
    --------------------------
@@ -2693,7 +2648,7 @@ package body Src_Editor_Module is
                   No_Location := True;
                end if;
 
-               if Console_Has_Focus (Kernel) then
+               if False and then Console_Has_Focus (Kernel) then
                   --  Only grab again the focus on Child (in Location_Callback)
                   --  if the focus was changed by Open_File, and an interactive
                   --  console had the focus previousely.
