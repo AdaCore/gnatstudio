@@ -93,6 +93,15 @@ package body Glide_Kernel.Preferences is
       Register_Property
         (Kernel.Preferences, Param_Spec (Animated_Image), -"General");
 
+      Can_Change_Accels := Param_Spec_Boolean (Gnew_Boolean
+        (Name    => "General-Can-Change-Accels",
+         Nick    => -"Dynamic key bindings",
+         Blurb   =>
+           -"True if the menu key bindings can be changed interactively",
+         Default => False));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (Can_Change_Accels), -"General");
+
       Splash_Screen := Param_Spec_Boolean
         (Gnew_Boolean
            (Name    => "General-Splash-Screen",
