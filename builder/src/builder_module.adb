@@ -19,7 +19,6 @@
 -----------------------------------------------------------------------
 
 with Glib;                      use Glib;
-with Glib.Convert;              use Glib.Convert;
 with Glib.Object;               use Glib.Object;
 with Gtk.Accel_Group;           use Gtk.Accel_Group;
 with Gdk.Color;                 use Gdk.Color;
@@ -76,7 +75,6 @@ with GNAT.Case_Util;            use GNAT.Case_Util;
 
 with Traces;                    use Traces;
 with Ada.Exceptions;            use Ada.Exceptions;
-with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 with Ada.Unchecked_Deallocation;
 with Ada.Tags;                  use Ada.Tags;
 
@@ -158,7 +156,7 @@ package body Builder_Module is
    --  Type used in Scenario_Variables_Cmd_Line to determine the command line
    --  syntax used when setting variables.
    --  GNAT_Syntax means use the GNAT project file syntax (-XVAR=value)
-   --  Make_Syntax means use the GNU make syntax (VAR=value)
+   --  Make_Syntax means use the gprmake syntax.
 
    function Compute_Arguments
      (Kernel         : Kernel_Handle;
@@ -372,110 +370,43 @@ package body Builder_Module is
          Project_Str := new String'(Path);
       end if;
 
-      case Syntax is
-         when GNAT_Syntax =>
-            --  gnatmake -d -Pproject main -XVAR1=value1 ...
+      --  -XVAR1=value1 [-c] -Pproject [-u] main...
 
-            Vars := Argument_String_To_List
-              (Scenario_Variables_Cmd_Line (Kernel, "-X"));
+      Vars := Argument_String_To_List
+        (Scenario_Variables_Cmd_Line (Kernel, "-X"));
 
-            declare
-               R_Tmp : Argument_List (1 .. 3);
-               K     : Natural := 0;
-            begin
+      declare
+         R_Tmp : Argument_List (1 .. 5);
+         K     : Natural := 0;
+      begin
+         if Compile_Only then
+            K := K + 1;
+            R_Tmp (K) := new String'("-c");
+         end if;
+
+         K := K + 1;
+         R_Tmp (K) := new String'("-P" & Project_Str.all);
+
+         if File = VFS.No_File then
+            if Unique_Project then
                K := K + 1;
-               R_Tmp (K) := new String'("-d");
+               R_Tmp (K) := new String'(Unique_Compile);
+            end if;
+         else
+            K := K + 1;
+            R_Tmp (K) := new String'(Base_Name (File));
+         end if;
 
-               K := K + 1;
-               R_Tmp (K) := new String'("-P" & Project_Str.all);
+         if Syntax = GNAT_Syntax then
+            --  ??? Until gprmake supports the -d option, only do this for
+            --  gnatmake
 
-               if File = VFS.No_File then
-                  if Unique_Project then
-                     K := K + 1;
-                     R_Tmp (K) := new String'(Unique_Compile);
-                  end if;
-               else
-                  K := K + 1;
-                  R_Tmp (K) := new String'(Base_Name (File));
-               end if;
+            K := K + 1;
+            R_Tmp (K) := new String'("-d");
+         end if;
 
-               Result := new Argument_List'(R_Tmp (1 .. K) & Vars.all);
-            end;
-
-         when Make_Syntax =>
-            --  make -s -C dir -f Makefile.project build VAR1=value1 ...
-
-            Vars := Argument_String_To_List
-              (Scenario_Variables_Cmd_Line (Kernel, ""));
-
-            declare
-               Lang : String := Get_Language_From_File
-                 (Get_Language_Handler (Kernel), File);
-               List : constant Argument_List :=
-                 ((new String'("-s"),
-                   new String'("-C"),
-                   new String'(Dir_Name (Project_Str.all)),
-                   new String'("-f"),
-                   new String'("Makefile." &
-                               Base_Name (Project_Str.all, ".gpr"))) &
-                  Vars.all);
-               Base : constant String := Locale_From_UTF8 (Base_Name (File));
-               Base_Object : constant String :=
-                 Base (Base'First ..
-                         Index (Base, ".",
-                                Going => Ada.Strings.Backward)) & "o";
-
-            begin
-               if File /= VFS.No_File and then Compile_Only then
-                  --  Compute the name of the object file to build and pass it
-                  --  to make
-
-                  Result := new Argument_List'
-                    (List & new String'(Base_Object));
-
-               else
-                  To_Lower (Lang);
-
-                  if Lang = "ada" then
-                     if File = VFS.No_File then
-                        if Unique_Project then
-                           Result := new Argument_List'
-                             (List &
-                              new String'("build") &
-                              new String'("ADAFLAGS=-d -u"));
-                        else
-                           Result := new Argument_List'
-                             (List &
-                              new String'("build") &
-                              new String'("ADAFLAGS=-d"));
-                        end if;
-
-                     else
-                        Result := new Argument_List'
-                          (List &
-                           new String'("build") &
-                           new String'("ADA_SOURCES=" & Base) &
-                           new String'("ADAFLAGS=-d"));
-                     end if;
-
-                  else
-                     if File = VFS.No_File then
-                        Result := new Argument_List'
-                          (List & new String'("build"));
-                     else
-                        Result := new Argument_List'
-                          (List &
-                           new String'("build") &
-                           new String'("MAIN_OBJECT=" & Base_Object) &
-                           new String'("MAIN=" & Lang) &
-                           new String'("ADAFLAGS=-d") &
-                           new String'("EXEC=" &
-                                       Get_Executable_Name (Project, Base)));
-                     end if;
-                  end if;
-               end if;
-            end;
-      end case;
+         Result := new Argument_List'(R_Tmp (1 .. K) & Vars.all);
+      end;
 
       Basic_Types.Unchecked_Free (Vars);
       Free (Project_Str);
@@ -624,12 +555,24 @@ package body Builder_Module is
          return;
       end if;
 
-      To_Lower (Langs (Langs'First).all);
+      for F in Langs'Range loop
+         To_Lower (Langs (F).all);
+      end loop;
 
       if Langs'Length = 1 and then Langs (Langs'First).all = "ada" then
          Syntax := GNAT_Syntax;
+      elsif Get_Pref (Kernel, Multi_Language_Build) then
+         Syntax := Make_Syntax;
       else
          Syntax := Make_Syntax;
+
+         for J in Langs'Range loop
+            if Langs (J).all = "ada" then
+               Syntax := GNAT_Syntax;
+
+               exit;
+            end if;
+         end loop;
       end if;
 
       Free (Langs);
@@ -742,7 +685,7 @@ package body Builder_Module is
                Default => "gnatmake", Index => "ada"));
 
          when Make_Syntax =>
-            Cmd := new String'("make");
+            Cmd := new String'("gprmake");
       end case;
 
       Set_Sensitive_Menus (Kernel, False);
@@ -954,7 +897,7 @@ package body Builder_Module is
          end if;
 
          Syntax      := Make_Syntax;
-         Cmd         := new String'("make");
+         Cmd         := new String'("gprmake");
          Common_Args := new Argument_List'(1 .. 0 => null);
       end if;
 
