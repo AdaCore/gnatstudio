@@ -345,39 +345,27 @@ package body VCS.CVS is
                  and then Line (Index .. Index + 6) = "Unknown"
                then
                   Current_Status.Status := Not_Registered;
+
                elsif Last >= Index + 15
                  and then Line (Index .. Index + 15) = "Locally Modified"
                then
                   Current_Status.Status := Modified;
+
                elsif Last >= Index + 14
                  and then Line (Index .. Index + 14) = "Locally Removed"
                then
                   Current_Status.Status := Not_Registered;
 
-                  declare
-                     S : constant String :=
-                       String_List.Head (Current_Status.File_Name);
-                  begin
-                     if S'Length > New_Dir'Length + 7
-                       and then S
-                         (S'First + New_Dir'Length
-                              .. S'First + New_Dir'Length + 7) = "no file "
-                     then
-                        Free (Current_Status.File_Name);
-                        Append (Current_Status.File_Name,
-                                New_Dir &
-                                S (S'First + New_Dir'Length + 8 .. S'Last));
-                     end if;
-                  end;
-
                elsif Last >= Index + 10
                  and then Line (Index .. Index + 10) = "Needs Merge"
                then
                   Current_Status.Status := Needs_Merge;
+
                elsif Last >= Index + 10
                  and then Line (Index .. Index + 10) = "Needs Patch"
                then
                   Current_Status.Status := Needs_Update;
+
                elsif Last >= Index + 9
                  and then Line (Index .. Index + 9) =  "Up-to-date"
                then
@@ -399,15 +387,34 @@ package body VCS.CVS is
                         Current_Status.Status := Removed;
                      end if;
                   end;
+
                elsif Last >= Index + 13
                  and then Line (Index .. Index + 13) = "Needs Checkout"
                then
                   Current_Status.Status := Needs_Update;
+
                elsif Last > Index + 13
                  and then Line (Index .. Index + 13) = "File had confl"
                then
                   Current_Status.Status := Modified;
                end if;
+
+               declare
+                  S : constant String :=
+                    String_List.Head (Current_Status.File_Name);
+               begin
+                  if S'Length > New_Dir'Length + 7
+                    and then S
+                      (S'First + New_Dir'Length
+                           .. S'First + New_Dir'Length + 7) = "no file "
+                  then
+                     Free (Current_Status.File_Name);
+                     Append (Current_Status.File_Name,
+                             New_Dir &
+                             S (S'First + New_Dir'Length + 8 .. S'Last));
+                  end if;
+               end;
+
 
             elsif Length > 14
               and then Line (First .. First + 13) = "   Working rev"
@@ -429,6 +436,7 @@ package body VCS.CVS is
                   Append (Current_Status.Working_Revision,
                           Trim (Line (Index .. Next_Index), Both));
                end if;
+
             elsif Length > 15
               and then Line (First .. First + 14) = "   Repository r"
             then
