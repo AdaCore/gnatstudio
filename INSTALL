@@ -10,7 +10,7 @@ GNAT must be installed before compiling any of the other
 packages, and the C compiler that comes with GNAT must be used to build
 Gtk+, since the Gtk+ packages are dependent on the particular compiler used.
 
-You then need to install the Gtk+ 2 suite (e.g 2.0.9 or 2.2.0).
+You then need to install the Gtk+ 2 suite (e.g 2.2.1).
 To download and build Gtk+, follow the instructions given at www.gtk.org
 
 Once Gtk+ has been installed, extract the GPS sources:
@@ -41,6 +41,6 @@ commands at the top level GPS source directory:
 
 
 If you need to modify configure.in and then regenerate the configure script,
-you will need autoconf version 2.13 installed on your machine. Later version
-are not compatible.
+you will need autoconf version 2.54 installed on your machine. Later version
+may not be compatible.
 
