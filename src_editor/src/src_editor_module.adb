@@ -1470,7 +1470,7 @@ package body Src_Editor_Module is
 
       Source : Source_Box;
       Edit   : Source_Editor_Box;
-
+      MDI    : constant MDI_Window := Get_MDI (Kernel);
    begin
       if Mime_Type = Mime_Source_File then
          declare
@@ -1483,46 +1483,63 @@ package body Src_Editor_Module is
               Get_Boolean (Data (Data'First + 5));
             The_Data  : Source_Editor_Module :=
               Source_Editor_Module (Src_Editor_Module_Id);
-
+            Iter      : Child_Iterator := First_Child (MDI);
+            Child     : MDI_Child;
          begin
-            if The_Data.Location_Open_Id /= 0 then
-               Idle_Remove (The_Data.Location_Open_Id);
-            end if;
+            if Line = -1 then
+               loop
+                  Child := Get (Iter);
 
-            Source := Open_File (Kernel, File, Create_New => New_File);
+                  exit when Child = null;
 
-            if Source /= null then
-               Edit := Source.Editor;
-            end if;
+                  if Get_Title (Child) = File then
+                     Destroy (Source_Box (Get_Widget (Child)));
+                  end if;
 
-            if Edit /= null
-              and then (Line /= 0 or else Column /= 0)
-            then
-               --  For some reason, we can not directly call
-               --  Set_Cursor_Location, since the source editor won't be
-               --  scrolled the first time the editor is displayed. Doing
-               --  this in an idle callback ensures that all the proper
-               --  events and initializations have taken place before we try
-               --  to scroll the editor.
+                  Next (Iter);
+               end loop;
 
-               Grab_Focus (Edit);
+               return True;
 
-               The_Data.Location_Open_Id := Location_Idle.Add
-                 (Location_Callback'Access,
-                  (Edit, Natural (Line), Natural (Column)),
-                  Destroy => Location_Destroy'Access);
-
-               if Highlight then
-                  Highlight_Line (Edit, Natural (Line));
+            else
+               if The_Data.Location_Open_Id /= 0 then
+                  Idle_Remove (The_Data.Location_Open_Id);
                end if;
-            end if;
 
-            return Edit /= null;
+               Source := Open_File (Kernel, File, Create_New => New_File);
+
+               if Source /= null then
+                  Edit := Source.Editor;
+               end if;
+
+               if Edit /= null
+                 and then (Line /= 0 or else Column /= 0)
+               then
+                  --  For some reason, we can not directly call
+                  --  Set_Cursor_Location, since the source editor won't be
+                  --  scrolled the first time the editor is displayed. Doing
+                  --  this in an idle callback ensures that all the proper
+                  --  events and initializations have taken place before we
+                  --  try to scroll the editor.
+
+                  Grab_Focus (Edit);
+
+                  The_Data.Location_Open_Id := Location_Idle.Add
+                    (Location_Callback'Access,
+                       (Edit, Natural (Line), Natural (Column)),
+                     Destroy => Location_Destroy'Access);
+
+                  if Highlight then
+                     Highlight_Line (Edit, Natural (Line));
+                  end if;
+               end if;
+
+               return Edit /= null;
+            end if;
          end;
 
       elsif Mime_Type = Mime_File_Line_Info then
          declare
-            MDI   : constant MDI_Window := Get_MDI (Kernel);
             File  : constant String  := Get_String (Data (Data'First));
             Id    : constant String  := Get_String (Data (Data'First + 1));
             Info  : constant Line_Information_Data :=
