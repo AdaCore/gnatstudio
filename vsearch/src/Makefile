@@ -1,4 +1,4 @@
-GVD_SOURCES=/berlin.a/hitier/src/gvd/gvd
+GVD_SOURCES=../../gvd/gvd
 all: find_utils gui
 
 find_utils:
