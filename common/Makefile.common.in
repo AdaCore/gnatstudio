@@ -24,7 +24,7 @@ OBJ_DIR = $(COMMON_OBJ_DIR)
 CFLAGS = -g -O2 -DSYSTEM_INCLUDE=@opsysfile@ @DEFS@
 
 PROJECT_FILE = common
-LIBS := $(COMMON_OBJ_DIR)/libcommon$(AR_EXT) @TARGET_LFLAGS@ $(LIBS)
+LIBS := @TARGET_LFLAGS@ $(LIBS)
 
 ifeq ($(COMMON_ROOT),True)
    include ../builder/src/Makefile.generic
