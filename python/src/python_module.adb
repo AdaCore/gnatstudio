@@ -670,7 +670,7 @@ package body Python_Module is
 
          Result := Run_Command
            (Python_Module_Id.Script.Interpreter,
-            "sys.path=['" & Dir & "']+sys.path",
+            "sys.path=[r'" & Dir & "']+sys.path",
             Hide_Output => True,
             Errors      => Errors'Unrestricted_Access);
 
