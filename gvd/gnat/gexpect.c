@@ -1,3 +1,53 @@
+#ifdef _WIN32
+
+#include <windows.h>
+
+void
+__gnat_pipe (int *fd)
+{
+  HANDLE read, write;
+
+  CreatePipe (&read, &write, NULL, 0);
+  fd[0]=_open_osfhandle (read, 0);
+  fd[1]=_open_osfhandle (write, 0);
+}
+
+int
+__gnat_expect_poll (int *fd, int num_fd, int timeout, int *is_set)
+{
+  int i, num;
+  DWORD avail;
+  HANDLE handles[num_fd];
+
+  for (i=0; i<num_fd; i++)
+    is_set[i]=0;
+
+  for (i=0; i<num_fd; i++)
+    handles[i] = (HANDLE) _get_osfhandle (fd [i]);
+
+  num = timeout / 10;
+
+  for (;;)
+    {
+      for (i=0; i<num_fd; i++)
+	{
+	  if (!PeekNamedPipe (handles [i], NULL, 0, NULL, &avail, NULL))
+	    return -1;
+	  if (avail > 0)
+	    {
+	      is_set[i] = 1;
+	      return 1;
+	    }
+	}
+
+      if (num == 0)
+	return 0;
+      Sleep (10);
+      num--;
+    }
+}
+
+#else
 
 /* The following implementation of poll() comes from the GNU C Library.
  * Copyright (C) 1994, 1996, 1997 Free Software Foundation, Inc.
@@ -23,6 +73,12 @@ typedef long fd_mask;
 #    define SELECT_MASK int
 #  endif /* !_IBMR2 */
 #endif /* !NO_FD_SET */
+
+void
+__gnat_pipe (int *fd)
+{
+  pipe (fd);
+}
 
 int
 __gnat_expect_poll (int* fd, int num_fd, int timeout, int* is_set)
@@ -56,3 +112,5 @@ __gnat_expect_poll (int* fd, int num_fd, int timeout, int* is_set)
   
   return ready;
 }
+
+#endif
