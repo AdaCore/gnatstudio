@@ -26,7 +26,7 @@
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with List_Utils;                use List_Utils;
 with Entities;                  use Entities;
-with GPS.Kernel;              use GPS.Kernel;
+with GPS.Kernel;                use GPS.Kernel;
 with VFS;
 with Generic_List;
 with HTables;
