@@ -237,7 +237,7 @@ package body Codefix.Merge_Utils is
       New_Infos       : Ptr_Merge_Array;
       Position        : constant Natural := Get_Array_Position (This, Start);
    begin
-      if Position > This.Str'First then
+      if Position > This.Str'First and then Position <= This.Str'Last then
          New_Str := new String'
            (This.Str (This.Str'First .. Position - 1)
               & Value
@@ -246,9 +246,12 @@ package body Codefix.Merge_Utils is
            (This.Infos (This.Infos'First .. Position - 1)
               & Insertion_Array
               & This.Infos (Position .. This.Str'Last));
-      else
+      elsif Position = This.Str'First then
          New_Str := new String'(Value & This.Str.all);
-         New_Infos := new Merge_Array '(Insertion_Array & This.Infos.all);
+         New_Infos := new Merge_Array'(Insertion_Array & This.Infos.all);
+      else
+         New_Str := new String'(This.Str.all & Value);
+         New_Infos := new Merge_Array'(This.Infos.all & Insertion_Array);
       end if;
 
       Free (This.Str);
@@ -258,6 +261,29 @@ package body Codefix.Merge_Utils is
 
    end Insert;
 
+   ------------
+   -- Modify --
+   ------------
+
+   procedure Modify
+     (This : in out Mergable_String; Start : Natural; Value : String)
+   is
+      Position : Natural := Get_Array_Position (This, Start);
+   begin
+      for J in Value'Range loop
+         while This.Infos (Position) = Unit_Deleted loop
+            Position := Position + 1;
+         end loop;
+
+         This.Str (Position) := Value (J);
+         if This.Infos (Position) = Original_Unit then
+            This.Infos (Position) := Unit_Modified;
+         end if;
+
+         Position := Position + 1;
+      end loop;
+   end Modify;
+
    -------------
    -- Replace --
    -------------
@@ -265,8 +291,15 @@ package body Codefix.Merge_Utils is
    procedure Replace
      (This : in out Mergable_String; Start, Len : Natural; Value : String) is
    begin
-      Delete (This, Start, Len);
-      Insert (This, Start, Value);
+      if Len > Value'Length then
+         Modify (This, Start, Value);
+         Delete (This, Start + Len, Len - Value'Length);
+      elsif Len < Value'Length then
+         Modify (This, Start, Value (Value'First .. Value'First + Len - 1));
+         Insert (This, Start + Len, Value (Value'First + Len .. Value'Last));
+      else
+         Modify (This, Start, Value);
+      end if;
    end Replace;
 
    ------------------
@@ -502,7 +535,7 @@ package body Codefix.Merge_Utils is
          end if;
       end loop;
 
-      return Str.Infos'Last;
+      return Str.Infos'Last + 1;
    end Get_Array_Position;
 
    -----------------
