@@ -183,8 +183,7 @@ package body Project_Explorers is
    function Add_Project_Node
      (Explorer     : access Project_Explorer_Record'Class;
       Project      : Project_Type;
-      Parent_Node  : Gtk_Tree_Iter := Null_Iter;
-      Modified_Project : Boolean := False) return Gtk_Tree_Iter;
+      Parent_Node  : Gtk_Tree_Iter := Null_Iter) return Gtk_Tree_Iter;
    --  Add a new project node in the tree.
    --  Parent_Node is the parent of the project in the tree. If this is null,
    --  the new node is added at the root level of the tree.
@@ -739,8 +738,7 @@ package body Project_Explorers is
    function Add_Project_Node
      (Explorer     : access Project_Explorer_Record'Class;
       Project      : Project_Type;
-      Parent_Node  : Gtk_Tree_Iter := Null_Iter;
-      Modified_Project : Boolean := False) return Gtk_Tree_Iter
+      Parent_Node  : Gtk_Tree_Iter := Null_Iter) return Gtk_Tree_Iter
    is
       N         : Gtk_Tree_Iter;
       Ref       : Gtk_Tree_Iter := Null_Iter;
@@ -756,7 +754,7 @@ package body Project_Explorers is
          return Null_Iter;
       end if;
 
-      if Modified_Project then
+      if Extending_Project (Project) /= No_Project then
          Node_Type := Extends_Project_Node;
 
       elsif Project_Modified (Project) then
@@ -786,7 +784,7 @@ package body Project_Explorers is
 
       Set (Explorer.Tree.Model, N, Absolute_Name_Column, "");
 
-      if Modified_Project then
+      if Extending_Project (Project) /= No_Project then
          --  ??? We could use a different icon instead
          Set (Explorer.Tree.Model, N, Base_Name_Column,
               Node_Text & " (extended)");
@@ -952,8 +950,7 @@ package body Project_Explorers is
          --  The modified project, if any, is always first
 
          if Parent_Project (Project) /= No_Project then
-            N := Add_Project_Node
-              (Explorer, Parent_Project (Project), Node, True);
+            N := Add_Project_Node (Explorer, Parent_Project (Project), Node);
          end if;
 
          --  Imported projects
@@ -962,7 +959,7 @@ package body Project_Explorers is
             P := Current (Iter);
             exit when P = No_Project;
 
-            if P /= Project then
+            if P /= Project and then Parent_Project (Project) /= P then
                N := Add_Project_Node (Explorer, P, Node);
             end if;
             Next (Iter);
