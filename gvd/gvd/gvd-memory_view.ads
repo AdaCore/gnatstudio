@@ -19,6 +19,8 @@
 -----------------------------------------------------------------------
 
 with Glib;                  use Glib;
+with Gdk.Color;             use Gdk.Color;
+with Gdk.Font;              use Gdk.Font;
 with Gdk.Window;            use Gdk.Window;
 with Gtk.Widget;            use Gtk.Widget;
 with Memory_View_Pkg;       use Memory_View_Pkg;
@@ -83,6 +85,28 @@ package GVD.Memory_View is
 
       Cursor_Index : Integer;
       --  Locates the cursor position within the values array;
+
+
+      --  Visual attributes :
+
+      View_Font      : Gdk_Font;
+      --  The font displayed in the data view.
+
+      White_Color    : Gdk_Color;
+      --  The standard background color.
+
+      Highlighted    : Gdk_Color;
+      --  The background color for highlighted data.
+
+      Selected       : Gdk_Color;
+      --  The background color for selected data.
+
+      View_Color     : Gdk_Color;
+      --  The standard foreground color.
+
+      Modified_Color : Gdk_Color;
+      --  The foreground color for modified data.
+
    end record;
 
    type GVD_Memory_View is access all GVD_Memory_View_Record'Class;
@@ -111,7 +135,9 @@ package GVD.Memory_View is
    procedure Page_Up (View : access GVD_Memory_View_Record'Class);
    --  Move up or down one page in the view.
 
-   procedure Init_Graphics (Window : Gdk.Window.Gdk_Window);
+   procedure Init_Graphics
+     (View   : access GVD_Memory_View_Record'Class;
+      Window : Gdk.Window.Gdk_Window);
    --  Initialize fonts and graphics used for this widget.
 
    procedure Update

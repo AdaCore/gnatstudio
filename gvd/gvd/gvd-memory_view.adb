@@ -79,16 +79,6 @@ package body GVD.Memory_View is
    Line_Base_Size    : constant Integer := 16;
    --  Number of bytes per line.
 
-   --  ??? These global variables should be put in a structure.
-   --  This will probably be needed for preferences anyway
-
-   View_Font      : Gdk_Font;
-   View_Color     : Gdk_Color;
-   Highlighted    : Gdk_Color;
-   Selected       : Gdk_Color;
-   White_Color    : Gdk_Color;
-   Modified_Color : Gdk_Color;
-
    -----------------------
    -- Local subprograms --
    -----------------------
@@ -270,15 +260,17 @@ package body GVD.Memory_View is
    -- Init_Graphics --
    -------------------
 
-   procedure Init_Graphics (Window : Gdk_Window) is
+   procedure Init_Graphics
+     (View   : access GVD_Memory_View_Record'Class;
+      Window : Gdk_Window) is
    begin
-      View_Font      := Get_Gdkfont
+      View.View_Font   := Get_Gdkfont
         (Get_Pref (Memory_View_Font), Get_Pref (Memory_View_Font_Size));
-      View_Color     := Get_Pref (Memory_View_Color);
-      Highlighted    := Get_Pref (Memory_Highlighted_Color);
-      White_Color    := White (Get_System);
-      Selected       := Get_Pref (Memory_Selected_Color);
-      Modified_Color := Get_Pref (Memory_Modified_Color);
+      View.View_Color       := Get_Pref (Memory_View_Color);
+      View.Highlighted      := Get_Pref (Memory_Highlighted_Color);
+      View.White_Color      := White (Get_System);
+      View.Selected         := Get_Pref (Memory_Selected_Color);
+      View.Modified_Color   := Get_Pref (Memory_Modified_Color);
    end Init_Graphics;
 
    ----------------------
@@ -388,7 +380,8 @@ package body GVD.Memory_View is
       Get_Size (Get_Text_Area (View.View), Width, Height);
 
       View.Number_Of_Lines := Integer (Height) /
-        Integer (Get_Ascent (View_Font) + Get_Descent (View_Font) + 1);
+        Integer (Get_Ascent (View.View_Font)
+                 + Get_Descent (View.View_Font) + 1);
 
       View.Number_Of_Columns := Line_Base_Size * 2 / View.Unit_Size;
 
@@ -399,9 +392,9 @@ package body GVD.Memory_View is
       for Line_Index in 1 .. View.Number_Of_Lines loop
          Insert
            (View.View,
-            Fore  => View_Color,
-            Back  => Highlighted,
-            Font  => View_Font,
+            Fore  => View.View_Color,
+            Back  => View.Highlighted,
+            Font  => View.View_Font,
             Chars =>
               To_Standard_Base
                 (View.Starting_Address +
@@ -418,7 +411,7 @@ package body GVD.Memory_View is
             if View.Values (Index .. Index + View.Unit_Size - 1) /=
               View.Flags (Index .. Index + View.Unit_Size - 1)
             then
-               Foreground := Modified_Color;
+               Foreground := View.Modified_Color;
                Current    := View.Flags;
             else
                Foreground := Null_Color;
@@ -427,7 +420,7 @@ package body GVD.Memory_View is
 
             Insert
               (View.View,
-               Font  => View_Font,
+               Font  => View.View_Font,
                Fore  => Foreground,
                Back  => Background,
                Chars =>
@@ -438,7 +431,7 @@ package body GVD.Memory_View is
 
             Insert
               (View.View,
-               Font  => View_Font,
+               Font  => View.View_Font,
                Fore  => Foreground,
                Back  => Background,
                Chars => Data_Separator);
@@ -455,7 +448,7 @@ package body GVD.Memory_View is
                if View.Values (Index .. Index + View.Unit_Size - 1) /=
                  View.Flags (Index .. Index + View.Unit_Size - 1)
                then
-                  Foreground := Modified_Color;
+                  Foreground := View.Modified_Color;
                   Current := View.Flags;
                else
                   Foreground := Null_Color;
@@ -464,7 +457,7 @@ package body GVD.Memory_View is
 
                Insert
                  (View.View,
-                  Font  => View_Font,
+                  Font  => View.View_Font,
                   Fore  => Foreground,
                   Back  => Background,
                   Chars =>
@@ -474,7 +467,7 @@ package body GVD.Memory_View is
                                 View.Unit_Size / 2));
                Insert
                  (View.View,
-                  Font  => View_Font,
+                  Font  => View.View_Font,
                   Fore  => Foreground,
                   Back  => Background,
                   Chars => Data_Separator);
@@ -616,7 +609,7 @@ package body GVD.Memory_View is
    begin
       View := new GVD_Memory_View_Record;
       Initialize (View);
-      Init_Graphics (Get_Window (Window));
+      Init_Graphics (View, Get_Window (Window));
       View.Window := Window;
       Set_Line_Wrap (View.View, False);
    end Gtk_New;
@@ -808,9 +801,9 @@ package body GVD.Memory_View is
       Set_Point (View.View, Guint (Position));
       Success := Forward_Delete (View.View, 1);
       Insert (View.View,
-              Font => View_Font,
+              Font => View.View_Font,
               Back => Background,
-              Fore => Modified_Color,
+              Fore => View.Modified_Color,
               Chars => Char);
 
       while Get_Chars (View.View,
