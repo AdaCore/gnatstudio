@@ -266,7 +266,27 @@
 		<object>Switches_Editor</object>
 		<last_modification_time>Fri, 11 May 2001 18:51:34 GMT</last_modification_time>
 	      </signal>
-	      <label>Debug Information</label>
+	      <label>Debug information</label>
+	      <active>False</active>
+	      <draw_indicator>True</draw_indicator>
+	      <child>
+		<padding>0</padding>
+		<expand>False</expand>
+		<fill>False</fill>
+	      </child>
+	    </widget>
+
+	    <widget>
+	      <class>GtkCheckButton</class>
+	      <name>make_mapping_file</name>
+	      <can_focus>True</can_focus>
+	      <signal>
+		<name>toggled</name>
+		<handler>refresh_make_switches</handler>
+		<object>Switches_Editor</object>
+		<last_modification_time>Fri, 11 May 2001 18:57:50 GMT</last_modification_time>
+	      </signal>
+	      <label>Use mapping file</label>
 	      <active>False</active>
 	      <draw_indicator>True</draw_indicator>
 	      <child>
@@ -405,7 +425,7 @@ Full + Automatic inlining
 		<object>Switches_Editor</object>
 		<last_modification_time>Fri, 11 May 2001 18:53:13 GMT</last_modification_time>
 	      </signal>
-	      <label>No Inlining</label>
+	      <label>No inlining</label>
 	      <active>False</active>
 	      <draw_indicator>True</draw_indicator>
 	      <child>
@@ -457,6 +477,26 @@ Full + Automatic inlining
 
 	    <widget>
 	      <class>GtkCheckButton</class>
+	      <name>ada_pic</name>
+	      <can_focus>True</can_focus>
+	      <signal>
+		<name>toggled</name>
+		<handler>refresh_ada_switches</handler>
+		<object>Switches_Editor</object>
+		<last_modification_time>Fri, 11 May 2001 18:53:31 GMT</last_modification_time>
+	      </signal>
+	      <label>Position independent code</label>
+	      <active>False</active>
+	      <draw_indicator>True</draw_indicator>
+	      <child>
+		<padding>0</padding>
+		<expand>False</expand>
+		<fill>False</fill>
+	      </child>
+	    </widget>
+
+	    <widget>
+	      <class>GtkCheckButton</class>
 	      <name>ada_code_coverage</name>
 	      <can_focus>True</can_focus>
 	      <signal>
@@ -465,7 +505,7 @@ Full + Automatic inlining
 		<object>Switches_Editor</object>
 		<last_modification_time>Fri, 11 May 2001 18:53:31 GMT</last_modification_time>
 	      </signal>
-	      <label>Code Coverage</label>
+	      <label>Code coverage</label>
 	      <active>False</active>
 	      <draw_indicator>True</draw_indicator>
 	      <child>
@@ -486,7 +526,7 @@ Full + Automatic inlining
 		<object>Switches_Editor</object>
 		<last_modification_time>Fri, 11 May 2001 18:53:31 GMT</last_modification_time>
 	      </signal>
-	      <label>Instrument Arcs</label>
+	      <label>Instrument arcs</label>
 	      <active>False</active>
 	      <draw_indicator>True</draw_indicator>
 	      <child>
@@ -576,7 +616,7 @@ Full + Automatic inlining
 		<object>Switches_Editor</object>
 		<last_modification_time>Fri, 11 May 2001 18:54:29 GMT</last_modification_time>
 	      </signal>
-	      <label>Stack Checking</label>
+	      <label>Stack checking</label>
 	      <active>False</active>
 	      <draw_indicator>True</draw_indicator>
 	      <child>
@@ -827,7 +867,7 @@ Full + Automatic inlining
 		  <object>Switches_Editor</object>
 		  <last_modification_time>Fri, 11 May 2001 18:56:37 GMT</last_modification_time>
 		</signal>
-		<label>Enable Assertions</label>
+		<label>Enable assertions</label>
 		<active>False</active>
 		<draw_indicator>True</draw_indicator>
 		<child>
@@ -1138,7 +1178,7 @@ Full + Automatic inlining
 		<object>Switches_Editor</object>
 		<last_modification_time>Fri, 11 May 2001 18:53:13 GMT</last_modification_time>
 	      </signal>
-	      <label>No Inlining</label>
+	      <label>No inlining</label>
 	      <active>False</active>
 	      <draw_indicator>True</draw_indicator>
 	      <child>
@@ -1159,6 +1199,26 @@ Full + Automatic inlining
 		<last_modification_time>Fri, 11 May 2001 18:53:31 GMT</last_modification_time>
 	      </signal>
 	      <label>Unroll loops</label>
+	      <active>False</active>
+	      <draw_indicator>True</draw_indicator>
+	      <child>
+		<padding>0</padding>
+		<expand>False</expand>
+		<fill>False</fill>
+	      </child>
+	    </widget>
+
+	    <widget>
+	      <class>GtkCheckButton</class>
+	      <name>c_pic</name>
+	      <can_focus>True</can_focus>
+	      <signal>
+		<name>toggled</name>
+		<handler>refresh_c_switches</handler>
+		<object>Switches_Editor</object>
+		<last_modification_time>Fri, 11 May 2001 18:53:31 GMT</last_modification_time>
+	      </signal>
+	      <label>Position independent code</label>
 	      <active>False</active>
 	      <draw_indicator>True</draw_indicator>
 	      <child>
@@ -1198,7 +1258,7 @@ Full + Automatic inlining
 		<object>Switches_Editor</object>
 		<last_modification_time>Fri, 11 May 2001 18:53:31 GMT</last_modification_time>
 	      </signal>
-	      <label>Code Coverage</label>
+	      <label>Code coverage</label>
 	      <active>False</active>
 	      <draw_indicator>True</draw_indicator>
 	      <child>
@@ -1219,7 +1279,7 @@ Full + Automatic inlining
 		<object>Switches_Editor</object>
 		<last_modification_time>Fri, 11 May 2001 18:53:31 GMT</last_modification_time>
 	      </signal>
-	      <label>Instrument Arcs</label>
+	      <label>Instrument arcs</label>
 	      <active>False</active>
 	      <draw_indicator>True</draw_indicator>
 	      <child>
@@ -1269,7 +1329,7 @@ Full + Automatic inlining
 		<object>Switches_Editor</object>
 		<last_modification_time>Sun, 09 Sep 2001 18:27:51 GMT</last_modification_time>
 	      </signal>
-	      <label>Debug Information</label>
+	      <label>Debug information</label>
 	      <active>False</active>
 	      <draw_indicator>True</draw_indicator>
 	      <child>
@@ -1401,6 +1461,26 @@ Full + Automatic inlining
 		<fill>False</fill>
 	      </child>
 	    </widget>
+
+	    <widget>
+	      <class>GtkCheckButton</class>
+	      <name>cpp_overloaded_virtual</name>
+	      <can_focus>True</can_focus>
+	      <signal>
+		<name>toggled</name>
+		<handler>refresh_cpp_switches</handler>
+		<object>Switches_Editor</object>
+		<last_modification_time>Fri, 11 May 2001 18:53:31 GMT</last_modification_time>
+	      </signal>
+	      <label>Overloaded virtual</label>
+	      <active>False</active>
+	      <draw_indicator>True</draw_indicator>
+	      <child>
+		<padding>0</padding>
+		<expand>False</expand>
+		<fill>False</fill>
+	      </child>
+	    </widget>
 	  </widget>
 	</widget>
 
@@ -1508,7 +1588,7 @@ Full + Automatic inlining
 		<object>Switches_Editor</object>
 		<last_modification_time>Sun, 09 Sep 2001 17:08:56 GMT</last_modification_time>
 	      </signal>
-	      <label>No Inlining</label>
+	      <label>No inlining</label>
 	      <active>False</active>
 	      <draw_indicator>True</draw_indicator>
 	      <child>
@@ -1529,6 +1609,26 @@ Full + Automatic inlining
 		<last_modification_time>Sun, 09 Sep 2001 17:09:01 GMT</last_modification_time>
 	      </signal>
 	      <label>Unroll loops</label>
+	      <active>False</active>
+	      <draw_indicator>True</draw_indicator>
+	      <child>
+		<padding>0</padding>
+		<expand>False</expand>
+		<fill>False</fill>
+	      </child>
+	    </widget>
+
+	    <widget>
+	      <class>GtkCheckButton</class>
+	      <name>cpp_pic</name>
+	      <can_focus>True</can_focus>
+	      <signal>
+		<name>toggled</name>
+		<handler>refresh_cpp_switches</handler>
+		<object>Switches_Editor</object>
+		<last_modification_time>Fri, 11 May 2001 18:53:31 GMT</last_modification_time>
+	      </signal>
+	      <label>Position independent code</label>
 	      <active>False</active>
 	      <draw_indicator>True</draw_indicator>
 	      <child>
@@ -1568,7 +1668,7 @@ Full + Automatic inlining
 		<object>Switches_Editor</object>
 		<last_modification_time>Sun, 09 Sep 2001 17:09:13 GMT</last_modification_time>
 	      </signal>
-	      <label>Code Coverage</label>
+	      <label>Code coverage</label>
 	      <active>False</active>
 	      <draw_indicator>True</draw_indicator>
 	      <child>
@@ -1589,7 +1689,7 @@ Full + Automatic inlining
 		<object>Switches_Editor</object>
 		<last_modification_time>Sun, 09 Sep 2001 17:09:13 GMT</last_modification_time>
 	      </signal>
-	      <label>Instrument Arcs</label>
+	      <label>Instrument arcs</label>
 	      <active>False</active>
 	      <draw_indicator>True</draw_indicator>
 	      <child>
@@ -1609,7 +1709,47 @@ Full + Automatic inlining
 		<object>Switches_Editor</object>
 		<last_modification_time>Sun, 09 Sep 2001 17:09:13 GMT</last_modification_time>
 	      </signal>
-	      <label>Exceptions Support</label>
+	      <label>Exceptions support</label>
+	      <active>False</active>
+	      <draw_indicator>True</draw_indicator>
+	      <child>
+		<padding>0</padding>
+		<expand>False</expand>
+		<fill>False</fill>
+	      </child>
+	    </widget>
+
+	    <widget>
+	      <class>GtkCheckButton</class>
+	      <name>cpp_elide_constructor</name>
+	      <can_focus>True</can_focus>
+	      <signal>
+		<name>toggled</name>
+		<handler>refresh_cpp_switches</handler>
+		<object>Switches_Editor</object>
+		<last_modification_time>Fri, 11 May 2001 18:53:31 GMT</last_modification_time>
+	      </signal>
+	      <label>Elide constructor</label>
+	      <active>False</active>
+	      <draw_indicator>True</draw_indicator>
+	      <child>
+		<padding>0</padding>
+		<expand>False</expand>
+		<fill>False</fill>
+	      </child>
+	    </widget>
+
+	    <widget>
+	      <class>GtkCheckButton</class>
+	      <name>cpp_conserve_space</name>
+	      <can_focus>True</can_focus>
+	      <signal>
+		<name>toggled</name>
+		<handler>refresh_cpp_switches</handler>
+		<object>Switches_Editor</object>
+		<last_modification_time>Fri, 11 May 2001 18:53:31 GMT</last_modification_time>
+	      </signal>
+	      <label>Conserve space</label>
 	      <active>False</active>
 	      <draw_indicator>True</draw_indicator>
 	      <child>
@@ -1659,7 +1799,7 @@ Full + Automatic inlining
 		<object>Switches_Editor</object>
 		<last_modification_time>Sun, 09 Sep 2001 18:27:45 GMT</last_modification_time>
 	      </signal>
-	      <label>Debug Information</label>
+	      <label>Debug information</label>
 	      <active>False</active>
 	      <draw_indicator>True</draw_indicator>
 	      <child>
@@ -1755,6 +1895,26 @@ Full + Automatic inlining
 	      <last_modification_time>Fri, 11 May 2001 18:57:50 GMT</last_modification_time>
 	    </signal>
 	    <label>Store call stack in exceptions</label>
+	    <active>False</active>
+	    <draw_indicator>True</draw_indicator>
+	    <child>
+	      <padding>0</padding>
+	      <expand>False</expand>
+	      <fill>False</fill>
+	    </child>
+	  </widget>
+
+	  <widget>
+	    <class>GtkCheckButton</class>
+	    <name>binder_restrictions</name>
+	    <can_focus>True</can_focus>
+	    <signal>
+	      <name>toggled</name>
+	      <handler>refresh_bind_switches</handler>
+	      <object>Switches_Editor</object>
+	      <last_modification_time>Fri, 11 May 2001 18:57:50 GMT</last_modification_time>
+	    </signal>
+	    <label>List possible restrictions</label>
 	    <active>False</active>
 	    <draw_indicator>True</draw_indicator>
 	    <child>
@@ -2586,7 +2746,6 @@ _.ada
 		<last_modification_time>Wed, 16 May 2001 22:35:41 GMT</last_modification_time>
 	      </signal>
 	      <label>Update</label>
-	      <relief>GTK_RELIEF_NORMAL</relief>
 	      <child>
 		<padding>0</padding>
 		<expand>False</expand>
@@ -2619,25 +2778,6 @@ _.ada
     <name>dialog-vbox1</name>
     <homogeneous>False</homogeneous>
     <spacing>0</spacing>
-
-    <widget>
-      <class>GtkHBox</class>
-      <child_name>Dialog:action_area</child_name>
-      <name>dialog-action_area1</name>
-      <border_width>10</border_width>
-      <homogeneous>True</homogeneous>
-      <spacing>5</spacing>
-      <child>
-	<padding>0</padding>
-	<expand>False</expand>
-	<fill>True</fill>
-	<pack>GTK_PACK_END</pack>
-      </child>
-
-      <widget>
-	<class>Placeholder</class>
-      </widget>
-    </widget>
 
     <widget>
       <class>GtkTable</class>
@@ -2825,7 +2965,6 @@ _.ada
 		<can_default>True</can_default>
 		<can_focus>True</can_focus>
 		<label>Delete</label>
-		<relief>GTK_RELIEF_NORMAL</relief>
 	      </widget>
 
 	      <widget>
@@ -2834,7 +2973,6 @@ _.ada
 		<can_default>True</can_default>
 		<can_focus>True</can_focus>
 		<label>New</label>
-		<relief>GTK_RELIEF_NORMAL</relief>
 	      </widget>
 
 	      <widget>
@@ -2843,11 +2981,29 @@ _.ada
 		<can_default>True</can_default>
 		<can_focus>True</can_focus>
 		<label>Rename</label>
-		<relief>GTK_RELIEF_NORMAL</relief>
 	      </widget>
 	    </widget>
 	  </widget>
 	</widget>
+      </widget>
+    </widget>
+
+    <widget>
+      <class>GtkHBox</class>
+      <child_name>Dialog:action_area</child_name>
+      <name>dialog-action_area1</name>
+      <border_width>10</border_width>
+      <homogeneous>True</homogeneous>
+      <spacing>5</spacing>
+      <child>
+	<padding>0</padding>
+	<expand>False</expand>
+	<fill>True</fill>
+	<pack>GTK_PACK_END</pack>
+      </child>
+
+      <widget>
+	<class>Placeholder</class>
       </widget>
     </widget>
   </widget>
