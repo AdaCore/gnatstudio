@@ -1063,6 +1063,8 @@ package body Builder_Module is
             then
                return;
             else
+               Console.Raise_Console (K);
+
                if Active then
                   Args := Argument_String_To_List
                     (Get_Pref (K, Execute_Command) & ' ' & Command);
@@ -1092,6 +1094,8 @@ package body Builder_Module is
             if Arguments = ""
               or else Arguments (Arguments'First) /= ASCII.NUL
             then
+               Console.Raise_Console (K);
+
                if Active then
                   Args := Argument_String_To_List
                     (Get_Pref (K, Execute_Command) & ' ' &
@@ -1130,6 +1134,7 @@ package body Builder_Module is
       Top : constant Glide_Window := Glide_Window (Get_Main_Window (Kernel));
    begin
       Top.Interrupted := True;
+      Console.Raise_Console (Kernel);
    end On_Stop_Build;
 
    ---------------------
