@@ -910,7 +910,7 @@ package body GPS.Main_Window is
          end if;
 
          if Child = null then
-            Set_Error_Msg (Data, "No such window");
+            Set_Return_Value (Data, null);
          else
             MDI_Window_Class := New_Class (Kernel, "MDIWindow");
             Inst := New_Instance (Get_Script (Data), MDI_Window_Class);
