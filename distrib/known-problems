@@ -1,5 +1,13 @@
 Known Problems fixed in GPS 1.3.0
 
+- C605-012 Editing read-only project file
+  Problem:    When a project has been edited through the project properties
+              dialog, and you try to save it but the file is read-only on the
+              system, the save action is silently ignored
+  Workaround: Avoid editing read-only projects. If in doubt, open the project
+              file itself through the contextual menu and check that the
+              editor doesn't report it as read-only
+
 - C528-003 Changes to Ada tools in project properties not taken into account
   Problem:    Changing the name of the compiler or the debugger through the
               project properties editor is not properly taken into account
