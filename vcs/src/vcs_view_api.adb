@@ -58,6 +58,7 @@ with Commands.External;         use Commands.External;
 
 with Traces;                    use Traces;
 with Ada.Exceptions;            use Ada.Exceptions;
+with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 with VFS;                       use VFS;
 with File_Utils;                use File_Utils;
 with String_Utils;              use String_Utils;
@@ -1162,8 +1163,121 @@ package body VCS_View_API is
       Context : Selection_Context_Access)
    is
       pragma Unreferenced (Widget);
+
+      function Get_Location
+        (File, ChangeLog_File : Virtual_File) return String;
+      --  Returns the line/columns where the cursor needs to be located.
+      --  This function must be called only when the global ChangeLog file
+      --  contains an entry for file.
+
       List   : String_List.List;
       Kernel : Kernel_Handle;
+
+      function Get_Location
+        (File, ChangeLog_File : Virtual_File) return String
+      is
+         Filename           : constant String := Base_Name (File);
+         --  The filename to look for in the ChangeLog file
+         ChangeLog_Filename : aliased String :=
+           Full_Name (ChangeLog_File).all;
+         --  The global ChangeLog file
+         L, C, Last         : Natural;
+      begin
+         L := 1;
+         C := 0;
+
+         --  Get last line in the file
+
+         Last := Natural'Value
+           (Execute_GPS_Shell_Command
+              (Kernel, "Editor.get_last_line " & ChangeLog_Filename));
+
+         --  First, look for the filename entry
+
+         loop
+            declare
+               Line : constant String :=
+                 Execute_GPS_Shell_Command
+                   (Kernel,
+                    "Editor.get_chars " &
+                    ChangeLog_Filename & Natural'Image (L));
+            begin
+               exit when Index (Line, Filename) /= 0 or else L = Last;
+               L := L + 1;
+            end;
+         end loop;
+
+         --  Look for the first empty line, this is where the cursor
+         --  needs to be set.
+
+         if L = Last then
+            --  No entry found, this should not happen, returns the first
+            --  position in the file.
+            return " 1 1";
+         end if;
+
+         L := L + 1;
+
+         loop
+            declare
+               Line : constant String :=
+                 Execute_GPS_Shell_Command
+                   (Kernel,
+                    "Editor.get_chars " &
+                    ChangeLog_Filename & Natural'Image (L));
+               Is_Empty : Boolean := True;
+            begin
+               for K in Line'Range loop
+                  if Line (K) /= ' '
+                    and then Line (K) /= ASCII.HT
+                    and then Line (K) /= ASCII.CR
+                    and then Line (K) /= ASCII.LF
+                  then
+                     Is_Empty := False;
+                     exit;
+                  end if;
+               end loop;
+
+               if Is_Empty then
+                  if Line (Line'First) = ASCII.HT then
+                     --  A line with a single HT, place cursor just after
+                     C := 2;
+
+                  elsif Line'Length = 0
+                    or else Line (Line'First) = ASCII.LF
+                  then
+                     --  An empty line, insert an HT
+
+                     declare
+                        Line : aliased String := Natural'Image (L);
+                        Col  : aliased String := "1";
+                        Text : aliased String :=
+                          ASCII.HT & ASCII.LF & ASCII.LF;
+                     begin
+                        Execute_GPS_Shell_Command
+                          (Kernel,
+                           "Editor.replace_text",
+                           (ChangeLog_Filename'Unchecked_Access,
+                            Line'Unchecked_Access,
+                            Col'Unchecked_Access,
+                            Text'Unchecked_Access));
+                     end;
+
+                     C := 2;
+
+                  else
+                     --  Only spaces, put cursor at the end of the line
+                     C := Line'Last;
+                  end if;
+                  exit;
+               end if;
+
+               L := L + 1;
+            end;
+         end loop;
+
+         return Natural'Image (L) & Natural'Image (C);
+      end Get_Location;
 
    begin
       Kernel := Get_Kernel (Context);
@@ -1171,14 +1285,30 @@ package body VCS_View_API is
 
       while not String_List.Is_Empty (List) loop
          declare
-            File               : constant Virtual_File :=
+            File           : constant Virtual_File :=
               Create (String_List.Head (List));
-            ChangeLog_File     : constant Virtual_File :=
-              Get_ChangeLog_From_File (File);
-            Already_Open       : Boolean;
+            ChangeLog_File : constant Virtual_File :=
+              Get_ChangeLog_From_File (Kernel, File);
+            Already_Open   : Boolean;
          begin
             Already_Open := Is_Open (Kernel, ChangeLog_File);
             Open_File_Editor (Kernel, ChangeLog_File);
+
+            --  At this point we know that there is an entry for the current
+            --  file for the current data into the ChangeLog file. Set the
+            --  cursor location at the right position.
+
+            declare
+               Result : constant String :=
+                 Execute_GPS_Shell_Command
+                   (Kernel,
+                    "Editor.edit " &
+                    Full_Name (ChangeLog_File).all &
+                    Get_Location (File, ChangeLog_File));
+               pragma Unreferenced (Result);
+            begin
+               null;
+            end;
 
             if not Already_Open then
                Split (Get_MDI (Kernel), Gtk.Enums.Orientation_Vertical,
