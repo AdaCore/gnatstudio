@@ -228,13 +228,14 @@ package body Project_Viewers is
    --  The file is automatically searched in all the source directories of
    --  Project_View.
 
-   procedure Close_Switch_Editor (Dialog : access Gtk_Widget_Record'Class);
-   procedure Destroy_Switch_Editor
-     (Dialog : access Gtk_Widget_Record'Class;
+   procedure Close_Switch_Editor
+     (Button : access Gtk_Widget_Record'Class;
       Data   : Switch_Editor_User_Data);
+   procedure Cancel_Switch_Editor
+     (Dialog : access Gtk_Widget_Record'Class);
    --  Called when the user has closed a switch editor for a specific file.
    --  The first version if the callback for the Close button, the second one
-   --  is for the "destroy".
+   --  is for the "cancel".
 
    function Append_Line_With_Full_Name
      (Viewer : access Project_Viewer_Record'Class;
@@ -491,17 +492,7 @@ package body Project_Viewers is
    -------------------------
 
    procedure Close_Switch_Editor
-     (Dialog : access Gtk_Widget_Record'Class) is
-   begin
-      Destroy (Dialog);
-   end Close_Switch_Editor;
-
-   ---------------------------
-   -- Destroy_Switch_Editor --
-   ---------------------------
-
-   procedure Destroy_Switch_Editor
-     (Dialog : access Gtk_Widget_Record'Class;
+     (Button : access Gtk_Widget_Record'Class;
       Data   : Switch_Editor_User_Data)
    is
       S : Switches_Edit := Data.Switches;
@@ -575,7 +566,18 @@ package body Project_Viewers is
       end if;
 
       Recompute_View (Data.Viewer.Kernel);
-   end Destroy_Switch_Editor;
+      Destroy (Get_Toplevel (Button));
+   end Close_Switch_Editor;
+
+   --------------------------
+   -- Cancel_Switch_Editor --
+   --------------------------
+
+   procedure Cancel_Switch_Editor
+     (Dialog : access Gtk_Widget_Record'Class) is
+   begin
+      Destroy (Dialog);
+   end Cancel_Switch_Editor;
 
    ----------------------------
    -- Edit_Switches_Callback --
@@ -626,6 +628,8 @@ package body Project_Viewers is
       Pack_Start (Get_Vbox (Dialog),
                   Get_Window (Switches), Fill => True, Expand => True);
 
+      Destroy_Pages (Switches, Gnatmake_Page or Binder_Page or Linker_Page);
+
       --  Set the switches for all the pages
       Get_Switches
         (Viewer.Project_Filter, "compiler", File, Value, Is_Default);
@@ -636,29 +640,25 @@ package body Project_Viewers is
          Free (List);
       end;
 
-      Destroy_Pages (Switches, Gnatmake_Page or Binder_Page or Linker_Page);
-
       Gtk_New_From_Stock (Button, Stock_Ok);
       Pack_Start
         (Get_Action_Area (Dialog), Button, Fill => False, Expand => False);
-      Widget_Callback.Object_Connect
-        (Button, "clicked",
-         Widget_Callback.To_Marshaller (Close_Switch_Editor'Access), Dialog);
-
-      Gtk_New_From_Stock (Button, Stock_Cancel);
-      Pack_Start
-        (Get_Action_Area (Dialog), Button, Fill => False, Expand => False);
-
       Switch_Callback.Connect
-        (Dialog, "destroy",
-         Switch_Callback.To_Marshaller (Destroy_Switch_Editor'Access),
+        (Button, "clicked",
+         Switch_Callback.To_Marshaller (Close_Switch_Editor'Access),
          (Viewer    => Project_Viewer (Viewer),
           Switches  => Switches,
           File_Name => File_Name,
           Directory => Directory));
 
+      Gtk_New_From_Stock (Button, Stock_Cancel);
+      Pack_Start
+        (Get_Action_Area (Dialog), Button, Fill => False, Expand => False);
+      Widget_Callback.Object_Connect
+        (Button, "clicked",
+         Widget_Callback.To_Marshaller (Cancel_Switch_Editor'Access), Dialog);
+
       Show_All (Dialog);
-      Set_Page (Switches, Tool);
    end Edit_Switches_Callback;
 
    --------------------------------
