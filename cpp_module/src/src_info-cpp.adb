@@ -42,6 +42,7 @@ with Types;             use Types;
 with Traces;            use Traces;
 with File_Utils;        use File_Utils;
 with Ada.Strings.Fixed;
+with Ada.Calendar;      use Ada.Calendar;
 with Ada.Unchecked_Deallocation;
 with VFS;               use VFS;
 
@@ -1133,8 +1134,8 @@ package body Src_Info.CPP is
       --  is newer than its Xref
 
       if not Is_Xref_Valid (Full_Filename, Pool)
-        or else To_Timestamp (File_Time_Stamp (Full_Filename)) >
-                To_Timestamp (File_Time_Stamp (Xref_File_Name))
+        or else File_Time_Stamp (Full_Filename) >
+                File_Time_Stamp (Xref_File_Name)
       then
          Set_Valid (Full_Filename, True, Pool);
 
@@ -1193,8 +1194,8 @@ package body Src_Info.CPP is
       Tmp_File         : File_Type;
       Success          : Boolean;
       Xref_File_Name   : Virtual_File;
-      TO_File_Name     : constant String :=
-        DB_Dir & SN.Browse.DB_File_Name & ".to";
+      TO_File_Name     : constant Virtual_File :=
+        Create (Full_Filename => DB_Dir & SN.Browse.DB_File_Name & ".to");
       Recompute_TO     : Boolean := False;
 
    begin
@@ -1247,8 +1248,8 @@ package body Src_Info.CPP is
             Xref_File_Name := Xref_Filename_For (File, DB_Dir, Pool);
 
             if not Is_Xref_Valid (File, Pool)
-              or else To_Timestamp (File_Time_Stamp (File)) >
-                To_Timestamp (File_Time_Stamp (Xref_File_Name))
+              or else File_Time_Stamp (File) >
+                File_Time_Stamp (Xref_File_Name)
             then
                Num_Source_Files := Num_Source_Files + 1;
 
@@ -1264,8 +1265,8 @@ package body Src_Info.CPP is
                Put_Line (Tmp_File, "@" & Full_Name (Xref_File_Name).all);
                Put_Line (Tmp_File, Full_Name (File).all);
 
-            elsif To_Timestamp (File_Time_Stamp (Xref_File_Name)) >
-              To_Timestamp (File_Time_Stamp (TO_File_Name))
+            elsif File_Time_Stamp (Xref_File_Name) >
+              File_Time_Stamp (TO_File_Name)
             then
                Recompute_TO := True;
             end if;
@@ -1815,8 +1816,7 @@ package body Src_Info.CPP is
       --  check timestamps for the parsed file
       if File /= No_LI_File and then File.LI.Parsed then
          if not Is_Incomplete (File)
-           and then To_Timestamp
-             (File_Time_Stamp (File.LI.LI_Filename)) <=
+           and then File_Time_Stamp (File.LI.LI_Filename) <=
              File.LI.LI_Timestamp
          then
             return;

@@ -973,7 +973,7 @@ private
       Current_Status  : Status_Type := Unmodified;
       --  The current buffer status.
 
-      Timestamp      : Src_Info.Timestamp := 0;
+      Timestamp      : Ada.Calendar.Time := Src_Info.No_Time;
       --  Timestamp of the file the last time it was checked. It it used to
       --  detect cases where the file was edited by an external editor.
 
