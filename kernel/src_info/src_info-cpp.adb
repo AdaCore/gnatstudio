@@ -454,6 +454,8 @@ package body Src_Info.CPP is
                return;
             end if;
 
+            Trace (Info_Stream, "dbimp process is finished");
+
             Finished := True;
             Iterator.State := Done;
             Save (Iterator.Xrefs,
