@@ -98,6 +98,13 @@ package body Commands.Editor is
       end if;
    end Free;
 
+   procedure Free (X : in out Hide_Editable_Lines_Type) is
+   begin
+      if not Get_Deleted (X.Mark) then
+         Delete_Mark (X.Buffer, X.Mark);
+      end if;
+   end Free;
+
    ---------------------
    -- Is_Null_Command --
    ---------------------
