@@ -80,14 +80,6 @@ package Language.Ada is
    -- Source Analyzing --
    ----------------------
 
-   procedure Format_Source
-     (Lang             : access Ada_Language;
-      Buffer           : String;
-      Indent_Params    : Indent_Parameters := Default_Indent_Parameters;
-      Reserved_Casing  : Casing_Type       := Lower;
-      Ident_Casing     : Casing_Type       := Mixed;
-      Format_Operators : Boolean           := True);
-
    function Comment_Line
      (Lang : access Ada_Language;
       Line : String) return String;
@@ -101,11 +93,11 @@ package Language.Ada is
       Buffer : String;
       Result : out Construct_List);
 
-   procedure Next_Indentation
+   procedure Format_Buffer
      (Lang          : access Ada_Language;
       Buffer        : String;
-      Indent        : out Natural;
-      Next_Indent   : out Natural;
+      Replace       : Replace_Text_Callback;
+      From, To      : Natural := 0;
       Indent_Params : Indent_Parameters := Default_Indent_Parameters);
 
    procedure Parse_Entities

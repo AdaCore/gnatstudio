@@ -346,24 +346,6 @@ package body Language is
       end loop;
    end Looking_At;
 
-   -------------------
-   -- Format_Source --
-   -------------------
-
-   procedure Format_Source
-     (Lang             : access Language_Root;
-      Buffer           : String;
-      Indent_Params    : Indent_Parameters := Default_Indent_Parameters;
-      Reserved_Casing  : Casing_Type       := Lower;
-      Ident_Casing     : Casing_Type       := Mixed;
-      Format_Operators : Boolean           := True)
-   is
-      pragma Unreferenced (Lang, Indent_Params, Reserved_Casing,
-                           Ident_Casing, Format_Operators);
-   begin
-      Put (Buffer);
-   end Format_Source;
-
    ------------------
    -- Comment_Line --
    ------------------
@@ -555,6 +537,7 @@ package body Language is
          --  If we are still on the same line, Column_Inc is an increment
          --  compared to what we have initially, otherwise it is an absolute
          --  column.
+
          if Line_Inc = 1 then
             Column_Inc := Column + Column_Inc - 1;
          end if;
@@ -572,52 +555,83 @@ package body Language is
       end loop;
    end Parse_Entities;
 
-   ----------------------
-   -- Next_Indentation --
-   ----------------------
+   -------------------
+   -- Format_Buffer --
+   -------------------
 
-   procedure Next_Indentation
+   procedure Format_Buffer
      (Lang          : access Language_Root;
       Buffer        : String;
-      Indent        : out Natural;
-      Next_Indent   : out Natural;
+      Replace       : Replace_Text_Callback;
+      From, To      : Natural := 0;
       Indent_Params : Indent_Parameters := Default_Indent_Parameters)
    is
       pragma Unreferenced (Lang);
 
-      Tab_Width : Natural renames Indent_Params.Tab_Width;
-      Index     : Natural;
+      Tab_Width       : Natural renames Indent_Params.Tab_Width;
+      Use_Tabs        : Boolean renames Indent_Params.Use_Tabs;
+      Index           : Natural;
+      Indent          : Natural := 0;
+      Start_Of_Line   : Natural;
+      Start_Prev_Line : Natural;
+
+      function Find_Line_Start
+        (Buffer : String; Index : Natural) return Natural;
+      --  Find the starting ASCII.LF character of the line positioned at
+      --  Buffer (Index).
+
+      ---------------------
+      -- Find_Line_Start --
+      ---------------------
+
+      function Find_Line_Start
+        (Buffer : String; Index : Natural) return Natural
+      is
+         Result : Natural := Index;
+      begin
+         while Result > Buffer'First
+           and then Buffer (Result) /= ASCII.LF
+         loop
+            Result := Result - 1;
+         end loop;
+
+         return Result;
+      end Find_Line_Start;
 
    begin
-      if Buffer'Length = 0 then
-         Indent := 0;
-         Next_Indent := 0;
+      if Buffer = "" or else To > From + 1 then
          return;
       end if;
 
-      Index  := Buffer'Last - 1;
-      Indent := 0;
+      Start_Of_Line   := Find_Line_Start (Buffer, Buffer'Last);
+      Start_Prev_Line := Find_Line_Start (Buffer, Start_Of_Line - 1);
 
-      while Index > Buffer'First and then Buffer (Index - 1) /= ASCII.LF loop
-         Index := Index - 1;
-      end loop;
+      --  Compute the indentation level
 
-      loop
-         if Buffer (Index) = ' ' then
+      for J in Start_Prev_Line + 1 .. Start_Of_Line - 1 loop
+         if Buffer (J) = ' ' then
             Indent := Indent + 1;
-         elsif Buffer (Index) = ASCII.HT then
+         elsif Buffer (J) = ASCII.HT then
             Indent := Indent + Tab_Width - (Indent mod Tab_Width);
          else
             exit;
          end if;
+      end loop;
 
-         exit when Index = Buffer'Last;
+      --  Find the blank slice to replace
 
+      Index := Start_Of_Line + 1;
+
+      while Index < Buffer'Last
+        and then (Buffer (Index) = ' ' or else Buffer (Index) = ASCII.HT)
+      loop
          Index := Index + 1;
       end loop;
 
-      Next_Indent := Indent;
-   end Next_Indentation;
+      Replace
+        (To, 1, Index - Start_Of_Line,
+         Blank_Slice (Indent, Use_Tabs, Tab_Width));
+   end Format_Buffer;
 
    -------------------
    -- Category_Name --
@@ -667,11 +681,9 @@ package body Language is
 
    procedure Get_Indentation_Parameters
      (Lang         : access Language_Root;
-      Use_Tabs     : out Boolean;
       Params       : out Indent_Parameters;
       Indent_Style : out Indentation_Kind) is
    begin
-      Use_Tabs     := Lang.Use_Tabs;
       Params       := Lang.Indent_Params;
       Indent_Style := Lang.Indent_Style;
    end Get_Indentation_Parameters;
@@ -682,11 +694,9 @@ package body Language is
 
    procedure Set_Indentation_Parameters
      (Lang         : access Language_Root;
-      Use_Tabs     : Boolean;
       Params       : Indent_Parameters;
       Indent_Style : Indentation_Kind) is
    begin
-      Lang.Use_Tabs      := Use_Tabs;
       Lang.Indent_Params := Params;
       Lang.Indent_Style  := Indent_Style;
    end Set_Indentation_Parameters;

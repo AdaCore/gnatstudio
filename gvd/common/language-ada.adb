@@ -20,6 +20,7 @@
 
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.Regpat;  use GNAT.Regpat;
+
 with Pixmaps_IDE;  use Pixmaps_IDE;
 with String_Utils; use String_Utils;
 with Ada_Analyzer; use Ada_Analyzer;
@@ -400,34 +401,6 @@ package body Language.Ada is
          Case_Sensitive                => False);
    end Get_Language_Context;
 
-   -------------------
-   -- Format_Source --
-   -------------------
-
-   procedure Format_Source
-     (Lang             : access Ada_Language;
-      Buffer           : String;
-      Indent_Params    : Indent_Parameters := Default_Indent_Parameters;
-      Reserved_Casing  : Casing_Type       := Lower;
-      Ident_Casing     : Casing_Type       := Mixed;
-      Format_Operators : Boolean           := True)
-   is
-      pragma Unreferenced (Lang);
-      New_Buffer : Extended_Line_Buffer;
-      Ignore     : Natural;
-
-   begin
-      New_Buffer := To_Line_Buffer (Buffer);
-      Analyze_Ada_Source
-        (Buffer,
-         New_Buffer, Indent_Params,
-         Reserved_Casing, Ident_Casing, Format_Operators,
-         Current_Indent => Ignore,
-         Prev_Indent   => Ignore);
-      Print (New_Buffer);
-      Free (New_Buffer);
-   end Format_Source;
-
    ------------------
    -- Comment_Line --
    ------------------
@@ -500,22 +473,13 @@ package body Language.Ada is
       Result : out Construct_List)
    is
       pragma Unreferenced (Lang);
-
-      New_Buffer : Extended_Line_Buffer;
       Constructs : aliased Construct_List;
-      Ignore     : Natural;
-
    begin
       Analyze_Ada_Source
         (Buffer,
-         New_Buffer, Default_Indent_Parameters,
-         Reserved_Casing  => Unchanged,
-         Ident_Casing     => Unchanged,
-         Format_Operators => False,
-         Indent           => False,
-         Constructs       => Constructs'Unchecked_Access,
-         Current_Indent   => Ignore,
-         Prev_Indent      => Ignore);
+         Default_Indent_Parameters,
+         Format     => False,
+         Constructs => Constructs'Unchecked_Access);
       Result := Constructs;
    end Parse_Constructs;
 
@@ -529,54 +493,34 @@ package body Language.Ada is
       Callback : Entity_Callback)
    is
       pragma Unreferenced (Lang);
-
       pragma Suppress (All_Checks);
       --  See comment in Language.C.Parse_Entities
       --  We've never got an exception for an Ada file, but on the other hand,
       --  no checks are required in this procedure anyway.
 
-      New_Buffer : Extended_Line_Buffer;
-      Ignore     : Natural;
-
    begin
       Analyze_Ada_Source
         (Buffer,
-         New_Buffer, Default_Indent_Parameters,
-         Reserved_Casing  => Unchanged,
-         Ident_Casing     => Unchanged,
-         Format_Operators => False,
-         Indent           => False,
-         Current_Indent   => Ignore,
-         Prev_Indent      => Ignore,
-         Callback         => Callback);
+         Default_Indent_Parameters,
+         Format   => False,
+         Callback => Callback);
    end Parse_Entities;
 
-   ----------------------
-   -- Next_Indentation --
-   ----------------------
+   -------------------
+   -- Format_Buffer --
+   -------------------
 
-   procedure Next_Indentation
+   procedure Format_Buffer
      (Lang          : access Ada_Language;
       Buffer        : String;
-      Indent        : out Natural;
-      Next_Indent   : out Natural;
+      Replace       : Replace_Text_Callback;
+      From, To      : Natural := 0;
       Indent_Params : Indent_Parameters := Default_Indent_Parameters)
    is
       pragma Unreferenced (Lang);
-
-      New_Buffer : Extended_Line_Buffer;
-
    begin
-      Analyze_Ada_Source
-        (Buffer,
-         New_Buffer, Indent_Params,
-         Reserved_Casing  => Unchanged,
-         Ident_Casing     => Unchanged,
-         Format_Operators => False,
-         Indent           => False,
-         Current_Indent   => Next_Indent,
-         Prev_Indent      => Indent);
-   end Next_Indentation;
+      Analyze_Ada_Source (Buffer, Indent_Params, True, From, To, Replace);
+   end Format_Buffer;
 
    ------------------------
    -- Get_Project_Fields --

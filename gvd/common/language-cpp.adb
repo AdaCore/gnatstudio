@@ -21,6 +21,7 @@
 with GNAT.Regpat; use GNAT.Regpat;
 with Pixmaps_IDE; use Pixmaps_IDE;
 with Language.C;  use Language.C;
+with C_Analyzer;  use C_Analyzer;
 
 package body Language.Cpp is
 
@@ -142,15 +143,11 @@ package body Language.Cpp is
       pragma Suppress (All_Checks);
       --  See comment in Language.C.Parse_Entities
 
-      Ignored     : Natural;
-      No_Contents : Boolean;
-
    begin
       Analyze_C_Source
         (Buffer        => Buffer,
-         Indent        => Ignored,
          Indent_Params => Default_Indent_Parameters,
-         No_Contents   => No_Contents,
+         Format        => False,
          Callback      => Callback,
          Enable_Cpp    => True);
    end Parse_Entities;

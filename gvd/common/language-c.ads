@@ -89,31 +89,22 @@ package Language.C is
    -- Source Analyzing --
    ----------------------
 
+   procedure Parse_Constructs
+     (Lang   : access C_Language;
+      Buffer : String;
+      Result : out Construct_List);
+
    procedure Parse_Entities
      (Lang     : access C_Language;
       Buffer   : String;
       Callback : Entity_Callback);
 
-   procedure Next_Indentation
+   procedure Format_Buffer
      (Lang          : access C_Language;
       Buffer        : String;
-      Indent        : out Natural;
-      Next_Indent   : out Natural;
+      Replace       : Replace_Text_Callback;
+      From, To      : Natural := 0;
       Indent_Params : Indent_Parameters := Default_Indent_Parameters);
-
-   procedure Analyze_C_Source
-     (Buffer        : String;
-      Indent        : out Integer;
-      Indent_Params : Indent_Parameters;
-      No_Contents   : out Boolean;
-      Callback      : Entity_Callback := null;
-      Enable_Cpp    : Boolean := False);
-   --  Analyze buffer.
-   --  Indent is set to the current indentation level after having parsed
-   --  Buffer.
-   --  No_Contents is set to True if the last line parsed contained no
-   --  contents other than closing curlys and parentheses.
-   --  If Callback is not null, it will be called for each entity.
 
    function Comment_Line
      (Lang : access C_Language;

@@ -231,6 +231,15 @@ package Language is
       Indent_Decl       : Natural;
       Tab_Width         : Natural;
       Indent_Case_Extra : Boolean;
+      Reserved_Casing   : Casing_Type;
+      Ident_Casing      : Casing_Type;
+      Format_Operators  : Boolean;
+      Use_Tabs          : Boolean;
+      --  ??? Missing alignment parameters:
+      --      - colons in declarations
+      --      - assignments in declarations
+      --      - assignments in assignment statements
+      --      - arrow delimiters in associations
    end record;
    --  Define all parameters to indent a source code.
    --  Note that some of these parameters will be ignored, depending on the
@@ -241,13 +250,22 @@ package Language is
    --  Indent_Decl       number of spaces for multi-line variables declaration.
    --  Tab_Width         number of spaces for a tab character.
    --  Indent_Case_Extra if true, add extra indent level for case statements
+   --  Reserved_Casing   casing of reserved words.
+   --  Indent_Casing     casing of identifiers.
+   --  Format_Operators  whether operators should be reformatted (e.g. spaces
+   --                    added around "<")
+   --  Use_Tabs          whether tabs should be used instead of spaces.
 
    Default_Indent_Parameters : constant Indent_Parameters :=
      (Indent_Level      => 3,
       Indent_Continue   => 2,
       Indent_Decl       => 0,
       Tab_Width         => 8,
-      Indent_Case_Extra => True);
+      Indent_Case_Extra => True,
+      Reserved_Casing   => Unchanged,
+      Ident_Casing      => Unchanged,
+      Format_Operators  => False,
+      Use_Tabs          => False);
 
    type Indentation_Kind is (None, Simple, Extended);
    for Indentation_Kind'Size use Integer'Size;
@@ -259,14 +277,12 @@ package Language is
 
    procedure Get_Indentation_Parameters
      (Lang         : access Language_Root;
-      Use_Tabs     : out Boolean;
       Params       : out Indent_Parameters;
       Indent_Style : out Indentation_Kind);
    --  Return the indentation parameters for this language
 
    procedure Set_Indentation_Parameters
      (Lang         : access Language_Root;
-      Use_Tabs     : Boolean;
       Params       : Indent_Parameters;
       Indent_Style : Indentation_Kind);
    --  Set the indentation parameters to use for this language.
@@ -394,21 +410,10 @@ package Language is
       First, Current, Last : Construct_Access;
    end record;
 
+   type Construct_List_Access is access all Construct_List;
+
    procedure Free (List : in out Construct_List);
    --  Free the contents of List.
-
-   procedure Format_Source
-     (Lang             : access Language_Root;
-      Buffer           : String;
-      Indent_Params    : Indent_Parameters := Default_Indent_Parameters;
-      Reserved_Casing  : Casing_Type       := Lower;
-      Ident_Casing     : Casing_Type       := Mixed;
-      Format_Operators : Boolean           := True);
-   --  Format Buffer and output the result on standard output.
-   --  Reserved_Casing specifies the casing for reserved words.
-   --  Ident_Casing specifies the casing for identifiers.
-   --  If Format_Operators is True, spaces are added when appropriate around
-   --  operators (e.g a space after commas, before left paren, etc...).
 
    function Comment_Line
      (Lang : access Language_Root;
@@ -438,14 +443,24 @@ package Language is
    --  Since Parse_File_Constructs calls Parse_Constructs, this function does
    --  not need to be dispatching.
 
-   procedure Next_Indentation
+   type Replace_Text_Callback is access procedure
+     (Line    : Natural;
+      First   : Natural;
+      Last    : Natural;
+      Replace : String);
+   --  Replacement procedure used by Format_Buffer below.
+   --  Replace the slice First .. Last by contents of Replace.
+   --  First and Last are byte offsets from the start of the line, not
+   --  character counts.
+
+   procedure Format_Buffer
      (Lang          : access Language_Root;
       Buffer        : String;
-      Indent        : out Natural;
-      Next_Indent   : out Natural;
+      Replace       : Replace_Text_Callback;
+      From, To      : Natural := 0;
       Indent_Params : Indent_Parameters := Default_Indent_Parameters);
-   --  Given a Buffer, return the indentation level for the last character
-   --  in the buffer and for the next line.
+   --  Given a Buffer, reformat it, based on Indent_Params.
+   --  Reformat only lines comprised between From and To.
 
    type Entity_Callback is access function
      (Entity         : Language_Entity;
@@ -513,7 +528,6 @@ package Language is
 
 private
    type Language_Root is abstract tagged record
-      Use_Tabs      : Boolean           := False;
       Indent_Params : Indent_Parameters := Default_Indent_Parameters;
       Indent_Style  : Indentation_Kind  := Extended;
    end record;
