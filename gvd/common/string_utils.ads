@@ -273,9 +273,10 @@ package String_Utils is
    --      Str := "%a"   results in   "cd"  if Recursive is True
    --                    results in   "c%b" otherwise
 
-   type Substitute_Callback is access function
+   type Substitute_Callback is access
+     function
        (Param  : String;
-        Quoted : Boolean)  return String;
+        Quoted : Boolean) return String;
    --  A callback for Substitute below. It is called once for each '%...'
    --  parameter found in the string. Param doesn't include the leading '%'
    --  sign.
