@@ -110,12 +110,6 @@ package GVD.Preferences is
    Hide_Delay : constant String_Guint := "Hide_Delay";
    --  Delay (in ms) after which the current message is hidden
 
-   Remote_Protocol : constant String_String := "Remote_Protocol";
-   --  How to run a process on a remote machine ?
-
-   Remote_Copy : constant String_String := "Remote_Copy";
-   --  Program used to copy a file from a remote host.
-
    ---------------------
    -- Explorer Window --
    ---------------------
@@ -210,6 +204,9 @@ package GVD.Preferences is
    Change_Color : constant String_Color := "Change_Color";
    --  Color used to highlight fields that have changed since the last
    --  update (default is red).
+
+   Selection_Color : constant String_Color := "Selection_Color";
+   --  Color used to handle item selections.
 
    Thaw_Bg_Color : constant String_Color := "Thaw_Bg_Color";
    --  Color used for auto-refreshed items (white)
@@ -315,6 +312,15 @@ package GVD.Preferences is
    --  This variable is superceded by the environment variable
    --  GVD_EDITOR if it exists.
    --  Try using "xterm -e /bin/vi %f +%l" if you prefer vi.
+
+   Remote_Protocol : constant String_String := "Remote_Protocol";
+   --  How to run a process on a remote machine ?
+
+   Remote_Copy : constant String_String := "Remote_Copy";
+   --  Program used to copy a file from a remote host.
+
+   HTML_Browser : constant String_String := "HTML_Browser";
+   --  Program used to browse HTML pages (e.g the GVD manual).
 
 private
    pragma Inline (Get_Pref);

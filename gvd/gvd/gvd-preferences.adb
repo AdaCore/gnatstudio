@@ -347,6 +347,7 @@ package body GVD.Preferences is
       Set (String (Xref_Color), "#0000FF");
       Set (String (Title_Color), "#BEBEBE");
       Set (String (Change_Color), "#FF0000");
+      Set (String (Selection_Color), Color_Selection);
       Set (String (Thaw_Bg_Color), "#FFFFFF");
       Set (String (Freeze_Bg_Color), "#AAAAAA");
       Set (Look_3d, True);
@@ -379,6 +380,7 @@ package body GVD.Preferences is
       Set (String (Default_External_Editor), "glide %f -emacs +%l");
       Set (String (Remote_Protocol), "rsh");
       Set (String (Remote_Copy), "rcp");
+      Set (String (HTML_Browser), "netscape");
 
       Tab_Size_Cached := Get_Pref (Tab_Size);
    end Set_Default_Preferences;
@@ -539,6 +541,7 @@ package body GVD.Preferences is
       Set_Text (Dialog.List_Processes_Entry, Get_Pref (List_Processes));
       Set_Text (Dialog.Remote_Shell_Entry, Get_Pref (Remote_Protocol));
       Set_Text (Dialog.Remote_Copy_Entry, Get_Pref (Remote_Copy));
+      Set_Text (Dialog.Html_Entry, Get_Pref (HTML_Browser));
 
       Saved_Preferences := Current_Preferences;
 
@@ -614,6 +617,7 @@ package body GVD.Preferences is
       Set (String (Remote_Protocol), Get_Chars (Dialog.Remote_Shell_Entry),
            True);
       Set (String (Remote_Copy), Get_Chars (Dialog.Remote_Copy_Entry), True);
+      Set (String (HTML_Browser), Get_Chars (Dialog.Html_Entry), True);
    end Set_From_Dialog;
 
    -----------------------
