@@ -9,6 +9,7 @@ DEBUG.ENCLOSING_ENTITY=no
 
 --  List of all the handles defined in the application
 BROWSERS.MODULE=yes
+PROJECT_VIEWERS=yes
 GLIDE_KERNEL=yes
 GLIDE_KERNEL.PROJECT=yes
 GLIDE_KERNEL.MODULES=yes
