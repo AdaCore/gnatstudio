@@ -121,6 +121,16 @@ package body GVD.Canvas is
       Item   : Item_Record);
    --  Callback for the "update value" contextual menu item.
 
+   procedure Undisplay_Item
+     (Widget  : access Gtk_Widget_Record'Class;
+      Item    : Item_Record);
+   --  Hide all the subcomponents of the selected item.
+
+   procedure Toggle_Refresh_Mode
+     (Widget  : access Gtk_Widget_Record'Class;
+      Item    : Item_Record);
+   --  Toggle between "auto_refresh" and "frozen" modes.
+
    --------------------------
    -- Change_Align_On_Grid --
    --------------------------
@@ -524,6 +534,7 @@ package body GVD.Canvas is
    is
       Mitem : Gtk_Menu_Item;
       Radio : Gtk_Radio_Menu_Item;
+      Check : Gtk_Check_Menu_Item;
 
    begin
       if Canvas.Item_Contextual_Menu /= null then
@@ -531,6 +542,25 @@ package body GVD.Canvas is
       end if;
 
       Gtk_New (Canvas.Item_Contextual_Menu);
+
+      --  Display "Close" option.
+
+      Gtk_New (Mitem, Label => -"Close " & Component_Name);
+      Item_Handler.Connect
+        (Mitem, "activate",
+         Item_Handler.To_Marshaller (Undisplay_Item'Access),
+         Item_Record'(Name_Length    => Component_Name'Length,
+                      Canvas         => GVD_Canvas (Canvas),
+                      Item           => Display_Item (Item),
+                      Component      => Component,
+                      Component_Name => Component_Name,
+                      Mode           => Value));
+      Append (Canvas.Item_Contextual_Menu, Mitem);
+
+      --  Display a separator
+
+      Gtk_New (Mitem);
+      Append (Canvas.Item_Contextual_Menu, Mitem);
 
       Gtk_New (Mitem, Label => -"Hide all " & Component_Name);
       Item_Handler.Connect
@@ -652,6 +682,28 @@ package body GVD.Canvas is
       Append (Canvas.Item_Contextual_Menu, Radio);
       Set_Always_Show_Toggle (Radio, True);
 
+      --  Display a separator
+
+      Gtk_New (Mitem);
+      Append (Canvas.Item_Contextual_Menu, Mitem);
+
+      --  Display "Toggle auto-refresh" option.
+
+      Gtk_New (Check, "Auto refresh");
+      Set_Active (Check, Get_Auto_Refresh (Display_Item (Item)));
+      Set_Show_Toggle (Check, True);
+
+      Item_Handler.Connect
+        (Check, "activate",
+         Item_Handler.To_Marshaller (Toggle_Refresh_Mode'Access),
+         Item_Record'(Name_Length    => Component_Name'Length,
+                      Canvas         => GVD_Canvas (Canvas),
+                      Item           => Display_Item (Item),
+                      Component      => Component,
+                      Component_Name => Component_Name,
+                      Mode           => Value));
+      Append (Canvas.Item_Contextual_Menu, Check);
+
       Show_All (Canvas.Item_Contextual_Menu);
       return Canvas.Item_Contextual_Menu;
    end Item_Contextual_Menu;
@@ -714,5 +766,34 @@ package body GVD.Canvas is
            (Item.Canvas, Item.Item, Redisplay_Canvas => True);
       end if;
    end Update_Variable;
+
+   --------------------
+   -- Undisplay_Item --
+   --------------------
+
+   procedure Undisplay_Item
+     (Widget  : access Gtk_Widget_Record'Class;
+      Item    : Item_Record) is
+   begin
+      Process_User_Command
+        (Get_Debugger (Item.Item),
+         "graph undisplay" & Integer'Image (Get_Num (Item.Item)),
+         Output_Command => True);
+   end Undisplay_Item;
+
+   -------------------------
+   -- Toggle_Refresh_Mode --
+   -------------------------
+
+   procedure Toggle_Refresh_Mode
+     (Widget  : access Gtk_Widget_Record'Class;
+      Item    : Item_Record) is
+   begin
+      Set_Auto_Refresh
+        (Item.Item,
+         Get_Window (Item.Canvas),
+         not Get_Auto_Refresh (Item.Item),
+         True);
+   end Toggle_Refresh_Mode;
 
 end GVD.Canvas;
