@@ -78,9 +78,9 @@ package body VCS_View_API is
       end;
    end Open;
 
-   ---------------
+   ------------
    -- Update --
-   ---------------
+   ------------
 
    procedure Update
      (Widget  : access GObject_Record'Class;
@@ -93,9 +93,54 @@ package body VCS_View_API is
       Update (Ref, Files);
    end Update;
 
-   ---------------
+   ---------
+   -- Add --
+   ---------
+
+   procedure Add
+     (Widget  : access GObject_Record'Class;
+      Kernel  : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+      Files : String_List.List := Get_Selected_Files (Kernel);
+      Ref   : VCS_Access := Get_Current_Ref (Kernel);
+   begin
+      Add (Ref, Files);
+   end Add;
+
+   ------------
+   -- Remove --
+   ------------
+
+   procedure Remove
+     (Widget  : access GObject_Record'Class;
+      Kernel  : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+      Files : String_List.List := Get_Selected_Files (Kernel);
+      Ref   : VCS_Access := Get_Current_Ref (Kernel);
+   begin
+      Remove (Ref, Files);
+   end Remove;
+
+   ------------
+   -- Revert --
+   ------------
+
+   procedure Revert
+     (Widget  : access GObject_Record'Class;
+      Kernel  : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+      Files : String_List.List := Get_Selected_Files (Kernel);
+      Ref   : VCS_Access := Get_Current_Ref (Kernel);
+   begin
+      Revert (Ref, Files);
+   end Revert;
+
+   ------------
    -- Commit --
-   ---------------
+   ------------
 
    procedure Commit
      (Widget  : access GObject_Record'Class;
@@ -107,9 +152,9 @@ package body VCS_View_API is
       Edit_Log (Widget, Kernel);
    end Commit;
 
-   ------------------
+   ---------------
    -- View_Diff --
-   ------------------
+   ---------------
 
    procedure View_Diff
      (Widget  : access GObject_Record'Class;
@@ -125,9 +170,9 @@ package body VCS_View_API is
       end loop;
    end View_Diff;
 
-   ------------------
+   --------------
    -- View_Log --
-   ------------------
+   --------------
 
    procedure View_Log
      (Widget  : access GObject_Record'Class;
@@ -143,9 +188,9 @@ package body VCS_View_API is
       end loop;
    end View_Log;
 
-   ----------------------
+   -------------------
    -- View_Annotate --
-   ----------------------
+   -------------------
 
    procedure View_Annotate
      (Widget  : access GObject_Record'Class;
@@ -161,9 +206,9 @@ package body VCS_View_API is
       end loop;
    end View_Annotate;
 
-   -----------------
+   --------------
    -- Edit_Log --
-   -----------------
+   --------------
 
    procedure Edit_Log
      (Widget  : access GObject_Record'Class;
