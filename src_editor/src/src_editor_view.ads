@@ -24,12 +24,14 @@
 --  </description>
 
 with Glib; use Glib;
+with Pango.Font;
 with Gdk.GC;
 with Gdk.Event;
 with Gdk.Font;
+
 with Gtk.Text_Mark;
 with Gtk.Text_View;
-with Pango.Font;
+
 with Src_Editor_Buffer;
 
 package Src_Editor_View is
