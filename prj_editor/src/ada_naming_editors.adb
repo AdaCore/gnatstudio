@@ -50,8 +50,8 @@ with Interfaces.C.Strings;     use Interfaces.C.Strings;
 package body Ada_Naming_Editors is
 
    Empty_Unit_Name : constant String := "<unit_name>";
-   Empty_Spec_Name : constant String := "<spec_file_name>";
-   Empty_Body_Name : constant String := "<body_file_name>";
+   Empty_Spec_Name : constant String := "<spec_file>";
+   Empty_Body_Name : constant String := "<body_file>";
 
    Default_Gnat_Dot_Replacement : constant String := "-";
    Default_Gnat_Spec_Suffix     : constant String := ".ads";
@@ -74,6 +74,10 @@ package body Ada_Naming_Editors is
    begin
       Editor := new Ada_Naming_Editor_Record;
       Initialize (Editor);
+
+      Set_Width_Chars (Editor.Unit_Name_Entry, 8);
+      Set_Width_Chars (Editor.Spec_Filename_Entry, 8);
+      Set_Width_Chars (Editor.Body_Filename_Entry, 8);
 
       Set_Size_Request (Editor.Exception_List, -1, 170);
       Gtk_New (Size_Group, Both);
