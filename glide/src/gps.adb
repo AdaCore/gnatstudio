@@ -1,4 +1,3 @@
-with Projects.Registry; use Projects.Registry;
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
