@@ -118,6 +118,7 @@ package body Glide_Kernel is
      (Glib.Object.GObject_Record);
 
    use Actions_Htable.String_Hash_Table;
+   use Action_Contexts_Htable.String_Hash_Table;
 
    function Convert is new Ada.Unchecked_Conversion
      (System.Address, Kernel_Handle);
@@ -1779,12 +1780,10 @@ package body Glide_Kernel is
    procedure Bind_Default_Key
      (Handler        : access Default_Key_Handler_Record;
       Action         : String;
-      Default_Key    : Gdk.Types.Gdk_Key_Type;
-      Default_Mod    : Gdk.Types.Gdk_Modifier_Type;
-      Context        : Key_Context := null)
+      Default_Key    : String)
    is
       pragma Unreferenced
-        (Handler, Default_Key, Default_Mod, Action, Context);
+        (Handler, Default_Key, Action);
    begin
       null;
    end Bind_Default_Key;
@@ -1918,11 +1917,13 @@ package body Glide_Kernel is
      (Kernel      : access Kernel_Handle_Record;
       Name        : String;
       Command     : access Commands.Interactive.Interactive_Command'Class;
-      Description : String := "") is
+      Description : String := "";
+      Context     : Action_Context := null) is
    begin
       Set (Kernel.Actions,
            Name,
            (Commands.Interactive.Interactive_Command_Access (Command),
+            Context,
             new String'(Description)));
    end Register_Action;
 
@@ -1959,33 +1960,92 @@ package body Glide_Kernel is
       return Get_Key (Iter.Iterator);
    end Get;
 
+   ---------
+   -- Get --
+   ---------
+
+   function Get (Iter : Action_Iterator) return Action_Record is
+   begin
+      return Get_Element (Iter.Iterator);
+   end Get;
+
    -------------------
    -- Lookup_Action --
    -------------------
 
    function Lookup_Action
-     (Kernel : access Kernel_Handle_Record;
-      Name   : String) return Commands.Interactive.Interactive_Command_Access
+     (Kernel : access Kernel_Handle_Record; Name : String) return Action_Record
    is
    begin
-      return Get (Kernel.Actions, Name).Command;
+      return Get (Kernel.Actions, Name);
    end Lookup_Action;
 
-   -------------------------------
-   -- Lookup_Action_Description --
-   -------------------------------
+   --------------------
+   -- Lookup_Context --
+   --------------------
 
-   function Lookup_Action_Description
+   function Lookup_Context
      (Kernel : access Kernel_Handle_Record;
-      Name   : String) return String
-   is
-      Action : constant Action_Record := Get (Kernel.Actions, Name);
+      Name   : String) return Action_Context is
    begin
-      if Action.Description = null then
-         return "";
-      else
-         return Action.Description.all;
-      end if;
-   end Lookup_Action_Description;
+      return Get (Kernel.Action_Contexts, Name);
+   end Lookup_Context;
+
+   -----------
+   -- Start --
+   -----------
+
+   function Start (Kernel : access Kernel_Handle_Record'Class)
+      return Action_Context_Iterator
+   is
+      Iter : Action_Context_Iterator;
+   begin
+      Get_First (Kernel.Action_Contexts, Iter.Iterator);
+      return Iter;
+   end Start;
+
+   ----------------
+   -- Do_Nothing --
+   ----------------
+
+   procedure Do_Nothing (Context : in out Action_Context) is
+      pragma Unreferenced (Context);
+   begin
+      null;
+   end Do_Nothing;
+
+   ----------
+   -- Next --
+   ----------
+
+   procedure Next
+     (Kernel : access Kernel_Handle_Record'Class;
+      Iter   : in out Action_Context_Iterator) is
+   begin
+      Get_Next (Kernel.Action_Contexts, Iter.Iterator);
+   end Next;
+
+   ---------
+   -- Get --
+   ---------
+
+   function Get (Iter : Action_Context_Iterator) return Action_Context is
+   begin
+      return Get_Element (Iter.Iterator);
+   end Get;
+
+   ----------------------
+   -- Register_Context --
+   ----------------------
+
+   procedure Register_Context
+     (Kernel  : access Kernel_Handle_Record;
+      Context : access Action_Context_Record'Class)
+   is
+   begin
+      Set (Kernel.Action_Contexts,
+           Get_Name (Context),
+           Action_Context (Context));
+   end Register_Context;
 
 end Glide_Kernel;
