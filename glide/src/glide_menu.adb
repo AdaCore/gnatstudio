@@ -120,7 +120,6 @@ package body Glide_Menu is
               History           => Get_History (Kernel));
       begin
          if Filename /= VFS.No_File then
-            Change_Dir (Dir_Name (Filename).all);
             Load_Project (Kernel, Full_Name (Filename).all);
          end if;
       end;
