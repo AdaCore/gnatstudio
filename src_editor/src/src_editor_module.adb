@@ -51,6 +51,7 @@ with Gtk.Button;                use Gtk.Button;
 with Gtk.Dialog;                use Gtk.Dialog;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.GEntry;                use Gtk.GEntry;
+with Gtk.Handlers;
 with Gtk.Label;                 use Gtk.Label;
 with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
@@ -439,6 +440,33 @@ package body Src_Editor_Module is
 
    procedure Map_Cb (Widget : access Gtk_Widget_Record'Class);
    --  Create the module-wide GCs.
+
+   package File_Callback is new Gtk.Handlers.User_Callback
+     (Gtk_Widget_Record, Virtual_File);
+
+   procedure On_Editor_Destroy
+     (Widget : access Gtk_Widget_Record'Class;
+      Params : Glib.Values.GValues;
+      User   : Virtual_File);
+   --  Callback to call when an editor is about to be destroyed.
+
+   -----------------------
+   -- On_Editor_Destroy --
+   -----------------------
+
+   procedure On_Editor_Destroy
+     (Widget : access Gtk_Widget_Record'Class;
+      Params : Glib.Values.GValues;
+      User   : Virtual_File)
+   is
+      pragma Unreferenced (Widget, Params);
+      Id : constant Source_Editor_Module :=
+        Source_Editor_Module (Src_Editor_Module_Id);
+   begin
+      if Id /= null then
+         Editors_Hash.Remove (Id.Editors, User);
+      end if;
+   end On_Editor_Destroy;
 
    --------------
    -- Dnd_Data --
@@ -2101,6 +2129,8 @@ package body Src_Editor_Module is
       Box        : Source_Box;
       Child      : MDI_Child;
       Dummy      : Boolean;
+      Id         : constant Source_Editor_Module :=
+        Source_Editor_Module (Src_Editor_Module_Id);
       pragma Unreferenced (Dummy);
 
    begin
@@ -2141,6 +2171,16 @@ package body Src_Editor_Module is
             Default_Height => Get_Pref (Kernel, Default_Widget_Height),
             Module         => Src_Editor_Module_Id);
          Set_Icon (Child, Gdk_New_From_Xpm_Data (editor_xpm));
+
+         --  Add child to the hash table of editors.
+         Editors_Hash.Set (Id.Editors, File, (Child => Child));
+
+         --  Make sure the entry in the hash table is removed when the editor
+         --  is destroyed.
+
+         File_Callback.Connect
+           (Child, "destroy", On_Editor_Destroy'Access,
+            User_Data => File);
 
          if Focus then
             Set_Focus_Child (Child);
@@ -4223,11 +4263,31 @@ package body Src_Editor_Module is
       Iter  : Child_Iterator := First_Child (Get_MDI (Kernel));
       Child : MDI_Child;
       Full  : VFS.Virtual_File;
+      Id    : constant Source_Editor_Module :=
+        Source_Editor_Module (Src_Editor_Module_Id);
 
    begin
       if File = VFS.No_File then
          return null;
       end if;
+
+      --  Attempt to find the editor in the cache.
+
+      Child := Editors_Hash.Get (Id.Editors, File).Child;
+
+      --  Verify that the child corresponds to the wanted filename.
+      --  (It could have changed, for example if "save as..." was used)
+
+      if Child /= null then
+         if Get_Filename (Child) = File then
+            return Child;
+         else
+            Editors_Hash.Remove (Id.Editors, File);
+         end if;
+      end if;
+
+      --  The editor could not be found in the hash table, find it by cycling
+      --  through the editors.
 
       if Is_Absolute_Path (File) then
          Full := File;
@@ -4315,5 +4375,35 @@ package body Src_Editor_Module is
 
       return Child;
    end Find_Child;
+
+   ----------
+   -- Hash --
+   ----------
+
+   function Hash is new HTables.Hash (Header_Num);
+
+   function Hash (F : Virtual_File) return Header_Num is
+   begin
+      return Hash (Full_Name (F).all);
+   end Hash;
+
+   -----------
+   -- Equal --
+   -----------
+
+   function Equal (F1, F2 : Virtual_File) return Boolean is
+   begin
+      return F1 = F2;
+   end Equal;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (X : in out Element) is
+      pragma Unreferenced (X);
+   begin
+      null;
+   end Free;
 
 end Src_Editor_Module;
