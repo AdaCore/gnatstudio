@@ -22,7 +22,6 @@
 
 with GNAT.OS_Lib;       use GNAT.OS_Lib;
 with Src_Editor_Buffer; use Src_Editor_Buffer;
-with Src_Editor_Box;    use Src_Editor_Box;
 
 package Commands.Editor is
 
@@ -41,9 +40,9 @@ package Commands.Editor is
    --  that the text is inserted/deleted after the cursor.
 
    procedure Create
-     (Item  : out Check_Modified_State;
-      Box   : Source_Editor_Box;
-      Queue : Command_Queue);
+     (Item   : out Check_Modified_State;
+      Buffer : Source_Buffer;
+      Queue  : Command_Queue);
    --  Create a new Check_Modified_State command.
 
    function Execute
@@ -121,7 +120,7 @@ package Commands.Editor is
 private
 
    type Check_Modified_State_Type is new Root_Command with record
-      Box         : Source_Editor_Box;
+      Buffer      : Source_Buffer;
       Check_Queue : Command_Queue;
    end record;
 

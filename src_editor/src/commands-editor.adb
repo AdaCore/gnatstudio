@@ -37,12 +37,12 @@ package body Commands.Editor is
    ------------
 
    procedure Create
-     (Item  : out Check_Modified_State;
-      Box   : Source_Editor_Box;
-      Queue : Command_Queue) is
+     (Item   : out Check_Modified_State;
+      Buffer : Source_Buffer;
+      Queue  : Command_Queue) is
    begin
       Item := new Check_Modified_State_Type;
-      Item.Box := Box;
+      Item.Buffer := Buffer;
       Item.Check_Queue := Queue;
    end Create;
 
@@ -51,13 +51,15 @@ package body Commands.Editor is
    -------------
 
    function Execute
-     (Command : access Check_Modified_State_Type) return Boolean is
+     (Command : access Check_Modified_State_Type) return Boolean
+   is
+      New_Status : constant Status_Type := Get_Status (Command.Buffer);
    begin
-      if Get_Position (Command.Check_Queue)
-        = Get_Saved_Position (Command.Box)
-      then
-         Set_Modified_State (Command.Box, False);
+      if New_Status /= Get_Last_Status (Command.Buffer) then
+         Status_Changed (Command.Buffer);
       end if;
+
+      Set_Last_Status (Command.Buffer, New_Status);
 
       return True;
    end Execute;
