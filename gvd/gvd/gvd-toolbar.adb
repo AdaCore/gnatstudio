@@ -18,10 +18,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Gtk.Arguments;   use Gtk.Arguments;
 with Gtk.Enums;       use Gtk.Enums;
 with Gtk.Pixmap;      use Gtk.Pixmap;
-with Gtk.Widget;      use Gtk.Widget;
 with Odd_Intl;        use Odd_Intl;
 with Pixmaps_IDE;     use Pixmaps_IDE;
 
@@ -33,65 +31,6 @@ with Debugger;        use Debugger;
 with Process_Proxies; use Process_Proxies;
 
 package body GVD.Toolbar is
-
-   ---------------------
-   -- Local Callbacks --
-   ---------------------
-
-   procedure On_Run
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args);
-   --  Callback for the "run" button
-
-   procedure On_Start
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args);
-   --  Callback for the "start" button
-
-   procedure On_Step
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args);
-   --  Callback for the "step" button
-
-   procedure On_Step_Instruction
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args);
-   --  Callback for the "step instruction" button
-
-   procedure On_Next
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args);
-   --  Callback for the "next" button
-
-   procedure On_Next_Instruction
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args);
-   --  Callback for the "next instruction" button
-
-   procedure On_Finish
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args);
-   --  Callback for the "finish" button
-
-   procedure On_Continue
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args);
-   --  Callback for the "cont" button
-
-   procedure On_Up
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args);
-   --  Callback for the "up" button
-
-   procedure On_Down
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args);
-   --  Callback for the "down" button
-
-   procedure On_Interrupt
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args);
-   --  Callback for the "interrupt" button
 
    --------------------
    -- Create_Toolbar --
