@@ -57,6 +57,7 @@ with Glide_Kernel.Contexts;     use Glide_Kernel.Contexts;
 with Glide_Kernel.Hooks;        use Glide_Kernel.Hooks;
 with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
 with Glide_Kernel.Project;      use Glide_Kernel.Project;
+with Glide_Kernel.Scripts;      use Glide_Kernel.Scripts;
 with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Calendar;              use Ada.Calendar;
 with String_Utils;              use String_Utils;
@@ -614,15 +615,15 @@ package body Src_Editor_Buffer is
 
       Process_Highlight_Region (Buffer);
 
-      --  Prototype: perform on-the-fly style check
+      --  Perform on-the-fly style check
 
---        Execute_GPS_Shell_Command
---          (Buffer.Kernel,
---           "File " & Full_Name (Buffer.Filename).all);
---        Execute_GPS_Shell_Command (Buffer.Kernel, "File.check_syntax %1");
-
-      --  end prototype.
-
+      if Buffer.Auto_Syntax_Check then
+         Execute_GPS_Shell_Command
+           (Buffer.Kernel,
+            "File " & Full_Name (Buffer.Filename).all);
+         Execute_GPS_Shell_Command
+           (Buffer.Kernel, "File.shadow_check_syntax %1");
+      end if;
 
       --  Unregister the timeout.
       Buffer.Blocks_Timeout_Registered := False;
@@ -2058,6 +2059,8 @@ package body Src_Editor_Buffer is
       if not Prev and then B.Parse_Blocks then
          Register_Edit_Timeout (B);
       end if;
+
+      B.Auto_Syntax_Check := Get_Pref (Kernel, Automatic_Syntax_Check);
    end Execute;
 
    ---------------
