@@ -118,6 +118,10 @@ package body Projects.Editor is
    --  Remove the variable declaration from the list of variables in
    --  Project_Or_Package.
 
+   function Get_All_Possible_Values
+     (Variable : Project_Node_Id) return Name_Id_Array;
+   --  Return the list of all possible values for Variable.
+
    ----------------
    -- Attributes --
    ----------------
@@ -3249,5 +3253,132 @@ package body Projects.Editor is
               Default     => No_Name,
               String_Type => Typ);
    end Create_Environment_Variable;
+
+   -------------------
+   -- Add_Case_Item --
+   -------------------
+
+   procedure Add_Case_Item
+     (Case_Node : Project_Node_Id; Choice : Name_Id)
+   is
+      Item, S : Project_Node_Id;
+   begin
+      Item := Default_Project_Node (N_Case_Item);
+      S := Default_Project_Node (N_Literal_String);
+      Set_String_Value_Of (S, Choice);
+      Set_First_Choice_Of (Item, S);
+      Set_Next_Case_Item (Item, First_Case_Item_Of (Case_Node));
+      Set_First_Case_Item_Of (Case_Node, Item);
+   end Add_Case_Item;
+
+   -----------------------------
+   -- Get_All_Possible_Values --
+   -----------------------------
+
+   function Get_All_Possible_Values
+     (Variable : Project_Node_Id) return Name_Id_Array
+   is
+      Choice        : Project_Node_Id := First_Literal_String
+        (String_Type_Of (Variable));
+      Choices_Count : Natural := 0;
+   begin
+      while Choice /= Empty_Node loop
+         Choices_Count := Choices_Count + 1;
+         Choice        := Next_Literal_String (Choice);
+      end loop;
+
+      declare
+         Choices : Name_Id_Array (1 .. Choices_Count);
+         Index   : Natural := Choices'First;
+      begin
+         Choice := First_Literal_String (String_Type_Of (Variable));
+         while Choice /= Empty_Node loop
+            Choices (Index) := String_Value_Of (Choice);
+            Index := Index + 1;
+            Choice := Next_Literal_String (Choice);
+         end loop;
+
+         return Choices;
+      end;
+   end Get_All_Possible_Values;
+
+   ---------------------
+   -- Normalize_Cases --
+   ---------------------
+
+   procedure Normalize_Cases (Project : Projects.Project_Type) is
+      procedure Process_Declarative_List (Node : Project_Node_Id);
+      --  Check all case statements in the declarative list
+
+      ------------------------------
+      -- Process_Declarative_List --
+      ------------------------------
+
+      procedure Process_Declarative_List (Node : Project_Node_Id) is
+         Decl_Item, Current : Project_Node_Id := Node;
+      begin
+         --  Nothing to do if there is no project
+         if Node = Empty_Node then
+            return;
+         end if;
+
+         pragma Assert (Kind_Of (Decl_Item) = N_Declarative_Item);
+
+         while Decl_Item /= Empty_Node loop
+            Current := Current_Item_Node (Decl_Item);
+            exit when Current = Empty_Node;
+
+            case Kind_Of (Current) is
+               when N_Package_Declaration =>
+                  Process_Declarative_List
+                    (First_Declarative_Item_Of (Current));
+               when N_Case_Construction =>
+                  declare
+                     Values : Name_Id_Array := Get_All_Possible_Values
+                       (Case_Variable_Reference_Of (Current));
+                     Case_Item : Project_Node_Id :=
+                       First_Case_Item_Of (Current);
+                     Choice    : Project_Node_Id;
+                  begin
+                     while Case_Item /= Empty_Node loop
+                        Choice := First_Choice_Of (Case_Item);
+                        while Choice /= Empty_Node loop
+                           for N in Values'Range loop
+                              if Values (N) = String_Value_Of (Choice) then
+                                 Values (N) := No_Name;
+                                 exit;
+                              end if;
+                           end loop;
+                           Choice := Next_Literal_String (Choice);
+                        end loop;
+
+                        Process_Declarative_List
+                          (First_Declarative_Item_Of (Case_Item));
+
+                        Case_Item := Next_Case_Item (Case_Item);
+                     end loop;
+
+                     for V in Values'Range loop
+                        if Values (V) /= No_Name then
+                           Add_Case_Item
+                             (Case_Node => Current,
+                              Choice    => Values (V));
+                        end if;
+                     end loop;
+                  end;
+
+               when others =>
+                  null;
+            end case;
+
+            Decl_Item := Next_Declarative_Item (Decl_Item);
+         end loop;
+      end Process_Declarative_List;
+
+   begin
+      Process_Declarative_List
+        (First_Declarative_Item_Of
+           (Project_Declaration_Of (Project.Node)));
+   end Normalize_Cases;
 
 end Projects.Editor;

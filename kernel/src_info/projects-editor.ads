@@ -131,6 +131,11 @@ package Projects.Editor is
    --  different from Project if the package declaration is a renaming of
    --  another package.
 
+   procedure Normalize_Cases (Project : Projects.Project_Type);
+   --  Make sure that all possible values of a variable appear in a case
+   --  statement, to avoid warnings from the project manager.
+   --  This subprogram doesn't apply recursively to imported projects
+
    -----------
    -- Paths --
    -----------
@@ -387,6 +392,15 @@ private
       Node   : Project_Node_Id);
    --  Add Node at the begining of the list for Parent.
    --  Node can also be a N_Declarative_Item (or a list of them).
+
+   -----------
+   -- Cases --
+   -----------
+
+   procedure Add_Case_Item
+     (Case_Node : Project_Node_Id; Choice : Types.Name_Id);
+   --  Create a new case item in case_node (which is associated with a
+   --  "case var is" statement
 
    ---------------
    -- Variables --
