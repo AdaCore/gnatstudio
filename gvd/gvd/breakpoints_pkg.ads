@@ -89,9 +89,14 @@ package Breakpoints_Pkg is
       null;
    end record;
 
-   procedure Breakpoint_Editor (Descriptor : out Breakpoint_Descriptor);
+   procedure Breakpoint_Editor
+     (Editor     : in out Breakpoints_Access;
+      Descriptor : out Breakpoint_Descriptor);
    --  Open a breakpoint editor and launch a main loop until the ok or cancel
    --  button has been pressed.
+   --  Editor if null is set to the created window, that is hidden on return.
+   --  If non null, Breakpoint_Editor will show it instead of creating a new
+   --  one.
    --  Return the breakpoint descriptor.
    --  Note that this is your responsibility to free the memory associated with
    --  Descriptor, using Free below.

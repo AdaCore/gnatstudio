@@ -332,14 +332,17 @@ begin
 
 end Initialize;
 
-procedure Breakpoint_Editor (Descriptor : out Breakpoint_Descriptor) is
-   Editor : Breakpoints_Access;
-
+procedure Breakpoint_Editor
+  (Editor     : in out Breakpoints_Access;
+   Descriptor : out Breakpoint_Descriptor) is
 begin
-   Gtk_New (Editor);
+   if Editor = null then
+      Gtk_New (Editor);
+   end if;
+
    Show_All (Editor);
    Gtk.Main.Main;
-   Destroy (Editor);
+   Hide (Editor);
 end Breakpoint_Editor;
 
 procedure Free (Descriptor : in out Breakpoint_Descriptor) is
