@@ -544,7 +544,7 @@ package body Docgen.Html_Output is
                      & Get_Name (TRL.Data (Node).Entity)
                      & "</A></TD><TD> at &nbsp<I>"
                      & Base_Name
-                       (Get_Declaration_File_Of (TRL.Data (Node).Entity)).all
+                       (Get_Declaration_File_Of (TRL.Data (Node).Entity))
                      & "</I></TD><TD>:"
                      & Image (Get_Declaration_Line_Of (TRL.Data (Node).Entity))
                      & "</TD><TD>:"
@@ -560,7 +560,7 @@ package body Docgen.Html_Output is
                      & Get_Name (TRL.Data (Node).Entity)
                      & "</TD><TD> at &nbsp<I>"
                      & Base_Name
-                       (Get_Declaration_File_Of (TRL.Data (Node).Entity)).all
+                       (Get_Declaration_File_Of (TRL.Data (Node).Entity))
                      & "</I></TD><TD>:"
                      & Image
                        (Get_Declaration_Line_Of (TRL.Data (Node).Entity))
@@ -1152,7 +1152,7 @@ package body Docgen.Html_Output is
 
       Put_Line
         (File, " <BR> &nbsp&nbsp&nbsp&nbsp&nbsp in " &
-         Base_Name (Info.Item_File).all);
+         Base_Name (Info.Item_File));
       New_Line (File);
       Put_Line (File, "<BR>");
       New_Line (File);
@@ -1208,14 +1208,14 @@ package body Docgen.Html_Output is
          declare
             Ext : constant String := Spec_Suffix (Kernel, File);
          begin
-            return Base_Name (File, Ext).all & "_"
+            return Base_Name (File, Ext) & "_"
             & Ext (Ext'First + 1 .. Ext'Last) & ".htm";
          end;
       else
          declare
             Ext : constant String := Body_Suffix (Kernel, File);
          begin
-            return Base_Name (File, Ext).all & "_"
+            return Base_Name (File, Ext) & "_"
             & Ext (Ext'First + 1 .. Ext'Last) & ".htm";
          end;
       end if;
