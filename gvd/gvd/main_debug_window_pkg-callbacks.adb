@@ -26,7 +26,7 @@ with Gtk.Handlers;        use Gtk.Handlers;
 with Gtk.Notebook;        use Gtk.Notebook;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 with Gtk.Text;            use Gtk.Text;
-with General_Preferences_Pkg; use General_Preferences_Pkg;
+with GVD.Preferences_Dialog;  use GVD.Preferences_Dialog;
 with Gtkada.Dialogs;      use Gtkada.Dialogs;
 with Gtkada.File_Selection; use Gtkada.File_Selection;
 with Gtkada.Canvas;       use Gtkada.Canvas;
@@ -58,7 +58,7 @@ with List_Select_Pkg;     use List_Select_Pkg;
 with Dock_Paned;          use Dock_Paned;
 with Debugger;            use Debugger;
 with Process_Proxies;     use Process_Proxies;
-with Breakpoints_Pkg;     use Breakpoints_Pkg;
+with Breakpoints_Editor;  use Breakpoints_Editor;
 with Display_Items;       use Display_Items;
 
 package body Main_Debug_Window_Pkg.Callbacks is
@@ -948,7 +948,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
    begin
       if Process /= null then
          Breakpoint_Editor
-           (Breakpoints_Access (Top.Breakpoints_Editor), Process);
+           (Breakpoint_Editor_Access (Top.Breakpoints_Editor), Process);
       end if;
    end On_Edit_Breakpoints1_Activate;
 
@@ -1288,7 +1288,8 @@ package body Main_Debug_Window_Pkg.Callbacks is
       Update_External_Dialogs (Main, Gtk_Widget (Process));
 
       if Main.Breakpoints_Editor /= null then
-         Set_Process (Breakpoints_Access (Main.Breakpoints_Editor), Process);
+         Set_Process
+           (Breakpoint_Editor_Access (Main.Breakpoints_Editor), Process);
       end if;
 
    exception

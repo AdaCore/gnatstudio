@@ -66,8 +66,7 @@ with Debugger.Jdb;               use Debugger.Jdb;
 with Process_Proxies;            use Process_Proxies;
 with Items.Simples;              use Items.Simples;
 with Main_Debug_Window_Pkg;      use Main_Debug_Window_Pkg;
-with Breakpoints_Pkg;            use Breakpoints_Pkg;
-with Breakpoints_Pkg.Callbacks;  use Breakpoints_Pkg.Callbacks;
+with Breakpoints_Editor;         use Breakpoints_Editor;
 with GVD.Canvas;                 use GVD.Canvas;
 with GVD.Dialogs;                use GVD.Dialogs;
 with Pixmaps_IDE;                use Pixmaps_IDE;
@@ -1557,7 +1556,7 @@ package body GVD.Process is
            and then Mapped_Is_Set (Process.Window.Breakpoints_Editor)
          then
             Update_Breakpoint_List
-           (Breakpoints_Access (Process.Window.Breakpoints_Editor));
+              (Breakpoint_Editor_Access (Process.Window.Breakpoints_Editor));
          end if;
       end if;
    end Update_Breakpoints;
