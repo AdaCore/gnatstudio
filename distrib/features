@@ -1,5 +1,11 @@
 New features in GPS 1.2.0
 
+- Errors highlighting in the source editor.
+
+- Block highlighting in the source editor.
+
+- Ability to add support for new languages through XML files.
+
 - Ability to create text aliases (Edit->Aliases).
 
 - New documentation can now be added through simple XML index files
