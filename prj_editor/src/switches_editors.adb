@@ -26,18 +26,19 @@
 -- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
 
-with Glib;              use Glib;
-with Gtk.Box;           use Gtk.Box;
-with Gtk.Check_Button;  use Gtk.Check_Button;
-with Gtk.Combo;         use Gtk.Combo;
-with Gtk.List;          use Gtk.List;
-with Gtk.Radio_Button;  use Gtk.Radio_Button;
-with Gtk.Spin_Button;   use Gtk.Spin_Button;
-with Gtk.Table;         use Gtk.Table;
-with Gtk.Widget;        use Gtk.Widget;
-with Gtk.GEntry;        use Gtk.GEntry;
-with Gtk.Notebook;      use Gtk.Notebook;
+with Glib;                use Glib;
+with Gtk.Box;             use Gtk.Box;
+with Gtk.Check_Button;    use Gtk.Check_Button;
+with Gtk.Combo;           use Gtk.Combo;
+with Gtk.List;            use Gtk.List;
+with Gtk.Radio_Button;    use Gtk.Radio_Button;
+with Gtk.Spin_Button;     use Gtk.Spin_Button;
+with Gtk.Table;           use Gtk.Table;
+with Gtk.Widget;          use Gtk.Widget;
+with Gtk.GEntry;          use Gtk.GEntry;
+with Gtk.Notebook;        use Gtk.Notebook;
 
+with String_Utils;        use String_Utils;
 with Switches_Editor_Pkg; use Switches_Editor_Pkg;
 with GNAT.OS_Lib;         use GNAT.OS_Lib;
 with Unchecked_Deallocation;
@@ -161,22 +162,19 @@ package body Switches_Editors is
          Value : Gint;
 
       begin
-         --  Check whether there is an actual selection. With gtk+2.0, the entry
-         --  emits the "changed" signal more often, even in some cases where
-         --  there is no actual selection in the list. However, the callback is
-         --  called again later on.
+         --  Check whether there is an actual selection. With gtk+2.0, the
+         --  entry emits the "changed" signal more often, even in some cases
+         --  where there is no actual selection in the list. However, the
+         --  callback is called again later on.
+
          if Get_Selection (List) /= Null_List then
             Value := Child_Position
               (List, Get_Data (Get_Selection (List)));
-            declare
-               Level : constant String := Gint'Image (Value);
-            begin
-               if Value /= 0 then
-                  Arr (Index) := new String'
-                    (Switch & Level (Level'First + 1 .. Level'Last));
-                  Index := Index + 1;
-               end if;
-            end;
+
+            if Value /= 0 then
+               Arr (Index) := new String' (Switch & Image (Value));
+               Index := Index + 1;
+            end if;
          end if;
       end Check_Combo;
 
@@ -184,10 +182,10 @@ package body Switches_Editors is
 
    begin
       case Tool is
-         when Gnatmake => Num_Switches := 6 + 1;  --  +1 is for arg to -j
-         when Compiler => Num_Switches := 20 + 1; --  +1 is for -g
-         when Binder   => Num_Switches := 3 + 1;  --  +1 is for -g
-         when Linker   => Num_Switches := 1 + 1;  --  +1 is for -g
+         when Gnatmake => Num_Switches :=  6 + 1;  --  +1 is for arg to -j
+         when Compiler => Num_Switches := 20 + 1;  --  +1 is for -g
+         when Binder   => Num_Switches :=  3 + 1;  --  +1 is for -g
+         when Linker   => Num_Switches :=  1 + 1;  --  +1 is for -g
       end case;
 
       declare
@@ -204,14 +202,9 @@ package body Switches_Editors is
                Check_Toggle (Editor.Make_Debug, "-g", Arr, Index);
 
                if Get_Active (Editor.Make_Multiprocessing) then
-                  declare
-                     Level : constant String := Gint'Image
-                       (Get_Value_As_Int (Editor.Num_Processes));
-                  begin
-                     Arr (Index) := new String'
-                       ("-j" & Level (Level'First + 1 .. Level'Last));
-                     Index := Index + 1;
-                  end;
+                  Arr (Index) := new String'
+                    ("-j" & Image (Get_Value_As_Int (Editor.Num_Processes)));
+                  Index := Index + 1;
                end if;
 
             when Compiler =>
