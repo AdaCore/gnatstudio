@@ -1147,7 +1147,8 @@ package body Glide_Kernel.Modules is
      (Kernel            : access Kernel_Handle_Record'Class;
       Filename          : String;
       Line              : Natural := 1;
-      Column            : Natural := 1) return String
+      Column            : Natural := 1;
+      Length            : Natural := 0) return String
    is
       File : Basic_Types.String_Access;
    begin
@@ -1175,7 +1176,10 @@ package body Glide_Kernel.Modules is
 
          return Interpret_Command
            (Kernel,
-            "create_mark -l" & Line'Img & " -c" & Column'Img & " " & F);
+            "create_mark -l" & Line'Img
+            & " -c" & Column'Img
+            & " -L" & Length'Img
+            & " " & F);
       end;
    end Create_Mark;
 

@@ -564,8 +564,10 @@ package Glide_Kernel.Modules is
      (Kernel            : access Kernel_Handle_Record'Class;
       Filename          : String;
       Line              : Natural := 1;
-      Column            : Natural := 1) return String;
-   --  Create a mark for Filename, at position given by Line, Column.
+      Column            : Natural := 1;
+      Length            : Natural := 0) return String;
+   --  Create a mark for Filename, at position given by Line, Column, with
+   --  length Length.
    --  Return the identifier corresponding to the mark that has been created.
 
    procedure Open_File_Editor
