@@ -45,11 +45,11 @@ with Gtk.Handlers;              use Gtk.Handlers;
 with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Widget;                use Gtk.Widget;
+with Commands.Interactive;      use Commands.Interactive;
 
 
 package body Vdiff2_Module is
    use Diff_Head_List;
-   use Diff_Chunk_List;
 
 
    procedure VDiff_Contextual
@@ -217,7 +217,48 @@ package body Vdiff2_Module is
       Register_Button (Kernel, -"Go to the First difference",
                          Command_Access
                            (VDiff2_Module (Vdiff_Module_ID).Command_First),
-                         Image);
+                       Image);
+      Register_Action
+        (Kernel,
+         "First difference",
+         Interactive_Command_Access
+           (VDiff2_Module (Vdiff_Module_ID).Command_First),
+         -"Go to the First difference");
+      Register_Action
+        (Kernel,
+         "Last difference",
+         Interactive_Command_Access
+           (VDiff2_Module (Vdiff_Module_ID).Command_Last),
+         -"Go to the Last difference");
+      Register_Action
+        (Kernel,
+         "Prev difference",
+         Interactive_Command_Access
+           (VDiff2_Module (Vdiff_Module_ID).Command_Prev),
+         -"Go to the previous difference");
+      Register_Action
+        (Kernel,
+         "Next difference",
+         Interactive_Command_Access
+           (VDiff2_Module (Vdiff_Module_ID).Command_Next),
+         -"Go to the next difference");
+
+      Bind_Default_Key
+        (Handler     => Get_Key_Handler (Kernel),
+         Action      => "Next difference",
+         Default_Key => "control-2");
+      Bind_Default_Key
+        (Handler     => Get_Key_Handler (Kernel),
+         Action      => "Prev difference",
+         Default_Key => "control-1");
+      Bind_Default_Key
+        (Handler     => Get_Key_Handler (Kernel),
+         Action      => "First difference",
+         Default_Key => "control-4");
+      Bind_Default_Key
+        (Handler     => Get_Key_Handler (Kernel),
+         Action      => "Last difference",
+         Default_Key => "control-3");
    end Register_Module;
 
    -------------
