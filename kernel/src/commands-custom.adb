@@ -774,40 +774,6 @@ package body Commands.Custom is
       --  If Quoted is True, escape all quotes in S and return result,
       --  otherwise return S.
 
-      function Unprotect (Arg : String) return String;
-      --  Unprotect an argument: remove the leading and ending '"',
-      --  and un-escape the "\" when necessary.
-
-      ---------------
-      -- Unprotect --
-      ---------------
-
-      function Unprotect (Arg : String) return String is
-         Result : String (Arg'Range);
-         Index  : Natural := Result'First;
-         S      : Natural := Arg'First;
-      begin
-         while S <= Arg'Last loop
-            if Arg (S) = '\' then
-               Result (Index) := Arg (S + 1);
-               S := S + 2;
-            else
-               Result (Index) := Arg (S);
-               S := S + 1;
-            end if;
-
-            Index := Index + 1;
-         end loop;
-
-         if Result (Result'First) = '"'
-           and then Result (Index - 1) = '"'
-         then
-            return Result (Result'First + 1 .. Index - 2);
-         else
-            return Result (Result'First .. Index - 1);
-         end if;
-      end Unprotect;
-
       --------------------
       -- Protect_Quoted --
       --------------------
@@ -817,22 +783,7 @@ package body Commands.Custom is
          Quoted : Boolean) return String is
       begin
          if Quoted then
-            declare
-               S2    : String (1 .. S'Length * 2);
-               Index : Natural := 1;
-            begin
-               for J in S'Range loop
-                  if S (J) = '"' or else S (J) = '\' then
-                     S2 (Index .. Index + 1) := '\' & S (J);
-                     Index := Index + 2;
-                  else
-                     S2 (Index) := S (J);
-                     Index := Index + 1;
-                  end if;
-               end loop;
-
-               return S2 (1 .. Index - 1);
-            end;
+            return String_Utils.Protect (S);
          else
             return S;
          end if;
