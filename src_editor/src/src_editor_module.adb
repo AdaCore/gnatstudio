@@ -3657,6 +3657,9 @@ package body Src_Editor_Module is
       Recent_Menu_Item   : Gtk_Menu_Item;
       Command            : Interactive_Command_Access;
       Editor_Class       : constant Class_Type := New_Class (Kernel, "Editor");
+      Filter             : Action_Filter;
+      Label              : Contextual_Menu_Label_Creator;
+      pragma Unreferenced (Label);
 
       Line_Numbers_Area_Filter : Action_Filter;
 
@@ -3813,20 +3816,51 @@ package body Src_Editor_Module is
 
       Command := new Goto_Declaration_Command;
       Register_Contextual_Menu
-        (Kernel, -"Goto declaration of entity",
-         Action => Command,
-         Ref_Item => "Goto declaration of %e",
+        (Kernel, "Goto declaration of entity",
+         Action     => Command,
+         Label      => -"Goto declaration of %e",
+         Ref_Item   => "Examine entity",
+         Add_Before => True,
+         Filter     => Action_Filter
+           (not Line_Numbers_Area_Filter
+            and Create (Module => Src_Editor_Module_Name)));
+
+      Command := new Goto_Next_Body_Command;
+      Filter  := new Has_Body_Filter;
+      Label   := new Goto_Body_Menu_Label;
+      Register_Contextual_Menu
+        (Kernel, "Goto body of entity",
+         Action     => Command,
+         Label      => -"Goto body of %e",
+         Ref_Item   => "Goto declaration of entity",
+         Add_Before => False,
+         Filter     => Filter);
+
+      Command := new Goto_Type_Command;
+      Filter  := new Has_Type_Filter;
+      Register_Contextual_Menu
+        (Kernel, "Goto type of entity",
+         Action     => Command,
+         Label      => -"Goto type declaration of %e",
+         Ref_Item   => "Goto body of entity",
+         Add_Before => False,
+         Filter     => Filter);
+
+      Command := new Goto_Other_File_Command;
+      Register_Contextual_Menu
+        (Kernel, "Goto file spec<->body",
+         Action     => Command,
+         Label      => -"Goto file spec<->body",
+         Ref_Item   => "Goto type of entity",
+         Add_Before => False,
          Filter => Action_Filter
            (not Line_Numbers_Area_Filter
             and Create (Module => Src_Editor_Module_Name)));
 
-      Command := new Goto_Other_File_Command;
-      Register_Contextual_Menu
-        (Kernel, -"Goto file spec<->body",
-         Action => Command,
-         Filter => Action_Filter
-           (not Line_Numbers_Area_Filter
-            and Create (Module => Src_Editor_Module_Name)));
+      Register_Contextual_Submenu
+        (Kernel, "References",
+         Ref_Item   => "Goto file spec<->body",
+         Add_Before => False);
 
       Command := new Edit_File_Command;
       Register_Contextual_Menu
