@@ -151,7 +151,7 @@ color selection area.
 Click on the @code{Apply} button and look at the effects in the source
 editor. If you like the new display, click on @code{OK} to confirm the
 changes, otherwise clicking on @code{Cancel} will revert to the previous
-(black) color.
+color.
 
 @c --------------------------------------------------------------------
 @node Building applications
