@@ -28,7 +28,7 @@
    <!-- CVS local status -->
    <!---------------------->
 
-   <action name="generic_cvs_local_status" show-command="true" output="">
+   <action name="generic_cvs_local_status" show-command="true" output="none">
       <shell>echo "Querying local status for $1"</shell>
       <shell>Editor.get_buffer ${1}/CVS/Entries</shell>
       <shell>VCS.status_parse "Custom CVS" "%1" FALSE TRUE</shell>
@@ -40,6 +40,33 @@
 
    <action name="generic_cvs_commit" show-command="true" output="">
       <shell>echo "Committing files $2-"</shell>
+      <shell>dump "$1" TRUE</shell>
+      <external>cvs commit -F %1 $2-</external>
+      <shell>delete %2</shell>
+   </action>
+
+   <!------------->
+   <!-- CVS add -->
+   <!------------->
+
+   <action name="generic_cvs_add" show-command="true" output="">
+      <shell>echo "adding files $2-"</shell>
+      <external>cvs add $2-</external>
+      <shell>dump "$1" TRUE</shell>
+      <external>cvs commit -F %1 $2-</external>
+      <shell>delete %2</shell>
+   </action>
+
+   <!---------------->
+   <!-- CVS remove -->
+   <!---------------->
+
+   <!-- ??? "delete" should work on multiple files>
+
+   <action name="generic_cvs_remove" show-command="true" output="">
+      <shell>echo "removing files $2-"</shell>
+      <shell>delete $2-</shell>
+      <external>cvs remove $2-</external>
       <shell>dump "$1" TRUE</shell>
       <external>cvs commit -F %1 $2-</external>
       <shell>delete %2</shell>
@@ -85,7 +112,7 @@
         <shell>Hook.run %1 null %2 %3</shell>
         <shell>delete %5</shell>
       </on-failure>
-      <shell>echo No differences found</shell>
+      <shell>MDI.dialog "No differences found."</shell>
    </action>
 
    <action name="generic_cvs_diff" show-command="true" output="">
@@ -99,7 +126,25 @@
         <shell>Hook.run %1 null %2 %3</shell>
         <shell>delete %5</shell>
       </on-failure>
-      <shell>echo No differences found</shell>
+      <shell>MDI.dialog "No differences found."</shell>
+   </action>
+
+   <action name="generic_cvs_diff2" show-command="true" output="">
+      <external>cvs -q update -p -r$2 $3</external>
+      <shell>dump "%1" TRUE</shell>
+      <shell>File %1</shell>
+
+      <external>cvs -f diff -r$1 -r$2 $3</external>
+
+      <on-failure>
+        <shell>dump "%1" TRUE</shell>
+        <shell>File %1</shell>
+        <shell>Hook "diff_action_hook"</shell>
+        <shell>Hook.run %1 null %5 %2</shell>
+        <shell>delete %4</shell>
+        <shell>delete %8</shell>
+      </on-failure>
+      <shell>MDI.dialog "No differences found."</shell>
    </action>
 
    <!-------------->
@@ -135,8 +180,9 @@
       <add              action="generic_cvs_add"          label="Add"/>
       <remove           action="generic_cvs_remove"       label="Remove"/>
       <revert           action="generic_cvs_revert"       label="Revert"/>
-      <diff_head        action="generic_cvs_diff_head"    label="Compare against head rev."/>
-      <diff             action="generic_cvs_diff"         label="Compare against other rev."/>
+      <diff_head        action="generic_cvs_diff_head"    label="Compare against head revision"/>
+      <diff             action="generic_cvs_diff"         label="Compare against other revision"/>
+      <diff2            action="generic_cvs_diff2"        label="Compare between two revisions"/>
 
       <status_parser>
          <regexp>File: ([^\s]*)\s*Status: (.*?)\n\n *Working revision:\s*([^\s]*).*\n *Repository revision:\s*([^\s]*).*</regexp>
