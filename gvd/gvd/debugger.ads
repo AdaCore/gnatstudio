@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                   GVD - The GNU Visual Debugger                   --
+--                              G P S                                --
 --                                                                   --
---                      Copyright (C) 2000-2003                      --
---                              ACT-Europe                           --
+--                     Copyright (C) 2000-2005                       --
+--                             AdaCore                               --
 --                                                                   --
--- GVD is free  software;  you can redistribute it and/or modify  it --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -108,7 +108,7 @@ package Debugger is
    --  the given communication protocol.
 
    procedure Send
-     (Debugger        : access Debugger_Root'Class;
+     (Debugger        : access Debugger_Root;
       Cmd             : String;
       Empty_Buffer    : Boolean := True;
       Wait_For_Prompt : Boolean := True;
@@ -124,7 +124,7 @@ package Debugger is
    --  prompt.
 
    function Send_Full
-     (Debugger        : access Debugger_Root'Class;
+     (Debugger        : access Debugger_Root;
       Cmd             : String;
       Mode            : GVD.Types.Invisible_Command := GVD.Types.Hidden)
       return String;
@@ -138,11 +138,11 @@ package Debugger is
    --  hidden calls to the debugger might have taken place in the meanwhile.
 
    function Send
-     (Debugger        : access Debugger_Root;
-      Cmd             : String;
-      Mode            : GVD.Types.Invisible_Command := GVD.Types.Hidden)
+     (Debugger : access Debugger_Root;
+      Cmd      : String;
+      Mode     : GVD.Types.Invisible_Command := GVD.Types.Hidden)
       return String is abstract;
-   --  Same as above, but return a clean version of the output, ie it deletes
+   --  Same as above, but return a clean version of the output, i.e. delete
    --  the final prompt if any, depending on the debugger type.
 
    procedure Wait_User_Command (Debugger : access Debugger_Root);

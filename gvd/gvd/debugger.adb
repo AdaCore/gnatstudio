@@ -647,7 +647,7 @@ package body Debugger is
    ----------
 
    procedure Send
-     (Debugger        : access Debugger_Root'Class;
+     (Debugger        : access Debugger_Root;
       Cmd             : String;
       Empty_Buffer    : Boolean := True;
       Wait_For_Prompt : Boolean := True;
@@ -680,7 +680,7 @@ package body Debugger is
             case Mode is
                when Invisible_Command =>
                   if Last > Cmd'Last and then Wait_For_Prompt then
-                     Wait_Prompt (Debugger);
+                     Wait_Prompt (Debugger_Access (Debugger));
                      Debugger.Continuation_Line := False;
                      Send_Internal_Post
                        (Debugger, Cmd (First .. Last - 1), Mode);
@@ -691,7 +691,7 @@ package body Debugger is
                      if not Async_Commands then
                         --  Synchronous handling of commands, simple case
 
-                        Wait_Prompt (Debugger);
+                        Wait_Prompt (Debugger_Access (Debugger));
                         Debugger.Continuation_Line := False;
                         Send_Internal_Post
                           (Debugger, Cmd (First .. Last - 1), Mode);
@@ -756,7 +756,7 @@ package body Debugger is
    ---------------
 
    function Send_Full
-     (Debugger : access Debugger_Root'Class;
+     (Debugger : access Debugger_Root;
       Cmd      : String;
       Mode     : Invisible_Command := Hidden) return String
    is
@@ -774,7 +774,7 @@ package body Debugger is
       end if;
 
       Send_Internal_Pre (Debugger, Cmd, Mode => Mode);
-      Wait_Prompt (Debugger);
+      Wait_Prompt (Debugger_Access (Debugger));
       Debugger.Continuation_Line := False;
 
       declare
