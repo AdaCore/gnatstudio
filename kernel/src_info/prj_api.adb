@@ -419,6 +419,7 @@ package body Prj_API is
       Expr : Project_Node_Id;
       Term : Project_Node_Id;
       Ext : Project_Node_Id;
+      Str : Project_Node_Id;
    begin
       pragma Assert (Expression_Kind_Of (Var) = Prj.Single);
 
@@ -433,7 +434,11 @@ package body Prj_API is
 
       Start_String;
       Store_String_Chars (External_Name);
-      Set_External_Reference_Of (Ext, String_As_Expression (End_String));
+
+      Str := Default_Project_Node (N_Literal_String, Single);
+      Set_String_Value_Of (Str, End_String);
+
+      Set_External_Reference_Of (Ext, Str);
 
       if Default /= "" then
          Start_String;
@@ -479,10 +484,17 @@ package body Prj_API is
    is
       Ext : Project_Node_Id;
    begin
+      --  ??? We do not correctly detect constructions like
+      --  ???    A : A_Type := "A" & external ("OS");
+      --  ??? The external reference must be by itself in the reference
+
       pragma Assert (Var_Or_Attribute /= Empty_Node);
 
       Ext := Expression_Of (Var_Or_Attribute);
-      pragma Assert (Ext /= Empty_Node);
+      pragma Assert (Kind_Of (Ext) = N_Expression);
+      Ext := First_Term (Ext);
+      pragma Assert (Kind_Of (Ext) = N_Term);
+      Ext := Current_Term (Ext);
 
       if Kind_Of (Ext) = N_External_Value then
          Ext := External_Reference_Of (Ext);
@@ -855,6 +867,25 @@ package body Prj_API is
          return List;
       end;
    end Find_Scenario_Variables;
+
+   ---------------------------
+   -- External_Reference_Of --
+   ---------------------------
+
+   function External_Reference_Of (Var : Project_Node_Id) return String_Id is
+      Expr : Project_Node_Id;
+   begin
+      Expr := Expression_Of (Var);
+      Expr := First_Term   (Expr);
+      Expr := Current_Term (Expr);
+
+      if Kind_Of (Expr) = N_External_Value then
+         Expr := External_Reference_Of (Expr);
+         return String_Value_Of (Expr);
+      else
+         return No_String;
+      end if;
+   end External_Reference_Of;
 
 begin
    Namet.Initialize;

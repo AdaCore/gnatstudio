@@ -205,6 +205,9 @@ package Prj_API is
    function Is_External_Variable (Var : Project_Node_Id) return Boolean;
    --  Return True if Var is a reference to an external variable
 
+   function External_Reference_Of (Var : Project_Node_Id) return Types.String_Id;
+   --  Returns the name of the external variable referenced by Var.
+   --  No_String is returned if Var doesn't reference an external variable.
 
    Invalid_Value : exception;
 
