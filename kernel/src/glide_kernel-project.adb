@@ -541,6 +541,7 @@ package body Glide_Kernel.Project is
                      Value := Prj.Variable_Value'
                        (Kind     => Prj.List,
                         Location => No_Location,
+                        Project  => Prj.No_Project,
                         Default  => True,
                         Values   => L);
                      Free (Cmd);
