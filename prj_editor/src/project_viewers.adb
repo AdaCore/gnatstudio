@@ -1476,7 +1476,10 @@ package body Project_Viewers is
                (On_Add_Dependency_From_Existing'Access),
                Selection_Context_Access (Context));
 
-            if Has_Importing_Project_Information (File_Context) then
+            if Has_Importing_Project_Information (File_Context)
+              and then Project_Information (File_Context) /=
+                Importing_Project_Information (File_Context)
+            then
                Gtk_New
                  (Item, Label => -"Remove dependency "
                   & Project_Name (Importing_Project_Information (File_Context))
