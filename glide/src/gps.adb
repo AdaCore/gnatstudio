@@ -106,6 +106,7 @@ with Theme_Manager_Module;
 with Docgen_Module;
 with SSH_Protocol;
 with Refactoring_Module;
+with Action_Editor;
 
 procedure GPS is
    use Glide_Main_Window;
@@ -989,6 +990,7 @@ procedure GPS is
       Glide_Kernel.Preferences.Register_Module (GPS.Kernel);
       Custom_Module.Register_Module (GPS.Kernel);
       Glide_Result_View.Register_Module (GPS.Kernel);
+      Action_Editor.Register_Module (GPS.Kernel);
 
       if Active (Refactor_Trace) then
          Refactoring_Module.Register_Module (GPS.Kernel);
