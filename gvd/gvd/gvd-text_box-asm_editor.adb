@@ -630,16 +630,19 @@ package body GVD.Text_Box.Asm_Editor is
    ------------------------
 
    procedure Update_Breakpoints
-     (Editor    : access Asm_Editor_Record;
-      Br        : GVD.Types.Breakpoint_Array)
+     (Editor : access Asm_Editor_Record;
+      Br     : GVD.Types.Breakpoint_Array)
    is
       use Gtk.Widget.Widget_List;
+
       Line  : Natural;
       Pix   : Gtk_Pixmap;
-      Tmp : Glist := Children (Get_Buttons (Editor));
+      First : Glist := Children (Get_Buttons (Editor));
+      Tmp   : Glist := First;
 
    begin
       if Get_Buffer (Editor) = null then
+         Free (First);
          return;
       end if;
 
@@ -650,8 +653,11 @@ package body GVD.Text_Box.Asm_Editor is
          if Get_Data (Tmp) /= Gtk_Widget (Current_Line_Button (Editor)) then
             Destroy (Get_Data (Tmp));
          end if;
+
          Tmp := Next (Tmp);
       end loop;
+
+      Free (First);
 
       --  Add the new ones
       for B in Br'Range loop
