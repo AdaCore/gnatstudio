@@ -37,7 +37,7 @@ package Codefix is
    Indentation_Width : constant := 3;
    --  Width of an identation in GNAT
 
-   EOL_Str : constant String := (1 => Character'Val (10));
+   EOL_Str : constant String := (1 => ASCII.LF);
    --  String used to insert an end of line.
 
    ----------------------------------------------------------------------------
