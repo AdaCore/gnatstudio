@@ -9308,13 +9308,14 @@ the same action. As GPS executes each command from the action in turn, it
 saves its output on a stack as needed. If a command line contains a special
 construct @code{%1}, @code{%2}@dots{} then these constructs will be replaced
 by the result of respectively the last command executed, the previous from last
-command, and so on.
+command, and so on. They are replaced by the returned value of the command, not
+by any output it might have done to some of the consoles in GPS.
 
 Every time you execute a new command, it pushes the previous %1, %2@dots{}
 parameters one step further on the stack, so that they become respectively %2,
 %3@dots{} and the output of that command becomes %1.
 
-The output of the previous commands is substituted exactly as is. However, if
+The result value of the previous commands is substituted exactly as is. However, if
 the output is surrounded by quotes, they are ignored when a substitution takes
 place, so you need to put them back if they are needed. The reason for this
 behavior is so that for scripting languages that systematically protect their
@@ -10161,8 +10162,9 @@ The output of the pipe is then redirected to Python's output, as in:
 import os, sys
 def my_external():
    f = os.popen ('ls')
+   console = GPS.Console ("ls")
    for l in f.readlines():
-      sys.stdout.write ('   ' + l)
+      console.write ('   ' + l)
 @end smallexample
 
 This solution allows you, at the same time, to modify the output, for instance
@@ -10183,8 +10185,8 @@ def my_external():
    GPS.execute_action ("ls")
 @end smallexample
 
-This solution allows you to send the output to a different window than the
-rest of your script. But you can filter or modify the output as in the
+This solution also allows you to send the output to a different window than the
+rest of your script. But you cannot filter or modify the output as in the
 first solution.
 
 @end itemize
@@ -10254,19 +10256,17 @@ sent, for instance if you can't know that statically when you write your
 commands, you can use the following code:
 
 @smallexample
-sys.stdout.set_console ("New Window")
-sys.stdin.set_console ("New Window")
+sys.stdin = sys.stdout = GPS.Console ("New window")
 print "foo"
 print (sys.stdin.read ())
-sys.stdout.set_console ()
-sys.stdin.set_console ()
+sys.stdin = sys.stdout = GPS.Console ("Python")
 @end smallexample
 
-The first two lines redirect all input and output to a new window, which is
+The first line redirect all input and output to a new window, which is
 created if it doesn't exist yet. Note however that the output of stderr
 is not redirected, and you need to explicitely do it for @code{sys.stderr}.
 
-The last two lines restore the default Python console. You must do this
+The last line restore the default Python console. You must do this
 at the end of your script, or all scripts will continue to use the new
 consoles.
 
@@ -10274,16 +10274,14 @@ You can alternatively create separate objects for the output, and use them
 in turn:
 
 @smallexample
-my_out=GPS.Console (1)
-my_out.set_console ("New Window")
-my_out2=GPS.Console (1)
-my_out2.set_console ("New Window2")
+my_out  = GPS.Console ("New Window")
+my_out2 = GPS.Console ("New Window2")
 
 sys.stdout=my_out
 print "a"
 sys.stdout=my_out2
 print "b"
-sys.stdout=GPS.Console (1)
+sys.stdout=GPS.Console ("Python")
 @end smallexample
 
 The parameter to the constructor @code{GPS.Console} indicates whether any
