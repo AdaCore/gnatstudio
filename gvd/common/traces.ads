@@ -98,7 +98,7 @@ package Traces is
    --  Two calls to this subprogram with the same name (case insensitive) will
    --  always return the same handle.
    --
-   --  If Default is not From_Config, this forces an explicit activatation
+   --  If Default is not From_Config, this forces an explicit activation
    --  status for that handle. To change it, the user must explicitely have
    --  a line for this handle in the config file, and this handle is not
    --  impacted by the user of "+" in this config file.
