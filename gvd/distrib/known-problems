@@ -1,6 +1,14 @@
 Known Problems in GVD 1.0.1
 
-- Highligthing misspelled in the Preferences dialog
+- [8327-010] NT directory separators not handled properly in the command line.
+  Problem:
+     When specifying an executable on the command line that contains
+     backslashes under NT, GVD did not properly handle it.
+  Workaround:
+     Replace blackslashes by slashes, or use the menu File/Open Program instead
+  Status: Fixed in GVD 1.0.2
+
+- [8327-009] Highligthing misspelled in the Preferences dialog
   Problem:
      Color Highlighting is mispelled in the preferences dialog.
   Workaround:
