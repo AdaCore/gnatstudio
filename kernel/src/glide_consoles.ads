@@ -4,7 +4,7 @@
 --                        Copyright (C) 2001                         --
 --                            ACT-Europe                             --
 --                                                                   --
--- GVD is free  software;  you can redistribute it and/or modify  it --
+-- GLIDE is free software; you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -30,7 +30,6 @@ package Glide_Consoles is
    type Glide_Console_Record is new
      Gtk.Scrolled_Window.Gtk_Scrolled_Window_Record with private;
    type Glide_Console is access all Glide_Console_Record'Class;
-
 
    procedure Gtk_New
      (Console : out Glide_Console;

@@ -4,7 +4,7 @@
 --                        Copyright (C) 2001                         --
 --                            ACT-Europe                             --
 --                                                                   --
--- GVD is free  software;  you can redistribute it and/or modify  it --
+-- GLIDE is free software; you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -17,6 +17,7 @@
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
+
 --  ??? Document the purpose of this package
 
 private package Src_Info.ALI_Maps is

@@ -4,7 +4,7 @@
 --                        Copyright (C) 2001                         --
 --                            ACT-Europe                             --
 --                                                                   --
--- GVD is free  software;  you can redistribute it and/or modify  it --
+-- GLIDE is free software; you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -24,9 +24,10 @@ with Glide_Main_Window; use Glide_Main_Window;
 
 package Glide_Page is
 
-   type Glide_Page_Record is new GVD.Process.Debugger_Process_Tab_Record with
+   type Glide_Page_Record is new
+     GVD.Process.Debugger_Process_Tab_Record with
    record
-      Console    : Glide_Consoles.Glide_Console;
+      Console : Glide_Consoles.Glide_Console;
    end record;
    type Glide_Page is access all Glide_Page_Record'Class;
 
