@@ -97,8 +97,8 @@ package body Projects.Editor is
 
    procedure For_Each_Environment_Variable
      (Root_Project      : Project_Type;
-      Ext_Variable_Name : String;
-      Specific_Choice   : String;
+      Ext_Variable_Name : Name_Id;
+      Specific_Choice   : Name_Id;
       Action            : Environment_Variable_Callback);
    --  Iterate over all possible references to an external variable. This
    --  returns N_External_Value, N_Variable_Reference,
@@ -123,13 +123,13 @@ package body Projects.Editor is
 
    function Create_Attribute
      (Prj_Or_Pkg : Project_Node_Id;
-      Name : String;
-      Index_Name : String := "";
-      Kind : Variable_Kind := List)
-      return Project_Node_Id;
+      Name       : Name_Id;
+      Index_Name : Name_Id := No_Name;
+      Kind       : Variable_Kind := List) return Project_Node_Id;
    --  Create a new attribute.
    --  The new declaration is added at the end of the declarative item list for
-   --  Prj_Or_Pkg (but before any package declaration).
+   --  Prj_Or_Pkg (but before any package declaration). No addition is done if
+   --  Prj_Or_Pkg is Empty_Node.
    --  If Index_Name is not "", then if creates an attribute value for a
    --  specific index
    --
@@ -234,7 +234,7 @@ package body Projects.Editor is
 
    procedure Move_From_Common_To_Case_Construct
      (Project            : Project_Node_Id;
-      Pkg_Name           : String;
+      Pkg                : Project_Node_Id;
       Case_Construct     : in out Project_Node_Id;
       Scenario_Variables : Scenario_Variable_Array;
       Attribute_Name     : Types.Name_Id;
@@ -242,6 +242,20 @@ package body Projects.Editor is
    --  Move any declaration for the attribute from the common part of the
    --  project into each branch of the nested case construct. Nothing is done
    --  if there is no such declaration.
+
+   procedure Common_Setup_For_Update_Attribute
+     (Project         : Project_Node_Id;
+      Attribute       : Attribute_Pkg;
+      Attribute_Index : String;
+      Rename_Prj      : out Project_Node_Id;
+      Pkg             : out Project_Node_Id;
+      Attr_Name       : out Name_Id;
+      Attr_Index      : out Name_Id;
+      Case_Construct  : out Project_Node_Id);
+   --  Common initialization function for all functions that update the
+   --  attributes. The output parameters represent the project/package and
+   --  attributes that should be modified, taking into account renaming
+   --  clauses.
 
    procedure Add_Node_To_List
      (To   : in out Project_Node_Array_Access;
@@ -264,16 +278,6 @@ package body Projects.Editor is
       end loop;
       return Count;
    end Length;
-
-   --------------
-   -- Is_Equal --
-   --------------
-
-   function Is_Equal (Str1 : Name_Id; Str2 : String) return Boolean is
-   begin
-      Get_Name_String (Str1);
-      return Name_Buffer (1 .. Name_Len) = Str2;
-   end Is_Equal;
 
    ---------------------------
    -- Create_Literal_String --
@@ -404,20 +408,22 @@ package body Projects.Editor is
 
    function Create_Attribute
      (Prj_Or_Pkg : Project_Node_Id;
-      Name       : String;
-      Index_Name : String := "";
+      Name       : Name_Id;
+      Index_Name : Name_Id := No_Name;
       Kind       : Variable_Kind := List) return Project_Node_Id
    is
       Node : constant Project_Node_Id :=
         Default_Project_Node (N_Attribute_Declaration, Kind);
    begin
-      Set_Name_Of (Node, Get_String (Name));
+      Set_Name_Of (Node, Name);
 
-      if Index_Name /= "" then
-         Set_Associative_Array_Index_Of (Node, Get_String (Index_Name));
+      if Index_Name /= No_Name then
+         Set_Associative_Array_Index_Of (Node, Index_Name);
       end if;
 
-      Add_At_End (Prj_Or_Pkg, Node);
+      if Prj_Or_Pkg /= Empty_Node then
+         Add_At_End (Prj_Or_Pkg, Node);
+      end if;
 
       return Node;
    end Create_Attribute;
@@ -748,14 +754,9 @@ package body Projects.Editor is
       Attribute_N     : Name_Id;
       List            : Project_Node_Id := Empty_Node;
       Pkg, Term, Expr : Project_Node_Id;
-      Rename_Prj      : Project_Node_Id := Project;
-      Sep             : constant Natural := Split_Package (Attribute);
-      Pkg_Name        : constant String :=
-        String (Attribute (Attribute'First .. Sep - 1));
-      Attribute_Name  : constant String :=
-        String (Attribute (Sep + 1 .. Attribute'Last));
+      Rename_Prj      : Project_Node_Id;
       Case_Construct  : Project_Node_Id;
-      Index           : Name_Id := No_Name;
+      Index           : Name_Id;
 
       procedure Add_Or_Replace (Case_Item : Project_Node_Id);
       --  Add or replace the attribute Attribute_Name in the declarative list
@@ -795,8 +796,7 @@ package body Projects.Editor is
          --  Else create the new instruction to be added to the project
 
          else
-            Decl := Create_Attribute
-              (Case_Item, Attribute_Name, Attribute_Index);
+            Decl := Create_Attribute (Case_Item, Attribute_N, Index);
             Expr := Enclose_In_Expression (List);
 
             if Prepend then
@@ -818,29 +818,11 @@ package body Projects.Editor is
       end Add_Or_Replace;
 
    begin
-      Attribute_N := Get_String (Attribute_Name);
-
-      if Attribute_Index /= "" then
-         Index := Get_String (Attribute_Index);
-      end if;
-
-      if Pkg_Name /= "" then
-         Pkg := Get_Or_Create_Package (Project, Pkg_Name);
-
-         --  If we have a renamed package, modify the target package.
-         Rename_Prj := Project_Of_Renamed_Package_Of (Pkg);
-         if Rename_Prj /= Empty_Node then
-            Pkg := Get_Or_Create_Package (Rename_Prj, Pkg_Name);
-         else
-            Rename_Prj := Project;
-         end if;
-      else
-         Pkg := Empty_Node;
-      end if;
-
-      Case_Construct := Find_Or_Create_Case_Statement (Rename_Prj, Pkg);
+      Common_Setup_For_Update_Attribute
+        (Project, Attribute, Attribute_Index,
+         Rename_Prj, Pkg, Attribute_N, Index, Case_Construct);
       Move_From_Common_To_Case_Construct
-        (Rename_Prj, Pkg_Name, Case_Construct, Scenario_Variables, Attribute_N,
+        (Rename_Prj, Pkg, Case_Construct, Scenario_Variables, Attribute_N,
          Index);
 
       --  Create the string list for the new values.
@@ -897,17 +879,12 @@ package body Projects.Editor is
       Value              : String;
       Attribute_Index    : String := "")
    is
-      Sep         : constant Natural := Split_Package (Attribute);
       Attribute_N : Name_Id;
-      Val         : Project_Node_Id := Empty_Node;
+      Val         : Project_Node_Id;
       Pkg         : Project_Node_Id;
       Rename_Prj  : Project_Node_Id := Project;
-      Attribute_Name : constant String :=
-        String (Attribute (Sep + 1 .. Attribute'Last));
-      Pkg_Name       : constant String :=
-        String (Attribute (Attribute'First .. Sep - 1));
       Case_Construct : Project_Node_Id;
-      Index       : Name_Id := No_Name;
+      Index       : Name_Id;
 
       procedure Add_Or_Replace (Case_Item : Project_Node_Id);
       --  Add or replace the attribute Attribute_Name in the declarative list
@@ -933,16 +910,54 @@ package body Projects.Editor is
 
          else
             Decl := Create_Attribute
-              (Case_Item, Attribute_Name, Attribute_Index, Prj.Single);
+              (Case_Item, Attribute_N, Index, Prj.Single);
             Set_Expression_Of (Decl, Enclose_In_Expression (Val));
          end if;
       end Add_Or_Replace;
 
    begin
-      Attribute_N := Get_String (Attribute_Name);
+      Common_Setup_For_Update_Attribute
+        (Project, Attribute, Attribute_Index,
+         Rename_Prj, Pkg, Attribute_N, Index, Case_Construct);
+      Move_From_Common_To_Case_Construct
+        (Rename_Prj, Pkg, Case_Construct, Scenario_Variables,
+         Attribute_N, Index);
+
+      --  Create the node for the new value
+
+      Val := Create_Literal_String (Get_String (Value));
+
+      For_Each_Scenario_Case_Item
+        (Rename_Prj, Pkg, Case_Construct, Scenario_Variables,
+         Add_Or_Replace'Unrestricted_Access);
+   end Update_Attribute_Value_In_Scenario;
+
+   ---------------------------------------
+   -- Common_Setup_For_Update_Attribute --
+   ---------------------------------------
+
+   procedure Common_Setup_For_Update_Attribute
+     (Project         : Project_Node_Id;
+      Attribute       : Attribute_Pkg;
+      Attribute_Index : String;
+      Rename_Prj      : out Project_Node_Id;
+      Pkg             : out Project_Node_Id;
+      Attr_Name       : out Name_Id;
+      Attr_Index      : out Name_Id;
+      Case_Construct  : out Project_Node_Id)
+   is
+      Sep         : constant Natural := Split_Package (Attribute);
+      Pkg_Name       : constant String :=
+        String (Attribute (Attribute'First .. Sep - 1));
+      Attribute_Name : constant String :=
+        String (Attribute (Sep + 1 .. Attribute'Last));
+   begin
+      Attr_Name := Get_String (Attribute_Name);
 
       if Attribute_Index /= "" then
-         Index := Get_String (Attribute_Index);
+         Attr_Index := Get_String (Attribute_Index);
+      else
+         Attr_Index := No_Name;
       end if;
 
       if Pkg_Name /= "" then
@@ -956,22 +971,75 @@ package body Projects.Editor is
             Rename_Prj := Project;
          end if;
       else
+         Rename_Prj := Project;
          Pkg := Empty_Node;
       end if;
 
-      Case_Construct := Find_Or_Create_Case_Statement (Rename_Prj, Pkg);
-      Move_From_Common_To_Case_Construct
-        (Rename_Prj, Pkg_Name, Case_Construct, Scenario_Variables,
-         Attribute_N, Index);
+      Case_Construct := Find_Case_Statement (Rename_Prj, Pkg);
+   end Common_Setup_For_Update_Attribute;
 
-      --  Create the node for the new value
+   -------------------------------------
+   -- Set_Attribute_Value_In_Scenario --
+   -------------------------------------
 
-      Val := Create_Literal_String (Get_String (Value));
+   procedure Set_Attribute_Value_In_Scenario
+     (Project            : Project_Type;
+      Scenario_Variables : Scenario_Variable_Array;
+      Attribute          : Attribute_Pkg;
+      Values             : Associative_Array_Values)
+   is
+      Rename_Prj, Pkg, Case_Construct, Val : Project_Node_Id;
+      Attr_Name, Attr_Index : Name_Id;
+      First : Project_Node_Id := Empty_Node;
+      Next  : Project_Node_Id := Empty_Node;
+      N     : Project_Node_Id;
+
+      procedure Add_Or_Replace (Case_Item : Project_Node_Id);
+      --  Add or replace the attribute Attribute_Name in the declarative list
+      --  for Case_Item
+
+      --------------------
+      -- Add_Or_Replace --
+      --------------------
+
+      procedure Add_Or_Replace (Case_Item : Project_Node_Id) is
+      begin
+         Add_In_Front (Case_Item, Clone_Node (First, True));
+      end Add_Or_Replace;
+
+   begin
+      --  The call to Delete_Attribute will normalize the right project
+      Delete_Attribute
+        (Project, Scenario_Variables, Attribute, Any_Attribute);
+      Common_Setup_For_Update_Attribute
+        (Project.Node, Attribute, "",
+         Rename_Prj, Pkg, Attr_Name, Attr_Index, Case_Construct);
+
+      for V in Values'Range loop
+         Attr_Index := Get_String (Values (V).Index.all);
+         Val := Create_Literal_String (Get_String (Values (V).Value.all));
+
+         N := Default_Project_Node (N_Declarative_Item, Prj.Single);
+         if First = Empty_Node then
+            First := N;
+         else
+            Set_Next_Declarative_Item (Next, N);
+         end if;
+         Next := N;
+
+         Set_Current_Item_Node
+           (N, Create_Attribute (Prj_Or_Pkg => Empty_Node,
+                                 Name       => Attr_Name,
+                                 Index_Name => Attr_Index,
+                                 Kind       => Prj.Single));
+         Set_Expression_Of
+           (Current_Item_Node (N), Enclose_In_Expression (Val));
+      end loop;
 
       For_Each_Scenario_Case_Item
         (Rename_Prj, Pkg, Case_Construct, Scenario_Variables,
          Add_Or_Replace'Unrestricted_Access);
-   end Update_Attribute_Value_In_Scenario;
+   end Set_Attribute_Value_In_Scenario;
 
    ------------------------------
    -- Find_Last_Declaration_Of --
@@ -1005,14 +1073,13 @@ package body Projects.Editor is
 
    procedure Move_From_Common_To_Case_Construct
      (Project            : Project_Node_Id;
-      Pkg_Name           : String;
+      Pkg                : Project_Node_Id;
       Case_Construct     : in out Project_Node_Id;
       Scenario_Variables : Scenario_Variable_Array;
       Attribute_Name     : Types.Name_Id;
       Attribute_Index    : Types.Name_Id := No_Name)
    is
       Parent          : Project_Node_Id;
-      Pkg             : Project_Node_Id := Empty_Node;
       Node, Tmp       : Project_Node_Id;
       Case_Items      : Project_Node_Array_Access :=
         new Project_Node_Array (1 .. 100);
@@ -1028,9 +1095,8 @@ package body Projects.Editor is
       end Add_Item;
 
    begin
-      if Pkg_Name /= "" then
-         Parent := Get_Or_Create_Package (Project, Pkg_Name);
-         Pkg := Parent;
+      if Pkg /= Empty_Node then
+         Parent := Pkg;
       else
          Parent := Project_Declaration_Of (Project);
       end if;
@@ -1207,9 +1273,9 @@ package body Projects.Editor is
          Index := Get_String (Attribute_Index);
       end if;
 
-      Case_Construct := Find_Or_Create_Case_Statement (Pkg_Prj.Node, Pkg);
+      Case_Construct := Find_Case_Statement (Pkg_Prj.Node, Pkg);
       Move_From_Common_To_Case_Construct
-        (Pkg_Prj.Node, Pkg_Name, Case_Construct, Scenario_Variables,
+        (Pkg_Prj.Node, Pkg, Case_Construct, Scenario_Variables,
          Attribute_N, Index);
 
       For_Each_Scenario_Case_Item
@@ -1306,6 +1372,7 @@ package body Projects.Editor is
    is
       Delete_Variable : exception;
       Type_Decl       : Project_Node_Id := Empty_Node;
+      V_Name          : constant Name_Id := Get_String (Value_Name);
 
       procedure Callback (Project, Parent, Node, Choice : Project_Node_Id);
       --  Called for each matching node for the env. variable.
@@ -1324,7 +1391,7 @@ package body Projects.Editor is
                   raise Delete_Variable;
                end if;
 
-               if Is_Equal (String_Value_Of (C), Value_Name) then
+               if String_Value_Of (C) = V_Name then
                   Set_First_Literal_String (Node, Next_Literal_String (C));
                   return;
                end if;
@@ -1333,7 +1400,7 @@ package body Projects.Editor is
                   C2 := Next_Literal_String (C);
                   exit when C2 = Empty_Node;
 
-                  if Is_Equal (String_Value_Of (C2), Value_Name) then
+                  if String_Value_Of (C2) = V_Name then
                      Set_Next_Literal_String (C, Next_Literal_String (C2));
                      exit;
                   end if;
@@ -1342,9 +1409,7 @@ package body Projects.Editor is
 
             when N_External_Value =>
                if External_Default_Of (Node) /= Empty_Node
-                 and then Is_Equal
-                 (String_Value_Of (External_Default_Of (Node)),
-                  Value_Name)
+                 and then String_Value_Of (External_Default_Of (Node)) = V_Name
                then
                   Set_External_Default_Of (Node, Empty_Node);
                end if;
@@ -1373,15 +1438,16 @@ package body Projects.Editor is
          end case;
       end Callback;
 
+      Ext_Var : constant Name_Id := Get_String (Ext_Variable_Name);
    begin
       Projects.Editor.Normalize.Normalize (Root_Project);
       For_Each_Environment_Variable
-        (Root_Project, Ext_Variable_Name, Value_Name,
-         Callback'Unrestricted_Access);
+        (Root_Project, Ext_Var,
+         Get_String (Value_Name), Callback'Unrestricted_Access);
 
       --  Reset the value of the external variable if needed
 
-      if Is_Equal (Value_Of (Get_String (Ext_Variable_Name)), Value_Name) then
+      if Value_Of (Ext_Var) = V_Name then
          if Type_Decl /= Empty_Node then
             Add (Ext_Variable_Name,
                  Get_String (String_Value_Of
@@ -1412,6 +1478,8 @@ package body Projects.Editor is
       Old_Value_Name    : String;
       New_Value_Name    : Types.Name_Id)
    is
+      Old_V_Name : constant Name_Id := Get_String (Old_Value_Name);
+
       procedure Callback (Project, Parent, Node, Choice : Project_Node_Id);
       --  Called for each mtching node for the env. variable.
 
@@ -1422,8 +1490,8 @@ package body Projects.Editor is
          case Kind_Of (Node) is
             when N_External_Value =>
                if External_Default_Of (Node) /= Empty_Node
-                 and then Is_Equal
-                 (String_Value_Of (External_Default_Of (Node)), Old_Value_Name)
+                 and then
+                  String_Value_Of (External_Default_Of (Node)) = Old_V_Name
                then
                   Set_String_Value_Of
                     (External_Default_Of (Node), New_Value_Name);
@@ -1432,7 +1500,7 @@ package body Projects.Editor is
             when N_String_Type_Declaration =>
                C := First_Literal_String (Node);
                while C /= Empty_Node loop
-                  if Is_Equal (String_Value_Of (C), Old_Value_Name) then
+                  if String_Value_Of (C) = Old_V_Name then
                      Set_String_Value_Of (C, New_Value_Name);
                      exit;
                   end if;
@@ -1447,17 +1515,15 @@ package body Projects.Editor is
          end case;
       end Callback;
 
-      N : Name_Id;
+      N : constant Name_Id := Get_String (Ext_Variable_Name);
    begin
       Projects.Editor.Normalize.Normalize (Root_Project);
       For_Each_Environment_Variable
-        (Root_Project, Ext_Variable_Name, Old_Value_Name,
+        (Root_Project, N, Get_String (Old_Value_Name),
          Callback'Unrestricted_Access);
 
-      N := Get_String (Ext_Variable_Name);
-
       if Value_Of (N) /= No_Name
-        and then Is_Equal (Value_Of (N), Old_Value_Name)
+        and then Value_Of (N) = Old_V_Name
       then
          Add (Ext_Variable_Name, Get_String (New_Value_Name));
       end if;
@@ -1471,8 +1537,8 @@ package body Projects.Editor is
 
    procedure For_Each_Environment_Variable
      (Root_Project      : Project_Type;
-      Ext_Variable_Name : String;
-      Specific_Choice   : String;
+      Ext_Variable_Name : Name_Id;
+      Specific_Choice   : Name_Id;
       Action            : Environment_Variable_Callback)
    is
       Variable_Nodes : Project_Node_Array_Access :=
@@ -1507,9 +1573,8 @@ package body Projects.Editor is
       begin
          case Kind_Of (Node) is
             when N_External_Value =>
-               Get_Name_String
-                 (String_Value_Of (Prj.Tree.External_Reference_Of (Node)));
-               return Name_Buffer (1 .. Name_Len) = Ext_Variable_Name;
+               return String_Value_Of (Prj.Tree.External_Reference_Of (Node)) =
+                 Ext_Variable_Name;
 
             when N_Variable_Reference =>
                for J in Variable_Nodes'First .. Variable_Nodes_Last loop
@@ -1598,8 +1663,8 @@ package body Projects.Editor is
                when N_Typed_Variable_Declaration =>
 
                   if Is_External_Variable (Current)
-                    and then Is_Equal
-                       (External_Reference_Of (Current), Ext_Variable_Name)
+                    and then
+                      External_Reference_Of (Current) = Ext_Variable_Name
                   then
                      Add_Node_To_List
                        (Variable_Nodes, Variable_Nodes_Last, Current);
@@ -1625,12 +1690,12 @@ package body Projects.Editor is
                         --  before, then that is the case item we want to keep.
                         --  This corresponds to "when others"
                         Match := Choice = Empty_Node
-                          or else Specific_Choice = "";
+                          or else Specific_Choice = No_Name;
 
                         if not Match then
                            while Choice /= Empty_Node loop
-                              if Is_Equal
-                                (String_Value_Of (Choice), Specific_Choice)
+                              if String_Value_Of (Choice) =
+                                Specific_Choice
                               then
                                  Match := True;
                                  exit;
@@ -1738,8 +1803,8 @@ package body Projects.Editor is
    begin
       Projects.Editor.Normalize.Normalize (Root_Project);
       For_Each_Environment_Variable
-        (Root_Project, Ext_Variable_Name, Keep_Choice,
-         Callback'Unrestricted_Access);
+        (Root_Project, Get_String (Ext_Variable_Name),
+         Get_String (Keep_Choice), Callback'Unrestricted_Access);
 
       --  Mark all projects in the hierarchy as modified, since they are
       --  potentially all impacted.
@@ -1822,7 +1887,7 @@ package body Projects.Editor is
 
    begin
       For_Each_Environment_Variable
-        (Root_Project, Ext_Variable_Name, "",
+        (Root_Project, Get_String (Ext_Variable_Name), No_Name,
          Callback'Unrestricted_Access);
       Set_Project_Modified (Root_Project, True);
    end Set_Default_Value_For_External_Variable;
@@ -1847,22 +1912,20 @@ package body Projects.Editor is
          end if;
       end Callback;
 
-      N : Name_Id;
+      Ext_Ref : constant Name_Id :=
+        Get_String (External_Reference_Of (Variable));
    begin
       Projects.Editor.Normalize.Normalize (Root_Project);
       For_Each_Environment_Variable
-        (Root_Project, External_Reference_Of (Variable), "",
-         Callback'Unrestricted_Access);
+        (Root_Project, Ext_Ref, No_Name, Callback'Unrestricted_Access);
       Set_Project_Modified (Root_Project, True);
 
       --  Create the new variable, to avoid errors when computing the view of
       --  the project.
-      N := Get_String (External_Reference_Of (Variable));
-
       Variable.Name := New_Name;
 
-      if Value_Of (N) /= No_Name then
-         Set_Value (Variable, Get_String (Value_Of (N)));
+      if Value_Of (Ext_Ref) /= No_Name then
+         Set_Value (Variable, Get_String (Value_Of (Ext_Ref)));
       end if;
    end Rename_External_Variable;
 
@@ -2383,6 +2446,7 @@ package body Projects.Editor is
    is
       Real_Parent : Project_Node_Id;
       New_Decl, Decl, Next : Project_Node_Id;
+      Last, L : Project_Node_Id;
    begin
       if Kind_Of (Expr) /= N_Declarative_Item then
          New_Decl := Default_Project_Node (N_Declarative_Item);
@@ -2414,7 +2478,15 @@ package body Projects.Editor is
             Decl := Next;
          end loop;
 
-         Set_Next_Declarative_Item (New_Decl, Next);
+         --  In case Expr is in fact a range of declarative items...
+         Last := New_Decl;
+         loop
+            L := Next_Declarative_Item (Last);
+            exit when L = Empty_Node;
+            Last := L;
+         end loop;
+         Set_Next_Declarative_Item (Last, Next);
+
          Set_Next_Declarative_Item (Decl, New_Decl);
       end if;
    end Add_At_End;
