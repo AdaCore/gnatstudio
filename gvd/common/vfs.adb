@@ -462,10 +462,7 @@ package body VFS is
       S       : chars_ptr;
    begin
       if As_UTF8 then
-         S := Locale_From_UTF8
-           (Str,
-            Read'Access,
-            Written'Access);
+         S := Locale_From_UTF8 (Str, Read'Access, Written'Access);
 
          if S = Null_Ptr then
             --  Couldn't convert ? Just save the string as is, this is better

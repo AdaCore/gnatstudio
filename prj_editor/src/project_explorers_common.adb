@@ -708,7 +708,6 @@ package body Project_Explorers_Common is
    begin
       if Iter /= Null_Iter then
          Node_Type := Get_Node_Type (Model, Iter);
-
       else
          return Context;
       end if;
