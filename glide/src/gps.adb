@@ -594,8 +594,12 @@ procedure GPS is
       Kernel : Kernel_Handle)
    is
       pragma Unreferenced (MDI);
+      Context : constant Selection_Context_Access :=
+        Get_Current_Context (Kernel);
    begin
-      Context_Changed (Kernel, Get_Current_Context (Kernel));
+      if Context /= null then
+         Context_Changed (Kernel, Context);
+      end if;
    end Child_Selected;
 
 begin
