@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# From configure.in Revision: 1.42 
+# From configure.in Revision: 1.1 
 #############################################################
 #
 #  Checking for Gnat
@@ -973,6 +973,9 @@ TARGET=$host
 EXEC_PREFIX="$prefix"
 
 
+GCC_VERSION=`$CC -dumpversion`
+
+
 trap '' 1 2 15
 cat > confcache <<\EOF
 # This file is a shell script that caches the results of configure
@@ -1136,6 +1139,7 @@ s%@CC@%$CC%g
 s%@GNATMAKE@%$GNATMAKE%g
 s%@TARGET@%$TARGET%g
 s%@EXEC_PREFIX@%$EXEC_PREFIX%g
+s%@GCC_VERSION@%$GCC_VERSION%g
 
 CEOF
 EOF
