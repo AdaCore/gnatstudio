@@ -117,6 +117,7 @@
 --      - Adding new supported languages (see language_handlers-glide.ads)
 --        and the corresponding cross-referencing subprograms (same file)
 --      - Each module can register new commands for the shell interpreter
+--      - Adding key handlers, which have priority over other shortcuts
 --
 --   All these changes can be done locally in the module, and do not need any
 --   modification to the rest of GPS itself (apart from registering the module
@@ -289,10 +290,10 @@ package Glide_Kernel.Modules is
       ID              : Module_ID;
       Context_Func    : Context_Factory);
    --  Register that Widget should be associated with a contextual menu.
-   --  Whenever a right-button click happens inside Widget_On_Widget, then the
+   --  Whenever a right-button click happens inside Event_On_Widget, then the
    --  following will happen:
    --     - the kernel detects the event, and creates an empty menu.
-   --     - it asks Widget, through Context_Func, the exact context for the
+   --     - it asks Object, through Context_Func, the exact context for the
    --       menu (selected file, ....)
    --     - it then asks each of the registered modules whether it wants to
    --       add new items to the menu, and let it do so (through the
