@@ -157,7 +157,6 @@ case "${host}" in
       *win32* )
 	machine=intel386 opsys=windows
 	STRIP_CR=True
-	ASYNC_COMMANDS=False
 	CAN_OUTPUT=False
 	LINK_SIZE=11
 	FONT_SIZE=14
