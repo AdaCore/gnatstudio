@@ -34,6 +34,7 @@ package body GVD.Trace is
    Quote_EOL     : aliased constant String := '"' & ASCII.LF;
    Quote_SOL     : aliased constant String := "       """;
    Verbose_EOL   : aliased constant String := "\n";
+   Verbose_CR    : aliased constant String := "\r";
    Verbose_HT    : aliased constant String := "\t";
 
    function To_Main_Window is new
@@ -114,6 +115,8 @@ package body GVD.Trace is
                   N := Write (File, Quote_SOL'Address, Quote_SOL'Length);
                end if;
 
+            when ASCII.CR =>
+               N := Write (File, Verbose_CR'Address, Verbose_CR'Length);
             when ASCII.HT =>
                N := Write (File, Verbose_HT'Address, Verbose_HT'Length);
             when others =>
