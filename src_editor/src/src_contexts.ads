@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -118,6 +118,10 @@ package Src_Contexts is
    procedure Move_To_Next_File
      (Context : access Abstract_Files_Context) is abstract;
    --  Move to the next file in the list.
+
+   procedure Move_To_First_File
+     (Context : access Abstract_Files_Context) is abstract;
+   --  Move to the first file in the list.
 
    -------------------
    -- Files context --
@@ -264,10 +268,12 @@ private
    function Current_File
      (Context : access Files_Project_Context) return String;
    procedure Move_To_Next_File (Context : access Files_Project_Context);
+   procedure Move_To_First_File (Context : access Files_Project_Context);
    procedure Free (Context : in out Files_Project_Context);
 
    function Current_File (Context : access Files_Context) return String;
    procedure Move_To_Next_File (Context : access Files_Context);
+   procedure Move_To_First_File (Context : access Files_Context);
    procedure Free (Context : in out Files_Context);
 
    type Scope_Selector_Record is new Gtk.Frame.Gtk_Frame_Record with record
