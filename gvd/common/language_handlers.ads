@@ -26,7 +26,7 @@
 --  scheme.
 
 with Language;
-with Basic_Types;
+with GNAT.OS_Lib;
 
 package Language_Handlers is
 
@@ -59,7 +59,7 @@ package Language_Handlers is
 
    function Known_Languages
      (Handler : access Language_Handler_Record)
-      return Basic_Types.String_Array is abstract;
+      return GNAT.OS_Lib.Argument_List is abstract;
    --  Return the list of known languages.
    --  The returned value must be freed by the caller.
 
