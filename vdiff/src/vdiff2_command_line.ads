@@ -57,6 +57,9 @@ package Vdiff2_Command_Line is
    function Execute
      (Command : access Diff_Command_Line;
       Event   : Gdk.Event.Gdk_Event) return Command_Return_Type;
+   --  Execute the command Command
+   --  Search in the global List of Diff the current diff end apply Action on
+   --  this
 
    function Execute
      (Command : access Diff_Command_Line) return Command_Return_Type;
@@ -69,18 +72,20 @@ package Vdiff2_Command_Line is
       Item          : Diff_Head;
       Line          : Natural)
       return Diff_Chunk_List.List_Node;
-   --  ???
+   --  Search in diff list the node corresponding to Item
 
    procedure test_button
      (Kernel : Kernel_Handle;
       Diff   : Diff_Head_Access;
       Line   : Natural := 0;
       File   : String := "");
+   --  Just For Testing
 
    procedure Move_On_Ref_File
      (Kernel : Kernel_Handle;
       Diff   : Diff_Head_Access;
       Line   : Natural := 0;
       File   : String := "");
+   --  Move a diff block to the Ref_File
 
 end Vdiff2_Command_Line;
