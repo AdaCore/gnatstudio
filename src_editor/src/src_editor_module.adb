@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                          G L I D E  I I                           --
 --                                                                   --
---                        Copyright (C) 2001                         --
+--                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GLIDE is free software; you can redistribute it and/or modify  it --
@@ -651,11 +651,14 @@ package body Src_Editor_Module is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle) is
    begin
       if Get_Editor_Filename (Kernel) /= "" then
+         Push_State (Kernel, Busy);
          Goto_Declaration_Or_Body (Kernel);
+         Pop_State (Kernel);
       end if;
 
    exception
       when E : others =>
+         Pop_State (Kernel);
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Goto_Declaration_Or_Body;
 
@@ -863,7 +866,7 @@ package body Src_Editor_Module is
                      On_Open_File'Access, GDK_F3, Ref_Item => -"Close");
       Register_Menu (Kernel, File & (-"Reopen"), Ref_Item => -"Open...",
                      Add_Before => False);
-      Gtk_New (Mitem, "");
+      Gtk_New (Mitem);
       Register_Menu
         (Kernel, File, Mitem, Ref_Item => -"Reopen", Add_Before => False);
 
@@ -882,7 +885,7 @@ package body Src_Editor_Module is
       Register_Menu (Kernel, Edit, -"Redo",  Stock_Redo,
                      On_Redo'Access, Ref_Item => -"Preferences");
 
-      Gtk_New (Mitem, "");
+      Gtk_New (Mitem);
       Register_Menu
         (Kernel, Edit, Mitem, Ref_Item => "Redo", Add_Before => False);
 
@@ -899,13 +902,13 @@ package body Src_Editor_Module is
                      On_Select_All'Access, GDK_A, Control_Mask,
                      Ref_Item => -"Preferences");
 
-      Gtk_New (Mitem, "");
+      Gtk_New (Mitem);
       Register_Menu (Kernel, Edit, Mitem, Ref_Item => -"Preferences");
 
       Register_Menu (Kernel, Edit, -"Generate Body", "",
-                     On_Generate_Body'Access);
+                     On_Generate_Body'Access, Ref_Item => -"Preferences");
       Register_Menu (Kernel, Edit, -"Pretty Print", "",
-                     On_Pretty_Print'Access);
+                     On_Pretty_Print'Access, Ref_Item => -"Preferences");
 
       Register_Menu (Kernel, Gotom, -"Goto Declaration<->Body", Stock_Home,
                      On_Goto_Declaration_Or_Body'Access,
@@ -913,39 +916,41 @@ package body Src_Editor_Module is
 
       --  Toolbars
 
-      Button := Insert_Stock (Toolbar, Stock_New, -"Create a New File",
-                              Position => 0);
+      Button := Insert_Stock
+        (Toolbar, Stock_New, -"Create a New File", Position => 0);
       Kernel_Callback.Connect
         (Button, "clicked",
          Kernel_Callback.To_Marshaller (On_New_File'Access),
          Kernel_Handle (Kernel));
 
-      Button := Insert_Stock (Toolbar, Stock_Open, -"Open a File",
-                              Position => 1);
+      Button := Insert_Stock
+        (Toolbar, Stock_Open, -"Open a File", Position => 1);
       Kernel_Callback.Connect
         (Button, "clicked",
          Kernel_Callback.To_Marshaller (On_Open_File'Access),
          Kernel_Handle (Kernel));
 
-      Button := Insert_Stock (Toolbar, Stock_Save, -"Save Current File",
-                              Position => 2);
+      Button := Insert_Stock
+        (Toolbar, Stock_Save, -"Save Current File", Position => 2);
       Kernel_Callback.Connect
         (Button, "clicked",
          Kernel_Callback.To_Marshaller (On_Save'Access),
          Kernel_Handle (Kernel));
 
       Insert_Space (Toolbar, Position => 3);
-      Button := Insert_Stock (Toolbar, Stock_Undo, -"Undo Previous Action",
-                             Position => 4);
-      Button := Insert_Stock (Toolbar, Stock_Redo, -"Redo Previous Action",
-                             Position => 5);
+      Button := Insert_Stock
+        (Toolbar, Stock_Undo, -"Undo Previous Action", Position => 4);
+      Set_Sensitive (Button, False);
+      Button := Insert_Stock
+        (Toolbar, Stock_Redo, -"Redo Previous Action", Position => 5);
+      Set_Sensitive (Button, False);
       Insert_Space (Toolbar, Position => 6);
-      Button := Insert_Stock (Toolbar, Stock_Cut, -"Cut to Clipboard",
-                              Position => 7);
-      Button := Insert_Stock (Toolbar, Stock_Copy, -"Copy to Clipboard",
-                              Position => 8);
-      Button := Insert_Stock (Toolbar, Stock_Paste, -"Paste from Clipboard",
-                             Position => 9);
+      Button := Insert_Stock
+        (Toolbar, Stock_Cut, -"Cut to Clipboard", Position => 7);
+      Button := Insert_Stock
+        (Toolbar, Stock_Copy, -"Copy to Clipboard", Position => 8);
+      Button := Insert_Stock
+        (Toolbar, Stock_Paste, -"Paste from Clipboard", Position => 9);
    end Initialize_Module;
 
    ---------------------
