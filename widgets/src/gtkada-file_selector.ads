@@ -130,9 +130,9 @@ package Gtkada.File_Selector is
 
    procedure Use_File_Filter
      (Filter    : access File_Filter_Record;
-      Win       : in File_Selector_Window_Access;
-      Dir       : in String;
-      File      : in String;
+      Win       : File_Selector_Window_Access;
+      Dir       : String;
+      File      : String;
       State     : out File_State;
       Pixmap    : out Gdk.Pixmap.Gdk_Pixmap;
       Mask      : out Gdk.Bitmap.Gdk_Bitmap;
@@ -158,13 +158,13 @@ package Gtkada.File_Selector is
 
    procedure Gtk_New
      (File_Selector_Window : out File_Selector_Window_Access;
-      Directory            : in String);
+      Directory            : String);
    --  Create a new file selector. Directory is the directory that should
    --  be opened when the file selector is first shown.
 
    procedure Initialize
      (File_Selector_Window : access File_Selector_Window_Record'Class;
-      Directory            : in String);
+      Directory            : String);
    --  Internal initialization function.
 
 private
