@@ -641,7 +641,7 @@ package body Ada_Analyzer is
             end if;
 
             Constructs.Current.Sloc_Start     := Value.Sloc;
-            Constructs.Current.Sloc_End       := (Line_Count, Column);
+            Constructs.Current.Sloc_End       := (Line_Count, Column, Prec);
             Constructs.Current.Is_Declaration :=
               Subprogram_Decl or else Value.Type_Declaration;
          end if;
@@ -665,6 +665,7 @@ package body Ada_Analyzer is
          Temp.Token       := Reserved;
          Temp.Sloc.Line   := Line_Count;
          Temp.Sloc.Column := Prec - Line_Start (Prec) + 1;
+         Temp.Sloc.Index  := Prec;
 
          --  Note: the order of the following conditions is important
 
@@ -1280,6 +1281,7 @@ package body Ada_Analyzer is
                                  Val.Sloc.Line   := Previous_Line;
                                  Val.Sloc.Column :=
                                    Token_Prec - Line_Start (Token_Prec) + 1;
+                                 Val.Sloc.Index  := Token_Prec;
                                  Val.Identifier (1 .. Str_Len) :=
                                    Str (1 .. Str_Len);
                                  Val.Ident_Len := Str_Len;
@@ -1433,6 +1435,7 @@ package body Ada_Analyzer is
                            Pop (Tokens);
                            Val.Sloc.Line   := Line_Count;
                            Val.Sloc.Column := Prec - Line_Start (Prec) + 2;
+                           Val.Sloc.Index  := Prec + 1;
                            Val.Ident_Len := 0;
                            Push (Tokens, Val);
                         end;

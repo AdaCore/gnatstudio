@@ -259,6 +259,9 @@ package Language is
 
       Column : Natural := 0;
       --  Column number for this entity
+
+      Index  : Natural := 0;
+      --  Index in the buffer for this entity
    end record;
 
    type Indent_Parameters is record
