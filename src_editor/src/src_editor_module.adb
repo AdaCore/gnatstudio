@@ -1456,9 +1456,11 @@ package body Src_Editor_Module is
       Register_Menu (Kernel, Edit, -"Paste",  Stock_Paste,
                      On_Paste'Access, GDK_Insert, Shift_Mask,
                      Ref_Item => -"Preferences");
+
+      --  ??? This should be bound to Ctrl-A, except this would interfer with
+      --  Emacs keybindings for people who want to use them.
       Register_Menu (Kernel, Edit, -"Select All",  "",
-                     On_Select_All'Access, GDK_A, Control_Mask,
-                     Ref_Item => -"Preferences");
+                     On_Select_All'Access, Ref_Item => -"Preferences");
 
       Gtk_New (Mitem);
       Register_Menu (Kernel, Edit, Mitem, Ref_Item => -"Preferences");
