@@ -1621,7 +1621,9 @@ package body GVD.Text_Box.Source_Editor.Builtin is
          --  Convert from line to visual buffer position (i.e include handling
          --  of ASCII.HT characters).
 
-         while Current_Line < Line loop
+         while Current_Line < Line
+           and then Text_Pos <= Buffer'Last
+         loop
             if Buffer (Text_Pos) = ASCII.LF then
                Col := 1;
                Index := Index + 1;
