@@ -203,8 +203,13 @@ package String_Utils is
    function Is_Operator_Letter (Char : Glib.Gunichar) return Boolean;
    --  Return True if the given letter is a valid operator.
 
-   function Case_Insensitive_Equal (S1, S2 : String) return Boolean;
-   --  Return True if S1 = S2 without taking into account case sensitivity.
+   function Equal (S1, S2 : String; Case_Sensitive : Boolean) return Boolean;
+   pragma Inline (Equal);
+   --  Compare two strings
+
+   -------------------
+   -- Argument_List --
+   -------------------
 
    function Argument_List_To_String
      (List : GNAT.OS_Lib.Argument_List;
