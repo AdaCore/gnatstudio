@@ -38,6 +38,7 @@ with Glide_Kernel;          use Glide_Kernel;
 with Files_Extra_Info_Pkg;  use Files_Extra_Info_Pkg;
 
 with Find_Utils;            use Find_Utils;
+with Find_Utils.Help;       use Find_Utils.Help;
 with GUI_Utils;             use GUI_Utils;
 
 with Basic_Types;           use Basic_Types;
@@ -137,10 +138,10 @@ package body Vsearch_Ext is
    begin
       Prepend (Search_Modules,
                Search_Module_Data'
-               (Label             => new String' (Label),
-                Mask              => Mask,
-                Factory           => Factory,
-                Extra_Information => Extra_Information));
+                 (Label             => new String' (Label),
+                  Mask              => Mask,
+                  Factory           => Factory,
+                  Extra_Information => Extra_Information));
 
       if Extra_Information /= null then
          Ref (Extra_Information);
@@ -161,11 +162,13 @@ package body Vsearch_Ext is
    -----------------
 
    function Find_Module (Name : String) return Search_Module_Data is
-      List : Search_Modules_List.List := Search_Modules;
+      use Search_Modules_List;
+
+      List : List_Node := First (Search_Modules);
    begin
-      while not Is_Empty (List) loop
-         if Head (List).Label.all = Name then
-            return Head (List);
+      while List /= Null_Node loop
+         if Data (List).Label.all = Name then
+            return Data (List);
          end if;
 
          List := Next (List);
@@ -449,7 +452,9 @@ package body Vsearch_Ext is
       Handle  : Glide_Kernel.Kernel_Handle)
    is
       pragma Suppress (All_Checks);
-      Current : Search_Modules_List.List := Search_Modules;
+      use Search_Modules_List;
+
+      Current : List_Node := First (Search_Modules);
    begin
       Vsearch_Pkg.Initialize (Vsearch);
       Vsearch.Kernel := Handle;
@@ -524,9 +529,9 @@ package body Vsearch_Ext is
          Widget_Callback.To_Marshaller (On_Options_Toggled'Access), Vsearch);
 
       --  Show the registered modules
-      while not Is_Empty (Current) loop
+      while Current /= Null_Node loop
          Add_Unique_Combo_Entry
-           (Vsearch.Context_Combo, Head (Current).Label.all);
+           (Vsearch.Context_Combo, Data (Current).Label.all);
          Current := Next (Current);
       end loop;
 
@@ -564,6 +569,13 @@ package body Vsearch_Ext is
          Extra_Information => Gtk_Widget (Extra),
          Mask              => All_Options
            and not Search_Backward and not Supports_Replace);
+      Register_Search_Function
+        (Kernel            => Kernel,
+         Label             => -"Help",
+         Factory           => Help_Factory'Access,
+         Extra_Information => null,
+         Mask              => All_Options and not Supports_Replace
+           and not Scope_Mask and not Whole_Word and not All_Occurences);
    end Register_Default_Search;
 
 end Vsearch_Ext;
