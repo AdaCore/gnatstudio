@@ -506,6 +506,16 @@ package body Glide_Kernel.Preferences is
          Param_Spec (Ada_Declaration_Level),
          -"Languages:Ada");
 
+      Ada_Indent_Case_Extra := Param_Spec_Boolean
+        (Gnew_Boolean
+          (Name    => "Ada-Indent-Case-Extra",
+           Default => True,
+           Blurb   => -"Indent case statements with an extra level",
+           Nick    => -"RM style case indentation"));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (Ada_Indent_Case_Extra),
+         -"Languages:Ada");
+
       C_Automatic_Indentation := Param_Spec_Boolean
         (Gnew_Boolean
           (Name    => "C-Automatic-Indentation",
