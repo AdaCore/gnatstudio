@@ -628,7 +628,8 @@ package body Docgen.Work_On_Source is
       Converter         : Docgen.Doc_Subprogram_Type;
       Doc_Directory     : String;
       Doc_Suffix        : String;
-      Level             : in out Natural)
+      Level             : in out Natural;
+      All_Scope_Tree    : in out Tree_Htable.String_Hash_Table.HTable)
    is
       use TEL;
       use type Basic_Types.String_Access;
@@ -681,10 +682,28 @@ package body Docgen.Work_On_Source is
       if Is_Spec_File (Kernel, Source_Filename) then
          if not TEL.Is_Empty (Entity_List) then
 
+            --  Try to get the scope tree associated with the ali file
+            Tree_Package
+              := Tree_Htable.String_Hash_Table.Get
+                (All_Scope_Tree,
+                 Base_Name (Get_LI_Filename (LI_Unit)));
+            --  First time, we met the ali file, we build the scope tree
+            --  and store it in the hash table during all the process of
+            --  docgen
+            if Tree_Package = Null_Scope_Tree then
+               Tree_Package :=
+                 Create_Tree (LI_Unit);
+                  Tree_Htable.String_Hash_Table.Set
+                 (All_Scope_Tree,
+                  Base_Name (Get_LI_Filename (LI_Unit)),
+                  Tree_Package);
+            end if;
+
             --  Build of the scope tree.
             --  True means that only declarations are inserted into the tree
             --  (references don't needed).
-            Tree_Package := Create_Tree (LI_Unit, True);
+            --  Tree_Package := Create_Tree (LI_Unit, True);
+
             --  Parse the source file and create the Parsed_List
             Parse_Constructs
               (Get_Language_From_File
@@ -759,7 +778,7 @@ package body Docgen.Work_On_Source is
                   Parsed_List);
             end if;
             Free (Parsed_List);
-            Free (Tree_Package);
+            --  Free (Tree_Package);
          end if;
       else
          Process_One_Body_File
@@ -2204,6 +2223,7 @@ package body Docgen.Work_On_Source is
       Line              : Natural;
       Max_Lines         : constant Natural := Count_Lines (Text);
       Description       : GNAT.OS_Lib.String_Access;
+      Temp_Line         : GNAT.OS_Lib.String_Access;
    begin
       --  Try to find the first line of the description of the package
       --  if something else is found than a comment line => no description
@@ -2212,17 +2232,17 @@ package body Docgen.Work_On_Source is
       Line              := 1;
 
       while not Start_Found and Line < Max_Lines + 1 loop
-         if Line_Is_Comment (Get_Line_From_String (Text, Line)) then
+         Temp_Line := new String'(Get_Line_From_String (Text, Line));
+         if Line_Is_Comment (Temp_Line.all) then
             Description_Found := True;
             Start_Found       := True;
 
-         elsif not Line_Is_Empty
-           (Get_Line_From_String (Text, Line))
-         then
+         elsif not Line_Is_Empty (Temp_Line.all) then
             Start_Found := True;
          else
             Line := Line + 1;
          end if;
+         Free (Temp_Line);
       end loop;
 
       if Description_Found then
