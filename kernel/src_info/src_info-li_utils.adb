@@ -32,6 +32,12 @@ package body Src_Info.LI_Utils is
       Parsed                  : in Boolean);
    --  Creates an empty LI_File structure
 
+   procedure Create_File_Info
+     (FI_Ptr   : in out File_Info_Ptr;
+      Source_Filename : in String;
+      Directory_Name  : in String);
+   --  Creates an empty File_Info (without declarations)
+
    -------------------------------------------------------------------------
 
    --------------------------
@@ -149,9 +155,14 @@ package body Src_Info.LI_Utils is
             Handler           => Handler,
             Source_Filename   => Referred_Filename,
             Parsed            => False);
+         Create_File_Info
+           (FI_Ptr            => Tmp_LI_File_Ptr.LI.Body_Info,
+            Source_Filename   => Referred_Filename,
+            Directory_Name    => "");
          Add (List.Table, Tmp_LI_File_Ptr, Success);
          pragma Assert (Success,
                "unable to insert new LI_File into the common LI_File_List");
+         --  Tmp_LI_File_Ptr := No_LI_File;
       end if;
       --  Is this is a first dependencies info in this file?
       if File.LI.Dependencies_Info = null then
@@ -166,6 +177,7 @@ package body Src_Info.LI_Utils is
                                            Depends_From_Body => True);
          File.LI.Dependencies_Info.Value.Declarations := null;
          File.LI.Dependencies_Info.Next := null;
+         Dep_Ptr := File.LI.Dependencies_Info;
       else
          Dep_Ptr := File.LI.Dependencies_Info;
          --  trying to locate Dependency_File_Info with given Source_Filename
@@ -191,6 +203,16 @@ package body Src_Info.LI_Utils is
             Dep_Ptr := Dep_Ptr.Next;
          end loop;
       end if;
+      --  Dep_Ptr now points to the right Dependency_File_Info
+      --  Inserting null stub declaration
+      --  if Dep_Ptr.Value.Declarations = null then
+      --     Dep_Ptr.Value.Declarations := new E_Declaration_Info_Node'
+      --       (Value => (Declaration => No_Declaration,
+      --                  References => new E_Reference_Node'
+      --                    (Value => No_Reference,
+      --                     Next  => null)),
+      --        Next  => null);
+      --  end if;
    end Insert_Dependency;
 
 
@@ -604,6 +626,20 @@ package body Src_Info.LI_Utils is
       end if;
    end Create_LI_File;
 
+   procedure Create_File_Info
+     (FI_Ptr   : in out File_Info_Ptr;
+      Source_Filename : in String;
+      Directory_Name  : in String) is
+   begin
+      FI_Ptr := new File_Info'
+        (Unit_Name         => null,
+         Source_Filename   => new String'(Source_Filename),
+         Directory_Name    => new String'(Directory_Name),
+         File_Timestamp         => 0,
+         Original_Filename => null,
+         Original_Line     => 1,
+         Declarations      => null);
+   end Create_File_Info;
 
 --   procedure Create_Dependency_File_Info_Node
 --     ()
