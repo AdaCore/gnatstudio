@@ -4,7 +4,7 @@
 --                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
--- GPS is free  software; you can  redistribute it and/or modify  it --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -13,7 +13,7 @@
 -- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
 -- General Public License for more details. You should have received --
--- a copy of the GNU General Public License along with this library; --
+-- a copy of the GNU General Public License along with this program; --
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
@@ -3154,23 +3154,23 @@ package body Prj_API is
    -- Create_Default_Project --
    ----------------------------
 
-   function Create_Default_Project (Name, Path : String)
-     return Project_Node_Id
+   function Create_Default_Project
+     (Name, Path : String) return Project_Node_Id
    is
       Project     : Project_Node_Id;
       No_Scenario : constant Project_Node_Array (1 .. 0) :=
         (others => Empty_Node);
-      Values      : Argument_List (1 .. 1);
+      Values      : Argument_List (1 .. 2);
 
    begin
       Project := Create_Project (Name, Path);
 
-      Values := (1 => new String' ("."));
+      Values (1) := new String' (".");
       Update_Attribute_Value_In_Scenario
         (Project,
          Scenario_Variables => No_Scenario,
          Attribute_Name     => "source_dirs",
-         Values             => Values);
+         Values             => Values (1 .. 1));
       Free (Values (1));
 
       Update_Attribute_Value_In_Scenario
@@ -3179,15 +3179,17 @@ package body Prj_API is
          Attribute_Name     => "object_dir",
          Value              => ".");
 
-      Values := (1 => new String' ("-g"));
+      Values (1) := new String' ("-g");
+      Values (2) := new String' ("-s");
       Update_Attribute_Value_In_Scenario
         (Project,
          Scenario_Variables => No_Scenario,
          Attribute_Name     => "default_switches",
-         Values             => Values,
+         Values             => Values (1 .. 2),
          Attribute_Index    => Ada_String,
          Pkg_Name           => "builder");
       Free (Values (1));
+      Free (Values (2));
 
       return Project;
    end Create_Default_Project;
