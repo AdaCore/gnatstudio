@@ -276,6 +276,7 @@ package body Src_Editor_View is
 
       if View.Side_Column_Buffer /= null then
          Gdk.Pixmap.Unref (View.Side_Column_Buffer);
+         View.Side_Column_Buffer := null;
       end if;
 
       Delete_Mark (Get_Buffer (View), View.Saved_Cursor_Mark);
