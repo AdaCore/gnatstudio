@@ -427,7 +427,7 @@ package body Glide_Kernel.Project is
       end if;
 
       if Langs'Length > 1
-        or else Langs (Langs'First).all /= "ada"
+        or else (Langs'Length = 1 and then Langs (Langs'First).all /= "ada")
       then
          if not Is_Regular_File (Project_Path (Project))
            or else Project_Modified (Project)
