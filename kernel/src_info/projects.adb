@@ -247,9 +247,9 @@ package body Projects is
    -- Save_Project --
    ------------------
 
-   procedure Save_Project
+   function Save_Project
      (Project       : Project_Type;
-      Report_Error  : Error_Report := null)
+      Report_Error  : Error_Report := null) return Boolean
    is
       File : Ada.Text_IO.File_Type;
 
@@ -284,7 +284,7 @@ package body Projects is
                              & " is not writable. Project not saved");
             end if;
             Trace (Me, "Project file not writable: " & Project_Path (Project));
-            return;
+            return False;
          end if;
 
          declare
@@ -304,7 +304,7 @@ package body Projects is
                      Report_Error ("Couldn't create directory " & Dirname);
                   end if;
 
-                  return;
+                  return False;
             end;
 
             Normalize_Cases (Project);
@@ -319,6 +319,7 @@ package body Projects is
 
             Set_Project_Modified (Project, False);
             Set_Status (Project, From_File);
+            return True;
 
          exception
             when Ada.Text_IO.Name_Error =>
@@ -327,8 +328,10 @@ package body Projects is
                if Report_Error /= null then
                   Report_Error ("Couldn't create file " & Filename);
                end if;
+               return False;
          end;
       end if;
+      return False;
    end Save_Project;
 
    ------------------
