@@ -65,7 +65,7 @@ package body Builder_Module is
    Timeout : constant Guint32 := 50;
    --  Timeout in milliseconds to check the build process
 
-   Timeout_Xref : constant Guint32 := 20;
+   Timeout_Xref : constant Guint32 := 50;
    --  Timeout in milliseconds to generate the xref information
 
    Me : constant Debug_Handle := Create (Builder_Module_Name);
