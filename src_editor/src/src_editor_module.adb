@@ -377,7 +377,7 @@ package body Src_Editor_Module is
          loop
             Child := Get (Iter);
             exit when Child = null
-              or else Get_Title (Child) = Short_File;
+              or else Get_Title (Child) = File;
             Next (Iter);
          end loop;
 
