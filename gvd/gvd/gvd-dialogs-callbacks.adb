@@ -92,7 +92,7 @@ package body GVD.Dialogs.Callbacks is
            (Process.Debugger, Natural (Index) + 1, Mode => GVD.Types.Visible);
 
       elsif Top = GVD_Dialog (Main_Window.PD_Dialog) then
-         Match ("[0-9]+", Str, Matched);
+         Match ("(0x)?[0-9a-fA-F]+", Str, Matched);
 
          --  ??? The Command_Type was changed from Visible to Hidden
          --  (revision 1.62) because the debugger is still
@@ -102,7 +102,7 @@ package body GVD.Dialogs.Callbacks is
 
          PD_Switch
            (Process.Debugger,
-            Natural'Value (Str (Matched (0).First .. Matched (0).Last)),
+            Str (Matched (0).First .. Matched (0).Last),
             Mode => GVD.Types.Hidden);
 
          --  After switching to a new protection domain, we want the
