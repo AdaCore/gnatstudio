@@ -57,7 +57,10 @@ Here is a first list of required data:
     can for instance be the text associated with a label, the icon for a
     button, ... A documentation string should be allowed. A default value should
     be provided whenever appropriate so that the GUI builder can display as
-    much information about the widget as possible.
+    much information about the widget as possible. Associated with the default
+    value, a flag should tell whether the default is known to Gtk+ or to the
+    GUI builder only. This will in particular allow code generators to cut their
+    output.
     Each property is associated with a list of subprograms used to modify it
     or get its value. Different subprogram names can be given for every
     language.
