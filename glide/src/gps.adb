@@ -481,11 +481,9 @@ procedure GPS is
             --  Load the project selected by the user
 
             if Project_Name = null then
-               Gtk_New (Screen, GPS.Kernel, "",
-                        Default_Is_Tutorial => not User_Directory_Existed);
+               Gtk_New (Screen, GPS.Kernel, "");
             else
-               Gtk_New (Screen, GPS.Kernel, Project_Name.all,
-                        Default_Is_Tutorial => not User_Directory_Existed);
+               Gtk_New (Screen, GPS.Kernel, Project_Name.all);
             end if;
 
             --  Remove the splash screen, since it conflicts with the welcome
@@ -508,13 +506,6 @@ procedure GPS is
                   --  Desktop was already loaded when the project itself was
                   --  loaded.
                   null;
-
-               when Welcome.Show_Tutorial =>
-                  Help_Module.Show_Tutorial (GPS.Kernel);
-                  Maximize_Children (Get_MDI (GPS.Kernel));
-
-                  --  Avoid displaying the standard help
-                  File_Opened := True;
             end case;
 
             Destroy (Screen);
