@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2001                      --
+--                      Copyright (C) 2000-2002                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -92,7 +92,8 @@ package GVD.Code_Editors is
    procedure Set_Line
      (Editor      : access Code_Editor_Record;
       Line        : Natural;
-      Set_Current : Boolean := True);
+      Set_Current : Boolean := True;
+      Process     : Gtk.Widget.Gtk_Widget);
    --  Set the current line (and draw the button on the side).
    --  If Set_Current is True, then the line becomes the current line (ie the
    --  one on which the debugger is stopped). Otherwise, Line is simply the
