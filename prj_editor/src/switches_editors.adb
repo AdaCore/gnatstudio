@@ -1298,7 +1298,7 @@ package body Switches_Editors is
       end if;
 
       if (Get_Pages (S) and Cpp_Page) /= 0 then
-         Change_Switches (Cpp_Compiler, "compiler", Snames.Name_CPP);
+         Change_Switches (Cpp_Compiler, "compiler", Name_C_Plus_Plus);
       end if;
 
       --  ??? Enable when the project file supports the pretty printer
@@ -1423,7 +1423,7 @@ package body Switches_Editors is
 
       if (Get_Pages (Switches) and Cpp_Page) /= 0 then
          Get_Switches (Project, "compiler", File_Name,
-                       Snames.Name_CPP, Value, Is_Default);
+                       Name_C_Plus_Plus, Value, Is_Default);
          declare
             List : Argument_List := To_Argument_List (Value);
          begin
