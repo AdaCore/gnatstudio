@@ -19,7 +19,6 @@
 -----------------------------------------------------------------------
 
 with Glib;                      use Glib;
-with Glib.Object;               use Glib.Object;
 
 with Glide_Kernel;              use Glide_Kernel;
 with Glide_Kernel.Actions;      use Glide_Kernel.Actions;
@@ -32,7 +31,6 @@ with Glide_Kernel.Standard_Hooks; use Glide_Kernel.Standard_Hooks;
 with Glide_Intl;                use Glide_Intl;
 with Commands;                  use Commands;
 with Commands.Interactive;      use Commands.Interactive;
-with VFS;                       use VFS;
 
 with Pixmaps_Vdiff2;            use Pixmaps_Vdiff2;
 with Diff_Utils2;               use Diff_Utils2;
@@ -48,20 +46,18 @@ with Gtk.Toolbar;               use Gtk.Toolbar;
 with Gtk.Window;                use Gtk.Window;
 with Gtk.Image;                 use Gtk.Image;
 with Gtk.Handlers;              use Gtk.Handlers;
-with Gtk.Menu;                  use Gtk.Menu;
-with Gtk.Menu_Item;             use Gtk.Menu_Item;
-with Gtk.Widget;                use Gtk.Widget;
 
 package body Vdiff2_Module is
 
    use Diff_Head_List;
 
-   procedure VDiff_Contextual
-     (Object  : access GObject_Record'Class;
-      Context : access Selection_Context'Class;
-      Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
-   --  Generate the contextual menu entries for contextual menus in other
-   --  modules than the visual diff.
+
+   type In_Diff_List_Filter is new Action_Filter_Record with null record;
+   function Filter_Matches_Primitive
+     (Filter  : access In_Diff_List_Filter;
+      Context : access Selection_Context'Class) return Boolean;
+   --  ??? See In_Diff_List subprogram
+
 
    ---------------------
    -- Register_Module --
@@ -70,8 +66,10 @@ package body Vdiff2_Module is
    procedure Register_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
-      Tools        : constant String := '/' & (-"Tools") & '/'
+      Tools  : constant String := '/' & (-"Tools") & '/'
         & (-"Visual Diff") & '/';
+      Filter : Action_Filter;
+      Command : Interactive_Command_Access;
    begin
       Vdiff_Module_ID := new VDiff2_Module_Record;
       VDiff2_Module (Vdiff_Module_ID).Kernel := Kernel_Handle (Kernel);
@@ -104,8 +102,37 @@ package body Vdiff2_Module is
         (Module                  => Vdiff_Module_ID,
          Kernel                  => Kernel,
          Module_Name             => Vdiff_Module_Name,
-         Priority                => Default_Priority,
-         Contextual_Menu_Handler => VDiff_Contextual'Access);
+         Priority                => Default_Priority);
+
+      Filter := new In_Diff_List_Filter;
+
+      Command := new Change_Ref_File_Command;
+      Register_Contextual_Menu
+        (Kernel, "Vdiff change reference file",
+         Label  => -"Visual Diff/Change Reference File",
+         Action => Command,
+         Filter => Filter);
+
+      Command := new Recompute_Diff_Command;
+      Register_Contextual_Menu
+        (Kernel, "Vdiff recompute difference",
+         Label  => -"Visual Diff/Recompute Difference",
+         Action => Command,
+         Filter => Filter);
+
+      Command := new Hide_Difference_Command;
+      Register_Contextual_Menu
+        (Kernel, "Vdiff hide difference",
+         Label  => -"Visual Diff/Hide Difference",
+         Action => Command,
+         Filter => Filter);
+
+      Command := new Close_Difference_Command;
+      Register_Contextual_Menu
+        (Kernel, "Vdiff close difference",
+         Label  => -"Visual Diff/Close Difference",
+         Action => Command,
+         Filter => Filter);
 
       Diff3_Cmd := Param_Spec_String
       (Gnew_String
@@ -264,73 +291,28 @@ package body Vdiff2_Module is
       Vdiff_Module_ID := null;
    end Destroy;
 
-   ----------------------
-   -- VDiff_Contextual --
-   ----------------------
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
 
-   procedure VDiff_Contextual
-     (Object  : access GObject_Record'Class;
-      Context : access Selection_Context'Class;
-      Menu    : access Gtk.Menu.Gtk_Menu_Record'Class)
+   function Filter_Matches_Primitive
+     (Filter  : access In_Diff_List_Filter;
+      Context : access Selection_Context'Class) return Boolean
    is
-      pragma Unreferenced (Object);
-
-      File          : File_Selection_Context_Access;
-      Submenu       : Gtk_Menu;
-      Mitem         : Gtk_Menu_Item;
-      Dummy         : Diff_Head_List.List_Node;
-      Selected_File : Virtual_File;
-
+      pragma Unreferenced (Filter);
    begin
-      if Context.all in File_Selection_Context'Class then
-         File := File_Selection_Context_Access (Context);
-
-         if Has_File_Information (File) and then
-           Has_Directory_Information (File_Selection_Context_Access (Context))
-         then
-            Selected_File :=
-              File_Information (File_Selection_Context_Access (Context));
-            Dummy := Is_In_Diff_List
-              (Selected_File,
-               VDiff2_Module (Vdiff_Module_ID).List_Diff.all);
-
-            if Dummy /= Diff_Head_List.Null_Node then
-               Gtk_New (Mitem, Label => -"Visual Diff");
-               Gtk_New (Submenu);
-               Set_Submenu (Mitem, Gtk_Widget (Submenu));
-               Append (Menu, Mitem);
-
-               Gtk_New (Mitem, -"Change Reference File");
-               Append (Submenu, Mitem);
-               Context_Callback.Connect
-                 (Mitem, "activate",
-                  Context_Callback.To_Marshaller (On_Ref_Change'Access),
-                  Selection_Context_Access (Context));
-
-               Gtk_New (Mitem, -"Recompute Difference");
-               Append (Submenu, Mitem);
-               Context_Callback.Connect
-                 (Mitem, "activate",
-                  Context_Callback.To_Marshaller (On_Recalculate'Access),
-                  Selection_Context_Access (Context));
-
-               Gtk_New (Mitem, -"Hide Difference");
-               Append (Submenu, Mitem);
-               Context_Callback.Connect
-                 (Mitem, "activate",
-                  Context_Callback.To_Marshaller (On_Hide_Differences'Access),
-                  Selection_Context_Access (Context));
-
-               Gtk_New (Mitem, -"Close Difference");
-               Append (Submenu, Mitem);
-               Context_Callback.Connect
-                 (Mitem, "activate",
-                  Context_Callback.To_Marshaller (On_Close_Difference'Access),
-                  Selection_Context_Access (Context));
-            end if;
-         end if;
+      if Context.all in File_Selection_Context'Class
+        and then Has_File_Information (File_Selection_Context_Access (Context))
+        and then Has_Directory_Information
+          (File_Selection_Context_Access (Context))
+      then
+         return Is_In_Diff_List
+           (File_Information (File_Selection_Context_Access (Context)),
+            VDiff2_Module (Vdiff_Module_ID).List_Diff.all) /=
+           Diff_Head_List.Null_Node;
       end if;
-   end VDiff_Contextual;
+      return False;
+   end Filter_Matches_Primitive;
 
    -------------------
    -- VDiff_Toolbar --

@@ -449,14 +449,15 @@ package body Vdiff2_Module.Callback is
                 "Unexpected exception: " & Exception_Information (E));
    end On_Preferences_Changed;
 
-   ---------------------
-   --  On_Ref_Change  --
-   ---------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_Ref_Change
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access) is
-      pragma Unreferenced (Widget);
+   function Execute
+     (Command : access Change_Ref_File_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      pragma Unreferenced (Command);
       Node          : Diff_Head_List.List_Node;
       Selected_File : Virtual_File;
       Cmd           : Diff_Command_Access;
@@ -470,7 +471,7 @@ package body Vdiff2_Module.Callback is
          Change_Ref_File'Access);
 
       Selected_File :=
-        File_Information (File_Selection_Context_Access (Context));
+        File_Information (File_Selection_Context_Access (Context.Context));
       Node := Is_In_Diff_List
         (Selected_File,
          VDiff2_Module (Vdiff_Module_ID).List_Diff.all);
@@ -490,17 +491,18 @@ package body Vdiff2_Module.Callback is
       end if;
 
       Free (Root_Command (Cmd.all));
-   end On_Ref_Change;
+      return Commands.Success;
+   end Execute;
 
-   ---------------------------
-   --  On_Hide_Differences  --
-   ---------------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_Hide_Differences
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access)
+   function Execute
+     (Command : access Hide_Difference_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Widget);
+      pragma Unreferenced (Command);
       Node          : Diff_Head_List.List_Node;
       Selected_File : Virtual_File;
       Cmd           : Diff_Command_Access;
@@ -513,7 +515,7 @@ package body Vdiff2_Module.Callback is
          Unhighlight_Difference'Access);
 
       Selected_File :=
-         File_Information (File_Selection_Context_Access (Context));
+         File_Information (File_Selection_Context_Access (Context.Context));
 
       Node := Is_In_Diff_List
         (Selected_File,
@@ -521,17 +523,18 @@ package body Vdiff2_Module.Callback is
 
       Unchecked_Execute (Cmd, Node);
       Free (Root_Command (Cmd.all));
-   end On_Hide_Differences;
+      return Commands.Success;
+   end Execute;
 
-   ----------------------
-   --  On_Recalculate  --
-   ----------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_Recalculate
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access)
+   function Execute
+     (Command : access Recompute_Diff_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Widget);
+      pragma Unreferenced (Command);
       Node          : Diff_Head_List.List_Node;
       Selected_File : Virtual_File;
       Cmd           : Diff_Command_Access;
@@ -544,7 +547,7 @@ package body Vdiff2_Module.Callback is
          Reload_Difference'Access);
 
       Selected_File :=
-         File_Information (File_Selection_Context_Access (Context));
+         File_Information (File_Selection_Context_Access (Context.Context));
 
       Node := Is_In_Diff_List
         (Selected_File,
@@ -552,17 +555,18 @@ package body Vdiff2_Module.Callback is
 
       Unchecked_Execute (Cmd, Node);
       Free (Root_Command (Cmd.all));
-   end On_Recalculate;
+      return Commands.Success;
+   end Execute;
 
-   ---------------------------
-   --  On_Close_Difference  --
-   ---------------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_Close_Difference
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access)
+   function Execute
+     (Command : access Close_Difference_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Widget);
+      pragma Unreferenced (Command);
       Node          : Diff_Head_List.List_Node;
       Selected_File : Virtual_File;
       Cmd           : Diff_Command_Access;
@@ -574,7 +578,7 @@ package body Vdiff2_Module.Callback is
          VDiff2_Module (Vdiff_Module_ID).List_Diff,
          Close_Difference'Access);
       Selected_File :=
-         File_Information (File_Selection_Context_Access (Context));
+         File_Information (File_Selection_Context_Access (Context.Context));
 
       Node := Is_In_Diff_List
         (Selected_File,
@@ -582,6 +586,7 @@ package body Vdiff2_Module.Callback is
 
       Unchecked_Execute (Cmd, Node);
       Free (Root_Command (Cmd.all));
-   end On_Close_Difference;
+      return Commands.Success;
+   end Execute;
 
 end Vdiff2_Module.Callback;

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2001-2003                    --
+--                        Copyright (C) 2001-2004                    --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -25,6 +25,7 @@ with Glib.Object;          use Glib.Object;
 with Glide_Kernel;         use Glide_Kernel;
 with Glide_Kernel.Scripts; use Glide_Kernel.Scripts;
 with Glide_Kernel.Hooks;   use Glide_Kernel.Hooks;
+with Commands.Interactive; use Commands, Commands.Interactive;
 
 package Vdiff2_Module.Callback is
 
@@ -62,25 +63,29 @@ package Vdiff2_Module.Callback is
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
    --  Called when the preferences have changed
 
-   procedure On_Ref_Change
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
+   type Change_Ref_File_Command is new Interactive_Command with null record;
+   function Execute
+     (Command : access Change_Ref_File_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
    --  Change the Ref File for the current diff and reload hightlighting
 
-   procedure On_Hide_Differences
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
+   type Hide_Difference_Command is new Interactive_Command with null record;
+   function Execute
+     (Command : access Hide_Difference_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
    --  Hide the highlighting and free the difference list
 
-   procedure On_Recalculate
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
+   type Recompute_Diff_Command is new Interactive_Command with null record;
+   function Execute
+     (Command : access Recompute_Diff_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
    --  Hide difference ,recalculate the difference
    --  and show the new difference list
 
-   procedure On_Close_Difference
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
+   type Close_Difference_Command is new Interactive_Command with null record;
+   function Execute
+     (Command : access Close_Difference_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
    --  Close all file for current diff
 
 end Vdiff2_Module.Callback;
