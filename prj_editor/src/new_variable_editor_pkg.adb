@@ -18,30 +18,32 @@ end Gtk_New;
 
 procedure Initialize (New_Variable_Editor : access New_Variable_Editor_Record'Class) is
    pragma Suppress (All_Checks);
+   Default_Env_Variable_Items : String_List.Glist;
    List_Env_Variables_Items : String_List.Glist;
    Vbox39_Group : Widget_SList.GSList;
 
 begin
    Gtk.Window.Initialize (New_Variable_Editor, Window_Toplevel);
    Set_Title (New_Variable_Editor, -"Creating a variable");
-   Set_Policy (New_Variable_Editor, True, True, True);
+   Set_Policy (New_Variable_Editor, True, True, False);
    Set_Position (New_Variable_Editor, Win_Pos_Center);
-   Set_Modal (New_Variable_Editor, True);
+   Set_Modal (New_Variable_Editor, False);
+   Set_Default_Size (New_Variable_Editor, 500, 480);
 
    Gtk_New_Vbox (New_Variable_Editor.Vbox37, False, 0);
    Add (New_Variable_Editor, New_Variable_Editor.Vbox37);
 
-   Gtk_New (New_Variable_Editor.Frame36, -"Name");
-   Set_Border_Width (New_Variable_Editor.Frame36, 10);
-   Set_Shadow_Type (New_Variable_Editor.Frame36, Shadow_Etched_In);
-   Pack_Start (New_Variable_Editor.Vbox37, New_Variable_Editor.Frame36, False, False, 0);
+   Gtk_New (New_Variable_Editor.Name_Frame, -"Name");
+   Set_Border_Width (New_Variable_Editor.Name_Frame, 10);
+   Set_Shadow_Type (New_Variable_Editor.Name_Frame, Shadow_Etched_In);
+   Pack_Start (New_Variable_Editor.Vbox37, New_Variable_Editor.Name_Frame, False, False, 0);
 
    Gtk_New (New_Variable_Editor.Variable_Name);
    Set_Editable (New_Variable_Editor.Variable_Name, True);
    Set_Max_Length (New_Variable_Editor.Variable_Name, 0);
    Set_Text (New_Variable_Editor.Variable_Name, -"");
    Set_Visibility (New_Variable_Editor.Variable_Name, True);
-   Add (New_Variable_Editor.Frame36, New_Variable_Editor.Variable_Name);
+   Add (New_Variable_Editor.Name_Frame, New_Variable_Editor.Variable_Name);
 
    Gtk_New (New_Variable_Editor.Frame33, -"Importing");
    Set_Border_Width (New_Variable_Editor.Frame33, 10);
@@ -59,37 +61,83 @@ begin
       Widget_Callback.To_Marshaller (On_Get_Environment_Toggled'Access), New_Variable_Editor);
 
    Gtk_New
-     (New_Variable_Editor.Alignment3, 1.0, 0.5, 0.91,
-      0.91);
-   Pack_Start (New_Variable_Editor.Vbox38, New_Variable_Editor.Alignment3, True, True, 4);
+     (New_Variable_Editor.Alignment7, 1.0, 0.5, 0.9, 
+      0.9);
+   Pack_Start (New_Variable_Editor.Vbox38, New_Variable_Editor.Alignment7, False, False, 0);
+
+   Gtk_New (New_Variable_Editor.Environment_Table, 3, 2, False);
+   Set_Row_Spacings (New_Variable_Editor.Environment_Table, 0);
+   Set_Col_Spacings (New_Variable_Editor.Environment_Table, 9);
+   Add (New_Variable_Editor.Alignment7, New_Variable_Editor.Environment_Table);
+
+   Gtk_New (New_Variable_Editor.Label56, -("Default value:"));
+   Set_Alignment (New_Variable_Editor.Label56, 7.45058e-09, 0.5);
+   Set_Padding (New_Variable_Editor.Label56, 0, 0);
+   Set_Justify (New_Variable_Editor.Label56, Justify_Center);
+   Set_Line_Wrap (New_Variable_Editor.Label56, False);
+   Attach (New_Variable_Editor.Environment_Table, New_Variable_Editor.Label56, 0, 1, 2, 3,
+     Shrink or Fill, 0,
+     0, 0);
+
+   Gtk_New (New_Variable_Editor.Default_Env_Variable);
+   Set_Case_Sensitive (New_Variable_Editor.Default_Env_Variable, False);
+   Set_Use_Arrows (New_Variable_Editor.Default_Env_Variable, True);
+   Set_Use_Arrows_Always (New_Variable_Editor.Default_Env_Variable, False);
+   String_List.Append (Default_Env_Variable_Items, -"");
+   Combo.Set_Popdown_Strings (New_Variable_Editor.Default_Env_Variable, Default_Env_Variable_Items);
+   Free_String_List (Default_Env_Variable_Items);
+   Attach (New_Variable_Editor.Environment_Table, New_Variable_Editor.Default_Env_Variable, 1, 2, 2, 3,
+     Expand or Fill, 0,
+     0, 0);
+
+   New_Variable_Editor.Combo_Entry8 := Get_Entry (New_Variable_Editor.Default_Env_Variable);
+   Set_Editable (New_Variable_Editor.Combo_Entry8, True);
+   Set_Max_Length (New_Variable_Editor.Combo_Entry8, 0);
+   Set_Text (New_Variable_Editor.Combo_Entry8, -"");
+   Set_Visibility (New_Variable_Editor.Combo_Entry8, True);
 
    Gtk_New (New_Variable_Editor.List_Env_Variables);
    Set_Case_Sensitive (New_Variable_Editor.List_Env_Variables, False);
    Set_Use_Arrows (New_Variable_Editor.List_Env_Variables, True);
    Set_Use_Arrows_Always (New_Variable_Editor.List_Env_Variables, False);
-   String_List.Append (List_Env_Variables_Items, -"HOME");
-   String_List.Append (List_Env_Variables_Items, -"MACHINE");
-   String_List.Append (List_Env_Variables_Items, -"FOO");
+   String_List.Append (List_Env_Variables_Items, -"");
    Combo.Set_Popdown_Strings (New_Variable_Editor.List_Env_Variables, List_Env_Variables_Items);
    Free_String_List (List_Env_Variables_Items);
    Set_Sensitive (New_Variable_Editor.List_Env_Variables, False);
-   Add (New_Variable_Editor.Alignment3, New_Variable_Editor.List_Env_Variables);
+   Attach (New_Variable_Editor.Environment_Table, New_Variable_Editor.List_Env_Variables, 1, 2, 1, 2,
+     Expand or Fill, 0,
+     0, 0);
 
    New_Variable_Editor.Combo_Entry7 := Get_Entry (New_Variable_Editor.List_Env_Variables);
    Set_Editable (New_Variable_Editor.Combo_Entry7, True);
    Set_Max_Length (New_Variable_Editor.Combo_Entry7, 0);
-   Set_Text (New_Variable_Editor.Combo_Entry7, -"HOME");
+   Set_Text (New_Variable_Editor.Combo_Entry7, -"");
    Set_Visibility (New_Variable_Editor.Combo_Entry7, True);
 
-   Gtk_New (New_Variable_Editor.Frame34, -"Type");
+   Gtk_New (New_Variable_Editor.Label55, -("Name:"));
+   Set_Alignment (New_Variable_Editor.Label55, 7.45058e-09, 0.5);
+   Set_Padding (New_Variable_Editor.Label55, 0, 0);
+   Set_Justify (New_Variable_Editor.Label55, Justify_Center);
+   Set_Line_Wrap (New_Variable_Editor.Label55, False);
+   Attach (New_Variable_Editor.Environment_Table, New_Variable_Editor.Label55, 0, 1, 1, 2,
+     Shrink or Fill, 0,
+     0, 0);
+
+   Gtk_New (New_Variable_Editor.Env_Must_Be_Defined, -"Environment variable must be defined");
+   Set_Active (New_Variable_Editor.Env_Must_Be_Defined, False);
+   Attach (New_Variable_Editor.Environment_Table, New_Variable_Editor.Env_Must_Be_Defined, 0, 2, 0, 1,
+     Expand or Shrink or Fill, 0,
+     0, 0);
+
+   Gtk_New (New_Variable_Editor.Frame34, -"Type and current value");
    Set_Border_Width (New_Variable_Editor.Frame34, 10);
    Set_Shadow_Type (New_Variable_Editor.Frame34, Shadow_Etched_In);
-   Pack_Start (New_Variable_Editor.Vbox37, New_Variable_Editor.Frame34, False, False, 0);
+   Pack_Start (New_Variable_Editor.Vbox37, New_Variable_Editor.Frame34, True, True, 0);
 
    Gtk_New_Vbox (New_Variable_Editor.Vbox39, False, 0);
    Add (New_Variable_Editor.Frame34, New_Variable_Editor.Vbox39);
 
-   Gtk_New (New_Variable_Editor.Typed_Variable, Vbox39_Group, -"Fixed list of possible values");
+   Gtk_New (New_Variable_Editor.Typed_Variable, Vbox39_Group, -"Enumeration of possible values");
    Vbox39_Group := Group (New_Variable_Editor.Typed_Variable);
    Set_Active (New_Variable_Editor.Typed_Variable, False);
    Pack_Start (New_Variable_Editor.Vbox39, New_Variable_Editor.Typed_Variable, False, False, 0);
@@ -97,40 +145,59 @@ begin
      (New_Variable_Editor.Typed_Variable, "toggled",
       Widget_Callback.To_Marshaller (On_Typed_Variable_Toggled'Access), New_Variable_Editor);
 
-   Gtk_New (New_Variable_Editor.Untyped_Variable, Vbox39_Group, -"Any value authorized");
-   Vbox39_Group := Group (New_Variable_Editor.Untyped_Variable);
-   Set_Active (New_Variable_Editor.Untyped_Variable, False);
-   Pack_Start (New_Variable_Editor.Vbox39, New_Variable_Editor.Untyped_Variable, False, False, 0);
+   Gtk_New
+     (New_Variable_Editor.Alignment4, 1.0, 0.5, 0.9, 
+      0.9);
+   Pack_Start (New_Variable_Editor.Vbox39, New_Variable_Editor.Alignment4, True, True, 0);
 
-   Gtk_New (New_Variable_Editor.Value_Frame, -"List of values / Current value");
-   Set_Border_Width (New_Variable_Editor.Value_Frame, 10);
-   Set_Shadow_Type (New_Variable_Editor.Value_Frame, Shadow_Etched_In);
-   Pack_Start (New_Variable_Editor.Vbox37, New_Variable_Editor.Value_Frame, True, True, 0);
+   Gtk_New (New_Variable_Editor.Enumeration_Scrolled);
+   Set_Policy (New_Variable_Editor.Enumeration_Scrolled, Policy_Never, Policy_Always);
+   Add (New_Variable_Editor.Alignment4, New_Variable_Editor.Enumeration_Scrolled);
 
-   Gtk_New_Vbox (New_Variable_Editor.Vbox40, False, 0);
-   Add (New_Variable_Editor.Value_Frame, New_Variable_Editor.Vbox40);
+   Gtk_New (New_Variable_Editor.Enumeration_Value);
+   Set_Editable (New_Variable_Editor.Enumeration_Value, True);
+   Add (New_Variable_Editor.Enumeration_Scrolled, New_Variable_Editor.Enumeration_Value);
 
-   Gtk_New (New_Variable_Editor.Scrolledwindow4);
-   Set_Policy (New_Variable_Editor.Scrolledwindow4, Policy_Never, Policy_Always);
-   Pack_Start (New_Variable_Editor.Vbox40, New_Variable_Editor.Scrolledwindow4, True, True, 0);
-
-   Gtk_New (New_Variable_Editor.List_Values);
-   Set_Editable (New_Variable_Editor.List_Values, False);
-   Add (New_Variable_Editor.Scrolledwindow4, New_Variable_Editor.List_Values);
+   Gtk_New (New_Variable_Editor.Untyped_List_Variable, Vbox39_Group, -"Any list value authorized");
+   Vbox39_Group := Group (New_Variable_Editor.Untyped_List_Variable);
+   Set_Active (New_Variable_Editor.Untyped_List_Variable, False);
+   Pack_Start (New_Variable_Editor.Vbox39, New_Variable_Editor.Untyped_List_Variable, False, False, 0);
+   Widget_Callback.Object_Connect
+     (New_Variable_Editor.Untyped_List_Variable, "toggled",
+      Widget_Callback.To_Marshaller (On_Typed_Variable_Toggled'Access), New_Variable_Editor);
 
    Gtk_New
-     (New_Variable_Editor.Alignment2, 1.0, 0.0, 0.0,
-      0.0);
-   Pack_Start (New_Variable_Editor.Vbox40, New_Variable_Editor.Alignment2, False, False, 0);
+     (New_Variable_Editor.Alignment5, 1.0, 0.5, 0.9, 
+      0.9);
+   Pack_Start (New_Variable_Editor.Vbox39, New_Variable_Editor.Alignment5, True, True, 0);
 
-   Gtk_New (New_Variable_Editor.Concatenate_Button, -"Concatenate...");
+   Gtk_New (New_Variable_Editor.List_Scrolled);
+   Set_Policy (New_Variable_Editor.List_Scrolled, Policy_Never, Policy_Always);
+   Add (New_Variable_Editor.Alignment5, New_Variable_Editor.List_Scrolled);
+
+   Gtk_New (New_Variable_Editor.List_Value);
+   Set_Editable (New_Variable_Editor.List_Value, True);
+   Add (New_Variable_Editor.List_Scrolled, New_Variable_Editor.List_Value);
+
+   Gtk_New (New_Variable_Editor.Untyped_Single_Variable, Vbox39_Group, -"Any string value authorized");
+   Vbox39_Group := Group (New_Variable_Editor.Untyped_Single_Variable);
+   Set_Active (New_Variable_Editor.Untyped_Single_Variable, False);
+   Pack_Start (New_Variable_Editor.Vbox39, New_Variable_Editor.Untyped_Single_Variable, False, False, 0);
    Widget_Callback.Object_Connect
-     (New_Variable_Editor.Concatenate_Button, "clicked",
-      Widget_Callback.To_Marshaller (On_Concatenate_Clicked'Access), New_Variable_Editor);
-   Add (New_Variable_Editor.Alignment2, New_Variable_Editor.Concatenate_Button);
+     (New_Variable_Editor.Untyped_Single_Variable, "toggled",
+      Widget_Callback.To_Marshaller (On_Typed_Variable_Toggled'Access), New_Variable_Editor);
+
+   Gtk_New
+     (New_Variable_Editor.Alignment6, 1.0, 0.5, 0.9, 
+      0.9);
+   Pack_Start (New_Variable_Editor.Vbox39, New_Variable_Editor.Alignment6, False, False, 0);
+
+   Gtk_New (New_Variable_Editor.Single_Value);
+   Set_Editable (New_Variable_Editor.Single_Value, True);
+   Add (New_Variable_Editor.Alignment6, New_Variable_Editor.Single_Value);
 
    Gtk_New_Hseparator (New_Variable_Editor.Hseparator4);
-   Pack_Start (New_Variable_Editor.Vbox37, New_Variable_Editor.Hseparator4, True, True, 0);
+   Pack_Start (New_Variable_Editor.Vbox37, New_Variable_Editor.Hseparator4, False, False, 0);
 
    Gtk_New (New_Variable_Editor.Hbuttonbox3);
    Set_Spacing (New_Variable_Editor.Hbuttonbox3, 30);

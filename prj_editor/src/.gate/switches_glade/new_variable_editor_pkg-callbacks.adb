@@ -34,17 +34,6 @@ package body New_Variable_Editor_Pkg.Callbacks is
       null;
    end On_Typed_Variable_Toggled;
 
-   ----------------------------
-   -- On_Concatenate_Clicked --
-   ----------------------------
-
-   procedure On_Concatenate_Clicked
-     (Object : access Gtk_Widget_Record'Class)
-   is
-   begin
-      null;
-   end On_Concatenate_Clicked;
-
    --------------------
    -- On_Add_Clicked --
    --------------------

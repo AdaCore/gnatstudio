@@ -8,9 +8,6 @@ package New_Variable_Editor_Pkg.Callbacks is
    procedure On_Typed_Variable_Toggled
      (Object : access Gtk_Widget_Record'Class);
 
-   procedure On_Concatenate_Clicked
-     (Object : access Gtk_Widget_Record'Class);
-
    procedure On_Add_Clicked
      (Object : access Gtk_Widget_Record'Class);
 
