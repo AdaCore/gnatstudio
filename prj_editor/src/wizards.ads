@@ -72,25 +72,50 @@ package Wizards is
      with private;
    type Wizard is access all Wizard_Record'Class;
 
-   procedure Gtk_New (Wiz : out Wizard; Title : String; Bg : String);
+   procedure Gtk_New
+     (Wiz : out Wizard; Title : String; Bg : String; Num_Pages : Positive);
    --  Create a new wizard.
    --  Bg is the color to use for the background of the table of contents.
+   --  Num_Pages is the number of pages. When the last one is displayed, the
+   --  Next button is replaced by the Finished button.
 
    procedure Initialize
-     (Wiz : access Wizard_Record'Class; Title : String; Bg : String);
+     (Wiz       : access Wizard_Record'Class;
+      Title     : String;
+      Bg        : String;
+      Num_Pages : Positive);
    --  Internal function used to create the new widget
 
-   procedure Add_Page
-     (Wiz   : access Wizard_Record;
-      Page  : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Toc   : String := "";
-      Level : Integer := 1);
-   --  Add a new page in the wizard, at the end.
-   --  The widget to be displayed is Page, and its associated table of
-   --  contents entry is Toc (none if "" is specified).
+   procedure Set_Toc
+     (Wiz      : access Wizard_Record;
+      Page_Num : Positive;
+      Toc      : String := "";
+      Level    : Integer := 1);
+   --  Set the table-of-contents entry to be used for the Page_Num-th page in
+   --  the wizard.
+   --  Whereas the pages themselves can be created lazily only before they
+   --  actually need to be displayed, you should always set the table of
+   --  content entries before displaying the widget.
    --  Level is the level of indentation for this new entry. 1 is the
    --  top-level, 2 is indented by one, ...
-   --  Sub-levels can be hidden later on.
+   --  ???  Sub-levels can be hidden later on.
+   --  Page numbers start at 1.
+
+   procedure Set_Page
+     (Wiz   : access Wizard_Record;
+      Page_Num : Positive;
+      Page  : access Gtk.Widget.Gtk_Widget_Record'Class);
+   --  Set the widget to use when displaying the Page_Num-th page in the
+   --  wizard.
+   --  Note: This procedure can be called directly from the callback
+   --  "switch_page", in case some of the pages take a long time to create and
+   --  you want the wizard to start as fast as possible.
+
+   function Get_Nth_Page
+     (Wiz : access Wizard_Record; Page_Num : Positive)
+      return Gtk.Widget.Gtk_Widget;
+   --  Return the widget displayed for the Page_Num-th page.
+   --  null is return if this widget hasn't been set yet.
 
    procedure Add_Logo
      (Wiz    : access Wizard_Record;
@@ -98,10 +123,15 @@ package Wizards is
       Mask   : Gdk.Bitmap.Gdk_Bitmap);
    --  Add a pixmap in the lower-left corner of the wizard
 
-   procedure Set_Page (Wiz : access Wizard_Record; Num : Natural);
+   procedure Set_Current_Page (Wiz : access Wizard_Record; Num : Positive);
    --  Change the page currently displayed.
 
-   function Get_Current_Page (Wiz : access Wizard_Record) return Natural;
+   procedure Set_Wizard_Title (Wiz : access Wizard_Record; Title : String);
+   --  Set the current title for the wizard.
+   --  You should probably change this every time a new page is displayed
+   --  by the user.
+
+   function Get_Current_Page (Wiz : access Wizard_Record) return Positive;
    --  Return the index of the current page.
 
    function Cancel_Button
@@ -130,17 +160,24 @@ package Wizards is
 
    --  <signals>
    --  The following new signals are defined for this widget:
+   --
+   --  - "switch_page"
+   --    procedure Handler
+   --      (Wiz : access Wizard_Record'Class; Page_Num : Guint);
+   --
+   --    Notify the user when a new page is about to be displayed. Page_Num is
+   --    the number of the page that will be displayed.
    --  </signals>
 
 private
 
-   type Widget_Array is array (Natural range <>) of Gtk.Widget.Gtk_Widget;
+   type Widget_Array is array (Positive range <>) of Gtk.Widget.Gtk_Widget;
    type Widget_Array_Access is access Widget_Array;
 
    type Wizard_Record is new Wizard_Window_Pkg.Wizard_Window_Record with record
       Toc             : Widget_Array_Access;
-      Current_Page    : Natural;
-      Current_Widget  : Gtk.Widget.Gtk_Widget;
+      Current_Page    : Positive;
+      Pages           : Widget_Array_Access;
       Highlight_Style : Gtk.Style.Gtk_Style;
       Normal_Style    : Gtk.Style.Gtk_Style;
       Has_Toc         : Boolean := False;

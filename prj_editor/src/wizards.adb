@@ -1,17 +1,22 @@
 with Wizard_Window_Pkg;  use Wizard_Window_Pkg;
+with Gdk.Color;          use Gdk.Color;
+with Gdk.Font;           use Gdk.Font;
 with Gtk.Widget;         use Gtk.Widget;
 with Gtk.Button;         use Gtk.Button;
 with Gtk.Label;          use Gtk.Label;
 with Unchecked_Deallocation;
-with Gdk.Color;          use Gdk.Color;
 with Gtk.Enums;          use Gtk.Enums;
+with Gtk.Frame;          use Gtk.Frame;
 with Gtk.Box;            use Gtk.Box;
 with Gtk.Style;          use Gtk.Style;
 with Gtkada.Handlers;    use Gtkada.Handlers;
 with Gtk.Event_Box;      use Gtk.Event_Box;
-with Gtk.Notebook;       use Gtk.Notebook;
 with Glib;               use Glib;
+with Glib.Object;        use Glib.Object;
 with Gtk.Pixmap;         use Gtk.Pixmap;
+with Interfaces.C.Strings; use Interfaces.C.Strings;
+with Pango.Font;         use Pango.Font;
+with Pango.Enums;        use Pango.Enums;
 
 package body Wizards is
 
@@ -30,25 +35,29 @@ package body Wizards is
    procedure Previous_Page (Wiz : access Gtk_Widget_Record'Class);
    --  Callback for the "previous" button
 
+   procedure Switch_Page
+     (Wiz : access Gtk_Widget_Record'Class; Page_Num : Guint);
+   --  Callback when a new page is selected.
+
    procedure Map (Wiz : access Gtk_Widget_Record'Class);
    --  Callback for the "map" signal
 
-   function Get_Notebook (Wiz : access Wizard_Record)
-      return Gtk.Notebook.Gtk_Notebook;
-   --  Return the notebook in which the pages are stored. You should insert the
-   --  pages there, and this can also be used to retrieve the current page.
+   Signals : constant chars_ptr_array :=
+     (1 => New_String ("switch_page"));
+   --  Array of the signals created for this widget
 
-   pragma Inline (Get_Notebook);
+   Wizard_Class_Record : GObject_Class := Uninitialized_Class;
+   --  The meta-class for the wizard.
 
    -------------
    -- Gtk_New --
    -------------
 
    procedure Gtk_New
-     (Wiz : out Wizard; Title : String; Bg : String) is
+     (Wiz : out Wizard; Title : String; Bg : String; Num_Pages : Positive) is
    begin
       Wiz := new Wizard_Record;
-      Wizards.Initialize (Wiz, Title, Bg);
+      Wizards.Initialize (Wiz, Title, Bg, Num_Pages);
    end Gtk_New;
 
    ----------------
@@ -56,11 +65,23 @@ package body Wizards is
    ----------------
 
    procedure Initialize
-     (Wiz : access Wizard_Record'Class; Title : String; Bg : String) is
+     (Wiz : access Wizard_Record'Class;
+      Title : String;
+      Bg : String;
+      Num_Pages : Positive)
+   is
+      Signal_Parameters : constant Signal_Parameter_Types :=
+        (1 => (1 => GType_Uint, 2 => GType_None));
       Color : Gdk_Color;
       Style : Gtk_Style;
+      Font : Gdk_Font;
+      Desc : Pango_Font_Description;
    begin
       Wizard_Window_Pkg.Initialize (Wiz);
+      Initialize_Class_Record
+        (Wiz, Signals, Wizard_Class_Record,
+         "WizardRecord", Signal_Parameters);
+
       Set_Title (Wiz, Title);
       Wiz.Current_Page := 1;
       Widget_Callback.Object_Connect
@@ -96,53 +117,99 @@ package body Wizards is
       Style := Copy (Get_Style (Wiz.Eventbox1));
       Set_Background (Style, State_Normal, Color);
       Set_Style (Wiz.Eventbox1, Style);
+      Set_Style (Wiz.Title_Box, Style);
+
+      Desc := To_Font_Description
+        (Family_Name => "helvetica",
+         Weight      => Pango_Weight_Bold,
+          Style       => Pango_Style_Oblique,
+          Size        => 14);
+      Set_Font_Description (Style, Desc);
+      Set_Style (Wiz.Title, Style);
+
+      From_Description (Font, Desc);
+      Set_USize (Wiz.Title_Box, -1,
+                 (Get_Ascent (Font) + Get_Descent (Font)) * 3);
+
+      Wiz.Toc := new Widget_Array (1 .. Num_Pages);
+      Wiz.Toc.all := (others => null);
+
+      Wiz.Pages := new Widget_Array (1 .. Num_Pages);
+      Wiz.Pages.all := (others => null);
    end Initialize;
 
-   --------------
-   -- Add_Page --
-   --------------
+   -----------------
+   -- Switch_Page --
+   -----------------
 
-   procedure Add_Page
-     (Wiz   : access Wizard_Record;
-      Page  : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Toc   : String := "";
-      Level : Integer := 1)
+   procedure Switch_Page
+     (Wiz : access Gtk_Widget_Record'Class; Page_Num : Guint) is
+   begin
+      Widget_Callback.Emit_By_Name (Wiz, "switch_page", Page_Num);
+   end Switch_Page;
+
+   ----------------------
+   -- Set_Wizard_Title --
+   ----------------------
+
+   procedure Set_Wizard_Title (Wiz : access Wizard_Record; Title : String) is
+   begin
+      Set_Text (Wiz.Title, Title);
+   end Set_Wizard_Title;
+
+   -------------
+   -- Set_Toc --
+   -------------
+
+   procedure Set_Toc
+     (Wiz      : access Wizard_Record;
+      Page_Num : Positive;
+      Toc      : String := "";
+      Level    : Integer := 1)
    is
-      Max_Page : Integer;
-      Old : Widget_Array_Access;
       Req : Gtk_Requisition;
    begin
-      Add (Get_Notebook (Wiz), Page);
+      pragma Assert (Page_Num <= Wiz.Toc'Last);
 
-      Max_Page :=
-        Integer (Page_List.Length (Get_Children (Get_Notebook (Wiz))));
-
-      Old := Wiz.Toc;
-      if Old = null then
-         Wiz.Toc := new Widget_Array (1 .. Max_Page);
-      else
-         Wiz.Toc := new Widget_Array (1 .. Max_Page);
-         Wiz.Toc (1 .. Max_Page - 1) := Old.all;
-         Free (Old);
+      if Wiz.Toc (Page_Num) /= null then
+         Unref (Wiz.Toc (Page_Num));
       end if;
 
-      if Toc /= "" then
-         Gtk_New (Gtk_Label (Wiz.Toc (Max_Page)), Toc);
-         Set_Justify (Gtk_Label (Wiz.Toc (Max_Page)), Justify_Left);
-         Set_Alignment (Gtk_Label (Wiz.Toc (Max_Page)),
-                        Gfloat (Level - 1) * 0.2, 0.0);
-         Pack_Start
-           (Wiz.Toc_Box, Wiz.Toc (Max_Page), Expand => False, Fill => True);
-         Set_Style (Wiz.Toc (Max_Page), Wiz.Normal_Style);
+      Gtk_New (Gtk_Label (Wiz.Toc (Page_Num)), Toc);
+      Set_Justify (Gtk_Label (Wiz.Toc (Page_Num)), Justify_Left);
+      Set_Alignment (Gtk_Label (Wiz.Toc (Page_Num)),
+                     Gfloat (Level - 1) * 0.2, 0.0);
+      Pack_Start
+        (Wiz.Toc_Box, Wiz.Toc (Page_Num), Expand => False, Fill => True);
+      --  ??? Should use a list instead of a box, so that we can put the item
+      --  ??? at a specific location.
 
-         Size_Request (Wiz.Toc (Max_Page), Req);
-         if Req.Width < Min_Toc_Width then
-            Set_USize (Wiz.Toc (Max_Page), Min_Toc_Width, Req.Height);
-         end if;
+      Set_Style (Wiz.Toc (Page_Num), Wiz.Normal_Style);
 
-         Wiz.Has_Toc := True;
+      Size_Request (Wiz.Toc (Page_Num), Req);
+      if Req.Width < Min_Toc_Width then
+         Set_USize (Wiz.Toc (Page_Num), Min_Toc_Width, Req.Height);
       end if;
-   end Add_Page;
+
+      Wiz.Has_Toc := True;
+   end Set_Toc;
+
+   --------------
+   -- Set_Page --
+   --------------
+
+   procedure Set_Page
+     (Wiz   : access Wizard_Record;
+      Page_Num : Positive;
+      Page  : access Gtk.Widget.Gtk_Widget_Record'Class) is
+   begin
+      if Wiz.Pages (Page_Num) /= null then
+         Unref (Wiz.Pages (Page_Num));
+      end if;
+
+      Wiz.Pages (Page_Num) := Gtk_Widget (Page);
+      Ref (Page);
+   end Set_Page;
 
    --------------
    -- Add_Logo --
@@ -156,18 +223,27 @@ package body Wizards is
       Pix : Gtk_Pixmap;
    begin
       Gtk_New (Pix, Pixmap, Mask);
-      Pack_End (Wiz.Toc_Box, Pix, Expand => False, Fill => False);
+      Pack_Start
+        (Wiz.Toc_Box, Pix, Expand => False, Fill => False, Padding => 10);
+      Reorder_Child (Wiz.Toc_Box, Pix, 0);
       Show (Pix);
    end Add_Logo;
 
-   --------------
-   -- Set_Page --
-   --------------
+   ----------------------
+   -- Set_Current_Page --
+   ----------------------
 
-   procedure Set_Page (Wiz : access Wizard_Record; Num : Natural) is
-      Max_Page : constant Guint :=
-        Page_List.Length (Get_Children (Get_Notebook (Wiz)));
+   procedure Set_Current_Page (Wiz : access Wizard_Record; Num : Positive) is
    begin
+      --  Inform all listeners that we are about to change the page. However,
+      --  still want the old page to be the current one, in case they need it.
+      --  This must be done first, so as to give them a chance to create the
+      --  pages on the fly.
+
+      Switch_Page (Wiz, Guint (Num));
+
+      pragma Assert (Num <= Wiz.Pages'Last and then Wiz.Pages (Num) /= null);
+
       --  Unhighlight the current page
 
       if Wiz.Toc /= null
@@ -177,8 +253,13 @@ package body Wizards is
          Set_Style (Wiz.Toc (Wiz.Current_Page), Wiz.Normal_Style);
       end if;
 
+      if Get_Child (Wiz.Page_Frame) /= null then
+         Remove (Wiz.Page_Frame, Get_Child (Wiz.Page_Frame));
+      end if;
+
       Wiz.Current_Page := Num;
-      Set_Page (Get_Notebook (Wiz), Gint (Wiz.Current_Page) - 1);
+      Add (Wiz.Page_Frame, Wiz.Pages (Wiz.Current_Page));
+      Show_All (Wiz.Page_Frame);
 
       --  If the new page is valid, highlight it
 
@@ -192,14 +273,26 @@ package body Wizards is
       --  Active the appropriate buttons
       Set_Sensitive (Wiz.Previous, Wiz.Current_Page > 1);
 
-      if Wiz.Current_Page = Integer (Max_Page) then
+      if Wiz.Current_Page = Wiz.Pages'Last then
          Show (Finish_Button (Wiz));
          Hide (Next_Button (Wiz));
       else
          Hide (Finish_Button (Wiz));
          Show (Next_Button (Wiz));
       end if;
-   end Set_Page;
+   end Set_Current_Page;
+
+   ------------------
+   -- Get_Nth_Page --
+   ------------------
+
+   function Get_Nth_Page
+     (Wiz : access Wizard_Record; Page_Num : Positive)
+      return Gtk.Widget.Gtk_Widget is
+   begin
+      pragma Assert (Page_Num <= Wiz.Pages'Last);
+      return Wiz.Pages (Page_Num);
+   end Get_Nth_Page;
 
    ---------
    -- Map --
@@ -214,7 +307,7 @@ package body Wizards is
       end if;
 
       --  Show the appropriate buttons
-      Set_Page (W, W.Current_Page);
+      Set_Current_Page (W, W.Current_Page);
    end Map;
 
    ---------------
@@ -224,7 +317,7 @@ package body Wizards is
    procedure Next_Page (Wiz : access Gtk_Widget_Record'Class) is
       W : Wizard := Wizard (Wiz);
    begin
-      Set_Page (W, W.Current_Page + 1);
+      Set_Current_Page (W, W.Current_Page + 1);
    end Next_Page;
 
    -------------------
@@ -234,14 +327,14 @@ package body Wizards is
    procedure Previous_Page (Wiz : access Gtk_Widget_Record'Class) is
       W : Wizard := Wizard (Wiz);
    begin
-      Set_Page (W, W.Current_Page - 1);
+      Set_Current_Page (W, W.Current_Page - 1);
    end Previous_Page;
 
    ----------------------
    -- Get_Current_Page --
    ----------------------
 
-   function Get_Current_Page (Wiz : access Wizard_Record) return Natural is
+   function Get_Current_Page (Wiz : access Wizard_Record) return Positive is
    begin
       return Wiz.Current_Page;
    end Get_Current_Page;
@@ -281,15 +374,5 @@ package body Wizards is
    begin
       return Wiz.Finish;
    end Finish_Button;
-
-   ------------------
-   -- Get_Notebook --
-   ------------------
-
-   function Get_Notebook (Wiz : access Wizard_Record)
-      return Gtk.Notebook.Gtk_Notebook is
-   begin
-      return Wiz.Notebook;
-   end Get_Notebook;
 
 end Wizards;
