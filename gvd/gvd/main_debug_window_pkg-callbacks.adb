@@ -22,6 +22,7 @@ with Gtk.Widget; use Gtk.Widget;
 with Gtk.List_Item;       use Gtk.List_Item;
 with Gtk.Main;            use Gtk.Main;
 with Gtk.List;            use Gtk.List;
+with Gtk.Notebook;        use Gtk.Notebook;
 with Odd_Preferences_Pkg; use Odd_Preferences_Pkg;
 with Gtkada.Dialogs;      use Gtkada.Dialogs;
 with Gtkada.Handlers;     use Gtkada.Handlers;
@@ -36,11 +37,14 @@ with Language;            use Language;
 with Breakpoints_Pkg;     use Breakpoints_Pkg;
 with Odd.Process;         use Odd.Process;
 with GNAT.Expect;         use GNAT.Expect;
+with Ada.Text_IO;         use Ada.Text_IO;
+with Gtkada.File_Selection; use Gtkada.File_Selection;
 
 package body Main_Debug_Window_Pkg.Callbacks is
 
    use Odd;
    use Gtk.Arguments;
+   use Process.String_History;
 
    procedure Cleanup_Debuggers (Top : Main_Debug_Window_Access);
    --  Close all the debuggers associated with a given main debug window
@@ -81,6 +85,38 @@ package body Main_Debug_Window_Pkg.Callbacks is
       return False;
    end On_Main_Debug_Window_Delete_Event;
 
+   ----------------------
+   -- Session Handling --
+   ----------------------
+
+   --  The format for session files is this :
+   --
+   --  [Session_File Header]
+   --  <number_of_processes>
+   --  ---------------------
+   --      <program_file_name_1>
+   --      <debugger_type_1>
+   --      <remote_host_1>
+   --      <remote_target_1>
+   --      <protocol_1>
+   --  [History]
+   --    <number of commands for process 1>
+   --    <command>
+   --    <command>
+   --  (etc)
+   --  --------------
+   --      <program_file_name_2>
+   --      <debugger_type_2>
+   --      <remote_host_2>
+   --      <remote_target_2>
+   --      <protocol_2>
+   --  [History]
+   --    <number of commands for process 2>
+   --    <command>
+   --    <command>
+   --  (etc)
+
+
    -------------------------------
    -- On_Open_Program1_Activate --
    -------------------------------
@@ -101,6 +137,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
          when Current_Debugger =>
             Tab := Get_Current_Process (Object);
             Set_Executable (Tab.Debugger, Program.Program.all);
+            Tab.Descriptor := Program;
 
          when New_Debugger =>
             Process  :=
@@ -112,12 +149,15 @@ package body Main_Debug_Window_Pkg.Callbacks is
                  Program.Remote_Host.all,
                  Program.Remote_Target.all,
                  Program.Protocol.all);
+            Tab := Get_Current_Process (Object);
+            Tab.Descriptor := Program;
 
          when None =>
             null;
       end case;
 
-      Free (Program);
+      --  Free (Program);
+
    end On_Open_Program1_Activate;
 
    ---------------------------------
@@ -138,8 +178,88 @@ package body Main_Debug_Window_Pkg.Callbacks is
    procedure On_Open_Session1_Activate
      (Object : access Gtk_Widget_Record'Class)
    is
+      File         : File_Type;
+      S            : String :=  File_Selection_Dialog;
+      Program      : Program_Descriptor;
+      Buffer       : String (1 .. 256);
+      Last         : Natural;
+      Tab          : Debugger_Process_Tab := Get_Current_Process (Object);
+      List         : Argument_List (1 .. 0);
+      Process      : Debugger_Process_Tab;
+      Top          : Main_Debug_Window_Access
+        := Main_Debug_Window_Access (Object);
+      Num_Pages    : Gint;
+      Page         : Gtk_Widget;
+      Page_Num     : Gint;
    begin
-      null;
+      if S /= "" then
+         Page_Num := Gint (Page_List.Length
+                           (Get_Children (Top.Process_Notebook)));
+
+         while Page_Num /= -1 loop
+            Page := Get_Nth_Page
+              (Top.Process_Notebook, Page_Num);
+
+            if Page /= null then
+               Tab := Process_User_Data.Get (Page);
+               Close (Tab.Debugger);
+            end if;
+
+            Remove_Page (Top.Process_Notebook, Page_Num);
+            Page_Num := Page_Num - 1;
+         end loop;
+
+         Open (File, In_File, S);
+         Get_Line (File, Buffer, Last);
+
+         if Buffer (1 .. Last) /= "[Session_File Header]" then
+            Close (File);
+            return;
+         end if;
+
+         Get_Line (File, Buffer, Last);
+         Num_Pages := Gint'Value (Buffer (1 ..  Last));
+         Get_Line (File, Buffer, Last);
+
+         for J in 1 .. Num_Pages loop
+            Get_Line (File, Buffer, Last);
+            Program.Program := new String' (Buffer (1 .. Last));
+            Get_Line (File, Buffer, Last);
+            Program.Debugger := Debugger_Type'Value (Buffer (1 .. Last));
+            Get_Line (File, Buffer, Last);
+            Program.Remote_Host := new String' (Buffer (1 .. Last));
+            Get_Line (File, Buffer, Last);
+            Program.Remote_Target := new String' (Buffer (1 .. Last));
+            Get_Line (File, Buffer, Last);
+            Program.Protocol := new String' (Buffer (1 .. Last));
+            Get_Line (File, Buffer, Last);
+            Process :=
+              Create_Debugger
+              (Main_Debug_Window_Access (Object),
+               Program.Debugger,
+               Program.Program.all,
+               List,
+               Program.Remote_Host.all,
+               Program.Remote_Target.all,
+               Program.Protocol.all);
+            Tab := Get_Current_Process (Object);
+            Tab.Descriptor := Program;
+
+            loop
+               Get_Line (File, Buffer, Last);
+               exit when Last > 4
+                 and then Buffer (1 .. 4) = "----";
+               Send (Tab.Debugger, Buffer (1 .. Last), True);
+            end loop;
+         end loop;
+
+         Close (File);
+      end if;
+
+   exception
+      when Name_Error =>
+         null;
+
    end On_Open_Session1_Activate;
 
    ----------------------------------
@@ -149,8 +269,61 @@ package body Main_Debug_Window_Pkg.Callbacks is
    procedure On_Save_Session_As1_Activate
      (Object : access Gtk_Widget_Record'Class)
    is
+      File        : File_Type;
+      S           : String :=  File_Selection_Dialog;
+      Page        : Gtk_Widget;
+      Top         : Main_Debug_Window_Access
+        := Main_Debug_Window_Access (Object);
+      Num_Pages   : Gint;
+      Tab         : Debugger_Process_Tab;
+      Hist_Length : Integer;
    begin
-      null;
+      Num_Pages := Gint
+        (Page_List.Length (Get_Children (Top.Process_Notebook)));
+      if S /= "" then
+         Create (File, Out_File, S);
+         Put_Line (File, "[Session_File Header]");
+         Put_Line (File, Gint'Image (Num_Pages));
+         Put_Line (File, "---------------------");
+
+         for Page_Num in 0 .. Gint ((Page_List.Length
+                                     (Get_Children (Top.Process_Notebook)))
+                                    - 1) loop
+            Page := Get_Nth_Page
+              (Top.Process_Notebook, Page_Num);
+
+            if Page /= null then
+               Tab := Process_User_Data.Get (Page);
+               Hist_Length := Length (Tab.Command_History);
+               Put_Line (File, Tab.Descriptor.Program.all);
+               Put_Line (File, Debugger_Type'Image (Tab.Descriptor.Debugger));
+               Put_Line (File, Tab.Descriptor.Remote_Host.all);
+               Put_Line (File, Tab.Descriptor.Remote_Target.all);
+               Put_Line (File, Tab.Descriptor.Protocol.all);
+               Put_Line (File, "[History]");
+               Rewind (Tab.Command_History);
+
+               for J in reverse 1 .. Length (Tab.Command_History) loop
+                  for Count in 1
+                    .. Get_Current_Repeat_Num (Tab.Command_History)
+                  loop
+                     Put_Line (File, Get_Current (Tab.Command_History));
+                  end loop;
+                  if J /= 1 then
+                     Move_To_Next (Tab.Command_History);
+                  end if;
+               end loop;
+
+            end if;
+
+            Put_Line (File, "--------------");
+         end loop;
+
+         Close (File);
+      end if;
+   exception
+      when No_Such_Item =>
+         Close (File);
    end On_Save_Session_As1_Activate;
 
    ------------------------------------
