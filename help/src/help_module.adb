@@ -832,10 +832,12 @@ package body Help_Module is
       if Child = null then
          Scrolled := Create_Html_Editor (Kernel, Help_File);
          Child := Put
-           (MDI, Scrolled,
+           (Kernel, Scrolled,
             Focus_Widget => Gtk_Widget (Scrolled.Csc),
             Default_Width  => Get_Pref (Kernel, Default_Widget_Width),
-            Default_Height => Get_Pref (Kernel, Default_Widget_Height));
+            Default_Height => Get_Pref (Kernel, Default_Widget_Height),
+            Module => Help_Module_ID,
+            Desktop_Independent => True);
          Set_Focus_Child (Child);
          Set_Title (Child, -"Help");
          Show_All (Scrolled);
@@ -865,6 +867,7 @@ package body Help_Module is
       Node : Node_Ptr;
       User : Kernel_Handle) return MDI_Child
    is
+      pragma Unreferenced (MDI);
       Editor : Help_Browser;
       File   : Glib.String_Ptr;
    begin
@@ -874,9 +877,11 @@ package body Help_Module is
             Editor := Create_Html_Editor (User, File.all);
 
             return Put
-              (MDI, Gtk_Widget (Editor),
-               Default_Width  => Get_Pref (User, Default_Widget_Width),
-               Default_Height => Get_Pref (User, Default_Widget_Height));
+              (User, Gtk_Widget (Editor),
+               Default_Width       => Get_Pref (User, Default_Widget_Width),
+               Default_Height      => Get_Pref (User, Default_Widget_Height),
+               Module              => Help_Module_ID,
+               Desktop_Independent => True);
          else
             return null;
          end if;
@@ -1232,7 +1237,6 @@ package body Help_Module is
          Priority                => Default_Priority - 20,
          Contextual_Menu_Handler => null,
          Default_Context_Factory => Default_Factory'Access,
-         MDI_Child_Tag           => Help_Browser_Record'Tag,
          Mime_Handler            => Mime_Action'Access);
       Glide_Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
@@ -1274,8 +1278,7 @@ package body Help_Module is
       Register_Command
         (Kernel,
          Command      => "html_browse",
-         Usage        =>
-           Parameter_Names_To_Usage (Help_Cmd_Parameters, "None", 1),
+         Params       => Parameter_Names_To_Usage (Help_Cmd_Parameters, 1),
          Description  => -"Launch a HTML viewer for URL at specified anchor.",
          Minimum_Args => 1,
          Maximum_Args => 2,
