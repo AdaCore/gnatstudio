@@ -1483,8 +1483,20 @@ package body Project_Properties is
 
    procedure Destroyed (Editor : access Gtk_Widget_Record'Class) is
       E : constant Properties_Editor := Properties_Editor (Editor);
+      Pages : Attribute_Page_List renames Properties_Module_ID.Pages;
    begin
       Unchecked_Free (E.Pages);
+
+      --  Reset the editors fields, so that we can safely open the properties
+      --  editor again. The widgets themselves have already been destroyed
+      --  anyway.
+      for P in Pages'Range loop
+         for S in Pages (P).Sections'Range loop
+            for A in Pages (P).Sections (S).Attributes'Range loop
+               Pages (P).Sections (S).Attributes (A).Editor := null;
+            end loop;
+         end loop;
+      end loop;
    end Destroyed;
 
    -------------------------
