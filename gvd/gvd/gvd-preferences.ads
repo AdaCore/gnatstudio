@@ -36,6 +36,10 @@ package GVD.Preferences is
      (Dialog : General_Preferences_Pkg.General_Preferences_Access);
    --  Fill up the preference dialog given the current settings
 
+   procedure Set_From_Dialog
+     (Dialog : General_Preferences_Pkg.General_Preferences_Access);
+   --  Set the preferences from the contents of Dialog.
+
    procedure Load_Preferences (File_Name : String);
    --  Load the preferences file, and initialize the preferences database.
    --  No query is allowed before loading the preferences.
