@@ -504,9 +504,10 @@ package body Browsers.Call_Graph is
       if Context.all in Entity_Selection_Context'Class then
          Entity_Context := Entity_Selection_Context_Access (Context);
 
-         if Has_Category_Information (Entity_Context)
-           and then Category_Information (Entity_Context)
-             in Subprogram_Category
+         if (Has_Category_Information (Entity_Context)
+             and then Category_Information (Entity_Context)
+             in Subprogram_Category)
+           or else not Has_Category_Information (Entity_Context)
          then
             Gtk_New (Item, Label => (-"Examine call graph for ") &
                      Entity_Name_Information (Entity_Context));
