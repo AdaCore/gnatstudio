@@ -198,8 +198,8 @@ package body Src_Info.CPP is
          Handler       => CPP_LI_Handler (Handler),
          Full_Filename => Referred_Filename);
 
-      Assert (Fail_Stream, File.LI.Body_Info.Source_Filename.all /=
-              Base_Name (Referred_Filename),
+      Assert (Fail_Stream, File.LI.Body_Info.Source_Filename /=
+              Referred_Filename,
               "Can't insert dependency, LI file "
               & Base_Name (Referred_LI.LI.LI_Filename)
               & " is already for file "
@@ -239,7 +239,7 @@ package body Src_Info.CPP is
          Dep_Ptr.all :=
            (Value => (File         => (LI              => Referred_LI,
                                        Part            => Unit_Body,
-                                       Source_Filename => null),
+                                       Source_Filename => Referred_Filename),
                       Dep_Info     => (Depends_From_Spec => False,
                                        Depends_From_Body => True),
                       Declarations => null),
@@ -397,7 +397,7 @@ package body Src_Info.CPP is
       D_Ptr.Value.Declaration.Location :=
         (File   => (LI              => File,
                     Part            => Unit_Body,
-                    Source_Filename => null),
+                    Source_Filename => File.LI.Body_Info.Source_Filename),
          Line   => Location.Line,
          Column => Location.Column);
       D_Ptr.Value.Declaration.Kind := Kind;
@@ -409,7 +409,7 @@ package body Src_Info.CPP is
          D_Ptr.Value.Declaration.End_Of_Scope.Location :=
            (File   => (LI              => File,
                        Part            => Unit_Body,
-                       Source_Filename => null),
+                       Source_Filename => File.LI.Body_Info.Source_Filename),
             Line   => End_Of_Scope_Location.Line,
             Column => End_Of_Scope_Location.Column);
          D_Ptr.Value.Declaration.End_Of_Scope.Kind := End_Of_Body;
@@ -421,7 +421,7 @@ package body Src_Info.CPP is
          D_Ptr.Value.Declaration.Rename :=
            (File   => (LI              => No_LI_File,
                        Part            => Unit_Body,
-                       Source_Filename => null),
+                       Source_Filename => File.LI.Body_Info.Source_Filename),
             Line   => Rename_Location.Line,
             Column => Rename_Location.Column);
 
@@ -459,8 +459,7 @@ package body Src_Info.CPP is
          --  Processing parent information
 
          if File.LI.Body_Info /= null
-           and then Base_Name (File.LI.Body_Info.Source_Filename.all) =
-           Base_Name (Parent_Filename)
+           and then File.LI.Body_Info.Source_Filename = Parent_Filename
          then
             Tmp_LI_File_Ptr := File;
 
@@ -474,9 +473,11 @@ package body Src_Info.CPP is
 
          Declaration.Value.Declaration.Parent_Location :=
            new File_Location_Node'
-             (Value => (File   => (LI              => Tmp_LI_File_Ptr,
-                                   Part            => Unit_Body,
-                                   Source_Filename => null),
+             (Value => (File   =>
+                          (LI              => Tmp_LI_File_Ptr,
+                           Part            => Unit_Body,
+                           Source_Filename =>
+                             Tmp_LI_File_Ptr.LI.Body_Info.Source_Filename),
                         Line   => Parent_Location.Line,
                         Column => Parent_Location.Column),
               Kind  => Kind,
@@ -3343,7 +3344,7 @@ package body Src_Info.CPP is
             Decl_Info.Value.Declaration.Location :=
               (File =>  (LI              => File,
                          Part            => Unit_Body,
-                         Source_Filename => null),
+                         Source_Filename => File.LI.Body_Info.Source_Filename),
                Line => 1,
                Column => 1);
 
@@ -3895,9 +3896,10 @@ package body Src_Info.CPP is
                Decl_Info.Value.Declaration.Name := new String'(Ref_Id);
                Decl_Info.Value.Declaration.Kind := Overloaded_Entity_Kind;
                Decl_Info.Value.Declaration.Location :=
-                 (File   => (LI              => File,
-                             Part            => Unit_Body,
-                             Source_Filename => null),
+                 (File   =>
+                    (LI              => File,
+                     Part            => Unit_Body,
+                     Source_Filename => File.LI.Body_Info.Source_Filename),
                   Line   => Class_Def.Start_Position.Line,
                   Column => Class_Def.Start_Position.Column);
                File.LI.Body_Info.Declarations := Decl_Info;
