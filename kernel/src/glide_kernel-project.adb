@@ -68,8 +68,12 @@ package body Glide_Kernel.Project is
       end if;
 
       --  Fallback, try on the Source_Path (only if Use_Source_Path is set)
-      if Use_Source_Path and then Kernel.Source_Path /= null then
-         Path := Locate_Regular_File (Short_File_Name, Kernel.Source_Path.all);
+      if Use_Source_Path
+        and then Get_Predefined_Source_Path (Kernel) /= ""
+      then
+         Path :=
+           Locate_Regular_File
+             (Short_File_Name, Get_Predefined_Source_Path (Kernel));
          if Path /= null then
             declare
                Full_Path : constant String := Path.all;
@@ -94,9 +98,12 @@ package body Glide_Kernel.Project is
       Use_Object_Path : Boolean := False)
       return String is
    begin
-      if Use_Object_Path and then Kernel.Object_Path /= null then
+      if Use_Object_Path
+        and then Get_Predefined_Object_Path (Kernel) /= ""
+      then
          return Find_Object_File
-           (Kernel.Project_View, Short_File_Name, Kernel.Object_Path.all);
+           (Kernel.Project_View, Short_File_Name,
+            Get_Predefined_Object_Path (Kernel));
       else
          return Find_Object_File (Kernel.Project_View, Short_File_Name, "");
       end if;
