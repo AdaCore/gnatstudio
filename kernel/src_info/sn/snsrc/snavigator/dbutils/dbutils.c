@@ -163,7 +163,7 @@ Paf_tempnam(char *dir,char *pref)
 
 	strcpy (tmpnm, nm);
 	sn_internal_convert_path (tmpnm, SN_PATH_UNIX);
-	
+
 	/* DON'T USE ckfree */
 	free(nm);
 
@@ -187,9 +187,9 @@ my_SplitList (char *str, int *num, char ***argvPtr, char sep)
 	char *p, **argv;
 	int cnt, i;
 	int have_bracket;
-	
+
 	MY_DEBUG ((Output, "ping..<%s>\n", str));
-	
+
 	/*
 	 * Use a static string pointer to store the splited string
 	 */
@@ -199,7 +199,7 @@ my_SplitList (char *str, int *num, char ***argvPtr, char sep)
 		lst=NULL;
 	}
 	lst = SN_StrDup (str);
-	
+
 	/*
 	 * Count how many fields
 	 */
@@ -268,12 +268,12 @@ read_next_field (char *str, char *buf, int size, char sep)
 {
 	char *p=str, *q=buf;
 	int i;
-	
+
 	if (q)
 	{
 		q[0] = 0;
 	}
-	
+
 	/*
 	 * Use stored pointer to continue parsing */
 	if (p == NULL)
@@ -284,7 +284,7 @@ read_next_field (char *str, char *buf, int size, char sep)
 		}
 		p = oldPtr;
 	}
-	
+
 	for(i=0; *p && *p != sep; p++)
 	{
 		/* skip the rest of string, if buffer exceeded */
@@ -300,17 +300,17 @@ read_next_field (char *str, char *buf, int size, char sep)
 	{
 		*q = 0;
 	}
-	
+
 	/*
 	 * Skip the separator
 	 */
 	if (*p == sep)
 		p ++;
-	
+
 	/*
 	 * Store last position for next stips */
 	oldPtr = p;
-	
+
 	return p;
 }
 int
@@ -344,7 +344,7 @@ create_table(int type,int mode,int cachesize, unsigned int dbi)
 	db_type = DB_BTREE;
 	memset((char *)&db_btree_info,0,sizeof(db_btree_info));
 	db_btree_info.cachesize = cachesize;
-	
+
 #if _WINDOWS
 	/*
 	 * On windows we do support lower/upper case pathnames
@@ -366,7 +366,7 @@ create_table(int type,int mode,int cachesize, unsigned int dbi)
 	sprintf(fname,"%s.%s",db_project_dir + dbi * MAXPATHLEN, SN_symbol_types[type]);
 
 	dbp = dbopen(fname, mode, get_db_permission(),db_type,db_inf);
-	
+
 	/*
 	 * Backward compatiblility:
 	 * if file exists it could be a hash table
@@ -501,7 +501,7 @@ put_file_db(char *file_name,char *group,char *highlight_file)
 	{
 		char highfile[MAXPATHLEN];
 		char *pData;
-		
+
 		/*
 		 * skip type
 		 */
@@ -742,7 +742,7 @@ int     high_end_colpos)
 		ret ? ret : "",                  DB_FLDSEP_CHR,
 		arg_types ? arg_types : "",      DB_FLDSEP_CHR,
 		args ? args : "",                DB_FLDSEP_CHR,
-		comment
+		comment ? comment : ""
 		);
 
 	Paf_Pipe_Write("%d%c%s%c%06d.%03d%c%s%c%s%c%s%c%d.%d%c%d.%d%c%d.%d%c{%s}\n",
@@ -800,7 +800,7 @@ int	acc)
 	{
 		char *_p;
 		for (; isspace(*scope); scope++);
-		
+
 		/*
 		 * It can happen, that the scope contains "class fld ",
 		 * so then terminate the rest after "class" */
@@ -874,7 +874,7 @@ int	acc)
 	if (Paf_dbimp_running)
 	{
 		MY_DEBUG2((Output, "xref entry <%s> <%s>\n", key_value.buf, data_value.buf));
-	
+
 		db_insert_entry(PAF_CROSS_REF, key_value.buf, data_value.buf);
 	}
 	else if (!scope || *scope != '?')
@@ -1090,7 +1090,7 @@ db_remove_file_def(int softdel,char *file)
 		{
 			break;
 		}
-		
+
 		/*
 		 * get scope name (at the end of the key field list)
 		 */
@@ -1217,7 +1217,7 @@ db_remove_file_xfer_using_keys(int softdel, char *key_files)
 	int key_len;
 	int line_cou = 1;
 	int delete_file = TRUE;
-	
+
 	LongStringInit(&key_to,0);
 	LongStringInit(&data_buf,0);
 	LongStringInit(&key_by,0);
@@ -1274,7 +1274,7 @@ db_remove_file_xfer_using_keys(int softdel, char *key_files)
 				file_del_key.field_value[1], DB_FLDSEP_STR,
 				file_del_key.field_value[2], DB_FLDSEP_STR,
 				NULL);
-			
+
 			key.data = (void *)key_to.buf;
 			key.size = key_to.len;
 			key_buf = key_to.buf;
@@ -1298,7 +1298,7 @@ db_remove_file_xfer_using_keys(int softdel, char *key_files)
 					key.data, key.size - 1, FALSE, DB_FLDSEP_CHR, -1);
 
 				ref_type = data_buf.field_value[5];
-				
+
 				/*
 				 * There is no xref "by" info for local variables. !
 				 */
@@ -1680,7 +1680,7 @@ Paf_Search_Include_dir(char *name)
 	int	len;
 	int flag;
 	int	cpy_len;
-	
+
 	sn_internal_convert_path (name, SN_PATH_UNIX);
 	if (! (bfn = file_lastroot (name)))
 	{
@@ -1746,7 +1746,7 @@ Paf_Search_Include_dir(char *name)
 		path_argc++;
 	}
 
-	
+
 	/*
 	if (!path_argc)
 	{
@@ -1832,14 +1832,14 @@ Paf_Search_Include_dir(char *name)
 			}
 		}
 	}
-	
+
 	if (path_argv)
 	{
 		for (cou = 0; cou < path_argc; cou++)
 			ckfree(path_argv[cou]);
 		ckfree((char*)path_argv);
 	}
-	
+
 	if (incl_with_path)
 	{
 		return incl_with_path;
@@ -2099,7 +2099,7 @@ load_class_members(int type, char *class_name, int dbi)
 
 		data_buf.append(&data_buf, DB_FLDSEP_STR, -1);
 		data_buf.append(&data_buf, mbr_type, mbr_type_len);
-		
+
 		mbr_key.data = (void *)key_buf.buf;
 		mbr_key.size = key_buf.len + 1;
 		mbr_data.data = (void *)data_buf.buf;
@@ -2540,7 +2540,7 @@ search_for_symbol(char *global_class_name,char *local_class_name,
 					    	if ((int)key.size < length + 1
                          || memcmp (cl_nm_p, key.data, length) != 0)
 					    		break;
-                                                                                                             
+
 					    	function_avail = 1;
                      fn_dbi = (int) dbi;
 
@@ -2564,10 +2564,10 @@ search_for_symbol(char *global_class_name,char *local_class_name,
 					    		param_args   [0] = 0;
 					    	}
 					    	ckfree ((char*)fields);
-					    	
+
 					    	tmp.makespace (&tmp,data.size);
 					    	tmp.len = RemoveIgnoredWords (tmp.buf, param_args);
-#if BUG_TRACE                                                                                                
+#if BUG_TRACE
 					    	fprintf(trace_fp,"method type: <%s> <%s> <%s>\n",
 					    		tmp.buf,cl_nm_p,(char *)data.data);
 #endif /* BUG_TRACE */
@@ -2576,13 +2576,13 @@ search_for_symbol(char *global_class_name,char *local_class_name,
 					    	{
 					    		/* method found and arguments are similar. */
 					    		memcpy(arg_types, param_args, strlen (param_args)+1);
-                                                                                                             
+
 					    		if (scope)
 					    		{
 					    			sscanf(cl_nm_p,"%s",scope);
 					    			MY_DEBUG ((Output, "sscanf used by cl_nm_p <%s> Scope <%s>\n", cl_nm_p, scope));
 					    		}
-#if BUG_TRACE                                                                                                
+#if BUG_TRACE
 					    		fprintf(trace_fp,"1 scope: <%s> access: <%s> ret_type: <%s> arg_types: <%s>\n",
 					    			scope ? scope : NULL,in_access_val,ret_type,arg_types);
 #endif /* BUG_T    RACE */
@@ -2686,7 +2686,7 @@ search_for_symbol(char *global_class_name,char *local_class_name,
 							ret_type     [0] = 0;
 						}
 						ckfree ((char*)fields);
-						
+
 #if BUG_TRACE
 						fprintf(trace_fp,"3 scope: <%s> access: <%s> ret_type: <%s> arg_types: <%s>\n",
 							scope ? scope : NULL,in_access_val,ret_type,arg_types);
@@ -2776,7 +2776,7 @@ search_for_symbol(char *global_class_name,char *local_class_name,
 		/* Parse for example: line.col attr {struct fp *} {unsigned char *,const int} */
 		*in_access_val = '\0';
 		*ret_type = '\0';
-		
+
 		/*
 		 * Field has the format, separated with DB_FLDSEP_CHR:
 		 *
@@ -3097,7 +3097,7 @@ Paf_Pipe_Create(char *pipe_cmd,char *db_prefix,char *incl_to_pipe,
 {
 	pid_t   pid = -1;
 	char    tmp[1024];
-	
+
 #ifdef WIN32
 	int             err;
 	HANDLE          read_handle;
@@ -3317,7 +3317,7 @@ int
 db_no_case_compare(const DBT *a,const DBT *b)
 {
 	register int cmp;
-	
+
 	cmp = use_STRNCASECMP (a->data, b->data, a->size < b->size ? a->size : b->size);
 	if (cmp == 0)
 	{
@@ -3328,7 +3328,7 @@ db_no_case_compare(const DBT *a,const DBT *b)
 		 * be returned.
 		 */
 		if (db_action_is_fetching &&
-			a->size == b->size && 
+			a->size == b->size &&
 			memcmp(a->data, b->data, a->size < b->size ? a->size : b->size) != 0)
 		{
 			memcpy (a->data, b->data, b->size);
@@ -3359,7 +3359,7 @@ int
 db_case_compare(register const DBT *a,register const DBT *b)
 {
 	register int cmp;
-	
+
 	if (db_compare_nocase && a->size == b->size)
 	{
 		cmp = use_STRNCASECMP (a->data, b->data, a->size < b->size ? a->size : b->size);
