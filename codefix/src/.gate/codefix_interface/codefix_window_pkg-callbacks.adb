@@ -58,6 +58,50 @@ package body Codefix_Window_Pkg.Callbacks is
       null;
    end On_Accept_Correction_Clicked;
 
+   -------------------------------------
+   -- On_Skip_All_Corrections_Clicked --
+   -------------------------------------
+
+   procedure On_Skip_All_Corrections_Clicked
+     (Object : access Gtk_Widget_Record'Class)
+   is
+   begin
+      null;
+   end On_Skip_All_Corrections_Clicked;
+
+   ---------------------------------------
+   -- On_Accept_All_Corrections_Clicked --
+   ---------------------------------------
+
+   procedure On_Accept_All_Corrections_Clicked
+     (Object : access Gtk_Widget_Record'Class)
+   is
+   begin
+      null;
+   end On_Accept_All_Corrections_Clicked;
+
+   ---------------------
+   -- On_Undo_Clicked --
+   ---------------------
+
+   procedure On_Undo_Clicked
+     (Object : access Gtk_Widget_Record'Class)
+   is
+   begin
+      null;
+   end On_Undo_Clicked;
+
+   ------------------------
+   -- On_Refresh_Clicked --
+   ------------------------
+
+   procedure On_Refresh_Clicked
+     (Object : access Gtk_Widget_Record'Class)
+   is
+   begin
+      null;
+   end On_Refresh_Clicked;
+
    -------------------------------
    -- On_Cancel_Changes_Clicked --
    -------------------------------
