@@ -1468,13 +1468,6 @@ package body Commands.Custom is
          while Success
            and then Command.Execution.Cmd_Index <= Command.Components'Last
          loop
-            Set_Progress
-              (Command,
-               Progress_Record'
-                 (Activity => Running,
-                  Current  => Command.Execution.Cmd_Index,
-                  Total    => Command.Execution.Outputs'Length));
-
             Current := Command.Components (Command.Execution.Cmd_Index);
             if Current.On_Failure_For = Command.Execution.Current_Failure then
                Success := Execute_Simple_Command (Current.Component);
