@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2003                       --
+--                     Copyright (C) 2001-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
@@ -386,6 +386,7 @@ package body Custom_Module is
          while Child /= null loop
             if To_Lower (Child.Tag.all) = "shell"
               or else To_Lower (Child.Tag.all) = "external"
+              or else To_Lower (Child.Tag.all) = "on-failure"
             then
                --  Handled directly by Commands.Custom
                null;
