@@ -1139,6 +1139,40 @@ package body Src_Editor_Buffer is
          Direction := Forward;
       end if;
 
+      --  If we are removing folded lines, stop the propagation of the handler.
+
+      if not Lines_Are_Real (Buffer) then
+         declare
+            Editable_Line_Start : Editable_Line_Type;
+            Editable_Line_End   : Editable_Line_Type;
+
+         begin
+            Editable_Line_Start :=
+              Get_Editable_Line
+                (Buffer, Buffer_Line_Type (Line_Start + 1));
+
+            Editable_Line_End :=
+              Get_Editable_Line
+                (Buffer, Buffer_Line_Type (Line_End + 1));
+
+            for J in Editable_Line_Start + 1 .. Editable_Line_End - 1 loop
+               case Buffer.Editable_Lines (J).Where is
+                  when In_Buffer =>
+                     null;
+
+                  when In_Mark =>
+                     Insert
+                       (Buffer.Kernel,
+                        -"Deleting a folded block is not permitted",
+                        Mode => Error);
+
+                     Emit_Stop_By_Name (Buffer, "delete_range");
+                     return;
+               end case;
+            end loop;
+         end;
+      end if;
+
       --  Remove the lines in the side information column.
 
       if Line_Start /= Line_End then
