@@ -597,7 +597,8 @@ package body Src_Info.CPP is
       end if;
 
       --  Prepare the list of files
-      Trace (Info_Stream, "Computing the C and C++ sources list");
+      Trace (Info_Stream, "Computing the C and C++ sources list for "
+             & Project_Name (Project));
       Compute_Sources
         (Iterator,
          Project,
