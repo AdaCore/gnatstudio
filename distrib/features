@@ -3,6 +3,8 @@ For more details, please see the documentation.
 
 New features in GPS 2.1.0
 
+- DA25-024 Columns can be sorted in the "Edit file switches" window
+
 - New shell commands, to ease writing of GPS scripts. See 'help' in the
   GPS shell for a full list of GPS commands, in particular:
   new classes GPS.Process, GPS.Toolbar, GPS.GUI, GPS.Menu, GPS.Console,
