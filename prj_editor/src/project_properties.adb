@@ -1967,23 +1967,25 @@ package body Project_Properties is
       Iter  : Gtk_Tree_Iter;
    begin
       Get_Selected (Get_Selection (Ed.View), M, Iter);
-      if Ed.Attribute.Base_Name_Only then
-         Select_Attribute_In_List
-           (Project     => Ed.Project,
-            Index_Pkg   => Ed.Attribute.Pkg.all,
-            Index_Name  => Ed.Attribute.Name.all,
-            Index_Value => Get_String (Ed.Model, Iter, 0),
-            Is_Selected => False);
-      else
-         Select_Attribute_In_List
-           (Project     => Ed.Project,
-            Index_Pkg   => Ed.Attribute.Pkg.all,
-            Index_Name  => Ed.Attribute.Name.all,
-            Index_Value => Get_String (Ed.Model, Iter, 0),
-            Is_Selected => False);
-      end if;
+      if Iter /= Null_Iter then
+         if Ed.Attribute.Base_Name_Only then
+            Select_Attribute_In_List
+              (Project     => Ed.Project,
+               Index_Pkg   => Ed.Attribute.Pkg.all,
+               Index_Name  => Ed.Attribute.Name.all,
+               Index_Value => Get_String (Ed.Model, Iter, 0),
+               Is_Selected => False);
+         else
+            Select_Attribute_In_List
+              (Project     => Ed.Project,
+               Index_Pkg   => Ed.Attribute.Pkg.all,
+               Index_Name  => Ed.Attribute.Name.all,
+               Index_Value => Get_String (Ed.Model, Iter, 0),
+               Is_Selected => False);
+         end if;
 
-      Remove (Ed.Model, Iter);
+         Remove (Ed.Model, Iter);
+      end if;
    end Remove_String_From_List;
 
    --------------------
