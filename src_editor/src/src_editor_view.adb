@@ -816,6 +816,7 @@ package body Src_Editor_View is
 
             procedure Draw_Block (B : in out Block_Record) is
                Block_Begin_Y : Gint;
+               Block_End_Y   : Gint;
                Y             : Gint;
                Height        : Gint;
                X             : Gint;
@@ -861,13 +862,24 @@ package body Src_Editor_View is
                X := Gint (Offset - 1) * View.Char_Width
                  - Bracket_Offset - Rect.X + Margin;
 
-               Draw_Line (Window, View.Current_Block_GC, X, Y, X, Y + Height);
+               if Y > 0 then
+                  Block_Begin_Y := Y;
+               else
+                  Block_Begin_Y := 0;
+               end if;
+
+               Block_End_Y := Y + Height;
+
                Draw_Line
-                 (Window, View.Current_Block_GC, X, Y, X + Bracket_Length, Y);
+                 (Window, View.Current_Block_GC,
+                  X, Block_Begin_Y, X, Block_End_Y);
+               Draw_Line
+                 (Window, View.Current_Block_GC,
+                  X, Block_Begin_Y, X + Bracket_Length, Block_Begin_Y);
                Draw_Line
                  (Window,
                   View.Current_Block_GC,
-                  X, Y + Height, X + Bracket_Length, Y + Height);
+                  X, Block_End_Y, X + Bracket_Length, Block_End_Y);
             end Draw_Block;
 
          begin
