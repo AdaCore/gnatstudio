@@ -417,6 +417,15 @@ package body Builder_Module is
 
       Free (Langs);
 
+      --  Ask for saving sources/projects before building.
+      --  Do this before checking the project, in case we have a default
+      --  project whose name is changed when saving
+
+      if Save_All_MDI_Children (K, Force => False) = False then
+         Free (Args);
+         return;
+      end if;
+
       --  If no file was specified in data, simply compile the current file.
 
       if Data.Length = 0 then
@@ -433,8 +442,9 @@ package body Builder_Module is
 
             if Prj = No_Project or else Project_Name = "" then
                Args := new Argument_List'
-                 (1 => new String'(File_Information
-                         (File_Selection_Context_Access (Context))));
+                 (Clone (Default_Builder_Switches)
+                  & new String'(File_Information
+                    (File_Selection_Context_Access (Context))));
             else
                Args := Compute_Arguments
                  (K, Syntax, Project_Path (Prj),
@@ -455,7 +465,9 @@ package body Builder_Module is
          if Get_Project_File_Name (K) = "" then
             case Syntax is
                when GNAT_Syntax =>
-                  Args := new Argument_List'(1 => new String'(Data.File));
+                  Args := new Argument_List'
+                    (Clone (Default_Builder_Switches)
+                     & new String'(Data.File));
 
                when Make_Syntax =>
                   Console.Insert
@@ -467,13 +479,6 @@ package body Builder_Module is
             Args := Compute_Arguments
               (K, Syntax, Project_Path (Data.Project), Data.File);
          end if;
-      end if;
-
-      --  Ask for saving sources/projects before building
-
-      if Save_All_MDI_Children (K, Force => False) = False then
-         Free (Args);
-         return;
       end if;
 
       Clear_Compilation_Output (K);
@@ -557,7 +562,8 @@ package body Builder_Module is
 
          File : constant String := Directory_Information (File_Context) &
            File_Information (File_Context);
-         Cmd  : constant String := "gnatmake -q -u -gnats " & File;
+         Cmd  : constant String := "gnatmake -q -u -gnats "
+           & Argument_List_To_String (Default_Builder_Switches) & File;
          Fd   : Process_Descriptor_Access;
          Args : Argument_List_Access;
          Id   : Timeout_Handler_Id;
@@ -674,7 +680,8 @@ package body Builder_Module is
 
       if Project = "" then
          declare
-            Full_Cmd : constant String := Cmd & File;
+            Full_Cmd : constant String :=
+              Cmd & Argument_List_To_String (Default_Builder_Switches) & File;
          begin
             Args := Argument_String_To_List (Full_Cmd);
             Console.Insert (Kernel, Full_Cmd);
@@ -1260,9 +1267,9 @@ package body Builder_Module is
             Builder_Module.Build_Item := Mitem;
             Has_Child := True;
          end if;
-
-         Free (Mains);
       end loop;
+
+      Free (Mains);
    end Add_Build_Menu;
 
    ------------------
