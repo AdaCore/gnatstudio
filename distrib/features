@@ -3,63 +3,7 @@ details, please see the documentation.
 
 New features in GPS 1.4.0
 
-New features in GPS 1.3.0
+- Ability to format Ada operators and delimiters in the editor
 
-- C611-003 Characters encoding can now be specified in custom files
+- Auto casing of Ada reserved words and identifiers
 
-- Central MDI window can now be split horizontally or vertically
-
-- Support for built-in printing under Windows
-
-- Window menu is now sorted alphabetically
-
-- Support for preprocessor directives in Ada sources
-
-- Support for current block highlighting and block folding for C/C++
-
-- Enhanced indentation engine for C/C++
-
-- C526-005 Better handling of the "Auto-Save" preference
-
-- C522-014 Better handling of the current directory
-
-- Support for multiple debuggers simultaneously
-
-- Block folding in the source editor
-
-- C514-007 The VCS menu items now work with the visual difference
-
-- C513-007 Support for multiple log files
-  GPS now uses separate log files so that it is easier to run multiple
-  sessions at the same time.
-
-- C511-002 Save As dialog and default file name
-  If you are editing an existing file and select Save As, the default file
-  name and directory are set to the ones of the file
-
-- C502-012 Named numbers recognized by codefix
-  The automatic code correction is now able to recognize and suppress
-  unreferenced named numbers.
-
-- C310-006 Improvements and clean ups in the Ada indentation engine
-
-- Projects can automatically be generated from an executable when using the
-  --debug command line switch
-
-- C306-012 Welcome dialog's default is now to reopen the last opened project
-
-- Improved support for unicode characters in file names or source files
-
-- C125-006 The edited file name is now displayed in the main window title.
-
-- BA08-011 Support for file drag'n'drop under Windows
-
-- Enumeration literals recognized by codefix
-  The automatic code correction is now able to recognize and suppress
-  unreferenced literals.
-
-- New key shortcuts manager, for easier configuration of keys and multiple
-  keymaps a la Emacs. This gives access to usual operations like center
-  cursor on screen, word navigation and deletion,...
-
-- Ability to revert files to VCS repository revision.
