@@ -440,22 +440,30 @@ package body VCS_Module is
          Add_Before => False);
 
       Register_Menu (Kernel, VCS, -"_Explorer", "", On_Open_Interface'Access);
-      Register_Menu (Kernel, VCS, -"Update _project", "", Update_All'Access);
+      Register_Menu (Kernel, VCS, -"Update all _projects", "",
+                     Update_All'Access);
       Register_Menu
-        (Kernel, VCS, -"_Query status for project", "",
+        (Kernel, VCS, -"_Query status for all projects", "",
          Query_Status_For_Project'Access);
       Gtk_New (Menu_Item);
       Register_Menu (Kernel, VCS, Menu_Item);
       Register_Menu (Kernel, VCS, -"_Update", "", Update'Access);
       Register_Menu (Kernel, VCS, -"Start _Editing", "", Open'Access);
-      Register_Menu (Kernel, VCS, -"_Compare against head", "",
-                     View_Diff'Access);
-      Register_Menu (Kernel, VCS, -"Edit _log", "", Edit_Log'Access);
-      Register_Menu (Kernel, VCS, -"_Commit", "", Commit'Access);
+      Register_Menu (Kernel, VCS, -"_View revision history", "",
+                     View_Log'Access);
+      Register_Menu (Kernel, VCS, -"_Compare against head revision", "",
+                     View_Head_Diff'Access);
+      Register_Menu (Kernel, VCS, -"_Compare against working revision", "",
+                     View_Work_Diff'Access);
       Register_Menu (Kernel, VCS, -"_Annotate", "", View_Annotate'Access);
-      Register_Menu (Kernel, VCS, -"_View Changelog", "", View_Log'Access);
+      Register_Menu (Kernel, VCS, -"Remove a_nnotations", "",
+                     Remove_Annotations'Access);
+      Register_Menu (Kernel, VCS, -"Edit change_log", "", Edit_Log'Access);
+      Register_Menu (Kernel, VCS, -"_Commit", "", Commit'Access);
       Register_Menu (Kernel, VCS, -"_Revert", "", Revert'Access,
                      Sensitive => False);
+      Gtk_New (Menu_Item);
+      Register_Menu (Kernel, VCS, Menu_Item);
       Register_Menu (Kernel, VCS, -"A_dd to repository", "", Add'Access);
       Register_Menu
         (Kernel, VCS, -"R_emove from repository", "", Remove'Access);
