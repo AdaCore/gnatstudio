@@ -473,7 +473,7 @@ package body Glide_Kernel.Standard_Hooks is
       Kernel : constant Kernel_Handle := Get_Kernel (Data);
       Identifier : constant String := Nth_Arg (Data, 2);
       Category   : constant String := Nth_Arg (Data, 3);
-      Message    : constant String := Nth_Arg (Data, 4);
+      Message    : constant String := Nth_Arg (Data, 7);
       Args   : constant Location_Hooks_Args :=
         (Hooks_Data with
          Ident_Length      => Identifier'Length,
