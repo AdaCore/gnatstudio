@@ -386,6 +386,12 @@ package body Src_Editor_Box is
 
          Set_Cursor_Position
            (Source.Source_Buffer, To_Buffer_Line (L), To_Buffer_Column (C));
+
+         --  ??? The following call will actually not have the desired effect,
+         --  since Set_Cursor_Position uses an idle callback. The proper thing
+         --  to do is to add additional parameters to Set_Cursor_Position, or
+         --  have a Set_Cursor_And_Selection_Region procedure.
+
          Select_Region (Source, L, C, L, C + Length);
       end if;
 
@@ -1676,8 +1682,8 @@ package body Src_Editor_Box is
       Column      : Positive := 1;
       Force_Focus : Boolean  := True)
    is
-      Buffer_Line  : constant Gint := To_Buffer_Line (Line);
-      Buffer_Col   : constant Gint := To_Buffer_Column (Column);
+      Buffer_Line : constant Gint := To_Buffer_Line (Line);
+      Buffer_Col  : constant Gint := To_Buffer_Column (Column);
    begin
       if Force_Focus then
          Grab_Focus (Editor.Source_View);
@@ -1692,9 +1698,9 @@ package body Src_Editor_Box is
    -------------------------
 
    procedure Get_Cursor_Location
-     (Editor  : access Source_Editor_Box_Record;
-      Line    : out Positive;
-      Column  : out Positive)
+     (Editor : access Source_Editor_Box_Record;
+      Line   : out Positive;
+      Column : out Positive)
    is
       Buffer_Line : Gint;
       Buffer_Col  : Gint;
