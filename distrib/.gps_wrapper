@@ -14,6 +14,14 @@ PANGO_RC_FILE=$root/etc/gps/pangorc
 GTK_IM_MODULE_FILE=$root/etc/gps/gtk.immodules
 GTK_DATA_PREFIX=$root
 MAKE_ROOT=$root
+
+# Gtk+ does not like when not CHARSET is set, so use Latin-1 by default:
+
+if [ "x$CHARSET" = "x" ]; then
+   CHARSET=ISO-8859-1
+   export CHARSET
+fi
+
 export LD_LIBRARY_PATH PANGO_RC_FILE GTK_DATA_PREFIX
 export GTK_IM_MODULE_FILE MAKE_ROOT
 GDK_USE_XFT=False
