@@ -18,7 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Gtkada.Types; use Gtkada.Types;
+with Basic_Types; use Basic_Types;
 
 package Pixmaps_IDE is
 
@@ -26,52 +26,52 @@ package Pixmaps_IDE is
    --  The actual size of the pixmaps is only known by GtkAda, which is
    --  enough for our needs and avoid having to maintain this information here.
 
-   arrow_xpm               : aliased Chars_Ptr_Array (0 .. 0);
-   box_xpm                 : aliased Chars_Ptr_Array (0 .. 0);
-   breakat_xpm             : aliased Chars_Ptr_Array (0 .. 0);
-   break_xpm               : aliased Chars_Ptr_Array (0 .. 0);
-   cancel_xpm              : aliased Chars_Ptr_Array (0 .. 0);
-   cont_xpm                : aliased Chars_Ptr_Array (0 .. 0);
-   display_xpm             : aliased Chars_Ptr_Array (0 .. 0);
-   display_small_xpm       : aliased Chars_Ptr_Array (0 .. 0);
-   dot_xpm                 : aliased Chars_Ptr_Array (0 .. 0);
-   down_xpm                : aliased Chars_Ptr_Array (0 .. 0);
-   findfwd_xpm             : aliased Chars_Ptr_Array (0 .. 0);
-   finish_xpm              : aliased Chars_Ptr_Array (0 .. 0);
-   interrupt_xpm           : aliased Chars_Ptr_Array (0 .. 0);
-   kill_xpm                : aliased Chars_Ptr_Array (0 .. 0);
-   lock_xpm                : aliased Chars_Ptr_Array (0 .. 0);
-   lookup_xpm              : aliased Chars_Ptr_Array (0 .. 0);
-   mini_folder_xpm         : aliased Chars_Ptr_Array (0 .. 0);
-   mini_ofolder_xpm        : aliased Chars_Ptr_Array (0 .. 0);
-   next_xpm                : aliased Chars_Ptr_Array (0 .. 0);
-   nexti_xpm               : aliased Chars_Ptr_Array (0 .. 0);
-   package_xpm             : aliased Chars_Ptr_Array (0 .. 0);
-   paint_xpm               : aliased Chars_Ptr_Array (0 .. 0);
-   plot_xpm                : aliased Chars_Ptr_Array (0 .. 0);
-   print_xpm               : aliased Chars_Ptr_Array (0 .. 0);
-   rotate_xpm              : aliased Chars_Ptr_Array (0 .. 0);
-   run_xpm                 : aliased Chars_Ptr_Array (0 .. 0);
-   set_xpm                 : aliased Chars_Ptr_Array (0 .. 0);
-   show_xpm                : aliased Chars_Ptr_Array (0 .. 0);
-   start_xpm               : aliased Chars_Ptr_Array (0 .. 0);
-   step_xpm                : aliased Chars_Ptr_Array (0 .. 0);
-   stepi_xpm               : aliased Chars_Ptr_Array (0 .. 0);
-   stock_add_xpm           : aliased Chars_Ptr_Array (0 .. 0);
-   stock_button_cancel_xpm : aliased Chars_Ptr_Array (0 .. 0);
-   stock_button_apply_xpm  : aliased Chars_Ptr_Array (0 .. 0);
-   stock_close_xpm         : aliased Chars_Ptr_Array (0 .. 0);
-   stock_left_arrow_xpm    : aliased Chars_Ptr_Array (0 .. 0);
-   stock_open_xpm          : aliased Chars_Ptr_Array (0 .. 0);
-   stock_preferences_xpm   : aliased Chars_Ptr_Array (0 .. 0);
-   stock_right_arrow_xpm   : aliased Chars_Ptr_Array (0 .. 0);
-   stop_xpm                : aliased Chars_Ptr_Array (0 .. 0);
-   subprogram_xpm          : aliased Chars_Ptr_Array (0 .. 0);
-   trash_xpm               : aliased Chars_Ptr_Array (0 .. 0);
-   undisplay_xpm           : aliased Chars_Ptr_Array (0 .. 0);
-   up_xpm                  : aliased Chars_Ptr_Array (0 .. 0);
-   var_xpm                 : aliased Chars_Ptr_Array (0 .. 0);
-   watch_xpm               : aliased Chars_Ptr_Array (0 .. 0);
+   arrow_xpm               : aliased Pixmap_Array;
+   box_xpm                 : aliased Pixmap_Array;
+   breakat_xpm             : aliased Pixmap_Array;
+   break_xpm               : aliased Pixmap_Array;
+   cancel_xpm              : aliased Pixmap_Array;
+   cont_xpm                : aliased Pixmap_Array;
+   display_xpm             : aliased Pixmap_Array;
+   display_small_xpm       : aliased Pixmap_Array;
+   dot_xpm                 : aliased Pixmap_Array;
+   down_xpm                : aliased Pixmap_Array;
+   findfwd_xpm             : aliased Pixmap_Array;
+   finish_xpm              : aliased Pixmap_Array;
+   interrupt_xpm           : aliased Pixmap_Array;
+   kill_xpm                : aliased Pixmap_Array;
+   lock_xpm                : aliased Pixmap_Array;
+   lookup_xpm              : aliased Pixmap_Array;
+   mini_folder_xpm         : aliased Pixmap_Array;
+   mini_ofolder_xpm        : aliased Pixmap_Array;
+   next_xpm                : aliased Pixmap_Array;
+   nexti_xpm               : aliased Pixmap_Array;
+   package_xpm             : aliased Pixmap_Array;
+   paint_xpm               : aliased Pixmap_Array;
+   plot_xpm                : aliased Pixmap_Array;
+   print_xpm               : aliased Pixmap_Array;
+   rotate_xpm              : aliased Pixmap_Array;
+   run_xpm                 : aliased Pixmap_Array;
+   set_xpm                 : aliased Pixmap_Array;
+   show_xpm                : aliased Pixmap_Array;
+   start_xpm               : aliased Pixmap_Array;
+   step_xpm                : aliased Pixmap_Array;
+   stepi_xpm               : aliased Pixmap_Array;
+   stock_add_xpm           : aliased Pixmap_Array;
+   stock_button_cancel_xpm : aliased Pixmap_Array;
+   stock_button_apply_xpm  : aliased Pixmap_Array;
+   stock_close_xpm         : aliased Pixmap_Array;
+   stock_left_arrow_xpm    : aliased Pixmap_Array;
+   stock_open_xpm          : aliased Pixmap_Array;
+   stock_preferences_xpm   : aliased Pixmap_Array;
+   stock_right_arrow_xpm   : aliased Pixmap_Array;
+   stop_xpm                : aliased Pixmap_Array;
+   subprogram_xpm          : aliased Pixmap_Array;
+   trash_xpm               : aliased Pixmap_Array;
+   undisplay_xpm           : aliased Pixmap_Array;
+   up_xpm                  : aliased Pixmap_Array;
+   var_xpm                 : aliased Pixmap_Array;
+   watch_xpm               : aliased Pixmap_Array;
 
 private
    pragma Import (C, arrow_xpm, "arrow_xpm");
