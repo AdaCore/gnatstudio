@@ -934,12 +934,13 @@ scripting languages. This is done with
 @smallexample
 GPS.add_doc_directory ("/home/foo")
 @end smallexample
+@end ifset
 
-@else
+@ifclear python
 @smallexample
 add_doc_path "/home/foo"
 @end smallexample
-@end ifset
+@end ifclear
 
 The specific list of files shown in the menus is set by reading the
 index files in each of the directories in @code{GPS_DOC_PATH}. These
