@@ -65,42 +65,7 @@
     </widget>
 
     <widget>
-      <class>GtkFrame</class>
-      <name>frame</name>
-      <label_xalign>0</label_xalign>
-      <shadow_type>GTK_SHADOW_ETCHED_IN</shadow_type>
-      <child>
-	<padding>0</padding>
-	<expand>True</expand>
-	<fill>True</fill>
-      </child>
-
-      <widget>
-	<class>GtkNotebook</class>
-	<name>process_notebook</name>
-	<signal>
-	  <name>switch_page</name>
-	  <handler>on_process_notebook_switch_page</handler>
-	  <object>Main_Debug_Window</object>
-	  <last_modification_time>Tue, 05 Sep 2000 04:59:06 GMT</last_modification_time>
-	</signal>
-	<show_tabs>False</show_tabs>
-	<show_border>True</show_border>
-	<tab_pos>GTK_POS_TOP</tab_pos>
-	<scrollable>True</scrollable>
-	<tab_hborder>2</tab_hborder>
-	<tab_vborder>2</tab_vborder>
-	<popup_enable>False</popup_enable>
-
-	<widget>
-	  <class>Placeholder</class>
-	</widget>
-
-	<widget>
-	  <class>Placeholder</class>
-	  <child_name>Notebook:tab</child_name>
-	</widget>
-      </widget>
+      <class>Placeholder</class>
     </widget>
 
     <widget>
@@ -110,55 +75,8 @@
 	<padding>0</padding>
 	<expand>False</expand>
 	<fill>False</fill>
+	<pack>GTK_PACK_END</pack>
       </child>
-    </widget>
-  </widget>
-</widget>
-
-<widget>
-  <class>GtkWindow</class>
-  <name>process_tab</name>
-  <signal>
-    <name>delete_event</name>
-    <handler>on_process_tab_delete_event</handler>
-    <last_modification_time>Sun, 04 Feb 2001 00:07:26 GMT</last_modification_time>
-  </signal>
-  <title>Data</title>
-  <type>GTK_WINDOW_TOPLEVEL</type>
-  <position>GTK_WIN_POS_NONE</position>
-  <modal>False</modal>
-  <default_width>500</default_width>
-  <default_height>300</default_height>
-  <allow_shrink>False</allow_shrink>
-  <allow_grow>True</allow_grow>
-  <auto_shrink>False</auto_shrink>
-
-  <widget>
-    <class>GtkHBox</class>
-    <name>process_mdi</name>
-    <homogeneous>False</homogeneous>
-    <spacing>0</spacing>
-
-    <widget>
-      <class>GtkHBox</class>
-      <name>editor_text</name>
-      <signal>
-	<name>delete_event</name>
-	<handler>on_editor_text_delete_event</handler>
-	<object>Process_Tab</object>
-	<last_modification_time>Tue, 26 Jun 2001 14:00:33 GMT</last_modification_time>
-      </signal>
-      <homogeneous>False</homogeneous>
-      <spacing>0</spacing>
-      <child>
-	<padding>0</padding>
-	<expand>True</expand>
-	<fill>True</fill>
-      </child>
-
-      <widget>
-	<class>Placeholder</class>
-      </widget>
     </widget>
   </widget>
 </widget>
@@ -180,7 +98,7 @@
   <type>GTK_WINDOW_TOPLEVEL</type>
   <position>GTK_WIN_POS_CENTER</position>
   <modal>False</modal>
-  <allow_shrink>True</allow_shrink>
+  <allow_shrink>False</allow_shrink>
   <allow_grow>True</allow_grow>
   <auto_shrink>True</auto_shrink>
 
@@ -604,6 +522,7 @@
 		<last_modification_time>Sun, 25 Jun 2000 02:35:15 GMT</last_modification_time>
 	      </signal>
 	      <label>Add</label>
+	      <relief>GTK_RELIEF_NORMAL</relief>
 	    </widget>
 
 	    <widget>
@@ -619,6 +538,7 @@
 		<last_modification_time>Wed, 07 Mar 2001 04:50:45 GMT</last_modification_time>
 	      </signal>
 	      <label>Update</label>
+	      <relief>GTK_RELIEF_NORMAL</relief>
 	    </widget>
 
 	    <widget>
@@ -633,6 +553,7 @@
 		<last_modification_time>Sun, 25 Jun 2000 02:35:58 GMT</last_modification_time>
 	      </signal>
 	      <label>Advanced &gt;&gt;</label>
+	      <relief>GTK_RELIEF_NORMAL</relief>
 	    </widget>
 	  </widget>
 	</widget>
@@ -785,6 +706,7 @@ read or written
 		<last_modification_time>Sun, 25 Jun 2000 02:37:18 GMT</last_modification_time>
 	      </signal>
 	      <label>Add</label>
+	      <relief>GTK_RELIEF_NORMAL</relief>
 	    </widget>
 
 	    <widget>
@@ -800,6 +722,7 @@ read or written
 		<last_modification_time>Wed, 07 Mar 2001 04:52:25 GMT</last_modification_time>
 	      </signal>
 	      <label>Update</label>
+	      <relief>GTK_RELIEF_NORMAL</relief>
 	    </widget>
 
 	    <widget>
@@ -813,7 +736,8 @@ read or written
 		<object>Breakpoints</object>
 		<last_modification_time>Sun, 25 Jun 2000 02:37:52 GMT</last_modification_time>
 	      </signal>
-	      <label>Advanced &gt;&gt;<label>
+	      <label>Advanced &gt;&gt;</label>
+	      <relief>GTK_RELIEF_NORMAL</relief>
 	    </widget>
 	  </widget>
 	</widget>
@@ -915,6 +839,7 @@ read or written
 		  <last_modification_time>Sun, 08 Oct 2000 15:52:12 GMT</last_modification_time>
 		</signal>
 		<label>Load List</label>
+		<relief>GTK_RELIEF_NORMAL</relief>
 		<child>
 		  <padding>0</padding>
 		  <expand>False</expand>
@@ -1024,6 +949,7 @@ read or written
 		<last_modification_time>Sun, 25 Jun 2000 02:38:34 GMT</last_modification_time>
 	      </signal>
 	      <label>Add</label>
+	      <relief>GTK_RELIEF_NORMAL</relief>
 	    </widget>
 
 	    <widget>
@@ -1039,6 +965,7 @@ read or written
 		<last_modification_time>Wed, 07 Mar 2001 04:53:31 GMT</last_modification_time>
 	      </signal>
 	      <label>Update</label>
+	      <relief>GTK_RELIEF_NORMAL</relief>
 	    </widget>
 
 	    <widget>
@@ -1052,7 +979,8 @@ read or written
 		<object>Breakpoints</object>
 		<last_modification_time>Sun, 25 Jun 2000 04:22:09 GMT</last_modification_time>
 	      </signal>
-	      <label>Advanced &gt;&gt;<label>
+	      <label>Advanced &gt;&gt;</label>
+	      <relief>GTK_RELIEF_NORMAL</relief>
 	    </widget>
 	  </widget>
 	</widget>
@@ -1185,6 +1113,7 @@ read or written
 		<last_modification_time>Sun, 02 Jul 2000 17:52:13 GMT</last_modification_time>
 	      </signal>
 	      <label>Remove</label>
+	      <relief>GTK_RELIEF_NORMAL</relief>
 	    </widget>
 
 	    <widget>
@@ -1199,6 +1128,7 @@ read or written
 		<last_modification_time>Sun, 02 Jul 2000 17:52:21 GMT</last_modification_time>
 	      </signal>
 	      <label>View</label>
+	      <relief>GTK_RELIEF_NORMAL</relief>
 	    </widget>
 	  </widget>
 	</widget>
@@ -1231,6 +1161,7 @@ read or written
 	    <last_modification_time>Sun, 04 Jun 2000 13:48:33 GMT</last_modification_time>
 	  </signal>
 	  <label>Close</label>
+	  <relief>GTK_RELIEF_NORMAL</relief>
 	</widget>
       </widget>
     </widget>
@@ -1496,6 +1427,7 @@ read or written
 	    <last_modification_time>Sat, 27 May 2000 15:51:14 GMT</last_modification_time>
 	  </signal>
 	  <label>...</label>
+	  <relief>GTK_RELIEF_NORMAL</relief>
 	  <child>
 	    <left_attach>6</left_attach>
 	    <right_attach>7</right_attach>
@@ -1866,6 +1798,7 @@ remote
 	  <last_modification_time>Sat, 27 May 2000 16:05:36 GMT</last_modification_time>
 	</signal>
 	<label>OK</label>
+	<relief>GTK_RELIEF_NORMAL</relief>
       </widget>
 
       <widget>
@@ -1879,6 +1812,7 @@ remote
 	  <last_modification_time>Sat, 27 May 2000 16:05:47 GMT</last_modification_time>
 	</signal>
 	<label>Cancel</label>
+	<relief>GTK_RELIEF_NORMAL</relief>
       </widget>
     </widget>
   </widget>
@@ -2094,6 +2028,7 @@ remote
 	      <last_modification_time>Tue, 05 Sep 2000 20:04:58 GMT</last_modification_time>
 	    </signal>
 	    <label>Select All</label>
+	    <relief>GTK_RELIEF_NORMAL</relief>
 	  </widget>
 
 	  <widget>
@@ -2107,6 +2042,7 @@ remote
 	      <last_modification_time>Tue, 05 Sep 2000 20:05:04 GMT</last_modification_time>
 	    </signal>
 	    <label>Unselect All</label>
+	    <relief>GTK_RELIEF_NORMAL</relief>
 	  </widget>
 	</widget>
       </widget>
@@ -2149,6 +2085,7 @@ remote
 	  <last_modification_time>Tue, 22 Aug 2000 20:50:12 GMT</last_modification_time>
 	</signal>
 	<label>OK</label>
+	<relief>GTK_RELIEF_NORMAL</relief>
       </widget>
 
       <widget>
@@ -2162,6 +2099,7 @@ remote
 	  <last_modification_time>Tue, 22 Aug 2000 20:41:31 GMT</last_modification_time>
 	</signal>
 	<label>Cancel</label>
+	<relief>GTK_RELIEF_NORMAL</relief>
       </widget>
     </widget>
   </widget>
@@ -2345,6 +2283,7 @@ remote
 	      <last_modification_time>Thu, 21 Sep 2000 20:53:15 GMT</last_modification_time>
 	    </signal>
 	    <label>View</label>
+	    <relief>GTK_RELIEF_NORMAL</relief>
 	  </widget>
 
 	  <widget>
@@ -2354,6 +2293,7 @@ remote
 	    <can_default>True</can_default>
 	    <can_focus>True</can_focus>
 	    <label>Search</label>
+	    <relief>GTK_RELIEF_NORMAL</relief>
 	  </widget>
 	</widget>
       </widget>
@@ -2554,6 +2494,7 @@ ASCII
 	  <handler>on_pgup_clicked</handler>
 	  <last_modification_time>Thu, 21 Sep 2000 12:53:53 GMT</last_modification_time>
 	</signal>
+	<relief>GTK_RELIEF_NORMAL</relief>
 	<child>
 	  <padding>0</padding>
 	  <expand>True</expand>
@@ -2582,6 +2523,7 @@ ASCII
 	  <handler>on_pgdn_clicked</handler>
 	  <last_modification_time>Thu, 21 Sep 2000 12:53:58 GMT</last_modification_time>
 	</signal>
+	<relief>GTK_RELIEF_NORMAL</relief>
 	<child>
 	  <padding>0</padding>
 	  <expand>True</expand>
@@ -2681,6 +2623,7 @@ ASCII
 	  <last_modification_time>Thu, 21 Sep 2000 12:54:48 GMT</last_modification_time>
 	</signal>
 	<label>Undo changes</label>
+	<relief>GTK_RELIEF_NORMAL</relief>
       </widget>
 
       <widget>
@@ -2694,6 +2637,7 @@ ASCII
 	  <last_modification_time>Thu, 21 Sep 2000 12:54:53 GMT</last_modification_time>
 	</signal>
 	<label>Submit changes</label>
+	<relief>GTK_RELIEF_NORMAL</relief>
       </widget>
 
       <widget>
@@ -2707,6 +2651,7 @@ ASCII
 	  <last_modification_time>Thu, 21 Sep 2000 12:54:43 GMT</last_modification_time>
 	</signal>
 	<label>Close</label>
+	<relief>GTK_RELIEF_NORMAL</relief>
       </widget>
     </widget>
 
@@ -2962,6 +2907,7 @@ ASCII
 		<last_modification_time>Sun, 04 Jun 2000 13:52:41 GMT</last_modification_time>
 	      </signal>
 	      <label>Record</label>
+	      <relief>GTK_RELIEF_NORMAL</relief>
 	    </widget>
 
 	    <widget>
@@ -2975,6 +2921,7 @@ ASCII
 		<last_modification_time>Sun, 04 Jun 2000 13:52:24 GMT</last_modification_time>
 	      </signal>
 	      <label>Stop recording</label>
+	      <relief>GTK_RELIEF_NORMAL</relief>
 	    </widget>
 	  </widget>
 	</widget>
