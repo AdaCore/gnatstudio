@@ -1445,8 +1445,7 @@ package body Glide_Kernel.Modules is
          end;
       end if;
 
-      Init (Value (1), Glib.GType_String);
-      Set_String (Value (1), Full_Name (Filename).all);
+      Set_File (Value (1), Filename);
 
       Init (Value (2), Glib.GType_Int);
       Set_Int (Value (2), Gint (Line));
@@ -1651,6 +1650,9 @@ package body Glide_Kernel.Modules is
          Module_Node := Next (Module_Node);
       end loop;
 
+      --  ??? Problem: should destroy the modules in the reverse order.
+      --  Otherwise, the scripts module is no longer available for the other
+      --  modules.
       Free (Kernel.Modules_List);
    end Free_Modules;
 
