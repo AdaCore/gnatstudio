@@ -193,24 +193,4 @@ package body Codefix_Window_Pkg.Callbacks is
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Cancel_Changes_Clicked;
 
-   ------------------------------
-   -- On_Apply_Changes_Clicked --
-   ------------------------------
-
-   procedure On_Apply_Changes_Clicked
-     (Object : access Gtk_Widget_Record'Class)
-   is
-      Graphic_Codefix : constant Graphic_Codefix_Access :=
-        Graphic_Codefix_Access (Object);
-   begin
-      Commit
-        (Graphic_Codefix.Corrector,
-         Graphic_Codefix.Current_Text.all);
-      Quit (Graphic_Codefix);
-
-   exception
-      when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
-   end On_Apply_Changes_Clicked;
-
 end Codefix_Window_Pkg.Callbacks;
