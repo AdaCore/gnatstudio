@@ -41,13 +41,23 @@ package Glide_Result_View is
    --  Internal initialization procedure.
 
    procedure Insert
-     (View              : access Result_View_Record'Class;
-      Identifier        : String;
-      Source_File       : String;
-      Source_Line       : Natural;
-      Source_Column     : Natural;
-      Message           : String);
-   --  See comment in glide_kernel-result_tree.ads.
+     (View          : access Result_View_Record'Class;
+      Identifier    : String;
+      Source_File   : String;
+      Source_Line   : Natural;
+      Source_Column : Natural;
+      Message       : String;
+      Length        : Natural);
+   --  Insert a new location item for the category corresponding to
+   --  Identifier. Message is the text that will be displayed next to the
+   --  file location. If necessary, the category corresponding to Identifier
+   --  is created.
+
+   procedure Remove_Category
+     (View          : access Result_View_Record'Class;
+      Identifier    : String);
+   --  Remove category Identifier from the view. All corresponding marks
+   --  are deleted.
 
 private
    type Result_View_Record is new Gtk_Hbox_Record with record
