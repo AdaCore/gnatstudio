@@ -26,7 +26,6 @@ with Gtk.Item_Factory; use Gtk.Item_Factory;
 with Gtk.Main;
 with Gtk.Menu_Bar; use Gtk.Menu_Bar;
 with Gtk.Window; use Gtk.Window;
-with Gtk.Widget; use Gtk.Widget;
 with Gtkada.MDI; use Gtkada.MDI;
 with Gtk.Dialog; use Gtk.Dialog;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
@@ -124,45 +123,5 @@ package GVD.Main_Window is
       Key         : String;
       Menu_Items  : Gtk_Item_Factory_Entry_Array);
    --  Internal initialize function.
-
-   procedure Set_Toolbar
-     (Main_Window : access GVD_Main_Window_Record'Class;
-      Toolbar     : access Gtk_Widget_Record'Class);
-   --  Set the main window's toolbar
-
-   procedure Update_External_Dialogs
-     (Window   : access GVD_Main_Window_Record'Class;
-      Debugger : Glib.Object.GObject := null);
-   --  Update the contents of all the dialogs associated with the window
-   --  (backtrace, threads, ...) if they are visible.
-   --  Their contents is updated based on the current debugger, unless
-   --  Debugger is not null.
-
-   procedure Find_Match
-     (H   : in out History_List;
-      Num : in Natural;
-      D   : in Direction);
-   --  Moves in the history in the given direction until it finds a non-hidden
-   --  command which was sent to the debugger with number Num.
-   --  No_Such_Item is raised if no matching command is found.
-
-   procedure Preferences_Changed
-     (Window : access GVD_Main_Window_Record'Class);
-   --  Emit the "preferences_changed" signal, which indicates a change in
-   --  the preferences. The exact change is not accessible as a parameter.
-
-   procedure Prepare_Cleanup_Debuggers
-     (Window : access GVD_Main_Window_Record'Class);
-   --  Prepare call to Cleanup_Debuggers below by stopping all the debuggers
-   --  contained in the main window.
-
-   procedure Cleanup_Debuggers (Window : access GVD_Main_Window_Record'Class);
-   --  Close all the debuggers associated with a given main debug window.
-
-   procedure Switch_Debugger
-     (Window   : access GVD_Main_Window_Record'Class;
-      Debugger : Glib.Object.GObject);
-   --  Set the current debugger associated with Window to Debugger.
-   --  Update any associated dialogs (e.g. Task window) accordingly.
 
 end GVD.Main_Window;
