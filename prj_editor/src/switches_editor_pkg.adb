@@ -5,7 +5,7 @@ with Gtk.Adjustment;  use Gtk.Adjustment;
 with Gtk.Widget;      use Gtk.Widget;
 with Gtk.Enums;       use Gtk.Enums;
 with Gtkada.Handlers; use Gtkada.Handlers;
-with Switches_Glade_Intl; use Switches_Glade_Intl;
+with Glide_Intl; use Glide_Intl;
 with Switches_Editor_Pkg.Callbacks; use Switches_Editor_Pkg.Callbacks;
 with Gtk.Handlers; use Gtk.Handlers;
 

@@ -3,7 +3,7 @@ pragma Style_Checks (Off);
 with Gtk; use Gtk;
 with Gtk.Widget;     use Gtk.Widget;
 with Gtk.Enums;      use Gtk.Enums;
-with Prj_Edit_Intl;  use Prj_Edit_Intl;
+with Glide_Intl;  use Glide_Intl;
 with Pixmaps_IDE;    use Pixmaps_IDE;
 
 package body Wizard_Window_Pkg is
