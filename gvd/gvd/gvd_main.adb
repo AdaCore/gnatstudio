@@ -34,11 +34,13 @@ with Debugger;
 with Process_Proxies;
 with GVD.Process;           use GVD.Process;
 with GVD.Types;
-with GNAT.OS_Lib;           use GNAT.OS_Lib;
-with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+with GVD.Strings;           use GVD.Strings;
 with GVD.Preferences;       use GVD.Preferences;
 with GVD.Window_Settings;   use GVD.Window_Settings;
 
+with GNAT.OS_Lib;           use GNAT.OS_Lib;
+with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+with GNAT.Command_Line; use GNAT.Command_Line;
 pragma Warnings (Off);
 with GNAT.Expect; use GNAT.Expect;
 pragma Warnings (On);
@@ -47,13 +49,6 @@ with Ada.Command_Line;  use Ada.Command_Line;
 with Ada.Strings.Fixed; use Ada.Strings.Fixed;
 with Ada.Exceptions;    use Ada.Exceptions;
 with Ada.Text_IO;       use Ada.Text_IO;
-with GNAT.Command_Line; use GNAT.Command_Line;
-
-with Language.Debugger.Ada; use Language.Debugger.Ada;
-with Language.Debugger.C;   use Language.Debugger.C;
-with Language.Debugger.Cpp; use Language.Debugger.Cpp;
-with Language;              use Language;
-with GVD.Strings;           use GVD.Strings;
 
 procedure GVD_Main is
    Process           : Debugger_Process_Tab;
@@ -75,7 +70,6 @@ procedure GVD_Main is
    Protocol          : String_Access := new String' ("");
    Tmp_String        : String_Access;
    Debuggee_Name     : String_Access;
-   Lang              : Language_Access;
 
    procedure Init;
    --  Set up environment for GVD.
@@ -171,29 +165,6 @@ procedure GVD_Main is
       else
          Set_Default_Preferences;
       end if;
-
-      --  ??? This should be moved in a future "preferences" package, so as to
-      --  accomodate user's specific extensions
-      --  ??? Pb with .c files, which can be both C or C++. The best would be
-      --  to ask the debugger, since it would also remove the need for
-      --  explicit registration.
-      --  ??? If we want to support modules, we can not register an explicit
-      --  instance. We need to rely on each module for registration.
-      Lang := new Ada_Language;
-      Add_File_Extension (Lang, "\.ada$");
-      Add_File_Extension (Lang, "\.a$");
-      Add_File_Extension (Lang, "\.adb$");
-      Add_File_Extension (Lang, "\.ads$");
-      Add_File_Extension (Lang, "\.dg$");
-      Lang := new C_Language;
-      Add_File_Extension (Lang, "\.c$");
-      Add_File_Extension (Lang, "\.h$");
-      Lang := new Cpp_Language;
-      Add_File_Extension (Lang, "\.cc$");
-      Add_File_Extension (Lang, "\.cpp$");
-      Add_File_Extension (Lang, "\.C$");
-      Add_File_Extension (Lang, "\.hh$");
-      Add_File_Extension (Lang, "\.H$");
    end Init;
 
    function Format (Str : String; Columns : Positive) return String is
@@ -356,8 +327,8 @@ begin
    Initialize_Option_Scan (Section_Delimiters => "-dargs -pargs");
 
    loop
-      case Getopt ("-debugger: -jdb -tty fullname -version -help " &
-        "-host: -log-level: -target:")
+      case Getopt ("-debugger: -jdb -parent-window: -tty fullname " &
+        "-version -help -host: -log-level: -target:")
       is
          -- long option names --
          when '-' =>
@@ -403,6 +374,11 @@ begin
                            (GVD.Types.Command_Type'Last) + 1 - Level);
                   end if;
 
+               when 'p' =>
+                  -- --parent-window --
+                  Main_Debug_Window.External_XID :=
+                    Guint'Value (Clean_Parameter);
+
                when 't' =>
                   -- --tty --
                   if Full_Switch = "-tty" then
@@ -437,10 +413,11 @@ begin
                -- --version --
                when 'v' =>
                   if GVD.Can_Output then
-                     Put_Line ("GVD Version " & GVD.Version);
+                     Put_Line ("GVD Version " & GVD.Version &
+                       " for " & GVD.Target);
                   else
                      Button := Message_Dialog
-                       ("GVD Version " & GVD.Version,
+                       ("GVD Version " & GVD.Version & " for " & GVD.Target,
                         Information, Button_OK,
                         Title => -"Version",
                         Justification => Justify_Left);
