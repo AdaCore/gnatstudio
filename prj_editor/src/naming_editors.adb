@@ -136,21 +136,51 @@ package body Naming_Editors is
       use Widget_List;
       List  : Gtk_List := Get_List (Editor.Standard_Scheme);
       Scheme : Gint := Child_Position (List, Get_Data (Get_Selection (List)));
-      Pack, Var : Project_Node_Id;
+      Pack : Project_Node_Id := Empty_Node;
+      Var : Project_Node_Id;
+      Num_Rows : constant Gint := Get_Rows (Editor.Exception_List);
    begin
       --  Do nothing for the standard GNAT naming scheme
       if Scheme /= 0 then
          Pack := Get_Or_Create_Package (Project, "Naming");
-         Var := Get_Or_Create_Variable (Pack, "Casing", Single);
+         Var := Get_Or_Create_Attribute (Pack, "Casing", Single);
          Set_Value (Var, Get_Text (Get_Entry (Editor.Casing)));
-         Var := Get_Or_Create_Variable (Pack, "Dot_Replacement", Single);
+         Var := Get_Or_Create_Attribute (Pack, "Dot_Replacement", Single);
          Set_Value (Var, Get_Text (Editor.Dot_Replacement));
-         Var := Get_Or_Create_Variable (Pack, "Specification_Append", Single);
+         Var := Get_Or_Create_Attribute (Pack, "Specification_Append", Single);
          Set_Value (Var, Get_Text (Get_Entry (Editor.Spec_Extension)));
-         Var := Get_Or_Create_Variable (Pack, "Body_Append", Single);
+         Var := Get_Or_Create_Attribute (Pack, "Body_Append", Single);
          Set_Value (Var, Get_Text (Get_Entry (Editor.Body_Extension)));
-         Var := Get_Or_Create_Variable (Pack, "Separate_Append", Single);
+         Var := Get_Or_Create_Attribute (Pack, "Separate_Append", Single);
          Set_Value (Var, Get_Text (Get_Entry (Editor.Separate_Extension)));
+      end if;
+
+      if Num_Rows /= 0 then
+         if Pack = Empty_Node then
+            Pack := Get_Or_Create_Package (Project, "Naming");
+         end if;
+
+         for J in 0 .. Num_Rows - 1 loop
+            declare
+               U : constant String := Get_Text (Editor.Exception_List, J, 0);
+               Spec : constant String :=
+                 Get_Text (Editor.Exception_List, J, 1);
+               Bod : constant String :=
+                 Get_Text (Editor.Exception_List, J, 2);
+            begin
+               if Spec /= "" then
+                  Var := Get_Or_Create_Attribute
+                    (Pack, "Specification", U, Single);
+                  Set_Value (Var, Spec);
+               end if;
+               if Bod /= "" then
+                  Var := Get_Or_Create_Attribute
+                    (Pack, "Body_Part", U, Single);
+                  Set_Value (Var, Bod);
+               end if;
+            end;
+         end loop;
+
       end if;
    end Create_Project_Entry;
 
