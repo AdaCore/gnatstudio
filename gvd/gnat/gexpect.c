@@ -25,9 +25,8 @@ typedef long fd_mask;
 #endif /* !NO_FD_SET */
 
 int
-g_expect_poll (int* fd, int num_fd,
-	       int timeout, int* is_set) {
-
+__gnat_expect_poll (int* fd, int num_fd, int timeout, int* is_set)
+{
   struct timeval tv;
   SELECT_MASK rset;
   int max_fd = 0;

@@ -83,7 +83,7 @@ package body GNAT.Expect is
                   Timeout : Integer;
                   Is_Set  : System.Address)
                  return Integer;
-   pragma Import (C, Poll, "g_expect_poll");
+   pragma Import (C, Poll, "__gnat_expect_poll");
    --  Check whether there is any data waiting on the file descriptor
    --  Out_fd, and wait if there is none, at most Timeout milliseconds
    --  Returns -1 in case of error, 0 if the timeout expired before
