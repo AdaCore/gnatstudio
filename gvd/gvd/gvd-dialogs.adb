@@ -157,7 +157,7 @@ package body Odd.Dialogs is
      (Task_Dialog : access Task_Dialog_Record;
       Debugger    : access Gtk.Widget.Gtk_Widget_Record'Class)
    is
-      Process  : Process_Proxy_Access :=
+      Process     : constant Process_Proxy_Access :=
         Get_Process (Debugger_Process_Tab (Debugger).Debugger);
       Num_Columns : Thread_Fields;
       Row         : Gint;
@@ -165,11 +165,6 @@ package body Odd.Dialogs is
    begin
       if not Visible_Is_Set (Task_Dialog) then
          return;
-      end if;
-
-      if Task_Dialog.List /= null then
-         Freeze (Task_Dialog.List);
-         Clear (Task_Dialog.List);
       end if;
 
       --  If the debugger was killed, no need to refresh
@@ -187,7 +182,7 @@ package body Odd.Dialogs is
          Info : Thread_Information_Array :=
            Info_Threads (Debugger_Process_Tab (Debugger).Debugger);
       begin
-         if Task_Dialog.List = null then
+         if Task_Dialog.List = null and then Info'Length > 0 then
             Num_Columns := Info (Info'First).Num_Fields;
             Gtk_New
               (Task_Dialog.List,
@@ -199,22 +194,22 @@ package body Odd.Dialogs is
                "select_row",
                On_Task_List_Select_Row'Access);
             Add (Task_Dialog.Scrolledwindow1, Task_Dialog.List);
-            Freeze (Task_Dialog.List);
          end if;
 
          if Info'Length > 0 then
+            Freeze (Task_Dialog.List);
+            Clear (Task_Dialog.List);
 
             for J in Info'First + 1 .. Info'Last loop
                Row := Append (Task_Dialog.List, Info (J).Information);
             end loop;
 
             Row := Columns_Autosize (Task_Dialog.List);
+            Thaw (Task_Dialog.List);
          end if;
 
          Free (Info);
       end;
-
-      Thaw (Task_Dialog.List);
    end Update;
 
    procedure Update
