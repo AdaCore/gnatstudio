@@ -2685,6 +2685,10 @@ package body Project_Properties is
             Default_Value := Typ.Dynamic_Default;
       end case;
 
+      if Default_Value = null then
+         Default_Value := Empty_String'Unchecked_Access;
+      end if;
+
       if Default_Only then
          return Default_Value.all;
       else
