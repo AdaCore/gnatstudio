@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
@@ -27,6 +27,7 @@ with Ada.Exceptions;          use Ada.Exceptions;
 
 with Glide_Kernel;            use Glide_Kernel;
 with Glide_Kernel.Modules;    use Glide_Kernel.Modules;
+with Glide_Kernel.Standard_Hooks; use Glide_Kernel.Standard_Hooks;
 with Glide_Intl;              use Glide_Intl;
 
 with Make_Harness_Window_Pkg; use Make_Harness_Window_Pkg;
