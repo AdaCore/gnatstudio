@@ -241,17 +241,18 @@ package Language is
    --  Non_RM_Style means do not follow the style recommended by the RM.
 
    type Indent_Parameters is record
-      Indent_Level      : Natural;
-      Indent_Continue   : Natural;
-      Indent_Decl       : Natural;
-      Tab_Width         : Natural;
-      Indent_Case_Extra : Indent_Style;
-      Reserved_Casing   : Case_Handling.Casing_Type;
-      Ident_Casing      : Case_Handling.Casing_Type;
-      Format_Operators  : Boolean;
-      Use_Tabs          : Boolean;
-      Align_On_Colons   : Boolean;
-      Align_On_Arrows   : Boolean;
+      Indent_Level        : Natural;
+      Indent_Continue     : Natural;
+      Indent_Decl         : Natural;
+      Tab_Width           : Natural;
+      Indent_Case_Extra   : Indent_Style;
+      Reserved_Casing     : Case_Handling.Casing_Type;
+      Ident_Casing        : Case_Handling.Casing_Type;
+      Format_Operators    : Boolean;
+      Use_Tabs            : Boolean;
+      Align_On_Colons     : Boolean;
+      Align_On_Arrows     : Boolean;
+      Align_Decl_On_Colon : Boolean;
       --  ??? Missing alignment parameters:
       --      - assignments in declarations
       --      - assignments in assignment statements
@@ -261,31 +262,36 @@ package Language is
    --  Note that some of these parameters will be ignored, depending on the
    --  actual language.
    --
-   --  Indent_Level      number of spaces when indenting a block.
-   --  Indent_Continue   number of spaces for a continuation line.
-   --  Indent_Decl       number of spaces for multi-line variables declaration.
-   --  Tab_Width         number of spaces for a tab character.
-   --  Indent_Case_Extra Whether to add extra indent level for case statements
-   --  Reserved_Casing   casing of reserved words.
-   --  Indent_Casing     casing of identifiers.
-   --  Format_Operators  whether operators should be reformatted (e.g. spaces
-   --                    added around "<")
-   --  Use_Tabs          whether tabs should be used instead of spaces.
-   --  Align_On_Colons   perform alignment on colons in declarations
-   --  Align_On_Arrows   perform alignment on arrows in associations
+   --  Indent_Level        number of spaces when indenting a block.
+   --  Indent_Continue     number of spaces for a continuation line.
+   --  Indent_Decl         number of spaces for multi-line variables
+   --                      declaration.
+   --  Tab_Width           number of spaces for a tab character.
+   --  Indent_Case_Extra   Whether to add extra indent level for case
+   --                      statements
+   --  Reserved_Casing     casing of reserved words.
+   --  Indent_Casing       casing of identifiers.
+   --  Format_Operators    whether operators should be reformatted (e.g. spaces
+   --                      added around "<")
+   --  Use_Tabs            whether tabs should be used instead of spaces.
+   --  Align_On_Colons     perform alignment on colons in declarations
+   --  Align_On_Arrows     perform alignment on arrows in associations
+   --  Align_Decl_On_Colon align variable declarations based on the ':' of the
+   --                      variable decl.
 
    Default_Indent_Parameters : constant Indent_Parameters :=
-     (Indent_Level      => 3,
-      Indent_Continue   => 2,
-      Indent_Decl       => 0,
-      Tab_Width         => 8,
-      Indent_Case_Extra => Automatic,
-      Reserved_Casing   => Case_Handling.Unchanged,
-      Ident_Casing      => Case_Handling.Unchanged,
-      Format_Operators  => False,
-      Use_Tabs          => False,
-      Align_On_Colons   => False,
-      Align_On_Arrows   => False);
+                                 (Indent_Level        => 3,
+                                  Indent_Continue     => 2,
+                                  Indent_Decl         => 0,
+                                  Tab_Width           => 8,
+                                  Indent_Case_Extra   => Automatic,
+                                  Reserved_Casing   => Case_Handling.Unchanged,
+                                  Ident_Casing      => Case_Handling.Unchanged,
+                                  Format_Operators    => False,
+                                  Use_Tabs            => False,
+                                  Align_On_Colons     => False,
+                                  Align_On_Arrows     => False,
+                                  Align_Decl_On_Colon => False);
 
    type Indentation_Kind is (None, Simple, Extended);
    for Indentation_Kind'Size use Integer'Size;
