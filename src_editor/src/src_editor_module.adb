@@ -318,7 +318,6 @@ package body Src_Editor_Module is
                Directory_Information (Area_Context) &
                File_Information (Area_Context),
                Src_Editor_Module_Name,
-               A (Line2).Text.all'Length * 6 + 2,
                Infos,
                False);
          end;
@@ -1160,12 +1159,10 @@ package body Src_Editor_Module is
             MDI   : constant MDI_Window := Get_MDI (Kernel);
             File  : constant String  := Get_String (Data (Data'First));
             Id    : constant String  := Get_String (Data (Data'First + 1));
-            Width : constant Integer :=
-              Integer (Get_Int (Data (Data'First + 2)));
             Info  : Line_Information_Data :=
-              To_Line_Information (Get_Address (Data (Data'First + 3)));
+              To_Line_Information (Get_Address (Data (Data'First + 2)));
             Stick_To_Data : constant Boolean :=
-              Get_Boolean (Data (Data'First + 4));
+              Get_Boolean (Data (Data'First + 3));
             Child : MDI_Child;
             Iter  : Child_Iterator := First_Child (MDI);
 
@@ -1184,7 +1181,6 @@ package body Src_Editor_Module is
                Add_File_Information
                  (Source_Box (Get_Widget (Child)).Editor,
                   Id,
-                  Width,
                   Info,
                   Stick_To_Data);
 
