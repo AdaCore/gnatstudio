@@ -102,7 +102,7 @@ package body GVD.Dialogs is
       Extra_Box2      : Gtk.Check_Button.Gtk_Check_Button := null;
       Title           : String;
       Message         : String;
-      Position        : Gtk_Window_Position := Win_Pos_Center;
+      Position        : Gtk_Window_Position := Win_Pos_Mouse;
       Key             : String := "") return String;
    --  Internal version of Simple_Entry_Dialog, where Dialog is already
    --  created.
@@ -530,7 +530,7 @@ package body GVD.Dialogs is
 
       Set_Title (Dialog, Title);
       Set_Policy (Dialog, False, True, False);
-      Set_Position (Dialog, Win_Pos_Center);
+      Set_Position (Dialog, Win_Pos_Mouse);
       Set_Default_Size (Dialog, -1, 200);
 
       Dialog.Vbox1 := Get_Vbox (Dialog);
@@ -548,7 +548,7 @@ package body GVD.Dialogs is
       Set_Child_Size (Dialog.Hbuttonbox1, 85, 27);
       Set_Layout (Dialog.Hbuttonbox1, Buttonbox_Spread);
 
-      Gtk_New (Dialog.Close_Button, -"Close");
+      Gtk_New_From_Stock (Dialog.Close_Button, Stock_Close);
       Add (Dialog.Hbuttonbox1, Dialog.Close_Button);
 
       Return_Callback.Connect
@@ -717,7 +717,7 @@ package body GVD.Dialogs is
       Gtk.Window.Initialize (History_Dialog, Window_Toplevel);
       Set_Title (History_Dialog, -"Command History");
       Set_Policy (History_Dialog, False, True, False);
-      Set_Position (History_Dialog, Win_Pos_Center);
+      Set_Position (History_Dialog, Win_Pos_Mouse);
       Set_Default_Size (History_Dialog, 0, 200);
       Set_Modal (History_Dialog, False);
 
@@ -749,8 +749,7 @@ package body GVD.Dialogs is
          Button_Callback.To_Marshaller (On_Replay_Selection_Clicked'Access));
       Add (History_Dialog.Hbuttonbox1, History_Dialog.Replay_Selection);
 
-      Gtk_New (History_Dialog.Cancel, -"Close");
-      Set_Flags (History_Dialog.Cancel, Can_Default);
+      Gtk_New_From_Stock (History_Dialog.Cancel, Stock_Close);
       Button_Callback.Connect
         (History_Dialog.Cancel, "clicked",
          Button_Callback.To_Marshaller (On_History_Cancel_Clicked'Access));
@@ -785,7 +784,7 @@ package body GVD.Dialogs is
       Extra_Box2      : Gtk.Check_Button.Gtk_Check_Button := null;
       Title           : String;
       Message         : String;
-      Position        : Gtk_Window_Position := Win_Pos_Center;
+      Position        : Gtk_Window_Position := Win_Pos_Mouse;
       Key             : String := "") return String
    is
       use Widget_List;
@@ -917,7 +916,7 @@ package body GVD.Dialogs is
      (Parent   : access Gtk.Window.Gtk_Window_Record'Class;
       Title    : String;
       Message  : String;
-      Position : Gtk_Window_Position := Win_Pos_Center;
+      Position : Gtk_Window_Position := Win_Pos_Mouse;
       Key      : String := "") return String
    is
       Dialog          : Simple_Entry_Dialog_Access;
@@ -988,7 +987,7 @@ package body GVD.Dialogs is
       Title          : String;
       Message        : String;
       Position       : Gtk.Enums.Gtk_Window_Position :=
-        Gtk.Enums.Win_Pos_Center;
+        Gtk.Enums.Win_Pos_Mouse;
       Check_Msg      : String;
       Key            : String := "";
       Button_Active  : access Boolean;

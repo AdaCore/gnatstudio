@@ -200,7 +200,7 @@ package GVD.Dialogs is
      (Parent    : access Gtk.Window.Gtk_Window_Record'Class;
       Title     : String;
       Message   : String;
-      Position  : Gtk.Enums.Gtk_Window_Position := Gtk.Enums.Win_Pos_Center;
+      Position  : Gtk.Enums.Gtk_Window_Position := Gtk.Enums.Win_Pos_Mouse;
       Key       : String := "") return String;
    --  Open a simple dialog, with a single entry field, and returns the
    --  contents of this field (or ASCII.NUL) if the user selected cancel).
@@ -218,7 +218,7 @@ package GVD.Dialogs is
       Title          : String;
       Message        : String;
       Position       : Gtk.Enums.Gtk_Window_Position :=
-        Gtk.Enums.Win_Pos_Center;
+        Gtk.Enums.Win_Pos_Mouse;
       Check_Msg      : String;
       Key            : String := "";
       Button_Active  : access Boolean;
