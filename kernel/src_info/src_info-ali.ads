@@ -22,20 +22,21 @@ with Prj;
 
 package Src_Info.ALI is
 
-   procedure Parse_ALI_File
-      (ALI_Filename           : String;
-       Project                : Prj.Project_Id;
-       Predefined_Source_Path : String;
-       Predefined_Object_Path : String;
-       List                   : in out LI_File_List;
-       Unit                   : out LI_File_Ptr;
-       Success                : out Boolean);
-   --  Parse the given ALI file and update the Unit Info list. Also returns
-   --  a handle to the Unit Info corresponding to this ALI file to avoid
-   --  searching right-back for this handle for immediate queries.
+   type ALI_Handler_Record is new LI_Handler_Record with null record;
+   type ALI_Handler is access all ALI_Handler_Record'Class;
 
-   function ALI_Filename_From_Source
-     (Source_Filename        : String;
+   procedure Create_Or_Complete_LI
+     (Handler                : access ALI_Handler_Record;
+      File                   : in out LI_File_Ptr;
+      Source_Filename        : String;
+      List                   : in out LI_File_List;
+      Project                : Prj.Project_Id;
+      Predefined_Source_Path : String;
+      Predefined_Object_Path : String);
+
+   function LI_Filename_From_Source
+     (Handler                : access ALI_Handler_Record;
+      Source_Filename        : String;
       Project                : Prj.Project_Id;
       Predefined_Source_Path : String)
       return String;
@@ -60,19 +61,5 @@ package Src_Info.ALI is
    --  ??? from a given unit name that would be a separate. The result of
    --  ??? this function could then be used to call ALI_Filename_From_Source
    --  ??? to get the associated ALI filename.
-
-   procedure Locate_From_Source
-     (List                   : in out LI_File_List;
-      Source_Filename        : String;
-      Project                : Prj.Project_Id;
-      Predefined_Source_Path : String;
-      Predefined_Object_Path : String;
-      File                   : out LI_File_Ptr);
-   --  Return a pointer to the LI_File which has a source file named
-   --  Source_Filename. Return No_LI_File if not found.
-   --  Source_Filename should be a basename (no directory).
-   --
-   --  If the matching ALI file was not found in List, it is automatically
-   --  searched and parsed.
 
 end Src_Info.ALI;
