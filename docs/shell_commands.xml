@@ -1621,6 +1621,27 @@ def on_exit (self, status, remaining_output):
 def run():
    proc = GPS.Process("gdb", "^\\(gdb\\)", on_match=on_match, on_exit=on_exit)
    proc.id = "first session"
+
+run()
+      </example>
+      <example lang="python">
+A similar example can be implemented by using a new class. This is slightly
+cleaner, since it doesn't pollute the global namespace.
+
+class My_Gdb (GPS.Process):
+   def matched (self, unmatched, matched):
+      my_print ("matched " + self.id)
+      self.kill()
+
+   def exited (self, status, output):
+      my__print ("exited " + self.id)
+
+   def __init__ (self):
+       self.id = "from class"
+       GPS.Process.__init__ (self, "gdb", "^\\(gdb\\)", on_match=My_Gdb.matched, on_exit=My_Gdb.exited)
+
+
+My_Gdb()
       </example>
   </shell_doc>
 
@@ -1678,7 +1699,7 @@ on_match is subprogram called with the parameters:
 
   <shell_doc name="GPS.Hook">
       <description>General interface to hooks. Hooks are commands executed when some specific events occur in GPS, and allow you to customize some of the aspects of GPS</description>
-  </shell_doc>
+ </shell_doc>
 
   <shell_doc name="GPS.Hook.__init__">
       <param name="self">The instance of GPS.Hook we are initializing</param>
@@ -1698,11 +1719,16 @@ The specific list depends on the hook type</param>
       <param name="self">The instance of GPS.Hook</param>
       <param name="function_name">A subprogram, see the "Subprogram Parameters" section in the GPS documentation</param>
       <description>Connect a new function to a specific hook. Any time this hook is run through run_hook, this function will be called with the same parameters passed to run_hook.</description>
-      <example lang="python">
-          def my_function (*args):
-              print "A new file was edited"
-          GPS.Hook ("filed_edited").add (my_function)
-      </example>
+      <example lang="shell">
+        parse_xml """&lt;action name="edited"&gt;&lt;shell&gt;echo "File edited hook=$1 file=$2"&lt;/shell&gt;&lt;/action&gt;"""
+        Hook "file_edited"
+        Hook.add %1 "edited"
+     </example>
+     <example lang="python">
+        def filed_edited (hook_name, file):
+            print "File edited (hook=" + hook_name + " file=" + file.name()
+        GPS.Hook ("file_edited").add (file_edited)
+     </example>
   </shell_doc>
 
   <shell_doc name="GPS.register" real_name="GPS.Hook.register">
