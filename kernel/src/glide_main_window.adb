@@ -56,6 +56,8 @@ with Glide_Intl;                use Glide_Intl;
 with Glide_Kernel.Project;      use Glide_Kernel.Project;
 with Glib.Values;               use Glib.Values;
 with Commands.Interactive;      use Commands, Commands.Interactive;
+with Glib.Generic_Properties;   use Glib.Generic_Properties;
+with Glib.Properties.Creation;  use Glib.Properties.Creation;
 
 package body Glide_Main_Window is
 
@@ -73,6 +75,22 @@ package body Glide_Main_Window is
    Input_Dialog_Cmd_Parameters : constant Cst_Argument_List :=
      (1 => Msg_Cst'Access,
       2 => Param1_Cst'Access);
+
+   type Tabs_Position_Preference is (Bottom, Top, Left, Right);
+   for Tabs_Position_Preference'Size use Glib.Gint'Size;
+   pragma Convention (C, Tabs_Position_Preference);
+   package Tabs_Position_Properties is new Generic_Enumeration_Property
+     ("Tabs_Position", Tabs_Position_Preference);
+
+   type Tabs_Policy_Enum is (Never, Automatic, Always);
+   for Tabs_Policy_Enum'Size use Glib.Gint'Size;
+   pragma Convention (C, Tabs_Policy_Enum);
+   package Show_Tabs_Policy_Properties is new Generic_Enumeration_Property
+     ("Tabs_Policy", Tabs_Policy_Enum);
+
+   Pref_Draw_Title_Bars : Param_Spec_Boolean;
+   Pref_Tabs_Policy     : Param_Spec_Enum;
+   Pref_Tabs_Position   : Param_Spec_Enum;
 
    function Delete_Callback
      (Widget : access Gtk_Widget_Record'Class;
@@ -264,6 +282,8 @@ package body Glide_Main_Window is
    is
       use Glib;
       Win : constant Glide_Window := Glide_Window (Get_Main_Window (Kernel));
+      Pos : Gtk_Position_Type;
+      Policy : Show_Tabs_Policy_Enum;
    begin
       Gtk.Rc.Parse_String
         ("gtk-font-name=""" &
@@ -289,6 +309,21 @@ package body Glide_Main_Window is
          Set_Style (Get_Toolbar (Kernel), Toolbar_Icons);
       end if;
 
+      case Tabs_Position_Preference'Val
+        (Get_Pref (Kernel, Pref_Tabs_Position))
+      is
+         when Bottom => Pos := Pos_Bottom;
+         when Right  => Pos := Pos_Right;
+         when Top    => Pos := Pos_Top;
+         when Left   => Pos := Pos_Left;
+      end case;
+
+      case Tabs_Policy_Enum'Val (Get_Pref (Kernel, Pref_Tabs_Policy)) is
+         when Automatic => Policy := Show_Tabs_Policy_Enum'(Automatic);
+         when Never     => Policy := Show_Tabs_Policy_Enum'(Never);
+         when Always    => Policy := Show_Tabs_Policy_Enum'(Always);
+      end case;
+
       Configure
         (Get_MDI (Kernel),
          Opaque_Resize     => Get_Pref (Kernel, MDI_Opaque),
@@ -298,7 +333,10 @@ package body Glide_Main_Window is
          Title_Font        => Get_Pref (Kernel, Default_Font),
          Background_Color  => Get_Pref (Kernel, MDI_Background_Color),
          Title_Bar_Color   => Get_Pref (Kernel, MDI_Title_Bar_Color),
-         Focus_Title_Color => Get_Pref (Kernel, MDI_Focus_Title_Color));
+         Focus_Title_Color => Get_Pref (Kernel, MDI_Focus_Title_Color),
+         Draw_Title_Bars   => Get_Pref (Kernel, Pref_Draw_Title_Bars),
+         Show_Tabs_Policy  => Policy,
+         Tabs_Position     => Pos);
 
       Set_All_Floating_Mode
         (Get_MDI (Kernel), Get_Pref (Kernel, MDI_All_Floating));
@@ -321,6 +359,38 @@ package body Glide_Main_Window is
 
    begin
       Gtk_New (Main_Window.Kernel, Gtk_Window (Main_Window), Home_Dir);
+
+      Pref_Draw_Title_Bars := Param_Spec_Boolean
+        (Gnew_Boolean
+           (Name  => "Window-Draw-Title-Bars",
+            Nick  => -"Show title bars",
+            Blurb => -("Whether the windows should have their own title bars."
+                       & " If this is disabled, then the notebooks tabs will"
+                       & " be used to show the current window"),
+            Default => True));
+      Register_Property
+        (Main_Window.Kernel, Param_Spec (Pref_Draw_Title_Bars), -"Windows");
+
+      Pref_Tabs_Policy := Param_Spec_Enum
+        (Show_Tabs_Policy_Properties.Gnew_Enum
+           (Name  => "Window-Tabs-Policy",
+            Nick  => -"Notebook tabs policy",
+            Blurb => -"When the notebook tabs should be displayed",
+            Default => Automatic));
+      Register_Property
+        (Main_Window.Kernel, Param_Spec (Pref_Tabs_Policy), -"Windows");
+
+      Pref_Tabs_Position := Param_Spec_Enum
+        (Tabs_Position_Properties.Gnew_Enum
+           (Name  => "Window-Tabs-Position",
+            Nick  => -"Notebook tabs position",
+            Blurb => -("Where the tabs should be displayed relative to the"
+                       & " notebooks"),
+            Default => Bottom));
+      Register_Property
+        (Main_Window.Kernel, Param_Spec (Pref_Tabs_Position), -"Windows");
+
+
       GVD.Main_Window.Initialize (Main_Window, Key, Menu_Items);
 
       Set_Priorities (Main_Window.Process_Mdi, (Left, Top, Bottom, Right));
