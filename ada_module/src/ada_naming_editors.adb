@@ -238,6 +238,9 @@ package body Ada_Naming_Editors is
       Data : Naming_Data;
       Cache_Iter : Naming_Hash.String_Hash_Table.Iterator;
 
+      type Array2 is array (Gint'(1) .. 2) of Integer;
+      Lengths : Array2 := (others => -1);
+
       procedure Update_If_Required
         (Name : Attribute_Pkg; Value : String; Index : String);
       --  Update the attribute if necessary
@@ -246,6 +249,9 @@ package body Ada_Naming_Editors is
          return Boolean;
       --  True if the list of elements in List is different from the elements
       --  in column Column of the exceptions list.
+
+      function Rows_Count (Column : Gint) return Natural;
+      --  Return the number of non-blank rows in Column
 
       ------------------------
       -- Update_If_Required --
@@ -290,19 +296,15 @@ package body Ada_Naming_Editors is
          end if;
       end Update_If_Required;
 
-      ------------------
-      -- List_Changed --
-      ------------------
+      ----------------
+      -- Rows_Count --
+      ----------------
 
-      function List_Changed (List : Associative_Array; Column : Gint)
-         return Boolean
-      is
+      function Rows_Count (Column : Gint) return Natural is
          Length : Natural := 0;
-         Iter : Naming_Hash.String_Hash_Table.Iterator;
-         Data : Naming_Data;
+         Iter   : Naming_Hash.String_Hash_Table.Iterator;
+         Data   : Naming_Data;
       begin
-         --  Count the non-empty items in the table
-
          Get_First (Cache, Iter);
          loop
             Data := Get_Element (Iter);
@@ -315,8 +317,21 @@ package body Ada_Naming_Editors is
 
             Get_Next (Cache, Iter);
          end loop;
+         return Length;
+      end Rows_Count;
 
-         if List'Length /= Length then
+      ------------------
+      -- List_Changed --
+      ------------------
+
+      function List_Changed (List : Associative_Array; Column : Gint)
+         return Boolean
+      is
+         Data : Naming_Data;
+      begin
+         Lengths (Column) := Rows_Count (Column);
+
+         if List'Length /= Lengths (Column) then
             return True;
          end if;
 
@@ -391,55 +406,65 @@ package body Ada_Naming_Editors is
       --  Update the project if needed
 
       Changed := Changed
-        or else Project = No_Project
-        or else List_Changed
-           (Get_Attribute_Value (Project, Specification_Attribute), 1)
-        or else List_Changed
-           (Get_Attribute_Value (Project, Implementation_Attribute), 2);
+        or else Project = No_Project;
 
-      if Changed then
-         Delete_Attribute
-           (Project            => Project,
-            Scenario_Variables => Scenario_Variables,
-            Attribute          => Specification_Attribute,
-            Attribute_Index    => Any_Attribute);
-         Delete_Attribute
-           (Project            => Project,
-            Scenario_Variables => Scenario_Variables,
-            Attribute          => Implementation_Attribute,
-            Attribute_Index    => Any_Attribute);
+      --  Computing whether a list has changed is extremely fast now that the
+      --  hash table has been created. Much faster than updating the attributes
+      --  for nothing.
 
-         Get_First (Cache, Cache_Iter);
-         loop
-            Data := Get_Element (Cache_Iter);
-            exit when Data = No_Data;
+      for L in Lengths'Range loop
+         if (L = 1 and then List_Changed
+             (Get_Attribute_Value (Project, Specification_Attribute), L))
+           or else (L = 2 and then List_Changed
+             (Get_Attribute_Value (Project, Implementation_Attribute), L))
+         then
+            Changed := True;
 
             declare
-               Key : constant String := Get_Key (Cache_Iter);
+               Values : Associative_Array_Values (1 .. Lengths (L));
+               Index  : Natural := Values'First;
             begin
-               if Data.Spec_Name /= null then
-                  Update_Attribute_Value_In_Scenario
-                    (Project            => Project,
-                     Scenario_Variables => Scenario_Variables,
-                     Attribute          => Specification_Attribute,
-                     Value              => Data.Spec_Name.all,
-                     Attribute_Index    => Key);
+               Get_First (Cache, Cache_Iter);
+               loop
+                  Data := Get_Element (Cache_Iter);
+                  exit when Data = No_Data;
+
+                  if L = 1
+                    and then Data.Spec_Name /= null
+                  then
+                     Values (Index) :=
+                       (Index => new String'(Get_Key (Cache_Iter)),
+                        Value => Data.Spec_Name);
+                     Index := Index + 1;
+
+                  elsif L = 2
+                    and then Data.Body_Name /= null
+                  then
+                     Values (Index) :=
+                       (Index => new String'(Get_Key (Cache_Iter)),
+                        Value => Data.Body_Name);
+                     Index := Index + 1;
+                  end if;
+
+                  Get_Next (Cache, Cache_Iter);
+               end loop;
+
+               if L = 1 then
+                  Set_Attribute_Value_In_Scenario
+                    (Project, Scenario_Variables, Specification_Attribute,
+                     Values (Values'First .. Index - 1));
+               else
+                  Set_Attribute_Value_In_Scenario
+                    (Project, Scenario_Variables, Implementation_Attribute,
+                     Values (Values'First .. Index - 1));
                end if;
 
-               if Data.Body_Name /= null then
-                  Update_Attribute_Value_In_Scenario
-                    (Project            => Project,
-                     Scenario_Variables => Scenario_Variables,
-                     Attribute          => Implementation_Attribute,
-                     Value              => Data.Body_Name.all,
-                     Attribute_Index    => Key);
-               end if;
+               for V in Values'First .. Index - 1 loop
+                  Free (Values (V).Index);
+               end loop;
             end;
-
-            Get_Next (Cache, Cache_Iter);
-         end loop;
-
-      end if;
+         end if;
+      end loop;
 
       Reset (Cache);
 
