@@ -42,8 +42,11 @@ package VCS is
    type VCS_Access is access all VCS_Record'Class;
 
    procedure Free (Ref : access VCS_Record);
+   --  ???
 
    procedure Free (S : in out String);
+   --  ???
+
    package String_List is new Generic_List (String, Free => Free);
 
    type File_Status is
@@ -126,8 +129,7 @@ package VCS is
 
    function Local_Get_Status
      (Rep         : access VCS_Record;
-      Filenames   :        String_List.List)
-     return File_Status_List.List is abstract;
+      Filenames   : String_List.List) return File_Status_List.List is abstract;
    --  Return the status of a list of files.
    --  This function only attempts to read information from local data, and
    --  does not connect to the repository.
@@ -138,9 +140,8 @@ package VCS is
 
    procedure Open
      (Rep       : access VCS_Record;
-      Filenames :        String_List.List;
-      User_Name :        String           := "")
-      is abstract;
+      Filenames : String_List.List;
+      User_Name : String := "") is abstract;
    --  Open the a file for modification.
    --  This is a necessary step for some systems but not all of them.
    --  If User_Name is not empty, then add it to the list of users
@@ -148,8 +149,8 @@ package VCS is
 
    procedure Commit
      (Rep       : access VCS_Record;
-      Filenames :        String_List.List;
-      Logs      :        String_List.List) is abstract;
+      Filenames : String_List.List;
+      Logs      : String_List.List) is abstract;
    --  Check a file Name in the specified repository.
    --  Log is used as the revision history.
    --  The elements in Logs must exactly correspond to the elements in
@@ -157,32 +158,31 @@ package VCS is
 
    procedure Update
      (Rep       : access VCS_Record;
-      Filenames :        String_List.List) is abstract;
+      Filenames : String_List.List) is abstract;
    --  Synchronize the local files or directories.
 
    procedure Merge
      (Rep       : access VCS_Record;
-      Filenames :        String_List.List) is abstract;
+      Filenames : String_List.List) is abstract;
    --  Merge the files from the specified repository with the local files.
    --  The merge is done locally, a commit is required to pass the
    --  resulting changes to the repository.
 
    procedure Add
      (Rep       : access VCS_Record;
-      Filenames :        String_List.List) is abstract;
+      Filenames : String_List.List) is abstract;
    --  Add files to the specified VCS repository
 
    procedure Remove
      (Rep       : access VCS_Record;
-      Filenames :        String_List.List) is abstract;
+      Filenames : String_List.List) is abstract;
    --  Remove a given file/directory name from the specified VCS repository
 
    function Diff
      (Rep       : access VCS_Record;
-      File      :        String;
-      Version_1 :        String     := "";
-      Version_2 :        String     := "")
-     return String_List.List is abstract;
+      File      : String;
+      Version_1 : String := "";
+      Version_2 : String := "") return String_List.List is abstract;
    --  Return a diff between two versions of one file.
    --  The result is a String_List.List with one element for each line,
    --  in the standard basic diff format.
@@ -191,15 +191,13 @@ package VCS is
 
    function Log
      (Rep  : access VCS_Record;
-      File :        String)
-      return String_List.List is abstract;
+      File : String) return String_List.List is abstract;
    --  Return a changelog for the corresponding file.
    --  The result String_List.List with one element for each line.
 
    function Annotate
      (Rep  : access VCS_Record;
-      File :        String)
-      return String_List.List is abstract;
+      File : String) return String_List.List is abstract;
    --  Return annotations for the corresponding file.
    --  The result String_List.List with one element for each line.
 
@@ -215,21 +213,19 @@ package VCS is
    --  This function must return an empty string whenever an operation succeeds
    --  and a non-empty string whenever an operation fails.
 
-
    --  ??? this needs to be documented.
    --  ??? this needs to be made generic.
    --    generic
    --       type Data_Type is private;
    --    package Idle Is
 
-   type Idle_Function is access
-     procedure;
+   type Idle_Function is access procedure;
 
    procedure Register_Idle_Function
      (Rep     : access VCS_Record;
       Func    : Idle_Function;
       Timeout : Integer := 100) is abstract;
-   --
+   -- ???
 
    type Error_Function is access
      procedure (Error_Message : String;
@@ -239,14 +235,15 @@ package VCS is
      (Rep  : access VCS_Record;
       Func : Error_Function;
       Data : Gtk.Widget.Gtk_Widget);
+   --  ???
 
-   procedure Set_Error (Rep     : access VCS_Record;
-                        Message : String);
+   procedure Set_Error
+     (Rep     : access VCS_Record;
+      Message : String);
    --  Register a function that will be called every time that
    --  an error occurs.
 
-
-   --  missing:
+   --  ??? missing:
    --  init
    --  tag
    --  other version
