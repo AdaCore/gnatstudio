@@ -38,12 +38,12 @@ package body Open_Session_Pkg.Callbacks is
      (Object : access Gtk_List_Record'Class;
       Params : Gtk.Arguments.Gtk_Args)
    is
-      Open : Open_Session_Access :=
+      Open : constant Open_Session_Access :=
         Open_Session_Access (Get_Toplevel (Object));
       Arg1 : Gtk_Widget := Gtk_Widget (To_Object (Params, 1));
       use Widget_List;
 
-      Text : String :=
+      Text : constant String :=
         Get (Gtk_Label (Get_Data (Children (Gtk_Container (Arg1)))));
 
    begin
@@ -55,28 +55,15 @@ package body Open_Session_Pkg.Callbacks is
       end if;
    end On_List_Select_Child;
 
-   ------------------------------
-   -- On_Cancel_Button_Clicked --
-   ------------------------------
-
-   procedure On_Cancel_Button_Clicked
-     (Object : access Gtk_Button_Record'Class)
-   is
-   begin
-      Set_Text (Open_Session_Access (Get_Toplevel (Object)).Entry1, "");
-      Main_Quit;
-      Hide_All (Get_Toplevel (Object));
-   end On_Cancel_Button_Clicked;
-
    ---------------------------
    -- On_Select_All_Clicked --
    ---------------------------
 
    procedure On_Select_All_Clicked
      (Object : access Gtk_Button_Record'Class)
-     is
-      Open : Open_Session_Access
-        := Open_Session_Access (Get_Toplevel (Object));
+   is
+      Open : constant Open_Session_Access :=
+        Open_Session_Access (Get_Toplevel (Object));
       Button : Button_Link := Open.First_Button;
    begin
       while Button /= null loop
@@ -92,9 +79,10 @@ package body Open_Session_Pkg.Callbacks is
    procedure On_Unselect_All_Clicked
      (Object : access Gtk_Button_Record'Class)
    is
-      Open : Open_Session_Access
-        := Open_Session_Access (Get_Toplevel (Object));
+      Open : constant Open_Session_Access :=
+        Open_Session_Access (Get_Toplevel (Object));
       Button : Button_Link := Open.First_Button;
+
    begin
       while Button /= null loop
          Set_Active (Button.Button, False);
@@ -102,9 +90,9 @@ package body Open_Session_Pkg.Callbacks is
       end loop;
    end On_Unselect_All_Clicked;
 
-   ------------------------------
+   --------------------------
    -- On_Ok_Button_Clicked --
-   ------------------------------
+   --------------------------
 
    procedure On_Ok_Button_Clicked
      (Object : access Gtk_Button_Record'Class)
@@ -113,6 +101,19 @@ package body Open_Session_Pkg.Callbacks is
       Main_Quit;
       Hide_All (Get_Toplevel (Object));
    end On_Ok_Button_Clicked;
+
+   ------------------------------
+   -- On_Cancel_Button_Clicked --
+   ------------------------------
+
+   procedure On_Cancel_Button_Clicked
+     (Object : access Gtk_Button_Record'Class)
+   is
+   begin
+      Set_Text (Open_Session_Access (Get_Toplevel (Object)).Entry1, "");
+      Main_Quit;
+      Hide_All (Get_Toplevel (Object));
+   end On_Cancel_Button_Clicked;
 
    ----------------------------
    -- On_Help_Button_Clicked --

@@ -47,6 +47,17 @@ package body Open_Session_Pkg.Callbacks is
       null;
    end On_Unselect_All_Clicked;
 
+   --------------------------
+   -- On_Ok_Button_Clicked --
+   --------------------------
+
+   procedure On_Ok_Button_Clicked
+     (Object : access Gtk_Button_Record'Class)
+   is
+   begin
+      null;
+   end On_Ok_Button_Clicked;
+
    ------------------------------
    -- On_Cancel_Button_Clicked --
    ------------------------------
