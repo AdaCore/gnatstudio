@@ -943,6 +943,9 @@ package body Src_Editor_Buffer is
 
       Buffer.Setting_Mark := True;
 
+      --  ??? Should optimize this function by saving the values of
+      --  insert/gtk_drag_target marks
+
       declare
          Mark_Name : constant String := Get_Name (Mark);
       begin
@@ -957,7 +960,6 @@ package body Src_Editor_Buffer is
             end if;
 
             Emit_New_Cursor_Position (Buffer);
-
             Cursor_Move_Hook (Buffer);
          end if;
       end;
