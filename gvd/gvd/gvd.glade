@@ -49,14 +49,10 @@
     </widget>
 
     <widget>
-      <class>GtkToolbar</class>
-      <name>toolbar</name>
-      <orientation>GTK_ORIENTATION_HORIZONTAL</orientation>
-      <type>GTK_TOOLBAR_ICONS</type>
-      <space_size>5</space_size>
-      <space_style>GTK_TOOLBAR_SPACE_EMPTY</space_style>
-      <relief>GTK_RELIEF_NORMAL</relief>
-      <tooltips>True</tooltips>
+      <class>GtkVBox</class>
+      <name>toolbar_box</name>
+      <homogeneous>False</homogeneous>
+      <spacing>0</spacing>
       <child>
 	<padding>0</padding>
 	<expand>False</expand>
@@ -64,168 +60,7 @@
       </child>
 
       <widget>
-	<class>GtkButton</class>
-	<child_name>Toolbar:button</child_name>
-	<name>button49</name>
-	<tooltip>Start the debugged program</tooltip>
-	<signal>
-	  <name>clicked</name>
-	  <handler>on_run1_toolbar_activate</handler>
-	  <object>main_debug_window</object>
-	  <last_modification_time>Tue, 23 May 2000 15:10:48 GMT</last_modification_time>
-	</signal>
-	<label></label>
-	<icon>run_xpm</icon>
-      </widget>
-
-      <widget>
-	<class>GtkButton</class>
-	<child_name>Toolbar:button</child_name>
-	<name>button50</name>
-	<tooltip>Start the debugged program, stopping at the beginning of the main procedure</tooltip>
-	<signal>
-	  <name>clicked</name>
-	  <handler>on_start1_activate</handler>
-	  <object>main_debug_window</object>
-	  <last_modification_time>Tue, 23 May 2000 15:11:18 GMT</last_modification_time>
-	</signal>
-	<label></label>
-	<icon>start_xpm</icon>
-      </widget>
-
-      <widget>
-	<class>GtkButton</class>
-	<child_name>Toolbar:button</child_name>
-	<name>button52</name>
-	<tooltip>Step program until it reaches a different source line</tooltip>
-	<signal>
-	  <name>clicked</name>
-	  <handler>on_step1_activate</handler>
-	  <object>main_debug_window</object>
-	  <last_modification_time>Sun, 28 May 2000 22:24:01 GMT</last_modification_time>
-	</signal>
-	<label></label>
-	<icon>step_xpm</icon>
-      </widget>
-
-      <widget>
-	<class>GtkButton</class>
-	<child_name>Toolbar:button</child_name>
-	<name>button53</name>
-	<tooltip>Step one instruction exactly</tooltip>
-	<signal>
-	  <name>clicked</name>
-	  <handler>on_step_instruction1_activate</handler>
-	  <object>main_debug_window</object>
-	  <last_modification_time>Sun, 28 May 2000 22:24:29 GMT</last_modification_time>
-	</signal>
-	<label></label>
-	<icon>stepi_xpm</icon>
-      </widget>
-
-      <widget>
-	<class>GtkButton</class>
-	<child_name>Toolbar:button</child_name>
-	<name>button54</name>
-	<tooltip>Step program, proceeding through subroutine calls</tooltip>
-	<signal>
-	  <name>clicked</name>
-	  <handler>on_next1_activate</handler>
-	  <object>main_debug_window</object>
-	  <last_modification_time>Sun, 28 May 2000 22:24:42 GMT</last_modification_time>
-	</signal>
-	<label></label>
-	<icon>next_xpm</icon>
-      </widget>
-
-      <widget>
-	<class>GtkButton</class>
-	<child_name>Toolbar:button</child_name>
-	<name>button55</name>
-	<tooltip>Step one instruction, but proceed through subroutine calls</tooltip>
-	<signal>
-	  <name>clicked</name>
-	  <handler>on_next_instruction1_activate</handler>
-	  <object>main_debug_window</object>
-	  <last_modification_time>Sun, 28 May 2000 22:24:57 GMT</last_modification_time>
-	</signal>
-	<label></label>
-	<icon>nexti_xpm</icon>
-      </widget>
-
-      <widget>
-	<class>GtkButton</class>
-	<child_name>Toolbar:button</child_name>
-	<name>button58</name>
-	<tooltip>Execute until selected stack frame returns</tooltip>
-	<signal>
-	  <name>clicked</name>
-	  <handler>on_finish1_activate</handler>
-	  <object>main_debug_window</object>
-	  <last_modification_time>Mon, 24 Jul 2000 09:33:07 GMT</last_modification_time>
-	</signal>
-	<label></label>
-	<icon>finish_xpm</icon>
-      </widget>
-
-      <widget>
-	<class>GtkButton</class>
-	<child_name>Toolbar:button</child_name>
-	<name>button60</name>
-	<tooltip>Continue program being debugged, after signal or breakpoint</tooltip>
-	<signal>
-	  <name>clicked</name>
-	  <handler>on_continue1_activate</handler>
-	  <object>main_debug_window</object>
-	  <last_modification_time>Mon, 24 Jul 2000 09:32:59 GMT</last_modification_time>
-	</signal>
-	<label></label>
-	<icon>cont_xpm</icon>
-      </widget>
-
-      <widget>
-	<class>GtkButton</class>
-	<child_name>Toolbar:button</child_name>
-	<name>button57</name>
-	<tooltip>Select and print stack frame that called this one</tooltip>
-	<signal>
-	  <name>clicked</name>
-	  <handler>on_up1_activate</handler>
-	  <object>main_debug_window</object>
-	  <last_modification_time>Mon, 24 Jul 2000 09:33:22 GMT</last_modification_time>
-	</signal>
-	<label></label>
-	<icon>up_xpm</icon>
-      </widget>
-
-      <widget>
-	<class>GtkButton</class>
-	<child_name>Toolbar:button</child_name>
-	<name>button51</name>
-	<tooltip>Select and print stack frame called by this one</tooltip>
-	<signal>
-	  <name>clicked</name>
-	  <handler>on_down1_activate</handler>
-	  <object>main_debug_window</object>
-	  <last_modification_time>Mon, 24 Jul 2000 09:33:30 GMT</last_modification_time>
-	</signal>
-	<label></label>
-	<icon>down_xpm</icon>
-      </widget>
-
-      <widget>
-	<class>GtkButton</class>
-	<child_name>Toolbar:button</child_name>
-	<name>button61</name>
-	<tooltip>Interrupt debugged program</tooltip>
-	<signal>
-	  <name>clicked</name>
-	  <handler>on_interrupt1_activate</handler>
-	  <object>main_debug_window</object>
-	  <last_modification_time>Mon, 24 Jul 2000 09:33:15 GMT</last_modification_time>
-	</signal>
-	<label></label>
-	<icon>interrupt_xpm</icon>
+	<class>Placeholder</class>
       </widget>
     </widget>
 
