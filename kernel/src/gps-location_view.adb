@@ -254,6 +254,9 @@ package body GPS.Location_View is
    procedure Remove_Category (Object   : access Gtk_Widget_Record'Class);
    --  Remove the selected category in the Location_View.
 
+   procedure Clear (Object   : access Gtk_Widget_Record'Class);
+   --  Remove everything in the Location_View.
+
    procedure On_Destroy (View : access Gtk_Widget_Record'Class);
    --  Callback for the "destroy" signal
 
@@ -729,6 +732,25 @@ package body GPS.Location_View is
          Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
    end Remove_Category;
+
+   -----------
+   -- Clear --
+   -----------
+
+   procedure Clear (Object   : access Gtk_Widget_Record'Class) is
+      View  : constant Location_View := Location_View (Object);
+      Iter  : Gtk_Tree_Iter;
+   begin
+      loop
+         Iter := Get_Iter_First (View.Tree.Model);
+         exit when Iter = Null_Iter;
+         Remove_Category_Or_File_Iter (View, Iter);
+      end loop;
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+   end Clear;
 
    ---------------
    -- Fill_Iter --
@@ -1317,8 +1339,20 @@ package body GPS.Location_View is
          end;
       end if;
 
+      Gtk_New (Mitem, -"Clear Locations View");
+      Gtkada.Handlers.Widget_Callback.Object_Connect
+        (Mitem, "activate", Clear'Access, Explorer,
+         After => False);
+      Append (Menu, Mitem);
+
+      if Location /= null then
+         Gtk_New (Mitem);
+         Append (Menu, Mitem);
+      end if;
+
       Path_Free (Path);
-      return Selection_Context_Access (Location);
+      return
+        Selection_Context_Access (Location);
    end Context_Func;
 
    -----------------
