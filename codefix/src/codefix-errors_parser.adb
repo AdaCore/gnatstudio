@@ -329,7 +329,9 @@ package body Codefix.Errors_Parser is
         (new Pattern_Matcher'
            (Compile ("""([^""]+)"" should be ""([^""]+)""")),
          new Pattern_Matcher'
-           (Compile ("([^\w\s][^\s]*) should be ([^\w\s][^\s]*)")));
+           (Compile ("([^\w\s][^\s]*) should be ([^\w\s][^\s]*)")),
+         new Pattern_Matcher'
+           (Compile ("""([^""])+"" illegal here, replaced by ""([^""])+""")));
    end Initialize;
 
    procedure Fix
