@@ -625,7 +625,7 @@ package body Src_Info.Type_Utils is
    is
       pragma Unreferenced (Symbol);
       Arg             : TA_Table;
-      P               : Pair_Ptr;
+      P               : Pair;
    begin
       Success := False;
       if not Is_Open (SN_Table (TA)) then
@@ -639,9 +639,9 @@ package body Src_Info.Type_Utils is
          Exact_Match => False);
 
       loop
-         P := Get_Pair (SN_Table (TA), Next_By_Key);
-         exit when P = null;
-         Parse_Pair (P.all, Arg);
+         Get_Pair (SN_Table (TA), Next_By_Key, Result => P);
+         exit when P = No_Pair;
+         Parse_Pair (P, Arg);
          Free (P);
 
          if File_Name = Arg.Buffer (Arg.File_Name.First .. Arg.File_Name.Last)
