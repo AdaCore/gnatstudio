@@ -134,8 +134,11 @@ package body Src_Info.CPP is
       end loop;
    end Free;
 
-   function Less (A, B : Point) return Boolean;
-   --  compares two positions within file
+   function Cmp_Arg_Types
+     (Buffer_A, Buffer_B     : SN.String_Access;
+      Args_A, Args_B         : DB_Structures.Segment_Vector.Node_Access)
+      return Boolean;
+   --  checks to see if argument types are the same
 
    function Cmp_Prototypes
      (Buffer_A, Buffer_B     : SN.String_Access;
@@ -1021,23 +1024,12 @@ package body Src_Info.CPP is
          null;
    end Refer_Type;
 
-
-   ----------
-   -- Less --
-   ----------
-   function Less (A, B : Point) return Boolean is
-   begin
-      return (A.Line < B.Line)
-         or else (A.Line = B.Line and then A.Column < B.Column);
-   end Less;
-
-   --------------------
-   -- Cmp_Prototypes --
-   --------------------
-   function Cmp_Prototypes
+   -------------------
+   -- Cmp_Arg_Types --
+   -------------------
+   function Cmp_Arg_Types
      (Buffer_A, Buffer_B     : SN.String_Access;
-      Args_A, Args_B         : DB_Structures.Segment_Vector.Node_Access;
-      Ret_Type_A, Ret_Type_B : Segment)
+      Args_A, Args_B         : DB_Structures.Segment_Vector.Node_Access)
       return Boolean
    is
       use DB_Structures.Segment_Vector;
@@ -1053,12 +1045,22 @@ package body Src_Info.CPP is
          Ptr_B := Ptr_B.Next;
       end loop;
 
-      if Ptr_A /= null or Ptr_B /= null then
-         return False;
-      end if;
+      return Ptr_A = null and Ptr_B = null;
+   end Cmp_Arg_Types;
 
-      return Buffer_A (Ret_Type_A.First .. Ret_Type_A.Last)
-         = Buffer_B (Ret_Type_B.First .. Ret_Type_B.Last);
+   --------------------
+   -- Cmp_Prototypes --
+   --------------------
+   function Cmp_Prototypes
+     (Buffer_A, Buffer_B     : SN.String_Access;
+      Args_A, Args_B         : DB_Structures.Segment_Vector.Node_Access;
+      Ret_Type_A, Ret_Type_B : Segment)
+      return Boolean
+   is
+   begin
+      return Cmp_Arg_Types (Buffer_A, Buffer_B, Args_A, Args_B)
+         and then Buffer_A (Ret_Type_A.First .. Ret_Type_A.Last)
+            = Buffer_B (Ret_Type_B.First .. Ret_Type_B.Last);
    end Cmp_Prototypes;
 
    function Find_First_Forward_Declaration
@@ -1114,7 +1116,11 @@ package body Src_Info.CPP is
          MD_Tab := Parse_Pair (P.all);
          Free (P);
          --  Update position of the first forward declaration
-         exit when Cmp_Prototypes
+         exit when (MD_Tab.Buffer (MD_Tab.File_Name.First ..
+                                   MD_Tab.File_Name.Last)
+            = MD_Tab_Tmp.Buffer (MD_Tab_Tmp.File_Name.First ..
+                                 MD_Tab_Tmp.File_Name.Last))
+            and then Cmp_Prototypes
               (MD_Tab.Buffer,
                Fn.Buffer,
                MD_Tab.Arg_Types,
@@ -1149,7 +1155,7 @@ package body Src_Info.CPP is
                MD_Tab.Return_Type,
                MD_Tab_Tmp.Return_Type)
             and then ((First_MD_Pos = Invalid_Point)
-            or else Less (MD_Tab_Tmp.Start_Position, First_MD_Pos)) then
+            or else MD_Tab_Tmp.Start_Position < First_MD_Pos) then
             First_MD_Pos := MD_Tab_Tmp.Start_Position;
          end if;
          Free (MD_Tab_Tmp);
@@ -1176,6 +1182,7 @@ package body Src_Info.CPP is
       FD_Tab       : FD_Table;
       FD_Tab_Tmp   : FD_Table;
       First_FD_Pos : Point := Invalid_Point;
+      Match        : Boolean;
    begin
 
       if not Is_Open (SN_Table (FD)) then
@@ -1184,12 +1191,9 @@ package body Src_Info.CPP is
 
       --  First we have to find the first forward declaration
       --  that corresponds to our method, that is prototypes
-      --  should be the same
-      --  ??? What should we do when forward declarations are
-      --  found in different files, which to choose?
-      --  So far we take the first one.
-      --  ??? What should we do when forward declaration located
-      --  in another file has not been processed yet?
+      --  should be the same.
+      --  Prototype is searched only in the same file, no
+      --  attempts to link .h and .cpp files are undertaken
       Set_Cursor
         (SN_Table (FD),
          By_Key,
@@ -1204,7 +1208,10 @@ package body Src_Info.CPP is
          FD_Tab := Parse_Pair (P.all);
          Free (P);
          --  Update position of the first forward declaration
-         exit when Cmp_Prototypes
+         exit when (FD_Tab.Buffer (FD_Tab.File_Name.First ..
+                                 FD_Tab.File_Name.Last)
+               = Fn.Buffer (Fn.File_Name.First .. Fn.File_Name.Last))
+            and then Cmp_Prototypes
               (FD_Tab.Buffer,
                Fn.Buffer,
                FD_Tab.Arg_Types,
@@ -1227,18 +1234,20 @@ package body Src_Info.CPP is
          FD_Tab_Tmp := Parse_Pair (P.all);
          Free (P);
          --  Update position of the first forward declaration
-         if FD_Tab.Buffer (FD_Tab.File_Name.First .. FD_Tab.File_Name.Last)
-            = FD_Tab_Tmp.Buffer (FD_Tab_Tmp.File_Name.First ..
-                                 FD_Tab_Tmp.File_Name.Last)
-            and then Cmp_Prototypes
-              (FD_Tab.Buffer,
-               FD_Tab_Tmp.Buffer,
-               FD_Tab.Arg_Types,
-               FD_Tab_Tmp.Arg_Types,
-               FD_Tab.Return_Type,
-               FD_Tab_Tmp.Return_Type)
-            and then ((First_FD_Pos = Invalid_Point)
-            or else Less (FD_Tab_Tmp.Start_Position, First_FD_Pos)) then
+         Match := FD_Tab.Buffer (FD_Tab.File_Name.First ..
+                                 FD_Tab.File_Name.Last)
+                = FD_Tab_Tmp.Buffer (FD_Tab_Tmp.File_Name.First ..
+                                     FD_Tab_Tmp.File_Name.Last);
+         Match := Match and then Cmp_Prototypes
+           (FD_Tab.Buffer,
+            FD_Tab_Tmp.Buffer,
+            FD_Tab.Arg_Types,
+            FD_Tab_Tmp.Arg_Types,
+            FD_Tab.Return_Type,
+            FD_Tab_Tmp.Return_Type);
+
+         if (Match and then First_FD_Pos = Invalid_Point)
+            or else FD_Tab_Tmp.Start_Position < First_FD_Pos then
             First_FD_Pos := FD_Tab_Tmp.Start_Position;
          end if;
          Free (FD_Tab_Tmp);
