@@ -761,6 +761,17 @@ package body VCS.Generic_VCS is
       end if;
    end Diff;
 
+   --------------------
+   -- Diff_Base_Head --
+   --------------------
+
+   procedure Diff_Base_Head
+     (Rep  : access Generic_VCS_Record;
+      File : VFS.Virtual_File) is
+   begin
+      Generic_Command (Rep, File, null, Diff_Base_Head);
+   end Diff_Base_Head;
+
    ---------
    -- Log --
    ---------

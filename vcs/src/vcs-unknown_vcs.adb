@@ -253,6 +253,19 @@ package body VCS.Unknown_VCS is
       null;
    end Diff;
 
+   --------------------
+   -- Diff_Base_Head --
+   --------------------
+
+   procedure Diff_Base_Head
+     (Rep       : access Unknown_VCS_Record;
+      File      : VFS.Virtual_File)
+   is
+      pragma Unreferenced (Rep, File);
+   begin
+      null;
+   end Diff_Base_Head;
+
    ---------
    -- Log --
    ---------

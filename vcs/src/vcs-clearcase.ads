@@ -87,6 +87,10 @@ package VCS.ClearCase is
       Version_1 : String := "";
       Version_2 : String := "");
 
+   procedure Diff_Base_Head
+     (Rep  : access ClearCase_Record;
+      File : VFS.Virtual_File);
+
    procedure Log
      (Rep  : access ClearCase_Record;
       File : VFS.Virtual_File;
