@@ -131,7 +131,7 @@ package body Process_Tab_Pkg.Callbacks is
          --  forbidding any key.
 
          if Is_Graphic (Arg1 (Arg1'First)) then
-            Text_Output_Handler
+            Output_Text
               (Top, Arg1 (Arg1'First .. Arg1'First + Integer (Arg2) - 1),
                Is_Command => True);
             Set_Position
@@ -171,7 +171,7 @@ package body Process_Tab_Pkg.Callbacks is
 
                else
                   --  Insert the newline character after the user's command.
-                  Text_Output_Handler (Top, "" & ASCII.LF);
+                  Output_Text (Top, "" & ASCII.LF);
 
                   --  Process the command.
                   Process_User_Command (Top, S, Mode => User);
@@ -289,12 +289,12 @@ package body Process_Tab_Pkg.Callbacks is
            (Top.Debugger_Text,
             Gint (Top.Edit_Pos),
             Gint (Get_Length (Top.Debugger_Text)));
-         Text_Output_Handler
-           (Top, Get_Current
-            (Top.Window.Command_History).Command.all,
+         Output_Text
+           (Top, Get_Current (Top.Window.Command_History).Command.all,
             Is_Command => True);
-         Set_Position (Gtk_Editable (Top.Debugger_Text),
-                       Gint (Get_Length (Top.Debugger_Text)));
+         Set_Position
+           (Gtk_Editable (Top.Debugger_Text),
+            Gint (Get_Length (Top.Debugger_Text)));
       end if;
 
       return True;
