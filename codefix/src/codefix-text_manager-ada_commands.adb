@@ -89,7 +89,6 @@ package body Codefix.Text_Manager.Ada_Commands is
       Word_Chosen  : Dynamic_String;
 
    begin
-
       Cursor := File_Cursor'
         (Get_Current_Cursor (Current_Text, This.Cursor.all));
       Cursor_Line := Cursor;
@@ -117,9 +116,7 @@ package body Codefix.Text_Manager.Ada_Commands is
       Free (Word_Chosen);
       Free (Line);
       Free (Cursor);
-
    end Execute;
-
 
    procedure Free (This : in out Recase_Word_Cmd) is
    begin
@@ -298,7 +295,6 @@ package body Codefix.Text_Manager.Ada_Commands is
          Assign (Word_Used.String_Match, Pkg_Info.Name.all);
       end if;
 
-
       if Pkg_Info.Category = Cat_Unknown then
          Pkg_Info := Search_Unit
            (Current_Text, Word.File_Name.all,
@@ -324,7 +320,6 @@ package body Codefix.Text_Manager.Ada_Commands is
 
          This.Is_Instantiation := False;
       end if;
-
 
       if Category /= Cat_Use then
          Clauses_List := Get_Use_Clauses
@@ -367,7 +362,6 @@ package body Codefix.Text_Manager.Ada_Commands is
       end if;
 
       Free (Word_Used);
-
    end Initialize;
 
    procedure Execute
@@ -416,7 +410,6 @@ package body Codefix.Text_Manager.Ada_Commands is
 
          Free (Last_With);
       end if;
-
    end Execute;
 
    procedure Free (This : in out Remove_Pkg_Clauses_Cmd) is
@@ -439,34 +432,20 @@ package body Codefix.Text_Manager.Ada_Commands is
    is
       Spec_Begin, Spec_End : File_Cursor;
       Body_Begin, Body_End : File_Cursor;
-      Garbage_Cursor       : File_Cursor;
-   begin
 
+   begin
       Get_Entity
         (Current_Text,
          Start_Entity,
          Spec_Begin, Spec_End,
          Body_Begin, Body_End);
 
-      --  ??? The use of the function Search_String will be removed when the
-      --  Sloc_End given from the Ada parser will be right positioned.
-
       if Spec_Begin /= Null_File_Cursor then
-         Garbage_Cursor := Spec_End;
-         Spec_End := File_Cursor
-           (Search_String (Current_Text, Garbage_Cursor, ";", Std_Ada_Escape));
-         Free (Garbage_Cursor);
-
          This.Spec_Begin := new Mark_Abstr'Class'
            (Get_New_Mark (Current_Text, Spec_Begin));
          This.Spec_End := new Mark_Abstr'Class'
            (Get_New_Mark (Current_Text, Spec_End));
       end if;
-
-      Garbage_Cursor := Body_End;
-      Body_End := File_Cursor
-        (Search_String (Current_Text, Garbage_Cursor, ";", Std_Ada_Escape));
-      Free (Garbage_Cursor);
 
       This.Body_Begin := new Mark_Abstr'Class'
         (Get_New_Mark (Current_Text, Body_Begin));
@@ -489,9 +468,8 @@ package body Codefix.Text_Manager.Ada_Commands is
       Line_Cursor                : File_Cursor;
       Spec_Extract, Body_Extract : Extract;
       Success_Merge              : Boolean;
+
    begin
-
-
       Body_Begin := File_Cursor
         (Get_Current_Cursor (Current_Text, This.Body_Begin.all));
       Body_End := File_Cursor
@@ -641,7 +619,6 @@ package body Codefix.Text_Manager.Ada_Commands is
       Assign (This.Name, Name);
    end Initialize;
 
-
    procedure Execute
      (This         : Make_Constant_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
@@ -739,7 +716,6 @@ package body Codefix.Text_Manager.Ada_Commands is
       end Right_Paren;
 
    begin
-
       Cursor := File_Cursor
         (Get_Current_Cursor (Current_Text, This.Cursor.all));
 
@@ -837,14 +813,12 @@ package body Codefix.Text_Manager.Ada_Commands is
                end if;
             end;
          end if;
-
       end Initialize_Profile;
 
       Destination_Begin, Destination_End : File_Cursor;
       Source_Begin, Source_End           : File_Cursor;
 
    begin
-
       Initialize_Profile
         (File_Cursor (Destination), Destination_Begin, Destination_End);
       Initialize_Profile (File_Cursor (Source), Source_Begin, Source_End);
@@ -872,6 +846,7 @@ package body Codefix.Text_Manager.Ada_Commands is
       Destination_Begin, Destination_End : File_Cursor;
       Source_Begin, Source_End           : File_Cursor;
       Line_Cursor                        : File_Cursor;
+
    begin
       Destination_Begin := File_Cursor
         (Get_Current_Cursor (Current_Text, This.Destination_Begin.all));
@@ -881,7 +856,6 @@ package body Codefix.Text_Manager.Ada_Commands is
         (Get_Current_Cursor (Current_Text, This.Source_Begin.all));
       Source_End := File_Cursor
         (Get_Current_Cursor (Current_Text, This.Source_End.all));
-
 
       Line_Cursor := Destination_Begin;
       Line_Cursor.Col := 1;
@@ -904,7 +878,6 @@ package body Codefix.Text_Manager.Ada_Commands is
       Free (Source_Begin);
       Free (Source_End);
    end Execute;
-
 
    procedure Free (This : in out Paste_Profile_Cmd) is
    begin
@@ -930,6 +903,7 @@ package body Codefix.Text_Manager.Ada_Commands is
       With_Cursor : File_Cursor;
       Pkg_Name    : Dynamic_String;
       Clauses_Str : Dynamic_String := new String'("");
+
    begin
       Assign
         (Pkg_Name,
@@ -970,6 +944,7 @@ package body Codefix.Text_Manager.Ada_Commands is
       Word        : Word_Cursor;
       With_Cursor : File_Cursor;
       Pkg_Name    : Dynamic_String;
+
    begin
       Assign
         (Pkg_Name,
@@ -1010,7 +985,6 @@ package body Codefix.Text_Manager.Ada_Commands is
 
       This := Result;
    end Prefix_Object;
-
 
    procedure Execute
      (This         : Get_Visible_Declaration_Cmd;
