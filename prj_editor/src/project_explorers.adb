@@ -2722,14 +2722,18 @@ package body Project_Explorers is
       Register_Contextual_Menu
         (Kernel, "Locate file in explorer",
          Action => Command,
-         Filter => Lookup_Filter (Kernel, "File"),
+         Filter => Action_Filter
+           (Lookup_Filter (Kernel, "File")
+            and not Create (Module => Explorer_Module_Name)),
          Label  => "Locate in explorer: %f");
 
       Command := new Locate_Project_In_Explorer_Command;
       Register_Contextual_Menu
         (Kernel, "Locate project in explorer",
          Action => Command,
-         Filter => Lookup_Filter (Kernel, "Project only"),
+         Filter => Action_Filter
+           (Lookup_Filter (Kernel, "Project only")
+            and not Create (Module => Explorer_Module_Name)),
          Label  => "Locate in explorer: %p");
 
 
