@@ -5,6 +5,7 @@ New features in GVD 2.0.0
   parameters from the command line.
 - [9305-037] A message dialog now pops up when trying to detach a process
   while the underlying debugger is busy.
+- [9130-004] Explorer displays return type for functions.
 - A new multiple document interface (MDI) is provided.
 
 New features in GVD 1.2.1
