@@ -76,7 +76,7 @@ package body Glide_Kernel.Preferences is
          Blurb   => -"Default width for all the newly created windows",
          Minimum => 50,
          Maximum => 2000,
-         Default => 400,
+         Default => 200,
          Flags   => Param_Readable));
       Register_Property
         (Kernel.Preferences, Param_Spec (Default_Widget_Width), -"General");
@@ -87,7 +87,7 @@ package body Glide_Kernel.Preferences is
          Blurb   => -"Default height for all the newly created windows",
          Minimum => 50,
          Maximum => 2000,
-         Default => 400,
+         Default => 200,
          Flags   => Param_Readable));
       Register_Property
         (Kernel.Preferences, Param_Spec (Default_Widget_Height), -"General");
