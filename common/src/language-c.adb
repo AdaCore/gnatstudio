@@ -18,12 +18,12 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GNAT.OS_Lib;       use GNAT.OS_Lib;
-with GNAT.Regpat;       use GNAT.Regpat;
-with Pixmaps_IDE;       use Pixmaps_IDE;
-with Ada.Strings.Fixed; use Ada.Strings.Fixed;
-with String_Utils;      use String_Utils;
-with C_Analyzer;        use C_Analyzer;
+with GNAT.Regpat;           use GNAT.Regpat;
+with Pixmaps_IDE;           use Pixmaps_IDE;
+with Ada.Strings.Fixed;     use Ada.Strings.Fixed;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+with String_Utils;          use String_Utils;
+with C_Analyzer;            use C_Analyzer;
 
 package body Language.C is
 
@@ -392,30 +392,30 @@ package body Language.C is
       Start_Of_Line : Natural := Block'First;
       End_Of_Line   : Natural := Line_End (Block, Start_Of_Line);
 
-      New_Block     : GNAT.OS_Lib.String_Access := new String'
+      New_Block     : Unbounded_String := To_Unbounded_String
         (Comment_Line
-           (Lang, Block (Start_Of_Line .. End_Of_Line), Comment, Clean));
-      Tmp           : String_Access;
+           (Lang,
+            Block (Start_Of_Line .. End_Of_Line),
+            Comment,
+            Clean));
+
    begin
       loop
          Start_Of_Line := Next_Line (Block, Start_Of_Line);
          exit when Start_Of_Line = Block'Last;
          End_Of_Line := Line_End (Block, Start_Of_Line);
 
-         Tmp       := New_Block;
-         New_Block := new String'
-           (New_Block.all & ASCII.LF &
+         Append (New_Block, ASCII.LF);
+         Append
+           (New_Block,
             Comment_Line
-              (Lang, Block (Start_Of_Line .. End_Of_Line), Comment, Clean));
-         Free (Tmp);
+              (Lang,
+               Block (Start_Of_Line .. End_Of_Line),
+               Comment,
+               Clean));
       end loop;
 
-      declare
-         Result : constant String := New_Block.all;
-      begin
-         Free (New_Block);
-         return Result;
-      end;
+      return To_String (New_Block);
    end Comment_Block;
 
    ------------------------
