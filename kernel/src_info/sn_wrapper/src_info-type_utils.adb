@@ -345,7 +345,7 @@ package body Src_Info.Type_Utils is
          return;
       end if;
 
-      Typedef   := Find (SN_Table (T), Type_Name);
+      Find (SN_Table (T), Type_Name, Tab => Typedef);
 
       Key := new String'(Type_Name);
       Set (Module_Typedefs.all, Key, (Key, Incomplete));
@@ -464,11 +464,13 @@ package body Src_Info.Type_Utils is
       Success := False;
       Match (Template_Type_Pat, Type_Name, Matches);
       if Matches (0) /= No_Match then
-         Class_Def := Find (SN_Table (CL), Type_Name
-            (Matches (1).First .. Matches (1).Last));
+         Find
+           (SN_Table (CL),
+            Type_Name (Matches (1).First .. Matches (1).Last),
+            Tab => Class_Def);
          Desc.Is_Template := True;
       else
-         Class_Def := Find (SN_Table (CL), Type_Name);
+         Find (SN_Table (CL), Type_Name, Tab => Class_Def);
       end if;
 
       Desc.Parent_Point    := Class_Def.Start_Position;
@@ -515,11 +517,13 @@ package body Src_Info.Type_Utils is
       Success := False;
       Match (Template_Type_Pat, Type_Name, Matches);
       if Matches (0) /= No_Match then
-         Union_Def := Find (SN_Table (UN), Type_Name
-            (Matches (1).First .. Matches (1).Last));
+         Find
+           (SN_Table (UN),
+            Type_Name (Matches (1).First .. Matches (1).Last),
+            Tab => Union_Def);
          Desc.Is_Template := True;
       else
-         Union_Def := Find (SN_Table (UN), Type_Name);
+         Find (SN_Table (UN), Type_Name, Tab => Union_Def);
       end if;
 
       Desc.Parent_Point    := Union_Def.Start_Position;
@@ -560,16 +564,19 @@ package body Src_Info.Type_Utils is
       Enum_Def  : out E_Table;
       Success   : out Boolean)
    is
-      Matches      : Match_Array (0 .. 1);
+      Matches : Match_Array (0 .. 1);
    begin
       Success := False;
       Match (Template_Type_Pat, Type_Name, Matches);
+
       if Matches (0) /= No_Match then
-         Enum_Def := Find (SN_Table (E), Type_Name
-            (Matches (1).First .. Matches (1).Last));
+         Find
+           (SN_Table (E),
+            Type_Name (Matches (1).First .. Matches (1).Last),
+            Tab => Enum_Def);
          Desc.Is_Template := True;
       else
-         Enum_Def := Find (SN_Table (E), Type_Name);
+         Find (SN_Table (E), Type_Name, Tab => Enum_Def);
       end if;
 
       Desc.Parent_Point    := Enum_Def.Start_Position;
@@ -587,8 +594,8 @@ package body Src_Info.Type_Utils is
       Desc.Kind := Enumeration_Type;
       Success := True;
    exception
-      when  DB_Error |   -- non-existent table
-            Not_Found => -- missed, fall thru'
+      when DB_Error |   -- non-existent table
+           Not_Found => -- missed, fall thru'
          Success := False;
    end Find_Enum;
 
@@ -625,7 +632,7 @@ package body Src_Info.Type_Utils is
       loop
          P := Get_Pair (SN_Table (TA), Next_By_Key);
          exit when P = null;
-         Arg := Parse_Pair (P.all);
+         Parse_Pair (P.all, Arg);
          Free (P);
 
          if File_Name = Arg.Buffer (Arg.File_Name.First .. Arg.File_Name.Last)
