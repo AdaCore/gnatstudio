@@ -466,15 +466,16 @@ package body Src_Info.Queries is
    is
       Current_Sep : File_Info_Ptr_List;
       Current_Dep : Dependency_File_Info_List;
-      E_Name      : String := Entity_Name;
-
+      E_Name      : GNAT.OS_Lib.String_Access;
       Proximity   : Integer := Integer'Last - 1;
       --  Not Integer'Last, so that if Location_Matches returns Integer'Last,
       --  this is not considered as a match.
 
    begin
       if Case_Insensitive_Identifiers (Lib_Info.LI.Handler) then
-         E_Name := UTF8_Strdown (E_Name);
+         E_Name := new String'(UTF8_Strdown (Entity_Name));
+      else
+         E_Name := new String'(Entity_Name);
       end if;
 
       Decl   := No_Declaration_Info;
@@ -487,7 +488,7 @@ package body Src_Info.Queries is
       then
          Find_Spec_Or_Body
            (Lib_Info.LI.Spec_Info.Declarations,
-            File_Name, E_Name, Line, Column, Check_References,
+            File_Name, E_Name.all, Line, Column, Check_References,
             Proximity, Decl, Ref, Status);
       end if;
 
@@ -498,7 +499,7 @@ package body Src_Info.Queries is
       then
          Find_Spec_Or_Body
            (Lib_Info.LI.Body_Info.Declarations,
-            File_Name, E_Name, Line, Column, Check_References,
+            File_Name, E_Name.all, Line, Column, Check_References,
             Proximity, Decl, Ref, Status);
       end if;
 
@@ -509,7 +510,7 @@ package body Src_Info.Queries is
             if Current_Sep.Value.Declarations /= null then
                Find_Spec_Or_Body
                  (Current_Sep.Value.Declarations,
-                  File_Name, E_Name, Line, Column, Check_References,
+                  File_Name, E_Name.all, Line, Column, Check_References,
                   Proximity, Decl, Ref, Status);
 
                exit when Search_Is_Completed (Status);
@@ -526,7 +527,7 @@ package body Src_Info.Queries is
             if Current_Dep.Value.Declarations /= null then
                Find_Spec_Or_Body
                  (Current_Dep.Value.Declarations,
-                  File_Name, E_Name, Line, Column, Check_References,
+                  File_Name, E_Name.all, Line, Column, Check_References,
                   Proximity, Decl, Ref, Status);
                if Search_Is_Completed (Status) then
                   exit;
@@ -536,6 +537,8 @@ package body Src_Info.Queries is
             Current_Dep := Current_Dep.Next;
          end loop;
       end if;
+
+      Free (E_Name);
    end Internal_Find_Declaration_Or_Body;
 
    ----------------------
