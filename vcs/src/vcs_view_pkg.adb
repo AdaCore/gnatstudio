@@ -1089,7 +1089,7 @@ package body VCS_View_Pkg is
             Set_File_Information (Context, File => First_File);
 
             Set_Current_Context (Explorer, Selection_Context_Access (Context));
-            VCS_Contextual_Menu (Explorer, Explorer.Context, Menu);
+            VCS_Contextual_Menu (Kernel, Explorer.Context, Menu, True);
 
             Gtk_New (Mitem);
             Append (Menu, Mitem);
@@ -1415,7 +1415,34 @@ package body VCS_View_Pkg is
      (Explorer : access VCS_View_Record)
       return Selection_Context_Access is
    begin
-      return Copy_Context (Explorer.Context);
+      if Explorer.Context = null then
+         declare
+            Context  : File_Selection_Context_Access;
+            Files    : String_List.List;
+            First    : VFS.Virtual_File;
+         begin
+            Files := Get_Selected_Files (VCS_View_Access (Explorer));
+
+            if not String_List.Is_Empty (Files) then
+               Context := new File_Selection_Context;
+               First := Create (String_List.Head (Files));
+
+               Set_Context_Information
+                 (Context, Explorer.Kernel, VCS_Module_ID);
+               Set_File_Information (Context, File => First);
+
+               Set_Current_Context
+                 (Explorer, Selection_Context_Access (Context));
+
+               String_List.Free (Files);
+               return Selection_Context_Access (Context);
+            else
+               return null;
+            end if;
+         end;
+      else
+         return Copy_Context (Explorer.Context);
+      end if;
    end Get_Current_Context;
 
    -------------------------
