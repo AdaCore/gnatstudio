@@ -98,24 +98,24 @@ package body Glide_Result_View is
    --  The following list must be synchronized with the array of types
    --  in Columns_Types.
 
-   Icon_Column          : constant := 0;
-   Base_Name_Column     : constant := 1;
-   Absolute_Name_Column : constant := 2;
-   Message_Column       : constant := 3;
-   Mark_Column          : constant := 4;
-   Node_Type_Column     : constant := 5;
-   Line_Column          : constant := 6;
-   Column_Column        : constant := 7;
-   Length_Column        : constant := 8;
-   Weight_Column        : constant := 9;
-   Color_Column         : constant := 10;
-   Button_Column        : constant := 11;
-   Action_Column        : constant := 12;
-   Highlight_Column     : constant := 13;
+   Icon_Column               : constant := 0;
+   Base_Name_Column          : constant := 1;
+   Absolute_Name_Column      : constant := 2;
+   Message_Column            : constant := 3;
+   Mark_Column               : constant := 4;
+   Node_Type_Column          : constant := 5;
+   Line_Column               : constant := 6;
+   Column_Column             : constant := 7;
+   Length_Column             : constant := 8;
+   Weight_Column             : constant := 9;
+   Color_Column              : constant := 10;
+   Button_Column             : constant := 11;
+   Action_Column             : constant := 12;
+   Highlight_Column          : constant := 13;
    Highlight_Category_Column : constant := 14;
-   Number_Of_Items_Column : constant := 15;
-   Total_Column           : constant := 16;
-   Category_Line_Column   : constant := 17;
+   Number_Of_Items_Column    : constant := 15;
+   Total_Column              : constant := 16;
+   Category_Line_Column      : constant := 17;
 
    Output_Cst        : aliased constant String := "output";
    Category_Cst      : aliased constant String := "category";
@@ -137,15 +137,15 @@ package body Glide_Result_View is
    Warning_Cat_Cst   : aliased constant String := "warning_category";
 
    Parse_Location_Parameters : constant Cst_Argument_List :=
-     (1 => Output_Cst'Access,
-      2 => Category_Cst'Access,
-      3 => Regexp_Cst'Access,
-      4 => File_Index_Cst'Access,
-      5 => Line_Index_Cst'Access,
-      6 => Col_Index_Cst'Access,
-      7 => Msg_Index_Cst'Access,
-      8 => Style_Index_Cst'Access,
-      9 => Warning_Index_Cst'Access,
+     (1  => Output_Cst'Access,
+      2  => Category_Cst'Access,
+      3  => Regexp_Cst'Access,
+      4  => File_Index_Cst'Access,
+      5  => Line_Index_Cst'Access,
+      6  => Col_Index_Cst'Access,
+      7  => Msg_Index_Cst'Access,
+      8  => Style_Index_Cst'Access,
+      9  => Warning_Index_Cst'Access,
       10 => Highlight_Cat_Cst'Access,
       11 => Style_Cat_Cst'Access,
       12 => Warning_Cat_Cst'Access);
@@ -230,8 +230,8 @@ package body Glide_Result_View is
    --  be highlighted in the color specified by Highlight_Category
 
    function Button_Press
-     (View     : access Gtk_Widget_Record'Class;
-      Event    : Gdk_Event)
+     (View  : access Gtk_Widget_Record'Class;
+      Event : Gdk_Event)
       return Boolean;
    --  Callback for the "button_press" event.
 
@@ -347,7 +347,6 @@ package body Glide_Result_View is
    is
       View : Result_View renames Hook.View;
       File : constant VFS.Virtual_File := File_Hooks_Args (Data).File;
-
 
       Category_Iter : Gtk_Tree_Iter;
       File_Iter     : Gtk_Tree_Iter;
@@ -1984,6 +1983,10 @@ package body Glide_Result_View is
       --  preferences file, we check that the message Index is still good.
       --  Otherwise, we return the last part of the regexp
 
+      -----------------------
+      -- Get_File_Location --
+      -----------------------
+
       function Get_File_Location return Pattern_Matcher is
       begin
          if File_Location_Regexp = "" then
@@ -1995,6 +1998,10 @@ package body Glide_Result_View is
 
       Max : Integer := 0;
       --  Maximal value for the indexes
+
+      ---------------
+      -- Get_Index --
+      ---------------
 
       function Get_Index
         (Pref : Param_Spec_Int; Value : Integer) return Integer
@@ -2032,6 +2039,10 @@ package body Glide_Result_View is
       Column     : Natural := 1;
       Length     : Natural := 0;
       C          : String_Access;
+
+      -----------------
+      -- Get_Message --
+      -----------------
 
       function Get_Message (Last : Natural) return String is
       begin
