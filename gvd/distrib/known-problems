@@ -4,30 +4,35 @@ Known Problems fixed in GVD 1.1.0
   Problem:    When using the File->Edit Current Source menu under NT, GVD
               launches the external editor using forward slashes instead of
               backslashes.
+
   Workaround: Use an editor that understands forward slashes.
 
 - Loading a non existant executable generates a bug box
   Problem:    When using the File->Open Program... menu and specifying
               a non existant file, GVD generates a bug box instead of
               reporting the error in the status bar.
+
   Workaround: The error can safely be ignored.
 
 - Wrong command line "--log-level" not handled properly
   Problem:    When specifying the --log-level option with no parameter,
               GVD generates a bug box instead of displaying the help
               text.
+
   Workaround: Use proper syntax for --log-level argument.
 
 - Support for CR characters on Unix systems
   Problem:    GVD can not correctly detect whether a file contains CR
-              characters unless it is on a Windows system. This result in the
+              characters unless it is on a Windows system. This results in the
               current line being incorrectly highlighted in the source
               editor.
+
   Workaround: Strip the CR characters from the files before using them.
  
 - [8531-006] --no-explorer option generates a bug box
   Problem:    When using the --no-explorer command line option, GVD generates
               an assert failure.
+
   Workaround: Do not use the --no-explorer option, or create a file
               $HOME/.gvd/preferences containing the following lines:
  
@@ -37,20 +42,21 @@ Known Problems fixed in GVD 1.1.0
               </preferences>
 
 - Parsing of unsigned char variables.
-  Problem:    When trying to display an unsigned char, GVD would recurse
-              infinitely.
+  Problem:    When trying to display an unsigned char, GVD recurses infinitely.
   Workaround: Use the tooltips or the command window to display such variables.
 
 - [8511-011] Parsing of Ada variant records with null part.
   Problem:    Variant records that have at least one alternative with a null
-              part were incorrectly parsed (parsing error, nothing displayed in
+              part are incorrectly parsed (parsing error, nothing displayed in
               the canvas).
+
   Workaround: Use the tooltips in the source window to look at the value of
               the variable.
 
 - Closing of the first of multiple debuggers.
   Problem:    When multiple debuggers are present, closing the first one raises
               an error.
+
   Workaround: No workaround for this problem, fixed in GVD 1.1.0.
 
 Known Problems fixed in GVD 1.0.2
@@ -58,6 +64,7 @@ Known Problems fixed in GVD 1.0.2
 - [8325-005] Interrupt button does not work under Windows
   Problem:    Hitting the 'Interrupt' button does nothing under windows
               systems.
+
   Workaround: Use breakpoints instead to stop the underlying process.
 
 - Cancel in File->Open Program does not work properly
@@ -65,24 +72,26 @@ Known Problems fixed in GVD 1.0.2
               to open the '' program. One symptom is, when a program was
               already open, a question from gdb asking whether the symbols
               from the previous program should be discarded.
+
   Workaround: Do not press on the 'Cancel' button :-)
 
 - [8408-001] Attach command in the debugger window does not start gvd properly
   Problem:    When typing the attach, load or add-symbol-file command in the
               debugger window, some functionalities like 'Display Files in
-              Shared Libraries' were not enabled.
+              Shared Libraries' are not enabled.
+
   Workaround: Use the menus instead, or click on the run button.
 
 - Parsing of char* fields in C structs
-  Problem:    The value of string fields in C structures was incorrectly parsed,
+  Problem:    The value of string fields in C structures is incorrectly parsed,
               and extended till the end of the line. As a result, the following
-              fields were empty.
+              fields are empty.
 
   Workaround: The value of the following fields is still visible, but not at
               the correct location.
 
 - Parsing of array fields in C structs
-  Problem:    Fields that are arrays of simple types (int, double,...) were
+  Problem:    Fields that are arrays of simple types (int, double,...) are
               incorrectly detected.
 
   Workaround: Look at the value of the variable directly in the source window
@@ -96,27 +105,27 @@ Known Problems fixed in GVD 1.0.2
 
 - Wrong handling of double in C structs.
   Problem:    When trying to display a C structure containing a double, GVD
-              would recurse infinitely, causing a stack overflow.
+              recurses infinitely, causing a stack overflow.
 
   Workaround: Print such variables in the debugger window instead.
 
 - Incorrect highlighting of ex-current line
   Problem:    When the current line (with green background) changes, the
               previous one is incorrectly syntax-highlighted (comments are
-              still in black)
+              still in black).
 
   Workaround: Force a redisplay of the source window (for instance hide line
               numbers and display them again)
 
 - Opening the preferences dialog multiple times
-  Problem:    If the preferences dialog was closed with the title bar's X
-              button, it wasn't possible to reopen it afterwards.
+  Problem:    If the preferences dialog is closed with the title bar's X
+              button, it isn't possible to reopen it afterwards.
 
   Workaround: Close the dialog with the Cancel button
 
 - [8327-010] NT directory separators not handled properly in the command line.
   Problem:    When specifying an executable on the command line that contains
-              backslashes under NT, GVD did not properly handle it.
+              backslashes under NT, GVD does not handle it properly.
 
   Workaround: Replace blackslashes by slashes, or use the menu File/Open
               Program instead.
@@ -135,19 +144,19 @@ Known Problems fixed in GVD 1.0.2
 Known Problems fixed in GVD 1.0.1
 
 - Start with arguments
-  Problem:    When starting a program with non null arguments, gvd would only
-              set the arguments and not actually start the program.
+  Problem:    When starting a program with non null arguments, gvd only
+              sets the arguments and does not actually start the program.
 
   Workaround: Set the arguments first, and then start the application
 
 - Attaching to a process
-  Problem:    When trying to attach using the File/Attach menu, GVD would fail
+  Problem:    When trying to attach using the File/Attach menu, GVD fails
               to attach to the process.
 
   Workaround: Attach by hand by using the attach command in the debugger window.
 
 - Call stack not displayed after an attach
-  Problem:    When trying to attach using the File/Attach menu, GVD would fail
+  Problem:    When trying to attach using the File/Attach menu, GVD fails
               to display the current call stack.
 
   Workaround: Either switch from one debugger to another, and back to the
@@ -156,7 +165,7 @@ Known Problems fixed in GVD 1.0.1
               display.
 
 - Task window does not display the last task name properly
-  Problem:    The last task name in the task window was truncated by one
+  Problem:    The last task name in the task window is truncated by one
               character.
 
   Workaround: This is a small cosmetic problem that does not require any work
@@ -164,46 +173,46 @@ Known Problems fixed in GVD 1.0.1
 
 - Closing the attach process window would generate a bug box
   Problem:    When closing the attach process window using the close icon of
-              the window manager, GVD would generate a bug box instead of
+              the window manager, GVD generates a bug box instead of
               silently closing the window.
 
   Workaround: Use the close button instead.
 
 - File/Edit Source is silently ignored
-  Problem:    When using the File/Edit Source menu, nothing would happen.
+  Problem:    When using the File/Edit Source menu, nothing happens.
 
   Workaround: Set the environment variable GVD_EDITOR (e.g
               "xterm -e /bin/vi %f +%l") before launching gvd.
 
 - Problem in the memory view address handling
   Problem:    In the memory view, when specifying some array variables whose
-              bounds are unknown to gdb in the Address area, gvd would hang.
+              bounds are unknown to gdb in the Address area, gvd hangs.
 
   Workaround: Do not try to display memory associated to arrays with non
               static bounds.
 
 - Special characters not properly handled in file and directory names
-  Problem:    GVD did not handle files containing special characters such as
+  Problem:    GVD does not handle files containing special characters such as
               '!' or ' '.
 
   Workaround: Avoid using these characters, by e.g using links.
 
 - Adding a breakpoint in the Breakpoint window would generate a bug box
   Problem:    When clicking on the Add button in the edit breakpoint window,
-              gvd would generate a Constraint_Error turned into a bug box.
+              gvd generates a Constraint_Error turned into a bug box.
 
   Workaround: Set breakpoints using the source code window or the debugger
               window instead.
 
 - Incorrect highlighting with TAB characters in comments
-  Problem:    Highlighting was incorrect for files containing tab characters
+  Problem:    Highlighting is incorrect for files containing tab characters
               inside comments.
 
   Workaround: Ignore the highlighting, or remove tabs from comments.
 
 - Under Windows NT/2000, GVD would crash on directory selection
   Problem:    When using the "File/Change Directory" menu item under NT/2000,
-              GVD would generate a bug box.
+              GVD generates a bug box.
 
   Workaround: Type the directory name explicitely without any pending
               slash/backslashes or use the "cd" command in the debugger window.
