@@ -29,10 +29,12 @@
 with Gdk.Color;       use Gdk.Color;
 with Gdk.Event;       use Gdk.Event;
 with Glib;            use Glib;
+with Glib.Object;     use Glib.Object;
 with Gtk.Arguments;   use Gtk.Arguments;
 with Gtk.Clist;       use Gtk.Clist;
 with Gtk.Enums;       use Gtk.Enums;
 with Gtk.Label;       use Gtk.Label;
+with Gtk.Main;        use Gtk.Main;
 with Gtk.Menu;        use Gtk.Menu;
 with Gtk.Menu_Item;   use Gtk.Menu_Item;
 with Gtk.Notebook;    use Gtk.Notebook;
@@ -40,6 +42,7 @@ with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 with Gtk.Style;       use Gtk.Style;
 with Gtk.Widget;      use Gtk.Widget;
 with Gtkada.Handlers; use Gtkada.Handlers;
+with Gtkada.MDI;      use Gtkada.MDI;
 with Gtkada.Types;    use Gtkada.Types;
 
 with Ada.Calendar;
@@ -51,11 +54,15 @@ with Interfaces.C.Strings;      use Interfaces.C.Strings;
 with Interfaces.C;              use Interfaces.C;
 
 with Prj_API;              use Prj_API;
-with Project_Trees;        use Project_Trees;
+with Creation_Wizard;      use Creation_Wizard;
 with Glide_Kernel;         use Glide_Kernel;
 with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
+with Glide_Kernel.Project; use Glide_Kernel.Project;
+with Glide_Kernel.Modules; use Glide_Kernel.Modules;
 with GUI_Utils;            use GUI_Utils;
 with Switches_Editors;     use Switches_Editors;
+with Directory_Tree;       use Directory_Tree;
+with String_Utils;         use String_Utils;
 
 with Prj;           use Prj;
 with Stringt;       use Stringt;
@@ -66,6 +73,15 @@ with Snames;        use Snames;
 with Switches_Editors; use Switches_Editors;
 
 package body Project_Viewers is
+
+   Prj_Editor_Module_ID : Module_ID;
+   --  Id for the project editor module
+
+   --  ??? Preferences
+   Default_Project_Width  : constant := 400;
+   Default_Project_Height : constant := 400;
+
+   Project_Editor_Window_Name : constant String := "Project editor";
 
    type View_Display is access procedure
      (Viewer    : access Project_Viewer_Record'Class;
@@ -197,7 +213,7 @@ package body Project_Viewers is
      (Viewer           : access Project_Viewer_Record'Class;
       Project_View     : Project_Id;
       File_Name        : String_Id;
-      Directory_Filter : Filter := No_Filter);
+      Directory_Filter : String := "");
    --  Append a new line in the current page of Viewer, for File_Name.
    --  The exact contents inserted depends on the current view.
    --  The file is automatically searched in all the source directories of
@@ -228,13 +244,40 @@ package body Project_Viewers is
    --  Callback when a row/column has been selected in the clist
 
    procedure Explorer_Selection_Changed
-     (Viewer : access Gtk_Widget_Record'Class);
+     (Viewer  : access Gtk_Widget_Record'Class;
+      Args    : Gtk_Args);
    --  Called every time the selection has changed in the tree
 
    function Viewer_Contextual_Menu
      (Viewer : access Gtk_Widget_Record'Class; Event : Gdk_Event)
       return Gtk_Menu;
    --  Return the contextual menu to use for the project viewer
+
+   procedure Project_Editor_Contextual
+     (Context   : access Selection_Context'Class;
+      Menu      : access Gtk.Menu.Gtk_Menu_Record'Class);
+   --  Add new entries, when needed, to the contextual menus from other
+   --  modules.
+
+   procedure Add_Directory_From_Contextual
+     (Widget : access Gtk_Widget_Record'Class;
+      Context : Selection_Context_Access);
+   --  Callback for the contextual menu item to add some source directories
+
+   procedure Change_Obj_Directory_From_Contextual
+     (Widget : access Gtk_Widget_Record'Class;
+      Context : Selection_Context_Access);
+   --  Change the object directory associated with a specific project
+
+   procedure On_New_Project
+     (Widget : access GObject_Record'Class;
+      Kernel : Kernel_Handle);
+   --  Callback for the Project->New menu
+
+   procedure On_Edit_Project
+     (Widget : access GObject_Record'Class;
+      Kernel : Kernel_Handle);
+   --  Callback for the Project->Edit menu
 
    -------------------------
    -- Find_In_Source_Dirs --
@@ -474,7 +517,7 @@ package body Project_Viewers is
      (Viewer           : access Project_Viewer_Record'Class;
       Project_View     : Project_Id;
       File_Name        : String_Id;
-      Directory_Filter : Filter := No_Filter)
+      Directory_Filter : String := "")
    is
       Current_View : constant View_Type := Current_Page (Viewer);
       File_N       : String (1 .. Integer (String_Length (File_Name)));
@@ -483,14 +526,16 @@ package body Project_Viewers is
    begin
       String_To_Name_Buffer (File_Name);
       File_N := Name_Buffer (1 .. Name_Len);
-      Dir_Name := Find_In_Source_Dirs (Project_View, File_N);
-      pragma Assert (Dir_Name /= No_String);
 
-      if Directory_Filter /= No_Filter
-        and then not String_Equal (Directory_Filter, Dir_Name)
+      if Directory_Filter /= ""
+        and then not Is_Regular_File
+        (Directory_Filter & Directory_Separator & File_N)
       then
          return;
       end if;
+
+      Dir_Name := Find_In_Source_Dirs (Project_View, File_N);
+      pragma Assert (Dir_Name /= No_String);
 
       String_To_Name_Buffer (Dir_Name);
       Project_User_Data.Set
@@ -615,37 +660,41 @@ package body Project_Viewers is
    --------------------------------
 
    procedure Explorer_Selection_Changed
-     (Viewer : access Gtk_Widget_Record'Class)
+     (Viewer  : access Gtk_Widget_Record'Class;
+      Args    : Gtk_Args)
    is
       View         : Project_Viewer := Project_Viewer (Viewer);
       Current_View : constant View_Type := Current_Page (View);
-      Dir, File    : String_Id;
       User         : User_Data;
       Rows         : Gint;
+      Context      : Selection_Context_Access :=
+        To_Selection_Context_Access (To_Address (Args, 1));
+      File         : File_Selection_Context_Access;
 
    begin
-      View.Current_Project := Get_Selected_Project (View.Explorer);
+      if Context.all in File_Selection_Context'Class then
+         File := File_Selection_Context_Access (Context);
+         View.Current_Project := Project_Information (File);
 
-      Clear (View);  --  ??? Should delete selectively
+         Clear (View);  --  ??? Should delete selectively
 
-      if View.Current_Project /= No_Project then
-         Dir := Get_Selected_Directory (View.Explorer);
-         Show_Project (View, View.Current_Project, Dir);
-      end if;
+         if View.Current_Project /= No_Project then
+            Show_Project (View, View.Current_Project,
+                          Directory_Information (File));
+         end if;
 
-      File := Get_Selected_File (View.Explorer);
+         if Has_File_Information (File) then
+            Rows := Get_Rows (View.Pages (Current_View));
 
-      if File /= No_String then
-         Rows := Get_Rows (View.Pages (Current_View));
+            for J in 0 .. Rows - 1 loop
+               User := Project_User_Data.Get (View.Pages (Current_View), J);
 
-         for J in 0 .. Rows - 1 loop
-            User := Project_User_Data.Get (View.Pages (Current_View), J);
-
-            if User.File_Name = File then
-               Select_Row (View.Pages (Current_View), J, 0);
-               return;
-            end if;
-         end loop;
+               if Get_String (User.File_Name) = File_Information (File) then
+                  Select_Row (View.Pages (Current_View), J, 0);
+                  return;
+               end if;
+            end loop;
+         end if;
       end if;
    end Explorer_Selection_Changed;
 
@@ -655,11 +704,10 @@ package body Project_Viewers is
 
    procedure Gtk_New
      (Viewer   : out Project_Viewer;
-      Kernel   : access Kernel_Handle_Record'Class;
-      Explorer : access Project_Trees.Project_Tree_Record'Class) is
+      Kernel   : access Kernel_Handle_Record'Class) is
    begin
       Viewer := new Project_Viewer_Record;
-      Project_Viewers.Initialize (Viewer, Kernel, Explorer);
+      Project_Viewers.Initialize (Viewer, Kernel);
    end Gtk_New;
 
    ----------------
@@ -668,8 +716,7 @@ package body Project_Viewers is
 
    procedure Initialize
      (Viewer   : access Project_Viewer_Record'Class;
-      Kernel   : access Kernel_Handle_Record'Class;
-      Explorer : access Project_Trees.Project_Tree_Record'Class)
+      Kernel   : access Kernel_Handle_Record'Class)
    is
       Label    : Gtk_Label;
       Color    : Gdk_Color;
@@ -680,7 +727,6 @@ package body Project_Viewers is
       Register_Contextual_Menu (Viewer, Viewer_Contextual_Menu'Access);
 
       Viewer.Kernel := Kernel_Handle (Kernel);
-      Viewer.Explorer := Project_Tree (Explorer);
 
       for View in View_Type'Range loop
          Gtk_New (Scrolled);
@@ -701,13 +747,9 @@ package body Project_Viewers is
       Widget_Callback.Connect (Viewer, "switch_page", Switch_Page'Access);
 
       Widget_Callback.Object_Connect
-        (Explorer, "tree_select_row",
-         Widget_Callback.To_Marshaller (Explorer_Selection_Changed'Access),
+        (Kernel, Context_Changed_Signal,
+         Explorer_Selection_Changed'Access,
          Viewer);
-      --  Widget_Callback.Object_Connect
-      --    (Explorer, "tree_unselect_row",
-      --     Widget_Callback.To_Marshaller (Explorer_Selection_Changed'Access),
-      --     Viewer);
 
       Color := Get_Pref (Kernel, Default_Switches_Color);
       Viewer.Default_Switches_Style := Copy (Get_Style (Viewer));
@@ -717,7 +759,7 @@ package body Project_Viewers is
 
       --  The initial contents of the viewer should be read immediately from
       --  the explorer, without forcing the user to do a new selection.
-      Explorer_Selection_Changed (Viewer);
+      --  ??? Explorer_Selection_Changed (Viewer);
    end Initialize;
 
    ----------------------------
@@ -808,7 +850,7 @@ package body Project_Viewers is
    procedure Show_Project
      (Viewer           : access Project_Viewer_Record;
       Project_Filter   : Prj.Project_Id;
-      Directory_Filter : Filter := No_Filter)
+      Directory_Filter : String := "")
    is
       Src          : String_List_Id := Projects.Table (Project_Filter).Sources;
       Current_View : constant View_Type := Current_Page (Viewer);
@@ -845,4 +887,227 @@ package body Project_Viewers is
       Thaw (Viewer.Pages (Current_View));
    end Clear;
 
+   -----------------------------------
+   -- Add_Directory_From_Contextual --
+   -----------------------------------
+
+   procedure Add_Directory_From_Contextual
+     (Widget : access Gtk_Widget_Record'Class;
+      Context : Selection_Context_Access)
+   is
+      Dirs : Argument_List :=
+        Multiple_Directories_Selector_Dialog (Get_Current_Dir);
+      File_Context : File_Selection_Context_Access :=
+        File_Selection_Context_Access (Context);
+   begin
+      if Dirs'Length /= 0 then
+         Update_Attribute_Value_In_Scenario
+           (Project            => Get_Project_From_View
+              (Project_Information (File_Context)),
+            Pkg_Name           => "",
+            Scenario_Variables => Scenario_Variables (Get_Kernel (Context)),
+            Attribute_Name     => "source_dirs",
+            Values             => Dirs,
+            Attribute_Index    => No_String,
+            Prepend            => True);
+         Free (Dirs);
+         Recompute_View (Get_Kernel (Context));
+      end if;
+   end Add_Directory_From_Contextual;
+
+   ------------------------------------------
+   -- Change_Obj_Directory_From_Contextual --
+   ------------------------------------------
+
+   procedure Change_Obj_Directory_From_Contextual
+     (Widget  : access Gtk_Widget_Record'Class;
+      Context : Selection_Context_Access)
+   is
+      Dir : constant String := Single_Directory_Selector_Dialog
+        (Get_Current_Dir);
+      File_Context : File_Selection_Context_Access :=
+        File_Selection_Context_Access (Context);
+   begin
+      if Dir /= "" then
+         Update_Attribute_Value_In_Scenario
+           (Project            => Get_Project_From_View
+              (Project_Information (File_Context)),
+            Pkg_Name           => "",
+            Scenario_Variables => Scenario_Variables (Get_Kernel (Context)),
+            Attribute_Name     => "object_dir",
+            Value              => Dir,
+            Attribute_Index    => No_String);
+         Recompute_View (Get_Kernel (Context));
+      end if;
+   end Change_Obj_Directory_From_Contextual;
+
+   -------------------------------
+   -- Project_Editor_Contextual --
+   -------------------------------
+
+   procedure Project_Editor_Contextual
+     (Context   : access Selection_Context'Class;
+      Menu      : access Gtk.Menu.Gtk_Menu_Record'Class)
+   is
+      Item : Gtk_Menu_Item;
+      File_Context : File_Selection_Context_Access;
+   begin
+      --  We insert entries whatever the sender_id is, as long as the context
+      --  knows something about project or files
+
+      if Context.all in File_Selection_Context'Class then
+         File_Context := File_Selection_Context_Access (Context);
+
+         if Has_Project_Information (File_Context) then
+            Gtk_New (Item, Label => "");
+            Append (Menu, Item);
+
+            Gtk_New (Item, Label => "Add Directory to "
+                     & Project_Name (Project_Information (File_Context)));
+            Append (Menu, Item);
+            Context_Callback.Connect
+              (Item, "activate",
+               Context_Callback.To_Marshaller
+               (Add_Directory_From_Contextual'Access),
+               Selection_Context_Access (Context));
+
+            Gtk_New (Item, Label => "Change Object Directory for "
+                     & Project_Name (Project_Information (File_Context)));
+            Append (Menu, Item);
+            Context_Callback.Connect
+              (Item, "activate",
+               Context_Callback.To_Marshaller
+               (Change_Obj_Directory_From_Contextual'Access),
+               Selection_Context_Access (Context));
+
+            Gtk_New (Item, Label => "Edit Default Switches for "
+                     & Project_Name (Project_Information (File_Context)));
+            Append (Menu, Item);
+            --  Context_Callback.Connect
+            --    (Item, "activate",
+            --     Context_Callback.To_Marshaller
+            --     (Edit_Switches_From_Contextual'Access),
+            --     Selection_Context_Access (Context));
+         end if;
+
+         if Has_Directory_Information (File_Context) then
+            Gtk_New (Item, Label => "");
+            Append (Menu, Item);
+            Gtk_New (Item, Label => "Remove Directory "
+                     & Directory_Information (File_Context));
+            Set_Sensitive (Item, False);
+            Append (Menu, Item);
+         end if;
+
+         Gtk_New (Item, Label => "");
+         Append (Menu, Item);
+         Gtk_New (Item, Label => "Add Variable");
+         Append (Menu, Item);
+         --  Context_Callback.Connect
+         --    (Item, "activate",
+         --     Context_Callback.To_Marshaller
+         --     (Add_Variable_Contextual'Access),
+         --     Selection_Context_Access (Context));
+
+         if Has_File_Information (File_Context) then
+            Gtk_New (Item, Label => "");
+            Append (Menu, Item);
+
+            Gtk_New (Item, Label => "Edit Switches for "
+                     & Base_File_Name (File_Information (File_Context)));
+            Append (Menu, Item);
+            --  Context_Callback.Connect
+            --    (Item, "activate",
+            --     Context_Callback.To_Marshaller
+            --     (Edit_Switches_From_Contextual'Access),
+            --     Selection_Context_Access (Context));
+
+            --  ??? Should be in another module
+            --  Gtk_New (Item, Label => File_Information (File_Context)
+            --           & " depends on...");
+            --  Append (Menu, Item);
+            --  Context_Callback.Connect
+            --    (Item, "activate",
+            --     Context_Callback.To_Marshaller
+            --     (Edit_Dependencies_From_Contextual'Access),
+            --     Selection_Context_Access (Context));
+         end if;
+      end if;
+   end Project_Editor_Contextual;
+
+   --------------------
+   -- On_New_Project --
+   --------------------
+
+   procedure On_New_Project
+     (Widget : access GObject_Record'Class;
+      Kernel : Kernel_Handle)
+   is
+      Wiz : Creation_Wizard.Prj_Wizard;
+   begin
+      Gtk_New (Wiz, Kernel);
+      Set_Current_Page (Wiz, 1);
+      Show_All (Wiz);
+      Main;
+   end On_New_Project;
+
+   -------------------------
+   -- On_Debug_Executable --
+   -------------------------
+
+   procedure On_Edit_Project
+     (Widget : access GObject_Record'Class;
+      Kernel : Kernel_Handle)
+   is
+      Child  : MDI_Child;
+      Viewer : Project_Viewer;
+   begin
+      Child := Find_MDI_Child_By_Tag (Kernel, Project_Viewer_Record'Tag);
+
+      if Child /= null then
+         Raise_Child (Child);
+      else
+         Gtk_New (Viewer, Kernel);
+         Set_Size_Request
+           (Viewer, Default_Project_Width, Default_Project_Height);
+         Child := Put (Get_MDI (Kernel), Viewer);
+         Set_Title (Child, Project_Editor_Window_Name);
+      end if;
+   end On_Edit_Project;
+
+   -----------------------
+   -- Initialize_Module --
+   -----------------------
+
+   procedure Initialize_Module
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+   is
+      Menu_Item : Gtk_Menu_Item;
+   begin
+      Gtk_New (Menu_Item, "New...");
+      Register_Menu (Kernel, "/Project", Menu_Item, Ref_Item => "Open...");
+      Kernel_Callback.Connect
+        (Menu_Item, "activate",
+         Kernel_Callback.To_Marshaller (On_New_Project'Access),
+         Kernel_Handle (Kernel));
+
+      Gtk_New (Menu_Item, "Edit...");
+      Register_Menu (Kernel, "/Project", Menu_Item, Ref_Item => "Open...",
+                     Add_Before => False);
+      Kernel_Callback.Connect
+        (Menu_Item, "activate",
+         Kernel_Callback.To_Marshaller (On_Edit_Project'Access),
+         Kernel_Handle (Kernel));
+
+      Gtk_New (Menu_Item, "Add Directory...");
+      Register_Menu (Kernel, "/Project", Menu_Item, Ref_Item => "Edit...",
+                     Add_Before => False);
+   end Initialize_Module;
+
+begin
+   Prj_Editor_Module_ID := Register_Module
+     (Module_Name             => Project_Editor_Module_Name,
+      Priority                => Default_Priority,
+      Initializer             => Initialize_Module'Access,
+      Contextual_Menu_Handler => Project_Editor_Contextual'Access);
 end Project_Viewers;
