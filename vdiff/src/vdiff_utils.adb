@@ -105,9 +105,9 @@ package body Vdiff_Utils is
       Event        : Gdk.Event.Gdk_Event;
       Menu         : Gtk.Menu.Gtk_Menu) return Selection_Context_Access
    is
-      Context : File_Selection_Context_Access
-        := new File_Selection_Context;
-      Vdiff   : Vdiff_Info_Access := Vdiff_Info_Access (Object);
+      Context : constant File_Selection_Context_Access :=
+        new File_Selection_Context;
+      Vdiff   : constant Vdiff_Info_Access := Vdiff_Info_Access (Object);
 
       pragma Unreferenced (Event_Widget, Menu, Event);
 
