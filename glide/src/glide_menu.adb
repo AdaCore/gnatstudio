@@ -18,13 +18,15 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib;                    use Glib;
-with Gtk.Label;               use Gtk.Label;
-with Gtk.Main;                use Gtk.Main;
-with Gtk.Stock;               use Gtk.Stock;
-with Gtkada.Dialogs;          use Gtkada.Dialogs;
-with Gtkada.File_Selection;   use Gtkada.File_Selection;
-with Gtkada.MDI;              use Gtkada.MDI;
+with Glib;                         use Glib;
+with Gtk.Label;                    use Gtk.Label;
+with Gtk.Main;                     use Gtk.Main;
+with Gtk.Stock;                    use Gtk.Stock;
+with Gtkada.Dialogs;               use Gtkada.Dialogs;
+with Gtkada.File_Selection;        use Gtkada.File_Selection;
+with Gtkada.File_Selector;         use Gtkada.File_Selector;
+with Gtkada.File_Selector.Filters; use Gtkada.File_Selector.Filters;
+with Gtkada.MDI;                   use Gtkada.MDI;
 
 with Creation_Wizard;         use Creation_Wizard;
 with Glide_Intl;              use Glide_Intl;
@@ -53,9 +55,10 @@ with Diff_Utils;              use Diff_Utils;
 with OS_Utils;                use OS_Utils;
 with GVD.Dialogs;             use GVD.Dialogs;
 
-with GNAT.Expect;             use GNAT.Expect;
-with GNAT.Regpat;             use GNAT.Regpat;
-with GNAT.OS_Lib;             use GNAT.OS_Lib;
+with GNAT.Expect;               use GNAT.Expect;
+with GNAT.Regpat;               use GNAT.Regpat;
+with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 
 with Factory_Data;            use Factory_Data;
 
@@ -354,13 +357,18 @@ package body Glide_Menu is
       Action : Guint;
       Widget : Limited_Widget)
    is
-      Filename : constant String :=
-        File_Selection_Dialog (Title => "Open Project", Must_Exist => True);
-
+      File_Selector   : File_Selector_Window_Access;
    begin
-      if Filename /= "" then
-         Load_Project (Glide_Window (Object).Kernel, Filename);
-      end if;
+      Gtk_New (File_Selector, Get_Current_Dir, "Open Project");
+      Register_Filter (File_Selector, Prj_File_Filter);
+
+      declare
+         Filename : constant String :=  Select_File (File_Selector);
+      begin
+         if Filename /= "" then
+            Load_Project (Glide_Window (Object).Kernel, Filename);
+         end if;
+      end;
 
    exception
       when E : others =>
