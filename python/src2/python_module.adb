@@ -22,6 +22,15 @@ with Glide_Kernel;             use Glide_Kernel;
 
 package body Python_Module is
 
+   -------------------
+   -- Initialize_IO --
+   -------------------
+
+   procedure Initialize_IO is
+   begin
+      null;
+   end Initialize_IO;
+
    ---------------------
    -- Register_Module --
    ---------------------
