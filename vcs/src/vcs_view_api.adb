@@ -347,13 +347,13 @@ package body VCS_View_API is
       Kernel : Kernel_Handle)
    is
       pragma Unreferenced (Widget);
-
       Files : String_List.List := Get_Selected_Files (Kernel);
-      Ref   : VCS_Access := Get_Current_Ref (Kernel);
-
    begin
-      Edit_Log (null, Kernel, Files, Ref);
-      String_List.Free (Files);
+      while not String_List.Is_Empty (Files) loop
+         Open_File_Editor
+           (Kernel, Get_Log_From_File (Kernel, String_List.Head (Files)));
+         String_List.Next (Files);
+      end loop;
    end Edit_Log;
 
    -------------------------
