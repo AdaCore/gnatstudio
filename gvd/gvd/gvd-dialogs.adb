@@ -761,7 +761,7 @@ package body GVD.Dialogs is
             Hide (Dialog);
          end if;
 
-         return ASCII.Nul & "";
+         return ASCII.NUL & "";
 
       else
          declare
@@ -862,8 +862,9 @@ package body GVD.Dialogs is
       Key           : String := "";
       Button_Active : access Boolean) return String
    is
-      Dialog      : Display_Dialog_Access;
+      Dialog          : Display_Dialog_Access;
       Must_Initialize : Boolean := False;
+
    begin
       if Key /= "" then
          begin
