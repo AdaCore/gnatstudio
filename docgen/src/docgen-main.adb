@@ -136,8 +136,10 @@ procedure Docgen.Main is
             elsif S = "-private" then
                Options.Show_Private := True;
             elsif S'Last > 9 and then S (1 .. 9) = "-docpath=" then
-                  Options.Doc_Directory := new String '(S (10 .. S'Last));
+               Options.Doc_Directory := new String '(S (10 .. S'Last));
             elsif S'Length > 5 and then S (S'Last - 3 .. S'Last) = ".ads" then
+               --  ??? Should use Prj_API to check whether the file is a spec
+
                Load_LI_File
                     (Source_Info_List, Handler, Project_View,
                      S, LI_Unit);
