@@ -1062,8 +1062,7 @@ package body Browsers.Dependency_Items is
          Usage        => "() -> None",
          Description  =>
            -("Display in the dependency browser the list of files that"
-             & ASCII.LF
-             & "file_name depends on."),
+             & " file_name depends on."),
          Minimum_Args => 0,
          Maximum_Args => 0,
          Class        => Get_File_Class (Kernel),
@@ -1074,8 +1073,7 @@ package body Browsers.Dependency_Items is
          Usage        => "() -> None",
          Description  =>
            -("Display in the dependency browser the list of files that"
-             & ASCII.LF
-             & "depends on file_name."),
+             & " depends on file_name."),
          Minimum_Args => 0,
          Maximum_Args => 0,
          Class        => Get_File_Class (Kernel),

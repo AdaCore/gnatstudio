@@ -445,10 +445,8 @@ package body Browsers.Entities is
          Usage        => "() -> None",
          Description  =>
            -("Display in the type browser the informations known about the"
-             & ASCII.LF
-             & "entity: list of fields for records, list of primitive"
-             & ASCII.LF
-             & "subprograms or methods, list of parameters, ..."),
+             & " entity: list of fields for records, list of primitive"
+             & " subprograms or methods, list of parameters, ..."),
          Minimum_Args => 0,
          Maximum_Args => 0,
          Class        => Get_Entity_Class (Kernel),
@@ -459,10 +457,8 @@ package body Browsers.Entities is
          Usage        => "() -> list",
          Description  =>
            -("Return the list of discriminants for entity. This is a list"
-             & ASCII.LF
-             & "of entities, empty if the type has no discriminant or if this"
-             & ASCII.LF
-             & "notion doesn't apply to that language"),
+             & " of entities, empty if the type has no discriminant or if this"
+             & " notion doesn't apply to that language"),
          Minimum_Args => 0,
          Maximum_Args => 0,
          Class        => Get_Entity_Class (Kernel),
@@ -473,12 +469,9 @@ package body Browsers.Entities is
          Usage        => "() -> list",
          Description  =>
            -("Return the list of fields for entity. This is a list of entities"
-             & ','
-             & ASCII.LF
-             & "if the type has no field. This applies to Ada record and"
+             & ", if the type has no field. This applies to Ada record and"
              & " tagged"
-             & ASCII.LF
-             & "types, or C structs for instance."),
+             & " types, or C structs for instance."),
          Minimum_Args => 0,
          Maximum_Args => 0,
          Class        => Get_Entity_Class (Kernel),
