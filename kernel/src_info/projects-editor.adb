@@ -3062,7 +3062,7 @@ package body Projects.Editor is
       --  renamed. Otherwise, Project_Path would still return "" when saving
       --  the default project.
 
-      Set_Is_Default (Project, False);
+      Set_Status (Project, From_File);
    end Rename_And_Move;
 
    ----------------------------
