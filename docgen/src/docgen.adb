@@ -130,30 +130,29 @@ package body Docgen is
          function Is_Operator (Op : String) return Boolean is
             use List_Reference_In_File;
             Ref_List_Info : List_Reference_In_File.List_Node;
+            Ref           : List_Reference_In_File.Data_Access;
+            Kind          : E_Kinds;
+
          begin
             --  Can this function be simplified ???
 
             Ref_List_Info := List_Reference_In_File.First (List_Ref_In_File);
 
             while Ref_List_Info /= List_Reference_In_File.Null_Node loop
-               if List_Reference_In_File.Data (Ref_List_Info).Name /= null then
-                  if Op = List_Reference_In_File.Data (Ref_List_Info).Name.all
-                     --  op is a reference
-                    and then
-                      (Get_Kind (List_Reference_In_File.Data
-                                   (Ref_List_Info).Entity.all).Kind
-                         = Function_Or_Operator
-                       or else
-                         Get_Kind (List_Reference_In_File.Data
-                                     (Ref_List_Info).Entity.all).Kind
-                         = Procedure_Kind)
-                     --  The entity of this reference overloads an operator
+               Ref := List_Reference_In_File.Data_Ref (Ref_List_Info);
+
+               if Ref.Name /= null and then Op = Ref.Name.all then
+                  Kind := Get_Kind (Ref.Entity.all).Kind;
+
+                  if Kind = Function_Or_Operator
+                    or else Kind = Procedure_Kind
                   then
+                     --  The entity of this reference overloads an operator
                      return True;
                   end if;
-
-                  Ref_List_Info := List_Reference_In_File.Next (Ref_List_Info);
                end if;
+
+               Ref_List_Info := List_Reference_In_File.Next (Ref_List_Info);
             end loop;
 
             return False;
@@ -390,16 +389,19 @@ package body Docgen is
          Column           : Natural;
          E_L_I            : in List_Reference_In_File.List_Node;
          Result           : in out Boolean;
-         Entity_Abstract  : in out Boolean) is
+         Entity_Abstract  : in out Boolean)
+      is
+         Ref : List_Reference_In_File.Data_Access;
       begin
-         if List_Reference_In_File.Data (E_L_I).Line = Line
-           and then
-             To_Lower (Text) = List_Reference_In_File.Data (E_L_I).Name.all
-           and then
-             List_Reference_In_File.Data (E_L_I).Column = Column
+         Ref := List_Reference_In_File.Data_Ref (E_L_I);
+
+         if Ref.Line = Line
+           and then To_Lower (Text) = Ref.Name.all
+           and then Ref.Column = Column
          then
             Result := True;
-            E_I := List_Reference_In_File.Data (E_L_I).Entity.all;
+            E_I := Ref.Entity.all;
+
             if Get_Kind (E_I).Is_Abstract then
                Entity_Abstract := True;
             end if;
@@ -446,7 +448,6 @@ package body Docgen is
             --  We search it in the list we have made before in order to
             --  find its declaration.
             while Ref_List_Info /= List_Reference_In_File.Null_Node loop
-
                Get_Declaration
                  (Text (Loc_Start .. Loc_End),
                   Entity_Info,
@@ -455,6 +456,7 @@ package body Docgen is
                   Ref_List_Info,
                   Result,
                   Entity_Abstract);
+
                if Result then
                   List_Reference_In_File.Remove_Nodes
                     (List_Ref_In_File, Ref_List_Info_Prec,
@@ -462,13 +464,15 @@ package body Docgen is
                end if;
 
                exit when Is_Body;
-               --  for body files, no loop because references in the list
-               --  are sorted. So the first element met in list is the good
+
+               --  For body files, no loop because references in the list
+               --  are sorted. So the first element met in list is the right
                --  one (for this elements are removed after being met).
+
                exit when Result;
+
                Ref_List_Info_Prec := Ref_List_Info;
-               Ref_List_Info
-                 := List_Reference_In_File.Next (Ref_List_Info);
+               Ref_List_Info := List_Reference_In_File.Next (Ref_List_Info);
             end loop;
 
             --  We create a link on the declaration for this entity
@@ -590,14 +594,16 @@ package body Docgen is
    is
       use Type_Reference_List;
       Node : Type_Reference_List.List_Node;
+      Data : Type_Reference_List.Data_Access;
+
    begin
       if not Type_Reference_List.Is_Empty (List_In) then
          Node := Type_Reference_List.First (List_In);
+
          while Node /= Type_Reference_List.Null_Node loop
+            Data := Type_Reference_List.Data_Ref (Node);
             Type_Reference_List.Append
-              (List_Out,
-               (Copy (Type_Reference_List.Data (Node).Entity),
-                Type_Reference_List.Data (Node).Set_Link));
+              (List_Out, (Copy (Data.Entity), Data.Set_Link));
             Node := Type_Reference_List.Next (Node);
          end loop;
       end if;
@@ -633,18 +639,23 @@ package body Docgen is
       Info : Entity_Information) return Entity_Handle
    is
       use List_Entity_Handle;
-      Node  : List_Entity_Handle.List_Node;
+      Node   : List_Entity_Handle.List_Node;
+      Entity : Entity_Handle;
    begin
-      Node  := List_Entity_Handle.First (List);
+      Node := List_Entity_Handle.First (List);
 
       while Node /= List_Entity_Handle.Null_Node loop
-         if List_Entity_Handle.Data (Node) /= null then
-            if Is_Equal (List_Entity_Handle.Data (Node).all, Info) then
-               return List_Entity_Handle.Data (Node);
+         Entity := List_Entity_Handle.Data (Node);
+
+         if Entity /= null then
+            if Is_Equal (Entity.all, Info) then
+               return Entity;
             end if;
          end if;
+
          Node := List_Entity_Handle.Next (Node);
       end loop;
+
       return null;
    end Find_In_List;
 
@@ -662,6 +673,7 @@ package body Docgen is
       Follow_Node : Type_List_Tagged_Element.List_Node;
       Found       : Boolean;
       Tag_Elem    : Tagged_Element_Handle;
+      Element     : Type_List_Tagged_Element.Data_Access;
 
    begin
       Found       := False;
@@ -669,42 +681,53 @@ package body Docgen is
       Follow_Node := Type_List_Tagged_Element.Null_Node;
 
       if Node /= Type_List_Tagged_Element.Null_Node then
+         Element := Data_Ref (Node);
+
          --  Work on the first node first
-         if Is_Equal (Data (Node).Me.all, Target.all) then
+
+         if Is_Equal (Element.Me.all, Target.all) then
             --  Target found: update if needed and exit
-            if Find_In_List (Data (Node).My_Children,
-                             Patch.all) = null then
-               Tag_Elem := new Tagged_Element'(Data (Node));
+
+            if Find_In_List (Element.My_Children, Patch.all) = null then
+               Tag_Elem := new Tagged_Element'(Element.all);
                List_Entity_Handle.Append (Tag_Elem.My_Children, Patch);
                Tag_Elem.Number_Of_Children := Tag_Elem.Number_Of_Children + 1;
                Type_List_Tagged_Element.Remove_Nodes (List, Follow_Node, Node);
                Type_List_Tagged_Element.Append (List, Tag_Elem.all);
             end if;
+
             Found := True;
          end if;
+
          --  Work on the other element of the list
+
          if not Found then
             Follow_Node := Node;
             Node := Type_List_Tagged_Element.Next (Node);
 
             while Node /= Type_List_Tagged_Element.Null_Node loop
-               if Is_Equal (Data (Node).Me.all, Target.all) then
+               Element := Data_Ref (Node);
+
+               if Is_Equal (Element.Me.all, Target.all) then
                   --  Target found: update if needed and exit
-                  if Find_In_List (Data (Node).My_Children,
-                                   Patch.all) = null then
-                     Tag_Elem := new Tagged_Element'(Data (Node));
+
+                  if Find_In_List (Element.My_Children, Patch.all) = null then
+                     Tag_Elem := new Tagged_Element'(Element.all);
                      List_Entity_Handle.Append (Tag_Elem.My_Children, Patch);
-                     Tag_Elem.Number_Of_Children
-                       := Tag_Elem.Number_Of_Children + 1;
+                     Tag_Elem.Number_Of_Children :=
+                       Tag_Elem.Number_Of_Children + 1;
                      Type_List_Tagged_Element.Remove_Nodes
                        (List, Follow_Node, Node);
                      Type_List_Tagged_Element.Append (List, Tag_Elem.all);
                   end if;
+
                   Found := True;
+
                else
                   Follow_Node := Node;
                   Node := Type_List_Tagged_Element.Next (Node);
                end if;
+
                exit when Found;
             end loop;
          end if;
@@ -725,6 +748,7 @@ package body Docgen is
       Follow_Node : Type_List_Tagged_Element.List_Node;
       Found       : Boolean;
       Tag_Elem    : Tagged_Element_Handle;
+      Element     : Type_List_Tagged_Element.Data_Access;
 
    begin
       Found       := False;
@@ -732,42 +756,53 @@ package body Docgen is
       Follow_Node := Type_List_Tagged_Element.Null_Node;
 
       if Node /= Type_List_Tagged_Element.Null_Node then
+         Element := Data_Ref (Node);
+
          --  Work on the first node first
-         if Is_Equal (Data (Node).Me.all, Target.all) then
+
+         if Is_Equal (Element.Me.all, Target.all) then
             --  Target found: update if needed and exit
-            if Find_In_List (Data (Node).My_Parents,
-                             Patch.all) = null then
-               Tag_Elem := new Tagged_Element'(Data (Node));
+
+            if Find_In_List (Element.My_Parents, Patch.all) = null then
+               Tag_Elem := new Tagged_Element'(Element.all);
                List_Entity_Handle.Append (Tag_Elem.My_Parents, Patch);
                Tag_Elem.Number_Of_Parents := Tag_Elem.Number_Of_Parents + 1;
                Type_List_Tagged_Element.Remove_Nodes (List, Follow_Node, Node);
                Type_List_Tagged_Element.Append (List, Tag_Elem.all);
             end if;
+
             Found := True;
          end if;
+
          --  Work on the other element of the list
+
          if not Found then
             Follow_Node := Node;
             Node := Type_List_Tagged_Element.Next (Node);
 
             while Node /= Type_List_Tagged_Element.Null_Node loop
-               if Is_Equal (Data (Node).Me.all, Target.all) then
-                  if Find_In_List (Data (Node).My_Parents,
-                                   Patch.all) = null then
+               Element := Data_Ref (Node);
+
+               if Is_Equal (Element.Me.all, Target.all) then
+                  if Find_In_List (Element.My_Parents, Patch.all) = null then
                      --  Target found: update if needed and exit
-                     Tag_Elem := new Tagged_Element'(Data (Node));
+
+                     Tag_Elem := new Tagged_Element'(Element.all);
                      List_Entity_Handle.Append (Tag_Elem.My_Parents, Patch);
-                     Tag_Elem.Number_Of_Parents
-                       := Tag_Elem.Number_Of_Parents + 1;
+                     Tag_Elem.Number_Of_Parents :=
+                       Tag_Elem.Number_Of_Parents + 1;
                      Type_List_Tagged_Element.Remove_Nodes
                        (List, Follow_Node, Node);
                      Type_List_Tagged_Element.Append (List, Tag_Elem.all);
                   end if;
+
                   Found := True;
+
                else
                   Follow_Node := Node;
                   Node := Type_List_Tagged_Element.Next (Node);
                end if;
+
                exit when Found;
             end loop;
          end if;
@@ -787,6 +822,8 @@ package body Docgen is
       Follow_Node : Type_List_Tagged_Element.List_Node;
       Found       : Boolean;
       Tag_Elem    : Tagged_Element_Handle;
+      Element     : Type_List_Tagged_Element.Data_Access;
+
    begin
       Found := False;
       Node        := Type_List_Tagged_Element.First (List);
@@ -794,37 +831,50 @@ package body Docgen is
 
       if Node /= Type_List_Tagged_Element.Null_Node then
          --  Work on the first node first
-         if Is_Equal (Data (Node).Me.all, Target.all) then
+
+         Element := Data_Ref (Node);
+
+         if Is_Equal (Element.Me.all, Target.all) then
             --  Target found: update if needed and exit
-            if Data (Node).Print_Me =  False then
-               Tag_Elem := new Tagged_Element'(Data (Node));
+
+            if not Element.Print_Me then
+               Tag_Elem := new Tagged_Element'(Element.all);
                Tag_Elem.Print_Me := True;
                Type_List_Tagged_Element.Remove_Nodes
                  (List, Follow_Node, Node);
                Type_List_Tagged_Element.Append (List, Tag_Elem.all);
             end if;
+
             Found := True;
          end if;
+
          --  Work on the other element of the list
+
          if not Found then
             Follow_Node := Node;
             Node := Type_List_Tagged_Element.Next (Node);
 
             while Node /= Type_List_Tagged_Element.Null_Node loop
-               if Is_Equal (Data (Node).Me.all, Target.all) then
+               Element := Data_Ref (Node);
+
+               if Is_Equal (Element.Me.all, Target.all) then
                   --  Target found: update if needed and exit
-                  if Data (Node).Print_Me =  False then
-                     Tag_Elem := new Tagged_Element'(Data (Node));
+
+                  if not Element.Print_Me then
+                     Tag_Elem := new Tagged_Element'(Element.all);
                      Tag_Elem.Print_Me := True;
                      Type_List_Tagged_Element.Remove_Nodes
                        (List, Follow_Node, Node);
                      Type_List_Tagged_Element.Append (List, Tag_Elem.all);
                   end if;
+
                   Found := True;
+
                else
                   Follow_Node := Node;
                   Node := Type_List_Tagged_Element.Next (Node);
                end if;
+
                exit when Found;
             end loop;
          end if;
@@ -995,17 +1045,19 @@ package body Docgen is
       package TSFL renames Type_Source_File_List;
       use type TSFL.List_Node;
       Source_File_Node : TSFL.List_Node := TSFL.First (Source_File_List);
+      Data             : TSFL.Data_Access;
+
    begin
       while Source_File_Node /= TSFL.Null_Node loop
-         if TSFL.Data (Source_File_Node).File_Name = Name then
+         Data := TSFL.Data_Ref (Source_File_Node);
+
+         if Data.File_Name = Name then
             return True;
          end if;
 
-         if Full_Name (TSFL.Data (Source_File_Node).File_Name).all
-           > Full_Name (Name).all
-         then
+         if Full_Name (Data.File_Name).all > Full_Name (Name).all then
             --  The list is sorted, we can exit
-            return false;
+            return False;
          end if;
 
          Source_File_Node := TSFL.Next (Source_File_Node);
