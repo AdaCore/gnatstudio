@@ -215,6 +215,7 @@ package body Find_Utils is
                   then
                      Continue := Explore_Directory (Full_Name);
                   end if;
+
                elsif Match (File_Name (1 .. Last), Search.Files_Pattern) then
                   Continue := Scan_File (Full_Name);
                end if;
@@ -238,21 +239,20 @@ package body Find_Utils is
       ---------------
 
       function Scan_File (Name : String) return Boolean is
+         Language : Language_Access;
       begin
          if Search.Scope = Whole then
             return Scan_File_Without_Context (Name);
          end if;
 
-         declare
-            Language : Language_Access := Get_Language_From_File (Name);
-         begin
-            if Language = null then
-               return Scan_File_Without_Context (Name);
-            else
-               return Scan_File_With_Context
-                 (Name, Get_Language_Context (Language));
-            end if;
-         end;
+         Language := Get_Language_From_File (Name);
+
+         if Language = null then
+            return Scan_File_Without_Context (Name);
+         else
+            return Scan_File_With_Context
+              (Name, Get_Language_Context (Language));
+         end if;
       end Scan_File;
 
       ----------------------------
