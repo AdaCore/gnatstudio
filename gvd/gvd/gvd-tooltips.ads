@@ -26,7 +26,7 @@ with Gdk.Window;
 with Gdk.Rectangle;
 with Gtk.Main;
 with Gdk.Event;
-with Gdk.Window;
+with Gtk.Window;
 
 --  This package provides tooltips-like functionality. It differs from
 --  the original Gtk.Tooltips package in that the drawing function is
@@ -116,7 +116,7 @@ private
       Parent_Window : Gdk.Window.Gdk_Window;
       --  The window which contains the tooltip.
 
-      Display_Window : Gdk.Window.Gdk_Window;
+      Display_Window : Gtk.Window.Gtk_Window;
       --  The window in which the tooltip will be displayed.
 
       Handler_Id : Gtk.Main.Timeout_Handler_Id;

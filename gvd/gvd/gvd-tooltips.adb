@@ -18,17 +18,18 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib;            use Glib;
-with Gtk.Widget;      use Gtk.Widget;
-with Gdk.Pixmap;      use Gdk.Pixmap;
-with Gdk.Window;      use Gdk.Window;
-with Gdk.Rectangle;   use Gdk.Rectangle;
-with Gtk.Main;        use Gtk.Main;
-with Gtk.Handlers;    use Gtk.Handlers;
-with Gdk.Types;       use Gdk.Types;
 with Gdk.Event;       use Gdk.Event;
-with Gdk.Visual;      use Gdk.Visual;
-with Gdk.Window_Attr; use Gdk.Window_Attr;
+with Gdk.Pixmap;      use Gdk.Pixmap;
+with Gdk.Rectangle;   use Gdk.Rectangle;
+with Gdk.Types;       use Gdk.Types;
+with Gdk.Window;      use Gdk.Window;
+with Glib;            use Glib;
+with Gtk.Enums;       use Gtk.Enums;
+with Gtk.Handlers;    use Gtk.Handlers;
+with Gtk.Main;        use Gtk.Main;
+with Gtk.Pixmap;      use Gtk.Pixmap;
+with Gtk.Widget;      use Gtk.Widget;
+with Gtk.Window;      use Gtk.Window;
 with Ada.Unchecked_Deallocation;
 
 package body GVD.Tooltips is
@@ -114,7 +115,7 @@ package body GVD.Tooltips is
       Tooltip := new Tooltips_Record'
         (Timeout        => Default_Timeout,
          Data           => new User_Type'(Data),
-         Display_Window => Null_Window,
+         Display_Window => null,
          Parent_Window  => Get_Window (Widget),
          Handler_Id     => 0,
          Active         => False,
@@ -147,10 +148,9 @@ package body GVD.Tooltips is
    function Display_Tooltip (Tooltip : in Tooltips) return Boolean is
       use type Gdk_Window;
       Pixmap      : Gdk_Pixmap;
-      Visual      : Gdk_Visual;
-      Window_Attr : Gdk_Window_Attr;
-      Mask        : Gdk_Modifier_Type;
       Window      : Gdk_Window;
+      Mask        : Gdk_Modifier_Type;
+      Pix         : Gtk_Pixmap;
       Width, Height : Gint;
       X, Y        : Gint;
 
@@ -162,9 +162,9 @@ package body GVD.Tooltips is
       --  To avoid overlapping windows when the user moves the mouse while
       --  a tooltip is being prepared and is about to be displayed.
 
-      if Tooltip.Display_Window /= Null_Window then
+      if Tooltip.Display_Window /= null then
          Destroy (Tooltip.Display_Window);
-         Tooltip.Display_Window := Null_Window;
+         Tooltip.Display_Window := null;
       end if;
 
       if not Has_Focus_Is_Set (Tooltip.Widget) then
@@ -180,25 +180,14 @@ package body GVD.Tooltips is
          Tooltip.Area);
 
       if Pixmap /= null and then Width /= 0 and then Height /= 0 then
-         Get_Best (Visual);
-         Gdk_New
-           (Window_Attr,
-            Height => Height,
-            Width => Width,
-            Title => "",
-            Window_Type => Window_Temp,
-            Visual => Visual);
-         Gdk.Window.Gdk_New
-           (Tooltip.Display_Window,
-            Tooltip.Parent_Window,
-            Window_Attr,
-            Wa_Cursor and Wa_Wmclass
-            and Wa_Colormap and Wa_Visual);
-         Set_Back_Pixmap (Tooltip.Display_Window, Pixmap, False);
-         Get_Pointer (Tooltip.Parent_Window, X, Y, Mask, Window);
-         Move (Tooltip.Display_Window, X + 10, Y + 10);
+         Gtk_New          (Tooltip.Display_Window, Window_Popup);
+         Set_Default_Size (Tooltip.Display_Window, Width, Height);
+         Gtk_New (Pix, Pixmap, null);
+         Add (Tooltip.Display_Window, Pix);
+         Get_Pointer      (Tooltip.Parent_Window, X, Y, Mask, Window);
+         Set_UPosition    (Tooltip.Display_Window, X + 10, Y + 10);
          Gdk.Pixmap.Unref (Pixmap);
-         Show (Tooltip.Display_Window);
+         Show_All (Tooltip.Display_Window);
       end if;
 
       return False;
@@ -250,9 +239,9 @@ package body GVD.Tooltips is
       if Tooltip.Active = True then
          Timeout_Remove (Tooltip.Handler_Id);
 
-         if Tooltip.Display_Window /= Null_Window then
+         if Tooltip.Display_Window /= null then
             Destroy (Tooltip.Display_Window);
-            Tooltip.Display_Window := Null_Window;
+            Tooltip.Display_Window := null;
          end if;
 
          Tooltip.Active := False;
