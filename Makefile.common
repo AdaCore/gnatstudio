@@ -86,7 +86,7 @@ endif
 
 .PHONY: check_gvd
 check_gvd: force
-	@[ -f ${GVD_SRC}/gvd/gvd.ads ] || \
+	@[ -f ${GVD_SRC}/gvd/gvd.ads.in ] || \
 	   (echo "GVD sources not found in ${GVD_SRC}, see README"; false)
 
 ###################
