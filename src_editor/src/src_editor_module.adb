@@ -129,7 +129,7 @@ package body Src_Editor_Module is
    function Save_Function
      (Kernel : access Kernel_Handle_Record'Class;
       Child  : Gtk.Widget.Gtk_Widget;
-      Force  : Boolean := False) return Boolean;
+      Force  : Boolean := False) return Save_Return_Value;
    --  Save the text editor.
    --  If Force is False, then offer a choice to the user before doing so.
 
@@ -272,10 +272,9 @@ package body Src_Editor_Module is
    is
       pragma Unreferenced (Params);
    begin
-      return not Save_Function
-        (Get_Kernel (Source_Box (Widget).Editor),
-         Gtk_Widget (Widget),
-         False);
+      return Save_Function
+        (Get_Kernel (Source_Box (Widget).Editor), Gtk_Widget (Widget), False)
+        /= Cancel;
    end Delete_Callback;
 
    ------------------
@@ -471,7 +470,7 @@ package body Src_Editor_Module is
    function Save_Function
      (Kernel : access Kernel_Handle_Record'Class;
       Child  : Gtk.Widget.Gtk_Widget;
-      Force  : Boolean := False) return Boolean
+      Force  : Boolean := False) return Save_Return_Value
    is
       Success        : Boolean;
       Containing_Box : Source_Box := Source_Box (Child);
@@ -483,35 +482,34 @@ package body Src_Editor_Module is
             Save_To_File (Box, Success => Success);
          end if;
 
-         return True;
+      elsif Modified (Box) then
+         Button := Message_Dialog
+           (Msg            =>
+              (-"Do you want to save file ") & Get_Filename (Box) & " ?",
+            Dialog_Type    => Confirmation,
+            Buttons        =>
+              Button_Yes or Button_All or Button_No or Button_Cancel,
+            Default_Button => Button_Cancel,
+            Parent         => Get_Main_Window (Kernel));
 
-      else
-         if Modified (Box) then
-            Button := Message_Dialog
-              (Msg            =>
-                 (-"Do you want to save file ") & Get_Filename (Box) & " ?",
-               Dialog_Type    => Confirmation,
-               Buttons        => Button_Yes or Button_No or Button_Cancel,
-               Default_Button => Button_Cancel,
-               Parent         => Get_Main_Window (Kernel));
+         case Button is
+            when Button_Yes =>
+               Save_To_File (Box, Success => Success);
+               return Saved;
 
-            case Button is
-               when Button_Yes =>
-                  Save_To_File (Box, Success => Success);
-                  return True;
+            when Button_No =>
+               return Not_Saved;
 
-               when Button_No =>
-                  return True;
+            when Button_All =>
+               Save_To_File (Box, Success => Success);
+               return Save_All;
 
-               when others =>
-                  return False;
+            when others =>
+               return Cancel;
 
-            end case;
-
-         else
-            return True;
-         end if;
+         end case;
       end if;
+      return Saved;
    end Save_Function;
 
    ------------------------
