@@ -1,5 +1,7 @@
 New features in GPS 1.2.0
 
+- Ability to create text aliases (Edit->Aliases).
+
 - New documentation can now be added through simple XML index files
   A new menu Help->Contents provides a list of all registered documentation.
 
@@ -28,7 +30,7 @@ New features in GPS 1.1.0
   and browsable in the project explorer and the project browser, ALI files
   are correctly looked for first in the children projects.
 
-- Enhanced support for non-ASCII file names, entity names,...
+- Enhanced support for non-ASCII file names, entity names, ...
 
 - Tooltips available in the switch editor
 
