@@ -44,6 +44,7 @@ with String_Utils;             use String_Utils;
 with Projects;                 use Projects;
 with Src_Info.Queries;         use Src_Info.Queries;
 with VFS;                      use VFS;
+with Interactive_Consoles;
 with HTables;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 
@@ -104,17 +105,20 @@ package body Python_Module is
    procedure Execute_Command
      (Script             : access Python_Scripting_Record;
       Command            : String;
-      Display_In_Console : Boolean := True;
+      Console            : Interactive_Consoles.Interactive_Console := null;
+      Hide_Output        : Boolean := False;
       Errors             : out Boolean);
    function Execute_Command
      (Script             : access Python_Scripting_Record;
       Command            : String;
-      Display_In_Console : Boolean;
+      Console            : Interactive_Consoles.Interactive_Console := null;
+      Hide_Output        : Boolean := False;
       Errors             : access Boolean) return String;
    procedure Execute_File
      (Script             : access Python_Scripting_Record;
       Filename           : String;
-      Display_In_Console : Boolean := True;
+      Console            : Interactive_Consoles.Interactive_Console := null;
+      Hide_Output        : Boolean := False;
       Errors             : out Boolean);
    function Get_Name (Script : access Python_Scripting_Record) return String;
    function Is_Subclass
@@ -373,7 +377,8 @@ package body Python_Module is
          Set_Wrap_Mode (View, Wrap_Char);
 
          Set_Console
-           (Script.Interpreter, View, Grab_Widget => Gtk_Widget (Console));
+           (Script.Interpreter, View, Grab_Widget => Gtk_Widget (Console),
+            Display_Prompt => True);
 
          Child := Put
            (Kernel, Console,
@@ -388,7 +393,8 @@ package body Python_Module is
          Dock_Child (Child);
       else
          Console := Interpreter_View (Get_Widget (Child));
-         Set_Console (Script.Interpreter, Gtk_Text_View (Get_Child (Console)));
+         Set_Console (Script.Interpreter, Gtk_Text_View (Get_Child (Console)),
+                      Display_Prompt => True);
          Raise_Child (Child);
       end if;
 
@@ -647,7 +653,6 @@ package body Python_Module is
                Execute_Command
                  (Python_Module_Id.Script,
                   "import " & Base_Name (File (1 .. Last), ".py"),
-                  Display_In_Console => True,
                   Errors             => Errors);
             end if;
          end loop;
@@ -1163,16 +1168,18 @@ package body Python_Module is
    procedure Execute_Command
      (Script             : access Python_Scripting_Record;
       Command            : String;
-      Display_In_Console : Boolean := True;
+      Console            : Interactive_Consoles.Interactive_Console := null;
+      Hide_Output        : Boolean := False;
       Errors             : out Boolean) is
    begin
-      if Display_In_Console then
-         Insert_Text (Script.Interpreter, Command & ASCII.LF);
+      if not Hide_Output then
+         Insert_Text (Script.Interpreter, Command & ASCII.LF, Console);
       end if;
 
       Run_Command
         (Script.Interpreter, Command,
-         Hide_Output => not Display_In_Console,
+         Console     => Console,
+         Hide_Output => Hide_Output,
          Errors      => Errors);
    end Execute_Command;
 
@@ -1181,14 +1188,17 @@ package body Python_Module is
    ---------------------
 
    function Execute_Command
-     (Script  : access Python_Scripting_Record;
-      Command : String;
-      Display_In_Console : Boolean;
-      Errors  : access Boolean) return String is
+     (Script      : access Python_Scripting_Record;
+      Command     : String;
+      Console     : Interactive_Consoles.Interactive_Console := null;
+      Hide_Output : Boolean := False;
+      Errors      : access Boolean) return String is
    begin
       return Run_Command
-        (Script.Interpreter, Command, Hide_Output => not Display_In_Console,
-         Errors => Errors);
+        (Script.Interpreter, Command,
+         Console     => Console,
+         Hide_Output => Hide_Output,
+         Errors      => Errors);
    end Execute_Command;
 
    ------------------
@@ -1198,12 +1208,13 @@ package body Python_Module is
    procedure Execute_File
      (Script             : access Python_Scripting_Record;
       Filename           : String;
-      Display_In_Console : Boolean := True;
+      Console            : Interactive_Consoles.Interactive_Console := null;
+      Hide_Output        : Boolean := False;
       Errors             : out Boolean) is
    begin
       Execute_Command
         (Script, "execfile (""" & Filename & """)",
-         Display_In_Console, Errors);
+         Console, Hide_Output, Errors);
    end Execute_File;
 
    --------------
