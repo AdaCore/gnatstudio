@@ -103,7 +103,7 @@ package body GVD.Main_Window is
    begin
       Main_Debug_Window_Pkg.Initialize (Main_Window);
       Initialize_Class_Record
-        (Main_Window, Signals, Class_Record, Name => "GvdMainWindow");
+        (Main_Window, Signals, Class_Record, Type_Name => "GvdMainWindow");
 
       Gtk_New (Main_Window.Task_Dialog, Gtk_Window (Main_Window));
       Gtk_New (Main_Window.Thread_Dialog, Gtk_Window (Main_Window));

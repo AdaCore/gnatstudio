@@ -708,7 +708,8 @@ package body GVD.Process is
       Process := new Debugger_Process_Tab_Record;
       Initialize (Process);
       Initialize_Class_Record
-        (Process, Signals, Class_Record, Name => "GvdDebuggerProcessTab");
+        (Process, Signals, Class_Record,
+         Type_Name => "GvdDebuggerProcessTab");
 
       --  Remove the stack window if needed.
 

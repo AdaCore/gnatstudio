@@ -60,7 +60,7 @@ procedure Initialize (Process_Tab : access Process_Tab_Record'Class) is
 begin
    Gtk.Window.Initialize (Process_Tab, Window_Toplevel);
    Initialize_Class_Record
-     (Process_Tab, Signals, Class_Record, Name => "GvdProcessTab");
+     (Process_Tab, Signals, Class_Record, Type_Name => "GvdProcessTab");
    Set_Title (Process_Tab, -"Data");
    Set_Policy (Process_Tab, False, True, False);
    Set_Position (Process_Tab, Win_Pos_None);
