@@ -488,14 +488,21 @@ package body Project_Viewers is
    is
       User : User_Data;
       Rows : Gint;
-      File : File_Selection_Context_Access;
+      File : File_Name_Selection_Context_Access;
 
    begin
       if Context /= null
-        and then Context.all in File_Selection_Context'Class
+        and then Context.all in File_Name_Selection_Context'Class
       then
-         File := File_Selection_Context_Access (Context);
-         Viewer.Current_Project := Project_Information (File);
+         File := File_Name_Selection_Context_Access (Context);
+
+         if File.all in File_Selection_Context'Class then
+            Viewer.Current_Project :=
+              Project_Information (File_Selection_Context_Access (File));
+         else
+            Viewer.Current_Project := Get_Project_From_Directory
+              (Get_Project_View (Viewer.Kernel), Directory_Information (File));
+         end if;
 
          Clear (Viewer);  --  ??? Should delete selectively
 
@@ -780,9 +787,11 @@ package body Project_Viewers is
       pragma Unreferenced (Widget);
       Child  : MDI_Child;
       Viewer : Project_Viewer;
+      Context : Selection_Context_Access := Get_Current_Context (Kernel);
+
    begin
-      Child := Find_MDI_Child_By_Tag (Get_MDI (Kernel),
-                                      Project_Viewer_Record'Tag);
+      Child := Find_MDI_Child_By_Tag
+        (Get_MDI (Kernel), Project_Viewer_Record'Tag);
 
       if Child /= null then
          Raise_Child (Child);
@@ -792,8 +801,7 @@ package body Project_Viewers is
          --  The initial contents of the viewer should be read immediately from
          --  the explorer, without forcing the user to do a new selection.
 
-         Explorer_Selection_Changed
-           (Viewer, Get_Current_Explorer_Context (Kernel));
+         Explorer_Selection_Changed (Viewer, Context);
 
          Set_Size_Request
            (Viewer,
