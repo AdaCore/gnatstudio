@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2003 - 2005                      --
+--                      Copyright (C) 2003-2005                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -265,6 +265,8 @@ package body Src_Editor_Module.Line_Highlighting is
    function Get_GC (Index : Natural) return Gdk_GC is
       Module_Id : constant Source_Editor_Module :=
         Source_Editor_Module (Src_Editor_Module_Id);
+      Main_Window : constant Gtk_Window :=
+        Get_Main_Window (Get_Kernel (Module_Id.all));
 
       use type Gdk_GC;
    begin
@@ -272,11 +274,11 @@ package body Src_Editor_Module.Line_Highlighting is
          --  If the GC is null, create it now.
 
          if Module_Id.Categories (Index).GC = null
-           and then Realized_Is_Set (Get_Main_Window (Module_Id.Kernel))
+           and then Realized_Is_Set (Main_Window)
          then
             Gdk_New
               (Module_Id.Categories (Index).GC,
-               Get_Window (Get_Main_Window (Module_Id.Kernel)));
+               Get_Window (Main_Window));
             Set_Foreground
               (Module_Id.Categories (Index).GC,
                Module_Id.Categories (Index).Color);
