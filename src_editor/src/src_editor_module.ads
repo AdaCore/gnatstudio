@@ -73,6 +73,7 @@ package Src_Editor_Module is
       File   : String) return Gtkada.MDI.MDI_Child;
    --  Return the first child that contains an editor that edits file.
    --  null is returned if there are no such editor
+   --  File can either be a file name or a buffer identifier.
 
    function Get_Source_Box_From_MDI
      (Child : Gtkada.MDI.MDI_Child) return Src_Editor_Box.Source_Editor_Box;
