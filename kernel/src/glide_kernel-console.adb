@@ -601,6 +601,56 @@ package body Glide_Kernel.Console is
       return False;
    end Mime_Handler;
 
+   --------------------------------
+   -- Create_Interactive_Console --
+   --------------------------------
+
+   function Create_Interactive_Console
+     (Kernel      : access Kernel_Handle_Record'Class;
+      Title       : String := "";
+      History     : History_Key := "interactive";
+      Create_If_Not_Exist : Boolean := True) return Interactive_Console
+   is
+      Console : Interactive_Console;
+      Child   : MDI_Child;
+   begin
+      if Title /= "" then
+         Child := Find_MDI_Child_By_Name (Get_MDI (Kernel), Title);
+
+         if Child = null
+           or else Get_Widget (Child).all not in
+              Interactive_Console_Record'Class
+         then
+            if not Create_If_Not_Exist then
+               return null;
+            end if;
+
+            Gtk_New
+              (Console, "", null,
+               null, Get_Pref (Kernel, Source_Editor_Font),
+               History_List => Get_History (Kernel),
+               Key          => History,
+               Wrap_Mode    => Wrap_Char,
+               Highlight    => Get_Pref (Kernel, Message_Highlight));
+            Set_Max_Length   (Get_History (Kernel).all, 100, History);
+            Allow_Duplicates (Get_History (Kernel).all, History, True, True);
+
+            Child := Put (Get_MDI (Kernel), Gtk_Widget (Console));
+            Set_Dock_Side (Child, Bottom);
+            Dock_Child (Child);
+            Set_Title (Child, Title, Title);
+            Set_Focus_Child (Child);
+         else
+            Console := Interactive_Console (Get_Widget (Child));
+         end if;
+
+         Raise_Child (Child);
+         return Console;
+      else
+         return Get_Console (Kernel);
+      end if;
+   end Create_Interactive_Console;
+
    ------------------
    -- Load_Desktop --
    ------------------
