@@ -223,7 +223,7 @@ package body Src_Info.LI_Utils is
          Dep_Ptr := File.LI.Dependencies_Info;
          loop
             if Get_Source_Filename (Dep_Ptr.Value.File) =
-              Referred_Filename
+              Base_Name (Referred_Filename)
             then
                return;
             end if;
@@ -483,13 +483,14 @@ package body Src_Info.LI_Utils is
 
    procedure Set_End_Of_Scope
      (Declaration_Info        : in out E_Declaration_Info_List;
+      File                    : LI_File_Ptr;
       Location                : Point;
       Kind                    : Reference_Kind := End_Of_Body) is
    begin
       Declaration_Info.Value.Declaration.End_Of_Scope.Location :=
         (Line   => Location.Line,
          Column => Location.Column,
-         File   => (LI => Declaration_Info.Value.Declaration.Location.File.LI,
+         File   => (LI              => File,
                     Part            => Unit_Body,
                     Source_Filename => null));
       Declaration_Info.Value.Declaration.End_Of_Scope.Kind := Kind;
@@ -599,7 +600,8 @@ package body Src_Info.LI_Utils is
                       & Get_LI_Filename (File));
          end if;
 
-         exit when Get_Source_Filename (Dep_Ptr.Value.File) = Filename;
+         exit when Get_Source_Filename (Dep_Ptr.Value.File)
+            = Base_Name (Filename);
          Dep_Ptr := Dep_Ptr.Next;
       end loop;
 

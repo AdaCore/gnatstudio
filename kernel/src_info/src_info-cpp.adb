@@ -384,34 +384,40 @@ package body Src_Info.CPP is
    --
    --  Kind is a kind of a reference.
 
-   function Find_First_Forward_Declaration
-     (Buffer       : String_Access;
-      Name         : Segment;
-      Filename     : Segment;
-      Return_Type  : Segment;
-      Arg_Types    : Segment_Vector.Node_Access;
-      Handler      : access CPP_LI_Handler_Record'Class;
-      File         : LI_File_Ptr)
-      return E_Declaration_Info_List;
-   --  Attempts to find the first forward declaration
-   --  for the function. Returns null if not found or
-   --  forward declaration is in another file which
-   --  has not been yet processed
+   function Get_Method_Kind
+     (Handler                 : access CPP_LI_Handler_Record'Class;
+      Class_Name, Return_Type : String)
+      return E_Kind;
+   --  Returns method E_Kind after investigation of its return
+   --  type and template parameters of the class
 
-   function Find_First_Forward_Declaration
-     (Buffer       : String_Access;
-      Class_Name   : Segment;
-      Name         : Segment;
-      Filename     : Segment;
-      Return_Type  : Segment;
-      Arg_Types    : Segment_Vector.Node_Access;
+
+   procedure Find_First_Forward_Declaration
+     (Buffer       : in String_Access;
+      Class_Name   : in Segment;
+      Name         : in Segment;
+      Filename     : in String;
+      Return_Type  : in Segment;
+      Arg_Types    : in Segment_Vector.Node_Access;
       Handler      : access CPP_LI_Handler_Record'Class;
-      File         : LI_File_Ptr)
-      return E_Declaration_Info_List;
-   --  Attempts to find the first forward declaration
-   --  for the method. Returns null if not found or
-   --  forward declaration is in another file which
-   --  has not been yet processed
+      File         : in out LI_File_Ptr;
+      List         : in out LI_File_List;
+      Decl_Info    : out E_Declaration_Info_List);
+   --  Attempts to find/create the first forward declaration
+   --  for the method. Returns null if not found
+
+   procedure Find_First_Forward_Declaration
+     (Buffer       : in String_Access;
+      Name         : in Segment;
+      Filename     : in String;
+      Return_Type  : in Segment;
+      Arg_Types    : in Segment_Vector.Node_Access;
+      Handler      : access CPP_LI_Handler_Record'Class;
+      File         : in out LI_File_Ptr;
+      List         : in out LI_File_List;
+      Decl_Info    : out E_Declaration_Info_List);
+   --  Attempts to find/create the first forward declaration
+   --  for the function. Returns null if not found
 
    ----------------------------
    -- Generate_LI_For_Source --
@@ -989,29 +995,64 @@ package body Src_Info.CPP is
       end if;
    end Find_Or_Create_Class;
 
+   ---------------------
+   -- Get_Method_Kind --
+   ---------------------
+   function Get_Method_Kind
+     (Handler                 : access CPP_LI_Handler_Record'Class;
+      Class_Name, Return_Type : String)
+      return E_Kind is
+      Class_Def          : CL_Table;
+      IsTemplate         : Boolean := False;
+   begin
+      begin -- check if this class is template
+         Class_Def := Find (Handler.SN_Table (CL), Class_Name);
+         IsTemplate := Class_Def.Template_Parameters.First
+            < Class_Def.Template_Parameters.Last;
+         Free (Class_Def);
+      exception
+         when DB_Error | Not_Found =>
+            null;
+      end;
+      if Return_Type = "void" then
+         if IsTemplate then
+            return Generic_Procedure;
+         else
+            return Non_Generic_Procedure;
+         end if;
+      else
+         if IsTemplate then
+            return Generic_Function_Or_Operator;
+         else
+            return Non_Generic_Function_Or_Operator;
+         end if;
+      end if;
+   end Get_Method_Kind;
+
    ------------------------------------
    -- Find_First_Forward_Declaration --
    ------------------------------------
 
-   function Find_First_Forward_Declaration
-     (Buffer       : String_Access;
-      Class_Name   : Segment;
-      Name         : Segment;
-      Filename     : Segment;
-      Return_Type  : Segment;
-      Arg_Types    : Segment_Vector.Node_Access;
+   procedure Find_First_Forward_Declaration
+     (Buffer       : in String_Access;
+      Class_Name   : in Segment;
+      Name         : in Segment;
+      Filename     : in String;
+      Return_Type  : in Segment;
+      Arg_Types    : in Segment_Vector.Node_Access;
       Handler      : access CPP_LI_Handler_Record'Class;
-      File         : LI_File_Ptr)
-      return E_Declaration_Info_List
+      File         : in out LI_File_Ptr;
+      List         : in out LI_File_List;
+      Decl_Info    : out E_Declaration_Info_List)
    is
       P            : Pair_Ptr;
       MD_Tab       : MD_Table;
       MD_Tab_Tmp   : MD_Table;
       First_MD_Pos : Point := Invalid_Point;
-
    begin
+      Decl_Info := null;
       if not Is_Open (Handler.SN_Table (MD)) then
-         return null; -- .md table does not exist
+         return; -- .md table does not exist
       end if;
 
       --  First we have to find the first forward declaration
@@ -1027,21 +1068,18 @@ package body Src_Info.CPP is
       loop
          P := Get_Pair (Handler.SN_Table (MD), Next_By_Key);
          if P = null then -- no fwd decls at all
-            return null;
+            return;
          end if;
          MD_Tab := Parse_Pair (P.all);
          Free (P);
          --  Update position of the first forward declaration
-         exit when
-            MD_Tab.Buffer (MD_Tab.File_Name.First .. MD_Tab.File_Name.Last)
-            = Buffer (Filename.First .. Filename.Last)
-            and then Cmp_Prototypes
-              (MD_Tab.Buffer,
-               Buffer,
-               MD_Tab.Arg_Types,
-               Arg_Types,
-               MD_Tab.Return_Type,
-               Return_Type);
+         exit when Cmp_Prototypes
+           (MD_Tab.Buffer,
+            Buffer,
+            MD_Tab.Arg_Types,
+            Arg_Types,
+            MD_Tab.Return_Type,
+            Return_Type);
          Free (MD_Tab);
       end loop;
 
@@ -1077,47 +1115,88 @@ package body Src_Info.CPP is
       end loop;
 
       Assert (Fail_Stream, First_MD_Pos /= Invalid_Point, "DB inconsistency");
-      return Find_Declaration
-        (File        => File,
-         Symbol_Name => Buffer (Name.First .. Name.Last),
-         Class_Name  => Buffer (Class_Name.First .. Class_Name.Last),
-         Location    => First_MD_Pos);
+      if Filename
+         = MD_Tab.Buffer  (MD_Tab.File_Name.First .. MD_Tab.File_Name.Last)
+      then -- work with declarations in the same file
+         Decl_Info := Find_Declaration
+           (File            => File,
+            Symbol_Name     => Buffer (Name.First .. Name.Last),
+            Class_Name      => Buffer (Class_Name.First .. Class_Name.Last),
+            Location        => First_MD_Pos);
 
+         if Decl_Info = null then
+            Warn ("Someone needs function "
+               & Buffer (Name.First .. Name.Last) & " before its declaration");
+         end if;
+
+      else -- work with dependency declarations
+         Decl_Info := Find_Dependency_Declaration
+           (File        => File,
+            Symbol_Name => Buffer (Name.First .. Name.Last),
+--  ??? class name may refer to non-existent class. We may get confused here
+--  by an entity with the same name
+--            Class_Name  => Buffer (Class_Name.First .. Class_Name.Last),
+            Filename    => MD_Tab.Buffer
+               (MD_Tab.File_Name.First .. MD_Tab.File_Name.Last),
+            Location    => First_MD_Pos);
+
+         if Decl_Info = null then
+            Insert_Dependency_Declaration
+              (Handler            => Handler,
+               File               => File,
+               LI_Full_Filename   => Handler.DB_Dir.all
+                  & Xref_Filename_For
+                    (Filename,
+                     Handler.DB_Dir.all,
+                     Handler.Xrefs).all,
+               List               => List,
+               Symbol_Name        => Buffer (Name.First .. Name.Last),
+               Referred_Filename  => MD_Tab.Buffer
+                  (MD_Tab.File_Name.First .. MD_Tab.File_Name.Last),
+               Location           => First_MD_Pos,
+               Kind               => Get_Method_Kind
+                 (Handler,
+                  Buffer (Class_Name.First .. Class_Name.Last),
+                  Buffer (Return_Type.First .. Return_Type.Last)),
+               Scope              => Global_Scope,
+               Declaration_Info   => Decl_Info);
+         end if;
+
+      end if;
+      Free (MD_Tab);
    exception
-      when DB_Error =>
-         return null;
+      when DB_Error => null;
    end Find_First_Forward_Declaration;
 
    ------------------------------------
    -- Find_First_Forward_Declaration --
    ------------------------------------
 
-   function Find_First_Forward_Declaration
-     (Buffer       : String_Access;
-      Name         : Segment;
-      Filename     : Segment;
-      Return_Type  : Segment;
-      Arg_Types    : Segment_Vector.Node_Access;
+   procedure Find_First_Forward_Declaration
+     (Buffer       : in String_Access;
+      Name         : in Segment;
+      Filename     : in String;
+      Return_Type  : in Segment;
+      Arg_Types    : in Segment_Vector.Node_Access;
       Handler      : access CPP_LI_Handler_Record'Class;
-      File         : LI_File_Ptr)
-      return E_Declaration_Info_List
+      File         : in out LI_File_Ptr;
+      List         : in out LI_File_List;
+      Decl_Info    : out E_Declaration_Info_List)
    is
       P            : Pair_Ptr;
       FD_Tab       : FD_Table;
       FD_Tab_Tmp   : FD_Table;
       First_FD_Pos : Point := Invalid_Point;
       Match        : Boolean;
-
+      Target_Kind  : E_Kind;
    begin
       if not Is_Open (Handler.SN_Table (FD)) then
-         return null; -- .md table does not exist
+         return; -- .md table does not exist
       end if;
 
       --  First we have to find the first forward declaration
-      --  that corresponds to our method, that is prototypes
+      --  that corresponds to our function, that is prototypes
       --  should be the same.
-      --  Prototype is searched only in the same file, no
-      --  attempts to link .h and .cpp files are undertaken
       Set_Cursor
         (Handler.SN_Table (FD),
          By_Key,
@@ -1127,15 +1206,12 @@ package body Src_Info.CPP is
       loop
          P := Get_Pair (Handler.SN_Table (FD), Next_By_Key);
          if P = null then -- no fwd decls at all
-            return null;
+            return;
          end if;
          FD_Tab := Parse_Pair (P.all);
          Free (P);
          --  Update position of the first forward declaration
-         exit when
-            FD_Tab.Buffer (FD_Tab.File_Name.First .. FD_Tab.File_Name.Last)
-            = Buffer (Filename.First .. Filename.Last)
-            and then Cmp_Prototypes
+         exit when Cmp_Prototypes
               (FD_Tab.Buffer,
                Buffer,
                FD_Tab.Arg_Types,
@@ -1178,14 +1254,56 @@ package body Src_Info.CPP is
       end loop;
 
       Assert (Fail_Stream, First_FD_Pos /= Invalid_Point, "DB inconsistency");
-      return Find_Declaration
-        (File        => File,
-         Symbol_Name => Buffer (Name.First .. Name.Last),
-         Location    => First_FD_Pos);
 
+      if Filename
+         = FD_Tab.Buffer  (FD_Tab.File_Name.First .. FD_Tab.File_Name.Last)
+      then -- work with declarations in the same file
+         Decl_Info := Find_Declaration
+           (File            => File,
+            Symbol_Name     => Buffer (Name.First .. Name.Last),
+            Location        => First_FD_Pos);
+
+         if Decl_Info = null then
+            Warn ("Someone needs function "
+               & Buffer (Name.First .. Name.Last) & " before its declaration");
+         end if;
+
+      else -- work with dependency declarations
+         Decl_Info := Find_Dependency_Declaration
+           (File        => File,
+            Symbol_Name => Buffer (Name.First .. Name.Last),
+            Filename    => FD_Tab.Buffer
+               (FD_Tab.File_Name.First .. FD_Tab.File_Name.Last),
+            Location    => First_FD_Pos);
+
+         if Decl_Info = null then
+            if Buffer (Return_Type.First .. Return_Type.Last) = "void" then
+               Target_Kind := Non_Generic_Procedure;
+            else
+               Target_Kind := Non_Generic_Function_Or_Operator;
+            end if;
+
+            Insert_Dependency_Declaration
+              (Handler            => Handler,
+               File               => File,
+               LI_Full_Filename   => Handler.DB_Dir.all
+                  & Xref_Filename_For
+                    (Filename,
+                     Handler.DB_Dir.all,
+                     Handler.Xrefs).all,
+               List               => List,
+               Symbol_Name        => Buffer (Name.First .. Name.Last),
+               Referred_Filename  => FD_Tab.Buffer
+                  (FD_Tab.File_Name.First .. FD_Tab.File_Name.Last),
+               Location           => First_FD_Pos,
+               Kind               => Target_Kind,
+               Scope              => Global_Scope,
+               Declaration_Info   => Decl_Info);
+         end if;
+      end if;
+      Free (FD_Tab);
    exception
-      when DB_Error =>
-         return null;
+      when DB_Error => null;
    end Find_First_Forward_Declaration;
 
    ---------
@@ -1766,92 +1884,58 @@ package body Src_Info.CPP is
       if not Overloaded then
          Assert (Fail_Stream, Forward_Declared or not No_Body,
            "Hey, what's up?");
-         if No_Body then
-            Buffer   := FDecl.Buffer;
+         if Forward_Declared then
+            Buffer         := FDecl.Buffer;
             Filename       := FDecl.File_Name;
             Start_Position := FDecl.Start_Position;
             Return_Type    := FDecl.Return_Type;
          else
-            Buffer   := Fn.Buffer;
+            Buffer         := Fn.Buffer;
             Filename       := Fn.File_Name;
             Start_Position := Fn.Start_Position;
             Return_Type    := Fn.Return_Type;
          end if;
 
          if Buffer (Return_Type.First .. Return_Type.Last) = "void" then
-            Kind := Non_Generic_Function_Or_Operator;
-         else
             Kind := Non_Generic_Procedure;
-         end if;
-         --  If procedure
-         --    defined in the current file => add reference
-         --    defined in another file => add dep decl and reference it
-         if Xref_Filename_For
-            (Buffer (Filename.First .. Filename.Last),
-             Handler.DB_Dir.all,
-             Handler.Xrefs).all = Get_LI_Filename (File)
-         then
-            --  this is a function defined in the current file
-            --  it may be either forward declared or implemented
-            --  right away
-            if Forward_Declared then
-               Decl_Info := Find_First_Forward_Declaration
-                 (FDecl.Buffer,
-                  FDecl.Name,
-                  FDecl.File_Name,
-                  FDecl.Return_Type,
-                  FDecl.Arg_Types,
-                  Handler,
-                  File);
-            else -- when only body is available
-               Decl_Info := Find_Declaration
-                 (File        => File,
-                  Symbol_Name => Fn.Buffer (Fn.Name.First .. Fn.Name.Last),
-                  Location    => Fn.Start_Position);
-            end if;
-
-            if Decl_Info = null then
-               --  function is in the current file, but used before
-               --  declaration. Create forward declaration
-               Insert_Declaration
-                 (Handler            => Handler,
-                  File               => File,
-                  List               => List,
-                  Symbol_Name        => Ref_Id,
-                  Source_Filename    => Ref.Buffer
-                    (Ref.File_Name.First .. Ref.File_Name.Last),
-                  Location           => Ref.Position,
-                  Kind               => Kind,
-                  Scope              => Global_Scope,
-                  Declaration_Info   => Decl_Info);
-            end if;
          else
-            --  this function is defined somewhere else...
-            Decl_Info := Find_Dependency_Declaration
-              (File                 => File,
-               Symbol_Name          => Ref_Id,
-               Filename             => Buffer
-                 (Filename.First .. Filename.Last),
-               Location             => Start_Position);
+            Kind := Non_Generic_Function_Or_Operator;
+         end if;
+         --  this is a function defined in the current file
+         --  it may be either forward declared or implemented
+         --  right away
+         if Forward_Declared then
+            Find_First_Forward_Declaration
+              (FDecl.Buffer,
+               FDecl.Name,
+               Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last),
+               FDecl.Return_Type,
+               FDecl.Arg_Types,
+               Handler,
+               File,
+               List,
+               Decl_Info);
+         else -- when only body is available
+            Decl_Info := Find_Declaration
+              (File        => File,
+               Symbol_Name => Fn.Buffer (Fn.Name.First .. Fn.Name.Last),
+               Location    => Fn.Start_Position);
+         end if;
 
-            if Decl_Info = null then
-               Insert_Dependency_Declaration
-                 (Handler            => Handler,
-                  File               => File,
-                  LI_Full_Filename   => Handler.DB_Dir.all &
-                    Xref_Filename_For
-                    (Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last),
-                     Handler.DB_Dir.all,
-                     Handler.Xrefs).all,
-                  List               => List,
-                  Symbol_Name        => Ref_Id,
-                  Location           => Start_Position,
-                  Kind               => Kind,
-                  Scope              => Global_Scope,
-                  Referred_Filename  => Buffer
-                    (Filename.First .. Filename.Last),
-                  Declaration_Info   => Decl_Info);
-            end if;
+         if Decl_Info = null then
+            --  function is used before
+            --  declaration. Create forward declaration
+            Insert_Declaration
+              (Handler            => Handler,
+               File               => File,
+               List               => List,
+               Symbol_Name        => Ref_Id,
+               Source_Filename    => Ref.Buffer
+                 (Ref.File_Name.First .. Ref.File_Name.Last),
+               Location           => Ref.Position,
+               Kind               => Kind,
+               Scope              => Global_Scope,
+               Declaration_Info   => Decl_Info);
          end if;
 
       else -- overloaded entity
@@ -2164,51 +2248,11 @@ package body Src_Info.CPP is
       Init          : Boolean := True;
       Pure_Virtual  : Boolean := False;
       Kind          : E_Kind;
-      IsTemplate    : Boolean := False;
       Ref_Id        : constant String := Ref.Buffer
         (Ref.Referred_Symbol_Name.First .. Ref.Referred_Symbol_Name.Last);
       Ref_Class     : constant String := Ref.Buffer
         (Ref.Referred_Class.First .. Ref.Referred_Class.Last);
       Attributes    : SN_Attributes;
-      Filename_Buf  : String_Access;
-      Filename      : Segment;
-      Start_Position : Point;
-
-      function Find_Method (Fn : MI_Table; MD_Tab : MD_Table)
-         return E_Declaration_Info_List;
-      --  searches for forward declaration. if no fwd decl found, searches for
-      --  implementation. If nothing found, return null.
-
-      -----------------
-      -- Find_Method --
-      -----------------
-
-      function Find_Method (Fn : MI_Table; MD_Tab : MD_Table)
-         return E_Declaration_Info_List
-      is
-         Decl_Info    : E_Declaration_Info_List;
-      begin
-         Decl_Info := Find_First_Forward_Declaration
-           (MD_Tab.Buffer,
-            MD_Tab.Class,
-            MD_Tab.Name,
-            MD_Tab.File_Name,
-            MD_Tab.Return_Type,
-            MD_Tab.Arg_Types,
-            Handler,
-            File);
-
-         if Decl_Info = null then
-            return Find_Declaration
-              (File        => File,
-               Symbol_Name => Fn.Buffer (Fn.Name.First .. Fn.Name.Last),
-               Class_Name  => Fn.Buffer (Fn.Class.First .. Fn.Class.Last),
-               Location    => Fn.Start_Position);
-         else
-            return Decl_Info;
-         end if;
-      end Find_Method;
-
    begin
       --  Info ("Fu_To_Mi_Handler: " & Ref_Id);
 
@@ -2278,126 +2322,43 @@ package body Src_Info.CPP is
                return;
             end if;
             Pure_Virtual := True;
-         end if;
-
-         --  If method
-         --    defined in the current file => add reference
-         --    defined in another file => add dep decl and reference it
-         declare
-            Class_Def    : CL_Table;
-         begin -- check if this class is template
-            Class_Def := Find (Handler.SN_Table (CL), Ref_Class);
-            IsTemplate := Class_Def.Template_Parameters.First
-               < Class_Def.Template_Parameters.Last;
-            Free (Class_Def);
-         exception
-            when DB_Error | Not_Found =>
-               null;
-         end;
-
-         if Pure_Virtual then
-            Filename_Buf   := MDecl.Buffer;
-            Filename       := MDecl.File_Name;
-            Start_Position := MDecl.Start_Position;
          else
-            Filename_Buf   := Fn.Buffer;
-            Filename       := Fn.File_Name;
-            Start_Position := Fn.Start_Position;
-         end if;
-
-         if MDecl.Buffer (MDecl.Return_Type.First .. MDecl.Return_Type.Last)
-               = "void" then
-            if IsTemplate then
-               Kind := Generic_Function_Or_Operator;
-            else
-               Kind := Non_Generic_Function_Or_Operator;
-            end if;
-         else
-            if IsTemplate then
-               Kind := Generic_Procedure;
-            else
-               Kind := Non_Generic_Procedure;
-            end if;
-         end if;
-         if Xref_Filename_For
-            (Filename_Buf (Filename.First .. Filename.Last),
-             Handler.DB_Dir.all,
-             Handler.Xrefs).all = Get_LI_Filename (File)
-         then
-            --  this is a method defined in the current file it may be either
-            --  forward declared or implemented right away
-            if Pure_Virtual then
-               Decl_Info := Find_First_Forward_Declaration
-                 (MDecl.Buffer,
-                  MDecl.Class,
-                  MDecl.Name,
-                  MDecl.File_Name,
-                  MDecl.Return_Type,
-                  MDecl.Arg_Types,
-                  Handler,
-                  File);
-            else
-               Decl_Info := Find_Method (Fn, MDecl);
-            end if;
-
-            if Decl_Info = null then
-               --  method is in the current file, but used before
-               --  declaration. Create forward declaration
-               Insert_Declaration
-                 (Handler            => Handler,
-                  File               => File,
-                  List               => List,
-                  Symbol_Name        => Ref_Id,
-                  Source_Filename    => Ref.Buffer
-                    (Ref.File_Name.First .. Ref.File_Name.Last),
-                  Location           => Ref.Position,
-                  Kind               => Kind,
-                  Scope              => Global_Scope,
-                  Declaration_Info   => Decl_Info);
-            end if;
-
-         else
-            --  this method is defined somewhere else...
-            Decl_Info := Find_Dependency_Declaration
-              (File                 => File,
-               Symbol_Name          => Ref_Id,
-               Class_Name           => Ref_Class,
-               Filename             => Filename_Buf
-                 (Filename.First .. Filename.Last),
-               Location             => Start_Position);
-
-            if Decl_Info /= null then
-               Info ("Dep Declaration for " & Ref_Id
-                     & " in " & Filename_Buf (Filename.First .. Filename.Last)
-                     & " found");
-
-            else
-               Info ("Declaration not found Fname = "
-                     & Filename_Buf (Filename.First .. Filename.Last)
-                     & "ref_fname = "
-                     & Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last));
-               Insert_Dependency_Declaration
-                 (Handler            => Handler,
-                  File               => File,
-                  LI_Full_Filename   => Handler.DB_Dir.all &
-                    Xref_Filename_For
-                    (Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last),
-                     Handler.DB_Dir.all,
-                     Handler.Xrefs).all,
-                  List               => List,
-                  Symbol_Name        => Ref_Id,
-                  Location           => Start_Position,
-                  Kind               => Kind,
-                  Scope              => Global_Scope,
-                  Referred_Filename  => Filename_Buf
-                    (Filename.First .. Filename.Last),
-                  Declaration_Info   => Decl_Info);
-            end if;
-         end if;
-
-         if not Pure_Virtual then
             Free (Fn);
          end if;
+
+         Kind := Get_Method_Kind
+           (Handler,
+            Ref_Class,
+            MDecl.Buffer (MDecl.Return_Type.First .. MDecl.Return_Type.Last));
+
+         Find_First_Forward_Declaration
+           (MDecl.Buffer,
+            MDecl.Class,
+            MDecl.Name,
+            Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last),
+            MDecl.Return_Type,
+            MDecl.Arg_Types,
+            Handler,
+            File,
+            List,
+            Decl_Info);
+
+         if Decl_Info = null then
+            --  method is used before
+            --  declaration. Create forward declaration
+            Insert_Declaration
+              (Handler            => Handler,
+               File               => File,
+               List               => List,
+               Symbol_Name        => Ref_Id,
+               Source_Filename    => Ref.Buffer
+                 (Ref.File_Name.First .. Ref.File_Name.Last),
+               Location           => Ref.Position,
+               Kind               => Kind,
+               Scope              => Global_Scope,
+               Declaration_Info   => Decl_Info);
+         end if;
+
       else -- overloaded entity
          --  have we already declared it?
          declare
@@ -3216,9 +3177,6 @@ package body Src_Info.CPP is
             Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
             Sym.Start_Position,
             Reference);
-      else
-         Fail ("Sym_FD_Handler: Invalid start position for "
-               & Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last));
       end if;
    exception
       when DB_Error | Not_Found =>
@@ -3372,30 +3330,34 @@ package body Src_Info.CPP is
       --  We should also try to find GPS declaration created during
       --  FD processing and not create new declaration.
       if Sym.Symbol = MI then
-         Decl_Info := Find_First_Forward_Declaration
+         Find_First_Forward_Declaration
            (MI_Tab.Buffer,
             MI_Tab.Class,
             MI_Tab.Name,
-            MI_Tab.File_Name,
+            Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
             MI_Tab.Return_Type,
             MI_Tab.Arg_Types,
             Handler,
-            File);
+            File,
+            List,
+            Decl_Info);
          if Decl_Info /= null then -- Body_Entity is inserted only w/ fwd decl
-            Body_Position  := Sym.Start_Position;
+            Body_Position := Sym.Start_Position;
          end if;
       else
          --  Try to find forward declaration
-         Decl_Info := Find_First_Forward_Declaration
+         Find_First_Forward_Declaration
            (FU_Tab.Buffer,
             FU_Tab.Name,
-            FU_Tab.File_Name,
+            Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
             FU_Tab.Return_Type,
             FU_Tab.Arg_Types,
             Handler,
-            File);
+            File,
+            List,
+            Decl_Info);
          if Decl_Info /= null then -- Body_Entity is inserted only w/ fwd decl
-            Body_Position  := Sym.Start_Position;
+            Body_Position := Sym.Start_Position;
          end if;
       end if;
 
@@ -3413,7 +3375,12 @@ package body Src_Info.CPP is
             End_Of_Scope_Location => End_Position,
             Declaration_Info      => Decl_Info);
       else
-         Set_End_Of_Scope (Decl_Info, End_Position);
+         Info ("Setting end of scope: "
+            & Get_LI_Filename (File) & " for " & Fu_Id);
+         Set_End_Of_Scope
+           (Decl_Info,
+            File,
+            End_Position);
       end if;
 
       if Body_Position /= Invalid_Point then

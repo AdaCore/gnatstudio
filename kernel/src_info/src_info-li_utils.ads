@@ -92,6 +92,7 @@ private package Src_Info.LI_Utils is
 
    procedure Set_End_Of_Scope
      (Declaration_Info        : in out E_Declaration_Info_List;
+      File                    : LI_File_Ptr;
       Location                : SN.Point;
       Kind                    : Reference_Kind := End_Of_Body);
    --  Sets given value for End_Of_Scope attribute of specified declaration
