@@ -2144,13 +2144,21 @@ package body Src_Editor_Box is
       Start_Column : Positive;
       End_Line     : Positive;
       End_Column   : Positive;
-      Text         : String) is
+      Text         : String)
+   is
+      C : Editor_Replace_Slice;
    begin
-      Replace_Slice
-        (Editor.Source_Buffer,
-         To_Buffer_Line (Start_Line), To_Buffer_Column (Start_Column),
-         To_Buffer_Line (End_Line), To_Buffer_Column (End_Column),
+      Create
+        (C,
+         Editor.Source_Buffer,
+         Integer (To_Buffer_Line (Start_Line)),
+         Integer (To_Buffer_Column (Start_Column)),
+         Integer (To_Buffer_Line (End_Line)),
+         Integer (To_Buffer_Column (End_Column)),
          Text);
+
+      External_End_Action (Editor.Source_Buffer);
+      Enqueue (Get_Queue (Editor.Source_Buffer), Command_Access (C));
    end Replace_Slice;
 
    ------------------
