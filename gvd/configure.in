@@ -43,6 +43,7 @@ AC_CHECK_FUNCS(setpgid)
 AC_CHECK_FUNCS(setsid)
 
 opsys=''
+TARGET=$host
 
 case "${host}" in
 
@@ -148,6 +149,7 @@ case "${host}" in
 	LINK_SIZE=11
 	FONT_SIZE=14
 	TARGET_LFLAGS="-mwindows"
+	TARGET=pentium-mingw32msv
 	;;
       ## Otherwise, we'll fall through to the generic opsys code at the bottom.
     esac
@@ -175,6 +177,7 @@ AC_SUBST(FONT_SIZE)
 AC_SUBST(GVD_VERSION)
 AC_SUBST(TARGET_CFLAGS)
 AC_SUBST(TARGET_LFLAGS)
+AC_SUBST(TARGET)
 
 EXEC_PREFIX="$prefix"
 AC_SUBST(EXEC_PREFIX)
