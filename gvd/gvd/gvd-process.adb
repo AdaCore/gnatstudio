@@ -83,7 +83,6 @@ with GVD.Preferences;            use GVD.Preferences;
 with GVD.Text_Box.Source_Editor; use GVD.Text_Box.Source_Editor;
 with GVD.Trace;                  use GVD.Trace;
 with GVD.Types;                  use GVD.Types;
-with GVD.Window_Settings;        use GVD.Window_Settings;
 with Language_Handlers;          use Language_Handlers;
 
 with String_List_Utils;          use String_List_Utils;
