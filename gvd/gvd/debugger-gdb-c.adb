@@ -66,6 +66,7 @@ package body Debugger.Gdb.C is
    is
       Tmp  : Natural := Index;
       Save : Natural;
+      Last : Natural := Type_Str'Last;
    begin
 
       --  First: Skip the type itself, to check whether we have in fact an
@@ -88,7 +89,7 @@ package body Debugger.Gdb.C is
       --  type, not an access type.
 
       Save := Index;
-      while Index <= Type_Str'Last loop
+      while Index <= Last loop
          --  Access type ?
          if Type_Str (Index) = '*' then
             Save := Index;
@@ -113,12 +114,22 @@ package body Debugger.Gdb.C is
             Save := Index;
 
             --  Skip the field name (if any), as in: "void (*field1[2])();"
+            --  or "void (*[2])()" for a type defined as "void (*asa[2]) ();"
+            --  The parsing should stop after the closing parenthesis.
             while Index <= Type_Str'Last
               and then Type_Str (Index) /= ')'
               and then Type_Str (Index) /= '['
             loop
                Index := Index + 1;
             end loop;
+
+            Last := Index;
+            while Last <= Type_Str'Last
+              and then Type_Str (Last) /= ')'
+            loop
+               Last := Last + 1;
+            end loop;
+            Last := Last - 1;
 
          else
             Skip_Word (Type_Str, Index);
