@@ -22,9 +22,10 @@
 
 with Glide_Kernel;         use Glide_Kernel;
 with Commands;             use Commands;
+with Commands.Interactive; use Commands.Interactive;
 with Vdiff2_Command;      use Vdiff2_Command;
 with Diff_Utils2;          use Diff_Utils2;
-with Gdk.Event;
+
 
 package Vdiff2_Command_Block is
 
@@ -55,7 +56,7 @@ package Vdiff2_Command_Block is
 
    function Execute
      (Command : access Diff_Command_Block;
-      Event   : Gdk.Event.Gdk_Event) return Command_Return_Type;
+      Context : Interactive_Command_Context) return Command_Return_Type;
 
    function Execute
      (Command : access Diff_Command_Block) return Command_Return_Type;

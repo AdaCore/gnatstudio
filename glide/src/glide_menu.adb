@@ -19,7 +19,6 @@
 -----------------------------------------------------------------------
 
 with Glib;                         use Glib;
-with Gdk.Event;                    use Gdk.Event;
 with Gdk.Types;                    use Gdk.Types;
 with Gdk.Types.Keysyms;            use Gdk.Types.Keysyms;
 with Gtk.Stock;                    use Gtk.Stock;
@@ -52,7 +51,8 @@ package body Glide_Menu is
       Close_All : Boolean;
    end record;
    function Execute
-     (Command : access Close_Command; Event : Gdk.Event.Gdk_Event)
+     (Command : access Close_Command;
+      Context : Interactive_Command_Context)
       return Standard.Commands.Command_Return_Type;
    --  Close the current window (or all windows if Close_All is True.
 
@@ -158,10 +158,11 @@ package body Glide_Menu is
    -------------
 
    function Execute
-     (Command : access Close_Command; Event : Gdk.Event.Gdk_Event)
+     (Command : access Close_Command;
+      Context : Interactive_Command_Context)
       return Standard.Commands.Command_Return_Type
    is
-      pragma Unreferenced (Event);
+      pragma Unreferenced (Context);
       MDI   : MDI_Window;
       Child : MDI_Child;
    begin

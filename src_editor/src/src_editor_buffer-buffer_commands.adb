@@ -40,10 +40,11 @@ package body Src_Editor_Buffer.Buffer_Commands is
    -------------
 
    function Execute
-     (Command : access Jump_To_Delimiter_Command; Event : Gdk.Event.Gdk_Event)
+     (Command : access Jump_To_Delimiter_Command;
+      Context : Interactive_Command_Context)
       return Command_Return_Type
    is
-      pragma Unreferenced (Event);
+      pragma Unreferenced (Context);
       View   : Source_View;
       Widget : constant Gtk_Widget :=
         Get_Current_Focus_Widget (Command.Kernel);
@@ -84,10 +85,11 @@ package body Src_Editor_Buffer.Buffer_Commands is
    -------------
 
    function Execute
-     (Command : access Completion_Command; Event : Gdk.Event.Gdk_Event)
+     (Command : access Completion_Command;
+      Context : Interactive_Command_Context)
       return Command_Return_Type
    is
-      pragma Unreferenced (Event);
+      pragma Unreferenced (Context);
       use String_List_Utils.String_List;
       Widget : constant Gtk_Widget :=
         Get_Current_Focus_Widget (Command.Kernel);

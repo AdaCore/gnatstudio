@@ -21,7 +21,6 @@
 --  This package handles commands related to the editor buffer, such
 --  as completion commands or delimiter jump commands.
 
-with Gdk.Event; use Gdk.Event;
 with Commands;
 with Commands.Interactive; use Commands.Interactive;
 
@@ -32,7 +31,8 @@ package Src_Editor_Buffer.Buffer_Commands is
          Kernel : Glide_Kernel.Kernel_Handle;
       end record;
    function Execute
-     (Command : access Jump_To_Delimiter_Command; Event : Gdk.Event.Gdk_Event)
+     (Command : access Jump_To_Delimiter_Command;
+      Context : Interactive_Command_Context)
       return Command_Return_Type;
    --  This commands jmps to the next delimiter for the one currently
    --  under the cursor.
@@ -41,7 +41,8 @@ package Src_Editor_Buffer.Buffer_Commands is
       Kernel : Glide_Kernel.Kernel_Handle;
    end record;
    function Execute
-     (Command : access Completion_Command; Event : Gdk.Event.Gdk_Event)
+     (Command : access Completion_Command;
+      Context : Interactive_Command_Context)
       return Command_Return_Type;
    --  This command completes the word under the cursor based on the
    --  contents of the buffer.

@@ -25,7 +25,6 @@ with Glib.Xml_Int;              use Glib.Xml_Int;
 with Glib.Convert;              use Glib.Convert;
 with Gdk;                       use Gdk;
 with Gdk.Color;                 use Gdk.Color;
-with Gdk.Event;                 use Gdk.Event;
 with Gdk.GC;                    use Gdk.GC;
 with Gdk.Types;                 use Gdk.Types;
 with Gdk.Types.Keysyms;         use Gdk.Types.Keysyms;
@@ -175,7 +174,8 @@ package body Src_Editor_Module is
       Kind   : Clipboard_Kind;
    end record;
    function Execute
-     (Command : access Clipboard_Command; Event : Gdk_Event)
+     (Command : access Clipboard_Command;
+      Context : Interactive_Command_Context)
       return Command_Return_Type;
    --  Perform the various actions associated with the clipboard
 
@@ -2618,10 +2618,11 @@ package body Src_Editor_Module is
    -------------
 
    function Execute
-     (Command : access Clipboard_Command; Event : Gdk_Event)
+     (Command : access Clipboard_Command;
+      Context : Interactive_Command_Context)
       return Command_Return_Type
    is
-      pragma Unreferenced (Event);
+      pragma Unreferenced (Context);
       Source : constant Source_Editor_Box :=
         Get_Source_Box_From_MDI (Find_Current_Editor (Command.Kernel));
    begin

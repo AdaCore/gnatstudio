@@ -22,7 +22,6 @@
 
 with Commands.Interactive; use Commands.Interactive;
 with Glide_Kernel;
-with Gdk.Event;
 
 package Src_Editor_View.Commands is
 
@@ -33,7 +32,8 @@ package Src_Editor_View.Commands is
       Step   : Integer;
    end record;
    function Execute
-     (Command : access Move_Command; Event : Gdk.Event.Gdk_Event)
+     (Command : access Move_Command;
+      Context : Interactive_Command_Context)
       return Standard.Commands.Command_Return_Type;
    --  This command moves the cursor to a new position
 
@@ -41,7 +41,8 @@ package Src_Editor_View.Commands is
       Kernel : Glide_Kernel.Kernel_Handle;
    end record;
    function Execute
-     (Command : access Scroll_Command; Event : Gdk.Event.Gdk_Event)
+     (Command : access Scroll_Command;
+      Context : Interactive_Command_Context)
       return Standard.Commands.Command_Return_Type;
    --  This command scrolls the current editor.
    --  Currently, it can only be used to center the cursor.
@@ -52,7 +53,8 @@ package Src_Editor_View.Commands is
       Count  : Integer := 1;  --  Delete backward if negative
    end record;
    function Execute
-     (Command : access Delete_Command; Event : Gdk.Event.Gdk_Event)
+     (Command : access Delete_Command;
+      Context : Interactive_Command_Context)
       return Standard.Commands.Command_Return_Type;
    --  This command deletes some text.
 
@@ -60,7 +62,8 @@ package Src_Editor_View.Commands is
       Kernel : Glide_Kernel.Kernel_Handle;
    end record;
    function Execute
-     (Command : access Indentation_Command; Event : Gdk.Event.Gdk_Event)
+     (Command : access Indentation_Command;
+      Context : Interactive_Command_Context)
       return Standard.Commands.Command_Return_Type;
    --  This command reindents the current line
 
