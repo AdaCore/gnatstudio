@@ -160,7 +160,7 @@ package body Odd.Memory_View is
       Unit := Column / (View.Trunc + Data_Separator'Length) +
         Row * View.Number_Of_Columns;
 
-      return (Unit + 1) * View.Unit_Size;
+      return Unit * View.Unit_Size + 1;
    end Position_To_Index;
 
    ----------------
@@ -561,7 +561,9 @@ package body Odd.Memory_View is
             if Position > Gint (Get_Length (View.View)) - 3 then
                Move := -1;
             else
-               if Get_Chars (View.View, Position + 1, Position + 2) = " " then
+               if Get_Chars (View.View, Position + 1, Position + 2)
+                 = Data_Separator
+               then
                   Move := 1;
                end if;
                if Get_Chars
@@ -572,7 +574,9 @@ package body Odd.Memory_View is
             end if;
 
          when Left =>
-            if Get_Chars (View.View, Position - 1, Position) = " " then
+            if Get_Chars (View.View, Position - 1, Position)
+              = Data_Separator
+            then
                if Position_To_Index (View, Position)
                  mod View.Number_Of_Columns = 1
                then
@@ -671,9 +675,9 @@ package body Odd.Memory_View is
                                - Gint (View.Trunc) - 2,
                                Get_Position (View.View)
                                + Gint (View.Trunc));
-         Skip_To_String (Current, Index, " ");
+         Skip_To_String (Current, Index, Data_Separator);
          Next_Index := Index + 1;
-         Skip_To_String (Current, Next_Index, " ");
+         Skip_To_String (Current, Next_Index, Data_Separator);
 
          --  Modify flags string to match the new value.
          View.Flags (Value_Index .. Value_Index + View.Unit_Size - 1) :=
@@ -683,15 +687,8 @@ package body Odd.Memory_View is
               16, View.Unit_Size));
       end;
 
+      Move_Cursor (View, Right);
       Set_Position (View.View, Get_Position (View.View) + 1);
-
-      if Get_Chars
-        (View.View,
-         Get_Position (View.View),
-         Get_Position (View.View) + 1) = " "
-      then
-         Set_Position (View.View, Get_Position (View.View) + 1);
-      end if;
    end Insert;
 
 end Odd.Memory_View;
