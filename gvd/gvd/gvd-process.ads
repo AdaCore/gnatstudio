@@ -28,12 +28,11 @@ with Gdk.Color;
 with Gdk.Font;
 with Gdk.Input;
 with Gdk.Types;
+with Gtk.Menu;
 with Gtk.Object; use Gtk.Object;
 with Gtk.Dialog;
-with Gtk.Handlers;
 with Gtk.Window;
 with Gtk.Widget;
-with GVD.Canvas;
 with Gtkada.Canvas;
 
 with Debugger; use Debugger;
@@ -45,9 +44,6 @@ with GVD.Types;
 with GVD.Types;
 
 package GVD.Process is
-
-   package Canvas_Handler is new Gtk.Handlers.Callback
-     (GVD.Canvas.GVD_Canvas_Record);
 
    package Standard_Input_Package is new Gdk.Input.Input_Add
      (Main_Debug_Window_Pkg.Main_Debug_Window_Record'Class);
@@ -184,6 +180,9 @@ package GVD.Process is
       --  Last match in Current_Output.
       --  This is needed to avoid matching twice the same string and to
       --  optimize the handling of regexp filters.
+
+      Contextual_Menu         : Gtk.Menu.Gtk_Menu;
+      Call_Stack_Contextual_Menu : Gtk.Menu.Gtk_Menu;
    end record;
    type Debugger_Process_Tab is access all Debugger_Process_Tab_Record'Class;
 
@@ -265,6 +264,12 @@ package GVD.Process is
    --  Conversion function.
    --  Main_Debug_Window should be the window in which the debugger is
    --  displayed.
+
+   function Call_Stack_Contextual_Menu
+     (Process : access Debugger_Process_Tab_Record'Class)
+      return Gtk.Menu.Gtk_Menu;
+   --  Create (if necessary) and reset the contextual menu used in the
+   --  debugger command window.
 
    procedure Send_Init (Process : access Debugger_Process_Tab_Record'Class);
    --  Call this procedure before each command sent to the debugger.

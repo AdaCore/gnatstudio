@@ -22,27 +22,31 @@ with Glib; use Glib;
 
 with Gdk.Input;
 with Gdk.Types;
-with Gdk.Color;    use Gdk.Color;
-with Gdk.Font;     use Gdk.Font;
-with Gdk.Types;    use Gdk.Types;
-with Gdk.Event;    use Gdk.Event;
+with Gdk.Color;           use Gdk.Color;
+with Gdk.Font;            use Gdk.Font;
+with Gdk.Types;           use Gdk.Types;
+with Gdk.Event;           use Gdk.Event;
 
-with Gtk;          use Gtk;
-with Gtk.Handlers; use Gtk.Handlers;
-with Gtk.Text;     use Gtk.Text;
-with Gtk.Menu;     use Gtk.Menu;
-with Gtk.Widget;   use Gtk.Widget;
-with Gtk.Notebook; use Gtk.Notebook;
-with Gtk.Label;    use Gtk.Label;
-with Gtk.Object;   use Gtk.Object;
-with Gtk.Dialog;   use Gtk.Dialog;
-with Gtk.Window;   use Gtk.Window;
-with Gtk.Adjustment; use Gtk.Adjustment;
+with Gtk;                 use Gtk;
+with Gtk.Check_Menu_Item; use Gtk.Check_Menu_Item;
+with Gtk.Enums;           use Gtk.Enums;
+with Gtk.Handlers;        use Gtk.Handlers;
+with Gtk.Text;            use Gtk.Text;
+with Gtk.Menu;            use Gtk.Menu;
+with Gtk.Menu_Item;       use Gtk.Menu_Item;
+with Gtk.Widget;          use Gtk.Widget;
+with Gtk.Notebook;        use Gtk.Notebook;
+with Gtk.Label;           use Gtk.Label;
+with Gtk.Object;          use Gtk.Object;
+with Gtk.Dialog;          use Gtk.Dialog;
+with Gtk.Window;          use Gtk.Window;
+with Gtk.Adjustment;      use Gtk.Adjustment;
 
-with Gtk.Extra.PsFont; use Gtk.Extra.PsFont;
+with Gtk.Extra.PsFont;    use Gtk.Extra.PsFont;
 
-with Gtkada.Types;    use Gtkada.Types;
-with Gtkada.Handlers; use Gtkada.Handlers;
+with Gtkada.Canvas;       use Gtkada.Canvas;
+with Gtkada.Handlers;     use Gtkada.Handlers;
+with Gtkada.Types;        use Gtkada.Types;
 
 with Ada.Characters.Handling;  use Ada.Characters.Handling;
 with Ada.Text_IO;              use Ada.Text_IO;
@@ -66,7 +70,6 @@ with GVD.Pixmaps;               use GVD.Pixmaps;
 with GVD.Strings;               use GVD.Strings;
 with GVD.Types;                 use GVD.Types;
 with GVD.Code_Editors;          use GVD.Code_Editors;
-with GVD.Menus;                 use GVD.Menus;
 with GVD.Preferences;           use GVD.Preferences;
 with GVD.Status_Bar;            use GVD.Status_Bar;
 with GVD.Utils;                 use GVD.Utils;
@@ -85,6 +88,14 @@ package body GVD.Process is
    Process_User_Data_Name : constant String := "gvd_editor_to_process";
    --  User data string.
    --  ??? Should use some quarks, which would be just a little bit faster.
+
+   type Call_Stack_Record is record
+      Process : Debugger_Process_Tab;
+      Mask    : Stack_List_Mask;
+   end record;
+
+   package Call_Stack_Cb is new Gtk.Handlers.User_Callback
+     (Gtk_Menu_Item_Record, Call_Stack_Record);
 
    package Canvas_Event_Handler is new Gtk.Handlers.Return_Callback
      (Debugger_Process_Tab_Record, Boolean);
@@ -148,6 +159,17 @@ package body GVD.Process is
    -- Local Subprograms --
    -----------------------
 
+   procedure Change_Mask
+     (Widget : access Gtk_Menu_Item_Record'Class;
+      Mask   : Call_Stack_Record);
+   --  Toggle the display of a specific column in the Stack_List window.
+
+   function Debugger_Contextual_Menu
+     (Process  : access Debugger_Process_Tab_Record'Class)
+      return Gtk.Menu.Gtk_Menu;
+   --  Create (if necessary) and reset the contextual menu used in the
+   --  debugger command window.
+
    procedure First_Text_Output_Filter
      (Descriptor : GNAT.Expect.Process_Descriptor'Class;
       Str        : String;
@@ -192,6 +214,85 @@ package body GVD.Process is
            Regexp => new Pattern_Matcher' (Regexp),
            Next   => Process.Filters);
    end Add_Regexp_Filter;
+
+   --------------------------------
+   -- Call_Stack_Contextual_Menu --
+   --------------------------------
+
+   function Call_Stack_Contextual_Menu
+     (Process : access Debugger_Process_Tab_Record'Class)
+      return Gtk.Menu.Gtk_Menu
+   is
+      Check : Gtk_Check_Menu_Item;
+   begin
+      --  Destroy the old menu (We need to recompute the state of the toggle
+      --  buttons)
+      if Process.Call_Stack_Contextual_Menu /= null then
+         Destroy (Process.Call_Stack_Contextual_Menu);
+      end if;
+
+      Gtk_New (Process.Call_Stack_Contextual_Menu);
+      Gtk_New (Check, Label => -"Frame Number");
+      Set_Always_Show_Toggle (Check, True);
+      Set_Active (Check, (Process.Backtrace_Mask and Frame_Num) /= 0);
+      Append (Process.Call_Stack_Contextual_Menu, Check);
+      Call_Stack_Cb.Connect
+        (Check, "activate",
+         Call_Stack_Cb.To_Marshaller (Change_Mask'Access),
+         (Debugger_Process_Tab (Process), Frame_Num));
+
+      Gtk_New (Check, Label => -"Program Counter");
+      Set_Always_Show_Toggle (Check, True);
+      Set_Active (Check, (Process.Backtrace_Mask and Program_Counter) /= 0);
+      Append (Process.Call_Stack_Contextual_Menu, Check);
+      Call_Stack_Cb.Connect
+        (Check, "activate",
+         Call_Stack_Cb.To_Marshaller (Change_Mask'Access),
+         (Debugger_Process_Tab (Process), Program_Counter));
+
+      Gtk_New (Check, Label => -"Subprogram Name");
+      Set_Always_Show_Toggle (Check, True);
+      Set_Active (Check, (Process.Backtrace_Mask and Subprog_Name) /= 0);
+      Append (Process.Call_Stack_Contextual_Menu, Check);
+      Call_Stack_Cb.Connect
+        (Check, "activate",
+         Call_Stack_Cb.To_Marshaller (Change_Mask'Access),
+         (Debugger_Process_Tab (Process), Subprog_Name));
+
+      Gtk_New (Check, Label => -"Parameters");
+      Set_Always_Show_Toggle (Check, True);
+      Set_Active (Check, (Process.Backtrace_Mask and Params) /= 0);
+      Append (Process.Call_Stack_Contextual_Menu, Check);
+      Call_Stack_Cb.Connect
+        (Check, "activate",
+         Call_Stack_Cb.To_Marshaller (Change_Mask'Access),
+         (Debugger_Process_Tab (Process), Params));
+
+      Gtk_New (Check, Label => -"File Location");
+      Set_Always_Show_Toggle (Check, True);
+      Set_Active (Check, (Process.Backtrace_Mask and File_Location) /= 0);
+      Append (Process.Call_Stack_Contextual_Menu, Check);
+      Call_Stack_Cb.Connect
+        (Check, "activate",
+         Call_Stack_Cb.To_Marshaller (Change_Mask'Access),
+         (Debugger_Process_Tab (Process), File_Location));
+
+      Show_All (Process.Call_Stack_Contextual_Menu);
+      return Process.Call_Stack_Contextual_Menu;
+   end Call_Stack_Contextual_Menu;
+
+   -----------------
+   -- Change_Mask --
+   -----------------
+
+   procedure Change_Mask
+     (Widget : access Gtk_Menu_Item_Record'Class;
+      Mask   : Call_Stack_Record) is
+   begin
+      Mask.Process.Backtrace_Mask :=
+        Mask.Process.Backtrace_Mask xor Mask.Mask;
+      Show_Call_Stack_Columns (Mask.Process);
+   end Change_Mask;
 
    -------------
    -- Convert --
@@ -257,6 +358,28 @@ package body GVD.Process is
       return Convert (Main_Debug_Window_Access (Main_Debug_Window),
                       Get_Descriptor (Get_Process (Debugger)).all);
    end Convert;
+
+   ------------------------------
+   -- Debugger_Contextual_Menu --
+   ------------------------------
+
+   function Debugger_Contextual_Menu
+     (Process : access Debugger_Process_Tab_Record'Class)
+      return Gtk.Menu.Gtk_Menu
+   is
+      Mitem : Gtk_Menu_Item;
+   begin
+      if Process.Contextual_Menu /= null then
+         return Process.Contextual_Menu;
+      end if;
+
+      Gtk_New (Process.Contextual_Menu);
+      Gtk_New (Mitem, Label => -"Info");
+      Set_State (Mitem, State_Insensitive);
+      Append (Process.Contextual_Menu, Mitem);
+      Show_All (Process.Contextual_Menu);
+      return Process.Contextual_Menu;
+   end Debugger_Contextual_Menu;
 
    -----------------
    -- Output_Text --
@@ -607,7 +730,7 @@ package body GVD.Process is
       Process.Descriptor.Debugger_Name := new String' (Debugger_Name);
 
       Process.Window := Window.all'Access;
-      Set_Process (Process.Data_Canvas, Process);
+      Set_Process (GVD_Canvas (Process.Data_Canvas), Process);
 
       Widget_Callback.Object_Connect
         (Process,
@@ -630,9 +753,9 @@ package body GVD.Process is
       Widget_Callback.Connect
         (Process, "process_stopped",
          Widget_Callback.To_Marshaller (On_Task_Process_Stopped'Access));
-      Canvas_Handler.Connect
+      Widget_Callback.Connect
         (Process.Data_Canvas, "background_click",
-         Canvas_Handler.To_Marshaller (On_Background_Click'Access));
+         Widget_Callback.To_Marshaller (On_Background_Click'Access));
 
       --  Connect the various components so that they are refreshed when the
       --  preferences are changed
@@ -804,7 +927,7 @@ package body GVD.Process is
 
       --  Initialize the pixmaps and colors for the canvas
       Realize (Process.Data_Canvas);
-      Init_Graphics (Process.Data_Canvas);
+      Init_Graphics (GVD_Canvas (Process.Data_Canvas));
 
       return Process;
    end Create_Debugger;
