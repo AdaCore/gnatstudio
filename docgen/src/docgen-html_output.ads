@@ -44,6 +44,7 @@ package Docgen.Html_Output is
      (B                : access Backend_HTML;
       Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
       File             : in Ada.Text_IO.File_Type;
+      Entity_List      : in out Type_Entity_List.List;
       List_Ref_In_File : in out List_Reference_In_File.List;
       Info             : in out Docgen.Doc_Info;
       Doc_Directory    : String;
