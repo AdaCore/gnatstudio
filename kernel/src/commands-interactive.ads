@@ -36,13 +36,15 @@ package Commands.Interactive is
       Context : Glide_Kernel.Selection_Context_Access;
       Dir     : GNAT.OS_Lib.String_Access;
       Args    : GNAT.OS_Lib.String_List_Access;
+      Label   : GNAT.OS_Lib.String_Access;
    end record;
 
    Null_Context : constant Interactive_Command_Context :=
      (Event   => null,
       Context => null,
       Dir     => null,
-      Args    => null);
+      Args    => null,
+      Label   => null);
 
    procedure Free (X : in out Interactive_Command_Context);
    --  Free memory associated to X.
@@ -86,6 +88,7 @@ package Commands.Interactive is
 
    function Execute (Command : access Interactive_Command_Proxy)
       return Command_Return_Type;
+   function Name (Command : access Interactive_Command_Proxy) return String;
    procedure Free (X : in out Interactive_Command_Proxy);
    --  See doc for inherited subprogram
 
