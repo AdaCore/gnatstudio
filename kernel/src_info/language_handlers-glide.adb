@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                          G L I D E  I I                           --
+--                               G P S                               --
 --                                                                   --
 --                     Copyright (C) 2002                            --
 --                            ACT-Europe                             --
 --                                                                   --
--- GLIDE is free software; you can redistribute it and/or modify  it --
+-- GPS is free software; you can redistribute it and/or modify  it   --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -113,19 +113,9 @@ package body Language_Handlers.Glide is
 
    function Get_Language_From_File
      (Handler : access Glide_Language_Handler_Record;
-      Source_Filename : String) return String
-   is
-      --  ??? Could be optimized, since both Get_Project_From_File and
-      --  ??? Get_Language_Of traverse the project structure
-      Lang : Name_Id := Get_Language_Of
-        (Get_Project_From_File (Handler.Project_View, Source_Filename),
-         Base_Name (Source_Filename));
+      Source_Filename : String) return String is
    begin
-      if Lang = No_Name then
-         return "";
-      else
-         return Get_Name_String (Lang);
-      end if;
+      return Get_Language_From_File (Handler, Source_Filename, No_Project);
    end Get_Language_From_File;
 
    ----------------------------
@@ -137,18 +127,25 @@ package body Language_Handlers.Glide is
       Source_Filename : String;
       Project         : Prj.Project_Id) return String
    is
+      --  ??? Could be optimized, since both Get_Project_From_File and
+      --  ??? Get_Language_Of traverse the project structure
       Proj : Project_Id := Project;
       Lang : Name_Id;
    begin
       if Project = No_Project then
          Proj := Get_Project_From_File
            (Handler.Project_View, Source_Filename);
+
+         if Proj = No_Project then
+            --  ??? Should use the default file extensions instead
+            Proj := Handler.Project_View;
+         end if;
       end if;
 
       Lang := Get_Language_Of (Proj, Base_Name (Source_Filename));
 
       if Lang = No_Name then
-         raise Unsupported_Language;
+         --  raise Unsupported_Language;
          return "";
       else
          return Get_Name_String (Lang);
