@@ -421,11 +421,11 @@ package body Vdiff2_Module is
          end if;
 
          Item := (List => Result,
-                     File1 => new String'(File1),
-                     File2 => new String'(File2),
-                     File3 => null,
-                     Current_Node => First (Result),
-                     Ref_File => 2);
+                  File1 => new String'(File1),
+                  File2 => new String'(File2),
+                  File3 => null,
+                  Current_Node => First (Result),
+                  Ref_File => 2);
          Show_Differences3 (Kernel, Item);
          Append (Id.List_Diff.all, Item);
          Dummy := Execute (Id.Command_First);
@@ -827,6 +827,7 @@ package body Vdiff2_Module is
                              CurrNode),
                           CurrNode);
       end if;
+      Free_All (Diff.all);
       Free (Diff);
    exception
       when E : others =>
