@@ -18,16 +18,16 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Command_Line; use Ada.Command_Line;
-with Ada.Text_IO; use Ada.Text_IO;
+with Ada.Command_Line;       use Ada.Command_Line;
+with Ada.Text_IO;            use Ada.Text_IO;
 
 with Codefix; use Codefix;
 with Codefix.Errors_Manager; use Codefix.Errors_Manager;
-with Codefix.Errors_Parser; use Codefix.Errors_Parser;
-with Codefix.Formal_Errors; use Codefix.Formal_Errors;
-with Codefix.File_Io; use Codefix.File_Io;
+with Codefix.Errors_Parser;  use Codefix.Errors_Parser;
+with Codefix.Formal_Errors;  use Codefix.Formal_Errors;
+with Codefix.File_Io;        use Codefix.File_Io;
 use Codefix.Formal_Errors.Extract_List;
-with Test_Lib; use Test_Lib;
+with Test_Lib;               use Test_Lib;
 use Test_Lib.Navigator;
 
 procedure Gnatfix is
@@ -90,14 +90,6 @@ begin
       Corrections_Proposed'Access);
 
    Commit (Errors_List, Current_Text);
-
-   if Visible then
-      if Successful_Update then
-         Put_Line ("Update successful");
-      else
-         Put_Line ("Update error");
-      end if;
-   end if;
 
    if Is_Open (Capture_File) then Close (Capture_File); end if;
 
