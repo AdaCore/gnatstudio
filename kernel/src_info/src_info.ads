@@ -529,6 +529,7 @@ private
       Instantiation_Reference,
       Body_Entity,
       Completion_Of_Private_Or_Incomplete_Type,
+      Discriminant,
       Type_Extension,
       Implicit,
       Primitive_Operation,
@@ -580,6 +581,8 @@ private
    --      parameters.
    --    - Parent_Package: for a child Ada package, reference its parent. This
    --      parent, in turn, references its own parent package.
+   --    - Discriminant: points to the declaration of the discriminants for
+   --      this type.
 
    type Reference_Kind_To_Boolean_Map is array (Reference_Kind) of Boolean;
 
@@ -593,6 +596,7 @@ private
       Implicit                                 => False,
       Label                                    => False,
       Primitive_Operation                      => False,
+      Discriminant                             => False,
       Overriding_Primitive_Operation           => False,
       With_Line                                => False,
       Subprogram_In_Parameter                  => False,
@@ -616,6 +620,7 @@ private
       Implicit                                 => False,
       Label                                    => False,
       Primitive_Operation                      => False,
+      Discriminant                             => False,
       Overriding_Primitive_Operation           => False,
       With_Line                                => False,
       Subprogram_In_Parameter                  => False,
@@ -639,6 +644,7 @@ private
       Implicit                                 => False,
       Label                                    => True,
       Primitive_Operation                      => False,
+      Discriminant                             => False,
       Overriding_Primitive_Operation           => False,
       With_Line                                => True,
       Subprogram_In_Parameter                  => False,
@@ -663,6 +669,7 @@ private
       Implicit                                 => False,
       Label                                    => True,
       Primitive_Operation                      => False,
+      Discriminant                             => False,
       Overriding_Primitive_Operation           => False,
       With_Line                                => True,
       Subprogram_In_Parameter                  => False,
@@ -685,6 +692,7 @@ private
       Implicit                                 => False,
       Label                                    => False,
       Primitive_Operation                      => False,
+      Discriminant                             => False,
       Overriding_Primitive_Operation           => False,
       With_Line                                => False,
       Subprogram_In_Parameter                  => False,
