@@ -367,7 +367,7 @@ package body Codefix.Errors_Manager is
      (This         : Correction_Manager;
       File         : VFS.Virtual_File;
       Line, Column : Integer;
-      Message      : String)
+      Message      : String := "")
       return Error_Id
    is
       Current_Id : Error_Id := Get_First_Error (This);
@@ -378,7 +378,7 @@ package body Codefix.Errors_Manager is
          exit when Get_Line (Error) = Line
            and then Get_Column (Error) = Column
            and then Get_File (Error) = File
-           and then Get_Message (Error) = Message;
+           and then (Message = "" or else Get_Message (Error) = Message);
          Current_Id := Next (Current_Id);
       end loop;
 

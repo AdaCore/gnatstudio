@@ -150,10 +150,12 @@ package Codefix.Errors_Manager is
      (This         : Correction_Manager;
       File         : VFS.Virtual_File;
       Line, Column : Integer;
-      Message      : String)
+      Message      : String := "")
      return Error_Id;
    --  Return the Error_Id contained in the correction manager correspondant to
    --  the message. If this error does not exist, Null_Error_Id is returned.
+   --  If Message is the empty string, the first error at that location is
+   --  returned
 
    procedure Set_Error_Cb
      (This     : in out Correction_Manager;
