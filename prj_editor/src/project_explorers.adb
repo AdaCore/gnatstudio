@@ -474,11 +474,11 @@ package body Project_Explorers is
          File_Name    => Get_File_From_Node (T.Tree.Model, Node),
          Project      => Get_Project_From_Node (T, Node, False));
       Context_Changed (T.Kernel, Selection_Context_Access (Context));
-      Free (Selection_Context_Access (Context));
+      Unref (Selection_Context_Access (Context));
 
    exception
       when E : others =>
-         Free (Selection_Context_Access (Context));
+         Unref (Selection_Context_Access (Context));
          Trace (Me, "Unexpected exception: " & Exception_Message (E));
    end Tree_Select_Row_Cb;
 
