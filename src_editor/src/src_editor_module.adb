@@ -827,30 +827,34 @@ package body Src_Editor_Module is
         or else Command = "get_file"
       then
          declare
-            Identifier : constant String := Nth_Arg (Data, 1);
+            Identifier  : constant String := Nth_Arg (Data, 1);
             Mark_Record : constant Mark_Identifier_Record :=
               Find_Mark (Identifier);
+            Buffer      : Source_Buffer;
          begin
             if Mark_Record.File = VFS.No_File then
                Set_Error_Msg (Data, -"mark not found");
             else
+               if Mark_Record.Child /= null then
+                  Buffer := Get_Buffer
+                    (Source_Box (Get_Widget (Mark_Record.Child)).Editor);
+               end if;
+
                if Command = "get_line" then
-                  if Mark_Record.Child /= null then
+                  if Buffer /= null then
                      Set_Return_Value
                        (Data,
-                        Get_Line
-                        (Source_Box (Get_Widget (Mark_Record.Child)).Editor,
-                         Mark_Record.Mark));
+                        Integer (Src_Editor_Buffer.Line_Information.Get_Line
+                                   (Buffer, Mark_Record.Mark)));
                   else
                      Set_Return_Value (Data, Mark_Record.Line);
                   end if;
                elsif Command = "get_column" then
-                  if Mark_Record.Child /= null then
+                  if Buffer /= null then
                      Set_Return_Value
                        (Data,
-                        Get_Column
-                        (Source_Box (Get_Widget (Mark_Record.Child)).Editor,
-                         Mark_Record.Mark));
+                        Src_Editor_Buffer.Line_Information.Get_Column
+                          (Buffer, Mark_Record.Mark));
                   else
                      Set_Return_Value (Data, Mark_Record.Column);
                   end if;
@@ -1185,9 +1189,12 @@ package body Src_Editor_Module is
             then
                Box := Source_Box (Get_Widget (Mark_Record.Child));
 
-               Mark_Record.Line := Get_Line (Box.Editor, Mark_Record.Mark);
+               Mark_Record.Line :=
+                 Natural (Src_Editor_Buffer.Line_Information.Get_Line
+                            (Get_Buffer (Box.Editor), Mark_Record.Mark));
                Mark_Record.Column :=
-                 Get_Column (Box.Editor, Mark_Record.Mark);
+                 Src_Editor_Buffer.Line_Information.Get_Column
+                   (Get_Buffer (Box.Editor), Mark_Record.Mark);
 
                Set_Data (Node,
                          Mark_Identifier_Record'
@@ -2727,7 +2734,7 @@ package body Src_Editor_Module is
                   if Get_Widget (Child).all in Source_Box_Record'Class
                     and then Get_Filename (Child) = File
                   then
-                     Destroy (Source_Box (Get_Widget (Child)));
+                     Close_Child (Child);
                   end if;
 
                   Next (Iter);
