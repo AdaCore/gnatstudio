@@ -778,6 +778,17 @@ package body Help_Module is
       return Search_Context_Access (Context);
    end Help_Factory;
 
+   -------------------
+   -- Show_Tutorial --
+   -------------------
+
+   procedure Show_Tutorial
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class) is
+   begin
+      On_GPS_Tutorial.On_Load_Html
+        (Get_Main_Window (Kernel), Kernel_Handle (Kernel));
+   end Show_Tutorial;
+
    ---------------------
    -- Register_Module --
    ---------------------

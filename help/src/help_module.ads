@@ -54,6 +54,10 @@ package Help_Module is
       return Find_Utils.Search_Context_Access;
    --  Search factory for "Help"
 
+   procedure Show_Tutorial
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
+   --  Open the help window and display the tutorial
+
 private
 
    type Help_Context is new Find_Utils.Search_Context with record
