@@ -521,9 +521,17 @@ package body VCS_Module is
       User : Kernel_Handle) return MDI_Child
    is
       pragma Unreferenced (MDI);
+      Child : MDI_Child;
    begin
       if Node.Tag.all = "VCS_View_Record" then
-         return Open_Explorer (User, Context => null);
+         if Get_Attribute (Node, "hidden") = "TRUE" then
+            Child := Open_Explorer (User, Context => null, Visible => False);
+            Load_State (VCS_View_Access (Get_Widget (Child)), Node);
+         else
+            Child := Open_Explorer (User, Context => null);
+            Load_State (VCS_View_Access (Get_Widget (Child)), Node);
+            return Child;
+         end if;
       end if;
 
       return null;
@@ -542,6 +550,12 @@ package body VCS_Module is
       if Widget.all in VCS_View_Record'Class then
          N := new Node;
          N.Tag := new String'("VCS_View_Record");
+
+         if not Visible_Is_Set (Widget) then
+            Set_Attribute (N, "hidden", "TRUE");
+         end if;
+
+         Save_State (VCS_View_Access (Widget), N);
          return N;
       end if;
 
