@@ -282,26 +282,24 @@ package body Layouts is
       Relative_Position : Natural_Array (0 .. Max_Index (G) - 1);
 
       function Barycenter_Weight_P (Vertex : Vertex_Access) return Integer;
---      pragma Unreferenced (Barycenter_Weight_P);
       --  Return the weight to use for the vertex Vertex.
       --  This is the weight computed in the top-down loop
-      --  Currently unused, but could replace median_weight_p function below.
 
       function Barycenter_Weight_S (Vertex : Vertex_Access) return Integer;
---      pragma Unreferenced (Barycenter_Weight_S);
       --  Return the weight to use for the vertex Vertex.
       --  This is the weight computed in the bottom-up loop
-      --  Currently unused, but could replace median_weight_s function below.
 
       function Median_Weight_P (Vertex : Vertex_Access) return Integer;
       pragma Unreferenced (Median_Weight_P);
       --  Return the median weight for Vertex.
       --  In case there is an even number of values, we choose an interpolated
       --  value biased toward the side where vertices are more closely packed.
+      --  Currently unused, but could replace barycenter_weight_p function.
 
       function Median_Weight_S (Vertex : Vertex_Access) return Integer;
       pragma Unreferenced (Median_Weight_S);
       --  Return the median weight for Vertex.
+      --  Currently unused, but could replace barycenter_weight_s function.
 
       procedure Process_Layer (Row : Natural; Top_Bottom : Boolean);
       --  Compute the positions for the nodes on a specific layer.
