@@ -476,6 +476,7 @@ package body Codefix.Formal_Errors is
 
          --  ??? This test is only here because the parser returns sometimes
          --  a Sloc_End.Col equal to 0.
+
          if New_Position.Col = 0 then
             New_Position.Col := 1;
          end if;

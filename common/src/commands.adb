@@ -46,8 +46,7 @@ package body Commands is
    -- Free_Queue --
    ----------------
 
-   procedure Free_Queue (Q : in out Command_Queue)
-   is
+   procedure Free_Queue (Q : in out Command_Queue) is
       procedure Free_Queue_Access is
          new Unchecked_Deallocation (Command_Queue_Record, Command_Queue);
    begin
@@ -253,9 +252,7 @@ package body Commands is
    ---------------------------
 
    function Get_Queue_Change_Hook
-     (Queue : Command_Queue)
-     return Command_Queues.List
-   is
+     (Queue : Command_Queue) return Command_Queues.List is
    begin
       return Queue.Queue_Change_Hook;
    end Get_Queue_Change_Hook;
@@ -327,9 +324,8 @@ package body Commands is
    -- Get_Previous_Command --
    --------------------------
 
-   function Get_Previous_Command (Queue : Command_Queue)
-     return Command_Access
-   is
+   function Get_Previous_Command
+     (Queue : Command_Queue) return Command_Access is
    begin
       if not Is_Empty (Queue.Undo_Queue) then
          return Head (Queue.Undo_Queue);
@@ -342,9 +338,8 @@ package body Commands is
    -- Get_Next_Command --
    ----------------------
 
-   function Get_Next_Command (Queue : Command_Queue)
-     return Command_Access
-   is
+   function Get_Next_Command
+     (Queue : Command_Queue) return Command_Access is
    begin
       if not Is_Empty (Queue.Redo_Queue) then
          return Head (Queue.Redo_Queue);

@@ -2256,7 +2256,6 @@ package body Glide_Kernel.Modules is
       Trace (Me, "Launching interactive command: " & Command);
 
       Args := Argument_String_To_List (Command);
-
       The_Command := new String'(Args (Args'First).all);
 
       for J in Args'First + 1 .. Args'Last loop
