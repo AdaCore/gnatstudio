@@ -58,6 +58,11 @@ Known Problems fixed in GPS 3.0.0
   Workaround: Execute your program through a script that sets the proper PATH
               and LD_LIBRARY_PATH variables
 
+- D930-006, D806-004, CB14-005 problems with the help browser under Windows
+  Problem:    Under Windows, the integrated help browser cannot display
+              properly the long HTML files after a certain point.
+  Workaround: Use an external HTML browser to view thise files.
+
 - D713-012 Improper substitution in XML files
   Problem:    When chaining multiple shell commands in an XML action, the
               second command can refer to the output of the first by using %1.
