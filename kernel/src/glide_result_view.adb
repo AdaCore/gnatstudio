@@ -30,6 +30,7 @@ with Gdk.Event;                use Gdk.Event;
 
 with Gtk.Menu;                 use Gtk.Menu;
 with Gtk.Menu_Item;            use Gtk.Menu_Item;
+with Gtk.Check_Menu_Item;      use Gtk.Check_Menu_Item;
 with Gtk.Tree_Model;           use Gtk.Tree_Model;
 with Gtk.Tree_View;            use Gtk.Tree_View;
 with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
@@ -161,6 +162,7 @@ package body Glide_Result_View is
 
    procedure Get_Category_File
      (View          : access Result_View_Record'Class;
+      Model         : Gtk_Tree_Store;
       Category      : String;
       H_Category    : String;
       File          : VFS.Virtual_File;
@@ -175,6 +177,7 @@ package body Glide_Result_View is
 
    procedure Fill_Iter
      (View               : access Result_View_Record'Class;
+      Model              : Gtk_Tree_Store;
       Iter               : Gtk_Tree_Iter;
       Base_Name          : String;
       Absolute_Name      : VFS.Virtual_File;
@@ -193,6 +196,7 @@ package body Glide_Result_View is
 
    procedure Add_Location
      (View               : access Result_View_Record'Class;
+      Model              : Gtk_Tree_Store;
       Category           : String;
       File               : VFS.Virtual_File;
       Line               : Positive;
@@ -211,6 +215,8 @@ package body Glide_Result_View is
    --  on the first item.
    --  If Remove_Duplicates is True, do not insert the entry if it is a
    --  duplicate.
+   --  If Model is set, append the items to Model, otherwise append them
+   --  to View.Tree.Model.
 
    function Button_Press
      (View     : access Gtk_Widget_Record'Class;
@@ -300,6 +306,10 @@ package body Glide_Result_View is
 
    function Idle_Redraw (View : Result_View) return Boolean;
    --  Redraw the "total" items.
+
+   procedure Toggle_Sort
+     (Widget : access Gtk_Widget_Record'Class);
+   --  Callback for the activation of the sort contextual menu item.
 
    -----------------
    -- Idle_Redraw --
@@ -466,6 +476,7 @@ package body Glide_Result_View is
       while Success and then Get_Depth (Path) /= 3 loop
          Success := Expand_Row (View.Tree, Path, False);
          Down (Path);
+         Select_Path (Get_Selection (View.Tree), Path);
       end loop;
 
       Iter := Get_Iter (View.Tree.Model, Path);
@@ -484,6 +495,10 @@ package body Glide_Result_View is
          end if;
          Free (Args);
       end;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Goto_Location;
 
    ----------------------------------
@@ -595,6 +610,10 @@ package body Glide_Result_View is
    begin
       Get_Selected (Get_Selection (View.Tree), Model, Iter);
       Remove_Category_Or_File_Iter (View, Iter);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Remove_Category;
 
    ---------------
@@ -603,6 +622,7 @@ package body Glide_Result_View is
 
    procedure Fill_Iter
      (View               : access Result_View_Record'Class;
+      Model              : Gtk_Tree_Store;
       Iter               : Gtk_Tree_Iter;
       Base_Name          : String;
       Absolute_Name      : VFS.Virtual_File;
@@ -618,7 +638,6 @@ package body Glide_Result_View is
       function To_Proxy is new
         Ada.Unchecked_Conversion (System.Address, C_Proxy);
 
-      Model : constant Gtk_Tree_Store := View.Tree.Model;
    begin
       if Base_Name = "" then
          Set
@@ -630,6 +649,7 @@ package body Glide_Result_View is
       Set (Model, Iter, Absolute_Name_Column, Full_Name (Absolute_Name).all);
       Set (Model, Iter, Message_Column,
            Glib.Convert.Locale_To_UTF8 (Message));
+
       Set (Model, Iter, Mark_Column, Mark);
       Set (Model, Iter, Line_Column, Gint (Line));
       Set (Model, Iter, Column_Column, Gint (Column));
@@ -753,6 +773,7 @@ package body Glide_Result_View is
 
    procedure Get_Category_File
      (View          : access Result_View_Record'Class;
+      Model         : Gtk_Tree_Store;
       Category      : String;
       H_Category    : String;
       File          : VFS.Virtual_File;
@@ -765,25 +786,26 @@ package body Glide_Result_View is
         Glib.Convert.Locale_To_UTF8 (Category);
 
    begin
-      Category_Iter := Get_Iter_First (View.Tree.Model);
+      Category_Iter := Get_Iter_First (Model);
       New_Category := False;
 
       while Category_Iter /= Null_Iter loop
          if Get_String
-           (View.Tree.Model, Category_Iter, Base_Name_Column) = Category_UTF8
+           (Model, Category_Iter, Base_Name_Column) = Category_UTF8
          then
             exit;
          end if;
 
-         Next (View.Tree.Model, Category_Iter);
+         Next (Model, Category_Iter);
       end loop;
 
       if Category_Iter = Null_Iter then
          if Create then
-            Append (View.Tree.Model, Category_Iter, Null_Iter);
-            Fill_Iter (View, Category_Iter, Category_UTF8, VFS.No_File,
-                       "", "", 0, 0, 0, False,
-                       H_Category, View.Category_Pixbuf);
+            Append (Model, Category_Iter, Null_Iter);
+            Fill_Iter
+              (View, Model, Category_Iter, Category_UTF8, VFS.No_File,
+               "", "", 0, 0, 0, False,
+               H_Category, View.Category_Pixbuf);
             New_Category := True;
          else
             return;
@@ -794,24 +816,24 @@ package body Glide_Result_View is
          return;
       end if;
 
-      File_Iter := Children (View.Tree.Model, Category_Iter);
+      File_Iter := Children (Model, Category_Iter);
 
       while File_Iter /= Null_Iter loop
-         if Get_String (View.Tree.Model, File_Iter, Absolute_Name_Column) =
+         if Get_String (Model, File_Iter, Absolute_Name_Column) =
            Full_Name (File).all
          then
             return;
          end if;
 
-         Next (View.Tree.Model, File_Iter);
+         Next (Model, File_Iter);
       end loop;
 
       --  When we reach this point, we need to create a new sub-category.
 
       if Create then
-         Append (View.Tree.Model, File_Iter, Category_Iter);
+         Append (Model, File_Iter, Category_Iter);
          Fill_Iter
-           (View, File_Iter, "", File, "", "", 0, 0, 0,
+           (View, Model, File_Iter, "", File, "", "", 0, 0, 0,
             False, H_Category, View.File_Pixbuf);
       end if;
 
@@ -824,6 +846,7 @@ package body Glide_Result_View is
 
    procedure Add_Location
      (View               : access Result_View_Record'Class;
+      Model              : Gtk_Tree_Store;
       Category           : String;
       File               : VFS.Virtual_File;
       Line               : Positive;
@@ -849,7 +872,7 @@ package body Glide_Result_View is
       end if;
 
       Get_Category_File
-        (View, Category, Highlight_Category,
+        (View, Model, Category, Highlight_Category,
          File, Category_Iter, File_Iter, Category_Created);
 
       --  Check whether the same item already exists.
@@ -858,30 +881,30 @@ package body Glide_Result_View is
          if Category_Iter /= Null_Iter
            and then File_Iter /= Null_Iter
          then
-            Iter := Children (View.Tree.Model, File_Iter);
+            Iter := Children (Model, File_Iter);
 
             while Iter /= Null_Iter loop
-               if Get_Int (View.Tree.Model, Iter, Line_Column) = Gint (Line)
+               if Get_Int (Model, Iter, Line_Column) = Gint (Line)
                  and then Get_Int
-                   (View.Tree.Model, Iter, Column_Column) = Gint (Column)
+                   (Model, Iter, Column_Column) = Gint (Column)
                  and then Get_String
-                   (View.Tree.Model, Iter, Message_Column) = Message
+                   (Model, Iter, Message_Column) = Message
                then
                   return;
                end if;
 
-               Next (View.Tree.Model, Iter);
+               Next (Model, Iter);
             end loop;
          end if;
       end if;
 
-      Append (View.Tree.Model, Iter, File_Iter);
+      Append (Model, Iter, File_Iter);
 
-      Set (View.Tree.Model, File_Iter, Number_Of_Items_Column,
-           Get_Int (View.Tree.Model, File_Iter, Number_Of_Items_Column) + 1);
+      Set (Model, File_Iter, Number_Of_Items_Column,
+           Get_Int (Model, File_Iter, Number_Of_Items_Column) + 1);
       Set
-        (View.Tree.Model, Category_Iter, Number_Of_Items_Column,
-         Get_Int (View.Tree.Model, Category_Iter, Number_Of_Items_Column) + 1);
+        (Model, Category_Iter, Number_Of_Items_Column,
+         Get_Int (Model, Category_Iter, Number_Of_Items_Column) + 1);
 
       Redraw_Totals (View);
 
@@ -895,7 +918,9 @@ package body Glide_Result_View is
            (View.Kernel, File, Line, Column, Length);
       begin
          Fill_Iter
-           (View, Iter,
+           (View,
+            Model,
+            Iter,
             Image (Line) & ":" & Image (Column), File,
             Message, Output,
             Line, Column, Length, Highlight,
@@ -903,35 +928,37 @@ package body Glide_Result_View is
       end;
 
       if Category_Created then
-         Path := Get_Path (View.Tree.Model, Category_Iter);
-         Dummy := Expand_Row (View.Tree, Path, False);
-         Path_Free (Path);
+         if Gtk_Tree_Model (Model) = Get_Model (View.Tree) then
+            Path := Get_Path (Model, Category_Iter);
+            Dummy := Expand_Row (View.Tree, Path, False);
+            Path_Free (Path);
 
-         if not Quiet then
-            declare
-               MDI   : constant MDI_Window := Get_MDI (View.Kernel);
-               Child : constant MDI_Child :=
-                 Find_MDI_Child_By_Tag (MDI, Result_View_Record'Tag);
-            begin
-               if Child /= null then
-                  Raise_Child (Child, Give_Focus => False);
-               end if;
-            end;
-         end if;
+            if not Quiet then
+               declare
+                  MDI   : constant MDI_Window := Get_MDI (View.Kernel);
+                  Child : constant MDI_Child :=
+                    Find_MDI_Child_By_Tag (MDI, Result_View_Record'Tag);
+               begin
+                  if Child /= null then
+                     Raise_Child (Child, Give_Focus => False);
+                  end if;
+               end;
+            end if;
 
-         Path := Get_Path (View.Tree.Model, File_Iter);
-         Dummy := Expand_Row (View.Tree, Path, False);
-         Path_Free (Path);
+            Path := Get_Path (Model, File_Iter);
+            Dummy := Expand_Row (View.Tree, Path, False);
+            Path_Free (Path);
 
-         Path := Get_Path (View.Tree.Model, Iter);
-         Select_Path (Get_Selection (View.Tree), Path);
-         Scroll_To_Cell (View.Tree, Path, null, True, 0.1, 0.1);
-         Path_Free (Path);
+            Path := Get_Path (Model, Iter);
+            Select_Path (Get_Selection (View.Tree), Path);
+            Scroll_To_Cell (View.Tree, Path, null, True, 0.1, 0.1);
+            Path_Free (Path);
 
-         if not Quiet
-           and then Get_Pref (View.Kernel, Auto_Jump_To_First)
-         then
-            Goto_Location (View);
+            if not Quiet
+              and then Get_Pref (View.Kernel, Auto_Jump_To_First)
+            then
+               Goto_Location (View);
+            end if;
          end if;
       end if;
    end Add_Location;
@@ -978,11 +1005,13 @@ package body Glide_Result_View is
       Dummy := Append_Column (Tree, Col);
       Set_Expander_Column (Tree, Col);
 
-      Gtk_New (Col);
+      Gtk_New (View.Sorting_Column);
       Gtk_New (Text_Rend);
-      Pack_Start (Col, Text_Rend, True);
-      Add_Attribute (Col, Text_Rend, "text", Message_Column);
-      Dummy := Append_Column (Tree, Col);
+      Pack_Start (View.Sorting_Column, Text_Rend, True);
+      Add_Attribute (View.Sorting_Column, Text_Rend, "text", Message_Column);
+      Set_Sort_Column_Id (View.Sorting_Column, Highlight_Category_Column);
+      Dummy := Append_Column (Tree, View.Sorting_Column);
+      Clicked (View.Sorting_Column);
    end Set_Column_Types;
 
    -------------------
@@ -1035,6 +1064,10 @@ package body Glide_Result_View is
          Timeout_Remove (V.Idle_Handler);
          V.Idle_Registered := False;
       end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Destroy;
 
    -------------
@@ -1070,6 +1103,7 @@ package body Glide_Result_View is
       Iter     : Gtk_Tree_Iter;
       Model    : Gtk_Tree_Model;
       Result   : Message_Context_Access := null;
+      Check    : Gtk_Check_Menu_Item;
 
    begin
       Get_Selected (Get_Selection (Explorer.Tree), Model, Iter);
@@ -1083,6 +1117,17 @@ package body Glide_Result_View is
       if Path = null then
          return null;
       end if;
+
+      Gtk_New (Check, -"Sort by subcategory");
+      Set_Active (Check, Explorer.Sort_By_Category);
+      Append (Menu, Check);
+      Widget_Callback.Object_Connect
+         (Check, "activate",
+          Widget_Callback.To_Marshaller (Toggle_Sort'Access),
+          Explorer);
+
+      Gtk_New (Mitem);
+      Append (Menu, Mitem);
 
       if not Path_Is_Selected (Get_Selection (Explorer.Tree), Path) then
          Unselect_All (Get_Selection (Explorer.Tree));
@@ -1148,6 +1193,31 @@ package body Glide_Result_View is
       Path_Free (Path);
       return Selection_Context_Access (Result);
    end Context_Func;
+
+   -----------------
+   -- Toggle_Sort --
+   -----------------
+
+   procedure Toggle_Sort
+     (Widget : access Gtk_Widget_Record'Class)
+   is
+      Explorer : Result_View := Result_View (Widget);
+   begin
+      Explorer.Sort_By_Category := not Explorer.Sort_By_Category;
+
+      if Explorer.Sort_By_Category then
+         Set_Sort_Column_Id
+           (Explorer.Sorting_Column,
+            Highlight_Category_Column);
+      else
+         Set_Sort_Column_Id (Explorer.Sorting_Column, Base_Name_Column);
+      end if;
+
+      Clicked (Explorer.Sorting_Column);
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+   end Toggle_Sort;
 
    ----------------
    -- Initialize --
@@ -1223,6 +1293,10 @@ package body Glide_Result_View is
       Get_Tree_Iter (Nth (Params, 1), Iter);
       Scroll_To_Cell
         (Tree, Get_Path (Get_Model (Tree), Iter), null, True, 0.1, 0.1);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Row_Expanded;
 
    -------------------
@@ -1245,7 +1319,7 @@ package body Glide_Result_View is
    begin
       if View /= null then
          Add_Location
-           (View, Category, File, Line, Column, Length,
+           (View, View.Tree.Model, Category, File, Line, Column, Length,
             Highlight, Text, Highlight_Category,
             Quiet             => Quiet,
             Remove_Duplicates => True);
@@ -1283,7 +1357,9 @@ package body Glide_Result_View is
       Dummy      : Boolean;
    begin
       Get_Category_File
-        (View, Identifier, "", VFS.No_File, Iter, Dummy_Iter, Dummy);
+        (View,
+         View.Tree.Model,
+         Identifier, "", VFS.No_File, Iter, Dummy_Iter, Dummy);
       Remove_Category_Or_File_Iter (Result_View (View), Iter);
    end Remove_Category;
 
@@ -1417,7 +1493,7 @@ package body Glide_Result_View is
              & ' ' & Message);
 
       Get_Category_File
-        (View, Category, H_Category,
+        (View, View.Tree.Model, Category, H_Category,
          File, Category_Iter, File_Iter, Created, False);
 
       if Category_Iter = Null_Iter then
@@ -1746,7 +1822,14 @@ package body Glide_Result_View is
       Warning_Index_In_Regexp : Integer := -1;
       Quiet                   : Boolean := False)
    is
-      View : constant Result_View := Get_Or_Create_Result_View (Kernel);
+      View      : constant Result_View := Get_Or_Create_Result_View (Kernel);
+      Sort_Col  : Gint;
+      Model     : Gtk_Tree_Store;
+      Dummy     : Boolean;
+      Path      : Gtk_Tree_Path;
+      Cat_Iter  : Gtk_Tree_Iter;
+      File_Iter : Gtk_Tree_Iter;
+      Child     : MDI_Child;
 
       function Get_File_Location return Pattern_Matcher;
       --  Return the pattern matcher for the file location
@@ -1824,6 +1907,11 @@ package body Glide_Result_View is
          Length := 1;
       end if;
 
+      Sort_Col := Freeze_Sort (View.Tree.Model);
+      Ref (View.Tree.Model);
+      Model := View.Tree.Model;
+      Set_Model (View.Tree, null);
+
       while Start <= Text'Last loop
          --  Parse Text line by line and look for file locations
 
@@ -1879,6 +1967,7 @@ package body Glide_Result_View is
 
             Add_Location
               (View,
+               Model,
                Category,
                Create
                  (Text (Matched
@@ -1896,7 +1985,30 @@ package body Glide_Result_View is
          Start := Real_Last + 1;
       end loop;
 
-      Highlight_Child (Find_MDI_Child (Get_MDI (Kernel), View));
+      Thaw_Sort (View.Tree.Model, Sort_Col);
+      Set_Model (View.Tree, Gtk_Tree_Model (Model));
+      Unref (Model);
+
+      --  Open the first item that was added.
+
+      Get_Category_File
+        (View, View.Tree.Model, Category, "", VFS.No_File,
+         Cat_Iter, File_Iter, Dummy, False);
+
+      if Cat_Iter /= Null_Iter then
+         Child := Find_MDI_Child (Get_MDI (Kernel), View);
+         Raise_Child (Child);
+
+         Path := Get_Path (View.Tree.Model, Cat_Iter);
+         Select_Path (Get_Selection (View.Tree), Path);
+         Path_Free (Path);
+
+         if Get_Pref (View.Kernel, Auto_Jump_To_First) then
+            Goto_Location (View);
+         else
+            Highlight_Child (Child);
+         end if;
+      end if;
    end Parse_File_Locations;
 
 end Glide_Result_View;
