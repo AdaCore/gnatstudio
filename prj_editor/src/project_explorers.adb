@@ -2169,7 +2169,7 @@ package body Project_Explorers is
                  (Create (Full_Filename => Get_Directory_From_Node
                             (Explorer.Tree.Model, Start) & N),
                   Get_Project_From_Node
-                     (Explorer.Tree.Model, Explorer.Kernel, Start, False))
+                    (Explorer.Tree.Model, Explorer.Kernel, Start, False))
                then
                   Set (C.Matches, N, Search_Match);
                   Compute_Children (Explorer, Start);
@@ -2218,6 +2218,21 @@ package body Project_Explorers is
          Tmp        : Gtk_Tree_Iter;
          Finish     : Boolean;
 
+         function First_Word (Str : String) return String;
+         --  Return the first word in Str. This is required since the model
+         --  of the explorer stores the arguments of the subprograms as well,
+         --  and no match would be found otherwise
+
+         function First_Word (Str : String) return String is
+         begin
+            for J in Str'Range loop
+               if Str (J) = ' ' then
+                  return Str (Str'First .. J - 1);
+               end if;
+            end loop;
+            return Str;
+         end First_Word;
+
       begin
          while Start_Node /= Null_Iter loop
             begin
@@ -2261,7 +2276,8 @@ package body Project_Explorers is
                      if C.Current /= Start_Node
                        and then Get
                          (C.Matches,
-                          Get_Base_Name (Explorer.Tree.Model, Start_Node))
+                          First_Word
+                            (Get_Base_Name (Explorer.Tree.Model, Start_Node)))
                           /= No_Match
                      then
                         return Start_Node;
@@ -2293,6 +2309,7 @@ package body Project_Explorers is
         (File      : VFS.Virtual_File;
          Project   : Project_Type) return Boolean
       is
+         use type Src_Info.LI_Handler;
          Languages  : constant Glide_Language_Handler :=
            Glide_Language_Handler (Get_Language_Handler (Kernel));
          Handler    : constant Src_Info.LI_Handler := Get_LI_Handler_From_File
@@ -2303,6 +2320,10 @@ package body Project_Explorers is
          use type Basic_Types.String_Access;
 
       begin
+         if Handler = null then
+            return False;
+         end if;
+
          Src_Info.Parse_File_Constructs
            (Handler, Project, Languages, File, Constructs);
 
