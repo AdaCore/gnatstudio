@@ -54,7 +54,8 @@ package Codefix.Errors_Parser is
       Missing_With,
       Wrong_Case,
       Unit_Not_Referenced,
-      Pragma_Should_Begin);
+      Pragma_Should_Begin,
+      Var_Not_Modified);
    --  Those subcatgeroies are the reals categories of errors that an user can
    --  choose to correct or not.
 
@@ -606,5 +607,18 @@ package Codefix.Errors_Parser is
       Solutions    : out Solution_List;
       Matches      : Match_Array);
    --  Fix problem 'pragma must be first line of'.
+
+   type Constant_Expected is new Error_Parser (Var_Not_Modified, 1)
+      with null record;
+
+   procedure Initialize (This : in out Constant_Expected);
+
+   procedure Fix
+     (This         : Constant_Expected;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message      : Error_Message;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array);
+   --  Fix problem 'could be declared constant'.
 
 end Codefix.Errors_Parser;
