@@ -41,6 +41,7 @@ PyObject * ada_pycfunction_newex (PyMethodDef *ml, PyObject* self, PyObject* mod
   ((PyCFunctionObject*)method)->m_module = module;
   Py_XINCREF (module);
 #endif
+  return method;
 }
 
 void ada_py_print_refcount (PyObject* obj, char* msg) {
