@@ -1476,8 +1476,8 @@ package body Glide_Kernel.Modules is
       File_Found : Boolean := False;
       Real_File  : Basic_Types.String_Access;
       Length     : Integer := Column_End - Column;
-   begin
 
+   begin
       if From_Path then
          declare
             Full : constant String := Get_Full_Path_From_File
