@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 1.0.1
 
+- No cross-reference for overloaded entities in C/C++
+  Problem:    When selecting "goto declaration" for a C/C++ entity that has 
+              multiple possible definitions (either overloaded or in a
+              pre-processor section), GPS failed, when a dialog should have
+              been displayed.
+  Workaround: Select the correct declaration directly in the explorer
+
 - Incorrect search when starting from middle of a line
   Problem:    If you start a search when you cursor is not in the first
               column and there is a match on that line, that match is
