@@ -3513,11 +3513,11 @@ package body Project_Properties is
       P     : Project_Editor_Page;
       Flags : Selector_Flags;
    begin
-      if Page >= Properties_Module_ID.Pages'Length + 1
+      if Page >= Properties_Module_ID.Pages'Length
         and then not Gtk.Object.In_Destruction_Is_Set (Ed)
       then
          P := Get_Nth_Project_Editor_Page
-           (Ed.Kernel, Page - Properties_Module_ID.Pages'Length);
+           (Ed.Kernel, Page - Properties_Module_ID.Pages'Length + 1);
       end if;
 
       if P /= null then
@@ -3526,7 +3526,8 @@ package body Project_Properties is
          begin
             Refresh
               (Page     => P,
-               Widget   => Ed.Pages (Page - Properties_Module_ID.Pages'Length),
+               Widget   => Ed.Pages
+                 (Page - Properties_Module_ID.Pages'Length + 1),
                Project  => Ed.Project,
                Languages => Languages);
             Free (Languages);
