@@ -12936,10 +12936,15 @@ Directory containing files with system-wide customizations
 (see @ref{Adding support for new languages} and
  @ref{Defining text aliases}).
 
+   @item @i{prefix}/share/gps/gps-animation.png
+@cindex png
+Default image displayed in the top right corner of GPS when GPS is idle.
+
    @item @i{prefix}/share/gps/gps-animation.gif
 @cindex gif
 Animated image displayed in the top right corner of GPS to indicate that
-actions (e.g compilation) are on going.
+actions (e.g compilation) are on going. If you remove this file, the idle
+image (@file{gps-animation.png}) will always be displayed.
 
    @item @i{prefix}/share/gps/gps-splash.png
 @cindex png
