@@ -28,6 +28,7 @@ with Gtk.Tooltips;              use Gtk.Tooltips;
 with Gtkada.MDI;                use Gtkada.MDI;
 with System;                    use System;
 
+with Ada.Tags;                  use Ada.Tags;
 with Ada.Text_IO;               use Ada.Text_IO;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
@@ -36,7 +37,6 @@ with String_Utils;              use String_Utils;
 with Gint_Xml;                  use Gint_Xml;
 with Glide_Main_Window;         use Glide_Main_Window;
 with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
-with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Kernel.Project;      use Glide_Kernel.Project;
 with Glide_Page;                use Glide_Page;
 with GVD.Process;               use GVD.Process;
@@ -134,11 +134,6 @@ package body Glide_Kernel is
       Gtk_New (Handle.Tooltips);
       Load_Preferences
         (Handle, String_Utils.Name_As_Directory (Home_Dir) & "preferences");
-
-      Handle.Explorer_Context := new File_Selection_Context;
-      Set_Context_Information (Handle.Explorer_Context, Handle, null);
-      Set_File_Information
-        (File_Selection_Context_Access (Handle.Explorer_Context));
    end Gtk_New;
 
    ------------------------------
@@ -349,30 +344,67 @@ package body Glide_Kernel is
          Signal  : String;
          Context : Selection_Context_Access);
       pragma Import (C, Internal, "g_signal_emit_by_name");
-
-      File : File_Selection_Context_Access;
    begin
-      if Module_Name (Get_Creator (Context)) = Explorer_Module_Name then
-         Free (Handle.Explorer_Context);
-         Handle.Explorer_Context := new File_Selection_Context;
-         Set_Context_Information
-           (Handle.Explorer_Context, Handle, Get_Creator (Context));
-
-         File := File_Selection_Context_Access (Context);
-         Set_File_Name_Information
-           (File_Selection_Context_Access (Handle.Explorer_Context),
-            Directory_Information (File),
-            File_Information (File));
-         Set_File_Information
-           (File_Selection_Context_Access (Handle.Explorer_Context),
-            Project_Information (File));
-      end if;
-
       Internal
         (Get_Object (Handle),
          Context_Changed_Signal & ASCII.NUL,
          Selection_Context_Access (Context));
    end Context_Changed;
+
+   -------------------------
+   -- Get_Current_Context --
+   -------------------------
+
+   function Get_Current_Context (Kernel : access Kernel_Handle_Record)
+      return Selection_Context_Access
+   is
+      use type Module_List.List_Node;
+      C : MDI_Child;
+      Module : Module_List.List_Node :=
+        Module_List.First (Kernel.Modules_List);
+   begin
+      if Kernel.Current_Context /= null then
+         Free (Kernel.Current_Context);
+      end if;
+
+      C := Get_Focus_Child (Get_MDI (Kernel));
+      if C = null then
+         return null;
+      end if;
+
+      --  ??? Should we fall back on the explorer if no factory was defined for
+      --  ??? the current child. However, it might have some unexpected effect
+      --  ??? for the user.
+
+      while Module /= Module_List.Null_Node loop
+         if Module_List.Data (Module).Child_Tag = Get_Widget (C)'Tag then
+            if Module_List.Data (Module).Default_Factory /= null then
+               Kernel.Current_Context :=
+                 Module_List.Data (Module).Default_Factory
+                 (Kernel, Get_Widget (C));
+
+               if Kernel.Current_Context /= null then
+                  Set_Context_Information
+                    (Kernel.Current_Context,
+                     Kernel,
+                     Module_List.Data (Module));
+               end if;
+            end if;
+            exit;
+         end if;
+
+         Module := Module_List.Next (Module);
+      end loop;
+
+      if Module = Module_List.Null_Node then
+         Trace (Me, "No module associated with tag "
+                & External_Tag (Get_Widget (C)'Tag));
+      elsif Kernel.Current_Context = null then
+         Trace (Me, "Null context returned bu the module");
+      end if;
+
+      return Kernel.Current_Context;
+   end Get_Current_Context;
 
    ------------------
    -- Save_Desktop --
@@ -445,17 +477,6 @@ package body Glide_Kernel is
       Destroy (Context.all);
       Internal (Context);
    end Free;
-
-   ----------------------------------
-   -- Get_Current_Explorer_Context --
-   ----------------------------------
-
-   function Get_Current_Explorer_Context
-     (Handle : access Kernel_Handle_Record'Class)
-      return Selection_Context_Access is
-   begin
-      return Handle.Explorer_Context;
-   end Get_Current_Explorer_Context;
 
    ----------------
    -- Get_Kernel --

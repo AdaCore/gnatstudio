@@ -20,6 +20,7 @@
 
 --  This package is the root of the glide's kernel API.
 
+with Ada.Tags;
 with Basic_Mapper;
 with GNAT.OS_Lib;
 with Generic_List;
@@ -225,13 +226,6 @@ package Glide_Kernel is
       Creator : Module_ID);
    --  Set the information in the context
 
-   function Get_Current_Explorer_Context
-     (Handle : access Kernel_Handle_Record'Class)
-      return Selection_Context_Access;
-   --  Return the currently selected project/directory/file in the
-   --  explorer. This value is cached, and not computed directly from the
-   --  explorer.
-
    function Get_Kernel
      (Context : access Selection_Context) return Kernel_Handle;
    --  Return the kernel associated with the context
@@ -247,6 +241,16 @@ package Glide_Kernel is
    procedure Free (Context : in out Selection_Context_Access);
    --  Free the memory occupied by Context. It automatically calls the
    --  primitive subprogram Destroy as well
+
+   function Get_Current_Context (Kernel : access Kernel_Handle_Record)
+      return Selection_Context_Access;
+   --  Return the context associated with the current MDI child.
+   --  The called should free the returned value, this is taken care of by the
+   --  kernel automatically.
+   --  The returned value might be null, if the current child doesn't support
+   --  selection contexts.
+   --  This function is mostly intended to be called for the callbacks in the
+   --  menu bar.
 
    -------------
    -- Modules --
@@ -302,6 +306,15 @@ package Glide_Kernel is
    --  should act on Data, and return True.
    --  Otherwise, if it doesn't know how to act on Mime_Type, it should return
    --  False. In that case, the next module will be queried.
+
+   type Module_Default_Context_Factory is access function
+     (Kernel : access Kernel_Handle_Record'Class;
+      Child  : Gtk.Widget.Gtk_Widget) return Selection_Context_Access;
+   --  A function called when the kernel needs to get the current context for
+   --  an MDI child. This is used mostly when generating a context for the
+   --  menubar menu items.
+   --  Child is the widget that was put directly in the MDI. It is always of
+   --  the type MDI_Child_Tag registered with Register_Module.
 
    ---------------------
    -- Signal emission --
@@ -386,6 +399,8 @@ private
       Contextual_Menu : Module_Menu_Handler;
       Mime_Handler    : Module_Mime_Handler;
       Was_Initialized : Boolean := False;
+      Default_Factory : Module_Default_Context_Factory;
+      Child_Tag       : Ada.Tags.Tag;
    end record;
 
    type Selection_Context is tagged record
@@ -447,10 +462,10 @@ private
       Last_Context_For_Contextual : Selection_Context_Access := null;
       --  The context used in the last contextual menu.
 
-      Explorer_Context : Selection_Context_Access := null;
-      --  The last context emitted by the explorer.
-      --  This implies knowledge of the explorer (at least to check the module
-      --  ID, but there is no way around that).
+      Current_Context : Selection_Context_Access := null;
+      --  The selection for the current MDI child. It is recomputed every time
+      --  Get_Current_Context is called, and is kept only for memory
+      --  management reasons.
 
       Home_Dir : GNAT.OS_Lib.String_Access;
       --  The home directory (e.g ~/.glide).
