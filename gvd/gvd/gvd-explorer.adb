@@ -21,6 +21,7 @@
 with Glib;                  use Glib;
 with Gdk.Bitmap;            use Gdk.Bitmap;
 with Gdk.Color;             use Gdk.Color;
+with Gdk.Event;             use Gdk.Event;
 with Gdk.Pixmap;            use Gdk.Pixmap;
 pragma Warnings (Off);
 with Gdk.Types;             use Gdk.Types;
@@ -109,7 +110,8 @@ package body GVD.Explorer is
    --  Show and select the node that matches the current source file.
 
    function Explorer_Contextual_Menu
-     (Explorer : access Gtk_Widget_Record'Class) return Gtk.Menu.Gtk_Menu;
+     (Explorer : access Gtk_Widget_Record'Class;
+      Event    : Gdk_Event) return Gtk.Menu.Gtk_Menu;
    --  Create (if necessary) the contextual menu for an explorer widget.
 
    function Convert (Explorer : access Explorer_Record'Class)
@@ -849,7 +851,8 @@ package body GVD.Explorer is
    ------------------------------
 
    function Explorer_Contextual_Menu
-     (Explorer : access Gtk_Widget_Record'Class)
+     (Explorer : access Gtk_Widget_Record'Class;
+      Event    : Gdk_Event)
      return Gtk.Menu.Gtk_Menu
    is
       Exp : Explorer_Access := Explorer_Access (Explorer);
