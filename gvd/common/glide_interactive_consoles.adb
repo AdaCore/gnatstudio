@@ -679,11 +679,11 @@ package body Glide_Interactive_Consoles is
       Prompt    : String;
       Handler   : Command_Handler;
       User_Data : GObject;
-      Font      : Pango.Font.Pango_Font_Description)
-   is
+      Font      : Pango.Font.Pango_Font_Description;
+      Wrap_Mode : Gtk.Enums.Gtk_Wrap_Mode := Gtk.Enums.Wrap_None) is
    begin
       Console := new Glide_Interactive_Console_Record;
-      Initialize (Console, Prompt, Handler, User_Data, Font);
+      Initialize (Console, Prompt, Handler, User_Data, Font, Wrap_Mode);
    end Gtk_New;
 
    ----------------
@@ -695,12 +695,14 @@ package body Glide_Interactive_Consoles is
       Prompt    : String;
       Handler   : Command_Handler;
       User_Data : GObject;
-      Font      : Pango.Font.Pango_Font_Description)
+      Font      : Pango.Font.Pango_Font_Description;
+      Wrap_Mode : Gtk.Enums.Gtk_Wrap_Mode)
    is
       --  ???
       Iter : Gtk_Text_Iter;
    begin
       --  Initialize the text buffer and the text view.
+
       Console.Prompt := new String'(Prompt);
       Console.Handler := Handler;
       Console.User_Data := User_Data;
@@ -713,6 +715,7 @@ package body Glide_Interactive_Consoles is
 
       Gtk_New (Console.Buffer);
       Gtk_New (Console.View, Console.Buffer);
+      Set_Wrap_Mode (Console.View, Wrap_Mode);
 
       --  The buffer should be destroyed when the view is destroyed
       --  ??? Perhaps we should store it in the module_id, and always reuse it

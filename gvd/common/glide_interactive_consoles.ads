@@ -24,6 +24,7 @@ with Glib.Object; use Glib.Object;
 
 with Gdk.Color;   use Gdk.Color;
 
+with Gtk.Enums;
 with Gtk.Main;
 with Gtk.Text_Buffer;
 with Gtk.Text_View;
@@ -63,7 +64,8 @@ package Glide_Interactive_Consoles is
       Prompt    : String;
       Handler   : Command_Handler;
       User_Data : GObject;
-      Font      : Pango.Font.Pango_Font_Description);
+      Font      : Pango.Font.Pango_Font_Description;
+      Wrap_Mode : Gtk.Enums.Gtk_Wrap_Mode := Gtk.Enums.Wrap_None);
    --  Create a new console for glide.
 
    procedure Initialize
@@ -71,7 +73,8 @@ package Glide_Interactive_Consoles is
       Prompt    : String;
       Handler   : Command_Handler;
       User_Data : GObject;
-      Font      : Pango.Font.Pango_Font_Description);
+      Font      : Pango.Font.Pango_Font_Description;
+      Wrap_Mode : Gtk.Enums.Gtk_Wrap_Mode);
    --  Internal initialization function.
 
    procedure Insert
