@@ -63,6 +63,8 @@ with String_Utils;              use String_Utils;
 with Traces;                    use Traces;
 with Ada.Text_IO;               use Ada.Text_IO;
 with Prj_API;                   use Prj_API;
+with Src_Contexts;              use Src_Contexts;
+with Find_Utils;                use Find_Utils;
 
 package body Src_Editor_Module is
 
@@ -1864,6 +1866,8 @@ package body Src_Editor_Module is
       Reopen_File      : File_Type;
       Buffer           : String (1 .. 1024);
       Last             : Integer := 1;
+      Selector         : Scope_Selector;
+      Extra            : Files_Extra_Scope;
 
    begin
       Src_Editor_Module_Id := new Source_Editor_Module_Record;
@@ -2062,6 +2066,42 @@ package body Src_Editor_Module is
          & "  close file_name" & ASCII.LF
          & (-"Close all file editors for file_name."),
          Handler => Edit_Command_Handler'Access);
+
+      --  Register the search functions
+
+      Gtk_New (Selector, Kernel);
+      Gtk_New (Extra, Kernel);
+
+      declare
+         Name  : constant String := -"Current File";
+         Name2 : constant String := -"Files From Project";
+         Name3 : constant String := -"Files...";
+      begin
+         Register_Search_Function
+           (Kernel => Kernel,
+            Data   => (Length            => Name'Length,
+                       Label             => Name,
+                       Factory           => Current_File_Factory'Access,
+                       Extra_Information => Gtk_Widget (Selector),
+                       Mask              => All_Options
+                       and not All_Occurences and not Supports_Replace));
+         Register_Search_Function
+           (Kernel => Kernel,
+            Data   => (Length            => Name2'Length,
+                       Label             => Name2,
+                       Factory           => Files_From_Project_Factory'Access,
+                       Extra_Information => Gtk_Widget (Selector),
+                       Mask              => All_Options
+                       and not Search_Backward and not Supports_Replace));
+         Register_Search_Function
+           (Kernel => Kernel,
+            Data   => (Length            => Name3'Length,
+                       Label             => Name3,
+                       Factory           => Files_Factory'Access,
+                       Extra_Information => Gtk_Widget (Extra),
+                       Mask              => All_Options
+                       and not Search_Backward and not Supports_Replace));
+      end;
    end Register_Module;
 
    -------------------------
