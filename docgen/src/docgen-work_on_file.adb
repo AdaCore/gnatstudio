@@ -867,7 +867,7 @@ package body Docgen.Work_On_File is
       Is_Spec          : constant Boolean :=
          Is_Spec_File (Kernel, Get_Filename (Source_Filename));
 
-      Level : Natural := 1;
+      Level            : Natural := 1;
       --  Stores the level of the current package in which we are
       --  processing types, subprograms...
 
