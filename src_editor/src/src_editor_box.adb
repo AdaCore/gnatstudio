@@ -1343,6 +1343,9 @@ package body Src_Editor_Box is
 
             if not Result
               or else Get_Line (Start_Iter) /= Get_Line (End_Iter)
+              or else Line /= Get_Line (Start_Iter)
+              or else Column < Get_Line_Offset (Start_Iter) - 1
+              or else Column > Get_Line_Offset (End_Iter) + 1
             then
                --  No selection, or multi-line selection: get the entity under
                --  the cursor instead.
