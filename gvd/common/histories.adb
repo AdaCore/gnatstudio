@@ -37,10 +37,36 @@ package body Histories is
    -- Set_Max_Length --
    --------------------
 
-   procedure Set_Max_Length (Hist : in out History_Record; Num : Positive) is
+   procedure Set_Max_Length
+     (Hist : in out History_Record; Num : Positive; Key : History_Key := "")
+   is
+      Current : History_Key_Record;
    begin
-      Hist.Max_Length := Num;
+      if Key = "" then
+         Hist.Max_Length := Num;
+      else
+         Current := Get (Hist.Table, String (Key));
+         Current.Max_Length := Num;
+         Set (Hist.Table, String (Key), Current);
+      end if;
    end Set_Max_Length;
+
+   ----------------------
+   -- Allow_Duplicates --
+   ----------------------
+
+   procedure Allow_Duplicates
+     (Hist        : in out History_Record;
+      Key         : History_Key;
+      Allow       : Boolean;
+      Merge_First : Boolean := False)
+   is
+      Current : History_Key_Record := Get (Hist.Table, String (Key));
+   begin
+      Current.Allow_Duplicates := Allow;
+      Current.Merge_First := Merge_First;
+      Set (Hist.Table, String (Key), Current);
+   end Allow_Duplicates;
 
    ----------
    -- Load --
@@ -51,7 +77,7 @@ package body Histories is
       File : Node_Ptr;
       Key  : Node_Ptr;
       Num  : Natural;
-      Value : String_List_Access;
+      Value : History_Key_Record;
    begin
       File := Parse (File_Name);
 
@@ -62,17 +88,28 @@ package body Histories is
          Num := 0;
 
          while N /= null loop
-            Num := Num + 1;
+            if N.Tag.all /= "Length" then
+               Num := Num + 1;
+            end if;
             N := N.Next;
          end loop;
 
-         Value := new String_List (1 .. Num);
+         Value.Max_Length := -1;
+         Value.List := new String_List (1 .. Num);
          N := Key.Child;
          Num := 1;
 
          while N /= null loop
-            Value (Num) := new String'(N.Value.all);
-            Num := Num + 1;
+            if N.Tag.all = "Length" then
+               begin
+                  Value.Max_Length := Integer'Value (N.Value.all);
+               exception
+                  when Constraint_Error => null;
+               end;
+            else
+               Value.List (Num) := new String'(N.Value.all);
+               Num := Num + 1;
+            end if;
             N := N.Next;
          end loop;
 
@@ -95,23 +132,34 @@ package body Histories is
    procedure Save (Hist : in out History_Record; File_Name : String) is
       File, Key, N : Node_Ptr;
       Iter : Iterator;
-      Value : String_List_Access;
+      Value : History_Key_Record;
    begin
       File := new Node;
       File.Tag := new String'("History");
 
       Get_First (Hist.Table, Iter);
-      while Get_Element (Iter) /= null loop
+      loop
+         Value := Get_Element (Iter);
+         exit when Value = Null_History;
+
          Key := new Node;
          Key.Tag := new String'(Get_Key (Iter));
 
-         Value := Get_Element (Iter);
-         for V in reverse Value'Range loop
+         if Value.Max_Length /= -1 then
             N := new Node;
-            N.Tag := new String'("value");
-            N.Value := new String'(Value (V).all);
+            N.Tag := new String'("Length");
+            N.Value := new String'(Integer'Image (Value.Max_Length));
             Add_Child (Key, N);
-         end loop;
+         end if;
+
+         if Value.List /= null then
+            for V in reverse Value.List'Range loop
+               N := new Node;
+               N.Tag := new String'("value");
+               N.Value := new String'(Value.List (V).all);
+               Add_Child (Key, N);
+            end loop;
+         end if;
 
          Add_Child (File, Key);
 
@@ -128,12 +176,13 @@ package body Histories is
 
    procedure Free (Hist : in out History_Record) is
       Iter : Iterator;
-      Value : String_List_Access;
+      Value : History_Key_Record;
    begin
       Get_First (Hist.Table, Iter);
-      while Get_Element (Iter) /= null loop
+      loop
          Value := Get_Element (Iter);
-         Free (Value);
+         exit when Value = Null_History;
+         Free (Value.List);
          Get_Next (Hist.Table, Iter);
       end loop;
       Reset (Hist.Table);
@@ -147,7 +196,7 @@ package body Histories is
      (Hist : History_Record; Key : History_Key)
       return GNAT.OS_Lib.String_List_Access is
    begin
-      return Get (Hist.Table, String (Key));
+      return Get (Hist.Table, String (Key)).List;
    end Get_History;
 
    -----------------
@@ -204,54 +253,69 @@ package body Histories is
    is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (String_List, String_List_Access);
-      Value : String_List_Access := Get_History (Hist, Key);
+      Value : History_Key_Record := Get (Hist.Table, String (Key));
       Tmp   : String_Access;
       Tmp2  : String_List_Access;
    begin
-      if Value /= null then
-         --  Is this item already in the table ?
-         for V in Value'Range loop
-            if Value (V).all = New_Entry then
-               Tmp := Value (V);
-               Value (Value'First + 1 .. V) :=
-                 Value (Value'First .. V - 1);
-               Value (Value'First) := Tmp;
+      if Value.List /= null then
+         --  Is this item already in the table ? We do not need to check, if
+         --  duplicates are allowed.
 
-               Set (Hist.Table, String (Key), Value);
-               return;
-            end if;
-         end loop;
+         if not Value.Allow_Duplicates then
+            for V in Value.List'Range loop
+               if Value.List (V).all = New_Entry then
+                  Tmp := Value.List (V);
+                  Value.List (Value.List'First + 1 .. V) :=
+                    Value.List (Value.List'First .. V - 1);
+                  Value.List (Value.List'First) := Tmp;
+
+                  Set (Hist.Table, String (Key), Value);
+                  return;
+               end if;
+            end loop;
+
+         elsif Value.Merge_First
+           and then Value.List (Value.List'First).all = New_Entry
+         then
+            return;
+         end if;
 
          --  Do we already have enough elements in the table
 
-         if Value'Length = Hist.Max_Length then
-            Free (Value (Value'Last));
-            Value (Value'First + 1 .. Value'Last) :=
-              Value (Value'First .. Value'Last - 1);
-            Value (Value'First) := new String'(New_Entry);
+         if (Value.Max_Length /= -1
+             and then Value.List'Length >= Value.Max_Length)
+           or else
+           (Value.Max_Length = -1
+            and then Value.List'Length >= Hist.Max_Length)
+         then
+            Free (Value.List (Value.List'Last));
+            Value.List (Value.List'First + 1 .. Value.List'Last) :=
+              Value.List (Value.List'First .. Value.List'Last - 1);
+            Value.List (Value.List'First) := new String'(New_Entry);
 
             Set (Hist.Table, String (Key), Value);
             return;
          end if;
 
          --  Insert the element in the table
-         Tmp2 := new String_List (1 .. Value'Length + 1);
-         Tmp2 (2 .. Tmp2'Last) := Value.all;
-         Unchecked_Free (Value);
+         Tmp2 := new String_List (1 .. Value.List'Length + 1);
+         Tmp2 (2 .. Tmp2'Last) := Value.List.all;
+         Unchecked_Free (Value.List);
 
       else
          Tmp2 := new String_List (1 .. 1);
       end if;
 
       Tmp2 (Tmp2'First) := new String'(New_Entry);
-      Set (Hist.Table, String (Key), Tmp2);
+      Value.List := Tmp2;
+      Set (Hist.Table, String (Key), Value);
    end Add_To_History;
 
    -------------
    -- No_Free --
    -------------
 
-   procedure No_Free (A : in out GNAT.OS_Lib.String_List_Access) is
+   procedure No_Free (A : in out History_Key_Record) is
       pragma Unreferenced (A);
    begin
       null;

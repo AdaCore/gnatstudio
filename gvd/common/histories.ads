@@ -20,7 +20,7 @@
 
 --  This package provides high-level histories management. It should be used
 --  for all combo boxes and the reopen menus, so that when GPS is started again
---  we an restore the histories.
+--  we can restore the histories.
 
 with GNAT.OS_Lib;
 with Gtk.Combo;
@@ -33,8 +33,28 @@ package Histories is
 
    type History_Key is new String;
 
-   procedure Set_Max_Length (Hist : in out History_Record; Num : Positive);
+   procedure Set_Max_Length
+     (Hist : in out History_Record; Num : Positive; Key : History_Key := "");
    --  Set the maximal number of entries stored in each key of Hist.
+   --  If Key is the empty string, then this becomes the default maximum
+   --  length, used unless a key-specific one is specified later on.
+
+   procedure Allow_Duplicates
+     (Hist        : in out History_Record;
+      Key         : History_Key;
+      Allow       : Boolean;
+      Merge_First : Boolean := False);
+   --  Indicates whether Key allows duplicates. If it doesn, adding an entry
+   --  that already exists to the history will simply move it to the first
+   --  position. If Allow is True, a copy is inserted at the first position,
+   --  but other similar entries are not removed.
+   --  If Merge_First is True, however, duplicates will not be inserted if the
+   --  new entry is already the first one in the history. Merge_First is
+   --  irrelevant if Allow is False.
+   --  Note: changing this setting dynamically will not remove existing
+   --  duplicates in Key.
+   --  The default is not to allow duplicates (more convenient for combo
+   --  boxes).
 
    procedure Load (Hist : out History_Record; File_Name : String);
    --  Load Hist from file File_Name
@@ -74,13 +94,25 @@ package Histories is
 
 private
 
-   procedure No_Free (A : in out GNAT.OS_Lib.String_List_Access);
+   type History_Key_Record is record
+      List : GNAT.OS_Lib.String_List_Access;
+      Max_Length : Integer := -1;
+      --  -1 means unspecified, use the default one for the whole
+      --  History_Record
+
+      Allow_Duplicates : Boolean := False;
+      Merge_First      : Boolean := True;
+   end record;
+
+   procedure No_Free (A : in out History_Key_Record);
    --  Does nothing
 
+   Null_History : constant History_Key_Record := (null, -1, False, False);
+
    package History_Hash is new String_Hash
-     (Data_Type    => GNAT.OS_Lib.String_List_Access,
+     (Data_Type    => History_Key_Record,
       Free_Data    => No_Free,
-      Null_Ptr     => null);
+      Null_Ptr     => Null_History);
 
    type History_Record is record
       Max_Length : Positive := Positive'Last;
