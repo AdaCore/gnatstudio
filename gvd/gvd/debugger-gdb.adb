@@ -41,6 +41,7 @@ with Debugger.Gdb.Ada;  use Debugger.Gdb.Ada;
 with Debugger.Gdb.C;    use Debugger.Gdb.C;
 with Debugger.Gdb.Cpp;  use Debugger.Gdb.Cpp;
 with Process_Proxies;   use Process_Proxies;
+with GVD.Preferences;   use GVD.Preferences;
 with GVD.Process;       use GVD.Process;
 with GVD.Strings;       use GVD.Strings;
 with GVD.Dialogs;       use GVD.Dialogs;
@@ -698,6 +699,7 @@ package body Debugger.Gdb is
       Executable : String;
       Mode       : Invisible_Command := Hidden)
    is
+      Num                 : Breakpoint_Identifier;
       No_Such_File_Regexp : Pattern_Matcher :=
         Compile ("No such file or directory.");
       --  Note that this pattern should work even when LANG isn't english
@@ -736,6 +738,10 @@ package body Debugger.Gdb is
 
       Send (Debugger, "show lang", Mode => Internal);
       Send (Debugger, "list", Mode => Internal);
+
+      if Get_Pref (Break_On_Exception) then
+         Num := Break_Exception (Debugger);
+      end if;
 
       Set_Parse_File_Name (Get_Process (Debugger), False);
 
@@ -1164,12 +1170,19 @@ package body Debugger.Gdb is
    function Get_Last_Breakpoint_Id
      (Debugger : access Gdb_Debugger'Class) return Breakpoint_Identifier
    is
-      S     : constant String :=
+      S            : constant String :=
         Send (Debugger, "print $bpnum", Mode => Internal);
-      Index : Integer := S'First;
-
+      Index        : Integer := S'First;
+      Error_String : constant String := "void";
    begin
+      Skip_To_String (S, Index, Error_String);
+      if Index <= S'Last - Error_String'Length + 1 then
+         return Breakpoint_Identifier (0);
+      end if;
+
+      Index := S'First;
       Skip_To_Char (S, Index, '=');
+
       return Breakpoint_Identifier'Value (S (Index + 1 .. S'Last));
    end Get_Last_Breakpoint_Id;
 
