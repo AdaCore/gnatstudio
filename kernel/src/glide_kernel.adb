@@ -52,6 +52,8 @@ with Gtk.Tooltips;                use Gtk.Tooltips;
 with Gtkada.Handlers;             use Gtkada.Handlers;
 with Gtkada.MDI;                  use Gtkada.MDI;
 with System;                      use System;
+with Prj.Attr;                    use Prj.Attr;
+with Namet;                       use Namet;
 
 with File_Utils;                  use File_Utils;
 with Glide_Intl;                  use Glide_Intl;
@@ -2006,8 +2008,31 @@ package body Glide_Kernel is
    procedure Register_Tool
      (Kernel    : access Kernel_Handle_Record;
       Tool_Name : String;
-      Tool      : Tool_Properties_Record) is
+      Tool      : Tool_Properties_Record)
+   is
+      Pkg : Package_Node_Id;
    begin
+      Name_Len := Tool.Project_Package'Length;
+      Name_Buffer (1 .. Name_Len) := Tool.Project_Package.all;
+      Pkg := Package_Node_Id_Of (Name_Find);
+      if Pkg = Empty_Package then
+         Register_New_Package (Tool.Project_Package.all, Pkg);
+      end if;
+
+      if Tool.Project_Index.all = "" then
+         Register_New_Attribute
+           (Name       => Tool.Project_Attribute.all,
+            In_Package => Pkg,
+            Attr_Kind  => Prj.Attr.Single,
+            Var_Kind   => Prj.List);
+      else
+         Register_New_Attribute
+           (Name       => Tool.Project_Attribute.all,
+            In_Package => Pkg,
+            Attr_Kind  => Prj.Attr.Associative_Array,
+            Var_Kind   => Prj.List);
+      end if;
+
       Tools_Htable.String_Hash_Table.Set (Kernel.Tools, Tool_Name, Tool);
    end Register_Tool;
 
