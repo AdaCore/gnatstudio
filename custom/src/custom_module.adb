@@ -21,6 +21,7 @@
 with Glib;                      use Glib;
 with Glib.Convert;              use Glib.Convert;
 with Glib.Xml_Int;              use Glib.Xml_Int;
+with Gdk.Types;                 use Gdk.Types;
 with Gtk.Enums;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Image;                 use Gtk.Image;
@@ -38,6 +39,7 @@ with Glide_Kernel.Console;      use Glide_Kernel.Console;
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Kernel.Scripts;      use Glide_Kernel.Scripts;
 with Glide_Intl;                use Glide_Intl;
+with GUI_Utils;                 use GUI_Utils;
 
 with Language;                  use Language;
 with Language.Custom;           use Language.Custom;
@@ -47,6 +49,7 @@ with Src_Info.Dummy;            use Src_Info.Dummy;
 
 with Traces;                    use Traces;
 with Commands;                  use Commands;
+with Commands.Interactive;      use Commands.Interactive;
 with Commands.Custom;           use Commands.Custom;
 
 
@@ -79,23 +82,269 @@ package body Custom_Module is
       --  Add a menuitem or submenu to the Parent_Path, according to
       --  what Current_Node contains.
 
+      procedure Parse_Action_Node (Node : Node_Ptr);
+      function Parse_Shell_Node
+        (Node : Node_Ptr) return Custom_Command_Access;
+      function Parse_External_Node
+        (Node : Node_Ptr) return Custom_Command_Access;
+      procedure Parse_Key_Node (Node : Node_Ptr);
+      procedure Parse_Button_Node (Node : Node_Ptr);
+      procedure Parse_Menu_Node (Node : Node_Ptr; Parent_Path : String);
+      --  Parse the various nodes: <action>, <shell>, ...
+
       procedure Parse_Custom_Dir (Directory : String);
       --  Parse all custom files located in Directory
 
-      procedure Add_Child
-        (Parent_Path  : String;
-         Current_Node : Node_Ptr)
-      is
-         Current_Child : Node_Ptr;
-         Current_Child_Child : Node_Ptr;
-         Command        : Command_Access := null;
-         Current_Title  : String_Access;
-         Current_Pixmap : String_Access;
-         Item           : Gtk_Menu_Item;
-         Image          : Gtk_Image;
-         Menuitem       : Boolean := False;
-         Lang           : Custom_Language_Access;
+      ----------------------
+      -- Parse_Shell_Node --
+      ----------------------
 
+      function Parse_Shell_Node
+        (Node : Node_Ptr) return Custom_Command_Access
+      is
+         Lang    : constant String := Get_Attribute (Node, "lang");
+         Script  : Scripting_Language;
+         Command : Custom_Command_Access;
+      begin
+         if Lang = "" then
+            Script := Lookup_Scripting_Language (Kernel, GPS_Shell_Name);
+         else
+            Script := Lookup_Scripting_Language (Kernel, Lang);
+         end if;
+
+         if Script = null then
+            Insert (Kernel,
+                    -"Invalid language specified for <shell> node: " & Lang,
+                    Mode => Error);
+            raise Assert_Failure;
+         end if;
+
+         Create (Command, Kernel_Handle (Kernel), Node.Value.all, Script);
+         return Command;
+      end Parse_Shell_Node;
+
+      -------------------------
+      -- Parse_External_Node --
+      -------------------------
+
+      function Parse_External_Node
+        (Node : Node_Ptr) return Custom_Command_Access
+      is
+         Command : Custom_Command_Access;
+      begin
+         Create (Command, Kernel_Handle (Kernel), Node.Value.all, null);
+         return Command;
+      end Parse_External_Node;
+
+      -----------------------
+      -- Parse_Action_Node --
+      -----------------------
+
+      procedure Parse_Action_Node (Node : Node_Ptr) is
+         Name    : constant String := Get_Attribute (Node, "name");
+         Child   : Node_Ptr;
+         Command, C : Custom_Command_Access;
+         Description : String_Access := new String'("");
+      begin
+         if Name = "" then
+            Insert
+              (Kernel,
+               -("<action> tags in customization files must have"
+                 & " a name attribute"),
+               Mode => Error);
+            raise Assert_Failure;  --  So that the name of the file is shown
+         end if;
+
+         Child := Node.Child;
+         while Child /= null loop
+            if To_Lower (Child.Tag.all) = "shell" then
+               C := Parse_Shell_Node (Child);
+            elsif To_Lower (Child.Tag.all) = "external" then
+               C := Parse_External_Node (Child);
+            elsif To_Lower (Child.Tag.all) = "description" then
+               Free (Description);
+               Description := new String'(Child.Value.all);
+            else
+               if Command /= null then
+                  Destroy (Command_Access (Command));
+               end if;
+
+               Insert
+                 (Kernel,
+                  -"Invalid child node for <action> tag",
+                  Mode => Error);
+               raise Assert_Failure;
+            end if;
+
+            if Command = null then
+               Command := C;
+            else
+               Add_Consequence_Action (Command, C);
+            end if;
+
+            Child := Child.Next;
+         end loop;
+
+         Register_Action
+           (Kernel,
+            Name        => Name,
+            Command     => Command,
+            Description => Description.all);
+         Free (Description);
+      end Parse_Action_Node;
+
+      --------------------
+      -- Parse_Key_Node --
+      --------------------
+
+      procedure Parse_Key_Node (Node : Node_Ptr) is
+         Action : constant String := Get_Attribute (Node, "action");
+         Child  : Node_Ptr;
+         Key    : Gdk_Key_Type;
+         Modif  : Gdk_Modifier_Type;
+      begin
+         if Action = "" then
+            Insert (Kernel, -"<key> nodes must have an action attribute",
+                    Mode => Error);
+            raise Assert_Failure;
+         end if;
+
+         Child := Node.Child;
+         while Child /= null loop
+            if To_Lower (Child.Tag.all) = "shortcut" then
+               Value (Child.Value.all, Key, Modif);
+            else
+               Insert
+                 (Kernel, -"Invalid child node for <key> tag", Mode => Error);
+               raise Assert_Failure;
+            end if;
+
+            Child := Child.Next;
+         end loop;
+
+         Bind_Default_Key
+           (Get_Key_Handler (Kernel),
+            Action      => Action,
+            Default_Key => Key,
+            Default_Mod => Modif,
+            Context     => null);
+      end Parse_Key_Node;
+
+      -----------------------
+      -- Parse_Button_Node --
+      -----------------------
+
+      procedure Parse_Button_Node (Node : Node_Ptr) is
+         Action : constant String := Get_Attribute (Node, "action");
+         Child  : Node_Ptr;
+         Title  : String_Access := new String'("");
+         Pixmap : String_Access := new String'("");
+         Image  : Gtk_Image;
+         Command : Interactive_Command_Access;
+      begin
+         if Action = "" then
+            Insert (Kernel, -"<button> nodes must have an action attribute",
+                    Mode => Error);
+            raise Assert_Failure;
+         end if;
+
+         Child := Node.Child;
+         while Child /= null loop
+            if To_Lower (Child.Tag.all) = "title" then
+               Free (Title);
+               Title := new String'(Child.Value.all);
+            elsif To_Lower (Child.Tag.all) = "pixmap" then
+               Free (Pixmap);
+               Pixmap := new String'(Child.Value.all);
+            else
+               Insert
+                 (Kernel, -"Invalid child node for <button> tag",
+                  Mode => Error);
+               raise Assert_Failure;
+            end if;
+
+            Child := Child.Next;
+         end loop;
+
+         if Title.all = "" then
+            if Pixmap.all /= ""
+              and then Is_Regular_File (Pixmap.all)
+            then
+               Gtk_New (Image, Pixmap.all);
+            end if;
+
+            Command := Lookup_Action (Kernel, Action);
+            if Command /= null then
+               Register_Button
+                 (Kernel,
+                  Locale_To_UTF8 (Title.all),
+                  Command_Access (Command),
+                  Image);
+            end if;
+         else
+            Append_Space (Get_Toolbar (Kernel));
+         end if;
+         Free (Title);
+         Free (Pixmap);
+      end Parse_Button_Node;
+
+      ---------------------
+      -- Parse_Menu_Node --
+      ---------------------
+
+      procedure Parse_Menu_Node (Node : Node_Ptr; Parent_Path : String) is
+         Action : constant String := Get_Attribute (Node, "action");
+         Child  : Node_Ptr;
+         Title  : String_Access := new String'("");
+         Item   : Gtk_Menu_Item;
+         Command : Interactive_Command_Access;
+      begin
+         if Action = "" then
+            Insert (Kernel, -"<menu> nodes must have an action attribute",
+                    Mode => Error);
+            raise Assert_Failure;
+         end if;
+
+         Child := Node.Child;
+         while Child /= null loop
+            if To_Lower (Child.Tag.all) = "title" then
+               Free (Title);
+               Title := new String'(Child.Value.all);
+            else
+               Insert
+                 (Kernel, -"Invalid child node for <menu> tag", Mode => Error);
+               raise Assert_Failure;
+            end if;
+
+            Child := Child.Next;
+         end loop;
+
+         if Title.all = "" then
+            Gtk_New (Item);
+            Register_Menu (Kernel, Locale_To_UTF8 (Parent_Path), Item);
+         else
+            Command := Lookup_Action (Kernel, Action);
+            if Command /= null then
+               Register_Menu
+                 (Kernel,
+                  Locale_To_UTF8 (Parent_Path),
+                  Locale_To_UTF8 (Title.all),
+                  "",
+                  null,
+                  Command_Access (Command));
+            end if;
+         end if;
+         Free (Title);
+      end Parse_Menu_Node;
+
+      ---------------
+      -- Add_Child --
+      ---------------
+
+      procedure Add_Child (Parent_Path : String; Current_Node : Node_Ptr) is
+         Child : Node_Ptr;
+         Lang  : Custom_Language_Access;
+         Title : String_Access;
       begin
          if Current_Node = null
            or else Current_Node.Tag = null
@@ -115,135 +364,48 @@ package body Custom_Module is
                Default_Body_Suffix => Get_Body_Suffix (Lang));
 
          elsif To_Lower (Current_Node.Tag.all) = "submenu" then
-            Current_Child := Current_Node.Child;
-
-            if To_Lower (Current_Child.Tag.all) = "title" then
-               Current_Title := new String'
-                 (Parent_Path & "/" & Current_Child.Value.all);
-
-               Current_Child_Child := Current_Child.Next;
-
-               while Current_Child_Child /= null loop
-                  Add_Child (Current_Title.all, Current_Child_Child);
-                  Current_Child_Child := Current_Child_Child.Next;
-               end loop;
-            end if;
-
-         elsif To_Lower (Current_Node.Tag.all) = "menu_item"
-           or else To_Lower (Current_Node.Tag.all) = "toolbar_item"
-         then
-            if To_Lower (Current_Node.Tag.all) = "menu_item" then
-               Menuitem := True;
-            end if;
-
-            Current_Child := Current_Node.Child;
-
-            while Current_Child /= null loop
-               if To_Lower (Current_Child.Tag.all) = "title" then
-                  if Current_Title /= null then
-                     Free (Current_Title);
-                  end if;
-
-                  Current_Title := new String'(Current_Child.Value.all);
-               end if;
-
-               if To_Lower (Current_Child.Tag.all) = "pixmap" then
-                  if Current_Pixmap /= null then
-                     Free (Current_Pixmap);
-                  end if;
-
-                  Current_Pixmap := new String'(Current_Child.Value.all);
-               end if;
-
-               if To_Lower (Current_Child.Tag.all) = "action"
-                 or else To_Lower (Current_Child.Tag.all) = "gps_action"
+            Child := Current_Node.Child;
+            Title := new String'("");
+            while Child /= null loop
+               if To_Lower (Child.Tag.all) = "title" then
+                  Free (Title);
+                  Title := new String'(Child.Value.all);
+               elsif To_Lower (Child.Tag.all) = "submenu" then
+                  Add_Child (Parent_Path & '/' & Title.all, Child);
+               elsif To_Lower (Child.Tag.all) = "menu" then
+                  Parse_Menu_Node (Child, Parent_Path & '/' & Title.all);
+               elsif To_Lower (Child.Tag.all) = "menu_item"
+                 or else To_Lower (Child.Tag.all) = "toolbar_item"
                then
-                  declare
-                     C : Custom_Command_Access;
-                     Script : Scripting_Language;
-                  begin
-                     if To_Lower (Current_Child.Tag.all) = "gps_action" then
-                        declare
-                           Lang : constant String := Get_Attribute
-                             (Current_Child, "lang");
-                        begin
-                           if Lang = "" then
-                              Script := Lookup_Scripting_Language
-                                (Kernel, GPS_Shell_Name);
-                           else
-                              Script := Lookup_Scripting_Language
-                                (Kernel, Lang);
-                           end if;
-
-                           if Script = null then
-                              if Current_Title /= null then
-                                 Insert
-                                   (Kernel,
-                                    -"Language not found in custom file: "
-                                    & Lang
-                                    & (-" for the menu ") & Current_Title.all,
-                                    Mode => Error);
-                              else
-                                 Insert
-                                   (Kernel,
-                                    -"Language not found in custom file: "
-                                    & Lang, Mode => Error);
-                              end if;
-                           end if;
-                        end;
-                     end if;
-
-                     --  ??? This command is never freed anywhere
-                     Create
-                       (C,
-                        Kernel_Handle (Kernel),
-                        Current_Child.Value.all,
-                        Script);
-
-                     if Command = null then
-                        Command := Command_Access (C);
-                     else
-                        Add_Consequence_Action (Command, Command_Access (C));
-                     end if;
-                  end;
+                  Insert
+                    (Kernel,
+                     -("<menu_item> and <toolbar_item> are no longer"
+                       & " supported. Please use the program"
+                       & " gps_convert_custom to convert to the new format."),
+                     Mode => Error);
+                  raise Assert_Failure;
+               else
+                  Insert (Kernel,
+                            -"Invalid child node for <submenu>: "
+                          & Child.Tag.all,
+                          Mode => Error);
+                  raise Assert_Failure;
                end if;
 
-               Current_Child := Current_Child.Next;
+               Child := Child.Next;
             end loop;
 
-            if Current_Title /= null and then Current_Title.all /= "" then
-               if Menuitem then
-                  Register_Menu
-                    (Kernel,
-                     Locale_To_UTF8 (Parent_Path),
-                     Locale_To_UTF8 (Current_Title.all),
-                     "",
-                     null,
-                     Command);
-               else
-                  if Current_Pixmap /= null
-                    and then Is_Regular_File (Current_Pixmap.all)
-                  then
-                     Gtk_New (Image, Current_Pixmap.all);
-                  end if;
+            Free (Title);
 
-                  Register_Button
-                    (Kernel,
-                     Locale_To_UTF8 (Current_Title.all),
-                     Command,
-                     Image);
-               end if;
+         elsif To_Lower (Current_Node.Tag.all) = "action" then
+            Parse_Action_Node (Current_Node);
 
-            elsif Menuitem then
-               Gtk_New (Item);
-               Register_Menu (Kernel, Locale_To_UTF8 (Parent_Path), Item);
-            else
-               Append_Space (Get_Toolbar (Kernel));
-            end if;
+         elsif To_Lower (Current_Node.Tag.all) = "key" then
+            Parse_Key_Node (Current_Node);
+
+         elsif To_Lower (Current_Node.Tag.all) = "button" then
+            Parse_Button_Node (Current_Node);
          end if;
-
-         Free (Current_Title);
-         Free (Current_Pixmap);
       end Add_Child;
 
       ----------------------
@@ -317,8 +479,10 @@ package body Custom_Module is
          end if;
       end if;
 
-      Parse_Custom_Dir (Local_Custom);
+      --  Load the system custom directory first, so that its contents can
+      --  be overriden locally by the user
       Parse_Custom_Dir (Sys_Custom);
+      Parse_Custom_Dir (Local_Custom);
 
       if Custom_Parsed then
          Register_Module

@@ -69,21 +69,19 @@ package body Commands.Custom is
    -------------
 
    function Execute
-     (Command : access Custom_Command) return Command_Return_Type
+     (Command : access Custom_Command;
+      Event   : Gdk.Event.Gdk_Event) return Command_Return_Type
    is
+      pragma Unreferenced (Event);
       Context  : constant Selection_Context_Access :=
         Get_Current_Context (Command.Kernel);
-      Success  : Boolean := False;
+      Success  : Boolean := True;
       No_Args  : String_List (1 .. 0);
       New_Args : Argument_List_Access;
       Last     : Integer;
       Index    : Integer;
 
       Recurse  : Boolean;
-
-      function Command_To_String
-        (Command : String; Args : String_List) return String;
-      --  Transform a command and its arguments into a string.
 
       function Substitution (Param : String) return String;
       --  Substitution function for the various '%...' parameters
@@ -119,37 +117,6 @@ package body Commands.Custom is
          end if;
       end Project_From_Param;
 
-      -----------------------
-      -- Command_To_String --
-      -----------------------
-
-      function Command_To_String
-        (Command : String; Args : String_List) return String
-      is
-         Length : Integer;
-      begin
-         Length := Command'Length;
-
-         for J in Args'Range loop
-            Length := Length + Args (J)'Length + 1;
-         end loop;
-
-         declare
-            Result : String (1 .. Length);
-            Index : Integer := 1;
-         begin
-            Result (Index .. Index + Command'Length - 1) := Command;
-            Index := Index + Command'Length;
-
-            for J in Args'Range loop
-               Result (Index .. Index + Args (J)'Length) := " " & Args (J).all;
-               Index := Index + Args (J)'Length + 1;
-            end loop;
-
-            return Result;
-         end;
-      end Command_To_String;
-
       ------------------
       -- Substitution --
       ------------------
@@ -178,6 +145,7 @@ package body Commands.Custom is
                Insert (Command.Kernel,
                        -"Command not executed: it requires a file",
                        Mode => Error);
+               Success := False;
                raise Invalid_Substitution;
             end if;
 
@@ -193,6 +161,7 @@ package body Commands.Custom is
                Insert (Command.Kernel,
                        -"Command not executed: it requires a directory",
                        Mode => Error);
+               Success := False;
                raise Invalid_Substitution;
             end if;
 
@@ -229,6 +198,7 @@ package body Commands.Custom is
                   Insert (Command.Kernel,
                           -"Command not executed: it requires a project",
                           Mode => Error);
+                  Success := False;
                   raise Invalid_Substitution;
                end if;
 
@@ -257,11 +227,7 @@ package body Commands.Custom is
                end if;
             end if;
          end if;
-
-         Insert (Command.Kernel,
-                 -"Unknown substitution parameter: " & Param,
-                 Mode => Error);
-         raise Invalid_Substitution;
+         return Param;
       end Substitution;
 
       Args : String_List_Access :=
@@ -321,10 +287,14 @@ package body Commands.Custom is
 
          --  Arguments have been substituted, launch the command.
 
-         if Command.Script /= null then
+         if not Success then
+            null;
+
+         elsif Command.Script /= null then
             Execute_Command
               (Command.Script,
-               Command_To_String (Args (Args'First).all, New_Args.all),
+               Args (Args'First).all & ' '
+               & Argument_List_To_String (New_Args.all),
                Display_In_Console => True);
             Success := True;
          else

@@ -58,14 +58,16 @@
 --
 --      %l, %c -> the current line and column in the current file.
 
+with Gdk.Event;
 with Glide_Kernel;         use Glide_Kernel;
 with GNAT.OS_Lib;          use GNAT.OS_Lib;
 with Glide_Kernel.Scripts; use Glide_Kernel.Scripts;
+with Commands.Interactive; use Commands.Interactive;
 
 package Commands.Custom is
 
-   type Custom_Command is new Root_Command with private;
-   type Custom_Command_Access is access all Custom_Command;
+   type Custom_Command is new Interactive_Command with private;
+   type Custom_Command_Access is access all Custom_Command'Class;
 
    procedure Create
      (Item         : out Custom_Command_Access;
@@ -81,7 +83,8 @@ package Commands.Custom is
    --  Free memory associated with X.
 
    function Execute
-     (Command : access Custom_Command) return Command_Return_Type;
+     (Command : access Custom_Command;
+      Event   : Gdk.Event.Gdk_Event) return Command_Return_Type;
    --  Execute Command, and return Success if the command could be launched
    --  successfully.
    --  Context-related arguments (like "%f", "%p" and so on) are converted
@@ -91,7 +94,7 @@ package Commands.Custom is
 
 private
 
-   type Custom_Command is new Root_Command with record
+   type Custom_Command is new Interactive_Command with record
       Kernel      : Kernel_Handle;
       Command     : String_Access;
       Script      : Glide_Kernel.Scripts.Scripting_Language;
