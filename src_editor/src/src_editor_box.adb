@@ -213,7 +213,7 @@ package body Src_Editor_Box is
    is
       Path : constant String :=
         Find_Source_File
-          (Kernel, Source_Filename.all, Use_Source_Path => True);
+          (Kernel, Source_Filename.all, Use_Predefined_Source_Path => True);
    begin
       if Path /= "" then
          Free (Source_Filename);
