@@ -23,7 +23,8 @@ with Unchecked_Deallocation;
 
 package Odd.Types is
 
-   type Chars_Ptr_Array_Access is access all Gtkada.Types.Chars_Ptr_Array;
+   subtype Pixmap_Array is Gtkada.Types.Chars_Ptr_Array (0 .. 0);
+   type Pixmap_Access is access all Pixmap_Array;
 
    type String_Access is access all String;
    procedure Free is new Unchecked_Deallocation (String, String_Access);
