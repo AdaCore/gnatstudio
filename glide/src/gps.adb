@@ -990,6 +990,7 @@ procedure GPS is
       VFS_Module.Register_Module (GPS.Kernel);
       Codefix_Module.Register_Module (GPS.Kernel);
       Glide_Kernel.Task_Manager.Register_Module (GPS.Kernel);
+      Glide_Kernel.Preferences.Register_Module (GPS.Kernel);
       Custom_Module.Register_Module (GPS.Kernel);
       Glide_Result_View.Register_Module (GPS.Kernel);
 
