@@ -268,10 +268,10 @@ package body Debugger.Gdb is
       Display         : Boolean := False;
       Empty_Buffer    : Boolean := True;
       Wait_For_Prompt : Boolean := True;
-      Is_Internal     : Boolean := False) return String is
+      Mode            : Command_Type := Hidden) return String is
    begin
       Send
-        (Debugger, Cmd, Display, Empty_Buffer, Wait_For_Prompt, Is_Internal);
+        (Debugger, Cmd, Display, Empty_Buffer, Wait_For_Prompt, Mode => Mode);
 
       if Wait_For_Prompt then
          declare
@@ -295,7 +295,7 @@ package body Debugger.Gdb is
    function Type_Of
      (Debugger : access Gdb_Debugger; Entity : String) return String
    is
-      S : String := Send (Debugger, "ptype " & Entity);
+      S : String := Send (Debugger, "ptype " & Entity, Mode => Internal);
    begin
       if S'Length > 6
         and then S (S'First .. S'First + 5) = "type ="
@@ -342,7 +342,8 @@ package body Debugger.Gdb is
       Entity   : String;
       Format   : Value_Format := Decimal) return String
    is
-      S     : constant String := Send (Debugger, "print " & Entity);
+      S     : constant String := Send (Debugger, "print " & Entity,
+                                       Mode => Internal);
       Index : Natural := S'First;
 
    begin
@@ -369,7 +370,7 @@ package body Debugger.Gdb is
    is
       --  ??? Probably, this should be language-dependent.
       S       : String :=
-        Send (Debugger, "print &(" & Entity & ")", Is_Internal => True);
+        Send (Debugger, "print &(" & Entity & ")", Mode => Internal);
       Matched : Match_Array (0 .. 1);
 
    begin
@@ -500,10 +501,10 @@ package body Debugger.Gdb is
       Push_Internal_Command_Status (Get_Process (Debugger), True);
 
       --  Make sure that the prompt is what we are expecting.
-      Send (Debugger, "set prompt (gdb) ");
-      Send (Debugger, "set width 0");
-      Send (Debugger, "set height 0");
-      Send (Debugger, "set annotate 1");
+      Send (Debugger, "set prompt (gdb) ", Mode => Internal);
+      Send (Debugger, "set width 0", Mode => Internal);
+      Send (Debugger, "set height 0", Mode => Internal);
+      Send (Debugger, "set annotate 1", Mode => Internal);
 
       --  Connect to the remote target if needed.
 
@@ -532,15 +533,15 @@ package body Debugger.Gdb is
          --  Detect the current language. Note that most of the work is done
          --  in fact directly by Language_Filter.
 
-         Send (Debugger, "show lang");
+         Send (Debugger, "show lang", Mode => Internal);
 
          --  Get the initial file name, so that we can display the appropriate
          --  file in the code editor.
          --  This should be done only after we have detected the current
          --  language, or no color highlighting will be provided.
 
-         Send (Debugger, "list");
-         Send (Debugger, "info line");
+         Send (Debugger, "list", Mode => Internal);
+         Send (Debugger, "info line", Mode => Internal);
 
          --  Make sure everything is hidden
          Pop_Internal_Command_Status (Get_Process (Debugger));
@@ -555,7 +556,7 @@ package body Debugger.Gdb is
    procedure Close (Debugger : access Gdb_Debugger) is
       Result : Expect_Match;
    begin
-      Send (Debugger, "quit", Wait_For_Prompt => False);
+      Send (Debugger, "quit", Wait_For_Prompt => False, Mode => Internal);
 
       --  Ensure that gdb is terminated before closing the pipes and trying to
       --  kill it abruptly.
@@ -583,9 +584,9 @@ package body Debugger.Gdb is
       Set_Is_Started (Debugger, False);
 
       if Debugger.Remote_Target then
-         Send (Debugger, "load " & Executable);
+         Send (Debugger, "load " & Executable, Mode => Internal);
       else
-         Send (Debugger, "file " & Executable);
+         Send (Debugger, "file " & Executable, Mode => Internal);
       end if;
 
       --  Report a change in the executable. This has to be done before we
@@ -599,9 +600,9 @@ package body Debugger.Gdb is
       --  Detect the current language, and get the name and line of the
       --  initial file.
       Push_Internal_Command_Status (Get_Process (Debugger), True);
-      Send (Debugger, "show lang");
-      Send (Debugger, "list");
-      Send (Debugger, "info line");
+      Send (Debugger, "show lang", Mode => Internal);
+      Send (Debugger, "list", Mode => Internal);
+      Send (Debugger, "info line", Mode => Internal);
       Pop_Internal_Command_Status (Get_Process (Debugger));
    end Set_Executable;
 
@@ -1001,7 +1002,8 @@ package body Debugger.Gdb is
       Send (Debugger, "info line "
             & Base_File_Name (File)
             & ':' &
-            Line_String (Line_String'First + 1 .. Line_String'Last));
+            Line_String (Line_String'First + 1 .. Line_String'Last),
+            Mode => Internal);
 
       if Index
         (Expect_Out (Get_Process (Debugger)), "starts at address") /= 0
@@ -1099,7 +1101,7 @@ package body Debugger.Gdb is
      (Debugger : access Gdb_Debugger) return Odd.Types.String_Array
    is
       S         : constant String :=
-        Send (Debugger, "info sources", Is_Internal => True);
+        Send (Debugger, "info sources", Mode => Internal);
       Num_Files : Natural := 0;
 
    begin
@@ -1457,7 +1459,7 @@ package body Debugger.Gdb is
    is
       Num_Breakpoints : Natural := 0;
       S : constant String :=
-        Send (Debugger, "info breakpoints", Is_Internal => True);
+        Send (Debugger, "info breakpoints", Mode => Internal);
       Index : Natural := S'First;
       Tmp   : Natural;
    begin
@@ -1625,7 +1627,7 @@ package body Debugger.Gdb is
       --  be closer to what the user would expect.
 
       Set_Parse_File_Name (Get_Process (Debugger), False);
-      Send (Debugger, "frame", Is_Internal => True);
+      Send (Debugger, "frame", Mode => Internal);
       Parse_Backtrace_Info (Expect_Out (Get_Process (Debugger)), Bt, Len);
       Set_Parse_File_Name (Get_Process (Debugger), True);
 
@@ -1650,7 +1652,7 @@ package body Debugger.Gdb is
      return Odd.Types.Exception_Array
    is
    begin
-      Send (Debugger, "info exceptions", Is_Internal => True);
+      Send (Debugger, "info exceptions", Mode => Internal);
 
       declare
          S     : String := Expect_Out (Get_Process (Debugger));
@@ -1704,7 +1706,7 @@ package body Debugger.Gdb is
       Entity    : String;
       Default   : String) return String
    is
-      S : String := Send (Debugger, "whatis " & Entity);
+      S : String := Send (Debugger, "whatis " & Entity, Mode => Internal);
    begin
       if S'Length > 6
         and then S (S'First .. S'First + 5) = "type ="
@@ -1735,7 +1737,7 @@ package body Debugger.Gdb is
       declare
          Str : constant String :=
            Send (Debugger, "info line " & File_Name & ":1",
-                 Is_Internal => True);
+                 Mode => Internal);
       begin
          Set_Parse_File_Name (Get_Process (Debugger), True);
          Found_File_Name
@@ -1770,7 +1772,7 @@ package body Debugger.Gdb is
       Code := new String'
         (Send
          (Debugger, "disassemble " & Start_Address & " " & End_Address,
-          Is_Internal => True));
+          Mode => Internal));
 
       if Start_Address /= "" then
          Range_Start_Len := Start_Address'Length;
@@ -1832,7 +1834,7 @@ package body Debugger.Gdb is
 
       declare
          S : constant String := Send
-           (Debugger, "info line" & Natural'Image (Line), Is_Internal => True);
+           (Debugger, "info line" & Natural'Image (Line), Mode => Internal);
          Matched : Match_Array (0 .. 2);
       begin
          Match (Address_Range_Pattern, S, Matched);

@@ -761,10 +761,10 @@ package body Debugger.Jdb is
       Display         : Boolean := False;
       Empty_Buffer    : Boolean := True;
       Wait_For_Prompt : Boolean := True;
-      Is_Internal     : Boolean := False) return String is
+      Mode            : Command_Type := Hidden) return String is
    begin
       Send (Debugger, Cmd, Display, Empty_Buffer, Wait_For_Prompt,
-            Is_Internal);
+            Mode => Internal);
 
       if Wait_For_Prompt then
          declare
