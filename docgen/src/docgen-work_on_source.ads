@@ -41,6 +41,7 @@
 with GNAT.OS_Lib;
 with VFS;
 with Glide_Kernel;
+with Docgen.Work_On_File; use Docgen.Work_On_File;
 
 package Docgen.Work_On_Source is
 
@@ -63,7 +64,8 @@ package Docgen.Work_On_Source is
       Converter         : Docgen.Doc_Subprogram_Type;
       Doc_Directory     : String;
       Doc_Suffix        : String;
-      Level             : in out Natural);
+      Level             : in out Natural;
+      All_Scope_Tree    : in out Tree_Htable.String_Hash_Table.HTable);
    --  With the data from the lists, the source file and the config file,
    --  create the Strings for the output.
    --  The order of the procedure calls can't be changed here
