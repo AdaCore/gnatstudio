@@ -1241,7 +1241,7 @@ package body GVD.Process is
 
       Configure
         (Process.Data_Canvas,
-         Annotation_Height => Get_Size
+         Annotation_Font => To_String
          (Get_Pref (GVD_Prefs, Annotation_Font)));
 
       Child := Put (Process.Process_Mdi, Process.Data_Paned);
