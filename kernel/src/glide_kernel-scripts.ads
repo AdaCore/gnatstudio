@@ -100,7 +100,8 @@ package Glide_Kernel.Scripts is
    procedure Set_Nth_Arg
      (Data : Callback_Data; N : Positive; Value : Class_Instance) is abstract;
    --  Set the nth argument of Data
-
+   --  For the last case (Class_Instance), Value needs to be freed explicitely
+   --  by the user, since a copy is stored in Data.
 
    function Number_Of_Arguments
      (Data : Callback_Data) return Natural is abstract;
@@ -148,21 +149,33 @@ package Glide_Kernel.Scripts is
      (Data : Callback_Data; N : Positive) return Boolean is abstract;
    function Nth_Arg
      (Data : Callback_Data; N : Positive) return System.Address is abstract;
+   --  Get the nth argument to the function, starting from 1.
+   --  If there is not enough parameters, No_Such_Parameter is raised
+   --  If the parameters doesn't have the right type, Invalid_Parameter is
+   --  raised.
+
    function Nth_Arg
      (Data       : Callback_Data;
       N          : Positive;
       Class      : Class_Type;
       Allow_Null : Boolean := False)
       return Class_Instance is abstract;
-   --  Get the nth argument to the function, starting from 1.
-   --  If there is not enough parameters, No_Such_Parameter is raised
-   --  If the parameters doesn't have the right type, Invalid_Parameter is
-   --  raised.
-   --  In the last case, the class_instance must belong to Class or its
-   --  children, or Invalid_Parameter is also raised.
+   --  The class_instance must belong to Class or its children, or
+   --  Invalid_Parameter is also raised.
+   --  The return value must be freed by the caller.
    --  If Allow_Null is true, then a null instance might be passed as a
    --  parameter. If it is false, passing a null instance will raise
    --  Invalid_Parameter.
+
+   function Nth_Arg_Data
+     (Data       : Callback_Data;
+      N          : Positive;
+      Class      : Class_Type;
+      Allow_Null : Boolean := False) return System.Address;
+   --  Same as above, but return directly the data contained in the class
+   --  instance. This avoids the need for freeing the instance itself. This
+   --  is not the same as Nth_Arg returning a System.Address.
+   --  See also the Get_Data subprograms below, which simplify this handling
 
    function Nth_Arg
      (Data : Callback_Data; N : Positive; Default : String)
@@ -183,6 +196,12 @@ package Glide_Kernel.Scripts is
       Default : Class_Instance;
       Allow_Null : Boolean := False)
       return Class_Instance;
+   function Nth_Arg_Data
+     (Data       : Callback_Data;
+      N          : Positive;
+      Class      : Class_Type;
+      Default    : System.Address;
+      Allow_Null : Boolean := False) return System.Address;
    --  Same as above, except that if there are not enough parameters, Default
    --  is returned.
 
@@ -577,7 +596,7 @@ package Glide_Kernel.Scripts is
    procedure Set_Data
      (Instance : access Class_Instance_Record'Class;
       Entity   : Src_Info.Queries.Entity_Information);
-   function Get_Data (Instance : access Class_Instance_Record'Class)
+   function Get_Data (Data : Callback_Data; N : Positive)
       return Src_Info.Queries.Entity_Information;
    --  The Entity class stores some Entity_Information data in Instance
    --  You should destroy the entity passed to Set_Data, but not the value
@@ -603,8 +622,8 @@ package Glide_Kernel.Scripts is
    function Get_File (File : File_Info) return VFS.Virtual_File;
    --  Return the name of File
 
-   function Get_Data (Instance : access Class_Instance_Record'Class)
-      return File_Info;
+   function Get_Data (Data : Callback_Data; N : Positive) return File_Info;
+   function Get_Data (Instance : Class_Instance) return File_Info;
    --  Retrieve the file information from an instance
 
    function Create_File
@@ -630,7 +649,7 @@ package Glide_Kernel.Scripts is
    function Get_Column (Location : File_Location_Info) return Integer;
    --  Return the information stored in the file location
 
-   function Get_Data (Instance : access Class_Instance_Record'Class)
+   function Get_Data (Data : Callback_Data; N : Positive)
       return File_Location_Info;
    --  Retrieve the file location information from an instance
 
@@ -651,7 +670,7 @@ package Glide_Kernel.Scripts is
       return Class_Type;
    --  Return the class to use for projects. This encapsulates a Project_Type
 
-   function Get_Data (Instance : access Class_Instance_Record'Class)
+   function Get_Data (Data : Callback_Data; N : Positive)
       return Projects.Project_Type;
    --  Retrieve get some project information in Instance
 
@@ -675,8 +694,8 @@ package Glide_Kernel.Scripts is
    --  Return an instance of one of the classes derived from
    --  Context_Class, depending on the type of Context
 
-   function Get_Data (Instance : access Class_Instance_Record'Class)
-                      return Glide_Kernel.Selection_Context_Access;
+   function Get_Data (Data : Callback_Data; N : Positive)
+      return Glide_Kernel.Selection_Context_Access;
    --  Retrieve some context information from instance
 
    function Get_Area_Context_Class
@@ -690,8 +709,8 @@ package Glide_Kernel.Scripts is
       return Class_Instance;
    --  Return an instance of an area context
 
-   function Get_Data (Instance : access Class_Instance_Record'Class)
-                      return Glide_Kernel.Contexts.File_Area_Context_Access;
+   function Get_Data (Data : Callback_Data; N : Positive)
+      return Glide_Kernel.Contexts.File_Area_Context_Access;
    --  Retrieve some context information from instance
 
    function Get_File_Context_Class
@@ -699,7 +718,7 @@ package Glide_Kernel.Scripts is
       return Class_Type;
    --  Return a class for a File_Selection_Context
 
-   function Get_Data (Instance : access Class_Instance_Record'Class)
+   function Get_Data (Data : Callback_Data; N : Positive)
       return Glide_Kernel.Contexts.File_Selection_Context_Access;
    --  Retrieve some context information from instance
 
@@ -714,8 +733,8 @@ package Glide_Kernel.Scripts is
       return Class_Type;
    --  Return a class for an Entity_Selection_Context
 
-   function Get_Data (Instance : access Class_Instance_Record'Class)
-      return Glide_Kernel.Contexts.Entity_Selection_Context_Access;
+   function Get_Data (Data : Callback_Data; N : Positive)
+     return Glide_Kernel.Contexts.Entity_Selection_Context_Access;
    --  Retrieve some context information from instance
 
    function Create_Entity_Context

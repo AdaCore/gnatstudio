@@ -439,20 +439,13 @@ package body Glide_Kernel.Scripts is
    -- Get_Data --
    --------------
 
-   function Get_Data
-     (Instance : access Class_Instance_Record'Class)
-      return Entity_Information
+   function Get_Data (Data : Callback_Data; N : Positive)
+                      return Src_Info.Queries.Entity_Information
    is
-      Script : constant Scripting_Language := Get_Script (Instance);
-      Ent    : Entity_Information_Access;
+      Value : constant System.Address := Nth_Arg_Data
+        (Data, N, Get_Entity_Class (Get_Kernel (Data)));
+      Ent   : constant Entity_Information_Access := Convert (Value);
    begin
-      if not Is_Subclass
-        (Script, Get_Class (Instance), Get_Entity_Class (Get_Kernel (Script)))
-      then
-         raise Invalid_Data;
-      end if;
-
-      Ent := Convert (Get_Data (Instance));
       return Ent.all;
    end Get_Data;
 
@@ -460,20 +453,13 @@ package body Glide_Kernel.Scripts is
    -- Get_Data --
    --------------
 
-   function Get_Data (Instance : access Class_Instance_Record'Class)
+   function Get_Data (Data : Callback_Data; N : Positive)
       return File_Location_Info
    is
-      Script : constant Scripting_Language := Get_Script (Instance);
-      Loc    : File_Location_Info_Access;
+      Value : constant System.Address := Nth_Arg_Data
+        (Data, N, Get_File_Location_Class (Get_Kernel (Data)));
+      Loc    : constant File_Location_Info_Access := Convert (Value);
    begin
-      if not Is_Subclass
-        (Script, Get_Class (Instance),
-         Get_File_Location_Class (Get_Kernel (Script)))
-      then
-         raise Invalid_Data;
-      end if;
-
-      Loc := Convert (Get_Data (Instance));
       return Loc.all;
    end Get_Data;
 
@@ -509,21 +495,29 @@ package body Glide_Kernel.Scripts is
    -- Get_Data --
    --------------
 
-   function Get_Data (Instance : access Class_Instance_Record'Class)
-      return File_Info
-   is
-      Ent    : File_Info_Access;
+   function Get_Data (Data : Callback_Data; N : Positive) return File_Info is
+      Value : constant System.Address := Nth_Arg_Data
+        (Data, N, Get_File_Class (Get_Kernel (Data)));
+      Ent    : constant File_Info_Access := Convert (Value);
+   begin
+      return Ent.all;
+   end Get_Data;
+
+   --------------
+   -- Get_Data --
+   --------------
+
+   function Get_Data (Instance : Class_Instance) return File_Info is
       Script : constant Scripting_Language := Get_Script (Instance);
+      Value  : constant System.Address := Get_Data (Instance);
+      Ent    : constant File_Info_Access := Convert (Value);
    begin
       if not Is_Subclass
         (Script, Get_Class (Instance), Get_File_Class (Get_Kernel (Script)))
       then
-         Trace (Me, "Expected FileClass, got "
-                & Get_Name (Get_Class (Instance)));
          raise Invalid_Data;
       end if;
 
-      Ent := Convert (Get_Data (Instance));
       return Ent.all;
    end Get_Data;
 
@@ -551,20 +545,17 @@ package body Glide_Kernel.Scripts is
    --------------
 
    function Get_Data
-     (Instance : access Class_Instance_Record'Class)
-      return Project_Type
+     (Data : Callback_Data; N : Positive) return Project_Type
    is
-      Script : constant Scripting_Language := Get_Script (Instance);
+      Inst  : constant Class_Instance := Nth_Arg
+        (Callback_Data'Class (Data), N, Get_Project_Class (Get_Kernel (Data)));
+      Value : constant Integer := Get_Data (Inst);
+      Project : constant Project_Type := Get_Project_From_Name
+        (Project_Registry (Get_Registry (Get_Kernel (Data))),
+         Name_Id (Value));
    begin
-      if not Is_Subclass
-        (Script, Get_Class (Instance), Get_Project_Class (Get_Kernel (Script)))
-      then
-         raise Invalid_Data;
-      end if;
-
-      return Get_Project_From_Name
-        (Project_Registry (Get_Registry (Get_Kernel (Script))),
-         Name_Id (Integer'(Get_Data (Instance))));
+      Free (Inst);
+      return Project;
    end Get_Data;
 
    -----------------------------
@@ -769,8 +760,6 @@ package body Glide_Kernel.Scripts is
      (Data : in out Callback_Data'Class; Command : String)
    is
       Kernel   : constant Kernel_Handle := Get_Kernel (Data);
-      Instance : constant Class_Instance :=
-        Nth_Arg (Data, 1, Get_File_Location_Class (Kernel));
       Location : File_Location_Info;
 
    begin
@@ -782,22 +771,24 @@ package body Glide_Kernel.Scripts is
               Nth_Arg (Data, 2, Get_File_Class (Kernel));
             L    : constant Integer := Nth_Arg (Data, 3);
             C    : constant Integer := Nth_Arg (Data, 4);
-
+            Instance : constant Class_Instance :=
+              Nth_Arg (Data, 1, Get_File_Location_Class (Kernel));
          begin
             Ref (File);
             Set_Data (Instance, File_Location_Info'(File, L, C));
+            Free (Instance);
          end;
 
       elsif Command = "line" then
-         Location := Get_Data (Instance);
+         Location := Get_Data (Data, 1);
          Set_Return_Value (Data, Get_Line (Location));
 
       elsif Command = "column" then
-         Location := Get_Data (Instance);
+         Location := Get_Data (Data, 1);
          Set_Return_Value (Data, Get_Column (Location));
 
       elsif Command = "file" then
-         Location := Get_Data (Instance);
+         Location := Get_Data (Data, 1);
          Set_Return_Value (Data, Get_File (Location));
       end if;
    end Create_Location_Command_Handler;
@@ -811,8 +802,6 @@ package body Glide_Kernel.Scripts is
    is
       Kernel   : constant Kernel_Handle := Get_Kernel (Data);
       Entity   : Entity_Information;
-      Instance : constant Class_Instance :=
-        Nth_Arg (Data, 1, Get_Entity_Class (Kernel));
 
    begin
       if Command = Constructor_Method then
@@ -832,14 +821,21 @@ package body Glide_Kernel.Scripts is
 
          begin
             if File = null then
-               Entity := Create_Predefined_Entity
-                 (Name, (Unresolved_Entity, False, True, False));
-               Set_Data (Instance, Entity);
-               Destroy (Entity);
-               return;
+               declare
+                  Instance : constant Class_Instance :=
+                    Nth_Arg (Data, 1, Get_Entity_Class (Kernel));
+               begin
+                  Entity := Create_Predefined_Entity
+                    (Name, (Unresolved_Entity, False, True, False));
+                  Set_Data (Instance, Entity);
+                  Destroy (Entity);
+                  Free (Instance);
+                  return;
+               end;
             end if;
 
             F := Get_Data (File);
+            Free (File);
             Lib_Info := Locate_From_Source_And_Complete (Kernel, Get_File (F));
 
             if Lib_Info = No_LI_File then
@@ -863,17 +859,23 @@ package body Glide_Kernel.Scripts is
                Set_Error_Msg (Data, -"Entity not found");
                Destroy (Entity);
             else
-               Set_Data (Instance, Entity);
-               Destroy (Entity);
+               declare
+                  Instance : constant Class_Instance :=
+                    Nth_Arg (Data, 1, Get_Entity_Class (Kernel));
+               begin
+                  Set_Data (Instance, Entity);
+                  Destroy (Entity);
+                  Free (Instance);
+               end;
             end if;
          end;
 
       elsif Command = "name" then
-         Entity := Get_Data (Instance);
+         Entity := Get_Data (Data, 1);
          Set_Return_Value (Data, Get_Name (Entity));
 
       elsif Command = "decl_file" then
-         Entity := Get_Data (Instance);
+         Entity := Get_Data (Data, 1);
 
          if not Is_Predefined_Entity (Entity) then
             Set_Return_Value
@@ -883,11 +885,11 @@ package body Glide_Kernel.Scripts is
          end if;
 
       elsif Command = "decl_line" then
-         Entity := Get_Data (Instance);
+         Entity := Get_Data (Data, 1);
          Set_Return_Value (Data, Get_Declaration_Line_Of (Entity));
 
       elsif Command = "decl_column" then
-         Entity := Get_Data (Instance);
+         Entity := Get_Data (Data, 1);
          Set_Return_Value (Data, Get_Declaration_Column_Of (Entity));
 
       elsif Command = "body" then
@@ -896,7 +898,7 @@ package body Glide_Kernel.Scripts is
             Lib_Info : LI_File_Ptr;
             Location : File_Location;
          begin
-            Entity := Get_Data (Instance);
+            Entity := Get_Data (Data, 1);
             Lib_Info := Locate_From_Source_And_Complete
               (Kernel, Get_Declaration_File_Of (Entity));
             Find_Next_Body
@@ -933,22 +935,26 @@ package body Glide_Kernel.Scripts is
      (Data : in out Callback_Data'Class; Command : String)
    is
       Kernel   : constant Kernel_Handle := Get_Kernel (Data);
-      Instance : constant Class_Instance :=
-        Nth_Arg (Data, 1, Get_File_Class (Kernel));
       Info     : File_Info;
    begin
       if Command = Constructor_Method then
          Name_Parameters (Data, File_Cmd_Parameters);
-         Info := (File => Create (Nth_Arg (Data, 2), Kernel));
-         Set_Data (Instance, Info);
-         Free (Info);
+         declare
+            Instance : constant Class_Instance :=
+              Nth_Arg (Data, 1, Get_File_Class (Kernel));
+         begin
+            Info := (File => Create (Nth_Arg (Data, 2), Kernel));
+            Set_Data (Instance, Info);
+            Free (Info);
+            Free (Instance);
+         end;
 
       elsif Command = "name" then
-         Info := Get_Data (Instance);
+         Info := Get_Data (Data, 1);
          Set_Return_Value (Data, Full_Name (Info.File).all);
 
       elsif Command = "project" then
-         Info := Get_Data (Instance);
+         Info := Get_Data (Data, 1);
          Set_Return_Value
            (Data, Create_Project
             (Get_Script (Data),
@@ -958,7 +964,7 @@ package body Glide_Kernel.Scripts is
               Root_If_Not_Found => True)));
 
       elsif Command = "other_file" then
-         Info := Get_Data (Instance);
+         Info := Get_Data (Data, 1);
          Set_Return_Value
            (Data, Create_File
             (Get_Script (Data), Other_File_Name (Kernel, Info.File)));
@@ -1034,8 +1040,6 @@ package body Glide_Kernel.Scripts is
            (Data, Create_Project (Get_Script (Data), Get_Project (Kernel)));
 
       else
-         Instance := Nth_Arg (Data, 1, Get_Project_Class (Kernel));
-
          if Command = Constructor_Method then
             Name_Parameters (Data, Project_Cmd_Parameters);
             Project  := Get_Project_From_Name
@@ -1045,15 +1049,17 @@ package body Glide_Kernel.Scripts is
             if Project = No_Project then
                Set_Error_Msg (Data, -"No such project: " & Nth_Arg (Data, 2));
             else
+               Instance := Nth_Arg (Data, 1, Get_Project_Class (Kernel));
                Set_Data (Instance, Project);
+               Free (Instance);
             end if;
 
          elsif Command = "name" then
-            Project := Get_Data (Instance);
+            Project := Get_Data (Data, 1);
             Set_Return_Value (Data, Project_Name (Project));
 
          elsif Command = "file" then
-            Project := Get_Data (Instance);
+            Project := Get_Data (Data, 1);
             Set_Return_Value
               (Data,
                Create_File
@@ -1064,7 +1070,7 @@ package body Glide_Kernel.Scripts is
                Iter : Imported_Project_Iterator;
                P    : Project_Type;
             begin
-               Project := Get_Data (Instance);
+               Project := Get_Data (Data, 1);
                Set_Return_Value_As_List (Data);
                Iter := Find_All_Projects_Importing
                  (Get_Project (Kernel), Project, Include_Self => True);
@@ -1083,7 +1089,7 @@ package body Glide_Kernel.Scripts is
          then
             Name_Parameters (Data, Get_Attributes_Parameters);
             Set_Return_Attribute
-              (Project => Get_Data (Instance),
+              (Project => Get_Data (Data, 1),
                Attr => Nth_Arg (Data, 2),
                Pkg  => Nth_Arg (Data, 3, ""),
                Index => Nth_Arg (Data, 4, ""),
@@ -1103,7 +1109,7 @@ package body Glide_Kernel.Scripts is
                   Set_Error_Msg (Data, -"No such tool: " & Tool);
                else
                   Set_Return_Attribute
-                    (Project => Get_Data (Instance),
+                    (Project => Get_Data (Data, 1),
                      Attr    => Props.Project_Attribute.all,
                      Pkg     => Props.Project_Package.all,
                      Index   => Props.Project_Index.all,
@@ -1121,13 +1127,8 @@ package body Glide_Kernel.Scripts is
    procedure Entity_Context_Command_Handler
      (Data : in out Callback_Data'Class; Command : String)
    is
-      Kernel   : constant Kernel_Handle := Get_Kernel (Data);
-      Instance : constant Class_Instance := Nth_Arg
-        (Data, 1, Get_Entity_Context_Class (Kernel));
-      Entity   : constant Entity_Selection_Context_Access :=
-        Entity_Selection_Context_Access'(Get_Data (Instance));
-      L, C     : Integer := -1;
-
+      Entity : constant Entity_Selection_Context_Access := Get_Data (Data, 1);
+      L, C   : Integer := -1;
    begin
       if Command = "location" then
          if Has_Line_Information (Entity) then
@@ -1165,7 +1166,6 @@ package body Glide_Kernel.Scripts is
      (Data : in out Callback_Data'Class; Command : String)
    is
       Kernel   : constant Kernel_Handle := Get_Kernel (Data);
-      Instance : Class_Instance;
       File     : File_Selection_Context_Access;
       Area     : File_Area_Context_Access;
       Context  : Selection_Context_Access;
@@ -1176,20 +1176,17 @@ package body Glide_Kernel.Scripts is
          Set_Error_Msg (Data, -"Cannot create an instance of this class");
 
       elsif Command = "start_line" then
-         Instance := Nth_Arg (Data, 1, Get_Area_Context_Class (Kernel));
-         Area := File_Area_Context_Access'(Get_Data (Instance));
+         Area := Get_Data (Data, 1);
          Get_Area (Area, L, C);
          Set_Return_Value (Data, L);
 
       elsif Command = "end_line" then
-         Instance := Nth_Arg (Data, 1, Get_Area_Context_Class (Kernel));
-         Area := File_Area_Context_Access'(Get_Data (Instance));
+         Area := Get_Data (Data, 1);
          Get_Area (Area, L, C);
          Set_Return_Value (Data, C);
 
       elsif Command = "file" then
-         Instance := Nth_Arg (Data, 1, Get_File_Context_Class (Kernel));
-         File := File_Selection_Context_Access'(Get_Data (Instance));
+         File := Get_Data (Data, 1);
          if Has_File_Information (File) then
             Set_Return_Value
               (Data, Create_File (Get_Script (Data), File_Information (File)));
@@ -1198,8 +1195,7 @@ package body Glide_Kernel.Scripts is
          end if;
 
       elsif Command = "project" then
-         Instance := Nth_Arg (Data, 1, Get_File_Context_Class (Kernel));
-         File := File_Selection_Context_Access'(Get_Data (Instance));
+         File := Get_Data (Data, 1);
          if Has_Project_Information (File) then
             Set_Return_Value
               (Data,
@@ -1220,8 +1216,7 @@ package body Glide_Kernel.Scripts is
          end if;
 
       elsif Command = "directory" then
-         Instance := Nth_Arg (Data, 1, Get_File_Context_Class (Kernel));
-         File := File_Selection_Context_Access'(Get_Data (Instance));
+         File := Get_Data (Data, 1);
          if Has_Directory_Information (File) then
             Set_Return_Value (Data, Directory_Information (File));
          else
@@ -1229,9 +1224,7 @@ package body Glide_Kernel.Scripts is
          end if;
 
       elsif Command = "location" then
-         Instance := Nth_Arg
-           (Data, 1, Get_File_Context_Class (Kernel));
-         File := File_Selection_Context_Access'(Get_Data (Instance));
+         File := Get_Data (Data, 1);
 
          if Has_Line_Information (File) then
             L := Line_Information (File);
@@ -1999,6 +1992,42 @@ package body Glide_Kernel.Scripts is
       return File.File;
    end Get_File;
 
+   ------------------
+   -- Nth_Arg_Data --
+   ------------------
+
+   function Nth_Arg_Data
+     (Data       : Callback_Data;
+      N          : Positive;
+      Class      : Class_Type;
+      Allow_Null : Boolean := False) return System.Address
+   is
+      Inst : constant Class_Instance := Nth_Arg
+        (Callback_Data'Class (Data), N, Class, Allow_Null);
+      Result : System.Address;
+   begin
+      Result := Get_Data (Inst);
+      Free (Inst);
+      return Result;
+   end Nth_Arg_Data;
+
+   ------------------
+   -- Nth_Arg_Data --
+   ------------------
+
+   function Nth_Arg_Data
+     (Data       : Callback_Data;
+      N          : Positive;
+      Class      : Class_Type;
+      Default    : System.Address;
+      Allow_Null : Boolean := False) return System.Address is
+   begin
+      return Nth_Arg_Data (Data, N, Class, Allow_Null);
+   exception
+      when No_Such_Parameter =>
+         return Default;
+   end Nth_Arg_Data;
+
    -------------
    -- Nth_Arg --
    -------------
@@ -2288,21 +2317,14 @@ package body Glide_Kernel.Scripts is
    -- Get_Data --
    --------------
 
-   function Get_Data (Instance : access Class_Instance_Record'Class)
-                      return Glide_Kernel.Contexts.File_Area_Context_Access
+   function Get_Data (Data : Callback_Data; N : Positive)
+      return Glide_Kernel.Contexts.File_Area_Context_Access
    is
-      Script : constant Scripting_Language := Get_Script (Instance);
+      Value : constant System.Address :=
+        Nth_Arg_Data (Data, N, Get_Area_Context_Class (Get_Kernel (Data)));
    begin
-      if not Is_Subclass
-        (Script,
-         Get_Class (Instance),
-         Get_Area_Context_Class (Get_Kernel (Script)))
-      then
-         raise Invalid_Data;
-      end if;
-
       return File_Area_Context_Access
-        (Selection_Context_Access'(Convert (Get_Data (Instance))));
+        (Selection_Context_Access'(Convert (Value)));
    end Get_Data;
 
    --------------------
@@ -2329,21 +2351,13 @@ package body Glide_Kernel.Scripts is
    -- Get_Data --
    --------------
 
-   function Get_Data
-     (Instance : access Class_Instance_Record'Class)
+   function Get_Data (Data : Callback_Data; N : Positive)
       return Glide_Kernel.Selection_Context_Access
    is
-      Script : constant Scripting_Language := Get_Script (Instance);
+      Value : constant System.Address := Nth_Arg_Data
+        (Data, N, Get_Context_Class (Get_Kernel (Data)));
    begin
-      if not Is_Subclass
-        (Script,
-         Get_Class (Instance),
-         Get_Context_Class (Get_Kernel (Script)))
-      then
-         raise Invalid_Data;
-      end if;
-
-      return Selection_Context_Access'(Convert (Get_Data (Instance)));
+      return Selection_Context_Access'(Convert (Value));
    end Get_Data;
 
    ----------------------------
@@ -2423,43 +2437,28 @@ package body Glide_Kernel.Scripts is
    -- Get_Data --
    --------------
 
-   function Get_Data
-     (Instance : access Class_Instance_Record'Class)
+   function Get_Data (Data : Callback_Data; N : Positive)
       return Glide_Kernel.Contexts.File_Selection_Context_Access
    is
-      Script : constant Scripting_Language := Get_Script (Instance);
+      Value : constant System.Address := Nth_Arg_Data
+        (Data, N, Get_File_Context_Class (Get_Kernel (Data)));
    begin
-      if not Is_Subclass
-        (Script,
-         Get_Class (Instance),
-         Get_File_Context_Class (Get_Kernel (Script)))
-      then
-         raise Invalid_Data;
-      end if;
-
       return File_Selection_Context_Access
-        (Selection_Context_Access'(Convert (Get_Data (Instance))));
+        (Selection_Context_Access'(Convert (Value)));
    end Get_Data;
 
    --------------
    -- Get_Data --
    --------------
 
-   function Get_Data (Instance : access Class_Instance_Record'Class)
-      return Glide_Kernel.Contexts.Entity_Selection_Context_Access
+   function Get_Data (Data : Callback_Data; N : Positive)
+     return Glide_Kernel.Contexts.Entity_Selection_Context_Access
    is
-      Script : constant Scripting_Language := Get_Script (Instance);
+      Value : constant System.Address := Nth_Arg_Data
+        (Data, N, Get_Entity_Context_Class (Get_Kernel (Data)));
    begin
-      if not Is_Subclass
-        (Script,
-         Get_Class (Instance),
-         Get_Entity_Context_Class (Get_Kernel (Script)))
-      then
-         raise Invalid_Data;
-      end if;
-
       return Entity_Selection_Context_Access
-        (Selection_Context_Access'(Convert (Get_Data (Instance))));
+        (Selection_Context_Access'(Convert (Value)));
    end Get_Data;
 
    -------------------------
