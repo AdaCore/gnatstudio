@@ -72,9 +72,9 @@ package body Directory_Tree is
    --  Used to register contextual menus with a user data.
 
    function Add_Directory_Node
-     (Tree       : access Dir_Tree_Record'Class;
-      Dir        : String;
-      Parent     : Gtk_Ctree_Node;
+     (Tree               : access Dir_Tree_Record'Class;
+      Dir                : String;
+      Parent             : Gtk_Ctree_Node;
       Num_Subdirectories : Integer) return Gtk_Ctree_Node;
    --  Add a new node in tree to reference Dir. The new node is created as
    --  a child of Parent (or at the root of the tree if Parent is null).
@@ -82,7 +82,7 @@ package body Directory_Tree is
    --  subdirectories.
 
    function Directory
-     (Tree      : access Dir_Tree_Record'Class;
+     (Tree     : access Dir_Tree_Record'Class;
       N        : Gtk_Ctree_Node;
       Absolute : Boolean := False) return String;
    --  Return the directory associated with node. This doesn't include the

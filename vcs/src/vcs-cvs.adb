@@ -962,15 +962,14 @@ package body VCS.CVS is
    is
       use String_List;
 
-      L_Temp  : List_Node := First (List);
-      Length  : Integer := String_List.Length (List) - 2;
-
+      L_Temp       : List_Node := First (List);
+      Length       : Integer := String_List.Length (List) - 2;
       Current_File : constant String := String_List.Head (Head);
+      A            : Line_Information_Array (1 .. Length);
+      Index        : Natural;
 
-      A     : Line_Information_Array (1 .. Length);
-      Index : Natural;
    begin
-      --- ??? This assumes that the file currently opened is identical to the
+      --  ??? This assumes that the file currently opened is identical to the
       --  file first checked-out from CVS. It would be necessary here to
       --  force a save of the file, and then to get a diff between that file
       --  and the one on CVS (which is given in the output of the annotation,
@@ -978,11 +977,12 @@ package body VCS.CVS is
       --  the annotated ones.
 
       if Length <= 0 then
-         Insert (Kernel,
-                 -"CVS: No annotations available for file "
-                 & Current_File & ".",
-                 Highlight_Sloc => False,
-                 Mode => Verbose);
+         Insert
+           (Kernel,
+            -"CVS: No annotations available for file "
+            & Current_File & ".",
+            Highlight_Sloc => False,
+            Mode => Verbose);
          return False;
       end if;
 
@@ -1009,11 +1009,12 @@ package body VCS.CVS is
          L_Temp := Next (L_Temp);
       end loop;
 
-      Add_Line_Information (Kernel,
-                            Current_File,
-                            VCS_CVS_Module_Name,
-                            Index * 6 + 2,
-                            new Line_Information_Array'(A));
+      Add_Line_Information
+        (Kernel,
+         Current_File,
+         VCS_CVS_Module_Name,
+         Index * 6 + 2,
+         new Line_Information_Array'(A));
 
       return True;
    end Annotation_Output_Handler;
