@@ -602,15 +602,17 @@ package body Diff_Utils2 is
       return Diff_List
    is
       V_Fich1,
-      V_Fich2 : Virtual_File;
+      V_Fich2     : Virtual_File;
       Fich1,
-      Fich2   : String_Access;
+      Fich2       : String_Access;
+      Local_Line1 : String (1 .. 2 * Line1'Length);
+      Local_Line2 : String (1 .. 2 * Line2'Length);
       FD1,
-      FD2     : File_Descriptor;
-      Diff1   : Diff_List;
-      Success : Boolean;
-      EOL_Str : constant String := (1 => ASCII.LF);
-      N       : Integer;
+      FD2         : File_Descriptor;
+      Diff1       : Diff_List;
+      Success     : Boolean;
+      EOL_Str     : constant String := (1 => ASCII.LF);
+      N           : Integer;
       pragma Unreferenced (N);
    begin
 
@@ -621,17 +623,22 @@ package body Diff_Utils2 is
       V_Fich2 := Create (Fich2.all);
 
       for J in Line1'Range loop
-         N := Write (FD1, Line1 (J)'Address, 1);
-         N := Write (FD1, EOL_Str (1)'Address, 1);
+         Local_Line1 (2 * J -1) := Line1 (J);
+         Local_Line1 (2 * J) := EOL_Str (1);
       end loop;
 
       for J in Line2'Range loop
-         N := Write (FD2, Line2 (J)'Address, 1);
-         N := Write (FD2, EOL_Str (1)'Address, 1);
+         Local_Line2 (2 * J -1) := Line2 (J);
+         Local_Line2 (2 * J) := EOL_Str (1);
       end loop;
 
+      N := Write (FD2, Local_Line2 (Local_Line2'First)'Address,
+                  Local_Line2'Length);
+      N := Write (FD1, Local_Line1 (Local_Line1'First)'Address,
+                  Local_Line1'Length);
       Close (FD1);
       Close (FD2);
+
       Diff1 := Diff (V_Fich1, V_Fich2);
 
       Delete_File (Fich1.all, Success);
