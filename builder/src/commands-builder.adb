@@ -106,9 +106,23 @@ package body Commands.Builder is
    ----------
 
    procedure Free (D : in out Build_Command) is
-      pragma Unreferenced (D);
+      Data    : Process_Data renames D.Data;
+      Fd      : Process_Descriptor_Access renames Data.Descriptor;
+      PID     : GNAT.Expect.Process_Id;
    begin
-      null;
+      if Fd /= null then
+         PID := Get_Pid (Fd.all);
+
+         if PID /= Null_Pid and then PID /= GNAT.Expect.Invalid_Pid then
+            Interrupt (Fd.all);
+            Console.Insert (Data.Kernel, "<^C>");
+            Close (Fd.all);
+            Free (Data.Descriptor);
+         end if;
+      end if;
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Free;
 
    -------------
@@ -120,7 +134,7 @@ package body Commands.Builder is
    is
       Data    : Process_Data renames Command.Data;
       Kernel  : Kernel_Handle renames Data.Kernel;
-      Fd      : Process_Descriptor_Access := Data.Descriptor;
+      Fd      : Process_Descriptor renames Data.Descriptor.all;
 
       Top          : constant Glide_Window :=
         Glide_Window (Get_Main_Window (Kernel));
@@ -142,7 +156,7 @@ package body Commands.Builder is
       Command.Progress.Activity := Running;
 
       if Top.Interrupted then
-         Interrupt (Fd.all);
+         Interrupt (Fd);
          Console.Insert (Kernel, "<^C>");
          Top.Interrupted := False;
          Print_Message
@@ -151,12 +165,12 @@ package body Commands.Builder is
       end if;
 
       loop
-         Expect (Fd.all, Result, Line_Matcher, Timeout => Timeout);
+         Expect (Fd, Result, Line_Matcher, Timeout => Timeout);
 
          exit when Result = Expect_Timeout;
 
          declare
-            S : constant String := Strip_CR (Expect_Out (Fd.all));
+            S : constant String := Strip_CR (Expect_Out (Fd));
          begin
             Match (Matcher, S, Matched);
 
@@ -212,7 +226,7 @@ package body Commands.Builder is
                -Error_Category,
                -Warning_Category,
                -Style_Category,
-               Buffer (Buffer'First .. Buffer_Pos - 1) & Expect_Out (Fd.all));
+               Buffer (Buffer'First .. Buffer_Pos - 1) & Expect_Out (Fd));
          end if;
 
          Free (Buffer);
@@ -221,8 +235,8 @@ package body Commands.Builder is
             -Error_Category,
             -Warning_Category,
             -Style_Category,
-            Expect_Out (Fd.all));
-         Close (Fd.all, Status);
+            Expect_Out (Fd));
+         Close (Fd, Status);
 
          if Status = 0 then
             Console.Insert
@@ -235,7 +249,7 @@ package body Commands.Builder is
 
          Pop_State (Kernel);
          Set_Sensitive_Menus (Kernel, True);
-         Free (Fd);
+         Free (Data.Descriptor);
 
          Compilation_Finished (Kernel, VFS.No_File);
          return Success;
@@ -244,8 +258,8 @@ package body Commands.Builder is
          Free (Buffer);
          Pop_State (Kernel);
          Set_Sensitive_Menus (Kernel, True);
-         Close (Fd.all);
-         Free (Fd);
+         Close (Fd);
+         Free (Data.Descriptor);
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
 
          return Failure;
