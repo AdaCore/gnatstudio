@@ -242,7 +242,6 @@ package body Directory_Tree is
       N        : Gtk_Ctree_Node;
       Absolute : Boolean := False) return String is
    begin
-      --  ??? Not very efficient, since we use the secondary stack. Oh well...
       if Absolute
         and then Row_Get_Parent (Node_Get_Row (N)) /= null
       then
@@ -341,6 +340,7 @@ package body Directory_Tree is
       --  that this signal is emitted with Node = null, for instance if we are
       --  expanding a directory that in fact has no children. This test is used
       --  to prevent a crash in that case.
+
       if Node = null then
          return;
       end if;
