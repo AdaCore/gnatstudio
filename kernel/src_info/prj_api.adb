@@ -1480,9 +1480,7 @@ package body Prj_API is
 
    begin
       if Pkg_Name /= "" then
-         Name_Len := Pkg_Name'Length;
-         Name_Buffer (1 .. Name_Len) := Pkg_Name;
-         Parent := Find_Package_Declaration (Project, Name_Find);
+         Parent := Get_Or_Create_Package (Project, Pkg_Name);
          Pkg := Parent;
       else
          Parent := Project_Declaration_Of (Project);
