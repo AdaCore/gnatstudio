@@ -230,6 +230,13 @@ package body GVD.Process is
      return String_List_Utils.String_List.List;
    --  Return the list of completions for Input.
 
+   procedure Setup_Data_Window
+     (Process : access Debugger_Process_Tab_Record'Class;
+      History : Histories.History := null);
+   --  Set up/initialize the data window associated with Process.
+   --  History will be used for the various dialog's combo boxes to store the
+   --  values used by the user
+
    -----------
    -- Setup --
    -----------
@@ -916,7 +923,8 @@ package body GVD.Process is
    -----------------------
 
    procedure Setup_Data_Window
-     (Process : access Debugger_Process_Tab_Record'Class)
+     (Process : access Debugger_Process_Tab_Record'Class;
+      History : Histories.History := null)
    is
       Label : Gtk_Label;
       Child : MDI_Child;
@@ -970,7 +978,7 @@ package body GVD.Process is
 
       --  Create the canvas for this process tab.
 
-      Gtk_New (GVD_Canvas (Process.Data_Canvas));
+      Gtk_New (GVD_Canvas (Process.Data_Canvas), History);
       Add (Process.Data_Scrolledwindow, Process.Data_Canvas);
       Set_Process (GVD_Canvas (Process.Data_Canvas), Process);
       Widget_Callback.Connect
@@ -1218,6 +1226,7 @@ package body GVD.Process is
       Remote_Target   : String := "";
       Remote_Protocol : String := "";
       Debugger_Name   : String := "";
+      History         : Histories.History := null;
       Success         : out Boolean)
    is
       Child         : MDI_Child;
@@ -1234,7 +1243,7 @@ package body GVD.Process is
       pragma Assert (Process.Data_Paned = null);
 
       Setup_Command_Window (Process);
-      Setup_Data_Window (Process);
+      Setup_Data_Window (Process, History);
 
       if Window.Standalone then
          Child := Put (Process.Process_Mdi, Process.Editor_Text);

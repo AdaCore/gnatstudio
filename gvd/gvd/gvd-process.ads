@@ -49,6 +49,7 @@ with Items;
 with GVD.Text_Box.Source_Editor;
 with GVD.Code_Editors;
 with GVD.Types;
+with Histories;
 
 with Glide_Interactive_Consoles; use Glide_Interactive_Consoles;
 
@@ -237,6 +238,7 @@ package GVD.Process is
       Remote_Target   : String := "";
       Remote_Protocol : String := "";
       Debugger_Name   : String := "";
+      History         : Histories.History := null;
       Success         : out Boolean);
    --  Configure a process tab.
    --  Kind specifies which debugger should be launched.
@@ -253,10 +255,6 @@ package GVD.Process is
    --  Remote_Protocol and Debugger_Name.
    --
    --  Success is set to true is the debugger could be successfully started.
-
-   procedure Setup_Data_Window
-     (Process : access Debugger_Process_Tab_Record'Class);
-   --  Set up/initialize the data window associated with Process.
 
    procedure Setup_Command_Window
      (Process : access Debugger_Process_Tab_Record'Class);
