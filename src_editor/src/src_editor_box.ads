@@ -263,7 +263,18 @@ package Src_Editor_Box is
    --  Replace the text between the start and end locations by Text.
    --
    --  The validity of the given locations must be verified before invoking
-   --  this procedure. An incorrect location  will cause an Assertion_Failure
+   --  this procedure. An incorrect location will cause an Assertion_Failure
+   --  when compiled with assertion checks, or an undefined behavior otherwise.
+
+   procedure Select_Region
+     (Editor       : access Source_Editor_Box_Record;
+      Start_Line   : Positive;
+      Start_Column : Positive;
+      End_Line     : Positive;
+      End_Column   : Positive);
+   --  Select the given region.
+   --  Both start and end positions must be verified before calling this
+   --  procedure. An incorrect position will cause an Assertion_Failure
    --  when compiled with assertion checks, or an undefined behavior otherwise.
 
    procedure Select_All (Editor : access Source_Editor_Box_Record);

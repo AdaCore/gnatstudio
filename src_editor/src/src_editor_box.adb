@@ -356,7 +356,6 @@ package body Src_Editor_Box is
               (Kernel, Get_Declaration_File_Of (Entity),
                Use_Predefined_Source_Path => True),
             L, C, False);
-
          Destroy (Entity);
       end if;
 
@@ -368,8 +367,6 @@ package body Src_Editor_Box is
       if Source /= null then
          --  Get the source box that was just opened/raised, and highlight
          --  the target entity.
-
-         Unhighlight_All (Source);
 
          Length := Entity_Name_Information (Context)'Length;
 
@@ -389,7 +386,7 @@ package body Src_Editor_Box is
 
          Set_Cursor_Position
            (Source.Source_Buffer, To_Buffer_Line (L), To_Buffer_Column (C));
-         Highlight_Region (Source, L, C, L, C + Length);
+         Select_Region (Source, L, C, L, C + Length);
       end if;
 
       Pop_State (Kernel_Handle (Kernel));
@@ -1831,6 +1828,23 @@ package body Src_Editor_Box is
    end Select_All;
 
    -------------------
+   -- Select_Region --
+   -------------------
+
+   procedure Select_Region
+     (Editor       : access Source_Editor_Box_Record;
+      Start_Line   : Positive;
+      Start_Column : Positive;
+      End_Line     : Positive;
+      End_Column   : Positive) is
+   begin
+      Select_Region
+        (Editor.Source_Buffer,
+         To_Buffer_Line (Start_Line), To_Buffer_Column (Start_Column),
+         To_Buffer_Line (End_Line), To_Buffer_Column (End_Column));
+   end Select_Region;
+
+   -------------------
    -- Cut_Clipboard --
    -------------------
 
@@ -1898,7 +1912,7 @@ package body Src_Editor_Box is
    ----------------------
 
    procedure Highlight_Region
-     (Editor : access Source_Editor_Box_Record;
+     (Editor       : access Source_Editor_Box_Record;
       Start_Line   : Positive;
       Start_Column : Positive;
       End_Line     : Positive;
@@ -1915,7 +1929,7 @@ package body Src_Editor_Box is
    ------------------------
 
    procedure Unhighlight_Region
-     (Editor : access Source_Editor_Box_Record;
+     (Editor       : access Source_Editor_Box_Record;
       Start_Line   : Positive;
       Start_Column : Positive;
       End_Line     : Positive;
