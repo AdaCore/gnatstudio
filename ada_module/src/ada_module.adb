@@ -21,6 +21,7 @@
 with Glib.Generic_Properties;
 with Glib.Object;              use Glib, Glib.Object;
 with Glib.Properties.Creation; use Glib.Properties.Creation;
+with Glib.Xml_Int;             use Glib.Xml_Int;
 with Gtk.Frame;                use Gtk.Frame;
 with Gtk.Box;                  use Gtk.Box;
 with Gtk.Size_Group;           use Gtk.Size_Group;
@@ -29,8 +30,8 @@ with Glide_Kernel;             use Glide_Kernel;
 with Src_Info.ALI;             use Src_Info.ALI;
 with Language.Ada;             use Language.Ada;
 with Language_Handlers.Glide;  use Language_Handlers.Glide;
-with Vsearch_Ext;              use Vsearch_Ext;
 with Glide_Intl;               use Glide_Intl;
+with Glide_Kernel.Custom;      use Glide_Kernel.Custom;
 with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
 with Language;                 use Language;
 with Switches_Editors;         use Switches_Editors;
@@ -860,29 +861,44 @@ package body Ada_Module is
          Default_Spec_Suffix => ".ads",
          Default_Body_Suffix => ".adb");
 
-      Register_Search_Pattern
+      Add_Customization_String
         (Kernel,
-         "type NAME is array (...)",
-         "\btype\s+(\w+)\s+is\s+array\s+\((.*?)\)\s+of\s+\w+\s*;");
-      Register_Search_Pattern
-        (Kernel,
-         "when CHOICE =>",
-         "\bwhen\s+((\w+)\s+:\s+)?[\w\s|]+\s*=>");
-      Register_Search_Pattern
-        (Kernel,
-         "(sub)type NAME is",
-         "\b((sub)?type\s+(\w+)|type\s+(\w+)\s+(\(.*?\))?)\s+is\b");
-      Register_Search_Pattern
-        (Kernel,
-         "type NAME (...) is",
-         "\btype\s+(\w+)\s+\((.*?)\)\s+is\b");
-      Register_Search_Pattern
-        (Kernel,
-         "for VAR in ... loop",
-         "\bfor\s+(\w+)\s+in\s+(reverse\s+)?(.+?)(\s+"
-         & "range\s+(.*?))?\s+loop\b");
-      Register_Search_Pattern
-        (Kernel, "Ada assignment", "\b(\w+)\s*:=");
+         "<vsearch-pattern>"
+         & "<name>Ada: type NAME is array (...)</name>"
+         & "<regexp>"
+         & Protect ("\btype\s+(\w+)\s+is\s+array\s+\((.*?)\)\s+of\s+\w+\s*;")
+         & "</regexp></vsearch-pattern>"
+
+         & "<vsearch-pattern>"
+         & "<name>Ada: when CHOICE =></name>"
+         & "<regexp>"
+         & Protect ("\bwhen\s+((\w+)\s+:\s+)?[\w\s|]+\s*=>")
+         & "</regexp></vsearch-pattern>"
+
+         & "<vsearch-pattern>"
+         & "<name>Ada: (sub)type NAME is</name>"
+         & "<regexp>"
+         & Protect ("\b((sub)?type\s+(\w+)|type\s+(\w+)\s+(\(.*?\))?)\s+is\b")
+         & "</regexp></vsearch-pattern>"
+
+         & "<vsearch-pattern>"
+         & "<name>Ada: type NAME (...) is</name>"
+         & "<regexp>"
+         & Protect ("\btype\s+(\w+)\s+\((.*?)\)\s+is\b")
+         & "</regexp></vsearch-pattern>"
+
+         & "<vsearch-pattern>"
+         & "<name>Ada: for VAR in ... loop</name>"
+         & "<regexp>"
+         & Protect ("\bfor\s+(\w+)\s+in\s+(reverse\s+)?(.+?)(\s+"
+                    & "range\s+(.*?))?\s+loop\b")
+         & "</regexp></vsearch-pattern>"
+
+         & "<vsearch-pattern>"
+         & "<name>Ada: assignment</name>"
+         & "<regexp>"
+         & Protect ("\b(\w+)\s*:=")
+         & "</regexp></vsearch-pattern>");
 
       Ada_Automatic_Indentation := Param_Spec_Enum
         (Indentation_Properties.Gnew_Enum
