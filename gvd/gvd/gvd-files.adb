@@ -24,7 +24,9 @@ with GNAT.OS_Lib;           use GNAT.OS_Lib;
 with Odd.Strings;           use Odd.Strings;
 with Ada.Text_IO;           use Ada.Text_IO;
 with Gtkada.Intl;           use Gtkada.Intl;
+pragma Warnings (Off);
 with GNAT.Expect;           use GNAT.Expect;
+pragma Warnings (On);
 
 package body GVD.Files is
 
