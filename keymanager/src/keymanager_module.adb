@@ -64,6 +64,7 @@ with Gtk.Label;                use Gtk.Label;
 with Gtk.Style;                use Gtk.Style;
 with Gtk.Separator;            use Gtk.Separator;
 with Traces;                   use Traces;
+with Glide_Kernel.Task_Manager; use Glide_Kernel.Task_Manager;
 with Ada.Unchecked_Deallocation;
 with Ada.Unchecked_Conversion;
 
@@ -625,8 +626,10 @@ package body KeyManager_Module is
 
                   elsif Context_Matches (Command.Context, Kernel) then
                      Trace (Me, "Executing action " & Binding.Action.all);
-                     Launch_Synchronous_Interactive
-                       (Command.Command, Event);
+                     Launch_Background_Command
+                       (Kernel, Create_Proxy (Command.Command, Event),
+                        Destroy_On_Exit => False,
+                        Active => False, Queue_Id => "");
                      return True;
                   end if;
                end if;
@@ -637,8 +640,10 @@ package body KeyManager_Module is
 
          if Any_Context_Command /= No_Action then
             Trace (Me, "Executing any context action");
-            Launch_Synchronous_Interactive
-              (Any_Context_Command.Command, Event);
+            Launch_Background_Command
+              (Kernel, Create_Proxy (Any_Context_Command.Command, Event),
+               Destroy_On_Exit => False,
+               Active => False, Queue_Id => "");
             return True;
          end if;
       end if;
