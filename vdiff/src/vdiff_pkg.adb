@@ -32,10 +32,10 @@ begin
 
    Gtk_New (Vdiff.Toolbar1, Orientation_Horizontal, Toolbar_Icons);
    Set_Border_Width (Vdiff.Toolbar1, 4);
-   Set_Space_Size (Vdiff.Toolbar1, 5);
-   Set_Space_Style (Vdiff.Toolbar1, Toolbar_Space_Empty);
+   --  Set_Space_Size (Vdiff.Toolbar1, 5);
+   --  Set_Space_Style (Vdiff.Toolbar1, Toolbar_Space_Empty);
    Set_Tooltips (Vdiff.Toolbar1, True);
-   Set_Button_Relief (Vdiff.Toolbar1, Relief_Normal);
+   --  Set_Button_Relief (Vdiff.Toolbar1, Relief_Normal);
    Vdiff.Button1 := Append_Element
      (Toolbar => Vdiff.Toolbar1,
       The_Type => Toolbar_Child_Button,
