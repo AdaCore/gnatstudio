@@ -367,8 +367,6 @@ private
       Location_Combo : Gtk_Combo;
       Location_Combo_Entry : Gtk_Entry;
 
-      Explorer_Tree_Scrolledwindow : Gtk_Scrolled_Window;
-
       Explorer_Tree : Dir_Tree;
 
       Files_Scrolledwindow : Gtk_Scrolled_Window;
