@@ -35,6 +35,9 @@ with Glib.Xml_Int;              use Glib.Xml_Int;
 with Gdk.Dnd;                   use Gdk.Dnd;
 with Gdk.Event;                 use Gdk.Event;
 with Gdk.Rectangle;             use Gdk.Rectangle;
+with Gdk.Types;                 use Gdk.Types;
+with Gdk.Window;                use Gdk.Window;
+with Gdk.Color;                 use Gdk.Color;
 
 with Gtk.Dnd;                   use Gtk.Dnd;
 with Gtk.Enums;                 use Gtk.Enums;
@@ -71,6 +74,7 @@ with Glide_Kernel.Contexts;     use Glide_Kernel.Contexts;
 with Glide_Kernel.Hooks;        use Glide_Kernel.Hooks;
 with Glide_Kernel.Project;      use Glide_Kernel.Project;
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
+with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
 with Glide_Intl;                use Glide_Intl;
 with Language_Handlers.Glide;   use Language_Handlers.Glide;
 with Traces;                    use Traces;
@@ -531,6 +535,8 @@ package body Project_Explorers is
      (Explorer : access Project_Explorer_Record'Class;
       Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
+      use Project_Explorer_Tooltips;
+
       Scrolled : Gtk_Scrolled_Window;
       Label    : Gtk_Label;
       H1       : Refresh_Hook;
@@ -610,6 +616,13 @@ package body Project_Explorers is
       Kernel_Callback.Connect
         (Explorer.Tree, "drag_data_received",
          Drag_Data_Received'Access, Kernel_Handle (Kernel));
+
+      --  Initialize tooltips
+
+      New_Tooltip
+        (Explorer.Tree, Project_Explorer_Access (Explorer), Explorer.Tooltip);
+
+      Set_Timeout (Explorer.Tooltip, 250);
    end Initialize;
 
    --------------------
@@ -844,7 +857,8 @@ package body Project_Explorers is
          Insert_Before (Explorer.Tree.Model, N, Parent_Node, Ref);
       end if;
 
-      Set (Explorer.Tree.Model, N, Absolute_Name_Column, "");
+      Set (Explorer.Tree.Model, N, Absolute_Name_Column,
+           Project_Path (Project));
 
       if Extending_Project (Project) /= No_Project then
          --  ??? We could use a different icon instead
@@ -1066,6 +1080,121 @@ package body Project_Explorers is
          Dir_Node := Next (Dir_Node);
       end loop;
    end Add_Source_Directories;
+
+   ------------------
+   -- Draw_Tooltip --
+   ------------------
+
+   procedure Draw_Tooltip
+     (Widget : access Gtkada.Tree_View.Tree_View_Record'Class;
+      Data   : in out Project_Explorer_Access;
+      Pixmap : out Gdk.Pixmap.Gdk_Pixmap;
+      Width  : out Glib.Gint;
+      Height : out Glib.Gint;
+      Area   : out Gdk.Rectangle.Gdk_Rectangle)
+   is
+      Window     : Gdk.Window.Gdk_Window;
+      New_Window : Gdk_Window;
+      Mask       : Gdk_Modifier_Type;
+
+      X, Y       : Gint;
+      Path       : Gtk_Tree_Path;
+      Column     : Gtk_Tree_View_Column;
+      Cell_X,
+      Cell_Y     : Gint;
+      Row_Found  : Boolean;
+      Par, Iter  : Gtk_Tree_Iter;
+      Node_Type  : Node_Types;
+
+      Text       : String_Access;
+   begin
+      Width  := 0;
+      Height := 0;
+
+      Window := Get_Bin_Window (Data.Tree);
+      Get_Pointer (Window, X, Y, Mask, New_Window);
+
+      Get_Path_At_Pos
+        (Data.Tree, X, Y, Path, Column, Cell_X, Cell_Y, Row_Found);
+
+      if not Row_Found then
+         return;
+      end if;
+
+      Get_Cell_Area (Data.Tree, Path, Column, Area);
+      Iter := Get_Iter (Data.Tree.Model, Path);
+
+      Path_Free (Path);
+
+      Node_Type := Get_Node_Type (Data.Tree.Model, Iter);
+
+      case Node_Type is
+         when Project_Node | Extends_Project_Node =>
+            --  Project or extended project full pathname
+            Text := new String'
+              (Get_String (Data.Tree.Model, Iter, Absolute_Name_Column));
+
+         when Directory_Node | Obj_Directory_Node | Exec_Directory_Node =>
+            --  Directroy full pathname and project name
+            --  Get parent node which is the project name
+            Par := Parent (Data.Tree.Model, Iter);
+
+            Text := new String'
+              (Get_String (Data.Tree.Model, Iter, Absolute_Name_Column) &
+               ASCII.LF &
+               (-"in project ") &
+               Get_String (Data.Tree.Model, Par, Base_Name_Column));
+
+         when File_Node =>
+            --  Base filename and Project name
+            --  Get grand-parent node which is the project node
+            Par := Parent (Data.Tree.Model, Parent (Data.Tree.Model, Iter));
+
+            Text := new String'
+              (Get_String (Data.Tree.Model, Iter, Base_Name_Column) &
+               ASCII.LF &
+               (-"in project ") &
+               Get_String (Data.Tree.Model, Par, Base_Name_Column));
+
+         when Category_Node =>
+            --  Category in Filename
+            --  Get the parent node which is the filename node
+            Par := Parent (Data.Tree.Model, Iter);
+
+            Text := new String'
+              (Get_String (Data.Tree.Model, Iter, Base_Name_Column) &
+               ASCII.LF &
+               (-"in ") &
+               Get_String (Data.Tree.Model, Par, Base_Name_Column));
+
+         when Entity_Node =>
+            --  Entity (parameters) declared at Filename:line
+            --  Get grand-parent node which is the filename node
+            Par := Parent (Data.Tree.Model, Parent (Data.Tree.Model, Iter));
+
+            Text := new String'
+              (Get_String (Data.Tree.Model, Iter, Base_Name_Column) &
+               ASCII.LF &
+               (-"declared at ") &
+               Get_String (Data.Tree.Model, Par, Base_Name_Column) & ':' &
+               Image (Integer (Get_Int (Data.Tree.Model, Iter, Line_Column))));
+
+         when others =>
+            null;
+      end case;
+
+      if Text /= null then
+         Create_Pixmap_From_Text
+           (Text.all,
+            Get_Pref (Data.Kernel, Default_Font),
+            White (Get_Default_Colormap),
+            Widget,
+            Pixmap,
+            Width,
+            Height);
+         Free (Text);
+      end if;
+   end Draw_Tooltip;
 
    -------------------------
    -- Expand_Project_Node --
