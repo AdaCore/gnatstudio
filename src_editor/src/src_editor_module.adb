@@ -72,6 +72,9 @@ package body Src_Editor_Module is
    end record;
    type Source_Editor_Module is access all Source_Editor_Module_Record'Class;
 
+   procedure Destroy (Id : in out Source_Editor_Module_Record);
+   --  Free the memory used by the module.
+
    type Source_Box_Record is new Gtk_Hbox_Record with record
       Editor : Source_Editor_Box;
    end record;
@@ -1770,5 +1773,14 @@ package body Src_Editor_Module is
 
       Show_All (Reopen_Menu);
    end Refresh_Reopen_Menu;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (Id : in out Source_Editor_Module_Record) is
+   begin
+      String_List_Utils.String_List.Free (Id.List);
+   end Destroy;
 
 end Src_Editor_Module;
