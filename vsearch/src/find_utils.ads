@@ -185,6 +185,7 @@ private
 
       Scope           : Search_Scope;
       Lexical_State   : Recognized_Lexical_States;
+      Optimize        : Boolean := False;
    end record;
 
 end Find_Utils;

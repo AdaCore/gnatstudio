@@ -87,9 +87,7 @@ package body Find_Utils is
               (Compile (WD & Quote (Look_For) & WD, Flags));
 
          elsif Match_Case then
-            null;
-
-            --  Search will be optimized by Ada.Strings.Fixed.Index
+            Search.Optimize := True;
 
          else
             Search.Pattern := new Pattern_Matcher'
@@ -177,12 +175,7 @@ package body Find_Utils is
       function Contain_Match (Text : String) return Boolean is
          use Ada.Strings.Fixed;
       begin
-         --  ??? Should compute the following test once.
-
-         if Search.Match_Case
-           and then not Search.Whole_Word
-           and then not Search.Regexp
-         then
+         if Search.Optimize then
             return Index (Text, Search.Look_For.all) /= 0;
          else
             return Match (Search.Pattern.all, Text) /= Text'First - 1;
@@ -245,14 +238,21 @@ package body Find_Utils is
       ---------------
 
       function Scan_File (Name : String) return Boolean is
-         Language : Language_Access := Get_Language_From_File (Name);
       begin
-         if Search.Scope = Whole or else Language = null then
+         if Search.Scope = Whole then
             return Scan_File_Without_Context (Name);
-         else
-            return Scan_File_With_Context
-              (Name, Get_Language_Context (Language));
          end if;
+
+         declare
+            Language : Language_Access := Get_Language_From_File (Name);
+         begin
+            if Language = null then
+               return Scan_File_Without_Context (Name);
+            else
+               return Scan_File_With_Context
+                 (Name, Get_Language_Context (Language));
+            end if;
+         end;
       end Scan_File;
 
       ----------------------------
