@@ -133,7 +133,7 @@ package body Debugger.Jdb is
          Debugger.Main_Class := new String' (Executable);
       end if;
 
-      --  ??? Should avoid the duplication of this code
+      --  ??? Should avoid the duplication of this code with debugger-*
 
       if Main_Debug_Window_Access (Window).Debug_Mode then
          Add_Filter
