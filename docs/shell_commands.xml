@@ -813,6 +813,35 @@ If the attribute value is stored as a simple string, a list with a single elemen
       <see_also name="GPS.Project.add_source_dir()"/>
   </shell_doc>
 
+  <shell_doc name="GPS.Project.languages">
+      <param name="self">The instance of GPS.Project</param>
+      <param name="recursive" default="false">A boolean</param>
+      <return>A list of strings</return>
+      <description>Return the list of languages that are used for the sources of the project (and its subprojects if recursive is True). This can be used to detect whether some specific action in a module should be activated or not. Language names are always lowercase</description>
+      <example lang="python">
+          The following example adds a new menu only if the current project
+          supports C. This is refreshed every time the project is changed by
+          the user.
+
+          import GPS
+          c_menu=None
+
+          def project_recomputed (hook_name):
+            global c_menu
+            try:
+               ## Check whether python is supported
+               GPS.Project.root().languages (recursive=True).index ("c")
+               if c_menu == None:
+                  c_menu = GPS.Menu.create ("/C support")
+            except:
+               if c_menu:
+                  c_menu.destroy()
+                  c_menu = None
+
+          GPS.Hook ("project_view_changed").add (project_recomputed)
+      </example>
+  </shell_doc>
+
   <shell_doc name="GPS.Project.object_dirs">
       <param name="self">The instance of GPS.Project</param>
       <param name="recursive" default="false">A boolean</param>
