@@ -31,6 +31,7 @@ with Glib;                use Glib;
 with Debugger;            use Debugger;
 with Process_Proxies;     use Process_Proxies;
 with Language;            use Language;
+with Breakpoints_Pkg;     use Breakpoints_Pkg;
 with Odd.Types;
 
 package body Main_Debug_Window_Pkg.Callbacks is
@@ -965,10 +966,12 @@ package body Main_Debug_Window_Pkg.Callbacks is
    procedure On_Edit_Breakpoints1_Activate
      (Object : access Gtk_Widget_Record'Class)
    is
-      Descriptor : Breakpoint_Descriptor;
+      Top : Main_Debug_Window_Access := Main_Debug_Window_Access (Object);
    begin
       Breakpoint_Editor
-        (Main_Debug_Window_Access (Object).Breakpoints, Descriptor);
+        (Breakpoints_Access (Top.Breakpoints_Editor),
+         Process_User_Data.Get
+         (Get_Child (Get_Cur_Page (Top.Process_Notebook))));
    end On_Edit_Breakpoints1_Activate;
 
    --------------------------------
