@@ -393,6 +393,8 @@ package body Entities.Debug is
                Dump (Entity.End_Of_Scope, Full => True);
                New_Line;
             end if;
+
+            Dump (Entity.Caller_At_Declaration, False, "caller_at_decl");
             Dump (Entity.Rename, False, "renames");
             Dump (Entity.Parent_Types,    False, "parents");
             Dump (Entity.Pointed_Type,    False, "points_to");
