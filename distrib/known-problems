@@ -1,5 +1,9 @@
 Known Problems fixed in GPS 1.2.0
 
+- C318-002 "Find All References" Menu is not working.
+  Problem:    The global menu "Navigate->Find All References" does nothing.
+  Workaround: Use the contextual menu "References->Find All References to".
+
 - C324-007 Error executing custom actions with constant arguments
   Problem:    If a command specified in the custom file (to add a new menu to GPS)
               contains an argument that doesn't start with '%', that command is
