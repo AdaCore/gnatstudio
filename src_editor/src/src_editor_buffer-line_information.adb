@@ -1166,13 +1166,8 @@ package body Src_Editor_Buffer.Line_Information is
 
       Real_Number : Buffer_Line_Type := 0;
       Result      : Boolean := True;
-      Info_Found  : Boolean := False;
       Buffer_Line : Buffer_Line_Type;
    begin
-      if Buffer.Block_Highlighting_Column = -1 then
-         return;
-      end if;
-
       Buffer.Modifying_Real_Lines := True;
 
       Get_Iter_At_Line (Buffer, Iter, Gint (Buffer_Line_At_Blanks) - 1);
@@ -1212,23 +1207,6 @@ package body Src_Editor_Buffer.Line_Information is
               - Real_Number;
          end if;
       end loop;
-
-      --  If it was the last item in the column, delete the column.
-
-      for J in Editable_Lines'Range loop
-         if Editable_Lines (J).Side_Info_Data /= null
-           and then Editable_Lines (J).Side_Info_Data
-           (Buffer.Block_Highlighting_Column).Info /= null
-         then
-            Info_Found := True;
-            exit;
-         end if;
-      end loop;
-
-      if not Info_Found then
-         Remove_Line_Information_Column (Buffer, Block_Info_Column);
-         Buffer.Block_Highlighting_Column := -1;
-      end if;
 
       --  Redraw the side column.
 
