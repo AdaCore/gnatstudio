@@ -22,8 +22,6 @@ with Ada.Unchecked_Conversion;
 with System.Memory; use System.Memory;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 with Traces; use Traces;
-with GNAT.IO; use GNAT.IO;
-with System.Assertions; use System.Assertions;
 
 package body Tries is
 
@@ -91,10 +89,6 @@ package body Tries is
    --        "iv"  "to"                  "iv" "to"   "cdef" (new cell)
    --
    --  Fifth case: the tree is currently empty
-
-   procedure Check (Tree : Trie_Tree);
-   pragma Warnings (Off, Check);
-   --  Check consistency of the tree (debug only)
 
    ----------
    -- Free --
@@ -185,58 +179,6 @@ package body Tries is
          Dump (Tree.Child, 0);
       end if;
    end Dump;
-
-   procedure Put (Str : Data_Type);
-   procedure Put (Str : Data_Type) is
-      pragma Unreferenced (Str);
-   begin
-      null;
-   end Put;
-   procedure My_Dump is new Dump;
-
-   -----------
-   -- Check --
-   -----------
-
-   procedure Check (Tree : Trie_Tree) is
-
-      procedure Check (Cell : Cell_Child_Access; Start : Integer);
-      procedure Check (Cell : Cell_Child_Access; Start : Integer) is
-         Ind : constant String_Access := Get_Index (Cell.all);
-      begin
-         Assert (Me, Ind /= null, "Null index");
-         Assert (Me, Ind'First + Cell.Index_Length - 1 <= Ind'Last,
-                 "Invalid index length");
-
-         if Start /= 0 then
-            Assert (Me, Ind'First + Start <= Ind'Last,
-                    "Invalid start of index: " & Start'Img & Ind'First'Img
-                    & Ind'Last'Img);
-            Assert (Me, Ind (Ind'First + Start) = Cell.First_Char_Of_Key,
-                    "Invalid cached index: "
-                    & Ind (Ind'First + Start)
-                    & Cell.First_Char_Of_Key
-                    & " at " & Ind.all
-                    & " " & Ind'First'Img & Start'Img);
-         end if;
-
-         if Cell.Children /= null then
-            for C in Cell.Children'Range loop
-               Check (Cell.Children (C)'Unrestricted_Access,
-                      Cell.Index_Length);
-            end loop;
-         end if;
-      end Check;
-
-   begin
-      Check (Tree.Child'Unrestricted_Access, 0);
-
-   exception
-      when Assert_Failure =>
-         My_Dump (Tree);
-         New_Line;
-         raise;
-   end Check;
 
    ---------------------
    -- Find_Cell_Child --
@@ -412,13 +354,13 @@ package body Tries is
 
          when 4 | 5 =>
             if Cell.Children /= null then
-               Cell.Children := Convert
+               Cell.Children     := Convert
                  (Realloc (Convert (Cell.Children),
                            size_t (Cell.Num_Children) * Component_Size
                                    + Component_Size));
                Cell.Num_Children := Cell.Num_Children + 1;
             else
-               Cell.Children := Convert (Alloc (Component_Size));
+               Cell.Children     := Convert (Alloc (Component_Size));
                Cell.Num_Children := 1;
             end if;
 
