@@ -1405,6 +1405,8 @@ package body VCS_View_API is
       end if;
 
       Remove (Get_Current_Ref (Context), Files);
+      Get_Status (Get_Current_Ref (Context), Files);
+
       String_List.Free (Files);
    exception
       when E : others =>
