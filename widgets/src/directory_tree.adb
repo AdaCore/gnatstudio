@@ -405,15 +405,19 @@ package body Directory_Tree is
          return False;
       end if;
 
-      if Get_Button (Event) = 1 then
-         if Get_Event_Type (Event) = Gdk_2button_Press then
-            Add_Single_Directory_Cb (Sel);
+      if Get_Button (Event) = 1
+        and then Get_Event_Type (Event) = Gdk_2button_Press
+      then
+         --  Need to force the selection: if the user double-clicked on an
+         --  already selected line, it has been deselected by the double-click.
+         Select_Row (Sel.Directory, Row, -1);
 
-            --  Stop the propagation of the event, otherwise the
-            --  node will also be expanded, which is confusing.
+         Add_Single_Directory_Cb (Sel);
 
-            return True;
-         end if;
+         --  Stop the propagation of the event, otherwise the
+         --  node will also be expanded, which is confusing.
+
+         return True;
       end if;
 
       return False;
