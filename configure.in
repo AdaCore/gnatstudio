@@ -1,5 +1,6 @@
 ADC_REVISION($Revision$)
 AC_INIT(common/src/sdefault.adb.in)
+AM_CONFIG_HEADER(widgets/cschtml/config.h)
 
 AC_CANONICAL_SYSTEM
 
@@ -20,6 +21,9 @@ HTML_BROWSER="netscape"
 ROOT=`pwd`
 TARGET=$host
 EXEC_PREFIX="$prefix"
+
+dnl GNU regex checking
+AC_CHECK_FUNC(re_compile_pattern, AC_DEFINE(HAVE_GNU_REGEX))
 
 ######## Command line options ###
 
