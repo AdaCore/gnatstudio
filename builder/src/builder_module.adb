@@ -112,7 +112,7 @@ package body Builder_Module is
          return;
       end if;
 
-      Set_Busy (Kernel);
+      Push_State (Kernel, Processing);
 
       if Project = "" then
          --  This is the default internal project
@@ -184,7 +184,7 @@ package body Builder_Module is
          Console.Insert (Kernel, Expect_Out (Fd), Add_LF => False);
          --  ??? Check returned status.
 
-         Set_Busy (Kernel, False);
+         Pop_State (Kernel);
 
          if Top.Interrupted then
             Top.Interrupted := False;
@@ -200,7 +200,7 @@ package body Builder_Module is
          return False;
 
       when E : others =>
-         Set_Busy (Kernel, False);
+         Pop_State (Kernel);
          Close (Fd);
          --  ??? Free (Data.Descriptor);
          Trace (Me, "Unexpected exception: " & Exception_Information (E));

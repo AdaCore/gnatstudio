@@ -719,19 +719,19 @@ package body Src_Editor_Module is
 
    begin
       if Title /= "" then
-         Set_Busy (Kernel);
+         Push_State (Kernel, Processing);
          Gnatstub (Title, Success);
 
          if Success then
             Open_File_Editor (Kernel, Body_Name (Title));
          end if;
 
-         Set_Busy (Kernel, False);
+         Pop_State (Kernel);
       end if;
 
    exception
       when E : others =>
-         Set_Busy (Kernel, False);
+         Pop_State (Kernel);
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Generate_Body;
 
@@ -744,9 +744,9 @@ package body Src_Editor_Module is
    is
       Title : constant String := Get_Editor_Filename (Kernel);
    begin
-      Set_Busy (Kernel);
+      Push_State (Kernel, Processing);
       Trace (Me, "pretty printing " & Title);
-      Set_Busy (Kernel, False);
+      Pop_State (Kernel);
    end On_Pretty_Print;
 
    -----------------
