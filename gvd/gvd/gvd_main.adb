@@ -308,7 +308,7 @@ begin
                when 'e' =>
                   -- --editor-window --
                   Main_Debug_Window.External_XID :=
-                    Guint'Value (Clean_Parameter);
+                    Guint32'Value (Clean_Parameter);
 
                -- -fullname --
                when 'f' => null;
