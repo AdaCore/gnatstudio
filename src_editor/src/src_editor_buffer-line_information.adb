@@ -955,6 +955,8 @@ package body Src_Editor_Buffer.Line_Information is
 
       Side_Column_Changed (Editor);
 
+      Editor.Blank_Lines := Editor.Blank_Lines + Number;
+
       return Mark;
    end Add_Blank_Lines;
 
@@ -1244,7 +1246,7 @@ package body Src_Editor_Buffer.Line_Information is
 
       --  Reset bottom lines
 
-      for J in Buffer_Lines'Last - Number
+      for J in Buffer_Lines'Last - Number + 1
         .. Buffer_Lines'Last
       loop
          if Buffer_Lines (J).Editable_Line /= 0
@@ -1303,6 +1305,8 @@ package body Src_Editor_Buffer.Line_Information is
          exit when Real_Number = Buffer_Line_Type (Number)
            or else Buffer_Lines (Buffer_Line).Editable_Line /= 0;
       end loop;
+
+      Buffer.Blank_Lines := Buffer.Blank_Lines - Natural (Real_Number);
 
       Buffer.Modifying_Editable_Lines := False;
       Buffer.Inserting := True;
@@ -1437,6 +1441,8 @@ package body Src_Editor_Buffer.Line_Information is
          end if;
       end loop;
 
+      Buffer.Hidden_Lines := Buffer.Hidden_Lines + Natural (Number) + 1;
+
       --  Shift up editable lines.
 
       for J in Line_End + 1 .. Editable_Lines'Last loop
@@ -1508,6 +1514,9 @@ package body Src_Editor_Buffer.Line_Information is
             Buffer.Line_Data (Buffer_Line).Editable_Line := Line;
          end if;
       end loop;
+
+      Buffer.Hidden_Lines := Buffer.Hidden_Lines +
+        Natural (First_Line - Last_Line) - 1;
 
       for Line in First_Line .. Last_Line loop
          if Editable_Lines (Line).Where = In_Buffer then
@@ -1671,5 +1680,15 @@ package body Src_Editor_Buffer.Line_Information is
          end loop;
       end loop;
    end Unfold_Line;
+
+   --------------------
+   -- Lines_Are_Real --
+   --------------------
+
+   function Lines_Are_Real
+     (Buffer : access Source_Buffer_Record'Class) return Boolean is
+   begin
+      return Buffer.Hidden_Lines = 0 and then Buffer.Blank_Lines = 0;
+   end Lines_Are_Real;
 
 end Src_Editor_Buffer.Line_Information;
