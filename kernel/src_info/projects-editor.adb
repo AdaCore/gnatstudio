@@ -2730,9 +2730,10 @@ package body Projects.Editor is
       D           : constant String :=
         New_Path & To_File_Name (New_Name) & Project_File_Extension;
       Full_Path   : String_Id := No_String;
-      Old         : Project_Node_Id;
-      Name        : Name_Id;
-      Old_Name    : Name_Id;
+      Name        : constant Name_Id := Get_String (New_Name);
+      Old_Name    : constant Name_Id := Prj.Tree.Name_Of (Project.Node);
+      Old         : constant Project_Node_Id :=
+        Find_Project_In_Hierarchy (Root_Project, Name);
       Imported    : Project_Type;
       Iterator    : Imported_Project_Iterator := Find_All_Projects_Importing
         (Root_Project, Project, Direct_Only => False);
@@ -2740,11 +2741,6 @@ package body Projects.Editor is
       Modified    : Boolean;
 
    begin
-      Old_Name := Prj.Tree.Name_Of (Project.Node);
-      Name := Get_String (New_Name);
-
-      Old := Find_Project_In_Hierarchy (Root_Project, Name);
-
       if Old /= Empty_Node
         and then Old /= Project.Node
       then
