@@ -111,6 +111,7 @@ with SSH_Protocol;
 with HTTP_Protocol;
 with Refactoring_Module;
 with Action_Editor;
+with Socket_Module;
 
 procedure GPS is
    use Glide_Main_Window;
@@ -156,7 +157,9 @@ procedure GPS is
      Create ("MODULE.Project_Viewer", On);
    Project_Properties_Trace : constant Debug_Handle :=
      Create ("MODULE.Project_Properties", On);
-   CPP_Trace : constant Debug_Handle := Create ("MODULE.CPP", On);
+   CPP_Trace    : constant Debug_Handle := Create ("MODULE.CPP", On);
+   Socket_Trace : constant Debug_Handle := Create ("MODULE.Socket", Off);
+   Server_Mode  : constant Debug_Handle := Create ("Server_Mode", Off);
 
    --  If any of these debug handles is active, the correponding module
    --  is loaded.
@@ -1142,6 +1145,10 @@ procedure GPS is
          Action_Editor.Register_Module (GPS.Kernel);
       end if;
 
+      if Active (Socket_Trace) then
+         Socket_Module.Register_Module (GPS.Kernel);
+      end if;
+
       --  Load preferences, but only after loading custom files, to make sure
       --  the themes loaded at startup are still overriden by the user's
       --  local choices.
@@ -1359,6 +1366,10 @@ procedure GPS is
       --  into account.
 
       Run_Hook (GPS.Kernel, Preferences_Changed_Hook);
+
+      if not Active (Server_Mode) then
+         Show (GPS);
+      end if;
 
       Started := True;
 
