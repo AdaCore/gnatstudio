@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                         Copyright (C) 2002                        --
---                              ACT-Europe                           --
+--                      Copyright (C) 2002-2005                      --
+--                            ACT-Europe                             --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -110,12 +110,7 @@ package body GVD.Proc_Utils is
 
    begin
       Handle := new Process_Record;
-
-      if Use_Ptys then
-         Handle.Descriptor := new TTY_Process_Descriptor;
-      else
-         Handle.Descriptor := new Process_Descriptor;
-      end if;
+      Handle.Descriptor := new TTY_Process_Descriptor;
 
       Skip_To_Char (Exec_Command, Command_Index, ' ');
       Args := Argument_String_To_List
@@ -153,12 +148,7 @@ package body GVD.Proc_Utils is
 
    begin
       Handle := new Process_Record;
-
-      if Use_Ptys then
-         Handle.Descriptor := new TTY_Process_Descriptor;
-      else
-         Handle.Descriptor := new Process_Descriptor;
-      end if;
+      Handle.Descriptor := new TTY_Process_Descriptor;
 
       New_Args (1 .. Remote_Args'Length - 1) :=
         Remote_Args (Remote_Args'First + 1 .. Remote_Args'Last);

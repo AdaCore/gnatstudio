@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2004                      --
+--                      Copyright (C) 2000-2005                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -239,11 +239,7 @@ package body Debugger is
    is
       Descriptor : Process_Descriptor_Access;
    begin
-      if Use_Ptys then
-         Descriptor := new TTY_Process_Descriptor;
-      else
-         Descriptor := new Process_Descriptor;
-      end if;
+      Descriptor := new TTY_Process_Descriptor;
 
       --  Start the external debugger.
       --  Note that there is no limitation on the buffer size, since we can

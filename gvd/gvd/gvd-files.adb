@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2003                      --
---                              ACT-Europe                           --
+--                      Copyright (C) 2000-2005                      --
+--                            ACT-Europe                             --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -122,12 +122,7 @@ package body GVD.Files is
          Args (2) := new String'
            (Tmp_File (Tmp_File'First .. Tmp_File'Last - 1));
 
-         if Use_Ptys then
-            Descriptor := new TTY_Process_Descriptor;
-         else
-            Descriptor := new Process_Descriptor;
-         end if;
-
+         Descriptor := new TTY_Process_Descriptor;
          Non_Blocking_Spawn
            (Descriptor.all,
             Command     => Get_Pref (GVD_Prefs, Remote_Copy),
