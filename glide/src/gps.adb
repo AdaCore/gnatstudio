@@ -341,8 +341,7 @@ procedure GPS is
         String_Utils.Name_As_Directory (Dir.all) & "custom_key";
       Auto_Load_Project : Boolean := True;
       Screen            : Welcome_Screen;
-      Had_Project_Desktop : Boolean;
-      pragma Unreferenced (Had_Project_Desktop, Data);
+      pragma Unreferenced (Data);
 
    begin
       --  Parse the system's RC file
@@ -513,8 +512,9 @@ procedure GPS is
                   return False;
 
                when Project_Loaded =>
-                  --  We can now load the desktop
-                  Had_Project_Desktop := Load_Desktop (GPS.Kernel);
+                  --  Desktop was already loaded when the project itself was
+                  --  loaded.
+                  null;
 
                when Welcome.Show_Tutorial =>
                   Help_Module.Show_Tutorial (GPS.Kernel);
