@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2004                       --
+--                     Copyright (C) 2001-2005                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -121,6 +121,20 @@ package Src_Editor_Module is
    function Is_Auto_Save (File : VFS.Virtual_File) return Boolean;
    --  Return True if File is an autosave file.
 
+   --------------------------------
+   -- Data common to all editors --
+   --------------------------------
+
+   function Line_Number_Character_Width return Gint;
+   pragma Inline (Line_Number_Character_Width);
+   --  Return the default character width to use when showing line numbers.
+   --  Return 0 when we are not showing line numbers.
+   --  This function is used as a preference cache for all editors.
+
+   function Post_It_Note_GC return Gdk.GC.Gdk_GC;
+   pragma Inline (Post_It_Note_GC);
+   --  Return the color to use for post-it notes
+
 private
 
    type Source_Box_Record is new Gtk_Hbox_Record with record
@@ -211,6 +225,7 @@ private
       Lines_Hook            : Lines_Revealed_Hook;
 
       Display_Line_Numbers  : Boolean    := False;
+      Character_Width       : Gint := 0;
 
       Show_Subprogram_Names : Boolean    := False;
 
