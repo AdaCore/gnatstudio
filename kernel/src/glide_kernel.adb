@@ -30,7 +30,6 @@ with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Unchecked_Deallocation;
 with Gint_Xml;                  use Gint_Xml;
-with Glide_Consoles;            use Glide_Consoles;
 with Glide_Main_Window;         use Glide_Main_Window;
 with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
 with Glide_Kernel.Project;      use Glide_Kernel.Project;
