@@ -164,7 +164,6 @@ package body Debugger.Jdb is
    begin
       --  Wait for initial prompt
       Wait_Prompt (Debugger);
-      Push_Internal_Command_Status (Get_Process (Debugger), True);
 
       if Debugger.Main_Class /= null then
          --  Set_Executable (Debugger, Debugger.Main_Class.all);
@@ -180,7 +179,6 @@ package body Debugger.Jdb is
       Language := new Jdb_Java_Language;
       Set_Language (Debugger, Language);
       Set_Debugger (Language_Debugger_Access (Language), Debugger.all'Access);
-      Pop_Internal_Command_Status (Get_Process (Debugger));
    end Initialize;
 
    -----------
@@ -466,7 +464,7 @@ package body Debugger.Jdb is
       Value    : out Backtrace_Array;
       Len      : out Natural)
    is
-      S       : String := Send (Debugger, "wherei");
+      S       : String := Send (Debugger, "wherei", Mode => Internal);
       Matched : Match_Array (0 .. 6);
       First   : Positive := S'First;
    begin
@@ -616,7 +614,8 @@ package body Debugger.Jdb is
      return Language.Thread_Information_Array
    is
       S : String :=
-        Send (Debugger, Thread_List (Get_Language (Debugger)), True);
+        Send (Debugger, Thread_List (Get_Language (Debugger)), True,
+              Mode => Internal);
       Matches : Match_Array (0 .. 0);
    begin
       Match (Prompt_Regexp, S, Matches);

@@ -489,7 +489,6 @@ package body Debugger.Gdb is
    begin
       --  Wait for initial prompt (and display it in the window)
       Wait (Get_Process (Debugger), Num, "^(.+).*$", Timeout => -1);
-      Push_Internal_Command_Status (Get_Process (Debugger), True);
 
       --  Make sure that the prompt is what we are expecting.
       Send (Debugger, "set prompt (gdb) ", Mode => Internal);
@@ -499,16 +498,14 @@ package body Debugger.Gdb is
 
       --  Connect to the remote target if needed.
 
-      Pop_Internal_Command_Status (Get_Process (Debugger));
-
       if Debugger.Target_Command /= null then
-         Send (Debugger, Debugger.Target_Command.all);
+         Send (Debugger, Debugger.Target_Command.all, Mode => Internal);
       end if;
 
       --  Load the module to debug, if any.
 
       if Debugger.Executable /= null then
-         Set_Executable (Debugger, Debugger.Executable.all);
+         Set_Executable (Debugger, Debugger.Executable.all, Mode => Internal);
       else
          --  Indicate that a new executable is present (even if there is none,
          --  we still need to reset some data).
@@ -519,8 +516,6 @@ package body Debugger.Gdb is
          if Debugger.Window /= null then
             Executable_Changed (Convert (Debugger.Window, Debugger), "");
          end if;
-
-         Push_Internal_Command_Status (Get_Process (Debugger), True);
 
          --  Detect the current language. Note that most of the work is done
          --  in fact directly by Language_Filter.
@@ -537,9 +532,6 @@ package body Debugger.Gdb is
 
          Send (Debugger, "list", Mode => Internal);
          Send (Debugger, "info line", Mode => Internal);
-
-         --  Make sure everything is hidden
-         Pop_Internal_Command_Status (Get_Process (Debugger));
       end if;
    end Initialize;
 
@@ -595,11 +587,9 @@ package body Debugger.Gdb is
 
       --  Detect the current language, and get the name and line of the
       --  initial file.
-      Push_Internal_Command_Status (Get_Process (Debugger), True);
       Send (Debugger, "show lang", Mode => Internal);
       Send (Debugger, "list", Mode => Internal);
       Send (Debugger, "info line", Mode => Internal);
-      Pop_Internal_Command_Status (Get_Process (Debugger));
    end Set_Executable;
 
    --------------------
@@ -621,7 +611,6 @@ package body Debugger.Gdb is
    begin
       Send (Debugger, "attach " & Process, Mode => Mode);
       Set_Is_Started (Debugger, True);
-      Push_Internal_Command_Status (Get_Process (Debugger), True);
 
       loop
          Set_Parse_File_Name (Get_Process (Debugger), False);
@@ -644,7 +633,6 @@ package body Debugger.Gdb is
       end loop;
 
       Send (Debugger, "frame", Mode => Internal);
-      Pop_Internal_Command_Status (Get_Process (Debugger));
    end Attach_Process;
 
    --------------------
@@ -696,7 +684,9 @@ package body Debugger.Gdb is
       Last  : Positive := Cmd'First;
 
    begin
-      Send (Debugger, "set args " & Arguments, Mode => Mode);
+      if Arguments /= "" then
+         Send (Debugger, "set args " & Arguments, Mode => Mode);
+      end if;
 
       if Cmd /= "" then
          while Last <= Cmd'Last loop
@@ -924,7 +914,8 @@ package body Debugger.Gdb is
       Value    : out Backtrace_Array;
       Len      : out Natural) is
    begin
-      Parse_Backtrace_Info (Send (Debugger, "where"), Value, Len);
+      Parse_Backtrace_Info
+        (Send (Debugger, "where", Mode => Internal), Value, Len);
    end Backtrace;
 
    ----------------------
@@ -1042,7 +1033,8 @@ package body Debugger.Gdb is
    begin
       return Parse_Thread_List
         (Get_Language (Debugger),
-         Send (Debugger, Thread_List (Get_Language (Debugger))));
+         Send (Debugger, Thread_List (Get_Language (Debugger)),
+               Mode => Internal));
    end Info_Threads;
 
    ------------------------
@@ -1172,6 +1164,11 @@ package body Debugger.Gdb is
       Num_Files : Natural := 0;
 
    begin
+      --  ??? Will fail on
+      --  "home/briot/Ada/glide/glide_window_pkg-callbacks: \
+      --     No such file or directory."
+      --  which can be emitted as the result of "info sources"
+
       --  Count the number of files
 
       for J in S'Range loop
