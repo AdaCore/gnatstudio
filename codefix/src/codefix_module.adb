@@ -74,7 +74,10 @@ package body Codefix_Module is
    Codefix_Ambiguous_Xpm : aliased Pixmap_Array;
    pragma Import (C, Codefix_Ambiguous_Xpm, "codefix_ambiguous_xpm");
 
-   Me : constant Debug_Handle := Create ("Codefix_Module");
+   Me          : constant Debug_Handle := Create ("Codefix_Module");
+
+   Codefix_GUI : constant Debug_Handle := Create ("Codefix_GUI", Off);
+   --  ??? Disabled by default, as the UI is not ready yet.
 
    Location_Button_Name : constant String := "Codefix";
 
@@ -113,12 +116,11 @@ package body Codefix_Module is
    type Codefix_Sessions_Array is array (Natural range <>) of Codefix_Session;
    type Codefix_Sessions is access Codefix_Sessions_Array;
 
-   type Codefix_Module_ID_Record is new GPS.Kernel.Module_ID_Record with
-      record
-         Sessions      : Codefix_Sessions;
-         Codefix_Class : Class_Type;
-         Codefix_Error_Class : Class_Type;
-      end record;
+   type Codefix_Module_ID_Record is new GPS.Kernel.Module_ID_Record with record
+      Sessions      : Codefix_Sessions;
+      Codefix_Class : Class_Type;
+      Codefix_Error_Class : Class_Type;
+   end record;
    type Codefix_Module_ID_Access is access all Codefix_Module_ID_Record'Class;
 
    Codefix_Module_ID   : Codefix_Module_ID_Access;
@@ -683,14 +685,13 @@ package body Codefix_Module is
          Name    => "Code Fixing",
          Submenu => Codefix_Contextual_Menu'Access);
 
-      --  ??? Disabled for now, as the UI is not quite ready yet.
-
-      Register_Menu
-        (Kernel      => Kernel,
-         Parent_Path => "/" & (-"Tools"),
-         Text        => -"_Code Fixing",
-         Callback    => Codefix_Handler'Access,
-         Sensitive   => False);
+      if Active (Codefix_GUI) then
+         Register_Menu
+           (Kernel      => Kernel,
+            Parent_Path => "/" & (-"Tools"),
+            Text        => -"_Code Fixing",
+            Callback    => Codefix_Handler'Access);
+      end if;
 
       Add_Hook
         (Kernel, Compilation_Finished_Hook, Compilation_Finished_Cb'Access);
