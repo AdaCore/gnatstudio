@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2001                      --
+--                      Copyright (C) 2000-2002                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -985,7 +985,6 @@ package body GVD.Text_Box.Source_Editor.Builtin is
       Editor.Breakpoint_Buttons := Null_List;
 
       --  Print a warning message
-
 
       Insert (Edit, Chars => Message);
    end Show_Message;
