@@ -14,6 +14,7 @@ bindir          = $(prefix)/bin
 CFLAGS     = -g -O2
 C_OBJECTS  = ../gnat/gexpect.o ../gnat/gexpect_tty.o ../pixmaps/pixmaps.o
 GTK_LIBS   = @GTK_LIBS@
+GTK_STATIC_LIBS = @GTK_STATIC_LIBS@
 GTK_CFLAGS = @GTK_CFLAGS@
 TARGET_CFLAGS = @TARGET_CFLAGS@
 TARGET_LFLAGS = @TARGET_LFLAGS@
@@ -41,6 +42,9 @@ ${PKG_FILES}: force
 $(EXEC): gvd-proc_utils-builtin.adb force
 	gnatmake -m $(ALL_CFLAGS) $(MAIN) -o $(EXEC) -bargs -E \
 	  -largs $(LINK_FLAGS)
+
+static:
+	make GTK_LIBS="$(GTK_STATIC_LIBS)" $(EXEC)
 
 gvd-proc_utils-builtin.adb: gvd-proc_utils-builtin_${BUILTIN_PS}.adb Makefile
 	$(CP) gvd-proc_utils-builtin_${BUILTIN_PS}.adb \
